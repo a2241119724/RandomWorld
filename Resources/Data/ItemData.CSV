@@ -1,0 +1,13 @@
+id,itemName,imageName,info,isStackable,type
+0,单发枪,SingleGun,一把可以单射的枪,FALSE,
+1,宝剑,CustomSword,一把可以攻击的剑,FALSE,
+2000,血瓶,AddHp,一瓶可以回复10血量的药水,TRUE,
+6000,房子,Room,多个房子组合成的房子,FALSE,
+7000,上墙,WallT,抵挡敌人攻击以及建造房子的墙,FALSE,
+7001,下墙,WallD,抵挡敌人攻击以及建造房子的墙,FALSE,
+7002,左墙,WallL,抵挡敌人攻击以及建造房子的墙,FALSE,
+7003,右墙,WallR,抵挡敌人攻击以及建造房子的墙,FALSE,
+7004,右上墙,WallRT,抵挡敌人攻击以及建造房子的墙,FALSE,
+7005,右下墙,WallRD,抵挡敌人攻击以及建造房子的墙,FALSE,
+7006,左上墙,WallLT,抵挡敌人攻击以及建造房子的墙,FALSE,
+7007,左下墙,WallLD,抵挡敌人攻击以及建造房子的墙,FALSE,
