@@ -1,2 +1,1 @@
 ﻿# RandomWorld
-自制的一个小游戏
