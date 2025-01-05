@@ -18,6 +18,9 @@ namespace LAB2D
         private int level = 1; // 当前等级
         private Animator animator;
         private Vector3 direction; // 电脑按键方向
+        /// <summary>
+        /// MainCamera,MiniCamera
+        /// </summary>
         private List<CameraMove> cameraMoves; // 相机脚本
         private SpriteRenderer spriteRenderer; // idle图像开关
 
@@ -71,7 +74,7 @@ namespace LAB2D
             }
         }
 
-        void Update()
+        private void FixedUpdate()
         {
             // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
             if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
@@ -207,13 +210,26 @@ namespace LAB2D
         /// 切换角色视角
         /// </summary>
         /// <param name="is_2_5D"></param>
-        public void togglePerspective(bool is_2_5D, Camera camera) {
+        public void togglePerspective(bool is_2_5D) {
             float rotationX = 0;
             if (is_2_5D){
                 rotationX = -45;
             }
             transform.rotation = Quaternion.Euler(rotationX, transform.rotation.y, transform.rotation.z);
-            cameraMoves[0] = camera.GetComponent<CameraMove>();
+            Camera.main.transform.rotation = Quaternion.Euler(new Vector3(rotationX, 0, 0));
+            //
+            if (is_2_5D)
+            {
+                Camera.main.orthographic = false;
+                Camera.main.fieldOfView = 100;
+                cameraMoves[0].Offset = new Vector3(0, -6, 14);
+            }
+            else
+            {
+                Camera.main.orthographic = true;
+                Camera.main.orthographicSize = 10;
+                cameraMoves[0].Offset = new Vector3(0, 0, 0);
+            }
         }
 
         /// <summary>

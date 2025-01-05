@@ -74,4 +74,3 @@ namespace LAB2D {
         protected abstract void death();
     }
 }
-

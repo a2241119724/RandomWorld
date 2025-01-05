@@ -12,6 +12,9 @@ namespace LAB2D
         private readonly Dictionary<string, GameObject> prefabsDic;
         private readonly Dictionary<string, UnityEngine.Object> assetsDic;
         private readonly Dictionary<string, Sprite> imagesDic;
+        /// <summary>
+        /// key:filename(´øºó×º) value:path
+        /// </summary>
         private readonly Dictionary<string, string> pathsDic;
 
         public ResourcesManager() {

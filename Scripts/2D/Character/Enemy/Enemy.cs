@@ -32,7 +32,6 @@ namespace LAB2D
             base.Awake();
             layerMask = LayerMask.GetMask("Tile", "Player");
             Manager = new EnemyStateManager<ICharacterState, EnemyStateType,Enemy>(this);
-            name = "Enemy_Lv1";
             MaxHp = Hp = 100;
         }
 
@@ -54,7 +53,7 @@ namespace LAB2D
             statusBar.updateStatus(Hp,MaxHp);
         }
 
-        protected virtual void Update()
+        protected virtual void FixedUpdate()
         {
             enemyForward = enemyHead.position - transform.position;
             if (!photonView.IsMine && PhotonNetwork.IsConnected) return;

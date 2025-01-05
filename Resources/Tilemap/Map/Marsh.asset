@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Marsh
   m_EditorClassIdentifier: 
   m_Sprite: {fileID: 21300000, guid: e4138b27a34b2ac49af1807ed1ae80df, type: 3}
-  m_Color: {r: 0.5882353, g: 0.5882353, b: 0.5882353, a: 1}
+  m_Color: {r: 1, g: 0.49803922, b: 0.3137255, a: 1}
   m_Transform:
     e00: 1
     e01: 0

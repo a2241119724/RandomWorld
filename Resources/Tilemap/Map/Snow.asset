@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Snow
   m_EditorClassIdentifier: 
   m_Sprite: {fileID: 21300000, guid: a3e0b9fe7b66c10499bc9454f83a2507, type: 3}
-  m_Color: {r: 0.5882353, g: 0.5882353, b: 0.5882353, a: 1}
+  m_Color: {r: 0.94509804, g: 0.9490196, b: 0.9647059, a: 0.78431374}
   m_Transform:
     e00: 1
     e01: 0

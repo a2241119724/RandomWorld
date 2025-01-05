@@ -63,9 +63,10 @@ namespace LAB2D
                 GlobalInit.Instance.showTip("«Î…‘∫Û‘Ÿ ‘");
                 return;
             }
-            GameObject.FindGameObjectWithTag("MapRoot").GetComponent<TileMap>().enabled = true;
+            GameObject.FindGameObjectWithTag(ResourceConstant.TILEMAP_TAG).GetComponent<TileMap>().enabled = true;
             TileMap.Instance.Height = length;
             TileMap.Instance.Width = width;
+            GameObject.FindGameObjectWithTag(ResourceConstant.RESOURCE_MAP_TAG).GetComponent<ResourceMap>().enabled = true;
             // map
             EnemyManager.Instance.MaxEnemyCount = maxEnemyCount;
             controller.close();

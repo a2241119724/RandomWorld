@@ -27,20 +27,14 @@ namespace LAB2D
                 // 有任务
                 targetMap = Character.Manager.Task.TargetMap;
                 // 找旁边的位置进行建造
-                bool isReach = false;
-                for (int i = -1; i <= 1; i++)
+                foreach (Vector3Int pos in Character.Manager.Task.BuildAvailableNeighborPos)
                 {
-                    for (int j = -1; j <= 1; j++)
+                    // 由于是斜对称
+                    targetMap = new Vector3Int(targetMap.x + pos.y, targetMap.y + pos.x, 0);
+                    if (Character.isCanReach(targetMap))
                     {
-                        if (i == 0 && j == 0) continue;
-                        targetMap = new Vector3Int(targetMap.x + i, targetMap.y + j, 0);
-                        if (Character.isCanReach(targetMap))
-                        {
-                            isReach = true;
-                            break;
-                        }
+                        break;
                     }
-                    if (isReach) break;
                 }
                 preString = "<color=red>Worker</color>\n";
             }

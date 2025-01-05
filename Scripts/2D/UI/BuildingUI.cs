@@ -16,6 +16,7 @@ namespace LAB2D
             // НЈдь
             if (Input.GetMouseButtonDown(0))
             {
+                // LAB_TODO
                 new Room().addRoomBuildTask(centerMap);
             }
         }

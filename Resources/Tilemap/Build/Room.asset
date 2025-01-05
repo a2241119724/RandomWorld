@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: Desert
+  m_Name: Room
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: 21300000, guid: 688ead34808ef2b419d687dee2f0a30e, type: 3}
-  m_Color: {r: 0.9254902, g: 0.8, b: 0.40784314, a: 0.78431374}
+  m_Sprite: {fileID: 21300000, guid: 1efb2523e471d6e4fb5e2ed299cfd765, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1
     e01: 0
@@ -33,4 +33,4 @@ MonoBehaviour:
     e33: 1
   m_InstancedGameObject: {fileID: 0}
   m_Flags: 1
-  m_ColliderType: 0
+  m_ColliderType: 1

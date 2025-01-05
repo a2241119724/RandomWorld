@@ -7,18 +7,22 @@ namespace LAB2D
 {
     public class BuildTask : WorkerTask
     {
-        private int i = 0;
+        /// <summary>
+        /// 没用
+        /// </summary>
+        public BuildItem BuildItem { get; private set; }
 
-        public override bool execute(Worker worker)
+        public BuildTask() {
+            BuildAvailableNeighborPos.Add(neighbors[0]);
+            BuildAvailableNeighborPos.Add(neighbors[1]);
+            BuildAvailableNeighborPos.Add(neighbors[2]);
+            BuildAvailableNeighborPos.Add(neighbors[3]);
+        }
+
+        public override void finish(Worker worker)
         {
-            if (i++ > 10) {
-                i = 0;
-                // 将建造完成的Tile从BuildingMap放到BuildMap中
-                BuildMap.Instance.setComplete(TargetMap);
-                complete();
-                return true;
-            }
-            return false;
+            // 将建造完成的Tile从BuildingMap放到BuildMap中
+            BuildMap.Instance.setComplete(TargetMap);
         }
 
         public class BuildTaskBuilder {
@@ -30,6 +34,12 @@ namespace LAB2D
 
             public BuildTaskBuilder setTarget(Vector3Int targetMap) {
                 task.TargetMap = targetMap;
+                return this;
+            }
+
+            public BuildTaskBuilder setBuild(BuildItem buildItem)
+            {
+                task.BuildItem = buildItem;
                 return this;
             }
 

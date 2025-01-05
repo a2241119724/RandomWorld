@@ -15,10 +15,10 @@ namespace LAB2D
             ItemData itemData = ItemDataManager.Instance.getById(id);
             return $"uid: {uid}\n" +
                 $"id: {id}\n" +
-                $"quantity: {quantity}" +
-                $"info: {itemData.info}" +
-                $"isStackable: {itemData.isStackable}" +
-                $"imageName: {itemData.imageName}" +
+                $"quantity: {quantity}\n" +
+                $"info: {itemData.info}\n" +
+                $"isStackable: {itemData.isStackable}\n" +
+                $"imageName: {itemData.imageName}\n" +
                 $"itemName: {itemData.itemName}";
         }
     }

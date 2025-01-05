@@ -35,11 +35,13 @@ namespace LAB2D
             new Vector2SByte(1,0), // 右
             new Vector2SByte(0,-1), // 下
             new Vector2SByte(-1,0), // 左
-            //new Vector2SByte(1,1), // 右上
-            //new Vector2SByte(1,-1), // 右下
-            //new Vector2SByte(-1,-1), // 左下
-            //new Vector2SByte(-1,1), // 左上
+            new Vector2SByte(1,1), // 右上
+            new Vector2SByte(1,-1), // 右下
+            new Vector2SByte(-1,-1), // 左下
+            new Vector2SByte(-1,1), // 左上
         }; // A*使用哪种邻居
+        private Slider progress;
+        private LineRenderer lineRenderer;
 
         protected override void Awake()
         {
@@ -52,6 +54,15 @@ namespace LAB2D
             name = "Worker";
             MaxHp = Hp = 100;
             WorkerState = transform.Find("State").GetComponent<Text>();
+            progress = transform.Find("Progress").GetComponent<Slider>();
+            progress.gameObject.SetActive(false);
+            lineRenderer = transform.GetComponent<LineRenderer>();
+            lineRenderer.startWidth = 0.05f;
+            lineRenderer.endWidth = 0.05f;
+            Material material = new Material(Shader.Find("Unlit/Color")); 
+            material.color = new Color(UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f));
+            lineRenderer.material = material;
+            lineRenderer.sortingLayerName = "Highest";
         }
 
         /// <summary>
@@ -324,6 +335,20 @@ namespace LAB2D
             }
             // ToTargetLAB要注释
             IsSeeking = false;
+            // 显示路径
+            updateLine();
+        }
+
+        /// <summary>
+        /// 更新路径UI
+        /// </summary>
+        private void updateLine() {
+            lineRenderer.positionCount = path.Count + 1;
+            lineRenderer.SetPosition(0, transform.position);
+            for (int i = 0; i < path.Count; i++)
+            {
+                lineRenderer.SetPosition(i + 1, TileMap.Instance.mapPosToWorldPos(path[i].posMap));
+            }
         }
 
         /// <summary>
@@ -331,19 +356,21 @@ namespace LAB2D
         /// </summary>
         public bool moveByPath()
         {
+            // 变为真实坐标
+            Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(path[0].posMap);
             // 到达路径中一个目标点，切换下一个目标点
             if (path.Count != 0 &&
-                Mathf.Abs(path[0].posMap.y - transform.position.x) < 0.01f &&
-                Mathf.Abs(path[0].posMap.x - transform.position.y) < 0.01f) {
+                Mathf.Abs(worldPos.x - transform.position.x) < 0.01f &&
+                Mathf.Abs(worldPos.y - transform.position.y) < 0.01f) {
                 path.RemoveAt(0); // --path.Count 
             }
             // remove过后防止后面越界
             if (path.Count == 0) { 
                 return true;
             }
-            // 变为真实坐标
-            Vector2 forward = new Vector2(path[0].posMap.y - transform.position.x, path[0].posMap.x - transform.position.y);
+            Vector2 forward = new Vector2(worldPos.x - transform.position.x, worldPos.y - transform.position.y);
             transform.Translate(forward.normalized * Time.deltaTime * moveSpeed, Space.World);//向前移动
+            updateLine();
             return false;
         }
 
@@ -365,6 +392,7 @@ namespace LAB2D
             {
                 return true;
             }
+            // 门可以通行
             return Mathf.Abs(BuildMap.Instance.BuildTileMap.GetColor(posMap).a - 0.49f) < 1e-5 
                 || Mathf.Abs(BuildMap.Instance.BuildTileMap.GetColor(posMap).a - 0.99f) < 1e-5;
         }
@@ -377,6 +405,12 @@ namespace LAB2D
                 initSeek(TargetMap);
                 toTarget();
             }
+        }
+
+        public void setProgress(float value,bool enable)
+        {
+            progress.value = value;
+            progress.gameObject.SetActive(enable);
         }
 
         class CheckBug

@@ -25,22 +25,39 @@ namespace LAB2D {
             Instance = this;
         }
 
-        private void FixedUpdate()
+        private void Update()
         {
             List<Worker> workers = WorkerManager.Instance.Characters;
             foreach (Worker worker in workers)
             {
                 if (worker.Manager.Task != null) continue;
+                WorkerTask closedTask = null;
+                float minDistance = 999999.0f;
                 foreach (WorkerTask task in tasks.Keys)
                 {
                     if (tasks[task]) continue;
-                    // 先设置任务
-                    worker.Manager.Task = task;
-                    // 进入工作状态
-                    worker.Manager.changeState(WorkerStateType.Seek);
-                    tasks[task] = true;
-                    break;
+                    if (closedTask == null)
+                    {
+                        minDistance = Mathf.Pow(worker.transform.position.y - task.TargetMap.x, 2) +
+                            Mathf.Pow(worker.transform.position.x - task.TargetMap.y, 2);
+                        closedTask = task;
+                    }
+                    else
+                    {
+                        float distance = Mathf.Pow(worker.transform.position.y - task.TargetMap.x, 2) +
+                            Mathf.Pow(worker.transform.position.x - task.TargetMap.y, 2);
+                        if(distance < minDistance)
+                        {
+                            minDistance = distance;
+                            closedTask = task;
+                        }
+                    }        
                 }
+                // 先设置任务
+                worker.Manager.Task = closedTask;
+                // 进入工作状态
+                worker.Manager.changeState(WorkerStateType.Seek);
+                tasks[closedTask] = true;
             }
         }
 

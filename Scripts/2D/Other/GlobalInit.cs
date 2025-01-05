@@ -16,10 +16,10 @@ namespace LAB2D
         private readonly List<string> fontExcludeText = new List<string>() {
             "Label"
         };
+        private BuildingUI buildingUI;
 
         void Awake()
         {
-            Tool.loadPaths();
             Instance = this;
             tip = ResourcesManager.Instance.getPrefab("Tip");
             if (initFont)
@@ -70,14 +70,22 @@ namespace LAB2D
 
         private void Update()
         {
+            // 退出界面(除了ForegroundPanel)
             if (Input.GetKey(KeyCode.Escape))
             {
-                // 退出建筑界面
-                if (PanelController.Instance.Panels.Peek() is BuildGridPanel)
+                if (PanelController.Instance.Panels.Count == 0)
                 {
-                    PanelController.Instance.close();
+                    if (buildingUI == null)
+                    {
+                        buildingUI = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<BuildingUI>();
+                    }
+                    buildingUI.enabled = false;
                     PanelController.Instance.show(BuildMenuPanel.Instance);
                     IsAvailableMap.Instance.clearShow();
+                }
+                else if(PanelController.Instance.Panels.Peek() != ForegroundPanel.Instance)
+                {
+                    PanelController.Instance.close();
                 }
             }
         }

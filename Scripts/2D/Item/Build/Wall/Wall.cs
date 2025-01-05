@@ -9,6 +9,7 @@ namespace LAB2D
     [Serializable]
     public class Wall : BuildItem
     {
+        [NonSerialized]
         public TileBase tile;
 
         public Wall()

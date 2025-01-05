@@ -227,15 +227,33 @@ namespace LAB2D
         public static Dictionary<string, string> loadPaths()
         {
             Dictionary<string, string> map = new Dictionary<string, string>();
-            string[] subPaths = AssetDatabase.GetAllAssetPaths();
-            foreach (string subPath in subPaths)
+            //string[] subPaths = AssetDatabase.GetAllAssetPaths();
+            _loadPaths("Assets\\Resources", map);
+            return map;
+        }
+
+        /// <summary>
+        /// µÝ¹é»ñÈ¡Â·¾¶
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name=""></param>
+        private static void _loadPaths(string path, Dictionary<string, string> map)
+        {
+            DirectoryInfo directoryInfo = new DirectoryInfo(path);
+            FileInfo[] fileInfos = directoryInfo.GetFiles();
+            foreach (FileInfo fileInfo in fileInfos)
             {
-                if (subPath.StartsWith("Assets/Resources/") && File.Exists(subPath))
+                string[] splits = fileInfo.Name.Split(".");
+                if (!splits[splits.Length - 1].Equals("meta"))
                 {
-                    map[Path.GetFileName(subPath)] = subPath.Split('.')[0].Remove(0,17);
+                    map[fileInfo.Name] = path.Split("Assets\\Resources\\")[1].Replace("\\", "/").Split('.')[0] + "/" + fileInfo.Name.Split('.')[0];
                 }
             }
-            return map;
+            DirectoryInfo[] subDirectoryInfos = directoryInfo.GetDirectories();
+            foreach (DirectoryInfo subDirectoryInfo in subDirectoryInfos)
+            {
+                _loadPaths(subDirectoryInfo.FullName, map);
+            }
         }
 
         public static void master(Action action)

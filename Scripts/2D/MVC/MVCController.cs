@@ -115,7 +115,7 @@ namespace LAB2D
                     Button[] btns = navigationView.GetComponentsInChildren<Button>();
                     foreach (Button btn in btns)
                     {
-                        btn.GetComponent<RoundCorner>().color = Color.white;
+                        btn.GetComponent<RoundCorner>().color = new Color(116 / 255.0f, 125 / 255.0f, 140 / 255.0f, 255 / 255.0f);
                     }
                     btns[index].GetComponent<RoundCorner>().color = new Color(255 / 255.0f, 150 / 255.0f, 150 / 255.0f, 255 / 255.0f);
                     break;

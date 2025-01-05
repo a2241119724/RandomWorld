@@ -1,6 +1,7 @@
 using System.IO;
 using UnityEngine;
 using UnityEditor;
+using System;
 
 namespace LAB2D
 {
@@ -22,7 +23,7 @@ namespace LAB2D
                 }
 
                 //文件名+文件行数
-                //Debug.Log(String.Format("{0}——{1}", temp, nowLine));
+                Debug.Log(String.Format("{0}——{1}", temp, nowLine));
 
                 totalLine += nowLine;
             }

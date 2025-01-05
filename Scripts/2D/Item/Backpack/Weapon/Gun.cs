@@ -13,7 +13,7 @@ namespace LAB2D
 	public abstract class GunObject : WeaponObject
 	{
 		protected GameObject gunHead; // 枪的头部
-		protected float bulletSpeed = 20.0f; // 子弹速度
+		protected float bulletSpeed = 50.0f; // 子弹速度
 
 		protected override void Awake() {
 			base.Awake();

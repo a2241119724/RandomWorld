@@ -4,11 +4,12 @@ using UnityEngine;
 namespace LAB2D {
     public class Enemy_Lv1 : Enemy
     {
-        public float enemyBulletSpeed = 20.0f; // 敌人发射子弹的速度
+        public float enemyBulletSpeed = 50.0f; // 敌人发射子弹的速度
     
         protected override void Awake()
         {
             base.Awake();
+            name = "Enemy_Lv1";
         }
 
         protected override void Start()

@@ -11,6 +11,7 @@ namespace LAB2D
     public class IsAvailableMap : MonoBehaviour
     {
         public static IsAvailableMap Instance { set; get; }
+        
         private Tilemap isAvailableMap;
         /// <summary>
         /// 已经显示绿色和红色Tile
@@ -59,12 +60,30 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// 是否可以建造
+        /// 是否可以建造(地图与建筑)
         /// </summary>
         /// <param name="posMap"></param>
         /// <returns></returns>
-        private bool isAvailablePos(Vector3Int posMap) {
-            return TileMap.Instance.isAvailableTile(posMap) && BuildMap.Instance.isAvailableTile(posMap);
+        public bool isAvailablePos(Vector3Int posMap) {
+            return TileMap.Instance.isAvailableTile(posMap) &&
+                BuildMap.Instance.isAvailableTile(posMap) &&
+                ResourceMap.Instance.isAvailableTile(posMap);
+        }
+
+        /// <summary>
+        /// 生成可用位置(地图与建筑)
+        /// </summary>
+        /// <param name="centerMap"></param>
+        /// <returns></returns>
+        public Vector3Int genAvailablePosMap()
+        {
+            int x, y;
+            do
+            {
+                x = Random.Range(0, TileMap.Instance.Height);
+                y = Random.Range(0, TileMap.Instance.Width);
+            } while (!isAvailablePos(new Vector3Int(x, y, 0)));
+            return new Vector3Int(x, y, 0);
         }
     }
 }

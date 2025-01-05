@@ -13,7 +13,8 @@ namespace LAB2D
         public int Width { set; get; }  // 地图横向长度
         public Tiles[,] MapTiles { private set; get; } // 地图瓦片
         public int RandomCount { get; private set; } // 随机点的数量
-        public Tilemap Tilemap { get; set; }
+        
+        private Tilemap tilemap { get; set; }
 
         //private readonly int SEND_QUANTITY = 10000; // 一次发送数量
         //private bool isOnce = false; // 是否创建完成
@@ -23,7 +24,7 @@ namespace LAB2D
         private void Awake()
         {
             Instance = this;
-            Tilemap = GetComponent<Tilemap>();
+            tilemap = GetComponent<Tilemap>();
         }
 
         private void Start()
@@ -49,7 +50,7 @@ namespace LAB2D
                     AsyncProgressUI.Instance.addOneProcess();
                     try
                     {
-                        Tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourcesManager.Instance.getAsset(mapTiles[i, j].ToString()));
+                        tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourcesManager.Instance.getAsset(mapTiles[i, j].ToString()));
                     }catch(KeyNotFoundException e)
                     {
                         Debug.Log(e.Data);
@@ -81,16 +82,18 @@ namespace LAB2D
         /// <returns></returns>
         public bool isAvailableTile(Vector3Int posMap)
         {
-            if (posMap.x < 0 || posMap.x >= Height || posMap.y < 0 || posMap.y >= Width) return false;
-            if (MapTiles[posMap.x, posMap.y] == Tiles.Mountain)
-            {
-                return false;
-            }
-            return true;
+            //if (posMap.x < 0 || posMap.x >= Height || posMap.y < 0 || posMap.y >= Width) return false;
+            //if (MapTiles[posMap.x, posMap.y] == Tiles.Mountain)
+            //{
+            //    return false;
+            //}
+            //return true;
+            return tilemap.GetTile(posMap) != ResourcesManager.Instance.getAsset("Mountain");
         }
 
         /// <summary>
         /// 生成可用的位置，返回数组下标
+        /// 可以选择以哪个点为中心，不选择则为所有
         /// </summary>
         /// <returns></returns>
         public Vector3Int genAvailablePosMap(Vector3 centerMap=default(Vector3))
@@ -98,10 +101,10 @@ namespace LAB2D
             int x, y, startX=0, endX=Height, startY = 0, endY = Width;
             if (centerMap != default(Vector3))
             {
-                startX = (int)Mathf.Max(centerMap.x - 100, 0);
-                startY = (int)Mathf.Max(centerMap.y - 100, 0);
-                endX = (int)Mathf.Min(centerMap.x + 100, Height);
-                endY = (int)Mathf.Min(centerMap.y + 100, Width);
+                startX = (int)Mathf.Max(centerMap.x - 50, 0);
+                startY = (int)Mathf.Max(centerMap.y - 50, 0);
+                endX = (int)Mathf.Min(centerMap.x + 50, Height);
+                endY = (int)Mathf.Min(centerMap.y + 10500, Width);
             }
             do
             {
@@ -228,26 +231,45 @@ namespace LAB2D
             for (int i = -1; i < Width; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                Tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
+                tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
             }
             // 右边
             for (int i = 0; i <= Height; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                Tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
+                tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
             }
             // 下边
             for (int i = 0; i <= Width; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                Tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
+                tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
             }
             // 左边
             for (int i = -1; i < Height; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                Tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
+                tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
             }
+        }
+
+        /// <summary>
+        /// MapPos -> WorldPos 
+        /// </summary>
+        /// <param name="posMap"></param>
+        /// <returns></returns>
+        public Vector3 mapPosToWorldPos(Vector3Int posMap) {
+            return new Vector3(posMap.y + 0.5f, posMap.x + 0.5f, 0);
+        }
+
+        /// <summary>
+        /// WorldPos -> MapPos
+        /// </summary>
+        /// <param name="worldPos"></param>
+        /// <returns></returns>
+        public Vector3Int worldPosToMapPos(Vector3 worldPos)
+        {
+            return new Vector3Int(Mathf.RoundToInt(worldPos.y - 0.5f), Mathf.RoundToInt(worldPos.x - 0.5f), 0);
         }
 
         /// <summary>

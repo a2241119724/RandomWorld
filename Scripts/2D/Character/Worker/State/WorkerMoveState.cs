@@ -29,16 +29,18 @@ namespace LAB2D {
         public override void OnUpdate()
         {
             base.OnUpdate();
+            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(Character.transform.position);
             Character.WorkerState.text = preString + $"Move\n" +
                 $"Target: {Character.TargetMap.y},{Character.TargetMap.x}\n" +
-                $"Position: {Mathf.RoundToInt(Character.transform.position.x)},{Mathf.RoundToInt(Character.transform.position.y)}";
+                $"Position: {posMap.y},{posMap.x}";
             bool isTarget = Character.moveByPath();
             if (isTarget)
             {
-                recordTime += Time.deltaTime;
-                if (recordTime < 2) return;
                 if (Character.Manager.Task == null)
                 {
+                    recordTime += Time.deltaTime;
+                    // 休息2秒
+                    if (recordTime < 2) return;
                     // 没有任务就进入寻路状态
                     Character.Manager.changeState(WorkerStateType.Seek);
                 }

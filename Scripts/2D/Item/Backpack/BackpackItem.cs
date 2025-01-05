@@ -31,8 +31,6 @@ namespace LAB2D
         protected override void Awake()
         {
             base.Awake();
-            // 现在放到MapTile
-            //transform.SetParent(GameObject.FindGameObjectWithTag("MapRoot").transform);
         }
 
         protected override void Start()
