@@ -3,16 +3,17 @@ using Photon.Pun;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
 using System.Collections;
+using System;
 
 namespace LAB2D
 {
-    public class TileMap : MonoBehaviour
+    public class TileMap : AMonoSaveData
     {
         public static TileMap Instance { private set; get; }
         public int Height { set; get; } // 地图纵向长度
         public int Width { set; get; }  // 地图横向长度
-        public Tiles[,] MapTiles { private set; get; } // 地图瓦片
-        public int RandomCount { get; private set; } // 随机点的数量
+        public Tiles[,] MapTiles { set; get; } // 地图瓦片
+        public int RandomCount { get; set; } // 随机点的数量
         
         private Tilemap tilemap { get; set; }
 
@@ -25,18 +26,6 @@ namespace LAB2D
         {
             Instance = this;
             tilemap = GetComponent<Tilemap>();
-        }
-
-        private void Start()
-        {
-            //PhotonNetwork.ConnectUsingSettings();
-            Tool.master(() =>
-            {
-                RandomCount = Width * Height / 1000;
-                AsyncProgressUI.Instance.show();
-                MapTiles = new Tiles[Height, Width];
-                StartCoroutine(create());
-            });
         }
 
         public IEnumerator showTilemap(Tiles[,] mapTiles)
@@ -88,7 +77,8 @@ namespace LAB2D
             //    return false;
             //}
             //return true;
-            return tilemap.GetTile(posMap) != ResourcesManager.Instance.getAsset("Mountain");
+            return tilemap.GetColliderType(posMap) == Tile.ColliderType.None;
+            //return tilemap.GetTile(posMap) != ResourcesManager.Instance.getAsset("Mountain");
         }
 
         /// <summary>
@@ -104,12 +94,12 @@ namespace LAB2D
                 startX = (int)Mathf.Max(centerMap.x - 50, 0);
                 startY = (int)Mathf.Max(centerMap.y - 50, 0);
                 endX = (int)Mathf.Min(centerMap.x + 50, Height);
-                endY = (int)Mathf.Min(centerMap.y + 10500, Width);
+                endY = (int)Mathf.Min(centerMap.y + 50, Width);
             }
             do
             {
-                x = Random.Range(startX, endX);
-                y = Random.Range(startY, endY);
+                x = UnityEngine.Random.Range(startX, endX);
+                y = UnityEngine.Random.Range(startY, endY);
             } while (!isAvailableTile(new Vector3Int(x,y,0)));
             return new Vector3Int(x, y, 0);
         }
@@ -178,12 +168,12 @@ namespace LAB2D
         /// 随机生成地图板块分布(未实例化)
         /// </summary>
         /// <returns></returns>
-        protected IEnumerator create()
+        public IEnumerator create()
         {
             AsyncProgressUI.Instance.setTip("正在生成随机坐标...");
             for (int i = 0; i < RandomCount; i++) // 生成随机坐标
             {
-                MapTiles[Random.Range(0, Height), Random.Range(0, Width)] = (Tiles)Random.Range(1, 6);
+                MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (Tiles)(UnityEngine.Random.Range(2, 12) / 2);
                 AsyncProgressUI.Instance.addOneProcess();
                 if (i % 1000 == 0)
                 {
@@ -215,10 +205,9 @@ namespace LAB2D
                 }
             }
             MapTiles = tiles;
-            Worker.setMap();
             createArroundTile();
-            yield return StartCoroutine(showTilemap(MapTiles));
-            GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<EnemyGenerator>().enabled = true;
+            StartCoroutine(showTilemap(MapTiles));
+            StartCoroutine(EnemyCreator.Instance.genEnemy());
         }
 
         /// <summary>
@@ -281,6 +270,31 @@ namespace LAB2D
         public bool isOverBorder(int x, int y)
         {
             return !(x >= 0 && x < Height && y >= 0 && y < Width);
+        }
+
+        public TileBase getTile(Vector3Int pos) {
+            return tilemap.GetTile(pos);
+        }
+
+        public override void loadData()
+        {
+            base.loadData();
+            TileMapData data = Tool.loadDataByBinary<TileMapData>(GlobalData.ConfigFile.getPath(this.GetType().Name));
+            Height = data.Height;
+            Width = data.Width;
+            MapTiles = data.MapTiles;
+            RandomCount = data.RandomCount;
+            createArroundTile();
+            StartCoroutine(showTilemap(MapTiles));
+            StartCoroutine(EnemyCreator.Instance.genEnemy());
+            Worker.initMap(Height, Width);
+        }
+
+        public override void saveData()
+        {
+            base.saveData();
+            TileMapData tileMapData = new TileMapData(Height,Width,MapTiles,RandomCount);
+            Tool.saveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), tileMapData);
         }
 
         ///// <summary>
@@ -374,7 +388,24 @@ namespace LAB2D
         //        }
         //    }
         //}
+
+        [Serializable]
+        public class TileMapData {
+            public int Height { set; get; } // 地图纵向长度
+            public int Width { set; get; }  // 地图横向长度
+            public Tiles[,] MapTiles { set; get; } // 地图瓦片
+            public int RandomCount { get; set; } // 随机点的数量
+
+            public TileMapData(int height, int width, Tiles[,] mapTiles, int randomCount)
+            {
+                Height = height;
+                Width = width;
+                MapTiles = mapTiles;
+                RandomCount = randomCount;
+            }
+        }
     }
+    [Serializable]
     public enum Tiles
     {
         Default, // 默认,不进行渲染
@@ -383,6 +414,5 @@ namespace LAB2D
         Grass, // 草
         Snow, // 雪
         Mountain, // 山
-        Build
     }
 }

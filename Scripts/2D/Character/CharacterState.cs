@@ -5,8 +5,8 @@ namespace LAB2D
     public abstract class CharacterState<C> : ICharacterState where C : Character
     {
         public C Character { set; get; }
-
-		protected CharacterState(C character)
+        
+        protected CharacterState(C character)
 		{
 			this.Character = character;
 		}

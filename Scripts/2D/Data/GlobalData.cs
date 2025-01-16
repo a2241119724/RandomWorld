@@ -15,6 +15,11 @@ namespace LAB2D
         public static readonly PackageType packaageType = PackageType.PC;
 
         /// <summary>
+        /// 是否是新游戏
+        /// </summary>
+        public static bool isNew = true;
+
+        /// <summary>
         /// 寻路时是否可以斜着走
         /// </summary>
         public static bool isTilt = false; // 是否可以斜着走
@@ -34,8 +39,10 @@ namespace LAB2D
         {
             // C:\Users\*\AppData\LocalLow\*\First_Version
             public static string UserDataFilePath = Application.persistentDataPath + "/user.json";
-            public static string BackpackDataFilePath = Application.persistentDataPath + "/backpack.lab";
-            public static string BuildDataFilePath = Application.persistentDataPath + "/build.lab";
+
+            public static string getPath(string name) {
+                return Application.persistentDataPath + "/" + name + ".lab";
+            }
         }
     }
 

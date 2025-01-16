@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace LAB2D {
-    public abstract class CharacterManager<CM,C,CC> : Singleton<CM>,ICharacterManager<C>,ICharacterCreator where CM : new() where C : Character where CC : ICharacterCreator,new()
+    public abstract class CharacterManager<CM,C,CC> : ASingletonSaveData<CM>,ICharacterManager<C>,ICharacterCreator where CM : new() where C : Character where CC : ICharacterCreator,new()
     {
         public List<C> Characters { get; set; }
         private CC creator;
@@ -47,12 +47,47 @@ namespace LAB2D {
             return Characters.Count;
         }
 
-        public virtual GameObject create()
+        public virtual GameObject create(Vector3 worldPos=default)
         {
-            GameObject g = creator.create();
+            GameObject g = creator.create(worldPos);
             if (g == null) return null;
             Characters.Add(g.GetComponent<C>());
             return g;
+        }
+
+        public override void loadData()
+        {
+            base.loadData();
+            List<Character.CharacterData> data = Tool.loadDataByBinary<List<Character.CharacterData>>(GlobalData.ConfigFile.getPath(this.GetType().Name));
+            foreach(Character.CharacterData characterData in data)
+            {
+                GameObject g = create(Vector3LAB.toVector3(characterData.pos));
+                g.GetComponent<C>().CharacterDataLAB = characterData;
+            }
+        }
+
+        public override void saveData()
+        {
+            base.saveData();
+            List<Character.CharacterData> characterDatas = new List<Character.CharacterData>();
+            foreach (C character in Characters)
+            {
+                character.CharacterDataLAB.pos = Vector3LAB.toVector3LAB(character.transform.position);
+                characterDatas.Add(character.CharacterDataLAB);
+            }
+            Tool.saveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), characterDatas);
+        }
+
+        public C getCharacterByPos(Vector3Int posMap) { 
+            foreach(C character in Characters)
+            {
+                Vector3Int characterPosMap = TileMap.Instance.worldPosToMapPos(character.transform.position);
+                if(characterPosMap.x == posMap.x && characterPosMap.y == posMap.y)
+                {
+                    return character;
+                }
+            }
+            return null;
         }
     }
 

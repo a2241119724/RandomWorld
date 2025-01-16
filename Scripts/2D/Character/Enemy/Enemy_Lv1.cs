@@ -1,4 +1,5 @@
 using Photon.Pun;
+using System;
 using UnityEngine;
 
 namespace LAB2D {
@@ -15,9 +16,9 @@ namespace LAB2D {
         protected override void Start()
         {
             // »­ÊÓ¾õ,Ìý¾õ,¹¥»÷·¶Î§
-            //Tool.DrawSectorSolid(10, attackRange, new Color32(255, 0, 0, 50), transform);
-            //Tool.DrawSectorSolid(SightAngle, SightRange, new Color32(0, 255, 0, 50), transform);
-            //Tool.DrawSectorSolid(360, SoundRange, new Color32(0, 0, 255, 50), transform);
+            Tool.DrawSectorSolid(10, attackRange, new Color32(255, 0, 0, 50), transform);
+            Tool.DrawSectorSolid(SightAngle, SightRange, new Color32(0, 255, 0, 50), transform);
+            Tool.DrawSectorSolid(360, SoundRange, new Color32(0, 0, 255, 50), transform);
             base.Start();
             // Ìí¼Ó×´Ì¬
             Manager.addStates(EnemyStateType.Wander, new EnemyWanderState(this));
@@ -38,7 +39,7 @@ namespace LAB2D {
             //GameObject g = Instantiate(enemyBullet, enemyHead.position, Quaternion.identity);
             g.GetComponent<EnemyBullet>().Direction = enemyForward;
             g.GetComponent<EnemyBullet>().BulletSpeed = enemyBulletSpeed;
-            damage = Random.Range(1,10);
+            damage = UnityEngine.Random.Range(1,10);
             g.GetComponent<EnemyBullet>().Damage = damage;
             g.transform.SetParent(transform.parent,false);
         }

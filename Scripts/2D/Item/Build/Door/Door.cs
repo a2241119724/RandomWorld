@@ -15,5 +15,10 @@ namespace LAB2D
         public Door() { 
             tile = (TileBase)ResourcesManager.Instance.getAsset("Door");
         }
+
+        public override void addBuildTask(Vector3Int centerMap, int width = 10, int height = 7)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

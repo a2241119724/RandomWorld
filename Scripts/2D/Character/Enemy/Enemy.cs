@@ -1,9 +1,9 @@
 ﻿using Photon.Pun;
+using System;
 using UnityEngine;
 
 namespace LAB2D
 {
-    //[Serializable] // 显示类
     public abstract class Enemy : Character, IPunObservable
     {
         [HideInInspector] public float continueTiming = 0.0f; // 搜寻或攻击时间
@@ -14,7 +14,6 @@ namespace LAB2D
         [HideInInspector] public Character target; // 打击目标
         public float attackRange = 4.0f; // 敌人攻击距离
         public float rotateInterval = 8.0f; // 敌人漫游时每次转向的时间间隔
-        public float moveSpeed = 1.0f; // 敌人移动随机倍数
         public float rotationSpeed = 2.0f; // 敌人旋转的速度
 
         [SerializeField] protected float SoundRange = 5.0f; // 听觉距离
@@ -22,7 +21,7 @@ namespace LAB2D
         [SerializeField] protected float SightAngle = 60.0f; // 视觉角度
         [SerializeField] protected LayerMask layerMask; // 射线检测的层级
         protected int damage; // 伤害值
-        private RaycastHit2D raycastHit2D; // 射线射中返回结果
+        private RaycastHit2D raycastHit2D; // 射线射中返回的结果
         private EnemyStatusUI statusBar; // 记录实例化血条
         //MeshFilter[] meshFilters; // 需要合并的mesh
         //private CombineInstance[] combine; // 合并用的工具
@@ -32,7 +31,7 @@ namespace LAB2D
             base.Awake();
             layerMask = LayerMask.GetMask("Tile", "Player");
             Manager = new EnemyStateManager<ICharacterState, EnemyStateType,Enemy>(this);
-            MaxHp = Hp = 100;
+            CharacterDataLAB.MaxHp = CharacterDataLAB.Hp = 100;
         }
 
         protected override void Start()
@@ -50,7 +49,7 @@ namespace LAB2D
                 return;
             }
             // 更新敌人身体状况
-            statusBar.updateStatus(Hp,MaxHp);
+            statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
         }
 
         protected virtual void FixedUpdate()
@@ -115,7 +114,7 @@ namespace LAB2D
         /// </summary>
         public void MoveToForward()
         {
-            moveSpeed = Random.Range(1.0f, 2.0f);
+            moveSpeed = UnityEngine.Random.Range(1.0f, 2.0f);
             transform.Translate(enemyForward.normalized * Time.deltaTime * moveSpeed, Space.World);//向前移动
         }
 
@@ -153,13 +152,13 @@ namespace LAB2D
                 Manager.changeState(EnemyStateType.Seek); // 进入搜索状态
             }
             base.reduceHp(Hp);
-            statusBar.updateStatus(this.Hp, MaxHp);
+            statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
             continueTiming = 0.0f; // 重新计时
         }
 
         protected override void death()
         {
-            statusBar.updateStatus(Hp, MaxHp);
+            statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
             if (PhotonNetwork.IsMasterClient)
             {
                 EnemyManager.Instance.remove(this);
@@ -172,13 +171,13 @@ namespace LAB2D
             if (stream.IsWriting)
             {
                 stream.SendNext(attackFlag);
-                stream.SendNext(Hp);
+                stream.SendNext(CharacterDataLAB.Hp);
             }
             else if(stream.IsReading)
             {
                 this.attackFlag = (bool)stream.ReceiveNext();
-                this.Hp = (float)stream.ReceiveNext();
-                statusBar.updateStatus(this.Hp, this.MaxHp);
+                CharacterDataLAB.Hp = (float)stream.ReceiveNext();
+                statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
             }
         }
 

@@ -9,7 +9,7 @@ namespace LAB2D
     /// </summary>
     public class BackpackItemManagerView : MVCItemManagerView<BackpackItemView, BackpackModel>
     {
-        public static BackpackItemManagerView Instance { get; set; }
+        public static BackpackItemManagerView Instance { private set; get; }
 
         public override void Awake()
         {

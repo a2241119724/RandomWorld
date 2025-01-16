@@ -13,6 +13,7 @@ namespace LAB2D
             Manager.addStates(WorkerStateType.Move, new WorkerMoveState(this));
             Manager.addStates(WorkerStateType.Work, new WorkerWorkState(this));
             Manager.addStates(WorkerStateType.Seek, new WorkerSeekState(this));
+            Manager.addStates(WorkerStateType.Hungry, new WorkerHungryState(this));
             // ³õÊ¼»¯×´Ì¬
             Manager.changeState(WorkerStateType.Seek);
         }

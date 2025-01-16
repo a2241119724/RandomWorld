@@ -6,7 +6,7 @@ namespace LAB2D
 {
     public class BuildItemManagerView : MVCItemManagerView<BuildItemView,BuildModel>
     {
-        public static BuildItemManagerView Instance { get; set; }
+        public static BuildItemManagerView Instance { private set; get; }
 
         public override void Awake()
         {

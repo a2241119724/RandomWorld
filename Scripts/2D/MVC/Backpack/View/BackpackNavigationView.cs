@@ -7,7 +7,7 @@ namespace LAB2D
 {
     public class BackpackNavigationView : MVCNavigationView
     {
-        public static BackpackNavigationView Instance { set; get; }
+        public static BackpackNavigationView Instance { private set; get; }
 
         private void Awake()
         {

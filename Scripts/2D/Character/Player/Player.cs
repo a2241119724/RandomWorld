@@ -2,6 +2,7 @@
 using Photon.Pun;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System;
 
 namespace LAB2D
 {
@@ -10,7 +11,6 @@ namespace LAB2D
     public class Player : Character
     {
         [Tooltip("角色速度")]
-        [SerializeField] private float moveSpeed = 2.5f; // 角色速度
         private int Mp = 100; // 玩家蓝量
         private int maxMp = 100; // 玩家最大蓝量
         private int currentExperience = 0; // 玩家当前经验值
@@ -18,11 +18,9 @@ namespace LAB2D
         private int level = 1; // 当前等级
         private Animator animator;
         private Vector3 direction; // 电脑按键方向
-        /// <summary>
-        /// MainCamera,MiniCamera
-        /// </summary>
-        private List<CameraMove> cameraMoves; // 相机脚本
         private SpriteRenderer spriteRenderer; // idle图像开关
+        private CameraMove mainCamera;
+        private CameraMove miniCamera;
 
         protected override void Awake()
         {
@@ -33,7 +31,7 @@ namespace LAB2D
                 Debug.LogError("direction assign resource Error!!!");
                 return;
             }
-            MaxHp = Hp = 100;
+            CharacterDataLAB.MaxHp = CharacterDataLAB.Hp = 100;
             spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
             name = "Player";
         }
@@ -56,16 +54,14 @@ namespace LAB2D
             //}
             if (photonView.IsMine)
             {
-                cameraMoves = new List<CameraMove>();
-                cameraMoves.Add(Camera.main.GetComponent<CameraMove>());
-                cameraMoves.Add(GameObject.FindGameObjectWithTag("MiniMap").GetComponent<CameraMove>());
-                cameraMoves.ForEach((cameraMove) => {
-                    cameraMove.directToPosition(transform.position);
-                });
+                mainCamera = Camera.main.GetComponent<CameraMove>();
+                miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
+                mainCamera.directToPosition(transform.position);
+                miniCamera.directToPosition(transform.position);
                 PlayerManager.Instance.Mine = this;
                 PhotonNetwork.LocalPlayer.TagObject = this;
                 Tool.GetComponentInChildren<Text>(gameObject, "Name").text = PhotonNetwork.NickName;
-                PlayerStatusUI.Instance.updatePlayerState(Hp, MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
+                PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
             }
             else {
                 Tool.GetComponentInChildren<Text>(gameObject, "Name").text = photonView.Owner.NickName;
@@ -91,9 +87,8 @@ namespace LAB2D
                 Input.GetKey(KeyCode.S) ||
                 Input.GetKey(KeyCode.D) ||
                 (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f)){
-                cameraMoves.ForEach((cameraMove) => {
-                    cameraMove.directToPosition(transform.position);
-                });
+                mainCamera.directToPosition(transform.position);
+                miniCamera.directToPosition(transform.position);
                 if (PlayerPositionUI.Instance != null)
                 {
                     PlayerPositionUI.Instance.setPosition(transform.position);
@@ -145,7 +140,7 @@ namespace LAB2D
                 maxExperience *= 2;
                 GlobalInit.Instance.showTip("UP " + level);
             }
-            PlayerStatusUI.Instance.updatePlayerState(Hp, MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
+            PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
         }
 
         /// <summary>
@@ -154,11 +149,11 @@ namespace LAB2D
         /// <param name="Hp">加血</param>
         public void addHp(float Hp)
         {
-            this.Hp += Hp;
-            if (this.Hp > MaxHp) {
-                this.Hp = MaxHp;
+            CharacterDataLAB.Hp += Hp;
+            if (CharacterDataLAB.Hp > CharacterDataLAB.MaxHp) {
+                CharacterDataLAB.Hp = CharacterDataLAB.MaxHp;
             }
-            PlayerStatusUI.Instance.updatePlayerState(this.Hp, MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
+            PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
         }
 
         /// <summary>
@@ -173,7 +168,7 @@ namespace LAB2D
             }
             base.reduceHp(Hp);
             if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
-            PlayerStatusUI.Instance.updatePlayerState(this.Hp, MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
+            PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
         }
 
         private void OnDestroy()
@@ -188,7 +183,7 @@ namespace LAB2D
         protected override void death()
         {
             Debug.Log("玩家重生");
-            Hp = 100;
+            CharacterDataLAB.Hp = 100;
         }
 
         /// <summary>
@@ -222,13 +217,13 @@ namespace LAB2D
             {
                 Camera.main.orthographic = false;
                 Camera.main.fieldOfView = 100;
-                cameraMoves[0].Offset = new Vector3(0, -6, 14);
+                mainCamera.Offset = new Vector3(0, -6, 14);
             }
             else
             {
                 Camera.main.orthographic = true;
                 Camera.main.orthographicSize = 10;
-                cameraMoves[0].Offset = new Vector3(0, 0, 0);
+                mainCamera.Offset = new Vector3(0, 0, 0);
             }
         }
 

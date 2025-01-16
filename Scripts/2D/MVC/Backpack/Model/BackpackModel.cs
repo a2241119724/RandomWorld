@@ -17,7 +17,6 @@ namespace LAB2D
             itemDict.Add(ItemType.Material, new ArrayList());
             itemDict.Add(ItemType.Task, new ArrayList());
             itemDict.Add(ItemType.Other, new ArrayList());
-            loadData();
         }
 
         /// <summary>
@@ -26,7 +25,7 @@ namespace LAB2D
         /// <returns>是否有数据</returns>
         public override void loadData()
         {
-            Dictionary<ItemType, ArrayList> data = Tool.loadDataByBinary<Dictionary<ItemType, ArrayList>>(GlobalData.ConfigFile.BackpackDataFilePath);
+            Dictionary<ItemType, ArrayList> data = Tool.loadDataByBinary<Dictionary<ItemType, ArrayList>>(GlobalData.ConfigFile.getPath(this.GetType().Name));
             //Dictionary<ItemType, ArrayList> data = Tool.loadDataByJson<Dictionary<ItemType, ArrayList>>(GlobalData.ConfigFile.BackpackDataFilePath);
             if (data == null) return;
             itemDict = data;
@@ -37,7 +36,7 @@ namespace LAB2D
         /// </summary>
         public override void saveData()
         {
-            Tool.saveDataByBinary(GlobalData.ConfigFile.BackpackDataFilePath, itemDict);
+            Tool.saveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), itemDict);
             //Tool.saveDataByJson<object>(GlobalData.ConfigFile.BackpackDataFilePath, itemDict);
         }
     }

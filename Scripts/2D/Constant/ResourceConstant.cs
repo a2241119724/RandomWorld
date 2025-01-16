@@ -10,4 +10,5 @@ public class ResourceConstant
     public const string TILEMAP_TAG = "TileMap";
     public const string RESOURCE_MAP_TAG = "ResourceMap";
     public const string GLOBAL_LIGHT_TAG = "GlobalLight";
+    public const string MINIMAP_TAG = "MiniMap";
 }

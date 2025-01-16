@@ -19,15 +19,11 @@ namespace LAB2D
             navigationView.CurItemType = ItemType.Room;
             if (model.isNull(navigationView.CurItemType))
             {
-                addItem(ItemFactory.Instance.getByName("Room"));
-                addItem(ItemFactory.Instance.getByName("WallT"));
-                addItem(ItemFactory.Instance.getByName("WallD"));
-                addItem(ItemFactory.Instance.getByName("WallR"));
-                addItem(ItemFactory.Instance.getByName("WallL"));
-                addItem(ItemFactory.Instance.getByName("WallRT"));
-                addItem(ItemFactory.Instance.getByName("WallRD"));
-                addItem(ItemFactory.Instance.getByName("WallLT"));
-                addItem(ItemFactory.Instance.getByName("WallLD"));
+                List<Item> items = ItemFactory.Instance.getItems();
+                foreach(Item item in items)
+                {
+                    addItem(item);
+                }
             }
         }
     }

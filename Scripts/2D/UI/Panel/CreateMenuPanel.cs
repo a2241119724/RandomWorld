@@ -59,7 +59,7 @@ namespace LAB2D
                 return;
             }
             controller.close();
-            controller.show(CreateDataPanel.Instance);
+            controller.show(NewOrContinuePanel.Instance);
         }
 
         private void OnClick_Back()

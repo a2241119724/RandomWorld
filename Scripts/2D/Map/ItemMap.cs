@@ -7,7 +7,7 @@ namespace LAB2D
 {
     public class ItemMap : MonoBehaviour
     {
-        public static ItemMap Instance { get; set; }
+        public static ItemMap Instance { private set; get; }
         public Tilemap ItemTileMap { get; set; }
 
         private void Awake()
@@ -18,25 +18,23 @@ namespace LAB2D
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
-            int x = Mathf.RoundToInt(collision.transform.position.x);
-            int y = Mathf.RoundToInt(collision.transform.position.y);
-            Vector3Int pos = new Vector3Int(y, x, 0);
-            TileBase tile = ItemTileMap.GetTile(pos);
+            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(collision.transform.position);
+            TileBase tile = ItemTileMap.GetTile(posMap);
             if(tile != null)
             {
-                BackpackController.Instance.addItem(ItemFactory.Instance.getByName(ItemTileMap.GetTile(pos).name));
-                ItemTileMap.SetTile(pos, null);
+                BackpackController.Instance.addItem(ItemFactory.Instance.getItemByName(ItemTileMap.GetTile(posMap).name));
+                ItemTileMap.SetTile(posMap, null);
             }
             for (int i = -1; i < 2; i++)
             {
                 for (int j = -1; j < 2; j++)
                 {
-                    pos = new Vector3Int(y + i, x + j, 0);
-                    tile = ItemTileMap.GetTile(pos);
+                    posMap = new Vector3Int(posMap.x + i, posMap.y + j, 0);
+                    tile = ItemTileMap.GetTile(posMap);
                     if (tile != null)
                     {
-                        BackpackController.Instance.addItem(ItemFactory.Instance.getByName(ItemTileMap.GetTile(pos).name));
-                        ItemTileMap.SetTile(pos, null);
+                        BackpackController.Instance.addItem(ItemFactory.Instance.getItemByName(ItemTileMap.GetTile(posMap).name));
+                        ItemTileMap.SetTile(posMap, null);
                     }
                 }
             }

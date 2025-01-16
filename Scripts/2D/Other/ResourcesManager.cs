@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
 namespace LAB2D
@@ -45,12 +46,13 @@ namespace LAB2D
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public UnityEngine.Object getAsset(string name)
+        //public UnityEngine.Object getAsset(string name)
+        public TileBase getAsset(string name)
         {
             if (assetsDic.ContainsKey(name))
             {
                 UnityEngine.Object asset = assetsDic[name];
-                return asset;
+                return (TileBase)asset;
             }
             Debug.Log(name + " asset not found!!!");
             return null;

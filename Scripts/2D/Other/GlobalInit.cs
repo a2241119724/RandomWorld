@@ -16,7 +16,6 @@ namespace LAB2D
         private readonly List<string> fontExcludeText = new List<string>() {
             "Label"
         };
-        private BuildingUI buildingUI;
 
         void Awake()
         {
@@ -70,28 +69,61 @@ namespace LAB2D
 
         private void Update()
         {
-            // 退出界面(除了ForegroundPanel)
+            // 退出界面(除了ForegroundPanel,CreateOrJoinPanel,CreateMenuPanel,CreateDataPanel,AsyncProgressPanel)
             if (Input.GetKey(KeyCode.Escape))
             {
                 if (PanelController.Instance.Panels.Count == 0)
                 {
-                    if (buildingUI == null)
-                    {
-                        buildingUI = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<BuildingUI>();
-                    }
-                    buildingUI.enabled = false;
+                    BuildingUI.Instance.enabled = false;
                     PanelController.Instance.show(BuildMenuPanel.Instance);
                     IsAvailableMap.Instance.clearShow();
                 }
-                else if(PanelController.Instance.Panels.Peek() != ForegroundPanel.Instance)
+                else if(PanelController.Instance.Panels.Peek() != ForegroundPanel.Instance &&
+                    PanelController.Instance.Panels.Peek() != CreateOrJoinPanel.Instance &&
+                    PanelController.Instance.Panels.Peek() != CreateMenuPanel.Instance &&
+                    PanelController.Instance.Panels.Peek() != CreateDataPanel.Instance &&
+                    PanelController.Instance.Panels.Peek() != AsyncProgressPanel.Instance)
                 {
                     PanelController.Instance.close();
                 }
             }
+            EnvironmentManager.Instance.updateEnergy();
         }
     }
 
     public abstract class MonoBehaviourInit : MonoBehaviour {
         public virtual void init() { }
+    }
+
+    public interface ISaveData
+    {
+        void loadData();
+        void saveData();
+    }
+
+    public abstract class ASaveData : ISaveData
+    {
+        public static List<ISaveData> Instances = new List<ISaveData>();
+
+        public ASaveData()
+        {
+            Instances.Add(this);
+        }
+
+        public virtual void loadData() { }
+        public virtual void saveData() { }
+    }
+
+    public abstract class AMonoSaveData : MonoBehaviour,ISaveData
+    {
+        public static List<ISaveData> Instances = new List<ISaveData>();
+
+        public AMonoSaveData()
+        {
+            Instances.Add(this);
+        }
+
+        public virtual void loadData() { }
+        public virtual void saveData() { }
     }
 }

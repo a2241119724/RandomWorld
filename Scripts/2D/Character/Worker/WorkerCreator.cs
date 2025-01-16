@@ -6,22 +6,10 @@ using UnityEngine;
 namespace LAB2D {
     public class WorkerCreator : CharacterCreator<WorkerCreator>
     {
-        public Vector3 Position { set; get; }
-
-        protected override GameObject _create()
+        protected override GameObject _create(Vector3 worldPos,string name,string layer)
         {
-            GameObject g = PhotonNetwork.Instantiate(ResourcesManager.Instance.getPath("Worker.prefab"),
-                new Vector3(Position.x + TileMap.Instance.transform.position.x, 
-                Position.y + TileMap.Instance.transform.position.y, 
-                TileMap.Instance.transform.position.z), 
-                Quaternion.identity);
-            if (g == null)
-            {
-                Debug.LogError("worker Instantiate Error!!!");
-                return null;
-            }
-            // …Ë÷√≤„º∂
-            g.layer = LayerMask.NameToLayer("Worker");
+            GameObject g = base._create(worldPos,"Worker", "Worker");
+            g.name = NameGenertor.Instance.getRandomName();
             return g;
         }
     }

@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace LAB2D {
-    public class WorkerMoveState : CharacterState<Worker>
+    public class WorkerMoveState : WorkerState
     {
-        private string preString = "";
         private float recordTime = 0.0f;
 
         public WorkerMoveState(Worker worker) : base(worker) { }
@@ -13,12 +12,7 @@ namespace LAB2D {
         public override void OnEnter()
         {
             base.OnEnter();
-            preString = "";
             recordTime = 0.0f;
-            if (Character.Manager.Task != null)
-            {
-                preString = "<color=red>Worker</color>\n";
-            }
         }
 
         public override void OnExit()
@@ -31,8 +25,8 @@ namespace LAB2D {
             base.OnUpdate();
             Vector3Int posMap = TileMap.Instance.worldPosToMapPos(Character.transform.position);
             Character.WorkerState.text = preString + $"Move\n" +
-                $"Target: {Character.TargetMap.y},{Character.TargetMap.x}\n" +
-                $"Position: {posMap.y},{posMap.x}";
+                $"Target: {Character.TargetMap.x},{Character.TargetMap.y}\n" +
+                $"Position: {posMap.x},{posMap.y}\n" + $"Hungry:{Mathf.RoundToInt(Character.CurHungry)}\n";
             bool isTarget = Character.moveByPath();
             if (isTarget)
             {

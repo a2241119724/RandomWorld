@@ -327,6 +327,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3cac58256ad23a4693067ffb126d61b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CharacterDataLAB:
+    Hp: 1
+    MaxHp: 1
+    ATN: 0
+    INT: 0
+    CRI: 0
+    ATK: 0
+    DEF: 0
+    SPD: 0
+    HIT: 0
+    RES: 0
+    pos:
+      x: 0
+      y: 0
+      z: 0
+  moveSpeed: 1
   continueTiming: 0
   attackFlag: 0
   enemyHead: {fileID: 0}
@@ -334,7 +350,6 @@ MonoBehaviour:
   target: {fileID: 0}
   attackRange: 5
   rotateInterval: 5
-  moveSpeed: 1
   rotationSpeed: 10
   SoundRange: 3
   SightRange: 7

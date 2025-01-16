@@ -9,7 +9,7 @@ namespace LAB2D
     /// </summary>
     public class CoroutineManager : MonoBehaviour
     {
-        public static CoroutineManager Instance { get; set; }
+        public static CoroutineManager Instance { private set; get; }
         //private int availableCount;
         //private Func<IEnumerator>[] coroutineDelegates;
         //private List<Coroutine> coroutines;

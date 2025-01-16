@@ -5,17 +5,14 @@ namespace LAB2D
 {
     public class SettingMenuPanel : BasePanel<SettingMenuPanel>
     {
-        private Canvas rootCanvas; // UI root
-
         public SettingMenuPanel()
         {
             Name = "SettingMenu";
             setPanel();
             //cameras = Object.FindObjectsOfType(typeof(Camera), true);
-            rootCanvas = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<Canvas>();
-            Toggle toggle = Tool.GetComponentInChildren<Toggle>(panel, "Toggle");
+            Tool.GetComponentInChildren<Toggle>(panel, "Toggle").onValueChanged.AddListener(OnClick_TogglePerspective);
             Tool.GetComponentInChildren<Button>(panel, "BackGame").onClick.AddListener(OnClick_BackGame);
-            toggle.onValueChanged.AddListener(OnClick_TogglePerspective);
+            Tool.GetComponentInChildren<Slider>(panel, "Slider").onValueChanged.AddListener(OnClick_GameSpeed);
         }
 
         public override void OnEnter()
@@ -42,6 +39,11 @@ namespace LAB2D
         public void OnClick_TogglePerspective(bool is_2D)
         {
             PlayerManager.Instance.Mine.togglePerspective(is_2D);
+        }
+
+        public void OnClick_GameSpeed(float speed)
+        {
+            ForegroundPanel.Instance.TimeScale = speed;
         }
     }
 }

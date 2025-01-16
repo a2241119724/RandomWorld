@@ -67,7 +67,7 @@ namespace LAB2D
         {
             int rand = Random.Range(0, 100);
             // 转为数组下标
-            Vector3Int posMap = new Vector3Int(Mathf.RoundToInt(Character.transform.position.y),Mathf.RoundToInt(Character.transform.position.x), 0);
+            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(Character.transform.position);
             if (rand < 10)
             {
             }

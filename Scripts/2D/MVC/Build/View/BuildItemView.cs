@@ -11,7 +11,7 @@ namespace LAB2D
             //// 发布事件,GetSiblingIndex索引(第几个孩子)
             //selectAndShow.select(item);
             BuildMenuPanel.Instance.Select.selectItemIndex = i;
-            BuildMenuPanel.Instance.Select.itemData = (BuildItem)item;
+            BuildMenuPanel.Instance.Select.item = (BuildItem)item;
         }
     }
 }

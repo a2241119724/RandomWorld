@@ -12,6 +12,23 @@ namespace LAB2D {
             Select = new SelectWeapon();
         }
 
+        public override void loadData()
+        {
+            Character.CharacterData data = Tool.loadDataByBinary<Character.CharacterData>(GlobalData.ConfigFile.getPath(this.GetType().Name));
+            AsyncProgressUI.Instance.complete += () =>
+            {
+                GameObject g = create(Vector3LAB.toVector3(data.pos));
+                Mine = g.GetComponent<Player>();
+                Mine.CharacterDataLAB = data;
+            };
+        }
+
+        public override void saveData()
+        {
+            mine.CharacterDataLAB.pos = Vector3LAB.toVector3LAB(mine.transform.position);
+            Tool.saveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), mine.CharacterDataLAB);
+        }
+
         public class SelectWeapon
         {
             /// <summary>

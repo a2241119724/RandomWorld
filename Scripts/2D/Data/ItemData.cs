@@ -78,15 +78,18 @@ namespace LAB2D
     public enum ItemType
     {
         // 背包
-        Weapon=0, // 武器
+        Weapon, // 武器
         Equipment, // 装备
         Consumable, // 道具
         Material, // 材料
         Task, // 任务用品
+        Food, // 食物
         Other,
         //
-        Room=6,
+        Room,
         Wall,
-        BuildOther
+        BuildOther,
+        //
+        Null // 用于仓库
     }
 }
