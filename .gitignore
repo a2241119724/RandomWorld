@@ -1,1 +1,9 @@
+/Animation
+/RenderTexture
+/Resources
+/Scenes
+/StreamingAssets
+/URP
+
 *.meta
+*.mat
