@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace LAB2D
 {
@@ -21,7 +24,7 @@ namespace LAB2D
             Vector3 ultimateTarget = new Vector3(Target.x + Offset.x, Target.y + Offset.y, Target.z + Offset.z);
             transform.position = Vector3.Lerp(transform.position, ultimateTarget, Time.deltaTime * cameraSpeed); // 设置相机的位置
             transform.position = new Vector3(transform.position.x, transform.position.y, -20 + Offset.z); // 固定相机z轴的位置
-            // 跟随边缘鼠标移动
+            // 跟随边缘鼠标移动(LOL)
             if (IsEdgeMode)
             {
                 if (Input.mousePosition.x > Screen.width - edgeSize)
@@ -53,8 +56,13 @@ namespace LAB2D
             // 根据鼠标滑动移动
             if (Input.GetMouseButtonDown(0))
             {
-                lastMousePos = Input.mousePosition;
-                isDown = true;
+                List<RaycastResult> results = Tool.getUIByMousePos();
+                // 过滤不是滑动主屏幕的动作
+                if(results.Count > 0 && results[0].gameObject.name.Equals("Foreground"))
+                {
+                    lastMousePos = Input.mousePosition;
+                    isDown = true;
+                }
             }
             else if (isDown)
             {

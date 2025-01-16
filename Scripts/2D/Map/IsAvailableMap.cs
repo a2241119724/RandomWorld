@@ -10,7 +10,7 @@ namespace LAB2D
 {
     public class IsAvailableMap : MonoBehaviour
     {
-        public static IsAvailableMap Instance { set; get; }
+        public static IsAvailableMap Instance { private set; get; }
         
         private Tilemap isAvailableMap;
         /// <summary>
@@ -29,7 +29,8 @@ namespace LAB2D
         /// 展示周围grid的是否可建造
         /// </summary>
         /// <param name="index">grid在controller下的sibling index</param>
-        public void showRect(Vector3Int posMap,int width=4,int height=3) {
+        public bool showRect(Vector3Int posMap,int width=10,int height=7) {
+            bool isBuilding = true;
             clearShow();
             for (int i = -height/2;i< height - height / 2; i++)
             {
@@ -46,9 +47,11 @@ namespace LAB2D
                     else
                     {
                         isAvailableMap.SetColor(_posMap, new Color(1, 0, 0));
+                        isBuilding = false;
                     }
                 }
             }
+            return isBuilding;
         }
 
         public void clearShow() {
@@ -75,13 +78,20 @@ namespace LAB2D
         /// </summary>
         /// <param name="centerMap"></param>
         /// <returns></returns>
-        public Vector3Int genAvailablePosMap()
+        public Vector3Int genAvailablePosMap(Vector3Int centerMap=default, int radius=10)
         {
-            int x, y;
+            int x, y, startX = 0, endX = TileMap.Instance.Height, startY = 0, endY = TileMap.Instance.Width;
+            if (centerMap != default)
+            {
+                startX = (int)Mathf.Max(centerMap.x - radius, 0);
+                startY = (int)Mathf.Max(centerMap.y - radius, 0);
+                endX = (int)Mathf.Min(centerMap.x + radius, TileMap.Instance.Height);
+                endY = (int)Mathf.Min(centerMap.y + radius, TileMap.Instance.Width);
+            }
             do
             {
-                x = Random.Range(0, TileMap.Instance.Height);
-                y = Random.Range(0, TileMap.Instance.Width);
+                x = Random.Range(startX, endX);
+                y = Random.Range(startY, endY);
             } while (!isAvailablePos(new Vector3Int(x, y, 0)));
             return new Vector3Int(x, y, 0);
         }

@@ -8,7 +8,6 @@ namespace LAB2D
     public class BuildMenuPanel : BasePanel<BuildMenuPanel>
     {
         public SelectItemData Select { set; get; }
-        private BuildingUI buildingUI;
 
         public BuildMenuPanel()
         {
@@ -17,7 +16,6 @@ namespace LAB2D
             setPanel();
             Tool.GetComponentInChildren<Button>(panel, "BackGame").onClick.AddListener(OnClick_BackGame);
             Tool.GetComponentInChildren<Button>(panel, "StartBuild").onClick.AddListener(OnClick_StartBuild);
-            buildingUI = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<BuildingUI>();
         }
 
         public override void OnEnter()
@@ -45,7 +43,7 @@ namespace LAB2D
             {
                 controller.close();
             }
-            buildingUI.enabled = true;
+            BuildingUI.Instance.enabled = true;
         }
     }
 }

@@ -72,7 +72,7 @@ namespace LAB2D
             GameObject g = e.pointerCurrentRaycast.gameObject; // 要交换的盒子
             if (g == null) return; // 不能拖拽到屏幕外面
             Transform imageBox; // 拖拽到的盒子
-            if (g.name == "Item") // 放到有道具的位置时
+            if (g.name.Equals("Item")) // 放到有道具的位置时
             {
                 imageBox = g.transform.parent;
             }
@@ -114,7 +114,7 @@ namespace LAB2D
     //public void OnEndDrag(PointerEventData e)
     //{
     //    GameObject g = e.pointerCurrentRaycast.gameObject;
-    //    if (g.name == "itemImage") // 放到有道具位置时
+    //    if (g.name.Equals("itemImage")) // 放到有道具位置时
     //    {
     //        // 数据位置变换
     //        Item temp = myBag.itemList[index];
@@ -127,7 +127,7 @@ namespace LAB2D
     //        g.transform.parent.position = originalParent.position;
     //        g.transform.parent.SetParent(originalParent);
     //    }
-    //    else if (g.name == "ImageBox") // 放到空位置时
+    //    else if (g.name.Equals("ImageBox")) // 放到空位置时
     //    {
     //        // 数据位置变换
     //        myBag.itemList[g.transform.GetSiblingIndex()] = myBag.itemList[index];

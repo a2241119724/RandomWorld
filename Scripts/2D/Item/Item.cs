@@ -6,8 +6,8 @@ namespace LAB2D
     [Serializable]
     public abstract class Item
     {
-        public int uid; // 唯一id
-        public int id; // 物品id
+        public int uid;
+        public int id;
         public int quantity; // 数量
 
         public override string ToString()

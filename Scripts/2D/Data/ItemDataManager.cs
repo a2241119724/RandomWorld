@@ -11,7 +11,7 @@ namespace LAB2D
     /// </summary>
     public class ItemDataManager : MonoBehaviour
     {
-        public static ItemDataManager Instance { get; set; }
+        public static ItemDataManager Instance { private set; get; }
 
         private Dictionary<int,ItemData> allItemInfo;
         private Dictionary<string, int> nameToId;

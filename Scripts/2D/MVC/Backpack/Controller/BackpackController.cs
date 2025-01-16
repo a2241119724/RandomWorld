@@ -19,7 +19,7 @@ namespace LAB2D
             // 如果背包为空添加一个武器到背包
             if (model.isNull(ItemType.Weapon))
             {
-                addItem(ItemFactory.Instance.getByName("SingleGun"));
+                addItem(ItemFactory.Instance.getItemByName("SingleGun"));
             }
         }
     }

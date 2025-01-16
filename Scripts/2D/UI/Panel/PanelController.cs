@@ -25,7 +25,7 @@ namespace LAB2D
         /// <param name="parent">¸¸ÎïÌå</param>
         public void show(IBasePanel basePanel)
         {
-            if (Panels.Count > 0)
+            if (Panels.Count > 0 && !(basePanel is ItemInfoPanel))
             {
                 Panels.Peek().OnPause();
             }

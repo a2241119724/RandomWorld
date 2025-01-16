@@ -7,7 +7,7 @@ using UnityEngine.Tilemaps;
 namespace LAB2D
 {
     [Serializable]
-    public class Wall : BuildItem
+    public abstract class Wall : BuildItem
     {
         [NonSerialized]
         public TileBase tile;
@@ -15,78 +15,51 @@ namespace LAB2D
         public Wall()
         {
         }
-    }
 
-    [Serializable]
-    public class WallT : Wall
-    {
-        public WallT()
+        public override void addBuildTask(Vector3Int centerMap, int width = 10, int height = 7)
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("WallT");
+            throw new NotImplementedException();
         }
     }
 
     [Serializable]
-    public class WallD : Wall
+    public abstract class WallT : Wall
     {
-        public WallD()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("WallD");
-        }
     }
 
     [Serializable]
-    public class WallL : Wall
+    public abstract class WallD : Wall
     {
-        public WallL()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("WallL");
-        }
     }
 
     [Serializable]
-    public class WallR : Wall
+    public abstract class WallL : Wall
     {
-        public WallR()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("WallR");
-        }
     }
 
     [Serializable]
-    public class WallRT : Wall
+    public abstract class WallR : Wall
     {
-        public WallRT()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("WallRT");
-        }
     }
 
     [Serializable]
-    public class WallRD : Wall
+    public abstract class WallRT : Wall
     {
-        public WallRD()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("WallRD");
-        }
     }
 
     [Serializable]
-    public class WallLT : Wall
+    public abstract class WallRD : Wall
     {
-        public WallLT()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("WallLT");
-        }
     }
 
     [Serializable]
-    public class WallLD : Wall
+    public abstract class WallLT : Wall
     {
-        public WallLD()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("WallLD");
-        }
+    }
+
+    [Serializable]
+    public abstract class WallLD : Wall
+    {
     }
 
     public class WallObject : BuildItemObject

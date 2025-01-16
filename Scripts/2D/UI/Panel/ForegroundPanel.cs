@@ -1,5 +1,7 @@
 using Photon.Pun;
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
@@ -7,6 +9,8 @@ using UnityEngine.UI;
 namespace LAB2D {
     public class ForegroundPanel : BasePanel<ForegroundPanel>
     {
+        public float TimeScale { get; set; } = 1;
+
         public ForegroundPanel()
         {
             Name = "Foreground";
@@ -22,6 +26,8 @@ namespace LAB2D {
             Tool.GetComponentInChildren<Button>(panel, "Setting").onClick.AddListener(Onclick_Setting);
             Tool.GetComponentInChildren<Button>(panel, "GeneratorWorker").onClick.AddListener(Onclick_GeneratorWorker);
             Tool.GetComponentInChildren<Button>(panel, "Build").onClick.AddListener(Onclick_Build);
+            Tool.GetComponentInChildren<Button>(panel, "WorkerInfo").onClick.AddListener(Onclick_WorkerInfo);
+            Tool.GetComponentInChildren<Button>(panel, "Save").onClick.AddListener(Onclick_Save);
         }
 
         public override void OnEnter()
@@ -47,13 +53,14 @@ namespace LAB2D {
             base.OnRun();
             // 射线是否能穿透(使得能点击按钮)
             panel.GetComponent<CanvasGroup>().blocksRaycasts = true;
-            Time.timeScale = 1; // 暂停
+            Time.timeScale = TimeScale; // 暂停
         }
 
         /// <summary>
         /// 打开背包
         /// </summary>
-        private void OnClick_Backpack() {
+        private void OnClick_Backpack()
+        {
             // 创建背包面板
             controller.show(BackpackMenuPanel.Instance);
         }
@@ -89,7 +96,8 @@ namespace LAB2D {
         /// <summary>
         /// 打开设置面板
         /// </summary>
-        public void Onclick_Setting() {
+        public void Onclick_Setting()
+        {
             controller.show(SettingMenuPanel.Instance);
         }
 
@@ -98,13 +106,29 @@ namespace LAB2D {
         /// </summary>
         public void Onclick_GeneratorWorker()
         {
-            WorkerCreator.Instance.Position = PlayerManager.Instance.Mine.transform.position;
-            WorkerManager.Instance.create();
+            WorkerManager.Instance.create(PlayerManager.Instance.Mine.transform.position);
         }
 
         public void Onclick_Build()
         {
             controller.show(BuildMenuPanel.Instance);
+        }
+
+        public void Onclick_WorkerInfo()
+        {
+            controller.show(WorkerInfoPanel.Instance);
+        }
+        public void Onclick_Save()
+        {
+            GlobalInit.Instance.showTip("保存数据");
+            foreach (ASaveData saveData in ASaveData.Instances)
+            {
+                saveData.saveData();
+            }
+            foreach (AMonoSaveData saveData in AMonoSaveData.Instances)
+            {
+                saveData.saveData();
+            }
         }
     }
 }

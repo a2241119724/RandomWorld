@@ -6,6 +6,9 @@ namespace LAB2D
     public abstract class BasePanel<BP> : Singleton<BP>, IBasePanel where BP : new()
     {
         public GameObject panel; // 面板物体
+        /// <summary>
+        /// 通过Name获取对应的GameObject Panel
+        /// </summary>
         public string Name { get; set; } = "";
         protected PanelController controller; // 切换和关闭面板
 

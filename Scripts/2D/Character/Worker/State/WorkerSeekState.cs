@@ -4,10 +4,9 @@ using UnityEngine;
 
 namespace LAB2D
 {
-    public class WorkerSeekState : CharacterState<Worker>
+    public class WorkerSeekState : WorkerState
     {
         private Vector3Int targetMap;
-        private string preString = "";
         private bool isOne = true;
 
         public WorkerSeekState(Worker character) : base(character)
@@ -17,26 +16,43 @@ namespace LAB2D
         public override void OnEnter()
         {
             base.OnEnter();
+            // 如果饥饿并且没有吃饭任务就进入饥饿状态,做完任务再吃饭
+            if (Character.CurHungry < Worker.ThresholdHungry && Character.Manager.Task == null) {
+                Character.Manager.changeState(WorkerStateType.Hungry);
+                return;
+            }
             isOne = true;
             // 没有任务
-            Vector3Int posMap = new Vector3Int(Mathf.RoundToInt(Character.transform.position.y), Mathf.RoundToInt(Character.transform.position.x), 0);
+            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(Character.transform.position);
             targetMap = TileMap.Instance.genAvailablePosMap(posMap);
-            preString = "";
             if (Character.Manager.Task != null)
             {
                 // 有任务
                 targetMap = Character.Manager.Task.TargetMap;
                 // 找旁边的位置进行建造
-                foreach (Vector3Int pos in Character.Manager.Task.BuildAvailableNeighborPos)
+                float minDistance = 99999.0f;
+                Vector3Int closedPos = default(Vector3Int);
+                foreach (Vector3Int pos in Character.Manager.Task.AvailableNeighborPos)
                 {
                     // 由于是斜对称
-                    targetMap = new Vector3Int(targetMap.x + pos.y, targetMap.y + pos.x, 0);
-                    if (Character.isCanReach(targetMap))
+                    Vector3Int temp = new Vector3Int(targetMap.x + pos.y, targetMap.y + pos.x, 0);
+                    if (Character.isCanReach(temp))
                     {
-                        break;
+                        Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(temp);
+                        float distance = Mathf.Pow(worldPos.x-Character.transform.position.x,2) +
+                            Mathf.Pow(worldPos.y - Character.transform.position.y, 2);
+                        if(distance < minDistance)
+                        {
+                            minDistance = distance;
+                            closedPos = temp;
+                        }
                     }
                 }
-                preString = "<color=red>Worker</color>\n";
+                if(closedPos == default(Vector3Int))
+                {
+                    Debug.Log("没有邻居位置!!!");
+                }
+                targetMap = closedPos;
             }
             Character.initSeek(targetMap);
         }
@@ -50,7 +66,7 @@ namespace LAB2D
         {
             base.OnUpdate();
             Character.WorkerState.text = preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(Character.SeekProgress * 100)}%</color>\n"+
-                $"Target: {targetMap.y},{targetMap.x}";
+                $"Target: {targetMap.x},{targetMap.y}";
             // 没有锁或者是自己上的锁
             if (!GlobalData.Lock.SeekLock.seekLock ||
                 (GlobalData.Lock.SeekLock.seekLock && GlobalData.Lock.SeekLock.owner == Character)) {

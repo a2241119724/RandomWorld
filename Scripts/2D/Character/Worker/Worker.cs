@@ -6,7 +6,6 @@ using UnityEngine.UI;
 
 namespace LAB2D
 {
-    [Serializable]
     public class Worker : Character
     {
         [HideInInspector] public WorkerStateManager<ICharacterState, WorkerStateType,Worker> Manager { get; private set; }
@@ -17,12 +16,19 @@ namespace LAB2D
         public Text WorkerState { set; get; }
         public Vector3Int TargetMap { get; set; }
         public float SeekProgress { get; set; }
-        //private static int[,] isBlockTiles; // 是否不能通行
+        /// <summary>
+        /// 是否需要做任务的开关
+        /// 任务越靠前优先级越高（理论）
+        /// 是否开启做该任务类型的开关(toogle的顺序与TaskType的顺序相关)
+        /// Build,Carry,CutTree
+        /// </summary>
+        public bool[] TaskToggle { get; set; }
+        public float CurHungry { get; set; } = 100.0f;
+        public static readonly float MaxHungry = 100.0f;
+        public static readonly float ThresholdHungry = 10.0f;
+        public int MaxResourceCount { get; set; } = 30;
 
-        [SerializeField] private float moveSpeed = 2.5f; // 角色速度
-        // 数组下标[y,x]与世界坐标(x,y)相反
-        private static int cols = 0;
-        private static int rows = 0;
+        //private static int[,] isBlockTiles; // 是否不能通行
         private static Spend[,] mapSpend; // 地图中板块的花费
         // 1为不能通行
         private List<Spend> openList;
@@ -30,7 +36,7 @@ namespace LAB2D
         private List<Spend> path; // 寻路路径
         private Coroutine coroutine; // 寻路路径
         private CheckBug checkBug;
-        private readonly List<Vector2SByte> neighbors = new List<Vector2SByte>(){
+        private static readonly List<Vector2SByte> neighbors = new List<Vector2SByte>(){
             new Vector2SByte(0,1), // 上
             new Vector2SByte(1,0), // 右
             new Vector2SByte(0,-1), // 下
@@ -42,6 +48,11 @@ namespace LAB2D
         }; // A*使用哪种邻居
         private Slider progress;
         private LineRenderer lineRenderer;
+        private Text nameUI;
+        /// <summary>
+        /// 携带的建筑资源
+        /// </summary>
+        public NeedResource resourceInfos;
 
         protected override void Awake()
         {
@@ -51,11 +62,12 @@ namespace LAB2D
             closeList = new List<Spend>();
             path = new List<Spend>();
             Manager = new WorkerStateManager<ICharacterState, WorkerStateType, Worker>(this);
-            name = "Worker";
-            MaxHp = Hp = 100;
+            CharacterDataLAB.MaxHp = CharacterDataLAB.Hp = 100;
+            nameUI = transform.Find("Name").GetComponent<Text>();
             WorkerState = transform.Find("State").GetComponent<Text>();
             progress = transform.Find("Progress").GetComponent<Slider>();
             progress.gameObject.SetActive(false);
+            // 路径
             lineRenderer = transform.GetComponent<LineRenderer>();
             lineRenderer.startWidth = 0.05f;
             lineRenderer.endWidth = 0.05f;
@@ -63,6 +75,11 @@ namespace LAB2D
             material.color = new Color(UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f));
             lineRenderer.material = material;
             lineRenderer.sortingLayerName = "Highest";
+            //
+            TaskToggle = new bool[10];
+            // 默认可以吃饭
+            TaskToggle[((int)TaskType.Hungry)] = true;
+            resourceInfos = new NeedResource();
         }
 
         /// <summary>
@@ -71,16 +88,11 @@ namespace LAB2D
         protected override void Start()
         {
             base.Start();
+            nameUI.text = name;
         }
 
         void Update()
         {
-            // 鼠标点击寻路
-            //if (Input.GetMouseButtonUp(0))
-            //{
-            //    Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            //    getPath(worldPos.x, worldPos.y);
-            //}
             transform.rotation = Quaternion.Euler(0, 0, 0);
             // 执行当前状态的函数
             Manager.CurrentState.OnUpdate();
@@ -89,26 +101,13 @@ namespace LAB2D
         /// <summary>
         /// 设置地图信息
         /// </summary>
-        public static void setMap() {
-            rows = TileMap.Instance.Height;
-            cols = TileMap.Instance.Width;
-            //isBlockTiles = new int[rows, cols];
-            //Tiles[,] _mapTiles = TileMap.Instance.MapTiles;
-            //for (int i = 0; i < rows; i++)
-            //{
-            //    for (int j = 0; j < cols; j++)
-            //    {
-            //        if (_mapTiles[i,j] == Tiles.Mountain)
-            //        {
-            //            isBlockTiles[i, j] = 1;
-            //        }
-            //    }
-            //}
+        public static void initMap(int height, int width)
+        {
             // 初始化寻路花费
-            mapSpend = new Spend[rows, cols];
-            for (int i = 0; i < rows; i++)
+            mapSpend = new Spend[height, width];
+            for (int i = 0; i < height; i++)
             {
-                for (int j = 0; j < cols; j++)
+                for (int j = 0; j < width; j++)
                 {
                     mapSpend[i, j] = new Spend(i, j);
                 }
@@ -128,9 +127,9 @@ namespace LAB2D
             closeList.Clear();
             path.Clear();
             SeekProgress = 0.0f;
-            for (int i = 0; i < rows; i++)
+            for (int i = 0; i < TileMap.Instance.Height; i++)
             {
-                for (int j = 0; j < cols; j++)
+                for (int j = 0; j < TileMap.Instance.Width; j++)
                 {
                     mapSpend[i, j].init();
                 }
@@ -145,9 +144,8 @@ namespace LAB2D
         public void toTarget() {
             //coroutine = StartCoroutine(toTargetLAB(TargetMap));
             // A*
-            int startX = Mathf.RoundToInt(transform.position.x);
-            int startY = Mathf.RoundToInt(transform.position.y);
-            Spend start = mapSpend[startY, startX]; // 起点
+            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(transform.position);
+            Spend start = mapSpend[posMap.x, posMap.y]; // 起点
             Spend end = mapSpend[TargetMap.x, TargetMap.y]; // 终点
             coroutine = StartCoroutine(toTargetAStar(start,end));
         }
@@ -164,9 +162,8 @@ namespace LAB2D
                 IsSeeking = false;
                 yield break;
             }
-            int startX = Mathf.RoundToInt(transform.position.x);
-            int startY = Mathf.RoundToInt(transform.position.y);
-            Spend start = mapSpend[startY, startX]; // 起点
+            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(transform.position);
+            Spend start = mapSpend[posMap.x, posMap.y]; // 起点
             Spend end = mapSpend[targetMap.x, targetMap.y]; // 终点
             while (true) {
                 Spend mid = straightMove(start, end);
@@ -356,6 +353,7 @@ namespace LAB2D
         /// </summary>
         public bool moveByPath()
         {
+            if (path.Count == 0) return true;
             // 变为真实坐标
             Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(path[0].posMap);
             // 到达路径中一个目标点，切换下一个目标点
@@ -365,9 +363,7 @@ namespace LAB2D
                 path.RemoveAt(0); // --path.Count 
             }
             // remove过后防止后面越界
-            if (path.Count == 0) { 
-                return true;
-            }
+            if (path.Count == 0) return true;
             Vector2 forward = new Vector2(worldPos.x - transform.position.x, worldPos.y - transform.position.y);
             transform.Translate(forward.normalized * Time.deltaTime * moveSpeed, Space.World);//向前移动
             updateLine();
@@ -386,6 +382,9 @@ namespace LAB2D
         public bool isCanReach(Vector3Int posMap)
         {
             if (!TileMap.Instance.isAvailableTile(posMap)) {
+                return false;
+            }
+            if(!ResourceMap.Instance.isCanReach(posMap)) {
                 return false;
             }
             if(BuildMap.Instance.BuildTileMap.GetTile(posMap) == null)
@@ -411,6 +410,117 @@ namespace LAB2D
         {
             progress.value = value;
             progress.gameObject.SetActive(enable);
+        }
+
+        public override string ToString()
+        {
+            string resources = "";
+            foreach (KeyValuePair<int, ResourceInfo> resource in resourceInfos.needs)
+            {
+                resources += resource.Key + ":" + resource.Value.count + "\n";
+            }
+            return base.ToString() + 
+                $"Hungry:{CurHungry}\n" +
+                $"TargetMap:{TargetMap}\n" +
+                resources;
+        }
+
+        public void addResource(ResourceInfo resourceInfo)
+        {
+            if (resourceInfo.count == 0) return;
+            if (resourceInfos.needs.ContainsKey(resourceInfo.id))
+            {
+                resourceInfos.needs[resourceInfo.id].count += resourceInfo.count;
+            }
+            else
+            {
+                resourceInfos.needs.Add(resourceInfo.id, resourceInfo);
+            }
+        }
+
+        public void subResource(NeedResource needResource) {
+            foreach(KeyValuePair<int, ResourceInfo> need in needResource.needs)
+            {
+                if (resourceInfos.needs.ContainsKey(need.Key))
+                {
+                    resourceInfos.needs[need.Key].count -= need.Value.count;
+                }
+                else
+                {
+                    Debug.Log("自身资源不够，仍然建造成功，错误");
+                }
+            }
+        }
+
+        public void subResource(ResourceInfo resourceInfo)
+        {
+            if (resourceInfo.count == 0) return;
+            if (resourceInfos.needs.ContainsKey(resourceInfo.id))
+            {
+                resourceInfos.needs[resourceInfo.id].count -= resourceInfo.count;
+            }
+            else
+            {
+                Debug.Log("自身资源不够，仍然建造成功，错误");
+            }
+        }
+
+        /// <summary>
+        /// 获得携带的资源数量
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public int getResourceCountById(int id)
+        {
+            if (resourceInfos.needs.ContainsKey(id))
+            {
+                return resourceInfos.needs[id].count;
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// 判断worker携带的资源够不够建造
+        /// </summary>
+        /// <returns></returns>
+        public bool isEnough(NeedResource needResource)
+        {
+            foreach (KeyValuePair<int, ResourceInfo> need in needResource.needs)
+            {
+                if (!resourceInfos.needs.ContainsKey(need.Key) || resourceInfos.needs[need.Key].count < need.Value.count)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public void giveUpTask()
+        {
+            WorkerTaskManager.Instance.giveUpTask(Manager.Task);
+            Manager.Task = null;
+            Manager.changeState(WorkerStateType.Seek);
+        }
+
+        /// <summary>
+        /// 建造所需要的资源数量减去worker身上所带的资源数量
+        /// </summary>
+        /// <param name="needResource"></param>
+        /// <returns></returns>
+        public NeedResource getRemaining(NeedResource needResource) {
+            NeedResource remaining = new NeedResource();
+            foreach (KeyValuePair<int, ResourceInfo> need in needResource.needs)
+            {
+                if (resourceInfos.needs.ContainsKey(need.Key))
+                {
+                    remaining.needs.Add(need.Key, new ResourceInfo(need.Key, need.Value.count - resourceInfos.needs[need.Key].count));
+                }
+                else
+                {
+                    remaining.needs.Add(need.Key, Tool.DeepCopyByBinary(need.Value));
+                }
+            }
+            return remaining;
         }
 
         class CheckBug

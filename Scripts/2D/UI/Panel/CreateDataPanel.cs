@@ -7,7 +7,7 @@ namespace LAB2D
 {
     public class CreateDataPanel : BasePanel<CreateDataPanel>
     {
-        private int length = 548; // 地图纵向长度
+        private int height = 548; // 地图纵向长度
         private int width = 548; // 地图横向长度
         private int maxEnemyCount = 548; // 敌人数量
 
@@ -15,13 +15,13 @@ namespace LAB2D
         {
             Name = "CreateData";
             setPanel();
-            Transform g1 = Tool.GetComponentInChildren<Transform>(panel, "MapLength");
+            Transform g1 = Tool.GetComponentInChildren<Transform>(panel, "MapHeight");
             Slider s1 = g1.Find("Bar").GetComponent<Slider>();
-            length = (int)s1.value;
+            height = (int)s1.value;
             g1.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener(delegate (float value)
             {
-                length = (int)Mathf.Floor(g1.Find("Bar").GetComponent<Slider>().value);
-                g1.Find("Count").GetComponent<Text>().text = length.ToString();
+                height = (int)Mathf.Floor(g1.Find("Bar").GetComponent<Slider>().value);
+                g1.Find("Count").GetComponent<Text>().text = height.ToString();
             });
             Transform g2 = Tool.GetComponentInChildren<Transform>(panel, "MapWidth");
             Slider s2 = g2.Find("Bar").GetComponent<Slider>();
@@ -39,7 +39,7 @@ namespace LAB2D
                 maxEnemyCount = (int)Mathf.Floor(g3.Find("Bar").GetComponent<Slider>().value);
                 g3.Find("Count").GetComponent<Text>().text = maxEnemyCount.ToString();
             });
-            Tool.GetComponentInChildren<Button>(panel, "StartCreate").onClick.AddListener(StartCreate);
+            Tool.GetComponentInChildren<Button>(panel, "StartCreate").onClick.AddListener(Onclick_StartCreate);
         }
 
         public override void OnEnter()
@@ -50,26 +50,39 @@ namespace LAB2D
         public override void OnExit()
         {
             base.OnExit();
-            // 进入进度条加载界面
             controller.show(AsyncProgressPanel.Instance);
         }
 
         /// <summary>
         /// 创建地图,敌人,玩家,道具等物体
         /// </summary>
-        private void StartCreate() {
+        private void Onclick_StartCreate() {
             if (PhotonNetwork.NetworkClientState != ClientState.Joined)
             {
                 GlobalInit.Instance.showTip("请稍后再试");
                 return;
             }
-            GameObject.FindGameObjectWithTag(ResourceConstant.TILEMAP_TAG).GetComponent<TileMap>().enabled = true;
-            TileMap.Instance.Height = length;
+            // TileMap
+            TileMap.Instance.Height = height;
             TileMap.Instance.Width = width;
-            GameObject.FindGameObjectWithTag(ResourceConstant.RESOURCE_MAP_TAG).GetComponent<ResourceMap>().enabled = true;
-            // map
-            EnemyManager.Instance.MaxEnemyCount = maxEnemyCount;
+            TileMap.Instance.RandomCount = width * height / 500;
+            int total = width * height;
+            total += TileMap.Instance.RandomCount;
+            total += (width + height) * 2 + 4;
+            total += width * height;
             controller.close();
+            AsyncProgressUI.Instance.addTotal(total);
+            TileMap.Instance.MapTiles = new Tiles[height, width];
+            TileMap.Instance.StartCoroutine(TileMap.Instance.create());
+            //Worker
+            Worker.initMap(height,width);
+            // ResourceMap
+            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.genTree());
+            // EnemyManager
+            EnemyManager.Instance.MaxEnemyCount = maxEnemyCount;
+            AsyncProgressUI.Instance.complete += () => {
+                PlayerManager.Instance.create();
+            };
         }
     }
 }

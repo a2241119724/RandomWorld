@@ -91,7 +91,7 @@ namespace LAB2D
     {
         Move, // ÂþÓÎ×´Ì¬	
         Work,
-        CantWork,
+        Hungry,
         Dead,
         Seek
     }

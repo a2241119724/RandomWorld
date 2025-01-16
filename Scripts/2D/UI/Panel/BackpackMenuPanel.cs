@@ -43,8 +43,8 @@ namespace LAB2D
         /// </summary>
         private void OnClick_Equip()
         {
-            if (Select.itemData == null) return;
-            if (ItemDataManager.Instance.getById(Select.itemData.id).type == ItemType.Weapon)
+            if (Select.item == null) return;
+            if (ItemDataManager.Instance.getById(Select.item.id).type == ItemType.Weapon)
             {
                 if (PlayerManager.Instance.Select.weapon != null)
                 {
@@ -54,26 +54,26 @@ namespace LAB2D
                     PhotonNetwork.Destroy(PlayerManager.Instance.Select.weapon);
                 }
                 // 设置当前装备id
-                PlayerManager.Instance.Select.currentId = Select.itemData.id;
+                PlayerManager.Instance.Select.currentId = Select.item.id;
                 // 实例化武器
-                PlayerManager.Instance.Select.weapon = PhotonNetwork.Instantiate(ResourcesManager.Instance.getPath(ItemDataManager.Instance.getById(Select.itemData.id).imageName+".prefab"), Vector3.zero,Quaternion.identity);
+                PlayerManager.Instance.Select.weapon = PhotonNetwork.Instantiate(ResourcesManager.Instance.getPath(ItemDataManager.Instance.getById(Select.item.id).imageName+".prefab"), Vector3.zero,Quaternion.identity);
                 if (PlayerManager.Instance.Select.weapon == null)
                 {
                     Debug.LogError(" PlayerManager.Instance.Select.weapon Instantiate Error!!!");
                     return;
                 }
-                PlayerManager.Instance.Select.weapon.name = ItemDataManager.Instance.getById(Select.itemData.id).imageName;
+                PlayerManager.Instance.Select.weapon.name = ItemDataManager.Instance.getById(Select.item.id).imageName;
                 PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
                 PlayerManager.Instance.Select.weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
                 GlobalInit.Instance.showTip("装备成功");
                 // 从背包删除该道具
-                PlayerManager.Instance.Select.weaponData = (Weapon)Select.itemData;
+                PlayerManager.Instance.Select.weaponData = (Weapon)Select.item;
                 BackpackController.Instance.deleteItem(Select.selectItemIndex);
                 // 不能对一个武器进行多次装备
                 Select.selectItemIndex = -1;
-                Select.itemData = null;
+                Select.item = null;
             }
-            else if (ItemDataManager.Instance.getById(Select.itemData.id).type == ItemType.Consumable)
+            else if (ItemDataManager.Instance.getById(Select.item.id).type == ItemType.Consumable)
             {
                 // 实例化道具调用上面的脚本再立即销毁
                 GameObject g = ResourcesManager.Instance.getPrefab("Select.selectItemData.itemName");
@@ -91,25 +91,25 @@ namespace LAB2D
                 g.GetComponent<ConsumableObject>().use();
                 Object.Destroy(g);
                 // 减少或删除
-                if (((BackpackItem)Select.itemData).quantity == 1)
+                if (((BackpackItem)Select.item).quantity == 1)
                 {
                     // 从背包删除该道具
                     BackpackController.Instance.deleteItem(Select.selectItemIndex);
                     Select.selectItemIndex = -1;
-                    Select.itemData = null;
+                    Select.item = null;
                 }
                 else {
-                    Debug.Log(((BackpackItem)Select.itemData));
+                    Debug.Log(((BackpackItem)Select.item));
                     // 数据--
-                    BackpackController.Instance.reduceQuantity(Select.itemData);
+                    BackpackController.Instance.reduceQuantity(Select.item);
                     // 界面--
-                    BackpackController.Instance.reduceQuantityUI(Select.itemData);
-                    BackpackController.Instance.setBorderColor(BackpackController.Instance.getIndex(Select.itemData));
-                    Debug.Log(((BackpackItem)Select.itemData));
+                    BackpackController.Instance.reduceQuantityUI(Select.item);
+                    BackpackController.Instance.setBorderColor(BackpackController.Instance.getIndex(Select.item));
+                    Debug.Log(((BackpackItem)Select.item));
                     // 全局数据--
-                    BackpackItem item = (BackpackItem)Select.itemData;
+                    BackpackItem item = (BackpackItem)Select.item;
                     --item.quantity;
-                    Select.itemData = item;
+                    Select.item = item;
                 }
             }
             else 
@@ -123,7 +123,7 @@ namespace LAB2D
         /// </summary>
         private void OnClick_Abandon()
         {
-            if (Select.itemData == null) return;
+            if (Select.item == null) return;
             // 从背包删除该道具
             BackpackController.Instance.deleteItem(Select.selectItemIndex);
             Select.init();
@@ -144,12 +144,12 @@ namespace LAB2D
         /// <summary>
         /// 选中的道具数据
         /// </summary>
-        public Item itemData = null;
+        public Item item = null;
 
         public void init()
         {
             selectItemIndex = -1;
-            itemData = null;
+            item = null;
         }
     }
 }

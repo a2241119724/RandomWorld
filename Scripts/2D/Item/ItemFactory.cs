@@ -8,25 +8,41 @@ namespace LAB2D
     public class ItemFactory : Singleton<ItemFactory>
     {
         /// <summary>
+        /// 缓存
+        /// </summary>
+        private Dictionary<string, Item> singletonItems;
+
+        public ItemFactory(){
+            singletonItems = new Dictionary<string, Item>();
+            readItems();
+        }
+        
+        public Item getItemByName(string name) {
+            return singletonItems[name];
+        }
+
+        public List<Item> getItems() {
+            List<Item> items = new List<Item>();
+            foreach (KeyValuePair<string, Item> item in singletonItems) {
+                items.Add(item.Value);
+            }
+            return items;
+        }
+
+        /// <summary>
         /// 通过反射实例化
         /// 仅需要类名与imageName一样
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public Item getByName(string name) {
-            int id = ItemDataManager.Instance.getByName(name).id;
-            List<Type> types = Tool.getChildByParen<Item>();
-            foreach(Type type in types)
+        private void readItems()
+        {
+            List<Type> types = Tool.getChildByParent<Item>();
+            foreach (Type type in types)
             {
-                if (type.Name == name)
-                {
-                    Item item = (Item)Activator.CreateInstance(type);
-                    item.id = id;
-                    return item;
-                }
+                int id = ItemDataManager.Instance.getByName(type.Name).id;
+                Item item = (Item)Activator.CreateInstance(type);
+                item.id = id;
+                singletonItems.Add(type.Name,item);
             }
-            Debug.LogError("不存在名为" + name + "的Item");
-            return null;
         }
     }
 }

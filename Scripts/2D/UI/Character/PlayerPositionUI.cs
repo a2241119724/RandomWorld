@@ -1,28 +1,34 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PlayerPositionUI : MonoBehaviour
+namespace LAB2D
 {
-    public static PlayerPositionUI Instance;
-
-    private Text positon;
-
-    private void Awake()
+    public class PlayerPositionUI : MonoBehaviour
     {
-        Instance = this;
-        positon = GetComponent<Text>();
-        if (positon == null)
-        {
-            Debug.LogError("text Not Found!!!");
-            return;
-        }
-    }
+        public static PlayerPositionUI Instance;
 
-    public void setPosition(Vector3 v) {
-        if (v == null) {
-            Debug.LogError("v is null!!!");
-            return;
+        private Text positon;
+
+        private void Awake()
+        {
+            Instance = this;
+            positon = GetComponent<Text>();
+            if (positon == null)
+            {
+                Debug.LogError("text Not Found!!!");
+                return;
+            }
         }
-        positon.text ="("+ (int)Mathf.Round(v.x) + "," + (int)Mathf.Round(v.y) + ")";
+
+        public void setPosition(Vector3 worldPos)
+        {
+            if (worldPos == null)
+            {
+                Debug.LogError("v is null!!!");
+                return;
+            }
+            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(worldPos);
+            positon.text = "(" + posMap.x + "," + posMap.y + ")";
+        }
     }
 }

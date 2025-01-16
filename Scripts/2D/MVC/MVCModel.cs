@@ -6,7 +6,7 @@ using UnityEngine;
 namespace LAB2D
 {
     // 优化,只需要存id与数量
-    public abstract class MVCModel
+    public abstract class MVCModel : ASaveData
     {
         /// <summary>
         /// 道具列表
@@ -36,7 +36,6 @@ namespace LAB2D
             }
             //itemList[index] = null;
             itemDict[type].RemoveAt(index);
-            saveData();
         }
 
         /// <summary>
@@ -50,7 +49,16 @@ namespace LAB2D
                 Debug.LogError("没有该物品类型!!!");
                 return;
             }
-            ArrayList itemList = itemDict[ItemDataManager.Instance.getTypeById(item.id)];
+            ArrayList itemList = null;
+            ItemType itemType = ItemDataManager.Instance.getTypeById(item.id);
+            if (itemDict.ContainsKey(itemType))
+            {
+                itemList = itemDict[itemType];
+            }
+            else
+            {
+                itemList = new ArrayList();
+            }
             // 可以堆叠
             if (ItemDataManager.Instance.getById(item.id).isStackable)
             {
@@ -60,7 +68,6 @@ namespace LAB2D
                     if (((Item)itemList[i]).id == item.id)
                     {
                         ((Item)itemList[i]).quantity++;
-                        saveData();
                         return;
                     }
                 }
@@ -68,7 +75,6 @@ namespace LAB2D
             // 不包括道具,添加
             item.quantity = 1;
             itemList.Add(item);
-            saveData();
         }
 
         /// <summary>
@@ -87,7 +93,6 @@ namespace LAB2D
             Item temp = (Item)itemList[index1];
             itemList[index1] = itemList[index2];
             itemList[index2] = temp;
-            saveData();
         }
 
         /// <summary>
@@ -102,7 +107,6 @@ namespace LAB2D
                 return;
             }
             ((Item)itemDict[type][getIndex(type, (Weapon)item)]).quantity--;
-            saveData();
         }
         #endregion
 
@@ -170,7 +174,7 @@ namespace LAB2D
         }
         #endregion
 
-        public abstract void loadData();
-        public abstract void saveData();
+        public override void loadData() { }
+        public override void saveData() { }
     }
 }

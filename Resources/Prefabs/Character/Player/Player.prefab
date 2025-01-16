@@ -706,6 +706,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66f9072413fa912459fa38465c5a6ec8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CharacterDataLAB:
+    Hp: 1
+    MaxHp: 1
+    ATN: 0
+    INT: 0
+    CRI: 0
+    ATK: 0
+    DEF: 0
+    SPD: 0
+    HIT: 0
+    RES: 0
+    pos:
+      x: 0
+      y: 0
+      z: 0
   moveSpeed: 10
 --- !u!50 &7320344032351924291
 Rigidbody2D:

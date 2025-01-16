@@ -10,6 +10,8 @@ using System.Text;
 using System.Xml.Serialization;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace LAB2D
 {
@@ -258,7 +260,7 @@ namespace LAB2D
 
         public static void master(Action action)
         {
-            if (PhotonNetwork.IsMasterClient)
+            if (PhotonNetwork.IsMasterClient && GlobalData.isNew)
             {
                 action();
             }
@@ -353,7 +355,7 @@ namespace LAB2D
         /// <summary>
         /// 通过反射实现，从父类得到相应非抽象的子类信息
         /// </summary>
-        public static List<Type> getChildByParen<T>() {
+        public static List<Type> getChildByParent<T>() {
             Type baseType = typeof(T);
             Assembly assembly = Assembly.GetExecutingAssembly();
 
@@ -361,6 +363,23 @@ namespace LAB2D
                 .Where(t => t.IsSubclassOf(baseType) && !t.IsAbstract)
                 .ToList();
             return derivedTypes;
+        }
+
+        public static Vector3Int add(Vector3Int vector, int x,int y) {
+            return new Vector3Int(vector.x + x, vector.y + y, vector.z);
+        }
+
+        public static Vector3Int t(Vector3Int vector)
+        {
+            return new Vector3Int(vector.y, vector.x, vector.z);
+        }
+
+        public static List<RaycastResult> getUIByMousePos() {
+            PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
+            pointerEventData.position = Input.mousePosition;
+            List<RaycastResult> results = new List<RaycastResult>();
+            GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<GraphicRaycaster>().Raycast(pointerEventData, results);
+            return results;
         }
     }
 }
