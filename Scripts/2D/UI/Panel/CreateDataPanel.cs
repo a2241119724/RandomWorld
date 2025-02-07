@@ -57,7 +57,8 @@ namespace LAB2D
         /// 创建地图,敌人,玩家,道具等物体
         /// </summary>
         private void Onclick_StartCreate() {
-            if (PhotonNetwork.NetworkClientState != ClientState.Joined)
+            if (PhotonNetwork.NetworkClientState != ClientState.Joined 
+                && NetworkConnect.Instance.IsOnline)
             {
                 GlobalInit.Instance.showTip("请稍后再试");
                 return;
@@ -72,12 +73,12 @@ namespace LAB2D
             total += width * height;
             controller.close();
             AsyncProgressUI.Instance.addTotal(total);
-            TileMap.Instance.MapTiles = new Tiles[height, width];
+            TileMap.Instance.MapTiles = new TileType[height, width];
             TileMap.Instance.StartCoroutine(TileMap.Instance.create());
             //Worker
-            Worker.initMap(height,width);
+            //Worker.initMap(height,width);
             // ResourceMap
-            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.genTree());
+            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.genResource());
             // EnemyManager
             EnemyManager.Instance.MaxEnemyCount = maxEnemyCount;
             AsyncProgressUI.Instance.complete += () => {

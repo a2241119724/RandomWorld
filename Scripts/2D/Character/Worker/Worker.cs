@@ -23,14 +23,18 @@ namespace LAB2D
         /// Build,Carry,CutTree
         /// </summary>
         public bool[] TaskToggle { get; set; }
+        public float CurTired { get; set; } = 100.0f;
+        public const float MaxTired = 100.0f;
+        public const float ThresholdTired = 10.0f;
         public float CurHungry { get; set; } = 100.0f;
-        public static readonly float MaxHungry = 100.0f;
-        public static readonly float ThresholdHungry = 10.0f;
+        public const float MaxHungry = 100.0f;
+        public const float ThresholdHungry = 10.0f;
         public int MaxResourceCount { get; set; } = 30;
+        public LineRenderer LineRenderer { get; set; }
+        public WearData WearData;
+        public BedItem BedItem;
 
-        //private static int[,] isBlockTiles; // 是否不能通行
         private static Spend[,] mapSpend; // 地图中板块的花费
-        // 1为不能通行
         private List<Spend> openList;
         private List<Spend> closeList;
         private List<Spend> path; // 寻路路径
@@ -47,12 +51,12 @@ namespace LAB2D
             new Vector2SByte(-1,1), // 左上
         }; // A*使用哪种邻居
         private Slider progress;
-        private LineRenderer lineRenderer;
         private Text nameUI;
         /// <summary>
         /// 携带的建筑资源
         /// </summary>
         public NeedResource resourceInfos;
+        private CharacterStatusUI statusBar; // 记录实例化血条
 
         protected override void Awake()
         {
@@ -68,18 +72,25 @@ namespace LAB2D
             progress = transform.Find("Progress").GetComponent<Slider>();
             progress.gameObject.SetActive(false);
             // 路径
-            lineRenderer = transform.GetComponent<LineRenderer>();
-            lineRenderer.startWidth = 0.05f;
-            lineRenderer.endWidth = 0.05f;
+            LineRenderer = transform.GetComponent<LineRenderer>();
+            LineRenderer.startWidth = 0.05f;
+            LineRenderer.endWidth = 0.05f;
             Material material = new Material(Shader.Find("Unlit/Color")); 
             material.color = new Color(UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f));
-            lineRenderer.material = material;
-            lineRenderer.sortingLayerName = "Highest";
+            LineRenderer.material = material;
+            LineRenderer.sortingLayerName = "Highest";
             //
             TaskToggle = new bool[10];
             // 默认可以吃饭
             TaskToggle[((int)TaskType.Hungry)] = true;
             resourceInfos = new NeedResource();
+            statusBar = transform.Find("Hp").GetComponent<CharacterStatusUI>();
+            if (statusBar == null)
+            {
+                Debug.LogError("statusBar Not Found!!!");
+                return;
+            }
+            WearData = new WearData();
         }
 
         /// <summary>
@@ -89,6 +100,7 @@ namespace LAB2D
         {
             base.Start();
             nameUI.text = name;
+            statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
         }
 
         void Update()
@@ -101,7 +113,7 @@ namespace LAB2D
         /// <summary>
         /// 设置地图信息
         /// </summary>
-        public static void initMap(int height, int width)
+        public void initMap(int height, int width)
         {
             // 初始化寻路花费
             mapSpend = new Spend[height, width];
@@ -116,6 +128,10 @@ namespace LAB2D
 
         public void initSeek(Vector3Int targetMap)
         {
+            if(mapSpend == null)
+            {
+                initMap(TileMap.Instance.Height, TileMap.Instance.Width);
+            }
             // 停止正在进行的寻路
             if (coroutine != null)
             {
@@ -233,6 +249,9 @@ namespace LAB2D
         /// </summary>
         private IEnumerator toTargetAStar(Spend start, Spend end)
         {
+            // 超过一定时间释放锁
+            float time = 0.0f;
+            // 记录一开始的path长度
             int curIterCount = path.Count;
             float totalDistance = Mathf.Sqrt(Mathf.Pow(start.posMap.x - end.posMap.x, 2) + Mathf.Pow(start.posMap.y - end.posMap.y, 2));
             openList.Add(start);
@@ -260,7 +279,7 @@ namespace LAB2D
                     // 找路径
                     int _count = 0;
                     Vector3Int lastDet = new Vector3Int(0,0);
-                    while (curSpend.previous != null)
+                    while (curSpend != null && curSpend.previous != null)
                     {
                         // 优化(一条直线只存终止节点)
                         if (curSpend.previous.posMap.x - curSpend.posMap.x != lastDet.x || curSpend.previous.posMap.y - curSpend.posMap.y != lastDet.y)
@@ -277,6 +296,7 @@ namespace LAB2D
                         if (++_count > 1000)
                         {
                             Debug.Log("路径长度超过1000!!!");
+                            yield return null;
                         }
                         curSpend = curSpend.previous;
                     }
@@ -298,6 +318,9 @@ namespace LAB2D
                     float temp;
                     if (isCorner > 4)
                     {
+                        // 当上下左右阻塞时，斜着不可走
+                        if (!isCanReach(new Vector3Int(_x, curSpend.posMap.y, 0))
+                            && !isCanReach(new Vector3Int(curSpend.posMap.x, _y, 0))) continue;
                         temp = curSpend.g + 1.414f; // 斜着相邻
                     }
                     else
@@ -323,7 +346,21 @@ namespace LAB2D
                 if(count++ > 10)
                 {
                     count = 0;
+                    time += Time.deltaTime;
+                    if(time > 2.0f)
+                    {
+                        // 如果寻路超过一定时间释放锁
+                        GlobalData.Lock.SeekLock.seekLock = false;
+                        //Debug.Log(name + "释放锁========");
+                        time = 0.0f;
+                    }
                     yield return null;
+                    // 被其他人持有锁，等待
+                    while(GlobalData.Lock.SeekLock.seekLock && GlobalData.Lock.SeekLock.owner != this)
+                    {
+                        //Debug.Log(name + "等待锁");
+                        yield return null;
+                    }
                 }
             }
             if (path.Count == curIterCount)
@@ -340,11 +377,11 @@ namespace LAB2D
         /// 更新路径UI
         /// </summary>
         private void updateLine() {
-            lineRenderer.positionCount = path.Count + 1;
-            lineRenderer.SetPosition(0, transform.position);
+            LineRenderer.positionCount = path.Count + 1;
+            LineRenderer.SetPosition(0, transform.position);
             for (int i = 0; i < path.Count; i++)
             {
-                lineRenderer.SetPosition(i + 1, TileMap.Instance.mapPosToWorldPos(path[i].posMap));
+                LineRenderer.SetPosition(i + 1, TileMap.Instance.mapPosToWorldPos(path[i].posMap));
             }
         }
 
@@ -358,8 +395,8 @@ namespace LAB2D
             Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(path[0].posMap);
             // 到达路径中一个目标点，切换下一个目标点
             if (path.Count != 0 &&
-                Mathf.Abs(worldPos.x - transform.position.x) < 0.01f &&
-                Mathf.Abs(worldPos.y - transform.position.y) < 0.01f) {
+                Mathf.Abs(worldPos.x - transform.position.x) < 0.3f &&
+                Mathf.Abs(worldPos.y - transform.position.y) < 0.3f) {
                 path.RemoveAt(0); // --path.Count 
             }
             // remove过后防止后面越界
@@ -523,6 +560,22 @@ namespace LAB2D
             return remaining;
         }
 
+        /// <summary>
+        /// 掉血
+        /// </summary>
+        /// <param name="Hp">所掉的血量</param>
+        public override void reduceHp(float Hp)
+        {
+            if (Hp <= 0)
+            {
+                Debug.LogError("Hp can't less than zero!!!");
+                return;
+            }
+            base.reduceHp(Hp);
+            statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
+            Manager.changeState(WorkerStateType.Attack);
+        }
+
         class CheckBug
         {
             public long lastTime;
@@ -580,6 +633,23 @@ namespace LAB2D
         {
             this.x = x;
             this.y = y;
+        }
+    }
+
+    public class WearData
+    {
+        /// <summary>
+        /// 携带的武器
+        /// </summary>
+        public Weapon weapon;
+        /// <summary>
+        /// 身上携带的装备
+        /// </summary>
+        public Dictionary<Equipment.EquipType, Equipment> equipments;
+
+        public WearData()
+        {
+            equipments = new Dictionary<Equipment.EquipType, Equipment>();
         }
     }
 }

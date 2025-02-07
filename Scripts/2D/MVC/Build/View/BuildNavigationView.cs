@@ -15,6 +15,7 @@ namespace LAB2D
         {
             addClickOnButton(ItemType.Room);
             addClickOnButton(ItemType.Wall);
+            addClickOnButton(ItemType.Furniture);
             addClickOnButton(ItemType.BuildOther);
         }
 

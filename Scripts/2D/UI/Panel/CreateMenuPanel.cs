@@ -27,8 +27,9 @@ namespace LAB2D
 
         private void OnClick_StartCreate()
         {
-            if (PhotonNetwork.NetworkClientState != ClientState.ConnectedToMasterServer &&
-                PhotonNetwork.NetworkClientState != ClientState.JoinedLobby)
+            if (PhotonNetwork.NetworkClientState != ClientState.ConnectedToMasterServer 
+                && PhotonNetwork.NetworkClientState != ClientState.JoinedLobby 
+                && NetworkConnect.Instance.IsOnline)
             {
                 GlobalInit.Instance.showTip("请稍后再试");
                 return;
@@ -43,20 +44,23 @@ namespace LAB2D
                 GlobalInit.Instance.showTip("房间名长度不能超过8位");
                 return;
             }
-            // 创建房间,(房间名字,房子选项{最大连接人数(最大4)},大厅基本属性)
-            RoomOptions roomOptions = new RoomOptions();
-            roomOptions.IsOpen = true;
-            roomOptions.IsVisible = true;
-            roomOptions.MaxPlayers = 4;
-            // 游戏模式为1
-            roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable { { "C0", 1 } };
-            roomOptions.CustomRoomPropertiesForLobby = new string[] { "C0" };
-            //bool success = PhotonNetwork.CreateRoom(roomName, roomOptions, typedLobby);
-            bool success = PhotonNetwork.CreateRoom(roomName, roomOptions);
-            if (!success)
+            if (NetworkConnect.Instance.IsOnline)
             {
-                GlobalInit.Instance.showTip("房间创建失败");
-                return;
+                // 创建房间,(房间名字,房子选项{最大连接人数(最大4)},大厅基本属性)
+                RoomOptions roomOptions = new RoomOptions();
+                roomOptions.IsOpen = true;
+                roomOptions.IsVisible = true;
+                roomOptions.MaxPlayers = 4;
+                // 游戏模式为1
+                roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable { { "C0", 1 } };
+                roomOptions.CustomRoomPropertiesForLobby = new string[] { "C0" };
+                //bool success = PhotonNetwork.CreateRoom(roomName, roomOptions, typedLobby);
+                bool success = PhotonNetwork.CreateRoom(roomName, roomOptions);
+                if (!success)
+                {
+                    GlobalInit.Instance.showTip("房间创建失败");
+                    return;
+                }
             }
             controller.close();
             controller.show(NewOrContinuePanel.Instance);

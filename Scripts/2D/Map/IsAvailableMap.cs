@@ -29,12 +29,21 @@ namespace LAB2D
         /// 展示周围grid的是否可建造
         /// </summary>
         /// <param name="index">grid在controller下的sibling index</param>
-        public bool showRect(Vector3Int posMap,int width=10,int height=7) {
+        public bool showRect(Vector3Int posMap,int width=10,int height=7,bool isBottomLeft=false) {
             bool isBuilding = true;
             clearShow();
-            for (int i = -height/2;i< height - height / 2; i++)
+            int hStart = 0, hEnd = height;
+            int wStart = 0, wEnd = width;
+            if (!isBottomLeft)
             {
-                for (int j = -width / 2; j < width - width / 2; j++)
+                hStart = -height / 2;
+                hEnd = height - height / 2;
+                wStart = -width / 2;
+                wEnd = width - width / 2;
+            }
+            for (int i = hStart; i< hEnd; i++)
+            {
+                for (int j = wStart; j < wEnd; j++)
                 {
                     Vector3Int _posMap = new Vector3Int(posMap.x + i, posMap.y + j, 0);
                     selectPos_s.Add(_posMap);

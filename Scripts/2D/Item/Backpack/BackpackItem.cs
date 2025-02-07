@@ -10,6 +10,10 @@ namespace LAB2D
     {
         public BackpackItemQuality quality; // 品质
 
+        protected BackpackItem()
+        {
+            quality = BackpackItemQuality.Gray;
+        }
 
         [Serializable]
         public enum BackpackItemQuality
@@ -23,6 +27,12 @@ namespace LAB2D
             Yellow, //黄色
             Red,    //红色
             Black   //黑色
+        }
+
+        public override string ToString()
+        {
+            return base.ToString() +
+                $"品质: {quality.ToString()}\n";
         }
     }
 
@@ -48,14 +58,14 @@ namespace LAB2D
         /// 该道具碰到玩家,加到背包里面
         /// </summary>
         /// <param name="collision"></param>
-        //protected virtual void OnTriggerEnter2D(Collider2D collision)
-        //{
-        //    if (collision.gameObject.CompareTag("Player"))
-        //    {
-        //        BackpackController.Instance.addItem(ItemDataFactory.Instance.get(name));
-        //        Destroy(gameObject);
-        //        //gameObject.SetActive(false); // 减小开销
-        //    }
-        //}
+        protected virtual void OnTriggerEnter2D(Collider2D collision)
+        {
+            if (collision.gameObject.CompareTag("Player"))
+            {
+                BackpackController.Instance.addItem(ItemFactory.Instance.getBackpackItemByName(name.Split("Object")[0]));
+                Destroy(gameObject);
+                //gameObject.SetActive(false); // 减小开销
+            }
+        }
     }
 }

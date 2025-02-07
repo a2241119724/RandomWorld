@@ -6,15 +6,14 @@ namespace LAB2D {
     {
         protected override void Awake() {
             base.Awake();
-            layerMask = LayerMask.GetMask("Tile", "Player");
-            name = "EnemyBullet";
+            layerMask = LayerMask.GetMask("Tile", "Player", "Worker");
         }
 
         public override void hitObject()
         {
             if (rayCastHit2D.transform.CompareTag("Player")) // 击中玩家处理
             {
-                rayCastHit2D.transform.GetComponent<Player>().reduceHp(Damage);
+                rayCastHit2D.transform.GetComponent<Character>().reduceHp(Damage);
             }
         }
     }

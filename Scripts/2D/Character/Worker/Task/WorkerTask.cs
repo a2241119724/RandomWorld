@@ -27,30 +27,42 @@ namespace LAB2D
             new Vector3Int(-1,1,0), // 左上
             new Vector3Int(0,0,0), // 自身
         };
-        protected int curProgress = 0;
-        protected int maxProgress = 1000;
+        /// <summary>
+        /// 当前经过时间
+        /// </summary>
+        protected float curProgress = 0.0f;
+        /// <summary>
+        /// 任务需要总的时间
+        /// </summary>
+        protected float maxProgress = 2.0f;
         protected List<UnityAction<Worker>> stageInit;
 
-        public WorkerTask() {
+        public WorkerTask(TaskType taskType) {
+            TaskType = taskType;
+            Name = taskType.ToString();
             AvailableNeighborPos = new List<Vector3Int>();
             stageInit = new List<UnityAction<Worker>>();
         }
 
+
+        /// <summary>
+        /// 不需要重写
+        /// </summary>
+        /// <param name="worker"></param>
+        /// <returns></returns>
         public bool execute(Worker worker)
         {
-            if (curProgress == 0)
-            {
-                workerStart(worker);
-            }
             _execute();
-            if (curProgress++ > maxProgress)
+            // 工作扣减疲劳值
+            worker.CurTired -= Time.deltaTime * 0.1f;
+            curProgress += Time.deltaTime;
+            if (curProgress > maxProgress)
             {
                 curProgress = 0;
                 worker.setProgress(.0f, false);
                 if (isFinish(worker))
                 {
                     finish(worker);
-                    complete();
                     return true;
                 }
                 return false;
@@ -77,14 +89,11 @@ namespace LAB2D
         /// <param name="worker"></param>
         public virtual void start(Worker worker) { }
 
-        protected virtual void workerStart(Worker worker) { }
-
-        protected virtual void finish(Worker worker) { }
-
-        public virtual void complete() { 
-            WorkerTaskManager.Instance.completeTask(this);
-        }
-
+        /// <summary>
+        /// Worker是否可以接该任务
+        /// </summary>
+        /// <param name="worker"></param>
+        /// <returns></returns>
         public virtual bool isCanWork(Worker worker) {
             return worker.TaskToggle[((int)TaskType)];
         }
@@ -92,13 +101,18 @@ namespace LAB2D
         public virtual void giveUpTask(Worker worker) {
             worker.giveUpTask();
         }
+
+        public virtual void finish(Worker worker)
+        {
+            WorkerTaskManager.Instance.completeTask(this);
+        }
     }
 
     public interface IWorkerTask
     {
         bool execute(Worker worker);
 
-        void complete();
+        void finish(Worker worker);
 
         /// <summary>
         /// 是否满足前提条件（Build需要材料，Carry需要Inventory）
@@ -108,12 +122,15 @@ namespace LAB2D
     }
 
     /// <summary>
-    /// 优先级，越靠前优先级越高
+    /// 任务优先级，越靠前优先级越高
     /// </summary>
     public enum TaskType { 
         Build,
         Carry,
-        CutTree,
-        Hungry
+        Gather,
+        Hungry,
+        Exercise,
+        Wear,
+        Sleep
     }
 }

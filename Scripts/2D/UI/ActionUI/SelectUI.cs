@@ -4,16 +4,14 @@ using UnityEngine;
 
 namespace LAB2D
 {
-    public class SelectUI : MonoBehaviour
+    public class SelectUI : MonoBehaviourInit
     {
-        public static SelectUI Instance { private set; get; }
         public Character Character { get; set; }
-        // Map
-        public Vector3 Target { get; set; }
+        public Vector3Int Target { get; private set; }
 
         private void Awake()
         {
-            Instance = this;
+            init();
         }
 
         private void Update()
@@ -22,10 +20,20 @@ namespace LAB2D
             {
                 transform.position = Character.transform.position;
             }
-            else
-            {
-                transform.position = new Vector3(Mathf.RoundToInt(Target.x + 0.5f) - 0.5f, Mathf.RoundToInt(Target.y + 0.5f) - 0.5f);
-            }
+        }
+
+        public void setTarget(Vector3Int posMap) {
+            Target = posMap;
+            Vector3 pos = TileMap.Instance.mapPosToWorldPos(posMap);
+            transform.position = new Vector3(Mathf.RoundToInt(pos.x + 0.5f) - 0.5f, Mathf.RoundToInt(pos.y + 0.5f) - 0.5f);
+        }
+
+        public override void init()
+        {
+            base.init();
+            transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            Target = ResourceConstant.VECTOR3INT_DEFAULT;
+            Character = null;
         }
     }
 }

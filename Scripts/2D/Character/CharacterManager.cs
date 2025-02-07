@@ -51,7 +51,7 @@ namespace LAB2D {
         {
             GameObject g = creator.create(worldPos);
             if (g == null) return null;
-            Characters.Add(g.GetComponent<C>());
+            add(g.GetComponent<C>());
             return g;
         }
 

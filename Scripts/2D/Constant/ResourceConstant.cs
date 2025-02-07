@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public class ResourceConstant
 {
     public const string PREFAB_ROOT = "Prefabs/";
@@ -11,4 +13,8 @@ public class ResourceConstant
     public const string RESOURCE_MAP_TAG = "ResourceMap";
     public const string GLOBAL_LIGHT_TAG = "GlobalLight";
     public const string MINIMAP_TAG = "MiniMap";
+    public const string ACTION_UI_TAG = "ActionUI";
+    //
+    public static readonly Vector3 VECTOR3_DEFAULT = new Vector3(-999.0f,0.0f,0.0f);
+    public static readonly Vector3Int VECTOR3INT_DEFAULT = new Vector3Int(-999,0,0);
 }

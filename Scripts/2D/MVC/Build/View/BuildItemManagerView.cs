@@ -12,7 +12,7 @@ namespace LAB2D
         {
             base.Awake();
             Instance = this;
-            itemBox = ResourcesManager.Instance.getPrefab("BuildItemBox");
+            itemBox = ResourcesManager.Instance.getPrefab("BuildItem");
         }
 
         protected override int getQuantity(Item item)

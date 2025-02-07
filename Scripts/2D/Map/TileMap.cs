@@ -12,7 +12,7 @@ namespace LAB2D
         public static TileMap Instance { private set; get; }
         public int Height { set; get; } // 地图纵向长度
         public int Width { set; get; }  // 地图横向长度
-        public Tiles[,] MapTiles { set; get; } // 地图瓦片
+        public TileType[,] MapTiles { set; get; } // 地图瓦片
         public int RandomCount { get; set; } // 随机点的数量
         
         private Tilemap tilemap { get; set; }
@@ -28,7 +28,7 @@ namespace LAB2D
             tilemap = GetComponent<Tilemap>();
         }
 
-        public IEnumerator showTilemap(Tiles[,] mapTiles)
+        public IEnumerator showTilemap(TileType[,] mapTiles)
         {
             AsyncProgressUI.Instance.setTip("正在展示地图...");
             int count = 0;
@@ -78,7 +78,7 @@ namespace LAB2D
             //}
             //return true;
             return tilemap.GetColliderType(posMap) == Tile.ColliderType.None;
-            //return tilemap.GetTile(posMap) != ResourcesManager.Instance.getAsset("Mountain");
+            //return tilemap.GetTile(posMap) != ResourcesManager.Instance.getAsset(TileType.Mountain.ToString());
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace LAB2D
         /// <param name="tiles">中心默认板块</param>
         /// <param name="i">中心横坐标</param>
         /// <param name="j">中心纵坐标</param>
-        protected void NeighborAndReplaceTiles(Tiles[,] tiles, int i, int j)
+        protected void NeighborAndReplaceTiles(TileType[,] tiles, int i, int j)
         {
             for (int t = 1; t < Width; t++) // 寻找离自己最近的非默认板块
             {
@@ -120,7 +120,7 @@ namespace LAB2D
                 {
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (MapTiles[k, l] != Tiles.Default)
+                        if (MapTiles[k, l] != TileType.Default)
                         {
                             tiles[i, j] = MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
@@ -133,7 +133,7 @@ namespace LAB2D
                     int l = j - t;
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (MapTiles[k, l] != Tiles.Default)
+                        if (MapTiles[k, l] != TileType.Default)
                         {
                             tiles[i, j] = MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
@@ -142,7 +142,7 @@ namespace LAB2D
                     l = j + t;
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (MapTiles[k, l] != Tiles.Default)
+                        if (MapTiles[k, l] != TileType.Default)
                         {
                             tiles[i, j] = MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
@@ -154,7 +154,7 @@ namespace LAB2D
                 {
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (MapTiles[k, l] != Tiles.Default)
+                        if (MapTiles[k, l] != TileType.Default)
                         {
                             tiles[i, j] = MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
@@ -173,14 +173,14 @@ namespace LAB2D
             AsyncProgressUI.Instance.setTip("正在生成随机坐标...");
             for (int i = 0; i < RandomCount; i++) // 生成随机坐标
             {
-                MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (Tiles)(UnityEngine.Random.Range(2, 12) / 2);
+                MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (TileType)(UnityEngine.Random.Range(2, 12) / 2);
                 AsyncProgressUI.Instance.addOneProcess();
                 if (i % 1000 == 0)
                 {
                     yield return null;
                 }
             }
-            Tiles[,] tiles = new Tiles[Height, Width];
+            TileType[,] tiles = new TileType[Height, Width];
             if (tiles == null)
             {
                 Debug.LogError("tiles assign resource Error!!!");
@@ -196,7 +196,7 @@ namespace LAB2D
                         yield return null;
                     }
                     AsyncProgressUI.Instance.addOneProcess();
-                    if (MapTiles[i, j] != Tiles.Default)
+                    if (MapTiles[i, j] != TileType.Default)
                     {
                         tiles[i, j] = MapTiles[i, j];
                         continue;
@@ -220,25 +220,25 @@ namespace LAB2D
             for (int i = -1; i < Width; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
+                tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.getAsset(TileType.Mountain.ToString()));
             }
             // 右边
             for (int i = 0; i <= Height; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
+                tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.getAsset(TileType.Mountain.ToString()));
             }
             // 下边
             for (int i = 0; i <= Width; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
+                tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.getAsset(TileType.Mountain.ToString()));
             }
             // 左边
             for (int i = -1; i < Height; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.getAsset("Mountain"));
+                tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.getAsset(TileType.Mountain.ToString()));
             }
         }
 
@@ -287,7 +287,7 @@ namespace LAB2D
             createArroundTile();
             StartCoroutine(showTilemap(MapTiles));
             StartCoroutine(EnemyCreator.Instance.genEnemy());
-            Worker.initMap(Height, Width);
+            //Worker.initMap(Height, Width);
         }
 
         public override void saveData()
@@ -393,10 +393,10 @@ namespace LAB2D
         public class TileMapData {
             public int Height { set; get; } // 地图纵向长度
             public int Width { set; get; }  // 地图横向长度
-            public Tiles[,] MapTiles { set; get; } // 地图瓦片
+            public TileType[,] MapTiles { set; get; } // 地图瓦片
             public int RandomCount { get; set; } // 随机点的数量
 
-            public TileMapData(int height, int width, Tiles[,] mapTiles, int randomCount)
+            public TileMapData(int height, int width, TileType[,] mapTiles, int randomCount)
             {
                 Height = height;
                 Width = width;
@@ -406,7 +406,7 @@ namespace LAB2D
         }
     }
     [Serializable]
-    public enum Tiles
+    public enum TileType
     {
         Default, // 默认,不进行渲染
         Desert, // 沙漠
@@ -414,5 +414,6 @@ namespace LAB2D
         Grass, // 草
         Snow, // 雪
         Mountain, // 山
+        Water, // 水
     }
 }

@@ -9,7 +9,7 @@ namespace LAB2D
         /// <summary>
         /// 销毁时间
         /// </summary>
-        private float destroyTime = 0.75f;
+        private const float destroyTime = 0.75f;
         /// <summary>
         /// 伤害数值
         /// </summary>

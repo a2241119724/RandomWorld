@@ -88,6 +88,7 @@ namespace LAB2D
         //
         Room,
         Wall,
+        Furniture,
         BuildOther,
         //
         Null // ”√”⁄≤÷ø‚

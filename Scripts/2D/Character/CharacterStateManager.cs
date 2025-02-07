@@ -89,10 +89,12 @@ namespace LAB2D
 
     public enum WorkerStateType
     {
-        Move, // ÂþÓÎ×´Ì¬	
+        Move,
         Work,
         Hungry,
         Dead,
-        Seek
+        Seek,
+        Attack,
+        Escape
     }
 }

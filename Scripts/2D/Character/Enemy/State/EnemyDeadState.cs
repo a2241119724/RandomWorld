@@ -1,4 +1,5 @@
 ﻿using Photon.Pun;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -6,11 +7,25 @@ namespace LAB2D
 {
     public class EnemyDeadState : CharacterState<Enemy>
     {
-        private float recordTime = 0.0f;
-        private float deadTime = 0.5f; // 死亡时间
+        private float _recordTime = 0.0f;
+        private const float deadTime = 0.5f; // 死亡时间
+        /// <summary>
+        /// 生成Item的总概率值
+        /// </summary>
+        private int dropTotal;
+        /// <summary>
+        /// key:获取对应item的概率值
+        /// </summary>
+        private Dictionary<int, TileBase> pToDropItem;
 
         public EnemyDeadState(Enemy character) : base(character)
         {
+            pToDropItem = new Dictionary<int, TileBase>();
+            addDropItem(10, null);
+            addDropItem(10, (TileBase)ResourcesManager.Instance.getAsset("AddHp"));
+            addDropItem(10, (TileBase)ResourcesManager.Instance.getAsset("CustomSword"));
+            addDropItem(10, (TileBase)ResourcesManager.Instance.getAsset("SingleGun"));
+            addDropItem(40, (TileBase)ResourcesManager.Instance.getAsset("TraceGun"));
         }
 
         public override void OnEnter()
@@ -33,8 +48,8 @@ namespace LAB2D
 
         public override void OnUpdate()
         {
-            recordTime += Time.deltaTime;
-            if (recordTime > deadTime) {
+            _recordTime += Time.deltaTime;
+            if (_recordTime > deadTime) {
                 dropItem();
                 //if (item != null)
                 //{
@@ -55,7 +70,6 @@ namespace LAB2D
                 PhotonNetwork.Destroy(Character.gameObject); // Destroy不会立即销毁,下一帧销毁
                 // 执行OnExit并关闭脚本
                 Character.Manager.changeState(EnemyStateType.Wander);
-                Character.target = null;
             }
         }
 
@@ -65,24 +79,30 @@ namespace LAB2D
         /// <returns>道具</returns>
         private void dropItem()
         {
-            int rand = Random.Range(0, 100);
+            int rand = Random.Range(0, dropTotal);
             // 转为数组下标
             Vector3Int posMap = TileMap.Instance.worldPosToMapPos(Character.transform.position);
-            if (rand < 10)
+            foreach(KeyValuePair<int,TileBase> dropItem in pToDropItem)
             {
+                if (rand <= dropItem.Key)
+                {
+                    if (dropItem.Value == null) break;
+                    ItemData itemData = ItemDataManager.Instance.getByName(dropItem.Value.name);
+                    ResourceInfo resourceInfo = new ResourceInfo(itemData.id, 1);
+                    ItemMap.Instance.putDown(posMap, dropItem.Value, resourceInfo, itemData.type);
+                    break;
+                }
             }
-            else if (rand < 50)
-            {
-                ItemMap.Instance.ItemTileMap.SetTile(posMap, (TileBase)ResourcesManager.Instance.getAsset("AddHp"));
-            }
-            else if (rand < 80)
-            {
-                ItemMap.Instance.ItemTileMap.SetTile(posMap, (TileBase)ResourcesManager.Instance.getAsset("CustomSword"));
-            }
-            else
-            {
-                ItemMap.Instance.ItemTileMap.SetTile(posMap, (TileBase)ResourcesManager.Instance.getAsset("SingleGun"));
-            }
+        }
+
+        /// <summary>
+        /// 添加可掉落物品到字典中
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="tileBase"></param>
+        private void addDropItem(int value, TileBase tileBase) {
+            dropTotal += value;
+            pToDropItem.Add(dropTotal, tileBase);
         }
     }
 }

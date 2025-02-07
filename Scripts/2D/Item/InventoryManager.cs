@@ -7,6 +7,11 @@ namespace LAB2D
     public class InventoryManager : Singleton<InventoryManager>
     {
         /// <summary>
+        /// 同一个类型对应的所有位置
+        /// </summary>
+        public Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> TypeToResource { get; set; }
+
+        /// <summary>
         /// 根据pos查资源
         /// </summary>
         private Dictionary<Vector3Int, ResourceInfo> posToResource;
@@ -14,10 +19,6 @@ namespace LAB2D
         /// 同一个id对应的所有位置
         /// </summary>
         private Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> idToResource;
-        /// <summary>
-        /// 同一个类型对应的所有位置
-        /// </summary>
-        private Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> typeToResource;
         /// <summary>
         /// 预申请资源
         /// </summary>
@@ -36,7 +37,7 @@ namespace LAB2D
             idToResource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
             preTakeResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
             prePlaceResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
-            typeToResource = new Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>>();
+            TypeToResource = new Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>>();
         }
 
         /// <summary>
@@ -63,7 +64,7 @@ namespace LAB2D
             }
             // 外层字典需要拷贝
             idToResource.Add(-1, idTo);
-            typeToResource.Add(ItemType.Null, typeTo);
+            TypeToResource.Add(ItemType.Null, typeTo);
         }
 
         /// <summary>
@@ -71,7 +72,7 @@ namespace LAB2D
         /// </summary>
         /// <param name="worker"></param>
         /// <returns></returns>
-        public Vector3Int getOneByPrePlace(Worker worker)
+        public Vector3Int getPosByPrePlace(Worker worker)
         {
             if (prePlaceResource.ContainsKey(worker))
             {
@@ -87,9 +88,9 @@ namespace LAB2D
         /// <param name="worker"></param>
         /// <param name="resourceInfo"></param>
         /// <returns></returns>
-        public bool isEnoughAndPrePlace(Worker worker, ResourceInfo resourceInfo, bool isPre=false)
+        public bool isEnoughAndPrePlace(Worker worker, ResourceInfo resourceInfo, bool isPre = false)
         {
-            Dictionary<Vector3Int, ResourceInfo> pre = new Dictionary<Vector3Int,ResourceInfo>();
+            Dictionary<Vector3Int, ResourceInfo> pre = new Dictionary<Vector3Int, ResourceInfo>();
             int remaining = resourceInfo.count;
             // 若仓库中存在该id,对应位置的资源数量与该位置预放置资源的数量之和是否超过容量
             if (idToResource.ContainsKey(resourceInfo.id))
@@ -105,8 +106,8 @@ namespace LAB2D
                         {
                             if (isPre)
                             {
-                                pre.Add(cell.Key,new ResourceInfo(resourceInfo.id, remaining));
-                                foreach(KeyValuePair<Vector3Int, ResourceInfo> pair in pre)
+                                pre.Add(cell.Key, new ResourceInfo(resourceInfo.id, remaining));
+                                foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in pre)
                                 {
                                     prePlace(worker, pair.Key, pair.Value);
                                 }
@@ -197,7 +198,7 @@ namespace LAB2D
             foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in prePlaceResource) {
                 foreach (KeyValuePair<Vector3Int, ResourceInfo> pre in prePlace.Value)
                 {
-                    if(pre.Value.id == id)
+                    if (pre.Value.id == id)
                     {
                         count += pre.Value.count;
                     }
@@ -255,18 +256,18 @@ namespace LAB2D
         /// TODO没有预取
         /// </summary>
         /// <returns></returns>
-        public bool isEnoughFoodAndPreTake(Worker worker, float hungry, bool isPre=false) {
+        public bool isEnoughFoodAndPreTake(Worker worker, float hungry, bool isPre = false) {
             Dictionary<Vector3Int, ResourceInfo> foods = new Dictionary<Vector3Int, ResourceInfo>();
-            foreach(KeyValuePair<Vector3Int,ResourceInfo> food in typeToResource[ItemType.Food])
+            foreach (KeyValuePair<Vector3Int, ResourceInfo> food in TypeToResource[ItemType.Food])
             {
                 float _hungry = food.Value.count * 10.0f;
                 // 足够吃饱
-                if(_hungry >= hungry)
+                if (_hungry >= hungry)
                 {
                     if (isPre)
                     {
-                        foods.Add(food.Key, new ResourceInfo(food.Value.id,(int)(hungry/10.0f)));
-                        foreach(KeyValuePair<Vector3Int, ResourceInfo> pair in foods) 
+                        foods.Add(food.Key, new ResourceInfo(food.Value.id, (int)(hungry / 10.0f)));
+                        foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in foods)
                         {
                             preTake(worker, pair.Key, pair.Value);
                         }
@@ -330,7 +331,7 @@ namespace LAB2D
             prePlaceResource[worker].Remove(posMap);
             // 添加到仓库真正的数据
             // 既然已经预放置了，那一定可以放置，不会超出容量
-            if(posToResource[posMap].id == -1)
+            if (posToResource[posMap].id == -1)
             {
                 transferResource(posMap, -1, resourceInfo.id, ItemType.Null, ItemDataManager.Instance.getTypeById(resourceInfo.id));
             }
@@ -345,7 +346,7 @@ namespace LAB2D
         /// <param name="worker"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Vector3Int getOneByPreTake(Worker worker) {
+        public Vector3Int getPosByPreTake(Worker worker) {
             if (preTakeResource.ContainsKey(worker))
             {
                 return preTakeResource[worker].First().Key;
@@ -357,7 +358,7 @@ namespace LAB2D
         private int getPreTakeCountByPos(Vector3Int pos)
         {
             int count = 0;
-            foreach(KeyValuePair<Worker,Dictionary<Vector3Int,ResourceInfo>> preTake in preTakeResource)
+            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> preTake in preTakeResource)
             {
                 if (preTake.Value.ContainsKey(pos))
                 {
@@ -405,7 +406,7 @@ namespace LAB2D
             if (posToResource[posMap].count == 0)
             {
                 transferResource(posMap, posToResource[posMap].id, -1, ItemDataManager.Instance.getTypeById(posToResource[posMap].id), ItemType.Null);
-                ResourceMap.Instance.pickUp(posMap);
+                ItemMap.Instance.pickUp(posMap);
                 // 食物被吃完删除任务
                 if (ItemDataManager.Instance.getTypeById(posToResource[posMap].id) == ItemType.Food)
                 {
@@ -439,16 +440,16 @@ namespace LAB2D
                 idToResource.Add(newId, dict);
             }
             // typeToResource
-            typeToResource[oldType].Remove(pos);
-            if (typeToResource.ContainsKey(newType))
+            TypeToResource[oldType].Remove(pos);
+            if (TypeToResource.ContainsKey(newType))
             {
-                typeToResource[newType].Add(pos, posToResource[pos]);
+                TypeToResource[newType].Add(pos, posToResource[pos]);
             }
             else
             {
                 Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
                 dict.Add(pos, posToResource[pos]);
-                typeToResource.Add(newType, dict);
+                TypeToResource.Add(newType, dict);
             }
         }
 
@@ -458,19 +459,19 @@ namespace LAB2D
         /// <param name="needResource"></param>
         /// <param name="maxValue">最大申请资源的数量</param>
         /// <returns></returns>
-        public bool isEnoughAndPreTake(Worker worker,NeedResource needResource, bool isPre=false)
+        public bool isEnoughAndPreTake(Worker worker, NeedResource needResource, bool isPre = false)
         {
-            foreach (KeyValuePair<int,ResourceInfo> need in needResource.needs)
+            foreach (KeyValuePair<int, ResourceInfo> need in needResource.needs)
             {
                 if (idToResource.ContainsKey(need.Key))
                 {
                     int count = 0;
-                    foreach(KeyValuePair<Vector3Int,ResourceInfo> resource in idToResource[need.Key])
+                    foreach (KeyValuePair<Vector3Int, ResourceInfo> resource in idToResource[need.Key])
                     {
                         count += resource.Value.count;
                     }
                     // id对应的总数量减去预取的资源数量，小于需求数量，不满足
-                    if(count - getPreTakeCountById(need.Key) < need.Value.count)
+                    if (count - getPreTakeCountById(need.Key) < need.Value.count)
                     {
                         return false;
                     }
@@ -508,6 +509,18 @@ namespace LAB2D
             return true;
         }
 
+        /// <summary>
+        /// 当在仓库中点击武器或者装备时，显示需要穿戴的Worker列表
+        /// </summary>
+        /// <param name="pos"></param>
+        public void showWearMenu(Vector3Int pos)
+        {
+            ItemType itemType = ItemDataManager.Instance.getTypeById(posToResource[pos].id);
+            if (itemType == ItemType.Weapon || itemType == ItemType.Equipment) { 
+                WearTaskUI.Instance.showWearTask(pos);
+            }
+        }
+
         public string ToString(Vector3Int pos)
         {
             if (!posToResource.ContainsKey(pos)) return "";
@@ -533,6 +546,15 @@ namespace LAB2D
                 }
             }
             return text;
+        }
+
+        public ResourceInfo getByPos(Vector3Int posMap)
+        {
+            if (posToResource.ContainsKey(posMap))
+            {
+                return posToResource[posMap];
+            }
+            return null;
         }
     }
 }

@@ -44,15 +44,16 @@ namespace LAB2D
                 Debug.LogError("animator Not Found!!!");
                 return;
             }
-            if (PlayerPositionUI.Instance != null)
+            if (InfoUI.Instance != null)
             {
-                PlayerPositionUI.Instance.setPosition(transform.position);
+                InfoUI.Instance.setPosition(transform.position);
             }
             //if (Map.Instance != null)
             //{
             //    Map.Instance.show(transform.position);
             //}
-            if (photonView.IsMine)
+            // 不在线，或者在线并且是自己
+            if (photonView.IsMine || !NetworkConnect.Instance.IsOnline)
             {
                 mainCamera = Camera.main.GetComponent<CameraMove>();
                 miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
@@ -63,7 +64,7 @@ namespace LAB2D
                 Tool.GetComponentInChildren<Text>(gameObject, "Name").text = PhotonNetwork.NickName;
                 PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
             }
-            else {
+            else if(!photonView.IsMine) {
                 Tool.GetComponentInChildren<Text>(gameObject, "Name").text = photonView.Owner.NickName;
                 PlayerManager.Instance.add(this);
                 //PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
@@ -74,6 +75,7 @@ namespace LAB2D
         {
             // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
             if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
+            // 防止撞墙震动
             move();
         }
 
@@ -87,11 +89,13 @@ namespace LAB2D
                 Input.GetKey(KeyCode.S) ||
                 Input.GetKey(KeyCode.D) ||
                 (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f)){
+                //mainCamera.Target = transform.position;
+                //miniCamera.Target = transform.position;
                 mainCamera.directToPosition(transform.position);
                 miniCamera.directToPosition(transform.position);
-                if (PlayerPositionUI.Instance != null)
+                if (InfoUI.Instance != null)
                 {
-                    PlayerPositionUI.Instance.setPosition(transform.position);
+                    InfoUI.Instance.setPosition(transform.position);
                 }
                 //if (Map.Instance != null)
                 //{
@@ -175,7 +179,7 @@ namespace LAB2D
         {
             PlayerManager.Instance.remove(this);
             // 关闭游戏添加正在装备的武器
-            if (PlayerManager.Instance.Select.currentId != -1) { 
+            if (PlayerManager.Instance.Select.id != -1) { 
                 BackpackController.Instance.addItem(PlayerManager.Instance.Select.weaponData);
             }
         }

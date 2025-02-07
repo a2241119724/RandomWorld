@@ -22,7 +22,7 @@ namespace LAB2D
 
         void Start()
         {
-            prefabRoomBox = ResourcesManager.Instance.getPrefab("RoomBox");
+            prefabRoomBox = ResourcesManager.Instance.getPrefab("RoomItem");
         }
 
         public override void OnRoomListUpdate(List<Photon.Realtime.RoomInfo> roomList)

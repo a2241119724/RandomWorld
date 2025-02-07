@@ -6,7 +6,7 @@ using UnityEngine;
 namespace LAB2D {
     public class EnemyCreator : CharacterCreator<EnemyCreator>
     {
-        private float instanceInterval = 3.0f; // 实例化时间间隔
+        private const float instanceInterval = 3.0f; // 实例化时间间隔
 
         /// <summary>
         /// 实例化在玩家附近的敌人

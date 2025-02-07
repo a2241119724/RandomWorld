@@ -12,7 +12,7 @@ namespace LAB2D
         /// <summary>
         /// 打包类型(未用)
         /// </summary>
-        public static readonly PackageType packaageType = PackageType.PC;
+        public static readonly PackageType packageType = PackageType.PC;
 
         /// <summary>
         /// 是否是新游戏
@@ -20,9 +20,14 @@ namespace LAB2D
         public static bool isNew = true;
 
         /// <summary>
-        /// 寻路时是否可以斜着走
+        /// 寻路时是否可以斜着走(未用)
         /// </summary>
-        public static bool isTilt = false; // 是否可以斜着走
+        public static bool isTilt = false;
+
+        /// <summary>
+        /// 一天的实际时间
+        /// </summary>
+        public static float dayTime = 30 * 60.0f;
 
         public static class Lock {
             public static class SeekLock

@@ -11,6 +11,8 @@ namespace LAB2D
     {
         public Inventory()
         {
+            width = 10;
+            height = 7;
             walls = new Dictionary<WallDirection, Wall>();
             walls.Add(WallDirection.TOP, new InventoryWallT());
             walls.Add(WallDirection.DOWN, new InventoryWallD());

@@ -7,7 +7,7 @@ namespace LAB2D
 {
     public class BackpackController : MVCController<BackpackItemManagerView,BackpackModel,BackpackNavigationView,BackpackItemView,BackpackInfoView>
     {
-        public static BackpackController Instance;
+        public static BackpackController Instance { get; private set; }
         
         public override void Awake()
         {
@@ -19,7 +19,12 @@ namespace LAB2D
             // 如果背包为空添加一个武器到背包
             if (model.isNull(ItemType.Weapon))
             {
-                addItem(ItemFactory.Instance.getItemByName("SingleGun"));
+                // addItem(ItemFactory.Instance.getBackpackItemByName("SingleGun"));
+                List<Item> items = ItemFactory.Instance.genBackpackItems();
+                foreach (Item item in items)
+                {
+                    addItem(item);
+                }
             }
         }
     }

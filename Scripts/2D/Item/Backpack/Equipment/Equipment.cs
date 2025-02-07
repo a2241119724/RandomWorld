@@ -14,7 +14,8 @@ namespace LAB2D
             Wrist,  //ÕÛ≤ø
             Knee,   //œ•∏«
             Hand,   // ÷≤ø
-            Shoulder//ºÁ∞Ú
+            Shoulder,//ºÁ∞Ú
+            Null
         }
     }
 

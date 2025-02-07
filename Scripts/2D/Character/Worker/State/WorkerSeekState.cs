@@ -70,10 +70,13 @@ namespace LAB2D
             // 没有锁或者是自己上的锁
             if (!GlobalData.Lock.SeekLock.seekLock ||
                 (GlobalData.Lock.SeekLock.seekLock && GlobalData.Lock.SeekLock.owner == Character)) {
+                // 概率获取锁
+                if (Random.Range(0.0f, 1.0f) > (1.0f / WorkerManager.Instance.getCountLock())) return;
+                //Debug.Log(Character.name + "持有锁");
+                GlobalData.Lock.SeekLock.seekLock = true;
+                GlobalData.Lock.SeekLock.owner = Character;
                 // 只能有一个在寻路(加锁),如果被锁了且锁的拥有者不是自己则阻塞，可重入
                 if (isOne) {
-                    GlobalData.Lock.SeekLock.seekLock = true;
-                    GlobalData.Lock.SeekLock.owner = Character;
                     isOne = false;
                     Character.toTarget();
                 }
