@@ -37,15 +37,14 @@ namespace LAB2D {
                 return;
             }
             g.name = damageUI.name;
-            if(this is Player)
-            {
-                g.GetComponent<DamageUI>().setDamage(Hp);
-            }
-            else
+            if(this is Enemy)
             {
                 // 暴击时显示不同的框
                 g.GetComponent<DamageUI>().setDamage(Hp, Convert.ToInt32(PlayerManager.Instance.Select.weaponData.isCRT));
-                //g.GetComponent<DamageUI>().setDamage(Hp, 0);
+            }
+            else
+            {
+                g.GetComponent<DamageUI>().setDamage(Hp);
             }
             g.transform.SetParent(transform);
 
@@ -94,6 +93,9 @@ namespace LAB2D {
         }
     }
 
+    /// <summary>
+    /// 为了可以序列化
+    /// </summary>
     [Serializable]
     public struct Vector3LAB
     {

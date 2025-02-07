@@ -4,12 +4,12 @@ using UnityEngine;
 namespace LAB2D {
     public class PlayerManager : CharacterManager<PlayerManager,Player,PlayerCreator>
     {
-        public SelectWeapon Select { set; get; }
+        public TakedWeapon Select { set; get; }
         public Player Mine { set { mine = value; add(value); } get { return mine; } }
         private Player mine;
 
         public PlayerManager() : base() {
-            Select = new SelectWeapon();
+            Select = new TakedWeapon();
         }
 
         public override void loadData()
@@ -29,12 +29,12 @@ namespace LAB2D {
             Tool.saveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), mine.CharacterDataLAB);
         }
 
-        public class SelectWeapon
+        public class TakedWeapon
         {
             /// <summary>
             /// 当前装备武器的id
             /// </summary>
-            public int currentId = -1;
+            public int id = -1;
 
             /// <summary>
             /// 当前装备武器的物体

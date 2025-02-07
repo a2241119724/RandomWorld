@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
@@ -10,6 +11,7 @@ namespace LAB2D {
     public class ForegroundPanel : BasePanel<ForegroundPanel>
     {
         public float TimeScale { get; set; } = 1;
+        public UnityAction[] ToolMenus { get; set; }
 
         public ForegroundPanel()
         {
@@ -26,8 +28,16 @@ namespace LAB2D {
             Tool.GetComponentInChildren<Button>(panel, "Setting").onClick.AddListener(Onclick_Setting);
             Tool.GetComponentInChildren<Button>(panel, "GeneratorWorker").onClick.AddListener(Onclick_GeneratorWorker);
             Tool.GetComponentInChildren<Button>(panel, "Build").onClick.AddListener(Onclick_Build);
-            Tool.GetComponentInChildren<Button>(panel, "WorkerInfo").onClick.AddListener(Onclick_WorkerInfo);
+            Tool.GetComponentInChildren<Button>(panel, "WorkerTask").onClick.AddListener(Onclick_WorkerTaskInfo);
             Tool.GetComponentInChildren<Button>(panel, "Save").onClick.AddListener(Onclick_Save);
+            Tool.GetComponentInChildren<Button>(panel, "Inventory").onClick.AddListener(Onclick_Inventory);
+            ToolMenus = new UnityAction[9];
+            ToolMenus[0] += Onclick_GeneratorWorker;
+            ToolMenus[1] += Onclick_Build;
+            ToolMenus[2] += Onclick_PlayerInfo;
+            ToolMenus[3] += OnClick_Backpack;
+            ToolMenus[4] += Onclick_WorkerTaskInfo;
+            ToolMenus[5] += Onclick_Inventory;
         }
 
         public override void OnEnter()
@@ -80,8 +90,14 @@ namespace LAB2D {
         {
             if (PlayerManager.Instance.Select.weapon != null)
             {
-                //PlayerManager.Instance.Select.weapon.GetComponent<Weapon>().attack();
-                PlayerManager.Instance.Select.weapon.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
+                if (NetworkConnect.Instance.IsOnline)
+                {
+                    PlayerManager.Instance.Select.weapon.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
+                }
+                else
+                {
+                    PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().attack();
+                }
             }
         }
 
@@ -114,9 +130,9 @@ namespace LAB2D {
             controller.show(BuildMenuPanel.Instance);
         }
 
-        public void Onclick_WorkerInfo()
+        public void Onclick_WorkerTaskInfo()
         {
-            controller.show(WorkerInfoPanel.Instance);
+            controller.show(WorkerTaskInfoPanel.Instance);
         }
         public void Onclick_Save()
         {
@@ -129,6 +145,11 @@ namespace LAB2D {
             {
                 saveData.saveData();
             }
+        }
+
+        public void Onclick_Inventory()
+        {
+            controller.show(InventoryMenuPanel.Instance);
         }
     }
 }

@@ -18,9 +18,13 @@ namespace LAB2D {
         public bool isCRT = false; // 本次共计是否暴击
 
         public Weapon() {
-            ATK = rankRandom(5.0f, 10.0f);
-            CRT = rankRandom(0.0f, 1.0f);
-            CSD = rankRandom(0.0f, 5.0f);
+            ATN = rankRandom(0.0f, 0.0f);
+            ATK = rankRandom(0.0f, 0.0f);
+            INT = rankRandom(0.0f, 0.0f);
+            CRT = rankRandom(0.0f, 0.0f);
+            CSD = rankRandom(0.0f, 0.0f);
+            HIT = rankRandom(0.0f, 0.0f);
+            RES = rankRandom(0.0f, 0.0f);
         }
 
         /// <summary>
@@ -38,7 +42,7 @@ namespace LAB2D {
         /// 按照越大几率越小生成随机数
         /// </summary>
         /// <returns></returns>
-        private float rankRandom(float down, float up)
+        protected float rankRandom(float down, float up)
         {
             if (down > up)
             {
@@ -46,10 +50,9 @@ namespace LAB2D {
                 down = up;
                 up = t;
             }
-            float intervalCount = 20; // 间隔个数
-            float intervalValue = (up - down) / intervalCount;
+            float intervalValue = (up - down) / 20;
             float r; // 每次生成随机数进行判断
-            for (float t = down + intervalValue; t < intervalCount; t += intervalValue)
+            for (float t = down + intervalValue; t < up; t += intervalValue)
             {
                 r = UnityEngine.Random.Range(down, up);
                 if (r < t)
@@ -62,18 +65,16 @@ namespace LAB2D {
 
         public override string ToString()
         {
-            return
-                "攻击力:" + Math.Round(ATK, 2) + "\n" +
-                "暴击率:" + Math.Round(CRT * 100, 2) + "%\n" +
-                "暴击伤害:" + Math.Round(CSD * 100, 2) + "%\n" +
-                "描述:" + ItemDataManager.Instance.getById(id).info;
+            return base.ToString() +
+                "攻击力: " + Math.Round(ATK, 2) + "\n" +
+                "暴击率: " + Math.Round(CRT * 100, 2) + "%\n" +
+                "暴击伤害: " + Math.Round(CSD * 100, 2) + "%\n";
         }
     }
 
     public abstract class WeaponObject : BackpackItemObject, IPunObservable
     {
         protected float attackInterval = 1.0f; // 攻击时间
-        protected int damage = 0; // 伤害
         protected Transform minDistanceEnemy; // 最近的敌人
         protected float raduis = 0.0f; // 武器追踪敌人范围
         protected GameObject player; // 手持该武器的玩家
@@ -90,6 +91,7 @@ namespace LAB2D {
         {
             base.Awake();
             contactFilter2D.useTriggers = true;
+            name = this.GetType().Name;
         }
 
         protected override void Start()
@@ -166,17 +168,9 @@ namespace LAB2D {
         }
 
         /// <summary>
-        /// 设置伤害
-        /// </summary>
-        /// <param name="damage"></param>
-        public void SetDamage(int damage) {
-            this.damage = damage;
-        }
-
-        /// <summary>
         /// 攻击
         /// </summary>
-        //[PunRPC]
+        [PunRPC]
         public virtual void attack()
         {
             //if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
@@ -200,6 +194,7 @@ namespace LAB2D {
                 transform.SetParent(player.transform);
             }
         }
+
         //protected override void OnTriggerEnter2D(Collider2D collision)
         //{
         //    if (transform.parent && transform.parent.CompareTag("Player")) return;

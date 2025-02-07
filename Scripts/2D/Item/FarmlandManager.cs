@@ -11,7 +11,7 @@ namespace LAB2D
         /// id,count
         /// </summary>
         private Dictionary<int, int> resources;
-        private int capacity = 1000;
+        private const int capacity = 1000;
 
         public FarmlandManager() {
             cells = new Dictionary<Vector3Int, ResourceInfo>();
@@ -133,7 +133,7 @@ namespace LAB2D
                 resources[cells[posMap].id] -= resourceInfo.count;
                 cells[posMap].count = 0;
                 resourceInfo.count = 0;
-                ResourceMap.Instance.pickUp(posMap);
+                ItemMap.Instance.pickUp(posMap);
                 // 食物被吃完删除任务
                 if (ItemDataManager.Instance.getTypeById(cells[posMap].id) == ItemType.Food)
                 {
@@ -148,7 +148,7 @@ namespace LAB2D
                 resources[cells[posMap].id] -= cells[posMap].count;
                 resourceInfo.count -= cells[posMap].count;
                 cells[posMap].count = 0;
-                ResourceMap.Instance.pickUp(posMap);
+                ItemMap.Instance.pickUp(posMap);
                 // 食物被吃完删除任务
                 if (ItemDataManager.Instance.getTypeById(cells[posMap].id) == ItemType.Food)
                 {

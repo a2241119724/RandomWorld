@@ -8,9 +8,11 @@ namespace LAB2D
     [Serializable]
     public class CustomRoom : RoomItem
     {
-        public Door door;
+        public DoorItem door;
 
         public CustomRoom() {
+            width = 10;
+            height = 7;
             walls = new Dictionary<WallDirection, Wall>();
             walls.Add(WallDirection.TOP, new CustomRoomWallT());
             walls.Add(WallDirection.DOWN, new CustomRoomWallD());
@@ -20,7 +22,7 @@ namespace LAB2D
             walls.Add(WallDirection.RIGHT_DOWN, new CustomRoomWallRD());
             walls.Add(WallDirection.LEFT_TOP, new CustomRoomWallLT());
             walls.Add(WallDirection.LEFT_DOWN, new CustomRoomWallLD());
-            door = new Door();
+            door = new CustomDoor();
         }
 
         public override void addBuildTask(Vector3Int centerMap, int width = 10, int height = 7)

@@ -9,7 +9,7 @@ namespace LAB2D {
     {
         protected virtual GameObject _create(Vector3 worldPos, string name, string layer) {
             //…Ë÷√Ω«…´
-            GameObject g = PhotonNetwork.Instantiate(ResourcesManager.Instance.getPath(name + ".prefab"),
+            GameObject g = Tool.Instantiate(ResourcesManager.Instance.getPrefab(name),
                 new Vector3(worldPos.x + TileMap.Instance.gameObject.transform.position.x,
                 worldPos.y + TileMap.Instance.gameObject.transform.position.y,
                 TileMap.Instance.gameObject.transform.position.z),

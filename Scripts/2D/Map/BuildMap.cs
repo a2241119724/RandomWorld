@@ -103,7 +103,7 @@ namespace LAB2D
             resourceInfos.Add(ItemDataManager.Instance.getByName("Wood").id,new ResourceInfo(ItemDataManager.Instance.getByName("Wood").id, 5));
             foreach (Vector3Int targetMap in targetMaps) { 
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
-                WorkerTaskManager.Instance.addTask(new BuildTask.BuildTaskBuilder().setBuildPos(targetMap)
+                WorkerTaskManager.Instance.addTask(new WorkerBuildTask.BuildTaskBuilder().setBuildPos(targetMap)
                     .setNeedResource(new NeedResource(Tool.DeepCopyByBinary(resourceInfos))).build());
             }
             targetMaps.Clear();

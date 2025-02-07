@@ -5,14 +5,14 @@ using UnityEngine;
 namespace LAB2D {
     public class WorkerMoveState : WorkerState
     {
-        private float recordTime = 0.0f;
+        private float _recordTime = 0.0f;
 
         public WorkerMoveState(Worker worker) : base(worker) { }
 
         public override void OnEnter()
         {
             base.OnEnter();
-            recordTime = 0.0f;
+            _recordTime = 0.0f;
         }
 
         public override void OnExit()
@@ -32,9 +32,9 @@ namespace LAB2D {
             {
                 if (Character.Manager.Task == null)
                 {
-                    recordTime += Time.deltaTime;
+                    _recordTime += Time.deltaTime;
                     // 休息2秒
-                    if (recordTime < 2) return;
+                    if (_recordTime < 2) return;
                     // 没有任务就进入寻路状态
                     Character.Manager.changeState(WorkerStateType.Seek);
                 }

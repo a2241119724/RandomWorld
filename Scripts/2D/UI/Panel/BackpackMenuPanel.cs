@@ -54,9 +54,9 @@ namespace LAB2D
                     PhotonNetwork.Destroy(PlayerManager.Instance.Select.weapon);
                 }
                 // 设置当前装备id
-                PlayerManager.Instance.Select.currentId = Select.item.id;
+                PlayerManager.Instance.Select.id = Select.item.id;
                 // 实例化武器
-                PlayerManager.Instance.Select.weapon = PhotonNetwork.Instantiate(ResourcesManager.Instance.getPath(ItemDataManager.Instance.getById(Select.item.id).imageName+".prefab"), Vector3.zero,Quaternion.identity);
+                PlayerManager.Instance.Select.weapon = Tool.Instantiate(ResourcesManager.Instance.getPrefab(ItemDataManager.Instance.getById(Select.item.id).imageName), Vector3.zero,Quaternion.identity);
                 if (PlayerManager.Instance.Select.weapon == null)
                 {
                     Debug.LogError(" PlayerManager.Instance.Select.weapon Instantiate Error!!!");
@@ -64,6 +64,7 @@ namespace LAB2D
                 }
                 PlayerManager.Instance.Select.weapon.name = ItemDataManager.Instance.getById(Select.item.id).imageName;
                 PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
+                PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().Item = Select.item;
                 PlayerManager.Instance.Select.weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
                 GlobalInit.Instance.showTip("装备成功");
                 // 从背包删除该道具

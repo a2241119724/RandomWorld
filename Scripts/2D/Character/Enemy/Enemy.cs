@@ -4,25 +4,29 @@ using UnityEngine;
 
 namespace LAB2D
 {
+    /// <summary>
+    /// const ~ static readonly
+    /// 编译时，运行时
+    /// </summary>
     public abstract class Enemy : Character, IPunObservable
     {
-        [HideInInspector] public float continueTiming = 0.0f; // 搜寻或攻击时间
-        [HideInInspector] public bool attackFlag = false; // 搜寻或攻击时间
-        [HideInInspector] public Transform enemyHead; // 敌人头的位置
-        [HideInInspector] public Vector3 enemyForward; // 敌人的前方
+        [HideInInspector] public Transform EnemyHead { get; set; } // 敌人头的位置
         [HideInInspector] public EnemyStateManager<ICharacterState, EnemyStateType, Enemy> Manager { get; set; }
-        [HideInInspector] public Character target; // 打击目标
-        public float attackRange = 4.0f; // 敌人攻击距离
-        public float rotateInterval = 8.0f; // 敌人漫游时每次转向的时间间隔
-        public float rotationSpeed = 2.0f; // 敌人旋转的速度
-
-        [SerializeField] protected float SoundRange = 5.0f; // 听觉距离
-        [SerializeField] protected float SightRange = 10.0f; // 视觉距离
-        [SerializeField] protected float SightAngle = 60.0f; // 视觉角度
-        [SerializeField] protected LayerMask layerMask; // 射线检测的层级
+        [HideInInspector] public Character Target { get; set; } // 打击目标
+        public readonly float rotateInterval = 8.0f; // 敌人漫游时每次转向的时间间隔
+        public readonly float rotationSpeed = 2.0f; // 敌人旋转的速度
+        public readonly float attackRange = 4.0f; // 敌人攻击距离
+        
+        protected readonly float SoundRange = 5.0f; // 听觉距离
+        protected readonly float SightRange = 10.0f; // 视觉距离
+        protected readonly float SightAngle = 60.0f; // 视觉角度
+        protected LayerMask layerMask; // 射线检测的层级
         protected int damage; // 伤害值
+        protected readonly float bulletSpeed = 50.0f; // 发射子弹的速度
+
         private RaycastHit2D raycastHit2D; // 射线射中返回的结果
-        private EnemyStatusUI statusBar; // 记录实例化血条
+        private CharacterStatusUI statusBar; // 记录实例化血条
+        private const float changeTarget = 3.0f; // 超过当前时间被攻击会被吸引仇恨
         //MeshFilter[] meshFilters; // 需要合并的mesh
         //private CombineInstance[] combine; // 合并用的工具
 
@@ -37,12 +41,12 @@ namespace LAB2D
         protected override void Start()
         {
             base.Start();
-            enemyHead = transform.Find("Head");
-            if (enemyHead == null) {
+            EnemyHead = transform.Find("Head");
+            if (EnemyHead == null) {
                 Debug.LogError("enemyHead Not Found!!!");
                 return;
             }
-            statusBar = transform.Find("EnemyHp").GetComponent<EnemyStatusUI>();
+            statusBar = transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (statusBar == null)
             {
                 Debug.LogError("statusBar Not Found!!!");
@@ -52,18 +56,12 @@ namespace LAB2D
             statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
         }
 
-        protected virtual void FixedUpdate()
+        private void Update()
         {
-            enemyForward = enemyHead.position - transform.position;
-            if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
-            // 由于玩家顶着敌人会使敌人z不为0
-            transform.position = new Vector3(transform.position.x,transform.position.y,0);
-            if(target == null)
-            {
-                target = PlayerManager.Instance.Mine;
-            }
             // 执行当前状态的函数
             Manager.CurrentState.OnUpdate();
+            // 由于玩家顶着敌人会使敌人z不为0
+            transform.position = new Vector3(transform.position.x, transform.position.y, 0);
         }
 
         /// <summary>
@@ -87,23 +85,25 @@ namespace LAB2D
             // 判断是否听到附近有玩家	
             bool isFind = dist < SoundRange;
             //如果玩家与敌人的距离小于敌人的视觉距离(前方扇形)
-            //if (dist < SightRange && !isFind)
-            if (dist < SightRange)
+            if (dist < SightRange && !isFind)
             {
                 //计算玩家是否在敌人的视角内 	
                 Vector3 direction = target.position - transform.position;
-                float degree = Vector3.Angle(direction, enemyForward);
+                float degree = Vector3.Angle(direction, EnemyHead.position - transform.position);
                 if (degree < SightAngle / 2 && degree > -SightAngle / 2)
                 {
-                    // 判断玩家和敌人之间是否存在遮挡物
-                    raycastHit2D = Physics2D.Raycast(transform.position, direction,SightRange, layerMask); // (源,方向,距离,层级)
-                    if (raycastHit2D.collider != null)
-                    {
-                        if (raycastHit2D.transform.gameObject.CompareTag("Player"))
-                        {
-                            isFind = true;
-                        }
-                    }
+                    isFind = true;
+                }
+            }
+            if (isFind)
+            {
+                // 判断玩家和敌人之间是否存在遮挡物
+                Vector3 direction = target.position - transform.position;
+                raycastHit2D = Physics2D.Raycast(transform.position, direction, SightRange, layerMask); // (源,方向,距离,层级)
+                // 如果有碰撞体并且不是目标，是障碍物
+                if (raycastHit2D.collider != null && raycastHit2D.transform != target)
+                {
+                   isFind = false;
                 }
             }
             return isFind;
@@ -115,7 +115,7 @@ namespace LAB2D
         public void MoveToForward()
         {
             moveSpeed = UnityEngine.Random.Range(1.0f, 2.0f);
-            transform.Translate(enemyForward.normalized * Time.deltaTime * moveSpeed, Space.World);//向前移动
+            transform.Translate(moveSpeed * Time.deltaTime * (EnemyHead.position - transform.position).normalized, Space.World);//向前移动
         }
 
         /// <summary>
@@ -128,32 +128,21 @@ namespace LAB2D
             transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(Vector3.up, direction), Time.deltaTime * rotationSpeed);
         }
 
-        public void setPlayer(Player player)
-        {
-            if(player != null)
-            {
-                target = player;
-            }
-        }
-
         /// <summary>
         /// 敌人掉血
         /// </summary>
         /// <param name="Hp">所掉的血量</param>
         public override void reduceHp(float Hp)
         {
-            if(continueTiming > 3.0f)
-            {
-                attackFlag = true;
-            }
+            //((EnemyAttackState)Manager.CurrentState)
             if (Manager.CurrentStateType != EnemyStateType.Attack || 
-                (Manager.CurrentStateType == EnemyStateType.Attack && attackFlag))
+                (Manager.CurrentStateType == EnemyStateType.Attack 
+                && ((EnemyAttackState)Manager.CurrentState).AttackTime > changeTarget))
             {
                 Manager.changeState(EnemyStateType.Seek); // 进入搜索状态
             }
             base.reduceHp(Hp);
             statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
-            continueTiming = 0.0f; // 重新计时
         }
 
         protected override void death()
@@ -170,12 +159,10 @@ namespace LAB2D
         {
             if (stream.IsWriting)
             {
-                stream.SendNext(attackFlag);
                 stream.SendNext(CharacterDataLAB.Hp);
             }
             else if(stream.IsReading)
             {
-                this.attackFlag = (bool)stream.ReceiveNext();
                 CharacterDataLAB.Hp = (float)stream.ReceiveNext();
                 statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
             }

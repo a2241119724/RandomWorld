@@ -20,10 +20,11 @@ namespace LAB2D
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             // 转为数组下标
             Vector3Int centerMap = TileMap.Instance.worldPosToMapPos(worldPos);
+            BuildItem buildItem = ((BuildItem)ItemFactory.Instance.getBuildItemByName(ItemDataManager.Instance.getById(BuildMenuPanel.Instance.Select.item.id).imageName));
             // 建造
-            if (IsAvailableMap.Instance.showRect(centerMap) && Input.GetMouseButtonDown(0))
+            if (IsAvailableMap.Instance.showRect(centerMap, buildItem.width, buildItem.height, buildItem.isBottomLeft) && Input.GetMouseButtonDown(0))
             {
-                ((BuildItem)ItemFactory.Instance.getItemByName(ItemDataManager.Instance.getById(BuildMenuPanel.Instance.Select.item.id).imageName)).addBuildTask(centerMap);
+                buildItem.addBuildTask(centerMap);
             }
         }
     }

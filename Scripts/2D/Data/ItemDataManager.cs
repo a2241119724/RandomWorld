@@ -15,6 +15,7 @@ namespace LAB2D
 
         private Dictionary<int,ItemData> allItemInfo;
         private Dictionary<string, int> nameToId;
+        private const int typeInterval = 100000;
 
         private void Awake()
         {
@@ -67,7 +68,15 @@ namespace LAB2D
 
         public ItemType getTypeById(int id)
         {
-            return (ItemType)(object)(id/1000);
+            if (id < 0) return ItemType.Null;
+            return (ItemType)(object)(id / typeInterval);
+        }
+
+        public Equipment.EquipType getEquipmentTypeById(int id) {
+            if (getTypeById(id) != ItemType.Equipment) return Equipment.EquipType.Null;
+            id -= ((int)ItemType.Equipment) * typeInterval;
+            // 最多10种装备
+            return (Equipment.EquipType)(object)(id * 10 / typeInterval);
         }
 
         /// <summary>

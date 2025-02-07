@@ -12,6 +12,7 @@ namespace LAB2D
         {
             itemDict.Add(ItemType.Room, new ArrayList());
             itemDict.Add(ItemType.Wall, new ArrayList());
+            itemDict.Add(ItemType.Furniture, new ArrayList());
             itemDict.Add(ItemType.BuildOther, new ArrayList());
         }
 

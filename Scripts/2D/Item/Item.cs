@@ -3,6 +3,9 @@ using System;
 
 namespace LAB2D
 {
+    /// <summary>
+    /// 存入背包
+    /// </summary>
     [Serializable]
     public abstract class Item
     {
@@ -19,13 +22,16 @@ namespace LAB2D
                 $"info: {itemData.info}\n" +
                 $"isStackable: {itemData.isStackable}\n" +
                 $"imageName: {itemData.imageName}\n" +
-                $"itemName: {itemData.itemName}";
+                $"itemName: {itemData.itemName}\n";
         }
     }
 
     public abstract class ItemObject : MonoBehaviourPun
     {
-        public int Uid { get; set; } // 对应的Item数据
+        /// <summary>
+        /// 对应的Item数据
+        /// </summary>
+        public Item Item { get; set; }
 
         protected virtual void Awake()
         {

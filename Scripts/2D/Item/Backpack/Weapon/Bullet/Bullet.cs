@@ -7,23 +7,26 @@ namespace LAB2D
         public float BulletSpeed { set { bulletSpeed = Mathf.Abs(value); } } // 速度
         public Vector3 Direction { set { direction = value.normalized; } } // 方向
         public float Damage { set; get; } = 5; // 伤害
+        public Character Origin { get; set; } // 发射子弹的角色
 
         [SerializeField] protected LayerMask layerMask; // 射线检测层级
+        protected Vector3 direction; // 子弹方向
+
         protected RaycastHit2D rayCastHit2D; // 射线检测返回值
         private float bulletSpeed; // 子弹速度
-        private Vector3 direction = Vector3.zero; // 子弹方向
-        private Vector3 distance = Vector3.zero; // 每帧位移的距离
+        private Vector3 distance; // 每帧位移的距离
         private GameObject blood; // 掉血特效
 
         protected virtual void Awake() {
             blood = ResourcesManager.Instance.getPrefab("Blood");
+            name = this.GetType().Name;
         }
 
         protected virtual void Start()
         {
             transform.position = new Vector3(transform.position.x, transform.position.y, 0.5f);
             direction = new Vector3(direction.x, direction.y, 0f);
-            Destroy(gameObject, 3.0f); // 没碰到东西自动销毁
+            Destroy(gameObject, 5.0f); // 没碰到东西自动销毁
             //Invoke(nameof(destory), 3.0f);
         }
 
