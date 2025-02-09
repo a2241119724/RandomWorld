@@ -21,7 +21,7 @@ namespace LAB2D
         {
             if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2) || Input.GetKeyDown(KeyCode.Escape))
             {
-                //transform.position = new Vector3(-999, 0, 0);
+                //transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }
         }
 
@@ -48,7 +48,7 @@ namespace LAB2D
                 button.onClick.AddListener(() => {
                     WorkerTaskManager.Instance.addTask(new WorkerWearTask.WearTaskBuilder()
                         .setWorker(workers[index]).setTarget(posMap).setEquipmentId(resourceInfo.id).build(), 1);
-                    transform.position = new Vector3(-999, 0, 0);
+                    transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     Dictionary<int, ResourceInfo> dict = new Dictionary<int, ResourceInfo>();
                     dict.Add(resourceInfo.id, resourceInfo);
                     InventoryManager.Instance.isEnoughAndPreTake(workers[index], new NeedResource(dict), true);

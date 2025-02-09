@@ -27,7 +27,7 @@ namespace LAB2D
             // 若是不在默认位置，则才返回默认位置
             if(Input.GetMouseButtonDown(1) && transform.position.x != -999)
             {
-                transform.position = new Vector3(-999, 0, 0);
+                transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }
         }
 
@@ -39,7 +39,7 @@ namespace LAB2D
 
         public void Onclick_Yes()
         {
-            transform.position = new Vector3(-999, 0, 0);
+            transform.position = ResourceConstant.VECTOR3_DEFAULT;
             if (WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
             WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
                 .setTarget(posMap).setGatherName("Tree").build());
@@ -47,7 +47,7 @@ namespace LAB2D
 
         public void Onclick_No()
         {
-            transform.position = new Vector3(-999, 0, 0);
+            transform.position = ResourceConstant.VECTOR3_DEFAULT;
             if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
             WorkerTaskManager.Instance.cancelGatherTask(posMap);
             GatherMap.Instance.cancelGather(posMap);
