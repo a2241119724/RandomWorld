@@ -67,22 +67,17 @@ namespace LAB2D
             base.OnUpdate();
             Character.WorkerState.text = preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(Character.SeekProgress * 100)}%</color>\n"+
                 $"Target: {targetMap.x},{targetMap.y}";
-            // 没有锁或者是自己上的锁
-            if (!GlobalData.Lock.SeekLock.seekLock ||
-                (GlobalData.Lock.SeekLock.seekLock && GlobalData.Lock.SeekLock.owner == Character)) {
-                // 概率获取锁
-                if (Random.Range(0.0f, 1.0f) > (1.0f / WorkerManager.Instance.getCountLock())) return;
-                //Debug.Log(Character.name + "持有锁");
-                GlobalData.Lock.SeekLock.seekLock = true;
-                GlobalData.Lock.SeekLock.owner = Character;
+            if (Worker.seekLock.getLock(Character))
+            {
                 // 只能有一个在寻路(加锁),如果被锁了且锁的拥有者不是自己则阻塞，可重入
-                if (isOne) {
+                if (isOne)
+                {
                     isOne = false;
                     Character.toTarget();
                 }
             }
             if (!Character.IsSeeking) {
-                GlobalData.Lock.SeekLock.seekLock = false;
+                Worker.seekLock.releaseLock(Character);
                 // 寻路结束
                 Character.Manager.changeState(WorkerStateType.Move);
             }

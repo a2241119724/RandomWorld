@@ -33,6 +33,7 @@ namespace LAB2D
         public LineRenderer LineRenderer { get; set; }
         public WearData WearData;
         public BedItem BedItem;
+        public static Lock seekLock = new Lock();
 
         private static Spend[,] mapSpend; // 地图中板块的花费
         private List<Spend> openList;
@@ -343,20 +344,19 @@ namespace LAB2D
                     neighbor.f = neighbor.g + neighbor.h;
                     neighbor.previous = curSpend; // 链接
                 }
-                if(count++ > 10)
+                if(count++ > 20)
                 {
                     count = 0;
                     time += Time.deltaTime;
-                    if(time > 2.0f)
+                    if(time > 3.0f)
                     {
                         // 如果寻路超过一定时间释放锁
-                        GlobalData.Lock.SeekLock.seekLock = false;
-                        //Debug.Log(name + "释放锁========");
+                        seekLock.releaseLock(this);
                         time = 0.0f;
                     }
                     yield return null;
                     // 被其他人持有锁，等待
-                    while(GlobalData.Lock.SeekLock.seekLock && GlobalData.Lock.SeekLock.owner != this)
+                    while (!seekLock.getLock(this))
                     {
                         //Debug.Log(name + "等待锁");
                         yield return null;
@@ -367,10 +367,11 @@ namespace LAB2D
             {
                 Debug.Log("未找到路径:" + start.posMap.y + ":" + start.posMap.x + "-->" + end.posMap.y + ":" + end.posMap.x);
             }
-            // ToTargetLAB要注释
-            IsSeeking = false;
             // 显示路径
             updateLine();
+            // ToTargetLAB要注释
+            IsSeeking = false;
+            //seekLock.releaseLock(this);
         }
 
         /// <summary>
