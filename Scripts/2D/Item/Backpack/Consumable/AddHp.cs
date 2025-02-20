@@ -1,9 +1,14 @@
 ﻿using System;
+using UnityEngine.Tilemaps;
 
 namespace LAB2D
 {
     [Serializable]
     public class AddHp : Consumable { 
+        public AddHp() 
+        {
+            tile = (TileBase)ResourcesManager.Instance.getAsset("AddHp");
+        }
     }
 
     public class AddHpObject : ConsumableObject
