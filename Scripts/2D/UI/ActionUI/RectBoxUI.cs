@@ -29,7 +29,7 @@ namespace LAB2D
                 transform.position = new Vector3(pos.x, pos.y, 0.0f);
                 isDown = true;
             }
-            else if (isDown)
+            else if (isDown && PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance)
             {
                 Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 float x = pos.x - start.x;

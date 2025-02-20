@@ -21,11 +21,12 @@ namespace LAB2D
         public EnemyDeadState(Enemy character) : base(character)
         {
             pToDropItem = new Dictionary<int, TileBase>();
+            List<Item> items = ItemFactory.Instance.genBackpackItems();
             addDropItem(10, null);
-            addDropItem(10, (TileBase)ResourcesManager.Instance.getAsset("AddHp"));
-            addDropItem(10, (TileBase)ResourcesManager.Instance.getAsset("CustomSword"));
-            addDropItem(10, (TileBase)ResourcesManager.Instance.getAsset("SingleGun"));
-            addDropItem(40, (TileBase)ResourcesManager.Instance.getAsset("TraceGun"));
+            foreach (BackpackItem item in items)
+            {
+                addDropItem(10, item.tile);
+            }
         }
 
         public override void OnEnter()

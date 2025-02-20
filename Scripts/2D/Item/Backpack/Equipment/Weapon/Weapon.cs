@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 
 namespace LAB2D {
     [Serializable]
-    public abstract class Weapon : BackpackItem {
+    public abstract class Weapon : Equipment {
         public float ATN; // 物理攻击力
         public float INT; // 魔法攻击力
         public float CRT; // 暴击率

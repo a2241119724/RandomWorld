@@ -17,7 +17,7 @@ namespace LAB2D
             for(int i=0;i < transform.childCount; i++)
             {
                 if (!Input.anyKeyDown) break;
-                if (Input.GetKeyDown(keyCodes[i]))
+                if (Input.GetKeyDown(keyCodes[i]) && PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance)
                 {
                     ForegroundPanel.Instance.ToolMenus[i].Invoke();
                     break;

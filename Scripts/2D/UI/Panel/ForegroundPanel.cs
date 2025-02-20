@@ -31,6 +31,8 @@ namespace LAB2D {
             Tool.GetComponentInChildren<Button>(panel, "WorkerTask").onClick.AddListener(Onclick_WorkerTaskInfo);
             Tool.GetComponentInChildren<Button>(panel, "Save").onClick.AddListener(Onclick_Save);
             Tool.GetComponentInChildren<Button>(panel, "Inventory").onClick.AddListener(Onclick_Inventory);
+            Tool.GetComponentInChildren<Button>(panel, "Chat").onClick.AddListener(Onclick_Chat);
+            // Æ¥ÅäÊý×Ö°´¼ü
             ToolMenus = new UnityAction[9];
             ToolMenus[0] += Onclick_GeneratorWorker;
             ToolMenus[1] += Onclick_Build;
@@ -38,6 +40,7 @@ namespace LAB2D {
             ToolMenus[3] += OnClick_Backpack;
             ToolMenus[4] += Onclick_WorkerTaskInfo;
             ToolMenus[5] += Onclick_Inventory;
+            ToolMenus[6] += Onclick_Chat;
         }
 
         public override void OnEnter()
@@ -150,6 +153,11 @@ namespace LAB2D {
         public void Onclick_Inventory()
         {
             controller.show(InventoryMenuPanel.Instance);
+        }
+
+        public void Onclick_Chat()
+        {
+            controller.show(AIChatPanel.Instance);
         }
     }
 }

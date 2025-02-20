@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -25,7 +26,8 @@ namespace LAB2D
         /// <param name="parent">¸¸ÎïÌå</param>
         public void show(IBasePanel basePanel)
         {
-            if (Panels.Count > 0 && !(basePanel is ItemInfoPanel))
+            if (Panels.Count > 0 && !(basePanel is ItemInfoPanel 
+                || basePanel is AIChatPanel))
             {
                 Panels.Peek().OnPause();
             }

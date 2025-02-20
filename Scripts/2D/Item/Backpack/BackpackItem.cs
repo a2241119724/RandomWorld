@@ -2,12 +2,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace LAB2D
 {
     [Serializable]
     public abstract class BackpackItem : Item
     {
+        [NonSerialized]
+        public TileBase tile;
         public BackpackItemQuality quality; // Æ·ÖÊ
 
         protected BackpackItem()
