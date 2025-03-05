@@ -5,6 +5,7 @@
 /StreamingAssets
 /URP
 /Scripts/Photon
+/AddressableAssetsData
 
 *.meta
 *.mat
