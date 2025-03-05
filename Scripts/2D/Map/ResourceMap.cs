@@ -6,68 +6,75 @@ using UnityEngine.Tilemaps;
 
 namespace LAB2D
 {
-    public class ResourceMap : AMonoSaveData
+    public class ResourceMap : BaseTileMap
     {
         public static ResourceMap Instance { private set; get; }
         public ResourceMapData ResourceMapDataLAB { get; set; }
 
-        public Tilemap ResourceTileMap { get; set; }
+        /// <summary>
+        /// 仅占一格的资源，解决遮盖问题
+        /// </summary>
+        private Tilemap resourceTileMapOne;
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             Instance = this;
-            ResourceTileMap = GetComponent<Tilemap>();
+            resourceTileMapOne = Tool.GetComponentInChildren<Tilemap>(transform.parent.gameObject, "ResourceMapOne");
             ResourceMapDataLAB = new ResourceMapData(0,100);
         }
 
         /// <summary>
         /// 生成资源，添加采摘任务
         /// </summary>
+        /// <param name="coroutine">需要等待该协程执行完后再执行</param>
         /// <returns></returns>
-        public IEnumerator genResource() {
-            for (int i = 0; i < TileMap.Instance.Height; i++)
+        public IEnumerator genResource(Coroutine coroutine = null) {
+            yield return coroutine;
+            AsyncProgressUI.Instance.setTip("生成资源...");
+            for (int i = 0; i < Height; i++)
             {
-                for (int j = 0; j < TileMap.Instance.Width; j++)
+                for (int j = 0; j < Width; j++)
                 {
+                    AsyncProgressUI.Instance.addOneProcess();
+                    if (FrameControl.Instance.isNeedStop(1))
+                    {
+                        yield return null;
+                    }
                     Vector3Int posMap = new Vector3Int(i, j, 0);
-                    if (IsAvailableMap.Instance.isAvailablePos(posMap) && 
-                        UnityEngine.Random.Range(0.0f, 1.0f) > 0.9f)
+                    if (TileMap.Instance.isCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.9f)
                     {
                         TileType tileType = TileMap.Instance.MapTiles[i, j];
                         TileBase tileBase = ResourcesManager.Instance.getAssetByTileType(tileType);
                         if (tileBase == null) continue;
-                        ResourceTileMap.SetTile(posMap, tileBase);
+                        tilemap.SetTile(posMap, tileBase);
                         ResourceMapDataLAB.add(posMap, tileBase.name);
                         if (tileBase.name.Contains("Tree"))
                         {
                             ResourceMapDataLAB.TreeCurCount++;
-                            WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
-                                .setTarget(posMap).setGatherName("Tree").build());
+                            //WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
+                            //    .setTarget(posMap).setGatherName("Tree").build());
                         }
                     }
                 }
-                yield return new WaitForEndOfFrame();
             }
-            ResourceTileMap.RefreshAllTiles();
             while (true)
             {
                 if (ResourceMapDataLAB.TreeCurCount < ResourceMapDataLAB.TreeTotalCount)
                 {
-                    TileType tileType = (TileType)UnityEngine.Random.Range(0,Enum.GetValues(typeof(TileType)).Length)-1; 
                     Vector3Int pos = IsAvailableMap.Instance.genAvailablePosMap();
-                    if (!tileType.ToString().Equals(TileMap.Instance.MapTiles[pos.x, pos.y])) {
-                        yield return new WaitForEndOfFrame();
+                    TileType tileType = TileMap.Instance.MapTiles[pos.x, pos.y];
+                    TileBase tileBase = ResourcesManager.Instance.getAssetByTileType(tileType,"Tree");
+                    if(tileBase == null)
+                    {
+                        yield return null;
                         continue;
                     }
-                    TileBase tileBase = ResourcesManager.Instance.getAssetByTileType(tileType,"Tree");
-                    if(tileBase != null)
-                    {
-                        ResourceMapDataLAB.TreeCurCount++;
-                    }
-                    ResourceTileMap.SetTile(pos, tileBase);
+                    ResourceMapDataLAB.TreeCurCount++;
+                    tilemap.SetTile(pos, tileBase);
                     ResourceMapDataLAB.add(pos, tileBase.name);
-                    WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
-                        .setTarget(pos).setGatherName("Tree").build());
+                    //WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
+                    //    .setTarget(pos).setGatherName("Tree").build());
                     refreshRound(pos);
                 }
                 yield return new WaitForSeconds(60.0f * 5);
@@ -84,30 +91,30 @@ namespace LAB2D
             {
                 for (int j = -radius; j <= radius; j++)
                 {
-                    ResourceTileMap.RefreshTile(Tool.add(center,i,j));
+                    tilemap.RefreshTile(Tool.add(center,i,j));
                 }
             }
         }
 
-        /// <summary>
-        /// 判断该坐标是否可用 
-        /// </summary>
-        /// <param name="x">横坐标</param>
-        /// <param name="y">纵坐标</param>
-        /// <returns></returns>
-        public bool isAvailableTile(Vector3Int posMap)
-        {
-            return ResourceTileMap.GetTile(posMap) == null;
-        }
-
-        public bool isCanReach(Vector3Int posMap) {
-            return ResourceTileMap.GetColliderType(posMap) == Tile.ColliderType.None;
-        }
-
         public void cutTree(Vector3Int posMap) {
             ResourceMapDataLAB.remove(posMap);
-            ResourceTileMap.SetTile(posMap, null);
+            tilemap.SetTile(posMap, null);
             ResourceMapDataLAB.TreeCurCount--;
+        }
+
+        public override TileBase getTile(Vector3Int posMap)
+        {
+            TileBase tileBase = tilemap.GetTile(posMap);
+            if(tileBase == null)
+            {
+                tileBase = resourceTileMapOne.GetTile(posMap);
+            }
+            return tileBase;
+        }
+
+        public void setProgress() 
+        {
+            AsyncProgressUI.Instance.addTotal(Height * Width);
         }
 
         public override void loadData()
@@ -116,7 +123,7 @@ namespace LAB2D
             ResourceMapDataLAB = Tool.loadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.getPath(this.GetType().Name));
             foreach (KeyValuePair<Vector3IntLAB, string> posMap in ResourceMapDataLAB.posMaps)
             {
-                ResourceTileMap.SetTile(Vector3IntLAB.toVector3Int(posMap.Key),
+                tilemap.SetTile(Vector3IntLAB.toVector3Int(posMap.Key),
                     (TileBase)ResourcesManager.Instance.getAsset(posMap.Value));
             }
             StartCoroutine(genResource());

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace LAB2D
 {
-    public class ItemInfoUI : MonoBehaviour
+    public class ItemInfoUI : MonoBehaviourInit
     {
         public static ItemInfoUI Instance { get; private set; }
 
@@ -16,8 +16,8 @@ namespace LAB2D
         /// 实时跟踪角色
         /// </summary>
         private Character character;
-        private string select;
-        private Vector3Int selectPos;
+        private string select = "";
+        private Vector3Int selectPos = default;
 
         private void Awake()
         {
@@ -34,6 +34,7 @@ namespace LAB2D
                     PanelController.Instance.show(ItemInfoPanel.Instance);
                 }
                 ItemInfoPanel.Instance.setItemInfo(character.ToString());
+                ItemInfoPanel.Instance.setCharacter(character);
             }
             if (Input.GetMouseButtonDown(1))
             {
@@ -62,6 +63,7 @@ namespace LAB2D
                         }
                         selectUI.setTarget(selectPos);
                         selectUI.Character = character;
+                        ItemInfoPanel.Instance.setCharacter(character);
                         break;
                     }
                     selectUI.setTarget(selectPos);
@@ -139,10 +141,11 @@ namespace LAB2D
         /// 
         /// </summary>
         /// <param name="posMap"></param>
-        /// <param name="isTile">是否需要检测Tile</param>
+        /// <param name="isTile"></param>
+        /// <param name="isUI"></param>
         /// <returns></returns>
-        public TileBase getTile(Vector3Int posMap,bool isTile=true) {
-            TileBase tileBase = BuildMap.Instance.BuildTileMap.GetTile(posMap);
+        public TileBase getTile(Vector3Int posMap,bool isTile=true,bool isUI=true) {
+            TileBase tileBase = BuildMap.Instance.getTile(posMap);
             text = "Build:";
             // 如果点击的是床，则展示分配的Worker
             if (tileBase != null && tileBase.name.Contains("Bed"))
@@ -152,10 +155,9 @@ namespace LAB2D
             if (tileBase == null)
             {
                 text = "Resource:";
-                tileBase = ResourceMap.Instance.ResourceTileMap.GetTile(posMap);
+                tileBase = ResourceMap.Instance.getTile(posMap);
                 // 手动添加任务
-                if (tileBase != null) {
-                    // TODO 显示是否采摘面板
+                if (tileBase != null && isUI) {
                     GatherUI.Instance.setPostion(posMap);
                 }
             }
@@ -165,6 +167,14 @@ namespace LAB2D
                 tileBase = TileMap.Instance.getTile(posMap);
             }
             return tileBase;
+        }
+
+        public override void init()
+        {
+            base.init();
+            character = null;
+            select = "";
+            selectPos = default;
         }
     }
 }

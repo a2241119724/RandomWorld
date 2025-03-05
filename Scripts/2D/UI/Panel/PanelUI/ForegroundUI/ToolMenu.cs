@@ -11,15 +11,28 @@ namespace LAB2D
         private static readonly KeyCode[] keyCodes = { KeyCode.Alpha1, KeyCode.Alpha2,
             KeyCode.Alpha3,KeyCode.Alpha4,KeyCode.Alpha5,KeyCode.Alpha6,KeyCode.Alpha7,
             KeyCode.Alpha8,KeyCode.Alpha9};
+        private Transform btns;
+
+        private void Awake()
+        {
+            btns = Tool.GetComponentInChildren<Transform>(gameObject, "Panel");
+        }
 
         void Update()
         {
-            for(int i=0;i < transform.childCount; i++)
+            if (!Input.anyKeyDown) return;
+            for (int i=0;i < btns.childCount; i++)
             {
-                if (!Input.anyKeyDown) break;
-                if (Input.GetKeyDown(keyCodes[i]) && PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance)
+                if (Input.GetKeyDown(keyCodes[i]))
                 {
-                    ForegroundPanel.Instance.ToolMenus[i].Invoke();
+                    if (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance)
+                    {
+                        PanelController.Instance.show(ForegroundPanel.Instance.ToolMenus[i]);
+                    }
+                    else if(PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance.ToolMenus[i])
+                    {
+                        PanelController.Instance.close();
+                    }
                     break;
                 }
             }

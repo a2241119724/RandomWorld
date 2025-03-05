@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using static LAB2D.TileMap;
 
 namespace LAB2D
 {
@@ -34,6 +35,12 @@ namespace LAB2D
 
         private void OnClick_ContinueGame()
         {
+            TileMapData data = Tool.loadDataByBinary<TileMapData>(GlobalData.ConfigFile.getPath("TileMap"));
+            if(data == null)
+            {
+                GlobalInit.Instance.showTip("û�д浵!!!");
+                return;
+            }
             controller.close();
             GlobalData.isNew = false;
             controller.show(AsyncProgressPanel.Instance);

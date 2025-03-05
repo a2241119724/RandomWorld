@@ -10,18 +10,18 @@ namespace LAB2D
     /// 使用Collider会出现,Worker寻路完成,但路径上的Tile被建造完成，导致不能通行
     /// 从半创建直接就不可通行
     /// </summary>
-    public class BuildMap : MonoBehaviour
+    public class BuildMap : BaseTileMap
     {
         public static BuildMap Instance { private set; get; }
-        public Tilemap BuildTileMap { get; set; }
         
         // Map地表数组下标
         private List<Vector3Int> targetMaps;
 
-        private void Awake()
+
+        protected override void Awake()
         {
+            base.Awake();
             Instance = this;
-            BuildTileMap = GetComponent<Tilemap>();
             targetMaps = new List<Vector3Int>();
         }
 
@@ -31,10 +31,10 @@ namespace LAB2D
         /// <param name="targetMap"></param>
         /// <param name="tile"></param>
         public BuildMap addBuilding(Vector3Int targetMap, TileBase tile, bool isCollider=true) {
-            BuildTileMap.SetTile(targetMap, tile);
-            BuildTileMap.RemoveTileFlags(targetMap, TileFlags.LockColor);
-            BuildTileMap.SetColliderType(targetMap, Tile.ColliderType.None);
-            BuildTileMap.SetColor(targetMap, new Color(1,1,1, isCollider ? 0.5f : 0.49f));
+            tilemap.SetTile(targetMap, tile);
+            tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
+            tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
+            tilemap.SetColor(targetMap, new Color(1,1,1, isCollider ? 0.5f : 0.49f));
             if (!targetMaps.Contains(targetMap))
             {
                 targetMaps.Add(targetMap);
@@ -47,24 +47,16 @@ namespace LAB2D
         /// </summary>
         /// <param name="targetMap"></param>
         /// <param name="tile"></param>
+        /// <param name="isPass">是否可通行</param>
         /// <returns></returns>
-        public BuildMap addPassBuild(Vector3Int targetMap, TileBase tile)
+        public BuildMap directBuild(Vector3Int targetMap, TileBase tile, bool isPass=true)
         {
-            BuildTileMap.SetTile(targetMap, tile);
-            BuildTileMap.RemoveTileFlags(targetMap, TileFlags.LockColor);
-            BuildTileMap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
-            return this;
-        }
-
-        /// <summary>
-        /// 直接建造完成
-        /// </summary>
-        /// <param name="targetMap"></param>
-        /// <param name="tile"></param>
-        /// <returns></returns>
-        public BuildMap addNoPassBuild(Vector3Int targetMap, TileBase tile)
-        {
-            BuildTileMap.SetTile(targetMap, tile);
+            tilemap.SetTile(targetMap, tile);
+            if (isPass)
+            {
+                tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
+                tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
+            }
             return this;
         }
 
@@ -74,48 +66,40 @@ namespace LAB2D
         /// <param name="targetMap"></param>
         public void setComplete(Vector3Int targetMap)
         {
-            if (BuildTileMap.GetColor(targetMap).a == 0.5f)
+            if (tilemap.GetColor(targetMap).a == 0.5f)
             {
-                BuildTileMap.SetColliderType(targetMap, Tile.ColliderType.Sprite);
-                BuildTileMap.SetColor(targetMap, new Color(1, 1, 1, 1));
+                tilemap.SetColliderType(targetMap, Tile.ColliderType.Sprite);
+                tilemap.SetColor(targetMap, new Color(1, 1, 1, 1));
             }
             else
             {
-                BuildTileMap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
+                tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
             }
             RoomManager.Instance.complete(targetMap);
         }
 
         public bool isBuilding(Vector3Int target)
         {
-            return BuildTileMap.GetColor(target).a < 1.0f;
+            return tilemap.GetColor(target).a < 1.0f;
         }
 
         public void cancelBuilding(Vector3Int targetMap)
         {
-            BuildTileMap.SetTile(targetMap, null);
+            tilemap.SetTile(targetMap, null);
             targetMaps.Remove(targetMap);
         }
 
         public void addTask()
         {
             Dictionary<int, ResourceInfo> resourceInfos = new Dictionary<int, ResourceInfo>();
-            resourceInfos.Add(ItemDataManager.Instance.getByName("Wood").id,new ResourceInfo(ItemDataManager.Instance.getByName("Wood").id, 5));
+            resourceInfos.Add(ItemDataManager.Instance.getByName("CustomWood").id,
+                new ResourceInfo(ItemDataManager.Instance.getByName("CustomWood").id, 5));
             foreach (Vector3Int targetMap in targetMaps) { 
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
                 WorkerTaskManager.Instance.addTask(new WorkerBuildTask.BuildTaskBuilder().setBuildPos(targetMap)
-                    .setNeedResource(new NeedResource(Tool.DeepCopyByBinary(resourceInfos))).build());
+                    .setNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).build());
             }
             targetMaps.Clear();
-        }
-
-        /// <summary>
-        /// 所有图标在内,不为null则不可用
-        /// </summary>
-        /// <param name="posMap"></param>
-        /// <returns></returns>
-        public bool isAvailableTile(Vector3Int posMap) {
-            return BuildTileMap.GetTile(posMap) == null;
         }
 
         /// <summary>
@@ -123,15 +107,12 @@ namespace LAB2D
         /// </summary>
         /// <param name="posMap"></param>
         /// <returns></returns>
-        public bool isPassTile(Vector3Int posMap)
+        public override bool isCanReach(Vector3Int posMap)
         {
-            return Mathf.Abs(BuildTileMap.GetColor(posMap).a - 0.49f) < 1e-5
-                || Mathf.Abs(BuildTileMap.GetColor(posMap).a - 0.99f) < 1e-5;
-        }
-
-        public TileBase getTile(Vector3Int pos)
-        {
-            return BuildTileMap.GetTile(pos);
+            // 门可以通行
+            return Mathf.Abs(tilemap.GetColor(posMap).a - 0.49f) < 1e-5
+                || Mathf.Abs(tilemap.GetColor(posMap).a - 0.99f) < 1e-5 
+                || base.isFreeTile(posMap);
         }
     }
 }

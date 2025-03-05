@@ -8,20 +8,19 @@ using UnityEngine.Tilemaps;
 
 namespace LAB2D
 {
-    public class IsAvailableMap : MonoBehaviour
+    public class IsAvailableMap : BaseTileMap
     {
         public static IsAvailableMap Instance { private set; get; }
         
-        private Tilemap isAvailableMap;
         /// <summary>
         /// 已经显示绿色和红色Tile
         /// </summary>
         private List<Vector3Int> selectPos_s;
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             Instance = this;
-            isAvailableMap = GetComponent<Tilemap>();
             selectPos_s = new List<Vector3Int>();
         }
 
@@ -47,15 +46,15 @@ namespace LAB2D
                 {
                     Vector3Int _posMap = new Vector3Int(posMap.x + i, posMap.y + j, 0);
                     selectPos_s.Add(_posMap);
-                    isAvailableMap.SetTile(_posMap, (TileBase)ResourcesManager.Instance.getAsset("Snow"));
-                    isAvailableMap.RemoveTileFlags(_posMap, TileFlags.LockColor);
-                    if (isAvailablePos(_posMap))
+                    tilemap.SetTile(_posMap, (TileBase)ResourcesManager.Instance.getAsset("Snow"));
+                    tilemap.RemoveTileFlags(_posMap, TileFlags.LockColor);
+                    if (isAvailable(_posMap))
                     {
-                        isAvailableMap.SetColor(_posMap, new Color(0, 1, 0));
+                        tilemap.SetColor(_posMap, new Color(0, 1, 0));
                     }
                     else
                     {
-                        isAvailableMap.SetColor(_posMap, new Color(1, 0, 0));
+                        tilemap.SetColor(_posMap, new Color(1, 0, 0));
                         isBuilding = false;
                     }
                 }
@@ -66,7 +65,7 @@ namespace LAB2D
         public void clearShow() {
             foreach (Vector3Int selectPos in selectPos_s)
             {
-                isAvailableMap.SetTile(selectPos, null);
+                tilemap.SetTile(selectPos, null);
             }
             selectPos_s.Clear();
         }
@@ -76,32 +75,46 @@ namespace LAB2D
         /// </summary>
         /// <param name="posMap"></param>
         /// <returns></returns>
-        public bool isAvailablePos(Vector3Int posMap) {
-            return TileMap.Instance.isAvailableTile(posMap) &&
-                BuildMap.Instance.isAvailableTile(posMap) &&
-                ResourceMap.Instance.isAvailableTile(posMap);
+        private bool isAvailable(Vector3Int posMap) {
+            return TileMap.Instance.isCanReach(posMap) &&
+                BuildMap.Instance.isFreeTile(posMap) &&
+                ResourceMap.Instance.isFreeTile(posMap);
         }
 
         /// <summary>
         /// 生成可用位置(地图与建筑)
         /// </summary>
-        /// <param name="centerMap"></param>
+        /// <param name="centerMap">default:全图找可用位置</param>
+        /// <param name="radius"></param>
+        /// <param name="isDrop"></param>
         /// <returns></returns>
-        public Vector3Int genAvailablePosMap(Vector3Int centerMap=default, int radius=10)
+        public Vector3Int genAvailablePosMap(Vector3Int centerMap=default, int radius=10, bool isDrop = false)
         {
-            int x, y, startX = 0, endX = TileMap.Instance.Height, startY = 0, endY = TileMap.Instance.Width;
+            int x, y, startX = 0, endX = TileMap.Height, startY = 0, endY = TileMap.Width;
             if (centerMap != default)
             {
                 startX = (int)Mathf.Max(centerMap.x - radius, 0);
                 startY = (int)Mathf.Max(centerMap.y - radius, 0);
-                endX = (int)Mathf.Min(centerMap.x + radius, TileMap.Instance.Height);
-                endY = (int)Mathf.Min(centerMap.y + radius, TileMap.Instance.Width);
+                endX = (int)Mathf.Min(centerMap.x + radius, TileMap.Height);
+                endY = (int)Mathf.Min(centerMap.y + radius, TileMap.Width);
             }
+            // 如果循环次数过多,则说明没有可用的位置
+            int count = 0;
+            bool flag = false;
             do
             {
                 x = Random.Range(startX, endX);
                 y = Random.Range(startY, endY);
-            } while (!isAvailablePos(new Vector3Int(x, y, 0)));
+                count++;
+                if(count > 100)
+                {
+                    LogManager.Instance.log("genAvailablePosMap Error!!!", LogManager.LogLevel.Error);
+                    return default;
+                }
+                // 如果是放置掉落物,则需要判断是否是可放置的位置
+                bool A = !isAvailable(new Vector3Int(x, y, 0));
+                flag = isDrop ? A || !ItemMap.Instance.isFreeTile(new Vector3Int(x, y, 0)) : A;
+            } while (flag);
             return new Vector3Int(x, y, 0);
         }
     }

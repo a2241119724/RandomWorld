@@ -13,10 +13,7 @@ namespace LAB2D
 
         void Start()
         {
-            addClickOnButton(ItemType.Room);
-            addClickOnButton(ItemType.Wall);
-            addClickOnButton(ItemType.Furniture);
-            addClickOnButton(ItemType.BuildOther);
+            bindButton(ItemType.Room, ItemType.BuildOther);
         }
 
         protected override void init()

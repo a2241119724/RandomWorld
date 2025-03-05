@@ -17,7 +17,7 @@ namespace LAB2D
 
         public void OnClick_Send()
         {
-            AIChat.Instance.send();
+            AIChatUI.Instance.send();
         }
     }
 }

@@ -13,11 +13,5 @@ namespace LAB2D
             height = 2;
             tile = (TileBase)ResourcesManager.Instance.getAsset("SingleBed");
         }
-
-        public override void addBuildTask(Vector3Int centerMap, int width = 1, int height = 1)
-        {
-            base.addBuildTask(centerMap, width, height);
-            BuildMap.Instance.addPassBuild(centerMap, tile).addTask();
-        }
     }
 }

@@ -51,7 +51,7 @@ namespace LAB2D
         //        GameObject go = Instantiate(blood, collision.transform.position, Quaternion.identity);
         //        if (go == null)
         //        {
-        //            Debug.LogError("blood Instantiate Error!!!");
+        //LogManager.Instance.log("blood Instantiate Error!!!", LogManager.LogLevel.Error);
         //            return;
         //        }
         //        go.name = blood.name;

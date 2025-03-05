@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace LAB2D
@@ -48,11 +49,7 @@ namespace LAB2D
         }
 
         public List<Item> getBuildItems() {
-            List<Item> items = new List<Item>();
-            foreach (KeyValuePair<string, BuildItem> buildItem in buildItems) {
-                items.Add(buildItem.Value);
-            }
-            return items;
+            return buildItems.Values.ToList<Item>();
         }
 
         /// <summary>
@@ -69,6 +66,8 @@ namespace LAB2D
             types = Tool.getChildByParent<BuildItem>();
             foreach (Type type in types)
             {
+                Type[] interfaces = type.GetInterfaces();
+                if (interfaces.Length > 0 && interfaces.Contains(typeof(DontShow))) continue;
                 int id = ItemDataManager.Instance.getByName(type.Name).id;
                 BuildItem item = (BuildItem)Activator.CreateInstance(type);
                 item.id = id;

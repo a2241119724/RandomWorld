@@ -27,7 +27,7 @@ namespace LAB2D
         public override void start(Worker worker)
         {
             base.start(worker);
-            stageInit[0].Invoke(worker);
+            changeStage(worker,0);
         }
 
         public override bool isCanWork(Worker worker)
@@ -49,13 +49,12 @@ namespace LAB2D
                     ItemDataManager.Instance.getById(id).imageName);
             }else if(ItemDataManager.Instance.getTypeById(id) == ItemType.Equipment)
             {
-                worker.WearData.equipments.Add(ItemDataManager.Instance.getEquipmentTypeById(id),
-                    (Equipment)ItemFactory.Instance.getBackpackItemByName(
-                    ItemDataManager.Instance.getById(id).imageName));
+                worker.WearData.addEquipment((Equipment)ItemFactory.Instance.getBackpackItemByName(
+                    ItemDataManager.Instance.getById(id).imageName), TargetMap);
             }
             InventoryManager.Instance.subItemByPreTake(worker, TargetMap);
             // É¾³ýÍ¼±ê
-            ItemMap.Instance.pickUp(TargetMap);
+            ItemMap.Instance.hindTile(TargetMap);
         }
 
         public class WearTaskBuilder

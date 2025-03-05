@@ -16,7 +16,7 @@ namespace LAB2D
             infoView = Tool.GetComponentInChildren<BackpackInfoView>(gameObject, "Info");
             base.Awake();
             Instance = this;
-            // 如果背包为空添加一个武器到背包
+            //
             if (model.isNull(ItemType.Weapon))
             {
                 // addItem(ItemFactory.Instance.getBackpackItemByName("SingleGun"));

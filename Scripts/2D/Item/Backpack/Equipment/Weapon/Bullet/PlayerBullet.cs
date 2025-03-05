@@ -18,14 +18,14 @@ namespace LAB2D
             base.Start();
             photonView = GetComponent<PhotonView>();
             if (photonView == null) {
-                Debug.LogError("photonView Not Found!!!");
+                LogManager.Instance.log("photonView Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
         }
 
         protected override void Update()
         {
-            if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
+            if (NetworkConnect.Instance.IsOnline && !photonView.IsMine && PhotonNetwork.IsConnected) return;
             base.Update();
         }
 

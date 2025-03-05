@@ -4,6 +4,9 @@ using UnityEngine.Tilemaps;
 
 namespace LAB2D
 {
+    /// <summary>
+    /// 再世界上显示数字
+    /// </summary>
     public class TextTileGenerator : MonoBehaviour
     {
         public static TextTileGenerator Instance { private set; get; }
@@ -18,13 +21,13 @@ namespace LAB2D
 
         private void Start()
         {
-            BuildMap.Instance.addPassBuild(new Vector3Int(1, 1, 0), getTileByNum(1));
+            BuildMap.Instance.directBuild(new Vector3Int(1, 1, 0), getTileByNum(1));
         }
 
         public Tile getTileByNum(int num) { 
             if(num<0 || num >=1000)
             {
-                Debug.LogError("错误的输入");
+                LogManager.Instance.log("错误的输入", LogManager.LogLevel.Error);
                 return null;
             }
             if (sprites[num] == null)

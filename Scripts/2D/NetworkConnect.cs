@@ -18,6 +18,7 @@ namespace LAB2D
         {
             Instance = this;
             PhotonNetwork.AutomaticallySyncScene = true;
+            IsOnline = false;
         }
 
         void Start()
@@ -52,7 +53,7 @@ namespace LAB2D
             //GameObject player = PhotonNetwork.Instantiate(Constant.PREFAB + _player.name, Vector3.zero, Quaternion.identity);
             //if (player == null)
             //{
-            //    Debug.LogError("player Instantiate Error!!!");
+            //    LogManager.Instance.log("加入房间成功", LogManager.LogLevel.Info);
             //    return;
             //}
             //player.name = "Player";
@@ -63,22 +64,22 @@ namespace LAB2D
         public override void OnLeftLobby()
         {
             base.OnLeftLobby();
-            Debug.Log("退出大厅");
+            LogManager.Instance.log("退出大厅", LogManager.LogLevel.Info);
         }
 
         public override void OnLeftRoom()
         {
             base.OnLeftRoom();
-            Debug.Log("离开房间");
+            LogManager.Instance.log("离开房间", LogManager.LogLevel.Info);
         }
 
         public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
         {
             base.OnPlayerEnteredRoom(newPlayer);
-            Debug.Log("新玩家加入");
+            LogManager.Instance.log("新玩家加入", LogManager.LogLevel.Info);
             //InitTip.Instance.showTip("新玩家加入");
             //仅需要房主传递数据给新玩家
-            if (PhotonNetwork.IsMasterClient)
+            if (IsOnline && PhotonNetwork.IsMasterClient)
             {
                 if (TileMap.Instance != null)
                 {
@@ -94,13 +95,13 @@ namespace LAB2D
         public override void OnCreateRoomFailed(short returnCode, string message)
         {
             base.OnCreateRoomFailed(returnCode, message);
-            Debug.Log("创建房间失败!!!");
+            LogManager.Instance.log("创建房间失败!!!", LogManager.LogLevel.Error);
         }
 
         public override void OnDisconnected(DisconnectCause cause)
         {
             base.OnDisconnected(cause);
-            Debug.Log("断开连接!!!");
+            LogManager.Instance.log("断开连接!!!", LogManager.LogLevel.Error);
             IsOnline = false;
         }
     }

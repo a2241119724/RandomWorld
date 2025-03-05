@@ -25,6 +25,7 @@ namespace LAB2D {
             CSD = rankRandom(0.0f, 0.0f);
             HIT = rankRandom(0.0f, 0.0f);
             RES = rankRandom(0.0f, 0.0f);
+            equipType = EquipType.Weapon;
         }
 
         /// <summary>
@@ -100,7 +101,7 @@ namespace LAB2D {
             transform.localPosition = Vector3.zero; // 初始位置与玩家一致
             _collider = transform.Find("Head").GetComponent<CircleCollider2D>();
             if (_collider == null) {
-                Debug.LogError("collider Not Found!!!");
+                LogManager.Instance.log("collider Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             // 设置武器追踪范围
@@ -158,7 +159,7 @@ namespace LAB2D {
         {
             if (player == null)
             {
-                Debug.LogError("collider is null!!!");
+                LogManager.Instance.log("collider is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             this.player = player.gameObject;
@@ -173,7 +174,7 @@ namespace LAB2D {
         [PunRPC]
         public virtual void attack()
         {
-            //if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
+            // if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
             if (recordTime >= attackInterval)
             {
                 _attack();

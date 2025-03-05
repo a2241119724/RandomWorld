@@ -14,7 +14,7 @@ namespace LAB2D
 
         public override void OnEnter()
         {
-            //Debug.Log("SeekState");
+            //LogManager.Instance.log("SeekState", LogManager.LogLevel.Info);
         }
 
         public override void OnExit()
@@ -37,8 +37,8 @@ namespace LAB2D
                 return;
             }
             // 如果受到攻击,那么向着玩家方向进行搜索
-            Character.RotateTo(Character.Target.transform.position - Character.transform.position); 
-            Character.MoveToForward();
+            Character.rotateTo(Character.Target.transform.position - Character.transform.position); 
+            Character.moveToForward();
             // TODO可以奔跑搜索，以后实现
         }
     }

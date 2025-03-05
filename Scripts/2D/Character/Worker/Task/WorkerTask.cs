@@ -15,6 +15,8 @@ namespace LAB2D
         public Vector3Int TargetMap { get; set; }
         public TaskType TaskType { get; set; }
         public string Name { set; get; }
+        
+        protected int stage;
 
         protected static readonly List<Vector3Int> neighbors = new List<Vector3Int>(){
             new Vector3Int(0,1,0), // 上
@@ -42,6 +44,17 @@ namespace LAB2D
             Name = taskType.ToString();
             AvailableNeighborPos = new List<Vector3Int>();
             stageInit = new List<UnityAction<Worker>>();
+        }
+
+        protected void changeStage(Worker worker, int stage)
+        {
+            if(stageInit.Count < stage + 1)
+            {
+                LogManager.Instance.log("没有该阶段", LogManager.LogLevel.Error);
+                return;
+            }
+            this.stage = stage;
+            stageInit[stage].Invoke(worker);
         }
 
 
@@ -99,6 +112,7 @@ namespace LAB2D
         }
 
         public virtual void giveUpTask(Worker worker) {
+            LogManager.Instance.log("放弃任务", LogManager.LogLevel.Warning);
             worker.giveUpTask();
         }
 
@@ -131,6 +145,7 @@ namespace LAB2D
         Hungry,
         Exercise,
         Wear,
-        Sleep
+        Sleep,
+        Plant,
     }
 }

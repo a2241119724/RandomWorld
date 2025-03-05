@@ -23,7 +23,7 @@ namespace LAB2D
         {
             base.start(worker);
             InventoryManager.Instance.isEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry,true);
-            stageInit[0].Invoke(worker);
+            changeStage(worker,0);
         }
 
         public override void finish(Worker worker)

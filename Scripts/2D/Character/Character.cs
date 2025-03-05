@@ -9,6 +9,7 @@ namespace LAB2D {
         public float moveSpeed = 2.5f; // 角色速度
 
         protected SpriteRenderer _renderer; // 闪烁 
+        protected CheckBug checkBug;
 
         private GameObject damageUI; // 掉血面板
         private Color originalColor; // 原来的自身颜色
@@ -17,12 +18,13 @@ namespace LAB2D {
         {
             damageUI = ResourcesManager.Instance.getPrefab("Damage");
             transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
+            checkBug = new CheckBug();
         }
 
         protected virtual void Start() { 
             _renderer = GetComponent<SpriteRenderer>();
             if (_renderer == null) {
-                Debug.LogError("renderer Not Found!!!");
+                LogManager.Instance.log("renderer Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             originalColor = _renderer.color;
@@ -33,7 +35,7 @@ namespace LAB2D {
             if (Hp <= 0) return;
             GameObject g = Instantiate(damageUI, transform.position, Quaternion.identity); // 创建物体(预设,位置,角度)
             if (g == null) {
-                Debug.LogError("damageUI Instantiate Error!!!");
+                LogManager.Instance.log("damageUI Instantiate Error!!!", LogManager.LogLevel.Error);
                 return;
             }
             g.name = damageUI.name;
@@ -75,6 +77,35 @@ namespace LAB2D {
         {
             return $"{this.GetType().Name}:{name}\n" +
                 $"Speed:{moveSpeed}\n";
+        }
+
+        protected class CheckBug
+        {
+            public long lastTime;
+            public int colliderCount;
+
+            public bool isBug(string name, int threshold=50)
+            {
+                bool bug = colliderCount > threshold;
+                if (bug)
+                {
+                    LogManager.Instance.log(name + "碰撞次数:" + colliderCount, LogManager.LogLevel.Info);
+                }
+                return bug;
+            }
+
+            public void addColliderCount(long time)
+            {
+                if (time - lastTime < 3e5)
+                {
+                    colliderCount++;
+                }
+                else
+                {
+                    colliderCount = 1;
+                }
+                lastTime = time;
+            }
         }
 
         [Serializable]

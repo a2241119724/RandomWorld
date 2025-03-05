@@ -8,16 +8,13 @@ using System.Linq;
 namespace LAB2D
 {
     /// <summary>
+    /// 任务2阶段：拿材料，建造
     /// Build在第一个阶段预留资源
     /// </summary>
     public class WorkerBuildTask : WorkerTask
     {
-        private NeedResource needResource;
-        private NeedResource temp;
-        /// <summary>
-        /// 任务2阶段：拿材料，建造
-        /// </summary>
-        private int stage;
+        private Dictionary<int, ResourceInfo> needs;
+        private Dictionary<int, ResourceInfo> temp;
         /// <summary>
         /// 建造的位置
         /// </summary>
@@ -45,7 +42,6 @@ namespace LAB2D
             });
             stageInit.Add((Worker worker) =>
             {
-                stage = 1;
                 maxProgress = 2.0f;
                 // 建造
                 AvailableNeighborPos.Clear();
@@ -61,17 +57,17 @@ namespace LAB2D
         public override void start(Worker worker)
         {
             // 自身携带资源足够
-            if (worker.isEnough(needResource))
+            if (worker.isEnough(needs))
             {
-                Debug.Log("携带资源充足");
-                stageInit[1].Invoke(worker);
+                //LogManager.Instance.log("携带资源充足", LogManager.LogLevel.Info);
+                changeStage(worker,1);
                 return;
             }
             // 获得剩余不够的数量
-            NeedResource remaining = worker.getRemaining(needResource);
+            Dictionary<int, ResourceInfo> remaining = worker.getRemaining(needs);
             InventoryManager.Instance.isEnoughAndPreTake(worker, remaining, true);
             // 不够就取资源
-            stageInit[0].Invoke(worker);
+            changeStage(worker,0);
         }
 
         protected override bool isFinish(Worker worker)
@@ -81,27 +77,27 @@ namespace LAB2D
             {
                 case 0:
                     ResourceInfo resourceInfo = InventoryManager.Instance.subItemByPreTake(worker, TargetMap);
-                    worker.addResource(Tool.DeepCopyByBinary(resourceInfo));
+                    worker.addResource(resourceInfo);
                     // 减少需求的数量
-                    foreach(KeyValuePair<int, ResourceInfo> pair in temp.needs)
+                    foreach(KeyValuePair<int, ResourceInfo> pair in temp)
                     {
                         if (pair.Key == resourceInfo.id)
                         {
                             pair.Value.count -= resourceInfo.count;
                             if(pair.Value.count <= 0)
                             {
-                                temp.needs.Remove(resourceInfo.id);
+                                temp.Remove(resourceInfo.id);
                             }
                             break;
                         }
                     }
                     // 获取完成所有的材料
-                    if (temp.needs.Count == 0)
+                    if (temp.Count == 0)
                     {
-                        stageInit[1].Invoke(worker);
+                        changeStage(worker,1);
                         return false;
                     }
-                    stageInit[0].Invoke(worker);
+                    changeStage(worker,0);
                     return false;
                 default:
                     return true;
@@ -112,7 +108,7 @@ namespace LAB2D
         {
             base.finish(worker);
             // 减少worker携带的资源
-            worker.subResource(needResource);
+            worker.subResource(needs);
             // 将建造完成的Tile从Building变为Build中
             BuildMap.Instance.setComplete(buildPos);
         }
@@ -124,17 +120,18 @@ namespace LAB2D
                 return false;
             }
             // 如果worker携带的资源已经满足建造
-            if (worker.isEnough(needResource)) return true;
+            if (worker.isEnough(needs)) return true;
             // 按照单个任务的资源取看是否足够
             // 获得剩余不够的数量
-            NeedResource remaining = worker.getRemaining(needResource);
+            Dictionary<int, ResourceInfo> remaining = worker.getRemaining(needs);
             return InventoryManager.Instance.isEnoughAndPreTake(worker, remaining);
         }
 
         public override void giveUpTask(Worker worker)
         {
             base.giveUpTask(worker);
-            temp = Tool.DeepCopyByBinary(needResource);
+            // 恢复资源
+            temp = Tool.DeepCopyByBinary(needs);
         }
 
         public class BuildTaskBuilder {
@@ -156,30 +153,15 @@ namespace LAB2D
                 return this;
             }
 
-            public BuildTaskBuilder setNeedResource(NeedResource needResource) {
-                task.temp = needResource;
-                task.needResource = Tool.DeepCopyByBinary(needResource);
+            public BuildTaskBuilder setNeedResource(Dictionary<int, ResourceInfo> needResource) {
+                task.temp = Tool.DeepCopyByBinary(needResource);
+                task.needs = Tool.DeepCopyByBinary(needResource);
                 return this;
             }
 
             public WorkerBuildTask build() {
                 return task;
             }
-        }
-    }
-
-    [Serializable]
-    public class NeedResource {
-        public Dictionary<int,ResourceInfo> needs;
-
-        public NeedResource()
-        {
-            needs = new Dictionary<int, ResourceInfo>();
-        }
-
-        public NeedResource(Dictionary<int, ResourceInfo> needs)
-        {
-            this.needs = needs;
         }
     }
 }

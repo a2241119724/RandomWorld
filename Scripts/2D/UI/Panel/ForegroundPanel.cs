@@ -11,36 +11,36 @@ namespace LAB2D {
     public class ForegroundPanel : BasePanel<ForegroundPanel>
     {
         public float TimeScale { get; set; } = 1;
-        public UnityAction[] ToolMenus { get; set; }
+        /// <summary>
+        /// 匹配数字按键
+        /// </summary>
+        public readonly IBasePanel[] ToolMenus = new IBasePanel[] { BuildMenuPanel.Instance, PlayerInfoPanel.Instance, BackpackMenuPanel.Instance,
+                WorkerTaskInfoPanel.Instance,InventoryMenuPanel.Instance,AIChatPanel.Instance};
 
-        public ForegroundPanel()
+    public ForegroundPanel()
         {
             Name = "Foreground";
             setPanel();
-            Tool.GetComponentInChildren<Button>(panel, "Backpack").onClick.AddListener(OnClick_Backpack);
             Tool.GetComponentInChildren<Button>(panel, "Pause").onClick.AddListener(OnClick_Pause);
             Button attack = Tool.GetComponentInChildren<Button>(panel, "Attack");
             if (attack != null)
             {
                 Tool.GetComponentInChildren<Button>(panel, "Attack").onClick.AddListener(Onclick_Attack);
             }
-            Tool.GetComponentInChildren<Button>(panel, "PlayerInfo").onClick.AddListener(Onclick_PlayerInfo);
             Tool.GetComponentInChildren<Button>(panel, "Setting").onClick.AddListener(Onclick_Setting);
             Tool.GetComponentInChildren<Button>(panel, "GeneratorWorker").onClick.AddListener(Onclick_GeneratorWorker);
-            Tool.GetComponentInChildren<Button>(panel, "Build").onClick.AddListener(Onclick_Build);
-            Tool.GetComponentInChildren<Button>(panel, "WorkerTask").onClick.AddListener(Onclick_WorkerTaskInfo);
+            Tool.GetComponentInChildren<Button>(panel, "GeneratorItem").onClick.AddListener(Onclick_GeneratorItem);
             Tool.GetComponentInChildren<Button>(panel, "Save").onClick.AddListener(Onclick_Save);
-            Tool.GetComponentInChildren<Button>(panel, "Inventory").onClick.AddListener(Onclick_Inventory);
-            Tool.GetComponentInChildren<Button>(panel, "Chat").onClick.AddListener(Onclick_Chat);
             // 匹配数字按键
-            ToolMenus = new UnityAction[9];
-            ToolMenus[0] += Onclick_GeneratorWorker;
-            ToolMenus[1] += Onclick_Build;
-            ToolMenus[2] += Onclick_PlayerInfo;
-            ToolMenus[3] += OnClick_Backpack;
-            ToolMenus[4] += Onclick_WorkerTaskInfo;
-            ToolMenus[5] += Onclick_Inventory;
-            ToolMenus[6] += Onclick_Chat;
+            Transform tools = Tool.GetComponentInChildren<Transform>(panel, "Panel");
+            for (int i = 0; i < tools.childCount; i++)
+            {
+                int temp = i;
+                tools.GetChild(i).GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    controller.show(ToolMenus[temp]);
+                });
+            }
         }
 
         public override void OnEnter()
@@ -70,15 +70,6 @@ namespace LAB2D {
         }
 
         /// <summary>
-        /// 打开背包
-        /// </summary>
-        private void OnClick_Backpack()
-        {
-            // 创建背包面板
-            controller.show(BackpackMenuPanel.Instance);
-        }
-
-        /// <summary>
         /// 暂停游戏
         /// </summary>
         private void OnClick_Pause()
@@ -105,14 +96,6 @@ namespace LAB2D {
         }
 
         /// <summary>
-        /// 打开玩家面板
-        /// </summary>
-        public void Onclick_PlayerInfo()
-        {
-            controller.show(PlayerInfoPanel.Instance);
-        }
-
-        /// <summary>
         /// 打开设置面板
         /// </summary>
         public void Onclick_Setting()
@@ -128,15 +111,6 @@ namespace LAB2D {
             WorkerManager.Instance.create(PlayerManager.Instance.Mine.transform.position);
         }
 
-        public void Onclick_Build()
-        {
-            controller.show(BuildMenuPanel.Instance);
-        }
-
-        public void Onclick_WorkerTaskInfo()
-        {
-            controller.show(WorkerTaskInfoPanel.Instance);
-        }
         public void Onclick_Save()
         {
             GlobalInit.Instance.showTip("保存数据");
@@ -150,14 +124,12 @@ namespace LAB2D {
             }
         }
 
-        public void Onclick_Inventory()
+        public void Onclick_GeneratorItem()
         {
-            controller.show(InventoryMenuPanel.Instance);
-        }
-
-        public void Onclick_Chat()
-        {
-            controller.show(AIChatPanel.Instance);
+            if(EnemyManager.Instance.Characters.Count > 0)
+            {
+                ((EnemyDeadState)EnemyManager.Instance.Characters[0].Manager.States[EnemyStateType.Dead]).dropItem();
+            }
         }
     }
 }

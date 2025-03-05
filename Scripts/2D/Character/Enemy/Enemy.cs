@@ -13,7 +13,7 @@ namespace LAB2D
         [HideInInspector] public Transform EnemyHead { get; set; } // 敌人头的位置
         [HideInInspector] public EnemyStateManager<ICharacterState, EnemyStateType, Enemy> Manager { get; set; }
         [HideInInspector] public Character Target { get; set; } // 打击目标
-        public readonly float rotateInterval = 8.0f; // 敌人漫游时每次转向的时间间隔
+        public readonly float rotateInterval = 20.0f; // 敌人漫游时每次转向的时间间隔
         public readonly float rotationSpeed = 2.0f; // 敌人旋转的速度
         public readonly float attackRange = 4.0f; // 敌人攻击距离
         
@@ -43,13 +43,13 @@ namespace LAB2D
             base.Start();
             EnemyHead = transform.Find("Head");
             if (EnemyHead == null) {
-                Debug.LogError("enemyHead Not Found!!!");
+                LogManager.Instance.log("enemyHead Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             statusBar = transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (statusBar == null)
             {
-                Debug.LogError("statusBar Not Found!!!");
+                LogManager.Instance.log("statusBar Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             // 更新敌人身体状况
@@ -76,7 +76,7 @@ namespace LAB2D
         public bool SenseNearby(Transform target)
         {
             if (target == null) {
-                Debug.LogError("target is null!!!");
+                LogManager.Instance.log("target is null!!!", LogManager.LogLevel.Error);
                 return false;
             }
             // 计算玩家与敌人之间的距离 
@@ -112,7 +112,7 @@ namespace LAB2D
         /// <summary>
         /// 向前移动
         /// </summary>
-        public void MoveToForward()
+        public void moveToForward()
         {
             moveSpeed = UnityEngine.Random.Range(1.0f, 2.0f);
             transform.Translate(moveSpeed * Time.deltaTime * (EnemyHead.position - transform.position).normalized, Space.World);//向前移动
@@ -122,7 +122,7 @@ namespace LAB2D
         /// 转向某个方位
         /// </summary>
         /// <param name="direction">转向的方位</param>
-        public void RotateTo(Vector3 direction)
+        public void rotateTo(Vector3 direction)
         {
             // FromToRotation得到从自定义方向到某方向旋转的角度
             transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(Vector3.up, direction), Time.deltaTime * rotationSpeed);
@@ -148,11 +148,20 @@ namespace LAB2D
         protected override void death()
         {
             statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
-            if (PhotonNetwork.IsMasterClient)
+            if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
             {
                 EnemyManager.Instance.remove(this);
             }
             Manager.changeState(EnemyStateType.Dead); // 进入死亡状态
+        }
+
+        private void OnCollisionStay2D(Collision2D collision)
+        {
+            checkBug.addColliderCount(DateTime.Now.Ticks);
+            if (checkBug.isBug(name, 200) && Manager.CurrentStateType == EnemyStateType.Wander)
+            {
+                Manager.changeState(EnemyStateType.Wander);
+            }
         }
 
         public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)

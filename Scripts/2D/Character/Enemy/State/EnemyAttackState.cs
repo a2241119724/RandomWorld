@@ -57,10 +57,10 @@ namespace LAB2D
                     //Object.Destroy(g, 1.0f);
                 }
                 Vector3 direction = Character.Target.transform.position - Character.transform.position;
-                Character.RotateTo(direction); // 旋转
+                Character.rotateTo(direction); // 旋转
                 if (direction.magnitude > 3.0f) // 2米之外向玩家移动
                 {
-                    Character.MoveToForward();
+                    Character.moveToForward();
                 }
                 // animator.SetBool("isAttack", false);
                 return;

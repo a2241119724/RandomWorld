@@ -51,7 +51,7 @@ namespace LAB2D
                     transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     Dictionary<int, ResourceInfo> dict = new Dictionary<int, ResourceInfo>();
                     dict.Add(resourceInfo.id, resourceInfo);
-                    InventoryManager.Instance.isEnoughAndPreTake(workers[index], new NeedResource(dict), true);
+                    InventoryManager.Instance.isEnoughAndPreTake(workers[index], new Dictionary<int, ResourceInfo>(dict), true);
                 });
             }
         }

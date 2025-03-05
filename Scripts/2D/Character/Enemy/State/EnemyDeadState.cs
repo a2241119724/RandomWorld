@@ -32,7 +32,7 @@ namespace LAB2D
         public override void OnEnter()
         {
             base.OnEnter();
-            //Debug.Log("DeadState");
+            //LogManager.Instance.log("DeadState", LogManager.LogLevel.Warning);
             // 如果敌人初次进入死亡状态,那么禁用敌人的一些组件(碰撞体组件)
             Character.transform.GetComponent<Collider2D>().enabled = false;
             PlayerManager.Instance.Mine.GetComponent<Player>().addExperienceValue(5); // 增加经验值
@@ -64,7 +64,7 @@ namespace LAB2D
                 //    }
                 //    else
                 //    {
-                //        Debug.LogError("item Instantiate Error!!!");
+                        //LogManager.Instance.log("item Instantiate Error!!!", LogManager.LogLevel.Error);
                 //    }
                 //}
                 //Object.Destroy(character.gameObject); // Destroy不会立即销毁,下一帧销毁
@@ -78,19 +78,21 @@ namespace LAB2D
         /// 概率获取掉落道具
         /// </summary>
         /// <returns>道具</returns>
-        private void dropItem()
+        public void dropItem()
         {
             int rand = Random.Range(0, dropTotal);
             // 转为数组下标
-            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(Character.transform.position);
-            foreach(KeyValuePair<int,TileBase> dropItem in pToDropItem)
+            Vector3Int pos = IsAvailableMap.Instance.genAvailablePosMap(
+                TileMap.Instance.worldPosToMapPos(Character.transform.position), 3, true);
+            if(pos == default) return;
+            foreach (KeyValuePair<int,TileBase> dropItem in pToDropItem)
             {
                 if (rand <= dropItem.Key)
                 {
                     if (dropItem.Value == null) break;
                     ItemData itemData = ItemDataManager.Instance.getByName(dropItem.Value.name);
                     ResourceInfo resourceInfo = new ResourceInfo(itemData.id, 1);
-                    ItemMap.Instance.putDown(posMap, dropItem.Value, resourceInfo, itemData.type);
+                    ItemMap.Instance.putDownToDrop(pos, dropItem.Value, resourceInfo);
                     break;
                 }
             }

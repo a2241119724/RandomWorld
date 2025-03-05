@@ -10,9 +10,19 @@ namespace LAB2D
     {
         public Dictionary<WallDirection, Wall> walls;
 
-        public override void addBuildTask(Vector3Int centerMap, int width = 10, int height = 7)
+        public override void addBuildTask(Vector3Int centerMap)
         {
             throw new System.NotImplementedException();
+        }
+
+        public int[] getXBoundary(Vector3Int centerMap)
+        {
+            return new int[] { centerMap.x - height / 2, centerMap.x + height - 1 - height / 2 };
+        }
+
+        public int[] getYBoundary(Vector3Int centerMap)
+        {
+            return new int[] { centerMap.y - width / 2, centerMap.y + width - 1 - width / 2 };
         }
 
         public enum WallDirection

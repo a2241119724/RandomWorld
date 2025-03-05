@@ -32,6 +32,7 @@ namespace LAB2D
             itemManagerView.get += get;
             itemManagerView.showInfo += showInfo;
             model = new M();
+            setBorderColor(0, "navigation");
             navigationView.OnClick += (int index) =>
             {
                 setBorderColor(index, "navigation");
@@ -88,7 +89,7 @@ namespace LAB2D
         {
             if (itemManagerView == null)
             {
-                Debug.LogError("inventoryView is null!!!");
+                LogManager.Instance.log("inventoryView is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             itemManagerView.updateView(navigationView.CurItemType,model);
@@ -120,7 +121,7 @@ namespace LAB2D
                     btns[index].GetComponent<RoundCorner>().color = new Color(255 / 255.0f, 150 / 255.0f, 150 / 255.0f, 255 / 255.0f);
                     break;
                 default:
-                    Debug.LogError("没有该类型边框可以修改!!!");
+                    LogManager.Instance.log("没有该类型边框可以修改!!!", LogManager.LogLevel.Error);
                     break;
             }
         }
@@ -139,7 +140,7 @@ namespace LAB2D
         {
             if (infoView == null)
             {
-                Debug.LogError("infoView is null!!!");
+                LogManager.Instance.log("infoView is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             infoView.showInfo(data);

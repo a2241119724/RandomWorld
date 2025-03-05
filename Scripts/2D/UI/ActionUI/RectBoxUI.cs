@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
+using static UnityEditor.Progress;
 
 namespace LAB2D
 {
@@ -14,22 +16,48 @@ namespace LAB2D
 
         private bool isDown = false;
         private Vector3 start;
+        private Dictionary<string, List<Vector3Int>> selects;
+        private Transform options;
 
         private void Awake()
         {
             Instance = this;
+            selects = new Dictionary<string, List<Vector3Int>>();
+            selects.Add("Resource", new List<Vector3Int>());
+            options = Tool.GetComponentInChildren<Transform>(gameObject, "Options");
+            options.gameObject.SetActive(false);
+            Transform gather = Tool.GetComponentInChildren<Transform>(options.gameObject, "Gather");
+            Tool.GetComponentInChildren<Button>(gather.gameObject, "Yes").onClick.AddListener(() =>
+            {
+                Onclick_Yes("Resource");
+            });
+            Tool.GetComponentInChildren<Button>(gather.gameObject, "No").onClick.AddListener(() =>
+            {
+                Onclick_No("Resource");
+            });
         }
 
         void Update()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (options.gameObject.activeSelf)
             {
+                if (Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2))
+                {
+                    options.gameObject.SetActive(false);
+                }
+                return;
+            }
+            if (Input.GetMouseButtonDown(0) && PanelController.Instance.Panels.Count > 0 && 
+                (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance ||
+                PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance))
+            {
+                options.gameObject.SetActive(false);
                 Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 start = pos;
                 transform.position = new Vector3(pos.x, pos.y, 0.0f);
                 isDown = true;
             }
-            else if (isDown && PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance)
+            else if (isDown && PanelController.Instance.isForeground())
             {
                 Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 float x = pos.x - start.x;
@@ -53,6 +81,7 @@ namespace LAB2D
                 select();
                 ((RectTransform)transform).sizeDelta = Vector2.zero;
                 isDown = false;
+                options.gameObject.SetActive(selects["Resource"].Count > 0);
             }
         }
 
@@ -61,6 +90,10 @@ namespace LAB2D
         /// </summary>
         private void select()
         {
+            foreach(string key in selects.Keys)
+            {
+                selects[key].Clear();
+            }
             SelectManager.Instance.freeAll();
             Vector3Int start = TileMap.Instance.worldPosToMapPos(transform.position);
             Vector3Int end = TileMap.Instance.worldPosToMapPos(new Vector3(
@@ -90,14 +123,41 @@ namespace LAB2D
                         SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
                         selectUI.setTarget(posMap);
                     }
-                    TileBase tileBase = ItemInfoUI.Instance.getTile(posMap,false);
+                    TileBase tileBase = ItemInfoUI.Instance.getTile(posMap,false,false);
                     if(tileBase != null)
                     {
                         SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
                         selectUI.setTarget(posMap);
+                        selects["Resource"].Add(posMap);
                     }
                 }
             }
+        }
+
+        public void Onclick_Yes(string key)
+        {
+            transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            options.gameObject.SetActive(false);
+            selects[key].ForEach((posMap) =>
+            {
+                TileBase tileBase = ResourceMap.Instance.getTile(posMap);
+                if (tileBase == null) return;
+                if (WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
+                WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
+                    .setTarget(posMap).setGatherName(tileBase.name).build());
+            });
+        }
+
+        public void Onclick_No(string key)
+        {
+            transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            options.gameObject.SetActive(false);
+            selects[key].ForEach((posMap) =>
+            {
+                if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
+                WorkerTaskManager.Instance.cancelGatherTask(posMap);
+                GatherMap.Instance.cancelGather(posMap);
+            });
         }
     }
 }

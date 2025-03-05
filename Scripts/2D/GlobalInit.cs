@@ -41,7 +41,7 @@ namespace LAB2D
                 ForegroundPanel.Instance.init();
                 if (PanelController.Instance == null)
                 {
-                    Debug.LogError("manager Not Found!!!");
+                    LogManager.Instance.log("manager Not Found!!!", LogManager.LogLevel.Error);
                     return;
                 }
                 PanelController.Instance.show(CreateOrJoinPanel.Instance);
@@ -49,13 +49,18 @@ namespace LAB2D
                 BackpackMenuPanel.Instance.panel.SetActive(true);
                 BackpackMenuPanel.Instance.panel.SetActive(false);
             }
+            // 添加10个种植任务
+            for(int i = 0; i < 10; i++)
+            {
+                WorkerTaskManager.Instance.addTask(new WorkerPlantTask.PlantTaskBuilder().build());
+            }
         }
 
         public void showTip(string text)
         {
             GameObject g = Instantiate(tip);
             if (g == null) {
-                Debug.LogError("tip Instantiate Error!!!");
+                LogManager.Instance.log("tip Instantiate Error!!!", LogManager.LogLevel.Error);
                 return;
             }
             g.name = tip.name;
@@ -72,6 +77,7 @@ namespace LAB2D
 
         private void Update()
         {
+            workerUpdate();
             // 退出界面(除了ForegroundPanel,CreateOrJoinPanel,CreateMenuPanel,CreateDataPanel,AsyncProgressPanel)
             if (Input.GetKey(KeyCode.Escape))
             {
@@ -81,12 +87,17 @@ namespace LAB2D
                     PanelController.Instance.show(BuildMenuPanel.Instance);
                     IsAvailableMap.Instance.clearShow();
                 }
+                // 不能关闭这些面板
                 else if(PanelController.Instance.Panels.Peek() != ForegroundPanel.Instance &&
                     PanelController.Instance.Panels.Peek() != CreateOrJoinPanel.Instance &&
                     PanelController.Instance.Panels.Peek() != CreateMenuPanel.Instance &&
                     PanelController.Instance.Panels.Peek() != CreateDataPanel.Instance &&
                     PanelController.Instance.Panels.Peek() != AsyncProgressPanel.Instance)
                 {
+                    if(PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
+                    {
+                        ItemInfoUI.Instance.init();
+                    }
                     PanelController.Instance.close();
                 }
             }
@@ -97,11 +108,25 @@ namespace LAB2D
                 if (PanelController.Instance.Panels.Count > 0 
                     && PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
                 {
+                    ItemInfoUI.Instance.init();
                     PanelController.Instance.close();
                 }
             }
         }
+
+        private void workerUpdate() 
+        {
+            List<Worker> workers = WorkerManager.Instance.Characters;
+            foreach (Worker worker in workers)
+            {
+                // 按照时间对饥饿值与疲劳值进行自然衰减
+                worker.CurHungry -= Time.deltaTime * 0.1f;
+                worker.CurTired -= Time.deltaTime * 0.01f;
+            }
+        }
     }
+
+    
 
     public abstract class MonoBehaviourInit : MonoBehaviour {
         public virtual void init() { }

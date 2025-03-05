@@ -15,13 +15,13 @@ namespace LAB2D
             roundCorner = GetComponent<RoundCorner>();
             if (roundCorner == null)
             {
-                Debug.LogError("image Not Found!!!");
+                LogManager.Instance.log("image Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             content = transform.Find("Content").GetComponent<Text>();
             if (content == null)
             {
-                Debug.LogError("content Not Found!!!");
+                LogManager.Instance.log("content Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             transform.localScale = Vector3.zero;
@@ -54,14 +54,14 @@ namespace LAB2D
             roundCorner.color = new Color(color.r, color.g, color.b, colorAlpha);
             if (roundCorner.color == null)
             {
-                Debug.LogError("image.color assign resource Error!!!");
+                LogManager.Instance.log("image.color assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
             color = content.color;
             content.color = new Color(color.r, color.g, color.b, colorAlpha);
             if (content.color == null)
             {
-                Debug.LogError("image.color assign resource Error!!!");
+                LogManager.Instance.log("content.color assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
             colorAlpha -= 0.02f;

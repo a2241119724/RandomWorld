@@ -25,35 +25,37 @@ namespace LAB2D
             door = new CustomDoor();
         }
 
-        public override void addBuildTask(Vector3Int centerMap, int width = 10, int height = 7)
+        public override void addBuildTask(Vector3Int centerMap)
         {
+            int[] xB = getXBoundary(centerMap);
+            int[] yB = getYBoundary(centerMap);
             RoomInfo roomInfo = new RoomInfo();
             for (int i = 1; i < width - 1; i++)
             {
-                BuildMap.Instance.addBuilding(new Vector3Int(centerMap.x - height / 2, centerMap.y - width / 2 + i, 0), walls[WallDirection.DOWN].tile)
-                    .addBuilding(new Vector3Int(centerMap.x + height - 1 - height / 2, centerMap.y - width / 2 + i, 0), walls[WallDirection.TOP].tile);
-                roomInfo.Points.Add(new Vector3Int(centerMap.x - height / 2, centerMap.y - width / 2 + i, 0));
-                roomInfo.Points.Add(new Vector3Int(centerMap.x + height - 1 - height / 2, centerMap.y - width / 2 + i, 0));
+                BuildMap.Instance.addBuilding(new Vector3Int(xB[0], yB[0] + i, 0), walls[WallDirection.DOWN].tile)
+                    .addBuilding(new Vector3Int(xB[1], yB[0] + i, 0), walls[WallDirection.TOP].tile);
+                roomInfo.Points.Add(new Vector3Int(xB[0], yB[0] + i, 0));
+                roomInfo.Points.Add(new Vector3Int(xB[1], yB[0] + i, 0));
             }
             for (int i = 1; i < height - 1; i++)
             {
-                BuildMap.Instance.addBuilding(new Vector3Int(centerMap.x - height / 2 + i, centerMap.y - width / 2, 0), walls[WallDirection.LEFT].tile)
-                    .addBuilding(new Vector3Int(centerMap.x - height / 2 + i, centerMap.y + width - 1 - width / 2, 0), walls[WallDirection.RIGHT].tile);
-                roomInfo.Points.Add(new Vector3Int(centerMap.x - height / 2 + i, centerMap.y - width / 2, 0));
-                roomInfo.Points.Add(new Vector3Int(centerMap.x - height / 2 + i, centerMap.y + width - 1 - width / 2, 0));
+                BuildMap.Instance.addBuilding(new Vector3Int(xB[0] + i, yB[0], 0), walls[WallDirection.LEFT].tile)
+                    .addBuilding(new Vector3Int(xB[0] + i, yB[1], 0), walls[WallDirection.RIGHT].tile);
+                roomInfo.Points.Add(new Vector3Int(xB[0] + i, yB[0], 0));
+                roomInfo.Points.Add(new Vector3Int(xB[0] + i, yB[1], 0));
             }
             BuildMap.Instance
-                .addBuilding(new Vector3Int(centerMap.x - height / 2, centerMap.y + width - 1 - width / 2, 0), walls[WallDirection.RIGHT_DOWN].tile)
-                .addBuilding(new Vector3Int(centerMap.x - height / 2, centerMap.y - width / 2, 0), walls[WallDirection.LEFT_DOWN].tile)
-                .addBuilding(new Vector3Int(centerMap.x + height - 1 - height / 2, centerMap.y + width - 1 - width / 2, 0), walls[WallDirection.RIGHT_TOP].tile)
-                .addBuilding(new Vector3Int(centerMap.x + height - 1 - height / 2, centerMap.y - width / 2, 0), walls[WallDirection.LEFT_TOP].tile)
-                .addBuilding(new Vector3Int(centerMap.x - height / 2, centerMap.y, 0), door.tile,false)
+                .addBuilding(new Vector3Int(xB[0], yB[1], 0), walls[WallDirection.RIGHT_DOWN].tile)
+                .addBuilding(new Vector3Int(xB[0], yB[0], 0), walls[WallDirection.LEFT_DOWN].tile)
+                .addBuilding(new Vector3Int(xB[1], yB[1], 0), walls[WallDirection.RIGHT_TOP].tile)
+                .addBuilding(new Vector3Int(xB[1], yB[0], 0), walls[WallDirection.LEFT_TOP].tile)
+                .addBuilding(new Vector3Int(xB[0], centerMap.y, 0), door.tile,false)
                 .addTask();
-            roomInfo.Points.Add(new Vector3Int(centerMap.x - height / 2, centerMap.y + width - 1 - width / 2, 0));
-            roomInfo.Points.Add(new Vector3Int(centerMap.x - height / 2, centerMap.y - width / 2, 0));
-            roomInfo.Points.Add(new Vector3Int(centerMap.x + height - 1 - height / 2, centerMap.y + width - 1 - width / 2, 0));
-            roomInfo.Points.Add(new Vector3Int(centerMap.x + height - 1 - height / 2, centerMap.y - width / 2, 0));
-            roomInfo.Points.Add(new Vector3Int(centerMap.x - height / 2, centerMap.y, 0));
+            roomInfo.Points.Add(new Vector3Int(xB[0], yB[1], 0));
+            roomInfo.Points.Add(new Vector3Int(xB[0], yB[0], 0));
+            roomInfo.Points.Add(new Vector3Int(xB[1], yB[1], 0));
+            roomInfo.Points.Add(new Vector3Int(xB[1], yB[0], 0));
+            roomInfo.Points.Add(new Vector3Int(xB[0], centerMap.y, 0));
             // 由于多计算了一次墙,门覆盖了前面的墙
             roomInfo.Progress = roomInfo.Points.Count - 1;
             RoomManager.Instance.addRoom(Guid.NewGuid().ToString(), roomInfo);

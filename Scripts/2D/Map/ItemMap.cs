@@ -9,69 +9,95 @@ namespace LAB2D
     /// <summary>
     /// 掉落物，仓库，土地管理
     /// </summary>
-    public class ItemMap : MonoBehaviour
+    public class ItemMap : BaseTileMap
     {
         public static ItemMap Instance { private set; get; }
-        public Tilemap ItemTileMap { get; set; }
         public ItemMapData ItemMapDataLAB { get; set; }
 
-        private void Awake()
+
+        protected override void Awake()
         {
+            base.Awake();
             Instance = this;
             ItemMapDataLAB = new ItemMapData();
-            ItemTileMap = GetComponent<Tilemap>();
         }
 
         /// <summary>
-        /// 捡起掉落物
+        /// 隐藏图标
         /// </summary>
         /// <param name="posMap"></param>
-        public void pickUp(Vector3Int posMap)
+        public void hindTile(Vector3Int posMap)
         {
             ItemMapDataLAB.remove(posMap);
-            ItemTileMap.SetTile(posMap, null);
+            tilemap.SetTile(posMap, null);
+        }
+
+        public void pickUpFromInventory(Vector3Int posMap, ResourceInfo resourceInfo)
+        {
+            hindTile(posMap);
+            InventoryManager.Instance.subItem(posMap, resourceInfo);
+        }
+
+        public void pickUpFromDrop(Vector3Int posMap, ResourceInfo resourceInfo)
+        {
+            // 删除拿起来的东西
+            DropResourceManager.Instance.subDropByAll(posMap, resourceInfo);
+            hindTile(posMap);
         }
 
         /// <summary>
-        /// 放置掉落物或仓库
-        /// 若放置掉落物，则添加搬运任务，并添加掉落物管理
+        /// 仅显示图片
         /// </summary>
         /// <param name="posMap"></param>
         /// <param name="tileBase"></param>
-        public void putDown(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo = null, ItemType itemType = ItemType.Null)
+        public void showTile(Vector3Int posMap, TileBase tileBase)
         {
             if (ItemMapDataLAB.containKey(posMap)) return;
             ItemMapDataLAB.add(posMap, tileBase.name);
-            ItemTileMap.SetTile(posMap, tileBase);
-            if (resourceInfo == null) return;
+            tilemap.SetTile(posMap, tileBase);
+        }
+
+        public void putDownToInventory(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
+        {
+            showTile(posMap, tileBase);
+            InventoryManager.Instance.addItem(posMap, resourceInfo);
+        }
+
+        /// <summary>
+        /// 放置掉落物
+        /// </summary>
+        public void putDownToDrop(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
+        {
+            showTile(posMap, tileBase);
+            ItemType itemType = ItemDataManager.Instance.getTypeById(resourceInfo.id);
             // 添加到掉落物管理中
             DropResourceManager.Instance.addDrop(itemType, posMap, resourceInfo);
             // 添加搬运任务
             WorkerTaskManager.Instance.addTask(new WorkerCarryTask.CarryTaskBuilder()
                 //.setEndTarget(InventoryManager.Instance.getCell(id))
-                .setResourceInfo(Tool.DeepCopyByBinary(resourceInfo)).setStartTarget(posMap).build());
+                .setResourceInfo(resourceInfo).setStartTarget(posMap).build());
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
             if (collision.transform.GetComponent<Player>() == null) return;
             Vector3Int posMap = TileMap.Instance.worldPosToMapPos(collision.transform.position);
-            TileBase tile = ItemTileMap.GetTile(posMap);
+            TileBase tile = tilemap.GetTile(posMap);
             if(tile != null)
             {
-                BackpackController.Instance.addItem(ItemFactory.Instance.getBackpackItemByName(ItemTileMap.GetTile(posMap).name));
-                ItemTileMap.SetTile(posMap, null);
+                BackpackController.Instance.addItem(ItemFactory.Instance.getBackpackItemByName(tilemap.GetTile(posMap).name));
+                tilemap.SetTile(posMap, null);
             }
             for (int i = -1; i < 2; i++)
             {
                 for (int j = -1; j < 2; j++)
                 {
                     posMap = new Vector3Int(posMap.x + i, posMap.y + j, 0);
-                    tile = ItemTileMap.GetTile(posMap);
+                    tile = tilemap.GetTile(posMap);
                     if (tile != null)
                     {
-                        BackpackController.Instance.addItem(ItemFactory.Instance.getBackpackItemByName(ItemTileMap.GetTile(posMap).name));
-                        ItemTileMap.SetTile(posMap, null);
+                        BackpackController.Instance.addItem(ItemFactory.Instance.getBackpackItemByName(tilemap.GetTile(posMap).name));
+                        tilemap.SetTile(posMap, null);
                     }
                 }
             }

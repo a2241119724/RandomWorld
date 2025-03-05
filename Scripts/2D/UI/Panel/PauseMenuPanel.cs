@@ -15,7 +15,7 @@ namespace LAB2D
             audioSource = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<AudioSource>();
             if (audioSource == null)
             {
-                Debug.LogError("audioSource Not Found!!!");
+                LogManager.Instance.log("audioSource Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             Tool.GetComponentInChildren<Button>(panel, "Exit").onClick.AddListener(OnClick_Exit);

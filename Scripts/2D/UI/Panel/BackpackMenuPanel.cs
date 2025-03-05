@@ -59,7 +59,7 @@ namespace LAB2D
                 PlayerManager.Instance.Select.weapon = Tool.Instantiate(ResourcesManager.Instance.getPrefab(ItemDataManager.Instance.getById(Select.item.id).imageName), Vector3.zero,Quaternion.identity);
                 if (PlayerManager.Instance.Select.weapon == null)
                 {
-                    Debug.LogError(" PlayerManager.Instance.Select.weapon Instantiate Error!!!");
+                    LogManager.Instance.log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
                 PlayerManager.Instance.Select.weapon.name = ItemDataManager.Instance.getById(Select.item.id).imageName;
@@ -80,13 +80,13 @@ namespace LAB2D
                 GameObject g = ResourcesManager.Instance.getPrefab("Select.selectItemData.itemName");
                 if (g == null)
                 {
-                    Debug.LogError("Consumable is null!!!");
+                    LogManager.Instance.log("Consumable is null!!!", LogManager.LogLevel.Error);
                     return;
                 }
                 g = Object.Instantiate(g);
                 if (g == null)
                 {
-                    Debug.LogError("Consumable Instantiate Error!!!");
+                    LogManager.Instance.log("Consumable Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
                 g.GetComponent<ConsumableObject>().use();
@@ -100,13 +100,13 @@ namespace LAB2D
                     Select.item = null;
                 }
                 else {
-                    Debug.Log(((BackpackItem)Select.item));
+                    LogManager.Instance.log("数量:" + ((BackpackItem)Select.item).quantity, LogManager.LogLevel.Info);
                     // 数据--
                     BackpackController.Instance.reduceQuantity(Select.item);
                     // 界面--
                     BackpackController.Instance.reduceQuantityUI(Select.item);
                     BackpackController.Instance.setBorderColor(BackpackController.Instance.getIndex(Select.item));
-                    Debug.Log(((BackpackItem)Select.item));
+                    LogManager.Instance.log("数量:" + ((BackpackItem)Select.item).quantity, LogManager.LogLevel.Info);
                     // 全局数据--
                     BackpackItem item = (BackpackItem)Select.item;
                     --item.quantity;

@@ -15,6 +15,8 @@ namespace LAB2D
             { TaskType.Exercise,"¶ÍÁ¶"},
             { TaskType.Hungry,"³Ô·¹"},
             { TaskType.Wear,"´©´÷"},
+            { TaskType.Sleep,"Ë¯¾õ"},
+            { TaskType.Plant,"ÖÖÖ²"},
         };
 
         public WorkerTaskInfoPanel()
@@ -24,7 +26,7 @@ namespace LAB2D
             Transform title = Tool.GetComponentInChildren<Transform>(panel,"Title");
             foreach(KeyValuePair<TaskType, string> pair in typeToChinese)
             {
-                title.GetChild((int)pair.Key + 1).GetComponent<Text>().text = pair.Value;
+                Tool.GetComponentInChildren<Text>(title.GetChild((int)pair.Key + 1).gameObject, "Text").text = pair.Value;
             }
         }
 

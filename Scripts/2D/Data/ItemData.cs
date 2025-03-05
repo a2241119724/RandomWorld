@@ -84,7 +84,8 @@ namespace LAB2D
         Material, // 材料
         Task, // 任务用品
         Food, // 食物
-        Other,
+        Seed, // 种子
+        BackpackOther,
         //
         Room,
         Wall,

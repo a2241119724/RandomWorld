@@ -9,14 +9,7 @@ namespace LAB2D
 {
     public class BackpackModel : MVCModel
     {
-        public BackpackModel() {
-            // 协变，异变
-            itemDict.Add(ItemType.Equipment, new ArrayList());
-            itemDict.Add(ItemType.Consumable, new ArrayList());
-            itemDict.Add(ItemType.Weapon, new ArrayList());
-            itemDict.Add(ItemType.Material, new ArrayList());
-            itemDict.Add(ItemType.Task, new ArrayList());
-            itemDict.Add(ItemType.Other, new ArrayList());
+        public BackpackModel() : base(ItemType.Weapon,ItemType.BackpackOther) {
         }
 
         /// <summary>
