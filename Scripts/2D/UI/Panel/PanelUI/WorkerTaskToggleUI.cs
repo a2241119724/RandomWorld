@@ -51,7 +51,7 @@ namespace LAB2D
             foreach(Worker worker in workers)
             {
                 taskItems[index].SetActive(true);
-                taskItems[index].transform.GetChild(0).GetComponent<Text>().text = worker.name;
+                Tool.GetComponentInChildren<Text>(taskItems[index].transform.GetChild(0).gameObject, "Text").text = worker.name;
                 for (int i = 1; i < taskItems[index].transform.childCount; i++)
                 {
                     taskItems[index].transform.GetChild(i).GetComponent<Toggle>().isOn = worker.TaskToggle[i - 1];

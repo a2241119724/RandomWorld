@@ -22,17 +22,27 @@ namespace LAB2D
             Instance = this;
             nameToId = new Dictionary<string, int>();
             allItemInfo = new Dictionary<int, ItemData>();
-            string[] data = Tool.getCSV(ResourceConstant.DATA_ROOT + "ItemData");
-            int len = data.Length;
-            // 跳过第一行
-            for(int i=1;i< len; i++)
+            foreach(ItemType itemType in Enum.GetValues(typeof(ItemType)))
             {
-                string[] cols = data[i].Split(',');
-                allItemInfo.Add(Convert.ToInt32(cols[0]), new ItemData.ItemDataBuilder()
-                    .setId(Convert.ToInt32(cols[0])).setItemName(cols[1])
-                    .setImageName(cols[2]).setInfo(cols[3]).setIsStackable(cols[4].Equals("TRUE"))
-                    .build());
-                nameToId.Add(cols[2], Convert.ToInt32(cols[0]));
+                string[] data = Tool.getCSV(ResourceConstant.DATA_ROOT + itemType.ToString() + "ItemData");
+                if (data == null) continue;
+                int len = data.Length;
+                int start_id = (int)itemType * typeInterval;
+                // 跳过第一行
+                for (int i = 1; i < len; i++)
+                {
+                    string[] cols = data[i].Split(',');
+                    int id = Convert.ToInt32(cols[0]) == -1 ? i - 1 : Convert.ToInt32(cols[0]);
+                    if(id < i - 1)
+                    {
+                        LogManager.Instance.log("id不对应!!!请检查数据", LogManager.LogLevel.Error);
+                    }
+                    id += start_id;
+                    allItemInfo.Add(id, new ItemData.ItemDataBuilder()
+                        .setId(id).setItemName(cols[1]).setImageName(cols[2])
+                        .setInfo(cols[3]).setIsStackable(cols[4].Equals("TRUE")).build());
+                    nameToId.Add(cols[2], id);
+                }
             }
         }
 
@@ -45,7 +55,7 @@ namespace LAB2D
         {
             if (!allItemInfo.ContainsKey(id))
             {
-                Debug.LogError("没有case该id的道具!!!");
+                LogManager.Instance.log("没有case该id的道具!!!", LogManager.LogLevel.Error);
                 return null;
             }
             return allItemInfo[id];
@@ -60,7 +70,7 @@ namespace LAB2D
         {
             if (!nameToId.ContainsKey(name))
             {
-                Debug.LogError("没有名字为"+ name + "的道具!!!");
+                LogManager.Instance.log("没有名字为" + name + "的道具!!!", LogManager.LogLevel.Error);
                 return null;
             }
             return getById(nameToId[name]);
@@ -112,6 +122,11 @@ namespace LAB2D
             {
                 return (int)type - (int)ItemType.Room;
             }
+        }
+
+        internal object getByName(object name)
+        {
+            throw new NotImplementedException();
         }
     }
 }

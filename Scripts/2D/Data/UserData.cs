@@ -17,7 +17,7 @@ namespace LAB2D
             data = new List<Row>();
             if (data == null)
             {
-                Debug.LogError("data assign resource Error!!!");
+                LogManager.Instance.log("data assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
         }

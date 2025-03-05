@@ -15,6 +15,11 @@ namespace LAB2D
         public ItemType CurItemType { get; set; }
         public UnityAction<int> OnClick;
 
+        protected void bindButton(ItemType start, ItemType end)
+        {
+            Tool.splitEnum<ItemType>(start,end).ForEach(item => addClickOnButton(item));
+        }
+
         /// <summary>
         /// «–ªªŒÔ∆∑¿∏
         /// </summary>

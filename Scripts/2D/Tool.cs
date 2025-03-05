@@ -1,5 +1,7 @@
+using NUnit;
 using Photon.Pun;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,6 +21,7 @@ namespace LAB2D
     public class Tool
     {
         private static BinaryFormatter bf = new BinaryFormatter();
+        private static string des = Application.persistentDataPath + "/Data/";
 
         /// <summary>
         /// 画扇形
@@ -162,7 +165,7 @@ namespace LAB2D
                     return t;
                 }
             }
-            Debug.Log(name + " Not Found!!!");
+            LogManager.Instance.log(name + " Not Found!!!", LogManager.LogLevel.Error);
             return null;
         }
 
@@ -259,22 +262,6 @@ namespace LAB2D
             }
         }
 
-        public static void master(Action action)
-        {
-            if (PhotonNetwork.IsMasterClient && GlobalData.isNew)
-            {
-                action();
-            }
-        }
-
-        public static void slave(Action action)
-        {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                action();
-            }
-        }
-
         /// <summary>
         /// 加载二进制文件
         /// </summary>
@@ -315,7 +302,7 @@ namespace LAB2D
         {
             if (!File.Exists(filePath))
             {
-                Debug.Log(filePath + "不存在");
+                LogManager.Instance.log(filePath + "不存在", LogManager.LogLevel.Error);
                 return null;
             }
             string json = File.ReadAllText(filePath);
@@ -339,7 +326,6 @@ namespace LAB2D
         /// <returns></returns>
         public static string[] getCSV(string name)
         {
-            string des = Application.persistentDataPath + "/Data/";
             string data;
             if (File.Exists(des + name + ".csv"))
             {
@@ -348,7 +334,9 @@ namespace LAB2D
             else
             {
                 //Encoding.UTF8.GetString();
-                data = Resources.Load<TextAsset>(name).text;
+                TextAsset textAsset = Resources.Load<TextAsset>(name);
+                if(textAsset == null) return null;
+                data = textAsset.text;
             }
             return data.TrimEnd('\r', '\n').Split("\r\n");
         }
@@ -397,6 +385,23 @@ namespace LAB2D
             {
                 return (GameObject)GameObject.Instantiate(prefab, position, rotation);
             }
+        }
+
+        public static List<T> splitEnum<T>(T start, T end) where T : Enum
+        {
+            List<T> itemTypes = new List<T>();
+            IEnumerator enumerator = Enum.GetValues(typeof(T)).GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                if (((T)enumerator.Current).Equals(start)) break;
+            }
+            do
+            {
+                T type = (T)enumerator.Current;
+                itemTypes.Add(type);
+                if (type.Equals(end)) break;
+            } while (enumerator.MoveNext());
+            return itemTypes;
         }
     }
 }

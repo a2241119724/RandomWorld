@@ -25,8 +25,8 @@ namespace LAB2D
 			gunHead = transform.Find("Head").gameObject;
 			if (gunHead == null)
 			{
-				Debug.LogError("gunHead Not Found!!!");
-				return;
+				LogManager.Instance.log("gunHead Not Found!!!", LogManager.LogLevel.Error);
+                return;
 			}
 		}
 
@@ -53,8 +53,8 @@ namespace LAB2D
 			GameObject g = Tool.Instantiate(ResourcesManager.Instance.getPrefab(bulletName), gunHead.transform.position, Quaternion.identity);
 			if (g == null)
 			{
-				Debug.LogError("bullet Instantiate Error!!!");
-				return null;
+				LogManager.Instance.log("bullet Instantiate Error!!!", LogManager.LogLevel.Error);
+                return null;
 			}
 			g.GetComponent<Bullet>().Direction = gunHead.transform.position - transform.position;
 			g.GetComponent<Bullet>().BulletSpeed = bulletSpeed;

@@ -13,13 +13,13 @@ namespace LAB2D
             slider = transform.Find("HpBar").GetComponent<Slider>();
             if (slider == null)
             {
-                Debug.LogError("slider Not Found!!!");
+                LogManager.Instance.log("slider Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             text = transform.Find("HpCount").GetComponent<Text>();
             if (text == null)
             {
-                Debug.LogError("text Not Found!!!");
+                LogManager.Instance.log("text Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
         }

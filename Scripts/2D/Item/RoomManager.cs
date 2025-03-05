@@ -16,7 +16,7 @@ namespace LAB2D
         public void addRoom(string name, RoomInfo roomInfo) {
             if (rooms.ContainsKey(name))
             {
-                Debug.LogError("已经有房间了");
+                LogManager.Instance.log("已经有房间了", LogManager.LogLevel.Error);
             }
             rooms.Add(name, roomInfo);
         }

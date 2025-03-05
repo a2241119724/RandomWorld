@@ -25,22 +25,21 @@ namespace LAB2D
         public override void start(Worker worker)
         {
             base.start(worker);
-            stageInit[0].Invoke(worker);
+            changeStage(worker,0);
         }
 
         public override void finish(Worker worker)
         {
             base.finish(worker);
             ResourceMap.Instance.cutTree(TargetMap);
-            List<DropItem> dropItems = DropItemManager.Instance.NameToDrop[resourceName];
-            if (dropItems == null) return;
+            List<DropItem> dropItems = DropItemManager.Instance.getDropItemsByName(resourceName);
             // ²ÉÕªµôÂäÄ¾Í·,Æ»¹û
             for (int i=0;i< dropItems.Count; i++)
             {
-                Vector3Int pos = IsAvailableMap.Instance.genAvailablePosMap(TargetMap,2);
-                ResourceInfo resourceInfo = new ResourceInfo(ItemDataManager.Instance.getByName(dropItems[i].Name).id, 10);
-                ItemMap.Instance.putDown(pos, (TileBase)ResourcesManager.Instance.getAsset(dropItems[i].Name),
-                    resourceInfo, dropItems[i].ItemType);
+                Vector3Int pos = IsAvailableMap.Instance.genAvailablePosMap(TargetMap, 3, true);
+                if (pos == default) break;
+                ItemMap.Instance.putDownToDrop(pos, (TileBase)ResourcesManager.Instance.getAsset(dropItems[i].Name),
+                    dropItems[i].ResourceInfo);
             }
             // É¾³ý²ÉÕªÍ¼±ê
             GatherMap.Instance.cancelGather(TargetMap);

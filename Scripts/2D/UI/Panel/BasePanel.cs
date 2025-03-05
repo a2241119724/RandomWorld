@@ -33,7 +33,7 @@ namespace LAB2D
         }
 
         public virtual void OnEnter() {
-            Debug.Log(PhotonNetwork.NetworkClientState);
+            LogManager.Instance.log(PhotonNetwork.NetworkClientState.ToString(), LogManager.LogLevel.Info);
             if (panel == null) return;
             panel.SetActive(true);
         }

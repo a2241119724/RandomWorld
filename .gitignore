@@ -4,6 +4,7 @@
 /Scenes
 /StreamingAssets
 /URP
+/Scripts/Photon
 
 *.meta
 *.mat

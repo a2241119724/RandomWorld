@@ -12,8 +12,9 @@ namespace LAB2D
             isBottomLeft = true;
         }
 
-        public override void addBuildTask(Vector3Int centerMap, int width = 10, int height = 7)
+        public override void addBuildTask(Vector3Int centerMap)
         {
+            base.addBuildTask(centerMap);
             // Ìí¼Ó
             FurnitureManager.Instance.addBed(centerMap);
         }

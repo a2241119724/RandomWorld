@@ -14,7 +14,7 @@ namespace LAB2D
             Parent = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).transform;
             Panels = new Stack<IBasePanel>();
             if (Panels == null) {
-                Debug.LogError("panels assign resource Error!!!");
+                LogManager.Instance.log("panels assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
         }
@@ -47,6 +47,19 @@ namespace LAB2D
             {
                 Panels.Peek().OnRun();
             }
+        }
+
+        /// <summary>
+        /// 最上面的面板是否是前景面板
+        /// </summary>
+        /// <returns></returns>
+        public bool isForeground()
+        {
+            if (Panels.Count > 0)
+            {
+                return Panels.Peek() == ForegroundPanel.Instance;
+            }
+            return false;
         }
     }
 }

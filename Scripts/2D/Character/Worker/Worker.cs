@@ -18,9 +18,7 @@ namespace LAB2D
         public float SeekProgress { get; set; }
         /// <summary>
         /// 是否需要做任务的开关
-        /// 任务越靠前优先级越高（理论）
         /// 是否开启做该任务类型的开关(toogle的顺序与TaskType的顺序相关)
-        /// Build,Carry,CutTree
         /// </summary>
         public bool[] TaskToggle { get; set; }
         public float CurTired { get; set; } = 100.0f;
@@ -34,35 +32,28 @@ namespace LAB2D
         public WearData WearData;
         public BedItem BedItem;
         public static Lock seekLock = new Lock();
-
+        
+        /// <summary>
+        /// 携带的资源
+        /// </summary>
+        private Dictionary<int, ResourceInfo> resourceInfos;
         private static Spend[,] mapSpend; // 地图中板块的花费
         private List<Spend> openList;
         private List<Spend> closeList;
         private List<Spend> path; // 寻路路径
         private Coroutine coroutine; // 寻路路径
-        private CheckBug checkBug;
         private static readonly List<Vector2SByte> neighbors = new List<Vector2SByte>(){
-            new Vector2SByte(0,1), // 上
-            new Vector2SByte(1,0), // 右
-            new Vector2SByte(0,-1), // 下
-            new Vector2SByte(-1,0), // 左
-            new Vector2SByte(1,1), // 右上
-            new Vector2SByte(1,-1), // 右下
-            new Vector2SByte(-1,-1), // 左下
-            new Vector2SByte(-1,1), // 左上
+            new Vector2SByte(0,1), new Vector2SByte(1,0), new Vector2SByte(0,-1), new Vector2SByte(-1,0), // 上右下左
+            //new Vector2SByte(1,1), new Vector2SByte(1,-1), // 右上,右下
+            //new Vector2SByte(-1,-1), new Vector2SByte(-1,1), // 左下, 左上
         }; // A*使用哪种邻居
         private Slider progress;
         private Text nameUI;
-        /// <summary>
-        /// 携带的建筑资源
-        /// </summary>
-        public NeedResource resourceInfos;
         private CharacterStatusUI statusBar; // 记录实例化血条
 
         protected override void Awake()
         {
             base.Awake();
-            checkBug = new CheckBug();
             openList = new List<Spend>();
             closeList = new List<Spend>();
             path = new List<Spend>();
@@ -83,12 +74,14 @@ namespace LAB2D
             //
             TaskToggle = new bool[10];
             // 默认可以吃饭
-            TaskToggle[((int)TaskType.Hungry)] = true;
-            resourceInfos = new NeedResource();
+            TaskToggle[(int)TaskType.Hungry] = true;
+            TaskToggle[(int)TaskType.Wear] = true;
+            TaskToggle[(int)TaskType.Carry] = true;
+            resourceInfos = new Dictionary<int, ResourceInfo>();
             statusBar = transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (statusBar == null)
             {
-                Debug.LogError("statusBar Not Found!!!");
+                LogManager.Instance.log("statusBar Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             WearData = new WearData();
@@ -131,7 +124,7 @@ namespace LAB2D
         {
             if(mapSpend == null)
             {
-                initMap(TileMap.Instance.Height, TileMap.Instance.Width);
+                initMap(TileMap.Height, TileMap.Width);
             }
             // 停止正在进行的寻路
             if (coroutine != null)
@@ -143,10 +136,11 @@ namespace LAB2D
             openList.Clear();
             closeList.Clear();
             path.Clear();
+            updateLine();
             SeekProgress = 0.0f;
-            for (int i = 0; i < TileMap.Instance.Height; i++)
+            for (int i = 0; i < TileMap.Height; i++)
             {
-                for (int j = 0; j < TileMap.Instance.Width; j++)
+                for (int j = 0; j < TileMap.Width; j++)
                 {
                     mapSpend[i, j].init();
                 }
@@ -173,9 +167,9 @@ namespace LAB2D
         /// <param name="targetMap"></param>
         /// <returns></returns>
         public IEnumerator toTargetLAB(Vector3Int targetMap) {
-            if (!TileMap.Instance.isAvailableTile(targetMap))
+            if (!TileMap.Instance.isFreeTile(targetMap))
             {
-                Debug.Log("超出边界!!!");
+                LogManager.Instance.log("超出边界!!!", LogManager.LogLevel.Error);
                 IsSeeking = false;
                 yield break;
             }
@@ -254,9 +248,10 @@ namespace LAB2D
             float time = 0.0f;
             // 记录一开始的path长度
             int curIterCount = path.Count;
-            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.posMap.x - end.posMap.x, 2) + Mathf.Pow(start.posMap.y - end.posMap.y, 2));
+            List<Spend> _path = new List<Spend>();
+            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.posMap.x - end.posMap.x, 2) 
+                + Mathf.Pow(start.posMap.y - end.posMap.y, 2));
             openList.Add(start);
-            int count = 0;
             while (openList.Count != 0)
             {
                 int minIndex = 0;
@@ -272,31 +267,42 @@ namespace LAB2D
                 //    break; // 解决bug
                 //}
                 Spend curSpend = openList[minIndex];
-                SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.posMap.x - start.posMap.x, 2) + Mathf.Pow(curSpend.posMap.y - start.posMap.y, 2)) / totalDistance;
+                SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.posMap.x - start.posMap.x, 2) 
+                    + Mathf.Pow(curSpend.posMap.y - start.posMap.y, 2)) / totalDistance;
                 // 判断是否到达终点(此处只能是整数)
                 if ((int)curSpend.posMap.x == (int)end.posMap.x && (int)curSpend.posMap.y == (int)end.posMap.y)
                 {
-                    //Debug.Log("找到路径!!!");
+                    //LogManager.Instance.log("找到路径!!!", LogManager.LogLevel.Info);
                     // 找路径
-                    int _count = 0;
                     Vector3Int lastDet = new Vector3Int(0,0);
+                    Spend _curSpend = curSpend;
                     while (curSpend != null && curSpend.previous != null)
                     {
-                        // 优化(一条直线只存终止节点)
-                        if (curSpend.previous.posMap.x - curSpend.posMap.x != lastDet.x || curSpend.previous.posMap.y - curSpend.posMap.y != lastDet.y)
-                        {
-                            //Debug.Log("经过" + curSpend.pos.x + " " + curSpend.pos.y);
-                            path.Insert(curIterCount, curSpend);
-                            lastDet.x = curSpend.previous.posMap.x - curSpend.posMap.x;
-                            lastDet.y = curSpend.previous.posMap.y - curSpend.posMap.y;
-                        }
+                        //// 优化(一条直线只存终止节点)
+                        //if (curSpend.previous.posMap.x - curSpend.posMap.x != lastDet.x || curSpend.previous.posMap.y - curSpend.posMap.y != lastDet.y)
+                        //{
+                        //    //LogManager.Instance.log("经过" + curSpend.posMap.y + " " + curSpend.posMap.x, LogManager.LogLevel.Info);
+                        //    _path.Insert(curIterCount, curSpend);
+                        //    lastDet.x = curSpend.previous.posMap.x - curSpend.posMap.x;
+                        //    lastDet.y = curSpend.previous.posMap.y - curSpend.posMap.y;
+                        //}
+                        _path.Insert(curIterCount, curSpend);
                         // 可能出现循环路径
-                        if (start.posMap.x == curSpend.previous.posMap.x && start.posMap.y == curSpend.previous.posMap.y) {
+                        if (_curSpend != null)
+                        {
+                            _curSpend = _curSpend.previous;
+                            if(_curSpend != null)
+                            {
+                                _curSpend = _curSpend.previous;
+                            }
+                        }
+                        if (_curSpend != null && _curSpend.posMap.x == curSpend.previous.posMap.x 
+                            && _curSpend.posMap.y == curSpend.previous.posMap.y) {
+                            LogManager.Instance.log("Worker寻路出现环路", LogManager.LogLevel.Error);
                             break;
                         }
-                        if (++_count > 1000)
+                        if (FrameControl.Instance.isNeedStop())
                         {
-                            Debug.Log("路径长度超过1000!!!");
                             yield return null;
                         }
                         curSpend = curSpend.previous;
@@ -344,11 +350,10 @@ namespace LAB2D
                     neighbor.f = neighbor.g + neighbor.h;
                     neighbor.previous = curSpend; // 链接
                 }
-                if(count++ > 20)
+                if (FrameControl.Instance.isNeedStop())
                 {
-                    count = 0;
                     time += Time.deltaTime;
-                    if(time > 3.0f)
+                    if(time > 1.0f)
                     {
                         // 如果寻路超过一定时间释放锁
                         seekLock.releaseLock(this);
@@ -356,16 +361,68 @@ namespace LAB2D
                     }
                     yield return null;
                     // 被其他人持有锁，等待
-                    while (!seekLock.getLock(this))
+                    yield return new WaitUntil(() => seekLock.getLock(this));
+                }
+            }
+            // 优化，射线检测
+            //if (_path.Count > 1)
+            //{
+            //    start = _path[0];
+            //    path.Add(start);
+            //    for (int i = 2; i < _path.Count; i++)
+            //    {
+            //        RaycastHit2D hit = Physics2D.Raycast(TileMap.Instance.mapPosToWorldPos(start.posMap),
+            //            TileMap.Instance.mapPosToWorldPos(_path[i].posMap) - TileMap.Instance.mapPosToWorldPos(start.posMap),
+            //            Vector3.Distance(TileMap.Instance.mapPosToWorldPos(start.posMap), TileMap.Instance.mapPosToWorldPos(_path[i].posMap)));
+            //        if (hit.collider == null) continue;
+            //        // 当前节点不可直接直线走，加入上一个节点
+            //        path.Add(_path[i - 1]);
+            //        start = _path[i - 1];
+            //    }
+            //    path.Add(_path[_path.Count - 1]);
+            //}
+            if (_path.Count > 1)
+            {
+                int lastIndex = 0;
+                while (lastIndex < _path.Count - 1)
+                {
+                    bool isUpdate = false;
+                    int _count = 0;
+                    start = _path[lastIndex];
+                    path.Add(start);
+                    for (int i = lastIndex+1; i < _path.Count; i++)
                     {
-                        //Debug.Log(name + "等待锁");
-                        yield return null;
+                        if (_count > 50) break;
+                        if (FrameControl.Instance.isNeedStop())
+                        {
+                            yield return null;
+                        }
+                        // 上下平移一下射线
+                        Vector3 pos = TileMap.Instance.mapPosToWorldPos(start.posMap);
+                        Vector3 direction = TileMap.Instance.mapPosToWorldPos(_path[i].posMap) - TileMap.Instance.mapPosToWorldPos(start.posMap);
+                        float distance = Vector3.Distance(TileMap.Instance.mapPosToWorldPos(start.posMap), TileMap.Instance.mapPosToWorldPos(_path[i].posMap));
+                        RaycastHit2D hit = Physics2D.Raycast(new Vector2(pos.x - 0.5f, pos.y),direction, distance);
+                        if(hit.collider == null)
+                        {
+                            hit = Physics2D.Raycast(new Vector2(pos.x + 0.5f, pos.y), direction, distance);
+                        }
+                        if (hit.collider == null)
+                        {
+                            lastIndex = i;
+                            isUpdate = true;
+                        }
+                    }
+                    if (!isUpdate)
+                    {
+                        lastIndex++;
                     }
                 }
+                path.Add(_path[_path.Count - 1]);
             }
             if (path.Count == curIterCount)
             {
-                Debug.Log("未找到路径:" + start.posMap.y + ":" + start.posMap.x + "-->" + end.posMap.y + ":" + end.posMap.x);
+                LogManager.Instance.log(name + "未找到路径:" + start.posMap.y + ":" + start.posMap.x 
+                    + "-->" + end.posMap.y + ":" + end.posMap.x, LogManager.LogLevel.Error);
             }
             // 显示路径
             updateLine();
@@ -396,12 +453,10 @@ namespace LAB2D
             Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(path[0].posMap);
             // 到达路径中一个目标点，切换下一个目标点
             if (path.Count != 0 &&
-                Mathf.Abs(worldPos.x - transform.position.x) < 0.3f &&
-                Mathf.Abs(worldPos.y - transform.position.y) < 0.3f) {
+                Mathf.Abs(worldPos.x - transform.position.x) < 0.2f &&
+                Mathf.Abs(worldPos.y - transform.position.y) < 0.2f) {
                 path.RemoveAt(0); // --path.Count 
             }
-            // remove过后防止后面越界
-            if (path.Count == 0) return true;
             Vector2 forward = new Vector2(worldPos.x - transform.position.x, worldPos.y - transform.position.y);
             transform.Translate(forward.normalized * Time.deltaTime * moveSpeed, Space.World);//向前移动
             updateLine();
@@ -419,28 +474,25 @@ namespace LAB2D
         /// <returns></returns>
         public bool isCanReach(Vector3Int posMap)
         {
-            if (!TileMap.Instance.isAvailableTile(posMap)) {
+            if (!TileMap.Instance.isCanReach(posMap)) {
                 return false;
             }
             if(!ResourceMap.Instance.isCanReach(posMap)) {
                 return false;
             }
-            if(BuildMap.Instance.BuildTileMap.GetTile(posMap) == null)
+            if(!BuildMap.Instance.isCanReach(posMap))
             {
-                return true;
+                return false;
             }
-            // 门可以通行
-            return Mathf.Abs(BuildMap.Instance.BuildTileMap.GetColor(posMap).a - 0.49f) < 1e-5 
-                || Mathf.Abs(BuildMap.Instance.BuildTileMap.GetColor(posMap).a - 0.99f) < 1e-5;
+            return true;
         }
 
-        private void OnCollisionEnter2D(Collision2D collision)
+        private void OnCollisionStay2D(Collision2D collision)
         {
             checkBug.addColliderCount(DateTime.Now.Ticks);
-            if (checkBug.isBug())
+            if (checkBug.isBug(name, 100))
             {
-                initSeek(TargetMap);
-                toTarget();
+                Manager.changeState(WorkerStateType.Seek);
             }
         }
 
@@ -453,7 +505,7 @@ namespace LAB2D
         public override string ToString()
         {
             string resources = "";
-            foreach (KeyValuePair<int, ResourceInfo> resource in resourceInfos.needs)
+            foreach (KeyValuePair<int, ResourceInfo> resource in resourceInfos)
             {
                 resources += resource.Key + ":" + resource.Value.count + "\n";
             }
@@ -466,26 +518,26 @@ namespace LAB2D
         public void addResource(ResourceInfo resourceInfo)
         {
             if (resourceInfo.count == 0) return;
-            if (resourceInfos.needs.ContainsKey(resourceInfo.id))
+            if (resourceInfos.ContainsKey(resourceInfo.id))
             {
-                resourceInfos.needs[resourceInfo.id].count += resourceInfo.count;
+                resourceInfos[resourceInfo.id].count += resourceInfo.count;
             }
             else
             {
-                resourceInfos.needs.Add(resourceInfo.id, resourceInfo);
+                resourceInfos.Add(resourceInfo.id, Tool.DeepCopyByBinary(resourceInfo));
             }
         }
 
-        public void subResource(NeedResource needResource) {
-            foreach(KeyValuePair<int, ResourceInfo> need in needResource.needs)
+        public void subResource(Dictionary<int, ResourceInfo> needResource) {
+            foreach(KeyValuePair<int, ResourceInfo> need in needResource)
             {
-                if (resourceInfos.needs.ContainsKey(need.Key))
+                if (resourceInfos.ContainsKey(need.Key))
                 {
-                    resourceInfos.needs[need.Key].count -= need.Value.count;
+                    resourceInfos[need.Key].count -= need.Value.count;
                 }
                 else
                 {
-                    Debug.Log("自身资源不够，仍然建造成功，错误");
+                    LogManager.Instance.log("自身资源不够，仍然建造成功，错误", LogManager.LogLevel.Error);
                 }
             }
         }
@@ -493,13 +545,13 @@ namespace LAB2D
         public void subResource(ResourceInfo resourceInfo)
         {
             if (resourceInfo.count == 0) return;
-            if (resourceInfos.needs.ContainsKey(resourceInfo.id))
+            if (resourceInfos.ContainsKey(resourceInfo.id))
             {
-                resourceInfos.needs[resourceInfo.id].count -= resourceInfo.count;
+                resourceInfos[resourceInfo.id].count -= resourceInfo.count;
             }
             else
             {
-                Debug.Log("自身资源不够，仍然建造成功，错误");
+                LogManager.Instance.log("自身资源不够，仍然建造成功，错误", LogManager.LogLevel.Error);
             }
         }
 
@@ -510,9 +562,9 @@ namespace LAB2D
         /// <returns></returns>
         public int getResourceCountById(int id)
         {
-            if (resourceInfos.needs.ContainsKey(id))
+            if (resourceInfos.ContainsKey(id))
             {
-                return resourceInfos.needs[id].count;
+                return resourceInfos[id].count;
             }
             return 0;
         }
@@ -521,11 +573,11 @@ namespace LAB2D
         /// 判断worker携带的资源够不够建造
         /// </summary>
         /// <returns></returns>
-        public bool isEnough(NeedResource needResource)
+        public bool isEnough(Dictionary<int, ResourceInfo> needResource)
         {
-            foreach (KeyValuePair<int, ResourceInfo> need in needResource.needs)
+            foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
-                if (!resourceInfos.needs.ContainsKey(need.Key) || resourceInfos.needs[need.Key].count < need.Value.count)
+                if (!resourceInfos.ContainsKey(need.Key) || resourceInfos[need.Key].count < need.Value.count)
                 {
                     return false;
                 }
@@ -545,17 +597,17 @@ namespace LAB2D
         /// </summary>
         /// <param name="needResource"></param>
         /// <returns></returns>
-        public NeedResource getRemaining(NeedResource needResource) {
-            NeedResource remaining = new NeedResource();
-            foreach (KeyValuePair<int, ResourceInfo> need in needResource.needs)
+        public Dictionary<int, ResourceInfo> getRemaining(Dictionary<int, ResourceInfo> needResource) {
+            Dictionary<int, ResourceInfo> remaining = new Dictionary<int, ResourceInfo>();
+            foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
-                if (resourceInfos.needs.ContainsKey(need.Key))
+                if (resourceInfos.ContainsKey(need.Key))
                 {
-                    remaining.needs.Add(need.Key, new ResourceInfo(need.Key, need.Value.count - resourceInfos.needs[need.Key].count));
+                    remaining.Add(need.Key, new ResourceInfo(need.Key, need.Value.count - resourceInfos[need.Key].count));
                 }
                 else
                 {
-                    remaining.needs.Add(need.Key, Tool.DeepCopyByBinary(need.Value));
+                    remaining.Add(need.Key, Tool.DeepCopyByBinary(need.Value));
                 }
             }
             return remaining;
@@ -569,34 +621,12 @@ namespace LAB2D
         {
             if (Hp <= 0)
             {
-                Debug.LogError("Hp can't less than zero!!!");
+                LogManager.Instance.log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
                 return;
             }
             base.reduceHp(Hp);
             statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
             Manager.changeState(WorkerStateType.Attack);
-        }
-
-        class CheckBug
-        {
-            public long lastTime;
-            public int colliderCount;
-
-            public bool isBug() {
-                return colliderCount > 10;
-            }
-
-            public void addColliderCount(long time) {
-                if (time - lastTime<100)
-                {
-                    colliderCount++;
-                }
-                else
-                {
-                    colliderCount = 1;
-                }
-                lastTime = time;
-            }
         }
     }
 
@@ -643,6 +673,7 @@ namespace LAB2D
         /// 携带的武器
         /// </summary>
         public Weapon weapon;
+
         /// <summary>
         /// 身上携带的装备
         /// </summary>
@@ -651,6 +682,22 @@ namespace LAB2D
         public WearData()
         {
             equipments = new Dictionary<Equipment.EquipType, Equipment>();
+        }
+
+        public void addEquipment(Equipment equipment, Vector3Int posMap)
+        {
+            if (equipments.ContainsKey(equipment.equipType))
+            {
+                // 交换装备
+                Equipment _equipment = equipments[equipment.equipType];
+                ItemMap.Instance.putDownToInventory(posMap, ResourcesManager.Instance.getAsset(equipment.ToString()),
+                    new ResourceInfo(equipment.id, 1));
+                equipments[equipment.equipType] = equipment;
+            }
+            else
+            {
+                equipments.Add(equipment.equipType, equipment);
+            }
         }
     }
 }

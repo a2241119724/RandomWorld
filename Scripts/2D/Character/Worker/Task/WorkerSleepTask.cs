@@ -24,7 +24,7 @@ namespace LAB2D
         public override void start(Worker worker)
         {
             base.start(worker);
-            stageInit[0].Invoke(worker);
+            changeStage(worker,0);
         }
 
         public override void _execute()

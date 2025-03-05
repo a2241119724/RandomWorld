@@ -63,22 +63,13 @@ namespace LAB2D
                 GlobalInit.Instance.showTip("ÇëÉÔºóÔÙÊÔ");
                 return;
             }
-            // TileMap
-            TileMap.Instance.Height = height;
-            TileMap.Instance.Width = width;
-            TileMap.Instance.RandomCount = width * height / 500;
-            int total = width * height;
-            total += TileMap.Instance.RandomCount;
-            total += (width + height) * 2 + 4;
-            total += width * height;
             controller.close();
-            AsyncProgressUI.Instance.addTotal(total);
-            TileMap.Instance.MapTiles = new TileType[height, width];
-            TileMap.Instance.StartCoroutine(TileMap.Instance.create());
-            //Worker
-            //Worker.initMap(height,width);
+            // TileMap
+            TileMap.Instance.setProgress(height, width);
+            Coroutine coroutine = TileMap.Instance.StartCoroutine(TileMap.Instance.create());
             // ResourceMap
-            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.genResource());
+            ResourceMap.Instance.setProgress();
+            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.genResource(coroutine));
             // EnemyManager
             EnemyManager.Instance.MaxEnemyCount = maxEnemyCount;
             AsyncProgressUI.Instance.complete += () => {

@@ -15,12 +15,12 @@ namespace LAB2D
         private const float cameraSpeed = 5.0f;//相机跟随速度
         private const float edgeSpeed = 50.0f;//边界跟随速度
         private const float scrollSpeed = 100.0f;//缩放速度
-        private const float mouseSpeed = 2.0f;//跟随鼠标速度
         private const float edgeSize = 1.0f;
+        private const float mouseSpeed = 2.0f;//跟随鼠标速度
         /// <summary>
         /// 缩放的最小视角与最大视角
         /// </summary>
-        private readonly float[] scaleThreshold = new float[] { 8, 40 };
+        private readonly float[] scaleThreshold = new float[] { 5, 40 };
 
         private bool isDown;
         private Vector3 lastMousePos;
@@ -93,8 +93,9 @@ namespace LAB2D
             }
             else if (isDown)
             {
-                float detx = -(Input.mousePosition.x - lastMousePos.x) * mouseSpeed;
-                float dety = -(Input.mousePosition.y - lastMousePos.y) * mouseSpeed;
+                float _mouseSpeed = mouseSpeed * Camera.main.orthographicSize / 10;
+                float detx = -(Input.mousePosition.x - lastMousePos.x) * _mouseSpeed;
+                float dety = -(Input.mousePosition.y - lastMousePos.y) * _mouseSpeed;
                 Target = new Vector3(Target.x + Time.deltaTime * detx, Target.y + Time.deltaTime * dety, 0);
                 lastMousePos = Input.mousePosition;
             }

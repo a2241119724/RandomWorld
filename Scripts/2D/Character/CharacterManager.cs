@@ -16,7 +16,7 @@ namespace LAB2D {
         {
             if (character == null)
             {
-                Debug.LogError("character is null!!!");
+                LogManager.Instance.log("character is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             Characters.Add(character);
@@ -26,7 +26,7 @@ namespace LAB2D {
         {
             if (character == null)
             {
-                Debug.LogError("character is null!!!");
+                LogManager.Instance.log("character is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             Characters.Remove(character);
@@ -36,7 +36,7 @@ namespace LAB2D {
         {
             if (i < 0 || i >= count())
             {
-                Debug.LogError("i overflow!!!");
+                LogManager.Instance.log("i overflow!!!", LogManager.LogLevel.Error);
                 return null;
             }
             return Characters[i];
@@ -81,8 +81,9 @@ namespace LAB2D {
         public C getCharacterByPos(Vector3Int posMap) { 
             foreach(C character in Characters)
             {
-                Vector3Int characterPosMap = TileMap.Instance.worldPosToMapPos(character.transform.position);
-                if(characterPosMap.x == posMap.x && characterPosMap.y == posMap.y)
+                Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(posMap);
+                if (Mathf.Sqrt(Mathf.Pow(character.transform.position.x - worldPos.x, 2) 
+                    + Mathf.Pow(character.transform.position.y - worldPos.y, 2)) < 0.7f)
                 {
                     return character;
                 }

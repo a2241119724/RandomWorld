@@ -32,7 +32,7 @@ namespace LAB2D
             parent = transform.parent;
             if (parent == null)
             {
-                Debug.LogError("parent Not Found!!!");
+                LogManager.Instance.log("parent Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
         }

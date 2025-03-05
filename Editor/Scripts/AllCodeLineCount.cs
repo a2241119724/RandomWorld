@@ -66,7 +66,6 @@ namespace LAB2D
                         }
                     }
                 }
-                // 文件名 + 文件有效行数
                 Debug.Log(String.Format("{0}——{1}", temp, nowLine));
                 totalLine += nowLine;
             }

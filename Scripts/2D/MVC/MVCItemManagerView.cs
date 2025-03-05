@@ -28,7 +28,7 @@ namespace LAB2D
             content = transform.GetComponent<ScrollRect>().content;
             if (content == null)
             {
-                Debug.LogError("content Not Found!!!");
+                LogManager.Instance.log("content Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             itemsView = new List<IV>();
@@ -41,7 +41,7 @@ namespace LAB2D
         {
             if (model == null)
             {
-                Debug.LogError("data is null!!!");
+                LogManager.Instance.log("data is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             //Ïú»ÙËùÓÐItemBox
@@ -63,7 +63,7 @@ namespace LAB2D
                 GameObject g = Instantiate(itemBox);
                 if (g == null)
                 {
-                    Debug.LogError("itemBox Instantiate Error!!!");
+                    LogManager.Instance.log("itemBox Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
                 g.name = itemBox.name;

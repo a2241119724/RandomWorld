@@ -8,12 +8,8 @@ namespace LAB2D
 {
     public class BuildModel : MVCModel
     {
-        public BuildModel()
+        public BuildModel() : base(ItemType.Room, ItemType.BuildOther)
         {
-            itemDict.Add(ItemType.Room, new ArrayList());
-            itemDict.Add(ItemType.Wall, new ArrayList());
-            itemDict.Add(ItemType.Furniture, new ArrayList());
-            itemDict.Add(ItemType.BuildOther, new ArrayList());
         }
 
         /// <summary>

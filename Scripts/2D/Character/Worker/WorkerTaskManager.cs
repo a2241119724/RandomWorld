@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace LAB2D {
@@ -18,7 +19,8 @@ namespace LAB2D {
         /// <summary>
         /// 饥饿任务与pos挂钩，TODO与worker数量挂钩
         /// </summary>
-        private List<WorkerHungryTask> hungrys;
+        private List<WorkerHungryTask> hungryTasks;
+        private List<WorkerWearTask> wearTasks;
 
         public WorkerTaskManager() {
             tasks = new List<Dictionary<WorkerTask, bool>>();
@@ -26,7 +28,8 @@ namespace LAB2D {
             {
                 tasks.Add(new Dictionary<WorkerTask, bool>());
             }
-            hungrys = new List<WorkerHungryTask>();
+            hungryTasks = new List<WorkerHungryTask>();
+            wearTasks = new List<WorkerWearTask>();
             GatherPos = new List<Vector3Int>();
         }
 
@@ -82,6 +85,7 @@ namespace LAB2D {
                         {
                             task[closedTask] = true;
                         }
+                        DebugUI.Instance.updateTaskInfo(getTaskInfo());
                         break;
                     }
                 }
@@ -95,19 +99,33 @@ namespace LAB2D {
         public void addTask(WorkerTask task, int prior = 2) {
             if (task == null) return;
             // 如果是饥饿任务,一个位置仅对应一个任务
-            if(task.TaskType == TaskType.Hungry)
+            if (task.TaskType == TaskType.Hungry)
             {
-                foreach (WorkerHungryTask hungryTask in hungrys)
+                foreach (WorkerHungryTask hungryTask in hungryTasks)
                 {
-                    if (hungryTask.TargetMap.x == task.TargetMap.x && hungryTask.TargetMap.y == task.TargetMap.y) {
+                    if (hungryTask.TargetMap.x == task.TargetMap.x && hungryTask.TargetMap.y == task.TargetMap.y)
+                    {
                         return;
                     }
                 }
-                hungrys.Add((WorkerHungryTask)task);
+                hungryTasks.Add((WorkerHungryTask)task);
             }
-            else if(task.TaskType == TaskType.Gather)
+            else if (task.TaskType == TaskType.Gather)
             {
                 GatherPos.Add(task.TargetMap);
+            }
+            else if (task.TaskType == TaskType.Wear)
+            {
+                // 一个位置只能有一个穿衣任务
+                foreach (WorkerTask wearTask in wearTasks)
+                {
+                    if (wearTask.TargetMap.x == task.TargetMap.x
+                        && wearTask.TargetMap.y == task.TargetMap.y)
+                    {
+                        return;
+                    }
+                }
+                wearTasks.Add((WorkerWearTask)task);
             }
             tasks[prior].Add(task, false);
             DebugUI.Instance.updateTaskInfo(getTaskInfo());
@@ -122,10 +140,14 @@ namespace LAB2D {
             // 不能删除饥饿任务，需要在deleteHungryTask中删除
             if (task.TaskType != TaskType.Hungry)
             {
-                foreach(Dictionary<WorkerTask,bool> _task in tasks)
+                for (int i = 0; i < tasks.Count; i++)
                 {
-                    _task.Remove(task);
-                    break;
+                    if (tasks[i].ContainsKey(task))
+                    {
+                        tasks[i].Remove(task);
+                        DebugUI.Instance.updateTaskInfo(getTaskInfo());
+                        break;
+                    }
                 }
             }
             // 是饥饿任务，则将其改为可再次接受状态，即false
@@ -138,17 +160,21 @@ namespace LAB2D {
 
         public void giveUpTask(WorkerTask task) {
             if (task == null) return;
-            foreach (Dictionary<WorkerTask, bool> _task in tasks)
+            for (int i = 0; i < tasks.Count; i++)
             {
-                _task[task] = false;
-                break;
+                if (tasks[i].ContainsKey(task))
+                {
+                    tasks[i].Remove(task);
+                    DebugUI.Instance.updateTaskInfo(getTaskInfo());
+                    break;
+                }
             }
         }
 
         public string getTaskInfo()
         {
-            int count = 0;
             int total = 0;
+            int[] taskCount = new int[10];
             foreach (Dictionary<WorkerTask, bool> task in tasks)
             {
                 total += task.Count;
@@ -156,12 +182,16 @@ namespace LAB2D {
                 {
                     if (task[_task])
                     {
-                        count++;
+                        taskCount[(int)_task.TaskType]++;
                     }
                 }
             }
-            return $"任务总数量: {total}\n" +
-                $"正在做的任务数量: {count}";
+            string res = $"任务总数量: {total}\n";
+            for(int i = 0; i < 10; i++)
+            {
+                res += $"{((TaskType)i).ToString()}:{taskCount[i]}\n";
+            }
+            return res;
         }
 
         /// <summary>
@@ -170,15 +200,19 @@ namespace LAB2D {
         /// </summary>
         /// <param name="pos"></param>
         public void deleteHungryTask(Vector3Int pos) {
-            foreach (WorkerHungryTask hungryTask in hungrys)
+            foreach (WorkerHungryTask hungryTask in hungryTasks)
             {
                 if (hungryTask.TargetMap.x == pos.x && hungryTask.TargetMap.y == pos.y)
                 {
-                    foreach (Dictionary<WorkerTask, bool> _task in tasks)
+                    for (int i = 0; i < tasks.Count; i++)
                     {
-                        _task.Remove(hungryTask);
-                        hungrys.Remove(hungryTask);
-                        return;
+                        if (tasks[i].ContainsKey(hungryTask))
+                        {
+                            tasks[i].Remove(hungryTask);
+                            hungryTasks.Remove(hungryTask);
+                            DebugUI.Instance.updateTaskInfo(getTaskInfo());
+                            return;
+                        }
                     }
                 }
             }
@@ -191,14 +225,16 @@ namespace LAB2D {
         public void cancelGatherTask(Vector3Int posMap)
         {
             if (!GatherPos.Contains(posMap)) return;
-            foreach (Dictionary<WorkerTask, bool> task in tasks)
+            for (int i = 0; i < tasks.Count; i++)
             {
-                foreach (WorkerTask _task in task.Keys)
+                foreach (WorkerTask _task in tasks[i].Keys)
                 {
-                    if(_task.TaskType == TaskType.Gather && _task.TargetMap.x == posMap.x 
-                        && _task.TargetMap.y == posMap.y) {
-                        task.Remove(_task);
+                    if (_task.TaskType == TaskType.Gather && _task.TargetMap.x == posMap.x
+                        && _task.TargetMap.y == posMap.y)
+                    {
+                        tasks[i].Remove(_task);
                         GatherPos.Remove(_task.TargetMap);
+                        DebugUI.Instance.updateTaskInfo(getTaskInfo());
                         return;
                     }
                 }

@@ -37,7 +37,7 @@ namespace LAB2D
         {
             if (item == null)
             {
-                Debug.LogError("item is null!!!");
+                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             info.text = item.ToString();

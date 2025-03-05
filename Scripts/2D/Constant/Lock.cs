@@ -18,7 +18,7 @@ namespace LAB2D
                 // 第一次概率获取锁
                 if (Random.Range(0.0f, 1.0f) > (1.0f / WorkerManager.Instance.getCountLock())) return false;
                 Owner = worker;
-                //Debug.Log(worker.name + "获取锁++++++");
+                //LogManager.Instance.log(worker.name + "获取锁++++++", LogManager.LogLevel.Info);
                 return true;
             }
             else if(Owner == worker)
@@ -32,7 +32,7 @@ namespace LAB2D
         {
             if(Owner == worker)
             {
-                //Debug.Log(worker.name + "释放锁========");
+                //LogManager.Instance.log(worker.name + "释放锁========", LogManager.LogLevel.Info);
                 Owner = null;
             }
         }

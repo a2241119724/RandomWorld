@@ -5,6 +5,8 @@ namespace LAB2D
     [Serializable]
     public abstract class Equipment : BackpackItem
     {
+        public EquipType equipType; //装备类型
+
         public enum EquipType
         {
             Head,   //头部

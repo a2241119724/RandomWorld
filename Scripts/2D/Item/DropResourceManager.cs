@@ -25,12 +25,11 @@ namespace LAB2D
             }
             if (dict.ContainsKey(posMap))
             {
-                Debug.Log(dict[posMap].id == resourceInfo.id);
                 dict[posMap].count += resourceInfo.count;
             }
             else
             {
-                dict.Add(posMap, resourceInfo);
+                dict.Add(posMap, Tool.DeepCopyByBinary(resourceInfo));
             }
         }
 

@@ -16,7 +16,7 @@ namespace LAB2D {
                 Quaternion.identity);
             if (g == null)
             {
-                Debug.LogError(name + " Instantiate Error!!!");
+                LogManager.Instance.log(name + " Instantiate Error!!!", LogManager.LogLevel.Error);
                 return null;
             }
             // …Ë÷√≤„º∂
@@ -28,7 +28,7 @@ namespace LAB2D {
         {
             if(worldPos == default)
             {
-                worldPos = TileMap.Instance.mapPosToWorldPos(TileMap.Instance.genAvailablePosMap());
+                worldPos = TileMap.Instance.mapPosToWorldPos(TileMap.Instance.genCanReachPos());
             }
             return _create(worldPos,"","");
         }

@@ -55,7 +55,7 @@ namespace LAB2D
                 GameObject prefab = prefabsDic[name];
                 return prefab;
             }
-            Debug.Log(name + " prefab not found!!!");
+            LogManager.Instance.log(name + " prefab not found!!!", LogManager.LogLevel.Error);
             return null;
         }
 
@@ -72,7 +72,7 @@ namespace LAB2D
                 UnityEngine.Object asset = assetsDic[name];
                 return (TileBase)asset;
             }
-            Debug.Log(name + " asset not found!!!");
+            LogManager.Instance.log(name + " asset not found!!!", LogManager.LogLevel.Error);
             return null;
         }
 
@@ -82,11 +82,11 @@ namespace LAB2D
         /// <param name="tileType">在哪种Tile上</param>
         /// <param name="name">包含该名称的资源</param>
         /// <returns></returns>
-        public TileBase getAssetByTileType(TileType tileType, string name="") {
+        public TileBase getAssetByTileType(TileType tileType, string name=default) {
             if (!tileDic.ContainsKey(tileType)) return null;
             List<UnityEngine.Object> tiles = tileDic[tileType];
             if (tiles.Count == 0) return null;
-            if (name.Equals(""))
+            if (name == default)
             {
                 return (TileBase)tiles[UnityEngine.Random.Range(0, tiles.Count)];
             }
@@ -112,7 +112,7 @@ namespace LAB2D
                 Sprite sprite = imagesDic[name];
                 return sprite;
             }
-            Debug.Log(name + " image not found!!!");
+            LogManager.Instance.log(name + " image not found!!!", LogManager.LogLevel.Error);
             return null;
         }
 
@@ -127,7 +127,7 @@ namespace LAB2D
                 string path = pathsDic[name];
                 return path;
             }
-            Debug.Log(name + " image not found!!!");
+            LogManager.Instance.log(name + " image not found!!!", LogManager.LogLevel.Error);
             return null;
         }
     }

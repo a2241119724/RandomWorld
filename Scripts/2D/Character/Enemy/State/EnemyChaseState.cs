@@ -12,7 +12,7 @@ namespace LAB2D
         public override void OnEnter()
         {
             base.OnEnter();
-            //Debug.Log("ChaseState");
+            //LogManager.Instance.log("ChaseState", LogManager.LogLevel.Info);
         }
 
         public override void OnUpdate()
@@ -43,9 +43,9 @@ namespace LAB2D
                     return;
                 }
                 //character.GetComponent<PhotonView>().RPC("RotateTo", RpcTarget.All, character.target.transform.position - character.transform.position);
-                Character.RotateTo(Character.Target.transform.position - Character.transform.position);
+                Character.rotateTo(Character.Target.transform.position - Character.transform.position);
                 //character.GetComponent<PhotonView>().RPC("MoveToForward", RpcTarget.All);
-                Character.MoveToForward();
+                Character.moveToForward();
                 return;
             }
             //如果敌人感知范围内没有玩家，进入搜索状态

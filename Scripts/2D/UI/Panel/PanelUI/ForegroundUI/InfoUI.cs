@@ -78,7 +78,7 @@ namespace LAB2D
         {
             if (worldPos == null)
             {
-                Debug.LogError("v is null!!!");
+                LogManager.Instance.log("v is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             Vector3Int posMap = TileMap.Instance.worldPosToMapPos(worldPos);

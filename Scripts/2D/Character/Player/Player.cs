@@ -28,7 +28,7 @@ namespace LAB2D
             direction = new Vector3();
             if(direction == null)
             {
-                Debug.LogError("direction assign resource Error!!!");
+                LogManager.Instance.log("direction assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
             CharacterDataLAB.MaxHp = CharacterDataLAB.Hp = 100;
@@ -41,7 +41,7 @@ namespace LAB2D
             base.Start();
             animator = GetComponent<Animator>();
             if (animator == null) {
-                Debug.LogError("animator Not Found!!!");
+                LogManager.Instance.log("animator Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             if (InfoUI.Instance != null)
@@ -74,7 +74,7 @@ namespace LAB2D
         private void FixedUpdate()
         {
             // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
-            if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
+            if (NetworkConnect.Instance.IsOnline && !photonView.IsMine && PhotonNetwork.IsConnected) return;
             // 防止撞墙震动
             move();
         }
@@ -167,11 +167,11 @@ namespace LAB2D
         public override void reduceHp(float Hp) {
             if(Hp <= 0)
             {
-                Debug.LogError("Hp can't less than zero!!!");
+                LogManager.Instance.log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
                 return;
             }
             base.reduceHp(Hp);
-            if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
+            if (NetworkConnect.Instance.IsOnline && !photonView.IsMine && PhotonNetwork.IsConnected) return;
             PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
         }
 
@@ -186,7 +186,7 @@ namespace LAB2D
 
         protected override void death()
         {
-            Debug.Log("玩家重生");
+            LogManager.Instance.log("玩家重生", LogManager.LogLevel.Info);
             CharacterDataLAB.Hp = 100;
         }
 
@@ -196,7 +196,7 @@ namespace LAB2D
         /// <returns></returns>
         public bool isArround(Vector3 pos) {
             if (pos == null) {
-                Debug.LogError("pos is null!!!");
+                LogManager.Instance.log("pos is null!!!", LogManager.LogLevel.Error);
                 return false;
             }
             return pos.x < transform.position.x + 50 &&

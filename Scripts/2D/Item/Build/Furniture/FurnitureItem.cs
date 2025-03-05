@@ -8,14 +8,6 @@ namespace LAB2D
 {
     public abstract class FurnitureItem : BuildItem
     {
-        [NonSerialized]
-        public TileBase tile;
-
-        public FurnitureItem()
-        {
-            width = 1;
-            height = 1;
-        }
     }
 
         

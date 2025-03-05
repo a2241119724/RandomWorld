@@ -22,7 +22,7 @@ namespace LAB2D
             note = transform.Find("Center/Note").gameObject;
             if (note == null)
             {
-                Debug.LogError("note Not Found!!!");
+                LogManager.Instance.log("note Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             Tool.GetComponentInChildren<Button>(gameObject,"Start").onClick.AddListener(OnClick_Start);

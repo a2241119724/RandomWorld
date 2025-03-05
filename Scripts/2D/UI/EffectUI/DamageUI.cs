@@ -23,7 +23,7 @@ namespace LAB2D
             content = transform.Find("Text").GetComponent<Text>();
             if (content == null)
             {
-                Debug.LogError("content Not Found!!!");
+                LogManager.Instance.log("content Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             offsetX = Random.Range(-0.2f, 0.2f);
@@ -39,7 +39,7 @@ namespace LAB2D
             parent = transform.parent;
             if (parent == null)
             {
-                Debug.LogError("parent Not Found!!!");
+                LogManager.Instance.log("parent Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             Destroy(gameObject, destroyTime);

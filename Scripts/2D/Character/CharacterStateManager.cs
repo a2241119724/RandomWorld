@@ -12,15 +12,14 @@ namespace LAB2D
         public CS CurrentState { get; private set; }
         public CST CurrentStateType { get; private set; }
         public C Character { set; get; }
-
         /// <summary>
         /// 存储所有的状态类型与对应的状态类
         /// </summary>
-        private Dictionary<CST, CS> states;
+        public Dictionary<CST, CS> States { get; private set; }
 
         public CharacterStateManager(C character)
         {
-            states = new Dictionary<CST, CS>();
+            States = new Dictionary<CST, CS>();
             this.Character = character;
         }
 
@@ -32,12 +31,12 @@ namespace LAB2D
         {
             if (enemyState == null)
             {
-                Debug.LogError("enemyState is null!!!");
+                LogManager.Instance.log("enemyState is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            if (!states.ContainsKey(type))
+            if (!States.ContainsKey(type))
             {
-                states.Add(type, enemyState);
+                States.Add(type, enemyState);
             }
         }
 
@@ -47,9 +46,9 @@ namespace LAB2D
         /// <param name="type">所要转换的状态</param>
         public virtual void changeState(CST type)
         {
-            if (!states.ContainsKey(type))
+            if (!States.ContainsKey(type))
             {
-                Debug.Log("states Not Contain type!!!");
+                LogManager.Instance.log("states Not Contain type!!!", LogManager.LogLevel.Error);
                 return;
             }
             if (CurrentState != null)
@@ -57,7 +56,7 @@ namespace LAB2D
                 CurrentState.OnExit();
             }
             CurrentStateType = type;
-            CurrentState = states[type];
+            CurrentState = States[type];
             CurrentState.OnEnter();
         }
     }

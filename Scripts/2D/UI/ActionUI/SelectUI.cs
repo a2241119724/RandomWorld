@@ -25,7 +25,7 @@ namespace LAB2D
         public void setTarget(Vector3Int posMap) {
             Target = posMap;
             Vector3 pos = TileMap.Instance.mapPosToWorldPos(posMap);
-            transform.position = new Vector3(Mathf.RoundToInt(pos.x + 0.5f) - 0.5f, Mathf.RoundToInt(pos.y + 0.5f) - 0.5f);
+            transform.position = new Vector3(pos.x, pos.y, 0.0f);
         }
 
         public override void init()

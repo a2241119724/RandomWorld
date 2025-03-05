@@ -46,7 +46,7 @@ namespace LAB2D
                 GameObject g = Instantiate(blood, transform.position, Quaternion.identity);
                 if (g == null)
                 {
-                    Debug.LogError("blood Instantiate Error!!!");
+                    LogManager.Instance.log("blood Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
                 else 

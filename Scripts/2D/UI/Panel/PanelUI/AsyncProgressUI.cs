@@ -24,20 +24,20 @@ namespace LAB2D
 			tip = transform.Find("Center/Tips").GetComponent<Text>();
 			if (tip == null)
 			{
-				Debug.LogError("tips Not Found!!!");
-				return;
+				LogManager.Instance.log("tips Not Found!!!", LogManager.LogLevel.Error);
+                return;
 			}
 			percent = transform.Find("Center/Percent").GetComponent<Text>();
 			if (percent == null)
 			{
-				Debug.LogError("percent Not Found!!!");
-				return;
+				LogManager.Instance.log("percent Not Found!!!", LogManager.LogLevel.Error);
+                return;
 			}
 			slider = transform.Find("Center/ProgressBar").GetComponent<Slider>();
 			if (slider == null)
 			{
-				Debug.LogError("slider Not Found!!!");
-				return;
+				LogManager.Instance.log("slider Not Found!!!", LogManager.LogLevel.Error);
+                return;
 			}
 		}
 
@@ -67,7 +67,7 @@ namespace LAB2D
 		public void addTotal(int total) {
             if (total < 0)
             {
-				Debug.LogError("不能为负值");
+				LogManager.Instance.log("不能为负值!!!", LogManager.LogLevel.Error);
             }
 			this.total += total;
 		}

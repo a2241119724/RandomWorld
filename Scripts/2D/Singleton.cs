@@ -19,7 +19,7 @@ namespace LAB2D
         }
         private static T instance;
 
-        public void init() {
+        public virtual void init() {
             // ≥ı ºªØInstance
         }
     }

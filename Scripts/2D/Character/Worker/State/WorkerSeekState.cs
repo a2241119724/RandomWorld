@@ -24,7 +24,7 @@ namespace LAB2D
             isOne = true;
             // 没有任务
             Vector3Int posMap = TileMap.Instance.worldPosToMapPos(Character.transform.position);
-            targetMap = TileMap.Instance.genAvailablePosMap(posMap);
+            targetMap = TileMap.Instance.genCanReachPos(posMap);
             if (Character.Manager.Task != null)
             {
                 // 有任务
@@ -50,7 +50,7 @@ namespace LAB2D
                 }
                 if(closedPos == default(Vector3Int))
                 {
-                    Debug.Log("没有邻居位置!!!");
+                    LogManager.Instance.log("没有邻居位置!!!", LogManager.LogLevel.Error);
                 }
                 targetMap = closedPos;
             }

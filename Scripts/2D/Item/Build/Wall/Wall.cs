@@ -9,16 +9,9 @@ namespace LAB2D
     [Serializable]
     public abstract class Wall : BuildItem
     {
-        [NonSerialized]
-        public TileBase tile;
-
         public Wall()
         {
-        }
-
-        public override void addBuildTask(Vector3Int centerMap, int width = 10, int height = 7)
-        {
-            throw new NotImplementedException();
+            tile = (TileBase)ResourcesManager.Instance.getAsset(this.GetType().Name);
         }
     }
 

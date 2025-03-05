@@ -21,12 +21,7 @@ namespace LAB2D
 
         void Start()
         {
-            addClickOnButton(ItemType.Weapon);
-            addClickOnButton(ItemType.Equipment);
-            addClickOnButton(ItemType.Consumable);
-            addClickOnButton(ItemType.Material);
-            addClickOnButton(ItemType.Task);
-            addClickOnButton(ItemType.Other);
+            bindButton(ItemType.Weapon, ItemType.BackpackOther);
         }
 
         protected override void init()
