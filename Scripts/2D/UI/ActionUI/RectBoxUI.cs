@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
-using static UnityEditor.Progress;
 
 namespace LAB2D
 {
