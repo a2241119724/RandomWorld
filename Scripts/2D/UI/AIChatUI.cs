@@ -45,6 +45,7 @@ namespace LAB2D
             if (request == null) return;
             request.Method = "POST";
             request.ContentType = "application/json";
+            request.Timeout = 1000;
             string jsonData = @"{
                 ""model"": ""deepseek-r1:1.5b"",
                 ""messages"": [
@@ -55,36 +56,47 @@ namespace LAB2D
                 ]
             }";
             byte[] body = Encoding.UTF8.GetBytes(jsonData);
-            using (Stream stream = request.GetRequestStream())
+            string text = "";
+            try
             {
-                stream.Write(body, 0, body.Length);
-            }
-            HttpWebResponse response = (HttpWebResponse) await request.GetResponseAsync();
-            if (response == null) return;
-            using (Stream stream = response.GetResponseStream())
-            {
-                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                using (Stream stream = await request.GetRequestStreamAsync())
                 {
-                    ChatData chatData;
-                    string text = "";
-                    bool isStart = false;
-                    do
-                    {
-                        chatData = JsonUtility.FromJson<ChatData>(await reader.ReadLineAsync());
-                        if (isStart && !chatData.message.content.Equals("\n\n"))
-                        {
-                            text += chatData.message.content;
-                        }
-                        if (chatData.message.content.Equals("</think>"))
-                        {
-                            isStart = true;
-                        }
-                    } while (!chatData.done && !reader.EndOfStream);
-                    g = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("LeftChatItem"), content, false);
-                    g.transform.SetParent(content);
-                    Tool.GetComponentInChildren<Text>(g, "Text").text = text;
-                    isWorking = false;
+                    stream.Write(body, 0, body.Length);
                 }
+                HttpWebResponse response = (HttpWebResponse) await request.GetResponseAsync();
+                if (response == null) return;
+                using (Stream stream = response.GetResponseStream())
+                {
+                    using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                    {
+                        ChatData chatData;
+                        bool isStart = false;
+                        do
+                        {
+                            chatData = JsonUtility.FromJson<ChatData>(await reader.ReadLineAsync());
+                            if (isStart && !chatData.message.content.Equals("\n\n"))
+                            {
+                                text += chatData.message.content;
+                            }
+                            if (chatData.message.content.Equals("</think>"))
+                            {
+                                isStart = true;
+                            }
+                        } while (!chatData.done && !reader.EndOfStream);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                LogManager.Instance.log("AIChatUI«Î«Û ß∞‹: " + e.Message, LogManager.LogLevel.Error);
+                text = "«Î«Û ß∞‹";
+            }
+            finally
+            {
+                g = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("LeftChatItem"), content, false);
+                g.transform.SetParent(content);
+                Tool.GetComponentInChildren<Text>(g, "Text").text = text;
+                isWorking = false;
             }
         }
 
