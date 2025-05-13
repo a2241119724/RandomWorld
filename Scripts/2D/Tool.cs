@@ -14,6 +14,7 @@ using System.Xml.Serialization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace LAB2D
@@ -22,6 +23,7 @@ namespace LAB2D
     {
         private static BinaryFormatter bf = new BinaryFormatter();
         private static string des = Application.persistentDataPath + "/Data/";
+        private static string dataPath = new DirectoryInfo(Application.dataPath).FullName + "\\Resources\\";
 
         /// <summary>
         /// 画扇形
@@ -234,7 +236,13 @@ namespace LAB2D
         {
             Dictionary<string, string> map = new Dictionary<string, string>();
             //string[] subPaths = AssetDatabase.GetAllAssetPaths();
-            _loadPaths("Assets\\Resources", map);
+#if UNITY_EDITOR
+            // 开发阶段加载path,并保存起来
+            _loadPaths(dataPath, map);
+            saveDataByBinary(Application.streamingAssetsPath + "/resourcePath.lab", map);
+#else
+            map = loadDataByBinary<Dictionary<string, string>>(Application.streamingAssetsPath + "/resourcePath.lab");
+#endif
             return map;
         }
 
@@ -252,7 +260,7 @@ namespace LAB2D
                 string[] splits = fileInfo.Name.Split(".");
                 if (!splits[splits.Length - 1].Equals("meta"))
                 {
-                    map[fileInfo.Name] = path.Split("Assets\\Resources\\")[1].Replace("\\", "/").Split('.')[0] + "/" + fileInfo.Name.Split('.')[0];
+                    map[fileInfo.Name] = path.Split(dataPath)[1].Replace("\\", "/").Split('.')[0] + "/" + fileInfo.Name.Split('.')[0];
                 }
             }
             DirectoryInfo[] subDirectoryInfos = directoryInfo.GetDirectories();
@@ -335,7 +343,7 @@ namespace LAB2D
             {
                 //Encoding.UTF8.GetString();
                 TextAsset textAsset = Resources.Load<TextAsset>(name);
-                if(textAsset == null) return null;
+                if (textAsset == null) return null;
                 data = textAsset.text;
             }
             return data.TrimEnd('\r', '\n').Split("\r\n");
@@ -354,7 +362,7 @@ namespace LAB2D
             return derivedTypes;
         }
 
-        public static Vector3Int add(Vector3Int vector, int x,int y) {
+        public static Vector3Int add(Vector3Int vector, int x, int y) {
             return new Vector3Int(vector.x + x, vector.y + y, vector.z);
         }
 
@@ -376,7 +384,7 @@ namespace LAB2D
         }
 
 
-        public static GameObject Instantiate(GameObject prefab,Vector3 position, Quaternion rotation) {
+        public static GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation) {
             if (NetworkConnect.Instance.IsOnline)
             {
                 return PhotonNetwork.Instantiate(ResourcesManager.Instance.getPath(prefab.name + ".prefab"), position, rotation);
@@ -403,5 +411,16 @@ namespace LAB2D
             } while (enumerator.MoveNext());
             return itemTypes;
         }
-    }
+
+        public static void loadScene(string sceneName)
+        {
+            Scene scene = SceneManager.GetSceneByName(sceneName);
+            if (scene.buildIndex == -1)
+            {
+                LogManager.Instance.log(sceneName + " Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+            SceneManager.LoadScene(sceneName);
+        }
+    } 
 }
