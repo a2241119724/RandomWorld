@@ -1,3 +1,4 @@
+using Photon.Pun;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -39,6 +40,9 @@ namespace LAB2D
         /// </summary>
         public void OnClick_Exit()
         {
+            // 需要关闭连接
+            PhotonNetwork.LeaveLobby();
+            PhotonNetwork.Disconnect();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -51,7 +55,7 @@ namespace LAB2D
         /// </summary>
         public void OnClick_BackMenu()
         {
-            SceneManager.LoadScene("Menu");
+            Tool.loadScene("Menu");
         }
 
         /// <summary>

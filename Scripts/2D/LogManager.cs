@@ -42,7 +42,7 @@ public class LogManager : Singleton<LogManager>
         }
 
         // 存储到日志列表
-        logs.Add(logMessage);
+        //logs.Add(logMessage);
 
         // 如果启用了文件记录，则写入文件
         if (isSave)

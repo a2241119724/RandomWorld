@@ -89,7 +89,7 @@ namespace LAB2D {
                 bool bug = colliderCount > threshold;
                 if (bug)
                 {
-                    LogManager.Instance.log(name + "碰撞次数:" + colliderCount, LogManager.LogLevel.Info);
+                    //LogManager.Instance.log(name + "碰撞次数:" + colliderCount, LogManager.LogLevel.Info);
                 }
                 return bug;
             }

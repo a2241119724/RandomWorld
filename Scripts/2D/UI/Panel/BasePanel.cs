@@ -33,13 +33,14 @@ namespace LAB2D
         }
 
         public virtual void OnEnter() {
-            LogManager.Instance.log(PhotonNetwork.NetworkClientState.ToString(), LogManager.LogLevel.Info);
+            LogManager.Instance.log("Enter: " + this.GetType().Name, LogManager.LogLevel.Info);
             if (panel == null) return;
             panel.SetActive(true);
         }
         public virtual void OnPause() { }
         public virtual void OnRun() { }
         public virtual void OnExit() {
+            LogManager.Instance.log("Exit: " + this.GetType().Name, LogManager.LogLevel.Info);
             panel.SetActive(false);
         }
     }
