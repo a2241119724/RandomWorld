@@ -17,7 +17,7 @@ namespace LAB2D {
         public readonly IBasePanel[] ToolMenus = new IBasePanel[] { BuildMenuPanel.Instance, PlayerInfoPanel.Instance, BackpackMenuPanel.Instance,
                 WorkerTaskInfoPanel.Instance,InventoryMenuPanel.Instance,AIChatPanel.Instance};
 
-    public ForegroundPanel()
+        public ForegroundPanel()
         {
             Name = "Foreground";
             setPanel();
