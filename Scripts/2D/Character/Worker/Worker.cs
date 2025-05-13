@@ -67,7 +67,7 @@ namespace LAB2D
             LineRenderer = transform.GetComponent<LineRenderer>();
             LineRenderer.startWidth = 0.05f;
             LineRenderer.endWidth = 0.05f;
-            Material material = new Material(Shader.Find("Unlit/Color")); 
+            Material material = new Material(Shader.Find("Unlit/Color"));
             material.color = new Color(UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f));
             LineRenderer.material = material;
             LineRenderer.sortingLayerName = "Highest";
