@@ -24,6 +24,8 @@ namespace LAB2D
         protected NV navigationView;
         protected IV_ infoView;
 
+        private Color btnOriginColor; // 按钮原始颜色
+
         public virtual void Awake()
         {
             // 添加到ItemManagerView
@@ -32,12 +34,14 @@ namespace LAB2D
             itemManagerView.get += get;
             itemManagerView.showInfo += showInfo;
             model = new M();
+            btnOriginColor = navigationView.GetComponentsInChildren<Button>()[0].GetComponent<RoundCorner>().color;
             setBorderColor(0, "navigation");
             navigationView.OnClick += (int index) =>
             {
                 setBorderColor(index, "navigation");
                 updateInventory();
             };
+            // 设置初始颜色
         }
 
         private void OnEnable()
@@ -116,9 +120,9 @@ namespace LAB2D
                     Button[] btns = navigationView.GetComponentsInChildren<Button>();
                     foreach (Button btn in btns)
                     {
-                        btn.GetComponent<RoundCorner>().color = new Color(116 / 255.0f, 125 / 255.0f, 140 / 255.0f, 255 / 255.0f);
+                        btn.GetComponent<RoundCorner>().color = btnOriginColor;
                     }
-                    btns[index].GetComponent<RoundCorner>().color = new Color(255 / 255.0f, 150 / 255.0f, 150 / 255.0f, 255 / 255.0f);
+                    btns[index].GetComponent<RoundCorner>().color = new Color(100 / 255.0f, 120 / 255.0f, 150 / 255.0f, 255 / 255.0f);
                     break;
                 default:
                     LogManager.Instance.log("没有该类型边框可以修改!!!", LogManager.LogLevel.Error);
