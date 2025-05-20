@@ -17,6 +17,11 @@ namespace LAB2D
 
         private void Update()
         {
+            // 没有选择任何物品
+            if (BuildMenuPanel.Instance.Select.item == null)
+            {
+                return;
+            }
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             // 转为数组下标
             Vector3Int centerMap = TileMap.Instance.worldPosToMapPos(worldPos);
