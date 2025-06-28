@@ -1,11 +1,11 @@
-using System;
-using System.Collections;
-using UnityEngine;
-
 namespace LAB2D
 {
+    using System;
+    using System.Collections;
+    using UnityEngine;
+
     /// <summary>
-    /// 没用
+    /// 没用.
     /// </summary>
     public class CoroutineManager : MonoBehaviour
     {

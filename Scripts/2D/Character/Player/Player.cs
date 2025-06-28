@@ -57,8 +57,8 @@ namespace LAB2D
             {
                 mainCamera = Camera.main.GetComponent<CameraMove>();
                 miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
-                mainCamera.directToPosition(transform.position);
-                miniCamera.directToPosition(transform.position);
+                mainCamera.DirectToPosition(transform.position);
+                miniCamera.DirectToPosition(transform.position);
                 PlayerManager.Instance.Mine = this;
                 PhotonNetwork.LocalPlayer.TagObject = this;
                 Tool.GetComponentInChildren<Text>(gameObject, "Name").text = PhotonNetwork.NickName;
@@ -91,8 +91,8 @@ namespace LAB2D
                 (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f)){
                 //mainCamera.Target = transform.position;
                 //miniCamera.Target = transform.position;
-                mainCamera.directToPosition(transform.position);
-                miniCamera.directToPosition(transform.position);
+                mainCamera.DirectToPosition(transform.position);
+                miniCamera.DirectToPosition(transform.position);
                 if (InfoUI.Instance != null)
                 {
                     InfoUI.Instance.setPosition(transform.position);
