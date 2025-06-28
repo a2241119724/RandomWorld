@@ -6,6 +6,7 @@
 /URP
 /Scripts/Photon
 /AddressableAssetsData
+/.vs
 
 *.meta
 *.mat
