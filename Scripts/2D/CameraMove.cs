@@ -1,115 +1,144 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
+﻿// <copyright file="CameraMove.cs" company="LAB">
+// Copyright (c) LAB. All rights reserved.
+// </copyright>
+// @author liuanbo
+// @date 2025/06/28 2025/6/28 14:11:06
+// @description TODO
 
 namespace LAB2D
 {
-    public class CameraMove : MonoBehaviour 
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.EventSystems;
+
+    /// <summary>
+    /// 摄像机跟随目标移动.
+    /// </summary>
+    public class CameraMove : MonoBehaviour
     {
-        public Vector3 Offset;
-        public Vector3 Target { set; get; } // 相机跟随位置
-        public Character Character { get; set; } // 跟随的角色
-        public bool IsEdgeMode { get; set; }
+        private const float CameraSpeed = 5.0f; // 相机跟随速度
+        private const float EdgeSize = 1.0f; // 相机边缘跟随鼠标的大小
+        private const float EdgeSpeed = 50.0f; // 相机边缘跟随速度
+        private const float MouseSpeed = 2.0f; // 相机跟随鼠标速度[鼠标中键]
+        private const float ScrollSpeed = 100.0f; // 相机缩放速度
+        private readonly float[] scaleThreshold = new float[] { 5, 40 }; // 相机缩放阈值
+        private bool isEdgeMode = false; // 鼠标在相机边缘滑动时[相机跟随鼠标移动]
+        private bool isDown; // 是否按下鼠标中键
+        private Vector3 lastMousePos; // 上一次鼠标位置[鼠标中键拖动相机]
 
-        private const float cameraSpeed = 5.0f;//相机跟随速度
-        private const float edgeSpeed = 50.0f;//边界跟随速度
-        private const float scrollSpeed = 100.0f;//缩放速度
-        private const float edgeSize = 1.0f;
-        private const float mouseSpeed = 2.0f;//跟随鼠标速度
         /// <summary>
-        /// 缩放的最小视角与最大视角
+        /// Gets or sets 相机跟随的目标.
         /// </summary>
-        private readonly float[] scaleThreshold = new float[] { 5, 40 };
+        public Character Character { get; set; }
 
-        private bool isDown;
-        private Vector3 lastMousePos;
+        /// <summary>
+        /// Gets or sets 相机相对目标的偏移量.
+        /// </summary>
+        public Vector3 Offset { get; set; }
+
+        /// <summary>
+        /// Gets or sets 相机需要移动到的目标位置.
+        /// </summary>
+        public Vector3 Target { get; set; }
+
+        /// <summary>
+        /// 将镜头直接到目标,不进行过度,消除镜头初始移动的bug.
+        /// </summary>
+        /// <param name="target">The target<see cref="Vector3"/>目标位置.</param>
+        public void DirectToPosition(Vector3 target)
+        {
+            // Mathf.Clamp(value,min,max) 夹逼函数,返回min与max之间的数
+            // 将镜头直接到玩家身上,消除镜头初始移动的bug
+            this.transform.position = new Vector3(target.x + this.Offset.x, target.y + this.Offset.y, -20 + this.Offset.z);
+            this.Target = target;
+        }
 
         private void LateUpdate()
         {
             // 仅主相机检测
-            if (Camera.main == gameObject.GetComponent<Camera>() && Input.anyKeyDown)
+            if (Camera.main == this.gameObject.GetComponent<Camera>() && Input.anyKeyDown)
             {
-                Character = null;
+                this.Character = null;
             }
+
             // 跟随的角色存在，那么跟随
-            if (Character != null)
+            if (this.Character != null)
             {
-                Target = Character.transform.position;
+                this.Target = this.Character.transform.position;
             }
-            Vector3 ultimateTarget = new Vector3(Target.x + Offset.x, Target.y + Offset.y, Target.z + Offset.z);
-            transform.position = Vector3.Lerp(transform.position, ultimateTarget, Time.deltaTime * cameraSpeed); // 设置相机的位置
-            transform.position = new Vector3(transform.position.x, transform.position.y, -20 + Offset.z); // 固定相机z轴的位置
-            //if (gameObject.GetComponent<Camera>() == Camera.main) return;
-            // 跟随边缘鼠标移动(LOL)
-            if (IsEdgeMode)
+
+            Vector3 ultimateTarget = new Vector3(this.Target.x + this.Offset.x, this.Target.y + this.Offset.y, this.Target.z + this.Offset.z);
+            this.transform.position = Vector3.Lerp(this.transform.position, ultimateTarget, Time.deltaTime * CameraSpeed); // 设置相机的位置
+            this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, -20 + this.Offset.z); // 固定相机z轴的位置
+
+            // if (gameObject.GetComponent<Camera>() == Camera.main) return;
+            // 相机边缘跟随鼠标移动
+            if (this.isEdgeMode)
             {
-                if (Input.mousePosition.x > Screen.width - edgeSize)
+                float offset = Time.deltaTime * EdgeSpeed;
+                if (Input.mousePosition.x > Screen.width - EdgeSize)
                 {
-                    Target = new Vector3(Target.x + Time.deltaTime * edgeSpeed, Target.y, 0);
+                    this.Target = new Vector3(this.Target.x + offset, this.Target.y, 0);
                 }
-                else if (Input.mousePosition.x < edgeSize)
+                else if (Input.mousePosition.x < EdgeSize)
                 {
-                    Target = new Vector3(Target.x - Time.deltaTime * edgeSpeed, Target.y, 0);
+                    this.Target = new Vector3(this.Target.x - offset, this.Target.y, 0);
                 }
-                else if (Input.mousePosition.y > Screen.height - edgeSize)
+                else if (Input.mousePosition.y > Screen.height - EdgeSize)
                 {
-                    Target = new Vector3(Target.x, Target.y + Time.deltaTime * edgeSpeed, 0);
+                    this.Target = new Vector3(this.Target.x, this.Target.y + offset, 0);
                 }
-                else if (Input.mousePosition.y < edgeSize)
+                else if (Input.mousePosition.y < EdgeSize)
                 {
-                    Target = new Vector3(Target.x, Target.y - Time.deltaTime * edgeSpeed, 0);
+                    this.Target = new Vector3(this.Target.x, this.Target.y - offset, 0);
                 }
             }
+
             // 视角缩放
-            if (Camera.main.orthographic && Input.mouseScrollDelta.y> 0 
-                && Camera.main.orthographicSize > scaleThreshold[0])
+            if (Camera.main.orthographic && Input.mouseScrollDelta.y > 0
+                && Camera.main.orthographicSize > this.scaleThreshold[0])
             {
-                Camera.main.orthographicSize -= Time.deltaTime * scrollSpeed;
-                if(Camera.main.orthographicSize < scaleThreshold[0])
+                Camera.main.orthographicSize -= Time.deltaTime * ScrollSpeed;
+                if (Camera.main.orthographicSize < this.scaleThreshold[0])
                 {
-                    Camera.main.orthographicSize = scaleThreshold[0];
+                    Camera.main.orthographicSize = this.scaleThreshold[0];
                 }
             }
-            else if(Camera.main.orthographic && Input.mouseScrollDelta.y < 0 
-                && Camera.main.orthographicSize < scaleThreshold[1])
+            else if (Camera.main.orthographic && Input.mouseScrollDelta.y < 0
+                && Camera.main.orthographicSize < this.scaleThreshold[1])
             {
-                Camera.main.orthographicSize += Time.deltaTime * scrollSpeed;
-                if (Camera.main.orthographicSize > scaleThreshold[1])
+                Camera.main.orthographicSize += Time.deltaTime * ScrollSpeed;
+                if (Camera.main.orthographicSize > this.scaleThreshold[1])
                 {
-                    Camera.main.orthographicSize = scaleThreshold[1];
+                    Camera.main.orthographicSize = this.scaleThreshold[1];
                 }
             }
+
             // 根据鼠标滑动移动
             if (Input.GetMouseButtonDown(2))
             {
                 List<RaycastResult> results = Tool.getUIByMousePos();
+
                 // 过滤不是滑动主屏幕的动作
-                if(results.Count > 0 && results[0].gameObject.name.Equals("Foreground"))
+                if (results.Count > 0 && results[0].gameObject.name.Equals("Foreground"))
                 {
-                    lastMousePos = Input.mousePosition;
-                    isDown = true;
+                    this.lastMousePos = Input.mousePosition;
+                    this.isDown = true;
                 }
             }
-            else if (isDown)
+            else if (this.isDown)
             {
-                float _mouseSpeed = mouseSpeed * Camera.main.orthographicSize / 10;
-                float detx = -(Input.mousePosition.x - lastMousePos.x) * _mouseSpeed;
-                float dety = -(Input.mousePosition.y - lastMousePos.y) * _mouseSpeed;
-                Target = new Vector3(Target.x + Time.deltaTime * detx, Target.y + Time.deltaTime * dety, 0);
-                lastMousePos = Input.mousePosition;
+                float mouseSpeed = MouseSpeed * Camera.main.orthographicSize / 10;
+                float detx = -(Input.mousePosition.x - this.lastMousePos.x) * mouseSpeed * Time.deltaTime;
+                float dety = -(Input.mousePosition.y - this.lastMousePos.y) * mouseSpeed * Time.deltaTime;
+                this.Target = new Vector3(this.Target.x + detx, this.Target.y + dety, 0);
+                this.lastMousePos = Input.mousePosition;
             }
+
             if (Input.GetMouseButtonUp(2))
             {
-                isDown = false;
+                this.isDown = false;
             }
-        }
-
-        public void directToPosition(Vector3 target) {
-            //Mathf.Clamp(value,min,max) 夹逼函数,返回min与max之间的数
-            // 将镜头直接到玩家身上,消除镜头初始移动的bug
-            transform.position = new Vector3(target.x + Offset.x, target.y + Offset.y, -20 + Offset.z);
-            Target = target;
         }
     }
 }
