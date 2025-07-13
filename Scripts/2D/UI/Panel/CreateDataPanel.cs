@@ -56,11 +56,12 @@ namespace LAB2D
         /// <summary>
         /// 创建地图,敌人,玩家,道具等物体
         /// </summary>
-        private void Onclick_StartCreate() {
-            if (PhotonNetwork.NetworkClientState != ClientState.Joined 
+        private void Onclick_StartCreate()
+        {
+            if (PhotonNetwork.NetworkClientState != ClientState.Joined
                 && NetworkConnect.Instance.IsOnline)
             {
-                GlobalInit.Instance.showTip("请稍后再试");
+                GlobalInit.Instance.ShowTip("请稍后再试");
                 return;
             }
             controller.close();
@@ -72,7 +73,8 @@ namespace LAB2D
             ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.genResource(coroutine));
             // EnemyManager
             EnemyManager.Instance.MaxEnemyCount = maxEnemyCount;
-            AsyncProgressUI.Instance.complete += () => {
+            AsyncProgressUI.Instance.complete += () =>
+            {
                 PlayerManager.Instance.create();
             };
         }

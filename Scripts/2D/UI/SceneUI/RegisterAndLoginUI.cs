@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -36,28 +34,29 @@ namespace LAB2D
         {
             string username = _username.text;
             string password = _password.text;
-            if (username.Length < 3 || password.Length < 3) {
-                GlobalInit.Instance.showTip("注册失败!!!");
+            if (username.Length < 3 || password.Length < 3)
+            {
+                GlobalInit.Instance.ShowTip("注册失败!!!");
                 return;
             }
             // 读取所有数据
-            UserData data = Tool.loadDataByJson<UserData>(GlobalData.ConfigFile.UserDataFilePath);
+            UserData data = Tool.LoadDataByJson<UserData>(GlobalData.ConfigFile.UserDataFilePath);
             // 遍历是否重名
-            if(data != null)
+            if (data != null)
             {
                 for (int i = 0; i < data.getLength(); i++)
                 {
                     if (data.getUsername(i) == username)
                     {
-                        GlobalInit.Instance.showTip("该用户已经注册!!!");
+                        GlobalInit.Instance.ShowTip("该用户已经注册!!!");
                         return;
                     }
                 }
             }
             data = new UserData();
-            data.addData(username,password);
-            File.WriteAllText(GlobalData.ConfigFile.UserDataFilePath,JsonUtility.ToJson(data));
-            GlobalInit.Instance.showTip("注册成功!!!");
+            data.addData(username, password);
+            File.WriteAllText(GlobalData.ConfigFile.UserDataFilePath, JsonUtility.ToJson(data));
+            GlobalInit.Instance.ShowTip("注册成功!!!");
         }
 
         /// <summary>
@@ -65,7 +64,7 @@ namespace LAB2D
         /// </summary>
         private void Onclick_Login()
         {
-            UserData data = Tool.loadDataByJson<UserData>(GlobalData.ConfigFile.UserDataFilePath);
+            UserData data = Tool.LoadDataByJson<UserData>(GlobalData.ConfigFile.UserDataFilePath);
             if (data != null)
             {
                 for (int i = 0; i < data.getLength(); i++)
@@ -77,7 +76,7 @@ namespace LAB2D
                     }
                 }
             }
-            GlobalInit.Instance.showTip("登录失败!!!");
+            GlobalInit.Instance.ShowTip("登录失败!!!");
         }
     }
 }

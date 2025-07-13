@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 namespace LAB2D
 {
     /// <summary>
@@ -26,7 +22,7 @@ namespace LAB2D
         {
             base.OnUpdate();
             // 如果接到了饥饿任务，则去吃饭
-            if(Character.Manager.Task != null && Character.Manager.Task.TaskType == TaskType.Hungry)
+            if (Character.Manager.Task != null && Character.Manager.Task.TaskType == TaskType.Hungry)
             {
                 Character.Manager.changeState(WorkerStateType.Seek);
             }

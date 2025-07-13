@@ -1,6 +1,5 @@
 using Photon.Pun;
 using Photon.Realtime;
-using UnityEngine;
 using UnityEngine.UI;
 
 namespace LAB2D
@@ -39,13 +38,15 @@ namespace LAB2D
         private void OnClick_JoinRoom()
         {
             if (PhotonNetwork.NetworkClientState == ClientState.ConnectedToMasterServer ||
-                PhotonNetwork.NetworkClientState == ClientState.JoinedLobby){
+                PhotonNetwork.NetworkClientState == ClientState.JoinedLobby)
+            {
                 // 进入加入房间面板
                 controller.close();
                 controller.show(JoinMenuPanel.Instance);
             }
-            else {
-                GlobalInit.Instance.showTip("请稍后再试");
+            else
+            {
+                GlobalInit.Instance.ShowTip("请稍后再试");
             }
         }
     }

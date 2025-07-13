@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace LAB2D
 {
@@ -20,7 +18,7 @@ namespace LAB2D
             if (model.isNull(navigationView.CurItemType))
             {
                 List<Item> items = ItemFactory.Instance.getBuildItems();
-                foreach(Item item in items)
+                foreach (Item item in items)
                 {
                     addItem(item);
                 }

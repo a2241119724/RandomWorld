@@ -1,9 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
-namespace LAB2D {
+namespace LAB2D
+{
     public class WorkerTaskManager : MonoBehaviour
     {
         public static WorkerTaskManager Instance { get; private set; }
@@ -15,16 +14,17 @@ namespace LAB2D {
         /// <summary>
         /// 所有任务(list中越靠前优先级越大)
         /// </summary>
-        private List<Dictionary<WorkerTask,bool>> tasks;
+        private List<Dictionary<WorkerTask, bool>> tasks;
         /// <summary>
         /// 饥饿任务与pos挂钩，TODO与worker数量挂钩
         /// </summary>
         private List<WorkerHungryTask> hungryTasks;
         private List<WorkerWearTask> wearTasks;
 
-        public WorkerTaskManager() {
+        public WorkerTaskManager()
+        {
             tasks = new List<Dictionary<WorkerTask, bool>>();
-            for(int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 tasks.Add(new Dictionary<WorkerTask, bool>());
             }
@@ -96,7 +96,8 @@ namespace LAB2D {
         /// 添加任务
         /// </summary>
         /// <param name="task"></param>
-        public void addTask(WorkerTask task, int prior = 2) {
+        public void addTask(WorkerTask task, int prior = 2)
+        {
             if (task == null) return;
             // 如果是饥饿任务,一个位置仅对应一个任务
             if (task.TaskType == TaskType.Hungry)
@@ -158,7 +159,8 @@ namespace LAB2D {
             DebugUI.Instance.updateTaskInfo(getTaskInfo());
         }
 
-        public void giveUpTask(WorkerTask task) {
+        public void giveUpTask(WorkerTask task)
+        {
             if (task == null) return;
             for (int i = 0; i < tasks.Count; i++)
             {
@@ -187,7 +189,7 @@ namespace LAB2D {
                 }
             }
             string res = $"任务总数量: {total}\n";
-            for(int i = 0; i < 10; i++)
+            for (int i = 0; i < 10; i++)
             {
                 res += $"{((TaskType)i).ToString()}:{taskCount[i]}\n";
             }
@@ -199,7 +201,8 @@ namespace LAB2D {
         /// 该位置再在仓库中的食物被消耗完了
         /// </summary>
         /// <param name="pos"></param>
-        public void deleteHungryTask(Vector3Int pos) {
+        public void deleteHungryTask(Vector3Int pos)
+        {
             foreach (WorkerHungryTask hungryTask in hungryTasks)
             {
                 if (hungryTask.TargetMap.x == pos.x && hungryTask.TargetMap.y == pos.y)

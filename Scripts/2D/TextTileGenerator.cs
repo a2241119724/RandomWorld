@@ -1,46 +1,56 @@
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+
     /// <summary>
-    /// ÔÙÊÀ½çÉÏÏÔÊ¾Êı×Ö
+    /// å†ä¸–ç•Œä¸Šæ˜¾ç¤ºæ•°å­—.
     /// </summary>
     public class TextTileGenerator : MonoBehaviour
     {
-        public static TextTileGenerator Instance { private set; get; }
-
         private Sprite[] sprites;
+
+        /// <summary>
+        /// å•ä¾‹.
+        /// </summary>
+        public static TextTileGenerator Instance { get; private set; }
+
+        /// <summary>
+        /// æ ¹æ®æ•°å­—è·å–å¯¹åº”çš„æ•°å­—Tile.
+        /// </summary>
+        /// <param name="num">æ•°å­—.</param>
+        /// <returns>å¯¹åº”çš„æ•°å­—Tile.</returns>
+        public Tile GetTileByNum(int num)
+        {
+            if (num < 0 || num >= 1000)
+            {
+                LogManager.Instance.Log("é”™è¯¯çš„è¾“å…¥", LogManager.LogLevel.Error);
+                return null;
+            }
+
+            if (this.sprites[num] == null)
+            {
+                Sprite sprite = this.GeneratorSpriteByNum(string.Empty + num);
+                this.sprites[num] = sprite;
+            }
+
+            Tile tile = ScriptableObject.CreateInstance<Tile>();
+            tile.sprite = this.sprites[num];
+            return tile;
+        }
 
         private void Awake()
         {
             Instance = this;
-            sprites = new Sprite[1000];
+            this.sprites = new Sprite[1000];
         }
 
         private void Start()
         {
-            BuildMap.Instance.directBuild(new Vector3Int(1, 1, 0), getTileByNum(1));
+            BuildMap.Instance.directBuild(new Vector3Int(1, 1, 0), this.GetTileByNum(1));
         }
 
-        public Tile getTileByNum(int num) { 
-            if(num<0 || num >=1000)
-            {
-                LogManager.Instance.log("´íÎóµÄÊäÈë", LogManager.LogLevel.Error);
-                return null;
-            }
-            if (sprites[num] == null)
-            {
-                Sprite sprite = generatorSpriteByNum("" + num);
-                sprites[num] = sprite;
-            }
-            Tile tile = ScriptableObject.CreateInstance<Tile>();
-            tile.sprite = sprites[num];
-            return tile;
-        }
-
-        private Sprite generatorSpriteByNum(string number)
+        private Sprite GeneratorSpriteByNum(string number)
         {
             return null;
         }

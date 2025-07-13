@@ -1,34 +1,39 @@
-using UnityEngine;
-using System;
-
-public class Memory : MonoBehaviour
+ï»¿namespace LAB2D
 {
-    //private float gameTime = 0;
+    using System;
+    using UnityEngine;
 
-    void Update()
+    /// <summary>
+    /// å†…å­˜ç›‘æ§.
+    /// </summary>
+    public class Memory : MonoBehaviour
     {
-        //gameTime += Time.deltaTime;
-        //if (gameTime > 1)
-        //{
-        //    gameTime = 0;
-        //    printMemory();
-        //}
-    }
+        // private float gameTime = 0;
+        private void Update()
+        {
+            // gameTime += Time.deltaTime;
+            // if (gameTime > 1)
+            // {
+            //     gameTime = 0;
+            //     printMemory();
+            // }
+        }
 
-    void printMemory()
-    {
-        // ´òÓ¡³õÊ¼ÍĞ¹Ü¶Ñ´óĞ¡
-        long initialHeapSize = GC.GetTotalMemory(false);
-        LogManager.Instance.log($"Initial Heap Size: {initialHeapSize / 1024 / 1024} M", LogManager.LogLevel.Info);
+        private void PrintMemory()
+        {
+            // æ‰“å°åˆå§‹æ‰˜ç®¡å †å¤§å°
+            long initialHeapSize = GC.GetTotalMemory(false);
+            LogManager.Instance.Log($"Initial Heap Size: {initialHeapSize / 1024 / 1024} M", LogManager.LogLevel.Info);
 
-        // Ö´ĞĞÒ»Ğ©²Ù×÷À´·ÖÅäÄÚ´æ£¬ÀıÈç´´½¨¶ÔÏó
-        // ...
+            // æ‰§è¡Œä¸€äº›æ“ä½œæ¥åˆ†é…å†…å­˜ï¼Œä¾‹å¦‚åˆ›å»ºå¯¹è±¡
+            // ...
 
-        // ÇëÇóÀ¬»øÊÕ¼¯ÒÔ¸üĞÂÄÚ´æÊ¹ÓÃÇé¿ö
-        // System.GC.Collect();
+            // è¯·æ±‚åƒåœ¾æ”¶é›†ä»¥æ›´æ–°å†…å­˜ä½¿ç”¨æƒ…å†µ
+            // System.GC.Collect();
 
-        // ´òÓ¡×îĞÂÍĞ¹Ü¶Ñ´óĞ¡
-        // long finalHeapSize = System.GC.GetTotalMemory(true);
-        //LogManager.Instance.log($"Final Heap Size: {GC.GetTotalMemory(false) / 1024 / 1024} M", LogManager.LogLevel.Info);
+            // æ‰“å°æœ€æ–°æ‰˜ç®¡å †å¤§å°
+            // long finalHeapSize = System.GC.GetTotalMemory(true);
+            // LogManager.Instance.log($"Final Heap Size: {GC.GetTotalMemory(false) / 1024 / 1024} M", LogManager.LogLevel.Info);
+        }
     }
 }

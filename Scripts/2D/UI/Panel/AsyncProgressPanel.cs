@@ -1,9 +1,9 @@
-using UnityEngine;
-
-namespace LAB2D {
+namespace LAB2D
+{
     public class AsyncProgressPanel : BasePanel<AsyncProgressPanel>
     {
-        public AsyncProgressPanel() {
+        public AsyncProgressPanel()
+        {
             Name = "AsyncProgress";
             setPanel();
             panel.transform.GetComponent<AsyncProgressUI>().complete += complate;
@@ -21,9 +21,10 @@ namespace LAB2D {
             controller.show(ForegroundPanel.Instance);
         }
 
-        private void complate() {
+        private void complate()
+        {
             // 关闭该界面
-            controller.close();        
-        } 
+            controller.close();
+        }
     }
 }

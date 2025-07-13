@@ -1,8 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace LAB2D
 {
@@ -18,13 +16,15 @@ namespace LAB2D
         private Dictionary<string, BuildItem> buildItems;
         private int uid = 0;
 
-        public ItemFactory(){
+        public ItemFactory()
+        {
             backpackItemTypes = new Dictionary<string, Type>();
             buildItems = new Dictionary<string, BuildItem>();
             readItems();
         }
-        
-        public BackpackItem getBackpackItemByName(string name) {
+
+        public BackpackItem getBackpackItemByName(string name)
+        {
             int id = ItemDataManager.Instance.getByName(name).id;
             BackpackItem item = (BackpackItem)Activator.CreateInstance(backpackItemTypes[name]);
             item.id = id;
@@ -48,7 +48,8 @@ namespace LAB2D
             return items;
         }
 
-        public List<Item> getBuildItems() {
+        public List<Item> getBuildItems()
+        {
             return buildItems.Values.ToList<Item>();
         }
 
@@ -58,12 +59,12 @@ namespace LAB2D
         /// </summary>
         private void readItems()
         {
-            List<Type> types = Tool.getChildByParent<BackpackItem>();
+            List<Type> types = Tool.GetChildByParent<BackpackItem>();
             foreach (Type type in types)
             {
                 backpackItemTypes.Add(type.Name, type);
             }
-            types = Tool.getChildByParent<BuildItem>();
+            types = Tool.GetChildByParent<BuildItem>();
             foreach (Type type in types)
             {
                 Type[] interfaces = type.GetInterfaces();

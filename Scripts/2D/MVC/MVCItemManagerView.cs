@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,7 +27,7 @@ namespace LAB2D
             content = transform.GetComponent<ScrollRect>().content;
             if (content == null)
             {
-                LogManager.Instance.log("content Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             itemsView = new List<IV>();
@@ -41,7 +40,7 @@ namespace LAB2D
         {
             if (model == null)
             {
-                LogManager.Instance.log("data is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("data is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             //销毁所有ItemBox
@@ -59,32 +58,36 @@ namespace LAB2D
             // 重新创建所有Item
             for (int i = 0; i < model.count(type); i++)
             {
-                if (model.get(type,i).id == -1) continue;
+                if (model.get(type, i).id == -1) continue;
                 GameObject g = Instantiate(itemBox);
                 if (g == null)
                 {
-                    LogManager.Instance.log("itemBox Instantiate Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("itemBox Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
                 g.name = itemBox.name;
                 g.transform.SetParent(content, false);
                 //t.transform.localScale = Vector3.one; // 控制大小
-                Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = getQuantity(model.get(type,i)).ToString();
+                Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = getQuantity(model.get(type, i)).ToString();
                 Image image = Tool.GetComponentInChildren<Image>(g, "ItemImage");
-                image.sprite = ResourcesManager.Instance.getImage(ItemDataManager.Instance.getById(model.get(type, i).id).imageName);
+                image.sprite = ResourcesManager.Instance.GetImage(ItemDataManager.Instance.getById(model.get(type, i).id).imageName);
                 image.preserveAspect = true;
                 IV itemView = g.transform.Find("Item").GetComponent<IV>();
                 // 添加到ItemView
-                itemView.exchangeItem += (int a, int b) => {
+                itemView.exchangeItem += (int a, int b) =>
+                {
                     exchangeItem(a, b);
                 };
-                itemView.setBorderColor += (int a, string b) => {
-                    setBorderColor(a,b);
+                itemView.setBorderColor += (int a, string b) =>
+                {
+                    setBorderColor(a, b);
                 };
-                itemView.get += (int a) => {
+                itemView.get += (int a) =>
+                {
                     return get(a);
                 };
-                itemView.showInfo += (Item a) => {
+                itemView.showInfo += (Item a) =>
+                {
                     showInfo(a);
                 };
                 itemsView.Add(itemView);

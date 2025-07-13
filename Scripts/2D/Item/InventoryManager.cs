@@ -32,7 +32,8 @@ namespace LAB2D
         /// </summary>
         private int capacity = 1000;
 
-        public InventoryManager() {
+        public InventoryManager()
+        {
             posToResource = new Dictionary<Vector3Int, ResourceInfo>();
             idToResource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
             preTakeResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
@@ -50,12 +51,12 @@ namespace LAB2D
         public void addCells(Vector3Int startPos, int width = 10, int length = 7)
         {
             // 外层字典需要拷贝,由于idTo中仅包含相同id的信息
-            if(!idToResource.ContainsKey(-1))
+            if (!idToResource.ContainsKey(-1))
             {
                 idToResource.Add(-1, new Dictionary<Vector3Int, ResourceInfo>());
             }
             Dictionary<Vector3Int, ResourceInfo> idTo = idToResource[-1];
-            if(!TypeToResource.ContainsKey(ItemType.Null))
+            if (!TypeToResource.ContainsKey(ItemType.Null))
             {
                 TypeToResource.Add(ItemType.Null, new Dictionary<Vector3Int, ResourceInfo>());
             }
@@ -64,7 +65,7 @@ namespace LAB2D
             {
                 for (int j = 0; j < width; j++)
                 {
-                    Vector3Int pos = Tool.add(startPos, i, j);
+                    Vector3Int pos = Tool.Add(startPos, i, j);
                     ResourceInfo resourceInfo = new ResourceInfo(-1, 0);
                     posToResource.Add(pos, resourceInfo);
                     idTo.Add(pos, resourceInfo);
@@ -84,7 +85,7 @@ namespace LAB2D
             {
                 return prePlaceResource[worker].First().Key;
             }
-            LogManager.Instance.log("没有预放置资源", LogManager.LogLevel.Error);
+            LogManager.Instance.Log("没有预放置资源", LogManager.LogLevel.Error);
             return default;
         }
 
@@ -189,7 +190,7 @@ namespace LAB2D
                 }
             }
             // 有可能被预放置了
-            LogManager.Instance.log("仓库满了", LogManager.LogLevel.Error);
+            LogManager.Instance.Log("仓库满了", LogManager.LogLevel.Error);
             return false;
         }
 
@@ -217,9 +218,11 @@ namespace LAB2D
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        private int getPrePlaceCountById(int id) {
+        private int getPrePlaceCountById(int id)
+        {
             int count = 0;
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in prePlaceResource) {
+            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in prePlaceResource)
+            {
                 foreach (KeyValuePair<Vector3Int, ResourceInfo> pre in prePlace.Value)
                 {
                     if (pre.Value.id == id)
@@ -262,17 +265,17 @@ namespace LAB2D
                 if (prePlaceResource[worker].ContainsKey(pos))
                 {
                     prePlaceResource[worker][pos].count += resourceInfo.count;
-                    ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
+                    ItemInfoUI.Instance.updateInfo(GetType().Name, pos, ToString(pos));
                     return;
                 }
                 prePlaceResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
-                ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
+                ItemInfoUI.Instance.updateInfo(GetType().Name, pos, ToString(pos));
                 return;
             }
             Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
             dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
             prePlaceResource.Add(worker, dict);
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
+            ItemInfoUI.Instance.updateInfo(GetType().Name, pos, ToString(pos));
         }
 
         /// <summary>
@@ -280,7 +283,8 @@ namespace LAB2D
         /// TODO没有预取
         /// </summary>
         /// <returns></returns>
-        public bool isEnoughFoodAndPreTake(Worker worker, float hungry, bool isPre = false) {
+        public bool isEnoughFoodAndPreTake(Worker worker, float hungry, bool isPre = false)
+        {
             Dictionary<Vector3Int, ResourceInfo> foods = new Dictionary<Vector3Int, ResourceInfo>();
             foreach (KeyValuePair<Vector3Int, ResourceInfo> food in TypeToResource[ItemType.Food])
             {
@@ -317,9 +321,9 @@ namespace LAB2D
         /// <param name="worker"></param>
         /// <param name="isPre"></param>
         /// <returns></returns>
-        public Vector3Int isContainSeedAndPreTake(Worker worker, bool isPre=false)
+        public Vector3Int isContainSeedAndPreTake(Worker worker, bool isPre = false)
         {
-            if(!TypeToResource.ContainsKey(ItemType.Seed) || TypeToResource[ItemType.Seed].Count == 0) return default;
+            if (!TypeToResource.ContainsKey(ItemType.Seed) || TypeToResource[ItemType.Seed].Count == 0) return default;
             Dictionary<Vector3Int, ResourceInfo>.Enumerator enumerator = TypeToResource[ItemType.Seed].GetEnumerator();
             enumerator.MoveNext();
             if (isPre)
@@ -342,17 +346,17 @@ namespace LAB2D
                 Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
                 dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
                 preTakeResource.Add(worker, dict);
-                ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
+                ItemInfoUI.Instance.updateInfo(GetType().Name, pos, ToString(pos));
                 return;
             }
             if (!preTakeResource[worker].ContainsKey(pos))
             {
                 preTakeResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
-                ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
+                ItemInfoUI.Instance.updateInfo(GetType().Name, pos, ToString(pos));
                 return;
             }
             preTakeResource[worker][pos].count += resourceInfo.count;
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
+            ItemInfoUI.Instance.updateInfo(GetType().Name, pos, ToString(pos));
         }
 
         public void addItem(Vector3Int posMap, ResourceInfo resourceInfo)
@@ -366,7 +370,7 @@ namespace LAB2D
                 if (resourceInfo.id != posToResource[posMap].id) return;
                 posToResource[posMap].count += resourceInfo.count;
             }
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, ToString(posMap));
+            ItemInfoUI.Instance.updateInfo(GetType().Name, posMap, ToString(posMap));
         }
 
         /// <summary>
@@ -379,7 +383,7 @@ namespace LAB2D
         {
             if (!prePlaceResource[worker].ContainsKey(posMap))
             {
-                LogManager.Instance.log("没有预放置资源", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有预放置资源", LogManager.LogLevel.Error);
                 return null;
             }
             ResourceInfo resourceInfo = prePlaceResource[worker][posMap];
@@ -393,7 +397,7 @@ namespace LAB2D
             }
             posToResource[posMap].id = resourceInfo.id;
             posToResource[posMap].count += resourceInfo.count;
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, ToString(posMap));
+            ItemInfoUI.Instance.updateInfo(GetType().Name, posMap, ToString(posMap));
             return resourceInfo;
         }
 
@@ -403,12 +407,13 @@ namespace LAB2D
         /// <param name="worker"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Vector3Int getPosByPreTake(Worker worker) {
+        public Vector3Int getPosByPreTake(Worker worker)
+        {
             if (preTakeResource.ContainsKey(worker))
             {
                 return preTakeResource[worker].First().Key;
             }
-            LogManager.Instance.log("没有预留资源", LogManager.LogLevel.Error);
+            LogManager.Instance.Log("没有预留资源", LogManager.LogLevel.Error);
             return default;
         }
 
@@ -446,7 +451,7 @@ namespace LAB2D
         {
             if (!posToResource.ContainsKey(posMap))
             {
-                LogManager.Instance.log("没有资源，错误", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有资源，错误", LogManager.LogLevel.Error);
                 return null;
             }
             transferResource(posMap, posToResource[posMap].id, -1, ItemDataManager.Instance.getTypeById(posToResource[posMap].id), ItemType.Null);
@@ -454,7 +459,7 @@ namespace LAB2D
             posToResource[posMap].id = -1;
             posToResource[posMap].count = 0;
             ItemMap.Instance.hindTile(posMap);
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, ToString(posMap));
+            ItemInfoUI.Instance.updateInfo(GetType().Name, posMap, ToString(posMap));
             return resourceInfo;
         }
 
@@ -462,7 +467,7 @@ namespace LAB2D
         {
             if (!posToResource.ContainsKey(posMap))
             {
-                LogManager.Instance.log("没有资源，错误", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有资源，错误", LogManager.LogLevel.Error);
                 return;
             }
             posToResource[posMap].count -= resourceInfo.count;
@@ -478,7 +483,7 @@ namespace LAB2D
                 }
                 posToResource[posMap].id = -1;
             }
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, ToString(posMap));
+            ItemInfoUI.Instance.updateInfo(GetType().Name, posMap, ToString(posMap));
         }
 
         /// <summary>
@@ -487,10 +492,11 @@ namespace LAB2D
         /// <param name="worker"></param>
         /// <param name="posMap"></param>
         /// <returns>返回从仓库中扣减的数量(预取的资源)</returns>
-        public ResourceInfo subItemByPreTake(Worker worker, Vector3Int posMap) {
+        public ResourceInfo subItemByPreTake(Worker worker, Vector3Int posMap)
+        {
             if (!preTakeResource[worker].ContainsKey(posMap))
             {
-                LogManager.Instance.log("没有预取资源", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有预取资源", LogManager.LogLevel.Error);
                 return null;
             }
             ResourceInfo resourceInfo = preTakeResource[worker][posMap];
@@ -510,7 +516,7 @@ namespace LAB2D
                 }
                 posToResource[posMap].id = -1;
             }
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, ToString(posMap));
+            ItemInfoUI.Instance.updateInfo(GetType().Name, posMap, ToString(posMap));
             // 不够，既然我已经预取了，那说明肯定是够的
             return resourceInfo;
         }
@@ -523,7 +529,8 @@ namespace LAB2D
         /// <param name="newId"></param>
         /// <param name="oldType"></param>
         /// <param name="newType"></param>
-        private void transferResource(Vector3Int pos, int oldId, int newId, ItemType oldType, ItemType newType) {
+        private void transferResource(Vector3Int pos, int oldId, int newId, ItemType oldType, ItemType newType)
+        {
             // idToResource
             idToResource[oldId].Remove(pos);
             if (idToResource.ContainsKey(newId))
@@ -613,8 +620,8 @@ namespace LAB2D
         public void showWearMenu(Vector3Int pos)
         {
             ItemType itemType = ItemDataManager.Instance.getTypeById(posToResource[pos].id);
-            if (itemType == ItemType.Weapon || itemType == ItemType.Equipment) 
-            { 
+            if (itemType == ItemType.Weapon || itemType == ItemType.Equipment)
+            {
                 WearTaskUI.Instance.showWearTask(pos);
             }
         }

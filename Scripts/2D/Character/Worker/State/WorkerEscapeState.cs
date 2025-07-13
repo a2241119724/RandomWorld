@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace LAB2D
@@ -27,12 +25,12 @@ namespace LAB2D
         {
             base.OnUpdate();
             _recordTime += Time.deltaTime;
-            if(_recordTime >= recordTime)
+            if (_recordTime >= recordTime)
             {
                 Character.Manager.changeState(WorkerStateType.Seek);
             }
             Character.LineRenderer.positionCount = 0;
-            Character.transform.Translate(Vector3.up * Time.deltaTime * Character.moveSpeed,Space.World);
+            Character.transform.Translate(Vector3.up * Time.deltaTime * Character.moveSpeed, Space.World);
         }
     }
 }

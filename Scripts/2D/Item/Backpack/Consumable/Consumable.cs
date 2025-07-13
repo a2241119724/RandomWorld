@@ -1,8 +1,10 @@
 using System;
 
-namespace LAB2D {
+namespace LAB2D
+{
     [Serializable]
-    public abstract class Consumable : BackpackItem { 
+    public abstract class Consumable : BackpackItem
+    {
     }
 
     public abstract class ConsumableObject : BackpackItemObject

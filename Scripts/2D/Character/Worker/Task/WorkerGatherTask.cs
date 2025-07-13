@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -25,7 +24,7 @@ namespace LAB2D
         public override void start(Worker worker)
         {
             base.start(worker);
-            changeStage(worker,0);
+            changeStage(worker, 0);
         }
 
         public override void finish(Worker worker)
@@ -34,11 +33,11 @@ namespace LAB2D
             ResourceMap.Instance.cutTree(TargetMap);
             List<DropItem> dropItems = DropItemManager.Instance.getDropItemsByName(resourceName);
             // ²ÉÕªµôÂäÄ¾Í·,Æ»¹û
-            for (int i=0;i< dropItems.Count; i++)
+            for (int i = 0; i < dropItems.Count; i++)
             {
                 Vector3Int pos = IsAvailableMap.Instance.genAvailablePosMap(TargetMap, 3, true);
                 if (pos == default) break;
-                ItemMap.Instance.putDownToDrop(pos, (TileBase)ResourcesManager.Instance.getAsset(dropItems[i].Name),
+                ItemMap.Instance.putDownToDrop(pos, (TileBase)ResourcesManager.Instance.GetAsset(dropItems[i].Name),
                     dropItems[i].ResourceInfo);
             }
             // É¾³ý²ÉÕªÍ¼±ê

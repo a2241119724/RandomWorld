@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,7 +35,7 @@ namespace LAB2D
         {
             if (item == null)
             {
-                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             info.text = item.ToString();

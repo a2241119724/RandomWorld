@@ -1,6 +1,4 @@
-﻿using Photon.Pun;
-using UnityEngine;
-using static UnityEngine.RuleTile.TilingRuleOutput;
+﻿using UnityEngine;
 
 namespace LAB2D
 {

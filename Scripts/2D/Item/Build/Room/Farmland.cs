@@ -1,8 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 namespace LAB2D
 {
@@ -31,7 +28,7 @@ namespace LAB2D
             }
             BuildMap.Instance.addTask();
             // ÃÌº”≤÷ø‚Cell
-            FarmlandManager.Instance.addCells(Tool.add(centerMap, -height / 2, -width / 2), width, height);
+            FarmlandManager.Instance.addCells(Tool.Add(centerMap, -height / 2, -width / 2), width, height);
         }
     }
 }

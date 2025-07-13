@@ -17,9 +17,10 @@ namespace LAB2D
         private Vector3 distance; // 每帧位移的距离
         private GameObject blood; // 掉血特效
 
-        protected virtual void Awake() {
-            blood = ResourcesManager.Instance.getPrefab("Blood");
-            name = this.GetType().Name;
+        protected virtual void Awake()
+        {
+            blood = ResourcesManager.Instance.GetPrefab("Blood");
+            name = GetType().Name;
         }
 
         protected virtual void Start()
@@ -46,10 +47,10 @@ namespace LAB2D
                 GameObject g = Instantiate(blood, transform.position, Quaternion.identity);
                 if (g == null)
                 {
-                    LogManager.Instance.log("blood Instantiate Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("blood Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
-                else 
+                else
                 {
                     g.name = blood.name;
                     g.transform.SetParent(rayCastHit2D.collider.transform);

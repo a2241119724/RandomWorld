@@ -1,8 +1,7 @@
-using System.IO;
-using UnityEngine;
-using UnityEditor;
 using System;
-using System.Text.RegularExpressions;
+using System.IO;
+using UnityEditor;
+using UnityEngine;
 
 namespace LAB2D
 {

@@ -17,8 +17,9 @@ namespace LAB2D
         {
             base.Start();
             photonView = GetComponent<PhotonView>();
-            if (photonView == null) {
-                LogManager.Instance.log("photonView Not Found!!!", LogManager.LogLevel.Error);
+            if (photonView == null)
+            {
+                LogManager.Instance.Log("photonView Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
         }

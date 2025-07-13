@@ -22,7 +22,8 @@ namespace LAB2D
         private RectTransform handle; // 摇杆中心按钮
         private Vector2 originalPostion; // 原来的位置
 
-        void Awake() {
+        void Awake()
+        {
             Instance = this;
         }
 
@@ -31,13 +32,13 @@ namespace LAB2D
             baseRect = GetComponent<RectTransform>();
             if (baseRect == null)
             {
-                LogManager.Instance.log("baseRect Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("baseRect Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             Vector2 center = new Vector2(0.5f, 0.5f);
             if (center == null)
             {
-                LogManager.Instance.log("center assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("center assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
             // 初始化background
@@ -45,7 +46,7 @@ namespace LAB2D
             originalPostion = background.GetComponent<RectTransform>().localPosition;
             if (background == null)
             {
-                LogManager.Instance.log("background Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("background Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             background.pivot = center;
@@ -53,7 +54,7 @@ namespace LAB2D
             handle = background.transform.Find("Handle").GetComponent<RectTransform>();
             if (handle == null)
             {
-                LogManager.Instance.log("handle Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("handle Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             handle.anchorMin = center;

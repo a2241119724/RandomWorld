@@ -23,7 +23,7 @@ namespace LAB2D
             content = transform.Find("Text").GetComponent<Text>();
             if (content == null)
             {
-                LogManager.Instance.log("content Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             offsetX = Random.Range(-0.2f, 0.2f);
@@ -39,7 +39,7 @@ namespace LAB2D
             parent = transform.parent;
             if (parent == null)
             {
-                LogManager.Instance.log("parent Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("parent Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             Destroy(gameObject, destroyTime);
@@ -58,7 +58,8 @@ namespace LAB2D
         /// 设置伤害数值
         /// </summary>
         /// <param name="value">数值</param>
-        public void setDamage(float value, int colorIndex = 0) {
+        public void setDamage(float value, int colorIndex = 0)
+        {
             content.text = ((float)System.Math.Round(value, 1)).ToString();
             content.color = param[colorIndex].color;
             content.fontSize = param[colorIndex].fontSize;
@@ -70,7 +71,7 @@ namespace LAB2D
             public Color color;
             public int fontSize;
 
-            public _Param(Color color,int fontSize)
+            public _Param(Color color, int fontSize)
             {
                 this.color = color;
                 this.fontSize = fontSize;

@@ -50,7 +50,8 @@ namespace LAB2D
         public override void OnUpdate()
         {
             _recordTime += Time.deltaTime;
-            if (_recordTime > deadTime) {
+            if (_recordTime > deadTime)
+            {
                 dropItem();
                 //if (item != null)
                 //{
@@ -64,7 +65,7 @@ namespace LAB2D
                 //    }
                 //    else
                 //    {
-                        //LogManager.Instance.log("item Instantiate Error!!!", LogManager.LogLevel.Error);
+                //LogManager.Instance.log("item Instantiate Error!!!", LogManager.LogLevel.Error);
                 //    }
                 //}
                 //Object.Destroy(character.gameObject); // Destroy不会立即销毁,下一帧销毁
@@ -84,8 +85,8 @@ namespace LAB2D
             // 转为数组下标
             Vector3Int pos = IsAvailableMap.Instance.genAvailablePosMap(
                 TileMap.Instance.worldPosToMapPos(Character.transform.position), 3, true);
-            if(pos == default) return;
-            foreach (KeyValuePair<int,TileBase> dropItem in pToDropItem)
+            if (pos == default) return;
+            foreach (KeyValuePair<int, TileBase> dropItem in pToDropItem)
             {
                 if (rand <= dropItem.Key)
                 {
@@ -103,7 +104,8 @@ namespace LAB2D
         /// </summary>
         /// <param name="value"></param>
         /// <param name="tileBase"></param>
-        private void addDropItem(int value, TileBase tileBase) {
+        private void addDropItem(int value, TileBase tileBase)
+        {
             dropTotal += value;
             pToDropItem.Add(dropTotal, tileBase);
         }

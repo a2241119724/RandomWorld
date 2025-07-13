@@ -1,20 +1,21 @@
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace LAB2D {
-    public class PlayerManager : CharacterManager<PlayerManager,Player,PlayerCreator>
+namespace LAB2D
+{
+    public class PlayerManager : CharacterManager<PlayerManager, Player, PlayerCreator>
     {
         public TakedWeapon Select { set; get; }
         public Player Mine { set { mine = value; add(value); } get { return mine; } }
         private Player mine;
 
-        public PlayerManager() : base() {
+        public PlayerManager() : base()
+        {
             Select = new TakedWeapon();
         }
 
-        public override void loadData()
+        public override void LoadData()
         {
-            Character.CharacterData data = Tool.loadDataByBinary<Character.CharacterData>(GlobalData.ConfigFile.getPath(this.GetType().Name));
+            Character.CharacterData data = Tool.LoadDataByBinary<Character.CharacterData>(GlobalData.ConfigFile.getPath(GetType().Name));
             AsyncProgressUI.Instance.complete += () =>
             {
                 GameObject g = create(Vector3LAB.toVector3(data.pos));
@@ -23,10 +24,10 @@ namespace LAB2D {
             };
         }
 
-        public override void saveData()
+        public override void SaveData()
         {
             mine.CharacterDataLAB.pos = Vector3LAB.toVector3LAB(mine.transform.position);
-            Tool.saveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), mine.CharacterDataLAB);
+            Tool.SaveDataByBinary(GlobalData.ConfigFile.getPath(GetType().Name), mine.CharacterDataLAB);
         }
 
         public class TakedWeapon

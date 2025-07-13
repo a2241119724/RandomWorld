@@ -1,6 +1,5 @@
 using Photon.Pun;
 using Photon.Realtime;
-using UnityEngine;
 using UnityEngine.UI;
 
 namespace LAB2D
@@ -27,21 +26,22 @@ namespace LAB2D
 
         private void OnClick_StartCreate()
         {
-            if (PhotonNetwork.NetworkClientState != ClientState.ConnectedToMasterServer 
-                && PhotonNetwork.NetworkClientState != ClientState.JoinedLobby 
+            if (PhotonNetwork.NetworkClientState != ClientState.ConnectedToMasterServer
+                && PhotonNetwork.NetworkClientState != ClientState.JoinedLobby
                 && NetworkConnect.Instance.IsOnline)
             {
-                GlobalInit.Instance.showTip("请稍后再试");
+                GlobalInit.Instance.ShowTip("请稍后再试");
                 return;
             }
             string roomName = Tool.GetComponentInChildren<Text>(panel, "RoomName").text;
             if (string.IsNullOrEmpty(roomName))
             {
-                GlobalInit.Instance.showTip("房间名不能为空");
+                GlobalInit.Instance.ShowTip("房间名不能为空");
                 return;
             }
-            if (roomName.Length > 8) {
-                GlobalInit.Instance.showTip("房间名长度不能超过8位");
+            if (roomName.Length > 8)
+            {
+                GlobalInit.Instance.ShowTip("房间名长度不能超过8位");
                 return;
             }
             if (NetworkConnect.Instance.IsOnline)
@@ -58,7 +58,7 @@ namespace LAB2D
                 bool success = PhotonNetwork.CreateRoom(roomName, roomOptions);
                 if (!success)
                 {
-                    GlobalInit.Instance.showTip("房间创建失败");
+                    GlobalInit.Instance.ShowTip("房间创建失败");
                     return;
                 }
             }

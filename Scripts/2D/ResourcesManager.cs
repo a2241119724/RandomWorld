@@ -1,133 +1,153 @@
-using System;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// èµ„æºç®¡ç†.
+    /// </summary>
     public class ResourcesManager : Singleton<ResourcesManager>
     {
-        /// <summary>
-        /// <characterType,<name,prefab>>
-        /// </summary>
-        private readonly Dictionary<string, GameObject> prefabsDic;
+        private readonly Dictionary<string, GameObject> prefabsDic; // <characterType,<name,prefab>>
         private readonly Dictionary<string, UnityEngine.Object> assetsDic;
         private readonly Dictionary<string, Sprite> imagesDic;
-        /// <summary>
-        /// key:filename(´øºó×º) value:path
-        /// </summary>
-        private readonly Dictionary<string, string> pathsDic;
+        private readonly Dictionary<string, string> pathsDic; // key:filename(å¸¦åç¼€) value:path
         private readonly Dictionary<TileType, List<UnityEngine.Object>> tileDic;
 
-        public ResourcesManager() {
-            prefabsDic = Tool.loadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
-            assetsDic = Tool.loadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
-            tileDic = new Dictionary<TileType, List<UnityEngine.Object>>();
-            foreach(KeyValuePair<string, UnityEngine.Object> asset in assetsDic)
+        public ResourcesManager()
+        {
+            this.prefabsDic = Tool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
+            this.assetsDic = Tool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
+            this.tileDic = new Dictionary<TileType, List<UnityEngine.Object>>();
+            foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetsDic)
             {
-                foreach(TileType tileType in Enum.GetValues(typeof(TileType)))
+                foreach (TileType tileType in Enum.GetValues(typeof(TileType)))
                 {
-                    // ²»°üº¬Tile±¾Éí£¬½ö°üº¬ÆäÉÏµÄ×ÊÔ´
-                    if (!asset.Key.StartsWith(tileType.ToString()) || 
-                        asset.Key.Equals(tileType.ToString())) continue;
-                    if (!tileDic.ContainsKey(tileType))
+                    // ä¸åŒ…å«Tileæœ¬èº«ï¼Œä»…åŒ…å«å…¶ä¸Šçš„èµ„æº
+                    if (!asset.Key.StartsWith(tileType.ToString()) ||
+                        asset.Key.Equals(tileType.ToString()))
                     {
-                        tileDic.Add(tileType, new List<UnityEngine.Object>());
+                        continue;
                     }
-                    tileDic[tileType].Add(asset.Value);
+
+                    if (!this.tileDic.ContainsKey(tileType))
+                    {
+                        this.tileDic.Add(tileType, new List<UnityEngine.Object>());
+                    }
+
+                    this.tileDic[tileType].Add(asset.Value);
                     break;
                 }
             }
-            imagesDic = Tool.loadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
-            pathsDic = Tool.loadPaths();
+
+            this.imagesDic = Tool.LoadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
+            this.pathsDic = Tool.LoadPaths();
         }
 
         /// <summary>
-        /// Í¨¹ıÀàĞÍÓëÃû³ÆÕÒµ½¶ÔÓ¦µÄÔ¤ÖÆÌå
+        /// é€šè¿‡åç§°è·å¾—å¯¹åº”çš„é¢„åˆ¶ä½“.
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public GameObject getPrefab(string name)
+        /// <param name="name">é¢„åˆ¶ä½“åç§°.</param>
+        /// <returns>é¢„åˆ¶ä½“.</returns>
+        public GameObject GetPrefab(string name)
         {
-            if (prefabsDic.ContainsKey(name))
+            if (this.prefabsDic.ContainsKey(name))
             {
-                GameObject prefab = prefabsDic[name];
+                GameObject prefab = this.prefabsDic[name];
                 return prefab;
             }
-            LogManager.Instance.log(name + " prefab not found!!!", LogManager.LogLevel.Error);
+
+            LogManager.Instance.Log(name + " prefab not found!!!", LogManager.LogLevel.Error);
             return null;
         }
 
         /// <summary>
-        /// tilebase
+        /// é€šè¿‡åç§°è·å¾—å¯¹åº”çš„tilebase.
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        //public UnityEngine.Object getAsset(string name)
-        public TileBase getAsset(string name)
+        /// <param name="name">tilebaseçš„åç§°.</param>
+        /// <returns>tilebase.</returns>
+        // public UnityEngine.Object getAsset(string name)
+        public TileBase GetAsset(string name)
         {
-            if (assetsDic.ContainsKey(name))
+            if (this.assetsDic.ContainsKey(name))
             {
-                UnityEngine.Object asset = assetsDic[name];
+                UnityEngine.Object asset = this.assetsDic[name];
                 return (TileBase)asset;
             }
-            LogManager.Instance.log(name + " asset not found!!!", LogManager.LogLevel.Error);
+
+            LogManager.Instance.Log(name + " asset not found!!!", LogManager.LogLevel.Error);
             return null;
         }
 
         /// <summary>
-        /// µÃµ½ÔÚTileÉÏµÄ×ÊÔ´,Ä¬ÈÏËæ»ú»ñÈ¡
+        /// é€šè¿‡ç±»å‹è·å¾—åœ¨Tileä¸Šçš„èµ„æº,é»˜è®¤éšæœºè·å–.
         /// </summary>
-        /// <param name="tileType">ÔÚÄÄÖÖTileÉÏ</param>
-        /// <param name="name">°üº¬¸ÃÃû³ÆµÄ×ÊÔ´</param>
-        /// <returns></returns>
-        public TileBase getAssetByTileType(TileType tileType, string name=default) {
-            if (!tileDic.ContainsKey(tileType)) return null;
-            List<UnityEngine.Object> tiles = tileDic[tileType];
-            if (tiles.Count == 0) return null;
+        /// <param name="tileType">åœ¨å“ªç§Tileä¸Š.</param>
+        /// <param name="name">åŒ…å«è¯¥åç§°çš„èµ„æº.</param>
+        /// <returns>Tile.</returns>
+        public TileBase GetAssetByTileType(TileType tileType, string name = default)
+        {
+            if (!this.tileDic.ContainsKey(tileType))
+            {
+                return null;
+            }
+
+            List<UnityEngine.Object> tiles = this.tileDic[tileType];
+            if (tiles.Count == 0)
+            {
+                return null;
+            }
+
             if (name == default)
             {
                 return (TileBase)tiles[UnityEngine.Random.Range(0, tiles.Count)];
             }
-            foreach(UnityEngine.Object tile in tiles)
+
+            foreach (UnityEngine.Object tile in tiles)
             {
                 if (tile.name.Contains(name))
                 {
                     return (TileBase)tile;
                 }
             }
+
             return null;
         }
 
         /// <summary>
-        /// ÔÚ±³°üÖĞÕ¹Ê¾Í¼Æ¬
+        /// é€šè¿‡åç§°è·å¾—Sprite
+        /// åœ¨èƒŒåŒ…ä¸­å±•ç¤ºå›¾ç‰‡.
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public Sprite getImage(string name)
+        /// <param name="name">åç§°.</param>
+        /// <returns>Sprite.</returns>
+        public Sprite GetImage(string name)
         {
-            if (imagesDic.ContainsKey(name))
+            if (this.imagesDic.ContainsKey(name))
             {
-                Sprite sprite = imagesDic[name];
+                Sprite sprite = this.imagesDic[name];
                 return sprite;
             }
-            LogManager.Instance.log(name + " image not found!!!", LogManager.LogLevel.Error);
+
+            LogManager.Instance.Log(name + " image not found!!!", LogManager.LogLevel.Error);
             return null;
         }
 
         /// <summary>
-        /// »ñÈ¡ResourceÏÂÎÄ¼şµÄÂ·¾¶
+        /// è·å–Resourceä¸‹æ–‡ä»¶çš„è·¯å¾„.
         /// </summary>
-        /// <param name="name">ĞèÒª¼ÓÈëºó×º</param>
-        /// <returns></returns>
-        public string getPath(string name) {
-            if (pathsDic.ContainsKey(name))
+        /// <param name="name">éœ€è¦åŠ å…¥åç¼€.</param>
+        /// <returns>è·¯å¾„.</returns>
+        public string GetPath(string name)
+        {
+            if (this.pathsDic.ContainsKey(name))
             {
-                string path = pathsDic[name];
+                string path = this.pathsDic[name];
                 return path;
             }
-            LogManager.Instance.log(name + " image not found!!!", LogManager.LogLevel.Error);
+
+            LogManager.Instance.Log(name + " image not found!!!", LogManager.LogLevel.Error);
             return null;
         }
     }

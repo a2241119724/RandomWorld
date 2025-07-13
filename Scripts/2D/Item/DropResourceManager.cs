@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,7 +11,8 @@ namespace LAB2D
         /// </summary>
         private static Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> resources = new Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>>();
 
-        public void addDrop(ItemType itemType, Vector3Int posMap, ResourceInfo resourceInfo) {
+        public void addDrop(ItemType itemType, Vector3Int posMap, ResourceInfo resourceInfo)
+        {
             Dictionary<Vector3Int, ResourceInfo> dict;
             if (resources.ContainsKey(itemType))
             {
@@ -37,7 +37,7 @@ namespace LAB2D
         {
             Dictionary<Vector3Int, ResourceInfo> dict = resources[itemType];
             dict[posMap].count -= resourceInfo.count;
-            if(dict[posMap].count <= 0)
+            if (dict[posMap].count <= 0)
             {
                 dict.Remove(posMap);
             }
@@ -58,7 +58,8 @@ namespace LAB2D
             }
         }
 
-        public ResourceInfo getDrop(ItemType itemType, Vector3Int posMap) {
+        public ResourceInfo getDrop(ItemType itemType, Vector3Int posMap)
+        {
             if (!resources[itemType].ContainsKey(posMap)) return null;
             return resources[itemType][posMap];
         }
@@ -89,7 +90,8 @@ namespace LAB2D
     }
 
     [Serializable]
-    public class ResourceInfo {
+    public class ResourceInfo
+    {
         /// <summary>
         /// Inventory,id=-1±íÊ¾¿Õ
         /// </summary>

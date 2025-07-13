@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.EventSystems;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
     public class BackpackItemView : MVCItemView
     {

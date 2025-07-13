@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,7 +12,7 @@ namespace LAB2D
     public abstract class MVCController<IMV, M, NV, IV, IV_> : MonoBehaviourInit
         where M : MVCModel, new()
         where IV : MVCItemView
-        where IMV : MVCItemManagerView<IV,M>
+        where IMV : MVCItemManagerView<IV, M>
         where NV : MVCNavigationView
         where IV_ : MVCInfoView
     {
@@ -59,7 +56,7 @@ namespace LAB2D
         #region 操作数据
         public void exchangeItem(int index1, int index2)
         {
-            model.exchangeItem(navigationView.CurItemType,index1, index2);
+            model.exchangeItem(navigationView.CurItemType, index1, index2);
             updateInventory();
         }
 
@@ -93,10 +90,10 @@ namespace LAB2D
         {
             if (itemManagerView == null)
             {
-                LogManager.Instance.log("inventoryView is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("inventoryView is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            itemManagerView.updateView(navigationView.CurItemType,model);
+            itemManagerView.updateView(navigationView.CurItemType, model);
         }
 
         /// <summary>
@@ -125,7 +122,7 @@ namespace LAB2D
                     btns[index].GetComponent<RoundCorner>().color = new Color(100 / 255.0f, 120 / 255.0f, 150 / 255.0f, 255 / 255.0f);
                     break;
                 default:
-                    LogManager.Instance.log("没有该类型边框可以修改!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("没有该类型边框可以修改!!!", LogManager.LogLevel.Error);
                     break;
             }
         }
@@ -144,7 +141,7 @@ namespace LAB2D
         {
             if (infoView == null)
             {
-                LogManager.Instance.log("infoView is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("infoView is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             infoView.showInfo(data);

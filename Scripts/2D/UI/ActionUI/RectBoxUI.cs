@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -46,7 +45,7 @@ namespace LAB2D
                 }
                 return;
             }
-            if (Input.GetMouseButtonDown(0) && PanelController.Instance.Panels.Count > 0 && 
+            if (Input.GetMouseButtonDown(0) && PanelController.Instance.Panels.Count > 0 &&
                 (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance ||
                 PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance))
             {
@@ -65,7 +64,7 @@ namespace LAB2D
                 {
                     transform.position = new Vector3(start.x, start.y + y, 0.0f);
                 }
-                else if(x < 0 && y > 0)
+                else if (x < 0 && y > 0)
                 {
                     transform.position = new Vector3(start.x + x, start.y + y, 0.0f);
                 }
@@ -89,7 +88,7 @@ namespace LAB2D
         /// </summary>
         private void select()
         {
-            foreach(string key in selects.Keys)
+            foreach (string key in selects.Keys)
             {
                 selects[key].Clear();
             }
@@ -99,19 +98,19 @@ namespace LAB2D
                 transform.position.x + ((RectTransform)transform).sizeDelta.x,
                 transform.position.y - ((RectTransform)transform).sizeDelta.y,
                 transform.position.z));
-            for(int i = start.x;i > end.x; i--)
+            for (int i = start.x; i > end.x; i--)
             {
                 for (int j = start.y; j < end.y; j++)
                 {
                     Vector3Int posMap = new Vector3Int(i, j, 0);
                     Character character = ItemInfoUI.Instance.getCharacter(posMap);
-                    if(character != null)
+                    if (character != null)
                     {
                         SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
                         selectUI.Character = character;
                     }
                     ResourceInfo resourceInfo = DropResourceManager.Instance.getDropByAll(posMap);
-                    if(resourceInfo != null)
+                    if (resourceInfo != null)
                     {
                         SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
                         selectUI.setTarget(posMap);
@@ -122,8 +121,8 @@ namespace LAB2D
                         SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
                         selectUI.setTarget(posMap);
                     }
-                    TileBase tileBase = ItemInfoUI.Instance.getTile(posMap,false,false);
-                    if(tileBase != null)
+                    TileBase tileBase = ItemInfoUI.Instance.getTile(posMap, false, false);
+                    if (tileBase != null)
                     {
                         SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
                         selectUI.setTarget(posMap);

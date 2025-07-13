@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace LAB2D {
+namespace LAB2D
+{
     public class WorkerMoveState : WorkerState
     {
         private float _recordTime = 0.0f;

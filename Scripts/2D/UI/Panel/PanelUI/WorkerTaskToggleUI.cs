@@ -1,7 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace LAB2D
@@ -24,15 +22,15 @@ namespace LAB2D
             List<Worker> workers = WorkerManager.Instance.Characters;
             // UI不够,创建
             int count = workers.Count - (transform.childCount - 1);
-            if (count>0)
+            if (count > 0)
             {
-                for(int i = count; i > 0; i--)
+                for (int i = count; i > 0; i--)
                 {
-                    GameObject g = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("TaskItem"), transform ,false);
+                    GameObject g = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("TaskItem"), transform, false);
                     g.name = "TaskItem";
                     taskItems.Add(g);
                     // 添加事件
-                    for(int j=1;j< g.transform.childCount; j++)
+                    for (int j = 1; j < g.transform.childCount; j++)
                     {
                         Toggle toggle = g.transform.GetChild(j).GetComponent<Toggle>();
                         toggle.onValueChanged.AddListener((bool isOn) =>
@@ -43,12 +41,12 @@ namespace LAB2D
                 }
             }
             // 清空TaskItem
-            for (int i=0; i < transform.childCount-1; i++)
+            for (int i = 0; i < transform.childCount - 1; i++)
             {
                 taskItems[i].SetActive(false);
             }
             int index = 0;
-            foreach(Worker worker in workers)
+            foreach (Worker worker in workers)
             {
                 taskItems[index].SetActive(true);
                 Tool.GetComponentInChildren<Text>(taskItems[index].transform.GetChild(0).gameObject, "Text").text = worker.name;
@@ -64,9 +62,10 @@ namespace LAB2D
         /// 在面板中挂在在所有TaskToggle上
         /// </summary>
         /// <param name="toggle"></param>
-        public void taskToggle(Toggle toggle) {
-            int x = toggle.transform.parent.GetSiblingIndex()-1;
-            int y = toggle.transform.GetSiblingIndex()-1;
+        public void taskToggle(Toggle toggle)
+        {
+            int x = toggle.transform.parent.GetSiblingIndex() - 1;
+            int y = toggle.transform.GetSiblingIndex() - 1;
             List<Worker> workers = WorkerManager.Instance.Characters;
             workers[x].TaskToggle[y] = toggle.isOn;
         }

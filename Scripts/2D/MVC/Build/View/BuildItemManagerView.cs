@@ -1,10 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 namespace LAB2D
 {
-    public class BuildItemManagerView : MVCItemManagerView<BuildItemView,BuildModel>
+    public class BuildItemManagerView : MVCItemManagerView<BuildItemView, BuildModel>
     {
         public static BuildItemManagerView Instance { private set; get; }
 
@@ -12,7 +8,7 @@ namespace LAB2D
         {
             base.Awake();
             Instance = this;
-            itemBox = ResourcesManager.Instance.getPrefab("BuildItem");
+            itemBox = ResourcesManager.Instance.GetPrefab("BuildItem");
         }
 
         protected override int getQuantity(Item item)

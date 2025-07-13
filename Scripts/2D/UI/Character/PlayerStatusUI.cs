@@ -20,37 +20,37 @@ namespace LAB2D
             HpValue = transform.Find("State/Hp/HpValue").GetComponent<Text>();
             if (HpValue == null)
             {
-                LogManager.Instance.log("HpValue Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("HpValue Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             MpValue = transform.Find("State/Mp/MpValue").GetComponent<Text>();
             if (MpValue == null)
             {
-                LogManager.Instance.log("MpValue Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("MpValue Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             LevelValue = transform.Find("State/Level/LevelValue").GetComponent<Text>();
             if (LevelValue == null)
             {
-                LogManager.Instance.log("LevelValue Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("LevelValue Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             HpBar = transform.Find("State/Hp/HpBar").GetComponent<Slider>();
             if (HpBar == null)
             {
-                LogManager.Instance.log("HpBar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("HpBar Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             MpBar = transform.Find("State/Mp/MpBar").GetComponent<Slider>();
             if (MpBar == null)
             {
-                LogManager.Instance.log("MpBar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("MpBar Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             LevelBar = transform.Find("State/Level/LevelBar").GetComponent<Slider>();
             if (LevelBar == null)
             {
-                LogManager.Instance.log("LevelBar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("LevelBar Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
         }

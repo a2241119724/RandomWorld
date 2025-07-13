@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 namespace LAB2D
 {
     public class WorkerAttackState : WorkerState
@@ -22,7 +18,7 @@ namespace LAB2D
         public override void OnUpdate()
         {
             base.OnUpdate();
-            if(Character.WearData.weapon == null)
+            if (Character.WearData.weapon == null)
             {
                 Character.Manager.changeState(WorkerStateType.Escape);
                 return;

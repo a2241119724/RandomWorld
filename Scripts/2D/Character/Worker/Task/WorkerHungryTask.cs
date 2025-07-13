@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace LAB2D
@@ -22,8 +20,8 @@ namespace LAB2D
         public override void start(Worker worker)
         {
             base.start(worker);
-            InventoryManager.Instance.isEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry,true);
-            changeStage(worker,0);
+            InventoryManager.Instance.isEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry, true);
+            changeStage(worker, 0);
         }
 
         public override void finish(Worker worker)

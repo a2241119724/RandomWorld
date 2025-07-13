@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -26,14 +24,15 @@ namespace LAB2D
                 // 进入工作状态
                 worker.Manager.changeState(WorkerStateType.Seek);
             });
-            stageInit.Add((Worker worker) => {
+            stageInit.Add((Worker worker) =>
+            {
                 maxProgress = 1.0f;
                 AvailableNeighborPos.Clear();
                 AvailableNeighborPos.Add(neighbors[8]);
                 TargetMap = InventoryManager.Instance.getPosByPrePlace(worker);
                 if (TargetMap == default)
                 {
-                    LogManager.Instance.log("仓库没有位置了", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("仓库没有位置了", LogManager.LogLevel.Error);
                 }
                 // 进入工作状态
                 worker.Manager.changeState(WorkerStateType.Seek);
@@ -44,7 +43,7 @@ namespace LAB2D
         {
             base.start(worker);
             InventoryManager.Instance.isEnoughAndPrePlace(worker, resourceInfo, true);
-            changeStage(worker,0);
+            changeStage(worker, 0);
         }
 
         protected override bool isFinish(Worker worker)
@@ -54,7 +53,7 @@ namespace LAB2D
                 case 0:
                     ItemMap.Instance.pickUpFromDrop(TargetMap, resourceInfo);
                     worker.addResource(resourceInfo);
-                    changeStage(worker,1);
+                    changeStage(worker, 1);
                     return false;
                 default:
                     return true;
@@ -67,11 +66,11 @@ namespace LAB2D
             ItemType itemType = ItemDataManager.Instance.getTypeById(resourceInfo.id);
             // 放下拿起来的东西
             ItemMap.Instance.showTile(TargetMap, (TileBase)ResourcesManager.Instance
-                .getAsset(ItemDataManager.Instance.getById(resourceInfo.id).imageName));
+                .GetAsset(ItemDataManager.Instance.getById(resourceInfo.id).imageName));
             worker.subResource(resourceInfo);
-            InventoryManager.Instance.addItemByPrePlace(worker,TargetMap);
+            InventoryManager.Instance.addItemByPrePlace(worker, TargetMap);
             // 如果是食物,添加饥饿任务
-            if(itemType == ItemType.Food)
+            if (itemType == ItemType.Food)
             {
                 WorkerTaskManager.Instance.addTask(new WorkerHungryTask.HungryTaskBuilder().setTarget(TargetMap).build(), 0);
             }

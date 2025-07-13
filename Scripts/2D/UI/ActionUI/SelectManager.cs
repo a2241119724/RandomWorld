@@ -1,10 +1,9 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace LAB2D {
+namespace LAB2D
+{
     public class SelectManager : Singleton<SelectManager>
     {
         public Dictionary<SelectUI, bool> selects;
@@ -33,7 +32,8 @@ namespace LAB2D {
             SelectUI select = null;
             foreach (KeyValuePair<SelectUI, bool> pair in selects)
             {
-                if (pair.Key.Target.x == posMap.x && pair.Key.Target.y == posMap.y) {
+                if (pair.Key.Target.x == posMap.x && pair.Key.Target.y == posMap.y)
+                {
                     select = pair.Key;
                     break;
                 }
@@ -42,13 +42,13 @@ namespace LAB2D {
                     select = pair.Key;
                 }
             }
-            if(select != null)
+            if (select != null)
             {
                 selects[select] = true;
                 return select;
             }
             // 没有更多的SelectUI,创建新的
-            select = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("Select")).GetComponent<SelectUI>();
+            select = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("Select")).GetComponent<SelectUI>();
             select.transform.SetParent(GameObject.FindGameObjectWithTag(ResourceConstant.ACTION_UI_TAG).transform);
             selects.Add(select, true);
             return select;
@@ -62,7 +62,7 @@ namespace LAB2D {
             foreach (SelectUI selectUI in selects.Keys.ToList())
             {
                 selects[selectUI] = false;
-                selectUI.init();
+                selectUI.Init();
             }
         }
 
@@ -74,8 +74,8 @@ namespace LAB2D {
         public SelectUI getByCharacter(Character character)
         {
             foreach (KeyValuePair<SelectUI, bool> pair in selects)
-            { 
-                if(pair.Key.Character == character)
+            {
+                if (pair.Key.Character == character)
                 {
                     return pair.Key;
                 }

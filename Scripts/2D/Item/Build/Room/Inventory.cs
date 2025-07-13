@@ -1,13 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 namespace LAB2D
 {
     [Serializable]
-    public class Inventory : RoomItem 
+    public class Inventory : RoomItem
     {
         public Inventory()
         {
@@ -45,7 +43,7 @@ namespace LAB2D
                 .directBuild(new Vector3Int(xB[1], yB[0], 0), walls[WallDirection.LEFT_TOP].tile)
                 .addTask();
             // ÃÌº”≤÷ø‚Cell
-            InventoryManager.Instance.addCells(Tool.add(centerMap, -height / 2, -width / 2), width, height);
+            InventoryManager.Instance.addCells(Tool.Add(centerMap, -height / 2, -width / 2), width, height);
         }
     }
 }

@@ -1,10 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 namespace LAB2D
 {
-    public class WorkerWorkState : WorkerState {
+    public class WorkerWorkState : WorkerState
+    {
         public WorkerWorkState(Worker worker) : base(worker) { }
 
         public override void OnEnter()

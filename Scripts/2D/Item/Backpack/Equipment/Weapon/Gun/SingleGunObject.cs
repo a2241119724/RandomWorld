@@ -1,6 +1,4 @@
-﻿using Photon.Pun;
-using System;
-using UnityEngine;
+﻿using System;
 
 namespace LAB2D
 {

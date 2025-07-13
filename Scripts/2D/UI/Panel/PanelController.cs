@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,8 +12,9 @@ namespace LAB2D
         {
             Parent = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).transform;
             Panels = new Stack<IBasePanel>();
-            if (Panels == null) {
-                LogManager.Instance.log("panels assign resource Error!!!", LogManager.LogLevel.Error);
+            if (Panels == null)
+            {
+                LogManager.Instance.Log("panels assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
         }
@@ -26,7 +26,7 @@ namespace LAB2D
         /// <param name="parent">父物体</param>
         public void show(IBasePanel basePanel)
         {
-            if (Panels.Count > 0 && !(basePanel is ItemInfoPanel 
+            if (Panels.Count > 0 && !(basePanel is ItemInfoPanel
                 || basePanel is AIChatPanel))
             {
                 Panels.Peek().OnPause();
@@ -40,7 +40,7 @@ namespace LAB2D
             if (Panels.Count > 0)
             {
                 // 先pop再执行退出
-                IBasePanel panel =  Panels.Pop();
+                IBasePanel panel = Panels.Pop();
                 panel.OnExit();
             }
             if (Panels.Count > 0)

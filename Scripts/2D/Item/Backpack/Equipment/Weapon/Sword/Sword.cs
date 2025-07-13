@@ -4,7 +4,8 @@ using UnityEngine;
 namespace LAB2D
 {
     [Serializable]
-    public abstract class Sword : Weapon { 
+    public abstract class Sword : Weapon
+    {
     }
 
     // 该脚本被玩家装备才会激活
@@ -16,7 +17,7 @@ namespace LAB2D
         {
             base.Awake();
             raduis = 8.0f;
-            blood = ResourcesManager.Instance.getPrefab("Blood");
+            blood = ResourcesManager.Instance.GetPrefab("Blood");
         }
 
         protected override void Start()

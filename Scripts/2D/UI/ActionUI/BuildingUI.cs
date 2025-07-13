@@ -1,8 +1,4 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace LAB2D
 {
@@ -27,7 +23,7 @@ namespace LAB2D
             Vector3Int centerMap = TileMap.Instance.worldPosToMapPos(worldPos);
             BuildItem buildItem = ((BuildItem)ItemFactory.Instance.getBuildItemByName(ItemDataManager.Instance.getById(BuildMenuPanel.Instance.Select.item.id).imageName));
             // НЈдь
-            if (IsAvailableMap.Instance.showRect(centerMap, buildItem.width, buildItem.height, buildItem.isBottomLeft) 
+            if (IsAvailableMap.Instance.showRect(centerMap, buildItem.width, buildItem.height, buildItem.isBottomLeft)
                 && Input.GetMouseButtonDown(0))
             {
                 buildItem.addBuildTask(centerMap);

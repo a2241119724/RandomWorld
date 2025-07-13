@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace LAB2D
@@ -22,7 +20,7 @@ namespace LAB2D
         /// </summary>
         public void updateEnergy()
         {
-            if(CurEnergy <= MaxEnergy)
+            if (CurEnergy <= MaxEnergy)
             {
                 CurEnergy += Time.deltaTime;
             }
@@ -34,7 +32,8 @@ namespace LAB2D
                 $"Êª¶È:{Humidity}\n";
         }
 
-        public string ToString(Vector3Int posMap) {
+        public string ToString(Vector3Int posMap)
+        {
             RoomInfo roomInfo = RoomManager.Instance.getRoomByPos(posMap);
             if (roomInfo != null)
             {

@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,8 +22,8 @@ namespace LAB2D
         {
             Name = "WorkerTaskInfo";
             setPanel();
-            Transform title = Tool.GetComponentInChildren<Transform>(panel,"Title");
-            foreach(KeyValuePair<TaskType, string> pair in typeToChinese)
+            Transform title = Tool.GetComponentInChildren<Transform>(panel, "Title");
+            foreach (KeyValuePair<TaskType, string> pair in typeToChinese)
             {
                 Tool.GetComponentInChildren<Text>(title.GetChild((int)pair.Key + 1).gameObject, "Text").text = pair.Value;
             }

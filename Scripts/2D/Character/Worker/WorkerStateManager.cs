@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace LAB2D
 {
@@ -9,7 +6,8 @@ namespace LAB2D
     {
         public WorkerTask Task { get; set; }
 
-        public WorkerStateManager(C character) : base(character) { 
+        public WorkerStateManager(C character) : base(character)
+        {
         }
 
         public override void changeState(CST type)

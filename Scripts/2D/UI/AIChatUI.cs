@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -15,7 +13,7 @@ namespace LAB2D
         public static AIChatUI Instance { get; private set; }
         public Text input;
         public Transform content;
-        
+
         private bool isWorking = false;
 
         private void Awake()
@@ -27,7 +25,7 @@ namespace LAB2D
 
         public void send()
         {
-            if(isWorking) return;
+            if (isWorking) return;
             isWorking = true;
             _ = chat(input.text);
         }
@@ -38,7 +36,7 @@ namespace LAB2D
         /// <returns></returns>
         public async Task chat(string question)
         {
-            GameObject g = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("RightChatItem"), content,false);
+            GameObject g = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("RightChatItem"), content, false);
             Tool.GetComponentInChildren<Text>(g, "Text").text = question;
             string url = "http://127.0.0.1:11434/api/chat";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
@@ -63,7 +61,7 @@ namespace LAB2D
                 {
                     stream.Write(body, 0, body.Length);
                 }
-                HttpWebResponse response = (HttpWebResponse) await request.GetResponseAsync();
+                HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync();
                 if (response == null) return;
                 using (Stream stream = response.GetResponseStream())
                 {
@@ -88,12 +86,12 @@ namespace LAB2D
             }
             catch (Exception e)
             {
-                LogManager.Instance.log("AIChatUI«Î«Û ß∞‹: " + e.Message, LogManager.LogLevel.Error);
+                LogManager.Instance.Log("AIChatUI«Î«Û ß∞‹: " + e.Message, LogManager.LogLevel.Error);
                 text = "«Î«Û ß∞‹";
             }
             finally
             {
-                g = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("LeftChatItem"), content, false);
+                g = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("LeftChatItem"), content, false);
                 g.transform.SetParent(content);
                 Tool.GetComponentInChildren<Text>(g, "Text").text = text;
                 isWorking = false;
@@ -101,7 +99,7 @@ namespace LAB2D
         }
 
         [Serializable]
-        class ChatData
+        public class ChatData
         {
             public string model;
             public string created_at;

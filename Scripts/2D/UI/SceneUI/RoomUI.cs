@@ -1,6 +1,4 @@
 using Photon.Pun;
-using Photon.Realtime;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -22,7 +20,7 @@ namespace LAB2D
 
         void Start()
         {
-            prefabRoomBox = ResourcesManager.Instance.getPrefab("RoomItem");
+            prefabRoomBox = ResourcesManager.Instance.GetPrefab("RoomItem");
         }
 
         public override void OnRoomListUpdate(List<Photon.Realtime.RoomInfo> roomList)
@@ -32,11 +30,12 @@ namespace LAB2D
             {
                 GameObject g = Instantiate(prefabRoomBox);
                 g.GetComponent<Button>().onClick.AddListener(
-                    delegate {
+                    delegate
+                    {
                         OnClick_RoomBox(room.Name);
                     });
                 g.name = prefabRoomBox.name;
-                g.transform.Find("RoomName").GetComponent<Text>().text = string.Format("{0}   {1}/{2}", room.Name, room.PlayerCount,20);
+                g.transform.Find("RoomName").GetComponent<Text>().text = string.Format("{0}   {1}/{2}", room.Name, room.PlayerCount, 20);
                 g.transform.SetParent(transform, false);
             }
         }

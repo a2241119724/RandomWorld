@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
     /// <summary>
     /// 背包仓库界面
@@ -15,7 +11,7 @@ namespace LAB2D
         {
             base.Awake();
             Instance = this;
-            itemBox = ResourcesManager.Instance.getPrefab("BackpackItem");
+            itemBox = ResourcesManager.Instance.GetPrefab("BackpackItem");
         }
 
         protected override int getQuantity(Item item)

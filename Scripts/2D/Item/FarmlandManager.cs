@@ -1,5 +1,3 @@
-using ExitGames.Client.Photon.StructWrapping;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,7 +38,7 @@ namespace LAB2D
             {
                 for (int j = 0; j < width; j++)
                 {
-                    Vector3Int pos = Tool.add(startPos, i, j);
+                    Vector3Int pos = Tool.Add(startPos, i, j);
                     cells.Add(pos, new PlantInfo(-1, 0, 0));
                     idTo.Add(pos, new PlantInfo(-1, 0, 0));
                 }
@@ -79,7 +77,7 @@ namespace LAB2D
                 idToResource[-1].Remove(posMap);
                 cells[posMap] = plantInfo;
                 prePlantResource[worker].Remove(posMap);
-                ResourceMap.Instance.setTile(posMap, ResourcesManager.Instance.getAsset(
+                ResourceMap.Instance.setTile(posMap, ResourcesManager.Instance.GetAsset(
                     ItemDataManager.Instance.getById(plantInfo.id).imageName));
             }
         }
