@@ -1,8 +1,6 @@
-﻿using UnityEngine;
-using Photon.Pun;
+﻿using Photon.Pun;
+using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
-using System;
 
 namespace LAB2D
 {
@@ -26,9 +24,9 @@ namespace LAB2D
         {
             base.Awake();
             direction = new Vector3();
-            if(direction == null)
+            if (direction == null)
             {
-                LogManager.Instance.log("direction assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("direction assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
             CharacterDataLAB.MaxHp = CharacterDataLAB.Hp = 100;
@@ -40,8 +38,9 @@ namespace LAB2D
         {
             base.Start();
             animator = GetComponent<Animator>();
-            if (animator == null) {
-                LogManager.Instance.log("animator Not Found!!!", LogManager.LogLevel.Error);
+            if (animator == null)
+            {
+                LogManager.Instance.Log("animator Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             if (InfoUI.Instance != null)
@@ -64,7 +63,8 @@ namespace LAB2D
                 Tool.GetComponentInChildren<Text>(gameObject, "Name").text = PhotonNetwork.NickName;
                 PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
             }
-            else if(!photonView.IsMine) {
+            else if (!photonView.IsMine)
+            {
                 Tool.GetComponentInChildren<Text>(gameObject, "Name").text = photonView.Owner.NickName;
                 PlayerManager.Instance.add(this);
                 //PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
@@ -88,7 +88,8 @@ namespace LAB2D
                 Input.GetKey(KeyCode.W) ||
                 Input.GetKey(KeyCode.S) ||
                 Input.GetKey(KeyCode.D) ||
-                (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f)){
+                (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f))
+            {
                 //mainCamera.Target = transform.position;
                 //miniCamera.Target = transform.position;
                 mainCamera.DirectToPosition(transform.position);
@@ -106,7 +107,8 @@ namespace LAB2D
                 direction.x = Input.GetAxisRaw("Horizontal"); // 在Game面板
                 direction.y = Input.GetAxisRaw("Vertical");
                 // 摇杆控制玩家
-                if(direction.x == 0 && direction.y == 0 &&Joystick.Instance != null) {
+                if (direction.x == 0 && direction.y == 0 && Joystick.Instance != null)
+                {
                     direction.x = Joystick.Instance.Direction.x;
                     direction.y = Joystick.Instance.Direction.y;
                 }
@@ -114,7 +116,8 @@ namespace LAB2D
                 // 翻转
                 _renderer.flipX = direction.x < 0;
                 spriteRenderer.enabled = false;
-                for (int i=0;i<7;i++) {
+                for (int i = 0; i < 7; i++)
+                {
                     transform.GetChild(i).gameObject.SetActive(true);
                 }
             }
@@ -142,7 +145,7 @@ namespace LAB2D
                 ++level;
                 currentExperience %= maxExperience;
                 maxExperience *= 2;
-                GlobalInit.Instance.showTip("UP " + level);
+                GlobalInit.Instance.ShowTip("UP " + level);
             }
             PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
         }
@@ -154,7 +157,8 @@ namespace LAB2D
         public void addHp(float Hp)
         {
             CharacterDataLAB.Hp += Hp;
-            if (CharacterDataLAB.Hp > CharacterDataLAB.MaxHp) {
+            if (CharacterDataLAB.Hp > CharacterDataLAB.MaxHp)
+            {
                 CharacterDataLAB.Hp = CharacterDataLAB.MaxHp;
             }
             PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
@@ -164,10 +168,11 @@ namespace LAB2D
         /// 减血
         /// </summary>
         /// <param name="Hp">减的血量</param>
-        public override void reduceHp(float Hp) {
-            if(Hp <= 0)
+        public override void reduceHp(float Hp)
+        {
+            if (Hp <= 0)
             {
-                LogManager.Instance.log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
                 return;
             }
             base.reduceHp(Hp);
@@ -179,14 +184,15 @@ namespace LAB2D
         {
             PlayerManager.Instance.remove(this);
             // 关闭游戏添加正在装备的武器
-            if (PlayerManager.Instance.Select.id != -1) { 
+            if (PlayerManager.Instance.Select.id != -1)
+            {
                 BackpackController.Instance.addItem(PlayerManager.Instance.Select.weaponData);
             }
         }
 
         protected override void death()
         {
-            LogManager.Instance.log("玩家重生", LogManager.LogLevel.Info);
+            LogManager.Instance.Log("玩家重生", LogManager.LogLevel.Info);
             CharacterDataLAB.Hp = 100;
         }
 
@@ -194,9 +200,11 @@ namespace LAB2D
         /// 是否在玩家周围
         /// </summary>
         /// <returns></returns>
-        public bool isArround(Vector3 pos) {
-            if (pos == null) {
-                LogManager.Instance.log("pos is null!!!", LogManager.LogLevel.Error);
+        public bool isArround(Vector3 pos)
+        {
+            if (pos == null)
+            {
+                LogManager.Instance.Log("pos is null!!!", LogManager.LogLevel.Error);
                 return false;
             }
             return pos.x < transform.position.x + 50 &&
@@ -209,9 +217,11 @@ namespace LAB2D
         /// 切换角色视角
         /// </summary>
         /// <param name="is_2_5D"></param>
-        public void togglePerspective(bool is_2_5D) {
+        public void togglePerspective(bool is_2_5D)
+        {
             float rotationX = 0;
-            if (is_2_5D){
+            if (is_2_5D)
+            {
                 rotationX = -45;
             }
             transform.rotation = Quaternion.Euler(rotationX, transform.rotation.y, transform.rotation.z);

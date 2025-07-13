@@ -1,4 +1,3 @@
-using Photon.Pun;
 using UnityEngine;
 
 namespace LAB2D
@@ -22,7 +21,7 @@ namespace LAB2D
             Transform t = GameObject.FindGameObjectWithTag(root).transform.Find(Name);
             if (t == null)
             {
-                panel = Object.Instantiate(ResourcesManager.Instance.getPrefab(Name), PanelController.Instance.Parent, false);
+                panel = Object.Instantiate(ResourcesManager.Instance.GetPrefab(Name), PanelController.Instance.Parent, false);
             }
             else
             {
@@ -32,20 +31,23 @@ namespace LAB2D
             panel.SetActive(false);
         }
 
-        public virtual void OnEnter() {
-            LogManager.Instance.log("Enter: " + this.GetType().Name, LogManager.LogLevel.Info);
+        public virtual void OnEnter()
+        {
+            LogManager.Instance.Log("Enter: " + GetType().Name, LogManager.LogLevel.Info);
             if (panel == null) return;
             panel.SetActive(true);
         }
         public virtual void OnPause() { }
         public virtual void OnRun() { }
-        public virtual void OnExit() {
-            LogManager.Instance.log("Exit: " + this.GetType().Name, LogManager.LogLevel.Info);
+        public virtual void OnExit()
+        {
+            LogManager.Instance.Log("Exit: " + GetType().Name, LogManager.LogLevel.Info);
             panel.SetActive(false);
         }
     }
 
-    public interface IBasePanel {
+    public interface IBasePanel
+    {
         void OnEnter();
         void OnPause();
         void OnRun(); // 暂停后开启为运行

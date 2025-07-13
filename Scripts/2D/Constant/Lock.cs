@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace LAB2D
@@ -13,7 +11,7 @@ namespace LAB2D
 
         public bool getLock(Worker worker)
         {
-            if(Owner == null)
+            if (Owner == null)
             {
                 // 第一次概率获取锁
                 if (Random.Range(0.0f, 1.0f) > (1.0f / WorkerManager.Instance.getCountLock())) return false;
@@ -21,7 +19,7 @@ namespace LAB2D
                 //LogManager.Instance.log(worker.name + "获取锁++++++", LogManager.LogLevel.Info);
                 return true;
             }
-            else if(Owner == worker)
+            else if (Owner == worker)
             {
                 return true;
             }
@@ -30,7 +28,7 @@ namespace LAB2D
 
         public void releaseLock(Worker worker)
         {
-            if(Owner == worker)
+            if (Owner == worker)
             {
                 //LogManager.Instance.log(worker.name + "释放锁========", LogManager.LogLevel.Info);
                 Owner = null;

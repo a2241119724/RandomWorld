@@ -1,10 +1,11 @@
-﻿using Photon.Pun;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace LAB2D {
+namespace LAB2D
+{
     public class EnemyBullet : Bullet
     {
-        protected override void Awake() {
+        protected override void Awake()
+        {
             base.Awake();
             layerMask = LayerMask.GetMask("Tile", "Player", "Worker");
         }

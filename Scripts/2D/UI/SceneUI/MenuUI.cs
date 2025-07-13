@@ -12,7 +12,7 @@ namespace LAB2D
 
         private void Awake()
         {
-            GlobalInit.Instance.showTip("登录成功!!!");
+            GlobalInit.Instance.ShowTip("登录成功!!!");
         }
 
         void Start()
@@ -22,10 +22,10 @@ namespace LAB2D
             note = transform.Find("Center/Note").gameObject;
             if (note == null)
             {
-                LogManager.Instance.log("note Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("note Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
-            Tool.GetComponentInChildren<Button>(gameObject,"Start").onClick.AddListener(OnClick_Start);
+            Tool.GetComponentInChildren<Button>(gameObject, "Start").onClick.AddListener(OnClick_Start);
             Tool.GetComponentInChildren<Button>(gameObject, "NoteClose").onClick.AddListener(OnClick_NoteClose);
         }
 
@@ -37,8 +37,9 @@ namespace LAB2D
             if (toggle.isOn)
             {
                 string name = Tool.GetComponentInChildren<Text>(gameObject, "PlayerName").text;
-                if (name.Length <= 0) {
-                    GlobalInit.Instance.showTip("名字不能为空!!!");
+                if (name.Length <= 0)
+                {
+                    GlobalInit.Instance.ShowTip("名字不能为空!!!");
                     return;
                 }
                 PhotonNetwork.NickName = name;
@@ -46,7 +47,7 @@ namespace LAB2D
             }
             else
             {
-                GlobalInit.Instance.showTip("未勾选条款!!!");
+                GlobalInit.Instance.ShowTip("未勾选条款!!!");
             }
         }
 

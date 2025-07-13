@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -18,7 +16,7 @@ namespace LAB2D
 
         public void addGather(Vector3Int posMap)
         {
-            tilemap.SetTile(posMap,(TileBase)ResourcesManager.Instance.getAsset("Gather"));
+            tilemap.SetTile(posMap, (TileBase)ResourcesManager.Instance.GetAsset("Gather"));
         }
 
         public void cancelGather(Vector3Int posMap)

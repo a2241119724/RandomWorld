@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Tilemaps;
 
 namespace LAB2D
@@ -11,7 +8,7 @@ namespace LAB2D
     {
         public CustomBracelet()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomBracelet");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomBracelet");
         }
     }
 

@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Tilemaps;
 
 namespace LAB2D
@@ -11,7 +8,7 @@ namespace LAB2D
         {
             width = 1;
             height = 2;
-            tile = (TileBase)ResourcesManager.Instance.getAsset("SingleBed");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("SingleBed");
         }
     }
 }

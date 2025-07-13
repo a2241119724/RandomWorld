@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -17,14 +14,16 @@ namespace LAB2D
 
         protected void bindButton(ItemType start, ItemType end)
         {
-            Tool.splitEnum<ItemType>(start,end).ForEach(item => addClickOnButton(item));
+            Tool.SplitEnum<ItemType>(start, end).ForEach(item => addClickOnButton(item));
         }
 
         /// <summary>
         /// «–ªªŒÔ∆∑¿∏
         /// </summary>
-        public void addClickOnButton(ItemType item) {
-            Tool.GetComponentInChildren<Button>(gameObject, item.ToString()).onClick.AddListener(() => {
+        public void addClickOnButton(ItemType item)
+        {
+            Tool.GetComponentInChildren<Button>(gameObject, item.ToString()).onClick.AddListener(() =>
+            {
                 CurItemType = item;
                 OnClick?.Invoke(ItemDataManager.Instance.getIndexByType(item));
             });

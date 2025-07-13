@@ -1,8 +1,8 @@
 using Photon.Pun;
-using System;
 using UnityEngine;
 
-namespace LAB2D {
+namespace LAB2D
+{
     public class Enemy_Lv1 : Enemy
     {
         protected override void Awake()
@@ -33,13 +33,13 @@ namespace LAB2D {
         public override void attack()
         {
             // ·¢Éä×Óµ¯
-            GameObject g = Tool.Instantiate(ResourcesManager.Instance.getPrefab("EnemyBullet"), EnemyHead.position, Quaternion.identity);
+            GameObject g = Tool.Instantiate(ResourcesManager.Instance.GetPrefab("EnemyBullet"), EnemyHead.position, Quaternion.identity);
             //GameObject g = Instantiate(enemyBullet, enemyHead.position, Quaternion.identity);
-            g.GetComponent<EnemyBullet>().Direction = EnemyHead.position-transform.position;
+            g.GetComponent<EnemyBullet>().Direction = EnemyHead.position - transform.position;
             g.GetComponent<EnemyBullet>().BulletSpeed = bulletSpeed;
-            damage = UnityEngine.Random.Range(1,10);
+            damage = UnityEngine.Random.Range(1, 10);
             g.GetComponent<EnemyBullet>().Damage = damage;
-            g.transform.SetParent(transform.parent,false);
+            g.transform.SetParent(transform.parent, false);
         }
     }
 }

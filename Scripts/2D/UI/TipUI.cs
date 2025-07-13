@@ -15,13 +15,13 @@ namespace LAB2D
             roundCorner = GetComponent<RoundCorner>();
             if (roundCorner == null)
             {
-                LogManager.Instance.log("image Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("image Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             content = transform.Find("Content").GetComponent<Text>();
             if (content == null)
             {
-                LogManager.Instance.log("content Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             transform.localScale = Vector3.zero;
@@ -40,7 +40,8 @@ namespace LAB2D
             {
                 fadeOut();
             }
-            else {
+            else
+            {
                 // 放大
                 transform.localScale = Quaternion.Lerp(Quaternion.Euler(transform.localScale), Quaternion.Euler(1, 1, 1), 0.2f).eulerAngles;
             }
@@ -49,19 +50,20 @@ namespace LAB2D
         /// <summary>
         /// 淡出(透明度减小)
         /// </summary>
-        private void fadeOut() {
+        private void fadeOut()
+        {
             Color color = roundCorner.color;
             roundCorner.color = new Color(color.r, color.g, color.b, colorAlpha);
             if (roundCorner.color == null)
             {
-                LogManager.Instance.log("image.color assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("image.color assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
             color = content.color;
             content.color = new Color(color.r, color.g, color.b, colorAlpha);
             if (content.color == null)
             {
-                LogManager.Instance.log("content.color assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content.color assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
             colorAlpha -= 0.02f;
@@ -72,7 +74,8 @@ namespace LAB2D
         }
 
 
-        public void setText(string text) {
+        public void setText(string text)
+        {
             content.text = text;
         }
     }

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,7 +12,7 @@ namespace LAB2D
     {
         public static ItemDataManager Instance { private set; get; }
 
-        private Dictionary<int,ItemData> allItemInfo;
+        private Dictionary<int, ItemData> allItemInfo;
         private Dictionary<string, int> nameToId;
         private const int typeInterval = 100000;
 
@@ -22,9 +21,9 @@ namespace LAB2D
             Instance = this;
             nameToId = new Dictionary<string, int>();
             allItemInfo = new Dictionary<int, ItemData>();
-            foreach(ItemType itemType in Enum.GetValues(typeof(ItemType)))
+            foreach (ItemType itemType in Enum.GetValues(typeof(ItemType)))
             {
-                string[] data = Tool.getCSV(ResourceConstant.DATA_ROOT + itemType.ToString() + "ItemData");
+                string[] data = Tool.GetCSV(ResourceConstant.DATA_ROOT + itemType.ToString() + "ItemData");
                 if (data == null) continue;
                 int len = data.Length;
                 int start_id = (int)itemType * typeInterval;
@@ -33,9 +32,9 @@ namespace LAB2D
                 {
                     string[] cols = data[i].Split(',');
                     int id = Convert.ToInt32(cols[0]) == -1 ? i - 1 : Convert.ToInt32(cols[0]);
-                    if(id < i - 1)
+                    if (id < i - 1)
                     {
-                        LogManager.Instance.log("id不对应!!!请检查数据", LogManager.LogLevel.Error);
+                        LogManager.Instance.Log("id不对应!!!请检查数据", LogManager.LogLevel.Error);
                     }
                     id += start_id;
                     allItemInfo.Add(id, new ItemData.ItemDataBuilder()
@@ -55,7 +54,7 @@ namespace LAB2D
         {
             if (!allItemInfo.ContainsKey(id))
             {
-                LogManager.Instance.log("没有case该id的道具!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有case该id的道具!!!", LogManager.LogLevel.Error);
                 return null;
             }
             return allItemInfo[id];
@@ -70,7 +69,7 @@ namespace LAB2D
         {
             if (!nameToId.ContainsKey(name))
             {
-                LogManager.Instance.log("没有名字为" + name + "的道具!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有名字为" + name + "的道具!!!", LogManager.LogLevel.Error);
                 return null;
             }
             return getById(nameToId[name]);
@@ -82,7 +81,8 @@ namespace LAB2D
             return (ItemType)(object)(id / typeInterval);
         }
 
-        public Equipment.EquipType getEquipmentTypeById(int id) {
+        public Equipment.EquipType getEquipmentTypeById(int id)
+        {
             if (getTypeById(id) != ItemType.Equipment) return Equipment.EquipType.Null;
             id -= ((int)ItemType.Equipment) * typeInterval;
             // 最多10种装备
@@ -97,7 +97,7 @@ namespace LAB2D
         public ItemType getIndexById(int id)
         {
             id /= 1000;
-            if(id < (int)ItemType.Room)
+            if (id < (int)ItemType.Room)
             {
                 return (ItemType)(object)(id);
             }

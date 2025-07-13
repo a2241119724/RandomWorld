@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Tilemaps;
 
 namespace LAB2D
@@ -11,7 +8,7 @@ namespace LAB2D
     {
         public CustomNecklace()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomNecklace");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomNecklace");
         }
     }
 

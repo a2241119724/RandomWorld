@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ namespace LAB2D
         [MenuItem("Tools/打AB包")]
         private static void BuildAB()
         {
-            BuildPipeline.BuildAssetBundles(Application.streamingAssetsPath,BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.StandaloneWindows64);
+            BuildPipeline.BuildAssetBundles(Application.streamingAssetsPath, BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.StandaloneWindows64);
             AssetDatabase.Refresh();
             Debug.Log("打包完成");
         }

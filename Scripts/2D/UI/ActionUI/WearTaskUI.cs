@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,7 +13,7 @@ namespace LAB2D
         private void Awake()
         {
             Instance = this;
-            content = Tool.GetComponentInChildren<Transform>(gameObject,"Content");
+            content = Tool.GetComponentInChildren<Transform>(gameObject, "Content");
         }
 
         private void Update()
@@ -25,18 +24,19 @@ namespace LAB2D
             }
         }
 
-        public void showWearTask(Vector3Int posMap) {
+        public void showWearTask(Vector3Int posMap)
+        {
             transform.position = TileMap.Instance.mapPosToWorldPos(posMap);
             List<Worker> workers = WorkerManager.Instance.Characters;
             ResourceInfo resourceInfo = InventoryManager.Instance.getByPos(posMap);
             // 该位置没有东西则不展示任何东西
             if (resourceInfo == null) return;
-            for (int i = 0;i < workers.Count; i++)
+            for (int i = 0; i < workers.Count; i++)
             {
                 // 若没有对应的物体，先创建
                 if (i > content.childCount - 1)
                 {
-                    GameObject g = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("WorkerItem"));
+                    GameObject g = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("WorkerItem"));
                     g.transform.SetParent(content);
                     g.transform.localScale = Vector3.one;
                 }
@@ -45,7 +45,8 @@ namespace LAB2D
                 button.onClick.RemoveAllListeners();
                 // 默认为引用传递，变为固定值
                 int index = i;
-                button.onClick.AddListener(() => {
+                button.onClick.AddListener(() =>
+                {
                     WorkerTaskManager.Instance.addTask(new WorkerWearTask.WearTaskBuilder()
                         .setWorker(workers[index]).setTarget(posMap).setEquipmentId(resourceInfo.id).build(), 1);
                     transform.position = ResourceConstant.VECTOR3_DEFAULT;

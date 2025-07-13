@@ -1,7 +1,3 @@
-using NUnit.Framework.Internal;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.UI;
 
 namespace LAB2D

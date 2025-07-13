@@ -1,36 +1,49 @@
-namespace LAB2D
+﻿namespace LAB2D
 {
     using System;
     using System.Collections;
     using UnityEngine;
 
     /// <summary>
-    /// û��.
+    /// 没用.
     /// </summary>
     public class CoroutineManager : MonoBehaviour
     {
-        public static CoroutineManager Instance { private set; get; }
-        //private int availableCount;
-        //private Func<IEnumerator>[] coroutineDelegates;
-        //private List<Coroutine> coroutines;
+        // private int availableCount;
+        // private Func<IEnumerator>[] coroutineDelegates;
+        // private List<Coroutine> coroutines;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CoroutineManager"/> class.
+        /// </summary>
+        /// <param name="maxCount">携程最大是数量.</param>
+        public CoroutineManager(int maxCount)
+        {
+            // availableCount = maxCount;
+            // coroutineDelegates = new Func<IEnumerator>[maxCount];
+        }
+
+        /// <summary>
+        /// 单例.
+        /// </summary>
+        public static CoroutineManager Instance { get; private set; }
+
+        /// <summary>
+        /// 开启协程.
+        /// </summary>
+        /// <param name="coroutineDelegate">携程执行的任务.</param>
+        public void StartCoroutine(Func<IEnumerator> coroutineDelegate)
+        {
+            // if (availableCount > 0)
+            // {
+            //     coroutines.Add(StartCoroutine(coroutineDelegate()));
+            // }
+            this.StartCoroutine(coroutineDelegate());
+        }
 
         private void Awake()
         {
             Instance = this;
         }
-
-        public CoroutineManager(int maxCount) {
-            //availableCount = maxCount;
-            //coroutineDelegates = new Func<IEnumerator>[maxCount];
-        }
-
-        public void startCoroutine(Func<IEnumerator> coroutineDelegate) {
-            //if (availableCount > 0)
-            //{
-            //    coroutines.Add(StartCoroutine(coroutineDelegate()));
-            //}
-            StartCoroutine(coroutineDelegate());
-        }
     }
 }
-

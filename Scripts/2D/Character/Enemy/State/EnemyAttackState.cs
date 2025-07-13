@@ -47,7 +47,7 @@ namespace LAB2D
                     //character.attack();
                     if (NetworkConnect.Instance.IsOnline)
                     {
-                        Character.photonView.RPC("attack",RpcTarget.All);
+                        Character.photonView.RPC("attack", RpcTarget.All);
                     }
                     else
                     {

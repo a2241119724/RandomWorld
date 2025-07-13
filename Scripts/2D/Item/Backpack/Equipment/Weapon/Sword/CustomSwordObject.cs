@@ -1,4 +1,3 @@
-using Photon.Pun;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -6,7 +5,8 @@ using UnityEngine;
 namespace LAB2D
 {
     [Serializable]
-    public class CustomSword : Sword { 
+    public class CustomSword : Sword
+    {
     }
 
     public class CustomSwordObject : SwordObject
@@ -26,7 +26,8 @@ namespace LAB2D
             StartCoroutine(Rotate());
         }
 
-        private IEnumerator Rotate(){
+        private IEnumerator Rotate()
+        {
             Quaternion q = transform.rotation;
             for (int i = 0; i < 20; i++)
             {

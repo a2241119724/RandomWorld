@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -42,7 +41,7 @@ namespace LAB2D
 
         public void setItemInfo(string text)
         {
-            this.character.gameObject.SetActive(false);
+            character.gameObject.SetActive(false);
             textUI.text = text;
         }
 
@@ -60,7 +59,7 @@ namespace LAB2D
                 Weapon weapon = ((Worker)character).WearData.weapon;
                 if (weapon != null)
                 {
-                    worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.getImage(
+                    worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.GetImage(
                         ItemDataManager.Instance.getById(weapon.id).imageName);
                 }
                 Dictionary<Equipment.EquipType, Equipment> equipments = ((Worker)character).WearData.equipments;
@@ -68,7 +67,7 @@ namespace LAB2D
                 {
                     if (item.Value != null)
                     {
-                        worker.Find(item.Key.ToString()+ "/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.getImage(
+                        worker.Find(item.Key.ToString() + "/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.GetImage(
                             ItemDataManager.Instance.getById(item.Value.id).imageName);
                     }
                 }

@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
@@ -78,7 +77,7 @@ namespace LAB2D
         {
             if (worldPos == null)
             {
-                LogManager.Instance.log("v is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("v is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             Vector3Int posMap = TileMap.Instance.worldPosToMapPos(worldPos);

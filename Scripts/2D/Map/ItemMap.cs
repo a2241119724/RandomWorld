@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -83,7 +82,7 @@ namespace LAB2D
             if (collision.transform.GetComponent<Player>() == null) return;
             Vector3Int posMap = TileMap.Instance.worldPosToMapPos(collision.transform.position);
             TileBase tile = tilemap.GetTile(posMap);
-            if(tile != null)
+            if (tile != null)
             {
                 BackpackController.Instance.addItem(ItemFactory.Instance.getBackpackItemByName(tilemap.GetTile(posMap).name));
                 tilemap.SetTile(posMap, null);

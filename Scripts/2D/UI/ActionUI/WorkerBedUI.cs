@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -39,7 +38,7 @@ namespace LAB2D
                 // 若没有对应的物体，先创建
                 if (i > content.childCount - 1)
                 {
-                    GameObject g = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("WorkerItem"));
+                    GameObject g = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("WorkerItem"));
                     g.transform.SetParent(content);
                     g.transform.localScale = Vector3.one;
                 }
@@ -48,7 +47,8 @@ namespace LAB2D
                 button.onClick.RemoveAllListeners();
                 // 默认为引用传递，变为固定值
                 int index = i;
-                button.onClick.AddListener(() => {
+                button.onClick.AddListener(() =>
+                {
                     WorkerTaskManager.Instance.addTask(new WorkerSleepTask.SleepTaskBuilder().setTarget(posMap).build(), 1);
                     transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     FurnitureManager.Instance.addWorkerToBed(posMap, workers[index]);

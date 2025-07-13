@@ -16,7 +16,7 @@ namespace LAB2D
         public readonly float rotateInterval = 20.0f; // 敌人漫游时每次转向的时间间隔
         public readonly float rotationSpeed = 2.0f; // 敌人旋转的速度
         public readonly float attackRange = 4.0f; // 敌人攻击距离
-        
+
         protected readonly float SoundRange = 5.0f; // 听觉距离
         protected readonly float SightRange = 10.0f; // 视觉距离
         protected readonly float SightAngle = 60.0f; // 视觉角度
@@ -34,7 +34,7 @@ namespace LAB2D
         {
             base.Awake();
             layerMask = LayerMask.GetMask("Tile", "Player");
-            Manager = new EnemyStateManager<ICharacterState, EnemyStateType,Enemy>(this);
+            Manager = new EnemyStateManager<ICharacterState, EnemyStateType, Enemy>(this);
             CharacterDataLAB.MaxHp = CharacterDataLAB.Hp = 100;
         }
 
@@ -42,14 +42,15 @@ namespace LAB2D
         {
             base.Start();
             EnemyHead = transform.Find("Head");
-            if (EnemyHead == null) {
-                LogManager.Instance.log("enemyHead Not Found!!!", LogManager.LogLevel.Error);
+            if (EnemyHead == null)
+            {
+                LogManager.Instance.Log("enemyHead Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             statusBar = transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (statusBar == null)
             {
-                LogManager.Instance.log("statusBar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             // 更新敌人身体状况
@@ -75,8 +76,9 @@ namespace LAB2D
         /// <returns>周围是否有玩家</returns>
         public bool SenseNearby(Transform target)
         {
-            if (target == null) {
-                LogManager.Instance.log("target is null!!!", LogManager.LogLevel.Error);
+            if (target == null)
+            {
+                LogManager.Instance.Log("target is null!!!", LogManager.LogLevel.Error);
                 return false;
             }
             // 计算玩家与敌人之间的距离 
@@ -103,7 +105,7 @@ namespace LAB2D
                 // 如果有碰撞体并且不是目标，是障碍物
                 if (raycastHit2D.collider != null && raycastHit2D.transform != target)
                 {
-                   isFind = false;
+                    isFind = false;
                 }
             }
             return isFind;
@@ -135,8 +137,8 @@ namespace LAB2D
         public override void reduceHp(float Hp)
         {
             //((EnemyAttackState)Manager.CurrentState)
-            if (Manager.CurrentStateType != EnemyStateType.Attack || 
-                (Manager.CurrentStateType == EnemyStateType.Attack 
+            if (Manager.CurrentStateType != EnemyStateType.Attack ||
+                (Manager.CurrentStateType == EnemyStateType.Attack
                 && ((EnemyAttackState)Manager.CurrentState).AttackTime > changeTarget))
             {
                 Manager.changeState(EnemyStateType.Seek); // 进入搜索状态
@@ -170,7 +172,7 @@ namespace LAB2D
             {
                 stream.SendNext(CharacterDataLAB.Hp);
             }
-            else if(stream.IsReading)
+            else if (stream.IsReading)
             {
                 CharacterDataLAB.Hp = (float)stream.ReceiveNext();
                 statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);

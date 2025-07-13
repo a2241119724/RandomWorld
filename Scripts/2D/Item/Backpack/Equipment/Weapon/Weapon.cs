@@ -1,11 +1,12 @@
 ﻿using Photon.Pun;
 using System;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
-namespace LAB2D {
+namespace LAB2D
+{
     [Serializable]
-    public abstract class Weapon : Equipment {
+    public abstract class Weapon : Equipment
+    {
         public float ATN; // 物理攻击力
         public float INT; // 魔法攻击力
         public float CRT; // 暴击率
@@ -17,7 +18,8 @@ namespace LAB2D {
         public float RES; // 魔法防御力
         public bool isCRT = false; // 本次共计是否暴击
 
-        public Weapon() {
+        public Weapon()
+        {
             ATN = rankRandom(0.0f, 0.0f);
             ATK = rankRandom(0.0f, 0.0f);
             INT = rankRandom(0.0f, 0.0f);
@@ -92,7 +94,7 @@ namespace LAB2D {
         {
             base.Awake();
             contactFilter2D.useTriggers = true;
-            name = this.GetType().Name;
+            name = GetType().Name;
         }
 
         protected override void Start()
@@ -100,8 +102,9 @@ namespace LAB2D {
             base.Start();
             transform.localPosition = Vector3.zero; // 初始位置与玩家一致
             _collider = transform.Find("Head").GetComponent<CircleCollider2D>();
-            if (_collider == null) {
-                LogManager.Instance.log("collider Not Found!!!", LogManager.LogLevel.Error);
+            if (_collider == null)
+            {
+                LogManager.Instance.Log("collider Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             // 设置武器追踪范围
@@ -128,7 +131,8 @@ namespace LAB2D {
                 if (retCollider2Ds[i].CompareTag("Enemy"))
                 {
                     tempDistance = (retCollider2Ds[i].transform.position - transform.position).magnitude;
-                    if (tempDistance < minDistance) {
+                    if (tempDistance < minDistance)
+                    {
                         minDistance = tempDistance;
                         minDistanceEnemy = retCollider2Ds[i].transform;
                     }
@@ -139,10 +143,14 @@ namespace LAB2D {
                 //transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(Vector3.up, minDistanceEnemy.position - transform.position), Time.deltaTime * 100);
                 transform.rotation = Quaternion.FromToRotation(Vector3.up, minDistanceEnemy.position - transform.position);
                 minDistanceEnemy = null;
-            }else if(Joystick.Instance && Joystick.Instance.Direction.magnitude > 1.0f) {
+            }
+            else if (Joystick.Instance && Joystick.Instance.Direction.magnitude > 1.0f)
+            {
                 transform.rotation = Quaternion.FromToRotation(Vector3.up, Joystick.Instance.Direction);
-            }else{
-                transform.rotation = Quaternion.FromToRotation(Vector3.up, Input.mousePosition-Camera.main.WorldToScreenPoint(PlayerManager.Instance.Mine.transform.position));
+            }
+            else
+            {
+                transform.rotation = Quaternion.FromToRotation(Vector3.up, Input.mousePosition - Camera.main.WorldToScreenPoint(PlayerManager.Instance.Mine.transform.position));
             }
             // 鼠标左键点击攻击
             if (Input.GetMouseButtonDown(0))
@@ -159,7 +167,7 @@ namespace LAB2D {
         {
             if (player == null)
             {
-                LogManager.Instance.log("collider is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("collider is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             this.player = player.gameObject;
@@ -188,9 +196,12 @@ namespace LAB2D {
 
         public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
         {
-            if (stream.IsWriting) {
+            if (stream.IsWriting)
+            {
                 stream.SendNext(player.GetPhotonView().ViewID);
-            } else {
+            }
+            else
+            {
                 player = PhotonView.Find((int)stream.ReceiveNext()).gameObject;
                 transform.SetParent(player.transform);
             }

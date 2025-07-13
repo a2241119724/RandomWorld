@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,7 +23,7 @@ namespace LAB2D
         private void Update()
         {
             // 若是不在默认位置，则才返回默认位置
-            if(Input.GetMouseButtonDown(1) && transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
+            if (Input.GetMouseButtonDown(1) && transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
             {
                 transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }

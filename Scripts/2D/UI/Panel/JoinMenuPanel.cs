@@ -1,5 +1,4 @@
 using Photon.Pun;
-using UnityEngine;
 using UnityEngine.UI;
 
 namespace LAB2D
@@ -32,14 +31,16 @@ namespace LAB2D
 
         private void OnClick_StartJoin()
         {
-            if (string.IsNullOrEmpty(selectRoomName)) {
-                GlobalInit.Instance.showTip("房间名不能为空");
+            if (string.IsNullOrEmpty(selectRoomName))
+            {
+                GlobalInit.Instance.ShowTip("房间名不能为空");
                 return;
             }
             // 创建房间,(房间名字,房子选项{最大连接人数(最大20)},大厅基本属性)
             bool success = PhotonNetwork.JoinRoom(selectRoomName);
-            if (!success) {
-                GlobalInit.Instance.showTip("房间名字不存在");
+            if (!success)
+            {
+                GlobalInit.Instance.ShowTip("房间名字不存在");
                 return;
             }
             controller.close();
@@ -52,7 +53,8 @@ namespace LAB2D
             controller.show(CreateOrJoinPanel.Instance);
         }
 
-        private void show(string str) {
+        private void show(string str)
+        {
             selectRoomName = str;
             Tool.GetComponentInChildren<Text>(panel, "SelectRoomName").text = "选择的房间\n[" + str + "]";
         }

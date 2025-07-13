@@ -1,8 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace LAB2D
 {
@@ -21,7 +17,7 @@ namespace LAB2D
         void Update()
         {
             if (!Input.anyKeyDown) return;
-            for (int i=0;i < btns.childCount; i++)
+            for (int i = 0; i < btns.childCount; i++)
             {
                 if (Input.GetKeyDown(keyCodes[i]))
                 {
@@ -29,7 +25,7 @@ namespace LAB2D
                     {
                         PanelController.Instance.show(ForegroundPanel.Instance.ToolMenus[i]);
                     }
-                    else if(PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance.ToolMenus[i])
+                    else if (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance.ToolMenus[i])
                     {
                         PanelController.Instance.close();
                     }

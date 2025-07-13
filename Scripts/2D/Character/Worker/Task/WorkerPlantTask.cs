@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 namespace LAB2D
 {
     public class WorkerPlantTask : WorkerTask
@@ -16,7 +12,7 @@ namespace LAB2D
                 AvailableNeighborPos.Clear();
                 AvailableNeighborPos.Add(neighbors[8]);
                 TargetMap = InventoryManager.Instance.isContainSeedAndPreTake(worker, true);
-                if (TargetMap == default) 
+                if (TargetMap == default)
                 {
                     giveUpTask(worker);
                     return;
@@ -43,7 +39,7 @@ namespace LAB2D
         public override void start(Worker worker)
         {
             base.start(worker);
-            changeStage(worker,0);
+            changeStage(worker, 0);
         }
 
         protected override bool isFinish(Worker worker)
@@ -53,13 +49,13 @@ namespace LAB2D
                 case 0:
                     resourceInfo = InventoryManager.Instance.subAllItemByPos(TargetMap);
                     worker.addResource(resourceInfo);
-                    changeStage(worker,1);
+                    changeStage(worker, 1);
                     return false;
                 case 1:
                     // 可以继续种植
-                    if(isCanWork(worker) && resourceInfo.count > 0)
+                    if (isCanWork(worker) && resourceInfo.count > 0)
                     {
-                        FarmlandManager.Instance.plantByPrePlant(worker,TargetMap);
+                        FarmlandManager.Instance.plantByPrePlant(worker, TargetMap);
                         resourceInfo.count--;
                         changeStage(worker, 1);
                         return false;

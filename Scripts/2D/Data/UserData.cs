@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace LAB2D
 {
@@ -17,7 +16,7 @@ namespace LAB2D
             data = new List<Row>();
             if (data == null)
             {
-                LogManager.Instance.log("data assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("data assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
         }

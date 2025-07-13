@@ -1,7 +1,5 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace LAB2D
 {
@@ -16,7 +14,7 @@ namespace LAB2D
         public MVCModel(ItemType start, ItemType end)
         {
             itemDict = new Dictionary<ItemType, ArrayList>();
-            Tool.splitEnum<ItemType>(start, end).ForEach((item) =>
+            Tool.SplitEnum<ItemType>(start, end).ForEach((item) =>
             {
                 itemDict.Add(item, new ArrayList());
             });
@@ -27,11 +25,11 @@ namespace LAB2D
         /// 删除一个道具
         /// </summary>
         /// <param name="index">道具索引</param>
-        public void deleteItem(ItemType type,int index)
+        public void deleteItem(ItemType type, int index)
         {
             if (itemDict[type] == null)
             {
-                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             //itemList[index] = null;
@@ -46,7 +44,7 @@ namespace LAB2D
         {
             if (item == null)
             {
-                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             ArrayList itemList = null;
@@ -86,7 +84,7 @@ namespace LAB2D
         {
             if (index1 < 0 || index1 >= count(type) || index2 < 0 || index2 >= count(type))
             {
-                LogManager.Instance.log("index1 or index2 Not Exist!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("index1 or index2 Not Exist!!!", LogManager.LogLevel.Error);
                 return;
             }
             ArrayList itemList = itemDict[type];
@@ -103,7 +101,7 @@ namespace LAB2D
         {
             if (item == null)
             {
-                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             ((Item)itemDict[type][getIndex(type, (Weapon)item)]).quantity--;
@@ -120,7 +118,7 @@ namespace LAB2D
         {
             if (index < 0 || index >= count(type))
             {
-                LogManager.Instance.log("index Not Exist!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("index Not Exist!!!", LogManager.LogLevel.Error);
                 return null;
             }
             return (Item)(itemDict[type][index]);
@@ -145,7 +143,7 @@ namespace LAB2D
         {
             if (item == null)
             {
-                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return -1;
             }
             ArrayList itemList = itemDict[type];
@@ -168,7 +166,7 @@ namespace LAB2D
         }
         #endregion
 
-        public override void loadData() { }
-        public override void saveData() { }
+        public override void LoadData() { }
+        public override void SaveData() { }
     }
 }

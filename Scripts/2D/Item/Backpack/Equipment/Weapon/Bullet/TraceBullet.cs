@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace LAB2D
@@ -46,11 +44,11 @@ namespace LAB2D
                     center = transform.position + _direction;
                 }
             }
-            else if(center != default)
+            else if (center != default)
             {
                 // ´¹Ö±Ïß
                 Vector3 _direction = transform.position - center;
-                direction = new Vector3(d[index] * _direction.y, d[(index+1)%2] * _direction.x, 0.0f).normalized;
+                direction = new Vector3(d[index] * _direction.y, d[(index + 1) % 2] * _direction.x, 0.0f).normalized;
                 _recordTime += Time.deltaTime;
                 if (_recordTime >= recordTime)
                 {

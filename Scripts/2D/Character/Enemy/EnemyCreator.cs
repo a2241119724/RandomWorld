@@ -1,9 +1,8 @@
-using Photon.Pun;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace LAB2D {
+namespace LAB2D
+{
     public class EnemyCreator : CharacterCreator<EnemyCreator>
     {
         private const float instanceInterval = 3.0f; // 实例化时间间隔

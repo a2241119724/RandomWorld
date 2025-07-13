@@ -1,9 +1,8 @@
-using LAB2D;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace LAB2D {
+namespace LAB2D
+{
     public class FurnitureManager : Singleton<FurnitureManager>
     {
         public Dictionary<Vector3Int, Worker> bedToWorker;
@@ -13,14 +12,16 @@ namespace LAB2D {
             bedToWorker = new Dictionary<Vector3Int, Worker>();
         }
 
-        public void addBed(Vector3Int posMap) {
+        public void addBed(Vector3Int posMap)
+        {
             if (bedToWorker.ContainsKey(posMap)) return;
             bedToWorker.Add(posMap, null);
         }
 
-        public void addWorkerToBed(Vector3Int posMap, Worker worker) {
+        public void addWorkerToBed(Vector3Int posMap, Worker worker)
+        {
             if (!bedToWorker.ContainsKey(posMap)) return;
-            if(bedToWorker[posMap] == null)
+            if (bedToWorker[posMap] == null)
             {
                 bedToWorker[posMap] = worker;
                 // TODO

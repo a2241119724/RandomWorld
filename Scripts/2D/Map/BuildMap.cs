@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -13,7 +12,7 @@ namespace LAB2D
     public class BuildMap : BaseTileMap
     {
         public static BuildMap Instance { private set; get; }
-        
+
         // Map地表数组下标
         private List<Vector3Int> targetMaps;
 
@@ -30,11 +29,12 @@ namespace LAB2D
         /// </summary>
         /// <param name="targetMap"></param>
         /// <param name="tile"></param>
-        public BuildMap addBuilding(Vector3Int targetMap, TileBase tile, bool isCollider=true) {
+        public BuildMap addBuilding(Vector3Int targetMap, TileBase tile, bool isCollider = true)
+        {
             tilemap.SetTile(targetMap, tile);
             tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
             tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
-            tilemap.SetColor(targetMap, new Color(1,1,1, isCollider ? 0.5f : 0.49f));
+            tilemap.SetColor(targetMap, new Color(1, 1, 1, isCollider ? 0.5f : 0.49f));
             if (!targetMaps.Contains(targetMap))
             {
                 targetMaps.Add(targetMap);
@@ -49,7 +49,7 @@ namespace LAB2D
         /// <param name="tile"></param>
         /// <param name="isPass">是否可通行</param>
         /// <returns></returns>
-        public BuildMap directBuild(Vector3Int targetMap, TileBase tile, bool isPass=true)
+        public BuildMap directBuild(Vector3Int targetMap, TileBase tile, bool isPass = true)
         {
             tilemap.SetTile(targetMap, tile);
             if (isPass)
@@ -94,7 +94,8 @@ namespace LAB2D
             Dictionary<int, ResourceInfo> resourceInfos = new Dictionary<int, ResourceInfo>();
             resourceInfos.Add(ItemDataManager.Instance.getByName("CustomWood").id,
                 new ResourceInfo(ItemDataManager.Instance.getByName("CustomWood").id, 5));
-            foreach (Vector3Int targetMap in targetMaps) { 
+            foreach (Vector3Int targetMap in targetMaps)
+            {
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
                 WorkerTaskManager.Instance.addTask(new WorkerBuildTask.BuildTaskBuilder().setBuildPos(targetMap)
                     .setNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).build());
@@ -111,7 +112,7 @@ namespace LAB2D
         {
             // 门可以通行
             return Mathf.Abs(tilemap.GetColor(posMap).a - 0.49f) < 1e-5
-                || Mathf.Abs(tilemap.GetColor(posMap).a - 0.99f) < 1e-5 
+                || Mathf.Abs(tilemap.GetColor(posMap).a - 0.99f) < 1e-5
                 || base.isFreeTile(posMap);
         }
     }

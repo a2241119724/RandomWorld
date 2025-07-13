@@ -56,17 +56,17 @@ namespace LAB2D
                 // 设置当前装备id
                 PlayerManager.Instance.Select.id = Select.item.id;
                 // 实例化武器
-                PlayerManager.Instance.Select.weapon = Tool.Instantiate(ResourcesManager.Instance.getPrefab(ItemDataManager.Instance.getById(Select.item.id).imageName), Vector3.zero,Quaternion.identity);
+                PlayerManager.Instance.Select.weapon = Tool.Instantiate(ResourcesManager.Instance.GetPrefab(ItemDataManager.Instance.getById(Select.item.id).imageName), Vector3.zero, Quaternion.identity);
                 if (PlayerManager.Instance.Select.weapon == null)
                 {
-                    LogManager.Instance.log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
                 PlayerManager.Instance.Select.weapon.name = ItemDataManager.Instance.getById(Select.item.id).imageName;
                 PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
                 PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().Item = Select.item;
                 PlayerManager.Instance.Select.weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
-                GlobalInit.Instance.showTip("装备成功");
+                GlobalInit.Instance.ShowTip("装备成功");
                 // 从背包删除该道具
                 PlayerManager.Instance.Select.weaponData = (Weapon)Select.item;
                 BackpackController.Instance.deleteItem(Select.selectItemIndex);
@@ -77,16 +77,16 @@ namespace LAB2D
             else if (ItemDataManager.Instance.getById(Select.item.id).type == ItemType.Consumable)
             {
                 // 实例化道具调用上面的脚本再立即销毁
-                GameObject g = ResourcesManager.Instance.getPrefab("Select.selectItemData.itemName");
+                GameObject g = ResourcesManager.Instance.GetPrefab("Select.selectItemData.itemName");
                 if (g == null)
                 {
-                    LogManager.Instance.log("Consumable is null!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("Consumable is null!!!", LogManager.LogLevel.Error);
                     return;
                 }
                 g = Object.Instantiate(g);
                 if (g == null)
                 {
-                    LogManager.Instance.log("Consumable Instantiate Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("Consumable Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
                 g.GetComponent<ConsumableObject>().use();
@@ -99,23 +99,24 @@ namespace LAB2D
                     Select.selectItemIndex = -1;
                     Select.item = null;
                 }
-                else {
-                    LogManager.Instance.log("数量:" + ((BackpackItem)Select.item).quantity, LogManager.LogLevel.Info);
+                else
+                {
+                    LogManager.Instance.Log("数量:" + ((BackpackItem)Select.item).quantity, LogManager.LogLevel.Info);
                     // 数据--
                     BackpackController.Instance.reduceQuantity(Select.item);
                     // 界面--
                     BackpackController.Instance.reduceQuantityUI(Select.item);
                     BackpackController.Instance.setBorderColor(BackpackController.Instance.getIndex(Select.item));
-                    LogManager.Instance.log("数量:" + ((BackpackItem)Select.item).quantity, LogManager.LogLevel.Info);
+                    LogManager.Instance.Log("数量:" + ((BackpackItem)Select.item).quantity, LogManager.LogLevel.Info);
                     // 全局数据--
                     BackpackItem item = (BackpackItem)Select.item;
                     --item.quantity;
                     Select.item = item;
                 }
             }
-            else 
+            else
             {
-                GlobalInit.Instance.showTip("未实现!!!");
+                GlobalInit.Instance.ShowTip("未实现!!!");
             }
         }
 

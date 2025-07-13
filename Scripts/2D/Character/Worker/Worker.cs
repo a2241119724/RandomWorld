@@ -8,7 +8,7 @@ namespace LAB2D
 {
     public class Worker : Character
     {
-        [HideInInspector] public WorkerStateManager<ICharacterState, WorkerStateType,Worker> Manager { get; private set; }
+        [HideInInspector] public WorkerStateManager<ICharacterState, WorkerStateType, Worker> Manager { get; private set; }
         /// <summary>
         /// 是否在寻路
         /// </summary>
@@ -32,7 +32,7 @@ namespace LAB2D
         public WearData WearData;
         public BedItem BedItem;
         public static Lock seekLock = new Lock();
-        
+
         /// <summary>
         /// 携带的资源
         /// </summary>
@@ -81,7 +81,7 @@ namespace LAB2D
             statusBar = transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (statusBar == null)
             {
-                LogManager.Instance.log("statusBar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             WearData = new WearData();
@@ -122,7 +122,7 @@ namespace LAB2D
 
         public void initSeek(Vector3Int targetMap)
         {
-            if(mapSpend == null)
+            if (mapSpend == null)
             {
                 initMap(TileMap.Height, TileMap.Width);
             }
@@ -152,13 +152,14 @@ namespace LAB2D
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        public void toTarget() {
+        public void toTarget()
+        {
             //coroutine = StartCoroutine(toTargetLAB(TargetMap));
             // A*
             Vector3Int posMap = TileMap.Instance.worldPosToMapPos(transform.position);
             Spend start = mapSpend[posMap.x, posMap.y]; // 起点
             Spend end = mapSpend[TargetMap.x, TargetMap.y]; // 终点
-            coroutine = StartCoroutine(toTargetAStar(start,end));
+            coroutine = StartCoroutine(toTargetAStar(start, end));
         }
 
         /// <summary>
@@ -166,21 +167,24 @@ namespace LAB2D
         /// </summary>
         /// <param name="targetMap"></param>
         /// <returns></returns>
-        public IEnumerator toTargetLAB(Vector3Int targetMap) {
+        public IEnumerator toTargetLAB(Vector3Int targetMap)
+        {
             if (!TileMap.Instance.isFreeTile(targetMap))
             {
-                LogManager.Instance.log("超出边界!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("超出边界!!!", LogManager.LogLevel.Error);
                 IsSeeking = false;
                 yield break;
             }
             Vector3Int posMap = TileMap.Instance.worldPosToMapPos(transform.position);
             Spend start = mapSpend[posMap.x, posMap.y]; // 起点
             Spend end = mapSpend[targetMap.x, targetMap.y]; // 终点
-            while (true) {
+            while (true)
+            {
                 Spend mid = straightMove(start, end);
                 path.Add(mid);
                 // 到达终点
-                if (mid.posMap.x == end.posMap.x && mid.posMap.y == end.posMap.y) {
+                if (mid.posMap.x == end.posMap.x && mid.posMap.y == end.posMap.y)
+                {
                     break;
                 }
                 start = findNext(mid, end);
@@ -195,7 +199,8 @@ namespace LAB2D
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns>最后碰到障碍物后走到的位置</returns>
-        private Spend straightMove(Spend start, Spend end) {
+        private Spend straightMove(Spend start, Spend end)
+        {
             float totalDistance = Mathf.Sqrt(Mathf.Pow(start.posMap.x - end.posMap.x, 2) + Mathf.Pow(start.posMap.y - end.posMap.y, 2));
             int detX = end.posMap.x - start.posMap.x;
             int detY = end.posMap.y - start.posMap.y;
@@ -249,7 +254,7 @@ namespace LAB2D
             // 记录一开始的path长度
             int curIterCount = path.Count;
             List<Spend> _path = new List<Spend>();
-            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.posMap.x - end.posMap.x, 2) 
+            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.posMap.x - end.posMap.x, 2)
                 + Mathf.Pow(start.posMap.y - end.posMap.y, 2));
             openList.Add(start);
             while (openList.Count != 0)
@@ -267,14 +272,14 @@ namespace LAB2D
                 //    break; // 解决bug
                 //}
                 Spend curSpend = openList[minIndex];
-                SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.posMap.x - start.posMap.x, 2) 
+                SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.posMap.x - start.posMap.x, 2)
                     + Mathf.Pow(curSpend.posMap.y - start.posMap.y, 2)) / totalDistance;
                 // 判断是否到达终点(此处只能是整数)
                 if ((int)curSpend.posMap.x == (int)end.posMap.x && (int)curSpend.posMap.y == (int)end.posMap.y)
                 {
                     //LogManager.Instance.log("找到路径!!!", LogManager.LogLevel.Info);
                     // 找路径
-                    Vector3Int lastDet = new Vector3Int(0,0);
+                    Vector3Int lastDet = new Vector3Int(0, 0);
                     Spend _curSpend = curSpend;
                     while (curSpend != null && curSpend.previous != null)
                     {
@@ -291,17 +296,18 @@ namespace LAB2D
                         if (_curSpend != null)
                         {
                             _curSpend = _curSpend.previous;
-                            if(_curSpend != null)
+                            if (_curSpend != null)
                             {
                                 _curSpend = _curSpend.previous;
                             }
                         }
-                        if (_curSpend != null && _curSpend.posMap.x == curSpend.previous.posMap.x 
-                            && _curSpend.posMap.y == curSpend.previous.posMap.y) {
-                            LogManager.Instance.log("Worker寻路出现环路", LogManager.LogLevel.Error);
+                        if (_curSpend != null && _curSpend.posMap.x == curSpend.previous.posMap.x
+                            && _curSpend.posMap.y == curSpend.previous.posMap.y)
+                        {
+                            LogManager.Instance.Log("Worker寻路出现环路", LogManager.LogLevel.Error);
                             break;
                         }
-                        if (FrameControl.Instance.isNeedStop())
+                        if (FrameControl.Instance.IsNeedStop())
                         {
                             yield return null;
                         }
@@ -313,12 +319,13 @@ namespace LAB2D
                 closeList.Add(curSpend);
                 // 对邻居进行f = g + h
                 byte isCorner = 0;
-                foreach (Vector2SByte direction in neighbors) {
+                foreach (Vector2SByte direction in neighbors)
+                {
                     ++isCorner;
                     int _x = curSpend.posMap.x + direction.x;
                     int _y = curSpend.posMap.y + direction.y;
                     // 数组下标
-                    if (!isCanReach(new Vector3Int(_x,_y,0))) continue;
+                    if (!isCanReach(new Vector3Int(_x, _y, 0))) continue;
                     Spend neighbor = mapSpend[_x, _y];
                     // 关闭队列不计算
                     if (closeList.Contains(neighbor)) continue;
@@ -350,10 +357,10 @@ namespace LAB2D
                     neighbor.f = neighbor.g + neighbor.h;
                     neighbor.previous = curSpend; // 链接
                 }
-                if (FrameControl.Instance.isNeedStop())
+                if (FrameControl.Instance.IsNeedStop())
                 {
                     time += Time.deltaTime;
-                    if(time > 1.0f)
+                    if (time > 1.0f)
                     {
                         // 如果寻路超过一定时间释放锁
                         seekLock.releaseLock(this);
@@ -390,10 +397,10 @@ namespace LAB2D
                     int _count = 0;
                     start = _path[lastIndex];
                     path.Add(start);
-                    for (int i = lastIndex+1; i < _path.Count; i++)
+                    for (int i = lastIndex + 1; i < _path.Count; i++)
                     {
                         if (_count > 50) break;
-                        if (FrameControl.Instance.isNeedStop())
+                        if (FrameControl.Instance.IsNeedStop())
                         {
                             yield return null;
                         }
@@ -401,8 +408,8 @@ namespace LAB2D
                         Vector3 pos = TileMap.Instance.mapPosToWorldPos(start.posMap);
                         Vector3 direction = TileMap.Instance.mapPosToWorldPos(_path[i].posMap) - TileMap.Instance.mapPosToWorldPos(start.posMap);
                         float distance = Vector3.Distance(TileMap.Instance.mapPosToWorldPos(start.posMap), TileMap.Instance.mapPosToWorldPos(_path[i].posMap));
-                        RaycastHit2D hit = Physics2D.Raycast(new Vector2(pos.x - 0.5f, pos.y),direction, distance);
-                        if(hit.collider == null)
+                        RaycastHit2D hit = Physics2D.Raycast(new Vector2(pos.x - 0.5f, pos.y), direction, distance);
+                        if (hit.collider == null)
                         {
                             hit = Physics2D.Raycast(new Vector2(pos.x + 0.5f, pos.y), direction, distance);
                         }
@@ -421,7 +428,7 @@ namespace LAB2D
             }
             if (path.Count == curIterCount)
             {
-                LogManager.Instance.log(name + "未找到路径:" + start.posMap.y + ":" + start.posMap.x 
+                LogManager.Instance.Log(name + "未找到路径:" + start.posMap.y + ":" + start.posMap.x
                     + "-->" + end.posMap.y + ":" + end.posMap.x, LogManager.LogLevel.Error);
             }
             // 显示路径
@@ -434,7 +441,8 @@ namespace LAB2D
         /// <summary>
         /// 更新路径UI
         /// </summary>
-        private void updateLine() {
+        private void updateLine()
+        {
             LineRenderer.positionCount = path.Count + 1;
             LineRenderer.SetPosition(0, transform.position);
             for (int i = 0; i < path.Count; i++)
@@ -454,7 +462,8 @@ namespace LAB2D
             // 到达路径中一个目标点，切换下一个目标点
             if (path.Count != 0 &&
                 Mathf.Abs(worldPos.x - transform.position.x) < 0.2f &&
-                Mathf.Abs(worldPos.y - transform.position.y) < 0.2f) {
+                Mathf.Abs(worldPos.y - transform.position.y) < 0.2f)
+            {
                 path.RemoveAt(0); // --path.Count 
             }
             Vector2 forward = new Vector2(worldPos.x - transform.position.x, worldPos.y - transform.position.y);
@@ -474,13 +483,15 @@ namespace LAB2D
         /// <returns></returns>
         public bool isCanReach(Vector3Int posMap)
         {
-            if (!TileMap.Instance.isCanReach(posMap)) {
+            if (!TileMap.Instance.isCanReach(posMap))
+            {
                 return false;
             }
-            if(!ResourceMap.Instance.isCanReach(posMap)) {
+            if (!ResourceMap.Instance.isCanReach(posMap))
+            {
                 return false;
             }
-            if(!BuildMap.Instance.isCanReach(posMap))
+            if (!BuildMap.Instance.isCanReach(posMap))
             {
                 return false;
             }
@@ -496,7 +507,7 @@ namespace LAB2D
             }
         }
 
-        public void setProgress(float value,bool enable)
+        public void setProgress(float value, bool enable)
         {
             progress.value = value;
             progress.gameObject.SetActive(enable);
@@ -509,7 +520,7 @@ namespace LAB2D
             {
                 resources += resource.Key + ":" + resource.Value.count + "\n";
             }
-            return base.ToString() + 
+            return base.ToString() +
                 $"Hungry:{CurHungry}\n" +
                 $"TargetMap:{TargetMap}\n" +
                 resources;
@@ -528,8 +539,9 @@ namespace LAB2D
             }
         }
 
-        public void subResource(Dictionary<int, ResourceInfo> needResource) {
-            foreach(KeyValuePair<int, ResourceInfo> need in needResource)
+        public void subResource(Dictionary<int, ResourceInfo> needResource)
+        {
+            foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
                 if (resourceInfos.ContainsKey(need.Key))
                 {
@@ -537,7 +549,7 @@ namespace LAB2D
                 }
                 else
                 {
-                    LogManager.Instance.log("自身资源不够，仍然建造成功，错误", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("自身资源不够，仍然建造成功，错误", LogManager.LogLevel.Error);
                 }
             }
         }
@@ -551,7 +563,7 @@ namespace LAB2D
             }
             else
             {
-                LogManager.Instance.log("自身资源不够，仍然建造成功，错误", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("自身资源不够，仍然建造成功，错误", LogManager.LogLevel.Error);
             }
         }
 
@@ -597,7 +609,8 @@ namespace LAB2D
         /// </summary>
         /// <param name="needResource"></param>
         /// <returns></returns>
-        public Dictionary<int, ResourceInfo> getRemaining(Dictionary<int, ResourceInfo> needResource) {
+        public Dictionary<int, ResourceInfo> getRemaining(Dictionary<int, ResourceInfo> needResource)
+        {
             Dictionary<int, ResourceInfo> remaining = new Dictionary<int, ResourceInfo>();
             foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
@@ -621,7 +634,7 @@ namespace LAB2D
         {
             if (Hp <= 0)
             {
-                LogManager.Instance.log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
                 return;
             }
             base.reduceHp(Hp);
@@ -690,7 +703,7 @@ namespace LAB2D
             {
                 // 交换装备
                 Equipment _equipment = equipments[equipment.equipType];
-                ItemMap.Instance.putDownToInventory(posMap, ResourcesManager.Instance.getAsset(equipment.ToString()),
+                ItemMap.Instance.putDownToInventory(posMap, ResourcesManager.Instance.GetAsset(equipment.ToString()),
                     new ResourceInfo(equipment.id, 1));
                 equipments[equipment.equipType] = equipment;
             }

@@ -1,8 +1,9 @@
-﻿using UnityEngine;
-using Photon.Pun;
+﻿using Photon.Pun;
 using System;
+using UnityEngine;
 
-namespace LAB2D {
+namespace LAB2D
+{
     public abstract class Character : MonoBehaviourPun
     {
         public CharacterData CharacterDataLAB = new CharacterData();
@@ -16,15 +17,17 @@ namespace LAB2D {
 
         protected virtual void Awake()
         {
-            damageUI = ResourcesManager.Instance.getPrefab("Damage");
+            damageUI = ResourcesManager.Instance.GetPrefab("Damage");
             transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
             checkBug = new CheckBug();
         }
 
-        protected virtual void Start() { 
+        protected virtual void Start()
+        {
             _renderer = GetComponent<SpriteRenderer>();
-            if (_renderer == null) {
-                LogManager.Instance.log("renderer Not Found!!!", LogManager.LogLevel.Error);
+            if (_renderer == null)
+            {
+                LogManager.Instance.Log("renderer Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             originalColor = _renderer.color;
@@ -34,12 +37,13 @@ namespace LAB2D {
         {
             if (Hp <= 0) return;
             GameObject g = Instantiate(damageUI, transform.position, Quaternion.identity); // 创建物体(预设,位置,角度)
-            if (g == null) {
-                LogManager.Instance.log("damageUI Instantiate Error!!!", LogManager.LogLevel.Error);
+            if (g == null)
+            {
+                LogManager.Instance.Log("damageUI Instantiate Error!!!", LogManager.LogLevel.Error);
                 return;
             }
             g.name = damageUI.name;
-            if(this is Enemy)
+            if (this is Enemy)
             {
                 // 暴击时显示不同的框
                 g.GetComponent<DamageUI>().setDamage(Hp, Convert.ToInt32(PlayerManager.Instance.Select.weaponData.isCRT));
@@ -67,7 +71,8 @@ namespace LAB2D {
         /// <summary>
         /// 恢复颜色
         /// </summary>
-        private void ResetColor() {
+        private void ResetColor()
+        {
             _renderer.color = originalColor;
         }
 
@@ -75,7 +80,7 @@ namespace LAB2D {
 
         public override string ToString()
         {
-            return $"{this.GetType().Name}:{name}\n" +
+            return $"{GetType().Name}:{name}\n" +
                 $"Speed:{moveSpeed}\n";
         }
 
@@ -84,7 +89,7 @@ namespace LAB2D {
             public long lastTime;
             public int colliderCount;
 
-            public bool isBug(string name, int threshold=50)
+            public bool isBug(string name, int threshold = 50)
             {
                 bool bug = colliderCount > threshold;
                 if (bug)
@@ -109,7 +114,8 @@ namespace LAB2D {
         }
 
         [Serializable]
-        public class CharacterData {
+        public class CharacterData
+        {
             public float Hp = 1; // 血量
             public float MaxHp = 1; // 最大血量
             public float ATN = 0.0f; // 物理攻击力

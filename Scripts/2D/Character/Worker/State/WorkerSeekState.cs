@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace LAB2D
@@ -17,7 +15,8 @@ namespace LAB2D
         {
             base.OnEnter();
             // 如果饥饿并且没有吃饭任务就进入饥饿状态,做完任务再吃饭
-            if (Character.CurHungry < Worker.ThresholdHungry && Character.Manager.Task == null) {
+            if (Character.CurHungry < Worker.ThresholdHungry && Character.Manager.Task == null)
+            {
                 Character.Manager.changeState(WorkerStateType.Hungry);
                 return;
             }
@@ -39,18 +38,18 @@ namespace LAB2D
                     if (Character.isCanReach(temp))
                     {
                         Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(temp);
-                        float distance = Mathf.Pow(worldPos.x-Character.transform.position.x,2) +
+                        float distance = Mathf.Pow(worldPos.x - Character.transform.position.x, 2) +
                             Mathf.Pow(worldPos.y - Character.transform.position.y, 2);
-                        if(distance < minDistance)
+                        if (distance < minDistance)
                         {
                             minDistance = distance;
                             closedPos = temp;
                         }
                     }
                 }
-                if(closedPos == default(Vector3Int))
+                if (closedPos == default(Vector3Int))
                 {
-                    LogManager.Instance.log("没有邻居位置!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("没有邻居位置!!!", LogManager.LogLevel.Error);
                 }
                 targetMap = closedPos;
             }
@@ -65,7 +64,7 @@ namespace LAB2D
         public override void OnUpdate()
         {
             base.OnUpdate();
-            Character.WorkerState.text = preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(Character.SeekProgress * 100)}%</color>\n"+
+            Character.WorkerState.text = preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(Character.SeekProgress * 100)}%</color>\n" +
                 $"Target: {targetMap.x},{targetMap.y}";
             if (Worker.seekLock.getLock(Character))
             {
@@ -76,7 +75,8 @@ namespace LAB2D
                     Character.toTarget();
                 }
             }
-            if (!Character.IsSeeking) {
+            if (!Character.IsSeeking)
+            {
                 Worker.seekLock.releaseLock(Character);
                 // 寻路结束
                 Character.Manager.changeState(WorkerStateType.Move);

@@ -1,84 +1,106 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// å…¨å±€åˆå§‹åŒ–.
+    /// </summary>
     public class GlobalInit : MonoBehaviour
     {
-        public static GlobalInit Instance { get; private set; }
-        public bool initPanel = false;
-        public bool initFont = true;
-
-        private GameObject tip; // ÌáÊ¾¿òÔ¤ÖÆÌå
-        private readonly List<string> fontExcludeText = new List<string>() {
-            "Label"
+        private const int FONT_SIZE = 20;
+        private readonly List<string> fontExcludeText = new List<string>()
+        {
+            "Label",
         };
 
-        void Awake()
+        private bool initPanel = true;
+        private bool initFont = true;
+        private GameObject tip; // æç¤ºæ¡†é¢„åˆ¶ä½“
+
+        /// <summary>
+        /// å•ä¾‹.
+        /// </summary>
+        public static GlobalInit Instance { get; private set; }
+
+        /// <summary>
+        /// å±•ç¤ºé€šçŸ¥.
+        /// </summary>
+        /// <param name="text">é€šçŸ¥å†…å®¹.</param>
+        public void ShowTip(string text)
+        {
+            GameObject g = Instantiate(this.tip);
+            if (g == null)
+            {
+                LogManager.Instance.Log("tip Instantiate Error!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            g.name = this.tip.name;
+            g.GetComponent<TipUI>().setText(text);
+            g.transform.SetParent(this.transform, false);
+
+            // ç”±äºå®ä¾‹åŒ–äº§ç”Ÿå½¢çŠ¶å˜åŒ–,é‡æ–°è®¾ç½®
+            // g.transform.localScale = Vector3.zero;
+            // RectTransform rt = g.GetComponent<RectTransform>();
+            // rt.offsetMin = Vector2.zero;
+            // rt.offsetMax = Vector2.zero;
+            // Vector3 v = rt.localPosition; // ç›¸å¯¹åæ ‡
+            // rt.localPosition = new Vector3(v.x, v.y, 0);
+        }
+
+        private void Awake()
         {
             Instance = this;
-            tip = ResourcesManager.Instance.getPrefab("Tip");
-            if (initFont)
+            this.tip = ResourcesManager.Instance.GetPrefab("Tip");
+            if (this.initFont)
             {
                 // init font
                 Text[] texts = FindObjectsOfType<Text>();
                 foreach (Text text in texts)
                 {
-                    if (fontExcludeText.Contains(text.name)) continue;
-                    text.fontSize = 40;
+                    if (this.fontExcludeText.Contains(text.name))
+                    {
+                        continue;
+                    }
+
+                    text.fontSize = FONT_SIZE;
                 }
             }
         }
 
-        void Start()
+        private void Start()
         {
             // init panel
-            if (initPanel)
+            if (this.initPanel)
             {
-                ForegroundPanel.Instance.init();
+                ForegroundPanel.Instance.Init();
                 if (PanelController.Instance == null)
                 {
-                    LogManager.Instance.log("manager Not Found!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("manager Not Found!!!", LogManager.LogLevel.Error);
                     return;
                 }
+
                 PanelController.Instance.show(CreateOrJoinPanel.Instance);
-                // ³õÊ¼»¯±³°ü
+
+                // åˆå§‹åŒ–èƒŒåŒ…
                 BackpackMenuPanel.Instance.panel.SetActive(true);
                 BackpackMenuPanel.Instance.panel.SetActive(false);
             }
-            // Ìí¼Ó10¸öÖÖÖ²ÈÎÎñ
-            for(int i = 0; i < 10; i++)
+
+            // æ·»åŠ 10ä¸ªç§æ¤ä»»åŠ¡
+            for (int i = 0; i < 10; i++)
             {
                 WorkerTaskManager.Instance.addTask(new WorkerPlantTask.PlantTaskBuilder().build());
             }
         }
 
-        public void showTip(string text)
-        {
-            GameObject g = Instantiate(tip);
-            if (g == null) {
-                LogManager.Instance.log("tip Instantiate Error!!!", LogManager.LogLevel.Error);
-                return;
-            }
-            g.name = tip.name;
-            g.GetComponent<TipUI>().setText(text);
-            g.transform.SetParent(transform,false);
-            // ÓÉÓÚÊµÀı»¯²úÉúĞÎ×´±ä»¯,ÖØĞÂÉèÖÃ
-            //g.transform.localScale = Vector3.zero;
-            //RectTransform rt = g.GetComponent<RectTransform>();
-            //rt.offsetMin = Vector2.zero;
-            //rt.offsetMax = Vector2.zero;
-            //Vector3 v = rt.localPosition; // Ïà¶Ô×ø±ê
-            //rt.localPosition = new Vector3(v.x, v.y, 0);
-        }
-
         private void Update()
         {
-            workerUpdate();
-            // ÍË³ö½çÃæ(³ıÁËForegroundPanel,CreateOrJoinPanel,CreateMenuPanel,CreateDataPanel,AsyncProgressPanel)
+            this.WorkerUpdate();
+
+            // é€€å‡ºç•Œé¢(é™¤äº†ForegroundPanel,CreateOrJoinPanel,CreateMenuPanel,CreateDataPanel,AsyncProgressPanel)
             if (Input.GetKey(KeyCode.Escape))
             {
                 if (PanelController.Instance.Panels.Count == 0)
@@ -87,80 +109,116 @@ namespace LAB2D
                     PanelController.Instance.show(BuildMenuPanel.Instance);
                     IsAvailableMap.Instance.clearShow();
                 }
-                // ²»ÄÜ¹Ø±ÕÕâĞ©Ãæ°å
-                else if(PanelController.Instance.Panels.Peek() != ForegroundPanel.Instance &&
+                else if (PanelController.Instance.Panels.Peek() != ForegroundPanel.Instance &&
                     PanelController.Instance.Panels.Peek() != CreateOrJoinPanel.Instance &&
                     PanelController.Instance.Panels.Peek() != CreateMenuPanel.Instance &&
                     PanelController.Instance.Panels.Peek() != CreateDataPanel.Instance &&
                     PanelController.Instance.Panels.Peek() != AsyncProgressPanel.Instance)
-                {
-                    if(PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
+                { // ä¸èƒ½å…³é—­è¿™äº›é¢æ¿
+                    if (PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
                     {
-                        ItemInfoUI.Instance.init();
+                        ItemInfoUI.Instance.Init();
                     }
+
                     PanelController.Instance.close();
                 }
             }
+
             EnvironmentManager.Instance.updateEnergy();
             if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2))
             {
-                // ¹Ø±ÕItemInfoÃæ°å
-                if (PanelController.Instance.Panels.Count > 0 
+                // å…³é—­ItemInfoé¢æ¿
+                if (PanelController.Instance.Panels.Count > 0
                     && PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
                 {
-                    ItemInfoUI.Instance.init();
+                    ItemInfoUI.Instance.Init();
                     PanelController.Instance.close();
                 }
             }
         }
 
-        private void workerUpdate() 
+        private void WorkerUpdate()
         {
             List<Worker> workers = WorkerManager.Instance.Characters;
             foreach (Worker worker in workers)
             {
-                // °´ÕÕÊ±¼ä¶Ô¼¢¶öÖµÓëÆ£ÀÍÖµ½øĞĞ×ÔÈ»Ë¥¼õ
+                // æŒ‰ç…§æ—¶é—´å¯¹é¥¥é¥¿å€¼ä¸ç–²åŠ³å€¼è¿›è¡Œè‡ªç„¶è¡°å‡
                 worker.CurHungry -= Time.deltaTime * 0.1f;
                 worker.CurTired -= Time.deltaTime * 0.01f;
             }
         }
     }
 
-    
-
-    public abstract class MonoBehaviourInit : MonoBehaviour {
-        public virtual void init() { }
-    }
-
-    public interface ISaveData
+    /// <summary>
+    /// å¸¦initæ–¹æ³•çš„MonoBehaviour.
+    /// </summary>
+    public abstract class MonoBehaviourInit : MonoBehaviour
     {
-        void loadData();
-        void saveData();
+        /// <summary>
+        /// åˆå§‹åŒ–æ–¹æ³•.
+        /// </summary>
+        public virtual void Init()
+        {
+        }
     }
 
+    /// <summary>
+    /// å®ç°LoadData,SaveData.
+    /// </summary>
     public abstract class ASaveData : ISaveData
     {
-        public static List<ISaveData> Instances = new List<ISaveData>();
-
         public ASaveData()
         {
             Instances.Add(this);
         }
 
-        public virtual void loadData() { }
-        public virtual void saveData() { }
+        /// <summary>
+        /// å•ä¾‹.
+        /// </summary>
+        public static List<ISaveData> Instances { get; set; } = new List<ISaveData>();
+
+        /// <summary>
+        /// åŠ è½½æ•°æ®.
+        /// </summary>
+        public virtual void LoadData()
+        {
+        }
+
+        /// <summary>
+        /// ä¿å­˜æ•°æ®.
+        /// </summary>
+        public virtual void SaveData()
+        {
+        }
     }
 
-    public abstract class AMonoSaveData : MonoBehaviour,ISaveData
+    /// <summary>
+    /// å¸¦æœ‰MonoBehaviourçš„ISaveData.
+    /// </summary>
+    public abstract class AMonoSaveData : MonoBehaviour, ISaveData
     {
-        public static List<ISaveData> Instances = new List<ISaveData>();
-
         public AMonoSaveData()
         {
             Instances.Add(this);
         }
 
-        public virtual void loadData() { }
-        public virtual void saveData() { }
+        /// <summary>
+        /// å•ä¾‹.
+        /// </summary>
+        public static List<ISaveData> Instances { get; set; } = new List<ISaveData>();
+
+        /// <summary>
+        /// åŠ è½½æ•°æ®.
+        /// </summary>
+        public virtual void LoadData()
+        {
+        }
+
+        /// <summary>
+        /// ä¿å­˜æ•°æ®.
+        /// </summary>
+        public virtual void SaveData()
+        {
+        }
     }
 }

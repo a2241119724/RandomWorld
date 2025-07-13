@@ -1,5 +1,4 @@
-﻿using Photon.Pun;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace LAB2D
 {
@@ -37,7 +36,7 @@ namespace LAB2D
                 return;
             }
             // 如果受到攻击,那么向着玩家方向进行搜索
-            Character.rotateTo(Character.Target.transform.position - Character.transform.position); 
+            Character.rotateTo(Character.Target.transform.position - Character.transform.position);
             Character.moveToForward();
             // TODO可以奔跑搜索，以后实现
         }

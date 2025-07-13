@@ -21,7 +21,7 @@ namespace LAB2D
             base.Awake();
             Instance = this;
             resourceTileMapOne = Tool.GetComponentInChildren<Tilemap>(transform.parent.gameObject, "ResourceMapOne");
-            ResourceMapDataLAB = new ResourceMapData(0,100);
+            ResourceMapDataLAB = new ResourceMapData(0, 100);
         }
 
         /// <summary>
@@ -29,7 +29,8 @@ namespace LAB2D
         /// </summary>
         /// <param name="coroutine">需要等待该协程执行完后再执行</param>
         /// <returns></returns>
-        public IEnumerator genResource(Coroutine coroutine = null) {
+        public IEnumerator genResource(Coroutine coroutine = null)
+        {
             yield return coroutine;
             AsyncProgressUI.Instance.setTip("生成资源...");
             for (int i = 0; i < Height; i++)
@@ -37,7 +38,7 @@ namespace LAB2D
                 for (int j = 0; j < Width; j++)
                 {
                     AsyncProgressUI.Instance.addOneProcess();
-                    if (FrameControl.Instance.isNeedStop(1))
+                    if (FrameControl.Instance.IsNeedStop(1))
                     {
                         yield return null;
                     }
@@ -45,7 +46,7 @@ namespace LAB2D
                     if (TileMap.Instance.isCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.9f)
                     {
                         TileType tileType = TileMap.Instance.MapTiles[i, j];
-                        TileBase tileBase = ResourcesManager.Instance.getAssetByTileType(tileType);
+                        TileBase tileBase = ResourcesManager.Instance.GetAssetByTileType(tileType);
                         if (tileBase == null) continue;
                         tilemap.SetTile(posMap, tileBase);
                         ResourceMapDataLAB.add(posMap, tileBase.name);
@@ -64,8 +65,8 @@ namespace LAB2D
                 {
                     Vector3Int pos = IsAvailableMap.Instance.genAvailablePosMap();
                     TileType tileType = TileMap.Instance.MapTiles[pos.x, pos.y];
-                    TileBase tileBase = ResourcesManager.Instance.getAssetByTileType(tileType,"Tree");
-                    if(tileBase == null)
+                    TileBase tileBase = ResourcesManager.Instance.GetAssetByTileType(tileType, "Tree");
+                    if (tileBase == null)
                     {
                         yield return null;
                         continue;
@@ -86,17 +87,19 @@ namespace LAB2D
         /// </summary>
         /// <param name="center"></param>
         /// <param name="radius"></param>
-        private void refreshRound(Vector3Int center, int radius = 4) {
+        private void refreshRound(Vector3Int center, int radius = 4)
+        {
             for (int i = -radius; i <= radius; i++)
             {
                 for (int j = -radius; j <= radius; j++)
                 {
-                    tilemap.RefreshTile(Tool.add(center,i,j));
+                    tilemap.RefreshTile(Tool.Add(center, i, j));
                 }
             }
         }
 
-        public void cutTree(Vector3Int posMap) {
+        public void cutTree(Vector3Int posMap)
+        {
             ResourceMapDataLAB.remove(posMap);
             tilemap.SetTile(posMap, null);
             ResourceMapDataLAB.TreeCurCount--;
@@ -105,38 +108,39 @@ namespace LAB2D
         public override TileBase getTile(Vector3Int posMap)
         {
             TileBase tileBase = tilemap.GetTile(posMap);
-            if(tileBase == null)
+            if (tileBase == null)
             {
                 tileBase = resourceTileMapOne.GetTile(posMap);
             }
             return tileBase;
         }
 
-        public void setProgress() 
+        public void setProgress()
         {
             AsyncProgressUI.Instance.addTotal(Height * Width);
         }
 
-        public override void loadData()
+        public override void LoadData()
         {
-            base.loadData();
-            ResourceMapDataLAB = Tool.loadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.getPath(this.GetType().Name));
+            base.LoadData();
+            ResourceMapDataLAB = Tool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.getPath(GetType().Name));
             foreach (KeyValuePair<Vector3IntLAB, string> posMap in ResourceMapDataLAB.posMaps)
             {
                 tilemap.SetTile(Vector3IntLAB.toVector3Int(posMap.Key),
-                    (TileBase)ResourcesManager.Instance.getAsset(posMap.Value));
+                    (TileBase)ResourcesManager.Instance.GetAsset(posMap.Value));
             }
             StartCoroutine(genResource());
         }
 
-        public override void saveData()
+        public override void SaveData()
         {
-            base.saveData();
-            Tool.saveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), ResourceMapDataLAB);
+            base.SaveData();
+            Tool.SaveDataByBinary(GlobalData.ConfigFile.getPath(GetType().Name), ResourceMapDataLAB);
         }
 
         [Serializable]
-        public class ResourceMapData {
+        public class ResourceMapData
+        {
             public int TreeCurCount;
             public int TreeTotalCount;
             /// <summary>

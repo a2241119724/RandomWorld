@@ -1,9 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
-using UnityEngine.UI;
 
 namespace LAB2D
 {
@@ -29,7 +27,7 @@ namespace LAB2D
             // 实时更新Character信息
             if (character != null)
             {
-                if(PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
+                if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
                 {
                     PanelController.Instance.show(ItemInfoPanel.Instance);
                 }
@@ -38,7 +36,7 @@ namespace LAB2D
             }
             if (Input.GetMouseButtonDown(1))
             {
-                List<RaycastResult> results = Tool.getUIByMousePos();
+                List<RaycastResult> results = Tool.GetUIByMousePos();
                 // 过滤不是滑动主屏幕的动作
                 if (results.Count > 0 && results[0].gameObject.name != "Foreground") return;
                 selectPos = TileMap.Instance.worldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
@@ -51,13 +49,14 @@ namespace LAB2D
                 {
                     selectUI = SelectManager.Instance.getFirstAndFreeAll();
                 }
-                do {
+                do
+                {
                     character = getCharacter(selectPos);
                     if (character != null)
                     {
                         text = character.ToString();
                         SelectUI _selectUI = SelectManager.Instance.getByCharacter(character);
-                        if(_selectUI != null)
+                        if (_selectUI != null)
                         {
                             selectUI = _selectUI;
                         }
@@ -97,7 +96,7 @@ namespace LAB2D
         /// <param name="text"></param>
         public void updateInfo(string name, Vector3Int pos, string text)
         {
-            if (select.Equals(name) && selectPos.x==pos.x && selectPos.y == pos.y)
+            if (select.Equals(name) && selectPos.x == pos.x && selectPos.y == pos.y)
             {
                 ItemInfoPanel.Instance.setItemInfo(text);
             }
@@ -120,7 +119,8 @@ namespace LAB2D
             return _character;
         }
 
-        private string getResource(Vector3Int posMap) {
+        private string getResource(Vector3Int posMap)
+        {
             // Drop
             select = "DropResourceManager";
             string text = DropResourceManager.Instance.ToString(posMap);
@@ -144,7 +144,8 @@ namespace LAB2D
         /// <param name="isTile"></param>
         /// <param name="isUI"></param>
         /// <returns></returns>
-        public TileBase getTile(Vector3Int posMap,bool isTile=true,bool isUI=true) {
+        public TileBase getTile(Vector3Int posMap, bool isTile = true, bool isUI = true)
+        {
             TileBase tileBase = BuildMap.Instance.getTile(posMap);
             text = "Build:";
             // 如果点击的是床，则展示分配的Worker
@@ -157,7 +158,8 @@ namespace LAB2D
                 text = "Resource:";
                 tileBase = ResourceMap.Instance.getTile(posMap);
                 // 手动添加任务
-                if (tileBase != null && isUI) {
+                if (tileBase != null && isUI)
+                {
                     GatherUI.Instance.setPostion(posMap);
                 }
             }
@@ -169,9 +171,9 @@ namespace LAB2D
             return tileBase;
         }
 
-        public override void init()
+        public override void Init()
         {
-            base.init();
+            base.Init();
             character = null;
             select = "";
             selectPos = default;

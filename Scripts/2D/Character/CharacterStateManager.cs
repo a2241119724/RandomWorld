@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace LAB2D
 {
-    public abstract class CharacterStateManager<CS,CST,C> : ICharacterStateManager<CS, CST> where CS : ICharacterState where CST : Enum where C : Character
+    public abstract class CharacterStateManager<CS, CST, C> : ICharacterStateManager<CS, CST> where CS : ICharacterState where CST : Enum where C : Character
     {
         /// <summary>
         /// 当前处于的状态类
@@ -20,7 +19,7 @@ namespace LAB2D
         public CharacterStateManager(C character)
         {
             States = new Dictionary<CST, CS>();
-            this.Character = character;
+            Character = character;
         }
 
         /// <summary>
@@ -31,7 +30,7 @@ namespace LAB2D
         {
             if (enemyState == null)
             {
-                LogManager.Instance.log("enemyState is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("enemyState is null!!!", LogManager.LogLevel.Error);
                 return;
             }
             if (!States.ContainsKey(type))
@@ -48,7 +47,7 @@ namespace LAB2D
         {
             if (!States.ContainsKey(type))
             {
-                LogManager.Instance.log("states Not Contain type!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("states Not Contain type!!!", LogManager.LogLevel.Error);
                 return;
             }
             if (CurrentState != null)

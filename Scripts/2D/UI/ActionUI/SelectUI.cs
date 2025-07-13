@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace LAB2D
@@ -11,7 +9,7 @@ namespace LAB2D
 
         private void Awake()
         {
-            init();
+            Init();
         }
 
         private void Update()
@@ -22,15 +20,16 @@ namespace LAB2D
             }
         }
 
-        public void setTarget(Vector3Int posMap) {
+        public void setTarget(Vector3Int posMap)
+        {
             Target = posMap;
             Vector3 pos = TileMap.Instance.mapPosToWorldPos(posMap);
             transform.position = new Vector3(pos.x, pos.y, 0.0f);
         }
 
-        public override void init()
+        public override void Init()
         {
-            base.init();
+            base.Init();
             transform.position = ResourceConstant.VECTOR3_DEFAULT;
             Target = ResourceConstant.VECTOR3INT_DEFAULT;
             Character = null;

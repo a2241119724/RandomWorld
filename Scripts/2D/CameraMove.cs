@@ -1,11 +1,4 @@
-﻿// <copyright file="CameraMove.cs" company="LAB">
-// Copyright (c) LAB. All rights reserved.
-// </copyright>
-// @author liuanbo
-// @date 2025/06/28 2025/6/28 14:11:06
-// @description TODO
-
-namespace LAB2D
+﻿namespace LAB2D
 {
     using System.Collections.Generic;
     using UnityEngine;
@@ -22,22 +15,22 @@ namespace LAB2D
         private const float MouseSpeed = 2.0f; // 相机跟随鼠标速度[鼠标中键]
         private const float ScrollSpeed = 100.0f; // 相机缩放速度
         private readonly float[] scaleThreshold = new float[] { 5, 40 }; // 相机缩放阈值
-        private bool isEdgeMode = false; // 鼠标在相机边缘滑动时[相机跟随鼠标移动]
+        private readonly bool isEdgeMode = false; // 鼠标在相机边缘滑动时[相机跟随鼠标移动]
         private bool isDown; // 是否按下鼠标中键
         private Vector3 lastMousePos; // 上一次鼠标位置[鼠标中键拖动相机]
 
         /// <summary>
-        /// Gets or sets 相机跟随的目标.
+        /// 相机跟随的目标.
         /// </summary>
         public Character Character { get; set; }
 
         /// <summary>
-        /// Gets or sets 相机相对目标的偏移量.
+        /// 相机相对目标的偏移量.
         /// </summary>
         public Vector3 Offset { get; set; }
 
         /// <summary>
-        /// Gets or sets 相机需要移动到的目标位置.
+        /// 相机需要移动到的目标位置.
         /// </summary>
         public Vector3 Target { get; set; }
 
@@ -117,7 +110,7 @@ namespace LAB2D
             // 根据鼠标滑动移动
             if (Input.GetMouseButtonDown(2))
             {
-                List<RaycastResult> results = Tool.getUIByMousePos();
+                List<RaycastResult> results = Tool.GetUIByMousePos();
 
                 // 过滤不是滑动主屏幕的动作
                 if (results.Count > 0 && results[0].gameObject.name.Equals("Foreground"))

@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 namespace LAB2D
 {
@@ -13,7 +10,8 @@ namespace LAB2D
         /// </summary>
         private int id;
 
-        public WorkerWearTask() : base(TaskType.Wear) {
+        public WorkerWearTask() : base(TaskType.Wear)
+        {
             stageInit.Add((Worker worker) =>
             {
                 maxProgress = 1.0f;
@@ -27,7 +25,7 @@ namespace LAB2D
         public override void start(Worker worker)
         {
             base.start(worker);
-            changeStage(worker,0);
+            changeStage(worker, 0);
         }
 
         public override bool isCanWork(Worker worker)
@@ -43,11 +41,12 @@ namespace LAB2D
         {
             base.finish(worker);
             // Worker拿起装备或者武器
-            if(ItemDataManager.Instance.getTypeById(id) == ItemType.Weapon)
+            if (ItemDataManager.Instance.getTypeById(id) == ItemType.Weapon)
             {
                 worker.WearData.weapon = (Weapon)ItemFactory.Instance.getBackpackItemByName(
                     ItemDataManager.Instance.getById(id).imageName);
-            }else if(ItemDataManager.Instance.getTypeById(id) == ItemType.Equipment)
+            }
+            else if (ItemDataManager.Instance.getTypeById(id) == ItemType.Equipment)
             {
                 worker.WearData.addEquipment((Equipment)ItemFactory.Instance.getBackpackItemByName(
                     ItemDataManager.Instance.getById(id).imageName), TargetMap);
@@ -66,12 +65,14 @@ namespace LAB2D
                 task = new WorkerWearTask();
             }
 
-            public WearTaskBuilder setWorker(Worker worker) {
+            public WearTaskBuilder setWorker(Worker worker)
+            {
                 task.worker = worker;
                 return this;
             }
 
-            public WearTaskBuilder setTarget(Vector3Int posMap) {
+            public WearTaskBuilder setTarget(Vector3Int posMap)
+            {
                 task.TargetMap = posMap;
                 return this;
             }

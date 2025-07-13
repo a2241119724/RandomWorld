@@ -6,9 +6,9 @@ namespace LAB2D
 {
     public abstract class MVCItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
-        public event Action<int,int> exchangeItem;
-        public event Action<int,string> setBorderColor;
-        public event Func<int,Item> get;
+        public event Action<int, int> exchangeItem;
+        public event Action<int, string> setBorderColor;
+        public event Func<int, Item> get;
         public event Action<Item> showInfo;
 
         public bool IsDrag { get; set; } // ÊÇ·ñ¿ÉÒÔÍÏ×§
@@ -32,7 +32,7 @@ namespace LAB2D
             parent = transform.parent;
             if (parent == null)
             {
-                LogManager.Instance.log("parent Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("parent Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
         }

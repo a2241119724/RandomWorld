@@ -1,6 +1,5 @@
 using Photon.Pun;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace LAB2D
@@ -16,7 +15,7 @@ namespace LAB2D
             audioSource = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<AudioSource>();
             if (audioSource == null)
             {
-                LogManager.Instance.log("audioSource Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("audioSource Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
             Tool.GetComponentInChildren<Button>(panel, "Exit").onClick.AddListener(OnClick_Exit);
@@ -55,7 +54,7 @@ namespace LAB2D
         /// </summary>
         public void OnClick_BackMenu()
         {
-            Tool.loadScene("Menu");
+            Tool.LoadScene("Menu");
         }
 
         /// <summary>

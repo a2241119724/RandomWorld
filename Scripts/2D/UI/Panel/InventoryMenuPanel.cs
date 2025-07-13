@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,11 +26,11 @@ namespace LAB2D
             base.OnEnter();
             Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> typeToResource = InventoryManager.Instance.TypeToResource;
             int count = 0;
-            foreach(KeyValuePair<ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in typeToResource)
+            foreach (KeyValuePair<ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in typeToResource)
             {
-                if(count >= type.childCount)
+                if (count >= type.childCount)
                 {
-                    GameObject buttonItem = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("ButtonItem"));
+                    GameObject buttonItem = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("ButtonItem"));
                     buttonItem.transform.SetParent(type);
                     buttonItem.transform.localScale = Vector3.one;
                 }

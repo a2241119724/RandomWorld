@@ -1,13 +1,9 @@
 using Photon.Pun;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
-namespace LAB2D {
+namespace LAB2D
+{
     public class ForegroundPanel : BasePanel<ForegroundPanel>
     {
         public float TimeScale { get; set; } = 1;
@@ -113,20 +109,20 @@ namespace LAB2D {
 
         public void Onclick_Save()
         {
-            GlobalInit.Instance.showTip("保存数据");
+            GlobalInit.Instance.ShowTip("保存数据");
             foreach (ASaveData saveData in ASaveData.Instances)
             {
-                saveData.saveData();
+                saveData.SaveData();
             }
             foreach (AMonoSaveData saveData in AMonoSaveData.Instances)
             {
-                saveData.saveData();
+                saveData.SaveData();
             }
         }
 
         public void Onclick_GeneratorItem()
         {
-            if(EnemyManager.Instance.Characters.Count > 0)
+            if (EnemyManager.Instance.Characters.Count > 0)
             {
                 ((EnemyDeadState)EnemyManager.Instance.Characters[0].Manager.States[EnemyStateType.Dead]).dropItem();
             }

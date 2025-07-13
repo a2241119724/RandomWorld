@@ -10,7 +10,8 @@ namespace LAB2D
     {
         public DoorItem door;
 
-        public CustomRoom() {
+        public CustomRoom()
+        {
             width = 10;
             height = 7;
             walls = new Dictionary<WallDirection, Wall>();
@@ -49,7 +50,7 @@ namespace LAB2D
                 .addBuilding(new Vector3Int(xB[0], yB[0], 0), walls[WallDirection.LEFT_DOWN].tile)
                 .addBuilding(new Vector3Int(xB[1], yB[1], 0), walls[WallDirection.RIGHT_TOP].tile)
                 .addBuilding(new Vector3Int(xB[1], yB[0], 0), walls[WallDirection.LEFT_TOP].tile)
-                .addBuilding(new Vector3Int(xB[0], centerMap.y, 0), door.tile,false)
+                .addBuilding(new Vector3Int(xB[0], centerMap.y, 0), door.tile, false)
                 .addTask();
             roomInfo.Points.Add(new Vector3Int(xB[0], yB[1], 0));
             roomInfo.Points.Add(new Vector3Int(xB[0], yB[0], 0));
@@ -71,7 +72,7 @@ namespace LAB2D
     {
         public CustomRoomWallT()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallT");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomRoomWallT");
         }
     }
 
@@ -80,7 +81,7 @@ namespace LAB2D
     {
         public CustomRoomWallD()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallD");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomRoomWallD");
         }
     }
 
@@ -89,7 +90,7 @@ namespace LAB2D
     {
         public CustomRoomWallL()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallL");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomRoomWallL");
         }
     }
 
@@ -98,7 +99,7 @@ namespace LAB2D
     {
         public CustomRoomWallR()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallR");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomRoomWallR");
         }
     }
 
@@ -107,7 +108,7 @@ namespace LAB2D
     {
         public CustomRoomWallRT()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallRT");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomRoomWallRT");
         }
     }
 
@@ -116,7 +117,7 @@ namespace LAB2D
     {
         public CustomRoomWallRD()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallRD");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomRoomWallRD");
         }
     }
 
@@ -125,7 +126,7 @@ namespace LAB2D
     {
         public CustomRoomWallLT()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallLT");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomRoomWallLT");
         }
     }
 
@@ -134,7 +135,7 @@ namespace LAB2D
     {
         public CustomRoomWallLD()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallLD");
+            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomRoomWallLD");
         }
     }
 

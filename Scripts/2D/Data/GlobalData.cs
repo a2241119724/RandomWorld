@@ -29,13 +29,15 @@ namespace LAB2D
             // C:\Users\*\AppData\LocalLow\*\First_Version
             public static string UserDataFilePath = Application.persistentDataPath + "/user.json";
 
-            public static string getPath(string name) {
-                return Application.persistentDataPath + "/" + name + ".lab";
+            public static string getPath(string name)
+            {
+                return Application.persistentDataPath + "/Data/" + name + ".lab";
             }
         }
     }
 
-    public enum PackageType { 
+    public enum PackageType
+    {
         Android,
         PC
     }

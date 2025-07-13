@@ -1,9 +1,7 @@
-using UnityEngine;
-using Photon.Pun;
-using UnityEngine.Tilemaps;
-using System.Collections.Generic;
-using System.Collections;
 using System;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace LAB2D
 {
@@ -11,7 +9,7 @@ namespace LAB2D
     {
         public static TileMap Instance { private set; get; }
         public TileType[,] MapTiles { set; get; } // 地图瓦片
-        
+
         private int randomCount { get; set; } // 随机点的数量
         //private readonly int SEND_QUANTITY = 10000; // 一次发送数量
         //private bool isOnce = false; // 是否创建完成
@@ -32,8 +30,8 @@ namespace LAB2D
                 for (int j = 0; j < Width; j++)
                 {
                     AsyncProgressUI.Instance.addOneProcess();
-                    tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourcesManager.Instance.getAsset(mapTiles[i, j].ToString()));
-                    if (FrameControl.Instance.isNeedStop(1))
+                    tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourcesManager.Instance.GetAsset(mapTiles[i, j].ToString()));
+                    if (FrameControl.Instance.IsNeedStop(1))
                     {
                         yield return null;
                     }
@@ -55,9 +53,9 @@ namespace LAB2D
         /// 可以选择以哪个点为中心，不选择则为所有
         /// </summary>
         /// <returns></returns>
-        public Vector3Int genCanReachPos(Vector3 centerMap=default(Vector3))
+        public Vector3Int genCanReachPos(Vector3 centerMap = default(Vector3))
         {
-            int x, y, startX=0, endX=Height, startY = 0, endY = Width;
+            int x, y, startX = 0, endX = Height, startY = 0, endY = Width;
             if (centerMap != default(Vector3))
             {
                 startX = (int)Mathf.Max(centerMap.x - 50, 0);
@@ -69,7 +67,7 @@ namespace LAB2D
             {
                 x = UnityEngine.Random.Range(startX, endX);
                 y = UnityEngine.Random.Range(startY, endY);
-            } while (!isCanReach(new Vector3Int(x,y,0)));
+            } while (!isCanReach(new Vector3Int(x, y, 0)));
             return new Vector3Int(x, y, 0);
         }
 
@@ -144,7 +142,7 @@ namespace LAB2D
             {
                 MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (TileType)(UnityEngine.Random.Range(2, 14) / 2);
                 AsyncProgressUI.Instance.addOneProcess();
-                if (FrameControl.Instance.isNeedStop(1))
+                if (FrameControl.Instance.IsNeedStop(1))
                 {
                     yield return null;
                 }
@@ -152,7 +150,7 @@ namespace LAB2D
             TileType[,] tiles = new TileType[Height, Width];
             if (tiles == null)
             {
-                LogManager.Instance.log("tiles assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("tiles assign resource Error!!!", LogManager.LogLevel.Error);
                 yield break;
             }
             AsyncProgressUI.Instance.setTip("正在填补地图...");
@@ -160,7 +158,7 @@ namespace LAB2D
             {
                 for (int j = 0; j < Width; j++)
                 {
-                    if (FrameControl.Instance.isNeedStop(1))
+                    if (FrameControl.Instance.IsNeedStop(1))
                     {
                         yield return null;
                     }
@@ -189,25 +187,25 @@ namespace LAB2D
             for (int i = -1; i < Width; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.getAsset(TileType.Mountain.ToString()));
+                tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
             }
             // 右边
             for (int i = 0; i <= Height; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.getAsset(TileType.Mountain.ToString()));
+                tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
             }
             // 下边
             for (int i = 0; i <= Width; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.getAsset(TileType.Mountain.ToString()));
+                tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
             }
             // 左边
             for (int i = -1; i < Height; i++)
             {
                 AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.getAsset(TileType.Mountain.ToString()));
+                tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
             }
         }
 
@@ -216,7 +214,8 @@ namespace LAB2D
         /// </summary>
         /// <param name="posMap"></param>
         /// <returns></returns>
-        public Vector3 mapPosToWorldPos(Vector3Int posMap) {
+        public Vector3 mapPosToWorldPos(Vector3Int posMap)
+        {
             return new Vector3(posMap.y, posMap.x, 0);
             //return new Vector3(posMap.y + 0.5f, posMap.x + 0.5f, 0);
         }
@@ -270,10 +269,10 @@ namespace LAB2D
             return count;
         }
 
-        public override void loadData()
+        public override void LoadData()
         {
-            base.loadData();
-            TileMapData data = Tool.loadDataByBinary<TileMapData>(GlobalData.ConfigFile.getPath(this.GetType().Name));
+            base.LoadData();
+            TileMapData data = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.getPath(GetType().Name));
             Height = data.Height;
             Width = data.Width;
             MapTiles = data.MapTiles;
@@ -284,11 +283,11 @@ namespace LAB2D
             //Worker.initMap(Height, Width);
         }
 
-        public override void saveData()
+        public override void SaveData()
         {
-            base.saveData();
-            TileMapData tileMapData = new TileMapData(Height,Width,MapTiles,randomCount);
-            Tool.saveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), tileMapData);
+            base.SaveData();
+            TileMapData tileMapData = new TileMapData(Height, Width, MapTiles, randomCount);
+            Tool.SaveDataByBinary(GlobalData.ConfigFile.getPath(GetType().Name), tileMapData);
         }
 
         ///// <summary>
@@ -384,7 +383,8 @@ namespace LAB2D
         //}
 
         [Serializable]
-        public class TileMapData {
+        public class TileMapData
+        {
             public int Height { set; get; } // 地图纵向长度
             public int Width { set; get; }  // 地图横向长度
             public TileType[,] MapTiles { set; get; } // 地图瓦片

@@ -1,9 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
-using static UnityEngine.EventSystems.PointerEventData;
 using UnityEngine.Tilemaps;
 
 namespace LAB2D
@@ -11,7 +7,7 @@ namespace LAB2D
     public class IsAvailableMap : BaseTileMap
     {
         public static IsAvailableMap Instance { private set; get; }
-        
+
         /// <summary>
         /// 已经显示绿色和红色Tile
         /// </summary>
@@ -28,7 +24,8 @@ namespace LAB2D
         /// 展示周围grid的是否可建造
         /// </summary>
         /// <param name="index">grid在controller下的sibling index</param>
-        public bool showRect(Vector3Int posMap,int width=10,int height=7,bool isBottomLeft=false) {
+        public bool showRect(Vector3Int posMap, int width = 10, int height = 7, bool isBottomLeft = false)
+        {
             bool isBuilding = true;
             clearShow();
             int hStart = 0, hEnd = height;
@@ -40,13 +37,13 @@ namespace LAB2D
                 wStart = -width / 2;
                 wEnd = width - width / 2;
             }
-            for (int i = hStart; i< hEnd; i++)
+            for (int i = hStart; i < hEnd; i++)
             {
                 for (int j = wStart; j < wEnd; j++)
                 {
                     Vector3Int _posMap = new Vector3Int(posMap.x + i, posMap.y + j, 0);
                     selectPos_s.Add(_posMap);
-                    tilemap.SetTile(_posMap, (TileBase)ResourcesManager.Instance.getAsset("Snow"));
+                    tilemap.SetTile(_posMap, (TileBase)ResourcesManager.Instance.GetAsset("Snow"));
                     tilemap.RemoveTileFlags(_posMap, TileFlags.LockColor);
                     if (isAvailable(_posMap))
                     {
@@ -62,7 +59,8 @@ namespace LAB2D
             return isBuilding;
         }
 
-        public void clearShow() {
+        public void clearShow()
+        {
             foreach (Vector3Int selectPos in selectPos_s)
             {
                 tilemap.SetTile(selectPos, null);
@@ -75,7 +73,8 @@ namespace LAB2D
         /// </summary>
         /// <param name="posMap"></param>
         /// <returns></returns>
-        private bool isAvailable(Vector3Int posMap) {
+        private bool isAvailable(Vector3Int posMap)
+        {
             return TileMap.Instance.isCanReach(posMap) &&
                 BuildMap.Instance.isFreeTile(posMap) &&
                 ResourceMap.Instance.isFreeTile(posMap);
@@ -88,7 +87,7 @@ namespace LAB2D
         /// <param name="radius"></param>
         /// <param name="isDrop"></param>
         /// <returns></returns>
-        public Vector3Int genAvailablePosMap(Vector3Int centerMap=default, int radius=10, bool isDrop = false)
+        public Vector3Int genAvailablePosMap(Vector3Int centerMap = default, int radius = 10, bool isDrop = false)
         {
             int x, y, startX = 0, endX = TileMap.Height, startY = 0, endY = TileMap.Width;
             if (centerMap != default)
@@ -106,9 +105,9 @@ namespace LAB2D
                 x = Random.Range(startX, endX);
                 y = Random.Range(startY, endY);
                 count++;
-                if(count > 100)
+                if (count > 100)
                 {
-                    LogManager.Instance.log("genAvailablePosMap Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("genAvailablePosMap Error!!!", LogManager.LogLevel.Error);
                     return default;
                 }
                 // 如果是放置掉落物,则需要判断是否是可放置的位置

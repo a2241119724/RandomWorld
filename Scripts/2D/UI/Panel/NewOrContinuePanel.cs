@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.UI;
 using static LAB2D.TileMap;
 
@@ -35,10 +32,10 @@ namespace LAB2D
 
         private void OnClick_ContinueGame()
         {
-            TileMapData data = Tool.loadDataByBinary<TileMapData>(GlobalData.ConfigFile.getPath("TileMap"));
-            if(data == null)
+            TileMapData data = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.getPath("TileMap"));
+            if (data == null)
             {
-                GlobalInit.Instance.showTip("没有存档!!!");
+                GlobalInit.Instance.ShowTip("没有存档!!!");
                 return;
             }
             controller.close();
@@ -46,19 +43,19 @@ namespace LAB2D
             controller.show(AsyncProgressPanel.Instance);
             AsyncProgressUI.Instance.addTotal(ASaveData.Instances.Count + AMonoSaveData.Instances.Count);
             // 加载数据之前,线实例化
-            PlayerManager.Instance.init();
+            PlayerManager.Instance.Init();
             foreach (ASaveData saveData in ASaveData.Instances)
             {
                 if (saveData == null) continue;
                 AsyncProgressUI.Instance.setTip(saveData.ToString());
-                saveData.loadData();
+                saveData.LoadData();
                 AsyncProgressUI.Instance.addOneProcess();
             }
             foreach (AMonoSaveData saveData in AMonoSaveData.Instances)
             {
                 if (saveData == null) continue;
                 AsyncProgressUI.Instance.setTip(saveData.ToString());
-                saveData.loadData();
+                saveData.LoadData();
                 AsyncProgressUI.Instance.addOneProcess();
             }
         }

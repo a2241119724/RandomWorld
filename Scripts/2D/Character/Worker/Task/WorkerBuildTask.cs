@@ -1,9 +1,5 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
-using System.Linq;
 
 namespace LAB2D
 {
@@ -25,7 +21,8 @@ namespace LAB2D
         /// </summary>
         public BuildItem BuildItem { get; private set; }
 
-        public WorkerBuildTask() : base(TaskType.Build) {
+        public WorkerBuildTask() : base(TaskType.Build)
+        {
             stageInit.Add((Worker worker) =>
             {
                 maxProgress = 1.0f;
@@ -60,14 +57,14 @@ namespace LAB2D
             if (worker.isEnough(needs))
             {
                 //LogManager.Instance.log("携带资源充足", LogManager.LogLevel.Info);
-                changeStage(worker,1);
+                changeStage(worker, 1);
                 return;
             }
             // 获得剩余不够的数量
             Dictionary<int, ResourceInfo> remaining = worker.getRemaining(needs);
             InventoryManager.Instance.isEnoughAndPreTake(worker, remaining, true);
             // 不够就取资源
-            changeStage(worker,0);
+            changeStage(worker, 0);
         }
 
         protected override bool isFinish(Worker worker)
@@ -79,12 +76,12 @@ namespace LAB2D
                     ResourceInfo resourceInfo = InventoryManager.Instance.subItemByPreTake(worker, TargetMap);
                     worker.addResource(resourceInfo);
                     // 减少需求的数量
-                    foreach(KeyValuePair<int, ResourceInfo> pair in temp)
+                    foreach (KeyValuePair<int, ResourceInfo> pair in temp)
                     {
                         if (pair.Key == resourceInfo.id)
                         {
                             pair.Value.count -= resourceInfo.count;
-                            if(pair.Value.count <= 0)
+                            if (pair.Value.count <= 0)
                             {
                                 temp.Remove(resourceInfo.id);
                             }
@@ -94,10 +91,10 @@ namespace LAB2D
                     // 获取完成所有的材料
                     if (temp.Count == 0)
                     {
-                        changeStage(worker,1);
+                        changeStage(worker, 1);
                         return false;
                     }
-                    changeStage(worker,0);
+                    changeStage(worker, 0);
                     return false;
                 default:
                     return true;
@@ -134,10 +131,12 @@ namespace LAB2D
             temp = Tool.DeepCopyByBinary(needs);
         }
 
-        public class BuildTaskBuilder {
+        public class BuildTaskBuilder
+        {
             private WorkerBuildTask task;
 
-            public BuildTaskBuilder(){
+            public BuildTaskBuilder()
+            {
                 task = new WorkerBuildTask();
             }
 
@@ -153,13 +152,15 @@ namespace LAB2D
                 return this;
             }
 
-            public BuildTaskBuilder setNeedResource(Dictionary<int, ResourceInfo> needResource) {
+            public BuildTaskBuilder setNeedResource(Dictionary<int, ResourceInfo> needResource)
+            {
                 task.temp = Tool.DeepCopyByBinary(needResource);
                 task.needs = Tool.DeepCopyByBinary(needResource);
                 return this;
             }
 
-            public WorkerBuildTask build() {
+            public WorkerBuildTask build()
+            {
                 return task;
             }
         }

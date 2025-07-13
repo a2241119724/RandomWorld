@@ -1,14 +1,11 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
 
 namespace LAB2D
 {
-    public class BackpackController : MVCController<BackpackItemManagerView,BackpackModel,BackpackNavigationView,BackpackItemView,BackpackInfoView>
+    public class BackpackController : MVCController<BackpackItemManagerView, BackpackModel, BackpackNavigationView, BackpackItemView, BackpackInfoView>
     {
         public static BackpackController Instance { get; private set; }
-        
+
         public override void Awake()
         {
             itemManagerView = Tool.GetComponentInChildren<BackpackItemManagerView>(gameObject, "Inventory");

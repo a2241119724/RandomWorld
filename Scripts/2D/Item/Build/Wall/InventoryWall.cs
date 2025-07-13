@@ -1,14 +1,9 @@
-using LAB2D;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
 
 namespace LAB2D
 {
     [Serializable]
-    public class InventoryWallT : Wall,DontShow
+    public class InventoryWallT : Wall, DontShow
     {
     }
 

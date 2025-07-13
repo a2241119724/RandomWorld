@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace LAB2D
 {
@@ -15,17 +13,17 @@ namespace LAB2D
         public DropItemManager()
         {
             nameToDrop = new Dictionary<string, List<DropItem>>();
-            string[] drops = Tool.getCSV(ResourceConstant.DATA_ROOT + "DropItem");
-            for(int i = 0;i < drops.Length; i++)
+            string[] drops = Tool.GetCSV(ResourceConstant.DATA_ROOT + "DropItem");
+            for (int i = 0; i < drops.Length; i++)
             {
                 string[] cols = drops[i].Split(',');
-                for (int j = 1; j < cols.Length; j+=2)
+                for (int j = 1; j < cols.Length; j += 2)
                 {
                     if (!nameToDrop.ContainsKey(cols[0]))
                     {
                         nameToDrop.Add(cols[0], new List<DropItem>());
                     }
-                    nameToDrop[cols[0]].Add(new DropItem(cols[j], int.Parse(cols[j+1])));
+                    nameToDrop[cols[0]].Add(new DropItem(cols[j], int.Parse(cols[j + 1])));
                 }
             }
         }
@@ -44,7 +42,7 @@ namespace LAB2D
 
         public DropItem(string name, int count)
         {
-            this.Name = name;
+            Name = name;
             ResourceInfo = new ResourceInfo(ItemDataManager.Instance.getByName(name).id, count);
         }
     }
