@@ -72,7 +72,7 @@ namespace LAB2D
             // 添加到掉落物管理中
             DropResourceManager.Instance.addDrop(itemType, posMap, resourceInfo);
             // 添加搬运任务
-            WorkerTaskManager.Instance.addTask(new WorkerCarryTask.CarryTaskBuilder()
+            WorkerTaskManager.Instance.AddTask(new WorkerCarryTask.CarryTaskBuilder()
                 //.setEndTarget(InventoryManager.Instance.getCell(id))
                 .setResourceInfo(resourceInfo).setStartTarget(posMap).build());
         }

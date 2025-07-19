@@ -29,9 +29,9 @@ namespace LAB2D
         protected override void _attack()
         {
             GameObject g = fireBullet("TraceBullet");
-            if (g != null && EnemyManager.Instance.count() > 0)
+            if (g != null && EnemyManager.Instance.Count() > 0)
             {
-                g.GetComponent<TraceBullet>().Target = EnemyManager.Instance.get(0);
+                g.GetComponent<TraceBullet>().Target = EnemyManager.Instance.Get(0);
             }
         }
     }

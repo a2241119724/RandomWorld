@@ -1,10 +1,13 @@
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    /// <summary>
+    /// æ•Œäººç®¡ç†å™¨.
+    /// </summary>
     public class EnemyManager : CharacterManager<EnemyManager, Enemy, EnemyCreator>
     {
         /// <summary>
-        /// ×î´óµĞÈËÊıÁ¿
+        /// æœ€å¤§æ•Œäººæ•°é‡.
         /// </summary>
-        public int MaxEnemyCount { set; get; }
+        public int MaxEnemyCount { get; set; }
     }
 }

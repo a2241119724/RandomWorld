@@ -172,7 +172,7 @@ namespace LAB2D
             }
             this.player = player.gameObject;
             enabled = true; // 启动角色控制武器脚本
-            CircleCollider2D c = PlayerManager.Instance.Select.weapon.transform.Find("Head").gameObject.AddComponent<CircleCollider2D>(); // 敌人检测
+            CircleCollider2D c = PlayerManager.Instance.Select.Weapon.transform.Find("Head").gameObject.AddComponent<CircleCollider2D>(); // 敌人检测
             c.isTrigger = true;
         }
 

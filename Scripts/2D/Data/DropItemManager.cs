@@ -1,11 +1,11 @@
-using System.Collections.Generic;
-
-namespace LAB2D
+锘縩amespace LAB2D
 {
+    using System.Collections.Generic;
+
     public class DropItemManager : Singleton<DropItemManager>
     {
         /// <summary>
-        /// 资源，与对应的掉落物
+        /// 璧勬簮锛屼笌瀵瑰簲鐨勬帀钀界墿
         /// </summary>
         private Dictionary<string, List<DropItem>> nameToDrop;
         private static readonly List<DropItem> empty = new List<DropItem>();

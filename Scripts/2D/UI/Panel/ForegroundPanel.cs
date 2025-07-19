@@ -78,15 +78,15 @@ namespace LAB2D
         /// </summary>
         public void Onclick_Attack()
         {
-            if (PlayerManager.Instance.Select.weapon != null)
+            if (PlayerManager.Instance.Select.Weapon != null)
             {
                 if (NetworkConnect.Instance.IsOnline)
                 {
-                    PlayerManager.Instance.Select.weapon.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
+                    PlayerManager.Instance.Select.Weapon.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
                 }
                 else
                 {
-                    PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().attack();
+                    PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().attack();
                 }
             }
         }
@@ -124,7 +124,7 @@ namespace LAB2D
         {
             if (EnemyManager.Instance.Characters.Count > 0)
             {
-                ((EnemyDeadState)EnemyManager.Instance.Characters[0].Manager.States[EnemyStateType.Dead]).dropItem();
+                ((EnemyDeadState)EnemyManager.Instance.Characters[0].Manager.States[EnemyStateType.Dead]).DropItem();
             }
         }
     }

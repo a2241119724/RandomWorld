@@ -39,7 +39,7 @@ namespace LAB2D
         {
             transform.position = ResourceConstant.VECTOR3_DEFAULT;
             if (WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
-            WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
+            WorkerTaskManager.Instance.AddTask(new WorkerGatherTask.GatherTaskBuilder()
                 .setTarget(posMap).setGatherName("Tree").build());
         }
 
@@ -47,7 +47,7 @@ namespace LAB2D
         {
             transform.position = ResourceConstant.VECTOR3_DEFAULT;
             if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
-            WorkerTaskManager.Instance.cancelGatherTask(posMap);
+            WorkerTaskManager.Instance.CancelGatherTask(posMap);
             GatherMap.Instance.cancelGather(posMap);
         }
     }

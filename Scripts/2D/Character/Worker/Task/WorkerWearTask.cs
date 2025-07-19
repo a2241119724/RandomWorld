@@ -43,12 +43,12 @@ namespace LAB2D
             // Worker拿起装备或者武器
             if (ItemDataManager.Instance.getTypeById(id) == ItemType.Weapon)
             {
-                worker.WearData.weapon = (Weapon)ItemFactory.Instance.getBackpackItemByName(
+                worker.WearData.Weapon = (Weapon)ItemFactory.Instance.getBackpackItemByName(
                     ItemDataManager.Instance.getById(id).imageName);
             }
             else if (ItemDataManager.Instance.getTypeById(id) == ItemType.Equipment)
             {
-                worker.WearData.addEquipment((Equipment)ItemFactory.Instance.getBackpackItemByName(
+                worker.WearData.AddEquipment((Equipment)ItemFactory.Instance.getBackpackItemByName(
                     ItemDataManager.Instance.getById(id).imageName), TargetMap);
             }
             InventoryManager.Instance.subItemByPreTake(worker, TargetMap);

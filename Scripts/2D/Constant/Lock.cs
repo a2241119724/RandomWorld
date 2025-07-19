@@ -1,37 +1,55 @@
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// 锁
+    /// </summary>
     public class Lock
     {
         /// <summary>
-        /// ӵ����
+        /// 拥有者
         /// </summary>
         public Worker Owner { get; set; }
 
-        public bool getLock(Worker worker)
+        /// <summary>
+        /// 获取锁
+        /// </summary>
+        /// <param name="worker">获取锁的Worker</param>
+        /// <returns>是否成功</returns>
+        public bool GetLock(Worker worker)
         {
-            if (Owner == null)
+            if (this.Owner == null)
             {
-                // ��һ�θ��ʻ�ȡ��
-                if (Random.Range(0.0f, 1.0f) > (1.0f / WorkerManager.Instance.getCountLock())) return false;
-                Owner = worker;
-                //LogManager.Instance.log(worker.name + "��ȡ��++++++", LogManager.LogLevel.Info);
+                // 第一次概率获取锁
+                if (Random.Range(0.0f, 1.0f) > (1.0f / WorkerManager.Instance.GetCountLock()))
+                {
+                    return false;
+                }
+
+                this.Owner = worker;
+
+                // LogManager.Instance.log(worker.name + "获取锁++++++", LogManager.LogLevel.Info);
                 return true;
             }
-            else if (Owner == worker)
+            else if (this.Owner == worker)
             {
                 return true;
             }
+
             return false;
         }
 
-        public void releaseLock(Worker worker)
+        /// <summary>
+        /// 释放锁
+        /// </summary>
+        /// <param name="worker">释放锁的Worker</param>
+        public void ReleaseLock(Worker worker)
         {
-            if (Owner == worker)
+            if (this.Owner == worker)
             {
-                //LogManager.Instance.log(worker.name + "�ͷ���========", LogManager.LogLevel.Info);
-                Owner = null;
+                // LogManager.Instance.log(worker.name + "释放锁========", LogManager.LogLevel.Info);
+                this.Owner = null;
             }
         }
     }

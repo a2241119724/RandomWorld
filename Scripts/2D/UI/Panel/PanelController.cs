@@ -10,7 +10,7 @@ namespace LAB2D
 
         public PanelController()
         {
-            Parent = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).transform;
+            Parent = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).transform;
             Panels = new Stack<IBasePanel>();
             if (Panels == null)
             {

@@ -1,26 +1,38 @@
-namespace LAB2D
+﻿namespace LAB2D
 {
+    /// <summary>
+    /// 工作者状态
+    /// </summary>
     public class WorkerState : CharacterState<Worker>
     {
-        protected string preString = "";
+        /// <summary>
+        /// 信息前缀
+        /// </summary>
+        protected string preString = string.Empty;
 
-        public WorkerState(Worker worker) : base(worker) { }
+        public WorkerState(Worker worker)
+            : base(worker)
+        {
+        }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            preString = "";
-            if (Character.Manager.Task != null)
+            this.preString = string.Empty;
+            if (this.Character.Manager.Task != null)
             {
-                preString = $"<color=red>{Character.Manager.Task.Name}</color>\n";
+                this.preString = $"<color=red>{this.Character.Manager.Task.Name}</color>\n";
             }
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();

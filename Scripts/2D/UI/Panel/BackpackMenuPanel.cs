@@ -46,29 +46,29 @@ namespace LAB2D
             if (Select.item == null) return;
             if (ItemDataManager.Instance.getById(Select.item.id).type == ItemType.Weapon)
             {
-                if (PlayerManager.Instance.Select.weapon != null)
+                if (PlayerManager.Instance.Select.Weapon != null)
                 {
                     // 将正在穿戴的物体加入背包
-                    BackpackController.Instance.addItem(PlayerManager.Instance.Select.weaponData);
+                    BackpackController.Instance.addItem(PlayerManager.Instance.Select.WeaponData);
                     // 销毁武器
-                    PhotonNetwork.Destroy(PlayerManager.Instance.Select.weapon);
+                    PhotonNetwork.Destroy(PlayerManager.Instance.Select.Weapon);
                 }
                 // 设置当前装备id
-                PlayerManager.Instance.Select.id = Select.item.id;
+                PlayerManager.Instance.Select.Id = Select.item.id;
                 // 实例化武器
-                PlayerManager.Instance.Select.weapon = Tool.Instantiate(ResourcesManager.Instance.GetPrefab(ItemDataManager.Instance.getById(Select.item.id).imageName), Vector3.zero, Quaternion.identity);
-                if (PlayerManager.Instance.Select.weapon == null)
+                PlayerManager.Instance.Select.Weapon = Tool.Instantiate(ResourcesManager.Instance.GetPrefab(ItemDataManager.Instance.getById(Select.item.id).imageName), Vector3.zero, Quaternion.identity);
+                if (PlayerManager.Instance.Select.Weapon == null)
                 {
                     LogManager.Instance.Log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
-                PlayerManager.Instance.Select.weapon.name = ItemDataManager.Instance.getById(Select.item.id).imageName;
-                PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
-                PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().Item = Select.item;
-                PlayerManager.Instance.Select.weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
+                PlayerManager.Instance.Select.Weapon.name = ItemDataManager.Instance.getById(Select.item.id).imageName;
+                PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
+                PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().Item = Select.item;
+                PlayerManager.Instance.Select.Weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
                 GlobalInit.Instance.ShowTip("装备成功");
                 // 从背包删除该道具
-                PlayerManager.Instance.Select.weaponData = (Weapon)Select.item;
+                PlayerManager.Instance.Select.WeaponData = (Weapon)Select.item;
                 BackpackController.Instance.deleteItem(Select.selectItemIndex);
                 // 不能对一个武器进行多次装备
                 Select.selectItemIndex = -1;

@@ -97,8 +97,8 @@ namespace LAB2D
             foreach (Vector3Int targetMap in targetMaps)
             {
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
-                WorkerTaskManager.Instance.addTask(new WorkerBuildTask.BuildTaskBuilder().setBuildPos(targetMap)
-                    .setNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).build());
+                WorkerTaskManager.Instance.AddTask(new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(targetMap)
+                    .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build());
             }
             targetMaps.Clear();
         }

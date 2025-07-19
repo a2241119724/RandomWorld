@@ -141,7 +141,7 @@ namespace LAB2D
                 TileBase tileBase = ResourceMap.Instance.getTile(posMap);
                 if (tileBase == null) return;
                 if (WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
-                WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
+                WorkerTaskManager.Instance.AddTask(new WorkerGatherTask.GatherTaskBuilder()
                     .setTarget(posMap).setGatherName(tileBase.name).build());
             });
         }
@@ -153,7 +153,7 @@ namespace LAB2D
             selects[key].ForEach((posMap) =>
             {
                 if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
-                WorkerTaskManager.Instance.cancelGatherTask(posMap);
+                WorkerTaskManager.Instance.CancelGatherTask(posMap);
                 GatherMap.Instance.cancelGather(posMap);
             });
         }

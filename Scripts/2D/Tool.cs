@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using Photon.Pun;
     using System;
     using System.Collections;
     using System.Collections.Generic;
@@ -8,7 +9,6 @@
     using System.Reflection;
     using System.Runtime.Serialization.Formatters.Binary;
     using System.Xml.Serialization;
-    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.EventSystems;
     using UnityEngine.SceneManagement;
@@ -417,7 +417,7 @@
             PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
             pointerEventData.position = Input.mousePosition;
             List<RaycastResult> results = new List<RaycastResult>();
-            GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<GraphicRaycaster>().Raycast(pointerEventData, results);
+            GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).GetComponent<GraphicRaycaster>().Raycast(pointerEventData, results);
             return results;
         }
 

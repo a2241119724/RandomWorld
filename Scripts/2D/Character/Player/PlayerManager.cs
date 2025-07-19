@@ -1,51 +1,80 @@
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// ç©å®¶ç®¡ç†å™¨
+    /// </summary>
     public class PlayerManager : CharacterManager<PlayerManager, Player, PlayerCreator>
     {
-        public TakedWeapon Select { set; get; }
-        public Player Mine { set { mine = value; add(value); } get { return mine; } }
         private Player mine;
 
-        public PlayerManager() : base()
+        public PlayerManager()
+            : base()
         {
-            Select = new TakedWeapon();
+            this.Select = new TakedWeapon();
         }
 
+        /// <summary>
+        /// å½“å‰é€‰ä¸­çš„æ­¦å™¨
+        /// </summary>
+        public TakedWeapon Select { get; set; }
+
+        /// <summary>
+        /// æœ¬åœ°ç©å®¶
+        /// </summary>
+        public Player Mine
+        {
+            get
+            {
+                return this.mine;
+            }
+
+            set
+            {
+                this.mine = value;
+                this.Add(value);
+            }
+        }
+
+        /// <inheritdoc/>
         public override void LoadData()
         {
-            Character.CharacterData data = Tool.LoadDataByBinary<Character.CharacterData>(GlobalData.ConfigFile.getPath(GetType().Name));
+            Character.CharacterData data = Tool.LoadDataByBinary<Character.CharacterData>(GlobalData.ConfigFile.getPath(this.GetType().Name));
             AsyncProgressUI.Instance.complete += () =>
             {
-                GameObject g = create(Vector3LAB.toVector3(data.pos));
-                Mine = g.GetComponent<Player>();
-                Mine.CharacterDataLAB = data;
+                GameObject g = this.create(Vector3LAB.ToVector3(data.Pos));
+                this.Mine = g.GetComponent<Player>();
+                this.Mine.CharacterDataLAB = data;
             };
         }
 
+        /// <inheritdoc/>
         public override void SaveData()
         {
-            mine.CharacterDataLAB.pos = Vector3LAB.toVector3LAB(mine.transform.position);
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.getPath(GetType().Name), mine.CharacterDataLAB);
+            this.mine.CharacterDataLAB.Pos = Vector3LAB.ToVector3LAB(this.mine.transform.position);
+            Tool.SaveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), this.mine.CharacterDataLAB);
         }
 
+        /// <summary>
+        /// æŒæœ‰çš„æ­¦å™¨
+        /// </summary>
         public class TakedWeapon
         {
             /// <summary>
-            /// µ±Ç°×°±¸ÎäÆ÷µÄid
+            /// å½“å‰è£…å¤‡æ­¦å™¨çš„id
             /// </summary>
-            public int id = -1;
+            public int Id = -1;
 
             /// <summary>
-            /// µ±Ç°×°±¸ÎäÆ÷µÄÎïÌå
+            /// å½“å‰è£…å¤‡æ­¦å™¨çš„ç‰©ä½“
             /// </summary>
-            public GameObject weapon = null;
+            public GameObject Weapon = null;
 
             /// <summary>
-            /// µ±Ç°×°±¸ÎäÆ÷µÄÊı¾İ
+            /// å½“å‰è£…å¤‡æ­¦å™¨çš„æ•°æ®
             /// </summary>
-            public Weapon weaponData = null;
+            public Weapon WeaponData = null;
         }
     }
 }
