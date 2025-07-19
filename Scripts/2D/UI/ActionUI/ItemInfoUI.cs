@@ -105,16 +105,16 @@ namespace LAB2D
         public Character getCharacter(Vector3Int posMap)
         {
             // Player
-            Character _character = PlayerManager.Instance.getCharacterByPos(posMap);
+            Character _character = PlayerManager.Instance.GetCharacterByPos(posMap);
             if (_character == null)
             {
                 // Enemy
-                _character = EnemyManager.Instance.getCharacterByPos(posMap);
+                _character = EnemyManager.Instance.GetCharacterByPos(posMap);
             }
             if (_character == null)
             {
                 //  Worker
-                _character = WorkerManager.Instance.getCharacterByPos(posMap);
+                _character = WorkerManager.Instance.GetCharacterByPos(posMap);
             }
             return _character;
         }

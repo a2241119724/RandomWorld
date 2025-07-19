@@ -49,7 +49,7 @@ namespace LAB2D
                 int index = i;
                 button.onClick.AddListener(() =>
                 {
-                    WorkerTaskManager.Instance.addTask(new WorkerSleepTask.SleepTaskBuilder().setTarget(posMap).build(), 1);
+                    WorkerTaskManager.Instance.AddTask(new WorkerSleepTask.SleepTaskBuilder().setTarget(posMap).build(), 1);
                     transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     FurnitureManager.Instance.addWorkerToBed(posMap, workers[index]);
                 });

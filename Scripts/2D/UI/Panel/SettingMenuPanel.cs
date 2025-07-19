@@ -37,7 +37,7 @@ namespace LAB2D
         /// </summary>
         public void OnClick_TogglePerspective(bool is_2D)
         {
-            PlayerManager.Instance.Mine.togglePerspective(is_2D);
+            PlayerManager.Instance.Mine.TogglePerspective(is_2D);
         }
 
         public void OnClick_GameSpeed(float speed)

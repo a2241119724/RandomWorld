@@ -12,7 +12,7 @@ namespace LAB2D
         {
             Name = "PauseMenu";
             setPanel();
-            audioSource = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<AudioSource>();
+            audioSource = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).GetComponent<AudioSource>();
             if (audioSource == null)
             {
                 LogManager.Instance.Log("audioSource Not Found!!!", LogManager.LogLevel.Error);

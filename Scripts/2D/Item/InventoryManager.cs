@@ -479,7 +479,7 @@ namespace LAB2D
                 // 食物被吃完删除任务
                 if (ItemDataManager.Instance.getTypeById(posToResource[posMap].id) == ItemType.Food)
                 {
-                    WorkerTaskManager.Instance.deleteHungryTask(posMap);
+                    WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
                 posToResource[posMap].id = -1;
             }
@@ -512,7 +512,7 @@ namespace LAB2D
                 // 食物被吃完删除任务
                 if (ItemDataManager.Instance.getTypeById(posToResource[posMap].id) == ItemType.Food)
                 {
-                    WorkerTaskManager.Instance.deleteHungryTask(posMap);
+                    WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
                 posToResource[posMap].id = -1;
             }

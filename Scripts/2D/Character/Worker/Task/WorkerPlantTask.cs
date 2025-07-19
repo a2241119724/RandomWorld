@@ -48,7 +48,7 @@ namespace LAB2D
             {
                 case 0:
                     resourceInfo = InventoryManager.Instance.subAllItemByPos(TargetMap);
-                    worker.addResource(resourceInfo);
+                    worker.AddResource(resourceInfo);
                     changeStage(worker, 1);
                     return false;
                 case 1:

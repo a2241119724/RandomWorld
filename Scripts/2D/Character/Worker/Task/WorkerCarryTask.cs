@@ -1,8 +1,8 @@
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
 namespace LAB2D
 {
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+
     /// <summary>
     /// 任务2阶段：取货，放货
     /// Carry在第二个阶段预留资源
@@ -52,7 +52,7 @@ namespace LAB2D
             {
                 case 0:
                     ItemMap.Instance.pickUpFromDrop(TargetMap, resourceInfo);
-                    worker.addResource(resourceInfo);
+                    worker.AddResource(resourceInfo);
                     changeStage(worker, 1);
                     return false;
                 default:
@@ -67,12 +67,12 @@ namespace LAB2D
             // 放下拿起来的东西
             ItemMap.Instance.showTile(TargetMap, (TileBase)ResourcesManager.Instance
                 .GetAsset(ItemDataManager.Instance.getById(resourceInfo.id).imageName));
-            worker.subResource(resourceInfo);
+            worker.SubResource1(resourceInfo);
             InventoryManager.Instance.addItemByPrePlace(worker, TargetMap);
             // 如果是食物,添加饥饿任务
             if (itemType == ItemType.Food)
             {
-                WorkerTaskManager.Instance.addTask(new WorkerHungryTask.HungryTaskBuilder().setTarget(TargetMap).build(), 0);
+                WorkerTaskManager.Instance.AddTask(new WorkerHungryTask.HungryTaskBuilder().setTarget(TargetMap).build(), 0);
             }
         }
 

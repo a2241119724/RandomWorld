@@ -56,13 +56,13 @@ namespace LAB2D
             {
                 Transform worker = this.character.Find("Worker");
                 worker.gameObject.SetActive(true);
-                Weapon weapon = ((Worker)character).WearData.weapon;
+                Weapon weapon = ((Worker)character).WearData.Weapon;
                 if (weapon != null)
                 {
                     worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.GetImage(
                         ItemDataManager.Instance.getById(weapon.id).imageName);
                 }
-                Dictionary<Equipment.EquipType, Equipment> equipments = ((Worker)character).WearData.equipments;
+                Dictionary<Equipment.EquipType, Equipment> equipments = ((Worker)character).WearData.Equipments;
                 foreach (var item in equipments)
                 {
                     if (item.Value != null)

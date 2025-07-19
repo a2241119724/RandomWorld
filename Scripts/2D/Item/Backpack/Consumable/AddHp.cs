@@ -24,7 +24,7 @@ namespace LAB2D
 
         public override void use()
         {
-            PlayerManager.Instance.Mine.addHp(value);
+            PlayerManager.Instance.Mine.AddHp(value);
         }
     }
 }

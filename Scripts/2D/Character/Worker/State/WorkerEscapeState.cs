@@ -1,36 +1,46 @@
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// 工作者逃跑状态
+    /// </summary>
     public class WorkerEscapeState : WorkerState
     {
-        private const float recordTime = 5.0f;
-        private float _recordTime = 0.0f;
+        private const float RecordTime = 5.0f;
+        private float recordTime = 0.0f;
 
-        public WorkerEscapeState(Worker worker) : base(worker) { }
+        public WorkerEscapeState(Worker worker)
+            : base(worker)
+        {
+        }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            _recordTime = 0.0f;
-            Character.WorkerState.text = $"<color=red>����</color>";
+            this.recordTime = 0.0f;
+            this.Character.WorkerState.text = $"<color=red>逃跑</color>";
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
-            _recordTime += Time.deltaTime;
-            if (_recordTime >= recordTime)
+            this.recordTime += Time.deltaTime;
+            if (this.recordTime >= RecordTime)
             {
-                Character.Manager.changeState(WorkerStateType.Seek);
+                this.Character.Manager.changeState(WorkerStateType.Seek);
             }
-            Character.LineRenderer.positionCount = 0;
-            Character.transform.Translate(Vector3.up * Time.deltaTime * Character.moveSpeed, Space.World);
+
+            this.Character.LineRenderer.positionCount = 0;
+            this.Character.transform.Translate(Vector3.up * Time.deltaTime * this.Character.MoveSpeed, Space.World);
         }
     }
 }

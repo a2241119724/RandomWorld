@@ -65,7 +65,7 @@ namespace LAB2D
             {
                 Enemy e = rayCastHit2D.transform.GetComponent<Enemy>();
                 e.Target = Origin;
-                e.reduceHp(Damage);
+                e.ReduceHp(Damage);
             }
         }
     }

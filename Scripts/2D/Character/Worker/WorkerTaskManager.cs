@@ -1,124 +1,73 @@
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+
+    /// <summary>
+    /// å·¥ä½œè€…ä»»åŠ¡ç®¡ç†å™¨
+    /// </summary>
     public class WorkerTaskManager : MonoBehaviour
     {
-        public static WorkerTaskManager Instance { get; private set; }
+        private List<Dictionary<WorkerTask, bool>> tasks; // æ‰€æœ‰ä»»åŠ¡(listä¸­è¶Šé å‰ä¼˜å…ˆçº§è¶Šå¤§)
+        private List<WorkerHungryTask> hungryTasks; // é¥¥é¥¿ä»»åŠ¡ä¸posæŒ‚é’©ï¼ŒTODOä¸workeræ•°é‡æŒ‚é’©
+        private List<WorkerWearTask> wearTasks;
+
         /// <summary>
-        /// ¼ÇÂ¼ËùÓĞ²ÉÕªÈÎÎñµÄÎ»ÖÃ
+        /// å•ä¾‹
+        /// </summary>
+        public static WorkerTaskManager Instance { get; private set; }
+
+        /// <summary>
+        /// è®°å½•æ‰€æœ‰é‡‡æ‘˜ä»»åŠ¡çš„ä½ç½®
         /// </summary>
         public List<Vector3Int> GatherPos { get; private set; }
 
-        /// <summary>
-        /// ËùÓĞÈÎÎñ(listÖĞÔ½¿¿Ç°ÓÅÏÈ¼¶Ô½´ó)
-        /// </summary>
-        private List<Dictionary<WorkerTask, bool>> tasks;
-        /// <summary>
-        /// ¼¢¶öÈÎÎñÓëpos¹Ò¹³£¬TODOÓëworkerÊıÁ¿¹Ò¹³
-        /// </summary>
-        private List<WorkerHungryTask> hungryTasks;
-        private List<WorkerWearTask> wearTasks;
-
         public WorkerTaskManager()
         {
-            tasks = new List<Dictionary<WorkerTask, bool>>();
+            this.tasks = new List<Dictionary<WorkerTask, bool>>();
             for (int i = 0; i < 4; i++)
             {
-                tasks.Add(new Dictionary<WorkerTask, bool>());
+                this.tasks.Add(new Dictionary<WorkerTask, bool>());
             }
-            hungryTasks = new List<WorkerHungryTask>();
-            wearTasks = new List<WorkerWearTask>();
-            GatherPos = new List<Vector3Int>();
-        }
 
-        private void Awake()
-        {
-            Instance = this;
+            this.hungryTasks = new List<WorkerHungryTask>();
+            this.wearTasks = new List<WorkerWearTask>();
+            this.GatherPos = new List<Vector3Int>();
         }
 
         /// <summary>
-        /// Worker»ñÈ¡ÈÎÎñ£¬LAB_TODOÓÅÏÈ¼¶Ã»ÓĞÊµÏÖ
+        /// æ·»åŠ ä»»åŠ¡
         /// </summary>
-        private void Update()
+        /// <param name="task">ä»»åŠ¡</param>
+        /// <param name="prior">ä¼˜å…ˆçº§</param>
+        public void AddTask(WorkerTask task, int prior = 2)
         {
-            List<Worker> workers = WorkerManager.Instance.Characters;
-            foreach (Worker worker in workers)
+            if (task == null)
             {
-                if (worker.Manager.Task != null) continue;
-                foreach (Dictionary<WorkerTask, bool> task in tasks)
-                {
-                    WorkerTask closedTask = null;
-                    float minDistance = 999999.0f;
-                    foreach (WorkerTask _task in task.Keys)
-                    {
-                        // ¸ÃÈÎÎñÊÇ·ñÕıÔÚ±»×ö
-                        if (task[_task]) continue;
-                        // ÊÇ·ñÂú×ã×öÈÎÎñµÄ»ù´¡Ìõ¼ş
-                        if (!_task.isCanWork(worker)) continue;
-                        if (closedTask == null)
-                        {
-                            minDistance = Mathf.Pow(worker.transform.position.y - _task.TargetMap.x, 2) +
-                                Mathf.Pow(worker.transform.position.x - _task.TargetMap.y, 2);
-                            closedTask = _task;
-                        }
-                        else
-                        {
-                            float distance = Mathf.Pow(worker.transform.position.y - _task.TargetMap.x, 2) +
-                                Mathf.Pow(worker.transform.position.x - _task.TargetMap.y, 2);
-                            if (distance < minDistance)
-                            {
-                                minDistance = distance;
-                                closedTask = _task;
-                            }
-                        }
-                    }
-                    // »ñµÃÈÎÎñ
-                    if (closedTask != null)
-                    {
-                        // ÏÈÉèÖÃÈÎÎñ
-                        worker.Manager.Task = closedTask;
-                        closedTask.start(worker);
-                        // Í¬Ò»¸ö¼¢¶öÈÎÎñ»¹¿ÉÒÔ¼ÌĞø½Ó
-                        if (closedTask.TaskType != TaskType.Hungry)
-                        {
-                            task[closedTask] = true;
-                        }
-                        DebugUI.Instance.updateTaskInfo(getTaskInfo());
-                        break;
-                    }
-                }
+                return;
             }
-        }
 
-        /// <summary>
-        /// Ìí¼ÓÈÎÎñ
-        /// </summary>
-        /// <param name="task"></param>
-        public void addTask(WorkerTask task, int prior = 2)
-        {
-            if (task == null) return;
-            // Èç¹ûÊÇ¼¢¶öÈÎÎñ,Ò»¸öÎ»ÖÃ½ö¶ÔÓ¦Ò»¸öÈÎÎñ
+            // å¦‚æœæ˜¯é¥¥é¥¿ä»»åŠ¡,ä¸€ä¸ªä½ç½®ä»…å¯¹åº”ä¸€ä¸ªä»»åŠ¡
             if (task.TaskType == TaskType.Hungry)
             {
-                foreach (WorkerHungryTask hungryTask in hungryTasks)
+                foreach (WorkerHungryTask hungryTask in this.hungryTasks)
                 {
                     if (hungryTask.TargetMap.x == task.TargetMap.x && hungryTask.TargetMap.y == task.TargetMap.y)
                     {
                         return;
                     }
                 }
-                hungryTasks.Add((WorkerHungryTask)task);
+
+                this.hungryTasks.Add((WorkerHungryTask)task);
             }
             else if (task.TaskType == TaskType.Gather)
             {
-                GatherPos.Add(task.TargetMap);
+                this.GatherPos.Add(task.TargetMap);
             }
             else if (task.TaskType == TaskType.Wear)
             {
-                // Ò»¸öÎ»ÖÃÖ»ÄÜÓĞÒ»¸ö´©ÒÂÈÎÎñ
-                foreach (WorkerTask wearTask in wearTasks)
+                // ä¸€ä¸ªä½ç½®åªèƒ½æœ‰ä¸€ä¸ªç©¿è¡£ä»»åŠ¡
+                foreach (WorkerTask wearTask in this.wearTasks)
                 {
                     if (wearTask.TargetMap.x == task.TargetMap.x
                         && wearTask.TargetMap.y == task.TargetMap.y)
@@ -126,94 +75,112 @@ namespace LAB2D
                         return;
                     }
                 }
-                wearTasks.Add((WorkerWearTask)task);
+
+                this.wearTasks.Add((WorkerWearTask)task);
             }
-            tasks[prior].Add(task, false);
-            DebugUI.Instance.updateTaskInfo(getTaskInfo());
+
+            this.tasks[prior].Add(task, false);
+            DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
         }
 
         /// <summary>
-        /// Íê³ÉÈÎÎñ
+        /// å®Œæˆä»»åŠ¡
         /// </summary>
-        /// <param name="task"></param>
-        public void completeTask(WorkerTask task)
+        /// <param name="task">ä»»åŠ¡</param>
+        public void CompleteTask(WorkerTask task)
         {
-            // ²»ÄÜÉ¾³ı¼¢¶öÈÎÎñ£¬ĞèÒªÔÚdeleteHungryTaskÖĞÉ¾³ı
+            // ä¸èƒ½åˆ é™¤é¥¥é¥¿ä»»åŠ¡ï¼Œéœ€è¦åœ¨deleteHungryTaskä¸­åˆ é™¤
             if (task.TaskType != TaskType.Hungry)
             {
-                for (int i = 0; i < tasks.Count; i++)
+                for (int i = 0; i < this.tasks.Count; i++)
                 {
-                    if (tasks[i].ContainsKey(task))
+                    if (this.tasks[i].ContainsKey(task))
                     {
-                        tasks[i].Remove(task);
-                        DebugUI.Instance.updateTaskInfo(getTaskInfo());
+                        this.tasks[i].Remove(task);
+                        DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
                         break;
                     }
                 }
             }
-            // ÊÇ¼¢¶öÈÎÎñ£¬Ôò½«Æä¸ÄÎª¿ÉÔÙ´Î½ÓÊÜ×´Ì¬£¬¼´false
+
+            // æ˜¯é¥¥é¥¿ä»»åŠ¡ï¼Œåˆ™å°†å…¶æ”¹ä¸ºå¯å†æ¬¡æ¥å—çŠ¶æ€ï¼Œå³false
             else
             {
-                tasks[1][task] = false;
+                this.tasks[1][task] = false;
             }
-            DebugUI.Instance.updateTaskInfo(getTaskInfo());
+
+            DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
         }
 
-        public void giveUpTask(WorkerTask task)
+        /// <summary>
+        /// æ”¾å¼ƒä»»åŠ¡
+        /// </summary>
+        /// <param name="task">ä»»åŠ¡</param>
+        public void GiveUpTask(WorkerTask task)
         {
-            if (task == null) return;
-            for (int i = 0; i < tasks.Count; i++)
+            if (task == null)
             {
-                if (tasks[i].ContainsKey(task))
+                return;
+            }
+
+            for (int i = 0; i < this.tasks.Count; i++)
+            {
+                if (this.tasks[i].ContainsKey(task))
                 {
-                    tasks[i].Remove(task);
-                    DebugUI.Instance.updateTaskInfo(getTaskInfo());
+                    this.tasks[i].Remove(task);
+                    DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
                     break;
                 }
             }
         }
 
-        public string getTaskInfo()
+        /// <summary>
+        /// è·å–ä»»åŠ¡ä¿¡æ¯
+        /// </summary>
+        /// <returns>ä»»åŠ¡ä¿¡æ¯</returns>
+        public string GetTaskInfo()
         {
             int total = 0;
             int[] taskCount = new int[10];
-            foreach (Dictionary<WorkerTask, bool> task in tasks)
+            foreach (Dictionary<WorkerTask, bool> task in this.tasks)
             {
                 total += task.Count;
-                foreach (WorkerTask _task in task.Keys)
+                foreach (WorkerTask task1 in task.Keys)
                 {
-                    if (task[_task])
+                    if (task[task1])
                     {
-                        taskCount[(int)_task.TaskType]++;
+                        taskCount[(int)task1.TaskType]++;
                     }
                 }
             }
-            string res = $"ÈÎÎñ×ÜÊıÁ¿: {total}\n";
+
+            string res = $"ä»»åŠ¡æ€»æ•°é‡: {total}\n";
             for (int i = 0; i < 10; i++)
             {
                 res += $"{((TaskType)i).ToString()}:{taskCount[i]}\n";
             }
+
             return res;
         }
 
         /// <summary>
-        /// É¾³ı³Ô·¹ÈÎÎñ
-        /// ¸ÃÎ»ÖÃÔÙÔÚ²Ö¿âÖĞµÄÊ³Îï±»ÏûºÄÍêÁË
+        /// åˆ é™¤åƒé¥­ä»»åŠ¡
+        /// è¯¥ä½ç½®åœ¨ä»“åº“ä¸­çš„é£Ÿç‰©è¢«æ¶ˆè€—å®Œäº†
         /// </summary>
-        /// <param name="pos"></param>
-        public void deleteHungryTask(Vector3Int pos)
+        /// <param name="pos">ä½ç½®</param>
+        public void DeleteHungryTask(Vector3Int pos)
         {
-            foreach (WorkerHungryTask hungryTask in hungryTasks)
+            foreach (WorkerHungryTask hungryTask in this.hungryTasks)
             {
                 if (hungryTask.TargetMap.x == pos.x && hungryTask.TargetMap.y == pos.y)
                 {
-                    for (int i = 0; i < tasks.Count; i++)
+                    for (int i = 0; i < this.tasks.Count; i++)
                     {
-                        if (tasks[i].ContainsKey(hungryTask))
+                        if (this.tasks[i].ContainsKey(hungryTask))
                         {
-                            tasks[i].Remove(hungryTask);
-                            hungryTasks.Remove(hungryTask);
-                            DebugUI.Instance.updateTaskInfo(getTaskInfo());
+                            this.tasks[i].Remove(hungryTask);
+                            this.hungryTasks.Remove(hungryTask);
+                            DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
                             return;
                         }
                     }
@@ -222,23 +189,101 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// È¡Ïû²É¼¯ÈÎÎñ
+        /// å–æ¶ˆé‡‡é›†ä»»åŠ¡
         /// </summary>
-        /// <param name="posMap"></param>
-        public void cancelGatherTask(Vector3Int posMap)
+        /// <param name="posMap">ä»»åŠ¡ä½ç½®</param>
+        public void CancelGatherTask(Vector3Int posMap)
         {
-            if (!GatherPos.Contains(posMap)) return;
-            for (int i = 0; i < tasks.Count; i++)
+            if (!this.GatherPos.Contains(posMap))
             {
-                foreach (WorkerTask _task in tasks[i].Keys)
+                return;
+            }
+
+            for (int i = 0; i < this.tasks.Count; i++)
+            {
+                foreach (WorkerTask task in this.tasks[i].Keys)
                 {
-                    if (_task.TaskType == TaskType.Gather && _task.TargetMap.x == posMap.x
-                        && _task.TargetMap.y == posMap.y)
+                    if (task.TaskType == TaskType.Gather && task.TargetMap.x == posMap.x
+                        && task.TargetMap.y == posMap.y)
                     {
-                        tasks[i].Remove(_task);
-                        GatherPos.Remove(_task.TargetMap);
-                        DebugUI.Instance.updateTaskInfo(getTaskInfo());
+                        this.tasks[i].Remove(task);
+                        this.GatherPos.Remove(task.TargetMap);
+                        DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
                         return;
+                    }
+                }
+            }
+        }
+
+        private void Awake()
+        {
+            Instance = this;
+        }
+
+        /// <summary>
+        /// Workerè·å–ä»»åŠ¡ï¼ŒLAB_TODOä¼˜å…ˆçº§æ²¡æœ‰å®ç°
+        /// </summary>
+        private void Update()
+        {
+            List<Worker> workers = WorkerManager.Instance.Characters;
+            foreach (Worker worker in workers)
+            {
+                if (worker.Manager.Task != null)
+                {
+                    continue;
+                }
+
+                foreach (Dictionary<WorkerTask, bool> task in this.tasks)
+                {
+                    WorkerTask closedTask = null;
+                    float minDistance = 999999.0f;
+                    foreach (WorkerTask task1 in task.Keys)
+                    {
+                        // è¯¥ä»»åŠ¡æ˜¯å¦æ­£åœ¨è¢«åš
+                        if (task[task1])
+                        {
+                            continue;
+                        }
+
+                        // æ˜¯å¦æ»¡è¶³åšä»»åŠ¡çš„åŸºç¡€æ¡ä»¶
+                        if (!task1.isCanWork(worker))
+                        {
+                            continue;
+                        }
+
+                        if (closedTask == null)
+                        {
+                            minDistance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.x, 2) +
+                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.y, 2);
+                            closedTask = task1;
+                        }
+                        else
+                        {
+                            float distance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.x, 2) +
+                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.y, 2);
+                            if (distance < minDistance)
+                            {
+                                minDistance = distance;
+                                closedTask = task1;
+                            }
+                        }
+                    }
+
+                    // è·å¾—ä»»åŠ¡
+                    if (closedTask != null)
+                    {
+                        // å…ˆè®¾ç½®ä»»åŠ¡
+                        worker.Manager.Task = closedTask;
+                        closedTask.start(worker);
+
+                        // åŒä¸€ä¸ªé¥¥é¥¿ä»»åŠ¡è¿˜å¯ä»¥ç»§ç»­æ¥
+                        if (closedTask.TaskType != TaskType.Hungry)
+                        {
+                            task[closedTask] = true;
+                        }
+
+                        DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
+                        break;
                     }
                 }
             }

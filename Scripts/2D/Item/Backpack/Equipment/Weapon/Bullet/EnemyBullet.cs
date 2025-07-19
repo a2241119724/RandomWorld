@@ -14,7 +14,7 @@ namespace LAB2D
         {
             if (rayCastHit2D.transform.CompareTag("Player")) // 击中玩家处理
             {
-                rayCastHit2D.transform.GetComponent<Character>().reduceHp(Damage);
+                rayCastHit2D.transform.GetComponent<Character>().ReduceHp(Damage);
             }
         }
     }

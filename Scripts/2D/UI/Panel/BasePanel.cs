@@ -16,7 +16,7 @@ namespace LAB2D
             controller = PanelController.Instance;
         }
 
-        public void setPanel(string root = ResourceConstant.UI_TAG_ROOT)
+        public void setPanel(string root = ResourceConstant.UI_TAG)
         {
             Transform t = GameObject.FindGameObjectWithTag(root).transform.Find(Name);
             if (t == null)

@@ -47,7 +47,7 @@ namespace LAB2D
                 int index = i;
                 button.onClick.AddListener(() =>
                 {
-                    WorkerTaskManager.Instance.addTask(new WorkerWearTask.WearTaskBuilder()
+                    WorkerTaskManager.Instance.AddTask(new WorkerWearTask.WearTaskBuilder()
                         .setWorker(workers[index]).setTarget(posMap).setEquipmentId(resourceInfo.id).build(), 1);
                     transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     Dictionary<int, ResourceInfo> dict = new Dictionary<int, ResourceInfo>();

@@ -1,20 +1,25 @@
-namespace LAB2D
+﻿namespace LAB2D
 {
+    /// <summary>
+    /// 工作者
+    /// </summary>
     public class Worker_Lv1 : Worker
     {
+        /// <inheritdoc/>
         protected override void Awake()
         {
             base.Awake();
-            // ����״̬
-            Manager.addStates(WorkerStateType.Move, new WorkerMoveState(this));
-            Manager.addStates(WorkerStateType.Work, new WorkerWorkState(this));
-            Manager.addStates(WorkerStateType.Seek, new WorkerSeekState(this));
-            Manager.addStates(WorkerStateType.Hungry, new WorkerHungryState(this));
-            Manager.addStates(WorkerStateType.Attack, new WorkerAttackState(this));
-            Manager.addStates(WorkerStateType.Escape, new WorkerEscapeState(this));
-            // ��ʼ��״̬
-            Manager.changeState(WorkerStateType.Seek);
+
+            // 添加状态
+            this.Manager.addStates(WorkerStateType.Move, new WorkerMoveState(this));
+            this.Manager.addStates(WorkerStateType.Work, new WorkerWorkState(this));
+            this.Manager.addStates(WorkerStateType.Seek, new WorkerSeekState(this));
+            this.Manager.addStates(WorkerStateType.Hungry, new WorkerHungryState(this));
+            this.Manager.addStates(WorkerStateType.Attack, new WorkerAttackState(this));
+            this.Manager.addStates(WorkerStateType.Escape, new WorkerEscapeState(this));
+
+            // 初始化状态
+            this.Manager.changeState(WorkerStateType.Seek);
         }
     }
 }
-

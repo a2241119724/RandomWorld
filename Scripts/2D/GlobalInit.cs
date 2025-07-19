@@ -92,7 +92,7 @@
             // 添加10个种植任务
             for (int i = 0; i < 10; i++)
             {
-                WorkerTaskManager.Instance.addTask(new WorkerPlantTask.PlantTaskBuilder().build());
+                WorkerTaskManager.Instance.AddTask(new WorkerPlantTask.PlantTaskBuilder().build());
             }
         }
 

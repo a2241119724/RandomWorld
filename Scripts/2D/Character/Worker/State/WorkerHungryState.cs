@@ -1,30 +1,37 @@
-namespace LAB2D
+ï»¿namespace LAB2D
 {
     /// <summary>
-    /// ²Ö¿âÃ»ÓĞ³ÔµÄ,¾ÍÒ»Ö±ÔÚ¸Ã×´Ì¬,²»ÄÜ×öÆäËûÊÂÇé
+    /// ä»“åº“æ²¡æœ‰åƒçš„,å°±ä¸€ç›´åœ¨è¯¥çŠ¶æ€,ä¸èƒ½åšå…¶ä»–äº‹æƒ…
     /// </summary>
     public class WorkerHungryState : WorkerState
     {
-        public WorkerHungryState(Worker worker) : base(worker) { }
+        public WorkerHungryState(Worker worker)
+            : base(worker)
+        {
+        }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            Character.WorkerState.text = $"<color=red>¶öÁË</color>";
+            this.Character.WorkerState.text = $"<color=red>é¥¿äº†</color>";
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
-            // Èç¹û½Óµ½ÁË¼¢¶öÈÎÎñ£¬ÔòÈ¥³Ô·¹
-            if (Character.Manager.Task != null && Character.Manager.Task.TaskType == TaskType.Hungry)
+
+            // å¦‚æœæ¥åˆ°äº†é¥¥é¥¿ä»»åŠ¡ï¼Œåˆ™å»åƒé¥­
+            if (this.Character.Manager.Task != null && this.Character.Manager.Task.TaskType == TaskType.Hungry)
             {
-                Character.Manager.changeState(WorkerStateType.Seek);
+                this.Character.Manager.changeState(WorkerStateType.Seek);
             }
         }
     }

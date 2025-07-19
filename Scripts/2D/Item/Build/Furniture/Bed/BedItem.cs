@@ -1,18 +1,23 @@
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// åºŠ
+    /// </summary>
     public abstract class BedItem : FurnitureItem
     {
         public BedItem()
         {
-            isBottomLeft = true;
+            this.isBottomLeft = true;
         }
 
+        /// <inheritdoc/>
         public override void addBuildTask(Vector3Int centerMap)
         {
             base.addBuildTask(centerMap);
-            // Ìí¼Ó
+
+            // æ·»åŠ 
             FurnitureManager.Instance.addBed(centerMap);
         }
     }

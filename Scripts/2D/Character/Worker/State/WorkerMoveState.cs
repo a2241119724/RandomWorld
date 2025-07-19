@@ -1,46 +1,60 @@
-using UnityEngine;
-
-namespace LAB2D
+Ôªønamespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// Â∑•‰ΩúËÄÖÁßªÂä®Áä∂ÊÄÅ
+    /// </summary>
     public class WorkerMoveState : WorkerState
     {
-        private float _recordTime = 0.0f;
+        private float recordTime = 0.0f;
 
-        public WorkerMoveState(Worker worker) : base(worker) { }
+        public WorkerMoveState(Worker worker)
+            : base(worker)
+        {
+        }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            _recordTime = 0.0f;
+            this.recordTime = 0.0f;
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
-            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(Character.transform.position);
-            Character.WorkerState.text = preString + $"Move\n" +
-                $"Target: {Character.TargetMap.x},{Character.TargetMap.y}\n" +
-                $"Position: {posMap.x},{posMap.y}\n" + $"Hungry:{Mathf.RoundToInt(Character.CurHungry)}\n";
-            bool isTarget = Character.moveByPath();
+            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(this.Character.transform.position);
+            this.Character.WorkerState.text = this.preString + $"Move\n" +
+                $"Target: {this.Character.TargetMap.x},{this.Character.TargetMap.y}\n" +
+                $"Position: {posMap.x},{posMap.y}\n" + $"Hungry:{Mathf.RoundToInt(this.Character.CurHungry)}\n";
+            bool isTarget = this.Character.MoveByPath();
             if (isTarget)
             {
-                if (Character.Manager.Task == null)
+                if (this.Character.Manager.Task == null)
                 {
-                    _recordTime += Time.deltaTime;
-                    // –›œ¢2√Î
-                    if (_recordTime < 2) return;
-                    // √ª”–»ŒŒÒæÕΩ¯»Î—∞¬∑◊¥Ã¨
-                    Character.Manager.changeState(WorkerStateType.Seek);
+                    this.recordTime += Time.deltaTime;
+
+                    // ‰ºëÊÅØ2Áßí
+                    if (this.recordTime < 2)
+                    {
+                        return;
+                    }
+
+                    // Ê≤°Êúâ‰ªªÂä°Â∞±ËøõÂÖ•ÂØªË∑ØÁä∂ÊÄÅ
+                    this.Character.Manager.changeState(WorkerStateType.Seek);
                 }
                 else
                 {
-                    // ”–»ŒŒÒæÕΩ¯»Îπ§◊˜◊¥Ã¨
-                    Character.Manager.changeState(WorkerStateType.Work);
+                    // Êúâ‰ªªÂä°Â∞±ËøõÂÖ•Â∑•‰ΩúÁä∂ÊÄÅ
+                    this.Character.Manager.changeState(WorkerStateType.Work);
                 }
             }
         }

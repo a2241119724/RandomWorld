@@ -71,7 +71,7 @@ namespace LAB2D
             if (curProgress > maxProgress)
             {
                 curProgress = 0;
-                worker.setProgress(.0f, false);
+                worker.SetProgress(.0f, false);
                 if (isFinish(worker))
                 {
                     finish(worker);
@@ -79,7 +79,7 @@ namespace LAB2D
                 }
                 return false;
             }
-            worker.setProgress((float)curProgress / maxProgress, true);
+            worker.SetProgress((float)curProgress / maxProgress, true);
             return false;
         }
 
@@ -116,12 +116,12 @@ namespace LAB2D
         public virtual void giveUpTask(Worker worker)
         {
             LogManager.Instance.Log("·ÅÆúÈÎÎñ", LogManager.LogLevel.Warning);
-            worker.giveUpTask();
+            worker.GiveUpTask();
         }
 
         public virtual void finish(Worker worker)
         {
-            WorkerTaskManager.Instance.completeTask(this);
+            WorkerTaskManager.Instance.CompleteTask(this);
         }
     }
 
