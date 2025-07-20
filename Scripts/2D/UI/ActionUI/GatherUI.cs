@@ -32,7 +32,7 @@ namespace LAB2D
         public void setPostion(Vector3Int posMap)
         {
             this.posMap = posMap;
-            transform.position = TileMap.Instance.mapPosToWorldPos(posMap);
+            transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
         }
 
         public void Onclick_Yes()
@@ -48,7 +48,7 @@ namespace LAB2D
             transform.position = ResourceConstant.VECTOR3_DEFAULT;
             if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
             WorkerTaskManager.Instance.CancelGatherTask(posMap);
-            GatherMap.Instance.cancelGather(posMap);
+            GatherMap.Instance.CancelGather(posMap);
         }
     }
 }

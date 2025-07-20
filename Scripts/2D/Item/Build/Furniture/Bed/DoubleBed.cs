@@ -1,14 +1,17 @@
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 双人床
+    /// </summary>
     public class DoubleBed : BedItem
     {
         public DoubleBed()
         {
-            width = 2;
-            height = 2;
-            tile = (TileBase)ResourcesManager.Instance.GetAsset("DoubleBed");
+            this.Width = 2;
+            this.Height = 2;
+            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("DoubleBed");
         }
     }
 }

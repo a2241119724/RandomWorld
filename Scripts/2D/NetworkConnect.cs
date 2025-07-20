@@ -92,7 +92,7 @@
             {
                 if (TileMap.Instance != null)
                 {
-                    TileMap.Instance.initData();
+                    TileMap.Instance.InitData();
                 }
 
                 // if (EnemyManager.Instance != null)

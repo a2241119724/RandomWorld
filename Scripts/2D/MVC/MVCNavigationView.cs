@@ -25,7 +25,7 @@ namespace LAB2D
             Tool.GetComponentInChildren<Button>(gameObject, item.ToString()).onClick.AddListener(() =>
             {
                 CurItemType = item;
-                OnClick?.Invoke(ItemDataManager.Instance.getIndexByType(item));
+                OnClick?.Invoke(ItemDataManager.Instance.GetIndexByType(item));
             });
         }
 

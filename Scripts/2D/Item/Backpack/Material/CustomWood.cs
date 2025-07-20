@@ -1,14 +1,17 @@
-using System;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 自定义木头
+    /// </summary>
     [Serializable]
-    public class CustomWood : Wood
+    public class CustomWood : WoodItem
     {
         public CustomWood()
         {
-            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomWood");
+            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomWood");
         }
     }
 }

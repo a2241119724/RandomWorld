@@ -47,7 +47,7 @@
 
         private void Start()
         {
-            BuildMap.Instance.directBuild(new Vector3Int(1, 1, 0), this.GetTileByNum(1));
+            BuildMap.Instance.DirectBuild(new Vector3Int(1, 1, 0), this.GetTileByNum(1));
         }
 
         private Sprite GeneratorSpriteByNum(string number)

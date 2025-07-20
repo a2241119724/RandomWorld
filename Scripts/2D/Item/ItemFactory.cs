@@ -1,78 +1,106 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    /// <summary>
+    /// 道具工厂
+    /// </summary>
     public class ItemFactory : Singleton<ItemFactory>
     {
         /// <summary>
-        /// ����nameʵ����
+        /// 根据name实例化
         /// </summary>
         private Dictionary<string, Type> backpackItemTypes;
+
         /// <summary>
-        /// ������
+        /// 单例的
         /// </summary>
         private Dictionary<string, BuildItem> buildItems;
         private int uid = 0;
 
         public ItemFactory()
         {
-            backpackItemTypes = new Dictionary<string, Type>();
-            buildItems = new Dictionary<string, BuildItem>();
-            readItems();
-        }
-
-        public BackpackItem getBackpackItemByName(string name)
-        {
-            int id = ItemDataManager.Instance.getByName(name).id;
-            BackpackItem item = (BackpackItem)Activator.CreateInstance(backpackItemTypes[name]);
-            item.id = id;
-            item.quantity = 1;
-            item.uid = uid++;
-            return item;
-        }
-
-        public BuildItem getBuildItemByName(string name)
-        {
-            return buildItems[name];
-        }
-
-        public List<Item> genBackpackItems()
-        {
-            List<Item> items = new List<Item>();
-            foreach (KeyValuePair<string, Type> item in backpackItemTypes)
-            {
-                items.Add(getBackpackItemByName(item.Key));
-            }
-            return items;
-        }
-
-        public List<Item> getBuildItems()
-        {
-            return buildItems.Values.ToList<Item>();
+            this.backpackItemTypes = new Dictionary<string, Type>();
+            this.buildItems = new Dictionary<string, BuildItem>();
+            this.ReadItems();
         }
 
         /// <summary>
-        /// ͨ������ʵ����
-        /// ����Ҫ������imageNameһ��
+        /// 根据名称后去背包道具
         /// </summary>
-        private void readItems()
+        /// <param name="name">名字</param>
+        /// <returns>背包道具</returns>
+        public BackpackItem GetBackpackItemByName(string name)
+        {
+            int id = ItemDataManager.Instance.GetByName(name).Id;
+            BackpackItem item = (BackpackItem)Activator.CreateInstance(this.backpackItemTypes[name]);
+            item.Id = id;
+            item.Quantity = 1;
+            item.Uid = this.uid++;
+            return item;
+        }
+
+        /// <summary>
+        /// 根据名字获得建造道具
+        /// </summary>
+        /// <param name="name">名字</param>
+        /// <returns>建造道具</returns>
+        public BuildItem GetBuildItemByName(string name)
+        {
+            return this.buildItems[name];
+        }
+
+        /// <summary>
+        /// 得到所有的背包道具
+        /// </summary>
+        /// <returns>所有背包道具</returns>
+        public List<Item> GenBackpackItems()
+        {
+            List<Item> items = new List<Item>();
+            foreach (KeyValuePair<string, Type> item in this.backpackItemTypes)
+            {
+                items.Add(this.GetBackpackItemByName(item.Key));
+            }
+
+            return items;
+        }
+
+        /// <summary>
+        /// 得到所有的建造道具
+        /// </summary>
+        /// <returns>所有建造道具</returns>
+        public List<Item> GetBuildItems()
+        {
+            return this.buildItems.Values.ToList<Item>();
+        }
+
+        /// <summary>
+        /// 通过反射实例化
+        /// 仅需要类名与imageName一样
+        /// </summary>
+        private void ReadItems()
         {
             List<Type> types = Tool.GetChildByParent<BackpackItem>();
             foreach (Type type in types)
             {
-                backpackItemTypes.Add(type.Name, type);
+                this.backpackItemTypes.Add(type.Name, type);
             }
+
             types = Tool.GetChildByParent<BuildItem>();
             foreach (Type type in types)
             {
                 Type[] interfaces = type.GetInterfaces();
-                if (interfaces.Length > 0 && interfaces.Contains(typeof(DontShow))) continue;
-                int id = ItemDataManager.Instance.getByName(type.Name).id;
+                if (interfaces.Length > 0 && interfaces.Contains(typeof(IDontShow)))
+                {
+                    continue;
+                }
+
+                int id = ItemDataManager.Instance.GetByName(type.Name).Id;
                 BuildItem item = (BuildItem)Activator.CreateInstance(type);
-                item.id = id;
-                buildItems.Add(type.Name, item);
+                item.Id = id;
+                this.buildItems.Add(type.Name, item);
             }
         }
     }

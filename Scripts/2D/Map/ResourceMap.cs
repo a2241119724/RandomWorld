@@ -1,38 +1,37 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 资源地图
+    /// </summary>
     public class ResourceMap : BaseTileMap
     {
-        public static ResourceMap Instance { private set; get; }
+        private Tilemap resourceTileMapOne; // 仅占一格的资源，解决遮盖问题
+
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static ResourceMap Instance { get; private set; }
+
+        /// <summary>
+        /// 资源地图数据
+        /// </summary>
         public ResourceMapData ResourceMapDataLAB { get; set; }
 
         /// <summary>
-        /// ��ռһ�����Դ������ڸ�����
+        /// 生成资源，添加采摘任务
         /// </summary>
-        private Tilemap resourceTileMapOne;
-
-        protected override void Awake()
-        {
-            base.Awake();
-            Instance = this;
-            resourceTileMapOne = Tool.GetComponentInChildren<Tilemap>(transform.parent.gameObject, "ResourceMapOne");
-            ResourceMapDataLAB = new ResourceMapData(0, 100);
-        }
-
-        /// <summary>
-        /// ������Դ�����Ӳ�ժ����
-        /// </summary>
-        /// <param name="coroutine">��Ҫ�ȴ���Э��ִ�������ִ��</param>
-        /// <returns></returns>
-        public IEnumerator genResource(Coroutine coroutine = null)
+        /// <param name="coroutine">需要等待该协程执行完后再执行</param>
+        /// <returns>迭代器</returns>
+        public IEnumerator GenResource(Coroutine coroutine = null)
         {
             yield return coroutine;
-            AsyncProgressUI.Instance.setTip("������Դ...");
+            AsyncProgressUI.Instance.setTip("生成资源...");
             for (int i = 0; i < Height; i++)
             {
                 for (int j = 0; j < Width; j++)
@@ -42,28 +41,35 @@ namespace LAB2D
                     {
                         yield return null;
                     }
+
                     Vector3Int posMap = new Vector3Int(i, j, 0);
-                    if (TileMap.Instance.isCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.9f)
+                    if (TileMap.Instance.IsCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.9f)
                     {
                         TileType tileType = TileMap.Instance.MapTiles[i, j];
                         TileBase tileBase = ResourcesManager.Instance.GetAssetByTileType(tileType);
-                        if (tileBase == null) continue;
-                        tilemap.SetTile(posMap, tileBase);
-                        ResourceMapDataLAB.add(posMap, tileBase.name);
+                        if (tileBase == null)
+                        {
+                            continue;
+                        }
+
+                        this.tilemap.SetTile(posMap, tileBase);
+                        this.ResourceMapDataLAB.Add(posMap, tileBase.name);
                         if (tileBase.name.Contains("Tree"))
                         {
-                            ResourceMapDataLAB.TreeCurCount++;
-                            //WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
-                            //    .setTarget(posMap).setGatherName("Tree").build());
+                            this.ResourceMapDataLAB.TreeCurCount++;
+
+                            // WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
+                            //     .setTarget(posMap).setGatherName("Tree").build());
                         }
                     }
                 }
             }
+
             while (true)
             {
-                if (ResourceMapDataLAB.TreeCurCount < ResourceMapDataLAB.TreeTotalCount)
+                if (this.ResourceMapDataLAB.TreeCurCount < this.ResourceMapDataLAB.TreeTotalCount)
                 {
-                    Vector3Int pos = IsAvailableMap.Instance.genAvailablePosMap();
+                    Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap();
                     TileType tileType = TileMap.Instance.MapTiles[pos.x, pos.y];
                     TileBase tileBase = ResourcesManager.Instance.GetAssetByTileType(tileType, "Tree");
                     if (tileBase == null)
@@ -71,127 +77,205 @@ namespace LAB2D
                         yield return null;
                         continue;
                     }
-                    ResourceMapDataLAB.TreeCurCount++;
-                    tilemap.SetTile(pos, tileBase);
-                    ResourceMapDataLAB.add(pos, tileBase.name);
-                    //WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
-                    //    .setTarget(pos).setGatherName("Tree").build());
-                    refreshRound(pos);
+
+                    this.ResourceMapDataLAB.TreeCurCount++;
+                    this.tilemap.SetTile(pos, tileBase);
+                    this.ResourceMapDataLAB.Add(pos, tileBase.name);
+
+                    // WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
+                    //     .setTarget(pos).setGatherName("Tree").build());
+                    this.RefreshRound(pos);
                 }
+
                 yield return new WaitForSeconds(60.0f * 5);
             }
         }
 
         /// <summary>
-        /// �����µ���Դʱ��ˢ��map,��ֹ�ڸǴ���
+        /// 砍树
         /// </summary>
-        /// <param name="center"></param>
-        /// <param name="radius"></param>
-        private void refreshRound(Vector3Int center, int radius = 4)
+        /// <param name="posMap">位置</param>
+        public void CutTree(Vector3Int posMap)
+        {
+            this.ResourceMapDataLAB.Remove(posMap);
+            this.tilemap.SetTile(posMap, null);
+            this.ResourceMapDataLAB.TreeCurCount--;
+        }
+
+        /// <summary>
+        /// 获取瓦片
+        /// </summary>
+        /// <param name="posMap">位置</param>
+        /// <returns>瓦片</returns>
+        public override TileBase GetTile(Vector3Int posMap)
+        {
+            TileBase tileBase = this.tilemap.GetTile(posMap);
+            if (tileBase == null)
+            {
+                tileBase = this.resourceTileMapOne.GetTile(posMap);
+            }
+
+            return tileBase;
+        }
+
+        /// <summary>
+        /// 设置进度条
+        /// </summary>
+        public void SetProgress()
+        {
+            AsyncProgressUI.Instance.addTotal(Height * Width);
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            this.ResourceMapDataLAB = Tool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            foreach (KeyValuePair<Vector3IntLAB, string> posMap in this.ResourceMapDataLAB.PosMaps)
+            {
+                this.tilemap.SetTile(
+                    Vector3IntLAB.ToVector3Int(posMap.Key),
+                    (TileBase)ResourcesManager.Instance.GetAsset(posMap.Value));
+            }
+
+            this.StartCoroutine(this.GenResource());
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.ResourceMapDataLAB);
+        }
+
+        /// <inheritdoc/>
+        protected override void Awake()
+        {
+            base.Awake();
+            Instance = this;
+            this.resourceTileMapOne = Tool.GetComponentInChildren<Tilemap>(this.transform.parent.gameObject, "ResourceMapOne");
+            this.ResourceMapDataLAB = new ResourceMapData(0, 100);
+        }
+
+        /// <summary>
+        /// 生成新的资源时，刷新map,防止遮盖错误
+        /// </summary>
+        /// <param name="center">中心位置</param>
+        /// <param name="radius">半径</param>
+        private void RefreshRound(Vector3Int center, int radius = 4)
         {
             for (int i = -radius; i <= radius; i++)
             {
                 for (int j = -radius; j <= radius; j++)
                 {
-                    tilemap.RefreshTile(Tool.Add(center, i, j));
+                    this.tilemap.RefreshTile(Tool.Add(center, i, j));
                 }
             }
         }
 
-        public void cutTree(Vector3Int posMap)
-        {
-            ResourceMapDataLAB.remove(posMap);
-            tilemap.SetTile(posMap, null);
-            ResourceMapDataLAB.TreeCurCount--;
-        }
-
-        public override TileBase getTile(Vector3Int posMap)
-        {
-            TileBase tileBase = tilemap.GetTile(posMap);
-            if (tileBase == null)
-            {
-                tileBase = resourceTileMapOne.GetTile(posMap);
-            }
-            return tileBase;
-        }
-
-        public void setProgress()
-        {
-            AsyncProgressUI.Instance.addTotal(Height * Width);
-        }
-
-        public override void LoadData()
-        {
-            base.LoadData();
-            ResourceMapDataLAB = Tool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.getPath(GetType().Name));
-            foreach (KeyValuePair<Vector3IntLAB, string> posMap in ResourceMapDataLAB.posMaps)
-            {
-                tilemap.SetTile(Vector3IntLAB.toVector3Int(posMap.Key),
-                    (TileBase)ResourcesManager.Instance.GetAsset(posMap.Value));
-            }
-            StartCoroutine(genResource());
-        }
-
-        public override void SaveData()
-        {
-            base.SaveData();
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.getPath(GetType().Name), ResourceMapDataLAB);
-        }
-
+        /// <summary>
+        /// 资源数据
+        /// </summary>
         [Serializable]
         public class ResourceMapData
         {
+            /// <summary>
+            /// 当前树的数量
+            /// </summary>
             public int TreeCurCount;
+
+            /// <summary>
+            /// 树的总数
+            /// </summary>
             public int TreeTotalCount;
+
             /// <summary>
             /// string:TileBase
             /// </summary>
-            public Dictionary<Vector3IntLAB, string> posMaps;
+            public Dictionary<Vector3IntLAB, string> PosMaps;
 
             public ResourceMapData(int treeCurCount, int treeTotalCount)
             {
-                TreeCurCount = treeCurCount;
-                TreeTotalCount = treeTotalCount;
-                posMaps = new Dictionary<Vector3IntLAB, string>();
+                this.TreeCurCount = treeCurCount;
+                this.TreeTotalCount = treeTotalCount;
+                this.PosMaps = new Dictionary<Vector3IntLAB, string>();
             }
 
-            public void remove(Vector3Int pos)
+            /// <summary>
+            /// 删
+            /// </summary>
+            /// <param name="pos">位置</param>
+            public void Remove(Vector3Int pos)
             {
-                posMaps.Remove(Vector3IntLAB.toVector3IntLAB(pos));
+                this.PosMaps.Remove(Vector3IntLAB.ToVector3IntLAB(pos));
             }
 
-            public void add(Vector3Int pos, string tileBase)
+            /// <summary>
+            /// 添加
+            /// </summary>
+            /// <param name="pos">位置</param>
+            /// <param name="tileBase">瓦片</param>
+            public void Add(Vector3Int pos, string tileBase)
             {
-                posMaps.Add(Vector3IntLAB.toVector3IntLAB(pos), tileBase);
+                this.PosMaps.Add(Vector3IntLAB.ToVector3IntLAB(pos), tileBase);
             }
 
-            public bool containKey(Vector3Int pos)
+            /// <summary>
+            /// 包含
+            /// </summary>
+            /// <param name="pos">位置</param>
+            /// <returns>是否</returns>
+            public bool ContainKey(Vector3Int pos)
             {
-                return posMaps.ContainsKey(Vector3IntLAB.toVector3IntLAB(pos));
+                return this.PosMaps.ContainsKey(Vector3IntLAB.ToVector3IntLAB(pos));
             }
         }
     }
 
+    /// <summary>
+    /// 可序列化的Vector3Int
+    /// </summary>
     [Serializable]
     public struct Vector3IntLAB
     {
-        public int x;
-        public int y;
-        public int z;
+        /// <summary>
+        /// X
+        /// </summary>
+        public int X;
+
+        /// <summary>
+        /// Y
+        /// </summary>
+        public int Y;
+
+        /// <summary>
+        /// Z
+        /// </summary>
+        public int Z;
 
         public Vector3IntLAB(int x, int y, int z)
         {
-            this.x = x;
-            this.y = y;
-            this.z = z;
+            this.X = x;
+            this.Y = y;
+            this.Z = z;
         }
 
-        public static Vector3Int toVector3Int(Vector3IntLAB vector3IntLAB)
+        /// <summary>
+        /// Vector3IntLAB to Vector3Int
+        /// </summary>
+        /// <param name="vector3IntLAB">Vector3IntLAB</param>
+        /// <returns>Vector3Int</returns>
+        public static Vector3Int ToVector3Int(Vector3IntLAB vector3IntLAB)
         {
-            return new Vector3Int(vector3IntLAB.x, vector3IntLAB.y, vector3IntLAB.z);
+            return new Vector3Int(vector3IntLAB.X, vector3IntLAB.Y, vector3IntLAB.Z);
         }
 
-        public static Vector3IntLAB toVector3IntLAB(Vector3Int vector3Int)
+        /// <summary>
+        /// Vector3Int to Vector3IntLAB
+        /// </summary>
+        /// <param name="vector3Int">Vector3Int</param>
+        /// <returns>Vector3IntLAB</returns>
+        public static Vector3IntLAB ToVector3IntLAB(Vector3Int vector3Int)
         {
             return new Vector3IntLAB(vector3Int.x, vector3Int.y, vector3Int.z);
         }

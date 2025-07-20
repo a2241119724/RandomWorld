@@ -1,36 +1,47 @@
-using System;
-using System.Collections;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+ï»¿ namespace LAB2D
 {
+    using System;
+    using System.Collections;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// åœ°å›¾
+    /// </summary>
     public class TileMap : BaseTileMap
     {
-        public static TileMap Instance { private set; get; }
-        public TileType[,] MapTiles { set; get; } // µØÍ¼ÍßÆ¬
+        // private readonly int SEND_QUANTITY = 10000; // ä¸€æ¬¡å‘é€æ•°é‡
+        // private bool isOnce = false; // æ˜¯å¦åˆ›å»ºå®Œæˆ
+        // private int sendIndex = 0; // å‘é€æ•°æ®çš„ç´¢å¼•
+        // private bool isSyncing; // æ˜¯å¦æ­£åœ¨å‘é€æ‰€æœ‰åœ°å›¾æ•°æ®
+        private int randomCount; // éšæœºç‚¹çš„æ•°é‡
 
-        private int randomCount { get; set; } // Ëæ»úµãµÄÊıÁ¿
-        //private readonly int SEND_QUANTITY = 10000; // Ò»´Î·¢ËÍÊıÁ¿
-        //private bool isOnce = false; // ÊÇ·ñ´´½¨Íê³É
-        //private int sendIndex = 0; // ·¢ËÍÊı¾İµÄË÷Òı
-        //private bool isSyncing; // ÊÇ·ñÕıÔÚ·¢ËÍËùÓĞµØÍ¼Êı¾İ
+        /// <summary>
+        /// å•ä¾‹
+        /// </summary>
+        public static TileMap Instance { get; private set; }
 
-        protected override void Awake()
+        /// <summary>
+        /// åœ°å›¾ç“¦ç‰‡
+        /// </summary>
+        public TileType[,] MapTiles { get; set; }
+
+        /// <summary>
+        /// æ˜¾ç¤ºåœ°å›¾
+        /// </summary>
+        /// <param name="mapTiles">æ‰€æœ‰ç“¦ç‰‡</param>
+        /// <returns>è¿­ä»£å™¨</returns>
+        public IEnumerator ShowTilemap(TileType[,] mapTiles)
         {
-            base.Awake();
-            Instance = this;
-        }
+            AsyncProgressUI.Instance.setTip("æ­£åœ¨å±•ç¤ºåœ°å›¾...");
 
-        public IEnumerator showTilemap(TileType[,] mapTiles)
-        {
-            AsyncProgressUI.Instance.setTip("ÕıÔÚÕ¹Ê¾µØÍ¼...");
-            for (int i = 0; i < Height; i++) // Ñ­»·Ã¿Ò»¸öµã
+            // å¾ªç¯æ¯ä¸€ä¸ªç‚¹
+            for (int i = 0; i < Height; i++)
             {
                 for (int j = 0; j < Width; j++)
                 {
                     AsyncProgressUI.Instance.addOneProcess();
-                    tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourcesManager.Instance.GetAsset(mapTiles[i, j].ToString()));
+                    this.tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourcesManager.Instance.GetAsset(mapTiles[i, j].ToString()));
                     if (FrameControl.Instance.IsNeedStop(1))
                     {
                         yield return null;
@@ -40,20 +51,21 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Ê¹µÃĞÂ¼ÓÈëµÄÓÃ»§µ÷ÓÃÀ´¿ØÖÆMaster·¢ËÍÊı¾İ
+        /// ä½¿å¾—æ–°åŠ å…¥çš„ç”¨æˆ·è°ƒç”¨æ¥æ§åˆ¶Masterå‘é€æ•°æ®
         /// </summary>
-        public void initData()
+        public void InitData()
         {
-            //isSyncing = true;
-            //sendIndex = 0;
+            // isSyncing = true;
+            // sendIndex = 0;
         }
 
         /// <summary>
-        /// Éú³É¿ÉÓÃµÄÎ»ÖÃ£¬·µ»ØÊı×éÏÂ±ê
-        /// ¿ÉÒÔÑ¡ÔñÒÔÄÄ¸öµãÎªÖĞĞÄ£¬²»Ñ¡ÔñÔòÎªËùÓĞ
+        /// ç”Ÿæˆå¯ç”¨çš„ä½ç½®ï¼Œè¿”å›æ•°ç»„ä¸‹æ ‡
+        /// å¯ä»¥é€‰æ‹©ä»¥å“ªä¸ªç‚¹ä¸ºä¸­å¿ƒï¼Œä¸é€‰æ‹©åˆ™ä¸ºæ‰€æœ‰
         /// </summary>
-        /// <returns></returns>
-        public Vector3Int genCanReachPos(Vector3 centerMap = default(Vector3))
+        /// <param name="centerMap">ä¸­å¿ƒä½ç½®</param>
+        /// <returns>ä½ç½®</returns>
+        public Vector3Int GenCanReachPos(Vector3 centerMap = default(Vector3))
         {
             int x, y, startX = 0, endX = Height, startY = 0, endY = Width;
             if (centerMap != default(Vector3))
@@ -63,98 +75,46 @@ namespace LAB2D
                 endX = (int)Mathf.Min(centerMap.x + 50, Height);
                 endY = (int)Mathf.Min(centerMap.y + 50, Width);
             }
+
             do
             {
                 x = UnityEngine.Random.Range(startX, endX);
                 y = UnityEngine.Random.Range(startY, endY);
-            } while (!isCanReach(new Vector3Int(x, y, 0)));
+            }
+            while (!this.IsCanReach(new Vector3Int(x, y, 0)));
             return new Vector3Int(x, y, 0);
         }
 
         /// <summary>
-        /// ÒÔ(i,j)ÎªÖĞĞÄ,ÕÒ×î½üµÄ·ÇÄ¬ÈÏ°å¿é,²¢¸³¸øµ±Ç°Ä¬ÈÏ°å¿é
+        /// éšæœºç”Ÿæˆåœ°å›¾æ¿å—åˆ†å¸ƒ(æœªå®ä¾‹åŒ–)
         /// </summary>
-        /// <param name="tiles">ÖĞĞÄÄ¬ÈÏ°å¿é</param>
-        /// <param name="i">ÖĞĞÄºá×ø±ê</param>
-        /// <param name="j">ÖĞĞÄ×İ×ø±ê</param>
-        protected void NeighborAndReplaceTiles(TileType[,] tiles, int i, int j)
+        /// <returns>è¿­ä»£å™¨</returns>
+        public IEnumerator Create()
         {
-            for (int t = 1; t < Width; t++) // Ñ°ÕÒÀë×Ô¼º×î½üµÄ·ÇÄ¬ÈÏ°å¿é
-            {
-                // µÚÒ»ĞĞ
-                int k = i - t;
-                for (int l = j - t; l <= j + t; l++)
-                {
-                    if (k >= 0 && k < Height && l >= 0 && l < Width)
-                    {
-                        if (MapTiles[k, l] != TileType.Default)
-                        {
-                            tiles[i, j] = MapTiles[k, l]; // ¸³¸øµ±Ç°Î´³õÊ¼»¯°å¿é
-                            return;
-                        }
-                    }
-                }
-                // ÖĞ¼ä×óÓÒÁ½ÁĞ
-                for (++k; k < i + t; k++)
-                {
-                    int l = j - t;
-                    if (k >= 0 && k < Height && l >= 0 && l < Width)
-                    {
-                        if (MapTiles[k, l] != TileType.Default)
-                        {
-                            tiles[i, j] = MapTiles[k, l]; // ¸³¸øµ±Ç°Î´³õÊ¼»¯°å¿é
-                            return;
-                        }
-                    }
-                    l = j + t;
-                    if (k >= 0 && k < Height && l >= 0 && l < Width)
-                    {
-                        if (MapTiles[k, l] != TileType.Default)
-                        {
-                            tiles[i, j] = MapTiles[k, l]; // ¸³¸øµ±Ç°Î´³õÊ¼»¯°å¿é
-                            return;
-                        }
-                    }
-                }
-                // ×îºóÒ»ĞĞ
-                for (int l = j - t; l <= j + t; l++)
-                {
-                    if (k >= 0 && k < Height && l >= 0 && l < Width)
-                    {
-                        if (MapTiles[k, l] != TileType.Default)
-                        {
-                            tiles[i, j] = MapTiles[k, l]; // ¸³¸øµ±Ç°Î´³õÊ¼»¯°å¿é
-                            return;
-                        }
-                    }
-                }
-            }
-        }
+            AsyncProgressUI.Instance.setTip("æ­£åœ¨ç”Ÿæˆéšæœºåæ ‡...");
 
-        /// <summary>
-        /// Ëæ»úÉú³ÉµØÍ¼°å¿é·Ö²¼(Î´ÊµÀı»¯)
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerator create()
-        {
-            AsyncProgressUI.Instance.setTip("ÕıÔÚÉú³ÉËæ»ú×ø±ê...");
-            for (int i = 0; i < randomCount; i++) // Éú³ÉËæ»ú×ø±ê
+            // ç”Ÿæˆéšæœºåæ ‡
+            for (int i = 0; i < this.randomCount; i++)
             {
-                MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (TileType)(UnityEngine.Random.Range(2, 14) / 2);
+                this.MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (TileType)(UnityEngine.Random.Range(2, 14) / 2);
                 AsyncProgressUI.Instance.addOneProcess();
                 if (FrameControl.Instance.IsNeedStop(1))
                 {
                     yield return null;
                 }
             }
+
             TileType[,] tiles = new TileType[Height, Width];
             if (tiles == null)
             {
                 LogManager.Instance.Log("tiles assign resource Error!!!", LogManager.LogLevel.Error);
                 yield break;
             }
-            AsyncProgressUI.Instance.setTip("ÕıÔÚÌî²¹µØÍ¼...");
-            for (int i = 0; i < Height; i++) // Ñ­»·Ã¿Ò»¸öµã
+
+            AsyncProgressUI.Instance.setTip("æ­£åœ¨å¡«è¡¥åœ°å›¾...");
+
+            // å¾ªç¯æ¯ä¸€ä¸ªç‚¹
+            for (int i = 0; i < Height; i++)
             {
                 for (int j = 0; j < Width; j++)
                 {
@@ -162,252 +122,400 @@ namespace LAB2D
                     {
                         yield return null;
                     }
+
                     AsyncProgressUI.Instance.addOneProcess();
-                    if (MapTiles[i, j] != TileType.Default)
+                    if (this.MapTiles[i, j] != TileType.Default)
                     {
-                        tiles[i, j] = MapTiles[i, j];
+                        tiles[i, j] = this.MapTiles[i, j];
                         continue;
                     }
-                    NeighborAndReplaceTiles(tiles, i, j);
+
+                    this.NeighborAndReplaceTiles(tiles, i, j);
                 }
             }
-            MapTiles = tiles;
-            createArroundTile();
-            StartCoroutine(showTilemap(MapTiles));
-            StartCoroutine(EnemyCreator.Instance.genEnemy());
+
+            this.MapTiles = tiles;
+            this.CreateArroundTile();
+            this.StartCoroutine(this.ShowTilemap(this.MapTiles));
+            this.StartCoroutine(EnemyCreator.Instance.genEnemy());
         }
 
         /// <summary>
-        /// µØÍ¼ËÄÖÜ´´½¨É½×èÖ¹³öÈ¥
+        /// MapPos -> WorldPos
         /// </summary>
-        private void createArroundTile()
-        {
-            AsyncProgressUI.Instance.setTip("ÕıÔÚÎ§×¡ËÄÖÜ...");
-            // ÉÏ±ß
-            for (int i = -1; i < Width; i++)
-            {
-                AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
-            }
-            // ÓÒ±ß
-            for (int i = 0; i <= Height; i++)
-            {
-                AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
-            }
-            // ÏÂ±ß
-            for (int i = 0; i <= Width; i++)
-            {
-                AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
-            }
-            // ×ó±ß
-            for (int i = -1; i < Height; i++)
-            {
-                AsyncProgressUI.Instance.addOneProcess();
-                tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
-            }
-        }
-
-        /// <summary>
-        /// MapPos -> WorldPos 
-        /// </summary>
-        /// <param name="posMap"></param>
-        /// <returns></returns>
-        public Vector3 mapPosToWorldPos(Vector3Int posMap)
+        /// <param name="posMap">åœ°å›¾ä½ç½®</param>
+        /// <returns>ä¸–ç•Œä½ç½®</returns>
+        public Vector3 MapPosToWorldPos(Vector3Int posMap)
         {
             return new Vector3(posMap.y, posMap.x, 0);
-            //return new Vector3(posMap.y + 0.5f, posMap.x + 0.5f, 0);
+
+            // return new Vector3(posMap.y + 0.5f, posMap.x + 0.5f, 0);
         }
 
         /// <summary>
         /// WorldPos -> MapPos
         /// </summary>
-        /// <param name="worldPos"></param>
-        /// <returns></returns>
-        public Vector3Int worldPosToMapPos(Vector3 worldPos)
+        /// <param name="worldPos">ä¸–ç•Œä½ç½®</param>
+        /// <returns>åœ°å›¾ä½ç½®</returns>
+        public Vector3Int WorldPosToMapPos(Vector3 worldPos)
         {
             return new Vector3Int(Mathf.RoundToInt(worldPos.y), Mathf.RoundToInt(worldPos.x), 0);
-            //return new Vector3Int(Mathf.RoundToInt(worldPos.y - 0.5f), Mathf.RoundToInt(worldPos.x - 0.5f), 0);
+
+            // return new Vector3Int(Mathf.RoundToInt(worldPos.y - 0.5f), Mathf.RoundToInt(worldPos.x - 0.5f), 0);
         }
 
         /// <summary>
-        /// µØÍ¼Ë÷ÒıÊÇ·ñÔ½½ç
+        /// åœ°å›¾ç´¢å¼•æ˜¯å¦è¶Šç•Œ
         /// </summary>
-        /// <param name="x">ÕæÊµ×ø±ê</param>
-        /// <param name="y">ÕæÊµ×ø±ê</param>
-        /// <returns></returns>
-        public bool isOverBorder(int x, int y)
+        /// <param name="x">çœŸå®åæ ‡x</param>
+        /// <param name="y">çœŸå®åæ ‡y</param>
+        /// <returns>æ˜¯å¦</returns>
+        public bool IsOverBorder(int x, int y)
         {
             return !(x >= 0 && x < Height && y >= 0 && y < Width);
         }
 
-        public void setProgress(int height, int width)
+        /// <summary>
+        /// è®¾ç½®è¿›åº¦
+        /// </summary>
+        /// <param name="height">é«˜åº¦</param>
+        /// <param name="width">å®½åº¦</param>
+        public void SetProgress(int height, int width)
         {
             Height = height;
             Width = width;
-            randomCount = width * height / 500;
-            MapTiles = new TileType[height, width];
+            this.randomCount = width * height / 500;
+            this.MapTiles = new TileType[height, width];
             int total = width * height;
-            total += randomCount;
-            total += (width + height) * 2 + 4;
+            total += this.randomCount;
+            total += ((width + height) * 2) + 4;
             total += width * height;
             AsyncProgressUI.Instance.addTotal(total);
         }
 
-        public int getCanReachCount()
+        /// <summary>
+        /// è·å–èƒ½åˆ°è¾¾ä½ç½®çš„æ•°é‡
+        /// </summary>
+        /// <returns>æ•°é‡</returns>
+        public int GetCanReachCount()
         {
             int count = 0;
-            for (int i = 0; i < Height; i++) // Ñ­»·Ã¿Ò»¸öµã
+
+            // å¾ªç¯æ¯ä¸€ä¸ªç‚¹
+            for (int i = 0; i < Height; i++)
             {
                 for (int j = 0; j < Width; j++)
                 {
-                    if (MapTiles[i, j] == TileType.Mountain || MapTiles[i, j] == TileType.Water) continue;
+                    if (this.MapTiles[i, j] == TileType.Mountain || this.MapTiles[i, j] == TileType.Water)
+                    {
+                        continue;
+                    }
+
                     count++;
                 }
             }
+
             return count;
         }
 
+        /// <inheritdoc/>
         public override void LoadData()
         {
             base.LoadData();
-            TileMapData data = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.getPath(GetType().Name));
+            TileMapData data = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             Height = data.Height;
             Width = data.Width;
-            MapTiles = data.MapTiles;
-            randomCount = data.RandomCount;
-            createArroundTile();
-            StartCoroutine(showTilemap(MapTiles));
-            StartCoroutine(EnemyCreator.Instance.genEnemy());
-            //Worker.initMap(Height, Width);
+            this.MapTiles = data.MapTiles;
+            this.randomCount = data.RandomCount;
+            this.CreateArroundTile();
+            this.StartCoroutine(this.ShowTilemap(this.MapTiles));
+            this.StartCoroutine(EnemyCreator.Instance.genEnemy());
+
+            // Worker.initMap(Height, Width);
         }
 
+        /// <inheritdoc/>
         public override void SaveData()
         {
             base.SaveData();
-            TileMapData tileMapData = new TileMapData(Height, Width, MapTiles, randomCount);
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.getPath(GetType().Name), tileMapData);
+            TileMapData tileMapData = new TileMapData(Height, Width, this.MapTiles, this.randomCount);
+            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), tileMapData);
         }
 
-        ///// <summary>
-        ///// ´«ÊäÊı¾İ
-        ///// </summary>
-        ///// <param name="stream"></param>
-        ///// <param name="info"></param>
-        //public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-        //{
-        //    if (stream.IsWriting)
-        //    {
-        //        Tool.master(() =>
-        //        {
-        //            if (isSyncing)
-        //            {
-        //                stream.SendNext(Length);
-        //                stream.SendNext(Width);
-        //                SerializeTiles(stream);
-        //            }
-        //        });
-        //    }
-        //    else
-        //    {
-        //        Length = (int)stream.ReceiveNext();
-        //        Width = (int)stream.ReceiveNext();
-        //        // Ã¿¸ö½ÇÉ«¼ÓÈëÖ»½ÓÊÕÒ»´ÎÈ«¾ÖĞÅÏ¢
-        //        if (!isOnce)
-        //        {
-        //            isOnce = true;
-        //            MapTiles = new Tiles[Length, Width];
-        //            createArroundTile();
-        //        }
-        //        // ¿ØÖÆ½«ËùÓĞÊı¾İ½ÓÊÕÒ»±ß,ºóÃæµÄÖØ¸´Êı¾İ¾Í²»½ÓÊÕÁË
-        //        if (MapTiles[Length - 1, Width - 1] == Tiles.Default && stream.PeekNext() is byte[])
-        //        {
-        //            DeserializeTiles(stream);
-        //        }
-        //    }
-        //}
+        /// <summary>
+        /// ä»¥(i,j)ä¸ºä¸­å¿ƒ,æ‰¾æœ€è¿‘çš„éé»˜è®¤æ¿å—,å¹¶èµ‹ç»™å½“å‰é»˜è®¤æ¿å—
+        /// </summary>
+        /// <param name="tiles">ä¸­å¿ƒé»˜è®¤æ¿å—</param>
+        /// <param name="i">ä¸­å¿ƒæ¨ªåæ ‡</param>
+        /// <param name="j">ä¸­å¿ƒçºµåæ ‡</param>
+        protected void NeighborAndReplaceTiles(TileType[,] tiles, int i, int j)
+        {
+            // å¯»æ‰¾ç¦»è‡ªå·±æœ€è¿‘çš„éé»˜è®¤æ¿å—
+            for (int t = 1; t < Width; t++)
+            {
+                // ç¬¬ä¸€è¡Œ
+                int k = i - t;
+                for (int l = j - t; l <= j + t; l++)
+                {
+                    if (k >= 0 && k < Height && l >= 0 && l < Width)
+                    {
+                        if (this.MapTiles[k, l] != TileType.Default)
+                        {
+                            tiles[i, j] = this.MapTiles[k, l]; // èµ‹ç»™å½“å‰æœªåˆå§‹åŒ–æ¿å—
+                            return;
+                        }
+                    }
+                }
 
-        ///// <summary>
-        ///// ĞòÁĞ»¯µØÍ¼
-        ///// Ğ­ÒéLAB_1
-        ///// Ã¿´Î·¢ËÍ2 + sendQuantity
-        ///// Ç°2¸ö×Ö½Ú±êÊ¶´«ÊäµØÍ¼µÄÆğÊ¼Ë÷ÒıÏµÊı[start,(start + 1))
-        ///// [start * sendQuantity,(start + 1) * sendQuantity)
-        ///// </summary>
-        //private void SerializeTiles(PhotonStream stream)
-        //{
-        //    // Ã¿´Î·¢ËÍ1000¸öµØÍ¼Êı¾İ
-        //    byte[] tiles = new byte[SEND_QUANTITY + 2];
-        //    // Ç°Á½×Ö½Ú·ÅÊı¾İ·¶Î§(Ğ¡¶Ë´æ´¢)
-        //    tiles[0] = (byte)(sendIndex % (1 << 8));
-        //    tiles[1] = (byte)(sendIndex / (1 << 8));
-        //    int temp = 2; // ´Ó¶ø¿ªÊ¼´æÊı¾İ
-        //    int len = (sendIndex + 1) * SEND_QUANTITY;
-        //    int total = Width * Length;
-        //    for (int i = sendIndex * SEND_QUANTITY; i < len; i++)
-        //    {
-        //        // Èç¹ûÃ»ÓĞ³äÂú´«Êä´°¿Ú£¬Ôò´Ë´ÎÎª´«Êä×îºóÒ»´Î
-        //        if (i >= total)
-        //        {
-        //            stream.SendNext(tiles);
-        //            isSyncing = false;
-        //            return;
-        //        }
-        //        tiles[temp++] = (byte)MapTiles[i / Width, i % Width];
-        //    }
-        //    stream.SendNext(tiles);
-        //    ++sendIndex;
-        //}
+                // ä¸­é—´å·¦å³ä¸¤åˆ—
+                for (++k; k < i + t; k++)
+                {
+                    int l = j - t;
+                    if (k >= 0 && k < Height && l >= 0 && l < Width)
+                    {
+                        if (this.MapTiles[k, l] != TileType.Default)
+                        {
+                            tiles[i, j] = this.MapTiles[k, l]; // èµ‹ç»™å½“å‰æœªåˆå§‹åŒ–æ¿å—
+                            return;
+                        }
+                    }
 
-        ///// <summary>
-        ///// ·´ĞòÁĞ»¯µØÍ¼
-        ///// </summary>
-        //private void DeserializeTiles(PhotonStream stream)
-        //{
-        //    byte[] tiles = (byte[])stream.ReceiveNext();
-        //    int temp = 2;
-        //    int start = tiles[1] * (1 << 8) + tiles[0];
-        //    int len = (start + 1) * SEND_QUANTITY;
-        //    int total = Width * Length;
-        //    for (int i = start * SEND_QUANTITY; i < len; i++)
-        //    {
-        //        MapTiles[i / Width, i % Width] = (Tiles)tiles[temp++];
-        //        if (i == (total - 1))
-        //        {
-        //            // ´´½¨ĞÂ¼ÓÈëµÄÍæ¼Ò
-        //            PlayerManager.Instance.create();
-        //            return;
-        //        }
-        //    }
-        //}
+                    l = j + t;
+                    if (k >= 0 && k < Height && l >= 0 && l < Width)
+                    {
+                        if (this.MapTiles[k, l] != TileType.Default)
+                        {
+                            tiles[i, j] = this.MapTiles[k, l]; // èµ‹ç»™å½“å‰æœªåˆå§‹åŒ–æ¿å—
+                            return;
+                        }
+                    }
+                }
 
+                // æœ€åä¸€è¡Œ
+                for (int l = j - t; l <= j + t; l++)
+                {
+                    if (k >= 0 && k < Height && l >= 0 && l < Width)
+                    {
+                        if (this.MapTiles[k, l] != TileType.Default)
+                        {
+                            tiles[i, j] = this.MapTiles[k, l]; // èµ‹ç»™å½“å‰æœªåˆå§‹åŒ–æ¿å—
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        protected override void Awake()
+        {
+            base.Awake();
+            Instance = this;
+        }
+
+        /// <summary>
+        /// åœ°å›¾å››å‘¨åˆ›å»ºå±±é˜»æ­¢å‡ºå»
+        /// </summary>
+        private void CreateArroundTile()
+        {
+            AsyncProgressUI.Instance.setTip("æ­£åœ¨å›´ä½å››å‘¨...");
+
+            // ä¸Šè¾¹
+            for (int i = -1; i < Width; i++)
+            {
+                AsyncProgressUI.Instance.addOneProcess();
+                this.tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
+            }
+
+            // å³è¾¹
+            for (int i = 0; i <= Height; i++)
+            {
+                AsyncProgressUI.Instance.addOneProcess();
+                this.tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
+            }
+
+            // ä¸‹è¾¹
+            for (int i = 0; i <= Width; i++)
+            {
+                AsyncProgressUI.Instance.addOneProcess();
+                this.tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
+            }
+
+            // å·¦è¾¹
+            for (int i = -1; i < Height; i++)
+            {
+                AsyncProgressUI.Instance.addOneProcess();
+                this.tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
+            }
+        }
+
+        // /// <summary>
+        // /// ä¼ è¾“æ•°æ®
+        // /// </summary>
+        // /// <param name="stream"></param>
+        // /// <param name="info"></param>
+        // public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+        // {
+        //     if (stream.IsWriting)
+        //     {
+        //         Tool.master(() =>
+        //         {
+        //             if (isSyncing)
+        //             {
+        //                 stream.SendNext(Length);
+        //                 stream.SendNext(Width);
+        //                 SerializeTiles(stream);
+        //             }
+        //         });
+        //     }
+        //     else
+        //     {
+        //         Length = (int)stream.ReceiveNext();
+        //         Width = (int)stream.ReceiveNext();
+        //         // æ¯ä¸ªè§’è‰²åŠ å…¥åªæ¥æ”¶ä¸€æ¬¡å…¨å±€ä¿¡æ¯
+        //         if (!isOnce)
+        //         {
+        //             isOnce = true;
+        //             MapTiles = new Tiles[Length, Width];
+        //             createArroundTile();
+        //         }
+        //         // æ§åˆ¶å°†æ‰€æœ‰æ•°æ®æ¥æ”¶ä¸€è¾¹,åé¢çš„é‡å¤æ•°æ®å°±ä¸æ¥æ”¶äº†
+        //         if (MapTiles[Length - 1, Width - 1] == Tiles.Default && stream.PeekNext() is byte[])
+        //         {
+        //             DeserializeTiles(stream);
+        //         }
+        //     }
+        // }
+
+        // /// <summary>
+        // /// åºåˆ—åŒ–åœ°å›¾
+        // /// åè®®LAB_1
+        // /// æ¯æ¬¡å‘é€2 + sendQuantity
+        // /// å‰2ä¸ªå­—èŠ‚æ ‡è¯†ä¼ è¾“åœ°å›¾çš„èµ·å§‹ç´¢å¼•ç³»æ•°[start,(start + 1))
+        // /// [start * sendQuantity,(start + 1) * sendQuantity)
+        // /// </summary>
+        // private void SerializeTiles(PhotonStream stream)
+        // {
+        //     // æ¯æ¬¡å‘é€1000ä¸ªåœ°å›¾æ•°æ®
+        //     byte[] tiles = new byte[SEND_QUANTITY + 2];
+        //     // å‰ä¸¤å­—èŠ‚æ”¾æ•°æ®èŒƒå›´(å°ç«¯å­˜å‚¨)
+        //     tiles[0] = (byte)(sendIndex % (1 << 8));
+        //     tiles[1] = (byte)(sendIndex / (1 << 8));
+        //     int temp = 2; // ä»è€Œå¼€å§‹å­˜æ•°æ®
+        //     int len = (sendIndex + 1) * SEND_QUANTITY;
+        //     int total = Width * Length;
+        //     for (int i = sendIndex * SEND_QUANTITY; i < len; i++)
+        //     {
+        //         // å¦‚æœæ²¡æœ‰å……æ»¡ä¼ è¾“çª—å£ï¼Œåˆ™æ­¤æ¬¡ä¸ºä¼ è¾“æœ€åä¸€æ¬¡
+        //         if (i >= total)
+        //         {
+        //             stream.SendNext(tiles);
+        //             isSyncing = false;
+        //             return;
+        //         }
+        //         tiles[temp++] = (byte)MapTiles[i / Width, i % Width];
+        //     }
+        //     stream.SendNext(tiles);
+        //     ++sendIndex;
+        // }
+
+        // /// <summary>
+        // /// ååºåˆ—åŒ–åœ°å›¾
+        // /// </summary>
+        // private void DeserializeTiles(PhotonStream stream)
+        // {
+        //     byte[] tiles = (byte[])stream.ReceiveNext();
+        //     int temp = 2;
+        //     int start = tiles[1] * (1 << 8) + tiles[0];
+        //     int len = (start + 1) * SEND_QUANTITY;
+        //     int total = Width * Length;
+        //     for (int i = start * SEND_QUANTITY; i < len; i++)
+        //     {
+        //         MapTiles[i / Width, i % Width] = (Tiles)tiles[temp++];
+        //         if (i == (total - 1))
+        //         {
+        //             // åˆ›å»ºæ–°åŠ å…¥çš„ç©å®¶
+        //             PlayerManager.Instance.create();
+        //             return;
+        //         }
+        //     }
+        // }
+
+        /// <summary>
+        /// ç“¦ç‰‡æ•°æ®
+        /// </summary>
         [Serializable]
         public class TileMapData
         {
-            public int Height { set; get; } // µØÍ¼×İÏò³¤¶È
-            public int Width { set; get; }  // µØÍ¼ºáÏò³¤¶È
-            public TileType[,] MapTiles { set; get; } // µØÍ¼ÍßÆ¬
-            public int RandomCount { get; set; } // Ëæ»úµãµÄÊıÁ¿
-
             public TileMapData(int height, int width, TileType[,] mapTiles, int randomCount)
             {
-                Height = height;
-                Width = width;
-                MapTiles = mapTiles;
-                RandomCount = randomCount;
+                this.Height = height;
+                this.Width = width;
+                this.MapTiles = mapTiles;
+                this.RandomCount = randomCount;
             }
+
+            /// <summary>
+            /// åœ°å›¾çºµå‘é•¿åº¦
+            /// </summary>
+            public int Height { get; set; }
+
+            /// <summary>
+            /// åœ°å›¾æ¨ªå‘é•¿åº¦
+            /// </summary>
+            public int Width { get; set; }
+
+            /// <summary>
+            /// åœ°å›¾ç“¦ç‰‡
+            /// </summary>
+            public TileType[,] MapTiles { get; set; }
+
+            /// <summary>
+            /// éšæœºç‚¹çš„æ•°é‡
+            /// </summary>
+            public int RandomCount { get; set; }
         }
     }
+
+    /// <summary>
+    /// ç“¦ç‰‡ç±»å‹
+    /// </summary>
     [Serializable]
     public enum TileType
     {
-        Default, // Ä¬ÈÏ,²»½øĞĞäÖÈ¾
-        Desert, // É³Ä®
-        Marsh, // ÕÓÔó
-        Grass, // ²İ
-        Snow, // Ñ©
-        Mountain, // É½
-        Water, // Ë®
+        /// <summary>
+        /// é»˜è®¤,ä¸è¿›è¡Œæ¸²æŸ“
+        /// </summary>
+        Default,
+
+        /// <summary>
+        /// æ²™æ¼ 
+        /// </summary>
+        Desert,
+
+        /// <summary>
+        /// æ²™æ¼ 
+        /// </summary>
+        Marsh,
+
+        /// <summary>
+        /// è‰
+        /// </summary>
+        Grass,
+
+        /// <summary>
+        /// é›ª
+        /// </summary>
+        Snow,
+
+        /// <summary>
+        /// å±±
+        /// </summary>
+        Mountain,
+
+        /// <summary>
+        /// æ°´
+        /// </summary>
+        Water,
     }
 }

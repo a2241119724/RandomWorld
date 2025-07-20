@@ -1,12 +1,18 @@
-using System;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+
+    /// <summary>
+    /// 木头
+    /// </summary>
     [Serializable]
-    public abstract class Wood : MaterialItem
+    public abstract class WoodItem : MaterialItem
     {
     }
 
+    /// <summary>
+    /// 木头对象
+    /// </summary>
     public class WoodItemObject : MaterialItemObject
     {
     }

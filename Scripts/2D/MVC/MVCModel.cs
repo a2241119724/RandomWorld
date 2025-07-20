@@ -48,7 +48,7 @@ namespace LAB2D
                 return;
             }
             ArrayList itemList = null;
-            ItemType itemType = ItemDataManager.Instance.getTypeById(item.id);
+            ItemType itemType = ItemDataManager.Instance.GetTypeById(item.Id);
             if (itemDict.ContainsKey(itemType))
             {
                 itemList = itemDict[itemType];
@@ -58,20 +58,20 @@ namespace LAB2D
                 itemList = new ArrayList();
             }
             // 可以堆叠
-            if (ItemDataManager.Instance.getById(item.id).isStackable)
+            if (ItemDataManager.Instance.GetById(item.Id).IsStackable)
             {
                 for (int i = 0; i < itemList.Count; i++)
                 {
                     // 包括道具
-                    if (((Item)itemList[i]).id == item.id)
+                    if (((Item)itemList[i]).Id == item.Id)
                     {
-                        ((Item)itemList[i]).quantity++;
+                        ((Item)itemList[i]).Quantity++;
                         return;
                     }
                 }
             }
             // 不包括道具,添加
-            item.quantity = 1;
+            item.Quantity = 1;
             itemList.Add(item);
         }
 
@@ -104,7 +104,7 @@ namespace LAB2D
                 LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            ((Item)itemDict[type][getIndex(type, (Weapon)item)]).quantity--;
+            ((Item)itemDict[type][getIndex(type, (Weapon)item)]).Quantity--;
         }
         #endregion
 
@@ -149,7 +149,7 @@ namespace LAB2D
             ArrayList itemList = itemDict[type];
             for (int i = 0; i < itemList.Count; i++)
             {
-                if (((Item)itemList[i]).id == item.id)
+                if (((Item)itemList[i]).Id == item.Id)
                 {
                     return i;
                 }

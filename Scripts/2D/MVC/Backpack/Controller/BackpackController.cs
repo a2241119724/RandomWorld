@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System.Collections.Generic;
+
     public class BackpackController : MVCController<BackpackItemManagerView, BackpackModel, BackpackNavigationView, BackpackItemView, BackpackInfoView>
     {
         public static BackpackController Instance { get; private set; }
@@ -17,7 +17,7 @@ namespace LAB2D
             if (model.isNull(ItemType.Weapon))
             {
                 // addItem(ItemFactory.Instance.getBackpackItemByName("SingleGun"));
-                List<Item> items = ItemFactory.Instance.genBackpackItems();
+                List<Item> items = ItemFactory.Instance.GenBackpackItems();
                 foreach (Item item in items)
                 {
                     addItem(item);

@@ -11,7 +11,7 @@ namespace LAB2D
                 maxProgress = 1.0f;
                 AvailableNeighborPos.Clear();
                 AvailableNeighborPos.Add(neighbors[8]);
-                TargetMap = InventoryManager.Instance.isContainSeedAndPreTake(worker, true);
+                TargetMap = InventoryManager.Instance.IsContainSeedAndPreTake(worker, true);
                 if (TargetMap == default)
                 {
                     giveUpTask(worker);
@@ -25,7 +25,7 @@ namespace LAB2D
                 maxProgress = 1.0f;
                 AvailableNeighborPos.Clear();
                 AvailableNeighborPos.Add(neighbors[8]);
-                TargetMap = FarmlandManager.Instance.isEnoughAndPrePlant(worker, resourceInfo, true);
+                TargetMap = FarmlandManager.Instance.IsEnoughAndPrePlant(worker, resourceInfo, true);
                 if (TargetMap == default)
                 {
                     giveUpTask(worker);
@@ -47,16 +47,16 @@ namespace LAB2D
             switch (stage)
             {
                 case 0:
-                    resourceInfo = InventoryManager.Instance.subAllItemByPos(TargetMap);
+                    resourceInfo = InventoryManager.Instance.SubAllItemByPos(TargetMap);
                     worker.AddResource(resourceInfo);
                     changeStage(worker, 1);
                     return false;
                 case 1:
                     // 可以继续种植
-                    if (isCanWork(worker) && resourceInfo.count > 0)
+                    if (isCanWork(worker) && resourceInfo.Count > 0)
                     {
-                        FarmlandManager.Instance.plantByPrePlant(worker, TargetMap);
-                        resourceInfo.count--;
+                        FarmlandManager.Instance.PlantByPrePlant(worker, TargetMap);
+                        resourceInfo.Count--;
                         changeStage(worker, 1);
                         return false;
                     }
@@ -79,8 +79,8 @@ namespace LAB2D
             {
                 return false;
             }
-            return FarmlandManager.Instance.isEnoughAndPrePlant(worker, null) != default &&
-                InventoryManager.Instance.isContainSeedAndPreTake(worker) != default;
+            return FarmlandManager.Instance.IsEnoughAndPrePlant(worker, null) != default &&
+                InventoryManager.Instance.IsContainSeedAndPreTake(worker) != default;
         }
 
         public class PlantTaskBuilder

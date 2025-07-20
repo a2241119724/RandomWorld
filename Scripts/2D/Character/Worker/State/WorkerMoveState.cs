@@ -3,7 +3,7 @@
     using UnityEngine;
 
     /// <summary>
-    /// 工作者移动状态
+    /// Worker移动状态
     /// </summary>
     public class WorkerMoveState : WorkerState
     {
@@ -31,7 +31,7 @@
         public override void OnUpdate()
         {
             base.OnUpdate();
-            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(this.Character.transform.position);
+            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
             this.Character.WorkerState.text = this.preString + $"Move\n" +
                 $"Target: {this.Character.TargetMap.x},{this.Character.TargetMap.y}\n" +
                 $"Position: {posMap.x},{posMap.y}\n" + $"Hungry:{Mathf.RoundToInt(this.Character.CurHungry)}\n";

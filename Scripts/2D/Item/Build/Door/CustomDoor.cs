@@ -1,14 +1,17 @@
-using System;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 自定义门
+    /// </summary>
     [Serializable]
     public class CustomDoor : DoorItem
     {
         public CustomDoor()
         {
-            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomDoor");
+            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomDoor");
         }
     }
 }

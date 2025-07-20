@@ -1,7 +1,7 @@
 ﻿namespace LAB2D
 {
     /// <summary>
-    /// 工作者攻击状态
+    /// Worker攻击状态
     /// </summary>
     public class WorkerAttackState : WorkerState
     {

@@ -1,7 +1,7 @@
 ﻿namespace LAB2D
 {
     /// <summary>
-    /// 工作者
+    /// Worker
     /// </summary>
     public class Worker_Lv1 : Worker
     {

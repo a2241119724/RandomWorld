@@ -1,12 +1,12 @@
 ﻿namespace LAB2D
 {
     /// <summary>
-    /// 工作者管理器
+    /// Worker管理器
     /// </summary>
     public class WorkerManager : CharacterManager<WorkerManager, Worker, WorkerCreator>
     {
         /// <summary>
-        /// 用于多个工作者概率获取寻路锁
+        /// 用于多个Worker概率获取寻路锁
         /// </summary>
         private int countLock = 1;
 

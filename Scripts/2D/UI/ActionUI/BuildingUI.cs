@@ -20,13 +20,13 @@ namespace LAB2D
             }
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             // 转为数组下标
-            Vector3Int centerMap = TileMap.Instance.worldPosToMapPos(worldPos);
-            BuildItem buildItem = ((BuildItem)ItemFactory.Instance.getBuildItemByName(ItemDataManager.Instance.getById(BuildMenuPanel.Instance.Select.item.id).imageName));
+            Vector3Int centerMap = TileMap.Instance.WorldPosToMapPos(worldPos);
+            BuildItem buildItem = ((BuildItem)ItemFactory.Instance.GetBuildItemByName(ItemDataManager.Instance.GetById(BuildMenuPanel.Instance.Select.item.Id).ImageName));
             // 建造
-            if (IsAvailableMap.Instance.showRect(centerMap, buildItem.width, buildItem.height, buildItem.isBottomLeft)
+            if (IsAvailableMap.Instance.ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.IsBottomLeft)
                 && Input.GetMouseButtonDown(0))
             {
-                buildItem.addBuildTask(centerMap);
+                buildItem.AddBuildTask(centerMap);
             }
         }
     }

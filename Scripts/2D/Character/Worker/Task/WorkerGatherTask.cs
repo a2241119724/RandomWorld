@@ -30,18 +30,18 @@ namespace LAB2D
         public override void finish(Worker worker)
         {
             base.finish(worker);
-            ResourceMap.Instance.cutTree(TargetMap);
-            List<DropItem> dropItems = DropItemManager.Instance.getDropItemsByName(resourceName);
+            ResourceMap.Instance.CutTree(TargetMap);
+            List<DropItem> dropItems = DropItemManager.Instance.GetDropItemsByName(resourceName);
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)
             {
-                Vector3Int pos = IsAvailableMap.Instance.genAvailablePosMap(TargetMap, 3, true);
+                Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(TargetMap, 3, true);
                 if (pos == default) break;
-                ItemMap.Instance.putDownToDrop(pos, (TileBase)ResourcesManager.Instance.GetAsset(dropItems[i].Name),
+                ItemMap.Instance.PutDownToDrop(pos, (TileBase)ResourcesManager.Instance.GetAsset(dropItems[i].Name),
                     dropItems[i].ResourceInfo);
             }
             // 删除采摘图标
-            GatherMap.Instance.cancelGather(TargetMap);
+            GatherMap.Instance.CancelGather(TargetMap);
         }
 
         public override bool isCanWork(Worker worker)
@@ -66,7 +66,7 @@ namespace LAB2D
             {
                 task.TargetMap = targetMap;
                 // 显示正在采摘图标
-                GatherMap.Instance.addGather(targetMap);
+                GatherMap.Instance.AddGather(targetMap);
                 return this;
             }
 

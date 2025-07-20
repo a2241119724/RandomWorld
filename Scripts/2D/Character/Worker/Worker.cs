@@ -7,7 +7,7 @@
     using UnityEngine.UI;
 
     /// <summary>
-    /// 工作者
+    /// Worker
     /// </summary>
     public class Worker : Character
     {
@@ -175,7 +175,7 @@
         {
             // coroutine = StartCoroutine(toTargetLAB(TargetMap));
             // A*
-            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(this.transform.position);
+            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.transform.position);
             Spend start = mapSpend[posMap.x, posMap.y]; // 起点
             Spend end = mapSpend[this.TargetMap.x, this.TargetMap.y]; // 终点
             this.coroutine = this.StartCoroutine(this.ToTargetAStar(start, end));
@@ -188,14 +188,14 @@
         /// <returns>迭代器</returns>
         public IEnumerator ToTargetLAB(Vector3Int targetMap)
         {
-            if (!TileMap.Instance.isFreeTile(targetMap))
+            if (!TileMap.Instance.IsFreeTile(targetMap))
             {
                 LogManager.Instance.Log("超出边界!!!", LogManager.LogLevel.Error);
                 this.IsSeeking = false;
                 yield break;
             }
 
-            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(this.transform.position);
+            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.transform.position);
             Spend start = mapSpend[posMap.x, posMap.y]; // 起点
             Spend end = mapSpend[targetMap.x, targetMap.y]; // 终点
             while (true)
@@ -228,7 +228,7 @@
             }
 
             // 变为真实坐标
-            Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(this.path[0].PosMap);
+            Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(this.path[0].PosMap);
 
             // 到达路径中一个目标点，切换下一个目标点
             if (this.path.Count != 0 &&
@@ -251,17 +251,17 @@
         /// <returns>是否</returns>
         public bool IsCanReach(Vector3Int posMap)
         {
-            if (!TileMap.Instance.isCanReach(posMap))
+            if (!TileMap.Instance.IsCanReach(posMap))
             {
                 return false;
             }
 
-            if (!ResourceMap.Instance.isCanReach(posMap))
+            if (!ResourceMap.Instance.IsCanReach(posMap))
             {
                 return false;
             }
 
-            if (!BuildMap.Instance.isCanReach(posMap))
+            if (!BuildMap.Instance.IsCanReach(posMap))
             {
                 return false;
             }
@@ -286,7 +286,7 @@
             string resources = string.Empty;
             foreach (KeyValuePair<int, ResourceInfo> resource in this.resourceInfos)
             {
-                resources += resource.Key + ":" + resource.Value.count + "\n";
+                resources += resource.Key + ":" + resource.Value.Count + "\n";
             }
 
             return base.ToString() +
@@ -301,18 +301,18 @@
         /// <param name="resourceInfo">资源</param>
         public void AddResource(ResourceInfo resourceInfo)
         {
-            if (resourceInfo.count == 0)
+            if (resourceInfo.Count == 0)
             {
                 return;
             }
 
-            if (this.resourceInfos.ContainsKey(resourceInfo.id))
+            if (this.resourceInfos.ContainsKey(resourceInfo.Id))
             {
-                this.resourceInfos[resourceInfo.id].count += resourceInfo.count;
+                this.resourceInfos[resourceInfo.Id].Count += resourceInfo.Count;
             }
             else
             {
-                this.resourceInfos.Add(resourceInfo.id, Tool.DeepCopyByBinary(resourceInfo));
+                this.resourceInfos.Add(resourceInfo.Id, Tool.DeepCopyByBinary(resourceInfo));
             }
         }
 
@@ -326,7 +326,7 @@
             {
                 if (this.resourceInfos.ContainsKey(need.Key))
                 {
-                    this.resourceInfos[need.Key].count -= need.Value.count;
+                    this.resourceInfos[need.Key].Count -= need.Value.Count;
                 }
                 else
                 {
@@ -341,14 +341,14 @@
         /// <param name="resourceInfo">资源</param>
         public void SubResource1(ResourceInfo resourceInfo)
         {
-            if (resourceInfo.count == 0)
+            if (resourceInfo.Count == 0)
             {
                 return;
             }
 
-            if (this.resourceInfos.ContainsKey(resourceInfo.id))
+            if (this.resourceInfos.ContainsKey(resourceInfo.Id))
             {
-                this.resourceInfos[resourceInfo.id].count -= resourceInfo.count;
+                this.resourceInfos[resourceInfo.Id].Count -= resourceInfo.Count;
             }
             else
             {
@@ -365,7 +365,7 @@
         {
             if (this.resourceInfos.ContainsKey(id))
             {
-                return this.resourceInfos[id].count;
+                return this.resourceInfos[id].Count;
             }
 
             return 0;
@@ -380,7 +380,7 @@
         {
             foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
-                if (!this.resourceInfos.ContainsKey(need.Key) || this.resourceInfos[need.Key].count < need.Value.count)
+                if (!this.resourceInfos.ContainsKey(need.Key) || this.resourceInfos[need.Key].Count < need.Value.Count)
                 {
                     return false;
                 }
@@ -411,7 +411,7 @@
             {
                 if (this.resourceInfos.ContainsKey(need.Key))
                 {
-                    remaining.Add(need.Key, new ResourceInfo(need.Key, need.Value.count - this.resourceInfos[need.Key].count));
+                    remaining.Add(need.Key, new ResourceInfo(need.Key, need.Value.Count - this.resourceInfos[need.Key].Count));
                 }
                 else
                 {
@@ -520,7 +520,7 @@
             this.LineRenderer.SetPosition(0, this.transform.position);
             for (int i = 0; i < this.path.Count; i++)
             {
-                this.LineRenderer.SetPosition(i + 1, TileMap.Instance.mapPosToWorldPos(this.path[i].PosMap));
+                this.LineRenderer.SetPosition(i + 1, TileMap.Instance.MapPosToWorldPos(this.path[i].PosMap));
             }
         }
 
@@ -783,9 +783,9 @@
                         }
 
                         // 上下平移一下射线
-                        Vector3 pos = TileMap.Instance.mapPosToWorldPos(start.PosMap);
-                        Vector3 direction = TileMap.Instance.mapPosToWorldPos(path[i].PosMap) - TileMap.Instance.mapPosToWorldPos(start.PosMap);
-                        float distance = Vector3.Distance(TileMap.Instance.mapPosToWorldPos(start.PosMap), TileMap.Instance.mapPosToWorldPos(path[i].PosMap));
+                        Vector3 pos = TileMap.Instance.MapPosToWorldPos(start.PosMap);
+                        Vector3 direction = TileMap.Instance.MapPosToWorldPos(path[i].PosMap) - TileMap.Instance.MapPosToWorldPos(start.PosMap);
+                        float distance = Vector3.Distance(TileMap.Instance.MapPosToWorldPos(start.PosMap), TileMap.Instance.MapPosToWorldPos(path[i].PosMap));
                         RaycastHit2D hit = Physics2D.Raycast(new Vector2(pos.x - 0.5f, pos.y), direction, distance);
                         if (hit.collider == null)
                         {
@@ -918,16 +918,16 @@
         /// <param name="posMap">位置</param>
         public void AddEquipment(Equipment equipment, Vector3Int posMap)
         {
-            if (this.Equipments.ContainsKey(equipment.equipType))
+            if (this.Equipments.ContainsKey(equipment.EquipTypeValue))
             {
                 // 交换装备
-                Equipment equipment1 = this.Equipments[equipment.equipType];
-                ItemMap.Instance.putDownToInventory(posMap, ResourcesManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.id, 1));
-                this.Equipments[equipment.equipType] = equipment;
+                Equipment equipment1 = this.Equipments[equipment.EquipTypeValue];
+                ItemMap.Instance.PutDownToInventory(posMap, ResourcesManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
+                this.Equipments[equipment.EquipTypeValue] = equipment;
             }
             else
             {
-                this.Equipments.Add(equipment.equipType, equipment);
+                this.Equipments.Add(equipment.EquipTypeValue, equipment);
             }
         }
     }

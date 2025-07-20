@@ -26,7 +26,7 @@ namespace LAB2D
         {
             if (worldPos == default)
             {
-                worldPos = TileMap.Instance.mapPosToWorldPos(TileMap.Instance.genCanReachPos());
+                worldPos = TileMap.Instance.MapPosToWorldPos(TileMap.Instance.GenCanReachPos());
             }
             return _create(worldPos, "", "");
         }

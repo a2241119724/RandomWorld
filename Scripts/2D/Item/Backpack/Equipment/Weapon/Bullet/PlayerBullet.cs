@@ -1,43 +1,51 @@
-﻿using Photon.Pun;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using Photon.Pun;
+    using UnityEngine;
+
+    /// <summary>
+    /// 玩家子弹
+    /// </summary>
     public class PlayerBullet : Bullet
     {
         private PhotonView photonView;
 
+        /// <inheritdoc/>
+        public override void HitObject()
+        {
+            // 击中敌人处理
+            if (this.rayCastHit2D.transform.gameObject.CompareTag("Enemy"))
+            {
+                Enemy e = this.rayCastHit2D.transform.GetComponent<Enemy>();
+                e.Target = this.Origin;
+                e.ReduceHp(this.Damage);
+            }
+        }
+
+        /// <inheritdoc/>
         protected override void Awake()
         {
             base.Awake();
-            layerMask = LayerMask.GetMask("Tile", "Enemy");
+            this.layerMask = LayerMask.GetMask("Tile", "Enemy");
         }
 
+        /// <inheritdoc/>
         protected override void Start()
         {
             base.Start();
-            photonView = GetComponent<PhotonView>();
-            if (photonView == null)
+            this.photonView = this.GetComponent<PhotonView>();
+            if (this.photonView == null)
             {
                 LogManager.Instance.Log("photonView Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
         }
 
+        /// <inheritdoc/>
         protected override void Update()
         {
-            if (NetworkConnect.Instance.IsOnline && !photonView.IsMine && PhotonNetwork.IsConnected) return;
+            if (NetworkConnect.Instance.IsOnline && !this.photonView.IsMine && PhotonNetwork.IsConnected) return;
             base.Update();
-        }
-
-        public override void hitObject()
-        {
-            if (rayCastHit2D.transform.gameObject.CompareTag("Enemy")) // 击中敌人处理
-            {
-                Enemy e = rayCastHit2D.transform.GetComponent<Enemy>();
-                e.Target = Origin;
-                e.ReduceHp(Damage);
-            }
         }
     }
 }

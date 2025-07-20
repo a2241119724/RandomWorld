@@ -1,105 +1,101 @@
-using System;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+    using UnityEngine;
+
     /// <summary>
-    /// Id¼ä¸ô1000
-    /// Start Id ¸ù¾İÃ¶¾ÙÀàĞÍBackpackItemType,BuildItemTypeÒ»ÖÂ
+    /// Idé—´éš”1000
+    /// Start Id æ ¹æ®æšä¸¾ç±»å‹BackpackItemType,BuildItemTypeä¸€è‡´
     /// </summary>
     public class ItemDataManager : MonoBehaviour
     {
-        public static ItemDataManager Instance { private set; get; }
-
+        private const int TypeInterval = 100000;
         private Dictionary<int, ItemData> allItemInfo;
         private Dictionary<string, int> nameToId;
-        private const int typeInterval = 100000;
-
-        private void Awake()
-        {
-            Instance = this;
-            nameToId = new Dictionary<string, int>();
-            allItemInfo = new Dictionary<int, ItemData>();
-            foreach (ItemType itemType in Enum.GetValues(typeof(ItemType)))
-            {
-                string[] data = Tool.GetCSV(ResourceConstant.DATA_ROOT + itemType.ToString() + "ItemData");
-                if (data == null) continue;
-                int len = data.Length;
-                int start_id = (int)itemType * typeInterval;
-                // Ìø¹ıµÚÒ»ĞĞ
-                for (int i = 1; i < len; i++)
-                {
-                    string[] cols = data[i].Split(',');
-                    int id = Convert.ToInt32(cols[0]) == -1 ? i - 1 : Convert.ToInt32(cols[0]);
-                    if (id < i - 1)
-                    {
-                        LogManager.Instance.Log("id²»¶ÔÓ¦!!!Çë¼ì²éÊı¾İ", LogManager.LogLevel.Error);
-                    }
-                    id += start_id;
-                    allItemInfo.Add(id, new ItemData.ItemDataBuilder()
-                        .setId(id).setItemName(cols[1]).setImageName(cols[2])
-                        .setInfo(cols[3]).setIsStackable(cols[4].Equals("TRUE")).build());
-                    nameToId.Add(cols[2], id);
-                }
-            }
-        }
 
         /// <summary>
-        /// »ñµÃ¶ÔÓ¦idµÄµÀ¾ßÊı¾İ
+        /// å•ä¾‹
         /// </summary>
-        /// <param name="id">µÀ¾ß±êÊ¶</param>
-        /// <returns>µÀ¾ßÊı¾İ</returns>
-        public ItemData getById(int id)
+        public static ItemDataManager Instance { get; private set; }
+
+        /// <summary>
+        /// è·å¾—å¯¹åº”idçš„é“å…·æ•°æ®
+        /// </summary>
+        /// <param name="id">é“å…·æ ‡è¯†</param>
+        /// <returns>é“å…·æ•°æ®</returns>
+        public ItemData GetById(int id)
         {
-            if (!allItemInfo.ContainsKey(id))
+            if (!this.allItemInfo.ContainsKey(id))
             {
-                LogManager.Instance.Log("Ã»ÓĞcase¸ÃidµÄµÀ¾ß!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("æ²¡æœ‰caseè¯¥idçš„é“å…·!!!", LogManager.LogLevel.Error);
                 return null;
             }
-            return allItemInfo[id];
+
+            return this.allItemInfo[id];
         }
 
         /// <summary>
-        /// Í¨¹ıÃû×Ö»ñµÃÊı¾İ
+        /// é€šè¿‡åå­—è·å¾—æ•°æ®
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public ItemData getByName(string name)
+        /// <param name="name">åå­—</param>
+        /// <returns>é“å…·æ•°æ®</returns>
+        public ItemData GetByName(string name)
         {
-            if (!nameToId.ContainsKey(name))
+            if (!this.nameToId.ContainsKey(name))
             {
-                LogManager.Instance.Log("Ã»ÓĞÃû×ÖÎª" + name + "µÄµÀ¾ß!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("æ²¡æœ‰åå­—ä¸º" + name + "çš„é“å…·!!!", LogManager.LogLevel.Error);
                 return null;
             }
-            return getById(nameToId[name]);
-        }
 
-        public ItemType getTypeById(int id)
-        {
-            if (id < 0) return ItemType.Null;
-            return (ItemType)(object)(id / typeInterval);
-        }
-
-        public Equipment.EquipType getEquipmentTypeById(int id)
-        {
-            if (getTypeById(id) != ItemType.Equipment) return Equipment.EquipType.Null;
-            id -= ((int)ItemType.Equipment) * typeInterval;
-            // ×î¶à10ÖÖ×°±¸
-            return (Equipment.EquipType)(object)(id * 10 / typeInterval);
+            return this.GetById(this.nameToId[name]);
         }
 
         /// <summary>
-        /// ÓÉÓÚItemType°üº¬ÁËËùÓĞÀàĞÍ
+        /// é€šè¿‡IDè·å–é“å…·æ•°æ®
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public ItemType getIndexById(int id)
+        /// <param name="id">ID</param>
+        /// <returns>é“å…·ç±»å‹
+        /// </returns>
+        public ItemType GetTypeById(int id)
+        {
+            if (id < 0)
+            {
+                return ItemType.Null;
+            }
+
+            return (ItemType)(object)(id / TypeInterval);
+        }
+
+        /// <summary>
+        /// é€šè¿‡IDè·å–è£…å¤‡ç±»å‹
+        /// </summary>
+        /// <param name="id">ID</param>
+        /// <returns>è£…å¤‡ç±»å‹</returns>
+        public Equipment.EquipType GetEquipmentTypeById(int id)
+        {
+            if (this.GetTypeById(id) != ItemType.Equipment)
+            {
+                return Equipment.EquipType.Null;
+            }
+
+            id -= ((int)ItemType.Equipment) * TypeInterval;
+
+            // æœ€å¤š10ç§è£…å¤‡
+            return (Equipment.EquipType)(object)(id * 10 / TypeInterval);
+        }
+
+        /// <summary>
+        /// ç”±äºItemTypeåŒ…å«äº†æ‰€æœ‰ç±»å‹
+        /// </summary>
+        /// <param name="id">ID</param>
+        /// <returns>é“å…·ç±»å‹</returns>
+        public ItemType GetIndexById(int id)
         {
             id /= 1000;
             if (id < (int)ItemType.Room)
             {
-                return (ItemType)(object)(id);
+                return (ItemType)(object)id;
             }
             else
             {
@@ -108,11 +104,11 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// ÓÉÓÚItemType°üº¬ÁËËùÓĞÀàĞÍ
+        /// ç”±äºItemTypeåŒ…å«äº†æ‰€æœ‰ç±»å‹
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public int getIndexByType(ItemType type)
+        /// <param name="type">é“å…·ç±»å‹</param>
+        /// <returns>ç´¢å¼•</returns>
+        public int GetIndexByType(ItemType type)
         {
             if ((int)type < (int)ItemType.Room)
             {
@@ -124,10 +120,39 @@ namespace LAB2D
             }
         }
 
-        internal object getByName(object name)
+        private void Awake()
         {
-            throw new NotImplementedException();
+            Instance = this;
+            this.nameToId = new Dictionary<string, int>();
+            this.allItemInfo = new Dictionary<int, ItemData>();
+            foreach (ItemType itemType in Enum.GetValues(typeof(ItemType)))
+            {
+                string[] data = Tool.GetCSV(ResourceConstant.DATA_ROOT + itemType.ToString() + "ItemData");
+                if (data == null)
+                {
+                    continue;
+                }
+
+                int len = data.Length;
+                int start_id = (int)itemType * TypeInterval;
+
+                // è·³è¿‡ç¬¬ä¸€è¡Œ
+                for (int i = 1; i < len; i++)
+                {
+                    string[] cols = data[i].Split(',');
+                    int id = Convert.ToInt32(cols[0]) == -1 ? i - 1 : Convert.ToInt32(cols[0]);
+                    if (id < i - 1)
+                    {
+                        LogManager.Instance.Log("idä¸å¯¹åº”!!!è¯·æ£€æŸ¥æ•°æ®", LogManager.LogLevel.Error);
+                    }
+
+                    id += start_id;
+                    this.allItemInfo.Add(id, new ItemData.ItemDataBuilder()
+                        .SetId(id).SetItemName(cols[1]).SetImageName(cols[2])
+                        .SetInfo(cols[3]).SetIsStackable(cols[4].Equals("TRUE")).Build());
+                    this.nameToId.Add(cols[2], id);
+                }
+            }
         }
     }
 }
-

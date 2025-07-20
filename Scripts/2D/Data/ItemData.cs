@@ -1,94 +1,176 @@
-using System;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System;
+
     /// <summary>
-    /// ²»ÄÜ½«ItemData×ª»»Îªjson,ÒòÎªĞèÒª[Serializable]ĞŞÊÎ,¶ø°ü×°ÀàÃ»ÓĞ±»ĞŞÊÎ
-    /// ¹«¹²µÄÊı¾İ£¬½ö´æ´¢Ò»·İ
+    /// ä¸èƒ½å°†ItemDataè½¬æ¢ä¸ºjson,å› ä¸ºéœ€è¦[Serializable]ä¿®é¥°,è€ŒåŒ…è£…ç±»æ²¡æœ‰è¢«ä¿®é¥°
+    /// å…¬å…±çš„æ•°æ®ï¼Œä»…å­˜å‚¨ä¸€ä»½
     /// </summary>
     [Serializable]
     public class ItemData
     {
-        public int id; // ±êÊ¶·û
-        public string itemName; // Ãû×Ö
-        public string imageName;  // »ñµÃ¶ÔÓ¦µÄÍ¼Æ¬
-        public string info; // ¼ò½é
-        public bool isStackable; // ÊÇ·ñ¿É¶Ñµş
-        public ItemType type; // µÀ¾ßÀàĞÍ
+        /// <summary>
+        /// å”¯ä¸€æ ‡è¯†ç¬¦
+        /// </summary>
+        public int Id;
 
+        /// <summary>
+        /// ç‰©å“åç§°(ä¸­æ–‡)
+        /// </summary>
+        public string ItemName;
+
+        /// <summary>
+        /// å›¾ç‰‡åç§°(è‹±æ–‡)
+        /// </summary>
+        public string ImageName;
+
+        /// <summary>
+        /// ç‰©å“ä¿¡æ¯
+        /// </summary>
+        public string Info;
+
+        /// <summary>
+        /// æ˜¯å¦å¯å †å 
+        /// </summary>
+        public bool IsStackable;
+
+        /// <summary>
+        /// ç‰©å“ç±»å‹
+        /// </summary>
+        public ItemType Type;
+
+        /// <summary>
+        /// å»ºé€ è€…
+        /// </summary>
         public class ItemDataBuilder
         {
             private ItemData itemData;
 
+#pragma warning disable SA1600 // Elements should be documented
             public ItemDataBuilder()
             {
-                itemData = new ItemData();
+                this.itemData = new ItemData();
             }
 
-            public ItemDataBuilder setId(int id)
+            public ItemDataBuilder SetId(int id)
             {
-                itemData.id = id;
+                this.itemData.Id = id;
                 return this;
             }
 
-            public ItemDataBuilder setItemName(string itemName)
+            public ItemDataBuilder SetItemName(string itemName)
             {
-                itemData.itemName = itemName;
+                this.itemData.ItemName = itemName;
                 return this;
             }
 
-            public ItemDataBuilder setImageName(string imageName)
+            public ItemDataBuilder SetImageName(string imageName)
             {
-                itemData.imageName = imageName;
+                this.itemData.ImageName = imageName;
                 return this;
             }
 
-            public ItemDataBuilder setInfo(string info)
+            public ItemDataBuilder SetInfo(string info)
             {
-                itemData.info = info;
+                this.itemData.Info = info;
                 return this;
             }
 
-            public ItemDataBuilder setIsStackable(bool isStackable)
+            public ItemDataBuilder SetIsStackable(bool isStackable)
             {
-                itemData.isStackable = isStackable;
+                this.itemData.IsStackable = isStackable;
                 return this;
             }
 
-            public ItemDataBuilder setItemType(ItemType type)
+            public ItemDataBuilder SetItemType(ItemType type)
             {
-                itemData.type = type;
+                this.itemData.Type = type;
                 return this;
             }
 
-            public ItemData build()
+            public ItemData Build()
             {
-                return itemData;
+                return this.itemData;
             }
+#pragma warning restore SA1600 // Elements should be documented
         }
     }
 
     /// <summary>
-    /// ËùÓĞBackpackÓëBuild¾ùÔÚ¸ÃEnumÖĞ
+    /// æ‰€æœ‰Backpackä¸Buildå‡åœ¨è¯¥Enumä¸­
     /// </summary>
     [Serializable]
     public enum ItemType
     {
-        // ±³°ü
-        Weapon, // ÎäÆ÷
-        Equipment, // ×°±¸
-        Consumable, // µÀ¾ß
-        Material, // ²ÄÁÏ
-        Task, // ÈÎÎñÓÃÆ·
-        Food, // Ê³Îï
-        Seed, // ÖÖ×Ó
+        // èƒŒåŒ…
+
+        /// <summary>
+        /// æ­¦å™¨
+        /// </summary>
+        Weapon,
+
+        /// <summary>
+        /// è£…å¤‡
+        /// </summary>
+        Equipment,
+
+        /// <summary>
+        /// æ¶ˆè€—å“(é“å…·)
+        /// </summary>
+        Consumable,
+
+        /// <summary>
+        /// ææ–™
+        /// </summary>
+        Material,
+
+        /// <summary>
+        /// ä»»åŠ¡ç”¨å“
+        /// </summary>
+        Task,
+
+        /// <summary>
+        /// é£Ÿç‰©
+        /// </summary>
+        Food,
+
+        /// <summary>
+        /// ç§å­
+        /// </summary>
+        Seed,
+
+        /// <summary>
+        /// èƒŒåŒ…å…¶ä»–
+        /// </summary>
         BackpackOther,
-        //
+
+        // å»ºé€ 
+
+        /// <summary>
+        /// æˆ¿é—´
+        /// </summary>
         Room,
+
+        /// <summary>
+        /// å¢™
+        /// </summary>
         Wall,
+
+        /// <summary>
+        /// å®¶å…·
+        /// </summary>
         Furniture,
+
+        /// <summary>
+        /// å»ºé€ å…¶ä»–
+        /// </summary>
         BuildOther,
-        //
-        Null // ÓÃÓÚ²Ö¿â
+
+        // å…¶ä»–
+
+        /// <summary>
+        /// ç©º(ç”¨äºä»“åº“)
+        /// </summary>
+        Null,
     }
 }

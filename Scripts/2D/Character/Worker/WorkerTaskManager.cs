@@ -4,7 +4,7 @@
     using UnityEngine;
 
     /// <summary>
-    /// 工作者任务管理器
+    /// Worker任务管理器
     /// </summary>
     public class WorkerTaskManager : MonoBehaviour
     {

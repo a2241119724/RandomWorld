@@ -1,17 +1,23 @@
-using System;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 自定义项链
+    /// </summary>
     [Serializable]
     public abstract class CustomNecklace : Necklace
     {
         public CustomNecklace()
         {
-            tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomNecklace");
+            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomNecklace");
         }
     }
 
+    /// <summary>
+    /// 自定义项链对象
+    /// </summary>
     public abstract class CustomNecklaceObject : NecklaceObject
     {
     }

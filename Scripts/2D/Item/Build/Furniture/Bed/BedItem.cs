@@ -9,16 +9,16 @@
     {
         public BedItem()
         {
-            this.isBottomLeft = true;
+            this.IsBottomLeft = true;
         }
 
         /// <inheritdoc/>
-        public override void addBuildTask(Vector3Int centerMap)
+        public override void AddBuildTask(Vector3Int centerMap)
         {
-            base.addBuildTask(centerMap);
+            base.AddBuildTask(centerMap);
 
             // 添加
-            FurnitureManager.Instance.addBed(centerMap);
+            FurnitureManager.Instance.AddBed(centerMap);
         }
     }
 }

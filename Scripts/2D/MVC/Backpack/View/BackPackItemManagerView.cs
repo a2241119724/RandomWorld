@@ -16,7 +16,7 @@
 
         protected override int getQuantity(Item item)
         {
-            return ((BackpackItem)item).quantity;
+            return ((BackpackItem)item).Quantity;
         }
     }
 }

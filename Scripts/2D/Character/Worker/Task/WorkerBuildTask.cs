@@ -27,7 +27,7 @@
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(neighbors[8]);
-                this.TargetMap = InventoryManager.Instance.getPosByPreTake(worker);
+                this.TargetMap = InventoryManager.Instance.GetPosByPreTake(worker);
                 if (this.TargetMap == default)
                 {
                     this.giveUpTask(worker);
@@ -69,7 +69,7 @@
 
             // 获得剩余不够的数量
             Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
-            InventoryManager.Instance.isEnoughAndPreTake(worker, remaining, true);
+            InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining, true);
 
             // 不够就取资源
             this.changeStage(worker, 0);
@@ -84,7 +84,7 @@
             worker.SubResource(this.needs);
 
             // 将建造完成的Tile从Building变为Build中
-            BuildMap.Instance.setComplete(this.buildPos);
+            BuildMap.Instance.SetComplete(this.buildPos);
         }
 
         /// <inheritdoc/>
@@ -104,7 +104,7 @@
             // 按照单个任务的资源取看是否足够
             // 获得剩余不够的数量
             Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
-            return InventoryManager.Instance.isEnoughAndPreTake(worker, remaining);
+            return InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining);
         }
 
         /// <inheritdoc/>
@@ -123,18 +123,18 @@
             switch (this.stage)
             {
                 case 0:
-                    ResourceInfo resourceInfo = InventoryManager.Instance.subItemByPreTake(worker, this.TargetMap);
+                    ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);
                     worker.AddResource(resourceInfo);
 
                     // 减少需求的数量
                     foreach (KeyValuePair<int, ResourceInfo> pair in this.temp)
                     {
-                        if (pair.Key == resourceInfo.id)
+                        if (pair.Key == resourceInfo.Id)
                         {
-                            pair.Value.count -= resourceInfo.count;
-                            if (pair.Value.count <= 0)
+                            pair.Value.Count -= resourceInfo.Count;
+                            if (pair.Value.Count <= 0)
                             {
-                                this.temp.Remove(resourceInfo.id);
+                                this.temp.Remove(resourceInfo.Id);
                             }
 
                             break;

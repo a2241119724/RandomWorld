@@ -3,7 +3,7 @@
     using UnityEngine;
 
     /// <summary>
-    /// 工作者逃跑状态
+    /// Worker逃跑状态
     /// </summary>
     public class WorkerEscapeState : WorkerState
     {

@@ -1,30 +1,42 @@
-﻿using System;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine;
+
+    /// <summary>
+    /// 剑
+    /// </summary>
     [Serializable]
     public abstract class Sword : Weapon
     {
     }
 
-    // 该脚本被玩家装备才会激活
+    /// <summary>
+    /// 剑对象
+    /// 该脚本被玩家装备才会激活
+    /// </summary>
     public abstract class SwordObject : WeaponObject
     {
-        protected GameObject blood; // 掉血特效
+        /// <summary>
+        /// 掉血特效
+        /// </summary>
+        protected GameObject blood;
 
+        /// <inheritdoc/>
         protected override void Awake()
         {
             base.Awake();
-            raduis = 8.0f;
-            blood = ResourcesManager.Instance.GetPrefab("Blood");
+            this.raduis = 8.0f;
+            this.blood = ResourcesManager.Instance.GetPrefab("Blood");
         }
 
+        /// <inheritdoc/>
         protected override void Start()
         {
             base.Start();
         }
 
+        /// <inheritdoc/>
         protected override void Update()
         {
             base.Update();

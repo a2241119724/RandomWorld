@@ -1,17 +1,26 @@
-using System;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+    using UnityEngine;
+
+    /// <summary>
+    /// 掉落物管理
+    /// </summary>
     public class DropResourceManager : Singleton<DropResourceManager>
     {
         /// <summary>
-        /// ������
+        /// 掉落物
         /// </summary>
         private static Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> resources = new Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>>();
 
-        public void addDrop(ItemType itemType, Vector3Int posMap, ResourceInfo resourceInfo)
+        /// <summary>
+        /// 添加掉落物
+        /// </summary>
+        /// <param name="itemType">掉落物类型</param>
+        /// <param name="posMap">掉落物位置</param>
+        /// <param name="resourceInfo">具体掉落物信息</param>
+        public void AddDrop(ItemType itemType, Vector3Int posMap, ResourceInfo resourceInfo)
         {
             Dictionary<Vector3Int, ResourceInfo> dict;
             if (resources.ContainsKey(itemType))
@@ -23,9 +32,10 @@ namespace LAB2D
                 dict = new Dictionary<Vector3Int, ResourceInfo>();
                 resources.Add(itemType, dict);
             }
+
             if (dict.ContainsKey(posMap))
             {
-                dict[posMap].count += resourceInfo.count;
+                dict[posMap].Count += resourceInfo.Count;
             }
             else
             {
@@ -33,38 +43,69 @@ namespace LAB2D
             }
         }
 
-        public void subDrop(ItemType itemType, Vector3Int posMap, ResourceInfo resourceInfo)
+        /// <summary>
+        /// 删除掉落物
+        /// </summary>
+        /// <param name="itemType">掉落物类型</param>
+        /// <param name="posMap">掉落物位置</param>
+        /// <param name="resourceInfo">具体掉落物信息</param>
+        public void SubDrop(ItemType itemType, Vector3Int posMap, ResourceInfo resourceInfo)
         {
             Dictionary<Vector3Int, ResourceInfo> dict = resources[itemType];
-            dict[posMap].count -= resourceInfo.count;
-            if (dict[posMap].count <= 0)
+            dict[posMap].Count -= resourceInfo.Count;
+            if (dict[posMap].Count <= 0)
             {
                 dict.Remove(posMap);
             }
         }
 
-        public void subDropByAll(Vector3Int posMap, ResourceInfo resourceInfo)
+        /// <summary>
+        /// 删除掉落物，对于所有的掉落物
+        /// </summary>
+        /// <param name="posMap">掉落物位置</param>
+        /// <param name="resourceInfo">具体掉落物信息</param>
+        public void SubDropByAll(Vector3Int posMap, ResourceInfo resourceInfo)
         {
             foreach (KeyValuePair<ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in resources)
             {
                 Dictionary<Vector3Int, ResourceInfo> dict = resources[pair.Key];
-                if (!dict.ContainsKey(posMap)) continue;
-                dict[posMap].count -= resourceInfo.count;
-                if (dict[posMap].count <= 0)
+                if (!dict.ContainsKey(posMap))
+                {
+                    continue;
+                }
+
+                dict[posMap].Count -= resourceInfo.Count;
+                if (dict[posMap].Count <= 0)
                 {
                     dict.Remove(posMap);
                 }
+
                 return;
             }
         }
 
-        public ResourceInfo getDrop(ItemType itemType, Vector3Int posMap)
+        /// <summary>
+        /// 获得掉落物
+        /// </summary>
+        /// <param name="itemType">掉落物类型</param>
+        /// <param name="posMap">掉落物位置</param>
+        /// <returns>掉落物信息</returns>
+        public ResourceInfo GetDrop(ItemType itemType, Vector3Int posMap)
         {
-            if (!resources[itemType].ContainsKey(posMap)) return null;
+            if (!resources[itemType].ContainsKey(posMap))
+            {
+                return null;
+            }
+
             return resources[itemType][posMap];
         }
 
-        public ResourceInfo getDropByAll(Vector3Int posMap)
+        /// <summary>
+        /// 获得掉落物，对于所有的掉落物
+        /// </summary>
+        /// <param name="posMap">掉落物位置</param>
+        /// <returns>掉落物信息</returns>
+        public ResourceInfo GetDropByAll(Vector3Int posMap)
         {
             foreach (KeyValuePair<ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in resources)
             {
@@ -73,35 +114,49 @@ namespace LAB2D
                     return pair.Value[posMap];
                 }
             }
+
             return null;
         }
 
+        /// <summary>
+        /// 凋落物管理信息
+        /// </summary>
+        /// <param name="posMap">位置</param>
+        /// <returns>信息</returns>
         public string ToString(Vector3Int posMap)
         {
-            string text = "";
-            ResourceInfo resourceInfo = getDropByAll(posMap);
+            string text = string.Empty;
+            ResourceInfo resourceInfo = this.GetDropByAll(posMap);
             if (resourceInfo != null)
             {
-                text += $"id:{resourceInfo.id}\n" +
-                $"count:{resourceInfo.count}\n";
+                text += $"id:{resourceInfo.Id}\n" +
+                $"count:{resourceInfo.Count}\n";
             }
+
             return text;
         }
     }
 
+    /// <summary>
+    /// 资源信息
+    /// </summary>
     [Serializable]
     public class ResourceInfo
     {
         /// <summary>
-        /// Inventory,id=-1��ʾ��
+        /// Inventory,id=-1表示空
         /// </summary>
-        public int id;
-        public int count;
+        public int Id;
+
+        /// <summary>
+        /// 数量
+        /// </summary>
+        public int Count;
 
         public ResourceInfo(int id, int count)
         {
-            this.id = id;
-            this.count = count;
+            this.Id = id;
+            this.Count = count;
         }
     }
 }

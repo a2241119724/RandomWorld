@@ -1,20 +1,25 @@
-﻿using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// 敌人子弹
+    /// </summary>
     public class EnemyBullet : Bullet
     {
         protected override void Awake()
         {
             base.Awake();
-            layerMask = LayerMask.GetMask("Tile", "Player", "Worker");
+            this.layerMask = LayerMask.GetMask("Tile", "Player", "Worker");
         }
 
-        public override void hitObject()
+        /// <inheritdoc/>
+        public override void HitObject()
         {
-            if (rayCastHit2D.transform.CompareTag("Player")) // 击中玩家处理
+            // 击中玩家处理
+            if (this.rayCastHit2D.transform.CompareTag("Player"))
             {
-                rayCastHit2D.transform.GetComponent<Character>().ReduceHp(Damage);
+                this.rayCastHit2D.transform.GetComponent<Character>().ReduceHp(this.Damage);
             }
         }
     }

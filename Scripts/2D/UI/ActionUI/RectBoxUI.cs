@@ -93,8 +93,8 @@ namespace LAB2D
                 selects[key].Clear();
             }
             SelectManager.Instance.freeAll();
-            Vector3Int start = TileMap.Instance.worldPosToMapPos(transform.position);
-            Vector3Int end = TileMap.Instance.worldPosToMapPos(new Vector3(
+            Vector3Int start = TileMap.Instance.WorldPosToMapPos(transform.position);
+            Vector3Int end = TileMap.Instance.WorldPosToMapPos(new Vector3(
                 transform.position.x + ((RectTransform)transform).sizeDelta.x,
                 transform.position.y - ((RectTransform)transform).sizeDelta.y,
                 transform.position.z));
@@ -109,13 +109,13 @@ namespace LAB2D
                         SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
                         selectUI.Character = character;
                     }
-                    ResourceInfo resourceInfo = DropResourceManager.Instance.getDropByAll(posMap);
+                    ResourceInfo resourceInfo = DropResourceManager.Instance.GetDropByAll(posMap);
                     if (resourceInfo != null)
                     {
                         SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
                         selectUI.setTarget(posMap);
                     }
-                    resourceInfo = InventoryManager.Instance.getByPos(posMap);
+                    resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
                     if (resourceInfo != null)
                     {
                         SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
@@ -138,7 +138,7 @@ namespace LAB2D
             options.gameObject.SetActive(false);
             selects[key].ForEach((posMap) =>
             {
-                TileBase tileBase = ResourceMap.Instance.getTile(posMap);
+                TileBase tileBase = ResourceMap.Instance.GetTile(posMap);
                 if (tileBase == null) return;
                 if (WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
                 WorkerTaskManager.Instance.AddTask(new WorkerGatherTask.GatherTaskBuilder()
@@ -154,7 +154,7 @@ namespace LAB2D
             {
                 if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
                 WorkerTaskManager.Instance.CancelGatherTask(posMap);
-                GatherMap.Instance.cancelGather(posMap);
+                GatherMap.Instance.CancelGather(posMap);
             });
         }
     }
