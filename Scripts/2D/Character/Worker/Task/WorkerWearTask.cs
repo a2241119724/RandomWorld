@@ -41,19 +41,19 @@ namespace LAB2D
         {
             base.finish(worker);
             // Worker拿起装备或者武器
-            if (ItemDataManager.Instance.getTypeById(id) == ItemType.Weapon)
+            if (ItemDataManager.Instance.GetTypeById(id) == ItemType.Weapon)
             {
-                worker.WearData.Weapon = (Weapon)ItemFactory.Instance.getBackpackItemByName(
-                    ItemDataManager.Instance.getById(id).imageName);
+                worker.WearData.Weapon = (Weapon)ItemFactory.Instance.GetBackpackItemByName(
+                    ItemDataManager.Instance.GetById(id).ImageName);
             }
-            else if (ItemDataManager.Instance.getTypeById(id) == ItemType.Equipment)
+            else if (ItemDataManager.Instance.GetTypeById(id) == ItemType.Equipment)
             {
-                worker.WearData.AddEquipment((Equipment)ItemFactory.Instance.getBackpackItemByName(
-                    ItemDataManager.Instance.getById(id).imageName), TargetMap);
+                worker.WearData.AddEquipment((Equipment)ItemFactory.Instance.GetBackpackItemByName(
+                    ItemDataManager.Instance.GetById(id).ImageName), TargetMap);
             }
-            InventoryManager.Instance.subItemByPreTake(worker, TargetMap);
+            InventoryManager.Instance.SubItemByPreTake(worker, TargetMap);
             // 删除图标
-            ItemMap.Instance.hindTile(TargetMap);
+            ItemMap.Instance.HindTile(TargetMap);
         }
 
         public class WearTaskBuilder

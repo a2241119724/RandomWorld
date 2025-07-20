@@ -86,7 +86,7 @@ namespace LAB2D
                 }
                 else
                 {
-                    PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().attack();
+                    PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().Attack();
                 }
             }
         }

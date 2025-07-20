@@ -17,7 +17,7 @@ namespace LAB2D
             navigationView.CurItemType = ItemType.Room;
             if (model.isNull(navigationView.CurItemType))
             {
-                List<Item> items = ItemFactory.Instance.getBuildItems();
+                List<Item> items = ItemFactory.Instance.GetBuildItems();
                 foreach (Item item in items)
                 {
                     addItem(item);

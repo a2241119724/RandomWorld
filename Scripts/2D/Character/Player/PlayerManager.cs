@@ -40,7 +40,7 @@
         /// <inheritdoc/>
         public override void LoadData()
         {
-            Character.CharacterData data = Tool.LoadDataByBinary<Character.CharacterData>(GlobalData.ConfigFile.getPath(this.GetType().Name));
+            Character.CharacterData data = Tool.LoadDataByBinary<Character.CharacterData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             AsyncProgressUI.Instance.complete += () =>
             {
                 GameObject g = this.create(Vector3LAB.ToVector3(data.Pos));
@@ -53,7 +53,7 @@
         public override void SaveData()
         {
             this.mine.CharacterDataLAB.Pos = Vector3LAB.ToVector3LAB(this.mine.transform.position);
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), this.mine.CharacterDataLAB);
+            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.mine.CharacterDataLAB);
         }
 
         /// <summary>

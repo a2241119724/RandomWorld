@@ -46,7 +46,7 @@ namespace LAB2D
             ++frames;
             // time
             gameTime += Time.deltaTime;
-            globalLight.intensity = Mathf.Clamp(Mathf.Abs(Mathf.Cos((float)gameTime / GlobalData.dayTime)), 0.2f, 1.0f);
+            globalLight.intensity = Mathf.Clamp(Mathf.Abs(Mathf.Cos((float)gameTime / GlobalData.DayTime)), 0.2f, 1.0f);
             if (gameTime - _gameTime >= 1.0)
             {
                 _gameTime = gameTime;
@@ -80,7 +80,7 @@ namespace LAB2D
                 LogManager.Instance.Log("v is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(worldPos);
+            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(worldPos);
             position.text = "(" + posMap.x + "," + posMap.y + ")";
         }
     }

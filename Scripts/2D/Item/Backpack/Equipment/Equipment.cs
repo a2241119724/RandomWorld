@@ -1,32 +1,103 @@
-using System;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System;
+
+    /// <summary>
+    /// è£…å¤‡
+    /// </summary>
     [Serializable]
     public abstract class Equipment : BackpackItem
     {
-        public EquipType equipType; //×°±¸ÀàĞÍ
+        /// <summary>
+        /// è£…å¤‡ç±»å‹
+        /// </summary>
+        public EquipType EquipTypeValue;
 
+        /// <summary>
+        /// è£…å¤‡ç±»å‹
+        /// </summary>
         public enum EquipType
         {
-            Head,   //Í·²¿
-            Body,   //ÉÏÒÂ
-            Trouser, // ¿ã×Ó
-            Shoes,  //Ğ¬×Ó
-            Weapon, //ÎäÆ÷
-            Shield, //¶ÜÅÆ
-            Ring,   //½äÖ¸
-            Necklace, //ÏîÁ´
-            Bracelet, //ÊÖïí
-            Belt,   //Ñü´ø
-            Earring, //¶ú»·
-            Wing,   //³á°ò
-            Mount,  //×øÆï
-            Pet,    //³èÎï
-            Null
+            /// <summary>
+            /// å¤´éƒ¨
+            /// </summary>
+            Head,
+
+            /// <summary>
+            /// ä¸Šè¡£
+            /// </summary>
+            Body,
+
+            /// <summary>
+            /// è£¤å­
+            /// </summary>
+            Trouser,
+
+            /// <summary>
+            /// é‹å­
+            /// </summary>
+            Shoes,
+
+            /// <summary>
+            /// æ­¦å™¨
+            /// </summary>
+            Weapon,
+
+            /// <summary>
+            /// ç›¾ç‰Œ
+            /// </summary>
+            Shield,
+
+            /// <summary>
+            /// æˆ’æŒ‡
+            /// </summary>
+            Ring,
+
+            /// <summary>
+            /// é¡¹é“¾
+            /// </summary>
+            Necklace,
+
+            /// <summary>
+            /// æ‰‹é•¯
+            /// </summary>
+            Bracelet,
+
+            /// <summary>
+            /// è…°å¸¦
+            /// </summary>
+            Belt,
+
+            /// <summary>
+            /// è€³ç¯
+            /// </summary>
+            Earring,
+
+            /// <summary>
+            /// ç¿…è†€
+            /// </summary>
+            Wing,
+
+            /// <summary>
+            /// åéª‘
+            /// </summary>
+            Mount,
+
+            /// <summary>
+            /// å® ç‰©
+            /// </summary>
+            Pet,
+
+            /// <summary>
+            /// ç©º
+            /// </summary>
+            Null,
         }
     }
 
+    /// <summary>
+    /// è£…å¤‡å¯¹è±¡
+    /// </summary>
     public abstract class EquipmentObject : BackpackItemObject
     {
     }

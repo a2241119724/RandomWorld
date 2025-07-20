@@ -103,7 +103,7 @@
         public override void LoadData()
         {
             base.LoadData();
-            List<Character.CharacterData> data = Tool.LoadDataByBinary<List<Character.CharacterData>>(GlobalData.ConfigFile.getPath(this.GetType().Name));
+            List<Character.CharacterData> data = Tool.LoadDataByBinary<List<Character.CharacterData>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             foreach (Character.CharacterData characterData in data)
             {
                 GameObject g = this.create(Vector3LAB.ToVector3(characterData.Pos));
@@ -122,7 +122,7 @@
                 characterDatas.Add(character.CharacterDataLAB);
             }
 
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), characterDatas);
+            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), characterDatas);
         }
 
         /// <summary>
@@ -134,7 +134,7 @@
         {
             foreach (C character in this.Characters)
             {
-                Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(posMap);
+                Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(posMap);
                 if (Mathf.Sqrt(Mathf.Pow(character.transform.position.x - worldPos.x, 2)
                     + Mathf.Pow(character.transform.position.y - worldPos.y, 2)) < 0.7f)
                 {

@@ -55,7 +55,7 @@
                 }
             }
 
-            // 感知到周围有活着的工作者，进入追踪状态
+            // 感知到周围有活着的Worker，进入追踪状态
             count = WorkerManager.Instance.Count();
             for (int i = 0; i < count; i++)
             {

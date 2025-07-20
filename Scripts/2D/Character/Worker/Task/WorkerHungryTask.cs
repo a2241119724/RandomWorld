@@ -20,7 +20,7 @@ namespace LAB2D
         public override void start(Worker worker)
         {
             base.start(worker);
-            InventoryManager.Instance.isEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry, true);
+            InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry, true);
             changeStage(worker, 0);
         }
 
@@ -29,8 +29,8 @@ namespace LAB2D
             // 将饥饿任务放回任务管理中
             base.finish(worker);
             // 再取食物，并且有可能会由于该位置的食物被取完，从而删除该饥饿任务
-            ResourceInfo resourceInfo = InventoryManager.Instance.subItemByPreTake(worker, TargetMap);
-            worker.CurHungry += resourceInfo.count * 10;
+            ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, TargetMap);
+            worker.CurHungry += resourceInfo.Count * 10;
         }
 
         public override bool isCanWork(Worker worker)
@@ -41,7 +41,7 @@ namespace LAB2D
             }
             // 饥饿值小于一定值可以接收饥饿任务
             return worker.CurHungry < Worker.ThresholdHungry
-                && InventoryManager.Instance.isEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry);
+                && InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry);
         }
 
         public class HungryTaskBuilder

@@ -19,11 +19,11 @@
             : base(character)
         {
             this.probToDropItem = new Dictionary<int, TileBase>();
-            List<Item> items = ItemFactory.Instance.genBackpackItems();
+            List<Item> items = ItemFactory.Instance.GenBackpackItems();
             this.AddDropItem(10, null);
             foreach (BackpackItem item in items)
             {
-                this.AddDropItem(10, item.tile);
+                this.AddDropItem(10, item.Tile);
             }
         }
 
@@ -94,8 +94,8 @@
             int rand = Random.Range(0, this.dropTotal);
 
             // 转为数组下标
-            Vector3Int pos = IsAvailableMap.Instance.genAvailablePosMap(
-                TileMap.Instance.worldPosToMapPos(this.Character.transform.position), 3, true);
+            Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(
+                TileMap.Instance.WorldPosToMapPos(this.Character.transform.position), 3, true);
             if (pos == default)
             {
                 return;
@@ -110,9 +110,9 @@
                         break;
                     }
 
-                    ItemData itemData = ItemDataManager.Instance.getByName(dropItem.Value.name);
-                    ResourceInfo resourceInfo = new ResourceInfo(itemData.id, 1);
-                    ItemMap.Instance.putDownToDrop(pos, dropItem.Value, resourceInfo);
+                    ItemData itemData = ItemDataManager.Instance.GetByName(dropItem.Value.name);
+                    ResourceInfo resourceInfo = new ResourceInfo(itemData.Id, 1);
+                    ItemMap.Instance.PutDownToDrop(pos, dropItem.Value, resourceInfo);
                     break;
                 }
             }

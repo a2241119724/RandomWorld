@@ -44,7 +44,7 @@ namespace LAB2D
         private void OnClick_Equip()
         {
             if (Select.item == null) return;
-            if (ItemDataManager.Instance.getById(Select.item.id).type == ItemType.Weapon)
+            if (ItemDataManager.Instance.GetById(Select.item.Id).Type == ItemType.Weapon)
             {
                 if (PlayerManager.Instance.Select.Weapon != null)
                 {
@@ -54,15 +54,15 @@ namespace LAB2D
                     PhotonNetwork.Destroy(PlayerManager.Instance.Select.Weapon);
                 }
                 // 设置当前装备id
-                PlayerManager.Instance.Select.Id = Select.item.id;
+                PlayerManager.Instance.Select.Id = Select.item.Id;
                 // 实例化武器
-                PlayerManager.Instance.Select.Weapon = Tool.Instantiate(ResourcesManager.Instance.GetPrefab(ItemDataManager.Instance.getById(Select.item.id).imageName), Vector3.zero, Quaternion.identity);
+                PlayerManager.Instance.Select.Weapon = Tool.Instantiate(ResourcesManager.Instance.GetPrefab(ItemDataManager.Instance.GetById(Select.item.Id).ImageName), Vector3.zero, Quaternion.identity);
                 if (PlayerManager.Instance.Select.Weapon == null)
                 {
                     LogManager.Instance.Log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
-                PlayerManager.Instance.Select.Weapon.name = ItemDataManager.Instance.getById(Select.item.id).imageName;
+                PlayerManager.Instance.Select.Weapon.name = ItemDataManager.Instance.GetById(Select.item.Id).ImageName;
                 PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
                 PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().Item = Select.item;
                 PlayerManager.Instance.Select.Weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
@@ -74,7 +74,7 @@ namespace LAB2D
                 Select.selectItemIndex = -1;
                 Select.item = null;
             }
-            else if (ItemDataManager.Instance.getById(Select.item.id).type == ItemType.Consumable)
+            else if (ItemDataManager.Instance.GetById(Select.item.Id).Type == ItemType.Consumable)
             {
                 // 实例化道具调用上面的脚本再立即销毁
                 GameObject g = ResourcesManager.Instance.GetPrefab("Select.selectItemData.itemName");
@@ -89,10 +89,10 @@ namespace LAB2D
                     LogManager.Instance.Log("Consumable Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
-                g.GetComponent<ConsumableObject>().use();
+                g.GetComponent<ConsumableObject>().Use();
                 Object.Destroy(g);
                 // 减少或删除
-                if (((BackpackItem)Select.item).quantity == 1)
+                if (((BackpackItem)Select.item).Quantity == 1)
                 {
                     // 从背包删除该道具
                     BackpackController.Instance.deleteItem(Select.selectItemIndex);
@@ -101,16 +101,16 @@ namespace LAB2D
                 }
                 else
                 {
-                    LogManager.Instance.Log("数量:" + ((BackpackItem)Select.item).quantity, LogManager.LogLevel.Info);
+                    LogManager.Instance.Log("数量:" + ((BackpackItem)Select.item).Quantity, LogManager.LogLevel.Info);
                     // 数据--
                     BackpackController.Instance.reduceQuantity(Select.item);
                     // 界面--
                     BackpackController.Instance.reduceQuantityUI(Select.item);
                     BackpackController.Instance.setBorderColor(BackpackController.Instance.getIndex(Select.item));
-                    LogManager.Instance.Log("数量:" + ((BackpackItem)Select.item).quantity, LogManager.LogLevel.Info);
+                    LogManager.Instance.Log("数量:" + ((BackpackItem)Select.item).Quantity, LogManager.LogLevel.Info);
                     // 全局数据--
                     BackpackItem item = (BackpackItem)Select.item;
-                    --item.quantity;
+                    --item.Quantity;
                     Select.item = item;
                 }
             }

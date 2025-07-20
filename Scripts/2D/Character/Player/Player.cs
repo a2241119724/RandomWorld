@@ -60,16 +60,16 @@
         /// <summary>
         /// 减血.
         /// </summary>
-        /// <param name="Hp">血量.</param>
-        public override void ReduceHp(float Hp)
+        /// <param name="hp">血量.</param>
+        public override void ReduceHp(float hp)
         {
-            if (Hp <= 0)
+            if (hp <= 0)
             {
                 LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
                 return;
             }
 
-            base.ReduceHp(Hp);
+            base.ReduceHp(hp);
             if (NetworkConnect.Instance.IsOnline && !this.photonView.IsMine && PhotonNetwork.IsConnected)
             {
                 return;

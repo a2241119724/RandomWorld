@@ -107,7 +107,7 @@
                 {
                     BuildingUI.Instance.enabled = false;
                     PanelController.Instance.show(BuildMenuPanel.Instance);
-                    IsAvailableMap.Instance.clearShow();
+                    IsAvailableMap.Instance.ClearShow();
                 }
                 else if (PanelController.Instance.Panels.Peek() != ForegroundPanel.Instance &&
                     PanelController.Instance.Panels.Peek() != CreateOrJoinPanel.Instance &&
@@ -124,7 +124,7 @@
                 }
             }
 
-            EnvironmentManager.Instance.updateEnergy();
+            EnvironmentManager.Instance.UpdateEnergy();
             if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2))
             {
                 // 关闭ItemInfo面板

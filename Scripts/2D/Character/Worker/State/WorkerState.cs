@@ -1,7 +1,7 @@
 ﻿namespace LAB2D
 {
     /// <summary>
-    /// 工作者状态
+    /// Worker状态
     /// </summary>
     public class WorkerState : CharacterState<Worker>
     {

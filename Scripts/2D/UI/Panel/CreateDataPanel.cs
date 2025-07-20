@@ -66,11 +66,11 @@ namespace LAB2D
             }
             controller.close();
             // TileMap
-            TileMap.Instance.setProgress(height, width);
-            Coroutine coroutine = TileMap.Instance.StartCoroutine(TileMap.Instance.create());
+            TileMap.Instance.SetProgress(height, width);
+            Coroutine coroutine = TileMap.Instance.StartCoroutine(TileMap.Instance.Create());
             // ResourceMap
-            ResourceMap.Instance.setProgress();
-            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.genResource(coroutine));
+            ResourceMap.Instance.SetProgress();
+            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.GenResource(coroutine));
             // EnemyManager
             EnemyManager.Instance.MaxEnemyCount = maxEnemyCount;
             AsyncProgressUI.Instance.complete += () =>

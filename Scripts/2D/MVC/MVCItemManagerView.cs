@@ -58,7 +58,7 @@ namespace LAB2D
             // 重新创建所有Item
             for (int i = 0; i < model.count(type); i++)
             {
-                if (model.get(type, i).id == -1) continue;
+                if (model.get(type, i).Id == -1) continue;
                 GameObject g = Instantiate(itemBox);
                 if (g == null)
                 {
@@ -70,7 +70,7 @@ namespace LAB2D
                 //t.transform.localScale = Vector3.one; // 控制大小
                 Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = getQuantity(model.get(type, i)).ToString();
                 Image image = Tool.GetComponentInChildren<Image>(g, "ItemImage");
-                image.sprite = ResourcesManager.Instance.GetImage(ItemDataManager.Instance.getById(model.get(type, i).id).imageName);
+                image.sprite = ResourcesManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.get(type, i).Id).ImageName);
                 image.preserveAspect = true;
                 IV itemView = g.transform.Find("Item").GetComponent<IV>();
                 // 添加到ItemView

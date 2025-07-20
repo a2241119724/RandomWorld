@@ -60,7 +60,7 @@ namespace LAB2D
                 if (weapon != null)
                 {
                     worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.GetImage(
-                        ItemDataManager.Instance.getById(weapon.id).imageName);
+                        ItemDataManager.Instance.GetById(weapon.Id).ImageName);
                 }
                 Dictionary<Equipment.EquipType, Equipment> equipments = ((Worker)character).WearData.Equipments;
                 foreach (var item in equipments)
@@ -68,7 +68,7 @@ namespace LAB2D
                     if (item.Value != null)
                     {
                         worker.Find(item.Key.ToString() + "/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.GetImage(
-                            ItemDataManager.Instance.getById(item.Value.id).imageName);
+                            ItemDataManager.Instance.GetById(item.Value.Id).ImageName);
                     }
                 }
             }

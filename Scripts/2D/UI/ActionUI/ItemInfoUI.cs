@@ -39,7 +39,7 @@ namespace LAB2D
                 List<RaycastResult> results = Tool.GetUIByMousePos();
                 // 过滤不是滑动主屏幕的动作
                 if (results.Count > 0 && results[0].gameObject.name != "Foreground") return;
-                selectPos = TileMap.Instance.worldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+                selectPos = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
                 SelectUI selectUI;
                 if (Input.GetKey(KeyCode.LeftControl))
                 {
@@ -131,7 +131,7 @@ namespace LAB2D
                 text = InventoryManager.Instance.ToString(posMap);
                 if (!text.Equals(""))
                 {
-                    InventoryManager.Instance.showWearMenu(posMap);
+                    InventoryManager.Instance.ShowWearMenu(posMap);
                 }
             }
             return text;
@@ -146,7 +146,7 @@ namespace LAB2D
         /// <returns></returns>
         public TileBase getTile(Vector3Int posMap, bool isTile = true, bool isUI = true)
         {
-            TileBase tileBase = BuildMap.Instance.getTile(posMap);
+            TileBase tileBase = BuildMap.Instance.GetTile(posMap);
             text = "Build:";
             // 如果点击的是床，则展示分配的Worker
             if (tileBase != null && tileBase.name.Contains("Bed"))
@@ -156,7 +156,7 @@ namespace LAB2D
             if (tileBase == null)
             {
                 text = "Resource:";
-                tileBase = ResourceMap.Instance.getTile(posMap);
+                tileBase = ResourceMap.Instance.GetTile(posMap);
                 // 手动添加任务
                 if (tileBase != null && isUI)
                 {
@@ -166,7 +166,7 @@ namespace LAB2D
             if (tileBase == null && isTile)
             {
                 text = "Tile:";
-                tileBase = TileMap.Instance.getTile(posMap);
+                tileBase = TileMap.Instance.GetTile(posMap);
             }
             return tileBase;
         }

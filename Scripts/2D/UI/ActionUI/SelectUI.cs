@@ -23,7 +23,7 @@ namespace LAB2D
         public void setTarget(Vector3Int posMap)
         {
             Target = posMap;
-            Vector3 pos = TileMap.Instance.mapPosToWorldPos(posMap);
+            Vector3 pos = TileMap.Instance.MapPosToWorldPos(posMap);
             transform.position = new Vector3(pos.x, pos.y, 0.0f);
         }
 

@@ -3,7 +3,7 @@
     using System;
 
     /// <summary>
-    /// 工作者状态管理器
+    /// Worker状态管理器
     /// </summary>
     /// <typeparam name="CS">角色状态</typeparam>
     /// <typeparam name="CST">角色状态类型</typeparam>

@@ -1,27 +1,37 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// æˆ¿é—´ç®¡ç†
+    /// </summary>
     public class RoomManager : Singleton<RoomManager>
     {
         private static Dictionary<string, RoomInfo> rooms = new Dictionary<string, RoomInfo>();
-        /// <summary>
-        /// Door(Default)
-        /// </summary>
-        private int layerMask = LayerMask.GetMask("BuildTile");
+        private int layerMask = LayerMask.GetMask("BuildTile"); // Door(Default)
 
-        public void addRoom(string name, RoomInfo roomInfo)
+        /// <summary>
+        /// æ·»åŠ æˆ¿é—´
+        /// </summary>
+        /// <param name="name">åå­—</param>
+        /// <param name="roomInfo">æˆ¿é—´ä¿¡æ¯</param>
+        public void AddRoom(string name, RoomInfo roomInfo)
         {
             if (rooms.ContainsKey(name))
             {
-                LogManager.Instance.Log("ÒÑ¾­ÓĞ·¿¼äÁË", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("å·²ç»æœ‰æˆ¿é—´äº†", LogManager.LogLevel.Error);
             }
+
             rooms.Add(name, roomInfo);
         }
 
-        public void complete(Vector3Int posMap)
+        /// <summary>
+        /// å»ºé€ å®Œæˆå›è°ƒ
+        /// </summary>
+        /// <param name="posMap">ä½ç½®</param>
+        public void Complete(Vector3Int posMap)
         {
             foreach (KeyValuePair<string, RoomInfo> room in rooms)
             {
@@ -37,90 +47,116 @@ namespace LAB2D
             }
         }
 
-        public RoomInfo getRoomByPos(Vector3Int posMap)
+        /// <summary>
+        /// æ ¹æ®ä½ç½®è·å–æˆ¿é—´
+        /// </summary>
+        /// <param name="posMap">ä½ç½®</param>
+        /// <returns>æˆ¿é—´ä¿¡æ¯</returns>
+        public RoomInfo GetRoomByPos(Vector3Int posMap)
         {
-            if (rooms.Count == 0) return null;
-            RaycastHit2D hitR = Physics2D.Raycast(TileMap.Instance.mapPosToWorldPos(posMap), Vector3.right, 1000.0f, layerMask);
-            RaycastHit2D hitL = Physics2D.Raycast(TileMap.Instance.mapPosToWorldPos(posMap), Vector3.left, 1000.0f, layerMask);
-            RaycastHit2D hitT = Physics2D.Raycast(TileMap.Instance.mapPosToWorldPos(posMap), Vector3.up, 1000.0f, layerMask);
-            RaycastHit2D hitD = Physics2D.Raycast(TileMap.Instance.mapPosToWorldPos(posMap), Vector3.down, 1000.0f, layerMask);
+            if (rooms.Count == 0)
+            {
+                return null;
+            }
+
+            RaycastHit2D hitR = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.right, 1000.0f, this.layerMask);
+            RaycastHit2D hitL = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.left, 1000.0f, this.layerMask);
+            RaycastHit2D hitT = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.up, 1000.0f, this.layerMask);
+            RaycastHit2D hitD = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.down, 1000.0f, this.layerMask);
             int count = 0;
-            Vector3Int _posMap = default;
+            Vector3Int posMap1 = default;
             if (hitR.collider != null)
             {
-                _posMap = TileMap.Instance.worldPosToMapPos(new Vector3(hitR.point.x + 0.5f, hitR.point.y));
-                TileBase tileBase = BuildMap.Instance.getTile(_posMap);
+                posMap1 = TileMap.Instance.WorldPosToMapPos(new Vector3(hitR.point.x + 0.5f, hitR.point.y));
+                TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
                 if (tileBase != null)
                 {
                     count += tileBase.name.Equals("WallR") ? 1 : 0;
                 }
             }
+
             if (hitL.collider != null)
             {
-                _posMap = TileMap.Instance.worldPosToMapPos(new Vector3(hitL.point.x - 0.5f, hitL.point.y));
-                TileBase tileBase = BuildMap.Instance.getTile(_posMap);
+                posMap1 = TileMap.Instance.WorldPosToMapPos(new Vector3(hitL.point.x - 0.5f, hitL.point.y));
+                TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
                 if (tileBase != null)
                 {
                     count += tileBase.name.Equals("WallL") ? 1 : 0;
                 }
             }
+
             if (hitT.collider != null)
             {
-                _posMap = TileMap.Instance.worldPosToMapPos(new Vector3(hitT.point.x, hitT.point.y + 0.5f));
-                TileBase tileBase = BuildMap.Instance.getTile(_posMap);
+                posMap1 = TileMap.Instance.WorldPosToMapPos(new Vector3(hitT.point.x, hitT.point.y + 0.5f));
+                TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
                 if (tileBase != null)
                 {
                     count += tileBase.name.Equals("WallT") ? 1 : 0;
                 }
-
             }
+
             if (hitD.collider != null)
             {
-                _posMap = TileMap.Instance.worldPosToMapPos(new Vector3(hitD.point.x, hitD.point.y - 0.5f));
-                TileBase tileBase = BuildMap.Instance.getTile(_posMap);
+                posMap1 = TileMap.Instance.WorldPosToMapPos(new Vector3(hitD.point.x, hitD.point.y - 0.5f));
+                TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
                 if (tileBase != null)
                 {
                     count += tileBase.name.Equals("WallD") ? 1 : 0;
                 }
             }
-            // Ö»ÒªÓĞÁ½ÃæÊÇÕıÈ·µÄ¾ÍÈÏÎªÔÚ·¿¼äÖĞ
+
+            // åªè¦æœ‰ä¸¤é¢æ˜¯æ­£ç¡®çš„å°±è®¤ä¸ºåœ¨æˆ¿é—´ä¸­
             if (count >= 2)
             {
                 foreach (KeyValuePair<string, RoomInfo> room in rooms)
                 {
-                    if (room.Value.Progress == 0 && room.Value.Points.Contains(_posMap))
+                    if (room.Value.Progress == 0 && room.Value.Points.Contains(posMap1))
                     {
                         return room.Value;
                     }
                 }
             }
+
             return null;
         }
     }
 
+    /// <summary>
+    /// æˆ¿é—´ä¿¡æ¯
+    /// </summary>
     public class RoomInfo
     {
         /// <summary>
-        /// ËùÓĞµÄÇ½ÓëÃÅµÄÎ»ÖÃ
+        /// æ‰€æœ‰çš„å¢™ä¸é—¨çš„ä½ç½®
         /// </summary>
         public List<Vector3Int> Points;
+
         /// <summary>
-        /// 0±íÊ¾ÒÑ¾­Íê³É
+        /// 0è¡¨ç¤ºå·²ç»å®Œæˆ
         /// </summary>
         public int Progress;
+
+        /// <summary>
+        /// æ¸©åº¦
+        /// </summary>
         public float Temperature;
+
+        /// <summary>
+        /// æ¹¿åº¦
+        /// </summary>
         public float Humidity;
 
         public RoomInfo()
         {
-            Points = new List<Vector3Int>();
+            this.Points = new List<Vector3Int>();
         }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
-            return $"ÎÂ¶È:{Temperature}\n" +
-                $"Êª¶È:{Humidity}\n" +
-                $"½ø¶È:{Progress}";
+            return $"æ¸©åº¦:{this.Temperature}\n" +
+                $"æ¹¿åº¦:{this.Humidity}\n" +
+                $"è¿›åº¦:{this.Progress}";
         }
     }
 }

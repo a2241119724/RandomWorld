@@ -3,7 +3,7 @@
     using UnityEngine;
 
     /// <summary>
-    /// 工作者寻找状态
+    /// Worker寻找状态
     /// </summary>
     public class WorkerSeekState : WorkerState
     {
@@ -30,8 +30,8 @@
             this.isOne = true;
 
             // 没有任务
-            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(this.Character.transform.position);
-            this.targetMap = TileMap.Instance.genCanReachPos(posMap);
+            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
+            this.targetMap = TileMap.Instance.GenCanReachPos(posMap);
             if (this.Character.Manager.Task != null)
             {
                 // 有任务
@@ -46,7 +46,7 @@
                     Vector3Int temp = new Vector3Int(this.targetMap.x + pos.y, this.targetMap.y + pos.x, 0);
                     if (this.Character.IsCanReach(temp))
                     {
-                        Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(temp);
+                        Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(temp);
                         float distance = Mathf.Pow(worldPos.x - this.Character.transform.position.x, 2) +
                             Mathf.Pow(worldPos.y - this.Character.transform.position.y, 2);
                         if (distance < minDistance)

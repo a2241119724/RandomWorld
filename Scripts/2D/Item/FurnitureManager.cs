@@ -1,45 +1,79 @@
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+
+    /// <summary>
+    /// 家具管理
+    /// </summary>
     public class FurnitureManager : Singleton<FurnitureManager>
     {
-        public Dictionary<Vector3Int, Worker> bedToWorker;
+        /// <summary>
+        /// Worker与床绑定
+        /// </summary>
+        public Dictionary<Vector3Int, Worker> BedToWorker;
 
         public FurnitureManager()
         {
-            bedToWorker = new Dictionary<Vector3Int, Worker>();
+            this.BedToWorker = new Dictionary<Vector3Int, Worker>();
         }
 
-        public void addBed(Vector3Int posMap)
+        /// <summary>
+        /// 添加床
+        /// </summary>
+        /// <param name="posMap">位置</param>
+        public void AddBed(Vector3Int posMap)
         {
-            if (bedToWorker.ContainsKey(posMap)) return;
-            bedToWorker.Add(posMap, null);
-        }
-
-        public void addWorkerToBed(Vector3Int posMap, Worker worker)
-        {
-            if (!bedToWorker.ContainsKey(posMap)) return;
-            if (bedToWorker[posMap] == null)
+            if (this.BedToWorker.ContainsKey(posMap))
             {
-                bedToWorker[posMap] = worker;
+                return;
+            }
+
+            this.BedToWorker.Add(posMap, null);
+        }
+
+        /// <summary>
+        /// 添加床预Worker的绑定关系
+        /// </summary>
+        /// <param name="posMap">位置</param>
+        /// <param name="worker">Worker</param>
+        public void AddWorkerToBed(Vector3Int posMap, Worker worker)
+        {
+            if (!this.BedToWorker.ContainsKey(posMap))
+            {
+                return;
+            }
+
+            if (this.BedToWorker[posMap] == null)
+            {
+                this.BedToWorker[posMap] = worker;
+
                 // TODO
                 worker.BedItem = new SingleBed();
             }
             else
             {
-                bedToWorker[posMap].BedItem = null;
-                bedToWorker[posMap] = worker;
+                this.BedToWorker[posMap].BedItem = null;
+                this.BedToWorker[posMap] = worker;
+
                 // TODO
                 worker.BedItem = new SingleBed();
             }
         }
 
-        public Worker getByBed(Vector3Int posMap)
+        /// <summary>
+        /// 通过床获取Worker
+        /// </summary>
+        /// <param name="posMap">位置</param>
+        /// <returns>Worker</returns>
+        public Worker GetWorkerByBed(Vector3Int posMap)
         {
-            if (!bedToWorker.ContainsKey(posMap)) return null;
-            return bedToWorker[posMap];
+            if (!this.BedToWorker.ContainsKey(posMap))
+            {
+                return null;
+            }
+
+            return this.BedToWorker[posMap];
         }
     }
 }

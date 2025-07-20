@@ -1,8 +1,11 @@
-using System;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine;
+
+    /// <summary>
+    /// 农田墙
+    /// </summary>
     [Serializable]
     public class FarmlandWall : Wall
     {
@@ -10,9 +13,10 @@ namespace LAB2D
         {
         }
 
-        public override void addBuildTask(Vector3Int centerMap)
+        /// <inheritdoc/>
+        public override void AddBuildTask(Vector3Int centerMap)
         {
-            BuildMap.Instance.directBuild(centerMap, tile).addTask();
+            BuildMap.Instance.DirectBuild(centerMap, this.Tile).AddTask();
         }
     }
 }

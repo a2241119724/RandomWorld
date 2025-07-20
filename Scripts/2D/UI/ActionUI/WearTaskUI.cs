@@ -26,9 +26,9 @@ namespace LAB2D
 
         public void showWearTask(Vector3Int posMap)
         {
-            transform.position = TileMap.Instance.mapPosToWorldPos(posMap);
+            transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
             List<Worker> workers = WorkerManager.Instance.Characters;
-            ResourceInfo resourceInfo = InventoryManager.Instance.getByPos(posMap);
+            ResourceInfo resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
             // 该位置没有东西则不展示任何东西
             if (resourceInfo == null) return;
             for (int i = 0; i < workers.Count; i++)
@@ -48,11 +48,11 @@ namespace LAB2D
                 button.onClick.AddListener(() =>
                 {
                     WorkerTaskManager.Instance.AddTask(new WorkerWearTask.WearTaskBuilder()
-                        .setWorker(workers[index]).setTarget(posMap).setEquipmentId(resourceInfo.id).build(), 1);
+                        .setWorker(workers[index]).setTarget(posMap).setEquipmentId(resourceInfo.Id).build(), 1);
                     transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     Dictionary<int, ResourceInfo> dict = new Dictionary<int, ResourceInfo>();
-                    dict.Add(resourceInfo.id, resourceInfo);
-                    InventoryManager.Instance.isEnoughAndPreTake(workers[index], new Dictionary<int, ResourceInfo>(dict), true);
+                    dict.Add(resourceInfo.Id, resourceInfo);
+                    InventoryManager.Instance.IsEnoughAndPreTake(workers[index], new Dictionary<int, ResourceInfo>(dict), true);
                 });
             }
         }

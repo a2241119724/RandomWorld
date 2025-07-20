@@ -26,20 +26,20 @@ namespace LAB2D
         private void OnClick_NewGame()
         {
             controller.close();
-            GlobalData.isNew = true;
+            GlobalData.IsNew = true;
             controller.show(CreateDataPanel.Instance);
         }
 
         private void OnClick_ContinueGame()
         {
-            TileMapData data = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.getPath("TileMap"));
+            TileMapData data = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath("TileMap"));
             if (data == null)
             {
                 GlobalInit.Instance.ShowTip("没有存档!!!");
                 return;
             }
             controller.close();
-            GlobalData.isNew = false;
+            GlobalData.IsNew = false;
             controller.show(AsyncProgressPanel.Instance);
             AsyncProgressUI.Instance.addTotal(ASaveData.Instances.Count + AMonoSaveData.Instances.Count);
             // 加载数据之前,线实例化

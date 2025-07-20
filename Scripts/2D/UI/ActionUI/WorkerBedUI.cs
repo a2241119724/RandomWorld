@@ -28,10 +28,10 @@ namespace LAB2D
 
         public void showWorkerBed(Vector3Int posMap)
         {
-            Worker worker = FurnitureManager.Instance.getByBed(posMap);
+            Worker worker = FurnitureManager.Instance.GetWorkerByBed(posMap);
             curWorker.text = $"当前: " + (worker != null ? worker.name : "没人");
             //
-            transform.position = TileMap.Instance.mapPosToWorldPos(posMap);
+            transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
             List<Worker> workers = WorkerManager.Instance.Characters;
             for (int i = 0; i < workers.Count; i++)
             {
@@ -51,7 +51,7 @@ namespace LAB2D
                 {
                     WorkerTaskManager.Instance.AddTask(new WorkerSleepTask.SleepTaskBuilder().setTarget(posMap).build(), 1);
                     transform.position = ResourceConstant.VECTOR3_DEFAULT;
-                    FurnitureManager.Instance.addWorkerToBed(posMap, workers[index]);
+                    FurnitureManager.Instance.AddWorkerToBed(posMap, workers[index]);
                 });
             }
         }

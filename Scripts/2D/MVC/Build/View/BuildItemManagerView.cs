@@ -13,7 +13,7 @@ namespace LAB2D
 
         protected override int getQuantity(Item item)
         {
-            return ((BuildItem)item).quantity;
+            return ((BuildItem)item).Quantity;
         }
     }
 }

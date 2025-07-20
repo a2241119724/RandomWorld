@@ -44,9 +44,9 @@ namespace LAB2D
             // 遍历是否重名
             if (data != null)
             {
-                for (int i = 0; i < data.getLength(); i++)
+                for (int i = 0; i < data.GetLength(); i++)
                 {
-                    if (data.getUsername(i) == username)
+                    if (data.GetUsername(i) == username)
                     {
                         GlobalInit.Instance.ShowTip("该用户已经注册!!!");
                         return;
@@ -54,7 +54,7 @@ namespace LAB2D
                 }
             }
             data = new UserData();
-            data.addData(username, password);
+            data.AddData(username, password);
             File.WriteAllText(GlobalData.ConfigFile.UserDataFilePath, JsonUtility.ToJson(data));
             GlobalInit.Instance.ShowTip("注册成功!!!");
         }
@@ -67,9 +67,9 @@ namespace LAB2D
             UserData data = Tool.LoadDataByJson<UserData>(GlobalData.ConfigFile.UserDataFilePath);
             if (data != null)
             {
-                for (int i = 0; i < data.getLength(); i++)
+                for (int i = 0; i < data.GetLength(); i++)
                 {
-                    if (data.getUsername(i) == _username.text && data.getPassword(i) == _password.text)
+                    if (data.GetUsername(i) == _username.text && data.GetPassword(i) == _password.text)
                     {
                         SceneManager.LoadScene("Menu"); // 加载场景
                         return;

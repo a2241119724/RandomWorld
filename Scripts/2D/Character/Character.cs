@@ -54,7 +54,7 @@
             if (this is Enemy)
             {
                 // 暴击时显示不同的框
-                g.GetComponent<DamageUI>().setDamage(hp, Convert.ToInt32(PlayerManager.Instance.Select.WeaponData.isCRT));
+                g.GetComponent<DamageUI>().setDamage(hp, Convert.ToInt32(PlayerManager.Instance.Select.WeaponData.IsCRT));
             }
             else
             {

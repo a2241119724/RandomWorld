@@ -29,7 +29,7 @@ namespace LAB2D
                 maxProgress = 1.0f;
                 AvailableNeighborPos.Clear();
                 AvailableNeighborPos.Add(neighbors[8]);
-                TargetMap = InventoryManager.Instance.getPosByPrePlace(worker);
+                TargetMap = InventoryManager.Instance.GetPosByPrePlace(worker);
                 if (TargetMap == default)
                 {
                     LogManager.Instance.Log("仓库没有位置了", LogManager.LogLevel.Error);
@@ -42,7 +42,7 @@ namespace LAB2D
         public override void start(Worker worker)
         {
             base.start(worker);
-            InventoryManager.Instance.isEnoughAndPrePlace(worker, resourceInfo, true);
+            InventoryManager.Instance.IsEnoughAndPrePlace(worker, resourceInfo, true);
             changeStage(worker, 0);
         }
 
@@ -51,7 +51,7 @@ namespace LAB2D
             switch (stage)
             {
                 case 0:
-                    ItemMap.Instance.pickUpFromDrop(TargetMap, resourceInfo);
+                    ItemMap.Instance.PickUpFromDrop(TargetMap, resourceInfo);
                     worker.AddResource(resourceInfo);
                     changeStage(worker, 1);
                     return false;
@@ -63,12 +63,12 @@ namespace LAB2D
         public override void finish(Worker worker)
         {
             base.finish(worker);
-            ItemType itemType = ItemDataManager.Instance.getTypeById(resourceInfo.id);
+            ItemType itemType = ItemDataManager.Instance.GetTypeById(resourceInfo.Id);
             // 放下拿起来的东西
-            ItemMap.Instance.showTile(TargetMap, (TileBase)ResourcesManager.Instance
-                .GetAsset(ItemDataManager.Instance.getById(resourceInfo.id).imageName));
+            ItemMap.Instance.ShowTile(TargetMap, (TileBase)ResourcesManager.Instance
+                .GetAsset(ItemDataManager.Instance.GetById(resourceInfo.Id).ImageName));
             worker.SubResource1(resourceInfo);
-            InventoryManager.Instance.addItemByPrePlace(worker, TargetMap);
+            InventoryManager.Instance.AddItemByPrePlace(worker, TargetMap);
             // 如果是食物,添加饥饿任务
             if (itemType == ItemType.Food)
             {
@@ -82,7 +82,7 @@ namespace LAB2D
             {
                 return false;
             }
-            return InventoryManager.Instance.isEnoughAndPrePlace(worker, resourceInfo);
+            return InventoryManager.Instance.IsEnoughAndPrePlace(worker, resourceInfo);
         }
 
         public class CarryTaskBuilder
