@@ -14,7 +14,7 @@ namespace LAB2D
 
         protected override void init()
         {
-            BuildMenuPanel.Instance.Select.init();
+            BuildMenuPanel.Instance.Select.Init();
         }
     }
 }

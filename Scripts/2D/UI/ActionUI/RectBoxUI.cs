@@ -1,161 +1,203 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+    using UnityEngine.UI;
+
     /// <summary>
-    /// ������ѡ��
+    /// 拉矩形选框
     /// </summary>
     public class RectBoxUI : MonoBehaviour
     {
-        public static RectBoxUI Instance { private set; get; }
-
         private bool isDown = false;
         private Vector3 start;
-        private Dictionary<string, List<Vector3Int>> selects;
+        private Dictionary<TileType, List<Vector3Int>> selects;
         private Transform options;
 
-        private void Awake()
-        {
-            Instance = this;
-            selects = new Dictionary<string, List<Vector3Int>>();
-            selects.Add("Resource", new List<Vector3Int>());
-            options = Tool.GetComponentInChildren<Transform>(gameObject, "Options");
-            options.gameObject.SetActive(false);
-            Transform gather = Tool.GetComponentInChildren<Transform>(options.gameObject, "Gather");
-            Tool.GetComponentInChildren<Button>(gather.gameObject, "Yes").onClick.AddListener(() =>
-            {
-                Onclick_Yes("Resource");
-            });
-            Tool.GetComponentInChildren<Button>(gather.gameObject, "No").onClick.AddListener(() =>
-            {
-                Onclick_No("Resource");
-            });
-        }
-
-        void Update()
-        {
-            if (options.gameObject.activeSelf)
-            {
-                if (Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2))
-                {
-                    options.gameObject.SetActive(false);
-                }
-                return;
-            }
-            if (Input.GetMouseButtonDown(0) && PanelController.Instance.Panels.Count > 0 &&
-                (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance ||
-                PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance))
-            {
-                options.gameObject.SetActive(false);
-                Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                start = pos;
-                transform.position = new Vector3(pos.x, pos.y, 0.0f);
-                isDown = true;
-            }
-            else if (isDown && PanelController.Instance.isForeground())
-            {
-                Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                float x = pos.x - start.x;
-                float y = pos.y - start.y;
-                if (x > 0 && y > 0)
-                {
-                    transform.position = new Vector3(start.x, start.y + y, 0.0f);
-                }
-                else if (x < 0 && y > 0)
-                {
-                    transform.position = new Vector3(start.x + x, start.y + y, 0.0f);
-                }
-                else if (x < 0 && y < 0)
-                {
-                    transform.position = new Vector3(start.x + x, start.y, 0.0f);
-                }
-                ((RectTransform)transform).sizeDelta = new Vector2(Mathf.Abs(x), Mathf.Abs(y));
-            }
-            if (Input.GetMouseButtonUp(0))
-            {
-                select();
-                ((RectTransform)transform).sizeDelta = Vector2.zero;
-                isDown = false;
-                options.gameObject.SetActive(selects["Resource"].Count > 0);
-            }
-        }
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static RectBoxUI Instance { get; private set; }
 
         /// <summary>
-        /// ѡ��ѡ���������������
+        /// 确定对选中的所有Tile确定做出对应操作
         /// </summary>
-        private void select()
+        /// <param name="key">Tile类型</param>
+        public void Onclick_Yes(TileType key)
         {
-            foreach (string key in selects.Keys)
-            {
-                selects[key].Clear();
-            }
-            SelectManager.Instance.freeAll();
-            Vector3Int start = TileMap.Instance.WorldPosToMapPos(transform.position);
-            Vector3Int end = TileMap.Instance.WorldPosToMapPos(new Vector3(
-                transform.position.x + ((RectTransform)transform).sizeDelta.x,
-                transform.position.y - ((RectTransform)transform).sizeDelta.y,
-                transform.position.z));
-            for (int i = start.x; i > end.x; i--)
-            {
-                for (int j = start.y; j < end.y; j++)
-                {
-                    Vector3Int posMap = new Vector3Int(i, j, 0);
-                    Character character = ItemInfoUI.Instance.getCharacter(posMap);
-                    if (character != null)
-                    {
-                        SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
-                        selectUI.Character = character;
-                    }
-                    ResourceInfo resourceInfo = DropResourceManager.Instance.GetDropByAll(posMap);
-                    if (resourceInfo != null)
-                    {
-                        SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
-                        selectUI.setTarget(posMap);
-                    }
-                    resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
-                    if (resourceInfo != null)
-                    {
-                        SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
-                        selectUI.setTarget(posMap);
-                    }
-                    TileBase tileBase = ItemInfoUI.Instance.getTile(posMap, false, false);
-                    if (tileBase != null)
-                    {
-                        SelectUI selectUI = SelectManager.Instance.getFreeSelect(posMap);
-                        selectUI.setTarget(posMap);
-                        selects["Resource"].Add(posMap);
-                    }
-                }
-            }
-        }
-
-        public void Onclick_Yes(string key)
-        {
-            transform.position = ResourceConstant.VECTOR3_DEFAULT;
-            options.gameObject.SetActive(false);
-            selects[key].ForEach((posMap) =>
+            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            this.options.gameObject.SetActive(false);
+            this.selects[key].ForEach((posMap) =>
             {
                 TileBase tileBase = ResourceMap.Instance.GetTile(posMap);
-                if (tileBase == null) return;
-                if (WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
+                if (tileBase == null)
+                {
+                    return;
+                }
+
+                if (WorkerTaskManager.Instance.GatherPos.Contains(posMap))
+                {
+                    return;
+                }
+
                 WorkerTaskManager.Instance.AddTask(new WorkerGatherTask.GatherTaskBuilder()
                     .setTarget(posMap).setGatherName(tileBase.name).build());
             });
         }
 
-        public void Onclick_No(string key)
+        /// <summary>
+        /// 取消对选中的所有Tile确定做出对应操作
+        /// </summary>
+        /// <param name="key">Tile类型</param>
+        public void Onclick_No(TileType key)
         {
-            transform.position = ResourceConstant.VECTOR3_DEFAULT;
-            options.gameObject.SetActive(false);
-            selects[key].ForEach((posMap) =>
+            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            this.options.gameObject.SetActive(false);
+            this.selects[key].ForEach((posMap) =>
             {
-                if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
+                if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap))
+                {
+                    return;
+                }
+
                 WorkerTaskManager.Instance.CancelGatherTask(posMap);
                 GatherMap.Instance.CancelGather(posMap);
             });
+        }
+
+        private void Awake()
+        {
+            Instance = this;
+            this.selects = new Dictionary<TileType, List<Vector3Int>>();
+            this.selects.Add(TileType.Resource, new List<Vector3Int>());
+            this.options = Tool.GetComponentInChildren<Transform>(this.gameObject, "Options");
+            this.options.gameObject.SetActive(false);
+            Transform gather = Tool.GetComponentInChildren<Transform>(this.options.gameObject, "Gather");
+            Tool.GetComponentInChildren<Button>(gather.gameObject, "Yes").onClick.AddListener(() =>
+            {
+                this.Onclick_Yes(TileType.Resource);
+            });
+            Tool.GetComponentInChildren<Button>(gather.gameObject, "No").onClick.AddListener(() =>
+            {
+                this.Onclick_No(TileType.Resource);
+            });
+        }
+
+        private void Update()
+        {
+            if (this.options.gameObject.activeSelf)
+            {
+                if (Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2))
+                {
+                    this.options.gameObject.SetActive(false);
+                }
+
+                return;
+            }
+
+            if (Input.GetMouseButtonDown(0) && PanelController.Instance.Panels.Count > 0 &&
+                (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance ||
+                PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance))
+            {
+                this.options.gameObject.SetActive(false);
+                Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                this.start = pos;
+                this.transform.position = new Vector3(pos.x, pos.y, 0.0f);
+                this.isDown = true;
+            }
+            else if (this.isDown && PanelController.Instance.IsForeground())
+            {
+                Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                float x = pos.x - this.start.x;
+                float y = pos.y - this.start.y;
+                if (x > 0 && y > 0)
+                {
+                    this.transform.position = new Vector3(this.start.x, this.start.y + y, 0.0f);
+                }
+                else if (x < 0 && y > 0)
+                {
+                    this.transform.position = new Vector3(this.start.x + x, this.start.y + y, 0.0f);
+                }
+                else if (x < 0 && y < 0)
+                {
+                    this.transform.position = new Vector3(this.start.x + x, this.start.y, 0.0f);
+                }
+
+                ((RectTransform)this.transform).sizeDelta = new Vector2(Mathf.Abs(x), Mathf.Abs(y));
+            }
+
+            if (Input.GetMouseButtonUp(0))
+            {
+                this.Select();
+                ((RectTransform)this.transform).sizeDelta = Vector2.zero;
+                this.isDown = false;
+                this.options.gameObject.SetActive(this.selects[TileType.Resource].Count > 0);
+            }
+        }
+
+        /// <summary>
+        /// 选择选中区域的所有物体
+        /// </summary>
+        private void Select()
+        {
+            foreach (TileType key in this.selects.Keys)
+            {
+                this.selects[key].Clear();
+            }
+
+            SelectManagerPool.Instance.FreeAll();
+            Vector3Int start = TileMap.Instance.WorldPosToMapPos(this.transform.position);
+            Vector3Int end = TileMap.Instance.WorldPosToMapPos(new Vector3(
+                this.transform.position.x + ((RectTransform)this.transform).sizeDelta.x,
+                this.transform.position.y - ((RectTransform)this.transform).sizeDelta.y,
+                this.transform.position.z));
+            for (int i = start.x; i > end.x; i--)
+            {
+                for (int j = start.y; j < end.y; j++)
+                {
+                    Vector3Int posMap = new Vector3Int(i, j, 0);
+                    Character character = ItemInfoUI.Instance.GetCharacter(posMap);
+                    if (character != null)
+                    {
+                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        selectUI.Character = character;
+                    }
+
+                    ResourceInfo resourceInfo = DropResourceManager.Instance.GetDropByAll(posMap);
+                    if (resourceInfo != null)
+                    {
+                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        selectUI.SetTarget(posMap);
+                    }
+
+                    resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
+                    if (resourceInfo != null)
+                    {
+                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        selectUI.SetTarget(posMap);
+                    }
+
+                    TileBase tileBase = ItemInfoUI.Instance.GetTile(posMap, false, false);
+                    if (tileBase != null)
+                    {
+                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        selectUI.SetTarget(posMap);
+                        this.selects[TileType.Resource].Add(posMap);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Tile的类型
+        /// </summary>
+        public enum TileType
+        {
+            /// <summary>
+            /// 资源Tile
+            /// </summary>
+            Resource,
         }
     }
 }

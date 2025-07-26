@@ -1,182 +1,218 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+Ôªønamespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.EventSystems;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// ÁÇπÂáªÂØπË±°Â±ïÁ§∫UI
+    /// </summary>
     public class ItemInfoUI : MonoBehaviourInit
     {
+        private string text;
+        private Character character; // ÂÆûÊó∂Ë∑üË∏™ËßíËâ≤
+        private string select = string.Empty;
+        private Vector3Int selectPos = default;
+
+        /// <summary>
+        /// Âçï‰æã
+        /// </summary>
         public static ItemInfoUI Instance { get; private set; }
 
-        private string text;
         /// <summary>
-        ///  µ ±∏˙◊ŸΩ«…´
+        /// Âä®ÊÄÅÊõ¥Êñ∞Tile‰ø°ÊÅØ
         /// </summary>
-        private Character character;
-        private string select = "";
-        private Vector3Int selectPos = default;
+        /// <param name="name">Á±ªÂêçÔºåÈÄâ‰∏≠ÁöÑÁ±ªËøõË°åÊòæÁ§∫</param>
+        /// <param name="pos">‰ΩçÁΩÆ</param>
+        /// <param name="text">ÊñáÊú¨‰ø°ÊÅØ</param>
+        public void UpdateInfo(string name, Vector3Int pos, string text)
+        {
+            if (this.select.Equals(name) && this.selectPos.x == pos.x && this.selectPos.y == pos.y)
+            {
+                ItemInfoPanel.Instance.SetItemInfo(text);
+            }
+        }
+
+        /// <summary>
+        /// Ëé∑ÂèñËßíËâ≤
+        /// </summary>
+        /// <param name="posMap">‰ΩçÁΩÆ</param>
+        /// <returns>ËßíËâ≤‰ø°ÊÅØ</returns>
+        public Character GetCharacter(Vector3Int posMap)
+        {
+            // Player
+            Character character = PlayerManager.Instance.GetCharacterByPos(posMap);
+            if (character == null)
+            {
+                // Enemy
+                character = EnemyManager.Instance.GetCharacterByPos(posMap);
+            }
+
+            if (character == null)
+            {
+                // Worker
+                character = WorkerManager.Instance.GetCharacterByPos(posMap);
+            }
+
+            return character;
+        }
+
+        /// <summary>
+        /// Ëé∑ÂèñTileBase
+        /// </summary>
+        /// <param name="posMap">‰ΩçÁΩÆ</param>
+        /// <param name="isTile">ÊòØÂê¶ÊòØÂú∞ÂõæTile</param>
+        /// <param name="isResource">ÊòØÂê¶ÊòØËµÑÊ∫êTile</param>
+        /// <returns>TileBase</returns>
+        public TileBase GetTile(Vector3Int posMap, bool isTile = true, bool isResource = true)
+        {
+            TileBase tileBase = BuildMap.Instance.GetTile(posMap);
+            this.text = "Build:";
+
+            // Â¶ÇÊûúÁÇπÂáªÁöÑÊòØÂ∫äÔºåÂàôÂ±ïÁ§∫ÂàÜÈÖçÁöÑWorker
+            if (tileBase != null && tileBase.name.Contains("Bed"))
+            {
+                WorkerBedUI.Instance.ShowWorkerBed(posMap);
+            }
+
+            if (tileBase == null)
+            {
+                this.text = "Resource:";
+                tileBase = ResourceMap.Instance.GetTile(posMap);
+
+                // ÊâãÂä®Ê∑ªÂä†‰ªªÂä°
+                if (tileBase != null && isResource)
+                {
+                    GatherUI.Instance.SetPostion(posMap);
+                }
+            }
+
+            if (tileBase == null && isTile)
+            {
+                this.text = "Tile:";
+                tileBase = TileMap.Instance.GetTile(posMap);
+            }
+
+            return tileBase;
+        }
+
+        /// <inheritdoc/>
+        public override void Init()
+        {
+            base.Init();
+            this.character = null;
+            this.select = string.Empty;
+            this.selectPos = default;
+        }
+
+        private string GetResource(Vector3Int posMap)
+        {
+            // Drop
+            this.select = "DropResourceManager";
+            string text = DropResourceManager.Instance.ToString(posMap);
+            if (text.Equals(string.Empty))
+            {
+                // Inventory
+                this.select = "InventoryManager";
+                text = InventoryManager.Instance.ToString(posMap);
+                if (!text.Equals(string.Empty))
+                {
+                    InventoryManager.Instance.ShowWearMenu(posMap);
+                }
+            }
+
+            return text;
+        }
 
         private void Awake()
         {
             Instance = this;
         }
 
-        void Update()
+        private void Update()
         {
-            //  µ ±∏¸–¬Character–≈œ¢
-            if (character != null)
+            // ÂÆûÊó∂Êõ¥Êñ∞Character‰ø°ÊÅØ
+            if (this.character != null)
             {
                 if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
                 {
-                    PanelController.Instance.show(ItemInfoPanel.Instance);
+                    PanelController.Instance.Show(ItemInfoPanel.Instance);
                 }
-                ItemInfoPanel.Instance.setItemInfo(character.ToString());
-                ItemInfoPanel.Instance.setCharacter(character);
+
+                ItemInfoPanel.Instance.SetItemInfo(this.character.ToString());
+                ItemInfoPanel.Instance.SetCharacter(this.character);
             }
+
             if (Input.GetMouseButtonDown(1))
             {
                 List<RaycastResult> results = Tool.GetUIByMousePos();
-                // π˝¬À≤ª «ª¨∂Ø÷˜∆¡ƒªµƒ∂Ø◊˜
-                if (results.Count > 0 && results[0].gameObject.name != "Foreground") return;
-                selectPos = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+
+                // ËøáÊª§‰∏çÊòØÊªëÂä®‰∏ªÂ±èÂπïÁöÑÂä®‰Ωú
+                if (results.Count > 0 && results[0].gameObject.name != "Foreground")
+                {
+                    return;
+                }
+
+                this.selectPos = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
                 SelectUI selectUI;
                 if (Input.GetKey(KeyCode.LeftControl))
                 {
-                    selectUI = SelectManager.Instance.getFreeSelect(selectPos);
+                    selectUI = SelectManagerPool.Instance.CreateFreeSelect(this.selectPos);
                 }
                 else
                 {
-                    selectUI = SelectManager.Instance.getFirstAndFreeAll();
+                    selectUI = SelectManagerPool.Instance.FreeAllAndGetOne();
                 }
+
                 do
                 {
-                    character = getCharacter(selectPos);
-                    if (character != null)
+                    this.character = this.GetCharacter(this.selectPos);
+                    if (this.character != null)
                     {
-                        text = character.ToString();
-                        SelectUI _selectUI = SelectManager.Instance.getByCharacter(character);
-                        if (_selectUI != null)
+                        this.text = this.character.ToString();
+                        SelectUI selectUI1 = SelectManagerPool.Instance.GetForCharacter(this.character);
+                        if (selectUI1 != null)
                         {
-                            selectUI = _selectUI;
+                            selectUI = selectUI1;
                         }
-                        selectUI.setTarget(selectPos);
-                        selectUI.Character = character;
-                        ItemInfoPanel.Instance.setCharacter(character);
+
+                        selectUI.SetTarget(this.selectPos);
+                        selectUI.Character = this.character;
+                        ItemInfoPanel.Instance.SetCharacter(this.character);
                         break;
                     }
-                    selectUI.setTarget(selectPos);
-                    // µÙ¬‰ŒÔªÚ’ﬂ≤÷ø‚
-                    select = "Resource";
-                    text = getResource(selectPos);
-                    if (!text.Equals(""))
+
+                    selectUI.SetTarget(this.selectPos);
+
+                    // ÊéâËêΩÁâ©ÊàñËÄÖ‰ªìÂ∫ì
+                    this.select = "Resource";
+                    this.text = this.GetResource(this.selectPos);
+                    if (!this.text.Equals(string.Empty))
                     {
                         break;
                     }
-                    // √ª”–ŒÔ∆∑,œ‘ æµÿÕºTile
-                    select = "Tile";
-                    TileBase tileBase = getTile(selectPos);
-                    if (tileBase == null) return;
-                    text += $"{tileBase.name}\n" +
-                        EnvironmentManager.Instance.ToString(selectPos);
+
+                    // Ê≤°ÊúâÁâ©ÂìÅ,ÊòæÁ§∫Âú∞ÂõæTile
+                    this.select = "Tile";
+                    TileBase tileBase = this.GetTile(this.selectPos);
+                    if (tileBase == null)
+                    {
+                        return;
+                    }
+
+                    this.text += $"{tileBase.name}\n" +
+                        EnvironmentManager.Instance.ToString(this.selectPos);
                     break;
-                } while (true);
+                }
+                while (true);
                 if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
                 {
-                    PanelController.Instance.show(ItemInfoPanel.Instance);
+                    PanelController.Instance.Show(ItemInfoPanel.Instance);
                 }
-                ItemInfoPanel.Instance.setItemInfo(text);
-            }
-        }
 
-        /// <summary>
-        /// ∂ØÃ¨∏¸–¬Tile–≈œ¢
-        /// </summary>
-        /// <param name="name">¿‡√˚£¨—°÷–µƒ¿‡Ω¯––œ‘ æ</param>
-        /// <param name="text"></param>
-        public void updateInfo(string name, Vector3Int pos, string text)
-        {
-            if (select.Equals(name) && selectPos.x == pos.x && selectPos.y == pos.y)
-            {
-                ItemInfoPanel.Instance.setItemInfo(text);
+                ItemInfoPanel.Instance.SetItemInfo(this.text);
             }
-        }
-
-        public Character getCharacter(Vector3Int posMap)
-        {
-            // Player
-            Character _character = PlayerManager.Instance.GetCharacterByPos(posMap);
-            if (_character == null)
-            {
-                // Enemy
-                _character = EnemyManager.Instance.GetCharacterByPos(posMap);
-            }
-            if (_character == null)
-            {
-                //  Worker
-                _character = WorkerManager.Instance.GetCharacterByPos(posMap);
-            }
-            return _character;
-        }
-
-        private string getResource(Vector3Int posMap)
-        {
-            // Drop
-            select = "DropResourceManager";
-            string text = DropResourceManager.Instance.ToString(posMap);
-            if (text.Equals(""))
-            {
-                // Inventory
-                select = "InventoryManager";
-                text = InventoryManager.Instance.ToString(posMap);
-                if (!text.Equals(""))
-                {
-                    InventoryManager.Instance.ShowWearMenu(posMap);
-                }
-            }
-            return text;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="posMap"></param>
-        /// <param name="isTile"></param>
-        /// <param name="isUI"></param>
-        /// <returns></returns>
-        public TileBase getTile(Vector3Int posMap, bool isTile = true, bool isUI = true)
-        {
-            TileBase tileBase = BuildMap.Instance.GetTile(posMap);
-            text = "Build:";
-            // »Áπ˚µ„ª˜µƒ «¥≤£¨‘Ú’π æ∑÷≈‰µƒWorker
-            if (tileBase != null && tileBase.name.Contains("Bed"))
-            {
-                WorkerBedUI.Instance.showWorkerBed(posMap);
-            }
-            if (tileBase == null)
-            {
-                text = "Resource:";
-                tileBase = ResourceMap.Instance.GetTile(posMap);
-                //  ÷∂ØÃÌº”»ŒŒÒ
-                if (tileBase != null && isUI)
-                {
-                    GatherUI.Instance.setPostion(posMap);
-                }
-            }
-            if (tileBase == null && isTile)
-            {
-                text = "Tile:";
-                tileBase = TileMap.Instance.GetTile(posMap);
-            }
-            return tileBase;
-        }
-
-        public override void Init()
-        {
-            base.Init();
-            character = null;
-            select = "";
-            selectPos = default;
         }
     }
 }

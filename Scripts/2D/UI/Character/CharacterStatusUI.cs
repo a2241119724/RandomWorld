@@ -1,42 +1,48 @@
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// è§’è‰²çŠ¶æ€ UI
+    /// </summary>
     public class CharacterStatusUI : MonoBehaviour
     {
-        private Slider slider; // ÑªÌõ½ø¶ÈÌõ
-        private Text text; // ÑªÁ¿ÏÔÊ¾
+        private Slider slider; // è¡€æ¡è¿›åº¦æ¡
+        private Text text; // è¡€é‡æ˜¾ç¤º
+
+        /// <summary>
+        /// æ›´æ–°æ•Œäººèº«ä½“çŠ¶å†µ
+        /// </summary>
+        /// <param name="hp">å½“å‰è¡€é‡</param>
+        /// <param name="maxHp">æœ€å¤§è¡€é‡</param>
+        public void UpdateStatus(float hp, float maxHp)
+        {
+            // æ•Œäººè¡€æ¡
+            this.slider.value = hp / (float)maxHp;
+            this.text.text = System.Math.Round(hp, 1) + "/" + maxHp;
+        }
 
         private void Awake()
         {
-            slider = transform.Find("HpBar").GetComponent<Slider>();
-            if (slider == null)
+            this.slider = this.transform.Find("HpBar").GetComponent<Slider>();
+            if (this.slider == null)
             {
                 LogManager.Instance.Log("slider Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
-            text = transform.Find("HpCount").GetComponent<Text>();
-            if (text == null)
+
+            this.text = this.transform.Find("HpCount").GetComponent<Text>();
+            if (this.text == null)
             {
                 LogManager.Instance.Log("text Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
         }
 
-        void Update()
+        private void Update()
         {
-            transform.rotation = Quaternion.Euler(0, 0, 0);
-        }
-
-        /// <summary>
-        /// ¸üĞÂµĞÈËÉíÌå×´¿ö
-        /// </summary>
-        public void updateStatus(float Hp, float maxHp)
-        {
-            // µĞÈËÑªÌõ
-            slider.value = Hp / (float)maxHp;
-            text.text = System.Math.Round(Hp, 1) + "/" + maxHp;
+            this.transform.rotation = Quaternion.Euler(0, 0, 0);
         }
     }
 }

@@ -6,8 +6,8 @@
         {
             //// 发布事件,GetSiblingIndex索引(第几个孩子)
             //selectAndShow.select(item);
-            BackpackMenuPanel.Instance.Select.selectItemIndex = i;
-            BackpackMenuPanel.Instance.Select.item = (BackpackItem)item;
+            BackpackMenuPanel.Instance.Select.SelectItemIndex = i;
+            BackpackMenuPanel.Instance.Select.Item = (BackpackItem)item;
         }
     }
 }

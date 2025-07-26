@@ -1,45 +1,51 @@
-using Photon.Pun;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using Photon.Pun;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// æš‚åœèœå•é¢æ¿
+    /// </summary>
     public class PauseMenuPanel : BasePanel<PauseMenuPanel>
     {
-        private AudioSource audioSource; // ±»¿ØÖÆ
+        private AudioSource audioSource; // è¢«æ§åˆ¶
 
         public PauseMenuPanel()
         {
-            Name = "PauseMenu";
-            setPanel();
-            audioSource = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).GetComponent<AudioSource>();
-            if (audioSource == null)
+            this.Name = "PauseMenu";
+            this.OpenPanel();
+            this.audioSource = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).GetComponent<AudioSource>();
+            if (this.audioSource == null)
             {
                 LogManager.Instance.Log("audioSource Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
-            Tool.GetComponentInChildren<Button>(panel, "Exit").onClick.AddListener(OnClick_Exit);
-            Tool.GetComponentInChildren<Button>(panel, "BackMenu").onClick.AddListener(OnClick_BackMenu);
-            Tool.GetComponentInChildren<Slider>(panel, "Audio").onValueChanged.AddListener(OnClick_Audio);
-            Tool.GetComponentInChildren<Button>(panel, "BackGame").onClick.AddListener(OnClick_BackGame);
+
+            Tool.GetComponentInChildren<Button>(this.Panel, "Exit").onClick.AddListener(this.OnClick_Exit);
+            Tool.GetComponentInChildren<Button>(this.Panel, "BackMenu").onClick.AddListener(this.OnClick_BackMenu);
+            Tool.GetComponentInChildren<Slider>(this.Panel, "Audio").onValueChanged.AddListener(this.OnClick_Audio);
+            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
         /// <summary>
-        /// ÍË³öÓÎÏ·
+        /// é€€å‡ºæ¸¸æˆ
         /// </summary>
-        public void OnClick_Exit()
+        private void OnClick_Exit()
         {
-            // ĞèÒª¹Ø±ÕÁ¬½Ó
+            // éœ€è¦å…³é—­è¿æ¥
             PhotonNetwork.LeaveLobby();
             PhotonNetwork.Disconnect();
 #if UNITY_EDITOR
@@ -50,27 +56,27 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// ·µ»Ø²Ëµ¥
+        /// è¿”å›èœå•
         /// </summary>
-        public void OnClick_BackMenu()
+        private void OnClick_BackMenu()
         {
             Tool.LoadScene("Menu");
         }
 
         /// <summary>
-        /// µ÷½ÚÒôÁ¿
+        /// è°ƒèŠ‚éŸ³é‡
         /// </summary>
-        public void OnClick_Audio(float value)
+        private void OnClick_Audio(float value)
         {
-            audioSource.volume = value;
+            this.audioSource.volume = value;
         }
 
         /// <summary>
-        /// ·µ»ØÓÎÏ·
+        /// è¿”å›æ¸¸æˆ
         /// </summary>
-        public void OnClick_BackGame()
+        private void OnClick_BackGame()
         {
-            controller.close();
+            this.Controller.Close();
         }
     }
 }

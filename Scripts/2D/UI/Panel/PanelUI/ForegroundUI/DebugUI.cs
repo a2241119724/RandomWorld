@@ -1,23 +1,33 @@
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// Debug UI
+    /// </summary>
     public class DebugUI : MonoBehaviour
     {
-        public static DebugUI Instance { private set; get; }
-
         private Text text;
+
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static DebugUI Instance { get; private set; }
+
+        /// <summary>
+        /// 更新信息
+        /// </summary>
+        /// <param name="text">信息</param>
+        public void UpdateInfo(string text)
+        {
+            this.text.text = text;
+        }
 
         private void Awake()
         {
-            text = Tool.GetComponentInChildren<Text>(gameObject, "Info");
+            this.text = Tool.GetComponentInChildren<Text>(this.gameObject, "Info");
             Instance = this;
-        }
-
-        public void updateTaskInfo(string _text)
-        {
-            text.text = _text;
         }
     }
 }

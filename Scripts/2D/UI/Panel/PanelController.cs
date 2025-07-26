@@ -1,18 +1,18 @@
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+
+    /// <summary>
+    /// é¢æ¿æ§åˆ¶å™¨
+    /// </summary>
     public class PanelController : Singleton<PanelController>
     {
-        public Transform Parent; // ËùÓĞÃæ°å¸¸ÎïÌå
-        public Stack<IBasePanel> Panels { get; set; }
-
         public PanelController()
         {
-            Parent = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).transform;
-            Panels = new Stack<IBasePanel>();
-            if (Panels == null)
+            this.Parent = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).transform;
+            this.Panels = new Stack<IBasePanel>();
+            if (this.Panels == null)
             {
                 LogManager.Instance.Log("panels assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
@@ -20,45 +20,60 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Õ¹Ê¾ÏÂÒ»¸ö½çÃæ
+        /// æ‰€æœ‰é¢æ¿çˆ¶ç‰©ä½“
         /// </summary>
-        /// <param name="basePanel">ÏÂÒ»¸ö½çÃæĞÅÏ¢</param>
-        /// <param name="parent">¸¸ÎïÌå</param>
-        public void show(IBasePanel basePanel)
+        public Transform Parent { get; set; }
+
+        /// <summary>
+        /// é¢æ¿æ ˆ
+        /// </summary>
+        public Stack<IBasePanel> Panels { get; set; }
+
+        /// <summary>
+        /// å±•ç¤ºä¸‹ä¸€ä¸ªç•Œé¢
+        /// </summary>
+        /// <param name="basePanel">ä¸‹ä¸€ä¸ªç•Œé¢ä¿¡æ¯</param>
+        public void Show(IBasePanel basePanel)
         {
-            if (Panels.Count > 0 && !(basePanel is ItemInfoPanel
+            if (this.Panels.Count > 0 && !(basePanel is ItemInfoPanel
                 || basePanel is AIChatPanel))
             {
-                Panels.Peek().OnPause();
+                this.Panels.Peek().OnPause();
             }
-            Panels.Push(basePanel);
+
+            this.Panels.Push(basePanel);
             basePanel.OnEnter();
         }
 
-        public void close()
+        /// <summary>
+        /// å…³é—­é¢æ¿
+        /// </summary>
+        public void Close()
         {
-            if (Panels.Count > 0)
+            if (this.Panels.Count > 0)
             {
-                // ÏÈpopÔÙÖ´ĞĞÍË³ö
-                IBasePanel panel = Panels.Pop();
+                // å…ˆpopå†æ‰§è¡Œé€€å‡º
+                IBasePanel panel = this.Panels.Pop();
                 panel.OnExit();
             }
-            if (Panels.Count > 0)
+
+            if (this.Panels.Count > 0)
             {
-                Panels.Peek().OnRun();
+                this.Panels.Peek().OnRun();
             }
         }
 
         /// <summary>
-        /// ×îÉÏÃæµÄÃæ°åÊÇ·ñÊÇÇ°¾°Ãæ°å
+        /// æœ€ä¸Šé¢çš„é¢æ¿æ˜¯å¦æ˜¯å‰æ™¯é¢æ¿
         /// </summary>
-        /// <returns></returns>
-        public bool isForeground()
+        /// <returns>æ˜¯å¦</returns>
+        public bool IsForeground()
         {
-            if (Panels.Count > 0)
+            if (this.Panels.Count > 0)
             {
-                return Panels.Peek() == ForegroundPanel.Instance;
+                return this.Panels.Peek() == ForegroundPanel.Instance;
             }
+
             return false;
         }
     }

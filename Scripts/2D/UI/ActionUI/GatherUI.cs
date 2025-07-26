@@ -1,54 +1,78 @@
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// 采集对应的UI
+    /// </summary>
     public class GatherUI : MonoBehaviour
     {
+        private Vector3Int posMap;
+
+        /// <summary>
+        /// 单例
+        /// </summary>
         public static GatherUI Instance { get; private set; }
 
-        private Vector3Int posMap;
+        /// <summary>
+        /// 设置采集UI的位置
+        /// </summary>
+        /// <param name="posMap">位置</param>
+        public void SetPostion(Vector3Int posMap)
+        {
+            this.posMap = posMap;
+            this.transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
+        }
+
+        /// <summary>
+        /// 确定采集
+        /// </summary>
+        public void Onclick_Yes()
+        {
+            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            if (WorkerTaskManager.Instance.GatherPos.Contains(this.posMap))
+            {
+                return;
+            }
+
+            WorkerTaskManager.Instance.AddTask(new WorkerGatherTask.GatherTaskBuilder()
+                .setTarget(this.posMap).setGatherName("Tree").build());
+        }
+
+        /// <summary>
+        /// 取消采集
+        /// </summary>
+        public void Onclick_No()
+        {
+            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            if (!WorkerTaskManager.Instance.GatherPos.Contains(this.posMap))
+            {
+                return;
+            }
+
+            WorkerTaskManager.Instance.CancelGatherTask(this.posMap);
+            GatherMap.Instance.CancelGather(this.posMap);
+        }
 
         private void Awake()
         {
             Instance = this;
         }
 
-        void Start()
+        private void Start()
         {
-            Tool.GetComponentInChildren<Button>(gameObject, "Yes").onClick.AddListener(Onclick_Yes);
-            Tool.GetComponentInChildren<Button>(gameObject, "No").onClick.AddListener(Onclick_No);
+            Tool.GetComponentInChildren<Button>(this.gameObject, "Yes").onClick.AddListener(this.Onclick_Yes);
+            Tool.GetComponentInChildren<Button>(this.gameObject, "No").onClick.AddListener(this.Onclick_No);
         }
 
         private void Update()
         {
-            // ���ǲ���Ĭ��λ�ã���ŷ���Ĭ��λ��
-            if (Input.GetMouseButtonDown(1) && transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
+            // 若是不在默认位置，则才返回默认位置
+            if (Input.GetMouseButtonDown(1) && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
             {
-                transform.position = ResourceConstant.VECTOR3_DEFAULT;
+                this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }
-        }
-
-        public void setPostion(Vector3Int posMap)
-        {
-            this.posMap = posMap;
-            transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
-        }
-
-        public void Onclick_Yes()
-        {
-            transform.position = ResourceConstant.VECTOR3_DEFAULT;
-            if (WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
-            WorkerTaskManager.Instance.AddTask(new WorkerGatherTask.GatherTaskBuilder()
-                .setTarget(posMap).setGatherName("Tree").build());
-        }
-
-        public void Onclick_No()
-        {
-            transform.position = ResourceConstant.VECTOR3_DEFAULT;
-            if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap)) return;
-            WorkerTaskManager.Instance.CancelGatherTask(posMap);
-            GatherMap.Instance.CancelGather(posMap);
         }
     }
 }

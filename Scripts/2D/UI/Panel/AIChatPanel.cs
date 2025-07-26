@@ -1,19 +1,25 @@
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// AI聊天面板
+    /// </summary>
     public class AIChatPanel : BasePanel<AIChatPanel>
     {
         public AIChatPanel()
         {
-            Name = "AIChat";
-            setPanel();
-            Tool.GetComponentInChildren<Button>(panel, "Send").onClick.AddListener(OnClick_Send);
+            this.Name = "AIChat";
+            this.OpenPanel();
+            Tool.GetComponentInChildren<Button>(this.Panel, "Send").onClick.AddListener(this.OnClick_Send);
         }
 
+        /// <summary>
+        /// 发送聊天请求
+        /// </summary>
         public void OnClick_Send()
         {
-            AIChatUI.Instance.send();
+            AIChatUI.Instance.Send();
         }
     }
 }

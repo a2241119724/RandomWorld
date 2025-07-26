@@ -1,9 +1,12 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// 物品信心面板
+    /// </summary>
     public class ItemInfoPanel : BasePanel<ItemInfoPanel>
     {
         private Text textUI;
@@ -11,47 +14,60 @@ namespace LAB2D
 
         public ItemInfoPanel()
         {
-            Name = "ItemInfo";
-            setPanel();
-            textUI = Tool.GetComponentInChildren<Text>(panel, "Info");
-            character = Tool.GetComponentInChildren<Transform>(panel, "Character");
+            this.Name = "ItemInfo";
+            this.OpenPanel();
+            this.textUI = Tool.GetComponentInChildren<Text>(this.Panel, "Info");
+            this.character = Tool.GetComponentInChildren<Transform>(this.Panel, "Character");
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
+        /// <inheritdoc/>
         public override void OnPause()
         {
             base.OnPause();
-            Time.timeScale = 0; // ��ͣ
+            Time.timeScale = 0; // 暂停
         }
 
+        /// <inheritdoc/>
         public override void OnRun()
         {
             base.OnRun();
             Time.timeScale = ForegroundPanel.Instance.TimeScale;
         }
 
-        public void setItemInfo(string text)
+        /// <summary>
+        /// 设置道具信息
+        /// </summary>
+        /// <param name="text">信息</param>
+        public void SetItemInfo(string text)
         {
-            character.gameObject.SetActive(false);
-            textUI.text = text;
+            this.character.gameObject.SetActive(false);
+            this.textUI.text = text;
         }
 
-        public void setCharacter(Character character)
+        /// <summary>
+        /// 设置角色
+        /// </summary>
+        /// <param name="character">角色</param>
+        public void SetCharacter(Character character)
         {
             this.character.gameObject.SetActive(true);
             for (int i = 0; i < this.character.childCount; i++)
             {
                 this.character.GetChild(i).gameObject.SetActive(false);
             }
+
             if (character is Worker)
             {
                 Transform worker = this.character.Find("Worker");
@@ -62,6 +78,7 @@ namespace LAB2D
                     worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.GetImage(
                         ItemDataManager.Instance.GetById(weapon.Id).ImageName);
                 }
+
                 Dictionary<Equipment.EquipType, Equipment> equipments = ((Worker)character).WearData.Equipments;
                 foreach (var item in equipments)
                 {

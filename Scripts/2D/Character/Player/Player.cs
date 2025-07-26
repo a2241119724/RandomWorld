@@ -39,7 +39,7 @@
                 GlobalInit.Instance.ShowTip("UP " + this.level);
             }
 
-            PlayerStatusUI.Instance.updatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
+            PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@
                 this.CharacterDataLAB.Hp = this.CharacterDataLAB.MaxHp;
             }
 
-            PlayerStatusUI.Instance.updatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
+            PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@
                 return;
             }
 
-            PlayerStatusUI.Instance.updatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
+            PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
         }
 
         /// <summary>
@@ -153,9 +153,9 @@
                 return;
             }
 
-            if (InfoUI.Instance != null)
+            if (GameInfoUI.Instance != null)
             {
-                InfoUI.Instance.setPosition(this.transform.position);
+                GameInfoUI.Instance.SetPosition(this.transform.position);
             }
 
             // if (Map.Instance != null)
@@ -172,7 +172,7 @@
                 PlayerManager.Instance.Mine = this;
                 PhotonNetwork.LocalPlayer.TagObject = this;
                 Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
-                PlayerStatusUI.Instance.updatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
+                PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
             }
             else if (!this.photonView.IsMine)
             {
@@ -217,9 +217,9 @@
                 // miniCamera.Target = transform.position;
                 this.mainCamera.DirectToPosition(this.transform.position);
                 this.miniCamera.DirectToPosition(this.transform.position);
-                if (InfoUI.Instance != null)
+                if (GameInfoUI.Instance != null)
                 {
-                    InfoUI.Instance.setPosition(this.transform.position);
+                    GameInfoUI.Instance.SetPosition(this.transform.position);
                 }
 
                 // if (Map.Instance != null)

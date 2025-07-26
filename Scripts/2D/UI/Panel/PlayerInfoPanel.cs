@@ -1,32 +1,37 @@
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// 玩家信息面面板
+    /// </summary>
     public class PlayerInfoPanel : BasePanel<PlayerInfoPanel>
     {
         public PlayerInfoPanel()
         {
-            Name = "PlayerInfo";
-            setPanel();
-            Tool.GetComponentInChildren<Button>(panel, "BackGame").onClick.AddListener(OnClick_BackGame);
+            this.Name = "PlayerInfo";
+            this.OpenPanel();
+            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
         /// <summary>
-        /// ������Ϸ
+        /// 返回游戏
         /// </summary>
         public void OnClick_BackGame()
         {
-            controller.close();
+            this.Controller.Close();
         }
     }
 }

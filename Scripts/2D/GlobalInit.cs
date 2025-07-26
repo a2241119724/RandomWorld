@@ -38,7 +38,7 @@
             }
 
             g.name = this.tip.name;
-            g.GetComponent<TipUI>().setText(text);
+            g.GetComponent<TipUI>().SetText(text);
             g.transform.SetParent(this.transform, false);
 
             // 由于实例化产生形状变化,重新设置
@@ -82,11 +82,11 @@
                     return;
                 }
 
-                PanelController.Instance.show(CreateOrJoinPanel.Instance);
+                PanelController.Instance.Show(CreateOrJoinPanel.Instance);
 
                 // 初始化背包
-                BackpackMenuPanel.Instance.panel.SetActive(true);
-                BackpackMenuPanel.Instance.panel.SetActive(false);
+                BackpackMenuPanel.Instance.Panel.SetActive(true);
+                BackpackMenuPanel.Instance.Panel.SetActive(false);
             }
 
             // 添加10个种植任务
@@ -106,7 +106,7 @@
                 if (PanelController.Instance.Panels.Count == 0)
                 {
                     BuildingUI.Instance.enabled = false;
-                    PanelController.Instance.show(BuildMenuPanel.Instance);
+                    PanelController.Instance.Show(BuildMenuPanel.Instance);
                     IsAvailableMap.Instance.ClearShow();
                 }
                 else if (PanelController.Instance.Panels.Peek() != ForegroundPanel.Instance &&
@@ -120,7 +120,7 @@
                         ItemInfoUI.Instance.Init();
                     }
 
-                    PanelController.Instance.close();
+                    PanelController.Instance.Close();
                 }
             }
 
@@ -132,7 +132,7 @@
                     && PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
                 {
                     ItemInfoUI.Instance.Init();
-                    PanelController.Instance.close();
+                    PanelController.Instance.Close();
                 }
             }
         }

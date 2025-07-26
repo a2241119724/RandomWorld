@@ -1,30 +1,36 @@
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    /// <summary>
+    /// è¿›åº¦æ¡é¢æ¿
+    /// </summary>
     public class AsyncProgressPanel : BasePanel<AsyncProgressPanel>
     {
         public AsyncProgressPanel()
         {
-            Name = "AsyncProgress";
-            setPanel();
-            panel.transform.GetComponent<AsyncProgressUI>().complete += complate;
+            this.Name = "AsyncProgress";
+            this.OpenPanel();
+            this.Panel.transform.GetComponent<AsyncProgressUI>().Complete += this.Complate;
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
-            // ½øÈëÓÎÏ·Ö÷½çÃæ
-            controller.show(ForegroundPanel.Instance);
+
+            // è¿›å…¥æ¸¸æˆä¸»ç•Œé¢
+            this.Controller.Show(ForegroundPanel.Instance);
         }
 
-        private void complate()
+        private void Complate()
         {
-            // ¹Ø±Õ¸Ã½çÃæ
-            controller.close();
+            // å…³é—­è¯¥ç•Œé¢
+            this.Controller.Close();
         }
     }
 }

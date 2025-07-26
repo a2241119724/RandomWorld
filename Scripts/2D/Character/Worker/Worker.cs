@@ -435,7 +435,7 @@
             }
 
             base.ReduceHp(hp);
-            this.statusBar.updateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
             this.Manager.changeState(WorkerStateType.Attack);
         }
 
@@ -491,7 +491,7 @@
         {
             base.Start();
             this.nameUI.text = this.name;
-            this.statusBar.updateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
         }
 
         private void Update()

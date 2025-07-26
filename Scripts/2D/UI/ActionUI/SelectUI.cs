@@ -1,38 +1,53 @@
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// Select UI
+    /// </summary>
     public class SelectUI : MonoBehaviourInit
     {
+        /// <summary>
+        /// 选中的角色
+        /// </summary>
         public Character Character { get; set; }
+
+        /// <summary>
+        /// 选中的目标
+        /// </summary>
         public Vector3Int Target { get; private set; }
+
+        /// <summary>
+        /// 设置Select的位置
+        /// </summary>
+        /// <param name="posMap">位置</param>
+        public void SetTarget(Vector3Int posMap)
+        {
+            this.Target = posMap;
+            Vector3 pos = TileMap.Instance.MapPosToWorldPos(posMap);
+            this.transform.position = new Vector3(pos.x, pos.y, 0.0f);
+        }
+
+        /// <inheritdoc/>
+        public override void Init()
+        {
+            base.Init();
+            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            this.Target = ResourceConstant.VECTOR3INT_DEFAULT;
+            this.Character = null;
+        }
 
         private void Awake()
         {
-            Init();
+            this.Init();
         }
 
         private void Update()
         {
-            if (Character != null)
+            if (this.Character != null)
             {
-                transform.position = Character.transform.position;
+                this.transform.position = this.Character.transform.position;
             }
-        }
-
-        public void setTarget(Vector3Int posMap)
-        {
-            Target = posMap;
-            Vector3 pos = TileMap.Instance.MapPosToWorldPos(posMap);
-            transform.position = new Vector3(pos.x, pos.y, 0.0f);
-        }
-
-        public override void Init()
-        {
-            base.Init();
-            transform.position = ResourceConstant.VECTOR3_DEFAULT;
-            Target = ResourceConstant.VECTOR3INT_DEFAULT;
-            Character = null;
         }
     }
 }
