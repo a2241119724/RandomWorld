@@ -1,82 +1,100 @@
-using Photon.Pun;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using Photon.Pun;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// æ¸¸æˆå‰æ™¯é¢æ¿
+    /// </summary>
     public class ForegroundPanel : BasePanel<ForegroundPanel>
     {
-        public float TimeScale { get; set; } = 1;
         /// <summary>
-        /// Æ¥ÅäÊı×Ö°´¼ü
+        /// åŒ¹é…æ•°å­—æŒ‰é”®
         /// </summary>
-        public readonly IBasePanel[] ToolMenus = new IBasePanel[] { BuildMenuPanel.Instance, PlayerInfoPanel.Instance, BackpackMenuPanel.Instance,
-                WorkerTaskInfoPanel.Instance,InventoryMenuPanel.Instance,AIChatPanel.Instance};
+        public readonly IBasePanel[] ToolMenus = new IBasePanel[]
+        {
+            BuildMenuPanel.Instance, PlayerInfoPanel.Instance, BackpackMenuPanel.Instance,
+            WorkerTaskInfoPanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
+        };
 
         public ForegroundPanel()
         {
-            Name = "Foreground";
-            setPanel();
-            Tool.GetComponentInChildren<Button>(panel, "Pause").onClick.AddListener(OnClick_Pause);
-            Button attack = Tool.GetComponentInChildren<Button>(panel, "Attack");
+            this.Name = "Foreground";
+            this.OpenPanel();
+            Tool.GetComponentInChildren<Button>(this.Panel, "Pause").onClick.AddListener(this.OnClick_Pause);
+            Button attack = Tool.GetComponentInChildren<Button>(this.Panel, "Attack");
             if (attack != null)
             {
-                Tool.GetComponentInChildren<Button>(panel, "Attack").onClick.AddListener(Onclick_Attack);
+                Tool.GetComponentInChildren<Button>(this.Panel, "Attack").onClick.AddListener(this.Onclick_Attack);
             }
-            Tool.GetComponentInChildren<Button>(panel, "Setting").onClick.AddListener(Onclick_Setting);
-            Tool.GetComponentInChildren<Button>(panel, "GeneratorWorker").onClick.AddListener(Onclick_GeneratorWorker);
-            Tool.GetComponentInChildren<Button>(panel, "GeneratorItem").onClick.AddListener(Onclick_GeneratorItem);
-            Tool.GetComponentInChildren<Button>(panel, "Save").onClick.AddListener(Onclick_Save);
-            // Æ¥ÅäÊı×Ö°´¼ü
-            Transform tools = Tool.GetComponentInChildren<Transform>(panel, "Panel");
+
+            Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.Onclick_Setting);
+            Tool.GetComponentInChildren<Button>(this.Panel, "GeneratorWorker").onClick.AddListener(this.Onclick_GeneratorWorker);
+            Tool.GetComponentInChildren<Button>(this.Panel, "GeneratorItem").onClick.AddListener(this.Onclick_GeneratorItem);
+            Tool.GetComponentInChildren<Button>(this.Panel, "Save").onClick.AddListener(this.Onclick_Save);
+
+            // åŒ¹é…æ•°å­—æŒ‰é”®
+            Transform tools = Tool.GetComponentInChildren<Transform>(this.Panel, "Panel");
             for (int i = 0; i < tools.childCount; i++)
             {
                 int temp = i;
                 tools.GetChild(i).GetComponent<Button>().onClick.AddListener(() =>
                 {
-                    controller.show(ToolMenus[temp]);
+                    this.Controller.Show(this.ToolMenus[temp]);
                 });
             }
         }
 
+        /// <summary>
+        /// æ¸¸æˆé€Ÿç‡
+        /// </summary>
+        public float TimeScale { get; set; } = 1;
+
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
+        /// <inheritdoc/>
         public override void OnPause()
         {
             base.OnPause();
-            // ÉäÏßÊÇ·ñÄÜ´©Í¸(Ê¹µÃ²»ÄÜµã»÷°´Å¥)
-            panel.GetComponent<CanvasGroup>().blocksRaycasts = false;
-            Time.timeScale = 0; // ÔİÍ£
+
+            // å°„çº¿æ˜¯å¦èƒ½ç©¿é€(ä½¿å¾—ä¸èƒ½ç‚¹å‡»æŒ‰é’®)
+            this.Panel.GetComponent<CanvasGroup>().blocksRaycasts = false;
+            Time.timeScale = 0; // æš‚åœ
         }
 
+        /// <inheritdoc/>
         public override void OnRun()
         {
             base.OnRun();
-            // ÉäÏßÊÇ·ñÄÜ´©Í¸(Ê¹µÃÄÜµã»÷°´Å¥)
-            panel.GetComponent<CanvasGroup>().blocksRaycasts = true;
-            Time.timeScale = TimeScale; // ÔİÍ£
+
+            // å°„çº¿æ˜¯å¦èƒ½ç©¿é€(ä½¿å¾—èƒ½ç‚¹å‡»æŒ‰é’®)
+            this.Panel.GetComponent<CanvasGroup>().blocksRaycasts = true;
+            Time.timeScale = this.TimeScale; // æš‚åœ
         }
 
         /// <summary>
-        /// ÔİÍ£ÓÎÏ·
+        /// æš‚åœæ¸¸æˆ
         /// </summary>
         private void OnClick_Pause()
         {
-            controller.show(PauseMenuPanel.Instance);
+            this.Controller.Show(PauseMenuPanel.Instance);
         }
 
         /// <summary>
-        /// Íæ¼Ò¹¥»÷
+        /// ç©å®¶æ”»å‡»
         /// </summary>
-        public void Onclick_Attack()
+        private void Onclick_Attack()
         {
             if (PlayerManager.Instance.Select.Weapon != null)
             {
@@ -92,35 +110,36 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// ´ò¿ªÉèÖÃÃæ°å
+        /// æ‰“å¼€è®¾ç½®é¢æ¿
         /// </summary>
-        public void Onclick_Setting()
+        private void Onclick_Setting()
         {
-            controller.show(SettingMenuPanel.Instance);
+            this.Controller.Show(SettingMenuPanel.Instance);
         }
 
         /// <summary>
-        /// ²âÊÔÉú³ÉÍæ¼Ò
+        /// æµ‹è¯•ç”Ÿæˆç©å®¶
         /// </summary>
-        public void Onclick_GeneratorWorker()
+        private void Onclick_GeneratorWorker()
         {
             WorkerManager.Instance.create(PlayerManager.Instance.Mine.transform.position);
         }
 
-        public void Onclick_Save()
+        private void Onclick_Save()
         {
-            GlobalInit.Instance.ShowTip("±£´æÊı¾İ");
+            GlobalInit.Instance.ShowTip("ä¿å­˜æ•°æ®");
             foreach (ASaveData saveData in ASaveData.Instances)
             {
                 saveData.SaveData();
             }
+
             foreach (AMonoSaveData saveData in AMonoSaveData.Instances)
             {
                 saveData.SaveData();
             }
         }
 
-        public void Onclick_GeneratorItem()
+        private void Onclick_GeneratorItem()
         {
             if (EnemyManager.Instance.Characters.Count > 0)
             {

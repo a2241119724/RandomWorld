@@ -31,12 +31,12 @@
         public IEnumerator GenResource(Coroutine coroutine = null)
         {
             yield return coroutine;
-            AsyncProgressUI.Instance.setTip("生成资源...");
+            AsyncProgressUI.Instance.SetTip("生成资源...");
             for (int i = 0; i < Height; i++)
             {
                 for (int j = 0; j < Width; j++)
                 {
-                    AsyncProgressUI.Instance.addOneProcess();
+                    AsyncProgressUI.Instance.AddOneProcess();
                     if (FrameControl.Instance.IsNeedStop(1))
                     {
                         yield return null;
@@ -45,7 +45,7 @@
                     Vector3Int posMap = new Vector3Int(i, j, 0);
                     if (TileMap.Instance.IsCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.9f)
                     {
-                        TileType tileType = TileMap.Instance.MapTiles[i, j];
+                        MapTileType tileType = TileMap.Instance.MapTiles[i, j];
                         TileBase tileBase = ResourcesManager.Instance.GetAssetByTileType(tileType);
                         if (tileBase == null)
                         {
@@ -70,7 +70,7 @@
                 if (this.ResourceMapDataLAB.TreeCurCount < this.ResourceMapDataLAB.TreeTotalCount)
                 {
                     Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap();
-                    TileType tileType = TileMap.Instance.MapTiles[pos.x, pos.y];
+                    MapTileType tileType = TileMap.Instance.MapTiles[pos.x, pos.y];
                     TileBase tileBase = ResourcesManager.Instance.GetAssetByTileType(tileType, "Tree");
                     if (tileBase == null)
                     {
@@ -123,7 +123,7 @@
         /// </summary>
         public void SetProgress()
         {
-            AsyncProgressUI.Instance.addTotal(Height * Width);
+            AsyncProgressUI.Instance.AddTotal(Height * Width);
         }
 
         /// <inheritdoc/>

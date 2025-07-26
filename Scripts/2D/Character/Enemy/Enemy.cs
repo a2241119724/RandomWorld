@@ -167,7 +167,7 @@
             }
 
             base.ReduceHp(Hp);
-            this.statusBar.updateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
         }
 
         public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
@@ -179,7 +179,7 @@
             else if (stream.IsReading)
             {
                 this.CharacterDataLAB.Hp = (float)stream.ReceiveNext();
-                this.statusBar.updateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+                this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
             }
         }
 
@@ -209,7 +209,7 @@
             }
 
             // 更新敌人身体状况
-            this.statusBar.updateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
         }
 
         /// <summary>
@@ -217,7 +217,7 @@
         /// </summary>
         protected override void Death()
         {
-            this.statusBar.updateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
             if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
             {
                 EnemyManager.Instance.Remove(this);

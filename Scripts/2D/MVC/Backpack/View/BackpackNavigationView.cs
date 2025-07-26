@@ -21,7 +21,7 @@ namespace LAB2D
 
         protected override void init()
         {
-            BackpackMenuPanel.Instance.Select.init();
+            BackpackMenuPanel.Instance.Select.Init();
         }
     }
 }

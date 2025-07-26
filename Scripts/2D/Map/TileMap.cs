@@ -24,23 +24,23 @@
         /// <summary>
         /// 地图瓦片
         /// </summary>
-        public TileType[,] MapTiles { get; set; }
+        public MapTileType[,] MapTiles { get; set; }
 
         /// <summary>
         /// 显示地图
         /// </summary>
         /// <param name="mapTiles">所有瓦片</param>
         /// <returns>迭代器</returns>
-        public IEnumerator ShowTilemap(TileType[,] mapTiles)
+        public IEnumerator ShowTilemap(MapTileType[,] mapTiles)
         {
-            AsyncProgressUI.Instance.setTip("正在展示地图...");
+            AsyncProgressUI.Instance.SetTip("正在展示地图...");
 
             // 循环每一个点
             for (int i = 0; i < Height; i++)
             {
                 for (int j = 0; j < Width; j++)
                 {
-                    AsyncProgressUI.Instance.addOneProcess();
+                    AsyncProgressUI.Instance.AddOneProcess();
                     this.tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourcesManager.Instance.GetAsset(mapTiles[i, j].ToString()));
                     if (FrameControl.Instance.IsNeedStop(1))
                     {
@@ -91,27 +91,27 @@
         /// <returns>迭代器</returns>
         public IEnumerator Create()
         {
-            AsyncProgressUI.Instance.setTip("正在生成随机坐标...");
+            AsyncProgressUI.Instance.SetTip("正在生成随机坐标...");
 
             // 生成随机坐标
             for (int i = 0; i < this.randomCount; i++)
             {
-                this.MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (TileType)(UnityEngine.Random.Range(2, 14) / 2);
-                AsyncProgressUI.Instance.addOneProcess();
+                this.MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (MapTileType)(UnityEngine.Random.Range(2, 14) / 2);
+                AsyncProgressUI.Instance.AddOneProcess();
                 if (FrameControl.Instance.IsNeedStop(1))
                 {
                     yield return null;
                 }
             }
 
-            TileType[,] tiles = new TileType[Height, Width];
+            MapTileType[,] tiles = new MapTileType[Height, Width];
             if (tiles == null)
             {
                 LogManager.Instance.Log("tiles assign resource Error!!!", LogManager.LogLevel.Error);
                 yield break;
             }
 
-            AsyncProgressUI.Instance.setTip("正在填补地图...");
+            AsyncProgressUI.Instance.SetTip("正在填补地图...");
 
             // 循环每一个点
             for (int i = 0; i < Height; i++)
@@ -123,8 +123,8 @@
                         yield return null;
                     }
 
-                    AsyncProgressUI.Instance.addOneProcess();
-                    if (this.MapTiles[i, j] != TileType.Default)
+                    AsyncProgressUI.Instance.AddOneProcess();
+                    if (this.MapTiles[i, j] != MapTileType.Default)
                     {
                         tiles[i, j] = this.MapTiles[i, j];
                         continue;
@@ -185,12 +185,12 @@
             Height = height;
             Width = width;
             this.randomCount = width * height / 500;
-            this.MapTiles = new TileType[height, width];
+            this.MapTiles = new MapTileType[height, width];
             int total = width * height;
             total += this.randomCount;
             total += ((width + height) * 2) + 4;
             total += width * height;
-            AsyncProgressUI.Instance.addTotal(total);
+            AsyncProgressUI.Instance.AddTotal(total);
         }
 
         /// <summary>
@@ -206,7 +206,7 @@
             {
                 for (int j = 0; j < Width; j++)
                 {
-                    if (this.MapTiles[i, j] == TileType.Mountain || this.MapTiles[i, j] == TileType.Water)
+                    if (this.MapTiles[i, j] == MapTileType.Mountain || this.MapTiles[i, j] == MapTileType.Water)
                     {
                         continue;
                     }
@@ -248,7 +248,7 @@
         /// <param name="tiles">中心默认板块</param>
         /// <param name="i">中心横坐标</param>
         /// <param name="j">中心纵坐标</param>
-        protected void NeighborAndReplaceTiles(TileType[,] tiles, int i, int j)
+        protected void NeighborAndReplaceTiles(MapTileType[,] tiles, int i, int j)
         {
             // 寻找离自己最近的非默认板块
             for (int t = 1; t < Width; t++)
@@ -259,7 +259,7 @@
                 {
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (this.MapTiles[k, l] != TileType.Default)
+                        if (this.MapTiles[k, l] != MapTileType.Default)
                         {
                             tiles[i, j] = this.MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
@@ -273,7 +273,7 @@
                     int l = j - t;
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (this.MapTiles[k, l] != TileType.Default)
+                        if (this.MapTiles[k, l] != MapTileType.Default)
                         {
                             tiles[i, j] = this.MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
@@ -283,7 +283,7 @@
                     l = j + t;
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (this.MapTiles[k, l] != TileType.Default)
+                        if (this.MapTiles[k, l] != MapTileType.Default)
                         {
                             tiles[i, j] = this.MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
@@ -296,7 +296,7 @@
                 {
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (this.MapTiles[k, l] != TileType.Default)
+                        if (this.MapTiles[k, l] != MapTileType.Default)
                         {
                             tiles[i, j] = this.MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
@@ -318,34 +318,34 @@
         /// </summary>
         private void CreateArroundTile()
         {
-            AsyncProgressUI.Instance.setTip("正在围住四周...");
+            AsyncProgressUI.Instance.SetTip("正在围住四周...");
 
             // 上边
             for (int i = -1; i < Width; i++)
             {
-                AsyncProgressUI.Instance.addOneProcess();
-                this.tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
+                AsyncProgressUI.Instance.AddOneProcess();
+                this.tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
 
             // 右边
             for (int i = 0; i <= Height; i++)
             {
-                AsyncProgressUI.Instance.addOneProcess();
-                this.tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
+                AsyncProgressUI.Instance.AddOneProcess();
+                this.tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
 
             // 下边
             for (int i = 0; i <= Width; i++)
             {
-                AsyncProgressUI.Instance.addOneProcess();
-                this.tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
+                AsyncProgressUI.Instance.AddOneProcess();
+                this.tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
 
             // 左边
             for (int i = -1; i < Height; i++)
             {
-                AsyncProgressUI.Instance.addOneProcess();
-                this.tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.GetAsset(TileType.Mountain.ToString()));
+                AsyncProgressUI.Instance.AddOneProcess();
+                this.tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
         }
 
@@ -447,7 +447,7 @@
         [Serializable]
         public class TileMapData
         {
-            public TileMapData(int height, int width, TileType[,] mapTiles, int randomCount)
+            public TileMapData(int height, int width, MapTileType[,] mapTiles, int randomCount)
             {
                 this.Height = height;
                 this.Width = width;
@@ -468,7 +468,7 @@
             /// <summary>
             /// 地图瓦片
             /// </summary>
-            public TileType[,] MapTiles { get; set; }
+            public MapTileType[,] MapTiles { get; set; }
 
             /// <summary>
             /// 随机点的数量
@@ -481,7 +481,7 @@
     /// 瓦片类型
     /// </summary>
     [Serializable]
-    public enum TileType
+    public enum MapTileType
     {
         /// <summary>
         /// 默认,不进行渲染

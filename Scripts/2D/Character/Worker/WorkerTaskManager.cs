@@ -80,7 +80,7 @@
             }
 
             this.tasks[prior].Add(task, false);
-            DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
+            DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
         }
 
         /// <summary>
@@ -97,7 +97,7 @@
                     if (this.tasks[i].ContainsKey(task))
                     {
                         this.tasks[i].Remove(task);
-                        DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
+                        DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
                         break;
                     }
                 }
@@ -109,7 +109,7 @@
                 this.tasks[1][task] = false;
             }
 
-            DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
+            DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
         }
 
         /// <summary>
@@ -128,7 +128,7 @@
                 if (this.tasks[i].ContainsKey(task))
                 {
                     this.tasks[i].Remove(task);
-                    DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
+                    DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
                     break;
                 }
             }
@@ -180,7 +180,7 @@
                         {
                             this.tasks[i].Remove(hungryTask);
                             this.hungryTasks.Remove(hungryTask);
-                            DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
+                            DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
                             return;
                         }
                     }
@@ -208,7 +208,7 @@
                     {
                         this.tasks[i].Remove(task);
                         this.GatherPos.Remove(task.TargetMap);
-                        DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
+                        DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
                         return;
                     }
                 }
@@ -282,7 +282,7 @@
                             task[closedTask] = true;
                         }
 
-                        DebugUI.Instance.updateTaskInfo(this.GetTaskInfo());
+                        DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
                         break;
                     }
                 }

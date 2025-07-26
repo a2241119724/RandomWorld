@@ -1,62 +1,67 @@
-using Photon.Pun;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using Photon.Pun;
+    using UnityEngine;
+    using UnityEngine.SceneManagement;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// èœå•UI
+    /// </summary>
     public class MenuUI : MonoBehaviour
     {
-        private Toggle toggle; // Ìõ¿î¹´Ñ¡¿ò
-        private GameObject note; // Í¨Öª
+        private Toggle toggle; // æ¡æ¬¾å‹¾é€‰æ¡†
+        private GameObject note; // é€šçŸ¥
 
         private void Awake()
         {
-            GlobalInit.Instance.ShowTip("µÇÂ¼³É¹¦!!!");
+            GlobalInit.Instance.ShowTip("ç™»å½•æˆåŠŸ!!!");
         }
 
-        void Start()
+        private void Start()
         {
             PhotonNetwork.NickName = "aaa";
-            toggle = Tool.GetComponentInChildren<Toggle>(gameObject, "Clause").GetComponent<Toggle>();
-            note = transform.Find("Center/Note").gameObject;
-            if (note == null)
+            this.toggle = Tool.GetComponentInChildren<Toggle>(this.gameObject, "Clause").GetComponent<Toggle>();
+            this.note = this.transform.Find("Center/Note").gameObject;
+            if (this.note == null)
             {
                 LogManager.Instance.Log("note Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
-            Tool.GetComponentInChildren<Button>(gameObject, "Start").onClick.AddListener(OnClick_Start);
-            Tool.GetComponentInChildren<Button>(gameObject, "NoteClose").onClick.AddListener(OnClick_NoteClose);
+
+            Tool.GetComponentInChildren<Button>(this.gameObject, "Start").onClick.AddListener(this.OnClick_Start);
+            Tool.GetComponentInChildren<Button>(this.gameObject, "NoteClose").onClick.AddListener(this.OnClick_NoteClose);
         }
 
         /// <summary>
-        /// ¿ªÊ¼ÓÎÏ·
+        /// å¼€å§‹æ¸¸æˆ
         /// </summary>
-        public void OnClick_Start()
+        private void OnClick_Start()
         {
-            if (toggle.isOn)
+            if (this.toggle.isOn)
             {
-                string name = Tool.GetComponentInChildren<Text>(gameObject, "PlayerName").text;
+                string name = Tool.GetComponentInChildren<Text>(this.gameObject, "PlayerName").text;
                 if (name.Length <= 0)
                 {
-                    GlobalInit.Instance.ShowTip("Ãû×Ö²»ÄÜÎª¿Õ!!!");
+                    GlobalInit.Instance.ShowTip("åå­—ä¸èƒ½ä¸ºç©º!!!");
                     return;
                 }
+
                 PhotonNetwork.NickName = name;
-                SceneManager.LoadScene("Game"); // ¼ÓÔØ³¡¾°
+                SceneManager.LoadScene("Game"); // åŠ è½½åœºæ™¯
             }
             else
             {
-                GlobalInit.Instance.ShowTip("Î´¹´Ñ¡Ìõ¿î!!!");
+                GlobalInit.Instance.ShowTip("æœªå‹¾é€‰æ¡æ¬¾!!!");
             }
         }
 
         /// <summary>
-        /// ¹Ø±ÕÍ¨¸æ
+        /// å…³é—­é€šå‘Š
         /// </summary>
-        public void OnClick_NoteClose()
+        private void OnClick_NoteClose()
         {
-            note.SetActive(false);
+            this.note.SetActive(false);
         }
     }
 }

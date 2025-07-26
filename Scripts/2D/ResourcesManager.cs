@@ -14,16 +14,16 @@
         private readonly Dictionary<string, UnityEngine.Object> assetsDic;
         private readonly Dictionary<string, Sprite> imagesDic;
         private readonly Dictionary<string, string> pathsDic; // key:filename(带后缀) value:path
-        private readonly Dictionary<TileType, List<UnityEngine.Object>> tileDic;
+        private readonly Dictionary<MapTileType, List<UnityEngine.Object>> tileDic;
 
         public ResourcesManager()
         {
             this.prefabsDic = Tool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
             this.assetsDic = Tool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
-            this.tileDic = new Dictionary<TileType, List<UnityEngine.Object>>();
+            this.tileDic = new Dictionary<MapTileType, List<UnityEngine.Object>>();
             foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetsDic)
             {
-                foreach (TileType tileType in Enum.GetValues(typeof(TileType)))
+                foreach (MapTileType tileType in Enum.GetValues(typeof(MapTileType)))
                 {
                     // 不包含Tile本身，仅包含其上的资源
                     if (!asset.Key.StartsWith(tileType.ToString()) ||
@@ -87,7 +87,7 @@
         /// <param name="tileType">在哪种Tile上.</param>
         /// <param name="name">包含该名称的资源.</param>
         /// <returns>Tile.</returns>
-        public TileBase GetAssetByTileType(TileType tileType, string name = default)
+        public TileBase GetAssetByTileType(MapTileType tileType, string name = default)
         {
             if (!this.tileDic.ContainsKey(tileType))
             {

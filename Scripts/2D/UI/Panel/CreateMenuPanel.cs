@@ -1,24 +1,29 @@
-using Photon.Pun;
-using Photon.Realtime;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using Photon.Pun;
+    using Photon.Realtime;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// åˆ›å»ºé¢æ¿
+    /// </summary>
     public class CreateMenuPanel : BasePanel<CreateMenuPanel>
     {
         public CreateMenuPanel()
         {
-            Name = "CreateMenu";
-            setPanel();
-            Tool.GetComponentInChildren<Button>(panel, "StartCreate").onClick.AddListener(OnClick_StartCreate);
-            Tool.GetComponentInChildren<Button>(panel, "Back").onClick.AddListener(OnClick_Back);
+            this.Name = "CreateMenu";
+            this.OpenPanel();
+            Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.OnClick_StartCreate);
+            Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
@@ -30,46 +35,52 @@ namespace LAB2D
                 && PhotonNetwork.NetworkClientState != ClientState.JoinedLobby
                 && NetworkConnect.Instance.IsOnline)
             {
-                GlobalInit.Instance.ShowTip("ÇëÉÔºóÔÙÊÔ");
+                GlobalInit.Instance.ShowTip("è¯·ç¨åå†è¯•");
                 return;
             }
-            string roomName = Tool.GetComponentInChildren<Text>(panel, "RoomName").text;
+
+            string roomName = Tool.GetComponentInChildren<Text>(this.Panel, "RoomName").text;
             if (string.IsNullOrEmpty(roomName))
             {
-                GlobalInit.Instance.ShowTip("·¿¼äÃû²»ÄÜÎª¿Õ");
+                GlobalInit.Instance.ShowTip("æˆ¿é—´åä¸èƒ½ä¸ºç©º");
                 return;
             }
+
             if (roomName.Length > 8)
             {
-                GlobalInit.Instance.ShowTip("·¿¼äÃû³¤¶È²»ÄÜ³¬¹ı8Î»");
+                GlobalInit.Instance.ShowTip("æˆ¿é—´åé•¿åº¦ä¸èƒ½è¶…è¿‡8ä½");
                 return;
             }
+
             if (NetworkConnect.Instance.IsOnline)
             {
-                // ´´½¨·¿¼ä,(·¿¼äÃû×Ö,·¿×ÓÑ¡Ïî{×î´óÁ¬½ÓÈËÊı(×î´ó4)},´óÌü»ù±¾ÊôĞÔ)
+                // åˆ›å»ºæˆ¿é—´,(æˆ¿é—´åå­—,æˆ¿å­é€‰é¡¹{æœ€å¤§è¿æ¥äººæ•°(æœ€å¤§4)},å¤§å…åŸºæœ¬å±æ€§)
                 RoomOptions roomOptions = new RoomOptions();
                 roomOptions.IsOpen = true;
                 roomOptions.IsVisible = true;
                 roomOptions.MaxPlayers = 4;
-                // ÓÎÏ·Ä£Ê½Îª1
+
+                // æ¸¸æˆæ¨¡å¼ä¸º1
                 roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable { { "C0", 1 } };
                 roomOptions.CustomRoomPropertiesForLobby = new string[] { "C0" };
-                //bool success = PhotonNetwork.CreateRoom(roomName, roomOptions, typedLobby);
+
+                // bool success = PhotonNetwork.CreateRoom(roomName, roomOptions, typedLobby);
                 bool success = PhotonNetwork.CreateRoom(roomName, roomOptions);
                 if (!success)
                 {
-                    GlobalInit.Instance.ShowTip("·¿¼ä´´½¨Ê§°Ü");
+                    GlobalInit.Instance.ShowTip("æˆ¿é—´åˆ›å»ºå¤±è´¥");
                     return;
                 }
             }
-            controller.close();
-            controller.show(NewOrContinuePanel.Instance);
+
+            this.Controller.Close();
+            this.Controller.Show(NewOrContinuePanel.Instance);
         }
 
         private void OnClick_Back()
         {
-            controller.close();
-            controller.show(CreateOrJoinPanel.Instance);
+            this.Controller.Close();
+            this.Controller.Show(CreateOrJoinPanel.Instance);
         }
     }
 }

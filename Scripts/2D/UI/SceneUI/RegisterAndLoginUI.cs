@@ -1,66 +1,63 @@
-using System.IO;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-
-/// <summary>
-/// ÎÄ¼ş±àÂëUTF-8
-/// </summary>
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.IO;
+    using UnityEngine;
+    using UnityEngine.SceneManagement;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// æ³¨å†Œä¸ç™»å½•UI
+    /// </summary>
     public class RegisterAndLoginUI : MonoBehaviour
     {
-        /// <summary>
-        /// ÓÃ»§Ãû
-        /// </summary>
-        private InputField _username;
-        /// <summary>
-        /// ÃÜÂë
-        /// </summary>
-        private InputField _password;
+        private InputField username; // ç”¨æˆ·å
+        private InputField password; // å¯†ç 
 
-        void Start()
+        private void Start()
         {
-            _username = Tool.GetComponentInChildren<InputField>(gameObject, "Username");
-            _password = Tool.GetComponentInChildren<InputField>(gameObject, "Password");
-            Tool.GetComponentInChildren<Button>(gameObject, "Register").onClick.AddListener(Onclick_Register);
-            Tool.GetComponentInChildren<Button>(gameObject, "Login").onClick.AddListener(Onclick_Login);
+            this.username = Tool.GetComponentInChildren<InputField>(this.gameObject, "Username");
+            this.password = Tool.GetComponentInChildren<InputField>(this.gameObject, "Password");
+            Tool.GetComponentInChildren<Button>(this.gameObject, "Register").onClick.AddListener(this.Onclick_Register);
+            Tool.GetComponentInChildren<Button>(this.gameObject, "Login").onClick.AddListener(this.Onclick_Login);
         }
 
         /// <summary>
-        /// ×¢²á
+        /// æ³¨å†Œ
         /// </summary>
         private void Onclick_Register()
         {
-            string username = _username.text;
-            string password = _password.text;
+            string username = this.username.text;
+            string password = this.password.text;
             if (username.Length < 3 || password.Length < 3)
             {
-                GlobalInit.Instance.ShowTip("×¢²áÊ§°Ü!!!");
+                GlobalInit.Instance.ShowTip("æ³¨å†Œå¤±è´¥!!!");
                 return;
             }
-            // ¶ÁÈ¡ËùÓĞÊı¾İ
+
+            // è¯»å–æ‰€æœ‰æ•°æ®
             UserData data = Tool.LoadDataByJson<UserData>(GlobalData.ConfigFile.UserDataFilePath);
-            // ±éÀúÊÇ·ñÖØÃû
+
+            // éå†æ˜¯å¦é‡å
             if (data != null)
             {
                 for (int i = 0; i < data.GetLength(); i++)
                 {
                     if (data.GetUsername(i) == username)
                     {
-                        GlobalInit.Instance.ShowTip("¸ÃÓÃ»§ÒÑ¾­×¢²á!!!");
+                        GlobalInit.Instance.ShowTip("è¯¥ç”¨æˆ·å·²ç»æ³¨å†Œ!!!");
                         return;
                     }
                 }
             }
+
             data = new UserData();
             data.AddData(username, password);
             File.WriteAllText(GlobalData.ConfigFile.UserDataFilePath, JsonUtility.ToJson(data));
-            GlobalInit.Instance.ShowTip("×¢²á³É¹¦!!!");
+            GlobalInit.Instance.ShowTip("æ³¨å†ŒæˆåŠŸ!!!");
         }
 
         /// <summary>
-        /// µÇÂ¼
+        /// ç™»å½•
         /// </summary>
         private void Onclick_Login()
         {
@@ -69,14 +66,15 @@ namespace LAB2D
             {
                 for (int i = 0; i < data.GetLength(); i++)
                 {
-                    if (data.GetUsername(i) == _username.text && data.GetPassword(i) == _password.text)
+                    if (data.GetUsername(i) == this.username.text && data.GetPassword(i) == this.password.text)
                     {
-                        SceneManager.LoadScene("Menu"); // ¼ÓÔØ³¡¾°
+                        SceneManager.LoadScene("Menu"); // åŠ è½½åœºæ™¯
                         return;
                     }
                 }
             }
-            GlobalInit.Instance.ShowTip("µÇÂ¼Ê§°Ü!!!");
+
+            GlobalInit.Instance.ShowTip("ç™»å½•å¤±è´¥!!!");
         }
     }
 }

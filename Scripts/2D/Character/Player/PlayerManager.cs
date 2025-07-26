@@ -41,7 +41,7 @@
         public override void LoadData()
         {
             Character.CharacterData data = Tool.LoadDataByBinary<Character.CharacterData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
-            AsyncProgressUI.Instance.complete += () =>
+            AsyncProgressUI.Instance.Complete += () =>
             {
                 GameObject g = this.create(Vector3LAB.ToVector3(data.Pos));
                 this.Mine = g.GetComponent<Player>();

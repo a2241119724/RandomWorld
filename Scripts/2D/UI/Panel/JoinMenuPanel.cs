@@ -1,62 +1,70 @@
-using Photon.Pun;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using Photon.Pun;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// åŠ å…¥èœå•é¢æ¿
+    /// </summary>
     public class JoinMenuPanel : BasePanel<JoinMenuPanel>
     {
-        private string selectRoomName; // µ±Ç°Ñ¡ÔñµÄ·¿¼äÃû³Æ
+        private string selectRoomName; // å½“å‰é€‰æ‹©çš„æˆ¿é—´åç§°
 
         public JoinMenuPanel()
         {
-            Name = "JoinMenu";
-            setPanel();
-            Tool.GetComponentInChildren<Button>(panel, "StartJoin").onClick.AddListener(OnClick_StartJoin);
-            Tool.GetComponentInChildren<Button>(panel, "Back").onClick.AddListener(OnClick_Back);
+            this.Name = "JoinMenu";
+            this.OpenPanel();
+            Tool.GetComponentInChildren<Button>(this.Panel, "StartJoin").onClick.AddListener(this.OnClick_StartJoin);
+            Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            RoomUI.Instance.ClickAndShow += show;
-            // »Øµ÷OnRoomListUpdate
+            RoomUI.Instance.ClickAndShow += this.Show;
+
+            // å›è°ƒOnRoomListUpdate
             PhotonNetwork.GetCustomRoomList(PhotonNetwork.CurrentLobby, "C0 = 1");
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
-            RoomUI.Instance.ClickAndShow -= show;
+            RoomUI.Instance.ClickAndShow -= this.Show;
         }
 
         private void OnClick_StartJoin()
         {
-            if (string.IsNullOrEmpty(selectRoomName))
+            if (string.IsNullOrEmpty(this.selectRoomName))
             {
-                GlobalInit.Instance.ShowTip("·¿¼äÃû²»ÄÜÎª¿Õ");
+                GlobalInit.Instance.ShowTip("æˆ¿é—´åä¸èƒ½ä¸ºç©º");
                 return;
             }
-            // ´´½¨·¿¼ä,(·¿¼äÃû×Ö,·¿×ÓÑ¡Ïî{×î´óÁ¬½ÓÈËÊı(×î´ó20)},´óÌü»ù±¾ÊôĞÔ)
-            bool success = PhotonNetwork.JoinRoom(selectRoomName);
+
+            // åˆ›å»ºæˆ¿é—´,(æˆ¿é—´åå­—,æˆ¿å­é€‰é¡¹{æœ€å¤§è¿æ¥äººæ•°(æœ€å¤§20)},å¤§å…åŸºæœ¬å±æ€§)
+            bool success = PhotonNetwork.JoinRoom(this.selectRoomName);
             if (!success)
             {
-                GlobalInit.Instance.ShowTip("·¿¼äÃû×Ö²»´æÔÚ");
+                GlobalInit.Instance.ShowTip("æˆ¿é—´åå­—ä¸å­˜åœ¨");
                 return;
             }
-            controller.close();
-            controller.show(ForegroundPanel.Instance);
+
+            this.Controller.Close();
+            this.Controller.Show(ForegroundPanel.Instance);
         }
 
         private void OnClick_Back()
         {
-            controller.close();
-            controller.show(CreateOrJoinPanel.Instance);
+            this.Controller.Close();
+            this.Controller.Show(CreateOrJoinPanel.Instance);
         }
 
-        private void show(string str)
+        private void Show(string str)
         {
-            selectRoomName = str;
-            Tool.GetComponentInChildren<Text>(panel, "SelectRoomName").text = "Ñ¡ÔñµÄ·¿¼ä\n[" + str + "]";
+            this.selectRoomName = str;
+            Tool.GetComponentInChildren<Text>(this.Panel, "SelectRoomName").text = "é€‰æ‹©çš„æˆ¿é—´\n[" + str + "]";
         }
     }
 }

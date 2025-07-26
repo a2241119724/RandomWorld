@@ -294,7 +294,7 @@
                 this.posToResource[posMap].Count += resourceInfo.Count;
             }
 
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, this.ToString(posMap));
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
         }
 
         /// <summary>
@@ -325,7 +325,7 @@
 
             this.posToResource[posMap].Id = resourceInfo.Id;
             this.posToResource[posMap].Count += resourceInfo.Count;
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, this.ToString(posMap));
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
             return resourceInfo;
         }
 
@@ -363,7 +363,7 @@
             this.posToResource[posMap].Id = -1;
             this.posToResource[posMap].Count = 0;
             ItemMap.Instance.HindTile(posMap);
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, this.ToString(posMap));
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
             return resourceInfo;
         }
 
@@ -397,7 +397,7 @@
                 this.posToResource[posMap].Id = -1;
             }
 
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, this.ToString(posMap));
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
         }
 
         /// <summary>
@@ -437,7 +437,7 @@
                 this.posToResource[posMap].Id = -1;
             }
 
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, this.ToString(posMap));
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
 
             // 不够，既然我已经预取了，那说明肯定是够的
             return resourceInfo;
@@ -513,7 +513,7 @@
             ItemType itemType = ItemDataManager.Instance.GetTypeById(this.posToResource[pos].Id);
             if (itemType == ItemType.Weapon || itemType == ItemType.Equipment)
             {
-                WearTaskUI.Instance.showWearTask(pos);
+                WearTaskUI.Instance.ShowWearTask(pos);
             }
         }
 
@@ -602,19 +602,19 @@
                 if (this.prePlaceResource[worker].ContainsKey(pos))
                 {
                     this.prePlaceResource[worker][pos].Count += resourceInfo.Count;
-                    ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, this.ToString(pos));
+                    ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
                     return;
                 }
 
                 this.prePlaceResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
-                ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, this.ToString(pos));
+                ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
                 return;
             }
 
             Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
             dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
             this.prePlaceResource.Add(worker, dict);
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, this.ToString(pos));
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
         }
 
         /// <summary>
@@ -672,19 +672,19 @@
                 Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
                 dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
                 this.preTakeResource.Add(worker, dict);
-                ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, this.ToString(pos));
+                ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
                 return;
             }
 
             if (!this.preTakeResource[worker].ContainsKey(pos))
             {
                 this.preTakeResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
-                ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, this.ToString(pos));
+                ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
                 return;
             }
 
             this.preTakeResource[worker][pos].Count += resourceInfo.Count;
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, this.ToString(pos));
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
         }
 
         private int GetPreTakeCountByPos(Vector3Int pos)
@@ -698,7 +698,7 @@
                 }
             }
 
-            DebugUI.Instance.updateTaskInfo(pos + " " + count);
+            DebugUI.Instance.UpdateInfo(pos + " " + count);
             return count;
         }
 
