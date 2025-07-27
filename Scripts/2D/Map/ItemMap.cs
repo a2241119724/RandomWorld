@@ -99,7 +99,7 @@
             WorkerTaskManager.Instance.AddTask(new WorkerCarryTask.CarryTaskBuilder()
 
                 // .setEndTarget(InventoryManager.Instance.getCell(id))
-                .setResourceInfo(resourceInfo).setStartTarget(posMap).build());
+                .SetResourceInfo(resourceInfo).SetStartTarget(posMap).Build());
         }
 
         /// <inheritdoc/>

@@ -10,13 +10,13 @@
     public class GlobalInit : MonoBehaviour
     {
         private const int FONT_SIZE = 20;
-        private readonly List<string> fontExcludeText = new List<string>()
+        private readonly List<string> fontExcludeText = new ()
         {
             "Label",
         };
 
-        private bool initPanel = true;
-        private bool initFont = true;
+        private readonly bool initPanel = true;
+        private readonly bool initFont = true;
         private GameObject tip; // 提示框预制体
 
         /// <summary>
@@ -92,7 +92,7 @@
             // 添加10个种植任务
             for (int i = 0; i < 10; i++)
             {
-                WorkerTaskManager.Instance.AddTask(new WorkerPlantTask.PlantTaskBuilder().build());
+                WorkerTaskManager.Instance.AddTask(new WorkerPlantTask.PlantTaskBuilder().Build());
             }
         }
 

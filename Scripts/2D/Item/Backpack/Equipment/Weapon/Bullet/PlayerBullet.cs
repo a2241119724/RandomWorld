@@ -44,7 +44,11 @@
         /// <inheritdoc/>
         protected override void Update()
         {
-            if (NetworkConnect.Instance.IsOnline && !this.photonView.IsMine && PhotonNetwork.IsConnected) return;
+            if (NetworkConnect.Instance.IsOnline && !this.photonView.IsMine && PhotonNetwork.IsConnected)
+            {
+                return;
+            }
+
             base.Update();
         }
     }

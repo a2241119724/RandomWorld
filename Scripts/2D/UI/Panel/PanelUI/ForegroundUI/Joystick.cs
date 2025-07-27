@@ -39,10 +39,8 @@
         public void OnPointerDown(PointerEventData eventData)
         {
             // 将摇杆放到按下的位置
-            Vector2 localPosition;
-
             // ScreenPointToLocalPointInRectangle(父节点,屏幕坐标,照相机{Sceen Space-Overlay则可以为空},返回值{屏幕坐标在父节点的局部坐标})
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(this.baseRect, eventData.position, Camera.main, out localPosition);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(this.baseRect, eventData.position, Camera.main, out Vector2 localPosition);
             this.background.anchoredPosition = localPosition;
             this.OnDrag(eventData);
         }
@@ -84,7 +82,7 @@
                 return;
             }
 
-            Vector2 center = new Vector2(0.5f, 0.5f);
+            Vector2 center = new (0.5f, 0.5f);
             if (center == null)
             {
                 LogManager.Instance.Log("center assign resource Error!!!", LogManager.LogLevel.Error);

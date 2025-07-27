@@ -9,9 +9,9 @@
     public class FarmlandManager : Singleton<FarmlandManager>
     {
         private readonly Dictionary<int, Dictionary<Vector3Int, PlantInfo>> id2Resource; // 同一个id对应的所有位置
-        private Dictionary<Vector3Int, PlantInfo> cells;
-        private Dictionary<Worker, Dictionary<Vector3Int, PlantInfo>> preGatherResource; // 预采集资源
-        private Dictionary<Worker, Dictionary<Vector3Int, PlantInfo>> prePlantResource; // 预种植资源
+        private readonly Dictionary<Vector3Int, PlantInfo> cells;
+        private readonly Dictionary<Worker, Dictionary<Vector3Int, PlantInfo>> preGatherResource; // 预采集资源
+        private readonly Dictionary<Worker, Dictionary<Vector3Int, PlantInfo>> prePlantResource; // 预种植资源
 
         public FarmlandManager()
         {

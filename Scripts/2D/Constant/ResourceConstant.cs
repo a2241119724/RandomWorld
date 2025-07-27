@@ -69,11 +69,11 @@
         /// <summary>
         /// 默认向量
         /// </summary>
-        public static readonly Vector3 VECTOR3_DEFAULT = new Vector3(-999.0f, 0.0f, 0.0f);
+        public static readonly Vector3 VECTOR3_DEFAULT = new (-999.0f, 0.0f, 0.0f);
 
         /// <summary>
         /// 默认向量整数
         /// </summary>
-        public static readonly Vector3Int VECTOR3INT_DEFAULT = new Vector3Int(-999, 0, 0);
+        public static readonly Vector3Int VECTOR3INT_DEFAULT = new (-999, 0, 0);
     }
 }

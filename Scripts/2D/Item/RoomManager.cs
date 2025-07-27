@@ -9,8 +9,8 @@
     /// </summary>
     public class RoomManager : Singleton<RoomManager>
     {
-        private static Dictionary<string, RoomInfo> rooms = new Dictionary<string, RoomInfo>();
-        private int layerMask = LayerMask.GetMask("BuildTile"); // Door(Default)
+        private static readonly Dictionary<string, RoomInfo> Rooms = new ();
+        private readonly int layerMask = LayerMask.GetMask("BuildTile"); // Door(Default)
 
         /// <summary>
         /// 添加房间
@@ -19,12 +19,12 @@
         /// <param name="roomInfo">房间信息</param>
         public void AddRoom(string name, RoomInfo roomInfo)
         {
-            if (rooms.ContainsKey(name))
+            if (Rooms.ContainsKey(name))
             {
                 LogManager.Instance.Log("已经有房间了", LogManager.LogLevel.Error);
             }
 
-            rooms.Add(name, roomInfo);
+            Rooms.Add(name, roomInfo);
         }
 
         /// <summary>
@@ -33,7 +33,7 @@
         /// <param name="posMap">位置</param>
         public void Complete(Vector3Int posMap)
         {
-            foreach (KeyValuePair<string, RoomInfo> room in rooms)
+            foreach (KeyValuePair<string, RoomInfo> room in Rooms)
             {
                 if (room.Value.Progress != 0)
                 {
@@ -54,7 +54,7 @@
         /// <returns>房间信息</returns>
         public RoomInfo GetRoomByPos(Vector3Int posMap)
         {
-            if (rooms.Count == 0)
+            if (Rooms.Count == 0)
             {
                 return null;
             }
@@ -108,7 +108,7 @@
             // 只要有两面是正确的就认为在房间中
             if (count >= 2)
             {
-                foreach (KeyValuePair<string, RoomInfo> room in rooms)
+                foreach (KeyValuePair<string, RoomInfo> room in Rooms)
                 {
                     if (room.Value.Progress == 0 && room.Value.Points.Contains(posMap1))
                     {

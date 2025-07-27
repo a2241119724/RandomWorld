@@ -29,7 +29,7 @@
             base.OnUpdate();
             if (this.Character.WearData.Weapon == null)
             {
-                this.Character.Manager.changeState(WorkerStateType.Escape);
+                this.Character.Manager.ChangeState(WorkerStateType.Escape);
                 return;
             }
 

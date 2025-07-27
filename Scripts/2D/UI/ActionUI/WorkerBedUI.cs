@@ -46,7 +46,7 @@
                 int index = i;
                 button.onClick.AddListener(() =>
                 {
-                    WorkerTaskManager.Instance.AddTask(new WorkerSleepTask.SleepTaskBuilder().setTarget(posMap).build(), 1);
+                    WorkerTaskManager.Instance.AddTask(new WorkerSleepTask.SleepTaskBuilder().SetTarget(posMap).Build(), 1);
                     this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     FurnitureManager.Instance.AddWorkerToBed(posMap, workers[index]);
                 });

@@ -50,7 +50,7 @@
                 if (Vector3.Distance(this.Character.Target.transform.position, this.Character.transform.position)
                     <= this.Character.AttackRange)
                 {
-                    this.Character.Manager.changeState(EnemyStateType.Attack);
+                    this.Character.Manager.ChangeState(EnemyStateType.Attack);
                     return;
                 }
 
@@ -63,7 +63,7 @@
             }
 
             // 如果敌人感知范围内没有玩家，进入搜索状态
-            this.Character.Manager.changeState(EnemyStateType.Seek);
+            this.Character.Manager.ChangeState(EnemyStateType.Seek);
         }
     }
 }

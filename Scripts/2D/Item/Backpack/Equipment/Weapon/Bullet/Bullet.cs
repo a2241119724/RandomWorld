@@ -83,7 +83,7 @@
         // }
         protected virtual void Update()
         {
-            this.distance = this.direction * this.bulletSpeed * Time.deltaTime;
+            this.distance = this.bulletSpeed * Time.deltaTime * this.direction;
 
             // 2D射线检测
             this.rayCastHit2D = Physics2D.Raycast(this.transform.position, this.direction, this.distance.magnitude, this.layerMask);

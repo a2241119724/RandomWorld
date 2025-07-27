@@ -23,7 +23,7 @@
             // 如果饥饿并且没有吃饭任务就进入饥饿状态,做完任务再吃饭
             if (this.Character.CurHungry < Worker.ThresholdHungry && this.Character.Manager.Task == null)
             {
-                this.Character.Manager.changeState(WorkerStateType.Hungry);
+                this.Character.Manager.ChangeState(WorkerStateType.Eat);
                 return;
             }
 
@@ -39,11 +39,11 @@
 
                 // 找旁边的位置进行建造
                 float minDistance = 99999.0f;
-                Vector3Int closedPos = default(Vector3Int);
+                Vector3Int closedPos = default;
                 foreach (Vector3Int pos in this.Character.Manager.Task.AvailableNeighborPos)
                 {
                     // 由于是斜对称
-                    Vector3Int temp = new Vector3Int(this.targetMap.x + pos.y, this.targetMap.y + pos.x, 0);
+                    Vector3Int temp = new (this.targetMap.x + pos.y, this.targetMap.y + pos.x, 0);
                     if (this.Character.IsCanReach(temp))
                     {
                         Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(temp);
@@ -57,7 +57,7 @@
                     }
                 }
 
-                if (closedPos == default(Vector3Int))
+                if (closedPos == default)
                 {
                     LogManager.Instance.Log("没有邻居位置!!!", LogManager.LogLevel.Error);
                 }
@@ -95,7 +95,7 @@
                 Worker.SeekLock.ReleaseLock(this.Character);
 
                 // 寻路结束
-                this.Character.Manager.changeState(WorkerStateType.Move);
+                this.Character.Manager.ChangeState(WorkerStateType.Move);
             }
         }
     }

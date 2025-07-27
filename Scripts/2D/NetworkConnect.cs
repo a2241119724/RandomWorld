@@ -27,7 +27,7 @@
             base.OnConnectedToMaster();
 
             // 设置当前大厅类型为sqlLobby
-            TypedLobby typedLobby = new TypedLobby("myLobby", LobbyType.SqlLobby);
+            TypedLobby typedLobby = new ("myLobby", LobbyType.SqlLobby);
 
             // 只有加入到大厅才可以获取房间列表
             PhotonNetwork.JoinLobby(typedLobby);

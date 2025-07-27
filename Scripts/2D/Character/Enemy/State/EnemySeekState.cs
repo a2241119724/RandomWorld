@@ -39,14 +39,14 @@
             this.recordTime += Time.deltaTime;
             if (this.recordTime > SeekTime)
             {
-                this.Character.Manager.changeState(EnemyStateType.Wander); // 进入游荡状态
+                this.Character.Manager.ChangeState(EnemyStateType.Wander); // 进入游荡状态
                 return;
             }
 
             // 感知人物是否在范围内，进入追踪状态
             if (this.Character.SenseNearby(this.Character.Target.transform))
             {
-                this.Character.Manager.changeState(EnemyStateType.Chase);
+                this.Character.Manager.ChangeState(EnemyStateType.Chase);
                 return;
             }
 

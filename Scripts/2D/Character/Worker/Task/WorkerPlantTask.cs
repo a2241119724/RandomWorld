@@ -1,101 +1,119 @@
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    /// <summary>
+    /// ç§æ¤ä»»åŠ¡
+    /// </summary>
     public class WorkerPlantTask : WorkerTask
     {
         private ResourceInfo resourceInfo;
 
-        public WorkerPlantTask() : base(TaskType.Plant)
+        public WorkerPlantTask()
+            : base(TaskType.Plant)
         {
-            stageInit.Add((Worker worker) =>
+            this.stageInit.Add((Worker worker) =>
             {
-                maxProgress = 1.0f;
-                AvailableNeighborPos.Clear();
-                AvailableNeighborPos.Add(neighbors[8]);
-                TargetMap = InventoryManager.Instance.IsContainSeedAndPreTake(worker, true);
-                if (TargetMap == default)
+                this.maxProgress = 1.0f;
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[8]);
+                this.TargetMap = InventoryManager.Instance.IsContainSeedAndPreTake(worker, true);
+                if (this.TargetMap == default)
                 {
-                    giveUpTask(worker);
+                    this.GiveUpTask(worker);
                     return;
                 }
-                // ½øÈë¹¤×÷×´Ì¬
-                worker.Manager.changeState(WorkerStateType.Seek);
+
+                // è¿›å…¥å·¥ä½œçŠ¶æ€
+                worker.Manager.ChangeState(WorkerStateType.Seek);
             });
-            stageInit.Add((Worker worker) =>
+            this.stageInit.Add((Worker worker) =>
             {
-                maxProgress = 1.0f;
-                AvailableNeighborPos.Clear();
-                AvailableNeighborPos.Add(neighbors[8]);
-                TargetMap = FarmlandManager.Instance.IsEnoughAndPrePlant(worker, resourceInfo, true);
-                if (TargetMap == default)
+                this.maxProgress = 1.0f;
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[8]);
+                this.TargetMap = FarmlandManager.Instance.IsEnoughAndPrePlant(worker, this.resourceInfo, true);
+                if (this.TargetMap == default)
                 {
-                    giveUpTask(worker);
+                    this.GiveUpTask(worker);
                     return;
                 }
-                // ½øÈë¹¤×÷×´Ì¬
-                worker.Manager.changeState(WorkerStateType.Seek);
+
+                // è¿›å…¥å·¥ä½œçŠ¶æ€
+                worker.Manager.ChangeState(WorkerStateType.Seek);
             });
         }
 
-        public override void start(Worker worker)
+        /// <inheritdoc/>
+        public override void Start(Worker worker)
         {
-            base.start(worker);
-            changeStage(worker, 0);
+            base.Start(worker);
+            this.ChangeStage(worker, 0);
         }
 
-        protected override bool isFinish(Worker worker)
+        /// <inheritdoc/>
+        public override void Finish(Worker worker)
         {
-            switch (stage)
+            base.Finish(worker);
+
+            // TODO å¯ä»¥å°†ç§å­æ”¾å›
+        }
+
+        /// <inheritdoc/>
+        public override bool IsCanWork(Worker worker)
+        {
+            if (!base.IsCanWork(worker))
+            {
+                return false;
+            }
+
+            return FarmlandManager.Instance.IsEnoughAndPrePlant(worker, null) != default &&
+                InventoryManager.Instance.IsContainSeedAndPreTake(worker) != default;
+        }
+
+        /// <inheritdoc/>
+        protected override bool IsFinish(Worker worker)
+        {
+            switch (this.stage)
             {
                 case 0:
-                    resourceInfo = InventoryManager.Instance.SubAllItemByPos(TargetMap);
-                    worker.AddResource(resourceInfo);
-                    changeStage(worker, 1);
+                    this.resourceInfo = InventoryManager.Instance.SubAllItemByPos(this.TargetMap);
+                    worker.AddResource(this.resourceInfo);
+                    this.ChangeStage(worker, 1);
                     return false;
                 case 1:
-                    // ¿ÉÒÔ¼ÌĞøÖÖÖ²
-                    if (isCanWork(worker) && resourceInfo.Count > 0)
+                    // å¯ä»¥ç»§ç»­ç§æ¤
+                    if (this.IsCanWork(worker) && this.resourceInfo.Count > 0)
                     {
-                        FarmlandManager.Instance.PlantByPrePlant(worker, TargetMap);
-                        resourceInfo.Count--;
-                        changeStage(worker, 1);
+                        FarmlandManager.Instance.PlantByPrePlant(worker, this.TargetMap);
+                        this.resourceInfo.Count--;
+                        this.ChangeStage(worker, 1);
                         return false;
                     }
-                    changeStage(worker, 0);
+
+                    this.ChangeStage(worker, 0);
                     return false;
                 default:
                     return true;
             }
         }
 
-        public override void finish(Worker worker)
-        {
-            base.finish(worker);
-            // TODO ¿ÉÒÔ½«ÖÖ×Ó·Å»Ø
-        }
-
-        public override bool isCanWork(Worker worker)
-        {
-            if (!base.isCanWork(worker))
-            {
-                return false;
-            }
-            return FarmlandManager.Instance.IsEnoughAndPrePlant(worker, null) != default &&
-                InventoryManager.Instance.IsContainSeedAndPreTake(worker) != default;
-        }
-
+#pragma warning disable SA1600 // Elements should be documented
+        /// <summary>
+        /// å»ºé€ è€…
+        /// </summary>
         public class PlantTaskBuilder
         {
-            private WorkerPlantTask task;
+            private readonly WorkerPlantTask task;
 
             public PlantTaskBuilder()
             {
-                task = new WorkerPlantTask();
+                this.task = new WorkerPlantTask();
             }
 
-            public WorkerPlantTask build()
+            public WorkerPlantTask Build()
             {
-                return task;
+                return this.task;
             }
         }
+#pragma warning restore SA1600 // Elements should be documented
     }
 }

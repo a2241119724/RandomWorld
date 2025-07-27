@@ -9,13 +9,13 @@
     /// </summary>
     public class WorkerTaskInfoPanel : BasePanel<WorkerTaskInfoPanel>
     {
-        private static readonly Dictionary<TaskType, string> TypeToChinese = new Dictionary<TaskType, string>
+        private static readonly Dictionary<TaskType, string> TypeToChinese = new ()
         {
             { TaskType.Build, "建造" },
             { TaskType.Carry, "搬运" },
             { TaskType.Gather, "采摘" },
             { TaskType.Exercise, "锻炼" },
-            { TaskType.Hungry, "吃饭" },
+            { TaskType.Eat, "吃饭" },
             { TaskType.Wear, "穿戴" },
             { TaskType.Sleep, "睡觉" },
             { TaskType.Plant, "种植" },

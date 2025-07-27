@@ -8,9 +8,9 @@
     public class WorkerCreator : CharacterCreator<WorkerCreator>
     {
         /// <inheritdoc/>
-        protected override GameObject _create(Vector3 worldPos, string name, string layer)
+        protected override GameObject DoCreate(Vector3 worldPos, string name, string layer)
         {
-            GameObject g = base._create(worldPos, "Worker", "Worker");
+            GameObject g = base.DoCreate(worldPos, "Worker", "Worker");
             g.name = NameGenertor.Instance.GetRandomName();
             return g;
         }

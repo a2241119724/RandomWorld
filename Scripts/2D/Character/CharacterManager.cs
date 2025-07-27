@@ -14,7 +14,7 @@
         where C : Character
         where CC : ICharacterCreator, new()
     {
-        private CC creator; // 角色创建器
+        private readonly CC creator; // 角色创建器
 
         public CharacterManager()
         {
@@ -87,9 +87,9 @@
         /// </summary>
         /// <param name="worldPos">角色位置</param>
         /// <returns>角色</returns>
-        public virtual GameObject create(Vector3 worldPos = default)
+        public virtual GameObject Create(Vector3 worldPos = default)
         {
-            GameObject g = this.creator.create(worldPos);
+            GameObject g = this.creator.Create(worldPos);
             if (g == null)
             {
                 return null;
@@ -106,7 +106,7 @@
             List<Character.CharacterData> data = Tool.LoadDataByBinary<List<Character.CharacterData>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             foreach (Character.CharacterData characterData in data)
             {
-                GameObject g = this.create(Vector3LAB.ToVector3(characterData.Pos));
+                GameObject g = this.Create(Vector3LAB.ToVector3(characterData.Pos));
                 g.GetComponent<C>().CharacterDataLAB = characterData;
             }
         }
@@ -115,7 +115,7 @@
         public override void SaveData()
         {
             base.SaveData();
-            List<Character.CharacterData> characterDatas = new List<Character.CharacterData>();
+            List<Character.CharacterData> characterDatas = new ();
             foreach (C character in this.Characters)
             {
                 character.CharacterDataLAB.Pos = Vector3LAB.ToVector3LAB(character.transform.position);

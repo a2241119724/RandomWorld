@@ -29,9 +29,9 @@
             base.OnUpdate();
 
             // 如果接到了饥饿任务，则去吃饭
-            if (this.Character.Manager.Task != null && this.Character.Manager.Task.TaskType == TaskType.Hungry)
+            if (this.Character.Manager.Task != null && this.Character.Manager.Task.TaskType == TaskType.Eat)
             {
-                this.Character.Manager.changeState(WorkerStateType.Seek);
+                this.Character.Manager.ChangeState(WorkerStateType.Seek);
             }
         }
     }

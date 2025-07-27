@@ -12,12 +12,12 @@
         /// <summary>
         /// 根据name实例化
         /// </summary>
-        private Dictionary<string, Type> backpackItemTypes;
+        private readonly Dictionary<string, Type> backpackItemTypes;
 
         /// <summary>
         /// 单例的
         /// </summary>
-        private Dictionary<string, BuildItem> buildItems;
+        private readonly Dictionary<string, BuildItem> buildItems;
         private int uid = 0;
 
         public ItemFactory()
@@ -58,7 +58,7 @@
         /// <returns>所有背包道具</returns>
         public List<Item> GenBackpackItems()
         {
-            List<Item> items = new List<Item>();
+            List<Item> items = new ();
             foreach (KeyValuePair<string, Type> item in this.backpackItemTypes)
             {
                 items.Add(this.GetBackpackItemByName(item.Key));

@@ -1,116 +1,129 @@
-namespace LAB2D
+ï»¿namespace LAB2D
 {
     using UnityEngine;
-    using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// ÈÎÎñ2½×¶Î£ºÈ¡»õ£¬·Å»õ
-    /// CarryÔÚµÚ¶ş¸ö½×¶ÎÔ¤Áô×ÊÔ´
+    /// ä»»åŠ¡2é˜¶æ®µï¼šå–è´§ï¼Œæ”¾è´§
+    /// Carryåœ¨ç¬¬äºŒä¸ªé˜¶æ®µé¢„ç•™èµ„æº
     /// </summary>
     public class WorkerCarryTask : WorkerTask
     {
         /// <summary>
-        /// WorkerĞ¯´øµÄ×ÊÔ´
+        /// Workeræºå¸¦çš„èµ„æº
         /// </summary>
         private ResourceInfo resourceInfo;
 
-        public WorkerCarryTask() : base(TaskType.Carry)
+        public WorkerCarryTask()
+            : base(TaskType.Carry)
         {
-            stageInit.Add((Worker worker) =>
+            this.stageInit.Add((Worker worker) =>
             {
-                maxProgress = 1.0f;
-                AvailableNeighborPos.Clear();
-                AvailableNeighborPos.Add(neighbors[8]);
-                // ½øÈë¹¤×÷×´Ì¬
-                worker.Manager.changeState(WorkerStateType.Seek);
+                this.maxProgress = 1.0f;
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[8]);
+
+                // è¿›å…¥å·¥ä½œçŠ¶æ€
+                worker.Manager.ChangeState(WorkerStateType.Seek);
             });
-            stageInit.Add((Worker worker) =>
+            this.stageInit.Add((Worker worker) =>
             {
-                maxProgress = 1.0f;
-                AvailableNeighborPos.Clear();
-                AvailableNeighborPos.Add(neighbors[8]);
-                TargetMap = InventoryManager.Instance.GetPosByPrePlace(worker);
-                if (TargetMap == default)
+                this.maxProgress = 1.0f;
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[8]);
+                this.TargetMap = InventoryManager.Instance.GetPosByPrePlace(worker);
+                if (this.TargetMap == default)
                 {
-                    LogManager.Instance.Log("²Ö¿âÃ»ÓĞÎ»ÖÃÁË", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("ä»“åº“æ²¡æœ‰ä½ç½®äº†", LogManager.LogLevel.Error);
                 }
-                // ½øÈë¹¤×÷×´Ì¬
-                worker.Manager.changeState(WorkerStateType.Seek);
+
+                // è¿›å…¥å·¥ä½œçŠ¶æ€
+                worker.Manager.ChangeState(WorkerStateType.Seek);
             });
         }
 
-        public override void start(Worker worker)
+        /// <inheritdoc/>
+        public override void Start(Worker worker)
         {
-            base.start(worker);
-            InventoryManager.Instance.IsEnoughAndPrePlace(worker, resourceInfo, true);
-            changeStage(worker, 0);
+            base.Start(worker);
+            InventoryManager.Instance.IsEnoughAndPrePlace(worker, this.resourceInfo, true);
+            this.ChangeStage(worker, 0);
         }
 
-        protected override bool isFinish(Worker worker)
+        /// <inheritdoc/>
+        public override void Finish(Worker worker)
         {
-            switch (stage)
+            base.Finish(worker);
+            ItemType itemType = ItemDataManager.Instance.GetTypeById(this.resourceInfo.Id);
+
+            // æ”¾ä¸‹æ‹¿èµ·æ¥çš„ä¸œè¥¿
+            ItemMap.Instance.ShowTile(this.TargetMap, ResourcesManager.Instance
+                .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).ImageName));
+            worker.SubResource1(this.resourceInfo);
+            InventoryManager.Instance.AddItemByPrePlace(worker, this.TargetMap);
+
+            // å¦‚æœæ˜¯é£Ÿç‰©,æ·»åŠ é¥¥é¥¿ä»»åŠ¡
+            if (itemType == ItemType.Food)
+            {
+                WorkerTaskManager.Instance.AddTask(new WorkerHungryTask.HungryTaskBuilder().SetTarget(this.TargetMap).Build(), 0);
+            }
+        }
+
+        /// <inheritdoc/>
+        public override bool IsCanWork(Worker worker)
+        {
+            if (!base.IsCanWork(worker))
+            {
+                return false;
+            }
+
+            return InventoryManager.Instance.IsEnoughAndPrePlace(worker, this.resourceInfo);
+        }
+
+        /// <inheritdoc/>
+        protected override bool IsFinish(Worker worker)
+        {
+            switch (this.stage)
             {
                 case 0:
-                    ItemMap.Instance.PickUpFromDrop(TargetMap, resourceInfo);
-                    worker.AddResource(resourceInfo);
-                    changeStage(worker, 1);
+                    ItemMap.Instance.PickUpFromDrop(this.TargetMap, this.resourceInfo);
+                    worker.AddResource(this.resourceInfo);
+                    this.ChangeStage(worker, 1);
                     return false;
                 default:
                     return true;
             }
         }
 
-        public override void finish(Worker worker)
-        {
-            base.finish(worker);
-            ItemType itemType = ItemDataManager.Instance.GetTypeById(resourceInfo.Id);
-            // ·ÅÏÂÄÃÆğÀ´µÄ¶«Î÷
-            ItemMap.Instance.ShowTile(TargetMap, (TileBase)ResourcesManager.Instance
-                .GetAsset(ItemDataManager.Instance.GetById(resourceInfo.Id).ImageName));
-            worker.SubResource1(resourceInfo);
-            InventoryManager.Instance.AddItemByPrePlace(worker, TargetMap);
-            // Èç¹ûÊÇÊ³Îï,Ìí¼Ó¼¢¶öÈÎÎñ
-            if (itemType == ItemType.Food)
-            {
-                WorkerTaskManager.Instance.AddTask(new WorkerHungryTask.HungryTaskBuilder().setTarget(TargetMap).build(), 0);
-            }
-        }
-
-        public override bool isCanWork(Worker worker)
-        {
-            if (!base.isCanWork(worker))
-            {
-                return false;
-            }
-            return InventoryManager.Instance.IsEnoughAndPrePlace(worker, resourceInfo);
-        }
-
+#pragma warning disable SA1600 // Elements should be documented
+        /// <summary>
+        /// å»ºé€ è€…
+        /// </summary>
         public class CarryTaskBuilder
         {
-            private WorkerCarryTask task;
+            private readonly WorkerCarryTask task;
 
             public CarryTaskBuilder()
             {
-                task = new WorkerCarryTask();
+                this.task = new WorkerCarryTask();
             }
 
-            public CarryTaskBuilder setStartTarget(Vector3Int targetMap)
+            public CarryTaskBuilder SetStartTarget(Vector3Int targetMap)
             {
-                task.TargetMap = targetMap;
+                this.task.TargetMap = targetMap;
                 return this;
             }
 
-            public CarryTaskBuilder setResourceInfo(ResourceInfo resourceInfo)
+            public CarryTaskBuilder SetResourceInfo(ResourceInfo resourceInfo)
             {
-                task.resourceInfo = Tool.DeepCopyByBinary(resourceInfo);
+                this.task.resourceInfo = Tool.DeepCopyByBinary(resourceInfo);
                 return this;
             }
 
-            public WorkerCarryTask build()
+            public WorkerCarryTask Build()
             {
-                return task;
+                return this.task;
             }
         }
+#pragma warning restore SA1600 // Elements should be documented
     }
 }
-

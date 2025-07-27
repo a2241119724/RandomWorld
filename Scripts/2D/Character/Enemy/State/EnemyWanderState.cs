@@ -49,7 +49,7 @@
             {
                 if (this.Character.SenseNearby(PlayerManager.Instance.Get(i).transform))
                 {
-                    this.Character.Manager.changeState(EnemyStateType.Chase);
+                    this.Character.Manager.ChangeState(EnemyStateType.Chase);
                     this.Character.Target = PlayerManager.Instance.Get(i);
                     return;
                 }
@@ -61,7 +61,7 @@
             {
                 if (this.Character.SenseNearby(WorkerManager.Instance.Get(i).transform))
                 {
-                    this.Character.Manager.changeState(EnemyStateType.Chase);
+                    this.Character.Manager.ChangeState(EnemyStateType.Chase);
                     this.Character.Target = WorkerManager.Instance.Get(i);
                     return;
                 }
@@ -80,7 +80,7 @@
             //// 将Vector3转换为Quaternion类型
             // character.transform.rotation = Quaternion.Lerp(character.transform.rotation, Quaternion.Euler(0, 0, rotationAngle), Time.deltaTime * character.rotationSpeed); // (起始方向，终止方向，旋转速度)非匀速
             // character.GetComponent<PhotonView>().RPC("RotateTo", RpcTarget.All, new Vector3(Mathf.Sin(rotationAngle), Mathf.Cos(rotationAngle), 0));
-            Vector3 direction = new Vector3(Mathf.Sin(this.rotationAngle), Mathf.Cos(this.rotationAngle), 0);
+            Vector3 direction = new (Mathf.Sin(this.rotationAngle), Mathf.Cos(this.rotationAngle), 0);
             this.Character.RotateTo(direction);
 
             // character.GetComponent<PhotonView>().RPC("MoveToForward", RpcTarget.All);

@@ -13,25 +13,25 @@
         where CST : Enum
         where C : Worker
     {
-        /// <summary>
-        /// 任务
-        /// </summary>
-        public WorkerTask Task { get; set; }
-
         public WorkerStateManager(C character)
             : base(character)
         {
         }
 
         /// <summary>
+        /// 任务
+        /// </summary>
+        public WorkerTask Task { get; set; }
+
+        /// <summary>
         /// 切换状态
         /// </summary>
         /// <param name="type">切换的状态</param>
-        public override void changeState(CST type)
+        public override void ChangeState(CST type)
         {
             // 先执行,可以在Enter中更改,不然会被覆盖
             this.Character.WorkerState.text = this.CurrentStateType.ToString();
-            base.changeState(type);
+            base.ChangeState(type);
         }
     }
 }

@@ -9,10 +9,10 @@
     /// </summary>
     public class InventoryMenuPanel : BasePanel<InventoryMenuPanel>
     {
-        private Transform position;
-        private Transform type;
-        private Transform id;
-        private Text content;
+        private readonly Transform position;
+        private readonly Transform type;
+        private readonly Transform id;
+        private readonly Text content;
 
         public InventoryMenuPanel()
         {

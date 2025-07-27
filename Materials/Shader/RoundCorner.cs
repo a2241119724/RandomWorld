@@ -1,54 +1,77 @@
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
-    [ExecuteInEditMode, RequireComponent(typeof(CanvasRenderer), typeof(RectTransform)), DisallowMultipleComponent]
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// åœ†è§’
+    /// </summary>
+    [ExecuteInEditMode]
+    [RequireComponent(typeof(CanvasRenderer), typeof(RectTransform))]
+    [DisallowMultipleComponent]
     [AddComponentMenu("LAB/RoundCorner (Unity UI Canvas)")]
     public class RoundCorner : MaskableGraphic
     {
+        /// <summary>
+        /// Inspectoré¢æ¿ä¸Šæ‹–å…¥
+        /// </summary>
+        public Shader Shader = null;
 
-        //InspectorÃæ°åÉÏÖ±½ÓÍÏÈë  
-        public Shader shader = null;
-        [Range(0, 0.5f)] public float radius = 0.5f;
+        /// <summary>
+        /// åœ†è§’åŠå¾„
+        /// </summary>
+        [Range(0, 0.5f)]
+        public float Radius = 0.5f;
 
+        /// <inheritdoc/>
         protected override void Start()
         {
             base.Start();
-            material = GenerateMaterial(shader);
-            material.SetFloat("_Width", rectTransform.rect.width);
-            material.SetFloat("_Height", rectTransform.rect.height);
+            this.material = this.GenerateMaterial(this.Shader);
+            this.material.SetFloat("_Width", this.rectTransform.rect.width);
+            this.material.SetFloat("_Height", this.rectTransform.rect.height);
         }
 
-
-        private void Update()
-        {
-            material.SetFloat("_RoundRadius", radius);
-        }
-
+        /// <inheritdoc/>
         protected override void OnRectTransformDimensionsChange()
         {
             base.OnRectTransformDimensionsChange();
 
-            material.SetFloat("_Width", rectTransform.rect.width);
-            material.SetFloat("_Height", rectTransform.rect.height);
+            this.material.SetFloat("_Width", this.rectTransform.rect.width);
+            this.material.SetFloat("_Height", this.rectTransform.rect.height);
         }
 
-        //¸ù¾İshader´´½¨ÓÃÓÚÆÁÄ»ÌØĞ§µÄ²ÄÖÊ
+        /// <summary>
+        /// æ ¹æ®shaderåˆ›å»ºç”¨äºå±å¹•ç‰¹æ•ˆçš„æè´¨
+        /// </summary>
+        /// <param name="shader">Shader</param>
+        /// <returns>Material</returns>
         protected UnityEngine.Material GenerateMaterial(Shader shader)
         {
             if (shader == null)
+            {
                 return null;
+            }
 
             if (shader.isSupported == false)
+            {
                 return null;
-            UnityEngine.Material material = new UnityEngine.Material(shader);
+            }
+
+            UnityEngine.Material material = new (shader);
             material.hideFlags = HideFlags.DontSave;
 
             if (material)
+            {
                 return material;
+            }
 
             return null;
+        }
+
+        private void Update()
+        {
+            this.material.SetFloat("_RoundRadius", this.Radius);
         }
     }
 }

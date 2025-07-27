@@ -7,12 +7,6 @@
     /// </summary>
     public class EnemyBullet : Bullet
     {
-        protected override void Awake()
-        {
-            base.Awake();
-            this.layerMask = LayerMask.GetMask("Tile", "Player", "Worker");
-        }
-
         /// <inheritdoc/>
         public override void HitObject()
         {
@@ -21,6 +15,13 @@
             {
                 this.rayCastHit2D.transform.GetComponent<Character>().ReduceHp(this.Damage);
             }
+        }
+
+        /// <inheritdoc/>
+        protected override void Awake()
+        {
+            base.Awake();
+            this.layerMask = LayerMask.GetMask("Tile", "Player", "Worker");
         }
     }
 }

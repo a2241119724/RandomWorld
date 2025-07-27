@@ -9,7 +9,7 @@
     public class NameGenertor : Singleton<NameGenertor>
     {
         // 预定义的名字列表
-        private static readonly List<string> FirstNames = new List<string>
+        private static readonly List<string> FirstNames = new ()
         {
             "赵", "钱", "孙", "李", "周", "吴", "郑", "王", "冯", "陈", "褚", "卫", "蒋", "沈", "韩", "杨",
             "朱", "秦", "尤", "许", "何", "吕", "施", "张", "孔", "曹", "严", "华", "金", "魏", "陶", "姜",
@@ -22,7 +22,7 @@
         };
 
         // 预定义的姓氏列表
-        private static readonly List<string> LastNames = new List<string>
+        private static readonly List<string> LastNames = new ()
         {
             "伟", "刚", "勇", "毅", "俊", "峰", "强", "军", "平", "保", "东", "文", "辉", "力", "明", "永",
             "健", "世", "广", "志", "义", "兴", "良", "海", "山", "仁", "波", "宁", "贵", "福", "生", "龙",

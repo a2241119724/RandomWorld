@@ -36,11 +36,11 @@
             this.recordTime += Time.deltaTime;
             if (this.recordTime >= RecordTime)
             {
-                this.Character.Manager.changeState(WorkerStateType.Seek);
+                this.Character.Manager.ChangeState(WorkerStateType.Seek);
             }
 
             this.Character.LineRenderer.positionCount = 0;
-            this.Character.transform.Translate(Vector3.up * Time.deltaTime * this.Character.MoveSpeed, Space.World);
+            this.Character.transform.Translate(this.Character.MoveSpeed * Time.deltaTime * Vector3.up, Space.World);
         }
     }
 }

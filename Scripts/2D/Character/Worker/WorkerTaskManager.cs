@@ -8,19 +8,9 @@
     /// </summary>
     public class WorkerTaskManager : MonoBehaviour
     {
-        private List<Dictionary<WorkerTask, bool>> tasks; // 所有任务(list中越靠前优先级越大)
-        private List<WorkerHungryTask> hungryTasks; // 饥饿任务与pos挂钩，TODO与worker数量挂钩
-        private List<WorkerWearTask> wearTasks;
-
-        /// <summary>
-        /// 单例
-        /// </summary>
-        public static WorkerTaskManager Instance { get; private set; }
-
-        /// <summary>
-        /// 记录所有采摘任务的位置
-        /// </summary>
-        public List<Vector3Int> GatherPos { get; private set; }
+        private readonly List<Dictionary<WorkerTask, bool>> tasks; // 所有任务(list中越靠前优先级越大)
+        private readonly List<WorkerHungryTask> hungryTasks; // 饥饿任务与pos挂钩，TODO与worker数量挂钩
+        private readonly List<WorkerWearTask> wearTasks;
 
         public WorkerTaskManager()
         {
@@ -36,6 +26,16 @@
         }
 
         /// <summary>
+        /// 单例
+        /// </summary>
+        public static WorkerTaskManager Instance { get; private set; }
+
+        /// <summary>
+        /// 记录所有采摘任务的位置
+        /// </summary>
+        public List<Vector3Int> GatherPos { get; private set; }
+
+        /// <summary>
         /// 添加任务
         /// </summary>
         /// <param name="task">任务</param>
@@ -48,7 +48,7 @@
             }
 
             // 如果是饥饿任务,一个位置仅对应一个任务
-            if (task.TaskType == TaskType.Hungry)
+            if (task.TaskType == TaskType.Eat)
             {
                 foreach (WorkerHungryTask hungryTask in this.hungryTasks)
                 {
@@ -90,7 +90,7 @@
         public void CompleteTask(WorkerTask task)
         {
             // 不能删除饥饿任务，需要在deleteHungryTask中删除
-            if (task.TaskType != TaskType.Hungry)
+            if (task.TaskType != TaskType.Eat)
             {
                 for (int i = 0; i < this.tasks.Count; i++)
                 {
@@ -157,7 +157,7 @@
             string res = $"任务总数量: {total}\n";
             for (int i = 0; i < 10; i++)
             {
-                res += $"{((TaskType)i).ToString()}:{taskCount[i]}\n";
+                res += $"{(TaskType)i}:{taskCount[i]}\n";
             }
 
             return res;
@@ -246,7 +246,7 @@
                         }
 
                         // 是否满足做任务的基础条件
-                        if (!task1.isCanWork(worker))
+                        if (!task1.IsCanWork(worker))
                         {
                             continue;
                         }
@@ -274,10 +274,10 @@
                     {
                         // 先设置任务
                         worker.Manager.Task = closedTask;
-                        closedTask.start(worker);
+                        closedTask.Start(worker);
 
                         // 同一个饥饿任务还可以继续接
-                        if (closedTask.TaskType != TaskType.Hungry)
+                        if (closedTask.TaskType != TaskType.Eat)
                         {
                             task[closedTask] = true;
                         }

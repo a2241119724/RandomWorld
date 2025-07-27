@@ -37,7 +37,7 @@
             }
 
             WorkerTaskManager.Instance.AddTask(new WorkerGatherTask.GatherTaskBuilder()
-                .setTarget(this.posMap).setGatherName("Tree").build());
+                .SetTarget(this.posMap).SetGatherName("Tree").Build());
         }
 
         /// <summary>

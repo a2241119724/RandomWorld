@@ -44,7 +44,7 @@
         /// </summary>
         public class ItemDataBuilder
         {
-            private ItemData itemData;
+            private readonly ItemData itemData;
 
 #pragma warning disable SA1600 // Elements should be documented
             public ItemDataBuilder()

@@ -1,6 +1,5 @@
 ﻿namespace LAB2D
 {
-    using System;
     using System.Collections;
     using UnityEngine;
     using UnityEngine.UI;

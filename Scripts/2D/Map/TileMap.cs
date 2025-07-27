@@ -1,4 +1,4 @@
-﻿ namespace LAB2D
+﻿namespace LAB2D
 {
     using System;
     using System.Collections;
@@ -65,10 +65,10 @@
         /// </summary>
         /// <param name="centerMap">中心位置</param>
         /// <returns>位置</returns>
-        public Vector3Int GenCanReachPos(Vector3 centerMap = default(Vector3))
+        public Vector3Int GenCanReachPos(Vector3 centerMap = default)
         {
             int x, y, startX = 0, endX = Height, startY = 0, endY = Width;
-            if (centerMap != default(Vector3))
+            if (centerMap != default)
             {
                 startX = (int)Mathf.Max(centerMap.x - 50, 0);
                 startY = (int)Mathf.Max(centerMap.y - 50, 0);
@@ -137,7 +137,7 @@
             this.MapTiles = tiles;
             this.CreateArroundTile();
             this.StartCoroutine(this.ShowTilemap(this.MapTiles));
-            this.StartCoroutine(EnemyCreator.Instance.genEnemy());
+            this.StartCoroutine(EnemyCreator.Instance.GenEnemy());
         }
 
         /// <summary>
@@ -229,7 +229,7 @@
             this.randomCount = data.RandomCount;
             this.CreateArroundTile();
             this.StartCoroutine(this.ShowTilemap(this.MapTiles));
-            this.StartCoroutine(EnemyCreator.Instance.genEnemy());
+            this.StartCoroutine(EnemyCreator.Instance.GenEnemy());
 
             // Worker.initMap(Height, Width);
         }
@@ -238,7 +238,7 @@
         public override void SaveData()
         {
             base.SaveData();
-            TileMapData tileMapData = new TileMapData(Height, Width, this.MapTiles, this.randomCount);
+            TileMapData tileMapData = new (Height, Width, this.MapTiles, this.randomCount);
             Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), tileMapData);
         }
 
