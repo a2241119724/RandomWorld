@@ -1,85 +1,105 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// é‡‡é›†ä»»åŠ¡
+    /// </summary>
     public class WorkerGatherTask : WorkerTask
     {
         private string resourceName = "Tree";
 
-        public WorkerGatherTask() : base(TaskType.Gather)
+        public WorkerGatherTask()
+            : base(TaskType.Gather)
         {
-            stageInit.Add((Worker worker) =>
+            this.stageInit.Add((Worker worker) =>
             {
-                maxProgress = 10.0f;
-                AvailableNeighborPos.Clear();
-                AvailableNeighborPos.Add(neighbors[1]);
-                AvailableNeighborPos.Add(neighbors[3]);
-                // ½øÈë¹¤×÷×´Ì¬
-                worker.Manager.changeState(WorkerStateType.Seek);
+                this.maxProgress = 10.0f;
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[1]);
+                this.AvailableNeighborPos.Add(Neighbors[3]);
+
+                // è¿›å…¥å·¥ä½œçŠ¶æ€
+                worker.Manager.ChangeState(WorkerStateType.Seek);
             });
         }
 
-        public override void start(Worker worker)
+        /// <inheritdoc/>
+        public override void Start(Worker worker)
         {
-            base.start(worker);
-            changeStage(worker, 0);
+            base.Start(worker);
+            this.ChangeStage(worker, 0);
         }
 
-        public override void finish(Worker worker)
+        /// <inheritdoc/>
+        public override void Finish(Worker worker)
         {
-            base.finish(worker);
-            ResourceMap.Instance.CutTree(TargetMap);
-            List<DropItem> dropItems = DropItemManager.Instance.GetDropItemsByName(resourceName);
-            // ²ÉÕªµôÂäÄ¾Í·,Æ»¹û
+            base.Finish(worker);
+            ResourceMap.Instance.CutTree(this.TargetMap);
+            List<DropItem> dropItems = DropItemManager.Instance.GetDropItemsByName(this.resourceName);
+
+            // é‡‡æ‘˜æ‰è½æœ¨å¤´,è‹¹æœ
             for (int i = 0; i < dropItems.Count; i++)
             {
-                Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(TargetMap, 3, true);
-                if (pos == default) break;
-                ItemMap.Instance.PutDownToDrop(pos, (TileBase)ResourcesManager.Instance.GetAsset(dropItems[i].Name),
-                    dropItems[i].ResourceInfo);
+                Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(this.TargetMap, 3, true);
+                if (pos == default)
+                {
+                    break;
+                }
+
+                ItemMap.Instance.PutDownToDrop(pos, (TileBase)ResourcesManager.Instance.GetAsset(dropItems[i].Name), dropItems[i].ResourceInfo);
             }
-            // É¾³ı²ÉÕªÍ¼±ê
-            GatherMap.Instance.CancelGather(TargetMap);
+
+            // åˆ é™¤é‡‡æ‘˜å›¾æ ‡
+            GatherMap.Instance.CancelGather(this.TargetMap);
         }
 
-        public override bool isCanWork(Worker worker)
+        /// <inheritdoc/>
+        public override bool IsCanWork(Worker worker)
         {
-            if (!base.isCanWork(worker))
+            if (!base.IsCanWork(worker))
             {
                 return false;
             }
+
             return ResourceMap.Instance.ResourceMapDataLAB.TreeCurCount > 0;
         }
 
+#pragma warning disable SA1600 // Elements should be documented
+        /// <summary>
+        /// å»ºé€ è€…
+        /// </summary>
         public class GatherTaskBuilder
         {
-            private WorkerGatherTask task;
+            private readonly WorkerGatherTask task;
 
             public GatherTaskBuilder()
             {
-                task = new WorkerGatherTask();
+                this.task = new WorkerGatherTask();
             }
 
-            public GatherTaskBuilder setTarget(Vector3Int targetMap)
+            public GatherTaskBuilder SetTarget(Vector3Int targetMap)
             {
-                task.TargetMap = targetMap;
-                // ÏÔÊ¾ÕıÔÚ²ÉÕªÍ¼±ê
+                this.task.TargetMap = targetMap;
+
+                // æ˜¾ç¤ºæ­£åœ¨é‡‡æ‘˜å›¾æ ‡
                 GatherMap.Instance.AddGather(targetMap);
                 return this;
             }
 
-            public GatherTaskBuilder setGatherName(string name)
+            public GatherTaskBuilder SetGatherName(string name)
             {
-                task.resourceName = name;
+                this.task.resourceName = name;
                 return this;
             }
 
-            public WorkerGatherTask build()
+            public WorkerGatherTask Build()
             {
-                return task;
+                return this.task;
             }
         }
+#pragma warning restore SA1600 // Elements should be documented
     }
 }

@@ -14,9 +14,9 @@
         /// <param name="name">玩家名字</param>
         /// <param name="layer">玩家层级</param>
         /// <returns>游戏对象</returns>
-        protected override GameObject _create(Vector3 worldPos, string name, string layer)
+        protected override GameObject DoCreate(Vector3 worldPos, string name, string layer)
         {
-            return base._create(worldPos, "Player", "Player");
+            return base.DoCreate(worldPos, "Player", "Player");
         }
     }
 }

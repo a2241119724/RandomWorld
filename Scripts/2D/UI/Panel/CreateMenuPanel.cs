@@ -55,7 +55,7 @@
             if (NetworkConnect.Instance.IsOnline)
             {
                 // 创建房间,(房间名字,房子选项{最大连接人数(最大4)},大厅基本属性)
-                RoomOptions roomOptions = new RoomOptions();
+                RoomOptions roomOptions = new ();
                 roomOptions.IsOpen = true;
                 roomOptions.IsVisible = true;
                 roomOptions.MaxPlayers = 4;

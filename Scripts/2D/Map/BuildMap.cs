@@ -105,7 +105,7 @@
         /// </summary>
         public void AddTask()
         {
-            Dictionary<int, ResourceInfo> resourceInfos = new Dictionary<int, ResourceInfo>();
+            Dictionary<int, ResourceInfo> resourceInfos = new ();
             resourceInfos.Add(
                 ItemDataManager.Instance.GetByName("CustomWood").Id,
                 new ResourceInfo(ItemDataManager.Instance.GetByName("CustomWood").Id, 5));

@@ -9,7 +9,7 @@
     {
         private const float RecordTime = 1.0f;
         private static readonly int[] D = new int[] { -1, 1 };
-        private float turnSpeed = 0.1f; // 转弯速度
+        private readonly float turnSpeed = 0.1f; // 转弯速度
         private Vector3 center = default; // 旋转的圆心
         private int index;
         private float recordTime;
@@ -44,12 +44,12 @@
             if (this.Target != null && this.center == default)
             {
                 // TODO Lerp
-                Vector3 offset = new Vector3(
+                Vector3 offset = new (
                     this.Target.transform.position.x - this.transform.position.x - this.direction.x,
                     this.Target.transform.position.y - this.transform.position.y - this.direction.y,
                     this.Target.transform.position.z - this.transform.position.z - this.direction.z);
                 this.direction = new Vector3(
-                    this.direction.x + (offset.x * this.turnSpeed * Time.deltaTime), 
+                    this.direction.x + (offset.x * this.turnSpeed * Time.deltaTime),
                     this.direction.y + (offset.y * this.turnSpeed * Time.deltaTime),
                     this.direction.z + (offset.z * this.turnSpeed * Time.deltaTime)).normalized;
                 if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.998f)

@@ -81,25 +81,23 @@
 
                 using (Stream stream = response.GetResponseStream())
                 {
-                    using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                    using StreamReader reader = new (stream, Encoding.UTF8);
+                    ChatData chatData;
+                    bool isStart = false;
+                    do
                     {
-                        ChatData chatData;
-                        bool isStart = false;
-                        do
+                        chatData = JsonUtility.FromJson<ChatData>(await reader.ReadLineAsync());
+                        if (isStart && !chatData.message.content.Equals("\n\n"))
                         {
-                            chatData = JsonUtility.FromJson<ChatData>(await reader.ReadLineAsync());
-                            if (isStart && !chatData.message.content.Equals("\n\n"))
-                            {
-                                text += chatData.message.content;
-                            }
-
-                            if (chatData.message.content.Equals("</think>"))
-                            {
-                                isStart = true;
-                            }
+                            text += chatData.message.content;
                         }
-                        while (!chatData.done && !reader.EndOfStream);
+
+                        if (chatData.message.content.Equals("</think>"))
+                        {
+                            isStart = true;
+                        }
                     }
+                    while (!chatData.done && !reader.EndOfStream);
                 }
             }
             catch (Exception e)

@@ -38,7 +38,7 @@
                 return;
             }
 
-            bool isComplete = this.Character.Manager.Task.execute(this.Character);
+            bool isComplete = this.Character.Manager.Task.Execute(this.Character);
             if (!isComplete)
             {
                 return;
@@ -46,7 +46,7 @@
 
             // 完成任务
             this.Character.Manager.Task = null;
-            this.Character.Manager.changeState(WorkerStateType.Seek);
+            this.Character.Manager.ChangeState(WorkerStateType.Seek);
         }
     }
 }

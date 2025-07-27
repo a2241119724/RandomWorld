@@ -9,8 +9,8 @@
     /// </summary>
     public class ItemInfoPanel : BasePanel<ItemInfoPanel>
     {
-        private Text textUI;
-        private Transform character;
+        private readonly Text textUI;
+        private readonly Transform character;
 
         public ItemInfoPanel()
         {
@@ -68,18 +68,18 @@
                 this.character.GetChild(i).gameObject.SetActive(false);
             }
 
-            if (character is Worker)
+            if (character is Worker worker1)
             {
                 Transform worker = this.character.Find("Worker");
                 worker.gameObject.SetActive(true);
-                Weapon weapon = ((Worker)character).WearData.Weapon;
+                Weapon weapon = worker1.WearData.Weapon;
                 if (weapon != null)
                 {
                     worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.GetImage(
                         ItemDataManager.Instance.GetById(weapon.Id).ImageName);
                 }
 
-                Dictionary<Equipment.EquipType, Equipment> equipments = ((Worker)character).WearData.Equipments;
+                Dictionary<Equipment.EquipType, Equipment> equipments = worker1.WearData.Equipments;
                 foreach (var item in equipments)
                 {
                     if (item.Value != null)

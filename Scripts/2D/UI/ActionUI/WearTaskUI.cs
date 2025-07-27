@@ -52,9 +52,9 @@
                 {
                     WorkerTaskManager.Instance.AddTask(
                         new WorkerWearTask.WearTaskBuilder()
-                        .setWorker(workers[index]).setTarget(posMap).setEquipmentId(resourceInfo.Id).build(), 1);
+                        .SetWorker(workers[index]).SetTarget(posMap).SetEquipmentId(resourceInfo.Id).Build(), 1);
                     this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
-                    Dictionary<int, ResourceInfo> dict = new Dictionary<int, ResourceInfo>();
+                    Dictionary<int, ResourceInfo> dict = new ();
                     dict.Add(resourceInfo.Id, resourceInfo);
                     InventoryManager.Instance.IsEnoughAndPreTake(workers[index], new Dictionary<int, ResourceInfo>(dict), true);
                 });

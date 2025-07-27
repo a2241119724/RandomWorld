@@ -9,7 +9,7 @@
     /// </summary>
     public class PauseMenuPanel : BasePanel<PauseMenuPanel>
     {
-        private AudioSource audioSource; // 被控制
+        private readonly AudioSource audioSource; // 被控制
 
         public PauseMenuPanel()
         {

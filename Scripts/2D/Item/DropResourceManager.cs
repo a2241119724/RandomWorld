@@ -12,7 +12,7 @@
         /// <summary>
         /// 掉落物
         /// </summary>
-        private static Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> resources = new Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>>();
+        private static readonly Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> Resources = new ();
 
         /// <summary>
         /// 添加掉落物
@@ -23,14 +23,14 @@
         public void AddDrop(ItemType itemType, Vector3Int posMap, ResourceInfo resourceInfo)
         {
             Dictionary<Vector3Int, ResourceInfo> dict;
-            if (resources.ContainsKey(itemType))
+            if (Resources.ContainsKey(itemType))
             {
-                dict = resources[itemType];
+                dict = Resources[itemType];
             }
             else
             {
                 dict = new Dictionary<Vector3Int, ResourceInfo>();
-                resources.Add(itemType, dict);
+                Resources.Add(itemType, dict);
             }
 
             if (dict.ContainsKey(posMap))
@@ -51,7 +51,7 @@
         /// <param name="resourceInfo">具体掉落物信息</param>
         public void SubDrop(ItemType itemType, Vector3Int posMap, ResourceInfo resourceInfo)
         {
-            Dictionary<Vector3Int, ResourceInfo> dict = resources[itemType];
+            Dictionary<Vector3Int, ResourceInfo> dict = Resources[itemType];
             dict[posMap].Count -= resourceInfo.Count;
             if (dict[posMap].Count <= 0)
             {
@@ -66,9 +66,9 @@
         /// <param name="resourceInfo">具体掉落物信息</param>
         public void SubDropByAll(Vector3Int posMap, ResourceInfo resourceInfo)
         {
-            foreach (KeyValuePair<ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in resources)
+            foreach (KeyValuePair<ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in Resources)
             {
-                Dictionary<Vector3Int, ResourceInfo> dict = resources[pair.Key];
+                Dictionary<Vector3Int, ResourceInfo> dict = Resources[pair.Key];
                 if (!dict.ContainsKey(posMap))
                 {
                     continue;
@@ -92,12 +92,12 @@
         /// <returns>掉落物信息</returns>
         public ResourceInfo GetDrop(ItemType itemType, Vector3Int posMap)
         {
-            if (!resources[itemType].ContainsKey(posMap))
+            if (!Resources[itemType].ContainsKey(posMap))
             {
                 return null;
             }
 
-            return resources[itemType][posMap];
+            return Resources[itemType][posMap];
         }
 
         /// <summary>
@@ -107,7 +107,7 @@
         /// <returns>掉落物信息</returns>
         public ResourceInfo GetDropByAll(Vector3Int posMap)
         {
-            foreach (KeyValuePair<ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in resources)
+            foreach (KeyValuePair<ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in Resources)
             {
                 if (pair.Value.ContainsKey(posMap))
                 {

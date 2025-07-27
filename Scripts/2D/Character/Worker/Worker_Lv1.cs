@@ -11,15 +11,15 @@
             base.Awake();
 
             // 添加状态
-            this.Manager.addStates(WorkerStateType.Move, new WorkerMoveState(this));
-            this.Manager.addStates(WorkerStateType.Work, new WorkerWorkState(this));
-            this.Manager.addStates(WorkerStateType.Seek, new WorkerSeekState(this));
-            this.Manager.addStates(WorkerStateType.Hungry, new WorkerHungryState(this));
-            this.Manager.addStates(WorkerStateType.Attack, new WorkerAttackState(this));
-            this.Manager.addStates(WorkerStateType.Escape, new WorkerEscapeState(this));
+            this.Manager.AddState(WorkerStateType.Move, new WorkerMoveState(this));
+            this.Manager.AddState(WorkerStateType.Work, new WorkerWorkState(this));
+            this.Manager.AddState(WorkerStateType.Seek, new WorkerSeekState(this));
+            this.Manager.AddState(WorkerStateType.Eat, new WorkerHungryState(this));
+            this.Manager.AddState(WorkerStateType.Attack, new WorkerAttackState(this));
+            this.Manager.AddState(WorkerStateType.Escape, new WorkerEscapeState(this));
 
             // 初始化状态
-            this.Manager.changeState(WorkerStateType.Seek);
+            this.Manager.ChangeState(WorkerStateType.Seek);
         }
     }
 }

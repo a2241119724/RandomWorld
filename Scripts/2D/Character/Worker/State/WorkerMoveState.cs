@@ -49,12 +49,12 @@
                     }
 
                     // 没有任务就进入寻路状态
-                    this.Character.Manager.changeState(WorkerStateType.Seek);
+                    this.Character.Manager.ChangeState(WorkerStateType.Seek);
                 }
                 else
                 {
                     // 有任务就进入工作状态
-                    this.Character.Manager.changeState(WorkerStateType.Work);
+                    this.Character.Manager.ChangeState(WorkerStateType.Work);
                 }
             }
         }

@@ -6,7 +6,15 @@
     /// 仓库上墙
     /// </summary>
     [Serializable]
-    public class InventoryWallT : Wall, IDontShow
+    public class InventoryWall : Wall, IDontShow
+    {
+    }
+
+    /// <summary>
+    /// 仓库上墙
+    /// </summary>
+    [Serializable]
+    public class InventoryWallT : InventoryWall
     {
     }
 
@@ -14,7 +22,7 @@
     /// 仓库下墙
     /// </summary>
     [Serializable]
-    public class InventoryWallD : Wall, IDontShow
+    public class InventoryWallD : InventoryWall
     {
     }
 
@@ -22,7 +30,7 @@
     /// 仓库左墙
     /// </summary>
     [Serializable]
-    public class InventoryWallL : Wall, IDontShow
+    public class InventoryWallL : InventoryWall
     {
     }
 
@@ -30,7 +38,7 @@
     /// 仓库右墙
     /// </summary>
     [Serializable]
-    public class InventoryWallR : Wall, IDontShow
+    public class InventoryWallR : InventoryWall
     {
     }
 
@@ -38,7 +46,7 @@
     /// 仓库右上墙
     /// </summary>
     [Serializable]
-    public class InventoryWallRT : Wall, IDontShow
+    public class InventoryWallRT : InventoryWall
     {
     }
 
@@ -46,7 +54,7 @@
     /// 仓库右下墙
     /// </summary>
     [Serializable]
-    public class InventoryWallRD : Wall, IDontShow
+    public class InventoryWallRD : InventoryWall
     {
     }
 
@@ -54,7 +62,7 @@
     /// 仓库左上墙
     /// </summary>
     [Serializable]
-    public class InventoryWallLT : Wall, IDontShow
+    public class InventoryWallLT : InventoryWall
     {
     }
 
@@ -62,7 +70,7 @@
     /// 仓库左下墙
     /// </summary>
     [Serializable]
-    public class InventoryWallLD : Wall, IDontShow
+    public class InventoryWallLD : InventoryWall
     {
     }
 }

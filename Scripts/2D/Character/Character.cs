@@ -1,7 +1,7 @@
 ﻿namespace LAB2D
 {
-    using Photon.Pun;
     using System;
+    using Photon.Pun;
     using UnityEngine;
 
     /// <summary>
@@ -12,7 +12,7 @@
         /// <summary>
         /// 角色数据
         /// </summary>
-        public CharacterData CharacterDataLAB = new CharacterData();
+        public CharacterData CharacterDataLAB = new ();
 
         /// <summary>
         /// 移动速度

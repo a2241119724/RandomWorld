@@ -39,9 +39,11 @@
             this.offsetX = Random.Range(-0.2f, 0.2f);
 
             // 不能在Start中
-            this.param = new List<Config>();
-            this.param.Add(new Config(Color.white, 40));
-            this.param.Add(new Config(Color.red, 50));
+            this.param = new List<Config>
+            {
+                new Config(Color.white, 40),
+                new Config(Color.red, 50),
+            };
         }
 
         private void Start()
@@ -60,10 +62,8 @@
         private void Update()
         {
             // 不随父元素旋转而旋转
-            this.transform.rotation = Quaternion.identity;
-
             // 不随父元素旋转而移动(通过世界坐标偏移量实现)
-            this.transform.position = new Vector3(this.parent.position.x + this.offsetX, this.transform.position.y, 0);
+            this.transform.SetPositionAndRotation(new Vector3(this.parent.position.x + this.offsetX, this.transform.position.y, 0), Quaternion.identity);
             this.transform.Translate(2.0f * Time.deltaTime * Vector3.up, Space.World); // 使文本在垂直方向山产生一个偏移
         }
 

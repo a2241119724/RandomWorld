@@ -11,8 +11,8 @@
     public class Player : Character
     {
         [Tooltip("角色速度")]
-        private int mp = 100; // 玩家蓝量
-        private int maxMp = 100; // 玩家最大蓝量
+        private readonly int mp = 100; // 玩家蓝量
+        private readonly int maxMp = 100; // 玩家最大蓝量
         private int currentExperience = 0; // 玩家当前经验值
         private int maxExperience = 4; // 玩家当前等级最大经验值
         private int level = 1; // 当前等级
@@ -130,7 +130,7 @@
         protected override void Awake()
         {
             base.Awake();
-            this.direction = default(Vector3);
+            this.direction = default;
             if (this.direction == null)
             {
                 LogManager.Instance.Log("direction assign resource Error!!!", LogManager.LogLevel.Error);
@@ -239,7 +239,7 @@
                     this.direction.y = Joystick.Instance.Direction.y;
                 }
 
-                this.transform.Translate(this.direction.normalized * Time.deltaTime * this.MoveSpeed, Space.World);
+                this.transform.Translate(this.MoveSpeed * Time.deltaTime * this.direction.normalized, Space.World);
 
                 // 翻转
                 this.renderer.flipX = this.direction.x < 0;

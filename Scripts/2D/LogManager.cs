@@ -13,7 +13,7 @@
         private readonly LogLevel minLogLevel = LogLevel.Info; // 最小的日志级别.
         private readonly string logPath = Application.persistentDataPath + "/game.log";
         private readonly bool isSave = true;
-        private List<string> logs;
+        private readonly List<string> logs;
 
         public LogManager()
         {

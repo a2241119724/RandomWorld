@@ -26,15 +26,15 @@
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(neighbors[8]);
+                this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = InventoryManager.Instance.GetPosByPreTake(worker);
                 if (this.TargetMap == default)
                 {
-                    this.giveUpTask(worker);
+                    this.GiveUpTask(worker);
                 }
 
                 // 进入工作状态
-                worker.Manager.changeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerStateType.Seek);
             });
             this.stageInit.Add((Worker worker) =>
             {
@@ -42,12 +42,12 @@
 
                 // 建造
                 this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(neighbors[0]);
-                this.AvailableNeighborPos.Add(neighbors[1]);
-                this.AvailableNeighborPos.Add(neighbors[2]);
-                this.AvailableNeighborPos.Add(neighbors[3]);
+                this.AvailableNeighborPos.Add(Neighbors[0]);
+                this.AvailableNeighborPos.Add(Neighbors[1]);
+                this.AvailableNeighborPos.Add(Neighbors[2]);
+                this.AvailableNeighborPos.Add(Neighbors[3]);
                 this.TargetMap = this.buildPos;
-                worker.Manager.changeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerStateType.Seek);
             });
         }
 
@@ -57,13 +57,13 @@
         public BuildItem BuildItem { get; private set; }
 
         /// <inheritdoc/>
-        public override void start(Worker worker)
+        public override void Start(Worker worker)
         {
             // 自身携带资源足够
             if (worker.IsEnough(this.needs))
             {
                 // LogManager.Instance.log("携带资源充足", LogManager.LogLevel.Info);
-                this.changeStage(worker, 1);
+                this.ChangeStage(worker, 1);
                 return;
             }
 
@@ -72,13 +72,13 @@
             InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining, true);
 
             // 不够就取资源
-            this.changeStage(worker, 0);
+            this.ChangeStage(worker, 0);
         }
 
         /// <inheritdoc/>
-        public override void finish(Worker worker)
+        public override void Finish(Worker worker)
         {
-            base.finish(worker);
+            base.Finish(worker);
 
             // 减少worker携带的资源
             worker.SubResource(this.needs);
@@ -88,9 +88,9 @@
         }
 
         /// <inheritdoc/>
-        public override bool isCanWork(Worker worker)
+        public override bool IsCanWork(Worker worker)
         {
-            if (!base.isCanWork(worker))
+            if (!base.IsCanWork(worker))
             {
                 return false;
             }
@@ -108,16 +108,16 @@
         }
 
         /// <inheritdoc/>
-        public override void giveUpTask(Worker worker)
+        public override void GiveUpTask(Worker worker)
         {
-            base.giveUpTask(worker);
+            base.GiveUpTask(worker);
 
             // 恢复资源
             this.temp = Tool.DeepCopyByBinary(this.needs);
         }
 
         /// <inheritdoc/>
-        protected override bool isFinish(Worker worker)
+        protected override bool IsFinish(Worker worker)
         {
             // 只worker携带的资源不够时,取建筑材料
             switch (this.stage)
@@ -144,11 +144,11 @@
                     // 获取完成所有的材料
                     if (this.temp.Count == 0)
                     {
-                        this.changeStage(worker, 1);
+                        this.ChangeStage(worker, 1);
                         return false;
                     }
 
-                    this.changeStage(worker, 0);
+                    this.ChangeStage(worker, 0);
                     return false;
                 default:
                     return true;
@@ -160,7 +160,7 @@
         /// </summary>
         public class BuildTaskBuilder
         {
-            private WorkerBuildTask task;
+            private readonly WorkerBuildTask task;
 
 #pragma warning disable SA1600 // Elements should be documented
             public BuildTaskBuilder()

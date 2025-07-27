@@ -43,7 +43,7 @@
             Character.CharacterData data = Tool.LoadDataByBinary<Character.CharacterData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             AsyncProgressUI.Instance.Complete += () =>
             {
-                GameObject g = this.create(Vector3LAB.ToVector3(data.Pos));
+                GameObject g = this.Create(Vector3LAB.ToVector3(data.Pos));
                 this.Mine = g.GetComponent<Player>();
                 this.Mine.CharacterDataLAB = data;
             };

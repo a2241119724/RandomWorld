@@ -1,7 +1,7 @@
 ﻿namespace LAB2D
 {
-    using Photon.Pun;
     using System.Collections.Generic;
+    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
@@ -82,7 +82,7 @@
                 PhotonNetwork.Destroy(this.Character.gameObject); // Destroy不会立即销毁,下一帧销毁
 
                 // 执行OnExit并关闭脚本
-                this.Character.Manager.changeState(EnemyStateType.Wander);
+                this.Character.Manager.ChangeState(EnemyStateType.Wander);
             }
         }
 
@@ -111,7 +111,7 @@
                     }
 
                     ItemData itemData = ItemDataManager.Instance.GetByName(dropItem.Value.name);
-                    ResourceInfo resourceInfo = new ResourceInfo(itemData.Id, 1);
+                    ResourceInfo resourceInfo = new (itemData.Id, 1);
                     ItemMap.Instance.PutDownToDrop(pos, dropItem.Value, resourceInfo);
                     break;
                 }

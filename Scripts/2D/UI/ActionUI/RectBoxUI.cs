@@ -42,7 +42,7 @@
                 }
 
                 WorkerTaskManager.Instance.AddTask(new WorkerGatherTask.GatherTaskBuilder()
-                    .setTarget(posMap).setGatherName(tileBase.name).build());
+                    .SetTarget(posMap).SetGatherName(tileBase.name).Build());
             });
         }
 
@@ -69,8 +69,10 @@
         private void Awake()
         {
             Instance = this;
-            this.selects = new Dictionary<TileType, List<Vector3Int>>();
-            this.selects.Add(TileType.Resource, new List<Vector3Int>());
+            this.selects = new Dictionary<TileType, List<Vector3Int>>
+            {
+                { TileType.Resource, new List<Vector3Int>() },
+            };
             this.options = Tool.GetComponentInChildren<Transform>(this.gameObject, "Options");
             this.options.gameObject.SetActive(false);
             Transform gather = Tool.GetComponentInChildren<Transform>(this.options.gameObject, "Gather");
@@ -156,7 +158,7 @@
             {
                 for (int j = start.y; j < end.y; j++)
                 {
-                    Vector3Int posMap = new Vector3Int(i, j, 0);
+                    Vector3Int posMap = new (i, j, 0);
                     Character character = ItemInfoUI.Instance.GetCharacter(posMap);
                     if (character != null)
                     {

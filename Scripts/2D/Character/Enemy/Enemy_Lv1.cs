@@ -40,14 +40,14 @@
             base.Start();
 
             // 添加状态
-            this.Manager.addStates(EnemyStateType.Wander, new EnemyWanderState(this));
-            this.Manager.addStates(EnemyStateType.Chase, new EnemyChaseState(this));
-            this.Manager.addStates(EnemyStateType.Dead, new EnemyDeadState(this));
-            this.Manager.addStates(EnemyStateType.Seek, new EnemySeekState(this));
-            this.Manager.addStates(EnemyStateType.Attack, new EnemyAttackState(this));
+            this.Manager.AddState(EnemyStateType.Wander, new EnemyWanderState(this));
+            this.Manager.AddState(EnemyStateType.Chase, new EnemyChaseState(this));
+            this.Manager.AddState(EnemyStateType.Dead, new EnemyDeadState(this));
+            this.Manager.AddState(EnemyStateType.Seek, new EnemySeekState(this));
+            this.Manager.AddState(EnemyStateType.Attack, new EnemyAttackState(this));
 
             // 初始化状态
-            this.Manager.changeState(EnemyStateType.Wander);
+            this.Manager.ChangeState(EnemyStateType.Wander);
             this.Target = null;
         }
     }

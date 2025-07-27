@@ -42,7 +42,7 @@
                         yield return null;
                     }
 
-                    Vector3Int posMap = new Vector3Int(i, j, 0);
+                    Vector3Int posMap = new (i, j, 0);
                     if (TileMap.Instance.IsCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.9f)
                     {
                         MapTileType tileType = TileMap.Instance.MapTiles[i, j];

@@ -60,7 +60,7 @@
                 this.Target = this.Character.transform.position;
             }
 
-            Vector3 ultimateTarget = new Vector3(this.Target.x + this.Offset.x, this.Target.y + this.Offset.y, this.Target.z + this.Offset.z);
+            Vector3 ultimateTarget = new (this.Target.x + this.Offset.x, this.Target.y + this.Offset.y, this.Target.z + this.Offset.z);
             this.transform.position = Vector3.Lerp(this.transform.position, ultimateTarget, Time.deltaTime * CameraSpeed); // 设置相机的位置
             this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, -20 + this.Offset.z); // 固定相机z轴的位置
 

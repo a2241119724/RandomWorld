@@ -83,7 +83,7 @@
             while (true)
             {
                 // 每秒平均帧数
-                this.accum = this.accum / this.frames;
+                this.accum /= this.frames;
 
                 // if (!double.IsNaN(accum))
                 // {

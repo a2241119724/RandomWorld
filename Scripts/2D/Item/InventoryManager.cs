@@ -10,10 +10,10 @@
     public class InventoryManager : Singleton<InventoryManager>
     {
         private readonly Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> id2Resource; // 同一个id对应的所有位置
-        private Dictionary<Vector3Int, ResourceInfo> posToResource; // 根据pos查资源
-        private Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // 预申请资源
-        private Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // 预放置资源
-        private int capacity = 1000; // 单个cell的容量
+        private readonly Dictionary<Vector3Int, ResourceInfo> posToResource; // 根据pos查资源
+        private readonly Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // 预申请资源
+        private readonly Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // 预放置资源
+        private readonly int capacity = 1000; // 单个cell的容量
 
         public InventoryManager()
         {
@@ -56,7 +56,7 @@
                 for (int j = 0; j < width; j++)
                 {
                     Vector3Int pos = Tool.Add(startPos, i, j);
-                    ResourceInfo resourceInfo = new ResourceInfo(-1, 0);
+                    ResourceInfo resourceInfo = new (-1, 0);
                     this.posToResource.Add(pos, resourceInfo);
                     resources.Add(pos, resourceInfo);
                     typeTo.Add(pos, resourceInfo);
@@ -115,7 +115,7 @@
             }
 
             // 对于可以堆叠的资源，先判断是否有相同的资源
-            Dictionary<Vector3Int, ResourceInfo> pre = new Dictionary<Vector3Int, ResourceInfo>();
+            Dictionary<Vector3Int, ResourceInfo> pre = new ();
             int remaining = resourceInfo.Count;
 
             // 若仓库中存在该id,对应位置的资源数量与该位置预放置资源的数量之和是否超过容量
@@ -216,7 +216,7 @@
         /// <returns>是否足够</returns>
         public bool IsEnoughFoodAndPreTake(Worker worker, float hungry, bool isPre = false)
         {
-            Dictionary<Vector3Int, ResourceInfo> foods = new Dictionary<Vector3Int, ResourceInfo>();
+            Dictionary<Vector3Int, ResourceInfo> foods = new ();
             foreach (KeyValuePair<Vector3Int, ResourceInfo> food in this.TypeToResource[ItemType.Food])
             {
                 float hungry1 = food.Value.Count * 10.0f;
@@ -611,7 +611,7 @@
                 return;
             }
 
-            Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
+            Dictionary<Vector3Int, ResourceInfo> dict = new ();
             dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
             this.prePlaceResource.Add(worker, dict);
             ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
@@ -669,7 +669,7 @@
         {
             if (!this.preTakeResource.ContainsKey(worker))
             {
-                Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
+                Dictionary<Vector3Int, ResourceInfo> dict = new ();
                 dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
                 this.preTakeResource.Add(worker, dict);
                 ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
@@ -737,7 +737,7 @@
             }
             else
             {
-                Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
+                Dictionary<Vector3Int, ResourceInfo> dict = new ();
                 dict.Add(pos, this.posToResource[pos]);
                 this.id2Resource.Add(newId, dict);
             }
@@ -750,7 +750,7 @@
             }
             else
             {
-                Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
+                Dictionary<Vector3Int, ResourceInfo> dict = new ();
                 dict.Add(pos, this.posToResource[pos]);
                 this.TypeToResource.Add(newType, dict);
             }

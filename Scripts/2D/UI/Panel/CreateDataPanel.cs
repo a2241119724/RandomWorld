@@ -84,7 +84,7 @@
             EnemyManager.Instance.MaxEnemyCount = this.maxEnemyCount;
             AsyncProgressUI.Instance.Complete += () =>
             {
-                PlayerManager.Instance.create();
+                PlayerManager.Instance.Create();
             };
         }
     }

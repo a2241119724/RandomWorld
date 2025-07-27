@@ -1,6 +1,5 @@
 ﻿namespace LAB2D
 {
-    using Photon.Pun;
     using System;
     using System.Collections;
     using System.Collections.Generic;
@@ -9,6 +8,7 @@
     using System.Reflection;
     using System.Runtime.Serialization.Formatters.Binary;
     using System.Xml.Serialization;
+    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.EventSystems;
     using UnityEngine.SceneManagement;
@@ -19,9 +19,9 @@
     /// </summary>
     public class Tool
     {
-        private static BinaryFormatter bf = new BinaryFormatter();
-        private static string des = Application.persistentDataPath + "/Data/";
-        private static string dataPath = new DirectoryInfo(Application.dataPath).FullName + "\\Resources\\";
+        private static readonly BinaryFormatter Bf = new ();
+        private static readonly string Des = Application.persistentDataPath + "/Data/";
+        private static readonly string DataPath = new DirectoryInfo(Application.dataPath).FullName + "\\Resources\\";
 
         /// <summary>
         /// 画扇形.
@@ -33,7 +33,7 @@
         public static void DrawSectorSolid(float angle, float radius, Color32 color, Transform parent)
         {
             int pointAmount = 100; // 将angle平均分为
-            List<Vector3> vertices = new List<Vector3>();
+            List<Vector3> vertices = new ();
             vertices.Add(Vector3.zero);
             for (int i = 0; i <= pointAmount; i++)
             {
@@ -53,7 +53,7 @@
                 triangles[(3 * i) + 2] = i + 2;
             }
 
-            GameObject g = new GameObject("Range");
+            GameObject g = new ("Range");
             g.transform.position = parent.position + new Vector3(0, 0, -0.1f); // 使不被遮挡(对于非GUI Shader)
             MeshFilter mf = g.AddComponent<MeshFilter>();
             MeshRenderer mr = g.AddComponent<MeshRenderer>();
@@ -64,7 +64,7 @@
             // false:面板不变,相对位置改变
             g.transform.SetParent(parent, true);
 
-            Mesh mesh = new Mesh();
+            Mesh mesh = new ();
             mesh.vertices = vertices.ToArray();
             mesh.triangles = triangles;
 
@@ -125,7 +125,7 @@
             MeshFilter meshFilter = parent.GetComponent<MeshFilter>();
             MeshRenderer meshRenderer = parent.GetComponent<MeshRenderer>();
 
-            Mesh mesh = new Mesh();
+            Mesh mesh = new ();
             mesh.vertices = vertices;
             mesh.SetIndices(indices, MeshTopology.Lines, 0);
             meshFilter.mesh = mesh;
@@ -201,9 +201,9 @@
             object retval;
 
             // 自动释放资源
-            using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new ())
             {
-                BinaryFormatter bf = new BinaryFormatter();
+                BinaryFormatter bf = new ();
                 bf.Serialize(ms, obj);
                 ms.Seek(0, SeekOrigin.Begin);
                 retval = bf.Deserialize(ms);
@@ -222,9 +222,9 @@
         public static T DeepCopyByXml<T>(T obj)
         {
             object retval;
-            using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new ())
             {
-                XmlSerializer xml = new XmlSerializer(typeof(T));
+                XmlSerializer xml = new (typeof(T));
                 xml.Serialize(ms, obj);
                 ms.Seek(0, SeekOrigin.Begin);
                 retval = xml.Deserialize(ms);
@@ -243,7 +243,7 @@
         public static Dictionary<string, T> LoadResources<T>(string folderPath)
             where T : UnityEngine.Object
         {
-            Dictionary<string, T> map = new Dictionary<string, T>();
+            Dictionary<string, T> map = new ();
             T[] prefabs = Resources.LoadAll<T>(folderPath);
             foreach (T p in prefabs)
             {
@@ -259,12 +259,12 @@
         /// <returns>所有路径键值对.</returns>
         public static Dictionary<string, string> LoadPaths()
         {
-            Dictionary<string, string> map = new Dictionary<string, string>();
+            Dictionary<string, string> map = new ();
 
             // string[] subPaths = AssetDatabase.GetAllAssetPaths();
 #if UNITY_EDITOR
             // 开发阶段加载path,并保存起来
-            LoadPaths1(dataPath, map);
+            LoadPaths1(DataPath, map);
             SaveDataByBinary(Application.streamingAssetsPath + "/resourcePath.lab", map);
 #else
             map = loadDataByBinary<Dictionary<string, string>>(Application.streamingAssetsPath + "/resourcePath.lab");
@@ -287,10 +287,8 @@
                 return null;
             }
 
-            using (FileStream fs = File.Open(filePath, FileMode.Open, FileAccess.Read))
-            {
-                return (T)bf.Deserialize(fs);
-            }
+            using FileStream fs = File.Open(filePath, FileMode.Open, FileAccess.Read);
+            return (T)Bf.Deserialize(fs);
         }
 
         /// <summary>
@@ -302,12 +300,10 @@
         public static void SaveDataByBinary<T>(string filePath, T data)
             where T : class
         {
-            using (FileStream fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
-            {
-                bf.Serialize(fs, data);
-                fs.Flush();
-                fs.Close();
-            }
+            using FileStream fs = new (filePath, FileMode.OpenOrCreate, FileAccess.Write);
+            Bf.Serialize(fs, data);
+            fs.Flush();
+            fs.Close();
         }
 
         /// <summary>
@@ -351,9 +347,9 @@
         public static string[] GetCSV(string name)
         {
             string data;
-            if (File.Exists(des + name + ".csv"))
+            if (File.Exists(Des + name + ".csv"))
             {
-                data = File.ReadAllText(des + name + ".csv");
+                data = File.ReadAllText(Des + name + ".csv");
             }
             else
             {
@@ -414,9 +410,9 @@
         /// <returns>UI对象.</returns>
         public static List<RaycastResult> GetUIByMousePos()
         {
-            PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
+            PointerEventData pointerEventData = new (EventSystem.current);
             pointerEventData.position = Input.mousePosition;
-            List<RaycastResult> results = new List<RaycastResult>();
+            List<RaycastResult> results = new ();
             GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).GetComponent<GraphicRaycaster>().Raycast(pointerEventData, results);
             return results;
         }
@@ -450,7 +446,7 @@
         public static List<T> SplitEnum<T>(T start, T end)
             where T : Enum
         {
-            List<T> itemTypes = new List<T>();
+            List<T> itemTypes = new ();
             IEnumerator enumerator = Enum.GetValues(typeof(T)).GetEnumerator();
             while (enumerator.MoveNext())
             {
@@ -496,14 +492,14 @@
         /// <param name="map">out.</param>
         private static void LoadPaths1(string path, Dictionary<string, string> map)
         {
-            DirectoryInfo directoryInfo = new DirectoryInfo(path);
+            DirectoryInfo directoryInfo = new (path);
             FileInfo[] fileInfos = directoryInfo.GetFiles();
             foreach (FileInfo fileInfo in fileInfos)
             {
                 string[] splits = fileInfo.Name.Split(".");
-                if (!splits[splits.Length - 1].Equals("meta"))
+                if (!splits[^1].Equals("meta"))
                 {
-                    map[fileInfo.Name] = path.Split(dataPath)[1].Replace("\\", "/").Split('.')[0] + "/" + fileInfo.Name.Split('.')[0];
+                    map[fileInfo.Name] = path.Split(DataPath)[1].Replace("\\", "/").Split('.')[0] + "/" + fileInfo.Name.Split('.')[0];
                 }
             }
 

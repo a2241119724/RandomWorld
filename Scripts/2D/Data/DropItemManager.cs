@@ -7,8 +7,8 @@
     /// </summary>
     public class DropItemManager : Singleton<DropItemManager>
     {
-        private static readonly List<DropItem> Empty = new List<DropItem>();
-        private Dictionary<string, List<DropItem>> nameToDrop; // 资源，与对应的掉落物
+        private static readonly List<DropItem> Empty = new ();
+        private readonly Dictionary<string, List<DropItem>> nameToDrop; // 资源，与对应的掉落物
 
         public DropItemManager()
         {

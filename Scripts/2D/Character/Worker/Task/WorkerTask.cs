@@ -1,155 +1,245 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Events;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.Events;
+
+    /// <summary>
+    /// Workerä»»åŠ¡
+    /// </summary>
     public abstract class WorkerTask : IWorkerTask
     {
         /// <summary>
-        /// WorkerÔÚ¹¤×÷Ê±µÄÎ»ÖÃ£¨ÉÏÏÂ×óÓÒ£©
+        /// Workeråœ¨å·¥ä½œæ—¶çš„ä½ç½®ï¼ˆä¸Šä¸‹å·¦å³ï¼‰
         /// </summary>
         public List<Vector3Int> AvailableNeighborPos;
-        public Vector3Int TargetMap { get; set; }
-        public TaskType TaskType { get; set; }
-        public string Name { set; get; }
 
+        /// <summary>
+        /// ä¸´è¿‘çš„ä½ç½®
+        /// </summary>
+        protected static readonly List<Vector3Int> Neighbors = new ()
+        {
+            new Vector3Int(0, 1, 0), // ä¸Š
+            new Vector3Int(1, 0, 0), // å³
+            new Vector3Int(0, -1, 0), // ä¸‹
+            new Vector3Int(-1, 0, 0), // å·¦
+            new Vector3Int(1, 1, 0), // å³ä¸Š
+            new Vector3Int(1, -1, 0), // å³ä¸‹
+            new Vector3Int(-1, -1, 0), // å·¦ä¸‹
+            new Vector3Int(-1, 1, 0), // å·¦ä¸Š
+            new Vector3Int(0, 0, 0), // è‡ªèº«
+        };
+
+        /// <summary>
+        /// ä»»åŠ¡é˜¶æ®µ
+        /// </summary>
         protected int stage;
 
-        protected static readonly List<Vector3Int> neighbors = new List<Vector3Int>(){
-            new Vector3Int(0,1,0), // ÉÏ
-            new Vector3Int(1,0,0), // ÓÒ
-            new Vector3Int(0,-1,0), // ÏÂ
-            new Vector3Int(-1,0,0), // ×ó
-            new Vector3Int(1,1,0), // ÓÒÉÏ
-            new Vector3Int(1,-1,0), // ÓÒÏÂ
-            new Vector3Int(-1,-1,0), // ×óÏÂ
-            new Vector3Int(-1,1,0), // ×óÉÏ
-            new Vector3Int(0,0,0), // ×ÔÉí
-        };
         /// <summary>
-        /// µ±Ç°¾­¹ıÊ±¼ä
+        /// å½“å‰ç»è¿‡æ—¶é—´
         /// </summary>
         protected float curProgress = 0.0f;
+
         /// <summary>
-        /// ÈÎÎñĞèÒª×ÜµÄÊ±¼ä
+        /// ä»»åŠ¡éœ€è¦æ€»çš„æ—¶é—´
         /// </summary>
         protected float maxProgress = 2.0f;
+
+        /// <summary>
+        /// ä»»åŠ¡é˜¶æ®µä¸Šä¸‹æ–‡
+        /// </summary>
         protected List<UnityAction<Worker>> stageInit;
 
         public WorkerTask(TaskType taskType)
         {
-            TaskType = taskType;
-            Name = taskType.ToString();
-            AvailableNeighborPos = new List<Vector3Int>();
-            stageInit = new List<UnityAction<Worker>>();
+            this.TaskType = taskType;
+            this.Name = taskType.ToString();
+            this.AvailableNeighborPos = new List<Vector3Int>();
+            this.stageInit = new List<UnityAction<Worker>>();
         }
-
-        protected void changeStage(Worker worker, int stage)
-        {
-            if (stageInit.Count < stage + 1)
-            {
-                LogManager.Instance.Log("Ã»ÓĞ¸Ã½×¶Î", LogManager.LogLevel.Error);
-                return;
-            }
-            this.stage = stage;
-            stageInit[stage].Invoke(worker);
-        }
-
 
         /// <summary>
-        /// ²»ĞèÒªÖØĞ´
+        /// ç›®æ ‡ä½ç½®
         /// </summary>
-        /// <param name="worker"></param>
-        /// <returns></returns>
-        public bool execute(Worker worker)
+        public Vector3Int TargetMap { get; set; }
+
+        /// <summary>
+        /// ä»»åŠ¡ç±»å‹
+        /// </summary>
+        public TaskType TaskType { get; set; }
+
+        /// <summary>
+        /// ä»»åŠ¡åç§°
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// ä¸éœ€è¦é‡å†™
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <returns>æ˜¯å¦æˆåŠŸ</returns>
+        public bool Execute(Worker worker)
         {
-            _execute();
-            // ¹¤×÷¿Û¼õÆ£ÀÍÖµ
+            this.Execute1();
+
+            // å·¥ä½œæ‰£å‡ç–²åŠ³å€¼
             worker.CurTired -= Time.deltaTime * 0.1f;
-            curProgress += Time.deltaTime;
-            if (curProgress > maxProgress)
+            this.curProgress += Time.deltaTime;
+            if (this.curProgress > this.maxProgress)
             {
-                curProgress = 0;
+                this.curProgress = 0;
                 worker.SetProgress(.0f, false);
-                if (isFinish(worker))
+                if (this.IsFinish(worker))
                 {
-                    finish(worker);
+                    this.Finish(worker);
                     return true;
                 }
+
                 return false;
             }
-            worker.SetProgress((float)curProgress / maxProgress, true);
+
+            worker.SetProgress((float)this.curProgress / this.maxProgress, true);
             return false;
         }
 
-        public virtual void _execute()
+        /// <summary>
+        /// æ‰§è¡Œ
+        /// </summary>
+        public virtual void Execute1()
         {
         }
 
         /// <summary>
-        /// ÊÇ·ñÕæµÄÍê³É£¬Îª¶à½×¶ÎÈÎÎñ·şÎñ£¨Carry£©
+        /// é€‰æ‹©åˆ°æœ€è¿‘çš„ä»»åŠ¡ä¹‹åæ‰§è¡Œ
         /// </summary>
-        /// <param name="worker"></param>
-        /// <returns></returns>
-        protected virtual bool isFinish(Worker worker)
+        /// <param name="worker">Worker</param>
+        public virtual void Start(Worker worker)
+        {
+        }
+
+        /// <summary>
+        /// Workeræ˜¯å¦å¯ä»¥æ¥è¯¥ä»»åŠ¡
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <returns>æ˜¯å¦</returns>
+        public virtual bool IsCanWork(Worker worker)
+        {
+            return worker.TaskToggle[(int)this.TaskType];
+        }
+
+        /// <summary>
+        /// æ”¾å¼ƒä»»åŠ¡
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        public virtual void GiveUpTask(Worker worker)
+        {
+            LogManager.Instance.Log("æ”¾å¼ƒä»»åŠ¡", LogManager.LogLevel.Warning);
+            worker.GiveUpTask();
+        }
+
+        /// <inheritdoc/>
+        public virtual void Finish(Worker worker)
+        {
+            WorkerTaskManager.Instance.CompleteTask(this);
+        }
+
+        /// <summary>
+        /// æ˜¯å¦çœŸçš„å®Œæˆï¼Œä¸ºå¤šé˜¶æ®µä»»åŠ¡æœåŠ¡ï¼ˆCarryï¼‰
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <returns>æ˜¯å¦</returns>
+        protected virtual bool IsFinish(Worker worker)
         {
             return true;
         }
 
         /// <summary>
-        /// Ñ¡Ôñµ½×î½üµÄÈÎÎñÖ®ºóÖ´ĞĞ
+        /// ä»»åŠ¡è¿›å…¥ä¸åŒé˜¶æ®µ,åˆ‡æ¢ä¸Šä¸‹æ–‡
         /// </summary>
-        /// <param name="worker"></param>
-        public virtual void start(Worker worker) { }
-
-        /// <summary>
-        /// WorkerÊÇ·ñ¿ÉÒÔ½Ó¸ÃÈÎÎñ
-        /// </summary>
-        /// <param name="worker"></param>
-        /// <returns></returns>
-        public virtual bool isCanWork(Worker worker)
+        /// <param name="worker">Worker</param>
+        /// <param name="stage">ä»»åŠ¡æ‰€å¤„é˜¶æ®µ</param>
+        protected void ChangeStage(Worker worker, int stage)
         {
-            return worker.TaskToggle[((int)TaskType)];
+            if (this.stageInit.Count < stage + 1)
+            {
+                LogManager.Instance.Log("æ²¡æœ‰è¯¥é˜¶æ®µ", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.stage = stage;
+            this.stageInit[stage].Invoke(worker);
         }
-
-        public virtual void giveUpTask(Worker worker)
-        {
-            LogManager.Instance.Log("·ÅÆúÈÎÎñ", LogManager.LogLevel.Warning);
-            worker.GiveUpTask();
-        }
-
-        public virtual void finish(Worker worker)
-        {
-            WorkerTaskManager.Instance.CompleteTask(this);
-        }
-    }
-
-    public interface IWorkerTask
-    {
-        bool execute(Worker worker);
-
-        void finish(Worker worker);
-
-        /// <summary>
-        /// ÊÇ·ñÂú×ãÇ°ÌáÌõ¼ş£¨BuildĞèÒª²ÄÁÏ£¬CarryĞèÒªInventory£©
-        /// </summary>
-        /// <returns></returns>
-        bool isCanWork(Worker worker);
     }
 
     /// <summary>
-    /// ÈÎÎñÓÅÏÈ¼¶£¬Ô½¿¿Ç°ÓÅÏÈ¼¶Ô½¸ß
+    /// Workerä»»åŠ¡åŸº
+    /// </summary>
+    public interface IWorkerTask
+    {
+        /// <summary>
+        /// æ‰§è¡Œä»»åŠ¡
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <returns>æ˜¯å¦æˆåŠŸ</returns>
+        bool Execute(Worker worker);
+
+        /// <summary>
+        /// å®Œæˆä»»åŠ¡
+        /// </summary>
+        /// <param name="worker">Worer</param>
+        void Finish(Worker worker);
+
+        /// <summary>
+        /// æ˜¯å¦æ»¡è¶³å‰ææ¡ä»¶ï¼ˆBuildéœ€è¦ææ–™ï¼ŒCarryéœ€è¦Inventoryï¼‰
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <returns>æ˜¯å¦</returns>
+        bool IsCanWork(Worker worker);
+    }
+
+    /// <summary>
+    /// ä»»åŠ¡ä¼˜å…ˆçº§ï¼Œè¶Šé å‰ä¼˜å…ˆçº§è¶Šé«˜
     /// </summary>
     public enum TaskType
     {
+        /// <summary>
+        /// å»ºé€ 
+        /// </summary>
         Build,
+
+        /// <summary>
+        /// æ¬è¿
+        /// </summary>
         Carry,
+
+        /// <summary>
+        /// é‡‡é›†
+        /// </summary>
         Gather,
-        Hungry,
+
+        /// <summary>
+        /// åƒé¥­
+        /// </summary>
+        Eat,
+
+        /// <summary>
+        /// é”»ç‚¼
+        /// </summary>
         Exercise,
+
+        /// <summary>
+        /// ç©¿æˆ´
+        /// </summary>
         Wear,
+
+        /// <summary>
+        /// ç¡è§‰
+        /// </summary>
         Sleep,
+
+        /// <summary>
+        /// ç§æ¤
+        /// </summary>
         Plant,
     }
 }

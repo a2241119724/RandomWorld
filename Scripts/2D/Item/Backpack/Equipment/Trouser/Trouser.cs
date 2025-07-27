@@ -1,9 +1,9 @@
-namespace LAB2D
+锘縩amespace LAB2D
 {
     using System;
 
     /// <summary>
-    /// 裤子
+    /// 瑁ゅ瓙
     /// </summary>
     [Serializable]
     public abstract class Trouser : Equipment
@@ -15,7 +15,7 @@ namespace LAB2D
     }
 
     /// <summary>
-    /// 裤子对象
+    /// 瑁ゅ瓙瀵硅薄
     /// </summary>
     public abstract class TrouserObject : EquipmentObject
     {

@@ -1,11 +1,15 @@
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    /// <summary>
+    /// å»ºé€ é“å…·UI
+    /// </summary>
     public class BuildItemView : MVCItemView
     {
+        /// <inheritdoc/>
         public override void SetSelect(int i, Item item)
         {
-            //// ·¢²¼ÊÂ¼ş,GetSiblingIndexË÷Òı(µÚ¼¸¸öº¢×Ó)
-            //selectAndShow.select(item);
+            // // å‘å¸ƒäº‹ä»¶,GetSiblingIndexç´¢å¼•(ç¬¬å‡ ä¸ªå­©å­)
+            // selectAndShow.select(item);
             BuildMenuPanel.Instance.Select.SelectItemIndex = i;
             BuildMenuPanel.Instance.Select.Item = (BuildItem)item;
         }

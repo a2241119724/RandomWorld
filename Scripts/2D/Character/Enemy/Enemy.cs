@@ -1,7 +1,7 @@
 ﻿namespace LAB2D
 {
-    using Photon.Pun;
     using System;
+    using Photon.Pun;
     using UnityEngine;
 
     /// <summary>
@@ -155,18 +155,18 @@
         /// <summary>
         /// 敌人掉血
         /// </summary>
-        /// <param name="Hp">所掉的血量</param>
-        public override void ReduceHp(float Hp)
+        /// <param name="hp">所掉的血量</param>
+        public override void ReduceHp(float hp)
         {
             // ((EnemyAttackState)Manager.CurrentState)
             if (this.Manager.CurrentStateType != EnemyStateType.Attack ||
                 (this.Manager.CurrentStateType == EnemyStateType.Attack
                 && ((EnemyAttackState)this.Manager.CurrentState).AttackTime > ChangeTarget))
             {
-                this.Manager.changeState(EnemyStateType.Seek); // 进入搜索状态
+                this.Manager.ChangeState(EnemyStateType.Seek); // 进入搜索状态
             }
 
-            base.ReduceHp(Hp);
+            base.ReduceHp(hp);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
         }
 
@@ -223,7 +223,7 @@
                 EnemyManager.Instance.Remove(this);
             }
 
-            this.Manager.changeState(EnemyStateType.Dead); // 进入死亡状态
+            this.Manager.ChangeState(EnemyStateType.Dead); // 进入死亡状态
         }
 
         private void Update()
@@ -240,7 +240,7 @@
             this.checkBug.AddColliderCount(DateTime.Now.Ticks);
             if (this.checkBug.IsBug(this.name, 200) && this.Manager.CurrentStateType == EnemyStateType.Wander)
             {
-                this.Manager.changeState(EnemyStateType.Wander);
+                this.Manager.ChangeState(EnemyStateType.Wander);
             }
         }
 

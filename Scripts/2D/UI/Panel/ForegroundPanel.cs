@@ -122,7 +122,7 @@
         /// </summary>
         private void Onclick_GeneratorWorker()
         {
-            WorkerManager.Instance.create(PlayerManager.Instance.Mine.transform.position);
+            WorkerManager.Instance.Create(PlayerManager.Instance.Mine.transform.position);
         }
 
         private void Onclick_Save()

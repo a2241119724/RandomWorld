@@ -20,45 +20,47 @@
         {
             this.Width = 10;
             this.Height = 7;
-            this.walls = new Dictionary<WallDirection, Wall>();
-            this.walls.Add(WallDirection.TOP, new CustomRoomWallT());
-            this.walls.Add(WallDirection.DOWN, new CustomRoomWallD());
-            this.walls.Add(WallDirection.LEFT, new CustomRoomWallL());
-            this.walls.Add(WallDirection.RIGHT, new CustomRoomWallR());
-            this.walls.Add(WallDirection.RIGHT_TOP, new CustomRoomWallRT());
-            this.walls.Add(WallDirection.RIGHT_DOWN, new CustomRoomWallRD());
-            this.walls.Add(WallDirection.LEFT_TOP, new CustomRoomWallLT());
-            this.walls.Add(WallDirection.LEFT_DOWN, new CustomRoomWallLD());
+            this.Walls = new Dictionary<WallDirection, Wall>
+            {
+                { WallDirection.TOP, new CustomRoomWallT() },
+                { WallDirection.DOWN, new CustomRoomWallD() },
+                { WallDirection.LEFT, new CustomRoomWallL() },
+                { WallDirection.RIGHT, new CustomRoomWallR() },
+                { WallDirection.RIGHT_TOP, new CustomRoomWallRT() },
+                { WallDirection.RIGHT_DOWN, new CustomRoomWallRD() },
+                { WallDirection.LEFT_TOP, new CustomRoomWallLT() },
+                { WallDirection.LEFT_DOWN, new CustomRoomWallLD() },
+            };
             this.Door = new CustomDoor();
         }
 
         /// <inheritdoc/>
         public override void AddBuildTask(Vector3Int centerMap)
         {
-            int[] x_B = this.getXBoundary(centerMap);
-            int[] y_B = this.getYBoundary(centerMap);
-            RoomInfo roomInfo = new RoomInfo();
+            int[] x_B = this.GetXBoundary(centerMap);
+            int[] y_B = this.GetYBoundary(centerMap);
+            RoomInfo roomInfo = new ();
             for (int i = 1; i < this.Width - 1; i++)
             {
-                BuildMap.Instance.AddBuilding(new Vector3Int(x_B[0], y_B[0] + i, 0), this.walls[WallDirection.DOWN].Tile)
-                    .AddBuilding(new Vector3Int(x_B[1], y_B[0] + i, 0), this.walls[WallDirection.TOP].Tile);
+                BuildMap.Instance.AddBuilding(new Vector3Int(x_B[0], y_B[0] + i, 0), this.Walls[WallDirection.DOWN].Tile)
+                    .AddBuilding(new Vector3Int(x_B[1], y_B[0] + i, 0), this.Walls[WallDirection.TOP].Tile);
                 roomInfo.Points.Add(new Vector3Int(x_B[0], y_B[0] + i, 0));
                 roomInfo.Points.Add(new Vector3Int(x_B[1], y_B[0] + i, 0));
             }
 
             for (int i = 1; i < this.Height - 1; i++)
             {
-                BuildMap.Instance.AddBuilding(new Vector3Int(x_B[0] + i, y_B[0], 0), this.walls[WallDirection.LEFT].Tile)
-                    .AddBuilding(new Vector3Int(x_B[0] + i, y_B[1], 0), this.walls[WallDirection.RIGHT].Tile);
+                BuildMap.Instance.AddBuilding(new Vector3Int(x_B[0] + i, y_B[0], 0), this.Walls[WallDirection.LEFT].Tile)
+                    .AddBuilding(new Vector3Int(x_B[0] + i, y_B[1], 0), this.Walls[WallDirection.RIGHT].Tile);
                 roomInfo.Points.Add(new Vector3Int(x_B[0] + i, y_B[0], 0));
                 roomInfo.Points.Add(new Vector3Int(x_B[0] + i, y_B[1], 0));
             }
 
             BuildMap.Instance
-                .AddBuilding(new Vector3Int(x_B[0], y_B[1], 0), this.walls[WallDirection.RIGHT_DOWN].Tile)
-                .AddBuilding(new Vector3Int(x_B[0], y_B[0], 0), this.walls[WallDirection.LEFT_DOWN].Tile)
-                .AddBuilding(new Vector3Int(x_B[1], y_B[1], 0), this.walls[WallDirection.RIGHT_TOP].Tile)
-                .AddBuilding(new Vector3Int(x_B[1], y_B[0], 0), this.walls[WallDirection.LEFT_TOP].Tile)
+                .AddBuilding(new Vector3Int(x_B[0], y_B[1], 0), this.Walls[WallDirection.RIGHT_DOWN].Tile)
+                .AddBuilding(new Vector3Int(x_B[0], y_B[0], 0), this.Walls[WallDirection.LEFT_DOWN].Tile)
+                .AddBuilding(new Vector3Int(x_B[1], y_B[1], 0), this.Walls[WallDirection.RIGHT_TOP].Tile)
+                .AddBuilding(new Vector3Int(x_B[1], y_B[0], 0), this.Walls[WallDirection.LEFT_TOP].Tile)
                 .AddBuilding(new Vector3Int(x_B[0], centerMap.y, 0), this.Door.Tile, false)
                 .AddTask();
             roomInfo.Points.Add(new Vector3Int(x_B[0], y_B[1], 0));

@@ -34,7 +34,7 @@
         /// <summary>
         /// 锁，防止多个Worker同时寻路
         /// </summary>
-        public static Lock SeekLock = new Lock();
+        public static Lock SeekLock = new ();
 
         /// <summary>
         /// 角色装备
@@ -46,7 +46,7 @@
         /// </summary>
         public BedItem BedItem;
 
-        private static readonly List<Vector2SByte> Neighbors = new List<Vector2SByte>()
+        private static readonly List<Vector2SByte> Neighbors = new ()
         {
             new Vector2SByte(0, 1), new Vector2SByte(1, 0), new Vector2SByte(0, -1), new Vector2SByte(-1, 0), // 上右下左
 
@@ -238,8 +238,8 @@
                 this.path.RemoveAt(0); // --path.Count
             }
 
-            Vector2 forward = new Vector2(worldPos.x - this.transform.position.x, worldPos.y - this.transform.position.y);
-            this.transform.Translate(forward.normalized * Time.deltaTime * this.MoveSpeed, Space.World); // 向前移动
+            Vector2 forward = new (worldPos.x - this.transform.position.x, worldPos.y - this.transform.position.y);
+            this.transform.Translate(this.MoveSpeed * Time.deltaTime * forward.normalized, Space.World); // 向前移动
             this.UpdateLine();
             return false;
         }
@@ -396,7 +396,7 @@
         {
             WorkerTaskManager.Instance.GiveUpTask(this.Manager.Task);
             this.Manager.Task = null;
-            this.Manager.changeState(WorkerStateType.Seek);
+            this.Manager.ChangeState(WorkerStateType.Seek);
         }
 
         /// <summary>
@@ -406,7 +406,7 @@
         /// <returns>Worker携带不够的资源数</returns>
         public Dictionary<int, ResourceInfo> GetRemaining(Dictionary<int, ResourceInfo> needResource)
         {
-            Dictionary<int, ResourceInfo> remaining = new Dictionary<int, ResourceInfo>();
+            Dictionary<int, ResourceInfo> remaining = new ();
             foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
                 if (this.resourceInfos.ContainsKey(need.Key))
@@ -436,7 +436,7 @@
 
             base.ReduceHp(hp);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            this.Manager.changeState(WorkerStateType.Attack);
+            this.Manager.ChangeState(WorkerStateType.Attack);
         }
 
         /// <inheritdoc/>
@@ -462,7 +462,7 @@
             this.LineRenderer = this.transform.GetComponent<LineRenderer>();
             this.LineRenderer.startWidth = 0.05f;
             this.LineRenderer.endWidth = 0.05f;
-            Material material = new Material(Shader.Find("Unlit/Color"));
+            Material material = new (Shader.Find("Unlit/Color"));
             material.color = new Color(UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f));
             this.LineRenderer.material = material;
             this.LineRenderer.sortingLayerName = "Highest";
@@ -470,7 +470,7 @@
             this.TaskToggle = new bool[10];
 
             // 默认可以吃饭
-            this.TaskToggle[(int)TaskType.Hungry] = true;
+            this.TaskToggle[(int)TaskType.Eat] = true;
             this.TaskToggle[(int)TaskType.Wear] = true;
             this.TaskToggle[(int)TaskType.Carry] = true;
             this.resourceInfos = new Dictionary<int, ResourceInfo>();
@@ -507,7 +507,7 @@
             this.checkBug.AddColliderCount(DateTime.Now.Ticks);
             if (this.checkBug.IsBug(this.name, 100))
             {
-                this.Manager.changeState(WorkerStateType.Seek);
+                this.Manager.ChangeState(WorkerStateType.Seek);
             }
         }
 
@@ -590,7 +590,7 @@
 
             // 记录一开始的path长度
             int curIterCount = this.path.Count;
-            List<Spend> path = new List<Spend>();
+            List<Spend> path = new ();
             float totalDistance = Mathf.Sqrt(Mathf.Pow(start.PosMap.x - end.PosMap.x, 2)
                 + Mathf.Pow(start.PosMap.y - end.PosMap.y, 2));
             this.openList.Add(start);
@@ -619,7 +619,7 @@
                 {
                     // LogManager.Instance.log("找到路径!!!", LogManager.LogLevel.Info);
                     // 找路径
-                    Vector3Int lastDet = new Vector3Int(0, 0);
+                    Vector3Int lastDet = new (0, 0);
                     Spend curSpend1 = curSpend;
                     while (curSpend != null && curSpend.Previous != null)
                     {
@@ -805,7 +805,7 @@
                     }
                 }
 
-                this.path.Add(path[path.Count - 1]);
+                this.path.Add(path[^1]);
             }
 
             if (this.path.Count == curIterCount)
@@ -923,7 +923,7 @@
                 // 交换装备
                 Equipment equipment1 = this.Equipments[equipment.EquipTypeValue];
                 ItemMap.Instance.PutDownToInventory(posMap, ResourcesManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
-                this.Equipments[equipment.EquipTypeValue] = equipment;
+                this.Equipments[equipment.EquipTypeValue] = equipment1;
             }
             else
             {
