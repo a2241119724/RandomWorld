@@ -118,7 +118,7 @@
         {
             if (collision.gameObject.CompareTag("Player"))
             {
-                BackpackController.Instance.addItem(ItemFactory.Instance.GetBackpackItemByName(this.name.Split("Object")[0]));
+                BackpackController.Instance.AddItem(ItemFactory.Instance.GetBackpackItemByName(this.name.Split("Object")[0]));
                 Destroy(this.gameObject);
 
                 // gameObject.SetActive(false); // 减小开销

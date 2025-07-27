@@ -5,16 +5,21 @@
     /// </summary>
     public class BackpackItemManagerView : MVCItemManagerView<BackpackItemView, BackpackModel>
     {
-        public static BackpackItemManagerView Instance { private set; get; }
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static BackpackItemManagerView Instance { get; private set; }
 
+        /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
             Instance = this;
-            itemBox = ResourcesManager.Instance.GetPrefab("BackpackItem");
+            this.itemBox = ResourcesManager.Instance.GetPrefab("BackpackItem");
         }
 
-        protected override int getQuantity(Item item)
+        /// <inheritdoc/>
+        protected override int GetQuantity(Item item)
         {
             return ((BackpackItem)item).Quantity;
         }
