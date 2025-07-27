@@ -13,11 +13,6 @@
     public class RoundCorner : MaskableGraphic
     {
         /// <summary>
-        /// Inspector面板上拖入
-        /// </summary>
-        public Shader Shader = null;
-
-        /// <summary>
         /// 圆角半径
         /// </summary>
         [Range(0, 0.5f)]
@@ -27,7 +22,8 @@
         protected override void Start()
         {
             base.Start();
-            this.material = this.GenerateMaterial(this.Shader);
+            this.Radius = 0.1f;
+            this.material = this.GenerateMaterial(ResourcesManager.Instance.GetShader("RoundCorner"));
             this.material.SetFloat("_Width", this.rectTransform.rect.width);
             this.material.SetFloat("_Height", this.rectTransform.rect.height);
         }

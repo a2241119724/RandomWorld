@@ -247,7 +247,7 @@
             T[] prefabs = Resources.LoadAll<T>(folderPath);
             foreach (T p in prefabs)
             {
-                map[p.name] = p;
+                map[p.name.Split("/")[^1]] = p;
             }
 
             return map;

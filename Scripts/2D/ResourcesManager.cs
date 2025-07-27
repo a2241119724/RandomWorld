@@ -10,18 +10,20 @@
     /// </summary>
     public class ResourcesManager : Singleton<ResourcesManager>
     {
-        private readonly Dictionary<string, GameObject> prefabsDic; // <characterType,<name,prefab>>
-        private readonly Dictionary<string, UnityEngine.Object> assetsDic;
-        private readonly Dictionary<string, Sprite> imagesDic;
-        private readonly Dictionary<string, string> pathsDic; // key:filename(带后缀) value:path
+        private readonly Dictionary<string, GameObject> prefabDic; // <characterType,<name,prefab>>
+        private readonly Dictionary<string, UnityEngine.Object> assetDic;
+        private readonly Dictionary<string, Sprite> imageDic;
+        private readonly Dictionary<string, string> pathDic; // key:filename(带后缀) value:path
         private readonly Dictionary<MapTileType, List<UnityEngine.Object>> tileDic;
+        private readonly Dictionary<string, Shader> shaderDic;
 
         public ResourcesManager()
         {
-            this.prefabsDic = Tool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
-            this.assetsDic = Tool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
+            this.prefabDic = Tool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
+            this.assetDic = Tool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
             this.tileDic = new Dictionary<MapTileType, List<UnityEngine.Object>>();
-            foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetsDic)
+            this.shaderDic = Tool.LoadResources<Shader>(ResourceConstant.SHADER_ROOT);
+            foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetDic)
             {
                 foreach (MapTileType tileType in Enum.GetValues(typeof(MapTileType)))
                 {
@@ -42,8 +44,24 @@
                 }
             }
 
-            this.imagesDic = Tool.LoadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
-            this.pathsDic = Tool.LoadPaths();
+            this.imageDic = Tool.LoadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
+            this.pathDic = Tool.LoadPaths();
+        }
+
+        /// <summary>
+        /// 获取着色器
+        /// </summary>
+        /// <param name="name">名称</param>
+        /// <returns>着色器</returns>
+        public Shader GetShader(string name)
+        {
+            if (!this.shaderDic.ContainsKey(name))
+            {
+                LogManager.Instance.Log(name + " shader not found!!!", LogManager.LogLevel.Error);
+                return null;
+            }
+
+            return this.shaderDic[name];
         }
 
         /// <summary>
@@ -53,9 +71,9 @@
         /// <returns>预制体.</returns>
         public GameObject GetPrefab(string name)
         {
-            if (this.prefabsDic.ContainsKey(name))
+            if (this.prefabDic.ContainsKey(name))
             {
-                GameObject prefab = this.prefabsDic[name];
+                GameObject prefab = this.prefabDic[name];
                 return prefab;
             }
 
@@ -71,9 +89,9 @@
         // public UnityEngine.Object getAsset(string name)
         public TileBase GetAsset(string name)
         {
-            if (this.assetsDic.ContainsKey(name))
+            if (this.assetDic.ContainsKey(name))
             {
-                UnityEngine.Object asset = this.assetsDic[name];
+                UnityEngine.Object asset = this.assetDic[name];
                 return (TileBase)asset;
             }
 
@@ -124,9 +142,9 @@
         /// <returns>Sprite.</returns>
         public Sprite GetImage(string name)
         {
-            if (this.imagesDic.ContainsKey(name))
+            if (this.imageDic.ContainsKey(name))
             {
-                Sprite sprite = this.imagesDic[name];
+                Sprite sprite = this.imageDic[name];
                 return sprite;
             }
 
@@ -141,9 +159,9 @@
         /// <returns>路径.</returns>
         public string GetPath(string name)
         {
-            if (this.pathsDic.ContainsKey(name))
+            if (this.pathDic.ContainsKey(name))
             {
-                string path = this.pathsDic[name];
+                string path = this.pathDic[name];
                 return path;
             }
 

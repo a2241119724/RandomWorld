@@ -1,24 +1,27 @@
-using UnityEditor;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEditor;
+    using UnityEngine;
+
+    /// <summary>
+    /// æ‰“ABåŒ…
+    /// </summary>
     public class ABPackage
     {
         /// <summary>
-        /// ÔÚÔ¤ÖÆÌåµÄInspector×îÏÂÃæNew AssetBundle,ÔÙµã´ò°ü
-        /// ´ò°üµ½StreamingAssetsÎÄ¼ş¼ĞÏÂ
-        /// Ê¹ÓÃ·½·¨
+        /// åœ¨é¢„åˆ¶ä½“çš„Inspectoræœ€ä¸‹é¢New AssetBundle,å†ç‚¹æ‰“åŒ…
+        /// æ‰“åŒ…åˆ°StreamingAssetsæ–‡ä»¶å¤¹ä¸‹
+        /// ä½¿ç”¨æ–¹æ³•
         /// AssetBundle assetBundleObj = AssetBundle.LoadFromFile(Application.streamingAssetsPath + "/snow");
         /// GameObject g = Instantiate(assetBundleObj.LoadAsset<GameObject>("snow"));
-        /// g.name = "AB×ÊÔ´¼ÓÔØ·½Ê½";
+        /// g.name = "ABèµ„æºåŠ è½½æ–¹å¼";
         /// </summary>
-        [MenuItem("Tools/´òAB°ü")]
+        [MenuItem("Tools/æ‰“ABåŒ…")]
         private static void BuildAB()
         {
             BuildPipeline.BuildAssetBundles(Application.streamingAssetsPath, BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.StandaloneWindows64);
             AssetDatabase.Refresh();
-            Debug.Log("´ò°üÍê³É");
+            Debug.Log("æ‰“åŒ…å®Œæˆ");
         }
     }
 }

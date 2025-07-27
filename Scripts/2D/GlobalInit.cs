@@ -9,14 +9,7 @@
     /// </summary>
     public class GlobalInit : MonoBehaviour
     {
-        private const int FONT_SIZE = 20;
-        private readonly List<string> fontExcludeText = new ()
-        {
-            "Label",
-        };
-
         private readonly bool initPanel = true;
-        private readonly bool initFont = true;
         private GameObject tip; // 提示框预制体
 
         /// <summary>
@@ -54,20 +47,6 @@
         {
             Instance = this;
             this.tip = ResourcesManager.Instance.GetPrefab("Tip");
-            if (this.initFont)
-            {
-                // init font
-                Text[] texts = FindObjectsOfType<Text>();
-                foreach (Text text in texts)
-                {
-                    if (this.fontExcludeText.Contains(text.name))
-                    {
-                        continue;
-                    }
-
-                    text.fontSize = FONT_SIZE;
-                }
-            }
         }
 
         private void Start()
