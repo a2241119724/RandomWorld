@@ -27,6 +27,11 @@
         /// </summary>
         public const string DATA_ROOT = "Data/";
 
+        /// <summary>
+        /// 着色器根目录
+        /// </summary>
+        public const string SHADER_ROOT = "Shader/";
+
         // tag =============================================================================================================
 
         /// <summary>

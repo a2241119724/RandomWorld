@@ -1,14 +1,16 @@
-using System;
-using System.IO;
-using UnityEditor;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.IO;
+    using UnityEditor;
+    using UnityEngine;
+
+    /// <summary>
+    /// ä»£ç è¡Œæ•°è®¡ç®—
+    /// </summary>
     public class AllCodeLineCount
     {
         [MenuItem("Tools/All Code Line Count")]
-        private static void printTotalLine()
+        private static void PrintTotalLine()
         {
             string[] fileName = Directory.GetFiles("Assets/Scripts/2D", "*.cs", SearchOption.AllDirectories);
 
@@ -23,13 +25,14 @@ namespace LAB2D
                     string line;
                     while ((line = sr.ReadLine()) != null)
                     {
-                        // Ìø¹ı¶àĞĞ×¢ÊÍÄÚ²¿µÄËùÓĞĞĞ
+                        // è·³è¿‡å¤šè¡Œæ³¨é‡Šå†…éƒ¨çš„æ‰€æœ‰è¡Œ
                         if (isInsideMultiLineComment)
                         {
                             if (line.Contains("*/"))
                             {
                                 isInsideMultiLineComment = false;
-                                // ¼ì²éÕâÒ»ĞĞÔÚ×¢ÊÍ½áÊøºóµÄ²¿·ÖÊÇ·ñÓĞÓĞĞ§´úÂë
+
+                                // æ£€æŸ¥è¿™ä¸€è¡Œåœ¨æ³¨é‡Šç»“æŸåçš„éƒ¨åˆ†æ˜¯å¦æœ‰æœ‰æ•ˆä»£ç 
                                 string restOfLine = line.Substring(line.IndexOf("*/") + 2).Trim();
                                 if (!string.IsNullOrEmpty(restOfLine))
                                 {
@@ -39,12 +42,13 @@ namespace LAB2D
                         }
                         else
                         {
-                            // È¥³ıĞĞÊ×ºÍĞĞÎ²µÄ¿Õ°××Ö·û
+                            // å»é™¤è¡Œé¦–å’Œè¡Œå°¾çš„ç©ºç™½å­—ç¬¦
                             string trimmedLine = line.Trim();
-                            // ¼ì²éµ¥ĞĞ×¢ÊÍºÍ¶àĞĞ×¢ÊÍµÄ¿ªÊ¼
+
+                            // æ£€æŸ¥å•è¡Œæ³¨é‡Šå’Œå¤šè¡Œæ³¨é‡Šçš„å¼€å§‹
                             if (!string.IsNullOrEmpty(trimmedLine) && !trimmedLine.StartsWith("//") && !trimmedLine.StartsWith("/*"))
                             {
-                                // Èç¹ûĞĞÒÔ*/½áÊø£¬Ôò¼ì²éÇ°ÃæµÄ²¿·ÖÊÇ·ñ°üº¬ÓĞĞ§´úÂë
+                                // å¦‚æœè¡Œä»¥*/ç»“æŸï¼Œåˆ™æ£€æŸ¥å‰é¢çš„éƒ¨åˆ†æ˜¯å¦åŒ…å«æœ‰æ•ˆä»£ç 
                                 if (trimmedLine.EndsWith("*/"))
                                 {
                                     string beforeEndComment = trimmedLine.Substring(0, trimmedLine.Length - 2).Trim();
@@ -65,10 +69,12 @@ namespace LAB2D
                         }
                     }
                 }
-                Debug.Log(String.Format("{0}¡ª¡ª{1}", temp, nowLine));
+
+                Debug.Log(string.Format("{0}â€”â€”{1}", temp, nowLine));
                 totalLine += nowLine;
             }
-            Debug.Log(string.Format("×ÜÓĞĞ§´úÂëĞĞÊı£º{0}", totalLine));
+
+            Debug.Log(string.Format("æ€»æœ‰æ•ˆä»£ç è¡Œæ•°ï¼š{0}", totalLine));
         }
     }
 }

@@ -5,14 +5,6 @@
     using UnityEngine;
 
     /// <summary>
-    /// 自定义剑
-    /// </summary>
-    [Serializable]
-    public class CustomSword : Sword
-    {
-    }
-
-    /// <summary>
     /// 自定义剑对象
     /// </summary>
     public class CustomSwordObject : SwordObject
@@ -68,5 +60,13 @@
         //         go.transform.SetParent(collision.transform);
         //     }
         // }
+    }
+
+    /// <summary>
+    /// 自定义剑
+    /// </summary>
+    [Serializable]
+    public class CustomSword : Sword
+    {
     }
 }
