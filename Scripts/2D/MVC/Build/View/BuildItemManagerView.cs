@@ -1,20 +1,27 @@
-namespace LAB2D
+﻿namespace LAB2D
 {
+    /// <summary>
+    /// 建造道具UI
+    /// </summary>
     public class BuildItemManagerView : MVCItemManagerView<BuildItemView, BuildModel>
     {
-        public static BuildItemManagerView Instance { private set; get; }
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static BuildItemManagerView Instance { get; private set; }
 
+        /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
             Instance = this;
-            itemBox = ResourcesManager.Instance.GetPrefab("BuildItem");
+            this.itemBox = ResourcesManager.Instance.GetPrefab("BuildItem");
         }
 
-        protected override int getQuantity(Item item)
+        /// <inheritdoc/>
+        protected override int GetQuantity(Item item)
         {
             return ((BuildItem)item).Quantity;
         }
     }
 }
-

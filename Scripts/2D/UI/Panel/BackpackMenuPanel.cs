@@ -28,7 +28,7 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            BackpackController.Instance.setBorderColor(System.Convert.ToInt32(BackpackNavigationView.Instance.CurItemType), "navigation");
+            BackpackController.Instance.SetBorderColor(System.Convert.ToInt32(BackpackNavigationView.Instance.CurItemType), "navigation");
         }
 
         /// <inheritdoc/>
@@ -60,7 +60,7 @@
                 if (PlayerManager.Instance.Select.Weapon != null)
                 {
                     // 将正在穿戴的物体加入背包
-                    BackpackController.Instance.addItem(PlayerManager.Instance.Select.WeaponData);
+                    BackpackController.Instance.AddItem(PlayerManager.Instance.Select.WeaponData);
 
                     // 销毁武器
                     PhotonNetwork.Destroy(PlayerManager.Instance.Select.Weapon);
@@ -85,7 +85,7 @@
 
                 // 从背包删除该道具
                 PlayerManager.Instance.Select.WeaponData = (Weapon)this.Select.Item;
-                BackpackController.Instance.deleteItem(this.Select.SelectItemIndex);
+                BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
 
                 // 不能对一个武器进行多次装备
                 this.Select.SelectItemIndex = -1;
@@ -115,7 +115,7 @@
                 if (((BackpackItem)this.Select.Item).Quantity == 1)
                 {
                     // 从背包删除该道具
-                    BackpackController.Instance.deleteItem(this.Select.SelectItemIndex);
+                    BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
                     this.Select.SelectItemIndex = -1;
                     this.Select.Item = null;
                 }
@@ -124,11 +124,11 @@
                     LogManager.Instance.Log("数量:" + ((BackpackItem)this.Select.Item).Quantity, LogManager.LogLevel.Info);
 
                     // 数据--
-                    BackpackController.Instance.reduceQuantity(this.Select.Item);
+                    BackpackController.Instance.ReduceQuantity(this.Select.Item);
 
                     // 界面--
-                    BackpackController.Instance.reduceQuantityUI(this.Select.Item);
-                    BackpackController.Instance.setBorderColor(BackpackController.Instance.getIndex(this.Select.Item));
+                    BackpackController.Instance.ReduceQuantityUI(this.Select.Item);
+                    BackpackController.Instance.SetBorderColor(BackpackController.Instance.GetIndex(this.Select.Item));
                     LogManager.Instance.Log("数量:" + ((BackpackItem)this.Select.Item).Quantity, LogManager.LogLevel.Info);
 
                     // 全局数据--
@@ -154,7 +154,7 @@
             }
 
             // 从背包删除该道具
-            BackpackController.Instance.deleteItem(this.Select.SelectItemIndex);
+            BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
             this.Select.Init();
         }
     }

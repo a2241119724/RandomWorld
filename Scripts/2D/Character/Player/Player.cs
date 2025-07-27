@@ -267,7 +267,7 @@
             // 关闭游戏添加正在装备的武器
             if (PlayerManager.Instance.Select.Id != -1)
             {
-                BackpackController.Instance.addItem(PlayerManager.Instance.Select.WeaponData);
+                BackpackController.Instance.AddItem(PlayerManager.Instance.Select.WeaponData);
             }
         }
 

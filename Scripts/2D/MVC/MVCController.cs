@@ -1,14 +1,19 @@
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+    using UnityEngine.UI;
+
     /// <summary>
-    /// User:µ÷ÓÃViewºÍController
+    /// User:è°ƒç”¨Viewå’ŒController
     /// Model
-    /// View:ÊÂ¼şÍ¨ÖªController
-    /// Controller:µ÷ÓÃViewºÍModel
+    /// View:äº‹ä»¶é€šçŸ¥Controller
+    /// Controller:è°ƒç”¨Viewå’ŒModel
     /// </summary>
+    /// <typeparam name="IMV">ItemManagerView</typeparam>
+    /// <typeparam name="M">Model</typeparam>
+    /// <typeparam name="NV">NavigationView</typeparam>
+    /// <typeparam name="IV">ItemView</typeparam>
+    /// <typeparam name="IV_">InfoView</typeparam>
     public abstract class MVCController<IMV, M, NV, IV, IV_> : MonoBehaviourInit
         where M : MVCModel, new()
         where IV : MVCItemView
@@ -16,136 +21,184 @@ namespace LAB2D
         where NV : MVCNavigationView
         where IV_ : MVCInfoView
     {
+        /// <summary>
+        /// ItemManagerView
+        /// </summary>
         protected IMV itemManagerView;
+
+        /// <summary>
+        /// Model
+        /// </summary>
         protected M model;
+
+        /// <summary>
+        /// NavigationView
+        /// </summary>
         protected NV navigationView;
+
+        /// <summary>
+        /// InfoView
+        /// </summary>
         protected IV_ infoView;
 
-        private Color btnOriginColor; // °´Å¥Ô­Ê¼ÑÕÉ«
+        private Color btnOriginColor; // æŒ‰é’®åŸå§‹é¢œè‰²
 
         public virtual void Awake()
         {
-            // Ìí¼Óµ½ItemManagerView
-            itemManagerView.exchangeItem += exchangeItem;
-            itemManagerView.setBorderColor += setBorderColor;
-            itemManagerView.get += get;
-            itemManagerView.showInfo += showInfo;
-            model = new M();
-            btnOriginColor = navigationView.GetComponentsInChildren<Button>()[0].GetComponent<RoundCorner>().color;
-            setBorderColor(0, "navigation");
-            navigationView.OnClick += (int index) =>
+            // æ·»åŠ åˆ°ItemManagerView
+            this.itemManagerView.ExchangeItem += this.ExchangeItem;
+            this.itemManagerView.SetBorderColor += this.SetBorderColor;
+            this.itemManagerView.GetItem += this.GetItem;
+            this.itemManagerView.ShowInfo += this.ShowInfo;
+            this.model = new M();
+            this.btnOriginColor = this.navigationView.GetComponentsInChildren<Button>()[0].GetComponent<RoundCorner>().color;
+            this.SetBorderColor(0, "navigation");
+            this.navigationView.OnClick += (int index) =>
             {
-                setBorderColor(index, "navigation");
-                updateInventory();
+                this.SetBorderColor(index, "navigation");
+                this.UpdateInventory();
             };
-            // ÉèÖÃ³õÊ¼ÑÕÉ«
+
+            // è®¾ç½®åˆå§‹é¢œè‰²
         }
 
-        private void OnEnable()
+        /// <summary>
+        /// æ·»åŠ é“å…·
+        /// </summary>
+        /// <param name="item">é“å…·</param>
+        public virtual void AddItem(Item item)
         {
-            updateInventory();
-        }
+            this.model.Add(item);
 
-        public virtual void addItem(Item item)
-        {
-            model.addItem(item);
-            // ²»ÄÜ¸üĞÂ£¬ÓÉÓÚ¸üĞÂĞèÒª´ò¿ª±³°ü
+            // ä¸èƒ½æ›´æ–°ï¼Œç”±äºæ›´æ–°éœ€è¦æ‰“å¼€èƒŒåŒ…
             // updateInventory();
         }
 
-        #region ²Ù×÷Êı¾İ
-        public void exchangeItem(int index1, int index2)
-        {
-            model.exchangeItem(navigationView.CurItemType, index1, index2);
-            updateInventory();
-        }
-
-        public void deleteItem(int index)
-        {
-            model.deleteItem(navigationView.CurItemType, index);
-            updateInventory();
-        }
-
-        public Item get(int index)
-        {
-            return model.get(navigationView.CurItemType, index);
-        }
-
-        public void reduceQuantity(Item item)
-        {
-            model.reduceQuantity(navigationView.CurItemType, item);
-        }
-
-        public int getIndex(Item item)
-        {
-            return model.getIndex(navigationView.CurItemType, (Weapon)item);
-        }
-        #endregion
-
-        #region ²Ù×÷Ò³Ãæ
         /// <summary>
-        /// ¸üĞÂ²Ö¿â½çÃæ
+        /// äº¤æ¢é“å…·
         /// </summary>
-        public void updateInventory()
+        /// <param name="index1">é“å…·1ç´¢å¼•</param>
+        /// <param name="index2">é“å…·2ç´¢å¼•</param>
+        public void ExchangeItem(int index1, int index2)
         {
-            if (itemManagerView == null)
+            this.model.Exchange(this.navigationView.CurItemType, index1, index2);
+            this.UpdateInventory();
+        }
+
+        /// <summary>
+        /// åˆ é™¤é“å…·
+        /// </summary>
+        /// <param name="index">ç´¢å¼•</param>
+        public void DeleteItem(int index)
+        {
+            this.model.Delete(this.navigationView.CurItemType, index);
+            this.UpdateInventory();
+        }
+
+        /// <summary>
+        /// è·å–é“å…·
+        /// </summary>
+        /// <param name="index">ç´¢å¼•</param>
+        /// <returns>é“å…·</returns>
+        public Item GetItem(int index)
+        {
+            return this.model.Get(this.navigationView.CurItemType, index);
+        }
+
+        /// <summary>
+        /// å‡å°‘é“å…·æ•°é‡
+        /// </summary>
+        /// <param name="item">é“å…·</param>
+        public void ReduceQuantity(Item item)
+        {
+            this.model.ReduceQuantity(this.navigationView.CurItemType, item);
+        }
+
+        /// <summary>
+        /// è·å–é“å…·ç´¢å¼•
+        /// </summary>
+        /// <param name="item">é“å…·</param>
+        /// <returns>ç´¢å¼•</returns>
+        public int GetIndex(Item item)
+        {
+            return this.model.GetIndex(this.navigationView.CurItemType, (Weapon)item);
+        }
+
+        /// <summary>
+        /// æ›´æ–°ä»“åº“ç•Œé¢
+        /// </summary>
+        public void UpdateInventory()
+        {
+            if (this.itemManagerView == null)
             {
                 LogManager.Instance.Log("inventoryView is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            itemManagerView.updateView(navigationView.CurItemType, model);
+
+            this.itemManagerView.UpdateView(this.navigationView.CurItemType, this.model);
         }
 
         /// <summary>
-        /// ÉèÖÃ¼¤»îÊ±µÄ±ß¿òÑÕÉ«
+        /// è®¾ç½®æ¿€æ´»æ—¶çš„è¾¹æ¡†é¢œè‰²
         /// </summary>
-        /// <param name="index"></param>
-        public void setBorderColor(int index, string name = "item")
+        /// <param name="index">ç´¢å¼•</param>
+        /// <param name="name">ç±»å‹</param>
+        public void SetBorderColor(int index, string name = "item")
         {
             switch (name)
             {
                 case "item":
-                    foreach (IV item in itemManagerView.itemsView)
+                    foreach (IV item in this.itemManagerView.ItemsView)
                     {
                         item.GetComponent<Image>().color = Color.white;
                         item.IsDrag = false;
                     }
-                    itemManagerView.itemsView[index].GetComponent<Image>().color = Color.red;
-                    itemManagerView.itemsView[index].IsDrag = true;
+
+                    this.itemManagerView.ItemsView[index].GetComponent<Image>().color = Color.red;
+                    this.itemManagerView.ItemsView[index].IsDrag = true;
                     break;
                 case "navigation":
-                    Button[] btns = navigationView.GetComponentsInChildren<Button>();
+                    Button[] btns = this.navigationView.GetComponentsInChildren<Button>();
                     foreach (Button btn in btns)
                     {
-                        btn.GetComponent<RoundCorner>().color = btnOriginColor;
+                        btn.GetComponent<RoundCorner>().color = this.btnOriginColor;
                     }
+
                     btns[index].GetComponent<RoundCorner>().color = new Color(100 / 255.0f, 120 / 255.0f, 150 / 255.0f, 255 / 255.0f);
                     break;
                 default:
-                    LogManager.Instance.Log("Ã»ÓĞ¸ÃÀàĞÍ±ß¿ò¿ÉÒÔĞŞ¸Ä!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("æ²¡æœ‰è¯¥ç±»å‹è¾¹æ¡†å¯ä»¥ä¿®æ”¹!!!", LogManager.LogLevel.Error);
                     break;
             }
         }
 
         /// <summary>
-        /// ½çÃæ¼õ¼õ
+        /// ç•Œé¢å‡å‡
         /// </summary>
-        /// <param name="item"></param>
-        public void reduceQuantityUI(Item item)
+        /// <param name="item">é“å…·</param>
+        public void ReduceQuantityUI(Item item)
         {
-            itemManagerView.reduceQuantityUI(getIndex(item));
+            this.itemManagerView.ReduceQuantityUI(this.GetIndex(item));
         }
-        #endregion
 
-        public void showInfo(Item data)
+        /// <summary>
+        /// å±•ç¤ºé“å…·ä¿¡æ¯
+        /// </summary>
+        /// <param name="data">é“å…·</param>
+        public void ShowInfo(Item data)
         {
-            if (infoView == null)
+            if (this.infoView == null)
             {
                 LogManager.Instance.Log("infoView is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            infoView.showInfo(data);
+
+            this.infoView.ShowInfo(data);
+        }
+
+        private void OnEnable()
+        {
+            this.UpdateInventory();
         }
     }
 }
-

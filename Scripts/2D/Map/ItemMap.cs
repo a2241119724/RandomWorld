@@ -121,7 +121,7 @@
             TileBase tile = this.tilemap.GetTile(posMap);
             if (tile != null)
             {
-                BackpackController.Instance.addItem(ItemFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
+                BackpackController.Instance.AddItem(ItemFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
                 this.tilemap.SetTile(posMap, null);
             }
 
@@ -133,7 +133,7 @@
                     tile = this.tilemap.GetTile(posMap);
                     if (tile != null)
                     {
-                        BackpackController.Instance.addItem(ItemFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
+                        BackpackController.Instance.AddItem(ItemFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
                         this.tilemap.SetTile(posMap, null);
                     }
                 }
