@@ -13,7 +13,7 @@
         public override void Attack()
         {
             // 发射子弹
-            GameObject g = Tool.Instantiate(ResourcesManager.Instance.GetPrefab("EnemyBullet"), this.EnemyHead.position, Quaternion.identity);
+            GameObject g = Tool.Instantiate(ResourceManager.Instance.GetPrefab("EnemyBullet"), this.EnemyHead.position, Quaternion.identity);
 
             // GameObject g = Instantiate(enemyBullet, enemyHead.position, Quaternion.identity);
             g.GetComponent<EnemyBullet>().Direction = this.EnemyHead.position - this.transform.position;
@@ -40,14 +40,14 @@
             base.Start();
 
             // 添加状态
-            this.Manager.AddState(EnemyStateType.Wander, new EnemyWanderState(this));
-            this.Manager.AddState(EnemyStateType.Chase, new EnemyChaseState(this));
-            this.Manager.AddState(EnemyStateType.Dead, new EnemyDeadState(this));
-            this.Manager.AddState(EnemyStateType.Seek, new EnemySeekState(this));
-            this.Manager.AddState(EnemyStateType.Attack, new EnemyAttackState(this));
+            this.Manager.AddState(EnemyState.EnemyStateTypeEnum.Wander, new EnemyWanderState(this));
+            this.Manager.AddState(EnemyState.EnemyStateTypeEnum.Chase, new EnemyChaseState(this));
+            this.Manager.AddState(EnemyState.EnemyStateTypeEnum.Dead, new EnemyDeadState(this));
+            this.Manager.AddState(EnemyState.EnemyStateTypeEnum.Seek, new EnemySeekState(this));
+            this.Manager.AddState(EnemyState.EnemyStateTypeEnum.Attack, new EnemyAttackState(this));
 
             // 初始化状态
-            this.Manager.ChangeState(EnemyStateType.Wander);
+            this.Manager.ChangeState(EnemyState.EnemyStateTypeEnum.Wander);
             this.Target = null;
         }
     }

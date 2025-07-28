@@ -14,41 +14,40 @@
         {
             this.Width = 10;
             this.Height = 7;
-            this.Walls = new Dictionary<WallDirection, Wall>
+            this.Walls = new Dictionary<WallItem.WallDirectionEnum, WallItem>
             {
-                { WallDirection.TOP, new InventoryWallT() },
-                { WallDirection.DOWN, new InventoryWallD() },
-                { WallDirection.LEFT, new InventoryWallL() },
-                { WallDirection.RIGHT, new InventoryWallR() },
-                { WallDirection.RIGHT_TOP, new InventoryWallRT() },
-                { WallDirection.RIGHT_DOWN, new InventoryWallRD() },
-                { WallDirection.LEFT_TOP, new InventoryWallLT() },
-                { WallDirection.LEFT_DOWN, new InventoryWallLD() },
+                { WallItem.WallDirectionEnum.TOP, new InventoryWallT() },
+                { WallItem.WallDirectionEnum.DOWN, new InventoryWallD() },
+                { WallItem.WallDirectionEnum.LEFT, new InventoryWallL() },
+                { WallItem.WallDirectionEnum.RIGHT, new InventoryWallR() },
+                { WallItem.WallDirectionEnum.RIGHT_TOP, new InventoryWallRT() },
+                { WallItem.WallDirectionEnum.RIGHT_DOWN, new InventoryWallRD() },
+                { WallItem.WallDirectionEnum.LEFT_TOP, new InventoryWallLT() },
+                { WallItem.WallDirectionEnum.LEFT_DOWN, new InventoryWallLD() },
             };
         }
 
         /// <inheritdoc/>
         public override void AddBuildTask(Vector3Int centerMap)
         {
-            int[] x_B = this.GetXBoundary(centerMap);
-            int[] y_B = this.GetYBoundary(centerMap);
+            int[] boundary = this.GetBoundary(centerMap);
             for (int i = 1; i < this.Width - 1; i++)
             {
-                BuildMap.Instance.DirectBuild(new Vector3Int(x_B[0], y_B[0] + i, 0), this.Walls[WallDirection.DOWN].Tile)
-                    .DirectBuild(new Vector3Int(x_B[1], y_B[0] + i, 0), this.Walls[WallDirection.TOP].Tile);
+                BuildMap.Instance.DirectBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.DOWN].Tile)
+                    .DirectBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.TOP].Tile);
             }
 
             for (int i = 1; i < this.Height - 1; i++)
             {
-                BuildMap.Instance.DirectBuild(new Vector3Int(x_B[0] + i, y_B[0], 0), this.Walls[WallDirection.LEFT].Tile)
-                    .DirectBuild(new Vector3Int(x_B[0] + i, y_B[1], 0), this.Walls[WallDirection.RIGHT].Tile);
+                BuildMap.Instance.DirectBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT].Tile)
+                    .DirectBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT].Tile);
             }
 
             BuildMap.Instance
-                .DirectBuild(new Vector3Int(x_B[0], y_B[1], 0), this.Walls[WallDirection.RIGHT_DOWN].Tile)
-                .DirectBuild(new Vector3Int(x_B[0], y_B[0], 0), this.Walls[WallDirection.LEFT_DOWN].Tile)
-                .DirectBuild(new Vector3Int(x_B[1], y_B[1], 0), this.Walls[WallDirection.RIGHT_TOP].Tile)
-                .DirectBuild(new Vector3Int(x_B[1], y_B[0], 0), this.Walls[WallDirection.LEFT_TOP].Tile)
+                .DirectBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_DOWN].Tile)
+                .DirectBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_DOWN].Tile)
+                .DirectBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_TOP].Tile)
+                .DirectBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_TOP].Tile)
                 .AddTask();
 
             // 添加仓库Cell

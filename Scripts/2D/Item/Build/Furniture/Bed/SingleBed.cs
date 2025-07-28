@@ -11,7 +11,7 @@
         {
             this.Width = 1;
             this.Height = 2;
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("SingleBed");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("SingleBed");
         }
     }
 }

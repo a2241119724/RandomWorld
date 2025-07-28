@@ -15,6 +15,47 @@
         {
         }
 
+        /// <summary>
+        /// Worker状态类型
+        /// </summary>
+        public enum WorkerStateTypeEnum
+        {
+            /// <summary>
+            /// 移动状态
+            /// </summary>
+            Move,
+
+            /// <summary>
+            /// 工作状态
+            /// </summary>
+            Work,
+
+            /// <summary>
+            /// 吃饭装她爱
+            /// </summary>
+            Eat,
+
+            /// <summary>
+            /// 死亡状态
+            /// </summary>
+            Dead,
+
+            /// <summary>
+            /// 寻路状态
+            /// </summary>
+            Seek,
+
+            /// <summary>
+            /// 攻击状态
+            /// </summary>
+            Attack,
+
+            /// <summary>
+            /// 逃跑状态
+            /// </summary>
+            Escape,
+        }
+
         /// <inheritdoc/>
         public override void OnEnter()
         {
@@ -27,15 +68,15 @@
         }
 
         /// <inheritdoc/>
-        public override void OnExit()
-        {
-            base.OnExit();
-        }
-
-        /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
+        }
+
+        /// <inheritdoc/>
+        public override void OnExit()
+        {
+            base.OnExit();
         }
     }
 }

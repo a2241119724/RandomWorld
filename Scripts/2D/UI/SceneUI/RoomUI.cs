@@ -53,7 +53,7 @@
 
         private void Start()
         {
-            this.prefabRoomBox = ResourcesManager.Instance.GetPrefab("RoomItem");
+            this.prefabRoomBox = ResourceManager.Instance.GetPrefab("RoomItem");
         }
     }
 }

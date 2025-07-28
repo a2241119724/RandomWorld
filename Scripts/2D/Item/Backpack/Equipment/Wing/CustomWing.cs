@@ -11,7 +11,7 @@
     {
         public CustomWing()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomWing");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomWing");
         }
     }
 

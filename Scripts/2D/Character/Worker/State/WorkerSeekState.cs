@@ -23,7 +23,7 @@
             // 如果饥饿并且没有吃饭任务就进入饥饿状态,做完任务再吃饭
             if (this.Character.CurHungry < Worker.ThresholdHungry && this.Character.Manager.Task == null)
             {
-                this.Character.Manager.ChangeState(WorkerStateType.Eat);
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Eat);
                 return;
             }
 
@@ -78,7 +78,7 @@
         public override void OnUpdate()
         {
             base.OnUpdate();
-            this.Character.WorkerState.text = this.preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(this.Character.SeekProgress * 100)}%</color>\n" +
+            this.Character.WorkerStateText.text = this.preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(this.Character.SeekProgress * 100)}%</color>\n" +
                 $"Target: {this.targetMap.x},{this.targetMap.y}";
             if (Worker.SeekLock.GetLock(this.Character))
             {
@@ -95,7 +95,7 @@
                 Worker.SeekLock.ReleaseLock(this.Character);
 
                 // 寻路结束
-                this.Character.Manager.ChangeState(WorkerStateType.Move);
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Move);
             }
         }
     }

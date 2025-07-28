@@ -12,7 +12,7 @@
         private string resourceName = "Tree";
 
         public WorkerGatherTask()
-            : base(TaskType.Gather)
+            : base(WorkerTaskTypeEnum.Gather)
         {
             this.stageInit.Add((Worker worker) =>
             {
@@ -22,7 +22,7 @@
                 this.AvailableNeighborPos.Add(Neighbors[3]);
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 
@@ -38,7 +38,7 @@
         {
             base.Finish(worker);
             ResourceMap.Instance.CutTree(this.TargetMap);
-            List<DropItem> dropItems = DropItemManager.Instance.GetDropItemsByName(this.resourceName);
+            List<DropItem> dropItems = DropDataManager.Instance.GetDropItemsByName(this.resourceName);
 
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)
@@ -49,7 +49,7 @@
                     break;
                 }
 
-                ItemMap.Instance.PutDownToDrop(pos, (TileBase)ResourcesManager.Instance.GetAsset(dropItems[i].Name), dropItems[i].ResourceInfo);
+                ItemMap.Instance.PutDownToDrop(pos, (TileBase)ResourceManager.Instance.GetAsset(dropItems[i].Name), dropItems[i].ResourceInfo);
             }
 
             // 删除采摘图标

@@ -31,7 +31,14 @@ namespace LAB2D
                 // 记录对象
                 Undo.RecordObject(rc, rc.gameObject.name);
 
-                rc.Radius = 0.1f;
+                if (rc.GetComponent<Transform>().name.Equals("Background"))
+                {
+                    rc.Radius = 0.01f;
+                }
+                else
+                {
+                    rc.Radius = 0.1f;
+                }
 
                 // 设置已改变
                 EditorUtility.SetDirty(rc);

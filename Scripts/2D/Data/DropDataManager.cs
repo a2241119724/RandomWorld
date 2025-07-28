@@ -5,16 +5,18 @@
     /// <summary>
     /// 掉落物管理
     /// </summary>
-    public class DropItemManager : Singleton<DropItemManager>
+    public class DropDataManager : Singleton<DropDataManager>
     {
         private static readonly List<DropItem> Empty = new ();
         private readonly Dictionary<string, List<DropItem>> nameToDrop; // 资源，与对应的掉落物
 
-        public DropItemManager()
+        public DropDataManager()
         {
             this.nameToDrop = new Dictionary<string, List<DropItem>>();
             string[] drops = Tool.GetCSV(ResourceConstant.DATA_ROOT + "DropItem");
-            for (int i = 0; i < drops.Length; i++)
+
+            // 跳过第一行
+            for (int i = 1; i < drops.Length; i++)
             {
                 string[] cols = drops[i].Split(',');
                 for (int j = 1; j < cols.Length; j += 2)

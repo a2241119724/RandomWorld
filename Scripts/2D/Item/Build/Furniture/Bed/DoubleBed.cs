@@ -11,7 +11,7 @@
         {
             this.Width = 2;
             this.Height = 2;
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("DoubleBed");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("DoubleBed");
         }
     }
 }

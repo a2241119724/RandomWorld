@@ -11,7 +11,7 @@
     {
         public CustomHead()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomHead");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomHead");
         }
     }
 

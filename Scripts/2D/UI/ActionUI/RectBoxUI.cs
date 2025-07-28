@@ -166,7 +166,7 @@
                         selectUI.Character = character;
                     }
 
-                    ResourceInfo resourceInfo = DropResourceManager.Instance.GetDropByAll(posMap);
+                    ResourceInfo resourceInfo = DropManager.Instance.GetDropByAll(posMap);
                     if (resourceInfo != null)
                     {
                         SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);

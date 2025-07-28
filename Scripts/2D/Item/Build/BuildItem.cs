@@ -47,12 +47,4 @@
     public abstract class BuildItemObject : ItemObject
     {
     }
-
-    /// <summary>
-    /// 不可使用反射找到该类
-    /// 不加入到BuildMenu中
-    /// </summary>
-    public interface IDontShow
-    {
-    }
 }

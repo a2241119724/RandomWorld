@@ -23,12 +23,12 @@
 
         private void OnEnable()
         {
-            this.CurItemType = ItemType.Weapon;
+            this.CurItemType = Item.ItemType.Weapon;
         }
 
         private void Start()
         {
-            this.BindButton(ItemType.Weapon, ItemType.BackpackOther);
+            this.BindButton(Item.ItemType.Weapon, Item.ItemType.BackpackOther);
         }
     }
 }

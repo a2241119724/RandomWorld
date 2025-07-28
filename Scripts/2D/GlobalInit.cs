@@ -46,7 +46,7 @@
         private void Awake()
         {
             Instance = this;
-            this.tip = ResourcesManager.Instance.GetPrefab("Tip");
+            this.tip = ResourceManager.Instance.GetPrefab("Tip");
         }
 
         private void Start()

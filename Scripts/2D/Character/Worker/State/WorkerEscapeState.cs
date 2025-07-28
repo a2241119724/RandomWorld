@@ -20,7 +20,7 @@
         {
             base.OnEnter();
             this.recordTime = 0.0f;
-            this.Character.WorkerState.text = $"<color=red>逃跑</color>";
+            this.Character.WorkerStateText.text = $"<color=red>逃跑</color>";
         }
 
         /// <inheritdoc/>
@@ -36,7 +36,7 @@
             this.recordTime += Time.deltaTime;
             if (this.recordTime >= RecordTime)
             {
-                this.Character.Manager.ChangeState(WorkerStateType.Seek);
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
             }
 
             this.Character.LineRenderer.positionCount = 0;

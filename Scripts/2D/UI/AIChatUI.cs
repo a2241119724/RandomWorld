@@ -43,7 +43,7 @@
         /// <returns>回答</returns>
         public async Task Chat(string question)
         {
-            GameObject g = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("RightChatItem"), this.content, false);
+            GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("RightChatItem"), this.content, false);
             Tool.GetComponentInChildren<Text>(g, "Text").text = question;
             string url = "http://127.0.0.1:11434/api/chat";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
@@ -107,7 +107,7 @@
             }
             finally
             {
-                g = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("LeftChatItem"), this.content, false);
+                g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("LeftChatItem"), this.content, false);
                 g.transform.SetParent(this.content);
                 Tool.GetComponentInChildren<Text>(g, "Text").text = text;
                 this.isWorking = false;

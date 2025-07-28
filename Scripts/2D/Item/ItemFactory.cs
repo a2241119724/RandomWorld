@@ -92,7 +92,7 @@
             foreach (Type type in types)
             {
                 Type[] interfaces = type.GetInterfaces();
-                if (interfaces.Length > 0 && interfaces.Contains(typeof(IDontShow)))
+                if (interfaces.Length > 0 && interfaces.Contains(typeof(Item.IItemDontShow)))
                 {
                     continue;
                 }

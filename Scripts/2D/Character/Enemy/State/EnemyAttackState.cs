@@ -6,7 +6,7 @@
     /// <summary>
     /// 敌人攻击状态.
     /// </summary>
-    public class EnemyAttackState : CharacterState<Enemy>
+    public class EnemyAttackState : EnemyState
     {
         private static readonly float AttackInterval = 1.0f;
         private float recordTime = 0.0f;
@@ -21,26 +21,20 @@
         /// </summary>
         public float AttackTime { get; private set; } = 0.0f;
 
-        /// <summary>
-        /// 进入攻击状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
             this.AttackTime = 0.0f;
         }
 
-        /// <summary>
-        /// 退出攻击状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
-        /// <summary>
-        /// 攻击状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             this.AttackTime += Time.deltaTime;
@@ -49,7 +43,7 @@
             if (Vector3.Distance(this.Character.Target.transform.position, this.Character.transform.position)
                 > this.Character.AttackRange)
             {
-                this.Character.Manager.ChangeState(EnemyStateType.Chase);
+                this.Character.Manager.ChangeState(EnemyStateTypeEnum.Chase);
                 return;
             }
 
@@ -94,7 +88,7 @@
             }
 
             // 如果敌人感知范围内没有玩家，进入搜寻状态
-            this.Character.Manager.ChangeState(EnemyStateType.Seek);
+            this.Character.Manager.ChangeState(EnemyStateTypeEnum.Seek);
 
             // animator.SetBool("isAttack", false);
         }

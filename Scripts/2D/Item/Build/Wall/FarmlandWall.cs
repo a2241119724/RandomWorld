@@ -4,10 +4,10 @@
     using UnityEngine;
 
     /// <summary>
-    /// 农田墙
+    /// 农田,地块
     /// </summary>
     [Serializable]
-    public class FarmlandWall : Wall
+    public class FarmlandWall : WallItem
     {
         public FarmlandWall()
         {

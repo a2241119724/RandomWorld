@@ -67,7 +67,7 @@
             }
 
             // 没有更多的SelectUI,创建新的
-            select = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("Select")).GetComponent<SelectUI>();
+            select = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("Select")).GetComponent<SelectUI>();
             select.transform.SetParent(GameObject.FindGameObjectWithTag(ResourceConstant.ACTION_UI_TAG).transform);
             this.Selects.Add(select, true);
             return select;

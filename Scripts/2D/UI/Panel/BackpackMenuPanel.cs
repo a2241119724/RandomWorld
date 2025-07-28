@@ -55,7 +55,7 @@
                 return;
             }
 
-            if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == ItemType.Weapon)
+            if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == Item.ItemType.Weapon)
             {
                 if (PlayerManager.Instance.Select.Weapon != null)
                 {
@@ -70,7 +70,7 @@
                 PlayerManager.Instance.Select.Id = this.Select.Item.Id;
 
                 // 实例化武器
-                PlayerManager.Instance.Select.Weapon = Tool.Instantiate(ResourcesManager.Instance.GetPrefab(ItemDataManager.Instance.GetById(this.Select.Item.Id).ImageName), Vector3.zero, Quaternion.identity);
+                PlayerManager.Instance.Select.Weapon = Tool.Instantiate(ResourceManager.Instance.GetPrefab(ItemDataManager.Instance.GetById(this.Select.Item.Id).ImageName), Vector3.zero, Quaternion.identity);
                 if (PlayerManager.Instance.Select.Weapon == null)
                 {
                     LogManager.Instance.Log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
@@ -91,10 +91,10 @@
                 this.Select.SelectItemIndex = -1;
                 this.Select.Item = null;
             }
-            else if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == ItemType.Consumable)
+            else if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == Item.ItemType.Consumable)
             {
                 // 实例化道具调用上面的脚本再立即销毁
-                GameObject g = ResourcesManager.Instance.GetPrefab("Select.selectItemData.itemName");
+                GameObject g = ResourceManager.Instance.GetPrefab("Select.selectItemData.itemName");
                 if (g == null)
                 {
                     LogManager.Instance.Log("Consumable is null!!!", LogManager.LogLevel.Error);

@@ -9,16 +9,16 @@
     /// </summary>
     public class WorkerTaskInfoPanel : BasePanel<WorkerTaskInfoPanel>
     {
-        private static readonly Dictionary<TaskType, string> TypeToChinese = new ()
+        private static readonly Dictionary<WorkerTask.WorkerTaskTypeEnum, string> TypeToChinese = new ()
         {
-            { TaskType.Build, "建造" },
-            { TaskType.Carry, "搬运" },
-            { TaskType.Gather, "采摘" },
-            { TaskType.Exercise, "锻炼" },
-            { TaskType.Eat, "吃饭" },
-            { TaskType.Wear, "穿戴" },
-            { TaskType.Sleep, "睡觉" },
-            { TaskType.Plant, "种植" },
+            { WorkerTask.WorkerTaskTypeEnum.Build, "建造" },
+            { WorkerTask.WorkerTaskTypeEnum.Carry, "搬运" },
+            { WorkerTask.WorkerTaskTypeEnum.Gather, "采摘" },
+            { WorkerTask.WorkerTaskTypeEnum.Exercise, "锻炼" },
+            { WorkerTask.WorkerTaskTypeEnum.Eat, "吃饭" },
+            { WorkerTask.WorkerTaskTypeEnum.Wear, "穿戴" },
+            { WorkerTask.WorkerTaskTypeEnum.Sleep, "睡觉" },
+            { WorkerTask.WorkerTaskTypeEnum.Plant, "种植" },
         };
 
         public WorkerTaskInfoPanel()
@@ -26,7 +26,7 @@
             this.Name = "WorkerTaskInfo";
             this.OpenPanel();
             Transform title = Tool.GetComponentInChildren<Transform>(this.Panel, "Title");
-            foreach (KeyValuePair<TaskType, string> pair in TypeToChinese)
+            foreach (KeyValuePair<WorkerTask.WorkerTaskTypeEnum, string> pair in TypeToChinese)
             {
                 Tool.GetComponentInChildren<Text>(title.GetChild((int)pair.Key + 1).gameObject, "Text").text = pair.Value;
             }

@@ -11,7 +11,7 @@
     {
         public CustomTrouser()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomTrouser");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomTrouser");
         }
     }
 

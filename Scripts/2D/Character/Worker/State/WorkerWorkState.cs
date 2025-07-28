@@ -19,7 +19,7 @@
                 return;
             }
 
-            this.Character.WorkerState.text = this.preString +
+            this.Character.WorkerStateText.text = this.preString +
                 $"Target: {this.Character.Manager.Task.TargetMap.x},{this.Character.Manager.Task.TargetMap.y}";
         }
 
@@ -46,7 +46,7 @@
 
             // 完成任务
             this.Character.Manager.Task = null;
-            this.Character.Manager.ChangeState(WorkerStateType.Seek);
+            this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
         }
     }
 }

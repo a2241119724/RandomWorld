@@ -8,7 +8,7 @@
     /// <summary>
     /// 敌人死亡状态.
     /// </summary>
-    public class EnemyDeadState : CharacterState<Enemy>
+    public class EnemyDeadState : EnemyState
     {
         private const float DeadTime = 0.5f; // 死亡时间
         private readonly Dictionary<int, TileBase> probToDropItem; // key:获取对应item的概率值
@@ -27,9 +27,7 @@
             }
         }
 
-        /// <summary>
-        /// 进入死亡状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
@@ -44,18 +42,14 @@
             // animator.SetTrigger("toDie");
         }
 
-        /// <summary>
-        /// 退出死亡状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
             this.Character.GetComponent<Enemy>().enabled = false;
         }
 
-        /// <summary>
-        /// 死亡状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             this.recordTime += Time.deltaTime;
@@ -82,7 +76,7 @@
                 PhotonNetwork.Destroy(this.Character.gameObject); // Destroy不会立即销毁,下一帧销毁
 
                 // 执行OnExit并关闭脚本
-                this.Character.Manager.ChangeState(EnemyStateType.Wander);
+                this.Character.Manager.ChangeState(EnemyStateTypeEnum.Wander);
             }
         }
 

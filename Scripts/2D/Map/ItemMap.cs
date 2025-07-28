@@ -49,7 +49,7 @@
         public void PickUpFromDrop(Vector3Int posMap, ResourceInfo resourceInfo)
         {
             // 删除拿起来的东西
-            DropResourceManager.Instance.SubDropByAll(posMap, resourceInfo);
+            DropManager.Instance.SubDropByAll(posMap, resourceInfo);
             this.HindTile(posMap);
         }
 
@@ -90,10 +90,10 @@
         public void PutDownToDrop(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
         {
             this.ShowTile(posMap, tileBase);
-            ItemType itemType = ItemDataManager.Instance.GetTypeById(resourceInfo.Id);
+            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(resourceInfo.Id);
 
             // 添加到掉落物管理中
-            DropResourceManager.Instance.AddDrop(itemType, posMap, resourceInfo);
+            DropManager.Instance.AddDrop(itemType, posMap, resourceInfo);
 
             // 添加搬运任务
             WorkerTaskManager.Instance.AddTask(new WorkerCarryTask.CarryTaskBuilder()

@@ -3,6 +3,9 @@
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using PimDeWitte.UnityMainThreadDispatcher;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -59,7 +62,7 @@
         private List<Spend> openList;
         private List<Spend> closeList;
         private List<Spend> path; // 寻路路径
-        private Coroutine coroutine; // 寻路路径
+        private Coroutine coroutine; // 当前寻路协程
         private Slider progress;
         private Text nameUI;
         private CharacterStatusUI statusBar; // 记录实例化血条
@@ -68,7 +71,7 @@
         /// 状态管理器
         /// </summary>
         [HideInInspector]
-        public WorkerStateManager<ICharacterState, WorkerStateType, Worker> Manager { get; private set; }
+        public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker> Manager { get; private set; }
 
         /// <summary>
         /// 是否在寻路
@@ -79,7 +82,7 @@
         /// <summary>
         /// Worker状态
         /// </summary>
-        public Text WorkerState { get; set; }
+        public Text WorkerStateText { get; set; }
 
         /// <summary>
         /// 目标地图坐标
@@ -178,7 +181,14 @@
             Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.transform.position);
             Spend start = mapSpend[posMap.x, posMap.y]; // 起点
             Spend end = mapSpend[this.TargetMap.x, this.TargetMap.y]; // 终点
+
             this.coroutine = this.StartCoroutine(this.ToTargetAStar(start, end));
+
+            // ThreadPool.QueueUserWorkItem(t =>
+            // {
+            //     Debug.Log("线程开始");
+            //     this.ToTargetAStarThread(start, end);
+            // });
         }
 
         /// <summary>
@@ -396,7 +406,7 @@
         {
             WorkerTaskManager.Instance.GiveUpTask(this.Manager.Task);
             this.Manager.Task = null;
-            this.Manager.ChangeState(WorkerStateType.Seek);
+            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
         }
 
         /// <summary>
@@ -436,7 +446,7 @@
 
             base.ReduceHp(hp);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            this.Manager.ChangeState(WorkerStateType.Attack);
+            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Attack);
         }
 
         /// <inheritdoc/>
@@ -451,10 +461,10 @@
             this.openList = new List<Spend>();
             this.closeList = new List<Spend>();
             this.path = new List<Spend>();
-            this.Manager = new WorkerStateManager<ICharacterState, WorkerStateType, Worker>(this);
+            this.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker>(this);
             this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
-            this.WorkerState = this.transform.Find("State").GetComponent<Text>();
+            this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
             this.progress = this.transform.Find("Progress").GetComponent<Slider>();
             this.progress.gameObject.SetActive(false);
 
@@ -470,9 +480,9 @@
             this.TaskToggle = new bool[10];
 
             // 默认可以吃饭
-            this.TaskToggle[(int)TaskType.Eat] = true;
-            this.TaskToggle[(int)TaskType.Wear] = true;
-            this.TaskToggle[(int)TaskType.Carry] = true;
+            this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Eat] = true;
+            this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Wear] = true;
+            this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Carry] = true;
             this.resourceInfos = new Dictionary<int, ResourceInfo>();
             this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (this.statusBar == null)
@@ -482,6 +492,7 @@
             }
 
             this.WearData = new WearData();
+            ThreadPool.SetMaxThreads(5, 5);
         }
 
         /// <summary>
@@ -507,7 +518,7 @@
             this.checkBug.AddColliderCount(DateTime.Now.Ticks);
             if (this.checkBug.IsBug(this.name, 100))
             {
-                this.Manager.ChangeState(WorkerStateType.Seek);
+                this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             }
         }
 
@@ -821,6 +832,210 @@
 
             // seekLock.releaseLock(this);
         }
+
+        /// <summary>
+        /// A*算法寻路
+        /// </summary>
+        private void ToTargetAStarThread(Spend start, Spend end)
+        {
+            try
+            {
+                // 记录一开始的path长度
+                int curIterCount = this.path.Count;
+                List<Spend> path = new ();
+                float totalDistance = Mathf.Sqrt(Mathf.Pow(start.PosMap.x - end.PosMap.x, 2)
+                    + Mathf.Pow(start.PosMap.y - end.PosMap.y, 2));
+                this.openList.Add(start);
+                while (this.openList.Count != 0)
+                {
+                    int minIndex = 0;
+
+                    // 选出当前相邻位置最小花费f在openList中的索引位置
+                    for (int i = 1; i < this.openList.Count; i++)
+                    {
+                        if (this.openList[i].F < this.openList[minIndex].F)
+                        {
+                            minIndex = i;
+                        }
+                    }
+
+                    Spend curSpend = this.openList[minIndex];
+                    this.SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.PosMap.x - start.PosMap.x, 2)
+                        + Mathf.Pow(curSpend.PosMap.y - start.PosMap.y, 2)) / totalDistance;
+
+                    // 判断是否到达终点(此处只能是整数)
+                    if ((int)curSpend.PosMap.x == (int)end.PosMap.x && (int)curSpend.PosMap.y == (int)end.PosMap.y)
+                    {
+                        // LogManager.Instance.log("找到路径!!!", LogManager.LogLevel.Info);
+                        // 找路径
+                        Vector3Int lastDet = new (0, 0);
+                        Spend curSpend1 = curSpend;
+                        while (curSpend != null && curSpend.Previous != null)
+                        {
+                            path.Insert(curIterCount, curSpend);
+
+                            // 可能出现循环路径
+                            if (curSpend1 != null)
+                            {
+                                curSpend1 = curSpend1.Previous;
+                                if (curSpend1 != null)
+                                {
+                                    curSpend1 = curSpend1.Previous;
+                                }
+                            }
+
+                            if (curSpend1 != null && curSpend1.PosMap.x == curSpend.Previous.PosMap.x
+                                && curSpend1.PosMap.y == curSpend.Previous.PosMap.y)
+                            {
+                                LogManager.Instance.Log("Worker寻路出现环路", LogManager.LogLevel.Error);
+                                break;
+                            }
+
+                            curSpend = curSpend.Previous;
+                        }
+
+                        break;
+                    }
+
+                    this.openList.Remove(curSpend);
+                    this.closeList.Add(curSpend);
+
+                    // 对邻居进行f = g + h
+                    byte isCorner = 0;
+                    foreach (Vector2SByte direction in Neighbors)
+                    {
+                        ++isCorner;
+                        int x = curSpend.PosMap.x + direction.X;
+                        int y = curSpend.PosMap.y + direction.Y;
+
+                        bool isReach = true;
+                        Task task = UnityMainThreadDispatcher.Instance().EnqueueAsync(() =>
+                        {
+                            isReach = this.IsCanReach(new Vector3Int(x, y, 0));
+                        });
+                        task.Wait();
+
+                        // 数组下标
+                        if (!isReach)
+                        {
+                            continue;
+                        }
+
+                        Spend neighbor = mapSpend[x, y];
+
+                        // 关闭队列不计算
+                        if (this.closeList.Contains(neighbor))
+                        {
+                            continue;
+                        }
+
+                        float temp;
+                        if (isCorner > 4)
+                        {
+                            // 当上下左右阻塞时，斜着不可走
+                            if (!this.IsCanReach(new Vector3Int(x, curSpend.PosMap.y, 0))
+                                && !this.IsCanReach(new Vector3Int(curSpend.PosMap.x, y, 0)))
+                            {
+                                continue;
+                            }
+
+                            temp = curSpend.G + 1.414f; // 斜着相邻
+                        }
+                        else
+                        {
+                            temp = curSpend.G + 1.0f; // 挨着相邻
+                        }
+
+                        // 打开队列已经计算过，赋值最小的g
+                        if (this.openList.Contains(neighbor))
+                        {
+                            // 回溯,放弃该节点
+                            if (temp >= neighbor.G)
+                            {
+                                continue;
+                            }
+
+                            neighbor.G = temp;
+                        }
+
+                        // 不在任何列表中
+                        else
+                        {
+                            neighbor.G = temp;
+                            this.openList.Add(neighbor);
+                        }
+
+                        neighbor.H = Mathf.Abs(end.PosMap.x - neighbor.PosMap.x) + Mathf.Abs(end.PosMap.y - neighbor.PosMap.y);
+                        neighbor.F = neighbor.G + neighbor.H;
+                        neighbor.Previous = curSpend; // 链接
+                    }
+                }
+
+                if (path.Count > 1)
+                {
+                    int lastIndex = 0;
+                    while (lastIndex < path.Count - 1)
+                    {
+                        bool isUpdate = false;
+                        int count = 0;
+                        start = path[lastIndex];
+                        this.path.Add(start);
+                        for (int i = lastIndex + 1; i < path.Count; i++)
+                        {
+                            if (count > 50)
+                            {
+                                break;
+                            }
+
+                            // 上下平移一下射线
+                            Vector3 pos = TileMap.Instance.MapPosToWorldPos(start.PosMap);
+                            Vector3 direction = TileMap.Instance.MapPosToWorldPos(path[i].PosMap) - TileMap.Instance.MapPosToWorldPos(start.PosMap);
+                            float distance = Vector3.Distance(TileMap.Instance.MapPosToWorldPos(start.PosMap), TileMap.Instance.MapPosToWorldPos(path[i].PosMap));
+
+                            Task task = UnityMainThreadDispatcher.Instance().EnqueueAsync(() =>
+                            {
+                                RaycastHit2D hit = Physics2D.Raycast(new Vector2(pos.x - 0.5f, pos.y), direction, distance);
+                                if (hit.collider == null)
+                                {
+                                    hit = Physics2D.Raycast(new Vector2(pos.x + 0.5f, pos.y), direction, distance);
+                                }
+
+                                if (hit.collider == null)
+                                {
+                                    lastIndex = i;
+                                    isUpdate = true;
+                                }
+                            });
+                            task.Wait();
+                        }
+
+                        if (!isUpdate)
+                        {
+                            lastIndex++;
+                        }
+                    }
+
+                    this.path.Add(path[^1]);
+                }
+
+                if (this.path.Count == curIterCount)
+                {
+                    LogManager.Instance.Log(this.name + "未找到路径:" + start.PosMap.y + ":" + start.PosMap.x + "-->" + end.PosMap.y + ":" + end.PosMap.x, LogManager.LogLevel.Error);
+                }
+
+                // 显示路径
+                this.UpdateLine();
+
+                // ToTargetLAB要注释
+                this.IsSeeking = false;
+
+                // seekLock.releaseLock(this);
+            }
+            catch (Exception e)
+            {
+                Debug.Log(e);
+            }
+        }
     }
 
     /// <summary>
@@ -872,7 +1087,7 @@
     /// <summary>
     /// Byte的Vector2
     /// </summary>
-    public struct Vector2SByte
+    public class Vector2SByte
     {
         /// <summary>
         /// X 坐标
@@ -922,7 +1137,7 @@
             {
                 // 交换装备
                 Equipment equipment1 = this.Equipments[equipment.EquipTypeValue];
-                ItemMap.Instance.PutDownToInventory(posMap, ResourcesManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
+                ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
                 this.Equipments[equipment.EquipTypeValue] = equipment1;
             }
             else

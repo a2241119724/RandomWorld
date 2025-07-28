@@ -22,8 +22,7 @@
         protected override void Start()
         {
             base.Start();
-            this.Radius = 0.1f;
-            this.material = this.GenerateMaterial(ResourcesManager.Instance.GetShader("RoundCorner"));
+            this.material = this.GenerateMaterial(ResourceManager.Instance.GetShader("RoundCorner"));
             this.material.SetFloat("_Width", this.rectTransform.rect.width);
             this.material.SetFloat("_Height", this.rectTransform.rect.height);
         }

@@ -37,7 +37,7 @@
         /// <summary>
         /// 物品类型
         /// </summary>
-        public ItemType Type;
+        public Item.ItemType Type;
 
         /// <summary>
         /// 建造者
@@ -82,7 +82,7 @@
                 return this;
             }
 
-            public ItemDataBuilder SetItemType(ItemType type)
+            public ItemDataBuilder SetItemType(Item.ItemType type)
             {
                 this.itemData.Type = type;
                 return this;
@@ -94,83 +94,5 @@
             }
 #pragma warning restore SA1600 // Elements should be documented
         }
-    }
-
-    /// <summary>
-    /// 所有Backpack与Build均在该Enum中
-    /// </summary>
-    [Serializable]
-    public enum ItemType
-    {
-        // 背包
-
-        /// <summary>
-        /// 武器
-        /// </summary>
-        Weapon,
-
-        /// <summary>
-        /// 装备
-        /// </summary>
-        Equipment,
-
-        /// <summary>
-        /// 消耗品(道具)
-        /// </summary>
-        Consumable,
-
-        /// <summary>
-        /// 材料
-        /// </summary>
-        Material,
-
-        /// <summary>
-        /// 任务用品
-        /// </summary>
-        Task,
-
-        /// <summary>
-        /// 食物
-        /// </summary>
-        Food,
-
-        /// <summary>
-        /// 种子
-        /// </summary>
-        Seed,
-
-        /// <summary>
-        /// 背包其他
-        /// </summary>
-        BackpackOther,
-
-        // 建造
-
-        /// <summary>
-        /// 房间
-        /// </summary>
-        Room,
-
-        /// <summary>
-        /// 墙
-        /// </summary>
-        Wall,
-
-        /// <summary>
-        /// 家具
-        /// </summary>
-        Furniture,
-
-        /// <summary>
-        /// 建造其他
-        /// </summary>
-        BuildOther,
-
-        // 其他
-
-        /// <summary>
-        /// 空(用于仓库)
-        /// </summary>
-        Null,
     }
 }

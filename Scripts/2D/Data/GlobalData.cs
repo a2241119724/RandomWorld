@@ -10,7 +10,7 @@
         /// <summary>
         /// 打包类型(未用)
         /// </summary>
-        public static readonly PackageType PackageType = PackageType.PC;
+        public static readonly PackageTypeEnum PackageType = PackageTypeEnum.PC;
 
         /// <summary>
         /// 是否是2D游戏(未用)
@@ -47,21 +47,5 @@
                 return Application.persistentDataPath + "/Data/" + name + ".lab";
             }
         }
-    }
-
-    /// <summary>
-    /// 设备类型
-    /// </summary>
-    public enum PackageType
-    {
-        /// <summary>
-        /// 安卓
-        /// </summary>
-        Android,
-
-        /// <summary>
-        /// PC
-        /// </summary>
-        PC,
     }
 }

@@ -143,7 +143,7 @@
         {
             if (EnemyManager.Instance.Characters.Count > 0)
             {
-                ((EnemyDeadState)EnemyManager.Instance.Characters[0].Manager.States[EnemyStateType.Dead]).DropItem();
+                ((EnemyDeadState)EnemyManager.Instance.Characters[0].Manager.States[EnemyState.EnemyStateTypeEnum.Dead]).DropItem();
             }
         }
     }

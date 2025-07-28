@@ -18,7 +18,7 @@
         private Vector3Int buildPos;
 
         public WorkerBuildTask()
-            : base(TaskType.Build)
+            : base(WorkerTaskTypeEnum.Build)
         {
             this.stageInit.Add((Worker worker) =>
             {
@@ -34,7 +34,7 @@
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
             this.stageInit.Add((Worker worker) =>
             {
@@ -47,7 +47,7 @@
                 this.AvailableNeighborPos.Add(Neighbors[2]);
                 this.AvailableNeighborPos.Add(Neighbors[3]);
                 this.TargetMap = this.buildPos;
-                worker.Manager.ChangeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 

@@ -94,7 +94,7 @@
                 this.id2Resource[-1].Remove(posMap);
                 this.cells[posMap] = plantInfo;
                 this.prePlantResource[worker].Remove(posMap);
-                ResourceMap.Instance.SetTile(posMap, ResourcesManager.Instance.GetAsset(
+                ResourceMap.Instance.SetTile(posMap, ResourceManager.Instance.GetAsset(
                     ItemDataManager.Instance.GetById(plantInfo.Id).ImageName));
             }
         }

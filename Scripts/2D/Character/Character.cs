@@ -89,7 +89,7 @@
 
         protected virtual void Awake()
         {
-            this.damageUI = ResourcesManager.Instance.GetPrefab("Damage");
+            this.damageUI = ResourceManager.Instance.GetPrefab("Damage");
             this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
             this.checkBug = new CheckBug();
         }
@@ -237,7 +237,7 @@
     /// 为了可以序列化
     /// </summary>
     [Serializable]
-    public struct Vector3LAB
+    public class Vector3LAB
     {
         /// <summary>
         /// X 坐标
