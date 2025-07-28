@@ -5,7 +5,7 @@
     /// <summary>
     /// 敌人漫游状态.
     /// </summary>
-    public class EnemyWanderState : CharacterState<Enemy>
+    public class EnemyWanderState : EnemyState
     {
         private float recordTime = 9999.0f; // 记录时间
         private float rotationAngle; // 转向角度
@@ -16,9 +16,7 @@
         {
         }
 
-        /// <summary>
-        /// 进入漫游状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
@@ -30,17 +28,13 @@
             // LogManager.Instance.log("WanderState", LogManager.LogLevel.Info);
         }
 
-        /// <summary>
-        /// 退出漫游状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
-        /// <summary>
-        /// 漫游状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             // 感知到周围有活着的玩家，进入追踪状态
@@ -49,7 +43,7 @@
             {
                 if (this.Character.SenseNearby(PlayerManager.Instance.Get(i).transform))
                 {
-                    this.Character.Manager.ChangeState(EnemyStateType.Chase);
+                    this.Character.Manager.ChangeState(EnemyStateTypeEnum.Chase);
                     this.Character.Target = PlayerManager.Instance.Get(i);
                     return;
                 }
@@ -61,7 +55,7 @@
             {
                 if (this.Character.SenseNearby(WorkerManager.Instance.Get(i).transform))
                 {
-                    this.Character.Manager.ChangeState(EnemyStateType.Chase);
+                    this.Character.Manager.ChangeState(EnemyStateTypeEnum.Chase);
                     this.Character.Target = WorkerManager.Instance.Get(i);
                     return;
                 }

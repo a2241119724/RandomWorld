@@ -8,7 +8,7 @@
     public class WorkerHungryTask : WorkerTask
     {
         public WorkerHungryTask()
-            : base(TaskType.Eat)
+            : base(WorkerTaskTypeEnum.Eat)
         {
             this.stageInit.Add((Worker worker) =>
             {

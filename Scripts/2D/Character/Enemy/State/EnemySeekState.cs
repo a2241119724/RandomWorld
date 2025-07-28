@@ -5,7 +5,7 @@
     /// <summary>
     /// 敌人搜索状态.
     /// </summary>
-    public class EnemySeekState : CharacterState<Enemy>
+    public class EnemySeekState : EnemyState
     {
         private const float SeekTime = 3.0f; // 敌人被攻击搜索时间
         private float recordTime = 0.0f;
@@ -15,38 +15,32 @@
         {
         }
 
-        /// <summary>
-        /// 进入搜索状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             // LogManager.Instance.log("SeekState", LogManager.LogLevel.Info);
         }
 
-        /// <summary>
-        /// 退出搜索状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnExit()
         {
         }
 
-        /// <summary>
-        /// 搜索状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             // 如果一段时间后没有找到搜索目标,那么回到游荡状态
             this.recordTime += Time.deltaTime;
             if (this.recordTime > SeekTime)
             {
-                this.Character.Manager.ChangeState(EnemyStateType.Wander); // 进入游荡状态
+                this.Character.Manager.ChangeState(EnemyStateTypeEnum.Wander); // 进入游荡状态
                 return;
             }
 
             // 感知人物是否在范围内，进入追踪状态
             if (this.Character.SenseNearby(this.Character.Target.transform))
             {
-                this.Character.Manager.ChangeState(EnemyStateType.Chase);
+                this.Character.Manager.ChangeState(EnemyStateTypeEnum.Chase);
                 return;
             }
 

@@ -22,7 +22,7 @@
             Instance = this;
 
             // 如果背包为空添加一个武器到背包
-            this.navigationView.CurItemType = ItemType.Room;
+            this.navigationView.CurItemType = Item.ItemType.Room;
             if (this.model.IsNull(this.navigationView.CurItemType))
             {
                 List<Item> items = ItemFactory.Instance.GetBuildItems();

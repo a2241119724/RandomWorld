@@ -11,7 +11,7 @@
     {
         public CustomShield()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomShield");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomShield");
         }
     }
 

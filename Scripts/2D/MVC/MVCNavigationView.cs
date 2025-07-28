@@ -17,13 +17,13 @@
         /// <summary>
         /// 当前的背包所选择的栏
         /// </summary>
-        public ItemType CurItemType { get; set; }
+        public Item.ItemType CurItemType { get; set; }
 
         /// <summary>
         /// 切换物品栏
         /// </summary>
         /// <param name="item">道具</param>
-        public void AddClickOnButton(ItemType item)
+        public void AddClickOnButton(Item.ItemType item)
         {
             Tool.GetComponentInChildren<Button>(this.gameObject, item.ToString()).onClick.AddListener(() =>
             {
@@ -37,9 +37,9 @@
         /// </summary>
         /// <param name="start">道具类型起始</param>
         /// <param name="end">道具类型结束</param>
-        protected void BindButton(ItemType start, ItemType end)
+        protected void BindButton(Item.ItemType start, Item.ItemType end)
         {
-            Tool.SplitEnum<ItemType>(start, end).ForEach(item => this.AddClickOnButton(item));
+            Tool.SplitEnum<Item.ItemType>(start, end).ForEach(item => this.AddClickOnButton(item));
         }
 
         /// <summary>

@@ -27,7 +27,7 @@
         {
             base.Awake();
             this.raduis = 8.0f;
-            this.blood = ResourcesManager.Instance.GetPrefab("Blood");
+            this.blood = ResourceManager.Instance.GetPrefab("Blood");
         }
 
         /// <inheritdoc/>

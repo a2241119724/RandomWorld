@@ -19,7 +19,7 @@
         /// <param name="posMap">位置</param>
         public void AddGather(Vector3Int posMap)
         {
-            this.tilemap.SetTile(posMap, (TileBase)ResourcesManager.Instance.GetAsset("Gather"));
+            this.tilemap.SetTile(posMap, (TileBase)ResourceManager.Instance.GetAsset("Gather"));
         }
 
         /// <summary>

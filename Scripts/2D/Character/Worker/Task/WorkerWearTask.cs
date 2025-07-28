@@ -11,7 +11,7 @@
         private int id; // 穿戴的装备id
 
         public WorkerWearTask()
-            : base(TaskType.Wear)
+            : base(WorkerTaskTypeEnum.Wear)
         {
             this.stageInit.Add((Worker worker) =>
             {
@@ -20,7 +20,7 @@
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 
@@ -48,12 +48,12 @@
             base.Finish(worker);
 
             // Worker拿起装备或者武器
-            if (ItemDataManager.Instance.GetTypeById(this.id) == ItemType.Weapon)
+            if (ItemDataManager.Instance.GetTypeById(this.id) == Item.ItemType.Weapon)
             {
                 worker.WearData.Weapon = (Weapon)ItemFactory.Instance.GetBackpackItemByName(
                     ItemDataManager.Instance.GetById(this.id).ImageName);
             }
-            else if (ItemDataManager.Instance.GetTypeById(this.id) == ItemType.Equipment)
+            else if (ItemDataManager.Instance.GetTypeById(this.id) == Item.ItemType.Equipment)
             {
                 worker.WearData.AddEquipment(
                     (Equipment)ItemFactory.Instance.GetBackpackItemByName(

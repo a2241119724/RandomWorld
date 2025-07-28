@@ -21,13 +21,13 @@
             this.id2Resource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
             this.preTakeResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
             this.prePlaceResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
-            this.TypeToResource = new Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>>();
+            this.TypeToResource = new Dictionary<Item.ItemType, Dictionary<Vector3Int, ResourceInfo>>();
         }
 
         /// <summary>
         /// 同一个类型对应的所有位置
         /// </summary>
-        public Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> TypeToResource { get; set; }
+        public Dictionary<Item.ItemType, Dictionary<Vector3Int, ResourceInfo>> TypeToResource { get; set; }
 
         /// <summary>
         /// 新建仓库时，插入cell
@@ -45,12 +45,12 @@
             }
 
             Dictionary<Vector3Int, ResourceInfo> resources = this.id2Resource[-1];
-            if (!this.TypeToResource.ContainsKey(ItemType.Null))
+            if (!this.TypeToResource.ContainsKey(Item.ItemType.Null))
             {
-                this.TypeToResource.Add(ItemType.Null, new Dictionary<Vector3Int, ResourceInfo>());
+                this.TypeToResource.Add(Item.ItemType.Null, new Dictionary<Vector3Int, ResourceInfo>());
             }
 
-            Dictionary<Vector3Int, ResourceInfo> typeTo = this.TypeToResource[ItemType.Null];
+            Dictionary<Vector3Int, ResourceInfo> typeTo = this.TypeToResource[Item.ItemType.Null];
             for (int i = 0; i < length; i++)
             {
                 for (int j = 0; j < width; j++)
@@ -217,7 +217,7 @@
         public bool IsEnoughFoodAndPreTake(Worker worker, float hungry, bool isPre = false)
         {
             Dictionary<Vector3Int, ResourceInfo> foods = new ();
-            foreach (KeyValuePair<Vector3Int, ResourceInfo> food in this.TypeToResource[ItemType.Food])
+            foreach (KeyValuePair<Vector3Int, ResourceInfo> food in this.TypeToResource[Item.ItemType.Food])
             {
                 float hungry1 = food.Value.Count * 10.0f;
 
@@ -258,12 +258,12 @@
         /// <returns>位置</returns>
         public Vector3Int IsContainSeedAndPreTake(Worker worker, bool isPre = false)
         {
-            if (!this.TypeToResource.ContainsKey(ItemType.Seed) || this.TypeToResource[ItemType.Seed].Count == 0)
+            if (!this.TypeToResource.ContainsKey(Item.ItemType.Seed) || this.TypeToResource[Item.ItemType.Seed].Count == 0)
             {
                 return default;
             }
 
-            Dictionary<Vector3Int, ResourceInfo>.Enumerator enumerator = this.TypeToResource[ItemType.Seed].GetEnumerator();
+            Dictionary<Vector3Int, ResourceInfo>.Enumerator enumerator = this.TypeToResource[Item.ItemType.Seed].GetEnumerator();
             enumerator.MoveNext();
             if (isPre)
             {
@@ -320,7 +320,7 @@
             // 既然已经预放置了，那一定可以放置，不会超出容量
             if (this.posToResource[posMap].Id == -1)
             {
-                this.TransferResource(posMap, -1, resourceInfo.Id, ItemType.Null, ItemDataManager.Instance.GetTypeById(resourceInfo.Id));
+                this.TransferResource(posMap, -1, resourceInfo.Id, Item.ItemType.Null, ItemDataManager.Instance.GetTypeById(resourceInfo.Id));
             }
 
             this.posToResource[posMap].Id = resourceInfo.Id;
@@ -358,7 +358,7 @@
                 return null;
             }
 
-            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), ItemType.Null);
+            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
             ResourceInfo resourceInfo = Tool.DeepCopyByBinary(this.posToResource[posMap]);
             this.posToResource[posMap].Id = -1;
             this.posToResource[posMap].Count = 0;
@@ -385,11 +385,11 @@
             // 如果正好取完
             if (this.posToResource[posMap].Count == 0)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), ItemType.Null);
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
                 ItemMap.Instance.HindTile(posMap);
 
                 // 食物被吃完删除任务
-                if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == ItemType.Food)
+                if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == Item.ItemType.Food)
                 {
                     WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
@@ -425,11 +425,11 @@
             // 如果正好取完
             if (this.posToResource[posMap].Count == 0)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), ItemType.Null);
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
                 ItemMap.Instance.HindTile(posMap);
 
                 // 食物被吃完删除任务
-                if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == ItemType.Food)
+                if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == Item.ItemType.Food)
                 {
                     WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
@@ -510,8 +510,8 @@
         /// <param name="pos">位置</param>
         public void ShowWearMenu(Vector3Int pos)
         {
-            ItemType itemType = ItemDataManager.Instance.GetTypeById(this.posToResource[pos].Id);
-            if (itemType == ItemType.Weapon || itemType == ItemType.Equipment)
+            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(this.posToResource[pos].Id);
+            if (itemType == Item.ItemType.Weapon || itemType == Item.ItemType.Equipment)
             {
                 WearTaskUI.Instance.ShowWearTask(pos);
             }
@@ -727,7 +727,7 @@
         /// <param name="newId">新的ID</param>
         /// <param name="oldType">旧的类型</param>
         /// <param name="newType">新的类型</param>
-        private void TransferResource(Vector3Int pos, int oldId, int newId, ItemType oldType, ItemType newType)
+        private void TransferResource(Vector3Int pos, int oldId, int newId, Item.ItemType oldType, Item.ItemType newType)
         {
             // idToResource
             this.id2Resource[oldId].Remove(pos);

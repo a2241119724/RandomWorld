@@ -37,7 +37,7 @@
                 // 若没有对应的物体，先创建
                 if (i > this.content.childCount - 1)
                 {
-                    GameObject g = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("WorkerItem"));
+                    GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("WorkerItem"));
                     g.transform.SetParent(this.content);
                     g.transform.localScale = Vector3.one;
                 }

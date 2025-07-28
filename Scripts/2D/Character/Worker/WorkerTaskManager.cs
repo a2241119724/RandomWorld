@@ -48,7 +48,7 @@
             }
 
             // 如果是饥饿任务,一个位置仅对应一个任务
-            if (task.TaskType == TaskType.Eat)
+            if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Eat)
             {
                 foreach (WorkerHungryTask hungryTask in this.hungryTasks)
                 {
@@ -60,11 +60,11 @@
 
                 this.hungryTasks.Add((WorkerHungryTask)task);
             }
-            else if (task.TaskType == TaskType.Gather)
+            else if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Gather)
             {
                 this.GatherPos.Add(task.TargetMap);
             }
-            else if (task.TaskType == TaskType.Wear)
+            else if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Wear)
             {
                 // 一个位置只能有一个穿衣任务
                 foreach (WorkerTask wearTask in this.wearTasks)
@@ -90,7 +90,7 @@
         public void CompleteTask(WorkerTask task)
         {
             // 不能删除饥饿任务，需要在deleteHungryTask中删除
-            if (task.TaskType != TaskType.Eat)
+            if (task.TaskType != WorkerTask.WorkerTaskTypeEnum.Eat)
             {
                 for (int i = 0; i < this.tasks.Count; i++)
                 {
@@ -157,7 +157,7 @@
             string res = $"任务总数量: {total}\n";
             for (int i = 0; i < 10; i++)
             {
-                res += $"{(TaskType)i}:{taskCount[i]}\n";
+                res += $"{(WorkerTask.WorkerTaskTypeEnum)i}:{taskCount[i]}\n";
             }
 
             return res;
@@ -203,7 +203,7 @@
             {
                 foreach (WorkerTask task in this.tasks[i].Keys)
                 {
-                    if (task.TaskType == TaskType.Gather && task.TargetMap.x == posMap.x
+                    if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Gather && task.TargetMap.x == posMap.x
                         && task.TargetMap.y == posMap.y)
                     {
                         this.tasks[i].Remove(task);
@@ -277,7 +277,7 @@
                         closedTask.Start(worker);
 
                         // 同一个饥饿任务还可以继续接
-                        if (closedTask.TaskType != TaskType.Eat)
+                        if (closedTask.TaskType != WorkerTask.WorkerTaskTypeEnum.Eat)
                         {
                             task[closedTask] = true;
                         }

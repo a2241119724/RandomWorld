@@ -13,12 +13,12 @@
 
         private void OnEnable()
         {
-            this.CurItemType = ItemType.Room;
+            this.CurItemType = Item.ItemType.Room;
         }
 
         private void Start()
         {
-            this.BindButton(ItemType.Room, ItemType.BuildOther);
+            this.BindButton(Item.ItemType.Room, Item.ItemType.BuildOther);
         }
     }
 }

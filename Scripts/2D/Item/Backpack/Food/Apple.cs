@@ -11,7 +11,7 @@
     {
         public Apple()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("Apple");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("Apple");
         }
     }
 

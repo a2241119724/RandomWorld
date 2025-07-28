@@ -62,7 +62,7 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <param name="model">Model</param>
-        public void UpdateView(ItemType type, M model)
+        public void UpdateView(Item.ItemType type, M model)
         {
             if (model == null)
             {
@@ -105,7 +105,7 @@
                 // t.transform.localScale = Vector3.one; // 控制大小
                 Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = this.GetQuantity(model.Get(type, i)).ToString();
                 Image image = Tool.GetComponentInChildren<Image>(g, "ItemImage");
-                image.sprite = ResourcesManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.Get(type, i).Id).ImageName);
+                image.sprite = ResourceManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.Get(type, i).Id).ImageName);
                 image.preserveAspect = true;
                 IV itemView = g.transform.Find("Item").GetComponent<IV>();
 

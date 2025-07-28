@@ -17,6 +17,48 @@
         private int randomCount; // 随机点的数量
 
         /// <summary>
+        /// 瓦片类型
+        /// </summary>
+        [Serializable]
+        public enum MapTileType
+        {
+            /// <summary>
+            /// 默认,不进行渲染
+            /// </summary>
+            Default,
+
+            /// <summary>
+            /// 沙漠
+            /// </summary>
+            Desert,
+
+            /// <summary>
+            /// 沙漠
+            /// </summary>
+            Marsh,
+
+            /// <summary>
+            /// 草
+            /// </summary>
+            Grass,
+
+            /// <summary>
+            /// 雪
+            /// </summary>
+            Snow,
+
+            /// <summary>
+            /// 山
+            /// </summary>
+            Mountain,
+
+            /// <summary>
+            /// 水
+            /// </summary>
+            Water,
+        }
+
+        /// <summary>
         /// 单例
         /// </summary>
         public static TileMap Instance { get; private set; }
@@ -41,7 +83,7 @@
                 for (int j = 0; j < Width; j++)
                 {
                     AsyncProgressUI.Instance.AddOneProcess();
-                    this.tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourcesManager.Instance.GetAsset(mapTiles[i, j].ToString()));
+                    this.tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourceManager.Instance.GetAsset(mapTiles[i, j].ToString()));
                     if (FrameControl.Instance.IsNeedStop(1))
                     {
                         yield return null;
@@ -324,28 +366,28 @@
             for (int i = -1; i < Width; i++)
             {
                 AsyncProgressUI.Instance.AddOneProcess();
-                this.tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
+                this.tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
 
             // 右边
             for (int i = 0; i <= Height; i++)
             {
                 AsyncProgressUI.Instance.AddOneProcess();
-                this.tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourcesManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
+                this.tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
 
             // 下边
             for (int i = 0; i <= Width; i++)
             {
                 AsyncProgressUI.Instance.AddOneProcess();
-                this.tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourcesManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
+                this.tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
 
             // 左边
             for (int i = -1; i < Height; i++)
             {
                 AsyncProgressUI.Instance.AddOneProcess();
-                this.tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourcesManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
+                this.tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
         }
 
@@ -475,47 +517,5 @@
             /// </summary>
             public int RandomCount { get; set; }
         }
-    }
-
-    /// <summary>
-    /// 瓦片类型
-    /// </summary>
-    [Serializable]
-    public enum MapTileType
-    {
-        /// <summary>
-        /// 默认,不进行渲染
-        /// </summary>
-        Default,
-
-        /// <summary>
-        /// 沙漠
-        /// </summary>
-        Desert,
-
-        /// <summary>
-        /// 沙漠
-        /// </summary>
-        Marsh,
-
-        /// <summary>
-        /// 草
-        /// </summary>
-        Grass,
-
-        /// <summary>
-        /// 雪
-        /// </summary>
-        Snow,
-
-        /// <summary>
-        /// 山
-        /// </summary>
-        Mountain,
-
-        /// <summary>
-        /// 水
-        /// </summary>
-        Water,
     }
 }

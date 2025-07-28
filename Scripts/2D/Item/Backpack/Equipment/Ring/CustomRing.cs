@@ -11,7 +11,7 @@
     {
         public CustomRing()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomRing");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomRing");
         }
     }
 

@@ -28,13 +28,13 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> typeToResource = InventoryManager.Instance.TypeToResource;
+            Dictionary<Item.ItemType, Dictionary<Vector3Int, ResourceInfo>> typeToResource = InventoryManager.Instance.TypeToResource;
             int count = 0;
-            foreach (KeyValuePair<ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in typeToResource)
+            foreach (KeyValuePair<Item.ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in typeToResource)
             {
                 if (count >= this.type.childCount)
                 {
-                    GameObject buttonItem = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("ButtonItem"));
+                    GameObject buttonItem = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("ButtonItem"));
                     buttonItem.transform.SetParent(this.type);
                     buttonItem.transform.localScale = Vector3.one;
                 }

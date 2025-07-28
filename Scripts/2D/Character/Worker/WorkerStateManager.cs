@@ -30,7 +30,7 @@
         public override void ChangeState(CST type)
         {
             // 先执行,可以在Enter中更改,不然会被覆盖
-            this.Character.WorkerState.text = this.CurrentStateType.ToString();
+            this.Character.WorkerStateText.text = this.CurrentStateType.ToString();
             base.ChangeState(type);
         }
     }

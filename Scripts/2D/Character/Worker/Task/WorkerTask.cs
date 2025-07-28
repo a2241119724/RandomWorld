@@ -50,12 +50,58 @@
         /// </summary>
         protected List<UnityAction<Worker>> stageInit;
 
-        public WorkerTask(TaskType taskType)
+        public WorkerTask(WorkerTaskTypeEnum taskType)
         {
             this.TaskType = taskType;
             this.Name = taskType.ToString();
             this.AvailableNeighborPos = new List<Vector3Int>();
             this.stageInit = new List<UnityAction<Worker>>();
+        }
+
+        /// <summary>
+        /// 任务优先级，越靠前优先级越高
+        /// </summary>
+        public enum WorkerTaskTypeEnum
+        {
+            /// <summary>
+            /// 建造
+            /// </summary>
+            Build,
+
+            /// <summary>
+            /// 搬运
+            /// </summary>
+            Carry,
+
+            /// <summary>
+            /// 采集
+            /// </summary>
+            Gather,
+
+            /// <summary>
+            /// 吃饭
+            /// </summary>
+            Eat,
+
+            /// <summary>
+            /// 锻炼
+            /// </summary>
+            Exercise,
+
+            /// <summary>
+            /// 穿戴
+            /// </summary>
+            Wear,
+
+            /// <summary>
+            /// 睡觉
+            /// </summary>
+            Sleep,
+
+            /// <summary>
+            /// 种植
+            /// </summary>
+            Plant,
         }
 
         /// <summary>
@@ -66,7 +112,7 @@
         /// <summary>
         /// 任务类型
         /// </summary>
-        public TaskType TaskType { get; set; }
+        public WorkerTaskTypeEnum TaskType { get; set; }
 
         /// <summary>
         /// 任务名称
@@ -195,51 +241,5 @@
         /// <param name="worker">Worker</param>
         /// <returns>是否</returns>
         bool IsCanWork(Worker worker);
-    }
-
-    /// <summary>
-    /// 任务优先级，越靠前优先级越高
-    /// </summary>
-    public enum TaskType
-    {
-        /// <summary>
-        /// 建造
-        /// </summary>
-        Build,
-
-        /// <summary>
-        /// 搬运
-        /// </summary>
-        Carry,
-
-        /// <summary>
-        /// 采集
-        /// </summary>
-        Gather,
-
-        /// <summary>
-        /// 吃饭
-        /// </summary>
-        Eat,
-
-        /// <summary>
-        /// 锻炼
-        /// </summary>
-        Exercise,
-
-        /// <summary>
-        /// 穿戴
-        /// </summary>
-        Wear,
-
-        /// <summary>
-        /// 睡觉
-        /// </summary>
-        Sleep,
-
-        /// <summary>
-        /// 种植
-        /// </summary>
-        Plant,
     }
 }

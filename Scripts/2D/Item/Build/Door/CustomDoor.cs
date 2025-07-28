@@ -11,7 +11,7 @@
     {
         public CustomDoor()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomDoor");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomDoor");
         }
     }
 }

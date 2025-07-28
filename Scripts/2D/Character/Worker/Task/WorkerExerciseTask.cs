@@ -8,7 +8,7 @@
     public class WorkerExerciseTask : WorkerTask
     {
         public WorkerExerciseTask()
-            : base(TaskType.Exercise)
+            : base(WorkerTaskTypeEnum.Exercise)
         {
         }
 

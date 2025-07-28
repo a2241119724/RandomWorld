@@ -45,7 +45,7 @@
             {
                 for (int i = count; i > 0; i--)
                 {
-                    GameObject g = GameObject.Instantiate(ResourcesManager.Instance.GetPrefab("TaskItem"), this.transform, false);
+                    GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("TaskItem"), this.transform, false);
                     g.name = "TaskItem";
                     this.TaskItems.Add(g);
 

@@ -72,7 +72,7 @@
         /// 敌人状态管理器.
         /// </summary>
         [HideInInspector]
-        public EnemyStateManager<ICharacterState, EnemyStateType, Enemy> Manager { get; set; }
+        public EnemyStateManager<ICharacterState, EnemyState.EnemyStateTypeEnum, Enemy> Manager { get; set; }
 
         /// <summary>
         /// 敌人攻击目标.
@@ -159,11 +159,11 @@
         public override void ReduceHp(float hp)
         {
             // ((EnemyAttackState)Manager.CurrentState)
-            if (this.Manager.CurrentStateType != EnemyStateType.Attack ||
-                (this.Manager.CurrentStateType == EnemyStateType.Attack
+            if (this.Manager.CurrentStateType != EnemyState.EnemyStateTypeEnum.Attack ||
+                (this.Manager.CurrentStateType == EnemyState.EnemyStateTypeEnum.Attack
                 && ((EnemyAttackState)this.Manager.CurrentState).AttackTime > ChangeTarget))
             {
-                this.Manager.ChangeState(EnemyStateType.Seek); // 进入搜索状态
+                this.Manager.ChangeState(EnemyState.EnemyStateTypeEnum.Seek); // 进入搜索状态
             }
 
             base.ReduceHp(hp);
@@ -187,7 +187,7 @@
         {
             base.Awake();
             this.layerMask = LayerMask.GetMask("Tile", "Player");
-            this.Manager = new EnemyStateManager<ICharacterState, EnemyStateType, Enemy>(this);
+            this.Manager = new EnemyStateManager<ICharacterState, EnemyState.EnemyStateTypeEnum, Enemy>(this);
             this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
         }
 
@@ -223,7 +223,7 @@
                 EnemyManager.Instance.Remove(this);
             }
 
-            this.Manager.ChangeState(EnemyStateType.Dead); // 进入死亡状态
+            this.Manager.ChangeState(EnemyState.EnemyStateTypeEnum.Dead); // 进入死亡状态
         }
 
         private void Update()
@@ -238,9 +238,9 @@
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.checkBug.AddColliderCount(DateTime.Now.Ticks);
-            if (this.checkBug.IsBug(this.name, 200) && this.Manager.CurrentStateType == EnemyStateType.Wander)
+            if (this.checkBug.IsBug(this.name, 200) && this.Manager.CurrentStateType == EnemyState.EnemyStateTypeEnum.Wander)
             {
-                this.Manager.ChangeState(EnemyStateType.Wander);
+                this.Manager.ChangeState(EnemyState.EnemyStateTypeEnum.Wander);
             }
         }
 

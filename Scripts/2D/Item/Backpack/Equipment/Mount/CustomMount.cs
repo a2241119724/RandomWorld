@@ -11,7 +11,7 @@
     {
         public CustomMount()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomMount");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomMount");
         }
     }
 

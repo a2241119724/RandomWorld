@@ -57,14 +57,14 @@
         /// <param name="id">ID</param>
         /// <returns>道具类型
         /// </returns>
-        public ItemType GetTypeById(int id)
+        public Item.ItemType GetTypeById(int id)
         {
             if (id < 0)
             {
-                return ItemType.Null;
+                return Item.ItemType.Null;
             }
 
-            return (ItemType)(object)(id / TypeInterval);
+            return (Item.ItemType)(object)(id / TypeInterval);
         }
 
         /// <summary>
@@ -74,49 +74,49 @@
         /// <returns>装备类型</returns>
         public Equipment.EquipType GetEquipmentTypeById(int id)
         {
-            if (this.GetTypeById(id) != ItemType.Equipment)
+            if (this.GetTypeById(id) != Item.ItemType.Equipment)
             {
                 return Equipment.EquipType.Null;
             }
 
-            id -= ((int)ItemType.Equipment) * TypeInterval;
+            id -= ((int)Item.ItemType.Equipment) * TypeInterval;
 
             // 最多10种装备
             return (Equipment.EquipType)(object)(id * 10 / TypeInterval);
         }
 
         /// <summary>
-        /// 由于ItemType包含了所有类型
+        /// 由于Item.ItemType包含了所有类型
         /// </summary>
         /// <param name="id">ID</param>
         /// <returns>道具类型</returns>
-        public ItemType GetIndexById(int id)
+        public Item.ItemType GetIndexById(int id)
         {
             id /= 1000;
-            if (id < (int)ItemType.Room)
+            if (id < (int)Item.ItemType.Room)
             {
-                return (ItemType)(object)id;
+                return (Item.ItemType)(object)id;
             }
             else
             {
-                return (ItemType)(object)(id - (int)ItemType.Room);
+                return (Item.ItemType)(object)(id - (int)Item.ItemType.Room);
             }
         }
 
         /// <summary>
-        /// 由于ItemType包含了所有类型
+        /// 由于Item.ItemType包含了所有类型
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <returns>索引</returns>
-        public int GetIndexByType(ItemType type)
+        public int GetIndexByType(Item.ItemType type)
         {
-            if ((int)type < (int)ItemType.Room)
+            if ((int)type < (int)Item.ItemType.Room)
             {
                 return (int)type;
             }
             else
             {
-                return (int)type - (int)ItemType.Room;
+                return (int)type - (int)Item.ItemType.Room;
             }
         }
 
@@ -125,7 +125,7 @@
             Instance = this;
             this.nameToId = new Dictionary<string, int>();
             this.allItemInfo = new Dictionary<int, ItemData>();
-            foreach (ItemType itemType in Enum.GetValues(typeof(ItemType)))
+            foreach (Item.ItemType itemType in Enum.GetValues(typeof(Item.ItemType)))
             {
                 string[] data = Tool.GetCSV(ResourceConstant.DATA_ROOT + itemType.ToString() + "ItemData");
                 if (data == null)

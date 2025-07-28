@@ -110,7 +110,7 @@
         {
             // Drop
             this.select = "DropResourceManager";
-            string text = DropResourceManager.Instance.ToString(posMap);
+            string text = DropManager.Instance.ToString(posMap);
             if (text.Equals(string.Empty))
             {
                 // Inventory

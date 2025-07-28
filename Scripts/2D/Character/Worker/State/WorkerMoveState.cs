@@ -32,7 +32,7 @@
         {
             base.OnUpdate();
             Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
-            this.Character.WorkerState.text = this.preString + $"Move\n" +
+            this.Character.WorkerStateText.text = this.preString + $"Move\n" +
                 $"Target: {this.Character.TargetMap.x},{this.Character.TargetMap.y}\n" +
                 $"Position: {posMap.x},{posMap.y}\n" + $"Hungry:{Mathf.RoundToInt(this.Character.CurHungry)}\n";
             bool isTarget = this.Character.MoveByPath();
@@ -49,12 +49,12 @@
                     }
 
                     // 没有任务就进入寻路状态
-                    this.Character.Manager.ChangeState(WorkerStateType.Seek);
+                    this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
                 }
                 else
                 {
                     // 有任务就进入工作状态
-                    this.Character.Manager.ChangeState(WorkerStateType.Work);
+                    this.Character.Manager.ChangeState(WorkerStateTypeEnum.Work);
                 }
             }
         }

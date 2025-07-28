@@ -11,7 +11,7 @@
     {
         public CustomNecklace()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomNecklace");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomNecklace");
         }
     }
 

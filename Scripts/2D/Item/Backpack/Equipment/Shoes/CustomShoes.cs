@@ -11,7 +11,7 @@
     {
         public CustomShoes()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomShoes");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomShoes");
         }
     }
 

@@ -29,7 +29,7 @@
                 // 初始时或只有一个Worker在寻路时, 获取寻路Worker的数量
                 foreach (Worker worker in this.Characters)
                 {
-                    if (worker.Manager.CurrentStateType == WorkerStateType.Seek)
+                    if (worker.Manager.CurrentStateType == WorkerState.WorkerStateTypeEnum.Seek)
                     {
                         this.countLock++;
                     }

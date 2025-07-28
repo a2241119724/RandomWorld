@@ -9,7 +9,7 @@
     [Serializable]
     public class Farmland : RoomItem
     {
-        private readonly Wall soil;
+        private readonly WallItem soil;
 
         public Farmland()
         {
@@ -21,11 +21,10 @@
         /// <inheritdoc/>
         public override void AddBuildTask(Vector3Int centerMap)
         {
-            int[] x_B = this.GetXBoundary(centerMap);
-            int[] y_B = this.GetYBoundary(centerMap);
-            for (int i = x_B[0]; i < x_B[1] + 1; i++)
+            int[] boundary = this.GetBoundary(centerMap);
+            for (int i = boundary[0]; i < boundary[1] + 1; i++)
             {
-                for (int j = y_B[0]; j < y_B[1] + 1; j++)
+                for (int j = boundary[2]; j < boundary[3] + 1; j++)
                 {
                     BuildMap.Instance.DirectBuild(new Vector3Int(i, j, 0), this.soil.Tile);
                 }

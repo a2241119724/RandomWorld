@@ -45,8 +45,8 @@
                     Vector3Int posMap = new (i, j, 0);
                     if (TileMap.Instance.IsCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.9f)
                     {
-                        MapTileType tileType = TileMap.Instance.MapTiles[i, j];
-                        TileBase tileBase = ResourcesManager.Instance.GetAssetByTileType(tileType);
+                        TileMap.MapTileType tileType = TileMap.Instance.MapTiles[i, j];
+                        TileBase tileBase = ResourceManager.Instance.GetAssetByTileType(tileType);
                         if (tileBase == null)
                         {
                             continue;
@@ -70,8 +70,8 @@
                 if (this.ResourceMapDataLAB.TreeCurCount < this.ResourceMapDataLAB.TreeTotalCount)
                 {
                     Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap();
-                    MapTileType tileType = TileMap.Instance.MapTiles[pos.x, pos.y];
-                    TileBase tileBase = ResourcesManager.Instance.GetAssetByTileType(tileType, "Tree");
+                    TileMap.MapTileType tileType = TileMap.Instance.MapTiles[pos.x, pos.y];
+                    TileBase tileBase = ResourceManager.Instance.GetAssetByTileType(tileType, "Tree");
                     if (tileBase == null)
                     {
                         yield return null;
@@ -135,7 +135,7 @@
             {
                 this.tilemap.SetTile(
                     Vector3IntLAB.ToVector3Int(posMap.Key),
-                    (TileBase)ResourcesManager.Instance.GetAsset(posMap.Value));
+                    (TileBase)ResourceManager.Instance.GetAsset(posMap.Value));
             }
 
             this.StartCoroutine(this.GenResource());

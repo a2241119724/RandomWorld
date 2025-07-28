@@ -47,7 +47,7 @@
                 {
                     Vector3Int posMap1 = new (posMap.x + i, posMap.y + j, 0);
                     this.selectPosS.Add(posMap1);
-                    this.tilemap.SetTile(posMap1, (TileBase)ResourcesManager.Instance.GetAsset("Snow"));
+                    this.tilemap.SetTile(posMap1, (TileBase)ResourceManager.Instance.GetAsset("Snow"));
                     this.tilemap.RemoveTileFlags(posMap1, TileFlags.LockColor);
                     if (this.IsAvailable(posMap1))
                     {

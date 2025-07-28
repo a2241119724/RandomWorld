@@ -9,7 +9,7 @@
     public class BackpackModel : MVCModel
     {
         public BackpackModel()
-            : base(ItemType.Weapon, ItemType.BackpackOther)
+            : base(Item.ItemType.Weapon, Item.ItemType.BackpackOther)
         {
         }
 
@@ -18,9 +18,9 @@
         /// </summary>
         public override void LoadData()
         {
-            Dictionary<ItemType, ArrayList> data = Tool.LoadDataByBinary<Dictionary<ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            Dictionary<Item.ItemType, ArrayList> data = Tool.LoadDataByBinary<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
-            // Dictionary<ItemType, ArrayList> data = Tool.loadDataByJson<Dictionary<ItemType, ArrayList>>(GlobalData.ConfigFile.BackpackDataFilePath);
+            // Dictionary<Item.ItemType, ArrayList> data = Tool.loadDataByJson<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.BackpackDataFilePath);
             if (data == null)
             {
                 return;

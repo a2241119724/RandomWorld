@@ -11,7 +11,7 @@
     {
         public CustomBracelet()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomBracelet");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomBracelet");
         }
     }
 

@@ -14,7 +14,7 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            this.Character.WorkerState.text = $"<color=red>攻击</color>";
+            this.Character.WorkerStateText.text = $"<color=red>攻击</color>";
         }
 
         /// <inheritdoc/>
@@ -29,7 +29,7 @@
             base.OnUpdate();
             if (this.Character.WearData.Weapon == null)
             {
-                this.Character.Manager.ChangeState(WorkerStateType.Escape);
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Escape);
                 return;
             }
 

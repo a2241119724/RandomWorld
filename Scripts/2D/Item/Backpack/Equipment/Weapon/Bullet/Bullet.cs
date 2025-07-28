@@ -65,7 +65,7 @@
 
         protected virtual void Awake()
         {
-            this.blood = ResourcesManager.Instance.GetPrefab("Blood");
+            this.blood = ResourceManager.Instance.GetPrefab("Blood");
             this.name = this.GetType().Name;
         }
 

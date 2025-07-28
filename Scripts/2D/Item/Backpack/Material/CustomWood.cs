@@ -11,7 +11,7 @@
     {
         public CustomWood()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomWood");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomWood");
         }
     }
 }

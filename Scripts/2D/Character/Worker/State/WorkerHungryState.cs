@@ -14,7 +14,7 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            this.Character.WorkerState.text = $"<color=red>饿了</color>";
+            this.Character.WorkerStateText.text = $"<color=red>饿了</color>";
         }
 
         /// <inheritdoc/>
@@ -29,9 +29,9 @@
             base.OnUpdate();
 
             // 如果接到了饥饿任务，则去吃饭
-            if (this.Character.Manager.Task != null && this.Character.Manager.Task.TaskType == TaskType.Eat)
+            if (this.Character.Manager.Task != null && this.Character.Manager.Task.TaskType.Equals(WorkerTask.WorkerTaskTypeEnum.Eat))
             {
-                this.Character.Manager.ChangeState(WorkerStateType.Seek);
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
             }
         }
     }

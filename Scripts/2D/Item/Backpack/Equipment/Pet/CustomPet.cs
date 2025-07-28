@@ -11,7 +11,7 @@
     {
         public CustomPet()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomPet");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomPet");
         }
     }
 

@@ -14,7 +14,7 @@
         private ResourceInfo resourceInfo;
 
         public WorkerCarryTask()
-            : base(TaskType.Carry)
+            : base(WorkerTaskTypeEnum.Carry)
         {
             this.stageInit.Add((Worker worker) =>
             {
@@ -23,7 +23,7 @@
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
             this.stageInit.Add((Worker worker) =>
             {
@@ -37,7 +37,7 @@
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 
@@ -53,16 +53,16 @@
         public override void Finish(Worker worker)
         {
             base.Finish(worker);
-            ItemType itemType = ItemDataManager.Instance.GetTypeById(this.resourceInfo.Id);
+            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(this.resourceInfo.Id);
 
             // 放下拿起来的东西
-            ItemMap.Instance.ShowTile(this.TargetMap, ResourcesManager.Instance
+            ItemMap.Instance.ShowTile(this.TargetMap, ResourceManager.Instance
                 .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).ImageName));
             worker.SubResource1(this.resourceInfo);
             InventoryManager.Instance.AddItemByPrePlace(worker, this.TargetMap);
 
             // 如果是食物,添加饥饿任务
-            if (itemType == ItemType.Food)
+            if (itemType == Item.ItemType.Food)
             {
                 WorkerTaskManager.Instance.AddTask(new WorkerHungryTask.HungryTaskBuilder().SetTarget(this.TargetMap).Build(), 0);
             }

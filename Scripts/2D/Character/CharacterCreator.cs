@@ -31,7 +31,7 @@
         {
             // 设置角色
             GameObject g = Tool.Instantiate(
-                ResourcesManager.Instance.GetPrefab(name),
+                ResourceManager.Instance.GetPrefab(name),
                 new Vector3(
                     worldPos.x + TileMap.Instance.gameObject.transform.position.x,
                     worldPos.y + TileMap.Instance.gameObject.transform.position.y,

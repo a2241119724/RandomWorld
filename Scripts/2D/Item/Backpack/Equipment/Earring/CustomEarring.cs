@@ -11,7 +11,7 @@
     {
         public CustomEarring()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomEarring");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomEarring");
         }
     }
 

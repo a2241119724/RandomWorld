@@ -8,24 +8,24 @@
     /// <summary>
     /// 资源管理.
     /// </summary>
-    public class ResourcesManager : Singleton<ResourcesManager>
+    public class ResourceManager : Singleton<ResourceManager>
     {
         private readonly Dictionary<string, GameObject> prefabDic; // <characterType,<name,prefab>>
         private readonly Dictionary<string, UnityEngine.Object> assetDic;
         private readonly Dictionary<string, Sprite> imageDic;
         private readonly Dictionary<string, string> pathDic; // key:filename(带后缀) value:path
-        private readonly Dictionary<MapTileType, List<UnityEngine.Object>> tileDic;
+        private readonly Dictionary<TileMap.MapTileType, List<UnityEngine.Object>> tileDic;
         private readonly Dictionary<string, Shader> shaderDic;
 
-        public ResourcesManager()
+        public ResourceManager()
         {
             this.prefabDic = Tool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
             this.assetDic = Tool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
-            this.tileDic = new Dictionary<MapTileType, List<UnityEngine.Object>>();
+            this.tileDic = new Dictionary<TileMap.MapTileType, List<UnityEngine.Object>>();
             this.shaderDic = Tool.LoadResources<Shader>(ResourceConstant.SHADER_ROOT);
             foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetDic)
             {
-                foreach (MapTileType tileType in Enum.GetValues(typeof(MapTileType)))
+                foreach (TileMap.MapTileType tileType in Enum.GetValues(typeof(TileMap.MapTileType)))
                 {
                     // 不包含Tile本身，仅包含其上的资源
                     if (!asset.Key.StartsWith(tileType.ToString()) ||
@@ -105,7 +105,7 @@
         /// <param name="tileType">在哪种Tile上.</param>
         /// <param name="name">包含该名称的资源.</param>
         /// <returns>Tile.</returns>
-        public TileBase GetAssetByTileType(MapTileType tileType, string name = default)
+        public TileBase GetAssetByTileType(TileMap.MapTileType tileType, string name = default)
         {
             if (!this.tileDic.ContainsKey(tileType))
             {

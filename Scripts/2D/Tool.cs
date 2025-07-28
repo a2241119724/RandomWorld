@@ -428,7 +428,7 @@
         {
             if (NetworkConnect.Instance.IsOnline)
             {
-                return PhotonNetwork.Instantiate(ResourcesManager.Instance.GetPath(prefab.name + ".prefab"), position, rotation);
+                return PhotonNetwork.Instantiate(ResourceManager.Instance.GetPath(prefab.name + ".prefab"), position, rotation);
             }
             else
             {

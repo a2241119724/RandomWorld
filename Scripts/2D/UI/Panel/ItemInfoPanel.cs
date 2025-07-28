@@ -75,7 +75,7 @@
                 Weapon weapon = worker1.WearData.Weapon;
                 if (weapon != null)
                 {
-                    worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.GetImage(
+                    worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourceManager.Instance.GetImage(
                         ItemDataManager.Instance.GetById(weapon.Id).ImageName);
                 }
 
@@ -84,7 +84,7 @@
                 {
                     if (item.Value != null)
                     {
-                        worker.Find(item.Key.ToString() + "/Image").GetComponent<Image>().sprite = ResourcesManager.Instance.GetImage(
+                        worker.Find(item.Key.ToString() + "/Image").GetComponent<Image>().sprite = ResourceManager.Instance.GetImage(
                             ItemDataManager.Instance.GetById(item.Value.Id).ImageName);
                     }
                 }

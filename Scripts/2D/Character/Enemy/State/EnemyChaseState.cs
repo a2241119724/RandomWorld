@@ -5,16 +5,14 @@
     /// <summary>
     /// 敌人追击状态.
     /// </summary>
-    public class EnemyChaseState : CharacterState<Enemy>
+    public class EnemyChaseState : EnemyState
     {
         public EnemyChaseState(Enemy character)
             : base(character)
         {
         }
 
-        /// <summary>
-        /// 进入追击状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
@@ -22,9 +20,7 @@
             // LogManager.Instance.log("ChaseState", LogManager.LogLevel.Info);
         }
 
-        /// <summary>
-        /// 追击状态.
-        /// </summary>
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             // int count = PlayerManager.Instance.count();
@@ -50,7 +46,7 @@
                 if (Vector3.Distance(this.Character.Target.transform.position, this.Character.transform.position)
                     <= this.Character.AttackRange)
                 {
-                    this.Character.Manager.ChangeState(EnemyStateType.Attack);
+                    this.Character.Manager.ChangeState(EnemyStateTypeEnum.Attack);
                     return;
                 }
 
@@ -63,7 +59,7 @@
             }
 
             // 如果敌人感知范围内没有玩家，进入搜索状态
-            this.Character.Manager.ChangeState(EnemyStateType.Seek);
+            this.Character.Manager.ChangeState(EnemyStateTypeEnum.Seek);
         }
     }
 }

@@ -11,7 +11,7 @@
     {
         public AddHp()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("AddHp");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("AddHp");
         }
     }
 

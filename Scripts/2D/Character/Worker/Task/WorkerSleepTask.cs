@@ -10,7 +10,7 @@
         private Worker worker;
 
         public WorkerSleepTask()
-            : base(TaskType.Sleep)
+            : base(WorkerTaskTypeEnum.Sleep)
         {
             this.stageInit.Add((Worker worker) =>
             {
@@ -21,7 +21,7 @@
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 

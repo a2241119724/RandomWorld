@@ -11,7 +11,7 @@
     {
         public CustomBelt()
         {
-            this.Tile = (TileBase)ResourcesManager.Instance.GetAsset("CustomBelt");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomBelt");
         }
     }
 

@@ -9,14 +9,14 @@
     public class BuildModel : MVCModel
     {
         public BuildModel()
-            : base(ItemType.Room, ItemType.BuildOther)
+            : base(Item.ItemType.Room, Item.ItemType.BuildOther)
         {
         }
 
         /// <inheritdoc/>
         public override void LoadData()
         {
-            Dictionary<ItemType, ArrayList> data = Tool.LoadDataByBinary<Dictionary<ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            Dictionary<Item.ItemType, ArrayList> data = Tool.LoadDataByBinary<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
             // Dictionary<BuildType, ArrayList> data = Tool.loadDataByJson<Dictionary<BuildType, ArrayList>>(GlobalData.ConfigFile.BuildDataFilePath);
             if (data == null)

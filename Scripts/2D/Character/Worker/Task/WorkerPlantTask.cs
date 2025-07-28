@@ -8,7 +8,7 @@
         private ResourceInfo resourceInfo;
 
         public WorkerPlantTask()
-            : base(TaskType.Plant)
+            : base(WorkerTaskTypeEnum.Plant)
         {
             this.stageInit.Add((Worker worker) =>
             {
@@ -23,7 +23,7 @@
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
             this.stageInit.Add((Worker worker) =>
             {
@@ -38,7 +38,7 @@
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerStateType.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 
