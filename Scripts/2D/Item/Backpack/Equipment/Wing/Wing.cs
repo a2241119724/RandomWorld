@@ -1,19 +1,22 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+
+    /// <summary>
+    /// 翅膀
+    /// </summary>
     [Serializable]
     public abstract class Wing : Equipment
     {
         public Wing()
         {
-            equipType = EquipType.Wing;
+            this.EquipTypeValue = EquipType.Wing;
         }
     }
 
+    /// <summary>
+    /// 翅膀对象
+    /// </summary>
     public abstract class WingObject : EquipmentObject
     {
     }

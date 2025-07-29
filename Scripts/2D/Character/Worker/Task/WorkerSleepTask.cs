@@ -1,77 +1,91 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// ç¡è§‰ä»»åŠ¡
+    /// </summary>
     public class WorkerSleepTask : WorkerTask
     {
         private Worker worker;
-        
-        public WorkerSleepTask() : base(TaskType.Sleep)
+
+        public WorkerSleepTask()
+            : base(WorkerTaskTypeEnum.Sleep)
         {
-            stageInit.Add((Worker worker) =>
+            this.stageInit.Add((Worker worker) =>
             {
-                maxProgress = 10.0f;
-                // »ñÈ¡Îï×Ê
-                AvailableNeighborPos.Clear();
-                AvailableNeighborPos.Add(neighbors[8]);
-                // ½øÈë¹¤×÷×´Ì¬
-                worker.Manager.changeState(WorkerStateType.Seek);
+                this.maxProgress = 10.0f;
+
+                // è·å–ç‰©èµ„
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[8]);
+
+                // è¿›å…¥å·¥ä½œçŠ¶æ€
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 
-        public override void start(Worker worker)
+        /// <inheritdoc/>
+        public override void Start(Worker worker)
         {
-            base.start(worker);
-            changeStage(worker,0);
+            base.Start(worker);
+            this.ChangeStage(worker, 0);
         }
 
-        public override void _execute()
+        /// <inheritdoc/>
+        public override void Execute1()
         {
-            base._execute();
+            base.Execute1();
         }
 
-        public override bool isCanWork(Worker worker)
+        /// <inheritdoc/>
+        public override bool IsCanWork(Worker worker)
         {
-            if (!base.isCanWork(worker))
+            if (!base.IsCanWork(worker))
             {
                 return false;
             }
-            // Èç¹ûÆ£ÀÍÖµµÍÓÚãĞÖµ£¬²¢ÇÒÓĞ´²£¬Ôò¿ÉÒÔË¯¾õ
+
+            // å¦‚æœç–²åŠ³å€¼ä½äºé˜ˆå€¼ï¼Œå¹¶ä¸”æœ‰åºŠï¼Œåˆ™å¯ä»¥ç¡è§‰
             return worker.CurTired < Worker.ThresholdTired && worker.BedItem != null && this.worker == worker;
         }
 
-        public override void finish(Worker worker)
+        /// <inheritdoc/>
+        public override void Finish(Worker worker)
         {
-            base.finish(worker);
+            base.Finish(worker);
         }
 
+#pragma warning disable SA1600 // Elements should be documented
+        /// <summary>
+        /// å»ºé€ è€…
+        /// </summary>
         public class SleepTaskBuilder
         {
-            private WorkerSleepTask task;
+            private readonly WorkerSleepTask task;
 
             public SleepTaskBuilder()
             {
-                task = new WorkerSleepTask();
+                this.task = new WorkerSleepTask();
             }
 
-            public SleepTaskBuilder setTarget(Vector3Int posMap)
+            public SleepTaskBuilder SetTarget(Vector3Int posMap)
             {
-                task.TargetMap = posMap;
+                this.task.TargetMap = posMap;
                 return this;
             }
 
-            public SleepTaskBuilder setWorker(Worker worker)
+            public SleepTaskBuilder SetWorker(Worker worker)
             {
-                task.worker = worker;
+                this.task.worker = worker;
                 return this;
             }
 
-            public WorkerSleepTask build()
+            public WorkerSleepTask Build()
             {
-                return task;
+                return this.task;
             }
         }
+#pragma warning restore SA1600 // Elements should be documented
     }
 }

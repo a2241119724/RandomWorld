@@ -1,49 +1,76 @@
-using LAB2D;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+
+    /// <summary>
+    /// 仓库上墙
+    /// </summary>
     [Serializable]
-    public class InventoryWallT : Wall,DontShow
+    public abstract class InventoryWall : WallItem, Item.IItemDontShow
     {
     }
 
+    /// <summary>
+    /// 仓库上墙
+    /// </summary>
     [Serializable]
-    public class InventoryWallD : Wall, DontShow
+    public class InventoryWallT : InventoryWall
     {
     }
 
+    /// <summary>
+    /// 仓库下墙
+    /// </summary>
     [Serializable]
-    public class InventoryWallL : Wall, DontShow
+    public class InventoryWallD : InventoryWall
     {
     }
 
+    /// <summary>
+    /// 仓库左墙
+    /// </summary>
     [Serializable]
-    public class InventoryWallR : Wall, DontShow
+    public class InventoryWallL : InventoryWall
     {
     }
 
+    /// <summary>
+    /// 仓库右墙
+    /// </summary>
     [Serializable]
-    public class InventoryWallRT : Wall, DontShow
+    public class InventoryWallR : InventoryWall
     {
     }
 
+    /// <summary>
+    /// 仓库右上墙
+    /// </summary>
     [Serializable]
-    public class InventoryWallRD : Wall, DontShow
+    public class InventoryWallRT : InventoryWall
     {
     }
 
+    /// <summary>
+    /// 仓库右下墙
+    /// </summary>
     [Serializable]
-    public class InventoryWallLT : Wall, DontShow
+    public class InventoryWallRD : InventoryWall
     {
     }
 
+    /// <summary>
+    /// 仓库左上墙
+    /// </summary>
     [Serializable]
-    public class InventoryWallLD : Wall, DontShow
+    public class InventoryWallLT : InventoryWall
+    {
+    }
+
+    /// <summary>
+    /// 仓库左下墙
+    /// </summary>
+    [Serializable]
+    public class InventoryWallLD : InventoryWall
     {
     }
 }

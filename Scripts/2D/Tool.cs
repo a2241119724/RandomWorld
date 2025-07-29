@@ -1,106 +1,118 @@
-using NUnit;
-using Photon.Pun;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization.Json;
-using System.Text;
-using System.Xml.Serialization;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Reflection;
+    using System.Runtime.Serialization.Formatters.Binary;
+    using System.Xml.Serialization;
+    using Photon.Pun;
+    using UnityEngine;
+    using UnityEngine.EventSystems;
+    using UnityEngine.SceneManagement;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// å·¥å…·ç±».
+    /// </summary>
     public class Tool
     {
-        private static BinaryFormatter bf = new BinaryFormatter();
-        private static string des = Application.persistentDataPath + "/Data/";
-        private static string dataPath = new DirectoryInfo(Application.dataPath).FullName + "\\Resources\\";
+        private static readonly BinaryFormatter Bf = new ();
+        private static readonly string Des = Application.persistentDataPath + "/Data/";
+        private static readonly string DataPath = new DirectoryInfo(Application.dataPath).FullName + "\\Resources\\";
 
         /// <summary>
-        /// »­ÉÈĞÎ
+        /// ç”»æ‰‡å½¢.
         /// </summary>
-        /// <param name="center">ÉÈĞÎÔ²ĞÄ</param>
-        /// <param name="angle">ÕıÇ°·½(Vector3.up)ÉÈĞÎ½Ç¶È</param>
-        /// <param name="radius">ÉÈĞÎ°ë¾¶</param>
-        /// <param name="color">ÉÈĞÎÑÕÉ«</param>
-        /// <param name="parent">°ó¶¨µÄ¸¸ÔªËØ</param>
+        /// <param name="angle">æ­£å‰æ–¹(Vector3.up)æ‰‡å½¢è§’åº¦.</param>
+        /// <param name="radius">æ‰‡å½¢åŠå¾„.</param>
+        /// <param name="color">æ‰‡å½¢é¢œè‰².</param>
+        /// <param name="parent">ç»‘å®šçš„çˆ¶å…ƒç´ .</param>
         public static void DrawSectorSolid(float angle, float radius, Color32 color, Transform parent)
         {
-            int pointAmount = 100; // ½«angleÆ½¾ù·ÖÎª
-            List<Vector3> vertices = new List<Vector3>();
+            int pointAmount = 100; // å°†angleå¹³å‡åˆ†ä¸º
+            List<Vector3> vertices = new ();
             vertices.Add(Vector3.zero);
             for (int i = 0; i <= pointAmount; i++)
             {
-                // Vector3.upÍ¨¹ıËÄÔªÊıĞı×ª(xÖá,yÖá,zÖá)µÃµ½µÄÏòÁ¿
-                Vector3 pos = Quaternion.Euler(0f, 0f, angle / 2 - angle / pointAmount * i) * Vector3.up * radius;
+                // Vector3.upé€šè¿‡å››å…ƒæ•°æ—‹è½¬(xè½´,yè½´,zè½´)å¾—åˆ°çš„å‘é‡
+                Vector3 pos = Quaternion.Euler(0f, 0f, (angle / 2) - (angle / pointAmount * i)) * Vector3.up * radius;
                 vertices.Add(pos);
             }
+
             int[] triangles = new int[3 * pointAmount];
-            // ¸ù¾İÈı½ÇĞÎµÄ¸öÊı,À´¼ÆËã»æÖÆÈı½ÇĞÎµÄ¶¥µãË³Ğò(Ë÷Òı)   
-            // Ë³Ê±Õë»òÕßÄæÊ±Õë      
+
+            // æ ¹æ®ä¸‰è§’å½¢çš„ä¸ªæ•°,æ¥è®¡ç®—ç»˜åˆ¶ä¸‰è§’å½¢çš„é¡¶ç‚¹é¡ºåº(ç´¢å¼•)
+            // é¡ºæ—¶é’ˆæˆ–è€…é€†æ—¶é’ˆ
             for (int i = 0; i < pointAmount; i++)
             {
-                triangles[3 * i] = 0; // Èı½ÇĞÎÒ»µã¾ùÎªÖĞĞÄµã      
-                triangles[3 * i + 1] = i + 1;
-                triangles[3 * i + 2] = i + 2;
+                triangles[3 * i] = 0; // ä¸‰è§’å½¢ä¸€ç‚¹å‡ä¸ºä¸­å¿ƒç‚¹
+                triangles[(3 * i) + 1] = i + 1;
+                triangles[(3 * i) + 2] = i + 2;
             }
 
-            GameObject g = new GameObject("Range");
-            g.transform.position = parent.position + new Vector3(0, 0, -0.1f); // Ê¹²»±»ÕÚµ²(¶ÔÓÚ·ÇGUI Shader)
+            GameObject g = new ("Range");
+            g.transform.position = parent.position + new Vector3(0, 0, -0.1f); // ä½¿ä¸è¢«é®æŒ¡(å¯¹äºéGUI Shader)
             MeshFilter mf = g.AddComponent<MeshFilter>();
             MeshRenderer mr = g.AddComponent<MeshRenderer>();
-            // Á½¸öÊÀ½ç×ø±êµÄÎïÌå³ÉÎª¸¸×ÓÎïÌå
-            // ÊÇ·ñ±£³ÖÊÀ½ç×ø±ê
-            // true:Ïà¶ÔÎ»ÖÃ²»±ä,Ãæ°åÊıÖµ¸Ä±ä
-            // false:Ãæ°å²»±ä,Ïà¶ÔÎ»ÖÃ¸Ä±ä
+
+            // ä¸¤ä¸ªä¸–ç•Œåæ ‡çš„ç‰©ä½“æˆä¸ºçˆ¶å­ç‰©ä½“
+            // æ˜¯å¦ä¿æŒä¸–ç•Œåæ ‡
+            // true:ç›¸å¯¹ä½ç½®ä¸å˜,é¢æ¿æ•°å€¼æ”¹å˜
+            // false:é¢æ¿ä¸å˜,ç›¸å¯¹ä½ç½®æ”¹å˜
             g.transform.SetParent(parent, true);
 
-            Mesh mesh = new Mesh();
+            Mesh mesh = new ();
             mesh.vertices = vertices.ToArray();
             mesh.triangles = triangles;
 
+            // mr.material.shader = Shader.Find("Unlit/Color");
             mf.mesh = mesh;
-            //mr.material.shader = Shader.Find("Unlit/Color");
             mr.material.shader = Shader.Find("GUI/Text Shader");
             mr.material.color = color;
-            // ¶ÔÓÚGUI Shader,ÉèÖÃ²ã¼¶,±ÜÃâ±»ÕÚµ²
+
+            // å¯¹äºGUI Shader,è®¾ç½®å±‚çº§,é¿å…è¢«é®æŒ¡
             mr.sortingLayerName = "Enemy";
             mr.sortingOrder = 0;
         }
 
+        /// <summary>
+        /// ç”»ç½‘æ ¼.
+        /// </summary>
+        /// <param name="cellSize">æ¯ä¸ªç½‘æ ¼çš„å¤§å°.</param>
+        /// <param name="color">ç½‘æ ¼çš„é¢œè‰².</param>
+        /// <param name="parent">ç»‘å®šçš„çˆ¶å…ƒç´ .</param>
         public static void DrawGrid(float cellSize, Color32 color, Transform parent)
         {
             int width = 10;
             int height = 10;
-            // ³õÊ¼»¯¶¥µãÊı×é
-            Vector3[] vertices = new Vector3[((width + 1) * 2 + (height + 1) * 2) * (height + width) / 2];
-            // ³õÊ¼»¯Ë÷ÒıÊı×é£¨ÓÃÓÚ¶¨ÒåÏßÌõ£©
-            int[] indices = new int[2 * ((width + 1) * height + width * (height + 1))];
+
+            // åˆå§‹åŒ–é¡¶ç‚¹æ•°ç»„
+            Vector3[] vertices = new Vector3[(((width + 1) * 2) + ((height + 1) * 2)) * (height + width) / 2];
+
+            // åˆå§‹åŒ–ç´¢å¼•æ•°ç»„ï¼ˆç”¨äºå®šä¹‰çº¿æ¡ï¼‰
+            int[] indices = new int[2 * (((width + 1) * height) + (width * (height + 1)))];
             int vertexIndex = 0;
             int indexIndex = 0;
-            // Éú³ÉË®Æ½Íø¸ñÏß
+
+            // ç”Ÿæˆæ°´å¹³ç½‘æ ¼çº¿
             for (int y = 0; y <= height; y++)
             {
                 for (int x = 0; x <= width; x++)
                 {
                     vertices[vertexIndex++] = new Vector3(x * cellSize, y * cellSize, 0);
-                    // ´¹Ö±Ïß
+
+                    // å‚ç›´çº¿
                     if (y < height)
                     {
                         indices[indexIndex] = (y * (width + 1)) + x;
                         indices[indexIndex + 1] = ((y + 1) * (width + 1)) + x;
                         indexIndex += 2;
                     }
-                    // Ë®Æ½Ïß
+
+                    // æ°´å¹³çº¿
                     if ((x + 1) % (width + 1) != 0)
                     {
                         indices[indexIndex] = (y * (width + 1)) + x;
@@ -109,31 +121,34 @@ namespace LAB2D
                     }
                 }
             }
+
             MeshFilter meshFilter = parent.GetComponent<MeshFilter>();
             MeshRenderer meshRenderer = parent.GetComponent<MeshRenderer>();
-            //
-            Mesh mesh = new Mesh();
+
+            Mesh mesh = new ();
             mesh.vertices = vertices;
             mesh.SetIndices(indices, MeshTopology.Lines, 0);
             meshFilter.mesh = mesh;
 
-            //meshRenderer.material.shader = Shader.Find("GUI/Text Shader");
+            // meshRenderer.material.shader = Shader.Find("GUI/Text Shader");
             meshRenderer.material.color = color;
-            // ¶ÔÓÚGUI Shader,ÉèÖÃ²ã¼¶,±ÜÃâ±»ÕÚµ²
+
+            // å¯¹äºGUI Shader,è®¾ç½®å±‚çº§,é¿å…è¢«é®æŒ¡
             meshRenderer.sortingLayerName = "Enemy";
             meshRenderer.sortingOrder = 0;
         }
 
         /// <summary>
-        /// ÔÚº¢×ÓÖĞÕÒµ½»òÌí¼Ó×é¼ş
+        /// åœ¨å­©å­ä¸­æ‰¾åˆ°æˆ–æ·»åŠ ç»„ä»¶
         /// </summary>
-        /// <typeparam name="T">×é¼şÀàĞÍ</typeparam>
-        /// <param name="parent">¸¸×é¼ş</param>
-        /// <param name="name">×é¼şÃû×Ö</param>
-        /// <returns>Ãû×Ö¶ÔÓ¦ÉíÉÏµÄ×é¼ş</returns>
-        public static T GetOrAddComponentInChildren<T>(GameObject parent, string name) where T : Component
+        /// <typeparam name="T">ç»„ä»¶ç±»å‹</typeparam>
+        /// <param name="parent">çˆ¶ç»„ä»¶</param>
+        /// <param name="name">ç»„ä»¶åå­—</param>
+        /// <returns>åå­—å¯¹åº”èº«ä¸Šçš„ç»„ä»¶</returns>
+        public static T GetOrAddComponentInChildren<T>(GameObject parent, string name)
+            where T : Component
         {
-            // ÕÒµ½ËùÓĞparentÏÂÃæµÄTransform×é¼ş
+            // æ‰¾åˆ°æ‰€æœ‰parentä¸‹é¢çš„Transformç»„ä»¶
             Transform[] ts = parent.GetComponentsInChildren<Transform>();
             foreach (var t in ts)
             {
@@ -143,22 +158,25 @@ namespace LAB2D
                     {
                         t.gameObject.AddComponent<T>();
                     }
+
                     return t.gameObject.GetComponent<T>();
                 }
             }
+
             return null;
         }
 
         /// <summary>
-        /// ÔÚº¢×ÓÖĞÕÒµ½×é¼ş
+        /// åœ¨å­©å­ä¸­æ‰¾åˆ°ç»„ä»¶.
         /// </summary>
-        /// <typeparam name="T">×é¼şÀàĞÍ</typeparam>
-        /// <param name="parent">¸¸ÎïÌå</param>
-        /// <param name="name">×é¼şÃû×Ö</param>
-        /// <returns>Ãû×Ö¶ÔÓ¦ÉíÉÏµÄ×é¼ş</returns>
-        public static T GetComponentInChildren<T>(GameObject parent, string name) where T : Component
+        /// <typeparam name="T">ç»„ä»¶ç±»å‹.</typeparam>
+        /// <param name="parent">çˆ¶ç‰©ä½“.</param>
+        /// <param name="name">ç»„ä»¶åå­—.</param>
+        /// <returns>åå­—å¯¹åº”èº«ä¸Šçš„ç»„ä»¶.</returns>
+        public static T GetComponentInChildren<T>(GameObject parent, string name)
+            where T : Component
         {
-            // ÕÒµ½ËùÓĞparentÏÂÃæµÄTransform×é¼ş
+            // æ‰¾åˆ°æ‰€æœ‰parentä¸‹é¢çš„Transformç»„ä»¶
             T[] ts = parent.GetComponentsInChildren<T>();
             foreach (var t in ts)
             {
@@ -167,79 +185,87 @@ namespace LAB2D
                     return t;
                 }
             }
-            LogManager.Instance.log(name + " Not Found!!!", LogManager.LogLevel.Error);
+
+            LogManager.Instance.Log(name + " Not Found!!!", LogManager.LogLevel.Error);
             return null;
         }
 
         /// <summary>
-        /// ¶ş½øÖÆĞòÁĞ»¯ºÍ·´ĞòÁĞ»¯Éî¿½±´
+        /// äºŒè¿›åˆ¶åºåˆ—åŒ–å’Œååºåˆ—åŒ–æ·±æ‹·è´.
         /// </summary>
-        /// <typeparam name="T">¿½±´ÀàĞÍ</typeparam>
-        /// <param name="obj">¿½±´Ô´¶ÔÏó</param>
-        /// <returns>¿½±´µÃµ½¶ÔÏó</returns>
+        /// <typeparam name="T">æ‹·è´ç±»å‹.</typeparam>
+        /// <param name="obj">æ‹·è´æºå¯¹è±¡.</param>
+        /// <returns>æ‹·è´å¾—åˆ°å¯¹è±¡.</returns>
         public static T DeepCopyByBinary<T>(T obj)
         {
             object retval;
-            // ×Ô¶¯ÊÍ·Å×ÊÔ´
-            using (MemoryStream ms = new MemoryStream())
+
+            // è‡ªåŠ¨é‡Šæ”¾èµ„æº
+            using (MemoryStream ms = new ())
             {
-                BinaryFormatter bf = new BinaryFormatter();
+                BinaryFormatter bf = new ();
                 bf.Serialize(ms, obj);
                 ms.Seek(0, SeekOrigin.Begin);
                 retval = bf.Deserialize(ms);
                 ms.Close();
             }
+
             return (T)retval;
         }
 
         /// <summary>
-        /// xmlĞòÁĞ»¯ºÍ·´ĞòÁĞ»¯Éî¿½±´
+        /// xmlåºåˆ—åŒ–å’Œååºåˆ—åŒ–æ·±æ‹·è´.
         /// </summary>
-        /// <typeparam name="T">¿½±´ÀàĞÍ</typeparam>
-        /// <param name="obj">¿½±´Ô´¶ÔÏó</param>
-        /// <returns>¿½±´µÃµ½¶ÔÏó</returns>
+        /// <typeparam name="T">æ‹·è´ç±»å‹.</typeparam>
+        /// <param name="obj">æ‹·è´æºå¯¹è±¡.</param>
+        /// <returns>æ‹·è´å¾—åˆ°å¯¹è±¡.</returns>
         public static T DeepCopyByXml<T>(T obj)
         {
             object retval;
-            using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new ())
             {
-                XmlSerializer xml = new XmlSerializer(typeof(T));
+                XmlSerializer xml = new (typeof(T));
                 xml.Serialize(ms, obj);
                 ms.Seek(0, SeekOrigin.Begin);
                 retval = xml.Deserialize(ms);
                 ms.Close();
             }
+
             return (T)retval;
         }
 
         /// <summary>
-        /// »ñÈ¡ÎÄ¼şÏÂµÄÔ¤ÖÆÌå²¢·â×°³ÉDictionary
+        /// è·å–æ–‡ä»¶ä¸‹çš„Resourceså¹¶å°è£…æˆDictionary.
         /// </summary>
-        /// <param name="folderPath">ResourcesÏÂµÄÎÄ¼ş¼ĞÂ·¾¶</param>
-        /// <returns></returns>
-        public static Dictionary<string, T> loadResources<T>(string folderPath) where T : UnityEngine.Object
+        /// <param name="folderPath">Resourcesä¸‹çš„æ–‡ä»¶å¤¹è·¯å¾„.</param>
+        /// <typeparam name="T">Resourcesç±»å‹.</typeparam>
+        /// <returns>æ‰€æœ‰é¢„åˆ¶ä½“çš„é”®å€¼å¯¹.</returns>
+        public static Dictionary<string, T> LoadResources<T>(string folderPath)
+            where T : UnityEngine.Object
         {
-            Dictionary<string, T> map = new Dictionary<string, T>();
+            Dictionary<string, T> map = new ();
             T[] prefabs = Resources.LoadAll<T>(folderPath);
             foreach (T p in prefabs)
             {
-                map[p.name] = p;
+                map[p.name.Split("/")[^1]] = p;
             }
+
             return map;
         }
 
         /// <summary>
-        /// resourceÏÂµÄËùÓĞÎÄ¼şÂ·¾¶
+        /// resourceä¸‹çš„æ‰€æœ‰æ–‡ä»¶è·¯å¾„.
         /// </summary>
-        /// <returns></returns>
-        public static Dictionary<string, string> loadPaths()
+        /// <returns>æ‰€æœ‰è·¯å¾„é”®å€¼å¯¹.</returns>
+        public static Dictionary<string, string> LoadPaths()
         {
-            Dictionary<string, string> map = new Dictionary<string, string>();
-            //string[] subPaths = AssetDatabase.GetAllAssetPaths();
+            Dictionary<string, string> map = new ();
+
+            // string[] subPaths = AssetDatabase.GetAllAssetPaths();
 #if UNITY_EDITOR
-            // ¿ª·¢½×¶Î¼ÓÔØpath,²¢±£´æÆğÀ´
-            _loadPaths(dataPath, map);
-            saveDataByBinary(Application.streamingAssetsPath + "/resourcePath.lab", map);
+            // å¼€å‘é˜¶æ®µåŠ è½½path,å¹¶ä¿å­˜èµ·æ¥
+            LoadPaths1(DataPath, map);
+            SaveDataByBinary(Application.streamingAssetsPath + "/resourcePath.lab", map);
 #else
             map = loadDataByBinary<Dictionary<string, string>>(Application.streamingAssetsPath + "/resourcePath.lab");
 #endif
@@ -247,112 +273,106 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// µİ¹é»ñÈ¡Â·¾¶
+        /// åŠ è½½äºŒè¿›åˆ¶æ–‡ä»¶.
         /// </summary>
-        /// <param name="path"></param>
-        /// <param name=""></param>
-        private static void _loadPaths(string path, Dictionary<string, string> map)
-        {
-            DirectoryInfo directoryInfo = new DirectoryInfo(path);
-            FileInfo[] fileInfos = directoryInfo.GetFiles();
-            foreach (FileInfo fileInfo in fileInfos)
-            {
-                string[] splits = fileInfo.Name.Split(".");
-                if (!splits[splits.Length - 1].Equals("meta"))
-                {
-                    map[fileInfo.Name] = path.Split(dataPath)[1].Replace("\\", "/").Split('.')[0] + "/" + fileInfo.Name.Split('.')[0];
-                }
-            }
-            DirectoryInfo[] subDirectoryInfos = directoryInfo.GetDirectories();
-            foreach (DirectoryInfo subDirectoryInfo in subDirectoryInfos)
-            {
-                _loadPaths(subDirectoryInfo.FullName, map);
-            }
-        }
-
-        /// <summary>
-        /// ¼ÓÔØ¶ş½øÖÆÎÄ¼ş
-        /// </summary>
-        /// <param name="filePath"></param>
-        /// <returns></returns>
-        public static T loadDataByBinary<T>(string filePath) where T : class
+        /// <typeparam name="T">åŠ è½½æ•°æ®çš„ç»“æ„.</typeparam>
+        /// <param name="filePath">æ–‡ä»¶è·¯å¾„.</param>
+        /// <returns>æ–‡ä»¶å†…å®¹.</returns>
+        /// <returns>å¯¹åº”çš„æ•°æ®ç±».</returns>
+        public static T LoadDataByBinary<T>(string filePath)
+            where T : class
         {
             if (!File.Exists(filePath))
             {
                 return null;
             }
-            using (FileStream fs = File.Open(filePath, FileMode.Open, FileAccess.Read))
-            {
-                return (T)bf.Deserialize(fs);
-            }
+
+            using FileStream fs = File.Open(filePath, FileMode.Open, FileAccess.Read);
+            return (T)Bf.Deserialize(fs);
         }
 
         /// <summary>
-        /// ±£´æÎª¶ş½øÖÆÎÄ¼ş
+        /// ä¿å­˜ä¸ºäºŒè¿›åˆ¶æ–‡ä»¶.
         /// </summary>
-        /// <param name="filePath"></param>
-        /// <param name="data"></param>
-        public static void saveDataByBinary<T>(string filePath, T data) where T : class
+        /// <typeparam name="T">åŠ è½½æ•°æ®çš„ç»“æ„.</typeparam>
+        /// <param name="filePath">è·¯å¾„.</param>
+        /// <param name="data">æ•°æ®å†…å®¹.</param>
+        public static void SaveDataByBinary<T>(string filePath, T data)
+            where T : class
         {
-            using (FileStream fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
-            {
-                bf.Serialize(fs, data);
-                fs.Flush();
-                fs.Close();
-            }
+            using FileStream fs = new (filePath, FileMode.OpenOrCreate, FileAccess.Write);
+            Bf.Serialize(fs, data);
+            fs.Flush();
+            fs.Close();
         }
 
         /// <summary>
-        /// ¼ÓÔØJsonÊı¾İ
+        /// åŠ è½½Jsonæ•°æ®
         /// </summary>
-        /// <returns>ÊÇ·ñÓĞÊı¾İ</returns>
-        public static T loadDataByJson<T>(string filePath) where T : class
+        /// <typeparam name="T">åŠ è½½æ•°æ®çš„ç»“æ„.</typeparam>
+        /// <param name="filePath">è·¯å¾„.</param>
+        /// <returns>æ˜¯å¦æœ‰æ•°æ®</returns>
+        public static T LoadDataByJson<T>(string filePath)
+            where T : class
         {
             if (!File.Exists(filePath))
             {
-                LogManager.Instance.log(filePath + "²»´æÔÚ", LogManager.LogLevel.Error);
+                LogManager.Instance.Log(filePath + "ä¸å­˜åœ¨", LogManager.LogLevel.Error);
                 return null;
             }
+
             string json = File.ReadAllText(filePath);
             return JsonUtility.FromJson<T>(json);
         }
 
         /// <summary>
-        /// ±£´æJsonÊı¾İ
+        /// ä¿å­˜Jsonæ•°æ®.
         /// </summary>
-        public static void saveDataByJson<T>(string filePath, T data) where T : class
+        /// <typeparam name="T">åŠ è½½æ•°æ®çš„ç»“æ„.</typeparam>
+        /// <param name="filePath">è·¯å¾„.</param>
+        /// <param name="data">æ•°æ®å†…å®¹.</param>
+        public static void SaveDataByJson<T>(string filePath, T data)
+            where T : class
         {
-            // JsonUtilityÎŞ·¨ĞòÁĞ»¯Dictionary
+            // JsonUtilityæ— æ³•åºåˆ—åŒ–Dictionary
             string json = JsonUtility.ToJson(data);
             File.WriteAllText(filePath, json);
         }
 
         /// <summary>
-        /// ¶ÁÈ¡CSVÎÄ¼ş£¬ÎÄ¼şĞèÒªÊ±UTF-8
+        /// è¯»å–CSVæ–‡ä»¶ï¼Œæ–‡ä»¶éœ€è¦æ—¶UTF-8.
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public static string[] getCSV(string name)
+        /// <param name="name">æ–‡ä»¶åç§°.</param>
+        /// <returns>æ–‡ä»¶å†…å®¹.</returns>
+        public static string[] GetCSV(string name)
         {
             string data;
-            if (File.Exists(des + name + ".csv"))
+            if (File.Exists(Des + name + ".csv"))
             {
-                data = File.ReadAllText(des + name + ".csv");
+                data = File.ReadAllText(Des + name + ".csv");
             }
             else
             {
-                //Encoding.UTF8.GetString();
+                // Encoding.UTF8.GetString();
                 TextAsset textAsset = Resources.Load<TextAsset>(name);
-                if (textAsset == null) return null;
+                if (textAsset == null)
+                {
+                    return null;
+                }
+
                 data = textAsset.text;
             }
+
             return data.TrimEnd('\r', '\n').Split("\r\n");
         }
 
         /// <summary>
-        /// Í¨¹ı·´ÉäÊµÏÖ£¬´Ó¸¸ÀàµÃµ½ÏàÓ¦·Ç³éÏóµÄ×ÓÀàĞÅÏ¢
+        /// é€šè¿‡åå°„å®ç°ï¼Œä»çˆ¶ç±»å¾—åˆ°ç›¸åº”éæŠ½è±¡çš„å­ç±»ä¿¡æ¯.
         /// </summary>
-        public static List<Type> getChildByParent<T>() {
+        /// <typeparam name="T">è·å–å­ç±»ä¸­çš„ç±»å‹.</typeparam>
+        /// <returns>ç±»å‹åˆ—è¡¨.</returns>
+        public static List<Type> GetChildByParent<T>()
+        {
             Type baseType = typeof(T);
             Assembly assembly = Assembly.GetExecutingAssembly();
 
@@ -362,32 +382,53 @@ namespace LAB2D
             return derivedTypes;
         }
 
-        public static Vector3Int add(Vector3Int vector, int x, int y) {
+        /// <summary>
+        /// å‘é‡åŠ (x,y).
+        /// </summary>
+        /// <param name="vector">å‘é‡.</param>
+        /// <param name="x">æ¨ªåæ ‡.</param>
+        /// <param name="y">çºµåæ ‡.</param>
+        /// <returns>ç»“æœ.</returns>
+        public static Vector3Int Add(Vector3Int vector, int x, int y)
+        {
             return new Vector3Int(vector.x + x, vector.y + y, vector.z);
         }
 
-        public static Vector3Int t(Vector3Int vector)
+        /// <summary>
+        /// å‘é‡è½¬ç½®.
+        /// </summary>
+        /// <param name="vector">å‘é‡.</param>
+        /// <returns>è½¬ç½®ç»“æœ.</returns>
+        public static Vector3Int T(Vector3Int vector)
         {
             return new Vector3Int(vector.y, vector.x, vector.z);
         }
 
         /// <summary>
-        /// µã»÷ÉäÏß¼ì²â¶ÔÏó
+        /// ç‚¹å‡»å°„çº¿æ£€æµ‹UIå¯¹è±¡.
         /// </summary>
-        /// <returns></returns>
-        public static List<RaycastResult> getUIByMousePos() {
-            PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
+        /// <returns>UIå¯¹è±¡.</returns>
+        public static List<RaycastResult> GetUIByMousePos()
+        {
+            PointerEventData pointerEventData = new (EventSystem.current);
             pointerEventData.position = Input.mousePosition;
-            List<RaycastResult> results = new List<RaycastResult>();
-            GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG_ROOT).GetComponent<GraphicRaycaster>().Raycast(pointerEventData, results);
+            List<RaycastResult> results = new ();
+            GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).GetComponent<GraphicRaycaster>().Raycast(pointerEventData, results);
             return results;
         }
 
-
-        public static GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation) {
+        /// <summary>
+        /// å®ä¾‹åŒ–é¢„åˆ¶ä½“.
+        /// </summary>
+        /// <param name="prefab">æ•°æ®.</param>
+        /// <param name="position">å®ä¾‹åŒ–ä½ç½®.</param>
+        /// <param name="rotation">å®ä¾‹åŒ–è§’åº¦.</param>
+        /// <returns>å¯¹è±¡.</returns>
+        public static GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation)
+        {
             if (NetworkConnect.Instance.IsOnline)
             {
-                return PhotonNetwork.Instantiate(ResourcesManager.Instance.getPath(prefab.name + ".prefab"), position, rotation);
+                return PhotonNetwork.Instantiate(ResourceManager.Instance.GetPath(prefab.name + ".prefab"), position, rotation);
             }
             else
             {
@@ -395,32 +436,78 @@ namespace LAB2D
             }
         }
 
-        public static List<T> splitEnum<T>(T start, T end) where T : Enum
+        /// <summary>
+        /// ç”±äºå¤šä¸ªEnumæ”¾åˆ°ä¸€ä¸ªä¸­,éœ€è¦Split.
+        /// </summary>
+        /// <typeparam name="T">Splitæšä¸¾çš„ç±»å‹.</typeparam>
+        /// <param name="start">èµ·å§‹æšä¸¾.</param>
+        /// <param name="end">ç»ˆæ­¢æšä¸¾.</param>
+        /// <returns>æšä¸¾åˆ—è¡¨.</returns>
+        public static List<T> SplitEnum<T>(T start, T end)
+            where T : Enum
         {
-            List<T> itemTypes = new List<T>();
+            List<T> itemTypes = new ();
             IEnumerator enumerator = Enum.GetValues(typeof(T)).GetEnumerator();
             while (enumerator.MoveNext())
             {
-                if (((T)enumerator.Current).Equals(start)) break;
+                if (((T)enumerator.Current).Equals(start))
+                {
+                    break;
+                }
             }
+
             do
             {
                 T type = (T)enumerator.Current;
                 itemTypes.Add(type);
-                if (type.Equals(end)) break;
-            } while (enumerator.MoveNext());
+                if (type.Equals(end))
+                {
+                    break;
+                }
+            }
+            while (enumerator.MoveNext());
             return itemTypes;
         }
 
-        public static void loadScene(string sceneName)
+        /// <summary>
+        /// åŠ è½½åœºæ™¯.
+        /// </summary>
+        /// <param name="sceneName">åœºæ™¯åç§°.</param>
+        public static void LoadScene(string sceneName)
         {
             Scene scene = SceneManager.GetSceneByName(sceneName);
             if (scene.buildIndex == -1)
             {
-                LogManager.Instance.log(sceneName + " Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log(sceneName + " Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
+
             SceneManager.LoadScene(sceneName);
         }
-    } 
+
+        /// <summary>
+        /// é€’å½’è·å–è·¯å¾„.
+        /// </summary>
+        /// <param name="path">è·¯å¾„.</param>
+        /// <param name="map">out.</param>
+        private static void LoadPaths1(string path, Dictionary<string, string> map)
+        {
+            DirectoryInfo directoryInfo = new (path);
+            FileInfo[] fileInfos = directoryInfo.GetFiles();
+            foreach (FileInfo fileInfo in fileInfos)
+            {
+                string[] splits = fileInfo.Name.Split(".");
+                if (!splits[^1].Equals("meta"))
+                {
+                    map[fileInfo.Name] = path.Split(DataPath)[1].Replace("\\", "/").Split('.')[0] + "/" + fileInfo.Name.Split('.')[0];
+                }
+            }
+
+            DirectoryInfo[] subDirectoryInfos = directoryInfo.GetDirectories();
+            foreach (DirectoryInfo subDirectoryInfo in subDirectoryInfos)
+            {
+                LoadPaths1(subDirectoryInfo.FullName, map);
+            }
+        }
+    }
 }

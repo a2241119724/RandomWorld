@@ -1,73 +1,127 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// èƒŒåŒ…é“å…·
+    /// </summary>
     [Serializable]
     public abstract class BackpackItem : Item
     {
+        /// <summary>
+        /// ç“¦ç‰‡
+        /// </summary>
         [NonSerialized]
-        public TileBase tile;
-        public BackpackItemQuality quality; // Æ·ÖÊ
+        public TileBase Tile;
+
+        /// <summary>
+        /// å“è´¨
+        /// </summary>
+        public BackpackItemQuality Quality;
 
         protected BackpackItem()
         {
-            quality = BackpackItemQuality.Gray;
+            this.Quality = BackpackItemQuality.Gray;
         }
 
+        /// <summary>
+        /// èƒŒåŒ…è´¨é‡
+        /// </summary>
         [Serializable]
         public enum BackpackItemQuality
         {
-            Gray,   //»ÒÉ«
-            White,  //°×É«
-            Green,  //ÂÌÉ«
-            Blue,   //À¶É«
-            Purple, //×ÏÉ«
-            Orange, //³ÈÉ«
-            Yellow, //»ÆÉ«
-            Red,    //ºìÉ«
-            Black   //ºÚÉ«
+            /// <summary>
+            /// ç°è‰²
+            /// </summary>
+            Gray,
+
+            /// <summary>
+            /// ç™½è‰²
+            /// </summary>
+            White,
+
+            /// <summary>
+            /// ç»¿è‰²
+            /// </summary>
+            Green,
+
+            /// <summary>
+            /// è“è‰²
+            /// </summary>
+            Blue,
+
+            /// <summary>
+            /// ç´«è‰²
+            /// </summary>
+            Purple,
+
+            /// <summary>
+            /// æ©™è‰²
+            /// </summary>
+            Orange,
+
+            /// <summary>
+            /// é»„è‰²
+            /// </summary>
+            Yellow,
+
+            /// <summary>
+            /// çº¢è‰²
+            /// </summary>
+            Red,
+
+            /// <summary>
+            /// é»‘è‰²
+            /// </summary>
+            Black,
         }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
             return base.ToString() +
-                $"Æ·ÖÊ: {quality.ToString()}\n";
+                $"å“è´¨: {this.Quality}\n";
         }
     }
 
+    /// <summary>
+    /// èƒŒåŒ…å¯¹è±¡
+    /// </summary>
     public abstract class BackpackItemObject : ItemObject
     {
+        /// <inheritdoc/>
         protected override void Awake()
         {
             base.Awake();
         }
 
+        /// <inheritdoc/>
         protected override void Start()
         {
             base.Start();
         }
 
+        /// <inheritdoc/>
         protected override void Update()
         {
             base.Update();
         }
 
         /// <summary>
-        /// ¼´Ê¹¹ÒÔÚÎïÌåÉÏµÄ½Å±¾Ã»ÓĞ¿ªÆô,¸Ã·½·¨Ò²»áÖ´ĞĞ
-        /// ¸ÃµÀ¾ßÅöµ½Íæ¼Ò,¼Óµ½±³°üÀïÃæ
+        /// å³ä½¿æŒ‚åœ¨ç‰©ä½“ä¸Šçš„è„šæœ¬æ²¡æœ‰å¼€å¯,è¯¥æ–¹æ³•ä¹Ÿä¼šæ‰§è¡Œ
+        /// è¯¥é“å…·ç¢°åˆ°ç©å®¶,åŠ åˆ°èƒŒåŒ…é‡Œé¢
         /// </summary>
-        /// <param name="collision"></param>
+        /// <param name="collision">ç¢°æ’ä½“</param>
         protected virtual void OnTriggerEnter2D(Collider2D collision)
         {
             if (collision.gameObject.CompareTag("Player"))
             {
-                BackpackController.Instance.addItem(ItemFactory.Instance.getBackpackItemByName(name.Split("Object")[0]));
-                Destroy(gameObject);
-                //gameObject.SetActive(false); // ¼õĞ¡¿ªÏú
+                BackpackController.Instance.AddItem(ItemFactory.Instance.GetBackpackItemByName(this.name.Split("Object")[0]));
+                Destroy(this.gameObject);
+
+                // gameObject.SetActive(false); // å‡å°å¼€é”€
             }
         }
     }

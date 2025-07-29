@@ -1,13 +1,20 @@
-using System;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    /// <summary>
+    /// 背包导航按钮UI
+    /// </summary>
     public class BackpackNavigationView : MVCNavigationView
     {
-        public static BackpackNavigationView Instance { private set; get; }
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static BackpackNavigationView Instance { get; private set; }
+
+        /// <inheritdoc/>
+        protected override void Init()
+        {
+            BackpackMenuPanel.Instance.Select.Init();
+        }
 
         private void Awake()
         {
@@ -16,17 +23,12 @@ namespace LAB2D
 
         private void OnEnable()
         {
-            CurItemType = ItemType.Weapon;
+            this.CurItemType = Item.ItemType.Weapon;
         }
 
-        void Start()
+        private void Start()
         {
-            bindButton(ItemType.Weapon, ItemType.BackpackOther);
-        }
-
-        protected override void init()
-        {
-            BackpackMenuPanel.Instance.Select.init();
+            this.BindButton(Item.ItemType.Weapon, Item.ItemType.BackpackOther);
         }
     }
 }

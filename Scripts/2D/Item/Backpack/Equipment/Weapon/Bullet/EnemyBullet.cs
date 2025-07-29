@@ -1,20 +1,27 @@
-﻿using Photon.Pun;
-using UnityEngine;
+﻿namespace LAB2D
+{
+    using UnityEngine;
 
-namespace LAB2D {
+    /// <summary>
+    /// 敌人子弹
+    /// </summary>
     public class EnemyBullet : Bullet
     {
-        protected override void Awake() {
-            base.Awake();
-            layerMask = LayerMask.GetMask("Tile", "Player", "Worker");
+        /// <inheritdoc/>
+        public override void HitObject()
+        {
+            // 击中玩家处理
+            if (this.rayCastHit2D.transform.CompareTag("Player"))
+            {
+                this.rayCastHit2D.transform.GetComponent<Character>().ReduceHp(this.Damage);
+            }
         }
 
-        public override void hitObject()
+        /// <inheritdoc/>
+        protected override void Awake()
         {
-            if (rayCastHit2D.transform.CompareTag("Player")) // 击中玩家处理
-            {
-                rayCastHit2D.transform.GetComponent<Character>().reduceHp(Damage);
-            }
+            base.Awake();
+            this.layerMask = LayerMask.GetMask("Tile", "Player", "Worker");
         }
     }
 }

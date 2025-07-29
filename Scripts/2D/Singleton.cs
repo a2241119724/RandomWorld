@@ -1,11 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
-    public abstract class Singleton<T> where T : new()
+    /// <summary>
+    /// 单例.
+    /// </summary>
+    /// <typeparam name="T">需要单例的类.</typeparam>
+    public abstract class Singleton<T>
+        where T : new()
     {
+        private static T instance;
+
+        /// <summary>
+        /// 单例.
+        /// </summary>
         public static T Instance
         {
             get
@@ -14,18 +20,32 @@ namespace LAB2D
                 {
                     instance = new T();
                 }
+
                 return instance;
             }
         }
-        private static T instance;
 
-        public virtual void init() {
-            // ��ʼ��Instance
+        /// <summary>
+        /// 初始化.
+        /// </summary>
+        public virtual void Init()
+        {
+            // 初始化Instance
         }
     }
 
-    public abstract class ASingletonSaveData<T> : ASaveData where T : new()
+    /// <summary>
+    /// 带ASaveData的单例.
+    /// </summary>
+    /// <typeparam name="T">需要单例的类.</typeparam>
+    public abstract class ASingletonSaveData<T> : ASaveData
+        where T : new()
     {
+        private static T instance;
+
+        /// <summary>
+        /// 单例.
+        /// </summary>
         public static T Instance
         {
             get
@@ -34,21 +54,30 @@ namespace LAB2D
                 {
                     instance = new T();
                 }
+
                 return instance;
             }
         }
-        private static T instance;
 
-        public void init()
+        /// <summary>
+        /// 初始化.
+        /// </summary>
+        public void Init()
         {
-            // ��ʼ��Instance
+            // 初始化Instance
         }
 
-        public override void loadData()
+        /// <summary>
+        /// 加载数据.
+        /// </summary>
+        public override void LoadData()
         {
         }
 
-        public override void saveData()
+        /// <summary>
+        /// 保存数据.
+        /// </summary>
+        public override void SaveData()
         {
         }
     }

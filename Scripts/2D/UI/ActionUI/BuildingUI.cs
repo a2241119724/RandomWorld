@@ -1,14 +1,16 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.EventSystems;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// å»ºé€ ä½¿ç”¨çš„UI
+    /// </summary>
     public class BuildingUI : MonoBehaviour
     {
-        public static BuildingUI Instance { private set; get; }
+        /// <summary>
+        /// å•ä¾‹
+        /// </summary>
+        public static BuildingUI Instance { get; private set; }
 
         private void Awake()
         {
@@ -17,20 +19,23 @@ namespace LAB2D
 
         private void Update()
         {
-            // Ã»ÓĞÑ¡ÔñÈÎºÎÎïÆ·
-            if (BuildMenuPanel.Instance.Select.item == null)
+            // æ²¡æœ‰é€‰æ‹©ä»»ä½•ç‰©å“
+            if (BuildMenuPanel.Instance.Select.Item == null)
             {
                 return;
             }
+
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            // ×ªÎªÊı×éÏÂ±ê
-            Vector3Int centerMap = TileMap.Instance.worldPosToMapPos(worldPos);
-            BuildItem buildItem = ((BuildItem)ItemFactory.Instance.getBuildItemByName(ItemDataManager.Instance.getById(BuildMenuPanel.Instance.Select.item.id).imageName));
-            // ½¨Ôì
-            if (IsAvailableMap.Instance.showRect(centerMap, buildItem.width, buildItem.height, buildItem.isBottomLeft) 
+
+            // è½¬ä¸ºæ•°ç»„ä¸‹æ ‡
+            Vector3Int centerMap = TileMap.Instance.WorldPosToMapPos(worldPos);
+            BuildItem buildItem = (BuildItem)ItemFactory.Instance.GetBuildItemByName(ItemDataManager.Instance.GetById(BuildMenuPanel.Instance.Select.Item.Id).ImageName);
+
+            // å»ºé€ 
+            if (IsAvailableMap.Instance.ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.IsBottomLeft)
                 && Input.GetMouseButtonDown(0))
             {
-                buildItem.addBuildTask(centerMap);
+                buildItem.AddBuildTask(centerMap);
             }
         }
     }

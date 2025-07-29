@@ -1,29 +1,33 @@
-using Photon.Pun;
-using Photon.Realtime;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using Photon.Pun;
+    using Photon.Realtime;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// åˆ›å»ºæˆ–åŠ å…¥é¢æ¿
+    /// </summary>
     public class CreateOrJoinPanel : BasePanel<CreateOrJoinPanel>
     {
         private TypedLobby typedLobby = null;
 
         public CreateOrJoinPanel()
         {
-            Name = "CreateOrJoin";
-            setPanel();
-            Tool.GetComponentInChildren<Button>(panel, "CreateRoom").onClick.AddListener(OnClick_CreateRoom);
-            Tool.GetComponentInChildren<Button>(panel, "JoinRoom").onClick.AddListener(OnClick_JoinRoom);
+            this.Name = "CreateOrJoin";
+            this.OpenPanel();
+            Tool.GetComponentInChildren<Button>(this.Panel, "CreateRoom").onClick.AddListener(this.OnClick_CreateRoom);
+            Tool.GetComponentInChildren<Button>(this.Panel, "JoinRoom").onClick.AddListener(this.OnClick_JoinRoom);
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            typedLobby = new TypedLobby("myLobby", LobbyType.SqlLobby);
-            PhotonNetwork.JoinLobby(typedLobby);
+            this.typedLobby = new TypedLobby("myLobby", LobbyType.SqlLobby);
+            PhotonNetwork.JoinLobby(this.typedLobby);
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
@@ -31,21 +35,23 @@ namespace LAB2D
 
         private void OnClick_CreateRoom()
         {
-            // ½øÈë´´½¨·¿¼äÃæ°å
-            controller.close();
-            controller.show(CreateMenuPanel.Instance);
+            // è¿›å…¥åˆ›å»ºæˆ¿é—´é¢æ¿
+            this.Controller.Close();
+            this.Controller.Show(CreateMenuPanel.Instance);
         }
 
         private void OnClick_JoinRoom()
         {
             if (PhotonNetwork.NetworkClientState == ClientState.ConnectedToMasterServer ||
-                PhotonNetwork.NetworkClientState == ClientState.JoinedLobby){
-                // ½øÈë¼ÓÈë·¿¼äÃæ°å
-                controller.close();
-                controller.show(JoinMenuPanel.Instance);
+                PhotonNetwork.NetworkClientState == ClientState.JoinedLobby)
+            {
+                // è¿›å…¥åŠ å…¥æˆ¿é—´é¢æ¿
+                this.Controller.Close();
+                this.Controller.Show(JoinMenuPanel.Instance);
             }
-            else {
-                GlobalInit.Instance.showTip("ÇëÉÔºóÔÙÊÔ");
+            else
+            {
+                GlobalInit.Instance.ShowTip("è¯·ç¨åå†è¯•");
             }
         }
     }

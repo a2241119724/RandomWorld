@@ -1,50 +1,62 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// å»ºé€ èœå•é¢æ¿
+    /// </summary>
     public class BuildMenuPanel : BasePanel<BuildMenuPanel>
     {
-        public SelectItemData Select { set; get; }
-
         public BuildMenuPanel()
         {
-            Name = "BuildMenu";
-            Select = new SelectItemData();
-            setPanel();
-            Tool.GetComponentInChildren<Button>(panel, "BackGame").onClick.AddListener(OnClick_BackGame);
-            Tool.GetComponentInChildren<Button>(panel, "StartBuild").onClick.AddListener(OnClick_StartBuild);
+            this.Name = "BuildMenu";
+            this.Select = new SelectItemData();
+            this.OpenPanel();
+            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
+            Tool.GetComponentInChildren<Button>(this.Panel, "StartBuild").onClick.AddListener(this.OnClick_StartBuild);
         }
 
+        /// <summary>
+        /// é€‰æ‹©çš„å»ºé€ ç‰©å“
+        /// </summary>
+        public SelectItemData Select { get; set; }
+
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
-            // ½øÈëÓÎÏ·Ö÷½çÃæ
-            controller.show(ForegroundPanel.Instance);
+
+            // è¿›å…¥æ¸¸æˆä¸»ç•Œé¢
+            this.Controller.Show(ForegroundPanel.Instance);
         }
 
+        /// <summary>
+        /// å…³é—­é¢æ¿
+        /// </summary>
         public void OnClick_BackGame()
         {
-            controller.close();
+            this.Controller.Close();
         }
 
+        /// <summary>
+        /// å¼€å§‹å»ºé€ 
+        /// </summary>
         public void OnClick_StartBuild()
         {
             // GameObject g = PrefabManager.Instance.getByAll(Select.itemData.itemName);
-            // ¹Ø±ÕËùÓĞÃæ°å
-            while (controller.Panels.Count > 0)
+            // å…³é—­æ‰€æœ‰é¢æ¿
+            while (this.Controller.Panels.Count > 0)
             {
-                controller.close();
+                this.Controller.Close();
             }
+
             BuildingUI.Instance.enabled = true;
         }
     }
 }
-

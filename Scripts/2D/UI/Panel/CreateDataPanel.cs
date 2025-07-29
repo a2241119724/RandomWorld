@@ -1,79 +1,90 @@
-using Photon.Pun;
-using Photon.Realtime;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using Photon.Pun;
+    using Photon.Realtime;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// åˆ›å»ºåœ°å›¾é¢æ¿
+    /// </summary>
     public class CreateDataPanel : BasePanel<CreateDataPanel>
     {
-        private int height = 548; // µØÍ¼×İÏò³¤¶È
-        private int width = 548; // µØÍ¼ºáÏò³¤¶È
-        private int maxEnemyCount = 548; // µĞÈËÊıÁ¿
+        private int height = 548; // åœ°å›¾çºµå‘é•¿åº¦
+        private int width = 548; // åœ°å›¾æ¨ªå‘é•¿åº¦
+        private int maxEnemyCount = 548; // æ•Œäººæ•°é‡
 
         public CreateDataPanel()
         {
-            Name = "CreateData";
-            setPanel();
-            Transform g1 = Tool.GetComponentInChildren<Transform>(panel, "MapHeight");
+            this.Name = "CreateData";
+            this.OpenPanel();
+            Transform g1 = Tool.GetComponentInChildren<Transform>(this.Panel, "MapHeight");
             Slider s1 = g1.Find("Bar").GetComponent<Slider>();
-            height = (int)s1.value;
-            g1.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener(delegate (float value)
+            this.height = (int)s1.value;
+            g1.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener(delegate(float value)
             {
-                height = (int)Mathf.Floor(g1.Find("Bar").GetComponent<Slider>().value);
-                g1.Find("Count").GetComponent<Text>().text = height.ToString();
+                this.height = (int)Mathf.Floor(g1.Find("Bar").GetComponent<Slider>().value);
+                g1.Find("Count").GetComponent<Text>().text = this.height.ToString();
             });
-            Transform g2 = Tool.GetComponentInChildren<Transform>(panel, "MapWidth");
+            Transform g2 = Tool.GetComponentInChildren<Transform>(this.Panel, "MapWidth");
             Slider s2 = g2.Find("Bar").GetComponent<Slider>();
-            width = (int)s2.value;
+            this.width = (int)s2.value;
             g2.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener((value) =>
             {
-                width = (int)Mathf.Floor(g2.Find("Bar").GetComponent<Slider>().value);
-                g2.Find("Count").GetComponent<Text>().text = width.ToString();
+                this.width = (int)Mathf.Floor(g2.Find("Bar").GetComponent<Slider>().value);
+                g2.Find("Count").GetComponent<Text>().text = this.width.ToString();
             });
-            Transform g3 = Tool.GetComponentInChildren<Transform>(panel, "EnemyCount");
+            Transform g3 = Tool.GetComponentInChildren<Transform>(this.Panel, "EnemyCount");
             Slider s3 = g3.Find("Bar").GetComponent<Slider>();
-            maxEnemyCount = (int)s3.value;
+            this.maxEnemyCount = (int)s3.value;
             g3.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener((value) =>
             {
-                maxEnemyCount = (int)Mathf.Floor(g3.Find("Bar").GetComponent<Slider>().value);
-                g3.Find("Count").GetComponent<Text>().text = maxEnemyCount.ToString();
+                this.maxEnemyCount = (int)Mathf.Floor(g3.Find("Bar").GetComponent<Slider>().value);
+                g3.Find("Count").GetComponent<Text>().text = this.maxEnemyCount.ToString();
             });
-            Tool.GetComponentInChildren<Button>(panel, "StartCreate").onClick.AddListener(Onclick_StartCreate);
+            Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.Onclick_StartCreate);
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
-            controller.show(AsyncProgressPanel.Instance);
+            this.Controller.Show(AsyncProgressPanel.Instance);
         }
 
         /// <summary>
-        /// ´´½¨µØÍ¼,µĞÈË,Íæ¼Ò,µÀ¾ßµÈÎïÌå
+        /// åˆ›å»ºåœ°å›¾,æ•Œäºº,ç©å®¶,é“å…·ç­‰ç‰©ä½“
         /// </summary>
-        private void Onclick_StartCreate() {
-            if (PhotonNetwork.NetworkClientState != ClientState.Joined 
+        private void Onclick_StartCreate()
+        {
+            if (PhotonNetwork.NetworkClientState != ClientState.Joined
                 && NetworkConnect.Instance.IsOnline)
             {
-                GlobalInit.Instance.showTip("ÇëÉÔºóÔÙÊÔ");
+                GlobalInit.Instance.ShowTip("è¯·ç¨åå†è¯•");
                 return;
             }
-            controller.close();
+
+            this.Controller.Close();
+
             // TileMap
-            TileMap.Instance.setProgress(height, width);
-            Coroutine coroutine = TileMap.Instance.StartCoroutine(TileMap.Instance.create());
+            TileMap.Instance.SetProgress(this.height, this.width);
+            Coroutine coroutine = TileMap.Instance.StartCoroutine(TileMap.Instance.Create());
+
             // ResourceMap
-            ResourceMap.Instance.setProgress();
-            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.genResource(coroutine));
+            ResourceMap.Instance.SetProgress();
+            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.GenResource(coroutine));
+
             // EnemyManager
-            EnemyManager.Instance.MaxEnemyCount = maxEnemyCount;
-            AsyncProgressUI.Instance.complete += () => {
-                PlayerManager.Instance.create();
+            EnemyManager.Instance.MaxEnemyCount = this.maxEnemyCount;
+            AsyncProgressUI.Instance.Complete += () =>
+            {
+                PlayerManager.Instance.Create();
             };
         }
     }

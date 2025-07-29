@@ -1,18 +1,22 @@
-using Photon.Pun;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// 玩家创建器
+    /// </summary>
     public class PlayerCreator : CharacterCreator<PlayerCreator>
     {
         /// <summary>
-        /// ʵ�������
+        /// 实例化玩家
         /// </summary>
-        protected override GameObject _create(Vector3 worldPos, string name, string layer)
+        /// <param name="worldPos">玩家世界坐标</param>
+        /// <param name="name">玩家名字</param>
+        /// <param name="layer">玩家层级</param>
+        /// <returns>游戏对象</returns>
+        protected override GameObject DoCreate(Vector3 worldPos, string name, string layer)
         {
-            return base._create(worldPos, "Player", "Player");
+            return base.DoCreate(worldPos, "Player", "Player");
         }
     }
 }

@@ -1,42 +1,51 @@
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// 全局数据
+    /// </summary>
     public static class GlobalData
     {
         /// <summary>
-        /// �Ƿ���2D��Ϸ(δ��)
+        /// 打包类型(未用)
         /// </summary>
-        public static bool is2D = true;
+        public static readonly PackageTypeEnum PackageType = PackageTypeEnum.PC;
 
         /// <summary>
-        /// �������(δ��)
+        /// 是否是2D游戏(未用)
         /// </summary>
-        public static readonly PackageType packageType = PackageType.PC;
+        public static bool Is2D = true;
 
         /// <summary>
-        /// �Ƿ�������Ϸ
+        /// 是否是新游戏
         /// </summary>
-        public static bool isNew = true;
+        public static bool IsNew = true;
 
         /// <summary>
-        /// һ���ʵ��ʱ��
+        /// 一天的实际时间
         /// </summary>
-        public static float dayTime = 30 * 60.0f;
+        public static float DayTime = 30 * 60.0f;
 
+        /// <summary>
+        /// 用户数据文件路径
+        /// </summary>
         public static class ConfigFile
         {
-            // C:\Users\*\AppData\LocalLow\*\First_Version
+            /// <summary>
+            /// 用户数据文件路径C:\Users\*\AppData\LocalLow\*\First_Version
+            /// </summary>
             public static string UserDataFilePath = Application.persistentDataPath + "/user.json";
 
-            public static string getPath(string name) {
-                return Application.persistentDataPath + "/" + name + ".lab";
+            /// <summary>
+            /// 获取文件路径
+            /// </summary>
+            /// <param name="name">类名</param>
+            /// <returns>文件路径</returns>
+            public static string GetPath(string name)
+            {
+                return Application.persistentDataPath + "/Data/" + name + ".lab";
             }
         }
-    }
-
-    public enum PackageType { 
-        Android,
-        PC
     }
 }

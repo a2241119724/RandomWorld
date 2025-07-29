@@ -1,36 +1,40 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using UnityEngine;
-
-namespace LAB2D
+Ôªønamespace LAB2D
 {
+    using System.Collections;
+    using System.Collections.Generic;
+
+    /// <summary>
+    /// Âª∫ÈÄ†Êï∞ÊçÆÊ®°Âûã
+    /// </summary>
     public class BuildModel : MVCModel
     {
-        public BuildModel() : base(ItemType.Room, ItemType.BuildOther)
+        public BuildModel()
+            : base(Item.ItemType.Room, Item.ItemType.BuildOther)
         {
         }
 
-        /// <summary>
-        /// º”‘ÿ ˝æ›
-        /// </summary>
-        /// <returns> «∑Ò”– ˝æ›</returns>
-        public override void loadData()
+        /// <inheritdoc/>
+        public override void LoadData()
         {
-            Dictionary<ItemType, ArrayList> data = Tool.loadDataByBinary<Dictionary<ItemType, ArrayList>>(GlobalData.ConfigFile.getPath(this.GetType().Name));
-            //Dictionary<BuildType, ArrayList> data = Tool.loadDataByJson<Dictionary<BuildType, ArrayList>>(GlobalData.ConfigFile.BuildDataFilePath);
-            if (data == null) return;
-            itemDict = data;
+            Dictionary<Item.ItemType, ArrayList> data = Tool.LoadDataByBinary<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+
+            // Dictionary<BuildType, ArrayList> data = Tool.loadDataByJson<Dictionary<BuildType, ArrayList>>(GlobalData.ConfigFile.BuildDataFilePath);
+            if (data == null)
+            {
+                return;
+            }
+
+            this.ItemDict = data;
         }
 
         /// <summary>
-        /// ±£¥Ê ˝æ›
+        /// ‰øùÂ≠òÊï∞ÊçÆ
         /// </summary>
-        public override void saveData()
+        public override void SaveData()
         {
-            Tool.saveDataByBinary(GlobalData.ConfigFile.getPath(this.GetType().Name), itemDict);
-            //Tool.saveDataByJson(GlobalData.ConfigFile.BuildDataFilePath, itemDict);
+            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.ItemDict);
+
+            // Tool.saveDataByJson(GlobalData.ConfigFile.BuildDataFilePath, itemDict);
         }
     }
 }

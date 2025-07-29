@@ -1,19 +1,22 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+
+    /// <summary>
+    /// 戒指
+    /// </summary>
     [Serializable]
     public abstract class Ring : Equipment
     {
         public Ring()
         {
-            equipType = EquipType.Ring;
+            this.EquipTypeValue = EquipType.Ring;
         }
     }
 
+    /// <summary>
+    /// 戒指对象
+    /// </summary>
     public abstract class RingObject : EquipmentObject
     {
     }

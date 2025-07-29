@@ -1,69 +1,94 @@
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// ç©å®¶çŠ¶æ€ UI
+    /// </summary>
     public class PlayerStatusUI : MonoBehaviour
     {
+        private Text hp; // æ˜¾ç¤ºç©å®¶è¡€é‡,è“é‡,ç­‰çº§
+        private Text mp;
+        private Text level;
+        private Slider barHp; // ç©å®¶è¡€é‡,è“é‡,ç­‰çº§è¿›åº¦æ¡
+        private Slider barMp;
+        private Slider barLevel;
+
+        /// <summary>
+        /// å•ä¾‹
+        /// </summary>
         public static PlayerStatusUI Instance { get; private set; }
 
-        private Text HpValue, MpValue, LevelValue; // ÏÔÊ¾Íæ¼ÒÑªÁ¿,À¶Á¿,µÈ¼¶
-        private Slider HpBar, MpBar, LevelBar; // Íæ¼ÒÑªÁ¿,À¶Á¿,µÈ¼¶½ø¶ÈÌõ
+        /// <summary>
+        /// æ›´æ–°ç©å®¶çŠ¶æ€
+        /// </summary>
+        /// <param name="hp">è¡€é‡</param>
+        /// <param name="maxHp">æœ€å¤§è¡€é‡</param>
+        /// <param name="mp">è“é‡</param>
+        /// <param name="maxMp">æœ€å¤§è“é‡</param>
+        /// <param name="level">ç­‰çº§</param>
+        /// <param name="currentExperience">å½“å‰ç»éªŒ</param>
+        /// <param name="maxExperience">å½“å‰ç­‰çº§çš„æœ€å¤§ç»éªŒ</param>
+        public void UpdatePlayerState(float hp, float maxHp, int mp, int maxMp, int level, int currentExperience, int maxExperience)
+        {
+            // æ˜¾ç¤ºè¡€é‡,è“é‡,ç»éªŒå€¼
+            this.hp.text = " Hp               " + hp + "/" + maxHp;
+            this.mp.text = " Mp               " + mp + "/" + maxMp;
+            this.level.text = " Level:" + level + "           " + currentExperience + "/" + maxExperience;
+            this.barHp.value = hp / (float)maxHp;
+            this.barMp.value = mp / (float)maxMp;
+            this.barLevel.value = currentExperience / (float)maxExperience;
+        }
 
-        void Awake()
+        private void Awake()
         {
             Instance = this;
         }
 
-        void OnEnable()
+        private void OnEnable()
         {
-            HpValue = transform.Find("State/Hp/HpValue").GetComponent<Text>();
-            if (HpValue == null)
+            this.hp = this.transform.Find("State/Hp/HpValue").GetComponent<Text>();
+            if (this.hp == null)
             {
-                LogManager.Instance.log("HpValue Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("HpValue Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
-            MpValue = transform.Find("State/Mp/MpValue").GetComponent<Text>();
-            if (MpValue == null)
-            {
-                LogManager.Instance.log("MpValue Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-            LevelValue = transform.Find("State/Level/LevelValue").GetComponent<Text>();
-            if (LevelValue == null)
-            {
-                LogManager.Instance.log("LevelValue Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-            HpBar = transform.Find("State/Hp/HpBar").GetComponent<Slider>();
-            if (HpBar == null)
-            {
-                LogManager.Instance.log("HpBar Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-            MpBar = transform.Find("State/Mp/MpBar").GetComponent<Slider>();
-            if (MpBar == null)
-            {
-                LogManager.Instance.log("MpBar Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-            LevelBar = transform.Find("State/Level/LevelBar").GetComponent<Slider>();
-            if (LevelBar == null)
-            {
-                LogManager.Instance.log("LevelBar Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-        }
 
-        public void updatePlayerState(float Hp, float maxHp, int Mp, int maxMp, int Level, int currentExperience, int maxExperience)
-        {
-            // ÏÔÊ¾ÑªÁ¿,À¶Á¿,¾­ÑéÖµ
-            HpValue.text = " Hp               " + Hp + "/" + maxHp;
-            MpValue.text = " Mp               " + Mp + "/" + maxMp;
-            LevelValue.text = " Level:" + Level + "           " + currentExperience + "/" + maxExperience;
-            HpBar.value = Hp / (float)maxHp;
-            MpBar.value = Mp / (float)maxMp;
-            LevelBar.value = currentExperience / (float)maxExperience;
+            this.mp = this.transform.Find("State/Mp/MpValue").GetComponent<Text>();
+            if (this.mp == null)
+            {
+                LogManager.Instance.Log("MpValue Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.level = this.transform.Find("State/Level/LevelValue").GetComponent<Text>();
+            if (this.level == null)
+            {
+                LogManager.Instance.Log("LevelValue Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.barHp = this.transform.Find("State/Hp/HpBar").GetComponent<Slider>();
+            if (this.barHp == null)
+            {
+                LogManager.Instance.Log("HpBar Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.barMp = this.transform.Find("State/Mp/MpBar").GetComponent<Slider>();
+            if (this.barMp == null)
+            {
+                LogManager.Instance.Log("MpBar Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.barLevel = this.transform.Find("State/Level/LevelBar").GetComponent<Slider>();
+            if (this.barLevel == null)
+            {
+                LogManager.Instance.Log("LevelBar Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
         }
     }
 }

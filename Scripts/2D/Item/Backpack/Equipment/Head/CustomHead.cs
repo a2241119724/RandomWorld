@@ -1,20 +1,23 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 自定义帽子
+    /// </summary>
     [Serializable]
     public class CustomHead : Head
     {
         public CustomHead()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomHead");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomHead");
         }
     }
 
+    /// <summary>
+    /// 自定义帽子对象
+    /// </summary>
     public class CustomHeadObject : HeadObject
     {
     }

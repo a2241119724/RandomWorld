@@ -1,574 +1,469 @@
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using UnityEngine;
+
+    /// <summary>
+    /// ä»“åº“ç®¡ç†
+    /// </summary>
     public class InventoryManager : Singleton<InventoryManager>
     {
-        /// <summary>
-        /// Í¬Ò»¸öÀàĞÍ¶ÔÓ¦µÄËùÓĞÎ»ÖÃ
-        /// </summary>
-        public Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> TypeToResource { get; set; }
+        private readonly Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> id2Resource; // åŒä¸€ä¸ªidå¯¹åº”çš„æ‰€æœ‰ä½ç½®
+        private readonly Dictionary<Vector3Int, ResourceInfo> posToResource; // æ ¹æ®posæŸ¥èµ„æº
+        private readonly Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // é¢„ç”³è¯·èµ„æº
+        private readonly Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // é¢„æ”¾ç½®èµ„æº
+        private readonly int capacity = 1000; // å•ä¸ªcellçš„å®¹é‡
 
-        /// <summary>
-        /// ¸ù¾İpos²é×ÊÔ´
-        /// </summary>
-        private Dictionary<Vector3Int, ResourceInfo> posToResource;
-        /// <summary>
-        /// Í¬Ò»¸öid¶ÔÓ¦µÄËùÓĞÎ»ÖÃ
-        /// </summary>
-        private Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> idToResource;
-        /// <summary>
-        /// Ô¤ÉêÇë×ÊÔ´
-        /// </summary>
-        private Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>> preTakeResource;
-        /// <summary>
-        /// Ô¤·ÅÖÃ×ÊÔ´
-        /// </summary>
-        private Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource;
-        /// <summary>
-        /// µ¥¸öcellµÄÈİÁ¿
-        /// </summary>
-        private int capacity = 1000;
-
-        public InventoryManager() {
-            posToResource = new Dictionary<Vector3Int, ResourceInfo>();
-            idToResource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
-            preTakeResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
-            prePlaceResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
-            TypeToResource = new Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>>();
+        public InventoryManager()
+        {
+            this.posToResource = new Dictionary<Vector3Int, ResourceInfo>();
+            this.id2Resource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
+            this.preTakeResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
+            this.prePlaceResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
+            this.TypeToResource = new Dictionary<Item.ItemType, Dictionary<Vector3Int, ResourceInfo>>();
         }
 
         /// <summary>
-        /// ĞÂ½¨²Ö¿âÊ±£¬²åÈëcell
-        /// posToResource,idToResource,typeToResourceÖĞµÄResourceInfo¹«ÓÃ
+        /// åŒä¸€ä¸ªç±»å‹å¯¹åº”çš„æ‰€æœ‰ä½ç½®
         /// </summary>
-        /// <param name="startPos"></param>
-        /// <param name="width"></param>
-        /// <param name="length"></param>
-        public void addCells(Vector3Int startPos, int width = 10, int length = 7)
+        public Dictionary<Item.ItemType, Dictionary<Vector3Int, ResourceInfo>> TypeToResource { get; set; }
+
+        /// <summary>
+        /// æ–°å»ºä»“åº“æ—¶ï¼Œæ’å…¥cell
+        /// posToResource,idToResource,typeToResourceä¸­çš„ResourceInfoå…¬ç”¨
+        /// </summary>
+        /// <param name="startPos">èµ·å§‹ä½ç½®</param>
+        /// <param name="width">å®½åº¦</param>
+        /// <param name="length">é«˜åº¦</param>
+        public void AddCells(Vector3Int startPos, int width = 10, int length = 7)
         {
-            // Íâ²ã×ÖµäĞèÒª¿½±´,ÓÉÓÚidToÖĞ½ö°üº¬ÏàÍ¬idµÄĞÅÏ¢
-            if(!idToResource.ContainsKey(-1))
+            // å¤–å±‚å­—å…¸éœ€è¦æ‹·è´,ç”±äºidToä¸­ä»…åŒ…å«ç›¸åŒidçš„ä¿¡æ¯
+            if (!this.id2Resource.ContainsKey(-1))
             {
-                idToResource.Add(-1, new Dictionary<Vector3Int, ResourceInfo>());
+                this.id2Resource.Add(-1, new Dictionary<Vector3Int, ResourceInfo>());
             }
-            Dictionary<Vector3Int, ResourceInfo> idTo = idToResource[-1];
-            if(!TypeToResource.ContainsKey(ItemType.Null))
+
+            Dictionary<Vector3Int, ResourceInfo> resources = this.id2Resource[-1];
+            if (!this.TypeToResource.ContainsKey(Item.ItemType.Null))
             {
-                TypeToResource.Add(ItemType.Null, new Dictionary<Vector3Int, ResourceInfo>());
+                this.TypeToResource.Add(Item.ItemType.Null, new Dictionary<Vector3Int, ResourceInfo>());
             }
-            Dictionary<Vector3Int, ResourceInfo> typeTo = TypeToResource[ItemType.Null];
+
+            Dictionary<Vector3Int, ResourceInfo> typeTo = this.TypeToResource[Item.ItemType.Null];
             for (int i = 0; i < length; i++)
             {
                 for (int j = 0; j < width; j++)
                 {
-                    Vector3Int pos = Tool.add(startPos, i, j);
-                    ResourceInfo resourceInfo = new ResourceInfo(-1, 0);
-                    posToResource.Add(pos, resourceInfo);
-                    idTo.Add(pos, resourceInfo);
+                    Vector3Int pos = Tool.Add(startPos, i, j);
+                    ResourceInfo resourceInfo = new (-1, 0);
+                    this.posToResource.Add(pos, resourceInfo);
+                    resources.Add(pos, resourceInfo);
                     typeTo.Add(pos, resourceInfo);
                 }
             }
         }
 
         /// <summary>
-        /// µÃµ½Ò»¸öÔ¤·ÅÖÃµÄÎ»ÖÃ
+        /// å¾—åˆ°ä¸€ä¸ªé¢„æ”¾ç½®çš„ä½ç½®
         /// </summary>
-        /// <param name="worker"></param>
-        /// <returns></returns>
-        public Vector3Int getPosByPrePlace(Worker worker)
+        /// <param name="worker">Worker</param>
+        /// <returns>ä½ç½®</returns>
+        public Vector3Int GetPosByPrePlace(Worker worker)
         {
-            if (prePlaceResource.ContainsKey(worker))
+            if (this.prePlaceResource.ContainsKey(worker))
             {
-                return prePlaceResource[worker].First().Key;
+                return this.prePlaceResource[worker].First().Key;
             }
-            LogManager.Instance.log("Ã»ÓĞÔ¤·ÅÖÃ×ÊÔ´", LogManager.LogLevel.Error);
+
+            LogManager.Instance.Log("æ²¡æœ‰é¢„æ”¾ç½®èµ„æº", LogManager.LogLevel.Error);
             return default;
         }
 
         /// <summary>
-        /// Èç¹û×ã¹»·ÅÖÃ£¬ÄÇÃ´Ô¤·ÅÖÃ×ÊÔ´
+        /// å¦‚æœè¶³å¤Ÿæ”¾ç½®ï¼Œé‚£ä¹ˆé¢„æ”¾ç½®èµ„æº
         /// </summary>
-        /// <param name="worker"></param>
-        /// <param name="resourceInfo"></param>
-        /// <returns></returns>
-        public bool isEnoughAndPrePlace(Worker worker, ResourceInfo resourceInfo, bool isPre = false)
+        /// <param name="worker">Worker</param>
+        /// <param name="resourceInfo">èµ„æºä¿¡æ¯</param>
+        /// <param name="isPre">æ˜¯å¦éœ€è¦é¢„æ”¾ç½®</param>
+        /// <returns>æ˜¯å¦è¶³å¤Ÿ</returns>
+        public bool IsEnoughAndPrePlace(Worker worker, ResourceInfo resourceInfo, bool isPre = false)
         {
-            // ¶ÔÓÚ²»¿É¶ÑµşµÄ×ÊÔ´
-            if (!ItemDataManager.Instance.getById(resourceInfo.id).isStackable)
+            // å¯¹äºä¸å¯å †å çš„èµ„æº
+            if (!ItemDataManager.Instance.GetById(resourceInfo.Id).IsStackable)
             {
-                if (idToResource.ContainsKey(-1))
+                if (this.id2Resource.ContainsKey(-1))
                 {
-                    foreach (KeyValuePair<Vector3Int, ResourceInfo> cell in idToResource[-1])
+                    foreach (KeyValuePair<Vector3Int, ResourceInfo> cell in this.id2Resource[-1])
                     {
-                        // ¸ÃÎ»ÖÃÃ»ÓĞ±»Ô¤·ÅÖÃ
-                        if (isAreadyPrePlace(cell.Key, resourceInfo.id)) continue;
+                        // è¯¥ä½ç½®æ²¡æœ‰è¢«é¢„æ”¾ç½®
+                        if (this.IsAreadyPrePlace(cell.Key, resourceInfo.Id))
+                        {
+                            continue;
+                        }
+
                         if (isPre)
                         {
-                            prePlace(worker, cell.Key, resourceInfo);
+                            this.PrePlace(worker, cell.Key, resourceInfo);
                         }
+
                         return true;
                     }
                 }
+
                 return false;
             }
-            // ¶ÔÓÚ¿ÉÒÔ¶ÑµşµÄ×ÊÔ´£¬ÏÈÅĞ¶ÏÊÇ·ñÓĞÏàÍ¬µÄ×ÊÔ´
-            Dictionary<Vector3Int, ResourceInfo> pre = new Dictionary<Vector3Int, ResourceInfo>();
-            int remaining = resourceInfo.count;
-            // Èô²Ö¿âÖĞ´æÔÚ¸Ãid,¶ÔÓ¦Î»ÖÃµÄ×ÊÔ´ÊıÁ¿Óë¸ÃÎ»ÖÃÔ¤·ÅÖÃ×ÊÔ´µÄÊıÁ¿Ö®ºÍÊÇ·ñ³¬¹ıÈİÁ¿
-            if (idToResource.ContainsKey(resourceInfo.id))
+
+            // å¯¹äºå¯ä»¥å †å çš„èµ„æºï¼Œå…ˆåˆ¤æ–­æ˜¯å¦æœ‰ç›¸åŒçš„èµ„æº
+            Dictionary<Vector3Int, ResourceInfo> pre = new ();
+            int remaining = resourceInfo.Count;
+
+            // è‹¥ä»“åº“ä¸­å­˜åœ¨è¯¥id,å¯¹åº”ä½ç½®çš„èµ„æºæ•°é‡ä¸è¯¥ä½ç½®é¢„æ”¾ç½®èµ„æºçš„æ•°é‡ä¹‹å’Œæ˜¯å¦è¶…è¿‡å®¹é‡
+            if (this.id2Resource.ContainsKey(resourceInfo.Id))
             {
-                foreach (KeyValuePair<Vector3Int, ResourceInfo> cell in idToResource[resourceInfo.id])
+                foreach (KeyValuePair<Vector3Int, ResourceInfo> cell in this.id2Resource[resourceInfo.Id])
                 {
-                    if (cell.Value.count + getPrePlaceCountByPos(cell.Key) < capacity)
+                    if (cell.Value.Count + this.GetPrePlaceCountByPos(cell.Key) < this.capacity)
                     {
-                        int count = capacity - (cell.Value.count + getPrePlaceCountByPos(cell.Key));
-                        // ·ÅÖÃÍêÁË
+                        int count = this.capacity - (cell.Value.Count + this.GetPrePlaceCountByPos(cell.Key));
+
+                        // æ”¾ç½®å®Œäº†
                         if (remaining <= count)
                         {
                             if (isPre)
                             {
-                                pre.Add(cell.Key, new ResourceInfo(resourceInfo.id, remaining));
+                                pre.Add(cell.Key, new ResourceInfo(resourceInfo.Id, remaining));
                                 foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in pre)
                                 {
-                                    prePlace(worker, pair.Key, pair.Value);
+                                    this.PrePlace(worker, pair.Key, pair.Value);
                                 }
                             }
+
                             return true;
                         }
-                        // Ã»ÓĞ·ÅÖÃÍê
+
+                        // æ²¡æœ‰æ”¾ç½®å®Œ
                         else
                         {
                             if (isPre)
                             {
-                                pre.Add(cell.Key, new ResourceInfo(resourceInfo.id, count));
+                                pre.Add(cell.Key, new ResourceInfo(resourceInfo.Id, count));
                             }
+
                             remaining -= count;
                         }
                     }
                 }
-                // ¸Ãid¶ÔÓ¦µÄËùÓĞcellÂúÁË²»ÄÜ·ÅÖÃ×ÊÔ´£¬ĞèÒªÑ°ÕÒ¿ÕµÄcell
+
+                // è¯¥idå¯¹åº”çš„æ‰€æœ‰cellæ»¡äº†ä¸èƒ½æ”¾ç½®èµ„æºï¼Œéœ€è¦å¯»æ‰¾ç©ºçš„cell
             }
-            // ²Ö¿âÖĞÃ»ÓĞ¶ÔÓ¦idµÄcell,ĞèÒªÑ°ÕÒ¿ÕµÄcell
-            if (!idToResource.ContainsKey(-1))
+
+            // ä»“åº“ä¸­æ²¡æœ‰å¯¹åº”idçš„cell,éœ€è¦å¯»æ‰¾ç©ºçš„cell
+            if (!this.id2Resource.ContainsKey(-1))
             {
-                //LogManager.Instance.log("²Ö¿âÂúÁË", LogManager.LogLevel.Error);
+                // LogManager.Instance.log("ä»“åº“æ»¡äº†", LogManager.LogLevel.Error);
                 return false;
             }
-            // ÕÒµ½Ã»ÓĞÔ¤·ÅÖÃµÄÎ»ÖÃ
-            foreach (KeyValuePair<Vector3Int, ResourceInfo> cell in idToResource[-1])
+
+            // æ‰¾åˆ°æ²¡æœ‰é¢„æ”¾ç½®çš„ä½ç½®
+            foreach (KeyValuePair<Vector3Int, ResourceInfo> cell in this.id2Resource[-1])
             {
-                // ¸ÃÎ»ÖÃÃ»ÓĞ±»Ô¤·ÅÖÃ
-                if (!isAreadyPrePlace(cell.Key, resourceInfo.id))
+                // è¯¥ä½ç½®æ²¡æœ‰è¢«é¢„æ”¾ç½®
+                if (!this.IsAreadyPrePlace(cell.Key, resourceInfo.Id))
                 {
-                    int count = capacity - (cell.Value.count + getPrePlaceCountByPos(cell.Key));
-                    // ·ÅÖÃÍêÁË
+                    int count = this.capacity - (cell.Value.Count + this.GetPrePlaceCountByPos(cell.Key));
+
+                    // æ”¾ç½®å®Œäº†
                     if (remaining <= count)
                     {
                         if (isPre)
                         {
-                            pre.Add(cell.Key, new ResourceInfo(resourceInfo.id, remaining));
+                            pre.Add(cell.Key, new ResourceInfo(resourceInfo.Id, remaining));
                             foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in pre)
                             {
-                                prePlace(worker, pair.Key, pair.Value);
+                                this.PrePlace(worker, pair.Key, pair.Value);
                             }
                         }
+
                         return true;
                     }
-                    // Ã»ÓĞ·ÅÖÃÍê
+
+                    // æ²¡æœ‰æ”¾ç½®å®Œ
                     else
                     {
                         if (isPre)
                         {
-                            pre.Add(cell.Key, new ResourceInfo(resourceInfo.id, count));
+                            pre.Add(cell.Key, new ResourceInfo(resourceInfo.Id, count));
                         }
+
                         remaining -= count;
                     }
                 }
             }
-            // ÓĞ¿ÉÄÜ±»Ô¤·ÅÖÃÁË
-            LogManager.Instance.log("²Ö¿âÂúÁË", LogManager.LogLevel.Error);
+
+            // æœ‰å¯èƒ½è¢«é¢„æ”¾ç½®äº†
+            LogManager.Instance.Log("ä»“åº“æ»¡äº†", LogManager.LogLevel.Error);
             return false;
         }
 
         /// <summary>
-        /// ¸ÃÎ»ÖÃÊÇ·ñÓĞÆäËûidÒÑ¾­Ô¤·ÅÖÃ
+        /// åˆ¤æ–­ä»“åº“ä¸­æ˜¯å¦å¯¹åº”ç±»å‹çš„ç‰©å“ï¼Œå¹¶é¢„ç”³è¯·èµ„æº
+        /// TODO æ²¡æœ‰é¢„å–
         /// </summary>
-        /// <param name="pos"></param>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        private bool isAreadyPrePlace(Vector3Int pos, int id)
+        /// <param name="worker">Worker</param>
+        /// <param name="hungry">é¥¥é¥¿å€¼</param>
+        /// <param name="isPre">æ˜¯å¦é¢„å–é£Ÿç‰©</param>
+        /// <returns>æ˜¯å¦è¶³å¤Ÿ</returns>
+        public bool IsEnoughFoodAndPreTake(Worker worker, float hungry, bool isPre = false)
         {
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in prePlaceResource)
+            Dictionary<Vector3Int, ResourceInfo> foods = new ();
+            foreach (KeyValuePair<Vector3Int, ResourceInfo> food in this.TypeToResource[Item.ItemType.Food])
             {
-                // ÆäËûµÄidÒÑ¾­Ô¤·ÅÖÃÁË£¬»»ÏÂÒ»¸öCell
-                if (prePlace.Value.ContainsKey(pos) && prePlace.Value[pos].id != id)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
+                float hungry1 = food.Value.Count * 10.0f;
 
-        /// <summary>
-        /// Í¨¹ıid»ñÈ¡Ô¤·ÅÖÃ×ÊÔ´µÄÊıÁ¿
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        private int getPrePlaceCountById(int id) {
-            int count = 0;
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in prePlaceResource) {
-                foreach (KeyValuePair<Vector3Int, ResourceInfo> pre in prePlace.Value)
-                {
-                    if (pre.Value.id == id)
-                    {
-                        count += pre.Value.count;
-                    }
-                }
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Í¨¹ıpos»ñÈ¡Ô¤·ÅÖÃ×ÊÔ´µÄÊıÁ¿
-        /// </summary>
-        /// <param name="pos"></param>
-        /// <returns></returns>
-        private int getPrePlaceCountByPos(Vector3Int pos)
-        {
-            int count = 0;
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in prePlaceResource)
-            {
-                if (prePlace.Value.ContainsKey(pos))
-                {
-                    count += prePlace.Value.Count;
-                }
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Ô¤·ÅÖÃ×ÊÔ´£¬²»¹ÜÄÜ²»ÄÜÔÚ³¬³öÈİÁ¿Ö®Ç°·ÅÏÂ
-        /// </summary>
-        /// <param name="worker"></param>
-        /// <param name="pos"></param>
-        /// <param name="resourceInfo"></param>
-        private void prePlace(Worker worker, Vector3Int pos, ResourceInfo resourceInfo)
-        {
-            if (prePlaceResource.ContainsKey(worker))
-            {
-                if (prePlaceResource[worker].ContainsKey(pos))
-                {
-                    prePlaceResource[worker][pos].count += resourceInfo.count;
-                    ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
-                    return;
-                }
-                prePlaceResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
-                ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
-                return;
-            }
-            Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
-            dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
-            prePlaceResource.Add(worker, dict);
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
-        }
-
-        /// <summary>
-        /// ÅĞ¶Ï²Ö¿âÖĞÊÇ·ñ¶ÔÓ¦ÀàĞÍµÄÎïÆ·£¬²¢Ô¤ÉêÇë×ÊÔ´
-        /// TODOÃ»ÓĞÔ¤È¡
-        /// </summary>
-        /// <returns></returns>
-        public bool isEnoughFoodAndPreTake(Worker worker, float hungry, bool isPre = false) {
-            Dictionary<Vector3Int, ResourceInfo> foods = new Dictionary<Vector3Int, ResourceInfo>();
-            foreach (KeyValuePair<Vector3Int, ResourceInfo> food in TypeToResource[ItemType.Food])
-            {
-                float _hungry = food.Value.count * 10.0f;
-                // ×ã¹»³Ô±¥
-                if (_hungry >= hungry)
+                // è¶³å¤Ÿåƒé¥±
+                if (hungry1 >= hungry)
                 {
                     if (isPre)
                     {
-                        foods.Add(food.Key, new ResourceInfo(food.Value.id, (int)(hungry / 10.0f)));
+                        foods.Add(food.Key, new ResourceInfo(food.Value.Id, (int)(hungry / 10.0f)));
                         foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in foods)
                         {
-                            preTake(worker, pair.Key, pair.Value);
+                            this.PreTake(worker, pair.Key, pair.Value);
                         }
                     }
+
                     return true;
                 }
-                // µ±Ç°id³Ô²»±¥
+
+                // å½“å‰idåƒä¸é¥±
                 else
                 {
-                    hungry -= _hungry;
+                    hungry -= hungry1;
                     if (isPre)
                     {
                         foods.Add(food.Key, Tool.DeepCopyByBinary(food.Value));
                     }
                 }
             }
+
             return false;
         }
 
         /// <summary>
-        /// ÊÇ·ñ°üº¬ÖÖ×Ó²¢Ô¤È¡
+        /// æ˜¯å¦åŒ…å«ç§å­å¹¶é¢„å–
         /// </summary>
-        /// <param name="worker"></param>
-        /// <param name="isPre"></param>
-        /// <returns></returns>
-        public Vector3Int isContainSeedAndPreTake(Worker worker, bool isPre=false)
+        /// <param name="worker">Worker</param>
+        /// <param name="isPre">æ˜¯å¦é¢„å–ç§å­</param>
+        /// <returns>ä½ç½®</returns>
+        public Vector3Int IsContainSeedAndPreTake(Worker worker, bool isPre = false)
         {
-            if(!TypeToResource.ContainsKey(ItemType.Seed) || TypeToResource[ItemType.Seed].Count == 0) return default;
-            Dictionary<Vector3Int, ResourceInfo>.Enumerator enumerator = TypeToResource[ItemType.Seed].GetEnumerator();
+            if (!this.TypeToResource.ContainsKey(Item.ItemType.Seed) || this.TypeToResource[Item.ItemType.Seed].Count == 0)
+            {
+                return default;
+            }
+
+            Dictionary<Vector3Int, ResourceInfo>.Enumerator enumerator = this.TypeToResource[Item.ItemType.Seed].GetEnumerator();
             enumerator.MoveNext();
             if (isPre)
             {
-                preTake(worker, enumerator.Current.Key, enumerator.Current.Value);
+                this.PreTake(worker, enumerator.Current.Key, enumerator.Current.Value);
             }
+
             return enumerator.Current.Key;
         }
 
         /// <summary>
-        /// Ô¤È¡×ÊÔ´,Ã»ÓĞ¿¼ÂÇ³¬¹ıÈİÁ¿£¬ËùÒÔ·â×°ÎªisEnough
+        /// æ·»åŠ é“å…·
         /// </summary>
-        /// <param name="worker"></param>
-        /// <param name="pos"></param>
-        /// <param name="resourceInfo"></param>
-        private void preTake(Worker worker, Vector3Int pos, ResourceInfo resourceInfo)
+        /// <param name="posMap">ä½ç½®</param>
+        /// <param name="resourceInfo">èµ„æºä¿¡æ¯</param>
+        public void AddItem(Vector3Int posMap, ResourceInfo resourceInfo)
         {
-            if (!preTakeResource.ContainsKey(worker))
+            if (!this.posToResource.ContainsKey(posMap))
             {
-                Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
-                dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
-                preTakeResource.Add(worker, dict);
-                ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
-                return;
-            }
-            if (!preTakeResource[worker].ContainsKey(pos))
-            {
-                preTakeResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
-                ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
-                return;
-            }
-            preTakeResource[worker][pos].count += resourceInfo.count;
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, pos, ToString(pos));
-        }
-
-        public void addItem(Vector3Int posMap, ResourceInfo resourceInfo)
-        {
-            if (!posToResource.ContainsKey(posMap))
-            {
-                posToResource.Add(posMap, resourceInfo);
+                this.posToResource.Add(posMap, resourceInfo);
             }
             else
             {
-                if (resourceInfo.id != posToResource[posMap].id) return;
-                posToResource[posMap].count += resourceInfo.count;
+                if (resourceInfo.Id != this.posToResource[posMap].Id)
+                {
+                    return;
+                }
+
+                this.posToResource[posMap].Count += resourceInfo.Count;
             }
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, ToString(posMap));
+
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
         }
 
         /// <summary>
-        /// Í¨¹ıÔ¤·ÅÖÃÌí¼Ó
+        /// é€šè¿‡é¢„æ”¾ç½®æ·»åŠ 
         /// </summary>
-        /// <param name="worker"></param>
-        /// <param name="pos"></param>
-        /// <param name="resourceInfo"></param>
-        public ResourceInfo addItemByPrePlace(Worker worker, Vector3Int posMap)
+        /// <param name="worker">Worker</param>
+        /// <param name="posMap">ä½ç½®</param>
+        /// <returns>èµ„æºä¿¡æ¯</returns>
+        public ResourceInfo AddItemByPrePlace(Worker worker, Vector3Int posMap)
         {
-            if (!prePlaceResource[worker].ContainsKey(posMap))
+            if (!this.prePlaceResource[worker].ContainsKey(posMap))
             {
-                LogManager.Instance.log("Ã»ÓĞÔ¤·ÅÖÃ×ÊÔ´", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("æ²¡æœ‰é¢„æ”¾ç½®èµ„æº", LogManager.LogLevel.Error);
                 return null;
             }
-            ResourceInfo resourceInfo = prePlaceResource[worker][posMap];
-            // É¾³ıÔ¤·ÅÖÃµÄ×ÊÔ´
-            prePlaceResource[worker].Remove(posMap);
-            // Ìí¼Óµ½²Ö¿âÕæÕıµÄÊı¾İ
-            // ¼ÈÈ»ÒÑ¾­Ô¤·ÅÖÃÁË£¬ÄÇÒ»¶¨¿ÉÒÔ·ÅÖÃ£¬²»»á³¬³öÈİÁ¿
-            if (posToResource[posMap].id == -1)
+
+            ResourceInfo resourceInfo = this.prePlaceResource[worker][posMap];
+
+            // åˆ é™¤é¢„æ”¾ç½®çš„èµ„æº
+            this.prePlaceResource[worker].Remove(posMap);
+
+            // æ·»åŠ åˆ°ä»“åº“çœŸæ­£çš„æ•°æ®
+            // æ—¢ç„¶å·²ç»é¢„æ”¾ç½®äº†ï¼Œé‚£ä¸€å®šå¯ä»¥æ”¾ç½®ï¼Œä¸ä¼šè¶…å‡ºå®¹é‡
+            if (this.posToResource[posMap].Id == -1)
             {
-                transferResource(posMap, -1, resourceInfo.id, ItemType.Null, ItemDataManager.Instance.getTypeById(resourceInfo.id));
+                this.TransferResource(posMap, -1, resourceInfo.Id, Item.ItemType.Null, ItemDataManager.Instance.GetTypeById(resourceInfo.Id));
             }
-            posToResource[posMap].id = resourceInfo.id;
-            posToResource[posMap].count += resourceInfo.count;
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, ToString(posMap));
+
+            this.posToResource[posMap].Id = resourceInfo.Id;
+            this.posToResource[posMap].Count += resourceInfo.Count;
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
             return resourceInfo;
         }
 
         /// <summary>
-        /// »ñÈ¡Ò»¸öÔ¤Áô×ÊÔ´µÄÎ»ÖÃ
+        /// è·å–ä¸€ä¸ªé¢„ç•™èµ„æºçš„ä½ç½®
         /// </summary>
-        /// <param name="worker"></param>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public Vector3Int getPosByPreTake(Worker worker) {
-            if (preTakeResource.ContainsKey(worker))
+        /// <param name="worker">Worker</param>
+        /// <returns>ä½ç½®</returns>
+        public Vector3Int GetPosByPreTake(Worker worker)
+        {
+            if (this.preTakeResource.ContainsKey(worker))
             {
-                return preTakeResource[worker].First().Key;
+                return this.preTakeResource[worker].First().Key;
             }
-            LogManager.Instance.log("Ã»ÓĞÔ¤Áô×ÊÔ´", LogManager.LogLevel.Error);
+
+            LogManager.Instance.Log("æ²¡æœ‰é¢„ç•™èµ„æº", LogManager.LogLevel.Error);
             return default;
         }
 
-        private int getPreTakeCountByPos(Vector3Int pos)
+        /// <summary>
+        /// é€šè¿‡ä½ç½®åˆ é™¤æ‰€æœ‰çš„é“å…·
+        /// </summary>
+        /// <param name="posMap">ä½ç½®</param>
+        /// <returns>èµ„æºä¿¡æ¯</returns>
+        public ResourceInfo SubAllItemByPos(Vector3Int posMap)
         {
-            int count = 0;
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> preTake in preTakeResource)
+            if (!this.posToResource.ContainsKey(posMap))
             {
-                if (preTake.Value.ContainsKey(pos))
-                {
-                    count += preTake.Value[pos].count;
-                }
-            }
-            DebugUI.Instance.updateTaskInfo(pos + " " + count);
-            return count;
-        }
-
-        private int getPreTakeCountById(int id)
-        {
-            int count = 0;
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in preTakeResource)
-            {
-                foreach (KeyValuePair<Vector3Int, ResourceInfo> pre in prePlace.Value)
-                {
-                    if (pre.Value.id == id)
-                    {
-                        count += pre.Value.count;
-                    }
-                }
-            }
-            return count;
-        }
-
-        public ResourceInfo subAllItemByPos(Vector3Int posMap)
-        {
-            if (!posToResource.ContainsKey(posMap))
-            {
-                LogManager.Instance.log("Ã»ÓĞ×ÊÔ´£¬´íÎó", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("æ²¡æœ‰èµ„æºï¼Œé”™è¯¯", LogManager.LogLevel.Error);
                 return null;
             }
-            transferResource(posMap, posToResource[posMap].id, -1, ItemDataManager.Instance.getTypeById(posToResource[posMap].id), ItemType.Null);
-            ResourceInfo resourceInfo = Tool.DeepCopyByBinary(posToResource[posMap]);
-            posToResource[posMap].id = -1;
-            posToResource[posMap].count = 0;
-            ItemMap.Instance.hindTile(posMap);
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, ToString(posMap));
+
+            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
+            ResourceInfo resourceInfo = Tool.DeepCopyByBinary(this.posToResource[posMap]);
+            this.posToResource[posMap].Id = -1;
+            this.posToResource[posMap].Count = 0;
+            ItemMap.Instance.HindTile(posMap);
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
             return resourceInfo;
         }
 
-        public void subItem(Vector3Int posMap, ResourceInfo resourceInfo)
+        /// <summary>
+        /// åˆ é™¤å¯¹åº”æ•°é‡çš„é“å…·
+        /// </summary>
+        /// <param name="posMap">ä½ç½®</param>
+        /// <param name="resourceInfo">èµ„æºä¿¡æ¯</param>
+        public void SubItem(Vector3Int posMap, ResourceInfo resourceInfo)
         {
-            if (!posToResource.ContainsKey(posMap))
+            if (!this.posToResource.ContainsKey(posMap))
             {
-                LogManager.Instance.log("Ã»ÓĞ×ÊÔ´£¬´íÎó", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("æ²¡æœ‰èµ„æºï¼Œé”™è¯¯", LogManager.LogLevel.Error);
                 return;
             }
-            posToResource[posMap].count -= resourceInfo.count;
-            // Èç¹ûÕıºÃÈ¡Íê
-            if (posToResource[posMap].count == 0)
+
+            this.posToResource[posMap].Count -= resourceInfo.Count;
+
+            // å¦‚æœæ­£å¥½å–å®Œ
+            if (this.posToResource[posMap].Count == 0)
             {
-                transferResource(posMap, posToResource[posMap].id, -1, ItemDataManager.Instance.getTypeById(posToResource[posMap].id), ItemType.Null);
-                ItemMap.Instance.hindTile(posMap);
-                // Ê³Îï±»³ÔÍêÉ¾³ıÈÎÎñ
-                if (ItemDataManager.Instance.getTypeById(posToResource[posMap].id) == ItemType.Food)
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
+                ItemMap.Instance.HindTile(posMap);
+
+                // é£Ÿç‰©è¢«åƒå®Œåˆ é™¤ä»»åŠ¡
+                if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == Item.ItemType.Food)
                 {
-                    WorkerTaskManager.Instance.deleteHungryTask(posMap);
+                    WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
-                posToResource[posMap].id = -1;
+
+                this.posToResource[posMap].Id = -1;
             }
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, ToString(posMap));
+
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
         }
 
         /// <summary>
-        /// ¸ù¾İÔ¤È¡µÄ×ÊÔ´É¾³ı²Ö¿âÖĞµÄ¿â´æ
+        /// æ ¹æ®é¢„å–çš„èµ„æºåˆ é™¤ä»“åº“ä¸­çš„åº“å­˜
         /// </summary>
-        /// <param name="worker"></param>
-        /// <param name="posMap"></param>
-        /// <returns>·µ»Ø´Ó²Ö¿âÖĞ¿Û¼õµÄÊıÁ¿(Ô¤È¡µÄ×ÊÔ´)</returns>
-        public ResourceInfo subItemByPreTake(Worker worker, Vector3Int posMap) {
-            if (!preTakeResource[worker].ContainsKey(posMap))
+        /// <param name="worker">Worker</param>
+        /// <param name="posMap">ä½ç½®</param>
+        /// <returns>è¿”å›ä»ä»“åº“ä¸­æ‰£å‡çš„æ•°é‡(é¢„å–çš„èµ„æº)</returns>
+        public ResourceInfo SubItemByPreTake(Worker worker, Vector3Int posMap)
+        {
+            if (!this.preTakeResource[worker].ContainsKey(posMap))
             {
-                LogManager.Instance.log("Ã»ÓĞÔ¤È¡×ÊÔ´", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("æ²¡æœ‰é¢„å–èµ„æº", LogManager.LogLevel.Error);
                 return null;
             }
-            ResourceInfo resourceInfo = preTakeResource[worker][posMap];
-            // É¾³ıÔ¤È¡µÄ×ÊÔ´
-            preTakeResource[worker].Remove(posMap);
-            // ¼õÉÙ²Ö¿âÕæÕıµÄÊı¾İ
-            posToResource[posMap].count -= resourceInfo.count;
-            // Èç¹ûÕıºÃÈ¡Íê
-            if (posToResource[posMap].count == 0)
+
+            ResourceInfo resourceInfo = this.preTakeResource[worker][posMap];
+
+            // åˆ é™¤é¢„å–çš„èµ„æº
+            this.preTakeResource[worker].Remove(posMap);
+
+            // å‡å°‘ä»“åº“çœŸæ­£çš„æ•°æ®
+            this.posToResource[posMap].Count -= resourceInfo.Count;
+
+            // å¦‚æœæ­£å¥½å–å®Œ
+            if (this.posToResource[posMap].Count == 0)
             {
-                transferResource(posMap, posToResource[posMap].id, -1, ItemDataManager.Instance.getTypeById(posToResource[posMap].id), ItemType.Null);
-                ItemMap.Instance.hindTile(posMap);
-                // Ê³Îï±»³ÔÍêÉ¾³ıÈÎÎñ
-                if (ItemDataManager.Instance.getTypeById(posToResource[posMap].id) == ItemType.Food)
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
+                ItemMap.Instance.HindTile(posMap);
+
+                // é£Ÿç‰©è¢«åƒå®Œåˆ é™¤ä»»åŠ¡
+                if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == Item.ItemType.Food)
                 {
-                    WorkerTaskManager.Instance.deleteHungryTask(posMap);
+                    WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
-                posToResource[posMap].id = -1;
+
+                this.posToResource[posMap].Id = -1;
             }
-            ItemInfoUI.Instance.updateInfo(this.GetType().Name, posMap, ToString(posMap));
-            // ²»¹»£¬¼ÈÈ»ÎÒÒÑ¾­Ô¤È¡ÁË£¬ÄÇËµÃ÷¿Ï¶¨ÊÇ¹»µÄ
+
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
+
+            // ä¸å¤Ÿï¼Œæ—¢ç„¶æˆ‘å·²ç»é¢„å–äº†ï¼Œé‚£è¯´æ˜è‚¯å®šæ˜¯å¤Ÿçš„
             return resourceInfo;
         }
 
         /// <summary>
-        /// ¸üĞÂidToResource,typeToResource
+        /// çœ‹æ˜¯å¦è¶³å¤Ÿï¼Œè‹¥è¶³å¤Ÿåˆ™é¢„ç”³è¯·èµ„æºï¼ŒæŒ‰ç…§workerå¯æºå¸¦æœ€å¤§èµ„æºé¢„å–
         /// </summary>
-        /// <param name="pos"></param>
-        /// <param name="oldId"></param>
-        /// <param name="newId"></param>
-        /// <param name="oldType"></param>
-        /// <param name="newType"></param>
-        private void transferResource(Vector3Int pos, int oldId, int newId, ItemType oldType, ItemType newType) {
-            // idToResource
-            idToResource[oldId].Remove(pos);
-            if (idToResource.ContainsKey(newId))
-            {
-                idToResource[newId].Add(pos, posToResource[pos]);
-            }
-            else
-            {
-                Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
-                dict.Add(pos, posToResource[pos]);
-                idToResource.Add(newId, dict);
-            }
-            // typeToResource
-            TypeToResource[oldType].Remove(pos);
-            if (TypeToResource.ContainsKey(newType))
-            {
-                TypeToResource[newType].Add(pos, posToResource[pos]);
-            }
-            else
-            {
-                Dictionary<Vector3Int, ResourceInfo> dict = new Dictionary<Vector3Int, ResourceInfo>();
-                dict.Add(pos, posToResource[pos]);
-                TypeToResource.Add(newType, dict);
-            }
-        }
-
-        /// <summary>
-        /// ¿´ÊÇ·ñ×ã¹»£¬Èô×ã¹»ÔòÔ¤ÉêÇë×ÊÔ´£¬°´ÕÕworker¿ÉĞ¯´ø×î´ó×ÊÔ´Ô¤È¡
-        /// </summary>
-        /// <param name="needResource"></param>
-        /// <param name="maxValue">×î´óÉêÇë×ÊÔ´µÄÊıÁ¿</param>
-        /// <returns></returns>
-        public bool isEnoughAndPreTake(Worker worker, Dictionary<int, ResourceInfo> needResource, bool isPre = false)
+        /// <param name="worker">Worker</param>
+        /// <param name="needResource">éœ€è¦çš„èµ„æº</param>
+        /// <param name="isPre">æ˜¯å¦é¢„å–èµ„æº</param>
+        /// <returns>æ˜¯å¦è¶³å¤Ÿ</returns>
+        public bool IsEnoughAndPreTake(Worker worker, Dictionary<int, ResourceInfo> needResource, bool isPre = false)
         {
             foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
-                if (idToResource.ContainsKey(need.Key))
+                if (this.id2Resource.ContainsKey(need.Key))
                 {
                     int count = 0;
-                    foreach (KeyValuePair<Vector3Int, ResourceInfo> resource in idToResource[need.Key])
+                    foreach (KeyValuePair<Vector3Int, ResourceInfo> resource in this.id2Resource[need.Key])
                     {
-                        count += resource.Value.count;
+                        count += resource.Value.Count;
                     }
-                    // id¶ÔÓ¦µÄ×ÜÊıÁ¿¼õÈ¥Ô¤È¡µÄ×ÊÔ´ÊıÁ¿£¬Ğ¡ÓÚĞèÇóÊıÁ¿£¬²»Âú×ã
-                    if (count - getPreTakeCountById(need.Key) < need.Value.count)
+
+                    // idå¯¹åº”çš„æ€»æ•°é‡å‡å»é¢„å–çš„èµ„æºæ•°é‡ï¼Œå°äºéœ€æ±‚æ•°é‡ï¼Œä¸æ»¡è¶³
+                    if (count - this.GetPreTakeCountById(need.Key) < need.Value.Count)
                     {
                         return false;
                     }
@@ -578,81 +473,287 @@ namespace LAB2D
                     return false;
                 }
             }
-            // Ô¤ÉêÇë×ÊÔ´
+
+            // é¢„ç”³è¯·èµ„æº
             if (isPre)
             {
                 foreach (KeyValuePair<int, ResourceInfo> need in needResource)
                 {
-                    // Ã¿¸öCellÔ¤È¡ÍêÖ®ºóÊ£ÓàCell¿ÉÔ¤È¡µÄÊıÁ¿,ÖÁÉÙÈ¡need.Value.count
-                    int remaining = Mathf.Max(need.Value.count, worker.MaxResourceCount);
-                    // °´ÕÕWorkerĞ¯´øµÄ×î´óÖµÔ¤È¡,Èç¹û²»¹»×î´óÖµ¾ÍÈ¡ÍêËùÓĞ×ÊÔ´
-                    foreach (KeyValuePair<Vector3Int, ResourceInfo> resource in idToResource[need.Key])
+                    // æ¯ä¸ªCellé¢„å–å®Œä¹‹åå‰©ä½™Cellå¯é¢„å–çš„æ•°é‡,è‡³å°‘å–need.Value.count
+                    int remaining = Mathf.Max(need.Value.Count, worker.MaxResourceCount);
+
+                    // æŒ‰ç…§Workeræºå¸¦çš„æœ€å¤§å€¼é¢„å–,å¦‚æœä¸å¤Ÿæœ€å¤§å€¼å°±å–å®Œæ‰€æœ‰èµ„æº
+                    foreach (KeyValuePair<Vector3Int, ResourceInfo> resource in this.id2Resource[need.Key])
                     {
-                        int count = resource.Value.count - getPreTakeCountByPos(resource.Key);
+                        int count = resource.Value.Count - this.GetPreTakeCountByPos(resource.Key);
                         if (count < remaining)
                         {
                             remaining -= count;
-                            preTake(worker, resource.Key, new ResourceInfo(need.Key, count));
+                            this.PreTake(worker, resource.Key, new ResourceInfo(need.Key, count));
                         }
                         else
                         {
-                            // µ±Ç°idÈ¡¹»ÁË£¬²»ĞèÒªÔÙÈ¡ÁË
-                            preTake(worker, resource.Key, new ResourceInfo(need.Key, remaining));
+                            // å½“å‰idå–å¤Ÿäº†ï¼Œä¸éœ€è¦å†å–äº†
+                            this.PreTake(worker, resource.Key, new ResourceInfo(need.Key, remaining));
                             break;
                         }
                     }
                 }
             }
+
             return true;
         }
 
         /// <summary>
-        /// µ±ÔÚ²Ö¿âÖĞµã»÷ÎäÆ÷»òÕß×°±¸Ê±£¬ÏÔÊ¾ĞèÒª´©´÷µÄWorkerÁĞ±í
+        /// å½“åœ¨ä»“åº“ä¸­ç‚¹å‡»æ­¦å™¨æˆ–è€…è£…å¤‡æ—¶ï¼Œæ˜¾ç¤ºéœ€è¦ç©¿æˆ´çš„Workeråˆ—è¡¨
         /// </summary>
-        /// <param name="pos"></param>
-        public void showWearMenu(Vector3Int pos)
+        /// <param name="pos">ä½ç½®</param>
+        public void ShowWearMenu(Vector3Int pos)
         {
-            ItemType itemType = ItemDataManager.Instance.getTypeById(posToResource[pos].id);
-            if (itemType == ItemType.Weapon || itemType == ItemType.Equipment) 
-            { 
-                WearTaskUI.Instance.showWearTask(pos);
+            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(this.posToResource[pos].Id);
+            if (itemType == Item.ItemType.Weapon || itemType == Item.ItemType.Equipment)
+            {
+                WearTaskUI.Instance.ShowWearTask(pos);
             }
         }
 
+        /// <summary>
+        /// ä»“åº“ä¿¡æ¯
+        /// </summary>
+        /// <param name="pos">ä½ç½®</param>
+        /// <returns>ä¿¡æ¯</returns>
         public string ToString(Vector3Int pos)
         {
-            if (!posToResource.ContainsKey(pos)) return "";
-            ResourceInfo resourceInfo = posToResource[pos];
-            string text = $"id:{resourceInfo.id}\n" +
-                $"count:{resourceInfo.count}\n" +
+            if (!this.posToResource.ContainsKey(pos))
+            {
+                return string.Empty;
+            }
+
+            ResourceInfo resourceInfo = this.posToResource[pos];
+            string text = $"id:{resourceInfo.Id}\n" +
+                $"count:{resourceInfo.Count}\n" +
                 $"prePlace:\n";
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in prePlaceResource)
+            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
                 if (prePlace.Value.ContainsKey(pos))
                 {
                     text += prePlace.Key.name + ":\n"
-                        + "    " + prePlace.Value[pos].id + " " + prePlace.Value[pos].count + "\n";
+                        + "    " + prePlace.Value[pos].Id + " " + prePlace.Value[pos].Count + "\n";
                 }
             }
+
             text += "preTake:\n";
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> preTake in preTakeResource)
+            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
             {
                 if (preTake.Value.ContainsKey(pos))
                 {
                     text += preTake.Key.name + ":\n"
-                        + "    " + preTake.Value[pos].id + " " + preTake.Value[pos].count + "\n";
+                        + "    " + preTake.Value[pos].Id + " " + preTake.Value[pos].Count + "\n";
                 }
             }
+
             return text;
         }
 
-        public ResourceInfo getByPos(Vector3Int posMap)
+        /// <summary>
+        /// é€šè¿‡ä½ç½®è·å–èµ„æº
+        /// </summary>
+        /// <param name="posMap">ä½ç½®</param>
+        /// <returns>èµ„æº</returns>
+        public ResourceInfo GetResourceByPos(Vector3Int posMap)
         {
-            if (posToResource.ContainsKey(posMap))
+            if (this.posToResource.ContainsKey(posMap))
             {
-                return posToResource[posMap];
+                return this.posToResource[posMap];
             }
+
             return null;
+        }
+
+        /// <summary>
+        /// é€šè¿‡posè·å–é¢„æ”¾ç½®èµ„æºçš„æ•°é‡
+        /// </summary>
+        /// <param name="pos">ä½ç½®</param>
+        /// <returns>é¢„æ”¾ç½®çš„æ•°é‡</returns>
+        private int GetPrePlaceCountByPos(Vector3Int pos)
+        {
+            int count = 0;
+            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
+            {
+                if (prePlace.Value.ContainsKey(pos))
+                {
+                    count += prePlace.Value.Count;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// é¢„æ”¾ç½®èµ„æºï¼Œä¸ç®¡èƒ½ä¸èƒ½åœ¨è¶…å‡ºå®¹é‡ä¹‹å‰æ”¾ä¸‹
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <param name="pos">ä½ç½®</param>
+        /// <param name="resourceInfo">èµ„æºä¿¡æ¯</param>
+        private void PrePlace(Worker worker, Vector3Int pos, ResourceInfo resourceInfo)
+        {
+            if (this.prePlaceResource.ContainsKey(worker))
+            {
+                if (this.prePlaceResource[worker].ContainsKey(pos))
+                {
+                    this.prePlaceResource[worker][pos].Count += resourceInfo.Count;
+                    ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
+                    return;
+                }
+
+                this.prePlaceResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+                ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
+                return;
+            }
+
+            Dictionary<Vector3Int, ResourceInfo> dict = new ();
+            dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+            this.prePlaceResource.Add(worker, dict);
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
+        }
+
+        /// <summary>
+        /// è¯¥ä½ç½®æ˜¯å¦æœ‰å…¶ä»–idå·²ç»é¢„æ”¾ç½®
+        /// </summary>
+        /// <param name="pos">ä½ç½®</param>
+        /// <param name="id">ID</param>
+        /// <returns>æ˜¯å¦å·²ç»é¢„æ”¾ç½®è¿‡äº†</returns>
+        private bool IsAreadyPrePlace(Vector3Int pos, int id)
+        {
+            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
+            {
+                // å…¶ä»–çš„idå·²ç»é¢„æ”¾ç½®äº†ï¼Œæ¢ä¸‹ä¸€ä¸ªCell
+                if (prePlace.Value.ContainsKey(pos) && prePlace.Value[pos].Id != id)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// é€šè¿‡idè·å–é¢„æ”¾ç½®èµ„æºçš„æ•°é‡
+        /// </summary>
+        /// <param name="id">ID</param>
+        /// <returns>é¢„æ”¾ç½®çš„æ•°é‡</returns>
+        private int GetPrePlaceCountById(int id)
+        {
+            int count = 0;
+            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
+            {
+                foreach (KeyValuePair<Vector3Int, ResourceInfo> pre in prePlace.Value)
+                {
+                    if (pre.Value.Id == id)
+                    {
+                        count += pre.Value.Count;
+                    }
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// é¢„å–èµ„æº,æ²¡æœ‰è€ƒè™‘è¶…è¿‡å®¹é‡ï¼Œæ‰€ä»¥å°è£…ä¸ºisEnough
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <param name="pos">ä½ç½®</param>
+        /// <param name="resourceInfo">èµ„æºä¿¡æ¯</param>
+        private void PreTake(Worker worker, Vector3Int pos, ResourceInfo resourceInfo)
+        {
+            if (!this.preTakeResource.ContainsKey(worker))
+            {
+                Dictionary<Vector3Int, ResourceInfo> dict = new ();
+                dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+                this.preTakeResource.Add(worker, dict);
+                ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
+                return;
+            }
+
+            if (!this.preTakeResource[worker].ContainsKey(pos))
+            {
+                this.preTakeResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+                ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
+                return;
+            }
+
+            this.preTakeResource[worker][pos].Count += resourceInfo.Count;
+            ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
+        }
+
+        private int GetPreTakeCountByPos(Vector3Int pos)
+        {
+            int count = 0;
+            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
+            {
+                if (preTake.Value.ContainsKey(pos))
+                {
+                    count += preTake.Value[pos].Count;
+                }
+            }
+
+            DebugUI.Instance.UpdateInfo(pos + " " + count);
+            return count;
+        }
+
+        private int GetPreTakeCountById(int id)
+        {
+            int count = 0;
+            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.preTakeResource)
+            {
+                foreach (KeyValuePair<Vector3Int, ResourceInfo> pre in prePlace.Value)
+                {
+                    if (pre.Value.Id == id)
+                    {
+                        count += pre.Value.Count;
+                    }
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// æ›´æ–°idToResource,typeToResource
+        /// </summary>
+        /// <param name="pos">ä½ç½®</param>
+        /// <param name="oldId">æ—§çš„ID</param>
+        /// <param name="newId">æ–°çš„ID</param>
+        /// <param name="oldType">æ—§çš„ç±»å‹</param>
+        /// <param name="newType">æ–°çš„ç±»å‹</param>
+        private void TransferResource(Vector3Int pos, int oldId, int newId, Item.ItemType oldType, Item.ItemType newType)
+        {
+            // idToResource
+            this.id2Resource[oldId].Remove(pos);
+            if (this.id2Resource.ContainsKey(newId))
+            {
+                this.id2Resource[newId].Add(pos, this.posToResource[pos]);
+            }
+            else
+            {
+                Dictionary<Vector3Int, ResourceInfo> dict = new ();
+                dict.Add(pos, this.posToResource[pos]);
+                this.id2Resource.Add(newId, dict);
+            }
+
+            // typeToResource
+            this.TypeToResource[oldType].Remove(pos);
+            if (this.TypeToResource.ContainsKey(newType))
+            {
+                this.TypeToResource[newType].Add(pos, this.posToResource[pos]);
+            }
+            else
+            {
+                Dictionary<Vector3Int, ResourceInfo> dict = new ();
+                dict.Add(pos, this.posToResource[pos]);
+                this.TypeToResource.Add(newType, dict);
+            }
         }
     }
 }

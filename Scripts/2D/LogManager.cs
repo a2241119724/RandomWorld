@@ -1,62 +1,90 @@
-using LAB2D;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using UnityEngine;
-
-public class LogManager : Singleton<LogManager>
+ï»¿namespace LAB2D
 {
-    public readonly LogLevel minLogLevel = LogLevel.Info;
-
-    private List<string> logs;
-    private readonly string logPath = Application.persistentDataPath + "/game.log";
-    private readonly bool isSave = true;
-
-    public LogManager()
-    {
-        logs = new List<string>();
-        if (isSave)
-        {
-            File.WriteAllText(logPath, string.Empty);
-        }
-    }
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using UnityEngine;
 
     /// <summary>
-    /// ¼ÇÂ¼ÈÕÖ¾
+    /// æ—¥å¿—ç®¡ç†.
     /// </summary>
-    /// <param name="message"></param>
-    /// <param name="level"></param>
-    public void log(string message, LogLevel level = LogLevel.Info)
+    public class LogManager : Singleton<LogManager>
     {
-        if ((int)level < (int)minLogLevel)
-            return;
+        private readonly LogLevel minLogLevel = LogLevel.Info; // æœ€å°çš„æ—¥å¿—çº§åˆ«.
+        private readonly string logPath = Application.persistentDataPath + "/game.log";
+        private readonly bool isSave = true;
+        private readonly List<string> logs;
 
-        string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-        string logMessage = $"{timestamp} [{level}] {message}";
-
-        if(level == LogLevel.Error)
+        public LogManager()
         {
-            // Êä³öµ½¿ØÖÆÌ¨
-            Debug.Log(logMessage);
+            this.logs = new List<string>();
+            if (this.isSave)
+            {
+                File.WriteAllText(this.logPath, string.Empty);
+            }
         }
 
-        // ´æ´¢µ½ÈÕÖ¾ÁĞ±í
-        //logs.Add(logMessage);
-
-        // Èç¹ûÆôÓÃÁËÎÄ¼ş¼ÇÂ¼£¬ÔòĞ´ÈëÎÄ¼ş
-        if (isSave)
+        /// <summary>
+        /// æ—¥å¿—çº§åˆ«.
+        /// </summary>
+        public enum LogLevel
         {
-            File.AppendAllText(logPath, logMessage + Environment.NewLine);
-        }
-    }
+            /// <summary>
+            /// Debug.
+            /// </summary>
+            Debug,
 
-    public enum LogLevel
-    {
-        Debug,
-        Info,
-        Warning,
-        Error,
-        Fatal
+            /// <summary>
+            /// Info.
+            /// </summary>
+            Info,
+
+            /// <summary>
+            /// Warning.
+            /// </summary>
+            Warning,
+
+            /// <summary>
+            /// Error.
+            /// </summary>
+            Error,
+
+            /// <summary>
+            /// Fatal.
+            /// </summary>
+            Fatal,
+        }
+
+        /// <summary>
+        /// è®°å½•æ—¥å¿—.
+        /// </summary>
+        /// <param name="message">æ—¥å¿—å†…å®¹.</param>
+        /// <param name="level">æ—¥å¿—çº§åˆ«.</param>
+        public void Log(string message, LogLevel level = LogLevel.Info)
+        {
+            if ((int)level < (int)this.minLogLevel)
+            {
+                return;
+            }
+
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            string logMessage = $"{timestamp} [{level}] {message}";
+
+            if (level == LogLevel.Error)
+            {
+                // è¾“å‡ºåˆ°æ§åˆ¶å°
+                Debug.Log(logMessage);
+                this.logs.Add(logMessage);
+            }
+
+            // å­˜å‚¨åˆ°æ—¥å¿—åˆ—è¡¨
+            // logs.Add(logMessage);
+
+            // å¦‚æœå¯ç”¨äº†æ–‡ä»¶è®°å½•ï¼Œåˆ™å†™å…¥æ–‡ä»¶
+            if (this.isSave)
+            {
+                File.AppendAllText(this.logPath, logMessage + Environment.NewLine);
+            }
+        }
     }
 }

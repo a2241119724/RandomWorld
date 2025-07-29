@@ -1,104 +1,154 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+锘縩amespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.UI;
+
     /// <summary>
-    /// 由于MonoBehaviour没有实现单例
+    /// 鐢变簬MonoBehaviour娌℃湁瀹炵幇鍗曚緥
     /// </summary>
-    /// <typeparam name="IV"></typeparam>
+    /// <typeparam name="IV">MVCItemView</typeparam>
+    /// <typeparam name="M">MVCModel</typeparam>
     public abstract class MVCItemManagerView<IV, M> : MonoBehaviour
         where M : MVCModel
         where IV : MVCItemView
     {
-        public event Action<int, int> exchangeItem;
-        public event Action<int, string> setBorderColor;
-        public event Func<int, Item> get;
-        public event Action<Item> showInfo;
-        public List<IV> itemsView; // 所有的道具视图
+        /// <summary>
+        /// 鎵�鏈夌殑閬撳叿瑙嗗浘
+        /// </summary>
+        public List<IV> ItemsView;
 
-        private Transform content; // 背包的栅格框
-        protected GameObject itemBox; // 每个道具
+        /// <summary>
+        /// 姣忎釜閬撳叿
+        /// </summary>
+        protected GameObject itemBox;
+        private Transform content; // 鑳屽寘鐨勬爡鏍兼
+
+        /// <summary>
+        /// 浜ゆ崲閬撳叿
+        /// </summary>
+        public event Action<int, int> ExchangeItem;
+
+        /// <summary>
+        /// 璁剧疆杈规棰滆壊
+        /// </summary>
+        public event Action<int, string> SetBorderColor;
+
+        /// <summary>
+        /// 鑾峰彇閬撳叿
+        /// </summary>
+        public event Func<int, Item> GetItem;
+
+        /// <summary>
+        /// 灞曠ず淇℃伅
+        /// </summary>
+        public event Action<Item> ShowInfo;
 
         public virtual void Awake()
         {
-            content = transform.GetComponent<ScrollRect>().content;
-            if (content == null)
+            this.content = this.transform.GetComponent<ScrollRect>().content;
+            if (this.content == null)
             {
-                LogManager.Instance.log("content Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
-            itemsView = new List<IV>();
+
+            this.ItemsView = new List<IV>();
         }
 
         /// <summary>
-        /// 更新仓库界面
+        /// 鏇存柊浠撳簱鐣岄潰
         /// </summary>
-        public void updateView(ItemType type, M model)
+        /// <param name="type">閬撳叿绫诲瀷</param>
+        /// <param name="model">Model</param>
+        public void UpdateView(Item.ItemType type, M model)
         {
             if (model == null)
             {
-                LogManager.Instance.log("data is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("data is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            //销毁所有ItemBox
-            //for (int i = 0; i < content.childCount; i++)
-            //{
-            //    Destroy(content.GetChild(i).gameObject);
-            //}
-            int len = itemsView.Count;
+
+            // 閿�姣佹墍鏈塈temBox
+            // for (int i = 0; i < content.childCount; i++)
+            // {
+            //     Destroy(content.GetChild(i).gameObject);
+            // }
+            int len = this.ItemsView.Count;
             for (int i = 0; i < len; i++)
             {
-                //GameObject g = itemsView[i].transform.parent.gameObject;
-                Destroy(itemsView[i].transform.parent.gameObject);
+                // GameObject g = itemsView[i].transform.parent.gameObject;
+                Destroy(this.ItemsView[i].transform.parent.gameObject);
             }
-            itemsView.Clear();
-            // 重新创建所有Item
-            for (int i = 0; i < model.count(type); i++)
+
+            this.ItemsView.Clear();
+
+            // 閲嶆柊鍒涘缓鎵�鏈塈tem
+            for (int i = 0; i < model.Count(type); i++)
             {
-                if (model.get(type,i).id == -1) continue;
-                GameObject g = Instantiate(itemBox);
+                if (model.Get(type, i).Id == -1)
+                {
+                    continue;
+                }
+
+                GameObject g = Instantiate(this.itemBox);
                 if (g == null)
                 {
-                    LogManager.Instance.log("itemBox Instantiate Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("itemBox Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
-                g.name = itemBox.name;
-                g.transform.SetParent(content, false);
-                //t.transform.localScale = Vector3.one; // 控制大小
-                Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = getQuantity(model.get(type,i)).ToString();
+
+                g.name = this.itemBox.name;
+                g.transform.SetParent(this.content, false);
+
+                // t.transform.localScale = Vector3.one; // 鎺у埗澶у皬
+                Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = this.GetQuantity(model.Get(type, i)).ToString();
                 Image image = Tool.GetComponentInChildren<Image>(g, "ItemImage");
-                image.sprite = ResourcesManager.Instance.getImage(ItemDataManager.Instance.getById(model.get(type, i).id).imageName);
+                image.sprite = ResourceManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.Get(type, i).Id).ImageName);
                 image.preserveAspect = true;
                 IV itemView = g.transform.Find("Item").GetComponent<IV>();
-                // 添加到ItemView
-                itemView.exchangeItem += (int a, int b) => {
-                    exchangeItem(a, b);
+
+                // 娣诲姞鍒癐temView
+                itemView.ExchangeItem += (int a, int b) =>
+                {
+                    this.ExchangeItem(a, b);
                 };
-                itemView.setBorderColor += (int a, string b) => {
-                    setBorderColor(a,b);
+                itemView.SetBorderColor += (int a, string b) =>
+                {
+                    this.SetBorderColor(a, b);
                 };
-                itemView.get += (int a) => {
-                    return get(a);
+                itemView.GetItem += (int a) =>
+                {
+                    return this.GetItem(a);
                 };
-                itemView.showInfo += (Item a) => {
-                    showInfo(a);
+                itemView.ShowInfo += (Item a) =>
+                {
+                    this.ShowInfo(a);
                 };
-                itemsView.Add(itemView);
+                this.ItemsView.Add(itemView);
             }
         }
-        protected abstract int getQuantity(Item item);
 
-        public void reduceQuantityUI(int index)
+        /// <summary>
+        /// 鍑忓皯閬撳叿鏁伴噺
+        /// </summary>
+        /// <param name="index">閬撳叿绱㈠紩</param>
+        public void ReduceQuantityUI(int index)
         {
-            Text t = Tool.GetComponentInChildren<Text>(content.GetChild(index).gameObject, "ItemInfo");
+            Text t = Tool.GetComponentInChildren<Text>(this.content.GetChild(index).gameObject, "ItemInfo");
+
             // string -> int
             int count = int.Parse(t.text);
             --count;
             t.text = count.ToString();
         }
+
+        /// <summary>
+        /// 鑾峰彇閬撳叿鏁伴噺
+        /// </summary>
+        /// <param name="item">閬撳叿</param>
+        /// <returns>鏁伴噺</returns>
+        protected abstract int GetQuantity(Item item);
     }
 }

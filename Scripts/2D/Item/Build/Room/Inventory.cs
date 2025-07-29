@@ -1,51 +1,57 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+    using UnityEngine;
+
+    /// <summary>
+    /// 仓库
+    /// </summary>
     [Serializable]
-    public class Inventory : RoomItem 
+    public class Inventory : RoomItem
     {
         public Inventory()
         {
-            width = 10;
-            height = 7;
-            walls = new Dictionary<WallDirection, Wall>();
-            walls.Add(WallDirection.TOP, new InventoryWallT());
-            walls.Add(WallDirection.DOWN, new InventoryWallD());
-            walls.Add(WallDirection.LEFT, new InventoryWallL());
-            walls.Add(WallDirection.RIGHT, new InventoryWallR());
-            walls.Add(WallDirection.RIGHT_TOP, new InventoryWallRT());
-            walls.Add(WallDirection.RIGHT_DOWN, new InventoryWallRD());
-            walls.Add(WallDirection.LEFT_TOP, new InventoryWallLT());
-            walls.Add(WallDirection.LEFT_DOWN, new InventoryWallLD());
+            this.Width = 10;
+            this.Height = 7;
+            this.Walls = new Dictionary<WallItem.WallDirectionEnum, WallItem>
+            {
+                { WallItem.WallDirectionEnum.TOP, new InventoryWallT() },
+                { WallItem.WallDirectionEnum.DOWN, new InventoryWallD() },
+                { WallItem.WallDirectionEnum.LEFT, new InventoryWallL() },
+                { WallItem.WallDirectionEnum.RIGHT, new InventoryWallR() },
+                { WallItem.WallDirectionEnum.RIGHT_TOP, new InventoryWallRT() },
+                { WallItem.WallDirectionEnum.RIGHT_DOWN, new InventoryWallRD() },
+                { WallItem.WallDirectionEnum.LEFT_TOP, new InventoryWallLT() },
+                { WallItem.WallDirectionEnum.LEFT_DOWN, new InventoryWallLD() },
+            };
         }
 
-        public override void addBuildTask(Vector3Int centerMap)
+        /// <inheritdoc/>
+        public override void AddBuildTask(Vector3Int centerMap)
         {
-            int[] xB = getXBoundary(centerMap);
-            int[] yB = getYBoundary(centerMap);
-            for (int i = 1; i < width - 1; i++)
+            int[] boundary = this.GetBoundary(centerMap);
+            for (int i = 1; i < this.Width - 1; i++)
             {
-                BuildMap.Instance.directBuild(new Vector3Int(xB[0], yB[0] + i, 0), walls[WallDirection.DOWN].tile)
-                    .directBuild(new Vector3Int(xB[1], yB[0] + i, 0), walls[WallDirection.TOP].tile);
+                BuildMap.Instance.DirectBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.DOWN].Tile)
+                    .DirectBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.TOP].Tile);
             }
-            for (int i = 1; i < height - 1; i++)
+
+            for (int i = 1; i < this.Height - 1; i++)
             {
-                BuildMap.Instance.directBuild(new Vector3Int(xB[0] + i, yB[0], 0), walls[WallDirection.LEFT].tile)
-                    .directBuild(new Vector3Int(xB[0] + i, yB[1], 0), walls[WallDirection.RIGHT].tile);
+                BuildMap.Instance.DirectBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT].Tile)
+                    .DirectBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT].Tile);
             }
+
             BuildMap.Instance
-                .directBuild(new Vector3Int(xB[0], yB[1], 0), walls[WallDirection.RIGHT_DOWN].tile)
-                .directBuild(new Vector3Int(xB[0], yB[0], 0), walls[WallDirection.LEFT_DOWN].tile)
-                .directBuild(new Vector3Int(xB[1], yB[1], 0), walls[WallDirection.RIGHT_TOP].tile)
-                .directBuild(new Vector3Int(xB[1], yB[0], 0), walls[WallDirection.LEFT_TOP].tile)
-                .addTask();
-            // ���Ӳֿ�Cell
-            InventoryManager.Instance.addCells(Tool.add(centerMap, -height / 2, -width / 2), width, height);
+                .DirectBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_DOWN].Tile)
+                .DirectBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_DOWN].Tile)
+                .DirectBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_TOP].Tile)
+                .DirectBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_TOP].Tile)
+                .AddTask();
+
+            // 添加仓库Cell
+            InventoryManager.Instance.AddCells(Tool.Add(centerMap, -this.Height / 2, -this.Width / 2), this.Width, this.Height);
         }
     }
 }

@@ -1,74 +1,83 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// è·Ÿè¸ªå­å¼¹
+    /// </summary>
     public class TraceBullet : Bullet
     {
+        private const float RecordTime = 1.0f;
+        private static readonly int[] D = new int[] { -1, 1 };
+        private readonly float turnSpeed = 0.1f; // è½¬å¼¯é€Ÿåº¦
+        private Vector3 center = default; // æ—‹è½¬çš„åœ†å¿ƒ
+        private int index;
+        private float recordTime;
+
+        /// <summary>
+        /// è·Ÿè¸ªç›®æ ‡
+        /// </summary>
         public Character Target { get; set; }
 
-        /// <summary>
-        /// ×ªÍäËÙ¶È
-        /// </summary>
-        private float turnSpeed = 0.1f;
-        /// <summary>
-        /// Ğı×ªµÄÔ²ĞÄ
-        /// </summary>
-        private Vector3 center = default;
-        private static readonly int[] d = new int[] { -1, 1 };
-        private int index;
-        private float recordTime = 1.0f;
-        private float _recordTime;
+        /// <inheritdoc/>
+        public override void HitObject()
+        {
+            // å‡»ä¸­æ•Œäººå¤„ç†
+            if (this.rayCastHit2D.transform.gameObject.CompareTag("Enemy"))
+            {
+                Enemy e = this.rayCastHit2D.transform.GetComponent<Enemy>();
+                e.Target = this.Origin;
+                e.ReduceHp(this.Damage);
+            }
+        }
 
+        /// <inheritdoc/>
         protected override void Awake()
         {
             base.Awake();
-            layerMask = LayerMask.GetMask("Tile", "Enemy");
+            this.layerMask = LayerMask.GetMask("Tile", "Enemy");
         }
 
+        /// <inheritdoc/>
         protected override void Update()
         {
-            if (Target != null && center == default)
+            if (this.Target != null && this.center == default)
             {
                 // TODO Lerp
-                Vector3 offset = new Vector3(Target.transform.position.x - transform.position.x - direction.x,
-                Target.transform.position.y - transform.position.y - direction.y,
-                Target.transform.position.z - transform.position.z - direction.z);
-                direction = new Vector3(direction.x + offset.x * turnSpeed * Time.deltaTime, direction.y + offset.y * turnSpeed * Time.deltaTime,
-                    direction.z + offset.z * turnSpeed * Time.deltaTime).normalized;
+                Vector3 offset = new (
+                    this.Target.transform.position.x - this.transform.position.x - this.direction.x,
+                    this.Target.transform.position.y - this.transform.position.y - this.direction.y,
+                    this.Target.transform.position.z - this.transform.position.z - this.direction.z);
+                this.direction = new Vector3(
+                    this.direction.x + (offset.x * this.turnSpeed * Time.deltaTime),
+                    this.direction.y + (offset.y * this.turnSpeed * Time.deltaTime),
+                    this.direction.z + (offset.z * this.turnSpeed * Time.deltaTime)).normalized;
                 if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.998f)
                 {
-                    index = UnityEngine.Random.Range(0, 2);
-                    // ´¹Ö±Ïß
-                    Vector3 _direction = new Vector3(d[index] * direction.y,
-                        d[(index + 1) % 2] * direction.x, direction.z).normalized;
-                    center = transform.position + _direction;
-                }
-            }
-            else if(center != default)
-            {
-                // ´¹Ö±Ïß
-                Vector3 _direction = transform.position - center;
-                direction = new Vector3(d[index] * _direction.y, d[(index+1)%2] * _direction.x, 0.0f).normalized;
-                _recordTime += Time.deltaTime;
-                if (_recordTime >= recordTime)
-                {
-                    _recordTime = 0.0f;
-                    center = default;
-                }
-            }
-            base.Update();
-        }
+                    this.index = UnityEngine.Random.Range(0, 2);
 
-        public override void hitObject()
-        {
-            if (rayCastHit2D.transform.gameObject.CompareTag("Enemy")) // »÷ÖĞµĞÈË´¦Àí
-            {
-                Enemy e = rayCastHit2D.transform.GetComponent<Enemy>();
-                e.Target = Origin;
-                e.reduceHp(Damage);
+                    // å‚ç›´çº¿
+                    Vector3 direction = new Vector3(
+                        D[this.index] * this.direction.y,
+                        D[(this.index + 1) % 2] * this.direction.x,
+                        this.direction.z).normalized;
+                    this.center = this.transform.position + direction;
+                }
             }
+            else if (this.center != default)
+            {
+                // å‚ç›´çº¿
+                Vector3 direction1 = this.transform.position - this.center;
+                this.direction = new Vector3(D[this.index] * direction1.y, D[(this.index + 1) % 2] * direction1.x, 0.0f).normalized;
+                this.recordTime += Time.deltaTime;
+                if (this.recordTime >= RecordTime)
+                {
+                    this.recordTime = 0.0f;
+                    this.center = default;
+                }
+            }
+
+            base.Update();
         }
     }
 }

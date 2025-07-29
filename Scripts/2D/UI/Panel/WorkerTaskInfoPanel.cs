@@ -1,40 +1,44 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// Workerä»»åŠ¡ä¿¡æ¯é¢æ¿
+    /// </summary>
     public class WorkerTaskInfoPanel : BasePanel<WorkerTaskInfoPanel>
     {
-        private static readonly Dictionary<TaskType, string> typeToChinese = new Dictionary<TaskType, string>
+        private static readonly Dictionary<WorkerTask.WorkerTaskTypeEnum, string> TypeToChinese = new ()
         {
-            { TaskType.Build,"½¨Ôì"},
-            { TaskType.Carry,"°áÔË"},
-            { TaskType.Gather,"²ÉÕª"},
-            { TaskType.Exercise,"¶ÍÁ¶"},
-            { TaskType.Hungry,"³Ô·¹"},
-            { TaskType.Wear,"´©´÷"},
-            { TaskType.Sleep,"Ë¯¾õ"},
-            { TaskType.Plant,"ÖÖÖ²"},
+            { WorkerTask.WorkerTaskTypeEnum.Build, "å»ºé€ " },
+            { WorkerTask.WorkerTaskTypeEnum.Carry, "æ¬è¿" },
+            { WorkerTask.WorkerTaskTypeEnum.Gather, "é‡‡æ‘˜" },
+            { WorkerTask.WorkerTaskTypeEnum.Exercise, "é”»ç‚¼" },
+            { WorkerTask.WorkerTaskTypeEnum.Eat, "åƒé¥­" },
+            { WorkerTask.WorkerTaskTypeEnum.Wear, "ç©¿æˆ´" },
+            { WorkerTask.WorkerTaskTypeEnum.Sleep, "ç¡è§‰" },
+            { WorkerTask.WorkerTaskTypeEnum.Plant, "ç§æ¤" },
         };
 
         public WorkerTaskInfoPanel()
         {
-            Name = "WorkerTaskInfo";
-            setPanel();
-            Transform title = Tool.GetComponentInChildren<Transform>(panel,"Title");
-            foreach(KeyValuePair<TaskType, string> pair in typeToChinese)
+            this.Name = "WorkerTaskInfo";
+            this.OpenPanel();
+            Transform title = Tool.GetComponentInChildren<Transform>(this.Panel, "Title");
+            foreach (KeyValuePair<WorkerTask.WorkerTaskTypeEnum, string> pair in TypeToChinese)
             {
                 Tool.GetComponentInChildren<Text>(title.GetChild((int)pair.Key + 1).gameObject, "Text").text = pair.Value;
             }
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();

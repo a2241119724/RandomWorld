@@ -1,35 +1,50 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine;
+    using UnityEngine.Events;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// 导航按钮UI
+    /// </summary>
     public abstract class MVCNavigationView : MonoBehaviour
     {
         /// <summary>
-        /// ��ǰ�ı�����ѡ�����
+        /// 点击事件
         /// </summary>
-        public ItemType CurItemType { get; set; }
         public UnityAction<int> OnClick;
 
-        protected void bindButton(ItemType start, ItemType end)
-        {
-            Tool.splitEnum<ItemType>(start,end).ForEach(item => addClickOnButton(item));
-        }
+        /// <summary>
+        /// 当前的背包所选择的栏
+        /// </summary>
+        public Item.ItemType CurItemType { get; set; }
 
         /// <summary>
-        /// �л���Ʒ��
+        /// 切换物品栏
         /// </summary>
-        public void addClickOnButton(ItemType item) {
-            Tool.GetComponentInChildren<Button>(gameObject, item.ToString()).onClick.AddListener(() => {
-                CurItemType = item;
-                OnClick?.Invoke(ItemDataManager.Instance.getIndexByType(item));
+        /// <param name="item">道具</param>
+        public void AddClickOnButton(Item.ItemType item)
+        {
+            Tool.GetComponentInChildren<Button>(this.gameObject, item.ToString()).onClick.AddListener(() =>
+            {
+                this.CurItemType = item;
+                this.OnClick?.Invoke(ItemDataManager.Instance.GetIndexByType(item));
             });
         }
 
-        protected abstract void init();
+        /// <summary>
+        /// 绑定按钮
+        /// </summary>
+        /// <param name="start">道具类型起始</param>
+        /// <param name="end">道具类型结束</param>
+        protected void BindButton(Item.ItemType start, Item.ItemType end)
+        {
+            Tool.SplitEnum<Item.ItemType>(start, end).ForEach(item => this.AddClickOnButton(item));
+        }
+
+        /// <summary>
+        /// 初始化
+        /// </summary>
+        protected abstract void Init();
     }
 }

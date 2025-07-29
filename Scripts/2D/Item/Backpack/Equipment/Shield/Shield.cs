@@ -1,19 +1,22 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+
+    /// <summary>
+    /// 盾牌
+    /// </summary>
     [Serializable]
     public abstract class Shield : Equipment
     {
         public Shield()
         {
-            equipType = EquipType.Shield;
+            this.EquipTypeValue = EquipType.Shield;
         }
     }
 
+    /// <summary>
+    /// 盾牌对象
+    /// </summary>
     public abstract class ShieldObject : EquipmentObject
     {
     }

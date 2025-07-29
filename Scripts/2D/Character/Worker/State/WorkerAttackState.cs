@@ -1,34 +1,40 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    /// <summary>
+    /// Workeræ”»å‡»çŠ¶æ€
+    /// </summary>
     public class WorkerAttackState : WorkerState
     {
-        public WorkerAttackState(Worker worker) : base(worker) { }
+        public WorkerAttackState(Worker worker)
+            : base(worker)
+        {
+        }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            Character.WorkerState.text = $"<color=red>¹¥»÷</color>";
+            this.Character.WorkerStateText.text = $"<color=red>æ”»å‡»</color>";
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
-            if(Character.WearData.weapon == null)
+            if (this.Character.WearData.Weapon == null)
             {
-                Character.Manager.changeState(WorkerStateType.Escape);
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Escape);
                 return;
             }
-            // ÄÃ³öÎäÆ÷
-            // ¹¥»÷
+
+            // æ‹¿å‡ºæ­¦å™¨
+            // æ”»å‡»
         }
     }
 }

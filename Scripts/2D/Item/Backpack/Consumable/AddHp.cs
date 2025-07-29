@@ -1,29 +1,41 @@
-﻿using System;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 血瓶
+    /// </summary>
     [Serializable]
-    public class AddHp : Consumable { 
-        public AddHp() 
+    public class AddHp : Consumable
+    {
+        public AddHp()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("AddHp");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("AddHp");
         }
     }
 
+    /// <summary>
+    /// 加血对象
+    /// </summary>
     public class AddHpObject : ConsumableObject
     {
-        public float value;
+        /// <summary>
+        /// 加血量
+        /// </summary>
+        public float Value;
 
+        /// <inheritdoc/>
+        public override void Use()
+        {
+            PlayerManager.Instance.Mine.AddHp(this.Value);
+        }
+
+        /// <inheritdoc/>
         protected override void Awake()
         {
             base.Awake();
-            name = "AddHp";
-        }
-
-        public override void use()
-        {
-            PlayerManager.Instance.Mine.addHp(value);
+            this.name = "AddHp";
         }
     }
 }

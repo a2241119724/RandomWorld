@@ -1,20 +1,23 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 自定义翅膀
+    /// </summary>
     [Serializable]
     public class CustomWing : Wing
     {
         public CustomWing()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomWing");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomWing");
         }
     }
 
+    /// <summary>
+    /// 自定义翅膀对象
+    /// </summary>
     public class CustomWingObject : WingObject
     {
     }

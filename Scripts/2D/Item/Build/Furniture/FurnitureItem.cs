@@ -1,17 +1,16 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    /// <summary>
+    /// 家具
+    /// </summary>
     public abstract class FurnitureItem : BuildItem
     {
     }
 
-        
-    public abstract class FurnitureItemObject : BuildItemObject { 
-    
+    /// <summary>
+    /// 家具对象
+    /// </summary>
+    public abstract class FurnitureItemObject : BuildItemObject
+    {
     }
 }

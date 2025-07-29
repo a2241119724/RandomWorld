@@ -1,144 +1,82 @@
-using System;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+    using UnityEngine;
+
+    /// <summary>
+    /// è‡ªå®šä¹‰æˆ¿é—´
+    /// </summary>
     [Serializable]
     public class CustomRoom : RoomItem
     {
-        public DoorItem door;
+        /// <summary>
+        /// é—¨
+        /// </summary>
+        public DoorItem Door;
 
-        public CustomRoom() {
-            width = 10;
-            height = 7;
-            walls = new Dictionary<WallDirection, Wall>();
-            walls.Add(WallDirection.TOP, new CustomRoomWallT());
-            walls.Add(WallDirection.DOWN, new CustomRoomWallD());
-            walls.Add(WallDirection.LEFT, new CustomRoomWallL());
-            walls.Add(WallDirection.RIGHT, new CustomRoomWallR());
-            walls.Add(WallDirection.RIGHT_TOP, new CustomRoomWallRT());
-            walls.Add(WallDirection.RIGHT_DOWN, new CustomRoomWallRD());
-            walls.Add(WallDirection.LEFT_TOP, new CustomRoomWallLT());
-            walls.Add(WallDirection.LEFT_DOWN, new CustomRoomWallLD());
-            door = new CustomDoor();
+        public CustomRoom()
+        {
+            this.Width = 10;
+            this.Height = 7;
+            this.Walls = new Dictionary<WallItem.WallDirectionEnum, WallItem>
+            {
+                { WallItem.WallDirectionEnum.TOP, new CustomRoomWallT() },
+                { WallItem.WallDirectionEnum.DOWN, new CustomRoomWallD() },
+                { WallItem.WallDirectionEnum.LEFT, new CustomRoomWallL() },
+                { WallItem.WallDirectionEnum.RIGHT, new CustomRoomWallR() },
+                { WallItem.WallDirectionEnum.RIGHT_TOP, new CustomRoomWallRT() },
+                { WallItem.WallDirectionEnum.RIGHT_DOWN, new CustomRoomWallRD() },
+                { WallItem.WallDirectionEnum.LEFT_TOP, new CustomRoomWallLT() },
+                { WallItem.WallDirectionEnum.LEFT_DOWN, new CustomRoomWallLD() },
+            };
+            this.Door = new CustomDoor();
         }
 
-        public override void addBuildTask(Vector3Int centerMap)
+        /// <inheritdoc/>
+        public override void AddBuildTask(Vector3Int centerMap)
         {
-            int[] xB = getXBoundary(centerMap);
-            int[] yB = getYBoundary(centerMap);
-            RoomInfo roomInfo = new RoomInfo();
-            for (int i = 1; i < width - 1; i++)
+            int[] boundary = this.GetBoundary(centerMap);
+            RoomInfo roomInfo = new ();
+            for (int i = 1; i < this.Width - 1; i++)
             {
-                BuildMap.Instance.addBuilding(new Vector3Int(xB[0], yB[0] + i, 0), walls[WallDirection.DOWN].tile)
-                    .addBuilding(new Vector3Int(xB[1], yB[0] + i, 0), walls[WallDirection.TOP].tile);
-                roomInfo.Points.Add(new Vector3Int(xB[0], yB[0] + i, 0));
-                roomInfo.Points.Add(new Vector3Int(xB[1], yB[0] + i, 0));
+                BuildMap.Instance.AddBuilding(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.DOWN].Tile)
+                    .AddBuilding(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.TOP].Tile);
+                roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2] + i, 0));
+                roomInfo.Points.Add(new Vector3Int(boundary[1], boundary[2] + i, 0));
             }
-            for (int i = 1; i < height - 1; i++)
+
+            for (int i = 1; i < this.Height - 1; i++)
             {
-                BuildMap.Instance.addBuilding(new Vector3Int(xB[0] + i, yB[0], 0), walls[WallDirection.LEFT].tile)
-                    .addBuilding(new Vector3Int(xB[0] + i, yB[1], 0), walls[WallDirection.RIGHT].tile);
-                roomInfo.Points.Add(new Vector3Int(xB[0] + i, yB[0], 0));
-                roomInfo.Points.Add(new Vector3Int(xB[0] + i, yB[1], 0));
+                BuildMap.Instance.AddBuilding(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT].Tile)
+                    .AddBuilding(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT].Tile);
+                roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[2], 0));
+                roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[3], 0));
             }
+
             BuildMap.Instance
-                .addBuilding(new Vector3Int(xB[0], yB[1], 0), walls[WallDirection.RIGHT_DOWN].tile)
-                .addBuilding(new Vector3Int(xB[0], yB[0], 0), walls[WallDirection.LEFT_DOWN].tile)
-                .addBuilding(new Vector3Int(xB[1], yB[1], 0), walls[WallDirection.RIGHT_TOP].tile)
-                .addBuilding(new Vector3Int(xB[1], yB[0], 0), walls[WallDirection.LEFT_TOP].tile)
-                .addBuilding(new Vector3Int(xB[0], centerMap.y, 0), door.tile,false)
-                .addTask();
-            roomInfo.Points.Add(new Vector3Int(xB[0], yB[1], 0));
-            roomInfo.Points.Add(new Vector3Int(xB[0], yB[0], 0));
-            roomInfo.Points.Add(new Vector3Int(xB[1], yB[1], 0));
-            roomInfo.Points.Add(new Vector3Int(xB[1], yB[0], 0));
-            roomInfo.Points.Add(new Vector3Int(xB[0], centerMap.y, 0));
-            // ÓÉÓÚ¶à¼ÆËãÁËÒ»´ÎÇ½,ÃÅ¸²¸ÇÁËÇ°ÃæµÄÇ½
+                .AddBuilding(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_DOWN].Tile)
+                .AddBuilding(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_DOWN].Tile)
+                .AddBuilding(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_TOP].Tile)
+                .AddBuilding(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_TOP].Tile)
+                .AddBuilding(new Vector3Int(boundary[0], centerMap.y, 0), this.Door.Tile, false)
+                .AddTask();
+            roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[3], 0));
+            roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2], 0));
+            roomInfo.Points.Add(new Vector3Int(boundary[1], boundary[3], 0));
+            roomInfo.Points.Add(new Vector3Int(boundary[1], boundary[2], 0));
+            roomInfo.Points.Add(new Vector3Int(boundary[0], centerMap.y, 0));
+
+            // ç”±äºŽå¤šè®¡ç®—äº†ä¸€æ¬¡å¢™,é—¨è¦†ç›–äº†å‰é¢çš„å¢™
             roomInfo.Progress = roomInfo.Points.Count - 1;
-            RoomManager.Instance.addRoom(Guid.NewGuid().ToString(), roomInfo);
+            RoomManager.Instance.AddRoom(Guid.NewGuid().ToString(), roomInfo);
         }
     }
 
-    public class RoomObject : BuildItemObject
-    {
-    }
-
-    [Serializable]
-    public class CustomRoomWallT : Wall
-    {
-        public CustomRoomWallT()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallT");
-        }
-    }
-
-    [Serializable]
-    public class CustomRoomWallD : Wall
-    {
-        public CustomRoomWallD()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallD");
-        }
-    }
-
-    [Serializable]
-    public class CustomRoomWallL : Wall
-    {
-        public CustomRoomWallL()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallL");
-        }
-    }
-
-    [Serializable]
-    public class CustomRoomWallR : Wall
-    {
-        public CustomRoomWallR()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallR");
-        }
-    }
-
-    [Serializable]
-    public class CustomRoomWallRT : Wall
-    {
-        public CustomRoomWallRT()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallRT");
-        }
-    }
-
-    [Serializable]
-    public class CustomRoomWallRD : Wall
-    {
-        public CustomRoomWallRD()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallRD");
-        }
-    }
-
-    [Serializable]
-    public class CustomRoomWallLT : Wall
-    {
-        public CustomRoomWallLT()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallLT");
-        }
-    }
-
-    [Serializable]
-    public class CustomRoomWallLD : Wall
-    {
-        public CustomRoomWallLD()
-        {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomRoomWallLD");
-        }
-    }
-
-    public class CustomRoomWallObject : BuildItemObject
+    /// <summary>
+    /// æˆ¿é—´å¯¹è±¡
+    /// </summary>
+    public class CustomRoomObject : BuildItemObject
     {
     }
 }

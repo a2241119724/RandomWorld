@@ -1,22 +1,24 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 自定义手链
+    /// </summary>
     [Serializable]
     public class CustomBracelet : Bracelet
     {
         public CustomBracelet()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomBracelet");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomBracelet");
         }
     }
 
+    /// <summary>
+    /// 自定义手链对象
+    /// </summary>
     public class CustomBraceletObject : BraceletObject
     {
     }
 }
-

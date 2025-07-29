@@ -1,22 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// åºŠ
+    /// </summary>
     public abstract class BedItem : FurnitureItem
     {
         public BedItem()
         {
-            isBottomLeft = true;
+            this.IsBottomLeft = true;
         }
 
-        public override void addBuildTask(Vector3Int centerMap)
+        /// <inheritdoc/>
+        public override void AddBuildTask(Vector3Int centerMap)
         {
-            base.addBuildTask(centerMap);
-            // Ìí¼Ó
-            FurnitureManager.Instance.addBed(centerMap);
+            base.AddBuildTask(centerMap);
+
+            // æ·»åŠ 
+            FurnitureManager.Instance.AddBed(centerMap);
         }
     }
 }

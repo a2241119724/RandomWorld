@@ -1,108 +1,140 @@
-using UnityEngine;
-using Photon.Pun;
-using System.Collections.Generic;
-using Photon.Realtime;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using Photon.Pun;
+    using Photon.Realtime;
+
     /// <summary>
-    /// ½«¹ÙÍø×¢²áµÄAppId¸´ÖÆµ½ÉèÖÃÖĞ
-    /// Photon View¹Û²ìÄ³Ğ©ÎïÌå
+    /// å°†å®˜ç½‘æ³¨å†Œçš„AppIdå¤åˆ¶åˆ°è®¾ç½®ä¸­
+    /// Photon Viewè§‚å¯ŸæŸäº›ç‰©ä½“.
     /// </summary>
     public class NetworkConnect : MonoBehaviourPunCallbacks
     {
+        /// <summary>
+        /// å•ä¾‹.
+        /// </summary>
         public static NetworkConnect Instance { get; private set; }
-        public bool IsOnline { get; private set; } = true;
-
-        void Awake()
-        {
-            Instance = this;
-            PhotonNetwork.AutomaticallySyncScene = true;
-            IsOnline = false;
-        }
-
-        void Start()
-        {
-            // Ê¹ÓÃPhoton/PhotonUnityNetworking/Resources/PhotonServerSettingsÁ¬½Ó·şÎñÆ÷
-            PhotonNetwork.ConnectUsingSettings();
-        }
 
         /// <summary>
-        /// ÊÇ·ñÁ¬½Ó·şÎñÆ÷
+        /// æ˜¯å¦æ˜¯è”ç½‘çš„.
+        /// </summary>
+        public bool IsOnline { get; private set; } = true;
+
+        /// <summary>
+        /// æ˜¯å¦è¿æ¥æœåŠ¡å™¨.
         /// </summary>
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
-            // ÉèÖÃµ±Ç°´óÌüÀàĞÍÎªsqlLobby
-            TypedLobby typedLobby = new TypedLobby("myLobby", LobbyType.SqlLobby);
-            // Ö»ÓĞ¼ÓÈëµ½´óÌü²Å¿ÉÒÔ»ñÈ¡·¿¼äÁĞ±í
+
+            // è®¾ç½®å½“å‰å¤§å…ç±»å‹ä¸ºsqlLobby
+            TypedLobby typedLobby = new ("myLobby", LobbyType.SqlLobby);
+
+            // åªæœ‰åŠ å…¥åˆ°å¤§å…æ‰å¯ä»¥è·å–æˆ¿é—´åˆ—è¡¨
             PhotonNetwork.JoinLobby(typedLobby);
         }
 
+        /// <summary>
+        /// è¿æ¥å¤§å…æ—¶è°ƒç”¨.
+        /// </summary>
         public override void OnJoinedLobby()
         {
             base.OnJoinedLobby();
         }
 
         /// <summary>
-        /// ÔÚ¼ÓÈë·¿¼ä³É¹¦
+        /// åŠ å…¥æˆ¿é—´æˆåŠŸ.
         /// </summary>
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
-            //GameObject player = PhotonNetwork.Instantiate(Constant.PREFAB + _player.name, Vector3.zero, Quaternion.identity);
-            //if (player == null)
-            //{
-            //    LogManager.Instance.log("¼ÓÈë·¿¼ä³É¹¦", LogManager.LogLevel.Info);
-            //    return;
-            //}
-            //player.name = "Player";
-            //// ÉèÖÃ²ã¼¶
-            //player.layer = LayerMask.NameToLayer("Player");
+
+            // GameObject player = PhotonNetwork.Instantiate(Constant.PREFAB + _player.name, Vector3.zero, Quaternion.identity);
+            // if (player == null)
+            // {
+            //     LogManager.Instance.log("åŠ å…¥æˆ¿é—´æˆåŠŸ", LogManager.LogLevel.Info);
+            //     return;
+            // }
+            // player.name = "Player";
+            // // è®¾ç½®å±‚çº§
+            // player.layer = LayerMask.NameToLayer("Player");
         }
 
+        /// <summary>
+        /// ç¦»å¼€å¤§å…æ—¶è°ƒç”¨.
+        /// </summary>
         public override void OnLeftLobby()
         {
             base.OnLeftLobby();
-            LogManager.Instance.log("ÍË³ö´óÌü", LogManager.LogLevel.Info);
+            LogManager.Instance.Log("é€€å‡ºå¤§å…", LogManager.LogLevel.Info);
         }
 
+        /// <summary>
+        /// ç¦»å¼€æˆ¿é—´æ—¶è°ƒç”¨.
+        /// </summary>
         public override void OnLeftRoom()
         {
             base.OnLeftRoom();
-            LogManager.Instance.log("Àë¿ª·¿¼ä", LogManager.LogLevel.Info);
+            LogManager.Instance.Log("ç¦»å¼€æˆ¿é—´", LogManager.LogLevel.Info);
         }
 
+        /// <summary>
+        /// ç©å®¶è¿›å…¥æˆ¿é—´æ—¶è°ƒç”¨.
+        /// </summary>
+        /// <param name="newPlayer">åŠ å…¥çš„ç©å®¶ä¿¡æ¯.</param>
         public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
         {
             base.OnPlayerEnteredRoom(newPlayer);
-            LogManager.Instance.log("ĞÂÍæ¼Ò¼ÓÈë", LogManager.LogLevel.Info);
-            //InitTip.Instance.showTip("ĞÂÍæ¼Ò¼ÓÈë");
-            //½öĞèÒª·¿Ö÷´«µİÊı¾İ¸øĞÂÍæ¼Ò
-            if (IsOnline && PhotonNetwork.IsMasterClient)
+            LogManager.Instance.Log("æ–°ç©å®¶åŠ å…¥", LogManager.LogLevel.Info);
+
+            // InitTip.Instance.showTip("æ–°ç©å®¶åŠ å…¥");
+            // ä»…éœ€è¦æˆ¿ä¸»ä¼ é€’æ•°æ®ç»™æ–°ç©å®¶
+            if (this.IsOnline && PhotonNetwork.IsMasterClient)
             {
                 if (TileMap.Instance != null)
                 {
-                    TileMap.Instance.initData();
+                    TileMap.Instance.InitData();
                 }
-                //if (EnemyManager.Instance != null)
-                //{
-                //    EnemyManager.Instance.initData();
-                //}
+
+                // if (EnemyManager.Instance != null)
+                // {
+                //     EnemyManager.Instance.initData();
+                // }
             }
         }
 
+        /// <summary>
+        /// å½“åˆ›å»ºæˆ¿é—´å¤±è´¥æ—¶è°ƒç”¨.
+        /// </summary>
+        /// <param name="returnCode">è¿”å›çš„çŠ¶æ€ç .</param>
+        /// <param name="message">è¿”å›çš„ä¿¡æ¯.</param>
         public override void OnCreateRoomFailed(short returnCode, string message)
         {
             base.OnCreateRoomFailed(returnCode, message);
-            LogManager.Instance.log("´´½¨·¿¼äÊ§°Ü!!!", LogManager.LogLevel.Error);
+            LogManager.Instance.Log("åˆ›å»ºæˆ¿é—´å¤±è´¥!!!", LogManager.LogLevel.Error);
         }
 
+        /// <summary>
+        /// å½“è¿æ¥å…³é—­æ—¶è°ƒç”¨.
+        /// </summary>
+        /// <param name="cause">å…³é—­åŸå› .</param>
         public override void OnDisconnected(DisconnectCause cause)
         {
             base.OnDisconnected(cause);
-            LogManager.Instance.log("¶Ï¿ªÁ¬½Ó!!!", LogManager.LogLevel.Error);
-            IsOnline = false;
+            LogManager.Instance.Log("æ–­å¼€è¿æ¥!!!", LogManager.LogLevel.Error);
+            this.IsOnline = false;
+        }
+
+        private void Awake()
+        {
+            Instance = this;
+            PhotonNetwork.AutomaticallySyncScene = true;
+            this.IsOnline = false;
+        }
+
+        private void Start()
+        {
+            // ä½¿ç”¨Photon/PhotonUnityNetworking/Resources/PhotonServerSettingsè¿æ¥æœåŠ¡å™¨
+            PhotonNetwork.ConnectUsingSettings();
         }
     }
 }

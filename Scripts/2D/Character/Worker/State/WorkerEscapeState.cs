@@ -1,38 +1,46 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+Ôªønamespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// WorkerÈÄÉË∑ëÁä∂ÊÄÅ
+    /// </summary>
     public class WorkerEscapeState : WorkerState
     {
-        private const float recordTime = 5.0f;
-        private float _recordTime = 0.0f;
+        private const float RecordTime = 5.0f;
+        private float recordTime = 0.0f;
 
-        public WorkerEscapeState(Worker worker) : base(worker) { }
+        public WorkerEscapeState(Worker worker)
+            : base(worker)
+        {
+        }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            _recordTime = 0.0f;
-            Character.WorkerState.text = $"<color=red>Ã”≈‹</color>";
+            this.recordTime = 0.0f;
+            this.Character.WorkerStateText.text = $"<color=red>ÈÄÉË∑ë</color>";
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
-            _recordTime += Time.deltaTime;
-            if(_recordTime >= recordTime)
+            this.recordTime += Time.deltaTime;
+            if (this.recordTime >= RecordTime)
             {
-                Character.Manager.changeState(WorkerStateType.Seek);
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
             }
-            Character.LineRenderer.positionCount = 0;
-            Character.transform.Translate(Vector3.up * Time.deltaTime * Character.moveSpeed,Space.World);
+
+            this.Character.LineRenderer.positionCount = 0;
+            this.Character.transform.Translate(this.Character.MoveSpeed * Time.deltaTime * Vector3.up, Space.World);
         }
     }
 }

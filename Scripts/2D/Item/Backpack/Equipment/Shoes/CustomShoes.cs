@@ -1,20 +1,23 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 自定义鞋子
+    /// </summary>
     [Serializable]
     public class CustomShoes : Shoes
     {
         public CustomShoes()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomShoes");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomShoes");
         }
     }
 
+    /// <summary>
+    /// 自定义鞋子对象
+    /// </summary>
     public class CustomShoesObject : ShoesObject
     {
     }

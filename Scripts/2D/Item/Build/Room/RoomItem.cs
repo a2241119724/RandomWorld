@@ -1,40 +1,38 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+    using UnityEngine;
+
+    /// <summary>
+    /// 房间数据
+    /// </summary>
     [Serializable]
     public abstract class RoomItem : BuildItem
     {
-        public Dictionary<WallDirection, Wall> walls;
+        /// <summary>
+        /// 房间的所有墙
+        /// </summary>
+        public Dictionary<WallItem.WallDirectionEnum, WallItem> Walls;
 
-        public override void addBuildTask(Vector3Int centerMap)
+        /// <inheritdoc/>
+        public override void AddBuildTask(Vector3Int centerMap)
         {
             throw new System.NotImplementedException();
         }
 
-        public int[] getXBoundary(Vector3Int centerMap)
+        /// <summary>
+        /// 获得XY轴边界
+        /// </summary>
+        /// <param name="centerMap">中心位置</param>
+        /// <returns>坐标</returns>
+        public int[] GetBoundary(Vector3Int centerMap)
         {
-            return new int[] { centerMap.x - height / 2, centerMap.x + height - 1 - height / 2 };
-        }
-
-        public int[] getYBoundary(Vector3Int centerMap)
-        {
-            return new int[] { centerMap.y - width / 2, centerMap.y + width - 1 - width / 2 };
-        }
-
-        public enum WallDirection
-        {
-            TOP,
-            DOWN,
-            LEFT,
-            RIGHT,
-            RIGHT_TOP,
-            RIGHT_DOWN,
-            LEFT_TOP,
-            LEFT_DOWN
+            return new int[]
+            {
+                centerMap.x - (this.Height / 2), centerMap.x + this.Height - 1 - (this.Height / 2),
+                centerMap.y - (this.Width / 2), centerMap.y + this.Width - 1 - (this.Width / 2),
+            };
         }
     }
 }

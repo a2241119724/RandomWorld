@@ -1,26 +1,27 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
     /// <summary>
     /// 背包仓库界面
     /// </summary>
     public class BackpackItemManagerView : MVCItemManagerView<BackpackItemView, BackpackModel>
     {
-        public static BackpackItemManagerView Instance { private set; get; }
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static BackpackItemManagerView Instance { get; private set; }
 
+        /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
             Instance = this;
-            itemBox = ResourcesManager.Instance.getPrefab("BackpackItem");
+            this.itemBox = ResourceManager.Instance.GetPrefab("BackpackItem");
         }
 
-        protected override int getQuantity(Item item)
+        /// <inheritdoc/>
+        protected override int GetQuantity(Item item)
         {
-            return ((BackpackItem)item).quantity;
+            return ((BackpackItem)item).Quantity;
         }
     }
 }

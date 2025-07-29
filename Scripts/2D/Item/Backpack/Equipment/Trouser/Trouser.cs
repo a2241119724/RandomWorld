@@ -1,19 +1,22 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+
+    /// <summary>
+    /// 裤子
+    /// </summary>
     [Serializable]
     public abstract class Trouser : Equipment
     {
         public Trouser()
         {
-            equipType = EquipType.Trouser;
+            this.EquipTypeValue = EquipType.Trouser;
         }
     }
 
+    /// <summary>
+    /// 裤子对象
+    /// </summary>
     public abstract class TrouserObject : EquipmentObject
     {
     }

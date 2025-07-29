@@ -1,91 +1,104 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// ç©¿æˆ´ä»»åŠ¡
+    /// </summary>
     public class WorkerWearTask : WorkerTask
     {
         private Worker worker;
-        /// <summary>
-        /// ´©´÷µÄ×°±¸id
-        /// </summary>
-        private int id;
+        private int id; // ç©¿æˆ´çš„è£…å¤‡id
 
-        public WorkerWearTask() : base(TaskType.Wear) {
-            stageInit.Add((Worker worker) =>
+        public WorkerWearTask()
+            : base(WorkerTaskTypeEnum.Wear)
+        {
+            this.stageInit.Add((Worker worker) =>
             {
-                maxProgress = 1.0f;
-                AvailableNeighborPos.Clear();
-                AvailableNeighborPos.Add(neighbors[8]);
-                // ½øÈë¹¤×÷×´Ì¬
-                worker.Manager.changeState(WorkerStateType.Seek);
+                this.maxProgress = 1.0f;
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[8]);
+
+                // è¿›å…¥å·¥ä½œçŠ¶æ€
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 
-        public override void start(Worker worker)
+        /// <inheritdoc/>
+        public override void Start(Worker worker)
         {
-            base.start(worker);
-            changeStage(worker,0);
+            base.Start(worker);
+            this.ChangeStage(worker, 0);
         }
 
-        public override bool isCanWork(Worker worker)
+        /// <inheritdoc/>
+        public override bool IsCanWork(Worker worker)
         {
-            if (!base.isCanWork(worker))
+            if (!base.IsCanWork(worker))
             {
                 return false;
             }
+
             return this.worker == worker;
         }
 
-        public override void finish(Worker worker)
+        /// <inheritdoc/>
+        public override void Finish(Worker worker)
         {
-            base.finish(worker);
-            // WorkerÄÃÆğ×°±¸»òÕßÎäÆ÷
-            if(ItemDataManager.Instance.getTypeById(id) == ItemType.Weapon)
+            base.Finish(worker);
+
+            // Workeræ‹¿èµ·è£…å¤‡æˆ–è€…æ­¦å™¨
+            if (ItemDataManager.Instance.GetTypeById(this.id) == Item.ItemType.Weapon)
             {
-                worker.WearData.weapon = (Weapon)ItemFactory.Instance.getBackpackItemByName(
-                    ItemDataManager.Instance.getById(id).imageName);
-            }else if(ItemDataManager.Instance.getTypeById(id) == ItemType.Equipment)
-            {
-                worker.WearData.addEquipment((Equipment)ItemFactory.Instance.getBackpackItemByName(
-                    ItemDataManager.Instance.getById(id).imageName), TargetMap);
+                worker.WearData.Weapon = (Weapon)ItemFactory.Instance.GetBackpackItemByName(
+                    ItemDataManager.Instance.GetById(this.id).ImageName);
             }
-            InventoryManager.Instance.subItemByPreTake(worker, TargetMap);
-            // É¾³ıÍ¼±ê
-            ItemMap.Instance.hindTile(TargetMap);
+            else if (ItemDataManager.Instance.GetTypeById(this.id) == Item.ItemType.Equipment)
+            {
+                worker.WearData.AddEquipment(
+                    (Equipment)ItemFactory.Instance.GetBackpackItemByName(
+                    ItemDataManager.Instance.GetById(this.id).ImageName), this.TargetMap);
+            }
+
+            InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);
+
+            // åˆ é™¤å›¾æ ‡
+            ItemMap.Instance.HindTile(this.TargetMap);
         }
 
+#pragma warning disable SA1600 // Elements should be documented
         public class WearTaskBuilder
         {
-            private WorkerWearTask task;
+            private readonly WorkerWearTask task;
 
             public WearTaskBuilder()
             {
-                task = new WorkerWearTask();
+                this.task = new WorkerWearTask();
             }
 
-            public WearTaskBuilder setWorker(Worker worker) {
-                task.worker = worker;
-                return this;
-            }
-
-            public WearTaskBuilder setTarget(Vector3Int posMap) {
-                task.TargetMap = posMap;
-                return this;
-            }
-
-            public WearTaskBuilder setEquipmentId(int id)
+            public WearTaskBuilder SetWorker(Worker worker)
             {
-                task.id = id;
+                this.task.worker = worker;
                 return this;
             }
 
-            public WorkerWearTask build()
+            public WearTaskBuilder SetTarget(Vector3Int posMap)
             {
-                return task;
+                this.task.TargetMap = posMap;
+                return this;
+            }
+
+            public WearTaskBuilder SetEquipmentId(int id)
+            {
+                this.task.id = id;
+                return this;
+            }
+
+            public WorkerWearTask Build()
+            {
+                return this.task;
             }
         }
+#pragma warning restore SA1600 // Elements should be documented
     }
 }

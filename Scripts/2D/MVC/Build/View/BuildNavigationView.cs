@@ -1,24 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    /// <summary>
+    /// 建造导航按钮UI
+    /// </summary>
     public class BuildNavigationView : MVCNavigationView
     {
+        /// <inheritdoc/>
+        protected override void Init()
+        {
+            BuildMenuPanel.Instance.Select.Init();
+        }
+
         private void OnEnable()
         {
-            CurItemType = ItemType.Room;
+            this.CurItemType = Item.ItemType.Room;
         }
 
-        void Start()
+        private void Start()
         {
-            bindButton(ItemType.Room, ItemType.BuildOther);
-        }
-
-        protected override void init()
-        {
-            BuildMenuPanel.Instance.Select.init();
+            this.BindButton(Item.ItemType.Room, Item.ItemType.BuildOther);
         }
     }
 }

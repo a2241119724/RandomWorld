@@ -1,59 +1,98 @@
-using System;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+
     /// <summary>
-    /// ��JsonUtility����ʶ��
+    /// 让JsonUtility可以识别
     /// </summary>
     [Serializable]
     public class UserData
     {
-        public List<Row> data;
+        /// <summary>
+        /// 数据
+        /// </summary>
+        public List<Row> Data;
 
         public UserData()
         {
-            data = new List<Row>();
-            if (data == null)
+            this.Data = new List<Row>();
+            if (this.Data == null)
             {
-                LogManager.Instance.log("data assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("data assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
         }
 
-        public void addData(string username, string password)
+        /// <summary>
+        /// 添加数据
+        /// </summary>
+        /// <param name="username">用户名</param>
+        /// <param name="password">密码</param>
+        public void AddData(string username, string password)
         {
-            data.Add(new Row(username, password));
+            this.Data.Add(new Row(username, password));
         }
 
-        public int getLength()
+        /// <summary>
+        /// 获取数据数量
+        /// </summary>
+        /// <returns>数量</returns>
+        public int GetLength()
         {
-            return data.Count;
+            return this.Data.Count;
         }
 
-        public string getUsername(int index)
+        /// <summary>
+        /// 通过索引获取用户名
+        /// </summary>
+        /// <param name="index">索引</param>
+        /// <returns>用户名</returns>
+        public string GetUsername(int index)
         {
-            if (index < 0 || index >= data.Count) return "";
-            return data[index].username;
+            if (index < 0 || index >= this.Data.Count)
+            {
+                return string.Empty;
+            }
+
+            return this.Data[index].Username;
         }
 
-        public string getPassword(int index)
+        /// <summary>
+        /// 通过索引获取密码
+        /// </summary>
+        /// <param name="index">索引</param>
+        /// <returns>密码</returns>
+        public string GetPassword(int index)
         {
-            if (index < 0 || index >= data.Count) return "";
-            return data[index].password;
+            if (index < 0 || index >= this.Data.Count)
+            {
+                return string.Empty;
+            }
+
+            return this.Data[index].Password;
         }
 
+        /// <summary>
+        /// 每个用户数据
+        /// </summary>
         [Serializable]
         public class Row
         {
-            public string username;
-            public string password;
+            /// <summary>
+            /// 用户名
+            /// </summary>
+            public string Username;
+
+            /// <summary>
+            /// 密码
+            /// </summary>
+            public string Password;
 
             public Row(string username, string password)
             {
-                this.username = username;
-                this.password = password;
+                this.Username = username;
+                this.Password = password;
             }
         }
     }

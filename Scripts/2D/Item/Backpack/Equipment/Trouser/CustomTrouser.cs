@@ -1,20 +1,23 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 自定义裤子
+    /// </summary>
     [Serializable]
     public class CustomTrouser : Trouser
     {
         public CustomTrouser()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomTrouser");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomTrouser");
         }
     }
 
+    /// <summary>
+    /// 自定义裤子对象
+    /// </summary>
     public class CustomTrouserObject : TrouserObject
     {
     }

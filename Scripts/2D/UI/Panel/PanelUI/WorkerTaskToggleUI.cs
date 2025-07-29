@@ -1,74 +1,84 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// Workerå¯åšä»»åŠ¡å¼€å…³ UI
+    /// </summary>
     public class WorkerTaskToggleUI : MonoBehaviour
     {
-        public List<GameObject> taskItems;
+        /// <summary>
+        /// ä»»åŠ¡é¡¹
+        /// </summary>
+        public List<GameObject> TaskItems { get; set; }
+
+        /// <summary>
+        /// åœ¨é¢æ¿ä¸­æŒ‚åœ¨åœ¨æ‰€æœ‰TaskToggleä¸Š
+        /// </summary>
+        /// <param name="toggle">å¼€å…³UI</param>
+        public void TaskToggle(Toggle toggle)
+        {
+            int x = toggle.transform.parent.GetSiblingIndex() - 1;
+            int y = toggle.transform.GetSiblingIndex() - 1;
+            List<Worker> workers = WorkerManager.Instance.Characters;
+            workers[x].TaskToggle[y] = toggle.isOn;
+        }
 
         private void Awake()
         {
-            taskItems = new List<GameObject>();
-            for (int i = 0; i < transform.childCount - 1; i++)
+            this.TaskItems = new List<GameObject>();
+            for (int i = 0; i < this.transform.childCount - 1; i++)
             {
-                taskItems.Add(transform.GetChild(i + 1).gameObject);
+                this.TaskItems.Add(this.transform.GetChild(i + 1).gameObject);
             }
         }
 
         private void OnEnable()
         {
             List<Worker> workers = WorkerManager.Instance.Characters;
-            // UI²»¹»,´´½¨
-            int count = workers.Count - (transform.childCount - 1);
-            if (count>0)
+
+            // UIä¸å¤Ÿ,åˆ›å»º
+            int count = workers.Count - (this.transform.childCount - 1);
+            if (count > 0)
             {
-                for(int i = count; i > 0; i--)
+                for (int i = count; i > 0; i--)
                 {
-                    GameObject g = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("TaskItem"), transform ,false);
+                    GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("TaskItem"), this.transform, false);
                     g.name = "TaskItem";
-                    taskItems.Add(g);
-                    // Ìí¼ÓÊÂ¼ş
-                    for(int j=1;j< g.transform.childCount; j++)
+                    this.TaskItems.Add(g);
+
+                    // æ·»åŠ äº‹ä»¶
+                    for (int j = 1; j < g.transform.childCount; j++)
                     {
                         Toggle toggle = g.transform.GetChild(j).GetComponent<Toggle>();
                         toggle.onValueChanged.AddListener((bool isOn) =>
                         {
-                            taskToggle(toggle);
+                            this.TaskToggle(toggle);
                         });
                     }
                 }
             }
-            // Çå¿ÕTaskItem
-            for (int i=0; i < transform.childCount-1; i++)
+
+            // æ¸…ç©ºTaskItem
+            for (int i = 0; i < this.transform.childCount - 1; i++)
             {
-                taskItems[i].SetActive(false);
+                this.TaskItems[i].SetActive(false);
             }
+
             int index = 0;
-            foreach(Worker worker in workers)
+            foreach (Worker worker in workers)
             {
-                taskItems[index].SetActive(true);
-                Tool.GetComponentInChildren<Text>(taskItems[index].transform.GetChild(0).gameObject, "Text").text = worker.name;
-                for (int i = 1; i < taskItems[index].transform.childCount; i++)
+                this.TaskItems[index].SetActive(true);
+                Tool.GetComponentInChildren<Text>(this.TaskItems[index].transform.GetChild(0).gameObject, "Text").text = worker.name;
+                for (int i = 1; i < this.TaskItems[index].transform.childCount; i++)
                 {
-                    taskItems[index].transform.GetChild(i).GetComponent<Toggle>().isOn = worker.TaskToggle[i - 1];
+                    this.TaskItems[index].transform.GetChild(i).GetComponent<Toggle>().isOn = worker.TaskToggle[i - 1];
                 }
+
                 index++;
             }
-        }
-
-        /// <summary>
-        /// ÔÚÃæ°åÖĞ¹ÒÔÚÔÚËùÓĞTaskToggleÉÏ
-        /// </summary>
-        /// <param name="toggle"></param>
-        public void taskToggle(Toggle toggle) {
-            int x = toggle.transform.parent.GetSiblingIndex()-1;
-            int y = toggle.transform.GetSiblingIndex()-1;
-            List<Worker> workers = WorkerManager.Instance.Characters;
-            workers[x].TaskToggle[y] = toggle.isOn;
         }
     }
 }

@@ -1,87 +1,102 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// Workerå¯»æ‰¾çŠ¶æ€
+    /// </summary>
     public class WorkerSeekState : WorkerState
     {
         private Vector3Int targetMap;
         private bool isOne = true;
 
-        public WorkerSeekState(Worker character) : base(character)
+        public WorkerSeekState(Worker character)
+            : base(character)
         {
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            // Èç¹û¼¢¶ö²¢ÇÒÃ»ÓĞ³Ô·¹ÈÎÎñ¾Í½øÈë¼¢¶ö×´Ì¬,×öÍêÈÎÎñÔÙ³Ô·¹
-            if (Character.CurHungry < Worker.ThresholdHungry && Character.Manager.Task == null) {
-                Character.Manager.changeState(WorkerStateType.Hungry);
+
+            // å¦‚æœé¥¥é¥¿å¹¶ä¸”æ²¡æœ‰åƒé¥­ä»»åŠ¡å°±è¿›å…¥é¥¥é¥¿çŠ¶æ€,åšå®Œä»»åŠ¡å†åƒé¥­
+            if (this.Character.CurHungry < Worker.ThresholdHungry && this.Character.Manager.Task == null)
+            {
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Eat);
                 return;
             }
-            isOne = true;
-            // Ã»ÓĞÈÎÎñ
-            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(Character.transform.position);
-            targetMap = TileMap.Instance.genCanReachPos(posMap);
-            if (Character.Manager.Task != null)
+
+            this.isOne = true;
+
+            // æ²¡æœ‰ä»»åŠ¡
+            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
+            this.targetMap = TileMap.Instance.GenCanReachPos(posMap);
+            if (this.Character.Manager.Task != null)
             {
-                // ÓĞÈÎÎñ
-                targetMap = Character.Manager.Task.TargetMap;
-                // ÕÒÅÔ±ßµÄÎ»ÖÃ½øĞĞ½¨Ôì
+                // æœ‰ä»»åŠ¡
+                this.targetMap = this.Character.Manager.Task.TargetMap;
+
+                // æ‰¾æ—è¾¹çš„ä½ç½®è¿›è¡Œå»ºé€ 
                 float minDistance = 99999.0f;
-                Vector3Int closedPos = default(Vector3Int);
-                foreach (Vector3Int pos in Character.Manager.Task.AvailableNeighborPos)
+                Vector3Int closedPos = default;
+                foreach (Vector3Int pos in this.Character.Manager.Task.AvailableNeighborPos)
                 {
-                    // ÓÉÓÚÊÇĞ±¶Ô³Æ
-                    Vector3Int temp = new Vector3Int(targetMap.x + pos.y, targetMap.y + pos.x, 0);
-                    if (Character.isCanReach(temp))
+                    // ç”±äºæ˜¯æ–œå¯¹ç§°
+                    Vector3Int temp = new (this.targetMap.x + pos.y, this.targetMap.y + pos.x, 0);
+                    if (this.Character.IsCanReach(temp))
                     {
-                        Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(temp);
-                        float distance = Mathf.Pow(worldPos.x-Character.transform.position.x,2) +
-                            Mathf.Pow(worldPos.y - Character.transform.position.y, 2);
-                        if(distance < minDistance)
+                        Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(temp);
+                        float distance = Mathf.Pow(worldPos.x - this.Character.transform.position.x, 2) +
+                            Mathf.Pow(worldPos.y - this.Character.transform.position.y, 2);
+                        if (distance < minDistance)
                         {
                             minDistance = distance;
                             closedPos = temp;
                         }
                     }
                 }
-                if(closedPos == default(Vector3Int))
+
+                if (closedPos == default)
                 {
-                    LogManager.Instance.log("Ã»ÓĞÁÚ¾ÓÎ»ÖÃ!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("æ²¡æœ‰é‚»å±…ä½ç½®!!!", LogManager.LogLevel.Error);
                 }
-                targetMap = closedPos;
+
+                this.targetMap = closedPos;
             }
-            Character.initSeek(targetMap);
+
+            this.Character.InitSeek(this.targetMap);
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
-            Character.WorkerState.text = preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(Character.SeekProgress * 100)}%</color>\n"+
-                $"Target: {targetMap.x},{targetMap.y}";
-            if (Worker.seekLock.getLock(Character))
+            this.Character.WorkerStateText.text = this.preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(this.Character.SeekProgress * 100)}%</color>\n" +
+                $"Target: {this.targetMap.x},{this.targetMap.y}";
+            if (Worker.SeekLock.GetLock(this.Character))
             {
-                // Ö»ÄÜÓĞÒ»¸öÔÚÑ°Â·(¼ÓËø),Èç¹û±»ËøÁËÇÒËøµÄÓµÓĞÕß²»ÊÇ×Ô¼ºÔò×èÈû£¬¿ÉÖØÈë
-                if (isOne)
+                // åªèƒ½æœ‰ä¸€ä¸ªåœ¨å¯»è·¯(åŠ é”),å¦‚æœè¢«é”äº†ä¸”é”çš„æ‹¥æœ‰è€…ä¸æ˜¯è‡ªå·±åˆ™é˜»å¡ï¼Œå¯é‡å…¥
+                if (this.isOne)
                 {
-                    isOne = false;
-                    Character.toTarget();
+                    this.isOne = false;
+                    this.Character.ToTarget();
                 }
             }
-            if (!Character.IsSeeking) {
-                Worker.seekLock.releaseLock(Character);
-                // Ñ°Â·½áÊø
-                Character.Manager.changeState(WorkerStateType.Move);
+
+            if (!this.Character.IsSeeking)
+            {
+                Worker.SeekLock.ReleaseLock(this.Character);
+
+                // å¯»è·¯ç»“æŸ
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Move);
             }
         }
     }
 }
-

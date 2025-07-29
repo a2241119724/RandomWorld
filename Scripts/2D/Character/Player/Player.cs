@@ -1,18 +1,18 @@
-﻿using UnityEngine;
-using Photon.Pun;
-using UnityEngine.UI;
-using System.Collections.Generic;
-using System;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
-    // 渲染更新 Update,不受Time.timeScale影响;Time.deltaTime,受Time.timeScale影响
-    // 物理更新 FixedUpdate,受Time.timeScale影响
+    using Photon.Pun;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// 渲染更新 Update,不受Time.timeScale影响;Time.deltaTime,受Time.timeScale影响
+    /// 物理更新 FixedUpdate,受Time.timeScale影响.
+    /// </summary>
     public class Player : Character
     {
         [Tooltip("角色速度")]
-        private int Mp = 100; // 玩家蓝量
-        private int maxMp = 100; // 玩家最大蓝量
+        private readonly int mp = 100; // 玩家蓝量
+        private readonly int maxMp = 100; // 玩家最大蓝量
         private int currentExperience = 0; // 玩家当前经验值
         private int maxExperience = 4; // 玩家当前等级最大经验值
         private int level = 1; // 当前等级
@@ -22,212 +22,252 @@ namespace LAB2D
         private CameraMove mainCamera;
         private CameraMove miniCamera;
 
-        protected override void Awake()
-        {
-            base.Awake();
-            direction = new Vector3();
-            if(direction == null)
-            {
-                LogManager.Instance.log("direction assign resource Error!!!", LogManager.LogLevel.Error);
-                return;
-            }
-            CharacterDataLAB.MaxHp = CharacterDataLAB.Hp = 100;
-            spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
-            name = "Player";
-        }
-
-        protected override void Start()
-        {
-            base.Start();
-            animator = GetComponent<Animator>();
-            if (animator == null) {
-                LogManager.Instance.log("animator Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-            if (InfoUI.Instance != null)
-            {
-                InfoUI.Instance.setPosition(transform.position);
-            }
-            //if (Map.Instance != null)
-            //{
-            //    Map.Instance.show(transform.position);
-            //}
-            // 不在线，或者在线并且是自己
-            if (photonView.IsMine || !NetworkConnect.Instance.IsOnline)
-            {
-                mainCamera = Camera.main.GetComponent<CameraMove>();
-                miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
-                mainCamera.DirectToPosition(transform.position);
-                miniCamera.DirectToPosition(transform.position);
-                PlayerManager.Instance.Mine = this;
-                PhotonNetwork.LocalPlayer.TagObject = this;
-                Tool.GetComponentInChildren<Text>(gameObject, "Name").text = PhotonNetwork.NickName;
-                PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
-            }
-            else if(!photonView.IsMine) {
-                Tool.GetComponentInChildren<Text>(gameObject, "Name").text = photonView.Owner.NickName;
-                PlayerManager.Instance.add(this);
-                //PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
-            }
-        }
-
-        private void FixedUpdate()
-        {
-            // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
-            if (NetworkConnect.Instance.IsOnline && !photonView.IsMine && PhotonNetwork.IsConnected) return;
-            // 防止撞墙震动
-            move();
-        }
-
         /// <summary>
-        /// 玩家移动
+        /// 增加经验值.
         /// </summary>
-        private void move()
+        /// <param name="experience">经验值.</param>
+        public void AddExperienceValue(int experience)
         {
-            if (Input.GetKey(KeyCode.A) ||
-                Input.GetKey(KeyCode.W) ||
-                Input.GetKey(KeyCode.S) ||
-                Input.GetKey(KeyCode.D) ||
-                (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f)){
-                //mainCamera.Target = transform.position;
-                //miniCamera.Target = transform.position;
-                mainCamera.DirectToPosition(transform.position);
-                miniCamera.DirectToPosition(transform.position);
-                if (InfoUI.Instance != null)
-                {
-                    InfoUI.Instance.setPosition(transform.position);
-                }
-                //if (Map.Instance != null)
-                //{
-                //    Map.Instance.show(transform.position);
-                //}
-                animator.SetBool("IsMove", true);
-                // 按键控制玩家
-                direction.x = Input.GetAxisRaw("Horizontal"); // 在Game面板
-                direction.y = Input.GetAxisRaw("Vertical");
-                // 摇杆控制玩家
-                if(direction.x == 0 && direction.y == 0 &&Joystick.Instance != null) {
-                    direction.x = Joystick.Instance.Direction.x;
-                    direction.y = Joystick.Instance.Direction.y;
-                }
-                transform.Translate(direction.normalized * Time.deltaTime * moveSpeed, Space.World);
-                // 翻转
-                _renderer.flipX = direction.x < 0;
-                spriteRenderer.enabled = false;
-                for (int i=0;i<7;i++) {
-                    transform.GetChild(i).gameObject.SetActive(true);
-                }
-            }
-            else
-            {
-                animator.SetBool("IsMove", false);
-                spriteRenderer.enabled = true;
-                for (int i = 0; i < 7; i++)
-                {
-                    transform.GetChild(i).gameObject.SetActive(false);
-                }
-            }
-        }
+            this.currentExperience += experience;
 
-        /// <summary>
-        /// 增加经验值
-        /// </summary>
-        /// <param name="experience"></param>
-        public void addExperienceValue(int experience)
-        {
-            currentExperience += experience;
             // 升级
-            if (currentExperience / maxExperience >= 1)
+            if (this.currentExperience / this.maxExperience >= 1)
             {
-                ++level;
-                currentExperience %= maxExperience;
-                maxExperience *= 2;
-                GlobalInit.Instance.showTip("UP " + level);
+                ++this.level;
+                this.currentExperience %= this.maxExperience;
+                this.maxExperience *= 2;
+                GlobalInit.Instance.ShowTip("UP " + this.level);
             }
-            PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
+
+            PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
         }
 
         /// <summary>
-        /// 加血
+        /// 加血.
         /// </summary>
-        /// <param name="Hp">加血</param>
-        public void addHp(float Hp)
+        /// <param name="hp">血量.</param>
+        public void AddHp(float hp)
         {
-            CharacterDataLAB.Hp += Hp;
-            if (CharacterDataLAB.Hp > CharacterDataLAB.MaxHp) {
-                CharacterDataLAB.Hp = CharacterDataLAB.MaxHp;
+            this.CharacterDataLAB.Hp += hp;
+            if (this.CharacterDataLAB.Hp > this.CharacterDataLAB.MaxHp)
+            {
+                this.CharacterDataLAB.Hp = this.CharacterDataLAB.MaxHp;
             }
-            PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
+
+            PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
         }
 
         /// <summary>
-        /// 减血
+        /// 减血.
         /// </summary>
-        /// <param name="Hp">减的血量</param>
-        public override void reduceHp(float Hp) {
-            if(Hp <= 0)
+        /// <param name="hp">血量.</param>
+        public override void ReduceHp(float hp)
+        {
+            if (hp <= 0)
             {
-                LogManager.Instance.log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
                 return;
             }
-            base.reduceHp(Hp);
-            if (NetworkConnect.Instance.IsOnline && !photonView.IsMine && PhotonNetwork.IsConnected) return;
-            PlayerStatusUI.Instance.updatePlayerState(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp, Mp, maxMp, level, currentExperience, maxExperience);
-        }
 
-        private void OnDestroy()
-        {
-            PlayerManager.Instance.remove(this);
-            // 关闭游戏添加正在装备的武器
-            if (PlayerManager.Instance.Select.id != -1) { 
-                BackpackController.Instance.addItem(PlayerManager.Instance.Select.weaponData);
+            base.ReduceHp(hp);
+            if (NetworkConnect.Instance.IsOnline && !this.photonView.IsMine && PhotonNetwork.IsConnected)
+            {
+                return;
             }
-        }
 
-        protected override void death()
-        {
-            LogManager.Instance.log("玩家重生", LogManager.LogLevel.Info);
-            CharacterDataLAB.Hp = 100;
+            PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
         }
 
         /// <summary>
-        /// 是否在玩家周围
+        /// 某位置是否在玩家周围.
         /// </summary>
-        /// <returns></returns>
-        public bool isArround(Vector3 pos) {
-            if (pos == null) {
-                LogManager.Instance.log("pos is null!!!", LogManager.LogLevel.Error);
+        /// <param name="pos">位置.</param>
+        /// <returns>是否.</returns>
+        public bool IsArround(Vector3 pos)
+        {
+            if (pos == null)
+            {
+                LogManager.Instance.Log("pos is null!!!", LogManager.LogLevel.Error);
                 return false;
             }
-            return pos.x < transform.position.x + 50 &&
-                pos.x > transform.position.x - 50 &&
-                pos.y > transform.position.y - 50 &&
-                pos.y < transform.position.y + 50;
+
+            return pos.x < this.transform.position.x + 50 &&
+                pos.x > this.transform.position.x - 50 &&
+                pos.y > this.transform.position.y - 50 &&
+                pos.y < this.transform.position.y + 50;
         }
 
         /// <summary>
-        /// 切换角色视角
+        /// 切换角色视角.
         /// </summary>
-        /// <param name="is_2_5D"></param>
-        public void togglePerspective(bool is_2_5D) {
+        /// <param name="is_2_5D">是否是2.5D视角.</param>
+        public void TogglePerspective(bool is_2_5D)
+        {
             float rotationX = 0;
-            if (is_2_5D){
+            if (is_2_5D)
+            {
                 rotationX = -45;
             }
-            transform.rotation = Quaternion.Euler(rotationX, transform.rotation.y, transform.rotation.z);
+
+            this.transform.rotation = Quaternion.Euler(rotationX, this.transform.rotation.y, this.transform.rotation.z);
             Camera.main.transform.rotation = Quaternion.Euler(new Vector3(rotationX, 0, 0));
-            //
+
             if (is_2_5D)
             {
                 Camera.main.orthographic = false;
                 Camera.main.fieldOfView = 100;
-                mainCamera.Offset = new Vector3(0, -6, 14);
+                this.mainCamera.Offset = new Vector3(0, -6, 14);
             }
             else
             {
                 Camera.main.orthographic = true;
                 Camera.main.orthographicSize = 10;
-                mainCamera.Offset = new Vector3(0, 0, 0);
+                this.mainCamera.Offset = new Vector3(0, 0, 0);
+            }
+        }
+
+        /// <inheritdoc/>
+        protected override void Awake()
+        {
+            base.Awake();
+            this.direction = default;
+            if (this.direction == null)
+            {
+                LogManager.Instance.Log("direction assign resource Error!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
+            this.spriteRenderer = this.gameObject.GetComponent<SpriteRenderer>();
+            this.name = "Player";
+        }
+
+        /// <inheritdoc/>
+        protected override void Start()
+        {
+            base.Start();
+            this.animator = this.GetComponent<Animator>();
+            if (this.animator == null)
+            {
+                LogManager.Instance.Log("animator Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            if (GameInfoUI.Instance != null)
+            {
+                GameInfoUI.Instance.SetPosition(this.transform.position);
+            }
+
+            // if (Map.Instance != null)
+            // {
+            //     Map.Instance.show(transform.position);
+            // }
+            // 不在线，或者在线并且是自己
+            if (this.photonView.IsMine || !NetworkConnect.Instance.IsOnline)
+            {
+                this.mainCamera = Camera.main.GetComponent<CameraMove>();
+                this.miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
+                this.mainCamera.DirectToPosition(this.transform.position);
+                this.miniCamera.DirectToPosition(this.transform.position);
+                PlayerManager.Instance.Mine = this;
+                PhotonNetwork.LocalPlayer.TagObject = this;
+                Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
+                PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
+            }
+            else if (!this.photonView.IsMine)
+            {
+                Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.photonView.Owner.NickName;
+                PlayerManager.Instance.Add(this);
+
+                // PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
+            }
+        }
+
+        /// <inheritdoc/>
+        protected override void Death()
+        {
+            LogManager.Instance.Log("玩家重生", LogManager.LogLevel.Info);
+            this.CharacterDataLAB.Hp = 100;
+        }
+
+        private void FixedUpdate()
+        {
+            // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
+            if (NetworkConnect.Instance.IsOnline && !this.photonView.IsMine && PhotonNetwork.IsConnected)
+            {
+                return;
+            }
+
+            // 防止撞墙震动
+            this.Move();
+        }
+
+        /// <summary>
+        /// 玩家移动.
+        /// </summary>
+        private void Move()
+        {
+            if (Input.GetKey(KeyCode.A) ||
+                Input.GetKey(KeyCode.W) ||
+                Input.GetKey(KeyCode.S) ||
+                Input.GetKey(KeyCode.D) ||
+                (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f))
+            {
+                // mainCamera.Target = transform.position;
+                // miniCamera.Target = transform.position;
+                this.mainCamera.DirectToPosition(this.transform.position);
+                this.miniCamera.DirectToPosition(this.transform.position);
+                if (GameInfoUI.Instance != null)
+                {
+                    GameInfoUI.Instance.SetPosition(this.transform.position);
+                }
+
+                // if (Map.Instance != null)
+                // {
+                //     Map.Instance.show(transform.position);
+                // }
+                this.animator.SetBool("IsMove", true);
+
+                // 按键控制玩家
+                this.direction.x = Input.GetAxisRaw("Horizontal"); // 在Game面板
+                this.direction.y = Input.GetAxisRaw("Vertical");
+
+                // 摇杆控制玩家
+                if (this.direction.x == 0 && this.direction.y == 0 && Joystick.Instance != null)
+                {
+                    this.direction.x = Joystick.Instance.Direction.x;
+                    this.direction.y = Joystick.Instance.Direction.y;
+                }
+
+                this.transform.Translate(this.MoveSpeed * Time.deltaTime * this.direction.normalized, Space.World);
+
+                // 翻转
+                this.renderer.flipX = this.direction.x < 0;
+                this.spriteRenderer.enabled = false;
+                for (int i = 0; i < 7; i++)
+                {
+                    this.transform.GetChild(i).gameObject.SetActive(true);
+                }
+            }
+            else
+            {
+                this.animator.SetBool("IsMove", false);
+                this.spriteRenderer.enabled = true;
+                for (int i = 0; i < 7; i++)
+                {
+                    this.transform.GetChild(i).gameObject.SetActive(false);
+                }
+            }
+        }
+
+        private void OnDestroy()
+        {
+            PlayerManager.Instance.Remove(this);
+
+            // 关闭游戏添加正在装备的武器
+            if (PlayerManager.Instance.Select.Id != -1)
+            {
+                BackpackController.Instance.AddItem(PlayerManager.Instance.Select.WeaponData);
             }
         }
 
@@ -235,19 +275,19 @@ namespace LAB2D
         /// 都有碰撞器,其中之一勾选Is Trigger,其中之一带有刚体
         /// </summary>
         /// <param name="collider"></param>
-        //private void OnTriggerEnter2D(Collider2D collider)
-        //{
-        //    if (collider.gameObject.CompareTag("Enemy"))
-        //    {  
-        //    }
-        //}
+        // private void OnTriggerEnter2D(Collider2D collider)
+        // {
+        //     if (collider.gameObject.CompareTag("Enemy"))
+        //     {
+        //     }
+        // }
 
         /// <summary>
         /// 都有碰撞器,其中之一带有刚体,都不勾选Is Trigger
         /// </summary>
-        //private void OnColisionEnter2D(Collision2D collision) {
-        //    //collision.contacts[0].point; // 碰撞的第一个点
-        //    //collision.contacts[0].normal; // 碰撞的法线
-        //}
+        // private void OnColisionEnter2D(Collision2D collision) {
+        //     //collision.contacts[0].point; // 碰撞的第一个点
+        //     //collision.contacts[0].normal; // 碰撞的法线
+        // }
     }
 }

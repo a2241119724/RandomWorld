@@ -1,41 +1,45 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D {
-    public class WorkerManager : CharacterManager<WorkerManager,Worker,WorkerCreator>
+﻿namespace LAB2D
+{
+    /// <summary>
+    /// Worker管理器
+    /// </summary>
+    public class WorkerManager : CharacterManager<WorkerManager, Worker, WorkerCreator>
     {
         /// <summary>
-        /// ���ڸ��ʻ�ȡ��
+        /// 用于多个Worker概率获取寻路锁
         /// </summary>
         private int countLock = 1;
 
-        public override void add(Worker character)
+        /// <inheritdoc/>
+        public override void Add(Worker character)
         {
-            base.add(character);
-            WorkerInfoUI.Instance.addWorkerItem(character);
+            base.Add(character);
+            WorkerInfoUI.Instance.AddWorkerItem(character);
         }
 
         /// <summary>
-        /// ÿ�λ�ȡ-1����0���ٱ�ΪѰ·Worker������
-        /// ����Worker�����ȡ��
+        /// 每次获取-1，到0后再变为寻路Worker的数量
+        /// 用于Worker随机获取寻路锁
         /// </summary>
-        /// <returns></returns>
-        public int getCountLock() { 
-            if(countLock == 1)
+        /// <returns>当前寻路Worker的数量</returns>
+        public int GetCountLock()
+        {
+            if (this.countLock == 1)
             {
-                foreach(Worker worker in Characters)
+                // 初始时或只有一个Worker在寻路时, 获取寻路Worker的数量
+                foreach (Worker worker in this.Characters)
                 {
-                    if(worker.Manager.CurrentStateType == WorkerStateType.Seek)
+                    if (worker.Manager.CurrentStateType == WorkerState.WorkerStateTypeEnum.Seek)
                     {
-                        countLock++;
+                        this.countLock++;
                     }
                 }
-                return countLock;
+
+                return this.countLock;
             }
             else
             {
-                return --countLock;
+                return --this.countLock;
             }
         }
     }

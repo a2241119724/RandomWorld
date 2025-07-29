@@ -1,70 +1,79 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+
     /// <summary>
-    /// ÏÈÔ¤È¡×ÊÔ´
+    /// å…ˆé¢„å–èµ„æº
     /// </summary>
     public class WorkerHungryTask : WorkerTask
     {
-        public WorkerHungryTask() : base(TaskType.Hungry)
+        public WorkerHungryTask()
+            : base(WorkerTaskTypeEnum.Eat)
         {
-            stageInit.Add((Worker worker) =>
+            this.stageInit.Add((Worker worker) =>
             {
-                maxProgress = 1.0f;
-                AvailableNeighborPos.Clear();
-                AvailableNeighborPos.Add(neighbors[8]);
+                this.maxProgress = 1.0f;
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[8]);
             });
         }
 
-        public override void start(Worker worker)
+        /// <inheritdoc/>
+        public override void Start(Worker worker)
         {
-            base.start(worker);
-            InventoryManager.Instance.isEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry,true);
-            changeStage(worker,0);
+            base.Start(worker);
+            InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry, true);
+            this.ChangeStage(worker, 0);
         }
 
-        public override void finish(Worker worker)
+        /// <inheritdoc/>
+        public override void Finish(Worker worker)
         {
-            // ½«¼¢¶öÈÎÎñ·Å»ØÈÎÎñ¹ÜÀíÖĞ
-            base.finish(worker);
-            // ÔÙÈ¡Ê³Îï£¬²¢ÇÒÓĞ¿ÉÄÜ»áÓÉÓÚ¸ÃÎ»ÖÃµÄÊ³Îï±»È¡Íê£¬´Ó¶øÉ¾³ı¸Ã¼¢¶öÈÎÎñ
-            ResourceInfo resourceInfo = InventoryManager.Instance.subItemByPreTake(worker, TargetMap);
-            worker.CurHungry += resourceInfo.count * 10;
+            // å°†é¥¥é¥¿ä»»åŠ¡æ”¾å›ä»»åŠ¡ç®¡ç†ä¸­
+            base.Finish(worker);
+
+            // å†å–é£Ÿç‰©ï¼Œå¹¶ä¸”æœ‰å¯èƒ½ä¼šç”±äºè¯¥ä½ç½®çš„é£Ÿç‰©è¢«å–å®Œï¼Œä»è€Œåˆ é™¤è¯¥é¥¥é¥¿ä»»åŠ¡
+            ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);
+            worker.CurHungry += resourceInfo.Count * 10;
         }
 
-        public override bool isCanWork(Worker worker)
+        /// <inheritdoc/>
+        public override bool IsCanWork(Worker worker)
         {
-            if (!base.isCanWork(worker))
+            if (!base.IsCanWork(worker))
             {
                 return false;
             }
-            // ¼¢¶öÖµĞ¡ÓÚÒ»¶¨Öµ¿ÉÒÔ½ÓÊÕ¼¢¶öÈÎÎñ
+
+            // é¥¥é¥¿å€¼å°äºä¸€å®šå€¼å¯ä»¥æ¥æ”¶é¥¥é¥¿ä»»åŠ¡
             return worker.CurHungry < Worker.ThresholdHungry
-                && InventoryManager.Instance.isEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry);
+                && InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry);
         }
 
+#pragma warning disable SA1600 // Elements should be documented
+        /// <summary>
+        /// å»ºé€ è€…
+        /// </summary>
         public class HungryTaskBuilder
         {
-            private WorkerHungryTask task;
+            private readonly WorkerHungryTask task;
 
             public HungryTaskBuilder()
             {
-                task = new WorkerHungryTask();
+                this.task = new WorkerHungryTask();
             }
 
-            public HungryTaskBuilder setTarget(Vector3Int targetMap)
+            public HungryTaskBuilder SetTarget(Vector3Int targetMap)
             {
-                task.TargetMap = targetMap;
+                this.task.TargetMap = targetMap;
                 return this;
             }
 
-            public WorkerHungryTask build()
+            public WorkerHungryTask Build()
             {
-                return task;
+                return this.task;
             }
         }
+#pragma warning restore SA1600 // Elements should be documented
     }
 }

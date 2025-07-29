@@ -1,47 +1,51 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+    using UnityEngine.UI;
+
     /// <summary>
-    /// µã»÷µÀ¾ßÏÔÊ¾µÀ¾ßĞÅÏ¢
+    /// ç‚¹å‡»é“å…·æ˜¾ç¤ºé“å…·ä¿¡æ¯
     /// </summary>
     public abstract class MVCInfoView : MonoBehaviour
     {
-        private Text info; // µÀ¾ßĞÅÏ¢
-        //private SelectAndShowEventSO selectAndShow;
+        // private SelectAndShowEventSO selectAndShow;
+        private Text info; // é“å…·ä¿¡æ¯
 
-        private void OnEnable()
-        {
-            //selectAndShow = Resources.Load<SelectAndShowEventSO>("SO/SelectAndShowEvent");
-            ////¶©ÔÄÊÂ¼ş
-            //selectAndShow.OnSelectAndRun += showInfo;
-        }
-
-        void Start()
-        {
-            //info = transform.Find("Background/Message").GetComponent<Text>();
-            info = Tool.GetComponentInChildren<Text>(gameObject, "Message");
-            info.text = "";
-        }
-
-        //private void OnDisable()
-        //{
-        //    // É¾³ı¶©ÔÄ(±ØÒªµÄ)
-        //    selectAndShow.OnSelectAndRun -= showInfo;
-        //}
-
-        public void showInfo(Item item)
+        /// <summary>
+        /// å±•ç¤ºä¿¡æ¯
+        /// </summary>
+        /// <param name="item">é“å…·</param>
+        public void ShowInfo(Item item)
         {
             if (item == null)
             {
-                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            info.text = item.ToString();
-            // ¼ÇÂ¼µã»÷µÄÊÇÄÄ¸öµÀ¾ß
+
+            this.info.text = item.ToString();
+
+            // è®°å½•ç‚¹å‡»çš„æ˜¯å“ªä¸ªé“å…·
         }
+
+        private void OnEnable()
+        {
+            // selectAndShow = Resources.Load<SelectAndShowEventSO>("SO/SelectAndShowEvent");
+            // //è®¢é˜…äº‹ä»¶
+            // selectAndShow.OnSelectAndRun += showInfo;
+        }
+
+        private void Start()
+        {
+            // info = transform.Find("Background/Message").GetComponent<Text>();
+            this.info = Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
+            this.info.text = string.Empty;
+        }
+
+        // private void OnDisable()
+        // {
+        //     // åˆ é™¤è®¢é˜…(å¿…è¦çš„)
+        //     selectAndShow.OnSelectAndRun -= showInfo;
+        // }
     }
 }

@@ -1,115 +1,133 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using PimDeWitte.UnityMainThreadDispatcher;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// Worker
+    /// </summary>
     public class Worker : Character
     {
-        [HideInInspector] public WorkerStateManager<ICharacterState, WorkerStateType,Worker> Manager { get; private set; }
         /// <summary>
-        /// ÊÇ·ñÔÚÑ°Â·
+        /// æœ€å¤§ç–²åŠ³å€¼
         /// </summary>
-        [HideInInspector] public bool IsSeeking { get; set; }
-        public Text WorkerState { set; get; }
-        public Vector3Int TargetMap { get; set; }
-        public float SeekProgress { get; set; }
-        /// <summary>
-        /// ÊÇ·ñĞèÒª×öÈÎÎñµÄ¿ª¹Ø
-        /// ÊÇ·ñ¿ªÆô×ö¸ÃÈÎÎñÀàĞÍµÄ¿ª¹Ø(toogleµÄË³ĞòÓëTaskTypeµÄË³ĞòÏà¹Ø)
-        /// </summary>
-        public bool[] TaskToggle { get; set; }
-        public float CurTired { get; set; } = 100.0f;
         public const float MaxTired = 100.0f;
-        public const float ThresholdTired = 10.0f;
-        public float CurHungry { get; set; } = 100.0f;
-        public const float MaxHungry = 100.0f;
-        public const float ThresholdHungry = 10.0f;
-        public int MaxResourceCount { get; set; } = 30;
-        public LineRenderer LineRenderer { get; set; }
-        public WearData WearData;
-        public BedItem BedItem;
-        public static Lock seekLock = new Lock();
-        
+
         /// <summary>
-        /// Ğ¯´øµÄ×ÊÔ´
+        /// ç–²åŠ³å€¼é˜ˆå€¼
         /// </summary>
-        private Dictionary<int, ResourceInfo> resourceInfos;
-        private static Spend[,] mapSpend; // µØÍ¼ÖĞ°å¿éµÄ»¨·Ñ
+        public const float ThresholdTired = 10.0f;
+
+        /// <summary>
+        /// æœ€å¤§é¥¥é¥¿å€¼
+        /// </summary>
+        public const float MaxHungry = 100.0f;
+
+        /// <summary>
+        /// é¥¥é¥¿å€¼é˜ˆå€¼
+        /// </summary>
+        public const float ThresholdHungry = 10.0f;
+
+        /// <summary>
+        /// é”ï¼Œé˜²æ­¢å¤šä¸ªWorkeråŒæ—¶å¯»è·¯
+        /// </summary>
+        public static Lock SeekLock = new ();
+
+        /// <summary>
+        /// è§’è‰²è£…å¤‡
+        /// </summary>
+        public WearData WearData;
+
+        /// <summary>
+        /// Workerçš„åºŠ
+        /// </summary>
+        public BedItem BedItem;
+
+        private static readonly List<Vector2SByte> Neighbors = new ()
+        {
+            new Vector2SByte(0, 1), new Vector2SByte(1, 0), new Vector2SByte(0, -1), new Vector2SByte(-1, 0), // ä¸Šå³ä¸‹å·¦
+
+            // new Vector2SByte(1, 1), new Vector2SByte(1, -1), // å³ä¸Š,å³ä¸‹
+            // new Vector2SByte(-1, -1), new Vector2SByte(-1, 1), // å·¦ä¸‹, å·¦ä¸Š
+        }; // A*ä½¿ç”¨å“ªç§é‚»å±…
+
+        private static Spend[,] mapSpend; // åœ°å›¾ä¸­æ¿å—çš„èŠ±è´¹
+        private Dictionary<int, ResourceInfo> resourceInfos; // æºå¸¦çš„èµ„æº
         private List<Spend> openList;
         private List<Spend> closeList;
-        private List<Spend> path; // Ñ°Â·Â·¾¶
-        private Coroutine coroutine; // Ñ°Â·Â·¾¶
-        private static readonly List<Vector2SByte> neighbors = new List<Vector2SByte>(){
-            new Vector2SByte(0,1), new Vector2SByte(1,0), new Vector2SByte(0,-1), new Vector2SByte(-1,0), // ÉÏÓÒÏÂ×ó
-            //new Vector2SByte(1,1), new Vector2SByte(1,-1), // ÓÒÉÏ,ÓÒÏÂ
-            //new Vector2SByte(-1,-1), new Vector2SByte(-1,1), // ×óÏÂ, ×óÉÏ
-        }; // A*Ê¹ÓÃÄÄÖÖÁÚ¾Ó
+        private List<Spend> path; // å¯»è·¯è·¯å¾„
+        private Coroutine coroutine; // å½“å‰å¯»è·¯åç¨‹
         private Slider progress;
         private Text nameUI;
-        private CharacterStatusUI statusBar; // ¼ÇÂ¼ÊµÀı»¯ÑªÌõ
-
-        protected override void Awake()
-        {
-            base.Awake();
-            openList = new List<Spend>();
-            closeList = new List<Spend>();
-            path = new List<Spend>();
-            Manager = new WorkerStateManager<ICharacterState, WorkerStateType, Worker>(this);
-            CharacterDataLAB.MaxHp = CharacterDataLAB.Hp = 100;
-            nameUI = transform.Find("Name").GetComponent<Text>();
-            WorkerState = transform.Find("State").GetComponent<Text>();
-            progress = transform.Find("Progress").GetComponent<Slider>();
-            progress.gameObject.SetActive(false);
-            // Â·¾¶
-            LineRenderer = transform.GetComponent<LineRenderer>();
-            LineRenderer.startWidth = 0.05f;
-            LineRenderer.endWidth = 0.05f;
-            Material material = new Material(Shader.Find("Unlit/Color"));
-            material.color = new Color(UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f));
-            LineRenderer.material = material;
-            LineRenderer.sortingLayerName = "Highest";
-            //
-            TaskToggle = new bool[10];
-            // Ä¬ÈÏ¿ÉÒÔ³Ô·¹
-            TaskToggle[(int)TaskType.Hungry] = true;
-            TaskToggle[(int)TaskType.Wear] = true;
-            TaskToggle[(int)TaskType.Carry] = true;
-            resourceInfos = new Dictionary<int, ResourceInfo>();
-            statusBar = transform.Find("Hp").GetComponent<CharacterStatusUI>();
-            if (statusBar == null)
-            {
-                LogManager.Instance.log("statusBar Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-            WearData = new WearData();
-        }
+        private CharacterStatusUI statusBar; // è®°å½•å®ä¾‹åŒ–è¡€æ¡
 
         /// <summary>
-        /// ÔÚ¼ÓÈëËùÓĞ×´Ì¬Ö®ºóÔÙ¼Óµ½TaskManagerÖĞ
+        /// çŠ¶æ€ç®¡ç†å™¨
         /// </summary>
-        protected override void Start()
-        {
-            base.Start();
-            nameUI.text = name;
-            statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
-        }
-
-        void Update()
-        {
-            transform.rotation = Quaternion.Euler(0, 0, 0);
-            // Ö´ĞĞµ±Ç°×´Ì¬µÄº¯Êı
-            Manager.CurrentState.OnUpdate();
-        }
+        [HideInInspector]
+        public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker> Manager { get; private set; }
 
         /// <summary>
-        /// ÉèÖÃµØÍ¼ĞÅÏ¢
+        /// æ˜¯å¦åœ¨å¯»è·¯
         /// </summary>
-        public void initMap(int height, int width)
+        [HideInInspector]
+        public bool IsSeeking { get; set; }
+
+        /// <summary>
+        /// WorkerçŠ¶æ€
+        /// </summary>
+        public Text WorkerStateText { get; set; }
+
+        /// <summary>
+        /// ç›®æ ‡åœ°å›¾åæ ‡
+        /// </summary>
+        public Vector3Int TargetMap { get; set; }
+
+        /// <summary>
+        /// å¯»è·¯è¿›åº¦
+        /// </summary>
+        public float SeekProgress { get; set; }
+
+        /// <summary>
+        /// æ˜¯å¦éœ€è¦åšä»»åŠ¡çš„å¼€å…³
+        /// æ˜¯å¦å¼€å¯åšè¯¥ä»»åŠ¡ç±»å‹çš„å¼€å…³(toogleçš„é¡ºåºä¸TaskTypeçš„é¡ºåºç›¸å…³)
+        /// </summary>
+        public bool[] TaskToggle { get; set; }
+
+        /// <summary>
+        /// å½“å‰ç–²åŠ³å€¼
+        /// </summary>
+        public float CurTired { get; set; } = 100.0f;
+
+        /// <summary>
+        /// å½“å‰é¥¥é¥¿å€¼
+        /// </summary>
+        public float CurHungry { get; set; } = 100.0f;
+
+        /// <summary>
+        /// æœ€å¤§æŒæœ‰èµ„æºæ•°é‡
+        /// </summary>
+        public int MaxResourceCount { get; set; } = 30;
+
+        /// <summary>
+        /// å¯»è·¯è·¯å¾„æ¸²æŸ“
+        /// </summary>
+        public LineRenderer LineRenderer { get; set; }
+
+        /// <summary>
+        /// è®¾ç½®åœ°å›¾ä¿¡æ¯
+        /// </summary>
+        /// <param name="height">åœ°å›¾é«˜åº¦</param>
+        /// <param name="width">åœ°å›¾å®½åº¦</param>
+        public void InitMap(int height, int width)
         {
-            // ³õÊ¼»¯Ñ°Â·»¨·Ñ
+            // åˆå§‹åŒ–å¯»è·¯èŠ±è´¹
             mapSpend = new Spend[height, width];
             for (int i = 0; i < height; i++)
             {
@@ -120,583 +138,1011 @@ namespace LAB2D
             }
         }
 
-        public void initSeek(Vector3Int targetMap)
+        /// <summary>
+        /// åˆå§‹åŒ–å¯»è·¯ä¿¡æ¯
+        /// </summary>
+        /// <param name="targetMap">å¯»è·¯ç›®æ ‡</param>
+        public void InitSeek(Vector3Int targetMap)
         {
-            if(mapSpend == null)
+            if (mapSpend == null)
             {
-                initMap(TileMap.Height, TileMap.Width);
+                this.InitMap(TileMap.Height, TileMap.Width);
             }
-            // Í£Ö¹ÕıÔÚ½øĞĞµÄÑ°Â·
-            if (coroutine != null)
+
+            // åœæ­¢æ­£åœ¨è¿›è¡Œçš„å¯»è·¯
+            if (this.coroutine != null)
             {
-                StopCoroutine(coroutine);
+                this.StopCoroutine(this.coroutine);
             }
-            TargetMap = targetMap;
-            IsSeeking = true;
-            openList.Clear();
-            closeList.Clear();
-            path.Clear();
-            updateLine();
-            SeekProgress = 0.0f;
+
+            this.TargetMap = targetMap;
+            this.IsSeeking = true;
+            this.openList.Clear();
+            this.closeList.Clear();
+            this.path.Clear();
+            this.UpdateLine();
+            this.SeekProgress = 0.0f;
             for (int i = 0; i < TileMap.Height; i++)
             {
                 for (int j = 0; j < TileMap.Width; j++)
                 {
-                    mapSpend[i, j].init();
+                    mapSpend[i, j].Init();
                 }
             }
         }
 
         /// <summary>
-        /// ¿ªÆôĞ­³Ì
+        /// å¼€å¯åç¨‹
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        public void toTarget() {
-            //coroutine = StartCoroutine(toTargetLAB(TargetMap));
+        public void ToTarget()
+        {
+            // coroutine = StartCoroutine(toTargetLAB(TargetMap));
             // A*
-            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(transform.position);
-            Spend start = mapSpend[posMap.x, posMap.y]; // Æğµã
-            Spend end = mapSpend[TargetMap.x, TargetMap.y]; // ÖÕµã
-            coroutine = StartCoroutine(toTargetAStar(start,end));
+            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.transform.position);
+            Spend start = mapSpend[posMap.x, posMap.y]; // èµ·ç‚¹
+            Spend end = mapSpend[this.TargetMap.x, this.TargetMap.y]; // ç»ˆç‚¹
+
+            this.coroutine = this.StartCoroutine(this.ToTargetAStar(start, end));
+
+            // ThreadPool.QueueUserWorkItem(t =>
+            // {
+            //     Debug.Log("çº¿ç¨‹å¼€å§‹");
+            //     this.ToTargetAStarThread(start, end);
+            // });
         }
 
         /// <summary>
-        /// ½¨Ôì²»¿ÉĞĞ
+        /// å»ºé€ ä¸å¯è¡Œ
         /// </summary>
-        /// <param name="targetMap"></param>
-        /// <returns></returns>
-        public IEnumerator toTargetLAB(Vector3Int targetMap) {
-            if (!TileMap.Instance.isFreeTile(targetMap))
+        /// <param name="targetMap">ç›®æ ‡åæ ‡</param>
+        /// <returns>è¿­ä»£å™¨</returns>
+        public IEnumerator ToTargetLAB(Vector3Int targetMap)
+        {
+            if (!TileMap.Instance.IsFreeTile(targetMap))
             {
-                LogManager.Instance.log("³¬³ö±ß½ç!!!", LogManager.LogLevel.Error);
-                IsSeeking = false;
+                LogManager.Instance.Log("è¶…å‡ºè¾¹ç•Œ!!!", LogManager.LogLevel.Error);
+                this.IsSeeking = false;
                 yield break;
             }
-            Vector3Int posMap = TileMap.Instance.worldPosToMapPos(transform.position);
-            Spend start = mapSpend[posMap.x, posMap.y]; // Æğµã
-            Spend end = mapSpend[targetMap.x, targetMap.y]; // ÖÕµã
-            while (true) {
-                Spend mid = straightMove(start, end);
-                path.Add(mid);
-                // µ½´ïÖÕµã
-                if (mid.posMap.x == end.posMap.x && mid.posMap.y == end.posMap.y) {
+
+            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.transform.position);
+            Spend start = mapSpend[posMap.x, posMap.y]; // èµ·ç‚¹
+            Spend end = mapSpend[targetMap.x, targetMap.y]; // ç»ˆç‚¹
+            while (true)
+            {
+                Spend mid = this.StraightMove(start, end);
+                this.path.Add(mid);
+
+                // åˆ°è¾¾ç»ˆç‚¹
+                if (mid.PosMap.x == end.PosMap.x && mid.PosMap.y == end.PosMap.y)
+                {
                     break;
                 }
-                start = findNext(mid, end);
-                yield return StartCoroutine(toTargetAStar(mid, start));
+
+                start = this.FindNext(mid, end);
+                yield return this.StartCoroutine(this.ToTargetAStar(mid, start));
             }
-            IsSeeking = false;
+
+            this.IsSeeking = false;
         }
 
         /// <summary>
-        /// ³¯×ÅÄ¿±êÖ±Ïß×ß
+        /// æ ¹æ®è·¯å¾„ç§»åŠ¨
         /// </summary>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        /// <returns>×îºóÅöµ½ÕÏ°­Îïºó×ßµ½µÄÎ»ÖÃ</returns>
-        private Spend straightMove(Spend start, Spend end) {
-            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.posMap.x - end.posMap.x, 2) + Mathf.Pow(start.posMap.y - end.posMap.y, 2));
-            int detX = end.posMap.x - start.posMap.x;
-            int detY = end.posMap.y - start.posMap.y;
-            do
-            {
-                start = mapSpend[end.posMap.x - detX, end.posMap.y - detY];
-                SeekProgress = Mathf.Sqrt(Mathf.Pow(start.posMap.x - end.posMap.x, 2) + Mathf.Pow(start.posMap.y - end.posMap.y, 2)) / totalDistance;
-                // µ½´ïÄ¿±ê
-                if (detX == 0 && detY == 0)
-                {
-                    return end;
-                }
-                int max = Mathf.Abs(detX) > Mathf.Abs(detY) ? Mathf.Abs(detX) : Mathf.Abs(detY);
-                detX -= Mathf.RoundToInt(detX * 1.0f / max);
-                detY -= Mathf.RoundToInt(detY * 1.0f / max);
-            } while (isCanReach(new Vector3Int(end.posMap.x - detX, end.posMap.y - detY, 0)));
-            return start;
-        }
-
-        /// <summary>
-        /// Óöµ½ÕÏ°­ÎïÖ®ºó£¬»ñÈ¡ÕÏ°­Îï¶ÔÃæ×î½üµÄ¿ÉÓÃÎ»ÖÃ
-        /// </summary>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        /// <returns>ÕÏ°­Îï¶ÔÃæ×î½üµÄ¿ÉÓÃÎ»ÖÃ</returns>
-        private Spend findNext(Spend start, Spend end)
+        /// <returns>æ˜¯å¦åˆ°è¾¾ç›®æ ‡</returns>
+        public bool MoveByPath()
         {
-            int detX = end.posMap.x - start.posMap.x;
-            int detY = end.posMap.y - start.posMap.y;
-            do
+            if (this.path.Count == 0)
             {
-                // µ½´ïÄ¿±ê
-                if (detX == 0 && detY == 0)
-                {
-                    return end;
-                }
-                int max = Mathf.Abs(detX) > Mathf.Abs(detY) ? Mathf.Abs(detX) : Mathf.Abs(detY);
-                detX -= Mathf.RoundToInt(detX * 1.0f / max);
-                detY -= Mathf.RoundToInt(detY * 1.0f / max);
-            } while (!isCanReach(new Vector3Int(end.posMap.x - detX, end.posMap.y - detY, 0)));
-            return mapSpend[end.posMap.x - detX, end.posMap.y - detY];
-        }
+                return true;
+            }
 
-        /// <summary>
-        /// A*Ëã·¨Ñ°Â·
-        /// </summary>
-        private IEnumerator toTargetAStar(Spend start, Spend end)
-        {
-            // ³¬¹ıÒ»¶¨Ê±¼äÊÍ·ÅËø
-            float time = 0.0f;
-            // ¼ÇÂ¼Ò»¿ªÊ¼µÄpath³¤¶È
-            int curIterCount = path.Count;
-            List<Spend> _path = new List<Spend>();
-            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.posMap.x - end.posMap.x, 2) 
-                + Mathf.Pow(start.posMap.y - end.posMap.y, 2));
-            openList.Add(start);
-            while (openList.Count != 0)
-            {
-                int minIndex = 0;
-                // Ñ¡³öµ±Ç°ÏàÁÚÎ»ÖÃ×îĞ¡»¨·ÑfÔÚopenListÖĞµÄË÷ÒıÎ»ÖÃ
-                for (int i = 1; i < openList.Count; i++)
-                {
-                    if (openList[i].f < openList[minIndex].f)
-                    {
-                        minIndex = i;
-                    }
-                }
-                //if (openList.Count == 0){
-                //    break; // ½â¾öbug
-                //}
-                Spend curSpend = openList[minIndex];
-                SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.posMap.x - start.posMap.x, 2) 
-                    + Mathf.Pow(curSpend.posMap.y - start.posMap.y, 2)) / totalDistance;
-                // ÅĞ¶ÏÊÇ·ñµ½´ïÖÕµã(´Ë´¦Ö»ÄÜÊÇÕûÊı)
-                if ((int)curSpend.posMap.x == (int)end.posMap.x && (int)curSpend.posMap.y == (int)end.posMap.y)
-                {
-                    //LogManager.Instance.log("ÕÒµ½Â·¾¶!!!", LogManager.LogLevel.Info);
-                    // ÕÒÂ·¾¶
-                    Vector3Int lastDet = new Vector3Int(0,0);
-                    Spend _curSpend = curSpend;
-                    while (curSpend != null && curSpend.previous != null)
-                    {
-                        //// ÓÅ»¯(Ò»ÌõÖ±ÏßÖ»´æÖÕÖ¹½Úµã)
-                        //if (curSpend.previous.posMap.x - curSpend.posMap.x != lastDet.x || curSpend.previous.posMap.y - curSpend.posMap.y != lastDet.y)
-                        //{
-                        //    //LogManager.Instance.log("¾­¹ı" + curSpend.posMap.y + " " + curSpend.posMap.x, LogManager.LogLevel.Info);
-                        //    _path.Insert(curIterCount, curSpend);
-                        //    lastDet.x = curSpend.previous.posMap.x - curSpend.posMap.x;
-                        //    lastDet.y = curSpend.previous.posMap.y - curSpend.posMap.y;
-                        //}
-                        _path.Insert(curIterCount, curSpend);
-                        // ¿ÉÄÜ³öÏÖÑ­»·Â·¾¶
-                        if (_curSpend != null)
-                        {
-                            _curSpend = _curSpend.previous;
-                            if(_curSpend != null)
-                            {
-                                _curSpend = _curSpend.previous;
-                            }
-                        }
-                        if (_curSpend != null && _curSpend.posMap.x == curSpend.previous.posMap.x 
-                            && _curSpend.posMap.y == curSpend.previous.posMap.y) {
-                            LogManager.Instance.log("WorkerÑ°Â·³öÏÖ»·Â·", LogManager.LogLevel.Error);
-                            break;
-                        }
-                        if (FrameControl.Instance.isNeedStop())
-                        {
-                            yield return null;
-                        }
-                        curSpend = curSpend.previous;
-                    }
-                    break;
-                }
-                openList.Remove(curSpend);
-                closeList.Add(curSpend);
-                // ¶ÔÁÚ¾Ó½øĞĞf = g + h
-                byte isCorner = 0;
-                foreach (Vector2SByte direction in neighbors) {
-                    ++isCorner;
-                    int _x = curSpend.posMap.x + direction.x;
-                    int _y = curSpend.posMap.y + direction.y;
-                    // Êı×éÏÂ±ê
-                    if (!isCanReach(new Vector3Int(_x,_y,0))) continue;
-                    Spend neighbor = mapSpend[_x, _y];
-                    // ¹Ø±Õ¶ÓÁĞ²»¼ÆËã
-                    if (closeList.Contains(neighbor)) continue;
-                    float temp;
-                    if (isCorner > 4)
-                    {
-                        // µ±ÉÏÏÂ×óÓÒ×èÈûÊ±£¬Ğ±×Å²»¿É×ß
-                        if (!isCanReach(new Vector3Int(_x, curSpend.posMap.y, 0))
-                            && !isCanReach(new Vector3Int(curSpend.posMap.x, _y, 0))) continue;
-                        temp = curSpend.g + 1.414f; // Ğ±×ÅÏàÁÚ
-                    }
-                    else
-                    {
-                        temp = curSpend.g + 1.0f; // °¤×ÅÏàÁÚ
-                    }
-                    // ´ò¿ª¶ÓÁĞÒÑ¾­¼ÆËã¹ı£¬¸³Öµ×îĞ¡µÄg
-                    if (openList.Contains(neighbor))
-                    {
-                        // »ØËİ,·ÅÆú¸Ã½Úµã
-                        if (temp >= neighbor.g) continue;
-                        neighbor.g = temp;
-                    }
-                    else // ²»ÔÚÈÎºÎÁĞ±íÖĞ 
-                    {
-                        neighbor.g = temp;
-                        openList.Add(neighbor);
-                    }
-                    neighbor.h = Mathf.Abs(end.posMap.x - neighbor.posMap.x) + Mathf.Abs(end.posMap.y - neighbor.posMap.y);
-                    neighbor.f = neighbor.g + neighbor.h;
-                    neighbor.previous = curSpend; // Á´½Ó
-                }
-                if (FrameControl.Instance.isNeedStop())
-                {
-                    time += Time.deltaTime;
-                    if(time > 1.0f)
-                    {
-                        // Èç¹ûÑ°Â·³¬¹ıÒ»¶¨Ê±¼äÊÍ·ÅËø
-                        seekLock.releaseLock(this);
-                        time = 0.0f;
-                    }
-                    yield return null;
-                    // ±»ÆäËûÈË³ÖÓĞËø£¬µÈ´ı
-                    yield return new WaitUntil(() => seekLock.getLock(this));
-                }
-            }
-            // ÓÅ»¯£¬ÉäÏß¼ì²â
-            //if (_path.Count > 1)
-            //{
-            //    start = _path[0];
-            //    path.Add(start);
-            //    for (int i = 2; i < _path.Count; i++)
-            //    {
-            //        RaycastHit2D hit = Physics2D.Raycast(TileMap.Instance.mapPosToWorldPos(start.posMap),
-            //            TileMap.Instance.mapPosToWorldPos(_path[i].posMap) - TileMap.Instance.mapPosToWorldPos(start.posMap),
-            //            Vector3.Distance(TileMap.Instance.mapPosToWorldPos(start.posMap), TileMap.Instance.mapPosToWorldPos(_path[i].posMap)));
-            //        if (hit.collider == null) continue;
-            //        // µ±Ç°½Úµã²»¿ÉÖ±½ÓÖ±Ïß×ß£¬¼ÓÈëÉÏÒ»¸ö½Úµã
-            //        path.Add(_path[i - 1]);
-            //        start = _path[i - 1];
-            //    }
-            //    path.Add(_path[_path.Count - 1]);
-            //}
-            if (_path.Count > 1)
-            {
-                int lastIndex = 0;
-                while (lastIndex < _path.Count - 1)
-                {
-                    bool isUpdate = false;
-                    int _count = 0;
-                    start = _path[lastIndex];
-                    path.Add(start);
-                    for (int i = lastIndex+1; i < _path.Count; i++)
-                    {
-                        if (_count > 50) break;
-                        if (FrameControl.Instance.isNeedStop())
-                        {
-                            yield return null;
-                        }
-                        // ÉÏÏÂÆ½ÒÆÒ»ÏÂÉäÏß
-                        Vector3 pos = TileMap.Instance.mapPosToWorldPos(start.posMap);
-                        Vector3 direction = TileMap.Instance.mapPosToWorldPos(_path[i].posMap) - TileMap.Instance.mapPosToWorldPos(start.posMap);
-                        float distance = Vector3.Distance(TileMap.Instance.mapPosToWorldPos(start.posMap), TileMap.Instance.mapPosToWorldPos(_path[i].posMap));
-                        RaycastHit2D hit = Physics2D.Raycast(new Vector2(pos.x - 0.5f, pos.y),direction, distance);
-                        if(hit.collider == null)
-                        {
-                            hit = Physics2D.Raycast(new Vector2(pos.x + 0.5f, pos.y), direction, distance);
-                        }
-                        if (hit.collider == null)
-                        {
-                            lastIndex = i;
-                            isUpdate = true;
-                        }
-                    }
-                    if (!isUpdate)
-                    {
-                        lastIndex++;
-                    }
-                }
-                path.Add(_path[_path.Count - 1]);
-            }
-            if (path.Count == curIterCount)
-            {
-                LogManager.Instance.log(name + "Î´ÕÒµ½Â·¾¶:" + start.posMap.y + ":" + start.posMap.x 
-                    + "-->" + end.posMap.y + ":" + end.posMap.x, LogManager.LogLevel.Error);
-            }
-            // ÏÔÊ¾Â·¾¶
-            updateLine();
-            // ToTargetLABÒª×¢ÊÍ
-            IsSeeking = false;
-            //seekLock.releaseLock(this);
-        }
+            // å˜ä¸ºçœŸå®åæ ‡
+            Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(this.path[0].PosMap);
 
-        /// <summary>
-        /// ¸üĞÂÂ·¾¶UI
-        /// </summary>
-        private void updateLine() {
-            LineRenderer.positionCount = path.Count + 1;
-            LineRenderer.SetPosition(0, transform.position);
-            for (int i = 0; i < path.Count; i++)
+            // åˆ°è¾¾è·¯å¾„ä¸­ä¸€ä¸ªç›®æ ‡ç‚¹ï¼Œåˆ‡æ¢ä¸‹ä¸€ä¸ªç›®æ ‡ç‚¹
+            if (this.path.Count != 0 &&
+                Mathf.Abs(worldPos.x - this.transform.position.x) < 0.2f &&
+                Mathf.Abs(worldPos.y - this.transform.position.y) < 0.2f)
             {
-                LineRenderer.SetPosition(i + 1, TileMap.Instance.mapPosToWorldPos(path[i].posMap));
+                this.path.RemoveAt(0); // --path.Count
             }
-        }
 
-        /// <summary>
-        /// ¸ù¾İÂ·¾¶ÒÆ¶¯
-        /// </summary>
-        public bool moveByPath()
-        {
-            if (path.Count == 0) return true;
-            // ±äÎªÕæÊµ×ø±ê
-            Vector3 worldPos = TileMap.Instance.mapPosToWorldPos(path[0].posMap);
-            // µ½´ïÂ·¾¶ÖĞÒ»¸öÄ¿±êµã£¬ÇĞ»»ÏÂÒ»¸öÄ¿±êµã
-            if (path.Count != 0 &&
-                Mathf.Abs(worldPos.x - transform.position.x) < 0.2f &&
-                Mathf.Abs(worldPos.y - transform.position.y) < 0.2f) {
-                path.RemoveAt(0); // --path.Count 
-            }
-            Vector2 forward = new Vector2(worldPos.x - transform.position.x, worldPos.y - transform.position.y);
-            transform.Translate(forward.normalized * Time.deltaTime * moveSpeed, Space.World);//ÏòÇ°ÒÆ¶¯
-            updateLine();
+            Vector2 forward = new (worldPos.x - this.transform.position.x, worldPos.y - this.transform.position.y);
+            this.transform.Translate(this.MoveSpeed * Time.deltaTime * forward.normalized, Space.World); // å‘å‰ç§»åŠ¨
+            this.UpdateLine();
             return false;
         }
 
-        protected override void death()
-        {
-        }
-
         /// <summary>
-        /// ÊÇ·ñ¿ÉÒÔµÖ´ï(²»°üº¬´øÓĞÅö×²ÌåµÄTile,¼´Ê¹ÊÇÕıÔÚ½¨ÔìÖĞµÄ)
+        /// æ˜¯å¦å¯ä»¥æŠµè¾¾(ä¸åŒ…å«å¸¦æœ‰ç¢°æ’ä½“çš„Tile,å³ä½¿æ˜¯æ­£åœ¨å»ºé€ ä¸­çš„)
         /// </summary>
-        /// <param name="posMap"></param>
-        /// <returns></returns>
-        public bool isCanReach(Vector3Int posMap)
+        /// <param name="posMap">ç›®æ ‡åæ ‡</param>
+        /// <returns>æ˜¯å¦</returns>
+        public bool IsCanReach(Vector3Int posMap)
         {
-            if (!TileMap.Instance.isCanReach(posMap)) {
-                return false;
-            }
-            if(!ResourceMap.Instance.isCanReach(posMap)) {
-                return false;
-            }
-            if(!BuildMap.Instance.isCanReach(posMap))
+            if (!TileMap.Instance.IsCanReach(posMap))
             {
                 return false;
             }
+
+            if (!ResourceMap.Instance.IsCanReach(posMap))
+            {
+                return false;
+            }
+
+            if (!BuildMap.Instance.IsCanReach(posMap))
+            {
+                return false;
+            }
+
             return true;
         }
 
-        private void OnCollisionStay2D(Collision2D collision)
+        /// <summary>
+        /// è®¾ç½®ä»»åŠ¡è¿›åº¦æ¡
+        /// </summary>
+        /// <param name="value">è¿›åº¦å€¼</param>
+        /// <param name="enable">æ˜¯å¦æ˜¾ç¤ºè¿›åº¦æ¡</param>
+        public void SetProgress(float value, bool enable)
         {
-            checkBug.addColliderCount(DateTime.Now.Ticks);
-            if (checkBug.isBug(name, 100))
-            {
-                Manager.changeState(WorkerStateType.Seek);
-            }
+            this.progress.value = value;
+            this.progress.gameObject.SetActive(enable);
         }
 
-        public void setProgress(float value,bool enable)
-        {
-            progress.value = value;
-            progress.gameObject.SetActive(enable);
-        }
-
+        /// <inheritdoc/>
         public override string ToString()
         {
-            string resources = "";
-            foreach (KeyValuePair<int, ResourceInfo> resource in resourceInfos)
+            string resources = string.Empty;
+            foreach (KeyValuePair<int, ResourceInfo> resource in this.resourceInfos)
             {
-                resources += resource.Key + ":" + resource.Value.count + "\n";
+                resources += resource.Key + ":" + resource.Value.Count + "\n";
             }
-            return base.ToString() + 
-                $"Hungry:{CurHungry}\n" +
-                $"TargetMap:{TargetMap}\n" +
+
+            return base.ToString() +
+                $"Hungry:{this.CurHungry}\n" +
+                $"TargetMap:{this.TargetMap}\n" +
                 resources;
         }
 
-        public void addResource(ResourceInfo resourceInfo)
+        /// <summary>
+        /// æ·»åŠ æºå¸¦çš„èµ„æº
+        /// </summary>
+        /// <param name="resourceInfo">èµ„æº</param>
+        public void AddResource(ResourceInfo resourceInfo)
         {
-            if (resourceInfo.count == 0) return;
-            if (resourceInfos.ContainsKey(resourceInfo.id))
+            if (resourceInfo.Count == 0)
             {
-                resourceInfos[resourceInfo.id].count += resourceInfo.count;
+                return;
+            }
+
+            if (this.resourceInfos.ContainsKey(resourceInfo.Id))
+            {
+                this.resourceInfos[resourceInfo.Id].Count += resourceInfo.Count;
             }
             else
             {
-                resourceInfos.Add(resourceInfo.id, Tool.DeepCopyByBinary(resourceInfo));
-            }
-        }
-
-        public void subResource(Dictionary<int, ResourceInfo> needResource) {
-            foreach(KeyValuePair<int, ResourceInfo> need in needResource)
-            {
-                if (resourceInfos.ContainsKey(need.Key))
-                {
-                    resourceInfos[need.Key].count -= need.Value.count;
-                }
-                else
-                {
-                    LogManager.Instance.log("×ÔÉí×ÊÔ´²»¹»£¬ÈÔÈ»½¨Ôì³É¹¦£¬´íÎó", LogManager.LogLevel.Error);
-                }
-            }
-        }
-
-        public void subResource(ResourceInfo resourceInfo)
-        {
-            if (resourceInfo.count == 0) return;
-            if (resourceInfos.ContainsKey(resourceInfo.id))
-            {
-                resourceInfos[resourceInfo.id].count -= resourceInfo.count;
-            }
-            else
-            {
-                LogManager.Instance.log("×ÔÉí×ÊÔ´²»¹»£¬ÈÔÈ»½¨Ôì³É¹¦£¬´íÎó", LogManager.LogLevel.Error);
+                this.resourceInfos.Add(resourceInfo.Id, Tool.DeepCopyByBinary(resourceInfo));
             }
         }
 
         /// <summary>
-        /// »ñµÃĞ¯´øµÄ×ÊÔ´ÊıÁ¿
+        /// åˆ é™¤æºå¸¦çš„èµ„æº
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public int getResourceCountById(int id)
+        /// <param name="needResource">èµ„æº</param>
+        public void SubResource(Dictionary<int, ResourceInfo> needResource)
         {
-            if (resourceInfos.ContainsKey(id))
+            foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
-                return resourceInfos[id].count;
+                if (this.resourceInfos.ContainsKey(need.Key))
+                {
+                    this.resourceInfos[need.Key].Count -= need.Value.Count;
+                }
+                else
+                {
+                    LogManager.Instance.Log("è‡ªèº«èµ„æºä¸å¤Ÿï¼Œä»ç„¶å»ºé€ æˆåŠŸï¼Œé”™è¯¯", LogManager.LogLevel.Error);
+                }
             }
+        }
+
+        /// <summary>
+        /// åˆ é™¤æºå¸¦çš„èµ„æº
+        /// </summary>
+        /// <param name="resourceInfo">èµ„æº</param>
+        public void SubResource1(ResourceInfo resourceInfo)
+        {
+            if (resourceInfo.Count == 0)
+            {
+                return;
+            }
+
+            if (this.resourceInfos.ContainsKey(resourceInfo.Id))
+            {
+                this.resourceInfos[resourceInfo.Id].Count -= resourceInfo.Count;
+            }
+            else
+            {
+                LogManager.Instance.Log("è‡ªèº«èµ„æºä¸å¤Ÿï¼Œä»ç„¶å»ºé€ æˆåŠŸï¼Œé”™è¯¯", LogManager.LogLevel.Error);
+            }
+        }
+
+        /// <summary>
+        /// æ ¹æ®IDè·å¾—æºå¸¦çš„èµ„æºæ•°é‡
+        /// </summary>
+        /// <param name="id">èµ„æºID</param>
+        /// <returns>èµ„æºæ•°é‡</returns>
+        public int GetResourceCountById(int id)
+        {
+            if (this.resourceInfos.ContainsKey(id))
+            {
+                return this.resourceInfos[id].Count;
+            }
+
             return 0;
         }
 
         /// <summary>
-        /// ÅĞ¶ÏworkerĞ¯´øµÄ×ÊÔ´¹»²»¹»½¨Ôì
+        /// åˆ¤æ–­workeræºå¸¦çš„èµ„æºå¤Ÿä¸å¤Ÿå»ºé€ 
         /// </summary>
-        /// <returns></returns>
-        public bool isEnough(Dictionary<int, ResourceInfo> needResource)
+        /// <param name="needResource">éœ€è¦å»ºé€ çš„èµ„æº</param>
+        /// <returns>æ˜¯å¦</returns>
+        public bool IsEnough(Dictionary<int, ResourceInfo> needResource)
         {
             foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
-                if (!resourceInfos.ContainsKey(need.Key) || resourceInfos[need.Key].count < need.Value.count)
+                if (!this.resourceInfos.ContainsKey(need.Key) || this.resourceInfos[need.Key].Count < need.Value.Count)
                 {
                     return false;
                 }
             }
+
             return true;
         }
 
-        public void giveUpTask()
+        /// <summary>
+        /// æ”¾å¼ƒä»»åŠ¡
+        /// </summary>
+        public void GiveUpTask()
         {
-            WorkerTaskManager.Instance.giveUpTask(Manager.Task);
-            Manager.Task = null;
-            Manager.changeState(WorkerStateType.Seek);
+            WorkerTaskManager.Instance.GiveUpTask(this.Manager.Task);
+            this.Manager.Task = null;
+            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
         }
 
         /// <summary>
-        /// ½¨ÔìËùĞèÒªµÄ×ÊÔ´ÊıÁ¿¼õÈ¥workerÉíÉÏËù´øµÄ×ÊÔ´ÊıÁ¿
+        /// å»ºé€ æ‰€éœ€è¦çš„èµ„æºæ•°é‡å‡å»workerèº«ä¸Šæ‰€å¸¦çš„èµ„æºæ•°é‡
         /// </summary>
-        /// <param name="needResource"></param>
-        /// <returns></returns>
-        public Dictionary<int, ResourceInfo> getRemaining(Dictionary<int, ResourceInfo> needResource) {
-            Dictionary<int, ResourceInfo> remaining = new Dictionary<int, ResourceInfo>();
+        /// <param name="needResource">éœ€è¦çš„èµ„æº</param>
+        /// <returns>Workeræºå¸¦ä¸å¤Ÿçš„èµ„æºæ•°</returns>
+        public Dictionary<int, ResourceInfo> GetRemaining(Dictionary<int, ResourceInfo> needResource)
+        {
+            Dictionary<int, ResourceInfo> remaining = new ();
             foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
-                if (resourceInfos.ContainsKey(need.Key))
+                if (this.resourceInfos.ContainsKey(need.Key))
                 {
-                    remaining.Add(need.Key, new ResourceInfo(need.Key, need.Value.count - resourceInfos[need.Key].count));
+                    remaining.Add(need.Key, new ResourceInfo(need.Key, need.Value.Count - this.resourceInfos[need.Key].Count));
                 }
                 else
                 {
                     remaining.Add(need.Key, Tool.DeepCopyByBinary(need.Value));
                 }
             }
+
             return remaining;
         }
 
         /// <summary>
-        /// µôÑª
+        /// æ‰è¡€
         /// </summary>
-        /// <param name="Hp">ËùµôµÄÑªÁ¿</param>
-        public override void reduceHp(float Hp)
+        /// <param name="hp">æ‰€æ‰çš„è¡€é‡</param>
+        public override void ReduceHp(float hp)
         {
-            if (Hp <= 0)
+            if (hp <= 0)
             {
-                LogManager.Instance.log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
                 return;
             }
-            base.reduceHp(Hp);
-            statusBar.updateStatus(CharacterDataLAB.Hp, CharacterDataLAB.MaxHp);
-            Manager.changeState(WorkerStateType.Attack);
+
+            base.ReduceHp(hp);
+            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Attack);
+        }
+
+        /// <inheritdoc/>
+        protected override void Death()
+        {
+        }
+
+        /// <inheritdoc/>
+        protected override void Awake()
+        {
+            base.Awake();
+            this.openList = new List<Spend>();
+            this.closeList = new List<Spend>();
+            this.path = new List<Spend>();
+            this.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker>(this);
+            this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
+            this.nameUI = this.transform.Find("Name").GetComponent<Text>();
+            this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
+            this.progress = this.transform.Find("Progress").GetComponent<Slider>();
+            this.progress.gameObject.SetActive(false);
+
+            // è·¯å¾„
+            this.LineRenderer = this.transform.GetComponent<LineRenderer>();
+            this.LineRenderer.startWidth = 0.05f;
+            this.LineRenderer.endWidth = 0.05f;
+            Material material = new (Shader.Find("Unlit/Color"));
+            material.color = new Color(UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f));
+            this.LineRenderer.material = material;
+            this.LineRenderer.sortingLayerName = "Highest";
+
+            this.TaskToggle = new bool[10];
+
+            // é»˜è®¤å¯ä»¥åƒé¥­
+            this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Eat] = true;
+            this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Wear] = true;
+            this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Carry] = true;
+            this.resourceInfos = new Dictionary<int, ResourceInfo>();
+            this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
+            if (this.statusBar == null)
+            {
+                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.WearData = new WearData();
+            ThreadPool.SetMaxThreads(5, 5);
+        }
+
+        /// <summary>
+        /// åœ¨åŠ å…¥æ‰€æœ‰çŠ¶æ€ä¹‹åå†åŠ åˆ°TaskManagerä¸­
+        /// </summary>
+        protected override void Start()
+        {
+            base.Start();
+            this.nameUI.text = this.name;
+            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+        }
+
+        private void Update()
+        {
+            this.transform.rotation = Quaternion.Euler(0, 0, 0);
+
+            // æ‰§è¡Œå½“å‰çŠ¶æ€çš„å‡½æ•°
+            this.Manager.CurrentState.OnUpdate();
+        }
+
+        private void OnCollisionStay2D(Collision2D collision)
+        {
+            this.checkBug.AddColliderCount(DateTime.Now.Ticks);
+            if (this.checkBug.IsBug(this.name, 100))
+            {
+                this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+            }
+        }
+
+        /// <summary>
+        /// æ›´æ–°è·¯å¾„UI
+        /// </summary>
+        private void UpdateLine()
+        {
+            this.LineRenderer.positionCount = this.path.Count + 1;
+            this.LineRenderer.SetPosition(0, this.transform.position);
+            for (int i = 0; i < this.path.Count; i++)
+            {
+                this.LineRenderer.SetPosition(i + 1, TileMap.Instance.MapPosToWorldPos(this.path[i].PosMap));
+            }
+        }
+
+        /// <summary>
+        /// æœç€ç›®æ ‡ç›´çº¿èµ°
+        /// </summary>
+        /// <param name="start">èµ·å§‹ä½ç½®</param>
+        /// <param name="end">ç»ˆç‚¹ä½ç½®</param>
+        /// <returns>æœ€åç¢°åˆ°éšœç¢ç‰©åèµ°åˆ°çš„ä½ç½®</returns>
+        private Spend StraightMove(Spend start, Spend end)
+        {
+            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.PosMap.x - end.PosMap.x, 2) + Mathf.Pow(start.PosMap.y - end.PosMap.y, 2));
+            int detX = end.PosMap.x - start.PosMap.x;
+            int detY = end.PosMap.y - start.PosMap.y;
+            do
+            {
+                start = mapSpend[end.PosMap.x - detX, end.PosMap.y - detY];
+                this.SeekProgress = Mathf.Sqrt(Mathf.Pow(start.PosMap.x - end.PosMap.x, 2) + Mathf.Pow(start.PosMap.y - end.PosMap.y, 2)) / totalDistance;
+
+                // åˆ°è¾¾ç›®æ ‡
+                if (detX == 0 && detY == 0)
+                {
+                    return end;
+                }
+
+                int max = Mathf.Abs(detX) > Mathf.Abs(detY) ? Mathf.Abs(detX) : Mathf.Abs(detY);
+                detX -= Mathf.RoundToInt(detX * 1.0f / max);
+                detY -= Mathf.RoundToInt(detY * 1.0f / max);
+            }
+            while (this.IsCanReach(new Vector3Int(end.PosMap.x - detX, end.PosMap.y - detY, 0)));
+            return start;
+        }
+
+        /// <summary>
+        /// é‡åˆ°éšœç¢ç‰©ä¹‹åï¼Œè·å–éšœç¢ç‰©å¯¹é¢æœ€è¿‘çš„å¯ç”¨ä½ç½®
+        /// </summary>
+        /// <param name="start">èµ·å§‹ä½ç½®</param>
+        /// <param name="end">ç»ˆç‚¹ä½ç½®</param>
+        /// <returns>éšœç¢ç‰©å¯¹é¢æœ€è¿‘çš„å¯ç”¨ä½ç½®</returns>
+        private Spend FindNext(Spend start, Spend end)
+        {
+            int detX = end.PosMap.x - start.PosMap.x;
+            int detY = end.PosMap.y - start.PosMap.y;
+            do
+            {
+                // åˆ°è¾¾ç›®æ ‡
+                if (detX == 0 && detY == 0)
+                {
+                    return end;
+                }
+
+                int max = Mathf.Abs(detX) > Mathf.Abs(detY) ? Mathf.Abs(detX) : Mathf.Abs(detY);
+                detX -= Mathf.RoundToInt(detX * 1.0f / max);
+                detY -= Mathf.RoundToInt(detY * 1.0f / max);
+            }
+            while (!this.IsCanReach(new Vector3Int(end.PosMap.x - detX, end.PosMap.y - detY, 0)));
+            return mapSpend[end.PosMap.x - detX, end.PosMap.y - detY];
+        }
+
+        /// <summary>
+        /// A*ç®—æ³•å¯»è·¯
+        /// </summary>
+        private IEnumerator ToTargetAStar(Spend start, Spend end)
+        {
+            // è¶…è¿‡ä¸€å®šæ—¶é—´é‡Šæ”¾é”
+            float time = 0.0f;
+
+            // è®°å½•ä¸€å¼€å§‹çš„pathé•¿åº¦
+            int curIterCount = this.path.Count;
+            List<Spend> path = new ();
+            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.PosMap.x - end.PosMap.x, 2)
+                + Mathf.Pow(start.PosMap.y - end.PosMap.y, 2));
+            this.openList.Add(start);
+            while (this.openList.Count != 0)
+            {
+                int minIndex = 0;
+
+                // é€‰å‡ºå½“å‰ç›¸é‚»ä½ç½®æœ€å°èŠ±è´¹fåœ¨openListä¸­çš„ç´¢å¼•ä½ç½®
+                for (int i = 1; i < this.openList.Count; i++)
+                {
+                    if (this.openList[i].F < this.openList[minIndex].F)
+                    {
+                        minIndex = i;
+                    }
+                }
+
+                // if (openList.Count == 0){
+                //     break; // è§£å†³bug
+                // }
+                Spend curSpend = this.openList[minIndex];
+                this.SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.PosMap.x - start.PosMap.x, 2)
+                    + Mathf.Pow(curSpend.PosMap.y - start.PosMap.y, 2)) / totalDistance;
+
+                // åˆ¤æ–­æ˜¯å¦åˆ°è¾¾ç»ˆç‚¹(æ­¤å¤„åªèƒ½æ˜¯æ•´æ•°)
+                if ((int)curSpend.PosMap.x == (int)end.PosMap.x && (int)curSpend.PosMap.y == (int)end.PosMap.y)
+                {
+                    // LogManager.Instance.log("æ‰¾åˆ°è·¯å¾„!!!", LogManager.LogLevel.Info);
+                    // æ‰¾è·¯å¾„
+                    Vector3Int lastDet = new (0, 0);
+                    Spend curSpend1 = curSpend;
+                    while (curSpend != null && curSpend.Previous != null)
+                    {
+                        // // ä¼˜åŒ–(ä¸€æ¡ç›´çº¿åªå­˜ç»ˆæ­¢èŠ‚ç‚¹)
+                        // if (curSpend.previous.posMap.x - curSpend.posMap.x != lastDet.x || curSpend.previous.posMap.y - curSpend.posMap.y != lastDet.y)
+                        // {
+                        //     //LogManager.Instance.log("ç»è¿‡" + curSpend.posMap.y + " " + curSpend.posMap.x, LogManager.LogLevel.Info);
+                        //     _path.Insert(curIterCount, curSpend);
+                        //     lastDet.x = curSpend.previous.posMap.x - curSpend.posMap.x;
+                        //     lastDet.y = curSpend.previous.posMap.y - curSpend.posMap.y;
+                        // }
+                        path.Insert(curIterCount, curSpend);
+
+                        // å¯èƒ½å‡ºç°å¾ªç¯è·¯å¾„
+                        if (curSpend1 != null)
+                        {
+                            curSpend1 = curSpend1.Previous;
+                            if (curSpend1 != null)
+                            {
+                                curSpend1 = curSpend1.Previous;
+                            }
+                        }
+
+                        if (curSpend1 != null && curSpend1.PosMap.x == curSpend.Previous.PosMap.x
+                            && curSpend1.PosMap.y == curSpend.Previous.PosMap.y)
+                        {
+                            LogManager.Instance.Log("Workerå¯»è·¯å‡ºç°ç¯è·¯", LogManager.LogLevel.Error);
+                            break;
+                        }
+
+                        if (FrameControl.Instance.IsNeedStop())
+                        {
+                            yield return null;
+                        }
+
+                        curSpend = curSpend.Previous;
+                    }
+
+                    break;
+                }
+
+                this.openList.Remove(curSpend);
+                this.closeList.Add(curSpend);
+
+                // å¯¹é‚»å±…è¿›è¡Œf = g + h
+                byte isCorner = 0;
+                foreach (Vector2SByte direction in Neighbors)
+                {
+                    ++isCorner;
+                    int x = curSpend.PosMap.x + direction.X;
+                    int y = curSpend.PosMap.y + direction.Y;
+
+                    // æ•°ç»„ä¸‹æ ‡
+                    if (!this.IsCanReach(new Vector3Int(x, y, 0)))
+                    {
+                        continue;
+                    }
+
+                    Spend neighbor = mapSpend[x, y];
+
+                    // å…³é—­é˜Ÿåˆ—ä¸è®¡ç®—
+                    if (this.closeList.Contains(neighbor))
+                    {
+                        continue;
+                    }
+
+                    float temp;
+                    if (isCorner > 4)
+                    {
+                        // å½“ä¸Šä¸‹å·¦å³é˜»å¡æ—¶ï¼Œæ–œç€ä¸å¯èµ°
+                        if (!this.IsCanReach(new Vector3Int(x, curSpend.PosMap.y, 0))
+                            && !this.IsCanReach(new Vector3Int(curSpend.PosMap.x, y, 0)))
+                        {
+                            continue;
+                        }
+
+                        temp = curSpend.G + 1.414f; // æ–œç€ç›¸é‚»
+                    }
+                    else
+                    {
+                        temp = curSpend.G + 1.0f; // æŒ¨ç€ç›¸é‚»
+                    }
+
+                    // æ‰“å¼€é˜Ÿåˆ—å·²ç»è®¡ç®—è¿‡ï¼Œèµ‹å€¼æœ€å°çš„g
+                    if (this.openList.Contains(neighbor))
+                    {
+                        // å›æº¯,æ”¾å¼ƒè¯¥èŠ‚ç‚¹
+                        if (temp >= neighbor.G)
+                        {
+                            continue;
+                        }
+
+                        neighbor.G = temp;
+                    }
+
+                    // ä¸åœ¨ä»»ä½•åˆ—è¡¨ä¸­
+                    else
+                    {
+                        neighbor.G = temp;
+                        this.openList.Add(neighbor);
+                    }
+
+                    neighbor.H = Mathf.Abs(end.PosMap.x - neighbor.PosMap.x) + Mathf.Abs(end.PosMap.y - neighbor.PosMap.y);
+                    neighbor.F = neighbor.G + neighbor.H;
+                    neighbor.Previous = curSpend; // é“¾æ¥
+                }
+
+                if (FrameControl.Instance.IsNeedStop())
+                {
+                    time += Time.deltaTime;
+                    if (time > 1.0f)
+                    {
+                        // å¦‚æœå¯»è·¯è¶…è¿‡ä¸€å®šæ—¶é—´é‡Šæ”¾é”
+                        SeekLock.ReleaseLock(this);
+                        time = 0.0f;
+                    }
+
+                    yield return null;
+
+                    // è¢«å…¶ä»–äººæŒæœ‰é”ï¼Œç­‰å¾…
+                    yield return new WaitUntil(() => SeekLock.GetLock(this));
+                }
+            }
+
+            // ä¼˜åŒ–ï¼Œå°„çº¿æ£€æµ‹
+            // if (_path.Count > 1)
+            // {
+            //     start = _path[0];
+            //     path.Add(start);
+            //     for (int i = 2; i < _path.Count; i++)
+            //     {
+            //         RaycastHit2D hit = Physics2D.Raycast(TileMap.Instance.mapPosToWorldPos(start.posMap),
+            //             TileMap.Instance.mapPosToWorldPos(_path[i].posMap) - TileMap.Instance.mapPosToWorldPos(start.posMap),
+            //             Vector3.Distance(TileMap.Instance.mapPosToWorldPos(start.posMap), TileMap.Instance.mapPosToWorldPos(_path[i].posMap)));
+            //         if (hit.collider == null) continue;
+            //         // å½“å‰èŠ‚ç‚¹ä¸å¯ç›´æ¥ç›´çº¿èµ°ï¼ŒåŠ å…¥ä¸Šä¸€ä¸ªèŠ‚ç‚¹
+            //         path.Add(_path[i - 1]);
+            //         start = _path[i - 1];
+            //     }
+            //     path.Add(_path[_path.Count - 1]);
+            // }
+            if (path.Count > 1)
+            {
+                int lastIndex = 0;
+                while (lastIndex < path.Count - 1)
+                {
+                    bool isUpdate = false;
+                    int count = 0;
+                    start = path[lastIndex];
+                    this.path.Add(start);
+                    for (int i = lastIndex + 1; i < path.Count; i++)
+                    {
+                        if (count > 50)
+                        {
+                            break;
+                        }
+
+                        if (FrameControl.Instance.IsNeedStop())
+                        {
+                            yield return null;
+                        }
+
+                        // ä¸Šä¸‹å¹³ç§»ä¸€ä¸‹å°„çº¿
+                        Vector3 pos = TileMap.Instance.MapPosToWorldPos(start.PosMap);
+                        Vector3 direction = TileMap.Instance.MapPosToWorldPos(path[i].PosMap) - TileMap.Instance.MapPosToWorldPos(start.PosMap);
+                        float distance = Vector3.Distance(TileMap.Instance.MapPosToWorldPos(start.PosMap), TileMap.Instance.MapPosToWorldPos(path[i].PosMap));
+                        RaycastHit2D hit = Physics2D.Raycast(new Vector2(pos.x - 0.5f, pos.y), direction, distance);
+                        if (hit.collider == null)
+                        {
+                            hit = Physics2D.Raycast(new Vector2(pos.x + 0.5f, pos.y), direction, distance);
+                        }
+
+                        if (hit.collider == null)
+                        {
+                            lastIndex = i;
+                            isUpdate = true;
+                        }
+                    }
+
+                    if (!isUpdate)
+                    {
+                        lastIndex++;
+                    }
+                }
+
+                this.path.Add(path[^1]);
+            }
+
+            if (this.path.Count == curIterCount)
+            {
+                LogManager.Instance.Log(this.name + "æœªæ‰¾åˆ°è·¯å¾„:" + start.PosMap.y + ":" + start.PosMap.x + "-->" + end.PosMap.y + ":" + end.PosMap.x, LogManager.LogLevel.Error);
+            }
+
+            // æ˜¾ç¤ºè·¯å¾„
+            this.UpdateLine();
+
+            // ToTargetLABè¦æ³¨é‡Š
+            this.IsSeeking = false;
+
+            // seekLock.releaseLock(this);
+        }
+
+        /// <summary>
+        /// A*ç®—æ³•å¯»è·¯
+        /// </summary>
+        private void ToTargetAStarThread(Spend start, Spend end)
+        {
+            try
+            {
+                // è®°å½•ä¸€å¼€å§‹çš„pathé•¿åº¦
+                int curIterCount = this.path.Count;
+                List<Spend> path = new ();
+                float totalDistance = Mathf.Sqrt(Mathf.Pow(start.PosMap.x - end.PosMap.x, 2)
+                    + Mathf.Pow(start.PosMap.y - end.PosMap.y, 2));
+                this.openList.Add(start);
+                while (this.openList.Count != 0)
+                {
+                    int minIndex = 0;
+
+                    // é€‰å‡ºå½“å‰ç›¸é‚»ä½ç½®æœ€å°èŠ±è´¹fåœ¨openListä¸­çš„ç´¢å¼•ä½ç½®
+                    for (int i = 1; i < this.openList.Count; i++)
+                    {
+                        if (this.openList[i].F < this.openList[minIndex].F)
+                        {
+                            minIndex = i;
+                        }
+                    }
+
+                    Spend curSpend = this.openList[minIndex];
+                    this.SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.PosMap.x - start.PosMap.x, 2)
+                        + Mathf.Pow(curSpend.PosMap.y - start.PosMap.y, 2)) / totalDistance;
+
+                    // åˆ¤æ–­æ˜¯å¦åˆ°è¾¾ç»ˆç‚¹(æ­¤å¤„åªèƒ½æ˜¯æ•´æ•°)
+                    if ((int)curSpend.PosMap.x == (int)end.PosMap.x && (int)curSpend.PosMap.y == (int)end.PosMap.y)
+                    {
+                        // LogManager.Instance.log("æ‰¾åˆ°è·¯å¾„!!!", LogManager.LogLevel.Info);
+                        // æ‰¾è·¯å¾„
+                        Vector3Int lastDet = new (0, 0);
+                        Spend curSpend1 = curSpend;
+                        while (curSpend != null && curSpend.Previous != null)
+                        {
+                            path.Insert(curIterCount, curSpend);
+
+                            // å¯èƒ½å‡ºç°å¾ªç¯è·¯å¾„
+                            if (curSpend1 != null)
+                            {
+                                curSpend1 = curSpend1.Previous;
+                                if (curSpend1 != null)
+                                {
+                                    curSpend1 = curSpend1.Previous;
+                                }
+                            }
+
+                            if (curSpend1 != null && curSpend1.PosMap.x == curSpend.Previous.PosMap.x
+                                && curSpend1.PosMap.y == curSpend.Previous.PosMap.y)
+                            {
+                                LogManager.Instance.Log("Workerå¯»è·¯å‡ºç°ç¯è·¯", LogManager.LogLevel.Error);
+                                break;
+                            }
+
+                            curSpend = curSpend.Previous;
+                        }
+
+                        break;
+                    }
+
+                    this.openList.Remove(curSpend);
+                    this.closeList.Add(curSpend);
+
+                    // å¯¹é‚»å±…è¿›è¡Œf = g + h
+                    byte isCorner = 0;
+                    foreach (Vector2SByte direction in Neighbors)
+                    {
+                        ++isCorner;
+                        int x = curSpend.PosMap.x + direction.X;
+                        int y = curSpend.PosMap.y + direction.Y;
+
+                        bool isReach = true;
+                        Task task = UnityMainThreadDispatcher.Instance().EnqueueAsync(() =>
+                        {
+                            isReach = this.IsCanReach(new Vector3Int(x, y, 0));
+                        });
+                        task.Wait();
+
+                        // æ•°ç»„ä¸‹æ ‡
+                        if (!isReach)
+                        {
+                            continue;
+                        }
+
+                        Spend neighbor = mapSpend[x, y];
+
+                        // å…³é—­é˜Ÿåˆ—ä¸è®¡ç®—
+                        if (this.closeList.Contains(neighbor))
+                        {
+                            continue;
+                        }
+
+                        float temp;
+                        if (isCorner > 4)
+                        {
+                            // å½“ä¸Šä¸‹å·¦å³é˜»å¡æ—¶ï¼Œæ–œç€ä¸å¯èµ°
+                            if (!this.IsCanReach(new Vector3Int(x, curSpend.PosMap.y, 0))
+                                && !this.IsCanReach(new Vector3Int(curSpend.PosMap.x, y, 0)))
+                            {
+                                continue;
+                            }
+
+                            temp = curSpend.G + 1.414f; // æ–œç€ç›¸é‚»
+                        }
+                        else
+                        {
+                            temp = curSpend.G + 1.0f; // æŒ¨ç€ç›¸é‚»
+                        }
+
+                        // æ‰“å¼€é˜Ÿåˆ—å·²ç»è®¡ç®—è¿‡ï¼Œèµ‹å€¼æœ€å°çš„g
+                        if (this.openList.Contains(neighbor))
+                        {
+                            // å›æº¯,æ”¾å¼ƒè¯¥èŠ‚ç‚¹
+                            if (temp >= neighbor.G)
+                            {
+                                continue;
+                            }
+
+                            neighbor.G = temp;
+                        }
+
+                        // ä¸åœ¨ä»»ä½•åˆ—è¡¨ä¸­
+                        else
+                        {
+                            neighbor.G = temp;
+                            this.openList.Add(neighbor);
+                        }
+
+                        neighbor.H = Mathf.Abs(end.PosMap.x - neighbor.PosMap.x) + Mathf.Abs(end.PosMap.y - neighbor.PosMap.y);
+                        neighbor.F = neighbor.G + neighbor.H;
+                        neighbor.Previous = curSpend; // é“¾æ¥
+                    }
+                }
+
+                if (path.Count > 1)
+                {
+                    int lastIndex = 0;
+                    while (lastIndex < path.Count - 1)
+                    {
+                        bool isUpdate = false;
+                        int count = 0;
+                        start = path[lastIndex];
+                        this.path.Add(start);
+                        for (int i = lastIndex + 1; i < path.Count; i++)
+                        {
+                            if (count > 50)
+                            {
+                                break;
+                            }
+
+                            // ä¸Šä¸‹å¹³ç§»ä¸€ä¸‹å°„çº¿
+                            Vector3 pos = TileMap.Instance.MapPosToWorldPos(start.PosMap);
+                            Vector3 direction = TileMap.Instance.MapPosToWorldPos(path[i].PosMap) - TileMap.Instance.MapPosToWorldPos(start.PosMap);
+                            float distance = Vector3.Distance(TileMap.Instance.MapPosToWorldPos(start.PosMap), TileMap.Instance.MapPosToWorldPos(path[i].PosMap));
+
+                            Task task = UnityMainThreadDispatcher.Instance().EnqueueAsync(() =>
+                            {
+                                RaycastHit2D hit = Physics2D.Raycast(new Vector2(pos.x - 0.5f, pos.y), direction, distance);
+                                if (hit.collider == null)
+                                {
+                                    hit = Physics2D.Raycast(new Vector2(pos.x + 0.5f, pos.y), direction, distance);
+                                }
+
+                                if (hit.collider == null)
+                                {
+                                    lastIndex = i;
+                                    isUpdate = true;
+                                }
+                            });
+                            task.Wait();
+                        }
+
+                        if (!isUpdate)
+                        {
+                            lastIndex++;
+                        }
+                    }
+
+                    this.path.Add(path[^1]);
+                }
+
+                if (this.path.Count == curIterCount)
+                {
+                    LogManager.Instance.Log(this.name + "æœªæ‰¾åˆ°è·¯å¾„:" + start.PosMap.y + ":" + start.PosMap.x + "-->" + end.PosMap.y + ":" + end.PosMap.x, LogManager.LogLevel.Error);
+                }
+
+                // æ˜¾ç¤ºè·¯å¾„
+                this.UpdateLine();
+
+                // ToTargetLABè¦æ³¨é‡Š
+                this.IsSeeking = false;
+
+                // seekLock.releaseLock(this);
+            }
+            catch (Exception e)
+            {
+                Debug.Log(e);
+            }
         }
     }
 
     /// <summary>
     /// f = g + h
     /// </summary>
-    class Spend
+    public class Spend
     {
-        // Êı×é×ø±ê
-        public Vector3Int posMap;
-        public float f = 0;
-        public float g = 0;
-        public float h = 0;
-        public Spend previous; // Ö¸ÏòÂ·¾¶µÄÇ°Ò»¸öÎ»ÖÃ
+        /// <summary>
+        /// åæ ‡
+        /// </summary>
+        public Vector3Int PosMap;
+
+        /// <summary>
+        /// é¢„ä¼°æ€»æ¶ˆè€—
+        /// </summary>
+        public float F = 0;
+
+        /// <summary>
+        /// å·²ç»çš„æ¶ˆè€—
+        /// </summary>
+        public float G = 0;
+
+        /// <summary>
+        /// åç»­é¢„ä¼°çš„æ¶ˆè€—
+        /// </summary>
+        public float H = 0;
+
+        /// <summary>
+        /// æŒ‡å‘è·¯å¾„çš„å‰ä¸€ä¸ªä½ç½®
+        /// </summary>
+        public Spend Previous;
 
         public Spend(int x, int y)
         {
-            posMap.x = x;
-            posMap.y = y;
+            this.PosMap.x = x;
+            this.PosMap.y = y;
         }
 
-        public void init()
+        /// <summary>
+        /// åˆå§‹åŒ–
+        /// </summary>
+        public void Init()
         {
-            f = g = h = 0;
-            previous = null;
+            this.F = this.G = this.H = 0;
+            this.Previous = null;
         }
     }
 
-    struct Vector2SByte
+    /// <summary>
+    /// Byteçš„Vector2
+    /// </summary>
+    public class Vector2SByte
     {
-        public sbyte x;
-        public sbyte y;
+        /// <summary>
+        /// X åæ ‡
+        /// </summary>
+        public sbyte X;
+
+        /// <summary>
+        /// Y åæ ‡
+        /// </summary>
+        public sbyte Y;
 
         public Vector2SByte(sbyte x, sbyte y)
         {
-            this.x = x;
-            this.y = y;
+            this.X = x;
+            this.Y = y;
         }
     }
 
+    /// <summary>
+    /// è§’è‰²è£…å¤‡æ•°æ®
+    /// </summary>
     public class WearData
     {
         /// <summary>
-        /// Ğ¯´øµÄÎäÆ÷
+        /// æºå¸¦çš„æ­¦å™¨
         /// </summary>
-        public Weapon weapon;
+        public Weapon Weapon;
 
         /// <summary>
-        /// ÉíÉÏĞ¯´øµÄ×°±¸
+        /// èº«ä¸Šæºå¸¦çš„è£…å¤‡
         /// </summary>
-        public Dictionary<Equipment.EquipType, Equipment> equipments;
+        public Dictionary<Equipment.EquipType, Equipment> Equipments;
 
         public WearData()
         {
-            equipments = new Dictionary<Equipment.EquipType, Equipment>();
+            this.Equipments = new Dictionary<Equipment.EquipType, Equipment>();
         }
 
-        public void addEquipment(Equipment equipment, Vector3Int posMap)
+        /// <summary>
+        /// æ·»åŠ è£…å¤‡
+        /// </summary>
+        /// <param name="equipment">è£…å¤‡</param>
+        /// <param name="posMap">ä½ç½®</param>
+        public void AddEquipment(Equipment equipment, Vector3Int posMap)
         {
-            if (equipments.ContainsKey(equipment.equipType))
+            if (this.Equipments.ContainsKey(equipment.EquipTypeValue))
             {
-                // ½»»»×°±¸
-                Equipment _equipment = equipments[equipment.equipType];
-                ItemMap.Instance.putDownToInventory(posMap, ResourcesManager.Instance.getAsset(equipment.ToString()),
-                    new ResourceInfo(equipment.id, 1));
-                equipments[equipment.equipType] = equipment;
+                // äº¤æ¢è£…å¤‡
+                Equipment equipment1 = this.Equipments[equipment.EquipTypeValue];
+                ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
+                this.Equipments[equipment.EquipTypeValue] = equipment1;
             }
             else
             {
-                equipments.Add(equipment.equipType, equipment);
+                this.Equipments.Add(equipment.EquipTypeValue, equipment);
             }
         }
     }

@@ -1,119 +1,142 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+
     /// <summary>
-    /// Ê¹ÓÃalphaÅĞ¶ÏWorkerÊÇ·ñ¿ÉÒÔÍ¨ĞĞ
-    /// Ê¹ÓÃCollider»á³öÏÖ,WorkerÑ°Â·Íê³É,µ«Â·¾¶ÉÏµÄTile±»½¨ÔìÍê³É£¬µ¼ÖÂ²»ÄÜÍ¨ĞĞ
-    /// ´Ó°ë´´½¨Ö±½Ó¾Í²»¿ÉÍ¨ĞĞ
+    /// ä½¿ç”¨alphaåˆ¤æ–­Workeræ˜¯å¦å¯ä»¥é€šè¡Œ
+    /// ä½¿ç”¨Colliderä¼šå‡ºç°,Workerå¯»è·¯å®Œæˆ,ä½†è·¯å¾„ä¸Šçš„Tileè¢«å»ºé€ å®Œæˆï¼Œå¯¼è‡´ä¸èƒ½é€šè¡Œ
+    /// ä»åŠåˆ›å»ºç›´æ¥å°±ä¸å¯é€šè¡Œ
     /// </summary>
     public class BuildMap : BaseTileMap
     {
-        public static BuildMap Instance { private set; get; }
-        
-        // MapµØ±íÊı×éÏÂ±ê
+        /// <summary>
+        /// Mapåœ°è¡¨æ•°ç»„ä¸‹æ ‡
+        /// </summary>
         private List<Vector3Int> targetMaps;
 
+        /// <summary>
+        /// å•ä¾‹
+        /// </summary>
+        public static BuildMap Instance { get; private set; }
+
+        /// <summary>
+        /// Color a 0.5fä»£è¡¨æœ‰ç¢°æ’ä½“ï¼Œ0.49fä»£è¡¨æ²¡æœ‰ç¢°æ’ä½“ï¼Œ
+        /// </summary>
+        /// <param name="targetMap">ç›®æ ‡ä½ç½®</param>
+        /// <param name="tile">ç“¦ç‰‡</param>
+        /// <param name="isCollider">æ˜¯å¦æ˜¯ç¢°æ’ä½“</param>
+        /// <returns>å»ºé€ åœ°å›¾</returns>
+        public BuildMap AddBuilding(Vector3Int targetMap, TileBase tile, bool isCollider = true)
+        {
+            this.tilemap.SetTile(targetMap, tile);
+            this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
+            this.tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
+            this.tilemap.SetColor(targetMap, new Color(1, 1, 1, isCollider ? 0.5f : 0.49f));
+            if (!this.targetMaps.Contains(targetMap))
+            {
+                this.targetMaps.Add(targetMap);
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// ç›´æ¥å»ºé€ å®Œæˆ,Worker
+        /// </summary>
+        /// <param name="targetMap">ç›®æ ‡ä½ç½®</param>
+        /// <param name="tile">ç“¦ç‰‡</param>
+        /// <param name="isPass">æ˜¯å¦å¯é€šè¡Œ</param>
+        /// <returns>åœ°å›¾ç“¦ç‰‡</returns>
+        public BuildMap DirectBuild(Vector3Int targetMap, TileBase tile, bool isPass = true)
+        {
+            this.tilemap.SetTile(targetMap, tile);
+            if (isPass)
+            {
+                this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
+                this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// æ²¡æœ‰ç¢°æ’ä½“çš„æœ€åColor aä¸º0.99f
+        /// </summary>
+        /// <param name="targetMap">ç›®æ ‡ä½ç½®</param>
+        public void SetComplete(Vector3Int targetMap)
+        {
+            if (this.tilemap.GetColor(targetMap).a == 0.5f)
+            {
+                this.tilemap.SetColliderType(targetMap, Tile.ColliderType.Sprite);
+                this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 1));
+            }
+            else
+            {
+                this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
+            }
+
+            RoomManager.Instance.Complete(targetMap);
+        }
+
+        /// <summary>
+        /// æ˜¯å¦æ­£åœ¨å»ºé€ 
+        /// </summary>
+        /// <param name="target">ç›®æ ‡ä½ç½®</param>
+        /// <returns>æ˜¯å¦</returns>
+        public bool IsBuilding(Vector3Int target)
+        {
+            return this.tilemap.GetColor(target).a < 1.0f;
+        }
+
+        /// <summary>
+        /// åˆ é™¤æ­£åœ¨å»ºé€ 
+        /// </summary>
+        /// <param name="targetMap">å»ºé€ ç›®æ ‡</param>
+        public void CancelBuilding(Vector3Int targetMap)
+        {
+            this.tilemap.SetTile(targetMap, null);
+            this.targetMaps.Remove(targetMap);
+        }
+
+        /// <summary>
+        /// æ·»åŠ å»ºé€ ä»»åŠ¡åˆ°åœ°å›¾
+        /// </summary>
+        public void AddTask()
+        {
+            Dictionary<int, ResourceInfo> resourceInfos = new ();
+            resourceInfos.Add(
+                ItemDataManager.Instance.GetByName("CustomWood").Id,
+                new ResourceInfo(ItemDataManager.Instance.GetByName("CustomWood").Id, 5));
+            foreach (Vector3Int targetMap in this.targetMaps)
+            {
+                // ä¸èƒ½å†è¿™é‡Œè®¾ç½®ç¬¬ä¸€ä¸ªåæ ‡ç‚¹ï¼Œå³Targetï¼Œå› ä¸ºæ­¤æ—¶Inventoryå¯èƒ½æ²¡æœ‰ææ–™ï¼Œè¿”å›default
+                WorkerTaskManager.Instance.AddTask(new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(targetMap)
+                    .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build());
+            }
+
+            this.targetMaps.Clear();
+        }
+
+        /// <summary>
+        /// æ˜¯å¦å¯ä»¥é€šè¡Œ,Workerå¯»è·¯æ—¶ä½¿ç”¨
+        /// </summary>
+        /// <param name="posMap">ä½ç½®</param>
+        /// <returns>æ˜¯å¦</returns>
+        public override bool IsCanReach(Vector3Int posMap)
+        {
+            // é—¨å¯ä»¥é€šè¡Œ
+            return Mathf.Abs(this.tilemap.GetColor(posMap).a - 0.49f) < 1e-5
+                || Mathf.Abs(this.tilemap.GetColor(posMap).a - 0.99f) < 1e-5
+                || this.IsFreeTile(posMap);
+        }
 
         protected override void Awake()
         {
             base.Awake();
             Instance = this;
-            targetMaps = new List<Vector3Int>();
-        }
-
-        /// <summary>
-        /// Color a 0.5f´ú±íÓĞÅö×²Ìå£¬0.49f´ú±íÃ»ÓĞÅö×²Ìå£¬
-        /// </summary>
-        /// <param name="targetMap"></param>
-        /// <param name="tile"></param>
-        public BuildMap addBuilding(Vector3Int targetMap, TileBase tile, bool isCollider=true) {
-            tilemap.SetTile(targetMap, tile);
-            tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
-            tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
-            tilemap.SetColor(targetMap, new Color(1,1,1, isCollider ? 0.5f : 0.49f));
-            if (!targetMaps.Contains(targetMap))
-            {
-                targetMaps.Add(targetMap);
-            }
-            return this;
-        }
-
-        /// <summary>
-        /// Ö±½Ó½¨ÔìÍê³É,Worker
-        /// </summary>
-        /// <param name="targetMap"></param>
-        /// <param name="tile"></param>
-        /// <param name="isPass">ÊÇ·ñ¿ÉÍ¨ĞĞ</param>
-        /// <returns></returns>
-        public BuildMap directBuild(Vector3Int targetMap, TileBase tile, bool isPass=true)
-        {
-            tilemap.SetTile(targetMap, tile);
-            if (isPass)
-            {
-                tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
-                tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
-            }
-            return this;
-        }
-
-        /// <summary>
-        /// Ã»ÓĞÅö×²ÌåµÄ×îºóColor aÎª0.99f
-        /// </summary>
-        /// <param name="targetMap"></param>
-        public void setComplete(Vector3Int targetMap)
-        {
-            if (tilemap.GetColor(targetMap).a == 0.5f)
-            {
-                tilemap.SetColliderType(targetMap, Tile.ColliderType.Sprite);
-                tilemap.SetColor(targetMap, new Color(1, 1, 1, 1));
-            }
-            else
-            {
-                tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
-            }
-            RoomManager.Instance.complete(targetMap);
-        }
-
-        public bool isBuilding(Vector3Int target)
-        {
-            return tilemap.GetColor(target).a < 1.0f;
-        }
-
-        public void cancelBuilding(Vector3Int targetMap)
-        {
-            tilemap.SetTile(targetMap, null);
-            targetMaps.Remove(targetMap);
-        }
-
-        public void addTask()
-        {
-            Dictionary<int, ResourceInfo> resourceInfos = new Dictionary<int, ResourceInfo>();
-            resourceInfos.Add(ItemDataManager.Instance.getByName("CustomWood").id,
-                new ResourceInfo(ItemDataManager.Instance.getByName("CustomWood").id, 5));
-            foreach (Vector3Int targetMap in targetMaps) { 
-                // ²»ÄÜÔÙÕâÀïÉèÖÃµÚÒ»¸ö×ø±êµã£¬¼´Target£¬ÒòÎª´ËÊ±Inventory¿ÉÄÜÃ»ÓĞ²ÄÁÏ£¬·µ»Ødefault
-                WorkerTaskManager.Instance.addTask(new WorkerBuildTask.BuildTaskBuilder().setBuildPos(targetMap)
-                    .setNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).build());
-            }
-            targetMaps.Clear();
-        }
-
-        /// <summary>
-        /// ÊÇ·ñ¿ÉÒÔÍ¨ĞĞ,WorkerÑ°Â·Ê±Ê¹ÓÃ
-        /// </summary>
-        /// <param name="posMap"></param>
-        /// <returns></returns>
-        public override bool isCanReach(Vector3Int posMap)
-        {
-            // ÃÅ¿ÉÒÔÍ¨ĞĞ
-            return Mathf.Abs(tilemap.GetColor(posMap).a - 0.49f) < 1e-5
-                || Mathf.Abs(tilemap.GetColor(posMap).a - 0.99f) < 1e-5 
-                || base.isFreeTile(posMap);
+            this.targetMaps = new List<Vector3Int>();
         }
     }
 }
-

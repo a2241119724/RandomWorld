@@ -1,168 +1,197 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-using System.Linq;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+
     /// <summary>
-    /// ÈÎÎñ2½×¶Î£ºÄÃ²ÄÁÏ£¬½¨Ôì
-    /// BuildÔÚµÚÒ»¸ö½×¶ÎÔ¤Áô×ÊÔ´
+    /// ä»»åŠ¡2é˜¶æ®µï¼šæ‹¿ææ–™ï¼Œå»ºé€ 
+    /// Buildåœ¨ç¬¬ä¸€ä¸ªé˜¶æ®µé¢„ç•™èµ„æº
     /// </summary>
     public class WorkerBuildTask : WorkerTask
     {
         private Dictionary<int, ResourceInfo> needs;
         private Dictionary<int, ResourceInfo> temp;
+
         /// <summary>
-        /// ½¨ÔìµÄÎ»ÖÃ
+        /// å»ºé€ çš„ä½ç½®
         /// </summary>
         private Vector3Int buildPos;
 
+        public WorkerBuildTask()
+            : base(WorkerTaskTypeEnum.Build)
+        {
+            this.stageInit.Add((Worker worker) =>
+            {
+                this.maxProgress = 1.0f;
+
+                // è·å–ç‰©èµ„
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[8]);
+                this.TargetMap = InventoryManager.Instance.GetPosByPreTake(worker);
+                if (this.TargetMap == default)
+                {
+                    this.GiveUpTask(worker);
+                }
+
+                // è¿›å…¥å·¥ä½œçŠ¶æ€
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+            });
+            this.stageInit.Add((Worker worker) =>
+            {
+                this.maxProgress = 2.0f;
+
+                // å»ºé€ 
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[0]);
+                this.AvailableNeighborPos.Add(Neighbors[1]);
+                this.AvailableNeighborPos.Add(Neighbors[2]);
+                this.AvailableNeighborPos.Add(Neighbors[3]);
+                this.TargetMap = this.buildPos;
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+            });
+        }
+
         /// <summary>
-        /// Ã»ÓÃ
+        /// æ²¡ç”¨
         /// </summary>
         public BuildItem BuildItem { get; private set; }
 
-        public WorkerBuildTask() : base(TaskType.Build) {
-            stageInit.Add((Worker worker) =>
-            {
-                maxProgress = 1.0f;
-                // »ñÈ¡Îï×Ê
-                AvailableNeighborPos.Clear();
-                AvailableNeighborPos.Add(neighbors[8]);
-                TargetMap = InventoryManager.Instance.getPosByPreTake(worker);
-                if (TargetMap == default)
-                {
-                    giveUpTask(worker);
-                }
-                // ½øÈë¹¤×÷×´Ì¬
-                worker.Manager.changeState(WorkerStateType.Seek);
-            });
-            stageInit.Add((Worker worker) =>
-            {
-                maxProgress = 2.0f;
-                // ½¨Ôì
-                AvailableNeighborPos.Clear();
-                AvailableNeighborPos.Add(neighbors[0]);
-                AvailableNeighborPos.Add(neighbors[1]);
-                AvailableNeighborPos.Add(neighbors[2]);
-                AvailableNeighborPos.Add(neighbors[3]);
-                TargetMap = buildPos;
-                worker.Manager.changeState(WorkerStateType.Seek);
-            });
-        }
-
-        public override void start(Worker worker)
+        /// <inheritdoc/>
+        public override void Start(Worker worker)
         {
-            // ×ÔÉíĞ¯´ø×ÊÔ´×ã¹»
-            if (worker.isEnough(needs))
+            // è‡ªèº«æºå¸¦èµ„æºè¶³å¤Ÿ
+            if (worker.IsEnough(this.needs))
             {
-                //LogManager.Instance.log("Ğ¯´ø×ÊÔ´³ä×ã", LogManager.LogLevel.Info);
-                changeStage(worker,1);
+                // LogManager.Instance.log("æºå¸¦èµ„æºå……è¶³", LogManager.LogLevel.Info);
+                this.ChangeStage(worker, 1);
                 return;
             }
-            // »ñµÃÊ£Óà²»¹»µÄÊıÁ¿
-            Dictionary<int, ResourceInfo> remaining = worker.getRemaining(needs);
-            InventoryManager.Instance.isEnoughAndPreTake(worker, remaining, true);
-            // ²»¹»¾ÍÈ¡×ÊÔ´
-            changeStage(worker,0);
+
+            // è·å¾—å‰©ä½™ä¸å¤Ÿçš„æ•°é‡
+            Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
+            InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining, true);
+
+            // ä¸å¤Ÿå°±å–èµ„æº
+            this.ChangeStage(worker, 0);
         }
 
-        protected override bool isFinish(Worker worker)
+        /// <inheritdoc/>
+        public override void Finish(Worker worker)
         {
-            // Ö»workerĞ¯´øµÄ×ÊÔ´²»¹»Ê±,È¡½¨Öş²ÄÁÏ
-            switch (stage)
+            base.Finish(worker);
+
+            // å‡å°‘workeræºå¸¦çš„èµ„æº
+            worker.SubResource(this.needs);
+
+            // å°†å»ºé€ å®Œæˆçš„Tileä»Buildingå˜ä¸ºBuildä¸­
+            BuildMap.Instance.SetComplete(this.buildPos);
+        }
+
+        /// <inheritdoc/>
+        public override bool IsCanWork(Worker worker)
+        {
+            if (!base.IsCanWork(worker))
+            {
+                return false;
+            }
+
+            // å¦‚æœworkeræºå¸¦çš„èµ„æºå·²ç»æ»¡è¶³å»ºé€ 
+            if (worker.IsEnough(this.needs))
+            {
+                return true;
+            }
+
+            // æŒ‰ç…§å•ä¸ªä»»åŠ¡çš„èµ„æºå–çœ‹æ˜¯å¦è¶³å¤Ÿ
+            // è·å¾—å‰©ä½™ä¸å¤Ÿçš„æ•°é‡
+            Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
+            return InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining);
+        }
+
+        /// <inheritdoc/>
+        public override void GiveUpTask(Worker worker)
+        {
+            base.GiveUpTask(worker);
+
+            // æ¢å¤èµ„æº
+            this.temp = Tool.DeepCopyByBinary(this.needs);
+        }
+
+        /// <inheritdoc/>
+        protected override bool IsFinish(Worker worker)
+        {
+            // åªworkeræºå¸¦çš„èµ„æºä¸å¤Ÿæ—¶,å–å»ºç­‘ææ–™
+            switch (this.stage)
             {
                 case 0:
-                    ResourceInfo resourceInfo = InventoryManager.Instance.subItemByPreTake(worker, TargetMap);
-                    worker.addResource(resourceInfo);
-                    // ¼õÉÙĞèÇóµÄÊıÁ¿
-                    foreach(KeyValuePair<int, ResourceInfo> pair in temp)
+                    ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);
+                    worker.AddResource(resourceInfo);
+
+                    // å‡å°‘éœ€æ±‚çš„æ•°é‡
+                    foreach (KeyValuePair<int, ResourceInfo> pair in this.temp)
                     {
-                        if (pair.Key == resourceInfo.id)
+                        if (pair.Key == resourceInfo.Id)
                         {
-                            pair.Value.count -= resourceInfo.count;
-                            if(pair.Value.count <= 0)
+                            pair.Value.Count -= resourceInfo.Count;
+                            if (pair.Value.Count <= 0)
                             {
-                                temp.Remove(resourceInfo.id);
+                                this.temp.Remove(resourceInfo.Id);
                             }
+
                             break;
                         }
                     }
-                    // »ñÈ¡Íê³ÉËùÓĞµÄ²ÄÁÏ
-                    if (temp.Count == 0)
+
+                    // è·å–å®Œæˆæ‰€æœ‰çš„ææ–™
+                    if (this.temp.Count == 0)
                     {
-                        changeStage(worker,1);
+                        this.ChangeStage(worker, 1);
                         return false;
                     }
-                    changeStage(worker,0);
+
+                    this.ChangeStage(worker, 0);
                     return false;
                 default:
                     return true;
             }
         }
 
-        public override void finish(Worker worker)
+        /// <summary>
+        /// å»ºé€ è€…
+        /// </summary>
+        public class BuildTaskBuilder
         {
-            base.finish(worker);
-            // ¼õÉÙworkerĞ¯´øµÄ×ÊÔ´
-            worker.subResource(needs);
-            // ½«½¨ÔìÍê³ÉµÄTile´ÓBuilding±äÎªBuildÖĞ
-            BuildMap.Instance.setComplete(buildPos);
-        }
+            private readonly WorkerBuildTask task;
 
-        public override bool isCanWork(Worker worker)
-        {
-            if (!base.isCanWork(worker))
+#pragma warning disable SA1600 // Elements should be documented
+            public BuildTaskBuilder()
             {
-                return false;
-            }
-            // Èç¹ûworkerĞ¯´øµÄ×ÊÔ´ÒÑ¾­Âú×ã½¨Ôì
-            if (worker.isEnough(needs)) return true;
-            // °´ÕÕµ¥¸öÈÎÎñµÄ×ÊÔ´È¡¿´ÊÇ·ñ×ã¹»
-            // »ñµÃÊ£Óà²»¹»µÄÊıÁ¿
-            Dictionary<int, ResourceInfo> remaining = worker.getRemaining(needs);
-            return InventoryManager.Instance.isEnoughAndPreTake(worker, remaining);
-        }
-
-        public override void giveUpTask(Worker worker)
-        {
-            base.giveUpTask(worker);
-            // »Ö¸´×ÊÔ´
-            temp = Tool.DeepCopyByBinary(needs);
-        }
-
-        public class BuildTaskBuilder {
-            private WorkerBuildTask task;
-
-            public BuildTaskBuilder(){
-                task = new WorkerBuildTask();
+                this.task = new WorkerBuildTask();
             }
 
-            public BuildTaskBuilder setBuild(BuildItem buildItem)
+            public BuildTaskBuilder SetBuild(BuildItem buildItem)
             {
-                task.BuildItem = buildItem;
+                this.task.BuildItem = buildItem;
                 return this;
             }
 
-            public BuildTaskBuilder setBuildPos(Vector3Int pos)
+            public BuildTaskBuilder SetBuildPos(Vector3Int pos)
             {
-                task.buildPos = pos;
+                this.task.buildPos = pos;
                 return this;
             }
 
-            public BuildTaskBuilder setNeedResource(Dictionary<int, ResourceInfo> needResource) {
-                task.temp = Tool.DeepCopyByBinary(needResource);
-                task.needs = Tool.DeepCopyByBinary(needResource);
+            public BuildTaskBuilder SetNeedResource(Dictionary<int, ResourceInfo> needResource)
+            {
+                this.task.temp = Tool.DeepCopyByBinary(needResource);
+                this.task.needs = Tool.DeepCopyByBinary(needResource);
                 return this;
             }
 
-            public WorkerBuildTask build() {
-                return task;
+            public WorkerBuildTask Build()
+            {
+                return this.task;
             }
+#pragma warning restore SA1600 // Elements should be documented
         }
     }
 }
-

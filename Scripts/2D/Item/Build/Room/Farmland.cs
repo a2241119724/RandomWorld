@@ -1,37 +1,39 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine;
+
+    /// <summary>
+    /// 农田
+    /// </summary>
     [Serializable]
     public class Farmland : RoomItem
     {
-        private Wall soil;
+        private readonly WallItem soil;
 
         public Farmland()
         {
-            width = 4;
-            height = 3;
-            soil = new FarmlandWall();
+            this.Width = 4;
+            this.Height = 3;
+            this.soil = new FarmlandWall();
         }
 
-        public override void addBuildTask(Vector3Int centerMap)
+        /// <inheritdoc/>
+        public override void AddBuildTask(Vector3Int centerMap)
         {
-            int[] xB = getXBoundary(centerMap);
-            int[] yB = getYBoundary(centerMap);
-            for (int i = xB[0]; i < xB[1] + 1; i++)
+            int[] boundary = this.GetBoundary(centerMap);
+            for (int i = boundary[0]; i < boundary[1] + 1; i++)
             {
-                for (int j = yB[0]; j < yB[1] + 1; j++)
+                for (int j = boundary[2]; j < boundary[3] + 1; j++)
                 {
-                    BuildMap.Instance.directBuild(new Vector3Int(i, j, 0), soil.tile);
+                    BuildMap.Instance.DirectBuild(new Vector3Int(i, j, 0), this.soil.Tile);
                 }
             }
-            BuildMap.Instance.addTask();
-            // ���Ӳֿ�Cell
-            FarmlandManager.Instance.addCells(Tool.add(centerMap, -height / 2, -width / 2), width, height);
+
+            BuildMap.Instance.AddTask();
+
+            // 添加仓库Cell
+            FarmlandManager.Instance.AddCells(Tool.Add(centerMap, -this.Height / 2, -this.Width / 2), this.Width, this.Height);
         }
     }
 }

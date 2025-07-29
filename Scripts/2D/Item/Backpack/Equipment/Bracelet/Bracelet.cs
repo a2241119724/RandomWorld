@@ -1,21 +1,23 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+
+    /// <summary>
+    /// 手链
+    /// </summary>
     [Serializable]
     public abstract class Bracelet : Equipment
     {
         public Bracelet()
         {
-            equipType = EquipType.Bracelet;
+            this.EquipTypeValue = EquipType.Bracelet;
         }
     }
 
+    /// <summary>
+    /// 手链对象
+    /// </summary>
     public abstract class BraceletObject : EquipmentObject
     {
     }
 }
-

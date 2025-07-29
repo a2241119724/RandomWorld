@@ -1,28 +1,34 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+锘縩amespace LAB2D
 {
+    using System.Collections.Generic;
+
+    /// <summary>
+    /// 寤洪�犳帶鍒跺櫒
+    /// </summary>
     public class BuildController : MVCController<BuildItemManagerView, BuildModel, BuildNavigationView, BuildItemView, BuildInfoView>
     {
-        public static BuildController Instance;
+        /// <summary>
+        /// 鍗曚緥
+        /// </summary>
+        public static BuildController Instance { get; private set; }
 
+        /// <inheritdoc/>
         public override void Awake()
         {
-            itemManagerView = Tool.GetComponentInChildren<BuildItemManagerView>(gameObject, "Inventory");
-            navigationView = Tool.GetComponentInChildren<BuildNavigationView>(gameObject, "Navigation");
-            infoView = Tool.GetComponentInChildren<BuildInfoView>(gameObject, "Info");
+            this.itemManagerView = Tool.GetComponentInChildren<BuildItemManagerView>(this.gameObject, "Inventory");
+            this.navigationView = Tool.GetComponentInChildren<BuildNavigationView>(this.gameObject, "Navigation");
+            this.infoView = Tool.GetComponentInChildren<BuildInfoView>(this.gameObject, "Info");
             base.Awake();
             Instance = this;
-            // 如果背包为空添加一个武器到背包
-            navigationView.CurItemType = ItemType.Room;
-            if (model.isNull(navigationView.CurItemType))
+
+            // 濡傛灉鑳屽寘涓虹┖娣诲姞涓�涓鍣ㄥ埌鑳屽寘
+            this.navigationView.CurItemType = Item.ItemType.Room;
+            if (this.model.IsNull(this.navigationView.CurItemType))
             {
-                List<Item> items = ItemFactory.Instance.getBuildItems();
-                foreach(Item item in items)
+                List<Item> items = ItemFactory.Instance.GetBuildItems();
+                foreach (Item item in items)
                 {
-                    addItem(item);
+                    this.AddItem(item);
                 }
             }
         }

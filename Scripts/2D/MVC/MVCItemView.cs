@@ -1,78 +1,107 @@
-using System;
-using UnityEngine;
-using UnityEngine.EventSystems;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using System;
+    using UnityEngine;
+    using UnityEngine.EventSystems;
+
+    /// <summary>
+    /// MVCé“å…·UI
+    /// </summary>
     public abstract class MVCItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
-        public event Action<int,int> exchangeItem;
-        public event Action<int,string> setBorderColor;
-        public event Func<int,Item> get;
-        public event Action<Item> showInfo;
-
-        public bool IsDrag { get; set; } // ÊÇ·ñ¿ÉÒÔÍÏ×§
         /// <summary>
-        /// ÊÇ·ñ¿ªÊ¼ÍÏ×§(½â¾öÍÏ×§²»ÄÜ×§µÄItem»áÖ»Ö´ĞĞOnEndDrag)
+        /// æ˜¯å¦å¼€å§‹æ‹–æ‹½(è§£å†³æ‹–æ‹½ä¸èƒ½æ‹½çš„Itemä¼šåªæ‰§è¡ŒOnEndDrag)
         /// </summary>
-        public bool isBeginDrag;
+        public bool IsBeginDrag;
 
-        private int index; // µ±Ç°ÍÏ×§¸ñ×ÓµÄË÷Òı
-        private Transform parent; // ¸¸ÎïÌå
-        //private SelectAndShowEventSO selectAndShow = null;
-        private Vector3 offset; // Êó±êµã»÷Î»ÖÃÓëÎïÌåÖĞĞÄµÄÆ«ÒÆÁ¿
+        // private SelectAndShowEventSO selectAndShow = null;
+        private int index; // å½“å‰æ‹–æ‹½æ ¼å­çš„ç´¢å¼•
+        private Transform parent; // çˆ¶ç‰©ä½“
+        private Vector3 offset; // é¼ æ ‡ç‚¹å‡»ä½ç½®ä¸ç‰©ä½“ä¸­å¿ƒçš„åç§»é‡
 
-        void Awake()
-        {
-            //selectAndShow = Resources.Load<SelectAndShowEventSO>("SO/SelectAndShowEvent");
-        }
+        /// <summary>
+        /// äº¤æ¢é“å…·
+        /// </summary>
+        public event Action<int, int> ExchangeItem;
 
-        void Start()
-        {
-            parent = transform.parent;
-            if (parent == null)
-            {
-                LogManager.Instance.log("parent Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-        }
+        /// <summary>
+        /// è®¾ç½®è¾¹æ¡†é¢œè‰²
+        /// </summary>
+        public event Action<int, string> SetBorderColor;
 
+        /// <summary>
+        /// è·å–é“å…·
+        /// </summary>
+        public event Func<int, Item> GetItem;
+
+        /// <summary>
+        /// å±•ç¤ºä¿¡æ¯
+        /// </summary>
+        public event Action<Item> ShowInfo;
+
+        /// <summary>
+        /// æ˜¯å¦å¯ä»¥æ‹–æ‹½
+        /// </summary>
+        public bool IsDrag { get; set; }
+
+        /// <inheritdoc/>
         public void OnBeginDrag(PointerEventData e)
         {
-            if (!IsDrag) return;
-            isBeginDrag = true;
+            if (!this.IsDrag)
+            {
+                return;
+            }
+
+            this.IsBeginDrag = true;
+
             // originalParent = transform.parent;
-            index = parent.GetSiblingIndex();
-            offset = transform.position - e.pressEventCamera.ScreenToWorldPoint(e.position);
-            offset.z = 0;
-            transform.SetParent(parent.parent.parent.parent.parent.parent, false); // ÍÏ×§Ê±·ÀÖ¹±»¸¸ÎïÌåÕÚµ²
-            GetComponent<CanvasGroup>().blocksRaycasts = false; // ÊÇ·ñÉäÏß¼ì²â
+            this.index = this.parent.GetSiblingIndex();
+            this.offset = this.transform.position - e.pressEventCamera.ScreenToWorldPoint(e.position);
+            this.offset.z = 0;
+            this.transform.SetParent(this.parent.parent.parent.parent.parent.parent, false); // æ‹–æ‹½æ—¶é˜²æ­¢è¢«çˆ¶ç‰©ä½“é®æŒ¡
+            this.GetComponent<CanvasGroup>().blocksRaycasts = false; // æ˜¯å¦å°„çº¿æ£€æµ‹
         }
 
+        /// <inheritdoc/>
         public void OnDrag(PointerEventData e)
         {
-            if (!IsDrag) return;
-            Vector3 v = e.pressEventCamera.ScreenToWorldPoint(e.position); // ½«ÊÓ¿Ú×ø±ê×ª»»ÎªÊÀ½ç×ø±ê
-            v.z = -5; // ±£Ö¤ÔÚÉäÏà»ú(-20)ÓëÃæ°å(0)Ö®¼ä
-            transform.position = v + offset;
+            if (!this.IsDrag)
+            {
+                return;
+            }
+
+            Vector3 v = e.pressEventCamera.ScreenToWorldPoint(e.position); // å°†è§†å£åæ ‡è½¬æ¢ä¸ºä¸–ç•Œåæ ‡
+            v.z = -5; // ä¿è¯åœ¨å°„ç›¸æœº(-20)ä¸é¢æ¿(0)ä¹‹é—´
+            this.transform.position = v + this.offset;
         }
 
         /// <summary>
-        /// Í¨¹ı½»»»Á½¸öºĞ×ÓÊµÏÖ½»»»
+        /// é€šè¿‡äº¤æ¢ä¸¤ä¸ªç›’å­å®ç°äº¤æ¢
         /// </summary>
-        /// <param name="e"></param>
+        /// <inheritdoc/>
         public void OnEndDrag(PointerEventData e)
         {
-            if (!IsDrag || !isBeginDrag) return;
-            isBeginDrag = false;
-            GetComponent<CanvasGroup>().blocksRaycasts = true; // ÊÇ·ñÉäÏß¼ì²â
-            // »¹Ô­µ½Ô­À´µÄÎ»ÖÃ
-            transform.SetParent(parent, false);
-            transform.position = parent.position;
-            GameObject g = e.pointerCurrentRaycast.gameObject; // Òª½»»»µÄºĞ×Ó
-            if (g == null) return; // ²»ÄÜÍÏ×§µ½ÆÁÄ»ÍâÃæ
-            Transform imageBox; // ÍÏ×§µ½µÄºĞ×Ó
-            if (g.name.Equals("Item")) // ·Åµ½ÓĞµÀ¾ßµÄÎ»ÖÃÊ±
+            if (!this.IsDrag || !this.IsBeginDrag)
+            {
+                return;
+            }
+
+            this.IsBeginDrag = false;
+            this.GetComponent<CanvasGroup>().blocksRaycasts = true; // æ˜¯å¦å°„çº¿æ£€æµ‹
+
+            // è¿˜åŸåˆ°åŸæ¥çš„ä½ç½®
+            this.transform.SetParent(this.parent, false);
+            this.transform.position = this.parent.position;
+            GameObject g = e.pointerCurrentRaycast.gameObject; // è¦äº¤æ¢çš„ç›’å­
+            if (g == null)
+            {
+                return; // ä¸èƒ½æ‹–æ‹½åˆ°å±å¹•å¤–é¢
+            }
+
+            Transform imageBox; // æ‹–æ‹½åˆ°çš„ç›’å­
+
+            // æ”¾åˆ°æœ‰é“å…·çš„ä½ç½®æ—¶
+            if (g.name.Equals("Item"))
             {
                 imageBox = g.transform.parent;
             }
@@ -80,71 +109,91 @@ namespace LAB2D
             {
                 return;
             }
-            // Í¨ÖªControllerÊı¾İÎ»ÖÃ±ä»»
-            exchangeItem(index, imageBox.GetSiblingIndex());
-            setBorderColor(imageBox.GetSiblingIndex(), "item");
-            //// ·Åµ½ÍÏµ½µÄÎ»ÖÃ
-            //parent.SetSiblingIndex(imageBox.GetSiblingIndex());
-            //// ½«ÍÏµ½µÄºĞ×Ó·ÅÔÚÍÏ×§µÄÎïÌåÎ»ÖÃ
-            //imageBox.SetSiblingIndex(index);
+
+            // é€šçŸ¥Controlleræ•°æ®ä½ç½®å˜æ¢
+            this.ExchangeItem(this.index, imageBox.GetSiblingIndex());
+            this.SetBorderColor(imageBox.GetSiblingIndex(), "item");
+
+            // // æ”¾åˆ°æ‹–åˆ°çš„ä½ç½®
+            // parent.SetSiblingIndex(imageBox.GetSiblingIndex());
+            // // å°†æ‹–åˆ°çš„ç›’å­æ”¾åœ¨æ‹–æ‹½çš„ç‰©ä½“ä½ç½®
+            // imageBox.SetSiblingIndex(index);
+        }
+
+        /// <inheritdoc/>
+        public void OnPointerClick(PointerEventData e)
+        {
+            // ä¿®æ”¹é€‰ä¸­è¾¹æ¡†é¢œè‰²
+            this.SetBorderColor(this.parent.GetSiblingIndex(), "item");
+
+            // é“å…·ç´¢å¼•
+            int i = this.transform.parent.GetSiblingIndex();
+            Item item = this.GetItem(i);
+            this.ShowInfo(item);
+            this.SetSelect(i, item);
         }
 
         /// <summary>
-        /// µã»÷ÊÂ¼ş
+        /// è®¾ç½®é€‰æ‹©çš„é“å…·
         /// </summary>
-        /// <param name="eventData"></param>
-        public void OnPointerClick(PointerEventData e)
+        /// <param name="i">é“å…·ç´¢å¼•</param>
+        /// <param name="item">é“å…·</param>
+        public abstract void SetSelect(int i, Item item);
+
+        private void Awake()
         {
-            // ĞŞ¸ÄÑ¡ÖĞ±ß¿òÑÕÉ«
-            setBorderColor(parent.GetSiblingIndex(), "item");
-            // µÀ¾ßË÷Òı
-            int i = transform.parent.GetSiblingIndex();
-            Item item = get(i);
-            showInfo(item);
-            setSelect(i, item);
+            // selectAndShow = Resources.Load<SelectAndShowEventSO>("SO/SelectAndShowEvent");
         }
 
-        public abstract void setSelect(int i, Item item);
+        private void Start()
+        {
+            this.parent = this.transform.parent;
+            if (this.parent == null)
+            {
+                LogManager.Instance.Log("parent Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+        }
     }
 
     /// <summary>
-    /// Í¨¹ı½»»»ºĞ×ÓÏÂÃæµÄItemÊµÏÖ½»»»
+    /// é€šè¿‡äº¤æ¢ç›’å­ä¸‹é¢çš„Itemå®ç°äº¤æ¢
     /// </summary>
     /// <param name="e"></param>
-    //public void OnEndDrag(PointerEventData e)
-    //{
-    //    GameObject g = e.pointerCurrentRaycast.gameObject;
-    //    if (g.name.Equals("itemImage")) // ·Åµ½ÓĞµÀ¾ßÎ»ÖÃÊ±
-    //    {
-    //        // Êı¾İÎ»ÖÃ±ä»»
-    //        Item temp = myBag.itemList[index];
-    //        myBag.itemList[index] = myBag.itemList[g.transform.parent.parent.GetSiblingIndex()];
-    //        myBag.itemList[g.transform.parent.parent.GetSiblingIndex()] = temp;
-    //        // ·Åµ½ÍÏµ½µÄÎ»ÖÃ
-    //        transform.SetParent(g.transform.parent.parent);
-    //        transform.position = transform.parent.position;
-    //        // ½«item»»µ½±»ÍÏ×§µÄÔ­¸¸ÎïÌåÉÏ,ÊµÏÖ½»»»
-    //        g.transform.parent.position = originalParent.position;
-    //        g.transform.parent.SetParent(originalParent);
-    //    }
-    //    else if (g.name.Equals("ImageBox")) // ·Åµ½¿ÕÎ»ÖÃÊ±
-    //    {
-    //        // Êı¾İÎ»ÖÃ±ä»»
-    //        myBag.itemList[g.transform.GetSiblingIndex()] = myBag.itemList[index];
-    //        if (g.transform.GetSiblingIndex() != index)
-    //        {
-    //            myBag.itemList[index] = null;
-    //        }
-    //        // ·Åµ½ÍÏµ½µÄÎ»ÖÃ
-    //        transform.SetParent(g.transform);
-    //        transform.position = transform.parent.position;
-    //    }
-    //    else
-    //    {
-    //        // ÍÏµ½ÆäËûÎ»ÖÃ»Øµ½Ô­Î»
-    //        transform.SetParent(originalParent);
-    //        transform.position = originalParent.position;
-    //    }
-    //    GetComponent<CanvasGroup>().blocksRaycasts = true; // ÊÇ·ñ×èÖ¹ÉäÏßÍ¶Éä
-    //}
+    // public void OnEndDrag(PointerEventData e)
+    // {
+    //     GameObject g = e.pointerCurrentRaycast.gameObject;
+    //     if (g.name.Equals("itemImage")) // æ”¾åˆ°æœ‰é“å…·ä½ç½®æ—¶
+    //     {
+    //         // æ•°æ®ä½ç½®å˜æ¢
+    //         Item temp = myBag.itemList[index];
+    //         myBag.itemList[index] = myBag.itemList[g.transform.parent.parent.GetSiblingIndex()];
+    //         myBag.itemList[g.transform.parent.parent.GetSiblingIndex()] = temp;
+    //         // æ”¾åˆ°æ‹–åˆ°çš„ä½ç½®
+    //         transform.SetParent(g.transform.parent.parent);
+    //         transform.position = transform.parent.position;
+    //         // å°†itemæ¢åˆ°è¢«æ‹–æ‹½çš„åŸçˆ¶ç‰©ä½“ä¸Š,å®ç°äº¤æ¢
+    //         g.transform.parent.position = originalParent.position;
+    //         g.transform.parent.SetParent(originalParent);
+    //     }
+    //     else if (g.name.Equals("ImageBox")) // æ”¾åˆ°ç©ºä½ç½®æ—¶
+    //     {
+    //         // æ•°æ®ä½ç½®å˜æ¢
+    //         myBag.itemList[g.transform.GetSiblingIndex()] = myBag.itemList[index];
+    //         if (g.transform.GetSiblingIndex() != index)
+    //         {
+    //             myBag.itemList[index] = null;
+    //         }
+    //         // æ”¾åˆ°æ‹–åˆ°çš„ä½ç½®
+    //         transform.SetParent(g.transform);
+    //         transform.position = transform.parent.position;
+    //     }
+    //     else
+    //     {
+    //         // æ‹–åˆ°å…¶ä»–ä½ç½®å›åˆ°åŸä½
+    //         transform.SetParent(originalParent);
+    //         transform.position = originalParent.position;
+    //     }
+    //     GetComponent<CanvasGroup>().blocksRaycasts = true; // æ˜¯å¦é˜»æ­¢å°„çº¿æŠ•å°„
+    // }
 }

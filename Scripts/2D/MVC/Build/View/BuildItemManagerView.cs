@@ -1,24 +1,27 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
-    public class BuildItemManagerView : MVCItemManagerView<BuildItemView,BuildModel>
+    /// <summary>
+    /// 建造道具UI
+    /// </summary>
+    public class BuildItemManagerView : MVCItemManagerView<BuildItemView, BuildModel>
     {
-        public static BuildItemManagerView Instance { private set; get; }
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static BuildItemManagerView Instance { get; private set; }
 
+        /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
             Instance = this;
-            itemBox = ResourcesManager.Instance.getPrefab("BuildItem");
+            this.itemBox = ResourceManager.Instance.GetPrefab("BuildItem");
         }
 
-        protected override int getQuantity(Item item)
+        /// <inheritdoc/>
+        protected override int GetQuantity(Item item)
         {
-            return ((BuildItem)item).quantity;
+            return ((BuildItem)item).Quantity;
         }
     }
 }
-

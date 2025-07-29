@@ -1,141 +1,150 @@
-using Photon.Pun;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+ï»¿namespace LAB2D
+{
+    using System.Collections;
+    using UnityEngine;
 
-namespace LAB2D {
+    /// <summary>
+    /// æ•Œäººåˆ›å»ºå™¨
+    /// </summary>
     public class EnemyCreator : CharacterCreator<EnemyCreator>
     {
-        private const float instanceInterval = 3.0f; // ÊµÀı»¯Ê±¼ä¼ä¸ô
+        private const float InstanceInterval = 3.0f; // å®ä¾‹åŒ–æ—¶é—´é—´éš”
 
         /// <summary>
-        /// ÊµÀı»¯ÔÚÍæ¼Ò¸½½üµÄµĞÈË
+        /// æ¯éš”ä¸€æ®µæ—¶é—´ç”Ÿæˆæ•Œäºº
         /// </summary>
-        /// <param name="index">µĞÈË±àºÅ</param>
-        protected override GameObject _create(Vector3 worldPos, string name, string layer)
-        {
-            if (EnemyManager.Instance.Characters.Count >= EnemyManager.Instance.MaxEnemyCount) return null;
-            return base._create(worldPos, "Enemy_Lv1", "Enemy");
-        }
-
-        /// <summary>
-        /// Ã¿¸ôÒ»¶ÎÊ±¼äÉú³ÉµĞÈË
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerator genEnemy()
+        /// <returns>åç¨‹</returns>
+        public IEnumerator GenEnemy()
         {
             while (true)
             {
-                EnemyManager.Instance.create();
-                yield return new WaitForSeconds(instanceInterval);
+                EnemyManager.Instance.Create();
+                yield return new WaitForSeconds(InstanceInterval);
             }
         }
 
-        //private int sendQuantity = 100; // Ò»´Î·¢ËÍÊıÁ¿
-        //private int sendIndex = 0; // ·¢ËÍÊı¾İµÄË÷Òı
-        //private bool isFinish; // ÊÇ·ñ·¢ËÍËùÓĞµØÍ¼Êı¾İ
-        //private bool isOne; // Ö´ĞĞÒ»´Î
+        /// <summary>
+        /// å®ä¾‹åŒ–åœ¨ç©å®¶é™„è¿‘çš„æ•Œäºº
+        /// </summary>
+        /// <param name="worldPos">ä¸–ç•Œä½ç½®</param>
+        /// <param name="name">åå­—</param>
+        /// <param name="layer">å±‚çº§</param>
+        /// <returns>å®ä¾‹åŒ–å¯¹è±¡</returns>
+        protected override GameObject DoCreate(Vector3 worldPos, string name, string layer)
+        {
+            if (EnemyManager.Instance.Characters.Count >= EnemyManager.Instance.MaxEnemyCount)
+            {
+                return null;
+            }
 
-        ///// <summary>
-        ///// Ê¹µÃĞÂ¼ÓÈëµÄÓÃ»§µ÷ÓÃÀ´¿ØÖÆMaster·¢ËÍÊı¾İ
-        ///// </summary>
-        //public void initData()
-        //{
-        //    isFinish = false;
-        //    sendIndex = 0;
-        //}
+            return base.DoCreate(worldPos, "Enemy_Lv1", "Enemy");
+        }
 
-        ///// <summary>
-        ///// ĞòÁĞ»¯µĞÈËÎ»ÖÃ
-        ///// Ğ­ÒéLAB_2
-        ///// Ã¿´Î·¢ËÍ2 + sendQuantity * 4
-        ///// Ç°2¸ö×Ö½Ú±êÊ¶´«ÊäµØÍ¼µÄÆğÊ¼Ë÷ÒıÏµÊı[start,(start + 1))
-        ///// [start * sendQuantity,(start + 1) * sendQuantity)
-        ///// </summary>
-        //private void SerializeTiles(PhotonStream stream)
-        //{
-        //    // Ã¿´Î·¢ËÍ1000¸öµØÍ¼Êı¾İ
-        //    byte[] position = new byte[sendQuantity * 4 + 2];
-        //    // Ç°Á½×Ö½Ú·ÅÊı¾İ·¶Î§(Ğ¡¶Ë´æ´¢)
-        //    position[0] = (byte)(sendIndex % (1 << 8));
-        //    position[1] = (byte)(sendIndex / (1 << 8));
-        //    int temp = 2; // ´Ó¶ø¿ªÊ¼´æÊı¾İ
-        //    int len = (sendIndex + 1) * sendQuantity;
-        //    int total = enemysPosition.Count;
-        //    for (int i = sendIndex * sendQuantity; i < len; i++)
-        //    {
-        //        if (i >= total)
-        //        {
-        //            stream.SendNext(position);
-        //            //sendIndex = 0;
-        //            isFinish = true;
-        //            return;
-        //        }
-        //        position[temp++] = (byte)(enemysPosition[i].x % (1 << 8));
-        //        position[temp++] = (byte)(enemysPosition[i].x / (1 << 8));
-        //        position[temp++] = (byte)(enemysPosition[i].y % (1 << 8));
-        //        position[temp++] = (byte)(enemysPosition[i].y / (1 << 8));
-        //    }
-        //    stream.SendNext(position);
-        //    ++sendIndex;
-        //}
+        // private int sendQuantity = 100; // ä¸€æ¬¡å‘é€æ•°é‡
+        // private int sendIndex = 0; // å‘é€æ•°æ®çš„ç´¢å¼•
+        // private bool isFinish; // æ˜¯å¦å‘é€æ‰€æœ‰åœ°å›¾æ•°æ®
+        // private bool isOne; // æ‰§è¡Œä¸€æ¬¡
 
-        ///// <summary>
-        ///// ·´ĞòÁĞ»¯µĞÈËÎ»ÖÃ
-        ///// </summary>
-        //private void DeserializeTiles(PhotonStream stream)
-        //{
-        //    byte[] tiles = (byte[])stream.ReceiveNext();
-        //    int temp = 2;
-        //    int start = tiles[1] * 256 + tiles[0];
-        //    int len = (start + 1) * sendQuantity;
-        //    int total = enemysPosition.Count;
-        //    for (int i = start * sendQuantity; i < len; i++)
-        //    {
-        //        byte a = tiles[temp++];
-        //        byte b = tiles[temp++];
-        //        byte c = tiles[temp++];
-        //        byte d = tiles[temp++];
-        //        int x = b * (1 << 8) + a;
-        //        int y = d * (1 << 8) + c;
-        //        enemysPosition.Add(new Vector2(x, y));
-        //        if (i == (total - 1))
-        //        {
-        //            isOne = true;
-        //            return;
-        //        }
-        //    }
-        //}
+        // /// <summary>
+        // /// ä½¿å¾—æ–°åŠ å…¥çš„ç”¨æˆ·è°ƒç”¨æ¥æ§åˆ¶Masterå‘é€æ•°æ®
+        //  /// </summary>
+        // public void initData()
+        // {
+        //     isFinish = false;
+        //     sendIndex = 0;
+        // }
 
-        //public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-        //{
-        //    if (stream.IsWriting)
-        //    {
-        //        stream.SendNext(GlobalData.maxEnemyCount);
-        //        stream.SendNext(currentEnemyCount);
-        //        //stream.SendNext(enemysPosition.Count);
-        //        if (!isFinish)
-        //        {
-        //            SerializeTiles(stream);
-        //        }
-        //        else
-        //        {
-        //            // ·ÀÖ¹¶ÁÈ¡Ê±Ô½½ç
-        //            stream.SendNext(-1);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        GlobalData.maxEnemyCount = (int)stream.ReceiveNext();
-        //        currentEnemyCount = (int)stream.ReceiveNext();
-        //        //int len = (int)stream.ReceiveNext();
-        //        //enemysPosition.Capacity = len;
-        //        // ¿ØÖÆ½«ËùÓĞÊı¾İ½ÓÊÕÒ»±é,ºóÃæµÄÖØ¸´Êı¾İ¾Í²»½ÓÊÕÁË
-        //        if (!isOne && stream.PeekNext() is byte[])
-        //        {
-        //            DeserializeTiles(stream);
-        //        }
-        //    }
-        //}
+        // /// <summary>
+        // /// åºåˆ—åŒ–æ•Œäººä½ç½®
+        // /// åè®®LAB_2
+        // /// æ¯æ¬¡å‘é€2 + sendQuantity * 4
+        // /// å‰2ä¸ªå­—èŠ‚æ ‡è¯†ä¼ è¾“åœ°å›¾çš„èµ·å§‹ç´¢å¼•ç³»æ•°[start,(start + 1))
+        // /// [start * sendQuantity,(start + 1) * sendQuantity)
+        // /// </summary>
+        // private void SerializeTiles(PhotonStream stream)
+        // {
+        //     // æ¯æ¬¡å‘é€1000ä¸ªåœ°å›¾æ•°æ®
+        //     byte[] position = new byte[sendQuantity * 4 + 2];
+        //     // å‰ä¸¤å­—èŠ‚æ”¾æ•°æ®èŒƒå›´(å°ç«¯å­˜å‚¨)
+        //     position[0] = (byte)(sendIndex % (1 << 8));
+        //     position[1] = (byte)(sendIndex / (1 << 8));
+        //     int temp = 2; // ä»è€Œå¼€å§‹å­˜æ•°æ®
+        //     int len = (sendIndex + 1) * sendQuantity;
+        //     int total = enemysPosition.Count;
+        //     for (int i = sendIndex * sendQuantity; i < len; i++)
+        //     {
+        //         if (i >= total)
+        //         {
+        //             stream.SendNext(position);
+        //             //sendIndex = 0;
+        //             isFinish = true;
+        //             return;
+        //         }
+        //         position[temp++] = (byte)(enemysPosition[i].x % (1 << 8));
+        //         position[temp++] = (byte)(enemysPosition[i].x / (1 << 8));
+        //         position[temp++] = (byte)(enemysPosition[i].y % (1 << 8));
+        //         position[temp++] = (byte)(enemysPosition[i].y / (1 << 8));
+        //     }
+        //     stream.SendNext(position);
+        //     ++sendIndex;
+        // }
+
+        // /// <summary>
+        // /// ååºåˆ—åŒ–æ•Œäººä½ç½®
+        // /// </summary>
+        // private void DeserializeTiles(PhotonStream stream)
+        // {
+        //     byte[] tiles = (byte[])stream.ReceiveNext();
+        //     int temp = 2;
+        //     int start = tiles[1] * 256 + tiles[0];
+        //     int len = (start + 1) * sendQuantity;
+        //     int total = enemysPosition.Count;
+        //     for (int i = start * sendQuantity; i < len; i++)
+        //     {
+        //         byte a = tiles[temp++];
+        //         byte b = tiles[temp++];
+        //         byte c = tiles[temp++];
+        //         byte d = tiles[temp++];
+        //         int x = b * (1 << 8) + a;
+        //         int y = d * (1 << 8) + c;
+        //         enemysPosition.Add(new Vector2(x, y));
+        //         if (i == (total - 1))
+        //         {
+        //             isOne = true;
+        //             return;
+        //         }
+        //     }
+        // }
+
+        // public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+        // {
+        //     if (stream.IsWriting)
+        //     {
+        //         stream.SendNext(GlobalData.maxEnemyCount);
+        //         stream.SendNext(currentEnemyCount);
+        //         //stream.SendNext(enemysPosition.Count);
+        //         if (!isFinish)
+        //         {
+        //             SerializeTiles(stream);
+        //         }
+        //         else
+        //         {
+        //             // é˜²æ­¢è¯»å–æ—¶è¶Šç•Œ
+        //             stream.SendNext(-1);
+        //         }
+        //     }
+        //     else
+        //     {
+        //         GlobalData.maxEnemyCount = (int)stream.ReceiveNext();
+        //         currentEnemyCount = (int)stream.ReceiveNext();
+        //         //int len = (int)stream.ReceiveNext();
+        //         //enemysPosition.Capacity = len;
+        //         // æ§åˆ¶å°†æ‰€æœ‰æ•°æ®æ¥æ”¶ä¸€é,åé¢çš„é‡å¤æ•°æ®å°±ä¸æ¥æ”¶äº†
+        //         if (!isOne && stream.PeekNext() is byte[])
+        //         {
+        //             DeserializeTiles(stream);
+        //         }
+        //     }
+        // }
     }
 }

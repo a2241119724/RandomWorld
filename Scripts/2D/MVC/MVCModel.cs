@@ -1,174 +1,199 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
-    // ÓÅ»¯,Ö»ĞèÒª´æidÓëÊıÁ¿
+    using System.Collections;
+    using System.Collections.Generic;
+
+    /// <summary>
+    /// Model
+    /// ä¼˜åŒ–,åªéœ€è¦å­˜idä¸æ•°é‡
+    /// </summary>
     public abstract class MVCModel : ASaveData
     {
         /// <summary>
-        /// µÀ¾ßÁĞ±í
+        /// é“å…·åˆ—è¡¨
         /// </summary>
-        public Dictionary<ItemType, ArrayList> itemDict;
+        public Dictionary<Item.ItemType, ArrayList> ItemDict;
 
-        public MVCModel(ItemType start, ItemType end)
+        public MVCModel(Item.ItemType start, Item.ItemType end)
         {
-            itemDict = new Dictionary<ItemType, ArrayList>();
-            Tool.splitEnum<ItemType>(start, end).ForEach((item) =>
+            this.ItemDict = new Dictionary<Item.ItemType, ArrayList>();
+            Tool.SplitEnum<Item.ItemType>(start, end).ForEach((item) =>
             {
-                itemDict.Add(item, new ArrayList());
+                this.ItemDict.Add(item, new ArrayList());
             });
         }
 
-        #region CRUD
         /// <summary>
-        /// É¾³ıÒ»¸öµÀ¾ß
+        /// åˆ é™¤ä¸€ä¸ªé“å…·
         /// </summary>
-        /// <param name="index">µÀ¾ßË÷Òı</param>
-        public void deleteItem(ItemType type,int index)
+        /// <param name="type">é“å…·ç±»å‹</param>
+        /// <param name="index">é“å…·ç´¢å¼•</param>
+        public void Delete(Item.ItemType type, int index)
         {
-            if (itemDict[type] == null)
+            if (this.ItemDict[type] == null)
             {
-                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            //itemList[index] = null;
-            itemDict[type].RemoveAt(index);
+
+            // itemList[index] = null;
+            this.ItemDict[type].RemoveAt(index);
         }
 
         /// <summary>
-        /// Ìí¼ÓµÀ¾ßµ½±³°ü
+        /// æ·»åŠ é“å…·åˆ°èƒŒåŒ…
         /// </summary>
-        /// <param name="item">µÀ¾ßĞÅÏ¢</param>
-        public void addItem(Item item)
+        /// <param name="item">é“å…·ä¿¡æ¯</param>
+        public void Add(Item item)
         {
             if (item == null)
             {
-                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            ArrayList itemList = null;
-            ItemType itemType = ItemDataManager.Instance.getTypeById(item.id);
-            if (itemDict.ContainsKey(itemType))
+
+            ArrayList itemList;
+            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(item.Id);
+            if (this.ItemDict.ContainsKey(itemType))
             {
-                itemList = itemDict[itemType];
+                itemList = this.ItemDict[itemType];
             }
             else
             {
                 itemList = new ArrayList();
             }
-            // ¿ÉÒÔ¶Ñµş
-            if (ItemDataManager.Instance.getById(item.id).isStackable)
+
+            // å¯ä»¥å †å 
+            if (ItemDataManager.Instance.GetById(item.Id).IsStackable)
             {
                 for (int i = 0; i < itemList.Count; i++)
                 {
-                    // °üÀ¨µÀ¾ß
-                    if (((Item)itemList[i]).id == item.id)
+                    // åŒ…æ‹¬é“å…·
+                    if (((Item)itemList[i]).Id == item.Id)
                     {
-                        ((Item)itemList[i]).quantity++;
+                        ((Item)itemList[i]).Quantity++;
                         return;
                     }
                 }
             }
-            // ²»°üÀ¨µÀ¾ß,Ìí¼Ó
-            item.quantity = 1;
+
+            // ä¸åŒ…æ‹¬é“å…·,æ·»åŠ 
+            item.Quantity = 1;
             itemList.Add(item);
         }
 
         /// <summary>
-        /// ½»»»µÀ¾ßÎ»ÖÃ
+        /// äº¤æ¢é“å…·ä½ç½®
         /// </summary>
-        /// <param name="index1">µÀ¾ß1µÄË÷Òı</param>
-        /// <param name="index2">µÀ¾ß2µÄË÷Òı</param>
-        public void exchangeItem(ItemType type, int index1, int index2)
+        /// <param name="type">é“å…·ç±»å‹</param>
+        /// <param name="index1">é“å…·1çš„ç´¢å¼•</param>
+        /// <param name="index2">é“å…·2çš„ç´¢å¼•</param>
+        public void Exchange(Item.ItemType type, int index1, int index2)
         {
-            if (index1 < 0 || index1 >= count(type) || index2 < 0 || index2 >= count(type))
+            if (index1 < 0 || index1 >= this.Count(type) || index2 < 0 || index2 >= this.Count(type))
             {
-                LogManager.Instance.log("index1 or index2 Not Exist!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("index1 or index2 Not Exist!!!", LogManager.LogLevel.Error);
                 return;
             }
-            ArrayList itemList = itemDict[type];
+
+            ArrayList itemList = this.ItemDict[type];
             Item temp = (Item)itemList[index1];
             itemList[index1] = itemList[index2];
             itemList[index2] = temp;
         }
 
         /// <summary>
-        /// ¼õÉÙµÀ¾ßÊıÁ¿
+        /// å‡å°‘é“å…·æ•°é‡
         /// </summary>
-        /// <param name="index">µÀ¾ßË÷Òı</param>
-        public void reduceQuantity(ItemType type, Item item)
+        /// <param name="type">é“å…·ç±»å‹</param>
+        /// <param name="item">é“å…·</param>
+        public void ReduceQuantity(Item.ItemType type, Item item)
         {
             if (item == null)
             {
-                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            ((Item)itemDict[type][getIndex(type, (Weapon)item)]).quantity--;
-        }
-        #endregion
 
-        #region GET
+            ((Item)this.ItemDict[type][this.GetIndex(type, (Weapon)item)]).Quantity--;
+        }
+
         /// <summary>
-        /// »ñÈ¡µÀ¾ßĞÅÏ¢
+        /// è·å–é“å…·ä¿¡æ¯
         /// </summary>
-        /// <param name="index">µÀ¾ßµÄË÷Òı</param>
-        /// <returns>µÀ¾ßĞÅÏ¢</returns>
-        public Item get(ItemType type, int index)
+        /// <param name="type">é“å…·ç±»å‹</param>
+        /// <param name="index">é“å…·çš„ç´¢å¼•</param>
+        /// <returns>é“å…·ä¿¡æ¯</returns>
+        public Item Get(Item.ItemType type, int index)
         {
-            if (index < 0 || index >= count(type))
+            if (index < 0 || index >= this.Count(type))
             {
-                LogManager.Instance.log("index Not Exist!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("index Not Exist!!!", LogManager.LogLevel.Error);
                 return null;
             }
-            return (Item)(itemDict[type][index]);
+
+            return (Item)this.ItemDict[type][index];
         }
 
         /// <summary>
-        /// »ñÈ¡µÀ¾ßÊıÁ¿
+        /// è·å–é“å…·æ•°é‡
         /// </summary>
-        /// <returns>ÊıÁ¿</returns>
-        public int count(ItemType type)
+        /// <param name="type">é“å…·ç±»å‹</param>
+        /// <returns>æ•°é‡</returns>
+        public int Count(Item.ItemType type)
         {
-            if (!itemDict.ContainsKey(type)) return 0;
-            return itemDict[type].Count;
+            if (!this.ItemDict.ContainsKey(type))
+            {
+                return 0;
+            }
+
+            return this.ItemDict[type].Count;
         }
 
         /// <summary>
-        /// »ñÈ¡µÀ¾ßµÄË÷Òı(´íµÄ)
+        /// è·å–é“å…·çš„ç´¢å¼•(é”™çš„)
         /// </summary>
-        /// <param name="item">µÀ¾ß</param>
-        /// <returns></returns>
-        public int getIndex(ItemType type, Weapon item)
+        /// <param name="type">é“å…·ç±»å‹</param>
+        /// <param name="item">é“å…·</param>
+        /// <returns>ç´¢å¼•</returns>
+        public int GetIndex(Item.ItemType type, Weapon item)
         {
             if (item == null)
             {
-                LogManager.Instance.log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
                 return -1;
             }
-            ArrayList itemList = itemDict[type];
+
+            ArrayList itemList = this.ItemDict[type];
             for (int i = 0; i < itemList.Count; i++)
             {
-                if (((Item)itemList[i]).id == item.id)
+                if (((Item)itemList[i]).Id == item.Id)
                 {
                     return i;
                 }
             }
+
             return -1;
         }
 
         /// <summary>
-        /// ±³°üÖĞÊÇ·ñÓĞÎïÆ·
+        /// èƒŒåŒ…ä¸­æ˜¯å¦æœ‰ç‰©å“
         /// </summary>
-        public bool isNull(ItemType type)
+        /// <param name="type">é“å…·ç±»å‹</param>
+        /// <returns>æ˜¯å¦</returns>
+        public bool IsNull(Item.ItemType type)
         {
-            return count(type) == 0;
+            return this.Count(type) == 0;
         }
-        #endregion
 
-        public override void loadData() { }
-        public override void saveData() { }
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+        }
     }
 }

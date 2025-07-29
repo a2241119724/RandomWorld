@@ -1,17 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    /// <summary>
+    /// å»ºé€ é“å…·UI
+    /// </summary>
     public class BuildItemView : MVCItemView
     {
-        public override void setSelect(int i, Item item)
+        /// <inheritdoc/>
+        public override void SetSelect(int i, Item item)
         {
-            //// ·¢²¼ÊÂ¼ş,GetSiblingIndexË÷Òı(µÚ¼¸¸öº¢×Ó)
-            //selectAndShow.select(item);
-            BuildMenuPanel.Instance.Select.selectItemIndex = i;
-            BuildMenuPanel.Instance.Select.item = (BuildItem)item;
+            // // å‘å¸ƒäº‹ä»¶,GetSiblingIndexç´¢å¼•(ç¬¬å‡ ä¸ªå­©å­)
+            // selectAndShow.select(item);
+            BuildMenuPanel.Instance.Select.SelectItemIndex = i;
+            BuildMenuPanel.Instance.Select.Item = (BuildItem)item;
         }
     }
 }

@@ -1,156 +1,186 @@
-using Photon.Pun;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using Photon.Pun;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// èƒŒåŒ…èœå•é¢æ¿
+    /// </summary>
     public class BackpackMenuPanel : BasePanel<BackpackMenuPanel>
     {
-        public SelectItemData Select { set; get; }
-
         public BackpackMenuPanel()
         {
-            Name = "BackpackMenu";
-            Select = new SelectItemData();
-            setPanel();
-            Tool.GetComponentInChildren<Button>(panel, "Equip").onClick.AddListener(OnClick_Equip);
-            Tool.GetComponentInChildren<Button>(panel, "Abandon").onClick.AddListener(OnClick_Abandon);
-            Tool.GetComponentInChildren<Button>(panel, "BackGame").onClick.AddListener(OnClick_BackGame);
+            this.Name = "BackpackMenu";
+            this.Select = new SelectItemData();
+            this.OpenPanel();
+            Tool.GetComponentInChildren<Button>(this.Panel, "Equip").onClick.AddListener(this.OnClick_Equip);
+            Tool.GetComponentInChildren<Button>(this.Panel, "Abandon").onClick.AddListener(this.OnClick_Abandon);
+            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
         }
 
+        /// <summary>
+        /// é€‰ä¸­çš„ç‰©å“
+        /// </summary>
+        public SelectItemData Select { get; set; }
+
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            BackpackController.Instance.setBorderColor(System.Convert.ToInt32(BackpackNavigationView.Instance.CurItemType), "navigation");
+            BackpackController.Instance.SetBorderColor(System.Convert.ToInt32(BackpackNavigationView.Instance.CurItemType), "navigation");
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
-        #region ÊÂ¼ş
         /// <summary>
-        /// ·µ»ØÓÎÏ·
+        /// è¿”å›æ¸¸æˆ
         /// </summary>
         public void OnClick_BackGame()
         {
-            controller.close();
+            this.Controller.Close();
         }
 
         /// <summary>
-        /// ×°±¸°´Å¥
+        /// è£…å¤‡æŒ‰é’®
         /// </summary>
         private void OnClick_Equip()
         {
-            if (Select.item == null) return;
-            if (ItemDataManager.Instance.getById(Select.item.id).type == ItemType.Weapon)
+            if (this.Select.Item == null)
             {
-                if (PlayerManager.Instance.Select.weapon != null)
+                return;
+            }
+
+            if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == Item.ItemType.Weapon)
+            {
+                if (PlayerManager.Instance.Select.Weapon != null)
                 {
-                    // ½«ÕıÔÚ´©´÷µÄÎïÌå¼ÓÈë±³°ü
-                    BackpackController.Instance.addItem(PlayerManager.Instance.Select.weaponData);
-                    // Ïú»ÙÎäÆ÷
-                    PhotonNetwork.Destroy(PlayerManager.Instance.Select.weapon);
+                    // å°†æ­£åœ¨ç©¿æˆ´çš„ç‰©ä½“åŠ å…¥èƒŒåŒ…
+                    BackpackController.Instance.AddItem(PlayerManager.Instance.Select.WeaponData);
+
+                    // é”€æ¯æ­¦å™¨
+                    PhotonNetwork.Destroy(PlayerManager.Instance.Select.Weapon);
                 }
-                // ÉèÖÃµ±Ç°×°±¸id
-                PlayerManager.Instance.Select.id = Select.item.id;
-                // ÊµÀı»¯ÎäÆ÷
-                PlayerManager.Instance.Select.weapon = Tool.Instantiate(ResourcesManager.Instance.getPrefab(ItemDataManager.Instance.getById(Select.item.id).imageName), Vector3.zero,Quaternion.identity);
-                if (PlayerManager.Instance.Select.weapon == null)
+
+                // è®¾ç½®å½“å‰è£…å¤‡id
+                PlayerManager.Instance.Select.Id = this.Select.Item.Id;
+
+                // å®ä¾‹åŒ–æ­¦å™¨
+                PlayerManager.Instance.Select.Weapon = Tool.Instantiate(ResourceManager.Instance.GetPrefab(ItemDataManager.Instance.GetById(this.Select.Item.Id).ImageName), Vector3.zero, Quaternion.identity);
+                if (PlayerManager.Instance.Select.Weapon == null)
                 {
-                    LogManager.Instance.log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
-                PlayerManager.Instance.Select.weapon.name = ItemDataManager.Instance.getById(Select.item.id).imageName;
-                PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
-                PlayerManager.Instance.Select.weapon.GetComponent<WeaponObject>().Item = Select.item;
-                PlayerManager.Instance.Select.weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
-                GlobalInit.Instance.showTip("×°±¸³É¹¦");
-                // ´Ó±³°üÉ¾³ı¸ÃµÀ¾ß
-                PlayerManager.Instance.Select.weaponData = (Weapon)Select.item;
-                BackpackController.Instance.deleteItem(Select.selectItemIndex);
-                // ²»ÄÜ¶ÔÒ»¸öÎäÆ÷½øĞĞ¶à´Î×°±¸
-                Select.selectItemIndex = -1;
-                Select.item = null;
+
+                PlayerManager.Instance.Select.Weapon.name = ItemDataManager.Instance.GetById(this.Select.Item.Id).ImageName;
+                PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
+                PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().Item = this.Select.Item;
+                PlayerManager.Instance.Select.Weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
+                GlobalInit.Instance.ShowTip("è£…å¤‡æˆåŠŸ");
+
+                // ä»èƒŒåŒ…åˆ é™¤è¯¥é“å…·
+                PlayerManager.Instance.Select.WeaponData = (Weapon)this.Select.Item;
+                BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
+
+                // ä¸èƒ½å¯¹ä¸€ä¸ªæ­¦å™¨è¿›è¡Œå¤šæ¬¡è£…å¤‡
+                this.Select.SelectItemIndex = -1;
+                this.Select.Item = null;
             }
-            else if (ItemDataManager.Instance.getById(Select.item.id).type == ItemType.Consumable)
+            else if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == Item.ItemType.Consumable)
             {
-                // ÊµÀı»¯µÀ¾ßµ÷ÓÃÉÏÃæµÄ½Å±¾ÔÙÁ¢¼´Ïú»Ù
-                GameObject g = ResourcesManager.Instance.getPrefab("Select.selectItemData.itemName");
+                // å®ä¾‹åŒ–é“å…·è°ƒç”¨ä¸Šé¢çš„è„šæœ¬å†ç«‹å³é”€æ¯
+                GameObject g = ResourceManager.Instance.GetPrefab("Select.selectItemData.itemName");
                 if (g == null)
                 {
-                    LogManager.Instance.log("Consumable is null!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("Consumable is null!!!", LogManager.LogLevel.Error);
                     return;
                 }
+
                 g = Object.Instantiate(g);
                 if (g == null)
                 {
-                    LogManager.Instance.log("Consumable Instantiate Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("Consumable Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
-                g.GetComponent<ConsumableObject>().use();
+
+                g.GetComponent<ConsumableObject>().Use();
                 Object.Destroy(g);
-                // ¼õÉÙ»òÉ¾³ı
-                if (((BackpackItem)Select.item).quantity == 1)
+
+                // å‡å°‘æˆ–åˆ é™¤
+                if (((BackpackItem)this.Select.Item).Quantity == 1)
                 {
-                    // ´Ó±³°üÉ¾³ı¸ÃµÀ¾ß
-                    BackpackController.Instance.deleteItem(Select.selectItemIndex);
-                    Select.selectItemIndex = -1;
-                    Select.item = null;
+                    // ä»èƒŒåŒ…åˆ é™¤è¯¥é“å…·
+                    BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
+                    this.Select.SelectItemIndex = -1;
+                    this.Select.Item = null;
                 }
-                else {
-                    LogManager.Instance.log("ÊıÁ¿:" + ((BackpackItem)Select.item).quantity, LogManager.LogLevel.Info);
-                    // Êı¾İ--
-                    BackpackController.Instance.reduceQuantity(Select.item);
-                    // ½çÃæ--
-                    BackpackController.Instance.reduceQuantityUI(Select.item);
-                    BackpackController.Instance.setBorderColor(BackpackController.Instance.getIndex(Select.item));
-                    LogManager.Instance.log("ÊıÁ¿:" + ((BackpackItem)Select.item).quantity, LogManager.LogLevel.Info);
-                    // È«¾ÖÊı¾İ--
-                    BackpackItem item = (BackpackItem)Select.item;
-                    --item.quantity;
-                    Select.item = item;
+                else
+                {
+                    LogManager.Instance.Log("æ•°é‡:" + ((BackpackItem)this.Select.Item).Quantity, LogManager.LogLevel.Info);
+
+                    // æ•°æ®--
+                    BackpackController.Instance.ReduceQuantity(this.Select.Item);
+
+                    // ç•Œé¢--
+                    BackpackController.Instance.ReduceQuantityUI(this.Select.Item);
+                    BackpackController.Instance.SetBorderColor(BackpackController.Instance.GetIndex(this.Select.Item));
+                    LogManager.Instance.Log("æ•°é‡:" + ((BackpackItem)this.Select.Item).Quantity, LogManager.LogLevel.Info);
+
+                    // å…¨å±€æ•°æ®--
+                    BackpackItem item = (BackpackItem)this.Select.Item;
+                    --item.Quantity;
+                    this.Select.Item = item;
                 }
             }
-            else 
+            else
             {
-                GlobalInit.Instance.showTip("Î´ÊµÏÖ!!!");
+                GlobalInit.Instance.ShowTip("æœªå®ç°!!!");
             }
         }
 
         /// <summary>
-        ///  ¶ªÆúµÀ¾ß
+        ///  ä¸¢å¼ƒé“å…·
         /// </summary>
         private void OnClick_Abandon()
         {
-            if (Select.item == null) return;
-            // ´Ó±³°üÉ¾³ı¸ÃµÀ¾ß
-            BackpackController.Instance.deleteItem(Select.selectItemIndex);
-            Select.init();
+            if (this.Select.Item == null)
+            {
+                return;
+            }
+
+            // ä»èƒŒåŒ…åˆ é™¤è¯¥é“å…·
+            BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
+            this.Select.Init();
         }
-        #endregion
     }
 
     /// <summary>
-    /// ÔÙ±³°üÖĞÑ¡ÔñµÄµÀ¾ßÀàĞÍ
+    /// å†èƒŒåŒ…ä¸­é€‰æ‹©çš„é“å…·ç±»å‹
     /// </summary>
     public class SelectItemData
     {
         /// <summary>
-        /// Ñ¡ÖĞµÄµÀ¾ßË÷Òı
+        /// é€‰ä¸­çš„é“å…·ç´¢å¼•
         /// </summary>
-        public int selectItemIndex = -1;
+        public int SelectItemIndex = -1;
 
         /// <summary>
-        /// Ñ¡ÖĞµÄµÀ¾ßÊı¾İ
+        /// é€‰ä¸­çš„é“å…·æ•°æ®
         /// </summary>
-        public Item item = null;
+        public Item Item = null;
 
-        public void init()
+        /// <summary>
+        /// åˆå§‹åŒ–
+        /// </summary>
+        public void Init()
         {
-            selectItemIndex = -1;
-            item = null;
+            this.SelectItemIndex = -1;
+            this.Item = null;
         }
     }
 }

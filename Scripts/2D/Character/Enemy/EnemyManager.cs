@@ -1,14 +1,13 @@
-using Photon.Pun;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
-    public class EnemyManager : CharacterManager<EnemyManager,Enemy,EnemyCreator>
+    /// <summary>
+    /// æ•Œäººç®¡ç†å™¨.
+    /// </summary>
+    public class EnemyManager : CharacterManager<EnemyManager, Enemy, EnemyCreator>
     {
         /// <summary>
-        /// ×î´óµĞÈËÊıÁ¿
+        /// æœ€å¤§æ•Œäººæ•°é‡.
         /// </summary>
-        public int MaxEnemyCount { set; get; }
+        public int MaxEnemyCount { get; set; }
     }
 }

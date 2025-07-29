@@ -1,57 +1,64 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// 仓库菜单面板
+    /// </summary>
     public class InventoryMenuPanel : BasePanel<InventoryMenuPanel>
     {
-        private Transform position;
-        private Transform type;
-        private Transform id;
-        private Text content;
+        private readonly Transform position;
+        private readonly Transform type;
+        private readonly Transform id;
+        private readonly Text content;
 
         public InventoryMenuPanel()
         {
-            Name = "InventoryMenu";
-            setPanel();
-            position = Tool.GetComponentInChildren<Transform>(panel, "Position");
-            type = Tool.GetComponentInChildren<Transform>(panel, "Type");
-            id = Tool.GetComponentInChildren<Transform>(panel, "Id");
-            content = Tool.GetComponentInChildren<Text>(panel, "Content");
+            this.Name = "InventoryMenu";
+            this.OpenPanel();
+            this.position = Tool.GetComponentInChildren<Transform>(this.Panel, "Position");
+            this.type = Tool.GetComponentInChildren<Transform>(this.Panel, "Type");
+            this.id = Tool.GetComponentInChildren<Transform>(this.Panel, "Id");
+            this.content = Tool.GetComponentInChildren<Text>(this.Panel, "Content");
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            Dictionary<ItemType, Dictionary<Vector3Int, ResourceInfo>> typeToResource = InventoryManager.Instance.TypeToResource;
+            Dictionary<Item.ItemType, Dictionary<Vector3Int, ResourceInfo>> typeToResource = InventoryManager.Instance.TypeToResource;
             int count = 0;
-            foreach(KeyValuePair<ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in typeToResource)
+            foreach (KeyValuePair<Item.ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in typeToResource)
             {
-                if(count >= type.childCount)
+                if (count >= this.type.childCount)
                 {
-                    GameObject buttonItem = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("ButtonItem"));
-                    buttonItem.transform.SetParent(type);
+                    GameObject buttonItem = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("ButtonItem"));
+                    buttonItem.transform.SetParent(this.type);
                     buttonItem.transform.localScale = Vector3.one;
                 }
-                Button button = type.GetChild(count).GetComponent<Button>();
-                string _text = "";
+
+                Button button = this.type.GetChild(count).GetComponent<Button>();
+                string text1 = string.Empty;
                 foreach (KeyValuePair<Vector3Int, ResourceInfo> valuePair in pair.Value)
                 {
-                    _text += valuePair.Key.ToString() + ":" + valuePair.Value.ToString() + "\n";
+                    text1 += valuePair.Key.ToString() + ":" + valuePair.Value.ToString() + "\n";
                 }
+
                 button.onClick.AddListener(() =>
                 {
-                    content.text = _text;
+                    this.content.text = text1;
                 });
                 Text text = button.transform.GetComponentInChildren<Text>();
                 text.text = pair.Key.ToString();
-                // TODO ɾ��Gameobject
+
+                // TODO 删除Gameobject
                 count++;
             }
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();

@@ -1,46 +1,67 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using UnityEngine;
+
+    /// <summary>
+    /// 环境管理
+    /// </summary>
     public class EnvironmentManager : Singleton<EnvironmentManager>
     {
-        public float Temperature = -10.0f;
-        public float Humidity = -10.0f;
         /// <summary>
-        /// �������ֵ
+        /// 温度
+        /// </summary>
+        public float Temperature = -10.0f;
+
+        /// <summary>
+        /// 湿度
+        /// </summary>
+        public float Humidity = -10.0f;
+
+        /// <summary>
+        /// 最大灵气值
         /// </summary>
         public float MaxEnergy = 100.0f;
+
         /// <summary>
-        /// ��ǰ����ֵ
+        /// 当前灵气值
         /// </summary>
         public float CurEnergy = 100.0f;
 
         /// <summary>
-        /// �����ָ�����
+        /// 缓慢恢复灵气
         /// </summary>
-        public void updateEnergy()
+        public void UpdateEnergy()
         {
-            if(CurEnergy <= MaxEnergy)
+            if (this.CurEnergy <= this.MaxEnergy)
             {
-                CurEnergy += Time.deltaTime;
+                this.CurEnergy += Time.deltaTime;
             }
         }
 
+        /// <summary>
+        /// 获取当前环境信息
+        /// </summary>
+        /// <returns>信息</returns>
         public override string ToString()
         {
-            return $"�¶�:{Temperature}\n" +
-                $"ʪ��:{Humidity}\n";
+            return $"温度:{this.Temperature}\n" +
+                $"湿度:{this.Humidity}\n";
         }
 
-        public string ToString(Vector3Int posMap) {
-            RoomInfo roomInfo = RoomManager.Instance.getRoomByPos(posMap);
+        /// <summary>
+        /// 获取某位置的当前环境信息
+        /// </summary>
+        /// <param name="posMap">位置</param>
+        /// <returns>信息</returns>
+        public string ToString(Vector3Int posMap)
+        {
+            RoomInfo roomInfo = RoomManager.Instance.GetRoomByPos(posMap);
             if (roomInfo != null)
             {
                 return roomInfo.ToString();
             }
-            return ToString();
+
+            return this.ToString();
         }
     }
 }

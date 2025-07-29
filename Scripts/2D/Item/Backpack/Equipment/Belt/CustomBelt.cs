@@ -1,20 +1,23 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using UnityEngine.Tilemaps;
+
+    /// <summary>
+    /// 自定义腰带
+    /// </summary>
     [Serializable]
     public class CustomBelt : Belt
     {
         public CustomBelt()
         {
-            tile = (TileBase)ResourcesManager.Instance.getAsset("CustomBelt");
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomBelt");
         }
     }
 
+    /// <summary>
+    /// 自定义腰带对象
+    /// </summary>
     public class CustomBeltObject : BeltObject
     {
     }

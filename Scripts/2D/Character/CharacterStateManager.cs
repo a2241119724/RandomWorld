@@ -1,99 +1,101 @@
-using System;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
-    public abstract class CharacterStateManager<CS,CST,C> : ICharacterStateManager<CS, CST> where CS : ICharacterState where CST : Enum where C : Character
-    {
-        /// <summary>
-        /// µ±Ç°´¦ÓÚµÄ×´Ì¬Àà
-        /// </summary>
-        public CS CurrentState { get; private set; }
-        public CST CurrentStateType { get; private set; }
-        public C Character { set; get; }
-        /// <summary>
-        /// ´æ´¢ËùÓĞµÄ×´Ì¬ÀàĞÍÓë¶ÔÓ¦µÄ×´Ì¬Àà
-        /// </summary>
-        public Dictionary<CST, CS> States { get; private set; }
+    using System;
+    using System.Collections.Generic;
 
+    /// <summary>
+    /// è§’è‰²çŠ¶æ€ç®¡ç†
+    /// </summary>
+    /// <typeparam name="CS">ICharacterState</typeparam>
+    /// <typeparam name="CST">ICharacterStateType</typeparam>
+    /// <typeparam name="C">Character</typeparam>
+    public abstract class CharacterStateManager<CS, CST, C> : ICharacterStateManager<CS, CST>
+        where CS : ICharacterState
+        where CST : Enum
+        where C : Character
+    {
         public CharacterStateManager(C character)
         {
-            States = new Dictionary<CST, CS>();
+            this.States = new Dictionary<CST, CS>();
             this.Character = character;
         }
 
         /// <summary>
-        /// ¸øµĞÈËÀàÌí¼ÓËùÓĞµĞÈË×´Ì¬
+        /// å½“å‰å¤„äºçš„çŠ¶æ€ç±»
         /// </summary>
-        /// <param name="enemy">Ë÷ÒªÌí¼Óµ½µÄµĞÈËÀà</param>
-        public virtual void addStates(CST type, CS enemyState)
+        public CS CurrentState { get; private set; }
+
+        /// <summary>
+        /// å½“å‰çŠ¶æ€ç±»å‹
+        /// </summary>
+        public CST CurrentStateType { get; private set; }
+
+        /// <summary>
+        /// è§’è‰²
+        /// </summary>
+        public C Character { get; set; }
+
+        /// <summary>
+        /// å­˜å‚¨æ‰€æœ‰çš„çŠ¶æ€ç±»å‹ä¸å¯¹åº”çš„çŠ¶æ€ç±»
+        /// </summary>
+        public Dictionary<CST, CS> States { get; private set; }
+
+        /// <inheritdoc/>
+        public virtual void AddState(CST type, CS state)
         {
-            if (enemyState == null)
+            if (state == null)
             {
-                LogManager.Instance.log("enemyState is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("state is null!!!", LogManager.LogLevel.Error);
                 return;
             }
-            if (!States.ContainsKey(type))
+
+            if (!this.States.ContainsKey(type))
             {
-                States.Add(type, enemyState);
+                this.States.Add(type, state);
             }
         }
 
         /// <summary>
-        /// ×ª»»µĞÈËµ±Ç°×´Ì¬Îªtype
+        /// è½¬æ¢æ•Œäººå½“å‰çŠ¶æ€ä¸ºtype
         /// </summary>
-        /// <param name="type">ËùÒª×ª»»µÄ×´Ì¬</param>
-        public virtual void changeState(CST type)
+        /// <param name="type">æ‰€è¦è½¬æ¢çš„çŠ¶æ€</param>
+        public virtual void ChangeState(CST type)
         {
-            if (!States.ContainsKey(type))
+            if (!this.States.ContainsKey(type))
             {
-                LogManager.Instance.log("states Not Contain type!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("states Not Contain type!!!", LogManager.LogLevel.Error);
                 return;
             }
-            if (CurrentState != null)
+
+            if (this.CurrentState != null)
             {
-                CurrentState.OnExit();
+                this.CurrentState.OnExit();
             }
-            CurrentStateType = type;
-            CurrentState = States[type];
-            CurrentState.OnEnter();
+
+            this.CurrentStateType = type;
+            this.CurrentState = this.States[type];
+            this.CurrentState.OnEnter();
         }
     }
 
+    /// <summary>
+    /// è§’è‰²çŠ¶æ€ç®¡ç†
+    /// </summary>
+    /// <typeparam name="CS">CharacterState</typeparam>
+    /// <typeparam name="CST">CharacterStateType</typeparam>
     public interface ICharacterStateManager<CS, CST>
     {
-        void addStates(CST type, CS enemyState);
-        void changeState(CST type);
-    }
+        /// <summary>
+        /// æ·»åŠ çŠ¶æ€
+        /// </summary>
+        /// <param name="type">çŠ¶æ€ç±»å‹</param>
+        /// <param name="state">çŠ¶æ€</param>
+        void AddState(CST type, CS state);
 
-    /// <summary>
-    /// ÂşÓÎ×´Ì¬:¸ĞÖª(¿´µ½»òÌıµ½)µ½Íæ¼Ò½øÈë¸ú×Ù×´Ì¬
-    /// ËÑË÷×´Ì¬:Ò»¶ÎÊ±¼äÄÚÃ»ÓĞ¸ĞÖªµ½Íæ¼Ò½øÈëÂşÓÎ×´Ì¬,¸ĞÖªµ½Íæ¼Ò½øÈë¸ú×Ù×´Ì¬
-    /// ¸ú×Ù×´Ì¬:²»ÄÜ¸ĞÖªµ½Íæ¼Ò½øÈëËÑË÷×´Ì¬,½øÈë¹¥»÷·¶Î§½øÈë¹¥»÷×´Ì¬
-    /// ¹¥»÷×´Ì¬:ÄÜ¸ĞÖªµ½µ«´óÓÚ¹¥»÷·¶Î§½øÈë¸ú×Ù×´Ì¬,²»ÄÜ¸ĞÖªµ½Íæ¼Ò½øÈëËÑË÷×´Ì¬
-    /// ËÀÍö×´Ì¬:ËÀÍö²Ù×÷(ÑªÁ¿Îª0½øÈë)
-    /// ×¢:Èç¹û¹¥»÷·¶Î§´óÓÚ¸ĞÖª·¶Î§,Íæ¼ÒÔ¶Àë,Ö±½Ó»á½øÈëËÑË÷×´Ì¬
-    /// Èç¹û¹¥»÷·¶Î§Ğ¡ÓÚ¸ĞÖª·¶Î§,Íæ¼ÒÔ¶Àë,»áÏÈ½øÈë¸ú×Ù×´Ì¬,È»ºó½øÈëËÑË÷×´Ì¬
-    /// ÊÜµ½Íæ¼Ò¹¥»÷½øÈëËÑË÷×´Ì¬
-    /// </summary>
-    public enum EnemyStateType
-    {
-        Wander, // ÂşÓÎ×´Ì¬ 	
-        Seek, // ËÑË÷×´Ì¬ 	
-        Chase, // ×·×Ù×´Ì¬ 	
-        Attack, // ¹¥»÷×´Ì¬ 	
-        Dead, // ËÀÍö×´Ì¬ 
-    }
-
-    public enum WorkerStateType
-    {
-        Move,
-        Work,
-        Hungry,
-        Dead,
-        Seek,
-        Attack,
-        Escape
+        /// <summary>
+        /// æ”¹å˜çŠ¶æ€
+        /// </summary>
+        /// <param name="type">çŠ¶æ€ç±»å‹</param>
+        void ChangeState(CST type);
     }
 }

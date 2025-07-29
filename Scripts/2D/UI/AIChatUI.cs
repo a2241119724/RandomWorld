@@ -1,48 +1,57 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Text;
+    using System.Threading.Tasks;
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// AI聊天UI
+    /// </summary>
     public class AIChatUI : MonoBehaviour
     {
-        public static AIChatUI Instance { get; private set; }
-        public Text input;
-        public Transform content;
-        
+        private Text input;
+        private Transform content;
         private bool isWorking = false;
 
-        private void Awake()
-        {
-            Instance = this;
-            input = Tool.GetComponentInChildren<Text>(gameObject, "Message");
-            content = Tool.GetComponentInChildren<Transform>(gameObject, "Content");
-        }
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static AIChatUI Instance { get; private set; }
 
-        public void send()
+        /// <summary>
+        /// 发送聊天记录
+        /// </summary>
+        public void Send()
         {
-            if(isWorking) return;
-            isWorking = true;
-            _ = chat(input.text);
+            if (this.isWorking)
+            {
+                return;
+            }
+
+            this.isWorking = true;
+            _ = this.Chat(this.input.text);
         }
 
         /// <summary>
-        /// ʹ��ollama�Ի�
+        /// 使用ollama对话
         /// </summary>
-        /// <returns></returns>
-        public async Task chat(string question)
+        /// <param name="question">问题</param>
+        /// <returns>回答</returns>
+        public async Task Chat(string question)
         {
-            GameObject g = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("RightChatItem"), content,false);
+            GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("RightChatItem"), this.content, false);
             Tool.GetComponentInChildren<Text>(g, "Text").text = question;
             string url = "http://127.0.0.1:11434/api/chat";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            if (request == null) return;
+            if (request == null)
+            {
+                return;
+            }
+
             request.Method = "POST";
             request.ContentType = "application/json";
             request.Timeout = 1000;
@@ -56,64 +65,106 @@ namespace LAB2D
                 ]
             }";
             byte[] body = Encoding.UTF8.GetBytes(jsonData);
-            string text = "";
+            string text = string.Empty;
             try
             {
                 using (Stream stream = await request.GetRequestStreamAsync())
                 {
                     stream.Write(body, 0, body.Length);
                 }
-                HttpWebResponse response = (HttpWebResponse) await request.GetResponseAsync();
-                if (response == null) return;
+
+                HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync();
+                if (response == null)
+                {
+                    return;
+                }
+
                 using (Stream stream = response.GetResponseStream())
                 {
-                    using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                    using StreamReader reader = new (stream, Encoding.UTF8);
+                    ChatData chatData;
+                    bool isStart = false;
+                    do
                     {
-                        ChatData chatData;
-                        bool isStart = false;
-                        do
+                        chatData = JsonUtility.FromJson<ChatData>(await reader.ReadLineAsync());
+                        if (isStart && !chatData.message.content.Equals("\n\n"))
                         {
-                            chatData = JsonUtility.FromJson<ChatData>(await reader.ReadLineAsync());
-                            if (isStart && !chatData.message.content.Equals("\n\n"))
-                            {
-                                text += chatData.message.content;
-                            }
-                            if (chatData.message.content.Equals("</think>"))
-                            {
-                                isStart = true;
-                            }
-                        } while (!chatData.done && !reader.EndOfStream);
+                            text += chatData.message.content;
+                        }
+
+                        if (chatData.message.content.Equals("</think>"))
+                        {
+                            isStart = true;
+                        }
                     }
+                    while (!chatData.done && !reader.EndOfStream);
                 }
             }
             catch (Exception e)
             {
-                LogManager.Instance.log("AIChatUI����ʧ��: " + e.Message, LogManager.LogLevel.Error);
-                text = "����ʧ��";
+                LogManager.Instance.Log("AIChatUI请求失败: " + e.Message, LogManager.LogLevel.Error);
+                text = "请求失败";
             }
             finally
             {
-                g = GameObject.Instantiate(ResourcesManager.Instance.getPrefab("LeftChatItem"), content, false);
-                g.transform.SetParent(content);
+                g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("LeftChatItem"), this.content, false);
+                g.transform.SetParent(this.content);
                 Tool.GetComponentInChildren<Text>(g, "Text").text = text;
-                isWorking = false;
+                this.isWorking = false;
             }
         }
 
-        [Serializable]
-        class ChatData
+        private void Awake()
         {
+            Instance = this;
+            this.input = Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
+            this.content = Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
+        }
+
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+        /// <summary>
+        /// 聊天数据
+        /// </summary>
+        [Serializable]
+        public class ChatData
+        {
+            /// <summary>
+            /// 模型
+            /// </summary>
             public string model;
+
+            /// <summary>
+            /// 创建
+            /// </summary>
             public string created_at;
+
+            /// <summary>
+            /// 信息
+            /// </summary>
             public Message message;
+
+            /// <summary>
+            /// 结束
+            /// </summary>
             public bool done;
 
+            /// <summary>
+            /// 消息
+            /// </summary>
             [Serializable]
             public class Message
             {
+                /// <summary>
+                /// 角色
+                /// </summary>
                 public string role;
+
+                /// <summary>
+                /// 内容
+                /// </summary>
                 public string content;
             }
         }
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
     }
 }

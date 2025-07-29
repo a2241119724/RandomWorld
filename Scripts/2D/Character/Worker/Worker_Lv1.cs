@@ -1,24 +1,25 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    /// <summary>
+    /// Worker
+    /// </summary>
     public class Worker_Lv1 : Worker
     {
+        /// <inheritdoc/>
         protected override void Awake()
         {
             base.Awake();
-            // Ìí¼Ó×´Ì¬
-            Manager.addStates(WorkerStateType.Move, new WorkerMoveState(this));
-            Manager.addStates(WorkerStateType.Work, new WorkerWorkState(this));
-            Manager.addStates(WorkerStateType.Seek, new WorkerSeekState(this));
-            Manager.addStates(WorkerStateType.Hungry, new WorkerHungryState(this));
-            Manager.addStates(WorkerStateType.Attack, new WorkerAttackState(this));
-            Manager.addStates(WorkerStateType.Escape, new WorkerEscapeState(this));
-            // ³õÊ¼»¯×´Ì¬
-            Manager.changeState(WorkerStateType.Seek);
+
+            // æ·»åŠ çŠ¶æ€
+            this.Manager.AddState(WorkerState.WorkerStateTypeEnum.Move, new WorkerMoveState(this));
+            this.Manager.AddState(WorkerState.WorkerStateTypeEnum.Work, new WorkerWorkState(this));
+            this.Manager.AddState(WorkerState.WorkerStateTypeEnum.Seek, new WorkerSeekState(this));
+            this.Manager.AddState(WorkerState.WorkerStateTypeEnum.Eat, new WorkerHungryState(this));
+            this.Manager.AddState(WorkerState.WorkerStateTypeEnum.Attack, new WorkerAttackState(this));
+            this.Manager.AddState(WorkerState.WorkerStateTypeEnum.Escape, new WorkerEscapeState(this));
+
+            // åˆå§‹åŒ–çŠ¶æ€
+            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
         }
     }
 }
-

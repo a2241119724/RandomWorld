@@ -1,62 +1,72 @@
-using Photon.Pun;
-using System;
-using System.Collections;
-using UnityEngine;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
-    [Serializable]
-    public class CustomSword : Sword { 
-    }
+    using System;
+    using System.Collections;
+    using UnityEngine;
 
+    /// <summary>
+    /// è‡ªå®šä¹‰å‰‘å¯¹è±¡
+    /// </summary>
     public class CustomSwordObject : SwordObject
     {
+        /// <inheritdoc/>
         protected override void Awake()
         {
             base.Awake();
-            name = "CustomSword";
-            attackInterval = 0.2f;
+            this.name = "CustomSword";
+            this.attackInterval = 0.2f;
         }
 
-        protected override void _attack()
+        /// <inheritdoc/>
+        protected override void Attack1()
         {
-            // Ê¹µÃ´¥·¢Æ÷ÖØµşÊ½ÔÙ´Î´¥·¢OnTriggerEnter2D
-            GetComponent<Collider2D>().enabled = false;
-            GetComponent<Collider2D>().enabled = true;
-            StartCoroutine(Rotate());
+            // ä½¿å¾—è§¦å‘å™¨é‡å å¼å†æ¬¡è§¦å‘OnTriggerEnter2D
+            this.GetComponent<Collider2D>().enabled = false;
+            this.GetComponent<Collider2D>().enabled = true;
+            this.StartCoroutine(this.Rotate());
         }
 
-        private IEnumerator Rotate(){
-            Quaternion q = transform.rotation;
+        private IEnumerator Rotate()
+        {
+            Quaternion q = this.transform.rotation;
             for (int i = 0; i < 20; i++)
             {
-                transform.rotation = Quaternion.Lerp(q * Quaternion.Euler(0, 0, 60), q * Quaternion.Euler(0, 0, -60), 0.05f * i); // (ÆğÊ¼·½Ïò£¬ÖÕÖ¹·½Ïò£¬Ğı×ªËÙ¶È)·ÇÔÈËÙ
+                this.transform.rotation = Quaternion.Lerp(q * Quaternion.Euler(0, 0, 60), q * Quaternion.Euler(0, 0, -60), 0.05f * i); // (èµ·å§‹æ–¹å‘ï¼Œç»ˆæ­¢æ–¹å‘ï¼Œæ—‹è½¬é€Ÿåº¦)éåŒ€é€Ÿ
                 yield return null;
             }
-            // »Øµ½Ô­·½Ïò
-            transform.rotation = q;
+
+            // å›åˆ°åŸæ–¹å‘
+            this.transform.rotation = q;
         }
 
-        //protected override void OnTriggerEnter2D(Collider2D collision)
-        //{
-        //    base.OnTriggerEnter2D(collision);
-        //    if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
-        //    if (collision.transform.CompareTag("Enemy"))
-        //    {
-        //        // ·ÀÖ¹¶àÈËÁª»úÊ±,Í¬Ê±µ÷ÓÃ
-        //        if (PlayerManager.Instance.Select.weaponData == null) return;
-        //        collision.GetComponent<Enemy>().setPlayer(player.GetComponent<Player>());
-        //        //collision.GetComponent<PhotonView>().RPC("reduceHp", RpcTarget.All, ((WeaponData)PlayerManager.Instance.Select.weaponData).getDamage());
-        //        collision.transform.GetComponent<Enemy>().reduceHp((PlayerManager.Instance.Select.weaponData).getDamage());
-        //        GameObject go = Instantiate(blood, collision.transform.position, Quaternion.identity);
-        //        if (go == null)
-        //        {
-        //LogManager.Instance.log("blood Instantiate Error!!!", LogManager.LogLevel.Error);
-        //            return;
-        //        }
-        //        go.name = blood.name;
-        //        go.transform.SetParent(collision.transform);
-        //    }
-        //}
+        // protected override void OnTriggerEnter2D(Collider2D collision)
+        // {
+        //     base.OnTriggerEnter2D(collision);
+        //     if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
+        //     if (collision.transform.CompareTag("Enemy"))
+        //     {
+        //         // é˜²æ­¢å¤šäººè”æœºæ—¶,åŒæ—¶è°ƒç”¨
+        //         if (PlayerManager.Instance.Select.weaponData == null) return;
+        //         collision.GetComponent<Enemy>().setPlayer(player.GetComponent<Player>());
+        //         //collision.GetComponent<PhotonView>().RPC("reduceHp", RpcTarget.All, ((WeaponData)PlayerManager.Instance.Select.weaponData).getDamage());
+        //         collision.transform.GetComponent<Enemy>().reduceHp((PlayerManager.Instance.Select.weaponData).getDamage());
+        //         GameObject go = Instantiate(blood, collision.transform.position, Quaternion.identity);
+        //         if (go == null)
+        //         {
+        // LogManager.Instance.log("blood Instantiate Error!!!", LogManager.LogLevel.Error);
+        //             return;
+        //         }
+        //         go.name = blood.name;
+        //         go.transform.SetParent(collision.transform);
+        //     }
+        // }
+    }
+
+    /// <summary>
+    /// è‡ªå®šä¹‰å‰‘
+    /// </summary>
+    [Serializable]
+    public class CustomSword : Sword
+    {
     }
 }

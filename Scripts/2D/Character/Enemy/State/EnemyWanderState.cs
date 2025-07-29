@@ -1,78 +1,88 @@
-﻿using Photon.Pun;
-using UnityEngine;
-using static UnityEngine.RuleTile.TilingRuleOutput;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
-    public class EnemyWanderState : CharacterState<Enemy>
-    {
-        private float _recordTime = 9999.0f; // 记录时间
-        private float rotationAngle; // 转向角度
-        //private static readonly LayerMask layerMask = LayerMask.GetMask("Tile", "ResourceMap"); // 射线检测层级
+    using UnityEngine;
 
-        public EnemyWanderState(Enemy character) : base(character)
+    /// <summary>
+    /// 敌人漫游状态.
+    /// </summary>
+    public class EnemyWanderState : EnemyState
+    {
+        private float recordTime = 9999.0f; // 记录时间
+        private float rotationAngle; // 转向角度
+
+        // private static readonly LayerMask layerMask = LayerMask.GetMask("Tile", "ResourceMap"); // 射线检测层级
+        public EnemyWanderState(Enemy character)
+            : base(character)
         {
         }
 
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            Character.Target = null;
+            this.Character.Target = null;
+
             // 为了再一次进入会直接转动方向
-            _recordTime = 9999.0f;
-            //LogManager.Instance.log("WanderState", LogManager.LogLevel.Info);
+            this.recordTime = 9999.0f;
+
+            // LogManager.Instance.log("WanderState", LogManager.LogLevel.Info);
         }
 
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
         }
 
+        /// <inheritdoc/>
         public override void OnUpdate()
         {
             // 感知到周围有活着的玩家，进入追踪状态
-            int count = PlayerManager.Instance.count();
+            int count = PlayerManager.Instance.Count();
             for (int i = 0; i < count; i++)
             {
-                if (Character.SenseNearby(PlayerManager.Instance.get(i).transform))
+                if (this.Character.SenseNearby(PlayerManager.Instance.Get(i).transform))
                 {
-                    Character.Manager.changeState(EnemyStateType.Chase);
-                    Character.Target = PlayerManager.Instance.get(i);
+                    this.Character.Manager.ChangeState(EnemyStateTypeEnum.Chase);
+                    this.Character.Target = PlayerManager.Instance.Get(i);
                     return;
                 }
             }
-            // 感知到周围有活着的工作者，进入追踪状态
-            count = WorkerManager.Instance.count();
+
+            // 感知到周围有活着的Worker，进入追踪状态
+            count = WorkerManager.Instance.Count();
             for (int i = 0; i < count; i++)
             {
-                if (Character.SenseNearby(WorkerManager.Instance.get(i).transform))
+                if (this.Character.SenseNearby(WorkerManager.Instance.Get(i).transform))
                 {
-                    Character.Manager.changeState(EnemyStateType.Chase);
-                    Character.Target = WorkerManager.Instance.get(i);
+                    this.Character.Manager.ChangeState(EnemyStateTypeEnum.Chase);
+                    this.Character.Target = WorkerManager.Instance.Get(i);
                     return;
                 }
             }
-            //RaycastHit2D raycastHit2D = Physics2D.Raycast(Character.transform.position, 
-            //    Character.EnemyHead.position - Character.transform.position, 1, layerMask); // (源,方向,距离,层级)
+
+            // RaycastHit2D raycastHit2D = Physics2D.Raycast(Character.transform.position,
+            //     Character.EnemyHead.position - Character.transform.position, 1, layerMask); // (源,方向,距离,层级)
             // 漫游
-            _recordTime += Time.deltaTime;
-            if (_recordTime >= Character.rotateInterval)
+            this.recordTime += Time.deltaTime;
+            if (this.recordTime >= this.Character.RotateInterval)
             {
-                rotationAngle = Random.Range(0.0f, 360.0f);
-                Character.moveSpeed = Random.Range(3.0f, 4.0f);
-                _recordTime = 0.0f;
+                this.rotationAngle = Random.Range(0.0f, 360.0f);
+                this.Character.MoveSpeed = Random.Range(3.0f, 4.0f);
+                this.recordTime = 0.0f;
             }
             //// 将Vector3转换为Quaternion类型
-            //character.transform.rotation = Quaternion.Lerp(character.transform.rotation, Quaternion.Euler(0, 0, rotationAngle), Time.deltaTime * character.rotationSpeed); // (起始方向，终止方向，旋转速度)非匀速
-            //character.GetComponent<PhotonView>().RPC("RotateTo", RpcTarget.All, new Vector3(Mathf.Sin(rotationAngle), Mathf.Cos(rotationAngle), 0));
-            Vector3 direction = new Vector3(Mathf.Sin(rotationAngle), Mathf.Cos(rotationAngle), 0);
-            Character.rotateTo(direction);
-            //character.GetComponent<PhotonView>().RPC("MoveToForward", RpcTarget.All);
+            // character.transform.rotation = Quaternion.Lerp(character.transform.rotation, Quaternion.Euler(0, 0, rotationAngle), Time.deltaTime * character.rotationSpeed); // (起始方向，终止方向，旋转速度)非匀速
+            // character.GetComponent<PhotonView>().RPC("RotateTo", RpcTarget.All, new Vector3(Mathf.Sin(rotationAngle), Mathf.Cos(rotationAngle), 0));
+            Vector3 direction = new (Mathf.Sin(this.rotationAngle), Mathf.Cos(this.rotationAngle), 0);
+            this.Character.RotateTo(direction);
+
+            // character.GetComponent<PhotonView>().RPC("MoveToForward", RpcTarget.All);
             // 先转再移动
-            float angle = Quaternion.Angle(Character.transform.rotation, Quaternion.FromToRotation(Vector3.up, direction));
+            float angle = Quaternion.Angle(this.Character.transform.rotation, Quaternion.FromToRotation(Vector3.up, direction));
             if (angle < 1.0f)
             {
-                Character.moveToForward();
+                this.Character.MoveToForward();
             }
         }
     }

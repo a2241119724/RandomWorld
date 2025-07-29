@@ -1,15 +1,20 @@
-using UnityEngine;
-
-public class BloodUI : MonoBehaviour
+ï»¿namespace LAB2D
 {
-    //private GameObject parent; // ¸úËæÎïÌå
+    using UnityEngine;
 
-    void Start()
+    /// <summary>
+    /// æº…è¡€ UI
+    /// </summary>
+    public class BloodUI : MonoBehaviour
     {
-        // ÌØĞ§½áÊøºóÏú»Ù
-        Destroy(gameObject, GetComponent<ParticleSystem>().main.startLifetime.constant);
-    }
+        // private GameObject parent; // è·Ÿéšç‰©ä½“
+        private void Start()
+        {
+            // ç‰¹æ•ˆç»“æŸåé”€æ¯
+            Destroy(this.gameObject, this.GetComponent<ParticleSystem>().main.startLifetime.constant);
+        }
 
-    //public void setParent(GameObject parent) {
-    //}
+        // public void setParent(GameObject parent) {
+        // }
+    }
 }

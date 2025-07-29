@@ -1,79 +1,94 @@
-using UnityEngine;
-using UnityEngine.UI;
-
-namespace LAB2D
+ï»¿namespace LAB2D
 {
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// æç¤º UI
+    /// </summary>
     public class TipUI : MonoBehaviour
     {
-        private float colorAlpha = 1; // Í¸Ã÷¶È
-        private RoundCorner roundCorner; // ¾¯¸æĞÅÏ¢±³¾°
-        private Text content; // ¾¯¸æĞÅÏ¢ÎÄ±¾
-        private float _recordTime = 0.0f; // ¼ÇÂ¼Ê±¼ä
+        private float colorAlpha = 1; // é€æ˜åº¦
+        private RoundCorner roundCorner; // è­¦å‘Šä¿¡æ¯èƒŒæ™¯
+        private Text content; // è­¦å‘Šä¿¡æ¯æ–‡æœ¬
+        private float recordTime = 0.0f; // è®°å½•æ—¶é—´
 
-        void Awake()
+        /// <summary>
+        /// è®¾ç½®æç¤ºä¿¡æ¯
+        /// </summary>
+        /// <param name="text">ä¿¡æ¯</param>
+        public void SetText(string text)
         {
-            roundCorner = GetComponent<RoundCorner>();
-            if (roundCorner == null)
+            this.content.text = text;
+        }
+
+        private void Awake()
+        {
+            this.roundCorner = this.GetComponent<RoundCorner>();
+            if (this.roundCorner == null)
             {
-                LogManager.Instance.log("image Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("image Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
-            content = transform.Find("Content").GetComponent<Text>();
-            if (content == null)
+
+            this.content = this.transform.Find("Content").GetComponent<Text>();
+            if (this.content == null)
             {
-                LogManager.Instance.log("content Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
-            transform.localScale = Vector3.zero;
+
+            this.transform.localScale = Vector3.zero;
         }
 
         /// <summary>
-        /// Color32Í¸Ã÷¶È0~1
-        /// ColorÍ¸Ã÷¶È0~255
-        /// ÓÉÓÚ¿ÉÄÜÊÜµ½Time.timeScaleµÄÓ°Ïì
-        /// ²»ÄÜÊ¹ÓÃFixedUpdate,Time.deltaTime...
+        /// Color32é€æ˜åº¦0~1
+        /// Coloré€æ˜åº¦0~255
+        /// ç”±äºå¯èƒ½å—åˆ°Time.timeScaleçš„å½±å“
+        /// ä¸èƒ½ä½¿ç”¨FixedUpdate,Time.deltaTime...
         /// </summary>
-        void Update()
+        private void Update()
         {
-            _recordTime += Time.deltaTime;
-            if (_recordTime >= 2.0f) // Á½Ãëºóµ­³ö
+            this.recordTime += Time.deltaTime;
+
+            // ä¸¤ç§’åæ·¡å‡º
+            if (this.recordTime >= 2.0f)
             {
-                fadeOut();
+                this.FadeOut();
             }
-            else {
-                // ·Å´ó
-                transform.localScale = Quaternion.Lerp(Quaternion.Euler(transform.localScale), Quaternion.Euler(1, 1, 1), 0.2f).eulerAngles;
+            else
+            {
+                // æ”¾å¤§
+                this.transform.localScale = Quaternion.Lerp(Quaternion.Euler(this.transform.localScale), Quaternion.Euler(1, 1, 1), 0.2f).eulerAngles;
             }
         }
 
         /// <summary>
-        /// µ­³ö(Í¸Ã÷¶È¼õĞ¡)
+        /// æ·¡å‡º(é€æ˜åº¦å‡å°)
         /// </summary>
-        private void fadeOut() {
-            Color color = roundCorner.color;
-            roundCorner.color = new Color(color.r, color.g, color.b, colorAlpha);
-            if (roundCorner.color == null)
+        private void FadeOut()
+        {
+            Color color = this.roundCorner.color;
+            this.roundCorner.color = new Color(color.r, color.g, color.b, this.colorAlpha);
+            if (this.roundCorner.color == null)
             {
-                LogManager.Instance.log("image.color assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("image.color assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
-            color = content.color;
-            content.color = new Color(color.r, color.g, color.b, colorAlpha);
-            if (content.color == null)
+
+            color = this.content.color;
+            this.content.color = new Color(color.r, color.g, color.b, this.colorAlpha);
+            if (this.content.color == null)
             {
-                LogManager.Instance.log("content.color assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content.color assign resource Error!!!", LogManager.LogLevel.Error);
                 return;
             }
-            colorAlpha -= 0.02f;
-            if (colorAlpha <= 0)
+
+            this.colorAlpha -= 0.02f;
+            if (this.colorAlpha <= 0)
             {
-                Destroy(gameObject);
+                Destroy(this.gameObject);
             }
-        }
-
-
-        public void setText(string text) {
-            content.text = text;
         }
     }
 }
