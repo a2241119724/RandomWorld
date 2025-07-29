@@ -196,13 +196,16 @@
             /// </summary>
             public int ColliderCount;
 
+            private const double Interval = 3e5;
+            private const int Threshold = 100;
+
             /// <summary>
             /// 是否有bug
             /// </summary>
             /// <param name="name">出bug的角色名称</param>
             /// <param name="threshold">检测bug的碰撞阈值</param>
             /// <returns>是否有bug.</returns>
-            public bool IsBug(string name, int threshold = 50)
+            public bool IsBug(string name, int threshold = Threshold)
             {
                 bool bug = this.ColliderCount > threshold;
                 if (bug)
@@ -219,7 +222,7 @@
             /// <param name="time">当前时间</param>
             public void AddColliderCount(long time)
             {
-                if (time - this.LastTime < 3e5)
+                if (time - this.LastTime < Interval)
                 {
                     this.ColliderCount++;
                 }
