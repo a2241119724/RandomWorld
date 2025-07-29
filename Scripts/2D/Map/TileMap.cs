@@ -104,6 +104,7 @@
         /// <summary>
         /// 生成可用的位置，返回数组下标
         /// 可以选择以哪个点为中心，不选择则为所有
+        /// 包括TileMap,ResourceMap,BuildMap可达位置
         /// </summary>
         /// <param name="centerMap">中心位置</param>
         /// <returns>位置</returns>
@@ -112,18 +113,20 @@
             int x, y, startX = 0, endX = Height, startY = 0, endY = Width;
             if (centerMap != default)
             {
-                startX = (int)Mathf.Max(centerMap.x - 50, 0);
-                startY = (int)Mathf.Max(centerMap.y - 50, 0);
-                endX = (int)Mathf.Min(centerMap.x + 50, Height);
-                endY = (int)Mathf.Min(centerMap.y + 50, Width);
+                startX = (int)Mathf.Max(centerMap.x - 20, 0);
+                startY = (int)Mathf.Max(centerMap.y - 20, 0);
+                endX = (int)Mathf.Min(centerMap.x + 20, Height);
+                endY = (int)Mathf.Min(centerMap.y + 20, Width);
             }
 
+            Vector3Int posMap;
             do
             {
                 x = UnityEngine.Random.Range(startX, endX);
                 y = UnityEngine.Random.Range(startY, endY);
+                posMap = new Vector3Int(x, y, 0);
             }
-            while (!this.IsCanReach(new Vector3Int(x, y, 0)));
+            while (!(this.IsCanReach(posMap) && ResourceMap.Instance.IsCanReach(posMap) && BuildMap.Instance.IsCanReach(posMap)));
             return new Vector3Int(x, y, 0);
         }
 

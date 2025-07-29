@@ -7,8 +7,8 @@
     /// </summary>
     public class WorkerSeekState : WorkerState
     {
-        private Vector3Int targetMap;
         private bool isOne = true;
+        private Vector3Int targetMap;
 
         public WorkerSeekState(Worker character)
             : base(character)
@@ -80,20 +80,26 @@
             base.OnUpdate();
             this.Character.WorkerStateText.text = this.preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(this.Character.SeekProgress * 100)}%</color>\n" +
                 $"Target: {this.targetMap.x},{this.targetMap.y}";
-            if (Worker.SeekLock.GetLock(this.Character))
+
+            // if (Worker.SeekLock.GetLock(this.Character))
+            // {
+            //     // 使用协程时,只能有一个在寻路(加锁),如果被锁了且锁的拥有者不是自己则阻塞,可重入
+            //     if (this.isOne)
+            //     {
+            //         this.isOne = false;
+            //         this.Character.ToTarget();
+            //     }
+            // }
+            // 只能有一个在寻路
+            if (this.isOne)
             {
-                // 只能有一个在寻路(加锁),如果被锁了且锁的拥有者不是自己则阻塞，可重入
-                if (this.isOne)
-                {
-                    this.isOne = false;
-                    this.Character.ToTarget();
-                }
+                this.isOne = false;
+                this.Character.ToTarget();
             }
 
             if (!this.Character.IsSeeking)
             {
-                Worker.SeekLock.ReleaseLock(this.Character);
-
+                // Worker.SeekLock.ReleaseLock(this.Character);
                 // 寻路结束
                 this.Character.Manager.ChangeState(WorkerStateTypeEnum.Move);
             }
