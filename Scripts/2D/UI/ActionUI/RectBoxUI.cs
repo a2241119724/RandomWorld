@@ -2,6 +2,7 @@
 {
     using System.Collections.Generic;
     using UnityEngine;
+    using UnityEngine.EventSystems;
     using UnityEngine.Tilemaps;
     using UnityEngine.UI;
 
@@ -94,6 +95,16 @@
                 {
                     this.options.gameObject.SetActive(false);
                 }
+                else if (Input.GetMouseButtonDown(0))
+                {
+                    List<RaycastResult> results = Tool.GetUIByMousePos(ResourceConstant.ACTION_UI_TAG);
+
+                    // 若没有点击到options UI, 则关闭options UI
+                    if (results.Count == 0)
+                    {
+                        this.options.gameObject.SetActive(false);
+                    }
+                }
 
                 return;
             }
@@ -148,7 +159,7 @@
                 this.selects[key].Clear();
             }
 
-            SelectManagerPool.Instance.FreeAll();
+            SelectManagerPool.Instance.ReleaseAll();
             Vector3Int start = TileMap.Instance.WorldPosToMapPos(this.transform.position);
             Vector3Int end = TileMap.Instance.WorldPosToMapPos(new Vector3(
                 this.transform.position.x + ((RectTransform)this.transform).sizeDelta.x,

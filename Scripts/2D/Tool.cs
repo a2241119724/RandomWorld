@@ -407,13 +407,14 @@
         /// <summary>
         /// 点击射线检测UI对象.
         /// </summary>
-        /// <returns>UI对象.</returns>
-        public static List<RaycastResult> GetUIByMousePos()
+        /// <param name="tag">在哪个canvas下发射射线</param>
+        /// <returns>UI对象</returns>
+        public static List<RaycastResult> GetUIByMousePos(string tag = ResourceConstant.UI_TAG)
         {
             PointerEventData pointerEventData = new (EventSystem.current);
             pointerEventData.position = Input.mousePosition;
             List<RaycastResult> results = new ();
-            GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).GetComponent<GraphicRaycaster>().Raycast(pointerEventData, results);
+            GameObject.FindGameObjectWithTag(tag).GetComponent<GraphicRaycaster>().Raycast(pointerEventData, results);
             return results;
         }
 

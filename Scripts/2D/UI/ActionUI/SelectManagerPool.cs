@@ -23,9 +23,9 @@
         /// 释放所有的Select,并获取一个Select
         /// </summary>
         /// <returns>Select</returns>
-        public SelectUI FreeAllAndGetOne()
+        public SelectUI ReleaseAllAndGetOne()
         {
-            this.FreeAll();
+            this.ReleaseAll();
             if (this.Selects.Count == 0)
             {
                 return this.CreateFreeSelect(default);
@@ -76,7 +76,7 @@
         /// <summary>
         /// 将所有SelectUI置为空闲
         /// </summary>
-        public void FreeAll()
+        public void ReleaseAll()
         {
             foreach (SelectUI selectUI in this.Selects.Keys.ToList())
             {
