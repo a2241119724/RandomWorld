@@ -162,7 +162,7 @@
                 }
                 else
                 {
-                    selectUI = SelectManagerPool.Instance.FreeAllAndGetOne();
+                    selectUI = SelectManagerPool.Instance.ReleaseAllAndGetOne();
                 }
 
                 do

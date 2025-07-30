@@ -158,13 +158,14 @@
             this.path.Clear();
             this.UpdateLine();
             this.SeekProgress = 0.0f;
-            for (int i = 0; i < TileMap.Height; i++)
-            {
-                for (int j = 0; j < TileMap.Width; j++)
-                {
-                    this.mapSpend[i, j].Init();
-                }
-            }
+
+            // for (int i = 0; i < TileMap.Height; i++)
+            // {
+            //     for (int j = 0; j < TileMap.Width; j++)
+            //     {
+            //         this.mapSpend[i, j].Init();
+            //     }
+            // }
         }
 
         /// <summary>
@@ -831,6 +832,7 @@
         /// </summary>
         private void ToTargetAStarThread(Spend start, Spend end)
         {
+            start.Previous = null;
             this.isStopThread = false;
             List<Spend> path = new ();
             float totalDistance = Mathf.Sqrt(Mathf.Pow(start.PosMap.x - end.PosMap.x, 2)

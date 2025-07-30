@@ -217,6 +217,7 @@
                 // miniCamera.Target = transform.position;
                 this.mainCamera.DirectToPosition(this.transform.position);
                 this.miniCamera.DirectToPosition(this.transform.position);
+                GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>().Character = this;
                 if (GameInfoUI.Instance != null)
                 {
                     GameInfoUI.Instance.SetPosition(this.transform.position);

@@ -5,7 +5,7 @@
     /// <summary>
     /// 排除优化字体标志
     /// </summary>
-    public class ExcludeOptimizeFont : MonoBehaviour
+    public class ExcludeEditor : MonoBehaviour
     {
     }
 }

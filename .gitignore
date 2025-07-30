@@ -1,7 +1,6 @@
 /Animation
 /RenderTexture
 /Resources
-/Scenes
 /StreamingAssets
 /URP
 /Scripts/Reference
@@ -11,3 +10,4 @@
 [Ss]tyle[Cc]op.*
 *.meta
 *.mat
+*.lighting
