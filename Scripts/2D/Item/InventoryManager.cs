@@ -513,7 +513,7 @@
             Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(this.posToResource[pos].Id);
             if (itemType == Item.ItemType.Weapon || itemType == Item.ItemType.Equipment)
             {
-                WearTaskUI.Instance.ShowWearTask(pos);
+                AddWearTaskUI.Instance.ShowWearTask(pos);
             }
         }
 

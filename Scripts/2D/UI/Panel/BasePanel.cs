@@ -33,7 +33,7 @@
         /// 打开面板
         /// </summary>
         /// <param name="root">面板根</param>
-        public void OpenPanel(string root = ResourceConstant.UI_TAG)
+        public void Open(string root = ResourceConstant.UI_TAG)
         {
             Transform t = GameObject.FindGameObjectWithTag(root).transform.Find(this.Name);
             if (t == null)

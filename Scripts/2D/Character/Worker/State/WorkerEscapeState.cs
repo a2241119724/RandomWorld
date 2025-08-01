@@ -20,7 +20,7 @@
         {
             base.OnEnter();
             this.recordTime = 0.0f;
-            this.Character.WorkerStateText.text = $"<color=red>逃跑</color>";
+            this.Character.WorkerStateText.text = this.preString;
         }
 
         /// <inheritdoc/>

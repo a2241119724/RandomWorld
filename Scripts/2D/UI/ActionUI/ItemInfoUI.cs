@@ -64,11 +64,16 @@
         /// <param name="posMap">位置</param>
         /// <param name="isTile">是否是地图Tile</param>
         /// <param name="isResource">是否是资源Tile</param>
+        /// <param name="isBuild">是否是建筑物</param>
         /// <returns>TileBase</returns>
-        public TileBase GetTile(Vector3Int posMap, bool isTile = true, bool isResource = true)
+        public TileBase GetTile(Vector3Int posMap, bool isTile = true, bool isResource = true, bool isBuild = true)
         {
-            TileBase tileBase = BuildMap.Instance.GetTile(posMap);
-            this.text = "Build:";
+            TileBase tileBase = null;
+            if (isBuild)
+            {
+                tileBase = BuildMap.Instance.GetTile(posMap);
+                this.text = "Build:";
+            }
 
             // 如果点击的是床，则展示分配的Worker
             if (tileBase != null && tileBase.name.Contains("Bed"))

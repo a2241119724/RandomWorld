@@ -7,12 +7,12 @@
     /// Worker 信息UI
     /// 最顶端的按钮
     /// </summary>
-    public class WorkerInfoUI : MonoBehaviour
+    public class LocateWorkerUI : MonoBehaviour
     {
         /// <summary>
         /// 单例
         /// </summary>
-        public static WorkerInfoUI Instance { get; private set; }
+        public static LocateWorkerUI Instance { get; private set; }
 
         /// <summary>
         /// 添加Worker按钮
@@ -20,7 +20,7 @@
         /// <param name="worker">Worker</param>
         public void AddWorkerItem(Worker worker)
         {
-            GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("WorkerItem"));
+            GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("LocateWorkerItem"));
             g.transform.SetParent(this.transform);
             g.transform.localScale = Vector3.one;
             Tool.GetComponentInChildren<Text>(g, "Name").text = worker.name;

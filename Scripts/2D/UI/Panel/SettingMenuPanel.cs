@@ -10,7 +10,7 @@
         public SettingMenuPanel()
         {
             this.Name = "SettingMenu";
-            this.OpenPanel();
+            this.Open();
 
             // cameras = Object.FindObjectsOfType(typeof(Camera), true);
             Tool.GetComponentInChildren<Toggle>(this.Panel, "Toggle").onValueChanged.AddListener(this.OnClick_TogglePerspective);

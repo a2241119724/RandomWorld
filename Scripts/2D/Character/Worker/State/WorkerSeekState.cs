@@ -7,7 +7,7 @@
     /// </summary>
     public class WorkerSeekState : WorkerState
     {
-        private bool isOne = true;
+        // private bool isOne = true;
         private Vector3Int targetMap;
 
         public WorkerSeekState(Worker character)
@@ -27,7 +27,7 @@
                 return;
             }
 
-            this.isOne = true;
+            // this.isOne = true;
 
             // 没有任务
             Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
@@ -36,8 +36,6 @@
             {
                 // 有任务
                 this.targetMap = this.Character.Manager.Task.TargetMap;
-
-                // 找旁边的位置进行建造
                 float minDistance = 99999.0f;
                 Vector3Int closedPos = default;
                 foreach (Vector3Int pos in this.Character.Manager.Task.AvailableNeighborPos)
@@ -66,6 +64,7 @@
             }
 
             this.Character.InitSeek(this.targetMap);
+            this.Character.ToTarget();
         }
 
         /// <inheritdoc/>
@@ -90,13 +89,13 @@
             //         this.Character.ToTarget();
             //     }
             // }
-            // 只能有一个在寻路
-            if (this.isOne)
-            {
-                this.isOne = false;
-                this.Character.ToTarget();
-            }
 
+            // // 只能有一个在寻路
+            // if (this.isOne)
+            // {
+            //     this.isOne = false;
+            //      this.Character.ToTarget();
+            // }
             if (!this.Character.IsSeeking)
             {
                 // Worker.SeekLock.ReleaseLock(this.Character);
