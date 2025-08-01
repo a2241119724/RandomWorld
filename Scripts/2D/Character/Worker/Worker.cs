@@ -169,7 +169,7 @@
         }
 
         /// <summary>
-        /// 开启协程
+        /// 开启协程/线程
         /// </summary>
         public void ToTarget()
         {
@@ -180,7 +180,10 @@
 
             ThreadPool.QueueUserWorkItem(t =>
             {
-                this.ToTargetAStarThread(start, end);
+                lock (this)
+                {
+                    this.ToTargetAStarThread(start, end);
+                }
             });
         }
 
@@ -844,7 +847,7 @@
 
                 if (this.isStopThread)
                 {
-                    break;
+                    return;
                 }
 
                 // 选出当前相邻位置最小花费f在openList中的索引位置
@@ -852,7 +855,7 @@
                 {
                     if (this.isStopThread)
                     {
-                        break;
+                        return;
                     }
 
                     if (this.openList[i].F < this.openList[minIndex].F)
@@ -863,7 +866,7 @@
 
                 if (this.isStopThread)
                 {
-                    break;
+                    return;
                 }
 
                 Spend curSpend = this.openList[minIndex];
@@ -904,12 +907,17 @@
                         curSpend = curSpend.Previous;
                     }
 
+                    if (this.isStopThread)
+                    {
+                        return;
+                    }
+
                     break;
                 }
 
                 if (this.isStopThread)
                 {
-                    break;
+                    return;
                 }
 
                 this.openList.Remove(curSpend);
@@ -966,7 +974,7 @@
 
                     if (this.isStopThread)
                     {
-                        break;
+                        return;
                     }
 
                     // 打开队列已经计算过，赋值最小的g
@@ -988,7 +996,7 @@
 
                         if (this.isStopThread)
                         {
-                            break;
+                            return;
                         }
 
                         this.openList.Add(neighbor);
@@ -998,6 +1006,11 @@
                     neighbor.F = neighbor.G + neighbor.H;
                     neighbor.Previous = curSpend; // 链接
                 }
+            }
+
+            if (this.isStopThread)
+            {
+                return;
             }
 
             // 合并path
@@ -1021,7 +1034,7 @@
                     {
                         if (this.isStopThread)
                         {
-                            break;
+                            return;
                         }
 
                         // 上下左右平移一下射线
@@ -1056,6 +1069,11 @@
                     {
                         lastIndex++;
                     }
+                }
+
+                if (this.isStopThread)
+                {
+                    return;
                 }
 
                 this.path.Add(path[^1]);

@@ -14,7 +14,7 @@
         public override void Add(Worker character)
         {
             base.Add(character);
-            WorkerInfoUI.Instance.AddWorkerItem(character);
+            LocateWorkerUI.Instance.AddWorkerItem(character);
         }
 
         /// <summary>

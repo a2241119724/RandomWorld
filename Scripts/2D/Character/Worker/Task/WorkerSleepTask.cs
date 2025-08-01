@@ -33,9 +33,9 @@
         }
 
         /// <inheritdoc/>
-        public override void Execute1()
+        public override void DoExecute()
         {
-            base.Execute1();
+            base.DoExecute();
         }
 
         /// <inheritdoc/>

@@ -14,7 +14,7 @@
         public CreateOrJoinPanel()
         {
             this.Name = "CreateOrJoin";
-            this.OpenPanel();
+            this.Open();
             Tool.GetComponentInChildren<Button>(this.Panel, "CreateRoom").onClick.AddListener(this.OnClick_CreateRoom);
             Tool.GetComponentInChildren<Button>(this.Panel, "JoinRoom").onClick.AddListener(this.OnClick_JoinRoom);
         }

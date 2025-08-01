@@ -15,13 +15,13 @@
         public readonly IBasePanel[] ToolMenus = new IBasePanel[]
         {
             BuildMenuPanel.Instance, PlayerInfoPanel.Instance, BackpackMenuPanel.Instance,
-            WorkerTaskInfoPanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
+            WorkerTaskTogglePanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
         };
 
         public ForegroundPanel()
         {
             this.Name = "Foreground";
-            this.OpenPanel();
+            this.Open();
             Tool.GetComponentInChildren<Button>(this.Panel, "Pause").onClick.AddListener(this.OnClick_Pause);
             Button attack = Tool.GetComponentInChildren<Button>(this.Panel, "Attack");
             if (attack != null)

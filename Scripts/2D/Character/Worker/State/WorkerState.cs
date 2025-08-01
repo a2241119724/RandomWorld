@@ -1,5 +1,7 @@
 ﻿namespace LAB2D
 {
+    using System.Text.RegularExpressions;
+
     /// <summary>
     /// Worker状态
     /// </summary>
@@ -9,6 +11,8 @@
         /// 信息前缀
         /// </summary>
         protected string preString = string.Empty;
+
+        private const string Pattern = "^Worker(.*)State$";
 
         public WorkerState(Worker worker)
             : base(worker)
@@ -60,10 +64,11 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            this.preString = string.Empty;
+            Match match = Regex.Match(this.GetType().Name, Pattern);
+            this.preString = $"<color=red>{match.Groups[1]}</color>\n";
             if (this.Character.Manager.Task != null)
             {
-                this.preString = $"<color=red>{this.Character.Manager.Task.Name}</color>\n";
+                this.preString += $"<color=green>{this.Character.Manager.Task.Name}</color>\n";
             }
         }
 

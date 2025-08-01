@@ -11,7 +11,7 @@
         {
             this.Name = "BuildMenu";
             this.Select = new SelectItemData();
-            this.OpenPanel();
+            this.Open();
             Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
             Tool.GetComponentInChildren<Button>(this.Panel, "StartBuild").onClick.AddListener(this.OnClick_StartBuild);
         }

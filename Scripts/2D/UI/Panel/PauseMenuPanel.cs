@@ -14,7 +14,7 @@
         public PauseMenuPanel()
         {
             this.Name = "PauseMenu";
-            this.OpenPanel();
+            this.Open();
             this.audioSource = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).GetComponent<AudioSource>();
             if (this.audioSource == null)
             {

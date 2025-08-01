@@ -7,7 +7,7 @@
     /// <summary>
     /// Worker任务信息面板
     /// </summary>
-    public class WorkerTaskInfoPanel : BasePanel<WorkerTaskInfoPanel>
+    public class WorkerTaskTogglePanel : BasePanel<WorkerTaskTogglePanel>
     {
         private static readonly Dictionary<WorkerTask.WorkerTaskTypeEnum, string> TypeToChinese = new ()
         {
@@ -21,10 +21,10 @@
             { WorkerTask.WorkerTaskTypeEnum.Plant, "种植" },
         };
 
-        public WorkerTaskInfoPanel()
+        public WorkerTaskTogglePanel()
         {
-            this.Name = "WorkerTaskInfo";
-            this.OpenPanel();
+            this.Name = "WorkerTaskToggle";
+            this.Open();
             Transform title = Tool.GetComponentInChildren<Transform>(this.Panel, "Title");
             foreach (KeyValuePair<WorkerTask.WorkerTaskTypeEnum, string> pair in TypeToChinese)
             {

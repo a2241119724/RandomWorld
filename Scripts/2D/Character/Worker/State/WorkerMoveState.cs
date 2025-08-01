@@ -32,7 +32,7 @@
         {
             base.OnUpdate();
             Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
-            this.Character.WorkerStateText.text = this.preString + $"Move\n" +
+            this.Character.WorkerStateText.text = this.preString +
                 $"Target: {this.Character.TargetMap.x},{this.Character.TargetMap.y}\n" +
                 $"Position: {posMap.x},{posMap.y}\n" + $"Hungry:{Mathf.RoundToInt(this.Character.CurHungry)}\n";
             bool isTarget = this.Character.MoveByPath();

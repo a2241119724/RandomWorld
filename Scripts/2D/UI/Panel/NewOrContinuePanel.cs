@@ -11,7 +11,7 @@
         public NewOrContinuePanel()
         {
             this.Name = "NewOrContinue";
-            this.OpenPanel();
+            this.Open();
             Tool.GetComponentInChildren<Button>(this.Panel, "NewGame").onClick.AddListener(this.OnClick_NewGame);
             Tool.GetComponentInChildren<Button>(this.Panel, "ContinueGame").onClick.AddListener(this.OnClick_ContinueGame);
         }

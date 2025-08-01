@@ -196,13 +196,13 @@
                     }
 
                     resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
-                    if (resourceInfo != null)
+                    if (resourceInfo != null && resourceInfo.Id != -1 && resourceInfo.Count != 0)
                     {
                         SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
                         selectUI.SetTarget(posMap);
                     }
 
-                    TileBase tileBase = ItemInfoUI.Instance.GetTile(posMap, false, false);
+                    TileBase tileBase = ItemInfoUI.Instance.GetTile(posMap, false, false, false);
                     if (tileBase != null)
                     {
                         SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);

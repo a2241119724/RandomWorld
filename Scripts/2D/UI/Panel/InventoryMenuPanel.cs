@@ -17,7 +17,7 @@
         public InventoryMenuPanel()
         {
             this.Name = "InventoryMenu";
-            this.OpenPanel();
+            this.Open();
             this.position = Tool.GetComponentInChildren<Transform>(this.Panel, "Position");
             this.type = Tool.GetComponentInChildren<Transform>(this.Panel, "Type");
             this.id = Tool.GetComponentInChildren<Transform>(this.Panel, "Id");

@@ -5,39 +5,35 @@
     using UnityEngine.UI;
 
     /// <summary>
-    /// 穿戴任务UI
+    /// 工作者的床 UI
     /// </summary>
-    public class WearTaskUI : MonoBehaviour
+    public class WorkerBedUI : MonoBehaviour
     {
         private Transform content;
+        private Text curWorker;
 
         /// <summary>
         /// 单例
         /// </summary>
-        public static WearTaskUI Instance { get; private set; }
+        public static WorkerBedUI Instance { get; private set; }
 
         /// <summary>
-        /// 展示穿戴任务
+        /// 展示工作者床 UI
         /// </summary>
         /// <param name="posMap">位置</param>
-        public void ShowWearTask(Vector3Int posMap)
+        public void ShowWorkerBed(Vector3Int posMap)
         {
+            Worker worker = FurnitureManager.Instance.GetWorkerByBed(posMap);
+            this.curWorker.text = $"当前: " + (worker != null ? worker.name : "没人");
+
             this.transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
             List<Worker> workers = WorkerManager.Instance.Characters;
-            ResourceInfo resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
-
-            // 该位置没有东西则不展示任何东西
-            if (resourceInfo == null)
-            {
-                return;
-            }
-
             for (int i = 0; i < workers.Count; i++)
             {
                 // 若没有对应的物体，先创建
                 if (i > this.content.childCount - 1)
                 {
-                    GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("WorkerItem"));
+                    GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("WorkerBedItem"));
                     g.transform.SetParent(this.content);
                     g.transform.localScale = Vector3.one;
                 }
@@ -50,13 +46,9 @@
                 int index = i;
                 button.onClick.AddListener(() =>
                 {
-                    WorkerTaskManager.Instance.AddTask(
-                        new WorkerWearTask.WearTaskBuilder()
-                        .SetWorker(workers[index]).SetTarget(posMap).SetEquipmentId(resourceInfo.Id).Build(), 1);
+                    WorkerTaskManager.Instance.AddTask(new WorkerSleepTask.SleepTaskBuilder().SetTarget(posMap).Build(), 1);
                     this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
-                    Dictionary<int, ResourceInfo> dict = new ();
-                    dict.Add(resourceInfo.Id, resourceInfo);
-                    InventoryManager.Instance.IsEnoughAndPreTake(workers[index], new Dictionary<int, ResourceInfo>(dict), true);
+                    FurnitureManager.Instance.AddWorkerToBed(posMap, workers[index]);
                 });
             }
         }
@@ -65,6 +57,7 @@
         {
             Instance = this;
             this.content = Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
+            this.curWorker = Tool.GetComponentInChildren<Text>(this.gameObject, "CurWorker");
         }
 
         private void Update()

@@ -14,7 +14,7 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            this.Character.WorkerStateText.text = $"<color=red>攻击</color>";
+            this.Character.WorkerStateText.text = this.preString;
         }
 
         /// <inheritdoc/>

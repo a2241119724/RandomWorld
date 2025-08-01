@@ -8,7 +8,7 @@
         public AsyncProgressPanel()
         {
             this.Name = "AsyncProgress";
-            this.OpenPanel();
+            this.Open();
             this.Panel.transform.GetComponent<AsyncProgressUI>().Complete += this.Complate;
         }
 
