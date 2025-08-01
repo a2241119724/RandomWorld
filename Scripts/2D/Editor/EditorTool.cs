@@ -1,4 +1,4 @@
-namespace LAB2D
+ï»¿namespace LAB2D
 {
     using System.Text.RegularExpressions;
     using UnityEditor;
@@ -6,30 +6,30 @@ namespace LAB2D
     using UnityEngine.UI;
 
     /// <summary>
-    /// ±à¼­¹¤¾ß
+    /// ç¼–è¾‘å·¥å…·
     /// </summary>
     public class EditorTool : MonoBehaviour
     {
-        private static readonly string Exclude = @"^$"; // ÅÅ³ı,²»ÓÅ»¯
+        private static readonly string Exclude = @"^$"; // æ’é™¤,ä¸ä¼˜åŒ–
 
         /// <summary>
-        /// ĞŞ¸ÄRoundCorner°ë¾¶
+        /// ä¿®æ”¹RoundCorneråŠå¾„
         /// </summary>
-        [MenuItem("Tools/ĞŞ¸ÄRoundCorner°ë¾¶")]
+        [MenuItem("Tools/ä¿®æ”¹RoundCorneråŠå¾„")]
         public static void UpdateRoundCorner()
         {
-            // Ñ°ÕÒËùÓĞµÄRoundCorner
+            // å¯»æ‰¾æ‰€æœ‰çš„RoundCorner
             var roundCorners = Resources.FindObjectsOfTypeAll(typeof(RoundCorner));
             for (int i = 0; i < roundCorners.Length; i++)
             {
                 RoundCorner rc = roundCorners[i] as RoundCorner;
                 if (Regex.IsMatch(rc.name, Exclude) || rc.GetComponent<ExcludeEditor>() != null)
                 {
-                    Debug.Log("ÅÅ³ı:" + rc.name);
+                    Debug.Log("æ’é™¤:" + rc.name);
                     continue;
                 }
 
-                // ¼ÇÂ¼¶ÔÏó
+                // è®°å½•å¯¹è±¡
                 Undo.RecordObject(rc, rc.gameObject.name);
 
                 if (rc.GetComponent<Transform>().name.Equals("Background"))
@@ -41,17 +41,17 @@ namespace LAB2D
                     rc.Radius = 0.1f;
                 }
 
-                // ÉèÖÃÒÑ¸Ä±ä
+                // è®¾ç½®å·²æ”¹å˜
                 EditorUtility.SetDirty(rc);
             }
 
-            Debug.Log("Íê³É");
+            Debug.Log("å®Œæˆ");
         }
 
         /// <summary>
-        /// ÓÅ»¯°´Å¥
+        /// ä¼˜åŒ–æŒ‰é’®
         /// </summary>
-        [MenuItem("Tools/ĞŞ¸ÄButton")]
+        [MenuItem("Tools/ä¿®æ”¹Button")]
         public static void UpdateButton()
         {
             var buttons = Resources.FindObjectsOfTypeAll(typeof(Button));
@@ -60,11 +60,11 @@ namespace LAB2D
                 Button btn = buttons[i] as Button;
                 if (Regex.IsMatch(btn.name, Exclude) || btn.GetComponent<ExcludeEditor>() != null)
                 {
-                    Debug.Log("ÅÅ³ı:" + btn.name);
+                    Debug.Log("æ’é™¤:" + btn.name);
                     continue;
                 }
 
-                // ¼ÇÂ¼¶ÔÏó
+                // è®°å½•å¯¹è±¡
                 Undo.RecordObject(btn, btn.gameObject.name);
 
                 ColorBlock colors = btn.colors;
@@ -76,24 +76,24 @@ namespace LAB2D
                 colors.disabledColor = new Color32(0, 0, 0, 0);
                 btn.colors = colors;
 
-                // ÉèÖÃÒÑ¸Ä±ä
+                // è®¾ç½®å·²æ”¹å˜
                 EditorUtility.SetDirty(btn);
 
                 Image img = btn.GetComponent<Image>();
                 if (img != null)
                 {
-                    // ¼ÇÂ¼¶ÔÏó
+                    // è®°å½•å¯¹è±¡
                     Undo.RecordObject(img, img.gameObject.name);
 
-                    // ÉèÖÃ°´Å¥ËùÔÚ×é¼şÉÏµÄÍ¼Æ¬ÑÕÉ«
+                    // è®¾ç½®æŒ‰é’®æ‰€åœ¨ç»„ä»¶ä¸Šçš„å›¾ç‰‡é¢œè‰²
                     img.color = Color.white;
 
-                    // ÉèÖÃÒÑ¸Ä±ä
+                    // è®¾ç½®å·²æ”¹å˜
                     EditorUtility.SetDirty(img);
                 }
             }
 
-            Debug.Log("Íê³É");
+            Debug.Log("å®Œæˆ");
         }
     }
 }
