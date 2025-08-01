@@ -44,7 +44,7 @@
             /// <returns>文件路径</returns>
             public static string GetPath(string name)
             {
-                return Application.persistentDataPath + "/Data/" + name + ".lab";
+                return Application.persistentDataPath + "/" + name + ".lab";
             }
         }
     }

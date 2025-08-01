@@ -10,7 +10,6 @@
     /// </summary>
     public class Player : Character
     {
-        [Tooltip("角色速度")]
         private readonly int mp = 100; // 玩家蓝量
         private readonly int maxMp = 100; // 玩家最大蓝量
         private int currentExperience = 0; // 玩家当前经验值
@@ -146,6 +145,7 @@
         protected override void Start()
         {
             base.Start();
+            this.MoveSpeed = 10;
             this.animator = this.GetComponent<Animator>();
             if (this.animator == null)
             {
@@ -217,6 +217,7 @@
                 // miniCamera.Target = transform.position;
                 this.mainCamera.DirectToPosition(this.transform.position);
                 this.miniCamera.DirectToPosition(this.transform.position);
+                GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>().Character = this;
                 if (GameInfoUI.Instance != null)
                 {
                     GameInfoUI.Instance.SetPosition(this.transform.position);

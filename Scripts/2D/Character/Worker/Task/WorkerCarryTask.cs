@@ -58,7 +58,7 @@
             // 放下拿起来的东西
             ItemMap.Instance.ShowTile(this.TargetMap, ResourceManager.Instance
                 .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).ImageName));
-            worker.SubResource1(this.resourceInfo);
+            worker.SubResource(this.resourceInfo);
             InventoryManager.Instance.AddItemByPrePlace(worker, this.TargetMap);
 
             // 如果是食物,添加饥饿任务

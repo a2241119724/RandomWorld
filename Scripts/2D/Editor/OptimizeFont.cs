@@ -23,7 +23,7 @@
             for (int i = 0; i < tests.Length; i++)
             {
                 Text t = tests[i] as Text;
-                if (Regex.IsMatch(t.name, Exclude) || t.GetComponent<ExcludeOptimizeFont>() != null)
+                if (Regex.IsMatch(t.name, Exclude) || t.GetComponent<ExcludeEditor>() != null)
                 {
                     Debug.Log("排除:" + t.name);
                     continue;
