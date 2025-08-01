@@ -894,7 +894,7 @@
                         if (quickCurSpend != null && quickCurSpend.PosMap.x == curSpend.Previous.PosMap.x
                             && quickCurSpend.PosMap.y == curSpend.Previous.PosMap.y)
                         {
-                            UnityMainThreadDispatcher.Instance().EnqueueAsync(() =>
+                            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                             {
                                 LogManager.Instance.Log(this.name + ":寻路出现环路", LogManager.LogLevel.Error);
                             }).Wait();
@@ -924,7 +924,7 @@
                     int y = curSpend.PosMap.y + direction.Y;
 
                     bool isReach = true;
-                    UnityMainThreadDispatcher.Instance().EnqueueAsync(() =>
+                    UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                     {
                         isReach = this.IsCanReach(new Vector3Int(x, y, 0));
                     }).Wait();
@@ -946,7 +946,7 @@
                     float temp;
                     if (isCorner > 4)
                     {
-                        UnityMainThreadDispatcher.Instance().EnqueueAsync(() =>
+                        UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                         {
                             isReach = this.IsCanReach(new Vector3Int(x, curSpend.PosMap.y, 0)) || this.IsCanReach(new Vector3Int(curSpend.PosMap.x, y, 0));
                         }).Wait();
@@ -1030,7 +1030,7 @@
                         float distance = Vector3.Distance(TileMap.Instance.MapPosToWorldPos(start.PosMap), TileMap.Instance.MapPosToWorldPos(path[i].PosMap));
 
                         bool isAllCanReach = true;
-                        UnityMainThreadDispatcher.Instance().EnqueueAsync(() =>
+                        UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                         {
                             RaycastHit2D hit;
                             foreach (var offset in this.checkOffsets)
@@ -1062,14 +1062,14 @@
             }
             else
             {
-                UnityMainThreadDispatcher.Instance().EnqueueAsync(() =>
+                UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {
                     LogManager.Instance.Log(this.name + ":未找到路径 " + start.PosMap.y + ":" + start.PosMap.x + "-->" + end.PosMap.y + ":" + end.PosMap.x, LogManager.LogLevel.Error);
                 }).Wait();
             }
 
             // 显示路径
-            UnityMainThreadDispatcher.Instance().EnqueueAsync(() =>
+            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
             {
                 this.UpdateLine();
             }).Wait();

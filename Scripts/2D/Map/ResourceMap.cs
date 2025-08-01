@@ -236,7 +236,7 @@
     /// 可序列化的Vector3Int
     /// </summary>
     [Serializable]
-    public struct Vector3IntLAB
+    public class Vector3IntLAB
     {
         /// <summary>
         /// X

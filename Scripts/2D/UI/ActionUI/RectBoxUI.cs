@@ -17,6 +17,17 @@
         private Transform options;
 
         /// <summary>
+        /// Tile的类型
+        /// </summary>
+        public enum TileType
+        {
+            /// <summary>
+            /// 资源Tile
+            /// </summary>
+            Resource,
+        }
+
+        /// <summary>
         /// 单例
         /// </summary>
         public static RectBoxUI Instance { get; private set; }
@@ -200,17 +211,6 @@
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Tile的类型
-        /// </summary>
-        public enum TileType
-        {
-            /// <summary>
-            /// 资源Tile
-            /// </summary>
-            Resource,
         }
     }
 }
