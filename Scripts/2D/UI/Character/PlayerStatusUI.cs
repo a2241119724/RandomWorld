@@ -41,7 +41,7 @@
             this.barLevel.value = currentExperience / (float)maxExperience;
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
         }

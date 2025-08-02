@@ -20,6 +20,96 @@
         /// </summary>
         public static ItemInfoUI Instance { get; private set; }
 
+        public void Awake()
+        {
+            Instance = this;
+        }
+
+        public void Update()
+        {
+            // 实时更新Character信息
+            if (this.character != null)
+            {
+                if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
+                {
+                    PanelController.Instance.Show(ItemInfoPanel.Instance);
+                }
+
+                ItemInfoPanel.Instance.SetItemInfo(this.character.ToString());
+                ItemInfoPanel.Instance.SetCharacter(this.character);
+            }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                List<RaycastResult> results = Tool.GetUIByMousePos();
+
+                // 过滤不是滑动主屏幕的动作
+                if (results.Count > 0 && results[0].gameObject.name != "Foreground")
+                {
+                    return;
+                }
+
+                this.selectPos = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+                SelectUI selectUI;
+                if (Input.GetKey(KeyCode.LeftControl))
+                {
+                    selectUI = SelectManagerPool.Instance.CreateFreeSelect(this.selectPos);
+                }
+                else
+                {
+                    selectUI = SelectManagerPool.Instance.ReleaseAllAndGetOne();
+                }
+
+                do
+                {
+                    this.character = this.GetCharacter(this.selectPos);
+                    if (this.character != null)
+                    {
+                        this.text = this.character.ToString();
+                        SelectUI selectUI1 = SelectManagerPool.Instance.GetForCharacter(this.character);
+                        if (selectUI1 != null)
+                        {
+                            selectUI = selectUI1;
+                        }
+
+                        selectUI.SetTarget(this.selectPos);
+                        selectUI.Character = this.character;
+                        ItemInfoPanel.Instance.SetCharacter(this.character);
+                        break;
+                    }
+
+                    selectUI.SetTarget(this.selectPos);
+
+                    // 掉落物或者仓库
+                    this.select = "Resource";
+                    this.text = this.GetResource(this.selectPos);
+                    if (!this.text.Equals(string.Empty))
+                    {
+                        break;
+                    }
+
+                    // 没有物品,显示地图Tile
+                    this.select = "Tile";
+                    TileBase tileBase = this.GetTile(this.selectPos);
+                    if (tileBase == null)
+                    {
+                        return;
+                    }
+
+                    this.text += $"{tileBase.name}\n" +
+                        EnvironmentManager.Instance.ToString(this.selectPos);
+                    break;
+                }
+                while (true);
+                if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
+                {
+                    PanelController.Instance.Show(ItemInfoPanel.Instance);
+                }
+
+                ItemInfoPanel.Instance.SetItemInfo(this.text);
+            }
+        }
+
         /// <summary>
         /// 动态更新Tile信息
         /// </summary>
@@ -128,96 +218,6 @@
             }
 
             return text;
-        }
-
-        private void Awake()
-        {
-            Instance = this;
-        }
-
-        private void Update()
-        {
-            // 实时更新Character信息
-            if (this.character != null)
-            {
-                if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
-                {
-                    PanelController.Instance.Show(ItemInfoPanel.Instance);
-                }
-
-                ItemInfoPanel.Instance.SetItemInfo(this.character.ToString());
-                ItemInfoPanel.Instance.SetCharacter(this.character);
-            }
-
-            if (Input.GetMouseButtonDown(1))
-            {
-                List<RaycastResult> results = Tool.GetUIByMousePos();
-
-                // 过滤不是滑动主屏幕的动作
-                if (results.Count > 0 && results[0].gameObject.name != "Foreground")
-                {
-                    return;
-                }
-
-                this.selectPos = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-                SelectUI selectUI;
-                if (Input.GetKey(KeyCode.LeftControl))
-                {
-                    selectUI = SelectManagerPool.Instance.CreateFreeSelect(this.selectPos);
-                }
-                else
-                {
-                    selectUI = SelectManagerPool.Instance.ReleaseAllAndGetOne();
-                }
-
-                do
-                {
-                    this.character = this.GetCharacter(this.selectPos);
-                    if (this.character != null)
-                    {
-                        this.text = this.character.ToString();
-                        SelectUI selectUI1 = SelectManagerPool.Instance.GetForCharacter(this.character);
-                        if (selectUI1 != null)
-                        {
-                            selectUI = selectUI1;
-                        }
-
-                        selectUI.SetTarget(this.selectPos);
-                        selectUI.Character = this.character;
-                        ItemInfoPanel.Instance.SetCharacter(this.character);
-                        break;
-                    }
-
-                    selectUI.SetTarget(this.selectPos);
-
-                    // 掉落物或者仓库
-                    this.select = "Resource";
-                    this.text = this.GetResource(this.selectPos);
-                    if (!this.text.Equals(string.Empty))
-                    {
-                        break;
-                    }
-
-                    // 没有物品,显示地图Tile
-                    this.select = "Tile";
-                    TileBase tileBase = this.GetTile(this.selectPos);
-                    if (tileBase == null)
-                    {
-                        return;
-                    }
-
-                    this.text += $"{tileBase.name}\n" +
-                        EnvironmentManager.Instance.ToString(this.selectPos);
-                    break;
-                }
-                while (true);
-                if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
-                {
-                    PanelController.Instance.Show(ItemInfoPanel.Instance);
-                }
-
-                ItemInfoPanel.Instance.SetItemInfo(this.text);
-            }
         }
     }
 }

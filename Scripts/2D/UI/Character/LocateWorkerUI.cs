@@ -31,7 +31,7 @@
             });
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
         }

@@ -6,7 +6,7 @@
     public class Worker_Lv1 : Worker
     {
         /// <inheritdoc/>
-        protected override void Awake()
+        public override void Awake()
         {
             base.Awake();
 

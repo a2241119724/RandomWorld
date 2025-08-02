@@ -13,7 +13,7 @@
         private InputField username; // 用户名
         private InputField password; // 密码
 
-        private void Start()
+        public void Start()
         {
             this.username = Tool.GetComponentInChildren<InputField>(this.gameObject, "Username");
             this.password = Tool.GetComponentInChildren<InputField>(this.gameObject, "Password");

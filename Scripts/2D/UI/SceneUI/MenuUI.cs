@@ -13,12 +13,12 @@
         private Toggle toggle; // 条款勾选框
         private GameObject note; // 通知
 
-        private void Awake()
+        public void Awake()
         {
             GlobalInit.Instance.ShowTip("登录成功!!!");
         }
 
-        private void Start()
+        public void Start()
         {
             PhotonNetwork.NickName = "aaa";
             this.toggle = Tool.GetComponentInChildren<Toggle>(this.gameObject, "Clause").GetComponent<Toggle>();

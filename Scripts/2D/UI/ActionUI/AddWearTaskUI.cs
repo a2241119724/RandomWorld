@@ -62,13 +62,13 @@
             }
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             this.content = Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
         }
 
-        private void Update()
+        public void Update()
         {
             if (Input.GetMouseButtonDown(2) || Input.GetKeyDown(KeyCode.Escape))
             {

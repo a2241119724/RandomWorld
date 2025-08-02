@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System.Text;
     using UnityEngine;
 
     /// <summary>
@@ -9,6 +10,7 @@
     {
         // private bool isOne = true;
         private Vector3Int targetMap;
+        private StringBuilder builder = new StringBuilder(128); // 减少GC
 
         public WorkerSeekState(Worker character)
             : base(character)
@@ -42,7 +44,7 @@
                 {
                     // 由于是斜对称
                     Vector3Int temp = new (this.targetMap.x + pos.y, this.targetMap.y + pos.x, 0);
-                    if (this.Character.IsCanReach(temp))
+                    if (ASeek.IsCanReach(temp))
                     {
                         Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(temp);
                         float distance = Mathf.Pow(worldPos.x - this.Character.transform.position.x, 2) +
@@ -63,22 +65,25 @@
                 this.targetMap = closedPos;
             }
 
-            this.Character.InitSeek(this.targetMap);
-            this.Character.ToTarget();
-        }
-
-        /// <inheritdoc/>
-        public override void OnExit()
-        {
-            base.OnExit();
+            this.Character.Seek.Seek(this.targetMap);
         }
 
         /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
-            this.Character.WorkerStateText.text = this.preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(this.Character.SeekProgress * 100)}%</color>\n" +
-                $"Target: {this.targetMap.x},{this.targetMap.y}";
+            if (Time.frameCount % 60 == 0)
+            {
+                this.builder.Clear();
+                this.Character.WorkerStateText.text = this.builder.Append(this.preString)
+                    .Append("<color=yellow>Seeking: ")
+                    .Append(Mathf.RoundToInt(this.Character.Seek.SeekProgress * 100))
+                    .Append("%</color>\nTarget: ")
+                    .Append(this.targetMap.x)
+                    .Append(",")
+                    .Append(this.targetMap.y)
+                    .ToString();
+            }
 
             // if (Worker.SeekLock.GetLock(this.Character))
             // {
@@ -94,14 +99,20 @@
             // if (this.isOne)
             // {
             //     this.isOne = false;
-            //      this.Character.ToTarget();
+            //     this.Character.ToTarget();
             // }
-            if (!this.Character.IsSeeking)
+            if (!this.Character.Seek.IsSeeking)
             {
                 // Worker.SeekLock.ReleaseLock(this.Character);
                 // 寻路结束
                 this.Character.Manager.ChangeState(WorkerStateTypeEnum.Move);
             }
+        }
+
+        /// <inheritdoc/>
+        public override void OnExit()
+        {
+            base.OnExit();
         }
     }
 }

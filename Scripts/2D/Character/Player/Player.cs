@@ -21,6 +21,64 @@
         private CameraMove mainCamera;
         private CameraMove miniCamera;
 
+        /// <inheritdoc/>
+        public override void Awake()
+        {
+            base.Awake();
+            this.direction = default;
+            if (this.direction == null)
+            {
+                LogManager.Instance.Log("direction assign resource Error!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
+            this.spriteRenderer = this.gameObject.GetComponent<SpriteRenderer>();
+            this.name = "Player";
+        }
+
+        /// <inheritdoc/>
+        public override void Start()
+        {
+            base.Start();
+            this.MoveSpeed = 10;
+            this.animator = this.GetComponent<Animator>();
+            if (this.animator == null)
+            {
+                LogManager.Instance.Log("animator Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            if (GameInfoUI.Instance != null)
+            {
+                GameInfoUI.Instance.SetPosition(this.transform.position);
+            }
+
+            // if (Map.Instance != null)
+            // {
+            //     Map.Instance.show(transform.position);
+            // }
+            // 不在线，或者在线并且是自己
+            if (this.photonView.IsMine || !NetworkConnect.Instance.IsOnline)
+            {
+                this.mainCamera = Camera.main.GetComponent<CameraMove>();
+                this.miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
+                this.mainCamera.DirectToPosition(this.transform.position);
+                this.miniCamera.DirectToPosition(this.transform.position);
+                PlayerManager.Instance.Mine = this;
+                PhotonNetwork.LocalPlayer.TagObject = this;
+                Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
+                PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
+            }
+            else if (!this.photonView.IsMine)
+            {
+                Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.photonView.Owner.NickName;
+                PlayerManager.Instance.Add(this);
+
+                // PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
+            }
+        }
+
         /// <summary>
         /// 增加经验值.
         /// </summary>
@@ -122,64 +180,6 @@
                 Camera.main.orthographic = true;
                 Camera.main.orthographicSize = 10;
                 this.mainCamera.Offset = new Vector3(0, 0, 0);
-            }
-        }
-
-        /// <inheritdoc/>
-        protected override void Awake()
-        {
-            base.Awake();
-            this.direction = default;
-            if (this.direction == null)
-            {
-                LogManager.Instance.Log("direction assign resource Error!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
-            this.spriteRenderer = this.gameObject.GetComponent<SpriteRenderer>();
-            this.name = "Player";
-        }
-
-        /// <inheritdoc/>
-        protected override void Start()
-        {
-            base.Start();
-            this.MoveSpeed = 10;
-            this.animator = this.GetComponent<Animator>();
-            if (this.animator == null)
-            {
-                LogManager.Instance.Log("animator Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            if (GameInfoUI.Instance != null)
-            {
-                GameInfoUI.Instance.SetPosition(this.transform.position);
-            }
-
-            // if (Map.Instance != null)
-            // {
-            //     Map.Instance.show(transform.position);
-            // }
-            // 不在线，或者在线并且是自己
-            if (this.photonView.IsMine || !NetworkConnect.Instance.IsOnline)
-            {
-                this.mainCamera = Camera.main.GetComponent<CameraMove>();
-                this.miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
-                this.mainCamera.DirectToPosition(this.transform.position);
-                this.miniCamera.DirectToPosition(this.transform.position);
-                PlayerManager.Instance.Mine = this;
-                PhotonNetwork.LocalPlayer.TagObject = this;
-                Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
-                PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
-            }
-            else if (!this.photonView.IsMine)
-            {
-                Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.photonView.Owner.NickName;
-                PlayerManager.Instance.Add(this);
-
-                // PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
             }
         }
 

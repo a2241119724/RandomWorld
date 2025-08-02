@@ -9,7 +9,6 @@
     [ExecuteInEditMode]
     [RequireComponent(typeof(CanvasRenderer), typeof(RectTransform))]
     [DisallowMultipleComponent]
-    [AddComponentMenu("LAB/RoundCorner (Unity UI Canvas)")]
     public class RoundCorner : MaskableGraphic
     {
         /// <summary>
@@ -25,6 +24,7 @@
             this.material = this.GenerateMaterial(ResourceManager.Instance.GetShader("RoundCorner"));
             this.material.SetFloat("_Width", this.rectTransform.rect.width);
             this.material.SetFloat("_Height", this.rectTransform.rect.height);
+            this.material.SetFloat("_RoundRadius", this.Radius);
         }
 
         /// <inheritdoc/>
@@ -62,11 +62,6 @@
             }
 
             return null;
-        }
-
-        private void Update()
-        {
-            this.material.SetFloat("_RoundRadius", this.Radius);
         }
     }
 }

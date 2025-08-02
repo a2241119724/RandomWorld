@@ -26,7 +26,7 @@
             workers[x].TaskToggle[y] = toggle.isOn;
         }
 
-        private void Awake()
+        public void Awake()
         {
             this.TaskItems = new List<GameObject>();
             for (int i = 0; i < this.transform.childCount - 1; i++)

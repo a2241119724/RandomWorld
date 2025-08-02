@@ -28,6 +28,11 @@
         public static float DayTime = 30 * 60.0f;
 
         /// <summary>
+        /// 最大帧率
+        /// </summary>
+        public static int MaxFrame = 300;
+
+        /// <summary>
         /// 用户数据文件路径
         /// </summary>
         public static class ConfigFile

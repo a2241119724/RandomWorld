@@ -24,7 +24,7 @@
             this.text.text = text;
         }
 
-        private void Awake()
+        public void Awake()
         {
             this.text = Tool.GetComponentInChildren<Text>(this.gameObject, "Info");
             Instance = this;

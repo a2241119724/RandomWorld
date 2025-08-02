@@ -35,6 +35,80 @@
         /// </summary>
         public List<Vector3Int> GatherPos { get; private set; }
 
+        public void Awake()
+        {
+            Instance = this;
+        }
+
+        /// <summary>
+        /// Worker获取任务，LAB_TODO优先级没有实现
+        /// </summary>
+        public void Update()
+        {
+            List<Worker> workers = WorkerManager.Instance.Characters;
+            foreach (Worker worker in workers)
+            {
+                if (worker.Manager.Task != null)
+                {
+                    continue;
+                }
+
+                foreach (Dictionary<WorkerTask, bool> task in this.tasks)
+                {
+                    WorkerTask closedTask = null;
+                    float minDistance = 999999.0f;
+                    foreach (WorkerTask task1 in task.Keys)
+                    {
+                        // 该任务是否正在被做
+                        if (task[task1])
+                        {
+                            continue;
+                        }
+
+                        // 是否满足做任务的基础条件
+                        if (!task1.IsCanWork(worker))
+                        {
+                            continue;
+                        }
+
+                        if (closedTask == null)
+                        {
+                            minDistance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.x, 2) +
+                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.y, 2);
+                            closedTask = task1;
+                        }
+                        else
+                        {
+                            float distance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.x, 2) +
+                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.y, 2);
+                            if (distance < minDistance)
+                            {
+                                minDistance = distance;
+                                closedTask = task1;
+                            }
+                        }
+                    }
+
+                    // 获得任务
+                    if (closedTask != null)
+                    {
+                        // 先设置任务
+                        worker.Manager.Task = closedTask;
+                        closedTask.Start(worker);
+
+                        // 同一个饥饿任务还可以继续接
+                        if (closedTask.TaskType != WorkerTask.WorkerTaskTypeEnum.Eat)
+                        {
+                            task[closedTask] = true;
+                        }
+
+                        DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
+                        break;
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// 添加任务
         /// </summary>
@@ -210,80 +284,6 @@
                         this.GatherPos.Remove(task.TargetMap);
                         DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
                         return;
-                    }
-                }
-            }
-        }
-
-        private void Awake()
-        {
-            Instance = this;
-        }
-
-        /// <summary>
-        /// Worker获取任务，LAB_TODO优先级没有实现
-        /// </summary>
-        private void Update()
-        {
-            List<Worker> workers = WorkerManager.Instance.Characters;
-            foreach (Worker worker in workers)
-            {
-                if (worker.Manager.Task != null)
-                {
-                    continue;
-                }
-
-                foreach (Dictionary<WorkerTask, bool> task in this.tasks)
-                {
-                    WorkerTask closedTask = null;
-                    float minDistance = 999999.0f;
-                    foreach (WorkerTask task1 in task.Keys)
-                    {
-                        // 该任务是否正在被做
-                        if (task[task1])
-                        {
-                            continue;
-                        }
-
-                        // 是否满足做任务的基础条件
-                        if (!task1.IsCanWork(worker))
-                        {
-                            continue;
-                        }
-
-                        if (closedTask == null)
-                        {
-                            minDistance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.x, 2) +
-                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.y, 2);
-                            closedTask = task1;
-                        }
-                        else
-                        {
-                            float distance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.x, 2) +
-                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.y, 2);
-                            if (distance < minDistance)
-                            {
-                                minDistance = distance;
-                                closedTask = task1;
-                            }
-                        }
-                    }
-
-                    // 获得任务
-                    if (closedTask != null)
-                    {
-                        // 先设置任务
-                        worker.Manager.Task = closedTask;
-                        closedTask.Start(worker);
-
-                        // 同一个饥饿任务还可以继续接
-                        if (closedTask.TaskType != WorkerTask.WorkerTaskTypeEnum.Eat)
-                        {
-                            task[closedTask] = true;
-                        }
-
-                        DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
-                        break;
                     }
                 }
             }
