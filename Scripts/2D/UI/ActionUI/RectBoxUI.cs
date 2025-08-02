@@ -78,7 +78,7 @@
             });
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             this.selects = new Dictionary<TileType, List<Vector3Int>>
@@ -98,7 +98,7 @@
             });
         }
 
-        private void Update()
+        public void Update()
         {
             if (this.options.gameObject.activeSelf)
             {

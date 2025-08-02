@@ -11,6 +11,13 @@
         // private SelectAndShowEventSO selectAndShow;
         private Text info; // 道具信息
 
+        public void Start()
+        {
+            // info = transform.Find("Background/Message").GetComponent<Text>();
+            this.info = Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
+            this.info.text = string.Empty;
+        }
+
         /// <summary>
         /// 展示信息
         /// </summary>
@@ -33,13 +40,6 @@
             // selectAndShow = Resources.Load<SelectAndShowEventSO>("SO/SelectAndShowEvent");
             // //订阅事件
             // selectAndShow.OnSelectAndRun += showInfo;
-        }
-
-        private void Start()
-        {
-            // info = transform.Find("Background/Message").GetComponent<Text>();
-            this.info = Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
-            this.info.text = string.Empty;
         }
 
         // private void OnDisable()

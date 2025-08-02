@@ -23,7 +23,7 @@
             this.text.text = System.Math.Round(hp, 1) + "/" + maxHp;
         }
 
-        private void Awake()
+        public void Awake()
         {
             this.slider = this.transform.Find("HpBar").GetComponent<Slider>();
             if (this.slider == null)
@@ -40,7 +40,7 @@
             }
         }
 
-        private void Update()
+        public void Update()
         {
             this.transform.rotation = Quaternion.Euler(0, 0, 0);
         }

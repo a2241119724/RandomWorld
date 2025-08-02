@@ -22,7 +22,7 @@
             this.content.text = text;
         }
 
-        private void Awake()
+        public void Awake()
         {
             this.roundCorner = this.GetComponent<RoundCorner>();
             if (this.roundCorner == null)
@@ -47,7 +47,7 @@
         /// 由于可能受到Time.timeScale的影响
         /// 不能使用FixedUpdate,Time.deltaTime...
         /// </summary>
-        private void Update()
+        public void Update()
         {
             this.recordTime += Time.deltaTime;
 

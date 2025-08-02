@@ -37,12 +37,12 @@
             this.Character = null;
         }
 
-        private void Awake()
+        public void Awake()
         {
             this.Init();
         }
 
-        private void Update()
+        public void Update()
         {
             if (this.Character != null)
             {

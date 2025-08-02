@@ -114,7 +114,7 @@
             }
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             this.input = Tool.GetComponentInChildren<Text>(this.gameObject, "Message");

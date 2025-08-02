@@ -35,6 +35,31 @@
         /// </summary>
         public long CurProcess { get; set; }
 
+        public void Awake()
+        {
+            Instance = this;
+            this.tip = this.transform.Find("Center/Tips").GetComponent<Text>();
+            if (this.tip == null)
+            {
+                LogManager.Instance.Log("tips Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.percent = this.transform.Find("Center/Percent").GetComponent<Text>();
+            if (this.percent == null)
+            {
+                LogManager.Instance.Log("percent Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.slider = this.transform.Find("Center/ProgressBar").GetComponent<Slider>();
+            if (this.slider == null)
+            {
+                LogManager.Instance.Log("slider Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+        }
+
         /// <summary>
         /// 添加进度值1
         /// </summary>
@@ -80,31 +105,6 @@
         {
             this.percent.text = "当前进度:" + (this.CurProcess * 1000 / this.total / 10.0f).ToString() + "%";
             this.slider.value = this.CurProcess * 1.0f / this.total;
-        }
-
-        private void Awake()
-        {
-            Instance = this;
-            this.tip = this.transform.Find("Center/Tips").GetComponent<Text>();
-            if (this.tip == null)
-            {
-                LogManager.Instance.Log("tips Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            this.percent = this.transform.Find("Center/Percent").GetComponent<Text>();
-            if (this.percent == null)
-            {
-                LogManager.Instance.Log("percent Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            this.slider = this.transform.Find("Center/ProgressBar").GetComponent<Slider>();
-            if (this.slider == null)
-            {
-                LogManager.Instance.Log("slider Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
         }
 
         private IEnumerator Complete1()

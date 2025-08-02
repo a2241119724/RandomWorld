@@ -134,7 +134,7 @@
             if (this.curProgress > this.maxProgress)
             {
                 this.curProgress = 0;
-                worker.SetProgress(.0f, false);
+                worker.SetProgress(this.curProgress, false);
                 if (this.IsFinish(worker))
                 {
                     this.Finish(worker);

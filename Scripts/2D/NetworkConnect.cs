@@ -124,14 +124,14 @@
             this.IsOnline = false;
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             PhotonNetwork.AutomaticallySyncScene = true;
             this.IsOnline = false;
         }
 
-        private void Start()
+        public void Start()
         {
             // 使用Photon/PhotonUnityNetworking/Resources/PhotonServerSettings连接服务器
             PhotonNetwork.ConnectUsingSettings();

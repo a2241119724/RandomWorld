@@ -39,13 +39,13 @@
             return tile;
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             this.sprites = new Sprite[1000];
         }
 
-        private void Start()
+        public void Start()
         {
             BuildMap.Instance.DirectBuild(new Vector3Int(1, 1, 0), this.GetTileByNum(1));
         }

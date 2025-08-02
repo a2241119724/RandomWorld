@@ -43,13 +43,14 @@
             // rt.localPosition = new Vector3(v.x, v.y, 0);
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             this.tip = ResourceManager.Instance.GetPrefab("Tip");
+            Application.targetFrameRate = GlobalData.MaxFrame;
         }
 
-        private void Start()
+        public void Start()
         {
             // init panel
             if (this.initPanel)
@@ -75,7 +76,7 @@
             }
         }
 
-        private void Update()
+        public void Update()
         {
             this.WorkerUpdate();
 

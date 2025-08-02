@@ -41,7 +41,7 @@
             this.StartCoroutine(coroutineDelegate());
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
         }

@@ -32,6 +32,25 @@
         private GameObject damageUI; // 掉血面板
         private Color originalColor; // 原来的自身颜色
 
+        public virtual void Awake()
+        {
+            this.damageUI = ResourceManager.Instance.GetPrefab("Damage");
+            this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
+            this.checkBug = new CheckBug();
+        }
+
+        public virtual void Start()
+        {
+            this.renderer = this.GetComponent<SpriteRenderer>();
+            if (this.renderer == null)
+            {
+                LogManager.Instance.Log("renderer Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.originalColor = this.renderer.color;
+        }
+
         /// <summary>
         /// 角色扣血
         /// </summary>
@@ -77,33 +96,11 @@
             }
         }
 
-        /// <summary>
-        /// 角色信息
-        /// </summary>
-        /// <returns>信息</returns>
+        /// <inheritdoc/>
         public override string ToString()
         {
             return $"{this.GetType().Name}:{this.name}\n" +
                 $"Speed:{this.MoveSpeed}\n";
-        }
-
-        protected virtual void Awake()
-        {
-            this.damageUI = ResourceManager.Instance.GetPrefab("Damage");
-            this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
-            this.checkBug = new CheckBug();
-        }
-
-        protected virtual void Start()
-        {
-            this.renderer = this.GetComponent<SpriteRenderer>();
-            if (this.renderer == null)
-            {
-                LogManager.Instance.Log("renderer Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            this.originalColor = this.renderer.color;
         }
 
         /// <summary>

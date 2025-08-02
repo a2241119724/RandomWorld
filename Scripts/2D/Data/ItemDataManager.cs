@@ -120,7 +120,7 @@
             }
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             this.nameToId = new Dictionary<string, int>();

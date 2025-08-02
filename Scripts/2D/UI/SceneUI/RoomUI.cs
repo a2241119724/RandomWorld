@@ -23,6 +23,16 @@
         /// </summary>
         public UnityAction<string> ClickAndShow { get; set; }
 
+        public void Awake()
+        {
+            Instance = this;
+        }
+
+        public void Start()
+        {
+            this.prefabRoomBox = ResourceManager.Instance.GetPrefab("RoomItem");
+        }
+
         /// <inheritdoc/>
         public override void OnRoomListUpdate(List<Photon.Realtime.RoomInfo> roomList)
         {
@@ -44,16 +54,6 @@
         private void OnClick_RoomBox(string str)
         {
             this.ClickAndShow?.Invoke(str);
-        }
-
-        private void Awake()
-        {
-            Instance = this;
-        }
-
-        private void Start()
-        {
-            this.prefabRoomBox = ResourceManager.Instance.GetPrefab("RoomItem");
         }
     }
 }

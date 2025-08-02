@@ -12,12 +12,12 @@
         /// </summary>
         public static BuildingUI Instance { get; private set; }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
         }
 
-        private void Update()
+        public void Update()
         {
             // 没有选择任何物品
             if (BuildMenuPanel.Instance.Select.Item == null)

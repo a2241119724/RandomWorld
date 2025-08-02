@@ -55,18 +55,18 @@
             GatherMap.Instance.CancelGather(this.posMap);
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
         }
 
-        private void Start()
+        public void Start()
         {
             Tool.GetComponentInChildren<Button>(this.gameObject, "Yes").onClick.AddListener(this.Onclick_Yes);
             Tool.GetComponentInChildren<Button>(this.gameObject, "No").onClick.AddListener(this.Onclick_No);
         }
 
-        private void Update()
+        public void Update()
         {
             // 若是不在默认位置，则才返回默认位置
             if (Input.GetMouseButtonDown(1) && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)

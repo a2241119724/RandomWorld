@@ -53,14 +53,14 @@
             }
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             this.content = Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
             this.curWorker = Tool.GetComponentInChildren<Text>(this.gameObject, "CurWorker");
         }
 
-        private void Update()
+        public void Update()
         {
             if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2) || Input.GetKeyDown(KeyCode.Escape))
             {

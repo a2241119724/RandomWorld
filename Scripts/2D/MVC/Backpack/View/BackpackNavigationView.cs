@@ -10,25 +10,25 @@
         /// </summary>
         public static BackpackNavigationView Instance { get; private set; }
 
+        public void Awake()
+        {
+            Instance = this;
+        }
+
+        public void Start()
+        {
+            this.BindButton(Item.ItemType.Weapon, Item.ItemType.BackpackOther);
+        }
+
         /// <inheritdoc/>
         protected override void Init()
         {
             BackpackMenuPanel.Instance.Select.Init();
         }
 
-        private void Awake()
-        {
-            Instance = this;
-        }
-
         private void OnEnable()
         {
             this.CurItemType = Item.ItemType.Weapon;
-        }
-
-        private void Start()
-        {
-            this.BindButton(Item.ItemType.Weapon, Item.ItemType.BackpackOther);
         }
     }
 }

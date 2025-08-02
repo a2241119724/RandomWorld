@@ -9,7 +9,7 @@
     public class Memory : MonoBehaviour
     {
         // private float gameTime = 0;
-        private void Update()
+        public void Update()
         {
             // gameTime += Time.deltaTime;
             // if (gameTime > 1)
