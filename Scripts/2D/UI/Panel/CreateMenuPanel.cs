@@ -12,7 +12,7 @@
         public CreateMenuPanel()
         {
             this.Name = "CreateMenu";
-            this.Open();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.OnClick_StartCreate);
             Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
         }

@@ -1,10 +1,12 @@
 ﻿namespace LAB2D
 {
+    using System;
     using UnityEngine;
 
     /// <summary>
     /// 床
     /// </summary>
+    [Serializable]
     public abstract class BedItem : FurnitureItem
     {
         public BedItem()

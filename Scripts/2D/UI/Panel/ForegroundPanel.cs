@@ -21,7 +21,7 @@
         public ForegroundPanel()
         {
             this.Name = "Foreground";
-            this.Open();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "Pause").onClick.AddListener(this.OnClick_Pause);
             Button attack = Tool.GetComponentInChildren<Button>(this.Panel, "Attack");
             if (attack != null)

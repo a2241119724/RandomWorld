@@ -6,6 +6,12 @@
     public interface IBasePanel
     {
         /// <summary>
+        /// 初始化面板
+        /// </summary>
+        /// <param name="root">面板根</param>
+        void Init(string root = ResourceConstant.UI_TAG);
+
+        /// <summary>
         /// 进入面板
         /// </summary>
         void OnEnter();

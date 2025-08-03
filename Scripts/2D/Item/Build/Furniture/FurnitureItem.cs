@@ -1,8 +1,11 @@
-﻿namespace LAB2D
+﻿using System;
+
+namespace LAB2D
 {
     /// <summary>
     /// 家具
     /// </summary>
+    [Serializable]
     public abstract class FurnitureItem : BuildItem
     {
     }

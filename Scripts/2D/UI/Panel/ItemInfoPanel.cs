@@ -15,7 +15,7 @@
         public ItemInfoPanel()
         {
             this.Name = "ItemInfo";
-            this.Open();
+            this.Init();
             this.textUI = Tool.GetComponentInChildren<Text>(this.Panel, "Info");
             this.character = Tool.GetComponentInChildren<Transform>(this.Panel, "Character");
         }
