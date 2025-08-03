@@ -1,1 +1,0 @@
-# [MenuItem()]必须放到Editor文件夹下

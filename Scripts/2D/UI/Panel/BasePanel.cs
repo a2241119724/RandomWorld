@@ -29,11 +29,8 @@
         /// </summary>
         protected PanelController Controller { get; set; }
 
-        /// <summary>
-        /// 打开面板
-        /// </summary>
-        /// <param name="root">面板根</param>
-        public void Open(string root = ResourceConstant.UI_TAG)
+        /// <inheritdoc/>
+        public void Init(string root = ResourceConstant.UI_TAG)
         {
             Transform t = GameObject.FindGameObjectWithTag(root).transform.Find(this.Name);
             if (t == null)

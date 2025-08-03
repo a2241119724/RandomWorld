@@ -24,7 +24,7 @@
         public WorkerTaskTogglePanel()
         {
             this.Name = "WorkerTaskToggle";
-            this.Open();
+            this.Init();
             Transform title = Tool.GetComponentInChildren<Transform>(this.Panel, "Title");
             foreach (KeyValuePair<WorkerTask.WorkerTaskTypeEnum, string> pair in TypeToChinese)
             {

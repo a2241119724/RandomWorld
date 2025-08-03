@@ -14,6 +14,40 @@
         private static readonly string Exclude = @"^$"; // 排除,不优化
 
         /// <summary>
+        /// 优化Text
+        /// </summary>
+        [MenuItem("Tools/优化Text")]
+        public static void UpdateText()
+        {
+            EditorTool.UpdateCommon(
+                (Text text) =>
+            {
+                // 字体
+                text.font = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
+
+                // 清晰倍数
+                float multiple = 2;
+
+                // 清晰度
+                text.fontSize = 20 * (int)multiple;
+                RectTransform rectTransform = text.GetComponent<RectTransform>();
+                RectTransform parent = rectTransform.parent.GetComponent<RectTransform>();
+                if (parent == null)
+                {
+                    Debug.Log("父物体:" + text.name + "没有RectTransform");
+                    return;
+                }
+
+                rectTransform.pivot = Vector2.zero;
+                rectTransform.localScale = new Vector3(1 / multiple, 1 / multiple, 1);
+                rectTransform.offsetMax = Vector2.zero;
+                rectTransform.offsetMin = Vector2.zero;
+                rectTransform.anchorMin = new Vector2(0, 0);
+                rectTransform.anchorMax = new Vector2(multiple, multiple);
+            }, @"^.*\[[^]]*E[^]]*\]$");
+        }
+
+        /// <summary>
         /// 修改RoundCorner半径
         /// </summary>
         [MenuItem("Tools/修改RoundCorner")]
@@ -50,9 +84,35 @@
         }
 
         /// <summary>
-        /// 优化按钮
+        /// 修改Button边框
         /// </summary>
-        [MenuItem("Tools/修改Button")]
+        [MenuItem("Tools/修改Button边框")]
+        public static void UpdateButton1()
+        {
+            EditorTool.UpdateCommon((Button button) =>
+            {
+                RoundCorner roundCorner = button.GetComponent<RoundCorner>();
+                if (roundCorner == null)
+                {
+                    return;
+                }
+
+                Transform transform = button.GetComponent<Transform>();
+                if (transform.Find("Border") != null)
+                {
+                    return;
+                }
+
+                GameObject border = Resources.Load<GameObject>("Prefabs/Border");
+                GameObject g = GameObject.Instantiate(border, button.transform);
+                g.name = "Border";
+            });
+        }
+
+        /// <summary>
+        /// 修改Button颜色
+        /// </summary>
+        [MenuItem("Tools/修改Button颜色")]
         public static void UpdateButton()
         {
             var buttons = Resources.FindObjectsOfTypeAll(typeof(Button));
@@ -148,14 +208,15 @@
         /// </summary>
         /// <typeparam name="T">组件类型</typeparam>
         /// <param name="action">具体执行内容</param>
-        public static void UpdateCommon<T>(Action<T> action)
+        /// <param name="exclude">通过名称正则排除</param>
+        public static void UpdateCommon<T>(Action<T> action, string exclude = @"^$")
             where T : Component
         {
             var coponents = Resources.FindObjectsOfTypeAll(typeof(T));
             for (int i = 0; i < coponents.Length; i++)
             {
                 T component = coponents[i] as T;
-                if (Regex.IsMatch(component.name, Exclude) || component.GetComponent<ExcludeEditor>() != null)
+                if (Regex.IsMatch(component.name, exclude) || component.GetComponent<ExcludeEditor>() != null)
                 {
                     Debug.Log("排除:" + component.name);
                     continue;

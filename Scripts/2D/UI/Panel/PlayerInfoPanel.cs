@@ -10,7 +10,7 @@
         public PlayerInfoPanel()
         {
             this.Name = "PlayerInfo";
-            this.Open();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
         }
 

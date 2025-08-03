@@ -1,10 +1,12 @@
 ﻿namespace LAB2D
 {
+    using System;
     using UnityEngine.Tilemaps;
 
     /// <summary>
     /// 双人床
     /// </summary>
+    [Serializable]
     public class DoubleBed : BedItem
     {
         public DoubleBed()

@@ -182,7 +182,9 @@
                 {
                     Vector3Int posMap = new (i, j, 0);
                     Character character = ItemInfoUI.Instance.GetCharacter(posMap);
-                    if (character != null)
+
+                    // 临近的位置可能会获得多个角色, 所以这里只取第一个
+                    if (character != null && SelectManagerPool.Instance.GetForCharacter(character) == null)
                     {
                         SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
                         selectUI.Character = character;

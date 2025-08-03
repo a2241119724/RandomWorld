@@ -13,7 +13,7 @@
         public JoinMenuPanel()
         {
             this.Name = "JoinMenu";
-            this.Open();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "StartJoin").onClick.AddListener(this.OnClick_StartJoin);
             Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
         }

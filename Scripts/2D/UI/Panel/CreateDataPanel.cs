@@ -17,7 +17,7 @@
         public CreateDataPanel()
         {
             this.Name = "CreateData";
-            this.Open();
+            this.Init();
             Transform g1 = Tool.GetComponentInChildren<Transform>(this.Panel, "MapHeight");
             Slider s1 = g1.Find("Bar").GetComponent<Slider>();
             this.height = (int)s1.value;

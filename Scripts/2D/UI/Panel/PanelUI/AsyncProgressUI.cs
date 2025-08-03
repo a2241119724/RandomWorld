@@ -52,10 +52,10 @@
                 return;
             }
 
-            this.slider = this.transform.Find("Center/ProgressBar").GetComponent<Slider>();
+            this.slider = this.transform.Find("Center/Bar").GetComponent<Slider>();
             if (this.slider == null)
             {
-                LogManager.Instance.Log("slider Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Progress/Bar Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
         }

@@ -10,7 +10,7 @@
         public AIChatPanel()
         {
             this.Name = "AIChat";
-            this.Open();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "Send").onClick.AddListener(this.OnClick_Send);
         }
 
