@@ -19,6 +19,14 @@
         /// </summary>
         public static IsAvailableMap Instance { get; private set; }
 
+        /// <inheritdoc/>
+        public override void Awake()
+        {
+            base.Awake();
+            Instance = this;
+            this.selectPosS = new List<Vector3Int>();
+        }
+
         /// <summary>
         /// 展示周围grid的是否可建造
         /// </summary>
@@ -115,14 +123,6 @@
             }
             while (flag);
             return new Vector3Int(x, y, 0);
-        }
-
-        /// <inheritdoc/>
-        protected override void Awake()
-        {
-            base.Awake();
-            Instance = this;
-            this.selectPosS = new List<Vector3Int>();
         }
 
         /// <summary>

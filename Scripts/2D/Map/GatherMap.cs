@@ -13,6 +13,13 @@
         /// </summary>
         public static GatherMap Instance { get; private set; }
 
+        /// <inheritdoc/>
+        public override void Awake()
+        {
+            base.Awake();
+            Instance = this;
+        }
+
         /// <summary>
         /// 添加采集物
         /// </summary>
@@ -29,13 +36,6 @@
         public void CancelGather(Vector3Int posMap)
         {
             this.tilemap.SetTile(posMap, null);
-        }
-
-        /// <inheritdoc/>
-        protected override void Awake()
-        {
-            base.Awake();
-            Instance = this;
         }
     }
 }

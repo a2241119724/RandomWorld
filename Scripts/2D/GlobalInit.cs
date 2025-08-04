@@ -17,32 +17,6 @@
         /// </summary>
         public static GlobalInit Instance { get; private set; }
 
-        /// <summary>
-        /// 展示通知.
-        /// </summary>
-        /// <param name="text">通知内容.</param>
-        public void ShowTip(string text)
-        {
-            GameObject g = Instantiate(this.tip);
-            if (g == null)
-            {
-                LogManager.Instance.Log("tip Instantiate Error!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            g.name = this.tip.name;
-            g.GetComponent<TipUI>().SetText(text);
-            g.transform.SetParent(this.transform, false);
-
-            // 由于实例化产生形状变化,重新设置
-            // g.transform.localScale = Vector3.zero;
-            // RectTransform rt = g.GetComponent<RectTransform>();
-            // rt.offsetMin = Vector2.zero;
-            // rt.offsetMax = Vector2.zero;
-            // Vector3 v = rt.localPosition; // 相对坐标
-            // rt.localPosition = new Vector3(v.x, v.y, 0);
-        }
-
         public void Awake()
         {
             Instance = this;
@@ -115,6 +89,32 @@
                     PanelController.Instance.Close();
                 }
             }
+        }
+
+        /// <summary>
+        /// 展示通知.
+        /// </summary>
+        /// <param name="text">通知内容.</param>
+        public void ShowTip(string text)
+        {
+            GameObject g = Instantiate(this.tip);
+            if (g == null)
+            {
+                LogManager.Instance.Log("tip Instantiate Error!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            g.name = this.tip.name;
+            g.GetComponent<TipUI>().SetText(text);
+            g.transform.SetParent(this.transform, false);
+
+            // 由于实例化产生形状变化,重新设置
+            // g.transform.localScale = Vector3.zero;
+            // RectTransform rt = g.GetComponent<RectTransform>();
+            // rt.offsetMin = Vector2.zero;
+            // rt.offsetMax = Vector2.zero;
+            // Vector3 v = rt.localPosition; // 相对坐标
+            // rt.localPosition = new Vector3(v.x, v.y, 0);
         }
 
         private void WorkerUpdate()

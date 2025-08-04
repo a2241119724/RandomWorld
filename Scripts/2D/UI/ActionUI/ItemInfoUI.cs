@@ -49,7 +49,7 @@
                     return;
                 }
 
-                this.selectPos = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+                this.selectPos = TileMap.Instance.GetMapPosByMouse();
                 SelectUI selectUI;
                 if (Input.GetKey(KeyCode.LeftControl))
                 {

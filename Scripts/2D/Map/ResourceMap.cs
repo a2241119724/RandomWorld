@@ -23,6 +23,15 @@
         /// </summary>
         public ResourceMapData ResourceMapDataLAB { get; set; }
 
+        /// <inheritdoc/>
+        public override void Awake()
+        {
+            base.Awake();
+            Instance = this;
+            this.resourceTileMapOne = Tool.GetComponentInChildren<Tilemap>(this.transform.parent.gameObject, "ResourceMapOne");
+            this.ResourceMapDataLAB = new ResourceMapData(0, 100);
+        }
+
         /// <summary>
         /// 生成资源，添加采摘任务
         /// </summary>
@@ -146,15 +155,6 @@
         {
             base.SaveData();
             Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.ResourceMapDataLAB);
-        }
-
-        /// <inheritdoc/>
-        protected override void Awake()
-        {
-            base.Awake();
-            Instance = this;
-            this.resourceTileMapOne = Tool.GetComponentInChildren<Tilemap>(this.transform.parent.gameObject, "ResourceMapOne");
-            this.ResourceMapDataLAB = new ResourceMapData(0, 100);
         }
 
         /// <summary>

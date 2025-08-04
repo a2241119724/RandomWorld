@@ -21,6 +21,14 @@
         /// </summary>
         public static BuildMap Instance { get; private set; }
 
+        /// <inheritdoc/>
+        public override void Awake()
+        {
+            base.Awake();
+            Instance = this;
+            this.targetMaps = new List<Vector3Int>();
+        }
+
         /// <summary>
         /// Color a 0.5f代表有碰撞体，0.49f代表没有碰撞体，
         /// </summary>
@@ -130,13 +138,6 @@
             return Mathf.Abs(this.tilemap.GetColor(posMap).a - 0.49f) < 1e-5
                 || Mathf.Abs(this.tilemap.GetColor(posMap).a - 0.99f) < 1e-5
                 || this.IsFreeTile(posMap);
-        }
-
-        protected override void Awake()
-        {
-            base.Awake();
-            Instance = this;
-            this.targetMaps = new List<Vector3Int>();
         }
     }
 }
