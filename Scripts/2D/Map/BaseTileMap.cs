@@ -13,6 +13,8 @@
         /// </summary>
         protected Tilemap tilemap;
 
+        private static string alreadyShowMap = string.Empty; // 所有的Map是否已经在显示
+
         /// <summary>
         /// 地图纵向长度
         /// </summary>
@@ -22,6 +24,31 @@
         /// 地图横向长度
         /// </summary>
         public static int Width { get; set; }
+
+        public virtual void Awake()
+        {
+            this.tilemap = this.GetComponent<Tilemap>();
+        }
+
+        public virtual void Update()
+        {
+            Vector3Int posMap = TileMap.Instance.GetMapPosByMouse();
+            if (this.tilemap.HasTile(posMap) && (BaseTileMap.alreadyShowMap.Equals(string.Empty) || BaseTileMap.alreadyShowMap.Equals(this.GetType().Name)))
+            {
+                BaseTileMap.alreadyShowMap = this.GetType().Name;
+                TileInfoUI.Instance.SetContent(this.tilemap.GetTile(posMap).name);
+                TileInfoUI.Instance.SetPostion(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+            }
+            else
+            {
+                // 已经抢到显示的Map退出,则关闭显示
+                if (BaseTileMap.alreadyShowMap.Equals(this.GetType().Name))
+                {
+                    BaseTileMap.alreadyShowMap = string.Empty;
+                    TileInfoUI.Instance.Init();
+                }
+            }
+        }
 
         /// <summary>
         /// 获取瓦片
@@ -61,11 +88,6 @@
         public virtual bool IsCanReach(Vector3Int posMap)
         {
             return this.tilemap.GetColliderType(posMap) == Tile.ColliderType.None;
-        }
-
-        protected virtual void Awake()
-        {
-            this.tilemap = this.GetComponent<Tilemap>();
         }
     }
 }

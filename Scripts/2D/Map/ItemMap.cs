@@ -20,6 +20,14 @@
         /// </summary>
         public ItemMapData ItemMapDataLAB { get; set; }
 
+        /// <inheritdoc/>
+        public override void Awake()
+        {
+            base.Awake();
+            Instance = this;
+            this.ItemMapDataLAB = new ItemMapData();
+        }
+
         /// <summary>
         /// 隐藏图标
         /// </summary>
@@ -100,14 +108,6 @@
 
                 // .setEndTarget(InventoryManager.Instance.getCell(id))
                 .SetResourceInfo(resourceInfo).SetStartTarget(posMap).Build());
-        }
-
-        /// <inheritdoc/>
-        protected override void Awake()
-        {
-            base.Awake();
-            Instance = this;
-            this.ItemMapDataLAB = new ItemMapData();
         }
 
         private void OnTriggerEnter2D(Collider2D collision)

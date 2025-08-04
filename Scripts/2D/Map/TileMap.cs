@@ -68,6 +68,17 @@
         /// </summary>
         public MapTileType[,] MapTiles { get; set; }
 
+        /// <inheritdoc/>
+        public override void Awake()
+        {
+            base.Awake();
+            Instance = this;
+        }
+
+        public override void Update()
+        {
+        }
+
         /// <summary>
         /// 显示地图
         /// </summary>
@@ -210,6 +221,15 @@
         }
 
         /// <summary>
+        /// 获取鼠标位置
+        /// </summary>
+        /// <returns>Map位置</returns>
+        public Vector3Int GetMapPosByMouse()
+        {
+            return this.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+        }
+
+        /// <summary>
         /// 地图索引是否越界
         /// </summary>
         /// <param name="x">真实坐标x</param>
@@ -349,13 +369,6 @@
                     }
                 }
             }
-        }
-
-        /// <inheritdoc/>
-        protected override void Awake()
-        {
-            base.Awake();
-            Instance = this;
         }
 
         /// <summary>

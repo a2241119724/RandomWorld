@@ -24,8 +24,9 @@
         public void SetTarget(Vector3Int posMap)
         {
             this.Target = posMap;
-            Vector3 pos = TileMap.Instance.MapPosToWorldPos(posMap);
-            this.transform.position = new Vector3(pos.x, pos.y, 0.0f);
+            Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(posMap);
+            worldPos.z = 0;
+            this.transform.position = worldPos;
         }
 
         /// <inheritdoc/>
