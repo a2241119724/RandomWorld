@@ -25,6 +25,7 @@
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
+            LogManager.Instance.Log("已连接服务器", LogManager.LogLevel.Info);
 
             // 设置当前大厅类型为sqlLobby
             TypedLobby typedLobby = new ("myLobby", LobbyType.SqlLobby);
@@ -39,6 +40,7 @@
         public override void OnJoinedLobby()
         {
             base.OnJoinedLobby();
+            LogManager.Instance.Log("进入大厅", LogManager.LogLevel.Info);
         }
 
         /// <summary>
@@ -47,6 +49,7 @@
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
+            LogManager.Instance.Log("加入房间成功", LogManager.LogLevel.Info);
 
             // GameObject player = PhotonNetwork.Instantiate(Constant.PREFAB + _player.name, Vector3.zero, Quaternion.identity);
             // if (player == null)
@@ -128,7 +131,8 @@
         {
             Instance = this;
             PhotonNetwork.AutomaticallySyncScene = true;
-            this.IsOnline = false;
+
+            // this.IsOnline = false;
         }
 
         public void Start()

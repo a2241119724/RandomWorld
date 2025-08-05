@@ -2,13 +2,14 @@
 {
     using TMPro;
     using UnityEngine;
+    using UnityEngine.UI;
 
     /// <summary>
     /// 鼠标地图Tile信息
     /// </summary>
     public class TileInfoUI : MonoBehaviourInit
     {
-        private TextMeshProUGUI content;
+        private Text content;
 
         /// <summary>
         /// 单例
@@ -18,7 +19,7 @@
         public void Awake()
         {
             Instance = this;
-            this.content = this.transform.Find("Content").GetComponent<TextMeshProUGUI>();
+            this.content = this.transform.Find("Content").GetComponent<Text>();
         }
 
         /// <summary>

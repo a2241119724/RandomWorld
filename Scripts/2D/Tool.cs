@@ -264,10 +264,10 @@
             // string[] subPaths = AssetDatabase.GetAllAssetPaths();
 #if UNITY_EDITOR
             // 开发阶段加载path,并保存起来
-            LoadPaths1(DataPath, map);
+            DoLoadPaths(DataPath, map);
             SaveDataByBinary(Application.streamingAssetsPath + "/resourcePath.lab", map);
 #else
-            map = loadDataByBinary<Dictionary<string, string>>(Application.streamingAssetsPath + "/resourcePath.lab");
+            map = Tool.LoadDataByBinary<Dictionary<string, string>>(Application.streamingAssetsPath + "/resourcePath.lab");
 #endif
             return map;
         }
@@ -487,11 +487,23 @@
         }
 
         /// <summary>
+        /// 是否是房间主人
+        /// </summary>
+        /// <param name="action">执行.</param>
+        public static void Master(Action action)
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                action();
+            }
+        }
+
+        /// <summary>
         /// 递归获取路径.
         /// </summary>
         /// <param name="path">路径.</param>
         /// <param name="map">out.</param>
-        private static void LoadPaths1(string path, Dictionary<string, string> map)
+        private static void DoLoadPaths(string path, Dictionary<string, string> map)
         {
             DirectoryInfo directoryInfo = new (path);
             FileInfo[] fileInfos = directoryInfo.GetFiles();
@@ -507,7 +519,7 @@
             DirectoryInfo[] subDirectoryInfos = directoryInfo.GetDirectories();
             foreach (DirectoryInfo subDirectoryInfo in subDirectoryInfos)
             {
-                LoadPaths1(subDirectoryInfo.FullName, map);
+                DoLoadPaths(subDirectoryInfo.FullName, map);
             }
         }
     }
