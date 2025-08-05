@@ -2,19 +2,21 @@
 {
     using System;
     using System.Collections;
+    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
     /// <summary>
     /// 地图
     /// </summary>
-    public class TileMap : BaseTileMap
+    public class TileMap : BaseTileMap, IPunObservable
     {
-        // private readonly int SEND_QUANTITY = 10000; // 一次发送数量
-        // private bool isOnce = false; // 是否创建完成
-        // private int sendIndex = 0; // 发送数据的索引
-        // private bool isSyncing; // 是否正在发送所有地图数据
+        private readonly int sentQuantity = 10000; // 一次发送数量
+        private bool isOnce = false; // 是否创建完成
+        private int sendIndex = 0; // 发送数据的索引
         private int randomCount; // 随机点的数量
+
+        // private bool isSyncing; // 是否正在发送所有地图数据
 
         /// <summary>
         /// 瓦片类型
@@ -108,8 +110,8 @@
         /// </summary>
         public void InitData()
         {
-            // isSyncing = true;
-            // sendIndex = 0;
+            // this.isSyncing = true;
+            this.sendIndex = 0;
         }
 
         /// <summary>
@@ -308,6 +310,47 @@
         }
 
         /// <summary>
+        /// 传输数据
+        /// </summary>
+        /// <param name="stream">传输流</param>
+        /// <param name="info">信息</param>
+        public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+        {
+            if (stream.IsWriting)
+            {
+                Tool.Master(() =>
+                {
+                    // if (this.isSyncing)
+                    // {
+                    stream.SendNext(Height);
+                    stream.SendNext(Width);
+                    this.SerializeTiles(stream);
+
+                    // }
+                });
+            }
+            else
+            {
+                Height = (int)stream.ReceiveNext();
+                Width = (int)stream.ReceiveNext();
+
+                // 每个角色加入只接收一次全局信息
+                if (!this.isOnce)
+                {
+                    this.isOnce = true;
+                    this.MapTiles = new MapTileType[Height, Width];
+                    this.CreateArroundTile();
+                }
+
+                // 控制将所有数据接收一边,后面的重复数据就不接收了
+                if (this.MapTiles[Height - 1, Width - 1] == MapTileType.Default && stream.PeekNext() is byte[])
+                {
+                    this.DeserializeTiles(stream);
+                }
+            }
+        }
+
+        /// <summary>
         /// 以(i,j)为中心,找最近的非默认板块,并赋给当前默认板块
         /// </summary>
         /// <param name="tiles">中心默认板块</param>
@@ -407,97 +450,63 @@
             }
         }
 
-        // /// <summary>
-        // /// 传输数据
-        // /// </summary>
-        // /// <param name="stream"></param>
-        // /// <param name="info"></param>
-        // public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-        // {
-        //     if (stream.IsWriting)
-        //     {
-        //         Tool.master(() =>
-        //         {
-        //             if (isSyncing)
-        //             {
-        //                 stream.SendNext(Length);
-        //                 stream.SendNext(Width);
-        //                 SerializeTiles(stream);
-        //             }
-        //         });
-        //     }
-        //     else
-        //     {
-        //         Length = (int)stream.ReceiveNext();
-        //         Width = (int)stream.ReceiveNext();
-        //         // 每个角色加入只接收一次全局信息
-        //         if (!isOnce)
-        //         {
-        //             isOnce = true;
-        //             MapTiles = new Tiles[Length, Width];
-        //             createArroundTile();
-        //         }
-        //         // 控制将所有数据接收一边,后面的重复数据就不接收了
-        //         if (MapTiles[Length - 1, Width - 1] == Tiles.Default && stream.PeekNext() is byte[])
-        //         {
-        //             DeserializeTiles(stream);
-        //         }
-        //     }
-        // }
+        /// <summary>
+        /// 序列化地图
+        /// 协议LAB_1
+        /// 每次发送2 + sendQuantity
+        /// 前2个字节标识传输地图的起始索引系数[start,(start + 1))
+        /// [start * sendQuantity,(start + 1) * sendQuantity)
+        /// </summary>
+        private void SerializeTiles(PhotonStream stream)
+        {
+            // 每次发送1000个地图数据
+            byte[] tiles = new byte[this.sentQuantity + 2];
 
-        // /// <summary>
-        // /// 序列化地图
-        // /// 协议LAB_1
-        // /// 每次发送2 + sendQuantity
-        // /// 前2个字节标识传输地图的起始索引系数[start,(start + 1))
-        // /// [start * sendQuantity,(start + 1) * sendQuantity)
-        // /// </summary>
-        // private void SerializeTiles(PhotonStream stream)
-        // {
-        //     // 每次发送1000个地图数据
-        //     byte[] tiles = new byte[SEND_QUANTITY + 2];
-        //     // 前两字节放数据范围(小端存储)
-        //     tiles[0] = (byte)(sendIndex % (1 << 8));
-        //     tiles[1] = (byte)(sendIndex / (1 << 8));
-        //     int temp = 2; // 从而开始存数据
-        //     int len = (sendIndex + 1) * SEND_QUANTITY;
-        //     int total = Width * Length;
-        //     for (int i = sendIndex * SEND_QUANTITY; i < len; i++)
-        //     {
-        //         // 如果没有充满传输窗口，则此次为传输最后一次
-        //         if (i >= total)
-        //         {
-        //             stream.SendNext(tiles);
-        //             isSyncing = false;
-        //             return;
-        //         }
-        //         tiles[temp++] = (byte)MapTiles[i / Width, i % Width];
-        //     }
-        //     stream.SendNext(tiles);
-        //     ++sendIndex;
-        // }
+            // 前两字节放数据范围(小端存储)
+            tiles[0] = (byte)(this.sendIndex % (1 << 8));
+            tiles[1] = (byte)(this.sendIndex / (1 << 8));
+            int temp = 2; // 从而开始存数据
+            int len = (this.sendIndex + 1) * this.sentQuantity;
+            int total = Width * Height;
+            for (int i = this.sendIndex * this.sentQuantity; i < len; i++)
+            {
+                // 如果没有充满传输窗口，则此次为传输最后一次
+                if (i >= total)
+                {
+                    stream.SendNext(tiles);
 
-        // /// <summary>
-        // /// 反序列化地图
-        // /// </summary>
-        // private void DeserializeTiles(PhotonStream stream)
-        // {
-        //     byte[] tiles = (byte[])stream.ReceiveNext();
-        //     int temp = 2;
-        //     int start = tiles[1] * (1 << 8) + tiles[0];
-        //     int len = (start + 1) * SEND_QUANTITY;
-        //     int total = Width * Length;
-        //     for (int i = start * SEND_QUANTITY; i < len; i++)
-        //     {
-        //         MapTiles[i / Width, i % Width] = (Tiles)tiles[temp++];
-        //         if (i == (total - 1))
-        //         {
-        //             // 创建新加入的玩家
-        //             PlayerManager.Instance.create();
-        //             return;
-        //         }
-        //     }
-        // }
+                    // this.isSyncing = false;
+                    return;
+                }
+
+                tiles[temp++] = (byte)this.MapTiles[i / Width, i % Width];
+            }
+
+            stream.SendNext(tiles);
+            ++this.sendIndex;
+        }
+
+        /// <summary>
+        /// 反序列化地图
+        /// </summary>
+        private void DeserializeTiles(PhotonStream stream)
+        {
+            byte[] tiles = (byte[])stream.ReceiveNext();
+            int temp = 2;
+            int start = (tiles[1] * (1 << 8)) + tiles[0];
+            int len = (start + 1) * this.sentQuantity;
+            int total = Width * Height;
+            for (int i = start * this.sentQuantity; i < len; i++)
+            {
+                this.MapTiles[i / Width, i % Width] = (MapTileType)tiles[temp++];
+                if (i == (total - 1))
+                {
+                    // 创建新加入的玩家
+                    PlayerManager.Instance.Create();
+                    return;
+                }
+            }
+        }
 
         /// <summary>
         /// 瓦片数据

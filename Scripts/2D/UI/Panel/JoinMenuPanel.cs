@@ -52,7 +52,7 @@
             }
 
             this.Controller.Close();
-            this.Controller.Show(ForegroundPanel.Instance);
+            this.Controller.Show(AsyncProgressPanel.Instance);
         }
 
         private void OnClick_Back()

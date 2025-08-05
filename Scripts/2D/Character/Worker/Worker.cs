@@ -49,7 +49,7 @@
 
         private Dictionary<int, ResourceInfo> resourceInfos; // 携带的资源
         private Slider progress;
-        private TextMeshProUGUI nameUI;
+        private Text nameUI;
         private CharacterStatusUI statusBar; // 记录实例化血条
 
         /// <summary>
@@ -95,7 +95,7 @@
             base.Awake();
             this.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker>(this);
             this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
-            this.nameUI = this.transform.Find("Name").GetComponent<TextMeshProUGUI>();
+            this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
             this.progress = this.transform.Find("Progress").GetComponent<Slider>();
             this.progress.gameObject.SetActive(false);
