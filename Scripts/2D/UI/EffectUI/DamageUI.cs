@@ -27,7 +27,7 @@
             this.content.fontSize = this.param[colorIndex].FontSize;
         }
 
-        private void Awake()
+        public void Awake()
         {
             this.content = this.transform.Find("Text").GetComponent<Text>();
             if (this.content == null)
@@ -46,7 +46,7 @@
             };
         }
 
-        private void Start()
+        public void Start()
         {
             // 由于transform，不能放到Awake中
             this.parent = this.transform.parent;
@@ -59,7 +59,7 @@
             Destroy(this.gameObject, DestroyTime);
         }
 
-        private void Update()
+        public void Update()
         {
             // 不随父元素旋转而旋转
             // 不随父元素旋转而移动(通过世界坐标偏移量实现)

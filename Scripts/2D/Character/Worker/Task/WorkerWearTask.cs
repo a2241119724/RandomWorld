@@ -63,7 +63,7 @@
             InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);
 
             // 删除图标
-            ItemMap.Instance.HindTile(this.TargetMap);
+            ItemMap.Instance.DeleteTile(this.TargetMap);
         }
 
 #pragma warning disable SA1600 // Elements should be documented

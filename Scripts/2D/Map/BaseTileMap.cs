@@ -1,17 +1,20 @@
 ﻿namespace LAB2D
 {
+    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
     /// <summary>
     /// 基地图
     /// </summary>
-    public abstract class BaseTileMap : AMonoSaveData
+    public abstract class BaseTileMap : AMonoSaveData, ISyncData
     {
         /// <summary>
         /// 地图
         /// </summary>
         protected Tilemap tilemap;
+
+        private static string alreadyShowMap = string.Empty; // 所有的Map是否已经在显示
 
         /// <summary>
         /// 地图纵向长度
@@ -22,6 +25,48 @@
         /// 地图横向长度
         /// </summary>
         public static int Width { get; set; }
+
+        /// <summary>
+        /// 同步数据
+        /// </summary>
+        public PhotonView PhotonView { get; set; }
+
+        public virtual void Awake()
+        {
+            this.tilemap = this.GetComponent<Tilemap>();
+            this.PhotonView = this.GetComponent<PhotonView>();
+        }
+
+        public virtual void Update()
+        {
+            if (Input.GetKeyUp(KeyCode.LeftControl))
+            {
+                TileInfoUI.Instance.Init();
+            }
+
+            // 选择鼠标左键才会显示,在进度条界面不显示
+            if (!Input.GetKey(KeyCode.LeftControl) || PanelController.Instance.Panels.Peek() == AsyncProgressPanel.Instance)
+            {
+                return;
+            }
+
+            Vector3Int posMap = TileMap.Instance.GetMapPosByMouse();
+            if (this.tilemap.HasTile(posMap) && (BaseTileMap.alreadyShowMap.Equals(string.Empty) || BaseTileMap.alreadyShowMap.Equals(this.GetType().Name)))
+            {
+                BaseTileMap.alreadyShowMap = this.GetType().Name;
+                TileInfoUI.Instance.SetContent(this.tilemap.GetTile(posMap).name);
+                TileInfoUI.Instance.SetPostion(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+            }
+            else
+            {
+                // 已经抢到显示的Map退出,则关闭显示
+                if (BaseTileMap.alreadyShowMap.Equals(this.GetType().Name))
+                {
+                    BaseTileMap.alreadyShowMap = string.Empty;
+                    TileInfoUI.Instance.Init();
+                }
+            }
+        }
 
         /// <summary>
         /// 获取瓦片
@@ -63,9 +108,12 @@
             return this.tilemap.GetColliderType(posMap) == Tile.ColliderType.None;
         }
 
-        protected virtual void Awake()
+        public virtual void SyncDataReq(byte[] data)
         {
-            this.tilemap = this.GetComponent<Tilemap>();
+        }
+
+        public virtual void SyncDataResp(byte[] data)
+        {
         }
     }
 }

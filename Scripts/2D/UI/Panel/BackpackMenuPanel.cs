@@ -7,16 +7,16 @@
     /// <summary>
     /// 背包菜单面板
     /// </summary>
-    public class BackpackMenuPanel : BasePanel<BackpackMenuPanel>
+    public class BackpackMenuPanel : ABasePanel<BackpackMenuPanel>
     {
         public BackpackMenuPanel()
         {
             this.Name = "BackpackMenu";
             this.Select = new SelectItemData();
-            this.OpenPanel();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "Equip").onClick.AddListener(this.OnClick_Equip);
             Tool.GetComponentInChildren<Button>(this.Panel, "Abandon").onClick.AddListener(this.OnClick_Abandon);
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
+            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
         }
 
         /// <summary>
@@ -37,10 +37,8 @@
             base.OnExit();
         }
 
-        /// <summary>
-        /// 返回游戏
-        /// </summary>
-        public void OnClick_BackGame()
+        /// <inheritdoc/>
+        public override void OnClick_Back()
         {
             this.Controller.Close();
         }

@@ -20,7 +20,7 @@
         {
             base.OnEnter();
             this.recordTime = 0.0f;
-            this.Character.WorkerStateText.text = $"<color=red>逃跑</color>";
+            this.Character.WorkerStateText.text = this.preString;
         }
 
         /// <inheritdoc/>
@@ -39,7 +39,7 @@
                 this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
             }
 
-            this.Character.LineRenderer.positionCount = 0;
+            this.Character.Seek.LineRenderer.positionCount = 0;
             this.Character.transform.Translate(this.Character.MoveSpeed * Time.deltaTime * Vector3.up, Space.World);
         }
     }

@@ -8,7 +8,7 @@
     public class BloodUI : MonoBehaviour
     {
         // private GameObject parent; // 跟随物体
-        private void Start()
+        public void Start()
         {
             // 特效结束后销毁
             Destroy(this.gameObject, this.GetComponent<ParticleSystem>().main.startLifetime.constant);

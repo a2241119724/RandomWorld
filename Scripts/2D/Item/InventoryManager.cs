@@ -362,7 +362,7 @@
             ResourceInfo resourceInfo = Tool.DeepCopyByBinary(this.posToResource[posMap]);
             this.posToResource[posMap].Id = -1;
             this.posToResource[posMap].Count = 0;
-            ItemMap.Instance.HindTile(posMap);
+            ItemMap.Instance.DeleteTile(posMap);
             ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, posMap, this.ToString(posMap));
             return resourceInfo;
         }
@@ -386,7 +386,7 @@
             if (this.posToResource[posMap].Count == 0)
             {
                 this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
-                ItemMap.Instance.HindTile(posMap);
+                ItemMap.Instance.DeleteTile(posMap);
 
                 // 食物被吃完删除任务
                 if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == Item.ItemType.Food)
@@ -426,7 +426,7 @@
             if (this.posToResource[posMap].Count == 0)
             {
                 this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
-                ItemMap.Instance.HindTile(posMap);
+                ItemMap.Instance.DeleteTile(posMap);
 
                 // 食物被吃完删除任务
                 if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == Item.ItemType.Food)
@@ -513,7 +513,7 @@
             Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(this.posToResource[pos].Id);
             if (itemType == Item.ItemType.Weapon || itemType == Item.ItemType.Equipment)
             {
-                WearTaskUI.Instance.ShowWearTask(pos);
+                AddWearTaskUI.Instance.ShowWearTask(pos);
             }
         }
 

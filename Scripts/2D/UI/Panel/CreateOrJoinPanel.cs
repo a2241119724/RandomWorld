@@ -7,14 +7,14 @@
     /// <summary>
     /// 创建或加入面板
     /// </summary>
-    public class CreateOrJoinPanel : BasePanel<CreateOrJoinPanel>
+    public class CreateOrJoinPanel : ABasePanel<CreateOrJoinPanel>
     {
         private TypedLobby typedLobby = null;
 
         public CreateOrJoinPanel()
         {
             this.Name = "CreateOrJoin";
-            this.OpenPanel();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "CreateRoom").onClick.AddListener(this.OnClick_CreateRoom);
             Tool.GetComponentInChildren<Button>(this.Panel, "JoinRoom").onClick.AddListener(this.OnClick_JoinRoom);
         }

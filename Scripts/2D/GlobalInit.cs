@@ -11,45 +11,30 @@
     {
         private readonly bool initPanel = true;
         private GameObject tip; // 提示框预制体
+        private List<IBasePanel> dontClosePanels; // ESC不可关闭的面板
 
         /// <summary>
         /// 单例.
         /// </summary>
         public static GlobalInit Instance { get; private set; }
 
-        /// <summary>
-        /// 展示通知.
-        /// </summary>
-        /// <param name="text">通知内容.</param>
-        public void ShowTip(string text)
-        {
-            GameObject g = Instantiate(this.tip);
-            if (g == null)
-            {
-                LogManager.Instance.Log("tip Instantiate Error!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            g.name = this.tip.name;
-            g.GetComponent<TipUI>().SetText(text);
-            g.transform.SetParent(this.transform, false);
-
-            // 由于实例化产生形状变化,重新设置
-            // g.transform.localScale = Vector3.zero;
-            // RectTransform rt = g.GetComponent<RectTransform>();
-            // rt.offsetMin = Vector2.zero;
-            // rt.offsetMax = Vector2.zero;
-            // Vector3 v = rt.localPosition; // 相对坐标
-            // rt.localPosition = new Vector3(v.x, v.y, 0);
-        }
-
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             this.tip = ResourceManager.Instance.GetPrefab("Tip");
+            Application.targetFrameRate = GlobalData.MaxFrame;
+            this.dontClosePanels = new ()
+            {
+                ForegroundPanel.Instance,
+                CreateOrJoinPanel.Instance,
+                CreateDataPanel.Instance,
+                AsyncProgressPanel.Instance,
+                NewOrContinuePanel.Instance,
+                PauseMenuPanel.Instance,
+            };
         }
 
-        private void Start()
+        public void Start()
         {
             // init panel
             if (this.initPanel)
@@ -75,12 +60,12 @@
             }
         }
 
-        private void Update()
+        public void Update()
         {
             this.WorkerUpdate();
 
             // 退出界面(除了ForegroundPanel,CreateOrJoinPanel,CreateMenuPanel,CreateDataPanel,AsyncProgressPanel)
-            if (Input.GetKey(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (PanelController.Instance.Panels.Count == 0)
                 {
@@ -88,18 +73,15 @@
                     PanelController.Instance.Show(BuildMenuPanel.Instance);
                     IsAvailableMap.Instance.ClearShow();
                 }
-                else if (PanelController.Instance.Panels.Peek() != ForegroundPanel.Instance &&
-                    PanelController.Instance.Panels.Peek() != CreateOrJoinPanel.Instance &&
-                    PanelController.Instance.Panels.Peek() != CreateMenuPanel.Instance &&
-                    PanelController.Instance.Panels.Peek() != CreateDataPanel.Instance &&
-                    PanelController.Instance.Panels.Peek() != AsyncProgressPanel.Instance)
-                { // 不能关闭这些面板
+                else
+                {
+                    // 不能关闭下面面板
                     if (PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
                     {
                         ItemInfoUI.Instance.Init();
                     }
 
-                    PanelController.Instance.Close();
+                    PanelController.Instance.Panels.Peek().OnClick_Back();
                 }
             }
 
@@ -114,6 +96,32 @@
                     PanelController.Instance.Close();
                 }
             }
+        }
+
+        /// <summary>
+        /// 展示通知.
+        /// </summary>
+        /// <param name="text">通知内容.</param>
+        public void ShowTip(string text)
+        {
+            GameObject g = Instantiate(this.tip);
+            if (g == null)
+            {
+                LogManager.Instance.Log("tip Instantiate Error!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            g.name = this.tip.name;
+            g.GetComponent<TipUI>().SetText(text);
+            g.transform.SetParent(this.transform, false);
+
+            // 由于实例化产生形状变化,重新设置
+            // g.transform.localScale = Vector3.zero;
+            // RectTransform rt = g.GetComponent<RectTransform>();
+            // rt.offsetMin = Vector2.zero;
+            // rt.offsetMax = Vector2.zero;
+            // Vector3 v = rt.localPosition; // 相对坐标
+            // rt.localPosition = new Vector3(v.x, v.y, 0);
         }
 
         private void WorkerUpdate()

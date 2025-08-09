@@ -80,6 +80,51 @@
         [HideInInspector]
         public Character Target { get; set; } // 打击目标
 
+        /// <inheritdoc/>
+        public override void Awake()
+        {
+            base.Awake();
+            this.layerMask = LayerMask.GetMask("Tile", "Player");
+            this.Manager = new EnemyStateManager<ICharacterState, EnemyState.EnemyStateTypeEnum, Enemy>(this);
+            this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
+        }
+
+        /// <inheritdoc/>
+        public override void Start()
+        {
+            base.Start();
+            this.EnemyHead = this.transform.Find("Head");
+            if (this.EnemyHead == null)
+            {
+                LogManager.Instance.Log("enemyHead Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
+            if (this.statusBar == null)
+            {
+                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            // 更新敌人身体状况
+            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+        }
+
+        public void Update()
+        {
+            // 执行当前状态的函数
+            this.Manager.CurrentState.OnUpdate();
+
+            // 由于玩家顶着敌人会使敌人z不为0
+            Vector3 pos = this.transform.position;
+            if (Mathf.Abs(pos.z) > 0.001f)
+            {
+                pos.z = 0;
+                this.transform.position = pos;
+            }
+        }
+
         /// <summary>
         /// 攻击.
         /// </summary>
@@ -183,35 +228,6 @@
             }
         }
 
-        protected override void Awake()
-        {
-            base.Awake();
-            this.layerMask = LayerMask.GetMask("Tile", "Player");
-            this.Manager = new EnemyStateManager<ICharacterState, EnemyState.EnemyStateTypeEnum, Enemy>(this);
-            this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
-        }
-
-        protected override void Start()
-        {
-            base.Start();
-            this.EnemyHead = this.transform.Find("Head");
-            if (this.EnemyHead == null)
-            {
-                LogManager.Instance.Log("enemyHead Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
-            if (this.statusBar == null)
-            {
-                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            // 更新敌人身体状况
-            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-        }
-
         /// <summary>
         /// 死亡.
         /// </summary>
@@ -224,15 +240,6 @@
             }
 
             this.Manager.ChangeState(EnemyState.EnemyStateTypeEnum.Dead); // 进入死亡状态
-        }
-
-        private void Update()
-        {
-            // 执行当前状态的函数
-            this.Manager.CurrentState.OnUpdate();
-
-            // 由于玩家顶着敌人会使敌人z不为0
-            this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, 0);
         }
 
         private void OnCollisionStay2D(Collision2D collision)

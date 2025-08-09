@@ -7,7 +7,7 @@
     /// 将官网注册的AppId复制到设置中
     /// Photon View观察某些物体.
     /// </summary>
-    public class NetworkConnect : MonoBehaviourPunCallbacks
+    public class NetworkConnect : MonoBehaviourPunCallbacks, ILobbyCallbacks
     {
         /// <summary>
         /// 单例.
@@ -19,12 +19,27 @@
         /// </summary>
         public bool IsOnline { get; private set; } = true;
 
+        public void Awake()
+        {
+            Instance = this;
+            PhotonNetwork.AutomaticallySyncScene = true;
+
+            // this.IsOnline = false;
+        }
+
+        public void Start()
+        {
+            // 使用Photon/PhotonUnityNetworking/Resources/PhotonServerSettings连接服务器
+            PhotonNetwork.ConnectUsingSettings();
+        }
+
         /// <summary>
         /// 是否连接服务器.
         /// </summary>
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
+            LogManager.Instance.Log("已连接服务器", LogManager.LogLevel.Info);
 
             // 设置当前大厅类型为sqlLobby
             TypedLobby typedLobby = new ("myLobby", LobbyType.SqlLobby);
@@ -39,6 +54,7 @@
         public override void OnJoinedLobby()
         {
             base.OnJoinedLobby();
+            LogManager.Instance.Log("进入大厅", LogManager.LogLevel.Info);
         }
 
         /// <summary>
@@ -47,16 +63,14 @@
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
+            LogManager.Instance.Log("加入房间成功", LogManager.LogLevel.Info);
 
-            // GameObject player = PhotonNetwork.Instantiate(Constant.PREFAB + _player.name, Vector3.zero, Quaternion.identity);
-            // if (player == null)
-            // {
-            //     LogManager.Instance.log("加入房间成功", LogManager.LogLevel.Info);
-            //     return;
-            // }
-            // player.name = "Player";
-            // // 设置层级
-            // player.layer = LayerMask.NameToLayer("Player");
+            // 同步地图数据
+            SyncDataTool.SyncDataReqWrapper(TileMap.Instance.PhotonView);
+            SyncDataTool.SyncDataReqWrapper(ResourceMap.Instance.PhotonView);
+            SyncDataTool.SyncDataReqWrapper(BuildMap.Instance.PhotonView);
+            SyncDataTool.SyncDataReqWrapper(GatherMap.Instance.PhotonView);
+            SyncDataTool.SyncDataReqWrapper(ItemMap.Instance.PhotonView);
         }
 
         /// <summary>
@@ -85,21 +99,7 @@
         {
             base.OnPlayerEnteredRoom(newPlayer);
             LogManager.Instance.Log("新玩家加入", LogManager.LogLevel.Info);
-
-            // InitTip.Instance.showTip("新玩家加入");
-            // 仅需要房主传递数据给新玩家
-            if (this.IsOnline && PhotonNetwork.IsMasterClient)
-            {
-                if (TileMap.Instance != null)
-                {
-                    TileMap.Instance.InitData();
-                }
-
-                // if (EnemyManager.Instance != null)
-                // {
-                //     EnemyManager.Instance.initData();
-                // }
-            }
+            GlobalInit.Instance.ShowTip("新玩家加入");
         }
 
         /// <summary>
@@ -111,6 +111,9 @@
         {
             base.OnCreateRoomFailed(returnCode, message);
             LogManager.Instance.Log("创建房间失败!!!", LogManager.LogLevel.Error);
+            GlobalInit.Instance.ShowTip("创建房间失败");
+            PanelController.Instance.Close();
+            PanelController.Instance.Show(JoinMenuPanel.Instance);
         }
 
         /// <summary>
@@ -122,19 +125,6 @@
             base.OnDisconnected(cause);
             LogManager.Instance.Log("断开连接!!!", LogManager.LogLevel.Error);
             this.IsOnline = false;
-        }
-
-        private void Awake()
-        {
-            Instance = this;
-            PhotonNetwork.AutomaticallySyncScene = true;
-            this.IsOnline = false;
-        }
-
-        private void Start()
-        {
-            // 使用Photon/PhotonUnityNetworking/Resources/PhotonServerSettings连接服务器
-            PhotonNetwork.ConnectUsingSettings();
         }
     }
 }

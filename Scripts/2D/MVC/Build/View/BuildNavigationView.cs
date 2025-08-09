@@ -5,6 +5,11 @@
     /// </summary>
     public class BuildNavigationView : MVCNavigationView
     {
+        public void Start()
+        {
+            this.BindButton(Item.ItemType.Room, Item.ItemType.BuildOther);
+        }
+
         /// <inheritdoc/>
         protected override void Init()
         {
@@ -14,11 +19,6 @@
         private void OnEnable()
         {
             this.CurItemType = Item.ItemType.Room;
-        }
-
-        private void Start()
-        {
-            this.BindButton(Item.ItemType.Room, Item.ItemType.BuildOther);
         }
     }
 }

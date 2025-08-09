@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System.Text;
     using UnityEngine;
 
     /// <summary>
@@ -7,7 +8,8 @@
     /// </summary>
     public class WorkerSeekState : WorkerState
     {
-        private bool isOne = true;
+        // private bool isOne = true;
+        private readonly StringBuilder builder = new (128); // 减少GC
         private Vector3Int targetMap;
 
         public WorkerSeekState(Worker character)
@@ -27,7 +29,7 @@
                 return;
             }
 
-            this.isOne = true;
+            // this.isOne = true;
 
             // 没有任务
             Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
@@ -36,15 +38,13 @@
             {
                 // 有任务
                 this.targetMap = this.Character.Manager.Task.TargetMap;
-
-                // 找旁边的位置进行建造
                 float minDistance = 99999.0f;
                 Vector3Int closedPos = default;
                 foreach (Vector3Int pos in this.Character.Manager.Task.AvailableNeighborPos)
                 {
                     // 由于是斜对称
                     Vector3Int temp = new (this.targetMap.x + pos.y, this.targetMap.y + pos.x, 0);
-                    if (this.Character.IsCanReach(temp))
+                    if (ASeek.IsCanReach(temp))
                     {
                         Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(temp);
                         float distance = Mathf.Pow(worldPos.x - this.Character.transform.position.x, 2) +
@@ -65,21 +65,25 @@
                 this.targetMap = closedPos;
             }
 
-            this.Character.InitSeek(this.targetMap);
-        }
-
-        /// <inheritdoc/>
-        public override void OnExit()
-        {
-            base.OnExit();
+            this.Character.Seek.Seek(this.targetMap);
         }
 
         /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
-            this.Character.WorkerStateText.text = this.preString + $"<color=yellow>Seeking:{Mathf.RoundToInt(this.Character.SeekProgress * 100)}%</color>\n" +
-                $"Target: {this.targetMap.x},{this.targetMap.y}";
+            if (Time.frameCount % 60 == 0)
+            {
+                this.builder.Clear();
+                this.Character.WorkerStateText.text = this.builder.Append(this.preString)
+                    .Append("<color=yellow>Seeking: ")
+                    .Append(Mathf.RoundToInt(this.Character.Seek.SeekProgress * 100))
+                    .Append("%</color>\nTarget: ")
+                    .Append(this.targetMap.x)
+                    .Append(",")
+                    .Append(this.targetMap.y)
+                    .ToString();
+            }
 
             // if (Worker.SeekLock.GetLock(this.Character))
             // {
@@ -90,19 +94,25 @@
             //         this.Character.ToTarget();
             //     }
             // }
-            // 只能有一个在寻路
-            if (this.isOne)
-            {
-                this.isOne = false;
-                this.Character.ToTarget();
-            }
 
-            if (!this.Character.IsSeeking)
+            // // 只能有一个在寻路
+            // if (this.isOne)
+            // {
+            //     this.isOne = false;
+            //     this.Character.ToTarget();
+            // }
+            if (!this.Character.Seek.IsSeeking)
             {
                 // Worker.SeekLock.ReleaseLock(this.Character);
                 // 寻路结束
                 this.Character.Manager.ChangeState(WorkerStateTypeEnum.Move);
             }
+        }
+
+        /// <inheritdoc/>
+        public override void OnExit()
+        {
+            base.OnExit();
         }
     }
 }

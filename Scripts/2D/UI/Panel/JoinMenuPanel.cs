@@ -6,14 +6,14 @@
     /// <summary>
     /// 加入菜单面板
     /// </summary>
-    public class JoinMenuPanel : BasePanel<JoinMenuPanel>
+    public class JoinMenuPanel : ABasePanel<JoinMenuPanel>
     {
         private string selectRoomName; // 当前选择的房间名称
 
         public JoinMenuPanel()
         {
             this.Name = "JoinMenu";
-            this.OpenPanel();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "StartJoin").onClick.AddListener(this.OnClick_StartJoin);
             Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
         }
@@ -22,7 +22,7 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            RoomUI.Instance.ClickAndShow += this.Show;
+            JoinMenuUI.Instance.ClickAndShow += this.Show;
 
             // 回调OnRoomListUpdate
             PhotonNetwork.GetCustomRoomList(PhotonNetwork.CurrentLobby, "C0 = 1");
@@ -32,7 +32,13 @@
         public override void OnExit()
         {
             base.OnExit();
-            RoomUI.Instance.ClickAndShow -= this.Show;
+            JoinMenuUI.Instance.ClickAndShow -= this.Show;
+        }
+
+        public override void OnClick_Back()
+        {
+            this.Controller.Close();
+            this.Controller.Show(CreateOrJoinPanel.Instance);
         }
 
         private void OnClick_StartJoin()
@@ -52,13 +58,7 @@
             }
 
             this.Controller.Close();
-            this.Controller.Show(ForegroundPanel.Instance);
-        }
-
-        private void OnClick_Back()
-        {
-            this.Controller.Close();
-            this.Controller.Show(CreateOrJoinPanel.Instance);
+            this.Controller.Show(AsyncProgressPanel.Instance);
         }
 
         private void Show(string str)

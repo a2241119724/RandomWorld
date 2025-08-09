@@ -6,12 +6,12 @@
     /// <summary>
     /// 新游戏或者继续游戏面板
     /// </summary>
-    public class NewOrContinuePanel : BasePanel<NewOrContinuePanel>
+    public class NewOrContinuePanel : ABasePanel<NewOrContinuePanel>
     {
         public NewOrContinuePanel()
         {
             this.Name = "NewOrContinue";
-            this.OpenPanel();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "NewGame").onClick.AddListener(this.OnClick_NewGame);
             Tool.GetComponentInChildren<Button>(this.Panel, "ContinueGame").onClick.AddListener(this.OnClick_ContinueGame);
         }
@@ -50,6 +50,7 @@
             AsyncProgressUI.Instance.AddTotal(ASaveData.Instances.Count + AMonoSaveData.Instances.Count);
 
             // 加载数据之前,线实例化
+            ResourceConstant.IsCompleteTileMap = true;
             PlayerManager.Instance.Init();
             foreach (ASaveData saveData in ASaveData.Instances)
             {

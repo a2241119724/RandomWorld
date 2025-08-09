@@ -17,12 +17,12 @@
 
         private Transform btns;
 
-        private void Awake()
+        public void Awake()
         {
             this.btns = Tool.GetComponentInChildren<Transform>(this.gameObject, "Panel");
         }
 
-        private void Update()
+        public void Update()
         {
             if (!Input.anyKeyDown)
             {

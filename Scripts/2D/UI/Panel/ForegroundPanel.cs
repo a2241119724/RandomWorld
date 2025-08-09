@@ -7,7 +7,7 @@
     /// <summary>
     /// 游戏前景面板
     /// </summary>
-    public class ForegroundPanel : BasePanel<ForegroundPanel>
+    public class ForegroundPanel : ABasePanel<ForegroundPanel>
     {
         /// <summary>
         /// 匹配数字按键
@@ -15,13 +15,13 @@
         public readonly IBasePanel[] ToolMenus = new IBasePanel[]
         {
             BuildMenuPanel.Instance, PlayerInfoPanel.Instance, BackpackMenuPanel.Instance,
-            WorkerTaskInfoPanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
+            WorkerTaskTogglePanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
         };
 
         public ForegroundPanel()
         {
             this.Name = "Foreground";
-            this.OpenPanel();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "Pause").onClick.AddListener(this.OnClick_Pause);
             Button attack = Tool.GetComponentInChildren<Button>(this.Panel, "Attack");
             if (attack != null)

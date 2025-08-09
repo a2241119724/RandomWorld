@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System.Text;
     using UnityEngine;
 
     /// <summary>
@@ -7,6 +8,7 @@
     /// </summary>
     public class WorkerMoveState : WorkerState
     {
+        private readonly StringBuilder builder = new (128); // 减少GC
         private float recordTime = 0.0f;
 
         public WorkerMoveState(Worker worker)
@@ -31,16 +33,19 @@
         public override void OnUpdate()
         {
             base.OnUpdate();
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
-            this.Character.WorkerStateText.text = this.preString + $"Move\n" +
-                $"Target: {this.Character.TargetMap.x},{this.Character.TargetMap.y}\n" +
-                $"Position: {posMap.x},{posMap.y}\n" + $"Hungry:{Mathf.RoundToInt(this.Character.CurHungry)}\n";
-            bool isTarget = this.Character.MoveByPath();
+            this.builder.Clear();
+            bool isTarget = this.Character.Seek.MoveByPath();
             if (isTarget)
             {
                 if (this.Character.Manager.Task == null)
                 {
                     this.recordTime += Time.deltaTime;
+                    if (Time.frameCount % 60 == 0)
+                    {
+                        this.Character.WorkerStateText.text = this.builder.Append("休息: ")
+                        .Append(Mathf.RoundToInt(this.recordTime))
+                        .ToString();
+                    }
 
                     // 休息2秒
                     if (this.recordTime < 2)
@@ -56,6 +61,23 @@
                     // 有任务就进入工作状态
                     this.Character.Manager.ChangeState(WorkerStateTypeEnum.Work);
                 }
+
+                return;
+            }
+
+            if (Time.frameCount % 60 == 0)
+            {
+                Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
+                this.Character.WorkerStateText.text = this.builder.Append(this.preString)
+                    .Append("Target: ")
+                    .Append(this.Character.Seek.TargetMap.x)
+                    .Append(",")
+                    .Append(this.Character.Seek.TargetMap.y)
+                    .Append("\nPosition: ")
+                    .Append(posMap.x)
+                    .Append(",")
+                    .Append(posMap.y)
+                    .ToString();
             }
         }
     }

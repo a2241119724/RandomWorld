@@ -126,7 +126,7 @@
         /// <returns>是否成功</returns>
         public bool Execute(Worker worker)
         {
-            this.Execute1();
+            this.DoExecute();
 
             // 工作扣减疲劳值
             worker.CurTired -= Time.deltaTime * 0.1f;
@@ -134,7 +134,7 @@
             if (this.curProgress > this.maxProgress)
             {
                 this.curProgress = 0;
-                worker.SetProgress(.0f, false);
+                worker.SetProgress(this.curProgress, false);
                 if (this.IsFinish(worker))
                 {
                     this.Finish(worker);
@@ -151,7 +151,7 @@
         /// <summary>
         /// 执行
         /// </summary>
-        public virtual void Execute1()
+        public virtual void DoExecute()
         {
         }
 

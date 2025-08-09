@@ -7,12 +7,12 @@
     /// <summary>
     /// 创建面板
     /// </summary>
-    public class CreateMenuPanel : BasePanel<CreateMenuPanel>
+    public class CreateMenuPanel : ABasePanel<CreateMenuPanel>
     {
         public CreateMenuPanel()
         {
             this.Name = "CreateMenu";
-            this.OpenPanel();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.OnClick_StartCreate);
             Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
         }
@@ -27,6 +27,12 @@
         public override void OnExit()
         {
             base.OnExit();
+        }
+
+        public override void OnClick_Back()
+        {
+            this.Controller.Close();
+            this.Controller.Show(CreateOrJoinPanel.Instance);
         }
 
         private void OnClick_StartCreate()
@@ -58,7 +64,7 @@
                 RoomOptions roomOptions = new ();
                 roomOptions.IsOpen = true;
                 roomOptions.IsVisible = true;
-                roomOptions.MaxPlayers = 4;
+                roomOptions.MaxPlayers = 5;
 
                 // 游戏模式为1
                 roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable { { "C0", 1 } };
@@ -75,12 +81,6 @@
 
             this.Controller.Close();
             this.Controller.Show(NewOrContinuePanel.Instance);
-        }
-
-        private void OnClick_Back()
-        {
-            this.Controller.Close();
-            this.Controller.Show(CreateOrJoinPanel.Instance);
         }
     }
 }

@@ -15,6 +15,26 @@
         /// </summary>
         public static GatherUI Instance { get; private set; }
 
+        public void Awake()
+        {
+            Instance = this;
+        }
+
+        public void Start()
+        {
+            Tool.GetComponentInChildren<Button>(this.gameObject, "Yes").onClick.AddListener(this.Onclick_Yes);
+            Tool.GetComponentInChildren<Button>(this.gameObject, "No").onClick.AddListener(this.Onclick_No);
+        }
+
+        public void Update()
+        {
+            // 若是不在默认位置，则才返回默认位置
+            if (Input.GetMouseButtonDown(1) && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
+            {
+                this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            }
+        }
+
         /// <summary>
         /// 设置采集UI的位置
         /// </summary>
@@ -53,26 +73,6 @@
 
             WorkerTaskManager.Instance.CancelGatherTask(this.posMap);
             GatherMap.Instance.CancelGather(this.posMap);
-        }
-
-        private void Awake()
-        {
-            Instance = this;
-        }
-
-        private void Start()
-        {
-            Tool.GetComponentInChildren<Button>(this.gameObject, "Yes").onClick.AddListener(this.Onclick_Yes);
-            Tool.GetComponentInChildren<Button>(this.gameObject, "No").onClick.AddListener(this.Onclick_No);
-        }
-
-        private void Update()
-        {
-            // 若是不在默认位置，则才返回默认位置
-            if (Input.GetMouseButtonDown(1) && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
-            {
-                this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
-            }
         }
     }
 }

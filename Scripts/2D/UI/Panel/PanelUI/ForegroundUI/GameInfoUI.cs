@@ -42,7 +42,7 @@
             this.position.text = "(" + posMap.x + "," + posMap.y + ")";
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             this.fps = Tool.GetComponentInChildren<Text>(this.gameObject, "FPS");
@@ -51,12 +51,12 @@
             this.globalLight = GameObject.FindGameObjectWithTag(ResourceConstant.GLOBAL_LIGHT_TAG).GetComponent<Light2D>();
         }
 
-        private void Start()
+        public void Start()
         {
             this.StartCoroutine(this.FPS());
         }
 
-        private void Update()
+        public void Update()
         {
             // fps
             // 添加本次可能会执行的帧数

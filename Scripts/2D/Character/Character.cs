@@ -22,7 +22,7 @@
         /// <summary>
         /// 闪烁
         /// </summary>
-        protected new SpriteRenderer renderer;
+        protected SpriteRenderer spriteRenderer;
 
         /// <summary>
         /// 检测bug
@@ -31,6 +31,25 @@
 
         private GameObject damageUI; // 掉血面板
         private Color originalColor; // 原来的自身颜色
+
+        public virtual void Awake()
+        {
+            this.damageUI = ResourceManager.Instance.GetPrefab("Damage");
+            this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
+            this.checkBug = new CheckBug();
+        }
+
+        public virtual void Start()
+        {
+            this.spriteRenderer = this.GetComponent<SpriteRenderer>();
+            if (this.spriteRenderer == null)
+            {
+                LogManager.Instance.Log("renderer Not Found!!!", LogManager.LogLevel.Error);
+                return;
+            }
+
+            this.originalColor = this.spriteRenderer.color;
+        }
 
         /// <summary>
         /// 角色扣血
@@ -64,7 +83,7 @@
             g.transform.SetParent(this.transform);
 
             // 变红
-            this.renderer.color = Color.red;
+            this.spriteRenderer.color = Color.red;
             this.Invoke(nameof(this.ResetColor), 0.2f); // 一段时间后调用
 
             // if (!photonView.IsMine) return;
@@ -77,33 +96,11 @@
             }
         }
 
-        /// <summary>
-        /// 角色信息
-        /// </summary>
-        /// <returns>信息</returns>
+        /// <inheritdoc/>
         public override string ToString()
         {
             return $"{this.GetType().Name}:{this.name}\n" +
                 $"Speed:{this.MoveSpeed}\n";
-        }
-
-        protected virtual void Awake()
-        {
-            this.damageUI = ResourceManager.Instance.GetPrefab("Damage");
-            this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
-            this.checkBug = new CheckBug();
-        }
-
-        protected virtual void Start()
-        {
-            this.renderer = this.GetComponent<SpriteRenderer>();
-            if (this.renderer == null)
-            {
-                LogManager.Instance.Log("renderer Not Found!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            this.originalColor = this.renderer.color;
         }
 
         /// <summary>
@@ -116,7 +113,7 @@
         /// </summary>
         private void ResetColor()
         {
-            this.renderer.color = this.originalColor;
+            this.spriteRenderer.color = this.originalColor;
         }
 
         /// <summary>

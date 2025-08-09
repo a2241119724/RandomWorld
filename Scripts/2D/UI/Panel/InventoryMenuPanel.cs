@@ -7,7 +7,7 @@
     /// <summary>
     /// 仓库菜单面板
     /// </summary>
-    public class InventoryMenuPanel : BasePanel<InventoryMenuPanel>
+    public class InventoryMenuPanel : ABasePanel<InventoryMenuPanel>
     {
         private readonly Transform position;
         private readonly Transform type;
@@ -17,7 +17,7 @@
         public InventoryMenuPanel()
         {
             this.Name = "InventoryMenu";
-            this.OpenPanel();
+            this.Init();
             this.position = Tool.GetComponentInChildren<Transform>(this.Panel, "Position");
             this.type = Tool.GetComponentInChildren<Transform>(this.Panel, "Type");
             this.id = Tool.GetComponentInChildren<Transform>(this.Panel, "Id");
@@ -62,6 +62,12 @@
         public override void OnExit()
         {
             base.OnExit();
+        }
+
+        /// <inheritdoc/>
+        public override void OnClick_Back()
+        {
+            this.Controller.Close();
         }
     }
 }

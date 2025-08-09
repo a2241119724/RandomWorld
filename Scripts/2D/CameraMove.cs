@@ -10,12 +10,12 @@
     public class CameraMove : MonoBehaviour
     {
         private const float CameraSpeed = 5.0f; // 相机跟随速度
-        private const float EdgeSize = 1.0f; // 相机边缘跟随鼠标的大小
+        private const float EdgeSize = 3.0f; // 相机边缘跟随鼠标的大小
         private const float EdgeSpeed = 50.0f; // 相机边缘跟随速度
         private const float MouseSpeed = 2.0f; // 相机跟随鼠标速度[鼠标中键]
         private const float ScrollSpeed = 100.0f; // 相机缩放速度
-        private readonly float[] scaleThreshold = new float[] { 5, 40 }; // 相机缩放阈值
-        private readonly bool isEdgeMode = false; // 鼠标在相机边缘滑动时[相机跟随鼠标移动]
+        private readonly float[] scaleThreshold = new float[] { 5, 20 }; // 相机缩放阈值
+        private readonly bool isEdgeMode = true; // 鼠标在相机边缘滑动时[相机跟随鼠标移动]
         private bool isDown; // 是否按下鼠标中键
         private Vector3 lastMousePos; // 上一次鼠标位置[鼠标中键拖动相机]
 
@@ -68,20 +68,22 @@
             // 相机边缘跟随鼠标移动
             if (this.isEdgeMode)
             {
+                // 真实坐标x对应地图坐标y
+                Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Target);
                 float offset = Time.deltaTime * EdgeSpeed;
-                if (Input.mousePosition.x > Screen.width - EdgeSize)
+                if (Input.mousePosition.x > Screen.width - EdgeSize && posMap.y < TileMap.Width)
                 {
                     this.Target = new Vector3(this.Target.x + offset, this.Target.y, 0);
                 }
-                else if (Input.mousePosition.x < EdgeSize)
+                else if (Input.mousePosition.x < EdgeSize && posMap.y > 0)
                 {
                     this.Target = new Vector3(this.Target.x - offset, this.Target.y, 0);
                 }
-                else if (Input.mousePosition.y > Screen.height - EdgeSize)
+                else if (Input.mousePosition.y > Screen.height - EdgeSize && posMap.x < TileMap.Height)
                 {
                     this.Target = new Vector3(this.Target.x, this.Target.y + offset, 0);
                 }
-                else if (Input.mousePosition.y < EdgeSize)
+                else if (Input.mousePosition.y < EdgeSize && posMap.x > 0)
                 {
                     this.Target = new Vector3(this.Target.x, this.Target.y - offset, 0);
                 }

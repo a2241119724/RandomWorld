@@ -7,7 +7,7 @@
     /// <summary>
     /// 物品信心面板
     /// </summary>
-    public class ItemInfoPanel : BasePanel<ItemInfoPanel>
+    public class ItemInfoPanel : ABasePanel<ItemInfoPanel>
     {
         private readonly Text textUI;
         private readonly Transform character;
@@ -15,7 +15,7 @@
         public ItemInfoPanel()
         {
             this.Name = "ItemInfo";
-            this.OpenPanel();
+            this.Init();
             this.textUI = Tool.GetComponentInChildren<Text>(this.Panel, "Info");
             this.character = Tool.GetComponentInChildren<Transform>(this.Panel, "Character");
         }

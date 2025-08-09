@@ -1,14 +1,16 @@
 ﻿namespace LAB2D
 {
+    using Photon.Pun;
+
     /// <summary>
     /// 进度条面板
     /// </summary>
-    public class AsyncProgressPanel : BasePanel<AsyncProgressPanel>
+    public class AsyncProgressPanel : ABasePanel<AsyncProgressPanel>
     {
         public AsyncProgressPanel()
         {
             this.Name = "AsyncProgress";
-            this.OpenPanel();
+            this.Init();
             this.Panel.transform.GetComponent<AsyncProgressUI>().Complete += this.Complate;
         }
 
@@ -31,6 +33,9 @@
         {
             // 关闭该界面
             this.Controller.Close();
+
+            // 创建玩家
+            PlayerManager.Instance.Create();
         }
     }
 }

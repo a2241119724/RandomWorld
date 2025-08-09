@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections;
+    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
@@ -10,12 +11,6 @@
     /// </summary>
     public class TileMap : BaseTileMap
     {
-        // private readonly int SEND_QUANTITY = 10000; // 一次发送数量
-        // private bool isOnce = false; // 是否创建完成
-        // private int sendIndex = 0; // 发送数据的索引
-        // private bool isSyncing; // 是否正在发送所有地图数据
-        private int randomCount; // 随机点的数量
-
         /// <summary>
         /// 瓦片类型
         /// </summary>
@@ -64,9 +59,16 @@
         public static TileMap Instance { get; private set; }
 
         /// <summary>
-        /// 地图瓦片
+        /// 地图数据
         /// </summary>
-        public MapTileType[,] MapTiles { get; set; }
+        public TileMapData TileMapDataLAB { get; private set; }
+
+        /// <inheritdoc/>
+        public override void Awake()
+        {
+            base.Awake();
+            Instance = this;
+        }
 
         /// <summary>
         /// 显示地图
@@ -90,15 +92,6 @@
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// 使得新加入的用户调用来控制Master发送数据
-        /// </summary>
-        public void InitData()
-        {
-            // isSyncing = true;
-            // sendIndex = 0;
         }
 
         /// <summary>
@@ -137,11 +130,9 @@
         public IEnumerator Create()
         {
             AsyncProgressUI.Instance.SetTip("正在生成随机坐标...");
-
-            // 生成随机坐标
-            for (int i = 0; i < this.randomCount; i++)
+            for (int i = 0; i < this.TileMapDataLAB.RandomCount; i++)
             {
-                this.MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (MapTileType)(UnityEngine.Random.Range(2, 14) / 2);
+                this.TileMapDataLAB.MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (MapTileType)(UnityEngine.Random.Range(2, 14) / 2);
                 AsyncProgressUI.Instance.AddOneProcess();
                 if (FrameControl.Instance.IsNeedStop(1))
                 {
@@ -150,15 +141,7 @@
             }
 
             MapTileType[,] tiles = new MapTileType[Height, Width];
-            if (tiles == null)
-            {
-                LogManager.Instance.Log("tiles assign resource Error!!!", LogManager.LogLevel.Error);
-                yield break;
-            }
-
             AsyncProgressUI.Instance.SetTip("正在填补地图...");
-
-            // 循环每一个点
             for (int i = 0; i < Height; i++)
             {
                 for (int j = 0; j < Width; j++)
@@ -169,9 +152,9 @@
                     }
 
                     AsyncProgressUI.Instance.AddOneProcess();
-                    if (this.MapTiles[i, j] != MapTileType.Default)
+                    if (this.TileMapDataLAB.MapTiles[i, j] != MapTileType.Default)
                     {
-                        tiles[i, j] = this.MapTiles[i, j];
+                        tiles[i, j] = this.TileMapDataLAB.MapTiles[i, j];
                         continue;
                     }
 
@@ -179,10 +162,10 @@
                 }
             }
 
-            this.MapTiles = tiles;
+            this.TileMapDataLAB.MapTiles = tiles;
+            ResourceConstant.IsCompleteTileMap = true;
             this.CreateArroundTile();
-            this.StartCoroutine(this.ShowTilemap(this.MapTiles));
-            this.StartCoroutine(EnemyCreator.Instance.GenEnemy());
+            yield return this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
         }
 
         /// <summary>
@@ -192,9 +175,8 @@
         /// <returns>世界位置</returns>
         public Vector3 MapPosToWorldPos(Vector3Int posMap)
         {
-            return new Vector3(posMap.y, posMap.x, 0);
-
             // return new Vector3(posMap.y + 0.5f, posMap.x + 0.5f, 0);
+            return new Vector3(posMap.y, posMap.x, 0);
         }
 
         /// <summary>
@@ -204,20 +186,27 @@
         /// <returns>地图位置</returns>
         public Vector3Int WorldPosToMapPos(Vector3 worldPos)
         {
-            return new Vector3Int(Mathf.RoundToInt(worldPos.y), Mathf.RoundToInt(worldPos.x), 0);
-
             // return new Vector3Int(Mathf.RoundToInt(worldPos.y - 0.5f), Mathf.RoundToInt(worldPos.x - 0.5f), 0);
+            return new Vector3Int(Mathf.RoundToInt(worldPos.y), Mathf.RoundToInt(worldPos.x), 0);
+        }
+
+        /// <summary>
+        /// 获取鼠标位置
+        /// </summary>
+        /// <returns>Map位置</returns>
+        public Vector3Int GetMapPosByMouse()
+        {
+            return this.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
         }
 
         /// <summary>
         /// 地图索引是否越界
         /// </summary>
-        /// <param name="x">真实坐标x</param>
-        /// <param name="y">真实坐标y</param>
+        /// <param name="posMap">坐标</param>
         /// <returns>是否</returns>
-        public bool IsOverBorder(int x, int y)
+        public bool IsOverBorder(Vector3Int posMap)
         {
-            return !(x >= 0 && x < Height && y >= 0 && y < Width);
+            return !(posMap.x >= 0 && posMap.x < Height && posMap.y >= 0 && posMap.y < Width);
         }
 
         /// <summary>
@@ -227,53 +216,25 @@
         /// <param name="width">宽度</param>
         public void SetProgress(int height, int width)
         {
+            this.TileMapDataLAB = new TileMapData(height, width, new MapTileType[height, width], width * height / 500);
             Height = height;
             Width = width;
-            this.randomCount = width * height / 500;
-            this.MapTiles = new MapTileType[height, width];
             int total = width * height;
-            total += this.randomCount;
+            total += this.TileMapDataLAB.RandomCount;
             total += ((width + height) * 2) + 4;
             total += width * height;
             AsyncProgressUI.Instance.AddTotal(total);
-        }
-
-        /// <summary>
-        /// 获取能到达位置的数量
-        /// </summary>
-        /// <returns>数量</returns>
-        public int GetCanReachCount()
-        {
-            int count = 0;
-
-            // 循环每一个点
-            for (int i = 0; i < Height; i++)
-            {
-                for (int j = 0; j < Width; j++)
-                {
-                    if (this.MapTiles[i, j] == MapTileType.Mountain || this.MapTiles[i, j] == MapTileType.Water)
-                    {
-                        continue;
-                    }
-
-                    count++;
-                }
-            }
-
-            return count;
         }
 
         /// <inheritdoc/>
         public override void LoadData()
         {
             base.LoadData();
-            TileMapData data = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
-            Height = data.Height;
-            Width = data.Width;
-            this.MapTiles = data.MapTiles;
-            this.randomCount = data.RandomCount;
+            this.TileMapDataLAB = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            Height = this.TileMapDataLAB.Height;
+            Width = this.TileMapDataLAB.Width;
             this.CreateArroundTile();
-            this.StartCoroutine(this.ShowTilemap(this.MapTiles));
+            this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
             this.StartCoroutine(EnemyCreator.Instance.GenEnemy());
 
             // Worker.initMap(Height, Width);
@@ -283,8 +244,45 @@
         public override void SaveData()
         {
             base.SaveData();
-            TileMapData tileMapData = new (Height, Width, this.MapTiles, this.randomCount);
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), tileMapData);
+            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.TileMapDataLAB);
+        }
+
+        /// <inheritdoc/>
+        [PunRPC]
+        public override void SyncDataReq(byte[] data)
+        {
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                return;
+            }
+
+            base.SyncDataReq(data);
+            LogManager.Instance.Log("Request: 同步地图数据");
+            SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.TileMapDataLAB);
+        }
+
+        /// <inheritdoc/>
+        [PunRPC]
+        public override void SyncDataResp(byte[] data)
+        {
+            base.SyncDataResp(data);
+            LogManager.Instance.Log("Response: 同步地图数据");
+            this.TileMapDataLAB = Tool.FromByteArray<TileMapData>(data);
+            this.SetProgressAsync(this.TileMapDataLAB.MapTiles.GetLength(0), this.TileMapDataLAB.MapTiles.GetLength(1));
+            this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
+            this.CreateArroundTile();
+        }
+
+        /// <summary>
+        /// 同步数据设置进度
+        /// </summary>
+        private void SetProgressAsync(int height, int width)
+        {
+            Height = height;
+            Width = width;
+            int total = width * height;
+            total += ((width + height) * 2) + 4;
+            AsyncProgressUI.Instance.AddTotal(total);
         }
 
         /// <summary>
@@ -293,7 +291,7 @@
         /// <param name="tiles">中心默认板块</param>
         /// <param name="i">中心横坐标</param>
         /// <param name="j">中心纵坐标</param>
-        protected void NeighborAndReplaceTiles(MapTileType[,] tiles, int i, int j)
+        private void NeighborAndReplaceTiles(MapTileType[,] tiles, int i, int j)
         {
             // 寻找离自己最近的非默认板块
             for (int t = 1; t < Width; t++)
@@ -304,9 +302,9 @@
                 {
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (this.MapTiles[k, l] != MapTileType.Default)
+                        if (this.TileMapDataLAB.MapTiles[k, l] != MapTileType.Default)
                         {
-                            tiles[i, j] = this.MapTiles[k, l]; // 赋给当前未初始化板块
+                            tiles[i, j] = this.TileMapDataLAB.MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
                         }
                     }
@@ -318,9 +316,9 @@
                     int l = j - t;
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (this.MapTiles[k, l] != MapTileType.Default)
+                        if (this.TileMapDataLAB.MapTiles[k, l] != MapTileType.Default)
                         {
-                            tiles[i, j] = this.MapTiles[k, l]; // 赋给当前未初始化板块
+                            tiles[i, j] = this.TileMapDataLAB.MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
                         }
                     }
@@ -328,9 +326,9 @@
                     l = j + t;
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (this.MapTiles[k, l] != MapTileType.Default)
+                        if (this.TileMapDataLAB.MapTiles[k, l] != MapTileType.Default)
                         {
-                            tiles[i, j] = this.MapTiles[k, l]; // 赋给当前未初始化板块
+                            tiles[i, j] = this.TileMapDataLAB.MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
                         }
                     }
@@ -341,9 +339,9 @@
                 {
                     if (k >= 0 && k < Height && l >= 0 && l < Width)
                     {
-                        if (this.MapTiles[k, l] != MapTileType.Default)
+                        if (this.TileMapDataLAB.MapTiles[k, l] != MapTileType.Default)
                         {
-                            tiles[i, j] = this.MapTiles[k, l]; // 赋给当前未初始化板块
+                            tiles[i, j] = this.TileMapDataLAB.MapTiles[k, l]; // 赋给当前未初始化板块
                             return;
                         }
                     }
@@ -351,19 +349,12 @@
             }
         }
 
-        /// <inheritdoc/>
-        protected override void Awake()
-        {
-            base.Awake();
-            Instance = this;
-        }
-
         /// <summary>
         /// 地图四周创建山阻止出去
         /// </summary>
         private void CreateArroundTile()
         {
-            AsyncProgressUI.Instance.SetTip("正在围住四周...");
+            AsyncProgressUI.Instance.SetTip("创建地图四周...");
 
             // 上边
             for (int i = -1; i < Width; i++)
@@ -394,104 +385,32 @@
             }
         }
 
-        // /// <summary>
-        // /// 传输数据
-        // /// </summary>
-        // /// <param name="stream"></param>
-        // /// <param name="info"></param>
-        // public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-        // {
-        //     if (stream.IsWriting)
-        //     {
-        //         Tool.master(() =>
-        //         {
-        //             if (isSyncing)
-        //             {
-        //                 stream.SendNext(Length);
-        //                 stream.SendNext(Width);
-        //                 SerializeTiles(stream);
-        //             }
-        //         });
-        //     }
-        //     else
-        //     {
-        //         Length = (int)stream.ReceiveNext();
-        //         Width = (int)stream.ReceiveNext();
-        //         // 每个角色加入只接收一次全局信息
-        //         if (!isOnce)
-        //         {
-        //             isOnce = true;
-        //             MapTiles = new Tiles[Length, Width];
-        //             createArroundTile();
-        //         }
-        //         // 控制将所有数据接收一边,后面的重复数据就不接收了
-        //         if (MapTiles[Length - 1, Width - 1] == Tiles.Default && stream.PeekNext() is byte[])
-        //         {
-        //             DeserializeTiles(stream);
-        //         }
-        //     }
-        // }
-
-        // /// <summary>
-        // /// 序列化地图
-        // /// 协议LAB_1
-        // /// 每次发送2 + sendQuantity
-        // /// 前2个字节标识传输地图的起始索引系数[start,(start + 1))
-        // /// [start * sendQuantity,(start + 1) * sendQuantity)
-        // /// </summary>
-        // private void SerializeTiles(PhotonStream stream)
-        // {
-        //     // 每次发送1000个地图数据
-        //     byte[] tiles = new byte[SEND_QUANTITY + 2];
-        //     // 前两字节放数据范围(小端存储)
-        //     tiles[0] = (byte)(sendIndex % (1 << 8));
-        //     tiles[1] = (byte)(sendIndex / (1 << 8));
-        //     int temp = 2; // 从而开始存数据
-        //     int len = (sendIndex + 1) * SEND_QUANTITY;
-        //     int total = Width * Length;
-        //     for (int i = sendIndex * SEND_QUANTITY; i < len; i++)
-        //     {
-        //         // 如果没有充满传输窗口，则此次为传输最后一次
-        //         if (i >= total)
-        //         {
-        //             stream.SendNext(tiles);
-        //             isSyncing = false;
-        //             return;
-        //         }
-        //         tiles[temp++] = (byte)MapTiles[i / Width, i % Width];
-        //     }
-        //     stream.SendNext(tiles);
-        //     ++sendIndex;
-        // }
-
-        // /// <summary>
-        // /// 反序列化地图
-        // /// </summary>
-        // private void DeserializeTiles(PhotonStream stream)
-        // {
-        //     byte[] tiles = (byte[])stream.ReceiveNext();
-        //     int temp = 2;
-        //     int start = tiles[1] * (1 << 8) + tiles[0];
-        //     int len = (start + 1) * SEND_QUANTITY;
-        //     int total = Width * Length;
-        //     for (int i = start * SEND_QUANTITY; i < len; i++)
-        //     {
-        //         MapTiles[i / Width, i % Width] = (Tiles)tiles[temp++];
-        //         if (i == (total - 1))
-        //         {
-        //             // 创建新加入的玩家
-        //             PlayerManager.Instance.create();
-        //             return;
-        //         }
-        //     }
-        // }
-
         /// <summary>
         /// 瓦片数据
         /// </summary>
         [Serializable]
         public class TileMapData
         {
+            /// <summary>
+            /// 地图纵向长度
+            /// </summary>
+            public int Height;
+
+            /// <summary>
+            /// 地图横向长度
+            /// </summary>
+            public int Width;
+
+            /// <summary>
+            /// 地图瓦片
+            /// </summary>
+            public MapTileType[,] MapTiles;
+
+            /// <summary>
+            /// 随机点数量
+            /// </summary>
+            public int RandomCount;
+
             public TileMapData(int height, int width, MapTileType[,] mapTiles, int randomCount)
             {
                 this.Height = height;
@@ -499,26 +418,6 @@
                 this.MapTiles = mapTiles;
                 this.RandomCount = randomCount;
             }
-
-            /// <summary>
-            /// 地图纵向长度
-            /// </summary>
-            public int Height { get; set; }
-
-            /// <summary>
-            /// 地图横向长度
-            /// </summary>
-            public int Width { get; set; }
-
-            /// <summary>
-            /// 地图瓦片
-            /// </summary>
-            public MapTileType[,] MapTiles { get; set; }
-
-            /// <summary>
-            /// 随机点的数量
-            /// </summary>
-            public int RandomCount { get; set; }
         }
     }
 }

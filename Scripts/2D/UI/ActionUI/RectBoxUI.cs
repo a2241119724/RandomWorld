@@ -78,7 +78,7 @@
             });
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
             this.selects = new Dictionary<TileType, List<Vector3Int>>
@@ -98,7 +98,7 @@
             });
         }
 
-        private void Update()
+        public void Update()
         {
             if (this.options.gameObject.activeSelf)
             {
@@ -182,7 +182,9 @@
                 {
                     Vector3Int posMap = new (i, j, 0);
                     Character character = ItemInfoUI.Instance.GetCharacter(posMap);
-                    if (character != null)
+
+                    // 临近的位置可能会获得多个角色, 所以这里只取第一个
+                    if (character != null && SelectManagerPool.Instance.GetForCharacter(character) == null)
                     {
                         SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
                         selectUI.Character = character;
@@ -196,13 +198,13 @@
                     }
 
                     resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
-                    if (resourceInfo != null)
+                    if (resourceInfo != null && resourceInfo.Id != -1 && resourceInfo.Count != 0)
                     {
                         SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
                         selectUI.SetTarget(posMap);
                     }
 
-                    TileBase tileBase = ItemInfoUI.Instance.GetTile(posMap, false, false);
+                    TileBase tileBase = ItemInfoUI.Instance.GetTile(posMap, false, false, false);
                     if (tileBase != null)
                     {
                         SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);

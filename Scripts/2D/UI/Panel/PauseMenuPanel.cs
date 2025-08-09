@@ -7,14 +7,14 @@
     /// <summary>
     /// 暂停菜单面板
     /// </summary>
-    public class PauseMenuPanel : BasePanel<PauseMenuPanel>
+    public class PauseMenuPanel : ABasePanel<PauseMenuPanel>
     {
         private readonly AudioSource audioSource; // 被控制
 
         public PauseMenuPanel()
         {
             this.Name = "PauseMenu";
-            this.OpenPanel();
+            this.Init();
             this.audioSource = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).GetComponent<AudioSource>();
             if (this.audioSource == null)
             {
@@ -25,7 +25,7 @@
             Tool.GetComponentInChildren<Button>(this.Panel, "Exit").onClick.AddListener(this.OnClick_Exit);
             Tool.GetComponentInChildren<Button>(this.Panel, "BackMenu").onClick.AddListener(this.OnClick_BackMenu);
             Tool.GetComponentInChildren<Slider>(this.Panel, "Audio").onValueChanged.AddListener(this.OnClick_Audio);
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
+            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
         }
 
         /// <inheritdoc/>
@@ -38,6 +38,11 @@
         public override void OnExit()
         {
             base.OnExit();
+        }
+
+        public override void OnClick_Back()
+        {
+            this.Controller.Close();
         }
 
         /// <summary>
@@ -60,7 +65,8 @@
         /// </summary>
         private void OnClick_BackMenu()
         {
-            Tool.LoadScene("Menu");
+            PanelController.Instance.Close();
+            PanelController.Instance.Show(CreateOrJoinPanel.Instance);
         }
 
         /// <summary>
@@ -69,14 +75,6 @@
         private void OnClick_Audio(float value)
         {
             this.audioSource.volume = value;
-        }
-
-        /// <summary>
-        /// 返回游戏
-        /// </summary>
-        private void OnClick_BackGame()
-        {
-            this.Controller.Close();
         }
     }
 }

@@ -5,13 +5,13 @@
     /// <summary>
     /// 玩家信息面面板
     /// </summary>
-    public class PlayerInfoPanel : BasePanel<PlayerInfoPanel>
+    public class PlayerInfoPanel : ABasePanel<PlayerInfoPanel>
     {
         public PlayerInfoPanel()
         {
             this.Name = "PlayerInfo";
-            this.OpenPanel();
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
+            this.Init();
+            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
         }
 
         /// <inheritdoc/>
@@ -29,7 +29,7 @@
         /// <summary>
         /// 返回游戏
         /// </summary>
-        public void OnClick_BackGame()
+        public override void OnClick_Back()
         {
             this.Controller.Close();
         }

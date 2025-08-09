@@ -140,12 +140,12 @@
         /// <param name="item">道具</param>
         public abstract void SetSelect(int i, Item item);
 
-        private void Awake()
+        public void Awake()
         {
             // selectAndShow = Resources.Load<SelectAndShowEventSO>("SO/SelectAndShowEvent");
         }
 
-        private void Start()
+        public void Start()
         {
             this.parent = this.transform.parent;
             if (this.parent == null)

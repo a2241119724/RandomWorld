@@ -3,8 +3,14 @@
     /// <summary>
     /// 面板基接口
     /// </summary>
-    public interface IBasePanel
+    public interface IBasePanel : IPanelCommonButton
     {
+        /// <summary>
+        /// 初始化面板
+        /// </summary>
+        /// <param name="root">面板根</param>
+        void Init(string root = ResourceConstant.UI_TAG);
+
         /// <summary>
         /// 进入面板
         /// </summary>

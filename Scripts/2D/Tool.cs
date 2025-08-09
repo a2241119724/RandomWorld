@@ -264,10 +264,10 @@
             // string[] subPaths = AssetDatabase.GetAllAssetPaths();
 #if UNITY_EDITOR
             // 开发阶段加载path,并保存起来
-            LoadPaths1(DataPath, map);
+            DoLoadPaths(DataPath, map);
             SaveDataByBinary(Application.streamingAssetsPath + "/resourcePath.lab", map);
 #else
-            map = loadDataByBinary<Dictionary<string, string>>(Application.streamingAssetsPath + "/resourcePath.lab");
+            map = Tool.LoadDataByBinary<Dictionary<string, string>>(Application.streamingAssetsPath + "/resourcePath.lab");
 #endif
             return map;
         }
@@ -487,11 +487,40 @@
         }
 
         /// <summary>
+        /// 将数据序列化为字节数组
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="data">数据</param>
+        /// <returns>字节数组</returns>
+        public static byte[] ToByteArray<T>(T data)
+        {
+            using (MemoryStream stream = new MemoryStream())
+            {
+                Bf.Serialize(stream, data);
+                return stream.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// 将数据序列化为字节数组
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="data">数据</param>
+        /// <returns>字节数组</returns>
+        public static T FromByteArray<T>(byte[] data)
+        {
+            using (var stream = new MemoryStream(data))
+            {
+                return (T)Bf.Deserialize(stream);
+            }
+        }
+
+        /// <summary>
         /// 递归获取路径.
         /// </summary>
         /// <param name="path">路径.</param>
         /// <param name="map">out.</param>
-        private static void LoadPaths1(string path, Dictionary<string, string> map)
+        private static void DoLoadPaths(string path, Dictionary<string, string> map)
         {
             DirectoryInfo directoryInfo = new (path);
             FileInfo[] fileInfos = directoryInfo.GetFiles();
@@ -507,7 +536,7 @@
             DirectoryInfo[] subDirectoryInfos = directoryInfo.GetDirectories();
             foreach (DirectoryInfo subDirectoryInfo in subDirectoryInfos)
             {
-                LoadPaths1(subDirectoryInfo.FullName, map);
+                DoLoadPaths(subDirectoryInfo.FullName, map);
             }
         }
     }

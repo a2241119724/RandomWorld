@@ -5,12 +5,12 @@
     /// <summary>
     /// AI聊天面板
     /// </summary>
-    public class AIChatPanel : BasePanel<AIChatPanel>
+    public class AIChatPanel : ABasePanel<AIChatPanel>
     {
         public AIChatPanel()
         {
             this.Name = "AIChat";
-            this.OpenPanel();
+            this.Init();
             Tool.GetComponentInChildren<Button>(this.Panel, "Send").onClick.AddListener(this.OnClick_Send);
         }
 
@@ -20,6 +20,12 @@
         public void OnClick_Send()
         {
             AIChatUI.Instance.Send();
+        }
+
+        /// <inheritdoc/>
+        public override void OnClick_Back()
+        {
+            this.Controller.Close();
         }
     }
 }

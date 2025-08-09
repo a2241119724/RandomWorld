@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Text.RegularExpressions;
     using UnityEditor;
     using UnityEngine;
@@ -13,9 +14,43 @@
         private static readonly string Exclude = @"^$"; // 排除,不优化
 
         /// <summary>
+        /// 优化Text
+        /// </summary>
+        [MenuItem("Tools/优化Text")]
+        public static void UpdateText()
+        {
+            EditorTool.UpdateCommon(
+                (Text text) =>
+            {
+                // 字体
+                text.font = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
+
+                // 清晰倍数
+                float multiple = 2;
+
+                // 清晰度
+                text.fontSize = 20 * (int)multiple;
+                RectTransform rectTransform = text.GetComponent<RectTransform>();
+                RectTransform parent = rectTransform.parent.GetComponent<RectTransform>();
+                if (parent == null)
+                {
+                    Debug.Log("父物体:" + text.name + "没有RectTransform");
+                    return;
+                }
+
+                rectTransform.pivot = Vector2.zero;
+                rectTransform.localScale = new Vector3(1 / multiple, 1 / multiple, 1);
+                rectTransform.offsetMax = Vector2.zero;
+                rectTransform.offsetMin = Vector2.zero;
+                rectTransform.anchorMin = new Vector2(0, 0);
+                rectTransform.anchorMax = new Vector2(multiple, multiple);
+            }, @"^.*\[[^]]*E[^]]*\]$");
+        }
+
+        /// <summary>
         /// 修改RoundCorner半径
         /// </summary>
-        [MenuItem("Tools/修改RoundCorner半径")]
+        [MenuItem("Tools/修改RoundCorner")]
         public static void UpdateRoundCorner()
         {
             // 寻找所有的RoundCorner
@@ -49,9 +84,35 @@
         }
 
         /// <summary>
-        /// 优化按钮
+        /// 修改Button边框
         /// </summary>
-        [MenuItem("Tools/修改Button")]
+        [MenuItem("Tools/修改Button边框")]
+        public static void UpdateButton1()
+        {
+            EditorTool.UpdateCommon((Button button) =>
+            {
+                RoundCorner roundCorner = button.GetComponent<RoundCorner>();
+                if (roundCorner == null)
+                {
+                    return;
+                }
+
+                Transform transform = button.GetComponent<Transform>();
+                if (transform.Find("Border") != null)
+                {
+                    return;
+                }
+
+                GameObject border = Resources.Load<GameObject>("Prefabs/Border");
+                GameObject g = GameObject.Instantiate(border, button.transform);
+                g.name = "Border";
+            });
+        }
+
+        /// <summary>
+        /// 修改Button颜色
+        /// </summary>
+        [MenuItem("Tools/修改Button颜色")]
         public static void UpdateButton()
         {
             var buttons = Resources.FindObjectsOfTypeAll(typeof(Button));
@@ -91,6 +152,84 @@
                     // 设置已改变
                     EditorUtility.SetDirty(img);
                 }
+            }
+
+            Debug.Log("完成");
+        }
+
+        /// <summary>
+        /// 修改RoundCorner半径
+        /// </summary>
+        [MenuItem("Tools/修改Slider")]
+        public static void UpdateSlider()
+        {
+            EditorTool.UpdateCommon((Slider slider) =>
+            {
+                // RectTransform sliderTransform = slider.GetComponent<RectTransform>();
+                // sliderTransform.sizeDelta = new Vector2(sliderTransform.sizeDelta.x, 20);
+                RectTransform fill = slider.transform.Find("Fill Area/Fill").GetComponent<RectTransform>();
+                fill.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Screen.width);
+                fill.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Screen.height);
+                fill.anchorMax = new Vector2(1, 1);
+                fill.anchorMin = new Vector2(0, 0);
+                fill.offsetMax = Vector2.zero;
+                fill.offsetMin = Vector2.zero;
+
+                RectTransform background = slider.transform.Find("Background").GetComponent<RectTransform>();
+                background.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Screen.width);
+                background.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Screen.height);
+                background.anchorMax = new Vector2(1, 1);
+                background.anchorMin = new Vector2(0, 0);
+                background.offsetMax = new Vector2(0, -5);
+                background.offsetMin = new Vector2(0, 5);
+
+                RectTransform fillArea = slider.transform.Find("Fill Area").GetComponent<RectTransform>();
+                fillArea.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Screen.width);
+                fillArea.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Screen.height);
+                background.anchorMax = new Vector2(1, 1);
+                background.anchorMin = new Vector2(0, 0);
+                fillArea.offsetMax = new Vector2(-1, -6);
+                fillArea.offsetMin = new Vector2(1, 6);
+
+                // 设置按钮为圆形
+                Transform handle = slider.transform.Find("Handle Slide Area/Handle");
+                if (handle == null)
+                {
+                    return;
+                }
+
+                RectTransform handleTransform = handle.GetComponent<RectTransform>();
+                handleTransform.sizeDelta = new Vector2(20, 0);
+            });
+        }
+
+        /// <summary>
+        /// 公共的编辑UI组件
+        /// </summary>
+        /// <typeparam name="T">组件类型</typeparam>
+        /// <param name="action">具体执行内容</param>
+        /// <param name="exclude">通过名称正则排除</param>
+        public static void UpdateCommon<T>(Action<T> action, string exclude = @"^$")
+            where T : Component
+        {
+            var coponents = Resources.FindObjectsOfTypeAll(typeof(T));
+            for (int i = 0; i < coponents.Length; i++)
+            {
+                T component = coponents[i] as T;
+                if (Regex.IsMatch(component.name, exclude) || component.GetComponent<ExcludeEditor>() != null)
+                {
+                    Debug.Log("排除:" + component.name);
+                    continue;
+                }
+
+                // 记录对象
+                Undo.RecordObject(component, component.gameObject.name);
+
+                // 修改
+                action(component);
+
+                // 设置已改变
+                EditorUtility.SetDirty(component);
             }
 
             Debug.Log("完成");

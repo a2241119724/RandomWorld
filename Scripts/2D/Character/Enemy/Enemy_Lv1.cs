@@ -9,29 +9,14 @@
     public class Enemy_Lv1 : Enemy
     {
         /// <inheritdoc/>
-        [PunRPC]
-        public override void Attack()
-        {
-            // 发射子弹
-            GameObject g = Tool.Instantiate(ResourceManager.Instance.GetPrefab("EnemyBullet"), this.EnemyHead.position, Quaternion.identity);
-
-            // GameObject g = Instantiate(enemyBullet, enemyHead.position, Quaternion.identity);
-            g.GetComponent<EnemyBullet>().Direction = this.EnemyHead.position - this.transform.position;
-            g.GetComponent<EnemyBullet>().BulletSpeed = this.bulletSpeed;
-            this.damage = UnityEngine.Random.Range(1, 10);
-            g.GetComponent<EnemyBullet>().Damage = this.damage;
-            g.transform.SetParent(this.transform.parent, false);
-        }
-
-        /// <inheritdoc/>
-        protected override void Awake()
+        public override void Awake()
         {
             base.Awake();
             this.name = "Enemy_Lv1";
         }
 
         /// <inheritdoc/>
-        protected override void Start()
+        public override void Start()
         {
             // 画视觉,听觉,攻击范围
             Tool.DrawSectorSolid(10, this.AttackRange, new Color32(255, 0, 0, 50), this.transform);
@@ -49,6 +34,21 @@
             // 初始化状态
             this.Manager.ChangeState(EnemyState.EnemyStateTypeEnum.Wander);
             this.Target = null;
+        }
+
+        /// <inheritdoc/>
+        [PunRPC]
+        public override void Attack()
+        {
+            // 发射子弹
+            GameObject g = Tool.Instantiate(ResourceManager.Instance.GetPrefab("EnemyBullet"), this.EnemyHead.position, Quaternion.identity);
+
+            // GameObject g = Instantiate(enemyBullet, enemyHead.position, Quaternion.identity);
+            g.GetComponent<EnemyBullet>().Direction = this.EnemyHead.position - this.transform.position;
+            g.GetComponent<EnemyBullet>().BulletSpeed = this.bulletSpeed;
+            this.damage = UnityEngine.Random.Range(1, 10);
+            g.GetComponent<EnemyBullet>().Damage = this.damage;
+            g.transform.SetParent(this.transform.parent, false);
         }
     }
 }

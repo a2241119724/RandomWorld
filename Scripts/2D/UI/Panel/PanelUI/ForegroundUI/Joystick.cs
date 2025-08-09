@@ -68,12 +68,12 @@
             this.background.anchoredPosition = this.originalPostion;
         }
 
-        private void Awake()
+        public void Awake()
         {
             Instance = this;
         }
 
-        private void Start()
+        public void Start()
         {
             this.baseRect = this.GetComponent<RectTransform>();
             if (this.baseRect == null)
