@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using System.Collections;
+    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -9,11 +10,13 @@
     /// </summary>
     public class AsyncProgressUI : MonoBehaviour
     {
-        private int total;
+        private int totalProcess;
+        private volatile int curProcess; // 当前进度
+        private bool isOne = false; // 仅执行一次
+
         private Text tip; // 提示信息
         private Text percent; // 百分比
         private Slider slider; // 进度条
-        private bool isOne = false; // 进度条
 
         /// <summary>
         /// 完成委托
@@ -29,11 +32,6 @@
         /// 所有完成回调
         /// </summary>
         public CompleteDelegate Complete { get; set; }
-
-        /// <summary>
-        /// 当前进度值
-        /// </summary>
-        public long CurProcess { get; set; }
 
         public void Awake()
         {
@@ -65,9 +63,13 @@
         /// </summary>
         public void AddOneProcess()
         {
-            this.CurProcess += 1;
-            this.Show();
-            if (this.CurProcess >= this.total && !this.isOne)
+            this.curProcess += 1;
+            if (this.curProcess % 1000 == 0 || this.curProcess >= this.totalProcess)
+            {
+                this.Show();
+            }
+
+            if (this.curProcess >= this.totalProcess && !this.isOne)
             {
                 this.isOne = true;
                 this.StartCoroutine(this.Complete1());
@@ -95,7 +97,7 @@
                 LogManager.Instance.Log("不能为负值!!!", LogManager.LogLevel.Error);
             }
 
-            this.total += value;
+            this.totalProcess += value;
         }
 
         /// <summary>
@@ -103,8 +105,8 @@
         /// </summary>
         private void Show()
         {
-            this.percent.text = "当前进度:" + (this.CurProcess * 1000 / this.total / 10.0f).ToString() + "%";
-            this.slider.value = this.CurProcess * 1.0f / this.total;
+            this.slider.value = this.curProcess * 1.0f / this.totalProcess;
+            this.percent.text = "当前进度:" + Mathf.RoundToInt(this.slider.value * 100) + "%";
         }
 
         private IEnumerator Complete1()

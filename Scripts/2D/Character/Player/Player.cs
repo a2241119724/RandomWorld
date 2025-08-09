@@ -17,7 +17,7 @@
         private int level = 1; // 当前等级
         private Animator animator;
         private Vector3 direction; // 电脑按键方向
-        private SpriteRenderer spriteRenderer; // idle图像开关
+        private SpriteRenderer spriteRendererIdle; // idle图像开关
         private CameraMove mainCamera;
         private CameraMove miniCamera;
 
@@ -33,7 +33,7 @@
             }
 
             this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
-            this.spriteRenderer = this.gameObject.GetComponent<SpriteRenderer>();
+            this.spriteRendererIdle = this.gameObject.GetComponent<SpriteRenderer>();
             this.name = "Player";
         }
 
@@ -41,7 +41,6 @@
         public override void Start()
         {
             base.Start();
-            this.MoveSpeed = 10;
             this.animator = this.GetComponent<Animator>();
             if (this.animator == null)
             {
@@ -49,30 +48,27 @@
                 return;
             }
 
-            if (GameInfoUI.Instance != null)
-            {
-                GameInfoUI.Instance.SetPosition(this.transform.position);
-            }
-
-            // if (Map.Instance != null)
-            // {
-            //     Map.Instance.show(transform.position);
-            // }
             // 不在线，或者在线并且是自己
-            if (this.photonView.IsMine || !NetworkConnect.Instance.IsOnline)
+            if (this.pv.IsMine || !NetworkConnect.Instance.IsOnline)
             {
-                this.mainCamera = Camera.main.GetComponent<CameraMove>();
+                this.MoveSpeed = 10;
+                if (GameInfoUI.Instance != null)
+                {
+                    GameInfoUI.Instance.SetPosition(this.transform.position);
+                }
+
                 this.miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
-                this.mainCamera.DirectToPosition(this.transform.position);
                 this.miniCamera.DirectToPosition(this.transform.position);
+                this.mainCamera = Camera.main.GetComponent<CameraMove>();
+                this.mainCamera.DirectToPosition(this.transform.position);
                 PlayerManager.Instance.Mine = this;
                 PhotonNetwork.LocalPlayer.TagObject = this;
                 Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
                 PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
             }
-            else if (!this.photonView.IsMine)
+            else if (!this.pv.IsMine)
             {
-                Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.photonView.Owner.NickName;
+                Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.pv.Owner.NickName;
                 PlayerManager.Instance.Add(this);
 
                 // PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
@@ -127,7 +123,7 @@
             }
 
             base.ReduceHp(hp);
-            if (NetworkConnect.Instance.IsOnline && !this.photonView.IsMine && PhotonNetwork.IsConnected)
+            if (NetworkConnect.Instance.IsOnline && !this.pv.IsMine && PhotonNetwork.IsConnected)
             {
                 return;
             }
@@ -193,7 +189,7 @@
         private void FixedUpdate()
         {
             // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
-            if (NetworkConnect.Instance.IsOnline && !this.photonView.IsMine && PhotonNetwork.IsConnected)
+            if (NetworkConnect.Instance.IsOnline && !this.pv.IsMine && PhotonNetwork.IsConnected)
             {
                 return;
             }
@@ -213,20 +209,16 @@
                 Input.GetKey(KeyCode.D) ||
                 (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f))
             {
-                // mainCamera.Target = transform.position;
-                // miniCamera.Target = transform.position;
                 this.mainCamera.DirectToPosition(this.transform.position);
+                this.miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
                 this.miniCamera.DirectToPosition(this.transform.position);
-                GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>().Character = this;
+                this.miniCamera.Character = this;
+
                 if (GameInfoUI.Instance != null)
                 {
                     GameInfoUI.Instance.SetPosition(this.transform.position);
                 }
 
-                // if (Map.Instance != null)
-                // {
-                //     Map.Instance.show(transform.position);
-                // }
                 this.animator.SetBool("IsMove", true);
 
                 // 按键控制玩家
@@ -243,8 +235,8 @@
                 this.transform.Translate(this.MoveSpeed * Time.deltaTime * this.direction.normalized, Space.World);
 
                 // 翻转
-                this.renderer.flipX = this.direction.x < 0;
-                this.spriteRenderer.enabled = false;
+                this.spriteRendererIdle.flipX = this.direction.x < 0;
+                this.spriteRendererIdle.enabled = false;
                 for (int i = 0; i < 7; i++)
                 {
                     this.transform.GetChild(i).gameObject.SetActive(true);
@@ -253,7 +245,7 @@
             else
             {
                 this.animator.SetBool("IsMove", false);
-                this.spriteRenderer.enabled = true;
+                this.spriteRendererIdle.enabled = true;
                 for (int i = 0; i < 7; i++)
                 {
                     this.transform.GetChild(i).gameObject.SetActive(false);

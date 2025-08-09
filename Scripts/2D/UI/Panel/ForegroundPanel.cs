@@ -7,7 +7,7 @@
     /// <summary>
     /// 游戏前景面板
     /// </summary>
-    public class ForegroundPanel : BasePanel<ForegroundPanel>
+    public class ForegroundPanel : ABasePanel<ForegroundPanel>
     {
         /// <summary>
         /// 匹配数字按键

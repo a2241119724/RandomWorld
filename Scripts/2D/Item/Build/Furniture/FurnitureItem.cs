@@ -1,7 +1,7 @@
-﻿using System;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+
     /// <summary>
     /// 家具
     /// </summary>

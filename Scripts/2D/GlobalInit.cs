@@ -11,6 +11,7 @@
     {
         private readonly bool initPanel = true;
         private GameObject tip; // 提示框预制体
+        private List<IBasePanel> dontClosePanels; // ESC不可关闭的面板
 
         /// <summary>
         /// 单例.
@@ -22,6 +23,15 @@
             Instance = this;
             this.tip = ResourceManager.Instance.GetPrefab("Tip");
             Application.targetFrameRate = GlobalData.MaxFrame;
+            this.dontClosePanels = new ()
+            {
+                ForegroundPanel.Instance,
+                CreateOrJoinPanel.Instance,
+                CreateDataPanel.Instance,
+                AsyncProgressPanel.Instance,
+                NewOrContinuePanel.Instance,
+                PauseMenuPanel.Instance,
+            };
         }
 
         public void Start()
@@ -55,7 +65,7 @@
             this.WorkerUpdate();
 
             // 退出界面(除了ForegroundPanel,CreateOrJoinPanel,CreateMenuPanel,CreateDataPanel,AsyncProgressPanel)
-            if (Input.GetKey(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (PanelController.Instance.Panels.Count == 0)
                 {
@@ -63,18 +73,15 @@
                     PanelController.Instance.Show(BuildMenuPanel.Instance);
                     IsAvailableMap.Instance.ClearShow();
                 }
-                else if (PanelController.Instance.Panels.Peek() != ForegroundPanel.Instance &&
-                    PanelController.Instance.Panels.Peek() != CreateOrJoinPanel.Instance &&
-                    PanelController.Instance.Panels.Peek() != CreateMenuPanel.Instance &&
-                    PanelController.Instance.Panels.Peek() != CreateDataPanel.Instance &&
-                    PanelController.Instance.Panels.Peek() != AsyncProgressPanel.Instance)
-                { // 不能关闭这些面板
+                else
+                {
+                    // 不能关闭下面面板
                     if (PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
                     {
                         ItemInfoUI.Instance.Init();
                     }
 
-                    PanelController.Instance.Close();
+                    PanelController.Instance.Panels.Peek().OnClick_Back();
                 }
             }
 

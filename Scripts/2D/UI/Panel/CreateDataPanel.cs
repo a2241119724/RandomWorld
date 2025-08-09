@@ -8,7 +8,7 @@
     /// <summary>
     /// 创建地图面板
     /// </summary>
-    public class CreateDataPanel : BasePanel<CreateDataPanel>
+    public class CreateDataPanel : ABasePanel<CreateDataPanel>
     {
         private int height = 548; // 地图纵向长度
         private int width = 548; // 地图横向长度
@@ -74,18 +74,17 @@
 
             // TileMap
             TileMap.Instance.SetProgress(this.height, this.width);
-            Coroutine coroutine = TileMap.Instance.StartCoroutine(TileMap.Instance.Create());
+            TileMap.Instance.StartCoroutine(TileMap.Instance.Create());
 
             // ResourceMap
             ResourceMap.Instance.SetProgress();
-            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.GenResource(coroutine));
+            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.GenResource());
 
             // EnemyManager
             EnemyManager.Instance.MaxEnemyCount = this.maxEnemyCount;
-            AsyncProgressUI.Instance.Complete += () =>
-            {
-                PlayerManager.Instance.Create();
-            };
+
+            // EnemyCreator
+            TileMap.Instance.StartCoroutine(EnemyCreator.Instance.GenEnemy());
         }
     }
 }

@@ -1,0 +1,61 @@
+﻿namespace LAB2D
+{
+    using Photon.Pun;
+
+    /// <summary>
+    /// 同步数据工具
+    /// </summary>
+    public class SyncDataTool
+    {
+        /// <summary>
+        /// 同步数据请求包装
+        /// </summary>
+        /// <param name="photonView">同步数据</param>
+        /// <param name="methodName">rpc方法名</param>
+        public static void SyncDataReqWrapper(PhotonView photonView, string methodName = "SyncDataReq")
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                return;
+            }
+
+            photonView.RPC(methodName, RpcTarget.MasterClient, Tool.ToByteArray(PhotonNetwork.LocalPlayer.ActorNumber));
+        }
+
+        /// <summary>
+        /// 同步数据响应包装
+        /// </summary>
+        /// <typeparam name="T">传输数据类型</typeparam>
+        /// <param name="photonView">同步数据</param>
+        /// <param name="playerId">请求玩家ID</param>
+        /// <param name="data">响应数据</param>
+        /// <param name="methodName">rpc方法名</param>
+        public static void SyncDataRespWrapper<T>(PhotonView photonView, byte[] playerId, T data, string methodName = "SyncDataResp")
+        {
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                return;
+            }
+
+            photonView.RPC(methodName, PhotonNetwork.LocalPlayer.Get(Tool.FromByteArray<int>(playerId)), Tool.ToByteArray(data));
+        }
+
+        /// <summary>
+        /// 同步数据响应包装,重载
+        /// </summary>
+        /// <typeparam name="T">传输数据类型</typeparam>
+        /// <param name="photonView">同步数据</param>
+        /// <param name="rpcTarget">发送的目标</param>
+        /// <param name="data">响应数据</param>
+        /// <param name="methodName">rpc方法名</param>
+        public static void SyncDataRespWrapper<T>(PhotonView photonView, RpcTarget rpcTarget, T data, string methodName = "SyncDataResp")
+        {
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                return;
+            }
+
+            photonView.RPC(methodName, rpcTarget, Tool.ToByteArray(data));
+        }
+    }
+}

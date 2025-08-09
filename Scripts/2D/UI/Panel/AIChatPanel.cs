@@ -5,7 +5,7 @@
     /// <summary>
     /// AI聊天面板
     /// </summary>
-    public class AIChatPanel : BasePanel<AIChatPanel>
+    public class AIChatPanel : ABasePanel<AIChatPanel>
     {
         public AIChatPanel()
         {
@@ -20,6 +20,12 @@
         public void OnClick_Send()
         {
             AIChatUI.Instance.Send();
+        }
+
+        /// <inheritdoc/>
+        public override void OnClick_Back()
+        {
+            this.Controller.Close();
         }
     }
 }

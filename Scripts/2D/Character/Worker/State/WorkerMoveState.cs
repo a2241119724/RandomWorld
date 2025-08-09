@@ -8,8 +8,8 @@
     /// </summary>
     public class WorkerMoveState : WorkerState
     {
+        private readonly StringBuilder builder = new (128); // 减少GC
         private float recordTime = 0.0f;
-        private StringBuilder builder = new StringBuilder(128); // 减少GC
 
         public WorkerMoveState(Worker worker)
             : base(worker)

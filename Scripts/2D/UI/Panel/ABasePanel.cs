@@ -6,10 +6,10 @@
     /// 面板基类
     /// </summary>
     /// <typeparam name="BP">单例</typeparam>
-    public abstract class BasePanel<BP> : Singleton<BP>, IBasePanel
+    public abstract class ABasePanel<BP> : Singleton<BP>, IBasePanel
         where BP : new()
     {
-        public BasePanel()
+        public ABasePanel()
         {
             this.Controller = PanelController.Instance;
         }
@@ -73,6 +73,13 @@
         {
             LogManager.Instance.Log("Exit: " + this.GetType().Name, LogManager.LogLevel.Info);
             this.Panel.SetActive(false);
+        }
+
+        /// <inheritdoc/>
+        public virtual void OnClick_Back()
+        {
+            // 没有返回按钮的面板,显示暂停菜单
+            PanelController.Instance.Show(PauseMenuPanel.Instance);
         }
     }
 }

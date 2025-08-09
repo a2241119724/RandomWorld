@@ -7,7 +7,7 @@
     /// <summary>
     /// Worker任务信息面板
     /// </summary>
-    public class WorkerTaskTogglePanel : BasePanel<WorkerTaskTogglePanel>
+    public class WorkerTaskTogglePanel : ABasePanel<WorkerTaskTogglePanel>
     {
         private static readonly Dictionary<WorkerTask.WorkerTaskTypeEnum, string> TypeToChinese = new ()
         {
@@ -42,6 +42,12 @@
         public override void OnExit()
         {
             base.OnExit();
+        }
+
+        /// <inheritdoc/>
+        public override void OnClick_Back()
+        {
+            this.Controller.Close();
         }
     }
 }

@@ -14,6 +14,7 @@
         private readonly string logPath = Application.persistentDataPath + "/game.log";
         private readonly bool isSave = true;
         private readonly List<string> logs;
+        private readonly int maxLogCount = 10;
 
         public LogManager()
         {
@@ -70,21 +71,29 @@
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             string logMessage = $"{timestamp} [{level}] {message}";
 
-            if (level == LogLevel.Error)
+            Debug.Log(logMessage);
+            lock (this.logs)
             {
-                // 输出到控制台
-                Debug.Log(logMessage);
                 this.logs.Add(logMessage);
+                if (this.logs.Count > this.maxLogCount)
+                {
+                    if (this.logs.Count > this.maxLogCount)
+                    {
+                        this.SaveLog(this.logPath, this.logs);
+                    }
+                }
             }
+        }
 
-            // 存储到日志列表
-            // logs.Add(logMessage);
-
+        private void SaveLog(string path, List<string> logs)
+        {
             // 如果启用了文件记录，则写入文件
             if (this.isSave)
             {
-                File.AppendAllText(this.logPath, logMessage + Environment.NewLine);
+                File.AppendAllText(path, string.Join("\n", logs));
             }
+
+            logs.Clear();
         }
     }
 }

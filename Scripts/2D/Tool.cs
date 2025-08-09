@@ -487,14 +487,31 @@
         }
 
         /// <summary>
-        /// 是否是房间主人
+        /// 将数据序列化为字节数组
         /// </summary>
-        /// <param name="action">执行.</param>
-        public static void Master(Action action)
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="data">数据</param>
+        /// <returns>字节数组</returns>
+        public static byte[] ToByteArray<T>(T data)
         {
-            if (PhotonNetwork.IsMasterClient)
+            using (MemoryStream stream = new MemoryStream())
             {
-                action();
+                Bf.Serialize(stream, data);
+                return stream.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// 将数据序列化为字节数组
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="data">数据</param>
+        /// <returns>字节数组</returns>
+        public static T FromByteArray<T>(byte[] data)
+        {
+            using (var stream = new MemoryStream(data))
+            {
+                return (T)Bf.Deserialize(stream);
             }
         }
 
