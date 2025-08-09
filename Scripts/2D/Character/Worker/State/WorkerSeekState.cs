@@ -9,8 +9,8 @@
     public class WorkerSeekState : WorkerState
     {
         // private bool isOne = true;
+        private readonly StringBuilder builder = new (128); // 减少GC
         private Vector3Int targetMap;
-        private StringBuilder builder = new StringBuilder(128); // 减少GC
 
         public WorkerSeekState(Worker character)
             : base(character)

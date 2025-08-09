@@ -3,7 +3,7 @@
     /// <summary>
     /// 面板基接口
     /// </summary>
-    public interface IBasePanel
+    public interface IBasePanel : IPanelCommonButton
     {
         /// <summary>
         /// 初始化面板

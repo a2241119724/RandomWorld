@@ -59,7 +59,7 @@
                 .AddBuilding(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_DOWN].Tile)
                 .AddBuilding(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_TOP].Tile)
                 .AddBuilding(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_TOP].Tile)
-                .AddBuilding(new Vector3Int(boundary[0], centerMap.y, 0), this.Door.Tile, false)
+                .AddBuilding(new Vector3Int(boundary[0], centerMap.y, 0), this.Door.Tile, true)
                 .AddTask();
             roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[3], 0));
             roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2], 0));

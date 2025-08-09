@@ -80,5 +80,12 @@
         /// 默认向量整数
         /// </summary>
         public static readonly Vector3Int VECTOR3INT_DEFAULT = new (-999, 0, 0);
+
+        // =============================================================================================================
+
+        /// <summary>
+        /// 等待地图执行完，开启其他协程
+        /// </summary>
+        public static bool IsCompleteTileMap = false;
     }
 }

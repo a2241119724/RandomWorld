@@ -22,7 +22,7 @@
         /// <summary>
         /// 闪烁
         /// </summary>
-        protected new SpriteRenderer renderer;
+        protected SpriteRenderer spriteRenderer;
 
         /// <summary>
         /// 检测bug
@@ -41,14 +41,14 @@
 
         public virtual void Start()
         {
-            this.renderer = this.GetComponent<SpriteRenderer>();
-            if (this.renderer == null)
+            this.spriteRenderer = this.GetComponent<SpriteRenderer>();
+            if (this.spriteRenderer == null)
             {
                 LogManager.Instance.Log("renderer Not Found!!!", LogManager.LogLevel.Error);
                 return;
             }
 
-            this.originalColor = this.renderer.color;
+            this.originalColor = this.spriteRenderer.color;
         }
 
         /// <summary>
@@ -83,7 +83,7 @@
             g.transform.SetParent(this.transform);
 
             // 变红
-            this.renderer.color = Color.red;
+            this.spriteRenderer.color = Color.red;
             this.Invoke(nameof(this.ResetColor), 0.2f); // 一段时间后调用
 
             // if (!photonView.IsMine) return;
@@ -113,7 +113,7 @@
         /// </summary>
         private void ResetColor()
         {
-            this.renderer.color = this.originalColor;
+            this.spriteRenderer.color = this.originalColor;
         }
 
         /// <summary>

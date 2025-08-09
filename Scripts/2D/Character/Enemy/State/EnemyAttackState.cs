@@ -63,7 +63,7 @@
                     // character.attack();
                     if (NetworkConnect.Instance.IsOnline)
                     {
-                        this.Character.photonView.RPC("attack", RpcTarget.All);
+                        this.Character.pv.RPC("Attack", RpcTarget.All);
                     }
                     else
                     {

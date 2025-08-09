@@ -7,7 +7,7 @@
     /// <summary>
     /// 仓库菜单面板
     /// </summary>
-    public class InventoryMenuPanel : BasePanel<InventoryMenuPanel>
+    public class InventoryMenuPanel : ABasePanel<InventoryMenuPanel>
     {
         private readonly Transform position;
         private readonly Transform type;
@@ -62,6 +62,12 @@
         public override void OnExit()
         {
             base.OnExit();
+        }
+
+        /// <inheritdoc/>
+        public override void OnClick_Back()
+        {
+            this.Controller.Close();
         }
     }
 }

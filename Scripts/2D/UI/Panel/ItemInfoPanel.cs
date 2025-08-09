@@ -7,7 +7,7 @@
     /// <summary>
     /// 物品信心面板
     /// </summary>
-    public class ItemInfoPanel : BasePanel<ItemInfoPanel>
+    public class ItemInfoPanel : ABasePanel<ItemInfoPanel>
     {
         private readonly Text textUI;
         private readonly Transform character;

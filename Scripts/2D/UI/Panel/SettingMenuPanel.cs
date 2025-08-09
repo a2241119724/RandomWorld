@@ -5,7 +5,7 @@
     /// <summary>
     /// 设置菜单面板
     /// </summary>
-    public class SettingMenuPanel : BasePanel<SettingMenuPanel>
+    public class SettingMenuPanel : ABasePanel<SettingMenuPanel>
     {
         public SettingMenuPanel()
         {
@@ -14,7 +14,7 @@
 
             // cameras = Object.FindObjectsOfType(typeof(Camera), true);
             Tool.GetComponentInChildren<Toggle>(this.Panel, "Toggle").onValueChanged.AddListener(this.OnClick_TogglePerspective);
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
+            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
             Tool.GetComponentInChildren<Slider>(this.Panel, "Slider").onValueChanged.AddListener(this.OnClick_GameSpeed);
         }
 
@@ -33,7 +33,7 @@
         /// <summary>
         /// 返回游戏
         /// </summary>
-        private void OnClick_BackGame()
+        public override void OnClick_Back()
         {
             this.Controller.Close();
         }

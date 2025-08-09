@@ -56,7 +56,7 @@
             Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(this.resourceInfo.Id);
 
             // 放下拿起来的东西
-            ItemMap.Instance.ShowTile(this.TargetMap, ResourceManager.Instance
+            ItemMap.Instance.AddTile(this.TargetMap, ResourceManager.Instance
                 .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).ImageName));
             worker.SubResource(this.resourceInfo);
             InventoryManager.Instance.AddItemByPrePlace(worker, this.TargetMap);

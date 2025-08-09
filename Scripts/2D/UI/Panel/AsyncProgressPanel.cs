@@ -1,9 +1,11 @@
 ﻿namespace LAB2D
 {
+    using Photon.Pun;
+
     /// <summary>
     /// 进度条面板
     /// </summary>
-    public class AsyncProgressPanel : BasePanel<AsyncProgressPanel>
+    public class AsyncProgressPanel : ABasePanel<AsyncProgressPanel>
     {
         public AsyncProgressPanel()
         {
@@ -31,6 +33,9 @@
         {
             // 关闭该界面
             this.Controller.Close();
+
+            // 创建玩家
+            PlayerManager.Instance.Create();
         }
     }
 }

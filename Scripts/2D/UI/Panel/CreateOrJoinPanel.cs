@@ -7,7 +7,7 @@
     /// <summary>
     /// 创建或加入面板
     /// </summary>
-    public class CreateOrJoinPanel : BasePanel<CreateOrJoinPanel>
+    public class CreateOrJoinPanel : ABasePanel<CreateOrJoinPanel>
     {
         private TypedLobby typedLobby = null;
 

@@ -9,14 +9,14 @@
     /// <summary>
     /// 房间UI
     /// </summary>
-    public class RoomUI : MonoBehaviourPunCallbacks
+    public class JoinMenuUI : MonoBehaviourPunCallbacks
     {
         private GameObject prefabRoomBox;
 
         /// <summary>
         /// 单例
         /// </summary>
-        public static RoomUI Instance { get; private set; }
+        public static JoinMenuUI Instance { get; private set; }
 
         /// <summary>
         /// 点击并展示
@@ -37,6 +37,11 @@
         public override void OnRoomListUpdate(List<Photon.Realtime.RoomInfo> roomList)
         {
             base.OnRoomListUpdate(roomList);
+            for (int i = 0; i < this.transform.childCount; i++)
+            {
+                DestroyImmediate(this.transform.GetChild(i).gameObject);
+            }
+
             foreach (Photon.Realtime.RoomInfo room in roomList)
             {
                 GameObject g = Instantiate(this.prefabRoomBox);

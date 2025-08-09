@@ -5,14 +5,14 @@
     /// <summary>
     /// 建造菜单面板
     /// </summary>
-    public class BuildMenuPanel : BasePanel<BuildMenuPanel>
+    public class BuildMenuPanel : ABasePanel<BuildMenuPanel>
     {
         public BuildMenuPanel()
         {
             this.Name = "BuildMenu";
             this.Select = new SelectItemData();
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_BackGame);
+            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
             Tool.GetComponentInChildren<Button>(this.Panel, "StartBuild").onClick.AddListener(this.OnClick_StartBuild);
         }
 
@@ -39,7 +39,7 @@
         /// <summary>
         /// 关闭面板
         /// </summary>
-        public void OnClick_BackGame()
+        public override void OnClick_Back()
         {
             this.Controller.Close();
         }

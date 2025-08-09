@@ -1,6 +1,5 @@
 ﻿namespace LAB2D
 {
-    using TMPro;
     using UnityEngine;
     using UnityEngine.UI;
 

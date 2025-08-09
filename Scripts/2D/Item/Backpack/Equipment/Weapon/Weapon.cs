@@ -142,7 +142,7 @@
 
         private readonly Collider2D[] retCollider2Ds = new Collider2D[100]; // 存储圈内的所有碰撞体
         private float recordTime = float.MaxValue;
-        private new CircleCollider2D collider;
+        private CircleCollider2D circleCollider2D;
         private ContactFilter2D contactFilter2D; // 结构体可以不new
 
         /// <summary>
@@ -203,8 +203,8 @@
         {
             base.Start();
             this.transform.localPosition = Vector3.zero; // 初始位置与玩家一致
-            this.collider = this.transform.Find("Head").GetComponent<CircleCollider2D>();
-            if (this.collider == null)
+            this.circleCollider2D = this.transform.Find("Head").GetComponent<CircleCollider2D>();
+            if (this.circleCollider2D == null)
             {
                 LogManager.Instance.Log("collider Not Found!!!", LogManager.LogLevel.Error);
                 return;
@@ -232,7 +232,7 @@
             float minDistance = 9999.0f, tempDistance;
 
             // 通过检测碰撞器内部的碰撞体{Overlap:重叠}
-            int length = this.collider.OverlapCollider(this.contactFilter2D, this.retCollider2Ds);
+            int length = this.circleCollider2D.OverlapCollider(this.contactFilter2D, this.retCollider2Ds);
             for (int i = 0; i < length; i++)
             {
                 if (this.retCollider2Ds[i].CompareTag("Enemy"))
