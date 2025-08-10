@@ -121,7 +121,7 @@
 
                 // 对邻居进行f = g + h
                 byte isCorner = 0;
-                foreach (Vector2SByte direction in Neighbors)
+                foreach (Vector2SByteLAB direction in Neighbors)
                 {
                     ++isCorner;
                     int x = curSpend.PosMap.x + direction.X;

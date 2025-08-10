@@ -2,7 +2,6 @@
 {
     using System.Collections.Generic;
     using UnityEngine;
-    using UnityEngine.UI;
 
     /// <summary>
     /// 全局初始化.
@@ -150,7 +149,7 @@
     }
 
     /// <summary>
-    /// 实现LoadData,SaveData.
+    /// 实现LoadData, SaveData.
     /// </summary>
     public abstract class ASaveData : ISaveData
     {
@@ -180,7 +179,7 @@
     }
 
     /// <summary>
-    /// 带有MonoBehaviour的ISaveData.
+    /// 带有MonoBehaviour的ISaveData
     /// </summary>
     public abstract class AMonoSaveData : MonoBehaviour, ISaveData
     {

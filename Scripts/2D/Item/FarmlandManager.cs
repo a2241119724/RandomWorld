@@ -39,7 +39,7 @@
             {
                 for (int j = 0; j < width; j++)
                 {
-                    Vector3Int pos = Tool.Add(startPos, i, j);
+                    Vector3Int pos = VectorTool.Add(startPos, i, j);
                     this.cells.Add(pos, new PlantInfo(-1, 0, 0));
                     resources.Add(pos, new PlantInfo(-1, 0, 0));
                 }

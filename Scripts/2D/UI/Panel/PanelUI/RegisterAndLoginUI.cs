@@ -2,7 +2,6 @@
 {
     using System.IO;
     using UnityEngine;
-    using UnityEngine.SceneManagement;
     using UnityEngine.UI;
 
     /// <summary>
@@ -35,7 +34,7 @@
             }
 
             // 读取所有数据
-            UserData data = Tool.LoadDataByJson<UserData>(GlobalData.ConfigFile.UserDataFilePath);
+            UserData data = DataTool.LoadDataByJson<UserData>(GlobalData.ConfigFile.UserDataFilePath);
 
             // 遍历是否重名
             if (data != null)
@@ -61,14 +60,14 @@
         /// </summary>
         private void Onclick_Login()
         {
-            UserData data = Tool.LoadDataByJson<UserData>(GlobalData.ConfigFile.UserDataFilePath);
+            UserData data = DataTool.LoadDataByJson<UserData>(GlobalData.ConfigFile.UserDataFilePath);
             if (data != null)
             {
                 for (int i = 0; i < data.GetLength(); i++)
                 {
                     if (data.GetUsername(i) == this.username.text && data.GetPassword(i) == this.password.text)
                     {
-                        SceneManager.LoadScene("Menu"); // 加载场景
+                        Tool.LoadScene("Menu");
                         return;
                     }
                 }

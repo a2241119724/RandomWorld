@@ -14,7 +14,10 @@
         where C : Character
         where CC : ICharacterCreator, new()
     {
-        private readonly CC creator; // 角色创建器
+        /// <summary>
+        /// 角色创建器
+        /// </summary>
+        protected readonly CC creator;
 
         public CharacterManager()
         {
@@ -103,7 +106,8 @@
         public override void LoadData()
         {
             base.LoadData();
-            List<Character.CharacterData> data = Tool.LoadDataByBinary<List<Character.CharacterData>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            AsyncProgressUI.Instance.SetTip("加载角色管理信息...");
+            List<Character.CharacterData> data = DataTool.LoadDataByBinary<List<Character.CharacterData>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             foreach (Character.CharacterData characterData in data)
             {
                 GameObject g = this.Create(Vector3LAB.ToVector3(characterData.Pos));
@@ -122,7 +126,7 @@
                 characterDatas.Add(character.CharacterDataLAB);
             }
 
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), characterDatas);
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), characterDatas);
         }
 
         /// <summary>

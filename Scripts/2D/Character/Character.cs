@@ -10,11 +10,6 @@
     public abstract class Character : MonoBehaviourPun
     {
         /// <summary>
-        /// 角色数据
-        /// </summary>
-        public CharacterData CharacterDataLAB = new ();
-
-        /// <summary>
         /// 移动速度
         /// </summary>
         public float MoveSpeed = 2.5f;
@@ -31,6 +26,11 @@
 
         private GameObject damageUI; // 掉血面板
         private Color originalColor; // 原来的自身颜色
+
+        /// <summary>
+        /// 角色数据
+        /// </summary>
+        public CharacterData CharacterDataLAB { get; set; } = new ();
 
         public virtual void Awake()
         {

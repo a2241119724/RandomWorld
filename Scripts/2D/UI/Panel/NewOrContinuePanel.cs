@@ -1,5 +1,8 @@
 ﻿namespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Reflection;
     using UnityEngine.UI;
     using static LAB2D.TileMap;
 
@@ -37,7 +40,7 @@
 
         private void OnClick_ContinueGame()
         {
-            TileMapData data = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath("TileMap"));
+            TileMapData data = DataTool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(nameof(TileMap)));
             if (data == null)
             {
                 GlobalInit.Instance.ShowTip("没有存档!!!");
@@ -47,32 +50,42 @@
             this.Controller.Close();
             GlobalData.IsNew = false;
             this.Controller.Show(AsyncProgressPanel.Instance);
+            AsyncProgressUI.Instance.SetTip("...");
             AsyncProgressUI.Instance.AddTotal(ASaveData.Instances.Count + AMonoSaveData.Instances.Count);
 
-            // 加载数据之前,线实例化
+            // 注: 加载数据之前, 必须先实例化
             ResourceConstant.IsCompleteTileMap = true;
-            PlayerManager.Instance.Init();
-            foreach (ASaveData saveData in ASaveData.Instances)
+            List<Type> types = Tool.GetChildByParent<ASaveData>();
+            foreach (Type type in types)
             {
-                if (saveData == null)
+                PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
+                if (propertyInfo == null)
                 {
                     continue;
                 }
 
-                AsyncProgressUI.Instance.SetTip(saveData.ToString());
-                saveData.LoadData();
+                // 实例化
+                object obj = propertyInfo.GetValue(null, null);
+
+                // AsyncProgressUI.Instance.SetTip(saveData.ToString());
+                Tool.GetMethodByType(type, "LoadData")?.Invoke(obj, null);
                 AsyncProgressUI.Instance.AddOneProcess();
             }
 
-            foreach (AMonoSaveData saveData in AMonoSaveData.Instances)
+            types = Tool.GetChildByParent<AMonoSaveData>();
+            foreach (Type type in types)
             {
-                if (saveData == null)
+                PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
+                if (propertyInfo == null)
                 {
                     continue;
                 }
 
-                AsyncProgressUI.Instance.SetTip(saveData.ToString());
-                saveData.LoadData();
+                // 实例化
+                object obj = propertyInfo.GetValue(null, null);
+
+                // AsyncProgressUI.Instance.SetTip(saveData.ToString());
+                Tool.GetMethodByType(type, "LoadData")?.Invoke(obj, null);
                 AsyncProgressUI.Instance.AddOneProcess();
             }
         }

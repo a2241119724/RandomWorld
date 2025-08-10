@@ -15366,14 +15366,14 @@ GameObject:
   - component: {fileID: 1532737351}
   - component: {fileID: 1532737350}
   - component: {fileID: 1532737349}
+  - component: {fileID: 1532737357}
   - component: {fileID: 1532737354}
   - component: {fileID: 1532737356}
-  - component: {fileID: 1532737357}
   - component: {fileID: 1532737359}
+  - component: {fileID: 1532737363}
   - component: {fileID: 1532737360}
   - component: {fileID: 1532737361}
   - component: {fileID: 1532737362}
-  - component: {fileID: 1532737363}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: UIRoot

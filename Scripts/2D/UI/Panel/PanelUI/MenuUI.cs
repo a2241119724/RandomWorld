@@ -2,7 +2,6 @@
 {
     using Photon.Pun;
     using UnityEngine;
-    using UnityEngine.SceneManagement;
     using UnityEngine.UI;
 
     /// <summary>
@@ -48,7 +47,7 @@
                 }
 
                 PhotonNetwork.NickName = name;
-                SceneManager.LoadScene("Game"); // 加载场景
+                Tool.LoadScene("Game");
             }
             else
             {

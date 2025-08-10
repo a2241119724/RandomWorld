@@ -55,7 +55,7 @@
             {
                 for (int j = 0; j < width; j++)
                 {
-                    Vector3Int pos = Tool.Add(startPos, i, j);
+                    Vector3Int pos = VectorTool.Add(startPos, i, j);
                     ResourceInfo resourceInfo = new (-1, 0);
                     this.posToResource.Add(pos, resourceInfo);
                     resources.Add(pos, resourceInfo);
@@ -242,7 +242,7 @@
                     hungry -= hungry1;
                     if (isPre)
                     {
-                        foods.Add(food.Key, Tool.DeepCopyByBinary(food.Value));
+                        foods.Add(food.Key, DataTool.DeepCopyByBinary(food.Value));
                     }
                 }
             }
@@ -359,7 +359,7 @@
             }
 
             this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
-            ResourceInfo resourceInfo = Tool.DeepCopyByBinary(this.posToResource[posMap]);
+            ResourceInfo resourceInfo = DataTool.DeepCopyByBinary(this.posToResource[posMap]);
             this.posToResource[posMap].Id = -1;
             this.posToResource[posMap].Count = 0;
             ItemMap.Instance.DeleteTile(posMap);
@@ -606,13 +606,13 @@
                     return;
                 }
 
-                this.prePlaceResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+                this.prePlaceResource[worker].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
                 return;
             }
 
             Dictionary<Vector3Int, ResourceInfo> dict = new ();
-            dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+            dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
             this.prePlaceResource.Add(worker, dict);
             ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
         }
@@ -670,7 +670,7 @@
             if (!this.preTakeResource.ContainsKey(worker))
             {
                 Dictionary<Vector3Int, ResourceInfo> dict = new ();
-                dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+                dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 this.preTakeResource.Add(worker, dict);
                 ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
                 return;
@@ -678,7 +678,7 @@
 
             if (!this.preTakeResource[worker].ContainsKey(pos))
             {
-                this.preTakeResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+                this.preTakeResource[worker].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
                 return;
             }

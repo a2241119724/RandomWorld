@@ -1,8 +1,8 @@
 ﻿namespace LAB2D
 {
+    using Photon.Pun;
     using System;
     using System.Collections;
-    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
@@ -230,12 +230,13 @@
         public override void LoadData()
         {
             base.LoadData();
-            this.TileMapDataLAB = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            AsyncProgressUI.Instance.SetTip("加载地图数据...");
+            this.TileMapDataLAB = DataTool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            ResourceConstant.IsCompleteTileMap = true;
             Height = this.TileMapDataLAB.Height;
             Width = this.TileMapDataLAB.Width;
             this.CreateArroundTile();
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
-            this.StartCoroutine(EnemyCreator.Instance.GenEnemy());
 
             // Worker.initMap(Height, Width);
         }
@@ -244,7 +245,7 @@
         public override void SaveData()
         {
             base.SaveData();
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.TileMapDataLAB);
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.TileMapDataLAB);
         }
 
         /// <inheritdoc/>
@@ -267,7 +268,7 @@
         {
             base.SyncDataResp(data);
             LogManager.Instance.Log("Response: 同步地图数据");
-            this.TileMapDataLAB = Tool.FromByteArray<TileMapData>(data);
+            this.TileMapDataLAB = DataTool.FromByteArray<TileMapData>(data);
             this.SetProgressAsync(this.TileMapDataLAB.MapTiles.GetLength(0), this.TileMapDataLAB.MapTiles.GetLength(1));
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
             this.CreateArroundTile();

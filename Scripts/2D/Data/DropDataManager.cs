@@ -13,7 +13,7 @@
         public DropDataManager()
         {
             this.nameToDrop = new Dictionary<string, List<DropItem>>();
-            string[] drops = Tool.GetCSV(ResourceConstant.DATA_ROOT + "DropItem");
+            string[] drops = DataTool.LoadCSV(ResourceConstant.DATA_ROOT + "DropItem");
 
             // 跳过第一行
             for (int i = 1; i < drops.Length; i++)

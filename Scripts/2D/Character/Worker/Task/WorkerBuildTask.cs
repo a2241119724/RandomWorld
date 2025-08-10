@@ -113,7 +113,7 @@
             base.GiveUpTask(worker);
 
             // 恢复资源
-            this.temp = Tool.DeepCopyByBinary(this.needs);
+            this.temp = DataTool.DeepCopyByBinary(this.needs);
         }
 
         /// <inheritdoc/>
@@ -182,8 +182,8 @@
 
             public BuildTaskBuilder SetNeedResource(Dictionary<int, ResourceInfo> needResource)
             {
-                this.task.temp = Tool.DeepCopyByBinary(needResource);
-                this.task.needs = Tool.DeepCopyByBinary(needResource);
+                this.task.temp = DataTool.DeepCopyByBinary(needResource);
+                this.task.needs = DataTool.DeepCopyByBinary(needResource);
                 return this;
             }
 

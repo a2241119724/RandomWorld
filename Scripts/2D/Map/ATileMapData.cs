@@ -21,7 +21,7 @@
         }
 
         /// <summary>
-        /// 删
+        /// 删除
         /// </summary>
         /// <param name="pos">位置</param>
         public void Remove(Vector3Int pos)
