@@ -12,12 +12,12 @@
         /// <summary>
         /// 邻居
         /// </summary>
-        protected static readonly List<Vector2SByte> Neighbors = new ()
+        protected static readonly List<Vector2SByteLAB> Neighbors = new ()
         {
-            new Vector2SByte(0, 1),
-            new Vector2SByte(1, 0),
-            new Vector2SByte(0, -1),
-            new Vector2SByte(-1, 0), // 上右下左
+            new Vector2SByteLAB(0, 1),
+            new Vector2SByteLAB(1, 0),
+            new Vector2SByteLAB(0, -1),
+            new Vector2SByteLAB(-1, 0), // 上右下左
 
             // new Vector2SByte(1, 1), new Vector2SByte(1, -1), // 右上,右下
             // new Vector2SByte(-1, -1), new Vector2SByte(-1, 1), // 左下, 左上

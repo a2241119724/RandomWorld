@@ -80,13 +80,18 @@
         [HideInInspector]
         public Character Target { get; set; } // 打击目标
 
+        /// <summary>
+        /// 角色数据
+        /// </summary>
+        public EnemyData EnemyDataLAB { get; set; } = new ();
+
         /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
             this.layerMask = LayerMask.GetMask("Tile", "Player");
             this.Manager = new EnemyStateManager<ICharacterState, EnemyState.EnemyStateTypeEnum, Enemy>(this);
-            this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
+            this.EnemyDataLAB.MaxHp = this.EnemyDataLAB.Hp = 100;
         }
 
         /// <inheritdoc/>
@@ -108,7 +113,7 @@
             }
 
             // 更新敌人身体状况
-            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+            this.statusBar.UpdateStatus(this.EnemyDataLAB.Hp, this.EnemyDataLAB.MaxHp);
         }
 
         public void Update()
@@ -212,19 +217,19 @@
             }
 
             base.ReduceHp(hp);
-            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+            this.statusBar.UpdateStatus(this.EnemyDataLAB.Hp, this.EnemyDataLAB.MaxHp);
         }
 
         public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
         {
             if (stream.IsWriting)
             {
-                stream.SendNext(this.CharacterDataLAB.Hp);
+                stream.SendNext(this.EnemyDataLAB.Hp);
             }
             else if (stream.IsReading)
             {
-                this.CharacterDataLAB.Hp = (float)stream.ReceiveNext();
-                this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+                this.EnemyDataLAB.Hp = (float)stream.ReceiveNext();
+                this.statusBar.UpdateStatus(this.EnemyDataLAB.Hp, this.EnemyDataLAB.MaxHp);
             }
         }
 
@@ -233,7 +238,7 @@
         /// </summary>
         protected override void Death()
         {
-            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+            this.statusBar.UpdateStatus(this.EnemyDataLAB.Hp, this.EnemyDataLAB.MaxHp);
             if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
             {
                 EnemyManager.Instance.Remove(this);
@@ -267,5 +272,13 @@
         //     // FromToRotation得到从自定义方向到某方向旋转的角度
         //     //transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(Vector3.up, pointToPlayer), Time.deltaTime * rotationSpeed);
         // }
+
+        /// <summary>
+        /// 敌人数据
+        /// </summary>
+        [Serializable]
+        public class EnemyData : CharacterData
+        {
+        }
     }
 }

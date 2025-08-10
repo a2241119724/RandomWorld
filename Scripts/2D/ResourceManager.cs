@@ -19,10 +19,10 @@
 
         public ResourceManager()
         {
-            this.prefabDic = Tool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
-            this.assetDic = Tool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
+            this.prefabDic = ResourceTool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
+            this.assetDic = ResourceTool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
             this.tileDic = new Dictionary<TileMap.MapTileType, List<UnityEngine.Object>>();
-            this.shaderDic = Tool.LoadResources<Shader>(ResourceConstant.SHADER_ROOT);
+            this.shaderDic = ResourceTool.LoadResources<Shader>(ResourceConstant.SHADER_ROOT);
             foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetDic)
             {
                 foreach (TileMap.MapTileType tileType in Enum.GetValues(typeof(TileMap.MapTileType)))
@@ -44,8 +44,8 @@
                 }
             }
 
-            this.imageDic = Tool.LoadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
-            this.pathDic = Tool.LoadPaths();
+            this.imageDic = ResourceTool.LoadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
+            this.pathDic = ResourceTool.LoadPaths();
         }
 
         /// <summary>

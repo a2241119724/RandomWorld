@@ -51,7 +51,7 @@
                 .AddTask();
 
             // 添加仓库Cell
-            InventoryManager.Instance.AddCells(Tool.Add(centerMap, -this.Height / 2, -this.Width / 2), this.Width, this.Height);
+            InventoryManager.Instance.AddCells(VectorTool.Add(centerMap, -this.Height / 2, -this.Width / 2), this.Width, this.Height);
         }
     }
 }

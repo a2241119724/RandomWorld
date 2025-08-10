@@ -39,7 +39,7 @@
             }
             else
             {
-                dict.Add(posMap, Tool.DeepCopyByBinary(resourceInfo));
+                dict.Add(posMap, DataTool.DeepCopyByBinary(resourceInfo));
             }
         }
 

@@ -1,7 +1,5 @@
 ﻿namespace LAB2D
 {
-    using Photon.Pun;
-
     /// <summary>
     /// 进度条面板
     /// </summary>
@@ -11,7 +9,16 @@
         {
             this.Name = "AsyncProgress";
             this.Init();
-            this.Panel.transform.GetComponent<AsyncProgressUI>().Complete += this.Complate;
+            this.Panel.transform.GetComponent<AsyncProgressUI>().Complete += () =>
+            {
+                this.Controller.Close();
+
+                if (GlobalData.IsNew)
+                {
+                    // 新游戏, 创建玩家在随机位置, 否则在角色管理中创建
+                    PlayerManager.Instance.Create();
+                }
+            };
         }
 
         /// <inheritdoc/>
@@ -27,15 +34,6 @@
 
             // 进入游戏主界面
             this.Controller.Show(ForegroundPanel.Instance);
-        }
-
-        private void Complate()
-        {
-            // 关闭该界面
-            this.Controller.Close();
-
-            // 创建玩家
-            PlayerManager.Instance.Create();
         }
     }
 }

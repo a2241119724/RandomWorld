@@ -59,6 +59,7 @@
 
             this.Controller.Close();
             this.Controller.Show(AsyncProgressPanel.Instance);
+            AsyncProgressUI.Instance.SetTip("正在同步数据...");
         }
 
         private void Show(string str)

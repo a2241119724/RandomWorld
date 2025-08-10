@@ -127,7 +127,7 @@
             this.allItemInfo = new Dictionary<int, ItemData>();
             foreach (Item.ItemType itemType in Enum.GetValues(typeof(Item.ItemType)))
             {
-                string[] data = Tool.GetCSV(ResourceConstant.DATA_ROOT + itemType.ToString() + "ItemData");
+                string[] data = DataTool.LoadCSV(ResourceConstant.DATA_ROOT + itemType.ToString() + "ItemData");
                 if (data == null)
                 {
                     continue;

@@ -115,7 +115,7 @@
 
             public CarryTaskBuilder SetResourceInfo(ResourceInfo resourceInfo)
             {
-                this.task.resourceInfo = Tool.DeepCopyByBinary(resourceInfo);
+                this.task.resourceInfo = DataTool.DeepCopyByBinary(resourceInfo);
                 return this;
             }
 

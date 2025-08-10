@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.Threading;
-    using TMPro;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -177,7 +176,7 @@
             }
             else
             {
-                this.resourceInfos.Add(resourceInfo.Id, Tool.DeepCopyByBinary(resourceInfo));
+                this.resourceInfos.Add(resourceInfo.Id, DataTool.DeepCopyByBinary(resourceInfo));
             }
         }
 
@@ -280,7 +279,7 @@
                 }
                 else
                 {
-                    remaining.Add(need.Key, Tool.DeepCopyByBinary(need.Value));
+                    remaining.Add(need.Key, DataTool.DeepCopyByBinary(need.Value));
                 }
             }
 
@@ -322,7 +321,7 @@
     /// <summary>
     /// Byte的Vector2
     /// </summary>
-    public class Vector2SByte
+    public class Vector2SByteLAB
     {
         /// <summary>
         /// X 坐标
@@ -334,7 +333,7 @@
         /// </summary>
         public sbyte Y;
 
-        public Vector2SByte(sbyte x, sbyte y)
+        public Vector2SByteLAB(sbyte x, sbyte y)
         {
             this.X = x;
             this.Y = y;

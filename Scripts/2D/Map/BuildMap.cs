@@ -50,7 +50,7 @@
                 this.BuildMapDataLAB.TargetMaps.Add(vector3IntLAB, tile.name);
             }
 
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), true, true);
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), true, true);
             return this;
         }
 
@@ -70,7 +70,7 @@
                 this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
             }
 
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), tile.name, isPass, false);
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), tile.name, isPass, false);
             return this;
         }
 
@@ -84,12 +84,12 @@
             {
                 this.tilemap.SetColliderType(targetMap, Tile.ColliderType.Sprite);
                 this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 1));
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, false, false);
+                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, false, false);
             }
             else
             {
                 this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, true, false);
+                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, true, false);
             }
 
             RoomManager.Instance.Complete(targetMap);
@@ -113,7 +113,7 @@
         {
             this.tilemap.SetTile(targetMap, null);
             this.BuildMapDataLAB.TargetMaps.Remove(Vector3IntLAB.ToVector3IntLAB(targetMap));
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, false, false, true);
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, false, false, true);
         }
 
         /// <summary>
@@ -168,7 +168,7 @@
         {
             base.SyncDataResp(data);
             LogManager.Instance.Log("Response: 同步地图建造数据");
-            BuildMapData buildMapData = Tool.FromByteArray<BuildMapData>(data);
+            BuildMapData buildMapData = DataTool.FromByteArray<BuildMapData>(data);
             Dictionary<Vector3IntLAB, string>.Enumerator enumerator = buildMapData.PosMaps.GetEnumerator();
             while (enumerator.MoveNext())
             {
@@ -198,7 +198,7 @@
         public void SyncDataResp(byte[] vector3IntLAB, string tileBaseName, bool isPass = false, bool isBuilding = false, bool isDelete = false)
         {
             LogManager.Instance.Log("Response: 同步地图建造数据");
-            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(Tool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
+            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {
                 this.tilemap.SetTile(vector3Int, null);

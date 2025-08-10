@@ -37,7 +37,7 @@
         {
             this.ItemMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
         }
 
         /// <summary>
@@ -77,7 +77,7 @@
 
             this.ItemMapDataLAB.Add(posMap, tileBase.name);
             this.tilemap.SetTile(posMap, tileBase);
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
         }
 
         /// <summary>
@@ -133,7 +133,7 @@
         {
             base.SyncDataResp(data);
             LogManager.Instance.Log("Response: 同步地图道具数据");
-            ItemMapData itemMapData = Tool.FromByteArray<ItemMapData>(data);
+            ItemMapData itemMapData = DataTool.FromByteArray<ItemMapData>(data);
             Dictionary<Vector3IntLAB, string>.Enumerator enumerator = itemMapData.PosMaps.GetEnumerator();
             while (enumerator.MoveNext())
             {
@@ -154,7 +154,7 @@
         {
             LogManager.Instance.Log("Response: 同步地图道具数据");
 
-            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(Tool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
+            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {
                 this.tilemap.SetTile(vector3Int, null);

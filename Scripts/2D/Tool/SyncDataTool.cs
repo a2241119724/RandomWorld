@@ -19,7 +19,7 @@
                 return;
             }
 
-            photonView.RPC(methodName, RpcTarget.MasterClient, Tool.ToByteArray(PhotonNetwork.LocalPlayer.ActorNumber));
+            photonView.RPC(methodName, RpcTarget.MasterClient, DataTool.ToByteArray(PhotonNetwork.LocalPlayer.ActorNumber));
         }
 
         /// <summary>
@@ -37,11 +37,11 @@
                 return;
             }
 
-            photonView.RPC(methodName, PhotonNetwork.LocalPlayer.Get(Tool.FromByteArray<int>(playerId)), Tool.ToByteArray(data));
+            photonView.RPC(methodName, PhotonNetwork.LocalPlayer.Get(DataTool.FromByteArray<int>(playerId)), DataTool.ToByteArray(data));
         }
 
         /// <summary>
-        /// 同步数据响应包装,重载
+        /// 同步数据响应包装, 重载
         /// </summary>
         /// <typeparam name="T">传输数据类型</typeparam>
         /// <param name="photonView">同步数据</param>
@@ -55,7 +55,7 @@
                 return;
             }
 
-            photonView.RPC(methodName, rpcTarget, Tool.ToByteArray(data));
+            photonView.RPC(methodName, rpcTarget, DataTool.ToByteArray(data));
         }
     }
 }
