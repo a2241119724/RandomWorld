@@ -88,13 +88,17 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
+        public override void GiveUpTask(Worker worker)
         {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
+            base.GiveUpTask(worker);
 
+            // 恢复资源
+            this.temp = DataTool.DeepCopyByBinary(this.needs);
+        }
+
+        /// <inheritdoc/>
+        protected override bool DoIsCanWork(Worker worker)
+        {
             // 如果worker携带的资源已经满足建造
             if (worker.IsEnough(this.needs))
             {
@@ -105,15 +109,6 @@
             // 获得剩余不够的数量
             Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
             return InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining);
-        }
-
-        /// <inheritdoc/>
-        public override void GiveUpTask(Worker worker)
-        {
-            base.GiveUpTask(worker);
-
-            // 恢复资源
-            this.temp = DataTool.DeepCopyByBinary(this.needs);
         }
 
         /// <inheritdoc/>

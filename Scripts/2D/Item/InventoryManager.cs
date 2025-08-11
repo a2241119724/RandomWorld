@@ -477,10 +477,11 @@
             // 预申请资源
             if (isPre)
             {
+                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
                 foreach (KeyValuePair<int, ResourceInfo> need in needResource)
                 {
                     // 每个Cell预取完之后剩余Cell可预取的数量,至少取need.Value.count
-                    int remaining = Mathf.Max(need.Value.Count, worker.MaxResourceCount);
+                    int remaining = Mathf.Max(need.Value.Count, workerData.MaxResourceCount);
 
                     // 按照Worker携带的最大值预取,如果不够最大值就取完所有资源
                     foreach (KeyValuePair<Vector3Int, ResourceInfo> resource in this.id2Resource[need.Key])

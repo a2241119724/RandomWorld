@@ -57,13 +57,8 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
+        protected override bool DoIsCanWork(Worker worker)
         {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
-
             return ResourceMap.Instance.ResourceMapDataLAB.TreeCurCount > 0;
         }
 

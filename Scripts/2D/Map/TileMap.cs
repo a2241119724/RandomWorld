@@ -1,8 +1,8 @@
 ﻿namespace LAB2D
 {
-    using Photon.Pun;
     using System;
     using System.Collections;
+    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
@@ -163,7 +163,7 @@
             }
 
             this.TileMapDataLAB.MapTiles = tiles;
-            ResourceConstant.IsCompleteTileMap = true;
+            Lock.IsCompleteTileMap = true;
             this.CreateArroundTile();
             yield return this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
         }
@@ -232,7 +232,7 @@
             base.LoadData();
             AsyncProgressUI.Instance.SetTip("加载地图数据...");
             this.TileMapDataLAB = DataTool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
-            ResourceConstant.IsCompleteTileMap = true;
+            Lock.IsCompleteTileMap = true;
             Height = this.TileMapDataLAB.Height;
             Width = this.TileMapDataLAB.Width;
             this.CreateArroundTile();
@@ -252,11 +252,6 @@
         [PunRPC]
         public override void SyncDataReq(byte[] data)
         {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
             base.SyncDataReq(data);
             LogManager.Instance.Log("Request: 同步地图数据");
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.TileMapDataLAB);

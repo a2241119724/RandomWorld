@@ -129,7 +129,8 @@
             this.DoExecute();
 
             // 工作扣减疲劳值
-            worker.CurTired -= Time.deltaTime * 0.1f;
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            workerData.CurTired -= Time.deltaTime * 0.1f;
             this.curProgress += Time.deltaTime;
             if (this.curProgress > this.maxProgress)
             {
@@ -168,9 +169,15 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否</returns>
-        public virtual bool IsCanWork(Worker worker)
+        public bool IsCanWork(Worker worker)
         {
-            return worker.TaskToggle[(int)this.TaskType];
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            if (!workerData.TaskToggle[(int)this.TaskType])
+            {
+                return false;
+            }
+
+            return this.DoIsCanWork(worker);
         }
 
         /// <summary>
@@ -187,6 +194,16 @@
         public virtual void Finish(Worker worker)
         {
             WorkerTaskManager.Instance.CompleteTask(this);
+        }
+
+        /// <summary>
+        /// Worker是否可以接该任务,具体实现
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <returns>是否</returns>
+        protected virtual bool DoIsCanWork(Worker worker)
+        {
+            return false;
         }
 
         /// <summary>

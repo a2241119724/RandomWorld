@@ -8,6 +8,11 @@
     public class Lock
     {
         /// <summary>
+        /// 等待地图执行完，开启其他协程
+        /// </summary>
+        public static bool IsCompleteTileMap = false;
+
+        /// <summary>
         /// 拥有者
         /// </summary>
         public Worker Owner { get; set; }

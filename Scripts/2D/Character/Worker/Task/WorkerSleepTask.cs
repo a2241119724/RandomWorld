@@ -39,21 +39,17 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
-        {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
-
-            // 如果疲劳值低于阈值，并且有床，则可以睡觉
-            return worker.CurTired < Worker.ThresholdTired && worker.BedItem != null && this.worker == worker;
-        }
-
-        /// <inheritdoc/>
         public override void Finish(Worker worker)
         {
             base.Finish(worker);
+        }
+
+        /// <inheritdoc/>
+        protected override bool DoIsCanWork(Worker worker)
+        {
+            // 如果疲劳值低于阈值，并且有床，则可以睡觉
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            return workerData.CurTired < Worker.ThresholdTired && worker.BedItem != null && this.worker == worker;
         }
 
 #pragma warning disable SA1600 // Elements should be documented

@@ -204,7 +204,7 @@
         /// </summary>
         /// <param name="tag">在哪个canvas下发射射线</param>
         /// <returns>UI对象</returns>
-        public static List<RaycastResult> GetUIByMousePos(string tag = ResourceConstant.UI_TAG)
+        public static List<RaycastResult> GetUIByMousePos(string tag = TagConstant.UI_TAG)
         {
             PointerEventData pointerEventData = new (EventSystem.current);
             pointerEventData.position = Input.mousePosition;

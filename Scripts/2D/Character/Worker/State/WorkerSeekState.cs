@@ -23,7 +23,8 @@
             base.OnEnter();
 
             // 如果饥饿并且没有吃饭任务就进入饥饿状态,做完任务再吃饭
-            if (this.Character.CurHungry < Worker.ThresholdHungry && this.Character.Manager.Task == null)
+            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            if (workerData.CurHungry < Worker.ThresholdHungry && this.Character.Manager.Task == null)
             {
                 this.Character.Manager.ChangeState(WorkerStateTypeEnum.Eat);
                 return;

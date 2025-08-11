@@ -41,7 +41,7 @@
         public override void LoadData()
         {
             AsyncProgressUI.Instance.SetTip("加载玩家管理信息...");
-            Character.CharacterData data = DataTool.LoadDataByBinary<Character.CharacterData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            Player.PlayerData data = DataTool.LoadDataByBinary<Player.PlayerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             AsyncProgressUI.Instance.Complete += () =>
             {
                 GameObject g = this.Create(Vector3LAB.ToVector3(data.Pos));
@@ -53,6 +53,7 @@
         /// <inheritdoc/>
         public override void SaveData()
         {
+            // 仅保存玩家自己的信息
             this.mine.CharacterDataLAB.Pos = Vector3LAB.ToVector3LAB(this.mine.transform.position);
             DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.mine.CharacterDataLAB);
         }

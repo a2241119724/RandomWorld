@@ -17,7 +17,7 @@
         public IEnumerator GenEnemy()
         {
             // 需要等待地图协程执行完后再执行
-            yield return new WaitUntil(() => ResourceConstant.IsCompleteTileMap);
+            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
             while (true)
             {
                 EnemyManager.Instance.Create();
