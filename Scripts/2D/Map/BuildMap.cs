@@ -152,11 +152,6 @@
         [PunRPC]
         public override void SyncDataReq(byte[] data)
         {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
             base.SyncDataReq(data);
             LogManager.Instance.Log("Request: 同步地图建造数据");
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.BuildMapDataLAB);
@@ -219,6 +214,20 @@
             {
                 this.tilemap.SetColor(vector3Int, new Color(1, 1, 1, 0.5f));
             }
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            this.BuildMapDataLAB = DataTool.LoadDataByBinary<BuildMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.BuildMapDataLAB);
         }
 
         /// <summary>

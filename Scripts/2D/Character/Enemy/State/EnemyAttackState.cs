@@ -38,10 +38,10 @@
         public override void OnUpdate()
         {
             this.AttackTime += Time.deltaTime;
+            Enemy.EnemyData enemyData = this.Character.CharacterDataLAB as Enemy.EnemyData;
 
             // 如果玩家与敌人的距离大于敌人的攻击距离，那么进入追踪状态
-            if (Vector3.Distance(this.Character.Target.transform.position, this.Character.transform.position)
-                > this.Character.AttackRange)
+            if (Vector3.Distance(this.Character.Target.transform.position, this.Character.transform.position) > enemyData.AttackRange)
             {
                 this.Character.Manager.ChangeState(EnemyStateTypeEnum.Chase);
                 return;

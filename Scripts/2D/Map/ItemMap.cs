@@ -117,11 +117,6 @@
         [PunRPC]
         public override void SyncDataReq(byte[] data)
         {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
             base.SyncDataReq(data);
             LogManager.Instance.Log("Request: 同步地图道具数据");
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.ItemMapDataLAB);

@@ -76,7 +76,7 @@
             }
             else if (Input.GetMouseButtonDown(0))
             {
-                List<RaycastResult> results = Tool.GetUIByMousePos(ResourceConstant.ACTION_UI_TAG);
+                List<RaycastResult> results = Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
 
                 // 未点击到options UI, 则关闭options UI
                 if (results.Count == 0)

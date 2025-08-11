@@ -40,7 +40,7 @@
         public IEnumerator GenResource()
         {
             // 需要等待地图协程执行完后再执行
-            yield return new WaitUntil(() => ResourceConstant.IsCompleteTileMap);
+            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
             AsyncProgressUI.Instance.SetTip("生成资源...");
             for (int i = 0; i < Height; i++)
             {
@@ -84,7 +84,7 @@
         public IEnumerator GenTree()
         {
             // 需要等待地图协程执行完后再执行
-            yield return new WaitUntil(() => ResourceConstant.IsCompleteTileMap);
+            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
             while (true)
             {
                 if (this.ResourceMapDataLAB.TreeCurCount < this.ResourceMapDataLAB.TreeTotalCount)
@@ -173,11 +173,6 @@
         [PunRPC]
         public override void SyncDataReq(byte[] data)
         {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
             base.SyncDataReq(data);
             LogManager.Instance.Log("Request: 同步地图资源数据");
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.ResourceMapDataLAB);

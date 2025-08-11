@@ -69,13 +69,8 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
+        protected override bool DoIsCanWork(Worker worker)
         {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
-
             return InventoryManager.Instance.IsEnoughAndPrePlace(worker, this.resourceInfo);
         }
 

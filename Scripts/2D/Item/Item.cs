@@ -106,7 +106,7 @@
         /// 不可使用反射找到该类
         /// 不加入到BuildMenu中
         /// </summary>
-        public interface IItemDontShow
+        public interface IDontShow
         {
         }
 

@@ -129,8 +129,9 @@
             foreach (Worker worker in workers)
             {
                 // 按照时间对饥饿值与疲劳值进行自然衰减
-                worker.CurHungry -= Time.deltaTime * 0.1f;
-                worker.CurTired -= Time.deltaTime * 0.01f;
+                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                workerData.CurHungry -= Time.deltaTime * 0.1f;
+                workerData.CurTired -= Time.deltaTime * 0.01f;
             }
         }
     }
@@ -144,66 +145,6 @@
         /// 初始化方法.
         /// </summary>
         public virtual void Init()
-        {
-        }
-    }
-
-    /// <summary>
-    /// 实现LoadData, SaveData.
-    /// </summary>
-    public abstract class ASaveData : ISaveData
-    {
-        public ASaveData()
-        {
-            Instances.Add(this);
-        }
-
-        /// <summary>
-        /// 单例.
-        /// </summary>
-        public static List<ISaveData> Instances { get; set; } = new List<ISaveData>();
-
-        /// <summary>
-        /// 加载数据.
-        /// </summary>
-        public virtual void LoadData()
-        {
-        }
-
-        /// <summary>
-        /// 保存数据.
-        /// </summary>
-        public virtual void SaveData()
-        {
-        }
-    }
-
-    /// <summary>
-    /// 带有MonoBehaviour的ISaveData
-    /// </summary>
-    public abstract class AMonoSaveData : MonoBehaviour, ISaveData
-    {
-        public AMonoSaveData()
-        {
-            Instances.Add(this);
-        }
-
-        /// <summary>
-        /// 单例.
-        /// </summary>
-        public static List<ISaveData> Instances { get; set; } = new List<ISaveData>();
-
-        /// <summary>
-        /// 加载数据.
-        /// </summary>
-        public virtual void LoadData()
-        {
-        }
-
-        /// <summary>
-        /// 保存数据.
-        /// </summary>
-        public virtual void SaveData()
         {
         }
     }

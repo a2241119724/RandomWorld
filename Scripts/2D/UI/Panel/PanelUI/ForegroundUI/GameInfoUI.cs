@@ -48,7 +48,7 @@
             this.fps = Tool.GetComponentInChildren<Text>(this.gameObject, "FPS");
             this.position = Tool.GetComponentInChildren<Text>(this.gameObject, "PlayerPosition");
             this.time = Tool.GetComponentInChildren<Text>(this.gameObject, "Time");
-            this.globalLight = GameObject.FindGameObjectWithTag(ResourceConstant.GLOBAL_LIGHT_TAG).GetComponent<Light2D>();
+            this.globalLight = GameObject.FindGameObjectWithTag(TagConstant.GLOBAL_LIGHT_TAG).GetComponent<Light2D>();
         }
 
         public void Start()

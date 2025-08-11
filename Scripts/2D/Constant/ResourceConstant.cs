@@ -32,43 +32,6 @@
         /// </summary>
         public const string SHADER_ROOT = "Shader/";
 
-        // tag =============================================================================================================
-
-        /// <summary>
-        /// UI标签
-        /// </summary>
-        public const string UI_TAG = "UIRoot";
-
-        /// <summary>
-        /// 角色标签
-        /// </summary>
-        public const string CHARACTER_TAG = "CharacterRoot";
-
-        /// <summary>
-        /// 地图标签
-        /// </summary>
-        public const string TILEMAP_TAG = "TileMap";
-
-        /// <summary>
-        /// 资源地图标签
-        /// </summary>
-        public const string RESOURCE_MAP_TAG = "ResourceMap";
-
-        /// <summary>
-        /// 全局光照标签
-        /// </summary>
-        public const string GLOBAL_LIGHT_TAG = "GlobalLight";
-
-        /// <summary>
-        /// 小地图标签
-        /// </summary>
-        public const string MINIMAP_TAG = "MiniMap";
-
-        /// <summary>
-        /// 动作UI标签
-        /// </summary>
-        public const string ACTION_UI_TAG = "ActionUI";
-
         // =============================================================================================================
 
         /// <summary>
@@ -80,12 +43,5 @@
         /// 默认向量整数
         /// </summary>
         public static readonly Vector3Int VECTOR3INT_DEFAULT = new (-999, 0, 0);
-
-        // =============================================================================================================
-
-        /// <summary>
-        /// 等待地图执行完，开启其他协程
-        /// </summary>
-        public static bool IsCompleteTileMap = false;
     }
 }

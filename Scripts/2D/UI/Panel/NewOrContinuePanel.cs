@@ -50,17 +50,19 @@
             this.Controller.Close();
             GlobalData.IsNew = false;
             this.Controller.Show(AsyncProgressPanel.Instance);
-            AsyncProgressUI.Instance.SetTip("...");
-            AsyncProgressUI.Instance.AddTotal(ASaveData.Instances.Count + AMonoSaveData.Instances.Count);
 
             // 注: 加载数据之前, 必须先实例化
-            ResourceConstant.IsCompleteTileMap = true;
-            List<Type> types = Tool.GetChildByParent<ASaveData>();
-            foreach (Type type in types)
+            Lock.IsCompleteTileMap = true;
+            List<Type> saveDatas = Tool.GetChildByParent<ASaveData>();
+            List<Type> monoSaveDatas = Tool.GetChildByParent<AMonoSaveData>();
+            AsyncProgressUI.Instance.SetTip("...");
+            AsyncProgressUI.Instance.AddTotal(saveDatas.Count + monoSaveDatas.Count);
+            foreach (Type type in saveDatas)
             {
                 PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
                 if (propertyInfo == null)
                 {
+                    AsyncProgressUI.Instance.AddOneProcess();
                     continue;
                 }
 
@@ -72,12 +74,12 @@
                 AsyncProgressUI.Instance.AddOneProcess();
             }
 
-            types = Tool.GetChildByParent<AMonoSaveData>();
-            foreach (Type type in types)
+            foreach (Type type in monoSaveDatas)
             {
                 PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
                 if (propertyInfo == null)
                 {
+                    AsyncProgressUI.Instance.AddOneProcess();
                     continue;
                 }
 

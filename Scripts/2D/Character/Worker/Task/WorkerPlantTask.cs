@@ -58,13 +58,8 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
+        protected override bool DoIsCanWork(Worker worker)
         {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
-
             return FarmlandManager.Instance.IsEnoughAndPrePlant(worker, null) != default &&
                 InventoryManager.Instance.IsContainSeedAndPreTake(worker) != default;
         }

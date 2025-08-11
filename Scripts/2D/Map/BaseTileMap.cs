@@ -7,7 +7,7 @@
     /// <summary>
     /// 基地图
     /// </summary>
-    public abstract class BaseTileMap : AMonoSaveData, ISyncData
+    public abstract class BaseTileMap : AMonoSaveData
     {
         /// <summary>
         /// 地图

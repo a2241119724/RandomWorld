@@ -22,7 +22,8 @@
         public override void Start(Worker worker)
         {
             base.Start(worker);
-            InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry, true);
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, workerData.MaxHungry - workerData.CurHungry, true);
             this.ChangeStage(worker, 0);
         }
 
@@ -34,20 +35,17 @@
 
             // 再取食物，并且有可能会由于该位置的食物被取完，从而删除该饥饿任务
             ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);
-            worker.CurHungry += resourceInfo.Count * 10;
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            workerData.CurHungry += resourceInfo.Count * 10;
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
+        protected override bool DoIsCanWork(Worker worker)
         {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
-
             // 饥饿值小于一定值可以接收饥饿任务
-            return worker.CurHungry < Worker.ThresholdHungry
-                && InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, Worker.MaxHungry - worker.CurHungry);
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            return workerData.CurHungry < Worker.ThresholdHungry
+                && InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, workerData.MaxHungry - workerData.CurHungry);
         }
 
 #pragma warning disable SA1600 // Elements should be documented

@@ -27,7 +27,8 @@
         public override void OnUpdate()
         {
             base.OnUpdate();
-            if (this.Character.WearData.Weapon == null)
+            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            if (workerData.Weapon == null)
             {
                 this.Character.Manager.ChangeState(WorkerStateTypeEnum.Escape);
                 return;

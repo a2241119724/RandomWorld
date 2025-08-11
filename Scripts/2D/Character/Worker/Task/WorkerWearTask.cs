@@ -32,30 +32,20 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
-        {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
-
-            return this.worker == worker;
-        }
-
-        /// <inheritdoc/>
         public override void Finish(Worker worker)
         {
             base.Finish(worker);
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
 
             // Worker拿起装备或者武器
             if (ItemDataManager.Instance.GetTypeById(this.id) == Item.ItemType.Weapon)
             {
-                worker.WearData.Weapon = (Weapon)ItemFactory.Instance.GetBackpackItemByName(
+                workerData.Weapon = (Weapon)ItemFactory.Instance.GetBackpackItemByName(
                     ItemDataManager.Instance.GetById(this.id).ImageName);
             }
             else if (ItemDataManager.Instance.GetTypeById(this.id) == Item.ItemType.Equipment)
             {
-                worker.WearData.AddEquipment(
+                workerData.AddEquipment(
                     (Equipment)ItemFactory.Instance.GetBackpackItemByName(
                     ItemDataManager.Instance.GetById(this.id).ImageName), this.TargetMap);
             }
@@ -64,6 +54,12 @@
 
             // 删除图标
             ItemMap.Instance.DeleteTile(this.TargetMap);
+        }
+
+        /// <inheritdoc/>
+        protected override bool DoIsCanWork(Worker worker)
+        {
+            return this.worker == worker;
         }
 
 #pragma warning disable SA1600 // Elements should be documented

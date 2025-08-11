@@ -10,7 +10,7 @@
     {
         public PanelController()
         {
-            this.Parent = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).transform;
+            this.Parent = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG).transform;
             this.Panels = new Stack<IBasePanel>();
             if (this.Panels == null)
             {

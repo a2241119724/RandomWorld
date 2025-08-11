@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -10,13 +11,8 @@
     /// </summary>
     public class Player : Character
     {
-        private readonly int mp = 100; // 玩家蓝量
-        private readonly int maxMp = 100; // 玩家最大蓝量
-        private int currentExperience = 0; // 玩家当前经验值
-        private int maxExperience = 4; // 玩家当前等级最大经验值
-        private int level = 1; // 当前等级
         private Animator animator;
-        private Vector3 direction; // 电脑按键方向
+        private Vector3 direction; // 按键玩家移动方向
         private SpriteRenderer spriteRendererIdle; // idle图像开关
         private CameraMove mainCamera;
         private CameraMove miniCamera;
@@ -32,9 +28,9 @@
                 return;
             }
 
-            this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
             this.spriteRendererIdle = this.gameObject.GetComponent<SpriteRenderer>();
             this.name = "Player";
+            this.CharacterDataLAB = new PlayerData();
         }
 
         /// <inheritdoc/>
@@ -57,14 +53,22 @@
                     GameInfoUI.Instance.SetPosition(this.transform.position);
                 }
 
-                this.miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
+                this.miniCamera = GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG).GetComponent<CameraMove>();
                 this.miniCamera.DirectToPosition(this.transform.position);
                 this.mainCamera = Camera.main.GetComponent<CameraMove>();
                 this.mainCamera.DirectToPosition(this.transform.position);
                 PlayerManager.Instance.Mine = this;
                 PhotonNetwork.LocalPlayer.TagObject = this;
                 Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
-                PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
+                PlayerData playerData = this.CharacterDataLAB as PlayerData;
+                PlayerStatusUI.Instance.UpdatePlayerState(
+                    this.CharacterDataLAB.Hp,
+                    this.CharacterDataLAB.MaxHp,
+                    playerData.Mp,
+                    playerData.MaxMp,
+                    playerData.Level,
+                    playerData.CurExperience,
+                    playerData.MaxExperience);
             }
             else if (!this.pv.IsMine)
             {
@@ -81,18 +85,26 @@
         /// <param name="experience">经验值.</param>
         public void AddExperienceValue(int experience)
         {
-            this.currentExperience += experience;
+            PlayerData playerData = this.CharacterDataLAB as PlayerData;
+            playerData.CurExperience += experience;
 
             // 升级
-            if (this.currentExperience / this.maxExperience >= 1)
+            if (playerData.CurExperience / playerData.MaxExperience >= 1)
             {
-                ++this.level;
-                this.currentExperience %= this.maxExperience;
-                this.maxExperience *= 2;
-                GlobalInit.Instance.ShowTip("UP " + this.level);
+                ++playerData.Level;
+                playerData.CurExperience %= playerData.MaxExperience;
+                playerData.MaxExperience *= 2;
+                GlobalInit.Instance.ShowTip("UP " + playerData.Level);
             }
 
-            PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
+            PlayerStatusUI.Instance.UpdatePlayerState(
+                this.CharacterDataLAB.Hp,
+                this.CharacterDataLAB.MaxHp,
+                playerData.Mp,
+                playerData.MaxMp,
+                playerData.Level,
+                playerData.CurExperience,
+                playerData.MaxExperience);
         }
 
         /// <summary>
@@ -107,7 +119,15 @@
                 this.CharacterDataLAB.Hp = this.CharacterDataLAB.MaxHp;
             }
 
-            PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
+            PlayerData playerData = this.CharacterDataLAB as PlayerData;
+            PlayerStatusUI.Instance.UpdatePlayerState(
+                this.CharacterDataLAB.Hp,
+                this.CharacterDataLAB.MaxHp,
+                playerData.Mp,
+                playerData.MaxMp,
+                playerData.Level,
+                playerData.CurExperience,
+                playerData.MaxExperience);
         }
 
         /// <summary>
@@ -128,7 +148,15 @@
                 return;
             }
 
-            PlayerStatusUI.Instance.UpdatePlayerState(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp, this.mp, this.maxMp, this.level, this.currentExperience, this.maxExperience);
+            PlayerData playerData = this.CharacterDataLAB as PlayerData;
+            PlayerStatusUI.Instance.UpdatePlayerState(
+                this.CharacterDataLAB.Hp,
+                this.CharacterDataLAB.MaxHp,
+                playerData.Mp,
+                playerData.MaxMp,
+                playerData.Level,
+                playerData.CurExperience,
+                playerData.MaxExperience);
         }
 
         /// <summary>
@@ -210,7 +238,7 @@
                 (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f))
             {
                 this.mainCamera.DirectToPosition(this.transform.position);
-                this.miniCamera = GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>();
+                this.miniCamera = GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG).GetComponent<CameraMove>();
                 this.miniCamera.DirectToPosition(this.transform.position);
                 this.miniCamera.Character = this;
 
@@ -267,7 +295,7 @@
         /// <summary>
         /// 都有碰撞器,其中之一勾选Is Trigger,其中之一带有刚体
         /// </summary>
-        /// <param name="collider"></param>
+        /// <param name="collider">collider</param>
         // private void OnTriggerEnter2D(Collider2D collider)
         // {
         //     if (collider.gameObject.CompareTag("Enemy"))
@@ -282,5 +310,37 @@
         //     //collision.contacts[0].point; // 碰撞的第一个点
         //     //collision.contacts[0].normal; // 碰撞的法线
         // }
+
+        /// <summary>
+        /// 敌人数据
+        /// </summary>
+        [Serializable]
+        public class PlayerData : CharacterData
+        {
+            /// <summary>
+            /// 玩家蓝量
+            /// </summary>
+            public int Mp = 100;
+
+            /// <summary>
+            /// 玩家最大蓝量
+            /// </summary>
+            public int MaxMp = 100;
+
+            /// <summary>
+            /// 玩家当前经验值
+            /// </summary>
+            public int CurExperience = 0;
+
+            /// <summary>
+            /// 玩家当前等级最大经验值
+            /// </summary>
+            public int MaxExperience = 4;
+
+            /// <summary>
+            /// 当前等级
+            /// </summary>
+            public int Level = 1;
+        }
     }
 }

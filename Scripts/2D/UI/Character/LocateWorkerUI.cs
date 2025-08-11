@@ -27,7 +27,7 @@
             g.GetComponent<Button>().onClick.AddListener(() =>
             {
                 Camera.main.GetComponent<CameraMove>().Character = worker;
-                GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>().Character = worker;
+                GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG).GetComponent<CameraMove>().Character = worker;
             });
         }
 

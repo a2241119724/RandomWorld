@@ -22,7 +22,7 @@
             foreach (Enemy.EnemyData enemyData in this.EnemyManagerDataLAB.EnemyDatas)
             {
                 GameObject g = this.Create(Vector3LAB.ToVector3(enemyData.Pos));
-                g.GetComponent<Enemy>().EnemyDataLAB = enemyData;
+                g.GetComponent<Enemy>().CharacterDataLAB = enemyData;
             }
 
             TileMap.Instance.StartCoroutine(this.creator.GenEnemy());
@@ -34,8 +34,9 @@
             this.EnemyManagerDataLAB.EnemyDatas = new ();
             foreach (Enemy enemy in this.Characters)
             {
-                enemy.EnemyDataLAB.Pos = Vector3LAB.ToVector3LAB(enemy.transform.position);
-                this.EnemyManagerDataLAB.EnemyDatas.Add(enemy.EnemyDataLAB);
+                Enemy.EnemyData enemyData = enemy.CharacterDataLAB as Enemy.EnemyData;
+                enemy.CharacterDataLAB.Pos = Vector3LAB.ToVector3LAB(enemy.transform.position);
+                this.EnemyManagerDataLAB.EnemyDatas.Add(enemyData);
             }
 
             DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.EnemyManagerDataLAB);
