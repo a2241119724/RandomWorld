@@ -15,9 +15,13 @@
         private const float MouseSpeed = 2.0f; // 相机跟随鼠标速度[鼠标中键]
         private const float ScrollSpeed = 100.0f; // 相机缩放速度
         private readonly float[] scaleThreshold = new float[] { 5, 20 }; // 相机缩放阈值
-        private readonly bool isEdgeMode = true; // 鼠标在相机边缘滑动时[相机跟随鼠标移动]
         private bool isDown; // 是否按下鼠标中键
         private Vector3 lastMousePos; // 上一次鼠标位置[鼠标中键拖动相机]
+
+        /// <summary>
+        /// 鼠标在相机边缘滑动时[相机跟随鼠标移动]
+        /// </summary>
+        public static bool IsEdgeMode { get; set; }
 
         /// <summary>
         /// 相机跟随的目标.
@@ -66,7 +70,7 @@
 
             // if (gameObject.GetComponent<Camera>() == Camera.main) return;
             // 相机边缘跟随鼠标移动
-            if (this.isEdgeMode)
+            if (CameraMove.IsEdgeMode)
             {
                 // 真实坐标x对应地图坐标y
                 Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Target);

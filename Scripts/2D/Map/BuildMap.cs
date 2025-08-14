@@ -40,16 +40,13 @@
         /// <returns>建造地图</returns>
         public BuildMap AddBuilding(Vector3Int targetMap, TileBase tile, bool isPass = false)
         {
+            this.BuildMapDataLAB.Add(targetMap, tile.name);
+            Vector3IntLAB vector3IntLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
+            this.BuildMapDataLAB.BuildingTargetMaps.Add(vector3IntLAB, tile.name);
             this.tilemap.SetTile(targetMap, tile);
             this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
             this.tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
             this.tilemap.SetColor(targetMap, new Color(1, 1, 1, isPass ? 0.49f : 0.5f));
-            Vector3IntLAB vector3IntLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
-            if (!this.BuildMapDataLAB.TargetMaps.ContainsKey(vector3IntLAB))
-            {
-                this.BuildMapDataLAB.TargetMaps.Add(vector3IntLAB, tile.name);
-            }
-
             this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), true, true);
             return this;
         }
@@ -63,15 +60,8 @@
         /// <returns>地图瓦片</returns>
         public BuildMap DirectBuild(Vector3Int targetMap, TileBase tile, bool isPass = true)
         {
-            this.tilemap.SetTile(targetMap, tile);
-            if (isPass)
-            {
-                this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
-                this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
-            }
-
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), tile.name, isPass, false);
-            return this;
+            this.BuildMapDataLAB.Add(targetMap, tile.name);
+            return this.DoDirectBuild(targetMap, tile, isPass);
         }
 
         /// <summary>
@@ -80,6 +70,8 @@
         /// <param name="targetMap">目标位置</param>
         public void SetComplete(Vector3Int targetMap)
         {
+            this.BuildMapDataLAB.Add(targetMap, this.tilemap.GetTile(targetMap).name);
+            RoomManager.Instance.Complete(targetMap);
             if (this.tilemap.GetColor(targetMap).a == 0.5f)
             {
                 this.tilemap.SetColliderType(targetMap, Tile.ColliderType.Sprite);
@@ -91,8 +83,6 @@
                 this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
                 this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, true, false);
             }
-
-            RoomManager.Instance.Complete(targetMap);
         }
 
         /// <summary>
@@ -112,7 +102,7 @@
         public void CancelBuilding(Vector3Int targetMap)
         {
             this.tilemap.SetTile(targetMap, null);
-            this.BuildMapDataLAB.TargetMaps.Remove(Vector3IntLAB.ToVector3IntLAB(targetMap));
+            this.BuildMapDataLAB.BuildingTargetMaps.Remove(Vector3IntLAB.ToVector3IntLAB(targetMap));
             this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, false, false, true);
         }
 
@@ -125,14 +115,14 @@
             resourceInfos.Add(
                 ItemDataManager.Instance.GetByName("CustomWood").Id,
                 new ResourceInfo(ItemDataManager.Instance.GetByName("CustomWood").Id, 5));
-            foreach (Vector3IntLAB targetMap in this.BuildMapDataLAB.TargetMaps.Keys)
+            foreach (Vector3IntLAB targetMap in this.BuildMapDataLAB.BuildingTargetMaps.Keys)
             {
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
                 WorkerTaskManager.Instance.AddTask(new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(Vector3IntLAB.ToVector3Int(targetMap))
                     .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build());
             }
 
-            this.BuildMapDataLAB.TargetMaps.Clear();
+            this.BuildMapDataLAB.BuildingTargetMaps.Clear();
         }
 
         /// <summary>
@@ -172,7 +162,7 @@
                     (TileBase)ResourceManager.Instance.GetAsset(enumerator.Current.Value));
             }
 
-            Dictionary<Vector3IntLAB, string>.Enumerator enumerator1 = buildMapData.TargetMaps.GetEnumerator();
+            Dictionary<Vector3IntLAB, string>.Enumerator enumerator1 = buildMapData.BuildingTargetMaps.GetEnumerator();
             while (enumerator1.MoveNext())
             {
                 this.tilemap.SetTile(
@@ -221,6 +211,10 @@
         {
             base.LoadData();
             this.BuildMapDataLAB = DataTool.LoadDataByBinary<BuildMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            foreach (var posMap in this.BuildMapDataLAB.PosMaps)
+            {
+                this.DoDirectBuild(Vector3IntLAB.ToVector3Int(posMap.Key), ResourceManager.Instance.GetAsset(posMap.Value));
+            }
         }
 
         /// <inheritdoc/>
@@ -228,6 +222,22 @@
         {
             base.SaveData();
             DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.BuildMapDataLAB);
+        }
+
+        /// <summary>
+        /// 直接建造完成,Worker
+        /// </summary>
+        private BuildMap DoDirectBuild(Vector3Int targetMap, TileBase tile, bool isPass = true)
+        {
+            this.tilemap.SetTile(targetMap, tile);
+            if (isPass)
+            {
+                this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
+                this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
+            }
+
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), tile.name, isPass, false);
+            return this;
         }
 
         /// <summary>
@@ -239,12 +249,7 @@
             /// <summary>
             /// 正在建造的地图坐标
             /// </summary>
-            public Dictionary<Vector3IntLAB, string> TargetMaps;
-
-            public BuildMapData()
-            {
-                this.TargetMaps = new Dictionary<Vector3IntLAB, string>();
-            }
+            public Dictionary<Vector3IntLAB, string> BuildingTargetMaps;
         }
     }
 }

@@ -173,7 +173,7 @@
             T[] ts = parent.GetComponentsInChildren<T>();
             foreach (var t in ts)
             {
-                if (t.name == name)
+                if (t.name.Trim().Equals(name))
                 {
                     return t;
                 }

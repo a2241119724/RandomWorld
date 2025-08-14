@@ -79,6 +79,18 @@
             }
         }
 
+        public void FixedUpdate()
+        {
+            // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
+            if (NetworkConnect.Instance.IsOnline && !this.pv.IsMine && PhotonNetwork.IsConnected)
+            {
+                return;
+            }
+
+            // 防止撞墙震动
+            this.Move();
+        }
+
         /// <summary>
         /// 增加经验值.
         /// </summary>
@@ -214,18 +226,6 @@
             this.CharacterDataLAB.Hp = 100;
         }
 
-        private void FixedUpdate()
-        {
-            // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
-            if (NetworkConnect.Instance.IsOnline && !this.pv.IsMine && PhotonNetwork.IsConnected)
-            {
-                return;
-            }
-
-            // 防止撞墙震动
-            this.Move();
-        }
-
         /// <summary>
         /// 玩家移动.
         /// </summary>
@@ -238,7 +238,6 @@
                 (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f))
             {
                 this.mainCamera.DirectToPosition(this.transform.position);
-                this.miniCamera = GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG).GetComponent<CameraMove>();
                 this.miniCamera.DirectToPosition(this.transform.position);
                 this.miniCamera.Character = this;
 
