@@ -15,7 +15,7 @@
         {
             base.Awake();
             Instance = this;
-            this.itemBox = ResourceManager.Instance.GetPrefab("BackpackItem");
+            this.itemBox = PrefabConstant.BACKPACK_ITEM;
         }
 
         /// <inheritdoc/>

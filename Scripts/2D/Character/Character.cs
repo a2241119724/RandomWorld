@@ -24,7 +24,6 @@
         /// </summary>
         protected CheckBug checkBug;
 
-        private GameObject damageUI; // 掉血面板
         private Color originalColor; // 原来的自身颜色
 
         /// <summary>
@@ -34,7 +33,6 @@
 
         public virtual void Awake()
         {
-            this.damageUI = ResourceManager.Instance.GetPrefab("Damage");
             this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
             this.checkBug = new CheckBug();
         }
@@ -62,14 +60,12 @@
                 return;
             }
 
-            GameObject g = Instantiate(this.damageUI, this.transform.position, Quaternion.identity); // 创建物体(预设,位置,角度)
+            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.DAMAGE); // 创建物体(预设,位置,角度)
             if (g == null)
             {
-                LogManager.Instance.Log("damageUI Instantiate Error!!!", LogManager.LogLevel.Error);
                 return;
             }
 
-            g.name = this.damageUI.name;
             if (this is Enemy)
             {
                 // 暴击时显示不同的框

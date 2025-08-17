@@ -35,7 +35,7 @@
             Transform t = GameObject.FindGameObjectWithTag(root).transform.Find(this.Name);
             if (t == null)
             {
-                this.Panel = Object.Instantiate(ResourceManager.Instance.GetPrefab(this.Name), PanelController.Instance.Parent, false);
+                this.Panel = ResourceManager.Instance.Instantiate(this.Name, PanelController.Instance.Parent, false);
             }
             else
             {

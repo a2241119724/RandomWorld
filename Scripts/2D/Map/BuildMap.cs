@@ -250,6 +250,11 @@
             /// 正在建造的地图坐标
             /// </summary>
             public Dictionary<Vector3IntLAB, string> BuildingTargetMaps;
+
+            public BuildMapData()
+            {
+                this.BuildingTargetMaps = new Dictionary<Vector3IntLAB, string>();
+            }
         }
     }
 }

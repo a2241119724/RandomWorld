@@ -9,17 +9,18 @@
     /// <summary>
     /// 编辑工具
     /// </summary>
-    public class EditorTool : MonoBehaviour
+    public class UITool : MonoBehaviour
     {
-        private static readonly string Exclude = @"^$"; // 排除,不优化
+        private const string Exclude = @"^$"; // 排除,不优化
+        private const string Prefix = "Tools/UI/";
 
         /// <summary>
         /// 优化Text
         /// </summary>
-        [MenuItem("Tools/优化Text")]
+        [MenuItem(Prefix + "修改Text")]
         public static void UpdateText()
         {
-            EditorTool.UpdateCommon(
+            UITool.UpdateCommon(
                 (Text text) =>
             {
                 // 字体
@@ -50,7 +51,7 @@
         /// <summary>
         /// 修改RoundCorner半径
         /// </summary>
-        [MenuItem("Tools/修改RoundCorner")]
+        [MenuItem(Prefix + "修改RoundCorner")]
         public static void UpdateRoundCorner()
         {
             // 寻找所有的RoundCorner
@@ -84,35 +85,9 @@
         }
 
         /// <summary>
-        /// 修改Button边框
-        /// </summary>
-        [MenuItem("Tools/修改Button边框")]
-        public static void UpdateButton1()
-        {
-            EditorTool.UpdateCommon((Button button) =>
-            {
-                RoundCorner roundCorner = button.GetComponent<RoundCorner>();
-                if (roundCorner == null)
-                {
-                    return;
-                }
-
-                Transform transform = button.GetComponent<Transform>();
-                if (transform.Find("Border") != null)
-                {
-                    return;
-                }
-
-                GameObject border = Resources.Load<GameObject>("Prefabs/Border");
-                GameObject g = GameObject.Instantiate(border, button.transform);
-                g.name = "Border";
-            });
-        }
-
-        /// <summary>
         /// 修改Button颜色
         /// </summary>
-        [MenuItem("Tools/修改Button颜色")]
+        [MenuItem(Prefix + "修改Button")]
         public static void UpdateButton()
         {
             var buttons = Resources.FindObjectsOfTypeAll(typeof(Button));
@@ -158,12 +133,12 @@
         }
 
         /// <summary>
-        /// 修改RoundCorner半径
+        /// 修改Slider
         /// </summary>
-        [MenuItem("Tools/修改Slider")]
+        [MenuItem(Prefix + "修改Slider")]
         public static void UpdateSlider()
         {
-            EditorTool.UpdateCommon((Slider slider) =>
+            UITool.UpdateCommon((Slider slider) =>
             {
                 // RectTransform sliderTransform = slider.GetComponent<RectTransform>();
                 // sliderTransform.sizeDelta = new Vector2(sliderTransform.sizeDelta.x, 20);
@@ -209,7 +184,7 @@
         /// <typeparam name="T">组件类型</typeparam>
         /// <param name="action">具体执行内容</param>
         /// <param name="exclude">通过名称正则排除</param>
-        public static void UpdateCommon<T>(Action<T> action, string exclude = @"^$")
+        private static void UpdateCommon<T>(Action<T> action, string exclude = @"^$")
             where T : Component
         {
             var coponents = Resources.FindObjectsOfTypeAll(typeof(T));

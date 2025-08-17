@@ -9,7 +9,7 @@
     /// </summary>
     public class ResourceTool
     {
-        private static readonly string ResourcePath = new DirectoryInfo(Application.dataPath).FullName + "\\Resources\\";
+        private static readonly string ResourcePath = Application.streamingAssetsPath + "\\Resources\\";
 
         /// <summary>
         /// 获取文件下的Resources并封装成Dictionary.
@@ -27,25 +27,6 @@
                 map[p.name.Split("/")[^1]] = p;
             }
 
-            return map;
-        }
-
-        /// <summary>
-        /// resource下的所有文件路径.
-        /// </summary>
-        /// <returns>所有路径键值对.</returns>
-        public static Dictionary<string, string> LoadPaths()
-        {
-            Dictionary<string, string> map = new ();
-
-            // string[] subPaths = AssetDatabase.GetAllAssetPaths();
-#if UNITY_EDITOR
-            // 开发阶段加载path, 并保存起来
-            DoLoadPaths(ResourcePath, map);
-            DataTool.SaveDataByBinary(Application.streamingAssetsPath + "/resourcePath.lab", map);
-#else
-            map = DataTool.LoadDataByBinary<Dictionary<string, string>>(Application.streamingAssetsPath + "/resourcePath.lab");
-#endif
             return map;
         }
 

@@ -22,7 +22,7 @@
         /// <summary>
         /// 每个道具
         /// </summary>
-        protected GameObject itemBox;
+        protected string itemBox;
         private Transform content; // 背包的栅格框
 
         /// <summary>
@@ -92,14 +92,12 @@
                     continue;
                 }
 
-                GameObject g = Instantiate(this.itemBox);
+                GameObject g = ResourceManager.Instance.Instantiate(this.itemBox);
                 if (g == null)
                 {
-                    LogManager.Instance.Log("itemBox Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
 
-                g.name = this.itemBox.name;
                 g.transform.SetParent(this.content, false);
 
                 // t.transform.localScale = Vector3.one; // 控制大小
