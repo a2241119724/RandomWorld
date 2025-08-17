@@ -10,7 +10,7 @@
         /// <inheritdoc/>
         protected override GameObject DoCreate(Vector3 worldPos, string name, string layer)
         {
-            GameObject g = base.DoCreate(worldPos, "Worker", "Worker");
+            GameObject g = base.DoCreate(worldPos, PrefabConstant.WORKER, "Worker");
             g.name = NameGenertor.Instance.GetRandomName();
             return g;
         }

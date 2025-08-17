@@ -18,7 +18,7 @@
         /// <inheritdoc/>
         protected override void Attack1()
         {
-            this.FireBullet("PlayerBullet");
+            this.FireBullet(PrefabConstant.PLAYER_BULLET);
         }
     }
 

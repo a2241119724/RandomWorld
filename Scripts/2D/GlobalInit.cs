@@ -9,7 +9,6 @@
     public class GlobalInit : MonoBehaviour
     {
         private readonly bool initPanel = true;
-        private GameObject tip; // 提示框预制体
         private List<IBasePanel> dontClosePanels; // ESC不可关闭的面板
 
         /// <summary>
@@ -20,7 +19,6 @@
         public void Awake()
         {
             Instance = this;
-            this.tip = ResourceManager.Instance.GetPrefab("Tip");
             Application.targetFrameRate = GlobalData.MaxFrame;
             this.dontClosePanels = new ()
             {
@@ -103,14 +101,12 @@
         /// <param name="text">通知内容.</param>
         public void ShowTip(string text)
         {
-            GameObject g = Instantiate(this.tip);
+            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.TIP);
             if (g == null)
             {
-                LogManager.Instance.Log("tip Instantiate Error!!!", LogManager.LogLevel.Error);
                 return;
             }
 
-            g.name = this.tip.name;
             g.GetComponent<TipUI>().SetText(text);
             g.transform.SetParent(this.transform, false);
 

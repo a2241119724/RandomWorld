@@ -214,25 +214,6 @@
         }
 
         /// <summary>
-        /// 实例化预制体.
-        /// </summary>
-        /// <param name="prefab">数据.</param>
-        /// <param name="position">实例化位置.</param>
-        /// <param name="rotation">实例化角度.</param>
-        /// <returns>对象.</returns>
-        public static GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation)
-        {
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                return PhotonNetwork.Instantiate(ResourceManager.Instance.GetPath(prefab.name + ".prefab"), position, rotation);
-            }
-            else
-            {
-                return (GameObject)GameObject.Instantiate(prefab, position, rotation);
-            }
-        }
-
-        /// <summary>
         /// 由于多个Enum放到一个中,需要Split.
         /// </summary>
         /// <typeparam name="T">Split枚举的类型.</typeparam>

@@ -30,16 +30,16 @@
         protected virtual GameObject DoCreate(Vector3 worldPos, string name, string layer)
         {
             // 设置角色
-            GameObject g = Tool.Instantiate(
-                ResourceManager.Instance.GetPrefab(name),
+            GameObject g = ResourceManager.Instance.Instantiate(
+                name,
                 new Vector3(
                     worldPos.x + TileMap.Instance.gameObject.transform.position.x,
                     worldPos.y + TileMap.Instance.gameObject.transform.position.y,
                     TileMap.Instance.gameObject.transform.position.z),
-                Quaternion.identity);
+                Quaternion.identity,
+                false);
             if (g == null)
             {
-                LogManager.Instance.Log(name + " Instantiate Error!!!", LogManager.LogLevel.Error);
                 return null;
             }
 

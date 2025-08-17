@@ -18,7 +18,7 @@
         /// <inheritdoc/>
         protected override void Attack1()
         {
-            GameObject g = this.FireBullet("TraceBullet");
+            GameObject g = this.FireBullet(PrefabConstant.TRACE_BULLET);
             if (g != null && EnemyManager.Instance.Count() > 0)
             {
                 g.GetComponent<TraceBullet>().Target = EnemyManager.Instance.Get(0);

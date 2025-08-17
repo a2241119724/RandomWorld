@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using System;
+    using UnityEngine;
 
     /// <summary>
     /// 不能将ItemData转换为json,因为需要[Serializable]修饰,而包装类没有被修饰

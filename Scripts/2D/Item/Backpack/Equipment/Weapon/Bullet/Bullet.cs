@@ -24,7 +24,6 @@
         protected RaycastHit2D rayCastHit2D;
         private float bulletSpeed; // 子弹速度
         private Vector3 distance; // 每帧位移的距离
-        private GameObject blood; // 掉血特效
 
         /// <summary>
         /// 子弹速度
@@ -65,7 +64,6 @@
 
         protected virtual void Awake()
         {
-            this.blood = ResourceManager.Instance.GetPrefab("Blood");
             this.name = this.GetType().Name;
         }
 
@@ -93,18 +91,13 @@
             {
                 this.HitObject();
                 this.transform.position = this.rayCastHit2D.point; // 放到射线射中的位置
-                GameObject g = Instantiate(this.blood, this.transform.position, Quaternion.identity);
+                GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.DAMAGE);
                 if (g == null)
                 {
-                    LogManager.Instance.Log("blood Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
-                else
-                {
-                    g.name = this.blood.name;
-                    g.transform.SetParent(this.rayCastHit2D.collider.transform);
-                }
 
+                g.transform.SetParent(this.rayCastHit2D.collider.transform);
                 Destroy(this.gameObject, 0.25f);
 
                 // Invoke(nameof(destory), 0.25f); // 销毁

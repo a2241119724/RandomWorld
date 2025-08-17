@@ -67,7 +67,7 @@
         /// <returns>子弹</returns>
         protected GameObject FireBullet(string bulletName)
         {
-            GameObject g = Tool.Instantiate(ResourceManager.Instance.GetPrefab(bulletName), this.gunHead.transform.position, Quaternion.identity);
+            GameObject g = ResourceManager.Instance.Instantiate(bulletName, this.gunHead.transform.position, Quaternion.identity);
             if (g == null)
             {
                 LogManager.Instance.Log("bullet Instantiate Error!!!", LogManager.LogLevel.Error);

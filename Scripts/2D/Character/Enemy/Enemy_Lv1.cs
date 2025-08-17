@@ -45,7 +45,7 @@
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
 
             // 发射子弹
-            GameObject g = Tool.Instantiate(ResourceManager.Instance.GetPrefab("EnemyBullet"), this.EnemyHead.position, Quaternion.identity);
+            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.ENEMY_BULLET, this.EnemyHead.position, Quaternion.identity);
             g.GetComponent<EnemyBullet>().Direction = this.EnemyHead.position - this.transform.position;
             g.GetComponent<EnemyBullet>().BulletSpeed = enemyData.BulletSpeed;
             this.damage = UnityEngine.Random.Range(1, 10);

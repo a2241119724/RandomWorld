@@ -1,0 +1,25 @@
+﻿namespace LAB2D
+{
+    using System;
+    using System.Collections.Generic;
+    using UnityEditor;
+    using UnityEngine;
+
+    /// <summary>
+    /// 数据工具
+    /// </summary>
+    public class DataTool
+    {
+        private const string Prefix = "Tools/Data/";
+
+        [MenuItem(Prefix + "根据代码生成道具数据")]
+        private static void BuildAB()
+        {
+            List<Type> types = Tool.GetChildByParent<Item>();
+            foreach (var type in types)
+            {
+                Debug.Log(type.Name);
+            }
+        }
+    }
+}

@@ -5,11 +5,33 @@
     using UnityEngine;
 
     /// <summary>
-    /// 代码行数计算
+    /// 其他工具
     /// </summary>
-    public class AllCodeLineCount
+    public class OtherTool
     {
-        [MenuItem("Tools/All Code Line Count")]
+        private const string Prefix = "Tools/Other/";
+
+        /// <summary>
+        /// 打AB包
+        /// 在预制体的Inspector最下面New AssetBundle,再点打包
+        /// 打包到StreamingAssets文件夹下
+        /// 使用方法
+        /// AssetBundle assetBundleObj = AssetBundle.LoadFromFile(Application.streamingAssetsPath + "/snow");
+        /// GameObject g = Instantiate(assetBundleObj.LoadAsset<GameObject>("snow"));
+        /// g.name = "AB资源加载方式";
+        /// </summary>
+        [MenuItem(Prefix + "打AB包")]
+        private static void BuildAB()
+        {
+            BuildPipeline.BuildAssetBundles(Application.streamingAssetsPath, BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.StandaloneWindows64);
+            AssetDatabase.Refresh();
+            Debug.Log("打包完成");
+        }
+
+        /// <summary>
+        /// 打印所有代码行数
+        /// </summary>
+        [MenuItem(Prefix + "计算代码行数")]
         private static void PrintTotalLine()
         {
             string[] fileName = Directory.GetFiles("Assets/Scripts/2D", "*.cs", SearchOption.AllDirectories);
