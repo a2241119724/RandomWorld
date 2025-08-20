@@ -57,7 +57,7 @@
 
             // 放下拿起来的东西
             ItemMap.Instance.AddTile(this.TargetMap, ResourceManager.Instance
-                .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).ImageName));
+                .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).EnName));
             worker.SubResource(this.resourceInfo);
             InventoryManager.Instance.AddItemByPrePlace(worker, this.TargetMap);
 

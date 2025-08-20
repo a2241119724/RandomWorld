@@ -77,7 +77,7 @@
                 if (weapon != null)
                 {
                     worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourceManager.Instance.GetImage(
-                        ItemDataManager.Instance.GetById(weapon.Id).ImageName);
+                        ItemDataManager.Instance.GetById(weapon.Id).EnName);
                 }
 
                 Dictionary<Equipment.EquipType, Equipment> equipments = workerData.Equipments;
@@ -86,7 +86,7 @@
                     if (item.Value != null)
                     {
                         worker.Find(item.Key.ToString() + "/Image").GetComponent<Image>().sprite = ResourceManager.Instance.GetImage(
-                            ItemDataManager.Instance.GetById(item.Value.Id).ImageName);
+                            ItemDataManager.Instance.GetById(item.Value.Id).EnName);
                     }
                 }
             }

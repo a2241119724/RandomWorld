@@ -1,6 +1,6 @@
 ﻿# RandomWorld(未完成)
 
-* Unity，不包含所有资源
+* 可能缺少某些资源
 * 需要整个Build文件夹运行exe
 
 # 注

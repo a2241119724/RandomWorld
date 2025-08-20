@@ -103,7 +103,7 @@
                 // t.transform.localScale = Vector3.one; // 控制大小
                 Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = this.GetQuantity(model.Get(type, i)).ToString();
                 Image image = Tool.GetComponentInChildren<Image>(g, "ItemImage");
-                image.sprite = ResourceManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.Get(type, i).Id).ImageName);
+                image.sprite = ResourceManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.Get(type, i).Id).EnName);
                 image.preserveAspect = true;
                 IV itemView = g.transform.Find("Item").GetComponent<IV>();
 
