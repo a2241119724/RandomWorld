@@ -41,13 +41,13 @@
             if (ItemDataManager.Instance.GetTypeById(this.id) == Item.ItemType.Weapon)
             {
                 workerData.Weapon = (Weapon)ItemFactory.Instance.GetBackpackItemByName(
-                    ItemDataManager.Instance.GetById(this.id).ImageName);
+                    ItemDataManager.Instance.GetById(this.id).EnName);
             }
             else if (ItemDataManager.Instance.GetTypeById(this.id) == Item.ItemType.Equipment)
             {
                 workerData.AddEquipment(
                     (Equipment)ItemFactory.Instance.GetBackpackItemByName(
-                    ItemDataManager.Instance.GetById(this.id).ImageName), this.TargetMap);
+                    ItemDataManager.Instance.GetById(this.id).EnName), this.TargetMap);
             }
 
             InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);

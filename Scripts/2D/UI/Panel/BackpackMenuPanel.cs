@@ -68,14 +68,14 @@
                 PlayerManager.Instance.Select.Id = this.Select.Item.Id;
 
                 // 实例化武器
-                PlayerManager.Instance.Select.Weapon = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).ImageName, Vector3.zero, Quaternion.identity);
+                PlayerManager.Instance.Select.Weapon = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName, Vector3.zero, Quaternion.identity);
                 if (PlayerManager.Instance.Select.Weapon == null)
                 {
                     LogManager.Instance.Log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
                     return;
                 }
 
-                PlayerManager.Instance.Select.Weapon.name = ItemDataManager.Instance.GetById(this.Select.Item.Id).ImageName;
+                PlayerManager.Instance.Select.Weapon.name = ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName;
                 PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
                 PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().Item = this.Select.Item;
                 PlayerManager.Instance.Select.Weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
@@ -92,7 +92,7 @@
             else if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == Item.ItemType.Consumable)
             {
                 // 实例化道具调用上面的脚本再立即销毁
-                GameObject g = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).ImageName);
+                GameObject g = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName);
                 if (g == null)
                 {
                     LogManager.Instance.Log("Consumable is null!!!", LogManager.LogLevel.Error);

@@ -19,6 +19,28 @@
         /// </summary>
         public static ItemDataManager Instance { get; private set; }
 
+        public void Awake()
+        {
+            Instance = this;
+            this.nameToId = new Dictionary<string, int>();
+            this.allItemInfo = new Dictionary<int, ItemData>();
+            foreach (Item.ItemType itemType in Enum.GetValues(typeof(Item.ItemType)))
+            {
+                ItemDataSO itemDataSO = ResourceManager.Instance.GetSO(itemType.ToString() + "ItemData");
+                if (itemDataSO == null)
+                {
+                    continue;
+                }
+
+                foreach (ItemData itemData in itemDataSO.ItemDatas)
+                {
+                    int id = Convert.ToInt32(itemData.Id);
+                    this.allItemInfo.Add(id, itemData);
+                    this.nameToId.Add(itemData.EnName, id);
+                }
+            }
+        }
+
         /// <summary>
         /// 获得对应id的道具数据
         /// </summary>
@@ -117,41 +139,6 @@
             else
             {
                 return (int)type - (int)Item.ItemType.Room;
-            }
-        }
-
-        public void Awake()
-        {
-            Instance = this;
-            this.nameToId = new Dictionary<string, int>();
-            this.allItemInfo = new Dictionary<int, ItemData>();
-            foreach (Item.ItemType itemType in Enum.GetValues(typeof(Item.ItemType)))
-            {
-                string[] data = DataTool.LoadCSV(ResourceConstant.DATA_ROOT + itemType.ToString() + "ItemData");
-                if (data == null)
-                {
-                    continue;
-                }
-
-                int len = data.Length;
-                int start_id = (int)itemType * TypeInterval;
-
-                // 跳过第一行
-                for (int i = 1; i < len; i++)
-                {
-                    string[] cols = data[i].Split(',');
-                    int id = Convert.ToInt32(cols[0]) == -1 ? i - 1 : Convert.ToInt32(cols[0]);
-                    if (id < i - 1)
-                    {
-                        LogManager.Instance.Log("id不对应!!!请检查数据", LogManager.LogLevel.Error);
-                    }
-
-                    id += start_id;
-                    this.allItemInfo.Add(id, new ItemData.ItemDataBuilder()
-                        .SetId(id).SetItemName(cols[1]).SetImageName(cols[2])
-                        .SetInfo(cols[3]).SetIsStackable(cols[4].Equals("TRUE")).Build());
-                    this.nameToId.Add(cols[2], id);
-                }
             }
         }
     }

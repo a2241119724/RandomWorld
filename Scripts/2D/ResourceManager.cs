@@ -17,6 +17,7 @@
         private readonly Dictionary<string, Sprite> imageDic;
         private readonly Dictionary<TileMap.MapTileType, List<UnityEngine.Object>> tileDic;
         private readonly Dictionary<string, Shader> shaderDic;
+        private readonly Dictionary<string, ItemDataSO> scriptableDic;
 
         public ResourceManager()
         {
@@ -46,7 +47,24 @@
             }
 
             this.imageDic = ResourceTool.LoadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
+            this.scriptableDic = ResourceTool.LoadResources<ItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
             this.LoadPrefabs();
+        }
+
+        /// <summary>
+        /// 获取道具数据SO
+        /// </summary>
+        /// <param name="name">道具数据名称</param>
+        /// <returns>道具数据</returns>
+        public ItemDataSO GetSO(string name)
+        {
+            if (!this.scriptableDic.ContainsKey(name))
+            {
+                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevel.Error);
+                return null;
+            }
+
+            return this.scriptableDic[name];
         }
 
         /// <summary>
@@ -63,6 +81,77 @@
             }
 
             return this.shaderDic[name];
+        }
+
+        /// <summary>
+        /// 通过名称获得对应的tilebase.
+        /// </summary>
+        /// <param name="name">tilebase的名称.</param>
+        /// <returns>tilebase.</returns>
+        // public UnityEngine.Object getAsset(string name)
+        public TileBase GetAsset(string name)
+        {
+            if (this.assetDic.ContainsKey(name))
+            {
+                UnityEngine.Object asset = this.assetDic[name];
+                return (TileBase)asset;
+            }
+
+            LogManager.Instance.Log(name + " asset not found!!!", LogManager.LogLevel.Error);
+            return null;
+        }
+
+        /// <summary>
+        /// 通过类型获得在Tile上的资源,默认随机获取.
+        /// </summary>
+        /// <param name="tileType">在哪种Tile上.</param>
+        /// <param name="name">包含该名称的资源.</param>
+        /// <returns>Tile.</returns>
+        public TileBase GetAssetByTileType(TileMap.MapTileType tileType, string name = default)
+        {
+            if (!this.tileDic.ContainsKey(tileType))
+            {
+                return null;
+            }
+
+            List<UnityEngine.Object> tiles = this.tileDic[tileType];
+            if (tiles.Count == 0)
+            {
+                return null;
+            }
+
+            if (name == default)
+            {
+                return (TileBase)tiles[UnityEngine.Random.Range(0, tiles.Count)];
+            }
+
+            foreach (UnityEngine.Object tile in tiles)
+            {
+                if (tile.name.Contains(name))
+                {
+                    return (TileBase)tile;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 通过名称获得Sprite
+        /// 在背包中展示图片.
+        /// </summary>
+        /// <param name="name">名称.</param>
+        /// <returns>Sprite.</returns>
+        public Sprite GetImage(string name)
+        {
+            if (this.imageDic.ContainsKey(name))
+            {
+                Sprite sprite = this.imageDic[name];
+                return sprite;
+            }
+
+            LogManager.Instance.Log(name + " image not found!!!", LogManager.LogLevel.Error);
+            return null;
         }
 
         /// <summary>
@@ -151,77 +240,6 @@
                 instance.name = prefabName;
                 return instance;
             }
-        }
-
-        /// <summary>
-        /// 通过名称获得对应的tilebase.
-        /// </summary>
-        /// <param name="name">tilebase的名称.</param>
-        /// <returns>tilebase.</returns>
-        // public UnityEngine.Object getAsset(string name)
-        public TileBase GetAsset(string name)
-        {
-            if (this.assetDic.ContainsKey(name))
-            {
-                UnityEngine.Object asset = this.assetDic[name];
-                return (TileBase)asset;
-            }
-
-            LogManager.Instance.Log(name + " asset not found!!!", LogManager.LogLevel.Error);
-            return null;
-        }
-
-        /// <summary>
-        /// 通过类型获得在Tile上的资源,默认随机获取.
-        /// </summary>
-        /// <param name="tileType">在哪种Tile上.</param>
-        /// <param name="name">包含该名称的资源.</param>
-        /// <returns>Tile.</returns>
-        public TileBase GetAssetByTileType(TileMap.MapTileType tileType, string name = default)
-        {
-            if (!this.tileDic.ContainsKey(tileType))
-            {
-                return null;
-            }
-
-            List<UnityEngine.Object> tiles = this.tileDic[tileType];
-            if (tiles.Count == 0)
-            {
-                return null;
-            }
-
-            if (name == default)
-            {
-                return (TileBase)tiles[UnityEngine.Random.Range(0, tiles.Count)];
-            }
-
-            foreach (UnityEngine.Object tile in tiles)
-            {
-                if (tile.name.Contains(name))
-                {
-                    return (TileBase)tile;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// 通过名称获得Sprite
-        /// 在背包中展示图片.
-        /// </summary>
-        /// <param name="name">名称.</param>
-        /// <returns>Sprite.</returns>
-        public Sprite GetImage(string name)
-        {
-            if (this.imageDic.ContainsKey(name))
-            {
-                Sprite sprite = this.imageDic[name];
-                return sprite;
-            }
-
-            LogManager.Instance.Log(name + " image not found!!!", LogManager.LogLevel.Error);
-            return null;
         }
 
         private void LoadPrefabs()

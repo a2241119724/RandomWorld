@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1634bc25a36d98749aa3c85f1bc9e144, type: 3}
+  m_Name: SeedItemData
+  m_EditorClassIdentifier: 
+  ItemType: 6
+  ItemDatas:
+  - Id: 0
+    CnName: Seed0
+    EnName: Seed0
+    Info: Seed0
+    IsStackable: 1
+    Type: 0
+  - Id: 1
+    CnName: Seed1
+    EnName: Seed1
+    Info: Seed1
+    IsStackable: 1
+    Type: 0
+  - Id: 2
+    CnName: Seed2
+    EnName: Seed2
+    Info: Seed2
+    IsStackable: 1
+    Type: 0
+  - Id: 3
+    CnName: Seed3
+    EnName: Seed3
+    Info: Seed3
+    IsStackable: 1
+    Type: 0
+  - Id: 4
+    CnName: Seed4
+    EnName: Seed4
+    Info: Seed4
+    IsStackable: 1
+    Type: 0
+  - Id: 5
+    CnName: Seed5
+    EnName: Seed5
+    Info: Seed5
+    IsStackable: 1
+    Type: 0
+  - Id: 6
+    CnName: Seed6
+    EnName: Seed6
+    Info: Seed6
+    IsStackable: 1
+    Type: 0
+  - Id: 7
+    CnName: Seed7
+    EnName: Seed7
+    Info: Seed7
+    IsStackable: 1
+    Type: 0
+  - Id: 8
+    CnName: Seed8
+    EnName: Seed8
+    Info: Seed8
+    IsStackable: 1
+    Type: 0
+  - Id: 9
+    CnName: Seed9
+    EnName: Seed9
+    Info: Seed9
+    IsStackable: 1
+    Type: 0
+  - Id: 10
+    CnName: Seed10
+    EnName: Seed10
+    Info: Seed10
+    IsStackable: 1
+    Type: 0
+  - Id: 11
+    CnName: Seed11
+    EnName: Seed11
+    Info: Seed11
+    IsStackable: 1
+    Type: 0
+  - Id: 12
+    CnName: Seed12
+    EnName: Seed12
+    Info: Seed12
+    IsStackable: 1
+    Type: 0
+  - Id: 13
+    CnName: Seed13
+    EnName: Seed13
+    Info: Seed13
+    IsStackable: 1
+    Type: 0
+  - Id: 14
+    CnName: Seed14
+    EnName: Seed14
+    Info: Seed14
+    IsStackable: 1
+    Type: 0

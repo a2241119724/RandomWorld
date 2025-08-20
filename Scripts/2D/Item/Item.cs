@@ -5,6 +5,7 @@
 
     /// <summary>
     /// 道具
+    /// 通过ID关联ItemData
     /// </summary>
     [Serializable]
     public abstract class Item
@@ -119,8 +120,8 @@
                 $"quantity: {this.Quantity}\n" +
                 $"info: {itemData.Info}\n" +
                 $"isStackable: {itemData.IsStackable}\n" +
-                $"imageName: {itemData.ImageName}\n" +
-                $"itemName: {itemData.ItemName}\n";
+                $"imageName: {itemData.EnName}\n" +
+                $"itemName: {itemData.CnName}\n";
         }
     }
 

@@ -32,6 +32,11 @@
         /// </summary>
         public const string SHADER_ROOT = "Shader/";
 
+        /// <summary>
+        /// 道具数据目录
+        /// </summary>
+        public const string SCRIPTABLE_ROOT = "Scriptable/";
+
         // =============================================================================================================
 
         /// <summary>
