@@ -154,7 +154,7 @@
             base.LoadData();
             AsyncProgressUI.Instance.SetTip("加载资源地图信息...");
             this.ResourceMapDataLAB = DataTool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
-            foreach (KeyValuePair<Vector3IntLAB, string> posMap in this.ResourceMapDataLAB.PosMaps)
+            foreach (KeyValuePair<Vector3IntLAB, string> posMap in this.ResourceMapDataLAB.PosMap)
             {
                 this.tilemap.SetTile(Vector3IntLAB.ToVector3Int(posMap.Key), (TileBase)ResourceManager.Instance.GetAsset(posMap.Value));
             }
@@ -186,7 +186,7 @@
             LogManager.Instance.Log("Response: 同步地图资源数据");
             this.SetProgress();
             ResourceMapData resourceMapData = DataTool.FromByteArray<ResourceMapData>(data);
-            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = resourceMapData.PosMaps.GetEnumerator();
+            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = resourceMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 this.tilemap.SetTile(

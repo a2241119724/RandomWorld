@@ -40,27 +40,26 @@
             RoomInfo roomInfo = new ();
             for (int i = 1; i < this.Width - 1; i++)
             {
-                BuildMap.Instance.AddBuilding(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.DOWN].Tile)
-                    .AddBuilding(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.TOP].Tile);
+                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.DOWN].TileName)
+                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.TOP].TileName);
                 roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2] + i, 0));
                 roomInfo.Points.Add(new Vector3Int(boundary[1], boundary[2] + i, 0));
             }
 
             for (int i = 1; i < this.Height - 1; i++)
             {
-                BuildMap.Instance.AddBuilding(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT].Tile)
-                    .AddBuilding(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT].Tile);
+                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT].TileName)
+                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT].TileName);
                 roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[2], 0));
                 roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[3], 0));
             }
 
             BuildMap.Instance
-                .AddBuilding(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_DOWN].Tile)
-                .AddBuilding(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_DOWN].Tile)
-                .AddBuilding(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_TOP].Tile)
-                .AddBuilding(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_TOP].Tile)
-                .AddBuilding(new Vector3Int(boundary[0], centerMap.y, 0), this.Door.Tile, true)
-                .AddTask();
+                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_DOWN].TileName)
+                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_DOWN].TileName)
+                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_TOP].TileName)
+                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_TOP].TileName)
+                .AddBuild(new Vector3Int(boundary[0], centerMap.y, 0), this.Door.TileName);
             roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[3], 0));
             roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2], 0));
             roomInfo.Points.Add(new Vector3Int(boundary[1], boundary[3], 0));

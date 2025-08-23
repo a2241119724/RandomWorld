@@ -9,14 +9,10 @@
     [Serializable]
     public class FarmlandWall : WallItem
     {
-        public FarmlandWall()
-        {
-        }
-
         /// <inheritdoc/>
         public override void AddBuildTask(Vector3Int centerMap)
         {
-            BuildMap.Instance.DirectBuild(centerMap, this.Tile).AddTask();
+            BuildMap.Instance.AddBuild(centerMap, this.TileName);
         }
     }
 }

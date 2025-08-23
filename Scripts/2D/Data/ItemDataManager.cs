@@ -24,15 +24,34 @@
             Instance = this;
             this.nameToId = new Dictionary<string, int>();
             this.allItemInfo = new Dictionary<int, ItemData>();
-            foreach (Item.ItemType itemType in Enum.GetValues(typeof(Item.ItemType)))
+
+            Item.ItemType[] itemTypes = Item.Ranges["Backpack"];
+            for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
-                ItemDataSO itemDataSO = ResourceManager.Instance.GetSO(itemType.ToString() + "ItemData");
+                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(((Item.ItemType)type).ToString() + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
                 }
 
                 foreach (ItemData itemData in itemDataSO.ItemDatas)
+                {
+                    int id = Convert.ToInt32(itemData.Id);
+                    this.allItemInfo.Add(id, itemData);
+                    this.nameToId.Add(itemData.EnName, id);
+                }
+            }
+
+            itemTypes = Item.Ranges["Build"];
+            for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
+            {
+                BuildItemDataSO itemDataSO = ResourceManager.Instance.GetBuildSO(((Item.ItemType)type).ToString() + "ItemData");
+                if (itemDataSO == null)
+                {
+                    continue;
+                }
+
+                foreach (BuildItemData itemData in itemDataSO.BuildItemDatas)
                 {
                     int id = Convert.ToInt32(itemData.Id);
                     this.allItemInfo.Add(id, itemData);
@@ -77,12 +96,12 @@
         /// 通过ID获取道具数据
         /// </summary>
         /// <param name="id">ID</param>
-        /// <returns>道具类型
-        /// </returns>
-        public Item.ItemType GetTypeById(int id)
+        /// <returns>道具类型</returns>
+        public Item.ItemType IdToType(int id)
         {
             if (id < 0)
             {
+                LogManager.Instance.Log("id小于0!!!", LogManager.LogLevel.Error);
                 return Item.ItemType.Null;
             }
 
@@ -94,10 +113,11 @@
         /// </summary>
         /// <param name="id">ID</param>
         /// <returns>装备类型</returns>
-        public Equipment.EquipType GetEquipmentTypeById(int id)
+        public Equipment.EquipType IdToEquipmentType(int id)
         {
-            if (this.GetTypeById(id) != Item.ItemType.Equipment)
+            if (this.IdToType(id) != Item.ItemType.Equipment)
             {
+                LogManager.Instance.Log("id不是装备!!!", LogManager.LogLevel.Error);
                 return Equipment.EquipType.Null;
             }
 
@@ -109,27 +129,21 @@
 
         /// <summary>
         /// 由于Item.ItemType包含了所有类型
+        /// 获取Button导航索引
         /// </summary>
         /// <param name="id">ID</param>
-        /// <returns>道具类型</returns>
-        public Item.ItemType GetIndexById(int id)
+        /// <returns>button索引</returns>
+        public int GetIndexById(int id)
         {
-            id /= 1000;
-            if (id < (int)Item.ItemType.Room)
-            {
-                return (Item.ItemType)(object)id;
-            }
-            else
-            {
-                return (Item.ItemType)(object)(id - (int)Item.ItemType.Room);
-            }
+            return this.GetIndexByType(this.IdToType(id));
         }
 
         /// <summary>
         /// 由于Item.ItemType包含了所有类型
+        /// 获取Button导航索引
         /// </summary>
         /// <param name="type">道具类型</param>
-        /// <returns>索引</returns>
+        /// <returns>button索引</returns>
         public int GetIndexByType(Item.ItemType type)
         {
             if ((int)type < (int)Item.ItemType.Room)
@@ -140,6 +154,17 @@
             {
                 return (int)type - (int)Item.ItemType.Room;
             }
+        }
+
+        /// <summary>
+        /// 通过名称获取建造道具
+        /// </summary>
+        /// <param name="name">道具名称</param>
+        /// <returns>建造道具</returns>
+        public BuildItemData GetBuildItemDataByName(string name)
+        {
+            ItemData itemData = this.GetByName(name);
+            return (BuildItemData)itemData;
         }
     }
 }

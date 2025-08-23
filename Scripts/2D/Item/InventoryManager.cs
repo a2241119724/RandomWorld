@@ -320,7 +320,7 @@
             // 既然已经预放置了，那一定可以放置，不会超出容量
             if (this.posToResource[posMap].Id == -1)
             {
-                this.TransferResource(posMap, -1, resourceInfo.Id, Item.ItemType.Null, ItemDataManager.Instance.GetTypeById(resourceInfo.Id));
+                this.TransferResource(posMap, -1, resourceInfo.Id, Item.ItemType.Null, ItemDataManager.Instance.IdToType(resourceInfo.Id));
             }
 
             this.posToResource[posMap].Id = resourceInfo.Id;
@@ -358,7 +358,7 @@
                 return null;
             }
 
-            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
+            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), Item.ItemType.Null);
             ResourceInfo resourceInfo = DataTool.DeepCopyByBinary(this.posToResource[posMap]);
             this.posToResource[posMap].Id = -1;
             this.posToResource[posMap].Count = 0;
@@ -385,11 +385,11 @@
             // 如果正好取完
             if (this.posToResource[posMap].Count == 0)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), Item.ItemType.Null);
                 ItemMap.Instance.DeleteTile(posMap);
 
                 // 食物被吃完删除任务
-                if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == Item.ItemType.Food)
+                if (ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id) == Item.ItemType.Food)
                 {
                     WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
@@ -425,11 +425,11 @@
             // 如果正好取完
             if (this.posToResource[posMap].Count == 0)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), Item.ItemType.Null);
                 ItemMap.Instance.DeleteTile(posMap);
 
                 // 食物被吃完删除任务
-                if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == Item.ItemType.Food)
+                if (ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id) == Item.ItemType.Food)
                 {
                     WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
@@ -511,7 +511,7 @@
         /// <param name="pos">位置</param>
         public void ShowWearMenu(Vector3Int pos)
         {
-            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(this.posToResource[pos].Id);
+            Item.ItemType itemType = ItemDataManager.Instance.IdToType(this.posToResource[pos].Id);
             if (itemType == Item.ItemType.Weapon || itemType == Item.ItemType.Equipment)
             {
                 AddWearTaskUI.Instance.ShowWearTask(pos);

@@ -9,26 +9,32 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1634bc25a36d98749aa3c85f1bc9e144, type: 3}
+  m_Script: {fileID: 11500000, guid: bf2b1fefb02d4334faf2f0a35807aa07, type: 3}
   m_Name: RoomItemData
   m_EditorClassIdentifier: 
   ItemType: 8
-  ItemDatas:
-  - Id: 0
+  BuildItemDatas:
+  - Id: 800000
     CnName: "\u623F\u5B50"
     EnName: CustomRoom
     Info: "\u591A\u4E2A\u5899\u7EC4\u5408\u6210\u7684\u623F\u5B50"
     IsStackable: 0
-    Type: 0
-  - Id: 1
+    Type: 8
+    IsPass: 0
+    IsNeedBuild: 0
+  - Id: 800001
     CnName: "\u4ED3\u5E93"
     EnName: Inventory
     Info: "\u591A\u4E2A\u8FB9\u6846\u7EC4\u5408\u6210\u7684\u4ED3\u5E93"
     IsStackable: 0
-    Type: 0
-  - Id: 2
+    Type: 8
+    IsPass: 0
+    IsNeedBuild: 0
+  - Id: 800002
     CnName: "\u519C\u7530"
     EnName: Farmland
     Info: "\u591A\u4E2A\u8FB9\u6846\u7EC4\u5408\u6210\u7684\u519C\u7530"
     IsStackable: 0
-    Type: 0
+    Type: 8
+    IsPass: 0
+    IsNeedBuild: 0

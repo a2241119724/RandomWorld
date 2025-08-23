@@ -67,7 +67,7 @@
             base.SyncDataResp(data);
             LogManager.Instance.Log("Response: 同步地图采集数据");
             GatherMapData gatherMapData = DataTool.FromByteArray<GatherMapData>(data);
-            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = gatherMapData.PosMaps.GetEnumerator();
+            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = gatherMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 this.tilemap.SetTile(

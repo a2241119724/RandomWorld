@@ -26,10 +26,14 @@
         public bool IsBottomLeft = false;
 
         /// <summary>
-        /// 瓦片
+        /// 瓦片名称
         /// </summary>
-        [NonSerialized]
-        public TileBase Tile;
+        public string TileName;
+
+        public BuildItem()
+        {
+            this.TileName = this.GetType().Name;
+        }
 
         /// <summary>
         /// 添加建造任务
@@ -37,7 +41,7 @@
         /// <param name="centerMap">位置</param>
         public virtual void AddBuildTask(Vector3Int centerMap)
         {
-            BuildMap.Instance.AddBuilding(centerMap, this.Tile).AddTask();
+            BuildMap.Instance.AddBuild(centerMap, this.TileName);
         }
     }
 

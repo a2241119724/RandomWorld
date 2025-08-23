@@ -20,7 +20,7 @@
         public string CnName;
 
         /// <summary>
-        /// 英文名称(图片名)
+        /// 英文名称(图片)
         /// </summary>
         public string EnName;
 

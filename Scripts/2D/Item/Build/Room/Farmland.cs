@@ -26,7 +26,7 @@
             {
                 for (int j = boundary[2]; j < boundary[3] + 1; j++)
                 {
-                    BuildMap.Instance.DirectBuild(new Vector3Int(i, j, 0), this.soil.Tile);
+                    BuildMap.Instance.AddBuild(new Vector3Int(i, j, 0), this.soil.TileName);
                 }
             }
 
