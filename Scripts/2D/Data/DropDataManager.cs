@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
@@ -14,21 +15,17 @@
         {
             this.nameToDrop = new Dictionary<string, List<DropItem>>();
             string[] drops = DataTool.LoadCSV(ResourceConstant.DATA_ROOT + "DropItem");
+            DropItemDataSO dropItemDataSO = ResourceManager.Instance.GetDropSO("DropItemDataSO");
 
-            // 跳过第一行
-            for (int i = 1; i < drops.Length; i++)
+            dropItemDataSO.DropItemDatas.ForEach(item =>
             {
-                string[] cols = drops[i].Split(',');
-                for (int j = 1; j < cols.Length; j += 2)
+                List<DropItem> dropItems = new List<DropItem>();
+                item.DropData.ForEach(dropData =>
                 {
-                    if (!this.nameToDrop.ContainsKey(cols[0]))
-                    {
-                        this.nameToDrop.Add(cols[0], new List<DropItem>());
-                    }
-
-                    this.nameToDrop[cols[0]].Add(new DropItem(cols[j], int.Parse(cols[j + 1])));
-                }
-            }
+                    dropItems.Add(new DropItem(dropData.Name, dropData.Count));
+                });
+                this.nameToDrop.Add(item.Name, dropItems);
+            });
         }
 
         /// <summary>
@@ -50,6 +47,7 @@
     /// <summary>
     /// 掉落物
     /// </summary>
+    [Serializable]
     public class DropItem
     {
         public DropItem(string name, int count)

@@ -4,7 +4,7 @@
     using UnityEngine;
 
     /// <summary>
-    /// 创建物品数据
+    /// 创建建造物品数据
     /// </summary>
     [CreateAssetMenu(menuName = "SO/BuildItemDataSO", order = 0)]
     public class BuildItemDataSO : ScriptableObject
