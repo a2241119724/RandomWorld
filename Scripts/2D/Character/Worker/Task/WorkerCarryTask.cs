@@ -53,7 +53,7 @@
         public override void Finish(Worker worker)
         {
             base.Finish(worker);
-            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(this.resourceInfo.Id);
+            Item.ItemType itemType = ItemDataManager.Instance.IdToType(this.resourceInfo.Id);
 
             // 放下拿起来的东西
             ItemMap.Instance.AddTile(this.TargetMap, ResourceManager.Instance

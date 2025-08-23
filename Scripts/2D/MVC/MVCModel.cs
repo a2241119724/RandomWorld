@@ -53,7 +53,7 @@
             }
 
             ArrayList itemList;
-            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(item.Id);
+            Item.ItemType itemType = ItemDataManager.Instance.IdToType(item.Id);
             if (this.ItemDict.ContainsKey(itemType))
             {
                 itemList = this.ItemDict[itemType];

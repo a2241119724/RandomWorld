@@ -17,7 +17,8 @@
         private readonly Dictionary<string, Sprite> imageDic;
         private readonly Dictionary<TileMap.MapTileType, List<UnityEngine.Object>> tileDic;
         private readonly Dictionary<string, Shader> shaderDic;
-        private readonly Dictionary<string, ItemDataSO> scriptableDic;
+        private readonly Dictionary<string, ItemDataSO> backpackDataDic;
+        private readonly Dictionary<string, BuildItemDataSO> buildDataDic;
 
         public ResourceManager()
         {
@@ -47,24 +48,41 @@
             }
 
             this.imageDic = ResourceTool.LoadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
-            this.scriptableDic = ResourceTool.LoadResources<ItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
+            this.backpackDataDic = ResourceTool.LoadResources<ItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
+            this.buildDataDic = ResourceTool.LoadResources<BuildItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
             this.LoadPrefabs();
         }
 
         /// <summary>
-        /// 获取道具数据SO
+        /// 获取背包道具SO
         /// </summary>
         /// <param name="name">道具数据名称</param>
         /// <returns>道具数据</returns>
-        public ItemDataSO GetSO(string name)
+        public ItemDataSO GetBackpackSO(string name)
         {
-            if (!this.scriptableDic.ContainsKey(name))
+            if (!this.backpackDataDic.ContainsKey(name))
             {
                 LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevel.Error);
                 return null;
             }
 
-            return this.scriptableDic[name];
+            return this.backpackDataDic[name];
+        }
+
+        /// <summary>
+        /// 获取建造道具SO
+        /// </summary>
+        /// <param name="name">道具数据名称</param>
+        /// <returns>道具数据</returns>
+        public BuildItemDataSO GetBuildSO(string name)
+        {
+            if (!this.buildDataDic.ContainsKey(name))
+            {
+                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevel.Error);
+                return null;
+            }
+
+            return this.buildDataDic[name];
         }
 
         /// <summary>
@@ -218,7 +236,7 @@
 
                 GameObject prefab = this.prefabDic[prefabName];
                 GameObject instance;
-                if (position != default || rotation != default)
+                if (!position.Equals(default) || !rotation.Equals(default))
                 {
                     instance = GameObject.Instantiate(prefab, position, rotation) as GameObject;
                 }

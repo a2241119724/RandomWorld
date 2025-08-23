@@ -13,11 +13,11 @@
         /// <summary>
         /// value: TileBase name
         /// </summary>
-        public Dictionary<Vector3IntLAB, string> PosMaps;
+        public Dictionary<Vector3IntLAB, string> PosMap;
 
         public ATileMapData()
         {
-            this.PosMaps = new Dictionary<Vector3IntLAB, string>();
+            this.PosMap = new Dictionary<Vector3IntLAB, string>();
         }
 
         /// <summary>
@@ -26,7 +26,7 @@
         /// <param name="pos">位置</param>
         public void Remove(Vector3Int pos)
         {
-            this.PosMaps.Remove(Vector3IntLAB.ToVector3IntLAB(pos));
+            this.PosMap.Remove(Vector3IntLAB.ToVector3IntLAB(pos));
         }
 
         /// <summary>
@@ -36,7 +36,7 @@
         /// <param name="tileBase">瓦片</param>
         public void Add(Vector3Int pos, string tileBase)
         {
-            this.PosMaps.Add(Vector3IntLAB.ToVector3IntLAB(pos), tileBase);
+            this.PosMap.Add(Vector3IntLAB.ToVector3IntLAB(pos), tileBase);
         }
 
         /// <summary>
@@ -46,7 +46,7 @@
         /// <returns>是否</returns>
         public bool ContainKey(Vector3Int pos)
         {
-            return this.PosMaps.ContainsKey(Vector3IntLAB.ToVector3IntLAB(pos));
+            return this.PosMap.ContainsKey(Vector3IntLAB.ToVector3IntLAB(pos));
         }
     }
 }

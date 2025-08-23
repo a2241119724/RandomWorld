@@ -101,7 +101,7 @@
         public void PutDownToDrop(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
         {
             this.AddTile(posMap, tileBase);
-            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(resourceInfo.Id);
+            Item.ItemType itemType = ItemDataManager.Instance.IdToType(resourceInfo.Id);
 
             // 添加到掉落物管理中
             DropManager.Instance.AddDrop(itemType, posMap, resourceInfo);
@@ -129,7 +129,7 @@
             base.SyncDataResp(data);
             LogManager.Instance.Log("Response: 同步地图道具数据");
             ItemMapData itemMapData = DataTool.FromByteArray<ItemMapData>(data);
-            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = itemMapData.PosMaps.GetEnumerator();
+            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = itemMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 this.tilemap.SetTile(

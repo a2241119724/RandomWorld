@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using System;
+    using System.Collections.Generic;
     using Photon.Pun;
 
     /// <summary>
@@ -10,6 +11,15 @@
     [Serializable]
     public abstract class Item
     {
+        /// <summary>
+        /// 道具的范围
+        /// </summary>
+        public static Dictionary<string, ItemType[]> Ranges = new ()
+        {
+            { "Backpack", new ItemType[] { ItemType.Weapon, ItemType.BackpackOther } },
+            { "Build", new ItemType[] { ItemType.Room, ItemType.BuildOther } },
+        };
+
         /// <summary>
         /// 具体道具ID
         /// </summary>
