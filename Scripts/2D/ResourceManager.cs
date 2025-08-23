@@ -19,6 +19,7 @@
         private readonly Dictionary<string, Shader> shaderDic;
         private readonly Dictionary<string, ItemDataSO> backpackDataDic;
         private readonly Dictionary<string, BuildItemDataSO> buildDataDic;
+        private readonly Dictionary<string, DropItemDataSO> dropDataDic;
 
         public ResourceManager()
         {
@@ -50,6 +51,7 @@
             this.imageDic = ResourceTool.LoadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
             this.backpackDataDic = ResourceTool.LoadResources<ItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
             this.buildDataDic = ResourceTool.LoadResources<BuildItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
+            this.dropDataDic = ResourceTool.LoadResources<DropItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
             this.LoadPrefabs();
         }
 
@@ -83,6 +85,22 @@
             }
 
             return this.buildDataDic[name];
+        }
+
+        /// <summary>
+        /// 获取掉落物道具SO
+        /// </summary>
+        /// <param name="name">道具数据名称</param>
+        /// <returns>道具数据</returns>
+        public DropItemDataSO GetDropSO(string name)
+        {
+            if (!this.dropDataDic.ContainsKey(name))
+            {
+                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevel.Error);
+                return null;
+            }
+
+            return this.dropDataDic[name];
         }
 
         /// <summary>
