@@ -263,20 +263,10 @@
 
                 // 翻转
                 this.spriteRendererIdle.flipX = this.direction.x < 0;
-                this.spriteRendererIdle.enabled = false;
-                for (int i = 0; i < 7; i++)
-                {
-                    this.transform.GetChild(i).gameObject.SetActive(true);
-                }
             }
             else
             {
                 this.animator.SetBool("IsMove", false);
-                this.spriteRendererIdle.enabled = true;
-                for (int i = 0; i < 7; i++)
-                {
-                    this.transform.GetChild(i).gameObject.SetActive(false);
-                }
             }
         }
 
