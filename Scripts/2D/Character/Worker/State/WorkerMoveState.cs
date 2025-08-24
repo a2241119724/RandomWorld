@@ -38,7 +38,7 @@
             if (isTarget)
             {
                 Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
-                if (workerData.Manager.Task == null)
+                if (workerData.Task == null)
                 {
                     this.recordTime += Time.deltaTime;
                     if (Time.frameCount % 60 == 0)
@@ -55,12 +55,12 @@
                     }
 
                     // 没有任务就进入寻路状态
-                    workerData.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                    this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
                 }
                 else
                 {
                     // 有任务就进入工作状态
-                    workerData.Manager.ChangeState(WorkerStateTypeEnum.Work);
+                    this.Character.Manager.ChangeState(WorkerStateTypeEnum.Work);
                 }
 
                 return;

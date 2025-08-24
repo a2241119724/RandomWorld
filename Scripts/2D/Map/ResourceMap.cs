@@ -42,9 +42,9 @@
             // 需要等待地图协程执行完后再执行
             yield return new WaitUntil(() => Lock.IsCompleteTileMap);
             AsyncProgressUI.Instance.SetTip("生成资源...");
-            for (int i = 0; i < Height; i++)
+            for (int i = 0; i < TileMap.Instance.TileMapDataLAB.Height; i++)
             {
-                for (int j = 0; j < Width; j++)
+                for (int j = 0; j < TileMap.Instance.TileMapDataLAB.Width; j++)
                 {
                     AsyncProgressUI.Instance.AddOneProcess();
                     if (FrameControl.Instance.IsNeedStop(1))
@@ -145,7 +145,7 @@
         /// </summary>
         public void SetProgress()
         {
-            AsyncProgressUI.Instance.AddTotal(Height * Width);
+            AsyncProgressUI.Instance.AddTotal(TileMap.Instance.TileMapDataLAB.Height * TileMap.Instance.TileMapDataLAB.Width);
         }
 
         /// <inheritdoc/>

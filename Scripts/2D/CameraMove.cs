@@ -75,7 +75,7 @@
                 // 真实坐标x对应地图坐标y
                 Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Target);
                 float offset = Time.deltaTime * EdgeSpeed;
-                if (Input.mousePosition.x > Screen.width - EdgeSize && posMap.y < TileMap.Width)
+                if (Input.mousePosition.x > Screen.width - EdgeSize && posMap.y < TileMap.Instance.TileMapDataLAB.Width)
                 {
                     this.Target = new Vector3(this.Target.x + offset, this.Target.y, 0);
                 }
@@ -83,7 +83,7 @@
                 {
                     this.Target = new Vector3(this.Target.x - offset, this.Target.y, 0);
                 }
-                else if (Input.mousePosition.y > Screen.height - EdgeSize && posMap.x < TileMap.Height)
+                else if (Input.mousePosition.y > Screen.height - EdgeSize && posMap.x < TileMap.Instance.TileMapDataLAB.Height)
                 {
                     this.Target = new Vector3(this.Target.x, this.Target.y + offset, 0);
                 }

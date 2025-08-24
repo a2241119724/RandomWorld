@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -7,6 +8,7 @@
     /// <summary>
     /// 采集任务
     /// </summary>
+    [Serializable]
     public class WorkerGatherTask : WorkerTask
     {
         private string resourceName = "Tree";
@@ -16,14 +18,13 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 10.0f;
+                WorkerTask.maxProgress = 10.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[1]);
                 this.AvailableNeighborPos.Add(Neighbors[3]);
 
                 // 进入工作状态
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 

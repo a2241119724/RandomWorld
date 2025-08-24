@@ -49,7 +49,7 @@
             foreach (Worker worker in workers)
             {
                 Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-                if (workerData.Manager.Task != null)
+                if (workerData.Task != null)
                 {
                     continue;
                 }
@@ -94,7 +94,7 @@
                     if (closedTask != null)
                     {
                         // 先设置任务
-                        workerData.Manager.Task = closedTask;
+                        workerData.Task = closedTask;
                         closedTask.Start(worker);
 
                         // 同一个饥饿任务还可以继续接

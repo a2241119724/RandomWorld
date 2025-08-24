@@ -1,10 +1,12 @@
 ﻿namespace LAB2D
 {
+    using System;
     using UnityEngine;
 
     /// <summary>
     /// 睡觉任务
     /// </summary>
+    [Serializable]
     public class WorkerSleepTask : WorkerTask
     {
         private Worker worker;
@@ -14,15 +16,14 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 10.0f;
+                WorkerTask.maxProgress = 10.0f;
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 进入工作状态
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 

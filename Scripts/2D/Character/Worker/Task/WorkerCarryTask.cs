@@ -1,11 +1,13 @@
 ﻿namespace LAB2D
 {
+    using System;
     using UnityEngine;
 
     /// <summary>
     /// 任务2阶段：取货，放货
     /// Carry在第二个阶段预留资源
     /// </summary>
+    [Serializable]
     public class WorkerCarryTask : WorkerTask
     {
         /// <summary>
@@ -18,17 +20,16 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 1.0f;
+                WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 进入工作状态
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 1.0f;
+                WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = InventoryManager.Instance.GetPosByPrePlace(worker);
@@ -38,8 +39,7 @@
                 }
 
                 // 进入工作状态
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 

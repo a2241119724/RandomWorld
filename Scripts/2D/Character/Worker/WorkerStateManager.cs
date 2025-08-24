@@ -19,11 +19,6 @@
         }
 
         /// <summary>
-        /// 任务
-        /// </summary>
-        public WorkerTask Task { get; set; }
-
-        /// <summary>
         /// 切换状态
         /// </summary>
         /// <param name="type">切换的状态</param>

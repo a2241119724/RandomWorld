@@ -94,13 +94,13 @@
         /// <returns>位置</returns>
         public Vector3Int GenAvailablePosMap(Vector3Int centerMap = default, int radius = 10, bool isDrop = false)
         {
-            int x, y, startX = 0, endX = TileMap.Height, startY = 0, endY = TileMap.Width;
+            int x, y, startX = 0, endX = TileMap.Instance.TileMapDataLAB.Height, startY = 0, endY = TileMap.Instance.TileMapDataLAB.Width;
             if (centerMap != default)
             {
                 startX = (int)Mathf.Max(centerMap.x - radius, 0);
                 startY = (int)Mathf.Max(centerMap.y - radius, 0);
-                endX = (int)Mathf.Min(centerMap.x + radius, TileMap.Height);
-                endY = (int)Mathf.Min(centerMap.y + radius, TileMap.Width);
+                endX = (int)Mathf.Min(centerMap.x + radius, TileMap.Instance.TileMapDataLAB.Height);
+                endY = (int)Mathf.Min(centerMap.y + radius, TileMap.Instance.TileMapDataLAB.Width);
             }
 
             // 如果循环次数过多,则说明没有可用的位置

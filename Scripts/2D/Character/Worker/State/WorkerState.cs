@@ -67,9 +67,9 @@
             Match match = Regex.Match(this.GetType().Name, Pattern);
             this.preString = $"<color=red>{match.Groups[1]}</color>\n";
             Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
-            if (workerData.Manager.Task != null)
+            if (workerData.Task != null)
             {
-                this.preString += $"<color=green>{workerData.Manager.Task.Name}</color>\n";
+                this.preString += $"<color=green>{workerData.Task.Name}</color>\n";
             }
         }
 

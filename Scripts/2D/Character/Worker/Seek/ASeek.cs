@@ -57,8 +57,8 @@
         // private static ManualResetEvent manualResetEvent; // 线程Wait
         public ASeek(Worker character)
         {
-            int height = TileMap.Height;
-            int width = TileMap.Width;
+            int height = TileMap.Instance.TileMapDataLAB.Height;
+            int width = TileMap.Instance.TileMapDataLAB.Width;
 
             // 初始化寻路花费
             this.mapSpend = new Spend[height, width];
@@ -145,7 +145,7 @@
                 // 之前的线程停止后执行
                 lock (this)
                 {
-                    // if (TileMap.Height == 0 || TileMap.Width == 0)
+                    // if (TileMap.Instance.TileMapDataLAB.Height == 0 || TileMap.Instance.TileMapDataLAB.Width == 0)
                     // {
                     //     ASeek.manualResetEvent.WaitOne();
                     // }

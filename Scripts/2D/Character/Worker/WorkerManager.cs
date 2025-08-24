@@ -29,8 +29,7 @@
                 // 初始时或只有一个Worker在寻路时, 获取寻路Worker的数量
                 foreach (Worker worker in this.Characters)
                 {
-                    Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-                    if (workerData.Manager.CurrentStateType == WorkerState.WorkerStateTypeEnum.Seek)
+                    if (worker.Manager.CurrentStateType == WorkerState.WorkerStateTypeEnum.Seek)
                     {
                         this.countLock++;
                     }

@@ -17,16 +17,6 @@
         private static string alreadyShowMap = string.Empty; // 所有的Map是否已经在显示
 
         /// <summary>
-        /// 地图纵向长度
-        /// </summary>
-        public static int Height { get; set; }
-
-        /// <summary>
-        /// 地图横向长度
-        /// </summary>
-        public static int Width { get; set; }
-
-        /// <summary>
         /// 同步数据
         /// </summary>
         public PhotonView PhotonView { get; set; }
