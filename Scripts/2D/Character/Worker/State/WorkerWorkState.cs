@@ -1,12 +1,14 @@
-﻿using static LAB2D.Worker;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using static LAB2D.Worker;
+
     /// <summary>
     /// Worker工作状态
     /// </summary>
     public class WorkerWorkState : WorkerState
     {
+        private bool waitOneFrame; // 等待一帧
+
         public WorkerWorkState(Worker worker)
             : base(worker)
         {
@@ -16,6 +18,7 @@ namespace LAB2D
         public override void OnEnter()
         {
             base.OnEnter();
+            this.waitOneFrame = false;
             WorkerData workerData = this.Character.CharacterDataLAB as WorkerData;
             if (workerData.Manager.Task == null)
             {
@@ -35,22 +38,27 @@ namespace LAB2D
         /// <inheritdoc/>
         public override void OnUpdate()
         {
-            base.OnUpdate();
             WorkerData workerData = this.Character.CharacterDataLAB as WorkerData;
+            if (this.waitOneFrame)
+            {
+                // 等待一帧后再进入寻路状态,先去接任务
+                workerData.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                return;
+            }
+
+            base.OnUpdate();
             if (workerData.Manager.Task == null)
             {
                 return;
             }
 
             bool isComplete = workerData.Manager.Task.Execute(this.Character);
-            if (!isComplete)
+            if (isComplete)
             {
-                return;
+                // 完成任务
+                workerData.Manager.Task = null;
+                this.waitOneFrame = true;
             }
-
-            // 完成任务
-            workerData.Manager.Task = null;
-            workerData.Manager.ChangeState(WorkerStateTypeEnum.Seek);
         }
     }
 }

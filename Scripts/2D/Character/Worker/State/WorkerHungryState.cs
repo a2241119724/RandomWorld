@@ -1,7 +1,7 @@
-﻿using static LAB2D.Worker;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using static LAB2D.Worker;
+
     /// <summary>
     /// 仓库没有吃的,就一直在该状态,不能做其他事情
     /// </summary>

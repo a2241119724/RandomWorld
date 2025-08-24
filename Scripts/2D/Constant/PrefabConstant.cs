@@ -1,102 +1,102 @@
-namespace LAB2D
+ï»¿namespace LAB2D
 {
     /// <summary>
-    /// Ô¤ÖÆÌå³£Á¿
+    /// é¢„åˆ¶ä½“å¸¸é‡
     /// </summary>
     public class PrefabConstant
     {
         /// <summary>
-        /// ÌáÊ¾
+        /// æç¤º
         /// </summary>
         public const string TIP = "Tip";
 
         /// <summary>
-        /// ÉËº¦
+        /// ä¼¤å®³
         /// </summary>
         public const string DAMAGE = "Damage";
 
         /// <summary>
-        /// µĞÈË×Óµ¯
+        /// æ•Œäººå­å¼¹
         /// </summary>
         public const string ENEMY_BULLET = "EnemyBullet";
 
         /// <summary>
-        /// ÈÎÎñÏî
+        /// ä»»åŠ¡é¡¹
         /// </summary>
         public const string TASK_ITEM = "TaskItem";
 
         /// <summary>
-        /// ½¨ÔìÏî
+        /// å»ºé€ é¡¹
         /// </summary>
         public const string BUILD_ITEM = "BuildItem";
 
         /// <summary>
-        /// Íæ¼Ò×Óµ¯
+        /// ç©å®¶å­å¼¹
         /// </summary>
         public const string PLAYER_BULLET = "PlayerBullet";
 
         /// <summary>
-        /// ×·×Ù×Óµ¯
+        /// è¿½è¸ªå­å¼¹
         /// </summary>
         public const string TRACE_BULLET = "TraceBullet";
 
         /// <summary>
-        /// µĞÈË
+        /// æ•Œäºº
         /// </summary>
         public const string ENEMY_LV1 = "Enemy_Lv1";
 
         /// <summary>
-        /// Íæ¼Ò
+        /// ç©å®¶
         /// </summary>
         public const string PLAYER = "Player";
 
         /// <summary>
-        /// ¹¤ÈË
+        /// å·¥äºº
         /// </summary>
         public const string WORKER = "Worker";
 
         /// <summary>
-        /// ·¿¼äÏî
+        /// æˆ¿é—´é¡¹
         /// </summary>
         public const string ROOM_ITEM = "RoomItem";
 
         /// <summary>
-        /// ±³°üÏî
+        /// èƒŒåŒ…é¡¹
         /// </summary>
         public const string BACKPACK_ITEM = "BackpackItem";
 
         /// <summary>
-        /// Ñ¡Ôñ¿ò
+        /// é€‰æ‹©æ¡†
         /// </summary>
         public const string SELECT = "Select";
 
         /// <summary>
-        /// Ìí¼Ó×°±¸ÈÎÎñÏî
+        /// æ·»åŠ è£…å¤‡ä»»åŠ¡é¡¹
         /// </summary>
         public const string ADD_WEAR_TASK_ITEM = "AddWearTaskItem";
 
         /// <summary>
-        /// Ìí¼Ó×°±¸ÈÎÎñÏî
+        /// æ·»åŠ è£…å¤‡ä»»åŠ¡é¡¹
         /// </summary>
         public const string LOCATE_WORKER_ITEM = "LocateWorkerItem";
 
         /// <summary>
-        /// ¹¤ÈË´²Ïî
+        /// å·¥äººåºŠé¡¹
         /// </summary>
         public const string WORKER_BED_ITEM = "WorkerBedItem";
 
         /// <summary>
-        /// °´Å¥Ïî
+        /// æŒ‰é’®é¡¹
         /// </summary>
         public const string BUTTON_ITEM = "ButtonItem";
 
         /// <summary>
-        /// ÓÒ²àÁÄÌìÏî
+        /// å³ä¾§èŠå¤©é¡¹
         /// </summary>
         public const string RIGHT_CHAT_ITEM = "RightChatItem";
 
         /// <summary>
-        /// ×ó²àÁÄÌìÏî
+        /// å·¦ä¾§èŠå¤©é¡¹
         /// </summary>
         public const string LEFT_CHAT_ITEM = "LeftChatItem";
     }
