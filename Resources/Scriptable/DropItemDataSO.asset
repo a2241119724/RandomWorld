@@ -12,10 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 065d4322df8970c4ea99d36d41b3b792, type: 3}
   m_Name: DropItemDataSO
   m_EditorClassIdentifier: 
-  DropItemDatas:
-  - Name: Tree
-    DropData:
+  ResourceDropItems:
+  - Name: Default
+    DropItems:
     - Name: Apple
-      Count: 2
+      ResourceInfo:
+        Id: 500000
+        Count: 2
     - Name: CustomWood
-      Count: 2
+      ResourceInfo:
+        Id: 300000
+        Count: 2

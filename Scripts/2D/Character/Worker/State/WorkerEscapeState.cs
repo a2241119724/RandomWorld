@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using UnityEngine;
+    using static LAB2D.Worker;
 
     /// <summary>
     /// Worker逃跑状态
@@ -36,7 +37,8 @@
             this.recordTime += Time.deltaTime;
             if (this.recordTime >= RecordTime)
             {
-                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                WorkerData workerData = this.Character.CharacterDataLAB as WorkerData;
+                workerData.Manager.ChangeState(WorkerStateTypeEnum.Seek);
             }
 
             this.Character.Seek.LineRenderer.positionCount = 0;

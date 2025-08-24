@@ -1,4 +1,6 @@
-﻿namespace LAB2D
+﻿using static LAB2D.Worker;
+
+namespace LAB2D
 {
     /// <summary>
     /// Worker攻击状态
@@ -30,7 +32,7 @@
             Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
             if (workerData.Weapon == null)
             {
-                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Escape);
+                workerData.Manager.ChangeState(WorkerStateTypeEnum.Escape);
                 return;
             }
 

@@ -1,4 +1,6 @@
-﻿namespace LAB2D
+﻿using static LAB2D.Worker;
+
+namespace LAB2D
 {
     /// <summary>
     /// 仓库没有吃的,就一直在该状态,不能做其他事情
@@ -29,9 +31,10 @@
             base.OnUpdate();
 
             // 如果接到了饥饿任务，则去吃饭
-            if (this.Character.Manager.Task != null && this.Character.Manager.Task.TaskType.Equals(WorkerTask.WorkerTaskTypeEnum.Eat))
+            WorkerData workerData = this.Character.CharacterDataLAB as WorkerData;
+            if (workerData.Manager.Task != null && workerData.Manager.Task.TaskType.Equals(WorkerTask.WorkerTaskTypeEnum.Eat))
             {
-                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                workerData.Manager.ChangeState(WorkerStateTypeEnum.Seek);
             }
         }
     }

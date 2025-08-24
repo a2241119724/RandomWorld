@@ -14,22 +14,17 @@
         /// <summary>
         /// 饥饿值阈值
         /// </summary>
-        public static float ThresholdHungry = 10.0f;
+        public static readonly float ThresholdHungry = 10.0f;
 
         /// <summary>
         /// 疲劳值阈值
         /// </summary>
-        public static float ThresholdTired = 10.0f;
+        public static readonly float ThresholdTired = 10.0f;
 
         private Dictionary<int, ResourceInfo> resourceInfos; // 携带的资源
         private Slider progress;
         private Text nameUI;
         private CharacterStatusUI statusBar; // 记录实例化血条
-
-        /// <summary>
-        /// 状态管理器
-        /// </summary>
-        public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker> Manager { get; private set; }
 
         /// <summary>
         /// Worker状态
@@ -50,7 +45,9 @@
         public override void Awake()
         {
             base.Awake();
-            this.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker>(this);
+            this.CharacterDataLAB = new WorkerData();
+            WorkerData workerData = this.CharacterDataLAB as WorkerData;
+            workerData.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker>(this);
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
             this.progress = this.transform.Find("Progress").GetComponent<Slider>();
@@ -65,7 +62,6 @@
 
             ThreadPool.SetMaxThreads(5, 5);
             this.Seek = new AStar(this);
-            this.CharacterDataLAB = new WorkerData();
         }
 
         /// <inheritdoc/>
@@ -81,7 +77,8 @@
             this.transform.rotation = Quaternion.identity;
 
             // 执行当前状态的函数
-            this.Manager.CurrentState.OnUpdate();
+            WorkerData workerData = this.CharacterDataLAB as WorkerData;
+            workerData.Manager.CurrentState.OnUpdate();
         }
 
         /// <summary>
@@ -210,9 +207,10 @@
         /// </summary>
         public void GiveUpTask()
         {
-            WorkerTaskManager.Instance.GiveUpTask(this.Manager.Task);
-            this.Manager.Task = null;
-            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+            WorkerData workerData = this.CharacterDataLAB as WorkerData;
+            WorkerTaskManager.Instance.GiveUpTask(workerData.Manager.Task);
+            workerData.Manager.Task = null;
+            workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
         }
 
         /// <summary>
@@ -252,7 +250,8 @@
 
             base.ReduceHp(hp);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Attack);
+            WorkerData workerData = this.CharacterDataLAB as WorkerData;
+            workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Attack);
         }
 
         /// <inheritdoc/>
@@ -265,7 +264,8 @@
             this.checkBug.AddColliderCount(DateTime.Now.Ticks);
             if (this.checkBug.IsBug(this.name, 100))
             {
-                this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                WorkerData workerData = this.CharacterDataLAB as WorkerData;
+                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             }
         }
 
@@ -315,6 +315,11 @@
             /// 是否开启做该任务类型的开关(toogle的顺序与TaskType的顺序相关)
             /// </summary>
             public bool[] TaskToggle;
+
+            /// <summary>
+            /// 状态管理器
+            /// </summary>
+            public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker> Manager;
 
             public WorkerData()
             {

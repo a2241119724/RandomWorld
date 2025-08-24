@@ -164,10 +164,19 @@
         /// <returns>是否</returns>
         public override bool IsCanReach(Vector3Int posMap)
         {
-            // 门可以通行
-            return Mathf.Abs(this.tilemap.GetColor(posMap).a - 0.49f) < 1e-5
-                || Mathf.Abs(this.tilemap.GetColor(posMap).a - 0.99f) < 1e-5
-                || this.IsFreeTile(posMap);
+            if (this.IsFreeTile(posMap))
+            {
+                return true;
+            }
+
+            if (!this.BuildMapDataLAB.PosMap.ContainsKey(Vector3IntLAB.ToVector3IntLAB(posMap)))
+            {
+                LogManager.Instance.Log("该位置建筑没有建造数据:" + posMap);
+                return true;
+            }
+
+            return ItemDataManager.Instance.GetBuildItemDataByName(
+                this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(posMap)].Name).IsPass;
         }
 
         /// <inheritdoc/>

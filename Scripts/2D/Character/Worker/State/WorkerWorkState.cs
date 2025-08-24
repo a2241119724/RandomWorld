@@ -1,4 +1,6 @@
-﻿namespace LAB2D
+﻿using static LAB2D.Worker;
+
+namespace LAB2D
 {
     /// <summary>
     /// Worker工作状态
@@ -14,13 +16,14 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            if (this.Character.Manager.Task == null)
+            WorkerData workerData = this.Character.CharacterDataLAB as WorkerData;
+            if (workerData.Manager.Task == null)
             {
                 return;
             }
 
             this.Character.WorkerStateText.text = this.preString +
-                $"Target: {this.Character.Manager.Task.TargetMap.x},{this.Character.Manager.Task.TargetMap.y}";
+                $"Target: {workerData.Manager.Task.TargetMap.x},{workerData.Manager.Task.TargetMap.y}";
         }
 
         /// <inheritdoc/>
@@ -33,20 +36,21 @@
         public override void OnUpdate()
         {
             base.OnUpdate();
-            if (this.Character.Manager.Task == null)
+            WorkerData workerData = this.Character.CharacterDataLAB as WorkerData;
+            if (workerData.Manager.Task == null)
             {
                 return;
             }
 
-            bool isComplete = this.Character.Manager.Task.Execute(this.Character);
+            bool isComplete = workerData.Manager.Task.Execute(this.Character);
             if (!isComplete)
             {
                 return;
             }
 
             // 完成任务
-            this.Character.Manager.Task = null;
-            this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+            workerData.Manager.Task = null;
+            workerData.Manager.ChangeState(WorkerStateTypeEnum.Seek);
         }
     }
 }
