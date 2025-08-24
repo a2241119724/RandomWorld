@@ -1,6 +1,4 @@
-﻿using static LAB2D.Worker;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
     /// <summary>
     /// Worker攻击状态
