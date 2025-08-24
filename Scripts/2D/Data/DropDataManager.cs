@@ -14,17 +14,15 @@
         public DropDataManager()
         {
             this.nameToDrop = new Dictionary<string, List<DropItem>>();
-            string[] drops = DataTool.LoadCSV(ResourceConstant.DATA_ROOT + "DropItem");
             DropItemDataSO dropItemDataSO = ResourceManager.Instance.GetDropSO("DropItemDataSO");
 
-            dropItemDataSO.DropItemDatas.ForEach(item =>
+            dropItemDataSO.ResourceDropItems.ForEach(item =>
             {
-                List<DropItem> dropItems = new List<DropItem>();
-                item.DropData.ForEach(dropData =>
+                item.DropItems.ForEach(dropItem =>
                 {
-                    dropItems.Add(new DropItem(dropData.Name, dropData.Count));
+                    dropItem.Init();
                 });
-                this.nameToDrop.Add(item.Name, dropItems);
+                this.nameToDrop.Add(item.Name, item.DropItems);
             });
         }
 
@@ -37,6 +35,12 @@
         {
             if (!this.nameToDrop.ContainsKey(name))
             {
+                // 默认使用默认掉落物
+                if (this.nameToDrop.ContainsKey("Default"))
+                {
+                    return this.nameToDrop["Default"];
+                }
+
                 return Empty;
             }
 
@@ -50,20 +54,19 @@
     [Serializable]
     public class DropItem
     {
-        public DropItem(string name, int count)
-        {
-            this.Name = name;
-            this.ResourceInfo = new ResourceInfo(ItemDataManager.Instance.GetByName(name).Id, count);
-        }
-
         /// <summary>
         /// 名称
         /// </summary>
-        public string Name { get; set; }
+        public string Name;
 
         /// <summary>
         /// 掉落物信息
         /// </summary>
-        public ResourceInfo ResourceInfo { get; private set; }
+        public ResourceInfo ResourceInfo;
+
+        public void Init()
+        {
+            this.ResourceInfo.Id = ItemDataManager.Instance.GetByName(this.Name).Id;
+        }
     }
 }

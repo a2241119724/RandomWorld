@@ -48,7 +48,8 @@
             List<Worker> workers = WorkerManager.Instance.Characters;
             foreach (Worker worker in workers)
             {
-                if (worker.Manager.Task != null)
+                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                if (workerData.Manager.Task != null)
                 {
                     continue;
                 }
@@ -93,7 +94,7 @@
                     if (closedTask != null)
                     {
                         // 先设置任务
-                        worker.Manager.Task = closedTask;
+                        workerData.Manager.Task = closedTask;
                         closedTask.Start(worker);
 
                         // 同一个饥饿任务还可以继续接

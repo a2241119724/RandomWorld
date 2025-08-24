@@ -37,7 +37,8 @@
             bool isTarget = this.Character.Seek.MoveByPath();
             if (isTarget)
             {
-                if (this.Character.Manager.Task == null)
+                Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+                if (workerData.Manager.Task == null)
                 {
                     this.recordTime += Time.deltaTime;
                     if (Time.frameCount % 60 == 0)
@@ -54,12 +55,12 @@
                     }
 
                     // 没有任务就进入寻路状态
-                    this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                    workerData.Manager.ChangeState(WorkerStateTypeEnum.Seek);
                 }
                 else
                 {
                     // 有任务就进入工作状态
-                    this.Character.Manager.ChangeState(WorkerStateTypeEnum.Work);
+                    workerData.Manager.ChangeState(WorkerStateTypeEnum.Work);
                 }
 
                 return;

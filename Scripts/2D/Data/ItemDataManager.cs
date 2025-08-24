@@ -101,7 +101,7 @@
         {
             if (id < 0)
             {
-                LogManager.Instance.Log("id小于0!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log($"id:{id}小于0!!!", LogManager.LogLevel.Error);
                 return Item.ItemType.Null;
             }
 

@@ -13,13 +13,13 @@
         /// <summary>
         /// 掉落信息
         /// </summary>
-        public List<ResurceData> DropItemDatas;
+        public List<ResourceDropItem> ResourceDropItems;
 
         /// <summary>
         /// 掉落数据
         /// </summary>
         [Serializable]
-        public class ResurceData
+        public class ResourceDropItem
         {
             /// <summary>
             /// 资源名称
@@ -29,24 +29,7 @@
             /// <summary>
             /// key: 资源名称
             /// </summary>
-            public List<DropData> DropData;
-        }
-
-        /// <summary>
-        /// 掉落数据
-        /// </summary>
-        [Serializable]
-        public class DropData
-        {
-            /// <summary>
-            /// 掉落物资源名称
-            /// </summary>
-            public string Name;
-
-            /// <summary>
-            /// 掉落物数量
-            /// </summary>
-            public int Count;
+            public List<DropItem> DropItems;
         }
     }
 }

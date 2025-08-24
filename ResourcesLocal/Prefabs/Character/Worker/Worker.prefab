@@ -128,7 +128,7 @@ SpriteRenderer:
   m_Size: {x: 0.64, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &-8138729702576940044
@@ -183,21 +183,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e514efe7a5781bf44b867595e8a9a707, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CharacterDataLAB:
-    Hp: 1
-    MaxHp: 1
-    ATN: 0
-    INT: 0
-    CRI: 0
-    ATK: 0
-    DEF: 0
-    SPD: 0
-    HIT: 0
-    RES: 0
-    Pos:
-      X: 0
-      Y: 0
-      Z: 0
   MoveSpeed: 2.5
 --- !u!58 &7565157228549643528
 CircleCollider2D:
@@ -452,8 +437,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 1.143}
-  m_SizeDelta: {x: 240, y: 120}
+  m_AnchoredPosition: {x: 0, y: 1.4}
+  m_SizeDelta: {x: 240, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1717329794972792523
 CanvasRenderer:

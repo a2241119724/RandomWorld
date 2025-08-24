@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using PimDeWitte.UnityMainThreadDispatcher;
     using System.Collections.Generic;
     using System.Threading;
     using UnityEngine;
@@ -209,6 +210,19 @@
             {
                 this.LineRenderer.SetPosition(this.path.Count - i - 1, TileMap.Instance.MapPosToWorldPos(this.path[i].PosMap));
             }
+        }
+
+        /// <summary>
+        /// 停止寻路
+        /// </summary>
+        protected void StopSeek()
+        {
+            // 显示路径
+            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+            {
+                this.UpdateLine();
+            }).Wait();
+            this.IsSeeking = false;
         }
     }
 }

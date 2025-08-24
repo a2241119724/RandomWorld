@@ -23,7 +23,8 @@
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
             this.stageInit.Add((Worker worker) =>
             {
@@ -38,7 +39,8 @@
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 

@@ -34,7 +34,8 @@
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
             this.stageInit.Add((Worker worker) =>
             {
@@ -47,7 +48,8 @@
                 this.AvailableNeighborPos.Add(Neighbors[2]);
                 this.AvailableNeighborPos.Add(Neighbors[3]);
                 this.TargetMap = this.buildPos;
-                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 
