@@ -57,7 +57,9 @@
             List<Type> monoSaveDatas = Tool.GetChildByParent<AMonoSaveData>();
             AsyncProgressUI.Instance.SetTip("...");
             AsyncProgressUI.Instance.AddTotal(saveDatas.Count + monoSaveDatas.Count);
-            foreach (Type type in saveDatas)
+
+            // 先加载地图数据
+            foreach (Type type in monoSaveDatas)
             {
                 PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
                 if (propertyInfo == null)
@@ -74,7 +76,7 @@
                 AsyncProgressUI.Instance.AddOneProcess();
             }
 
-            foreach (Type type in monoSaveDatas)
+            foreach (Type type in saveDatas)
             {
                 PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
                 if (propertyInfo == null)

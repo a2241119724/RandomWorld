@@ -41,13 +41,17 @@
         /// </summary>
         public BedItem BedItem { get; set; }
 
+        /// <summary>
+        /// 状态管理器
+        /// </summary>
+        public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker> Manager { get; private set; }
+
         /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
             this.CharacterDataLAB = new WorkerData();
-            WorkerData workerData = this.CharacterDataLAB as WorkerData;
-            workerData.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker>(this);
+            this.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker>(this);
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
             this.progress = this.transform.Find("Progress").GetComponent<Slider>();
@@ -77,8 +81,7 @@
             this.transform.rotation = Quaternion.identity;
 
             // 执行当前状态的函数
-            WorkerData workerData = this.CharacterDataLAB as WorkerData;
-            workerData.Manager.CurrentState.OnUpdate();
+            this.Manager.CurrentState.OnUpdate();
         }
 
         /// <summary>
@@ -207,10 +210,10 @@
         /// </summary>
         public void GiveUpTask()
         {
-            WorkerData workerData = this.CharacterDataLAB as WorkerData;
-            WorkerTaskManager.Instance.GiveUpTask(workerData.Manager.Task);
-            workerData.Manager.Task = null;
-            workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+            Worker.WorkerData workerData = this.CharacterDataLAB as Worker.WorkerData;
+            WorkerTaskManager.Instance.GiveUpTask(workerData.Task);
+            workerData.Task = null;
+            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
         }
 
         /// <summary>
@@ -250,8 +253,7 @@
 
             base.ReduceHp(hp);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            WorkerData workerData = this.CharacterDataLAB as WorkerData;
-            workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Attack);
+            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Attack);
         }
 
         /// <inheritdoc/>
@@ -264,8 +266,7 @@
             this.checkBug.AddColliderCount(DateTime.Now.Ticks);
             if (this.checkBug.IsBug(this.name, 100))
             {
-                WorkerData workerData = this.CharacterDataLAB as WorkerData;
-                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             }
         }
 
@@ -317,9 +318,14 @@
             public bool[] TaskToggle;
 
             /// <summary>
-            /// 状态管理器
+            /// 当前状态
             /// </summary>
-            public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker> Manager;
+            public WorkerState.WorkerStateTypeEnum CurrentStateType;
+
+            /// <summary>
+            /// 任务
+            /// </summary>
+            public WorkerTask Task;
 
             public WorkerData()
             {

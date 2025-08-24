@@ -31,10 +31,11 @@
             base.OnUpdate();
 
             // 如果接到了饥饿任务，则去吃饭
-            WorkerData workerData = this.Character.CharacterDataLAB as WorkerData;
-            if (workerData.Manager.Task != null && workerData.Manager.Task.TaskType.Equals(WorkerTask.WorkerTaskTypeEnum.Eat))
+            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            if (workerData.Task != null
+                && workerData.Task.TaskType.Equals(WorkerTask.WorkerTaskTypeEnum.Eat))
             {
-                workerData.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
             }
         }
     }

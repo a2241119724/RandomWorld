@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -7,6 +8,7 @@
     /// 任务2阶段：拿材料，建造
     /// Build在第一个阶段预留资源
     /// </summary>
+    [Serializable]
     public class WorkerBuildTask : WorkerTask
     {
         private Dictionary<int, ResourceInfo> needs;
@@ -22,7 +24,7 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 1.0f;
+                WorkerTask.maxProgress = 1.0f;
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
@@ -34,12 +36,11 @@
                 }
 
                 // 进入工作状态
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 2.0f;
+                WorkerTask.maxProgress = 2.0f;
 
                 // 建造
                 this.AvailableNeighborPos.Clear();
@@ -48,8 +49,7 @@
                 this.AvailableNeighborPos.Add(Neighbors[2]);
                 this.AvailableNeighborPos.Add(Neighbors[3]);
                 this.TargetMap = this.buildPos;
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 

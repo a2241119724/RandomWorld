@@ -1,8 +1,11 @@
-﻿namespace LAB2D
+﻿using System;
+
+namespace LAB2D
 {
     /// <summary>
     /// 种植任务
     /// </summary>
+    [Serializable]
     public class WorkerPlantTask : WorkerTask
     {
         private ResourceInfo resourceInfo;
@@ -12,7 +15,7 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 1.0f;
+                WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = InventoryManager.Instance.IsContainSeedAndPreTake(worker, true);
@@ -23,12 +26,11 @@
                 }
 
                 // 进入工作状态
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 1.0f;
+                WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = FarmlandManager.Instance.IsEnoughAndPrePlant(worker, this.resourceInfo, true);
@@ -39,8 +41,7 @@
                 }
 
                 // 进入工作状态
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-                workerData.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
         }
 

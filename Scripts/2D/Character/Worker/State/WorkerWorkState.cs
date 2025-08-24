@@ -19,14 +19,14 @@
         {
             base.OnEnter();
             this.waitOneFrame = false;
-            WorkerData workerData = this.Character.CharacterDataLAB as WorkerData;
-            if (workerData.Manager.Task == null)
+            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            if (workerData.Task == null)
             {
                 return;
             }
 
             this.Character.WorkerStateText.text = this.preString +
-                $"Target: {workerData.Manager.Task.TargetMap.x},{workerData.Manager.Task.TargetMap.y}";
+                $"Target: {workerData.Task.TargetMap.x},{workerData.Task.TargetMap.y}";
         }
 
         /// <inheritdoc/>
@@ -38,25 +38,25 @@
         /// <inheritdoc/>
         public override void OnUpdate()
         {
-            WorkerData workerData = this.Character.CharacterDataLAB as WorkerData;
             if (this.waitOneFrame)
             {
                 // 等待一帧后再进入寻路状态,先去接任务
-                workerData.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
                 return;
             }
 
             base.OnUpdate();
-            if (workerData.Manager.Task == null)
+            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            if (workerData.Task == null)
             {
                 return;
             }
 
-            bool isComplete = workerData.Manager.Task.Execute(this.Character);
+            bool isComplete = workerData.Task.Execute(this.Character);
             if (isComplete)
             {
                 // 完成任务
-                workerData.Manager.Task = null;
+                workerData.Task = null;
                 this.waitOneFrame = true;
             }
         }

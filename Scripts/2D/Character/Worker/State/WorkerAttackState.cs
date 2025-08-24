@@ -30,7 +30,7 @@
             Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
             if (workerData.Weapon == null)
             {
-                workerData.Manager.ChangeState(WorkerStateTypeEnum.Escape);
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Escape);
                 return;
             }
 

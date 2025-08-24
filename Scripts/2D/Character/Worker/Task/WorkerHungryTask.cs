@@ -1,10 +1,12 @@
 ﻿namespace LAB2D
 {
+    using System;
     using UnityEngine;
 
     /// <summary>
     /// 先预取资源
     /// </summary>
+    [Serializable]
     public class WorkerHungryTask : WorkerTask
     {
         public WorkerHungryTask()
@@ -12,7 +14,7 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 1.0f;
+                WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
             });

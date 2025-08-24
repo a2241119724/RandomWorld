@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Events;
@@ -7,6 +8,7 @@
     /// <summary>
     /// Worker任务
     /// </summary>
+    [Serializable]
     public abstract class WorkerTask : IWorkerTask
     {
         /// <summary>
@@ -31,6 +33,11 @@
         };
 
         /// <summary>
+        /// 任务需要总的时间
+        /// </summary>
+        protected static float maxProgress = 2.0f;
+
+        /// <summary>
         /// 任务阶段
         /// </summary>
         protected int stage;
@@ -39,11 +46,6 @@
         /// 当前经过时间
         /// </summary>
         protected float curProgress = 0.0f;
-
-        /// <summary>
-        /// 任务需要总的时间
-        /// </summary>
-        protected float maxProgress = 2.0f;
 
         /// <summary>
         /// 任务阶段上下文
@@ -132,7 +134,7 @@
             Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
             workerData.CurTired -= Time.deltaTime * 0.1f;
             this.curProgress += Time.deltaTime;
-            if (this.curProgress > this.maxProgress)
+            if (this.curProgress > WorkerTask.maxProgress)
             {
                 this.curProgress = 0;
                 worker.SetProgress(this.curProgress, false);
@@ -145,7 +147,7 @@
                 return false;
             }
 
-            worker.SetProgress((float)this.curProgress / this.maxProgress, true);
+            worker.SetProgress((float)this.curProgress / WorkerTask.maxProgress, true);
             return false;
         }
 
