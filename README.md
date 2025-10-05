@@ -1,12 +1,13 @@
-﻿# RandomWorld(未完成)
+﻿## RandomWorld(未完成)
 
-* 可能缺少某些资源
-* 需要整个Build文件夹运行exe
+- 可能缺少某些资源
+- 需要整个Build文件夹运行exe
 
-# 注
+## 注
 
-* transform.Find("a/b/c")可获取active为false的对象
-* photon的rpc同步时，大量数据不建议使用buffer，因为缓存有上限
-* 必须上传*.meta文件，不然配置出问题
-* 修改完prefab之后需要重新打AB包
-* RuleTile以y=x对称
+- transform.Find("a/b/c")可获取active为false的对象
+- photon的rpc同步时，大量数据不建议使用buffer，因为缓存有上限
+- 必须上传*.meta文件，不然配置出问题
+- 修改完prefab之后需要重新打AB包
+- RuleTile以y=x对称
+- 在Button的UI界面添加点击函数, 需要先将脚本放到物体上，再添加该物体
