@@ -5,7 +5,6 @@
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
-    using static LAB2D.LogManager;
 
     /// <summary>
     /// 资源管理.
