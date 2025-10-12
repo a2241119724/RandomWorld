@@ -46,7 +46,7 @@
             }
 
             // 匹配数字按键
-            Transform tools = Tool.GetComponentInChildren<Transform>(this.Panel, "Panel");
+            Transform tools = Tool.GetComponentInChildren<Transform>(this.Panel, "Menu");
             for (int i = 0; i < tools.childCount; i++)
             {
                 int temp = i;

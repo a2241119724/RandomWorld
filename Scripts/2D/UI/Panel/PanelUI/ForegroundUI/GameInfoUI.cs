@@ -2,7 +2,6 @@
 {
     using System.Collections;
     using UnityEngine;
-    using UnityEngine.Rendering.Universal;
     using UnityEngine.UI;
 
     /// <summary>
@@ -12,15 +11,9 @@
     {
         private Text fps;
         private Text position;
-        private Text realTime;
-        private Text gameTime;
-        private Light2D globalLight; // 白天黑天显示
 
         private float accum; // fps
         private int frames;
-
-        private double curGameTime; // time
-        private double lastGameTime;
 
         /// <summary>
         /// 单例
@@ -48,9 +41,6 @@
             Instance = this;
             this.fps = Tool.GetComponentInChildren<Text>(this.gameObject, "FPS");
             this.position = Tool.GetComponentInChildren<Text>(this.gameObject, "PlayerPosition");
-            this.realTime = Tool.GetComponentInChildren<Text>(this.gameObject, "RealTime");
-            this.gameTime = Tool.GetComponentInChildren<Text>(this.gameObject, "GameTime");
-            this.globalLight = GameObject.FindGameObjectWithTag(TagConstant.GLOBAL_LIGHT_TAG).GetComponent<Light2D>();
         }
 
         public void Start()
@@ -66,25 +56,6 @@
 
             // 一秒总共的次数
             ++this.frames;
-
-            // time
-            // 根据真实游戏时间换算成30分钟一天对应的时间
-            this.curGameTime += Time.deltaTime;
-            this.globalLight.intensity = Mathf.Clamp(Mathf.Abs(Mathf.Cos((float)this.curGameTime / GlobalData.DayTime)), 0.2f, 1.0f);
-            double gameTime1 = (this.curGameTime - (this.curGameTime * (int)(this.curGameTime / GlobalData.DayTime))) * (24 * 60 * 60 / GlobalData.DayTime);
-            this.gameTime.text = string.Format(
-                "<color=blue>游戏时间: </color>{0:D2}:{1:D2}:{2:D2}",
-                (int)gameTime1 / 3600,
-                ((int)this.curGameTime - ((int)gameTime1 / 3600 * 3600)) / 60,
-                (int)gameTime1 % 60);
-            if (this.curGameTime - this.lastGameTime >= 1.0)
-            {
-                this.lastGameTime = this.curGameTime;
-                int hour = (int)this.curGameTime / 3600;
-                int minute = ((int)this.curGameTime - (hour * 3600)) / 60;
-                int second = (int)this.curGameTime - (hour * 3600) - (minute * 60);
-                this.realTime.text = string.Format("<color=blue>游戏时间: </color>{0:D2}:{1:D2}:{2:D2}", hour, minute, second);
-            }
         }
 
         private IEnumerator FPS()

@@ -25,7 +25,7 @@
         /// <summary>
         /// 一天的实际时间
         /// </summary>
-        public static float DayTime = 30 * 60.0f;
+        public static float DayTime = 60.0f;
 
         /// <summary>
         /// 最大帧率
