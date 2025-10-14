@@ -35,7 +35,7 @@
             double time = this.curGameTime * this.rate;
 
             // 将sin函数转为周期为1的函数
-            this.globalLight.intensity = Mathf.Clamp(Mathf.Sin(((float)this.curGameTime / GlobalData.GameDayTime * 6.2624f) - 1.55f) + 0.7f, 0.2f, 0.9f);
+            this.globalLight.intensity = Mathf.Clamp(Mathf.Sin(((float)this.curGameTime / GlobalData.GameDayTime * 6.2624f) - 1.55f) + 0.7f, 0.5f, 0.9f);
             this.gameTime.text = string.Format(
                 "<color=blue>游戏时间: </color>{0:D2}天{1:D2}时{2:D2}分",
                 (int)time / DayTime,
