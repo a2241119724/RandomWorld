@@ -98,6 +98,7 @@
                 && Camera.main.orthographicSize > this.scaleThreshold[0])
             {
                 Camera.main.orthographicSize -= Time.deltaTime * ScrollSpeed;
+                WeatherManager.Instance.Scale(Camera.main.orthographicSize / 10);
                 if (Camera.main.orthographicSize < this.scaleThreshold[0])
                 {
                     Camera.main.orthographicSize = this.scaleThreshold[0];
@@ -107,6 +108,7 @@
                 && Camera.main.orthographicSize < this.scaleThreshold[1])
             {
                 Camera.main.orthographicSize += Time.deltaTime * ScrollSpeed;
+                WeatherManager.Instance.Scale(Camera.main.orthographicSize / 10);
                 if (Camera.main.orthographicSize > this.scaleThreshold[1])
                 {
                     Camera.main.orthographicSize = this.scaleThreshold[1];

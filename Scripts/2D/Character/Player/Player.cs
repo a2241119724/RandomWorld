@@ -47,7 +47,7 @@
             // 不在线，或者在线并且是自己
             if (this.pv.IsMine || !NetworkConnect.Instance.IsOnline)
             {
-                this.MoveSpeed = 10;
+                this.MoveSpeed = 5;
                 if (GameInfoUI.Instance != null)
                 {
                     GameInfoUI.Instance.SetPosition(this.transform.position);
@@ -237,9 +237,16 @@
                 Input.GetKey(KeyCode.D) ||
                 (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f))
             {
-                this.mainCamera.DirectToPosition(this.transform.position);
-                this.miniCamera.DirectToPosition(this.transform.position);
-                this.miniCamera.Character = this;
+                if (this.mainCamera.Character != this)
+                {
+                    this.mainCamera.DirectToPosition(this.transform.position);
+                }
+
+                if (this.miniCamera.Character != this)
+                {
+                    this.miniCamera.DirectToPosition(this.transform.position);
+                    this.miniCamera.Character = this;
+                }
 
                 if (GameInfoUI.Instance != null)
                 {
@@ -259,7 +266,7 @@
                     this.direction.y = Joystick.Instance.Direction.y;
                 }
 
-                this.transform.Translate(this.MoveSpeed * Time.deltaTime * this.direction.normalized, Space.World);
+                this.transform.Translate(this.MoveSpeed * Time.fixedDeltaTime * this.direction.normalized);
 
                 // 翻转
                 this.spriteRendererIdle.flipX = this.direction.x < 0;

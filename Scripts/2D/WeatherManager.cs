@@ -54,5 +54,17 @@
 
             this.weathers[(WeatherType)Random.Range(0, System.Enum.GetValues(typeof(WeatherType)).Length)].SetActive(true);
         }
+
+        /// <summary>
+        /// 缩放天气
+        /// </summary>
+        /// <param name="rate">比例</param>
+        public void Scale(float rate)
+        {
+            for (int i = 0; i < this.transform.childCount; i++)
+            {
+                this.transform.GetChild(i).localScale = new Vector3(rate, rate, 1);
+            }
+        }
     }
 }
