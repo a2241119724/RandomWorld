@@ -13,9 +13,9 @@
     {
         private Animator animator;
         private Vector3 direction; // 按键玩家移动方向
-        private SpriteRenderer spriteRendererIdle; // idle图像开关
         private CameraMove mainCamera;
         private CameraMove miniCamera;
+        private SpriteRenderer sprite; // idle图像开关
 
         /// <inheritdoc/>
         public override void Awake()
@@ -28,7 +28,7 @@
                 return;
             }
 
-            this.spriteRendererIdle = this.gameObject.GetComponent<SpriteRenderer>();
+            this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
             this.name = "Player";
             this.CharacterDataLAB = new PlayerData();
         }
@@ -266,10 +266,32 @@
                     this.direction.y = Joystick.Instance.Direction.y;
                 }
 
-                this.transform.Translate(this.MoveSpeed * Time.fixedDeltaTime * this.direction.normalized);
+                this.animator.enabled = false;
+                if (this.direction.y > 0)
+                {
+                    // 上
+                    this.sprite.sprite = ResourceManager.Instance.GetImage("PlayerBack");
+                }
+                else if (this.direction.y < 0)
+                {
+                    // 下
+                    this.sprite.sprite = ResourceManager.Instance.GetImage("PlayerFront");
+                    this.animator.enabled = true;
+                }
+                else if (this.direction.x > 0)
+                {
+                    // 右
+                    this.sprite.sprite = ResourceManager.Instance.GetImage("PlayerSide");
+                    this.sprite.flipX = true;
+                }
+                else if (this.direction.x < 0)
+                {
+                    // 左
+                    this.sprite.sprite = ResourceManager.Instance.GetImage("PlayerSide");
+                    this.sprite.flipX = false;
+                }
 
-                // 翻转
-                this.spriteRendererIdle.flipX = this.direction.x < 0;
+                this.transform.Translate(this.MoveSpeed * Time.fixedDeltaTime * this.direction.normalized);
             }
             else
             {

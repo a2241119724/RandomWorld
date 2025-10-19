@@ -218,7 +218,7 @@
         /// <param name="width">宽度</param>
         public void SetProgress(int height, int width)
         {
-            this.TileMapDataLAB = new TileMapData(height, width, new MapTileType[height, width], width * height / 500);
+            this.TileMapDataLAB = new TileMapData(height, width, new MapTileType[height, width], width * height / 2000);
             int total = width * height;
             total += this.TileMapDataLAB.RandomCount;
             total += ((width + height) * 2) + 4;
