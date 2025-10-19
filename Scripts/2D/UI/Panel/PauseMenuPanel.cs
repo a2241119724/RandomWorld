@@ -15,7 +15,7 @@
         {
             this.Name = "PauseMenu";
             this.Init();
-            this.audioSource = GameObject.FindGameObjectWithTag(ResourceConstant.UI_TAG).GetComponent<AudioSource>();
+            this.audioSource = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG).GetComponent<AudioSource>();
             if (this.audioSource == null)
             {
                 LogManager.Instance.Log("audioSource Not Found!!!", LogManager.LogLevel.Error);

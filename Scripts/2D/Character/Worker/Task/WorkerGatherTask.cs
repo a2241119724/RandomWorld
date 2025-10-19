@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -7,6 +8,7 @@
     /// <summary>
     /// 采集任务
     /// </summary>
+    [Serializable]
     public class WorkerGatherTask : WorkerTask
     {
         private string resourceName = "Tree";
@@ -16,7 +18,7 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 10.0f;
+                WorkerTask.maxProgress = 10.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[1]);
                 this.AvailableNeighborPos.Add(Neighbors[3]);
@@ -57,13 +59,8 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
+        protected override bool DoIsCanWork(Worker worker)
         {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
-
             return ResourceMap.Instance.ResourceMapDataLAB.TreeCurCount > 0;
         }
 

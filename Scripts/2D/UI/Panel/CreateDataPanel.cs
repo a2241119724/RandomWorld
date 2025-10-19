@@ -81,7 +81,7 @@
             ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.GenResource());
 
             // EnemyManager
-            EnemyManager.Instance.MaxEnemyCount = this.maxEnemyCount;
+            EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount = this.maxEnemyCount;
 
             // EnemyCreator
             TileMap.Instance.StartCoroutine(EnemyCreator.Instance.GenEnemy());

@@ -1,10 +1,12 @@
 ﻿namespace LAB2D
 {
+    using System;
     using UnityEngine;
 
     /// <summary>
     /// 睡觉任务
     /// </summary>
+    [Serializable]
     public class WorkerSleepTask : WorkerTask
     {
         private Worker worker;
@@ -14,7 +16,7 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 10.0f;
+                WorkerTask.maxProgress = 10.0f;
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
@@ -39,21 +41,17 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
-        {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
-
-            // 如果疲劳值低于阈值，并且有床，则可以睡觉
-            return worker.CurTired < Worker.ThresholdTired && worker.BedItem != null && this.worker == worker;
-        }
-
-        /// <inheritdoc/>
         public override void Finish(Worker worker)
         {
             base.Finish(worker);
+        }
+
+        /// <inheritdoc/>
+        protected override bool DoIsCanWork(Worker worker)
+        {
+            // 如果疲劳值低于阈值，并且有床，则可以睡觉
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            return workerData.CurTired < Worker.ThresholdTired && worker.BedItem != null && this.worker == worker;
         }
 
 #pragma warning disable SA1600 // Elements should be documented

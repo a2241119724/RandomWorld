@@ -1,7 +1,6 @@
-﻿ namespace LAB2D
+﻿namespace LAB2D
 {
     using System;
-    using UnityEngine.Tilemaps;
 
     /// <summary>
     /// 墙
@@ -10,11 +9,6 @@
     public abstract class WallItem
         : BuildItem
     {
-        public WallItem()
-        {
-            this.Tile = (TileBase)ResourceManager.Instance.GetAsset(this.GetType().Name);
-        }
-
         /// <summary>
         /// 墙的方向
         /// </summary>

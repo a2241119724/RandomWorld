@@ -23,7 +23,8 @@
             int x = toggle.transform.parent.GetSiblingIndex() - 1;
             int y = toggle.transform.GetSiblingIndex() - 1;
             List<Worker> workers = WorkerManager.Instance.Characters;
-            workers[x].TaskToggle[y] = toggle.isOn;
+            Worker.WorkerData workerData = workers[x].CharacterDataLAB as Worker.WorkerData;
+            workerData.TaskToggle[y] = toggle.isOn;
         }
 
         public void Awake()
@@ -45,8 +46,7 @@
             {
                 for (int i = count; i > 0; i--)
                 {
-                    GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("TaskItem"), this.transform, false);
-                    g.name = "TaskItem";
+                    GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.TASK_ITEM, this.transform, false);
                     this.TaskItems.Add(g);
 
                     // 添加事件
@@ -72,9 +72,10 @@
             {
                 this.TaskItems[index].SetActive(true);
                 Tool.GetComponentInChildren<Text>(this.TaskItems[index].transform.GetChild(0).gameObject, "Text").text = worker.name;
+                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
                 for (int i = 1; i < this.TaskItems[index].transform.childCount; i++)
                 {
-                    this.TaskItems[index].transform.GetChild(i).GetComponent<Toggle>().isOn = worker.TaskToggle[i - 1];
+                    this.TaskItems[index].transform.GetChild(i).GetComponent<Toggle>().isOn = workerData.TaskToggle[i - 1];
                 }
 
                 index++;

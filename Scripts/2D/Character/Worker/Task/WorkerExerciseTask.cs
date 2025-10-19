@@ -1,10 +1,12 @@
 ﻿namespace LAB2D
 {
+    using System;
     using UnityEngine;
 
     /// <summary>
     /// 锻炼任务
     /// </summary>
+    [Serializable]
     public class WorkerExerciseTask : WorkerTask
     {
         public WorkerExerciseTask()

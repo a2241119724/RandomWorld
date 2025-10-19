@@ -39,7 +39,7 @@
             {
                 for (int j = 0; j < width; j++)
                 {
-                    Vector3Int pos = Tool.Add(startPos, i, j);
+                    Vector3Int pos = VectorTool.Add(startPos, i, j);
                     this.cells.Add(pos, new PlantInfo(-1, 0, 0));
                     resources.Add(pos, new PlantInfo(-1, 0, 0));
                 }
@@ -95,7 +95,7 @@
                 this.cells[posMap] = plantInfo;
                 this.prePlantResource[worker].Remove(posMap);
                 ResourceMap.Instance.SetTile(posMap, ResourceManager.Instance.GetAsset(
-                    ItemDataManager.Instance.GetById(plantInfo.Id).ImageName));
+                    ItemDataManager.Instance.GetById(plantInfo.Id).EnName));
             }
         }
 

@@ -15,14 +15,14 @@
         public int Id;
 
         /// <summary>
-        /// 物品名称(中文)
+        /// 中文名称
         /// </summary>
-        public string ItemName;
+        public string CnName;
 
         /// <summary>
-        /// 图片名称(英文)
+        /// 英文名称(图片)
         /// </summary>
-        public string ImageName;
+        public string EnName;
 
         /// <summary>
         /// 物品信息
@@ -60,13 +60,13 @@
 
             public ItemDataBuilder SetItemName(string itemName)
             {
-                this.itemData.ItemName = itemName;
+                this.itemData.CnName = itemName;
                 return this;
             }
 
             public ItemDataBuilder SetImageName(string imageName)
             {
-                this.itemData.ImageName = imageName;
+                this.itemData.EnName = imageName;
                 return this;
             }
 

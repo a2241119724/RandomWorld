@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
@@ -13,16 +14,18 @@
         private readonly Dictionary<string, GameObject> prefabDic; // <characterType,<name,prefab>>
         private readonly Dictionary<string, UnityEngine.Object> assetDic;
         private readonly Dictionary<string, Sprite> imageDic;
-        private readonly Dictionary<string, string> pathDic; // key:filename(带后缀) value:path
         private readonly Dictionary<TileMap.MapTileType, List<UnityEngine.Object>> tileDic;
         private readonly Dictionary<string, Shader> shaderDic;
+        private readonly Dictionary<string, ItemDataSO> backpackDataDic;
+        private readonly Dictionary<string, BuildItemDataSO> buildDataDic;
+        private readonly Dictionary<string, DropItemDataSO> dropDataDic;
 
         public ResourceManager()
         {
-            this.prefabDic = Tool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
-            this.assetDic = Tool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
+            this.prefabDic = ResourceTool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
+            this.assetDic = ResourceTool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
             this.tileDic = new Dictionary<TileMap.MapTileType, List<UnityEngine.Object>>();
-            this.shaderDic = Tool.LoadResources<Shader>(ResourceConstant.SHADER_ROOT);
+            this.shaderDic = ResourceTool.LoadResources<Shader>(ResourceConstant.SHADER_ROOT);
             foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetDic)
             {
                 foreach (TileMap.MapTileType tileType in Enum.GetValues(typeof(TileMap.MapTileType)))
@@ -44,8 +47,59 @@
                 }
             }
 
-            this.imageDic = Tool.LoadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
-            this.pathDic = Tool.LoadPaths();
+            this.imageDic = ResourceTool.LoadResources<Sprite>(ResourceConstant.IMAGE_ROOT);
+            this.backpackDataDic = ResourceTool.LoadResources<ItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
+            this.buildDataDic = ResourceTool.LoadResources<BuildItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
+            this.dropDataDic = ResourceTool.LoadResources<DropItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
+            this.LoadPrefabs();
+        }
+
+        /// <summary>
+        /// 获取背包道具SO
+        /// </summary>
+        /// <param name="name">道具数据名称</param>
+        /// <returns>道具数据</returns>
+        public ItemDataSO GetBackpackSO(string name)
+        {
+            if (!this.backpackDataDic.ContainsKey(name))
+            {
+                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevel.Error);
+                return null;
+            }
+
+            return this.backpackDataDic[name];
+        }
+
+        /// <summary>
+        /// 获取建造道具SO
+        /// </summary>
+        /// <param name="name">道具数据名称</param>
+        /// <returns>道具数据</returns>
+        public BuildItemDataSO GetBuildSO(string name)
+        {
+            if (!this.buildDataDic.ContainsKey(name))
+            {
+                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevel.Error);
+                return null;
+            }
+
+            return this.buildDataDic[name];
+        }
+
+        /// <summary>
+        /// 获取掉落物道具SO
+        /// </summary>
+        /// <param name="name">道具数据名称</param>
+        /// <returns>道具数据</returns>
+        public DropItemDataSO GetDropSO(string name)
+        {
+            if (!this.dropDataDic.ContainsKey(name))
+            {
+                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevel.Error);
+                return null;
+            }
+
+            return this.dropDataDic[name];
         }
 
         /// <summary>
@@ -62,23 +116,6 @@
             }
 
             return this.shaderDic[name];
-        }
-
-        /// <summary>
-        /// 通过名称获得对应的预制体.
-        /// </summary>
-        /// <param name="name">预制体名称.</param>
-        /// <returns>预制体.</returns>
-        public GameObject GetPrefab(string name)
-        {
-            if (this.prefabDic.ContainsKey(name))
-            {
-                GameObject prefab = this.prefabDic[name];
-                return prefab;
-            }
-
-            LogManager.Instance.Log(name + " prefab not found!!!", LogManager.LogLevel.Error);
-            return null;
         }
 
         /// <summary>
@@ -153,20 +190,110 @@
         }
 
         /// <summary>
-        /// 获取Resource下文件的路径.
+        /// 通过AB实例化对象
         /// </summary>
-        /// <param name="name">需要加入后缀.</param>
-        /// <returns>路径.</returns>
-        public string GetPath(string name)
+        /// <param name="prefabName">预制体名称</param>
+        /// <param name="isLocal">是否仅自己实例化.</param>
+        /// <returns>对象.</returns>
+        public GameObject Instantiate(string prefabName, bool isLocal = true)
         {
-            if (this.pathDic.ContainsKey(name))
+            return this.Instantiate(prefabName, default, default, null, false, isLocal);
+        }
+
+        /// <summary>
+        /// 通过AB实例化对象
+        /// </summary>
+        /// <param name="prefabName">预制体名称</param>
+        /// <param name="parent">挂在某物体上</param>
+        /// <param name="worldPositionStays">不跟随父物体旋转</param>
+        /// <param name="isLocal">是否仅自己实例化.</param>
+        /// <returns>对象.</returns>
+        public GameObject Instantiate(string prefabName, Transform parent, bool worldPositionStays, bool isLocal = true)
+        {
+            return this.Instantiate(prefabName, default, default, parent, worldPositionStays, isLocal);
+        }
+
+        /// <summary>
+        /// 通过AB实例化对象
+        /// </summary>
+        /// <param name="prefabName">预制体名称</param>
+        /// <param name="position">实例化位置.</param>
+        /// <param name="rotation">实例化角度.</param>
+        /// <param name="isLocal">是否仅自己实例化.</param>
+        /// <returns>对象.</returns>
+        public GameObject Instantiate(string prefabName, Vector3 position, Quaternion rotation, bool isLocal = true)
+        {
+            return this.Instantiate(prefabName, position, rotation, null, false, isLocal);
+        }
+
+        /// <summary>
+        /// 通过AB实例化对象
+        /// </summary>
+        /// <param name="prefabName">预制体名称</param>
+        /// <param name="position">实例化位置.</param>
+        /// <param name="rotation">实例化角度.</param>
+        /// <param name="parent">挂在某物体上</param>
+        /// <param name="worldPositionStays">不跟随父物体旋转</param>
+        /// <param name="isLocal">是否仅自己实例化.</param>
+        /// <returns>对象.</returns>
+        public GameObject Instantiate(string prefabName, Vector3 position, Quaternion rotation, Transform parent, bool worldPositionStays, bool isLocal)
+        {
+            prefabName = prefabName.ToLower();
+            if (NetworkConnect.Instance.IsOnline && !isLocal)
             {
-                string path = this.pathDic[name];
-                return path;
+                return PhotonNetwork.Instantiate(prefabName, position, rotation);
+            }
+            else
+            {
+                if (!this.prefabDic.ContainsKey(prefabName))
+                {
+                    LogManager.Instance.Log(prefabName + " prefab not found!!!", LogManager.LogLevel.Error);
+                    return null;
+                }
+
+                GameObject prefab = this.prefabDic[prefabName];
+                GameObject instance;
+                if (!position.Equals(default) || !rotation.Equals(default))
+                {
+                    instance = GameObject.Instantiate(prefab, position, rotation) as GameObject;
+                }
+                else if (parent != null)
+                {
+                    instance = GameObject.Instantiate(prefab, parent, worldPositionStays);
+                }
+                else
+                {
+                    instance = GameObject.Instantiate(prefab) as GameObject;
+                }
+
+                if (instance == null)
+                {
+                    LogManager.Instance.Log($"{prefabName} Instantiate Error!!!", LogManager.LogLevel.Error);
+                    return null;
+                }
+
+                instance.name = prefabName;
+                return instance;
+            }
+        }
+
+        private void LoadPrefabs()
+        {
+            string prefabAB = Application.streamingAssetsPath + "/Prefab";
+            AssetBundle assetBundle = AssetBundle.LoadFromFile(prefabAB);
+            if (assetBundle == null)
+            {
+                LogManager.Instance.Log("AB包:" + prefabAB + "不存在");
+                return;
             }
 
-            LogManager.Instance.Log(name + " image not found!!!", LogManager.LogLevel.Error);
-            return null;
+            string[] assetPaths = assetBundle.GetAllAssetNames();
+            foreach (string path in assetPaths)
+            {
+                this.prefabDic[path.Split("/")[^1].Split(".")[0]] = assetBundle.LoadAsset<GameObject>(path);
+            }
+
+            assetBundle.Unload(false);
         }
     }
 }

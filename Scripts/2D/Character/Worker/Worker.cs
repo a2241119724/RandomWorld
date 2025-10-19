@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.Threading;
-    using TMPro;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -13,39 +12,14 @@
     public class Worker : Character
     {
         /// <summary>
-        /// 最大疲劳值
+        /// 饥饿值阈值
         /// </summary>
-        public const float MaxTired = 100.0f;
+        public static readonly float ThresholdHungry = 10.0f;
 
         /// <summary>
         /// 疲劳值阈值
         /// </summary>
-        public const float ThresholdTired = 10.0f;
-
-        /// <summary>
-        /// 最大饥饿值
-        /// </summary>
-        public const float MaxHungry = 100.0f;
-
-        /// <summary>
-        /// 饥饿值阈值
-        /// </summary>
-        public const float ThresholdHungry = 10.0f;
-
-        /// <summary>
-        /// 锁，防止多个Worker同时寻路
-        /// </summary>
-        public static Lock SeekLock = new ();
-
-        /// <summary>
-        /// 角色装备
-        /// </summary>
-        public WearData WearData;
-
-        /// <summary>
-        /// Worker的床
-        /// </summary>
-        public BedItem BedItem;
+        public static readonly float ThresholdTired = 10.0f;
 
         private Dictionary<int, ResourceInfo> resourceInfos; // 携带的资源
         private Slider progress;
@@ -53,58 +27,35 @@
         private CharacterStatusUI statusBar; // 记录实例化血条
 
         /// <summary>
-        /// 状态管理器
-        /// </summary>
-        [HideInInspector]
-        public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker> Manager { get; private set; }
-
-        /// <summary>
         /// Worker状态
         /// </summary>
         public Text WorkerStateText { get; set; }
-
-        /// <summary>
-        /// 是否需要做任务的开关
-        /// 是否开启做该任务类型的开关(toogle的顺序与TaskType的顺序相关)
-        /// </summary>
-        public bool[] TaskToggle { get; set; }
-
-        /// <summary>
-        /// 当前疲劳值
-        /// </summary>
-        public float CurTired { get; set; } = 100.0f;
-
-        /// <summary>
-        /// 当前饥饿值
-        /// </summary>
-        public float CurHungry { get; set; } = 100.0f;
-
-        /// <summary>
-        /// 最大持有资源数量
-        /// </summary>
-        public int MaxResourceCount { get; set; } = 30;
 
         /// <summary>
         /// 寻路
         /// </summary>
         public ASeek Seek { get; set; }
 
+        /// <summary>
+        /// Worker的床
+        /// </summary>
+        public BedItem BedItem { get; set; }
+
+        /// <summary>
+        /// 状态管理器
+        /// </summary>
+        public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker> Manager { get; private set; }
+
         /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
+            this.CharacterDataLAB = new WorkerData();
             this.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker>(this);
-            this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
             this.progress = this.transform.Find("Progress").GetComponent<Slider>();
             this.progress.gameObject.SetActive(false);
-
-            // 设置默认可接受任务类型
-            this.TaskToggle = new bool[10];
-            this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Eat] = true;
-            this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Wear] = true;
-            this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Carry] = true;
             this.resourceInfos = new Dictionary<int, ResourceInfo>();
             this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (this.statusBar == null)
@@ -113,7 +64,6 @@
                 return;
             }
 
-            this.WearData = new WearData();
             ThreadPool.SetMaxThreads(5, 5);
             this.Seek = new AStar(this);
         }
@@ -154,8 +104,9 @@
                 resources += resource.Key + ":" + resource.Value.Count + "\n";
             }
 
+            WorkerData workerData = this.CharacterDataLAB as WorkerData;
             return base.ToString() +
-                $"Hungry:{this.CurHungry}\n" +
+                $"Hungry:{workerData.CurHungry}\n" +
                 $"TargetMap:{this.Seek.TargetMap}\n" +
                 resources;
         }
@@ -177,7 +128,7 @@
             }
             else
             {
-                this.resourceInfos.Add(resourceInfo.Id, Tool.DeepCopyByBinary(resourceInfo));
+                this.resourceInfos.Add(resourceInfo.Id, DataTool.DeepCopyByBinary(resourceInfo));
             }
         }
 
@@ -259,8 +210,9 @@
         /// </summary>
         public void GiveUpTask()
         {
-            WorkerTaskManager.Instance.GiveUpTask(this.Manager.Task);
-            this.Manager.Task = null;
+            Worker.WorkerData workerData = this.CharacterDataLAB as Worker.WorkerData;
+            WorkerTaskManager.Instance.GiveUpTask(workerData.Task);
+            workerData.Task = null;
             this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
         }
 
@@ -280,7 +232,7 @@
                 }
                 else
                 {
-                    remaining.Add(need.Key, Tool.DeepCopyByBinary(need.Value));
+                    remaining.Add(need.Key, DataTool.DeepCopyByBinary(need.Value));
                 }
             }
 
@@ -317,67 +269,93 @@
                 this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             }
         }
-    }
-
-    /// <summary>
-    /// Byte的Vector2
-    /// </summary>
-    public class Vector2SByte
-    {
-        /// <summary>
-        /// X 坐标
-        /// </summary>
-        public sbyte X;
 
         /// <summary>
-        /// Y 坐标
+        /// 敌人数据
         /// </summary>
-        public sbyte Y;
-
-        public Vector2SByte(sbyte x, sbyte y)
+        [Serializable]
+        public class WorkerData : CharacterData
         {
-            this.X = x;
-            this.Y = y;
-        }
-    }
+            /// <summary>
+            /// 携带的武器
+            /// </summary>
+            public Weapon Weapon;
 
-    /// <summary>
-    /// 角色装备数据
-    /// </summary>
-    public class WearData
-    {
-        /// <summary>
-        /// 携带的武器
-        /// </summary>
-        public Weapon Weapon;
+            /// <summary>
+            /// 身上携带的装备
+            /// </summary>
+            public Dictionary<Equipment.EquipType, Equipment> Equipments;
 
-        /// <summary>
-        /// 身上携带的装备
-        /// </summary>
-        public Dictionary<Equipment.EquipType, Equipment> Equipments;
+            /// <summary>
+            /// 最大疲劳值
+            /// </summary>
+            public float MaxTired = 100.0f;
 
-        public WearData()
-        {
-            this.Equipments = new Dictionary<Equipment.EquipType, Equipment>();
-        }
+            /// <summary>
+            /// 当前疲劳值
+            /// </summary>
+            public float CurTired = 100.0f;
 
-        /// <summary>
-        /// 添加装备
-        /// </summary>
-        /// <param name="equipment">装备</param>
-        /// <param name="posMap">位置</param>
-        public void AddEquipment(Equipment equipment, Vector3Int posMap)
-        {
-            if (this.Equipments.ContainsKey(equipment.EquipTypeValue))
+            /// <summary>
+            /// 最大饥饿值
+            /// </summary>
+            public float MaxHungry = 100.0f;
+
+            /// <summary>
+            /// 当前饥饿值
+            /// </summary>
+            public float CurHungry = 100.0f;
+
+            /// <summary>
+            /// 最大持有资源数量
+            /// </summary>
+            public int MaxResourceCount = 30;
+
+            /// <summary>
+            /// 是否需要做任务的开关
+            /// 是否开启做该任务类型的开关(toogle的顺序与TaskType的顺序相关)
+            /// </summary>
+            public bool[] TaskToggle;
+
+            /// <summary>
+            /// 当前状态
+            /// </summary>
+            public WorkerState.WorkerStateTypeEnum CurrentStateType;
+
+            /// <summary>
+            /// 任务
+            /// </summary>
+            public WorkerTask Task;
+
+            public WorkerData()
             {
-                // 交换装备
-                Equipment equipment1 = this.Equipments[equipment.EquipTypeValue];
-                ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
-                this.Equipments[equipment.EquipTypeValue] = equipment1;
+                this.Equipments = new Dictionary<Equipment.EquipType, Equipment>();
+
+                // 设置默认可接受任务类型
+                this.TaskToggle = new bool[10];
+                this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Eat] = true;
+                this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Wear] = true;
+                this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Carry] = true;
             }
-            else
+
+            /// <summary>
+            /// 添加装备
+            /// </summary>
+            /// <param name="equipment">装备</param>
+            /// <param name="posMap">位置</param>
+            public void AddEquipment(Equipment equipment, Vector3Int posMap)
             {
-                this.Equipments.Add(equipment.EquipTypeValue, equipment);
+                if (this.Equipments.ContainsKey(equipment.EquipTypeValue))
+                {
+                    // 交换装备
+                    Equipment equipment1 = this.Equipments[equipment.EquipTypeValue];
+                    ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
+                    this.Equipments[equipment.EquipTypeValue] = equipment1;
+                }
+                else
+                {
+                    this.Equipments.Add(equipment.EquipTypeValue, equipment);
+                }
             }
         }
     }

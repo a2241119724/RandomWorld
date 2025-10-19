@@ -37,7 +37,7 @@
         {
             this.ItemMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
         }
 
         /// <summary>
@@ -77,7 +77,7 @@
 
             this.ItemMapDataLAB.Add(posMap, tileBase.name);
             this.tilemap.SetTile(posMap, tileBase);
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
         }
 
         /// <summary>
@@ -101,7 +101,7 @@
         public void PutDownToDrop(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
         {
             this.AddTile(posMap, tileBase);
-            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(resourceInfo.Id);
+            Item.ItemType itemType = ItemDataManager.Instance.IdToType(resourceInfo.Id);
 
             // 添加到掉落物管理中
             DropManager.Instance.AddDrop(itemType, posMap, resourceInfo);
@@ -117,11 +117,6 @@
         [PunRPC]
         public override void SyncDataReq(byte[] data)
         {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
             base.SyncDataReq(data);
             LogManager.Instance.Log("Request: 同步地图道具数据");
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.ItemMapDataLAB);
@@ -133,8 +128,8 @@
         {
             base.SyncDataResp(data);
             LogManager.Instance.Log("Response: 同步地图道具数据");
-            ItemMapData itemMapData = Tool.FromByteArray<ItemMapData>(data);
-            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = itemMapData.PosMaps.GetEnumerator();
+            ItemMapData itemMapData = DataTool.FromByteArray<ItemMapData>(data);
+            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = itemMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 this.tilemap.SetTile(
@@ -154,7 +149,7 @@
         {
             LogManager.Instance.Log("Response: 同步地图道具数据");
 
-            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(Tool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
+            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {
                 this.tilemap.SetTile(vector3Int, null);

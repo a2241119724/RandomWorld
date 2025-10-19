@@ -1,6 +1,5 @@
 /Animation
 /RenderTexture
-/Resources
 /StreamingAssets
 /URP
 /Scripts/Reference
@@ -9,6 +8,5 @@
 /TextMesh Pro
 
 [Ss]tyle[Cc]op.*
-*.meta
 *.mat
 *.lighting

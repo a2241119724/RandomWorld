@@ -34,17 +34,17 @@
         }
 
         /// <summary>
-        /// 生成资源，添加采摘任务
+        /// 生成资源
         /// </summary>
         /// <returns>迭代器</returns>
         public IEnumerator GenResource()
         {
             // 需要等待地图协程执行完后再执行
-            yield return new WaitUntil(() => ResourceConstant.IsCompleteTileMap);
+            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
             AsyncProgressUI.Instance.SetTip("生成资源...");
-            for (int i = 0; i < Height; i++)
+            for (int i = 0; i < TileMap.Instance.TileMapDataLAB.Height; i++)
             {
-                for (int j = 0; j < Width; j++)
+                for (int j = 0; j < TileMap.Instance.TileMapDataLAB.Width; j++)
                 {
                     AsyncProgressUI.Instance.AddOneProcess();
                     if (FrameControl.Instance.IsNeedStop(1))
@@ -74,6 +74,17 @@
                 }
             }
 
+            yield return this.StartCoroutine(this.GenTree());
+        }
+
+        /// <summary>
+        /// 动态生成树
+        /// </summary>
+        /// <returns>迭代器</returns>
+        public IEnumerator GenTree()
+        {
+            // 需要等待地图协程执行完后再执行
+            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
             while (true)
             {
                 if (this.ResourceMapDataLAB.TreeCurCount < this.ResourceMapDataLAB.TreeTotalCount)
@@ -87,7 +98,7 @@
                         continue;
                     }
 
-                    this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(pos)), tileBase.name, false);
+                    this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(pos)), tileBase.name, false);
                     this.ResourceMapDataLAB.TreeCurCount++;
                     this.tilemap.SetTile(pos, tileBase);
                     this.ResourceMapDataLAB.Add(pos, tileBase.name);
@@ -107,7 +118,7 @@
         /// <param name="posMap">位置</param>
         public void CutTree(Vector3Int posMap)
         {
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, false, true);
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, false, true);
             this.ResourceMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);
             this.ResourceMapDataLAB.TreeCurCount--;
@@ -134,40 +145,34 @@
         /// </summary>
         public void SetProgress()
         {
-            AsyncProgressUI.Instance.AddTotal(Height * Width);
+            AsyncProgressUI.Instance.AddTotal(TileMap.Instance.TileMapDataLAB.Height * TileMap.Instance.TileMapDataLAB.Width);
         }
 
         /// <inheritdoc/>
         public override void LoadData()
         {
             base.LoadData();
-            this.ResourceMapDataLAB = Tool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
-            foreach (KeyValuePair<Vector3IntLAB, string> posMap in this.ResourceMapDataLAB.PosMaps)
+            AsyncProgressUI.Instance.SetTip("加载资源地图信息...");
+            this.ResourceMapDataLAB = DataTool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            foreach (KeyValuePair<Vector3IntLAB, string> posMap in this.ResourceMapDataLAB.PosMap)
             {
-                this.tilemap.SetTile(
-                    Vector3IntLAB.ToVector3Int(posMap.Key),
-                    (TileBase)ResourceManager.Instance.GetAsset(posMap.Value));
+                this.tilemap.SetTile(Vector3IntLAB.ToVector3Int(posMap.Key), (TileBase)ResourceManager.Instance.GetAsset(posMap.Value));
             }
 
-            this.StartCoroutine(this.GenResource());
+            this.StartCoroutine(this.GenTree());
         }
 
         /// <inheritdoc/>
         public override void SaveData()
         {
             base.SaveData();
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.ResourceMapDataLAB);
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.ResourceMapDataLAB);
         }
 
         /// <inheritdoc/>
         [PunRPC]
         public override void SyncDataReq(byte[] data)
         {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
             base.SyncDataReq(data);
             LogManager.Instance.Log("Request: 同步地图资源数据");
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.ResourceMapDataLAB);
@@ -180,8 +185,8 @@
             base.SyncDataResp(data);
             LogManager.Instance.Log("Response: 同步地图资源数据");
             this.SetProgress();
-            ResourceMapData resourceMapData = Tool.FromByteArray<ResourceMapData>(data);
-            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = resourceMapData.PosMaps.GetEnumerator();
+            ResourceMapData resourceMapData = DataTool.FromByteArray<ResourceMapData>(data);
+            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = resourceMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 this.tilemap.SetTile(
@@ -201,7 +206,7 @@
         public void SyncDataResp(byte[] vector3IntLAB, string tileBaseName, bool isPass = false, bool isDelete = false)
         {
             LogManager.Instance.Log("Response: 同步地图资源数据");
-            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(Tool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
+            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {
                 this.tilemap.SetTile(vector3Int, null);
@@ -230,7 +235,7 @@
             {
                 for (int j = -radius; j <= radius; j++)
                 {
-                    this.tilemap.RefreshTile(Tool.Add(center, i, j));
+                    this.tilemap.RefreshTile(VectorTool.Add(center, i, j));
                 }
             }
         }

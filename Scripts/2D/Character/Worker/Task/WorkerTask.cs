@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Events;
@@ -7,6 +8,7 @@
     /// <summary>
     /// Worker任务
     /// </summary>
+    [Serializable]
     public abstract class WorkerTask : IWorkerTask
     {
         /// <summary>
@@ -31,6 +33,11 @@
         };
 
         /// <summary>
+        /// 任务需要总的时间
+        /// </summary>
+        protected static float maxProgress = 2.0f;
+
+        /// <summary>
         /// 任务阶段
         /// </summary>
         protected int stage;
@@ -39,11 +46,6 @@
         /// 当前经过时间
         /// </summary>
         protected float curProgress = 0.0f;
-
-        /// <summary>
-        /// 任务需要总的时间
-        /// </summary>
-        protected float maxProgress = 2.0f;
 
         /// <summary>
         /// 任务阶段上下文
@@ -129,9 +131,10 @@
             this.DoExecute();
 
             // 工作扣减疲劳值
-            worker.CurTired -= Time.deltaTime * 0.1f;
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            workerData.CurTired -= Time.deltaTime * 0.1f;
             this.curProgress += Time.deltaTime;
-            if (this.curProgress > this.maxProgress)
+            if (this.curProgress > WorkerTask.maxProgress)
             {
                 this.curProgress = 0;
                 worker.SetProgress(this.curProgress, false);
@@ -144,7 +147,7 @@
                 return false;
             }
 
-            worker.SetProgress((float)this.curProgress / this.maxProgress, true);
+            worker.SetProgress((float)this.curProgress / WorkerTask.maxProgress, true);
             return false;
         }
 
@@ -168,9 +171,15 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否</returns>
-        public virtual bool IsCanWork(Worker worker)
+        public bool IsCanWork(Worker worker)
         {
-            return worker.TaskToggle[(int)this.TaskType];
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            if (!workerData.TaskToggle[(int)this.TaskType])
+            {
+                return false;
+            }
+
+            return this.DoIsCanWork(worker);
         }
 
         /// <summary>
@@ -187,6 +196,16 @@
         public virtual void Finish(Worker worker)
         {
             WorkerTaskManager.Instance.CompleteTask(this);
+        }
+
+        /// <summary>
+        /// Worker是否可以接该任务,具体实现
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <returns>是否</returns>
+        protected virtual bool DoIsCanWork(Worker worker)
+        {
+            return false;
         }
 
         /// <summary>

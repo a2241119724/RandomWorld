@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using UnityEngine;
+    using static LAB2D.Worker;
 
     /// <summary>
     /// Worker逃跑状态

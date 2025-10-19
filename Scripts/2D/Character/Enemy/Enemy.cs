@@ -21,31 +21,6 @@
         public readonly float RotationSpeed = 2.0f;
 
         /// <summary>
-        /// 敌人攻击范围.
-        /// </summary>
-        public readonly float AttackRange = 4.0f;
-
-        /// <summary>
-        /// 听觉距离.
-        /// </summary>
-        protected readonly float SoundRange = 5.0f;
-
-        /// <summary>
-        /// 视野距离.
-        /// </summary>
-        protected readonly float SightRange = 10.0f;
-
-        /// <summary>
-        /// 视野角度.
-        /// </summary>
-        protected readonly float SightAngle = 60.0f;
-
-        /// <summary>
-        /// 发射子弹的速度.
-        /// </summary>
-        protected readonly float bulletSpeed = 50.0f;
-
-        /// <summary>
         /// 射线检测的层级.
         /// </summary>
         protected LayerMask layerMask;
@@ -86,7 +61,7 @@
             base.Awake();
             this.layerMask = LayerMask.GetMask("Tile", "Player");
             this.Manager = new EnemyStateManager<ICharacterState, EnemyState.EnemyStateTypeEnum, Enemy>(this);
-            this.CharacterDataLAB.MaxHp = this.CharacterDataLAB.Hp = 100;
+            this.CharacterDataLAB = new EnemyData();
         }
 
         /// <inheritdoc/>
@@ -143,20 +118,22 @@
                 return false;
             }
 
+            EnemyData enemyData = this.CharacterDataLAB as EnemyData;
+
             // 计算玩家与敌人之间的距离
             float dist = Vector3.Distance(target.position, this.transform.position);
 
             // 如果玩家与敌人的距离小于敌人的听觉距离(一周)
             // 判断是否听到附近有玩家
-            bool isFind = dist < this.SoundRange;
+            bool isFind = dist < enemyData.SoundRange;
 
             // 如果玩家与敌人的距离小于敌人的视觉距离(前方扇形)
-            if (dist < this.SightRange && !isFind)
+            if (dist < enemyData.SightRange && !isFind)
             {
                 // 计算玩家是否在敌人的视角内
                 Vector3 direction = target.position - this.transform.position;
                 float degree = Vector3.Angle(direction, this.EnemyHead.position - this.transform.position);
-                if (degree < this.SightAngle / 2 && degree > -this.SightAngle / 2)
+                if (degree < enemyData.SightAngle / 2 && degree > -enemyData.SightAngle / 2)
                 {
                     isFind = true;
                 }
@@ -166,7 +143,7 @@
             {
                 // 判断玩家和敌人之间是否存在遮挡物
                 Vector3 direction = target.position - this.transform.position;
-                this.raycastHit2D = Physics2D.Raycast(this.transform.position, direction, this.SightRange, this.layerMask); // (源,方向,距离,层级)
+                this.raycastHit2D = Physics2D.Raycast(this.transform.position, direction, enemyData.SightRange, this.layerMask); // (源,方向,距离,层级)
 
                 // 如果有碰撞体并且不是目标，是障碍物
                 if (this.raycastHit2D.collider != null && this.raycastHit2D.transform != target)
@@ -267,5 +244,37 @@
         //     // FromToRotation得到从自定义方向到某方向旋转的角度
         //     //transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(Vector3.up, pointToPlayer), Time.deltaTime * rotationSpeed);
         // }
+
+        /// <summary>
+        /// 敌人数据
+        /// </summary>
+        [Serializable]
+        public class EnemyData : CharacterData
+        {
+            /// <summary>
+            /// 敌人攻击范围.
+            /// </summary>
+            public float AttackRange = 4.0f;
+
+            /// <summary>
+            /// 听觉距离.
+            /// </summary>
+            public float SoundRange = 5.0f;
+
+            /// <summary>
+            /// 视野距离.
+            /// </summary>
+            public float SightRange = 10.0f;
+
+            /// <summary>
+            /// 视野角度.
+            /// </summary>
+            public float SightAngle = 60.0f;
+
+            /// <summary>
+            /// 发射子弹的速度.
+            /// </summary>
+            public float BulletSpeed = 50.0f;
+        }
     }
 }

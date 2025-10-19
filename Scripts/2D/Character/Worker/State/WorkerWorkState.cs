@@ -1,10 +1,14 @@
 ﻿namespace LAB2D
 {
+    using static LAB2D.Worker;
+
     /// <summary>
     /// Worker工作状态
     /// </summary>
     public class WorkerWorkState : WorkerState
     {
+        private bool waitOneFrame; // 等待一帧
+
         public WorkerWorkState(Worker worker)
             : base(worker)
         {
@@ -14,13 +18,15 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            if (this.Character.Manager.Task == null)
+            this.waitOneFrame = false;
+            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            if (workerData.Task == null)
             {
                 return;
             }
 
             this.Character.WorkerStateText.text = this.preString +
-                $"Target: {this.Character.Manager.Task.TargetMap.x},{this.Character.Manager.Task.TargetMap.y}";
+                $"Target: {workerData.Task.TargetMap.x},{workerData.Task.TargetMap.y}";
         }
 
         /// <inheritdoc/>
@@ -32,21 +38,27 @@
         /// <inheritdoc/>
         public override void OnUpdate()
         {
+            if (this.waitOneFrame)
+            {
+                // 等待一帧后再进入寻路状态,先去接任务
+                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                return;
+            }
+
             base.OnUpdate();
-            if (this.Character.Manager.Task == null)
+            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            if (workerData.Task == null)
             {
                 return;
             }
 
-            bool isComplete = this.Character.Manager.Task.Execute(this.Character);
-            if (!isComplete)
+            bool isComplete = workerData.Task.Execute(this.Character);
+            if (isComplete)
             {
-                return;
+                // 完成任务
+                workerData.Task = null;
+                this.waitOneFrame = true;
             }
-
-            // 完成任务
-            this.Character.Manager.Task = null;
-            this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
         }
     }
 }

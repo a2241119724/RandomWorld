@@ -1,7 +1,6 @@
 ﻿namespace LAB2D
 {
     using System.Collections;
-    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
 

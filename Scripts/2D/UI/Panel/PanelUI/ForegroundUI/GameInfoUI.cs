@@ -2,7 +2,6 @@
 {
     using System.Collections;
     using UnityEngine;
-    using UnityEngine.Rendering.Universal;
     using UnityEngine.UI;
 
     /// <summary>
@@ -12,14 +11,9 @@
     {
         private Text fps;
         private Text position;
-        private Text time;
-        private Light2D globalLight; // 白天黑天显示
 
         private float accum; // fps
         private int frames;
-
-        private double curGameTime; // time
-        private double lastGameTime;
 
         /// <summary>
         /// 单例
@@ -47,8 +41,6 @@
             Instance = this;
             this.fps = Tool.GetComponentInChildren<Text>(this.gameObject, "FPS");
             this.position = Tool.GetComponentInChildren<Text>(this.gameObject, "PlayerPosition");
-            this.time = Tool.GetComponentInChildren<Text>(this.gameObject, "Time");
-            this.globalLight = GameObject.FindGameObjectWithTag(ResourceConstant.GLOBAL_LIGHT_TAG).GetComponent<Light2D>();
         }
 
         public void Start()
@@ -64,18 +56,6 @@
 
             // 一秒总共的次数
             ++this.frames;
-
-            // time
-            this.curGameTime += Time.deltaTime;
-            this.globalLight.intensity = Mathf.Clamp(Mathf.Abs(Mathf.Cos((float)this.curGameTime / GlobalData.DayTime)), 0.2f, 1.0f);
-            if (this.curGameTime - this.lastGameTime >= 1.0)
-            {
-                this.lastGameTime = this.curGameTime;
-                int hour = (int)this.curGameTime / 3600;
-                int minute = ((int)this.curGameTime - (hour * 3600)) / 60;
-                int second = (int)this.curGameTime - (hour * 3600) - (minute * 60);
-                this.time.text = string.Format("<color=blue>游戏时间: </color>{0:D2}:{1:D2}:{2:D2}", hour, minute, second);
-            }
         }
 
         private IEnumerator FPS()

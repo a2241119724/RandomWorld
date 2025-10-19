@@ -1,11 +1,13 @@
 ﻿namespace LAB2D
 {
+    using System;
     using UnityEngine;
 
     /// <summary>
     /// 任务2阶段：取货，放货
     /// Carry在第二个阶段预留资源
     /// </summary>
+    [Serializable]
     public class WorkerCarryTask : WorkerTask
     {
         /// <summary>
@@ -18,7 +20,7 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 1.0f;
+                WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
@@ -27,7 +29,7 @@
             });
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 1.0f;
+                WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = InventoryManager.Instance.GetPosByPrePlace(worker);
@@ -53,11 +55,11 @@
         public override void Finish(Worker worker)
         {
             base.Finish(worker);
-            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(this.resourceInfo.Id);
+            Item.ItemType itemType = ItemDataManager.Instance.IdToType(this.resourceInfo.Id);
 
             // 放下拿起来的东西
             ItemMap.Instance.AddTile(this.TargetMap, ResourceManager.Instance
-                .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).ImageName));
+                .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).EnName));
             worker.SubResource(this.resourceInfo);
             InventoryManager.Instance.AddItemByPrePlace(worker, this.TargetMap);
 
@@ -69,13 +71,8 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
+        protected override bool DoIsCanWork(Worker worker)
         {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
-
             return InventoryManager.Instance.IsEnoughAndPrePlace(worker, this.resourceInfo);
         }
 
@@ -115,7 +112,7 @@
 
             public CarryTaskBuilder SetResourceInfo(ResourceInfo resourceInfo)
             {
-                this.task.resourceInfo = Tool.DeepCopyByBinary(resourceInfo);
+                this.task.resourceInfo = DataTool.DeepCopyByBinary(resourceInfo);
                 return this;
             }
 

@@ -26,14 +26,14 @@
             {
                 for (int j = boundary[2]; j < boundary[3] + 1; j++)
                 {
-                    BuildMap.Instance.DirectBuild(new Vector3Int(i, j, 0), this.soil.Tile);
+                    BuildMap.Instance.AddBuild(new Vector3Int(i, j, 0), this.soil.TileName);
                 }
             }
 
             BuildMap.Instance.AddTask();
 
             // 添加仓库Cell
-            FarmlandManager.Instance.AddCells(Tool.Add(centerMap, -this.Height / 2, -this.Width / 2), this.Width, this.Height);
+            FarmlandManager.Instance.AddCells(VectorTool.Add(centerMap, -this.Height / 2, -this.Width / 2), this.Width, this.Height);
         }
     }
 }

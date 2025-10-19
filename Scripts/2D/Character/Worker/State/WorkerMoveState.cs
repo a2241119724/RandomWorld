@@ -37,7 +37,8 @@
             bool isTarget = this.Character.Seek.MoveByPath();
             if (isTarget)
             {
-                if (this.Character.Manager.Task == null)
+                Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+                if (workerData.Task == null)
                 {
                     this.recordTime += Time.deltaTime;
                     if (Time.frameCount % 60 == 0)

@@ -71,7 +71,11 @@
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             string logMessage = $"{timestamp} [{level}] {message}";
 
-            Debug.Log(logMessage);
+            if (level == LogLevel.Error)
+            {
+                Debug.Log(logMessage);
+            }
+
             lock (this.logs)
             {
                 this.logs.Add(logMessage);

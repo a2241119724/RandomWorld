@@ -29,6 +29,14 @@
                 posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
                 this.UpdateLine();
             }).Wait();
+
+            // 起点就是终点
+            if (posMap.x == this.TargetMap.x && posMap.y == this.TargetMap.y)
+            {
+                this.StopSeek();
+                return;
+            }
+
             Spend start = this.mapSpend[posMap.x, posMap.y]; // 起点
             start.Previous = null;
             Spend end = this.mapSpend[this.TargetMap.x, this.TargetMap.y]; // 终点
@@ -43,6 +51,7 @@
 
                 if (this.isStopThread)
                 {
+                    this.StopSeek();
                     return;
                 }
 
@@ -51,6 +60,7 @@
                 {
                     if (this.isStopThread)
                     {
+                        this.StopSeek();
                         return;
                     }
 
@@ -62,6 +72,7 @@
 
                 if (this.isStopThread)
                 {
+                    this.StopSeek();
                     return;
                 }
 
@@ -105,6 +116,7 @@
 
                     if (this.isStopThread)
                     {
+                        this.StopSeek();
                         return;
                     }
 
@@ -113,6 +125,7 @@
 
                 if (this.isStopThread)
                 {
+                    this.StopSeek();
                     return;
                 }
 
@@ -121,7 +134,7 @@
 
                 // 对邻居进行f = g + h
                 byte isCorner = 0;
-                foreach (Vector2SByte direction in Neighbors)
+                foreach (Vector2SByteLAB direction in Neighbors)
                 {
                     ++isCorner;
                     int x = curSpend.PosMap.x + direction.X;
@@ -170,6 +183,7 @@
 
                     if (this.isStopThread)
                     {
+                        this.StopSeek();
                         return;
                     }
 
@@ -192,6 +206,7 @@
 
                         if (this.isStopThread)
                         {
+                            this.StopSeek();
                             return;
                         }
 
@@ -206,11 +221,12 @@
 
             if (this.isStopThread)
             {
+                this.StopSeek();
                 return;
             }
 
             // 合并path
-            if (path.Count > 1)
+            if (path.Count > 0)
             {
                 int lastIndex = 0;
                 while (!this.isStopThread && lastIndex < path.Count - 1)
@@ -230,6 +246,7 @@
                     {
                         if (this.isStopThread)
                         {
+                            this.StopSeek();
                             return;
                         }
 
@@ -268,6 +285,7 @@
 
                 if (this.isStopThread)
                 {
+                    this.StopSeek();
                     return;
                 }
 
@@ -281,12 +299,7 @@
                 }).Wait();
             }
 
-            // 显示路径
-            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
-            {
-                this.UpdateLine();
-            }).Wait();
-            this.IsSeeking = false;
+            this.StopSeek();
         }
     }
 }

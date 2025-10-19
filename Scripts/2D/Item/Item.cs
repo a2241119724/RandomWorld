@@ -1,14 +1,25 @@
 ﻿namespace LAB2D
 {
     using System;
+    using System.Collections.Generic;
     using Photon.Pun;
 
     /// <summary>
     /// 道具
+    /// 通过ID关联ItemData
     /// </summary>
     [Serializable]
     public abstract class Item
     {
+        /// <summary>
+        /// 道具的范围
+        /// </summary>
+        public static Dictionary<string, ItemType[]> Ranges = new ()
+        {
+            { "Backpack", new ItemType[] { ItemType.Weapon, ItemType.BackpackOther } },
+            { "Build", new ItemType[] { ItemType.Room, ItemType.BuildOther } },
+        };
+
         /// <summary>
         /// 具体道具ID
         /// </summary>
@@ -106,7 +117,7 @@
         /// 不可使用反射找到该类
         /// 不加入到BuildMenu中
         /// </summary>
-        public interface IItemDontShow
+        public interface IDontShow
         {
         }
 
@@ -119,8 +130,8 @@
                 $"quantity: {this.Quantity}\n" +
                 $"info: {itemData.Info}\n" +
                 $"isStackable: {itemData.IsStackable}\n" +
-                $"imageName: {itemData.ImageName}\n" +
-                $"itemName: {itemData.ItemName}\n";
+                $"imageName: {itemData.EnName}\n" +
+                $"itemName: {itemData.CnName}\n";
         }
     }
 

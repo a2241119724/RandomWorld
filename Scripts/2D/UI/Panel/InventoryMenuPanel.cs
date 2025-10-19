@@ -34,7 +34,7 @@
             {
                 if (count >= this.type.childCount)
                 {
-                    GameObject buttonItem = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("ButtonItem"));
+                    GameObject buttonItem = ResourceManager.Instance.Instantiate(PrefabConstant.BUTTON_ITEM);
                     buttonItem.transform.SetParent(this.type);
                     buttonItem.transform.localScale = Vector3.one;
                 }

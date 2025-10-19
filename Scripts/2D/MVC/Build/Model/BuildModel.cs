@@ -16,7 +16,8 @@
         /// <inheritdoc/>
         public override void LoadData()
         {
-            Dictionary<Item.ItemType, ArrayList> data = Tool.LoadDataByBinary<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            AsyncProgressUI.Instance.SetTip("加载建造数据...");
+            Dictionary<Item.ItemType, ArrayList> data = DataTool.LoadDataByBinary<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
             // Dictionary<BuildType, ArrayList> data = Tool.loadDataByJson<Dictionary<BuildType, ArrayList>>(GlobalData.ConfigFile.BuildDataFilePath);
             if (data == null)
@@ -32,7 +33,7 @@
         /// </summary>
         public override void SaveData()
         {
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.ItemDict);
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.ItemDict);
 
             // Tool.saveDataByJson(GlobalData.ConfigFile.BuildDataFilePath, itemDict);
         }

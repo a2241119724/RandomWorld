@@ -19,7 +19,7 @@
 
         public void Awake()
         {
-            this.btns = Tool.GetComponentInChildren<Transform>(this.gameObject, "Panel");
+            this.btns = Tool.GetComponentInChildren<Transform>(this.gameObject, "Menu");
         }
 
         public void Update()

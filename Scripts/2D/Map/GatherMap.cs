@@ -37,7 +37,7 @@
         {
             this.tilemap.SetTile(posMap, (TileBase)ResourceManager.Instance.GetAsset("Gather"));
             this.GatherMapDataLAB.Add(posMap, "Gather");
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
         }
 
         /// <summary>
@@ -48,18 +48,13 @@
         {
             this.tilemap.SetTile(posMap, null);
             this.GatherMapDataLAB.Remove(posMap);
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
+            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
         }
 
         /// <inheritdoc/>
         [PunRPC]
         public override void SyncDataReq(byte[] data)
         {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
             base.SyncDataReq(data);
             LogManager.Instance.Log("Request: 同步地图采集数据");
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.GatherMapDataLAB);
@@ -71,8 +66,8 @@
         {
             base.SyncDataResp(data);
             LogManager.Instance.Log("Response: 同步地图采集数据");
-            GatherMapData gatherMapData = Tool.FromByteArray<GatherMapData>(data);
-            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = gatherMapData.PosMaps.GetEnumerator();
+            GatherMapData gatherMapData = DataTool.FromByteArray<GatherMapData>(data);
+            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = gatherMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 this.tilemap.SetTile(
@@ -92,7 +87,7 @@
         {
             LogManager.Instance.Log("Response: 同步地图采集数据");
 
-            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(Tool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
+            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {
                 this.tilemap.SetTile(vector3Int, null);

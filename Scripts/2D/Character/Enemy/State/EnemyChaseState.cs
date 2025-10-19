@@ -42,9 +42,10 @@
             // 仅感知捕捉的玩家
             if (this.Character.SenseNearby(this.Character.Target.transform))
             {
+                Enemy.EnemyData enemyData = this.Character.CharacterDataLAB as Enemy.EnemyData;
+
                 // 如果玩家与敌人的距离小于敌人的攻击距离，那么进入攻击状态
-                if (Vector3.Distance(this.Character.Target.transform.position, this.Character.transform.position)
-                    <= this.Character.AttackRange)
+                if (Vector3.Distance(this.Character.Target.transform.position, this.Character.transform.position) <= enemyData.AttackRange)
                 {
                     this.Character.Manager.ChangeState(EnemyStateTypeEnum.Attack);
                     return;

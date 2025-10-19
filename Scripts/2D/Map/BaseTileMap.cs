@@ -7,7 +7,7 @@
     /// <summary>
     /// 基地图
     /// </summary>
-    public abstract class BaseTileMap : AMonoSaveData, ISyncData
+    public abstract class BaseTileMap : AMonoSaveData
     {
         /// <summary>
         /// 地图
@@ -15,16 +15,6 @@
         protected Tilemap tilemap;
 
         private static string alreadyShowMap = string.Empty; // 所有的Map是否已经在显示
-
-        /// <summary>
-        /// 地图纵向长度
-        /// </summary>
-        public static int Height { get; set; }
-
-        /// <summary>
-        /// 地图横向长度
-        /// </summary>
-        public static int Width { get; set; }
 
         /// <summary>
         /// 同步数据

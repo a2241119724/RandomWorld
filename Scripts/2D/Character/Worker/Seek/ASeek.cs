@@ -2,6 +2,7 @@
 {
     using System.Collections.Generic;
     using System.Threading;
+    using PimDeWitte.UnityMainThreadDispatcher;
     using UnityEngine;
 
     /// <summary>
@@ -12,12 +13,12 @@
         /// <summary>
         /// 邻居
         /// </summary>
-        protected static readonly List<Vector2SByte> Neighbors = new ()
+        protected static readonly List<Vector2SByteLAB> Neighbors = new ()
         {
-            new Vector2SByte(0, 1),
-            new Vector2SByte(1, 0),
-            new Vector2SByte(0, -1),
-            new Vector2SByte(-1, 0), // 上右下左
+            new Vector2SByteLAB(0, 1),
+            new Vector2SByteLAB(1, 0),
+            new Vector2SByteLAB(0, -1),
+            new Vector2SByteLAB(-1, 0), // 上右下左
 
             // new Vector2SByte(1, 1), new Vector2SByte(1, -1), // 右上,右下
             // new Vector2SByte(-1, -1), new Vector2SByte(-1, 1), // 左下, 左上
@@ -56,8 +57,8 @@
         // private static ManualResetEvent manualResetEvent; // 线程Wait
         public ASeek(Worker character)
         {
-            int height = TileMap.Height;
-            int width = TileMap.Width;
+            int height = TileMap.Instance.TileMapDataLAB.Height;
+            int width = TileMap.Instance.TileMapDataLAB.Width;
 
             // 初始化寻路花费
             this.mapSpend = new Spend[height, width];
@@ -144,7 +145,7 @@
                 // 之前的线程停止后执行
                 lock (this)
                 {
-                    // if (TileMap.Height == 0 || TileMap.Width == 0)
+                    // if (TileMap.Instance.TileMapDataLAB.Height == 0 || TileMap.Instance.TileMapDataLAB.Width == 0)
                     // {
                     //     ASeek.manualResetEvent.WaitOne();
                     // }
@@ -209,6 +210,19 @@
             {
                 this.LineRenderer.SetPosition(this.path.Count - i - 1, TileMap.Instance.MapPosToWorldPos(this.path[i].PosMap));
             }
+        }
+
+        /// <summary>
+        /// 停止寻路
+        /// </summary>
+        protected void StopSeek()
+        {
+            // 显示路径
+            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+            {
+                this.UpdateLine();
+            }).Wait();
+            this.IsSeeking = false;
         }
     }
 }

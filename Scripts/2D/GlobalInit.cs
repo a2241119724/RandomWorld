@@ -2,7 +2,6 @@
 {
     using System.Collections.Generic;
     using UnityEngine;
-    using UnityEngine.UI;
 
     /// <summary>
     /// 全局初始化.
@@ -10,7 +9,6 @@
     public class GlobalInit : MonoBehaviour
     {
         private readonly bool initPanel = true;
-        private GameObject tip; // 提示框预制体
         private List<IBasePanel> dontClosePanels; // ESC不可关闭的面板
 
         /// <summary>
@@ -21,7 +19,6 @@
         public void Awake()
         {
             Instance = this;
-            this.tip = ResourceManager.Instance.GetPrefab("Tip");
             Application.targetFrameRate = GlobalData.MaxFrame;
             this.dontClosePanels = new ()
             {
@@ -104,14 +101,12 @@
         /// <param name="text">通知内容.</param>
         public void ShowTip(string text)
         {
-            GameObject g = Instantiate(this.tip);
+            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.TIP);
             if (g == null)
             {
-                LogManager.Instance.Log("tip Instantiate Error!!!", LogManager.LogLevel.Error);
                 return;
             }
 
-            g.name = this.tip.name;
             g.GetComponent<TipUI>().SetText(text);
             g.transform.SetParent(this.transform, false);
 
@@ -130,8 +125,9 @@
             foreach (Worker worker in workers)
             {
                 // 按照时间对饥饿值与疲劳值进行自然衰减
-                worker.CurHungry -= Time.deltaTime * 0.1f;
-                worker.CurTired -= Time.deltaTime * 0.01f;
+                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                workerData.CurHungry -= Time.deltaTime * 0.1f;
+                workerData.CurTired -= Time.deltaTime * 0.01f;
             }
         }
     }
@@ -145,66 +141,6 @@
         /// 初始化方法.
         /// </summary>
         public virtual void Init()
-        {
-        }
-    }
-
-    /// <summary>
-    /// 实现LoadData,SaveData.
-    /// </summary>
-    public abstract class ASaveData : ISaveData
-    {
-        public ASaveData()
-        {
-            Instances.Add(this);
-        }
-
-        /// <summary>
-        /// 单例.
-        /// </summary>
-        public static List<ISaveData> Instances { get; set; } = new List<ISaveData>();
-
-        /// <summary>
-        /// 加载数据.
-        /// </summary>
-        public virtual void LoadData()
-        {
-        }
-
-        /// <summary>
-        /// 保存数据.
-        /// </summary>
-        public virtual void SaveData()
-        {
-        }
-    }
-
-    /// <summary>
-    /// 带有MonoBehaviour的ISaveData.
-    /// </summary>
-    public abstract class AMonoSaveData : MonoBehaviour, ISaveData
-    {
-        public AMonoSaveData()
-        {
-            Instances.Add(this);
-        }
-
-        /// <summary>
-        /// 单例.
-        /// </summary>
-        public static List<ISaveData> Instances { get; set; } = new List<ISaveData>();
-
-        /// <summary>
-        /// 加载数据.
-        /// </summary>
-        public virtual void LoadData()
-        {
-        }
-
-        /// <summary>
-        /// 保存数据.
-        /// </summary>
-        public virtual void SaveData()
         {
         }
     }

@@ -2,6 +2,7 @@
 {
     using System.Text;
     using UnityEngine;
+    using static LAB2D.Worker;
 
     /// <summary>
     /// Worker寻找状态
@@ -23,7 +24,8 @@
             base.OnEnter();
 
             // 如果饥饿并且没有吃饭任务就进入饥饿状态,做完任务再吃饭
-            if (this.Character.CurHungry < Worker.ThresholdHungry && this.Character.Manager.Task == null)
+            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            if (workerData.CurHungry < Worker.ThresholdHungry && workerData.Task == null)
             {
                 this.Character.Manager.ChangeState(WorkerStateTypeEnum.Eat);
                 return;
@@ -34,13 +36,13 @@
             // 没有任务
             Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
             this.targetMap = TileMap.Instance.GenCanReachPos(posMap);
-            if (this.Character.Manager.Task != null)
+            if (workerData.Task != null)
             {
                 // 有任务
-                this.targetMap = this.Character.Manager.Task.TargetMap;
+                this.targetMap = workerData.Task.TargetMap;
                 float minDistance = 99999.0f;
                 Vector3Int closedPos = default;
-                foreach (Vector3Int pos in this.Character.Manager.Task.AvailableNeighborPos)
+                foreach (Vector3Int pos in workerData.Task.AvailableNeighborPos)
                 {
                     // 由于是斜对称
                     Vector3Int temp = new (this.targetMap.x + pos.y, this.targetMap.y + pos.x, 0);
@@ -59,7 +61,8 @@
 
                 if (closedPos == default)
                 {
-                    LogManager.Instance.Log("没有邻居位置!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log($"{workerData.Task.TaskType},没有邻居位置!!!", LogManager.LogLevel.Error);
+                    return;
                 }
 
                 this.targetMap = closedPos;

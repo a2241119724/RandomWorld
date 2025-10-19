@@ -55,7 +55,7 @@
             {
                 for (int j = 0; j < width; j++)
                 {
-                    Vector3Int pos = Tool.Add(startPos, i, j);
+                    Vector3Int pos = VectorTool.Add(startPos, i, j);
                     ResourceInfo resourceInfo = new (-1, 0);
                     this.posToResource.Add(pos, resourceInfo);
                     resources.Add(pos, resourceInfo);
@@ -242,7 +242,7 @@
                     hungry -= hungry1;
                     if (isPre)
                     {
-                        foods.Add(food.Key, Tool.DeepCopyByBinary(food.Value));
+                        foods.Add(food.Key, DataTool.DeepCopyByBinary(food.Value));
                     }
                 }
             }
@@ -320,7 +320,7 @@
             // 既然已经预放置了，那一定可以放置，不会超出容量
             if (this.posToResource[posMap].Id == -1)
             {
-                this.TransferResource(posMap, -1, resourceInfo.Id, Item.ItemType.Null, ItemDataManager.Instance.GetTypeById(resourceInfo.Id));
+                this.TransferResource(posMap, -1, resourceInfo.Id, Item.ItemType.Null, ItemDataManager.Instance.IdToType(resourceInfo.Id));
             }
 
             this.posToResource[posMap].Id = resourceInfo.Id;
@@ -358,8 +358,8 @@
                 return null;
             }
 
-            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
-            ResourceInfo resourceInfo = Tool.DeepCopyByBinary(this.posToResource[posMap]);
+            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), Item.ItemType.Null);
+            ResourceInfo resourceInfo = DataTool.DeepCopyByBinary(this.posToResource[posMap]);
             this.posToResource[posMap].Id = -1;
             this.posToResource[posMap].Count = 0;
             ItemMap.Instance.DeleteTile(posMap);
@@ -385,11 +385,11 @@
             // 如果正好取完
             if (this.posToResource[posMap].Count == 0)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), Item.ItemType.Null);
                 ItemMap.Instance.DeleteTile(posMap);
 
                 // 食物被吃完删除任务
-                if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == Item.ItemType.Food)
+                if (ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id) == Item.ItemType.Food)
                 {
                     WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
@@ -425,11 +425,11 @@
             // 如果正好取完
             if (this.posToResource[posMap].Count == 0)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id), Item.ItemType.Null);
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), Item.ItemType.Null);
                 ItemMap.Instance.DeleteTile(posMap);
 
                 // 食物被吃完删除任务
-                if (ItemDataManager.Instance.GetTypeById(this.posToResource[posMap].Id) == Item.ItemType.Food)
+                if (ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id) == Item.ItemType.Food)
                 {
                     WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
@@ -477,10 +477,11 @@
             // 预申请资源
             if (isPre)
             {
+                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
                 foreach (KeyValuePair<int, ResourceInfo> need in needResource)
                 {
                     // 每个Cell预取完之后剩余Cell可预取的数量,至少取need.Value.count
-                    int remaining = Mathf.Max(need.Value.Count, worker.MaxResourceCount);
+                    int remaining = Mathf.Max(need.Value.Count, workerData.MaxResourceCount);
 
                     // 按照Worker携带的最大值预取,如果不够最大值就取完所有资源
                     foreach (KeyValuePair<Vector3Int, ResourceInfo> resource in this.id2Resource[need.Key])
@@ -510,7 +511,7 @@
         /// <param name="pos">位置</param>
         public void ShowWearMenu(Vector3Int pos)
         {
-            Item.ItemType itemType = ItemDataManager.Instance.GetTypeById(this.posToResource[pos].Id);
+            Item.ItemType itemType = ItemDataManager.Instance.IdToType(this.posToResource[pos].Id);
             if (itemType == Item.ItemType.Weapon || itemType == Item.ItemType.Equipment)
             {
                 AddWearTaskUI.Instance.ShowWearTask(pos);
@@ -606,13 +607,13 @@
                     return;
                 }
 
-                this.prePlaceResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+                this.prePlaceResource[worker].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
                 return;
             }
 
             Dictionary<Vector3Int, ResourceInfo> dict = new ();
-            dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+            dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
             this.prePlaceResource.Add(worker, dict);
             ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
         }
@@ -670,7 +671,7 @@
             if (!this.preTakeResource.ContainsKey(worker))
             {
                 Dictionary<Vector3Int, ResourceInfo> dict = new ();
-                dict.Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+                dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 this.preTakeResource.Add(worker, dict);
                 ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
                 return;
@@ -678,7 +679,7 @@
 
             if (!this.preTakeResource[worker].ContainsKey(pos))
             {
-                this.preTakeResource[worker].Add(pos, Tool.DeepCopyByBinary(resourceInfo));
+                this.preTakeResource[worker].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 ItemInfoUI.Instance.UpdateInfo(this.GetType().Name, pos, this.ToString(pos));
                 return;
             }

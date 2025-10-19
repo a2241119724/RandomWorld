@@ -33,7 +33,7 @@
                 // 若没有对应的物体，先创建
                 if (i > this.content.childCount - 1)
                 {
-                    GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("WorkerBedItem"));
+                    GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.WORKER_BED_ITEM);
                     g.transform.SetParent(this.content);
                     g.transform.localScale = Vector3.one;
                 }

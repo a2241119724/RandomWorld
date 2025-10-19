@@ -15,7 +15,7 @@
         {
             base.Awake();
             Instance = this;
-            this.itemBox = ResourceManager.Instance.GetPrefab("BuildItem");
+            this.itemBox = PrefabConstant.BUILD_ITEM;
         }
 
         /// <inheritdoc/>

@@ -67,16 +67,12 @@
             // 初始化Instance
         }
 
-        /// <summary>
-        /// 加载数据.
-        /// </summary>
+        /// <inheritdoc/>
         public override void LoadData()
         {
         }
 
-        /// <summary>
-        /// 保存数据.
-        /// </summary>
+        /// <inheritdoc/>
         public override void SaveData()
         {
         }

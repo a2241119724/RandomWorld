@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
@@ -13,22 +14,16 @@
         public DropDataManager()
         {
             this.nameToDrop = new Dictionary<string, List<DropItem>>();
-            string[] drops = Tool.GetCSV(ResourceConstant.DATA_ROOT + "DropItem");
+            DropItemDataSO dropItemDataSO = ResourceManager.Instance.GetDropSO("DropItemDataSO");
 
-            // 跳过第一行
-            for (int i = 1; i < drops.Length; i++)
+            dropItemDataSO.ResourceDropItems.ForEach(item =>
             {
-                string[] cols = drops[i].Split(',');
-                for (int j = 1; j < cols.Length; j += 2)
+                item.DropItems.ForEach(dropItem =>
                 {
-                    if (!this.nameToDrop.ContainsKey(cols[0]))
-                    {
-                        this.nameToDrop.Add(cols[0], new List<DropItem>());
-                    }
-
-                    this.nameToDrop[cols[0]].Add(new DropItem(cols[j], int.Parse(cols[j + 1])));
-                }
-            }
+                    dropItem.Init();
+                });
+                this.nameToDrop.Add(item.Name, item.DropItems);
+            });
         }
 
         /// <summary>
@@ -40,6 +35,12 @@
         {
             if (!this.nameToDrop.ContainsKey(name))
             {
+                // 默认使用默认掉落物
+                if (this.nameToDrop.ContainsKey("Default"))
+                {
+                    return this.nameToDrop["Default"];
+                }
+
                 return Empty;
             }
 
@@ -50,22 +51,22 @@
     /// <summary>
     /// 掉落物
     /// </summary>
+    [Serializable]
     public class DropItem
     {
-        public DropItem(string name, int count)
-        {
-            this.Name = name;
-            this.ResourceInfo = new ResourceInfo(ItemDataManager.Instance.GetByName(name).Id, count);
-        }
-
         /// <summary>
         /// 名称
         /// </summary>
-        public string Name { get; set; }
+        public string Name;
 
         /// <summary>
         /// 掉落物信息
         /// </summary>
-        public ResourceInfo ResourceInfo { get; private set; }
+        public ResourceInfo ResourceInfo;
+
+        public void Init()
+        {
+            this.ResourceInfo.Id = ItemDataManager.Instance.GetByName(this.Name).Id;
+        }
     }
 }

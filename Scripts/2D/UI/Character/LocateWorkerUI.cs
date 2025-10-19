@@ -20,14 +20,14 @@
         /// <param name="worker">Worker</param>
         public void AddWorkerItem(Worker worker)
         {
-            GameObject g = GameObject.Instantiate(ResourceManager.Instance.GetPrefab("LocateWorkerItem"));
+            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.LOCATE_WORKER_ITEM, true);
             g.transform.SetParent(this.transform);
             g.transform.localScale = Vector3.one;
             Tool.GetComponentInChildren<Text>(g, "Name").text = worker.name;
             g.GetComponent<Button>().onClick.AddListener(() =>
             {
                 Camera.main.GetComponent<CameraMove>().Character = worker;
-                GameObject.FindGameObjectWithTag(ResourceConstant.MINIMAP_TAG).GetComponent<CameraMove>().Character = worker;
+                GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG).GetComponent<CameraMove>().Character = worker;
             });
         }
 

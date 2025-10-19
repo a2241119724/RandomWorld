@@ -18,10 +18,12 @@
         /// <inheritdoc/>
         public override void Start()
         {
+            EnemyData enemyData = this.CharacterDataLAB as EnemyData;
+
             // 画视觉,听觉,攻击范围
-            Tool.DrawSectorSolid(10, this.AttackRange, new Color32(255, 0, 0, 50), this.transform);
-            Tool.DrawSectorSolid(this.SightAngle, this.SightRange, new Color32(0, 255, 0, 50), this.transform);
-            Tool.DrawSectorSolid(360, this.SoundRange, new Color32(0, 0, 255, 50), this.transform);
+            Tool.DrawSectorSolid(10, enemyData.AttackRange, new Color32(255, 0, 0, 50), this.transform);
+            Tool.DrawSectorSolid(enemyData.SightAngle, enemyData.SightRange, new Color32(0, 255, 0, 50), this.transform);
+            Tool.DrawSectorSolid(360, enemyData.SoundRange, new Color32(0, 0, 255, 50), this.transform);
             base.Start();
 
             // 添加状态
@@ -40,12 +42,12 @@
         [PunRPC]
         public override void Attack()
         {
-            // 发射子弹
-            GameObject g = Tool.Instantiate(ResourceManager.Instance.GetPrefab("EnemyBullet"), this.EnemyHead.position, Quaternion.identity);
+            EnemyData enemyData = this.CharacterDataLAB as EnemyData;
 
-            // GameObject g = Instantiate(enemyBullet, enemyHead.position, Quaternion.identity);
+            // 发射子弹
+            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.ENEMY_BULLET, this.EnemyHead.position, Quaternion.identity);
             g.GetComponent<EnemyBullet>().Direction = this.EnemyHead.position - this.transform.position;
-            g.GetComponent<EnemyBullet>().BulletSpeed = this.bulletSpeed;
+            g.GetComponent<EnemyBullet>().BulletSpeed = enemyData.BulletSpeed;
             this.damage = UnityEngine.Random.Range(1, 10);
             g.GetComponent<EnemyBullet>().Damage = this.damage;
             g.transform.SetParent(this.transform.parent, false);

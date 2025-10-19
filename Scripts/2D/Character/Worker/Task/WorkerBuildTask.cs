@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -7,6 +8,7 @@
     /// 任务2阶段：拿材料，建造
     /// Build在第一个阶段预留资源
     /// </summary>
+    [Serializable]
     public class WorkerBuildTask : WorkerTask
     {
         private Dictionary<int, ResourceInfo> needs;
@@ -22,7 +24,7 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 1.0f;
+                WorkerTask.maxProgress = 1.0f;
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
@@ -38,7 +40,7 @@
             });
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 2.0f;
+                WorkerTask.maxProgress = 2.0f;
 
                 // 建造
                 this.AvailableNeighborPos.Clear();
@@ -88,13 +90,17 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
+        public override void GiveUpTask(Worker worker)
         {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
+            base.GiveUpTask(worker);
 
+            // 恢复资源
+            this.temp = DataTool.DeepCopyByBinary(this.needs);
+        }
+
+        /// <inheritdoc/>
+        protected override bool DoIsCanWork(Worker worker)
+        {
             // 如果worker携带的资源已经满足建造
             if (worker.IsEnough(this.needs))
             {
@@ -105,15 +111,6 @@
             // 获得剩余不够的数量
             Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
             return InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining);
-        }
-
-        /// <inheritdoc/>
-        public override void GiveUpTask(Worker worker)
-        {
-            base.GiveUpTask(worker);
-
-            // 恢复资源
-            this.temp = Tool.DeepCopyByBinary(this.needs);
         }
 
         /// <inheritdoc/>
@@ -182,8 +179,8 @@
 
             public BuildTaskBuilder SetNeedResource(Dictionary<int, ResourceInfo> needResource)
             {
-                this.task.temp = Tool.DeepCopyByBinary(needResource);
-                this.task.needs = Tool.DeepCopyByBinary(needResource);
+                this.task.temp = DataTool.DeepCopyByBinary(needResource);
+                this.task.needs = DataTool.DeepCopyByBinary(needResource);
                 return this;
             }
 

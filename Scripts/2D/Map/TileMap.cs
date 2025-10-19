@@ -80,9 +80,9 @@
             AsyncProgressUI.Instance.SetTip("正在展示地图...");
 
             // 循环每一个点
-            for (int i = 0; i < Height; i++)
+            for (int i = 0; i < this.TileMapDataLAB.Height; i++)
             {
-                for (int j = 0; j < Width; j++)
+                for (int j = 0; j < this.TileMapDataLAB.Width; j++)
                 {
                     AsyncProgressUI.Instance.AddOneProcess();
                     this.tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourceManager.Instance.GetAsset(mapTiles[i, j].ToString()));
@@ -103,13 +103,13 @@
         /// <returns>位置</returns>
         public Vector3Int GenCanReachPos(Vector3 centerMap = default)
         {
-            int x, y, startX = 0, endX = Height, startY = 0, endY = Width;
+            int x, y, startX = 0, endX = this.TileMapDataLAB.Height, startY = 0, endY = this.TileMapDataLAB.Width;
             if (centerMap != default)
             {
                 startX = (int)Mathf.Max(centerMap.x - 20, 0);
                 startY = (int)Mathf.Max(centerMap.y - 20, 0);
-                endX = (int)Mathf.Min(centerMap.x + 20, Height);
-                endY = (int)Mathf.Min(centerMap.y + 20, Width);
+                endX = (int)Mathf.Min(centerMap.x + 20, this.TileMapDataLAB.Height);
+                endY = (int)Mathf.Min(centerMap.y + 20, this.TileMapDataLAB.Width);
             }
 
             Vector3Int posMap;
@@ -132,7 +132,9 @@
             AsyncProgressUI.Instance.SetTip("正在生成随机坐标...");
             for (int i = 0; i < this.TileMapDataLAB.RandomCount; i++)
             {
-                this.TileMapDataLAB.MapTiles[UnityEngine.Random.Range(0, Height), UnityEngine.Random.Range(0, Width)] = (MapTileType)(UnityEngine.Random.Range(2, 14) / 2);
+                this.TileMapDataLAB.MapTiles[
+                    UnityEngine.Random.Range(0, this.TileMapDataLAB.Height),
+                    UnityEngine.Random.Range(0, this.TileMapDataLAB.Width)] = (MapTileType)(UnityEngine.Random.Range(2, 14) / 2);
                 AsyncProgressUI.Instance.AddOneProcess();
                 if (FrameControl.Instance.IsNeedStop(1))
                 {
@@ -140,11 +142,11 @@
                 }
             }
 
-            MapTileType[,] tiles = new MapTileType[Height, Width];
+            MapTileType[,] tiles = new MapTileType[this.TileMapDataLAB.Height, this.TileMapDataLAB.Width];
             AsyncProgressUI.Instance.SetTip("正在填补地图...");
-            for (int i = 0; i < Height; i++)
+            for (int i = 0; i < this.TileMapDataLAB.Height; i++)
             {
-                for (int j = 0; j < Width; j++)
+                for (int j = 0; j < this.TileMapDataLAB.Width; j++)
                 {
                     if (FrameControl.Instance.IsNeedStop(1))
                     {
@@ -163,7 +165,7 @@
             }
 
             this.TileMapDataLAB.MapTiles = tiles;
-            ResourceConstant.IsCompleteTileMap = true;
+            Lock.IsCompleteTileMap = true;
             this.CreateArroundTile();
             yield return this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
         }
@@ -206,7 +208,7 @@
         /// <returns>是否</returns>
         public bool IsOverBorder(Vector3Int posMap)
         {
-            return !(posMap.x >= 0 && posMap.x < Height && posMap.y >= 0 && posMap.y < Width);
+            return !(posMap.x >= 0 && posMap.x < this.TileMapDataLAB.Height && posMap.y >= 0 && posMap.y < this.TileMapDataLAB.Width);
         }
 
         /// <summary>
@@ -216,9 +218,7 @@
         /// <param name="width">宽度</param>
         public void SetProgress(int height, int width)
         {
-            this.TileMapDataLAB = new TileMapData(height, width, new MapTileType[height, width], width * height / 500);
-            Height = height;
-            Width = width;
+            this.TileMapDataLAB = new TileMapData(height, width, new MapTileType[height, width], width * height / 2000);
             int total = width * height;
             total += this.TileMapDataLAB.RandomCount;
             total += ((width + height) * 2) + 4;
@@ -230,12 +230,11 @@
         public override void LoadData()
         {
             base.LoadData();
-            this.TileMapDataLAB = Tool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
-            Height = this.TileMapDataLAB.Height;
-            Width = this.TileMapDataLAB.Width;
+            AsyncProgressUI.Instance.SetTip("加载地图数据...");
+            this.TileMapDataLAB = DataTool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            Lock.IsCompleteTileMap = true;
             this.CreateArroundTile();
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
-            this.StartCoroutine(EnemyCreator.Instance.GenEnemy());
 
             // Worker.initMap(Height, Width);
         }
@@ -244,18 +243,13 @@
         public override void SaveData()
         {
             base.SaveData();
-            Tool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.TileMapDataLAB);
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.TileMapDataLAB);
         }
 
         /// <inheritdoc/>
         [PunRPC]
         public override void SyncDataReq(byte[] data)
         {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
             base.SyncDataReq(data);
             LogManager.Instance.Log("Request: 同步地图数据");
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.TileMapDataLAB);
@@ -267,7 +261,7 @@
         {
             base.SyncDataResp(data);
             LogManager.Instance.Log("Response: 同步地图数据");
-            this.TileMapDataLAB = Tool.FromByteArray<TileMapData>(data);
+            this.TileMapDataLAB = DataTool.FromByteArray<TileMapData>(data);
             this.SetProgressAsync(this.TileMapDataLAB.MapTiles.GetLength(0), this.TileMapDataLAB.MapTiles.GetLength(1));
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
             this.CreateArroundTile();
@@ -278,8 +272,8 @@
         /// </summary>
         private void SetProgressAsync(int height, int width)
         {
-            Height = height;
-            Width = width;
+            this.TileMapDataLAB.Height = height;
+            this.TileMapDataLAB.Width = width;
             int total = width * height;
             total += ((width + height) * 2) + 4;
             AsyncProgressUI.Instance.AddTotal(total);
@@ -294,13 +288,13 @@
         private void NeighborAndReplaceTiles(MapTileType[,] tiles, int i, int j)
         {
             // 寻找离自己最近的非默认板块
-            for (int t = 1; t < Width; t++)
+            for (int t = 1; t < this.TileMapDataLAB.Width; t++)
             {
                 // 第一行
                 int k = i - t;
                 for (int l = j - t; l <= j + t; l++)
                 {
-                    if (k >= 0 && k < Height && l >= 0 && l < Width)
+                    if (k >= 0 && k < this.TileMapDataLAB.Height && l >= 0 && l < this.TileMapDataLAB.Width)
                     {
                         if (this.TileMapDataLAB.MapTiles[k, l] != MapTileType.Default)
                         {
@@ -314,7 +308,7 @@
                 for (++k; k < i + t; k++)
                 {
                     int l = j - t;
-                    if (k >= 0 && k < Height && l >= 0 && l < Width)
+                    if (k >= 0 && k < this.TileMapDataLAB.Height && l >= 0 && l < this.TileMapDataLAB.Width)
                     {
                         if (this.TileMapDataLAB.MapTiles[k, l] != MapTileType.Default)
                         {
@@ -324,7 +318,7 @@
                     }
 
                     l = j + t;
-                    if (k >= 0 && k < Height && l >= 0 && l < Width)
+                    if (k >= 0 && k < this.TileMapDataLAB.Height && l >= 0 && l < this.TileMapDataLAB.Width)
                     {
                         if (this.TileMapDataLAB.MapTiles[k, l] != MapTileType.Default)
                         {
@@ -337,7 +331,7 @@
                 // 最后一行
                 for (int l = j - t; l <= j + t; l++)
                 {
-                    if (k >= 0 && k < Height && l >= 0 && l < Width)
+                    if (k >= 0 && k < this.TileMapDataLAB.Height && l >= 0 && l < this.TileMapDataLAB.Width)
                     {
                         if (this.TileMapDataLAB.MapTiles[k, l] != MapTileType.Default)
                         {
@@ -357,28 +351,28 @@
             AsyncProgressUI.Instance.SetTip("创建地图四周...");
 
             // 上边
-            for (int i = -1; i < Width; i++)
+            for (int i = -1; i < this.TileMapDataLAB.Width; i++)
             {
                 AsyncProgressUI.Instance.AddOneProcess();
-                this.tilemap.SetTile(new Vector3Int(Height, i, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
+                this.tilemap.SetTile(new Vector3Int(this.TileMapDataLAB.Height, i, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
 
             // 右边
-            for (int i = 0; i <= Height; i++)
+            for (int i = 0; i <= this.TileMapDataLAB.Height; i++)
             {
                 AsyncProgressUI.Instance.AddOneProcess();
-                this.tilemap.SetTile(new Vector3Int(i, Width, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
+                this.tilemap.SetTile(new Vector3Int(i, this.TileMapDataLAB.Width, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
 
             // 下边
-            for (int i = 0; i <= Width; i++)
+            for (int i = 0; i <= this.TileMapDataLAB.Width; i++)
             {
                 AsyncProgressUI.Instance.AddOneProcess();
                 this.tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileType.Mountain.ToString()));
             }
 
             // 左边
-            for (int i = -1; i < Height; i++)
+            for (int i = -1; i < this.TileMapDataLAB.Height; i++)
             {
                 AsyncProgressUI.Instance.AddOneProcess();
                 this.tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileType.Mountain.ToString()));

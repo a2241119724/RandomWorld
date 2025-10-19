@@ -1,5 +1,8 @@
 ﻿namespace LAB2D
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Reflection;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -32,10 +35,18 @@
             Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.Onclick_Setting);
             Tool.GetComponentInChildren<Button>(this.Panel, "GeneratorWorker").onClick.AddListener(this.Onclick_GeneratorWorker);
             Tool.GetComponentInChildren<Button>(this.Panel, "GeneratorItem").onClick.AddListener(this.Onclick_GeneratorItem);
-            Tool.GetComponentInChildren<Button>(this.Panel, "Save").onClick.AddListener(this.Onclick_Save);
+            Button save = Tool.GetComponentInChildren<Button>(this.Panel, "Save");
+            if (PhotonNetwork.IsConnected && !PhotonNetwork.IsMasterClient)
+            {
+                save.gameObject.SetActive(false);
+            }
+            else
+            {
+                save.onClick.AddListener(this.Onclick_Save);
+            }
 
             // 匹配数字按键
-            Transform tools = Tool.GetComponentInChildren<Transform>(this.Panel, "Panel");
+            Transform tools = Tool.GetComponentInChildren<Transform>(this.Panel, "Menu");
             for (int i = 0; i < tools.childCount; i++)
             {
                 int temp = i;
@@ -128,14 +139,32 @@
         private void Onclick_Save()
         {
             GlobalInit.Instance.ShowTip("保存数据");
-            foreach (ASaveData saveData in ASaveData.Instances)
+            List<Type> types = Tool.GetChildByParent<ASaveData>();
+            foreach (Type type in types)
             {
-                saveData.SaveData();
+                PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
+                if (propertyInfo == null)
+                {
+                    continue;
+                }
+
+                // 实例化
+                object obj = propertyInfo.GetValue(null, null);
+                Tool.GetMethodByType(type, "SaveData")?.Invoke(obj, null);
             }
 
-            foreach (AMonoSaveData saveData in AMonoSaveData.Instances)
+            types = Tool.GetChildByParent<AMonoSaveData>();
+            foreach (Type type in types)
             {
-                saveData.SaveData();
+                PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
+                if (propertyInfo == null)
+                {
+                    continue;
+                }
+
+                // 实例化
+                object obj = propertyInfo.GetValue(null, null);
+                Tool.GetMethodByType(type, "SaveData")?.Invoke(obj, null);
             }
         }
 

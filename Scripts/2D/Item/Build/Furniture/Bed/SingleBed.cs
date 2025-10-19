@@ -1,7 +1,6 @@
 ﻿namespace LAB2D
 {
     using System;
-    using UnityEngine.Tilemaps;
 
     /// <summary>
     /// 单人床
@@ -13,7 +12,6 @@
         {
             this.Width = 1;
             this.Height = 2;
-            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("SingleBed");
         }
     }
 }

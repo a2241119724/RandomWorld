@@ -1,10 +1,12 @@
 ﻿namespace LAB2D
 {
+    using System;
     using UnityEngine;
 
     /// <summary>
     /// 穿戴任务
     /// </summary>
+    [Serializable]
     public class WorkerWearTask : WorkerTask
     {
         private Worker worker;
@@ -15,7 +17,7 @@
         {
             this.stageInit.Add((Worker worker) =>
             {
-                this.maxProgress = 1.0f;
+                WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
@@ -32,38 +34,34 @@
         }
 
         /// <inheritdoc/>
-        public override bool IsCanWork(Worker worker)
-        {
-            if (!base.IsCanWork(worker))
-            {
-                return false;
-            }
-
-            return this.worker == worker;
-        }
-
-        /// <inheritdoc/>
         public override void Finish(Worker worker)
         {
             base.Finish(worker);
+            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
 
             // Worker拿起装备或者武器
-            if (ItemDataManager.Instance.GetTypeById(this.id) == Item.ItemType.Weapon)
+            if (ItemDataManager.Instance.IdToType(this.id) == Item.ItemType.Weapon)
             {
-                worker.WearData.Weapon = (Weapon)ItemFactory.Instance.GetBackpackItemByName(
-                    ItemDataManager.Instance.GetById(this.id).ImageName);
+                workerData.Weapon = (Weapon)ItemFactory.Instance.GetBackpackItemByName(
+                    ItemDataManager.Instance.GetById(this.id).EnName);
             }
-            else if (ItemDataManager.Instance.GetTypeById(this.id) == Item.ItemType.Equipment)
+            else if (ItemDataManager.Instance.IdToType(this.id) == Item.ItemType.Equipment)
             {
-                worker.WearData.AddEquipment(
+                workerData.AddEquipment(
                     (Equipment)ItemFactory.Instance.GetBackpackItemByName(
-                    ItemDataManager.Instance.GetById(this.id).ImageName), this.TargetMap);
+                    ItemDataManager.Instance.GetById(this.id).EnName), this.TargetMap);
             }
 
             InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);
 
             // 删除图标
             ItemMap.Instance.DeleteTile(this.TargetMap);
+        }
+
+        /// <inheritdoc/>
+        protected override bool DoIsCanWork(Worker worker)
+        {
+            return this.worker == worker;
         }
 
 #pragma warning disable SA1600 // Elements should be documented

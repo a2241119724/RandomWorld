@@ -7,12 +7,14 @@
     using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// 使用alpha判断Worker是否可以通行
     /// 使用Collider会出现, Worker寻路完成, 但路径上的Tile被建造完成，导致不能通行
-    /// 从半创建直接就不可通行
+    /// 正在建造的不可通行也是不可通行
     /// </summary>
     public class BuildMap : BaseTileMap
     {
+        private Dictionary<int, ResourceInfo> resourceInfos; // TODO 需要的建筑材料
+        private Color initColor = new (1, 1, 1, 0.5f);
+
         /// <summary>
         /// 单例
         /// </summary>
@@ -28,29 +30,50 @@
         {
             base.Awake();
             Instance = this;
+        }
+
+        public void Start()
+        {
             this.BuildMapDataLAB = new BuildMapData();
+            this.resourceInfos = new ()
+            {
+                {
+                    ItemDataManager.Instance.GetByName("CustomWood").Id,
+                    new ResourceInfo(ItemDataManager.Instance.GetByName("CustomWood").Id, 100)
+                },
+            };
         }
 
         /// <summary>
-        /// Color a 0.5f代表有碰撞体，0.49f代表没有碰撞体，
+        /// 添加建造
         /// </summary>
-        /// <param name="targetMap">目标位置</param>
-        /// <param name="tile">瓦片</param>
-        /// <param name="isPass">是否可通过</param>
-        /// <returns>建造地图</returns>
-        public BuildMap AddBuilding(Vector3Int targetMap, TileBase tile, bool isPass = false)
+        /// <param name="targetMap">建造位置</param>
+        /// <param name="tileName">瓦片名称</param>
+        /// <returns>链式</returns>
+        public BuildMap AddBuild(Vector3Int targetMap, string tileName)
         {
-            this.tilemap.SetTile(targetMap, tile);
-            this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
-            this.tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
-            this.tilemap.SetColor(targetMap, new Color(1, 1, 1, isPass ? 0.49f : 0.5f));
             Vector3IntLAB vector3IntLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
-            if (!this.BuildMapDataLAB.TargetMaps.ContainsKey(vector3IntLAB))
+            BuildItemData buildItemData = ItemDataManager.Instance.GetBuildItemDataByName(tileName);
+            this.tilemap.SetTile(targetMap, ResourceManager.Instance.GetAsset(tileName));
+            if (buildItemData.IsNeedBuild)
             {
-                this.BuildMapDataLAB.TargetMaps.Add(vector3IntLAB, tile.name);
+                // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
+                WorkerTaskManager.Instance.AddTask(new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(targetMap)
+                    .SetNeedResource(new Dictionary<int, ResourceInfo>(this.resourceInfos)).Build());
+
+                // 设置可通过并且颜色变淡
+                this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
+                this.tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
+                this.tilemap.SetColor(targetMap, this.initColor);
             }
 
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), true, true);
+            BuildTileData buildTileData = new BuildTileData(tileName, !buildItemData.IsNeedBuild);
+            this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
+            this.PhotonView.RPC(
+                "SyncDataResp",
+                RpcTarget.Others,
+                DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
+                DataTool.ToByteArray(buildTileData));
             return this;
         }
 
@@ -63,36 +86,30 @@
         /// <returns>地图瓦片</returns>
         public BuildMap DirectBuild(Vector3Int targetMap, TileBase tile, bool isPass = true)
         {
-            this.tilemap.SetTile(targetMap, tile);
-            if (isPass)
-            {
-                this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
-                this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
-            }
-
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), tile.name, isPass, false);
-            return this;
+            return this.DoDirectBuild(targetMap, tile, isPass);
         }
 
         /// <summary>
-        /// 没有碰撞体的最后Color a为0.99f
+        /// 完成建造,设置颜色透明度为1,不可通过的添加碰撞体
         /// </summary>
         /// <param name="targetMap">目标位置</param>
         public void SetComplete(Vector3Int targetMap)
         {
-            if (this.tilemap.GetColor(targetMap).a == 0.5f)
+            BuildTileData buildTileData = this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(targetMap)];
+            buildTileData.IsComplete = true;
+            RoomManager.Instance.Complete(targetMap);
+            BuildItemData buildItemData = ItemDataManager.Instance.GetBuildItemDataByName(buildTileData.Name);
+            this.tilemap.SetColor(targetMap, Color.white);
+            if (!buildItemData.IsPass)
             {
                 this.tilemap.SetColliderType(targetMap, Tile.ColliderType.Sprite);
-                this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 1));
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, false, false);
-            }
-            else
-            {
-                this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, true, false);
             }
 
-            RoomManager.Instance.Complete(targetMap);
+            this.PhotonView.RPC(
+                    "SyncDataResp",
+                    RpcTarget.Others,
+                    DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
+                    default);
         }
 
         /// <summary>
@@ -102,7 +119,7 @@
         /// <returns>是否</returns>
         public bool IsBuilding(Vector3Int target)
         {
-            return this.tilemap.GetColor(target).a < 1.0f;
+            return !this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(target)].IsComplete;
         }
 
         /// <summary>
@@ -112,8 +129,13 @@
         public void CancelBuilding(Vector3Int targetMap)
         {
             this.tilemap.SetTile(targetMap, null);
-            this.BuildMapDataLAB.TargetMaps.Remove(Vector3IntLAB.ToVector3IntLAB(targetMap));
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, Tool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)), string.Empty, false, false, true);
+            this.BuildMapDataLAB.PosMap.Remove(Vector3IntLAB.ToVector3IntLAB(targetMap));
+            this.PhotonView.RPC(
+                "SyncDataResp",
+                RpcTarget.Others,
+                DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
+                default,
+                true);
         }
 
         /// <summary>
@@ -125,14 +147,14 @@
             resourceInfos.Add(
                 ItemDataManager.Instance.GetByName("CustomWood").Id,
                 new ResourceInfo(ItemDataManager.Instance.GetByName("CustomWood").Id, 5));
-            foreach (Vector3IntLAB targetMap in this.BuildMapDataLAB.TargetMaps.Keys)
+            foreach (Vector3IntLAB targetMap in this.BuildMapDataLAB.PosMap.Keys)
             {
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
                 WorkerTaskManager.Instance.AddTask(new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(Vector3IntLAB.ToVector3Int(targetMap))
                     .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build());
             }
 
-            this.BuildMapDataLAB.TargetMaps.Clear();
+            this.BuildMapDataLAB.PosMap.Clear();
         }
 
         /// <summary>
@@ -142,21 +164,25 @@
         /// <returns>是否</returns>
         public override bool IsCanReach(Vector3Int posMap)
         {
-            // 门可以通行
-            return Mathf.Abs(this.tilemap.GetColor(posMap).a - 0.49f) < 1e-5
-                || Mathf.Abs(this.tilemap.GetColor(posMap).a - 0.99f) < 1e-5
-                || this.IsFreeTile(posMap);
+            if (this.IsFreeTile(posMap))
+            {
+                return true;
+            }
+
+            if (!this.BuildMapDataLAB.PosMap.ContainsKey(Vector3IntLAB.ToVector3IntLAB(posMap)))
+            {
+                LogManager.Instance.Log("该位置建筑没有建造数据:" + posMap);
+                return true;
+            }
+
+            return ItemDataManager.Instance.GetBuildItemDataByName(
+                this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(posMap)].Name).IsPass;
         }
 
         /// <inheritdoc/>
         [PunRPC]
         public override void SyncDataReq(byte[] data)
         {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
             base.SyncDataReq(data);
             LogManager.Instance.Log("Request: 同步地图建造数据");
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.BuildMapDataLAB);
@@ -168,21 +194,18 @@
         {
             base.SyncDataResp(data);
             LogManager.Instance.Log("Response: 同步地图建造数据");
-            BuildMapData buildMapData = Tool.FromByteArray<BuildMapData>(data);
-            Dictionary<Vector3IntLAB, string>.Enumerator enumerator = buildMapData.PosMaps.GetEnumerator();
+            BuildMapData buildMapData = DataTool.FromByteArray<BuildMapData>(data);
+            Dictionary<Vector3IntLAB, BuildTileData>.Enumerator enumerator = buildMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
-                this.tilemap.SetTile(
-                    Vector3IntLAB.ToVector3Int(enumerator.Current.Key),
-                    (TileBase)ResourceManager.Instance.GetAsset(enumerator.Current.Value));
-            }
-
-            Dictionary<Vector3IntLAB, string>.Enumerator enumerator1 = buildMapData.TargetMaps.GetEnumerator();
-            while (enumerator1.MoveNext())
-            {
-                this.tilemap.SetTile(
-                    Vector3IntLAB.ToVector3Int(enumerator1.Current.Key),
-                    (TileBase)ResourceManager.Instance.GetAsset(enumerator1.Current.Value));
+                Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(enumerator.Current.Key);
+                this.tilemap.SetTile(vector3Int, ResourceManager.Instance.GetAsset(enumerator.Current.Value.Name));
+                if (!enumerator.Current.Value.IsComplete)
+                {
+                    this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.None);
+                    this.tilemap.RemoveTileFlags(vector3Int, TileFlags.LockColor);
+                    this.tilemap.SetColor(vector3Int, this.initColor);
+                }
             }
         }
 
@@ -190,51 +213,123 @@
         /// 同步地图建造数据
         /// </summary>
         /// <param name="vector3IntLAB">位置</param>
-        /// <param name="tileBaseName">瓦片名称</param>
-        /// <param name="isPass">是否可以通过</param>
-        /// <param name="isBuilding">是否正在建造</param>
+        /// <param name="buildTileDataLAB">建造瓦片信息</param>
         /// <param name="isDelete">是否删除</param>
         [PunRPC]
-        public void SyncDataResp(byte[] vector3IntLAB, string tileBaseName, bool isPass = false, bool isBuilding = false, bool isDelete = false)
+        public void SyncDataResp(byte[] vector3IntLAB, byte[] buildTileDataLAB, bool isDelete = false)
         {
             LogManager.Instance.Log("Response: 同步地图建造数据");
-            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(Tool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
+            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {
                 this.tilemap.SetTile(vector3Int, null);
                 return;
             }
 
-            if (!tileBaseName.Equals(string.Empty))
+            BuildTileData buildTileData = DataTool.FromByteArray<BuildTileData>(buildTileDataLAB);
+            if (!buildTileData.Name.Equals(string.Empty))
             {
-                this.tilemap.SetTile(vector3Int, ResourceManager.Instance.GetAsset(tileBaseName));
+                this.tilemap.SetTile(vector3Int, ResourceManager.Instance.GetAsset(buildTileData.Name));
             }
 
-            if (isPass)
+            BuildItemData buildItemData = ItemDataManager.Instance.GetBuildItemDataByName(buildTileData.Name);
+            if (buildTileData.IsComplete)
+            {
+                this.tilemap.SetColor(vector3Int, Color.white);
+                if (!buildItemData.IsPass)
+                {
+                    this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.Sprite);
+                }
+            }
+            else
             {
                 this.tilemap.RemoveTileFlags(vector3Int, TileFlags.LockColor);
+                this.tilemap.SetColor(vector3Int, new Color(1, 1, 1, 0.5f));
+                if (buildItemData.IsPass)
+                {
+                    this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.None);
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            this.BuildMapDataLAB = DataTool.LoadDataByBinary<BuildMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            foreach (var posMap in this.BuildMapDataLAB.PosMap)
+            {
+                this.DoDirectBuild(Vector3IntLAB.ToVector3Int(posMap.Key), ResourceManager.Instance.GetAsset(posMap.Value.Name));
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.BuildMapDataLAB);
+        }
+
+        /// <summary>
+        /// 直接建造完成,Worker
+        /// </summary>
+        private BuildMap DoDirectBuild(Vector3Int targetMap, TileBase tile, bool isPass = true)
+        {
+            this.tilemap.SetTile(targetMap, tile);
+            if (isPass)
+            {
+                this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
+                this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
             }
 
-            if (isBuilding)
-            {
-                this.tilemap.SetColor(vector3Int, new Color(1, 1, 1, 0.5f));
-            }
+            this.PhotonView.RPC(
+                "SyncDataResp",
+                RpcTarget.Others,
+                DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
+                tile.name,
+                isPass,
+                false);
+            return this;
         }
 
         /// <summary>
         /// 建造数据
         /// </summary>
         [Serializable]
-        public class BuildMapData : ATileMapData
+        public class BuildMapData
         {
             /// <summary>
-            /// 正在建造的地图坐标
+            /// 所有建造的地图数据
+            /// 使用父类中的PosMap作为选中而未确定的地图数据
             /// </summary>
-            public Dictionary<Vector3IntLAB, string> TargetMaps;
+            public Dictionary<Vector3IntLAB, BuildTileData> PosMap;
 
             public BuildMapData()
             {
-                this.TargetMaps = new Dictionary<Vector3IntLAB, string>();
+                this.PosMap = new Dictionary<Vector3IntLAB, BuildTileData>();
+            }
+        }
+
+        /// <summary>
+        /// 建造瓦片数据
+        /// </summary>
+        [Serializable]
+        public class BuildTileData
+        {
+            /// <summary>
+            /// 瓦片名称
+            /// </summary>
+            public string Name;
+
+            /// <summary>
+            /// 是否建造完成
+            /// </summary>
+            public bool IsComplete;
+
+            public BuildTileData(string name, bool isComplete)
+            {
+                this.Name = name;
+                this.IsComplete = isComplete;
             }
         }
     }

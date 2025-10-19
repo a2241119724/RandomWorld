@@ -10,11 +10,6 @@
     public abstract class Character : MonoBehaviourPun
     {
         /// <summary>
-        /// 角色数据
-        /// </summary>
-        public CharacterData CharacterDataLAB = new ();
-
-        /// <summary>
         /// 移动速度
         /// </summary>
         public float MoveSpeed = 2.5f;
@@ -29,12 +24,15 @@
         /// </summary>
         protected CheckBug checkBug;
 
-        private GameObject damageUI; // 掉血面板
         private Color originalColor; // 原来的自身颜色
+
+        /// <summary>
+        /// 角色数据
+        /// </summary>
+        public CharacterData CharacterDataLAB { get; set; }
 
         public virtual void Awake()
         {
-            this.damageUI = ResourceManager.Instance.GetPrefab("Damage");
             this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
             this.checkBug = new CheckBug();
         }
@@ -62,14 +60,12 @@
                 return;
             }
 
-            GameObject g = Instantiate(this.damageUI, this.transform.position, Quaternion.identity); // 创建物体(预设,位置,角度)
+            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.DAMAGE); // 创建物体(预设,位置,角度)
             if (g == null)
             {
-                LogManager.Instance.Log("damageUI Instantiate Error!!!", LogManager.LogLevel.Error);
                 return;
             }
 
-            g.name = this.damageUI.name;
             if (this is Enemy)
             {
                 // 暴击时显示不同的框
@@ -125,12 +121,12 @@
             /// <summary>
             /// 血量
             /// </summary>
-            public float Hp = 1;
+            public float Hp = 100;
 
             /// <summary>
             /// 最大血量
             /// </summary>
-            public float MaxHp = 1;
+            public float MaxHp = 100;
 
             /// <summary>
             /// 物理攻击力
@@ -230,55 +226,6 @@
 
                 this.LastTime = time;
             }
-        }
-    }
-
-    /// <summary>
-    /// 为了可以序列化
-    /// </summary>
-    [Serializable]
-    public class Vector3LAB
-    {
-        /// <summary>
-        /// X 坐标
-        /// </summary>
-        public float X;
-
-        /// <summary>
-        /// Y 坐标
-        /// </summary>
-        public float Y;
-
-        /// <summary>
-        /// Z 坐标
-        /// </summary>
-        public float Z;
-
-        public Vector3LAB(float x, float y, float z)
-        {
-            this.X = x;
-            this.Y = y;
-            this.Z = z;
-        }
-
-        /// <summary>
-        /// 将Vector3LAB转换为Vector3
-        /// </summary>
-        /// <param name="vector3LAB">Vector3LAB</param>
-        /// <returns>Vector3</returns>
-        public static Vector3 ToVector3(Vector3LAB vector3LAB)
-        {
-            return new Vector3(vector3LAB.X, vector3LAB.Y, vector3LAB.Z);
-        }
-
-        /// <summary>
-        /// 将Vector3转换为Vector3LAB
-        /// </summary>
-        /// <param name="vector3">Vector3</param>
-        /// <returns>Vector3LAB</returns>
-        public static Vector3LAB ToVector3LAB(Vector3 vector3)
-        {
-            return new Vector3LAB(vector3.x, vector3.y, vector3.z);
         }
     }
 }
