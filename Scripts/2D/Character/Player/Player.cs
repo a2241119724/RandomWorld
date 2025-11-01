@@ -31,6 +31,7 @@
             this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
             this.name = "Player";
             this.CharacterDataLAB = new PlayerData();
+            this.sprite.material.SetTexture("_MainTex", this.sprite.sprite.texture);
         }
 
         /// <inheritdoc/>
@@ -89,6 +90,7 @@
 
             // 防止撞墙震动
             this.Move();
+            this.sprite.material.SetTexture("_mainTexture", this.sprite.sprite.texture);
         }
 
         /// <summary>
