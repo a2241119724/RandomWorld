@@ -164,6 +164,26 @@
         /// </summary>
         /// <typeparam name="T">组件类型.</typeparam>
         /// <param name="parent">父物体.</param>
+        /// <returns>名字对应身上的组件.</returns>
+        public static T GetComponentInChildren<T>(GameObject parent)
+            where T : Component
+        {
+            // 找到所有parent下面的Transform组件
+            T[] ts = parent.GetComponentsInChildren<T>();
+            if (ts.Length == 0)
+            {
+                LogManager.Instance.Log(ts.GetType() + " Not Found!!!", LogManager.LogLevel.Error);
+                return null;
+            }
+
+            return ts[0];
+        }
+
+        /// <summary>
+        /// 在孩子中找到组件.
+        /// </summary>
+        /// <typeparam name="T">组件类型.</typeparam>
+        /// <param name="parent">父物体.</param>
         /// <param name="name">组件名字.</param>
         /// <returns>名字对应身上的组件.</returns>
         public static T GetComponentInChildren<T>(GameObject parent, string name)

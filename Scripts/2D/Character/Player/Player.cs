@@ -17,6 +17,11 @@
         private CameraMove miniCamera;
         private SpriteRenderer sprite; // idle图像开关
 
+        /// <summary>
+        /// 攻击特效
+        /// </summary>
+        public ParticleSystem AttackEffect { get; set; }
+
         /// <inheritdoc/>
         public override void Awake()
         {
@@ -28,10 +33,10 @@
                 return;
             }
 
+            this.AttackEffect = Tool.GetComponentInChildren<ParticleSystem>(this.gameObject);
             this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
             this.name = "Player";
             this.CharacterDataLAB = new PlayerData();
-            this.sprite.material.SetTexture("_MainTex", this.sprite.sprite.texture);
         }
 
         /// <inheritdoc/>
@@ -90,7 +95,11 @@
 
             // 防止撞墙震动
             this.Move();
-            this.sprite.material.SetTexture("_mainTexture", this.sprite.sprite.texture);
+            this.sprite.material.SetTexture("_MainTex", this.sprite.sprite.texture);
+            if (Input.GetMouseButtonDown(0) && this.AttackEffect != null)
+            {
+                this.AttackEffect.Play();
+            }
         }
 
         /// <summary>

@@ -50,14 +50,13 @@ SpriteAtlas:
     - {fileID: 102900000, guid: 6955ae0dd901c8a4fb7c9f497180aec2, type: 3}
     - {fileID: 102900000, guid: aa61f87c423108f41b32af80d9bdc1c1, type: 3}
     - {fileID: 102900000, guid: 12439479034d80f418ff7bb0cad208a9, type: 3}
+    - {fileID: 102900000, guid: f534290771d064941aa637cbf72edd90, type: 3}
     - {fileID: 2800000, guid: 48c0d4d6bebaa934384b07aa1e2f8184, type: 3}
     - {fileID: 2800000, guid: 085185b08a40a924985bc0e4176edea6, type: 3}
-    - {fileID: 2800000, guid: dfcba2a9bef16c8448420f621cb07427, type: 3}
+    - {fileID: 2800000, guid: af6f4ec1e7c96554fa833c1ea30824d8, type: 3}
     - {fileID: 2800000, guid: 5a37f8cedfbad24428bf5eab7d2641b4, type: 3}
     - {fileID: 2800000, guid: e8537aca8ea6c7d4ba075cb7e1597f60, type: 3}
     - {fileID: 2800000, guid: a9f3b2238b72cb347bd6e1c98b385d17, type: 3}
-    - {fileID: 2800000, guid: af6f4ec1e7c96554fa833c1ea30824d8, type: 3}
-    - {fileID: 2800000, guid: f9d224c7e6f551449a4e53d7c82244d6, type: 3}
     bindAsDefault: 1
     isAtlasV2: 0
     cachedData: {fileID: 0}
@@ -140,9 +139,8 @@ SpriteAtlas:
     - 451f3f67253aa2148a29e0413f951b47: 21300000
     - a1ca05771f77cab4fb104c5298f9395d: 21300000
     - e45a0397cf78dd64b899055e208e6657: 21300000
-    - f9d224c7e6f551449a4e53d7c82244d6: 21300000
     - 7084aa58cdc3f8a46a7b8831f10a5d7d: 21300000
-    - dfcba2a9bef16c8448420f621cb07427: 21300000
+    - 09af350af6a771f48880a30c8445ddd8: 21300000
     - 3e79d56a71e8ee244b66ccb81e78b651: 21300000
     - e8537aca8ea6c7d4ba075cb7e1597f60: 21300000
     - 41caefdaac0306b48b5e88eb4ecb624a: 21300000
@@ -150,6 +148,7 @@ SpriteAtlas:
     - d4dd292b322e44a448ca0347f4a13c86: 21300000
     - eacf2f3b07505af4c97d9a646f66a07b: 21300000
     - 1425de8b071ae2a4e80e7a45e009ae39: 21300000
+    - c375b5ebe0272a64eb9044514f983b9f: 21300000
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: -631455148
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: 501694652
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: -664963349
@@ -273,9 +272,8 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 451f3f67253aa2148a29e0413f951b47, type: 3}
   - {fileID: 21300000, guid: a1ca05771f77cab4fb104c5298f9395d, type: 3}
   - {fileID: 21300000, guid: e45a0397cf78dd64b899055e208e6657, type: 3}
-  - {fileID: 21300000, guid: f9d224c7e6f551449a4e53d7c82244d6, type: 3}
   - {fileID: 21300000, guid: 7084aa58cdc3f8a46a7b8831f10a5d7d, type: 3}
-  - {fileID: 21300000, guid: dfcba2a9bef16c8448420f621cb07427, type: 3}
+  - {fileID: 21300000, guid: 09af350af6a771f48880a30c8445ddd8, type: 3}
   - {fileID: 21300000, guid: 3e79d56a71e8ee244b66ccb81e78b651, type: 3}
   - {fileID: 21300000, guid: e8537aca8ea6c7d4ba075cb7e1597f60, type: 3}
   - {fileID: 21300000, guid: 41caefdaac0306b48b5e88eb4ecb624a, type: 3}
@@ -283,6 +281,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: d4dd292b322e44a448ca0347f4a13c86, type: 3}
   - {fileID: 21300000, guid: eacf2f3b07505af4c97d9a646f66a07b, type: 3}
   - {fileID: 21300000, guid: 1425de8b071ae2a4e80e7a45e009ae39, type: 3}
+  - {fileID: 21300000, guid: c375b5ebe0272a64eb9044514f983b9f, type: 3}
   - {fileID: -631455148, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: 501694652, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: -664963349, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
@@ -405,9 +404,8 @@ SpriteAtlas:
   - SingleGun
   - "\u8349\u5730"
   - CustomBelt
-  - "\u5C71\u6C34"
   - SnowMushroom1
-  - "\u5929\u7A7A"
+  - Gradient
   - Soil
   - background2
   - CustomShield
@@ -415,6 +413,7 @@ SpriteAtlas:
   - CustomWing
   - Apple
   - Inventory
+  - Enemy
   - CustomRoomWall_8
   - CustomRoomWall_6
   - CustomRoomWall_7
