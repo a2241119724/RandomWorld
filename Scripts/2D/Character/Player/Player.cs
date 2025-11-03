@@ -20,7 +20,7 @@
         /// <summary>
         /// 攻击特效
         /// </summary>
-        public ParticleSystem AttackEffect { get; set; }
+        public AttackEffectManager.EffectType AttackEffect { get; set; }
 
         /// <inheritdoc/>
         public override void Awake()
@@ -33,10 +33,10 @@
                 return;
             }
 
-            this.AttackEffect = Tool.GetComponentInChildren<ParticleSystem>(this.gameObject);
             this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
             this.name = "Player";
             this.CharacterDataLAB = new PlayerData();
+            this.AttackEffect = AttackEffectManager.EffectType.KnifeLight;
         }
 
         /// <inheritdoc/>
@@ -85,6 +85,11 @@
             }
         }
 
+        public void Update()
+        {
+            this.Attack();
+        }
+
         public void FixedUpdate()
         {
             // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
@@ -96,9 +101,21 @@
             // 防止撞墙震动
             this.Move();
             this.sprite.material.SetTexture("_MainTex", this.sprite.sprite.texture);
-            if (Input.GetMouseButtonDown(0) && this.AttackEffect != null)
+        }
+
+        /// <inheritdoc/>
+        public override void Attack()
+        {
+            if (Input.GetMouseButtonDown(0) && this.AttackEffect != AttackEffectManager.EffectType.None)
             {
-                this.AttackEffect.Play();
+                // 弧度
+                Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                float deg = (float)Math.Atan2(mousePos.y - this.transform.position.y, mousePos.x - this.transform.position.x);
+
+                ParticleSystem particleSystem = AttackEffectManager.Instance.GetEffect(this.AttackEffect, deg);
+                particleSystem.transform.parent = this.transform;
+                particleSystem.transform.localPosition = Vector3.zero;
+                particleSystem.Play();
             }
         }
 
@@ -251,6 +268,7 @@
                 if (this.mainCamera.Character != this)
                 {
                     this.mainCamera.DirectToPosition(this.transform.position);
+                    this.mainCamera.Character = this;
                 }
 
                 if (this.miniCamera.Character != this)
