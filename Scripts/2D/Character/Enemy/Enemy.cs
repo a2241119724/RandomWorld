@@ -101,11 +101,6 @@
         }
 
         /// <summary>
-        /// 攻击.
-        /// </summary>
-        public abstract void Attack();
-
-        /// <summary>
         /// 敌人通过视觉和听觉感知周围是否有target.
         /// </summary>
         /// <param name="target">目标.</param>

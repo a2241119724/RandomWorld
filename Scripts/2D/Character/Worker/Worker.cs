@@ -84,6 +84,11 @@
             this.Manager.CurrentState.OnUpdate();
         }
 
+        /// <inheritdoc/>
+        public override void Attack()
+        {
+        }
+
         /// <summary>
         /// 设置任务进度条
         /// </summary>

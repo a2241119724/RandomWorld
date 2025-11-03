@@ -14,7 +14,7 @@
         private const float EdgeSpeed = 50.0f; // 相机边缘跟随速度
         private const float MouseSpeed = 2.0f; // 相机跟随鼠标速度[鼠标中键]
         private const float ScrollSpeed = 100.0f; // 相机缩放速度
-        private readonly float[] scaleThreshold = new float[] { 5, 20 }; // 相机缩放阈值
+        private readonly float[] scaleThreshold = new float[] { 4, 20 }; // 相机缩放阈值
         private bool isDown; // 是否按下鼠标中键
         private Vector3 lastMousePos; // 上一次鼠标位置[鼠标中键拖动相机]
 
@@ -52,12 +52,6 @@
 
         private void LateUpdate()
         {
-            // 仅主相机检测
-            if (Camera.main == this.gameObject.GetComponent<Camera>() && Input.anyKeyDown)
-            {
-                this.Character = null;
-            }
-
             // 跟随的角色存在，那么跟随
             if (this.Character != null)
             {

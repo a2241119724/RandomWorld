@@ -100,6 +100,11 @@
         }
 
         /// <summary>
+        /// 攻击.
+        /// </summary>
+        public abstract void Attack();
+
+        /// <summary>
         /// 敌人死亡
         /// </summary>
         protected abstract void Death();
