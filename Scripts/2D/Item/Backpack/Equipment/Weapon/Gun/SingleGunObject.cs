@@ -16,7 +16,7 @@
         }
 
         /// <inheritdoc/>
-        protected override void Attack1()
+        protected override void DoAttack()
         {
             this.FireBullet(PrefabConstant.PLAYER_BULLET);
         }

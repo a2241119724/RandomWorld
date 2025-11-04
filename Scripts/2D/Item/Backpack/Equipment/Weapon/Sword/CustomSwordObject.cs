@@ -15,28 +15,12 @@
             base.Awake();
             this.name = "CustomSword";
             this.attackInterval = 0.2f;
+            this.attackEffect = AttackEffectManager.EffectType.KnifeLight;
         }
 
         /// <inheritdoc/>
-        protected override void Attack1()
+        protected override void DoAttack()
         {
-            // 使得触发器重叠式再次触发OnTriggerEnter2D
-            this.GetComponent<Collider2D>().enabled = false;
-            this.GetComponent<Collider2D>().enabled = true;
-            this.StartCoroutine(this.Rotate());
-        }
-
-        private IEnumerator Rotate()
-        {
-            Quaternion q = this.transform.rotation;
-            for (int i = 0; i < 20; i++)
-            {
-                this.transform.rotation = Quaternion.Lerp(q * Quaternion.Euler(0, 0, 60), q * Quaternion.Euler(0, 0, -60), 0.05f * i); // (起始方向，终止方向，旋转速度)非匀速
-                yield return null;
-            }
-
-            // 回到原方向
-            this.transform.rotation = q;
         }
 
         // protected override void OnTriggerEnter2D(Collider2D collision)

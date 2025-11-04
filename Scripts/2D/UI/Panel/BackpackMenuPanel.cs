@@ -68,7 +68,7 @@
                 PlayerManager.Instance.Select.Id = this.Select.Item.Id;
 
                 // 实例化武器
-                PlayerManager.Instance.Select.Weapon = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName);
+                PlayerManager.Instance.Select.Weapon = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName, false);
                 if (PlayerManager.Instance.Select.Weapon == null)
                 {
                     LogManager.Instance.Log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
