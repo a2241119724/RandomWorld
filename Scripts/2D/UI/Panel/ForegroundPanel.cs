@@ -95,17 +95,9 @@
         }
 
         /// <summary>
-        /// 暂停游戏
-        /// </summary>
-        private void OnClick_Pause()
-        {
-            this.Controller.Show(PauseMenuPanel.Instance);
-        }
-
-        /// <summary>
         /// 玩家攻击
         /// </summary>
-        private void Onclick_Attack()
+        public void Onclick_Attack()
         {
             if (PlayerManager.Instance.Select.Weapon != null)
             {
@@ -118,6 +110,14 @@
                     PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().Attack();
                 }
             }
+        }
+
+        /// <summary>
+        /// 暂停游戏
+        /// </summary>
+        private void OnClick_Pause()
+        {
+            this.Controller.Show(PauseMenuPanel.Instance);
         }
 
         /// <summary>

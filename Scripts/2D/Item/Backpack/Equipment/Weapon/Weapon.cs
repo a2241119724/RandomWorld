@@ -140,6 +140,11 @@
         /// </summary>
         protected GameObject player;
 
+        /// <summary>
+        /// 攻击效果
+        /// </summary>
+        protected AttackEffectManager.EffectType attackEffect = AttackEffectManager.EffectType.KnifeLight;
+
         private readonly Collider2D[] retCollider2Ds = new Collider2D[100]; // 存储圈内的所有碰撞体
         private float recordTime = float.MaxValue;
         private CircleCollider2D circleCollider2D;
@@ -172,7 +177,13 @@
             // if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
             if (this.recordTime >= this.attackInterval)
             {
-                this.Attack1();
+                this.DoAttack();
+
+                // 所有武器攻击效果
+                ParticleSystem particleSystem = AttackEffectManager.Instance.GetEffect(this.attackEffect, (this.transform.rotation.eulerAngles.z + 90) * Mathf.Deg2Rad);
+                particleSystem.transform.parent = this.transform.parent;
+                particleSystem.transform.localPosition = Vector3.zero;
+                particleSystem.Play();
                 this.recordTime = 0.0f;
             }
         }
@@ -260,18 +271,12 @@
             {
                 this.transform.rotation = Quaternion.FromToRotation(Vector3.up, Input.mousePosition - Camera.main.WorldToScreenPoint(PlayerManager.Instance.Mine.transform.position));
             }
-
-            // 鼠标左键点击攻击
-            if (Input.GetMouseButtonDown(0))
-            {
-                this.Attack();
-            }
         }
 
         /// <summary>
         /// 间隔攻击
         /// </summary>
-        protected abstract void Attack1();
+        protected abstract void DoAttack();
 
         // protected override void OnTriggerEnter2D(Collider2D collision)
         // {

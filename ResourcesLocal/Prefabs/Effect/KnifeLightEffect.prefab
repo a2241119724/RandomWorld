@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2253597708226590745}
   - component: {fileID: 4229428722793901821}
   - component: {fileID: 8936734631233400165}
+  - component: {fileID: 6396698346416624158}
   m_Layer: 0
   m_Name: KnifeLightEffect
   m_TagString: Untagged
@@ -3688,8 +3689,8 @@ ParticleSystem:
   CollisionModule:
     enabled: 1
     serializedVersion: 4
-    type: 0
-    collisionMode: 0
+    type: 1
+    collisionMode: 1
     colliderForce: 0
     multiplyColliderForceByParticleSize: 0
     multiplyColliderForceByParticleSpeed: 0
@@ -3859,7 +3860,7 @@ ParticleSystem:
     radiusScale: 1
     collidesWith:
       serializedVersion: 2
-      m_Bits: 4294967295
+      m_Bits: 3831
     maxCollisionShapes: 256
     quality: 0
     voxelSize: 0.5
@@ -4897,3 +4898,15 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &6396698346416624158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 263765281448742687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9f4d29264e80e544a54621cabb593b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

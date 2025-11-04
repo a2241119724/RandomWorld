@@ -16,7 +16,7 @@
         }
 
         /// <inheritdoc/>
-        protected override void Attack1()
+        protected override void DoAttack()
         {
             GameObject g = this.FireBullet(PrefabConstant.TRACE_BULLET);
             if (g != null && EnemyManager.Instance.Count() > 0)

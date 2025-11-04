@@ -17,11 +17,6 @@
         private CameraMove miniCamera;
         private SpriteRenderer sprite; // idle图像开关
 
-        /// <summary>
-        /// 攻击特效
-        /// </summary>
-        public AttackEffectManager.EffectType AttackEffect { get; set; }
-
         /// <inheritdoc/>
         public override void Awake()
         {
@@ -36,7 +31,6 @@
             this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
             this.name = "Player";
             this.CharacterDataLAB = new PlayerData();
-            this.AttackEffect = AttackEffectManager.EffectType.KnifeLight;
         }
 
         /// <inheritdoc/>
@@ -106,16 +100,9 @@
         /// <inheritdoc/>
         public override void Attack()
         {
-            if (Input.GetMouseButtonDown(0) && this.AttackEffect != AttackEffectManager.EffectType.None)
+            if (Input.GetMouseButtonDown(0))
             {
-                // 弧度
-                Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                float deg = (float)Math.Atan2(mousePos.y - this.transform.position.y, mousePos.x - this.transform.position.x);
-
-                ParticleSystem particleSystem = AttackEffectManager.Instance.GetEffect(this.AttackEffect, deg);
-                particleSystem.transform.parent = this.transform;
-                particleSystem.transform.localPosition = Vector3.zero;
-                particleSystem.Play();
+                ForegroundPanel.Instance.Onclick_Attack();
             }
         }
 

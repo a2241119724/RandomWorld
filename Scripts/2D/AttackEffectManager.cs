@@ -41,9 +41,9 @@
         /// 获取攻击效果
         /// </summary>
         /// <param name="name">特效名称</param>
-        /// <param name="deg">特效方向，与x正半轴夹角的弧度值</param>
+        /// <param name="rad">特效方向，与x正半轴夹角的弧度值</param>
         /// <returns>特效</returns>
-        public ParticleSystem GetEffect(EffectType name, float deg)
+        public ParticleSystem GetEffect(EffectType name, float rad)
         {
             // 惰性检测
             foreach (var particleSystem in this.activeEffects[name].ToArray())
@@ -64,9 +64,9 @@
             this.activeEffects[name].Add(ps);
 
             // 设置角度
-            ps.transform.rotation = Quaternion.Euler(0, 0, deg * Mathf.Rad2Deg);
+            ps.transform.rotation = Quaternion.Euler(0, 0, rad * Mathf.Rad2Deg);
             ParticleSystem.MainModule main = ps.main;
-            main.startRotation = deg;
+            main.startRotation = rad;
             return ps.GetComponent<ParticleSystem>();
         }
     }
