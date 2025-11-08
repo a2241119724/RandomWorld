@@ -10,7 +10,7 @@
     public class CameraMove : MonoBehaviour
     {
         private const float CameraSpeed = 5.0f; // 相机跟随速度
-        private const float EdgeSize = 3.0f; // 相机边缘跟随鼠标的大小
+        private const float EdgeSize = 15.0f; // 相机边缘跟随鼠标的大小
         private const float EdgeSpeed = 50.0f; // 相机边缘跟随速度
         private const float MouseSpeed = 2.0f; // 相机跟随鼠标速度[鼠标中键]
         private const float ScrollSpeed = 100.0f; // 相机缩放速度
@@ -66,6 +66,8 @@
             // 相机边缘跟随鼠标移动
             if (CameraMove.IsEdgeMode)
             {
+                this.Character = null;
+
                 // 真实坐标x对应地图坐标y
                 Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Target);
                 float offset = Time.deltaTime * EdgeSpeed;
@@ -112,6 +114,7 @@
             // 根据鼠标滑动移动
             if (Input.GetMouseButtonDown(2))
             {
+                this.Character = null;
                 List<RaycastResult> results = Tool.GetUIByMousePos();
 
                 // 过滤不是滑动主屏幕的动作
