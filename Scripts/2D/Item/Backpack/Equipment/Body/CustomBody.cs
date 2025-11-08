@@ -1,19 +1,17 @@
 ﻿namespace LAB2D
 {
     using System;
+    using UnityEngine.Tilemaps;
 
     /// <summary>
     /// 自定义上衣
     /// </summary>
     [Serializable]
-    public abstract class CustomBody : Body
+    public class CustomBody : ABody
     {
-    }
-
-    /// <summary>
-    /// 自定义上衣对象
-    /// </summary>
-    public abstract class CustomBodyObject : BodyObject
-    {
+        public CustomBody()
+        {
+            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomBelt");
+        }
     }
 }

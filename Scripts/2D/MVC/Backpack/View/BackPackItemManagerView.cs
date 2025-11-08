@@ -19,9 +19,9 @@
         }
 
         /// <inheritdoc/>
-        protected override int GetQuantity(Item item)
+        protected override int GetQuantity(AItem item)
         {
-            return ((BackpackItem)item).Quantity;
+            return ((ABackpackItem)item).Quantity;
         }
     }
 }

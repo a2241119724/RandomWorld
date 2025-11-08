@@ -5,7 +5,7 @@
     /// <summary>
     /// 跟踪子弹
     /// </summary>
-    public class TraceBullet : Bullet
+    public class TraceBullet : ABulletObject
     {
         private const float RecordTime = 1.0f;
         private static readonly int[] D = new int[] { -1, 1 };
@@ -19,23 +19,9 @@
         /// </summary>
         public Character Target { get; set; }
 
-        /// <inheritdoc/>
-        public override void HitObject()
+        protected override void DoAttack()
         {
-            // 击中敌人处理
-            if (this.rayCastHit2D.transform.gameObject.CompareTag("Enemy"))
-            {
-                Enemy e = this.rayCastHit2D.transform.GetComponent<Enemy>();
-                e.Target = this.Origin;
-                e.ReduceHp(this.Damage);
-            }
-        }
-
-        /// <inheritdoc/>
-        protected override void Awake()
-        {
-            base.Awake();
-            this.layerMask = LayerMask.GetMask("Tile", "Enemy");
+            throw new System.NotImplementedException();
         }
 
         /// <inheritdoc/>

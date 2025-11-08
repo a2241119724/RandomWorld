@@ -9,7 +9,7 @@
     public class BackpackModel : MVCModel
     {
         public BackpackModel()
-            : base(Item.ItemType.Weapon, Item.ItemType.BackpackOther)
+            : base(AItem.ItemType.Weapon, AItem.ItemType.BackpackOther)
         {
         }
 
@@ -19,7 +19,7 @@
         public override void LoadData()
         {
             AsyncProgressUI.Instance.SetTip("加载背包数据...");
-            Dictionary<Item.ItemType, ArrayList> data = DataTool.LoadDataByBinary<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            Dictionary<AItem.ItemType, ArrayList> data = DataTool.LoadDataByBinary<Dictionary<AItem.ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
             // Dictionary<Item.ItemType, ArrayList> data = Tool.loadDataByJson<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.BackpackDataFilePath);
             if (data == null)

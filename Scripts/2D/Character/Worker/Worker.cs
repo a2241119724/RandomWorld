@@ -39,7 +39,7 @@
         /// <summary>
         /// Worker的床
         /// </summary>
-        public BedItem BedItem { get; set; }
+        public ABed BedItem { get; set; }
 
         /// <summary>
         /// 状态管理器
@@ -66,6 +66,10 @@
 
             ThreadPool.SetMaxThreads(5, 5);
             this.Seek = new AStar(this);
+            this.attackTags = new List<string>
+            {
+                "Enemy",
+            };
         }
 
         /// <inheritdoc/>
@@ -284,12 +288,12 @@
             /// <summary>
             /// 携带的武器
             /// </summary>
-            public Weapon Weapon;
+            public AWeapon Weapon;
 
             /// <summary>
             /// 身上携带的装备
             /// </summary>
-            public Dictionary<Equipment.EquipType, Equipment> Equipments;
+            public Dictionary<AEquipment.EquipType, AEquipment> Equipments;
 
             /// <summary>
             /// 最大疲劳值
@@ -334,7 +338,7 @@
 
             public WorkerData()
             {
-                this.Equipments = new Dictionary<Equipment.EquipType, Equipment>();
+                this.Equipments = new Dictionary<AEquipment.EquipType, AEquipment>();
 
                 // 设置默认可接受任务类型
                 this.TaskToggle = new bool[10];
@@ -348,12 +352,12 @@
             /// </summary>
             /// <param name="equipment">装备</param>
             /// <param name="posMap">位置</param>
-            public void AddEquipment(Equipment equipment, Vector3Int posMap)
+            public void AddEquipment(AEquipment equipment, Vector3Int posMap)
             {
                 if (this.Equipments.ContainsKey(equipment.EquipTypeValue))
                 {
                     // 交换装备
-                    Equipment equipment1 = this.Equipments[equipment.EquipTypeValue];
+                    AEquipment equipment1 = this.Equipments[equipment.EquipTypeValue];
                     ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
                     this.Equipments[equipment.EquipTypeValue] = equipment1;
                 }

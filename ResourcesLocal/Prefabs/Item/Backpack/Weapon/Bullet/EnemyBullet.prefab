@@ -45,12 +45,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1633193990877318}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d431115ea73021643bc7c57b31b2e094, type: 3}
+  m_Script: {fileID: 11500000, guid: a069e9c1eb682c74a881276b25fcb062, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  layerMask:
-    serializedVersion: 2
-    m_Bits: 1344
 --- !u!114 &7778983243730859929
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -70,6 +67,7 @@ MonoBehaviour:
   OwnershipTransfer: 0
   observableSearch: 2
   ObservedComponents:
+  - {fileID: -9031345671198653629}
   - {fileID: 5063241122348464030}
   sceneViewId: 0
   InstantiationId: 0

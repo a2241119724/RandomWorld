@@ -38,12 +38,12 @@
         /// <summary>
         /// 获取道具
         /// </summary>
-        public event Func<int, Item> GetItem;
+        public event Func<int, AItem> GetItem;
 
         /// <summary>
         /// 展示信息
         /// </summary>
-        public event Action<Item> ShowInfo;
+        public event Action<AItem> ShowInfo;
 
         public virtual void Awake()
         {
@@ -62,7 +62,7 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <param name="model">Model</param>
-        public void UpdateView(Item.ItemType type, M model)
+        public void UpdateView(AItem.ItemType type, M model)
         {
             if (model == null)
             {
@@ -120,7 +120,7 @@
                 {
                     return this.GetItem(a);
                 };
-                itemView.ShowInfo += (Item a) =>
+                itemView.ShowInfo += (AItem a) =>
                 {
                     this.ShowInfo(a);
                 };
@@ -147,6 +147,6 @@
         /// </summary>
         /// <param name="item">道具</param>
         /// <returns>数量</returns>
-        protected abstract int GetQuantity(Item item);
+        protected abstract int GetQuantity(AItem item);
     }
 }

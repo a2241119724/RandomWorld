@@ -66,7 +66,7 @@
         /// 添加道具
         /// </summary>
         /// <param name="item">道具</param>
-        public virtual void AddItem(Item item)
+        public virtual void AddItem(AItem item)
         {
             this.model.Add(item);
 
@@ -100,7 +100,7 @@
         /// </summary>
         /// <param name="index">索引</param>
         /// <returns>道具</returns>
-        public Item GetItem(int index)
+        public AItem GetItem(int index)
         {
             return this.model.Get(this.navigationView.CurItemType, index);
         }
@@ -109,7 +109,7 @@
         /// 减少道具数量
         /// </summary>
         /// <param name="item">道具</param>
-        public void ReduceQuantity(Item item)
+        public void ReduceQuantity(AItem item)
         {
             this.model.ReduceQuantity(this.navigationView.CurItemType, item);
         }
@@ -119,9 +119,9 @@
         /// </summary>
         /// <param name="item">道具</param>
         /// <returns>索引</returns>
-        public int GetIndex(Item item)
+        public int GetIndex(AItem item)
         {
-            return this.model.GetIndex(this.navigationView.CurItemType, (Weapon)item);
+            return this.model.GetIndex(this.navigationView.CurItemType, (AWeapon)item);
         }
 
         /// <summary>
@@ -176,7 +176,7 @@
         /// 界面减减
         /// </summary>
         /// <param name="item">道具</param>
-        public void ReduceQuantityUI(Item item)
+        public void ReduceQuantityUI(AItem item)
         {
             this.itemManagerView.ReduceQuantityUI(this.GetIndex(item));
         }
@@ -185,7 +185,7 @@
         /// 展示道具信息
         /// </summary>
         /// <param name="data">道具</param>
-        public void ShowInfo(Item data)
+        public void ShowInfo(AItem data)
         {
             if (this.infoView == null)
             {

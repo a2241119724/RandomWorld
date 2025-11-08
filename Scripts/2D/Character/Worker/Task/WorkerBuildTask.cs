@@ -56,7 +56,7 @@
         /// <summary>
         /// 没用
         /// </summary>
-        public BuildItem BuildItem { get; private set; }
+        public ABuildItem BuildItem { get; private set; }
 
         /// <inheritdoc/>
         public override void Start(Worker worker)
@@ -165,7 +165,7 @@
                 this.task = new WorkerBuildTask();
             }
 
-            public BuildTaskBuilder SetBuild(BuildItem buildItem)
+            public BuildTaskBuilder SetBuild(ABuildItem buildItem)
             {
                 this.task.BuildItem = buildItem;
                 return this;

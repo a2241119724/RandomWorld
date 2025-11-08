@@ -6,7 +6,7 @@
     /// 坐骑
     /// </summary>
     [Serializable]
-    public abstract class Mount : Equipment
+    public abstract class Mount : AEquipment
     {
         public Mount()
         {
@@ -17,7 +17,7 @@
     /// <summary>
     /// 坐骑对象
     /// </summary>
-    public abstract class MountObject : EquipmentObject
+    public abstract class MountObject : AEquipmentObject
     {
     }
 }

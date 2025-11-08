@@ -25,10 +25,10 @@
             this.nameToId = new Dictionary<string, int>();
             this.allItemInfo = new Dictionary<int, ItemData>();
 
-            Item.ItemType[] itemTypes = Item.Ranges["Backpack"];
+            AItem.ItemType[] itemTypes = AItem.Ranges["Backpack"];
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
-                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(((Item.ItemType)type).ToString() + "ItemData");
+                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(((AItem.ItemType)type).ToString() + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -42,10 +42,10 @@
                 }
             }
 
-            itemTypes = Item.Ranges["Build"];
+            itemTypes = AItem.Ranges["Build"];
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
-                BuildItemDataSO itemDataSO = ResourceManager.Instance.GetBuildSO(((Item.ItemType)type).ToString() + "ItemData");
+                BuildItemDataSO itemDataSO = ResourceManager.Instance.GetBuildSO(((AItem.ItemType)type).ToString() + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -97,15 +97,15 @@
         /// </summary>
         /// <param name="id">ID</param>
         /// <returns>道具类型</returns>
-        public Item.ItemType IdToType(int id)
+        public AItem.ItemType IdToType(int id)
         {
             if (id < 0)
             {
                 LogManager.Instance.Log($"id:{id}小于0!!!", LogManager.LogLevel.Error);
-                return Item.ItemType.Null;
+                return AItem.ItemType.Null;
             }
 
-            return (Item.ItemType)(object)(id / TypeInterval);
+            return (AItem.ItemType)(object)(id / TypeInterval);
         }
 
         /// <summary>
@@ -113,18 +113,18 @@
         /// </summary>
         /// <param name="id">ID</param>
         /// <returns>装备类型</returns>
-        public Equipment.EquipType IdToEquipmentType(int id)
+        public AEquipment.EquipType IdToEquipmentType(int id)
         {
-            if (this.IdToType(id) != Item.ItemType.Equipment)
+            if (this.IdToType(id) != AItem.ItemType.Equipment)
             {
                 LogManager.Instance.Log("id不是装备!!!", LogManager.LogLevel.Error);
-                return Equipment.EquipType.Null;
+                return AEquipment.EquipType.Null;
             }
 
-            id -= ((int)Item.ItemType.Equipment) * TypeInterval;
+            id -= ((int)AItem.ItemType.Equipment) * TypeInterval;
 
             // 最多10种装备
-            return (Equipment.EquipType)(object)(id * 10 / TypeInterval);
+            return (AEquipment.EquipType)(object)(id * 10 / TypeInterval);
         }
 
         /// <summary>
@@ -144,15 +144,15 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <returns>button索引</returns>
-        public int GetIndexByType(Item.ItemType type)
+        public int GetIndexByType(AItem.ItemType type)
         {
-            if ((int)type < (int)Item.ItemType.Room)
+            if ((int)type < (int)AItem.ItemType.Room)
             {
                 return (int)type;
             }
             else
             {
-                return (int)type - (int)Item.ItemType.Room;
+                return (int)type - (int)AItem.ItemType.Room;
             }
         }
 

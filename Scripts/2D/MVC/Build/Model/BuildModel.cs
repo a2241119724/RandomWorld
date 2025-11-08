@@ -9,7 +9,7 @@
     public class BuildModel : MVCModel
     {
         public BuildModel()
-            : base(Item.ItemType.Room, Item.ItemType.BuildOther)
+            : base(AItem.ItemType.Room, AItem.ItemType.BuildOther)
         {
         }
 
@@ -17,7 +17,7 @@
         public override void LoadData()
         {
             AsyncProgressUI.Instance.SetTip("加载建造数据...");
-            Dictionary<Item.ItemType, ArrayList> data = DataTool.LoadDataByBinary<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            Dictionary<AItem.ItemType, ArrayList> data = DataTool.LoadDataByBinary<Dictionary<AItem.ItemType, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
             // Dictionary<BuildType, ArrayList> data = Tool.loadDataByJson<Dictionary<BuildType, ArrayList>>(GlobalData.ConfigFile.BuildDataFilePath);
             if (data == null)

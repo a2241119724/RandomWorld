@@ -107,7 +107,7 @@
                 }
                 else
                 {
-                    PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().Attack();
+                    PlayerManager.Instance.Select.Weapon.GetComponent<AWeaponObject>().Attack();
                 }
             }
         }

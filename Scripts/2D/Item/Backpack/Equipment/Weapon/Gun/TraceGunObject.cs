@@ -6,7 +6,7 @@
     /// <summary>
     /// 跟踪枪对象
     /// </summary>
-    public class TraceGunObject : GunObject
+    public class TraceGunObject : AGunObject
     {
         /// <inheritdoc/>
         protected override void Awake()
@@ -30,7 +30,7 @@
     /// 跟踪枪
     /// </summary>
     [Serializable]
-    public class TraceGun : Gun
+    public class TraceGun : AGun
     {
         public TraceGun()
         {

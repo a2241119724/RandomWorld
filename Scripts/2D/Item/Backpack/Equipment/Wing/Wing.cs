@@ -6,7 +6,7 @@
     /// 翅膀
     /// </summary>
     [Serializable]
-    public abstract class Wing : Equipment
+    public abstract class Wing : AEquipment
     {
         public Wing()
         {
@@ -17,7 +17,7 @@
     /// <summary>
     /// 翅膀对象
     /// </summary>
-    public abstract class WingObject : EquipmentObject
+    public abstract class WingObject : AEquipmentObject
     {
     }
 }

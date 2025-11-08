@@ -6,7 +6,7 @@
     /// 仓库上墙
     /// </summary>
     [Serializable]
-    public abstract class InventoryWall : WallItem, Item.IDontShow
+    public abstract class InventoryWall : AWall, AItem.IDontShow
     {
     }
 

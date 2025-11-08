@@ -55,7 +55,7 @@
         public override void Finish(Worker worker)
         {
             base.Finish(worker);
-            Item.ItemType itemType = ItemDataManager.Instance.IdToType(this.resourceInfo.Id);
+            AItem.ItemType itemType = ItemDataManager.Instance.IdToType(this.resourceInfo.Id);
 
             // 放下拿起来的东西
             ItemMap.Instance.AddTile(this.TargetMap, ResourceManager.Instance
@@ -64,7 +64,7 @@
             InventoryManager.Instance.AddItemByPrePlace(worker, this.TargetMap);
 
             // 如果是食物,添加饥饿任务
-            if (itemType == Item.ItemType.Food)
+            if (itemType == AItem.ItemType.Food)
             {
                 WorkerTaskManager.Instance.AddTask(new WorkerHungryTask.HungryTaskBuilder().SetTarget(this.TargetMap).Build(), 0);
             }

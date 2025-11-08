@@ -6,7 +6,7 @@
     /// 剑
     /// </summary>
     [Serializable]
-    public abstract class Sword : Weapon
+    public abstract class Sword : AWeapon
     {
     }
 
@@ -14,7 +14,7 @@
     /// 剑对象
     /// 该脚本被玩家装备才会激活
     /// </summary>
-    public abstract class SwordObject : WeaponObject
+    public abstract class SwordObject : AWeaponObject
     {
         /// <inheritdoc/>
         protected override void Awake()

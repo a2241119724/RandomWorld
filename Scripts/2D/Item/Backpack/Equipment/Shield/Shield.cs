@@ -6,7 +6,7 @@
     /// 盾牌
     /// </summary>
     [Serializable]
-    public abstract class Shield : Equipment
+    public abstract class Shield : AEquipment
     {
         public Shield()
         {
@@ -17,7 +17,7 @@
     /// <summary>
     /// 盾牌对象
     /// </summary>
-    public abstract class ShieldObject : EquipmentObject
+    public abstract class ShieldObject : AEquipmentObject
     {
     }
 }

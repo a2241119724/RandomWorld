@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using System;
+    using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
 
@@ -19,11 +20,6 @@
         /// 敌人旋转的速度.
         /// </summary>
         public readonly float RotationSpeed = 2.0f;
-
-        /// <summary>
-        /// 射线检测的层级.
-        /// </summary>
-        protected LayerMask layerMask;
 
         /// <summary>
         /// 伤害值.
@@ -59,7 +55,11 @@
         public override void Awake()
         {
             base.Awake();
-            this.layerMask = LayerMask.GetMask("Tile", "Player");
+            this.attackTags = new List<string>
+            {
+                "Player",
+                "Worker",
+            };
             this.Manager = new EnemyStateManager<ICharacterState, EnemyState.EnemyStateTypeEnum, Enemy>(this);
             this.CharacterDataLAB = new EnemyData();
         }
@@ -138,7 +138,7 @@
             {
                 // 判断玩家和敌人之间是否存在遮挡物
                 Vector3 direction = target.position - this.transform.position;
-                this.raycastHit2D = Physics2D.Raycast(this.transform.position, direction, enemyData.SightRange, this.layerMask); // (源,方向,距离,层级)
+                this.raycastHit2D = Physics2D.Raycast(this.transform.position, direction, enemyData.SightRange, this.attackLayers); // (源,方向,距离,层级)
 
                 // 如果有碰撞体并且不是目标，是障碍物
                 if (this.raycastHit2D.collider != null && this.raycastHit2D.transform != target)
