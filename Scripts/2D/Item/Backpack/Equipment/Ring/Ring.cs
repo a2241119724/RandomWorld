@@ -6,7 +6,7 @@
     /// 戒指
     /// </summary>
     [Serializable]
-    public abstract class Ring : Equipment
+    public abstract class Ring : AEquipment
     {
         public Ring()
         {
@@ -17,7 +17,7 @@
     /// <summary>
     /// 戒指对象
     /// </summary>
-    public abstract class RingObject : EquipmentObject
+    public abstract class RingObject : AEquipmentObject
     {
     }
 }

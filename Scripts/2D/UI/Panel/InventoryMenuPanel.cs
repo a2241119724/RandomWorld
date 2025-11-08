@@ -28,9 +28,9 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            Dictionary<Item.ItemType, Dictionary<Vector3Int, ResourceInfo>> typeToResource = InventoryManager.Instance.TypeToResource;
+            Dictionary<AItem.ItemType, Dictionary<Vector3Int, ResourceInfo>> typeToResource = InventoryManager.Instance.TypeToResource;
             int count = 0;
-            foreach (KeyValuePair<Item.ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in typeToResource)
+            foreach (KeyValuePair<AItem.ItemType, Dictionary<Vector3Int, ResourceInfo>> pair in typeToResource)
             {
                 if (count >= this.type.childCount)
                 {

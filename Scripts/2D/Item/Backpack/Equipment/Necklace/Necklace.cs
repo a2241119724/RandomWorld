@@ -6,7 +6,7 @@
     /// 项链
     /// </summary>
     [Serializable]
-    public abstract class Necklace : Equipment
+    public abstract class Necklace : AEquipment
     {
         public Necklace()
         {
@@ -17,7 +17,7 @@
     /// <summary>
     /// 项链对象
     /// </summary>
-    public abstract class NecklaceObject : EquipmentObject
+    public abstract class NecklaceObject : AEquipmentObject
     {
     }
 }

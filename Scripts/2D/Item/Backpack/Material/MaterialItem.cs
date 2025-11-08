@@ -6,14 +6,14 @@
     /// 材料
     /// </summary>
     [Serializable]
-    public abstract class MaterialItem : BackpackItem
+    public abstract class MaterialItem : ABackpackItem
     {
     }
 
     /// <summary>
     /// 材料对象
     /// </summary>
-    public abstract class MaterialItemObject : BackpackItemObject
+    public abstract class MaterialItemObject : ABackpackItemObject
     {
     }
 }

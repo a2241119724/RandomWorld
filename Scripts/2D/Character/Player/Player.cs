@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using System;
+    using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -16,7 +17,7 @@
         private CameraMove mainCamera;
         private CameraMove miniCamera;
         private SpriteRenderer sprite;
-        private new Rigidbody2D rigidbody2D;
+        private Rigidbody2D rg;
 
         /// <inheritdoc/>
         public override void Awake()
@@ -29,12 +30,16 @@
                 return;
             }
 
-            this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
             this.name = "Player";
             this.CharacterDataLAB = new PlayerData();
-            this.rigidbody2D = this.GetComponent<Rigidbody2D>();
-            this.rigidbody2D.freezeRotation = true; // 防止旋转
-            this.rigidbody2D.interpolation = RigidbodyInterpolation2D.Interpolate; // 插值让移动更平滑，解决角色卡顿
+            this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
+            this.attackTags = new List<string>
+            {
+                "Enemy",
+            };
+            this.rg = this.GetComponent<Rigidbody2D>();
+            this.rg.freezeRotation = true; // 防止旋转
+            this.rg.interpolation = RigidbodyInterpolation2D.Interpolate; // 插值让移动更平滑，解决角色卡顿
         }
 
         /// <inheritdoc/>
@@ -306,12 +311,12 @@
                     this.animator.SetInteger("Direction", 3);
                 }
 
-                this.rigidbody2D.velocity = this.MoveSpeed * this.direction.normalized;
+                this.rg.velocity = this.MoveSpeed * this.direction.normalized;
             }
             else
             {
                 this.animator.SetBool("IsMove", false);
-                this.rigidbody2D.velocity = Vector3.zero;
+                this.rg.velocity = Vector3.zero;
             }
         }
 

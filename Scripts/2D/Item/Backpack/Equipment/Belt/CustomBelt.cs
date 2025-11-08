@@ -14,11 +14,4 @@
             this.Tile = (TileBase)ResourceManager.Instance.GetAsset("CustomBelt");
         }
     }
-
-    /// <summary>
-    /// 自定义腰带对象
-    /// </summary>
-    public class CustomBeltObject : BeltObject
-    {
-    }
 }

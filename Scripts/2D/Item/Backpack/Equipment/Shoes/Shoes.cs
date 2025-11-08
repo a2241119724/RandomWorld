@@ -6,7 +6,7 @@
     /// 鞋子
     /// </summary>
     [Serializable]
-    public abstract class Shoes : Equipment
+    public abstract class Shoes : AEquipment
     {
         public Shoes()
         {
@@ -17,7 +17,7 @@
     /// <summary>
     /// 鞋子对象
     /// </summary>
-    public abstract class ShoesObject : EquipmentObject
+    public abstract class ShoesObject : AEquipmentObject
     {
     }
 }

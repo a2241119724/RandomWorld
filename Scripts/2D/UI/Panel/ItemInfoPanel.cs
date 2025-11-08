@@ -73,14 +73,14 @@
                 Worker.WorkerData workerData = worker1.CharacterDataLAB as Worker.WorkerData;
                 Transform worker = this.character.Find("Worker");
                 worker.gameObject.SetActive(true);
-                Weapon weapon = workerData.Weapon;
+                AWeapon weapon = workerData.Weapon;
                 if (weapon != null)
                 {
                     worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourceManager.Instance.GetImage(
                         ItemDataManager.Instance.GetById(weapon.Id).EnName);
                 }
 
-                Dictionary<Equipment.EquipType, Equipment> equipments = workerData.Equipments;
+                Dictionary<AEquipment.EquipType, AEquipment> equipments = workerData.Equipments;
                 foreach (var item in equipments)
                 {
                     if (item.Value != null)

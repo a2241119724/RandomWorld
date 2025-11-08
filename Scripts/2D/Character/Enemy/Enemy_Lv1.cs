@@ -46,10 +46,10 @@
 
             // 发射子弹
             GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.ENEMY_BULLET, this.EnemyHead.position, Quaternion.identity);
-            g.GetComponent<EnemyBullet>().Direction = this.EnemyHead.position - this.transform.position;
-            g.GetComponent<EnemyBullet>().BulletSpeed = enemyData.BulletSpeed;
+            g.GetComponent<ABulletObject>().Direction = this.EnemyHead.position - this.transform.position;
+            g.GetComponent<ABulletObject>().BulletSpeed = enemyData.BulletSpeed;
             this.damage = UnityEngine.Random.Range(1, 10);
-            g.GetComponent<EnemyBullet>().Damage = this.damage;
+            g.GetComponent<ABulletObject>().Damage = this.damage;
             g.transform.SetParent(this.transform.parent, false);
         }
     }

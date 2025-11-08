@@ -6,7 +6,7 @@
     /// 耳环
     /// </summary>
     [Serializable]
-    public abstract class Earring : Equipment
+    public abstract class Earring : AEquipment
     {
         public Earring()
         {
@@ -17,7 +17,7 @@
     /// <summary>
     /// 耳环对象
     /// </summary>
-    public abstract class EarringObject : EquipmentObject
+    public abstract class EarringObject : AEquipmentObject
     {
     }
 }

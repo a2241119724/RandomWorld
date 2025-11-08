@@ -101,7 +101,7 @@
         public void PutDownToDrop(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
         {
             this.AddTile(posMap, tileBase);
-            Item.ItemType itemType = ItemDataManager.Instance.IdToType(resourceInfo.Id);
+            AItem.ItemType itemType = ItemDataManager.Instance.IdToType(resourceInfo.Id);
 
             // 添加到掉落物管理中
             DropManager.Instance.AddDrop(itemType, posMap, resourceInfo);

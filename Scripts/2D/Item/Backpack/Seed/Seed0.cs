@@ -3,7 +3,7 @@
     /// <summary>
     /// 种子
     /// </summary>
-    public abstract class Seed0 : SeedItem
+    public class Seed0 : ASeed
     {
     }
 }

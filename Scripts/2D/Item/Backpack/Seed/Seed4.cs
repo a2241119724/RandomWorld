@@ -3,7 +3,7 @@
     /// <summary>
     /// 种子
     /// </summary>
-    public abstract class Seed4 : BackpackItem
+    public class Seed4 : ABackpackItem
     {
     }
 }

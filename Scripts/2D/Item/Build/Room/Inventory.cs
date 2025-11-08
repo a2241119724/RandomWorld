@@ -8,22 +8,22 @@
     /// 仓库
     /// </summary>
     [Serializable]
-    public class Inventory : RoomItem
+    public class Inventory : ARoom
     {
         public Inventory()
         {
             this.Width = 10;
             this.Height = 7;
-            this.Walls = new Dictionary<WallItem.WallDirectionEnum, WallItem>
+            this.Walls = new Dictionary<AWall.WallDirectionEnum, AWall>
             {
-                { WallItem.WallDirectionEnum.TOP, new InventoryWallT() },
-                { WallItem.WallDirectionEnum.DOWN, new InventoryWallD() },
-                { WallItem.WallDirectionEnum.LEFT, new InventoryWallL() },
-                { WallItem.WallDirectionEnum.RIGHT, new InventoryWallR() },
-                { WallItem.WallDirectionEnum.RIGHT_TOP, new InventoryWallRT() },
-                { WallItem.WallDirectionEnum.RIGHT_DOWN, new InventoryWallRD() },
-                { WallItem.WallDirectionEnum.LEFT_TOP, new InventoryWallLT() },
-                { WallItem.WallDirectionEnum.LEFT_DOWN, new InventoryWallLD() },
+                { AWall.WallDirectionEnum.TOP, new InventoryWallT() },
+                { AWall.WallDirectionEnum.DOWN, new InventoryWallD() },
+                { AWall.WallDirectionEnum.LEFT, new InventoryWallL() },
+                { AWall.WallDirectionEnum.RIGHT, new InventoryWallR() },
+                { AWall.WallDirectionEnum.RIGHT_TOP, new InventoryWallRT() },
+                { AWall.WallDirectionEnum.RIGHT_DOWN, new InventoryWallRD() },
+                { AWall.WallDirectionEnum.LEFT_TOP, new InventoryWallLT() },
+                { AWall.WallDirectionEnum.LEFT_DOWN, new InventoryWallLD() },
             };
         }
 
@@ -33,21 +33,21 @@
             int[] boundary = this.GetBoundary(centerMap);
             for (int i = 1; i < this.Width - 1; i++)
             {
-                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.DOWN].TileName)
-                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.TOP].TileName);
+                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.DOWN].TileName)
+                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.TOP].TileName);
             }
 
             for (int i = 1; i < this.Height - 1; i++)
             {
-                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT].TileName)
-                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT].TileName);
+                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT].TileName)
+                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT].TileName);
             }
 
             BuildMap.Instance
-                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_DOWN].TileName)
-                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_DOWN].TileName)
-                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_TOP].TileName)
-                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_TOP].TileName);
+                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_DOWN].TileName)
+                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_DOWN].TileName)
+                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_TOP].TileName)
+                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_TOP].TileName);
 
             // 添加仓库Cell
             InventoryManager.Instance.AddCells(VectorTool.Add(centerMap, -this.Height / 2, -this.Width / 2), this.Width, this.Height);

@@ -6,7 +6,7 @@
     /// 自定义房间墙
     /// </summary>
     [Serializable]
-    public abstract class CustomRoomWall : WallItem
+    public abstract class CustomRoomWall : AWall
     {
     }
 
@@ -71,13 +71,6 @@
     /// </summary>
     [Serializable]
     public class CustomRoomWallLD : CustomRoomWall
-    {
-    }
-
-    /// <summary>
-    /// 自定义房间墙对象
-    /// </summary>
-    public class CustomRoomWallObject : BuildItemObject
     {
     }
 }

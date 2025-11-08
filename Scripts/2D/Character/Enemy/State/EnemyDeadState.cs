@@ -19,9 +19,9 @@
             : base(character)
         {
             this.probToDropItem = new Dictionary<int, TileBase>();
-            List<Item> items = ItemFactory.Instance.GenBackpackItems();
+            List<AItem> items = ItemFactory.Instance.GenBackpackItems();
             this.AddDropItem(10, null);
-            foreach (BackpackItem item in items)
+            foreach (ABackpackItem item in items)
             {
                 this.AddDropItem(10, item.Tile);
             }

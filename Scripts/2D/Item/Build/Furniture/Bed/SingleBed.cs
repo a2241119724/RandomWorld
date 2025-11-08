@@ -6,7 +6,7 @@
     /// 单人床
     /// </summary>
     [Serializable]
-    public class SingleBed : BedItem
+    public class SingleBed : ABed
     {
         public SingleBed()
         {

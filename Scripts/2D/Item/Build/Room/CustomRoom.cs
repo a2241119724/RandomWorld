@@ -8,27 +8,27 @@
     /// 自定义房间
     /// </summary>
     [Serializable]
-    public class CustomRoom : RoomItem
+    public class CustomRoom : ARoom
     {
         /// <summary>
         /// 门
         /// </summary>
-        public DoorItem Door;
+        public ADoor Door;
 
         public CustomRoom()
         {
             this.Width = 10;
             this.Height = 7;
-            this.Walls = new Dictionary<WallItem.WallDirectionEnum, WallItem>
+            this.Walls = new Dictionary<AWall.WallDirectionEnum, AWall>
             {
-                { WallItem.WallDirectionEnum.TOP, new CustomRoomWallT() },
-                { WallItem.WallDirectionEnum.DOWN, new CustomRoomWallD() },
-                { WallItem.WallDirectionEnum.LEFT, new CustomRoomWallL() },
-                { WallItem.WallDirectionEnum.RIGHT, new CustomRoomWallR() },
-                { WallItem.WallDirectionEnum.RIGHT_TOP, new CustomRoomWallRT() },
-                { WallItem.WallDirectionEnum.RIGHT_DOWN, new CustomRoomWallRD() },
-                { WallItem.WallDirectionEnum.LEFT_TOP, new CustomRoomWallLT() },
-                { WallItem.WallDirectionEnum.LEFT_DOWN, new CustomRoomWallLD() },
+                { AWall.WallDirectionEnum.TOP, new CustomRoomWallT() },
+                { AWall.WallDirectionEnum.DOWN, new CustomRoomWallD() },
+                { AWall.WallDirectionEnum.LEFT, new CustomRoomWallL() },
+                { AWall.WallDirectionEnum.RIGHT, new CustomRoomWallR() },
+                { AWall.WallDirectionEnum.RIGHT_TOP, new CustomRoomWallRT() },
+                { AWall.WallDirectionEnum.RIGHT_DOWN, new CustomRoomWallRD() },
+                { AWall.WallDirectionEnum.LEFT_TOP, new CustomRoomWallLT() },
+                { AWall.WallDirectionEnum.LEFT_DOWN, new CustomRoomWallLD() },
             };
             this.Door = new CustomDoor();
         }
@@ -40,25 +40,25 @@
             RoomInfo roomInfo = new ();
             for (int i = 1; i < this.Width - 1; i++)
             {
-                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.DOWN].TileName)
-                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[WallItem.WallDirectionEnum.TOP].TileName);
+                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.DOWN].TileName)
+                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.TOP].TileName);
                 roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2] + i, 0));
                 roomInfo.Points.Add(new Vector3Int(boundary[1], boundary[2] + i, 0));
             }
 
             for (int i = 1; i < this.Height - 1; i++)
             {
-                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT].TileName)
-                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT].TileName);
+                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT].TileName)
+                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT].TileName);
                 roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[2], 0));
                 roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[3], 0));
             }
 
             BuildMap.Instance
-                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_DOWN].TileName)
-                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_DOWN].TileName)
-                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[WallItem.WallDirectionEnum.RIGHT_TOP].TileName)
-                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[WallItem.WallDirectionEnum.LEFT_TOP].TileName)
+                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_DOWN].TileName)
+                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_DOWN].TileName)
+                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_TOP].TileName)
+                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_TOP].TileName)
                 .AddBuild(new Vector3Int(boundary[0], centerMap.y, 0), this.Door.TileName);
             roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[3], 0));
             roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2], 0));
@@ -70,12 +70,5 @@
             roomInfo.Progress = roomInfo.Points.Count - 1;
             RoomManager.Instance.AddRoom(Guid.NewGuid().ToString(), roomInfo);
         }
-    }
-
-    /// <summary>
-    /// 房间对象
-    /// </summary>
-    public class CustomRoomObject : BuildItemObject
-    {
     }
 }

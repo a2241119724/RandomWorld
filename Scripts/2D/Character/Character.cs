@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using System;
+    using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
 
@@ -24,6 +25,16 @@
         /// </summary>
         protected CheckBug checkBug;
 
+        /// <summary>
+        /// 攻击的层级
+        /// </summary>
+        protected LayerMask attackLayers;
+
+        /// <summary>
+        /// 攻击的标签
+        /// </summary>
+        protected List<string> attackTags;
+
         private Color originalColor; // 原来的自身颜色
 
         /// <summary>
@@ -33,6 +44,7 @@
 
         public virtual void Awake()
         {
+            this.attackLayers = LayerMask.GetMask("Tile", "Character");
             this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
             this.checkBug = new CheckBug();
         }

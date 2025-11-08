@@ -5,7 +5,7 @@
     /// <summary>
     /// 单发枪对象
     /// </summary>
-    public class SingleGunObject : GunObject
+    public class SingleGunObject : AGunObject
     {
         /// <inheritdoc/>
         protected override void Awake()
@@ -26,7 +26,7 @@
     /// 单发枪
     /// </summary>
     [Serializable]
-    public class SingleGun : Gun
+    public class SingleGun : AGun
     {
         public SingleGun()
         {

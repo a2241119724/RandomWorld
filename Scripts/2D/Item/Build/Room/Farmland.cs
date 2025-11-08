@@ -7,9 +7,9 @@
     /// 农田
     /// </summary>
     [Serializable]
-    public class Farmland : RoomItem
+    public class Farmland : ARoom
     {
-        private readonly WallItem soil;
+        private readonly AWall soil;
 
         public Farmland()
         {

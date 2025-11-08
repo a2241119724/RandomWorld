@@ -21,11 +21,11 @@
             base.Awake();
             Instance = this;
 
-            if (this.model.IsNull(Item.ItemType.Weapon))
+            if (this.model.IsNull(AItem.ItemType.Weapon))
             {
                 // addItem(ItemFactory.Instance.getBackpackItemByName("SingleGun"));
-                List<Item> items = ItemFactory.Instance.GenBackpackItems();
-                foreach (Item item in items)
+                List<AItem> items = ItemFactory.Instance.GenBackpackItems();
+                foreach (AItem item in items)
                 {
                     this.AddItem(item);
                 }

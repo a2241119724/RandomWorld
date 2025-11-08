@@ -7,35 +7,17 @@
     /// 血瓶
     /// </summary>
     [Serializable]
-    public class AddHp : Consumable
+    public class AddHp : AConsumable
     {
         public AddHp()
         {
             this.Tile = (TileBase)ResourceManager.Instance.GetAsset("AddHp");
         }
-    }
-
-    /// <summary>
-    /// 加血对象
-    /// </summary>
-    public class AddHpObject : ConsumableObject
-    {
-        /// <summary>
-        /// 加血量
-        /// </summary>
-        public float Value;
 
         /// <inheritdoc/>
         public override void Use()
         {
-            PlayerManager.Instance.Mine.AddHp(this.Value);
-        }
-
-        /// <inheritdoc/>
-        protected override void Awake()
-        {
-            base.Awake();
-            this.name = "AddHp";
+            PlayerManager.Instance.Mine.AddHp(10);
         }
     }
 }

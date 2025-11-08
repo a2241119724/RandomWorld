@@ -32,12 +32,12 @@
         /// <summary>
         /// 获取道具
         /// </summary>
-        public event Func<int, Item> GetItem;
+        public event Func<int, AItem> GetItem;
 
         /// <summary>
         /// 展示信息
         /// </summary>
-        public event Action<Item> ShowInfo;
+        public event Action<AItem> ShowInfo;
 
         /// <summary>
         /// 是否可以拖拽
@@ -128,7 +128,7 @@
 
             // 道具索引
             int i = this.transform.parent.GetSiblingIndex();
-            Item item = this.GetItem(i);
+            AItem item = this.GetItem(i);
             this.ShowInfo(item);
             this.SetSelect(i, item);
         }
@@ -138,7 +138,7 @@
         /// </summary>
         /// <param name="i">道具索引</param>
         /// <param name="item">道具</param>
-        public abstract void SetSelect(int i, Item item);
+        public abstract void SetSelect(int i, AItem item);
 
         public void Awake()
         {

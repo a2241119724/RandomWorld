@@ -76,7 +76,7 @@
             /// <summary>
             /// 当前装备武器的数据
             /// </summary>
-            public Weapon WeaponData = null;
+            public AWeapon WeaponData = null;
         }
     }
 }

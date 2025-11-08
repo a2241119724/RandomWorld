@@ -22,7 +22,7 @@
         /// 展示信息
         /// </summary>
         /// <param name="item">道具</param>
-        public void ShowInfo(Item item)
+        public void ShowInfo(AItem item)
         {
             if (item == null)
             {

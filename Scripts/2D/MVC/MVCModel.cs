@@ -12,12 +12,12 @@
         /// <summary>
         /// 道具列表
         /// </summary>
-        public Dictionary<Item.ItemType, ArrayList> ItemDict;
+        public Dictionary<AItem.ItemType, ArrayList> ItemDict;
 
-        public MVCModel(Item.ItemType start, Item.ItemType end)
+        public MVCModel(AItem.ItemType start, AItem.ItemType end)
         {
-            this.ItemDict = new Dictionary<Item.ItemType, ArrayList>();
-            Tool.SplitEnum<Item.ItemType>(start, end).ForEach((item) =>
+            this.ItemDict = new Dictionary<AItem.ItemType, ArrayList>();
+            Tool.SplitEnum<AItem.ItemType>(start, end).ForEach((item) =>
             {
                 this.ItemDict.Add(item, new ArrayList());
             });
@@ -28,7 +28,7 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <param name="index">道具索引</param>
-        public void Delete(Item.ItemType type, int index)
+        public void Delete(AItem.ItemType type, int index)
         {
             if (this.ItemDict[type] == null)
             {
@@ -44,7 +44,7 @@
         /// 添加道具到背包
         /// </summary>
         /// <param name="item">道具信息</param>
-        public void Add(Item item)
+        public void Add(AItem item)
         {
             if (item == null)
             {
@@ -53,7 +53,7 @@
             }
 
             ArrayList itemList;
-            Item.ItemType itemType = ItemDataManager.Instance.IdToType(item.Id);
+            AItem.ItemType itemType = ItemDataManager.Instance.IdToType(item.Id);
             if (this.ItemDict.ContainsKey(itemType))
             {
                 itemList = this.ItemDict[itemType];
@@ -69,9 +69,9 @@
                 for (int i = 0; i < itemList.Count; i++)
                 {
                     // 包括道具
-                    if (((Item)itemList[i]).Id == item.Id)
+                    if (((AItem)itemList[i]).Id == item.Id)
                     {
-                        ((Item)itemList[i]).Quantity++;
+                        ((AItem)itemList[i]).Quantity++;
                         return;
                     }
                 }
@@ -88,7 +88,7 @@
         /// <param name="type">道具类型</param>
         /// <param name="index1">道具1的索引</param>
         /// <param name="index2">道具2的索引</param>
-        public void Exchange(Item.ItemType type, int index1, int index2)
+        public void Exchange(AItem.ItemType type, int index1, int index2)
         {
             if (index1 < 0 || index1 >= this.Count(type) || index2 < 0 || index2 >= this.Count(type))
             {
@@ -97,7 +97,7 @@
             }
 
             ArrayList itemList = this.ItemDict[type];
-            Item temp = (Item)itemList[index1];
+            AItem temp = (AItem)itemList[index1];
             itemList[index1] = itemList[index2];
             itemList[index2] = temp;
         }
@@ -107,7 +107,7 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <param name="item">道具</param>
-        public void ReduceQuantity(Item.ItemType type, Item item)
+        public void ReduceQuantity(AItem.ItemType type, AItem item)
         {
             if (item == null)
             {
@@ -115,7 +115,7 @@
                 return;
             }
 
-            ((Item)this.ItemDict[type][this.GetIndex(type, (Weapon)item)]).Quantity--;
+            ((AItem)this.ItemDict[type][this.GetIndex(type, (AWeapon)item)]).Quantity--;
         }
 
         /// <summary>
@@ -124,7 +124,7 @@
         /// <param name="type">道具类型</param>
         /// <param name="index">道具的索引</param>
         /// <returns>道具信息</returns>
-        public Item Get(Item.ItemType type, int index)
+        public AItem Get(AItem.ItemType type, int index)
         {
             if (index < 0 || index >= this.Count(type))
             {
@@ -132,7 +132,7 @@
                 return null;
             }
 
-            return (Item)this.ItemDict[type][index];
+            return (AItem)this.ItemDict[type][index];
         }
 
         /// <summary>
@@ -140,7 +140,7 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <returns>数量</returns>
-        public int Count(Item.ItemType type)
+        public int Count(AItem.ItemType type)
         {
             if (!this.ItemDict.ContainsKey(type))
             {
@@ -156,7 +156,7 @@
         /// <param name="type">道具类型</param>
         /// <param name="item">道具</param>
         /// <returns>索引</returns>
-        public int GetIndex(Item.ItemType type, Weapon item)
+        public int GetIndex(AItem.ItemType type, AWeapon item)
         {
             if (item == null)
             {
@@ -167,7 +167,7 @@
             ArrayList itemList = this.ItemDict[type];
             for (int i = 0; i < itemList.Count; i++)
             {
-                if (((Item)itemList[i]).Id == item.Id)
+                if (((AItem)itemList[i]).Id == item.Id)
                 {
                     return i;
                 }
@@ -181,7 +181,7 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <returns>是否</returns>
-        public bool IsNull(Item.ItemType type)
+        public bool IsNull(AItem.ItemType type)
         {
             return this.Count(type) == 0;
         }

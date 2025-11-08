@@ -17,13 +17,13 @@
         /// <summary>
         /// 单例的
         /// </summary>
-        private readonly Dictionary<string, BuildItem> buildItems;
+        private readonly Dictionary<string, ABuildItem> buildItems;
         private int uid = 0;
 
         public ItemFactory()
         {
             this.backpackItemTypes = new Dictionary<string, Type>();
-            this.buildItems = new Dictionary<string, BuildItem>();
+            this.buildItems = new Dictionary<string, ABuildItem>();
             this.ReadItems();
         }
 
@@ -32,10 +32,10 @@
         /// </summary>
         /// <param name="name">名字</param>
         /// <returns>背包道具</returns>
-        public BackpackItem GetBackpackItemByName(string name)
+        public ABackpackItem GetBackpackItemByName(string name)
         {
             int id = ItemDataManager.Instance.GetByName(name).Id;
-            BackpackItem item = (BackpackItem)Activator.CreateInstance(this.backpackItemTypes[name]);
+            ABackpackItem item = (ABackpackItem)Activator.CreateInstance(this.backpackItemTypes[name]);
             item.Id = id;
             item.Quantity = 1;
             item.Uid = this.uid++;
@@ -47,7 +47,7 @@
         /// </summary>
         /// <param name="name">名字</param>
         /// <returns>建造道具</returns>
-        public BuildItem GetBuildItemByName(string name)
+        public ABuildItem GetBuildItemByName(string name)
         {
             return this.buildItems[name];
         }
@@ -56,9 +56,9 @@
         /// 得到所有的背包道具
         /// </summary>
         /// <returns>所有背包道具</returns>
-        public List<Item> GenBackpackItems()
+        public List<AItem> GenBackpackItems()
         {
-            List<Item> items = new ();
+            List<AItem> items = new ();
             foreach (KeyValuePair<string, Type> item in this.backpackItemTypes)
             {
                 items.Add(this.GetBackpackItemByName(item.Key));
@@ -71,9 +71,9 @@
         /// 得到所有的建造道具
         /// </summary>
         /// <returns>所有建造道具</returns>
-        public List<Item> GetBuildItems()
+        public List<AItem> GetBuildItems()
         {
-            return this.buildItems.Values.ToList<Item>();
+            return this.buildItems.Values.ToList<AItem>();
         }
 
         /// <summary>
@@ -82,23 +82,23 @@
         /// </summary>
         private void ReadItems()
         {
-            List<Type> types = Tool.GetChildByParent<BackpackItem>();
+            List<Type> types = Tool.GetChildByParent<ABackpackItem>();
             foreach (Type type in types)
             {
                 this.backpackItemTypes.Add(type.Name, type);
             }
 
-            types = Tool.GetChildByParent<BuildItem>();
+            types = Tool.GetChildByParent<ABuildItem>();
             foreach (Type type in types)
             {
                 Type[] interfaces = type.GetInterfaces();
-                if (interfaces.Length > 0 && interfaces.Contains(typeof(Item.IDontShow)))
+                if (interfaces.Length > 0 && interfaces.Contains(typeof(AItem.IDontShow)))
                 {
                     continue;
                 }
 
                 int id = ItemDataManager.Instance.GetByName(type.Name).Id;
-                BuildItem item = (BuildItem)Activator.CreateInstance(type);
+                ABuildItem item = (ABuildItem)Activator.CreateInstance(type);
                 item.Id = id;
                 this.buildItems.Add(type.Name, item);
             }

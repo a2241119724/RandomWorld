@@ -6,7 +6,7 @@
     /// 自定义门
     /// </summary>
     [Serializable]
-    public class CustomDoor : DoorItem
+    public class CustomDoor : ADoor
     {
     }
 }

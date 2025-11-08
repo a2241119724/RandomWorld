@@ -53,7 +53,7 @@
                 return;
             }
 
-            if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == Item.ItemType.Weapon)
+            if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == AItem.ItemType.Weapon)
             {
                 if (PlayerManager.Instance.Select.Weapon != null)
                 {
@@ -76,41 +76,25 @@
                 }
 
                 PlayerManager.Instance.Select.Weapon.name = ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName;
-                PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
-                PlayerManager.Instance.Select.Weapon.GetComponent<WeaponObject>().Item = this.Select.Item;
+                PlayerManager.Instance.Select.Weapon.GetComponent<AWeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
+                PlayerManager.Instance.Select.Weapon.GetComponent<AWeaponObject>().Item = this.Select.Item;
                 PlayerManager.Instance.Select.Weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
                 GlobalInit.Instance.ShowTip("装备成功");
 
                 // 从背包删除该道具
-                PlayerManager.Instance.Select.WeaponData = (Weapon)this.Select.Item;
+                PlayerManager.Instance.Select.WeaponData = (AWeapon)this.Select.Item;
                 BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
 
                 // 不能对一个武器进行多次装备
                 this.Select.SelectItemIndex = -1;
                 this.Select.Item = null;
             }
-            else if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == Item.ItemType.Consumable)
+            else if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == AItem.ItemType.Consumable)
             {
-                // 实例化道具调用上面的脚本再立即销毁
-                GameObject g = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName);
-                if (g == null)
-                {
-                    LogManager.Instance.Log("Consumable is null!!!", LogManager.LogLevel.Error);
-                    return;
-                }
-
-                g = Object.Instantiate(g);
-                if (g == null)
-                {
-                    LogManager.Instance.Log("Consumable Instantiate Error!!!", LogManager.LogLevel.Error);
-                    return;
-                }
-
-                g.GetComponent<ConsumableObject>().Use();
-                Object.Destroy(g);
+                ((AConsumable)this.Select.Item).Use();
 
                 // 减少或删除
-                if (((BackpackItem)this.Select.Item).Quantity == 1)
+                if (((ABackpackItem)this.Select.Item).Quantity == 1)
                 {
                     // 从背包删除该道具
                     BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
@@ -119,7 +103,7 @@
                 }
                 else
                 {
-                    LogManager.Instance.Log("数量:" + ((BackpackItem)this.Select.Item).Quantity, LogManager.LogLevel.Info);
+                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevel.Info);
 
                     // 数据--
                     BackpackController.Instance.ReduceQuantity(this.Select.Item);
@@ -127,10 +111,10 @@
                     // 界面--
                     BackpackController.Instance.ReduceQuantityUI(this.Select.Item);
                     BackpackController.Instance.SetBorderColor(BackpackController.Instance.GetIndex(this.Select.Item));
-                    LogManager.Instance.Log("数量:" + ((BackpackItem)this.Select.Item).Quantity, LogManager.LogLevel.Info);
+                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevel.Info);
 
                     // 全局数据--
-                    BackpackItem item = (BackpackItem)this.Select.Item;
+                    ABackpackItem item = (ABackpackItem)this.Select.Item;
                     --item.Quantity;
                     this.Select.Item = item;
                 }
@@ -170,7 +154,7 @@
         /// <summary>
         /// 选中的道具数据
         /// </summary>
-        public Item Item = null;
+        public AItem Item = null;
 
         /// <summary>
         /// 初始化

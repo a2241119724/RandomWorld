@@ -7,7 +7,7 @@
     /// 农田,地块
     /// </summary>
     [Serializable]
-    public class FarmlandWall : WallItem
+    public class FarmlandWall : AWall
     {
         /// <inheritdoc/>
         public override void AddBuildTask(Vector3Int centerMap)
