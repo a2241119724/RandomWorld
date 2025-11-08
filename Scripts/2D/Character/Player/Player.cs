@@ -15,7 +15,8 @@
         private Vector3 direction; // 按键玩家移动方向
         private CameraMove mainCamera;
         private CameraMove miniCamera;
-        private SpriteRenderer sprite; // idle图像开关
+        private SpriteRenderer sprite;
+        private new Rigidbody2D rigidbody2D;
 
         /// <inheritdoc/>
         public override void Awake()
@@ -31,6 +32,9 @@
             this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
             this.name = "Player";
             this.CharacterDataLAB = new PlayerData();
+            this.rigidbody2D = this.GetComponent<Rigidbody2D>();
+            this.rigidbody2D.freezeRotation = true; // 防止旋转
+            this.rigidbody2D.interpolation = RigidbodyInterpolation2D.Interpolate; // 插值让移动更平滑，解决角色卡顿
         }
 
         /// <inheritdoc/>
@@ -92,9 +96,8 @@
                 return;
             }
 
-            // 防止撞墙震动
-            this.Move();
-            this.sprite.material.SetTexture("_MainTex", this.sprite.sprite.texture);
+            this.Move(); // 防止撞墙震动
+            this.sprite.material.SetTexture("_MainTex", this.sprite.sprite.texture); // 设置边缘特效
         }
 
         /// <inheritdoc/>
@@ -282,36 +285,33 @@
                     this.direction.y = Joystick.Instance.Direction.y;
                 }
 
-                this.animator.enabled = false;
                 if (this.direction.y > 0)
                 {
                     // 上
-                    this.sprite.sprite = ResourceManager.Instance.GetImage("PlayerBack");
+                    this.animator.SetInteger("Direction", 0);
                 }
                 else if (this.direction.y < 0)
                 {
                     // 下
-                    this.sprite.sprite = ResourceManager.Instance.GetImage("PlayerFront");
-                    this.animator.enabled = true;
-                }
-                else if (this.direction.x > 0)
-                {
-                    // 右
-                    this.sprite.sprite = ResourceManager.Instance.GetImage("PlayerSide");
-                    this.sprite.flipX = true;
+                    this.animator.SetInteger("Direction", 1);
                 }
                 else if (this.direction.x < 0)
                 {
                     // 左
-                    this.sprite.sprite = ResourceManager.Instance.GetImage("PlayerSide");
-                    this.sprite.flipX = false;
+                    this.animator.SetInteger("Direction", 2);
+                }
+                else if (this.direction.x > 0)
+                {
+                    // 右
+                    this.animator.SetInteger("Direction", 3);
                 }
 
-                this.transform.Translate(this.MoveSpeed * Time.fixedDeltaTime * this.direction.normalized);
+                this.rigidbody2D.velocity = this.MoveSpeed * this.direction.normalized;
             }
             else
             {
                 this.animator.SetBool("IsMove", false);
+                this.rigidbody2D.velocity = Vector3.zero;
             }
         }
 
