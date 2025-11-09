@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: -1279589350504871589}
   - component: {fileID: -6787381352354303095}
   - component: {fileID: 4407907457519238339}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: CustomSword
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -124,7 +124,7 @@ BoxCollider2D:
   m_Offset: {x: 0, y: 0.43632644}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0, y: 0}
+    pivot: {x: 0.5, y: 0.03}
     oldSize: {x: 0.31, y: 1.1}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
@@ -196,7 +196,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4789387038913672919}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}

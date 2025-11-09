@@ -1,7 +1,14 @@
-﻿## RandomWorld(未完成)
+﻿# RandomWorld(未完成)
 
 - 可能缺少某些资源
 - 需要整个Build文件夹运行exe
+
+## 进行中
+
+- 多存档
+- 工人按照现实打工人事件行为
+- 追踪枪子弹
+- 优化Equipment与Material：<通过读取ItemDataSO实例化CmmonEquipmet>代替<通过父类获取子类创建新的道具>
 
 ## 注
 
@@ -11,3 +18,4 @@
 - 修改完prefab之后需要重新打AB包
 - RuleTile以y=x对称
 - 在Button的UI界面添加点击函数, 需要先将脚本放到物体上，再添加该物体
+- 道具数据ItemData与地图瓦片Tile的名称关联绑定

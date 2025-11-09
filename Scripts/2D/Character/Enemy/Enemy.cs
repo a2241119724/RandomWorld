@@ -37,7 +37,7 @@
         /// 敌人头的位置.
         /// </summary>
         [HideInInspector]
-        public Transform EnemyHead { get; set; }
+        public Transform Head { get; set; }
 
         /// <summary>
         /// 敌人状态管理器.
@@ -55,7 +55,8 @@
         public override void Awake()
         {
             base.Awake();
-            this.attackTags = new List<string>
+            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.PLAYER_LAAYER, LayerConstant.WORKER_LAAYER);
+            this.AttackTags = new List<string>
             {
                 "Player",
                 "Worker",
@@ -68,8 +69,8 @@
         public override void Start()
         {
             base.Start();
-            this.EnemyHead = this.transform.Find("Head");
-            if (this.EnemyHead == null)
+            this.Head = this.transform.Find("Head");
+            if (this.Head == null)
             {
                 LogManager.Instance.Log("enemyHead Not Found!!!", LogManager.LogLevel.Error);
                 return;
@@ -127,7 +128,7 @@
             {
                 // 计算玩家是否在敌人的视角内
                 Vector3 direction = target.position - this.transform.position;
-                float degree = Vector3.Angle(direction, this.EnemyHead.position - this.transform.position);
+                float degree = Vector3.Angle(direction, this.Head.position - this.transform.position);
                 if (degree < enemyData.SightAngle / 2 && degree > -enemyData.SightAngle / 2)
                 {
                     isFind = true;
@@ -138,7 +139,7 @@
             {
                 // 判断玩家和敌人之间是否存在遮挡物
                 Vector3 direction = target.position - this.transform.position;
-                this.raycastHit2D = Physics2D.Raycast(this.transform.position, direction, enemyData.SightRange, this.attackLayers); // (源,方向,距离,层级)
+                this.raycastHit2D = Physics2D.Raycast(this.transform.position, direction, enemyData.SightRange, this.AttackLayers); // (源,方向,距离,层级)
 
                 // 如果有碰撞体并且不是目标，是障碍物
                 if (this.raycastHit2D.collider != null && this.raycastHit2D.transform != target)
@@ -156,7 +157,7 @@
         public void MoveToForward()
         {
             this.MoveSpeed = UnityEngine.Random.Range(1.0f, 2.0f);
-            this.transform.Translate(this.MoveSpeed * Time.deltaTime * (this.EnemyHead.position - this.transform.position).normalized, Space.World); // 向前移动
+            this.transform.Translate(this.MoveSpeed * Time.deltaTime * (this.Head.position - this.transform.position).normalized, Space.World); // 向前移动
         }
 
         /// <summary>

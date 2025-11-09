@@ -60,7 +60,6 @@
                     // if (zombieAttackAudio != null)
                     // AudioSource.PlayClipAtPoint(zombieAttackAudio, transform.position);
                     // 攻击
-                    // character.attack();
                     if (NetworkConnect.Instance.IsOnline)
                     {
                         this.Character.pv.RPC("Attack", RpcTarget.All);

@@ -139,7 +139,12 @@
         /// <summary>
         /// 手持该武器的玩家
         /// </summary>
-        protected GameObject player;
+        protected Character character;
+
+        /// <summary>
+        /// 武器头部
+        /// </summary>
+        protected Transform head;
 
         /// <summary>
         /// 攻击效果
@@ -164,16 +169,10 @@
         /// <summary>
         /// 设置玩家
         /// </summary>
-        /// <param name="player">玩家</param>
-        public void SetPlayer(Player player)
+        /// <param name="character">持有武器的角色</param>
+        public void SetCharacter(Character character)
         {
-            if (player == null)
-            {
-                LogManager.Instance.Log("collider is null!!!", LogManager.LogLevel.Error);
-                return;
-            }
-
-            this.player = player.gameObject;
+            this.character = character;
             this.enabled = true; // 启动角色控制武器脚本
             CircleCollider2D c = PlayerManager.Instance.Select.Weapon.transform.Find("Head").gameObject.AddComponent<CircleCollider2D>(); // 敌人检测
             c.isTrigger = true;
@@ -188,14 +187,18 @@
             // if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
             if (this.recordTime >= this.attackInterval)
             {
-                this.DoAttack();
-
                 // 所有武器攻击效果
                 ParticleSystem particleSystem = AttackEffectManager.Instance.GetEffect(this.attackEffect, (this.transform.rotation.eulerAngles.z + 90) * Mathf.Deg2Rad);
-                particleSystem.transform.parent = this.transform.parent;
-                particleSystem.transform.localPosition = Vector3.zero;
+                particleSystem.transform.parent = this.transform.parent.parent;
+                particleSystem.transform.position = this.head.position;
                 particleSystem.Play();
+                AttackEffect attackEffect = particleSystem.GetComponent<AttackEffect>();
+                attackEffect.AttackLayers = this.AttackLayers;
+                attackEffect.AttackTags = this.AttackTags;
+                attackEffect.Onwer = this.character;
+                attackEffect.Damage = ((AWeapon)this.Item).GetDamage();
                 this.recordTime = 0.0f;
+                this.DoAttack(attackEffect);
             }
         }
 
@@ -203,12 +206,12 @@
         {
             if (stream.IsWriting)
             {
-                stream.SendNext(this.player.GetPhotonView().ViewID);
+                stream.SendNext(this.character.gameObject.GetPhotonView().ViewID);
             }
             else
             {
-                this.player = PhotonView.Find((int)stream.ReceiveNext()).gameObject;
-                this.transform.SetParent(this.player.transform);
+                this.character = PhotonView.Find((int)stream.ReceiveNext()).GetComponent<Character>();
+                this.transform.SetParent(this.character.transform);
             }
         }
 
@@ -218,6 +221,7 @@
             base.Awake();
             this.contactFilter2D.useTriggers = true;
             this.name = this.GetType().Name;
+            this.head = this.transform.Find("Head");
         }
 
         /// <inheritdoc/>
@@ -225,7 +229,7 @@
         {
             base.Start();
             this.transform.localPosition = Vector3.zero; // 初始位置与玩家一致
-            this.circleCollider2D = this.transform.Find("Head").GetComponent<CircleCollider2D>();
+            this.circleCollider2D = this.head.GetComponent<CircleCollider2D>();
             if (this.circleCollider2D == null)
             {
                 LogManager.Instance.Log("collider Not Found!!!", LogManager.LogLevel.Error);
@@ -233,7 +237,7 @@
             }
 
             // 设置武器追踪范围
-            CircleCollider2D collider2D = this.transform.Find("Head").GetComponent<CircleCollider2D>();
+            CircleCollider2D collider2D = this.head.GetComponent<CircleCollider2D>();
             if (collider2D != null)
             {
                 collider2D.radius = this.raduis;
@@ -287,14 +291,7 @@
         /// <summary>
         /// 间隔攻击
         /// </summary>
-        protected abstract void DoAttack();
-
-        private void OnParticleCollision(GameObject other)
-        {
-            if (this.AttackTags.Contains(other.tag))
-            {
-                other.GetComponent<Character>().ReduceHp(10);
-            }
-        }
+        /// <param name="attackEffect">攻击特效</param>
+        protected abstract void DoAttack(AttackEffect attackEffect);
     }
 }

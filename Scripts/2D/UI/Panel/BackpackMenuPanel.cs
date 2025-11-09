@@ -76,9 +76,12 @@
                 }
 
                 PlayerManager.Instance.Select.Weapon.name = ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName;
-                PlayerManager.Instance.Select.Weapon.GetComponent<AWeaponObject>().SetPlayer(PlayerManager.Instance.Mine);
-                PlayerManager.Instance.Select.Weapon.GetComponent<AWeaponObject>().Item = this.Select.Item;
                 PlayerManager.Instance.Select.Weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
+                AWeaponObject weaponObject = PlayerManager.Instance.Select.Weapon.GetComponent<AWeaponObject>();
+                weaponObject.SetCharacter(PlayerManager.Instance.Mine);
+                weaponObject.Item = this.Select.Item;
+                weaponObject.AttackLayers = PlayerManager.Instance.Mine.AttackLayers;
+                weaponObject.AttackTags = PlayerManager.Instance.Mine.AttackTags;
                 GlobalInit.Instance.ShowTip("装备成功");
 
                 // 从背包删除该道具

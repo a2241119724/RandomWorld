@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4925274171708366}
   - component: {fileID: 1463133184193780128}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -81,7 +81,7 @@ GameObject:
   - component: {fileID: -1307053299847142385}
   - component: {fileID: 4464460560868903683}
   - component: {fileID: -7166227021320989225}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: TraceGun
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -191,7 +191,7 @@ BoxCollider2D:
   m_Offset: {x: 0, y: 0.13642931}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0, y: 0}
+    pivot: {x: 0.5, y: 0.3}
     oldSize: {x: 1, y: 1}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
