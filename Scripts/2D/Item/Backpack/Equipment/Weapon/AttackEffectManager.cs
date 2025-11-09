@@ -32,9 +32,14 @@
             KnifeLight,
 
             /// <summary>
-            /// 无
+            /// 子弹
             /// </summary>
-            None,
+            Bullet,
+
+            /// <summary>
+            /// 跟踪子弹
+            /// </summary>
+            TraceBullet,
         }
 
         /// <summary>

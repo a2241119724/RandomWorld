@@ -1,8 +1,6 @@
 ﻿namespace LAB2D
 {
     using System;
-    using System.Collections;
-    using UnityEngine;
 
     /// <summary>
     /// 自定义剑对象
@@ -19,7 +17,7 @@
         }
 
         /// <inheritdoc/>
-        protected override void DoAttack()
+        protected override void DoAttack(AttackEffect attackEffect)
         {
         }
 

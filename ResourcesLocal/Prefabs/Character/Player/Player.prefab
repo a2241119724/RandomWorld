@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 7078958823552781607}
   - component: {fileID: 8770023980144328119}
   - component: {fileID: 2740162071042990384}
-  m_Layer: 8
+  m_Layer: 7
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -122,10 +122,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 6878778013314391245}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66f9072413fa912459fa38465c5a6ec8, type: 3}
+  m_Script: {fileID: 11500000, guid: 6482e1b8d983b3640add2a87d50e2f8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   MoveSpeed: 2.5
+  AttackLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  AttackTags: []
 --- !u!50 &6838091593783828372
 Rigidbody2D:
   serializedVersion: 4
@@ -261,7 +265,7 @@ GameObject:
   - component: {fileID: 1465285944131097558}
   - component: {fileID: 7980942897224461031}
   - component: {fileID: 53994580635885610}
-  m_Layer: 8
+  m_Layer: 7
   m_Name: Name
   m_TagString: Untagged
   m_Icon: {fileID: 0}

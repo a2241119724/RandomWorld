@@ -33,7 +33,8 @@
             this.name = "Player";
             this.CharacterDataLAB = new PlayerData();
             this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
-            this.attackTags = new List<string>
+            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAAYER);
+            this.AttackTags = new List<string>
             {
                 "Enemy",
             };

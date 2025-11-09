@@ -13,12 +13,13 @@
             base.Awake();
             this.attackInterval = 0.5f;
             this.name = "SingleGun";
+            this.attackEffect = AttackEffectManager.EffectType.Bullet;
         }
 
         /// <inheritdoc/>
-        protected override void DoAttack()
+        protected override void DoAttack(AttackEffect attackEffect)
         {
-            this.FireBullet(PrefabConstant.PLAYER_BULLET);
+            attackEffect.Speed = this.bulletSpeed;
         }
     }
 

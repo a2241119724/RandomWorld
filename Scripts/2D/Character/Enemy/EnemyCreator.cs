@@ -39,7 +39,7 @@
                 return null;
             }
 
-            return base.DoCreate(worldPos, PrefabConstant.ENEMY_LV1, "Enemy");
+            return base.DoCreate(worldPos, PrefabConstant.ENEMY_LV1, LayerConstant.ENEMY_LAAYER);
         }
     }
 }

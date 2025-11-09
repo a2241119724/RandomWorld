@@ -13,16 +13,14 @@
         {
             base.Awake();
             this.attackInterval = 0.5f;
+            this.attackEffect = AttackEffectManager.EffectType.TraceBullet;
         }
 
         /// <inheritdoc/>
-        protected override void DoAttack()
+        protected override void DoAttack(AttackEffect attackEffect)
         {
-            GameObject g = this.FireBullet(PrefabConstant.TRACE_BULLET);
-            if (g != null && EnemyManager.Instance.Count() > 0)
-            {
-                g.GetComponent<TraceBullet>().Target = EnemyManager.Instance.Get(0);
-            }
+            TraceBulletEffect traceBulletEffect = attackEffect as TraceBulletEffect;
+            traceBulletEffect.Target = EnemyManager.Instance.Get(0);
         }
     }
 

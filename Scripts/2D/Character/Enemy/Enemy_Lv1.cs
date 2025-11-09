@@ -45,12 +45,17 @@
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
 
             // 发射子弹
-            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.ENEMY_BULLET, this.EnemyHead.position, Quaternion.identity);
-            g.GetComponent<ABulletObject>().Direction = this.EnemyHead.position - this.transform.position;
-            g.GetComponent<ABulletObject>().BulletSpeed = enemyData.BulletSpeed;
-            this.damage = UnityEngine.Random.Range(1, 10);
-            g.GetComponent<ABulletObject>().Damage = this.damage;
-            g.transform.SetParent(this.transform.parent, false);
+            ParticleSystem ps = AttackEffectManager.Instance.GetEffect(AttackEffectManager.EffectType.Bullet, (this.transform.rotation.eulerAngles.z + 90) * Mathf.Deg2Rad);
+            ps.transform.parent = this.transform.parent;
+            ps.transform.position = this.Head.position;
+            ps.Play();
+            AttackEffect ae = ps.GetComponent<AttackEffect>();
+            ae.AttackLayers = this.AttackLayers;
+            ae.AttackTags = this.AttackTags;
+            ae.Speed = enemyData.BulletSpeed;
+            this.damage = Random.Range(1, 10);
+            ae.Damage = this.damage;
+            ae.Onwer = this;
         }
     }
 }

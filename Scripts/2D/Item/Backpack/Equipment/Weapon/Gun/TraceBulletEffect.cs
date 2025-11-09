@@ -5,7 +5,7 @@
     /// <summary>
     /// 跟踪子弹
     /// </summary>
-    public class TraceBullet : ABulletObject
+    public class TraceBulletEffect : AttackEffect
     {
         private const float RecordTime = 1.0f;
         private static readonly int[] D = new int[] { -1, 1 };
@@ -13,19 +13,14 @@
         private Vector3 center = default; // 旋转的圆心
         private int index;
         private float recordTime;
+        private Vector3 direction = Vector3.right;
 
         /// <summary>
         /// 跟踪目标
         /// </summary>
         public Character Target { get; set; }
 
-        protected override void DoAttack()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        protected override void Update()
+        public void Update()
         {
             if (this.Target != null && this.center == default)
             {
@@ -38,9 +33,9 @@
                     this.direction.x + (offset.x * this.turnSpeed * Time.deltaTime),
                     this.direction.y + (offset.y * this.turnSpeed * Time.deltaTime),
                     this.direction.z + (offset.z * this.turnSpeed * Time.deltaTime)).normalized;
-                if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.998f)
+                if (Random.Range(0.0f, 1.0f) > 0.998f)
                 {
-                    this.index = UnityEngine.Random.Range(0, 2);
+                    this.index = Random.Range(0, 2);
 
                     // 垂直线
                     Vector3 direction = new Vector3(
@@ -62,8 +57,6 @@
                     this.center = default;
                 }
             }
-
-            base.Update();
         }
     }
 }

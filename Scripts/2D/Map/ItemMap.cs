@@ -108,8 +108,6 @@
 
             // 添加搬运任务
             WorkerTaskManager.Instance.AddTask(new WorkerCarryTask.CarryTaskBuilder()
-
-                // .setEndTarget(InventoryManager.Instance.getCell(id))
                 .SetResourceInfo(resourceInfo).SetStartTarget(posMap).Build());
         }
 

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4913437295971138}
   - component: {fileID: 5306946785680926618}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: Hp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -55,7 +55,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4317711990918144}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -88,7 +88,7 @@ GameObject:
   - component: {fileID: 224513488336067968}
   - component: {fileID: 222410026534143052}
   - component: {fileID: 114475816116628270}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -167,7 +167,7 @@ GameObject:
   - component: {fileID: -6144550439610382453}
   - component: {fileID: -8390719607907001426}
   - component: {fileID: 5612860625550054286}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: Enemy_Lv1
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -328,6 +328,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MoveSpeed: 2.5
+  AttackLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  AttackTags: []
 --- !u!114 &-8390719607907001426
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -380,7 +384,7 @@ GameObject:
   - component: {fileID: 224349237525042484}
   - component: {fileID: 222331556047747748}
   - component: {fileID: 114521264140909142}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -456,7 +460,7 @@ GameObject:
   - component: {fileID: 222049365408098616}
   - component: {fileID: 114410887161959720}
   - component: {fileID: 2234357694461278621}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: HpCount
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -545,7 +549,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 224735567784788650}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: Fill Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -583,7 +587,7 @@ GameObject:
   - component: {fileID: 224501907355233960}
   - component: {fileID: 114481865190449160}
   - component: {fileID: 8934260569162574532}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: HpBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
