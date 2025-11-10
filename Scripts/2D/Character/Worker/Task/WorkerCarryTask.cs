@@ -35,7 +35,7 @@
                 this.TargetMap = InventoryManager.Instance.GetPosByPrePlace(worker);
                 if (this.TargetMap == default)
                 {
-                    LogManager.Instance.Log("仓库没有位置了", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("仓库没有位置了", LogManager.LogLevelEnum.Error);
                 }
 
                 // 进入工作状态
@@ -55,7 +55,7 @@
         public override void Finish(Worker worker)
         {
             base.Finish(worker);
-            AItem.ItemType itemType = ItemDataManager.Instance.IdToType(this.resourceInfo.Id);
+            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(this.resourceInfo.Id);
 
             // 放下拿起来的东西
             ItemMap.Instance.AddTile(this.TargetMap, ResourceManager.Instance
@@ -64,7 +64,7 @@
             InventoryManager.Instance.AddItemByPrePlace(worker, this.TargetMap);
 
             // 如果是食物,添加饥饿任务
-            if (itemType == AItem.ItemType.Food)
+            if (itemType == AItem.ItemTypeEnum.Food)
             {
                 WorkerTaskManager.Instance.AddTask(new WorkerHungryTask.HungryTaskBuilder().SetTarget(this.TargetMap).Build(), 0);
             }

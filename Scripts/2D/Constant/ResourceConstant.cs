@@ -35,7 +35,7 @@
         /// <summary>
         /// 道具数据脚本根目录
         /// </summary>
-        public const string SCRIPTABLE_ROOT = "Scriptable/";
+        public const string SCRIPTABLE_ROOT = "SO/";
 
         // =============================================================================================================
 

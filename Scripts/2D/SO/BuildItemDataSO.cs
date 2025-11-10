@@ -12,7 +12,7 @@
         /// <summary>
         /// 物品类型
         /// </summary>
-        public AItem.ItemType ItemType;
+        public AItem.ItemTypeEnum ItemType;
 
         /// <summary>
         /// 物品数据

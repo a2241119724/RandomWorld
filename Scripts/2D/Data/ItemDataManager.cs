@@ -25,27 +25,10 @@
             this.nameToId = new Dictionary<string, int>();
             this.allItemInfo = new Dictionary<int, ItemData>();
 
-            AItem.ItemType[] itemTypes = AItem.Ranges["Backpack"];
+            AItem.ItemTypeEnum[] itemTypes = AItem.Ranges["Build"];
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
-                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(((AItem.ItemType)type).ToString() + "ItemData");
-                if (itemDataSO == null)
-                {
-                    continue;
-                }
-
-                foreach (ItemData itemData in itemDataSO.ItemDatas)
-                {
-                    int id = Convert.ToInt32(itemData.Id);
-                    this.allItemInfo.Add(id, itemData);
-                    this.nameToId.Add(itemData.EnName, id);
-                }
-            }
-
-            itemTypes = AItem.Ranges["Build"];
-            for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
-            {
-                BuildItemDataSO itemDataSO = ResourceManager.Instance.GetBuildSO(((AItem.ItemType)type).ToString() + "ItemData");
+                BuildItemDataSO itemDataSO = ResourceManager.Instance.GetBuildSO(((AItem.ItemTypeEnum)type).ToString() + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -58,6 +41,34 @@
                     this.nameToId.Add(itemData.EnName, id);
                 }
             }
+
+            itemTypes = AItem.Ranges["Backpack"];
+            List<ItemData> equipmentData = null;
+            for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
+            {
+                string itemType = ((AItem.ItemTypeEnum)type).ToString();
+                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(itemType + "ItemData");
+                if (itemDataSO == null)
+                {
+                    continue;
+                }
+
+                foreach (ItemData itemData in itemDataSO.ItemDatas)
+                {
+                    int id = Convert.ToInt32(itemData.Id);
+                    this.allItemInfo.Add(id, itemData);
+                    this.nameToId.Add(itemData.EnName, id);
+                }
+
+                // 初始化装备实例
+                if (itemType.Equals("Equipment"))
+                {
+                    equipmentData = itemDataSO.ItemDatas;
+                }
+            }
+
+            // 最后初始化背包道具实例
+            ItemInstanceFactory.Instance.InitItemInstances(equipmentData);
         }
 
         /// <summary>
@@ -69,7 +80,7 @@
         {
             if (!this.allItemInfo.ContainsKey(id))
             {
-                LogManager.Instance.Log("没有case该id的道具!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有case该id的道具!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -85,7 +96,7 @@
         {
             if (!this.nameToId.ContainsKey(name))
             {
-                LogManager.Instance.Log("没有名字为" + name + "的道具!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有名字为" + name + "的道具!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -97,15 +108,15 @@
         /// </summary>
         /// <param name="id">ID</param>
         /// <returns>道具类型</returns>
-        public AItem.ItemType IdToType(int id)
+        public AItem.ItemTypeEnum IdToType(int id)
         {
             if (id < 0)
             {
-                LogManager.Instance.Log($"id:{id}小于0!!!", LogManager.LogLevel.Error);
-                return AItem.ItemType.Null;
+                LogManager.Instance.Log($"id:{id}小于0!!!", LogManager.LogLevelEnum.Error);
+                return AItem.ItemTypeEnum.Null;
             }
 
-            return (AItem.ItemType)(object)(id / TypeInterval);
+            return (AItem.ItemTypeEnum)(object)(id / TypeInterval);
         }
 
         /// <summary>
@@ -113,18 +124,18 @@
         /// </summary>
         /// <param name="id">ID</param>
         /// <returns>装备类型</returns>
-        public AEquipment.EquipType IdToEquipmentType(int id)
+        public AEquipment.EquipTypeEnum IdToEquipmentType(int id)
         {
-            if (this.IdToType(id) != AItem.ItemType.Equipment)
+            if (this.IdToType(id) != AItem.ItemTypeEnum.Equipment)
             {
-                LogManager.Instance.Log("id不是装备!!!", LogManager.LogLevel.Error);
-                return AEquipment.EquipType.Null;
+                LogManager.Instance.Log("id不是装备!!!", LogManager.LogLevelEnum.Error);
+                return AEquipment.EquipTypeEnum.Null;
             }
 
-            id -= ((int)AItem.ItemType.Equipment) * TypeInterval;
+            id -= ((int)AItem.ItemTypeEnum.Equipment) * TypeInterval;
 
             // 最多10种装备
-            return (AEquipment.EquipType)(object)(id * 10 / TypeInterval);
+            return (AEquipment.EquipTypeEnum)(object)(id * 10 / TypeInterval);
         }
 
         /// <summary>
@@ -144,15 +155,15 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <returns>button索引</returns>
-        public int GetIndexByType(AItem.ItemType type)
+        public int GetIndexByType(AItem.ItemTypeEnum type)
         {
-            if ((int)type < (int)AItem.ItemType.Room)
+            if ((int)type < (int)AItem.ItemTypeEnum.Room)
             {
                 return (int)type;
             }
             else
             {
-                return (int)type - (int)AItem.ItemType.Room;
+                return (int)type - (int)AItem.ItemTypeEnum.Room;
             }
         }
 

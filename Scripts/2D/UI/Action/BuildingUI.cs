@@ -29,7 +29,7 @@
 
             // 转为数组下标
             Vector3Int centerMap = TileMap.Instance.WorldPosToMapPos(worldPos);
-            ABuildItem buildItem = (ABuildItem)ItemFactory.Instance.GetBuildItemByName(ItemDataManager.Instance.GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = (ABuildItem)ItemInstanceFactory.Instance.GetBuildItemByName(ItemDataManager.Instance.GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
 
             // 建造
             if (IsAvailableMap.Instance.ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.IsBottomLeft)

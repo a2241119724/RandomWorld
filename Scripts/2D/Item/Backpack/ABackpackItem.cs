@@ -1,7 +1,6 @@
 ﻿namespace LAB2D
 {
     using System;
-    using UnityEngine;
     using UnityEngine.Tilemaps;
 
     /// <summary>
@@ -19,18 +18,18 @@
         /// <summary>
         /// 品质
         /// </summary>
-        public BackpackItemQuality Quality;
+        public BackpackItemQualityEnum Quality;
 
         protected ABackpackItem()
         {
-            this.Quality = BackpackItemQuality.Gray;
+            this.Quality = BackpackItemQualityEnum.Gray;
         }
 
         /// <summary>
         /// 背包质量
         /// </summary>
         [Serializable]
-        public enum BackpackItemQuality
+        public enum BackpackItemQualityEnum
         {
             /// <summary>
             /// 灰色
@@ -107,22 +106,6 @@
         protected override void Update()
         {
             base.Update();
-        }
-
-        /// <summary>
-        /// 即使挂在物体上的脚本没有开启,该方法也会执行
-        /// 该道具碰到玩家,加到背包里面
-        /// </summary>
-        /// <param name="collision">碰撞体</param>
-        protected virtual void OnTriggerEnter2D(Collider2D collision)
-        {
-            if (collision.gameObject.CompareTag("Player"))
-            {
-                BackpackController.Instance.AddItem(ItemFactory.Instance.GetBackpackItemByName(this.name.Split("Object")[0]));
-                Destroy(this.gameObject);
-
-                // gameObject.SetActive(false); // 减小开销
-            }
         }
     }
 }

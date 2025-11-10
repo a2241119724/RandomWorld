@@ -53,7 +53,7 @@
                 return;
             }
 
-            if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == AItem.ItemType.Weapon)
+            if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == AItem.ItemTypeEnum.Weapon)
             {
                 if (PlayerManager.Instance.Select.Weapon != null)
                 {
@@ -71,7 +71,7 @@
                 PlayerManager.Instance.Select.Weapon = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName, false);
                 if (PlayerManager.Instance.Select.Weapon == null)
                 {
-                    LogManager.Instance.Log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 
@@ -92,7 +92,7 @@
                 this.Select.SelectItemIndex = -1;
                 this.Select.Item = null;
             }
-            else if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == AItem.ItemType.Consumable)
+            else if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == AItem.ItemTypeEnum.Consumable)
             {
                 ((AConsumable)this.Select.Item).Use();
 
@@ -106,7 +106,7 @@
                 }
                 else
                 {
-                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevel.Info);
+                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Info);
 
                     // 数据--
                     BackpackController.Instance.ReduceQuantity(this.Select.Item);
@@ -114,7 +114,7 @@
                     // 界面--
                     BackpackController.Instance.ReduceQuantityUI(this.Select.Item);
                     BackpackController.Instance.SetBorderColor(BackpackController.Instance.GetIndex(this.Select.Item));
-                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevel.Info);
+                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Info);
 
                     // 全局数据--
                     ABackpackItem item = (ABackpackItem)this.Select.Item;

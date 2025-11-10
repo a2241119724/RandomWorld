@@ -19,7 +19,7 @@
             this.Data = new List<Row>();
             if (this.Data == null)
             {
-                LogManager.Instance.Log("data assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("data assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }

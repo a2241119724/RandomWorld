@@ -38,21 +38,21 @@
             this.tip = this.transform.Find("Center/Tips").GetComponent<Text>();
             if (this.tip == null)
             {
-                LogManager.Instance.Log("tips Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("tips Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.percent = this.transform.Find("Center/Percent").GetComponent<Text>();
             if (this.percent == null)
             {
-                LogManager.Instance.Log("percent Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("percent Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.slider = this.transform.Find("Center/Bar").GetComponent<Slider>();
             if (this.slider == null)
             {
-                LogManager.Instance.Log("Progress/Bar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Progress/Bar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }
@@ -93,7 +93,7 @@
         {
             if (value < 0)
             {
-                LogManager.Instance.Log("不能为负值!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("不能为负值!!!", LogManager.LogLevelEnum.Error);
             }
 
             this.totalProcess += value;

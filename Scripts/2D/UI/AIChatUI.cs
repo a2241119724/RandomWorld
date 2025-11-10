@@ -102,7 +102,7 @@
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log("AIChatUI请求失败: " + e.Message, LogManager.LogLevel.Error);
+                LogManager.Instance.Log("AIChatUI请求失败: " + e.Message, LogManager.LogLevelEnum.Error);
                 text = "请求失败";
             }
             finally

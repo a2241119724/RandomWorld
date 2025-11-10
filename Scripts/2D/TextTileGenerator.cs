@@ -24,7 +24,7 @@
         {
             if (num < 0 || num >= 1000)
             {
-                LogManager.Instance.Log("错误的输入", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("错误的输入", LogManager.LogLevelEnum.Error);
                 return null;
             }
 

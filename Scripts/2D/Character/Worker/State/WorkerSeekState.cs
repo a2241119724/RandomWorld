@@ -61,7 +61,7 @@
 
                 if (closedPos == default)
                 {
-                    LogManager.Instance.Log($"{workerData.Task.TaskType},没有邻居位置!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log($"{workerData.Task.TaskType},没有邻居位置!!!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 

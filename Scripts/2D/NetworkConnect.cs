@@ -39,7 +39,7 @@
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
-            LogManager.Instance.Log("已连接服务器", LogManager.LogLevel.Info);
+            LogManager.Instance.Log("已连接服务器", LogManager.LogLevelEnum.Info);
 
             // 设置当前大厅类型为sqlLobby
             TypedLobby typedLobby = new ("myLobby", LobbyType.SqlLobby);
@@ -54,7 +54,7 @@
         public override void OnJoinedLobby()
         {
             base.OnJoinedLobby();
-            LogManager.Instance.Log("进入大厅", LogManager.LogLevel.Info);
+            LogManager.Instance.Log("进入大厅", LogManager.LogLevelEnum.Info);
         }
 
         /// <summary>
@@ -63,7 +63,7 @@
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
-            LogManager.Instance.Log("加入房间成功", LogManager.LogLevel.Info);
+            LogManager.Instance.Log("加入房间成功", LogManager.LogLevelEnum.Info);
 
             // 同步地图数据
             SyncDataTool.SyncDataReqWrapper(TileMap.Instance.PhotonView);
@@ -79,7 +79,7 @@
         public override void OnLeftLobby()
         {
             base.OnLeftLobby();
-            LogManager.Instance.Log("退出大厅", LogManager.LogLevel.Info);
+            LogManager.Instance.Log("退出大厅", LogManager.LogLevelEnum.Info);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@
         public override void OnLeftRoom()
         {
             base.OnLeftRoom();
-            LogManager.Instance.Log("离开房间", LogManager.LogLevel.Info);
+            LogManager.Instance.Log("离开房间", LogManager.LogLevelEnum.Info);
         }
 
         /// <summary>
@@ -98,7 +98,7 @@
         public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
         {
             base.OnPlayerEnteredRoom(newPlayer);
-            LogManager.Instance.Log("新玩家加入", LogManager.LogLevel.Info);
+            LogManager.Instance.Log("新玩家加入", LogManager.LogLevelEnum.Info);
             GlobalInit.Instance.ShowTip("新玩家加入");
         }
 
@@ -110,7 +110,7 @@
         public override void OnCreateRoomFailed(short returnCode, string message)
         {
             base.OnCreateRoomFailed(returnCode, message);
-            LogManager.Instance.Log("创建房间失败!!!", LogManager.LogLevel.Error);
+            LogManager.Instance.Log("创建房间失败!!!", LogManager.LogLevelEnum.Error);
             GlobalInit.Instance.ShowTip("创建房间失败");
             PanelController.Instance.Close();
             PanelController.Instance.Show(JoinMenuPanel.Instance);
@@ -123,7 +123,7 @@
         public override void OnDisconnected(DisconnectCause cause)
         {
             base.OnDisconnected(cause);
-            LogManager.Instance.Log("断开连接!!!", LogManager.LogLevel.Error);
+            LogManager.Instance.Log("断开连接!!!", LogManager.LogLevelEnum.Error);
             this.IsOnline = false;
         }
     }

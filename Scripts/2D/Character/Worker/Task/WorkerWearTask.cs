@@ -40,15 +40,15 @@
             Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
 
             // Worker拿起装备或者武器
-            if (ItemDataManager.Instance.IdToType(this.id) == AItem.ItemType.Weapon)
+            if (ItemDataManager.Instance.IdToType(this.id) == AItem.ItemTypeEnum.Weapon)
             {
-                workerData.Weapon = (AWeapon)ItemFactory.Instance.GetBackpackItemByName(
+                workerData.Weapon = (AWeapon)ItemInstanceFactory.Instance.GetBackpackItemByName(
                     ItemDataManager.Instance.GetById(this.id).EnName);
             }
-            else if (ItemDataManager.Instance.IdToType(this.id) == AItem.ItemType.Equipment)
+            else if (ItemDataManager.Instance.IdToType(this.id) == AItem.ItemTypeEnum.Equipment)
             {
                 workerData.AddEquipment(
-                    (AEquipment)ItemFactory.Instance.GetBackpackItemByName(
+                    (AEquipment)ItemInstanceFactory.Instance.GetBackpackItemByName(
                     ItemDataManager.Instance.GetById(this.id).EnName), this.TargetMap);
             }
 

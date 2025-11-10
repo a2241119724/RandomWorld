@@ -80,7 +80,7 @@
                         ItemDataManager.Instance.GetById(weapon.Id).EnName);
                 }
 
-                Dictionary<AEquipment.EquipType, AEquipment> equipments = workerData.Equipments;
+                Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments = workerData.Equipments;
                 foreach (var item in equipments)
                 {
                     if (item.Value != null)

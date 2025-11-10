@@ -50,7 +50,7 @@
             this.content = this.transform.GetComponent<ScrollRect>().content;
             if (this.content == null)
             {
-                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -62,11 +62,11 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <param name="model">Model</param>
-        public void UpdateView(AItem.ItemType type, M model)
+        public void UpdateView(AItem.ItemTypeEnum type, M model)
         {
             if (model == null)
             {
-                LogManager.Instance.Log("data is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("data is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

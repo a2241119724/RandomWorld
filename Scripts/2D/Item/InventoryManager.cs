@@ -21,13 +21,13 @@
             this.id2Resource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
             this.preTakeResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
             this.prePlaceResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
-            this.TypeToResource = new Dictionary<AItem.ItemType, Dictionary<Vector3Int, ResourceInfo>>();
+            this.TypeToResource = new Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>>();
         }
 
         /// <summary>
         /// 同一个类型对应的所有位置
         /// </summary>
-        public Dictionary<AItem.ItemType, Dictionary<Vector3Int, ResourceInfo>> TypeToResource { get; set; }
+        public Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> TypeToResource { get; set; }
 
         /// <summary>
         /// 新建仓库时，插入cell
@@ -45,12 +45,12 @@
             }
 
             Dictionary<Vector3Int, ResourceInfo> resources = this.id2Resource[-1];
-            if (!this.TypeToResource.ContainsKey(AItem.ItemType.Null))
+            if (!this.TypeToResource.ContainsKey(AItem.ItemTypeEnum.Null))
             {
-                this.TypeToResource.Add(AItem.ItemType.Null, new Dictionary<Vector3Int, ResourceInfo>());
+                this.TypeToResource.Add(AItem.ItemTypeEnum.Null, new Dictionary<Vector3Int, ResourceInfo>());
             }
 
-            Dictionary<Vector3Int, ResourceInfo> typeTo = this.TypeToResource[AItem.ItemType.Null];
+            Dictionary<Vector3Int, ResourceInfo> typeTo = this.TypeToResource[AItem.ItemTypeEnum.Null];
             for (int i = 0; i < length; i++)
             {
                 for (int j = 0; j < width; j++)
@@ -76,7 +76,7 @@
                 return this.prePlaceResource[worker].First().Key;
             }
 
-            LogManager.Instance.Log("没有预放置资源", LogManager.LogLevel.Error);
+            LogManager.Instance.Log("没有预放置资源", LogManager.LogLevelEnum.Error);
             return default;
         }
 
@@ -202,7 +202,7 @@
             }
 
             // 有可能被预放置了
-            LogManager.Instance.Log("仓库满了", LogManager.LogLevel.Error);
+            LogManager.Instance.Log("仓库满了", LogManager.LogLevelEnum.Error);
             return false;
         }
 
@@ -217,7 +217,7 @@
         public bool IsEnoughFoodAndPreTake(Worker worker, float hungry, bool isPre = false)
         {
             Dictionary<Vector3Int, ResourceInfo> foods = new ();
-            foreach (KeyValuePair<Vector3Int, ResourceInfo> food in this.TypeToResource[AItem.ItemType.Food])
+            foreach (KeyValuePair<Vector3Int, ResourceInfo> food in this.TypeToResource[AItem.ItemTypeEnum.Food])
             {
                 float hungry1 = food.Value.Count * 10.0f;
 
@@ -258,12 +258,12 @@
         /// <returns>位置</returns>
         public Vector3Int IsContainSeedAndPreTake(Worker worker, bool isPre = false)
         {
-            if (!this.TypeToResource.ContainsKey(AItem.ItemType.Seed) || this.TypeToResource[AItem.ItemType.Seed].Count == 0)
+            if (!this.TypeToResource.ContainsKey(AItem.ItemTypeEnum.Seed) || this.TypeToResource[AItem.ItemTypeEnum.Seed].Count == 0)
             {
                 return default;
             }
 
-            Dictionary<Vector3Int, ResourceInfo>.Enumerator enumerator = this.TypeToResource[AItem.ItemType.Seed].GetEnumerator();
+            Dictionary<Vector3Int, ResourceInfo>.Enumerator enumerator = this.TypeToResource[AItem.ItemTypeEnum.Seed].GetEnumerator();
             enumerator.MoveNext();
             if (isPre)
             {
@@ -307,7 +307,7 @@
         {
             if (!this.prePlaceResource[worker].ContainsKey(posMap))
             {
-                LogManager.Instance.Log("没有预放置资源", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有预放置资源", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -320,7 +320,7 @@
             // 既然已经预放置了，那一定可以放置，不会超出容量
             if (this.posToResource[posMap].Id == -1)
             {
-                this.TransferResource(posMap, -1, resourceInfo.Id, AItem.ItemType.Null, ItemDataManager.Instance.IdToType(resourceInfo.Id));
+                this.TransferResource(posMap, -1, resourceInfo.Id, AItem.ItemTypeEnum.Null, ItemDataManager.Instance.IdToType(resourceInfo.Id));
             }
 
             this.posToResource[posMap].Id = resourceInfo.Id;
@@ -341,7 +341,7 @@
                 return this.preTakeResource[worker].First().Key;
             }
 
-            LogManager.Instance.Log("没有预留资源", LogManager.LogLevel.Error);
+            LogManager.Instance.Log("没有预留资源", LogManager.LogLevelEnum.Error);
             return default;
         }
 
@@ -354,11 +354,11 @@
         {
             if (!this.posToResource.ContainsKey(posMap))
             {
-                LogManager.Instance.Log("没有资源，错误", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有资源，错误", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
-            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), AItem.ItemType.Null);
+            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
             ResourceInfo resourceInfo = DataTool.DeepCopyByBinary(this.posToResource[posMap]);
             this.posToResource[posMap].Id = -1;
             this.posToResource[posMap].Count = 0;
@@ -376,7 +376,7 @@
         {
             if (!this.posToResource.ContainsKey(posMap))
             {
-                LogManager.Instance.Log("没有资源，错误", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有资源，错误", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -385,11 +385,11 @@
             // 如果正好取完
             if (this.posToResource[posMap].Count == 0)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), AItem.ItemType.Null);
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
                 ItemMap.Instance.DeleteTile(posMap);
 
                 // 食物被吃完删除任务
-                if (ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id) == AItem.ItemType.Food)
+                if (ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id) == AItem.ItemTypeEnum.Food)
                 {
                     WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
@@ -410,7 +410,7 @@
         {
             if (!this.preTakeResource[worker].ContainsKey(posMap))
             {
-                LogManager.Instance.Log("没有预取资源", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有预取资源", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -425,11 +425,11 @@
             // 如果正好取完
             if (this.posToResource[posMap].Count == 0)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), AItem.ItemType.Null);
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
                 ItemMap.Instance.DeleteTile(posMap);
 
                 // 食物被吃完删除任务
-                if (ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id) == AItem.ItemType.Food)
+                if (ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id) == AItem.ItemTypeEnum.Food)
                 {
                     WorkerTaskManager.Instance.DeleteHungryTask(posMap);
                 }
@@ -511,8 +511,8 @@
         /// <param name="pos">位置</param>
         public void ShowWearMenu(Vector3Int pos)
         {
-            AItem.ItemType itemType = ItemDataManager.Instance.IdToType(this.posToResource[pos].Id);
-            if (itemType == AItem.ItemType.Weapon || itemType == AItem.ItemType.Equipment)
+            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(this.posToResource[pos].Id);
+            if (itemType == AItem.ItemTypeEnum.Weapon || itemType == AItem.ItemTypeEnum.Equipment)
             {
                 AddWearTaskUI.Instance.ShowWearTask(pos);
             }
@@ -728,7 +728,7 @@
         /// <param name="newId">新的ID</param>
         /// <param name="oldType">旧的类型</param>
         /// <param name="newType">新的类型</param>
-        private void TransferResource(Vector3Int pos, int oldId, int newId, AItem.ItemType oldType, AItem.ItemType newType)
+        private void TransferResource(Vector3Int pos, int oldId, int newId, AItem.ItemTypeEnum oldType, AItem.ItemTypeEnum newType)
         {
             // idToResource
             this.id2Resource[oldId].Remove(pos);

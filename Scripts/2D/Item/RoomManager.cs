@@ -21,7 +21,7 @@
         {
             if (Rooms.ContainsKey(name))
             {
-                LogManager.Instance.Log("已经有房间了", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("已经有房间了", LogManager.LogLevelEnum.Error);
             }
 
             Rooms.Add(name, roomInfo);

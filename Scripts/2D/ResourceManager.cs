@@ -14,7 +14,7 @@
         private readonly Dictionary<string, GameObject> prefabDic; // <characterType,<name,prefab>>
         private readonly Dictionary<string, UnityEngine.Object> assetDic;
         private readonly Dictionary<string, Sprite> imageDic;
-        private readonly Dictionary<TileMap.MapTileType, List<UnityEngine.Object>> tileDic;
+        private readonly Dictionary<TileMap.MapTileTypeEnum, List<UnityEngine.Object>> tileDic;
         private readonly Dictionary<string, Shader> shaderDic;
         private readonly Dictionary<string, ItemDataSO> backpackDataDic;
         private readonly Dictionary<string, BuildItemDataSO> buildDataDic;
@@ -24,11 +24,11 @@
         {
             this.prefabDic = ResourceTool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
             this.assetDic = ResourceTool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
-            this.tileDic = new Dictionary<TileMap.MapTileType, List<UnityEngine.Object>>();
+            this.tileDic = new Dictionary<TileMap.MapTileTypeEnum, List<UnityEngine.Object>>();
             this.shaderDic = ResourceTool.LoadResources<Shader>(ResourceConstant.SHADER_ROOT);
             foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetDic)
             {
-                foreach (TileMap.MapTileType tileType in Enum.GetValues(typeof(TileMap.MapTileType)))
+                foreach (TileMap.MapTileTypeEnum tileType in Enum.GetValues(typeof(TileMap.MapTileTypeEnum)))
                 {
                     // 不包含Tile本身，仅包含其上的资源
                     if (!asset.Key.StartsWith(tileType.ToString()) ||
@@ -63,7 +63,7 @@
         {
             if (!this.backpackDataDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -79,7 +79,7 @@
         {
             if (!this.buildDataDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -95,7 +95,7 @@
         {
             if (!this.dropDataDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -111,7 +111,7 @@
         {
             if (!this.shaderDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " shader not found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log(name + " shader not found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -132,7 +132,7 @@
                 return (TileBase)asset;
             }
 
-            LogManager.Instance.Log(name + " asset not found!!!", LogManager.LogLevel.Error);
+            LogManager.Instance.Log(name + " asset not found!!!", LogManager.LogLevelEnum.Error);
             return null;
         }
 
@@ -142,7 +142,7 @@
         /// <param name="tileType">在哪种Tile上.</param>
         /// <param name="name">包含该名称的资源.</param>
         /// <returns>Tile.</returns>
-        public TileBase GetAssetByTileType(TileMap.MapTileType tileType, string name = default)
+        public TileBase GetAssetByTileType(TileMap.MapTileTypeEnum tileType, string name = default)
         {
             if (!this.tileDic.ContainsKey(tileType))
             {
@@ -185,7 +185,7 @@
                 return sprite;
             }
 
-            LogManager.Instance.Log(name + " image not found!!!", LogManager.LogLevel.Error);
+            LogManager.Instance.Log(name + " image not found!!!", LogManager.LogLevelEnum.Error);
             return null;
         }
 
@@ -247,7 +247,7 @@
             {
                 if (!this.prefabDic.ContainsKey(prefabName))
                 {
-                    LogManager.Instance.Log(prefabName + " prefab not found!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log(prefabName + " prefab not found!!!", LogManager.LogLevelEnum.Error);
                     return null;
                 }
 
@@ -268,7 +268,7 @@
 
                 if (instance == null)
                 {
-                    LogManager.Instance.Log($"{prefabName} Instantiate Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log($"{prefabName} Instantiate Error!!!", LogManager.LogLevelEnum.Error);
                     return null;
                 }
 

@@ -45,7 +45,7 @@
         {
             if (state == null)
             {
-                LogManager.Instance.Log("state is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("state is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -63,7 +63,7 @@
         {
             if (!this.States.ContainsKey(type))
             {
-                LogManager.Instance.Log("states Not Contain type!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("states Not Contain type!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

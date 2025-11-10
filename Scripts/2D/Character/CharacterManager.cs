@@ -38,7 +38,7 @@
         {
             if (character == null)
             {
-                LogManager.Instance.Log("character is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("character is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -53,7 +53,7 @@
         {
             if (character == null)
             {
-                LogManager.Instance.Log("character is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("character is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -69,7 +69,7 @@
         {
             if (i < 0 || i >= this.Count())
             {
-                LogManager.Instance.Log("i overflow!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("i overflow!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 

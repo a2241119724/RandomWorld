@@ -9,12 +9,12 @@
     /// </summary>
     public class AttackEffectManager : Singleton<AttackEffectManager>
     {
-        private Dictionary<EffectType, List<ParticleSystem>> activeEffects = new ();
-        private Dictionary<EffectType, Queue<ParticleSystem>> availableEffects = new ();
+        private Dictionary<EffectTypeEnum, List<ParticleSystem>> activeEffects = new ();
+        private Dictionary<EffectTypeEnum, Queue<ParticleSystem>> availableEffects = new ();
 
         public AttackEffectManager()
         {
-            foreach (EffectType type in Enum.GetValues(typeof(EffectType)))
+            foreach (EffectTypeEnum type in Enum.GetValues(typeof(EffectTypeEnum)))
             {
                 this.availableEffects.Add(type, new Queue<ParticleSystem>());
                 this.activeEffects.Add(type, new List<ParticleSystem>());
@@ -24,7 +24,7 @@
         /// <summary>
         /// 攻击特效类型
         /// </summary>
-        public enum EffectType
+        public enum EffectTypeEnum
         {
             /// <summary>
             /// 刀光
@@ -48,7 +48,7 @@
         /// <param name="name">特效名称</param>
         /// <param name="rad">特效方向，与x正半轴夹角的弧度值</param>
         /// <returns>特效</returns>
-        public ParticleSystem GetEffect(EffectType name, float rad)
+        public ParticleSystem GetEffect(EffectTypeEnum name, float rad)
         {
             // 惰性检测
             foreach (var particleSystem in this.activeEffects[name].ToArray())

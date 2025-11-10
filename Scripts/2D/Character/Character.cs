@@ -53,7 +53,7 @@
             this.spriteRenderer = this.GetComponent<SpriteRenderer>();
             if (this.spriteRenderer == null)
             {
-                LogManager.Instance.Log("renderer Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("renderer Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

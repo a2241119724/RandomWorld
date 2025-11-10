@@ -8,12 +8,12 @@
     /// </summary>
     public class WeatherManager : MonoBehaviour
     {
-        private readonly Dictionary<WeatherType, GameObject> weathers = new ();
+        private readonly Dictionary<WeatherTypeEnum, GameObject> weathers = new ();
 
         /// <summary>
         /// 天气类型
         /// </summary>
-        public enum WeatherType
+        public enum WeatherTypeEnum
         {
             /// <summary>
             /// 晴天
@@ -36,7 +36,7 @@
         public void Awake()
         {
             Instance = this;
-            foreach (WeatherType weatherType in System.Enum.GetValues(typeof(WeatherType)))
+            foreach (WeatherTypeEnum weatherType in System.Enum.GetValues(typeof(WeatherTypeEnum)))
             {
                 this.weathers.Add(weatherType, this.transform.Find(weatherType.ToString()).gameObject);
             }
@@ -47,12 +47,12 @@
         /// </summary>
         public void RandWeather()
         {
-            foreach (WeatherType weatherType in System.Enum.GetValues(typeof(WeatherType)))
+            foreach (WeatherTypeEnum weatherType in System.Enum.GetValues(typeof(WeatherTypeEnum)))
             {
                 this.weathers[weatherType].SetActive(false);
             }
 
-            this.weathers[(WeatherType)Random.Range(0, System.Enum.GetValues(typeof(WeatherType)).Length)].SetActive(true);
+            this.weathers[(WeatherTypeEnum)Random.Range(0, System.Enum.GetValues(typeof(WeatherTypeEnum)).Length)].SetActive(true);
         }
 
         /// <summary>

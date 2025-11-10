@@ -26,7 +26,7 @@
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

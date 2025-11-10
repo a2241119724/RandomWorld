@@ -28,7 +28,7 @@
         {
             if (worldPos == null)
             {
-                LogManager.Instance.Log("v is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("v is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

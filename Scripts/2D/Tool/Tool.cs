@@ -172,7 +172,7 @@
             T[] ts = parent.GetComponentsInChildren<T>();
             if (ts.Length == 0)
             {
-                LogManager.Instance.Log(ts.GetType() + " Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log(ts.GetType() + " Not Found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -199,7 +199,7 @@
                 }
             }
 
-            LogManager.Instance.Log(name + " Not Found!!!", LogManager.LogLevel.Error);
+            LogManager.Instance.Log(name + " Not Found!!!", LogManager.LogLevelEnum.Error);
             return null;
         }
 
@@ -275,7 +275,7 @@
             Scene scene = SceneManager.GetSceneByName(sceneName);
             if (scene.buildIndex == -1)
             {
-                LogManager.Instance.Log(sceneName + " Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log(sceneName + " Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
