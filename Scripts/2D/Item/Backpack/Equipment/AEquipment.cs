@@ -11,12 +11,57 @@
         /// <summary>
         /// 装备类型
         /// </summary>
-        public EquipType EquipTypeValue;
+        public EquipTypeEnum EquipType;
+
+        /// <summary>
+        /// 物理攻击力
+        /// </summary>
+        public float ATN;
+
+        /// <summary>
+        /// 魔法攻击力
+        /// </summary>
+        public float INT;
+
+        /// <summary>
+        /// 暴击率
+        /// </summary>
+        public float CRT;
+
+        /// <summary>
+        /// 暴击伤害
+        /// </summary>
+        public float CSD;
+
+        /// <summary>
+        /// 攻击力
+        /// </summary>
+        public float ATK;
+
+        /// <summary>
+        /// 防御力
+        /// </summary>
+        public float DEF;
+
+        /// <summary>
+        /// 速度，回避物理攻击之类的
+        /// </summary>
+        public float SPD;
+
+        /// <summary>
+        /// 命中率或者连击之类的
+        /// </summary>
+        public float HIT;
+
+        /// <summary>
+        /// 魔法防御力
+        /// </summary>
+        public float RES;
 
         /// <summary>
         /// 装备类型
         /// </summary>
-        public enum EquipType
+        public enum EquipTypeEnum
         {
             /// <summary>
             /// 头部

@@ -37,7 +37,7 @@
         /// <summary>
         /// 物品类型
         /// </summary>
-        public AItem.ItemType Type;
+        public AItem.ItemTypeEnum Type;
 
         /// <summary>
         /// 建造者
@@ -82,7 +82,7 @@
                 return this;
             }
 
-            public ItemDataBuilder SetItemType(AItem.ItemType type)
+            public ItemDataBuilder SetItemType(AItem.ItemTypeEnum type)
             {
                 this.itemData.Type = type;
                 return this;

@@ -26,7 +26,7 @@
             this.direction = default;
             if (this.direction == null)
             {
-                LogManager.Instance.Log("direction assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("direction assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -50,7 +50,7 @@
             this.animator = this.GetComponent<Animator>();
             if (this.animator == null)
             {
-                LogManager.Instance.Log("animator Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("animator Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -174,7 +174,7 @@
         {
             if (hp <= 0)
             {
-                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -204,7 +204,7 @@
         {
             if (pos == null)
             {
-                LogManager.Instance.Log("pos is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("pos is null!!!", LogManager.LogLevelEnum.Error);
                 return false;
             }
 
@@ -246,7 +246,7 @@
         /// <inheritdoc/>
         protected override void Death()
         {
-            LogManager.Instance.Log("玩家重生", LogManager.LogLevel.Info);
+            LogManager.Instance.Log("玩家重生", LogManager.LogLevelEnum.Info);
             this.CharacterDataLAB.Hp = 100;
         }
 

@@ -24,7 +24,7 @@
             this.note = this.transform.Find("Center/Note").gameObject;
             if (this.note == null)
             {
-                LogManager.Instance.Log("note Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("note Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

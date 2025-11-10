@@ -78,14 +78,14 @@
             this.baseRect = this.GetComponent<RectTransform>();
             if (this.baseRect == null)
             {
-                LogManager.Instance.Log("baseRect Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("baseRect Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             Vector2 center = new (0.5f, 0.5f);
             if (center == null)
             {
-                LogManager.Instance.Log("center assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("center assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -94,7 +94,7 @@
             this.originalPostion = this.background.GetComponent<RectTransform>().localPosition;
             if (this.background == null)
             {
-                LogManager.Instance.Log("background Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("background Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -104,7 +104,7 @@
             this.handle = this.background.transform.Find("Handle").GetComponent<RectTransform>();
             if (this.handle == null)
             {
-                LogManager.Instance.Log("handle Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("handle Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

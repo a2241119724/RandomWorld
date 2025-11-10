@@ -131,7 +131,7 @@
         {
             if (this.itemManagerView == null)
             {
-                LogManager.Instance.Log("inventoryView is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("inventoryView is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -167,7 +167,7 @@
                     btns[index].GetComponent<RoundCorner>().color = new Color(100 / 255.0f, 120 / 255.0f, 150 / 255.0f, 255 / 255.0f);
                     break;
                 default:
-                    LogManager.Instance.Log("没有该类型边框可以修改!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("没有该类型边框可以修改!!!", LogManager.LogLevelEnum.Error);
                     break;
             }
         }
@@ -189,7 +189,7 @@
         {
             if (this.infoView == null)
             {
-                LogManager.Instance.Log("infoView is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("infoView is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

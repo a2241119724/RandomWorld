@@ -57,7 +57,7 @@
         {
             if (!File.Exists(filePath))
             {
-                LogManager.Instance.Log(filePath + "不存在", LogManager.LogLevel.Error);
+                LogManager.Instance.Log(filePath + "不存在", LogManager.LogLevelEnum.Error);
                 return null;
             }
 

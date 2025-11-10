@@ -13,7 +13,7 @@
         {
             base.Awake();
             this.attackInterval = 0.5f;
-            this.attackEffect = AttackEffectManager.EffectType.TraceBullet;
+            this.attackEffect = AttackEffectManager.EffectTypeEnum.TraceBullet;
         }
 
         /// <inheritdoc/>

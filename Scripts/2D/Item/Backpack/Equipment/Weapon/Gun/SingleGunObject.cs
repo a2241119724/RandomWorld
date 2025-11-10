@@ -13,7 +13,7 @@
             base.Awake();
             this.attackInterval = 0.5f;
             this.name = "SingleGun";
-            this.attackEffect = AttackEffectManager.EffectType.Bullet;
+            this.attackEffect = AttackEffectManager.EffectTypeEnum.Bullet;
         }
 
         /// <inheritdoc/>

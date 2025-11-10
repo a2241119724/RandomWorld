@@ -18,7 +18,7 @@
             this.audioSource = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG).GetComponent<AudioSource>();
             if (this.audioSource == null)
             {
-                LogManager.Instance.Log("audioSource Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("audioSource Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

@@ -12,44 +12,6 @@
     public abstract class AWeapon : AEquipment
     {
         /// <summary>
-        /// 物理攻击力
-        /// </summary>
-        public float ATN;
-
-        /// <summary>
-        /// 魔法攻击力
-        /// </summary>
-        public float INT;
-
-        /// <summary>
-        /// 暴击率
-        /// </summary>
-        public float CRT;
-
-        /// <summary>
-        /// 暴击伤害
-        /// </summary>
-        public float CSD;
-
-        /// <summary>
-        /// 攻击力
-        /// </summary>
-        public float ATK;
-
-        // public float DEF; // 防御力
-        // public float SPD; // 速度，回避物理攻击之类的
-
-        /// <summary>
-        /// 命中率或者连击之类的
-        /// </summary>
-        public float HIT;
-
-        /// <summary>
-        /// 魔法防御力
-        /// </summary>
-        public float RES;
-
-        /// <summary>
         /// 本次共计是否暴击
         /// </summary>
         public bool IsCRT = false;
@@ -63,7 +25,7 @@
             this.CSD = this.RankRandom(0.0f, 0.0f);
             this.HIT = this.RankRandom(0.0f, 0.0f);
             this.RES = this.RankRandom(0.0f, 0.0f);
-            this.EquipTypeValue = EquipType.Weapon;
+            this.EquipType = EquipTypeEnum.Weapon;
         }
 
         /// <summary>
@@ -149,7 +111,7 @@
         /// <summary>
         /// 攻击效果
         /// </summary>
-        protected AttackEffectManager.EffectType attackEffect = AttackEffectManager.EffectType.KnifeLight;
+        protected AttackEffectManager.EffectTypeEnum attackEffect = AttackEffectManager.EffectTypeEnum.KnifeLight;
 
         private readonly Collider2D[] retCollider2Ds = new Collider2D[100]; // 存储圈内的所有碰撞体
         private float recordTime = float.MaxValue;
@@ -232,7 +194,7 @@
             this.circleCollider2D = this.head.GetComponent<CircleCollider2D>();
             if (this.circleCollider2D == null)
             {
-                LogManager.Instance.Log("collider Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("collider Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

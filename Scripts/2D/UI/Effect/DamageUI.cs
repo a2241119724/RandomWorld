@@ -32,7 +32,7 @@
             this.content = this.transform.Find("Text").GetComponent<Text>();
             if (this.content == null)
             {
-                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -52,7 +52,7 @@
             this.parent = this.transform.parent;
             if (this.parent == null)
             {
-                LogManager.Instance.Log("parent Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("parent Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

@@ -72,14 +72,14 @@
             this.Head = this.transform.Find("Head");
             if (this.Head == null)
             {
-                LogManager.Instance.Log("enemyHead Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("enemyHead Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (this.statusBar == null)
             {
-                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -110,7 +110,7 @@
         {
             if (target == null)
             {
-                LogManager.Instance.Log("target is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("target is null!!!", LogManager.LogLevelEnum.Error);
                 return false;
             }
 

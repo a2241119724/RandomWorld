@@ -150,7 +150,7 @@
             this.parent = this.transform.parent;
             if (this.parent == null)
             {
-                LogManager.Instance.Log("parent Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("parent Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }

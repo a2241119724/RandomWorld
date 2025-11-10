@@ -14,10 +14,10 @@
         /// <summary>
         /// 道具的范围
         /// </summary>
-        public static Dictionary<string, ItemType[]> Ranges = new ()
+        public static Dictionary<string, ItemTypeEnum[]> Ranges = new ()
         {
-            { "Backpack", new ItemType[] { ItemType.Weapon, ItemType.BackpackOther } },
-            { "Build", new ItemType[] { ItemType.Room, ItemType.BuildOther } },
+            { "Backpack", new ItemTypeEnum[] { ItemTypeEnum.Weapon, ItemTypeEnum.BackpackOther } },
+            { "Build", new ItemTypeEnum[] { ItemTypeEnum.Room, ItemTypeEnum.BuildOther } },
         };
 
         /// <summary>
@@ -39,7 +39,7 @@
         /// 所有Backpack与Build均在该Enum中
         /// </summary>
         [Serializable]
-        public enum ItemType
+        public enum ItemTypeEnum
         {
             // 背包
 

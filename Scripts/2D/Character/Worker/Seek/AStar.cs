@@ -106,7 +106,7 @@
                         {
                             UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                             {
-                                LogManager.Instance.Log(this.Character.name + ":寻路出现环路", LogManager.LogLevel.Error);
+                                LogManager.Instance.Log(this.Character.name + ":寻路出现环路", LogManager.LogLevelEnum.Error);
                             }).Wait();
                             break;
                         }
@@ -295,7 +295,7 @@
             {
                 UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {
-                    LogManager.Instance.Log(this.Character.name + ":未找到路径 " + start.PosMap.y + ":" + start.PosMap.x + "-->" + end.PosMap.y + ":" + end.PosMap.x, LogManager.LogLevel.Error);
+                    LogManager.Instance.Log(this.Character.name + ":未找到路径 " + start.PosMap.y + ":" + start.PosMap.x + "-->" + end.PosMap.y + ":" + end.PosMap.x, LogManager.LogLevelEnum.Error);
                 }).Wait();
             }
 

@@ -53,49 +53,49 @@
             this.hp = this.transform.Find("State/Hp/Value").GetComponent<Text>();
             if (this.hp == null)
             {
-                LogManager.Instance.Log("Hp/Value Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Hp/Value Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.mp = this.transform.Find("State/Mp/Value").GetComponent<Text>();
             if (this.mp == null)
             {
-                LogManager.Instance.Log("Mp/Value Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Mp/Value Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.level = this.transform.Find("State/Level/Value").GetComponent<Text>();
             if (this.level == null)
             {
-                LogManager.Instance.Log("Level/Value Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Level/Value Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.experience = this.transform.Find("State/Level/Experience").GetComponent<Text>();
             if (this.experience == null)
             {
-                LogManager.Instance.Log("Experience Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Experience Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.barHp = this.transform.Find("State/Hp/Bar").GetComponent<Slider>();
             if (this.barHp == null)
             {
-                LogManager.Instance.Log("Hp/Bar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Hp/Bar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.barMp = this.transform.Find("State/Mp/Bar").GetComponent<Slider>();
             if (this.barMp == null)
             {
-                LogManager.Instance.Log("Mp/Bar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Mp/Bar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.barLevel = this.transform.Find("State/Level/Bar").GetComponent<Slider>();
             if (this.barLevel == null)
             {
-                LogManager.Instance.Log("Level/Bar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Level/Bar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }

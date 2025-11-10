@@ -13,13 +13,13 @@
     {
         private bool isDown = false;
         private Vector3 start;
-        private Dictionary<TileType, List<Vector3Int>> selects;
+        private Dictionary<TileTypeEnum, List<Vector3Int>> selects;
         private Transform options;
 
         /// <summary>
         /// Tile的类型
         /// </summary>
-        public enum TileType
+        public enum TileTypeEnum
         {
             /// <summary>
             /// 资源Tile
@@ -36,7 +36,7 @@
         /// 确定对选中的所有Tile确定做出对应操作
         /// </summary>
         /// <param name="key">Tile类型</param>
-        public void Onclick_Yes(TileType key)
+        public void Onclick_Yes(TileTypeEnum key)
         {
             this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
             this.options.gameObject.SetActive(false);
@@ -62,7 +62,7 @@
         /// 取消对选中的所有Tile确定做出对应操作
         /// </summary>
         /// <param name="key">Tile类型</param>
-        public void Onclick_No(TileType key)
+        public void Onclick_No(TileTypeEnum key)
         {
             this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
             this.options.gameObject.SetActive(false);
@@ -81,20 +81,20 @@
         public void Awake()
         {
             Instance = this;
-            this.selects = new Dictionary<TileType, List<Vector3Int>>
+            this.selects = new Dictionary<TileTypeEnum, List<Vector3Int>>
             {
-                { TileType.Resource, new List<Vector3Int>() },
+                { TileTypeEnum.Resource, new List<Vector3Int>() },
             };
             this.options = Tool.GetComponentInChildren<Transform>(this.gameObject, "Options");
             this.options.gameObject.SetActive(false);
             Transform gather = Tool.GetComponentInChildren<Transform>(this.options.gameObject, "Gather");
             Tool.GetComponentInChildren<Button>(gather.gameObject, "Yes").onClick.AddListener(() =>
             {
-                this.Onclick_Yes(TileType.Resource);
+                this.Onclick_Yes(TileTypeEnum.Resource);
             });
             Tool.GetComponentInChildren<Button>(gather.gameObject, "No").onClick.AddListener(() =>
             {
-                this.Onclick_No(TileType.Resource);
+                this.Onclick_No(TileTypeEnum.Resource);
             });
         }
 
@@ -156,7 +156,7 @@
                 this.Select();
                 ((RectTransform)this.transform).sizeDelta = Vector2.zero;
                 this.isDown = false;
-                this.options.gameObject.SetActive(this.selects[TileType.Resource].Count > 0);
+                this.options.gameObject.SetActive(this.selects[TileTypeEnum.Resource].Count > 0);
             }
         }
 
@@ -165,7 +165,7 @@
         /// </summary>
         private void Select()
         {
-            foreach (TileType key in this.selects.Keys)
+            foreach (TileTypeEnum key in this.selects.Keys)
             {
                 this.selects[key].Clear();
             }
@@ -209,7 +209,7 @@
                     {
                         SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
                         selectUI.SetTarget(posMap);
-                        this.selects[TileType.Resource].Add(posMap);
+                        this.selects[TileTypeEnum.Resource].Add(posMap);
                     }
                 }
             }

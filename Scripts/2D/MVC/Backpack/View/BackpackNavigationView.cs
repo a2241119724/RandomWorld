@@ -17,7 +17,7 @@
 
         public void Start()
         {
-            this.BindButton(AItem.ItemType.Weapon, AItem.ItemType.BackpackOther);
+            this.BindButton(AItem.ItemTypeEnum.Weapon, AItem.ItemTypeEnum.BackpackOther);
         }
 
         /// <inheritdoc/>
@@ -28,7 +28,7 @@
 
         private void OnEnable()
         {
-            this.CurItemType = AItem.ItemType.Weapon;
+            this.CurItemType = AItem.ItemTypeEnum.Weapon;
         }
     }
 }

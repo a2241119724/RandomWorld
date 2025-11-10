@@ -101,7 +101,7 @@
         public void PutDownToDrop(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
         {
             this.AddTile(posMap, tileBase);
-            AItem.ItemType itemType = ItemDataManager.Instance.IdToType(resourceInfo.Id);
+            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(resourceInfo.Id);
 
             // 添加到掉落物管理中
             DropManager.Instance.AddDrop(itemType, posMap, resourceInfo);
@@ -168,7 +168,7 @@
             TileBase tile = this.tilemap.GetTile(posMap);
             if (tile != null)
             {
-                BackpackController.Instance.AddItem(ItemFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
+                BackpackController.Instance.AddItem(ItemInstanceFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
                 this.DeleteTile(posMap);
             }
 
@@ -180,7 +180,7 @@
                     tile = this.tilemap.GetTile(posMap);
                     if (tile != null)
                     {
-                        BackpackController.Instance.AddItem(ItemFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
+                        BackpackController.Instance.AddItem(ItemInstanceFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
                         this.DeleteTile(posMap);
                     }
                 }

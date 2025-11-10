@@ -14,93 +14,93 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ItemType: 6
   ItemDatas:
-  - Id: 0
+  - Id: 600000
     CnName: Seed0
     EnName: Seed0
     Info: Seed0
     IsStackable: 1
-    Type: 0
-  - Id: 1
+    Type: 6
+  - Id: 600001
     CnName: Seed1
     EnName: Seed1
     Info: Seed1
     IsStackable: 1
-    Type: 0
-  - Id: 2
+    Type: 6
+  - Id: 600002
     CnName: Seed2
     EnName: Seed2
     Info: Seed2
     IsStackable: 1
-    Type: 0
-  - Id: 3
+    Type: 6
+  - Id: 600003
     CnName: Seed3
     EnName: Seed3
     Info: Seed3
     IsStackable: 1
-    Type: 0
-  - Id: 4
+    Type: 6
+  - Id: 600004
     CnName: Seed4
     EnName: Seed4
     Info: Seed4
     IsStackable: 1
-    Type: 0
-  - Id: 5
+    Type: 6
+  - Id: 600005
     CnName: Seed5
     EnName: Seed5
     Info: Seed5
     IsStackable: 1
-    Type: 0
-  - Id: 6
+    Type: 6
+  - Id: 600006
     CnName: Seed6
     EnName: Seed6
     Info: Seed6
     IsStackable: 1
-    Type: 0
-  - Id: 7
+    Type: 6
+  - Id: 600007
     CnName: Seed7
     EnName: Seed7
     Info: Seed7
     IsStackable: 1
-    Type: 0
-  - Id: 8
+    Type: 6
+  - Id: 600008
     CnName: Seed8
     EnName: Seed8
     Info: Seed8
     IsStackable: 1
-    Type: 0
-  - Id: 9
+    Type: 6
+  - Id: 600009
     CnName: Seed9
     EnName: Seed9
     Info: Seed9
     IsStackable: 1
-    Type: 0
-  - Id: 10
+    Type: 6
+  - Id: 600010
     CnName: Seed10
     EnName: Seed10
     Info: Seed10
     IsStackable: 1
-    Type: 0
-  - Id: 11
+    Type: 6
+  - Id: 600011
     CnName: Seed11
     EnName: Seed11
     Info: Seed11
     IsStackable: 1
-    Type: 0
-  - Id: 12
+    Type: 6
+  - Id: 600012
     CnName: Seed12
     EnName: Seed12
     Info: Seed12
     IsStackable: 1
-    Type: 0
-  - Id: 13
+    Type: 6
+  - Id: 600013
     CnName: Seed13
     EnName: Seed13
     Info: Seed13
     IsStackable: 1
-    Type: 0
-  - Id: 14
+    Type: 6
+  - Id: 600014
     CnName: Seed14
     EnName: Seed14
     Info: Seed14
     IsStackable: 1
-    Type: 0
+    Type: 6

@@ -7,7 +7,7 @@
     {
         public void Start()
         {
-            this.BindButton(AItem.ItemType.Room, AItem.ItemType.BuildOther);
+            this.BindButton(AItem.ItemTypeEnum.Room, AItem.ItemTypeEnum.BuildOther);
         }
 
         /// <inheritdoc/>
@@ -18,7 +18,7 @@
 
         private void OnEnable()
         {
-            this.CurItemType = AItem.ItemType.Room;
+            this.CurItemType = AItem.ItemTypeEnum.Room;
         }
     }
 }

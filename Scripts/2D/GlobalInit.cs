@@ -39,7 +39,7 @@
                 ForegroundPanel.Instance.Init();
                 if (PanelController.Instance == null)
                 {
-                    LogManager.Instance.Log("manager Not Found!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("manager Not Found!!!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 

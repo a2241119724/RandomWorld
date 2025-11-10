@@ -3,11 +3,12 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using UnityEngine;
 
     /// <summary>
-    /// 道具工厂
+    /// 道具实例化工厂
     /// </summary>
-    public class ItemFactory : Singleton<ItemFactory>
+    public class ItemInstanceFactory : Singleton<ItemInstanceFactory>
     {
         /// <summary>
         /// 根据name实例化
@@ -20,11 +21,10 @@
         private readonly Dictionary<string, ABuildItem> buildItems;
         private int uid = 0;
 
-        public ItemFactory()
+        public ItemInstanceFactory()
         {
             this.backpackItemTypes = new Dictionary<string, Type>();
             this.buildItems = new Dictionary<string, ABuildItem>();
-            this.ReadItems();
         }
 
         /// <summary>
@@ -34,9 +34,8 @@
         /// <returns>背包道具</returns>
         public ABackpackItem GetBackpackItemByName(string name)
         {
-            int id = ItemDataManager.Instance.GetByName(name).Id;
             ABackpackItem item = (ABackpackItem)Activator.CreateInstance(this.backpackItemTypes[name]);
-            item.Id = id;
+            item.Id = ItemDataManager.Instance.GetByName(name).Id;
             item.Quantity = 1;
             item.Uid = this.uid++;
             return item;
@@ -80,14 +79,34 @@
         /// 通过反射实例化
         /// 仅需要类名与imageName一样
         /// </summary>
-        private void ReadItems()
+        /// <param name="itemDatas">所有装备数据(不包含武器)</param>
+        public void InitItemInstances(List<ItemData> itemDatas)
         {
+            // 装备
+            foreach (ItemData itemData in itemDatas)
+            {
+                this.backpackItemTypes.Add(itemData.EnName, typeof(CommonEquipment));
+            }
+
+            // 非装备(包含武器)
             List<Type> types = Tool.GetChildByParent<ABackpackItem>();
             foreach (Type type in types)
             {
-                this.backpackItemTypes.Add(type.Name, type);
+                if (this.backpackItemTypes.ContainsKey(type.Name))
+                {
+                    // 装备类覆盖CommonEquipment
+                    this.backpackItemTypes[type.Name] = type;
+                }
+                else
+                {
+                    this.backpackItemTypes.Add(type.Name, type);
+                }
             }
 
+            // 移除CommonEquipment, 因为CommonEquipment是所有装备的基类
+            this.backpackItemTypes.Remove(typeof(CommonEquipment).Name);
+
+            // 建造
             types = Tool.GetChildByParent<ABuildItem>();
             foreach (Type type in types)
             {

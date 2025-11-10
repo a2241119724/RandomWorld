@@ -12,12 +12,12 @@
         /// <summary>
         /// 道具列表
         /// </summary>
-        public Dictionary<AItem.ItemType, ArrayList> ItemDict;
+        public Dictionary<AItem.ItemTypeEnum, ArrayList> ItemDict;
 
-        public MVCModel(AItem.ItemType start, AItem.ItemType end)
+        public MVCModel(AItem.ItemTypeEnum start, AItem.ItemTypeEnum end)
         {
-            this.ItemDict = new Dictionary<AItem.ItemType, ArrayList>();
-            Tool.SplitEnum<AItem.ItemType>(start, end).ForEach((item) =>
+            this.ItemDict = new Dictionary<AItem.ItemTypeEnum, ArrayList>();
+            Tool.SplitEnum<AItem.ItemTypeEnum>(start, end).ForEach((item) =>
             {
                 this.ItemDict.Add(item, new ArrayList());
             });
@@ -28,11 +28,11 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <param name="index">道具索引</param>
-        public void Delete(AItem.ItemType type, int index)
+        public void Delete(AItem.ItemTypeEnum type, int index)
         {
             if (this.ItemDict[type] == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -48,12 +48,12 @@
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             ArrayList itemList;
-            AItem.ItemType itemType = ItemDataManager.Instance.IdToType(item.Id);
+            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(item.Id);
             if (this.ItemDict.ContainsKey(itemType))
             {
                 itemList = this.ItemDict[itemType];
@@ -88,11 +88,11 @@
         /// <param name="type">道具类型</param>
         /// <param name="index1">道具1的索引</param>
         /// <param name="index2">道具2的索引</param>
-        public void Exchange(AItem.ItemType type, int index1, int index2)
+        public void Exchange(AItem.ItemTypeEnum type, int index1, int index2)
         {
             if (index1 < 0 || index1 >= this.Count(type) || index2 < 0 || index2 >= this.Count(type))
             {
-                LogManager.Instance.Log("index1 or index2 Not Exist!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("index1 or index2 Not Exist!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -107,11 +107,11 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <param name="item">道具</param>
-        public void ReduceQuantity(AItem.ItemType type, AItem item)
+        public void ReduceQuantity(AItem.ItemTypeEnum type, AItem item)
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -124,11 +124,11 @@
         /// <param name="type">道具类型</param>
         /// <param name="index">道具的索引</param>
         /// <returns>道具信息</returns>
-        public AItem Get(AItem.ItemType type, int index)
+        public AItem Get(AItem.ItemTypeEnum type, int index)
         {
             if (index < 0 || index >= this.Count(type))
             {
-                LogManager.Instance.Log("index Not Exist!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("index Not Exist!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -140,7 +140,7 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <returns>数量</returns>
-        public int Count(AItem.ItemType type)
+        public int Count(AItem.ItemTypeEnum type)
         {
             if (!this.ItemDict.ContainsKey(type))
             {
@@ -156,11 +156,11 @@
         /// <param name="type">道具类型</param>
         /// <param name="item">道具</param>
         /// <returns>索引</returns>
-        public int GetIndex(AItem.ItemType type, AWeapon item)
+        public int GetIndex(AItem.ItemTypeEnum type, AWeapon item)
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
                 return -1;
             }
 
@@ -181,7 +181,7 @@
         /// </summary>
         /// <param name="type">道具类型</param>
         /// <returns>是否</returns>
-        public bool IsNull(AItem.ItemType type)
+        public bool IsNull(AItem.ItemTypeEnum type)
         {
             return this.Count(type) == 0;
         }

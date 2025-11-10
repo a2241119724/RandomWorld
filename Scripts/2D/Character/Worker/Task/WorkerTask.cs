@@ -188,7 +188,7 @@
         /// <param name="worker">Worker</param>
         public virtual void GiveUpTask(Worker worker)
         {
-            LogManager.Instance.Log("放弃任务", LogManager.LogLevel.Warning);
+            LogManager.Instance.Log("放弃任务", LogManager.LogLevelEnum.Warning);
             worker.GiveUpTask();
         }
 
@@ -227,7 +227,7 @@
         {
             if (this.stageInit.Count < stage + 1)
             {
-                LogManager.Instance.Log("没有该阶段", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("没有该阶段", LogManager.LogLevelEnum.Error);
                 return;
             }
 

@@ -60,7 +60,7 @@
             this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (this.statusBar == null)
             {
-                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -156,7 +156,7 @@
                 }
                 else
                 {
-                    LogManager.Instance.Log("自身资源不够，仍然建造成功，错误", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("自身资源不够，仍然建造成功，错误", LogManager.LogLevelEnum.Error);
                 }
             }
         }
@@ -178,7 +178,7 @@
             }
             else
             {
-                LogManager.Instance.Log("自身资源不够，仍然建造成功，错误", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("自身资源不够，仍然建造成功，错误", LogManager.LogLevelEnum.Error);
             }
         }
 
@@ -257,7 +257,7 @@
         {
             if (hp <= 0)
             {
-                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -294,7 +294,7 @@
             /// <summary>
             /// 身上携带的装备
             /// </summary>
-            public Dictionary<AEquipment.EquipType, AEquipment> Equipments;
+            public Dictionary<AEquipment.EquipTypeEnum, AEquipment> Equipments;
 
             /// <summary>
             /// 最大疲劳值
@@ -339,7 +339,7 @@
 
             public WorkerData()
             {
-                this.Equipments = new Dictionary<AEquipment.EquipType, AEquipment>();
+                this.Equipments = new Dictionary<AEquipment.EquipTypeEnum, AEquipment>();
 
                 // 设置默认可接受任务类型
                 this.TaskToggle = new bool[10];
@@ -355,16 +355,16 @@
             /// <param name="posMap">位置</param>
             public void AddEquipment(AEquipment equipment, Vector3Int posMap)
             {
-                if (this.Equipments.ContainsKey(equipment.EquipTypeValue))
+                if (this.Equipments.ContainsKey(equipment.EquipType))
                 {
                     // 交换装备
-                    AEquipment equipment1 = this.Equipments[equipment.EquipTypeValue];
+                    AEquipment equipment1 = this.Equipments[equipment.EquipType];
                     ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
-                    this.Equipments[equipment.EquipTypeValue] = equipment1;
+                    this.Equipments[equipment.EquipType] = equipment1;
                 }
                 else
                 {
-                    this.Equipments.Add(equipment.EquipTypeValue, equipment);
+                    this.Equipments.Add(equipment.EquipType, equipment);
                 }
             }
         }

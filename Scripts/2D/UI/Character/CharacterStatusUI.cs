@@ -28,14 +28,14 @@
             this.slider = this.transform.Find("HpBar").GetComponent<Slider>();
             if (this.slider == null)
             {
-                LogManager.Instance.Log("slider Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("slider Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.text = this.transform.Find("HpCount").GetComponent<Text>();
             if (this.text == null)
             {
-                LogManager.Instance.Log("text Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("text Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }

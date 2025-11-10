@@ -13,7 +13,7 @@
             base.Awake();
             this.name = "CustomSword";
             this.attackInterval = 0.2f;
-            this.attackEffect = AttackEffectManager.EffectType.KnifeLight;
+            this.attackEffect = AttackEffectManager.EffectTypeEnum.KnifeLight;
         }
 
         /// <inheritdoc/>

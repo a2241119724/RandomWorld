@@ -113,7 +113,7 @@
                 count++;
                 if (count > 100)
                 {
-                    LogManager.Instance.Log("genAvailablePosMap Error!!!", LogManager.LogLevel.Error);
+                    LogManager.Instance.Log("genAvailablePosMap Error!!!", LogManager.LogLevelEnum.Error);
                     return default;
                 }
 

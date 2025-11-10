@@ -10,7 +10,7 @@
     /// </summary>
     public class LogManager : Singleton<LogManager>
     {
-        private readonly LogLevel minLogLevel = LogLevel.Info; // 最小的日志级别.
+        private readonly LogLevelEnum minLogLevel = LogLevelEnum.Info; // 最小的日志级别.
         private readonly string logPath = Application.persistentDataPath + "/game.log";
         private readonly bool isSave = true;
         private readonly List<string> logs;
@@ -28,7 +28,7 @@
         /// <summary>
         /// 日志级别.
         /// </summary>
-        public enum LogLevel
+        public enum LogLevelEnum
         {
             /// <summary>
             /// Debug.
@@ -61,7 +61,7 @@
         /// </summary>
         /// <param name="message">日志内容.</param>
         /// <param name="level">日志级别.</param>
-        public void Log(string message, LogLevel level = LogLevel.Info)
+        public void Log(string message, LogLevelEnum level = LogLevelEnum.Info)
         {
             if ((int)level < (int)this.minLogLevel)
             {
@@ -71,7 +71,7 @@
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             string logMessage = $"{timestamp} [{level}] {message}";
 
-            if (level == LogLevel.Error)
+            if (level == LogLevelEnum.Error)
             {
                 Debug.Log(logMessage);
             }

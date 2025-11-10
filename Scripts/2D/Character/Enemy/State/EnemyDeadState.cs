@@ -19,7 +19,7 @@
             : base(character)
         {
             this.probToDropItem = new Dictionary<int, TileBase>();
-            List<AItem> items = ItemFactory.Instance.GenBackpackItems();
+            List<AItem> items = ItemInstanceFactory.Instance.GenBackpackItems();
             this.AddDropItem(10, null);
             foreach (ABackpackItem item in items)
             {

@@ -27,14 +27,14 @@
             this.roundCorner = this.GetComponent<RoundCorner>();
             if (this.roundCorner == null)
             {
-                LogManager.Instance.Log("image Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("image Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.content = this.transform.Find("Content").GetComponent<Text>();
             if (this.content == null)
             {
-                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -72,7 +72,7 @@
             this.roundCorner.color = new Color(color.r, color.g, color.b, this.colorAlpha);
             if (this.roundCorner.color == null)
             {
-                LogManager.Instance.Log("image.color assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("image.color assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -80,7 +80,7 @@
             this.content.color = new Color(color.r, color.g, color.b, this.colorAlpha);
             if (this.content.color == null)
             {
-                LogManager.Instance.Log("content.color assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("content.color assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

@@ -14,7 +14,7 @@
             this.Panels = new Stack<IBasePanel>();
             if (this.Panels == null)
             {
-                LogManager.Instance.Log("panels assign resource Error!!!", LogManager.LogLevel.Error);
+                LogManager.Instance.Log("panels assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }
