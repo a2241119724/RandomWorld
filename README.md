@@ -8,8 +8,7 @@
 - 多存档
 - 工人按照现实打工人事件行为
 - 追踪枪子弹
-- 优化Item**：<通过读取ItemDataSO实例化Common**>代替<通过父类获取子类创建新的道具>
-- Seed与Wall
+- (material与Build) 优化Item**：<通过读取ItemDataSO实例化Common**>代替<通过父类获取子类创建新的道具>
 
 ## 注
 

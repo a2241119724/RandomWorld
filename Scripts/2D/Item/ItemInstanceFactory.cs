@@ -3,10 +3,10 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using UnityEngine;
 
     /// <summary>
     /// 道具实例化工厂
+    /// EnName==对应类名==图片名
     /// </summary>
     public class ItemInstanceFactory : Singleton<ItemInstanceFactory>
     {
