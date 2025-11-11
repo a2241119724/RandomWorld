@@ -149,6 +149,7 @@ SpriteAtlas:
     - eacf2f3b07505af4c97d9a646f66a07b: 21300000
     - 1425de8b071ae2a4e80e7a45e009ae39: 21300000
     - c375b5ebe0272a64eb9044514f983b9f: 21300000
+    - 47c70dfbf8dc3dc44aa73ae7118c8b23: 925179246
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: -631455148
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: 501694652
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: -664963349
@@ -156,7 +157,6 @@ SpriteAtlas:
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: 1347455635
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: -1919832763
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: 1657219675
-    - 47c70dfbf8dc3dc44aa73ae7118c8b23: 925179246
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: 1194508756
     - c72a406cb521f4a4c8209a43e2a6356d: 21300000
     - 9657166c2057b3a4b833b7983ad27826: 21300000
@@ -282,6 +282,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: eacf2f3b07505af4c97d9a646f66a07b, type: 3}
   - {fileID: 21300000, guid: 1425de8b071ae2a4e80e7a45e009ae39, type: 3}
   - {fileID: 21300000, guid: c375b5ebe0272a64eb9044514f983b9f, type: 3}
+  - {fileID: 925179246, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: -631455148, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: 501694652, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: -664963349, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
@@ -289,7 +290,6 @@ SpriteAtlas:
   - {fileID: 1347455635, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: -1919832763, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: 1657219675, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
-  - {fileID: 925179246, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: 1194508756, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: 21300000, guid: c72a406cb521f4a4c8209a43e2a6356d, type: 3}
   - {fileID: 21300000, guid: 9657166c2057b3a4b833b7983ad27826, type: 3}
@@ -414,6 +414,7 @@ SpriteAtlas:
   - Apple
   - Inventory
   - Enemy
+  - CustomRoomWall_100
   - CustomRoomWall_8
   - CustomRoomWall_6
   - CustomRoomWall_7
@@ -421,7 +422,6 @@ SpriteAtlas:
   - CustomRoomWall_5
   - CustomRoomWall_2
   - CustomRoomWall_3
-  - CustomRoomWall_0
   - CustomRoomWall_1
   - DesertBushes
   - CustomDoor
