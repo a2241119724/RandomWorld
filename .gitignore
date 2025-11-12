@@ -1,14 +1,20 @@
-/Animation
+/Animation/*
+!/Animation/**/*.meta
 /StreamingAssets
-/URP
+/URP/*
+!/URP/**/*.meta
 /Scripts/Reference
 /AddressableAssetsData
 /.vs
 /TextMesh Pro
-/Editor
-/Materials
-/ResourcesLocal
-/Scenes
+/Editor/*
+!/Editor/**/*.meta
+/Materials/*
+!/Materials/**/*.meta
+/ResourcesLocal/*
+!/ResourcesLocal/**/*.meta
+/Scenes/*
+!/Scenes/**/*.meta
 
 [Ss]tyle[Cc]op.*
 *.mat
