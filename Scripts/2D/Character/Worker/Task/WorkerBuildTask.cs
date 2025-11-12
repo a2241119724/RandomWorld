@@ -17,7 +17,7 @@
         /// <summary>
         /// 建造的位置
         /// </summary>
-        private Vector3Int buildPos;
+        private Vector3IntLAB buildPos;
 
         public WorkerBuildTask()
             : base(WorkerTaskTypeEnum.Build)
@@ -29,7 +29,7 @@
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
-                this.TargetMap = InventoryManager.Instance.GetPosByPreTake(worker);
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.GetPosByPreTake(worker));
                 if (this.TargetMap == default)
                 {
                     this.GiveUpTask(worker);
@@ -86,7 +86,7 @@
             worker.SubResource(this.needs);
 
             // 将建造完成的Tile从Building变为Build中
-            BuildMap.Instance.SetComplete(this.buildPos);
+            BuildMap.Instance.SetComplete(Vector3IntLAB.ToVector3Int(this.buildPos));
         }
 
         /// <inheritdoc/>
@@ -120,7 +120,7 @@
             switch (this.stage)
             {
                 case 0:
-                    ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);
+                    ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
                     worker.AddResource(resourceInfo);
 
                     // 减少需求的数量
@@ -173,7 +173,7 @@
 
             public BuildTaskBuilder SetBuildPos(Vector3Int pos)
             {
-                this.task.buildPos = pos;
+                this.task.buildPos = Vector3IntLAB.ToVector3IntLAB(pos);
                 return this;
             }
 

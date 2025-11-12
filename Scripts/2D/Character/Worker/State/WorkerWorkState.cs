@@ -26,7 +26,7 @@
             }
 
             this.Character.WorkerStateText.text = this.preString +
-                $"Target: {workerData.Task.TargetMap.x},{workerData.Task.TargetMap.y}";
+                $"Target: {workerData.Task.TargetMap.X},{workerData.Task.TargetMap.Y}";
         }
 
         /// <inheritdoc/>

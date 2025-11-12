@@ -74,14 +74,14 @@
 
                         if (closedTask == null)
                         {
-                            minDistance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.x, 2) +
-                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.y, 2);
+                            minDistance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.X, 2) +
+                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.Y, 2);
                             closedTask = task1;
                         }
                         else
                         {
-                            float distance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.x, 2) +
-                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.y, 2);
+                            float distance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.X, 2) +
+                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.Y, 2);
                             if (distance < minDistance)
                             {
                                 minDistance = distance;
@@ -127,7 +127,7 @@
             {
                 foreach (WorkerHungryTask hungryTask in this.hungryTasks)
                 {
-                    if (hungryTask.TargetMap.x == task.TargetMap.x && hungryTask.TargetMap.y == task.TargetMap.y)
+                    if (hungryTask.TargetMap.X == task.TargetMap.X && hungryTask.TargetMap.Y == task.TargetMap.Y)
                     {
                         return;
                     }
@@ -137,15 +137,15 @@
             }
             else if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Gather)
             {
-                this.GatherPos.Add(task.TargetMap);
+                this.GatherPos.Add(Vector3IntLAB.ToVector3Int(task.TargetMap));
             }
             else if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Wear)
             {
                 // 一个位置只能有一个穿衣任务
                 foreach (WorkerTask wearTask in this.wearTasks)
                 {
-                    if (wearTask.TargetMap.x == task.TargetMap.x
-                        && wearTask.TargetMap.y == task.TargetMap.y)
+                    if (wearTask.TargetMap.X == task.TargetMap.X
+                        && wearTask.TargetMap.Y == task.TargetMap.Y)
                     {
                         return;
                     }
@@ -247,7 +247,7 @@
         {
             foreach (WorkerHungryTask hungryTask in this.hungryTasks)
             {
-                if (hungryTask.TargetMap.x == pos.x && hungryTask.TargetMap.y == pos.y)
+                if (hungryTask.TargetMap.X == pos.x && hungryTask.TargetMap.Y == pos.y)
                 {
                     for (int i = 0; i < this.tasks.Count; i++)
                     {
@@ -278,11 +278,11 @@
             {
                 foreach (WorkerTask task in this.tasks[i].Keys)
                 {
-                    if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Gather && task.TargetMap.x == posMap.x
-                        && task.TargetMap.y == posMap.y)
+                    if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Gather && task.TargetMap.X == posMap.x
+                        && task.TargetMap.Y == posMap.y)
                     {
                         this.tasks[i].Remove(task);
-                        this.GatherPos.Remove(task.TargetMap);
+                        this.GatherPos.Remove(Vector3IntLAB.ToVector3Int(task.TargetMap));
                         DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
                         return;
                     }

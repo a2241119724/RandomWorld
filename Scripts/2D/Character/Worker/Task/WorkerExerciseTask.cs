@@ -26,7 +26,7 @@
 
             public ExerciseTaskBuilder SetTarget(Vector3Int targetMap)
             {
-                this.task.TargetMap = targetMap;
+                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(targetMap);
                 return this;
             }
 

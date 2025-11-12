@@ -18,7 +18,7 @@ namespace LAB2D
                 WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
-                this.TargetMap = InventoryManager.Instance.IsContainSeedAndPreTake(worker, true);
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.IsContainSeedAndPreTake(worker, true));
                 if (this.TargetMap == default)
                 {
                     this.GiveUpTask(worker);
@@ -33,7 +33,7 @@ namespace LAB2D
                 WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
-                this.TargetMap = FarmlandManager.Instance.IsEnoughAndPrePlant(worker, this.resourceInfo, true);
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(FarmlandManager.Instance.IsEnoughAndPrePlant(worker, this.resourceInfo, true));
                 if (this.TargetMap == default)
                 {
                     this.GiveUpTask(worker);
@@ -73,7 +73,7 @@ namespace LAB2D
             switch (this.stage)
             {
                 case 0:
-                    this.resourceInfo = InventoryManager.Instance.SubAllItemByPos(this.TargetMap);
+                    this.resourceInfo = InventoryManager.Instance.SubAllItemByPos(Vector3IntLAB.ToVector3Int(this.TargetMap));
                     worker.AddResource(this.resourceInfo);
                     this.ChangeStage(worker, 1);
                     return false;
@@ -81,7 +81,7 @@ namespace LAB2D
                     // 可以继续种植
                     if (this.IsCanWork(worker) && this.resourceInfo.Count > 0)
                     {
-                        FarmlandManager.Instance.PlantByPrePlant(worker, this.TargetMap);
+                        FarmlandManager.Instance.PlantByPrePlant(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
                         this.resourceInfo.Count--;
                         this.ChangeStage(worker, 1);
                         return false;
