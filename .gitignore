@@ -1,11 +1,14 @@
 /Animation
-/RenderTexture
 /StreamingAssets
 /URP
 /Scripts/Reference
 /AddressableAssetsData
 /.vs
 /TextMesh Pro
+/Editor
+/Materials
+/ResourcesLocal
+/Scenes
 
 [Ss]tyle[Cc]op.*
 *.mat
