@@ -69,7 +69,7 @@
 
             public SleepTaskBuilder SetTarget(Vector3Int posMap)
             {
-                this.task.TargetMap = posMap;
+                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(posMap);
                 return this;
             }
 

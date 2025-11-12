@@ -49,13 +49,13 @@
             {
                 workerData.AddEquipment(
                     (AEquipment)ItemInstanceFactory.Instance.GetBackpackItemByName(
-                    ItemDataManager.Instance.GetById(this.id).EnName), this.TargetMap);
+                    ItemDataManager.Instance.GetById(this.id).EnName), Vector3IntLAB.ToVector3Int(this.TargetMap));
             }
 
-            InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);
+            InventoryManager.Instance.SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
 
             // 删除图标
-            ItemMap.Instance.DeleteTile(this.TargetMap);
+            ItemMap.Instance.DeleteTile(Vector3IntLAB.ToVector3Int(this.TargetMap));
         }
 
         /// <inheritdoc/>
@@ -82,7 +82,7 @@
 
             public WearTaskBuilder SetTarget(Vector3Int posMap)
             {
-                this.task.TargetMap = posMap;
+                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(posMap);
                 return this;
             }
 

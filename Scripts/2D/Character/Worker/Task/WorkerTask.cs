@@ -14,22 +14,22 @@
         /// <summary>
         /// Worker在工作时的位置（上下左右）
         /// </summary>
-        public List<Vector3Int> AvailableNeighborPos;
+        public List<Vector3IntLAB> AvailableNeighborPos;
 
         /// <summary>
         /// 临近的位置
         /// </summary>
-        protected static readonly List<Vector3Int> Neighbors = new ()
+        protected static readonly List<Vector3IntLAB> Neighbors = new ()
         {
-            new Vector3Int(0, 1, 0), // 上
-            new Vector3Int(1, 0, 0), // 右
-            new Vector3Int(0, -1, 0), // 下
-            new Vector3Int(-1, 0, 0), // 左
-            new Vector3Int(1, 1, 0), // 右上
-            new Vector3Int(1, -1, 0), // 右下
-            new Vector3Int(-1, -1, 0), // 左下
-            new Vector3Int(-1, 1, 0), // 左上
-            new Vector3Int(0, 0, 0), // 自身
+            new Vector3IntLAB(0, 1, 0), // 上
+            new Vector3IntLAB(1, 0, 0), // 右
+            new Vector3IntLAB(0, -1, 0), // 下
+            new Vector3IntLAB(-1, 0, 0), // 左
+            new Vector3IntLAB(1, 1, 0), // 右上
+            new Vector3IntLAB(1, -1, 0), // 右下
+            new Vector3IntLAB(-1, -1, 0), // 左下
+            new Vector3IntLAB(-1, 1, 0), // 左上
+            new Vector3IntLAB(0, 0, 0), // 自身
         };
 
         /// <summary>
@@ -56,7 +56,7 @@
         {
             this.TaskType = taskType;
             this.Name = taskType.ToString();
-            this.AvailableNeighborPos = new List<Vector3Int>();
+            this.AvailableNeighborPos = new List<Vector3IntLAB>();
             this.stageInit = new List<UnityAction<Worker>>();
         }
 
@@ -109,7 +109,7 @@
         /// <summary>
         /// 目标位置
         /// </summary>
-        public Vector3Int TargetMap { get; set; }
+        public Vector3IntLAB TargetMap { get; set; }
 
         /// <summary>
         /// 任务类型

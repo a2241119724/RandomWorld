@@ -32,7 +32,7 @@
                 WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
-                this.TargetMap = InventoryManager.Instance.GetPosByPrePlace(worker);
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.GetPosByPrePlace(worker));
                 if (this.TargetMap == default)
                 {
                     LogManager.Instance.Log("仓库没有位置了", LogManager.LogLevelEnum.Error);
@@ -58,15 +58,15 @@
             AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(this.resourceInfo.Id);
 
             // 放下拿起来的东西
-            ItemMap.Instance.AddTile(this.TargetMap, ResourceManager.Instance
+            ItemMap.Instance.AddTile(Vector3IntLAB.ToVector3Int(this.TargetMap), ResourceManager.Instance
                 .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).EnName));
             worker.SubResource(this.resourceInfo);
-            InventoryManager.Instance.AddItemByPrePlace(worker, this.TargetMap);
+            InventoryManager.Instance.AddItemByPrePlace(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
 
             // 如果是食物,添加饥饿任务
             if (itemType == AItem.ItemTypeEnum.Food)
             {
-                WorkerTaskManager.Instance.AddTask(new WorkerHungryTask.HungryTaskBuilder().SetTarget(this.TargetMap).Build(), 0);
+                WorkerTaskManager.Instance.AddTask(new WorkerHungryTask.HungryTaskBuilder().SetTarget(Vector3IntLAB.ToVector3Int(this.TargetMap)).Build(), 0);
             }
         }
 
@@ -82,7 +82,7 @@
             switch (this.stage)
             {
                 case 0:
-                    ItemMap.Instance.PickUpFromDrop(this.TargetMap, this.resourceInfo);
+                    ItemMap.Instance.PickUpFromDrop(Vector3IntLAB.ToVector3Int(this.TargetMap), this.resourceInfo);
                     worker.AddResource(this.resourceInfo);
                     this.ChangeStage(worker, 1);
                     return false;
@@ -106,7 +106,7 @@
 
             public CarryTaskBuilder SetStartTarget(Vector3Int targetMap)
             {
-                this.task.TargetMap = targetMap;
+                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(targetMap);
                 return this;
             }
 

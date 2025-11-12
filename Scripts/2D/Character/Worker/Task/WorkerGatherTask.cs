@@ -39,13 +39,13 @@
         public override void Finish(Worker worker)
         {
             base.Finish(worker);
-            ResourceMap.Instance.CutTree(this.TargetMap);
+            ResourceMap.Instance.CutTree(Vector3IntLAB.ToVector3Int(this.TargetMap));
             List<DropItem> dropItems = DropDataManager.Instance.GetDropItemsByName(this.resourceName);
 
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)
             {
-                Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(this.TargetMap, 3, true);
+                Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(Vector3IntLAB.ToVector3Int(this.TargetMap), 3, true);
                 if (pos == default)
                 {
                     break;
@@ -55,7 +55,7 @@
             }
 
             // 删除采摘图标
-            GatherMap.Instance.CancelGather(this.TargetMap);
+            GatherMap.Instance.CancelGather(Vector3IntLAB.ToVector3Int(this.TargetMap));
         }
 
         /// <inheritdoc/>
@@ -79,7 +79,7 @@
 
             public GatherTaskBuilder SetTarget(Vector3Int targetMap)
             {
-                this.task.TargetMap = targetMap;
+                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(targetMap);
 
                 // 显示正在采摘图标
                 GatherMap.Instance.AddGather(targetMap);

@@ -39,13 +39,13 @@
             if (workerData.Task != null)
             {
                 // 有任务
-                this.targetMap = workerData.Task.TargetMap;
+                this.targetMap = Vector3IntLAB.ToVector3Int(workerData.Task.TargetMap);
                 float minDistance = 99999.0f;
                 Vector3Int closedPos = default;
-                foreach (Vector3Int pos in workerData.Task.AvailableNeighborPos)
+                foreach (Vector3IntLAB pos in workerData.Task.AvailableNeighborPos)
                 {
                     // 由于是斜对称
-                    Vector3Int temp = new (this.targetMap.x + pos.y, this.targetMap.y + pos.x, 0);
+                    Vector3Int temp = new (this.targetMap.x + pos.Y, this.targetMap.y + pos.X, 0);
                     if (ASeek.IsCanReach(temp))
                     {
                         Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(temp);

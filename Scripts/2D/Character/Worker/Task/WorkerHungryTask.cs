@@ -36,7 +36,7 @@
             base.Finish(worker);
 
             // 再取食物，并且有可能会由于该位置的食物被取完，从而删除该饥饿任务
-            ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, this.TargetMap);
+            ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
             Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
             workerData.CurHungry += resourceInfo.Count * 10;
         }
@@ -65,7 +65,7 @@
 
             public HungryTaskBuilder SetTarget(Vector3Int targetMap)
             {
-                this.task.TargetMap = targetMap;
+                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(targetMap);
                 return this;
             }
 
