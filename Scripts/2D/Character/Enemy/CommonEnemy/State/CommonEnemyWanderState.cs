@@ -5,12 +5,12 @@
     /// <summary>
     /// 敌人漫游状态.
     /// </summary>
-    public class EnemyWanderState : EnemyState
+    public class CommonEnemyWanderState : ACommonEnemyState
     {
         private float recordTime = 9999.0f; // 记录时间
         private float rotationAngle; // 转向角度
 
-        public EnemyWanderState(Enemy character)
+        public CommonEnemyWanderState(ACommonEnemy character)
             : base(character)
         {
         }
@@ -42,7 +42,7 @@
             {
                 if (this.Character.SenseNearby(PlayerManager.Instance.Get(i).transform))
                 {
-                    this.Character.Manager.ChangeState(EnemyStateTypeEnum.Chase);
+                    this.Character.Manager.ChangeState(TypeEnum.Chase);
                     this.Character.Target = PlayerManager.Instance.Get(i);
                     return;
                 }
@@ -54,7 +54,7 @@
             {
                 if (this.Character.SenseNearby(WorkerManager.Instance.Get(i).transform))
                 {
-                    this.Character.Manager.ChangeState(EnemyStateTypeEnum.Chase);
+                    this.Character.Manager.ChangeState(TypeEnum.Chase);
                     this.Character.Target = WorkerManager.Instance.Get(i);
                     return;
                 }

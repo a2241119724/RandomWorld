@@ -3,9 +3,9 @@
     /// <summary>
     /// 敌人状态
     /// </summary>
-    public class EnemyState : CharacterState<Enemy>
+    public abstract class ACommonEnemyState : CharacterState<ACommonEnemy>
     {
-        public EnemyState(Enemy enemy)
+        public ACommonEnemyState(ACommonEnemy enemy)
             : base(enemy)
         {
         }
@@ -20,7 +20,7 @@
         /// 如果攻击范围小于感知范围,玩家远离,会先进入跟踪状态,然后进入搜索状态
         /// 受到玩家攻击进入搜索状态
         /// </summary>
-        public enum EnemyStateTypeEnum
+        public enum TypeEnum
         {
             /// <summary>
             /// 漫游状态

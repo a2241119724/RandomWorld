@@ -18,7 +18,7 @@
         public WorkerCarryTask()
             : base(WorkerTaskTypeEnum.Carry)
         {
-            this.stageInit.Add((Worker worker) =>
+            this.stageInit.Add((AWorker worker) =>
             {
                 WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
@@ -27,7 +27,7 @@
                 // 进入工作状态
                 worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
-            this.stageInit.Add((Worker worker) =>
+            this.stageInit.Add((AWorker worker) =>
             {
                 WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
@@ -44,7 +44,7 @@
         }
 
         /// <inheritdoc/>
-        public override void Start(Worker worker)
+        public override void Start(AWorker worker)
         {
             base.Start(worker);
             InventoryManager.Instance.IsEnoughAndPrePlace(worker, this.resourceInfo, true);
@@ -52,7 +52,7 @@
         }
 
         /// <inheritdoc/>
-        public override void Finish(Worker worker)
+        public override void Finish(AWorker worker)
         {
             base.Finish(worker);
             AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(this.resourceInfo.Id);
@@ -71,13 +71,13 @@
         }
 
         /// <inheritdoc/>
-        protected override bool DoIsCanWork(Worker worker)
+        protected override bool DoIsCanWork(AWorker worker)
         {
             return InventoryManager.Instance.IsEnoughAndPrePlace(worker, this.resourceInfo);
         }
 
         /// <inheritdoc/>
-        protected override bool IsFinish(Worker worker)
+        protected override bool IsFinish(AWorker worker)
         {
             switch (this.stage)
             {

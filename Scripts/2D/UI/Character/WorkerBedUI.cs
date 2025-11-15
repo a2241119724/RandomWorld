@@ -23,11 +23,11 @@
         /// <param name="posMap">位置</param>
         public void ShowWorkerBed(Vector3Int posMap)
         {
-            Worker worker = FurnitureManager.Instance.GetWorkerByBed(posMap);
+            AWorker worker = FurnitureManager.Instance.GetWorkerByBed(posMap);
             this.curWorker.text = $"当前: " + (worker != null ? worker.name : "没人");
 
             this.transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
-            List<Worker> workers = WorkerManager.Instance.Characters;
+            List<AWorker> workers = WorkerManager.Instance.Characters;
             for (int i = 0; i < workers.Count; i++)
             {
                 // 若没有对应的物体，先创建

@@ -8,16 +8,12 @@
     /// <typeparam name="CS">敌人状态.</typeparam>
     /// <typeparam name="CST">敌人状态类型.</typeparam>
     /// <typeparam name="C">敌人.</typeparam>
-    public class EnemyStateManager<CS, CST, C> : CharacterStateManager<CS, CST, C>
+    public class SeekEnemyStateManager<CS, CST, C> : CharacterStateManager<CS, CST, C>
         where CS : ICharacterState
         where CST : Enum
-        where C : Enemy
+        where C : ASeekEnemy
     {
-        /// <summary>
-        /// .
-        /// </summary>
-        /// <param name="character">敌人.</param>
-        public EnemyStateManager(C character)
+        public SeekEnemyStateManager(C character)
             : base(character)
         {
         }

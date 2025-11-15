@@ -6,19 +6,13 @@
     /// <summary>
     /// 敌人.
     /// </summary>
-    public class Enemy_Lv1 : Enemy
+    public class CommonEnemy_Lv1 : ACommonEnemy
     {
-        /// <inheritdoc/>
-        public override void Awake()
-        {
-            base.Awake();
-            this.name = "Enemy_Lv1";
-        }
-
         /// <inheritdoc/>
         public override void Start()
         {
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
+            enemyData.AttackRange = 7.0f;
 
             // 画视觉,听觉,攻击范围
             Tool.DrawSectorSolid(10, enemyData.AttackRange, new Color32(255, 0, 0, 50), this.transform);
@@ -27,14 +21,14 @@
             base.Start();
 
             // 添加状态
-            this.Manager.AddState(EnemyState.EnemyStateTypeEnum.Wander, new EnemyWanderState(this));
-            this.Manager.AddState(EnemyState.EnemyStateTypeEnum.Chase, new EnemyChaseState(this));
-            this.Manager.AddState(EnemyState.EnemyStateTypeEnum.Dead, new EnemyDeadState(this));
-            this.Manager.AddState(EnemyState.EnemyStateTypeEnum.Seek, new EnemySeekState(this));
-            this.Manager.AddState(EnemyState.EnemyStateTypeEnum.Attack, new EnemyAttackState(this));
+            this.Manager.AddState(ACommonEnemyState.TypeEnum.Wander, new CommonEnemyWanderState(this));
+            this.Manager.AddState(ACommonEnemyState.TypeEnum.Chase, new CommonEnemyChaseState(this));
+            this.Manager.AddState(ACommonEnemyState.TypeEnum.Dead, new CommonEnemyDeadState(this));
+            this.Manager.AddState(ACommonEnemyState.TypeEnum.Seek, new CommonEnemySeekState(this));
+            this.Manager.AddState(ACommonEnemyState.TypeEnum.Attack, new CommonEnemyAttackState(this));
 
             // 初始化状态
-            this.Manager.ChangeState(EnemyState.EnemyStateTypeEnum.Wander);
+            this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Wander);
             this.Target = null;
         }
 
@@ -53,8 +47,7 @@
             ae.AttackLayers = this.AttackLayers;
             ae.AttackTags = this.AttackTags;
             ae.Speed = enemyData.BulletSpeed;
-            this.damage = Random.Range(1, 10);
-            ae.Damage = this.damage;
+            ae.Damage = enemyData.GetDamage(false);
             ae.Onwer = this;
         }
     }

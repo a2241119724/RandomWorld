@@ -68,9 +68,9 @@
                 this.character.GetChild(i).gameObject.SetActive(false);
             }
 
-            if (character is Worker worker1)
+            if (character is AWorker worker1)
             {
-                Worker.WorkerData workerData = worker1.CharacterDataLAB as Worker.WorkerData;
+                AWorker.WorkerData workerData = worker1.CharacterDataLAB as AWorker.WorkerData;
                 Transform worker = this.character.Find("Worker");
                 worker.gameObject.SetActive(true);
                 AWeapon weapon = workerData.Weapon;
@@ -80,7 +80,7 @@
                         ItemDataManager.Instance.GetById(weapon.Id).EnName);
                 }
 
-                Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments = workerData.Equipments;
+                Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments = workerData.GetEquipments();
                 foreach (var item in equipments)
                 {
                     if (item.Value != null)
@@ -90,7 +90,7 @@
                     }
                 }
             }
-            else if (character is Enemy)
+            else if (character is ACommonEnemy)
             {
                 this.character.Find("Enemy").gameObject.SetActive(true);
             }

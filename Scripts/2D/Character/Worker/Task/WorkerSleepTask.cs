@@ -9,12 +9,12 @@
     [Serializable]
     public class WorkerSleepTask : WorkerTask
     {
-        private Worker worker;
+        private AWorker worker;
 
         public WorkerSleepTask()
             : base(WorkerTaskTypeEnum.Sleep)
         {
-            this.stageInit.Add((Worker worker) =>
+            this.stageInit.Add((AWorker worker) =>
             {
                 WorkerTask.maxProgress = 10.0f;
 
@@ -28,7 +28,7 @@
         }
 
         /// <inheritdoc/>
-        public override void Start(Worker worker)
+        public override void Start(AWorker worker)
         {
             base.Start(worker);
             this.ChangeStage(worker, 0);
@@ -41,17 +41,17 @@
         }
 
         /// <inheritdoc/>
-        public override void Finish(Worker worker)
+        public override void Finish(AWorker worker)
         {
             base.Finish(worker);
         }
 
         /// <inheritdoc/>
-        protected override bool DoIsCanWork(Worker worker)
+        protected override bool DoIsCanWork(AWorker worker)
         {
             // 如果疲劳值低于阈值，并且有床，则可以睡觉
-            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-            return workerData.CurTired < Worker.ThresholdTired && worker.BedItem != null && this.worker == worker;
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+            return workerData.CurTired < AWorker.ThresholdTired && worker.BedItem != null && this.worker == worker;
         }
 
 #pragma warning disable SA1600 // Elements should be documented
@@ -73,7 +73,7 @@
                 return this;
             }
 
-            public SleepTaskBuilder SetWorker(Worker worker)
+            public SleepTaskBuilder SetWorker(AWorker worker)
             {
                 this.task.worker = worker;
                 return this;

@@ -5,9 +5,9 @@
     /// <summary>
     /// 敌人追击状态.
     /// </summary>
-    public class EnemyChaseState : EnemyState
+    public class CommonEnemyChaseState : ACommonEnemyState
     {
-        public EnemyChaseState(Enemy character)
+        public CommonEnemyChaseState(ACommonEnemy character)
             : base(character)
         {
         }
@@ -42,12 +42,12 @@
             // 仅感知捕捉的玩家
             if (this.Character.SenseNearby(this.Character.Target.transform))
             {
-                Enemy.EnemyData enemyData = this.Character.CharacterDataLAB as Enemy.EnemyData;
+                ACommonEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as ACommonEnemy.EnemyData;
 
                 // 如果玩家与敌人的距离小于敌人的攻击距离，那么进入攻击状态
                 if (Vector3.Distance(this.Character.Target.transform.position, this.Character.transform.position) <= enemyData.AttackRange)
                 {
-                    this.Character.Manager.ChangeState(EnemyStateTypeEnum.Attack);
+                    this.Character.Manager.ChangeState(TypeEnum.Attack);
                     return;
                 }
 
@@ -60,7 +60,7 @@
             }
 
             // 如果敌人感知范围内没有玩家，进入搜索状态
-            this.Character.Manager.ChangeState(EnemyStateTypeEnum.Seek);
+            this.Character.Manager.ChangeState(TypeEnum.Seek);
         }
     }
 }

@@ -10,7 +10,6 @@
     public class GameInfoUI : MonoBehaviour
     {
         private Text fps;
-        private Text position;
 
         private float accum; // fps
         private int frames;
@@ -20,27 +19,10 @@
         /// </summary>
         public static GameInfoUI Instance { get; private set; }
 
-        /// <summary>
-        /// 设置当前游戏画面的位置
-        /// </summary>
-        /// <param name="worldPos">位置</param>
-        public void SetPosition(Vector3 worldPos)
-        {
-            if (worldPos == null)
-            {
-                LogManager.Instance.Log("v is null!!!", LogManager.LogLevelEnum.Error);
-                return;
-            }
-
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(worldPos);
-            this.position.text = "(" + posMap.x + "," + posMap.y + ")";
-        }
-
         public void Awake()
         {
             Instance = this;
             this.fps = Tool.GetComponentInChildren<Text>(this.gameObject, "FPS");
-            this.position = Tool.GetComponentInChildren<Text>(this.gameObject, "PlayerPosition");
         }
 
         public void Start()

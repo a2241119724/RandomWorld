@@ -45,10 +45,10 @@
         /// </summary>
         public void Update()
         {
-            List<Worker> workers = WorkerManager.Instance.Characters;
-            foreach (Worker worker in workers)
+            List<AWorker> workers = WorkerManager.Instance.Characters;
+            foreach (AWorker worker in workers)
             {
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
                 if (workerData.Task != null)
                 {
                     continue;

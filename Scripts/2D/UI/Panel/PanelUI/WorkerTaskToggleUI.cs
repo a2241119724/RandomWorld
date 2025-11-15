@@ -22,8 +22,8 @@
         {
             int x = toggle.transform.parent.GetSiblingIndex() - 1;
             int y = toggle.transform.GetSiblingIndex() - 1;
-            List<Worker> workers = WorkerManager.Instance.Characters;
-            Worker.WorkerData workerData = workers[x].CharacterDataLAB as Worker.WorkerData;
+            List<AWorker> workers = WorkerManager.Instance.Characters;
+            AWorker.WorkerData workerData = workers[x].CharacterDataLAB as AWorker.WorkerData;
             workerData.TaskToggle[y] = toggle.isOn;
         }
 
@@ -38,7 +38,7 @@
 
         private void OnEnable()
         {
-            List<Worker> workers = WorkerManager.Instance.Characters;
+            List<AWorker> workers = WorkerManager.Instance.Characters;
 
             // UI不够,创建
             int count = workers.Count - (this.transform.childCount - 1);
@@ -68,11 +68,11 @@
             }
 
             int index = 0;
-            foreach (Worker worker in workers)
+            foreach (AWorker worker in workers)
             {
                 this.TaskItems[index].SetActive(true);
                 Tool.GetComponentInChildren<Text>(this.TaskItems[index].transform.GetChild(0).gameObject, "Text").text = worker.name;
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
                 for (int i = 1; i < this.TaskItems[index].transform.childCount; i++)
                 {
                     this.TaskItems[index].transform.GetChild(i).GetComponent<Toggle>().isOn = workerData.TaskToggle[i - 1];

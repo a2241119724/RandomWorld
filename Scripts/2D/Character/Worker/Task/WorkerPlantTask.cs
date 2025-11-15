@@ -13,7 +13,7 @@ namespace LAB2D
         public WorkerPlantTask()
             : base(WorkerTaskTypeEnum.Plant)
         {
-            this.stageInit.Add((Worker worker) =>
+            this.stageInit.Add((AWorker worker) =>
             {
                 WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
@@ -28,7 +28,7 @@ namespace LAB2D
                 // 进入工作状态
                 worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
-            this.stageInit.Add((Worker worker) =>
+            this.stageInit.Add((AWorker worker) =>
             {
                 WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
@@ -46,14 +46,14 @@ namespace LAB2D
         }
 
         /// <inheritdoc/>
-        public override void Start(Worker worker)
+        public override void Start(AWorker worker)
         {
             base.Start(worker);
             this.ChangeStage(worker, 0);
         }
 
         /// <inheritdoc/>
-        public override void Finish(Worker worker)
+        public override void Finish(AWorker worker)
         {
             base.Finish(worker);
 
@@ -61,14 +61,14 @@ namespace LAB2D
         }
 
         /// <inheritdoc/>
-        protected override bool DoIsCanWork(Worker worker)
+        protected override bool DoIsCanWork(AWorker worker)
         {
             return FarmlandManager.Instance.IsEnoughAndPrePlant(worker, null) != default &&
                 InventoryManager.Instance.IsContainSeedAndPreTake(worker) != default;
         }
 
         /// <inheritdoc/>
-        protected override bool IsFinish(Worker worker)
+        protected override bool IsFinish(AWorker worker)
         {
             switch (this.stage)
             {

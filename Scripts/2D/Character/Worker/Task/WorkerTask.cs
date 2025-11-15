@@ -50,14 +50,14 @@
         /// <summary>
         /// 任务阶段上下文
         /// </summary>
-        protected List<UnityAction<Worker>> stageInit;
+        protected List<UnityAction<AWorker>> stageInit;
 
         public WorkerTask(WorkerTaskTypeEnum taskType)
         {
             this.TaskType = taskType;
             this.Name = taskType.ToString();
             this.AvailableNeighborPos = new List<Vector3IntLAB>();
-            this.stageInit = new List<UnityAction<Worker>>();
+            this.stageInit = new List<UnityAction<AWorker>>();
         }
 
         /// <summary>
@@ -126,12 +126,12 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否成功</returns>
-        public bool Execute(Worker worker)
+        public bool Execute(AWorker worker)
         {
             this.DoExecute();
 
             // 工作扣减疲劳值
-            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             workerData.CurTired -= Time.deltaTime * 0.1f;
             this.curProgress += Time.deltaTime;
             if (this.curProgress > WorkerTask.maxProgress)
@@ -162,7 +162,7 @@
         /// 选择到最近的任务之后执行
         /// </summary>
         /// <param name="worker">Worker</param>
-        public virtual void Start(Worker worker)
+        public virtual void Start(AWorker worker)
         {
         }
 
@@ -171,9 +171,9 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否</returns>
-        public bool IsCanWork(Worker worker)
+        public bool IsCanWork(AWorker worker)
         {
-            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             if (!workerData.TaskToggle[(int)this.TaskType])
             {
                 return false;
@@ -186,14 +186,14 @@
         /// 放弃任务
         /// </summary>
         /// <param name="worker">Worker</param>
-        public virtual void GiveUpTask(Worker worker)
+        public virtual void GiveUpTask(AWorker worker)
         {
             LogManager.Instance.Log("放弃任务", LogManager.LogLevelEnum.Warning);
             worker.GiveUpTask();
         }
 
         /// <inheritdoc/>
-        public virtual void Finish(Worker worker)
+        public virtual void Finish(AWorker worker)
         {
             WorkerTaskManager.Instance.CompleteTask(this);
         }
@@ -203,7 +203,7 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否</returns>
-        protected virtual bool DoIsCanWork(Worker worker)
+        protected virtual bool DoIsCanWork(AWorker worker)
         {
             return false;
         }
@@ -213,7 +213,7 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否</returns>
-        protected virtual bool IsFinish(Worker worker)
+        protected virtual bool IsFinish(AWorker worker)
         {
             return true;
         }
@@ -223,7 +223,7 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <param name="stage">任务所处阶段</param>
-        protected void ChangeStage(Worker worker, int stage)
+        protected void ChangeStage(AWorker worker, int stage)
         {
             if (this.stageInit.Count < stage + 1)
             {

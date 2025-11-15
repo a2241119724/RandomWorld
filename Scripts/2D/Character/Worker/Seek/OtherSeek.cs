@@ -2,7 +2,7 @@
 {
     public class OtherSeek : ASeek
     {
-        public OtherSeek(Worker character)
+        public OtherSeek(AWorker character)
         : base(character)
         {
         }

@@ -9,7 +9,7 @@
     /// <summary>
     /// Worker
     /// </summary>
-    public class Worker : Character
+    public abstract class AWorker : Character
     {
         /// <summary>
         /// 饥饿值阈值
@@ -44,14 +44,16 @@
         /// <summary>
         /// 状态管理器
         /// </summary>
-        public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker> Manager { get; private set; }
+        public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, AWorker> Manager { get; private set; }
 
         /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
+            this.basicAttribute = new Attribute(1.0f, 1.0f, 1.0f, 1.0f, 0.05f, 1.0f, 1.0f, 1.0f);
             this.CharacterDataLAB = new WorkerData();
-            this.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, Worker>(this);
+            this.CharacterDataLAB.Character = this;
+            this.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, AWorker>(this);
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
             this.progress = this.transform.Find("Progress").GetComponent<Slider>();
@@ -220,7 +222,7 @@
         /// </summary>
         public void GiveUpTask()
         {
-            Worker.WorkerData workerData = this.CharacterDataLAB as Worker.WorkerData;
+            AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
             WorkerTaskManager.Instance.GiveUpTask(workerData.Task);
             workerData.Task = null;
             this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
@@ -249,11 +251,8 @@
             return remaining;
         }
 
-        /// <summary>
-        /// 掉血
-        /// </summary>
-        /// <param name="hp">所掉的血量</param>
-        public override void ReduceHp(float hp)
+        /// <inheritdoc/>
+        public override void ReduceHp(float hp, bool isCRT = false)
         {
             if (hp <= 0)
             {
@@ -261,7 +260,7 @@
                 return;
             }
 
-            base.ReduceHp(hp);
+            base.ReduceHp(hp, isCRT);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
             this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Attack);
         }
@@ -286,16 +285,6 @@
         [Serializable]
         public class WorkerData : CharacterData
         {
-            /// <summary>
-            /// 携带的武器
-            /// </summary>
-            public AWeapon Weapon;
-
-            /// <summary>
-            /// 身上携带的装备
-            /// </summary>
-            public Dictionary<AEquipment.EquipTypeEnum, AEquipment> Equipments;
-
             /// <summary>
             /// 最大疲劳值
             /// </summary>
@@ -339,33 +328,11 @@
 
             public WorkerData()
             {
-                this.Equipments = new Dictionary<AEquipment.EquipTypeEnum, AEquipment>();
-
                 // 设置默认可接受任务类型
                 this.TaskToggle = new bool[10];
                 this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Eat] = true;
                 this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Wear] = true;
                 this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Carry] = true;
-            }
-
-            /// <summary>
-            /// 添加装备
-            /// </summary>
-            /// <param name="equipment">装备</param>
-            /// <param name="posMap">位置</param>
-            public void AddEquipment(AEquipment equipment, Vector3Int posMap)
-            {
-                if (this.Equipments.ContainsKey(equipment.EquipType))
-                {
-                    // 交换装备
-                    AEquipment equipment1 = this.Equipments[equipment.EquipType];
-                    ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
-                    this.Equipments[equipment.EquipType] = equipment1;
-                }
-                else
-                {
-                    this.Equipments.Add(equipment.EquipType, equipment);
-                }
             }
         }
     }

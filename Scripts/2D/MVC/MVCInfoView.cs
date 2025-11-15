@@ -31,8 +31,6 @@
             }
 
             this.info.text = item.ToString();
-
-            // 记录点击的是哪个道具
         }
 
         private void OnEnable()
