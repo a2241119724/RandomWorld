@@ -5,7 +5,7 @@
     /// </summary>
     public class WorkerAttackState : WorkerState
     {
-        public WorkerAttackState(Worker worker)
+        public WorkerAttackState(AWorker worker)
             : base(worker)
         {
         }
@@ -27,7 +27,7 @@
         public override void OnUpdate()
         {
             base.OnUpdate();
-            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.Weapon == null)
             {
                 this.Character.Manager.ChangeState(WorkerStateTypeEnum.Escape);

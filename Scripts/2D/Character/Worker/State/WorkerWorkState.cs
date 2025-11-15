@@ -1,6 +1,6 @@
 ﻿namespace LAB2D
 {
-    using static LAB2D.Worker;
+    using static LAB2D.AWorker;
 
     /// <summary>
     /// Worker工作状态
@@ -9,7 +9,7 @@
     {
         private bool waitOneFrame; // 等待一帧
 
-        public WorkerWorkState(Worker worker)
+        public WorkerWorkState(AWorker worker)
             : base(worker)
         {
         }
@@ -19,7 +19,7 @@
         {
             base.OnEnter();
             this.waitOneFrame = false;
-            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.Task == null)
             {
                 return;
@@ -46,7 +46,7 @@
             }
 
             base.OnUpdate();
-            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.Task == null)
             {
                 return;

@@ -50,5 +50,16 @@
     [Serializable]
     public class CustomSword : Sword
     {
+        public CustomSword()
+        {
+            this.Attribute.ATN = this.RankRandom(5.0f, 10.0f);
+            this.Attribute.INT = this.RankRandom(5.0f, 10.0f);
+            this.Attribute.CRT = this.RankRandom(0.05f, 0.1f);
+            this.Attribute.CSD = this.RankRandom(0f, 1.0f);
+            this.Attribute.HIT = this.RankRandom(5.0f, 10.0f);
+            this.Attribute.RES = this.RankRandom(5.0f, 10.0f);
+            this.Attribute.SPD = this.RankRandom(5.0f, 10.0f);
+            this.Attribute.DEF = this.RankRandom(5.0f, 10.0f);
+        }
     }
 }

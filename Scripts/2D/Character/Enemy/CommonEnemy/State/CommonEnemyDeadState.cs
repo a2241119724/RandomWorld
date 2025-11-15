@@ -8,14 +8,14 @@
     /// <summary>
     /// 敌人死亡状态.
     /// </summary>
-    public class EnemyDeadState : EnemyState
+    public class CommonEnemyDeadState : ACommonEnemyState
     {
         private const float DeadTime = 0.5f; // 死亡时间
         private readonly Dictionary<int, TileBase> probToDropItem; // key:获取对应item的概率值
         private float recordTime = 0.0f;
         private int dropTotal; // 生成Item的总概率值
 
-        public EnemyDeadState(Enemy character)
+        public CommonEnemyDeadState(ACommonEnemy character)
             : base(character)
         {
             this.probToDropItem = new Dictionary<int, TileBase>();
@@ -46,7 +46,7 @@
         public override void OnExit()
         {
             base.OnExit();
-            this.Character.GetComponent<Enemy>().enabled = false;
+            this.Character.GetComponent<ACommonEnemy>().enabled = false;
         }
 
         /// <inheritdoc/>
@@ -76,7 +76,7 @@
                 PhotonNetwork.Destroy(this.Character.gameObject); // Destroy不会立即销毁,下一帧销毁
 
                 // 执行OnExit并关闭脚本
-                this.Character.Manager.ChangeState(EnemyStateTypeEnum.Wander);
+                this.Character.Manager.ChangeState(TypeEnum.Wander);
             }
         }
 

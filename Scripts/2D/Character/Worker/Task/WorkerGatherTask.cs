@@ -16,7 +16,7 @@
         public WorkerGatherTask()
             : base(WorkerTaskTypeEnum.Gather)
         {
-            this.stageInit.Add((Worker worker) =>
+            this.stageInit.Add((AWorker worker) =>
             {
                 WorkerTask.maxProgress = 10.0f;
                 this.AvailableNeighborPos.Clear();
@@ -29,14 +29,14 @@
         }
 
         /// <inheritdoc/>
-        public override void Start(Worker worker)
+        public override void Start(AWorker worker)
         {
             base.Start(worker);
             this.ChangeStage(worker, 0);
         }
 
         /// <inheritdoc/>
-        public override void Finish(Worker worker)
+        public override void Finish(AWorker worker)
         {
             base.Finish(worker);
             ResourceMap.Instance.CutTree(Vector3IntLAB.ToVector3Int(this.TargetMap));
@@ -59,7 +59,7 @@
         }
 
         /// <inheritdoc/>
-        protected override bool DoIsCanWork(Worker worker)
+        protected override bool DoIsCanWork(AWorker worker)
         {
             return ResourceMap.Instance.ResourceMapDataLAB.TreeCurCount > 0;
         }

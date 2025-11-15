@@ -17,7 +17,7 @@
         /// </summary>
         public readonly IBasePanel[] ToolMenus = new IBasePanel[]
         {
-            BuildMenuPanel.Instance, PlayerInfoPanel.Instance, BackpackMenuPanel.Instance,
+            BuildMenuPanel.Instance, BackpackMenuPanel.Instance,
             WorkerTaskTogglePanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
         };
 
@@ -99,15 +99,17 @@
         /// </summary>
         public void Onclick_Attack()
         {
-            if (PlayerManager.Instance.Select.Weapon != null)
+            if (PlayerManager.Instance.Mine.Weapon != null)
             {
+                AWeaponObject weapon = PlayerManager.Instance.Mine.Weapon.GetComponent<AWeaponObject>();
+                weapon.IsCRT = UnityEngine.Random.Range(0.0f, 1.0f) < PlayerManager.Instance.Mine.CharacterDataLAB.CRT;
                 if (NetworkConnect.Instance.IsOnline)
                 {
-                    PlayerManager.Instance.Select.Weapon.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
+                    PlayerManager.Instance.Mine.Weapon.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
                 }
                 else
                 {
-                    PlayerManager.Instance.Select.Weapon.GetComponent<AWeaponObject>().Attack();
+                    weapon.Attack();
                 }
             }
         }
@@ -172,7 +174,7 @@
         {
             if (EnemyManager.Instance.Characters.Count > 0)
             {
-                ((EnemyDeadState)EnemyManager.Instance.Characters[0].Manager.States[EnemyState.EnemyStateTypeEnum.Dead]).DropItem();
+                ((CommonEnemyDeadState)((ACommonEnemy)EnemyManager.Instance.Characters[0]).Manager.States[ACommonEnemyState.TypeEnum.Dead]).DropItem();
             }
         }
     }

@@ -11,7 +11,7 @@
         private readonly StringBuilder builder = new (128); // 减少GC
         private float recordTime = 0.0f;
 
-        public WorkerMoveState(Worker worker)
+        public WorkerMoveState(AWorker worker)
             : base(worker)
         {
         }
@@ -37,7 +37,7 @@
             bool isTarget = this.Character.Seek.MoveByPath();
             if (isTarget)
             {
-                Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+                AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
                 if (workerData.Task == null)
                 {
                     this.recordTime += Time.deltaTime;

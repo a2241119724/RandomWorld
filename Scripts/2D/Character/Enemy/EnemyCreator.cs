@@ -1,6 +1,5 @@
 ﻿namespace LAB2D
 {
-    using System.Collections;
     using UnityEngine;
 
     /// <summary>
@@ -8,22 +7,7 @@
     /// </summary>
     public class EnemyCreator : CharacterCreator<EnemyCreator>
     {
-        private const float InstanceInterval = 3.0f; // 实例化时间间隔
-
-        /// <summary>
-        /// 每隔一段时间生成敌人
-        /// </summary>
-        /// <returns>协程</returns>
-        public IEnumerator GenEnemy()
-        {
-            // 需要等待地图协程执行完后再执行
-            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
-            while (true)
-            {
-                EnemyManager.Instance.Create();
-                yield return new WaitForSeconds(InstanceInterval);
-            }
-        }
+        private string[] enemyNames = new string[] { "CommonEnemy_Lv1", "SeekEnemy_Lv1" };
 
         /// <summary>
         /// 实例化在玩家附近的敌人
@@ -39,7 +23,8 @@
                 return null;
             }
 
-            return base.DoCreate(worldPos, PrefabConstant.ENEMY_LV1, LayerConstant.ENEMY_LAAYER);
+            // 随机实例化敌人
+            return base.DoCreate(worldPos, this.enemyNames[Random.Range(0, this.enemyNames.Length)], LayerConstant.ENEMY_LAAYER);
         }
     }
 }

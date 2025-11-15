@@ -5,7 +5,7 @@
     /// <summary>
     /// Worker状态
     /// </summary>
-    public class WorkerState : CharacterState<Worker>
+    public class WorkerState : CharacterState<AWorker>
     {
         /// <summary>
         /// 信息前缀
@@ -14,7 +14,7 @@
 
         private const string Pattern = "^Worker(.*)State$";
 
-        public WorkerState(Worker worker)
+        public WorkerState(AWorker worker)
             : base(worker)
         {
         }
@@ -66,7 +66,7 @@
             base.OnEnter();
             Match match = Regex.Match(this.GetType().Name, Pattern);
             this.preString = $"<color=red>{match.Groups[1]}</color>\n";
-            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.Task != null)
             {
                 this.preString += $"<color=green>{workerData.Task.Name}</color>\n";

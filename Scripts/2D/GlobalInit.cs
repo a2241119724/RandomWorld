@@ -121,11 +121,11 @@
 
         private void WorkerUpdate()
         {
-            List<Worker> workers = WorkerManager.Instance.Characters;
-            foreach (Worker worker in workers)
+            List<AWorker> workers = WorkerManager.Instance.Characters;
+            foreach (AWorker worker in workers)
             {
                 // 按照时间对饥饿值与疲劳值进行自然衰减
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
                 workerData.CurHungry -= Time.deltaTime * 0.1f;
                 workerData.CurTired -= Time.deltaTime * 0.01f;
             }

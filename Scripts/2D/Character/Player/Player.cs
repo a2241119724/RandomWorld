@@ -19,6 +19,11 @@
         private SpriteRenderer sprite;
         private Rigidbody2D rg;
 
+        /// <summary>
+        /// 当前装备的武器物体
+        /// </summary>
+        public GameObject Weapon { get; set; }
+
         /// <inheritdoc/>
         public override void Awake()
         {
@@ -31,7 +36,9 @@
             }
 
             this.name = "Player";
+            this.basicAttribute = new Attribute(1.0f, 1.0f, 1.0f, 1.0f, 0.05f, 1.0f, 1.0f, 1.0f);
             this.CharacterDataLAB = new PlayerData();
+            this.CharacterDataLAB.Character = this;
             this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
             this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAAYER);
             this.AttackTags = new List<string>
@@ -58,11 +65,6 @@
             if (this.pv.IsMine || !NetworkConnect.Instance.IsOnline)
             {
                 this.MoveSpeed = 5;
-                if (GameInfoUI.Instance != null)
-                {
-                    GameInfoUI.Instance.SetPosition(this.transform.position);
-                }
-
                 this.miniCamera = GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG).GetComponent<CameraMove>();
                 this.miniCamera.DirectToPosition(this.transform.position);
                 this.mainCamera = Camera.main.GetComponent<CameraMove>();
@@ -131,6 +133,7 @@
                 playerData.CurExperience %= playerData.MaxExperience;
                 playerData.MaxExperience *= 2;
                 GlobalInit.Instance.ShowTip("UP " + playerData.Level);
+                this.CharacterDataLAB.ComputeAttribute();
             }
 
             PlayerStatusUI.Instance.UpdatePlayerState(
@@ -166,11 +169,8 @@
                 playerData.MaxExperience);
         }
 
-        /// <summary>
-        /// 减血.
-        /// </summary>
-        /// <param name="hp">血量.</param>
-        public override void ReduceHp(float hp)
+        /// <inheritdoc/>
+        public override void ReduceHp(float hp, bool isCRT = false)
         {
             if (hp <= 0)
             {
@@ -178,7 +178,7 @@
                 return;
             }
 
-            base.ReduceHp(hp);
+            base.ReduceHp(hp, isCRT);
             if (NetworkConnect.Instance.IsOnline && !this.pv.IsMine && PhotonNetwork.IsConnected)
             {
                 return;
@@ -273,11 +273,6 @@
                     this.miniCamera.Character = this;
                 }
 
-                if (GameInfoUI.Instance != null)
-                {
-                    GameInfoUI.Instance.SetPosition(this.transform.position);
-                }
-
                 this.animator.SetBool("IsMove", true);
 
                 // 按键控制玩家
@@ -326,9 +321,10 @@
             PlayerManager.Instance.Remove(this);
 
             // 关闭游戏添加正在装备的武器
-            if (PlayerManager.Instance.Select.Id != -1)
+            PlayerData playerData = this.CharacterDataLAB as PlayerData;
+            if (playerData.Weapon != null)
             {
-                BackpackController.Instance.AddItem(PlayerManager.Instance.Select.WeaponData);
+                BackpackController.Instance.AddItem(playerData.Weapon);
             }
         }
 

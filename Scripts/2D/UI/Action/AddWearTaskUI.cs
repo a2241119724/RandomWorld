@@ -24,7 +24,7 @@
         public void ShowWearTask(Vector3Int posMap)
         {
             this.transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
-            List<Worker> workers = WorkerManager.Instance.Characters;
+            List<AWorker> workers = WorkerManager.Instance.Characters;
             ResourceInfo resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
 
             // 该位置没有东西则不展示任何东西

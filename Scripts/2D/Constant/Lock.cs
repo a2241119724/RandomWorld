@@ -15,14 +15,14 @@
         /// <summary>
         /// 拥有者
         /// </summary>
-        public Worker Owner { get; set; }
+        public AWorker Owner { get; set; }
 
         /// <summary>
         /// 获取锁
         /// </summary>
         /// <param name="worker">获取锁的Worker</param>
         /// <returns>是否成功</returns>
-        public bool GetLock(Worker worker)
+        public bool GetLock(AWorker worker)
         {
             if (this.Owner == null)
             {
@@ -49,7 +49,7 @@
         /// 释放锁
         /// </summary>
         /// <param name="worker">释放锁的Worker</param>
-        public void ReleaseLock(Worker worker)
+        public void ReleaseLock(AWorker worker)
         {
             if (this.Owner == worker)
             {

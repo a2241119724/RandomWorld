@@ -2,7 +2,6 @@
 {
     using System.Text;
     using UnityEngine;
-    using static LAB2D.Worker;
 
     /// <summary>
     /// Worker寻找状态
@@ -13,7 +12,7 @@
         private readonly StringBuilder builder = new (128); // 减少GC
         private Vector3Int targetMap;
 
-        public WorkerSeekState(Worker character)
+        public WorkerSeekState(AWorker character)
             : base(character)
         {
         }
@@ -24,8 +23,8 @@
             base.OnEnter();
 
             // 如果饥饿并且没有吃饭任务就进入饥饿状态,做完任务再吃饭
-            Worker.WorkerData workerData = this.Character.CharacterDataLAB as Worker.WorkerData;
-            if (workerData.CurHungry < Worker.ThresholdHungry && workerData.Task == null)
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            if (workerData.CurHungry < AWorker.ThresholdHungry && workerData.Task == null)
             {
                 this.Character.Manager.ChangeState(WorkerStateTypeEnum.Eat);
                 return;

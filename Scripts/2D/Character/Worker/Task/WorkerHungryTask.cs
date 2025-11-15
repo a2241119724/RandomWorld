@@ -12,7 +12,7 @@
         public WorkerHungryTask()
             : base(WorkerTaskTypeEnum.Eat)
         {
-            this.stageInit.Add((Worker worker) =>
+            this.stageInit.Add((AWorker worker) =>
             {
                 WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
@@ -21,32 +21,32 @@
         }
 
         /// <inheritdoc/>
-        public override void Start(Worker worker)
+        public override void Start(AWorker worker)
         {
             base.Start(worker);
-            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, workerData.MaxHungry - workerData.CurHungry, true);
             this.ChangeStage(worker, 0);
         }
 
         /// <inheritdoc/>
-        public override void Finish(Worker worker)
+        public override void Finish(AWorker worker)
         {
             // 将饥饿任务放回任务管理中
             base.Finish(worker);
 
             // 再取食物，并且有可能会由于该位置的食物被取完，从而删除该饥饿任务
             ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
-            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             workerData.CurHungry += resourceInfo.Count * 10;
         }
 
         /// <inheritdoc/>
-        protected override bool DoIsCanWork(Worker worker)
+        protected override bool DoIsCanWork(AWorker worker)
         {
             // 饥饿值小于一定值可以接收饥饿任务
-            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
-            return workerData.CurHungry < Worker.ThresholdHungry
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+            return workerData.CurHungry < AWorker.ThresholdHungry
                 && InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, workerData.MaxHungry - workerData.CurHungry);
         }
 

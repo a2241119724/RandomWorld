@@ -11,7 +11,7 @@
     public class WorkerStateManager<CS, CST, C> : CharacterStateManager<CS, CST, C>
         where CS : ICharacterState
         where CST : Enum
-        where C : Worker
+        where C : AWorker
     {
         public WorkerStateManager(C character)
             : base(character)

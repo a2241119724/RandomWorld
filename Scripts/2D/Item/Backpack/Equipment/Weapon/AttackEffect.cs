@@ -12,6 +12,11 @@
         private ParticleSystem ps;
 
         /// <summary>
+        /// 是否暴击
+        /// </summary>
+        public bool IsCRT { get; set; } = false;
+
+        /// <summary>
         /// 特效速度
         /// </summary>
         public float Speed
@@ -60,13 +65,13 @@
             if (this.AttackTags != null && this.AttackTags.Count > 0 && this.AttackTags.Contains(other.tag))
             {
                 Character c = other.GetComponent<Character>();
-                if (c is Enemy)
+                if (c is ACommonEnemy)
                 {
-                    Enemy e = c as Enemy;
+                    ACommonEnemy e = c as ACommonEnemy;
                     e.Target = this.Onwer;
                 }
 
-                other.GetComponent<Character>().ReduceHp(this.Damage);
+                other.GetComponent<Character>().ReduceHp(this.Damage, this.IsCRT);
             }
         }
     }

@@ -3,7 +3,7 @@
     /// <summary>
     /// Worker管理器
     /// </summary>
-    public class WorkerManager : CharacterManager<WorkerManager, Worker, WorkerCreator>
+    public class WorkerManager : CharacterManager<WorkerManager, AWorker, WorkerCreator>
     {
         /// <summary>
         /// 用于多个Worker概率获取寻路锁
@@ -11,7 +11,7 @@
         private int countLock = 1;
 
         /// <inheritdoc/>
-        public override void Add(Worker character)
+        public override void Add(AWorker character)
         {
             base.Add(character);
             LocateWorkerUI.Instance.AddWorkerItem(character);
@@ -27,7 +27,7 @@
             if (this.countLock == 1)
             {
                 // 初始时或只有一个Worker在寻路时, 获取寻路Worker的数量
-                foreach (Worker worker in this.Characters)
+                foreach (AWorker worker in this.Characters)
                 {
                     if (worker.Manager.CurrentStateType == WorkerState.WorkerStateTypeEnum.Seek)
                     {

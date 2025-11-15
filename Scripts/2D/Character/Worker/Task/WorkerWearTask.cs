@@ -9,13 +9,13 @@
     [Serializable]
     public class WorkerWearTask : WorkerTask
     {
-        private Worker worker;
+        private AWorker worker;
         private int id; // 穿戴的装备id
 
         public WorkerWearTask()
             : base(WorkerTaskTypeEnum.Wear)
         {
-            this.stageInit.Add((Worker worker) =>
+            this.stageInit.Add((AWorker worker) =>
             {
                 WorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
@@ -27,17 +27,17 @@
         }
 
         /// <inheritdoc/>
-        public override void Start(Worker worker)
+        public override void Start(AWorker worker)
         {
             base.Start(worker);
             this.ChangeStage(worker, 0);
         }
 
         /// <inheritdoc/>
-        public override void Finish(Worker worker)
+        public override void Finish(AWorker worker)
         {
             base.Finish(worker);
-            Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
 
             // Worker拿起装备或者武器
             if (ItemDataManager.Instance.IdToType(this.id) == AItem.ItemTypeEnum.Weapon)
@@ -59,7 +59,7 @@
         }
 
         /// <inheritdoc/>
-        protected override bool DoIsCanWork(Worker worker)
+        protected override bool DoIsCanWork(AWorker worker)
         {
             return this.worker == worker;
         }
@@ -74,7 +74,7 @@
                 this.task = new WorkerWearTask();
             }
 
-            public WearTaskBuilder SetWorker(Worker worker)
+            public WearTaskBuilder SetWorker(AWorker worker)
             {
                 this.task.worker = worker;
                 return this;

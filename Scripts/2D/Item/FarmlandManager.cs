@@ -10,15 +10,15 @@
     {
         private readonly Dictionary<int, Dictionary<Vector3Int, PlantInfo>> id2Resource; // 同一个id对应的所有位置
         private readonly Dictionary<Vector3Int, PlantInfo> cells;
-        private readonly Dictionary<Worker, Dictionary<Vector3Int, PlantInfo>> preGatherResource; // 预采集资源
-        private readonly Dictionary<Worker, Dictionary<Vector3Int, PlantInfo>> prePlantResource; // 预种植资源
+        private readonly Dictionary<AWorker, Dictionary<Vector3Int, PlantInfo>> preGatherResource; // 预采集资源
+        private readonly Dictionary<AWorker, Dictionary<Vector3Int, PlantInfo>> prePlantResource; // 预种植资源
 
         public FarmlandManager()
         {
             this.cells = new Dictionary<Vector3Int, PlantInfo>();
             this.id2Resource = new Dictionary<int, Dictionary<Vector3Int, PlantInfo>>();
-            this.preGatherResource = new Dictionary<Worker, Dictionary<Vector3Int, PlantInfo>>();
-            this.prePlantResource = new Dictionary<Worker, Dictionary<Vector3Int, PlantInfo>>();
+            this.preGatherResource = new Dictionary<AWorker, Dictionary<Vector3Int, PlantInfo>>();
+            this.prePlantResource = new Dictionary<AWorker, Dictionary<Vector3Int, PlantInfo>>();
         }
 
         /// <summary>
@@ -53,7 +53,7 @@
         /// <param name="resourceInfo">资源信息</param>
         /// <param name="isPre">是否需要预建造</param>
         /// <returns>位置</returns>
-        public Vector3Int IsEnoughAndPrePlant(Worker worker, ResourceInfo resourceInfo, bool isPre = false)
+        public Vector3Int IsEnoughAndPrePlant(AWorker worker, ResourceInfo resourceInfo, bool isPre = false)
         {
             if (!this.id2Resource.ContainsKey(-1) || this.id2Resource[-1].Count == 0)
             {
@@ -80,7 +80,7 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <param name="posMap">位置</param>
-        public void PlantByPrePlant(Worker worker, Vector3Int posMap)
+        public void PlantByPrePlant(AWorker worker, Vector3Int posMap)
         {
             if (this.prePlantResource.ContainsKey(worker) && this.prePlantResource[worker].ContainsKey(posMap))
             {
@@ -106,7 +106,7 @@
         /// <param name="plantInfo">农作物信息</param>
         /// <param name="isPre">是否预采集</param>
         /// <returns>位置</returns>
-        public Vector3Int PreGather(Worker worker, PlantInfo plantInfo, bool isPre = false)
+        public Vector3Int PreGather(AWorker worker, PlantInfo plantInfo, bool isPre = false)
         {
             if (this.id2Resource[plantInfo.Id].Count == 0)
             {
@@ -129,7 +129,7 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <param name="posMap">位置</param>
-        public void GatherByPreGather(Worker worker, Vector3Int posMap)
+        public void GatherByPreGather(AWorker worker, Vector3Int posMap)
         {
             if (this.preGatherResource.ContainsKey(worker) && this.preGatherResource[worker].ContainsKey(posMap))
             {

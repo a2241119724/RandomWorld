@@ -11,70 +11,9 @@
     [Serializable]
     public abstract class AWeapon : AEquipment
     {
-        /// <summary>
-        /// 本次共计是否暴击
-        /// </summary>
-        public bool IsCRT = false;
-
         public AWeapon()
         {
-            this.ATN = this.RankRandom(0.0f, 0.0f);
-            this.ATK = this.RankRandom(0.0f, 0.0f);
-            this.INT = this.RankRandom(0.0f, 0.0f);
-            this.CRT = this.RankRandom(0.0f, 0.0f);
-            this.CSD = this.RankRandom(0.0f, 0.0f);
-            this.HIT = this.RankRandom(0.0f, 0.0f);
-            this.RES = this.RankRandom(0.0f, 0.0f);
-            this.EquipType = EquipTypeEnum.Weapon;
-        }
-
-        /// <summary>
-        /// 返回武器伤害值
-        /// </summary>
-        /// <returns>伤害值</returns>
-        public float GetDamage()
-        {
-            this.IsCRT = UnityEngine.Random.Range(0.0f, 1.0f) < this.CRT;
-            float damage = (Convert.ToInt32(this.IsCRT) * this.ATK * (1 + this.CSD)) + (Convert.ToInt32(!this.IsCRT) * this.ATK);
-            return damage;
-        }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return base.ToString() +
-                "攻击力: " + Math.Round(this.ATK, 2) + "\n" +
-                "暴击率: " + Math.Round(this.CRT * 100, 2) + "%\n" +
-                "暴击伤害: " + Math.Round(this.CSD * 100, 2) + "%\n";
-        }
-
-        /// <summary>
-        /// 生成数越大生成的随机数几率越小
-        /// </summary>
-        /// <param name="down">下限</param>
-        /// <param name="up">上限</param>
-        /// <returns>随机数</returns>
-        protected float RankRandom(float down, float up)
-        {
-            if (down > up)
-            {
-                float t = down;
-                down = up;
-                up = t;
-            }
-
-            float intervalValue = (up - down) / 20;
-            float r; // 每次生成随机数进行判断
-            for (float t = down + intervalValue; t < up; t += intervalValue)
-            {
-                r = UnityEngine.Random.Range(down, up);
-                if (r < t)
-                {
-                    return r;
-                }
-            }
-
-            return 0.0f;
+            this.Type = EquipTypeEnum.Weapon;
         }
     }
 
@@ -104,11 +43,6 @@
         protected Character character;
 
         /// <summary>
-        /// 武器头部
-        /// </summary>
-        protected Transform head;
-
-        /// <summary>
         /// 攻击效果
         /// </summary>
         protected AttackEffectManager.EffectTypeEnum attackEffect = AttackEffectManager.EffectTypeEnum.KnifeLight;
@@ -117,6 +51,16 @@
         private float recordTime = float.MaxValue;
         private CircleCollider2D circleCollider2D;
         private ContactFilter2D contactFilter2D; // 结构体可以不new
+
+        /// <summary>
+        /// 是否暴击
+        /// </summary>
+        public bool IsCRT { get; set; } = false;
+
+        /// <summary>
+        /// 武器头部
+        /// </summary>
+        public Transform Head { get; set; }
 
         /// <summary>
         /// 攻击的层级
@@ -136,8 +80,6 @@
         {
             this.character = character;
             this.enabled = true; // 启动角色控制武器脚本
-            CircleCollider2D c = PlayerManager.Instance.Select.Weapon.transform.Find("Head").gameObject.AddComponent<CircleCollider2D>(); // 敌人检测
-            c.isTrigger = true;
         }
 
         /// <summary>
@@ -152,13 +94,14 @@
                 // 所有武器攻击效果
                 ParticleSystem particleSystem = AttackEffectManager.Instance.GetEffect(this.attackEffect, (this.transform.rotation.eulerAngles.z + 90) * Mathf.Deg2Rad);
                 particleSystem.transform.parent = this.transform.parent.parent;
-                particleSystem.transform.position = this.head.position;
+                particleSystem.transform.position = this.Head.position;
                 particleSystem.Play();
                 AttackEffect attackEffect = particleSystem.GetComponent<AttackEffect>();
+                attackEffect.IsCRT = this.IsCRT;
                 attackEffect.AttackLayers = this.AttackLayers;
                 attackEffect.AttackTags = this.AttackTags;
                 attackEffect.Onwer = this.character;
-                attackEffect.Damage = ((AWeapon)this.Item).GetDamage();
+                attackEffect.Damage = this.character.CharacterDataLAB.GetDamage(this.IsCRT);
                 this.recordTime = 0.0f;
                 this.DoAttack(attackEffect);
             }
@@ -183,7 +126,7 @@
             base.Awake();
             this.contactFilter2D.useTriggers = true;
             this.name = this.GetType().Name;
-            this.head = this.transform.Find("Head");
+            this.Head = this.transform.Find("Head");
         }
 
         /// <inheritdoc/>
@@ -191,7 +134,7 @@
         {
             base.Start();
             this.transform.localPosition = Vector3.zero; // 初始位置与玩家一致
-            this.circleCollider2D = this.head.GetComponent<CircleCollider2D>();
+            this.circleCollider2D = this.Head.GetComponent<CircleCollider2D>();
             if (this.circleCollider2D == null)
             {
                 LogManager.Instance.Log("collider Not Found!!!", LogManager.LogLevelEnum.Error);
@@ -199,7 +142,7 @@
             }
 
             // 设置武器追踪范围
-            CircleCollider2D collider2D = this.head.GetComponent<CircleCollider2D>();
+            CircleCollider2D collider2D = this.Head.GetComponent<CircleCollider2D>();
             if (collider2D != null)
             {
                 collider2D.radius = this.raduis;

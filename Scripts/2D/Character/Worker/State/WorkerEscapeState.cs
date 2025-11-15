@@ -1,7 +1,7 @@
 ﻿namespace LAB2D
 {
     using UnityEngine;
-    using static LAB2D.Worker;
+    using static LAB2D.AWorker;
 
     /// <summary>
     /// Worker逃跑状态
@@ -11,7 +11,7 @@
         private const float RecordTime = 5.0f;
         private float recordTime = 0.0f;
 
-        public WorkerEscapeState(Worker worker)
+        public WorkerEscapeState(AWorker worker)
             : base(worker)
         {
         }

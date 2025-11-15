@@ -41,11 +41,6 @@
         public const string TRACE_BULLET = "TraceBullet";
 
         /// <summary>
-        /// 敌人
-        /// </summary>
-        public const string ENEMY_LV1 = "Enemy_Lv1";
-
-        /// <summary>
         /// 玩家
         /// </summary>
         public const string PLAYER = "Player";

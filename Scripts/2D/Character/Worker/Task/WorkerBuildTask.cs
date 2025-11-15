@@ -22,7 +22,7 @@
         public WorkerBuildTask()
             : base(WorkerTaskTypeEnum.Build)
         {
-            this.stageInit.Add((Worker worker) =>
+            this.stageInit.Add((AWorker worker) =>
             {
                 WorkerTask.maxProgress = 1.0f;
 
@@ -38,7 +38,7 @@
                 // 进入工作状态
                 worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
             });
-            this.stageInit.Add((Worker worker) =>
+            this.stageInit.Add((AWorker worker) =>
             {
                 WorkerTask.maxProgress = 2.0f;
 
@@ -59,7 +59,7 @@
         public ABuildItem BuildItem { get; private set; }
 
         /// <inheritdoc/>
-        public override void Start(Worker worker)
+        public override void Start(AWorker worker)
         {
             // 自身携带资源足够
             if (worker.IsEnough(this.needs))
@@ -78,7 +78,7 @@
         }
 
         /// <inheritdoc/>
-        public override void Finish(Worker worker)
+        public override void Finish(AWorker worker)
         {
             base.Finish(worker);
 
@@ -90,7 +90,7 @@
         }
 
         /// <inheritdoc/>
-        public override void GiveUpTask(Worker worker)
+        public override void GiveUpTask(AWorker worker)
         {
             base.GiveUpTask(worker);
 
@@ -99,7 +99,7 @@
         }
 
         /// <inheritdoc/>
-        protected override bool DoIsCanWork(Worker worker)
+        protected override bool DoIsCanWork(AWorker worker)
         {
             // 如果worker携带的资源已经满足建造
             if (worker.IsEnough(this.needs))
@@ -114,7 +114,7 @@
         }
 
         /// <inheritdoc/>
-        protected override bool IsFinish(Worker worker)
+        protected override bool IsFinish(AWorker worker)
         {
             // 只worker携带的资源不够时,取建筑材料
             switch (this.stage)

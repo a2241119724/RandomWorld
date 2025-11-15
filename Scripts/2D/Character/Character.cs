@@ -35,6 +35,11 @@
         /// </summary>
         protected CheckBug checkBug;
 
+        /// <summary>
+        /// 角色基础属性
+        /// </summary>
+        protected Attribute basicAttribute;
+
         private Color originalColor; // 原来的自身颜色
 
         /// <summary>
@@ -44,6 +49,7 @@
 
         public virtual void Awake()
         {
+            this.name = this.GetType().Name;
             this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
             this.checkBug = new CheckBug();
         }
@@ -64,12 +70,17 @@
         /// 角色扣血
         /// </summary>
         /// <param name="hp">血量</param>
-        public virtual void ReduceHp(float hp)
+        /// <param name="isCRT">是否暴击</param>
+        public virtual void ReduceHp(float hp, bool isCRT = false)
         {
             if (hp <= 0)
             {
                 return;
             }
+
+            // 根据防御力计算伤害
+            hp -= hp * this.CharacterDataLAB.DEF / 10;
+            hp = hp < 0.1f ? 0.1f : hp;
 
             GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.DAMAGE); // 创建物体(预设,位置,角度)
             if (g == null)
@@ -77,17 +88,10 @@
                 return;
             }
 
-            if (this is Enemy)
-            {
-                // 暴击时显示不同的框
-                g.GetComponent<DamageUI>().SetDamage(hp, Convert.ToInt32(PlayerManager.Instance.Select.WeaponData.IsCRT));
-            }
-            else
-            {
-                g.GetComponent<DamageUI>().SetDamage(hp);
-            }
-
+            // 暴击时显示不同的框
+            g.GetComponent<DamageUI>().SetDamage(hp, Convert.ToInt32(isCRT));
             g.transform.SetParent(this.transform);
+            g.transform.localPosition = Vector3.zero;
 
             // 变红
             this.spriteRenderer.color = Color.red;
@@ -106,8 +110,18 @@
         /// <inheritdoc/>
         public override string ToString()
         {
+            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.transform.position);
             return $"{this.GetType().Name}:{this.name}\n" +
-                $"Speed:{this.MoveSpeed}\n";
+                $"速度: {this.MoveSpeed}\n" +
+                $"位置: ({posMap.x},{posMap.y})\n" +
+                $"物理攻击力: {this.CharacterDataLAB.ATN}\n" +
+                $"魔法攻击力: {this.CharacterDataLAB.INT}\n" +
+                $"物理防御力: {this.CharacterDataLAB.DEF}\n" +
+                $"魔法防御力: {this.CharacterDataLAB.RES}\n" +
+                $"暴击率: {this.CharacterDataLAB.CRT}\n" +
+                $"暴击伤害: {this.CharacterDataLAB.CSD}\n" +
+                $"速度, 回避: {this.CharacterDataLAB.SPD}\n" +
+                $"命中率, 连击: {this.CharacterDataLAB.HIT}\n";
         }
 
         /// <summary>
@@ -132,7 +146,7 @@
         /// 角色数据
         /// </summary>
         [Serializable]
-        public class CharacterData
+        public class CharacterData : Attribute
         {
             /// <summary>
             /// 血量
@@ -145,49 +159,205 @@
             public float MaxHp = 100;
 
             /// <summary>
+            /// 位置
+            /// </summary>
+            public Vector3LAB Pos;
+
+            /// <summary>
+            /// 携带的武器
+            /// </summary>
+            private AWeapon weapon;
+
+            /// <summary>
+            /// 身上携带的装备
+            /// </summary>
+            private Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments;
+
+            [NonSerialized]
+            private Character character;
+
+            public CharacterData()
+            {
+                this.equipments = new Dictionary<AEquipment.EquipTypeEnum, AEquipment>();
+            }
+
+            public Character Character
+            {
+                get
+                {
+                    return this.character;
+                }
+
+                set
+                {
+                    this.character = value;
+                    this.ComputeAttribute();
+                }
+            }
+
+            public AWeapon Weapon
+            {
+                get
+                {
+                    return this.weapon;
+                }
+
+                set
+                {
+                    this.weapon = value;
+                    this.ComputeAttribute();
+                }
+            }
+
+            public Dictionary<AEquipment.EquipTypeEnum, AEquipment> GetEquipments()
+            {
+                return this.equipments;
+            }
+
+            /// <summary>
+            /// 获取伤害
+            /// </summary>
+            /// <param name="isCRT">是否暴击</param>
+            /// <returns>伤害值</returns>
+            public float GetDamage(bool isCRT)
+            {
+                return isCRT ? this.ATN * this.CSD : this.ATN;
+            }
+
+            /// <summary>
+            /// 添加装备
+            /// </summary>
+            /// <param name="equipment">装备</param>
+            /// <param name="posMap">位置</param>
+            public void AddEquipment(AEquipment equipment, Vector3Int posMap)
+            {
+                if (this.equipments.ContainsKey(equipment.Type))
+                {
+                    // 交换装备
+                    AEquipment equipment1 = this.equipments[equipment.Type];
+                    ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
+                    this.equipments[equipment.Type] = equipment1;
+                }
+                else
+                {
+                    this.equipments.Add(equipment.Type, equipment);
+                }
+
+                this.ComputeAttribute();
+            }
+
+            /// <summary>
+            /// 计算总属性
+            /// </summary>
+            public void ComputeAttribute()
+            {
+                float ratio = 1;
+                if (this is Player.PlayerData data)
+                {
+                    ratio += data.Level * 0.1f;
+                }
+
+                // 基础属性
+                this.ATN = this.Character.basicAttribute.ATN * ratio;
+                this.INT = this.Character.basicAttribute.INT * ratio;
+                this.DEF = this.Character.basicAttribute.DEF * ratio;
+                this.RES = this.Character.basicAttribute.RES * ratio;
+                this.CRT = this.Character.basicAttribute.CRT * ratio;
+                this.CSD = this.Character.basicAttribute.CSD * ratio;
+                this.SPD = this.Character.basicAttribute.SPD * ratio;
+                this.HIT = this.Character.basicAttribute.HIT * ratio;
+
+                if (this.weapon != null)
+                {
+                    this.ATN += this.weapon.Attribute.ATN;
+                    this.INT += this.weapon.Attribute.INT;
+                    this.DEF += this.weapon.Attribute.DEF;
+                    this.RES += this.weapon.Attribute.RES;
+                    this.CRT += this.weapon.Attribute.CRT;
+                    this.CSD += this.weapon.Attribute.CSD;
+                    this.SPD += this.weapon.Attribute.SPD;
+                    this.HIT += this.weapon.Attribute.HIT;
+                }
+
+                foreach (var item in this.equipments)
+                {
+                    this.ATN += item.Value.Attribute.ATN;
+                    this.INT += item.Value.Attribute.INT;
+                    this.DEF += item.Value.Attribute.DEF;
+                    this.RES += item.Value.Attribute.RES;
+                    this.CRT += item.Value.Attribute.CRT;
+                    this.CSD += item.Value.Attribute.CSD;
+                    this.SPD += item.Value.Attribute.SPD;
+                    this.HIT += item.Value.Attribute.HIT;
+                }
+            }
+        }
+
+        public class Attribute
+        {
+            /// <summary>
             /// 物理攻击力
             /// </summary>
-            public float ATN = 0.0f;
+            public float ATN;
 
             /// <summary>
             /// 魔法攻击力
             /// </summary>
-            public float INT = 0.0f;
+            public float INT;
 
             /// <summary>
-            /// 暴击率
+            /// 物理防御力
             /// </summary>
-            public float CRI = 0.0f;
-
-            /// <summary>
-            /// 攻击力
-            /// </summary>
-            public float ATK = 0.0f;
-
-            /// <summary>
-            /// 防御力
-            /// </summary>
-            public float DEF = 0.0f;
-
-            /// <summary>
-            /// 速度，回避物理攻击之类的
-            /// </summary>
-            public float SPD = 0.0f;
-
-            /// <summary>
-            /// 命中率或者连击之类的
-            /// </summary>
-            public float HIT = 0.0f;
+            public float DEF;
 
             /// <summary>
             /// 魔法防御力
             /// </summary>
-            public float RES = 0.0f;
+            public float RES;
 
             /// <summary>
-            /// 位置
+            /// 暴击率
             /// </summary>
-            public Vector3LAB Pos;
+            public float CRT;
+
+            /// <summary>
+            /// 暴击伤害
+            /// </summary>
+            public float CSD;
+
+            /// <summary>
+            /// 速度，回避物理攻击之类的
+            /// </summary>
+            public float SPD;
+
+            /// <summary>
+            /// 命中率或者连击之类的
+            /// </summary>
+            public float HIT;
+
+            public Attribute()
+            {
+                this.ATN = 0;
+                this.INT = 0;
+                this.DEF = 0;
+                this.RES = 0;
+                this.CRT = 0;
+                this.CSD = 0;
+                this.SPD = 0;
+                this.HIT = 0;
+            }
+
+            public Attribute(float atn, float int_, float def, float res, float crt, float csd, float spd, float hit)
+            {
+                this.ATN = atn;
+                this.INT = int_;
+                this.DEF = def;
+                this.RES = res;
+                this.CRT = crt;
+                this.CSD = csd;
+                this.SPD = spd;
+                this.HIT = hit;
+            }
         }
 
         /// <summary>

@@ -6,10 +6,11 @@
 
     /// <summary>
     /// A*寻路
+    /// TODO 周围方块更新要重新寻路
     /// </summary>
     public class AStar : ASeek
     {
-        public AStar(Worker character)
+        public AStar(Character character)
             : base(character)
         {
         }
@@ -213,7 +214,8 @@
                         this.openList.Add(neighbor);
                     }
 
-                    neighbor.H = Mathf.Abs(end.PosMap.x - neighbor.PosMap.x) + Mathf.Abs(end.PosMap.y - neighbor.PosMap.y);
+                    // 加权A*，使得寻路更快，但不是最短路径
+                    neighbor.H = 1.5f * (Mathf.Abs(end.PosMap.x - neighbor.PosMap.x) + Mathf.Abs(end.PosMap.y - neighbor.PosMap.y));
                     neighbor.F = neighbor.G + neighbor.H;
                     neighbor.Previous = curSpend; // 链接
                 }

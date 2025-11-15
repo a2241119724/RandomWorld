@@ -84,7 +84,7 @@
             EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount = this.maxEnemyCount;
 
             // EnemyCreator
-            TileMap.Instance.StartCoroutine(EnemyCreator.Instance.GenEnemy());
+            TileMap.Instance.StartCoroutine(EnemyManager.Instance.GenEnemy());
         }
     }
 }

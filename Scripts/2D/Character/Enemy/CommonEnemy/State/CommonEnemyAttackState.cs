@@ -6,12 +6,12 @@
     /// <summary>
     /// 敌人攻击状态.
     /// </summary>
-    public class EnemyAttackState : EnemyState
+    public class CommonEnemyAttackState : ACommonEnemyState
     {
         private static readonly float AttackInterval = 1.0f;
         private float recordTime = 0.0f;
 
-        public EnemyAttackState(Enemy character)
+        public CommonEnemyAttackState(ACommonEnemy character)
             : base(character)
         {
         }
@@ -38,12 +38,12 @@
         public override void OnUpdate()
         {
             this.AttackTime += Time.deltaTime;
-            Enemy.EnemyData enemyData = this.Character.CharacterDataLAB as Enemy.EnemyData;
+            ACommonEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as ACommonEnemy.EnemyData;
 
             // 如果玩家与敌人的距离大于敌人的攻击距离，那么进入追踪状态
             if (Vector3.Distance(this.Character.Target.transform.position, this.Character.transform.position) > enemyData.AttackRange)
             {
-                this.Character.Manager.ChangeState(EnemyStateTypeEnum.Chase);
+                this.Character.Manager.ChangeState(TypeEnum.Chase);
                 return;
             }
 
@@ -87,7 +87,7 @@
             }
 
             // 如果敌人感知范围内没有玩家，进入搜寻状态
-            this.Character.Manager.ChangeState(EnemyStateTypeEnum.Seek);
+            this.Character.Manager.ChangeState(TypeEnum.Seek);
 
             // animator.SetBool("isAttack", false);
         }

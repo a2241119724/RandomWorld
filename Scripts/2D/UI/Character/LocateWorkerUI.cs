@@ -18,7 +18,7 @@
         /// 添加Worker按钮
         /// </summary>
         /// <param name="worker">Worker</param>
-        public void AddWorkerItem(Worker worker)
+        public void AddWorkerItem(AWorker worker)
         {
             GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.LOCATE_WORKER_ITEM, true);
             g.transform.SetParent(this.transform);

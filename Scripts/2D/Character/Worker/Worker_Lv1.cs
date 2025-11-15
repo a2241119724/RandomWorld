@@ -3,7 +3,7 @@
     /// <summary>
     /// Worker
     /// </summary>
-    public class Worker_Lv1 : Worker
+    public class Worker_Lv1 : AWorker
     {
         /// <inheritdoc/>
         public override void Awake()

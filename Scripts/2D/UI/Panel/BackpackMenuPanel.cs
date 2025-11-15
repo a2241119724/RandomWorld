@@ -53,31 +53,31 @@
                 return;
             }
 
+            Player.PlayerData playerData = PlayerManager.Instance.Mine.CharacterDataLAB as Player.PlayerData;
             if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == AItem.ItemTypeEnum.Weapon)
             {
-                if (PlayerManager.Instance.Select.Weapon != null)
+                if (PlayerManager.Instance.Mine.Weapon != null)
                 {
                     // 将正在穿戴的物体加入背包
-                    BackpackController.Instance.AddItem(PlayerManager.Instance.Select.WeaponData);
+                    BackpackController.Instance.AddItem(playerData.Weapon);
 
                     // 销毁武器
-                    PhotonNetwork.Destroy(PlayerManager.Instance.Select.Weapon);
+                    PhotonNetwork.Destroy(PlayerManager.Instance.Mine.Weapon);
                 }
 
-                // 设置当前装备id
-                PlayerManager.Instance.Select.Id = this.Select.Item.Id;
-
                 // 实例化武器
-                PlayerManager.Instance.Select.Weapon = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName, false);
-                if (PlayerManager.Instance.Select.Weapon == null)
+                PlayerManager.Instance.Mine.Weapon = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName, false);
+                if (PlayerManager.Instance.Mine.Weapon == null)
                 {
-                    LogManager.Instance.Log("PlayerManager.Instance.Select.weapon Instantiate Error!!!", LogManager.LogLevelEnum.Error);
+                    LogManager.Instance.Log("武器实例化错误!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 
-                PlayerManager.Instance.Select.Weapon.name = ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName;
-                PlayerManager.Instance.Select.Weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
-                AWeaponObject weaponObject = PlayerManager.Instance.Select.Weapon.GetComponent<AWeaponObject>();
+                PlayerManager.Instance.Mine.Weapon.name = ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName;
+                PlayerManager.Instance.Mine.Weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
+                AWeaponObject weaponObject = PlayerManager.Instance.Mine.Weapon.GetComponent<AWeaponObject>();
+                CircleCollider2D c = weaponObject.Head.gameObject.AddComponent<CircleCollider2D>(); // 敌人检测
+                c.isTrigger = true;
                 weaponObject.SetCharacter(PlayerManager.Instance.Mine);
                 weaponObject.Item = this.Select.Item;
                 weaponObject.AttackLayers = PlayerManager.Instance.Mine.AttackLayers;
@@ -85,7 +85,7 @@
                 GlobalInit.Instance.ShowTip("装备成功");
 
                 // 从背包删除该道具
-                PlayerManager.Instance.Select.WeaponData = (AWeapon)this.Select.Item;
+                playerData.Weapon = (AWeapon)this.Select.Item;
                 BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
 
                 // 不能对一个武器进行多次装备
@@ -150,7 +150,7 @@
     public class SelectItemData
     {
         /// <summary>
-        /// 选中的道具索引
+        /// 选中的道具索引(在背包中)
         /// </summary>
         public int SelectItemIndex = -1;
 

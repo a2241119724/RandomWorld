@@ -55,7 +55,7 @@
         protected volatile List<Spend> path;
 
         // private static ManualResetEvent manualResetEvent; // 线程Wait
-        public ASeek(Worker character)
+        public ASeek(Character character)
         {
             int height = TileMap.Instance.TileMapDataLAB.Height;
             int width = TileMap.Instance.TileMapDataLAB.Width;
@@ -108,7 +108,7 @@
         /// <summary>
         /// 寻路进度
         /// </summary>
-        protected Worker Character { get; set; }
+        protected Character Character { get; set; }
 
         /// <summary>
         /// 是否可以抵达(不包含带有碰撞体的Tile,即使是正在建造中的)

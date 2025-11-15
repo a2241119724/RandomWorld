@@ -11,16 +11,16 @@
     {
         private readonly Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> id2Resource; // 同一个id对应的所有位置
         private readonly Dictionary<Vector3Int, ResourceInfo> posToResource; // 根据pos查资源
-        private readonly Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // 预申请资源
-        private readonly Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // 预放置资源
+        private readonly Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // 预申请资源
+        private readonly Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // 预放置资源
         private readonly int capacity = 1000; // 单个cell的容量
 
         public InventoryManager()
         {
             this.posToResource = new Dictionary<Vector3Int, ResourceInfo>();
             this.id2Resource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
-            this.preTakeResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
-            this.prePlaceResource = new Dictionary<Worker, Dictionary<Vector3Int, ResourceInfo>>();
+            this.preTakeResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
+            this.prePlaceResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
             this.TypeToResource = new Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>>();
         }
 
@@ -69,7 +69,7 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>位置</returns>
-        public Vector3Int GetPosByPrePlace(Worker worker)
+        public Vector3Int GetPosByPrePlace(AWorker worker)
         {
             if (this.prePlaceResource.ContainsKey(worker))
             {
@@ -87,7 +87,7 @@
         /// <param name="resourceInfo">资源信息</param>
         /// <param name="isPre">是否需要预放置</param>
         /// <returns>是否足够</returns>
-        public bool IsEnoughAndPrePlace(Worker worker, ResourceInfo resourceInfo, bool isPre = false)
+        public bool IsEnoughAndPrePlace(AWorker worker, ResourceInfo resourceInfo, bool isPre = false)
         {
             // 对于不可堆叠的资源
             if (!ItemDataManager.Instance.GetById(resourceInfo.Id).IsStackable)
@@ -214,7 +214,7 @@
         /// <param name="hungry">饥饿值</param>
         /// <param name="isPre">是否预取食物</param>
         /// <returns>是否足够</returns>
-        public bool IsEnoughFoodAndPreTake(Worker worker, float hungry, bool isPre = false)
+        public bool IsEnoughFoodAndPreTake(AWorker worker, float hungry, bool isPre = false)
         {
             Dictionary<Vector3Int, ResourceInfo> foods = new ();
             foreach (KeyValuePair<Vector3Int, ResourceInfo> food in this.TypeToResource[AItem.ItemTypeEnum.Food])
@@ -256,7 +256,7 @@
         /// <param name="worker">Worker</param>
         /// <param name="isPre">是否预取种子</param>
         /// <returns>位置</returns>
-        public Vector3Int IsContainSeedAndPreTake(Worker worker, bool isPre = false)
+        public Vector3Int IsContainSeedAndPreTake(AWorker worker, bool isPre = false)
         {
             if (!this.TypeToResource.ContainsKey(AItem.ItemTypeEnum.Seed) || this.TypeToResource[AItem.ItemTypeEnum.Seed].Count == 0)
             {
@@ -303,7 +303,7 @@
         /// <param name="worker">Worker</param>
         /// <param name="posMap">位置</param>
         /// <returns>资源信息</returns>
-        public ResourceInfo AddItemByPrePlace(Worker worker, Vector3Int posMap)
+        public ResourceInfo AddItemByPrePlace(AWorker worker, Vector3Int posMap)
         {
             if (!this.prePlaceResource[worker].ContainsKey(posMap))
             {
@@ -334,7 +334,7 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>位置</returns>
-        public Vector3Int GetPosByPreTake(Worker worker)
+        public Vector3Int GetPosByPreTake(AWorker worker)
         {
             if (this.preTakeResource.ContainsKey(worker))
             {
@@ -406,7 +406,7 @@
         /// <param name="worker">Worker</param>
         /// <param name="posMap">位置</param>
         /// <returns>返回从仓库中扣减的数量(预取的资源)</returns>
-        public ResourceInfo SubItemByPreTake(Worker worker, Vector3Int posMap)
+        public ResourceInfo SubItemByPreTake(AWorker worker, Vector3Int posMap)
         {
             if (!this.preTakeResource[worker].ContainsKey(posMap))
             {
@@ -450,7 +450,7 @@
         /// <param name="needResource">需要的资源</param>
         /// <param name="isPre">是否预取资源</param>
         /// <returns>是否足够</returns>
-        public bool IsEnoughAndPreTake(Worker worker, Dictionary<int, ResourceInfo> needResource, bool isPre = false)
+        public bool IsEnoughAndPreTake(AWorker worker, Dictionary<int, ResourceInfo> needResource, bool isPre = false)
         {
             foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
@@ -477,7 +477,7 @@
             // 预申请资源
             if (isPre)
             {
-                Worker.WorkerData workerData = worker.CharacterDataLAB as Worker.WorkerData;
+                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
                 foreach (KeyValuePair<int, ResourceInfo> need in needResource)
                 {
                     // 每个Cell预取完之后剩余Cell可预取的数量,至少取need.Value.count
@@ -534,7 +534,7 @@
             string text = $"id:{resourceInfo.Id}\n" +
                 $"count:{resourceInfo.Count}\n" +
                 $"prePlace:\n";
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
+            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
                 if (prePlace.Value.ContainsKey(pos))
                 {
@@ -544,7 +544,7 @@
             }
 
             text += "preTake:\n";
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
+            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
             {
                 if (preTake.Value.ContainsKey(pos))
                 {
@@ -579,7 +579,7 @@
         private int GetPrePlaceCountByPos(Vector3Int pos)
         {
             int count = 0;
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
+            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
                 if (prePlace.Value.ContainsKey(pos))
                 {
@@ -596,7 +596,7 @@
         /// <param name="worker">Worker</param>
         /// <param name="pos">位置</param>
         /// <param name="resourceInfo">资源信息</param>
-        private void PrePlace(Worker worker, Vector3Int pos, ResourceInfo resourceInfo)
+        private void PrePlace(AWorker worker, Vector3Int pos, ResourceInfo resourceInfo)
         {
             if (this.prePlaceResource.ContainsKey(worker))
             {
@@ -626,7 +626,7 @@
         /// <returns>是否已经预放置过了</returns>
         private bool IsAreadyPrePlace(Vector3Int pos, int id)
         {
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
+            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
                 // 其他的id已经预放置了，换下一个Cell
                 if (prePlace.Value.ContainsKey(pos) && prePlace.Value[pos].Id != id)
@@ -646,7 +646,7 @@
         private int GetPrePlaceCountById(int id)
         {
             int count = 0;
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
+            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
                 foreach (KeyValuePair<Vector3Int, ResourceInfo> pre in prePlace.Value)
                 {
@@ -666,7 +666,7 @@
         /// <param name="worker">Worker</param>
         /// <param name="pos">位置</param>
         /// <param name="resourceInfo">资源信息</param>
-        private void PreTake(Worker worker, Vector3Int pos, ResourceInfo resourceInfo)
+        private void PreTake(AWorker worker, Vector3Int pos, ResourceInfo resourceInfo)
         {
             if (!this.preTakeResource.ContainsKey(worker))
             {
@@ -691,7 +691,7 @@
         private int GetPreTakeCountByPos(Vector3Int pos)
         {
             int count = 0;
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
+            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
             {
                 if (preTake.Value.ContainsKey(pos))
                 {
@@ -706,7 +706,7 @@
         private int GetPreTakeCountById(int id)
         {
             int count = 0;
-            foreach (KeyValuePair<Worker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.preTakeResource)
+            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.preTakeResource)
             {
                 foreach (KeyValuePair<Vector3Int, ResourceInfo> pre in prePlace.Value)
                 {

@@ -11,11 +11,11 @@
         /// <summary>
         /// Worker与床绑定
         /// </summary>
-        public Dictionary<Vector3Int, Worker> BedToWorker;
+        public Dictionary<Vector3Int, AWorker> BedToWorker;
 
         public FurnitureManager()
         {
-            this.BedToWorker = new Dictionary<Vector3Int, Worker>();
+            this.BedToWorker = new Dictionary<Vector3Int, AWorker>();
         }
 
         /// <summary>
@@ -37,7 +37,7 @@
         /// </summary>
         /// <param name="posMap">位置</param>
         /// <param name="worker">Worker</param>
-        public void AddWorkerToBed(Vector3Int posMap, Worker worker)
+        public void AddWorkerToBed(Vector3Int posMap, AWorker worker)
         {
             if (!this.BedToWorker.ContainsKey(posMap))
             {
@@ -66,7 +66,7 @@
         /// </summary>
         /// <param name="posMap">位置</param>
         /// <returns>Worker</returns>
-        public Worker GetWorkerByBed(Vector3Int posMap)
+        public AWorker GetWorkerByBed(Vector3Int posMap)
         {
             if (!this.BedToWorker.ContainsKey(posMap))
             {
