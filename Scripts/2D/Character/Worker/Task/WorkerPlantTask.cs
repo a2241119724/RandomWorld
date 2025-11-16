@@ -26,7 +26,7 @@ namespace LAB2D
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
             });
             this.stageInit.Add((AWorker worker) =>
             {
@@ -41,7 +41,7 @@ namespace LAB2D
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
             });
         }
 

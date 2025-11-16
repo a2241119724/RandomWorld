@@ -26,7 +26,7 @@
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.CurHungry < AWorker.ThresholdHungry && workerData.Task == null)
             {
-                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Eat);
+                this.Character.Manager.ChangeState(TypeEnum.Eat);
                 return;
             }
 
@@ -107,7 +107,7 @@
             {
                 // Worker.SeekLock.ReleaseLock(this.Character);
                 // 寻路结束
-                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Move);
+                this.Character.Manager.ChangeState(TypeEnum.Move);
             }
         }
 

@@ -43,6 +43,16 @@
         private Color originalColor; // 原来的自身颜色
 
         /// <summary>
+        /// 当前装备的武器物体
+        /// </summary>
+        public GameObject Weapon { get; set; }
+
+        /// <summary>
+        /// 最近攻击者
+        /// </summary>
+        public Character LastAttacker { get; set; }
+
+        /// <summary>
         /// 角色数据
         /// </summary>
         public CharacterData CharacterDataLAB { get; set; }
@@ -70,13 +80,16 @@
         /// 角色扣血
         /// </summary>
         /// <param name="hp">血量</param>
+        /// <param name="attacker">攻击者</param>
         /// <param name="isCRT">是否暴击</param>
-        public virtual void ReduceHp(float hp, bool isCRT = false)
+        public virtual void ReduceHp(float hp, Character attacker, bool isCRT = false)
         {
             if (hp <= 0)
             {
                 return;
             }
+
+            this.LastAttacker = attacker;
 
             // 根据防御力计算伤害
             hp -= hp * this.CharacterDataLAB.DEF / 10;
@@ -121,7 +134,28 @@
                 $"暴击率: {this.CharacterDataLAB.CRT}\n" +
                 $"暴击伤害: {this.CharacterDataLAB.CSD}\n" +
                 $"速度, 回避: {this.CharacterDataLAB.SPD}\n" +
-                $"命中率, 连击: {this.CharacterDataLAB.HIT}\n";
+                $"命中率, 连击: {this.CharacterDataLAB.HIT}\n" +
+                $"等级: {this.CharacterDataLAB.Level}\n" +
+                $"经验值: {this.CharacterDataLAB.CurExperience}/{this.CharacterDataLAB.MaxExperience}\n";
+        }
+
+        /// <summary>
+        /// 增加经验值.
+        /// </summary>
+        /// <param name="experience">经验值.</param>
+        public virtual void AddExperienceValue(int experience)
+        {
+            this.CharacterDataLAB.CurExperience += experience;
+
+            // 升级
+            if (this.CharacterDataLAB.CurExperience / this.CharacterDataLAB.MaxExperience >= 1)
+            {
+                ++this.CharacterDataLAB.Level;
+                this.CharacterDataLAB.CurExperience %= this.CharacterDataLAB.MaxExperience;
+                this.CharacterDataLAB.MaxExperience *= 2;
+                GlobalInit.Instance.ShowTip("UP " + this.CharacterDataLAB.Level);
+                this.CharacterDataLAB.ComputeAttribute();
+            }
         }
 
         /// <summary>
@@ -157,6 +191,31 @@
             /// 最大血量
             /// </summary>
             public float MaxHp = 100;
+
+            /// <summary>
+            /// 玩家当前经验值
+            /// </summary>
+            public int CurExperience = 0;
+
+            /// <summary>
+            /// 玩家当前等级最大经验值
+            /// </summary>
+            public int MaxExperience = 4;
+
+            /// <summary>
+            /// 当前等级
+            /// </summary>
+            public int Level = 1;
+
+            /// <summary>
+            /// 玩家蓝量
+            /// </summary>
+            public int Mp = 100;
+
+            /// <summary>
+            /// 玩家最大蓝量
+            /// </summary>
+            public int MaxMp = 100;
 
             /// <summary>
             /// 位置

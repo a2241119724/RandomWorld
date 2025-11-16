@@ -38,6 +38,7 @@
             item.Id = ItemDataManager.Instance.GetByName(name).Id;
             item.Quantity = 1;
             item.Uid = this.uid++;
+            item.Tile = ResourceManager.Instance.GetAsset(name);
             return item;
         }
 
@@ -85,7 +86,10 @@
             // 装备
             foreach (ItemData itemData in itemDatas)
             {
-                this.backpackItemTypes.Add(itemData.EnName, typeof(CommonEquipment));
+                if (itemData.Type == AItem.ItemTypeEnum.Weapon)
+                {
+                    this.backpackItemTypes.Add(itemData.EnName, typeof(CommonEquipment));
+                }
             }
 
             // 非装备(包含武器)

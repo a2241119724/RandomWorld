@@ -37,7 +37,7 @@
             this.recordTime += Time.deltaTime;
             if (this.recordTime >= RecordTime)
             {
-                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                this.Character.Manager.ChangeState(TypeEnum.Seek);
             }
 
             this.Character.Seek.LineRenderer.positionCount = 0;

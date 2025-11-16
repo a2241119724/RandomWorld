@@ -31,16 +31,16 @@
         }
 
         /// <inheritdoc/>
-        public override void ReduceHp(float hp, bool isCRT = false)
+        public override void ReduceHp(float hp, Character attacker, bool isCRT = false)
         {
             if (this.Manager.CurrentStateType != ASeekEnemyState.TypeEnum.Attack ||
                 (this.Manager.CurrentStateType == ASeekEnemyState.TypeEnum.Attack
                 && ((CommonEnemyAttackState)this.Manager.CurrentState).AttackTime > ChangeTarget))
             {
-                this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Move); // 进入追踪状态
+                this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Move); // TODO 进入追踪状态
             }
 
-            base.ReduceHp(hp, isCRT);
+            base.ReduceHp(hp, attacker, isCRT);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
         }
 

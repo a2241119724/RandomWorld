@@ -51,6 +51,8 @@
         private float recordTime = float.MaxValue;
         private CircleCollider2D circleCollider2D;
         private ContactFilter2D contactFilter2D; // 结构体可以不new
+        private LayerMask attackLayers; // 攻击的层级
+        private List<string> attackTags; // 攻击的标签
 
         /// <summary>
         /// 是否暴击
@@ -63,22 +65,14 @@
         public Transform Head { get; set; }
 
         /// <summary>
-        /// 攻击的层级
-        /// </summary>
-        public LayerMask AttackLayers { get; set; }
-
-        /// <summary>
-        /// 攻击的标签
-        /// </summary>
-        public List<string> AttackTags { get; set; }
-
-        /// <summary>
         /// 设置玩家
         /// </summary>
         /// <param name="character">持有武器的角色</param>
         public void SetCharacter(Character character)
         {
             this.character = character;
+            this.attackLayers = PlayerManager.Instance.Mine.AttackLayers;
+            this.attackTags = PlayerManager.Instance.Mine.AttackTags;
             this.enabled = true; // 启动角色控制武器脚本
         }
 
@@ -98,8 +92,8 @@
                 particleSystem.Play();
                 AttackEffect attackEffect = particleSystem.GetComponent<AttackEffect>();
                 attackEffect.IsCRT = this.IsCRT;
-                attackEffect.AttackLayers = this.AttackLayers;
-                attackEffect.AttackTags = this.AttackTags;
+                attackEffect.AttackLayers = this.attackLayers;
+                attackEffect.AttackTags = this.attackTags;
                 attackEffect.Onwer = this.character;
                 attackEffect.Damage = this.character.CharacterDataLAB.GetDamage(this.IsCRT);
                 this.recordTime = 0.0f;
@@ -127,6 +121,8 @@
             this.contactFilter2D.useTriggers = true;
             this.name = this.GetType().Name;
             this.Head = this.transform.Find("Head");
+            CircleCollider2D c = this.Head.gameObject.AddComponent<CircleCollider2D>(); // 敌人检测
+            c.isTrigger = true;
         }
 
         /// <inheritdoc/>
@@ -179,17 +175,24 @@
 
             if (this.minDistanceEnemy != null)
             {
+                // 如果范围内有敌人, 跟踪敌人
                 // transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(Vector3.up, minDistanceEnemy.position - transform.position), Time.deltaTime * 100);
                 this.transform.rotation = Quaternion.FromToRotation(Vector3.up, this.minDistanceEnemy.position - this.transform.position);
                 this.minDistanceEnemy = null;
             }
             else if (Joystick.Instance && Joystick.Instance.Direction.magnitude > 1.0f)
             {
+                // 跟随摇杆
                 this.transform.rotation = Quaternion.FromToRotation(Vector3.up, Joystick.Instance.Direction);
+            }
+            else if (this.character is Player)
+            {
+                // 玩家跟随鼠标
+                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, Input.mousePosition - Camera.main.WorldToScreenPoint(PlayerManager.Instance.Mine.transform.position));
             }
             else
             {
-                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, Input.mousePosition - Camera.main.WorldToScreenPoint(PlayerManager.Instance.Mine.transform.position));
+                // Worker暂时仅用上面的跟踪
             }
         }
 

@@ -22,7 +22,7 @@
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
             });
         }
 

@@ -174,7 +174,7 @@
         {
             if (EnemyManager.Instance.Characters.Count > 0)
             {
-                ((CommonEnemyDeadState)((ACommonEnemy)EnemyManager.Instance.Characters[0]).Manager.States[ACommonEnemyState.TypeEnum.Dead]).DropItem();
+                new EnemyDropManager().DropItem(PlayerManager.Instance.Mine.transform.position);
             }
         }
     }

@@ -35,7 +35,7 @@
             if (workerData.Task != null
                 && workerData.Task.TaskType.Equals(WorkerTask.WorkerTaskTypeEnum.Eat))
             {
-                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                this.Character.Manager.ChangeState(TypeEnum.Seek);
             }
         }
     }

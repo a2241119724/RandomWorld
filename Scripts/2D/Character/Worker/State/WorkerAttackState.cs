@@ -1,41 +1,83 @@
 ﻿namespace LAB2D
 {
+    using UnityEngine;
+
     /// <summary>
     /// Worker攻击状态
     /// </summary>
     public class WorkerAttackState : WorkerState
     {
+        private float recordTime = 0.0f;
+
         public WorkerAttackState(AWorker worker)
             : base(worker)
         {
+        }
+
+        public void Init()
+        {
+            this.recordTime = 0.0f;
         }
 
         /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
+            this.Init();
             this.Character.WorkerStateText.text = this.preString;
-        }
 
-        /// <inheritdoc/>
-        public override void OnExit()
-        {
-            base.OnExit();
+            // 拿起武器
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            if (this.Character.Weapon == null && workerData.Weapon != null)
+            {
+                // 实例化武器
+                string name = ItemDataManager.Instance.GetById(workerData.Weapon.Id).EnName;
+                this.Character.Weapon = ResourceManager.Instance.Instantiate(name, false);
+                if (this.Character.Weapon == null)
+                {
+                    LogManager.Instance.Log("武器实例化错误!", LogManager.LogLevelEnum.Error);
+                    return;
+                }
+
+                this.Character.Weapon.name = name;
+                this.Character.Weapon.transform.SetParent(this.Character.transform, false);
+                AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
+                weaponObject.SetCharacter(this.Character);
+                weaponObject.Item = workerData.Weapon;
+            }
+            else
+            {
+                this.Character.Manager.ChangeState(TypeEnum.Escape);
+            }
         }
 
         /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
-            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
-            if (workerData.Weapon == null)
+
+            // 若一段时间没有被攻击，那么回到寻路状态
+            this.recordTime += Time.deltaTime;
+            if (this.recordTime > 5)
             {
-                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Escape);
+                this.Character.Manager.ChangeState(TypeEnum.Seek);
                 return;
             }
 
-            // 拿出武器
-            // 攻击
+            AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
+            weaponObject.Attack();
+        }
+
+        public override void OnExit()
+        {
+            base.OnExit();
+
+            // 放下武器
+            if (this.Character.Weapon != null)
+            {
+                GameObject.Destroy(this.Character.Weapon.gameObject);
+                this.Character.Weapon = null;
+            }
         }
     }
 }
