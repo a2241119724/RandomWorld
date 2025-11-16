@@ -22,7 +22,7 @@
         /// <summary>
         /// Worker状态类型
         /// </summary>
-        public enum WorkerStateTypeEnum
+        public enum TypeEnum
         {
             /// <summary>
             /// 移动状态

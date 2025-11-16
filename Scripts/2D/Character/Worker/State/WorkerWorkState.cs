@@ -41,7 +41,7 @@
             if (this.waitOneFrame)
             {
                 // 等待一帧后再进入寻路状态,先去接任务
-                this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                this.Character.Manager.ChangeState(TypeEnum.Seek);
                 return;
             }
 

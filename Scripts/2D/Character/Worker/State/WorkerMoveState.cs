@@ -55,12 +55,12 @@
                     }
 
                     // 没有任务就进入寻路状态
-                    this.Character.Manager.ChangeState(WorkerStateTypeEnum.Seek);
+                    this.Character.Manager.ChangeState(TypeEnum.Seek);
                 }
                 else
                 {
                     // 有任务就进入工作状态
-                    this.Character.Manager.ChangeState(WorkerStateTypeEnum.Work);
+                    this.Character.Manager.ChangeState(TypeEnum.Work);
                 }
 
                 return;

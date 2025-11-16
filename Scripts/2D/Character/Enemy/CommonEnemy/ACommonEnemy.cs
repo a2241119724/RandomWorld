@@ -84,7 +84,7 @@
         }
 
         /// <inheritdoc/>
-        public override void ReduceHp(float hp, bool isCRT = false)
+        public override void ReduceHp(float hp, Character attacker, bool isCRT = false)
         {
             if (this.Manager.CurrentStateType != ACommonEnemyState.TypeEnum.Attack ||
                 (this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Attack
@@ -93,7 +93,7 @@
                 this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Seek); // 进入搜索状态
             }
 
-            base.ReduceHp(hp, isCRT);
+            base.ReduceHp(hp, attacker, isCRT);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
         }
 

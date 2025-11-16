@@ -44,7 +44,7 @@
         /// <summary>
         /// 状态管理器
         /// </summary>
-        public WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, AWorker> Manager { get; private set; }
+        public WorkerStateManager<ICharacterState, WorkerState.TypeEnum, AWorker> Manager { get; private set; }
 
         /// <inheritdoc/>
         public override void Awake()
@@ -53,7 +53,8 @@
             this.basicAttribute = new Attribute(1.0f, 1.0f, 1.0f, 1.0f, 0.05f, 1.0f, 1.0f, 1.0f);
             this.CharacterDataLAB = new WorkerData();
             this.CharacterDataLAB.Character = this;
-            this.Manager = new WorkerStateManager<ICharacterState, WorkerState.WorkerStateTypeEnum, AWorker>(this);
+            this.CharacterDataLAB.Weapon = (AWeapon)ItemInstanceFactory.Instance.GetBackpackItemByName("CustomSword");
+            this.Manager = new WorkerStateManager<ICharacterState, WorkerState.TypeEnum, AWorker>(this);
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
             this.progress = this.transform.Find("Progress").GetComponent<Slider>();
@@ -225,7 +226,7 @@
             AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
             WorkerTaskManager.Instance.GiveUpTask(workerData.Task);
             workerData.Task = null;
-            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+            this.Manager.ChangeState(WorkerState.TypeEnum.Seek);
         }
 
         /// <summary>
@@ -252,7 +253,7 @@
         }
 
         /// <inheritdoc/>
-        public override void ReduceHp(float hp, bool isCRT = false)
+        public override void ReduceHp(float hp, Character attacker, bool isCRT = false)
         {
             if (hp <= 0)
             {
@@ -260,9 +261,16 @@
                 return;
             }
 
-            base.ReduceHp(hp, isCRT);
+            base.ReduceHp(hp, attacker, isCRT);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Attack);
+            if (this.Manager.CurrentStateType != WorkerState.TypeEnum.Attack)
+            {
+                this.Manager.ChangeState(WorkerState.TypeEnum.Attack);
+            }
+            else
+            {
+                ((WorkerAttackState)this.Manager.CurrentState).Init();
+            }
         }
 
         /// <inheritdoc/>
@@ -275,7 +283,7 @@
             this.checkBug.AddColliderCount(DateTime.Now.Ticks);
             if (this.checkBug.IsBug(this.name, 100))
             {
-                this.Manager.ChangeState(WorkerState.WorkerStateTypeEnum.Seek);
+                this.Manager.ChangeState(WorkerState.TypeEnum.Seek);
             }
         }
 
@@ -319,7 +327,7 @@
             /// <summary>
             /// 当前状态
             /// </summary>
-            public WorkerState.WorkerStateTypeEnum CurrentStateType;
+            public WorkerState.TypeEnum CurrentStateType;
 
             /// <summary>
             /// 任务

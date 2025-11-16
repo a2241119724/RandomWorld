@@ -66,22 +66,19 @@
                 }
 
                 // 实例化武器
-                PlayerManager.Instance.Mine.Weapon = ResourceManager.Instance.Instantiate(ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName, false);
+                string name = ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName;
+                PlayerManager.Instance.Mine.Weapon = ResourceManager.Instance.Instantiate(name, false);
                 if (PlayerManager.Instance.Mine.Weapon == null)
                 {
                     LogManager.Instance.Log("武器实例化错误!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 
-                PlayerManager.Instance.Mine.Weapon.name = ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName;
+                PlayerManager.Instance.Mine.Weapon.name = name;
                 PlayerManager.Instance.Mine.Weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
                 AWeaponObject weaponObject = PlayerManager.Instance.Mine.Weapon.GetComponent<AWeaponObject>();
-                CircleCollider2D c = weaponObject.Head.gameObject.AddComponent<CircleCollider2D>(); // 敌人检测
-                c.isTrigger = true;
                 weaponObject.SetCharacter(PlayerManager.Instance.Mine);
                 weaponObject.Item = this.Select.Item;
-                weaponObject.AttackLayers = PlayerManager.Instance.Mine.AttackLayers;
-                weaponObject.AttackTags = PlayerManager.Instance.Mine.AttackTags;
                 GlobalInit.Instance.ShowTip("装备成功");
 
                 // 从背包删除该道具

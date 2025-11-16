@@ -1,4 +1,4 @@
-﻿Shader "UI/RoundCorner"
+﻿Shader "Custom/RoundCorner"
 {
     Properties
     {

@@ -19,11 +19,6 @@
         private SpriteRenderer sprite;
         private Rigidbody2D rg;
 
-        /// <summary>
-        /// 当前装备的武器物体
-        /// </summary>
-        public GameObject Weapon { get; set; }
-
         /// <inheritdoc/>
         public override void Awake()
         {
@@ -117,33 +112,18 @@
             }
         }
 
-        /// <summary>
-        /// 增加经验值.
-        /// </summary>
-        /// <param name="experience">经验值.</param>
-        public void AddExperienceValue(int experience)
+        /// <inheritdoc/>
+        public override void AddExperienceValue(int experience)
         {
-            PlayerData playerData = this.CharacterDataLAB as PlayerData;
-            playerData.CurExperience += experience;
-
-            // 升级
-            if (playerData.CurExperience / playerData.MaxExperience >= 1)
-            {
-                ++playerData.Level;
-                playerData.CurExperience %= playerData.MaxExperience;
-                playerData.MaxExperience *= 2;
-                GlobalInit.Instance.ShowTip("UP " + playerData.Level);
-                this.CharacterDataLAB.ComputeAttribute();
-            }
-
+            base.AddExperienceValue(experience);
             PlayerStatusUI.Instance.UpdatePlayerState(
                 this.CharacterDataLAB.Hp,
                 this.CharacterDataLAB.MaxHp,
-                playerData.Mp,
-                playerData.MaxMp,
-                playerData.Level,
-                playerData.CurExperience,
-                playerData.MaxExperience);
+                this.CharacterDataLAB.Mp,
+                this.CharacterDataLAB.MaxMp,
+                this.CharacterDataLAB.Level,
+                this.CharacterDataLAB.CurExperience,
+                this.CharacterDataLAB.MaxExperience);
         }
 
         /// <summary>
@@ -170,7 +150,7 @@
         }
 
         /// <inheritdoc/>
-        public override void ReduceHp(float hp, bool isCRT = false)
+        public override void ReduceHp(float hp, Character attacker, bool isCRT = false)
         {
             if (hp <= 0)
             {
@@ -178,7 +158,7 @@
                 return;
             }
 
-            base.ReduceHp(hp, isCRT);
+            base.ReduceHp(hp, attacker, isCRT);
             if (NetworkConnect.Instance.IsOnline && !this.pv.IsMine && PhotonNetwork.IsConnected)
             {
                 return;
@@ -353,30 +333,6 @@
         [Serializable]
         public class PlayerData : CharacterData
         {
-            /// <summary>
-            /// 玩家蓝量
-            /// </summary>
-            public int Mp = 100;
-
-            /// <summary>
-            /// 玩家最大蓝量
-            /// </summary>
-            public int MaxMp = 100;
-
-            /// <summary>
-            /// 玩家当前经验值
-            /// </summary>
-            public int CurExperience = 0;
-
-            /// <summary>
-            /// 玩家当前等级最大经验值
-            /// </summary>
-            public int MaxExperience = 4;
-
-            /// <summary>
-            /// 当前等级
-            /// </summary>
-            public int Level = 1;
         }
     }
 }

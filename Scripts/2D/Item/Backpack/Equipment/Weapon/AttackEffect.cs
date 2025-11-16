@@ -71,7 +71,7 @@
                     e.Target = this.Onwer;
                 }
 
-                other.GetComponent<Character>().ReduceHp(this.Damage, this.IsCRT);
+                other.GetComponent<Character>().ReduceHp(this.Damage, this.Onwer, this.IsCRT);
             }
         }
     }

@@ -9,7 +9,7 @@
 - 工人按照现实打工人事件行为
 - 追踪枪子弹
 - (material与Build) 优化Item**：<通过读取ItemDataSO实例化Common**>代替<通过父类获取子类创建新的道具>
-- player添加装备，worker计算所有数值
+- 寻路敌人攻击
 
 ## 注
 
@@ -20,4 +20,4 @@
 - RuleTile以y=x对称
 - 在Button的UI界面添加点击函数, 需要先将脚本放到物体上，再添加该物体
 - 道具数据ItemData与地图瓦片Tile的名称关联绑定
-- 数据传输: Character -> Weapon -> WeaponEffect
+- 数据传输: Character -> Weapon -> WeaponEffect -> Character
