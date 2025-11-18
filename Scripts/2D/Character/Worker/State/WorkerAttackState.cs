@@ -14,7 +14,7 @@
         {
         }
 
-        public void Init()
+        public override void Reset()
         {
             this.recordTime = 0.0f;
         }
@@ -23,7 +23,7 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            this.Init();
+            this.Reset();
             this.Character.WorkerStateText.text = this.preString;
 
             // 拿起武器

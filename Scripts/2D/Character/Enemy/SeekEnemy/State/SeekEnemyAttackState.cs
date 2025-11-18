@@ -5,6 +5,8 @@
 
     public class SeekEnemyAttackState : ASeekEnemyState
     {
+        private float recordTime = 0.0f;
+
         public SeekEnemyAttackState(ASeekEnemy character)
         : base(character)
         {
@@ -14,9 +16,11 @@
         public override void OnEnter()
         {
             base.OnEnter();
+            this.Character.Seek.StopMove();
+            this.recordTime = 0.0f;
 
             // 拿起武器
-            if (this.Character.Weapon == null)
+            if (this.Character.Weapon == null && this.Character.CharacterDataLAB.Weapon != null)
             {
                 // 实例化武器
                 string name = ItemDataManager.Instance.GetById(this.Character.CharacterDataLAB.Weapon.Id).EnName;
@@ -38,6 +42,13 @@
         public override void OnUpdate()
         {
             base.OnUpdate();
+            this.recordTime += Time.deltaTime;
+            if (this.recordTime >= 2.0f)
+            {
+                this.Character.Manager.ChangeState(TypeEnum.Seek);
+                return;
+            }
+
             AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
             weaponObject.Attack();
             if (NetworkConnect.Instance.IsOnline)
@@ -60,6 +71,12 @@
                 GameObject.Destroy(this.Character.Weapon.gameObject);
                 this.Character.Weapon = null;
             }
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            this.recordTime = 0.0f;
         }
     }
 }

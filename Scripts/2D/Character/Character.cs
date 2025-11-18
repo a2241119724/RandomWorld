@@ -164,6 +164,13 @@
         public abstract void Attack();
 
         /// <summary>
+        /// 重置状态中的属性
+        /// </summary>
+        public virtual void ResetState()
+        {
+        }
+
+        /// <summary>
         /// 敌人死亡
         /// </summary>
         protected abstract void Death();

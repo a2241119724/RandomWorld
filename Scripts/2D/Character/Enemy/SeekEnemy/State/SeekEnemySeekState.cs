@@ -24,30 +24,6 @@
         {
             base.OnUpdate();
 
-            // 感知到周围有活着的玩家，进入追踪状态
-            int count = PlayerManager.Instance.Count();
-            for (int i = 0; i < count; i++)
-            {
-                if (this.Character.SenseNearby(PlayerManager.Instance.Get(i).transform))
-                {
-                    this.Character.Manager.ChangeState(TypeEnum.Move);
-                    this.Character.Target = PlayerManager.Instance.Get(i);
-                    return;
-                }
-            }
-
-            // 感知到周围有活着的Worker，进入追踪状态
-            count = WorkerManager.Instance.Count();
-            for (int i = 0; i < count; i++)
-            {
-                if (this.Character.SenseNearby(WorkerManager.Instance.Get(i).transform))
-                {
-                    this.Character.Manager.ChangeState(TypeEnum.Move);
-                    this.Character.Target = WorkerManager.Instance.Get(i);
-                    return;
-                }
-            }
-
             if (!this.Character.Seek.IsSeeking)
             {
                 // Worker.SeekLock.ReleaseLock(this.Character);

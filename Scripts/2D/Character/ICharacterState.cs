@@ -6,7 +6,12 @@
     public interface ICharacterState
     {
         /// <summary>
-        /// 角色
+        /// 重置状态
+        /// </summary>
+        public void Reset();
+
+        /// <summary>
+        /// 开始执行
         /// </summary>
         public void OnEnter();
 
