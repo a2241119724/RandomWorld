@@ -64,14 +64,15 @@
         {
             if (this.AttackTags != null && this.AttackTags.Count > 0 && this.AttackTags.Contains(other.tag))
             {
+                // 重置攻击者攻击状态
+                this.Onwer.ResetState();
                 Character c = other.GetComponent<Character>();
-                if (c is ACommonEnemy)
+                if (c is ACommonEnemy commonEnemy)
                 {
-                    ACommonEnemy e = c as ACommonEnemy;
-                    e.Target = this.Onwer;
+                    commonEnemy.Target = this.Onwer;
                 }
 
-                other.GetComponent<Character>().ReduceHp(this.Damage, this.Onwer, this.IsCRT);
+                c.ReduceHp(this.Damage, this.Onwer, this.IsCRT);
             }
         }
     }

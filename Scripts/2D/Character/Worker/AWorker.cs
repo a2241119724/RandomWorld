@@ -269,7 +269,7 @@
             }
             else
             {
-                ((WorkerAttackState)this.Manager.CurrentState).Init();
+                this.Manager.CurrentState.Reset();
             }
         }
 

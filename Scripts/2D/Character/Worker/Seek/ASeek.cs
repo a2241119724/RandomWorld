@@ -155,6 +155,14 @@
         }
 
         /// <summary>
+        /// 停止移动
+        /// </summary>
+        public void StopMove()
+        {
+            this.path.Clear();
+        }
+
+        /// <summary>
         /// 根据路径移动
         /// </summary>
         /// <returns>是否到达目标</returns>

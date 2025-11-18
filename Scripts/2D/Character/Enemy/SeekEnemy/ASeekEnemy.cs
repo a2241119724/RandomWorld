@@ -20,6 +20,7 @@
         public override void Awake()
         {
             base.Awake();
+            this.CharacterDataLAB.Weapon = (AWeapon)ItemInstanceFactory.Instance.GetBackpackItemByName("CustomSword");
             this.Seek = new AStar(this);
             this.Manager = new SeekEnemyStateManager<ICharacterState, ASeekEnemyState.TypeEnum, ASeekEnemy>(this);
         }
@@ -48,6 +49,13 @@
         public override Vector3 GetDirection()
         {
             return Vector3.up;
+        }
+
+        /// <inheritdoc/>
+        public override void ResetState()
+        {
+            base.ResetState();
+            this.Manager.CurrentState.Reset();
         }
 
         /// <inheritdoc/>

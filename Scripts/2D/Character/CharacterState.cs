@@ -18,6 +18,11 @@
         public C Character { get; set; }
 
         /// <inheritdoc/>
+        public virtual void Reset()
+        {
+        }
+
+        /// <inheritdoc/>
         public virtual void OnEnter()
         {
         }
