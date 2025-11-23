@@ -5,7 +5,7 @@
     /// <summary>
     /// 仓库没有吃的,就一直在该状态,不能做其他事情
     /// </summary>
-    public class WorkerHungryState : WorkerState
+    public class WorkerHungryState : AWorkerState
     {
         public WorkerHungryState(AWorker worker)
             : base(worker)
@@ -33,7 +33,7 @@
             // 如果接到了饥饿任务，则去吃饭
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.Task != null
-                && workerData.Task.TaskType.Equals(WorkerTask.WorkerTaskTypeEnum.Eat))
+                && workerData.Task.TaskType.Equals(AWorkerTask.WorkerTaskTypeEnum.Eat))
             {
                 this.Character.Manager.ChangeState(TypeEnum.Seek);
             }

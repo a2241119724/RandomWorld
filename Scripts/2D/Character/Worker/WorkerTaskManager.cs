@@ -8,16 +8,17 @@
     /// </summary>
     public class WorkerTaskManager : MonoBehaviour
     {
-        private readonly List<Dictionary<WorkerTask, bool>> tasks; // 所有任务(list中越靠前优先级越大)
+        private readonly List<Dictionary<AWorkerTask, bool>> tasks; // 所有任务(list中越靠前优先级越大), TODO分离正在做的任务
         private readonly List<WorkerHungryTask> hungryTasks; // 饥饿任务与pos挂钩，TODO与worker数量挂钩
         private readonly List<WorkerWearTask> wearTasks;
+        private long curtaskId = 0;
 
         public WorkerTaskManager()
         {
-            this.tasks = new List<Dictionary<WorkerTask, bool>>();
+            this.tasks = new List<Dictionary<AWorkerTask, bool>>();
             for (int i = 0; i < 4; i++)
             {
-                this.tasks.Add(new Dictionary<WorkerTask, bool>());
+                this.tasks.Add(new Dictionary<AWorkerTask, bool>());
             }
 
             this.hungryTasks = new List<WorkerHungryTask>();
@@ -41,7 +42,7 @@
         }
 
         /// <summary>
-        /// Worker获取任务，LAB_TODO优先级没有实现
+        /// Worker获取任务
         /// </summary>
         public void Update()
         {
@@ -54,11 +55,11 @@
                     continue;
                 }
 
-                foreach (Dictionary<WorkerTask, bool> task in this.tasks)
+                foreach (Dictionary<AWorkerTask, bool> task in this.tasks)
                 {
-                    WorkerTask closedTask = null;
+                    AWorkerTask closedTask = null;
                     float minDistance = 999999.0f;
-                    foreach (WorkerTask task1 in task.Keys)
+                    foreach (AWorkerTask task1 in task.Keys)
                     {
                         // 该任务是否正在被做
                         if (task[task1])
@@ -98,7 +99,7 @@
                         closedTask.Start(worker);
 
                         // 同一个饥饿任务还可以继续接
-                        if (closedTask.TaskType != WorkerTask.WorkerTaskTypeEnum.Eat)
+                        if (closedTask.TaskType != AWorkerTask.WorkerTaskTypeEnum.Eat)
                         {
                             task[closedTask] = true;
                         }
@@ -115,15 +116,17 @@
         /// </summary>
         /// <param name="task">任务</param>
         /// <param name="prior">优先级</param>
-        public void AddTask(WorkerTask task, int prior = 2)
+        public void AddTask(AWorkerTask task, int prior = 2)
         {
             if (task == null)
             {
                 return;
             }
 
+            task.TaskId = ++this.curtaskId;
+
             // 如果是饥饿任务,一个位置仅对应一个任务
-            if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Eat)
+            if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Eat)
             {
                 foreach (WorkerHungryTask hungryTask in this.hungryTasks)
                 {
@@ -135,14 +138,14 @@
 
                 this.hungryTasks.Add((WorkerHungryTask)task);
             }
-            else if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Gather)
+            else if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Gather)
             {
                 this.GatherPos.Add(Vector3IntLAB.ToVector3Int(task.TargetMap));
             }
-            else if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Wear)
+            else if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Wear)
             {
                 // 一个位置只能有一个穿衣任务
-                foreach (WorkerTask wearTask in this.wearTasks)
+                foreach (AWorkerTask wearTask in this.wearTasks)
                 {
                     if (wearTask.TargetMap.X == task.TargetMap.X
                         && wearTask.TargetMap.Y == task.TargetMap.Y)
@@ -162,10 +165,10 @@
         /// 完成任务
         /// </summary>
         /// <param name="task">任务</param>
-        public void CompleteTask(WorkerTask task)
+        public void CompleteTask(AWorkerTask task)
         {
             // 不能删除饥饿任务，需要在deleteHungryTask中删除
-            if (task.TaskType != WorkerTask.WorkerTaskTypeEnum.Eat)
+            if (task.TaskType != AWorkerTask.WorkerTaskTypeEnum.Eat)
             {
                 for (int i = 0; i < this.tasks.Count; i++)
                 {
@@ -191,7 +194,7 @@
         /// 放弃任务
         /// </summary>
         /// <param name="task">任务</param>
-        public void GiveUpTask(WorkerTask task)
+        public void GiveUpTask(AWorkerTask task)
         {
             if (task == null)
             {
@@ -202,7 +205,7 @@
             {
                 if (this.tasks[i].ContainsKey(task))
                 {
-                    this.tasks[i].Remove(task);
+                    this.tasks[i][task] = false;
                     DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
                     break;
                 }
@@ -217,10 +220,10 @@
         {
             int total = 0;
             int[] taskCount = new int[10];
-            foreach (Dictionary<WorkerTask, bool> task in this.tasks)
+            foreach (Dictionary<AWorkerTask, bool> task in this.tasks)
             {
                 total += task.Count;
-                foreach (WorkerTask task1 in task.Keys)
+                foreach (AWorkerTask task1 in task.Keys)
                 {
                     if (task[task1])
                     {
@@ -232,7 +235,7 @@
             string res = $"任务总数量: {total}\n";
             for (int i = 0; i < 10; i++)
             {
-                res += $"{(WorkerTask.WorkerTaskTypeEnum)i}:{taskCount[i]}\n";
+                res += $"{(AWorkerTask.WorkerTaskTypeEnum)i}:{taskCount[i]}\n";
             }
 
             return res;
@@ -276,9 +279,9 @@
 
             for (int i = 0; i < this.tasks.Count; i++)
             {
-                foreach (WorkerTask task in this.tasks[i].Keys)
+                foreach (AWorkerTask task in this.tasks[i].Keys)
                 {
-                    if (task.TaskType == WorkerTask.WorkerTaskTypeEnum.Gather && task.TargetMap.X == posMap.x
+                    if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Gather && task.TargetMap.X == posMap.x
                         && task.TargetMap.Y == posMap.y)
                     {
                         this.tasks[i].Remove(task);

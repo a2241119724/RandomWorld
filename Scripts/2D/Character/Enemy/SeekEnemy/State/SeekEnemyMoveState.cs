@@ -17,6 +17,12 @@
             this.recordTime = 0.0f;
         }
 
+        public override void OnExit()
+        {
+            base.OnExit();
+            this.Character.Seek.StopMove();
+        }
+
         public override void OnUpdate()
         {
             base.OnUpdate();
@@ -49,6 +55,8 @@
                 }
             }
 
+            // 设置视觉角度
+            this.Character.SightRange.transform.rotation = Quaternion.FromToRotation(Vector3.up, this.Character.Direction);
             bool isTarget = this.Character.Seek.MoveByPath();
             if (isTarget)
             {

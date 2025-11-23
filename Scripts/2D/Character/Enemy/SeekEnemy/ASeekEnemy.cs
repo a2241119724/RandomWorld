@@ -5,10 +5,35 @@
 
     public abstract class ASeekEnemy : AEnemy
     {
+        private Vector3 direction;
+
         /// <summary>
         /// 寻路
         /// </summary>
-        public ASeek Seek { get; set; }
+        public ASeek Seek { get; private set; }
+
+        /// <summary>
+        /// 获取角色朝向的方向
+        /// </summary>
+        public override Vector3 Direction
+        {
+            get
+            {
+                if (this.Seek.Direction == Vector3.zero)
+                {
+                    // 攻击方向
+                    return this.direction;
+                }
+
+                // 寻路方向
+                return this.Seek.Direction;
+            }
+
+            set
+            {
+                this.direction = value;
+            }
+        }
 
         /// <summary>
         /// 敌人状态管理器.
@@ -25,6 +50,13 @@
             this.Manager = new SeekEnemyStateManager<ICharacterState, ASeekEnemyState.TypeEnum, ASeekEnemy>(this);
         }
 
+        /// <inheritdoc/>
+        public override void Start()
+        {
+            base.Start();
+            this.AttackRange.SetActive(false);
+        }
+
         public void Update()
         {
             // 执行当前状态的函数
@@ -36,19 +68,13 @@
         {
             if (this.Manager.CurrentStateType != ASeekEnemyState.TypeEnum.Attack ||
                 (this.Manager.CurrentStateType == ASeekEnemyState.TypeEnum.Attack
-                && ((CommonEnemyAttackState)this.Manager.CurrentState).AttackTime > ChangeTarget))
+                && ((SeekEnemyAttackState)this.Manager.CurrentState).AttackTime > ChangeTarget))
             {
-                this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Move); // TODO 进入追踪状态
+                this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Move);
             }
 
             base.ReduceHp(hp, attacker, isCRT);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-        }
-
-        /// <inheritdoc/>
-        public override Vector3 GetDirection()
-        {
-            return Vector3.up;
         }
 
         /// <inheritdoc/>
@@ -59,8 +85,17 @@
         }
 
         /// <inheritdoc/>
+        public override string ToString()
+        {
+            return base.ToString() +
+                $"Target:{this.Seek.TargetMap}\n" +
+                $"SeekId:{this.CharacterDataLAB.SeekId}\n";
+        }
+
+        /// <inheritdoc/>
         protected override void Death()
         {
+            base.Death();
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
             if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
             {

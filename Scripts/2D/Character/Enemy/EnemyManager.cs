@@ -10,7 +10,7 @@
     /// </summary>
     public class EnemyManager : CharacterManager<EnemyManager, AEnemy, EnemyCreator>
     {
-        private const float InstanceInterval = 3.0f; // 实例化时间间隔
+        private const float InstanceInterval = 60.0f; // 实例化时间间隔
 
         /// <summary>
         /// 敌人管理数据

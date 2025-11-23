@@ -9,7 +9,7 @@
     /// 采集任务
     /// </summary>
     [Serializable]
-    public class WorkerGatherTask : WorkerTask
+    public class WorkerGatherTask : AWorkerTask
     {
         private string resourceName = "Tree";
 
@@ -18,13 +18,13 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                WorkerTask.maxProgress = 10.0f;
+                AWorkerTask.maxProgress = 50.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[1]);
                 this.AvailableNeighborPos.Add(Neighbors[3]);
 
-                // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+                // 进入寻路状态
+                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
         }
 

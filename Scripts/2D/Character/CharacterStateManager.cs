@@ -61,15 +61,15 @@
         /// <param name="type">所要转换的状态</param>
         public virtual void ChangeState(CST type)
         {
+            if (this.CurrentState != null)
+            {
+                this.CurrentState.OnExit();
+            }
+
             if (!this.States.ContainsKey(type))
             {
                 LogManager.Instance.Log("states Not Contain type!!!", LogManager.LogLevelEnum.Error);
                 return;
-            }
-
-            if (this.CurrentState != null)
-            {
-                this.CurrentState.OnExit();
             }
 
             this.CurrentStateType = type;

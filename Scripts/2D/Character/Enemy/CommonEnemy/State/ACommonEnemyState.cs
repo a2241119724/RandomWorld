@@ -3,7 +3,7 @@
     /// <summary>
     /// 敌人状态
     /// </summary>
-    public abstract class ACommonEnemyState : CharacterState<ACommonEnemy>
+    public abstract class ACommonEnemyState : ACharacterState<ACommonEnemy>
     {
         public ACommonEnemyState(ACommonEnemy enemy)
             : base(enemy)

@@ -13,11 +13,6 @@
         {
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
             enemyData.AttackRange = 7.0f;
-
-            // 画视觉,听觉,攻击范围
-            Tool.DrawSectorSolid(10, enemyData.AttackRange, new Color32(255, 0, 0, 50), this.transform);
-            Tool.DrawSectorSolid(enemyData.SightAngle, enemyData.SightRange, new Color32(0, 255, 0, 50), this.transform);
-            Tool.DrawSectorSolid(360, enemyData.SoundRange, new Color32(0, 0, 255, 50), this.transform);
             base.Start();
 
             // 添加状态

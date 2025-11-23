@@ -30,7 +30,7 @@
         /// <summary>
         /// 最近的敌人
         /// </summary>
-        protected Transform minDistanceEnemy;
+        protected Transform minDistanceCharacter;
 
         /// <summary>
         /// 武器追踪敌人范围
@@ -71,9 +71,8 @@
         public void SetCharacter(Character character)
         {
             this.character = character;
-            this.attackLayers = PlayerManager.Instance.Mine.AttackLayers;
-            this.attackTags = PlayerManager.Instance.Mine.AttackTags;
-            this.enabled = true; // 启动角色控制武器脚本
+            this.attackLayers = character.AttackLayers;
+            this.attackTags = character.AttackTags;
         }
 
         /// <summary>
@@ -121,8 +120,6 @@
             this.contactFilter2D.useTriggers = true;
             this.name = this.GetType().Name;
             this.Head = this.transform.Find("Head");
-            CircleCollider2D c = this.Head.gameObject.AddComponent<CircleCollider2D>(); // 敌人检测
-            c.isTrigger = true;
         }
 
         /// <inheritdoc/>
@@ -138,11 +135,7 @@
             }
 
             // 设置武器追踪范围
-            CircleCollider2D collider2D = this.Head.GetComponent<CircleCollider2D>();
-            if (collider2D != null)
-            {
-                collider2D.radius = this.raduis;
-            }
+            this.circleCollider2D.radius = this.raduis;
         }
 
         /// <inheritdoc/>
@@ -162,23 +155,23 @@
             int length = this.circleCollider2D.OverlapCollider(this.contactFilter2D, this.retCollider2Ds);
             for (int i = 0; i < length; i++)
             {
-                if (this.retCollider2Ds[i].CompareTag("Enemy"))
+                if (this.attackTags.Contains(this.retCollider2Ds[i].tag))
                 {
                     tempDistance = (this.retCollider2Ds[i].transform.position - this.transform.position).magnitude;
                     if (tempDistance < minDistance)
                     {
                         minDistance = tempDistance;
-                        this.minDistanceEnemy = this.retCollider2Ds[i].transform;
+                        this.minDistanceCharacter = this.retCollider2Ds[i].transform;
                     }
                 }
             }
 
-            if (this.minDistanceEnemy != null)
+            if (this.minDistanceCharacter != null)
             {
                 // 如果范围内有敌人, 跟踪敌人
                 // transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(Vector3.up, minDistanceEnemy.position - transform.position), Time.deltaTime * 100);
-                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, this.minDistanceEnemy.position - this.transform.position);
-                this.minDistanceEnemy = null;
+                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, this.minDistanceCharacter.position - this.transform.position);
+                this.minDistanceCharacter = null;
             }
             else if (Joystick.Instance && Joystick.Instance.Direction.magnitude > 1.0f)
             {

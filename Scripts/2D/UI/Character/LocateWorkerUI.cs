@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -9,10 +10,18 @@
     /// </summary>
     public class LocateWorkerUI : MonoBehaviour
     {
+        private Dictionary<AWorker, GameObject> allItems;
+
         /// <summary>
         /// 单例
         /// </summary>
         public static LocateWorkerUI Instance { get; private set; }
+
+        public void Awake()
+        {
+            Instance = this;
+            this.allItems = new Dictionary<AWorker, GameObject>();
+        }
 
         /// <summary>
         /// 添加Worker按钮
@@ -21,6 +30,7 @@
         public void AddWorkerItem(AWorker worker)
         {
             GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.LOCATE_WORKER_ITEM, true);
+            this.allItems.Add(worker, g);
             g.transform.SetParent(this.transform);
             g.transform.localScale = Vector3.one;
             Tool.GetComponentInChildren<Text>(g, "Name").text = worker.name;
@@ -31,9 +41,17 @@
             });
         }
 
-        public void Awake()
+        /// <summary>
+        /// 销毁Worker按钮
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        public void RemoveWorkerItem(AWorker worker)
         {
-            Instance = this;
+            if (this.allItems.ContainsKey(worker))
+            {
+                GameObject.Destroy(this.allItems[worker]);
+                this.allItems.Remove(worker);
+            }
         }
     }
 }

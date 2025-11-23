@@ -7,14 +7,14 @@
     /// 先预取资源
     /// </summary>
     [Serializable]
-    public class WorkerHungryTask : WorkerTask
+    public class WorkerHungryTask : AWorkerTask
     {
         public WorkerHungryTask()
             : base(WorkerTaskTypeEnum.Eat)
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                WorkerTask.maxProgress = 1.0f;
+                AWorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
             });

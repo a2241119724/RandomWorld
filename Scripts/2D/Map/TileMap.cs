@@ -182,6 +182,26 @@
         }
 
         /// <summary>
+        /// MapPos -> WorldPos
+        /// </summary>
+        /// <param name="posMap">地图位置</param>
+        /// <returns>世界位置</returns>
+        public Vector3 MapPosToWorldPos(Vector3IntLAB posMap)
+        {
+            return new Vector3(posMap.Y, posMap.X, 0);
+        }
+
+        /// <summary>
+        /// MapPos -> WorldPos
+        /// </summary>
+        /// <param name="posMap">地图位置</param>
+        /// <returns>世界位置</returns>
+        public Vector3 MapPosToWorldPos(Vector2ShortLAB posMap)
+        {
+            return new Vector3(posMap.Y, posMap.X, 0);
+        }
+
+        /// <summary>
         /// WorldPos -> MapPos
         /// </summary>
         /// <param name="worldPos">世界位置</param>

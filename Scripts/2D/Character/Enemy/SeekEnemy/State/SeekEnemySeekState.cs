@@ -24,7 +24,7 @@
         {
             base.OnUpdate();
 
-            if (!this.Character.Seek.IsSeeking)
+            if (!this.Character.Seek.IsSeeking())
             {
                 // Worker.SeekLock.ReleaseLock(this.Character);
                 // 寻路结束

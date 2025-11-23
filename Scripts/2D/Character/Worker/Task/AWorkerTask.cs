@@ -9,7 +9,7 @@
     /// Worker任务
     /// </summary>
     [Serializable]
-    public abstract class WorkerTask : IWorkerTask
+    public abstract class AWorkerTask : IWorkerTask
     {
         /// <summary>
         /// Worker在工作时的位置（上下左右）
@@ -52,7 +52,7 @@
         /// </summary>
         protected List<UnityAction<AWorker>> stageInit;
 
-        public WorkerTask(WorkerTaskTypeEnum taskType)
+        public AWorkerTask(WorkerTaskTypeEnum taskType)
         {
             this.TaskType = taskType;
             this.Name = taskType.ToString();
@@ -107,6 +107,11 @@
         }
 
         /// <summary>
+        /// 任务ID
+        /// </summary>
+        public long TaskId { get; set; }
+
+        /// <summary>
         /// 目标位置
         /// </summary>
         public Vector3IntLAB TargetMap { get; set; }
@@ -134,11 +139,11 @@
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             workerData.CurTired -= Time.deltaTime * 0.1f;
             this.curProgress += Time.deltaTime;
-            if (this.curProgress > WorkerTask.maxProgress)
+            if (this.curProgress > AWorkerTask.maxProgress)
             {
                 this.curProgress = 0;
                 worker.SetProgress(this.curProgress, false);
-                if (this.IsFinish(worker))
+                if (this.IsFinishAllStage(worker))
                 {
                     this.Finish(worker);
                     return true;
@@ -147,7 +152,7 @@
                 return false;
             }
 
-            worker.SetProgress((float)this.curProgress / WorkerTask.maxProgress, true);
+            worker.SetProgress((float)this.curProgress / AWorkerTask.maxProgress, true);
             return false;
         }
 
@@ -164,6 +169,7 @@
         /// <param name="worker">Worker</param>
         public virtual void Start(AWorker worker)
         {
+            this.curProgress = 0.0f;
         }
 
         /// <summary>
@@ -213,7 +219,7 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否</returns>
-        protected virtual bool IsFinish(AWorker worker)
+        protected virtual bool IsFinishAllStage(AWorker worker)
         {
             return true;
         }

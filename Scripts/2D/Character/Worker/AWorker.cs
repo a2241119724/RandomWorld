@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Threading;
+    using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -44,7 +45,7 @@
         /// <summary>
         /// 状态管理器
         /// </summary>
-        public WorkerStateManager<ICharacterState, WorkerState.TypeEnum, AWorker> Manager { get; private set; }
+        public WorkerStateManager<ICharacterState, AWorkerState.TypeEnum, AWorker> Manager { get; private set; }
 
         /// <inheritdoc/>
         public override void Awake()
@@ -54,7 +55,7 @@
             this.CharacterDataLAB = new WorkerData();
             this.CharacterDataLAB.Character = this;
             this.CharacterDataLAB.Weapon = (AWeapon)ItemInstanceFactory.Instance.GetBackpackItemByName("CustomSword");
-            this.Manager = new WorkerStateManager<ICharacterState, WorkerState.TypeEnum, AWorker>(this);
+            this.Manager = new WorkerStateManager<ICharacterState, AWorkerState.TypeEnum, AWorker>(this);
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
             this.progress = this.transform.Find("Progress").GetComponent<Slider>();
@@ -67,7 +68,7 @@
                 return;
             }
 
-            ThreadPool.SetMaxThreads(5, 5);
+            ThreadPool.SetMaxThreads(2, 2);
             this.Seek = new AStar(this);
             this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAAYER);
             this.AttackTags = new List<string>
@@ -119,8 +120,13 @@
 
             WorkerData workerData = this.CharacterDataLAB as WorkerData;
             return base.ToString() +
+                $"状态:{this.Manager.CurrentStateType}\n" +
+                $"Task:{workerData.Task.TaskType}:{workerData.Task.TaskId}\n" +
+                $"IsSeeking:{this.Seek.IsSeeking()}\n" +
                 $"Hungry:{workerData.CurHungry}\n" +
                 $"TargetMap:{this.Seek.TargetMap}\n" +
+                $"TaskTarget:{workerData.Task.TargetMap}\n" +
+                $"SeekId:{this.CharacterDataLAB.SeekId}\n" +
                 resources;
         }
 
@@ -223,10 +229,11 @@
         /// </summary>
         public void GiveUpTask()
         {
+            InventoryManager.Instance.DeleteWorkerPre(this);
             AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
             WorkerTaskManager.Instance.GiveUpTask(workerData.Task);
             workerData.Task = null;
-            this.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+            this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
         }
 
         /// <summary>
@@ -263,9 +270,9 @@
 
             base.ReduceHp(hp, attacker, isCRT);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            if (this.Manager.CurrentStateType != WorkerState.TypeEnum.Attack)
+            if (this.Manager.CurrentStateType != AWorkerState.TypeEnum.Attack)
             {
-                this.Manager.ChangeState(WorkerState.TypeEnum.Attack);
+                this.Manager.ChangeState(AWorkerState.TypeEnum.Attack);
             }
             else
             {
@@ -276,6 +283,14 @@
         /// <inheritdoc/>
         protected override void Death()
         {
+            base.Death();
+            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+            if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
+            {
+                WorkerManager.Instance.Remove(this);
+            }
+
+            this.Manager.ChangeState(AWorkerState.TypeEnum.Dead); // 进入死亡状态
         }
 
         private void OnCollisionStay2D(Collision2D collision)
@@ -283,7 +298,7 @@
             this.checkBug.AddColliderCount(DateTime.Now.Ticks);
             if (this.checkBug.IsBug(this.name, 100))
             {
-                this.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+                this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             }
         }
 
@@ -327,20 +342,21 @@
             /// <summary>
             /// 当前状态
             /// </summary>
-            public WorkerState.TypeEnum CurrentStateType;
+            public AWorkerState.TypeEnum CurrentStateType;
 
             /// <summary>
             /// 任务
             /// </summary>
-            public WorkerTask Task;
+            public AWorkerTask Task;
 
             public WorkerData()
             {
                 // 设置默认可接受任务类型
                 this.TaskToggle = new bool[10];
-                this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Eat] = true;
-                this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Wear] = true;
-                this.TaskToggle[(int)WorkerTask.WorkerTaskTypeEnum.Carry] = true;
+                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Eat] = true;
+                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Wear] = true;
+                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Carry] = true;
+                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Gather] = true;
             }
         }
     }

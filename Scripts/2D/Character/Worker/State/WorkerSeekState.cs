@@ -6,7 +6,7 @@
     /// <summary>
     /// Worker寻找状态
     /// </summary>
-    public class WorkerSeekState : WorkerState
+    public class WorkerSeekState : AWorkerState
     {
         // private bool isOne = true;
         private readonly StringBuilder builder = new (128); // 减少GC
@@ -60,13 +60,19 @@
 
                 if (closedPos == default)
                 {
-                    LogManager.Instance.Log($"{workerData.Task.TaskType},没有邻居位置!!!", LogManager.LogLevelEnum.Error);
+                    LogManager.Instance.Log($"{workerData.Task.TaskType}, 没有邻居位置!!!", LogManager.LogLevelEnum.Error);
+                    this.Character.GiveUpTask();
                     return;
                 }
 
                 this.targetMap = closedPos;
             }
+            else
+            {
+                LogManager.Instance.Log(this.Character.name + " 没有任务!");
+            }
 
+            LogManager.Instance.Log(this.Character.name + " 寻路->" + this.targetMap);
             this.Character.Seek.Seek(this.targetMap);
         }
 
@@ -74,6 +80,8 @@
         public override void OnUpdate()
         {
             base.OnUpdate();
+
+            // 每60帧刷新一次
             if (Time.frameCount % 60 == 0)
             {
                 this.builder.Clear();
@@ -103,8 +111,26 @@
             //     this.isOne = false;
             //     this.Character.ToTarget();
             // }
-            if (!this.Character.Seek.IsSeeking)
+            if (!this.Character.Seek.IsSeeking())
             {
+                // 没有找到路
+                if (!this.Character.Seek.IsHavePath())
+                {
+                    // 如果有任务
+                    AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+                    if (workerData.Task != null)
+                    {
+                        this.Character.GiveUpTask();
+                    }
+                    else
+                    {
+                        this.Character.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                    }
+
+                    LogManager.Instance.Log(this.Character.name + " 没有找到路!");
+                    return;
+                }
+
                 // Worker.SeekLock.ReleaseLock(this.Character);
                 // 寻路结束
                 this.Character.Manager.ChangeState(TypeEnum.Move);

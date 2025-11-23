@@ -9,7 +9,7 @@
     /// Build在第一个阶段预留资源
     /// </summary>
     [Serializable]
-    public class WorkerBuildTask : WorkerTask
+    public class WorkerBuildTask : AWorkerTask
     {
         private Dictionary<int, ResourceInfo> needs;
         private Dictionary<int, ResourceInfo> temp;
@@ -24,7 +24,7 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                WorkerTask.maxProgress = 1.0f;
+                AWorkerTask.maxProgress = 1.0f;
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
@@ -36,11 +36,11 @@
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                WorkerTask.maxProgress = 2.0f;
+                AWorkerTask.maxProgress = 2.0f;
 
                 // 建造
                 this.AvailableNeighborPos.Clear();
@@ -49,7 +49,7 @@
                 this.AvailableNeighborPos.Add(Neighbors[2]);
                 this.AvailableNeighborPos.Add(Neighbors[3]);
                 this.TargetMap = this.buildPos;
-                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
         }
 
@@ -114,7 +114,7 @@
         }
 
         /// <inheritdoc/>
-        protected override bool IsFinish(AWorker worker)
+        protected override bool IsFinishAllStage(AWorker worker)
         {
             // 只worker携带的资源不够时,取建筑材料
             switch (this.stage)
