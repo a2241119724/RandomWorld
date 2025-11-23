@@ -1,7 +1,6 @@
 ﻿namespace LAB2D
 {
     using Photon.Pun;
-    using UnityEngine;
 
     /// <summary>
     /// 敌人.
@@ -12,7 +11,8 @@
         public override void Start()
         {
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
-            enemyData.AttackRange = 7.0f;
+            enemyData.AttackRange = enemyData.SightRange = 7.0f;
+            enemyData.SoundRange = 4.0f;
             base.Start();
 
             // 添加状态

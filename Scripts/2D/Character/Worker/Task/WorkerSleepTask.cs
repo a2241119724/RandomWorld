@@ -7,7 +7,7 @@
     /// 睡觉任务
     /// </summary>
     [Serializable]
-    public class WorkerSleepTask : WorkerTask
+    public class WorkerSleepTask : AWorkerTask
     {
         private AWorker worker;
 
@@ -16,14 +16,14 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                WorkerTask.maxProgress = 10.0f;
+                AWorkerTask.maxProgress = 10.0f;
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
         }
 

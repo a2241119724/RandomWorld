@@ -9,16 +9,16 @@
     /// </summary>
     public class WorkerTaskTogglePanel : ABasePanel<WorkerTaskTogglePanel>
     {
-        private static readonly Dictionary<WorkerTask.WorkerTaskTypeEnum, string> TypeToChinese = new ()
+        private static readonly Dictionary<AWorkerTask.WorkerTaskTypeEnum, string> TypeToChinese = new ()
         {
-            { WorkerTask.WorkerTaskTypeEnum.Build, "建造" },
-            { WorkerTask.WorkerTaskTypeEnum.Carry, "搬运" },
-            { WorkerTask.WorkerTaskTypeEnum.Gather, "采摘" },
-            { WorkerTask.WorkerTaskTypeEnum.Exercise, "锻炼" },
-            { WorkerTask.WorkerTaskTypeEnum.Eat, "吃饭" },
-            { WorkerTask.WorkerTaskTypeEnum.Wear, "穿戴" },
-            { WorkerTask.WorkerTaskTypeEnum.Sleep, "睡觉" },
-            { WorkerTask.WorkerTaskTypeEnum.Plant, "种植" },
+            { AWorkerTask.WorkerTaskTypeEnum.Build, "建造" },
+            { AWorkerTask.WorkerTaskTypeEnum.Carry, "搬运" },
+            { AWorkerTask.WorkerTaskTypeEnum.Gather, "采摘" },
+            { AWorkerTask.WorkerTaskTypeEnum.Exercise, "锻炼" },
+            { AWorkerTask.WorkerTaskTypeEnum.Eat, "吃饭" },
+            { AWorkerTask.WorkerTaskTypeEnum.Wear, "穿戴" },
+            { AWorkerTask.WorkerTaskTypeEnum.Sleep, "睡觉" },
+            { AWorkerTask.WorkerTaskTypeEnum.Plant, "种植" },
         };
 
         public WorkerTaskTogglePanel()
@@ -26,7 +26,7 @@
             this.Name = "WorkerTaskToggle";
             this.Init();
             Transform title = Tool.GetComponentInChildren<Transform>(this.Panel, "Title");
-            foreach (KeyValuePair<WorkerTask.WorkerTaskTypeEnum, string> pair in TypeToChinese)
+            foreach (KeyValuePair<AWorkerTask.WorkerTaskTypeEnum, string> pair in TypeToChinese)
             {
                 Tool.GetComponentInChildren<Text>(title.GetChild((int)pair.Key + 1).gameObject, "Text").text = pair.Value;
             }

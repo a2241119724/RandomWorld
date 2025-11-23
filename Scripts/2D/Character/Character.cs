@@ -173,7 +173,10 @@
         /// <summary>
         /// 敌人死亡
         /// </summary>
-        protected abstract void Death();
+        protected virtual void Death()
+        {
+            GameObject.Destroy(this.gameObject);
+        }
 
         /// <summary>
         /// 恢复颜色
@@ -189,6 +192,11 @@
         [Serializable]
         public class CharacterData : Attribute
         {
+            /// <summary>
+            /// Id
+            /// </summary>
+            public long Id = 0;
+
             /// <summary>
             /// 血量
             /// </summary>
@@ -230,6 +238,21 @@
             public Vector3LAB Pos;
 
             /// <summary>
+            /// 生成的Id
+            /// </summary>
+            private static long generateId = 0;
+
+            /// <summary>
+            /// 生成的寻路Id
+            /// </summary>
+            private int generateSeekId = 0;
+
+            /// <summary>
+            /// 寻路Id
+            /// </summary>
+            private int seekId = 0;
+
+            /// <summary>
             /// 携带的武器
             /// </summary>
             private AWeapon weapon;
@@ -245,6 +268,7 @@
             public CharacterData()
             {
                 this.equipments = new Dictionary<AEquipment.EquipTypeEnum, AEquipment>();
+                this.Id = CharacterData.generateId++;
             }
 
             public Character Character
@@ -272,6 +296,14 @@
                 {
                     this.weapon = value;
                     this.ComputeAttribute();
+                }
+            }
+
+            public string SeekId
+            {
+                get
+                {
+                    return this.Id + ":" + this.seekId;
                 }
             }
 
@@ -356,6 +388,16 @@
                     this.SPD += item.Value.Attribute.SPD;
                     this.HIT += item.Value.Attribute.HIT;
                 }
+            }
+
+            /// <summary>
+            /// 生成寻路Id
+            /// </summary>
+            /// <returns>寻路Id</returns>
+            public string GenerateSeekId()
+            {
+                this.seekId = ++this.generateSeekId;
+                return this.SeekId;
             }
         }
 

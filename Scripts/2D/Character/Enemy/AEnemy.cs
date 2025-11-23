@@ -13,7 +13,22 @@
         private RaycastHit2D raycastHit2D; // 射线射中返回的结果
 
         /// <summary>
-        /// 敌人攻击目标.
+        /// 获取角色朝向的方向
+        /// </summary>
+        public virtual Vector3 Direction { get; set; }
+
+        /// <summary>
+        /// 视觉
+        /// </summary>
+        public GameObject SightRange { get; set; }
+
+        /// <summary>
+        /// 攻击觉
+        /// </summary>
+        public GameObject AttackRange { get; set; }
+
+        /// <summary>
+        /// 敌人攻击目标, 扫描到附近的人
         /// </summary>
         [HideInInspector]
         public Character Target { get; set; } // 打击目标
@@ -39,9 +54,9 @@
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
 
             // 画视觉,听觉,攻击范围
-            Tool.DrawSectorSolid(10, enemyData.AttackRange, new Color32(255, 0, 0, 50), this.transform);
-            Tool.DrawSectorSolid(enemyData.SightAngle, enemyData.SightRange, new Color32(0, 255, 0, 50), this.transform);
-            Tool.DrawSectorSolid(360, enemyData.SoundRange, new Color32(0, 0, 255, 50), this.transform);
+            // Tool.DrawSectorSolid(360, enemyData.SoundRange, new Color32(0, 0, 255, 50), this.transform);
+            this.AttackRange = Tool.DrawSectorSolid(10, enemyData.AttackRange, new Color32(255, 0, 0, 50), this.transform);
+            this.SightRange = Tool.DrawSectorSolid(enemyData.SightAngle, enemyData.SightRange, new Color32(0, 255, 0, 50), this.transform);
 
             this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (this.statusBar == null)
@@ -81,7 +96,7 @@
             {
                 // 计算玩家是否在敌人的视角内
                 Vector3 direction = target.position - this.transform.position;
-                float degree = Vector3.Angle(direction, this.GetDirection());
+                float degree = Vector3.Angle(direction, this.Direction);
                 if (degree < enemyData.SightAngle / 2 && degree > -enemyData.SightAngle / 2)
                 {
                     isFind = true;
@@ -110,12 +125,10 @@
             throw new System.NotImplementedException();
         }
 
-        public abstract Vector3 GetDirection();
-
         /// <inheritdoc/>
         protected override void Death()
         {
-            throw new System.NotImplementedException();
+            base.Death();
         }
 
         /// <summary>
@@ -132,7 +145,7 @@
             /// <summary>
             /// 听觉距离.
             /// </summary>
-            public float SoundRange = 5.0f;
+            public float SoundRange = 4.0f;
 
             /// <summary>
             /// 视野距离.

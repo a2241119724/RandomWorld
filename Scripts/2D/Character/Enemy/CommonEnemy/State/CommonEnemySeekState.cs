@@ -38,6 +38,12 @@
                 return;
             }
 
+            if (this.Character.Target == null)
+            {
+                this.Character.Manager.ChangeState(TypeEnum.Wander);
+                return;
+            }
+
             // 感知人物是否在范围内，进入追踪状态
             if (this.Character.SenseNearby(this.Character.Target.transform))
             {

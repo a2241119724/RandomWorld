@@ -5,7 +5,7 @@
     /// <summary>
     /// Worker攻击状态
     /// </summary>
-    public class WorkerAttackState : WorkerState
+    public class WorkerAttackState : AWorkerState
     {
         private float recordTime = 0.0f;
 
@@ -24,6 +24,7 @@
         {
             base.OnEnter();
             this.Reset();
+            this.Character.Seek.StopMove();
             this.Character.WorkerStateText.text = this.preString;
 
             // 拿起武器

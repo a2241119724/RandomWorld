@@ -12,12 +12,18 @@
         {
         }
 
+        /// <summary>
+        /// 攻击时间
+        /// </summary>
+        public float AttackTime { get; private set; } = 0.0f;
+
         /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            this.Character.Seek.StopMove();
             this.recordTime = 0.0f;
+            this.AttackTime = 0.0f;
+            this.Character.AttackRange.SetActive(true);
 
             // 拿起武器
             if (this.Character.Weapon == null && this.Character.CharacterDataLAB.Weapon != null)
@@ -42,13 +48,21 @@
         public override void OnUpdate()
         {
             base.OnUpdate();
-            this.recordTime += Time.deltaTime;
-            if (this.recordTime >= 2.0f)
+            this.AttackTime += Time.deltaTime;
+
+            // 打击目标死亡
+            if (this.Character.Target == null)
             {
                 this.Character.Manager.ChangeState(TypeEnum.Seek);
                 return;
             }
 
+            // 设置视觉，攻击觉方向
+            this.Character.SightRange.transform.rotation = this.Character.Weapon.transform.rotation;
+            this.Character.AttackRange.transform.rotation = this.Character.Weapon.transform.rotation;
+
+            // 玩家朝向设置为攻击方向
+            this.Character.Direction = this.Character.Target.transform.position - this.Character.transform.position;
             AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
             weaponObject.Attack();
             if (NetworkConnect.Instance.IsOnline)
@@ -59,11 +73,26 @@
             {
                 this.Character.Attack();
             }
+
+            if (!this.Character.SenseNearby(this.Character.Target.transform))
+            {
+                // 追踪两秒
+                this.recordTime += Time.deltaTime;
+                if (this.recordTime >= 2.0f)
+                {
+                    this.Character.Manager.ChangeState(TypeEnum.Seek);
+                }
+            }
+            else
+            {
+                this.recordTime = 0.0f;
+            }
         }
 
         public override void OnExit()
         {
             base.OnExit();
+            this.Character.AttackRange.SetActive(false);
 
             // 放下武器
             if (this.Character.Weapon != null)
@@ -76,7 +105,6 @@
         public override void Reset()
         {
             base.Reset();
-            this.recordTime = 0.0f;
         }
     }
 }

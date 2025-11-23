@@ -7,7 +7,7 @@
     /// 穿戴任务
     /// </summary>
     [Serializable]
-    public class WorkerWearTask : WorkerTask
+    public class WorkerWearTask : AWorkerTask
     {
         private AWorker worker;
         private int id; // 穿戴的装备id
@@ -17,12 +17,12 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                WorkerTask.maxProgress = 1.0f;
+                AWorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
         }
 

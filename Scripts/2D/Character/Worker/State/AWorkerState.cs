@@ -1,20 +1,19 @@
 ﻿namespace LAB2D
 {
     using System.Text.RegularExpressions;
+    using UnityEngine;
 
     /// <summary>
     /// Worker状态
     /// </summary>
-    public class WorkerState : CharacterState<AWorker>
+    public abstract class AWorkerState : ACharacterState<AWorker>
     {
         /// <summary>
         /// 信息前缀
         /// </summary>
         protected string preString = string.Empty;
 
-        private const string Pattern = "^Worker(.*)State$";
-
-        public WorkerState(AWorker worker)
+        public AWorkerState(AWorker worker)
             : base(worker)
         {
         }
@@ -64,12 +63,12 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            Match match = Regex.Match(this.GetType().Name, Pattern);
-            this.preString = $"<color=red>{match.Groups[1]}</color>\n";
+            LogManager.Instance.Log(this.Character.name + " " + this.Character.Manager.CurrentStateType);
+            this.preString = string.Empty;
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.Task != null)
             {
-                this.preString += $"<color=green>{workerData.Task.Name}</color>\n";
+                this.preString += $"<color=green>任务: {workerData.Task.Name}</color>\n";
             }
         }
 

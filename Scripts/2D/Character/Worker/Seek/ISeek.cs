@@ -22,7 +22,8 @@
         /// <summary>
         /// 坐标
         /// </summary>
-        public Vector3Int PosMap;
+        // public Vector3Int PosMap;
+        public Vector2ShortLAB PosMap;
 
         /// <summary>
         /// 预估总消耗
@@ -44,10 +45,9 @@
         /// </summary>
         public Spend Previous;
 
-        public Spend(int x, int y)
+        public Spend(short x, short y)
         {
-            this.PosMap.x = x;
-            this.PosMap.y = y;
+            this.PosMap = new Vector2ShortLAB(x, y);
         }
 
         /// <summary>

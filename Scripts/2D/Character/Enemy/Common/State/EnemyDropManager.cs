@@ -49,7 +49,7 @@
                     }
 
                     ItemData itemData = ItemDataManager.Instance.GetByName(dropItem.Value.name);
-                    ResourceInfo resourceInfo = new(itemData.Id, 1);
+                    ResourceInfo resourceInfo = new (itemData.Id, 1);
                     ItemMap.Instance.PutDownToDrop(pos, dropItem.Value, resourceInfo);
                     break;
                 }

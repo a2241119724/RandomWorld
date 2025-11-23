@@ -83,10 +83,10 @@
         /// <param name="itemDatas">所有装备数据(不包含武器)</param>
         public void InitItemInstances(List<ItemData> itemDatas)
         {
-            // 装备
+            // 装备(不包含武器)
             foreach (ItemData itemData in itemDatas)
             {
-                if (itemData.Type == AItem.ItemTypeEnum.Weapon)
+                if (itemData.Type == AItem.ItemTypeEnum.Equipment)
                 {
                     this.backpackItemTypes.Add(itemData.EnName, typeof(CommonEquipment));
                 }

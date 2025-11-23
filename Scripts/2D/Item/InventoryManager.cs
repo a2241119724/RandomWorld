@@ -572,6 +572,23 @@
         }
 
         /// <summary>
+        /// 删除Worker预设(Worker死亡)
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        public void DeleteWorkerPre(AWorker worker)
+        {
+            if (this.prePlaceResource.ContainsKey(worker))
+            {
+                this.prePlaceResource.Remove(worker);
+            }
+
+            if (this.preTakeResource.ContainsKey(worker))
+            {
+                this.preTakeResource.Remove(worker);
+            }
+        }
+
+        /// <summary>
         /// 通过pos获取预放置资源的数量
         /// </summary>
         /// <param name="pos">位置</param>

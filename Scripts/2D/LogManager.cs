@@ -14,7 +14,8 @@
         private readonly string logPath = Application.persistentDataPath + "/game.log";
         private readonly bool isSave = true;
         private readonly List<string> logs;
-        private readonly int maxLogCount = 10;
+        private readonly int maxLogCount = 200;
+        private long index = 0;
 
         public LogManager()
         {
@@ -63,15 +64,15 @@
         /// <param name="level">日志级别.</param>
         public void Log(string message, LogLevelEnum level = LogLevelEnum.Info)
         {
-            if ((int)level < (int)this.minLogLevel)
+            if (level < this.minLogLevel)
             {
                 return;
             }
 
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            string logMessage = $"{timestamp} [{level}] {message}";
+            string logMessage = $"{timestamp} [{level}] {this.index++} {message}";
 
-            if (level == LogLevelEnum.Error)
+            if (level >= LogLevelEnum.Warning)
             {
                 Debug.Log(logMessage);
             }
@@ -94,7 +95,7 @@
             // 如果启用了文件记录，则写入文件
             if (this.isSave)
             {
-                File.AppendAllText(path, string.Join("\n", logs));
+                File.AppendAllText(path, "\n" + string.Join("\n", logs));
             }
 
             logs.Clear();

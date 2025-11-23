@@ -3,7 +3,7 @@
     /// <summary>
     /// 敌人状态
     /// </summary>
-    public abstract class ASeekEnemyState : CharacterState<ASeekEnemy>
+    public abstract class ASeekEnemyState : ACharacterState<ASeekEnemy>
     {
         public ASeekEnemyState(ASeekEnemy enemy)
             : base(enemy)

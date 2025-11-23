@@ -8,7 +8,7 @@
     /// Carry在第二个阶段预留资源
     /// </summary>
     [Serializable]
-    public class WorkerCarryTask : WorkerTask
+    public class WorkerCarryTask : AWorkerTask
     {
         /// <summary>
         /// Worker携带的资源
@@ -20,16 +20,16 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                WorkerTask.maxProgress = 1.0f;
+                AWorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                WorkerTask.maxProgress = 1.0f;
+                AWorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.GetPosByPrePlace(worker));
@@ -39,7 +39,7 @@
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
         }
 
@@ -77,7 +77,7 @@
         }
 
         /// <inheritdoc/>
-        protected override bool IsFinish(AWorker worker)
+        protected override bool IsFinishAllStage(AWorker worker)
         {
             switch (this.stage)
             {

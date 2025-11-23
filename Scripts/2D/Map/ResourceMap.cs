@@ -66,9 +66,9 @@
                         this.ResourceMapDataLAB.Add(posMap, tileBase.name);
                         if (tileBase.name.Contains("Tree"))
                         {
-                            // WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
-                            //     .setTarget(posMap).setGatherName("Tree").build());
-                            this.ResourceMapDataLAB.TreeCurCount++;
+                             WorkerTaskManager.Instance.AddTask(new WorkerGatherTask.GatherTaskBuilder()
+                                 .SetTarget(posMap).SetGatherName("Tree").Build());
+                             this.ResourceMapDataLAB.TreeCurCount++;
                         }
                     }
                 }

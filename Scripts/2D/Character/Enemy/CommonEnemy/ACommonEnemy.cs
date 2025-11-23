@@ -32,6 +32,17 @@
         [HideInInspector]
         public Transform Head { get; set; }
 
+        /// <summary>
+        /// 获取角色朝向的方向
+        /// </summary>
+        public override Vector3 Direction
+        {
+            get
+            {
+                return this.Head.position - this.transform.position;
+            }
+        }
+
         /// <inheritdoc/>
         public override void Awake()
         {
@@ -111,14 +122,9 @@
         }
 
         /// <inheritdoc/>
-        public override Vector3 GetDirection()
-        {
-            return this.Head.position - this.transform.position;
-        }
-
-        /// <inheritdoc/>
         protected override void Death()
         {
+            base.Death();
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
             if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
             {

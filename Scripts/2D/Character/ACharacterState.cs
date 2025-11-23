@@ -4,10 +4,10 @@
     /// 角色状态
     /// </summary>
     /// <typeparam name="C">Character</typeparam>
-    public abstract class CharacterState<C> : ICharacterState
+    public abstract class ACharacterState<C> : ICharacterState
         where C : Character
     {
-        protected CharacterState(C character)
+        protected ACharacterState(C character)
         {
             this.Character = character;
         }

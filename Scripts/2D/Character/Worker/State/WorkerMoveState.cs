@@ -6,7 +6,7 @@
     /// <summary>
     /// Worker移动状态
     /// </summary>
-    public class WorkerMoveState : WorkerState
+    public class WorkerMoveState : AWorkerState
     {
         private readonly StringBuilder builder = new (128); // 减少GC
         private float recordTime = 0.0f;

@@ -7,7 +7,7 @@
     /// 锻炼任务
     /// </summary>
     [Serializable]
-    public class WorkerExerciseTask : WorkerTask
+    public class WorkerExerciseTask : AWorkerTask
     {
         public WorkerExerciseTask()
             : base(WorkerTaskTypeEnum.Exercise)

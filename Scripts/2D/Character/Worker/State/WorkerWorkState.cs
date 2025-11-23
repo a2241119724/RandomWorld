@@ -1,11 +1,9 @@
 ﻿namespace LAB2D
 {
-    using static LAB2D.AWorker;
-
     /// <summary>
     /// Worker工作状态
     /// </summary>
-    public class WorkerWorkState : WorkerState
+    public class WorkerWorkState : AWorkerState
     {
         private bool waitOneFrame; // 等待一帧
 

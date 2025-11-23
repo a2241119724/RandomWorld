@@ -39,6 +39,12 @@
             //         return;
             //     }
             // }
+            if (this.Character.Target == null)
+            {
+                this.Character.Manager.ChangeState(TypeEnum.Wander);
+                return;
+            }
+
             // 仅感知捕捉的玩家
             if (this.Character.SenseNearby(this.Character.Target.transform))
             {

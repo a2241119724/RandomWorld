@@ -40,6 +40,13 @@
             this.AttackTime += Time.deltaTime;
             ACommonEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as ACommonEnemy.EnemyData;
 
+            // 打击目标死亡
+            if (this.Character.Target == null)
+            {
+                this.Character.Manager.ChangeState(TypeEnum.Wander);
+                return;
+            }
+
             // 如果玩家与敌人的距离大于敌人的攻击距离，那么进入追踪状态
             if (Vector3.Distance(this.Character.Target.transform.position, this.Character.transform.position) > enemyData.AttackRange)
             {

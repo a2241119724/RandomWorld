@@ -6,7 +6,7 @@ namespace LAB2D
     /// 种植任务
     /// </summary>
     [Serializable]
-    public class WorkerPlantTask : WorkerTask
+    public class WorkerPlantTask : AWorkerTask
     {
         private ResourceInfo resourceInfo;
 
@@ -15,7 +15,7 @@ namespace LAB2D
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                WorkerTask.maxProgress = 1.0f;
+                AWorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.IsContainSeedAndPreTake(worker, true));
@@ -26,11 +26,11 @@ namespace LAB2D
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                WorkerTask.maxProgress = 1.0f;
+                AWorkerTask.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(FarmlandManager.Instance.IsEnoughAndPrePlant(worker, this.resourceInfo, true));
@@ -41,7 +41,7 @@ namespace LAB2D
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(WorkerState.TypeEnum.Seek);
+                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
         }
 
@@ -68,7 +68,7 @@ namespace LAB2D
         }
 
         /// <inheritdoc/>
-        protected override bool IsFinish(AWorker worker)
+        protected override bool IsFinishAllStage(AWorker worker)
         {
             switch (this.stage)
             {

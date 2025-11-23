@@ -16,35 +16,26 @@
         }
 
         /// <inheritdoc/>
-        protected override void DoSeek(Vector3Int targetMap)
+        protected override void DoSeek()
         {
-            this.TargetMap = targetMap;
-            this.IsSeeking = true;
-            this.openList.Clear();
-            this.closeList.Clear();
-            this.path.Clear();
-            this.SeekProgress = 0.0f;
             Vector3Int posMap = default;
             UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
             {
                 posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
-                this.UpdateLine();
             }).Wait();
 
             // 起点就是终点
-            if (posMap.x == this.TargetMap.x && posMap.y == this.TargetMap.y)
+            if (posMap == this.TargetMap)
             {
-                this.StopSeek();
                 return;
             }
 
             Spend start = this.mapSpend[posMap.x, posMap.y]; // 起点
             start.Previous = null;
             Spend end = this.mapSpend[this.TargetMap.x, this.TargetMap.y]; // 终点
-            this.isStopThread = false;
             List<Spend> path = new ();
-            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.PosMap.x - end.PosMap.x, 2)
-                + Mathf.Pow(start.PosMap.y - end.PosMap.y, 2));
+            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.PosMap.X - end.PosMap.X, 2)
+                + Mathf.Pow(start.PosMap.Y - end.PosMap.Y, 2));
             this.openList.Add(start);
             while (!this.isStopThread && this.openList.Count != 0)
             {
@@ -52,7 +43,6 @@
 
                 if (this.isStopThread)
                 {
-                    this.StopSeek();
                     return;
                 }
 
@@ -61,7 +51,6 @@
                 {
                     if (this.isStopThread)
                     {
-                        this.StopSeek();
                         return;
                     }
 
@@ -73,16 +62,15 @@
 
                 if (this.isStopThread)
                 {
-                    this.StopSeek();
                     return;
                 }
 
                 Spend curSpend = this.openList[minIndex];
-                this.SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.PosMap.x - start.PosMap.x, 2)
-                    + Mathf.Pow(curSpend.PosMap.y - start.PosMap.y, 2)) / totalDistance;
+                this.SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.PosMap.X - start.PosMap.X, 2)
+                    + Mathf.Pow(curSpend.PosMap.Y - start.PosMap.Y, 2)) / totalDistance;
 
                 // 判断是否到达终点(此处只能是整数)
-                if ((int)curSpend.PosMap.x == (int)end.PosMap.x && (int)curSpend.PosMap.y == (int)end.PosMap.y)
+                if (curSpend.PosMap == end.PosMap)
                 {
                     // LogManager.Instance.log("找到路径!!!", LogManager.LogLevel.Info);
                     // 找路径
@@ -102,8 +90,8 @@
                             }
                         }
 
-                        if (quickCurSpend != null && quickCurSpend.PosMap.x == curSpend.Previous.PosMap.x
-                            && quickCurSpend.PosMap.y == curSpend.Previous.PosMap.y)
+                        if (quickCurSpend != null && quickCurSpend.PosMap.X == curSpend.Previous.PosMap.X
+                            && quickCurSpend.PosMap.Y == curSpend.Previous.PosMap.Y)
                         {
                             UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                             {
@@ -117,7 +105,6 @@
 
                     if (this.isStopThread)
                     {
-                        this.StopSeek();
                         return;
                     }
 
@@ -126,7 +113,6 @@
 
                 if (this.isStopThread)
                 {
-                    this.StopSeek();
                     return;
                 }
 
@@ -138,8 +124,8 @@
                 foreach (Vector2SByteLAB direction in Neighbors)
                 {
                     ++isCorner;
-                    int x = curSpend.PosMap.x + direction.X;
-                    int y = curSpend.PosMap.y + direction.Y;
+                    int x = curSpend.PosMap.X + direction.X;
+                    int y = curSpend.PosMap.Y + direction.Y;
 
                     bool isReach = true;
                     UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
@@ -166,7 +152,7 @@
                     {
                         UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                         {
-                            isReach = ASeek.IsCanReach(new Vector3Int(x, curSpend.PosMap.y, 0)) || ASeek.IsCanReach(new Vector3Int(curSpend.PosMap.x, y, 0));
+                            isReach = ASeek.IsCanReach(new Vector3Int(x, curSpend.PosMap.Y, 0)) || ASeek.IsCanReach(new Vector3Int(curSpend.PosMap.X, y, 0));
                         }).Wait();
 
                         // 当上下左右阻塞时，斜着不可走
@@ -184,7 +170,6 @@
 
                     if (this.isStopThread)
                     {
-                        this.StopSeek();
                         return;
                     }
 
@@ -207,7 +192,6 @@
 
                         if (this.isStopThread)
                         {
-                            this.StopSeek();
                             return;
                         }
 
@@ -215,7 +199,7 @@
                     }
 
                     // 加权A*，使得寻路更快，但不是最短路径
-                    neighbor.H = 1.5f * (Mathf.Abs(end.PosMap.x - neighbor.PosMap.x) + Mathf.Abs(end.PosMap.y - neighbor.PosMap.y));
+                    neighbor.H = 1.5f * (Mathf.Abs(end.PosMap.X - neighbor.PosMap.X) + Mathf.Abs(end.PosMap.Y - neighbor.PosMap.Y));
                     neighbor.F = neighbor.G + neighbor.H;
                     neighbor.Previous = curSpend; // 链接
                 }
@@ -223,11 +207,11 @@
 
             if (this.isStopThread)
             {
-                this.StopSeek();
                 return;
             }
 
             // 合并path
+            SeekResult seekResult = new ();
             if (path.Count > 0)
             {
                 int lastIndex = 0;
@@ -239,7 +223,7 @@
                     // 不加入起点第一个位置
                     if (lastIndex != 0)
                     {
-                        this.path.Add(start);
+                        seekResult.Path.Add(start);
                     }
 
                     // 在一定path范围内, 倒叙遍历最后一个直达的位置
@@ -248,7 +232,6 @@
                     {
                         if (this.isStopThread)
                         {
-                            this.StopSeek();
                             return;
                         }
 
@@ -287,21 +270,20 @@
 
                 if (this.isStopThread)
                 {
-                    this.StopSeek();
                     return;
                 }
 
-                this.path.Add(path[^1]);
+                seekResult.Path.Add(path[^1]);
             }
             else
             {
                 UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {
-                    LogManager.Instance.Log(this.Character.name + ":未找到路径 " + start.PosMap.y + ":" + start.PosMap.x + "-->" + end.PosMap.y + ":" + end.PosMap.x, LogManager.LogLevelEnum.Error);
+                    LogManager.Instance.Log(this.Character.name + ":未找到路径 " + start.PosMap + "-->" + end.PosMap, LogManager.LogLevelEnum.Error);
                 }).Wait();
             }
 
-            this.StopSeek();
+            this.SetResult(seekResult);
         }
     }
 }

@@ -6,7 +6,7 @@
     /// <summary>
     /// Worker逃跑状态
     /// </summary>
-    public class WorkerEscapeState : WorkerState
+    public class WorkerEscapeState : AWorkerState
     {
         private const float RecordTime = 5.0f;
         private float recordTime = 0.0f;

@@ -23,7 +23,8 @@
         /// <param name="radius">扇形半径.</param>
         /// <param name="color">扇形颜色.</param>
         /// <param name="parent">绑定的父元素.</param>
-        public static void DrawSectorSolid(float angle, float radius, Color32 color, Transform parent)
+        /// <returns>扇形对象</returns>
+        public static GameObject DrawSectorSolid(float angle, float radius, Color32 color, Transform parent)
         {
             int pointAmount = 100; // 将angle平均分为
             List<Vector3> vertices = new ();
@@ -69,6 +70,7 @@
             // 对于GUI Shader,设置层级,避免被遮挡
             mr.sortingLayerName = "Enemy";
             mr.sortingOrder = 0;
+            return g;
         }
 
         /// <summary>

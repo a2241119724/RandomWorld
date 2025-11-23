@@ -99,6 +99,11 @@
         {
             return new Vector3IntLAB(vector3Int.x, vector3Int.y, vector3Int.z);
         }
+
+        public override string ToString()
+        {
+            return $"({this.X},{this.Y},{this.Z})";
+        }
     }
 
     /// <summary>
@@ -118,6 +123,29 @@
         public sbyte Y;
 
         public Vector2SByteLAB(sbyte x, sbyte y)
+        {
+            this.X = x;
+            this.Y = y;
+        }
+    }
+
+    /// <summary>
+    /// Short的Vector2
+    /// </summary>
+    [Serializable]
+    public class Vector2ShortLAB
+    {
+        /// <summary>
+        /// X 坐标
+        /// </summary>
+        public short X;
+
+        /// <summary>
+        /// Y 坐标
+        /// </summary>
+        public short Y;
+
+        public Vector2ShortLAB(short x, short y)
         {
             this.X = x;
             this.Y = y;

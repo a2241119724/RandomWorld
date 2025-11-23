@@ -60,7 +60,7 @@
         /// <summary>
         /// 游戏速率
         /// </summary>
-        public float TimeScale { get; set; } = 1;
+        public float TimeScale { get; set; } = 3;
 
         /// <inheritdoc/>
         public override void OnEnter()
