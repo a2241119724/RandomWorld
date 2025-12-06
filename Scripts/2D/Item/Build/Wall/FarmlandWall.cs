@@ -10,7 +10,7 @@
     public class FarmlandWall : AWall
     {
         /// <inheritdoc/>
-        public override void AddBuildTask(Vector3Int centerMap)
+        public override void AddBuildTask(Vector3Int centerMap, Extra extra)
         {
             BuildMap.Instance.AddBuild(centerMap, this.TileName);
         }

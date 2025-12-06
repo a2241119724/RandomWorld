@@ -60,6 +60,24 @@
             this.stageInit = new List<UnityAction<AWorker>>();
         }
 
+        public enum RectType
+        {
+            /// <summary>
+            /// 建造的Rect以鼠标为中心(房间)
+            /// </summary>
+            Center,
+
+            /// <summary>
+            /// 建造的Rect以鼠标为左下, Tile大于1格的(床)
+            /// </summary>
+            BottomLeft,
+
+            /// <summary>
+            /// 建造的Rect以鼠标为左上, 可自定义大小的建造(房间)
+            /// </summary>
+            TopLeft,
+        }
+
         /// <summary>
         /// 任务优先级，越靠前优先级越高
         /// </summary>
@@ -112,9 +130,9 @@
         public long TaskId { get; set; }
 
         /// <summary>
-        /// 目标位置
+        /// 目标位置, 仅用于阶段性目标
         /// </summary>
-        public Vector3IntLAB TargetMap { get; set; }
+        public Vector3IntLAB TargetMap { get; protected set; }
 
         /// <summary>
         /// 任务类型

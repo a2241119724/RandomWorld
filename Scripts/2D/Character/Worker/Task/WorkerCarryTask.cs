@@ -66,7 +66,10 @@
             // 如果是食物,添加饥饿任务
             if (itemType == AItem.ItemTypeEnum.Food)
             {
-                WorkerTaskManager.Instance.AddTask(new WorkerHungryTask.HungryTaskBuilder().SetTarget(Vector3IntLAB.ToVector3Int(this.TargetMap)).Build(), 0);
+                WorkerTaskManager.Instance.AddTask(
+                    new WorkerHungryTask.HungryTaskBuilder()
+                    .SetTarget(Vector3IntLAB.ToVector3Int(this.TargetMap)).Build(), this.TargetMap,
+                    0);
             }
         }
 

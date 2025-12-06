@@ -100,6 +100,16 @@
             return new Vector3IntLAB(vector3Int.x, vector3Int.y, vector3Int.z);
         }
 
+        /// <summary>
+        /// Vector3Int to Vector3IntLAB
+        /// </summary>
+        /// <param name="vector3IntLAB">Vector3Int</param>
+        /// <returns>Vector3IntLAB</returns>
+        public static Vector2ShortLAB ToVector2ShortLAB(Vector3IntLAB vector3IntLAB)
+        {
+            return new Vector2ShortLAB((short)vector3IntLAB.X, (short)vector3IntLAB.Y);
+        }
+
         public override string ToString()
         {
             return $"({this.X},{this.Y},{this.Z})";
@@ -149,6 +159,57 @@
         {
             this.X = x;
             this.Y = y;
+        }
+
+        public double this[int index]
+        {
+            get
+            {
+                if (index == 0)
+                {
+                    return this.X;
+                }
+                else
+                {
+                    return this.Y;
+                }
+            }
+        }
+
+        public static bool operator ==(Vector2ShortLAB left, Vector2ShortLAB right)
+        {
+            if (left is null)
+            {
+                return right is null;
+            }
+
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Vector2ShortLAB left, Vector2ShortLAB right)
+        {
+            return !(left == right);
+        }
+
+        public double DistanceTo(Vector2ShortLAB other)
+        {
+            return Math.Pow(this.X - other.X, 2) + Math.Pow(this.Y - other.Y, 2);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is null || !this.GetType().Equals(obj.GetType()))
+            {
+                return false;
+            }
+
+            Vector2ShortLAB o = (Vector2ShortLAB)obj;
+            return o.X == this.X && o.Y == this.Y;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(this.X, this.Y);
         }
     }
 }

@@ -53,7 +53,8 @@
                 {
                     WorkerTaskManager.Instance.AddTask(
                         new WorkerWearTask.WearTaskBuilder()
-                        .SetWorker(workers[index]).SetTarget(posMap).SetEquipmentId(resourceInfo.Id).Build(), 1);
+                        .SetWorker(workers[index]).SetTarget(posMap).SetEquipmentId(resourceInfo.Id).Build(), Vector3IntLAB.ToVector3IntLAB(posMap),
+                        1);
                     this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     Dictionary<int, ResourceInfo> dict = new ();
                     dict.Add(resourceInfo.Id, resourceInfo);

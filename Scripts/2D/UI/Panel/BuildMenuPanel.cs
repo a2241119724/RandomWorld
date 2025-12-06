@@ -56,7 +56,7 @@
                 this.Controller.Close();
             }
 
-            BuildingUI.Instance.enabled = true;
+            BuildingUI.Instance.gameObject.SetActive(true);
         }
     }
 }

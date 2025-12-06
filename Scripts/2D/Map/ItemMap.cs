@@ -107,8 +107,9 @@
             DropManager.Instance.AddDrop(itemType, posMap, resourceInfo);
 
             // 添加搬运任务
-            WorkerTaskManager.Instance.AddTask(new WorkerCarryTask.CarryTaskBuilder()
-                .SetResourceInfo(resourceInfo).SetStartTarget(posMap).Build());
+            WorkerTaskManager.Instance.AddTask(
+                new WorkerCarryTask.CarryTaskBuilder()
+                .SetResourceInfo(resourceInfo).SetStartTarget(posMap).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
         }
 
         /// <inheritdoc/>

@@ -11,13 +11,13 @@
     {
         public ABed()
         {
-            this.IsBottomLeft = true;
+            this.RectType = AWorkerTask.RectType.BottomLeft;
         }
 
         /// <inheritdoc/>
-        public override void AddBuildTask(Vector3Int centerMap)
+        public override void AddBuildTask(Vector3Int centerMap, Extra extra)
         {
-            base.AddBuildTask(centerMap);
+            base.AddBuildTask(centerMap, extra);
 
             // 添加
             FurnitureManager.Instance.AddBed(centerMap);

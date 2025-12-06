@@ -28,16 +28,21 @@
         }
 
         /// <inheritdoc/>
-        public override void AddBuildTask(Vector3Int centerMap)
+        public override void AddBuildTask(Vector3Int centerMap, Extra extra)
         {
-            int[] boundary = this.GetBoundary(centerMap);
-            for (int i = 1; i < this.Width - 1; i++)
+            int[] boundary = this.GetBoundary(centerMap, extra);
+            if (!this.CheckBoundary(boundary))
+            {
+                return;
+            }
+
+            for (int i = 1; i < boundary[3] - boundary[2]; i++)
             {
                 BuildMap.Instance.AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.DOWN].TileName)
                     .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.TOP].TileName);
             }
 
-            for (int i = 1; i < this.Height - 1; i++)
+            for (int i = 1; i < boundary[1] - boundary[0]; i++)
             {
                 BuildMap.Instance.AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT].TileName)
                     .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT].TileName);
@@ -50,7 +55,7 @@
                 .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_TOP].TileName);
 
             // 添加仓库Cell
-            InventoryManager.Instance.AddCells(VectorTool.Add(centerMap, -this.Height / 2, -this.Width / 2), this.Width, this.Height);
+            InventoryManager.Instance.AddCells(VectorTool.Add(centerMap, -(boundary[1] - boundary[0]) / 2, -(boundary[3] - boundary[2]) / 2), boundary[3] - boundary[2], boundary[1] - boundary[0]);
         }
     }
 }
