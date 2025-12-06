@@ -19,9 +19,14 @@
         }
 
         /// <inheritdoc/>
-        public override void AddBuildTask(Vector3Int centerMap)
+        public override void AddBuildTask(Vector3Int centerMap, Extra extra)
         {
-            int[] boundary = this.GetBoundary(centerMap);
+            int[] boundary = this.GetBoundary(centerMap, extra);
+            if (!this.CheckBoundary(boundary))
+            {
+                return;
+            }
+
             for (int i = boundary[0]; i < boundary[1] + 1; i++)
             {
                 for (int j = boundary[2]; j < boundary[3] + 1; j++)

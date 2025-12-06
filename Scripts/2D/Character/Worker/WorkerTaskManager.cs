@@ -8,10 +8,11 @@
     /// </summary>
     public class WorkerTaskManager : MonoBehaviour
     {
+        private static long curtaskId = 0;
         private readonly List<Dictionary<AWorkerTask, bool>> tasks; // 所有任务(list中越靠前优先级越大), TODO分离正在做的任务
         private readonly List<WorkerHungryTask> hungryTasks; // 饥饿任务与pos挂钩，TODO与worker数量挂钩
         private readonly List<WorkerWearTask> wearTasks;
-        private long curtaskId = 0;
+        private KDTree taskTree = new KDTree();
 
         public WorkerTaskManager()
         {
@@ -115,22 +116,23 @@
         /// 添加任务
         /// </summary>
         /// <param name="task">任务</param>
+        /// <param name="taskPosMap">任务位置</param>
         /// <param name="prior">优先级</param>
-        public void AddTask(AWorkerTask task, int prior = 2)
+        public void AddTask(AWorkerTask task, Vector3IntLAB taskPosMap, int prior = 2)
         {
             if (task == null)
             {
                 return;
             }
 
-            task.TaskId = ++this.curtaskId;
+            task.TaskId = ++WorkerTaskManager.curtaskId;
 
             // 如果是饥饿任务,一个位置仅对应一个任务
             if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Eat)
             {
                 foreach (WorkerHungryTask hungryTask in this.hungryTasks)
                 {
-                    if (hungryTask.TargetMap.X == task.TargetMap.X && hungryTask.TargetMap.Y == task.TargetMap.Y)
+                    if (hungryTask.TargetMap.Equals(task.TargetMap))
                     {
                         return;
                     }
@@ -158,6 +160,7 @@
             }
 
             this.tasks[prior].Add(task, false);
+            this.taskTree.Insert(Vector3IntLAB.ToVector2ShortLAB(taskPosMap));
             DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
         }
 

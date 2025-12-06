@@ -58,8 +58,9 @@
             if (buildItemData.IsNeedBuild)
             {
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
-                WorkerTaskManager.Instance.AddTask(new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(targetMap)
-                    .SetNeedResource(new Dictionary<int, ResourceInfo>(this.resourceInfos)).Build());
+                WorkerTaskManager.Instance.AddTask(
+                    new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(targetMap)
+                    .SetNeedResource(new Dictionary<int, ResourceInfo>(this.resourceInfos)).Build(), Vector3IntLAB.ToVector3IntLAB(targetMap));
 
                 // 设置可通过并且颜色变淡
                 this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
@@ -150,8 +151,9 @@
             foreach (Vector3IntLAB targetMap in this.BuildMapDataLAB.PosMap.Keys)
             {
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
-                WorkerTaskManager.Instance.AddTask(new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(Vector3IntLAB.ToVector3Int(targetMap))
-                    .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build());
+                WorkerTaskManager.Instance.AddTask(
+                    new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(Vector3IntLAB.ToVector3Int(targetMap))
+                    .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build(), targetMap);
             }
 
             this.BuildMapDataLAB.PosMap.Clear();

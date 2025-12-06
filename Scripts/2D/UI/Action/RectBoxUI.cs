@@ -53,8 +53,9 @@
                     return;
                 }
 
-                WorkerTaskManager.Instance.AddTask(new WorkerGatherTask.GatherTaskBuilder()
-                    .SetTarget(posMap).SetGatherName(tileBase.name).Build());
+                WorkerTaskManager.Instance.AddTask(
+                    new WorkerGatherTask.GatherTaskBuilder()
+                    .SetTarget(posMap).SetGatherName(tileBase.name).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
             });
         }
 

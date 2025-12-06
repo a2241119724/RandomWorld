@@ -49,12 +49,6 @@
                 BackpackMenuPanel.Instance.Panel.SetActive(true);
                 BackpackMenuPanel.Instance.Panel.SetActive(false);
             }
-
-            // 添加10个种植任务
-            for (int i = 0; i < 10; i++)
-            {
-                WorkerTaskManager.Instance.AddTask(new WorkerPlantTask.PlantTaskBuilder().Build());
-            }
         }
 
         public void Update()
@@ -66,7 +60,7 @@
             {
                 if (PanelController.Instance.Panels.Count == 0)
                 {
-                    BuildingUI.Instance.enabled = false;
+                    BuildingUI.Instance.gameObject.SetActive(false);
                     PanelController.Instance.Show(BuildMenuPanel.Instance);
                     IsAvailableMap.Instance.ClearShow();
                 }

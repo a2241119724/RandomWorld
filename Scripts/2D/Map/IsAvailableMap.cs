@@ -12,7 +12,7 @@
         /// <summary>
         /// 已经显示绿色和红色Tile
         /// </summary>
-        private List<Vector3Int> selectPosS;
+        private List<Vector3Int> selectPoses;
 
         /// <summary>
         /// 单例
@@ -24,7 +24,7 @@
         {
             base.Awake();
             Instance = this;
-            this.selectPosS = new List<Vector3Int>();
+            this.selectPoses = new List<Vector3Int>();
         }
 
         /// <summary>
@@ -33,20 +33,27 @@
         /// <param name="posMap">位置</param>
         /// <param name="width">宽度</param>
         /// <param name="height">高度</param>
-        /// <param name="isBottomLeft">是否左下</param>
+        /// <param name="rectType">rect的类型</param>
         /// <returns>是否</returns>
-        public bool ShowRect(Vector3Int posMap, int width = 10, int height = 7, bool isBottomLeft = false)
+        public bool ShowRect(Vector3Int posMap, int width = 10, int height = 7, AWorkerTask.RectType rectType = AWorkerTask.RectType.Center)
         {
             bool isBuilding = true;
             this.ClearShow();
+
+            // BottomLeft
             int h_start = 0, h_end = height;
             int w_start = 0, w_end = width;
-            if (!isBottomLeft)
+            if (rectType == AWorkerTask.RectType.Center)
             {
                 h_start = -height / 2;
                 h_end = height - (height / 2);
                 w_start = -width / 2;
                 w_end = width - (width / 2);
+            }
+            else if (rectType == AWorkerTask.RectType.TopLeft)
+            {
+                h_start = 1 - height;
+                h_end = 1;
             }
 
             for (int i = h_start; i < h_end; i++)
@@ -54,7 +61,7 @@
                 for (int j = w_start; j < w_end; j++)
                 {
                     Vector3Int posMap1 = new (posMap.x + i, posMap.y + j, 0);
-                    this.selectPosS.Add(posMap1);
+                    this.selectPoses.Add(posMap1);
                     this.tilemap.SetTile(posMap1, (TileBase)ResourceManager.Instance.GetAsset("Snow"));
                     this.tilemap.RemoveTileFlags(posMap1, TileFlags.LockColor);
                     if (this.IsAvailable(posMap1))
@@ -77,12 +84,12 @@
         /// </summary>
         public void ClearShow()
         {
-            foreach (Vector3Int selectPos in this.selectPosS)
+            foreach (Vector3Int selectPos in this.selectPoses)
             {
                 this.tilemap.SetTile(selectPos, null);
             }
 
-            this.selectPosS.Clear();
+            this.selectPoses.Clear();
         }
 
         /// <summary>
