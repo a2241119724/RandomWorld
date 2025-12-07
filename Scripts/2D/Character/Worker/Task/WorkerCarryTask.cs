@@ -20,25 +20,28 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                AWorkerTask.maxProgress = 1.0f;
+                ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
+                this.maxProgress = itemData.RelatedTaskTime.TaskBaseTime;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
-
-                // 进入工作状态
                 worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                AWorkerTask.maxProgress = 1.0f;
+                ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
+                this.maxProgress = itemData.RelatedTaskTime.CarryTaskPutDownTime;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
+
+                // 取货
+                ItemMap.Instance.PickUpFromDrop(Vector3IntLAB.ToVector3Int(this.TargetMap), this.resourceInfo);
+                worker.AddResource(this.resourceInfo);
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.GetPosByPrePlace(worker));
                 if (this.TargetMap == default)
                 {
                     LogManager.Instance.Log("仓库没有位置了", LogManager.LogLevelEnum.Error);
                 }
 
-                // 进入工作状态
                 worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
         }
@@ -80,13 +83,11 @@
         }
 
         /// <inheritdoc/>
-        protected override bool IsFinishAllStage(AWorker worker)
+        protected override bool StageChangeRule(AWorker worker)
         {
             switch (this.stage)
             {
                 case 0:
-                    ItemMap.Instance.PickUpFromDrop(Vector3IntLAB.ToVector3Int(this.TargetMap), this.resourceInfo);
-                    worker.AddResource(this.resourceInfo);
                     this.ChangeStage(worker, 1);
                     return false;
                 default:

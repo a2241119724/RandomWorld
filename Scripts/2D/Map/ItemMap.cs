@@ -37,7 +37,10 @@
         {
             this.ItemMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
+            if (NetworkConnect.Instance.IsOnline)
+            {
+                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
+            }
         }
 
         /// <summary>
@@ -77,7 +80,10 @@
 
             this.ItemMapDataLAB.Add(posMap, tileBase.name);
             this.tilemap.SetTile(posMap, tileBase);
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
+            if (NetworkConnect.Instance.IsOnline)
+            {
+                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
+            }
         }
 
         /// <summary>

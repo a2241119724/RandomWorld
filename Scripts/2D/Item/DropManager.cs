@@ -153,6 +153,11 @@
         /// </summary>
         public int Count;
 
+        public ResourceInfo(int id)
+        {
+            this.Id = id;
+        }
+
         public ResourceInfo(int id, int count)
         {
             this.Id = id;

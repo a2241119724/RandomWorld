@@ -11,14 +11,18 @@
     [Serializable]
     public class WorkerGatherTask : AWorkerTask
     {
-        private string resourceName = "Tree";
+        /// <summary>
+        /// Worker携带的资源
+        /// </summary>
+        private ResourceInfo resourceInfo;
 
         public WorkerGatherTask()
             : base(WorkerTaskTypeEnum.Gather)
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                AWorkerTask.maxProgress = 50.0f;
+                ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
+                this.maxProgress = 50.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[1]);
                 this.AvailableNeighborPos.Add(Neighbors[3]);
@@ -40,7 +44,7 @@
         {
             base.Finish(worker);
             ResourceMap.Instance.CutTree(Vector3IntLAB.ToVector3Int(this.TargetMap));
-            List<DropItem> dropItems = DropDataManager.Instance.GetDropItemsByName(this.resourceName);
+            List<DropItem> dropItems = DropDataManager.Instance.GetDropItemsById(this.resourceInfo.Id);
 
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)
@@ -86,9 +90,9 @@
                 return this;
             }
 
-            public GatherTaskBuilder SetGatherName(string name)
+            public GatherTaskBuilder SetResourceInfo(ResourceInfo resourceInfo)
             {
-                this.task.resourceName = name;
+                this.task.resourceInfo = DataTool.DeepCopyByBinary(resourceInfo);
                 return this;
             }
 

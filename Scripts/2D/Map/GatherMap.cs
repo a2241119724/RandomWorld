@@ -37,7 +37,10 @@
         {
             this.tilemap.SetTile(posMap, (TileBase)ResourceManager.Instance.GetAsset("Gather"));
             this.GatherMapDataLAB.Add(posMap, "Gather");
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
+            if (NetworkConnect.Instance.IsOnline)
+            {
+                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
+            }
         }
 
         /// <summary>
@@ -48,7 +51,10 @@
         {
             this.tilemap.SetTile(posMap, null);
             this.GatherMapDataLAB.Remove(posMap);
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
+            if (NetworkConnect.Instance.IsOnline)
+            {
+                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
+            }
         }
 
         /// <inheritdoc/>

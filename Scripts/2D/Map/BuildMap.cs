@@ -70,11 +70,15 @@
 
             BuildTileData buildTileData = new BuildTileData(tileName, !buildItemData.IsNeedBuild);
             this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
-            this.PhotonView.RPC(
-                "SyncDataResp",
-                RpcTarget.Others,
-                DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
-                DataTool.ToByteArray(buildTileData));
+            if (NetworkConnect.Instance.IsOnline)
+            {
+                this.PhotonView.RPC(
+                    "SyncDataResp",
+                    RpcTarget.Others,
+                    DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
+                    DataTool.ToByteArray(buildTileData));
+            }
+
             return this;
         }
 
@@ -106,11 +110,14 @@
                 this.tilemap.SetColliderType(targetMap, Tile.ColliderType.Sprite);
             }
 
-            this.PhotonView.RPC(
+            if (NetworkConnect.Instance.IsOnline)
+            {
+                this.PhotonView.RPC(
                     "SyncDataResp",
                     RpcTarget.Others,
                     DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
                     default);
+            }
         }
 
         /// <summary>
@@ -131,12 +138,15 @@
         {
             this.tilemap.SetTile(targetMap, null);
             this.BuildMapDataLAB.PosMap.Remove(Vector3IntLAB.ToVector3IntLAB(targetMap));
-            this.PhotonView.RPC(
+            if (NetworkConnect.Instance.IsOnline)
+            {
+                this.PhotonView.RPC(
                 "SyncDataResp",
                 RpcTarget.Others,
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
                 default,
                 true);
+            }
         }
 
         /// <summary>
@@ -173,7 +183,6 @@
 
             if (!this.BuildMapDataLAB.PosMap.ContainsKey(Vector3IntLAB.ToVector3IntLAB(posMap)))
             {
-                LogManager.Instance.Log("该位置建筑没有建造数据:" + posMap);
                 return true;
             }
 
@@ -284,13 +293,17 @@
                 this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
             }
 
-            this.PhotonView.RPC(
+            if (NetworkConnect.Instance.IsOnline)
+            {
+                this.PhotonView.RPC(
                 "SyncDataResp",
                 RpcTarget.Others,
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
                 tile.name,
                 isPass,
                 false);
+            }
+
             return this;
         }
 

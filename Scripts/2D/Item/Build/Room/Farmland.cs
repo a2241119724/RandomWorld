@@ -38,7 +38,7 @@
             BuildMap.Instance.AddTask();
 
             // 添加仓库Cell
-            FarmlandManager.Instance.AddCells(VectorTool.Add(centerMap, -this.Height / 2, -this.Width / 2), this.Width, this.Height);
+            FarmlandManager.Instance.AddCells(new Vector3Int(boundary[0], boundary[2]), boundary[3] - boundary[2], boundary[1] - boundary[0]);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Threading;
@@ -238,7 +239,7 @@
                 return false;
             }
 
-            return result.Path.Count > 0;
+            return result != null;
         }
 
         /// <summary>

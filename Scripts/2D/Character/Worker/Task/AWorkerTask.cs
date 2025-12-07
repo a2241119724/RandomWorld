@@ -33,9 +33,9 @@
         };
 
         /// <summary>
-        /// 任务需要总的时间
+        /// 任务需要的时间
         /// </summary>
-        protected static float maxProgress = 2.0f;
+        protected float maxProgress = 2.0f;
 
         /// <summary>
         /// 任务阶段
@@ -157,11 +157,11 @@
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             workerData.CurTired -= Time.deltaTime * 0.1f;
             this.curProgress += Time.deltaTime;
-            if (this.curProgress > AWorkerTask.maxProgress)
+            if (this.curProgress > this.maxProgress)
             {
                 this.curProgress = 0;
                 worker.SetProgress(this.curProgress, false);
-                if (this.IsFinishAllStage(worker))
+                if (this.StageChangeRule(worker))
                 {
                     this.Finish(worker);
                     return true;
@@ -170,7 +170,7 @@
                 return false;
             }
 
-            worker.SetProgress((float)this.curProgress / AWorkerTask.maxProgress, true);
+            worker.SetProgress((float)this.curProgress / this.maxProgress, true);
             return false;
         }
 
@@ -219,7 +219,10 @@
         /// <inheritdoc/>
         public virtual void Finish(AWorker worker)
         {
+            // TODO 仅执行一次
             WorkerTaskManager.Instance.CompleteTask(this);
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+            workerData.Task = null;
         }
 
         /// <summary>
@@ -237,7 +240,7 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否</returns>
-        protected virtual bool IsFinishAllStage(AWorker worker)
+        protected virtual bool StageChangeRule(AWorker worker)
         {
             return true;
         }

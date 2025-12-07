@@ -55,7 +55,7 @@
                 .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_TOP].TileName);
 
             // 添加仓库Cell
-            InventoryManager.Instance.AddCells(VectorTool.Add(centerMap, -(boundary[1] - boundary[0]) / 2, -(boundary[3] - boundary[2]) / 2), boundary[3] - boundary[2], boundary[1] - boundary[0]);
+            InventoryManager.Instance.AddCells(new Vector3Int(boundary[0], boundary[2]), boundary[3] - boundary[2], boundary[1] - boundary[0]);
         }
     }
 }
