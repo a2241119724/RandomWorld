@@ -67,6 +67,24 @@
                 }
             }
 
+            itemTypes = AItem.Ranges["Resource"];
+            for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
+            {
+                string itemType = ((AItem.ItemTypeEnum)type).ToString();
+                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(itemType + "ItemData");
+                if (itemDataSO == null)
+                {
+                    continue;
+                }
+
+                foreach (ItemData itemData in itemDataSO.ItemDatas)
+                {
+                    int id = Convert.ToInt32(itemData.Id);
+                    this.allItemInfo.Add(id, itemData);
+                    this.nameToId.Add(itemData.EnName, id);
+                }
+            }
+
             // 最后初始化背包道具实例
             ItemInstanceFactory.Instance.InitItemInstances(equipmentData);
         }

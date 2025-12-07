@@ -40,6 +40,30 @@
         public AItem.ItemTypeEnum Type;
 
         /// <summary>
+        /// 任务时间
+        /// </summary>
+        public TaskTime RelatedTaskTime;
+
+        public ItemData()
+        {
+            this.RelatedTaskTime = new TaskTime();
+        }
+
+        [Serializable]
+        public class TaskTime
+        {
+            /// <summary>
+            /// 搬运任务的拾取时间/采集时间
+            /// </summary>
+            public float TaskBaseTime;
+
+            /// <summary>
+            /// 搬运任务的放置时间
+            /// </summary>
+            public float CarryTaskPutDownTime;
+        }
+
+        /// <summary>
         /// 建造者
         /// </summary>
         public class ItemDataBuilder

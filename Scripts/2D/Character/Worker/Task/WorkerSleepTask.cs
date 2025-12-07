@@ -16,7 +16,7 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                AWorkerTask.maxProgress = 10.0f;
+                this.maxProgress = 10.0f;
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();

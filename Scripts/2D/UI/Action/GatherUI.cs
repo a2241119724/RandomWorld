@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using UnityEngine;
+    using UnityEngine.Tilemaps;
     using UnityEngine.UI;
 
     /// <summary>
@@ -56,9 +57,11 @@
                 return;
             }
 
+            TileBase tileBase = ResourceMap.Instance.GetTile(this.posMap);
+            ItemData itemData = ItemDataManager.Instance.GetByName(tileBase.name);
             WorkerTaskManager.Instance.AddTask(
                 new WorkerGatherTask.GatherTaskBuilder()
-                .SetTarget(this.posMap).SetGatherName("Tree").Build(), Vector3IntLAB.ToVector3IntLAB(this.posMap));
+                .SetTarget(this.posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), Vector3IntLAB.ToVector3IntLAB(this.posMap));
         }
 
         /// <summary>

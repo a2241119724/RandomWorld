@@ -9,11 +9,11 @@
     public class DropDataManager : Singleton<DropDataManager>
     {
         private static readonly List<DropItem> Empty = new ();
-        private readonly Dictionary<string, List<DropItem>> nameToDrop; // 资源，与对应的掉落物
+        private readonly Dictionary<int, List<DropItem>> nameToDrop; // 资源, 与对应的掉落物, -1为默认掉落物
 
         public DropDataManager()
         {
-            this.nameToDrop = new Dictionary<string, List<DropItem>>();
+            this.nameToDrop = new Dictionary<int, List<DropItem>>();
             DropItemDataSO dropItemDataSO = ResourceManager.Instance.GetDropSO("DropItemDataSO");
 
             dropItemDataSO.ResourceDropItems.ForEach(item =>
@@ -22,29 +22,37 @@
                 {
                     dropItem.Init();
                 });
-                this.nameToDrop.Add(item.Name, item.DropItems);
+
+                if (item.Name.Equals("Default"))
+                {
+                    this.nameToDrop.Add(-1, item.DropItems);
+                    return;
+                }
+
+                // 根据树的名称获取item信息
+                this.nameToDrop.Add(ItemDataManager.Instance.GetByName(item.Name).Id, item.DropItems);
             });
         }
 
         /// <summary>
-        /// 根据名称获取掉落物
+        /// 根据ID获取掉落物
         /// </summary>
-        /// <param name="name">名称</param>
+        /// <param name="id">ID</param>
         /// <returns>掉落物</returns>
-        public List<DropItem> GetDropItemsByName(string name)
+        public List<DropItem> GetDropItemsById(int id)
         {
-            if (!this.nameToDrop.ContainsKey(name))
+            if (!this.nameToDrop.ContainsKey(id))
             {
                 // 默认使用默认掉落物
-                if (this.nameToDrop.ContainsKey("Default"))
+                if (this.nameToDrop.ContainsKey(-1))
                 {
-                    return this.nameToDrop["Default"];
+                    return this.nameToDrop[-1];
                 }
 
                 return Empty;
             }
 
-            return this.nameToDrop[name];
+            return this.nameToDrop[id];
         }
     }
 

@@ -17,7 +17,7 @@
         /// <summary>
         /// 是否是联网的.
         /// </summary>
-        public bool IsOnline { get; private set; } = true;
+        public bool IsOnline { get; private set; } = false;
 
         public void Awake()
         {

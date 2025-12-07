@@ -53,8 +53,6 @@
             bool isComplete = workerData.Task.Execute(this.Character);
             if (isComplete)
             {
-                // 完成任务
-                workerData.Task = null;
                 this.waitOneFrame = true;
             }
         }

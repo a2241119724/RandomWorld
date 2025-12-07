@@ -24,7 +24,7 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                AWorkerTask.maxProgress = 1.0f;
+                this.maxProgress = 1.0f;
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
@@ -40,7 +40,7 @@
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                AWorkerTask.maxProgress = 2.0f;
+                this.maxProgress = 2.0f;
 
                 // 建造
                 this.AvailableNeighborPos.Clear();
@@ -114,7 +114,7 @@
         }
 
         /// <inheritdoc/>
-        protected override bool IsFinishAllStage(AWorker worker)
+        protected override bool StageChangeRule(AWorker worker)
         {
             // 只worker携带的资源不够时,取建筑材料
             switch (this.stage)

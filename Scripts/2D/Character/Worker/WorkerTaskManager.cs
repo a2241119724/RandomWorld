@@ -170,7 +170,6 @@
         /// <param name="task">任务</param>
         public void CompleteTask(AWorkerTask task)
         {
-            // 不能删除饥饿任务，需要在deleteHungryTask中删除
             if (task.TaskType != AWorkerTask.WorkerTaskTypeEnum.Eat)
             {
                 for (int i = 0; i < this.tasks.Count; i++)
@@ -184,6 +183,7 @@
                 }
             }
 
+            // 不能删除饥饿任务，需要在deleteHungryTask中删除
             // 是饥饿任务，则将其改为可再次接受状态，即false
             else
             {

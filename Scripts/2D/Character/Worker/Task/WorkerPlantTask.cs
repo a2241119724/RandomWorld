@@ -1,7 +1,7 @@
-﻿using System;
-
-namespace LAB2D
+﻿namespace LAB2D
 {
+    using System;
+
     /// <summary>
     /// 种植任务
     /// </summary>
@@ -15,7 +15,7 @@ namespace LAB2D
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                AWorkerTask.maxProgress = 1.0f;
+                this.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.IsContainSeedAndPreTake(worker, true));
@@ -30,7 +30,7 @@ namespace LAB2D
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                AWorkerTask.maxProgress = 1.0f;
+                this.maxProgress = 1.0f;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(FarmlandManager.Instance.IsEnoughAndPrePlant(worker, this.resourceInfo, true));
@@ -68,7 +68,7 @@ namespace LAB2D
         }
 
         /// <inheritdoc/>
-        protected override bool IsFinishAllStage(AWorker worker)
+        protected override bool StageChangeRule(AWorker worker)
         {
             switch (this.stage)
             {

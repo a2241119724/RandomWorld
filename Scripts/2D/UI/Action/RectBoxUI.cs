@@ -53,9 +53,10 @@
                     return;
                 }
 
+                ItemData itemData = ItemDataManager.Instance.GetByName(tileBase.name);
                 WorkerTaskManager.Instance.AddTask(
                     new WorkerGatherTask.GatherTaskBuilder()
-                    .SetTarget(posMap).SetGatherName(tileBase.name).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
+                    .SetTarget(posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
             });
         }
 

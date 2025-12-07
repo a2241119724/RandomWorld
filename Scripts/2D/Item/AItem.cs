@@ -18,6 +18,7 @@
         {
             { "Backpack", new ItemTypeEnum[] { ItemTypeEnum.Weapon, ItemTypeEnum.BackpackOther } },
             { "Build", new ItemTypeEnum[] { ItemTypeEnum.Room, ItemTypeEnum.BuildOther } },
+            { "Resource", new ItemTypeEnum[] { ItemTypeEnum.Tree, ItemTypeEnum.Null } },
         };
 
         /// <summary>
@@ -41,7 +42,7 @@
         [Serializable]
         public enum ItemTypeEnum
         {
-            // 背包
+            // ========== 背包 ==========
 
             /// <summary>
             /// 武器
@@ -83,7 +84,7 @@
             /// </summary>
             BackpackOther,
 
-            // 建造
+            // ========= 建造 ==========
 
             /// <summary>
             /// 房间
@@ -105,7 +106,14 @@
             /// </summary>
             BuildOther,
 
-            // 其他
+            // ========== 资源 ==========
+
+            /// <summary>
+            /// 树
+            /// </summary>
+            Tree,
+
+            // ========== 其他 ==========
 
             /// <summary>
             /// 空(用于仓库)

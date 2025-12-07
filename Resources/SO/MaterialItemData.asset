@@ -14,9 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ItemType: 3
   ItemDatas:
-  - Id: 0
+  - Id: 300000
     CnName: "\u6728\u5934"
     EnName: CustomWood
     Info: "\u780D\u6811\u5F97\u5230\u7684\u6728\u5934\uFF0C\u53EF\u4EE5\u5EFA\u623F\u5B50"
     IsStackable: 1
-    Type: 0
+    Type: 3
+    RelatedTaskTime:
+      CarryTaskTakeTime: 1
+      CarryTaskPutDownTime: 1

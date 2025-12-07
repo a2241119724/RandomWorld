@@ -10,6 +10,8 @@
 - 追踪枪子弹
 - (material与Build) 优化Item**：<通过读取ItemDataSO实例化Common**>代替<通过父类获取子类创建新的道具>
 - 寻路敌人攻击
+- 任务树
+- Worker被攻击, 任务的更新
 
 ## 注
 

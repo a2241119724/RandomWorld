@@ -66,10 +66,11 @@
                         this.ResourceMapDataLAB.Add(posMap, tileBase.name);
                         if (tileBase.name.Contains("Tree"))
                         {
-                             WorkerTaskManager.Instance.AddTask(
-                                 new WorkerGatherTask.GatherTaskBuilder()
-                                 .SetTarget(posMap).SetGatherName("Tree").Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
-                             this.ResourceMapDataLAB.TreeCurCount++;
+                            ItemData itemData = ItemDataManager.Instance.GetByName(tileBase.name);
+                            WorkerTaskManager.Instance.AddTask(
+                                new WorkerGatherTask.GatherTaskBuilder()
+                                .SetTarget(posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
+                            this.ResourceMapDataLAB.TreeCurCount++;
                         }
                     }
                 }
@@ -99,7 +100,11 @@
                         continue;
                     }
 
-                    this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(pos)), tileBase.name, false);
+                    if (NetworkConnect.Instance.IsOnline)
+                    {
+                        this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(pos)), tileBase.name, false);
+                    }
+
                     this.ResourceMapDataLAB.TreeCurCount++;
                     this.tilemap.SetTile(pos, tileBase);
                     this.ResourceMapDataLAB.Add(pos, tileBase.name);
@@ -119,7 +124,11 @@
         /// <param name="posMap">位置</param>
         public void CutTree(Vector3Int posMap)
         {
-            this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, false, true);
+            if (NetworkConnect.Instance.IsOnline)
+            {
+                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, false, true);
+            }
+
             this.ResourceMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);
             this.ResourceMapDataLAB.TreeCurCount--;

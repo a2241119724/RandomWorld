@@ -165,9 +165,9 @@
             }
 
             this.TileMapDataLAB.MapTiles = tiles;
-            Lock.IsCompleteTileMap = true;
             this.CreateArroundTile();
             yield return this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
+            Lock.IsCompleteTileMap = true;
         }
 
         /// <summary>
@@ -252,7 +252,7 @@
             base.LoadData();
             AsyncProgressUI.Instance.SetTip("加载地图数据...");
             this.TileMapDataLAB = DataTool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
-            Lock.IsCompleteTileMap = true;
+            Lock.IsCompleteTileMap = true; // TODO
             this.CreateArroundTile();
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
 

@@ -27,6 +27,11 @@
             // 起点就是终点
             if (posMap == this.TargetMap)
             {
+                UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                {
+                    LogManager.Instance.Log(this.Character.name + ":起始==终点");
+                }).Wait();
+                this.SetResult(new SeekResult());
                 return;
             }
 
