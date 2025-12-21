@@ -14,6 +14,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ResourceDropItems:
   - Name: Default
+    DropItems: []
+  - Name: DesertCoconutTree
+    DropItems:
+    - Name: Apple
+      ResourceInfo:
+        Id: 500000
+        Count: 2
+    - Name: CustomWood
+      ResourceInfo:
+        Id: 300000
+        Count: 2
+  - Name: GrassTree
+    DropItems:
+    - Name: Apple
+      ResourceInfo:
+        Id: 500000
+        Count: 2
+    - Name: CustomWood
+      ResourceInfo:
+        Id: 300000
+        Count: 2
+  - Name: SnowTree
     DropItems:
     - Name: Apple
       ResourceInfo:

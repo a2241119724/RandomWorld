@@ -10,6 +10,11 @@
     public class ItemData
     {
         /// <summary>
+        /// 空物品
+        /// </summary>
+        public static ItemData Empty = new ();
+
+        /// <summary>
         /// 唯一标识符
         /// </summary>
         public int Id;
@@ -70,7 +75,6 @@
         {
             private readonly ItemData itemData;
 
-#pragma warning disable SA1600 // Elements should be documented
             public ItemDataBuilder()
             {
                 this.itemData = new ItemData();
@@ -116,7 +120,6 @@
             {
                 return this.itemData;
             }
-#pragma warning restore SA1600 // Elements should be documented
         }
     }
 }

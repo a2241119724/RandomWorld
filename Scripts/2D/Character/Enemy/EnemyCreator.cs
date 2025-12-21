@@ -24,7 +24,7 @@
             }
 
             // 随机实例化敌人
-            return base.DoCreate(worldPos, this.enemyNames[Random.Range(0, this.enemyNames.Length)], LayerConstant.ENEMY_LAAYER);
+            return base.DoCreate(worldPos, this.enemyNames[Random.Range(0, this.enemyNames.Length)], LayerConstant.ENEMY_LAYER);
         }
     }
 }

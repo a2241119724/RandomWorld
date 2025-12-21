@@ -11,6 +11,7 @@
         // private bool isOne = true;
         private readonly StringBuilder builder = new (128); // 减少GC
         private Vector3Int targetMap;
+        private long seekTimes; // 没有任务寻路的次数
 
         public WorkerSeekState(AWorker character)
             : base(character)
@@ -70,6 +71,16 @@
             else
             {
                 LogManager.Instance.Log(this.Character.name + " 没有任务!");
+                ++this.seekTimes;
+                if (this.seekTimes % WorkerExerciseTask.SeekThreshold == 0)
+                {
+                    WorkerTaskManager.Instance.AddTask(
+                        new WorkerExerciseTask.ExerciseTaskBuilder()
+                        .SetTarget(this.targetMap)
+                        .SetWorker(this.Character)
+                        .Build(), Vector3IntLAB.Zero,
+                        3);
+                }
             }
 
             LogManager.Instance.Log(this.Character.name + " 寻路->" + this.targetMap);

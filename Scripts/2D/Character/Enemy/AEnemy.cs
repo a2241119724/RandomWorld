@@ -36,7 +36,7 @@
         public override void Awake()
         {
             base.Awake();
-            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.PLAYER_LAAYER, LayerConstant.WORKER_LAAYER);
+            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.PLAYER_LAYER, LayerConstant.WORKER_LAYER);
             this.AttackTags = new List<string>
             {
                 "Player",

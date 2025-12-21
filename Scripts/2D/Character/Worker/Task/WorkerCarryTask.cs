@@ -95,7 +95,6 @@
             }
         }
 
-#pragma warning disable SA1600 // Elements should be documented
         /// <summary>
         /// 建造者
         /// </summary>
@@ -125,6 +124,5 @@
                 return this.task;
             }
         }
-#pragma warning restore SA1600 // Elements should be documented
     }
 }

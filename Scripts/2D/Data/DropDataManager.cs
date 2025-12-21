@@ -9,11 +9,11 @@
     public class DropDataManager : Singleton<DropDataManager>
     {
         private static readonly List<DropItem> Empty = new ();
-        private readonly Dictionary<int, List<DropItem>> nameToDrop; // 资源, 与对应的掉落物, -1为默认掉落物
+        private readonly Dictionary<int, List<DropItem>> idToDrop; // 资源, 与对应的掉落物, -1为默认掉落物
 
         public DropDataManager()
         {
-            this.nameToDrop = new Dictionary<int, List<DropItem>>();
+            this.idToDrop = new Dictionary<int, List<DropItem>>();
             DropItemDataSO dropItemDataSO = ResourceManager.Instance.GetDropSO("DropItemDataSO");
 
             dropItemDataSO.ResourceDropItems.ForEach(item =>
@@ -25,12 +25,12 @@
 
                 if (item.Name.Equals("Default"))
                 {
-                    this.nameToDrop.Add(-1, item.DropItems);
+                    this.idToDrop.Add(-1, item.DropItems);
                     return;
                 }
 
                 // 根据树的名称获取item信息
-                this.nameToDrop.Add(ItemDataManager.Instance.GetByName(item.Name).Id, item.DropItems);
+                this.idToDrop.Add(ItemDataManager.Instance.GetByName(item.Name).Id, item.DropItems);
             });
         }
 
@@ -41,18 +41,18 @@
         /// <returns>掉落物</returns>
         public List<DropItem> GetDropItemsById(int id)
         {
-            if (!this.nameToDrop.ContainsKey(id))
+            if (!this.idToDrop.ContainsKey(id))
             {
                 // 默认使用默认掉落物
-                if (this.nameToDrop.ContainsKey(-1))
+                if (this.idToDrop.ContainsKey(-1))
                 {
-                    return this.nameToDrop[-1];
+                    return this.idToDrop[-1];
                 }
 
                 return Empty;
             }
 
-            return this.nameToDrop[id];
+            return this.idToDrop[id];
         }
     }
 

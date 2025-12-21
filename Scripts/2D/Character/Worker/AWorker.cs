@@ -20,7 +20,7 @@
         /// <summary>
         /// 疲劳值阈值
         /// </summary>
-        public static readonly float ThresholdTired = 10.0f;
+        public static readonly float ThresholdTired = 100.0f;
 
         private Dictionary<int, ResourceInfo> resourceInfos; // 携带的资源
         private Slider progress;
@@ -70,7 +70,7 @@
 
             ThreadPool.SetMaxThreads(2, 2);
             this.Seek = new AStar(this);
-            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAAYER);
+            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAYER);
             this.AttackTags = new List<string>
             {
                 "Enemy",
@@ -119,13 +119,19 @@
             }
 
             WorkerData workerData = this.CharacterDataLAB as WorkerData;
+            string taskInfo = string.Empty;
+            if (workerData.Task != null)
+            {
+                taskInfo += $"Task:{workerData.Task.TaskType}:{workerData.Task.TaskId}\n" +
+                    $"TaskTarget:{workerData.Task.TargetMap}\n";
+            }
+
             return base.ToString() +
                 $"状态:{this.Manager.CurrentStateType}\n" +
-                $"Task:{workerData.Task.TaskType}:{workerData.Task.TaskId}\n" +
+                taskInfo +
                 $"IsSeeking:{this.Seek.IsSeeking()}\n" +
                 $"Hungry:{workerData.CurHungry}\n" +
                 $"TargetMap:{this.Seek.TargetMap}\n" +
-                $"TaskTarget:{workerData.Task.TargetMap}\n" +
                 $"SeekId:{this.CharacterDataLAB.SeekId}\n" +
                 resources;
         }
@@ -148,6 +154,29 @@
             else
             {
                 this.resourceInfos.Add(resourceInfo.Id, DataTool.DeepCopyByBinary(resourceInfo));
+            }
+        }
+
+        /// <summary>
+        /// 死亡丢弃身上的资源
+        /// </summary>
+        public void DropResource()
+        {
+            foreach (KeyValuePair<int, ResourceInfo> resource in this.resourceInfos)
+            {
+                if (resource.Value.Count <= 0)
+                {
+                    continue;
+                }
+
+                Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(
+                TileMap.Instance.WorldPosToMapPos(this.transform.position), 3, true);
+                if (pos == default)
+                {
+                    return;
+                }
+
+                ItemMap.Instance.PutDownToDrop(pos, ItemInstanceFactory.Instance.GetBackpackItemById(resource.Key).Tile, resource.Value);
             }
         }
 
@@ -296,7 +325,7 @@
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.checkBug.AddColliderCount(DateTime.Now.Ticks);
-            if (this.checkBug.IsBug(this.name, 100))
+            if (this.checkBug.IsBug(this.name, 1000))
             {
                 this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             }
@@ -357,6 +386,7 @@
                 this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Wear] = true;
                 this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Carry] = true;
                 this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Gather] = true;
+                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Exercise] = true;
             }
         }
     }

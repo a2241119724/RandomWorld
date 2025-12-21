@@ -86,7 +86,7 @@
             worker.SubResource(this.needs);
 
             // 将建造完成的Tile从Building变为Build中
-            BuildMap.Instance.SetComplete(Vector3IntLAB.ToVector3Int(this.buildPos));
+            BuildMap.Instance.SetComplete(this.buildPos);
         }
 
         /// <inheritdoc/>
@@ -159,7 +159,6 @@
         {
             private readonly WorkerBuildTask task;
 
-#pragma warning disable SA1600 // Elements should be documented
             public BuildTaskBuilder()
             {
                 this.task = new WorkerBuildTask();
@@ -173,7 +172,7 @@
 
             public BuildTaskBuilder SetBuildPos(Vector3Int pos)
             {
-                this.task.buildPos = Vector3IntLAB.ToVector3IntLAB(pos);
+                this.task.TargetMap = this.task.buildPos = Vector3IntLAB.ToVector3IntLAB(pos);
                 return this;
             }
 
@@ -188,7 +187,6 @@
             {
                 return this.task;
             }
-#pragma warning restore SA1600 // Elements should be documented
         }
     }
 }

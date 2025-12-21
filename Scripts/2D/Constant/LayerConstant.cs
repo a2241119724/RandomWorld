@@ -5,16 +5,16 @@
         /// <summary>
         /// 玩家层
         /// </summary>
-        public static string PLAYER_LAAYER = "Player";
+        public static string PLAYER_LAYER = "Player";
 
         /// <summary>
         /// 工作者层
         /// </summary>
-        public static string WORKER_LAAYER = "Worker";
+        public static string WORKER_LAYER = "Worker";
 
         /// <summary>
         /// 敌人层
         /// </summary>
-        public static string ENEMY_LAAYER = "Enemy";
+        public static string ENEMY_LAYER = "Enemy";
     }
 }

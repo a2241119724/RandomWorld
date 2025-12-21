@@ -16,7 +16,7 @@
         /// <returns>游戏对象</returns>
         protected override GameObject DoCreate(Vector3 worldPos, string name, string layer)
         {
-            return base.DoCreate(worldPos, PrefabConstant.PLAYER, LayerConstant.PLAYER_LAAYER);
+            return base.DoCreate(worldPos, PrefabConstant.PLAYER, LayerConstant.PLAYER_LAYER);
         }
     }
 }
