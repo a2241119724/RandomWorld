@@ -137,7 +137,7 @@
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.checkBug.AddColliderCount(DateTime.Now.Ticks);
-            if (this.checkBug.IsBug(this.name, 200) && this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Wander)
+            if (this.checkBug.IsBug(this.name, 1000) && this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Wander)
             {
                 this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Wander);
             }

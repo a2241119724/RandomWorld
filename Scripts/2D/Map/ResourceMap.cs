@@ -64,7 +64,7 @@
 
                         this.tilemap.SetTile(posMap, tileBase);
                         this.ResourceMapDataLAB.Add(posMap, tileBase.name);
-                        if (tileBase.name.Contains("Tree"))
+                        if (tileBase.name.Contains("_Tree"))
                         {
                             ItemData itemData = ItemDataManager.Instance.GetByName(tileBase.name);
                             WorkerTaskManager.Instance.AddTask(

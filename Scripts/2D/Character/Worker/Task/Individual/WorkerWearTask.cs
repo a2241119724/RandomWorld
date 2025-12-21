@@ -64,7 +64,6 @@
             return this.worker == worker;
         }
 
-#pragma warning disable SA1600 // Elements should be documented
         public class WearTaskBuilder
         {
             private readonly WorkerWearTask task;
@@ -97,6 +96,5 @@
                 return this.task;
             }
         }
-#pragma warning restore SA1600 // Elements should be documented
     }
 }

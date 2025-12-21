@@ -98,7 +98,7 @@
         {
             if (!this.allItemInfo.ContainsKey(id))
             {
-                LogManager.Instance.Log("没有case该id的道具!!!", LogManager.LogLevelEnum.Error);
+                LogManager.Instance.Log("没有id的道具!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -114,8 +114,8 @@
         {
             if (!this.nameToId.ContainsKey(name))
             {
-                LogManager.Instance.Log("没有名字为" + name + "的道具!!!", LogManager.LogLevelEnum.Error);
-                return null;
+                LogManager.Instance.Log("没有名字为" + name + "的道具!!!", LogManager.LogLevelEnum.Warning);
+                return ItemData.Empty;
             }
 
             return this.GetById(this.nameToId[name]);

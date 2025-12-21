@@ -58,6 +58,8 @@
     [Serializable]
     public class Vector3IntLAB
     {
+        public static readonly Vector3IntLAB Zero = new (0, 0, 0);
+
         /// <summary>
         /// X
         /// </summary>
@@ -113,6 +115,22 @@
         public override string ToString()
         {
             return $"({this.X},{this.Y},{this.Z})";
+        }
+
+        public override bool Equals(object obj)
+        {
+            Vector3IntLAB pos = (Vector3IntLAB)obj;
+            if (pos.X == this.X && pos.Y == this.Y && pos.Z == this.Z)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(this.X, this.Y, this.Z);
         }
     }
 

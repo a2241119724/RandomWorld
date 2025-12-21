@@ -20,7 +20,8 @@
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(Neighbors[8]);
+                this.AvailableNeighborPos.Add(Neighbors[1]);
+                this.AvailableNeighborPos.Add(Neighbors[3]);
 
                 // 进入工作状态
                 worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
@@ -44,6 +45,8 @@
         public override void Finish(AWorker worker)
         {
             base.Finish(worker);
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+            workerData.CurHungry = workerData.MaxHungry;
         }
 
         /// <inheritdoc/>
@@ -54,7 +57,6 @@
             return workerData.CurTired < AWorker.ThresholdTired && worker.BedItem != null && this.worker == worker;
         }
 
-#pragma warning disable SA1600 // Elements should be documented
         /// <summary>
         /// 建造者
         /// </summary>
@@ -84,6 +86,5 @@
                 return this.task;
             }
         }
-#pragma warning restore SA1600 // Elements should be documented
     }
 }

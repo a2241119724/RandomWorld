@@ -39,7 +39,7 @@
             {
                 {
                     ItemDataManager.Instance.GetByName("CustomWood").Id,
-                    new ResourceInfo(ItemDataManager.Instance.GetByName("CustomWood").Id, 100)
+                    new ResourceInfo(ItemDataManager.Instance.GetByName("CustomWood").Id, 5)
                 },
             };
         }
@@ -69,7 +69,16 @@
             }
 
             BuildTileData buildTileData = new BuildTileData(tileName, !buildItemData.IsNeedBuild);
-            this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
+            if (this.BuildMapDataLAB.PosMap.ContainsKey(vector3IntLAB))
+            {
+                // 门
+                this.BuildMapDataLAB.PosMap[vector3IntLAB] = buildTileData;
+            }
+            else
+            {
+                this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
+            }
+
             if (NetworkConnect.Instance.IsOnline)
             {
                 this.PhotonView.RPC(
@@ -98,16 +107,17 @@
         /// 完成建造,设置颜色透明度为1,不可通过的添加碰撞体
         /// </summary>
         /// <param name="targetMap">目标位置</param>
-        public void SetComplete(Vector3Int targetMap)
+        public void SetComplete(Vector3IntLAB targetMap)
         {
-            BuildTileData buildTileData = this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(targetMap)];
+            Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(targetMap);
+            BuildTileData buildTileData = this.BuildMapDataLAB.PosMap[targetMap];
             buildTileData.IsComplete = true;
-            RoomManager.Instance.Complete(targetMap);
+            RoomManager.Instance.Complete(vector3Int);
             BuildItemData buildItemData = ItemDataManager.Instance.GetBuildItemDataByName(buildTileData.Name);
-            this.tilemap.SetColor(targetMap, Color.white);
+            this.tilemap.SetColor(vector3Int, Color.white);
             if (!buildItemData.IsPass)
             {
-                this.tilemap.SetColliderType(targetMap, Tile.ColliderType.Sprite);
+                this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.Sprite);
             }
 
             if (NetworkConnect.Instance.IsOnline)
@@ -115,7 +125,7 @@
                 this.PhotonView.RPC(
                     "SyncDataResp",
                     RpcTarget.Others,
-                    DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
+                    DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(vector3Int)),
                     default);
             }
         }

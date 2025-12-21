@@ -35,10 +35,11 @@
             this.CharacterDataLAB = new PlayerData();
             this.CharacterDataLAB.Character = this;
             this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
-            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAAYER);
+            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAYER, LayerConstant.WORKER_LAYER);
             this.AttackTags = new List<string>
             {
                 "Enemy",
+                "Worker",
             };
             this.rg = this.GetComponent<Rigidbody2D>();
             this.rg.freezeRotation = true; // 防止旋转

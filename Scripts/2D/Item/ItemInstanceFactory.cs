@@ -43,6 +43,17 @@
         }
 
         /// <summary>
+        /// 根据id获得背包道具
+        /// </summary>
+        /// <param name="id">id</param>
+        /// <returns>背包道具</returns>
+        public ABackpackItem GetBackpackItemById(int id)
+        {
+            ItemData itemData = ItemDataManager.Instance.GetById(id);
+            return this.GetBackpackItemByName(itemData.EnName);
+        }
+
+        /// <summary>
         /// 根据名字获得建造道具
         /// </summary>
         /// <param name="name">名字</param>

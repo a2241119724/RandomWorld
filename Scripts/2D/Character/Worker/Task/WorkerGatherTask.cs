@@ -65,10 +65,9 @@
         /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
-            return ResourceMap.Instance.ResourceMapDataLAB.TreeCurCount > 0;
+            return true;
         }
 
-#pragma warning disable SA1600 // Elements should be documented
         /// <summary>
         /// 建造者
         /// </summary>
@@ -101,6 +100,5 @@
                 return this.task;
             }
         }
-#pragma warning restore SA1600 // Elements should be documented
     }
 }
