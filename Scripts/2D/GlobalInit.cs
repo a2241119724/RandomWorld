@@ -120,8 +120,15 @@
             {
                 // 按照时间对饥饿值与疲劳值进行自然衰减
                 AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-                workerData.CurHungry -= Time.deltaTime * 0.1f;
-                workerData.CurTired -= Time.deltaTime * 0.01f;
+                if (workerData.CurHungry > 0)
+                {
+                    workerData.CurHungry -= Time.deltaTime * 0.1f;
+                }
+
+                if (workerData.CurTired > 0)
+                {
+                    workerData.CurTired -= Time.deltaTime * 0.01f;
+                }
             }
         }
     }

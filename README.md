@@ -11,7 +11,7 @@
 * (material与Build) 优化Item\*\*：<通过读取ItemDataSO实例化Common\*\*>代替<通过父类获取子类创建新的道具>
 * 任务树（优化）
 * 种植任务
-* 建造有问题
+* 建造有问题，房间建造玩未加入RoomManager
 
 ## 注
 

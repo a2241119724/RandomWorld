@@ -19,12 +19,7 @@
                 this.maxProgress = 10.0f;
 
                 // 获取物资
-                this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(Neighbors[1]);
-                this.AvailableNeighborPos.Add(Neighbors[3]);
-
-                // 进入工作状态
-                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                this.Init();
             });
         }
 
@@ -33,12 +28,6 @@
         {
             base.Start(worker);
             this.ChangeStage(worker, 0);
-        }
-
-        /// <inheritdoc/>
-        public override void DoExecute()
-        {
-            base.DoExecute();
         }
 
         /// <inheritdoc/>
@@ -55,6 +44,13 @@
             // 如果疲劳值低于阈值，并且有床，则可以睡觉
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             return workerData.CurTired < AWorker.ThresholdTired && worker.BedItem != null && this.worker == worker;
+        }
+
+        protected override void Init()
+        {
+            this.AvailableNeighborPos.Clear();
+            this.AvailableNeighborPos.Add(Neighbors[1]);
+            this.AvailableNeighborPos.Add(Neighbors[3]);
         }
 
         /// <summary>

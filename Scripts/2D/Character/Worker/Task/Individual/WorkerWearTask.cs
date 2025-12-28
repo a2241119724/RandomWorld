@@ -18,11 +18,7 @@
             this.stageInit.Add((AWorker worker) =>
             {
                 this.maxProgress = 1.0f;
-                this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(Neighbors[8]);
-
-                // 进入工作状态
-                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                this.Init();
             });
         }
 
@@ -62,6 +58,12 @@
         protected override bool DoIsCanWork(AWorker worker)
         {
             return this.worker == worker;
+        }
+
+        protected override void Init()
+        {
+            this.AvailableNeighborPos.Clear();
+            this.AvailableNeighborPos.Add(Neighbors[8]);
         }
 
         public class WearTaskBuilder

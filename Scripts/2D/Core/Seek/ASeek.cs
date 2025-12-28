@@ -267,7 +267,7 @@
         /// <param name="result">结果</param>
         public void SetResult(SeekResult result)
         {
-            if (!ASeek.results.TryUpdate(this.Character.CharacterDataLAB.SeekId, result, null))
+            if (!ASeek.results.TryUpdate(this.Character.CharacterDataLAB.SeekId, result, null) && result.Path.Count != 0)
             {
                 UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {

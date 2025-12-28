@@ -24,24 +24,17 @@
                     this.GiveUpTask(worker);
                     return;
                 }
-
-                // 进入工作状态
-                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
             this.stageInit.Add((AWorker worker) =>
             {
                 this.maxProgress = 1.0f;
-                this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(Neighbors[8]);
+                this.Init();
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(FarmlandManager.Instance.IsEnoughAndPrePlant(worker, this.resourceInfo, true));
                 if (this.TargetMap == default)
                 {
                     this.GiveUpTask(worker);
                     return;
                 }
-
-                // 进入工作状态
-                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
         }
 
@@ -92,6 +85,12 @@
                 default:
                     return true;
             }
+        }
+
+        protected override void Init()
+        {
+            this.AvailableNeighborPos.Clear();
+            this.AvailableNeighborPos.Add(Neighbors[8]);
         }
 
         /// <summary>

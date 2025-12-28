@@ -58,6 +58,7 @@
             this.Name = taskType.ToString();
             this.AvailableNeighborPos = new List<Vector3IntLAB>();
             this.stageInit = new List<UnityAction<AWorker>>();
+            this.Init();
         }
 
         public enum RectType
@@ -151,11 +152,15 @@
         /// <returns>是否成功</returns>
         public bool Execute(AWorker worker)
         {
-            this.DoExecute();
-
             // 工作扣减疲劳值
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            workerData.CurTired -= Time.deltaTime * 0.1f;
+
+            // 吃饭任务不消耗疲劳
+            if (this.TaskType != WorkerTaskTypeEnum.Eat)
+            {
+                workerData.CurTired -= Time.deltaTime * 0.1f;
+            }
+
             this.curProgress += Time.deltaTime;
             if (this.curProgress > this.maxProgress)
             {
@@ -172,13 +177,6 @@
 
             worker.SetProgress((float)this.curProgress / this.maxProgress, true);
             return false;
-        }
-
-        /// <summary>
-        /// 执行
-        /// </summary>
-        public virtual void DoExecute()
-        {
         }
 
         /// <summary>
@@ -199,6 +197,21 @@
         {
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             if (!workerData.TaskToggle[(int)this.TaskType])
+            {
+                return false;
+            }
+
+            // 饥饿时候不能接任务
+            if (workerData.CurHungry < AWorker.ThresholdHungry && this.TaskType != WorkerTaskTypeEnum.Eat)
+            {
+                return false;
+            }
+
+            // 是否有做任务的位置, 并且不是锻炼任务(由于目标位置不确定, 并且一定可以有位置做)
+            if (this.TaskType != WorkerTaskTypeEnum.Exercise && this.AvailableNeighborPos.TrueForAll(pos =>
+            {
+                return !BuildMap.Instance.IsCanReach(Vector3IntLAB.ToVector3Int(pos + this.TargetMap));
+            }))
             {
                 return false;
             }
@@ -230,10 +243,12 @@
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否</returns>
-        protected virtual bool DoIsCanWork(AWorker worker)
-        {
-            return false;
-        }
+        protected abstract bool DoIsCanWork(AWorker worker);
+
+        /// <summary>
+        /// 初始化可用位置, 用于判断是否接受任务
+        /// </summary>
+        protected abstract void Init();
 
         /// <summary>
         /// 是否真的完成，为多阶段任务服务（Carry）
@@ -260,6 +275,7 @@
 
             this.stage = stage;
             this.stageInit[stage].Invoke(worker);
+            worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
         }
     }
 }
