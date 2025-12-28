@@ -82,6 +82,11 @@
             this.Z = z;
         }
 
+        public static Vector3IntLAB operator +(Vector3IntLAB left, Vector3IntLAB right)
+        {
+            return new Vector3IntLAB(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
+        }
+
         /// <summary>
         /// Vector3IntLAB to Vector3Int
         /// </summary>
@@ -228,6 +233,11 @@
         public override int GetHashCode()
         {
             return HashCode.Combine(this.X, this.Y);
+        }
+
+        public override string ToString()
+        {
+            return $"({this.X},{this.Y})";
         }
     }
 }

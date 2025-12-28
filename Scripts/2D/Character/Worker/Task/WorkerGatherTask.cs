@@ -23,12 +23,7 @@
             {
                 ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
                 this.maxProgress = 50.0f;
-                this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(Neighbors[1]);
-                this.AvailableNeighborPos.Add(Neighbors[3]);
-
-                // 进入寻路状态
-                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                this.Init();
             });
         }
 
@@ -66,6 +61,13 @@
         protected override bool DoIsCanWork(AWorker worker)
         {
             return true;
+        }
+
+        protected override void Init()
+        {
+            this.AvailableNeighborPos.Clear();
+            this.AvailableNeighborPos.Add(Neighbors[1]);
+            this.AvailableNeighborPos.Add(Neighbors[3]);
         }
 
         /// <summary>

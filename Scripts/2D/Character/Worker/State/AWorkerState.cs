@@ -34,11 +34,6 @@
             Work,
 
             /// <summary>
-            /// 吃饭装她爱
-            /// </summary>
-            Eat,
-
-            /// <summary>
             /// 死亡状态
             /// </summary>
             Dead,

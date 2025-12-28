@@ -22,9 +22,7 @@
             {
                 ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
                 this.maxProgress = itemData.RelatedTaskTime.TaskBaseTime;
-                this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(Neighbors[8]);
-                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                this.Init();
             });
             this.stageInit.Add((AWorker worker) =>
             {
@@ -41,8 +39,6 @@
                 {
                     LogManager.Instance.Log("仓库没有位置了", LogManager.LogLevelEnum.Error);
                 }
-
-                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
         }
 
@@ -93,6 +89,12 @@
                 default:
                     return true;
             }
+        }
+
+        protected override void Init()
+        {
+            this.AvailableNeighborPos.Clear();
+            this.AvailableNeighborPos.Add(Neighbors[8]);
         }
 
         /// <summary>

@@ -336,7 +336,7 @@
         /// <returns>位置</returns>
         public Vector3Int GetPosByPreTake(AWorker worker)
         {
-            if (this.preTakeResource.ContainsKey(worker))
+            if (this.preTakeResource.ContainsKey(worker) && this.preTakeResource[worker].Count > 0)
             {
                 return this.preTakeResource[worker].First().Key;
             }
@@ -423,7 +423,7 @@
             this.posToResource[posMap].Count -= resourceInfo.Count;
 
             // 如果正好取完
-            if (this.posToResource[posMap].Count == 0)
+            if (this.posToResource[posMap].Count <= 0)
             {
                 this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
                 ItemMap.Instance.DeleteTile(posMap);

@@ -30,7 +30,7 @@ MonoBehaviour:
     - Name: Apple
       ResourceInfo:
         Id: 500000
-        Count: 2
+        Count: 20
     - Name: CustomWood
       ResourceInfo:
         Id: 300000

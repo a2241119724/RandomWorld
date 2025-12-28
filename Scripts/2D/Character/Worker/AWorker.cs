@@ -15,12 +15,12 @@
         /// <summary>
         /// 饥饿值阈值
         /// </summary>
-        public static readonly float ThresholdHungry = 10.0f;
+        public static readonly float ThresholdHungry = 20.0f;
 
         /// <summary>
         /// 疲劳值阈值
         /// </summary>
-        public static readonly float ThresholdTired = 100.0f;
+        public static readonly float ThresholdTired = 20.0f;
 
         private Dictionary<int, ResourceInfo> resourceInfos; // 携带的资源
         private Slider progress;

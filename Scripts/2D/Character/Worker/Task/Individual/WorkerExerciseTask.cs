@@ -21,16 +21,10 @@
             this.stageInit.Add((AWorker worker) =>
             {
                 this.maxProgress = 10.0f;
-
-                // 获取物资
-                this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(Neighbors[8]);
+                this.Init();
 
                 // 设置Worker位置为目标位置
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(TileMap.Instance.WorldPosToMapPos(worker.transform.position));
-
-                // 进入工作状态
-                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
         }
 
@@ -43,6 +37,12 @@
         protected override bool DoIsCanWork(AWorker worker)
         {
             return this.worker == worker;
+        }
+
+        protected override void Init()
+        {
+            this.AvailableNeighborPos.Clear();
+            this.AvailableNeighborPos.Add(Neighbors[8]);
         }
 
         public class ExerciseTaskBuilder

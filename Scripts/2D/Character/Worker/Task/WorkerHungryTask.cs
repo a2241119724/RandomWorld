@@ -15,8 +15,7 @@
             this.stageInit.Add((AWorker worker) =>
             {
                 this.maxProgress = 1.0f;
-                this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(Neighbors[8]);
+                this.Init();
             });
         }
 
@@ -46,8 +45,14 @@
         {
             // 饥饿值小于一定值可以接收饥饿任务
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            return workerData.CurHungry < AWorker.ThresholdHungry
+            return workerData.CurHungry <= AWorker.ThresholdHungry
                 && InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, workerData.MaxHungry - workerData.CurHungry);
+        }
+
+        protected override void Init()
+        {
+            this.AvailableNeighborPos.Clear();
+            this.AvailableNeighborPos.Add(Neighbors[8]);
         }
 
         /// <summary>

@@ -14,7 +14,6 @@
             this.Manager.AddState(AWorkerState.TypeEnum.Move, new WorkerMoveState(this));
             this.Manager.AddState(AWorkerState.TypeEnum.Work, new WorkerWorkState(this));
             this.Manager.AddState(AWorkerState.TypeEnum.Seek, new WorkerSeekState(this));
-            this.Manager.AddState(AWorkerState.TypeEnum.Eat, new WorkerHungryState(this));
             this.Manager.AddState(AWorkerState.TypeEnum.Attack, new WorkerAttackState(this));
             this.Manager.AddState(AWorkerState.TypeEnum.Escape, new WorkerEscapeState(this));
             this.Manager.AddState(AWorkerState.TypeEnum.Dead, new WorkerDeadState(this));

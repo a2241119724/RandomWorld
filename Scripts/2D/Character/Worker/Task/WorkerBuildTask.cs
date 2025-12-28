@@ -36,20 +36,13 @@
                 }
 
                 // 进入工作状态
-                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             });
             this.stageInit.Add((AWorker worker) =>
             {
                 this.maxProgress = 2.0f;
 
                 // 建造
-                this.AvailableNeighborPos.Clear();
-                this.AvailableNeighborPos.Add(Neighbors[0]);
-                this.AvailableNeighborPos.Add(Neighbors[1]);
-                this.AvailableNeighborPos.Add(Neighbors[2]);
-                this.AvailableNeighborPos.Add(Neighbors[3]);
-                this.TargetMap = this.buildPos;
-                worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                this.Init();
             });
         }
 
@@ -150,6 +143,16 @@
                 default:
                     return true;
             }
+        }
+
+        protected override void Init()
+        {
+            this.AvailableNeighborPos.Clear();
+            this.AvailableNeighborPos.Add(Neighbors[0]);
+            this.AvailableNeighborPos.Add(Neighbors[1]);
+            this.AvailableNeighborPos.Add(Neighbors[2]);
+            this.AvailableNeighborPos.Add(Neighbors[3]);
+            this.TargetMap = this.buildPos;
         }
 
         /// <summary>
