@@ -53,7 +53,7 @@
                     }
 
                     Vector3Int posMap = new (i, j, 0);
-                    if (TileMap.Instance.IsCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.9f)
+                    if (TileMap.Instance.IsCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.95f)
                     {
                         TileMap.MapTileTypeEnum tileType = TileMap.Instance.TileMapDataLAB.MapTiles[i, j];
                         TileBase tileBase = ResourceManager.Instance.GetAssetByTileType(tileType);

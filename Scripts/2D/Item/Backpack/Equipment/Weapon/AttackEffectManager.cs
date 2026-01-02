@@ -60,6 +60,7 @@
                 }
             }
 
+            // 如果没有可用的粒子系统, 则创建一个
             if (!this.availableEffects.ContainsKey(name) || this.availableEffects[name].Count == 0)
             {
                 this.availableEffects[name].Enqueue(ResourceManager.Instance.Instantiate(name.ToString() + "Effect").GetComponent<ParticleSystem>());

@@ -9,7 +9,7 @@
     /// </summary>
     public class AttackEffect : MonoBehaviour
     {
-        private ParticleSystem ps;
+        protected ParticleSystem ps;
 
         /// <summary>
         /// 是否暴击
