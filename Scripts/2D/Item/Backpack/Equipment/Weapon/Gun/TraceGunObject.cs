@@ -21,6 +21,7 @@
         {
             TraceBulletEffect traceBulletEffect = attackEffect as TraceBulletEffect;
             traceBulletEffect.Target = EnemyManager.Instance.Get(0);
+            traceBulletEffect.Direction = this.GetDirection();
         }
     }
 

@@ -190,6 +190,15 @@
         }
 
         /// <summary>
+        /// 获取武器的方向
+        /// </summary>
+        /// <returns>方向</returns>
+        protected Vector3 GetDirection()
+        {
+            return (this.Head.position - this.transform.position).normalized;
+        }
+
+        /// <summary>
         /// 间隔攻击
         /// </summary>
         /// <param name="attackEffect">攻击特效</param>
