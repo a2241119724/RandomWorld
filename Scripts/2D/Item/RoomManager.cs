@@ -59,6 +59,7 @@
                 return null;
             }
 
+            // 射线检测是否有房间
             RaycastHit2D hitR = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.right, 1000.0f, this.layerMask);
             RaycastHit2D hitL = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.left, 1000.0f, this.layerMask);
             RaycastHit2D hitT = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.up, 1000.0f, this.layerMask);
@@ -71,7 +72,7 @@
                 TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
                 if (tileBase != null)
                 {
-                    count += tileBase.name.Equals("WallR") ? 1 : 0;
+                    count += tileBase.name.Contains("Wall") ? 1 : 0;
                 }
             }
 
@@ -81,7 +82,7 @@
                 TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
                 if (tileBase != null)
                 {
-                    count += tileBase.name.Equals("WallL") ? 1 : 0;
+                    count += tileBase.name.Contains("Wall") ? 1 : 0;
                 }
             }
 
@@ -91,7 +92,7 @@
                 TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
                 if (tileBase != null)
                 {
-                    count += tileBase.name.Equals("WallT") ? 1 : 0;
+                    count += tileBase.name.Contains("Wall") ? 1 : 0;
                 }
             }
 
@@ -101,7 +102,7 @@
                 TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
                 if (tileBase != null)
                 {
-                    count += tileBase.name.Equals("WallD") ? 1 : 0;
+                    count += tileBase.name.Contains("Wall") ? 1 : 0;
                 }
             }
 
