@@ -6,7 +6,7 @@
     /// <summary>
     /// 名字生成器.
     /// </summary>
-    public class NameGenertor : Singleton<NameGenertor>
+    public class NameGenerator : Singleton<NameGenerator>
     {
         // 预定义的名字列表
         private readonly List<string> firstNames = new ()
