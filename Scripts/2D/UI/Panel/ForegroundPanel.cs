@@ -137,7 +137,7 @@
 
         private void Onclick_Save()
         {
-            GlobalInit.Instance.ShowTip("保存数据");
+            GlobalInit.Instance.ShowTip($"保存数据: 存档 {ArchiveManager.Instance.CurrentArchiveIndex + 1}");
             ArchiveManager.Instance.SaveCurrentArchive();
         }
 
