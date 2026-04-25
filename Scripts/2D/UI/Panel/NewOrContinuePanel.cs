@@ -12,19 +12,18 @@ namespace LAB2D
         private const float SlotSpacing = 12.0f;
         private static readonly Vector2 SlotSize = new (560.0f, 72.0f);
         private readonly List<Button> archiveSlotButtons = new ();
-        private Button newGameButton;
-        private Button continueGameButton;
-        private RectTransform archiveSlotContent;
-        private Transform archiveSlotViewport;
+        private RectTransform content;
+        private Font uiFont;
+        private Sprite buttonSprite;
 
         public NewOrContinuePanel()
         {
             this.Name = "NewOrContinue";
             this.Init();
-            this.newGameButton = Tool.GetComponentInChildren<Button>(this.Panel, "NewGame");
-            this.continueGameButton = Tool.GetComponentInChildren<Button>(this.Panel, "ContinueGame");
-            this.archiveSlotViewport = Tool.GetComponentInChildren<Transform>(this.Panel, "Content");
-            this.CreateArchiveSlotButtons();
+            this.content = Tool.GetComponentInChildren<RectTransform>(this.Panel, "Content");
+            this.uiFont = this.GetUIFont();
+            this.buttonSprite = Resources.Load<Sprite>("Images/UI/ButtonBackground");
+            this.BindArchiveSlotButtons();
         }
 
         /// <inheritdoc/>
@@ -34,35 +33,20 @@ namespace LAB2D
             this.RefreshArchiveSlotButtons();
         }
 
-        /// <inheritdoc/>
-        public override void OnExit()
+        private void BindArchiveSlotButtons()
         {
-            base.OnExit();
-        }
-
-        private void CreateArchiveSlotButtons()
-        {
-            if (this.newGameButton == null || this.continueGameButton == null || this.archiveSlotViewport == null)
+            if (this.content == null)
             {
-                this.BindDefaultButtons();
                 return;
             }
 
-            this.ConfigureArchiveSlotViewport();
-
-            this.archiveSlotContent = this.CreateArchiveSlotContent();
-
-            this.newGameButton.gameObject.SetActive(false);
-            this.continueGameButton.gameObject.SetActive(false);
+            this.archiveSlotButtons.Clear();
 
             for (int i = 0; i < ArchiveManager.Instance.ArchiveCount; i++)
             {
-                Button archiveSlotButton = UnityEngine.Object.Instantiate(
-                    this.continueGameButton.gameObject,
-                    this.archiveSlotContent,
-                    false).GetComponent<Button>();
                 int archiveIndex = i;
-                archiveSlotButton.name = $"ArchiveSlot_{archiveIndex + 1}";
+                Button archiveSlotButton = this.FindArchiveSlotButton(archiveIndex) ??
+                    this.CreateArchiveSlotButton(archiveIndex);
                 archiveSlotButton.onClick.RemoveAllListeners();
                 archiveSlotButton.onClick.AddListener(() => this.OnClick_ArchiveSlot(archiveIndex));
                 this.SetArchiveSlotButtonPosition(archiveSlotButton, archiveIndex);
@@ -71,111 +55,76 @@ namespace LAB2D
             }
         }
 
-        private void ConfigureArchiveSlotViewport()
+        private Button FindArchiveSlotButton(int archiveIndex)
         {
-            HorizontalLayoutGroup horizontalLayout = this.archiveSlotViewport.GetComponent<HorizontalLayoutGroup>();
-            if (horizontalLayout != null)
+            string slotName = $"ArchiveSlot_{archiveIndex + 1}";
+            for (int i = 0; i < this.content.childCount; i++)
             {
-                horizontalLayout.enabled = false;
-            }
-
-            Image image = this.archiveSlotViewport.GetComponent<Image>();
-            if (image == null)
-            {
-                image = this.archiveSlotViewport.gameObject.AddComponent<Image>();
-                image.color = new Color(0.0f, 0.0f, 0.0f, 0.25f);
-            }
-
-            image.raycastTarget = true;
-
-            RectMask2D mask = this.archiveSlotViewport.GetComponent<RectMask2D>();
-            if (mask == null)
-            {
-                this.archiveSlotViewport.gameObject.AddComponent<RectMask2D>();
-            }
-        }
-
-        private RectTransform CreateArchiveSlotContent()
-        {
-            Transform contentTransform = this.FindChildTransform(this.archiveSlotViewport, "ArchiveSlotContent");
-            if (contentTransform == null)
-            {
-                GameObject content = new ("ArchiveSlotContent");
-                content.transform.SetParent(this.archiveSlotViewport, false);
-                content.layer = this.archiveSlotViewport.gameObject.layer;
-                contentTransform = content.transform;
-            }
-
-            RectTransform contentRect = contentTransform.GetComponent<RectTransform>();
-            if (contentRect == null)
-            {
-                contentRect = contentTransform.gameObject.AddComponent<RectTransform>();
-            }
-
-            contentRect.anchorMin = new Vector2(0.5f, 1.0f);
-            contentRect.anchorMax = new Vector2(0.5f, 1.0f);
-            contentRect.pivot = new Vector2(0.5f, 1.0f);
-            contentRect.anchoredPosition = Vector2.zero;
-            contentRect.sizeDelta = this.GetSlotContentSize();
-            this.ClearGeneratedArchiveSlotButtons(contentRect);
-
-            ScrollRect scrollRect = this.archiveSlotViewport.GetComponent<ScrollRect>();
-            if (scrollRect == null)
-            {
-                scrollRect = this.archiveSlotViewport.gameObject.AddComponent<ScrollRect>();
-            }
-
-            scrollRect.content = contentRect;
-            scrollRect.viewport = this.archiveSlotViewport.GetComponent<RectTransform>();
-            scrollRect.horizontal = false;
-            scrollRect.vertical = true;
-            scrollRect.movementType = ScrollRect.MovementType.Clamped;
-            scrollRect.scrollSensitivity = 50.0f;
-            return contentRect;
-        }
-
-        private void ClearGeneratedArchiveSlotButtons(RectTransform contentRect)
-        {
-            for (int i = contentRect.childCount - 1; i >= 0; i--)
-            {
-                Transform child = contentRect.GetChild(i);
-                if (!child.name.StartsWith("ArchiveSlot_", System.StringComparison.Ordinal))
+                Transform child = this.content.GetChild(i);
+                if (child.name != slotName)
                 {
                     continue;
                 }
 
-                if (Application.isPlaying)
-                {
-                    UnityEngine.Object.Destroy(child.gameObject);
-                }
-                else
-                {
-                    UnityEngine.Object.DestroyImmediate(child.gameObject);
-                }
-            }
-
-            this.archiveSlotButtons.Clear();
-        }
-
-        private Transform FindChildTransform(Transform root, string name)
-        {
-            Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
-            foreach (Transform child in transforms)
-            {
-                if (child.name == name)
-                {
-                    return child;
-                }
+                return child.GetComponent<Button>();
             }
 
             return null;
         }
 
-        private Vector2 GetSlotContentSize()
+        private Button CreateArchiveSlotButton(int archiveIndex)
         {
-            int count = ArchiveManager.Instance.ArchiveCount;
-            float height = (count * SlotSize.y) + (Mathf.Max(0, count - 1) * SlotSpacing);
-            return new Vector2(SlotSize.x, height);
+            GameObject gameObject = this.CreateUIObject($"ArchiveSlot_{archiveIndex + 1}", this.content);
+            RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
+            rectTransform.sizeDelta = SlotSize;
+
+            Image image = gameObject.AddComponent<Image>();
+            image.sprite = this.buttonSprite;
+            image.type = Image.Type.Simple;
+            image.color = Color.white;
+
+            Button button = gameObject.AddComponent<Button>();
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(0.96f, 0.96f, 0.96f, 1.0f);
+            colors.pressedColor = new Color(0.78f, 0.78f, 0.78f, 1.0f);
+            colors.selectedColor = new Color(0.96f, 0.96f, 0.96f, 1.0f);
+            colors.disabledColor = new Color(0.78f, 0.78f, 0.78f, 0.5f);
+            button.colors = colors;
+            button.targetGraphic = image;
+
+            GameObject textObject = this.CreateText("Title", gameObject.transform);
+            RectTransform textRect = textObject.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
+            return button;
+        }
+
+        private GameObject CreateUIObject(string name, Transform parent)
+        {
+            GameObject gameObject = new (name);
+            gameObject.transform.SetParent(parent, false);
+            gameObject.layer = parent.gameObject.layer;
+            gameObject.AddComponent<RectTransform>();
+            return gameObject;
+        }
+
+        private GameObject CreateText(string name, Transform parent)
+        {
+            GameObject gameObject = this.CreateUIObject(name, parent);
+            Text text = gameObject.AddComponent<Text>();
+            text.font = this.uiFont;
+            text.fontSize = 24;
+            text.fontStyle = FontStyle.Bold;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 16;
+            text.resizeTextMaxSize = 24;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = new Color(0.9843137f, 0.39215687f, 0.0f, 1.0f);
+            text.raycastTarget = false;
+            return gameObject;
         }
 
         private void SetArchiveSlotButtonPosition(Button archiveSlotButton, int archiveIndex)
@@ -187,39 +136,14 @@ namespace LAB2D
             }
 
             float y = -archiveIndex * (SlotSize.y + SlotSpacing);
-            rectTransform.anchorMin = new Vector2(0.5f, 1.0f);
-            rectTransform.anchorMax = new Vector2(0.5f, 1.0f);
+            rectTransform.anchorMin = new Vector2(0.0f, 1.0f);
+            rectTransform.anchorMax = new Vector2(1.0f, 1.0f);
             rectTransform.pivot = new Vector2(0.5f, 1.0f);
             rectTransform.anchoredPosition = new Vector2(0.0f, y);
-            rectTransform.sizeDelta = SlotSize;
+            rectTransform.sizeDelta = new Vector2(0.0f, SlotSize.y);
+            rectTransform.offsetMin = new Vector2(0.0f, rectTransform.offsetMin.y);
+            rectTransform.offsetMax = new Vector2(0.0f, rectTransform.offsetMax.y);
             rectTransform.localScale = Vector3.one;
-        }
-
-        private void BindDefaultButtons()
-        {
-            if (this.newGameButton != null)
-            {
-                this.newGameButton.onClick.AddListener(() =>
-                {
-                    ArchiveManager.Instance.SetCurrentArchive(0);
-                    this.StartNewArchive();
-                });
-            }
-
-            if (this.continueGameButton != null)
-            {
-                this.continueGameButton.onClick.AddListener(() =>
-                {
-                    ArchiveManager.Instance.SetCurrentArchive(0);
-                    if (!ArchiveManager.Instance.HasCurrentArchive())
-                    {
-                        GlobalInit.Instance.ShowTip("没有存档!!!");
-                        return;
-                    }
-
-                    this.LoadArchive();
-                });
-            }
         }
 
         private void RefreshArchiveSlotButtons()
@@ -231,9 +155,6 @@ namespace LAB2D
                 if (text != null)
                 {
                     text.text = hasArchive ? $"存档 {i + 1}\n继续游戏" : $"存档 {i + 1}\n新游戏";
-                    text.resizeTextForBestFit = true;
-                    text.resizeTextMinSize = 16;
-                    text.resizeTextMaxSize = 34;
                 }
             }
         }
@@ -263,6 +184,21 @@ namespace LAB2D
             GlobalData.IsNew = false;
             this.Controller.Show(AsyncProgressPanel.Instance);
             ArchiveManager.Instance.LoadCurrentArchive();
+        }
+
+        private Font GetUIFont()
+        {
+            Text[] texts = this.Panel.GetComponentsInChildren<Text>(true);
+            foreach (Text text in texts)
+            {
+                if (text.font != null)
+                {
+                    return text.font;
+                }
+            }
+
+            Font font = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
+            return font != null ? font : Resources.GetBuiltinResource<Font>("Arial.ttf");
         }
     }
 }
