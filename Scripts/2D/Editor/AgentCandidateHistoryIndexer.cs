@@ -16,7 +16,7 @@ namespace LAB2D
     {
         private const string MenuPath = "Tools/Agent/导出候选历史状态索引";
         private const string ReportRoot = "Assets/Agent/Reports";
-        private const string TaskDirectoryName = "F010_candidate_history_index";
+        private const string TaskDirectoryName = "efficiency_F010_candidate_history_index";
         private const string ReportFileName = "candidate_history_index.md";
 
         private static readonly string[] StatusPrecedence =

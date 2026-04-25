@@ -16,7 +16,7 @@ namespace LAB2D
     {
         private const string MenuPath = "Tools/Agent/导出上下文扫描报告";
         private const string ReportRoot = "Assets/Agent/Reports";
-        private const string TaskDirectoryName = "F002_agent_context_scanner";
+        private const string TaskDirectoryName = "efficiency_F002_agent_context_scanner";
         private const string ReportFileName = "agent_context_scan.md";
         private const string AgentRoot = "Assets/Agent";
         private const string ScriptsRoot = "Assets/Scripts/2D";

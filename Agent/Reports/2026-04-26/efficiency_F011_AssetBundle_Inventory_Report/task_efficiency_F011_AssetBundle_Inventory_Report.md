@@ -6,7 +6,7 @@
 - 原始候选: AssetBundle 与 StreamingAssets 只读清单报告器
 - 创建时间: 2026-04-26
 - 当前状态: Done
-- 本次任务目录: `Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report`
+- 本次任务目录: `Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report`
 - 全局候选报告路径: `Agent/Reports/feature_discovery.md`
 - 风险等级: Low
 
@@ -21,7 +21,7 @@
 - `Scripts/2D/Editor/AssetBundleInventoryReporter.cs`
 - `Scripts/2D/Editor/AssetBundleInventoryReporter.cs.meta`
 - `Agent/Reports/feature_discovery.md`
-- `Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report/`
+- `Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report/`
 
 ## 不应触碰路径
 
@@ -64,9 +64,9 @@
 
 - 最终状态: [DONE]
 - 已完成内容: 新增 `AssetBundleInventoryReporter` Editor 工具，可通过 `Tools/Agent/导出AssetBundle清单报告` 导出只读 Markdown 报告；报告覆盖 StreamingAssets bundle/manifest、ResourcesLocal Prefab 源、AssetBundle 标签、Addressables 配置和缺失 `.meta` 检查。
-- 修改的文件: `Scripts/2D/Editor/AssetBundleInventoryReporter.cs`; `Scripts/2D/Editor/AssetBundleInventoryReporter.cs.meta`; `Agent/Reports/feature_discovery.md`; `Agent/Reports/feature_discovery.md.meta`; `Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report/task_F011_AssetBundle_Inventory_Report.md`; `Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report/validation_F011.md`
+- 修改的文件: `Scripts/2D/Editor/AssetBundleInventoryReporter.cs`; `Scripts/2D/Editor/AssetBundleInventoryReporter.cs.meta`; `Agent/Reports/feature_discovery.md`; `Agent/Reports/feature_discovery.md.meta`; `Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report/task_efficiency_F011_AssetBundle_Inventory_Report.md`; `Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report/validation_efficiency_F011.md`
 - 验证结果: 静态检查通过；确认新工具只写报告文件，不调用打包、删除、移动、创建资源或修改 AssetBundle 标签 API；本机无 Unity CLI、无 .NET SDK/csc，未运行 Unity 编译。
-- 验证记录路径: `Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report/validation_F011.md`
+- 验证记录路径: `Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report/validation_efficiency_F011.md`
 - 未完成项: 未在 Unity Editor 内点击菜单生成实际报告；需待 Unity 打开项目后验证菜单编译和报告输出。
 - 剩余风险: 低；主要风险是 Unity 版本 API 差异或项目编译环境中潜在 Editor 编译错误。
 - 后续建议: 下一次优先做 F012 存档结构只读字段扫描报告器，继续保持只读边界。

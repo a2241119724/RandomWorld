@@ -18,7 +18,7 @@ namespace LAB2D
         private const string ItemTileRoot = "Assets/Resources/Tilemap/Item";
         private const string ItemImageRoot = "Assets/Resources/Images/Item";
         private const string ReportRoot = "Assets/Agent/Reports";
-        private const string TaskDirectoryName = "F001_item_resource_integrity_validator";
+        private const string TaskDirectoryName = "efficiency_F001_item_resource_integrity_validator";
         private const string ReportFileName = "resource_integrity_report.md";
 
         private static readonly string[] TileExtensions = { ".asset" };
