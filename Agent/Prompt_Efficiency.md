@@ -5,7 +5,10 @@
 - 不要等待我确认。
 - 如果遇到需要人工确认的高风险候选，请自动跳过它，选择下一个低风险或中风险候选。
 - 一次只实现一个功能。
-- 每次任务必须在 Agent/Reports/<今天日期>/ 下创建独立任务文件夹，所有本次任务相关输出都必须放入该文件夹中，避免和同一天其他任务混在一起。
+- 候选功能总表必须统一维护在：
+  - Agent/Reports/feature_discovery.md
+- 不要在每个任务目录下重复创建 feature_discovery.md。
+- 每次任务必须在 Agent/Reports/<今天日期>/ 下创建独立任务文件夹，任务卡、验证记录、补充报告等本次任务相关输出都必须放入该文件夹中，避免和同一天其他任务混在一起。
 - 独立任务文件夹命名格式建议为：
   - Agent/Reports/<今天日期>/<候选ID>_<功能名安全短名>/
   - 如果在选择候选前无法确定候选ID，则先使用：
@@ -16,8 +19,10 @@
 - 不要优先选择会直接修改 Scene、Prefab、ScriptableObject、StreamingAssets、存档结构、Photon 同步或 AssetBundle 的功能。
 - 如果所有候选都属于高风险，则只实现一个不改业务资产的只读分析/报告工具。
 - 生成候选功能列表时，必须为每个候选分配唯一编号和完成状态，便于后续判断该候选是否已经处理完成。
-- 完成功能实现与验证后，必须回写本次任务目录中的 feature_discovery.md 中对应候选的状态标记。
-- 扫描历史记录时，必须递归检查 Agent/Reports/ 下所有日期目录及其子任务目录中的 feature_discovery.md、task_*.md 和 validation_*.md，避免重复实现已经 `[DONE]` 的候选。
+- 完成功能实现与验证后，必须回写 Agent/Reports/feature_discovery.md 中对应候选的状态标记。
+- 扫描历史记录时，必须递归检查 Agent/Reports/ 下所有日期目录及其子任务目录中的 task_*.md 和 validation_*.md。
+- 同时必须读取 Agent/Reports/feature_discovery.md，避免重复实现已经 `[DONE]` 的候选。
+- 如果历史任务目录中遗留存在旧版 feature_discovery.md，也需要兼容读取，但新的候选总表只允许写入 Agent/Reports/feature_discovery.md。
 
 候选状态规则：
 - `[TODO]`：待处理，尚未实现。
@@ -27,13 +32,15 @@
 - `[PARTIAL]`：部分完成，已实现部分能力，但仍存在明确未完成项。
 
 候选功能列表格式必须包含：
+
 | 状态 | 候选ID | 功能名称 | 来源信号 | 价值 | 风险 | 成本 | 优先级 | 推荐 Agent | 推荐 Skill | 处理说明 |
 |---|---|---|---|---|---|---|---|---|---|---|
 
 示例：
+
 | [TODO] | F001 | 资源引用完整性只读扫描器 | Resources/SO 中存在未校验引用 | 高 | 低 | 中 | P0 | ResourceAuditAgent | ReadOnlyScanSkill | 推荐优先实现 |
 | [SKIPPED] | F002 | 自动修复 Prefab 缺失绑定 | Prefab 存在 Missing Reference | 高 | 高 | 高 | P1 | ResourceFixAgent | PrefabModifySkill | 涉及 Prefab 直接修改，跳过 |
-| [DONE] | F003 | TODO/FIXME 报告生成器 | Scripts/2D 存在 TODO/FIXME | 中 | 低 | 低 | P1 | CodeAuditAgent | ReportGenerateSkill | 已完成并生成验证记录 |
+| [DONE] | F003 | TODO/FIXME 报告生成器 | Scripts/2D 存在 TODO/FIXME | 中 | 低 | 低 | P1 | CodeAuditAgent | ReportGenerateSkill | 已完成；任务卡：Agent/Reports/2026-04-26/F003_TODO_FIXME_Report/task_F003_TODO_FIXME_Report.md；验证记录：Agent/Reports/2026-04-26/F003_TODO_FIXME_Report/validation_F003.md |
 
 执行步骤：
 
@@ -45,32 +52,29 @@
    - Agent/Config/task_router.json
    - Agent/Templates/agent_task_card.md
 
-2. 只读扫描项目上下文，重点检查：
+2. 读取全局候选功能发现报告：
+   - Agent/Reports/feature_discovery.md
+
+   如果该文件不存在，则自动创建。
+   如果该文件已存在，则必须读取其中已有候选，尤其是 `[DONE]`、`[SKIPPED]`、`[BLOCKED]` 和 `[PARTIAL]` 状态，避免重复生成或重复实现同一功能。
+
+3. 只读扫描项目上下文，重点检查：
    - README、Agent 文档、历史任务卡中的后续建议
    - Scripts/2D 中的 TODO、FIXME、空方法、临时实现、重复模式
    - Resources/SO、Resources/Tilemap、Resources/Images 中的资源绑定缺口
    - 已有系统中“有数据但无 UI / 有 UI 但无行为 / 有行为但无验证 / 有资源但无检查”的半完成链路
    - 存档、Photon、AssetBundle、资源引用等高风险区域的只读检查机会
-   - Agent/Reports/ 下所有历史日期目录及其子任务目录中的 feature_discovery.md 和 task_*.md
+   - Agent/Reports/feature_discovery.md 中已有的候选功能状态
+   - Agent/Reports/ 下所有历史日期目录及其子任务目录中的 task_*.md 和 validation_*.md
    - 历史记录中已经标记为 `[DONE]` 的候选，避免重复实现同一功能
+   - 历史任务目录中遗留的旧版 feature_discovery.md，仅作为兼容读取依据，不再作为新的写入目标
 
-3. 生成本次任务目录：
-   - 首先确保日期目录存在：
-     - Agent/Reports/<今天日期>/
-   - 然后在该日期目录下创建本次任务的独立目录：
-     - Agent/Reports/<今天日期>/<候选ID>_<功能名安全短名>/
-   - 如果候选ID尚未确定，则先创建：
-     - Agent/Reports/<今天日期>/run_<HHmmss>/
-   - 后续所有本次任务相关内容必须写入该独立任务目录中。
-   - 以下路径统一用 `<TASK_DIR>` 表示本次任务目录。
-
-4. 输出功能发现报告：
-   - <TASK_DIR>/feature_discovery.md
+4. 生成或更新全局功能发现报告：
+   - Agent/Reports/feature_discovery.md
 
    报告必须包含：
-   - 本次任务目录路径
+   - 全局候选功能列表
    - 扫描范围
-   - 候选功能列表
    - 每个候选的唯一候选ID
    - 每个候选的状态标记：`[TODO]`、`[DONE]`、`[SKIPPED]`、`[BLOCKED]` 或 `[PARTIAL]`
    - 每个候选的来源信号、价值、风险、成本、优先级、推荐 Agent、推荐 Skill
@@ -78,6 +82,12 @@
    - 被跳过的高风险候选及原因
    - 已完成候选的任务卡路径、修改文件和验证记录摘要
    - 历史已完成候选的去重依据
+
+   注意：
+   - 不要覆盖已有候选状态。
+   - 对已有 `[DONE]` 候选不得重新改为 `[TODO]`。
+   - 如果发现相似候选，应合并到已有候选的处理说明中，不要重复分配新候选ID。
+   - 新增候选时，应延续已有候选ID编号，例如已有 F001-F006，则新增从 F007 开始。
 
 5. 自动选择一个最适合立即开发的候选功能：
    - 只能从 `[TODO]` 状态的候选中选择
@@ -87,12 +97,20 @@
    - 必须满足：低风险或中风险、边界清晰、可在一个任务卡内完成、不会直接破坏业务数据或 Unity 资源引用
    - 如果候选涉及 Scene、Prefab、ScriptableObject、StreamingAssets、存档、Photon 或 AssetBundle 的直接修改，则跳过，并将状态更新为 `[SKIPPED]`
 
-6. 确认或调整本次任务目录：
-   - 选中候选后，如果当前目录仍是 run_<HHmmss>，可继续使用该目录。
+6. 生成本次任务目录：
+   - 首先确保日期目录存在：
+     - Agent/Reports/<今天日期>/
+   - 然后在该日期目录下创建本次任务的独立目录：
+     - Agent/Reports/<今天日期>/<候选ID>_<功能名安全短名>/
+   - 如果候选ID尚未确定，则先创建：
+     - Agent/Reports/<今天日期>/run_<HHmmss>/
+   - 选定候选后，如果当前目录仍是 run_<HHmmss>，可继续使用该目录。
    - 如果需要更清晰区分任务，可将目录调整为：
      - Agent/Reports/<今天日期>/<候选ID>_<功能名安全短名>/
-   - 如果发生目录调整，必须保证 feature_discovery.md 和后续文件都位于最终的 `<TASK_DIR>` 中。
+   - 如果发生目录调整，必须保证任务卡、验证记录和后续补充文件都位于最终的 `<TASK_DIR>` 中。
    - 不允许把多个任务的输出混写到同一个任务目录中。
+   - 不允许在 `<TASK_DIR>` 中创建新的 feature_discovery.md。
+   - 以下路径统一用 `<TASK_DIR>` 表示本次任务目录。
 
 7. 为选中的候选生成任务卡：
    - <TASK_DIR>/task_<候选ID>_<功能名安全短名>.md
@@ -102,6 +120,7 @@
    - 原始候选
    - 当前状态
    - 本次任务目录
+   - 全局候选报告路径：Agent/Reports/feature_discovery.md
    - 任务分类
    - 负责 Agent
    - 需要的 Skill
@@ -138,8 +157,8 @@
    - 剩余风险
    - 后续建议
 
-11. 回写功能发现报告：
-   - 打开 <TASK_DIR>/feature_discovery.md
+11. 回写全局功能发现报告：
+   - 打开 Agent/Reports/feature_discovery.md
    - 找到本次实现的候选ID
    - 将该候选状态从 `[TODO]` 更新为：
      - `[DONE]`：功能已实现且完成可行验证
@@ -153,8 +172,10 @@
      - 验证结果摘要
      - 是否仍有剩余风险
    - 对自动跳过的候选，将状态更新为 `[SKIPPED]`，并写明跳过原因
+   - 不要把状态回写到任务目录下的 feature_discovery.md，因为该文件不应再存在于任务目录中。
 
 12. 最终回复只需要简洁汇总：
+   - 全局候选报告路径
    - 本次任务目录
    - 自动选择了哪个功能
    - 候选ID
