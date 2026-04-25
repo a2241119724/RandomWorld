@@ -37,10 +37,24 @@
         {
             AsyncProgressUI.Instance.SetTip("加载敌人管理信息...");
             this.EnemyManagerDataLAB = DataTool.LoadDataByBinary<EnemyManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
-            foreach (ACommonEnemy.EnemyData enemyData in this.EnemyManagerDataLAB.EnemyDatas)
+            this.EnemyManagerDataLAB ??= new EnemyManagerData();
+            this.EnemyManagerDataLAB.EnemyDatas ??= new List<AEnemy.EnemyData>();
+            foreach (AEnemy.EnemyData enemyData in this.EnemyManagerDataLAB.EnemyDatas)
             {
                 GameObject g = this.Create(Vector3LAB.ToVector3(enemyData.Pos));
-                g.GetComponent<ACommonEnemy>().CharacterDataLAB = enemyData;
+                if (g == null)
+                {
+                    continue;
+                }
+
+                AEnemy enemy = g.GetComponent<AEnemy>();
+                if (enemy == null)
+                {
+                    continue;
+                }
+
+                enemy.CharacterDataLAB = enemyData;
+                enemy.CharacterDataLAB.Character = enemy;
             }
 
             TileMap.Instance.StartCoroutine(this.GenEnemy());
@@ -50,9 +64,13 @@
         public override void SaveData()
         {
             this.EnemyManagerDataLAB.EnemyDatas = new ();
-            foreach (ACommonEnemy enemy in this.Characters)
+            foreach (AEnemy enemy in this.Characters)
             {
-                ACommonEnemy.EnemyData enemyData = enemy.CharacterDataLAB as ACommonEnemy.EnemyData;
+                if (enemy == null || enemy.CharacterDataLAB is not AEnemy.EnemyData enemyData)
+                {
+                    continue;
+                }
+
                 enemy.CharacterDataLAB.Pos = Vector3LAB.ToVector3LAB(enemy.transform.position);
                 this.EnemyManagerDataLAB.EnemyDatas.Add(enemyData);
             }
@@ -74,7 +92,7 @@
             /// <summary>
             /// 敌人数据
             /// </summary>
-            public List<ACommonEnemy.EnemyData> EnemyDatas;
+            public List<AEnemy.EnemyData> EnemyDatas;
         }
     }
 }

@@ -130,7 +130,7 @@
         {
             if (id < 0)
             {
-                LogManager.Instance.Log($"id:{id}小于0!!!", LogManager.LogLevelEnum.Error);
+                LogManager.Instance.Log($"id:{id}小于0!!!", LogManager.LogLevelEnum.Warning);
                 return AItem.ItemTypeEnum.Null;
             }
 
