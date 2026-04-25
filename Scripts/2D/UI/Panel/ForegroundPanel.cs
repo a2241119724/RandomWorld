@@ -519,8 +519,9 @@ namespace LAB2D
                 Text text = this.saveSlotButtons[i].GetComponentInChildren<Text>(true);
                 if (text != null)
                 {
+                    string displayName = ArchiveManager.Instance.GetArchiveDisplayName(i);
                     string status = hasArchive ? "已有存档" : "空槽";
-                    text.text = $"存档 {i + 1}\n{status}";
+                    text.text = $"{displayName}\n{status}";
                 }
             }
         }
@@ -541,7 +542,8 @@ namespace LAB2D
             this.pendingOverwriteArchiveIndex = archiveIndex;
             if (this.overwriteConfirmText != null)
             {
-                this.overwriteConfirmText.text = $"存档 {archiveIndex + 1} 已存在\n是否确认覆盖?";
+                string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
+                this.overwriteConfirmText.text = $"{displayName} 已存在\n是否确认覆盖?";
             }
 
             this.overwriteConfirmPanel.SetActive(true);
@@ -570,7 +572,7 @@ namespace LAB2D
         private void SaveToArchive(int archiveIndex)
         {
             ArchiveManager.Instance.SetCurrentArchive(archiveIndex);
-            GlobalInit.Instance.ShowTip($"保存数据: 存档 {archiveIndex + 1}");
+            GlobalInit.Instance.ShowTip($"保存数据: {ArchiveManager.Instance.CurrentArchiveDisplayName}");
             ArchiveManager.Instance.SaveCurrentArchive();
             this.HideSaveSlotPanel();
         }
