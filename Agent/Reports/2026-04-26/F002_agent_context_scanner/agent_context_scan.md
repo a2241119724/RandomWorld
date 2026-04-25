@@ -1,9 +1,10 @@
 # Agent Context Scan
 
-- 生成时间: 2026-04-26 03:25:03
+- 生成时间: 2026-04-26 03:41:53
 - 工具菜单: `Tools/Agent/导出上下文扫描报告`
 - 扫描模式: 只读
-- 输出路径: `Assets/Agent/Reports/2026-04-26/agent_context_scan.md`
+- 本次任务目录: `Assets/Agent/Reports/2026-04-26/F002_agent_context_scanner`
+- 输出路径: `Assets/Agent/Reports/2026-04-26/F002_agent_context_scanner/agent_context_scan.md`
 
 ## Agent 基础文件
 
