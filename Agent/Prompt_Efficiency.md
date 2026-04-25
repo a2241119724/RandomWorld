@@ -6,8 +6,8 @@
 - 如果遇到需要人工确认的高风险候选，请自动跳过它，选择下一个低风险或中风险候选。
 - 一次只实现一个功能。
 - 候选功能总表必须统一维护在：
-  - Agent/Reports/feature_discovery.md
-- 不要在每个任务目录下重复创建 feature_discovery.md。
+  - Agent/Reports/efficiency_discovery.md
+- 不要在每个任务目录下重复创建 efficiency_discovery.md。
 - 每次任务必须在 Agent/Reports/<今天日期>/ 下创建独立任务文件夹，任务卡、验证记录、补充报告等本次任务相关输出都必须放入该文件夹中，避免和同一天其他任务混在一起。
 - 效率/工具类任务的输出目录必须使用固定前缀 `efficiency_`，用于和 Prompt_Feature.md 的 `feature_` 输出隔离，避免同一天同候选ID或同短名任务发生路径冲突。
 - 独立任务文件夹命名格式建议为：
@@ -20,10 +20,10 @@
 - 不要优先选择会直接修改 Scene、Prefab、ScriptableObject、StreamingAssets、存档结构、Photon 同步或 AssetBundle 的功能。
 - 如果所有候选都属于高风险，则只实现一个不改业务资产的只读分析/报告工具。
 - 生成候选功能列表时，必须为每个候选分配唯一编号和完成状态，便于后续判断该候选是否已经处理完成。
-- 完成功能实现与验证后，必须回写 Agent/Reports/feature_discovery.md 中对应候选的状态标记。
+- 完成功能实现与验证后，必须回写 Agent/Reports/efficiency_discovery.md 中对应候选的状态标记。
 - 扫描历史记录时，必须递归检查 Agent/Reports/ 下所有日期目录及其子任务目录中的 task_*.md 和 validation_*.md。
-- 同时必须读取 Agent/Reports/feature_discovery.md，避免重复实现已经 `[DONE]` 的候选。
-- 如果历史任务目录中遗留存在旧版 feature_discovery.md，也需要兼容读取，但新的候选总表只允许写入 Agent/Reports/feature_discovery.md。
+- 同时必须读取 Agent/Reports/efficiency_discovery.md，避免重复实现已经 `[DONE]` 的候选。
+- 如果历史任务目录中遗留存在旧版 efficiency_discovery.md，也需要兼容读取，但新的候选总表只允许写入 Agent/Reports/efficiency_discovery.md。
 
 候选状态规则：
 - `[TODO]`：待处理，尚未实现。
@@ -54,7 +54,7 @@
    - Agent/Templates/agent_task_card.md
 
 2. 读取全局候选功能发现报告：
-   - Agent/Reports/feature_discovery.md
+   - Agent/Reports/efficiency_discovery.md
 
    如果该文件不存在，则自动创建。
    如果该文件已存在，则必须读取其中已有候选，尤其是 `[DONE]`、`[SKIPPED]`、`[BLOCKED]` 和 `[PARTIAL]` 状态，避免重复生成或重复实现同一功能。
@@ -65,13 +65,13 @@
    - Resources/SO、Resources/Tilemap、Resources/Images 中的资源绑定缺口
    - 已有系统中“有数据但无 UI / 有 UI 但无行为 / 有行为但无验证 / 有资源但无检查”的半完成链路
    - 存档、Photon、AssetBundle、资源引用等高风险区域的只读检查机会
-   - Agent/Reports/feature_discovery.md 中已有的候选功能状态
+   - Agent/Reports/efficiency_discovery.md 中已有的候选功能状态
    - Agent/Reports/ 下所有历史日期目录及其子任务目录中的 task_*.md 和 validation_*.md
    - 历史记录中已经标记为 `[DONE]` 的候选，避免重复实现同一功能
-   - 历史任务目录中遗留的旧版 feature_discovery.md，仅作为兼容读取依据，不再作为新的写入目标
+   - 历史任务目录中遗留的旧版 efficiency_discovery.md，仅作为兼容读取依据，不再作为新的写入目标
 
 4. 生成或更新全局功能发现报告：
-   - Agent/Reports/feature_discovery.md
+   - Agent/Reports/efficiency_discovery.md
 
    报告必须包含：
    - 全局候选功能列表
@@ -110,7 +110,7 @@
      - Agent/Reports/<今天日期>/efficiency_<候选ID>_<功能名安全短名>/
    - 如果发生目录调整，必须保证任务卡、验证记录和后续补充文件都位于最终的 `<TASK_DIR>` 中。
    - 不允许把多个任务的输出混写到同一个任务目录中。
-   - 不允许在 `<TASK_DIR>` 中创建新的 feature_discovery.md。
+   - 不允许在 `<TASK_DIR>` 中创建新的 efficiency_discovery.md。
    - 以下路径统一用 `<TASK_DIR>` 表示本次任务目录。
 
 7. 为选中的候选生成任务卡：
@@ -121,7 +121,7 @@
    - 原始候选
    - 当前状态
    - 本次任务目录
-   - 全局候选报告路径：Agent/Reports/feature_discovery.md
+   - 全局候选报告路径：Agent/Reports/efficiency_discovery.md
    - 任务分类
    - 负责 Agent
    - 需要的 Skill
@@ -159,7 +159,7 @@
    - 后续建议
 
 11. 回写全局功能发现报告：
-   - 打开 Agent/Reports/feature_discovery.md
+   - 打开 Agent/Reports/efficiency_discovery.md
    - 找到本次实现的候选ID
    - 将该候选状态从 `[TODO]` 更新为：
      - `[DONE]`：功能已实现且完成可行验证
@@ -173,7 +173,7 @@
      - 验证结果摘要
      - 是否仍有剩余风险
    - 对自动跳过的候选，将状态更新为 `[SKIPPED]`，并写明跳过原因
-   - 不要把状态回写到任务目录下的 feature_discovery.md，因为该文件不应再存在于任务目录中。
+   - 不要把状态回写到任务目录下的 efficiency_discovery.md，因为该文件不应再存在于任务目录中。
 
 12. 最终回复只需要简洁汇总：
    - 全局候选报告路径
