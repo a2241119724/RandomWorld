@@ -14,7 +14,8 @@ namespace LAB2D
     {
         private const string ArchiveRootFolderName = "Archive";
         private const string ArchivePrefix = "Archive_";
-        private readonly int archiveCount = 1;
+        private const int ArchiveSlotCount = 10;
+        private readonly int archiveCount = ArchiveSlotCount;
         private bool isLegacyArchiveChecked;
 
         /// <summary>
@@ -31,6 +32,11 @@ namespace LAB2D
         /// 当前存档目录.
         /// </summary>
         public string CurrentArchiveDirectory => this.GetArchiveDirectory(this.CurrentArchiveIndex);
+
+        /// <summary>
+        /// 存档槽位数量.
+        /// </summary>
+        public int ArchiveCount => this.archiveCount;
 
         /// <summary>
         /// 获取当前已实现的存档槽位名称.
@@ -78,8 +84,33 @@ namespace LAB2D
         /// <returns>是否存在.</returns>
         public bool HasCurrentArchive()
         {
-            this.TryMigrateLegacyArchive();
+            if (this.CurrentArchiveIndex == 0)
+            {
+                this.TryMigrateLegacyArchive();
+            }
+
             return File.Exists(this.GetArchivePath(nameof(TileMap)));
+        }
+
+        /// <summary>
+        /// 指定存档槽是否存在.
+        /// </summary>
+        /// <param name="archiveIndex">存档索引.</param>
+        /// <returns>是否存在.</returns>
+        public bool HasArchive(int archiveIndex)
+        {
+            if (archiveIndex < 0 || archiveIndex >= this.archiveCount)
+            {
+                LogManager.Instance.Log($"archive index {archiveIndex} out of range", LogManager.LogLevelEnum.Error);
+                return false;
+            }
+
+            if (archiveIndex == 0)
+            {
+                this.TryMigrateLegacyArchive();
+            }
+
+            return File.Exists(this.GetArchivePath(archiveIndex, nameof(TileMap)));
         }
 
         /// <summary>
@@ -96,7 +127,11 @@ namespace LAB2D
         /// </summary>
         public void LoadCurrentArchive()
         {
-            this.TryMigrateLegacyArchive();
+            if (this.CurrentArchiveIndex == 0)
+            {
+                this.TryMigrateLegacyArchive();
+            }
+
             List<Type> saveDatas = Tool.GetChildByParent<ASaveData>();
             List<Type> monoSaveDatas = Tool.GetChildByParent<AMonoSaveData>();
 
@@ -116,6 +151,11 @@ namespace LAB2D
         private string GetArchiveDirectory(int archiveIndex)
         {
             return Path.Combine(Application.persistentDataPath, ArchiveRootFolderName, this.GetArchiveName(archiveIndex));
+        }
+
+        private string GetArchivePath(int archiveIndex, string name)
+        {
+            return Path.Combine(this.GetArchiveDirectory(archiveIndex), name + ".lab");
         }
 
         private void InvokeSaveData(List<Type> types)
@@ -161,13 +201,14 @@ namespace LAB2D
 
         private void TryMigrateLegacyArchive()
         {
-            if (this.isLegacyArchiveChecked || this.CurrentArchiveIndex != 0)
+            if (this.isLegacyArchiveChecked)
             {
                 return;
             }
 
             this.isLegacyArchiveChecked = true;
-            if (this.HasArchiveFilesInCurrentDirectory())
+            const int legacyArchiveIndex = 0;
+            if (this.HasArchiveFiles(legacyArchiveIndex))
             {
                 return;
             }
@@ -178,11 +219,12 @@ namespace LAB2D
                 return;
             }
 
-            Directory.CreateDirectory(this.CurrentArchiveDirectory);
+            string targetDirectory = this.GetArchiveDirectory(legacyArchiveIndex);
+            Directory.CreateDirectory(targetDirectory);
             string[] legacyFiles = Directory.GetFiles(Application.persistentDataPath, "*.lab");
             foreach (string legacyFile in legacyFiles)
             {
-                string targetFile = Path.Combine(this.CurrentArchiveDirectory, Path.GetFileName(legacyFile));
+                string targetFile = Path.Combine(targetDirectory, Path.GetFileName(legacyFile));
                 if (File.Exists(targetFile))
                 {
                     continue;
@@ -192,14 +234,15 @@ namespace LAB2D
             }
         }
 
-        private bool HasArchiveFilesInCurrentDirectory()
+        private bool HasArchiveFiles(int archiveIndex)
         {
-            if (!Directory.Exists(this.CurrentArchiveDirectory))
+            string archiveDirectory = this.GetArchiveDirectory(archiveIndex);
+            if (!Directory.Exists(archiveDirectory))
             {
                 return false;
             }
 
-            return File.Exists(this.GetArchivePath(nameof(TileMap)));
+            return File.Exists(this.GetArchivePath(archiveIndex, nameof(TileMap)));
         }
     }
 }
