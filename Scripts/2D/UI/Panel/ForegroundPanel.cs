@@ -11,13 +11,14 @@ namespace LAB2D
     /// </summary>
     public class ForegroundPanel : ABasePanel<ForegroundPanel>
     {
-        private const int SaveSlotColumnCount = 2;
-        private static readonly Vector2 SaveSlotSize = new (280.0f, 72.0f);
-        private static readonly Vector2 SaveSlotSpacing = new (18.0f, 14.0f);
+        private const float SaveSlotSpacing = 12.0f;
+        private static readonly Vector2 SaveSlotSize = new (560.0f, 72.0f);
+        private static readonly Vector2 SaveSlotViewportSize = new (640.0f, 360.0f);
         private readonly List<Button> saveSlotButtons = new ();
         private GameObject saveSlotPanel;
         private GameObject overwriteConfirmPanel;
         private Text overwriteConfirmText;
+        private RectTransform saveSlotContent;
         private Font uiFont;
         private int pendingOverwriteArchiveIndex = -1;
 
@@ -176,12 +177,13 @@ namespace LAB2D
             titleRect.anchoredPosition = new Vector2(0.0f, 250.0f);
             titleRect.sizeDelta = new Vector2(600.0f, 70.0f);
 
+            this.saveSlotContent = this.CreateSaveSlotScrollView();
             for (int i = 0; i < ArchiveManager.Instance.ArchiveCount; i++)
             {
                 int archiveIndex = i;
                 Button button = this.CreateButton(
                     $"SaveSlot_{archiveIndex + 1}",
-                    this.saveSlotPanel.transform,
+                    this.saveSlotContent,
                     string.Empty,
                     SaveSlotSize,
                     () => this.OnClick_SaveSlot(archiveIndex));
@@ -203,6 +205,46 @@ namespace LAB2D
 
             this.CreateOverwriteConfirmPanel();
             this.saveSlotPanel.SetActive(false);
+        }
+
+        private RectTransform CreateSaveSlotScrollView()
+        {
+            GameObject viewport = this.CreateUIObject("SaveSlotViewport", this.saveSlotPanel.transform);
+            RectTransform viewportRect = viewport.GetComponent<RectTransform>();
+            viewportRect.anchorMin = new Vector2(0.5f, 0.5f);
+            viewportRect.anchorMax = new Vector2(0.5f, 0.5f);
+            viewportRect.pivot = new Vector2(0.5f, 0.5f);
+            viewportRect.anchoredPosition = new Vector2(0.0f, 20.0f);
+            viewportRect.sizeDelta = SaveSlotViewportSize;
+
+            Image image = viewport.AddComponent<Image>();
+            image.color = new Color(0.0f, 0.0f, 0.0f, 0.25f);
+            image.raycastTarget = true;
+
+            viewport.AddComponent<RectMask2D>();
+            ScrollRect scrollRect = viewport.AddComponent<ScrollRect>();
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.scrollSensitivity = 50.0f;
+            scrollRect.viewport = viewportRect;
+
+            GameObject content = this.CreateUIObject("SaveSlotContent", viewport.transform);
+            RectTransform contentRect = content.GetComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0.5f, 1.0f);
+            contentRect.anchorMax = new Vector2(0.5f, 1.0f);
+            contentRect.pivot = new Vector2(0.5f, 1.0f);
+            contentRect.anchoredPosition = Vector2.zero;
+            contentRect.sizeDelta = this.GetSaveSlotContentSize();
+            scrollRect.content = contentRect;
+            return contentRect;
+        }
+
+        private Vector2 GetSaveSlotContentSize()
+        {
+            int count = ArchiveManager.Instance.ArchiveCount;
+            float height = (count * SaveSlotSize.y) + (Mathf.Max(0, count - 1) * SaveSlotSpacing);
+            return new Vector2(SaveSlotSize.x, height);
         }
 
         private void CreateOverwriteConfirmPanel()
@@ -347,14 +389,11 @@ namespace LAB2D
         private void SetSaveSlotButtonPosition(Button saveSlotButton, int archiveIndex)
         {
             RectTransform rectTransform = saveSlotButton.GetComponent<RectTransform>();
-            int row = archiveIndex / SaveSlotColumnCount;
-            int column = archiveIndex % SaveSlotColumnCount;
-            float x = (column - ((SaveSlotColumnCount - 1) * 0.5f)) * (SaveSlotSize.x + SaveSlotSpacing.x);
-            float y = 165.0f - (row * (SaveSlotSize.y + SaveSlotSpacing.y));
-            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.anchoredPosition = new Vector2(x, y);
+            float y = -archiveIndex * (SaveSlotSize.y + SaveSlotSpacing);
+            rectTransform.anchorMin = new Vector2(0.5f, 1.0f);
+            rectTransform.anchorMax = new Vector2(0.5f, 1.0f);
+            rectTransform.pivot = new Vector2(0.5f, 1.0f);
+            rectTransform.anchoredPosition = new Vector2(0.0f, y);
             rectTransform.sizeDelta = SaveSlotSize;
             rectTransform.localScale = Vector3.one;
         }
