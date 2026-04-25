@@ -9,13 +9,14 @@ namespace LAB2D
     /// </summary>
     public class NewOrContinuePanel : ABasePanel<NewOrContinuePanel>
     {
-        private const int SlotColumnCount = 2;
-        private static readonly Vector2 SlotSize = new (280.0f, 72.0f);
-        private static readonly Vector2 SlotSpacing = new (16.0f, 12.0f);
+        private const float SlotSpacing = 12.0f;
+        private static readonly Vector2 SlotSize = new (560.0f, 72.0f);
+        private static readonly Vector2 SlotViewportSize = new (640.0f, 360.0f);
         private readonly List<Button> archiveSlotButtons = new ();
         private Button newGameButton;
         private Button continueGameButton;
-        private Transform archiveSlotRoot;
+        private RectTransform archiveSlotContent;
+        private Transform archiveSlotViewport;
 
         public NewOrContinuePanel()
         {
@@ -23,7 +24,7 @@ namespace LAB2D
             this.Init();
             this.newGameButton = Tool.GetComponentInChildren<Button>(this.Panel, "NewGame");
             this.continueGameButton = Tool.GetComponentInChildren<Button>(this.Panel, "ContinueGame");
-            this.archiveSlotRoot = Tool.GetComponentInChildren<Transform>(this.Panel, "Content");
+            this.archiveSlotViewport = Tool.GetComponentInChildren<Transform>(this.Panel, "Content");
             this.CreateArchiveSlotButtons();
         }
 
@@ -42,24 +43,15 @@ namespace LAB2D
 
         private void CreateArchiveSlotButtons()
         {
-            if (this.newGameButton == null || this.continueGameButton == null || this.archiveSlotRoot == null)
+            if (this.newGameButton == null || this.continueGameButton == null || this.archiveSlotViewport == null)
             {
                 this.BindDefaultButtons();
                 return;
             }
 
-            RectTransform rootRect = this.archiveSlotRoot.GetComponent<RectTransform>();
-            rootRect.anchorMin = new Vector2(0.18f, 0.12f);
-            rootRect.anchorMax = new Vector2(0.82f, 0.82f);
-            rootRect.anchoredPosition = Vector2.zero;
-            rootRect.sizeDelta = Vector2.zero;
-            rootRect.pivot = new Vector2(0.5f, 1.0f);
+            this.ConfigureArchiveSlotViewport();
 
-            HorizontalLayoutGroup horizontalLayout = this.archiveSlotRoot.GetComponent<HorizontalLayoutGroup>();
-            if (horizontalLayout != null)
-            {
-                horizontalLayout.enabled = false;
-            }
+            this.archiveSlotContent = this.CreateArchiveSlotContent();
 
             this.newGameButton.gameObject.SetActive(false);
             this.continueGameButton.gameObject.SetActive(false);
@@ -68,7 +60,7 @@ namespace LAB2D
             {
                 Button archiveSlotButton = UnityEngine.Object.Instantiate(
                     this.continueGameButton.gameObject,
-                    this.archiveSlotRoot,
+                    this.archiveSlotContent,
                     false).GetComponent<Button>();
                 int archiveIndex = i;
                 archiveSlotButton.name = $"ArchiveSlot_{archiveIndex + 1}";
@@ -80,6 +72,71 @@ namespace LAB2D
             }
         }
 
+        private void ConfigureArchiveSlotViewport()
+        {
+            RectTransform viewportRect = this.archiveSlotViewport.GetComponent<RectTransform>();
+            viewportRect.anchorMin = new Vector2(0.5f, 0.5f);
+            viewportRect.anchorMax = new Vector2(0.5f, 0.5f);
+            viewportRect.pivot = new Vector2(0.5f, 0.5f);
+            viewportRect.anchoredPosition = new Vector2(0.0f, 20.0f);
+            viewportRect.sizeDelta = SlotViewportSize;
+
+            HorizontalLayoutGroup horizontalLayout = this.archiveSlotViewport.GetComponent<HorizontalLayoutGroup>();
+            if (horizontalLayout != null)
+            {
+                horizontalLayout.enabled = false;
+            }
+
+            Image image = this.archiveSlotViewport.GetComponent<Image>();
+            if (image == null)
+            {
+                image = this.archiveSlotViewport.gameObject.AddComponent<Image>();
+            }
+
+            image.color = new Color(0.0f, 0.0f, 0.0f, 0.25f);
+            image.raycastTarget = true;
+
+            RectMask2D mask = this.archiveSlotViewport.GetComponent<RectMask2D>();
+            if (mask == null)
+            {
+                this.archiveSlotViewport.gameObject.AddComponent<RectMask2D>();
+            }
+        }
+
+        private RectTransform CreateArchiveSlotContent()
+        {
+            GameObject content = new ("ArchiveSlotContent");
+            content.transform.SetParent(this.archiveSlotViewport, false);
+            content.layer = this.archiveSlotViewport.gameObject.layer;
+            RectTransform contentRect = content.AddComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0.5f, 1.0f);
+            contentRect.anchorMax = new Vector2(0.5f, 1.0f);
+            contentRect.pivot = new Vector2(0.5f, 1.0f);
+            contentRect.anchoredPosition = Vector2.zero;
+            contentRect.sizeDelta = this.GetSlotContentSize();
+
+            ScrollRect scrollRect = this.archiveSlotViewport.GetComponent<ScrollRect>();
+            if (scrollRect == null)
+            {
+                scrollRect = this.archiveSlotViewport.gameObject.AddComponent<ScrollRect>();
+            }
+
+            scrollRect.content = contentRect;
+            scrollRect.viewport = this.archiveSlotViewport.GetComponent<RectTransform>();
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.scrollSensitivity = 50.0f;
+            return contentRect;
+        }
+
+        private Vector2 GetSlotContentSize()
+        {
+            int count = ArchiveManager.Instance.ArchiveCount;
+            float height = (count * SlotSize.y) + (Mathf.Max(0, count - 1) * SlotSpacing);
+            return new Vector2(SlotSize.x, height);
+        }
+
         private void SetArchiveSlotButtonPosition(Button archiveSlotButton, int archiveIndex)
         {
             RectTransform rectTransform = archiveSlotButton.GetComponent<RectTransform>();
@@ -88,14 +145,11 @@ namespace LAB2D
                 return;
             }
 
-            int row = archiveIndex / SlotColumnCount;
-            int column = archiveIndex % SlotColumnCount;
-            float x = (column - ((SlotColumnCount - 1) * 0.5f)) * (SlotSize.x + SlotSpacing.x);
-            float y = -row * (SlotSize.y + SlotSpacing.y);
+            float y = -archiveIndex * (SlotSize.y + SlotSpacing);
             rectTransform.anchorMin = new Vector2(0.5f, 1.0f);
             rectTransform.anchorMax = new Vector2(0.5f, 1.0f);
             rectTransform.pivot = new Vector2(0.5f, 1.0f);
-            rectTransform.anchoredPosition = new Vector2(x, y);
+            rectTransform.anchoredPosition = new Vector2(0.0f, y);
             rectTransform.sizeDelta = SlotSize;
             rectTransform.localScale = Vector3.one;
         }
