@@ -9,11 +9,12 @@
   - Agent/Reports/feature_discovery.md
 - 不要在每个任务目录下重复创建 feature_discovery.md。
 - 每次任务必须在 Agent/Reports/<今天日期>/ 下创建独立任务文件夹，任务卡、验证记录、补充报告等本次任务相关输出都必须放入该文件夹中，避免和同一天其他任务混在一起。
+- 效率/工具类任务的输出目录必须使用固定前缀 `efficiency_`，用于和 Prompt_Feature.md 的 `feature_` 输出隔离，避免同一天同候选ID或同短名任务发生路径冲突。
 - 独立任务文件夹命名格式建议为：
-  - Agent/Reports/<今天日期>/<候选ID>_<功能名安全短名>/
+  - Agent/Reports/<今天日期>/efficiency_<候选ID>_<功能名安全短名>/
   - 如果在选择候选前无法确定候选ID，则先使用：
-    - Agent/Reports/<今天日期>/run_<HHmmss>/
-    - 选定候选后，可继续使用该目录，也可重命名为 `<候选ID>_<功能名安全短名>`。
+    - Agent/Reports/<今天日期>/efficiency_run_<HHmmss>/
+    - 选定候选后，可继续使用该目录，也可重命名为 `efficiency_<候选ID>_<功能名安全短名>`。
 - 同一天多次执行时，不得覆盖已有任务目录；如目录已存在，自动追加时间戳或序号。
 - 优先选择低风险、高价值、边界清晰、能提升后续开发效率的功能，例如只读扫描器、Editor 工具、报告生成器、模板生成器、资源完整性检查器。
 - 不要优先选择会直接修改 Scene、Prefab、ScriptableObject、StreamingAssets、存档结构、Photon 同步或 AssetBundle 的功能。
@@ -40,7 +41,7 @@
 
 | [TODO] | F001 | 资源引用完整性只读扫描器 | Resources/SO 中存在未校验引用 | 高 | 低 | 中 | P0 | ResourceAuditAgent | ReadOnlyScanSkill | 推荐优先实现 |
 | [SKIPPED] | F002 | 自动修复 Prefab 缺失绑定 | Prefab 存在 Missing Reference | 高 | 高 | 高 | P1 | ResourceFixAgent | PrefabModifySkill | 涉及 Prefab 直接修改，跳过 |
-| [DONE] | F003 | TODO/FIXME 报告生成器 | Scripts/2D 存在 TODO/FIXME | 中 | 低 | 低 | P1 | CodeAuditAgent | ReportGenerateSkill | 已完成；任务卡：Agent/Reports/2026-04-26/F003_TODO_FIXME_Report/task_F003_TODO_FIXME_Report.md；验证记录：Agent/Reports/2026-04-26/F003_TODO_FIXME_Report/validation_F003.md |
+| [DONE] | F003 | TODO/FIXME 报告生成器 | Scripts/2D 存在 TODO/FIXME | 中 | 低 | 低 | P1 | CodeAuditAgent | ReportGenerateSkill | 已完成；任务卡：Agent/Reports/2026-04-26/efficiency_F003_TODO_FIXME_Report/task_efficiency_F003_TODO_FIXME_Report.md；验证记录：Agent/Reports/2026-04-26/efficiency_F003_TODO_FIXME_Report/validation_efficiency_F003.md |
 
 执行步骤：
 
@@ -101,19 +102,19 @@
    - 首先确保日期目录存在：
      - Agent/Reports/<今天日期>/
    - 然后在该日期目录下创建本次任务的独立目录：
-     - Agent/Reports/<今天日期>/<候选ID>_<功能名安全短名>/
+     - Agent/Reports/<今天日期>/efficiency_<候选ID>_<功能名安全短名>/
    - 如果候选ID尚未确定，则先创建：
-     - Agent/Reports/<今天日期>/run_<HHmmss>/
-   - 选定候选后，如果当前目录仍是 run_<HHmmss>，可继续使用该目录。
+     - Agent/Reports/<今天日期>/efficiency_run_<HHmmss>/
+   - 选定候选后，如果当前目录仍是 efficiency_run_<HHmmss>，可继续使用该目录。
    - 如果需要更清晰区分任务，可将目录调整为：
-     - Agent/Reports/<今天日期>/<候选ID>_<功能名安全短名>/
+     - Agent/Reports/<今天日期>/efficiency_<候选ID>_<功能名安全短名>/
    - 如果发生目录调整，必须保证任务卡、验证记录和后续补充文件都位于最终的 `<TASK_DIR>` 中。
    - 不允许把多个任务的输出混写到同一个任务目录中。
    - 不允许在 `<TASK_DIR>` 中创建新的 feature_discovery.md。
    - 以下路径统一用 `<TASK_DIR>` 表示本次任务目录。
 
 7. 为选中的候选生成任务卡：
-   - <TASK_DIR>/task_<候选ID>_<功能名安全短名>.md
+   - <TASK_DIR>/task_efficiency_<候选ID>_<功能名安全短名>.md
 
    任务卡必须包含：
    - 候选ID
@@ -145,7 +146,7 @@
    - 如果不能运行 Unity 编译或 Play Mode，要在任务卡中明确写出未验证原因
    - 如果新增 Editor 工具或报告工具，要验证脚本路径、输出路径和基本扫描逻辑
    - 验证记录必须写入：
-     - <TASK_DIR>/validation_<候选ID>.md
+     - <TASK_DIR>/validation_efficiency_<候选ID>.md
 
 10. 更新任务卡结果区，写入：
    - 最终状态：`[DONE]`、`[PARTIAL]` 或 `[BLOCKED]`

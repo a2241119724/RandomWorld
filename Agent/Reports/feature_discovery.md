@@ -18,10 +18,10 @@
 
 | 状态 | 候选ID | 功能名称 | 来源信号 | 价值 | 风险 | 成本 | 优先级 | 推荐 Agent | 推荐 Skill | 处理说明 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| [DONE] | F001 | Item 资源引用完整性只读扫描器 | `Scripts/2D/Editor/ItemResourceIntegrityValidator.cs` 已存在，覆盖 `Resources/SO`、`Resources/Tilemap/Item`、`Resources/Images/Item` | 高 | 低 | 中 | P0 | ResourceAgent | ResourceCheckSkill | 已有实现；去重依据：脚本常量 `F001_item_resource_integrity_validator` 与菜单 `Tools/Data/导出Item资源绑定报告`；历史任务卡/验证记录未发现。 |
-| [DONE] | F002 | Agent 上下文只读扫描器 | `Scripts/2D/Editor/AgentContextScanner.cs` 已存在，可导出 Agent 文件、历史任务、脚本信号、资源根概况 | 高 | 低 | 中 | P0 | ToolAgent | EditorToolSkill | 已有实现；去重依据：脚本常量 `F002_agent_context_scanner` 与菜单 `Tools/Agent/导出上下文扫描报告`；历史任务卡/验证记录未发现。 |
-| [DONE] | F010 | 候选历史状态索引器 | `Scripts/2D/Editor/AgentCandidateHistoryIndexer.cs` 已存在，可递归读取候选总表、任务卡和验证记录 | 高 | 低 | 中 | P0 | ToolAgent | DocumentSkill | 已有实现；去重依据：脚本常量 `F010_candidate_history_index` 与菜单 `Tools/Agent/导出候选历史状态索引`；历史任务卡/验证记录未发现。 |
-| [DONE] | F011 | AssetBundle 与 StreamingAssets 只读清单报告器 | `StreamingAssets`、`ResourcesLocal/Prefabs`、`AddressableAssetsData` 已存在，`OtherTool` 有打 AB 包入口但缺少构建前后只读清单 | 高 | 低 | 中 | P0 | BuildAgent | BuildFixSkill | 已完成；任务目录：`Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report`；任务卡：`Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report/task_F011_AssetBundle_Inventory_Report.md`；验证记录：`Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report/validation_F011.md`；修改文件：`Scripts/2D/Editor/AssetBundleInventoryReporter.cs`, `Scripts/2D/Editor/AssetBundleInventoryReporter.cs.meta`, `Agent/Reports/feature_discovery.md`；验证结果：静态检查通过，确认只写报告、不触发打包或资源修改；Unity CLI/csc 不可用，未做 Unity 编译；剩余风险：需在 Unity Editor 中首次执行菜单确认编译与报告生成。 |
+| [DONE] | F001 | Item 资源引用完整性只读扫描器 | `Scripts/2D/Editor/ItemResourceIntegrityValidator.cs` 已存在，覆盖 `Resources/SO`、`Resources/Tilemap/Item`、`Resources/Images/Item` | 高 | 低 | 中 | P0 | ResourceAgent | ResourceCheckSkill | 已有实现；去重依据：脚本常量 `efficiency_F001_item_resource_integrity_validator` 与菜单 `Tools/Data/导出Item资源绑定报告`；历史任务卡/验证记录未发现。 |
+| [DONE] | F002 | Agent 上下文只读扫描器 | `Scripts/2D/Editor/AgentContextScanner.cs` 已存在，可导出 Agent 文件、历史任务、脚本信号、资源根概况 | 高 | 低 | 中 | P0 | ToolAgent | EditorToolSkill | 已有实现；去重依据：脚本常量 `efficiency_F002_agent_context_scanner` 与菜单 `Tools/Agent/导出上下文扫描报告`；历史任务卡/验证记录未发现。 |
+| [DONE] | F010 | 候选历史状态索引器 | `Scripts/2D/Editor/AgentCandidateHistoryIndexer.cs` 已存在，可递归读取候选总表、任务卡和验证记录 | 高 | 低 | 中 | P0 | ToolAgent | DocumentSkill | 已有实现；去重依据：脚本常量 `efficiency_F010_candidate_history_index` 与菜单 `Tools/Agent/导出候选历史状态索引`；历史任务卡/验证记录未发现。 |
+| [DONE] | F011 | AssetBundle 与 StreamingAssets 只读清单报告器 | `StreamingAssets`、`ResourcesLocal/Prefabs`、`AddressableAssetsData` 已存在，`OtherTool` 有打 AB 包入口但缺少构建前后只读清单 | 高 | 低 | 中 | P0 | BuildAgent | BuildFixSkill | 已完成；任务目录：`Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report`；任务卡：`Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report/task_efficiency_F011_AssetBundle_Inventory_Report.md`；验证记录：`Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report/validation_efficiency_F011.md`；修改文件：`Scripts/2D/Editor/AssetBundleInventoryReporter.cs`, `Scripts/2D/Editor/AssetBundleInventoryReporter.cs.meta`, `Agent/Reports/feature_discovery.md`；验证结果：静态检查通过，确认只写报告、不触发打包或资源修改；Unity CLI/csc 不可用，未做 Unity 编译；剩余风险：需在 Unity Editor 中首次执行菜单确认编译与报告生成。 |
 | [TODO] | F012 | 存档结构只读字段扫描报告器 | `ArchiveManager` 与 `Scripts/2D/Data` 属高风险区域，后续存档改动需要字段基线 | 高 | 中 | 中 | P1 | SaveNetworkAgent | ErrorAnalyzeSkill | 只读扫描可做，暂不修改存档结构；适合后续任务。 |
 | [TODO] | F013 | Scene 关键入口只读索引报告器 | `Scenes/Game.unity` 等场景存在，运行入口和 Manager/Panel/Tilemap 绑定缺少结构化索引 | 中 | 中 | 中 | P1 | SceneAgent | SceneAnalyzeSkill | 只读索引可做，直接修复 Scene/Prefab 缺失引用需跳过或单独确认。 |
 | [TODO] | F014 | WorkerTask 模板生成器 | 路线图建议补齐 WorkerTask 模板，`Scripts/2D/Character/Worker/Task` 存在扩展信号 | 中 | 低 | 中 | P1 | AINPCAgent | ScriptGenerateSkill | 可生成模板文件但不得自动接入任务队列、UI、存档或 Photon；适合后续低侵入任务。 |
@@ -44,7 +44,7 @@
 - F001: 已发现实现文件 `Scripts/2D/Editor/ItemResourceIntegrityValidator.cs`；修改文件和验证记录未在历史任务目录中发现。
 - F002: 已发现实现文件 `Scripts/2D/Editor/AgentContextScanner.cs`；修改文件和验证记录未在历史任务目录中发现。
 - F010: 已发现实现文件 `Scripts/2D/Editor/AgentCandidateHistoryIndexer.cs`；修改文件和验证记录未在历史任务目录中发现。
-- F011: 已实现 `Scripts/2D/Editor/AssetBundleInventoryReporter.cs`；任务卡 `Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report/task_F011_AssetBundle_Inventory_Report.md`；验证记录 `Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report/validation_F011.md`。
+- F011: 已实现 `Scripts/2D/Editor/AssetBundleInventoryReporter.cs`；任务卡 `Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report/task_efficiency_F011_AssetBundle_Inventory_Report.md`；验证记录 `Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report/validation_efficiency_F011.md`。
 
 ## 历史已完成候选去重依据
 

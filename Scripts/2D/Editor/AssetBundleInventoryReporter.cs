@@ -15,7 +15,7 @@ namespace LAB2D
     {
         private const string MenuPath = "Tools/Agent/导出AssetBundle清单报告";
         private const string ReportRoot = "Assets/Agent/Reports";
-        private const string TaskDirectoryName = "F011_AssetBundle_Inventory_Report";
+        private const string TaskDirectoryName = "efficiency_F011_AssetBundle_Inventory_Report";
         private const string ReportFileName = "assetbundle_inventory_report.md";
         private const string StreamingAssetsRoot = "Assets/StreamingAssets";
         private const string ResourcesLocalPrefabRoot = "Assets/ResourcesLocal/Prefabs";

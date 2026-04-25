@@ -4,14 +4,14 @@
 - 功能名称: AssetBundle 与 StreamingAssets 只读清单报告器
 - 最终状态: [DONE]
 - 验证时间: 2026-04-26
-- 任务目录: `Agent/Reports/2026-04-26/F011_AssetBundle_Inventory_Report`
+- 任务目录: `Agent/Reports/2026-04-26/efficiency_F011_AssetBundle_Inventory_Report`
 
 ## 验证项
 
 | 验证项 | 结果 | 记录 |
 |---|---|---|
 | 脚本存在性 | 通过 | `Scripts/2D/Editor/AssetBundleInventoryReporter.cs` 和 `.meta` 已创建。 |
-| 菜单与输出路径 | 通过 | 菜单路径为 `Tools/Agent/导出AssetBundle清单报告`；默认输出到 `Assets/Agent/Reports/<date>/F011_AssetBundle_Inventory_Report*/assetbundle_inventory_report.md`。 |
+| 菜单与输出路径 | 通过 | 菜单路径为 `Tools/Agent/导出AssetBundle清单报告`；默认输出到 `Assets/Agent/Reports/<date>/efficiency_F011_AssetBundle_Inventory_Report*/assetbundle_inventory_report.md`。 |
 | 只读边界 | 通过 | `rg` 检查显示新脚本没有 `BuildPipeline`, `BuildAssetBundles`, `DeleteAsset`, `MoveAsset`, `CreateAsset`, `SaveAssets`, `SetAssetBundleName`, `WriteAllBytes`, `File.Delete`, `Directory.Delete`；唯一写入为 `File.WriteAllText` 写入报告文件。 |
 | 基本扫描逻辑 | 通过 | PowerShell 只读扫描确认：`StreamingAssets` 非 `.meta` 文件 4 个、bundle 候选 2 个、manifest 2 个；`ResourcesLocal/Prefabs` Prefab 源 25 个；`AddressableAssetsData` 非 `.meta` 文件 17 个；三处缺失 `.meta` 数量均为 0。 |
 | 历史去重 | 通过 | 递归检查 `Agent/Reports` 后，仅存在全局 `Agent/Reports/feature_discovery.md` 和本任务卡；未在任务目录创建 `feature_discovery.md`。 |

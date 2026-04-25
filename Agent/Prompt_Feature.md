@@ -15,11 +15,12 @@
   - Agent/Reports/feature_discovery.md
 - 不要在每个任务目录下重复创建 feature_discovery.md。
 - 每次任务必须在 Agent/Reports/<今天日期>/ 下创建独立任务文件夹，任务卡、验证记录、补充报告等本次任务相关输出都必须放入该文件夹中，避免和同一天其他任务混在一起。
+- 游戏业务功能任务的输出目录必须使用固定前缀 `feature_`，用于和 Prompt_Efficiency.md 的 `efficiency_` 输出隔离，避免同一天同候选ID或同短名任务发生路径冲突。
 - 独立任务文件夹命名格式建议为：
-  - Agent/Reports/<今天日期>/<候选ID>_<功能名安全短名>/
+  - Agent/Reports/<今天日期>/feature_<候选ID>_<功能名安全短名>/
   - 如果在选择候选前无法确定候选ID，则先使用：
-    - Agent/Reports/<今天日期>/run_<HHmmss>/
-    - 选定候选后，可继续使用该目录，也可重命名为 `<候选ID>_<功能名安全短名>`。
+    - Agent/Reports/<今天日期>/feature_run_<HHmmss>/
+    - 选定候选后，可继续使用该目录，也可重命名为 `feature_<候选ID>_<功能名安全短名>`。
 - 同一天多次执行时，不得覆盖已有任务目录；如目录已存在，自动追加时间戳或序号。
 - 优先选择与游戏核心体验、玩家成长、关卡反馈、奖励反馈、交互体验、战斗/操作反馈、任务目标、成就统计、资源收集、引导提示等游戏业务相关的功能。
 - 优先选择低风险、高价值、边界清晰、不破坏现有资源和存档结构的新功能。
@@ -57,7 +58,7 @@
 | [TODO] | F001 | 玩家击杀连击计数与反馈功能 | 战斗反馈 | 战斗脚本中存在击杀事件但缺少连续击杀反馈 | 提升战斗爽感和即时反馈 | 可复用为后续成就/任务条件 | 中 | 中 | P0 | GameplayFeatureAgent | RuntimeFeatureSkill | 推荐优先实现，采用独立脚本和事件接口 |
 | [TODO] | F002 | 关卡完成结果统计面板数据层 | 关卡结算 | 关卡流程有胜负结果但缺少统一统计数据 | 提升结算反馈和成长感 | 为 UI 面板和数据分析提供基础 | 低 | 中 | P0 | LevelFeatureAgent | DataModelSkill | 可先实现数据模型和管理器，不直接改 UI Prefab |
 | [SKIPPED] | F003 | 自动修改主场景并接入完整奖励弹窗 | 奖励反馈 | 奖励系统存在但缺少弹窗表现 | 提升奖励获得感 | 需要修改 Scene/Prefab，风险高 | 高 | 高 | P1 | UIIntegrationAgent | PrefabModifySkill | 涉及直接修改 Scene/Prefab，自动跳过 |
-| [DONE] | F004 | 玩家行为轻量日志记录功能 | 数据反馈 | 玩家操作缺少统一埋点记录 | 有助于分析玩家行为 | 为后续任务、成就、调优提供数据基础 | 低 | 中 | P1 | GameplayFeatureAgent | RuntimeFeatureSkill | 已完成；任务卡：Agent/Reports/2026-04-26/F004_Player_Action_Log/task_F004_Player_Action_Log.md；验证记录：Agent/Reports/2026-04-26/F004_Player_Action_Log/validation_F004.md |
+| [DONE] | F004 | 玩家行为轻量日志记录功能 | 数据反馈 | 玩家操作缺少统一埋点记录 | 有助于分析玩家行为 | 为后续任务、成就、调优提供数据基础 | 低 | 中 | P1 | GameplayFeatureAgent | RuntimeFeatureSkill | 已完成；任务卡：Agent/Reports/2026-04-26/feature_F004_Player_Action_Log/task_feature_F004_Player_Action_Log.md；验证记录：Agent/Reports/2026-04-26/feature_F004_Player_Action_Log/validation_feature_F004.md |
 
 游戏业务候选重点方向：
 
@@ -178,19 +179,19 @@
    - 首先确保日期目录存在：
      - Agent/Reports/<今天日期>/
    - 然后在该日期目录下创建本次任务的独立目录：
-     - Agent/Reports/<今天日期>/<候选ID>_<功能名安全短名>/
+     - Agent/Reports/<今天日期>/feature_<候选ID>_<功能名安全短名>/
    - 如果候选ID尚未确定，则先创建：
-     - Agent/Reports/<今天日期>/run_<HHmmss>/
-   - 选定候选后，如果当前目录仍是 run_<HHmmss>，可继续使用该目录。
+     - Agent/Reports/<今天日期>/feature_run_<HHmmss>/
+   - 选定候选后，如果当前目录仍是 feature_run_<HHmmss>，可继续使用该目录。
    - 如果需要更清晰区分任务，可将目录调整为：
-     - Agent/Reports/<今天日期>/<候选ID>_<功能名安全短名>/
+     - Agent/Reports/<今天日期>/feature_<候选ID>_<功能名安全短名>/
    - 如果发生目录调整，必须保证任务卡、验证记录和后续补充文件都位于最终的 `<TASK_DIR>` 中。
    - 不允许把多个任务的输出混写到同一个任务目录中。
    - 不允许在 `<TASK_DIR>` 中创建新的 feature_discovery.md。
    - 以下路径统一用 `<TASK_DIR>` 表示本次任务目录。
 
 7. 为选中的候选生成任务卡：
-   - <TASK_DIR>/task_<候选ID>_<功能名安全短名>.md
+   - <TASK_DIR>/task_feature_<候选ID>_<功能名安全短名>.md
 
    任务卡必须包含：
    - 候选ID
@@ -234,7 +235,7 @@
    - 如果新增 Editor 工具或报告工具，要验证菜单路径、输出路径和基本扫描逻辑
    - 如果新增数据模型或管理器，要验证默认值、空引用保护和调用边界
    - 验证记录必须写入：
-     - <TASK_DIR>/validation_<候选ID>.md
+     - <TASK_DIR>/validation_feature_<候选ID>.md
 
 10. 更新任务卡结果区，写入：
    - 最终状态：`[DONE]`、`[PARTIAL]` 或 `[BLOCKED]`
