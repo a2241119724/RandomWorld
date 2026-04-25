@@ -16,6 +16,7 @@ namespace LAB2D
     {
         private const string MenuPath = "Tools/Agent/导出上下文扫描报告";
         private const string ReportRoot = "Assets/Agent/Reports";
+        private const string TaskDirectoryName = "F002_agent_context_scanner";
         private const string ReportFileName = "agent_context_scan.md";
         private const string AgentRoot = "Assets/Agent";
         private const string ScriptsRoot = "Assets/Scripts/2D";
@@ -64,20 +65,16 @@ namespace LAB2D
         private static void ExportReport()
         {
             DateTime now = DateTime.Now;
-            string directory = NormalizePath(Path.Combine(ReportRoot, now.ToString("yyyy-MM-dd")));
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
+            string directory = CreateUniqueTaskDirectory(now);
             string reportPath = NormalizePath(Path.Combine(directory, ReportFileName));
-            File.WriteAllText(reportPath, BuildReport(now), new UTF8Encoding(false));
+            File.WriteAllText(reportPath, BuildReport(now, directory), new UTF8Encoding(false));
             AssetDatabase.Refresh();
             Debug.Log("Agent context scan report generated: " + reportPath);
         }
 
-        internal static string BuildReport(DateTime now)
+        internal static string BuildReport(DateTime now, string taskDirectory = null)
         {
+            string normalizedTaskDirectory = NormalizePath(taskDirectory ?? Path.Combine(ReportRoot, now.ToString("yyyy-MM-dd"), TaskDirectoryName));
             List<FileRecord> agentFileRecords = CollectKnownFiles(AgentFiles);
             List<FileRecord> taskCards = CollectFiles(ReportRoot, "task_*.md");
             List<ModuleRecord> modules = CollectScriptModules();
@@ -91,7 +88,8 @@ namespace LAB2D
             sb.AppendLine("- 生成时间: " + now.ToString("yyyy-MM-dd HH:mm:ss"));
             sb.AppendLine("- 工具菜单: `" + MenuPath + "`");
             sb.AppendLine("- 扫描模式: 只读");
-            sb.AppendLine("- 输出路径: `" + ReportRoot + "/" + now.ToString("yyyy-MM-dd") + "/" + ReportFileName + "`");
+            sb.AppendLine("- 本次任务目录: `" + normalizedTaskDirectory + "`");
+            sb.AppendLine("- 输出路径: `" + normalizedTaskDirectory + "/" + ReportFileName + "`");
             sb.AppendLine();
 
             AppendAgentFiles(sb, agentFileRecords);
@@ -108,6 +106,42 @@ namespace LAB2D
             sb.AppendLine("- 如需修复资源、存档、Photon 或 AssetBundle 问题，单独生成任务卡后再执行。");
 
             return sb.ToString();
+        }
+
+        private static string CreateUniqueTaskDirectory(DateTime now)
+        {
+            string dateDirectory = NormalizePath(Path.Combine(ReportRoot, now.ToString("yyyy-MM-dd")));
+            if (!Directory.Exists(dateDirectory))
+            {
+                Directory.CreateDirectory(dateDirectory);
+            }
+
+            string desiredDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName));
+            if (!Directory.Exists(desiredDirectory))
+            {
+                Directory.CreateDirectory(desiredDirectory);
+                return desiredDirectory;
+            }
+
+            string timestampDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName + "_" + now.ToString("HHmmss")));
+            if (!Directory.Exists(timestampDirectory))
+            {
+                Directory.CreateDirectory(timestampDirectory);
+                return timestampDirectory;
+            }
+
+            int index = 2;
+            while (true)
+            {
+                string indexedDirectory = NormalizePath(timestampDirectory + "_" + index);
+                if (!Directory.Exists(indexedDirectory))
+                {
+                    Directory.CreateDirectory(indexedDirectory);
+                    return indexedDirectory;
+                }
+
+                index++;
+            }
         }
 
         private static List<FileRecord> CollectKnownFiles(IEnumerable<string> paths)

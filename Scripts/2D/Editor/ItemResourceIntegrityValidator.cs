@@ -18,6 +18,7 @@ namespace LAB2D
         private const string ItemTileRoot = "Assets/Resources/Tilemap/Item";
         private const string ItemImageRoot = "Assets/Resources/Images/Item";
         private const string ReportRoot = "Assets/Agent/Reports";
+        private const string TaskDirectoryName = "F001_item_resource_integrity_validator";
         private const string ReportFileName = "resource_integrity_report.md";
 
         private static readonly string[] TileExtensions = { ".asset" };
@@ -27,21 +28,17 @@ namespace LAB2D
         private static void ExportReport()
         {
             DateTime now = DateTime.Now;
-            string report = BuildReport(now);
-            string directory = NormalizePath(Path.Combine(ReportRoot, now.ToString("yyyy-MM-dd")));
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
+            string directory = CreateUniqueTaskDirectory(now);
+            string report = BuildReport(now, directory);
             string reportPath = NormalizePath(Path.Combine(directory, ReportFileName));
             File.WriteAllText(reportPath, report, new UTF8Encoding(false));
             AssetDatabase.Refresh();
             Debug.Log("Item资源绑定报告已生成: " + reportPath);
         }
 
-        internal static string BuildReport(DateTime now)
+        internal static string BuildReport(DateTime now, string taskDirectory = null)
         {
+            string normalizedTaskDirectory = NormalizePath(taskDirectory ?? Path.Combine(ReportRoot, now.ToString("yyyy-MM-dd"), TaskDirectoryName));
             List<ItemRecord> itemRecords = CollectItemRecords();
             List<AssetRecord> tileRecords = CollectAssetRecords(ItemTileRoot, TileExtensions);
             List<AssetRecord> imageRecords = CollectAssetRecords(ItemImageRoot, ImageExtensions);
@@ -86,6 +83,8 @@ namespace LAB2D
             sb.AppendLine("- 生成时间: " + now.ToString("yyyy-MM-dd HH:mm:ss"));
             sb.AppendLine("- 工具菜单: `Tools/Data/导出Item资源绑定报告`");
             sb.AppendLine("- 扫描模式: 只读");
+            sb.AppendLine("- 本次任务目录: `" + normalizedTaskDirectory + "`");
+            sb.AppendLine("- 输出路径: `" + normalizedTaskDirectory + "/" + ReportFileName + "`");
             sb.AppendLine();
             sb.AppendLine("## 扫描范围");
             sb.AppendLine();
@@ -125,6 +124,42 @@ namespace LAB2D
             }
 
             return sb.ToString();
+        }
+
+        private static string CreateUniqueTaskDirectory(DateTime now)
+        {
+            string dateDirectory = NormalizePath(Path.Combine(ReportRoot, now.ToString("yyyy-MM-dd")));
+            if (!Directory.Exists(dateDirectory))
+            {
+                Directory.CreateDirectory(dateDirectory);
+            }
+
+            string desiredDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName));
+            if (!Directory.Exists(desiredDirectory))
+            {
+                Directory.CreateDirectory(desiredDirectory);
+                return desiredDirectory;
+            }
+
+            string timestampDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName + "_" + now.ToString("HHmmss")));
+            if (!Directory.Exists(timestampDirectory))
+            {
+                Directory.CreateDirectory(timestampDirectory);
+                return timestampDirectory;
+            }
+
+            int index = 2;
+            while (true)
+            {
+                string indexedDirectory = NormalizePath(timestampDirectory + "_" + index);
+                if (!Directory.Exists(indexedDirectory))
+                {
+                    Directory.CreateDirectory(indexedDirectory);
+                    return indexedDirectory;
+                }
+
+                index++;
+            }
         }
 
         private static List<ItemRecord> CollectItemRecords()

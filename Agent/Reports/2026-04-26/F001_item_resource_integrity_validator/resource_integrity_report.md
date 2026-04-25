@@ -1,8 +1,10 @@
 # Item Resource Integrity Report
 
-- 生成时间: 2026-04-26 03:08:38
+- 生成时间: 2026-04-26 03:39:57
 - 工具菜单: `Tools/Data/导出Item资源绑定报告`
 - 扫描模式: 只读
+- 本次任务目录: `Assets/Agent/Reports/2026-04-26/F001_item_resource_integrity_validator`
+- 输出路径: `Assets/Agent/Reports/2026-04-26/F001_item_resource_integrity_validator/resource_integrity_report.md`
 
 ## 扫描范围
 
