@@ -1,8 +1,5 @@
 ﻿namespace LAB2D
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Reflection;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -141,33 +138,7 @@
         private void Onclick_Save()
         {
             GlobalInit.Instance.ShowTip("保存数据");
-            List<Type> types = Tool.GetChildByParent<ASaveData>();
-            foreach (Type type in types)
-            {
-                PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
-                if (propertyInfo == null)
-                {
-                    continue;
-                }
-
-                // 实例化
-                object obj = propertyInfo.GetValue(null, null);
-                Tool.GetMethodByType(type, "SaveData")?.Invoke(obj, null);
-            }
-
-            types = Tool.GetChildByParent<AMonoSaveData>();
-            foreach (Type type in types)
-            {
-                PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
-                if (propertyInfo == null)
-                {
-                    continue;
-                }
-
-                // 实例化
-                object obj = propertyInfo.GetValue(null, null);
-                Tool.GetMethodByType(type, "SaveData")?.Invoke(obj, null);
-            }
+            ArchiveManager.Instance.SaveCurrentArchive();
         }
 
         private void Onclick_GeneratorItem()

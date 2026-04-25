@@ -401,6 +401,7 @@
             }
         }
 
+        [Serializable]
         public class Attribute
         {
             /// <summary>

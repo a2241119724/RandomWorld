@@ -21,6 +21,7 @@
         public static void SaveDataByBinary<T>(string filePath, T data)
             where T : class
         {
+            CreateDirectoryIfNeed(filePath);
             using FileStream fs = new (filePath, FileMode.OpenOrCreate, FileAccess.Write);
             Bf.Serialize(fs, data);
             fs.Flush();
@@ -74,9 +75,21 @@
         public static void SaveDataByJson<T>(string filePath, T data)
             where T : class
         {
+            CreateDirectoryIfNeed(filePath);
             // JsonUtility无法序列化Dictionary
             string json = JsonUtility.ToJson(data);
             File.WriteAllText(filePath, json);
+        }
+
+        private static void CreateDirectoryIfNeed(string filePath)
+        {
+            string directoryPath = Path.GetDirectoryName(filePath);
+            if (string.IsNullOrEmpty(directoryPath))
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(directoryPath);
         }
 
         /// <summary>
