@@ -14,9 +14,21 @@ namespace LAB2D
     {
         private const string ArchiveRootFolderName = "Archive";
         private const string ArchivePrefix = "Archive_";
+        private const string ArchiveMetaFileName = "ArchiveMeta.json";
         private const int ArchiveSlotCount = 10;
+
+        /// <summary>
+        /// 存档展示名称最大长度.
+        /// </summary>
+        public const int ArchiveDisplayNameMaxLength = 16;
         private readonly int archiveCount = ArchiveSlotCount;
         private bool isLegacyArchiveChecked;
+
+        [Serializable]
+        private class ArchiveMetaData
+        {
+            public string DisplayName;
+        }
 
         /// <summary>
         /// 当前存档索引.
@@ -24,9 +36,14 @@ namespace LAB2D
         public int CurrentArchiveIndex { get; private set; }
 
         /// <summary>
-        /// 当前存档名称.
+        /// 当前存档目录名称.
         /// </summary>
         public string CurrentArchiveName => this.GetArchiveName(this.CurrentArchiveIndex);
+
+        /// <summary>
+        /// 当前存档展示名称.
+        /// </summary>
+        public string CurrentArchiveDisplayName => this.GetArchiveDisplayName(this.CurrentArchiveIndex);
 
         /// <summary>
         /// 当前存档目录.
@@ -47,7 +64,7 @@ namespace LAB2D
             List<string> archiveNames = new ();
             for (int i = 0; i < this.archiveCount; i++)
             {
-                archiveNames.Add(this.GetArchiveName(i));
+                archiveNames.Add(this.GetArchiveDisplayName(i));
             }
 
             return archiveNames;
@@ -59,13 +76,59 @@ namespace LAB2D
         /// <param name="archiveIndex">存档索引.</param>
         public void SetCurrentArchive(int archiveIndex)
         {
-            if (archiveIndex < 0 || archiveIndex >= this.archiveCount)
+            if (!this.IsArchiveIndexValid(archiveIndex))
             {
-                LogManager.Instance.Log($"archive index {archiveIndex} out of range", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.CurrentArchiveIndex = archiveIndex;
+        }
+
+        /// <summary>
+        /// 获取指定存档槽展示名称.
+        /// </summary>
+        /// <param name="archiveIndex">存档索引.</param>
+        /// <returns>存档展示名称.</returns>
+        public string GetArchiveDisplayName(int archiveIndex)
+        {
+            if (!this.IsArchiveIndexValid(archiveIndex))
+            {
+                return string.Empty;
+            }
+
+            ArchiveMetaData metaData = this.LoadArchiveMetaData(archiveIndex);
+            if (metaData == null || string.IsNullOrWhiteSpace(metaData.DisplayName))
+            {
+                return this.GetDefaultArchiveDisplayName(archiveIndex);
+            }
+
+            return metaData.DisplayName;
+        }
+
+        /// <summary>
+        /// 修改指定存档槽展示名称.
+        /// </summary>
+        /// <param name="archiveIndex">存档索引.</param>
+        /// <param name="displayName">新的展示名称.</param>
+        /// <returns>是否修改成功.</returns>
+        public bool SetArchiveDisplayName(int archiveIndex, string displayName)
+        {
+            if (!this.IsArchiveIndexValid(archiveIndex))
+            {
+                return false;
+            }
+
+            string normalizedDisplayName = this.NormalizeArchiveDisplayName(displayName);
+            if (string.IsNullOrEmpty(normalizedDisplayName))
+            {
+                return false;
+            }
+
+            ArchiveMetaData metaData = new ()
+            {
+                DisplayName = normalizedDisplayName,
+            };
+            return this.SaveArchiveMetaData(archiveIndex, metaData);
         }
 
         /// <summary>
@@ -99,9 +162,8 @@ namespace LAB2D
         /// <returns>是否存在.</returns>
         public bool HasArchive(int archiveIndex)
         {
-            if (archiveIndex < 0 || archiveIndex >= this.archiveCount)
+            if (!this.IsArchiveIndexValid(archiveIndex))
             {
-                LogManager.Instance.Log($"archive index {archiveIndex} out of range", LogManager.LogLevelEnum.Error);
                 return false;
             }
 
@@ -120,6 +182,7 @@ namespace LAB2D
         {
             this.InvokeSaveData(Tool.GetChildByParent<ASaveData>());
             this.InvokeSaveData(Tool.GetChildByParent<AMonoSaveData>());
+            this.EnsureArchiveMetaData(this.CurrentArchiveIndex);
         }
 
         /// <summary>
@@ -148,6 +211,11 @@ namespace LAB2D
             return ArchivePrefix + (archiveIndex + 1);
         }
 
+        private string GetDefaultArchiveDisplayName(int archiveIndex)
+        {
+            return $"存档 {archiveIndex + 1}";
+        }
+
         private string GetArchiveDirectory(int archiveIndex)
         {
             return Path.Combine(Application.persistentDataPath, ArchiveRootFolderName, this.GetArchiveName(archiveIndex));
@@ -156,6 +224,90 @@ namespace LAB2D
         private string GetArchivePath(int archiveIndex, string name)
         {
             return Path.Combine(this.GetArchiveDirectory(archiveIndex), name + ".lab");
+        }
+
+        private string GetArchiveMetaPath(int archiveIndex)
+        {
+            return Path.Combine(this.GetArchiveDirectory(archiveIndex), ArchiveMetaFileName);
+        }
+
+        private bool IsArchiveIndexValid(int archiveIndex)
+        {
+            if (archiveIndex >= 0 && archiveIndex < this.archiveCount)
+            {
+                return true;
+            }
+
+            LogManager.Instance.Log($"archive index {archiveIndex} out of range", LogManager.LogLevelEnum.Error);
+            return false;
+        }
+
+        private string NormalizeArchiveDisplayName(string displayName)
+        {
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                return string.Empty;
+            }
+
+            string normalizedDisplayName = displayName.Trim();
+            if (normalizedDisplayName.Length > ArchiveDisplayNameMaxLength)
+            {
+                normalizedDisplayName = normalizedDisplayName.Substring(0, ArchiveDisplayNameMaxLength);
+            }
+
+            return normalizedDisplayName;
+        }
+
+        private ArchiveMetaData LoadArchiveMetaData(int archiveIndex)
+        {
+            string archiveMetaPath = this.GetArchiveMetaPath(archiveIndex);
+            if (!File.Exists(archiveMetaPath))
+            {
+                return null;
+            }
+
+            try
+            {
+                return DataTool.LoadDataByJson<ArchiveMetaData>(archiveMetaPath);
+            }
+            catch (Exception exception)
+            {
+                LogManager.Instance.Log(
+                    $"load archive meta failed: {archiveMetaPath}\n{exception}",
+                    LogManager.LogLevelEnum.Error);
+                return null;
+            }
+        }
+
+        private bool SaveArchiveMetaData(int archiveIndex, ArchiveMetaData metaData)
+        {
+            string archiveMetaPath = this.GetArchiveMetaPath(archiveIndex);
+            try
+            {
+                DataTool.SaveDataByJson(archiveMetaPath, metaData);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                LogManager.Instance.Log(
+                    $"save archive meta failed: {archiveMetaPath}\n{exception}",
+                    LogManager.LogLevelEnum.Error);
+                return false;
+            }
+        }
+
+        private void EnsureArchiveMetaData(int archiveIndex)
+        {
+            if (File.Exists(this.GetArchiveMetaPath(archiveIndex)))
+            {
+                return;
+            }
+
+            ArchiveMetaData metaData = new ()
+            {
+                DisplayName = this.GetDefaultArchiveDisplayName(archiveIndex),
+            };
+            this.SaveArchiveMetaData(archiveIndex, metaData);
         }
 
         private void InvokeSaveData(List<Type> types)
