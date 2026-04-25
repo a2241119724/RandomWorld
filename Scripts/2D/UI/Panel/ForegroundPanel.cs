@@ -158,6 +158,206 @@ namespace LAB2D
 
         private void CreateSaveSlotPanel()
         {
+            if (this.BindSceneSaveSlotPanel())
+            {
+                return;
+            }
+
+            this.CreateRuntimeSaveSlotPanel();
+        }
+
+        private bool BindSceneSaveSlotPanel()
+        {
+            Transform panelTransform = this.FindChildTransform(this.Panel.transform, "SaveSlotPanel");
+            if (panelTransform == null)
+            {
+                return false;
+            }
+
+            this.saveSlotPanel = panelTransform.gameObject;
+
+            Transform viewportTransform = this.FindChildTransform(panelTransform, "SaveSlotViewport");
+            if (viewportTransform == null)
+            {
+                return false;
+            }
+
+            this.ConfigureSceneSaveSlotViewport(viewportTransform);
+
+            Transform contentTransform = this.FindChildTransform(viewportTransform, "SaveSlotContent");
+            if (contentTransform == null)
+            {
+                contentTransform = this.CreateUIObject("SaveSlotContent", viewportTransform).transform;
+            }
+
+            this.saveSlotContent = contentTransform.GetComponent<RectTransform>();
+            if (this.saveSlotContent == null)
+            {
+                this.saveSlotContent = contentTransform.gameObject.AddComponent<RectTransform>();
+            }
+
+            this.ConfigureSaveSlotContent(this.saveSlotContent);
+            ScrollRect viewportScrollRect = viewportTransform.GetComponent<ScrollRect>();
+            if (viewportScrollRect != null)
+            {
+                viewportScrollRect.content = this.saveSlotContent;
+            }
+
+            this.ClearGeneratedSaveSlotButtons();
+            this.CreateSaveSlotButtons();
+
+            Button closeButton = this.FindChildComponent<Button>(panelTransform, "Close");
+            if (closeButton != null)
+            {
+                closeButton.onClick.RemoveAllListeners();
+                closeButton.onClick.AddListener(this.HideSaveSlotPanel);
+            }
+
+            this.BindSceneOverwriteConfirmPanel(panelTransform);
+            this.saveSlotPanel.SetActive(false);
+            return true;
+        }
+
+        private void ConfigureSceneSaveSlotViewport(Transform viewportTransform)
+        {
+            RectTransform viewportRect = viewportTransform.GetComponent<RectTransform>();
+            ScrollRect scrollRect = viewportTransform.GetComponent<ScrollRect>();
+            if (scrollRect == null)
+            {
+                scrollRect = viewportTransform.gameObject.AddComponent<ScrollRect>();
+            }
+
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.scrollSensitivity = 50.0f;
+            scrollRect.viewport = viewportRect;
+
+            Image image = viewportTransform.GetComponent<Image>();
+            if (image != null)
+            {
+                image.raycastTarget = true;
+            }
+
+            RectMask2D mask = viewportTransform.GetComponent<RectMask2D>();
+            if (mask == null)
+            {
+                viewportTransform.gameObject.AddComponent<RectMask2D>();
+            }
+        }
+
+        private void ConfigureSaveSlotContent(RectTransform contentRect)
+        {
+            contentRect.anchorMin = new Vector2(0.5f, 1.0f);
+            contentRect.anchorMax = new Vector2(0.5f, 1.0f);
+            contentRect.pivot = new Vector2(0.5f, 1.0f);
+            contentRect.anchoredPosition = Vector2.zero;
+            contentRect.sizeDelta = this.GetSaveSlotContentSize();
+
+            ScrollRect scrollRect = contentRect.GetComponentInParent<ScrollRect>();
+            if (scrollRect != null)
+            {
+                scrollRect.content = contentRect;
+            }
+        }
+
+        private void ClearGeneratedSaveSlotButtons()
+        {
+            if (this.saveSlotContent == null)
+            {
+                return;
+            }
+
+            for (int i = this.saveSlotContent.childCount - 1; i >= 0; i--)
+            {
+                Transform child = this.saveSlotContent.GetChild(i);
+                if (!child.name.StartsWith("SaveSlot_", System.StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (Application.isPlaying)
+                {
+                    UnityEngine.Object.Destroy(child.gameObject);
+                }
+                else
+                {
+                    UnityEngine.Object.DestroyImmediate(child.gameObject);
+                }
+            }
+
+            this.saveSlotButtons.Clear();
+        }
+
+        private void CreateSaveSlotButtons()
+        {
+            this.saveSlotButtons.Clear();
+            for (int i = 0; i < ArchiveManager.Instance.ArchiveCount; i++)
+            {
+                int archiveIndex = i;
+                Button button = this.CreateButton(
+                    $"SaveSlot_{archiveIndex + 1}",
+                    this.saveSlotContent,
+                    string.Empty,
+                    SaveSlotSize,
+                    () => this.OnClick_SaveSlot(archiveIndex));
+                this.SetSaveSlotButtonPosition(button, archiveIndex);
+                this.saveSlotButtons.Add(button);
+            }
+        }
+
+        private void BindSceneOverwriteConfirmPanel(Transform panelTransform)
+        {
+            Transform confirmPanelTransform = this.FindChildTransform(panelTransform, "OverwriteConfirmPanel");
+            if (confirmPanelTransform == null)
+            {
+                this.CreateRuntimeOverwriteConfirmPanel();
+                return;
+            }
+
+            this.overwriteConfirmPanel = confirmPanelTransform.gameObject;
+            this.overwriteConfirmText = this.FindChildComponent<Text>(confirmPanelTransform, "Tip");
+
+            Button confirmButton = this.FindChildComponent<Button>(confirmPanelTransform, "Confirm");
+            if (confirmButton != null)
+            {
+                confirmButton.onClick.RemoveAllListeners();
+                confirmButton.onClick.AddListener(this.OnClick_ConfirmOverwrite);
+            }
+
+            Button cancelButton = this.FindChildComponent<Button>(confirmPanelTransform, "Cancel");
+            if (cancelButton != null)
+            {
+                cancelButton.onClick.RemoveAllListeners();
+                cancelButton.onClick.AddListener(this.HideOverwriteConfirmPanel);
+            }
+
+            this.overwriteConfirmPanel.SetActive(false);
+        }
+
+        private Transform FindChildTransform(Transform root, string name)
+        {
+            Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
+            foreach (Transform child in transforms)
+            {
+                if (child.name == name)
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        private T FindChildComponent<T>(Transform root, string name)
+            where T : Component
+        {
+            Transform child = this.FindChildTransform(root, name);
+            return child == null ? null : child.GetComponent<T>();
+        }
+
+        private void CreateRuntimeSaveSlotPanel()
+        {
             this.saveSlotPanel = this.CreateUIObject("SaveSlotPanel", this.Panel.transform);
             RectTransform panelRect = this.saveSlotPanel.GetComponent<RectTransform>();
             panelRect.anchorMin = Vector2.zero;
@@ -177,19 +377,8 @@ namespace LAB2D
             titleRect.anchoredPosition = new Vector2(0.0f, 250.0f);
             titleRect.sizeDelta = new Vector2(600.0f, 70.0f);
 
-            this.saveSlotContent = this.CreateSaveSlotScrollView();
-            for (int i = 0; i < ArchiveManager.Instance.ArchiveCount; i++)
-            {
-                int archiveIndex = i;
-                Button button = this.CreateButton(
-                    $"SaveSlot_{archiveIndex + 1}",
-                    this.saveSlotContent,
-                    string.Empty,
-                    SaveSlotSize,
-                    () => this.OnClick_SaveSlot(archiveIndex));
-                this.SetSaveSlotButtonPosition(button, archiveIndex);
-                this.saveSlotButtons.Add(button);
-            }
+            this.saveSlotContent = this.CreateRuntimeSaveSlotScrollView();
+            this.CreateSaveSlotButtons();
 
             Button closeButton = this.CreateButton(
                 "Close",
@@ -203,11 +392,11 @@ namespace LAB2D
             closeRect.pivot = new Vector2(0.5f, 0.5f);
             closeRect.anchoredPosition = new Vector2(0.0f, -270.0f);
 
-            this.CreateOverwriteConfirmPanel();
+            this.CreateRuntimeOverwriteConfirmPanel();
             this.saveSlotPanel.SetActive(false);
         }
 
-        private RectTransform CreateSaveSlotScrollView()
+        private RectTransform CreateRuntimeSaveSlotScrollView()
         {
             GameObject viewport = this.CreateUIObject("SaveSlotViewport", this.saveSlotPanel.transform);
             RectTransform viewportRect = viewport.GetComponent<RectTransform>();
@@ -247,7 +436,7 @@ namespace LAB2D
             return new Vector2(SaveSlotSize.x, height);
         }
 
-        private void CreateOverwriteConfirmPanel()
+        private void CreateRuntimeOverwriteConfirmPanel()
         {
             this.overwriteConfirmPanel = this.CreateUIObject("OverwriteConfirmPanel", this.saveSlotPanel.transform);
             RectTransform panelRect = this.overwriteConfirmPanel.GetComponent<RectTransform>();

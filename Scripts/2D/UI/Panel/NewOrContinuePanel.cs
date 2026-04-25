@@ -11,7 +11,6 @@ namespace LAB2D
     {
         private const float SlotSpacing = 12.0f;
         private static readonly Vector2 SlotSize = new (560.0f, 72.0f);
-        private static readonly Vector2 SlotViewportSize = new (640.0f, 360.0f);
         private readonly List<Button> archiveSlotButtons = new ();
         private Button newGameButton;
         private Button continueGameButton;
@@ -74,13 +73,6 @@ namespace LAB2D
 
         private void ConfigureArchiveSlotViewport()
         {
-            RectTransform viewportRect = this.archiveSlotViewport.GetComponent<RectTransform>();
-            viewportRect.anchorMin = new Vector2(0.5f, 0.5f);
-            viewportRect.anchorMax = new Vector2(0.5f, 0.5f);
-            viewportRect.pivot = new Vector2(0.5f, 0.5f);
-            viewportRect.anchoredPosition = new Vector2(0.0f, 20.0f);
-            viewportRect.sizeDelta = SlotViewportSize;
-
             HorizontalLayoutGroup horizontalLayout = this.archiveSlotViewport.GetComponent<HorizontalLayoutGroup>();
             if (horizontalLayout != null)
             {
@@ -91,9 +83,9 @@ namespace LAB2D
             if (image == null)
             {
                 image = this.archiveSlotViewport.gameObject.AddComponent<Image>();
+                image.color = new Color(0.0f, 0.0f, 0.0f, 0.25f);
             }
 
-            image.color = new Color(0.0f, 0.0f, 0.0f, 0.25f);
             image.raycastTarget = true;
 
             RectMask2D mask = this.archiveSlotViewport.GetComponent<RectMask2D>();
@@ -105,15 +97,27 @@ namespace LAB2D
 
         private RectTransform CreateArchiveSlotContent()
         {
-            GameObject content = new ("ArchiveSlotContent");
-            content.transform.SetParent(this.archiveSlotViewport, false);
-            content.layer = this.archiveSlotViewport.gameObject.layer;
-            RectTransform contentRect = content.AddComponent<RectTransform>();
+            Transform contentTransform = this.FindChildTransform(this.archiveSlotViewport, "ArchiveSlotContent");
+            if (contentTransform == null)
+            {
+                GameObject content = new ("ArchiveSlotContent");
+                content.transform.SetParent(this.archiveSlotViewport, false);
+                content.layer = this.archiveSlotViewport.gameObject.layer;
+                contentTransform = content.transform;
+            }
+
+            RectTransform contentRect = contentTransform.GetComponent<RectTransform>();
+            if (contentRect == null)
+            {
+                contentRect = contentTransform.gameObject.AddComponent<RectTransform>();
+            }
+
             contentRect.anchorMin = new Vector2(0.5f, 1.0f);
             contentRect.anchorMax = new Vector2(0.5f, 1.0f);
             contentRect.pivot = new Vector2(0.5f, 1.0f);
             contentRect.anchoredPosition = Vector2.zero;
             contentRect.sizeDelta = this.GetSlotContentSize();
+            this.ClearGeneratedArchiveSlotButtons(contentRect);
 
             ScrollRect scrollRect = this.archiveSlotViewport.GetComponent<ScrollRect>();
             if (scrollRect == null)
@@ -128,6 +132,43 @@ namespace LAB2D
             scrollRect.movementType = ScrollRect.MovementType.Clamped;
             scrollRect.scrollSensitivity = 50.0f;
             return contentRect;
+        }
+
+        private void ClearGeneratedArchiveSlotButtons(RectTransform contentRect)
+        {
+            for (int i = contentRect.childCount - 1; i >= 0; i--)
+            {
+                Transform child = contentRect.GetChild(i);
+                if (!child.name.StartsWith("ArchiveSlot_", System.StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (Application.isPlaying)
+                {
+                    UnityEngine.Object.Destroy(child.gameObject);
+                }
+                else
+                {
+                    UnityEngine.Object.DestroyImmediate(child.gameObject);
+                }
+            }
+
+            this.archiveSlotButtons.Clear();
+        }
+
+        private Transform FindChildTransform(Transform root, string name)
+        {
+            Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
+            foreach (Transform child in transforms)
+            {
+                if (child.name == name)
+                {
+                    return child;
+                }
+            }
+
+            return null;
         }
 
         private Vector2 GetSlotContentSize()
