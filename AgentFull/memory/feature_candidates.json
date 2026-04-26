@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-26T16:05:01",
+  "updated_at": "2026-04-26T16:08:48",
   "candidates": [
     {
       "candidate_id": "cand_001_project_overview_editor",
@@ -11,7 +11,7 @@
       "implementation_type": "editor_tool",
       "status": "completed",
       "signals": {
-        "csharp_files": 363,
+        "csharp_files": 364,
         "scenes": 3,
         "prefabs": 29
       }
@@ -27,9 +27,7 @@
       "status": "completed",
       "signals": {
         "asset_files": 187
-      },
-      "status_note": "Generated code to the configured Unity path without overwriting existing files.",
-      "updated_at": "2026-04-26T16:05:01"
+      }
     },
     {
       "candidate_id": "cand_003_script_lifecycle_report",
@@ -39,12 +37,14 @@
       "risk_level": "low",
       "affected_files": [],
       "implementation_type": "report_tool",
-      "status": "pending",
+      "status": "completed",
       "signals": {
         "mono_behaviour_classes": 122,
-        "public_fields": 1245,
+        "public_fields": 1252,
         "serialize_fields": 22
-      }
+      },
+      "status_note": "Generated code to the configured Unity path without overwriting existing files.",
+      "updated_at": "2026-04-26T16:08:48"
     },
     {
       "candidate_id": "cand_004_editor_validation_menu",
@@ -56,7 +56,7 @@
       "implementation_type": "editor_tool",
       "status": "pending",
       "signals": {
-        "editor_window_classes": 3
+        "editor_window_classes": 4
       }
     },
     {
