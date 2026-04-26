@@ -105,10 +105,18 @@ class ModelClient:
         return selected, models[selected]
 
     def _api_key(self, model_config: dict[str, Any]) -> str | None:
+        direct_key = model_config.get("api_key")
+        if direct_key:
+            return str(direct_key)
         env_name = model_config.get("api_key_env")
         if not env_name:
             return None
-        return os.getenv(env_name)
+        env_value = os.getenv(str(env_name))
+        if env_value:
+            return env_value
+        if self._looks_like_literal_key(env_name):
+            return str(env_name)
+        return None
 
     def _chat_openai_compatible(
         self,
@@ -386,6 +394,10 @@ class ModelClient:
         label = str(value or "")
         if not label:
             return "<not configured>"
-        if label.lower().startswith(("sk-", "sk_", "key-", "apikey-")):
+        if self._looks_like_literal_key(label):
             return "<literal key redacted>"
         return label
+
+    def _looks_like_literal_key(self, value: Any) -> bool:
+        label = str(value or "").strip().lower()
+        return label.startswith(("sk-", "sk_", "key-", "apikey-"))

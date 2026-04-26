@@ -38,6 +38,7 @@ class WriteReportSkill(Skill):
         generated_meta = data.get("generated_meta_files", [])
         validation = data.get("validation", {})
         asset_check = data.get("asset_reference_check", {})
+        model_calls = data.get("model_calls", [])
         errors = data.get("errors", [])
 
         lines: list[str] = []
@@ -47,6 +48,26 @@ class WriteReportSkill(Skill):
         lines.append(f"- Task: `{task.get('task', '')}`")
         lines.append(f"- Task ID: `{task.get('task_id', '')}`")
         lines.append(f"- Report Directory: `{data.get('report_dir', '')}`")
+        lines.append("")
+
+        lines.append("## Model Calls")
+        lines.append("")
+        if model_calls:
+            lines.append("| Purpose | Provider | Model | Mock | Used | Fallback |")
+            lines.append("| --- | --- | --- | --- | --- | --- |")
+            for call in model_calls:
+                lines.append(
+                    "| {purpose} | {provider} | {model} | {mock} | {used} | {fallback} |".format(
+                        purpose=call.get("purpose", ""),
+                        provider=call.get("provider", ""),
+                        model=call.get("model", ""),
+                        mock=call.get("mock", ""),
+                        used=call.get("used", ""),
+                        fallback=call.get("fallback_reason", "") or call.get("note", ""),
+                    )
+                )
+        else:
+            lines.append("No model calls recorded.")
         lines.append("")
 
         lines.append("## Project Scan Summary")
