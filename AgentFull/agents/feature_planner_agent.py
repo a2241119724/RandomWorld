@@ -7,7 +7,7 @@ from core.sub_agent import SubAgent
 
 class FeaturePlannerAgent(SubAgent):
     name = "feature_planner"
-    description = "Discover candidate features and generate implementation task cards."
+    description = "发现功能候选项并生成实现任务卡。"
     available_skills = ["discover_feature_gap", "generate_feature_task"]
 
     def run(self, task: dict[str, Any], context: Any) -> dict[str, Any]:

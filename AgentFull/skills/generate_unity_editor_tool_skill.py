@@ -80,16 +80,16 @@ class GenerateUnityEditorToolSkill(Skill):
                 "role": "system",
                 "content": (
                     system_prompt
-                    + "\nReturn only one complete C# file in a fenced csharp code block."
+                    + "\n只返回一个完整 C# 文件，并放在带 csharp 语言标记的 Markdown 代码块中。"
                 ),
             },
             {
                 "role": "user",
                 "content": (
-                    "Generate a readonly Unity Editor tool. Use the exact namespace and class name. "
-                    "It may scan the project and export a report, but it must not modify scenes, "
-                    "prefabs, ScriptableObjects, StreamingAssets, Addressables, build settings, "
-                    "or existing project assets. Prefer a Tools/AgentFull menu entry.\n\n"
+                    "请生成一个只读 Unity Editor 工具。必须使用给定的 namespace 和 class_name。"
+                    "它可以扫描项目并导出报告，但不能修改场景、Prefab、ScriptableObject、"
+                    "StreamingAssets、Addressables、构建设置或任何已有项目资源。"
+                    "优先使用 Tools/AgentFull 菜单入口。\n\n"
                     f"class_name: {class_name}\n"
                     f"namespace: {namespace}\n"
                     f"selected_candidate:\n{compact_json(selected, 5000)}\n\n"

@@ -1,8 +1,8 @@
-# Project Analyzer Prompt
+# 项目分析提示词
 
-Analyze the Unity project structure and C# scripts.
+分析 Unity 项目结构和 C# 脚本。
 
-Focus on:
-- Assets, ProjectSettings, Packages, Scenes, Scripts, Prefabs, Resources, StreamingAssets, Addressables.
-- Class names, namespaces, inheritance, Unity base classes, lifecycle methods.
-- High-signal project summaries for later planning.
+关注点：
+- Assets、ProjectSettings、Packages、Scenes、Scripts、Prefabs、Resources、StreamingAssets、Addressables。
+- 类名、命名空间、继承关系、Unity 基类、生命周期方法。
+- 提炼高价值项目摘要，供后续功能规划使用。

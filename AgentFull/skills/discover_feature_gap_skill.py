@@ -242,26 +242,24 @@ class DiscoverFeatureGapSkill(Skill):
                 "role": "system",
                 "content": (
                     system_prompt
-                    + "\nReturn JSON only. Do not include markdown or commentary."
+                    + "\n只返回 JSON，不要包含 Markdown 或解释文字。"
                 ),
             },
             {
                 "role": "user",
                 "content": (
-                    "Review this Unity project summary and propose up to 4 additional new "
-                    "gameplay or project-system features that can be developed as isolated new "
-                    "C# files. Prefer standalone runtime MonoBehaviour components that can be "
-                    "attached manually. Avoid requiring edits to existing scenes, prefabs, "
-                    "ScriptableObjects, StreamingAssets, Addressables, save data, networking, "
-                    "build settings, or destructive file changes.\n\n"
-                    "JSON schema:\n"
+                    "请审查这个 Unity 项目摘要，并额外提出最多 4 个可以作为独立新 C# 文件开发的"
+                    "玩法功能或项目系统功能。优先选择可手动挂载的独立运行时 MonoBehaviour "
+                    "组件。避免需要修改已有场景、Prefab、ScriptableObject、StreamingAssets、"
+                    "Addressables、存档、网络、构建设置或破坏性文件操作的方案。\n\n"
+                    "JSON 结构：\n"
                     "{\n"
                     "  \"candidates\": [\n"
                     "    {\n"
                     "      \"candidate_id\": \"llm_001_short_slug\",\n"
-                    "      \"feature_name\": \"Name\",\n"
-                    "      \"description\": \"One or two sentences\",\n"
-                    "      \"value\": \"Why it helps\",\n"
+                    "      \"feature_name\": \"功能名称\",\n"
+                    "      \"description\": \"一到两句话描述功能\",\n"
+                    "      \"value\": \"为什么这个功能有价值\",\n"
                     "      \"risk_level\": \"low|medium|high\",\n"
                     "      \"affected_files\": [],\n"
                     "      \"implementation_type\": \"runtime_feature|editor_tool|report_tool\",\n"
@@ -271,8 +269,8 @@ class DiscoverFeatureGapSkill(Skill):
                     "    }\n"
                     "  ]\n"
                     "}\n\n"
-                    f"Project summary:\n{compact_json(project_summary, 9000)}\n\n"
-                    f"Seed candidates:\n{compact_json(seed_candidates, 5000)}"
+                    f"项目摘要：\n{compact_json(project_summary, 9000)}\n\n"
+                    f"已有启发式候选项：\n{compact_json(seed_candidates, 5000)}"
                 ),
             },
         ]

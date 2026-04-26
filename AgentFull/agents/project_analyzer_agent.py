@@ -7,7 +7,7 @@ from core.sub_agent import SubAgent
 
 class ProjectAnalyzerAgent(SubAgent):
     name = "project_analyzer"
-    description = "Analyze Unity project structure and C# scripts."
+    description = "分析 Unity 项目结构和 C# 脚本。"
     available_skills = ["scan_unity_project", "analyze_csharp_scripts"]
 
     def run(self, task: dict[str, Any], context: Any) -> dict[str, Any]:

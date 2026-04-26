@@ -1,10 +1,10 @@
-# Feature Planner Prompt
+# 功能规划提示词
 
-Plan safe development candidates for a Unity game project.
+为 Unity 游戏项目规划安全的新功能开发候选项。
 
-Priorities:
-- Low risk before medium risk.
-- New runtime gameplay or project-system features before readonly/report-only tooling.
-- Prefer standalone MonoBehaviour components that can be attached or wired manually.
-- Skip high-risk candidates by default.
-- Avoid anything that modifies scenes, prefabs, ScriptableObjects, save data, networking, or packaging.
+优先级：
+- 低风险优先于中风险。
+- 新的运行时玩法功能或项目系统功能优先于只读/报告类工具。
+- 优先选择可手动挂载或手动接入的独立 MonoBehaviour 组件。
+- 默认跳过高风险候选项。
+- 避免任何需要修改场景、Prefab、ScriptableObject、存档、网络或打包配置的方案。

@@ -42,18 +42,18 @@ class WriteReportSkill(Skill):
         errors = data.get("errors", [])
 
         lines: list[str] = []
-        lines.append("# AgentFull Development Report")
+        lines.append("# AgentFull 自动开发报告")
         lines.append("")
-        lines.append(f"- Generated At: {datetime.now().isoformat(timespec='seconds')}")
-        lines.append(f"- Task: `{task.get('task', '')}`")
-        lines.append(f"- Task ID: `{task.get('task_id', '')}`")
-        lines.append(f"- Report Directory: `{data.get('report_dir', '')}`")
+        lines.append(f"- 生成时间: {datetime.now().isoformat(timespec='seconds')}")
+        lines.append(f"- 任务: `{task.get('task', '')}`")
+        lines.append(f"- 任务 ID: `{task.get('task_id', '')}`")
+        lines.append(f"- 报告目录: `{data.get('report_dir', '')}`")
         lines.append("")
 
-        lines.append("## Model Calls")
+        lines.append("## 模型调用")
         lines.append("")
         if model_calls:
-            lines.append("| Purpose | Provider | Model | Mock | Used | Fallback |")
+            lines.append("| 用途 | Provider | Model | Mock | 是否采用 | 备注 |")
             lines.append("| --- | --- | --- | --- | --- | --- |")
             for call in model_calls:
                 lines.append(
@@ -67,40 +67,40 @@ class WriteReportSkill(Skill):
                     )
                 )
         else:
-            lines.append("No model calls recorded.")
+            lines.append("没有记录模型调用。")
         lines.append("")
 
-        lines.append("## Project Scan Summary")
+        lines.append("## 项目扫描摘要")
         lines.append("")
         if scan:
             lines.append(scan.get("summary", "Project scan completed."))
             lines.append("")
-            lines.append("| Item | Count |")
+            lines.append("| 项目 | 数量 |")
             lines.append("| --- | ---: |")
             for key, value in scan.get("counts", {}).items():
                 lines.append(f"| {key} | {value} |")
         else:
-            lines.append("No project scan result.")
+            lines.append("没有项目扫描结果。")
         lines.append("")
 
-        lines.append("## CSharp Script Analysis")
+        lines.append("## C# 脚本分析")
         lines.append("")
         if scripts:
-            lines.append(f"- Total Scripts: {scripts.get('total_scripts', 0)}")
+            lines.append(f"- 脚本总数: {scripts.get('total_scripts', 0)}")
             summary = scripts.get("summary", {})
-            lines.append(f"- MonoBehaviour Classes: {summary.get('mono_behaviour_classes', 0)}")
-            lines.append(f"- ScriptableObject Classes: {summary.get('scriptable_object_classes', 0)}")
-            lines.append(f"- EditorWindow Classes: {summary.get('editor_window_classes', 0)}")
-            lines.append(f"- Public Fields: {summary.get('public_fields', 0)}")
-            lines.append(f"- SerializeField Fields: {summary.get('serialize_fields', 0)}")
+            lines.append(f"- MonoBehaviour 类: {summary.get('mono_behaviour_classes', 0)}")
+            lines.append(f"- ScriptableObject 类: {summary.get('scriptable_object_classes', 0)}")
+            lines.append(f"- EditorWindow 类: {summary.get('editor_window_classes', 0)}")
+            lines.append(f"- Public 字段: {summary.get('public_fields', 0)}")
+            lines.append(f"- SerializeField 字段: {summary.get('serialize_fields', 0)}")
         else:
-            lines.append("No C# script analysis result.")
+            lines.append("没有 C# 脚本分析结果。")
         lines.append("")
 
-        lines.append("## Candidate Features")
+        lines.append("## 候选功能")
         lines.append("")
         if candidates:
-            lines.append("| ID | Feature | Risk | Type | Status |")
+            lines.append("| ID | 功能 | 风险 | 类型 | 状态 |")
             lines.append("| --- | --- | --- | --- | --- |")
             for item in candidates:
                 lines.append(
@@ -115,81 +115,81 @@ class WriteReportSkill(Skill):
                     )
                 )
         else:
-            lines.append("No candidates generated.")
+            lines.append("没有生成候选功能。")
         lines.append("")
 
-        lines.append("## Selected Feature")
+        lines.append("## 选中功能")
         lines.append("")
         if selected:
             lines.append(f"- ID: `{selected.get('candidate_id')}`")
-            lines.append(f"- Name: {selected.get('feature_name')}")
-            lines.append(f"- Risk: {selected.get('risk_level')}")
-            lines.append(f"- Type: {selected.get('implementation_type')}")
-            lines.append(f"- Value: {selected.get('value')}")
+            lines.append(f"- 名称: {selected.get('feature_name')}")
+            lines.append(f"- 风险: {selected.get('risk_level')}")
+            lines.append(f"- 类型: {selected.get('implementation_type')}")
+            lines.append(f"- 价值: {selected.get('value')}")
         else:
-            lines.append("No feature was selected for implementation.")
+            lines.append("没有选中要实现的功能。")
         lines.append("")
 
-        lines.append("## Task Card")
+        lines.append("## 任务卡")
         lines.append("")
         lines.append("```json")
         lines.append(json.dumps(task_card, ensure_ascii=False, indent=2))
         lines.append("```")
         lines.append("")
 
-        lines.append("## Generated Code Files")
+        lines.append("## 生成代码文件")
         lines.append("")
         if generated:
             for path in generated:
                 lines.append(f"- `{path}`")
         else:
-            lines.append("No code files were generated.")
+            lines.append("没有生成代码文件。")
         if generated_meta:
             lines.append("")
-            lines.append("Generated Unity meta files:")
+            lines.append("生成的 Unity meta 文件:")
             for path in generated_meta:
                 lines.append(f"- `{path}`")
         lines.append("")
 
-        lines.append("## Validation Results")
+        lines.append("## 验证结果")
         lines.append("")
-        lines.append("### Generated File Static Checks")
+        lines.append("### 生成文件静态检查")
         lines.append("")
         lines.append("```json")
         lines.append(json.dumps(validation, ensure_ascii=False, indent=2))
         lines.append("```")
         lines.append("")
-        lines.append("### Asset Reference Check")
+        lines.append("### 资源引用检查")
         lines.append("")
         lines.append("```json")
         lines.append(json.dumps(asset_check, ensure_ascii=False, indent=2))
         lines.append("```")
         lines.append("")
 
-        lines.append("## Risk Notes")
+        lines.append("## 风险说明")
         lines.append("")
-        lines.append("- Default policy does not overwrite existing Unity files.")
-        lines.append("- Scene, Prefab, ScriptableObject, StreamingAssets, and Addressables modification is disabled.")
-        lines.append("- Generated feature C# is written to the configured Unity Scripts folder as a new file when possible.")
+        lines.append("- 默认策略不会覆盖已有 Unity 文件。")
+        lines.append("- 默认禁用对场景、Prefab、ScriptableObject、StreamingAssets 和 Addressables 的修改。")
+        lines.append("- 生成的功能 C# 会尽量以新文件形式写入配置的 Unity Scripts 目录。")
         if selected and selected.get("risk_level") == "high":
-            lines.append("- High-risk candidate was not implemented by default.")
+            lines.append("- 默认不实现高风险候选项。")
         lines.append("")
 
-        lines.append("## Errors")
+        lines.append("## 错误")
         lines.append("")
         if errors:
             lines.append("```json")
             lines.append(json.dumps(errors, ensure_ascii=False, indent=2))
             lines.append("```")
         else:
-            lines.append("No runtime errors recorded.")
+            lines.append("没有记录运行时错误。")
         lines.append("")
 
-        lines.append("## Next Suggestions")
+        lines.append("## 后续建议")
         lines.append("")
-        lines.append("- Review the generated C# file in its Unity folder.")
-        lines.append("- Run Unity compilation after generation.")
-        lines.append("- Attach or wire the generated runtime feature manually after code review.")
-        lines.append("- Keep using feature_candidates.json to avoid repeating completed feature work.")
+        lines.append("- 审查 Unity 目录中的生成 C# 文件。")
+        lines.append("- 在 Unity 中触发编译，确认没有编译错误。")
+        lines.append("- 代码审查后，手动挂载或接入生成的运行时功能。")
+        lines.append("- 持续使用 feature_candidates.json 避免重复开发已完成候选功能。")
         lines.append("")
         return "\n".join(lines)

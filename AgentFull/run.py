@@ -22,7 +22,7 @@ from core.main_agent import MainAgent
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="AgentFull - Unity automation agent framework"
+        description="AgentFull - Unity 自动开发 Agent 框架"
     )
     parser.add_argument(
         "--task",
@@ -33,32 +33,37 @@ def build_parser() -> argparse.ArgumentParser:
             "analyze_scripts",
             "generate_feature",
         ],
-        help="Task type to execute.",
+        help="要执行的任务类型。",
     )
     parser.add_argument(
         "--model",
         default=None,
-        help="Model profile name from config/model_config.yaml, e.g. openai or deepseek.",
+        help="config/model_config.yaml 中的模型配置名，例如 openai 或 deepseek。",
     )
     parser.add_argument(
         "--mock",
         action="store_true",
-        help="Use local mock model responses and never call external AI APIs.",
+        help="使用本地 mock 响应，不调用外部 AI API。",
     )
     parser.add_argument(
         "--project-root",
         default=None,
-        help="Override the Unity project root path.",
+        help="覆盖 Unity 项目根目录路径。",
     )
     parser.add_argument(
         "--output",
         default=None,
-        help="Override report output directory.",
+        help="覆盖报告输出目录。",
     )
     parser.add_argument(
         "--task-file",
         default=None,
-        help="Optional JSON task file. Values are merged with CLI arguments.",
+        help="可选 JSON 任务文件，内容会与命令行参数合并。",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="不打印主 Agent/子 Agent/技能调用进度，只输出最终结果。",
     )
     return parser
 
@@ -79,15 +84,15 @@ def main() -> int:
     task_payload.setdefault("task", args.task)
     task_payload.setdefault(
         "description",
-        "Scan the Unity project, plan a low-risk automation feature, generate code, "
-        "validate it, and write a report.",
+        "扫描 Unity 项目，自动识别适合当前项目的新功能，生成实现代码，"
+        "执行静态验证，并写出运行报告。",
     )
     task_payload.setdefault(
         "constraints",
         [
-            "Do not overwrite existing Unity files.",
-            "Prefer readonly Editor tooling.",
-            "Write generated code to the configured Unity script or Editor folder.",
+            "不要覆盖已有 Unity 文件。",
+            "优先生成可手动挂载或接入的独立运行时功能脚本。",
+            "生成代码写入配置中的 Unity Scripts 或 Editor 目录。",
         ],
     )
 
@@ -97,13 +102,14 @@ def main() -> int:
         mock=args.mock,
         project_root=args.project_root,
         output=args.output,
+        verbose=not args.quiet,
     )
     result = agent.run_task(task_payload)
 
-    print("AgentFull task finished.")
-    print(f"Task ID: {result.get('task_id')}")
-    print(f"Report: {result.get('report_path')}")
-    print(f"Log: {result.get('log_path')}")
+    print("AgentFull 任务完成。")
+    print(f"任务 ID: {result.get('task_id')}")
+    print(f"报告: {result.get('report_path')}")
+    print(f"日志: {result.get('log_path')}")
     print(json.dumps(result.get("summary", {}), ensure_ascii=False, indent=2))
     return 0
 

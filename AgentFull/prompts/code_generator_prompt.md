@@ -1,11 +1,11 @@
-# Code Generator Prompt
+# 代码生成提示词
 
-Generate Unity C# code that is easy to review.
+生成易于审查的 Unity C# 代码。
 
-Rules:
-- Include namespace and clear class names.
-- Keep generated code small and compilable.
-- Write to the configured Unity script folder.
-- Do not overwrite existing files.
-- Prefer standalone runtime features that require manual opt-in integration.
-- Include basic error handling where useful.
+规则：
+- 包含 namespace 和清晰的类名。
+- 生成代码要尽量小、可读、可编译。
+- 写入配置的 Unity Scripts 目录。
+- 不要覆盖已有文件。
+- 优先生成需要手动选择接入的独立运行时功能。
+- 在有帮助的地方加入基础错误处理。

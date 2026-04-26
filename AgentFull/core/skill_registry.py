@@ -7,9 +7,10 @@ from .skill import Skill
 
 
 class SkillRegistry:
-    def __init__(self, logger: Any | None = None) -> None:
+    def __init__(self, logger: Any | None = None, trace: Any | None = None) -> None:
         self._skills: dict[str, Skill] = {}
         self.logger = logger
+        self.trace = trace
 
     def register(self, skill: Skill) -> None:
         if not skill.name:
@@ -28,6 +29,13 @@ class SkillRegistry:
     def run(self, name: str, params: dict[str, Any], context: Any) -> dict[str, Any]:
         skill = self.get(name)
         started = time.perf_counter()
+        if self.trace:
+            self.trace(
+                "技能开始: {name} | params={params}".format(
+                    name=name,
+                    params=", ".join(sorted(params.keys())) or "-",
+                )
+            )
         if self.logger:
             self.logger.info(
                 "Skill started | skill=%s params=%s",
@@ -41,6 +49,14 @@ class SkillRegistry:
                 self.logger.exception("Skill failed | skill=%s", name)
             raise
         elapsed_ms = int((time.perf_counter() - started) * 1000)
+        if self.trace:
+            self.trace(
+                "技能完成: {name} | duration_ms={duration} | result={keys}".format(
+                    name=name,
+                    duration=elapsed_ms,
+                    keys=", ".join(sorted(result.keys())) or "-",
+                )
+            )
         if self.logger:
             self.logger.info(
                 "Skill finished | skill=%s duration_ms=%s result_keys=%s",

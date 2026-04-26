@@ -26,9 +26,9 @@ class GenerateFeatureTaskSkill(Skill):
             return {
                 "selected_candidate": None,
                 "task_card": {
-                    "task_goal": "Generate readonly analysis report only.",
-                    "reason": "No pending low/medium risk candidate was available.",
-                    "verification_steps": ["Review report.md for scan and validation results."],
+                    "task_goal": "只生成只读分析报告。",
+                    "reason": "没有可用的待处理低/中风险功能候选项。",
+                    "verification_steps": ["查看 report.md 中的扫描和验证结果。"],
                 },
             }
 
@@ -54,24 +54,24 @@ class GenerateFeatureTaskSkill(Skill):
             "implementation_type": selected.get("implementation_type"),
             "suggested_class_name": selected.get("suggested_class_name") or class_name,
             "implementation_scope": [
-                "Generate one new C# runtime feature file into the configured Unity Scripts folder.",
-                "Do not modify existing scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
-                "Keep the feature self-contained so it can be attached or wired manually after review.",
+                "在配置的 Unity Scripts 目录中生成一个新的 C# 运行时功能文件。",
+                "不要修改已有场景、Prefab、ScriptableObject、StreamingAssets 或 Addressables。",
+                "保持功能自包含，方便审查后手动挂载或接入。",
             ],
             "modify_files": [],
             "new_files": [str(generated_file)],
             "risk_notes": [
-                f"Risk level: {selected.get('risk_level')}",
-                "Generated code is written as a new file only; existing Unity files are not overwritten.",
-                "Runtime integration is opt-in and requires manual Unity review.",
+                f"风险等级：{selected.get('risk_level')}",
+                "生成代码只写入新文件，不覆盖已有 Unity 文件。",
+                "运行时接入需要手动选择并经过 Unity 审查。",
             ],
             "verification_steps": [
-                "Review generated C# code at the configured Unity path.",
-                "Open Unity and confirm the new script compiles.",
-                "Attach or reference the component in a test scene/prefab after review.",
+                "审查配置路径中的生成 C# 代码。",
+                "打开 Unity 并确认新脚本可以编译。",
+                "审查通过后，在测试场景或 Prefab 中手动挂载或引用该组件。",
             ],
             "rollback_plan": [
-                "Delete the generated C# file from the configured Unity path.",
+                "删除配置路径中的生成 C# 文件。",
             ],
             "selected_at": context.get("started_at"),
         }
@@ -102,23 +102,21 @@ class GenerateFeatureTaskSkill(Skill):
                 "role": "system",
                 "content": (
                     system_prompt
-                    + "\nYou select exactly one implementation candidate and refine the task card. "
-                    "Return JSON only."
+                    + "\n你需要准确选择一个实现候选项，并细化任务卡。只返回 JSON。"
                 ),
             },
             {
                 "role": "user",
                 "content": (
-                    "Choose the safest useful new feature candidate from this eligible list. "
-                    "Prefer standalone runtime_feature candidates that can be implemented as a "
-                    "new C# file without editing existing project files. "
-                    "Do not select high-risk candidates when skip_high_risk_candidate is true. "
-                    "Do not add scene, prefab, ScriptableObject, StreamingAssets, Addressables, "
-                    "save-data, networking, build, or destructive file changes.\n\n"
-                    "Return this JSON schema:\n"
+                    "请从可选列表中选择最安全且有用的新功能候选项。优先选择 runtime_feature，"
+                    "并且这个功能应当能通过一个新的 C# 文件实现，不需要编辑已有项目文件。"
+                    "当 skip_high_risk_candidate 为 true 时不要选择高风险候选项。不要加入"
+                    "场景、Prefab、ScriptableObject、StreamingAssets、Addressables、存档、"
+                    "网络、构建或破坏性文件改动。\n\n"
+                    "返回这个 JSON 结构：\n"
                     "{\n"
                     "  \"selected_candidate_id\": \"candidate id from the list\",\n"
-                    "  \"selection_reason\": \"short reason\",\n"
+                    "  \"selection_reason\": \"简短选择理由\",\n"
                     "  \"task_card\": {\n"
                     "    \"implementation_scope\": [],\n"
                     "    \"risk_notes\": [],\n"
