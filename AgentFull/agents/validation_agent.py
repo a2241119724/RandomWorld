@@ -37,6 +37,7 @@ class ValidationAgent(SubAgent):
                 "path": str(path),
                 "exists": path.exists(),
                 "has_using_unity_editor": "using UnityEditor;" in content,
+                "inside_editor_folder": self._is_inside_editor_folder(path),
                 "has_namespace": "namespace " in content,
                 "has_class": " class " in content,
                 "risky_asset_modification_calls": [],
@@ -55,6 +56,10 @@ class ValidationAgent(SubAgent):
                 file_checks["exists"]
                 and file_checks["has_namespace"]
                 and file_checks["has_class"]
+                and (
+                    not file_checks["has_using_unity_editor"]
+                    or file_checks["inside_editor_folder"]
+                )
                 and not file_checks["risky_asset_modification_calls"]
             )
             checks.append(file_checks)
@@ -63,3 +68,6 @@ class ValidationAgent(SubAgent):
             "checks": checks,
             "policy": "Static validation only; Unity compilation is not executed by default.",
         }
+
+    def _is_inside_editor_folder(self, path: Path) -> bool:
+        return any(part.lower() == "editor" for part in path.parts)

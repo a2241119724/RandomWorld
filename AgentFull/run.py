@@ -87,7 +87,7 @@ def main() -> int:
         [
             "Do not overwrite existing Unity files.",
             "Prefer readonly Editor tooling.",
-            "Write generated code to the report folder first.",
+            "Write generated code to the configured Unity script or Editor folder.",
         ],
     )
 

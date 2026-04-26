@@ -13,14 +13,14 @@ unity_project:
   reports_path: "./reports"
 
 generation_policy:
-  default_output_mode: report_only
+  default_output_mode: project
   allow_modify_existing_files: false
   allow_scene_modification: false
   allow_prefab_modification: false
   allow_scriptableobject_modification: false
   allow_streamingassets_modification: false
   allow_addressables_modification: false
-  generate_code_to_report_folder_first: true
+  generate_code_to_report_folder_first: false
 
 risk_policy:
   skip_high_risk_candidate: true

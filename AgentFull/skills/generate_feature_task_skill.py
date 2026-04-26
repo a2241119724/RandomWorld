@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from core.file_utils import safe_slug
+from core.file_utils import csharp_class_name, csharp_output_dir
 from core.skill import Skill
 
 
@@ -15,7 +15,8 @@ class GenerateFeatureTaskSkill(Skill):
 
     def run(self, params: dict[str, Any], context: Any) -> dict[str, Any]:
         candidates = list(params.get("candidates") or [])
-        policies = context.get("configs", {}).get("unity", {})
+        configs = context.get("configs", {}).get("unity", {})
+        policies = configs
         risk_policy = policies.get("risk_policy", {})
         skip_high = risk_policy.get("skip_high_risk_candidate", True)
 
@@ -31,33 +32,38 @@ class GenerateFeatureTaskSkill(Skill):
             }
 
         report_dir = Path(params.get("report_dir") or context.get("report_dir") or ".")
+        base_dir = Path(context.get_service("base_dir") or ".")
         class_name = self._class_name_for_candidate(selected)
-        generated_file = report_dir / "generated_code" / f"{class_name}.cs"
+        generated_dir = csharp_output_dir(
+            base_dir,
+            configs,
+            report_dir,
+            implementation_type=selected.get("implementation_type"),
+        )
+        generated_file = generated_dir / f"{class_name}.cs"
         task_card = {
             "task_goal": selected.get("feature_name"),
             "candidate_id": selected.get("candidate_id"),
             "description": selected.get("description"),
             "implementation_type": selected.get("implementation_type"),
             "implementation_scope": [
-                "Generate code into the report folder first.",
+                "Generate C# into the configured Unity script folder.",
                 "Do not modify scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
-                "Keep the tool readonly and suitable for manual review before copying into Unity.",
+                "Keep the tool readonly and avoid overwriting existing Unity files.",
             ],
             "modify_files": [],
             "new_files": [str(generated_file)],
             "risk_notes": [
                 f"Risk level: {selected.get('risk_level')}",
-                "Generated code is not inserted into the Unity project automatically.",
+                "Generated code is written as a new file only; existing Unity files are not overwritten.",
             ],
             "verification_steps": [
-                "Review generated C# code in generated_code.",
-                "Optionally copy the Editor script into Assets/Editor after review.",
+                "Review generated C# code at the configured Unity path.",
                 "Open Unity and confirm the EditorWindow/menu compiles.",
                 "Use the tool to export a Markdown report.",
             ],
             "rollback_plan": [
-                "Delete the generated_code file from the report folder.",
-                "If manually copied into Assets/Editor later, remove that copied file.",
+                "Delete the generated C# file from the configured Unity path.",
             ],
             "selected_at": context.get("started_at"),
         }
@@ -86,5 +92,4 @@ class GenerateFeatureTaskSkill(Skill):
         candidate_id = candidate.get("candidate_id", "candidate")
         if candidate_id == "cand_001_project_overview_editor":
             return "AgentProjectOverviewWindow"
-        base = safe_slug(candidate.get("feature_name", "GeneratedUnityTool"), 40)
-        return "".join(part.capitalize() for part in base.replace("-", "_").split("_") if part) or "GeneratedUnityTool"
+        return csharp_class_name(candidate.get("feature_name"), "GeneratedUnityTool")

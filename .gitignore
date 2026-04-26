@@ -7,8 +7,6 @@
 /AddressableAssetsData
 /.vs
 /TextMesh Pro
-/Editor/*
-!/Editor/**/*.meta
 /Materials/*
 !/Materials/**/*.meta
 /ResourcesLocal/*

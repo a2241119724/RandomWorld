@@ -23,7 +23,7 @@ from skills.write_report_skill import WriteReportSkill
 from .cache import FileCache
 from .context_compressor import ContextCompressor
 from .context_manager import ContextManager
-from .file_utils import load_yaml, resolve_path
+from .file_utils import csharp_class_name, csharp_output_dir, load_yaml, resolve_path
 from .logger import get_logger
 from .memory import Memory
 from .model_router import ModelRouter
@@ -215,7 +215,7 @@ class MainAgent:
                     {
                         "candidate_id": selected.get("candidate_id"),
                         "status": "completed",
-                        "note": "Generated code to report folder; Unity project files were not modified.",
+                        "note": "Generated code to the configured Unity path without overwriting existing files.",
                     },
                     self.context,
                 )
@@ -237,10 +237,14 @@ class MainAgent:
             return
         class_name = "AgentProjectOverviewWindow"
         if selected.get("candidate_id") != "cand_001_project_overview_editor":
-            feature = selected.get("feature_name", "GeneratedUnityTool")
-            class_name = "".join(part.capitalize() for part in feature.replace("-", " ").split())[:64]
-            class_name = class_name or "GeneratedUnityTool"
-        task_card["new_files"] = [str(report_dir / "generated_code" / f"{class_name}.cs")]
+            class_name = csharp_class_name(selected.get("feature_name"), "GeneratedUnityTool")
+        generated_dir = csharp_output_dir(
+            self.base_dir,
+            self.unity_config,
+            report_dir,
+            implementation_type=selected.get("implementation_type"),
+        )
+        task_card["new_files"] = [str(generated_dir / f"{class_name}.cs")]
         self.context.set("task_card", task_card)
 
     def _context_configs(self) -> dict[str, Any]:
