@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from core.file_utils import read_text
+from core.file_utils import read_text, unity_meta_path
 from core.sub_agent import SubAgent
 
 
@@ -38,6 +38,7 @@ class ValidationAgent(SubAgent):
                 "exists": path.exists(),
                 "has_using_unity_editor": "using UnityEditor;" in content,
                 "inside_editor_folder": self._is_inside_editor_folder(path),
+                "has_unity_meta": unity_meta_path(path).exists(),
                 "has_namespace": "namespace " in content,
                 "has_class": " class " in content,
                 "risky_asset_modification_calls": [],
@@ -60,6 +61,7 @@ class ValidationAgent(SubAgent):
                     not file_checks["has_using_unity_editor"]
                     or file_checks["inside_editor_folder"]
                 )
+                and file_checks["has_unity_meta"]
                 and not file_checks["risky_asset_modification_calls"]
             )
             checks.append(file_checks)

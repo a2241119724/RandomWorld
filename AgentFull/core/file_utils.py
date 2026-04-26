@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -84,6 +85,42 @@ def unique_path(path: Path | str) -> Path:
         if not candidate.exists():
             return candidate
         index += 1
+
+
+def unity_meta_path(path: Path | str) -> Path:
+    return Path(f"{Path(path)}.meta")
+
+
+def unique_unity_asset_path(path: Path | str) -> Path:
+    target = Path(path)
+    if not target.exists() and not unity_meta_path(target).exists():
+        return target
+
+    stem = target.stem
+    suffix = target.suffix
+    parent = target.parent
+    index = 1
+    while True:
+        candidate = parent / f"{stem}_{index}{suffix}"
+        if not candidate.exists() and not unity_meta_path(candidate).exists():
+            return candidate
+        index += 1
+
+
+def mono_script_meta_content(guid: str | None = None) -> str:
+    meta_guid = guid or uuid.uuid4().hex
+    return f"""fileFormatVersion: 2
+guid: {meta_guid}
+MonoImporter:
+  externalObjects: {{}}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {{instanceID: 0}}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+"""
 
 
 def safe_slug(value: str, max_length: int = 48) -> str:

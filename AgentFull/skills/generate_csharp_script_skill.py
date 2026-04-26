@@ -3,7 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from core.file_utils import csharp_output_dir, safe_slug, unique_path, write_text
+from core.file_utils import (
+    csharp_output_dir,
+    mono_script_meta_content,
+    safe_slug,
+    unique_unity_asset_path,
+    unity_generation_policy,
+    unity_meta_path,
+    write_text,
+)
 from core.skill import Skill
 
 
@@ -31,13 +39,17 @@ class GenerateCSharpScriptSkill(Skill):
             script_kind=script_kind,
             implementation_type=implementation_type,
         )
-        target = unique_path(generated_dir / f"{class_name}.cs")
+        target = unique_unity_asset_path(generated_dir / f"{class_name}.cs")
         class_name = target.stem
         content = self._build_script(class_name, namespace, script_kind, task_card)
 
         target = write_text(target, content, overwrite=False)
+        meta_path = None
+        if unity_generation_policy(configs).get("default_output_mode", "project") != "report_only":
+            meta_path = write_text(unity_meta_path(target), mono_script_meta_content(), overwrite=False)
         result = {
             "generated_files": [str(target)],
+            "generated_meta_files": [str(meta_path)] if meta_path else [],
             "script_kind": script_kind,
             "namespace": namespace,
             "class_name": class_name,
