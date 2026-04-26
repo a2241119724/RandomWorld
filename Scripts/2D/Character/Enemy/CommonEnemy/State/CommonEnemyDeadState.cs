@@ -27,6 +27,8 @@
             // 如果敌人初次进入死亡状态,那么禁用敌人的一些组件(碰撞体组件)
             this.Character.transform.GetComponent<Collider2D>().enabled = false;
             this.Character.LastAttacker.AddExperienceValue(5); // 增加经验值
+            // experienceReward=0：经验值已通过 AddExperienceValue -> RecordExperienceGained 记录，避免重复统计
+            GameplaySessionStats.Instance.RecordEnemyDefeated(this.Character, this.Character.LastAttacker, 0);
 
             // 播放死亡动画
             // animator.applyRootMotion = true;

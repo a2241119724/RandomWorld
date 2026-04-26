@@ -95,6 +95,10 @@
             hp -= hp * this.CharacterDataLAB.DEF / 10;
             hp = hp < 0.1f ? 0.1f : hp;
 
+            // 记录战斗统计数据
+            GameplaySessionStats.Instance.RecordDamageDealt(hp, isCRT);
+            GameplaySessionStats.Instance.RecordDamageTaken(hp);
+
             GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.DAMAGE); // 创建物体(预设,位置,角度)
             if (g == null)
             {
@@ -145,6 +149,7 @@
         /// <param name="experience">经验值.</param>
         public virtual void AddExperienceValue(int experience)
         {
+            GameplaySessionStats.Instance.RecordExperienceGained(experience);
             this.CharacterDataLAB.CurExperience += experience;
 
             // 升级
