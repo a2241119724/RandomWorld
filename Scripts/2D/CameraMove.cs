@@ -89,25 +89,28 @@
                 }
             }
 
-            // 视角缩放
-            if (Camera.main.orthographic && Input.mouseScrollDelta.y > 0
-                && Camera.main.orthographicSize > this.scaleThreshold[0])
+            // 视角缩放（仅在游戏区域Foreground上时缩放，UI面板上不缩放）
+            List<RaycastResult> uiResults = Tool.GetUIByMousePos();
+            if (Camera.main.orthographic && Input.mouseScrollDelta.y != 0
+                && (uiResults.Count == 0 || uiResults[0].gameObject.name.Equals("Foreground")))
             {
-                Camera.main.orthographicSize -= Time.deltaTime * ScrollSpeed;
-                WeatherManager.Instance.Scale(Camera.main.orthographicSize / 10);
-                if (Camera.main.orthographicSize < this.scaleThreshold[0])
+                if (Input.mouseScrollDelta.y > 0 && Camera.main.orthographicSize > this.scaleThreshold[0])
                 {
-                    Camera.main.orthographicSize = this.scaleThreshold[0];
+                    Camera.main.orthographicSize -= Time.deltaTime * ScrollSpeed;
+                    WeatherManager.Instance.Scale(Camera.main.orthographicSize / 10);
+                    if (Camera.main.orthographicSize < this.scaleThreshold[0])
+                    {
+                        Camera.main.orthographicSize = this.scaleThreshold[0];
+                    }
                 }
-            }
-            else if (Camera.main.orthographic && Input.mouseScrollDelta.y < 0
-                && Camera.main.orthographicSize < this.scaleThreshold[1])
-            {
-                Camera.main.orthographicSize += Time.deltaTime * ScrollSpeed;
-                WeatherManager.Instance.Scale(Camera.main.orthographicSize / 10);
-                if (Camera.main.orthographicSize > this.scaleThreshold[1])
+                else if (Input.mouseScrollDelta.y < 0 && Camera.main.orthographicSize < this.scaleThreshold[1])
                 {
-                    Camera.main.orthographicSize = this.scaleThreshold[1];
+                    Camera.main.orthographicSize += Time.deltaTime * ScrollSpeed;
+                    WeatherManager.Instance.Scale(Camera.main.orthographicSize / 10);
+                    if (Camera.main.orthographicSize > this.scaleThreshold[1])
+                    {
+                        Camera.main.orthographicSize = this.scaleThreshold[1];
+                    }
                 }
             }
 
@@ -115,10 +118,9 @@
             if (Input.GetMouseButtonDown(2))
             {
                 this.Character = null;
-                List<RaycastResult> results = Tool.GetUIByMousePos();
 
                 // 过滤不是滑动主屏幕的动作
-                if (results.Count > 0 && results[0].gameObject.name.Equals("Foreground"))
+                if (uiResults.Count > 0 && uiResults[0].gameObject.name.Equals("Foreground"))
                 {
                     this.lastMousePos = Input.mousePosition;
                     this.isDown = true;
