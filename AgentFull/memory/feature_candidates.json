@@ -1,3 +1,74 @@
 {
-  "candidates": []
+  "updated_at": "2026-04-26T15:33:21",
+  "candidates": [
+    {
+      "candidate_id": "cand_001_project_overview_editor",
+      "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
+      "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
+      "value": "Gives the project a safe in-Unity overview tool for future automation work.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "editor_tool",
+      "status": "completed",
+      "signals": {
+        "csharp_files": 362,
+        "scenes": 3,
+        "prefabs": 29
+      },
+      "status_note": "Generated code to report folder; Unity project files were not modified.",
+      "updated_at": "2026-04-26T15:33:21"
+    },
+    {
+      "candidate_id": "cand_002_asset_reference_audit",
+      "feature_name": "Readonly Asset Reference Risk Report",
+      "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+      "value": "Finds project hygiene issues without touching assets.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "report_tool",
+      "status": "pending",
+      "signals": {
+        "asset_files": 187
+      }
+    },
+    {
+      "candidate_id": "cand_003_script_lifecycle_report",
+      "feature_name": "CSharp Lifecycle And Serialization Summary",
+      "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
+      "value": "Highlights maintainability hotspots and helps plan refactors.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "report_tool",
+      "status": "pending",
+      "signals": {
+        "mono_behaviour_classes": 122,
+        "public_fields": 1238,
+        "serialize_fields": 22
+      }
+    },
+    {
+      "candidate_id": "cand_004_editor_validation_menu",
+      "feature_name": "Readonly Editor Validation Menu",
+      "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+      "value": "Makes repeat validation accessible inside Unity.",
+      "risk_level": "medium",
+      "affected_files": [],
+      "implementation_type": "editor_tool",
+      "status": "pending",
+      "signals": {
+        "editor_window_classes": 2
+      }
+    },
+    {
+      "candidate_id": "cand_005_runtime_gameplay_tracker",
+      "feature_name": "Runtime Gameplay Session Tracker",
+      "description": "Add runtime tracking for play session metrics. This touches gameplay code and should be implemented only after manual review.",
+      "value": "Could improve telemetry for balancing and debugging.",
+      "risk_level": "high",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "signals": {}
+    }
+  ]
 }
