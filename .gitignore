@@ -17,3 +17,5 @@
 [Ss]tyle[Cc]op.*
 *.mat
 *.lighting
+**/__pycache__/*
+**/cache/*
