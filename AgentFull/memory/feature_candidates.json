@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-26T16:08:48",
+  "updated_at": "2026-04-26T17:45:01",
   "candidates": [
     {
       "candidate_id": "cand_001_project_overview_editor",
@@ -68,6 +68,124 @@
       "affected_files": [],
       "implementation_type": "runtime_feature",
       "status": "pending",
+      "signals": {}
+    },
+    {
+      "candidate_id": "auto_001_status_effect_controller",
+      "feature_name": "Status Effect Controller",
+      "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
+      "value": "Extends the existing character/combat foundation without editing existing scripts.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "completed",
+      "suggested_class_name": "StatusEffectController",
+      "source": "project_heuristic",
+      "signals": {
+        "matched_system": "character",
+        "mono_behaviour_classes": 122
+      },
+      "status_note": "Generated a new feature script to the configured Unity path without overwriting existing files.",
+      "updated_at": "2026-04-26T17:45:01"
+    },
+    {
+      "candidate_id": "auto_003_worker_morale_controller",
+      "feature_name": "Worker Morale Controller",
+      "description": "Add a standalone runtime morale component with decay, recovery, threshold events, and task-readiness helpers for worker gameplay.",
+      "value": "Builds on the worker/task system with a new balancing lever.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "WorkerMoraleController",
+      "source": "project_heuristic",
+      "signals": {
+        "matched_system": "worker_tasks",
+        "worker_scripts": 27
+      }
+    },
+    {
+      "candidate_id": "auto_004_resource_threshold_alerts",
+      "feature_name": "Resource Threshold Alert Controller",
+      "description": "Add a runtime resource-threshold component that tracks named resource amounts and raises events when stock falls below configured limits.",
+      "value": "Provides a low-risk foundation for UI alerts, worker priorities, and colony feedback.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "ResourceThresholdAlertController",
+      "source": "project_heuristic",
+      "signals": {
+        "matched_system": "resources",
+        "scriptable_assets": 129
+      }
+    },
+    {
+      "candidate_id": "auto_005_combat_event_feed",
+      "feature_name": "Combat Event Feed",
+      "description": "Add a runtime event-feed component for damage, healing, deaths, and combat notes so UI or debugging tools can subscribe without coupling to combat classes.",
+      "value": "Makes combat feedback easier to surface while keeping the generated code isolated.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "CombatEventFeed",
+      "source": "project_heuristic",
+      "signals": {
+        "matched_system": "combat",
+        "prefabs": 29
+      }
+    },
+    {
+      "candidate_id": "llm_001_box_selection",
+      "feature_name": "Box Selection Controller",
+      "description": "Standalone runtime component that draws a box on the terrain and selects any selectable objects inside, supporting RTS-style unit selection.",
+      "value": "Provides a common RTS control mechanism without modifying existing input or selection systems.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "BoxSelectionController",
+      "source": "llm",
+      "signals": {}
+    },
+    {
+      "candidate_id": "llm_002_double_click_zoom",
+      "feature_name": "Double-Click Zoom Controller",
+      "description": "A standalone script that smoothly zooms the camera toward a double-clicked world position, compatible with existing camera movement.",
+      "value": "Improves navigation and player experience without altering the active camera controller.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "DoubleClickZoomController",
+      "source": "llm",
+      "signals": {}
+    },
+    {
+      "candidate_id": "llm_003_resource_decay",
+      "feature_name": "Resource Decay Controller",
+      "description": "Attach to any resource holder to slowly reduce stockpiles over time based on configurable decay rates and environmental conditions.",
+      "value": "Adds a strategic layer to resource management without touching existing storage or consumption logic.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "ResourceDecayController",
+      "source": "llm",
+      "signals": {}
+    },
+    {
+      "candidate_id": "llm_004_notification_popup",
+      "feature_name": "Notification Popup Manager",
+      "description": "Simple component that spawns temporary on-screen text notifications (e.g., 'Worker idle', 'Research complete') using a provided prefab template.",
+      "value": "Gives immediate in-game feedback for important events without coupling UI to core systems.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "NotificationPopupManager",
+      "source": "llm",
       "signals": {}
     }
   ]

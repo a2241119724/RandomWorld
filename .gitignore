@@ -17,3 +17,4 @@
 *.lighting
 **/__pycache__/*
 **/cache/*
+**/Reports/*
