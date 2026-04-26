@@ -1,7 +1,7 @@
 {
   "task": {
     "task": "auto_discover_and_implement",
-    "task_id": "auto_discover_and_implement_160450",
+    "task_id": "auto_discover_and_implement_160846",
     "description": "Scan the Unity project, plan a low-risk automation feature, generate code, validate it, and write a report.",
     "constraints": [
       "Do not overwrite existing Unity files.",
@@ -10,7 +10,7 @@
     ],
     "parameters": {}
   },
-  "started_at": "2026-04-26T16:04:50",
+  "started_at": "2026-04-26T16:08:46",
   "agent_results": {
     "project_analyzer": {
       "mode": "full_analysis",
@@ -56,17 +56,18 @@
           }
         },
         "counts": {
-          "csharp_files": 363,
+          "csharp_files": 364,
           "prefabs": 29,
           "scenes": 3,
           "materials": 26,
           "textures": 95,
           "scriptable_assets": 129,
-          "meta_files": 941
+          "meta_files": 942
         },
         "samples": {
           "scripts": [
             "Editor/AgentProjectOverviewWindow.cs",
+            "Editor/ReadonlyAssetReferenceRiskReport.cs",
             "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
             "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
             "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
@@ -76,8 +77,7 @@
             "TextMesh Pro/Examples & Extras/Scripts/ChatController.cs",
             "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
             "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
-            "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
-            "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
+            "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs"
           ],
           "scenes": [
             "Scenes/Game.unity",
@@ -127,23 +127,23 @@
             "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
           ]
         },
-        "summary": "Unity project scan found 363 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
-        "fingerprint": "5abe1332fe2c862dc9a330c69bdde37d75ca2b07af0fb750f657653ae7b62879",
+        "summary": "Unity project scan found 364 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
+        "fingerprint": "45fbdca6a0224f3543392bd9715158f9722ea97985a3c866e6719795895be207",
         "from_cache": false
       },
       "script_analysis": {
         "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
-        "total_scripts": 363,
+        "total_scripts": 364,
         "summary": {
           "mono_behaviour_classes": 122,
           "scriptable_object_classes": 7,
-          "editor_window_classes": 3,
-          "plain_classes": 459,
-          "public_fields": 1245,
+          "editor_window_classes": 4,
+          "plain_classes": 460,
+          "public_fields": 1252,
           "serialize_fields": 22,
           "lifecycle_methods": {
             "Awake": 101,
-            "OnEnable": 40,
+            "OnEnable": 41,
             "Start": 77,
             "Update": 53,
             "FixedUpdate": 6,
@@ -181,6 +181,35 @@
               "OnEnable"
             ],
             "line_count": 151
+          },
+          {
+            "path": "Editor/ReadonlyAssetReferenceRiskReport.cs",
+            "namespaces": [
+              "RandomWorld.AgentGenerated.Editor"
+            ],
+            "classes": [
+              {
+                "kind": "class",
+                "name": "ReadonlyAssetReferenceRiskReport",
+                "inherits": [
+                  "EditorWindow"
+                ]
+              },
+              {
+                "kind": "class",
+                "name": "ProjectStats",
+                "inherits": []
+              }
+            ],
+            "unity_types": [
+              "EditorWindow"
+            ],
+            "public_fields": 7,
+            "serialize_fields": 0,
+            "lifecycle_methods": [
+              "OnEnable"
+            ],
+            "line_count": 150
           },
           {
             "path": "Scripts/2D/Attributes/BuilderAttribute.cs",
@@ -9689,26 +9718,13 @@
             "line_count": 145
           }
         ],
-        "fingerprint": "4edc63333fe25c117bdbe8cb2263ff6215402dd676f77fd4a44a1477fdf40c02",
+        "fingerprint": "a2154574da95a289d46952dc7063b76f779ab1856ebb3ad85f0b52fe02c31753",
         "from_cache": false
       }
     },
     "feature_planner": {
       "mode": "discover_and_plan",
       "candidates": [
-        {
-          "candidate_id": "cand_002_asset_reference_audit",
-          "feature_name": "Readonly Asset Reference Risk Report",
-          "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
-          "value": "Finds project hygiene issues without touching assets.",
-          "risk_level": "low",
-          "affected_files": [],
-          "implementation_type": "report_tool",
-          "status": "pending",
-          "signals": {
-            "asset_files": 187
-          }
-        },
         {
           "candidate_id": "cand_003_script_lifecycle_report",
           "feature_name": "CSharp Lifecycle And Serialization Summary",
@@ -9720,7 +9736,7 @@
           "status": "pending",
           "signals": {
             "mono_behaviour_classes": 122,
-            "public_fields": 1245,
+            "public_fields": 1252,
             "serialize_fields": 22
           }
         },
@@ -9734,7 +9750,7 @@
           "implementation_type": "editor_tool",
           "status": "pending",
           "signals": {
-            "editor_window_classes": 3
+            "editor_window_classes": 4
           }
         },
         {
@@ -9758,29 +9774,44 @@
           "implementation_type": "editor_tool",
           "status": "completed",
           "signals": {
-            "csharp_files": 363,
+            "csharp_files": 364,
             "scenes": 3,
             "prefabs": 29
+          }
+        },
+        {
+          "candidate_id": "cand_002_asset_reference_audit",
+          "feature_name": "Readonly Asset Reference Risk Report",
+          "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+          "value": "Finds project hygiene issues without touching assets.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "report_tool",
+          "status": "completed",
+          "signals": {
+            "asset_files": 187
           }
         }
       ],
       "selected_candidate": {
-        "candidate_id": "cand_002_asset_reference_audit",
-        "feature_name": "Readonly Asset Reference Risk Report",
-        "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
-        "value": "Finds project hygiene issues without touching assets.",
+        "candidate_id": "cand_003_script_lifecycle_report",
+        "feature_name": "CSharp Lifecycle And Serialization Summary",
+        "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
+        "value": "Highlights maintainability hotspots and helps plan refactors.",
         "risk_level": "low",
         "affected_files": [],
         "implementation_type": "report_tool",
         "status": "pending",
         "signals": {
-          "asset_files": 187
+          "mono_behaviour_classes": 122,
+          "public_fields": 1252,
+          "serialize_fields": 22
         }
       },
       "task_card": {
-        "task_goal": "Readonly Asset Reference Risk Report",
-        "candidate_id": "cand_002_asset_reference_audit",
-        "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+        "task_goal": "CSharp Lifecycle And Serialization Summary",
+        "candidate_id": "cand_003_script_lifecycle_report",
+        "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
         "implementation_type": "report_tool",
         "implementation_scope": [
           "Generate C# into the configured Unity script folder.",
@@ -9789,7 +9820,7 @@
         ],
         "modify_files": [],
         "new_files": [
-          "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
+          "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs"
         ],
         "risk_notes": [
           "Risk level: low",
@@ -9803,17 +9834,17 @@
         "rollback_plan": [
           "Delete the generated C# file from the configured Unity path."
         ],
-        "selected_at": "2026-04-26T16:04:50"
+        "selected_at": "2026-04-26T16:08:46"
       }
     },
     "unity_editor": {
       "generated_files": [
-        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs"
       ],
       "generated_meta_files": [
-        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs.meta"
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs.meta"
       ],
-      "class_name": "ReadonlyAssetReferenceRiskReport",
+      "class_name": "CSharpLifecycleAndSerializationSummary",
       "namespace": "RandomWorld.AgentGenerated.Editor",
       "policy": "readonly_editor_tool_configured_editor_path",
       "manual_next_step": "Open Unity and confirm the generated Editor menu compiles."
@@ -9958,7 +9989,7 @@
         "passed": true,
         "checks": [
           {
-            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs",
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs",
             "exists": true,
             "has_using_unity_editor": true,
             "inside_editor_folder": true,
@@ -9973,8 +10004,8 @@
       }
     },
     "report": {
-      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\report.md",
-      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\execution_context.json"
+      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_003_script_lifecycle_report_CSharp_Lifecycle_And_Serialization_Summ\\report.md",
+      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_003_script_lifecycle_report_CSharp_Lifecycle_And_Serialization_Summ\\execution_context.json"
     }
   },
   "skill_results": {
@@ -10020,17 +10051,18 @@
         }
       },
       "counts": {
-        "csharp_files": 363,
+        "csharp_files": 364,
         "prefabs": 29,
         "scenes": 3,
         "materials": 26,
         "textures": 95,
         "scriptable_assets": 129,
-        "meta_files": 941
+        "meta_files": 942
       },
       "samples": {
         "scripts": [
           "Editor/AgentProjectOverviewWindow.cs",
+          "Editor/ReadonlyAssetReferenceRiskReport.cs",
           "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
           "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
           "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
@@ -10040,8 +10072,7 @@
           "TextMesh Pro/Examples & Extras/Scripts/ChatController.cs",
           "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
           "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
-          "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
-          "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
+          "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs"
         ],
         "scenes": [
           "Scenes/Game.unity",
@@ -10091,23 +10122,23 @@
           "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
         ]
       },
-      "summary": "Unity project scan found 363 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
-      "fingerprint": "5abe1332fe2c862dc9a330c69bdde37d75ca2b07af0fb750f657653ae7b62879",
+      "summary": "Unity project scan found 364 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
+      "fingerprint": "45fbdca6a0224f3543392bd9715158f9722ea97985a3c866e6719795895be207",
       "from_cache": false
     },
     "analyze_csharp_scripts": {
       "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
-      "total_scripts": 363,
+      "total_scripts": 364,
       "summary": {
         "mono_behaviour_classes": 122,
         "scriptable_object_classes": 7,
-        "editor_window_classes": 3,
-        "plain_classes": 459,
-        "public_fields": 1245,
+        "editor_window_classes": 4,
+        "plain_classes": 460,
+        "public_fields": 1252,
         "serialize_fields": 22,
         "lifecycle_methods": {
           "Awake": 101,
-          "OnEnable": 40,
+          "OnEnable": 41,
           "Start": 77,
           "Update": 53,
           "FixedUpdate": 6,
@@ -10145,6 +10176,35 @@
             "OnEnable"
           ],
           "line_count": 151
+        },
+        {
+          "path": "Editor/ReadonlyAssetReferenceRiskReport.cs",
+          "namespaces": [
+            "RandomWorld.AgentGenerated.Editor"
+          ],
+          "classes": [
+            {
+              "kind": "class",
+              "name": "ReadonlyAssetReferenceRiskReport",
+              "inherits": [
+                "EditorWindow"
+              ]
+            },
+            {
+              "kind": "class",
+              "name": "ProjectStats",
+              "inherits": []
+            }
+          ],
+          "unity_types": [
+            "EditorWindow"
+          ],
+          "public_fields": 7,
+          "serialize_fields": 0,
+          "lifecycle_methods": [
+            "OnEnable"
+          ],
+          "line_count": 150
         },
         {
           "path": "Scripts/2D/Attributes/BuilderAttribute.cs",
@@ -19653,24 +19713,11 @@
           "line_count": 145
         }
       ],
-      "fingerprint": "4edc63333fe25c117bdbe8cb2263ff6215402dd676f77fd4a44a1477fdf40c02",
+      "fingerprint": "a2154574da95a289d46952dc7063b76f779ab1856ebb3ad85f0b52fe02c31753",
       "from_cache": false
     },
     "discover_feature_gap": {
       "candidates": [
-        {
-          "candidate_id": "cand_002_asset_reference_audit",
-          "feature_name": "Readonly Asset Reference Risk Report",
-          "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
-          "value": "Finds project hygiene issues without touching assets.",
-          "risk_level": "low",
-          "affected_files": [],
-          "implementation_type": "report_tool",
-          "status": "pending",
-          "signals": {
-            "asset_files": 187
-          }
-        },
         {
           "candidate_id": "cand_003_script_lifecycle_report",
           "feature_name": "CSharp Lifecycle And Serialization Summary",
@@ -19682,7 +19729,7 @@
           "status": "pending",
           "signals": {
             "mono_behaviour_classes": 122,
-            "public_fields": 1245,
+            "public_fields": 1252,
             "serialize_fields": 22
           }
         },
@@ -19696,7 +19743,7 @@
           "implementation_type": "editor_tool",
           "status": "pending",
           "signals": {
-            "editor_window_classes": 3
+            "editor_window_classes": 4
           }
         },
         {
@@ -19720,31 +19767,46 @@
           "implementation_type": "editor_tool",
           "status": "completed",
           "signals": {
-            "csharp_files": 363,
+            "csharp_files": 364,
             "scenes": 3,
             "prefabs": 29
+          }
+        },
+        {
+          "candidate_id": "cand_002_asset_reference_audit",
+          "feature_name": "Readonly Asset Reference Risk Report",
+          "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+          "value": "Finds project hygiene issues without touching assets.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "report_tool",
+          "status": "completed",
+          "signals": {
+            "asset_files": 187
           }
         }
       ]
     },
     "generate_feature_task": {
       "selected_candidate": {
-        "candidate_id": "cand_002_asset_reference_audit",
-        "feature_name": "Readonly Asset Reference Risk Report",
-        "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
-        "value": "Finds project hygiene issues without touching assets.",
+        "candidate_id": "cand_003_script_lifecycle_report",
+        "feature_name": "CSharp Lifecycle And Serialization Summary",
+        "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
+        "value": "Highlights maintainability hotspots and helps plan refactors.",
         "risk_level": "low",
         "affected_files": [],
         "implementation_type": "report_tool",
         "status": "pending",
         "signals": {
-          "asset_files": 187
+          "mono_behaviour_classes": 122,
+          "public_fields": 1252,
+          "serialize_fields": 22
         }
       },
       "task_card": {
-        "task_goal": "Readonly Asset Reference Risk Report",
-        "candidate_id": "cand_002_asset_reference_audit",
-        "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+        "task_goal": "CSharp Lifecycle And Serialization Summary",
+        "candidate_id": "cand_003_script_lifecycle_report",
+        "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
         "implementation_type": "report_tool",
         "implementation_scope": [
           "Generate C# into the configured Unity script folder.",
@@ -19753,7 +19815,7 @@
         ],
         "modify_files": [],
         "new_files": [
-          "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
+          "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs"
         ],
         "risk_notes": [
           "Risk level: low",
@@ -19767,17 +19829,17 @@
         "rollback_plan": [
           "Delete the generated C# file from the configured Unity path."
         ],
-        "selected_at": "2026-04-26T16:04:50"
+        "selected_at": "2026-04-26T16:08:46"
       }
     },
     "generate_unity_editor_tool": {
       "generated_files": [
-        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs"
       ],
       "generated_meta_files": [
-        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs.meta"
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs.meta"
       ],
-      "class_name": "ReadonlyAssetReferenceRiskReport",
+      "class_name": "CSharpLifecycleAndSerializationSummary",
       "namespace": "RandomWorld.AgentGenerated.Editor",
       "policy": "readonly_editor_tool_configured_editor_path",
       "manual_next_step": "Open Unity and confirm the generated Editor menu compiles."
@@ -19917,50 +19979,50 @@
       ]
     },
     "update_feature_status": {
-      "candidate_id": "cand_002_asset_reference_audit",
+      "candidate_id": "cand_003_script_lifecycle_report",
       "status": "completed",
       "note": "Generated code to the configured Unity path without overwriting existing files.",
       "candidate_count": 5
     },
     "write_report": {
-      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\report.md",
-      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\execution_context.json"
+      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_003_script_lifecycle_report_CSharp_Lifecycle_And_Serialization_Summ\\report.md",
+      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_003_script_lifecycle_report_CSharp_Lifecycle_And_Serialization_Summ\\execution_context.json"
     }
   },
   "errors": [],
   "events": [
     {
-      "time": "2026-04-26T16:04:50",
+      "time": "2026-04-26T16:08:46",
       "level": "info",
       "message": "Task started: auto_discover_and_implement"
     },
     {
-      "time": "2026-04-26T16:04:50",
+      "time": "2026-04-26T16:08:46",
       "level": "info",
       "message": "Dispatching to agent: project_analyzer"
     },
     {
-      "time": "2026-04-26T16:04:56",
+      "time": "2026-04-26T16:08:48",
       "level": "info",
       "message": "Dispatching to agent: feature_planner"
     },
     {
-      "time": "2026-04-26T16:04:56",
+      "time": "2026-04-26T16:08:48",
       "level": "info",
-      "message": "Candidate selected: cand_002_asset_reference_audit"
+      "message": "Candidate selected: cand_003_script_lifecycle_report"
     },
     {
-      "time": "2026-04-26T16:04:56",
+      "time": "2026-04-26T16:08:48",
       "level": "info",
       "message": "Dispatching to agent: unity_editor"
     },
     {
-      "time": "2026-04-26T16:04:56",
+      "time": "2026-04-26T16:08:48",
       "level": "info",
       "message": "Dispatching to agent: validation"
     },
     {
-      "time": "2026-04-26T16:05:01",
+      "time": "2026-04-26T16:08:48",
       "level": "info",
       "message": "Dispatching to agent: report"
     }
@@ -20040,9 +20102,9 @@
       }
     },
     "model_profile": "deepseek",
-    "mock": true
+    "mock": false
   },
-  "report_dir": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report",
+  "report_dir": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_003_script_lifecycle_report_CSharp_Lifecycle_And_Serialization_Summ",
   "project_scan": {
     "root_path": "D:\\LAB\\Unity\\RandomWorld",
     "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
@@ -20085,17 +20147,18 @@
       }
     },
     "counts": {
-      "csharp_files": 363,
+      "csharp_files": 364,
       "prefabs": 29,
       "scenes": 3,
       "materials": 26,
       "textures": 95,
       "scriptable_assets": 129,
-      "meta_files": 941
+      "meta_files": 942
     },
     "samples": {
       "scripts": [
         "Editor/AgentProjectOverviewWindow.cs",
+        "Editor/ReadonlyAssetReferenceRiskReport.cs",
         "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
         "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
         "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
@@ -20105,8 +20168,7 @@
         "TextMesh Pro/Examples & Extras/Scripts/ChatController.cs",
         "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
         "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
-        "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
-        "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
+        "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs"
       ],
       "scenes": [
         "Scenes/Game.unity",
@@ -20156,23 +20218,23 @@
         "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
       ]
     },
-    "summary": "Unity project scan found 363 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
-    "fingerprint": "5abe1332fe2c862dc9a330c69bdde37d75ca2b07af0fb750f657653ae7b62879",
+    "summary": "Unity project scan found 364 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
+    "fingerprint": "45fbdca6a0224f3543392bd9715158f9722ea97985a3c866e6719795895be207",
     "from_cache": false
   },
   "script_analysis": {
     "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
-    "total_scripts": 363,
+    "total_scripts": 364,
     "summary": {
       "mono_behaviour_classes": 122,
       "scriptable_object_classes": 7,
-      "editor_window_classes": 3,
-      "plain_classes": 459,
-      "public_fields": 1245,
+      "editor_window_classes": 4,
+      "plain_classes": 460,
+      "public_fields": 1252,
       "serialize_fields": 22,
       "lifecycle_methods": {
         "Awake": 101,
-        "OnEnable": 40,
+        "OnEnable": 41,
         "Start": 77,
         "Update": 53,
         "FixedUpdate": 6,
@@ -20210,6 +20272,35 @@
           "OnEnable"
         ],
         "line_count": 151
+      },
+      {
+        "path": "Editor/ReadonlyAssetReferenceRiskReport.cs",
+        "namespaces": [
+          "RandomWorld.AgentGenerated.Editor"
+        ],
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ReadonlyAssetReferenceRiskReport",
+            "inherits": [
+              "EditorWindow"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "ProjectStats",
+            "inherits": []
+          }
+        ],
+        "unity_types": [
+          "EditorWindow"
+        ],
+        "public_fields": 7,
+        "serialize_fields": 0,
+        "lifecycle_methods": [
+          "OnEnable"
+        ],
+        "line_count": 150
       },
       {
         "path": "Scripts/2D/Attributes/BuilderAttribute.cs",
@@ -29718,7 +29809,7 @@
         "line_count": 145
       }
     ],
-    "fingerprint": "4edc63333fe25c117bdbe8cb2263ff6215402dd676f77fd4a44a1477fdf40c02",
+    "fingerprint": "a2154574da95a289d46952dc7063b76f779ab1856ebb3ad85f0b52fe02c31753",
     "from_cache": false
   },
   "feature_candidates": [
@@ -29732,7 +29823,7 @@
       "implementation_type": "editor_tool",
       "status": "completed",
       "signals": {
-        "csharp_files": 363,
+        "csharp_files": 364,
         "scenes": 3,
         "prefabs": 29
       }
@@ -29748,9 +29839,7 @@
       "status": "completed",
       "signals": {
         "asset_files": 187
-      },
-      "status_note": "Generated code to the configured Unity path without overwriting existing files.",
-      "updated_at": "2026-04-26T16:05:01"
+      }
     },
     {
       "candidate_id": "cand_003_script_lifecycle_report",
@@ -29760,12 +29849,14 @@
       "risk_level": "low",
       "affected_files": [],
       "implementation_type": "report_tool",
-      "status": "pending",
+      "status": "completed",
       "signals": {
         "mono_behaviour_classes": 122,
-        "public_fields": 1245,
+        "public_fields": 1252,
         "serialize_fields": 22
-      }
+      },
+      "status_note": "Generated code to the configured Unity path without overwriting existing files.",
+      "updated_at": "2026-04-26T16:08:48"
     },
     {
       "candidate_id": "cand_004_editor_validation_menu",
@@ -29777,7 +29868,7 @@
       "implementation_type": "editor_tool",
       "status": "pending",
       "signals": {
-        "editor_window_classes": 3
+        "editor_window_classes": 4
       }
     },
     {
@@ -29793,22 +29884,24 @@
     }
   ],
   "selected_candidate": {
-    "candidate_id": "cand_002_asset_reference_audit",
-    "feature_name": "Readonly Asset Reference Risk Report",
-    "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
-    "value": "Finds project hygiene issues without touching assets.",
+    "candidate_id": "cand_003_script_lifecycle_report",
+    "feature_name": "CSharp Lifecycle And Serialization Summary",
+    "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
+    "value": "Highlights maintainability hotspots and helps plan refactors.",
     "risk_level": "low",
     "affected_files": [],
     "implementation_type": "report_tool",
     "status": "pending",
     "signals": {
-      "asset_files": 187
+      "mono_behaviour_classes": 122,
+      "public_fields": 1252,
+      "serialize_fields": 22
     }
   },
   "task_card": {
-    "task_goal": "Readonly Asset Reference Risk Report",
-    "candidate_id": "cand_002_asset_reference_audit",
-    "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+    "task_goal": "CSharp Lifecycle And Serialization Summary",
+    "candidate_id": "cand_003_script_lifecycle_report",
+    "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
     "implementation_type": "report_tool",
     "implementation_scope": [
       "Generate C# into the configured Unity script folder.",
@@ -29817,7 +29910,7 @@
     ],
     "modify_files": [],
     "new_files": [
-      "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
+      "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs"
     ],
     "risk_notes": [
       "Risk level: low",
@@ -29831,13 +29924,13 @@
     "rollback_plan": [
       "Delete the generated C# file from the configured Unity path."
     ],
-    "selected_at": "2026-04-26T16:04:50"
+    "selected_at": "2026-04-26T16:08:46"
   },
   "generated_files": [
-    "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
+    "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs"
   ],
   "generated_meta_files": [
-    "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs.meta"
+    "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs.meta"
   ],
   "asset_reference_check": {
     "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
@@ -29977,7 +30070,7 @@
     "passed": true,
     "checks": [
       {
-        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs",
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\CSharpLifecycleAndSerializationSummary.cs",
         "exists": true,
         "has_using_unity_editor": true,
         "inside_editor_folder": true,
@@ -29990,9 +30083,9 @@
     ],
     "policy": "Static validation only; Unity compilation is not executed by default."
   },
-  "finished_at": "2026-04-26T16:05:01",
+  "finished_at": "2026-04-26T16:08:48",
   "final_report": {
-    "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\report.md",
-    "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\execution_context.json"
+    "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_003_script_lifecycle_report_CSharp_Lifecycle_And_Serialization_Summ\\report.md",
+    "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_003_script_lifecycle_report_CSharp_Lifecycle_And_Serialization_Summ\\execution_context.json"
   }
 }
