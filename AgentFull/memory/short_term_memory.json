@@ -1,16 +1,16 @@
 {
   "task": {
     "task": "auto_discover_and_implement",
-    "task_id": "auto_discover_and_implement_174018",
-    "description": "Scan the Unity project, plan a low-risk automation feature, generate code, validate it, and write a report.",
+    "task_id": "auto_discover_and_implement_181448",
+    "description": "扫描 Unity 项目，自动识别适合当前项目的新功能，生成实现代码，执行静态验证，并写出运行报告。",
     "constraints": [
-      "Do not overwrite existing Unity files.",
-      "Prefer readonly Editor tooling.",
-      "Write generated code to the configured Unity script or Editor folder."
+      "不要覆盖已有 Unity 文件。",
+      "优先生成可手动挂载或接入的独立运行时功能脚本。",
+      "生成代码写入配置中的 Unity Scripts 或 Editor 目录。"
     ],
     "parameters": {}
   },
-  "started_at": "2026-04-26T17:40:18",
+  "started_at": "2026-04-26T18:14:48",
   "agent_results": {
     "project_analyzer": {
       "mode": "full_analysis",
@@ -66,7 +66,6 @@
         },
         "samples": {
           "scripts": [
-            "Editor/AgentProjectOverviewWindow.cs",
             "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
             "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
             "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
@@ -77,7 +76,8 @@
             "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
             "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
             "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
-            "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
+            "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs",
+            "TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs"
           ],
           "scenes": [
             "Scenes/Game.unity",
@@ -127,25 +127,25 @@
             "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
           ]
         },
-        "summary": "Unity project scan found 363 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
-        "fingerprint": "e00c4e0c93afa65630582d5eef4b2def9a07322f02dfe70b634a0802534b4cf0",
-        "from_cache": true
+        "summary": "Unity 项目扫描发现 363 个 C# 文件、3 个场景、29 个 Prefab、26 个材质、95 个贴图。",
+        "fingerprint": "0699a73dc82fd4177ba52bdff964b039b33b5b460d2f8fd5606df3b37e34021d",
+        "from_cache": false
       },
       "script_analysis": {
         "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
         "total_scripts": 363,
         "summary": {
-          "mono_behaviour_classes": 122,
+          "mono_behaviour_classes": 123,
           "scriptable_object_classes": 7,
-          "editor_window_classes": 3,
+          "editor_window_classes": 2,
           "plain_classes": 459,
-          "public_fields": 1245,
-          "serialize_fields": 22,
+          "public_fields": 1243,
+          "serialize_fields": 23,
           "lifecycle_methods": {
-            "Awake": 101,
-            "OnEnable": 40,
+            "Awake": 102,
+            "OnEnable": 39,
             "Start": 77,
-            "Update": 53,
+            "Update": 54,
             "FixedUpdate": 6,
             "LateUpdate": 7,
             "OnDisable": 22,
@@ -153,35 +153,6 @@
           }
         },
         "scripts": [
-          {
-            "path": "Editor/AgentProjectOverviewWindow.cs",
-            "namespaces": [
-              "RandomWorld.AgentGenerated.Editor"
-            ],
-            "classes": [
-              {
-                "kind": "class",
-                "name": "AgentProjectOverviewWindow",
-                "inherits": [
-                  "EditorWindow"
-                ]
-              },
-              {
-                "kind": "class",
-                "name": "ProjectStats",
-                "inherits": []
-              }
-            ],
-            "unity_types": [
-              "EditorWindow"
-            ],
-            "public_fields": 7,
-            "serialize_fields": 0,
-            "lifecycle_methods": [
-              "OnEnable"
-            ],
-            "line_count": 151
-          },
           {
             "path": "Scripts/2D/Attributes/BuilderAttribute.cs",
             "namespaces": [
@@ -4353,6 +4324,41 @@
               "OnEnable"
             ],
             "line_count": 20
+          },
+          {
+            "path": "Scripts/2D/StatusEffectController.cs",
+            "namespaces": [
+              "LAB2D.AgentGenerated"
+            ],
+            "classes": [
+              {
+                "kind": "interface",
+                "name": "IStatusEffectTarget",
+                "inherits": []
+              },
+              {
+                "kind": "class",
+                "name": "StatusEffectController",
+                "inherits": [
+                  "MonoBehaviour"
+                ]
+              },
+              {
+                "kind": "class",
+                "name": "StatusEffectInstance",
+                "inherits": []
+              }
+            ],
+            "unity_types": [
+              "MonoBehaviour"
+            ],
+            "public_fields": 5,
+            "serialize_fields": 1,
+            "lifecycle_methods": [
+              "Awake",
+              "Update"
+            ],
+            "line_count": 223
           },
           {
             "path": "Scripts/2D/TextTileGenerator.cs",
@@ -9689,29 +9695,13 @@
             "line_count": 145
           }
         ],
-        "fingerprint": "52980d282780b38dd37dfa4a96d9e3a596333c7604742a5ed180a4efa43ace96",
-        "from_cache": true
+        "fingerprint": "db1d99d29eff35919af1ad0353233d0bc513dda44e709bbbfa9439337e06fcbf",
+        "from_cache": false
       }
     },
     "feature_planner": {
       "mode": "discover_and_plan",
       "candidates": [
-        {
-          "candidate_id": "auto_001_status_effect_controller",
-          "feature_name": "Status Effect Controller",
-          "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
-          "value": "Extends the existing character/combat foundation without editing existing scripts.",
-          "risk_level": "low",
-          "affected_files": [],
-          "implementation_type": "runtime_feature",
-          "status": "pending",
-          "suggested_class_name": "StatusEffectController",
-          "source": "project_heuristic",
-          "signals": {
-            "matched_system": "character",
-            "mono_behaviour_classes": 122
-          }
-        },
         {
           "candidate_id": "auto_003_worker_morale_controller",
           "feature_name": "Worker Morale Controller",
@@ -9761,56 +9751,74 @@
           }
         },
         {
-          "candidate_id": "llm_001_box_selection",
-          "feature_name": "Box Selection Controller",
-          "description": "Standalone runtime component that draws a box on the terrain and selects any selectable objects inside, supporting RTS-style unit selection.",
-          "value": "Provides a common RTS control mechanism without modifying existing input or selection systems.",
+          "candidate_id": "llm_001_camera_shake",
+          "feature_name": "Camera Shake Controller",
+          "description": "提供运行时相机震动效果的独立组件，支持强度、持续时间、衰减等参数，可手动挂载至主相机。",
+          "value": "增强战斗反馈与视觉冲击力，丰富游戏氛围。",
           "risk_level": "low",
           "affected_files": [],
           "implementation_type": "runtime_feature",
           "status": "pending",
-          "suggested_class_name": "BoxSelectionController",
+          "suggested_class_name": "CameraShakeController",
           "source": "llm",
           "signals": {}
         },
         {
-          "candidate_id": "llm_002_double_click_zoom",
-          "feature_name": "Double-Click Zoom Controller",
-          "description": "A standalone script that smoothly zooms the camera toward a double-clicked world position, compatible with existing camera movement.",
-          "value": "Improves navigation and player experience without altering the active camera controller.",
+          "candidate_id": "llm_002_object_pool",
+          "feature_name": "Runtime Object Pool",
+          "description": "通用对象池组件，支持预制体预加载与动态回收，适用于频繁生成的伤害数字、血条等对象。",
+          "value": "减少运行时 GC 压力，提升性能。",
           "risk_level": "low",
           "affected_files": [],
           "implementation_type": "runtime_feature",
           "status": "pending",
-          "suggested_class_name": "DoubleClickZoomController",
+          "suggested_class_name": "ObjectPoolManager",
           "source": "llm",
           "signals": {}
         },
         {
-          "candidate_id": "llm_003_resource_decay",
-          "feature_name": "Resource Decay Controller",
-          "description": "Attach to any resource holder to slowly reduce stockpiles over time based on configurable decay rates and environmental conditions.",
-          "value": "Adds a strategic layer to resource management without touching existing storage or consumption logic.",
+          "candidate_id": "llm_003_audio_feedback",
+          "feature_name": "Audio Feedback Controller",
+          "description": "可挂载至任意游戏物体的音效反馈组件，通过公开方法或事件触发随机/顺序音效。",
+          "value": "低耦合的方式为战斗、交互等提供音效支持。",
           "risk_level": "low",
           "affected_files": [],
           "implementation_type": "runtime_feature",
           "status": "pending",
-          "suggested_class_name": "ResourceDecayController",
+          "suggested_class_name": "AudioFeedbackController",
           "source": "llm",
           "signals": {}
         },
         {
-          "candidate_id": "llm_004_notification_popup",
-          "feature_name": "Notification Popup Manager",
-          "description": "Simple component that spawns temporary on-screen text notifications (e.g., 'Worker idle', 'Research complete') using a provided prefab template.",
-          "value": "Gives immediate in-game feedback for important events without coupling UI to core systems.",
+          "candidate_id": "llm_004_select_highlight",
+          "feature_name": "Selectable Highlight Controller",
+          "description": "物体选中/悬停时自动激活指定高亮层或材质，支持边框、轮廓等表现，需手动绑定表现资源。",
+          "value": "为角色、敌人或 UI 元素提供直观的交互反馈。",
           "risk_level": "low",
           "affected_files": [],
           "implementation_type": "runtime_feature",
           "status": "pending",
-          "suggested_class_name": "NotificationPopupManager",
+          "suggested_class_name": "SelectableHighlightController",
           "source": "llm",
           "signals": {}
+        },
+        {
+          "candidate_id": "auto_001_status_effect_controller",
+          "feature_name": "Status Effect Controller",
+          "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
+          "value": "Extends the existing character/combat foundation without editing existing scripts.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "runtime_feature",
+          "status": "completed",
+          "suggested_class_name": "StatusEffectController",
+          "source": "project_heuristic",
+          "signals": {
+            "matched_system": "character",
+            "mono_behaviour_classes": 122
+          },
+          "status_note": "Generated a new feature script to the configured Unity path without overwriting existing files.",
+          "updated_at": "2026-04-26T17:45:01"
         },
         {
           "candidate_id": "cand_001_project_overview_editor",
@@ -9859,63 +9867,68 @@
         }
       ],
       "selected_candidate": {
-        "candidate_id": "auto_001_status_effect_controller",
-        "feature_name": "Status Effect Controller",
-        "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
-        "value": "Extends the existing character/combat foundation without editing existing scripts.",
+        "candidate_id": "auto_003_worker_morale_controller",
+        "feature_name": "Worker Morale Controller",
+        "description": "Add a standalone runtime morale component with decay, recovery, threshold events, and task-readiness helpers for worker gameplay.",
+        "value": "Builds on the worker/task system with a new balancing lever.",
         "risk_level": "low",
         "affected_files": [],
         "implementation_type": "runtime_feature",
         "status": "pending",
-        "suggested_class_name": "StatusEffectController",
+        "suggested_class_name": "WorkerMoraleController",
         "source": "project_heuristic",
         "signals": {
-          "matched_system": "character",
-          "mono_behaviour_classes": 122
+          "matched_system": "worker_tasks",
+          "worker_scripts": 27
         }
       },
       "task_card": {
-        "task_goal": "Status Effect Controller",
-        "candidate_id": "auto_001_status_effect_controller",
-        "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
+        "task_goal": "Worker Morale Controller",
+        "candidate_id": "auto_003_worker_morale_controller",
+        "description": "Add a standalone runtime morale component with decay, recovery, threshold events, and task-readiness helpers for worker gameplay.",
         "implementation_type": "runtime_feature",
-        "suggested_class_name": "StatusEffectController",
+        "suggested_class_name": "WorkerMoraleController",
         "implementation_scope": [
-          "Create StatusEffectController.cs: new MonoBehaviour script that manages timed status effects (buffs, debuffs, regeneration, etc.) using efficient tick updates. No changes to existing scripts or assets."
+          "Create a new C# file named WorkerMoraleController.cs.",
+          "Define a MonoBehaviour class with serialized fields: maxMorale, currentMorale, decayRate, recoveryRate, lowMoraleThreshold, criticalMoraleThreshold.",
+          "Expose UnityEvents for OnLowMorale, OnCriticalMorale, and OnMoraleRecovered.",
+          "Implement Update() to apply decay/recovery over time, clamp currentMorale between 0 and maxMorale, and invoke the appropriate events when thresholds are crossed.",
+          "Add a public method IsReadyForTasks() that returns true when currentMorale >= lowMoraleThreshold.",
+          "Include tooltips and range attributes for editor usability."
         ],
         "modify_files": [],
         "new_files": [
-          "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs"
+          "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs"
         ],
         "risk_notes": [
-          "Low risk: standalone script, no modifications to existing code, scenes, or prefabs.",
-          "Requires manual attachment to character prefabs; no automatic integration.",
-          "Potential performance overhead with many simultaneous effects; mitigable via delta-time batching or pool-based effect data."
+          "Fully self‑contained MonoBehaviour; no dependencies on existing project scripts or assets.",
+          "Uses simple Update loop – ensure that only a reasonable number of instances exist to avoid performance issues.",
+          "No serialized data, scene modifications, or asset changes required."
         ],
         "verification_steps": [
-          "Attach StatusEffectController to a test character GameObject in a scene.",
-          "During Play Mode, call public methods to add a speed boost, a slow, and a regeneration effect.",
-          "Verify effects modify character stats appropriately (e.g., speed changed, health regenerated).",
-          "Verify effects expire precisely after their configured durations.",
-          "Check that no exceptions or warnings appear in the console."
+          "Attach the component to a GameObject in a test scene.",
+          "Configure thresholds and rates via the Inspector.",
+          "Enter Play mode and observe morale decay over time.",
+          "Temporarily reduce currentMorale below the low/critical thresholds and confirm that the corresponding UnityEvents are triggered.",
+          "Call IsReadyForTasks() and verify it returns false when morale is below the low threshold and true once it recovers."
         ],
         "rollback_plan": [
-          "Delete StatusEffectController.cs from the project.",
-          "Manually remove the component from any GameObjects it was attached to in test scenes/prefabs (revert prefab overrides if any)."
+          "Delete WorkerMoraleController.cs from the project.",
+          "Remove the component from any GameObject it was manually attached to (no other cleanup needed)."
         ],
-        "selected_at": "2026-04-26T17:40:18"
+        "selected_at": "2026-04-26T18:14:48"
       }
     },
     "code_generator": {
       "generated_files": [
-        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs"
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs"
       ],
       "generated_meta_files": [
-        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs.meta"
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs.meta"
       ],
       "script_kind": "MonoBehaviour",
       "namespace": "LAB2D.AgentGenerated",
-      "class_name": "StatusEffectController",
+      "class_name": "WorkerMoraleController",
       "policy": "configured_unity_path_no_overwrite"
     },
     "validation": {
@@ -10058,7 +10071,7 @@
         "passed": true,
         "checks": [
           {
-            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs",
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs",
             "exists": true,
             "has_using_unity_editor": false,
             "inside_editor_folder": false,
@@ -10069,12 +10082,12 @@
             "passed": true
           }
         ],
-        "policy": "Static validation only; Unity compilation is not executed by default."
+        "policy": "仅执行静态验证；默认不会启动 Unity 编译。"
       }
     },
     "report": {
-      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\auto_001_status_effect_controller_Status_Effect_Controller\\report.md",
-      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\auto_001_status_effect_controller_Status_Effect_Controller\\execution_context.json"
+      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\run_181448\\report.md",
+      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\run_181448\\execution_context.json"
     }
   },
   "skill_results": {
@@ -10130,7 +10143,6 @@
       },
       "samples": {
         "scripts": [
-          "Editor/AgentProjectOverviewWindow.cs",
           "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
           "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
           "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
@@ -10141,7 +10153,8 @@
           "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
           "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
           "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
-          "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
+          "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs",
+          "TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs"
         ],
         "scenes": [
           "Scenes/Game.unity",
@@ -10191,25 +10204,25 @@
           "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
         ]
       },
-      "summary": "Unity project scan found 363 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
-      "fingerprint": "e00c4e0c93afa65630582d5eef4b2def9a07322f02dfe70b634a0802534b4cf0",
-      "from_cache": true
+      "summary": "Unity 项目扫描发现 363 个 C# 文件、3 个场景、29 个 Prefab、26 个材质、95 个贴图。",
+      "fingerprint": "0699a73dc82fd4177ba52bdff964b039b33b5b460d2f8fd5606df3b37e34021d",
+      "from_cache": false
     },
     "analyze_csharp_scripts": {
       "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
       "total_scripts": 363,
       "summary": {
-        "mono_behaviour_classes": 122,
+        "mono_behaviour_classes": 123,
         "scriptable_object_classes": 7,
-        "editor_window_classes": 3,
+        "editor_window_classes": 2,
         "plain_classes": 459,
-        "public_fields": 1245,
-        "serialize_fields": 22,
+        "public_fields": 1243,
+        "serialize_fields": 23,
         "lifecycle_methods": {
-          "Awake": 101,
-          "OnEnable": 40,
+          "Awake": 102,
+          "OnEnable": 39,
           "Start": 77,
-          "Update": 53,
+          "Update": 54,
           "FixedUpdate": 6,
           "LateUpdate": 7,
           "OnDisable": 22,
@@ -10217,35 +10230,6 @@
         }
       },
       "scripts": [
-        {
-          "path": "Editor/AgentProjectOverviewWindow.cs",
-          "namespaces": [
-            "RandomWorld.AgentGenerated.Editor"
-          ],
-          "classes": [
-            {
-              "kind": "class",
-              "name": "AgentProjectOverviewWindow",
-              "inherits": [
-                "EditorWindow"
-              ]
-            },
-            {
-              "kind": "class",
-              "name": "ProjectStats",
-              "inherits": []
-            }
-          ],
-          "unity_types": [
-            "EditorWindow"
-          ],
-          "public_fields": 7,
-          "serialize_fields": 0,
-          "lifecycle_methods": [
-            "OnEnable"
-          ],
-          "line_count": 151
-        },
         {
           "path": "Scripts/2D/Attributes/BuilderAttribute.cs",
           "namespaces": [
@@ -14417,6 +14401,41 @@
             "OnEnable"
           ],
           "line_count": 20
+        },
+        {
+          "path": "Scripts/2D/StatusEffectController.cs",
+          "namespaces": [
+            "LAB2D.AgentGenerated"
+          ],
+          "classes": [
+            {
+              "kind": "interface",
+              "name": "IStatusEffectTarget",
+              "inherits": []
+            },
+            {
+              "kind": "class",
+              "name": "StatusEffectController",
+              "inherits": [
+                "MonoBehaviour"
+              ]
+            },
+            {
+              "kind": "class",
+              "name": "StatusEffectInstance",
+              "inherits": []
+            }
+          ],
+          "unity_types": [
+            "MonoBehaviour"
+          ],
+          "public_fields": 5,
+          "serialize_fields": 1,
+          "lifecycle_methods": [
+            "Awake",
+            "Update"
+          ],
+          "line_count": 223
         },
         {
           "path": "Scripts/2D/TextTileGenerator.cs",
@@ -19753,27 +19772,11 @@
           "line_count": 145
         }
       ],
-      "fingerprint": "52980d282780b38dd37dfa4a96d9e3a596333c7604742a5ed180a4efa43ace96",
-      "from_cache": true
+      "fingerprint": "db1d99d29eff35919af1ad0353233d0bc513dda44e709bbbfa9439337e06fcbf",
+      "from_cache": false
     },
     "discover_feature_gap": {
       "candidates": [
-        {
-          "candidate_id": "auto_001_status_effect_controller",
-          "feature_name": "Status Effect Controller",
-          "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
-          "value": "Extends the existing character/combat foundation without editing existing scripts.",
-          "risk_level": "low",
-          "affected_files": [],
-          "implementation_type": "runtime_feature",
-          "status": "pending",
-          "suggested_class_name": "StatusEffectController",
-          "source": "project_heuristic",
-          "signals": {
-            "matched_system": "character",
-            "mono_behaviour_classes": 122
-          }
-        },
         {
           "candidate_id": "auto_003_worker_morale_controller",
           "feature_name": "Worker Morale Controller",
@@ -19823,56 +19826,74 @@
           }
         },
         {
-          "candidate_id": "llm_001_box_selection",
-          "feature_name": "Box Selection Controller",
-          "description": "Standalone runtime component that draws a box on the terrain and selects any selectable objects inside, supporting RTS-style unit selection.",
-          "value": "Provides a common RTS control mechanism without modifying existing input or selection systems.",
+          "candidate_id": "llm_001_camera_shake",
+          "feature_name": "Camera Shake Controller",
+          "description": "提供运行时相机震动效果的独立组件，支持强度、持续时间、衰减等参数，可手动挂载至主相机。",
+          "value": "增强战斗反馈与视觉冲击力，丰富游戏氛围。",
           "risk_level": "low",
           "affected_files": [],
           "implementation_type": "runtime_feature",
           "status": "pending",
-          "suggested_class_name": "BoxSelectionController",
+          "suggested_class_name": "CameraShakeController",
           "source": "llm",
           "signals": {}
         },
         {
-          "candidate_id": "llm_002_double_click_zoom",
-          "feature_name": "Double-Click Zoom Controller",
-          "description": "A standalone script that smoothly zooms the camera toward a double-clicked world position, compatible with existing camera movement.",
-          "value": "Improves navigation and player experience without altering the active camera controller.",
+          "candidate_id": "llm_002_object_pool",
+          "feature_name": "Runtime Object Pool",
+          "description": "通用对象池组件，支持预制体预加载与动态回收，适用于频繁生成的伤害数字、血条等对象。",
+          "value": "减少运行时 GC 压力，提升性能。",
           "risk_level": "low",
           "affected_files": [],
           "implementation_type": "runtime_feature",
           "status": "pending",
-          "suggested_class_name": "DoubleClickZoomController",
+          "suggested_class_name": "ObjectPoolManager",
           "source": "llm",
           "signals": {}
         },
         {
-          "candidate_id": "llm_003_resource_decay",
-          "feature_name": "Resource Decay Controller",
-          "description": "Attach to any resource holder to slowly reduce stockpiles over time based on configurable decay rates and environmental conditions.",
-          "value": "Adds a strategic layer to resource management without touching existing storage or consumption logic.",
+          "candidate_id": "llm_003_audio_feedback",
+          "feature_name": "Audio Feedback Controller",
+          "description": "可挂载至任意游戏物体的音效反馈组件，通过公开方法或事件触发随机/顺序音效。",
+          "value": "低耦合的方式为战斗、交互等提供音效支持。",
           "risk_level": "low",
           "affected_files": [],
           "implementation_type": "runtime_feature",
           "status": "pending",
-          "suggested_class_name": "ResourceDecayController",
+          "suggested_class_name": "AudioFeedbackController",
           "source": "llm",
           "signals": {}
         },
         {
-          "candidate_id": "llm_004_notification_popup",
-          "feature_name": "Notification Popup Manager",
-          "description": "Simple component that spawns temporary on-screen text notifications (e.g., 'Worker idle', 'Research complete') using a provided prefab template.",
-          "value": "Gives immediate in-game feedback for important events without coupling UI to core systems.",
+          "candidate_id": "llm_004_select_highlight",
+          "feature_name": "Selectable Highlight Controller",
+          "description": "物体选中/悬停时自动激活指定高亮层或材质，支持边框、轮廓等表现，需手动绑定表现资源。",
+          "value": "为角色、敌人或 UI 元素提供直观的交互反馈。",
           "risk_level": "low",
           "affected_files": [],
           "implementation_type": "runtime_feature",
           "status": "pending",
-          "suggested_class_name": "NotificationPopupManager",
+          "suggested_class_name": "SelectableHighlightController",
           "source": "llm",
           "signals": {}
+        },
+        {
+          "candidate_id": "auto_001_status_effect_controller",
+          "feature_name": "Status Effect Controller",
+          "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
+          "value": "Extends the existing character/combat foundation without editing existing scripts.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "runtime_feature",
+          "status": "completed",
+          "suggested_class_name": "StatusEffectController",
+          "source": "project_heuristic",
+          "signals": {
+            "matched_system": "character",
+            "mono_behaviour_classes": 122
+          },
+          "status_note": "Generated a new feature script to the configured Unity path without overwriting existing files.",
+          "updated_at": "2026-04-26T17:45:01"
         },
         {
           "candidate_id": "cand_001_project_overview_editor",
@@ -19923,63 +19944,68 @@
     },
     "generate_feature_task": {
       "selected_candidate": {
-        "candidate_id": "auto_001_status_effect_controller",
-        "feature_name": "Status Effect Controller",
-        "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
-        "value": "Extends the existing character/combat foundation without editing existing scripts.",
+        "candidate_id": "auto_003_worker_morale_controller",
+        "feature_name": "Worker Morale Controller",
+        "description": "Add a standalone runtime morale component with decay, recovery, threshold events, and task-readiness helpers for worker gameplay.",
+        "value": "Builds on the worker/task system with a new balancing lever.",
         "risk_level": "low",
         "affected_files": [],
         "implementation_type": "runtime_feature",
         "status": "pending",
-        "suggested_class_name": "StatusEffectController",
+        "suggested_class_name": "WorkerMoraleController",
         "source": "project_heuristic",
         "signals": {
-          "matched_system": "character",
-          "mono_behaviour_classes": 122
+          "matched_system": "worker_tasks",
+          "worker_scripts": 27
         }
       },
       "task_card": {
-        "task_goal": "Status Effect Controller",
-        "candidate_id": "auto_001_status_effect_controller",
-        "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
+        "task_goal": "Worker Morale Controller",
+        "candidate_id": "auto_003_worker_morale_controller",
+        "description": "Add a standalone runtime morale component with decay, recovery, threshold events, and task-readiness helpers for worker gameplay.",
         "implementation_type": "runtime_feature",
-        "suggested_class_name": "StatusEffectController",
+        "suggested_class_name": "WorkerMoraleController",
         "implementation_scope": [
-          "Create StatusEffectController.cs: new MonoBehaviour script that manages timed status effects (buffs, debuffs, regeneration, etc.) using efficient tick updates. No changes to existing scripts or assets."
+          "Create a new C# file named WorkerMoraleController.cs.",
+          "Define a MonoBehaviour class with serialized fields: maxMorale, currentMorale, decayRate, recoveryRate, lowMoraleThreshold, criticalMoraleThreshold.",
+          "Expose UnityEvents for OnLowMorale, OnCriticalMorale, and OnMoraleRecovered.",
+          "Implement Update() to apply decay/recovery over time, clamp currentMorale between 0 and maxMorale, and invoke the appropriate events when thresholds are crossed.",
+          "Add a public method IsReadyForTasks() that returns true when currentMorale >= lowMoraleThreshold.",
+          "Include tooltips and range attributes for editor usability."
         ],
         "modify_files": [],
         "new_files": [
-          "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs"
+          "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs"
         ],
         "risk_notes": [
-          "Low risk: standalone script, no modifications to existing code, scenes, or prefabs.",
-          "Requires manual attachment to character prefabs; no automatic integration.",
-          "Potential performance overhead with many simultaneous effects; mitigable via delta-time batching or pool-based effect data."
+          "Fully self‑contained MonoBehaviour; no dependencies on existing project scripts or assets.",
+          "Uses simple Update loop – ensure that only a reasonable number of instances exist to avoid performance issues.",
+          "No serialized data, scene modifications, or asset changes required."
         ],
         "verification_steps": [
-          "Attach StatusEffectController to a test character GameObject in a scene.",
-          "During Play Mode, call public methods to add a speed boost, a slow, and a regeneration effect.",
-          "Verify effects modify character stats appropriately (e.g., speed changed, health regenerated).",
-          "Verify effects expire precisely after their configured durations.",
-          "Check that no exceptions or warnings appear in the console."
+          "Attach the component to a GameObject in a test scene.",
+          "Configure thresholds and rates via the Inspector.",
+          "Enter Play mode and observe morale decay over time.",
+          "Temporarily reduce currentMorale below the low/critical thresholds and confirm that the corresponding UnityEvents are triggered.",
+          "Call IsReadyForTasks() and verify it returns false when morale is below the low threshold and true once it recovers."
         ],
         "rollback_plan": [
-          "Delete StatusEffectController.cs from the project.",
-          "Manually remove the component from any GameObjects it was attached to in test scenes/prefabs (revert prefab overrides if any)."
+          "Delete WorkerMoraleController.cs from the project.",
+          "Remove the component from any GameObject it was manually attached to (no other cleanup needed)."
         ],
-        "selected_at": "2026-04-26T17:40:18"
+        "selected_at": "2026-04-26T18:14:48"
       }
     },
     "generate_csharp_script": {
       "generated_files": [
-        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs"
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs"
       ],
       "generated_meta_files": [
-        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs.meta"
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs.meta"
       ],
       "script_kind": "MonoBehaviour",
       "namespace": "LAB2D.AgentGenerated",
-      "class_name": "StatusEffectController",
+      "class_name": "WorkerMoraleController",
       "policy": "configured_unity_path_no_overwrite"
     },
     "asset_reference_check": {
@@ -20117,65 +20143,65 @@
       ]
     },
     "update_feature_status": {
-      "candidate_id": "auto_001_status_effect_controller",
+      "candidate_id": "auto_003_worker_morale_controller",
       "status": "completed",
       "note": "Generated a new feature script to the configured Unity path without overwriting existing files.",
-      "candidate_count": 13
+      "candidate_count": 17
     },
     "write_report": {
-      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\auto_001_status_effect_controller_Status_Effect_Controller\\report.md",
-      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\auto_001_status_effect_controller_Status_Effect_Controller\\execution_context.json"
+      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\run_181448\\report.md",
+      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\run_181448\\execution_context.json"
     }
   },
   "errors": [],
   "events": [
     {
-      "time": "2026-04-26T17:40:18",
+      "time": "2026-04-26T18:14:48",
       "level": "info",
       "message": "Task started: auto_discover_and_implement"
     },
     {
-      "time": "2026-04-26T17:40:18",
+      "time": "2026-04-26T18:14:48",
       "level": "info",
       "message": "Dispatching to agent: project_analyzer"
     },
     {
-      "time": "2026-04-26T17:40:18",
+      "time": "2026-04-26T18:14:49",
       "level": "info",
       "message": "Dispatching to agent: feature_planner"
     },
     {
-      "time": "2026-04-26T17:41:41",
+      "time": "2026-04-26T18:15:30",
       "level": "info",
       "message": "LLM discover_feature_gap: used provider=openai_compatible model=deepseek-v4-pro mock=False"
     },
     {
-      "time": "2026-04-26T17:42:20",
+      "time": "2026-04-26T18:15:51",
       "level": "info",
       "message": "LLM generate_feature_task: used provider=openai_compatible model=deepseek-v4-pro mock=False"
     },
     {
-      "time": "2026-04-26T17:42:20",
+      "time": "2026-04-26T18:15:51",
       "level": "info",
-      "message": "Candidate selected: auto_001_status_effect_controller"
+      "message": "Candidate selected: auto_003_worker_morale_controller"
     },
     {
-      "time": "2026-04-26T17:42:20",
+      "time": "2026-04-26T18:15:51",
       "level": "info",
       "message": "Dispatching to agent: code_generator"
     },
     {
-      "time": "2026-04-26T17:45:01",
+      "time": "2026-04-26T18:16:15",
       "level": "info",
       "message": "LLM generate_csharp_script: used provider=openai_compatible model=deepseek-v4-pro mock=False"
     },
     {
-      "time": "2026-04-26T17:45:01",
+      "time": "2026-04-26T18:16:15",
       "level": "info",
       "message": "Dispatching to agent: validation"
     },
     {
-      "time": "2026-04-26T17:45:01",
+      "time": "2026-04-26T18:16:15",
       "level": "info",
       "message": "Dispatching to agent: report"
     }
@@ -20258,7 +20284,8 @@
     "mock": false,
     "log_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\agentfull.log"
   },
-  "report_dir": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\auto_001_status_effect_controller_Status_Effect_Controller",
+  "run_dir": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\run_181448",
+  "report_dir": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\run_181448",
   "project_scan": {
     "root_path": "D:\\LAB\\Unity\\RandomWorld",
     "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
@@ -20311,7 +20338,6 @@
     },
     "samples": {
       "scripts": [
-        "Editor/AgentProjectOverviewWindow.cs",
         "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
         "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
         "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
@@ -20322,7 +20348,8 @@
         "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
         "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
         "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
-        "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
+        "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs"
       ],
       "scenes": [
         "Scenes/Game.unity",
@@ -20372,25 +20399,25 @@
         "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
       ]
     },
-    "summary": "Unity project scan found 363 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
-    "fingerprint": "e00c4e0c93afa65630582d5eef4b2def9a07322f02dfe70b634a0802534b4cf0",
-    "from_cache": true
+    "summary": "Unity 项目扫描发现 363 个 C# 文件、3 个场景、29 个 Prefab、26 个材质、95 个贴图。",
+    "fingerprint": "0699a73dc82fd4177ba52bdff964b039b33b5b460d2f8fd5606df3b37e34021d",
+    "from_cache": false
   },
   "script_analysis": {
     "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
     "total_scripts": 363,
     "summary": {
-      "mono_behaviour_classes": 122,
+      "mono_behaviour_classes": 123,
       "scriptable_object_classes": 7,
-      "editor_window_classes": 3,
+      "editor_window_classes": 2,
       "plain_classes": 459,
-      "public_fields": 1245,
-      "serialize_fields": 22,
+      "public_fields": 1243,
+      "serialize_fields": 23,
       "lifecycle_methods": {
-        "Awake": 101,
-        "OnEnable": 40,
+        "Awake": 102,
+        "OnEnable": 39,
         "Start": 77,
-        "Update": 53,
+        "Update": 54,
         "FixedUpdate": 6,
         "LateUpdate": 7,
         "OnDisable": 22,
@@ -20398,35 +20425,6 @@
       }
     },
     "scripts": [
-      {
-        "path": "Editor/AgentProjectOverviewWindow.cs",
-        "namespaces": [
-          "RandomWorld.AgentGenerated.Editor"
-        ],
-        "classes": [
-          {
-            "kind": "class",
-            "name": "AgentProjectOverviewWindow",
-            "inherits": [
-              "EditorWindow"
-            ]
-          },
-          {
-            "kind": "class",
-            "name": "ProjectStats",
-            "inherits": []
-          }
-        ],
-        "unity_types": [
-          "EditorWindow"
-        ],
-        "public_fields": 7,
-        "serialize_fields": 0,
-        "lifecycle_methods": [
-          "OnEnable"
-        ],
-        "line_count": 151
-      },
       {
         "path": "Scripts/2D/Attributes/BuilderAttribute.cs",
         "namespaces": [
@@ -24598,6 +24596,41 @@
           "OnEnable"
         ],
         "line_count": 20
+      },
+      {
+        "path": "Scripts/2D/StatusEffectController.cs",
+        "namespaces": [
+          "LAB2D.AgentGenerated"
+        ],
+        "classes": [
+          {
+            "kind": "interface",
+            "name": "IStatusEffectTarget",
+            "inherits": []
+          },
+          {
+            "kind": "class",
+            "name": "StatusEffectController",
+            "inherits": [
+              "MonoBehaviour"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "StatusEffectInstance",
+            "inherits": []
+          }
+        ],
+        "unity_types": [
+          "MonoBehaviour"
+        ],
+        "public_fields": 5,
+        "serialize_fields": 1,
+        "lifecycle_methods": [
+          "Awake",
+          "Update"
+        ],
+        "line_count": 223
       },
       {
         "path": "Scripts/2D/TextTileGenerator.cs",
@@ -29934,13 +29967,13 @@
         "line_count": 145
       }
     ],
-    "fingerprint": "52980d282780b38dd37dfa4a96d9e3a596333c7604742a5ed180a4efa43ace96",
-    "from_cache": true
+    "fingerprint": "db1d99d29eff35919af1ad0353233d0bc513dda44e709bbbfa9439337e06fcbf",
+    "from_cache": false
   },
   "model_calls": [
     {
       "purpose": "discover_feature_gap",
-      "call_id": "0ef03d6d6049",
+      "call_id": "b90e785000a0",
       "model_profile": "deepseek",
       "provider": "openai_compatible",
       "model": "deepseek-v4-pro",
@@ -29949,69 +29982,69 @@
       "fallback_reason": "",
       "note": "accepted_candidates=4",
       "usage": {
-        "prompt_tokens": 3481,
-        "completion_tokens": 2983,
-        "total_tokens": 6464,
+        "prompt_tokens": 3359,
+        "completion_tokens": 1463,
+        "total_tokens": 4822,
         "prompt_tokens_details": {
           "cached_tokens": 0
         },
         "completion_tokens_details": {
-          "reasoning_tokens": 2444
+          "reasoning_tokens": 932
         },
         "prompt_cache_hit_tokens": 0,
-        "prompt_cache_miss_tokens": 3481
+        "prompt_cache_miss_tokens": 3359
       },
-      "content_preview": "{\\n  \"candidates\": [\\n    {\\n      \"candidate_id\": \"llm_001_box_selection\",\\n      \"feature_name\": \"Box Selection Controller\",\\n      \"description\": \"Standalone runtime component that draws a box on the terrain and selects any selectable objects inside, supporting RTS-style unit selection.\",\\n      \"value\": \"Provides a common RTS control mechanism without modifying existing input or selection systems.\",\\n      \"risk_level\": \"low\",\\n      \"affected_files\": [],\\n      \"implementation_type\": \"runtime_feature\",\\n      \"status\": \"pending\",\\n      \"suggested_class_name\": \"BoxSelectionController\",\\n ...<truncated>"
+      "content_preview": "{\\n  \"candidates\": [\\n    {\\n      \"candidate_id\": \"llm_001_camera_shake\",\\n      \"feature_name\": \"Camera Shake Controller\",\\n      \"description\": \"提供运行时相机震动效果的独立组件，支持强度、持续时间、衰减等参数，可手动挂载至主相机。\",\\n      \"value\": \"增强战斗反馈与视觉冲击力，丰富游戏氛围。\",\\n      \"risk_level\": \"low\",\\n      \"affected_files\": [],\\n      \"implementation_type\": \"runtime_feature\",\\n      \"status\": \"pending\",\\n      \"suggested_class_name\": \"CameraShakeController\",\\n      \"signals\": {}\\n    },\\n    {\\n      \"candidate_id\": \"llm_002_object_pool\",\\n      \"feature_name\": \"Runtime Object Pool\",\\n      \"description\": \"通用对象池组件，支持预制体预加载与动态回收，适用于...<truncated>"
     },
     {
       "purpose": "generate_feature_task",
-      "call_id": "f60683873fa9",
+      "call_id": "079f603bc955",
       "model_profile": "deepseek",
       "provider": "openai_compatible",
       "model": "deepseek-v4-pro",
       "mock": false,
       "used": true,
       "fallback_reason": "",
-      "note": "selected_candidate_id=auto_001_status_effect_controller",
+      "note": "selected_candidate_id=auto_003_worker_morale_controller",
       "usage": {
-        "prompt_tokens": 1504,
-        "completion_tokens": 1365,
-        "total_tokens": 2869,
+        "prompt_tokens": 1356,
+        "completion_tokens": 981,
+        "total_tokens": 2337,
         "prompt_tokens_details": {
           "cached_tokens": 0
         },
         "completion_tokens_details": {
-          "reasoning_tokens": 1042
+          "reasoning_tokens": 560
         },
         "prompt_cache_hit_tokens": 0,
-        "prompt_cache_miss_tokens": 1504
+        "prompt_cache_miss_tokens": 1356
       },
-      "content_preview": "{\\n  \"selected_candidate_id\": \"auto_001_status_effect_controller\",\\n  \"selection_reason\": \"Lowest risk, standalone runtime component, extends existing character/combat foundation without editing any files or requiring UI/asset dependencies.\",\\n  \"task_card\": {\\n    \"implementation_scope\": [\\n      \"Create StatusEffectController.cs: new MonoBehaviour script that manages timed status effects (buffs, debuffs, regeneration, etc.) using efficient tick updates. No changes to existing scripts or assets.\"\\n    ],\\n    \"risk_notes\": [\\n      \"Low risk: standalone script, no modifications to existing co...<truncated>"
+      "content_preview": "{\\n  \"selected_candidate_id\": \"auto_003_worker_morale_controller\",\\n  \"selection_reason\": \"Builds on the existing worker system with a purely additive, low‑risk MonoBehaviour that requires no changes to existing files.\",\\n  \"task_card\": {\\n    \"implementation_scope\": [\\n      \"Create a new C# file named WorkerMoraleController.cs.\",\\n      \"Define a MonoBehaviour class with serialized fields: maxMorale, currentMorale, decayRate, recoveryRate, lowMoraleThreshold, criticalMoraleThreshold.\",\\n      \"Expose UnityEvents for OnLowMorale, OnCriticalMorale, and OnMoraleRecovered.\",\\n      \"Implement Up...<truncated>"
     },
     {
       "purpose": "generate_csharp_script",
-      "call_id": "01034afd38ff",
+      "call_id": "9aaa2fb2e84e",
       "model_profile": "deepseek",
       "provider": "openai_compatible",
       "model": "deepseek-v4-pro",
       "mock": false,
       "used": true,
       "fallback_reason": "",
-      "note": "class_name=StatusEffectController",
+      "note": "class_name=WorkerMoraleController",
       "usage": {
-        "prompt_tokens": 759,
-        "completion_tokens": 5899,
-        "total_tokens": 6658,
+        "prompt_tokens": 882,
+        "completion_tokens": 1094,
+        "total_tokens": 1976,
         "prompt_tokens_details": {
           "cached_tokens": 0
         },
         "completion_tokens_details": {
-          "reasoning_tokens": 4552
+          "reasoning_tokens": 56
         },
         "prompt_cache_hit_tokens": 0,
-        "prompt_cache_miss_tokens": 759
+        "prompt_cache_miss_tokens": 882
       },
-      "content_preview": "```csharp\\nusing System;\\nusing System.Collections.Generic;\\nusing UnityEngine;\\n\\nnamespace LAB2D.AgentGenerated\\n{\\n    /// <summary>\\n    /// Interface that character scripts must implement to receive status effects from StatusEffectController.\\n    /// </summary>\\n    public interface IStatusEffectTarget\\n    {\\n        void SetSpeedMultiplier(float multiplier);\\n        void SetDamageMultiplier(float multiplier);\\n        void ApplyHeal(float amount);\\n        void ApplyDamage(float amount);\\n    }\\n\\n    public enum EffectType\\n    {\\n        SpeedModifier,\\n        DamageModifier,\\n    ...<truncated>"
+      "content_preview": "```csharp\\nusing UnityEngine;\\nusing UnityEngine.Events;\\n\\nnamespace LAB2D.AgentGenerated\\n{\\n    /// <summary>\\n    /// Standalone runtime morale component for worker entities.\\n    /// Handles morale decay/recovery over time, threshold‑based events, and task readiness.\\n    /// Attach manually to a GameObject representing a worker.\\n    /// </summary>\\n    public class WorkerMoraleController : MonoBehaviour\\n    {\\n        [Header(\"Morale Settings\")]\\n        [Tooltip(\"Maximum possible morale value.\")]\\n        [Range(1f, 1000f)]\\n        [SerializeField] private float maxMorale = 100f;\\n\\n...<truncated>"
     }
   ],
   "feature_candidates": [
@@ -30110,13 +30143,15 @@
       "risk_level": "low",
       "affected_files": [],
       "implementation_type": "runtime_feature",
-      "status": "pending",
+      "status": "completed",
       "suggested_class_name": "WorkerMoraleController",
       "source": "project_heuristic",
       "signals": {
         "matched_system": "worker_tasks",
         "worker_scripts": 27
-      }
+      },
+      "status_note": "Generated a new feature script to the configured Unity path without overwriting existing files.",
+      "updated_at": "2026-04-26T18:16:15"
     },
     {
       "candidate_id": "auto_004_resource_threshold_alerts",
@@ -30201,60 +30236,117 @@
       "suggested_class_name": "NotificationPopupManager",
       "source": "llm",
       "signals": {}
+    },
+    {
+      "candidate_id": "llm_001_camera_shake",
+      "feature_name": "Camera Shake Controller",
+      "description": "提供运行时相机震动效果的独立组件，支持强度、持续时间、衰减等参数，可手动挂载至主相机。",
+      "value": "增强战斗反馈与视觉冲击力，丰富游戏氛围。",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "CameraShakeController",
+      "source": "llm",
+      "signals": {}
+    },
+    {
+      "candidate_id": "llm_002_object_pool",
+      "feature_name": "Runtime Object Pool",
+      "description": "通用对象池组件，支持预制体预加载与动态回收，适用于频繁生成的伤害数字、血条等对象。",
+      "value": "减少运行时 GC 压力，提升性能。",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "ObjectPoolManager",
+      "source": "llm",
+      "signals": {}
+    },
+    {
+      "candidate_id": "llm_003_audio_feedback",
+      "feature_name": "Audio Feedback Controller",
+      "description": "可挂载至任意游戏物体的音效反馈组件，通过公开方法或事件触发随机/顺序音效。",
+      "value": "低耦合的方式为战斗、交互等提供音效支持。",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "AudioFeedbackController",
+      "source": "llm",
+      "signals": {}
+    },
+    {
+      "candidate_id": "llm_004_select_highlight",
+      "feature_name": "Selectable Highlight Controller",
+      "description": "物体选中/悬停时自动激活指定高亮层或材质，支持边框、轮廓等表现，需手动绑定表现资源。",
+      "value": "为角色、敌人或 UI 元素提供直观的交互反馈。",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "SelectableHighlightController",
+      "source": "llm",
+      "signals": {}
     }
   ],
   "selected_candidate": {
-    "candidate_id": "auto_001_status_effect_controller",
-    "feature_name": "Status Effect Controller",
-    "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
-    "value": "Extends the existing character/combat foundation without editing existing scripts.",
+    "candidate_id": "auto_003_worker_morale_controller",
+    "feature_name": "Worker Morale Controller",
+    "description": "Add a standalone runtime morale component with decay, recovery, threshold events, and task-readiness helpers for worker gameplay.",
+    "value": "Builds on the worker/task system with a new balancing lever.",
     "risk_level": "low",
     "affected_files": [],
     "implementation_type": "runtime_feature",
     "status": "pending",
-    "suggested_class_name": "StatusEffectController",
+    "suggested_class_name": "WorkerMoraleController",
     "source": "project_heuristic",
     "signals": {
-      "matched_system": "character",
-      "mono_behaviour_classes": 122
+      "matched_system": "worker_tasks",
+      "worker_scripts": 27
     }
   },
   "task_card": {
-    "task_goal": "Status Effect Controller",
-    "candidate_id": "auto_001_status_effect_controller",
-    "description": "Add a reusable runtime component for timed buffs, debuffs, slows, and regeneration that can be attached to character prefabs manually.",
+    "task_goal": "Worker Morale Controller",
+    "candidate_id": "auto_003_worker_morale_controller",
+    "description": "Add a standalone runtime morale component with decay, recovery, threshold events, and task-readiness helpers for worker gameplay.",
     "implementation_type": "runtime_feature",
-    "suggested_class_name": "StatusEffectController",
+    "suggested_class_name": "WorkerMoraleController",
     "implementation_scope": [
-      "Create StatusEffectController.cs: new MonoBehaviour script that manages timed status effects (buffs, debuffs, regeneration, etc.) using efficient tick updates. No changes to existing scripts or assets."
+      "Create a new C# file named WorkerMoraleController.cs.",
+      "Define a MonoBehaviour class with serialized fields: maxMorale, currentMorale, decayRate, recoveryRate, lowMoraleThreshold, criticalMoraleThreshold.",
+      "Expose UnityEvents for OnLowMorale, OnCriticalMorale, and OnMoraleRecovered.",
+      "Implement Update() to apply decay/recovery over time, clamp currentMorale between 0 and maxMorale, and invoke the appropriate events when thresholds are crossed.",
+      "Add a public method IsReadyForTasks() that returns true when currentMorale >= lowMoraleThreshold.",
+      "Include tooltips and range attributes for editor usability."
     ],
     "modify_files": [],
     "new_files": [
-      "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs"
+      "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs"
     ],
     "risk_notes": [
-      "Low risk: standalone script, no modifications to existing code, scenes, or prefabs.",
-      "Requires manual attachment to character prefabs; no automatic integration.",
-      "Potential performance overhead with many simultaneous effects; mitigable via delta-time batching or pool-based effect data."
+      "Fully self‑contained MonoBehaviour; no dependencies on existing project scripts or assets.",
+      "Uses simple Update loop – ensure that only a reasonable number of instances exist to avoid performance issues.",
+      "No serialized data, scene modifications, or asset changes required."
     ],
     "verification_steps": [
-      "Attach StatusEffectController to a test character GameObject in a scene.",
-      "During Play Mode, call public methods to add a speed boost, a slow, and a regeneration effect.",
-      "Verify effects modify character stats appropriately (e.g., speed changed, health regenerated).",
-      "Verify effects expire precisely after their configured durations.",
-      "Check that no exceptions or warnings appear in the console."
+      "Attach the component to a GameObject in a test scene.",
+      "Configure thresholds and rates via the Inspector.",
+      "Enter Play mode and observe morale decay over time.",
+      "Temporarily reduce currentMorale below the low/critical thresholds and confirm that the corresponding UnityEvents are triggered.",
+      "Call IsReadyForTasks() and verify it returns false when morale is below the low threshold and true once it recovers."
     ],
     "rollback_plan": [
-      "Delete StatusEffectController.cs from the project.",
-      "Manually remove the component from any GameObjects it was attached to in test scenes/prefabs (revert prefab overrides if any)."
+      "Delete WorkerMoraleController.cs from the project.",
+      "Remove the component from any GameObject it was manually attached to (no other cleanup needed)."
     ],
-    "selected_at": "2026-04-26T17:40:18"
+    "selected_at": "2026-04-26T18:14:48"
   },
   "generated_files": [
-    "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs"
+    "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs"
   ],
   "generated_meta_files": [
-    "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs.meta"
+    "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs.meta"
   ],
   "asset_reference_check": {
     "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
@@ -30394,7 +30486,7 @@
     "passed": true,
     "checks": [
       {
-        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\StatusEffectController.cs",
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts\\WorkerMoraleController.cs",
         "exists": true,
         "has_using_unity_editor": false,
         "inside_editor_folder": false,
@@ -30405,11 +30497,11 @@
         "passed": true
       }
     ],
-    "policy": "Static validation only; Unity compilation is not executed by default."
+    "policy": "仅执行静态验证；默认不会启动 Unity 编译。"
   },
-  "finished_at": "2026-04-26T17:45:01",
+  "finished_at": "2026-04-26T18:16:15",
   "final_report": {
-    "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\auto_001_status_effect_controller_Status_Effect_Controller\\report.md",
-    "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\auto_001_status_effect_controller_Status_Effect_Controller\\execution_context.json"
+    "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\run_181448\\report.md",
+    "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\run_181448\\execution_context.json"
   }
 }

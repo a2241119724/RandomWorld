@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-26T17:45:01",
+  "updated_at": "2026-04-26T18:16:15",
   "candidates": [
     {
       "candidate_id": "cand_001_project_overview_editor",
@@ -96,13 +96,15 @@
       "risk_level": "low",
       "affected_files": [],
       "implementation_type": "runtime_feature",
-      "status": "pending",
+      "status": "completed",
       "suggested_class_name": "WorkerMoraleController",
       "source": "project_heuristic",
       "signals": {
         "matched_system": "worker_tasks",
         "worker_scripts": 27
-      }
+      },
+      "status_note": "Generated a new feature script to the configured Unity path without overwriting existing files.",
+      "updated_at": "2026-04-26T18:16:15"
     },
     {
       "candidate_id": "auto_004_resource_threshold_alerts",
@@ -185,6 +187,58 @@
       "implementation_type": "runtime_feature",
       "status": "pending",
       "suggested_class_name": "NotificationPopupManager",
+      "source": "llm",
+      "signals": {}
+    },
+    {
+      "candidate_id": "llm_001_camera_shake",
+      "feature_name": "Camera Shake Controller",
+      "description": "提供运行时相机震动效果的独立组件，支持强度、持续时间、衰减等参数，可手动挂载至主相机。",
+      "value": "增强战斗反馈与视觉冲击力，丰富游戏氛围。",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "CameraShakeController",
+      "source": "llm",
+      "signals": {}
+    },
+    {
+      "candidate_id": "llm_002_object_pool",
+      "feature_name": "Runtime Object Pool",
+      "description": "通用对象池组件，支持预制体预加载与动态回收，适用于频繁生成的伤害数字、血条等对象。",
+      "value": "减少运行时 GC 压力，提升性能。",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "ObjectPoolManager",
+      "source": "llm",
+      "signals": {}
+    },
+    {
+      "candidate_id": "llm_003_audio_feedback",
+      "feature_name": "Audio Feedback Controller",
+      "description": "可挂载至任意游戏物体的音效反馈组件，通过公开方法或事件触发随机/顺序音效。",
+      "value": "低耦合的方式为战斗、交互等提供音效支持。",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "AudioFeedbackController",
+      "source": "llm",
+      "signals": {}
+    },
+    {
+      "candidate_id": "llm_004_select_highlight",
+      "feature_name": "Selectable Highlight Controller",
+      "description": "物体选中/悬停时自动激活指定高亮层或材质，支持边框、轮廓等表现，需手动绑定表现资源。",
+      "value": "为角色、敌人或 UI 元素提供直观的交互反馈。",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "suggested_class_name": "SelectableHighlightController",
       "source": "llm",
       "signals": {}
     }
