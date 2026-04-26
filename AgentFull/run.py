@@ -103,6 +103,7 @@ def main() -> int:
     print("AgentFull task finished.")
     print(f"Task ID: {result.get('task_id')}")
     print(f"Report: {result.get('report_path')}")
+    print(f"Log: {result.get('log_path')}")
     print(json.dumps(result.get("summary", {}), ensure_ascii=False, indent=2))
     return 0
 

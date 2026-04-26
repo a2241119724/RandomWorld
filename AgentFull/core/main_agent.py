@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -52,11 +53,18 @@ class MainAgent:
         self.unity_config: dict[str, Any] = {}
         self.agents: dict[str, Any] = {}
 
-        self.logger = get_logger("AgentFull", self.base_dir / "cache")
         self.context = ContextManager()
-        self.skill_registry = SkillRegistry(self.logger)
 
         self.load_config()
+        logging_config = self.agent_config.get("logging", {})
+        log_dir = self.base_dir / "cache" if logging_config.get("write_log_file", True) else None
+        self.log_path = (log_dir / "agentfull.log") if log_dir else None
+        self.logger = get_logger(
+            "AgentFull",
+            log_dir,
+            level=logging_config.get("level", "INFO"),
+        )
+        self.skill_registry = SkillRegistry(self.logger)
         self.context_compressor = ContextCompressor(
             self.agent_config.get("context", {}).get("max_chars", 24000)
         )
@@ -125,6 +133,7 @@ class MainAgent:
 
     def run_task(self, task: dict[str, Any]) -> dict[str, Any]:
         task_obj = AgentTask.from_dict(task)
+        started = time.perf_counter()
         self.context.reset(
             {
                 "task": task_obj.to_dict(),
@@ -137,6 +146,18 @@ class MainAgent:
         initial_report_dir = self.report_writer.create_run_dir(task_obj.task_id)
         self.context.set("report_dir", str(initial_report_dir))
         self.context.append_event(f"Task started: {task_obj.task_type}")
+        model_profile = self.model_name or self.model_config.get("models", {}).get("default")
+        selected_model_config = self.model_config.get("models", {}).get(model_profile, {})
+        self.logger.info(
+            "Task started | task_id=%s task_type=%s model_profile=%s provider=%s model=%s mock=%s report_dir=%s",
+            task_obj.task_id,
+            task_obj.task_type,
+            model_profile,
+            selected_model_config.get("provider", ""),
+            selected_model_config.get("model", ""),
+            self.mock,
+            initial_report_dir,
+        )
 
         try:
             if task_obj.task_type == "scan_project":
@@ -159,10 +180,19 @@ class MainAgent:
         report_info = self.save_report()
         self.context.set("final_report", report_info)
         self.memory.save_short_term(self.context.to_serializable())
+        elapsed_ms = int((time.perf_counter() - started) * 1000)
+        self.logger.info(
+            "Task finished | task_id=%s duration_ms=%s report_path=%s error_count=%s",
+            task_obj.task_id,
+            elapsed_ms,
+            report_info.get("report_path"),
+            len(self.context.get("errors", [])),
+        )
 
         return {
             "task_id": task_obj.task_id,
             "report_path": report_info.get("report_path"),
+            "log_path": str(self.log_path) if self.log_path else None,
             "summary": self.summarize_result(),
         }
 
@@ -170,7 +200,24 @@ class MainAgent:
         if agent_name not in self.agents:
             raise KeyError(f"Agent '{agent_name}' is not registered.")
         self.context.append_event(f"Dispatching to agent: {agent_name}")
-        result = self.agents[agent_name].run(task, self.context)
+        started = time.perf_counter()
+        self.logger.info(
+            "Agent dispatch started | agent=%s mode=%s",
+            agent_name,
+            task.get("mode", ""),
+        )
+        try:
+            result = self.agents[agent_name].run(task, self.context)
+        except Exception:
+            self.logger.exception("Agent dispatch failed | agent=%s", agent_name)
+            raise
+        elapsed_ms = int((time.perf_counter() - started) * 1000)
+        self.logger.info(
+            "Agent dispatch finished | agent=%s duration_ms=%s result_keys=%s",
+            agent_name,
+            elapsed_ms,
+            sorted(result.keys()),
+        )
         self.context.append_agent_result(agent_name, result)
         return result
 
@@ -253,6 +300,7 @@ class MainAgent:
             "unity": self.unity_config,
             "model_profile": self.model_name or self.model_config.get("models", {}).get("default"),
             "mock": self.mock,
+            "log_path": str(self.log_path) if self.log_path else None,
         }
 
     def _resolve_reports_dir(self) -> Path:

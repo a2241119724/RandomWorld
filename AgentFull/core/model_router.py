@@ -29,4 +29,10 @@ class ModelRouter:
     ) -> dict[str, Any]:
         # Routing is intentionally simple in v1; task-specific routing can be
         # added by mapping task_type to a model profile here.
-        return self.client.chat(messages, self.model_name)
+        if self.logger:
+            self.logger.info(
+                "Model route selected | task_type=%s model_profile=%s",
+                task_type,
+                self.model_name or self.config.get("models", {}).get("default"),
+            )
+        return self.client.chat(messages, self.model_name, task_type=task_type)
