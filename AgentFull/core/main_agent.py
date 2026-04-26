@@ -232,6 +232,18 @@ class MainAgent:
             "candidate_count": len(self.context.get("feature_candidates", [])),
             "selected_candidate": selected.get("candidate_id"),
             "generated_files": self.context.get("generated_files", []),
+            "model_call_count": len(self.context.get("model_calls", [])),
+            "model_calls": [
+                {
+                    "purpose": item.get("purpose"),
+                    "provider": item.get("provider"),
+                    "model": item.get("model"),
+                    "mock": item.get("mock"),
+                    "used": item.get("used"),
+                    "fallback_reason": item.get("fallback_reason", ""),
+                }
+                for item in self.context.get("model_calls", [])
+            ],
             "errors": self.context.get("errors", []),
         }
 

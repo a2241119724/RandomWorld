@@ -18,7 +18,7 @@ models:
   deepseek:
     provider: openai_compatible
     base_url: https://api.deepseek.com/v1
-    api_key_env: sk-3f93992692d943cbaebb14dbc38a3d96
+    api_key_env: DEEPSEEK_API_KEY
     model: deepseek-reasoner
     temperature: 0.2
 

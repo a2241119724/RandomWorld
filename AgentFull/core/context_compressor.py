@@ -22,6 +22,7 @@ class ContextCompressor:
             "selected_candidate": context_data.get("selected_candidate"),
             "task_card": context_data.get("task_card"),
             "generated_files": context_data.get("generated_files", []),
+            "model_calls": context_data.get("model_calls", []),
             "validation": context_data.get("validation", {}),
             "errors": context_data.get("errors", []),
             "events": context_data.get("events", [])[-20:],

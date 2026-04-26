@@ -7,11 +7,13 @@ from core.file_utils import (
     csharp_class_name,
     csharp_output_dir,
     mono_script_meta_content,
+    read_text,
     unique_unity_asset_path,
     unity_generation_policy,
     unity_meta_path,
     write_text,
 )
+from core.llm_utils import compact_json, extract_csharp_code, record_model_call
 from core.skill import Skill
 
 
@@ -37,7 +39,13 @@ class GenerateUnityEditorToolSkill(Skill):
         target = unique_unity_asset_path(generated_dir / f"{class_name}.cs")
         class_name = target.stem
         namespace = params.get("namespace") or "RandomWorld.AgentGenerated.Editor"
-        content = self._editor_window_template().replace("__CLASS_NAME__", class_name).replace(
+        content = self._llm_editor_tool(
+            class_name,
+            namespace,
+            params.get("task_card") or {},
+            selected,
+            context,
+        ) or self._editor_window_template().replace("__CLASS_NAME__", class_name).replace(
             "__NAMESPACE__", namespace
         )
         target = write_text(target, content, overwrite=False)
@@ -53,11 +61,79 @@ class GenerateUnityEditorToolSkill(Skill):
             "manual_next_step": "Open Unity and confirm the generated Editor menu compiles.",
         }
 
+    def _llm_editor_tool(
+        self,
+        class_name: str,
+        namespace: str,
+        task_card: dict[str, Any],
+        selected: dict[str, Any],
+        context: Any,
+    ) -> str | None:
+        router = context.get_service("model_router")
+        if not router:
+            return None
+
+        base_dir = Path(context.get_service("base_dir") or ".")
+        system_prompt = read_text(base_dir / "prompts" / "unity_editor_prompt.md")
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    system_prompt
+                    + "\nReturn only one complete C# file in a fenced csharp code block."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    "Generate a readonly Unity Editor tool. Use the exact namespace and class name. "
+                    "It may scan the project and export a report, but it must not modify scenes, "
+                    "prefabs, ScriptableObjects, StreamingAssets, Addressables, build settings, "
+                    "or existing project assets. Prefer a Tools/AgentFull menu entry.\n\n"
+                    f"class_name: {class_name}\n"
+                    f"namespace: {namespace}\n"
+                    f"selected_candidate:\n{compact_json(selected, 5000)}\n\n"
+                    f"task_card:\n{compact_json(task_card, 7000)}"
+                ),
+            },
+        ]
+        response = router.chat_for_task("generate_unity_editor_tool", messages)
+        code = extract_csharp_code(response.get("content", ""))
+        used = bool(code and self._is_safe_editor_code(code, class_name, namespace))
+        record_model_call(
+            context,
+            "generate_unity_editor_tool",
+            response,
+            used=used,
+            note=f"class_name={class_name}",
+        )
+        return code if used else None
+
     def _class_name(self, selected: dict[str, Any]) -> str:
         candidate_id = selected.get("candidate_id")
         if candidate_id == "cand_001_project_overview_editor":
             return "AgentProjectOverviewWindow"
         return csharp_class_name(selected.get("feature_name"), "AgentGeneratedEditorTool")
+
+    def _is_safe_editor_code(self, code: str, class_name: str, namespace: str) -> bool:
+        if class_name not in code or namespace not in code or "```" in code:
+            return False
+        if "UnityEditor" not in code:
+            return False
+        if "EditorWindow" not in code and "[MenuItem" not in code:
+            return False
+        forbidden = [
+            "AssetDatabase.DeleteAsset",
+            "AssetDatabase.MoveAsset",
+            "AssetDatabase.CreateAsset",
+            "AssetDatabase.SaveAssets",
+            "PrefabUtility.",
+            "EditorSceneManager.",
+            "File.Delete",
+            "Directory.Delete",
+            "Process.Start",
+        ]
+        return not any(pattern in code for pattern in forbidden)
 
     def _editor_window_template(self) -> str:
         return """#if UNITY_EDITOR

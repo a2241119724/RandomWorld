@@ -6,12 +6,14 @@ from typing import Any
 from core.file_utils import (
     csharp_output_dir,
     mono_script_meta_content,
+    read_text,
     safe_slug,
     unique_unity_asset_path,
     unity_generation_policy,
     unity_meta_path,
     write_text,
 )
+from core.llm_utils import compact_json, extract_csharp_code, record_model_call
 from core.skill import Skill
 
 
@@ -41,7 +43,14 @@ class GenerateCSharpScriptSkill(Skill):
         )
         target = unique_unity_asset_path(generated_dir / f"{class_name}.cs")
         class_name = target.stem
-        content = self._build_script(class_name, namespace, script_kind, task_card)
+        content = self._llm_build_script(
+            class_name,
+            namespace,
+            script_kind,
+            task_card,
+            selected,
+            context,
+        ) or self._build_script(class_name, namespace, script_kind, task_card)
 
         target = write_text(target, content, overwrite=False)
         meta_path = None
@@ -56,6 +65,78 @@ class GenerateCSharpScriptSkill(Skill):
             "policy": "configured_unity_path_no_overwrite",
         }
         return result
+
+    def _llm_build_script(
+        self,
+        class_name: str,
+        namespace: str,
+        script_kind: str,
+        task_card: dict[str, Any],
+        selected: dict[str, Any],
+        context: Any,
+    ) -> str | None:
+        router = context.get_service("model_router")
+        if not router:
+            return None
+
+        base_dir = Path(context.get_service("base_dir") or ".")
+        system_prompt = read_text(base_dir / "prompts" / "code_generator_prompt.md")
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    system_prompt
+                    + "\nReturn only one complete C# file in a fenced csharp code block."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    "Generate a small, reviewable Unity C# file for this task. "
+                    "Use the exact namespace and class name. Do not modify scenes, prefabs, "
+                    "ScriptableObjects, StreamingAssets, Addressables, save data, networking, "
+                    "or build settings. Do not include destructive file operations.\n\n"
+                    f"class_name: {class_name}\n"
+                    f"namespace: {namespace}\n"
+                    f"script_kind: {script_kind}\n"
+                    f"selected_candidate:\n{compact_json(selected, 5000)}\n\n"
+                    f"task_card:\n{compact_json(task_card, 7000)}"
+                ),
+            },
+        ]
+        response = router.chat_for_task("generate_csharp_script", messages)
+        code = extract_csharp_code(response.get("content", ""))
+        used = bool(code and self._is_safe_generated_code(code, class_name, script_kind))
+        record_model_call(
+            context,
+            "generate_csharp_script",
+            response,
+            used=used,
+            note=f"class_name={class_name}",
+        )
+        return code if used else None
+
+    def _is_safe_generated_code(self, code: str, class_name: str, script_kind: str) -> bool:
+        if class_name not in code or "```" in code:
+            return False
+        forbidden = [
+            "AssetDatabase.DeleteAsset",
+            "AssetDatabase.MoveAsset",
+            "AssetDatabase.CreateAsset",
+            "AssetDatabase.SaveAssets",
+            "PrefabUtility.",
+            "EditorSceneManager.",
+            "File.Delete",
+            "Directory.Delete",
+            "Process.Start",
+        ]
+        if any(pattern in code for pattern in forbidden):
+            return False
+        if script_kind == "MonoBehaviour":
+            return "MonoBehaviour" in code and "using UnityEngine" in code
+        if script_kind == "ScriptableObject":
+            return "ScriptableObject" in code and "using UnityEngine" in code
+        return "class " in code
 
     def _infer_kind(self, selected: dict[str, Any]) -> str:
         if selected.get("implementation_type") == "runtime_feature":
