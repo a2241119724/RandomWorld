@@ -1,10 +1,10 @@
-# Validation Prompt
+# 验证提示词
 
-Validate generated work with static checks.
+用静态检查验证生成结果。
 
-Check:
-- Generated files exist.
-- Namespaces and classes are present.
-- Risky Unity asset modification calls are absent.
-- Asset reference scan results are recorded.
-- Remaining manual Unity compilation steps are documented.
+检查：
+- 生成文件是否存在。
+- 是否包含命名空间和类。
+- 是否没有危险的 Unity 资源修改调用。
+- 是否记录了资源引用扫描结果。
+- 是否说明了后续需要人工执行的 Unity 编译验证步骤。

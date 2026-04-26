@@ -8,12 +8,16 @@ def get_logger(
     name: str = "AgentFull",
     log_dir: Path | None = None,
     level: str = "INFO",
+    console: bool = True,
 ) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, level.upper(), logging.INFO))
     logger.propagate = False
 
-    if not any(isinstance(handler, logging.StreamHandler) for handler in logger.handlers):
+    if console and not any(
+        isinstance(handler, logging.StreamHandler) and not isinstance(handler, logging.FileHandler)
+        for handler in logger.handlers
+    ):
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(_formatter())
         logger.addHandler(stream_handler)

@@ -41,12 +41,14 @@ class MainAgent:
         mock: bool = False,
         project_root: str | None = None,
         output: str | None = None,
+        verbose: bool = True,
     ) -> None:
         self.base_dir = Path(base_dir).resolve()
         self.model_name = model_name
         self.mock = mock
         self.project_root_override = project_root
         self.output_override = output
+        self.verbose = verbose
 
         self.agent_config: dict[str, Any] = {}
         self.model_config: dict[str, Any] = {}
@@ -63,8 +65,9 @@ class MainAgent:
             "AgentFull",
             log_dir,
             level=logging_config.get("level", "INFO"),
+            console=logging_config.get("console", False),
         )
-        self.skill_registry = SkillRegistry(self.logger)
+        self.skill_registry = SkillRegistry(self.logger, trace=self._trace)
         self.context_compressor = ContextCompressor(
             self.agent_config.get("context", {}).get("max_chars", 24000)
         )
@@ -134,6 +137,7 @@ class MainAgent:
     def run_task(self, task: dict[str, Any]) -> dict[str, Any]:
         task_obj = AgentTask.from_dict(task)
         started = time.perf_counter()
+        self._trace(f"主Agent启动任务: {task_obj.task_type} ({task_obj.task_id})")
         self.context.reset(
             {
                 "task": task_obj.to_dict(),
@@ -144,6 +148,7 @@ class MainAgent:
         self.context.set("configs", self._context_configs())
 
         initial_report_dir = self.report_writer.create_run_dir(task_obj.task_id)
+        self.context.set("run_dir", str(initial_report_dir))
         self.context.set("report_dir", str(initial_report_dir))
         self.context.append_event(f"Task started: {task_obj.task_type}")
         model_profile = self.model_name or self.model_config.get("models", {}).get("default")
@@ -161,13 +166,17 @@ class MainAgent:
 
         try:
             if task_obj.task_type == "scan_project":
+                self._trace("主Agent流程: 扫描项目 -> 引用检查 -> 写报告")
                 self.dispatch_to_agent("project_analyzer", {"mode": "scan_project"})
                 self.dispatch_to_agent("validation", {"mode": "asset_reference_check"})
             elif task_obj.task_type == "analyze_scripts":
+                self._trace("主Agent流程: 扫描并分析 C# 脚本 -> 写报告")
                 self.dispatch_to_agent("project_analyzer", {"mode": "full_analysis"})
             elif task_obj.task_type == "generate_feature":
+                self._trace("主Agent流程: 自动发现功能 -> 生成任务卡 -> 生成代码 -> 验证 -> 写报告")
                 self._run_auto_pipeline(mark_completed=False)
             elif task_obj.task_type == "auto_discover_and_implement":
+                self._trace("主Agent流程: 自动发现功能 -> 生成任务卡 -> 实现新功能 -> 验证 -> 写报告")
                 self._run_auto_pipeline(mark_completed=True)
             else:
                 raise ValueError(f"Unsupported task type: {task_obj.task_type}")
@@ -181,6 +190,13 @@ class MainAgent:
         self.context.set("final_report", report_info)
         self.memory.save_short_term(self.context.to_serializable())
         elapsed_ms = int((time.perf_counter() - started) * 1000)
+        self._trace(
+            "主Agent完成任务: report={report} errors={errors} duration_ms={duration}".format(
+                report=report_info.get("report_path"),
+                errors=len(self.context.get("errors", [])),
+                duration=elapsed_ms,
+            )
+        )
         self.logger.info(
             "Task finished | task_id=%s duration_ms=%s report_path=%s error_count=%s",
             task_obj.task_id,
@@ -201,17 +217,32 @@ class MainAgent:
             raise KeyError(f"Agent '{agent_name}' is not registered.")
         self.context.append_event(f"Dispatching to agent: {agent_name}")
         started = time.perf_counter()
+        agent = self.agents[agent_name]
+        self._trace(
+            "主Agent -> 子Agent: {name} | mode={mode} | {description}".format(
+                name=agent_name,
+                mode=task.get("mode", ""),
+                description=getattr(agent, "description", ""),
+            )
+        )
         self.logger.info(
             "Agent dispatch started | agent=%s mode=%s",
             agent_name,
             task.get("mode", ""),
         )
         try:
-            result = self.agents[agent_name].run(task, self.context)
+            result = agent.run(task, self.context)
         except Exception:
             self.logger.exception("Agent dispatch failed | agent=%s", agent_name)
             raise
         elapsed_ms = int((time.perf_counter() - started) * 1000)
+        self._trace(
+            "子Agent完成: {name} | duration_ms={duration} | result={keys}".format(
+                name=agent_name,
+                duration=elapsed_ms,
+                keys=", ".join(sorted(result.keys())),
+            )
+        )
         self.logger.info(
             "Agent dispatch finished | agent=%s duration_ms=%s result_keys=%s",
             agent_name,
@@ -256,10 +287,16 @@ class MainAgent:
         selected = planner_result.get("selected_candidate")
 
         if selected:
-            final_report_dir = self.report_writer.create_candidate_dir(selected)
-            self.context.set("report_dir", str(final_report_dir))
-            self._refresh_task_card_paths(selected, final_report_dir)
+            report_dir = Path(self.context.get("report_dir") or self.context.get("run_dir") or ".")
+            self._refresh_task_card_paths(selected, report_dir)
             self.context.append_event(f"Candidate selected: {selected.get('candidate_id')}")
+            self._trace(
+                "选中功能候选: {candidate_id} | {feature_name} | type={implementation_type}".format(
+                    candidate_id=selected.get("candidate_id"),
+                    feature_name=selected.get("feature_name"),
+                    implementation_type=selected.get("implementation_type"),
+                )
+            )
 
             implementation_type = selected.get("implementation_type")
             if implementation_type in {"readonly_tool", "editor_tool", "report_tool"}:
@@ -280,7 +317,12 @@ class MainAgent:
                 )
         else:
             self.context.append_event("No implementable low/medium risk candidate found.")
+            self._trace("没有找到可实现的低/中风险功能候选，转为只做只读验证。")
             self.dispatch_to_agent("validation", {"mode": "asset_reference_check"})
+
+    def _trace(self, message: str) -> None:
+        if self.verbose:
+            print(f"[AgentFull] {message}", flush=True)
 
     def _attach_services(self) -> None:
         self.context.set_service("memory", getattr(self, "memory", None))

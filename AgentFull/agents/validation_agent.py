@@ -9,7 +9,7 @@ from core.sub_agent import SubAgent
 
 class ValidationAgent(SubAgent):
     name = "validation"
-    description = "Run readonly static validation and risk checks."
+    description = "执行只读静态验证和风险检查。"
     available_skills = ["asset_reference_check"]
 
     def run(self, task: dict[str, Any], context: Any) -> dict[str, Any]:
@@ -68,7 +68,7 @@ class ValidationAgent(SubAgent):
         return {
             "passed": all(item.get("passed") for item in checks) if checks else True,
             "checks": checks,
-            "policy": "Static validation only; Unity compilation is not executed by default.",
+            "policy": "仅执行静态验证；默认不会启动 Unity 编译。",
         }
 
     def _is_inside_editor_folder(self, path: Path) -> bool:

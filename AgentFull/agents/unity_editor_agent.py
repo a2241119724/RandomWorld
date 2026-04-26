@@ -7,7 +7,7 @@ from core.sub_agent import SubAgent
 
 class UnityEditorAgent(SubAgent):
     name = "unity_editor"
-    description = "Generate readonly Unity Editor tools."
+    description = "生成只读 Unity Editor 工具。"
     available_skills = ["generate_unity_editor_tool"]
 
     def run(self, task: dict[str, Any], context: Any) -> dict[str, Any]:

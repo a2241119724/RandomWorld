@@ -7,7 +7,7 @@ from core.sub_agent import SubAgent
 
 class CodeGeneratorAgent(SubAgent):
     name = "code_generator"
-    description = "Generate Unity C# feature scripts into the configured project folder."
+    description = "生成 Unity C# 新功能脚本到配置的项目目录。"
     available_skills = ["generate_csharp_script"]
 
     def run(self, task: dict[str, Any], context: Any) -> dict[str, Any]:

@@ -81,9 +81,9 @@ class ScanUnityProjectSkill(Skill):
             "scriptable_assets": self._sample(assets_path, "*.asset"),
         }
         summary = (
-            f"Unity project scan found {counts['csharp_files']} C# files, "
-            f"{counts['scenes']} scenes, {counts['prefabs']} prefabs, "
-            f"{counts['materials']} materials, and {counts['textures']} textures."
+            f"Unity 项目扫描发现 {counts['csharp_files']} 个 C# 文件、"
+            f"{counts['scenes']} 个场景、{counts['prefabs']} 个 Prefab、"
+            f"{counts['materials']} 个材质、{counts['textures']} 个贴图。"
         )
         return {
             "root_path": str(root_path),

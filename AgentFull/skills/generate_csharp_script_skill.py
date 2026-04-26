@@ -87,17 +87,16 @@ class GenerateCSharpScriptSkill(Skill):
                 "role": "system",
                 "content": (
                     system_prompt
-                    + "\nReturn only one complete C# file in a fenced csharp code block."
+                    + "\n只返回一个完整 C# 文件，并放在带 csharp 语言标记的 Markdown 代码块中。"
                 ),
             },
             {
                 "role": "user",
                 "content": (
-                    "Generate a small, reviewable Unity C# file that implements this new feature. "
-                    "Use the exact namespace and class name. Prefer a standalone runtime component "
-                    "that can be attached or referenced manually after review. Do not modify scenes, "
-                    "prefabs, ScriptableObjects, StreamingAssets, Addressables, save data, networking, "
-                    "or build settings. Do not include destructive file operations.\n\n"
+                    "请生成一个小而易审查的 Unity C# 文件，用来实现这个新功能。"
+                    "必须使用给定的 namespace 和 class_name。优先生成独立运行时组件，"
+                    "让用户在审查后手动挂载或引用。不要修改场景、Prefab、ScriptableObject、"
+                    "StreamingAssets、Addressables、存档、网络或构建设置。不要包含破坏性文件操作。\n\n"
                     f"class_name: {class_name}\n"
                     f"namespace: {namespace}\n"
                     f"script_kind: {script_kind}\n"
