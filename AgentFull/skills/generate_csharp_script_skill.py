@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,7 @@ from core.file_utils import (
     write_text,
 )
 from core.llm_utils import compact_json, extract_csharp_code, record_model_call
+from core.project_context import build_llm_project_context
 from core.skill import Skill
 
 
@@ -82,12 +84,19 @@ class GenerateCSharpScriptSkill(Skill):
 
         base_dir = Path(context.get_service("base_dir") or ".")
         system_prompt = read_text(base_dir / "prompts" / "code_generator_prompt.md")
+        project_context = build_llm_project_context(
+            context,
+            "generate_csharp_script",
+            selected=selected,
+            task_card=task_card,
+        )
         messages = [
             {
                 "role": "system",
                 "content": (
                     system_prompt
                     + "\n只返回一个完整 C# 文件，并放在带 csharp 语言标记的 Markdown 代码块中。"
+                    + "\n生成 C# 代码中的注释必须使用中文，包括 XML summary、普通注释和说明性注释。"
                 ),
             },
             {
@@ -97,6 +106,8 @@ class GenerateCSharpScriptSkill(Skill):
                     "必须使用给定的 namespace 和 class_name。优先生成独立运行时组件，"
                     "让用户在审查后手动挂载或引用。不要修改场景、Prefab、ScriptableObject、"
                     "StreamingAssets、Addressables、存档、网络或构建设置。不要包含破坏性文件操作。\n\n"
+                    "完整上下文包（包含项目结构、关键 C# 片段、会话上下文、用户输入和最近模型调用）：\n"
+                    f"{project_context}\n\n"
                     f"class_name: {class_name}\n"
                     f"namespace: {namespace}\n"
                     f"script_kind: {script_kind}\n"
@@ -134,10 +145,30 @@ class GenerateCSharpScriptSkill(Skill):
         if any(pattern in code for pattern in forbidden):
             return False
         if script_kind == "MonoBehaviour":
-            return "MonoBehaviour" in code and "using UnityEngine" in code
+            return (
+                "MonoBehaviour" in code
+                and "using UnityEngine" in code
+                and self._comments_are_chinese(code)
+            )
         if script_kind == "ScriptableObject":
-            return "ScriptableObject" in code and "using UnityEngine" in code
-        return "class " in code
+            return (
+                "ScriptableObject" in code
+                and "using UnityEngine" in code
+                and self._comments_are_chinese(code)
+            )
+        return "class " in code and self._comments_are_chinese(code)
+
+    def _comments_are_chinese(self, code: str) -> bool:
+        line_comments = re.findall(r"^\s*//+.*$", code, flags=re.MULTILINE)
+        block_comments = re.findall(r"/\*.*?\*/", code, flags=re.DOTALL)
+        for comment in line_comments + block_comments:
+            text = re.sub(r"</?\w+[^>]*>", "", comment)
+            text = re.sub(r"[/\*]+", " ", text).strip()
+            if not text:
+                continue
+            if re.search(r"[A-Za-z]{4,}", text) and not re.search(r"[\u4e00-\u9fff]", text):
+                return False
+        return True
 
     def _infer_kind(self, selected: dict[str, Any]) -> str:
         if selected.get("implementation_type") == "runtime_feature":
@@ -212,8 +243,8 @@ using UnityEngine.Events;
 namespace {namespace}
 {{
     /// <summary>
-    /// Generated runtime feature for: {goal}
-    /// Attach this component manually after reviewing the implementation.
+    /// 为以下目标生成的运行时功能：{goal}
+    /// 审查实现后，可手动把此组件挂载到合适的 GameObject 上。
     /// </summary>
     public sealed class {class_name} : MonoBehaviour
     {{
@@ -269,8 +300,8 @@ using UnityEngine.Events;
 namespace {namespace}
 {{
     /// <summary>
-    /// Generated runtime feature for: {goal}
-    /// Manages timed status effects without modifying existing character scripts.
+    /// 为以下目标生成的运行时功能：{goal}
+    /// 管理限时状态效果，并且不需要修改已有角色脚本。
     /// </summary>
     public sealed class {class_name} : MonoBehaviour
     {{
@@ -422,8 +453,8 @@ using UnityEngine.Events;
 namespace {namespace}
 {{
     /// <summary>
-    /// Generated runtime feature for: {goal}
-    /// Provides a lightweight weather cycle that other systems can observe.
+    /// 为以下目标生成的运行时功能：{goal}
+    /// 提供一个轻量天气循环，让其他系统可以订阅天气变化。
     /// </summary>
     public sealed class {class_name} : MonoBehaviour
     {{
@@ -545,8 +576,8 @@ using UnityEngine.Events;
 namespace {namespace}
 {{
     /// <summary>
-    /// Generated runtime feature for: {goal}
-    /// Tracks a worker or colony morale value with threshold events.
+    /// 为以下目标生成的运行时功能：{goal}
+    /// 跟踪工人或基地士气值，并在达到阈值时触发事件。
     /// </summary>
     public sealed class {class_name} : MonoBehaviour
     {{
@@ -635,8 +666,8 @@ using UnityEngine.Events;
 namespace {namespace}
 {{
     /// <summary>
-    /// Generated runtime feature for: {goal}
-    /// Tracks named resource amounts and raises alerts when values cross thresholds.
+    /// 为以下目标生成的运行时功能：{goal}
+    /// 跟踪具名资源数量，并在资源跨过阈值时触发提醒。
     /// </summary>
     public sealed class {class_name} : MonoBehaviour
     {{
@@ -738,8 +769,8 @@ using UnityEngine.Events;
 namespace {namespace}
 {{
     /// <summary>
-    /// Generated runtime feature for: {goal}
-    /// Stores recent combat events and exposes them to UI or debugging systems.
+    /// 为以下目标生成的运行时功能：{goal}
+    /// 保存最近的战斗事件，并暴露给 UI 或调试系统使用。
     /// </summary>
     public sealed class {class_name} : MonoBehaviour
     {{
@@ -814,8 +845,8 @@ namespace {namespace}
 namespace {namespace}
 {{
     /// <summary>
-    /// Generated ScriptableObject for: {goal}
-    /// Review before creating assets from this type.
+    /// 为以下目标生成的 ScriptableObject：{goal}
+    /// 使用此类型创建资源前，请先审查生成代码。
     /// </summary>
     [CreateAssetMenu(fileName = "{class_name}", menuName = "AgentFull/{class_name}")]
     public sealed class {class_name} : ScriptableObject
@@ -833,7 +864,7 @@ namespace {namespace}
 namespace {namespace}
 {{
     /// <summary>
-    /// Generated helper for: {goal}
+    /// 为以下目标生成的辅助类：{goal}
     /// </summary>
     public sealed class {class_name}
     {{

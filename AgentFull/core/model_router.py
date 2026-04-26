@@ -14,13 +14,22 @@ class ModelRouter:
         model_name: str | None = None,
         mock: bool = False,
         logger: Any | None = None,
+        logging_config: dict[str, Any] | None = None,
     ) -> None:
         self.config_path = config_path
         self.config = load_yaml(config_path)
         self.model_name = model_name
         self.mock = mock
         self.logger = logger
-        self.client = ModelClient(self.config, model_name=model_name, mock=mock, logger=logger)
+        self.logging_config = logging_config or {}
+        self.client = ModelClient(
+            self.config,
+            model_name=model_name,
+            mock=mock,
+            logger=logger,
+            llm_log_dir=config_path.parent.parent / "cache" / "llm_calls",
+            logging_config=self.logging_config,
+        )
 
     def chat_for_task(
         self,

@@ -49,6 +49,8 @@ class MainAgent:
         self.project_root_override = project_root
         self.output_override = output
         self.verbose = verbose
+        self.session_conversation: list[dict[str, Any]] = []
+        self.session_model_calls: list[dict[str, Any]] = []
 
         self.agent_config: dict[str, Any] = {}
         self.model_config: dict[str, Any] = {}
@@ -83,6 +85,7 @@ class MainAgent:
             model_name=model_name,
             mock=mock,
             logger=self.logger,
+            logging_config=logging_config,
         )
 
         self._attach_services()
@@ -136,12 +139,22 @@ class MainAgent:
 
     def run_task(self, task: dict[str, Any]) -> dict[str, Any]:
         task_obj = AgentTask.from_dict(task)
+        user_request = (
+            task.get("user_request")
+            or task_obj.parameters.get("user_input")
+            or task_obj.description
+        )
+        if user_request:
+            self._append_session_message("user", str(user_request))
         started = time.perf_counter()
         self._trace(f"主Agent启动任务: {task_obj.task_type} ({task_obj.task_id})")
         self.context.reset(
             {
                 "task": task_obj.to_dict(),
                 "started_at": datetime.now().isoformat(timespec="seconds"),
+                "user_request": user_request,
+                "conversation_history": self.session_conversation[-20:],
+                "previous_model_calls": self.session_model_calls[-20:],
             }
         )
         self._attach_services()
@@ -178,6 +191,9 @@ class MainAgent:
             elif task_obj.task_type == "auto_discover_and_implement":
                 self._trace("主Agent流程: 自动发现功能 -> 生成任务卡 -> 实现新功能 -> 验证 -> 写报告")
                 self._run_auto_pipeline(mark_completed=True)
+            elif task_obj.task_type in {"user_request", "fix_bug", "implement_feature"}:
+                self._trace("主Agent流程: 结合用户输入和项目上下文 -> 自动规划 -> 生成代码 -> 验证 -> 写报告")
+                self._run_auto_pipeline(mark_completed=True)
             else:
                 raise ValueError(f"Unsupported task type: {task_obj.task_type}")
         except Exception as exc:
@@ -204,12 +220,23 @@ class MainAgent:
             report_info.get("report_path"),
             len(self.context.get("errors", [])),
         )
+        summary = self.summarize_result()
+        self.session_model_calls.extend(self.context.get("model_calls", []))
+        self.session_model_calls = self.session_model_calls[-30:]
+        self._append_session_message(
+            "assistant",
+            "任务完成：{task_type}，报告：{report}，生成文件：{files}".format(
+                task_type=task_obj.task_type,
+                report=report_info.get("report_path"),
+                files=", ".join(self.context.get("generated_files", [])) or "无",
+            ),
+        )
 
         return {
             "task_id": task_obj.task_id,
             "report_path": report_info.get("report_path"),
             "log_path": str(self.log_path) if self.log_path else None,
-            "summary": self.summarize_result(),
+            "summary": summary,
         }
 
     def dispatch_to_agent(self, agent_name: str, task: dict[str, Any]) -> dict[str, Any]:
@@ -272,6 +299,8 @@ class MainAgent:
                     "mock": item.get("mock"),
                     "used": item.get("used"),
                     "fallback_reason": item.get("fallback_reason", ""),
+                    "request_log_path": item.get("request_log_path", ""),
+                    "response_log_path": item.get("response_log_path", ""),
                 }
                 for item in self.context.get("model_calls", [])
             ],
@@ -283,6 +312,7 @@ class MainAgent:
 
     def _run_auto_pipeline(self, mark_completed: bool) -> None:
         self.dispatch_to_agent("project_analyzer", {"mode": "full_analysis"})
+        self.context.append_event("Project context collected before feature discovery.")
         planner_result = self.dispatch_to_agent("feature_planner", {"mode": "discover_and_plan"})
         selected = planner_result.get("selected_candidate")
 
@@ -323,6 +353,23 @@ class MainAgent:
     def _trace(self, message: str) -> None:
         if self.verbose:
             print(f"[AgentFull] {message}", flush=True)
+
+    def _append_session_message(self, role: str, content: str) -> None:
+        normalized = content.strip()
+        if not normalized:
+            return
+        if self.session_conversation:
+            last = self.session_conversation[-1]
+            if last.get("role") == role and last.get("content") == normalized:
+                return
+        self.session_conversation.append(
+            {
+                "role": role,
+                "content": normalized,
+                "time": datetime.now().isoformat(timespec="seconds"),
+            }
+        )
+        self.session_conversation = self.session_conversation[-30:]
 
     def _attach_services(self) -> None:
         self.context.set_service("memory", getattr(self, "memory", None))

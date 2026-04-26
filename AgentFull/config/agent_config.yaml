@@ -7,9 +7,17 @@ agent:
 logging:
   level: INFO
   write_log_file: true
+  console: false
+  log_llm_payloads: true
+  llm_payload_max_chars: 8000
+  write_llm_call_files: true
 
 context:
-  max_chars: 24000
+  max_chars: 60000
+  project_context_max_chars: 60000
+  max_script_excerpts: 60
+  script_excerpt_chars: 1400
+  include_vendor_scripts: false
   keep_recent_results: 12
 
 cache:

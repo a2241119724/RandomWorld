@@ -5,6 +5,7 @@ from typing import Any
 
 from core.file_utils import csharp_class_name, csharp_output_dir, read_text
 from core.llm_utils import compact_json, extract_json_value, record_model_call
+from core.project_context import build_llm_project_context
 from core.skill import Skill
 
 
@@ -91,6 +92,11 @@ class GenerateFeatureTaskSkill(Skill):
 
         base_dir = Path(context.get_service("base_dir") or ".")
         system_prompt = read_text(base_dir / "prompts" / "feature_planner_prompt.md")
+        project_context = build_llm_project_context(
+            context,
+            "generate_feature_task",
+            selected=default_selected,
+        )
         eligible = [
             candidate
             for candidate in candidates
@@ -124,6 +130,8 @@ class GenerateFeatureTaskSkill(Skill):
                     "    \"rollback_plan\": []\n"
                     "  }\n"
                     "}\n\n"
+                    "完整上下文包（包含项目结构、关键 C# 片段、会话上下文、用户输入和最近模型调用）：\n"
+                    f"{project_context}\n\n"
                     f"skip_high_risk_candidate: {skip_high}\n"
                     f"default_selected_candidate_id: {default_selected.get('candidate_id')}\n"
                     f"eligible_candidates:\n{compact_json(eligible, 10000)}"

@@ -53,16 +53,18 @@ class WriteReportSkill(Skill):
         lines.append("## 模型调用")
         lines.append("")
         if model_calls:
-            lines.append("| 用途 | Provider | Model | Mock | 是否采用 | 备注 |")
-            lines.append("| --- | --- | --- | --- | --- | --- |")
+            lines.append("| 用途 | Provider | Model | Mock | 是否采用 | 请求日志 | 响应日志 | 备注 |")
+            lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
             for call in model_calls:
                 lines.append(
-                    "| {purpose} | {provider} | {model} | {mock} | {used} | {fallback} |".format(
+                    "| {purpose} | {provider} | {model} | {mock} | {used} | {request_log} | {response_log} | {fallback} |".format(
                         purpose=call.get("purpose", ""),
                         provider=call.get("provider", ""),
                         model=call.get("model", ""),
                         mock=call.get("mock", ""),
                         used=call.get("used", ""),
+                        request_log=call.get("request_log_path", ""),
+                        response_log=call.get("response_log_path", ""),
                         fallback=call.get("fallback_reason", "") or call.get("note", ""),
                     )
                 )
