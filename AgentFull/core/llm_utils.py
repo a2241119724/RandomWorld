@@ -74,7 +74,11 @@ def record_model_call(
         "fallback_reason": response.get("fallback_reason", ""),
         "note": note,
         "usage": response.get("usage", {}),
-        "content_preview": safe_text(response.get("content", ""), 600),
+        "request_preview": compact_json(response.get("request_preview", []), 2200),
+        "content_preview": safe_text(response.get("content", ""), 1800),
+        "request_log_path": response.get("request_log_path", ""),
+        "response_log_path": response.get("response_log_path", ""),
+        "error_log_path": response.get("error_log_path", ""),
     }
     calls.append(entry)
     context.set("model_calls", calls)

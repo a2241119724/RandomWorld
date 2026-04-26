@@ -4,6 +4,7 @@ import json
 import os
 import time
 import uuid
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -16,11 +17,22 @@ class ModelClient:
         model_name: str | None = None,
         mock: bool = False,
         logger: Any | None = None,
+        llm_log_dir: Path | None = None,
+        logging_config: dict[str, Any] | None = None,
     ) -> None:
         self.config = config
         self.model_name = model_name
         self.mock = mock
         self.logger = logger
+        self.logging_config = logging_config or {}
+        self.llm_log_dir = (
+            Path(llm_log_dir)
+            if self.logging_config.get("write_llm_call_files", True) and llm_log_dir
+            else None
+        )
+        self.payload_log_chars = int(self.logging_config.get("llm_payload_max_chars", 8000))
+        self.log_llm_payloads = bool(self.logging_config.get("log_llm_payloads", True))
+        self._call_artifacts: dict[str, dict[str, str]] = {}
 
     def chat(
         self,
@@ -34,8 +46,22 @@ class ModelClient:
         started = time.perf_counter()
         self._log_call_start(call_id, task_type, messages, selected_name, model_config)
         if self.mock:
+            self._write_call_artifact(
+                call_id,
+                "request",
+                {
+                    "mode": "mock",
+                    "task_type": task_type,
+                    "model_profile": selected_name,
+                    "provider": provider,
+                    "model": model_config.get("model"),
+                    "messages": messages,
+                },
+            )
             result = self._mock_reply(messages, selected_name, "mock mode enabled")
             result["call_id"] = call_id
+            self._write_call_artifact(call_id, "response", result)
+            self._attach_call_metadata(result, call_id, messages)
             self._log_call_result(call_id, result, started, "mock")
             return result
 
@@ -54,6 +80,7 @@ class ModelClient:
                     started,
                     "fallback" if result.get("mock") else "success",
                 )
+                self._attach_call_metadata(result, call_id, messages)
                 return result
             if provider == "anthropic":
                 result = self._chat_anthropic(messages, selected_name, model_config, call_id)
@@ -64,6 +91,7 @@ class ModelClient:
                     started,
                     "fallback" if result.get("mock") else "success",
                 )
+                self._attach_call_metadata(result, call_id, messages)
                 return result
             if provider == "ollama":
                 result = self._chat_ollama(messages, selected_name, model_config, call_id)
@@ -74,6 +102,7 @@ class ModelClient:
                     started,
                     "fallback" if result.get("mock") else "success",
                 )
+                self._attach_call_metadata(result, call_id, messages)
                 return result
             result = self._mock_reply(
                 messages,
@@ -81,6 +110,19 @@ class ModelClient:
                 f"unsupported provider '{provider}'",
             )
             result["call_id"] = call_id
+            self._write_call_artifact(
+                call_id,
+                "request",
+                {
+                    "task_type": task_type,
+                    "model_profile": selected_name,
+                    "provider": provider,
+                    "model": model_config.get("model"),
+                    "messages": messages,
+                },
+            )
+            self._write_call_artifact(call_id, "response", result)
+            self._attach_call_metadata(result, call_id, messages)
             self._log_call_result(call_id, result, started, "fallback")
             return result
         except Exception as exc:  # Network/API problems fall back to local mock.
@@ -91,8 +133,21 @@ class ModelClient:
                     int((time.perf_counter() - started) * 1000),
                     self._safe_text(str(exc), 500),
                 )
+            self._write_call_artifact(
+                call_id,
+                "error",
+                {
+                    "task_type": task_type,
+                    "model_profile": selected_name,
+                    "provider": provider,
+                    "model": model_config.get("model"),
+                    "error": str(exc),
+                },
+            )
             result = self._mock_reply(messages, selected_name, self._safe_text(str(exc), 500))
             result["call_id"] = call_id
+            self._write_call_artifact(call_id, "response", result)
+            self._attach_call_metadata(result, call_id, messages)
             self._log_call_result(call_id, result, started, "fallback")
             return result
 
@@ -138,6 +193,12 @@ class ModelClient:
             "messages": messages,
             "temperature": model_config.get("temperature", 0.2),
         }
+        if model_config.get("reasoning_effort"):
+            payload["reasoning_effort"] = model_config.get("reasoning_effort")
+        if isinstance(model_config.get("extra_body"), dict):
+            payload.update(model_config["extra_body"])
+        if model_config.get("max_tokens"):
+            payload["max_tokens"] = model_config.get("max_tokens")
         response = self._post_json(
             call_id,
             endpoint,
@@ -279,11 +340,32 @@ class ModelClient:
     ) -> requests.Response:
         if self.logger:
             self.logger.info(
-                "LLM HTTP request | call_id=%s endpoint=%s timeout=%s payload=%s",
+                "LLM HTTP request | call_id=%s endpoint=%s timeout=%s request_log=%s payload=%s",
                 call_id,
                 endpoint,
                 timeout,
-                self._safe_json(self._summarize_payload(payload), 2000),
+                self._write_call_artifact(
+                    call_id,
+                    "request",
+                    {
+                        "endpoint": endpoint,
+                        "timeout": timeout,
+                        "payload": payload,
+                    },
+                ),
+                self._safe_json(self._summarize_payload(payload), self.payload_log_chars)
+                if self.log_llm_payloads
+                else "<payload logging disabled>",
+            )
+        else:
+            self._write_call_artifact(
+                call_id,
+                "request",
+                {
+                    "endpoint": endpoint,
+                    "timeout": timeout,
+                    "payload": payload,
+                },
             )
         started = time.perf_counter()
         response = requests.post(
@@ -295,11 +377,32 @@ class ModelClient:
         elapsed_ms = int((time.perf_counter() - started) * 1000)
         if self.logger:
             self.logger.info(
-                "LLM HTTP response | call_id=%s status_code=%s duration_ms=%s body=%s",
+                "LLM HTTP response | call_id=%s status_code=%s duration_ms=%s response_log=%s body=%s",
                 call_id,
                 response.status_code,
                 elapsed_ms,
-                self._safe_text(response.text, 2000),
+                self._write_call_artifact(
+                    call_id,
+                    "response",
+                    {
+                        "status_code": response.status_code,
+                        "duration_ms": elapsed_ms,
+                        "body": response.text,
+                    },
+                ),
+                self._safe_text(response.text, self.payload_log_chars)
+                if self.log_llm_payloads
+                else "<payload logging disabled>",
+            )
+        else:
+            self._write_call_artifact(
+                call_id,
+                "response",
+                {
+                    "status_code": response.status_code,
+                    "duration_ms": elapsed_ms,
+                    "body": response.text,
+                },
             )
         return response
 
@@ -363,7 +466,11 @@ class ModelClient:
                 summary[key] = value
         return summary
 
-    def _summarize_messages(self, messages: list[dict[str, str]]) -> list[dict[str, Any]]:
+    def _summarize_messages(
+        self,
+        messages: list[dict[str, str]],
+        preview_chars: int = 500,
+    ) -> list[dict[str, Any]]:
         summarized = []
         for index, message in enumerate(messages):
             content = message.get("content", "")
@@ -372,7 +479,7 @@ class ModelClient:
                     "index": index,
                     "role": message.get("role", ""),
                     "chars": len(content),
-                    "preview": self._safe_text(content, 500),
+                    "preview": self._safe_text(content, preview_chars),
                 }
             )
         return summarized
@@ -401,3 +508,26 @@ class ModelClient:
     def _looks_like_literal_key(self, value: Any) -> bool:
         label = str(value or "").strip().lower()
         return label.startswith(("sk-", "sk_", "key-", "apikey-"))
+
+    def _attach_call_metadata(
+        self,
+        result: dict[str, Any],
+        call_id: str,
+        messages: list[dict[str, str]],
+    ) -> None:
+        if not self._call_artifacts.get(call_id):
+            self._write_call_artifact(call_id, "request", {"messages": messages})
+            self._write_call_artifact(call_id, "response", result)
+        result["request_preview"] = self._summarize_messages(messages, preview_chars=1200)
+        result.update(self._call_artifacts.get(call_id, {}))
+
+    def _write_call_artifact(self, call_id: str, kind: str, payload: dict[str, Any]) -> str:
+        if not self.llm_log_dir:
+            return ""
+        self.llm_log_dir.mkdir(parents=True, exist_ok=True)
+        path = self.llm_log_dir / f"{call_id}_{kind}.json"
+        with path.open("w", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+        artifact_key = f"{kind}_log_path"
+        self._call_artifacts.setdefault(call_id, {})[artifact_key] = str(path)
+        return str(path)

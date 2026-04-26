@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,7 @@ from core.file_utils import (
     write_text,
 )
 from core.llm_utils import compact_json, extract_csharp_code, record_model_call
+from core.project_context import build_llm_project_context
 from core.skill import Skill
 
 
@@ -75,12 +77,19 @@ class GenerateUnityEditorToolSkill(Skill):
 
         base_dir = Path(context.get_service("base_dir") or ".")
         system_prompt = read_text(base_dir / "prompts" / "unity_editor_prompt.md")
+        project_context = build_llm_project_context(
+            context,
+            "generate_unity_editor_tool",
+            selected=selected,
+            task_card=task_card,
+        )
         messages = [
             {
                 "role": "system",
                 "content": (
                     system_prompt
                     + "\n只返回一个完整 C# 文件，并放在带 csharp 语言标记的 Markdown 代码块中。"
+                    + "\n生成 C# 代码中的注释必须使用中文，包括 XML summary、普通注释和说明性注释。"
                 ),
             },
             {
@@ -90,6 +99,8 @@ class GenerateUnityEditorToolSkill(Skill):
                     "它可以扫描项目并导出报告，但不能修改场景、Prefab、ScriptableObject、"
                     "StreamingAssets、Addressables、构建设置或任何已有项目资源。"
                     "优先使用 Tools/AgentFull 菜单入口。\n\n"
+                    "完整上下文包（包含项目结构、关键 C# 片段、会话上下文、用户输入和最近模型调用）：\n"
+                    f"{project_context}\n\n"
                     f"class_name: {class_name}\n"
                     f"namespace: {namespace}\n"
                     f"selected_candidate:\n{compact_json(selected, 5000)}\n\n"
@@ -133,7 +144,19 @@ class GenerateUnityEditorToolSkill(Skill):
             "Directory.Delete",
             "Process.Start",
         ]
-        return not any(pattern in code for pattern in forbidden)
+        return not any(pattern in code for pattern in forbidden) and self._comments_are_chinese(code)
+
+    def _comments_are_chinese(self, code: str) -> bool:
+        line_comments = re.findall(r"^\s*//+.*$", code, flags=re.MULTILINE)
+        block_comments = re.findall(r"/\*.*?\*/", code, flags=re.DOTALL)
+        for comment in line_comments + block_comments:
+            text = re.sub(r"</?\w+[^>]*>", "", comment)
+            text = re.sub(r"[/\*]+", " ", text).strip()
+            if not text:
+                continue
+            if re.search(r"[A-Za-z]{4,}", text) and not re.search(r"[\u4e00-\u9fff]", text):
+                return False
+        return True
 
     def _editor_window_template(self) -> str:
         return """#if UNITY_EDITOR

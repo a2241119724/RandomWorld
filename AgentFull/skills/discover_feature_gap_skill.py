@@ -5,6 +5,7 @@ from typing import Any
 
 from core.file_utils import read_text, safe_slug
 from core.llm_utils import compact_json, extract_json_value, record_model_call
+from core.project_context import build_llm_project_context
 from core.skill import Skill
 
 
@@ -237,6 +238,7 @@ class DiscoverFeatureGapSkill(Skill):
         base_dir = Path(context.get_service("base_dir") or ".")
         system_prompt = read_text(base_dir / "prompts" / "feature_planner_prompt.md")
         project_summary = self._compact_project_summary(project_scan, script_analysis)
+        project_context = build_llm_project_context(context, "discover_feature_gap")
         messages = [
             {
                 "role": "system",
@@ -269,6 +271,8 @@ class DiscoverFeatureGapSkill(Skill):
                     "    }\n"
                     "  ]\n"
                     "}\n\n"
+                    "完整上下文包（包含项目结构、关键 C# 片段、会话上下文、用户输入和最近模型调用）：\n"
+                    f"{project_context}\n\n"
                     f"项目摘要：\n{compact_json(project_summary, 9000)}\n\n"
                     f"已有启发式候选项：\n{compact_json(seed_candidates, 5000)}"
                 ),
