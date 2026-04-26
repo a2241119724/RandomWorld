@@ -6,6 +6,7 @@
 /Scripts/Reference
 /AddressableAssetsData
 /.vs
+/.claude
 /TextMesh Pro
 /Materials/*
 !/Materials/**/*.meta
