@@ -35,6 +35,7 @@ class WriteReportSkill(Skill):
         selected = data.get("selected_candidate") or {}
         task_card = data.get("task_card") or {}
         generated = data.get("generated_files", [])
+        generated_meta = data.get("generated_meta_files", [])
         validation = data.get("validation", {})
         asset_check = data.get("asset_reference_check", {})
         errors = data.get("errors", [])
@@ -122,6 +123,11 @@ class WriteReportSkill(Skill):
                 lines.append(f"- `{path}`")
         else:
             lines.append("No code files were generated.")
+        if generated_meta:
+            lines.append("")
+            lines.append("Generated Unity meta files:")
+            for path in generated_meta:
+                lines.append(f"- `{path}`")
         lines.append("")
 
         lines.append("## Validation Results")

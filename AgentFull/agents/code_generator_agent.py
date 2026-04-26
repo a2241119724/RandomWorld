@@ -21,4 +21,5 @@ class CodeGeneratorAgent(SubAgent):
             context,
         )
         context.set("generated_files", result.get("generated_files", []))
+        context.set("generated_meta_files", result.get("generated_meta_files", []))
         return result

@@ -1,16 +1,16 @@
 {
   "task": {
     "task": "auto_discover_and_implement",
-    "task_id": "auto_discover_and_implement_153313",
+    "task_id": "auto_discover_and_implement_160450",
     "description": "Scan the Unity project, plan a low-risk automation feature, generate code, validate it, and write a report.",
     "constraints": [
       "Do not overwrite existing Unity files.",
       "Prefer readonly Editor tooling.",
-      "Write generated code to the report folder first."
+      "Write generated code to the configured Unity script or Editor folder."
     ],
     "parameters": {}
   },
-  "started_at": "2026-04-26T15:33:13",
+  "started_at": "2026-04-26T16:04:50",
   "agent_results": {
     "project_analyzer": {
       "mode": "full_analysis",
@@ -56,16 +56,17 @@
           }
         },
         "counts": {
-          "csharp_files": 362,
+          "csharp_files": 363,
           "prefabs": 29,
           "scenes": 3,
           "materials": 26,
           "textures": 95,
           "scriptable_assets": 129,
-          "meta_files": 940
+          "meta_files": 941
         },
         "samples": {
           "scripts": [
+            "Editor/AgentProjectOverviewWindow.cs",
             "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
             "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
             "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
@@ -76,8 +77,7 @@
             "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
             "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
             "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
-            "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs",
-            "TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs"
+            "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
           ],
           "scenes": [
             "Scenes/Game.unity",
@@ -127,23 +127,23 @@
             "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
           ]
         },
-        "summary": "Unity project scan found 362 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
-        "fingerprint": "ea934a0181f2b378478bb14f477329b6ed0eb3d880b53b6aa7f41cd91688ec5d",
+        "summary": "Unity project scan found 363 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
+        "fingerprint": "5abe1332fe2c862dc9a330c69bdde37d75ca2b07af0fb750f657653ae7b62879",
         "from_cache": false
       },
       "script_analysis": {
         "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
-        "total_scripts": 362,
+        "total_scripts": 363,
         "summary": {
           "mono_behaviour_classes": 122,
           "scriptable_object_classes": 7,
-          "editor_window_classes": 2,
-          "plain_classes": 458,
-          "public_fields": 1238,
+          "editor_window_classes": 3,
+          "plain_classes": 459,
+          "public_fields": 1245,
           "serialize_fields": 22,
           "lifecycle_methods": {
             "Awake": 101,
-            "OnEnable": 39,
+            "OnEnable": 40,
             "Start": 77,
             "Update": 53,
             "FixedUpdate": 6,
@@ -153,6 +153,35 @@
           }
         },
         "scripts": [
+          {
+            "path": "Editor/AgentProjectOverviewWindow.cs",
+            "namespaces": [
+              "RandomWorld.AgentGenerated.Editor"
+            ],
+            "classes": [
+              {
+                "kind": "class",
+                "name": "AgentProjectOverviewWindow",
+                "inherits": [
+                  "EditorWindow"
+                ]
+              },
+              {
+                "kind": "class",
+                "name": "ProjectStats",
+                "inherits": []
+              }
+            ],
+            "unity_types": [
+              "EditorWindow"
+            ],
+            "public_fields": 7,
+            "serialize_fields": 0,
+            "lifecycle_methods": [
+              "OnEnable"
+            ],
+            "line_count": 151
+          },
           {
             "path": "Scripts/2D/Attributes/BuilderAttribute.cs",
             "namespaces": [
@@ -9660,28 +9689,13 @@
             "line_count": 145
           }
         ],
-        "fingerprint": "2ca2de870f400cd4553d3657669bc39c266694cfd6f14f2ebd6a32b1ffd32805",
+        "fingerprint": "4edc63333fe25c117bdbe8cb2263ff6215402dd676f77fd4a44a1477fdf40c02",
         "from_cache": false
       }
     },
     "feature_planner": {
       "mode": "discover_and_plan",
       "candidates": [
-        {
-          "candidate_id": "cand_001_project_overview_editor",
-          "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
-          "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
-          "value": "Gives the project a safe in-Unity overview tool for future automation work.",
-          "risk_level": "low",
-          "affected_files": [],
-          "implementation_type": "editor_tool",
-          "status": "pending",
-          "signals": {
-            "csharp_files": 362,
-            "scenes": 3,
-            "prefabs": 29
-          }
-        },
         {
           "candidate_id": "cand_002_asset_reference_audit",
           "feature_name": "Readonly Asset Reference Risk Report",
@@ -9706,7 +9720,7 @@
           "status": "pending",
           "signals": {
             "mono_behaviour_classes": 122,
-            "public_fields": 1238,
+            "public_fields": 1245,
             "serialize_fields": 22
           }
         },
@@ -9720,7 +9734,7 @@
           "implementation_type": "editor_tool",
           "status": "pending",
           "signals": {
-            "editor_window_classes": 2
+            "editor_window_classes": 3
           }
         },
         {
@@ -9733,62 +9747,76 @@
           "implementation_type": "runtime_feature",
           "status": "pending",
           "signals": {}
+        },
+        {
+          "candidate_id": "cand_001_project_overview_editor",
+          "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
+          "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
+          "value": "Gives the project a safe in-Unity overview tool for future automation work.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "editor_tool",
+          "status": "completed",
+          "signals": {
+            "csharp_files": 363,
+            "scenes": 3,
+            "prefabs": 29
+          }
         }
       ],
       "selected_candidate": {
-        "candidate_id": "cand_001_project_overview_editor",
-        "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
-        "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
-        "value": "Gives the project a safe in-Unity overview tool for future automation work.",
+        "candidate_id": "cand_002_asset_reference_audit",
+        "feature_name": "Readonly Asset Reference Risk Report",
+        "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+        "value": "Finds project hygiene issues without touching assets.",
         "risk_level": "low",
         "affected_files": [],
-        "implementation_type": "editor_tool",
+        "implementation_type": "report_tool",
         "status": "pending",
         "signals": {
-          "csharp_files": 362,
-          "scenes": 3,
-          "prefabs": 29
+          "asset_files": 187
         }
       },
       "task_card": {
-        "task_goal": "Unity Project Readonly Resource And Script Overview Tool",
-        "candidate_id": "cand_001_project_overview_editor",
-        "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
-        "implementation_type": "editor_tool",
+        "task_goal": "Readonly Asset Reference Risk Report",
+        "candidate_id": "cand_002_asset_reference_audit",
+        "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+        "implementation_type": "report_tool",
         "implementation_scope": [
-          "Generate code into the report folder first.",
+          "Generate C# into the configured Unity script folder.",
           "Do not modify scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
-          "Keep the tool readonly and suitable for manual review before copying into Unity."
+          "Keep the tool readonly and avoid overwriting existing Unity files."
         ],
         "modify_files": [],
         "new_files": [
-          "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\run_153313\\generated_code\\AgentProjectOverviewWindow.cs"
+          "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
         ],
         "risk_notes": [
           "Risk level: low",
-          "Generated code is not inserted into the Unity project automatically."
+          "Generated code is written as a new file only; existing Unity files are not overwritten."
         ],
         "verification_steps": [
-          "Review generated C# code in generated_code.",
-          "Optionally copy the Editor script into Assets/Editor after review.",
+          "Review generated C# code at the configured Unity path.",
           "Open Unity and confirm the EditorWindow/menu compiles.",
           "Use the tool to export a Markdown report."
         ],
         "rollback_plan": [
-          "Delete the generated_code file from the report folder.",
-          "If manually copied into Assets/Editor later, remove that copied file."
+          "Delete the generated C# file from the configured Unity path."
         ],
-        "selected_at": "2026-04-26T15:33:13"
+        "selected_at": "2026-04-26T16:04:50"
       }
     },
     "unity_editor": {
       "generated_files": [
-        "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\generated_code\\AgentProjectOverviewWindow.cs"
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
       ],
-      "class_name": "AgentProjectOverviewWindow",
+      "generated_meta_files": [
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs.meta"
+      ],
+      "class_name": "ReadonlyAssetReferenceRiskReport",
       "namespace": "RandomWorld.AgentGenerated.Editor",
-      "policy": "readonly_editor_tool_report_folder_first",
-      "manual_next_step": "After review, copy this file into Assets/Editor or another Editor folder."
+      "policy": "readonly_editor_tool_configured_editor_path",
+      "manual_next_step": "Open Unity and confirm the generated Editor menu compiles."
     },
     "validation": {
       "mode": "full_validation",
@@ -9930,9 +9958,11 @@
         "passed": true,
         "checks": [
           {
-            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\generated_code\\AgentProjectOverviewWindow.cs",
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs",
             "exists": true,
             "has_using_unity_editor": true,
+            "inside_editor_folder": true,
+            "has_unity_meta": true,
             "has_namespace": true,
             "has_class": true,
             "risky_asset_modification_calls": [],
@@ -9943,8 +9973,8 @@
       }
     },
     "report": {
-      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\report.md",
-      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\execution_context.json"
+      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\report.md",
+      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\execution_context.json"
     }
   },
   "skill_results": {
@@ -9990,16 +10020,17 @@
         }
       },
       "counts": {
-        "csharp_files": 362,
+        "csharp_files": 363,
         "prefabs": 29,
         "scenes": 3,
         "materials": 26,
         "textures": 95,
         "scriptable_assets": 129,
-        "meta_files": 940
+        "meta_files": 941
       },
       "samples": {
         "scripts": [
+          "Editor/AgentProjectOverviewWindow.cs",
           "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
           "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
           "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
@@ -10010,8 +10041,7 @@
           "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
           "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
           "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
-          "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs",
-          "TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs"
+          "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
         ],
         "scenes": [
           "Scenes/Game.unity",
@@ -10061,23 +10091,23 @@
           "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
         ]
       },
-      "summary": "Unity project scan found 362 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
-      "fingerprint": "ea934a0181f2b378478bb14f477329b6ed0eb3d880b53b6aa7f41cd91688ec5d",
+      "summary": "Unity project scan found 363 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
+      "fingerprint": "5abe1332fe2c862dc9a330c69bdde37d75ca2b07af0fb750f657653ae7b62879",
       "from_cache": false
     },
     "analyze_csharp_scripts": {
       "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
-      "total_scripts": 362,
+      "total_scripts": 363,
       "summary": {
         "mono_behaviour_classes": 122,
         "scriptable_object_classes": 7,
-        "editor_window_classes": 2,
-        "plain_classes": 458,
-        "public_fields": 1238,
+        "editor_window_classes": 3,
+        "plain_classes": 459,
+        "public_fields": 1245,
         "serialize_fields": 22,
         "lifecycle_methods": {
           "Awake": 101,
-          "OnEnable": 39,
+          "OnEnable": 40,
           "Start": 77,
           "Update": 53,
           "FixedUpdate": 6,
@@ -10087,6 +10117,35 @@
         }
       },
       "scripts": [
+        {
+          "path": "Editor/AgentProjectOverviewWindow.cs",
+          "namespaces": [
+            "RandomWorld.AgentGenerated.Editor"
+          ],
+          "classes": [
+            {
+              "kind": "class",
+              "name": "AgentProjectOverviewWindow",
+              "inherits": [
+                "EditorWindow"
+              ]
+            },
+            {
+              "kind": "class",
+              "name": "ProjectStats",
+              "inherits": []
+            }
+          ],
+          "unity_types": [
+            "EditorWindow"
+          ],
+          "public_fields": 7,
+          "serialize_fields": 0,
+          "lifecycle_methods": [
+            "OnEnable"
+          ],
+          "line_count": 151
+        },
         {
           "path": "Scripts/2D/Attributes/BuilderAttribute.cs",
           "namespaces": [
@@ -19594,26 +19653,11 @@
           "line_count": 145
         }
       ],
-      "fingerprint": "2ca2de870f400cd4553d3657669bc39c266694cfd6f14f2ebd6a32b1ffd32805",
+      "fingerprint": "4edc63333fe25c117bdbe8cb2263ff6215402dd676f77fd4a44a1477fdf40c02",
       "from_cache": false
     },
     "discover_feature_gap": {
       "candidates": [
-        {
-          "candidate_id": "cand_001_project_overview_editor",
-          "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
-          "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
-          "value": "Gives the project a safe in-Unity overview tool for future automation work.",
-          "risk_level": "low",
-          "affected_files": [],
-          "implementation_type": "editor_tool",
-          "status": "pending",
-          "signals": {
-            "csharp_files": 362,
-            "scenes": 3,
-            "prefabs": 29
-          }
-        },
         {
           "candidate_id": "cand_002_asset_reference_audit",
           "feature_name": "Readonly Asset Reference Risk Report",
@@ -19638,7 +19682,7 @@
           "status": "pending",
           "signals": {
             "mono_behaviour_classes": 122,
-            "public_fields": 1238,
+            "public_fields": 1245,
             "serialize_fields": 22
           }
         },
@@ -19652,7 +19696,7 @@
           "implementation_type": "editor_tool",
           "status": "pending",
           "signals": {
-            "editor_window_classes": 2
+            "editor_window_classes": 3
           }
         },
         {
@@ -19665,64 +19709,78 @@
           "implementation_type": "runtime_feature",
           "status": "pending",
           "signals": {}
+        },
+        {
+          "candidate_id": "cand_001_project_overview_editor",
+          "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
+          "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
+          "value": "Gives the project a safe in-Unity overview tool for future automation work.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "editor_tool",
+          "status": "completed",
+          "signals": {
+            "csharp_files": 363,
+            "scenes": 3,
+            "prefabs": 29
+          }
         }
       ]
     },
     "generate_feature_task": {
       "selected_candidate": {
-        "candidate_id": "cand_001_project_overview_editor",
-        "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
-        "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
-        "value": "Gives the project a safe in-Unity overview tool for future automation work.",
+        "candidate_id": "cand_002_asset_reference_audit",
+        "feature_name": "Readonly Asset Reference Risk Report",
+        "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+        "value": "Finds project hygiene issues without touching assets.",
         "risk_level": "low",
         "affected_files": [],
-        "implementation_type": "editor_tool",
+        "implementation_type": "report_tool",
         "status": "pending",
         "signals": {
-          "csharp_files": 362,
-          "scenes": 3,
-          "prefabs": 29
+          "asset_files": 187
         }
       },
       "task_card": {
-        "task_goal": "Unity Project Readonly Resource And Script Overview Tool",
-        "candidate_id": "cand_001_project_overview_editor",
-        "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
-        "implementation_type": "editor_tool",
+        "task_goal": "Readonly Asset Reference Risk Report",
+        "candidate_id": "cand_002_asset_reference_audit",
+        "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+        "implementation_type": "report_tool",
         "implementation_scope": [
-          "Generate code into the report folder first.",
+          "Generate C# into the configured Unity script folder.",
           "Do not modify scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
-          "Keep the tool readonly and suitable for manual review before copying into Unity."
+          "Keep the tool readonly and avoid overwriting existing Unity files."
         ],
         "modify_files": [],
         "new_files": [
-          "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\run_153313\\generated_code\\AgentProjectOverviewWindow.cs"
+          "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
         ],
         "risk_notes": [
           "Risk level: low",
-          "Generated code is not inserted into the Unity project automatically."
+          "Generated code is written as a new file only; existing Unity files are not overwritten."
         ],
         "verification_steps": [
-          "Review generated C# code in generated_code.",
-          "Optionally copy the Editor script into Assets/Editor after review.",
+          "Review generated C# code at the configured Unity path.",
           "Open Unity and confirm the EditorWindow/menu compiles.",
           "Use the tool to export a Markdown report."
         ],
         "rollback_plan": [
-          "Delete the generated_code file from the report folder.",
-          "If manually copied into Assets/Editor later, remove that copied file."
+          "Delete the generated C# file from the configured Unity path."
         ],
-        "selected_at": "2026-04-26T15:33:13"
+        "selected_at": "2026-04-26T16:04:50"
       }
     },
     "generate_unity_editor_tool": {
       "generated_files": [
-        "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\generated_code\\AgentProjectOverviewWindow.cs"
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
       ],
-      "class_name": "AgentProjectOverviewWindow",
+      "generated_meta_files": [
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs.meta"
+      ],
+      "class_name": "ReadonlyAssetReferenceRiskReport",
       "namespace": "RandomWorld.AgentGenerated.Editor",
-      "policy": "readonly_editor_tool_report_folder_first",
-      "manual_next_step": "After review, copy this file into Assets/Editor or another Editor folder."
+      "policy": "readonly_editor_tool_configured_editor_path",
+      "manual_next_step": "Open Unity and confirm the generated Editor menu compiles."
     },
     "asset_reference_check": {
       "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
@@ -19859,50 +19917,50 @@
       ]
     },
     "update_feature_status": {
-      "candidate_id": "cand_001_project_overview_editor",
+      "candidate_id": "cand_002_asset_reference_audit",
       "status": "completed",
-      "note": "Generated code to report folder; Unity project files were not modified.",
+      "note": "Generated code to the configured Unity path without overwriting existing files.",
       "candidate_count": 5
     },
     "write_report": {
-      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\report.md",
-      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\execution_context.json"
+      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\report.md",
+      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\execution_context.json"
     }
   },
   "errors": [],
   "events": [
     {
-      "time": "2026-04-26T15:33:13",
+      "time": "2026-04-26T16:04:50",
       "level": "info",
       "message": "Task started: auto_discover_and_implement"
     },
     {
-      "time": "2026-04-26T15:33:13",
+      "time": "2026-04-26T16:04:50",
       "level": "info",
       "message": "Dispatching to agent: project_analyzer"
     },
     {
-      "time": "2026-04-26T15:33:16",
+      "time": "2026-04-26T16:04:56",
       "level": "info",
       "message": "Dispatching to agent: feature_planner"
     },
     {
-      "time": "2026-04-26T15:33:16",
+      "time": "2026-04-26T16:04:56",
       "level": "info",
-      "message": "Candidate selected: cand_001_project_overview_editor"
+      "message": "Candidate selected: cand_002_asset_reference_audit"
     },
     {
-      "time": "2026-04-26T15:33:16",
+      "time": "2026-04-26T16:04:56",
       "level": "info",
       "message": "Dispatching to agent: unity_editor"
     },
     {
-      "time": "2026-04-26T15:33:16",
+      "time": "2026-04-26T16:04:56",
       "level": "info",
       "message": "Dispatching to agent: validation"
     },
     {
-      "time": "2026-04-26T15:33:21",
+      "time": "2026-04-26T16:05:01",
       "level": "info",
       "message": "Dispatching to agent: report"
     }
@@ -19966,14 +20024,14 @@
         "reports_path": "./reports"
       },
       "generation_policy": {
-        "default_output_mode": "report_only",
+        "default_output_mode": "project",
         "allow_modify_existing_files": false,
         "allow_scene_modification": false,
         "allow_prefab_modification": false,
         "allow_scriptableobject_modification": false,
         "allow_streamingassets_modification": false,
         "allow_addressables_modification": false,
-        "generate_code_to_report_folder_first": true
+        "generate_code_to_report_folder_first": false
       },
       "risk_policy": {
         "skip_high_risk_candidate": true,
@@ -19982,9 +20040,9 @@
       }
     },
     "model_profile": "deepseek",
-    "mock": false
+    "mock": true
   },
-  "report_dir": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr",
+  "report_dir": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report",
   "project_scan": {
     "root_path": "D:\\LAB\\Unity\\RandomWorld",
     "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
@@ -20027,16 +20085,17 @@
       }
     },
     "counts": {
-      "csharp_files": 362,
+      "csharp_files": 363,
       "prefabs": 29,
       "scenes": 3,
       "materials": 26,
       "textures": 95,
       "scriptable_assets": 129,
-      "meta_files": 940
+      "meta_files": 941
     },
     "samples": {
       "scripts": [
+        "Editor/AgentProjectOverviewWindow.cs",
         "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
         "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
         "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
@@ -20047,8 +20106,7 @@
         "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
         "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
         "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
-        "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs",
-        "TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs"
+        "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
       ],
       "scenes": [
         "Scenes/Game.unity",
@@ -20098,23 +20156,23 @@
         "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
       ]
     },
-    "summary": "Unity project scan found 362 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
-    "fingerprint": "ea934a0181f2b378478bb14f477329b6ed0eb3d880b53b6aa7f41cd91688ec5d",
+    "summary": "Unity project scan found 363 C# files, 3 scenes, 29 prefabs, 26 materials, and 95 textures.",
+    "fingerprint": "5abe1332fe2c862dc9a330c69bdde37d75ca2b07af0fb750f657653ae7b62879",
     "from_cache": false
   },
   "script_analysis": {
     "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
-    "total_scripts": 362,
+    "total_scripts": 363,
     "summary": {
       "mono_behaviour_classes": 122,
       "scriptable_object_classes": 7,
-      "editor_window_classes": 2,
-      "plain_classes": 458,
-      "public_fields": 1238,
+      "editor_window_classes": 3,
+      "plain_classes": 459,
+      "public_fields": 1245,
       "serialize_fields": 22,
       "lifecycle_methods": {
         "Awake": 101,
-        "OnEnable": 39,
+        "OnEnable": 40,
         "Start": 77,
         "Update": 53,
         "FixedUpdate": 6,
@@ -20124,6 +20182,35 @@
       }
     },
     "scripts": [
+      {
+        "path": "Editor/AgentProjectOverviewWindow.cs",
+        "namespaces": [
+          "RandomWorld.AgentGenerated.Editor"
+        ],
+        "classes": [
+          {
+            "kind": "class",
+            "name": "AgentProjectOverviewWindow",
+            "inherits": [
+              "EditorWindow"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "ProjectStats",
+            "inherits": []
+          }
+        ],
+        "unity_types": [
+          "EditorWindow"
+        ],
+        "public_fields": 7,
+        "serialize_fields": 0,
+        "lifecycle_methods": [
+          "OnEnable"
+        ],
+        "line_count": 151
+      },
       {
         "path": "Scripts/2D/Attributes/BuilderAttribute.cs",
         "namespaces": [
@@ -29631,7 +29718,7 @@
         "line_count": 145
       }
     ],
-    "fingerprint": "2ca2de870f400cd4553d3657669bc39c266694cfd6f14f2ebd6a32b1ffd32805",
+    "fingerprint": "4edc63333fe25c117bdbe8cb2263ff6215402dd676f77fd4a44a1477fdf40c02",
     "from_cache": false
   },
   "feature_candidates": [
@@ -29645,12 +29732,10 @@
       "implementation_type": "editor_tool",
       "status": "completed",
       "signals": {
-        "csharp_files": 362,
+        "csharp_files": 363,
         "scenes": 3,
         "prefabs": 29
-      },
-      "status_note": "Generated code to report folder; Unity project files were not modified.",
-      "updated_at": "2026-04-26T15:33:21"
+      }
     },
     {
       "candidate_id": "cand_002_asset_reference_audit",
@@ -29660,10 +29745,12 @@
       "risk_level": "low",
       "affected_files": [],
       "implementation_type": "report_tool",
-      "status": "pending",
+      "status": "completed",
       "signals": {
         "asset_files": 187
-      }
+      },
+      "status_note": "Generated code to the configured Unity path without overwriting existing files.",
+      "updated_at": "2026-04-26T16:05:01"
     },
     {
       "candidate_id": "cand_003_script_lifecycle_report",
@@ -29676,7 +29763,7 @@
       "status": "pending",
       "signals": {
         "mono_behaviour_classes": 122,
-        "public_fields": 1238,
+        "public_fields": 1245,
         "serialize_fields": 22
       }
     },
@@ -29690,7 +29777,7 @@
       "implementation_type": "editor_tool",
       "status": "pending",
       "signals": {
-        "editor_window_classes": 2
+        "editor_window_classes": 3
       }
     },
     {
@@ -29706,52 +29793,51 @@
     }
   ],
   "selected_candidate": {
-    "candidate_id": "cand_001_project_overview_editor",
-    "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
-    "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
-    "value": "Gives the project a safe in-Unity overview tool for future automation work.",
+    "candidate_id": "cand_002_asset_reference_audit",
+    "feature_name": "Readonly Asset Reference Risk Report",
+    "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+    "value": "Finds project hygiene issues without touching assets.",
     "risk_level": "low",
     "affected_files": [],
-    "implementation_type": "editor_tool",
+    "implementation_type": "report_tool",
     "status": "pending",
     "signals": {
-      "csharp_files": 362,
-      "scenes": 3,
-      "prefabs": 29
+      "asset_files": 187
     }
   },
   "task_card": {
-    "task_goal": "Unity Project Readonly Resource And Script Overview Tool",
-    "candidate_id": "cand_001_project_overview_editor",
-    "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
-    "implementation_type": "editor_tool",
+    "task_goal": "Readonly Asset Reference Risk Report",
+    "candidate_id": "cand_002_asset_reference_audit",
+    "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+    "implementation_type": "report_tool",
     "implementation_scope": [
-      "Generate code into the report folder first.",
+      "Generate C# into the configured Unity script folder.",
       "Do not modify scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
-      "Keep the tool readonly and suitable for manual review before copying into Unity."
+      "Keep the tool readonly and avoid overwriting existing Unity files."
     ],
     "modify_files": [],
     "new_files": [
-      "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\generated_code\\AgentProjectOverviewWindow.cs"
+      "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
     ],
     "risk_notes": [
       "Risk level: low",
-      "Generated code is not inserted into the Unity project automatically."
+      "Generated code is written as a new file only; existing Unity files are not overwritten."
     ],
     "verification_steps": [
-      "Review generated C# code in generated_code.",
-      "Optionally copy the Editor script into Assets/Editor after review.",
+      "Review generated C# code at the configured Unity path.",
       "Open Unity and confirm the EditorWindow/menu compiles.",
       "Use the tool to export a Markdown report."
     ],
     "rollback_plan": [
-      "Delete the generated_code file from the report folder.",
-      "If manually copied into Assets/Editor later, remove that copied file."
+      "Delete the generated C# file from the configured Unity path."
     ],
-    "selected_at": "2026-04-26T15:33:13"
+    "selected_at": "2026-04-26T16:04:50"
   },
   "generated_files": [
-    "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\generated_code\\AgentProjectOverviewWindow.cs"
+    "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs"
+  ],
+  "generated_meta_files": [
+    "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs.meta"
   ],
   "asset_reference_check": {
     "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
@@ -29891,9 +29977,11 @@
     "passed": true,
     "checks": [
       {
-        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\generated_code\\AgentProjectOverviewWindow.cs",
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Editor\\ReadonlyAssetReferenceRiskReport.cs",
         "exists": true,
         "has_using_unity_editor": true,
+        "inside_editor_folder": true,
+        "has_unity_meta": true,
         "has_namespace": true,
         "has_class": true,
         "risky_asset_modification_calls": [],
@@ -29902,9 +29990,9 @@
     ],
     "policy": "Static validation only; Unity compilation is not executed by default."
   },
-  "finished_at": "2026-04-26T15:33:21",
+  "finished_at": "2026-04-26T16:05:01",
   "final_report": {
-    "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\report.md",
-    "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_001_project_overview_editor_Unity_Project_Readonly_Resource_And_Scr\\execution_context.json"
+    "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\report.md",
+    "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\reports\\2026-04-26\\cand_002_asset_reference_audit_Readonly_Asset_Reference_Risk_Report\\execution_context.json"
   }
 }

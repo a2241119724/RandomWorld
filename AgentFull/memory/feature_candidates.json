@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-26T15:33:21",
+  "updated_at": "2026-04-26T16:05:01",
   "candidates": [
     {
       "candidate_id": "cand_001_project_overview_editor",
@@ -11,12 +11,10 @@
       "implementation_type": "editor_tool",
       "status": "completed",
       "signals": {
-        "csharp_files": 362,
+        "csharp_files": 363,
         "scenes": 3,
         "prefabs": 29
-      },
-      "status_note": "Generated code to report folder; Unity project files were not modified.",
-      "updated_at": "2026-04-26T15:33:21"
+      }
     },
     {
       "candidate_id": "cand_002_asset_reference_audit",
@@ -26,10 +24,12 @@
       "risk_level": "low",
       "affected_files": [],
       "implementation_type": "report_tool",
-      "status": "pending",
+      "status": "completed",
       "signals": {
         "asset_files": 187
-      }
+      },
+      "status_note": "Generated code to the configured Unity path without overwriting existing files.",
+      "updated_at": "2026-04-26T16:05:01"
     },
     {
       "candidate_id": "cand_003_script_lifecycle_report",
@@ -42,7 +42,7 @@
       "status": "pending",
       "signals": {
         "mono_behaviour_classes": 122,
-        "public_fields": 1238,
+        "public_fields": 1245,
         "serialize_fields": 22
       }
     },
@@ -56,7 +56,7 @@
       "implementation_type": "editor_tool",
       "status": "pending",
       "signals": {
-        "editor_window_classes": 2
+        "editor_window_classes": 3
       }
     },
     {
