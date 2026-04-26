@@ -170,7 +170,7 @@ class WriteReportSkill(Skill):
         lines.append("")
         lines.append("- Default policy does not overwrite existing Unity files.")
         lines.append("- Scene, Prefab, ScriptableObject, StreamingAssets, and Addressables modification is disabled.")
-        lines.append("- Generated C# is written to the configured Unity script or Editor folder as a new file.")
+        lines.append("- Generated feature C# is written to the configured Unity Scripts folder as a new file when possible.")
         if selected and selected.get("risk_level") == "high":
             lines.append("- High-risk candidate was not implemented by default.")
         lines.append("")
@@ -189,6 +189,7 @@ class WriteReportSkill(Skill):
         lines.append("")
         lines.append("- Review the generated C# file in its Unity folder.")
         lines.append("- Run Unity compilation after generation.")
-        lines.append("- Keep using feature_candidates.json to avoid repeating completed automation work.")
+        lines.append("- Attach or wire the generated runtime feature manually after code review.")
+        lines.append("- Keep using feature_candidates.json to avoid repeating completed feature work.")
         lines.append("")
         return "\n".join(lines)

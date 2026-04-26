@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -32,7 +33,7 @@ class GenerateCSharpScriptSkill(Skill):
 
         script_kind = params.get("script_kind") or self._infer_kind(selected)
         implementation_type = selected.get("implementation_type")
-        namespace = params.get("namespace") or "RandomWorld.AgentGenerated"
+        namespace = params.get("namespace") or self._default_namespace(context)
         class_name = params.get("class_name") or self._class_name(selected, script_kind)
         generated_dir = csharp_output_dir(
             base_dir,
@@ -50,7 +51,7 @@ class GenerateCSharpScriptSkill(Skill):
             task_card,
             selected,
             context,
-        ) or self._build_script(class_name, namespace, script_kind, task_card)
+        ) or self._build_script(class_name, namespace, script_kind, task_card, selected)
 
         target = write_text(target, content, overwrite=False)
         meta_path = None
@@ -92,9 +93,10 @@ class GenerateCSharpScriptSkill(Skill):
             {
                 "role": "user",
                 "content": (
-                    "Generate a small, reviewable Unity C# file for this task. "
-                    "Use the exact namespace and class name. Do not modify scenes, prefabs, "
-                    "ScriptableObjects, StreamingAssets, Addressables, save data, networking, "
+                    "Generate a small, reviewable Unity C# file that implements this new feature. "
+                    "Use the exact namespace and class name. Prefer a standalone runtime component "
+                    "that can be attached or referenced manually after review. Do not modify scenes, "
+                    "prefabs, ScriptableObjects, StreamingAssets, Addressables, save data, networking, "
                     "or build settings. Do not include destructive file operations.\n\n"
                     f"class_name: {class_name}\n"
                     f"namespace: {namespace}\n"
@@ -144,10 +146,30 @@ class GenerateCSharpScriptSkill(Skill):
         return "PlainClass"
 
     def _class_name(self, selected: dict[str, Any], script_kind: str) -> str:
+        if selected.get("suggested_class_name") or selected.get("feature_name"):
+            return safe_slug(
+                "".join(
+                    word[:1].upper() + word[1:]
+                    for word in safe_slug(
+                        selected.get("suggested_class_name") or selected.get("feature_name"),
+                        64,
+                    ).split("_")
+                    if word
+                ),
+                64,
+            ) or "GeneratedUnityFeature"
         if selected.get("candidate_id"):
             words = safe_slug(selected["candidate_id"], 48).split("_")
-            return "".join(word.capitalize() for word in words if word) or "GeneratedUnityScript"
+            return "".join(word.capitalize() for word in words if word) or "GeneratedUnityFeature"
         return f"Generated{script_kind}"
+
+    def _default_namespace(self, context: Any) -> str:
+        namespaces: list[str] = []
+        for script in context.get("script_analysis", {}).get("scripts", []):
+            namespaces.extend(str(item) for item in script.get("namespaces", []) if item)
+        if namespaces:
+            return f"{Counter(namespaces).most_common(1)[0][0]}.AgentGenerated"
+        return "RandomWorld.AgentGenerated"
 
     def _build_script(
         self,
@@ -155,38 +177,640 @@ class GenerateCSharpScriptSkill(Skill):
         namespace: str,
         script_kind: str,
         task_card: dict[str, Any],
+        selected: dict[str, Any],
     ) -> str:
         goal = task_card.get("task_goal", "Generated Unity helper")
+        candidate_text = " ".join(
+            str(value)
+            for value in [
+                selected.get("candidate_id", ""),
+                selected.get("feature_name", ""),
+                selected.get("description", ""),
+                goal,
+            ]
+        ).lower()
         if script_kind == "MonoBehaviour":
-            return f"""using UnityEngine;
+            if any(term in candidate_text for term in ["status effect", "status_effect", "buff", "debuff"]):
+                return self._status_effect_template(class_name, namespace, goal)
+            if any(term in candidate_text for term in ["weather", "season", "climate"]):
+                return self._weather_cycle_template(class_name, namespace, goal)
+            if any(term in candidate_text for term in ["morale", "happiness", "mood"]):
+                return self._morale_template(class_name, namespace, goal)
+            if any(term in candidate_text for term in ["resource threshold", "threshold alert", "stockpile"]):
+                return self._resource_alert_template(class_name, namespace, goal)
+            if any(term in candidate_text for term in ["combat event", "combat feed", "battlelog", "damagefeed"]):
+                return self._combat_feed_template(class_name, namespace, goal)
+            return self._runtime_feature_template(class_name, namespace, goal)
+        if script_kind == "ScriptableObject":
+            return self._scriptable_object_template(class_name, namespace, goal)
+        return self._plain_class_template(class_name, namespace, goal)
+
+    def _runtime_feature_template(self, class_name: str, namespace: str, goal: str) -> str:
+        return f"""using System;
+using UnityEngine;
+using UnityEngine.Events;
 
 namespace {namespace}
 {{
     /// <summary>
-    /// Generated helper for: {goal}
-    /// Review before copying into the Unity project.
+    /// Generated runtime feature for: {goal}
+    /// Attach this component manually after reviewing the implementation.
     /// </summary>
     public sealed class {class_name} : MonoBehaviour
     {{
-        [SerializeField] private bool logOnStart;
+        [SerializeField] private bool startActive = true;
+        [SerializeField] private string featureLabel = "{class_name}";
 
-        private void Start()
+        public UnityEvent<string> FeatureActivated = new UnityEvent<string>();
+        public UnityEvent<string> FeatureDeactivated = new UnityEvent<string>();
+
+        public bool IsActive {{ get; private set; }}
+        public DateTime ActivatedAtUtc {{ get; private set; }}
+
+        private void OnEnable()
         {{
-            if (logOnStart)
+            if (startActive)
             {{
-                Debug.Log($"{{nameof({class_name})}} started.");
+                Activate();
             }}
         }}
 
-        public bool IsReady()
+        public void Activate()
         {{
-            return isActiveAndEnabled;
+            if (IsActive)
+            {{
+                return;
+            }}
+
+            IsActive = true;
+            ActivatedAtUtc = DateTime.UtcNow;
+            FeatureActivated.Invoke(featureLabel);
+        }}
+
+        public void Deactivate()
+        {{
+            if (!IsActive)
+            {{
+                return;
+            }}
+
+            IsActive = false;
+            FeatureDeactivated.Invoke(featureLabel);
         }}
     }}
 }}
 """
-        if script_kind == "ScriptableObject":
-            return f"""using UnityEngine;
+
+    def _status_effect_template(self, class_name: str, namespace: str, goal: str) -> str:
+        return f"""using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace {namespace}
+{{
+    /// <summary>
+    /// Generated runtime feature for: {goal}
+    /// Manages timed status effects without modifying existing character scripts.
+    /// </summary>
+    public sealed class {class_name} : MonoBehaviour
+    {{
+        [Serializable]
+        private sealed class ActiveEffect
+        {{
+            public string Id = "effect";
+            public float DurationSeconds = 5f;
+            public float Potency = 1f;
+            public float TickIntervalSeconds = 1f;
+            [NonSerialized] public float RemainingSeconds;
+            [NonSerialized] public float TickTimerSeconds;
+        }}
+
+        [SerializeField] private bool applyStartingEffectsOnEnable;
+        [SerializeField] private bool clearEffectsOnDisable = true;
+        [SerializeField] private List<ActiveEffect> startingEffects = new List<ActiveEffect>();
+
+        private readonly List<ActiveEffect> activeEffects = new List<ActiveEffect>();
+
+        public UnityEvent<string> EffectApplied = new UnityEvent<string>();
+        public UnityEvent<string> EffectExpired = new UnityEvent<string>();
+        public UnityEvent<string> EffectTicked = new UnityEvent<string>();
+
+        public float SpeedMultiplier {{ get; private set; }} = 1f;
+        public float IncomingDamageMultiplier {{ get; private set; }} = 1f;
+
+        private void OnEnable()
+        {{
+            if (!applyStartingEffectsOnEnable)
+            {{
+                return;
+            }}
+
+            foreach (ActiveEffect effect in startingEffects)
+            {{
+                ApplyEffect(effect.Id, effect.DurationSeconds, effect.Potency, effect.TickIntervalSeconds);
+            }}
+        }}
+
+        private void OnDisable()
+        {{
+            if (clearEffectsOnDisable)
+            {{
+                activeEffects.Clear();
+                RecalculateModifiers();
+            }}
+        }}
+
+        private void Update()
+        {{
+            float deltaTime = Time.deltaTime;
+            for (int index = activeEffects.Count - 1; index >= 0; index--)
+            {{
+                ActiveEffect effect = activeEffects[index];
+                effect.RemainingSeconds -= deltaTime;
+                effect.TickTimerSeconds -= deltaTime;
+
+                if (effect.TickTimerSeconds <= 0f)
+                {{
+                    effect.TickTimerSeconds = Mathf.Max(0.1f, effect.TickIntervalSeconds);
+                    EffectTicked.Invoke(effect.Id);
+                }}
+
+                if (effect.RemainingSeconds <= 0f)
+                {{
+                    string expiredId = effect.Id;
+                    activeEffects.RemoveAt(index);
+                    EffectExpired.Invoke(expiredId);
+                }}
+            }}
+
+            RecalculateModifiers();
+        }}
+
+        public void ApplyEffect(string effectId, float durationSeconds, float potency = 1f, float tickIntervalSeconds = 1f)
+        {{
+            if (string.IsNullOrWhiteSpace(effectId) || durationSeconds <= 0f)
+            {{
+                return;
+            }}
+
+            ActiveEffect existing = activeEffects.Find(item => string.Equals(item.Id, effectId, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
+            {{
+                existing.RemainingSeconds = Mathf.Max(existing.RemainingSeconds, durationSeconds);
+                existing.Potency = Mathf.Max(existing.Potency, potency);
+                EffectApplied.Invoke(existing.Id);
+                RecalculateModifiers();
+                return;
+            }}
+
+            ActiveEffect effect = new ActiveEffect
+            {{
+                Id = effectId,
+                DurationSeconds = durationSeconds,
+                RemainingSeconds = durationSeconds,
+                Potency = Mathf.Max(0f, potency),
+                TickIntervalSeconds = Mathf.Max(0.1f, tickIntervalSeconds),
+                TickTimerSeconds = Mathf.Max(0.1f, tickIntervalSeconds)
+            }};
+            activeEffects.Add(effect);
+            EffectApplied.Invoke(effect.Id);
+            RecalculateModifiers();
+        }}
+
+        public bool HasEffect(string effectId)
+        {{
+            return activeEffects.Exists(item => string.Equals(item.Id, effectId, StringComparison.OrdinalIgnoreCase));
+        }}
+
+        private void RecalculateModifiers()
+        {{
+            float speed = 1f;
+            float incomingDamage = 1f;
+            foreach (ActiveEffect effect in activeEffects)
+            {{
+                string id = effect.Id.ToLowerInvariant();
+                if (id.Contains("slow"))
+                {{
+                    speed *= Mathf.Clamp01(1f - (0.15f * effect.Potency));
+                }}
+                else if (id.Contains("haste"))
+                {{
+                    speed *= 1f + (0.15f * effect.Potency);
+                }}
+                else if (id.Contains("vulnerable"))
+                {{
+                    incomingDamage *= 1f + (0.2f * effect.Potency);
+                }}
+                else if (id.Contains("guard"))
+                {{
+                    incomingDamage *= Mathf.Clamp01(1f - (0.2f * effect.Potency));
+                }}
+            }}
+
+            SpeedMultiplier = Mathf.Max(0.05f, speed);
+            IncomingDamageMultiplier = Mathf.Max(0.05f, incomingDamage);
+        }}
+    }}
+}}
+"""
+
+    def _weather_cycle_template(self, class_name: str, namespace: str, goal: str) -> str:
+        return f"""using System;
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace {namespace}
+{{
+    /// <summary>
+    /// Generated runtime feature for: {goal}
+    /// Provides a lightweight weather cycle that other systems can observe.
+    /// </summary>
+    public sealed class {class_name} : MonoBehaviour
+    {{
+        public enum WeatherState
+        {{
+            Clear,
+            Rain,
+            Storm,
+            Fog,
+            HeatWave,
+            ColdSnap
+        }}
+
+        [Serializable]
+        private sealed class WeatherRule
+        {{
+            public WeatherState State = WeatherState.Clear;
+            [Min(0f)] public float Weight = 1f;
+            [Min(1f)] public float MinDurationSeconds = 30f;
+            [Min(1f)] public float MaxDurationSeconds = 90f;
+            [Range(0f, 1f)] public float Intensity = 0.5f;
+        }}
+
+        [SerializeField] private WeatherRule[] weatherRules =
+        {{
+            new WeatherRule {{ State = WeatherState.Clear, Weight = 4f, Intensity = 0f }},
+            new WeatherRule {{ State = WeatherState.Rain, Weight = 2f, Intensity = 0.45f }},
+            new WeatherRule {{ State = WeatherState.Fog, Weight = 1f, Intensity = 0.35f }}
+        }};
+        [SerializeField] private bool advanceOnStart = true;
+
+        private float remainingSeconds;
+
+        public UnityEvent<string> WeatherChanged = new UnityEvent<string>();
+        public WeatherState CurrentWeather {{ get; private set; }} = WeatherState.Clear;
+        public float CurrentIntensity {{ get; private set; }}
+
+        private void Start()
+        {{
+            if (advanceOnStart)
+            {{
+                PickNextWeather();
+            }}
+        }}
+
+        private void Update()
+        {{
+            if (weatherRules == null || weatherRules.Length == 0)
+            {{
+                return;
+            }}
+
+            remainingSeconds -= Time.deltaTime;
+            if (remainingSeconds <= 0f)
+            {{
+                PickNextWeather();
+            }}
+        }}
+
+        public void PickNextWeather()
+        {{
+            WeatherRule rule = ChooseRule();
+            CurrentWeather = rule.State;
+            CurrentIntensity = Mathf.Clamp01(rule.Intensity);
+            remainingSeconds = UnityEngine.Random.Range(
+                Mathf.Min(rule.MinDurationSeconds, rule.MaxDurationSeconds),
+                Mathf.Max(rule.MinDurationSeconds, rule.MaxDurationSeconds));
+            WeatherChanged.Invoke(CurrentWeather.ToString());
+        }}
+
+        public float GetMovementMultiplier()
+        {{
+            if (CurrentWeather == WeatherState.Storm)
+            {{
+                return Mathf.Lerp(1f, 0.65f, CurrentIntensity);
+            }}
+
+            if (CurrentWeather == WeatherState.Rain || CurrentWeather == WeatherState.Fog)
+            {{
+                return Mathf.Lerp(1f, 0.85f, CurrentIntensity);
+            }}
+
+            return 1f;
+        }}
+
+        private WeatherRule ChooseRule()
+        {{
+            float totalWeight = 0f;
+            foreach (WeatherRule rule in weatherRules)
+            {{
+                totalWeight += Mathf.Max(0f, rule.Weight);
+            }}
+
+            if (totalWeight <= 0f)
+            {{
+                return weatherRules[0];
+            }}
+
+            float roll = UnityEngine.Random.Range(0f, totalWeight);
+            foreach (WeatherRule rule in weatherRules)
+            {{
+                roll -= Mathf.Max(0f, rule.Weight);
+                if (roll <= 0f)
+                {{
+                    return rule;
+                }}
+            }}
+
+            return weatherRules[weatherRules.Length - 1];
+        }}
+    }}
+}}
+"""
+
+    def _morale_template(self, class_name: str, namespace: str, goal: str) -> str:
+        return f"""using UnityEngine;
+using UnityEngine.Events;
+
+namespace {namespace}
+{{
+    /// <summary>
+    /// Generated runtime feature for: {goal}
+    /// Tracks a worker or colony morale value with threshold events.
+    /// </summary>
+    public sealed class {class_name} : MonoBehaviour
+    {{
+        [SerializeField, Range(0f, 100f)] private float morale = 75f;
+        [SerializeField] private float passiveDecayPerMinute = 1.5f;
+        [SerializeField] private float lowMoraleThreshold = 30f;
+        [SerializeField] private float highMoraleThreshold = 80f;
+
+        private bool lowMoraleRaised;
+        private bool highMoraleRaised;
+
+        public UnityEvent<float> MoraleChanged = new UnityEvent<float>();
+        public UnityEvent LowMoraleReached = new UnityEvent();
+        public UnityEvent HighMoraleReached = new UnityEvent();
+
+        public float Morale => morale;
+        public bool IsLowMorale => morale <= lowMoraleThreshold;
+        public bool IsHighMorale => morale >= highMoraleThreshold;
+
+        private void Update()
+        {{
+            if (passiveDecayPerMinute > 0f)
+            {{
+                AddMorale(-(passiveDecayPerMinute / 60f) * Time.deltaTime);
+            }}
+        }}
+
+        public void AddMorale(float amount)
+        {{
+            float previous = morale;
+            morale = Mathf.Clamp(morale + amount, 0f, 100f);
+            if (Mathf.Approximately(previous, morale))
+            {{
+                return;
+            }}
+
+            MoraleChanged.Invoke(morale);
+            EvaluateThresholds();
+        }}
+
+        public bool CanStartDemandingTask(float minimumMorale)
+        {{
+            return morale >= minimumMorale;
+        }}
+
+        private void EvaluateThresholds()
+        {{
+            if (IsLowMorale)
+            {{
+                if (!lowMoraleRaised)
+                {{
+                    LowMoraleReached.Invoke();
+                }}
+
+                lowMoraleRaised = true;
+            }}
+            else
+            {{
+                lowMoraleRaised = false;
+            }}
+
+            if (IsHighMorale)
+            {{
+                if (!highMoraleRaised)
+                {{
+                    HighMoraleReached.Invoke();
+                }}
+
+                highMoraleRaised = true;
+            }}
+            else
+            {{
+                highMoraleRaised = false;
+            }}
+        }}
+    }}
+}}
+"""
+
+    def _resource_alert_template(self, class_name: str, namespace: str, goal: str) -> str:
+        return f"""using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace {namespace}
+{{
+    /// <summary>
+    /// Generated runtime feature for: {goal}
+    /// Tracks named resource amounts and raises alerts when values cross thresholds.
+    /// </summary>
+    public sealed class {class_name} : MonoBehaviour
+    {{
+        [Serializable]
+        private sealed class ResourceThreshold
+        {{
+            public string ResourceId = "wood";
+            public int StartingAmount;
+            public int MinimumAmount = 10;
+        }}
+
+        [Serializable]
+        public sealed class ResourceAlertEvent : UnityEvent<string, int>
+        {{
+        }}
+
+        [SerializeField] private List<ResourceThreshold> startingThresholds = new List<ResourceThreshold>();
+
+        private readonly Dictionary<string, int> amounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, int> minimums = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> activeAlerts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        public ResourceAlertEvent ResourceBelowThreshold = new ResourceAlertEvent();
+        public ResourceAlertEvent ResourceRecovered = new ResourceAlertEvent();
+
+        private void Awake()
+        {{
+            foreach (ResourceThreshold threshold in startingThresholds)
+            {{
+                SetThreshold(threshold.ResourceId, threshold.MinimumAmount);
+                SetAmount(threshold.ResourceId, threshold.StartingAmount);
+            }}
+        }}
+
+        public void SetThreshold(string resourceId, int minimumAmount)
+        {{
+            if (string.IsNullOrWhiteSpace(resourceId))
+            {{
+                return;
+            }}
+
+            minimums[resourceId] = Mathf.Max(0, minimumAmount);
+            Evaluate(resourceId);
+        }}
+
+        public void SetAmount(string resourceId, int amount)
+        {{
+            if (string.IsNullOrWhiteSpace(resourceId))
+            {{
+                return;
+            }}
+
+            amounts[resourceId] = Mathf.Max(0, amount);
+            Evaluate(resourceId);
+        }}
+
+        public void AddAmount(string resourceId, int delta)
+        {{
+            int current = GetAmount(resourceId);
+            SetAmount(resourceId, current + delta);
+        }}
+
+        public int GetAmount(string resourceId)
+        {{
+            return amounts.TryGetValue(resourceId, out int amount) ? amount : 0;
+        }}
+
+        private void Evaluate(string resourceId)
+        {{
+            if (string.IsNullOrWhiteSpace(resourceId) || !minimums.ContainsKey(resourceId))
+            {{
+                return;
+            }}
+
+            int amount = GetAmount(resourceId);
+            bool below = amount < minimums[resourceId];
+            bool alreadyAlerting = activeAlerts.Contains(resourceId);
+            if (below && !alreadyAlerting)
+            {{
+                activeAlerts.Add(resourceId);
+                ResourceBelowThreshold.Invoke(resourceId, amount);
+            }}
+            else if (!below && alreadyAlerting)
+            {{
+                activeAlerts.Remove(resourceId);
+                ResourceRecovered.Invoke(resourceId, amount);
+            }}
+        }}
+    }}
+}}
+"""
+
+    def _combat_feed_template(self, class_name: str, namespace: str, goal: str) -> str:
+        return f"""using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace {namespace}
+{{
+    /// <summary>
+    /// Generated runtime feature for: {goal}
+    /// Stores recent combat events and exposes them to UI or debugging systems.
+    /// </summary>
+    public sealed class {class_name} : MonoBehaviour
+    {{
+        [Serializable]
+        public sealed class CombatEvent
+        {{
+            public string Source;
+            public string Target;
+            public string EventType;
+            public float Amount;
+            public float TimeSeconds;
+        }}
+
+        [Serializable]
+        public sealed class CombatEventUnityEvent : UnityEvent<string>
+        {{
+        }}
+
+        [SerializeField] private int maxEvents = 40;
+
+        private readonly Queue<CombatEvent> events = new Queue<CombatEvent>();
+
+        public CombatEventUnityEvent CombatEventRecorded = new CombatEventUnityEvent();
+
+        public IReadOnlyCollection<CombatEvent> Events => events;
+
+        public void RecordDamage(string source, string target, float amount)
+        {{
+            Record(source, target, "Damage", amount);
+        }}
+
+        public void RecordHealing(string source, string target, float amount)
+        {{
+            Record(source, target, "Healing", amount);
+        }}
+
+        public void RecordDeath(string source, string target)
+        {{
+            Record(source, target, "Death", 0f);
+        }}
+
+        public void Clear()
+        {{
+            events.Clear();
+        }}
+
+        private void Record(string source, string target, string eventType, float amount)
+        {{
+            CombatEvent entry = new CombatEvent
+            {{
+                Source = source,
+                Target = target,
+                EventType = eventType,
+                Amount = amount,
+                TimeSeconds = Time.time
+            }};
+            events.Enqueue(entry);
+            while (events.Count > Mathf.Max(1, maxEvents))
+            {{
+                events.Dequeue();
+            }}
+
+            CombatEventRecorded.Invoke($"{{eventType}}: {{source}} -> {{target}} ({{amount:0.##}})");
+        }}
+    }}
+}}
+"""
+
+    def _scriptable_object_template(self, class_name: str, namespace: str, goal: str) -> str:
+        return f"""using UnityEngine;
 
 namespace {namespace}
 {{
@@ -203,12 +827,14 @@ namespace {namespace}
     }}
 }}
 """
+
+    def _plain_class_template(self, class_name: str, namespace: str, goal: str) -> str:
         return f"""using System;
 
 namespace {namespace}
 {{
     /// <summary>
-    /// Generated readonly helper for: {goal}
+    /// Generated helper for: {goal}
     /// </summary>
     public sealed class {class_name}
     {{

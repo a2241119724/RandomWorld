@@ -274,7 +274,7 @@ class MainAgent:
                     {
                         "candidate_id": selected.get("candidate_id"),
                         "status": "completed",
-                        "note": "Generated code to the configured Unity path without overwriting existing files.",
+                        "note": "Generated a new feature script to the configured Unity path without overwriting existing files.",
                     },
                     self.context,
                 )
@@ -296,7 +296,10 @@ class MainAgent:
             return
         class_name = "AgentProjectOverviewWindow"
         if selected.get("candidate_id") != "cand_001_project_overview_editor":
-            class_name = csharp_class_name(selected.get("feature_name"), "GeneratedUnityTool")
+            class_name = csharp_class_name(
+                selected.get("suggested_class_name") or selected.get("feature_name"),
+                "GeneratedUnityFeature",
+            )
         generated_dir = csharp_output_dir(
             self.base_dir,
             self.unity_config,
