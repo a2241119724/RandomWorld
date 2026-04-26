@@ -36,6 +36,7 @@
                 GameObject g = this.Create(Vector3LAB.ToVector3(data.Pos));
                 this.Mine = g.GetComponent<Player>();
                 this.Mine.CharacterDataLAB = data;
+                this.Mine.CharacterDataLAB.Character = this.Mine;
             };
         }
 

@@ -227,6 +227,7 @@
         /// <inheritdoc/>
         protected override void Death()
         {
+            GameplaySessionStats.Instance.RecordPlayerDeath();
             LogManager.Instance.Log("玩家重生", LogManager.LogLevelEnum.Info);
             this.CharacterDataLAB.Hp = 100;
         }
