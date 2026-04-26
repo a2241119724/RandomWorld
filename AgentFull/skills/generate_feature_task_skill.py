@@ -52,21 +52,23 @@ class GenerateFeatureTaskSkill(Skill):
             "candidate_id": selected.get("candidate_id"),
             "description": selected.get("description"),
             "implementation_type": selected.get("implementation_type"),
+            "suggested_class_name": selected.get("suggested_class_name") or class_name,
             "implementation_scope": [
-                "Generate C# into the configured Unity script folder.",
-                "Do not modify scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
-                "Keep the tool readonly and avoid overwriting existing Unity files.",
+                "Generate one new C# runtime feature file into the configured Unity Scripts folder.",
+                "Do not modify existing scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
+                "Keep the feature self-contained so it can be attached or wired manually after review.",
             ],
             "modify_files": [],
             "new_files": [str(generated_file)],
             "risk_notes": [
                 f"Risk level: {selected.get('risk_level')}",
                 "Generated code is written as a new file only; existing Unity files are not overwritten.",
+                "Runtime integration is opt-in and requires manual Unity review.",
             ],
             "verification_steps": [
                 "Review generated C# code at the configured Unity path.",
-                "Open Unity and confirm the EditorWindow/menu compiles.",
-                "Use the tool to export a Markdown report.",
+                "Open Unity and confirm the new script compiles.",
+                "Attach or reference the component in a test scene/prefab after review.",
             ],
             "rollback_plan": [
                 "Delete the generated C# file from the configured Unity path.",
@@ -107,7 +109,9 @@ class GenerateFeatureTaskSkill(Skill):
             {
                 "role": "user",
                 "content": (
-                    "Choose the safest useful candidate from this eligible list. "
+                    "Choose the safest useful new feature candidate from this eligible list. "
+                    "Prefer standalone runtime_feature candidates that can be implemented as a "
+                    "new C# file without editing existing project files. "
                     "Do not select high-risk candidates when skip_high_risk_candidate is true. "
                     "Do not add scene, prefab, ScriptableObject, StreamingAssets, Addressables, "
                     "save-data, networking, build, or destructive file changes.\n\n"
@@ -194,7 +198,7 @@ class GenerateFeatureTaskSkill(Skill):
 
     def _select_candidate(self, candidates: list[dict[str, Any]], skip_high: bool) -> dict[str, Any] | None:
         risk_order = {"low": 0, "medium": 1, "high": 2}
-        type_order = {"readonly_tool": 0, "editor_tool": 1, "report_tool": 2, "runtime_feature": 3}
+        type_order = {"runtime_feature": 0, "editor_tool": 1, "report_tool": 2, "readonly_tool": 3}
         eligible = []
         for candidate in candidates:
             if candidate.get("status") != "pending":
@@ -215,4 +219,7 @@ class GenerateFeatureTaskSkill(Skill):
         candidate_id = candidate.get("candidate_id", "candidate")
         if candidate_id == "cand_001_project_overview_editor":
             return "AgentProjectOverviewWindow"
-        return csharp_class_name(candidate.get("feature_name"), "GeneratedUnityTool")
+        return csharp_class_name(
+            candidate.get("suggested_class_name") or candidate.get("feature_name"),
+            "GeneratedUnityFeature",
+        )
