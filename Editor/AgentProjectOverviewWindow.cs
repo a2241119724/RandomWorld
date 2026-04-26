@@ -1,54 +1,4 @@
-from __future__ import annotations
-
-from pathlib import Path
-from typing import Any
-
-from core.file_utils import csharp_class_name, csharp_output_dir, unique_path, write_text
-from core.skill import Skill
-
-
-class GenerateUnityEditorToolSkill(Skill):
-    name = "generate_unity_editor_tool"
-    description = "Generate a readonly Unity EditorWindow tool into the configured Unity Editor folder."
-    input_schema = {"task_card": "task card", "report_dir": "report directory"}
-    output_schema = {"generated_files": "written Editor C# files"}
-
-    def run(self, params: dict[str, Any], context: Any) -> dict[str, Any]:
-        report_dir = Path(params.get("report_dir") or context.get("report_dir") or ".")
-        base_dir = Path(context.get_service("base_dir") or ".")
-        configs = context.get("configs", {}).get("unity", {})
-        selected = params.get("selected_candidate") or {}
-        generated_dir = csharp_output_dir(
-            base_dir,
-            configs,
-            report_dir,
-            script_kind="EditorWindow",
-            implementation_type=selected.get("implementation_type") or "editor_tool",
-        )
-        class_name = params.get("class_name") or self._class_name(selected)
-        target = unique_path(generated_dir / f"{class_name}.cs")
-        class_name = target.stem
-        namespace = params.get("namespace") or "RandomWorld.AgentGenerated.Editor"
-        content = self._editor_window_template().replace("__CLASS_NAME__", class_name).replace(
-            "__NAMESPACE__", namespace
-        )
-        target = write_text(target, content, overwrite=False)
-        return {
-            "generated_files": [str(target)],
-            "class_name": class_name,
-            "namespace": namespace,
-            "policy": "readonly_editor_tool_configured_editor_path",
-            "manual_next_step": "Open Unity and confirm the generated Editor menu compiles.",
-        }
-
-    def _class_name(self, selected: dict[str, Any]) -> str:
-        candidate_id = selected.get("candidate_id")
-        if candidate_id == "cand_001_project_overview_editor":
-            return "AgentProjectOverviewWindow"
-        return csharp_class_name(selected.get("feature_name"), "AgentGeneratedEditorTool")
-
-    def _editor_window_template(self) -> str:
-        return """#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System;
 using System.IO;
 using System.Linq;
@@ -56,9 +6,9 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-namespace __NAMESPACE__
+namespace RandomWorld.AgentGenerated.Editor
 {
-    public sealed class __CLASS_NAME__ : EditorWindow
+    public sealed class AgentProjectOverviewWindow : EditorWindow
     {
         private Vector2 scroll;
         private ProjectStats stats;
@@ -66,7 +16,7 @@ namespace __NAMESPACE__
         [MenuItem("Tools/AgentFull/Readonly Project Overview")]
         public static void Open()
         {
-            GetWindow<__CLASS_NAME__>("Agent Project Overview");
+            GetWindow<AgentProjectOverviewWindow>("Agent Project Overview");
         }
 
         private void OnEnable()
@@ -86,6 +36,7 @@ namespace __NAMESPACE__
             {
                 ExportMarkdown();
             }
+
             EditorGUILayout.EndHorizontal();
 
             if (stats == null)
@@ -197,4 +148,3 @@ namespace __NAMESPACE__
     }
 }
 #endif
-"""

@@ -24,7 +24,7 @@ class Memory:
                 {
                     "project_summary": {},
                     "preferences": {
-                        "default_output_mode": "report_only",
+                        "default_output_mode": "project",
                         "readonly_first": True,
                     },
                     "updated_at": datetime.now().isoformat(timespec="seconds"),

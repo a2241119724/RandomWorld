@@ -111,3 +111,56 @@ def is_relative_to(path: Path, parent: Path) -> bool:
 
 def path_to_posix(path: Path | str) -> str:
     return Path(path).as_posix()
+
+
+def unity_project_config(configs: dict[str, Any]) -> dict[str, Any]:
+    unity_config = configs.get("unity", configs)
+    return unity_config.get("unity_project", unity_config)
+
+
+def unity_generation_policy(configs: dict[str, Any]) -> dict[str, Any]:
+    unity_config = configs.get("unity", configs)
+    return unity_config.get("generation_policy", {})
+
+
+def resolve_unity_project_path(
+    base_dir: Path,
+    configs: dict[str, Any],
+    key: str,
+    fallback_under_assets: str,
+) -> Path:
+    unity_project = unity_project_config(configs)
+    configured = resolve_path(base_dir, unity_project.get(key))
+    if configured is not None:
+        return configured
+
+    assets_path = resolve_path(base_dir, unity_project.get("assets_path"))
+    if assets_path is None:
+        assets_path = base_dir.parent
+    return assets_path / fallback_under_assets
+
+
+def csharp_class_name(value: str | None, fallback: str = "GeneratedUnityTool") -> str:
+    slug = safe_slug(value or fallback, 64)
+    parts = re.split(r"[-_.]+", slug)
+    class_name = "".join(part[:1].upper() + part[1:] for part in parts if part)
+    return class_name or fallback
+
+
+def csharp_output_dir(
+    base_dir: Path,
+    configs: dict[str, Any],
+    report_dir: Path,
+    *,
+    script_kind: str | None = None,
+    implementation_type: str | None = None,
+) -> Path:
+    output_mode = unity_generation_policy(configs).get("default_output_mode", "project")
+    if output_mode == "report_only":
+        return report_dir / "generated_code"
+
+    is_editor_code = implementation_type in {"readonly_tool", "editor_tool", "report_tool"}
+    is_editor_code = is_editor_code or script_kind in {"Editor", "EditorWindow", "EditorTool"}
+    if is_editor_code:
+        return resolve_unity_project_path(base_dir, configs, "editor_path", "Editor")
+    return resolve_unity_project_path(base_dir, configs, "scripts_path", "Scripts")

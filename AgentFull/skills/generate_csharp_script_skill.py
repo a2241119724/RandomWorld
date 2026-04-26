@@ -3,13 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from core.file_utils import safe_slug, write_text
+from core.file_utils import csharp_output_dir, safe_slug, unique_path, write_text
 from core.skill import Skill
 
 
 class GenerateCSharpScriptSkill(Skill):
     name = "generate_csharp_script"
-    description = "Generate a safe Unity C# script into the report folder."
+    description = "Generate a safe Unity C# script into the configured Unity script folder."
     input_schema = {"task_card": "task card", "script_kind": "MonoBehaviour|ScriptableObject|PlainClass"}
     output_schema = {"generated_files": "written C# files"}
 
@@ -17,20 +17,31 @@ class GenerateCSharpScriptSkill(Skill):
         task_card = params.get("task_card") or {}
         selected = params.get("selected_candidate") or {}
         report_dir = Path(params.get("report_dir") or context.get("report_dir") or ".")
-        generated_dir = report_dir / "generated_code"
+        base_dir = Path(context.get_service("base_dir") or ".")
+        configs = context.get("configs", {}).get("unity", {})
 
         script_kind = params.get("script_kind") or self._infer_kind(selected)
+        implementation_type = selected.get("implementation_type")
         namespace = params.get("namespace") or "RandomWorld.AgentGenerated"
         class_name = params.get("class_name") or self._class_name(selected, script_kind)
+        generated_dir = csharp_output_dir(
+            base_dir,
+            configs,
+            report_dir,
+            script_kind=script_kind,
+            implementation_type=implementation_type,
+        )
+        target = unique_path(generated_dir / f"{class_name}.cs")
+        class_name = target.stem
         content = self._build_script(class_name, namespace, script_kind, task_card)
 
-        target = write_text(generated_dir / f"{class_name}.cs", content, overwrite=False)
+        target = write_text(target, content, overwrite=False)
         result = {
             "generated_files": [str(target)],
             "script_kind": script_kind,
             "namespace": namespace,
             "class_name": class_name,
-            "policy": "report_only_no_overwrite",
+            "policy": "configured_unity_path_no_overwrite",
         }
         return result
 
