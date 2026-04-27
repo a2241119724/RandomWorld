@@ -92,7 +92,7 @@
             {
                 this.builder.Clear();
                 this.Character.WorkerStateText.text = this.builder.Append(this.preString)
-                    .Append("<color=yellow>Seeking: ")
+                    .Append("<color=" + PixelUITheme.RichGold + ">Seeking: ")
                     .Append(Mathf.RoundToInt(this.Character.Seek.SeekProgress * 100))
                     .Append("%</color>\nTarget: ")
                     .Append(this.targetMap.x)

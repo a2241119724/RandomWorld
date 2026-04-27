@@ -41,8 +41,8 @@
             // 不能在Start中
             this.param = new List<Config>
             {
-                new Config(Color.white, 40),
-                new Config(Color.red, 50),
+                new Config(PixelUITheme.DamageNormal, 40),
+                new Config(PixelUITheme.DamageCritical, 50),
             };
         }
 

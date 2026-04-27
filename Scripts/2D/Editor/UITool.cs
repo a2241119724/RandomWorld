@@ -104,10 +104,10 @@
                 Undo.RecordObject(btn, btn.gameObject.name);
 
                 ColorBlock colors = btn.colors;
-                colors.normalColor = new Color32(52, 152, 219, 255);
-                colors.highlightedColor = new Color32(93, 173, 226, 255);
-                colors.pressedColor = new Color32(241, 196, 15, 255);
-                colors.selectedColor = new Color32(46, 204, 113, 255);
+                colors.normalColor = new Color32(242, 160, 175, 255);
+                colors.highlightedColor = new Color32(252, 200, 213, 255);
+                colors.pressedColor = new Color32(249, 213, 110, 255);
+                colors.selectedColor = new Color32(126, 203, 154, 255);
 
                 colors.disabledColor = new Color32(0, 0, 0, 0);
                 btn.colors = colors;

@@ -63,7 +63,7 @@
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.Task != null)
             {
-                this.preString += $"<color=green>任务: {workerData.Task.Name}</color>\n";
+                this.preString += $"<color={PixelUITheme.RichMint}>任务: {workerData.Task.Name}</color>\n";
             }
         }
 

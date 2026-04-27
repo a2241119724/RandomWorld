@@ -112,10 +112,10 @@ namespace LAB2D
 
             Button button = gameObject.AddComponent<Button>();
             ColorBlock colors = button.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(0.96f, 0.96f, 0.96f, 1.0f);
-            colors.pressedColor = new Color(0.78f, 0.78f, 0.78f, 1.0f);
-            colors.selectedColor = new Color(0.96f, 0.96f, 0.96f, 1.0f);
+            colors.normalColor = new Color32(255, 248, 240, 255);
+            colors.highlightedColor = new Color32(255, 255, 252, 255);
+            colors.pressedColor = new Color32(240, 225, 210, 255);
+            colors.selectedColor = new Color32(255, 255, 252, 255);
             colors.disabledColor = new Color(0.78f, 0.78f, 0.78f, 0.5f);
             button.colors = colors;
             button.targetGraphic = image;
@@ -189,15 +189,15 @@ namespace LAB2D
             Image image = gameObject.AddComponent<Image>();
             image.sprite = this.buttonSprite;
             image.type = Image.Type.Simple;
-            image.color = new Color(0.20f, 0.60f, 0.86f, 1.0f);
+            image.color = PixelUITheme.ButtonNormal;
 
             Button button = gameObject.AddComponent<Button>();
             ColorBlock colors = button.colors;
-            colors.normalColor = new Color(0.20f, 0.60f, 0.86f, 1.0f);
-            colors.highlightedColor = new Color(0.36f, 0.68f, 0.89f, 1.0f);
-            colors.pressedColor = new Color(0.95f, 0.77f, 0.06f, 1.0f);
-            colors.selectedColor = new Color(0.18f, 0.80f, 0.44f, 1.0f);
-            colors.disabledColor = new Color(0.20f, 0.60f, 0.86f, 0.4f);
+            colors.normalColor = PixelUITheme.ButtonNormal;
+            colors.highlightedColor = PixelUITheme.ButtonHighlighted;
+            colors.pressedColor = PixelUITheme.ButtonPressed;
+            colors.selectedColor = PixelUITheme.ButtonSelected;
+            colors.disabledColor = new Color(0.95f, 0.63f, 0.69f, 0.4f);
             button.colors = colors;
             button.targetGraphic = image;
             if (onClick != null)
@@ -229,7 +229,7 @@ namespace LAB2D
                 string.Empty,
                 24,
                 TextAnchor.MiddleCenter,
-                new Color(0.9843137f, 0.39215687f, 0.0f, 1.0f),
+                PixelUITheme.SaveSlotTitleText,
                 FontStyle.Bold);
         }
 
@@ -363,7 +363,7 @@ namespace LAB2D
             panelRect.offsetMax = Vector2.zero;
 
             Image shade = this.renamePanel.AddComponent<Image>();
-            shade.color = new Color(0.0f, 0.0f, 0.0f, 0.72f);
+            shade.color = PixelUITheme.DialogShadeDark;
             shade.raycastTarget = true;
 
             GameObject box = this.CreateUIObject("Box", this.renamePanel.transform);
@@ -375,7 +375,7 @@ namespace LAB2D
             boxRect.sizeDelta = new Vector2(560.0f, 300.0f);
 
             Image boxImage = box.AddComponent<Image>();
-            boxImage.color = new Color(0.12f, 0.13f, 0.15f, 0.96f);
+            boxImage.color = PixelUITheme.DialogBoxBg;
             boxImage.raycastTarget = true;
 
             GameObject tip = this.CreateText(
@@ -384,7 +384,7 @@ namespace LAB2D
                 "修改存档名称",
                 32,
                 TextAnchor.MiddleCenter,
-                Color.white,
+                PixelUITheme.TextPrimary,
                 FontStyle.Bold);
             RectTransform tipRect = tip.GetComponent<RectTransform>();
             tipRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -549,10 +549,10 @@ namespace LAB2D
                 RenameButtonSize,
                 null);
             ColorBlock colors = button.colors;
-            colors.normalColor = new Color(0.86f, 0.20f, 0.20f, 1.0f);
-            colors.highlightedColor = new Color(0.94f, 0.34f, 0.34f, 1.0f);
-            colors.pressedColor = new Color(0.70f, 0.12f, 0.12f, 1.0f);
-            colors.selectedColor = new Color(0.18f, 0.80f, 0.44f, 1.0f);
+            colors.normalColor = PixelUITheme.DestroyNormal;
+            colors.highlightedColor = PixelUITheme.DestroyHighlighted;
+            colors.pressedColor = PixelUITheme.DestroyPressed;
+            colors.selectedColor = PixelUITheme.ButtonSelected;
             button.colors = colors;
             return button;
         }
@@ -596,7 +596,7 @@ namespace LAB2D
             panelRect.offsetMax = Vector2.zero;
 
             Image shade = this.clearConfirmPanel.AddComponent<Image>();
-            shade.color = new Color(0.0f, 0.0f, 0.0f, 0.72f);
+            shade.color = PixelUITheme.DialogShadeDark;
             shade.raycastTarget = true;
 
             GameObject box = this.CreateUIObject("Box", this.clearConfirmPanel.transform);
@@ -608,7 +608,7 @@ namespace LAB2D
             boxRect.sizeDelta = new Vector2(560.0f, 260.0f);
 
             Image boxImage = box.AddComponent<Image>();
-            boxImage.color = new Color(0.12f, 0.13f, 0.15f, 0.96f);
+            boxImage.color = PixelUITheme.DialogBoxBg;
             boxImage.raycastTarget = true;
 
             GameObject tip = this.CreateText(
@@ -617,7 +617,7 @@ namespace LAB2D
                 string.Empty,
                 32,
                 TextAnchor.MiddleCenter,
-                Color.white,
+                PixelUITheme.TextPrimary,
                 FontStyle.Bold);
             RectTransform tipRect = tip.GetComponent<RectTransform>();
             tipRect.anchorMin = new Vector2(0.5f, 0.5f);
