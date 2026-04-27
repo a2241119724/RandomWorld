@@ -185,7 +185,7 @@
         public bool MoveByPath()
         {
             // 没有路径返回到达目标
-            if (!ASeek.results.TryGetValue(this.Character.CharacterDataLAB.SeekId, out SeekResult result))
+            if (!ASeek.results.TryGetValue(this.Character.CharacterDataLAB.SeekId, out SeekResult result) || result == null)
             {
                 return true;
             }
