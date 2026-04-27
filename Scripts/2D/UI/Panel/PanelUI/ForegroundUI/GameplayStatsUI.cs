@@ -67,18 +67,18 @@ namespace LAB2D
         private string FormatStats(GameplaySessionStatsSnapshot s)
         {
             StringBuilder sb = new StringBuilder(512);
-            sb.AppendLine("<color=yellow>=== 会话统计 ===</color>");
-            sb.AppendLine($"<color=cyan>击杀敌人:</color> {s.TotalDefeatedEnemyCount}");
-            sb.AppendLine($"<color=cyan>最大连杀:</color> {s.MaxCombo}");
-            sb.AppendLine($"<color=cyan>当前连杀:</color> {s.CurrentCombo}");
-            sb.AppendLine($"<color=cyan>造成伤害:</color> {s.TotalDamageDealt}");
-            sb.AppendLine($"<color=cyan>受到伤害:</color> {s.TotalDamageTaken}");
-            sb.AppendLine($"<color=cyan>暴击次数:</color> {s.CriticalHitCount}");
-            sb.AppendLine($"<color=cyan>获得经验:</color> {s.TotalExperienceGained}");
-            sb.AppendLine($"<color=cyan>收集物品:</color> {s.TotalCollectedItemCount}");
-            sb.AppendLine($"<color=cyan>完成任务:</color> {s.TotalWorkerTaskCompletedCount}");
-            sb.AppendLine($"<color=cyan>玩家死亡:</color> {s.PlayerDeathCount}");
-            sb.AppendLine($"<color=cyan>工人死亡:</color> {s.TotalWorkerDeathCount}");
+            sb.AppendLine("<color=" + PixelUITheme.RichGold + ">=== 会话统计 ===</color>");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>击杀敌人:</color> {s.TotalDefeatedEnemyCount}");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>最大连杀:</color> {s.MaxCombo}");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>当前连杀:</color> {s.CurrentCombo}");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>造成伤害:</color> {s.TotalDamageDealt}");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>受到伤害:</color> {s.TotalDamageTaken}");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>暴击次数:</color> {s.CriticalHitCount}");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>获得经验:</color> {s.TotalExperienceGained}");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>收集物品:</color> {s.TotalCollectedItemCount}");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>完成任务:</color> {s.TotalWorkerTaskCompletedCount}");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>玩家死亡:</color> {s.PlayerDeathCount}");
+            sb.AppendLine($"<color={PixelUITheme.RichSky}>工人死亡:</color> {s.TotalWorkerDeathCount}");
             return sb.ToString();
         }
     }

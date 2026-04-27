@@ -93,7 +93,7 @@ namespace LAB2D
 
             // Full-screen dark background
             Image bg = this.panelRoot.AddComponent<Image>();
-            bg.color = new Color(0, 0, 0, 0.85f);
+            bg.color = new Color(0.12f, 0.08f, 0.06f, 0.88f);
 
             // Center text group
             GameObject textGroup = new GameObject("TextGroup");
@@ -118,7 +118,7 @@ namespace LAB2D
             titleText.text = "YOU DIED";
             titleText.font = font;
             titleText.fontSize = 52;
-            titleText.color = new Color(0.9f, 0.2f, 0.1f);
+            titleText.color = PixelUITheme.DeathTitle;
             titleText.alignment = TextAnchor.MiddleCenter;
             RectTransform titleRt = titleGo.GetComponent<RectTransform>();
             titleRt.anchorMin = new Vector2(0, 0.68f);
@@ -132,7 +132,7 @@ namespace LAB2D
             this.countdownText = cdGo.AddComponent<Text>();
             this.countdownText.font = font;
             this.countdownText.fontSize = 28;
-            this.countdownText.color = Color.white;
+            this.countdownText.color = PixelUITheme.DeathText;
             this.countdownText.alignment = TextAnchor.MiddleCenter;
             RectTransform cdRt = cdGo.GetComponent<RectTransform>();
             cdRt.anchorMin = new Vector2(0, 0.36f);
@@ -146,7 +146,7 @@ namespace LAB2D
             this.deathCountText = dcGo.AddComponent<Text>();
             this.deathCountText.font = font;
             this.deathCountText.fontSize = 22;
-            this.deathCountText.color = new Color(0.7f, 0.7f, 0.7f);
+            this.deathCountText.color = PixelUITheme.DeathCount;
             this.deathCountText.alignment = TextAnchor.MiddleCenter;
             RectTransform dcRt = dcGo.GetComponent<RectTransform>();
             dcRt.anchorMin = new Vector2(0, 0.04f);
@@ -159,10 +159,10 @@ namespace LAB2D
 
         private Font GetDefaultFont()
         {
-            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            Font font = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
             if (font == null)
             {
-                font = Font.CreateDynamicFontFromOSFont("Arial", 14);
+                font = Resources.GetBuiltinResource<Font>("Arial.ttf");
             }
 
             return font;
