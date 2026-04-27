@@ -13,6 +13,11 @@
         private const float InstanceInterval = 60.0f; // 实例化时间间隔
 
         /// <summary>
+        /// 波次控制标志：true 时由 WaveManager 接管敌人生成，GenEnemy 协程不再自动生成
+        /// </summary>
+        public static bool IsWaveControlEnabled = false;
+
+        /// <summary>
         /// 敌人管理数据
         /// </summary>
         public EnemyManagerData EnemyManagerDataLAB { get; set; } = new ();
@@ -27,7 +32,11 @@
             yield return new WaitUntil(() => Lock.IsCompleteTileMap);
             while (true)
             {
-                this.Create();
+                if (!IsWaveControlEnabled)
+                {
+                    this.Create();
+                }
+
                 yield return new WaitForSeconds(InstanceInterval);
             }
         }
