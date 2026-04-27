@@ -23,10 +23,6 @@ namespace LAB2D.AgentGenerated
         [Range(0f, 100f)]
         [SerializeField] private float decayRate = 1f;
 
-        [Tooltip("Morale gained per second when recovery conditions are met (e.g., resting).")]
-        [Range(0f, 100f)]
-        [SerializeField] private float recoveryRate = 2f;
-
         [Header("Thresholds")]
         [Tooltip("Morale below this value triggers the OnLowMorale event and disables task readiness.")]
         [Range(0f, 1000f)]
@@ -71,21 +67,9 @@ namespace LAB2D.AgentGenerated
             CheckThresholds();
         }
 
-        /// <summary>
-        /// Apply decay or recovery. By default, morale always decays.
-        /// Override or extend this method if you want custom recovery triggers.
-        /// </summary>
         private void ApplyChanges()
         {
-            // Simple always‑decay behaviour; toggle recovery via inspector or derived classes.
-            // Example: if you want recovery when a worker is resting, control the sign externally
-            // by changing recoveryRate or adding a separate 'isRecovering' field.
-            float delta = -decayRate * Time.deltaTime; // Decay is default
-            // Uncomment the line below if you want a simple toggle in the inspector for recovery.
-            // (Add a [SerializeField] private bool isRecovering; field to the class.)
-            // if (isRecovering) delta = recoveryRate * Time.deltaTime;
-            
-            currentMorale += delta;
+            currentMorale -= decayRate * Time.deltaTime;
         }
 
         private void ClampMorale()

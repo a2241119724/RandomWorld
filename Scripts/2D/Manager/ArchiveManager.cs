@@ -186,6 +186,38 @@ namespace LAB2D
         }
 
         /// <summary>
+        /// 删除指定存档槽.
+        /// </summary>
+        /// <param name="archiveIndex">存档索引.</param>
+        /// <returns>是否删除成功.</returns>
+        public bool DeleteArchive(int archiveIndex)
+        {
+            if (!this.IsArchiveIndexValid(archiveIndex))
+            {
+                return false;
+            }
+
+            string archiveDirectory = this.GetArchiveDirectory(archiveIndex);
+            if (!Directory.Exists(archiveDirectory))
+            {
+                return false;
+            }
+
+            try
+            {
+                Directory.Delete(archiveDirectory, true);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                LogManager.Instance.Log(
+                    $"delete archive failed: {archiveDirectory}\n{exception}",
+                    LogManager.LogLevelEnum.Error);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// 加载当前存档.
         /// </summary>
         public void LoadCurrentArchive()

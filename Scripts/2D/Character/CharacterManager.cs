@@ -108,6 +108,11 @@
             base.LoadData();
             AsyncProgressUI.Instance.SetTip("加载角色管理信息...");
             List<Character.CharacterData> data = DataTool.LoadDataByBinary<List<Character.CharacterData>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null)
+            {
+                return;
+            }
+
             foreach (Character.CharacterData characterData in data)
             {
                 GameObject g = this.Create(Vector3LAB.ToVector3(characterData.Pos));

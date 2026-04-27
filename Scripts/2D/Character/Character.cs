@@ -382,16 +382,19 @@
                     this.HIT += this.weapon.Attribute.HIT;
                 }
 
-                foreach (var item in this.equipments)
+                if (this.equipments != null)
                 {
-                    this.ATN += item.Value.Attribute.ATN;
-                    this.INT += item.Value.Attribute.INT;
-                    this.DEF += item.Value.Attribute.DEF;
-                    this.RES += item.Value.Attribute.RES;
-                    this.CRT += item.Value.Attribute.CRT;
-                    this.CSD += item.Value.Attribute.CSD;
-                    this.SPD += item.Value.Attribute.SPD;
-                    this.HIT += item.Value.Attribute.HIT;
+                    foreach (var item in this.equipments)
+                    {
+                        this.ATN += item.Value.Attribute.ATN;
+                        this.INT += item.Value.Attribute.INT;
+                        this.DEF += item.Value.Attribute.DEF;
+                        this.RES += item.Value.Attribute.RES;
+                        this.CRT += item.Value.Attribute.CRT;
+                        this.CSD += item.Value.Attribute.CSD;
+                        this.SPD += item.Value.Attribute.SPD;
+                        this.HIT += item.Value.Attribute.HIT;
+                    }
                 }
             }
 

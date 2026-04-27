@@ -43,8 +43,24 @@
                 return null;
             }
 
-            using FileStream fs = File.Open(filePath, FileMode.Open, FileAccess.Read);
-            return (T)Bf.Deserialize(fs);
+            try
+            {
+                using FileStream fs = File.Open(filePath, FileMode.Open, FileAccess.Read);
+                return (T)Bf.Deserialize(fs);
+            }
+            catch
+            {
+                // 反序列化失败（如类型结构变更），删除旧文件并返回 null
+                try
+                {
+                    File.Delete(filePath);
+                }
+                catch
+                {
+                }
+
+                return null;
+            }
         }
 
         /// <summary>
