@@ -24,6 +24,7 @@
 - 扫描历史记录时，必须递归检查 Agent/Reports/ 下所有日期目录及其子任务目录中的 task_*.md 和 validation_*.md。
 - 同时必须读取 Agent/Reports/efficiency_discovery.md，避免重复实现已经 `[DONE]` 的候选。
 - 如果历史任务目录中遗留存在旧版 efficiency_discovery.md，也需要兼容读取，但新的候选总表只允许写入 Agent/Reports/efficiency_discovery.md。
+- **所有生成的代码注释必须使用中文。**
 
 候选状态规则：
 - `[TODO]`：待处理，尚未实现。
