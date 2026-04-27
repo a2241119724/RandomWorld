@@ -22,6 +22,9 @@ namespace LAB2D
         private InputField renameInputField;
         private Text renameTipText;
         private int pendingRenameArchiveIndex = -1;
+        private GameObject clearConfirmPanel;
+        private Text clearConfirmText;
+        private int pendingClearArchiveIndex = -1;
 
         public NewOrContinuePanel()
         {
@@ -32,6 +35,7 @@ namespace LAB2D
             this.buttonSprite = Resources.Load<Sprite>("Images/UI/ButtonBackground");
             this.BindArchiveSlotButtons();
             this.CreateRenamePanel();
+            this.CreateClearConfirmPanel();
         }
 
         /// <inheritdoc/>
@@ -63,6 +67,13 @@ namespace LAB2D
                 {
                     renameButton.onClick.RemoveAllListeners();
                     renameButton.onClick.AddListener(() => this.ShowRenamePanel(archiveIndex));
+                }
+
+                Button clearButton = this.FindChildComponent<Button>(archiveSlotButton.transform, "Clear");
+                if (clearButton != null)
+                {
+                    clearButton.onClick.RemoveAllListeners();
+                    clearButton.onClick.AddListener(() => this.ShowClearConfirmPanel(archiveIndex));
                 }
 
                 this.SetArchiveSlotButtonPosition(archiveSlotButton, archiveIndex);
@@ -145,6 +156,19 @@ namespace LAB2D
             renameRect.pivot = new Vector2(0.0f, 0.5f);
             renameRect.anchoredPosition = new Vector2(RenameButtonGap, 0.0f);
             renameRect.sizeDelta = RenameButtonSize;
+
+            Button clearButton = this.FindChildComponent<Button>(archiveSlotButton.transform, "Clear");
+            if (clearButton == null)
+            {
+                clearButton = this.CreateClearButton("Clear", archiveSlotButton.transform);
+            }
+
+            RectTransform clearRect = clearButton.GetComponent<RectTransform>();
+            clearRect.anchorMin = new Vector2(1.0f, 0.5f);
+            clearRect.anchorMax = new Vector2(1.0f, 0.5f);
+            clearRect.pivot = new Vector2(0.0f, 0.5f);
+            clearRect.anchoredPosition = new Vector2(RenameButtonGap * 2 + RenameButtonSize.x, 0.0f);
+            clearRect.sizeDelta = RenameButtonSize;
         }
 
         private GameObject CreateUIObject(string name, Transform parent)
@@ -242,7 +266,7 @@ namespace LAB2D
             }
 
             float y = -archiveIndex * (SlotSize.y + SlotSpacing);
-            float sideControlWidth = RenameButtonSize.x + RenameButtonGap;
+            float sideControlWidth = (RenameButtonSize.x + RenameButtonGap) * 2;
             rectTransform.anchorMin = new Vector2(0.0f, 1.0f);
             rectTransform.anchorMax = new Vector2(1.0f, 1.0f);
             rectTransform.pivot = new Vector2(0.5f, 1.0f);
@@ -289,6 +313,12 @@ namespace LAB2D
                 if (renameButton != null)
                 {
                     renameButton.gameObject.SetActive(hasArchive);
+                }
+
+                Button clearButton = this.FindChildComponent<Button>(this.archiveSlotButtons[i].transform, "Clear");
+                if (clearButton != null)
+                {
+                    clearButton.gameObject.SetActive(hasArchive);
                 }
             }
         }
@@ -507,6 +537,173 @@ namespace LAB2D
 
             GlobalInit.Instance.ShowTip("存档名称已修改");
             this.HideRenamePanel();
+            this.RefreshArchiveSlotButtons();
+        }
+
+        private Button CreateClearButton(string name, Transform parent)
+        {
+            Button button = this.CreateButton(
+                name,
+                parent,
+                "清除",
+                RenameButtonSize,
+                null);
+            ColorBlock colors = button.colors;
+            colors.normalColor = new Color(0.86f, 0.20f, 0.20f, 1.0f);
+            colors.highlightedColor = new Color(0.94f, 0.34f, 0.34f, 1.0f);
+            colors.pressedColor = new Color(0.70f, 0.12f, 0.12f, 1.0f);
+            colors.selectedColor = new Color(0.18f, 0.80f, 0.44f, 1.0f);
+            button.colors = colors;
+            return button;
+        }
+
+        private void CreateClearConfirmPanel()
+        {
+            Transform panelTransform = this.FindChildTransform(this.Panel.transform, "ClearConfirmPanel");
+            if (panelTransform != null)
+            {
+                this.clearConfirmPanel = panelTransform.gameObject;
+                this.clearConfirmText = this.FindChildComponent<Text>(panelTransform, "Tip");
+
+                Button confirmButton = this.FindChildComponent<Button>(panelTransform, "Confirm");
+                if (confirmButton != null)
+                {
+                    confirmButton.onClick.RemoveAllListeners();
+                    confirmButton.onClick.AddListener(this.OnClick_ConfirmClear);
+                }
+
+                Button cancelButton = this.FindChildComponent<Button>(panelTransform, "Cancel");
+                if (cancelButton != null)
+                {
+                    cancelButton.onClick.RemoveAllListeners();
+                    cancelButton.onClick.AddListener(this.HideClearConfirmPanel);
+                }
+
+                this.clearConfirmPanel.SetActive(false);
+                return;
+            }
+
+            this.CreateRuntimeClearConfirmPanel();
+        }
+
+        private void CreateRuntimeClearConfirmPanel()
+        {
+            this.clearConfirmPanel = this.CreateUIObject("ClearConfirmPanel", this.Panel.transform);
+            RectTransform panelRect = this.clearConfirmPanel.GetComponent<RectTransform>();
+            panelRect.anchorMin = Vector2.zero;
+            panelRect.anchorMax = Vector2.one;
+            panelRect.offsetMin = Vector2.zero;
+            panelRect.offsetMax = Vector2.zero;
+
+            Image shade = this.clearConfirmPanel.AddComponent<Image>();
+            shade.color = new Color(0.0f, 0.0f, 0.0f, 0.72f);
+            shade.raycastTarget = true;
+
+            GameObject box = this.CreateUIObject("Box", this.clearConfirmPanel.transform);
+            RectTransform boxRect = box.GetComponent<RectTransform>();
+            boxRect.anchorMin = new Vector2(0.5f, 0.5f);
+            boxRect.anchorMax = new Vector2(0.5f, 0.5f);
+            boxRect.pivot = new Vector2(0.5f, 0.5f);
+            boxRect.anchoredPosition = Vector2.zero;
+            boxRect.sizeDelta = new Vector2(560.0f, 260.0f);
+
+            Image boxImage = box.AddComponent<Image>();
+            boxImage.color = new Color(0.12f, 0.13f, 0.15f, 0.96f);
+            boxImage.raycastTarget = true;
+
+            GameObject tip = this.CreateText(
+                "Tip",
+                box.transform,
+                string.Empty,
+                32,
+                TextAnchor.MiddleCenter,
+                Color.white,
+                FontStyle.Bold);
+            RectTransform tipRect = tip.GetComponent<RectTransform>();
+            tipRect.anchorMin = new Vector2(0.5f, 0.5f);
+            tipRect.anchorMax = new Vector2(0.5f, 0.5f);
+            tipRect.pivot = new Vector2(0.5f, 0.5f);
+            tipRect.anchoredPosition = new Vector2(0.0f, 55.0f);
+            tipRect.sizeDelta = new Vector2(500.0f, 110.0f);
+            this.clearConfirmText = tip.GetComponent<Text>();
+
+            Button confirmButton = this.CreateButton(
+                "Confirm",
+                box.transform,
+                "确认清除",
+                new Vector2(190.0f, 58.0f),
+                this.OnClick_ConfirmClear);
+            RectTransform confirmRect = confirmButton.GetComponent<RectTransform>();
+            confirmRect.anchorMin = new Vector2(0.5f, 0.5f);
+            confirmRect.anchorMax = new Vector2(0.5f, 0.5f);
+            confirmRect.pivot = new Vector2(0.5f, 0.5f);
+            confirmRect.anchoredPosition = new Vector2(-110.0f, -70.0f);
+
+            Button cancelButton = this.CreateButton(
+                "Cancel",
+                box.transform,
+                "取消",
+                new Vector2(190.0f, 58.0f),
+                this.HideClearConfirmPanel);
+            RectTransform cancelRect = cancelButton.GetComponent<RectTransform>();
+            cancelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            cancelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cancelRect.pivot = new Vector2(0.5f, 0.5f);
+            cancelRect.anchoredPosition = new Vector2(110.0f, -70.0f);
+
+            this.clearConfirmPanel.SetActive(false);
+        }
+
+        private void ShowClearConfirmPanel(int archiveIndex)
+        {
+            if (!ArchiveManager.Instance.HasArchive(archiveIndex))
+            {
+                GlobalInit.Instance.ShowTip("空存档槽不能清除");
+                this.RefreshArchiveSlotButtons();
+                return;
+            }
+
+            this.pendingClearArchiveIndex = archiveIndex;
+            string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
+            if (this.clearConfirmText != null)
+            {
+                this.clearConfirmText.text = $"确认清除存档\n{displayName}?";
+            }
+
+            if (this.clearConfirmPanel != null)
+            {
+                this.clearConfirmPanel.SetActive(true);
+                this.clearConfirmPanel.transform.SetAsLastSibling();
+            }
+        }
+
+        private void HideClearConfirmPanel()
+        {
+            this.pendingClearArchiveIndex = -1;
+            if (this.clearConfirmPanel != null)
+            {
+                this.clearConfirmPanel.SetActive(false);
+            }
+        }
+
+        private void OnClick_ConfirmClear()
+        {
+            if (this.pendingClearArchiveIndex < 0)
+            {
+                this.HideClearConfirmPanel();
+                return;
+            }
+
+            if (ArchiveManager.Instance.DeleteArchive(this.pendingClearArchiveIndex))
+            {
+                GlobalInit.Instance.ShowTip("存档已清除");
+            }
+            else
+            {
+                GlobalInit.Instance.ShowTip("清除存档失败");
+            }
+
+            this.HideClearConfirmPanel();
             this.RefreshArchiveSlotButtons();
         }
 

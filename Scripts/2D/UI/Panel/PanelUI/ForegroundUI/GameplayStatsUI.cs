@@ -68,7 +68,6 @@ namespace LAB2D
         {
             StringBuilder sb = new StringBuilder(512);
             sb.AppendLine("<color=yellow>=== 会话统计 ===</color>");
-            sb.AppendLine($"<color=cyan>游戏时长:</color> {s.SessionDuration:0.0}s");
             sb.AppendLine($"<color=cyan>击杀敌人:</color> {s.TotalDefeatedEnemyCount}");
             sb.AppendLine($"<color=cyan>最大连杀:</color> {s.MaxCombo}");
             sb.AppendLine($"<color=cyan>当前连杀:</color> {s.CurrentCombo}");
