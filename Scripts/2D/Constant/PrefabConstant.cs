@@ -94,5 +94,10 @@
         /// 左侧聊天项
         /// </summary>
         public const string LEFT_CHAT_ITEM = "LeftChatItem";
+
+        /// <summary>
+        /// 死亡菜单
+        /// </summary>
+        public const string DEATH_MENU = "DeathMenu";
     }
 }

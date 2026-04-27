@@ -40,6 +40,7 @@
 - 扫描历史记录时，必须递归检查 Agent/Reports/ 下所有日期目录及其子任务目录中的 task_*.md 和 validation_*.md。
 - 同时必须读取 Agent/Reports/feature_discovery.md，避免重复实现已经 `[DONE]` 的候选。
 - 如果历史任务目录中遗留存在旧版 feature_discovery.md，也需要兼容读取，但新的候选总表只允许写入 Agent/Reports/feature_discovery.md。
+- **所有生成的代码注释必须使用中文。**
 
 候选状态规则：
 - `[TODO]`：待处理，尚未实现。
@@ -226,7 +227,7 @@
    - 不直接修改 Scene、Prefab、ScriptableObject、StreamingAssets、存档结构、Photon 同步逻辑或 AssetBundle 配置
    - Unity 资源相关修改必须保留 .meta；如果无法安全处理，则不要修改该资源
    - 如果功能需要接入场景或 UI，但自动修改风险较高，则只实现可复用的业务逻辑层，并在任务卡中写清楚人工接入步骤
-   - 新增代码应具备清晰注释，说明用途、接入方式和风险边界
+   - **新增代码应具备清晰的中文注释，说明用途、接入方式和风险边界**
 
 9. 完成后运行可行的验证：
    - 至少做静态检查或编译相关检查
