@@ -89,6 +89,27 @@
 
         public void Update()
         {
+            // During respawn wait: show countdown, block all actions
+            if (DeathPenaltyManager.Instance.IsRespawning)
+            {
+                DeathPenaltyManager.Instance.UpdateDeathScreen();
+                return;
+            }
+
+            // Timer just expired: complete respawn (move to random pos, restore HP/MP, hide death screen)
+            if (DeathPenaltyManager.Instance.TryCompleteRespawn(this))
+            {
+                PlayerData playerData = this.CharacterDataLAB as PlayerData;
+                PlayerStatusUI.Instance.UpdatePlayerState(
+                    this.CharacterDataLAB.Hp,
+                    this.CharacterDataLAB.MaxHp,
+                    playerData.Mp,
+                    playerData.MaxMp,
+                    playerData.Level,
+                    playerData.CurExperience,
+                    playerData.MaxExperience);
+            }
+
             this.Attack();
         }
 
@@ -100,7 +121,12 @@
                 return;
             }
 
-            this.Move(); // 防止撞墙震动
+            // Block movement while respawning
+            if (!DeathPenaltyManager.Instance.IsRespawning)
+            {
+                this.Move();
+            }
+
             this.sprite.material.SetTexture("_MainTex", this.sprite.sprite.texture); // 设置边缘特效
         }
 
@@ -156,6 +182,12 @@
             if (hp <= 0)
             {
                 LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevelEnum.Error);
+                return;
+            }
+
+            // Invulnerable during respawn period
+            if (DeathPenaltyManager.Instance.IsRespawning)
+            {
                 return;
             }
 
@@ -228,8 +260,13 @@
         protected override void Death()
         {
             GameplaySessionStats.Instance.RecordPlayerDeath();
-            LogManager.Instance.Log("玩家重生", LogManager.LogLevelEnum.Info);
-            this.CharacterDataLAB.Hp = 100;
+            LogManager.Instance.Log("玩家死亡", LogManager.LogLevelEnum.Info);
+            this.CharacterDataLAB.Hp = 1; // Keep alive at 1 HP to prevent re-death during respawn
+
+            // Hide from enemies by switching off the Player layer temporarily
+            this.gameObject.layer = LayerMask.NameToLayer("Default");
+
+            DeathPenaltyManager.Instance.HandlePlayerDeath(this);
         }
 
         /// <summary>
