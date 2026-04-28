@@ -306,7 +306,14 @@ namespace LAB2D
             {
                 try
                 {
-                    return TileMap.Instance.GenCanReachPos();
+                    Vector3 centerMap = default;
+                    Player player = PlayerManager.Instance?.Mine;
+                    if (player != null)
+                    {
+                        centerMap = TileMap.Instance.WorldPosToMapPos(player.transform.position);
+                    }
+
+                    return TileMap.Instance.MapPosToWorldPos(TileMap.Instance.GenCanReachPos(centerMap));
                 }
                 catch (Exception)
                 {
