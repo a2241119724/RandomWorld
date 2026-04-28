@@ -1,5 +1,7 @@
 ﻿namespace LAB2D
 {
+    using Photon.Pun;
+
     public class WorkerDeadState : AWorkerState
     {
         public WorkerDeadState(AWorker worker)
@@ -19,6 +21,8 @@
 
             // 丢弃拿取的东西
             this.Character.DropResource();
+
+            PhotonNetwork.Destroy(this.Character.gameObject);
         }
     }
 }
