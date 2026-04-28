@@ -19,6 +19,37 @@
         private SpriteRenderer sprite;
         private Rigidbody2D rg;
 
+        /// <summary>
+        /// 受击无敌帧持续时间（秒），默认0.5秒，设为0可禁用无敌帧
+        /// </summary>
+        private float invincibilityDuration = 0.5f;
+
+        /// <summary>
+        /// 上次受到伤害的时间（Time.time），用于无敌帧判定
+        /// </summary>
+        private float lastDamageTime = -99f;
+
+        /// <summary>
+        /// 受击无敌帧持续时间（秒），可运行时动态调整
+        /// </summary>
+        public float InvincibilityDuration
+        {
+            get => this.invincibilityDuration;
+            set => this.invincibilityDuration = Mathf.Max(0f, value);
+        }
+
+        /// <summary>
+        /// 当前是否处于受击无敌状态（伤害冷却中）
+        /// </summary>
+        public bool IsInvincible
+        {
+            get
+            {
+                return this.invincibilityDuration > 0f &&
+                       Time.time - this.lastDamageTime < this.invincibilityDuration;
+            }
+        }
+
         /// <inheritdoc/>
         public override void Awake()
         {
@@ -190,6 +221,15 @@
             {
                 return;
             }
+
+            // 受击无敌帧保护：在无敌时间窗口内忽略所有伤害，防止被多敌人同时攻击秒杀
+            if (this.IsInvincible)
+            {
+                return;
+            }
+
+            // 记录本次受击时间，启动无敌帧冷却
+            this.lastDamageTime = Time.time;
 
             base.ReduceHp(hp, attacker, isCRT);
             if (NetworkConnect.Instance.IsOnline && !this.pv.IsMine && PhotonNetwork.IsConnected)
