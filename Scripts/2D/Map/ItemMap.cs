@@ -175,7 +175,10 @@
             TileBase tile = this.tilemap.GetTile(posMap);
             if (tile != null)
             {
-                BackpackController.Instance.AddItem(ItemInstanceFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
+                AItem item = ItemInstanceFactory.Instance.GetBackpackItemByName(tile.name);
+                BackpackController.Instance.AddItem(item);
+                // 记录物品收集统计（接入 F006 物品收集里程碑系统）
+                ItemCollectionTracker.Instance.RecordItemCollected(new ResourceInfo(item.Id, 1));
                 this.DeleteTile(posMap);
             }
 
@@ -187,7 +190,10 @@
                     tile = this.tilemap.GetTile(posMap);
                     if (tile != null)
                     {
-                        BackpackController.Instance.AddItem(ItemInstanceFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
+                        AItem item = ItemInstanceFactory.Instance.GetBackpackItemByName(tile.name);
+                        BackpackController.Instance.AddItem(item);
+                        // 记录物品收集统计（接入 F006 物品收集里程碑系统）
+                        ItemCollectionTracker.Instance.RecordItemCollected(new ResourceInfo(item.Id, 1));
                         this.DeleteTile(posMap);
                     }
                 }
