@@ -91,6 +91,13 @@
 
             this.LastAttacker = attacker;
 
+            // 连击增益：当攻击者是玩家且拥有活跃连击时，伤害获得加成
+            if (attacker is Player)
+            {
+                float mult = ComboBonusManager.Instance.DamageMultiplier;
+                hp *= mult;
+            }
+
             // 根据防御力计算伤害
             hp -= hp * this.CharacterDataLAB.DEF / 10;
             hp = hp < 0.1f ? 0.1f : hp;

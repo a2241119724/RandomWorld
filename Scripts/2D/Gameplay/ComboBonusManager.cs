@@ -1,0 +1,342 @@
+namespace LAB2D
+{
+    using System;
+    using UnityEngine;
+
+    /// <summary>
+    /// 连击增益奖励管理器。
+    /// 基于 GameplaySessionStats 的实时连击计数，为玩家提供伤害加成和经验值加成。
+    /// 连击越高，增益倍率越大。连击中断时给予即时反馈。
+    /// 运行时非 MonoBehaviour 单例，不保存数据，不涉及网络同步。
+    ///
+    /// 接入方式：
+    /// - Character.ReduceHp 中自动对 Player 攻击者应用 DamageMultiplier
+    /// - Player.AddExperienceValue 中自动应用 ExperienceMultiplier
+    /// - 外部系统可订阅 OnComboChanged / OnComboMilestoneReached / OnComboBroken 事件
+    /// </summary>
+    public class ComboBonusManager : Singleton<ComboBonusManager>
+    {
+        /// <summary>
+        /// 连击等级配置表：按连击数阈值定义伤害倍率和经验倍率。
+        /// 从高到低遍历，取第一个匹配的等级。
+        /// </summary>
+        private static readonly ComboTier[] Tiers = new ComboTier[]
+        {
+            new ComboTier { MinCombo = 1,   DamageMultiplier = 1.00f, ExperienceMultiplier = 1.0f, Label = "" },
+            new ComboTier { MinCombo = 3,   DamageMultiplier = 1.15f, ExperienceMultiplier = 1.3f, Label = "连击 x3!" },
+            new ComboTier { MinCombo = 5,   DamageMultiplier = 1.30f, ExperienceMultiplier = 1.6f, Label = "连击 x5! 伤害提升!" },
+            new ComboTier { MinCombo = 10,  DamageMultiplier = 1.50f, ExperienceMultiplier = 2.0f, Label = "连击 x10! 激增!" },
+            new ComboTier { MinCombo = 20,  DamageMultiplier = 1.80f, ExperienceMultiplier = 3.0f, Label = "连击 x20! 无双!" },
+            new ComboTier { MinCombo = 50,  DamageMultiplier = 2.50f, ExperienceMultiplier = 5.0f, Label = "连击 x50! 传说!" },
+        };
+
+        private int currentCombo;
+        private int currentTierIndex;
+        private float damageMultiplier = 1.0f;
+        private float experienceMultiplier = 1.0f;
+        private bool initialized;
+
+        /// <summary>
+        /// 延迟初始化：首次访问任意公开属性或方法时，订阅 GameplaySessionStats 的 StatsChanged 事件，
+        /// 并立即同步当前连击状态，避免错过已累积的连击数据。
+        /// 采用延迟订阅而非构造函数中订阅，避免与 GameplaySessionStats 的构造顺序产生竞态。
+        /// </summary>
+        private void EnsureInitialized()
+        {
+            if (this.initialized)
+            {
+                return;
+            }
+
+            this.initialized = true;
+            try
+            {
+                // 订阅后续连击变更事件
+                GameplaySessionStats.Instance.StatsChanged += this.OnStatsChanged;
+
+                // 立即同步当前连击状态，防止因延迟初始化错过已累积的连击数据
+                // 例如：玩家已击杀3只敌人（combo=3）后 ComboBonusManager 才首次被访问，
+                // 此时必须主动拉取当前 combo，否则内部 currentCombo 保持 0，倍率恒为 1.0
+                GameplaySessionStatsSnapshot snapshot = GameplaySessionStats.Instance.CreateSnapshot();
+                this.currentCombo = snapshot.CurrentCombo;
+                this.RecalculateMultipliers();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[ComboBonusManager] 初始化失败，无法同步连击状态: {e.Message}");
+            }
+        }
+
+        #region 公开属性
+
+        /// <summary>
+        /// 当前伤害倍率。基于玩家当前连击数计算，默认 1.0（无加成）。
+        /// 在 Character.ReduceHp 中自动应用于 Player 攻击者的伤害输出。
+        /// </summary>
+        public float DamageMultiplier
+        {
+            get
+            {
+                this.EnsureInitialized();
+                return this.damageMultiplier;
+            }
+        }
+
+        /// <summary>
+        /// 当前经验值倍率。基于玩家当前连击数计算，默认 1.0（无加成）。
+        /// 在 Player.AddExperienceValue 中自动应用。
+        /// </summary>
+        public float ExperienceMultiplier
+        {
+            get
+            {
+                this.EnsureInitialized();
+                return this.experienceMultiplier;
+            }
+        }
+
+        /// <summary>
+        /// 当前连击数（只读，来自 GameplaySessionStats 的实时同步）。
+        /// </summary>
+        public int CurrentCombo
+        {
+            get
+            {
+                this.EnsureInitialized();
+                return this.currentCombo;
+            }
+        }
+
+        /// <summary>
+        /// 当前连击等级索引（0 为无加成等级）。
+        /// </summary>
+        public int CurrentTierIndex
+        {
+            get
+            {
+                this.EnsureInitialized();
+                return this.currentTierIndex;
+            }
+        }
+
+        #endregion
+
+        #region 事件
+
+        /// <summary>
+        /// 连击数变更事件。每次连击数变化时触发（包括增加和减少）。
+        /// 参数：当前连击数。
+        /// </summary>
+        public event Action<int> OnComboChanged;
+
+        /// <summary>
+        /// 连击里程碑达成事件。连击数跨越等级阈值进入更高等级时触发。
+        /// 参数：连击数、伤害倍率、经验倍率。
+        /// 可用于 UI 特效、音效、成就判定等。
+        /// </summary>
+        public event Action<int, float, float> OnComboMilestoneReached;
+
+        /// <summary>
+        /// 连击中断事件。连击从大于 1 回落到 0 或 1 时触发。
+        /// 参数：中断前的最高连击数。
+        /// </summary>
+        public event Action<int> OnComboBroken;
+
+        #endregion
+
+        #region 核心逻辑
+
+        /// <summary>
+        /// 会话统计数据变更回调。
+        /// 检测连击数变化、连击中断、等级跨越，并更新增益倍率。
+        /// </summary>
+        /// <param name="snapshot">GameplaySessionStats 的当前快照。</param>
+        private void OnStatsChanged(GameplaySessionStatsSnapshot snapshot)
+        {
+            int newCombo = snapshot.CurrentCombo;
+            int oldCombo = this.currentCombo;
+
+            // 连击中断检测：之前有连击（>1），现在 <=1 表示连击链断裂
+            if (oldCombo > 1 && newCombo <= 1)
+            {
+                this.OnComboBroken?.Invoke(oldCombo);
+                this.ShowComboBreakTip(oldCombo);
+            }
+
+            this.currentCombo = newCombo;
+            this.RecalculateMultipliers();
+
+            if (newCombo != oldCombo)
+            {
+                this.OnComboChanged?.Invoke(newCombo);
+            }
+        }
+
+        /// <summary>
+        /// 根据当前连击数重新计算伤害倍率和经验倍率。
+        /// 从高等级向低等级遍历 Tiers，取第一个匹配的等级。
+        /// 如果等级发生变化，触发里程碑事件和 UI 提示。
+        /// </summary>
+        private void RecalculateMultipliers()
+        {
+            int newTierIndex = 0;
+
+            for (int i = Tiers.Length - 1; i >= 0; i--)
+            {
+                if (this.currentCombo >= Tiers[i].MinCombo)
+                {
+                    newTierIndex = i;
+                    break;
+                }
+            }
+
+            float newDmgMult = Tiers[newTierIndex].DamageMultiplier;
+            float newExpMult = Tiers[newTierIndex].ExperienceMultiplier;
+
+            bool tierChanged = newTierIndex != this.currentTierIndex;
+            this.currentTierIndex = newTierIndex;
+            this.damageMultiplier = newDmgMult;
+            this.experienceMultiplier = newExpMult;
+
+            // 连击等级提升时触发里程碑事件和即时提示
+            if (tierChanged && this.currentTierIndex > 0)
+            {
+                string label = Tiers[this.currentTierIndex].Label;
+                if (!string.IsNullOrEmpty(label))
+                {
+                    this.ShowComboMilestoneTip(label);
+                }
+
+                this.OnComboMilestoneReached?.Invoke(
+                    this.currentCombo,
+                    this.damageMultiplier,
+                    this.experienceMultiplier);
+            }
+        }
+
+        /// <summary>
+        /// 显示连击里程碑提示。
+        /// 优先通过 GlobalInit.ShowTip 显示游戏内提示，缺失时降级为 Debug.Log。
+        /// </summary>
+        /// <param name="message">提示文本。</param>
+        private void ShowComboMilestoneTip(string message)
+        {
+            try
+            {
+                if (GlobalInit.Instance != null)
+                {
+                    GlobalInit.Instance.ShowTip(message);
+                    return;
+                }
+            }
+            catch (Exception)
+            {
+                // 降级路径：GlobalInit 或 Tip Prefab 不可用时使用日志输出
+            }
+
+            Debug.Log($"[ComboBonus] {message}");
+        }
+
+        /// <summary>
+        /// 显示连击中断提示。
+        /// 优先通过 GlobalInit.ShowTip 显示，缺失时降级为 Debug.Log。
+        /// </summary>
+        /// <param name="maxCombo">中断前的最高连击数。</param>
+        private void ShowComboBreakTip(int maxCombo)
+        {
+            string message = $"连击中断! 最高连击: {maxCombo}";
+            try
+            {
+                if (GlobalInit.Instance != null)
+                {
+                    GlobalInit.Instance.ShowTip(message);
+                    return;
+                }
+            }
+            catch (Exception)
+            {
+                // 降级路径
+            }
+
+            Debug.Log($"[ComboBonus] {message}");
+        }
+
+        #endregion
+
+        #region 查询方法
+
+        /// <summary>
+        /// 获取当前连击等级标签文本，供 UI 或 HUD 使用。
+        /// </summary>
+        /// <returns>等级标签，无等级时返回空字符串。</returns>
+        public string GetCurrentTierLabel()
+        {
+            this.EnsureInitialized();
+            if (this.currentTierIndex >= 0 && this.currentTierIndex < Tiers.Length)
+            {
+                return Tiers[this.currentTierIndex].Label;
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// 静态查询：获取指定连击数对应的伤害倍率。
+        /// 只读方法，不修改任何状态，可用于 UI 预览或配置检查。
+        /// </summary>
+        /// <param name="combo">连击数。</param>
+        /// <returns>对应的伤害倍率。</returns>
+        public static float GetDamageMultiplierForCombo(int combo)
+        {
+            for (int i = Tiers.Length - 1; i >= 0; i--)
+            {
+                if (combo >= Tiers[i].MinCombo)
+                {
+                    return Tiers[i].DamageMultiplier;
+                }
+            }
+
+            return 1.0f;
+        }
+
+        /// <summary>
+        /// 静态查询：获取指定连击数对应的经验倍率。
+        /// 只读方法，不修改任何状态，可用于 UI 预览或配置检查。
+        /// </summary>
+        /// <param name="combo">连击数。</param>
+        /// <returns>对应的经验倍率。</returns>
+        public static float GetExperienceMultiplierForCombo(int combo)
+        {
+            for (int i = Tiers.Length - 1; i >= 0; i--)
+            {
+                if (combo >= Tiers[i].MinCombo)
+                {
+                    return Tiers[i].ExperienceMultiplier;
+                }
+            }
+
+            return 1.0f;
+        }
+
+        #endregion
+
+        /// <summary>
+        /// 连击等级配置结构体。
+        /// </summary>
+        [Serializable]
+        public struct ComboTier
+        {
+            /// <summary>进入该等级所需的最低连击数</summary>
+            public int MinCombo;
+
+            /// <summary>伤害倍率（如 1.5 表示 150% 伤害）</summary>
+            public float DamageMultiplier;
+
+            /// <summary>经验值倍率（如 2.0 表示 200% 经验）</summary>
+            public float ExperienceMultiplier;
+
+            /// <summary>UI 提示标签（如 "连击 x50! 无双!"），空字符串表示不提示</summary>
+            public string Label;
+        }
+    }
+}
