@@ -173,6 +173,12 @@
         /// <inheritdoc/>
         public override void AddExperienceValue(int experience)
         {
+            // 连击增益：经验值加成（连击越高，经验倍率越大）
+            if (experience > 0)
+            {
+                experience = Mathf.RoundToInt(experience * ComboBonusManager.Instance.ExperienceMultiplier);
+            }
+
             base.AddExperienceValue(experience);
             PlayerStatusUI.Instance.UpdatePlayerState(
                 this.CharacterDataLAB.Hp,
