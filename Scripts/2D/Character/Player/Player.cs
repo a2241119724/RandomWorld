@@ -313,6 +313,9 @@
             this.gameObject.layer = LayerMask.NameToLayer("Default");
 
             DeathPenaltyManager.Instance.HandlePlayerDeath(this);
+
+            // 自动采集会话结算数据（F011：补齐结算系统缺失的自动触发链路）
+            SessionResultAutoTrigger.NotifyPlayerDeath();
         }
 
         /// <summary>
