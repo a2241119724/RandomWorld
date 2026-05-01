@@ -186,6 +186,7 @@
         public virtual void Start(AWorker worker)
         {
             this.curProgress = 0.0f;
+            WorkerEfficiencyTracker.Instance.RecordTaskStarted(worker, this);
         }
 
         /// <summary>
@@ -234,6 +235,7 @@
         {
             // TODO 仅执行一次
             WorkerTaskManager.Instance.CompleteTask(this);
+            WorkerEfficiencyTracker.Instance.RecordTaskCompleted(worker, this);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             workerData.Task = null;
         }

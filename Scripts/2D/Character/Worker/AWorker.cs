@@ -319,6 +319,7 @@
                 WorkerManager.Instance.Remove(this);
             }
 
+            WorkerEfficiencyTracker.Instance.RecordWorkerDeath(this);
             this.Manager.ChangeState(AWorkerState.TypeEnum.Dead); // 进入死亡状态
         }
 
