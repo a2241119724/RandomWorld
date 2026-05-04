@@ -1,0 +1,29 @@
+{
+  "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "updated_at": "2026-04-26T16:26:21",
+  "data": {
+    "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+    "total_scripts": 0,
+    "summary": {
+      "mono_behaviour_classes": 0,
+      "scriptable_object_classes": 0,
+      "editor_window_classes": 0,
+      "plain_classes": 0,
+      "public_fields": 0,
+      "serialize_fields": 0,
+      "lifecycle_methods": {
+        "Awake": 0,
+        "OnEnable": 0,
+        "Start": 0,
+        "Update": 0,
+        "FixedUpdate": 0,
+        "LateUpdate": 0,
+        "OnDisable": 0,
+        "OnDestroy": 0
+      }
+    },
+    "scripts": [],
+    "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "from_cache": false
+  }
+}

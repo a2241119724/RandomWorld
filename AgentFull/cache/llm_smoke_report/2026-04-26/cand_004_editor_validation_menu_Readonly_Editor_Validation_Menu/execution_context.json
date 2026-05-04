@@ -1,0 +1,1640 @@
+{
+  "task": {
+    "task": "generate_feature",
+    "task_id": "generate_feature_164027",
+    "description": "Smoke test model routing without external API.",
+    "constraints": [
+      "Do not overwrite existing Unity files."
+    ],
+    "parameters": {}
+  },
+  "report_dir": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\llm_smoke_report\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu",
+  "project_scan": {
+    "root_path": "D:\\LAB\\Unity\\RandomWorld",
+    "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
+    "detected_directories": {
+      "Assets": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
+        "exists": true
+      },
+      "ProjectSettings": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\ProjectSettings",
+        "exists": true
+      },
+      "Packages": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Packages",
+        "exists": true
+      },
+      "Scenes": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scenes",
+        "exists": true
+      },
+      "Scripts": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts",
+        "exists": true
+      },
+      "Prefabs": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Prefabs",
+        "exists": false
+      },
+      "Resources": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Resources",
+        "exists": true
+      },
+      "StreamingAssets": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\StreamingAssets",
+        "exists": true
+      },
+      "Addressables": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AddressableAssetsData",
+        "exists": true
+      }
+    },
+    "counts": {
+      "csharp_files": 363,
+      "prefabs": 29,
+      "scenes": 3,
+      "materials": 26,
+      "textures": 95,
+      "scriptable_assets": 129,
+      "meta_files": 941
+    },
+    "samples": {
+      "scripts": [
+        "Editor/AgentProjectOverviewWindow.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/Benchmark03.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/Benchmark04.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/CameraController.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/ChatController.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
+      ],
+      "scenes": [
+        "Scenes/Game.unity",
+        "Scenes/Menu.unity",
+        "Scenes/RigisterOrLogin.unity"
+      ],
+      "prefabs": [
+        "TextMesh Pro/Examples & Extras/Prefabs/Text Popup.prefab",
+        "TextMesh Pro/Examples & Extras/Prefabs/TextMeshPro - Prefab 1.prefab",
+        "TextMesh Pro/Examples & Extras/Prefabs/TextMeshPro - Prefab 2.prefab",
+        "ResourcesLocal/Prefabs/Blood.prefab",
+        "ResourcesLocal/Prefabs/Border.prefab",
+        "ResourcesLocal/Prefabs/Damage.prefab",
+        "ResourcesLocal/Prefabs/Select.prefab",
+        "ResourcesLocal/Prefabs/Tip.prefab",
+        "ResourcesLocal/Prefabs/ItemBox/AddWearTaskItem.prefab",
+        "ResourcesLocal/Prefabs/ItemBox/BackpackItem.prefab",
+        "ResourcesLocal/Prefabs/ItemBox/BuildItem.prefab",
+        "ResourcesLocal/Prefabs/ItemBox/ButtonItem.prefab"
+      ],
+      "materials": [
+        "Materials/CharacterOutline.mat",
+        "Materials/HorizontalGradient.mat",
+        "Materials/Rain.mat",
+        "Materials/RainTrail.mat",
+        "Materials/RoundCorner.mat",
+        "Materials/Snow.mat",
+        "Materials/SpriteOutline.mat",
+        "Materials/拖尾.mat",
+        "TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Drop Shadow.mat",
+        "TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Outline.mat",
+        "TextMesh Pro/Examples & Extras/Materials/Crate - Surface Shader Scene.mat",
+        "TextMesh Pro/Examples & Extras/Materials/Ground - Logo Scene.mat"
+      ],
+      "scriptable_assets": [
+        "AddressableAssetsData/AddressableAssetSettings.asset",
+        "AddressableAssetsData/DefaultObject.asset",
+        "AddressableAssetsData/ProfileDataSourceSettings.asset",
+        "URP/Light.asset",
+        "URP/Light_Renderer.asset",
+        "URP/UniversalRenderPipelineGlobalSettings.asset",
+        "TextMesh Pro/Resources/TMP Settings.asset",
+        "TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset",
+        "TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset",
+        "TextMesh Pro/Resources/Sprite Assets/EmojiOne.asset",
+        "TextMesh Pro/Resources/Style Sheets/Default Style Sheet.asset",
+        "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
+      ]
+    }
+  },
+  "script_analysis": {
+    "total_scripts": 363,
+    "summary": {
+      "mono_behaviour_classes": 122,
+      "scriptable_object_classes": 7,
+      "editor_window_classes": 3,
+      "plain_classes": 459,
+      "public_fields": 1245,
+      "serialize_fields": 22,
+      "lifecycle_methods": {
+        "Awake": 101,
+        "OnEnable": 40,
+        "Start": 77,
+        "Update": 53,
+        "FixedUpdate": 6,
+        "LateUpdate": 7,
+        "OnDisable": 22,
+        "OnDestroy": 5
+      }
+    },
+    "scripts": [
+      {
+        "path": "Editor/AgentProjectOverviewWindow.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "AgentProjectOverviewWindow",
+            "inherits": [
+              "EditorWindow"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "ProjectStats",
+            "inherits": []
+          }
+        ],
+        "unity_types": [
+          "EditorWindow"
+        ],
+        "lifecycle_methods": [
+          "OnEnable"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Attributes/BuilderAttribute.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "BuilderAttribute",
+            "inherits": [
+              "Attribute"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/CameraMove.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CameraMove",
+            "inherits": [
+              "MonoBehaviour"
+            ]
+          }
+        ],
+        "unity_types": [
+          "MonoBehaviour"
+        ],
+        "lifecycle_methods": [
+          "LateUpdate"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/ACharacterState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ACharacterState",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Character.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "Character",
+            "inherits": [
+              "MonoBehaviourPun"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "CharacterData",
+            "inherits": [
+              "Attribute"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "Attribute",
+            "inherits": []
+          },
+          {
+            "kind": "class",
+            "name": "CheckBug",
+            "inherits": []
+          }
+        ],
+        "unity_types": [
+          "MonoBehaviour"
+        ],
+        "lifecycle_methods": [
+          "Awake",
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/CharacterCreator.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CharacterCreator",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/CharacterManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CharacterManager",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/CharacterStateManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CharacterStateManager",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/AEnemy.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "AEnemy",
+            "inherits": [
+              "Character"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "EnemyData",
+            "inherits": [
+              "CharacterData"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Awake",
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/Common/State/EnemyDropManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "EnemyDropManager",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/CommonEnemy/ACommonEnemy.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ACommonEnemy",
+            "inherits": [
+              "AEnemy",
+              "IPunObservable"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Awake",
+          "Start",
+          "Update"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/CommonEnemy/CommonEnemy_Lv1.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CommonEnemy_Lv1",
+            "inherits": [
+              "ACommonEnemy"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/CommonEnemy/CommonEnemyStateManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CommonEnemyStateManager",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/CommonEnemy/State/ACommonEnemyState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ACommonEnemyState",
+            "inherits": [
+              "ACharacterState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/CommonEnemy/State/CommonEnemyAttackState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CommonEnemyAttackState",
+            "inherits": [
+              "ACommonEnemyState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/CommonEnemy/State/CommonEnemyChaseState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CommonEnemyChaseState",
+            "inherits": [
+              "ACommonEnemyState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/CommonEnemy/State/CommonEnemyDeadState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CommonEnemyDeadState",
+            "inherits": [
+              "ACommonEnemyState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/CommonEnemy/State/CommonEnemySeekState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CommonEnemySeekState",
+            "inherits": [
+              "ACommonEnemyState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/CommonEnemy/State/CommonEnemyWanderState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "CommonEnemyWanderState",
+            "inherits": [
+              "ACommonEnemyState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/EnemyCreator.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "EnemyCreator",
+            "inherits": [
+              "CharacterCreator"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/EnemyManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "EnemyManager",
+            "inherits": [
+              "CharacterManager",
+              "AEnemy",
+              "EnemyCreator>"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "EnemyManagerData",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/SeekEnemy/ASeekEnemy.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ASeekEnemy",
+            "inherits": [
+              "AEnemy"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Awake",
+          "Start",
+          "Update"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/SeekEnemy/SeekEnemy_Lv1.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "SeekEnemy_Lv1",
+            "inherits": [
+              "ASeekEnemy"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/SeekEnemy/SeekEnemyStateManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "SeekEnemyStateManager",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/SeekEnemy/State/ASeekEnemyState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ASeekEnemyState",
+            "inherits": [
+              "ACharacterState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/SeekEnemy/State/SeekEnemyAttackState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "SeekEnemyAttackState",
+            "inherits": [
+              "ASeekEnemyState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/SeekEnemy/State/SeekEnemyDeadState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "SeekEnemyDeadState",
+            "inherits": [
+              "ASeekEnemyState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/SeekEnemy/State/SeekEnemyMoveState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "SeekEnemyMoveState",
+            "inherits": [
+              "ASeekEnemyState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Enemy/SeekEnemy/State/SeekEnemySeekState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "SeekEnemySeekState",
+            "inherits": [
+              "ASeekEnemyState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/ICharacterCreator.cs",
+        "classes": [
+          {
+            "kind": "interface",
+            "name": "ICharacterCreator",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/ICharacterManager.cs",
+        "classes": [
+          {
+            "kind": "interface",
+            "name": "ICharacterManager",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/ICharacterState.cs",
+        "classes": [
+          {
+            "kind": "interface",
+            "name": "ICharacterState",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/ICharacterStateManager.cs",
+        "classes": [
+          {
+            "kind": "interface",
+            "name": "ICharacterStateManager",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Player/Player.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "Player",
+            "inherits": [
+              "Character"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "PlayerData",
+            "inherits": [
+              "CharacterData"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Awake",
+          "Start",
+          "Update",
+          "FixedUpdate",
+          "OnDestroy"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Player/PlayerCreator.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "PlayerCreator",
+            "inherits": [
+              "CharacterCreator"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Player/PlayerManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "PlayerManager",
+            "inherits": [
+              "CharacterManager",
+              "Player",
+              "PlayerCreator>"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/AWorker.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "AWorker",
+            "inherits": [
+              "Character"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "WorkerData",
+            "inherits": [
+              "CharacterData"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Awake",
+          "Start",
+          "Update"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/State/AWorkerState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "AWorkerState",
+            "inherits": [
+              "ACharacterState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/State/WorkerAttackState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerAttackState",
+            "inherits": [
+              "AWorkerState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/State/WorkerDeadState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerDeadState",
+            "inherits": [
+              "AWorkerState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/State/WorkerEscapeState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerEscapeState",
+            "inherits": [
+              "AWorkerState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/State/WorkerMoveState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerMoveState",
+            "inherits": [
+              "AWorkerState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/State/WorkerSeekState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerSeekState",
+            "inherits": [
+              "AWorkerState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/State/WorkerWorkState.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerWorkState",
+            "inherits": [
+              "AWorkerState"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Task/AWorkerTask.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "AWorkerTask",
+            "inherits": [
+              "IWorkerTask"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Task/Individual/WorkerExerciseTask.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerExerciseTask",
+            "inherits": [
+              "AWorkerTask"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "ExerciseTaskBuilder",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Task/Individual/WorkerSleepTask.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerSleepTask",
+            "inherits": [
+              "AWorkerTask"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "SleepTaskBuilder",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Task/Individual/WorkerWearTask.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerWearTask",
+            "inherits": [
+              "AWorkerTask"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "WearTaskBuilder",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Task/IWorkerTask.cs",
+        "classes": [
+          {
+            "kind": "interface",
+            "name": "IWorkerTask",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Task/WorkerBuildTask.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerBuildTask",
+            "inherits": [
+              "AWorkerTask"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "BuildTaskBuilder",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Task/WorkerCarryTask.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerCarryTask",
+            "inherits": [
+              "AWorkerTask"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "CarryTaskBuilder",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Task/WorkerGatherTask.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerGatherTask",
+            "inherits": [
+              "AWorkerTask"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "GatherTaskBuilder",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Task/WorkerHungryTask.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerHungryTask",
+            "inherits": [
+              "AWorkerTask"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "HungryTaskBuilder",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Task/WorkerPlantTask.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerPlantTask",
+            "inherits": [
+              "AWorkerTask"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "PlantTaskBuilder",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Start"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/Worker_Lv1.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "Worker_Lv1",
+            "inherits": [
+              "AWorker"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": [
+          "Awake"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/WorkerCreator.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerCreator",
+            "inherits": [
+              "CharacterCreator"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/WorkerManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerManager",
+            "inherits": [
+              "CharacterManager",
+              "AWorker",
+              "WorkerCreator>"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/WorkerStateManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerStateManager",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Character/Worker/WorkerTaskManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "WorkerTaskManager",
+            "inherits": [
+              "MonoBehaviour"
+            ]
+          }
+        ],
+        "unity_types": [
+          "MonoBehaviour"
+        ],
+        "lifecycle_methods": [
+          "Awake",
+          "Start",
+          "Update"
+        ]
+      },
+      {
+        "path": "Scripts/2D/Constant/LayerConstant.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "LayerConstant",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Constant/Lock.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "Lock",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Constant/PrefabConstant.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "PrefabConstant",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Constant/ResourceConstant.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ResourceConstant",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Constant/TagConstant.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "TagConstant",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Core/KDTree/KDNode.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "KDNode",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Core/KDTree/KDTree.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "KDTree",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Core/Seek/ASeek.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ASeek",
+            "inherits": [
+              "ISeek"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "SeekResult",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Core/Seek/AStar.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "AStar",
+            "inherits": [
+              "ASeek"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Core/Seek/ISeek.cs",
+        "classes": [
+          {
+            "kind": "interface",
+            "name": "ISeek",
+            "inherits": []
+          },
+          {
+            "kind": "class",
+            "name": "Spend",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Core/Seek/OtherSeek.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "OtherSeek",
+            "inherits": [
+              "ASeek"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Data/AMonoSaveData.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "AMonoSaveData",
+            "inherits": [
+              "MonoBehaviour",
+              "ISaveData"
+            ]
+          }
+        ],
+        "unity_types": [
+          "MonoBehaviour"
+        ],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Data/ASaveData.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ASaveData",
+            "inherits": [
+              "ISaveData"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Data/BuildItemData.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "BuildItemData",
+            "inherits": [
+              "ItemData"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Data/DropDataManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "DropDataManager",
+            "inherits": [
+              "Singleton"
+            ]
+          },
+          {
+            "kind": "class",
+            "name": "DropItem",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Data/EnvironmentManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "EnvironmentManager",
+            "inherits": [
+              "Singleton"
+            ]
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Data/GlobalData.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "GlobalData",
+            "inherits": []
+          },
+          {
+            "kind": "class",
+            "name": "ConfigFile",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Data/ISaveData.cs",
+        "classes": [
+          {
+            "kind": "interface",
+            "name": "ISaveData",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Data/ISyncData.cs",
+        "classes": [
+          {
+            "kind": "interface",
+            "name": "ISyncData",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Data/ItemData.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ItemData",
+            "inherits": []
+          },
+          {
+            "kind": "class",
+            "name": "TaskTime",
+            "inherits": []
+          },
+          {
+            "kind": "class",
+            "name": "ItemDataBuilder",
+            "inherits": []
+          }
+        ],
+        "unity_types": [],
+        "lifecycle_methods": []
+      },
+      {
+        "path": "Scripts/2D/Data/ItemDataManager.cs",
+        "classes": [
+          {
+            "kind": "class",
+            "name": "ItemDataManager",
+            "inherits": [
+              "MonoBehaviour"
+            ]
+          }
+        ],
+        "unity_types": [
+          "MonoBehaviour"
+        ],
+        "lifecycle_methods": [
+          "Awake"
+        ]
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "candidate_id": "cand_004_editor_validation_menu",
+      "feature_name": "Readonly Editor Validation Menu",
+      "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+      "value": "Makes repeat validation accessible inside Unity.",
+      "risk_level": "medium",
+      "affected_files": [],
+      "implementation_type": "editor_tool",
+      "status": "pending",
+      "signals": {
+        "editor_window_classes": 3
+      }
+    },
+    {
+      "candidate_id": "cand_005_runtime_gameplay_tracker",
+      "feature_name": "Runtime Gameplay Session Tracker",
+      "description": "Add runtime tracking for play session metrics. This touches gameplay code and should be implemented only after manual review.",
+      "value": "Could improve telemetry for balancing and debugging.",
+      "risk_level": "high",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "signals": {}
+    },
+    {
+      "candidate_id": "cand_001_project_overview_editor",
+      "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
+      "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
+      "value": "Gives the project a safe in-Unity overview tool for future automation work.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "editor_tool",
+      "status": "completed",
+      "signals": {
+        "csharp_files": 363,
+        "scenes": 3,
+        "prefabs": 29
+      }
+    },
+    {
+      "candidate_id": "cand_002_asset_reference_audit",
+      "feature_name": "Readonly Asset Reference Risk Report",
+      "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+      "value": "Finds project hygiene issues without touching assets.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "report_tool",
+      "status": "completed",
+      "signals": {
+        "asset_files": 187
+      }
+    },
+    {
+      "candidate_id": "cand_003_script_lifecycle_report",
+      "feature_name": "CSharp Lifecycle And Serialization Summary",
+      "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
+      "value": "Highlights maintainability hotspots and helps plan refactors.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "report_tool",
+      "status": "completed",
+      "signals": {
+        "mono_behaviour_classes": 122,
+        "public_fields": 1245,
+        "serialize_fields": 22
+      }
+    }
+  ],
+  "selected_candidate": {
+    "candidate_id": "cand_004_editor_validation_menu",
+    "feature_name": "Readonly Editor Validation Menu",
+    "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+    "value": "Makes repeat validation accessible inside Unity.",
+    "risk_level": "medium",
+    "affected_files": [],
+    "implementation_type": "editor_tool",
+    "status": "pending",
+    "signals": {
+      "editor_window_classes": 3
+    }
+  },
+  "task_card": {
+    "task_goal": "Readonly Editor Validation Menu",
+    "candidate_id": "cand_004_editor_validation_menu",
+    "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+    "implementation_type": "editor_tool",
+    "implementation_scope": [
+      "Generate C# into the configured Unity script folder.",
+      "Do not modify scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
+      "Keep the tool readonly and avoid overwriting existing Unity files."
+    ],
+    "modify_files": [],
+    "new_files": [
+      "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\llm_smoke_report\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu\\generated_code\\ReadonlyEditorValidationMenu.cs"
+    ],
+    "risk_notes": [
+      "Risk level: medium",
+      "Generated code is written as a new file only; existing Unity files are not overwritten."
+    ],
+    "verification_steps": [
+      "Review generated C# code at the configured Unity path.",
+      "Open Unity and confirm the EditorWindow/menu compiles.",
+      "Use the tool to export a Markdown report."
+    ],
+    "rollback_plan": [
+      "Delete the generated C# file from the configured Unity path."
+    ],
+    "selected_at": "2026-04-26T16:40:27"
+  },
+  "generated_files": [
+    "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\llm_smoke_report\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu\\generated_code\\ReadonlyEditorValidationMenu.cs"
+  ],
+  "model_calls": [
+    {
+      "purpose": "discover_feature_gap",
+      "call_id": "b93c0c2b1787",
+      "model_profile": "deepseek",
+      "provider": "mock",
+      "model": "local-mock",
+      "mock": true,
+      "used": false,
+      "fallback_reason": "mock mode enabled",
+      "note": "accepted_candidates=0",
+      "usage": {},
+      "content_preview": "Mock response: local deterministic mode is active. Last user request summary: Review this Unity project summary and propose up to 4 additional safe automation candidates. Prefer readonly Editor/report tools. Avoid scene, prefab, ScriptableObject, StreamingAssets, Addressables, save data, networking, build settings, a"
+    },
+    {
+      "purpose": "generate_feature_task",
+      "call_id": "7a98f1d9f55e",
+      "model_profile": "deepseek",
+      "provider": "mock",
+      "model": "local-mock",
+      "mock": true,
+      "used": false,
+      "fallback_reason": "mock mode enabled",
+      "note": "selected_candidate_id=",
+      "usage": {},
+      "content_preview": "Mock response: local deterministic mode is active. Last user request summary: Choose the safest useful candidate from this eligible list. Do not select high-risk candidates when skip_high_risk_candidate is true. Do not add scene, prefab, ScriptableObject, StreamingAssets, Addressables, save-data, networking, build, o"
+    },
+    {
+      "purpose": "generate_unity_editor_tool",
+      "call_id": "48c16742f0e1",
+      "model_profile": "deepseek",
+      "provider": "mock",
+      "model": "local-mock",
+      "mock": true,
+      "used": false,
+      "fallback_reason": "mock mode enabled",
+      "note": "class_name=ReadonlyEditorValidationMenu",
+      "usage": {},
+      "content_preview": "Mock response: local deterministic mode is active. Last user request summary: Generate a readonly Unity Editor tool. Use the exact namespace and class name. It may scan the project and export a report, but it must not modify scenes, prefabs, ScriptableObjects, StreamingAssets, Addressables, build settings, or existin"
+    }
+  ],
+  "validation": {
+    "passed": false,
+    "checks": [
+      {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\llm_smoke_report\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu\\generated_code\\ReadonlyEditorValidationMenu.cs",
+        "exists": true,
+        "has_using_unity_editor": true,
+        "inside_editor_folder": false,
+        "has_unity_meta": false,
+        "has_namespace": true,
+        "has_class": true,
+        "risky_asset_modification_calls": [],
+        "passed": false
+      }
+    ],
+    "policy": "Static validation only; Unity compilation is not executed by default."
+  },
+  "errors": [],
+  "events": [
+    {
+      "time": "2026-04-26T16:40:27",
+      "level": "info",
+      "message": "Task started: generate_feature"
+    },
+    {
+      "time": "2026-04-26T16:40:27",
+      "level": "info",
+      "message": "Dispatching to agent: project_analyzer"
+    },
+    {
+      "time": "2026-04-26T16:40:27",
+      "level": "info",
+      "message": "Dispatching to agent: feature_planner"
+    },
+    {
+      "time": "2026-04-26T16:40:27",
+      "level": "info",
+      "message": "LLM discover_feature_gap: fallback provider=mock model=local-mock mock=True"
+    },
+    {
+      "time": "2026-04-26T16:40:27",
+      "level": "info",
+      "message": "LLM generate_feature_task: fallback provider=mock model=local-mock mock=True"
+    },
+    {
+      "time": "2026-04-26T16:40:27",
+      "level": "info",
+      "message": "Candidate selected: cand_004_editor_validation_menu"
+    },
+    {
+      "time": "2026-04-26T16:40:27",
+      "level": "info",
+      "message": "Dispatching to agent: unity_editor"
+    },
+    {
+      "time": "2026-04-26T16:40:27",
+      "level": "info",
+      "message": "LLM generate_unity_editor_tool: fallback provider=mock model=local-mock mock=True"
+    },
+    {
+      "time": "2026-04-26T16:40:27",
+      "level": "info",
+      "message": "Dispatching to agent: validation"
+    },
+    {
+      "time": "2026-04-26T16:40:28",
+      "level": "info",
+      "message": "Dispatching to agent: report"
+    }
+  ],
+  "compressed": true
+}
