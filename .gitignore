@@ -1,21 +1,98 @@
-/Animation/*
-!/Animation/**/*.meta
-/StreamingAssets
-/URP/*
-!/URP/**/*.meta
-/Scripts/Reference
-/AddressableAssetsData
-/.vs
-/.claude
-/TextMesh Pro
-/Materials/*
-!/Materials/**/*.meta
-/ResourcesLocal/*
-!/ResourcesLocal/**/*.meta
+# Public source snapshot.
+# Default to hiding Unity assets and local tooling, then allow only readable code/docs.
+/*
 
-[Ss]tyle[Cc]op.*
+!**/*.meta
+
+# Repository metadata and public docs.
+!/.gitignore
+!/README.md
+
+# Game source code that is safe to show.
+!/Scripts/
+!/Scripts/**/
+!/Scripts/**/*.cs
+!/Scripts/**/*.md
+
+# Optional top-level editor scripts. Asset-like editor settings stay ignored.
+!/Editor/
+!/Editor/**/
+!/Editor/**/*.cs
+
+# Keep vendor/package code out of the public snapshot.
+/Scripts/Reference/
+
+# Do not publish runnable Unity content.
+/AddressableAssetsData/
+/Animation/
+/Build/
+/Materials/
+/Resources/
+/ResourcesLocal/
+/Scenes/
+/StreamingAssets/
+/TextMesh Pro/
+/URP/
+
+# Local assistants, automation output, memory, reports, and caches.
+/.claude/
+/Agent/
+/AgentFull/
+**/__pycache__/
+**/cache/
+**/reports/
+**/Reports/
+
+# Unity, IDE, and generated files if they ever appear inside this repo.
+/.vs/
+/Library/
+/Logs/
+/Temp/
+/Obj/
+/obj/
+/MemoryCaptures/
+/UserSettings/
+*.csproj
+*.sln
+*.suo
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Build outputs and logs.
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.exe
+*.log
+hs_err_pid*.log
+
+# Asset file types should stay private unless deliberately whitelisted above.
+*.asset
+*.prefab
+*.unity
 *.mat
 *.lighting
-**/__pycache__/*
-**/cache/*
-**/Reports/*
+*.controller
+*.anim
+*.spriteatlas
+*.renderTexture
+*.colors
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.psd
+*.tga
+*.fbx
+*.mp3
+*.wav
+*.ogg
+*.ttf
+*.otf
