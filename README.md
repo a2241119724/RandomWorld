@@ -22,3 +22,10 @@
 * 在Button的UI界面添加点击函数, 需要先将脚本放到物体上，再添加该物体
 * 道具数据ItemData与地图瓦片Tile的名称关联绑定
 * 数据传输: Character -> Weapon -> WeaponEffect -> Character
+
+## 其他
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\.gitarchive\Set-ArchivePassword.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\.gitarchive\Restore-EncryptedProjectArchive.ps1 -Force
+```
