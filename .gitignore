@@ -46,6 +46,7 @@
 /Resources/**
 !/Resources/**/*.meta
 !/Resources/**/*.cs
+!/Resources/**/*.asset
 
 /ResourcesLocal/**
 !/ResourcesLocal/**/*.meta
@@ -127,3 +128,4 @@ hs_err_pid*.log
 *.ogg
 *.ttf
 *.otf
+*.unity
