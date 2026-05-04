@@ -2,12 +2,17 @@
 # By default, everything is included.
 # We explicitly ignore private folders and file types below.
 
+# Ensure ALL .meta files are tracked where needed.
+!**/*.meta
+
+# Ensure ALL .cs files are tracked (except in explicitly private dirs).
+!**/*.cs
+
 # Repository metadata and public docs.
-# These were already allowed; still fine.
 /.gitignore
 /README.md
 
-# Game source code (already public in your plan).
+# Game source code (already public).
 /Scripts/
 /Scripts/**/
 /Scripts/**/*.cs
@@ -18,20 +23,49 @@
 /Editor/**/
 /Editor/**/*.cs
 
-# Keep vendor/package code private.
+# Keep vendor/package code completely private (no .cs, no .meta).
 /Scripts/Reference/
 
-# Do not publish runnable Unity content.
-/AddressableAssetsData/
-/Animation/
-/Build/
-/Materials/
-/Resources/
-/ResourcesLocal/
-/Scenes/
-/StreamingAssets/
-/TextMesh Pro/
-/URP/
+# Do not publish runnable Unity content, but keep .meta and .cs files.
+/AddressableAssetsData/**
+!/AddressableAssetsData/**/*.meta
+!/AddressableAssetsData/**/*.cs
+
+/Animation/**
+!/Animation/**/*.meta
+!/Animation/**/*.cs
+
+/Build/**
+!/Build/**/*.meta
+!/Build/**/*.cs
+
+/Materials/**
+!/Materials/**/*.meta
+!/Materials/**/*.cs
+
+/Resources/**
+!/Resources/**/*.meta
+!/Resources/**/*.cs
+
+/ResourcesLocal/**
+!/ResourcesLocal/**/*.meta
+!/ResourcesLocal/**/*.cs
+
+/Scenes/**
+!/Scenes/**/*.meta
+!/Scenes/**/*.cs
+
+/StreamingAssets/**
+!/StreamingAssets/**/*.meta
+!/StreamingAssets/**/*.cs
+
+/TextMesh Pro/**
+!/TextMesh Pro/**/*.meta
+!/TextMesh Pro/**/*.cs
+
+/URP/**
+!/URP/**/*.meta
+!/URP/**/*.cs
 
 # Local assistants, automation output, memory, reports, and caches.
 /.claude/
@@ -40,7 +74,7 @@
 **/reports/
 **/Reports/
 
-# Unity, IDE, and generated files.
+# Unity, IDE, and generated files (keep fully ignored).
 /.vs/
 /Library/
 /Logs/
@@ -93,6 +127,3 @@ hs_err_pid*.log
 *.ogg
 *.ttf
 *.otf
-
-# Ensure ALL .meta files are tracked (place early to be safe)
-!**/*.meta
