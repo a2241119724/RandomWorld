@@ -8,6 +8,14 @@
 !/.gitignore
 !/README.md
 
+# Encrypted full-project snapshot generated before each commit.
+!/.githooks/
+!/.githooks/pre-commit
+!/.gitarchive/
+!/.gitarchive/*.ps1
+!/.commit-archive/
+!/.commit-archive/ProjectSnapshot.zip.aes
+
 # Track Unity .meta files across the project, except explicitly private folders below.
 !**/*.meta
 
