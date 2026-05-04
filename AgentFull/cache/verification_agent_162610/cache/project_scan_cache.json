@@ -1,0 +1,65 @@
+{
+  "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "updated_at": "2026-04-26T16:26:21",
+  "data": {
+    "root_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull",
+    "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+    "detected_directories": {
+      "Assets": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+        "exists": true
+      },
+      "ProjectSettings": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\ProjectSettings",
+        "exists": false
+      },
+      "Packages": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\Packages",
+        "exists": false
+      },
+      "Scenes": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Scenes",
+        "exists": false
+      },
+      "Scripts": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Scripts",
+        "exists": false
+      },
+      "Prefabs": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Prefabs",
+        "exists": false
+      },
+      "Resources": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Resources",
+        "exists": false
+      },
+      "StreamingAssets": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\StreamingAssets",
+        "exists": false
+      },
+      "Addressables": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\AddressableAssetsData",
+        "exists": false
+      }
+    },
+    "counts": {
+      "csharp_files": 0,
+      "prefabs": 0,
+      "scenes": 0,
+      "materials": 0,
+      "textures": 0,
+      "scriptable_assets": 0,
+      "meta_files": 0
+    },
+    "samples": {
+      "scripts": [],
+      "scenes": [],
+      "prefabs": [],
+      "materials": [],
+      "scriptable_assets": []
+    },
+    "summary": "Unity project scan found 0 C# files, 0 scenes, 0 prefabs, 0 materials, and 0 textures.",
+    "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "from_cache": false
+  }
+}

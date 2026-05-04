@@ -1,0 +1,860 @@
+{
+  "task": {
+    "task": "auto_discover_and_implement",
+    "task_id": "auto_discover_and_implement_162621",
+    "description": "Scan the Unity project, plan a low-risk automation feature, generate code, validate it, and write a report.",
+    "constraints": [
+      "Do not overwrite existing Unity files.",
+      "Prefer readonly Editor tooling.",
+      "Write generated code to the configured Unity script or Editor folder."
+    ],
+    "parameters": {}
+  },
+  "started_at": "2026-04-26T16:26:21",
+  "agent_results": {
+    "project_analyzer": {
+      "mode": "full_analysis",
+      "project_scan": {
+        "root_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull",
+        "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+        "detected_directories": {
+          "Assets": {
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+            "exists": true
+          },
+          "ProjectSettings": {
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\ProjectSettings",
+            "exists": false
+          },
+          "Packages": {
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\Packages",
+            "exists": false
+          },
+          "Scenes": {
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Scenes",
+            "exists": false
+          },
+          "Scripts": {
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Scripts",
+            "exists": false
+          },
+          "Prefabs": {
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Prefabs",
+            "exists": false
+          },
+          "Resources": {
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Resources",
+            "exists": false
+          },
+          "StreamingAssets": {
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\StreamingAssets",
+            "exists": false
+          },
+          "Addressables": {
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\AddressableAssetsData",
+            "exists": false
+          }
+        },
+        "counts": {
+          "csharp_files": 0,
+          "prefabs": 0,
+          "scenes": 0,
+          "materials": 0,
+          "textures": 0,
+          "scriptable_assets": 0,
+          "meta_files": 0
+        },
+        "samples": {
+          "scripts": [],
+          "scenes": [],
+          "prefabs": [],
+          "materials": [],
+          "scriptable_assets": []
+        },
+        "summary": "Unity project scan found 0 C# files, 0 scenes, 0 prefabs, 0 materials, and 0 textures.",
+        "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "from_cache": false
+      },
+      "script_analysis": {
+        "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+        "total_scripts": 0,
+        "summary": {
+          "mono_behaviour_classes": 0,
+          "scriptable_object_classes": 0,
+          "editor_window_classes": 0,
+          "plain_classes": 0,
+          "public_fields": 0,
+          "serialize_fields": 0,
+          "lifecycle_methods": {
+            "Awake": 0,
+            "OnEnable": 0,
+            "Start": 0,
+            "Update": 0,
+            "FixedUpdate": 0,
+            "LateUpdate": 0,
+            "OnDisable": 0,
+            "OnDestroy": 0
+          }
+        },
+        "scripts": [],
+        "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "from_cache": false
+      }
+    },
+    "feature_planner": {
+      "mode": "discover_and_plan",
+      "candidates": [
+        {
+          "candidate_id": "cand_004_editor_validation_menu",
+          "feature_name": "Readonly Editor Validation Menu",
+          "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+          "value": "Makes repeat validation accessible inside Unity.",
+          "risk_level": "medium",
+          "affected_files": [],
+          "implementation_type": "editor_tool",
+          "status": "pending",
+          "signals": {
+            "editor_window_classes": 0
+          }
+        },
+        {
+          "candidate_id": "cand_005_runtime_gameplay_tracker",
+          "feature_name": "Runtime Gameplay Session Tracker",
+          "description": "Add runtime tracking for play session metrics. This touches gameplay code and should be implemented only after manual review.",
+          "value": "Could improve telemetry for balancing and debugging.",
+          "risk_level": "high",
+          "affected_files": [],
+          "implementation_type": "runtime_feature",
+          "status": "pending",
+          "signals": {}
+        },
+        {
+          "candidate_id": "cand_001_project_overview_editor",
+          "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
+          "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
+          "value": "Gives the project a safe in-Unity overview tool for future automation work.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "editor_tool",
+          "status": "completed",
+          "signals": {
+            "csharp_files": 0,
+            "scenes": 0,
+            "prefabs": 0
+          }
+        },
+        {
+          "candidate_id": "cand_002_asset_reference_audit",
+          "feature_name": "Readonly Asset Reference Risk Report",
+          "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+          "value": "Finds project hygiene issues without touching assets.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "report_tool",
+          "status": "completed",
+          "signals": {
+            "asset_files": 0
+          }
+        },
+        {
+          "candidate_id": "cand_003_script_lifecycle_report",
+          "feature_name": "CSharp Lifecycle And Serialization Summary",
+          "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
+          "value": "Highlights maintainability hotspots and helps plan refactors.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "report_tool",
+          "status": "completed",
+          "signals": {
+            "mono_behaviour_classes": 0,
+            "public_fields": 0,
+            "serialize_fields": 0
+          }
+        }
+      ],
+      "selected_candidate": {
+        "candidate_id": "cand_004_editor_validation_menu",
+        "feature_name": "Readonly Editor Validation Menu",
+        "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+        "value": "Makes repeat validation accessible inside Unity.",
+        "risk_level": "medium",
+        "affected_files": [],
+        "implementation_type": "editor_tool",
+        "status": "pending",
+        "signals": {
+          "editor_window_classes": 0
+        }
+      },
+      "task_card": {
+        "task_goal": "Readonly Editor Validation Menu",
+        "candidate_id": "cand_004_editor_validation_menu",
+        "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+        "implementation_type": "editor_tool",
+        "implementation_scope": [
+          "Generate C# into the configured Unity script folder.",
+          "Do not modify scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
+          "Keep the tool readonly and avoid overwriting existing Unity files."
+        ],
+        "modify_files": [],
+        "new_files": [
+          "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs"
+        ],
+        "risk_notes": [
+          "Risk level: medium",
+          "Generated code is written as a new file only; existing Unity files are not overwritten."
+        ],
+        "verification_steps": [
+          "Review generated C# code at the configured Unity path.",
+          "Open Unity and confirm the EditorWindow/menu compiles.",
+          "Use the tool to export a Markdown report."
+        ],
+        "rollback_plan": [
+          "Delete the generated C# file from the configured Unity path."
+        ],
+        "selected_at": "2026-04-26T16:26:21"
+      }
+    },
+    "unity_editor": {
+      "generated_files": [
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs"
+      ],
+      "generated_meta_files": [
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs.meta"
+      ],
+      "class_name": "ReadonlyEditorValidationMenu",
+      "namespace": "RandomWorld.AgentGenerated.Editor",
+      "policy": "readonly_editor_tool_configured_editor_path",
+      "manual_next_step": "Open Unity and confirm the generated Editor menu compiles."
+    },
+    "validation": {
+      "mode": "full_validation",
+      "asset_reference_check": {
+        "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+        "scanned_files": 0,
+        "finding_count": 0,
+        "findings": [],
+        "external_or_missing_guid_samples": [],
+        "risk_level": "low",
+        "readonly": true,
+        "notes": [
+          "Unknown GUID samples may include package references; review before treating them as broken.",
+          "This check does not modify assets."
+        ]
+      },
+      "generated_file_validation": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs",
+            "exists": true,
+            "has_using_unity_editor": true,
+            "inside_editor_folder": true,
+            "has_unity_meta": true,
+            "has_namespace": true,
+            "has_class": true,
+            "risky_asset_modification_calls": [],
+            "passed": true
+          }
+        ],
+        "policy": "Static validation only; Unity compilation is not executed by default."
+      }
+    },
+    "report": {
+      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\verification_agent_162610\\reports\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu\\report.md",
+      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\verification_agent_162610\\reports\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu\\execution_context.json"
+    }
+  },
+  "skill_results": {
+    "scan_unity_project": {
+      "root_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull",
+      "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+      "detected_directories": {
+        "Assets": {
+          "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+          "exists": true
+        },
+        "ProjectSettings": {
+          "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\ProjectSettings",
+          "exists": false
+        },
+        "Packages": {
+          "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\Packages",
+          "exists": false
+        },
+        "Scenes": {
+          "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Scenes",
+          "exists": false
+        },
+        "Scripts": {
+          "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Scripts",
+          "exists": false
+        },
+        "Prefabs": {
+          "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Prefabs",
+          "exists": false
+        },
+        "Resources": {
+          "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Resources",
+          "exists": false
+        },
+        "StreamingAssets": {
+          "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\StreamingAssets",
+          "exists": false
+        },
+        "Addressables": {
+          "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\AddressableAssetsData",
+          "exists": false
+        }
+      },
+      "counts": {
+        "csharp_files": 0,
+        "prefabs": 0,
+        "scenes": 0,
+        "materials": 0,
+        "textures": 0,
+        "scriptable_assets": 0,
+        "meta_files": 0
+      },
+      "samples": {
+        "scripts": [],
+        "scenes": [],
+        "prefabs": [],
+        "materials": [],
+        "scriptable_assets": []
+      },
+      "summary": "Unity project scan found 0 C# files, 0 scenes, 0 prefabs, 0 materials, and 0 textures.",
+      "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "from_cache": false
+    },
+    "analyze_csharp_scripts": {
+      "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+      "total_scripts": 0,
+      "summary": {
+        "mono_behaviour_classes": 0,
+        "scriptable_object_classes": 0,
+        "editor_window_classes": 0,
+        "plain_classes": 0,
+        "public_fields": 0,
+        "serialize_fields": 0,
+        "lifecycle_methods": {
+          "Awake": 0,
+          "OnEnable": 0,
+          "Start": 0,
+          "Update": 0,
+          "FixedUpdate": 0,
+          "LateUpdate": 0,
+          "OnDisable": 0,
+          "OnDestroy": 0
+        }
+      },
+      "scripts": [],
+      "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "from_cache": false
+    },
+    "discover_feature_gap": {
+      "candidates": [
+        {
+          "candidate_id": "cand_004_editor_validation_menu",
+          "feature_name": "Readonly Editor Validation Menu",
+          "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+          "value": "Makes repeat validation accessible inside Unity.",
+          "risk_level": "medium",
+          "affected_files": [],
+          "implementation_type": "editor_tool",
+          "status": "pending",
+          "signals": {
+            "editor_window_classes": 0
+          }
+        },
+        {
+          "candidate_id": "cand_005_runtime_gameplay_tracker",
+          "feature_name": "Runtime Gameplay Session Tracker",
+          "description": "Add runtime tracking for play session metrics. This touches gameplay code and should be implemented only after manual review.",
+          "value": "Could improve telemetry for balancing and debugging.",
+          "risk_level": "high",
+          "affected_files": [],
+          "implementation_type": "runtime_feature",
+          "status": "pending",
+          "signals": {}
+        },
+        {
+          "candidate_id": "cand_001_project_overview_editor",
+          "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
+          "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
+          "value": "Gives the project a safe in-Unity overview tool for future automation work.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "editor_tool",
+          "status": "completed",
+          "signals": {
+            "csharp_files": 0,
+            "scenes": 0,
+            "prefabs": 0
+          }
+        },
+        {
+          "candidate_id": "cand_002_asset_reference_audit",
+          "feature_name": "Readonly Asset Reference Risk Report",
+          "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+          "value": "Finds project hygiene issues without touching assets.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "report_tool",
+          "status": "completed",
+          "signals": {
+            "asset_files": 0
+          }
+        },
+        {
+          "candidate_id": "cand_003_script_lifecycle_report",
+          "feature_name": "CSharp Lifecycle And Serialization Summary",
+          "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
+          "value": "Highlights maintainability hotspots and helps plan refactors.",
+          "risk_level": "low",
+          "affected_files": [],
+          "implementation_type": "report_tool",
+          "status": "completed",
+          "signals": {
+            "mono_behaviour_classes": 0,
+            "public_fields": 0,
+            "serialize_fields": 0
+          }
+        }
+      ]
+    },
+    "generate_feature_task": {
+      "selected_candidate": {
+        "candidate_id": "cand_004_editor_validation_menu",
+        "feature_name": "Readonly Editor Validation Menu",
+        "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+        "value": "Makes repeat validation accessible inside Unity.",
+        "risk_level": "medium",
+        "affected_files": [],
+        "implementation_type": "editor_tool",
+        "status": "pending",
+        "signals": {
+          "editor_window_classes": 0
+        }
+      },
+      "task_card": {
+        "task_goal": "Readonly Editor Validation Menu",
+        "candidate_id": "cand_004_editor_validation_menu",
+        "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+        "implementation_type": "editor_tool",
+        "implementation_scope": [
+          "Generate C# into the configured Unity script folder.",
+          "Do not modify scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
+          "Keep the tool readonly and avoid overwriting existing Unity files."
+        ],
+        "modify_files": [],
+        "new_files": [
+          "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs"
+        ],
+        "risk_notes": [
+          "Risk level: medium",
+          "Generated code is written as a new file only; existing Unity files are not overwritten."
+        ],
+        "verification_steps": [
+          "Review generated C# code at the configured Unity path.",
+          "Open Unity and confirm the EditorWindow/menu compiles.",
+          "Use the tool to export a Markdown report."
+        ],
+        "rollback_plan": [
+          "Delete the generated C# file from the configured Unity path."
+        ],
+        "selected_at": "2026-04-26T16:26:21"
+      }
+    },
+    "generate_unity_editor_tool": {
+      "generated_files": [
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs"
+      ],
+      "generated_meta_files": [
+        "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs.meta"
+      ],
+      "class_name": "ReadonlyEditorValidationMenu",
+      "namespace": "RandomWorld.AgentGenerated.Editor",
+      "policy": "readonly_editor_tool_configured_editor_path",
+      "manual_next_step": "Open Unity and confirm the generated Editor menu compiles."
+    },
+    "asset_reference_check": {
+      "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+      "scanned_files": 0,
+      "finding_count": 0,
+      "findings": [],
+      "external_or_missing_guid_samples": [],
+      "risk_level": "low",
+      "readonly": true,
+      "notes": [
+        "Unknown GUID samples may include package references; review before treating them as broken.",
+        "This check does not modify assets."
+      ]
+    },
+    "update_feature_status": {
+      "candidate_id": "cand_004_editor_validation_menu",
+      "status": "completed",
+      "note": "Generated code to the configured Unity path without overwriting existing files.",
+      "candidate_count": 5
+    },
+    "write_report": {
+      "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\verification_agent_162610\\reports\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu\\report.md",
+      "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\verification_agent_162610\\reports\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu\\execution_context.json"
+    }
+  },
+  "errors": [],
+  "events": [
+    {
+      "time": "2026-04-26T16:26:21",
+      "level": "info",
+      "message": "Task started: auto_discover_and_implement"
+    },
+    {
+      "time": "2026-04-26T16:26:21",
+      "level": "info",
+      "message": "Dispatching to agent: project_analyzer"
+    },
+    {
+      "time": "2026-04-26T16:26:21",
+      "level": "info",
+      "message": "Dispatching to agent: feature_planner"
+    },
+    {
+      "time": "2026-04-26T16:26:21",
+      "level": "info",
+      "message": "Candidate selected: cand_004_editor_validation_menu"
+    },
+    {
+      "time": "2026-04-26T16:26:21",
+      "level": "info",
+      "message": "Dispatching to agent: unity_editor"
+    },
+    {
+      "time": "2026-04-26T16:26:21",
+      "level": "info",
+      "message": "Dispatching to agent: validation"
+    },
+    {
+      "time": "2026-04-26T16:26:21",
+      "level": "info",
+      "message": "Dispatching to agent: report"
+    }
+  ],
+  "configs": {
+    "agent": {
+      "agent": {
+        "name": "AgentFull",
+        "version": "1.0.0",
+        "default_task": "auto_discover_and_implement",
+        "language": "zh-CN"
+      },
+      "logging": {
+        "level": "INFO",
+        "write_log_file": true
+      },
+      "context": {
+        "max_chars": 24000,
+        "keep_recent_results": 12
+      },
+      "cache": {
+        "enabled": true,
+        "project_scan_cache": "project_scan_cache.json",
+        "script_analysis_cache": "script_analysis_cache.json"
+      },
+      "skills": {
+        "enabled": [
+          "scan_unity_project",
+          "analyze_csharp_scripts",
+          "discover_feature_gap",
+          "generate_feature_task",
+          "generate_csharp_script",
+          "generate_unity_editor_tool",
+          "asset_reference_check",
+          "write_report",
+          "update_feature_status"
+        ]
+      },
+      "agents": {
+        "enabled": [
+          "project_analyzer",
+          "feature_planner",
+          "code_generator",
+          "unity_editor",
+          "validation",
+          "report"
+        ]
+      }
+    },
+    "unity": {
+      "unity_project": {
+        "root_path": "../..",
+        "assets_path": "..",
+        "scripts_path": "../Scripts",
+        "editor_path": "../Editor",
+        "scenes_path": "../Scenes",
+        "prefabs_path": "../Prefabs",
+        "resources_path": "../Resources",
+        "streaming_assets_path": "../StreamingAssets",
+        "addressables_path": "../AddressableAssetsData",
+        "reports_path": "./reports"
+      },
+      "generation_policy": {
+        "default_output_mode": "project",
+        "allow_modify_existing_files": false,
+        "allow_scene_modification": false,
+        "allow_prefab_modification": false,
+        "allow_scriptableobject_modification": false,
+        "allow_streamingassets_modification": false,
+        "allow_addressables_modification": false,
+        "generate_code_to_report_folder_first": false
+      },
+      "risk_policy": {
+        "skip_high_risk_candidate": true,
+        "prefer_low_risk_feature": true,
+        "readonly_first": true
+      }
+    },
+    "model_profile": "deepseek",
+    "mock": true,
+    "log_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\verification_agent_162610\\cache\\agentfull.log"
+  },
+  "report_dir": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\verification_agent_162610\\reports\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu",
+  "project_scan": {
+    "root_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull",
+    "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+    "detected_directories": {
+      "Assets": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+        "exists": true
+      },
+      "ProjectSettings": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\ProjectSettings",
+        "exists": false
+      },
+      "Packages": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\Packages",
+        "exists": false
+      },
+      "Scenes": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Scenes",
+        "exists": false
+      },
+      "Scripts": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Scripts",
+        "exists": false
+      },
+      "Prefabs": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Prefabs",
+        "exists": false
+      },
+      "Resources": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Resources",
+        "exists": false
+      },
+      "StreamingAssets": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\StreamingAssets",
+        "exists": false
+      },
+      "Addressables": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\AddressableAssetsData",
+        "exists": false
+      }
+    },
+    "counts": {
+      "csharp_files": 0,
+      "prefabs": 0,
+      "scenes": 0,
+      "materials": 0,
+      "textures": 0,
+      "scriptable_assets": 0,
+      "meta_files": 0
+    },
+    "samples": {
+      "scripts": [],
+      "scenes": [],
+      "prefabs": [],
+      "materials": [],
+      "scriptable_assets": []
+    },
+    "summary": "Unity project scan found 0 C# files, 0 scenes, 0 prefabs, 0 materials, and 0 textures.",
+    "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "from_cache": false
+  },
+  "script_analysis": {
+    "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+    "total_scripts": 0,
+    "summary": {
+      "mono_behaviour_classes": 0,
+      "scriptable_object_classes": 0,
+      "editor_window_classes": 0,
+      "plain_classes": 0,
+      "public_fields": 0,
+      "serialize_fields": 0,
+      "lifecycle_methods": {
+        "Awake": 0,
+        "OnEnable": 0,
+        "Start": 0,
+        "Update": 0,
+        "FixedUpdate": 0,
+        "LateUpdate": 0,
+        "OnDisable": 0,
+        "OnDestroy": 0
+      }
+    },
+    "scripts": [],
+    "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "from_cache": false
+  },
+  "feature_candidates": [
+    {
+      "candidate_id": "cand_001_project_overview_editor",
+      "feature_name": "Unity Project Readonly Resource And Script Overview Tool",
+      "description": "Generate a readonly EditorWindow that scans scripts, scenes, prefabs, materials, and textures, then exports a Markdown report.",
+      "value": "Gives the project a safe in-Unity overview tool for future automation work.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "editor_tool",
+      "status": "completed",
+      "signals": {
+        "csharp_files": 0,
+        "scenes": 0,
+        "prefabs": 0
+      }
+    },
+    {
+      "candidate_id": "cand_002_asset_reference_audit",
+      "feature_name": "Readonly Asset Reference Risk Report",
+      "description": "Scan prefab, scene, material, and ScriptableObject YAML files for empty GUIDs, missing script markers, and suspicious local references.",
+      "value": "Finds project hygiene issues without touching assets.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "report_tool",
+      "status": "completed",
+      "signals": {
+        "asset_files": 0
+      }
+    },
+    {
+      "candidate_id": "cand_003_script_lifecycle_report",
+      "feature_name": "CSharp Lifecycle And Serialization Summary",
+      "description": "Generate a static report for MonoBehaviour lifecycle methods, public fields, and SerializeField usage.",
+      "value": "Highlights maintainability hotspots and helps plan refactors.",
+      "risk_level": "low",
+      "affected_files": [],
+      "implementation_type": "report_tool",
+      "status": "completed",
+      "signals": {
+        "mono_behaviour_classes": 0,
+        "public_fields": 0,
+        "serialize_fields": 0
+      }
+    },
+    {
+      "candidate_id": "cand_004_editor_validation_menu",
+      "feature_name": "Readonly Editor Validation Menu",
+      "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+      "value": "Makes repeat validation accessible inside Unity.",
+      "risk_level": "medium",
+      "affected_files": [],
+      "implementation_type": "editor_tool",
+      "status": "completed",
+      "signals": {
+        "editor_window_classes": 0
+      },
+      "status_note": "Generated code to the configured Unity path without overwriting existing files.",
+      "updated_at": "2026-04-26T16:26:21"
+    },
+    {
+      "candidate_id": "cand_005_runtime_gameplay_tracker",
+      "feature_name": "Runtime Gameplay Session Tracker",
+      "description": "Add runtime tracking for play session metrics. This touches gameplay code and should be implemented only after manual review.",
+      "value": "Could improve telemetry for balancing and debugging.",
+      "risk_level": "high",
+      "affected_files": [],
+      "implementation_type": "runtime_feature",
+      "status": "pending",
+      "signals": {}
+    }
+  ],
+  "selected_candidate": {
+    "candidate_id": "cand_004_editor_validation_menu",
+    "feature_name": "Readonly Editor Validation Menu",
+    "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+    "value": "Makes repeat validation accessible inside Unity.",
+    "risk_level": "medium",
+    "affected_files": [],
+    "implementation_type": "editor_tool",
+    "status": "pending",
+    "signals": {
+      "editor_window_classes": 0
+    }
+  },
+  "task_card": {
+    "task_goal": "Readonly Editor Validation Menu",
+    "candidate_id": "cand_004_editor_validation_menu",
+    "description": "Create an Editor menu command that runs non-destructive checks and writes a validation report.",
+    "implementation_type": "editor_tool",
+    "implementation_scope": [
+      "Generate C# into the configured Unity script folder.",
+      "Do not modify scenes, prefabs, ScriptableObjects, StreamingAssets, or Addressables.",
+      "Keep the tool readonly and avoid overwriting existing Unity files."
+    ],
+    "modify_files": [],
+    "new_files": [
+      "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs"
+    ],
+    "risk_notes": [
+      "Risk level: medium",
+      "Generated code is written as a new file only; existing Unity files are not overwritten."
+    ],
+    "verification_steps": [
+      "Review generated C# code at the configured Unity path.",
+      "Open Unity and confirm the EditorWindow/menu compiles.",
+      "Use the tool to export a Markdown report."
+    ],
+    "rollback_plan": [
+      "Delete the generated C# file from the configured Unity path."
+    ],
+    "selected_at": "2026-04-26T16:26:21"
+  },
+  "generated_files": [
+    "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs"
+  ],
+  "generated_meta_files": [
+    "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs.meta"
+  ],
+  "asset_reference_check": {
+    "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache",
+    "scanned_files": 0,
+    "finding_count": 0,
+    "findings": [],
+    "external_or_missing_guid_samples": [],
+    "risk_level": "low",
+    "readonly": true,
+    "notes": [
+      "Unknown GUID samples may include package references; review before treating them as broken.",
+      "This check does not modify assets."
+    ]
+  },
+  "validation": {
+    "passed": true,
+    "checks": [
+      {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\Editor\\ReadonlyEditorValidationMenu.cs",
+        "exists": true,
+        "has_using_unity_editor": true,
+        "inside_editor_folder": true,
+        "has_unity_meta": true,
+        "has_namespace": true,
+        "has_class": true,
+        "risky_asset_modification_calls": [],
+        "passed": true
+      }
+    ],
+    "policy": "Static validation only; Unity compilation is not executed by default."
+  },
+  "finished_at": "2026-04-26T16:26:21",
+  "final_report": {
+    "report_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\verification_agent_162610\\reports\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu\\report.md",
+    "context_path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\verification_agent_162610\\reports\\2026-04-26\\cand_004_editor_validation_menu_Readonly_Editor_Validation_Menu\\execution_context.json"
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "task": {
+    "task": "scan_project",
+    "task_id": "scan_project_173005",
+    "description": "Scan the Unity project, plan a low-risk automation feature, generate code, validate it, and write a report.",
+    "constraints": [
+      "Do not overwrite existing Unity files.",
+      "Prefer readonly Editor tooling.",
+      "Write generated code to the configured Unity script or Editor folder."
+    ],
+    "parameters": {}
+  },
+  "report_dir": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AgentFull\\cache\\verify_scan\\2026-04-26\\run_173005",
+  "project_scan": {
+    "root_path": "D:\\LAB\\Unity\\RandomWorld",
+    "assets_path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
+    "detected_directories": {
+      "Assets": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets",
+        "exists": true
+      },
+      "ProjectSettings": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\ProjectSettings",
+        "exists": true
+      },
+      "Packages": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Packages",
+        "exists": true
+      },
+      "Scenes": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scenes",
+        "exists": true
+      },
+      "Scripts": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Scripts",
+        "exists": true
+      },
+      "Prefabs": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Prefabs",
+        "exists": false
+      },
+      "Resources": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\Resources",
+        "exists": true
+      },
+      "StreamingAssets": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\StreamingAssets",
+        "exists": true
+      },
+      "Addressables": {
+        "path": "D:\\LAB\\Unity\\RandomWorld\\Assets\\AddressableAssetsData",
+        "exists": true
+      }
+    },
+    "counts": {
+      "csharp_files": 363,
+      "prefabs": 29,
+      "scenes": 3,
+      "materials": 26,
+      "textures": 95,
+      "scriptable_assets": 129,
+      "meta_files": 941
+    },
+    "samples": {
+      "scripts": [
+        "Editor/AgentProjectOverviewWindow.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/Benchmark03.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/Benchmark04.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/CameraController.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/ChatController.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs",
+        "TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
+      ],
+      "scenes": [
+        "Scenes/Game.unity",
+        "Scenes/Menu.unity",
+        "Scenes/RigisterOrLogin.unity"
+      ],
+      "prefabs": [
+        "TextMesh Pro/Examples & Extras/Prefabs/Text Popup.prefab",
+        "TextMesh Pro/Examples & Extras/Prefabs/TextMeshPro - Prefab 1.prefab",
+        "TextMesh Pro/Examples & Extras/Prefabs/TextMeshPro - Prefab 2.prefab",
+        "ResourcesLocal/Prefabs/Blood.prefab",
+        "ResourcesLocal/Prefabs/Border.prefab",
+        "ResourcesLocal/Prefabs/Damage.prefab",
+        "ResourcesLocal/Prefabs/Select.prefab",
+        "ResourcesLocal/Prefabs/Tip.prefab",
+        "ResourcesLocal/Prefabs/ItemBox/AddWearTaskItem.prefab",
+        "ResourcesLocal/Prefabs/ItemBox/BackpackItem.prefab",
+        "ResourcesLocal/Prefabs/ItemBox/BuildItem.prefab",
+        "ResourcesLocal/Prefabs/ItemBox/ButtonItem.prefab"
+      ],
+      "materials": [
+        "Materials/CharacterOutline.mat",
+        "Materials/HorizontalGradient.mat",
+        "Materials/Rain.mat",
+        "Materials/RainTrail.mat",
+        "Materials/RoundCorner.mat",
+        "Materials/Snow.mat",
+        "Materials/SpriteOutline.mat",
+        "Materials/拖尾.mat",
+        "TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Drop Shadow.mat",
+        "TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Outline.mat",
+        "TextMesh Pro/Examples & Extras/Materials/Crate - Surface Shader Scene.mat",
+        "TextMesh Pro/Examples & Extras/Materials/Ground - Logo Scene.mat"
+      ],
+      "scriptable_assets": [
+        "AddressableAssetsData/AddressableAssetSettings.asset",
+        "AddressableAssetsData/DefaultObject.asset",
+        "AddressableAssetsData/ProfileDataSourceSettings.asset",
+        "URP/Light.asset",
+        "URP/Light_Renderer.asset",
+        "URP/UniversalRenderPipelineGlobalSettings.asset",
+        "TextMesh Pro/Resources/TMP Settings.asset",
+        "TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset",
+        "TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset",
+        "TextMesh Pro/Resources/Sprite Assets/EmojiOne.asset",
+        "TextMesh Pro/Resources/Style Sheets/Default Style Sheet.asset",
+        "TextMesh Pro/Examples & Extras/Resources/Color Gradient Presets/Blue to Purple - Vertical.asset"
+      ]
+    }
+  },
+  "script_analysis": {},
+  "candidates": [],
+  "selected_candidate": null,
+  "task_card": null,
+  "generated_files": [],
+  "model_calls": [],
+  "validation": {},
+  "errors": [],
+  "events": [
+    {
+      "time": "2026-04-26T17:30:05",
+      "level": "info",
+      "message": "Task started: scan_project"
+    },
+    {
+      "time": "2026-04-26T17:30:05",
+      "level": "info",
+      "message": "Dispatching to agent: project_analyzer"
+    },
+    {
+      "time": "2026-04-26T17:30:05",
+      "level": "info",
+      "message": "Dispatching to agent: validation"
+    },
+    {
+      "time": "2026-04-26T17:30:05",
+      "level": "info",
+      "message": "Dispatching to agent: report"
+    }
+  ],
+  "compressed": true
+}
