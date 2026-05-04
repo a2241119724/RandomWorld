@@ -13,6 +13,16 @@
     public class ASeek : ISeek
     {
         /// <summary>
+        /// 同时寻路的最大并发数
+        /// </summary>
+        private static readonly SemaphoreSlim ConcurrencyLimit = new (Environment.ProcessorCount, Environment.ProcessorCount);
+
+        /// <summary>
+        /// 共享LineRenderer材质
+        /// </summary>
+        private static Material sharedLineMaterial;
+
+        /// <summary>
         /// 邻居
         /// </summary>
         protected static readonly List<Vector2SByteLAB> Neighbors = new ()
@@ -21,9 +31,6 @@
             new Vector2SByteLAB(1, 0),
             new Vector2SByteLAB(0, -1),
             new Vector2SByteLAB(-1, 0), // 上右下左
-
-            // new Vector2SByte(1, 1), new Vector2SByte(1, -1), // 右上,右下
-            // new Vector2SByte(-1, -1), new Vector2SByte(-1, 1), // 左下, 左上
         };
 
         /// <summary>
@@ -37,10 +44,9 @@
         protected readonly Vector3[] checkOffsets = { new Vector3(0, 0), new Vector3(-0.5f, 0), new Vector3(0.5f, 0), new Vector3(0, 0.5f), new Vector3(0, -0.5f) };
 
         /// <summary>
-        /// 地图中板块的花费
-        /// TODO, 优化公共池
+        /// 地图中板块的花费(使用共享池)
         /// </summary>
-        protected volatile Spend[,] mapSpend;
+        protected Spend[,] mapSpend;
 
         /// <summary>
         /// 控制线程停止
@@ -48,43 +54,44 @@
         protected volatile bool isStopThread = false;
 
         /// <summary>
+        /// 搜索代数, 每次StartSeek递增, 用于丢弃过时的搜索任务
+        /// </summary>
+        protected volatile int seekGeneration = 0;
+
+        /// <summary>
         /// 待处理的板块
         /// </summary>
-        protected volatile List<Spend> openList;
+        protected List<Spend> openList;
 
         /// <summary>
         /// 已处理的板块
         /// </summary>
-        protected volatile List<Spend> closeList;
+        protected List<Spend> closeList;
 
-        // private static ManualResetEvent manualResetEvent; // 线程Wait
         public ASeek(Character character)
         {
-            int height = TileMap.Instance.TileMapDataLAB.Height;
-            int width = TileMap.Instance.TileMapDataLAB.Width;
+            // 确保Spend池和可步行性缓存已初始化
+            var tileMap = TileMap.Instance.TileMapDataLAB;
+            SpendPool.Initialize(tileMap.Width, tileMap.Height);
+            WalkabilityCache.Initialize(tileMap.Width, tileMap.Height);
 
-            // 初始化寻路花费
-            this.mapSpend = new Spend[height, width];
-            for (short i = 0; i < height; i++)
-            {
-                for (short j = 0; j < width; j++)
-                {
-                    this.mapSpend[i, j] = new Spend(i, j);
-                }
-            }
-
-            // 路径
+            // 路径 — 使用共享材质模板, 每个实例用不同颜色
             this.LineRenderer = character.GetComponent<LineRenderer>();
             this.LineRenderer.startWidth = 0.05f;
             this.LineRenderer.endWidth = 0.05f;
-            Material material = new (Shader.Find("Unlit/Color"));
-            material.color = new Color(UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f));
-            this.LineRenderer.material = material;
+            if (sharedLineMaterial == null)
+            {
+                sharedLineMaterial = new Material(Shader.Find("Unlit/Color"));
+            }
+
+            Material instanceMat = new (sharedLineMaterial);
+            instanceMat.color = new Color(UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f));
+            this.LineRenderer.material = instanceMat;
             this.LineRenderer.sortingLayerName = "Highest";
 
             this.Character = character;
-            this.openList = new List<Spend>();
-            this.closeList = new List<Spend>();
+            this.openList = new List<Spend>(128);
+            this.closeList = new List<Spend>(128);
         }
 
         /// <summary>
@@ -147,24 +154,50 @@
 
             this.StartSeek();
 
-            // 线程内获取targetMap可能是上一次的值, 所以不传入targetMap
-            ThreadPool.QueueUserWorkItem(t =>
-            {
-                // 之前的线程停止后执行
-                lock (this)
-                {
-                    // if (TileMap.Instance.TileMapDataLAB.Height == 0 || TileMap.Instance.TileMapDataLAB.Width == 0)
-                    // {
-                    //     ASeek.manualResetEvent.WaitOne();
-                    // }
-                    this.isStopThread = false;
-                    this.DoSeek();
+            // 捕获当前代数, 用于在等待信号量后验证搜索是否已过期
+            int capturedGeneration = this.seekGeneration;
 
-                    // 显示路径
-                    UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+            // 使用Task.Run以支持async/await并发控制
+            _ = System.Threading.Tasks.Task.Run(async () =>
+            {
+                await ConcurrencyLimit.WaitAsync();
+                try
+                {
+                    lock (this)
                     {
-                        this.UpdateLine();
-                    }).Wait();
+                        // 在等待信号量期间, 新的StartSeek可能已递增代数 — 丢弃过期任务
+                        if (capturedGeneration != this.seekGeneration)
+                        {
+                            return;
+                        }
+
+                        this.isStopThread = false;
+
+                        // 从池中租借Spend数组, 搜索完成后归还
+                        this.mapSpend = SpendPool.Rent();
+                        try
+                        {
+                            this.DoSeek();
+                        }
+                        finally
+                        {
+                            SpendPool.Return(this.mapSpend);
+                            this.mapSpend = null;
+                        }
+
+                        // 显示路径(仅在未被新搜索打断时)
+                        if (capturedGeneration == this.seekGeneration)
+                        {
+                            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                            {
+                                this.UpdateLine();
+                            }).Wait();
+                        }
+                    }
+                }
+                finally
+                {
+                    ConcurrencyLimit.Release();
                 }
             });
         }
@@ -243,12 +276,13 @@
         }
 
         /// <summary>
-        /// 寻路初始化
+        /// 寻路初始化(主线程调用)
         /// </summary>
         public void StartSeek()
         {
-            // 停止之前的线程
+            // 停止之前的线程, 递增代数使旧搜索任务失效
             this.isStopThread = true;
+            this.seekGeneration++;
             this.openList.Clear();
             this.closeList.Clear();
             this.SeekProgress = 0.0f;
@@ -257,6 +291,9 @@
             {
                 LogManager.Instance.Log(this.Character.name + ":添加寻路任务失败!", LogManager.LogLevelEnum.Warning);
             }
+
+            // 刷新可步行性缓存, 避免A*循环中每次邻居检查都向主线程派发
+            WalkabilityCache.Refresh();
 
             this.UpdateLine();
         }

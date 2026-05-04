@@ -132,14 +132,8 @@
                     int x = curSpend.PosMap.X + direction.X;
                     int y = curSpend.PosMap.Y + direction.Y;
 
-                    bool isReach = true;
-                    UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
-                    {
-                        isReach = ASeek.IsCanReach(new Vector3Int(x, y, 0));
-                    }).Wait();
-
-                    // 数组下标
-                    if (!isReach)
+                    // 直接从缓存读取(后台线程安全), 无需向主线程派发
+                    if (!WalkabilityCache.IsWalkable(x, y))
                     {
                         continue;
                     }
@@ -155,13 +149,9 @@
                     float temp;
                     if (isCorner > 4)
                     {
-                        UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
-                        {
-                            isReach = ASeek.IsCanReach(new Vector3Int(x, curSpend.PosMap.Y, 0)) || ASeek.IsCanReach(new Vector3Int(curSpend.PosMap.X, y, 0));
-                        }).Wait();
-
                         // 当上下左右阻塞时，斜着不可走
-                        if (!isReach)
+                        if (!WalkabilityCache.IsWalkable(x, curSpend.PosMap.Y)
+                            && !WalkabilityCache.IsWalkable(curSpend.PosMap.X, y))
                         {
                             continue;
                         }
