@@ -2,9 +2,6 @@
 # By default, everything is included.
 # We explicitly ignore private folders and file types below.
 
-# Ensure ALL .meta files are tracked (place early to be safe)
-!**/*.meta
-
 # Repository metadata and public docs.
 # These were already allowed; still fine.
 /.gitignore
@@ -96,3 +93,6 @@ hs_err_pid*.log
 *.ogg
 *.ttf
 *.otf
+
+# Ensure ALL .meta files are tracked (place early to be safe)
+!**/*.meta
