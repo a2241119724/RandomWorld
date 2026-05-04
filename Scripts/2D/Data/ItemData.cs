@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using System;
+    using UnityEngine.Serialization;
 
     /// <summary>
     /// 不能将ItemData转换为json,因为需要[Serializable]修饰,而包装类没有被修饰
@@ -54,18 +55,27 @@
             this.RelatedTaskTime = new TaskTime();
         }
 
+        public void EnsureTaskTime()
+        {
+            if (this.RelatedTaskTime == null)
+            {
+                this.RelatedTaskTime = new TaskTime();
+            }
+        }
+
         [Serializable]
         public class TaskTime
         {
             /// <summary>
-            /// 搬运任务的拾取时间/采集时间
+            /// 搬运任务的拾取时间
             /// </summary>
-            public float TaskBaseTime;
+            [FormerlySerializedAs("CarryTaskTakeTime")]
+            public float TaskBaseTime = WorkerTaskTimeConfig.CarryTakeSeconds;
 
             /// <summary>
             /// 搬运任务的放置时间
             /// </summary>
-            public float CarryTaskPutDownTime;
+            public float CarryTaskPutDownTime = WorkerTaskTimeConfig.CarryPutDownSeconds;
         }
 
         /// <summary>

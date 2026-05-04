@@ -48,8 +48,8 @@
                         .ToString();
                     }
 
-                    // 休息2秒
-                    if (this.recordTime < 2)
+                    // 短暂休息后重新找任务
+                    if (this.recordTime < WorkerTaskTimeConfig.IdleRestSeconds)
                     {
                         return;
                     }

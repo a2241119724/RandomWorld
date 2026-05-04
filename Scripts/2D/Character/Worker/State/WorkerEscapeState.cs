@@ -8,7 +8,6 @@
     /// </summary>
     public class WorkerEscapeState : AWorkerState
     {
-        private const float RecordTime = 5.0f;
         private float recordTime = 0.0f;
 
         public WorkerEscapeState(AWorker worker)
@@ -35,7 +34,7 @@
         {
             base.OnUpdate();
             this.recordTime += Time.deltaTime;
-            if (this.recordTime >= RecordTime)
+            if (this.recordTime >= WorkerTaskTimeConfig.EscapeSeconds)
             {
                 this.Character.Manager.ChangeState(TypeEnum.Seek);
             }

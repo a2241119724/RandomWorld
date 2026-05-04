@@ -67,7 +67,7 @@
             {
                 LogManager.Instance.Log(this.Character.name + " 没有任务!");
                 ++this.seekTimes;
-                if (this.seekTimes % WorkerExerciseTask.SeekThreshold == 0)
+                if (this.seekTimes % WorkerTaskTimeConfig.ExerciseSeekThreshold == 0)
                 {
                     WorkerTaskManager.Instance.AddTask(
                         new WorkerExerciseTask.ExerciseTaskBuilder()

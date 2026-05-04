@@ -35,7 +35,7 @@
         /// <summary>
         /// 任务需要的时间
         /// </summary>
-        protected float maxProgress = 2.0f;
+        protected float maxProgress = WorkerTaskTimeConfig.DefaultTaskSeconds;
 
         /// <summary>
         /// 任务阶段
@@ -155,10 +155,10 @@
             // 工作扣减疲劳值
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
 
-            // 吃饭任务不消耗疲劳
-            if (this.TaskType != WorkerTaskTypeEnum.Eat)
+            // 吃饭和睡觉任务不消耗疲劳
+            if (this.TaskType != WorkerTaskTypeEnum.Eat && this.TaskType != WorkerTaskTypeEnum.Sleep)
             {
-                workerData.CurTired -= Time.deltaTime * 0.1f;
+                workerData.CurTired -= Time.deltaTime * WorkerTaskTimeConfig.WorkTiredCostPerSecond;
             }
 
             this.curProgress += Time.deltaTime;
