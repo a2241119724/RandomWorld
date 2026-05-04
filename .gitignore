@@ -3,6 +3,8 @@
 /*
 
 !**/*.meta
+!/Agent
+!/AgentFull
 
 # Repository metadata and public docs.
 !/.gitignore
