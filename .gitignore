@@ -38,8 +38,6 @@
 
 # Local assistants, automation output, memory, reports, and caches.
 /.claude/
-/Agent/
-/AgentFull/
 **/__pycache__/
 **/cache/
 **/reports/
