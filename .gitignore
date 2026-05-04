@@ -1,27 +1,27 @@
 # Public source snapshot.
-# Default to hiding Unity assets and local tooling, then allow only readable code/docs.
-/*
+# By default, everything is included.
+# We explicitly ignore private folders and file types below.
 
+# Ensure ALL .meta files are tracked (place early to be safe)
 !**/*.meta
-!/Agent
-!/AgentFull
 
 # Repository metadata and public docs.
-!/.gitignore
-!/README.md
+# These were already allowed; still fine.
+/.gitignore
+/README.md
 
-# Game source code that is safe to show.
-!/Scripts/
-!/Scripts/**/
-!/Scripts/**/*.cs
-!/Scripts/**/*.md
+# Game source code (already public in your plan).
+/Scripts/
+/Scripts/**/
+/Scripts/**/*.cs
+/Scripts/**/*.md
 
-# Optional top-level editor scripts. Asset-like editor settings stay ignored.
-!/Editor/
-!/Editor/**/
-!/Editor/**/*.cs
+# Optional top-level editor scripts.
+/Editor/
+/Editor/**/
+/Editor/**/*.cs
 
-# Keep vendor/package code out of the public snapshot.
+# Keep vendor/package code private.
 /Scripts/Reference/
 
 # Do not publish runnable Unity content.
@@ -43,7 +43,7 @@
 **/reports/
 **/Reports/
 
-# Unity, IDE, and generated files if they ever appear inside this repo.
+# Unity, IDE, and generated files.
 /.vs/
 /Library/
 /Logs/
@@ -73,7 +73,7 @@
 *.log
 hs_err_pid*.log
 
-# Asset file types should stay private unless deliberately whitelisted above.
+# Asset file types that should stay private.
 *.asset
 *.prefab
 *.unity
