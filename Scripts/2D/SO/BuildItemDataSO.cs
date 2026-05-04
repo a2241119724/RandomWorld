@@ -33,6 +33,7 @@
             {
                 itemData.Id = index++;
                 itemData.Type = this.ItemType;
+                itemData.EnsureTaskTime();
             }
         }
     }

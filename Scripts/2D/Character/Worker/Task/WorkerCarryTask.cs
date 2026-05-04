@@ -21,13 +21,13 @@
             this.stageInit.Add((AWorker worker) =>
             {
                 ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
-                this.maxProgress = itemData.RelatedTaskTime.TaskBaseTime;
+                this.maxProgress = WorkerTaskTimeConfig.ResolveCarryTakeSeconds(itemData);
                 this.Init();
             });
             this.stageInit.Add((AWorker worker) =>
             {
                 ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
-                this.maxProgress = itemData.RelatedTaskTime.CarryTaskPutDownTime;
+                this.maxProgress = WorkerTaskTimeConfig.ResolveCarryPutDownSeconds(itemData);
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 

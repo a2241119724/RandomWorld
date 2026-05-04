@@ -17,7 +17,7 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 1.0f;
+                this.maxProgress = WorkerTaskTimeConfig.WearSeconds;
                 this.Init();
             });
         }

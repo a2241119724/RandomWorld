@@ -9,10 +9,6 @@
     [Serializable]
     public class WorkerExerciseTask : AWorkerTask
     {
-        /// <summary>
-        /// 没有任务寻路多少次添加锻炼任务
-        /// </summary>
-        public static readonly long SeekThreshold = 10;
         private AWorker worker;
 
         public WorkerExerciseTask()
@@ -20,7 +16,7 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 10.0f;
+                this.maxProgress = WorkerTaskTimeConfig.ExerciseSeconds;
                 this.Init();
 
                 // 设置Worker位置为目标位置

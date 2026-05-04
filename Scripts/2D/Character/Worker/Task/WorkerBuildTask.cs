@@ -24,7 +24,7 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 1.0f;
+                this.maxProgress = WorkerTaskTimeConfig.BuildFetchResourceSeconds;
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
@@ -39,7 +39,7 @@
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 2.0f;
+                this.maxProgress = WorkerTaskTimeConfig.GetBuildConstructionSeconds(this.needs);
 
                 // 建造
                 this.Init();

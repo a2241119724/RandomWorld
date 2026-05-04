@@ -16,7 +16,7 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 10.0f;
+                this.maxProgress = WorkerTaskTimeConfig.SleepSeconds;
 
                 // 获取物资
                 this.Init();
@@ -35,7 +35,7 @@
         {
             base.Finish(worker);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            workerData.CurHungry = workerData.MaxHungry;
+            workerData.CurTired = workerData.MaxTired;
         }
 
         /// <inheritdoc/>

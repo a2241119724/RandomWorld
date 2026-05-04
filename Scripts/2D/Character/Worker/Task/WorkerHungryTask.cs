@@ -14,7 +14,7 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 1.0f;
+                this.maxProgress = WorkerTaskTimeConfig.EatSeconds;
                 this.Init();
             });
         }

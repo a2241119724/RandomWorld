@@ -15,7 +15,7 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 1.0f;
+                this.maxProgress = WorkerTaskTimeConfig.PlantFetchSeedSeconds;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.IsContainSeedAndPreTake(worker, true));
@@ -27,7 +27,7 @@
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 1.0f;
+                this.maxProgress = WorkerTaskTimeConfig.PlantOneSeedSeconds;
                 this.Init();
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(FarmlandManager.Instance.IsEnoughAndPrePlant(worker, this.resourceInfo, true));
                 if (this.TargetMap == default)

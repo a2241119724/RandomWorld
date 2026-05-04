@@ -21,8 +21,7 @@
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
-                this.maxProgress = 50.0f;
+                this.maxProgress = WorkerTaskTimeConfig.GatherSeconds;
                 this.Init();
             });
         }
