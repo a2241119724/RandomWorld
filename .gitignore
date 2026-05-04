@@ -9,19 +9,19 @@
 !**/*.cs
 
 # Repository metadata and public docs.
-/.gitignore
-/README.md
+!/.gitignore
+!/README.md
 
-# Game source code (already public).
-/Scripts/
-/Scripts/**/
-/Scripts/**/*.cs
-/Scripts/**/*.md
+# Game source code – fully public.
+!/Scripts
+!/Scripts/**/
+!/Scripts/**/*.cs
+!/Scripts/**/*.md
 
-# Optional top-level editor scripts.
-/Editor/
-/Editor/**/
-/Editor/**/*.cs
+# Optional top-level editor scripts – fully public.
+!/Editor
+!/Editor/**/
+!/Editor/**/*.cs
 
 # Keep vendor/package code completely private (no .cs, no .meta).
 /Scripts/Reference/
