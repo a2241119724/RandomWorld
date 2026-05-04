@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Threading;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -68,7 +67,6 @@
                 return;
             }
 
-            ThreadPool.SetMaxThreads(2, 2);
             this.Seek = new AStar(this);
             this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAYER);
             this.AttackTags = new List<string>
