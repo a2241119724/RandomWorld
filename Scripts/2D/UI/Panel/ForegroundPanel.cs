@@ -3,7 +3,6 @@ namespace LAB2D
     using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
-    using UnityEngine.Events;
     using UnityEngine.UI;
 
     /// <summary>
@@ -11,15 +10,11 @@ namespace LAB2D
     /// </summary>
     public class ForegroundPanel : ABasePanel<ForegroundPanel>
     {
-        private const float SaveSlotSpacing = 12.0f;
-        private static readonly Vector2 SaveSlotSize = new (560.0f, 72.0f);
-        private static readonly Vector2 SaveSlotViewportSize = new (640.0f, 360.0f);
         private readonly List<Button> saveSlotButtons = new ();
         private GameObject saveSlotPanel;
         private GameObject overwriteConfirmPanel;
         private Text overwriteConfirmText;
         private RectTransform saveSlotContent;
-        private Font uiFont;
         private int pendingOverwriteArchiveIndex = -1;
         private GameObject clearConfirmPanel;
         private Text clearConfirmText;
@@ -58,7 +53,6 @@ namespace LAB2D
                 save.onClick.AddListener(this.Onclick_Save);
             }
 
-            this.uiFont = this.GetUIFont();
             this.CreateSaveSlotPanel();
             this.CreateClearConfirmPanel();
 
@@ -162,12 +156,7 @@ namespace LAB2D
 
         private void CreateSaveSlotPanel()
         {
-            if (this.BindSceneSaveSlotPanel())
-            {
-                return;
-            }
-
-            this.CreateRuntimeSaveSlotPanel();
+            this.BindSceneSaveSlotPanel();
         }
 
         private bool BindSceneSaveSlotPanel()
@@ -186,8 +175,6 @@ namespace LAB2D
                 return false;
             }
 
-            this.ConfigureSceneSaveSlotViewport(viewportTransform);
-
             Transform contentTransform = this.FindChildTransform(viewportTransform, "SaveSlotContent");
             this.saveSlotContent = contentTransform.GetComponent<RectTransform>();
             viewportTransform.GetComponent<ScrollRect>().content = this.saveSlotContent;
@@ -202,24 +189,6 @@ namespace LAB2D
             this.BindSceneOverwriteConfirmPanel(panelTransform);
             this.saveSlotPanel.SetActive(false);
             return true;
-        }
-
-        private void ConfigureSceneSaveSlotViewport(Transform viewportTransform)
-        {
-            RectTransform viewportRect = viewportTransform.GetComponent<RectTransform>();
-            ScrollRect scrollRect = viewportTransform.GetComponent<ScrollRect>();
-            scrollRect.horizontal = false;
-            scrollRect.vertical = true;
-            scrollRect.movementType = ScrollRect.MovementType.Clamped;
-            scrollRect.scrollSensitivity = 50.0f;
-            scrollRect.viewport = viewportRect;
-
-            viewportTransform.GetComponent<Image>().raycastTarget = true;
-
-            if (viewportTransform.GetComponent<RectMask2D>() == null)
-            {
-                viewportTransform.gameObject.AddComponent<RectMask2D>();
-            }
         }
 
         private void ClearGeneratedSaveSlotButtons()
@@ -277,12 +246,6 @@ namespace LAB2D
         private void BindSceneOverwriteConfirmPanel(Transform panelTransform)
         {
             Transform confirmPanelTransform = this.FindChildTransform(panelTransform, "OverwriteConfirmPanel");
-            if (confirmPanelTransform == null)
-            {
-                this.CreateRuntimeOverwriteConfirmPanel();
-                return;
-            }
-
             this.overwriteConfirmPanel = confirmPanelTransform.gameObject;
             this.overwriteConfirmText = this.FindChildComponent<Text>(confirmPanelTransform, "Tip");
 
@@ -316,148 +279,6 @@ namespace LAB2D
         {
             Transform child = this.FindChildTransform(root, name);
             return child == null ? null : child.GetComponent<T>();
-        }
-
-        private void CreateRuntimeSaveSlotPanel()
-        {
-            this.saveSlotPanel = this.CreateUIObject("SaveSlotPanel", this.Panel.transform);
-            RectTransform panelRect = this.saveSlotPanel.GetComponent<RectTransform>();
-            panelRect.anchorMin = Vector2.zero;
-            panelRect.anchorMax = Vector2.one;
-            panelRect.offsetMin = Vector2.zero;
-            panelRect.offsetMax = Vector2.zero;
-
-            Image background = this.saveSlotPanel.AddComponent<Image>();
-            background.color = PixelUITheme.ModalShade;
-            background.raycastTarget = true;
-
-            GameObject title = this.CreateText("Title", this.saveSlotPanel.transform, "选择存档槽", 40, TextAnchor.MiddleCenter);
-            RectTransform titleRect = title.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.5f, 0.5f);
-            titleRect.anchorMax = new Vector2(0.5f, 0.5f);
-            titleRect.pivot = new Vector2(0.5f, 0.5f);
-            titleRect.anchoredPosition = new Vector2(0.0f, 250.0f);
-            titleRect.sizeDelta = new Vector2(600.0f, 70.0f);
-
-            this.saveSlotContent = this.CreateRuntimeSaveSlotScrollView();
-            this.CreateSaveSlotButtons();
-
-            Button closeButton = this.CreateButton(
-                "Close",
-                this.saveSlotPanel.transform,
-                "关闭",
-                new Vector2(180.0f, 58.0f),
-                this.HideSaveSlotPanel);
-            RectTransform closeRect = closeButton.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(0.5f, 0.5f);
-            closeRect.anchorMax = new Vector2(0.5f, 0.5f);
-            closeRect.pivot = new Vector2(0.5f, 0.5f);
-            closeRect.anchoredPosition = new Vector2(0.0f, -270.0f);
-
-            this.CreateRuntimeOverwriteConfirmPanel();
-            this.saveSlotPanel.SetActive(false);
-        }
-
-        private RectTransform CreateRuntimeSaveSlotScrollView()
-        {
-            GameObject viewport = this.CreateUIObject("SaveSlotViewport", this.saveSlotPanel.transform);
-            RectTransform viewportRect = viewport.GetComponent<RectTransform>();
-            viewportRect.anchorMin = new Vector2(0.5f, 0.5f);
-            viewportRect.anchorMax = new Vector2(0.5f, 0.5f);
-            viewportRect.pivot = new Vector2(0.5f, 0.5f);
-            viewportRect.anchoredPosition = new Vector2(0.0f, 20.0f);
-            viewportRect.sizeDelta = SaveSlotViewportSize;
-
-            Image image = viewport.AddComponent<Image>();
-            image.color = PixelUITheme.ViewportBg;
-            image.raycastTarget = true;
-
-            viewport.AddComponent<RectMask2D>();
-            ScrollRect scrollRect = viewport.AddComponent<ScrollRect>();
-            scrollRect.horizontal = false;
-            scrollRect.vertical = true;
-            scrollRect.movementType = ScrollRect.MovementType.Clamped;
-            scrollRect.scrollSensitivity = 50.0f;
-            scrollRect.viewport = viewportRect;
-
-            GameObject content = this.CreateUIObject("SaveSlotContent", viewport.transform);
-            RectTransform contentRect = content.GetComponent<RectTransform>();
-            contentRect.anchorMin = new Vector2(0.5f, 1.0f);
-            contentRect.anchorMax = new Vector2(0.5f, 1.0f);
-            contentRect.pivot = new Vector2(0.5f, 1.0f);
-            contentRect.anchoredPosition = Vector2.zero;
-            contentRect.sizeDelta = this.GetSaveSlotContentSize();
-            scrollRect.content = contentRect;
-            return contentRect;
-        }
-
-        private Vector2 GetSaveSlotContentSize()
-        {
-            int count = ArchiveManager.Instance.ArchiveCount;
-            float height = (count * SaveSlotSize.y) + (Mathf.Max(0, count - 1) * SaveSlotSpacing);
-            return new Vector2(SaveSlotSize.x, height);
-        }
-
-        private void CreateRuntimeOverwriteConfirmPanel()
-        {
-            this.overwriteConfirmPanel = this.CreateUIObject("OverwriteConfirmPanel", this.saveSlotPanel.transform);
-            RectTransform panelRect = this.overwriteConfirmPanel.GetComponent<RectTransform>();
-            panelRect.anchorMin = Vector2.zero;
-            panelRect.anchorMax = Vector2.one;
-            panelRect.offsetMin = Vector2.zero;
-            panelRect.offsetMax = Vector2.zero;
-
-            Image shade = this.overwriteConfirmPanel.AddComponent<Image>();
-            shade.color = PixelUITheme.DialogShadeDark;
-            shade.raycastTarget = true;
-
-            GameObject box = this.CreateUIObject("Box", this.overwriteConfirmPanel.transform);
-            RectTransform boxRect = box.GetComponent<RectTransform>();
-            boxRect.anchorMin = new Vector2(0.5f, 0.5f);
-            boxRect.anchorMax = new Vector2(0.5f, 0.5f);
-            boxRect.pivot = new Vector2(0.5f, 0.5f);
-            boxRect.anchoredPosition = Vector2.zero;
-            boxRect.sizeDelta = new Vector2(560.0f, 260.0f);
-
-            Image boxImage = box.AddComponent<Image>();
-            boxImage.color = PixelUITheme.DialogBoxBg;
-            boxImage.raycastTarget = true;
-
-            GameObject tip = this.CreateText("Tip", box.transform, string.Empty, 32, TextAnchor.MiddleCenter);
-            tip.GetComponent<Text>().color = PixelUITheme.TextPrimary;
-            RectTransform tipRect = tip.GetComponent<RectTransform>();
-            tipRect.anchorMin = new Vector2(0.5f, 0.5f);
-            tipRect.anchorMax = new Vector2(0.5f, 0.5f);
-            tipRect.pivot = new Vector2(0.5f, 0.5f);
-            tipRect.anchoredPosition = new Vector2(0.0f, 55.0f);
-            tipRect.sizeDelta = new Vector2(500.0f, 110.0f);
-            this.overwriteConfirmText = tip.GetComponent<Text>();
-
-            Button confirmButton = this.CreateButton(
-                "Confirm",
-                box.transform,
-                "确认覆盖",
-                new Vector2(190.0f, 58.0f),
-                this.OnClick_ConfirmOverwrite);
-            RectTransform confirmRect = confirmButton.GetComponent<RectTransform>();
-            confirmRect.anchorMin = new Vector2(0.5f, 0.5f);
-            confirmRect.anchorMax = new Vector2(0.5f, 0.5f);
-            confirmRect.pivot = new Vector2(0.5f, 0.5f);
-            confirmRect.anchoredPosition = new Vector2(-110.0f, -70.0f);
-
-            Button cancelButton = this.CreateButton(
-                "Cancel",
-                box.transform,
-                "取消",
-                new Vector2(190.0f, 58.0f),
-                this.HideOverwriteConfirmPanel);
-            RectTransform cancelRect = cancelButton.GetComponent<RectTransform>();
-            cancelRect.anchorMin = new Vector2(0.5f, 0.5f);
-            cancelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            cancelRect.pivot = new Vector2(0.5f, 0.5f);
-            cancelRect.anchoredPosition = new Vector2(110.0f, -70.0f);
-
-            this.overwriteConfirmPanel.SetActive(false);
         }
 
         private void ShowSaveSlotPanel()
@@ -526,90 +347,32 @@ namespace LAB2D
         private void CreateClearConfirmPanel()
         {
             Transform panelTransform = this.FindChildTransform(this.saveSlotPanel.transform, "ClearConfirmPanel");
-            if (panelTransform != null)
+            if (panelTransform == null)
             {
-                this.clearConfirmPanel = panelTransform.gameObject;
-                this.clearConfirmText = this.FindChildComponent<Text>(panelTransform, "Tip");
-
-                Button confirmButton = this.FindChildComponent<Button>(panelTransform, "Confirm");
-                confirmButton.onClick.RemoveAllListeners();
-                confirmButton.onClick.AddListener(this.OnClick_ConfirmClear);
-
-                Button cancelButton = this.FindChildComponent<Button>(panelTransform, "Cancel");
-                cancelButton.onClick.RemoveAllListeners();
-                cancelButton.onClick.AddListener(this.HideClearConfirmPanel);
-
-                this.clearConfirmPanel.SetActive(false);
                 return;
             }
 
-            this.CreateRuntimeClearConfirmPanel();
-        }
+            this.clearConfirmPanel = panelTransform.gameObject;
+            this.clearConfirmText = this.FindChildComponent<Text>(panelTransform, "Tip");
 
-        private void CreateRuntimeClearConfirmPanel()
-        {
-            this.clearConfirmPanel = this.CreateUIObject("ClearConfirmPanel", this.saveSlotPanel.transform);
-            RectTransform panelRect = this.clearConfirmPanel.GetComponent<RectTransform>();
-            panelRect.anchorMin = Vector2.zero;
-            panelRect.anchorMax = Vector2.one;
-            panelRect.offsetMin = Vector2.zero;
-            panelRect.offsetMax = Vector2.zero;
+            Button confirmButton = this.FindChildComponent<Button>(panelTransform, "Confirm");
+            confirmButton.onClick.RemoveAllListeners();
+            confirmButton.onClick.AddListener(this.OnClick_ConfirmClear);
 
-            Image shade = this.clearConfirmPanel.AddComponent<Image>();
-            shade.color = PixelUITheme.DialogShadeDark;
-            shade.raycastTarget = true;
-
-            GameObject box = this.CreateUIObject("Box", this.clearConfirmPanel.transform);
-            RectTransform boxRect = box.GetComponent<RectTransform>();
-            boxRect.anchorMin = new Vector2(0.5f, 0.5f);
-            boxRect.anchorMax = new Vector2(0.5f, 0.5f);
-            boxRect.pivot = new Vector2(0.5f, 0.5f);
-            boxRect.anchoredPosition = Vector2.zero;
-            boxRect.sizeDelta = new Vector2(560.0f, 260.0f);
-
-            Image boxImage = box.AddComponent<Image>();
-            boxImage.color = PixelUITheme.DialogBoxBg;
-            boxImage.raycastTarget = true;
-
-            GameObject tip = this.CreateText("Tip", box.transform, string.Empty, 32, TextAnchor.MiddleCenter);
-            tip.GetComponent<Text>().color = PixelUITheme.TextPrimary;
-            RectTransform tipRect = tip.GetComponent<RectTransform>();
-            tipRect.anchorMin = new Vector2(0.5f, 0.5f);
-            tipRect.anchorMax = new Vector2(0.5f, 0.5f);
-            tipRect.pivot = new Vector2(0.5f, 0.5f);
-            tipRect.anchoredPosition = new Vector2(0.0f, 55.0f);
-            tipRect.sizeDelta = new Vector2(500.0f, 110.0f);
-            this.clearConfirmText = tip.GetComponent<Text>();
-
-            Button confirmButton = this.CreateButton(
-                "Confirm",
-                box.transform,
-                "确认清除",
-                new Vector2(190.0f, 58.0f),
-                this.OnClick_ConfirmClear);
-            RectTransform confirmRect = confirmButton.GetComponent<RectTransform>();
-            confirmRect.anchorMin = new Vector2(0.5f, 0.5f);
-            confirmRect.anchorMax = new Vector2(0.5f, 0.5f);
-            confirmRect.pivot = new Vector2(0.5f, 0.5f);
-            confirmRect.anchoredPosition = new Vector2(-110.0f, -70.0f);
-
-            Button cancelButton = this.CreateButton(
-                "Cancel",
-                box.transform,
-                "取消",
-                new Vector2(190.0f, 58.0f),
-                this.HideClearConfirmPanel);
-            RectTransform cancelRect = cancelButton.GetComponent<RectTransform>();
-            cancelRect.anchorMin = new Vector2(0.5f, 0.5f);
-            cancelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            cancelRect.pivot = new Vector2(0.5f, 0.5f);
-            cancelRect.anchoredPosition = new Vector2(110.0f, -70.0f);
+            Button cancelButton = this.FindChildComponent<Button>(panelTransform, "Cancel");
+            cancelButton.onClick.RemoveAllListeners();
+            cancelButton.onClick.AddListener(this.HideClearConfirmPanel);
 
             this.clearConfirmPanel.SetActive(false);
         }
 
         private void ShowClearConfirmPanel(int archiveIndex)
         {
+            if (this.clearConfirmPanel == null)
+            {
+                return;
+            }
+
             if (!ArchiveManager.Instance.HasArchive(archiveIndex))
             {
                 GlobalInit.Instance.ShowTip("空存档槽不能清除");
@@ -627,7 +390,10 @@ namespace LAB2D
         private void HideClearConfirmPanel()
         {
             this.pendingClearArchiveIndex = -1;
-            this.clearConfirmPanel.SetActive(false);
+            if (this.clearConfirmPanel != null)
+            {
+                this.clearConfirmPanel.SetActive(false);
+            }
         }
 
         private void OnClick_ConfirmClear()
@@ -657,74 +423,6 @@ namespace LAB2D
             GlobalInit.Instance.ShowTip($"保存数据: {ArchiveManager.Instance.CurrentArchiveDisplayName}");
             ArchiveManager.Instance.SaveCurrentArchive();
             this.HideSaveSlotPanel();
-        }
-
-        private GameObject CreateUIObject(string name, Transform parent)
-        {
-            GameObject gameObject = new (name);
-            gameObject.transform.SetParent(parent, false);
-            gameObject.layer = parent.gameObject.layer;
-            gameObject.AddComponent<RectTransform>();
-            return gameObject;
-        }
-
-        private Button CreateButton(string name, Transform parent, string text, Vector2 size, UnityAction onClick)
-        {
-            GameObject gameObject = this.CreateUIObject(name, parent);
-            RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-            rectTransform.sizeDelta = size;
-
-            Image image = gameObject.AddComponent<Image>();
-            image.color = PixelUITheme.ButtonNormal;
-
-            Button button = gameObject.AddComponent<Button>();
-            ColorBlock colors = button.colors;
-            colors.normalColor = PixelUITheme.ButtonNormal;
-            colors.highlightedColor = PixelUITheme.ButtonHighlighted;
-            colors.pressedColor = PixelUITheme.ButtonPressed;
-            colors.selectedColor = PixelUITheme.ButtonSelected;
-            colors.disabledColor = PixelUITheme.ButtonDisabled;
-            button.colors = colors;
-            button.targetGraphic = image;
-            button.onClick.AddListener(onClick);
-
-            GameObject textObject = this.CreateText("Text", gameObject.transform, text, 30, TextAnchor.MiddleCenter);
-            RectTransform textRect = textObject.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = Vector2.zero;
-            textRect.offsetMax = Vector2.zero;
-            return button;
-        }
-
-        private GameObject CreateText(string name, Transform parent, string text, int fontSize, TextAnchor alignment)
-        {
-            GameObject gameObject = this.CreateUIObject(name, parent);
-            Text textComponent = gameObject.AddComponent<Text>();
-            textComponent.font = this.uiFont;
-            textComponent.fontSize = fontSize;
-            textComponent.resizeTextForBestFit = true;
-            textComponent.resizeTextMinSize = 14;
-            textComponent.resizeTextMaxSize = fontSize;
-            textComponent.alignment = alignment;
-            textComponent.color = Color.white;
-            textComponent.text = text;
-            return gameObject;
-        }
-
-        private Font GetUIFont()
-        {
-            Text[] texts = this.Panel.GetComponentsInChildren<Text>(true);
-            foreach (Text text in texts)
-            {
-                if (text.font != null)
-                {
-                    return text.font;
-                }
-            }
-
-            Font font = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
-            return font != null ? font : Resources.GetBuiltinResource<Font>("Arial.ttf");
         }
 
         private void Onclick_GeneratorItem()
