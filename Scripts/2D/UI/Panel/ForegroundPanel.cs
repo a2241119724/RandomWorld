@@ -16,6 +16,10 @@ namespace LAB2D
         private Text overwriteConfirmText;
         private RectTransform saveSlotContent;
         private int pendingOverwriteArchiveIndex = -1;
+        private GameObject renamePanel;
+        private InputField renameInputField;
+        private Text renameTipText;
+        private int pendingRenameArchiveIndex = -1;
         private GameObject clearConfirmPanel;
         private Text clearConfirmText;
         private int pendingClearArchiveIndex = -1;
@@ -55,6 +59,7 @@ namespace LAB2D
 
             this.CreateSaveSlotPanel();
             this.CreateClearConfirmPanel();
+            this.CreateRenamePanel();
 
             // 匹配数字按键
             Transform tools = Tool.GetComponentInChildren<Transform>(this.Panel, "Menu");
@@ -235,6 +240,8 @@ namespace LAB2D
             button.onClick.AddListener(() => this.OnClick_SaveSlot(archiveIndex));
 
             Button renameButton = this.FindChildComponent<Button>(gameObject.transform, "Rename");
+            renameButton.onClick.RemoveAllListeners();
+            renameButton.onClick.AddListener(() => this.ShowRenamePanel(archiveIndex));
 
             Button clearButton = this.FindChildComponent<Button>(gameObject.transform, "Clear");
             clearButton.onClick.RemoveAllListeners();
@@ -293,6 +300,7 @@ namespace LAB2D
             this.pendingOverwriteArchiveIndex = -1;
             this.HideOverwriteConfirmPanel();
             this.HideClearConfirmPanel();
+            this.HideRenamePanel();
             this.saveSlotPanel.SetActive(false);
         }
 
@@ -414,6 +422,94 @@ namespace LAB2D
             }
 
             this.HideClearConfirmPanel();
+            this.RefreshSaveSlotButtons();
+        }
+
+        private void CreateRenamePanel()
+        {
+            Transform panelTransform = this.FindChildTransform(this.saveSlotPanel.transform, "RenameArchivePanel");
+            if (panelTransform == null)
+            {
+                return;
+            }
+
+            this.renamePanel = panelTransform.gameObject;
+            this.renameInputField = this.FindChildComponent<InputField>(panelTransform, "NameInput");
+            this.renameTipText = this.FindChildComponent<Text>(panelTransform, "Tip");
+
+            Button confirmButton = this.FindChildComponent<Button>(panelTransform, "Confirm");
+            confirmButton.onClick.RemoveAllListeners();
+            confirmButton.onClick.AddListener(this.OnClick_ConfirmRename);
+
+            Button cancelButton = this.FindChildComponent<Button>(panelTransform, "Cancel");
+            cancelButton.onClick.RemoveAllListeners();
+            cancelButton.onClick.AddListener(this.HideRenamePanel);
+
+            this.renamePanel.SetActive(false);
+        }
+
+        private void ShowRenamePanel(int archiveIndex)
+        {
+            if (this.renamePanel == null)
+            {
+                return;
+            }
+
+            if (!ArchiveManager.Instance.HasArchive(archiveIndex))
+            {
+                GlobalInit.Instance.ShowTip("空存档槽不能改名");
+                this.RefreshSaveSlotButtons();
+                return;
+            }
+
+            string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
+            this.pendingRenameArchiveIndex = archiveIndex;
+            if (this.renameTipText != null)
+            {
+                this.renameTipText.text = $"修改存档名称\n{displayName}";
+            }
+
+            if (this.renameInputField != null)
+            {
+                this.renameInputField.text = displayName;
+            }
+
+            this.renamePanel.SetActive(true);
+            this.renamePanel.transform.SetAsLastSibling();
+
+            if (this.renameInputField != null)
+            {
+                this.renameInputField.Select();
+                this.renameInputField.ActivateInputField();
+            }
+        }
+
+        private void HideRenamePanel()
+        {
+            this.pendingRenameArchiveIndex = -1;
+            if (this.renamePanel != null)
+            {
+                this.renamePanel.SetActive(false);
+            }
+        }
+
+        private void OnClick_ConfirmRename()
+        {
+            if (this.pendingRenameArchiveIndex < 0)
+            {
+                this.HideRenamePanel();
+                return;
+            }
+
+            string displayName = this.renameInputField == null ? string.Empty : this.renameInputField.text;
+            if (!ArchiveManager.Instance.SetArchiveDisplayName(this.pendingRenameArchiveIndex, displayName))
+            {
+                GlobalInit.Instance.ShowTip("存档名称不能为空");
+                return;
+            }
+
+            GlobalInit.Instance.ShowTip("存档名称已修改");
+            this.HideRenamePanel();
             this.RefreshSaveSlotButtons();
         }
 
