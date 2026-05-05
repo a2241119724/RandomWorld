@@ -14,8 +14,8 @@
         private readonly string logPath = Path.Combine(Application.persistentDataPath, "game.log");
         private readonly string errorLogPath = Path.Combine(Application.persistentDataPath, "error.log");
         private readonly List<string> logs = new List<string>();
-        private readonly int maxLogCount = 200;
-        private LogLevelEnum minLogLevel = LogLevelEnum.Info; // 最小的日志级别.
+        private readonly int maxLogCount = 100; // 每条日志立即落盘，方便运行时查看game.log.
+        private LogLevelEnum minLogLevel = LogLevelEnum.Trace; // 最小的日志级别.
         private bool isSave = true;
         private bool logFileAvailable = true;
         private bool errorFileAvailable = true;
