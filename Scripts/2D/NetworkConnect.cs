@@ -39,7 +39,7 @@
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
-            LogManager.Instance.Log("已连接服务器", LogManager.LogLevelEnum.Info);
+            LogManager.Instance.Log("已连接服务器", LogManager.LogLevelEnum.Trace);
 
             // 设置当前大厅类型为sqlLobby
             TypedLobby typedLobby = new ("myLobby", LobbyType.SqlLobby);
@@ -54,7 +54,7 @@
         public override void OnJoinedLobby()
         {
             base.OnJoinedLobby();
-            LogManager.Instance.Log("进入大厅", LogManager.LogLevelEnum.Info);
+            LogManager.Instance.Log("进入大厅", LogManager.LogLevelEnum.Trace);
         }
 
         /// <summary>
@@ -63,7 +63,7 @@
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
-            LogManager.Instance.Log("加入房间成功", LogManager.LogLevelEnum.Info);
+            LogManager.Instance.Log("加入房间成功", LogManager.LogLevelEnum.Trace);
 
             // 同步地图数据
             SyncDataTool.SyncDataReqWrapper(TileMap.Instance.PhotonView);
@@ -79,7 +79,7 @@
         public override void OnLeftLobby()
         {
             base.OnLeftLobby();
-            LogManager.Instance.Log("退出大厅", LogManager.LogLevelEnum.Info);
+            LogManager.Instance.Log("退出大厅", LogManager.LogLevelEnum.Trace);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@
         public override void OnLeftRoom()
         {
             base.OnLeftRoom();
-            LogManager.Instance.Log("离开房间", LogManager.LogLevelEnum.Info);
+            LogManager.Instance.Log("离开房间", LogManager.LogLevelEnum.Trace);
         }
 
         /// <summary>
@@ -98,7 +98,7 @@
         public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
         {
             base.OnPlayerEnteredRoom(newPlayer);
-            LogManager.Instance.Log("新玩家加入", LogManager.LogLevelEnum.Info);
+            LogManager.Instance.Log("新玩家加入", LogManager.LogLevelEnum.Trace);
             GlobalInit.Instance.ShowTip("新玩家加入");
         }
 

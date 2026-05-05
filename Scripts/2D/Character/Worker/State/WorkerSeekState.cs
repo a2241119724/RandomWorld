@@ -65,7 +65,7 @@
             }
             else
             {
-                LogManager.Instance.Log(this.Character.name + " 没有任务!");
+                LogManager.Instance.Log(this.Character.name + " 没有任务!", LogManager.LogLevelEnum.Trace);
                 ++this.seekTimes;
                 if (this.seekTimes % WorkerTaskTimeConfig.ExerciseSeekThreshold == 0)
                 {
@@ -78,7 +78,7 @@
                 }
             }
 
-            LogManager.Instance.Log(this.Character.name + " 寻路->" + this.targetMap);
+            LogManager.Instance.Log(this.Character.name + " 寻路->" + this.targetMap, LogManager.LogLevelEnum.Trace);
             this.Character.Seek.Seek(this.targetMap);
         }
 
@@ -133,7 +133,7 @@
                         this.Character.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
                     }
 
-                    LogManager.Instance.Log(this.Character.name + " 没有找到路!");
+                    LogManager.Instance.Log(this.Character.name + " 没有找到路!", LogManager.LogLevelEnum.Trace);
                     return;
                 }
 

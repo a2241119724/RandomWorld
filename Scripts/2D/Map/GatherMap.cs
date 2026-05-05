@@ -62,7 +62,7 @@
         public override void SyncDataReq(byte[] data)
         {
             base.SyncDataReq(data);
-            LogManager.Instance.Log("Request: 同步地图采集数据");
+            LogManager.Instance.Log("Request: 同步地图采集数据", LogManager.LogLevelEnum.Trace);
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.GatherMapDataLAB);
         }
 
@@ -71,7 +71,7 @@
         public override void SyncDataResp(byte[] data)
         {
             base.SyncDataResp(data);
-            LogManager.Instance.Log("Response: 同步地图采集数据");
+            LogManager.Instance.Log("Response: 同步地图采集数据", LogManager.LogLevelEnum.Trace);
             GatherMapData gatherMapData = DataTool.FromByteArray<GatherMapData>(data);
             Dictionary<Vector3IntLAB, string>.Enumerator enumerator = gatherMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
@@ -91,7 +91,7 @@
         [PunRPC]
         public void SyncDataResp(byte[] vector3IntLAB, string tileBaseName, bool isDelete = false)
         {
-            LogManager.Instance.Log("Response: 同步地图采集数据");
+            LogManager.Instance.Log("Response: 同步地图采集数据", LogManager.LogLevelEnum.Trace);
 
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)

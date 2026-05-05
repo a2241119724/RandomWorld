@@ -23,7 +23,7 @@
         {
             // 打印初始托管堆大小
             long initialHeapSize = GC.GetTotalMemory(false);
-            LogManager.Instance.Log($"Initial Heap Size: {initialHeapSize / 1024 / 1024} M", LogManager.LogLevelEnum.Info);
+            LogManager.Instance.Log($"Initial Heap Size: {initialHeapSize / 1024 / 1024} M", LogManager.LogLevelEnum.Trace);
 
             // 执行一些操作来分配内存，例如创建对象
             // ...

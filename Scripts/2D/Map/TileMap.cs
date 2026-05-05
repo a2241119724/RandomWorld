@@ -271,7 +271,7 @@
         public override void SyncDataReq(byte[] data)
         {
             base.SyncDataReq(data);
-            LogManager.Instance.Log("Request: 同步地图数据");
+            LogManager.Instance.Log("Request: 同步地图数据", LogManager.LogLevelEnum.Trace);
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.TileMapDataLAB);
         }
 
@@ -280,7 +280,7 @@
         public override void SyncDataResp(byte[] data)
         {
             base.SyncDataResp(data);
-            LogManager.Instance.Log("Response: 同步地图数据");
+            LogManager.Instance.Log("Response: 同步地图数据", LogManager.LogLevelEnum.Trace);
             this.TileMapDataLAB = DataTool.FromByteArray<TileMapData>(data);
             this.SetProgressAsync(this.TileMapDataLAB.MapTiles.GetLength(0), this.TileMapDataLAB.MapTiles.GetLength(1));
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));

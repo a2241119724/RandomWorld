@@ -103,7 +103,7 @@
                 }
                 else
                 {
-                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Info);
+                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Trace);
 
                     // 数据--
                     BackpackController.Instance.ReduceQuantity(this.Select.Item);
@@ -111,7 +111,7 @@
                     // 界面--
                     BackpackController.Instance.ReduceQuantityUI(this.Select.Item);
                     BackpackController.Instance.SetBorderColor(BackpackController.Instance.GetIndex(this.Select.Item));
-                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Info);
+                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Trace);
 
                     // 全局数据--
                     ABackpackItem item = (ABackpackItem)this.Select.Item;
