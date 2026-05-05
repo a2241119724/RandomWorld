@@ -200,7 +200,6 @@ namespace LAB2D
                 this.saveSlotContent = contentTransform.gameObject.AddComponent<RectTransform>();
             }
 
-            this.ConfigureSaveSlotContent(this.saveSlotContent);
             ScrollRect viewportScrollRect = viewportTransform.GetComponent<ScrollRect>();
             if (viewportScrollRect != null)
             {
@@ -247,21 +246,6 @@ namespace LAB2D
             if (mask == null)
             {
                 viewportTransform.gameObject.AddComponent<RectMask2D>();
-            }
-        }
-
-        private void ConfigureSaveSlotContent(RectTransform contentRect)
-        {
-            contentRect.anchorMin = new Vector2(0.5f, 1.0f);
-            contentRect.anchorMax = new Vector2(0.5f, 1.0f);
-            contentRect.pivot = new Vector2(0.5f, 1.0f);
-            contentRect.anchoredPosition = Vector2.zero;
-            contentRect.sizeDelta = this.GetSaveSlotContentSize();
-
-            ScrollRect scrollRect = contentRect.GetComponentInParent<ScrollRect>();
-            if (scrollRect != null)
-            {
-                scrollRect.content = contentRect;
             }
         }
 
@@ -320,7 +304,6 @@ namespace LAB2D
             clearButton.onClick.RemoveAllListeners();
             clearButton.onClick.AddListener(() => this.ShowClearConfirmPanel(archiveIndex));
 
-            this.SetSaveSlotButtonPosition(button, archiveIndex);
             return button;
         }
 
@@ -715,13 +698,6 @@ namespace LAB2D
             GlobalInit.Instance.ShowTip($"保存数据: {ArchiveManager.Instance.CurrentArchiveDisplayName}");
             ArchiveManager.Instance.SaveCurrentArchive();
             this.HideSaveSlotPanel();
-        }
-
-        private void SetSaveSlotButtonPosition(Button saveSlotButton, int archiveIndex)
-        {
-            RectTransform rectTransform = saveSlotButton.transform.parent.GetComponent<RectTransform>();
-            float y = -archiveIndex * (SaveSlotSize.y + SaveSlotSpacing);
-            rectTransform.anchoredPosition = new Vector2(0.0f, y);
         }
 
         private GameObject CreateUIObject(string name, Transform parent)
