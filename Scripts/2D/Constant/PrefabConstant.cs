@@ -86,6 +86,11 @@
         public const string BUTTON_ITEM = "ButtonItem";
 
         /// <summary>
+        /// 存档项
+        /// </summary>
+        public const string ARCHIVE_ITEM = "ArchiveItem";
+
+        /// <summary>
         /// 右侧聊天项
         /// </summary>
         public const string RIGHT_CHAT_ITEM = "RightChatItem";

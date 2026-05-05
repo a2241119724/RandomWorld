@@ -59,22 +59,15 @@ namespace LAB2D
                 int archiveIndex = i;
                 Button archiveSlotButton = this.FindArchiveSlotButton(archiveIndex) ??
                     this.CreateArchiveSlotButton(archiveIndex);
-                this.EnsureArchiveSlotControls(archiveSlotButton);
                 archiveSlotButton.onClick.RemoveAllListeners();
                 archiveSlotButton.onClick.AddListener(() => this.OnClick_ArchiveSlot(archiveIndex));
                 Button renameButton = this.FindChildComponent<Button>(archiveSlotButton.transform, "Rename");
-                if (renameButton != null)
-                {
-                    renameButton.onClick.RemoveAllListeners();
-                    renameButton.onClick.AddListener(() => this.ShowRenamePanel(archiveIndex));
-                }
+                renameButton.onClick.RemoveAllListeners();
+                renameButton.onClick.AddListener(() => this.ShowRenamePanel(archiveIndex));
 
                 Button clearButton = this.FindChildComponent<Button>(archiveSlotButton.transform, "Clear");
-                if (clearButton != null)
-                {
-                    clearButton.onClick.RemoveAllListeners();
-                    clearButton.onClick.AddListener(() => this.ShowClearConfirmPanel(archiveIndex));
-                }
+                clearButton.onClick.RemoveAllListeners();
+                clearButton.onClick.AddListener(() => this.ShowClearConfirmPanel(archiveIndex));
 
                 this.SetArchiveSlotButtonPosition(archiveSlotButton, archiveIndex);
                 archiveSlotButton.gameObject.SetActive(true);
@@ -101,74 +94,10 @@ namespace LAB2D
 
         private Button CreateArchiveSlotButton(int archiveIndex)
         {
-            GameObject gameObject = this.CreateUIObject($"ArchiveSlot_{archiveIndex + 1}", this.content);
-            RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-            rectTransform.sizeDelta = SlotSize;
-
-            Image image = gameObject.AddComponent<Image>();
-            image.sprite = this.buttonSprite;
-            image.type = Image.Type.Simple;
-            image.color = Color.white;
-
-            Button button = gameObject.AddComponent<Button>();
-            ColorBlock colors = button.colors;
-            colors.normalColor = new Color32(255, 248, 240, 255);
-            colors.highlightedColor = new Color32(255, 255, 252, 255);
-            colors.pressedColor = new Color32(240, 225, 210, 255);
-            colors.selectedColor = new Color32(255, 255, 252, 255);
-            colors.disabledColor = new Color(0.78f, 0.78f, 0.78f, 0.5f);
-            button.colors = colors;
-            button.targetGraphic = image;
-
-            this.EnsureArchiveSlotControls(button);
-            return button;
-        }
-
-        private void EnsureArchiveSlotControls(Button archiveSlotButton)
-        {
-            Text titleText = this.FindChildComponent<Text>(archiveSlotButton.transform, "Title");
-            if (titleText == null)
-            {
-                titleText = this.CreateText("Title", archiveSlotButton.transform).GetComponent<Text>();
-            }
-
-            RectTransform titleRect = titleText.GetComponent<RectTransform>();
-            titleRect.anchorMin = Vector2.zero;
-            titleRect.anchorMax = Vector2.one;
-            titleRect.offsetMin = new Vector2(18.0f, 0.0f);
-            titleRect.offsetMax = new Vector2(-18.0f, 0.0f);
-            titleText.alignment = TextAnchor.MiddleCenter;
-
-            Button renameButton = this.FindChildComponent<Button>(archiveSlotButton.transform, "Rename");
-            if (renameButton == null)
-            {
-                renameButton = this.CreateButton(
-                    "Rename",
-                    archiveSlotButton.transform,
-                    "改名",
-                    RenameButtonSize,
-                    null);
-            }
-
-            RectTransform renameRect = renameButton.GetComponent<RectTransform>();
-            renameRect.anchorMin = new Vector2(1.0f, 0.5f);
-            renameRect.anchorMax = new Vector2(1.0f, 0.5f);
-            renameRect.pivot = new Vector2(0.0f, 0.5f);
-            renameRect.anchoredPosition = new Vector2(RenameButtonGap, 0.0f);
-            renameRect.sizeDelta = RenameButtonSize;
-
-            Button clearButton = this.FindChildComponent<Button>(archiveSlotButton.transform, "Clear");
-            if (clearButton == null)
-            {
-                clearButton = this.CreateClearButton("Clear", archiveSlotButton.transform);
-            }
-
-            RectTransform clearRect = clearButton.GetComponent<RectTransform>();
-            clearRect.anchorMin = new Vector2(1.0f, 0.5f);
-            clearRect.anchorMax = new Vector2(1.0f, 0.5f);
-            clearRect.pivot = new Vector2(0.0f, 0.5f);
-            clearRect.anchoredPosition = new Vector2(RenameButtonGap * 2 + RenameButtonSize.x, 0.0f);
-            clearRect.sizeDelta = RenameButtonSize;
+            GameObject gameObject = ResourceManager.Instance.Instantiate(PrefabConstant.ARCHIVE_ITEM, this.content, false);
+            gameObject.name = $"ArchiveSlot_{archiveIndex + 1}";
+            gameObject.layer = this.content.gameObject.layer;
+            return gameObject.GetComponent<Button>();
         }
 
         private GameObject CreateUIObject(string name, Transform parent)
@@ -260,11 +189,6 @@ namespace LAB2D
         private void SetArchiveSlotButtonPosition(Button archiveSlotButton, int archiveIndex)
         {
             RectTransform rectTransform = archiveSlotButton.GetComponent<RectTransform>();
-            if (rectTransform == null)
-            {
-                return;
-            }
-
             float y = -archiveIndex * (SlotSize.y + SlotSpacing);
             float sideControlWidth = (RenameButtonSize.x + RenameButtonGap) * 2;
             rectTransform.anchorMin = new Vector2(0.0f, 1.0f);
@@ -302,24 +226,15 @@ namespace LAB2D
             {
                 bool hasArchive = ArchiveManager.Instance.HasArchive(i);
                 Text text = this.FindChildComponent<Text>(this.archiveSlotButtons[i].transform, "Title");
-                if (text != null)
-                {
-                    string displayName = ArchiveManager.Instance.GetArchiveDisplayName(i);
-                    string status = hasArchive ? "继续游戏" : "新游戏";
-                    text.text = $"{displayName}\n{status}";
-                }
+                string displayName = ArchiveManager.Instance.GetArchiveDisplayName(i);
+                string status = hasArchive ? "继续游戏" : "新游戏";
+                text.text = $"{displayName}\n{status}";
 
                 Button renameButton = this.FindChildComponent<Button>(this.archiveSlotButtons[i].transform, "Rename");
-                if (renameButton != null)
-                {
-                    renameButton.gameObject.SetActive(hasArchive);
-                }
+                renameButton.gameObject.SetActive(hasArchive);
 
                 Button clearButton = this.FindChildComponent<Button>(this.archiveSlotButtons[i].transform, "Clear");
-                if (clearButton != null)
-                {
-                    clearButton.gameObject.SetActive(hasArchive);
-                }
+                clearButton.gameObject.SetActive(hasArchive);
             }
         }
 
@@ -538,23 +453,6 @@ namespace LAB2D
             GlobalInit.Instance.ShowTip("存档名称已修改");
             this.HideRenamePanel();
             this.RefreshArchiveSlotButtons();
-        }
-
-        private Button CreateClearButton(string name, Transform parent)
-        {
-            Button button = this.CreateButton(
-                name,
-                parent,
-                "清除",
-                RenameButtonSize,
-                null);
-            ColorBlock colors = button.colors;
-            colors.normalColor = PixelUITheme.DestroyNormal;
-            colors.highlightedColor = PixelUITheme.DestroyHighlighted;
-            colors.pressedColor = PixelUITheme.DestroyPressed;
-            colors.selectedColor = PixelUITheme.ButtonSelected;
-            button.colors = colors;
-            return button;
         }
 
         private void CreateClearConfirmPanel()
