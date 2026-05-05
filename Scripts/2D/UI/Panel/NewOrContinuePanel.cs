@@ -11,9 +11,7 @@ namespace LAB2D
     public class NewOrContinuePanel : ABasePanel<NewOrContinuePanel>
     {
         private const float SlotSpacing = 12.0f;
-        private const float RenameButtonGap = 12.0f;
         private static readonly Vector2 SlotSize = new (560.0f, 72.0f);
-        private static readonly Vector2 RenameButtonSize = new (96.0f, 46.0f);
         private readonly List<Button> archiveSlotButtons = new ();
         private RectTransform content;
         private Font uiFont;
@@ -61,11 +59,12 @@ namespace LAB2D
                     this.CreateArchiveSlotButton(archiveIndex);
                 archiveSlotButton.onClick.RemoveAllListeners();
                 archiveSlotButton.onClick.AddListener(() => this.OnClick_ArchiveSlot(archiveIndex));
-                Button renameButton = this.FindChildComponent<Button>(archiveSlotButton.transform, "Rename");
+                Transform root = archiveSlotButton.transform.parent;
+                Button renameButton = this.FindChildComponent<Button>(root, "Rename");
                 renameButton.onClick.RemoveAllListeners();
                 renameButton.onClick.AddListener(() => this.ShowRenamePanel(archiveIndex));
 
-                Button clearButton = this.FindChildComponent<Button>(archiveSlotButton.transform, "Clear");
+                Button clearButton = this.FindChildComponent<Button>(root, "Clear");
                 clearButton.onClick.RemoveAllListeners();
                 clearButton.onClick.AddListener(() => this.ShowClearConfirmPanel(archiveIndex));
 
@@ -86,7 +85,7 @@ namespace LAB2D
                     continue;
                 }
 
-                return child.GetComponent<Button>();
+                return this.FindChildComponent<Button>(child, "Save");
             }
 
             return null;
@@ -97,7 +96,7 @@ namespace LAB2D
             GameObject gameObject = ResourceManager.Instance.Instantiate(PrefabConstant.ARCHIVE_ITEM, this.content, false);
             gameObject.name = $"ArchiveSlot_{archiveIndex + 1}";
             gameObject.layer = this.content.gameObject.layer;
-            return gameObject.GetComponent<Button>();
+            return this.FindChildComponent<Button>(gameObject.transform, "Save");
         }
 
         private GameObject CreateUIObject(string name, Transform parent)
@@ -188,15 +187,9 @@ namespace LAB2D
 
         private void SetArchiveSlotButtonPosition(Button archiveSlotButton, int archiveIndex)
         {
-            RectTransform rectTransform = archiveSlotButton.GetComponent<RectTransform>();
+            RectTransform rectTransform = archiveSlotButton.transform.parent.GetComponent<RectTransform>();
             float y = -archiveIndex * (SlotSize.y + SlotSpacing);
-            float sideControlWidth = (RenameButtonSize.x + RenameButtonGap) * 2;
-            rectTransform.anchorMin = new Vector2(0.0f, 1.0f);
-            rectTransform.anchorMax = new Vector2(1.0f, 1.0f);
-            rectTransform.pivot = new Vector2(0.5f, 1.0f);
-            rectTransform.anchoredPosition = new Vector2(-sideControlWidth * 0.5f, y);
-            rectTransform.sizeDelta = new Vector2(-sideControlWidth, SlotSize.y);
-            rectTransform.localScale = Vector3.one;
+            rectTransform.anchoredPosition = new Vector2(0.0f, y);
         }
 
         private Transform FindChildTransform(Transform root, string name)
@@ -225,15 +218,16 @@ namespace LAB2D
             for (int i = 0; i < this.archiveSlotButtons.Count; i++)
             {
                 bool hasArchive = ArchiveManager.Instance.HasArchive(i);
-                Text text = this.FindChildComponent<Text>(this.archiveSlotButtons[i].transform, "Title");
+                Transform root = this.archiveSlotButtons[i].transform.parent;
+                Text text = this.FindChildComponent<Text>(root, "Title");
                 string displayName = ArchiveManager.Instance.GetArchiveDisplayName(i);
                 string status = hasArchive ? "继续游戏" : "新游戏";
                 text.text = $"{displayName}\n{status}";
 
-                Button renameButton = this.FindChildComponent<Button>(this.archiveSlotButtons[i].transform, "Rename");
+                Button renameButton = this.FindChildComponent<Button>(root, "Rename");
                 renameButton.gameObject.SetActive(hasArchive);
 
-                Button clearButton = this.FindChildComponent<Button>(this.archiveSlotButtons[i].transform, "Clear");
+                Button clearButton = this.FindChildComponent<Button>(root, "Clear");
                 clearButton.gameObject.SetActive(hasArchive);
             }
         }
