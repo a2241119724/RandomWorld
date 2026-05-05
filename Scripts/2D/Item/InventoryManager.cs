@@ -341,7 +341,7 @@
                 return this.preTakeResource[worker].First().Key;
             }
 
-            LogManager.Instance.Log("没有预留资源", LogManager.LogLevelEnum.Error);
+            LogManager.Instance.Log("没有预留资源!", LogManager.LogLevelEnum.Warning);
             return default;
         }
 
