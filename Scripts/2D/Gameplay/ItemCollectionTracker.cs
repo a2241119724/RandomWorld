@@ -103,8 +103,9 @@ namespace LAB2D
             }
             catch (Exception ex)
             {
-                Debug.LogWarning(string.Format(
-                    "[ItemCollectionTracker] Tip 显示失败（可能 Prefab 缺失），降级为日志: {0}", ex.Message));
+                LogManager.Instance.Log(
+                    $"ItemCollectionTracker.FireMilestone ShowTip failed, threshold: {threshold}.\n{ex}",
+                    LogManager.LogLevelEnum.Error);
             }
 
             Debug.Log(string.Format(

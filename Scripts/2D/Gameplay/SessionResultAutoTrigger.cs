@@ -213,8 +213,12 @@ namespace LAB2D
                     return;
                 }
             }
-            catch (System.Exception)
+            catch (System.Exception exception)
             {
+                LogManager.Instance.Log(
+                    $"SessionResultAutoTrigger.ShowCaptureTip failed.\n{exception}",
+                    LogManager.LogLevelEnum.Error);
+
                 // Tip 显示失败，降级到 Debug.Log
             }
 

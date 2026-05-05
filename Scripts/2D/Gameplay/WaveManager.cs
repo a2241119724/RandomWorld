@@ -315,8 +315,12 @@ namespace LAB2D
 
                     return TileMap.Instance.MapPosToWorldPos(TileMap.Instance.GenCanReachPos(centerMap));
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
+                    LogManager.Instance.Log(
+                        $"WaveManager.GetSpawnPosition failed, fallback to Vector3.zero.\n{exception}",
+                        LogManager.LogLevelEnum.Error);
+
                     // 回退到默认位置
                 }
             }

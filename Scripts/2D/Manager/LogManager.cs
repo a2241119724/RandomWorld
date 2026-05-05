@@ -12,16 +12,21 @@
     {
         private readonly object syncRoot = new object();
         private readonly string logPath = Path.Combine(Application.persistentDataPath, "game.log");
+        private readonly string errorLogPath = Path.Combine(Application.persistentDataPath, "error.log");
         private readonly List<string> logs = new List<string>();
         private readonly int maxLogCount = 200;
         private LogLevelEnum minLogLevel = LogLevelEnum.Info; // 最小的日志级别.
         private bool isSave = true;
-        private bool fileAvailable = true;
+        private bool logFileAvailable = true;
+        private bool errorFileAvailable = true;
+        private int suppressUnityErrorCapture = 0;
         private long index = 0;
 
         public LogManager()
         {
-            this.PrepareLogFile(true);
+            this.PrepareLogFile(this.logPath, true, ref this.logFileAvailable, "game.log");
+            this.PrepareLogFile(this.errorLogPath, true, ref this.errorFileAvailable, "error.log");
+            Application.logMessageReceived += this.HandleUnityLogMessageReceived;
             Application.quitting += this.Flush;
         }
 
@@ -93,7 +98,11 @@
             }
 
             this.WriteToUnityConsole(logMessage, level);
-            this.SaveLog(this.logPath, pendingLogs);
+            this.SaveLog(this.logPath, pendingLogs, ref this.logFileAvailable, "game.log");
+            if (level >= LogLevelEnum.Error)
+            {
+                this.SaveErrorLog(logMessage);
+            }
         }
 
         /// <summary>
@@ -124,7 +133,8 @@
             this.isSave = enabled;
             if (this.isSave)
             {
-                this.PrepareLogFile(false);
+                this.PrepareLogFile(this.logPath, false, ref this.logFileAvailable, "game.log");
+                this.PrepareLogFile(this.errorLogPath, false, ref this.errorFileAvailable, "error.log");
             }
         }
 
@@ -139,24 +149,48 @@
                 pendingLogs = this.TakeLogsLocked();
             }
 
-            this.SaveLog(this.logPath, pendingLogs);
+            this.SaveLog(this.logPath, pendingLogs, ref this.logFileAvailable, "game.log");
         }
 
-        private void SaveLog(string path, List<string> logs)
+        private void SaveLog(string path, List<string> logs, ref bool fileAvailable, string fileName)
         {
-            if (!this.isSave || !this.fileAvailable || logs == null || logs.Count == 0)
+            if (!this.isSave || !fileAvailable || logs == null || logs.Count == 0)
             {
                 return;
             }
 
             try
             {
-                File.AppendAllText(path, string.Join(Environment.NewLine, logs) + Environment.NewLine);
+                lock (this.syncRoot)
+                {
+                    File.AppendAllText(path, string.Join(Environment.NewLine, logs) + Environment.NewLine);
+                }
             }
             catch (Exception exception)
             {
-                this.fileAvailable = false;
-                Debug.LogWarning($"[LogManager] 写入日志文件失败，已暂停文件日志: {exception.Message}");
+                fileAvailable = false;
+                Debug.LogWarning($"[LogManager] 写入{fileName}失败，已暂停该文件日志: {exception.Message}");
+            }
+        }
+
+        private void SaveErrorLog(string logMessage)
+        {
+            if (!this.isSave || !this.errorFileAvailable || string.IsNullOrEmpty(logMessage))
+            {
+                return;
+            }
+
+            try
+            {
+                lock (this.syncRoot)
+                {
+                    File.AppendAllText(this.errorLogPath, logMessage + Environment.NewLine);
+                }
+            }
+            catch (Exception exception)
+            {
+                this.errorFileAvailable = false;
+                Debug.LogWarning($"[LogManager] 写入error.log失败，已暂停错误日志: {exception.Message}");
             }
         }
 
@@ -172,7 +206,7 @@
             return pendingLogs;
         }
 
-        private void PrepareLogFile(bool clear)
+        private void PrepareLogFile(string path, bool clear, ref bool fileAvailable, string fileName)
         {
             if (!this.isSave)
             {
@@ -181,7 +215,7 @@
 
             try
             {
-                string directory = Path.GetDirectoryName(this.logPath);
+                string directory = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(directory))
                 {
                     Directory.CreateDirectory(directory);
@@ -189,20 +223,43 @@
 
                 if (clear)
                 {
-                    File.WriteAllText(this.logPath, string.Empty);
+                    File.WriteAllText(path, string.Empty);
                 }
-                else if (!File.Exists(this.logPath))
+                else if (!File.Exists(path))
                 {
-                    File.WriteAllText(this.logPath, string.Empty);
+                    File.WriteAllText(path, string.Empty);
                 }
 
-                this.fileAvailable = true;
+                fileAvailable = true;
             }
             catch (Exception exception)
             {
-                this.fileAvailable = false;
-                Debug.LogWarning($"[LogManager] 初始化日志文件失败，已暂停文件日志: {exception.Message}");
+                fileAvailable = false;
+                Debug.LogWarning($"[LogManager] 初始化{fileName}失败，已暂停该文件日志: {exception.Message}");
             }
+        }
+
+        private void HandleUnityLogMessageReceived(string condition, string stackTrace, LogType type)
+        {
+            if (this.suppressUnityErrorCapture > 0
+                || (type != LogType.Error && type != LogType.Assert && type != LogType.Exception))
+            {
+                return;
+            }
+
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            string logMessage;
+            lock (this.syncRoot)
+            {
+                logMessage = $"{timestamp} [Unity{type}] {this.index++} {condition ?? string.Empty}";
+            }
+
+            if (!string.IsNullOrEmpty(stackTrace))
+            {
+                logMessage += Environment.NewLine + stackTrace;
+            }
+
+            this.SaveErrorLog(logMessage);
         }
 
         private void WriteToUnityConsole(string logMessage, LogLevelEnum level)
@@ -214,7 +271,16 @@
                     break;
                 case LogLevelEnum.Error:
                 case LogLevelEnum.Fatal:
-                    Debug.LogError(logMessage);
+                    try
+                    {
+                        this.suppressUnityErrorCapture++;
+                        Debug.LogError(logMessage);
+                    }
+                    finally
+                    {
+                        this.suppressUnityErrorCapture--;
+                    }
+
                     break;
             }
         }
