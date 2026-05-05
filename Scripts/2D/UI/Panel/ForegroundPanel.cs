@@ -309,7 +309,7 @@ namespace LAB2D
             GameObject gameObject = ResourceManager.Instance.Instantiate(PrefabConstant.ARCHIVE_ITEM, this.saveSlotContent, false);
             gameObject.name = $"SaveSlot_{archiveIndex + 1}";
             gameObject.layer = this.saveSlotContent.gameObject.layer;
-            Button button = gameObject.GetComponent<Button>();
+            Button button = this.FindChildComponent<Button>(gameObject.transform, "Save");
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => this.OnClick_SaveSlot(archiveIndex));
 
@@ -540,12 +540,13 @@ namespace LAB2D
             for (int i = 0; i < this.saveSlotButtons.Count; i++)
             {
                 bool hasArchive = ArchiveManager.Instance.HasArchive(i);
-                Text text = this.FindChildComponent<Text>(this.saveSlotButtons[i].transform, "Title");
+                Transform root = this.saveSlotButtons[i].transform.parent;
+                Text text = this.FindChildComponent<Text>(root, "Title");
                 string displayName = ArchiveManager.Instance.GetArchiveDisplayName(i);
                 string status = hasArchive ? "已有存档" : "空槽";
                 text.text = $"{displayName}\n{status}";
 
-                Button clearButton = this.FindChildComponent<Button>(this.saveSlotButtons[i].transform, "Clear");
+                Button clearButton = this.FindChildComponent<Button>(root, "Clear");
                 clearButton.gameObject.SetActive(hasArchive);
             }
         }
@@ -722,14 +723,9 @@ namespace LAB2D
 
         private void SetSaveSlotButtonPosition(Button saveSlotButton, int archiveIndex)
         {
-            RectTransform rectTransform = saveSlotButton.GetComponent<RectTransform>();
+            RectTransform rectTransform = saveSlotButton.transform.parent.GetComponent<RectTransform>();
             float y = -archiveIndex * (SaveSlotSize.y + SaveSlotSpacing);
-            rectTransform.anchorMin = new Vector2(0.5f, 1.0f);
-            rectTransform.anchorMax = new Vector2(0.5f, 1.0f);
-            rectTransform.pivot = new Vector2(0.5f, 1.0f);
             rectTransform.anchoredPosition = new Vector2(0.0f, y);
-            rectTransform.sizeDelta = SaveSlotSize;
-            rectTransform.localScale = Vector3.one;
         }
 
         private GameObject CreateUIObject(string name, Transform parent)
