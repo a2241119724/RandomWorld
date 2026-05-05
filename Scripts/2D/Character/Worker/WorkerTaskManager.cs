@@ -98,9 +98,7 @@
                         // 先设置任务
                         workerData.Task = closedTask;
                         closedTask.Start(worker);
-
-                        // 同一个饥饿任务还可以继续接
-                        if (closedTask.TaskType != AWorkerTask.WorkerTaskTypeEnum.Eat)
+                        if (workerData.Task == closedTask)
                         {
                             task[closedTask] = true;
                         }
@@ -170,24 +168,22 @@
         /// <param name="task">任务</param>
         public void CompleteTask(AWorkerTask task)
         {
-            if (task.TaskType != AWorkerTask.WorkerTaskTypeEnum.Eat)
+            for (int i = 0; i < this.tasks.Count; i++)
             {
-                for (int i = 0; i < this.tasks.Count; i++)
+                if (this.tasks[i].ContainsKey(task))
                 {
-                    if (this.tasks[i].ContainsKey(task))
+                    if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Eat)
+                    {
+                        this.tasks[i][task] = false;
+                    }
+                    else
                     {
                         this.tasks[i].Remove(task);
-                        DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
-                        break;
                     }
-                }
-            }
 
-            // 不能删除饥饿任务，需要在deleteHungryTask中删除
-            // 是饥饿任务，则将其改为可再次接受状态，即false
-            else
-            {
-                this.tasks[1][task] = false;
+                    DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
+                    return;
+                }
             }
 
             DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
