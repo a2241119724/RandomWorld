@@ -189,32 +189,15 @@ namespace LAB2D
             this.ConfigureSceneSaveSlotViewport(viewportTransform);
 
             Transform contentTransform = this.FindChildTransform(viewportTransform, "SaveSlotContent");
-            if (contentTransform == null)
-            {
-                contentTransform = this.CreateUIObject("SaveSlotContent", viewportTransform).transform;
-            }
-
             this.saveSlotContent = contentTransform.GetComponent<RectTransform>();
-            if (this.saveSlotContent == null)
-            {
-                this.saveSlotContent = contentTransform.gameObject.AddComponent<RectTransform>();
-            }
-
-            ScrollRect viewportScrollRect = viewportTransform.GetComponent<ScrollRect>();
-            if (viewportScrollRect != null)
-            {
-                viewportScrollRect.content = this.saveSlotContent;
-            }
+            viewportTransform.GetComponent<ScrollRect>().content = this.saveSlotContent;
 
             this.ClearGeneratedSaveSlotButtons();
             this.CreateSaveSlotButtons();
 
             Button closeButton = this.FindChildComponent<Button>(panelTransform, "Close");
-            if (closeButton != null)
-            {
-                closeButton.onClick.RemoveAllListeners();
-                closeButton.onClick.AddListener(this.HideSaveSlotPanel);
-            }
+            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.AddListener(this.HideSaveSlotPanel);
 
             this.BindSceneOverwriteConfirmPanel(panelTransform);
             this.saveSlotPanel.SetActive(false);
@@ -225,25 +208,15 @@ namespace LAB2D
         {
             RectTransform viewportRect = viewportTransform.GetComponent<RectTransform>();
             ScrollRect scrollRect = viewportTransform.GetComponent<ScrollRect>();
-            if (scrollRect == null)
-            {
-                scrollRect = viewportTransform.gameObject.AddComponent<ScrollRect>();
-            }
-
             scrollRect.horizontal = false;
             scrollRect.vertical = true;
             scrollRect.movementType = ScrollRect.MovementType.Clamped;
             scrollRect.scrollSensitivity = 50.0f;
             scrollRect.viewport = viewportRect;
 
-            Image image = viewportTransform.GetComponent<Image>();
-            if (image != null)
-            {
-                image.raycastTarget = true;
-            }
+            viewportTransform.GetComponent<Image>().raycastTarget = true;
 
-            RectMask2D mask = viewportTransform.GetComponent<RectMask2D>();
-            if (mask == null)
+            if (viewportTransform.GetComponent<RectMask2D>() == null)
             {
                 viewportTransform.gameObject.AddComponent<RectMask2D>();
             }
@@ -251,11 +224,6 @@ namespace LAB2D
 
         private void ClearGeneratedSaveSlotButtons()
         {
-            if (this.saveSlotContent == null)
-            {
-                return;
-            }
-
             for (int i = this.saveSlotContent.childCount - 1; i >= 0; i--)
             {
                 Transform child = this.saveSlotContent.GetChild(i);
@@ -298,7 +266,6 @@ namespace LAB2D
             button.onClick.AddListener(() => this.OnClick_SaveSlot(archiveIndex));
 
             Button renameButton = this.FindChildComponent<Button>(gameObject.transform, "Rename");
-            renameButton.gameObject.SetActive(false);
 
             Button clearButton = this.FindChildComponent<Button>(gameObject.transform, "Clear");
             clearButton.onClick.RemoveAllListeners();
@@ -320,18 +287,12 @@ namespace LAB2D
             this.overwriteConfirmText = this.FindChildComponent<Text>(confirmPanelTransform, "Tip");
 
             Button confirmButton = this.FindChildComponent<Button>(confirmPanelTransform, "Confirm");
-            if (confirmButton != null)
-            {
-                confirmButton.onClick.RemoveAllListeners();
-                confirmButton.onClick.AddListener(this.OnClick_ConfirmOverwrite);
-            }
+            confirmButton.onClick.RemoveAllListeners();
+            confirmButton.onClick.AddListener(this.OnClick_ConfirmOverwrite);
 
             Button cancelButton = this.FindChildComponent<Button>(confirmPanelTransform, "Cancel");
-            if (cancelButton != null)
-            {
-                cancelButton.onClick.RemoveAllListeners();
-                cancelButton.onClick.AddListener(this.HideOverwriteConfirmPanel);
-            }
+            cancelButton.onClick.RemoveAllListeners();
+            cancelButton.onClick.AddListener(this.HideOverwriteConfirmPanel);
 
             this.overwriteConfirmPanel.SetActive(false);
         }
@@ -463,11 +424,7 @@ namespace LAB2D
             boxImage.raycastTarget = true;
 
             GameObject tip = this.CreateText("Tip", box.transform, string.Empty, 32, TextAnchor.MiddleCenter);
-            Text tipTextComp = tip.GetComponent<Text>();
-            if (tipTextComp != null)
-            {
-                tipTextComp.color = PixelUITheme.TextPrimary;
-            }
+            tip.GetComponent<Text>().color = PixelUITheme.TextPrimary;
             RectTransform tipRect = tip.GetComponent<RectTransform>();
             tipRect.anchorMin = new Vector2(0.5f, 0.5f);
             tipRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -544,22 +501,15 @@ namespace LAB2D
         private void ShowOverwriteConfirmPanel(int archiveIndex)
         {
             this.pendingOverwriteArchiveIndex = archiveIndex;
-            if (this.overwriteConfirmText != null)
-            {
-                string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
-                this.overwriteConfirmText.text = $"{displayName} 已存在\n是否确认覆盖?";
-            }
-
+            string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
+            this.overwriteConfirmText.text = $"{displayName} 已存在\n是否确认覆盖?";
             this.overwriteConfirmPanel.SetActive(true);
             this.overwriteConfirmPanel.transform.SetAsLastSibling();
         }
 
         private void HideOverwriteConfirmPanel()
         {
-            if (this.overwriteConfirmPanel != null)
-            {
-                this.overwriteConfirmPanel.SetActive(false);
-            }
+            this.overwriteConfirmPanel.SetActive(false);
         }
 
         private void OnClick_ConfirmOverwrite()
@@ -574,6 +524,29 @@ namespace LAB2D
         }
 
         private void CreateClearConfirmPanel()
+        {
+            Transform panelTransform = this.FindChildTransform(this.saveSlotPanel.transform, "ClearConfirmPanel");
+            if (panelTransform != null)
+            {
+                this.clearConfirmPanel = panelTransform.gameObject;
+                this.clearConfirmText = this.FindChildComponent<Text>(panelTransform, "Tip");
+
+                Button confirmButton = this.FindChildComponent<Button>(panelTransform, "Confirm");
+                confirmButton.onClick.RemoveAllListeners();
+                confirmButton.onClick.AddListener(this.OnClick_ConfirmClear);
+
+                Button cancelButton = this.FindChildComponent<Button>(panelTransform, "Cancel");
+                cancelButton.onClick.RemoveAllListeners();
+                cancelButton.onClick.AddListener(this.HideClearConfirmPanel);
+
+                this.clearConfirmPanel.SetActive(false);
+                return;
+            }
+
+            this.CreateRuntimeClearConfirmPanel();
+        }
+
+        private void CreateRuntimeClearConfirmPanel()
         {
             this.clearConfirmPanel = this.CreateUIObject("ClearConfirmPanel", this.saveSlotPanel.transform);
             RectTransform panelRect = this.clearConfirmPanel.GetComponent<RectTransform>();
@@ -599,11 +572,7 @@ namespace LAB2D
             boxImage.raycastTarget = true;
 
             GameObject tip = this.CreateText("Tip", box.transform, string.Empty, 32, TextAnchor.MiddleCenter);
-            Text clearTipTextComp = tip.GetComponent<Text>();
-            if (clearTipTextComp != null)
-            {
-                clearTipTextComp.color = PixelUITheme.TextPrimary;
-            }
+            tip.GetComponent<Text>().color = PixelUITheme.TextPrimary;
             RectTransform tipRect = tip.GetComponent<RectTransform>();
             tipRect.anchorMin = new Vector2(0.5f, 0.5f);
             tipRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -650,25 +619,15 @@ namespace LAB2D
 
             this.pendingClearArchiveIndex = archiveIndex;
             string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
-            if (this.clearConfirmText != null)
-            {
-                this.clearConfirmText.text = $"确认清除存档\n{displayName}?";
-            }
-
-            if (this.clearConfirmPanel != null)
-            {
-                this.clearConfirmPanel.SetActive(true);
-                this.clearConfirmPanel.transform.SetAsLastSibling();
-            }
+            this.clearConfirmText.text = $"确认清除存档\n{displayName}?";
+            this.clearConfirmPanel.SetActive(true);
+            this.clearConfirmPanel.transform.SetAsLastSibling();
         }
 
         private void HideClearConfirmPanel()
         {
             this.pendingClearArchiveIndex = -1;
-            if (this.clearConfirmPanel != null)
-            {
-                this.clearConfirmPanel.SetActive(false);
-            }
+            this.clearConfirmPanel.SetActive(false);
         }
 
         private void OnClick_ConfirmClear()
@@ -755,10 +714,13 @@ namespace LAB2D
 
         private Font GetUIFont()
         {
-            Text text = Tool.GetComponentInChildren<Text>(this.Panel);
-            if (text != null && text.font != null)
+            Text[] texts = this.Panel.GetComponentsInChildren<Text>(true);
+            foreach (Text text in texts)
             {
-                return text.font;
+                if (text.font != null)
+                {
+                    return text.font;
+                }
             }
 
             Font font = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
