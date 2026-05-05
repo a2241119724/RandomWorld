@@ -1,7 +1,6 @@
 ﻿namespace LAB2D
 {
     using UnityEngine;
-    using UnityEngine.Tilemaps;
     using UnityEngine.UI;
 
     /// <summary>
@@ -47,21 +46,32 @@
         }
 
         /// <summary>
+        /// 隐藏采集UI。
+        /// </summary>
+        public void Hide()
+        {
+            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
+        }
+
+        /// <summary>
         /// 确定采集
         /// </summary>
         public void Onclick_Yes()
         {
-            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            this.Hide();
             if (WorkerTaskManager.Instance.GatherPos.Contains(this.posMap))
             {
                 return;
             }
 
-            TileBase tileBase = ResourceMap.Instance.GetTile(this.posMap);
-            ItemData itemData = ItemDataManager.Instance.GetByName(tileBase.name);
+            if (!ResourceMap.Instance.TryGetGatherResourceInfo(this.posMap, out ResourceInfo resourceInfo))
+            {
+                return;
+            }
+
             WorkerTaskManager.Instance.AddTask(
                 new WorkerGatherTask.GatherTaskBuilder()
-                .SetTarget(this.posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), Vector3IntLAB.ToVector3IntLAB(this.posMap));
+                .SetTarget(this.posMap).SetResourceInfo(resourceInfo).Build(), Vector3IntLAB.ToVector3IntLAB(this.posMap));
         }
 
         /// <summary>
@@ -69,7 +79,7 @@
         /// </summary>
         public void Onclick_No()
         {
-            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
+            this.Hide();
             if (!WorkerTaskManager.Instance.GatherPos.Contains(this.posMap))
             {
                 return;

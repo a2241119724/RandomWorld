@@ -42,21 +42,19 @@
             this.options.gameObject.SetActive(false);
             this.selects[key].ForEach((posMap) =>
             {
-                TileBase tileBase = ResourceMap.Instance.GetTile(posMap);
-                if (tileBase == null)
-                {
-                    return;
-                }
-
                 if (WorkerTaskManager.Instance.GatherPos.Contains(posMap))
                 {
                     return;
                 }
 
-                ItemData itemData = ItemDataManager.Instance.GetByName(tileBase.name);
+                if (!ResourceMap.Instance.TryGetGatherResourceInfo(posMap, out ResourceInfo resourceInfo))
+                {
+                    return;
+                }
+
                 WorkerTaskManager.Instance.AddTask(
                     new WorkerGatherTask.GatherTaskBuilder()
-                    .SetTarget(posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
+                    .SetTarget(posMap).SetResourceInfo(resourceInfo).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
             });
         }
 
@@ -211,7 +209,10 @@
                     {
                         SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
                         selectUI.SetTarget(posMap);
-                        this.selects[TileTypeEnum.Resource].Add(posMap);
+                        if (ResourceMap.Instance.TryGetGatherResourceInfo(posMap, out _))
+                        {
+                            this.selects[TileTypeEnum.Resource].Add(posMap);
+                        }
                     }
                 }
             }

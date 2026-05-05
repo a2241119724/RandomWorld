@@ -16,7 +16,7 @@
         }
 
         /// <inheritdoc/>
-        protected override void DoSeek()
+        protected override void DoSeek(string seekId)
         {
             Vector3Int posMap = default;
             UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
@@ -31,7 +31,7 @@
                 {
                     LogManager.Instance.Log(this.Character.name + ":起始==终点", LogManager.LogLevelEnum.Trace);
                 }).Wait();
-                this.SetResult(new SeekResult());
+                this.SetResult(new SeekResult(), seekId);
                 return;
             }
 
@@ -272,13 +272,14 @@
             }
             else
             {
+                seekResult.IsReachable = false;
                 UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {
                     LogManager.Instance.Log(this.Character.name + ":未找到路径 " + start.PosMap + "-->" + end.PosMap, LogManager.LogLevelEnum.Error);
                 }).Wait();
             }
 
-            this.SetResult(seekResult);
+            this.SetResult(seekResult, seekId);
         }
     }
 }

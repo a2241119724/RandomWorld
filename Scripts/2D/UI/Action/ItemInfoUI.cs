@@ -177,9 +177,13 @@
                 tileBase = ResourceMap.Instance.GetTile(posMap);
 
                 // 手动添加任务
-                if (tileBase != null && isResource)
+                if (tileBase != null && isResource && ResourceMap.Instance.TryGetGatherResourceInfo(posMap, out _))
                 {
                     GatherUI.Instance.SetPostion(posMap);
+                }
+                else if (tileBase != null && isResource)
+                {
+                    GatherUI.Instance.Hide();
                 }
             }
 
