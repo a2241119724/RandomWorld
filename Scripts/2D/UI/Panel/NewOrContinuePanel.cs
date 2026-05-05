@@ -10,8 +10,6 @@ namespace LAB2D
     /// </summary>
     public class NewOrContinuePanel : ABasePanel<NewOrContinuePanel>
     {
-        private const float SlotSpacing = 12.0f;
-        private static readonly Vector2 SlotSize = new (560.0f, 72.0f);
         private readonly List<Button> archiveSlotButtons = new ();
         private RectTransform content;
         private Font uiFont;
@@ -68,7 +66,6 @@ namespace LAB2D
                 clearButton.onClick.RemoveAllListeners();
                 clearButton.onClick.AddListener(() => this.ShowClearConfirmPanel(archiveIndex));
 
-                this.SetArchiveSlotButtonPosition(archiveSlotButton, archiveIndex);
                 archiveSlotButton.gameObject.SetActive(true);
                 this.archiveSlotButtons.Add(archiveSlotButton);
             }
@@ -149,18 +146,6 @@ namespace LAB2D
             return button;
         }
 
-        private GameObject CreateText(string name, Transform parent)
-        {
-            return this.CreateText(
-                name,
-                parent,
-                string.Empty,
-                24,
-                TextAnchor.MiddleCenter,
-                PixelUITheme.SaveSlotTitleText,
-                FontStyle.Bold);
-        }
-
         private GameObject CreateText(
             string name,
             Transform parent,
@@ -183,13 +168,6 @@ namespace LAB2D
             text.text = textValue;
             text.raycastTarget = false;
             return gameObject;
-        }
-
-        private void SetArchiveSlotButtonPosition(Button archiveSlotButton, int archiveIndex)
-        {
-            RectTransform rectTransform = archiveSlotButton.transform.parent.GetComponent<RectTransform>();
-            float y = -archiveIndex * (SlotSize.y + SlotSpacing);
-            rectTransform.anchoredPosition = new Vector2(0.0f, y);
         }
 
         private Transform FindChildTransform(Transform root, string name)
