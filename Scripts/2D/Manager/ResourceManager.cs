@@ -239,7 +239,7 @@
         public GameObject Instantiate(string prefabName, Vector3 position, Quaternion rotation, Transform parent, bool worldPositionStays, bool isLocal)
         {
             prefabName = prefabName.ToLower();
-            if (NetworkConnect.Instance.IsOnline && !isLocal)
+            if (NetworkConnect.Instance != null && NetworkConnect.Instance.IsOnline && !isLocal)
             {
                 return PhotonNetwork.Instantiate(prefabName, position, rotation);
             }
