@@ -218,17 +218,10 @@ namespace LAB2D
             for (int i = 0; i < this.archiveSlotButtons.Count; i++)
             {
                 bool hasArchive = ArchiveManager.Instance.HasArchive(i);
-                Transform root = this.archiveSlotButtons[i].transform.parent;
-                Text text = this.FindChildComponent<Text>(root, "Title");
+                Text text = this.FindChildComponent<Text>(this.archiveSlotButtons[i].transform, "Text");
                 string displayName = ArchiveManager.Instance.GetArchiveDisplayName(i);
                 string status = hasArchive ? "继续游戏" : "新游戏";
                 text.text = $"{displayName}\n{status}";
-
-                Button renameButton = this.FindChildComponent<Button>(root, "Rename");
-                renameButton.gameObject.SetActive(hasArchive);
-
-                Button clearButton = this.FindChildComponent<Button>(root, "Clear");
-                clearButton.gameObject.SetActive(hasArchive);
             }
         }
 
