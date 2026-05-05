@@ -24,7 +24,7 @@
 
         public void Update()
         {
-            if (!Input.anyKeyDown)
+            if (Tool.IsUIInputActive() || !Input.anyKeyDown)
             {
                 return;
             }
