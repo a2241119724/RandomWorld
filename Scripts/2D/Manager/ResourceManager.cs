@@ -63,7 +63,7 @@
         {
             if (!this.backpackDataDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
+                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Warning);
                 return null;
             }
 

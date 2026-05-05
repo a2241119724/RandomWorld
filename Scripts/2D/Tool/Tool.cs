@@ -201,7 +201,7 @@
                 }
             }
 
-            LogManager.Instance.Log(name + " Not Found!!!", LogManager.LogLevelEnum.Error);
+            LogManager.Instance.Log(name + " Not Found!!!", LogManager.LogLevelEnum.Warning);
             return null;
         }
 
