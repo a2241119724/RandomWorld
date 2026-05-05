@@ -103,7 +103,9 @@ namespace LAB2D
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[WaveEventFeedback] 启用失败: {e.Message}");
+                LogManager.Instance.Log(
+                    $"WaveEventFeedback.Enable failed.\n{e}",
+                    LogManager.LogLevelEnum.Error);
             }
         }
 
@@ -123,7 +125,9 @@ namespace LAB2D
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[WaveEventFeedback] 禁用失败: {e.Message}");
+                LogManager.Instance.Log(
+                    $"WaveEventFeedback.Disable failed.\n{e}",
+                    LogManager.LogLevelEnum.Error);
             }
 
             this.enabled = false;
@@ -235,7 +239,9 @@ namespace LAB2D
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[WaveEventFeedback] 状态同步失败: {e.Message}");
+                LogManager.Instance.Log(
+                    $"WaveEventFeedback.SyncCurrentState failed.\n{e}",
+                    LogManager.LogLevelEnum.Error);
             }
         }
 
@@ -298,8 +304,12 @@ namespace LAB2D
                     return;
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                LogManager.Instance.Log(
+                    $"WaveEventFeedback.ShowTip failed: {message}\n{e}",
+                    LogManager.LogLevelEnum.Error);
+
                 // 降级路径：GlobalInit 或 Tip Prefab 不可用时使用日志输出
             }
 

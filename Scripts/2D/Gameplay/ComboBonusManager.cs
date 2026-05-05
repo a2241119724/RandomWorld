@@ -63,7 +63,9 @@ namespace LAB2D
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[ComboBonusManager] 初始化失败，无法同步连击状态: {e.Message}");
+                LogManager.Instance.Log(
+                    $"ComboBonusManager.EnsureInitialized failed.\n{e}",
+                    LogManager.LogLevelEnum.Error);
             }
         }
 
@@ -229,8 +231,12 @@ namespace LAB2D
                     return;
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                LogManager.Instance.Log(
+                    $"ComboBonusManager.ShowComboMilestoneTip failed: {message}\n{e}",
+                    LogManager.LogLevelEnum.Error);
+
                 // 降级路径：GlobalInit 或 Tip Prefab 不可用时使用日志输出
             }
 
@@ -253,8 +259,12 @@ namespace LAB2D
                     return;
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                LogManager.Instance.Log(
+                    $"ComboBonusManager.ShowComboBreakTip failed: {message}\n{e}",
+                    LogManager.LogLevelEnum.Error);
+
                 // 降级路径
             }
 

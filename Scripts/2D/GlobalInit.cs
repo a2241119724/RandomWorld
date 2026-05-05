@@ -19,6 +19,7 @@
         public void Awake()
         {
             Instance = this;
+            LogManager.Instance.Init();
             Application.targetFrameRate = GlobalData.MaxFrame;
             this.dontClosePanels = new ()
             {
