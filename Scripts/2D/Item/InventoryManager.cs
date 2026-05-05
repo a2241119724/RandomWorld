@@ -216,6 +216,11 @@
         /// <returns>是否足够</returns>
         public bool IsEnoughFoodAndPreTake(AWorker worker, float hungry, bool isPre = false)
         {
+            if (!this.TypeToResource.ContainsKey(AItem.ItemTypeEnum.Food))
+            {
+                return false;
+            }
+
             Dictionary<Vector3Int, ResourceInfo> foods = new ();
             foreach (KeyValuePair<Vector3Int, ResourceInfo> food in this.TypeToResource[AItem.ItemTypeEnum.Food])
             {
@@ -248,6 +253,43 @@
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 判断指定位置是否有可预取的食物，并预取最多够当前Worker吃饱的数量。
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <param name="posMap">食物位置</param>
+        /// <param name="hungry">饥饿值缺口</param>
+        /// <param name="isPre">是否预取食物</param>
+        /// <returns>是否有可吃的食物</returns>
+        public bool IsFoodAvailableAndPreTake(AWorker worker, Vector3Int posMap, float hungry, bool isPre = false)
+        {
+            if (!this.posToResource.ContainsKey(posMap))
+            {
+                return false;
+            }
+
+            ResourceInfo resourceInfo = this.posToResource[posMap];
+            if (resourceInfo.Count <= 0 || ItemDataManager.Instance.IdToType(resourceInfo.Id) != AItem.ItemTypeEnum.Food)
+            {
+                return false;
+            }
+
+            int availableCount = resourceInfo.Count - this.GetPreTakeCountByPos(posMap);
+            int needCount = Mathf.CeilToInt(hungry / 10.0f);
+            int preTakeCount = Mathf.Min(availableCount, needCount);
+            if (preTakeCount <= 0)
+            {
+                return false;
+            }
+
+            if (isPre)
+            {
+                this.PreTake(worker, posMap, new ResourceInfo(resourceInfo.Id, preTakeCount));
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -408,7 +450,7 @@
         /// <returns>返回从仓库中扣减的数量(预取的资源)</returns>
         public ResourceInfo SubItemByPreTake(AWorker worker, Vector3Int posMap)
         {
-            if (!this.preTakeResource[worker].ContainsKey(posMap))
+            if (!this.preTakeResource.ContainsKey(worker) || !this.preTakeResource[worker].ContainsKey(posMap))
             {
                 LogManager.Instance.Log("没有预取资源", LogManager.LogLevelEnum.Error);
                 return null;
@@ -418,6 +460,10 @@
 
             // 删除预取的资源
             this.preTakeResource[worker].Remove(posMap);
+            if (this.preTakeResource[worker].Count == 0)
+            {
+                this.preTakeResource.Remove(worker);
+            }
 
             // 减少仓库真正的数据
             this.posToResource[posMap].Count -= resourceInfo.Count;
