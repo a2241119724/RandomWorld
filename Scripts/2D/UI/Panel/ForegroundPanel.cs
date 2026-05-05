@@ -306,95 +306,21 @@ namespace LAB2D
 
         private Button CreateSaveSlotButton(int archiveIndex)
         {
-            Sprite buttonSprite = Resources.Load<Sprite>("Images/UI/ButtonBackground");
-            GameObject gameObject = this.CreateUIObject($"SaveSlot_{archiveIndex + 1}", this.saveSlotContent);
-            RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-            rectTransform.sizeDelta = SaveSlotSize;
-
-            Image image = gameObject.AddComponent<Image>();
-            if (buttonSprite != null)
-            {
-                image.sprite = buttonSprite;
-                image.type = Image.Type.Simple;
-            }
-
-            image.color = Color.white;
-
-            Button button = gameObject.AddComponent<Button>();
-            ColorBlock colors = button.colors;
-            colors.normalColor = new Color32(255, 248, 240, 255);
-            colors.highlightedColor = new Color32(255, 255, 252, 255);
-            colors.pressedColor = new Color32(240, 225, 210, 255);
-            colors.selectedColor = new Color32(255, 255, 252, 255);
-            colors.disabledColor = new Color(0.78f, 0.78f, 0.78f, 0.5f);
-            button.colors = colors;
-            button.targetGraphic = image;
+            GameObject gameObject = ResourceManager.Instance.Instantiate(PrefabConstant.ARCHIVE_ITEM, this.saveSlotContent, false);
+            gameObject.name = $"SaveSlot_{archiveIndex + 1}";
+            gameObject.layer = this.saveSlotContent.gameObject.layer;
+            Button button = gameObject.GetComponent<Button>();
+            button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => this.OnClick_SaveSlot(archiveIndex));
 
-            GameObject titleObj = this.CreateText("Title", gameObject.transform, string.Empty, 30, TextAnchor.MiddleCenter);
-            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
-            titleRect.anchorMin = Vector2.zero;
-            titleRect.anchorMax = Vector2.one;
-            titleRect.offsetMin = new Vector2(18.0f, 0.0f);
-            titleRect.offsetMax = new Vector2(-120.0f, 0.0f);
-            Text titleText = titleObj.GetComponent<Text>();
-            if (titleText != null)
-            {
-                titleText.fontStyle = FontStyle.Bold;
-                titleText.color = PixelUITheme.SaveSlotTitleText;
-                titleText.alignment = TextAnchor.MiddleCenter;
-            }
+            Button renameButton = this.FindChildComponent<Button>(gameObject.transform, "Rename");
+            renameButton.gameObject.SetActive(false);
 
-            Button clearButton = this.CreateClearButton(
-                "Clear",
-                gameObject.transform,
-                () => this.ShowClearConfirmPanel(archiveIndex));
-            RectTransform clearRect = clearButton.GetComponent<RectTransform>();
-            clearRect.anchorMin = new Vector2(1.0f, 0.5f);
-            clearRect.anchorMax = new Vector2(1.0f, 0.5f);
-            clearRect.pivot = new Vector2(0.0f, 0.5f);
-            clearRect.anchoredPosition = new Vector2(12.0f, 0.0f);
-            clearRect.sizeDelta = new Vector2(96.0f, 46.0f);
+            Button clearButton = this.FindChildComponent<Button>(gameObject.transform, "Clear");
+            clearButton.onClick.RemoveAllListeners();
+            clearButton.onClick.AddListener(() => this.ShowClearConfirmPanel(archiveIndex));
 
             this.SetSaveSlotButtonPosition(button, archiveIndex);
-            return button;
-        }
-
-        private Button CreateClearButton(string name, Transform parent, UnityAction onClick)
-        {
-            GameObject gameObject = this.CreateUIObject(name, parent);
-            RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-
-            Image image = gameObject.AddComponent<Image>();
-            image.sprite = Resources.Load<Sprite>("Images/UI/ButtonBackground");
-            image.type = Image.Type.Simple;
-
-            Button button = gameObject.AddComponent<Button>();
-            ColorBlock colors = button.colors;
-            colors.normalColor = PixelUITheme.DestroyNormal;
-            colors.highlightedColor = PixelUITheme.DestroyHighlighted;
-            colors.pressedColor = PixelUITheme.DestroyPressed;
-            colors.selectedColor = PixelUITheme.ButtonSelected;
-            colors.disabledColor = new Color(0.0f, 0.0f, 0.0f, 0.0f);
-            button.colors = colors;
-            button.targetGraphic = image;
-            if (onClick != null)
-            {
-                button.onClick.AddListener(onClick);
-            }
-
-            GameObject textObject = this.CreateText("Text", gameObject.transform, "清除", 22, TextAnchor.MiddleCenter);
-            RectTransform textRect = textObject.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = Vector2.zero;
-            textRect.offsetMax = Vector2.zero;
-            Text textComponent = textObject.GetComponent<Text>();
-            if (textComponent != null)
-            {
-                textComponent.fontStyle = FontStyle.Bold;
-            }
-
             return button;
         }
 
@@ -615,20 +541,12 @@ namespace LAB2D
             {
                 bool hasArchive = ArchiveManager.Instance.HasArchive(i);
                 Text text = this.FindChildComponent<Text>(this.saveSlotButtons[i].transform, "Title");
-                if (text != null)
-                {
-                    string displayName = ArchiveManager.Instance.GetArchiveDisplayName(i);
-                    string status = hasArchive ? "已有存档" : "空槽";
-                    text.text = $"{displayName}\n{status}";
-                    text.fontSize = 25;
-                    text.alignment = TextAnchor.MiddleCenter;
-                }
+                string displayName = ArchiveManager.Instance.GetArchiveDisplayName(i);
+                string status = hasArchive ? "已有存档" : "空槽";
+                text.text = $"{displayName}\n{status}";
 
                 Button clearButton = this.FindChildComponent<Button>(this.saveSlotButtons[i].transform, "Clear");
-                if (clearButton != null)
-                {
-                    clearButton.gameObject.SetActive(hasArchive);
-                }
+                clearButton.gameObject.SetActive(hasArchive);
             }
         }
 
