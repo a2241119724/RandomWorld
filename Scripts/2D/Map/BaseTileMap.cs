@@ -29,13 +29,13 @@
 
         public virtual void Update()
         {
-            if (Input.GetKeyUp(KeyCode.LeftControl))
+            if (!Tool.IsUIInputActive() && Input.GetKeyUp(KeyCode.LeftControl))
             {
                 TileInfoUI.Instance.Init();
             }
 
             // 选择鼠标左键才会显示,在进度条界面不显示
-            if (!Input.GetKey(KeyCode.LeftControl) || PanelController.Instance.Panels.Peek() == AsyncProgressPanel.Instance)
+            if (Tool.IsUIInputActive() || !Input.GetKey(KeyCode.LeftControl) || PanelController.Instance.Panels.Peek() == AsyncProgressPanel.Instance)
             {
                 return;
             }

@@ -3,6 +3,7 @@ namespace LAB2D
     using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
+    using UnityEngine.EventSystems;
     using UnityEngine.UI;
 
     /// <summary>
@@ -469,18 +470,16 @@ namespace LAB2D
                 this.renameTipText.text = $"修改存档名称\n{displayName}";
             }
 
-            if (this.renameInputField != null)
-            {
-                this.renameInputField.text = displayName;
-            }
-
             this.renamePanel.SetActive(true);
             this.renamePanel.transform.SetAsLastSibling();
 
             if (this.renameInputField != null)
             {
+                this.renameInputField.text = displayName;
+                Canvas.ForceUpdateCanvases();
                 this.renameInputField.Select();
                 this.renameInputField.ActivateInputField();
+                EventSystem.current.SetSelectedGameObject(this.renameInputField.gameObject);
             }
         }
 

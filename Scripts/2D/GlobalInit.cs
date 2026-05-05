@@ -57,7 +57,7 @@
             this.WorkerUpdate();
 
             // 退出界面(除了ForegroundPanel,CreateOrJoinPanel,CreateMenuPanel,CreateDataPanel,AsyncProgressPanel)
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (!Tool.IsUIInputActive() && Input.GetKeyDown(KeyCode.Escape))
             {
                 if (PanelController.Instance.Panels.Count == 0)
                 {
@@ -78,7 +78,7 @@
             }
 
             EnvironmentManager.Instance.UpdateEnergy();
-            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2))
+            if (!Tool.IsUIInputActive() && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2)))
             {
                 // 关闭ItemInfo面板
                 if (PanelController.Instance.Panels.Count > 0

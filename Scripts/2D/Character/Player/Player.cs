@@ -323,11 +323,12 @@
         /// </summary>
         private void Move()
         {
-            if (Input.GetKey(KeyCode.A) ||
+            if (!Tool.IsUIInputActive() &&
+                (Input.GetKey(KeyCode.A) ||
                 Input.GetKey(KeyCode.W) ||
                 Input.GetKey(KeyCode.S) ||
                 Input.GetKey(KeyCode.D) ||
-                (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f))
+                (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f)))
             {
                 if (this.mainCamera.Character != this)
                 {
