@@ -96,13 +96,13 @@
         /// <returns>道具数据</returns>
         public ItemData GetById(int id)
         {
-            if (!this.allItemInfo.ContainsKey(id))
+            if (!this.allItemInfo.TryGetValue(id, out ItemData itemData))
             {
                 LogManager.Instance.Log("没有id的道具!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
-            return this.allItemInfo[id];
+            return itemData;
         }
 
         /// <summary>
@@ -112,13 +112,31 @@
         /// <returns>道具数据</returns>
         public ItemData GetByName(string name)
         {
-            if (!this.nameToId.ContainsKey(name))
+            if (!this.TryGetByName(name, out ItemData itemData))
             {
                 LogManager.Instance.Log("没有名字为" + name + "的道具!!!", LogManager.LogLevelEnum.Warning);
                 return ItemData.Empty;
             }
 
-            return this.GetById(this.nameToId[name]);
+            return itemData;
+        }
+
+        /// <summary>
+        /// 尝试通过名字获得数据，不打印缺失日志。
+        /// </summary>
+        /// <param name="name">名字</param>
+        /// <param name="itemData">道具数据</param>
+        /// <returns>是否存在</returns>
+        public bool TryGetByName(string name, out ItemData itemData)
+        {
+            itemData = ItemData.Empty;
+            if (!this.nameToId.TryGetValue(name, out int id))
+            {
+                return false;
+            }
+
+            itemData = this.GetById(id);
+            return itemData != null;
         }
 
         /// <summary>

@@ -39,6 +39,11 @@
         protected static ConcurrentDictionary<string, SeekResult> results = new ();
 
         /// <summary>
+        /// 当前寻路任务的结果键。
+        /// </summary>
+        private string activeSeekId = string.Empty;
+
+        /// <summary>
         /// 合并path时检测射线偏移
         /// </summary>
         protected readonly Vector3[] checkOffsets = { new Vector3(0, 0), new Vector3(-0.5f, 0), new Vector3(0.5f, 0), new Vector3(0, 0.5f), new Vector3(0, -0.5f) };
@@ -152,7 +157,7 @@
                 LogManager.Instance.Log(this.Character.name + ":重新寻路!", LogManager.LogLevelEnum.Trace);
             }
 
-            this.StartSeek();
+            string seekId = this.StartSeek();
 
             // 捕获当前代数, 用于在等待信号量后验证搜索是否已过期
             int capturedGeneration = this.seekGeneration;
@@ -166,7 +171,7 @@
                     lock (this)
                     {
                         // 在等待信号量期间, 新的StartSeek可能已递增代数 — 丢弃过期任务
-                        if (capturedGeneration != this.seekGeneration)
+                        if (capturedGeneration != this.seekGeneration || !seekId.Equals(this.activeSeekId))
                         {
                             return;
                         }
@@ -177,7 +182,7 @@
                         this.mapSpend = SpendPool.Rent();
                         try
                         {
-                            this.DoSeek();
+                            this.DoSeek(seekId);
                         }
                         finally
                         {
@@ -186,11 +191,11 @@
                         }
 
                         // 显示路径(仅在未被新搜索打断时)
-                        if (capturedGeneration == this.seekGeneration)
+                        if (capturedGeneration == this.seekGeneration && seekId.Equals(this.activeSeekId))
                         {
                             UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                             {
-                                this.UpdateLine();
+                                this.UpdateLine(seekId);
                             }).Wait();
                         }
                     }
@@ -207,7 +212,12 @@
         /// </summary>
         public void StopMove()
         {
-            ASeek.results.TryRemove(this.Character.CharacterDataLAB.SeekId, out SeekResult result);
+            if (!string.IsNullOrEmpty(this.activeSeekId))
+            {
+                ASeek.results.TryRemove(this.activeSeekId, out _);
+                this.activeSeekId = string.Empty;
+            }
+
             this.LineRenderer.positionCount = 0;
         }
 
@@ -218,7 +228,8 @@
         public bool MoveByPath()
         {
             // 没有路径返回到达目标
-            if (!ASeek.results.TryGetValue(this.Character.CharacterDataLAB.SeekId, out SeekResult result) || result == null)
+            if (string.IsNullOrEmpty(this.activeSeekId) ||
+                !ASeek.results.TryGetValue(this.activeSeekId, out SeekResult result) || result == null)
             {
                 return true;
             }
@@ -252,7 +263,8 @@
         /// <returns>是否</returns>
         public bool IsSeeking()
         {
-            if (ASeek.results.TryGetValue(this.Character.CharacterDataLAB.SeekId, out SeekResult result) && result == null)
+            if (!string.IsNullOrEmpty(this.activeSeekId) &&
+                ASeek.results.TryGetValue(this.activeSeekId, out SeekResult result) && result == null)
             {
                 return true;
             }
@@ -266,19 +278,19 @@
         /// <returns>是否</returns>
         public bool IsHavePath()
         {
-            if (!ASeek.results.TryGetValue(this.Character.CharacterDataLAB.SeekId, out SeekResult result))
+            if (string.IsNullOrEmpty(this.activeSeekId) ||
+                !ASeek.results.TryGetValue(this.activeSeekId, out SeekResult result))
             {
-                LogManager.Instance.Log(this.Character.name + ":获取寻路结果失败!", LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
-            return result != null;
+            return result != null && result.IsReachable;
         }
 
         /// <summary>
         /// 寻路初始化(主线程调用)
         /// </summary>
-        public void StartSeek()
+        public string StartSeek()
         {
             // 停止之前的线程, 递增代数使旧搜索任务失效
             this.isStopThread = true;
@@ -286,8 +298,13 @@
             this.openList.Clear();
             this.closeList.Clear();
             this.SeekProgress = 0.0f;
-            ASeek.results.TryRemove(this.Character.CharacterDataLAB.SeekId, out SeekResult result);
-            if (!ASeek.results.TryAdd(this.Character.CharacterDataLAB.GenerateSeekId(), null))
+            if (!string.IsNullOrEmpty(this.activeSeekId))
+            {
+                ASeek.results.TryRemove(this.activeSeekId, out _);
+            }
+
+            this.activeSeekId = this.Character.CharacterDataLAB.GenerateSeekId();
+            if (!ASeek.results.TryAdd(this.activeSeekId, null))
             {
                 LogManager.Instance.Log(this.Character.name + ":添加寻路任务失败!", LogManager.LogLevelEnum.Warning);
             }
@@ -296,24 +313,26 @@
             WalkabilityCache.Refresh();
 
             this.UpdateLine();
+            return this.activeSeekId;
         }
 
         /// <summary>
         /// 设置结果
         /// </summary>
         /// <param name="result">结果</param>
-        public void SetResult(SeekResult result)
+        /// <param name="seekId">寻路结果键</param>
+        public void SetResult(SeekResult result, string seekId)
         {
-            if (!ASeek.results.TryUpdate(this.Character.CharacterDataLAB.SeekId, result, null) && result.Path.Count != 0)
+            if (!ASeek.results.TryUpdate(seekId, result, null) && result.Path.Count != 0)
             {
                 UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {
-                    LogManager.Instance.Log(this.Character.name + this.Character.CharacterDataLAB.SeekId + "更新寻路结果失败!", LogManager.LogLevelEnum.Warning);
+                    LogManager.Instance.Log(this.Character.name + seekId + "更新寻路结果失败!", LogManager.LogLevelEnum.Warning);
                 }).Wait();
             }
         }
 
-        protected virtual void DoSeek()
+        protected virtual void DoSeek(string seekId)
         {
             throw new System.NotImplementedException();
         }
@@ -324,19 +343,30 @@
         /// <param name="isFirst">是否仅更新第一段线</param>
         protected void UpdateLine(bool isFirst = false)
         {
-            if (!ASeek.results.TryGetValue(this.Character.CharacterDataLAB.SeekId, out SeekResult result))
+            this.UpdateLine(this.activeSeekId, isFirst);
+        }
+
+        /// <summary>
+        /// 更新路径UI
+        /// </summary>
+        /// <param name="seekId">寻路结果键</param>
+        /// <param name="isFirst">是否仅更新第一段线</param>
+        protected void UpdateLine(string seekId, bool isFirst = false)
+        {
+            if (this.LineRenderer == null)
             {
-                LogManager.Instance.Log(this.Character.name + ":获取寻路结果失败!", LogManager.LogLevelEnum.Warning);
+                return;
             }
 
-            if (result == null)
+            if (string.IsNullOrEmpty(seekId) || !ASeek.results.TryGetValue(seekId, out SeekResult result))
             {
                 this.LineRenderer.positionCount = 0;
                 return;
             }
 
-            if (this.LineRenderer == null)
+            if (result == null || !result.IsReachable)
             {
+                this.LineRenderer.positionCount = 0;
                 return;
             }
 
@@ -359,6 +389,11 @@
         /// </summary>
         public class SeekResult
         {
+            /// <summary>
+            /// 是否可以抵达目标；起点等于终点时为true且路径为空。
+            /// </summary>
+            public bool IsReachable { get; set; } = true;
+
             /// <summary>
             /// 寻路结果, 在主线程执行
             /// </summary>

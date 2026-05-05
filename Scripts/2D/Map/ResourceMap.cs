@@ -151,6 +151,35 @@
         }
 
         /// <summary>
+        /// 尝试获取可采集资源的信息。
+        /// </summary>
+        /// <param name="posMap">资源位置</param>
+        /// <param name="resourceInfo">资源信息</param>
+        /// <returns>该位置是否有可采集资源</returns>
+        public bool TryGetGatherResourceInfo(Vector3Int posMap, out ResourceInfo resourceInfo)
+        {
+            resourceInfo = null;
+            TileBase tileBase = this.GetTile(posMap);
+            if (tileBase == null)
+            {
+                return false;
+            }
+
+            if (!ItemDataManager.Instance.TryGetByName(tileBase.name, out ItemData itemData))
+            {
+                return false;
+            }
+
+            if (!DropDataManager.Instance.HasDropItemsById(itemData.Id))
+            {
+                return false;
+            }
+
+            resourceInfo = new ResourceInfo(itemData.Id);
+            return true;
+        }
+
+        /// <summary>
         /// 设置进度条
         /// </summary>
         public void SetProgress()
