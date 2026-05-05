@@ -26,6 +26,8 @@
 ## 其他
 
 ```powershell
+git config --unset core.hooksPath
+git config core.hooksPath .githooks
 powershell -NoProfile -ExecutionPolicy Bypass -File .\.gitarchive\Set-ArchivePassword.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\.gitarchive\Restore-EncryptedProjectArchive.ps1 -Force
 ```
