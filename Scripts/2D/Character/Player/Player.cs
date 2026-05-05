@@ -306,7 +306,7 @@
         protected override void Death()
         {
             GameplaySessionStats.Instance.RecordPlayerDeath();
-            LogManager.Instance.Log("玩家死亡", LogManager.LogLevelEnum.Info);
+            LogManager.Instance.Log("玩家死亡", LogManager.LogLevelEnum.Trace);
             this.CharacterDataLAB.Hp = 1; // Keep alive at 1 HP to prevent re-death during respawn
 
             // Hide from enemies by switching off the Player layer temporarily

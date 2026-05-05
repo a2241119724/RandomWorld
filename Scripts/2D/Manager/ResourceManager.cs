@@ -283,7 +283,7 @@
             AssetBundle assetBundle = AssetBundle.LoadFromFile(prefabAB);
             if (assetBundle == null)
             {
-                LogManager.Instance.Log("AB包:" + prefabAB + "不存在");
+                LogManager.Instance.Log("AB包:" + prefabAB + "不存在", LogManager.LogLevelEnum.Trace);
                 return;
             }
 

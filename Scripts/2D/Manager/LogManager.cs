@@ -71,7 +71,7 @@
         /// </summary>
         /// <param name="message">日志内容.</param>
         /// <param name="level">日志级别.</param>
-        public void Log(string message, LogLevelEnum level = LogLevelEnum.Info)
+        public void Log(string message, LogLevelEnum level = LogLevelEnum.Trace)
         {
             if (level == LogLevelEnum.Off || level < this.minLogLevel)
             {

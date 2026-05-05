@@ -149,7 +149,7 @@
             this.TargetMap = targetMap;
             if (this.IsSeeking())
             {
-                LogManager.Instance.Log(this.Character.name + ":重新寻路!");
+                LogManager.Instance.Log(this.Character.name + ":重新寻路!", LogManager.LogLevelEnum.Trace);
             }
 
             this.StartSeek();

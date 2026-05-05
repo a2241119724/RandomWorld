@@ -29,7 +29,7 @@
             {
                 UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {
-                    LogManager.Instance.Log(this.Character.name + ":起始==终点");
+                    LogManager.Instance.Log(this.Character.name + ":起始==终点", LogManager.LogLevelEnum.Trace);
                 }).Wait();
                 this.SetResult(new SeekResult());
                 return;

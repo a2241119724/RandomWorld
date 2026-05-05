@@ -58,7 +58,7 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            LogManager.Instance.Log(this.Character.name + " " + this.Character.Manager.CurrentStateType);
+            LogManager.Instance.Log(this.Character.name + " " + this.Character.Manager.CurrentStateType, LogManager.LogLevelEnum.Trace);
             this.preString = string.Empty;
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.Task != null)

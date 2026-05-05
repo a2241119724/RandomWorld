@@ -49,7 +49,7 @@
         /// <inheritdoc/>
         public virtual void OnEnter()
         {
-            LogManager.Instance.Log("Enter: " + this.GetType().Name, LogManager.LogLevelEnum.Info);
+            LogManager.Instance.Log("Enter: " + this.GetType().Name, LogManager.LogLevelEnum.Trace);
             if (this.Panel == null)
             {
                 return;
@@ -71,7 +71,7 @@
         /// <inheritdoc/>
         public virtual void OnExit()
         {
-            LogManager.Instance.Log("Exit: " + this.GetType().Name, LogManager.LogLevelEnum.Info);
+            LogManager.Instance.Log("Exit: " + this.GetType().Name, LogManager.LogLevelEnum.Trace);
             this.Panel.SetActive(false);
         }
 
