@@ -253,7 +253,7 @@ namespace LAB2D
 
         private void BindSceneOverwriteConfirmPanel(Transform panelTransform)
         {
-            Transform confirmPanelTransform = this.FindChildTransform(panelTransform, "OverwriteConfirmPanel");
+            Transform confirmPanelTransform = this.FindChildTransform(panelTransform, "OverwriteConfirm");
             this.overwriteConfirmPanel = confirmPanelTransform.gameObject;
             this.overwriteConfirmText = this.FindChildComponent<Text>(confirmPanelTransform, "Tip");
 
@@ -355,7 +355,7 @@ namespace LAB2D
 
         private void CreateClearConfirmPanel()
         {
-            Transform panelTransform = this.FindChildTransform(this.saveSlotPanel.transform, "ClearConfirmPanel");
+            Transform panelTransform = this.FindChildTransform(this.saveSlotPanel.transform, "ClearConfirm");
             if (panelTransform == null)
             {
                 return;
@@ -428,7 +428,7 @@ namespace LAB2D
 
         private void CreateRenamePanel()
         {
-            Transform panelTransform = this.FindChildTransform(this.saveSlotPanel.transform, "RenameArchivePanel");
+            Transform panelTransform = this.FindChildTransform(this.saveSlotPanel.transform, "RenameArchive");
             if (panelTransform == null)
             {
                 return;
