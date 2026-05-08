@@ -6,16 +6,16 @@ namespace LAB2D
     /// <summary>
     /// Editor 菜单工具：查看和调试波次事件反馈系统状态。
     /// 仅在 Unity Editor 中可用，用于验证 WaveEventFeedback 是否正常工作。
-    /// 菜单路径：Tools > Wave Event Feedback >
+    /// 菜单路径：工具 > 波次事件反馈 >
     ///
     /// 接入方式：无需任何配置，在 Unity Editor 中直接使用菜单项。
     /// 风险边界：仅读取运行时状态，不修改任何游戏数据或资源。
     /// </summary>
     public static class WaveEventFeedbackMenu
     {
-        private const string MenuRoot = "Tools/Wave Event Feedback/";
+        private const string MenuRoot = "工具/波次事件反馈/";
 
-        [MenuItem(MenuRoot + "Show Feedback Status")]
+        [MenuItem(MenuRoot + "查看反馈状态")]
         private static void ShowFeedbackStatus()
         {
             if (!Application.isPlaying)
@@ -52,7 +52,7 @@ namespace LAB2D
             EditorUtility.DisplayDialog("Wave Event Feedback Status", info, "确定");
         }
 
-        [MenuItem(MenuRoot + "Enable Feedback")]
+        [MenuItem(MenuRoot + "启用反馈")]
         private static void EnableFeedback()
         {
             if (!Application.isPlaying)
@@ -71,7 +71,7 @@ namespace LAB2D
                 "确定");
         }
 
-        [MenuItem(MenuRoot + "Disable Feedback")]
+        [MenuItem(MenuRoot + "禁用反馈")]
         private static void DisableFeedback()
         {
             if (!Application.isPlaying)
@@ -90,7 +90,7 @@ namespace LAB2D
                 "确定");
         }
 
-        [MenuItem(MenuRoot + "Show WaveManager Runtime State")]
+        [MenuItem(MenuRoot + "查看波次运行状态")]
         private static void ShowWaveManagerRuntimeState()
         {
             if (!Application.isPlaying)
@@ -131,7 +131,7 @@ namespace LAB2D
             EditorUtility.DisplayDialog("WaveManager Runtime State", info, "确定");
         }
 
-        [MenuItem(MenuRoot + "Simulate Wave Tip (Test)")]
+        [MenuItem(MenuRoot + "模拟波次提示（测试）")]
         private static void SimulateWaveTip()
         {
             if (!Application.isPlaying)

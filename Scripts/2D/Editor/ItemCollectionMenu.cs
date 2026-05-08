@@ -7,13 +7,13 @@ namespace LAB2D
     /// <summary>
     /// Editor 菜单：玩家物品收集统计与里程碑调试工具。
     /// 提供 Play Mode 下的收集数据查看和里程碑管理入口。
-    /// 菜单路径：Tools/Item Collection/
+    /// 菜单路径：工具/物品收集/
     /// </summary>
     public static class ItemCollectionMenu
     {
-        private const string MenuRoot = "Tools/Item Collection/";
+        private const string MenuRoot = "工具/物品收集/";
 
-        [MenuItem(MenuRoot + "Show Collection Stats")]
+        [MenuItem(MenuRoot + "查看收集统计")]
         private static void ShowCollectionStats()
         {
             if (!Application.isPlaying)
@@ -74,7 +74,7 @@ namespace LAB2D
             EditorUtility.DisplayDialog("物品收集统计", sb.ToString(), "确定");
         }
 
-        [MenuItem(MenuRoot + "Show Milestones")]
+        [MenuItem(MenuRoot + "查看里程碑")]
         private static void ShowMilestones()
         {
             if (!Application.isPlaying)
@@ -108,7 +108,7 @@ namespace LAB2D
             EditorUtility.DisplayDialog("收集里程碑", sb.ToString(), "确定");
         }
 
-        [MenuItem(MenuRoot + "Reset Milestones")]
+        [MenuItem(MenuRoot + "重置里程碑")]
         private static void ResetMilestones()
         {
             if (!Application.isPlaying)

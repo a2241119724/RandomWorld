@@ -7,13 +7,13 @@ namespace LAB2D
     /// <summary>
     /// Editor 菜单：工人工作效率统计与调试工具。
     /// 提供 Play Mode 下的效率数据查看、最高效 Worker 查询和任务分布分析入口。
-    /// 菜单路径：Tools/Worker Efficiency/
+    /// 菜单路径：工具/工人效率/
     /// </summary>
     public static class WorkerEfficiencyMenu
     {
-        private const string MenuRoot = "Tools/Worker Efficiency/";
+        private const string MenuRoot = "工具/工人效率/";
 
-        [MenuItem(MenuRoot + "Show Efficiency Summary")]
+        [MenuItem(MenuRoot + "查看效率汇总")]
         private static void ShowEfficiencySummary()
         {
             if (!Application.isPlaying)
@@ -33,7 +33,7 @@ namespace LAB2D
             EditorUtility.DisplayDialog("工人工作效率报告", summary, "确定");
         }
 
-        [MenuItem(MenuRoot + "Show Most Productive Worker")]
+        [MenuItem(MenuRoot + "查看最高效工人")]
         private static void ShowMostProductiveWorker()
         {
             if (!Application.isPlaying)
@@ -77,7 +77,7 @@ namespace LAB2D
             EditorUtility.DisplayDialog("最高效 Worker", sb.ToString(), "确定");
         }
 
-        [MenuItem(MenuRoot + "Show Worker List")]
+        [MenuItem(MenuRoot + "查看工人列表")]
         private static void ShowWorkerList()
         {
             if (!Application.isPlaying)
@@ -123,7 +123,7 @@ namespace LAB2D
             EditorUtility.DisplayDialog("Worker 效率列表", sb.ToString(), "确定");
         }
 
-        [MenuItem(MenuRoot + "Show Global Task Distribution")]
+        [MenuItem(MenuRoot + "查看全局任务分布")]
         private static void ShowGlobalTaskDistribution()
         {
             if (!Application.isPlaying)
@@ -168,7 +168,7 @@ namespace LAB2D
             EditorUtility.DisplayDialog("任务分布", sb.ToString(), "确定");
         }
 
-        [MenuItem(MenuRoot + "Show GameplaySessionStats Worker Stats")]
+        [MenuItem(MenuRoot + "查看会话工人统计")]
         private static void ShowSessionStatsWorkerStats()
         {
             if (!Application.isPlaying)

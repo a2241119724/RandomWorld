@@ -13,7 +13,7 @@ namespace RandomWorld.AgentGenerated.Editor
         private Vector2 scroll;
         private ProjectStats stats;
 
-        [MenuItem("Tools/AgentFull/Readonly Project Overview")]
+        [MenuItem("工具/完整智能体/只读项目概览")]
         public static void Open()
         {
             GetWindow<ReadonlyEditorValidationMenu>("Agent Project Overview");

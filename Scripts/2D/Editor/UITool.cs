@@ -12,12 +12,12 @@
     public class UITool : MonoBehaviour
     {
         private const string Exclude = @"^$"; // 排除,不优化
-        private const string Prefix = "Tools/UI/";
+        private const string Prefix = "工具/界面/";
 
         /// <summary>
         /// 优化Text
         /// </summary>
-        [MenuItem(Prefix + "修改Text")]
+        [MenuItem(Prefix + "修改文本")]
         public static void UpdateText()
         {
             UITool.UpdateCommon(
@@ -51,7 +51,7 @@
         /// <summary>
         /// 修改RoundCorner半径
         /// </summary>
-        [MenuItem(Prefix + "修改RoundCorner")]
+        [MenuItem(Prefix + "修改圆角")]
         public static void UpdateRoundCorner()
         {
             // 寻找所有的RoundCorner
@@ -87,7 +87,7 @@
         /// <summary>
         /// 修改Button颜色
         /// </summary>
-        [MenuItem(Prefix + "修改Button")]
+        [MenuItem(Prefix + "修改按钮")]
         public static void UpdateButton()
         {
             var buttons = Resources.FindObjectsOfTypeAll(typeof(Button));
@@ -135,7 +135,7 @@
         /// <summary>
         /// 修改Slider
         /// </summary>
-        [MenuItem(Prefix + "修改Slider")]
+        [MenuItem(Prefix + "修改滑条")]
         public static void UpdateSlider()
         {
             UITool.UpdateCommon((Slider slider) =>

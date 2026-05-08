@@ -5,6 +5,7 @@ namespace LAB2D
     using System.IO;
     using System.Linq;
     using System.Text;
+    using static LAB2D.EditorReportUtility;
     using UnityEditor;
     using UnityEngine;
 
@@ -13,7 +14,7 @@ namespace LAB2D
     /// </summary>
     public static class AssetBundleInventoryReporter
     {
-        private const string MenuPath = "Tools/Agent/导出AssetBundle清单报告";
+        private const string MenuPath = "工具/智能体/导出资源包清单报告";
         private const string ReportRoot = "Assets/Agent/Reports";
         private const string TaskDirectoryName = "efficiency_F011_AssetBundle_Inventory_Report";
         private const string ReportFileName = "assetbundle_inventory_report.md";
@@ -25,7 +26,7 @@ namespace LAB2D
         private static void ExportReport()
         {
             DateTime now = DateTime.Now;
-            string directory = CreateUniqueTaskDirectory(now);
+            string directory = CreateUniqueTaskDirectory(ReportRoot, TaskDirectoryName, now);
             string reportPath = NormalizePath(Path.Combine(directory, ReportFileName));
             File.WriteAllText(reportPath, BuildReport(now, directory), new UTF8Encoding(false));
             AssetDatabase.Refresh();
@@ -81,42 +82,6 @@ namespace LAB2D
             return sb.ToString();
         }
 
-        private static string CreateUniqueTaskDirectory(DateTime now)
-        {
-            string dateDirectory = NormalizePath(Path.Combine(ReportRoot, now.ToString("yyyy-MM-dd")));
-            if (!Directory.Exists(dateDirectory))
-            {
-                Directory.CreateDirectory(dateDirectory);
-            }
-
-            string desiredDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName));
-            if (!Directory.Exists(desiredDirectory))
-            {
-                Directory.CreateDirectory(desiredDirectory);
-                return desiredDirectory;
-            }
-
-            string timestampDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName + "_" + now.ToString("HHmmss")));
-            if (!Directory.Exists(timestampDirectory))
-            {
-                Directory.CreateDirectory(timestampDirectory);
-                return timestampDirectory;
-            }
-
-            int index = 2;
-            while (true)
-            {
-                string indexedDirectory = NormalizePath(timestampDirectory + "_" + index);
-                if (!Directory.Exists(indexedDirectory))
-                {
-                    Directory.CreateDirectory(indexedDirectory);
-                    return indexedDirectory;
-                }
-
-                index++;
-            }
-        }
-
         private static List<FileRecord> CollectFiles(string root, bool includeMeta)
         {
             if (!Directory.Exists(root))
@@ -151,49 +116,6 @@ namespace LAB2D
             }
 
             return records;
-        }
-
-        private static List<string> CollectMissingMetaFiles(params string[] roots)
-        {
-            List<string> missing = new List<string>();
-            foreach (string root in roots)
-            {
-                if (!Directory.Exists(root))
-                {
-                    continue;
-                }
-
-                string rootMetaPath = root + ".meta";
-                if (!File.Exists(rootMetaPath))
-                {
-                    missing.Add(NormalizePath(rootMetaPath));
-                }
-
-                foreach (string directory in Directory.GetDirectories(root, "*", SearchOption.AllDirectories))
-                {
-                    string metaPath = directory + ".meta";
-                    if (!File.Exists(metaPath))
-                    {
-                        missing.Add(NormalizePath(metaPath));
-                    }
-                }
-
-                foreach (string file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
-                {
-                    if (Path.GetExtension(file).Equals(".meta", StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    string metaPath = file + ".meta";
-                    if (!File.Exists(metaPath))
-                    {
-                        missing.Add(NormalizePath(metaPath));
-                    }
-                }
-            }
-
-            return missing.OrderBy(path => path, StringComparer.Ordinal).ToList();
         }
 
         private static List<string> FindBundleWithoutManifests(IEnumerable<FileRecord> bundleFiles)
@@ -299,25 +221,6 @@ namespace LAB2D
             sb.AppendLine();
         }
 
-        private static void AppendStringList(StringBuilder sb, string title, IReadOnlyCollection<string> values, string emptyText)
-        {
-            sb.AppendLine("## " + title);
-            sb.AppendLine();
-            if (values.Count == 0)
-            {
-                sb.AppendLine("- " + emptyText);
-            }
-            else
-            {
-                foreach (string value in values)
-                {
-                    sb.AppendLine("- " + value);
-                }
-            }
-
-            sb.AppendLine();
-        }
-
         private static void AppendBundleLabelTable(StringBuilder sb, IReadOnlyList<BundleLabelRecord> labels)
         {
             sb.AppendLine("## AssetBundle 标签");
@@ -347,16 +250,6 @@ namespace LAB2D
             sb.AppendLine("- 本报告只用于打包前后排查，不会触发 AssetBundle 构建。");
             sb.AppendLine("- 若发现 bundle/manifest 不匹配，单独生成修复任务卡后再处理 `StreamingAssets`。");
             sb.AppendLine("- 若发现 Prefab 源和 AssetBundle 标签不一致，先核对运行时加载路径，再决定是否重打包。");
-        }
-
-        private static string EscapeTable(string value)
-        {
-            return value.Replace("|", "\\|");
-        }
-
-        private static string NormalizePath(string path)
-        {
-            return path.Replace("\\", "/");
         }
 
         private readonly struct FileRecord

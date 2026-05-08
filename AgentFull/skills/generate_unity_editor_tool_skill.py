@@ -98,7 +98,7 @@ class GenerateUnityEditorToolSkill(Skill):
                     "请生成一个只读 Unity Editor 工具。必须使用给定的 namespace 和 class_name。"
                     "它可以扫描项目并导出报告，但不能修改场景、Prefab、ScriptableObject、"
                     "StreamingAssets、Addressables、构建设置或任何已有项目资源。"
-                    "优先使用 Tools/AgentFull 菜单入口。\n\n"
+                    "优先使用 工具/完整智能体 菜单入口。\n\n"
                     "完整上下文包（包含项目结构、关键 C# 片段、会话上下文、用户输入和最近模型调用）：\n"
                     f"{project_context}\n\n"
                     f"class_name: {class_name}\n"
@@ -174,7 +174,7 @@ namespace __NAMESPACE__
         private Vector2 scroll;
         private ProjectStats stats;
 
-        [MenuItem("Tools/AgentFull/Readonly Project Overview")]
+        [MenuItem("工具/完整智能体/只读项目概览")]
         public static void Open()
         {
             GetWindow<__CLASS_NAME__>("Agent Project Overview");

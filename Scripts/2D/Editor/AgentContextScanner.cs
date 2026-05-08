@@ -6,6 +6,7 @@ namespace LAB2D
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
+    using static LAB2D.EditorReportUtility;
     using UnityEditor;
     using UnityEngine;
 
@@ -14,7 +15,7 @@ namespace LAB2D
     /// </summary>
     public static class AgentContextScanner
     {
-        private const string MenuPath = "Tools/Agent/导出上下文扫描报告";
+        private const string MenuPath = "工具/智能体/导出上下文扫描报告";
         private const string ReportRoot = "Assets/Agent/Reports";
         private const string TaskDirectoryName = "efficiency_F002_agent_context_scanner";
         private const string ReportFileName = "agent_context_scan.md";
@@ -65,7 +66,7 @@ namespace LAB2D
         private static void ExportReport()
         {
             DateTime now = DateTime.Now;
-            string directory = CreateUniqueTaskDirectory(now);
+            string directory = CreateUniqueTaskDirectory(ReportRoot, TaskDirectoryName, now);
             string reportPath = NormalizePath(Path.Combine(directory, ReportFileName));
             File.WriteAllText(reportPath, BuildReport(now, directory), new UTF8Encoding(false));
             AssetDatabase.Refresh();
@@ -106,42 +107,6 @@ namespace LAB2D
             sb.AppendLine("- 如需修复资源、存档、Photon 或 AssetBundle 问题，单独生成任务卡后再执行。");
 
             return sb.ToString();
-        }
-
-        private static string CreateUniqueTaskDirectory(DateTime now)
-        {
-            string dateDirectory = NormalizePath(Path.Combine(ReportRoot, now.ToString("yyyy-MM-dd")));
-            if (!Directory.Exists(dateDirectory))
-            {
-                Directory.CreateDirectory(dateDirectory);
-            }
-
-            string desiredDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName));
-            if (!Directory.Exists(desiredDirectory))
-            {
-                Directory.CreateDirectory(desiredDirectory);
-                return desiredDirectory;
-            }
-
-            string timestampDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName + "_" + now.ToString("HHmmss")));
-            if (!Directory.Exists(timestampDirectory))
-            {
-                Directory.CreateDirectory(timestampDirectory);
-                return timestampDirectory;
-            }
-
-            int index = 2;
-            while (true)
-            {
-                string indexedDirectory = NormalizePath(timestampDirectory + "_" + index);
-                if (!Directory.Exists(indexedDirectory))
-                {
-                    Directory.CreateDirectory(indexedDirectory);
-                    return indexedDirectory;
-                }
-
-                index++;
-            }
         }
 
         private static List<FileRecord> CollectKnownFiles(IEnumerable<string> paths)
@@ -284,38 +249,6 @@ namespace LAB2D
             return Path.GetFileName(path).Equals(nameof(AgentContextScanner) + ".cs", StringComparison.Ordinal);
         }
 
-        private static int CountMissingMeta(string root)
-        {
-            int count = 0;
-            if (!File.Exists(root + ".meta"))
-            {
-                count++;
-            }
-
-            foreach (string directory in Directory.GetDirectories(root, "*", SearchOption.AllDirectories))
-            {
-                if (!File.Exists(directory + ".meta"))
-                {
-                    count++;
-                }
-            }
-
-            foreach (string file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
-            {
-                if (Path.GetExtension(file).Equals(".meta", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                if (!File.Exists(file + ".meta"))
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
         private static void AppendAgentFiles(StringBuilder sb, IReadOnlyList<FileRecord> files)
         {
             sb.AppendLine("## Agent 基础文件");
@@ -376,7 +309,7 @@ namespace LAB2D
 
             foreach (SignalRecord signal in signals.Take(80))
             {
-                sb.AppendLine("- `" + signal.Path + ":" + signal.Line + "` " + EscapeMarkdown(signal.Text));
+                sb.AppendLine("- `" + signal.Path + ":" + signal.Line + "` " + EscapeTable(signal.Text));
             }
 
             if (signals.Count > 80)
@@ -399,16 +332,6 @@ namespace LAB2D
             }
 
             sb.AppendLine();
-        }
-
-        private static string EscapeMarkdown(string value)
-        {
-            return value.Replace("|", "\\|");
-        }
-
-        private static string NormalizePath(string path)
-        {
-            return path.Replace("\\", "/");
         }
 
         private readonly struct FileRecord

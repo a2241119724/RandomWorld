@@ -10,7 +10,7 @@
     /// </summary>
     public class DataTool
     {
-        private const string Prefix = "Tools/Data/";
+        private const string Prefix = "工具/数据/";
 
         [MenuItem(Prefix + "根据代码生成道具数据")]
         private static void BuildAB()
