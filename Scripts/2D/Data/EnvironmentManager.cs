@@ -34,7 +34,8 @@
         {
             if (this.CurEnergy <= this.MaxEnergy)
             {
-                this.CurEnergy += Time.deltaTime;
+                float recovery = Time.deltaTime * WeatherGameplayEffect.Instance.EnergyRecoveryMultiplier;
+                this.CurEnergy = Mathf.Min(this.MaxEnergy, this.CurEnergy + recovery);
             }
         }
 

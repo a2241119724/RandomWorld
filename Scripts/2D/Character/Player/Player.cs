@@ -376,7 +376,8 @@
                     this.animator.SetInteger("Direction", 3);
                 }
 
-                this.rg.velocity = this.MoveSpeed * this.direction.normalized;
+                float speed = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this, this.MoveSpeed);
+                this.rg.velocity = speed * this.direction.normalized;
             }
             else
             {

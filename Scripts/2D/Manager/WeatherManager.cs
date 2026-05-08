@@ -1,5 +1,6 @@
 ﻿namespace LAB2D
 {
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -9,6 +10,7 @@
     public class WeatherManager : MonoBehaviour
     {
         private readonly Dictionary<WeatherTypeEnum, GameObject> weathers = new ();
+        private WeatherTypeEnum currentWeather = WeatherTypeEnum.Sunny;
 
         /// <summary>
         /// 天气类型
@@ -33,13 +35,40 @@
 
         public static WeatherManager Instance { get; private set; }
 
+        /// <summary>
+        /// 当前天气。
+        /// </summary>
+        public WeatherTypeEnum CurrentWeather
+        {
+            get { return this.currentWeather; }
+        }
+
+        /// <summary>
+        /// 天气变化事件。
+        /// 参数为新的天气类型，供玩法、UI 和调试工具订阅。
+        /// </summary>
+        public event Action<WeatherTypeEnum> WeatherChanged;
+
         public void Awake()
         {
             Instance = this;
             foreach (WeatherTypeEnum weatherType in System.Enum.GetValues(typeof(WeatherTypeEnum)))
             {
-                this.weathers.Add(weatherType, this.transform.Find(weatherType.ToString()).gameObject);
+                Transform weatherTransform = this.transform.Find(weatherType.ToString());
+                if (weatherTransform == null)
+                {
+                    LogManager.Instance.Log("天气节点缺失: " + weatherType, LogManager.LogLevelEnum.Warning);
+                    continue;
+                }
+
+                this.weathers[weatherType] = weatherTransform.gameObject;
+                if (weatherTransform.gameObject.activeSelf)
+                {
+                    this.currentWeather = weatherType;
+                }
             }
+
+            this.SetWeather(this.currentWeather, false);
         }
 
         /// <summary>
@@ -47,12 +76,39 @@
         /// </summary>
         public void RandWeather()
         {
-            foreach (WeatherTypeEnum weatherType in System.Enum.GetValues(typeof(WeatherTypeEnum)))
+            WeatherTypeEnum nextWeather = (WeatherTypeEnum)UnityEngine.Random.Range(0, System.Enum.GetValues(typeof(WeatherTypeEnum)).Length);
+            this.SetWeather(nextWeather);
+        }
+
+        /// <summary>
+        /// 设置天气。
+        /// </summary>
+        /// <param name="weatherType">目标天气。</param>
+        public void SetWeather(WeatherTypeEnum weatherType)
+        {
+            this.SetWeather(weatherType, true);
+        }
+
+        /// <summary>
+        /// 设置天气。
+        /// </summary>
+        /// <param name="weatherType">目标天气。</param>
+        /// <param name="notify">是否通知订阅者。</param>
+        private void SetWeather(WeatherTypeEnum weatherType, bool notify)
+        {
+            foreach (KeyValuePair<WeatherTypeEnum, GameObject> pair in this.weathers)
             {
-                this.weathers[weatherType].SetActive(false);
+                if (pair.Value != null)
+                {
+                    pair.Value.SetActive(pair.Key == weatherType);
+                }
             }
 
-            this.weathers[(WeatherTypeEnum)Random.Range(0, System.Enum.GetValues(typeof(WeatherTypeEnum)).Length)].SetActive(true);
+            this.currentWeather = weatherType;
+            if (notify)
+            {
+                this.WeatherChanged?.Invoke(weatherType);
+            }
         }
 
         /// <summary>

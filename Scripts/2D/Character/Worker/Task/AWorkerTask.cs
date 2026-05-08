@@ -161,7 +161,8 @@
                 workerData.CurTired -= Time.deltaTime * WorkerTaskTimeConfig.WorkTiredCostPerSecond;
             }
 
-            this.curProgress += Time.deltaTime;
+            float progressMultiplier = WeatherGameplayEffect.Instance.GetWorkerTaskProgressMultiplier(this.TaskType);
+            this.curProgress += Time.deltaTime * progressMultiplier;
             if (this.curProgress > this.maxProgress)
             {
                 this.curProgress = 0;
