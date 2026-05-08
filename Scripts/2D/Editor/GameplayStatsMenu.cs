@@ -6,13 +6,13 @@ namespace LAB2D
     /// <summary>
     /// Editor 菜单工具：查看当前运行时会话统计数据。
     /// 仅在 Unity Editor 中可用，用于验证 GameplaySessionStats 是否正常接入。
-    /// 菜单路径：Tools > Gameplay Stats > Show Session Stats
+    /// 菜单路径：工具 > 玩法统计 > 查看会话统计
     /// </summary>
     public static class GameplayStatsMenu
     {
-        private const string MenuRoot = "Tools/Gameplay Stats/";
+        private const string MenuRoot = "工具/玩法统计/";
 
-        [MenuItem(MenuRoot + "Show Session Stats")]
+        [MenuItem(MenuRoot + "查看会话统计")]
         private static void ShowSessionStats()
         {
             if (!Application.isPlaying)
@@ -42,7 +42,7 @@ namespace LAB2D
                 "OK");
         }
 
-        [MenuItem(MenuRoot + "Reset Session Stats")]
+        [MenuItem(MenuRoot + "重置会话统计")]
         private static void ResetSessionStats()
         {
             if (!Application.isPlaying)

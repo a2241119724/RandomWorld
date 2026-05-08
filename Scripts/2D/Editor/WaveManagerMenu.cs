@@ -6,13 +6,13 @@ namespace LAB2D
     /// <summary>
     /// Editor 菜单工具：控制波次系统（WaveManager）。
     /// 仅在 Unity Editor 中可用，用于快速启停波次和查看状态。
-    /// 菜单路径：Tools > Wave Manager > ...
+    /// 菜单路径：工具 > 波次管理 > ...
     /// </summary>
     public static class WaveManagerMenu
     {
-        private const string MenuRoot = "Tools/Wave Manager/";
+        private const string MenuRoot = "工具/波次管理/";
 
-        [MenuItem(MenuRoot + "Start Waves")]
+        [MenuItem(MenuRoot + "开始波次")]
         private static void StartWaves()
         {
             if (!Application.isPlaying)
@@ -37,7 +37,7 @@ namespace LAB2D
             Debug.Log("<color=cyan>[WaveManager]</color> 波次系统已启动！");
         }
 
-        [MenuItem(MenuRoot + "Stop Waves")]
+        [MenuItem(MenuRoot + "停止波次")]
         private static void StopWaves()
         {
             if (!Application.isPlaying)
@@ -58,7 +58,7 @@ namespace LAB2D
             Debug.Log("<color=cyan>[WaveManager]</color> 波次系统已停止，恢复默认生成模式。");
         }
 
-        [MenuItem(MenuRoot + "Show Wave Status")]
+        [MenuItem(MenuRoot + "查看波次状态")]
         private static void ShowWaveStatus()
         {
             if (!Application.isPlaying)
@@ -100,7 +100,7 @@ namespace LAB2D
             EditorUtility.DisplayDialog("Wave Manager Status", statusText, "OK");
         }
 
-        [MenuItem(MenuRoot + "Configure (Quick)")]
+        [MenuItem(MenuRoot + "快速查看配置")]
         private static void QuickConfigure()
         {
             if (!Application.isPlaying)

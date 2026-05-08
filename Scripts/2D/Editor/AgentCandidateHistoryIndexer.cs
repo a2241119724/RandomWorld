@@ -6,6 +6,7 @@ namespace LAB2D
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
+    using static LAB2D.EditorReportUtility;
     using UnityEditor;
     using UnityEngine;
 
@@ -14,7 +15,7 @@ namespace LAB2D
     /// </summary>
     public static class AgentCandidateHistoryIndexer
     {
-        private const string MenuPath = "Tools/Agent/导出候选历史状态索引";
+        private const string MenuPath = "工具/智能体/导出候选历史状态索引";
         private const string ReportRoot = "Assets/Agent/Reports";
         private const string TaskDirectoryName = "efficiency_F010_candidate_history_index";
         private const string ReportFileName = "candidate_history_index.md";
@@ -47,7 +48,7 @@ namespace LAB2D
         private static void ExportReport()
         {
             DateTime now = DateTime.Now;
-            string directory = CreateUniqueTaskDirectory(now);
+            string directory = CreateUniqueTaskDirectory(ReportRoot, TaskDirectoryName, now);
             string reportPath = NormalizePath(Path.Combine(directory, ReportFileName));
             File.WriteAllText(reportPath, BuildReport(now, directory), new UTF8Encoding(false));
             AssetDatabase.Refresh();
@@ -351,42 +352,6 @@ namespace LAB2D
             sb.AppendLine("- 本工具不修改业务资源；如需修复场景、预制体、SO、存档、联机同步或打包产物，请单独生成任务卡。");
         }
 
-        private static string CreateUniqueTaskDirectory(DateTime now)
-        {
-            string dateDirectory = NormalizePath(Path.Combine(ReportRoot, now.ToString("yyyy-MM-dd")));
-            if (!Directory.Exists(dateDirectory))
-            {
-                Directory.CreateDirectory(dateDirectory);
-            }
-
-            string desiredDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName));
-            if (!Directory.Exists(desiredDirectory))
-            {
-                Directory.CreateDirectory(desiredDirectory);
-                return desiredDirectory;
-            }
-
-            string timestampDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName + "_" + now.ToString("HHmmss")));
-            if (!Directory.Exists(timestampDirectory))
-            {
-                Directory.CreateDirectory(timestampDirectory);
-                return timestampDirectory;
-            }
-
-            int index = 2;
-            while (true)
-            {
-                string indexedDirectory = NormalizePath(timestampDirectory + "_" + index);
-                if (!Directory.Exists(indexedDirectory))
-                {
-                    Directory.CreateDirectory(indexedDirectory);
-                    return indexedDirectory;
-                }
-
-                index++;
-            }
-        }
-
         private static bool IsStatusCell(string cell)
         {
             return StatusTokens.Any(token => cell.Equals(token, StringComparison.OrdinalIgnoreCase));
@@ -479,21 +444,6 @@ namespace LAB2D
 
             string tail = line.Substring(candidateIndex + candidateId.Length).Trim(' ', ':', '：', '-', '。', '.', '`');
             return tail;
-        }
-
-        private static string EscapeTable(string value)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return string.Empty;
-            }
-
-            return value.Replace("|", "\\|").Replace("\r", " ").Replace("\n", " ");
-        }
-
-        private static string NormalizePath(string path)
-        {
-            return path.Replace("\\", "/");
         }
 
         private readonly struct HistorySnapshot

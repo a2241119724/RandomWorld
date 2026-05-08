@@ -15,7 +15,7 @@ namespace LAB2D
     ///   - 手动停止：调用 WaveEventFeedback.Instance.Disable() 取消订阅
     ///   - HUD 数据源：WaveEventFeedback.Instance.CurrentState
     ///   - 外部订阅：WaveEventFeedback.Instance.OnWaveFeedbackChanged
-    ///   - Editor 菜单：Tools > Wave Event Feedback > ...
+    ///   - Editor 菜单：工具 > 波次事件反馈 > ...
     ///
     /// 风险边界：
     ///   - 不修改任何已有文件，仅新增独立脚本

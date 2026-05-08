@@ -10,7 +10,7 @@ namespace LAB2D
     /// </summary>
     public static class SessionResultAutoTriggerMenu
     {
-        private const string MenuRoot = "Tools/Session Auto Trigger";
+        private const string MenuRoot = "工具/结算自动触发";
 
         /// <summary>
         /// 获取当前活动的 SessionResultAutoTrigger 实例（可能为 null）
@@ -27,7 +27,7 @@ namespace LAB2D
             return trigger;
         }
 
-        [MenuItem(MenuRoot + "/Show Status", false, 1)]
+        [MenuItem(MenuRoot + "/查看状态", false, 1)]
         private static void ShowStatus()
         {
             if (!Application.isPlaying)
@@ -60,7 +60,7 @@ namespace LAB2D
             EditorUtility.DisplayDialog("Session Auto Trigger — 状态", statusText, "确认");
         }
 
-        [MenuItem(MenuRoot + "/Simulate Player Death Capture", false, 2)]
+        [MenuItem(MenuRoot + "/模拟玩家死亡采集", false, 2)]
         private static void SimulatePlayerDeathCapture()
         {
             if (!Application.isPlaying)
@@ -79,7 +79,7 @@ namespace LAB2D
                 "确认");
         }
 
-        [MenuItem(MenuRoot + "/Simulate Wave Clear Capture", false, 3)]
+        [MenuItem(MenuRoot + "/模拟波次通关采集", false, 3)]
         private static void SimulateWaveClearCapture()
         {
             if (!Application.isPlaying)
@@ -98,7 +98,7 @@ namespace LAB2D
                     "Session Auto Trigger",
                     "SessionResultAutoTrigger 实例不存在，无法模拟波次通关采集。\n\n" +
                     "SessionResultAutoTrigger 需挂载到场景 GameObject 上才能订阅 WaveManager 事件。\n" +
-                    "如仅需测试结算采集，请使用 'Tools > Session Result > Capture Now' 菜单。",
+                    "如仅需测试结算采集，请使用 '工具 > 结算结果 > 立即采集' 菜单。",
                     "确认");
                 return;
             }
@@ -128,7 +128,7 @@ namespace LAB2D
             }
         }
 
-        [MenuItem(MenuRoot + "/Show Latest Result Report", false, 4)]
+        [MenuItem(MenuRoot + "/查看最新结果报告", false, 4)]
         private static void ShowLatestResultReport()
         {
             if (!Application.isPlaying)
@@ -156,7 +156,7 @@ namespace LAB2D
                 "确认");
         }
 
-        [MenuItem(MenuRoot + "/Clear All Results", false, 20)]
+        [MenuItem(MenuRoot + "/清空全部结果", false, 20)]
         private static void ClearAllResults()
         {
             if (!Application.isPlaying)

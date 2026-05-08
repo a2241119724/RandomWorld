@@ -11,7 +11,7 @@ namespace LAB2D
     /// 接入方式：
     ///   1. 手动采集：SessionResultManager.Instance.CaptureResult()
     ///   2. 事件触发：GameplaySessionStats.StatsChanged 事件可用于自动检测会话结束
-    ///   3. Editor 菜单：Tools > Session Result 系列菜单
+    ///   3. Editor 菜单：工具 > 结算结果 系列菜单
     ///   4. 结算面板数据源：SessionResultManager.Instance.LatestResult
     /// </summary>
     public class SessionResultManager : Singleton<SessionResultManager>
@@ -133,7 +133,7 @@ namespace LAB2D
         {
             if (this.resultHistory.Count == 0)
             {
-                return "暂无结算记录。\n请在 Play Mode 中使用 Tools > Session Result > Capture Now 采集结算数据。";
+                return "暂无结算记录。\n请在 Play Mode 中使用 工具 > 结算结果 > 立即采集 采集结算数据。";
             }
 
             System.Text.StringBuilder builder = new System.Text.StringBuilder(256);

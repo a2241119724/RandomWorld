@@ -12,14 +12,14 @@ namespace LAB2D
     /// </summary>
     public static class AmbitiousExperienceHubInstaller
     {
-        private const string MenuRoot = "Tools/Agent/Ambitious/Experience Hub/";
+        private const string MenuRoot = "工具/智能体/体验中枢/";
         private const string SceneRootName = "ExperienceHub_Root";
         private const string RuntimeRootName = "ExperienceHub_Runtime";
 
         /// <summary>
         /// 在 Game.unity 中安装独立根节点。
         /// </summary>
-        [MenuItem(MenuRoot + "Install Scene Root In Game Scene", false, 1)]
+        [MenuItem(MenuRoot + "安装场景根节点到游戏场景", false, 1)]
         private static void InstallSceneRootInGameScene()
         {
             string scenePath = FindGameScenePath();
@@ -51,7 +51,7 @@ namespace LAB2D
         /// <summary>
         /// 从当前场景移除 A001 根节点，用于回滚。
         /// </summary>
-        [MenuItem(MenuRoot + "Remove Scene Root From Current Scene", false, 20)]
+        [MenuItem(MenuRoot + "从当前场景移除场景根节点", false, 20)]
         private static void RemoveSceneRootFromCurrentScene()
         {
             int removed = 0;

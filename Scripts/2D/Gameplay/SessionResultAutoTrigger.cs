@@ -14,7 +14,7 @@ namespace LAB2D
     /// 接入方式：
     ///   - 运行时自动：SessionResultAutoTrigger 在 Start 时订阅 WaveManager 事件
     ///   - Player.cs 需新增 1 行调用 NotifyPlayerDeath（Player.Death 方法内）
-    ///   - Editor 菜单：Tools > Session Auto Trigger 系列
+    ///   - Editor 菜单：工具 > 结算自动触发 系列
     ///   - 完全降级保护：所有依赖缺失时静默跳过，不抛异常
     ///
     /// 风险边界：不修改 Scene/Prefab/SO/存档/Photon，仅作为运行时事件桥接层。

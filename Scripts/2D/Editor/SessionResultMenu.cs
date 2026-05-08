@@ -5,7 +5,7 @@ namespace LAB2D
 
     /// <summary>
     /// Editor 菜单工具：会话结算数据的采集、查看和管理。
-    /// 菜单路径：Tools > Session Result
+    /// 菜单路径：工具 > 结算结果
     ///
     /// 功能：
     ///   - Capture Now：从当前 GameplaySessionStats 采集一次结算数据
@@ -15,9 +15,9 @@ namespace LAB2D
     /// </summary>
     public static class SessionResultMenu
     {
-        private const string MenuRoot = "Tools/Session Result/";
+        private const string MenuRoot = "工具/结算结果/";
 
-        [MenuItem(MenuRoot + "Capture Now")]
+        [MenuItem(MenuRoot + "立即采集")]
         private static void CaptureNow()
         {
             if (!Application.isPlaying)
@@ -50,7 +50,7 @@ namespace LAB2D
                 "OK");
         }
 
-        [MenuItem(MenuRoot + "Show Latest")]
+        [MenuItem(MenuRoot + "查看最新")]
         private static void ShowLatest()
         {
             if (!Application.isPlaying)
@@ -67,7 +67,7 @@ namespace LAB2D
             {
                 EditorUtility.DisplayDialog(
                     "Session Result",
-                    "暂无结算数据。\n请先使用 Tools > Session Result > Capture Now 采集数据。",
+                    "暂无结算数据。\n请先使用 工具 > 结算结果 > 立即采集 采集数据。",
                     "OK");
                 return;
             }
@@ -79,7 +79,7 @@ namespace LAB2D
                 "OK");
         }
 
-        [MenuItem(MenuRoot + "Show History")]
+        [MenuItem(MenuRoot + "查看历史")]
         private static void ShowHistory()
         {
             if (!Application.isPlaying)
@@ -99,7 +99,7 @@ namespace LAB2D
                 "OK");
         }
 
-        [MenuItem(MenuRoot + "Clear History")]
+        [MenuItem(MenuRoot + "清空历史")]
         private static void ClearHistory()
         {
             if (!Application.isPlaying)

@@ -5,6 +5,7 @@ namespace LAB2D
     using System.IO;
     using System.Linq;
     using System.Text;
+    using static LAB2D.EditorReportUtility;
     using UnityEditor;
     using UnityEngine;
 
@@ -13,7 +14,7 @@ namespace LAB2D
     /// </summary>
     public static class ItemResourceIntegrityValidator
     {
-        private const string Prefix = "Tools/Data/";
+        private const string Prefix = "工具/数据/";
         private const string ScriptableRoot = "Assets/Resources/SO";
         private const string ItemTileRoot = "Assets/Resources/Tilemap/Item";
         private const string ItemImageRoot = "Assets/Resources/Images/Item";
@@ -24,11 +25,11 @@ namespace LAB2D
         private static readonly string[] TileExtensions = { ".asset" };
         private static readonly string[] ImageExtensions = { ".png", ".jpg", ".jpeg", ".psd", ".tga" };
 
-        [MenuItem(Prefix + "导出Item资源绑定报告")]
+        [MenuItem(Prefix + "导出道具资源绑定报告")]
         private static void ExportReport()
         {
             DateTime now = DateTime.Now;
-            string directory = CreateUniqueTaskDirectory(now);
+            string directory = CreateUniqueTaskDirectory(ReportRoot, TaskDirectoryName, now);
             string report = BuildReport(now, directory);
             string reportPath = NormalizePath(Path.Combine(directory, ReportFileName));
             File.WriteAllText(reportPath, report, new UTF8Encoding(false));
@@ -81,7 +82,7 @@ namespace LAB2D
             sb.AppendLine("# Item Resource Integrity Report");
             sb.AppendLine();
             sb.AppendLine("- 生成时间: " + now.ToString("yyyy-MM-dd HH:mm:ss"));
-            sb.AppendLine("- 工具菜单: `Tools/Data/导出Item资源绑定报告`");
+            sb.AppendLine("- 工具菜单: `工具/数据/导出道具资源绑定报告`");
             sb.AppendLine("- 扫描模式: 只读");
             sb.AppendLine("- 本次任务目录: `" + normalizedTaskDirectory + "`");
             sb.AppendLine("- 输出路径: `" + normalizedTaskDirectory + "/" + ReportFileName + "`");
@@ -107,12 +108,12 @@ namespace LAB2D
             sb.AppendLine("| 缺失 .meta | " + missingMetaFiles.Count + " |");
             sb.AppendLine();
 
-            AppendStringList(sb, "缺失 Tile 绑定", missingTiles, "未发现缺失 Tile 绑定。");
-            AppendStringList(sb, "缺失 Image 绑定", missingImages, "未发现缺失 Image 绑定。");
+            AppendStringList(sb, "缺失 Tile 绑定", missingTiles, "未发现缺失 Tile 绑定。", wrapValuesInCode: true);
+            AppendStringList(sb, "缺失 Image 绑定", missingImages, "未发现缺失 Image 绑定。", wrapValuesInCode: true);
             AppendItemDuplicateList(sb, "重复 EnName", duplicateItems);
             AppendAssetDuplicateList(sb, "重复 Tile 名称", duplicateTiles);
             AppendAssetDuplicateList(sb, "重复 Image 名称", duplicateImages);
-            AppendStringList(sb, "缺失 .meta", missingMetaFiles, "未发现缺失 .meta。");
+            AppendStringList(sb, "缺失 .meta", missingMetaFiles, "未发现缺失 .meta。", wrapValuesInCode: true);
 
             sb.AppendLine("## Item 记录");
             sb.AppendLine();
@@ -124,42 +125,6 @@ namespace LAB2D
             }
 
             return sb.ToString();
-        }
-
-        private static string CreateUniqueTaskDirectory(DateTime now)
-        {
-            string dateDirectory = NormalizePath(Path.Combine(ReportRoot, now.ToString("yyyy-MM-dd")));
-            if (!Directory.Exists(dateDirectory))
-            {
-                Directory.CreateDirectory(dateDirectory);
-            }
-
-            string desiredDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName));
-            if (!Directory.Exists(desiredDirectory))
-            {
-                Directory.CreateDirectory(desiredDirectory);
-                return desiredDirectory;
-            }
-
-            string timestampDirectory = NormalizePath(Path.Combine(dateDirectory, TaskDirectoryName + "_" + now.ToString("HHmmss")));
-            if (!Directory.Exists(timestampDirectory))
-            {
-                Directory.CreateDirectory(timestampDirectory);
-                return timestampDirectory;
-            }
-
-            int index = 2;
-            while (true)
-            {
-                string indexedDirectory = NormalizePath(timestampDirectory + "_" + index);
-                if (!Directory.Exists(indexedDirectory))
-                {
-                    Directory.CreateDirectory(indexedDirectory);
-                    return indexedDirectory;
-                }
-
-                index++;
-            }
         }
 
         private static List<ItemRecord> CollectItemRecords()
@@ -219,68 +184,6 @@ namespace LAB2D
             return records;
         }
 
-        private static List<string> CollectMissingMetaFiles(params string[] roots)
-        {
-            List<string> missing = new ();
-            foreach (string root in roots)
-            {
-                if (!Directory.Exists(root))
-                {
-                    continue;
-                }
-
-                string rootMetaPath = root + ".meta";
-                if (!File.Exists(rootMetaPath))
-                {
-                    missing.Add(NormalizePath(rootMetaPath));
-                }
-
-                foreach (string directory in Directory.GetDirectories(root, "*", SearchOption.AllDirectories))
-                {
-                    string metaPath = directory + ".meta";
-                    if (!File.Exists(metaPath))
-                    {
-                        missing.Add(NormalizePath(metaPath));
-                    }
-                }
-
-                foreach (string file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
-                {
-                    if (Path.GetExtension(file).Equals(".meta", StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    string metaPath = file + ".meta";
-                    if (!File.Exists(metaPath))
-                    {
-                        missing.Add(NormalizePath(metaPath));
-                    }
-                }
-            }
-
-            return missing.OrderBy(path => path, StringComparer.Ordinal).ToList();
-        }
-
-        private static void AppendStringList(StringBuilder sb, string title, IReadOnlyCollection<string> values, string emptyText)
-        {
-            sb.AppendLine("## " + title);
-            sb.AppendLine();
-            if (values.Count == 0)
-            {
-                sb.AppendLine("- " + emptyText);
-            }
-            else
-            {
-                foreach (string value in values)
-                {
-                    sb.AppendLine("- `" + value + "`");
-                }
-            }
-
-            sb.AppendLine();
-        }
-
         private static void AppendItemDuplicateList(StringBuilder sb, string title, IReadOnlyCollection<IGrouping<string, ItemRecord>> groups)
         {
             sb.AppendLine("## " + title);
@@ -325,16 +228,6 @@ namespace LAB2D
             }
 
             sb.AppendLine();
-        }
-
-        private static string EscapeTable(string value)
-        {
-            return value.Replace("|", "\\|");
-        }
-
-        private static string NormalizePath(string path)
-        {
-            return path.Replace("\\", "/");
         }
 
         private readonly struct ItemRecord

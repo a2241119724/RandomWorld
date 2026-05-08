@@ -9,7 +9,7 @@
     /// </summary>
     public class OtherTool
     {
-        private const string Prefix = "Tools/Other/";
+        private const string Prefix = "工具/其他/";
 
         /// <summary>
         /// 打AB包
@@ -20,7 +20,7 @@
         /// GameObject g = Instantiate(assetBundleObj.LoadAsset<GameObject>("snow"));
         /// g.name = "AB资源加载方式";
         /// </summary>
-        [MenuItem(Prefix + "打AB包")]
+        [MenuItem(Prefix + "打资源包")]
         private static void BuildAB()
         {
             BuildPipeline.BuildAssetBundles(Application.streamingAssetsPath, BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.StandaloneWindows64);
