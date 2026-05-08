@@ -252,7 +252,8 @@
             }
 
             this.Direction = worldPos - this.Character.transform.position;
-            this.Character.transform.Translate(this.Character.MoveSpeed * Time.deltaTime * this.Direction.normalized, Space.World); // 向前移动
+            float speed = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this.Character, this.Character.MoveSpeed);
+            this.Character.transform.Translate(speed * Time.deltaTime * this.Direction.normalized, Space.World); // 向前移动
             this.UpdateLine(true);
             return false;
         }

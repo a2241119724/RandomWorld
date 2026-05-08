@@ -30,20 +30,35 @@
 | [DONE] | F009 | 连击增益奖励系统 | 战斗反馈 | GameplaySessionStats 追踪连击但无任何游戏性收益 | 激励连续击杀，提升战斗深度和爽感 | 为后续技能/装备连击增益提供基础 | 低 | 中 | P1 | GameplayAgent | ScriptGenerateSkill | **已完成**。任务目录：Agent/Reports/2026-04-30/feature_F009_ComboBonus/；任务卡：task_feature_F009_ComboBonus.md；验证记录：validation_feature_F009.md；新增文件：ComboBonusManager.cs、ComboBonusMenu.cs；修改文件：Character.cs（ReduceHp +3行连击伤害加成）、Player.cs（AddExperienceValue +3行连击经验加成）；新增能力：6级连击等级配置（1/5/10/20/50/100）、递进式伤害倍率（1.0x~2.0x）和经验倍率（1.0x~5.0x）、连击里程碑即时Tip提示、连击中断检测与反馈、OnComboChanged/OnComboMilestoneReached/OnComboBroken事件、静态倍率查询方法、Editor调试菜单（4项）；验证：静态验证全部通过（35+检查项），Play Mode 待人工完成；剩余风险：无；后续：接入HUD实时连击显示、添加连击特效、接入成就系统 |
 | [DONE] | F010 | 波次事件反馈与波间提示系统 | 关卡玩法 | WaveManager 有5个公开事件但零订阅者；波次开始/结束/清空/休息无任何玩家反馈 | 让玩家感知波次节奏，提升关卡沉浸感 | 补齐波次系统缺失的玩家反馈层 | 低 | 低 | P1 | AINPCAgent + UIAgent | ScriptGenerateSkill | **已完成**。任务目录：Agent/Reports/2026-04-30/feature_F010_WaveEventFeedback/；任务卡：task_feature_F010_WaveEventFeedback.md；验证记录：validation_feature_F010.md；新增文件：Scripts/2D/Gameplay/WaveEventFeedback.cs、Scripts/2D/Editor/WaveEventFeedbackMenu.cs；修改文件：无（零侵入）；新增能力：5种波次事件即时Tip提示（波次来袭/清除/通关/休息/状态同步）、WaveFeedbackState数据层供HUD查询、OnWaveFeedbackChanged/OnWaveTipRequested公开事件、Editor调试菜单（5项：查看状态/启用/禁用/WaveManager运行时状态/模拟Tip测试）、全依赖降级保护；验证：静态验证全部通过（9维度40+检查项），Play Mode 待人工完成；剩余风险：无；后续：HUD波次状态显示组件、波次特效、通关成就 |
 | [DONE] | F011 | 会话结算自动触发与结果接入 | 关卡结算 | SessionResultManager.CaptureResult 从未被自动调用；OnResultCaptured 无订阅者 | 玩家死亡或通关后自动获得战斗评价 | 补齐结算系统缺失的自动触发链路 | 低 | 低 | P1 | GameplayAgent | ScriptGenerateSkill | **已完成**。任务目录：Agent/Reports/2026-04-30/feature_F011_SessionResultAutoTrigger/；任务卡：task_feature_F011_SessionResultAutoTrigger.md；验证记录：validation_feature_F011.md；新增文件：SessionResultAutoTrigger.cs、SessionResultAutoTriggerMenu.cs；修改文件：Player.cs（Death方法 +1行调用）；新增能力：玩家死亡自动采集结算数据、波次通关自动采集结算数据、结算摘要 Tip 提示、OnAutoCaptureResult 公开事件、Editor 调试菜单（5项）、全依赖降级保护（Trigger未挂载时直连、GlobalInit缺失时降级 Debug.Log）；验证：静态验证全部通过（35+检查项），Play Mode 待人工完成；剩余风险：无；后续：可在 Unity Play Mode 验证实际采集效果、可选将 Trigger 组件挂载到场景 GameObject |
-| [TODO] | F012 | 天气环境对玩法的影响系统 | 玩家体验 | WeatherManager 每日随机天气但零玩法影响；EnvironmentManager 温度/湿度/能量数据未被玩法使用 | 天气变化带来玩法差异和策略深度 | 激活已有的环境数据系统 | 低 | 中 | P2 | GameplayAgent + MapAgent | ScriptGenerateSkill | 新增 WeatherGameplayEffect，基于当前天气调整移动速度/视野/采集效率 |
+| [DONE] | F012 | 天气环境对玩法的影响系统 | 玩家体验 | WeatherManager 每日随机天气但零玩法影响；EnvironmentManager 温度/湿度/能量数据未被玩法使用 | 天气变化带来玩法差异和策略深度 | 激活已有的环境数据系统 | 低 | 中 | P2 | GameplayAgent + MapAgent | ScriptGenerateSkill | **已完成**。任务目录：Agent/Reports/2026-05-09/feature_F012_WeatherGameplayEffect/；任务卡：task_feature_F012_WeatherGameplayEffect.md；验证记录：validation_feature_F012.md；修改文件：WeatherManager.cs、EnvironmentManager.cs、Player.cs、ASeek.cs、AWorkerTask.cs；新增文件：WeatherGameplayTool.cs、WeatherGameplayEffect.cs、WeatherGameplayHUD.cs、WeatherGameplayEffectMenu.cs；新增业务能力：天气当前状态与事件、晴/雨/雪天气倍率、玩家移动速度影响、工人移动速度影响、工人任务进度影响、环境灵气恢复影响、天气变化 Tip、可选天气 HUD；UI 生成方式：未手写 Game.unity，未创建 ResourcesLocal Prefab，已改用 Editor 菜单 `工具/天气玩法影响/创建天气 HUD 到 Game 场景`；验证：静态检查通过，Unity 编译和 Play Mode 待人工完成；工具类复用：复用 Tool.IsUIInputActive、Tool.GetComponentInChildren，新增 Scripts/2D/Tool/WeatherGameplayTool.cs；具体业务脚本通过 WeatherGameplayEffect 调用 WeatherGameplayTool；剩余风险：天气倍率和 HUD 菜单需 Unity Play Mode 体验验证 |
 | [TODO] | F013 | 工人饥饿疲劳状态效果与视觉反馈 | 成长奖励 | Worker 有 hunger/fatigue 衰减但降到0无任何后果；无视觉状态指示 | 让工人管理有实际意义和紧迫感 | 补齐生存模拟缺失的惩罚层 | 中 | 中 | P2 | AINPCAgent | ScriptGenerateSkill | 新增 WorkerConditionManager，饥饿/疲劳归零时触发减速/停工，添加状态图标 |
 
 ## 推荐优先开发
 
-1. **F012 — 天气环境对玩法的影响系统**（P2，低风险，WeatherManager/EnvironmentManager 数据已有但零玩法应用）
-2. **F013 — 工人饥饿疲劳状态效果与视觉反馈**（P2，中风险，需评估 Worker 行为修改影响）
-3. **F007 — 战斗评分与关卡星级计算系统（增强版）**（P1，基础评分已被 F004 覆盖，需扩展增强版维度）
+1. **F013 — 工人饥饿疲劳状态效果与视觉反馈**（P2，中风险，需评估 Worker 行为修改影响）
+2. **F007 — 战斗评分与关卡星级计算系统（增强版）**（P1，基础评分已被 F004 覆盖，需扩展增强版维度）
 
 ## 高/中风险候选及跳过原因
 
-（当前无新增跳过候选）
+- F013 本次未选择：需要触碰 Worker 状态和停工逻辑，风险高于 F012，保留 `[TODO]` 等后续单独评估。
+- F007 本次未选择：基础评分已被 F004 覆盖，增强版需要更明确的关卡差异化规则，保留 `[TODO]`。
 
 ## 历史任务记录
+
+### 2026-05-09
+
+- **F012 [DONE]** — 天气环境对玩法的影响系统
+  - 任务目录：`Agent/Reports/2026-05-09/feature_F012_WeatherGameplayEffect/`
+  - 任务卡：`task_feature_F012_WeatherGameplayEffect.md`
+  - 验证记录：`validation_feature_F012.md`
+  - 修改文件：`Scripts/2D/Manager/WeatherManager.cs`、`Scripts/2D/Data/EnvironmentManager.cs`、`Scripts/2D/Character/Player/Player.cs`、`Scripts/2D/Core/Seek/ASeek.cs`、`Scripts/2D/Character/Worker/Task/AWorkerTask.cs`
+  - 新增文件：`Scripts/2D/Tool/WeatherGameplayTool.cs`、`Scripts/2D/Gameplay/WeatherGameplayEffect.cs`、`Scripts/2D/UI/WeatherGameplayHUD.cs`、`Scripts/2D/Editor/WeatherGameplayEffectMenu.cs`
+  - 新增能力：WeatherManager 当前天气状态与事件、晴/雨/雪天气倍率、玩家移动速度影响、工人移动速度影响、工人任务进度影响、环境灵气恢复影响、天气变化 Tip、可选天气 HUD 数据源与生成菜单
+  - UI 生成方式：未直接写入 `Game.unity`，未创建 `ResourcesLocal` Prefab；已提供 Editor 菜单 `工具/天气玩法影响/创建天气 HUD 到 Game 场景`，用于通过 Unity Editor 安全生成独立 HUD
+  - 工具类复用：复用 `Tool.IsUIInputActive()` 和 `Tool.GetComponentInChildren<T>()`；新增 `WeatherGameplayTool` 承载天气倍率、天气中文名、摘要文本和安全倍率计算
+  - 具体调用链：`Player`、`ASeek`、`AWorkerTask`、`EnvironmentManager` 读取 `WeatherGameplayEffect`；`WeatherGameplayEffect` 调用 `WeatherGameplayTool` 统一计算公共逻辑
+  - 验证结果：静态检查通过；确认运行时代码未引用 `UnityEditor`；`.meta` 文件已创建；Unity 编译和 Play Mode 待人工完成
+  - 剩余风险：天气倍率需 Play Mode 手感微调；HUD 菜单需在 Unity Editor 中实际执行验证
 
 ### 2026-05-01
 
