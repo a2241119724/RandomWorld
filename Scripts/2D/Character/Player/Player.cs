@@ -377,6 +377,8 @@
                 }
 
                 float speed = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this, this.MoveSpeed);
+                // A004：波间奖励移动强化在天气倍率之后应用，避免覆盖天气玩法的减速/增益。
+                speed = WaveBossRewardManager.Instance.GetAdjustedPlayerMoveSpeed(this, speed);
                 this.rg.velocity = speed * this.direction.normalized;
             }
             else

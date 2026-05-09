@@ -194,11 +194,14 @@ namespace LAB2D
                 this.enemiesAliveBeforeWave = this.CountAliveEnemies();
 
                 this.IsWaveActive = true;
+                // A004：通知 Boss 与波间奖励系统同步当前波次阶段，保持波次系统仍为主流程。
+                WaveBossRewardManager.Instance.OnWaveStarted(this.CurrentWaveIndex, this.CurrentDifficultyScale);
                 this.OnWaveStart?.Invoke(this.CurrentWaveIndex);
                 this.OnWaveStateChanged?.Invoke();
 
                 // 生成当前波次的所有敌人
-                int enemiesInWave = this.GetEnemyCountForWave(this.CurrentWaveIndex);
+                int baseEnemiesInWave = this.GetEnemyCountForWave(this.CurrentWaveIndex);
+                int enemiesInWave = WaveBossRewardManager.Instance.GetEnemyCountForWave(this.CurrentWaveIndex, baseEnemiesInWave);
                 for (int i = 0; i < enemiesInWave; i++)
                 {
                     // 检查最大同时存活敌人限制
@@ -213,6 +216,13 @@ namespace LAB2D
                     GameObject enemyObj = EnemyManager.Instance.Create(spawnPos);
                     if (enemyObj != null)
                     {
+                        // A004：生成后立即套用普通难度缩放或 Boss 缩放，不改敌人 Prefab 本体。
+                        WaveBossRewardManager.Instance.ConfigureSpawnedEnemy(
+                            enemyObj,
+                            this.CurrentWaveIndex,
+                            i,
+                            enemiesInWave,
+                            this.CurrentDifficultyScale);
                         this.enemiesSpawnedThisWave++;
                     }
 

@@ -96,7 +96,13 @@
             {
                 float mult = ComboBonusManager.Instance.DamageMultiplier;
                 hp *= mult;
+
+                // A004：波间奖励的玩家伤害强化只作用于玩家输出，不改变敌人或 Worker 的基础属性。
+                hp = WaveBossRewardManager.Instance.GetAdjustedPlayerOutgoingDamage(attacker, hp);
             }
+
+            // A004：波间奖励的减伤只作用于玩家受击，禁用奖励系统后会自动回到原始伤害。
+            hp = WaveBossRewardManager.Instance.GetAdjustedIncomingDamage(this, hp);
 
             // 根据防御力计算伤害
             hp -= hp * this.CharacterDataLAB.DEF / 10;
