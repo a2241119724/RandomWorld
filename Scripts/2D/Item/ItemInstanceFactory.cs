@@ -39,6 +39,12 @@
             item.Quantity = 1;
             item.Uid = this.uid++;
             item.Tile = ResourceManager.Instance.GetAsset(name);
+
+            if (item is AEquipment equip && ItemDataManager.Instance.IdToType(item.Id) == AItem.ItemTypeEnum.Equipment)
+            {
+                equip.Type = ItemDataManager.Instance.GetById(item.Id).EquipSlot;
+            }
+
             return item;
         }
 
