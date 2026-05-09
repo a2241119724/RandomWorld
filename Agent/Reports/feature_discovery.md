@@ -44,11 +44,14 @@
 | [DONE] | F013 | 工人饥饿疲劳状态效果与视觉反馈 | 成长奖励 | Worker 有 `CurHungry/CurTired` 衰减，但缺少统一状态、效率后果和 HUD | 让工人管理有实际反馈和紧迫感 | 沉淀 Worker 状态枚举、常量、工具、HUD 数据源 | 中 | 中 | P2 | AINPCAgent + GameplayAgent + UIAgent | ScriptGenerateSkill | 任务目录：`Agent/Reports/2026-05-09/feature_F013_WorkerCondition/`；任务卡：`task_feature_F013_WorkerCondition.md`；验证：`validation_feature_F013.md`；新增 `WorkerConditionState.cs`、`WorkerConditionConstant.cs`、`WorkerConditionTool.cs`、`WorkerConditionManager.cs`、`WorkerConditionHUD.cs`、`WorkerConditionMenu.cs`；修改 `ASeek.cs`、`AWorkerTask.cs`、`GlobalInit.cs`；UI 未直接写入 `Game.unity`，提供菜单 `工具/工人状态/创建工人状态 HUD 到 Game 场景`；静态验证通过，Unity 编译和 Play Mode 待人工。 |
 | [DONE] | F014 | 工人补给缺口提示系统 | 交互提示 | 吃饭/睡觉依赖食物和床位，但缺口缺少玩家提示 | 让玩家知道为什么工人无法恢复 | 与 F013 状态事件联动，形成补给目标提示 | 低 | 中 | P1 | AINPCAgent + UIAgent | ScriptGenerateSkill | 任务目录：`Agent/Reports/2026-05-09/feature_F014_WorkerSupplyShortage/`；任务卡：`task_feature_F014_WorkerSupplyShortage.md`；验证：`validation_feature_F014.md`；新增 `WorkerSupplyIssueType.cs`、`WorkerSupplyConstant.cs`、`WorkerSupplyTool.cs`、`WorkerSupplyIssueManager.cs`、`WorkerSupplyHUD.cs`、`WorkerSupplyIssueMenu.cs`；修改 `GlobalInit.cs`；新增只读补给缺口统计，提示食物不足、缺床、饥饿、疲劳和临界停工；UI 未直接写入 `Game.unity`，未创建 `ResourcesLocal` Prefab，提供菜单 `工具/工人补给提示/创建补给缺口 HUD 到 Game 场景`；静态验证通过，Unity 编译和 Play Mode 待人工。 |
 | [DONE] | F015 | 任务队列 HUD 摘要 | UI 数据表现 | `WorkerTaskManager.GetTaskInfo()` 主要给 DebugUI 使用，缺少玩家可读任务概览 | 玩家能快速理解当前任务压力 | 复用任务管理器已有统计，低侵入 | 低 | 中 | P2 | UIAgent + AINPCAgent | ScriptGenerateSkill | 任务目录：`Agent/Reports/2026-05-09/feature_F015_WorkerTaskQueueHUD/`；任务卡：`task_feature_F015_WorkerTaskQueueHUD.md`；验证：`validation_feature_F015.md`；新增 `WorkerTaskQueueSnapshot.cs`、`WorkerTaskHudConstant.cs`、`WorkerTaskSummaryTool.cs`、`WorkerTaskQueueHUD.cs`、`WorkerTaskQueueHUDMenu.cs`；修改 `WorkerTaskManager.cs`，新增只读任务队列快照和 HUD 摘要接口；UI 未直接写入 `Game.unity`，未创建 `ResourcesLocal` Prefab，提供菜单 `工具/任务队列 HUD/创建任务队列 HUD 到 Game 场景`；静态检查通过，Unity 编译和 Play Mode 待人工。 |
-| [TODO] | F016 | 任务队列拥堵 Tip 与优先级建议 | 任务目标提示 | F015 已提供任务队列快照，但等待任务过多时仍缺少主动提醒 | 玩家能在任务积压时及时调整建造、采集、搬运或休息安排 | 复用 F015 快照与压力阈值，补齐主动提示层 | 低 | 低 | P2 | UIAgent + AINPCAgent | ScriptGenerateSkill | 可新增只读提示管理器，基于等待中任务数量和任务类型分布节流显示 Tip，不改变任务优先级和 Worker 调度。 |
+| [DONE] | F016 | 任务队列拥堵 Tip 与优先级建议 | 任务目标提示 | F015 已提供任务队列快照，但等待任务过多时仍缺少主动提醒 | 玩家能在任务积压时及时调整建造、采集、搬运或休息安排 | 复用 F015 快照与压力阈值，补齐主动提示层 | 低 | 低 | P2 | UIAgent + AINPCAgent | ScriptGenerateSkill | 任务目录：`Agent/Reports/2026-05-09/feature_F016_WorkerTaskCongestionTip/`；任务卡：`task_feature_F016_WorkerTaskCongestionTip.md`；验证：`validation_feature_F016.md`；新增 `WorkerTaskCongestionLevel.cs`、`WorkerTaskCongestionConstant.cs`、`WorkerTaskCongestionTool.cs`、`WorkerTaskCongestionAdvisor.cs`、`WorkerTaskCongestionAdvisorMenu.cs`；修改 `GlobalInit.cs`；新增只读任务拥堵等级、主积压类型识别和 Tip 建议；UI 未直接写入 `Game.unity`，未创建新 Prefab，复用 `ResourcesLocal/Prefabs/Tip.prefab` 与 `GlobalInit.ShowTip()`；静态检查通过，Unity 编译和 Play Mode 待人工。 |
+| [TODO] | F017 | 任务无法接取原因提示 | 任务目标提示 | F016 能提示任务拥堵，但尚不能解释“为什么有任务没人接”；`AWorkerTask.IsCanWork()` 涉及饥饿、疲劳、任务开关和可达性 | 玩家能理解任务停滞原因，减少误以为系统失效 | 与 F013/F014/F016 联动，补齐任务链路诊断 | 中 | 中 | P1 | AINPCAgent + UIAgent | ScriptGenerateSkill + CodeReviewSkill | 可新增只读任务阻塞原因报告与 Tip，不改变 `IsCanWork()` 判定，不自动改任务优先级。 |
+| [TODO] | F018 | 工人空闲与可用人力提示 | 运营反馈 | 当前有任务队列压力，但缺少空闲工人、忙碌工人和不可用工人数量的玩家可读提示 | 玩家能判断是任务太多还是人手不足 | 复用 WorkerManager 和 WorkerCondition 数据，低侵入补充人力反馈 | 低 | 低 | P2 | AINPCAgent + UIAgent | ScriptGenerateSkill | 可新增只读人力快照和 Tip/HUD 文案，统计空闲、工作中、临界状态工人，不改变 Worker 调度。 |
 
 ## 推荐优先开发
 
-1. F016 任务队列拥堵 Tip 与优先级建议：复用 F015 的任务队列快照和压力阈值，适合低侵入主动提示。
+1. F017 任务无法接取原因提示：在 F016 拥堵提示之后继续解释任务停滞原因，价值高但需谨慎读取 `IsCanWork()` 条件。
+2. F018 工人空闲与可用人力提示：低风险补充人力反馈，适合继续完善 Worker 运营 HUD / Tip。
 
 ## 被跳过候选及原因
 
@@ -62,6 +65,8 @@
 - F013、F014 均涉及 Worker 状态，但 F013 是状态效果与效率后果，F014 是补给缺口解释和 UI 提示，保留为不同候选。
 - F005、F015 均涉及 Worker 任务，但 F005 是已完成任务效率统计，F015 是当前任务队列压力展示，保留为不同候选。
 - F014、F015 均为 Worker 运营 HUD，但 F014 展示补给缺口，F015 展示任务队列压力，保留为不同候选。
+- F015、F016 均涉及任务队列，但 F015 是常驻 HUD 摘要，F016 是主动 Tip 与建议层，保留为不同候选。
+- F016、F017 均涉及任务停滞反馈，但 F016 只根据队列数量提示拥堵，F017 需要解释单个任务无法接取原因，保留为后续候选。
 - A001 已有综合体验 HUD，但它聚合会话与结算数据；F015 专注 WorkerTaskManager 当前队列明细，保留为低侵入专项候选。
 - F007 与 F004 的基础评分能力重叠，已标记跳过，避免重复开发。
 
@@ -80,6 +85,11 @@
   - `BuildHudText()`
   - `BuildPlainText()`
   - `GetTaskDisplayName()`
+- `Scripts/2D/Tool/WorkerTaskCongestionTool.cs`
+  - `BuildReport()`
+  - `GetCongestionLevel()`
+  - `GetPrimaryWaitingSummary()`
+  - `BuildAdviceText()`
 - `Scripts/2D/Constant/PrefabConstant.cs`
 - `Scripts/2D/Constant/ResourceConstant.cs`
 - `Scripts/2D/Constant/TagConstant.cs`
@@ -92,41 +102,49 @@
   - `HudToggleKey`
   - `MenuRoot`
   - `HudRootName`
+- `Scripts/2D/Constant/WorkerTaskCongestionConstant.cs`
+  - `MonitorRefreshInterval`
+  - `TipCooldownSeconds`
+  - `BusyWaitingTaskThreshold`
+  - `CongestedWaitingTaskThreshold`
 - `Scripts/2D/Enum/PackageTypeEnum.cs`
 - `Scripts/2D/Enum/WorkerConditionState.cs`
+- `Scripts/2D/Enum/WorkerTaskCongestionLevel.cs`
 - `AWorkerTask.WorkerTaskTypeEnum`
-  - Worker 任务系统现有任务类型枚举，本次 F015 继续复用，未新增重复枚举。
+  - Worker 任务系统现有任务类型枚举，本次 F016 继续复用，未新增重复任务类型枚举。
 
 ## 本次新增公共代码
 
-- `Scripts/2D/Gameplay/WorkerTaskQueueSnapshot.cs`
-  - 统一表达任务总数、等待中数量、进行中数量和任务类型统计，供 HUD、Editor 菜单和后续运营面板复用。
-- `Scripts/2D/Constant/WorkerTaskHudConstant.cs`
-  - 统一维护 F015 HUD 刷新间隔、热键、菜单路径、节点名、默认文案、压力阈值和 UI 尺寸。
-- `Scripts/2D/Tool/WorkerTaskSummaryTool.cs`
-  - 统一计算任务队列快照、任务类型中文名、压力标签、HUD RichText 文案和 Editor 纯文本摘要。
+- `Scripts/2D/Enum/WorkerTaskCongestionLevel.cs`
+  - 统一表达任务队列无数据、平稳、繁忙、拥堵和严重拥堵等级，供 Tip、Editor 菜单和后续 HUD 复用。
+- `Scripts/2D/Constant/WorkerTaskCongestionConstant.cs`
+  - 统一维护 F016 扫描间隔、Tip 冷却、菜单路径、默认文案、严重拥堵阈值和主积压判断规则。
+- `Scripts/2D/Tool/WorkerTaskCongestionTool.cs`
+  - 统一计算拥堵等级、主积压任务类型、任务建议文案和展示颜色，复用 F015 任务快照和压力阈值。
+- `Scripts/2D/Gameplay/WorkerTaskCongestionAdvisor.cs`
+  - 维护运行时拥堵报告、变化事件、Tip 请求和节流逻辑，只读读取 `WorkerTaskManager`。
 
 ## 本次完成候选摘要
 
-- 候选 ID：F015
+- 候选 ID：F016
 - 最终状态：[DONE]
-- 任务目录：`Agent/Reports/2026-05-09/feature_F015_WorkerTaskQueueHUD/`
-- 任务卡路径：`Agent/Reports/2026-05-09/feature_F015_WorkerTaskQueueHUD/task_feature_F015_WorkerTaskQueueHUD.md`
-- 验证记录路径：`Agent/Reports/2026-05-09/feature_F015_WorkerTaskQueueHUD/validation_feature_F015.md`
+- 任务目录：`Agent/Reports/2026-05-09/feature_F016_WorkerTaskCongestionTip/`
+- 任务卡路径：`Agent/Reports/2026-05-09/feature_F016_WorkerTaskCongestionTip/task_feature_F016_WorkerTaskCongestionTip.md`
+- 验证记录路径：`Agent/Reports/2026-05-09/feature_F016_WorkerTaskCongestionTip/validation_feature_F016.md`
 - 修改文件：
-  - `Scripts/2D/Character/Worker/WorkerTaskManager.cs`
-  - `Scripts/2D/Gameplay/WorkerTaskQueueSnapshot.cs`
-  - `Scripts/2D/Constant/WorkerTaskHudConstant.cs`
-  - `Scripts/2D/Tool/WorkerTaskSummaryTool.cs`
-  - `Scripts/2D/UI/WorkerTaskQueueHUD.cs`
-  - `Scripts/2D/Editor/WorkerTaskQueueHUDMenu.cs`
-- 新增业务能力：提供工人任务队列只读快照和 HUD 摘要，显示任务总量、等待中数量、进行中数量，以及建造、搬运、采集、吃饭、睡觉等类型分布。
-- UI 生成方式：未手写 `Game.unity`，未创建 `ResourcesLocal` Prefab；提供 Editor 菜单 `工具/任务队列 HUD/创建任务队列 HUD 到 Game 场景` 安全生成独立 HUD。
-- 验证结果：静态检查通过；新增运行时代码未引用 Editor API；新增脚本和任务卡均有 `.meta`；Unity 编译和 Play Mode 待人工验证。
-- Tool 复用：复用 `Tool.GetComponentInChildren<T>()`、`Tool.IsUIInputActive()`。
-- Tool 新增：`WorkerTaskSummaryTool.cs`。
+  - `Scripts/2D/Enum/WorkerTaskCongestionLevel.cs`
+  - `Scripts/2D/Constant/WorkerTaskCongestionConstant.cs`
+  - `Scripts/2D/Tool/WorkerTaskCongestionTool.cs`
+  - `Scripts/2D/Gameplay/WorkerTaskCongestionAdvisor.cs`
+  - `Scripts/2D/Editor/WorkerTaskCongestionAdvisorMenu.cs`
+  - `Scripts/2D/GlobalInit.cs`
+- 新增业务能力：等待任务达到拥堵阈值时，自动识别主积压类型并通过现有 Tip UI 提醒玩家暂停扩张、补充资源或调整工人任务开关。
+- UI 生成方式：未手写 `Game.unity`，未创建新的 `ResourcesLocal` Prefab；复用 `ResourcesLocal/Prefabs/Tip.prefab` 与 `GlobalInit.ShowTip()` 动态显示。
+- 验证结果：静态检查通过；新增运行时代码未引用 Editor API；新增脚本和任务卡均有 `.meta`；`Scenes` 和 `ResourcesLocal` 未被写入 F016 内容；Unity 编译和 Play Mode 待人工验证。
+- Tool 复用：复用 F015 `WorkerTaskSummaryTool.GetTaskDisplayName()` 和任务快照语义。
+- Tool 新增：`WorkerTaskCongestionTool.cs`。
 - Enum 复用：`AWorkerTask.WorkerTaskTypeEnum`。
-- Enum 新增：无，避免重复定义任务类型。
-- Constant 复用：`WorkerConditionConstant.GameSceneName`、`WorkerConditionConstant.FontResourcePath`。
-- Constant 新增：`WorkerTaskHudConstant.cs`。
-- 剩余风险：HUD 场景生成、字体加载、屏幕位置、Canvas 层级和 Play Mode 任务刷新节奏需在 Unity Editor 内验证。
+- Enum 新增：`WorkerTaskCongestionLevel.cs`。
+- Constant 复用：`WorkerTaskHudConstant.MediumWaitingTaskThreshold`、`WorkerTaskHudConstant.HighWaitingTaskThreshold`。
+- Constant 新增：`WorkerTaskCongestionConstant.cs`。
+- 剩余风险：Tip 文本长度、屏幕位置和拥堵阈值体感需在 Unity Editor / Play Mode 内验证。
