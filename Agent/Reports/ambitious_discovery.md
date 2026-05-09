@@ -21,12 +21,15 @@
 | [DONE] | A004 | 波次Boss与波间奖励系统（精英波+奖励选择+难度缩放接入） | 关卡与玩法 | WaveManager 已有波次基础，但难度缩放未接入敌人属性，也无Boss/奖励阶段 | 提升关卡节奏、重玩价值和阶段目标 | 扩展波次系统为完整关卡流程模板 | 高 | 高 | P1 | AINPCAgent + GameplayAgent + UIAgent | ScriptGenerateSkill + ConfigGenerateSkill + TestSkill | Scripts/2D/Gameplay, Scripts/2D/Character/Enemy, Scripts/2D/UI, Resources/SO | **已完成**。任务目录：`Agent/Reports/2026-05-09/ambitious_A004_Wave_Boss_Rewards/`；任务卡：`Agent/Reports/2026-05-09/ambitious_A004_Wave_Boss_Rewards/task_ambitious_A004_Wave_Boss_Rewards.md`；验证记录：`validation_ambitious_A004.md`；新增 `WavePhaseType`、`WaveRewardType`、`WaveBossRewardConstant`、`WaveBossRewardTool`、`WaveBossRewardManager`、`WaveBossRewardPanel`、`WaveBossRewardMenu` 及 `.meta`；修改 `WaveManager.cs`、`Character.cs`、`Player.cs`。新增能力：每 3 波 Boss、敌人难度缩放、Boss 视觉/属性强化、波间三选一奖励、玩家本局伤害/减伤/移动 Buff、运行时动态奖励面板、Game 场景 Editor 安装/移除菜单。UI 未直接手写 `Game.unity`，未创建 `ResourcesLocal` Prefab；采用 Editor 菜单 + 运行时动态 Canvas。静态验证通过；Unity 编译/Play Mode 待人工复验；回滚方案已记录。 |
 | [SKIPPED] | A005 | Photon实时多人PvP竞技场 | 多人玩法 | 项目存在 Photon，但当前玩法、存档、地图同步偏合作/房间流程，无PvP边界 | 可能带来巨大玩法变化 | 需要重构同步、输入、伤害归属和房间状态 | 极高 | 极高 | P2 | MultiplayerAgent | NetworkSkill | NetworkConnect, Photon设置, Character, Map, UI, Scene | 自动跳过。涉及Photon深度改造、同步权威性和不可控破坏风险，不适合作为本次自动大改候选 |
 | [DONE] | A006 | 殖民地运营指挥中心（人力状态+任务阻塞诊断+补给目标+建议HUD） | 殖民地管理 / Worker运营反馈 / UI与表现 | F013-F016 已分别完成工人状态、补给缺口、任务队列和拥堵 Tip，但玩家仍缺少统一答案：当前殖民地卡在哪里、为什么任务没人接、下一步该处理食物/床位/材料/人手还是可达性 | 把零散 Worker 运营信息合成一块可见指挥面板，帮助玩家快速定位问题并形成下一步目标 | 为后续任务优先级、教程目标、殖民地事件和运营评分提供统一只读诊断层 | 中高 | 高 | P0 | AINPCAgent + UIAgent + GameplayAgent + ToolAgent | ScriptGenerateSkill + CodeReviewSkill + SceneAnalyzeSkill + EditorToolSkill + TestSkill | Scripts/2D/Enum, Scripts/2D/Constant, Scripts/2D/Tool, Scripts/2D/Gameplay, Scripts/2D/UI, Scripts/2D/Editor, GlobalInit, WorkerTaskManager, Game.unity, ResourcesLocal/Prefabs/UI | **已完成**。任务目录：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/`；任务卡：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/task_ambitious_A006_Colony_Command_Center.md`；验证记录：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/validation_ambitious_A006.md`；回滚方案：`rollback_ambitious_A006.md`。新增 `ColonyCommandAlertLevel`、`WorkerTaskBlockReason`、`ColonyCommandCenterConstant`、`ColonyCommandCenterTool`、`ColonyCommandCenterReport`、`ColonyCommandCenterManager`、`ColonyCommandCenterHUD`、`ColonyCommandCenterMenu` 及 `.meta`；修改 `WorkerTaskManager.cs`、`GlobalInit.cs`。新增能力：人力/任务/补给/拥堵统一指挥报告、等待任务阻塞原因诊断、运行时动态 HUD、F8 显示隐藏、警告 Tip、Game 场景安装菜单、ResourcesLocal Prefab 生成菜单。UI 未直接手写 `Game.unity`，未直接写入 Prefab YAML；采用运行时动态 UI + Editor 菜单。静态验证通过；Unity 编译/Play Mode 待人工复验；回滚方案已记录。 |
+| [DONE] | A007 | 成就系统（成就定义+条件检测+解锁弹窗+成就面板+成就点数） | 收集与进度 / UI与表现 | F001-F016 已提供完整战斗统计、收集统计、波次记录、Worker 效率和条件数据，A001 已有体验中枢、A006 已有指挥中心，但玩家缺少跨局的长期成就目标和解锁反馈 | 提供跨局长期目标、解锁成就感、收集驱动力和重玩价值 | 为每日任务、赛季挑战、排行榜和社交分享提供成就数据基础 | 中 | 高 | P0 | GameplayAgent + UIAgent + ItemDataAgent | ScriptGenerateSkill + ConfigGenerateSkill + EditorToolSkill + TestSkill | Scripts/2D/Enum, Scripts/2D/Constant, Scripts/2D/Tool, Scripts/2D/Gameplay, Scripts/2D/UI, Scripts/2D/Editor, Scripts/2D/Character, GlobalInit, Game.unity, ResourcesLocal/Prefabs/UI | **已完成**。任务目录：`Agent/Reports/2026-05-09/ambitious_A007_Achievement_System/`；任务卡：`Agent/Reports/2026-05-09/ambitious_A007_Achievement_System/task_ambitious_A007_Achievement_System.md`；验证记录：`Agent/Reports/2026-05-09/ambitious_A007_Achievement_System/validation_ambitious_A007.md`；新增 `AchievementCategory`、`AchievementState`、`AchievementConstant`、`AchievementTool`、`AchievementData`、`AchievementManager`、`AchievementPopup`、`AchievementPanel`、`AchievementMenu` 及 `.meta`；修改 `GlobalInit.cs`。新增能力：20个预定义成就（战斗×6、收集×3、生存×4、波次×3、工人×3）、实时进度跟踪、解锁弹窗通知、成就浏览面板（F7切换）、成就点数系统、Editor 安装/卸载/验证菜单。UI 采用运行时动态创建（优先级4）+ Editor 菜单辅助；未直接写入 `Game.unity`；未创建 `ResourcesLocal` Prefab。静态验证通过；Unity 编译/Play Mode 待人工复验。Tool 新增 `AchievementTool.cs`（10个可复用方法）、Enum 新增 `AchievementCategory.cs`/`AchievementState.cs`、Constant 新增 `AchievementConstant.cs`。剩余风险：版面布局需在 Unity 中人工调整；成就进度仅内存存储不支持跨会话持久化。 |
+| [TODO] | A008 | 主动技能系统（技能冷却+技能效果+技能HUD+技能升级树） | 战斗体验升级 | 玩家只有鼠标点击基础攻击，缺少主动技能释放、冷却管理和技能成长 | 显著丰富战斗操作维度，增加策略深度和操作爽感 | 为技能树、职业、装备附加技能和 PvP 提供技能框架 | 中高 | 高 | P1 | GameplayAgent + AINPCAgent + UIAgent | ScriptGenerateSkill + ConfigGenerateSkill + CodeReviewSkill + TestSkill | Scripts/2D/Character/Player, Scripts/2D/Gameplay, Scripts/2D/UI, Scripts/2D/Enum, Scripts/2D/Constant, Game.unity, ResourcesLocal/Prefabs/UI | 预留候选。需定义技能数据模型、冷却管理、技能效果基类、技能 HUD 按钮栏、技能升级条件。 |
+| [TODO] | A009 | 浮动战斗文字系统（伤害/暴击/治疗/状态文字+动画+颜色分级） | 战斗体验升级 / UI与表现 | 战斗有伤害和暴击数据但缺少即时浮动文字视觉反馈，DamageUI 能力有限 | 显著提升战斗打击感和信息可读性，让每次伤害可见 | 为战斗反馈、BUFF/DEBUFF 提示和战斗教学提供统一文字层 | 中 | 中 | P1 | UIAgent + GameplayAgent | ScriptGenerateSkill + SceneAnalyzeSkill + EditorToolSkill + TestSkill | Scripts/2D/UI/Effect, Scripts/2D/Enum, Scripts/2D/Constant, Scripts/2D/Tool, Game.unity, ResourcesLocal/Prefabs/UI | 预留候选。需定义浮动文字类型、颜色/大小/动画分级、文字对象池、世界空间→屏幕空间映射、暴击/治疗/状态差异化表现。 |
 
 ## 推荐优先开发
 
-1. **后续 A002 增强**：天气采集掉落、天气事件和装备抗性仍有扩展价值，但需在 F012 基础上独立评估。
-2. **后续 A003 增强**：自动吃饭/睡觉优先级、床位/食物引导和可选调度辅助仍有扩展价值。
-3. **A006 已完成**：殖民地指挥中心已把 Worker 状态、补给、任务队列和拥堵提示聚合为统一 HUD 与阻塞诊断。
+1. **A007 已完成**：成就系统已实现 20 个预定义成就、条件检测、解锁弹窗和成就浏览面板，形成"战斗→收集→成就→重玩"完整闭环。
+2. **A008 主动技能系统**：为玩家增加主动技能释放、冷却和升级，显著丰富战斗操作维度。
+3. **A009 浮动战斗文字**：补齐战斗视觉反馈的最后短板。
 
 ## 历史已完成候选去重依据
 
@@ -38,6 +41,9 @@
 - `feature_discovery.md` 中 F013 已完成工人饥饿/疲劳惩罚、状态工具和 HUD 菜单，A003 本次标记为 `[PARTIAL]`，避免重复实现。
 - `feature_discovery.md` 中 F002/F010 只提供波次基础和 Tip，未覆盖 Boss 属性、奖励选择和玩家本局 Buff，A004 本次可安全升级。
 - `feature_discovery.md` 中 F013-F016 只提供 Worker 状态、补给、任务队列和拥堵提示的专项能力；A006 不重复实现这些底层能力，而是聚合为指挥中心并补充等待任务阻塞原因诊断。
+- A007 不与 A001（体验中枢）重复：A001 提供会话内实时 HUD 和结算面板，A007 提供跨局持久成就目标和条件检测，共享 F001-F016 的数据源但不重复实现统计逻辑。
+- A007 不与 F006（物品收集里程碑）重复：F006 是本局收集统计提示，A007 是跨局成就条件、点数和解锁通知。
+- A008 不与 A004（波次 Boss 奖励）重复：A004 是波间三选一临时奖励 Buff，A008 是玩家主动释放技能+冷却+成长。
 
 ## 跳过候选
 
@@ -74,6 +80,20 @@
   - Constant：新增 `WaveBossRewardConstant.cs`
   - 验证结果：`.meta` 存在、运行时代码无新增 `UnityEditor` 引用、`git diff --check` 通过但有 CRLF 提醒；命令行环境无 .NET SDK，Unity 编译和 Play Mode 待人工复验
   - 剩余风险：Boss 数值、奖励上限和 UI 尺寸需在 Unity Play Mode 中手感调优
+
+- **A007 [DONE] — 成就系统**
+  - 任务目录：`Agent/Reports/2026-05-09/ambitious_A007_Achievement_System/`
+  - 任务卡：`Agent/Reports/2026-05-09/ambitious_A007_Achievement_System/task_ambitious_A007_Achievement_System.md`
+  - 验证记录：`Agent/Reports/2026-05-09/ambitious_A007_Achievement_System/validation_ambitious_A007.md`
+  - 新增文件：`Scripts/2D/Enum/AchievementCategory.cs`、`Scripts/2D/Enum/AchievementState.cs`、`Scripts/2D/Constant/AchievementConstant.cs`、`Scripts/2D/Tool/AchievementTool.cs`、`Scripts/2D/Gameplay/AchievementData.cs`、`Scripts/2D/Gameplay/AchievementManager.cs`、`Scripts/2D/UI/AchievementPopup.cs`、`Scripts/2D/UI/AchievementPanel.cs`、`Scripts/2D/Editor/AchievementMenu.cs` 及 `.meta`
+  - 修改文件：`Scripts/2D/GlobalInit.cs`
+  - 新增能力：20个预定义成就（战斗×6、收集×3、生存×4、波次×3、工人×3）、实时进度跟踪、解锁弹窗通知、成就浏览面板（F7切换）、成就点数系统、Editor 安装/卸载/验证菜单
+  - UI 生成方式：运行时动态创建（优先级4）+ Editor 菜单辅助；弹窗 Canvas `Ambitious_A007_AchievementPopup_Canvas`（sortingOrder=200）、面板 Canvas `Ambitious_A007_AchievementPanel_Canvas`（sortingOrder=150）
+  - Tool：复用 `Tool.IsUIInputActive()`，新增 `AchievementTool.cs`
+  - Enum：新增 `AchievementCategory.cs`、`AchievementState.cs`
+  - Constant：新增 `AchievementConstant.cs`
+  - 验证结果：静态验证通过（无 UnityEditor 运行时引用、.meta 齐全、namespace 一致）；Unity 编译和 Play Mode 待人工复验
+  - 剩余风险：面板布局需在 Unity 中人工调整；成就进度仅内存存储不支持跨会话持久化
 
 - **A006 [DONE] — 殖民地运营指挥中心**
   - 任务目录：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/`
