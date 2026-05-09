@@ -65,7 +65,7 @@
 
         public void Update()
         {
-            if (!Tool.IsUIInputActive() && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2) || Input.GetKeyDown(KeyCode.Escape)))
+            if (!Tool.IsUIInputActive() && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2) || Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu)))
             {
                 // transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }

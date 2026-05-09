@@ -51,7 +51,7 @@
 
                 this.selectPos = TileMap.Instance.GetMapPosByMouse();
                 SelectUI selectUI;
-                if (!Tool.IsUIInputActive() && Input.GetKey(KeyCode.LeftControl))
+                if (!Tool.IsUIInputActive() && Input.GetKey(InputKeyConstant.ShowTileInfo))
                 {
                     selectUI = SelectManagerPool.Instance.CreateFreeSelect(this.selectPos);
                 }

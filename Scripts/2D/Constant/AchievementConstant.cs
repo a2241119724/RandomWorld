@@ -36,6 +36,7 @@ namespace LAB2D
         public const string PointsSuffix = " 点";
 
         /// <summary>显示/隐藏成就面板的快捷键名</summary>
+        /// <summary>显示/隐藏成就面板的快捷键名（与工人任务队列 HUD 共用 F7）</summary>
         public const string TogglePanelKeyName = "F7";
 
         // --- 默认数值 ---

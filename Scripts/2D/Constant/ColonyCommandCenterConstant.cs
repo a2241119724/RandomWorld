@@ -85,7 +85,7 @@ namespace LAB2D
         /// HUD 显示隐藏热键。
         /// 只在没有 UI 输入框聚焦时生效，避免输入穿透。
         /// </summary>
-        public const KeyCode HudToggleKey = KeyCode.F8;
+        public const KeyCode HudToggleKey = InputKeyConstant.ToggleColonyCommandCenterHud;
 
         /// <summary>
         /// 阻塞任务达到该数量时视为警告。

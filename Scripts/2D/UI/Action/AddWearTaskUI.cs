@@ -71,7 +71,7 @@
 
         public void Update()
         {
-            if (Input.GetMouseButtonDown(2) || (!Tool.IsUIInputActive() && Input.GetKeyDown(KeyCode.Escape)))
+            if (Input.GetMouseButtonDown(2) || (!Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu)))
             {
                  this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }
