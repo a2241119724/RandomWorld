@@ -171,7 +171,7 @@
                 TileMap.Instance.WorldPosToMapPos(this.transform.position), 3, true);
                 if (pos == default)
                 {
-                    return;
+                    continue;
                 }
 
                 ItemMap.Instance.PutDownToDrop(pos, ItemInstanceFactory.Instance.GetBackpackItemById(resource.Key).Tile, resource.Value);
