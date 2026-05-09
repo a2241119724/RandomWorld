@@ -115,12 +115,12 @@ namespace LAB2D
         public const float PanelRefreshInterval = 0.25f;
 
         /// <summary>选择第一个奖励的热键。</summary>
-        public const KeyCode RewardOptionOneKey = KeyCode.Alpha1;
+        public const KeyCode RewardOptionOneKey = InputKeyConstant.BossRewardOption1;
 
         /// <summary>选择第二个奖励的热键。</summary>
-        public const KeyCode RewardOptionTwoKey = KeyCode.Alpha2;
+        public const KeyCode RewardOptionTwoKey = InputKeyConstant.BossRewardOption2;
 
         /// <summary>选择第三个奖励的热键。</summary>
-        public const KeyCode RewardOptionThreeKey = KeyCode.Alpha3;
+        public const KeyCode RewardOptionThreeKey = InputKeyConstant.BossRewardOption3;
     }
 }

@@ -68,7 +68,7 @@
             this.WorkerUpdate();
 
             // 退出界面(除了ForegroundPanel,CreateOrJoinPanel,CreateMenuPanel,CreateDataPanel,AsyncProgressPanel)
-            if (!Tool.IsUIInputActive() && Input.GetKeyDown(KeyCode.Escape))
+            if (!Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu))
             {
                 if (PanelController.Instance.Panels.Count == 0)
                 {
@@ -105,7 +105,7 @@
                 }
 
                 // F7 切换成就面板
-                if (!Tool.IsUIInputActive() && Input.GetKeyDown(KeyCode.F7))
+                if (!Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleWorkerTaskAndAchievementHud))
                 {
                     AchievementPanel.RuntimeInstance?.TogglePanel();
                 }

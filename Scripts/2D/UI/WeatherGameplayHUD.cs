@@ -28,7 +28,7 @@ namespace LAB2D
         /// <summary>
         /// HUD 显示隐藏热键。
         /// </summary>
-        public KeyCode toggleKey = KeyCode.F4;
+        public KeyCode toggleKey = InputKeyConstant.ToggleWeatherHud;
 
         private void Awake()
         {

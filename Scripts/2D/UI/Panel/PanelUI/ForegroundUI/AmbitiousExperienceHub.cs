@@ -64,12 +64,12 @@ namespace LAB2D
         /// <summary>
         /// HUD 显示/隐藏热键。
         /// </summary>
-        public KeyCode toggleHudKey = KeyCode.F2;
+        public KeyCode toggleHudKey = InputKeyConstant.ToggleExperienceHubHud;
 
         /// <summary>
         /// 最近结算/实时预览面板热键。
         /// </summary>
-        public KeyCode toggleResultKey = KeyCode.F3;
+        public KeyCode toggleResultKey = InputKeyConstant.ToggleExperienceResultPanel;
 
         private void Awake()
         {

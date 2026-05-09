@@ -96,7 +96,7 @@ namespace LAB2D
         /// 工人状态 HUD 默认显示隐藏热键。
         /// 该热键只在没有 UI 输入框聚焦时生效。
         /// </summary>
-        public const KeyCode HudToggleKey = KeyCode.F5;
+        public const KeyCode HudToggleKey = InputKeyConstant.ToggleWorkerConditionHud;
 
         /// <summary>
         /// 工人状态 Editor 菜单根路径。

@@ -35,7 +35,7 @@ namespace LAB2D
 
         public void Update()
         {
-            if (!Tool.IsUIInputActive() && Input.GetKeyDown(KeyCode.F1))
+            if (!Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleGameplayStatsHud))
             {
                 bool show = this.canvasGroup.alpha < 0.5f;
                 this.canvasGroup.alpha = show ? 1f : 0f;
