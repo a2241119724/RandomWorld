@@ -123,6 +123,10 @@
             g.transform.SetParent(this.transform);
             g.transform.localPosition = Vector3.zero;
 
+            // A009：生成浮动战斗文字（屏幕空间，独立于世界空间伤害预制体）
+            bool isComboDamage = attacker is Player && ComboBonusManager.Instance.DamageMultiplier > 1.0f;
+            FloatingTextManager.Instance.SpawnDamageText(this.transform.position, hp, isCRT, isComboDamage);
+
             // 变红
             this.spriteRenderer.color = Color.red;
             this.Invoke(nameof(this.ResetColor), 0.2f); // 一段时间后调用

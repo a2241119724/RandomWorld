@@ -110,9 +110,9 @@ namespace LAB2D
             root.transform.SetParent(parent, false);
 
             RectTransform rootRect = root.GetComponent<RectTransform>();
-            rootRect.anchorMin = new Vector2(1.0f, 1.0f);
-            rootRect.anchorMax = new Vector2(1.0f, 1.0f);
-            rootRect.pivot = new Vector2(1.0f, 1.0f);
+            rootRect.anchorMin = new Vector2(1.0f, 0.5f);
+            rootRect.anchorMax = new Vector2(1.0f, 0.5f);
+            rootRect.pivot = new Vector2(1.0f, 0.5f);
             rootRect.anchoredPosition = new Vector2(
                 ColonyCommandCenterConstant.HudAnchoredX,
                 ColonyCommandCenterConstant.HudAnchoredY);

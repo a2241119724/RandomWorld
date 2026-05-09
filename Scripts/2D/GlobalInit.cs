@@ -57,6 +57,9 @@
                 AchievementManager.Instance.Initialize();
                 AchievementPopup.EnsureRuntimePopup();
                 AchievementPanel.EnsureRuntimePanel();
+
+                // A009 浮动战斗文字系统：初始化管理器和对象池
+                FloatingTextManager.Instance.EnsureInitialized();
             }
         }
 

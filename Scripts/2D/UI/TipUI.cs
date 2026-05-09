@@ -52,7 +52,7 @@
             this.recordTime += Time.deltaTime;
 
             // 两秒后淡出
-            if (this.recordTime >= 2.0f)
+            if (this.recordTime >= 5.0f)
             {
                 this.FadeOut();
             }

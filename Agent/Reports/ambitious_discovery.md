@@ -23,13 +23,13 @@
 | [DONE] | A006 | 殖民地运营指挥中心（人力状态+任务阻塞诊断+补给目标+建议HUD） | 殖民地管理 / Worker运营反馈 / UI与表现 | F013-F016 已分别完成工人状态、补给缺口、任务队列和拥堵 Tip，但玩家仍缺少统一答案：当前殖民地卡在哪里、为什么任务没人接、下一步该处理食物/床位/材料/人手还是可达性 | 把零散 Worker 运营信息合成一块可见指挥面板，帮助玩家快速定位问题并形成下一步目标 | 为后续任务优先级、教程目标、殖民地事件和运营评分提供统一只读诊断层 | 中高 | 高 | P0 | AINPCAgent + UIAgent + GameplayAgent + ToolAgent | ScriptGenerateSkill + CodeReviewSkill + SceneAnalyzeSkill + EditorToolSkill + TestSkill | Scripts/2D/Enum, Scripts/2D/Constant, Scripts/2D/Tool, Scripts/2D/Gameplay, Scripts/2D/UI, Scripts/2D/Editor, GlobalInit, WorkerTaskManager, Game.unity, ResourcesLocal/Prefabs/UI | **已完成**。任务目录：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/`；任务卡：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/task_ambitious_A006_Colony_Command_Center.md`；验证记录：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/validation_ambitious_A006.md`；回滚方案：`rollback_ambitious_A006.md`。新增 `ColonyCommandAlertLevel`、`WorkerTaskBlockReason`、`ColonyCommandCenterConstant`、`ColonyCommandCenterTool`、`ColonyCommandCenterReport`、`ColonyCommandCenterManager`、`ColonyCommandCenterHUD`、`ColonyCommandCenterMenu` 及 `.meta`；修改 `WorkerTaskManager.cs`、`GlobalInit.cs`。新增能力：人力/任务/补给/拥堵统一指挥报告、等待任务阻塞原因诊断、运行时动态 HUD、F8 显示隐藏、警告 Tip、Game 场景安装菜单、ResourcesLocal Prefab 生成菜单。UI 未直接手写 `Game.unity`，未直接写入 Prefab YAML；采用运行时动态 UI + Editor 菜单。静态验证通过；Unity 编译/Play Mode 待人工复验；回滚方案已记录。 |
 | [DONE] | A007 | 成就系统（成就定义+条件检测+解锁弹窗+成就面板+成就点数） | 收集与进度 / UI与表现 | F001-F016 已提供完整战斗统计、收集统计、波次记录、Worker 效率和条件数据，A001 已有体验中枢、A006 已有指挥中心，但玩家缺少跨局的长期成就目标和解锁反馈 | 提供跨局长期目标、解锁成就感、收集驱动力和重玩价值 | 为每日任务、赛季挑战、排行榜和社交分享提供成就数据基础 | 中 | 高 | P0 | GameplayAgent + UIAgent + ItemDataAgent | ScriptGenerateSkill + ConfigGenerateSkill + EditorToolSkill + TestSkill | Scripts/2D/Enum, Scripts/2D/Constant, Scripts/2D/Tool, Scripts/2D/Gameplay, Scripts/2D/UI, Scripts/2D/Editor, Scripts/2D/Character, GlobalInit, Game.unity, ResourcesLocal/Prefabs/UI | **已完成**。任务目录：`Agent/Reports/2026-05-09/ambitious_A007_Achievement_System/`；任务卡：`Agent/Reports/2026-05-09/ambitious_A007_Achievement_System/task_ambitious_A007_Achievement_System.md`；验证记录：`Agent/Reports/2026-05-09/ambitious_A007_Achievement_System/validation_ambitious_A007.md`；新增 `AchievementCategory`、`AchievementState`、`AchievementConstant`、`AchievementTool`、`AchievementData`、`AchievementManager`、`AchievementPopup`、`AchievementPanel`、`AchievementMenu` 及 `.meta`；修改 `GlobalInit.cs`。新增能力：20个预定义成就（战斗×6、收集×3、生存×4、波次×3、工人×3）、实时进度跟踪、解锁弹窗通知、成就浏览面板（F7切换）、成就点数系统、Editor 安装/卸载/验证菜单。UI 采用运行时动态创建（优先级4）+ Editor 菜单辅助；未直接写入 `Game.unity`；未创建 `ResourcesLocal` Prefab。静态验证通过；Unity 编译/Play Mode 待人工复验。Tool 新增 `AchievementTool.cs`（10个可复用方法）、Enum 新增 `AchievementCategory.cs`/`AchievementState.cs`、Constant 新增 `AchievementConstant.cs`。剩余风险：版面布局需在 Unity 中人工调整；成就进度仅内存存储不支持跨会话持久化。 |
 | [TODO] | A008 | 主动技能系统（技能冷却+技能效果+技能HUD+技能升级树） | 战斗体验升级 | 玩家只有鼠标点击基础攻击，缺少主动技能释放、冷却管理和技能成长 | 显著丰富战斗操作维度，增加策略深度和操作爽感 | 为技能树、职业、装备附加技能和 PvP 提供技能框架 | 中高 | 高 | P1 | GameplayAgent + AINPCAgent + UIAgent | ScriptGenerateSkill + ConfigGenerateSkill + CodeReviewSkill + TestSkill | Scripts/2D/Character/Player, Scripts/2D/Gameplay, Scripts/2D/UI, Scripts/2D/Enum, Scripts/2D/Constant, Game.unity, ResourcesLocal/Prefabs/UI | 预留候选。需定义技能数据模型、冷却管理、技能效果基类、技能 HUD 按钮栏、技能升级条件。 |
-| [TODO] | A009 | 浮动战斗文字系统（伤害/暴击/治疗/状态文字+动画+颜色分级） | 战斗体验升级 / UI与表现 | 战斗有伤害和暴击数据但缺少即时浮动文字视觉反馈，DamageUI 能力有限 | 显著提升战斗打击感和信息可读性，让每次伤害可见 | 为战斗反馈、BUFF/DEBUFF 提示和战斗教学提供统一文字层 | 中 | 中 | P1 | UIAgent + GameplayAgent | ScriptGenerateSkill + SceneAnalyzeSkill + EditorToolSkill + TestSkill | Scripts/2D/UI/Effect, Scripts/2D/Enum, Scripts/2D/Constant, Scripts/2D/Tool, Game.unity, ResourcesLocal/Prefabs/UI | 预留候选。需定义浮动文字类型、颜色/大小/动画分级、文字对象池、世界空间→屏幕空间映射、暴击/治疗/状态差异化表现。 |
+| [DONE] | A009 | 浮动战斗文字系统（伤害/暴击/治疗/状态文字+动画+颜色分级） | 战斗体验升级 / UI与表现 | 战斗有伤害和暴击数据但缺少即时浮动文字视觉反馈，DamageUI 能力有限 | 显著提升战斗打击感和信息可读性，让每次伤害可见 | 为战斗反馈、BUFF/DEBUFF 提示和战斗教学提供统一文字层 | 中 | 中 | P1 | UIAgent + GameplayAgent | ScriptGenerateSkill + SceneAnalyzeSkill + EditorToolSkill + TestSkill | Scripts/2D/UI, Scripts/2D/Enum, Scripts/2D/Constant, Scripts/2D/Tool, Scripts/2D/Gameplay, Scripts/2D/Editor, Scripts/2D/Character/Character.cs, Scripts/2D/GlobalInit.cs | **已完成**。任务目录：`Agent/Reports/2026-05-09/ambitious_A009_Floating_Combat_Text/`；任务卡：`Agent/Reports/2026-05-09/ambitious_A009_Floating_Combat_Text/task_ambitious_A009_Floating_Combat_Text.md`；验证记录：`Agent/Reports/2026-05-09/ambitious_A009_Floating_Combat_Text/validation_ambitious_A009.md`；新增 `FloatingTextType.cs`、`FloatingTextConstant.cs`、`FloatingTextTool.cs`、`FloatingTextUI.cs`、`FloatingTextManager.cs`、`FloatingTextMenu.cs` 及 `.meta`；修改 `Character.cs`（+4行）、`GlobalInit.cs`（+2行）。新增能力：7种浮动文字类型（伤害/暴击/治疗/连击/经验/闪避/状态）、暴击弹出缩放动画、对象池（30默认/60最大）、世界→屏幕坐标转换、6种公开Spawn接口、Editor安装/移除/验证菜单。UI 生成方式：运行时动态创建 `Ambitious_A009_FloatingText_Canvas`（sortingOrder=100）+ Editor 菜单。静态验证通过；Unity 编译/Play Mode 待人工复验。Tool 新增 `FloatingTextTool.cs`（12个方法）、Enum 新增 `FloatingTextType.cs`、Constant 新增 `FloatingTextConstant.cs`。残馀风险：字体 LegacyRuntime.ttf 高版本兼容性、Canvas sortingOrder 层级冲突、数值/动画参数需在 Unity 中手感调优。 |
 
 ## 推荐优先开发
 
-1. **A007 已完成**：成就系统已实现 20 个预定义成就、条件检测、解锁弹窗和成就浏览面板，形成"战斗→收集→成就→重玩"完整闭环。
+1. **A009 已完成**：浮动战斗文字系统已实现7种文字类型、对象池和完整动画表现，补齐战斗视觉反馈短板。
 2. **A008 主动技能系统**：为玩家增加主动技能释放、冷却和升级，显著丰富战斗操作维度。
-3. **A009 浮动战斗文字**：补齐战斗视觉反馈的最后短板。
+3. **A002/A003 继续推进**：天气生存压力和工人生存状态闭环仍有未展开子模块，可继续深化。
 
 ## 历史已完成候选去重依据
 
@@ -109,3 +109,17 @@
   - Constant：复用 Worker 状态/补给/队列/拥堵常量，新增 `ColonyCommandCenterConstant.cs`
   - 验证结果：新增 `.meta` 存在；新增运行时代码无 `using UnityEditor`；`Scenes/Game.unity` 无 A006 写入；`git diff --check` 通过但有 LF/CRLF 提醒；命令行环境无 .NET SDK，Unity 编译和 Play Mode 待人工复验
   - 剩余风险：HUD 右上角布局、字号和诊断文案需在 Unity Play Mode 中调优；任务私有字段未来改名时诊断会降级为通用原因
+
+- **A009 [DONE] — 浮动战斗文字系统**
+  - 任务目录：`Agent/Reports/2026-05-09/ambitious_A009_Floating_Combat_Text/`
+  - 任务卡：`Agent/Reports/2026-05-09/ambitious_A009_Floating_Combat_Text/task_ambitious_A009_Floating_Combat_Text.md`
+  - 验证记录：`Agent/Reports/2026-05-09/ambitious_A009_Floating_Combat_Text/validation_ambitious_A009.md`
+  - 新增文件：`Scripts/2D/Enum/FloatingTextType.cs`、`Scripts/2D/Constant/FloatingTextConstant.cs`、`Scripts/2D/Tool/FloatingTextTool.cs`、`Scripts/2D/UI/FloatingTextUI.cs`、`Scripts/2D/Gameplay/FloatingTextManager.cs`、`Scripts/2D/Editor/FloatingTextMenu.cs` 及 `.meta`
+  - 修改文件：`Scripts/2D/Character/Character.cs`（+4行）、`Scripts/2D/GlobalInit.cs`（+2行）
+  - 新增能力：7种浮动文字类型（伤害/暴击/治疗/连击/经验/闪避/状态）、暴击/连击弹出缩放动画、对象池（30默认/60最大）、世界→屏幕坐标转换、6种公开Spawn接口、Editor安装/移除/验证菜单
+  - UI 生成方式：运行时动态创建 `Ambitious_A009_FloatingText_Canvas`（sortingOrder=100）+ Editor 菜单；未直接写入 `Game.unity`，未创建 ResourcesLocal Prefab
+  - Tool：新增 `FloatingTextTool.cs`（12个公共静态方法）
+  - Enum：新增 `FloatingTextType.cs`（7个枚举值）
+  - Constant：新增 `FloatingTextConstant.cs`（颜色×7、字号×7、动画参数×8、池配置、节点名、文案、菜单路径）
+  - 验证结果：静态验证通过（无 UnityEditor 运行时引用、namespace 一致、Singleton 模式一致）；Unity 编译和 Play Mode 待人工复验
+  - 剩余风险：LegacyRuntime.ttf 字体高版本兼容性、Canvas sortingOrder=100 层级冲突、数值/动画参数需在 Play Mode 中调优
