@@ -20,12 +20,13 @@
 | [PARTIAL] | A003 | 工人生存状态闭环（饥饿疲劳惩罚+状态图标+自动任务优先级） | 殖民地管理 / 生存模拟 | Worker 有饥饿和疲劳衰减，低值只影响接任务但缺少明显惩罚和可见反馈 | 让殖民地管理更有压力，玩家能及时救援低状态工人 | 补齐 Worker 状态系统，可复用到医疗、休息、排班 | 中 | 高 | P1 | AINPCAgent + UIAgent | ScriptGenerateSkill + CodeReviewSkill + TestSkill | Scripts/2D/Character/Worker, Scripts/2D/UI/Character, Scripts/2D/UI/Panel | **部分覆盖**。普通功能 `F013` 已完成饥饿/疲劳状态枚举、常量、工具、倍率惩罚、Tip 和 HUD 菜单：`Agent/Reports/2026-05-09/feature_F013_WorkerCondition/`。自动任务优先级与补给缺口调度仍未完成，故保持 `[PARTIAL]` 去重，不作为本次候选。 |
 | [DONE] | A004 | 波次Boss与波间奖励系统（精英波+奖励选择+难度缩放接入） | 关卡与玩法 | WaveManager 已有波次基础，但难度缩放未接入敌人属性，也无Boss/奖励阶段 | 提升关卡节奏、重玩价值和阶段目标 | 扩展波次系统为完整关卡流程模板 | 高 | 高 | P1 | AINPCAgent + GameplayAgent + UIAgent | ScriptGenerateSkill + ConfigGenerateSkill + TestSkill | Scripts/2D/Gameplay, Scripts/2D/Character/Enemy, Scripts/2D/UI, Resources/SO | **已完成**。任务目录：`Agent/Reports/2026-05-09/ambitious_A004_Wave_Boss_Rewards/`；任务卡：`Agent/Reports/2026-05-09/ambitious_A004_Wave_Boss_Rewards/task_ambitious_A004_Wave_Boss_Rewards.md`；验证记录：`validation_ambitious_A004.md`；新增 `WavePhaseType`、`WaveRewardType`、`WaveBossRewardConstant`、`WaveBossRewardTool`、`WaveBossRewardManager`、`WaveBossRewardPanel`、`WaveBossRewardMenu` 及 `.meta`；修改 `WaveManager.cs`、`Character.cs`、`Player.cs`。新增能力：每 3 波 Boss、敌人难度缩放、Boss 视觉/属性强化、波间三选一奖励、玩家本局伤害/减伤/移动 Buff、运行时动态奖励面板、Game 场景 Editor 安装/移除菜单。UI 未直接手写 `Game.unity`，未创建 `ResourcesLocal` Prefab；采用 Editor 菜单 + 运行时动态 Canvas。静态验证通过；Unity 编译/Play Mode 待人工复验；回滚方案已记录。 |
 | [SKIPPED] | A005 | Photon实时多人PvP竞技场 | 多人玩法 | 项目存在 Photon，但当前玩法、存档、地图同步偏合作/房间流程，无PvP边界 | 可能带来巨大玩法变化 | 需要重构同步、输入、伤害归属和房间状态 | 极高 | 极高 | P2 | MultiplayerAgent | NetworkSkill | NetworkConnect, Photon设置, Character, Map, UI, Scene | 自动跳过。涉及Photon深度改造、同步权威性和不可控破坏风险，不适合作为本次自动大改候选 |
+| [DONE] | A006 | 殖民地运营指挥中心（人力状态+任务阻塞诊断+补给目标+建议HUD） | 殖民地管理 / Worker运营反馈 / UI与表现 | F013-F016 已分别完成工人状态、补给缺口、任务队列和拥堵 Tip，但玩家仍缺少统一答案：当前殖民地卡在哪里、为什么任务没人接、下一步该处理食物/床位/材料/人手还是可达性 | 把零散 Worker 运营信息合成一块可见指挥面板，帮助玩家快速定位问题并形成下一步目标 | 为后续任务优先级、教程目标、殖民地事件和运营评分提供统一只读诊断层 | 中高 | 高 | P0 | AINPCAgent + UIAgent + GameplayAgent + ToolAgent | ScriptGenerateSkill + CodeReviewSkill + SceneAnalyzeSkill + EditorToolSkill + TestSkill | Scripts/2D/Enum, Scripts/2D/Constant, Scripts/2D/Tool, Scripts/2D/Gameplay, Scripts/2D/UI, Scripts/2D/Editor, GlobalInit, WorkerTaskManager, Game.unity, ResourcesLocal/Prefabs/UI | **已完成**。任务目录：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/`；任务卡：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/task_ambitious_A006_Colony_Command_Center.md`；验证记录：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/validation_ambitious_A006.md`；回滚方案：`rollback_ambitious_A006.md`。新增 `ColonyCommandAlertLevel`、`WorkerTaskBlockReason`、`ColonyCommandCenterConstant`、`ColonyCommandCenterTool`、`ColonyCommandCenterReport`、`ColonyCommandCenterManager`、`ColonyCommandCenterHUD`、`ColonyCommandCenterMenu` 及 `.meta`；修改 `WorkerTaskManager.cs`、`GlobalInit.cs`。新增能力：人力/任务/补给/拥堵统一指挥报告、等待任务阻塞原因诊断、运行时动态 HUD、F8 显示隐藏、警告 Tip、Game 场景安装菜单、ResourcesLocal Prefab 生成菜单。UI 未直接手写 `Game.unity`，未直接写入 Prefab YAML；采用运行时动态 UI + Editor 菜单。静态验证通过；Unity 编译/Play Mode 待人工复验；回滚方案已记录。 |
 
 ## 推荐优先开发
 
 1. **后续 A002 增强**：天气采集掉落、天气事件和装备抗性仍有扩展价值，但需在 F012 基础上独立评估。
-2. **后续 A003 增强**：工人补给缺口、自动吃饭/睡觉优先级和床位/食物引导仍有扩展价值。
-3. **A004 已完成**：Boss 波、难度缩放和波间奖励已作为本次中大型体验升级落地。
+2. **后续 A003 增强**：自动吃饭/睡觉优先级、床位/食物引导和可选调度辅助仍有扩展价值。
+3. **A006 已完成**：殖民地指挥中心已把 Worker 状态、补给、任务队列和拥堵提示聚合为统一 HUD 与阻塞诊断。
 
 ## 历史已完成候选去重依据
 
@@ -36,6 +37,7 @@
 - `feature_discovery.md` 中 F012 已完成天气移动、工人效率和灵气恢复影响，A002 本次标记为 `[PARTIAL]`，避免重复实现。
 - `feature_discovery.md` 中 F013 已完成工人饥饿/疲劳惩罚、状态工具和 HUD 菜单，A003 本次标记为 `[PARTIAL]`，避免重复实现。
 - `feature_discovery.md` 中 F002/F010 只提供波次基础和 Tip，未覆盖 Boss 属性、奖励选择和玩家本局 Buff，A004 本次可安全升级。
+- `feature_discovery.md` 中 F013-F016 只提供 Worker 状态、补给、任务队列和拥堵提示的专项能力；A006 不重复实现这些底层能力，而是聚合为指挥中心并补充等待任务阻塞原因诊断。
 
 ## 跳过候选
 
@@ -72,3 +74,18 @@
   - Constant：新增 `WaveBossRewardConstant.cs`
   - 验证结果：`.meta` 存在、运行时代码无新增 `UnityEditor` 引用、`git diff --check` 通过但有 CRLF 提醒；命令行环境无 .NET SDK，Unity 编译和 Play Mode 待人工复验
   - 剩余风险：Boss 数值、奖励上限和 UI 尺寸需在 Unity Play Mode 中手感调优
+
+- **A006 [DONE] — 殖民地运营指挥中心**
+  - 任务目录：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/`
+  - 任务卡：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/task_ambitious_A006_Colony_Command_Center.md`
+  - 验证记录：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/validation_ambitious_A006.md`
+  - 回滚方案：`Agent/Reports/2026-05-09/ambitious_A006_Colony_Command_Center/rollback_ambitious_A006.md`
+  - 新增文件：`Scripts/2D/Enum/ColonyCommandAlertLevel.cs`、`Scripts/2D/Enum/WorkerTaskBlockReason.cs`、`Scripts/2D/Constant/ColonyCommandCenterConstant.cs`、`Scripts/2D/Tool/ColonyCommandCenterTool.cs`、`Scripts/2D/Gameplay/ColonyCommandCenterReport.cs`、`Scripts/2D/Gameplay/ColonyCommandCenterManager.cs`、`Scripts/2D/UI/ColonyCommandCenterHUD.cs`、`Scripts/2D/Editor/ColonyCommandCenterMenu.cs` 及 `.meta`
+  - 修改文件：`Scripts/2D/Character/Worker/WorkerTaskManager.cs`、`Scripts/2D/GlobalInit.cs`
+  - 新增能力：殖民地人力/任务/补给/拥堵统一报告、等待任务阻塞原因诊断、警戒等级、行动建议、运行时动态 HUD、F8 显示隐藏、警告 Tip、Editor 场景安装和 ResourcesLocal Prefab 生成菜单
+  - UI 生成方式：未直接写入 `Game.unity`，未直接手写 `ResourcesLocal` Prefab；运行时自动动态创建 `Ambitious_A006_ColonyCommandCenter_Canvas` 与 `Ambitious_A006_ColonyCommandCenterHUD_Root`，并提供 Editor 菜单安全落场景/Prefab
+  - Tool：复用 `WorkerTaskSummaryTool`、`WorkerTaskCongestionTool`、`WorkerConditionTool`、`WorkerSupplyTool` 和 `Tool.IsUIInputActive()`，新增 `ColonyCommandCenterTool.cs`
+  - Enum：复用 Worker 相关枚举，新增 `ColonyCommandAlertLevel.cs`、`WorkerTaskBlockReason.cs`
+  - Constant：复用 Worker 状态/补给/队列/拥堵常量，新增 `ColonyCommandCenterConstant.cs`
+  - 验证结果：新增 `.meta` 存在；新增运行时代码无 `using UnityEditor`；`Scenes/Game.unity` 无 A006 写入；`git diff --check` 通过但有 LF/CRLF 提醒；命令行环境无 .NET SDK，Unity 编译和 Play Mode 待人工复验
+  - 剩余风险：HUD 右上角布局、字号和诊断文案需在 Unity Play Mode 中调优；任务私有字段未来改名时诊断会降级为通用原因

@@ -49,6 +49,9 @@
                 // 初始化背包
                 BackpackMenuPanel.Instance.Panel.SetActive(true);
                 BackpackMenuPanel.Instance.Panel.SetActive(false);
+
+                // A006 殖民地运营指挥中心使用独立运行时 HUD，避免直接改动复杂场景 UI 层级。
+                ColonyCommandCenterHUD.EnsureRuntimePanel();
             }
         }
 
@@ -143,6 +146,9 @@
 
             // 只读刷新任务队列拥堵提示，复用现有任务快照和 Tip UI，不改变任务调度。
             WorkerTaskCongestionAdvisor.Instance.Tick();
+
+            // 只读刷新殖民地指挥中心报告，聚合人力、补给、任务拥堵和阻塞诊断，不改变任务调度。
+            ColonyCommandCenterManager.Instance.Tick();
         }
     }
 

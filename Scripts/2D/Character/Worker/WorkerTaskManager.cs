@@ -221,6 +221,16 @@
         }
 
         /// <summary>
+        /// 创建任务分配只读诊断报告。
+        /// A006 殖民地指挥中心使用该报告解释等待任务为什么没有被 Worker 接走；本方法只读取任务队列，不改变任务状态或优先级。
+        /// </summary>
+        /// <returns>任务分配诊断报告。</returns>
+        public WorkerTaskAssignmentReport CreateTaskAssignmentReport()
+        {
+            return ColonyCommandCenterTool.BuildAssignmentReport(this.tasks, WorkerManager.Instance.Characters);
+        }
+
+        /// <summary>
         /// 获取适合 HUD 展示的任务队列摘要。
         /// </summary>
         /// <returns>任务队列摘要文本。</returns>
