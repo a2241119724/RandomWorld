@@ -103,7 +103,7 @@ namespace LAB2D
         /// HUD 默认宽度。
         /// 调整时需要同步验证右上角布局是否遮挡已有 Foreground UI。
         /// </summary>
-        public const float HudWidth = 660.0f;
+        public const float HudWidth = 500.0f;
 
         /// <summary>
         /// HUD 默认高度。
