@@ -10,11 +10,18 @@
     {
         private static readonly KeyCode[] KeyCodes = InputKeyConstant.ToolMenuKeys;
 
-        private Transform btns;
+        /// <summary>
+        /// 匹配数字按键
+        /// </summary>
+        public IBasePanel[] ToolMenus { get; private set; }
 
         public void Awake()
         {
-            this.btns = Tool.GetComponentInChildren<Transform>(this.gameObject, "Menu");
+            this.ToolMenus = new IBasePanel[]
+            {
+                BuildMenuPanel.Instance, BackpackMenuPanel.Instance,
+                WorkerTaskTogglePanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
+            };
         }
 
         public void Update()
@@ -24,15 +31,15 @@
                 return;
             }
 
-            for (int i = 0; i < this.btns.childCount; i++)
+            for (int i = 0; i < this.ToolMenus.Length; i++)
             {
                 if (Input.GetKeyDown(KeyCodes[i]))
                 {
                     if (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance)
                     {
-                        PanelController.Instance.Show(ForegroundPanel.Instance.ToolMenus[i]);
+                        PanelController.Instance.Show(this.ToolMenus[i]);
                     }
-                    else if (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance.ToolMenus[i])
+                    else if (PanelController.Instance.Panels.Peek() == this.ToolMenus[i])
                     {
                         PanelController.Instance.Close();
                     }

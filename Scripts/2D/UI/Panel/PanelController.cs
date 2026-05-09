@@ -8,26 +8,50 @@
     /// </summary>
     public class PanelController : Singleton<PanelController>
     {
-        public PanelController()
-        {
-            this.Parent = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG).transform;
-            this.Panels = new Stack<IBasePanel>();
-            if (this.Panels == null)
-            {
-                LogManager.Instance.Log("panels assign resource Error!!!", LogManager.LogLevelEnum.Error);
-                return;
-            }
-        }
+        private Transform parent;
+        private Stack<IBasePanel> panels;
 
         /// <summary>
         /// 所有面板父物体
         /// </summary>
-        public Transform Parent { get; set; }
+        public Transform Parent
+        {
+            get
+            {
+                if (this.parent == null)
+                {
+                    this.parent = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG).transform;
+                }
+
+                return this.parent;
+            }
+
+            set
+            {
+                this.parent = value;
+            }
+        }
 
         /// <summary>
         /// 面板栈
         /// </summary>
-        public Stack<IBasePanel> Panels { get; set; }
+        public Stack<IBasePanel> Panels
+        {
+            get
+            {
+                if (this.panels == null)
+                {
+                    this.panels = new Stack<IBasePanel>();
+                }
+
+                return this.panels;
+            }
+
+            set
+            {
+                this.panels = value;
+            }
+        }
 
         /// <summary>
         /// 展示下一个界面
