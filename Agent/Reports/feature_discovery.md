@@ -42,13 +42,12 @@
 | [DONE] | F011 | 会话结算自动触发与结果接入 | 关卡结算 | `SessionResultManager.CaptureResult()` 未自动调用 | 死亡或通关后自动获得评价 | 补齐结算触发链路 | 低 | 低 | P1 | GameplayAgent | ScriptGenerateSkill | 任务目录：`Agent/Reports/2026-04-30/feature_F011_SessionResultAutoTrigger/`；新增 `SessionResultAutoTrigger.cs`、`SessionResultAutoTriggerMenu.cs`，修改 `Player.cs`；静态验证通过。 |
 | [DONE] | F012 | 天气环境对玩法的影响系统 | 玩家体验 | 天气和环境数据未影响玩法 | 天气带来策略差异 | 激活环境系统 | 低 | 中 | P2 | GameplayAgent + MapAgent | ScriptGenerateSkill | 任务目录：`Agent/Reports/2026-05-09/feature_F012_WeatherGameplayEffect/`；新增 `WeatherGameplayTool.cs`、`WeatherGameplayEffect.cs`、`WeatherGameplayHUD.cs`、`WeatherGameplayEffectMenu.cs`，修改天气、环境、移动和任务进度接入点；UI 采用 Editor 菜单生成。 |
 | [DONE] | F013 | 工人饥饿疲劳状态效果与视觉反馈 | 成长奖励 | Worker 有 `CurHungry/CurTired` 衰减，但缺少统一状态、效率后果和 HUD | 让工人管理有实际反馈和紧迫感 | 沉淀 Worker 状态枚举、常量、工具、HUD 数据源 | 中 | 中 | P2 | AINPCAgent + GameplayAgent + UIAgent | ScriptGenerateSkill | 任务目录：`Agent/Reports/2026-05-09/feature_F013_WorkerCondition/`；任务卡：`task_feature_F013_WorkerCondition.md`；验证：`validation_feature_F013.md`；新增 `WorkerConditionState.cs`、`WorkerConditionConstant.cs`、`WorkerConditionTool.cs`、`WorkerConditionManager.cs`、`WorkerConditionHUD.cs`、`WorkerConditionMenu.cs`；修改 `ASeek.cs`、`AWorkerTask.cs`、`GlobalInit.cs`；UI 未直接写入 `Game.unity`，提供菜单 `工具/工人状态/创建工人状态 HUD 到 Game 场景`；静态验证通过，Unity 编译和 Play Mode 待人工。 |
-| [TODO] | F014 | 工人补给缺口提示系统 | 交互提示 | 吃饭/睡觉依赖食物和床位，但缺口缺少玩家提示 | 让玩家知道为什么工人无法恢复 | 与 F013 状态事件联动，形成补给目标提示 | 低 | 中 | P1 | AINPCAgent + UIAgent | ScriptGenerateSkill | 建议新增只读补给检查器：统计缺食物、缺床位、低状态工人数量，通过 Tip 或 HUD 提示，不修改存档或资源。 |
+| [DONE] | F014 | 工人补给缺口提示系统 | 交互提示 | 吃饭/睡觉依赖食物和床位，但缺口缺少玩家提示 | 让玩家知道为什么工人无法恢复 | 与 F013 状态事件联动，形成补给目标提示 | 低 | 中 | P1 | AINPCAgent + UIAgent | ScriptGenerateSkill | 任务目录：`Agent/Reports/2026-05-09/feature_F014_WorkerSupplyShortage/`；任务卡：`task_feature_F014_WorkerSupplyShortage.md`；验证：`validation_feature_F014.md`；新增 `WorkerSupplyIssueType.cs`、`WorkerSupplyConstant.cs`、`WorkerSupplyTool.cs`、`WorkerSupplyIssueManager.cs`、`WorkerSupplyHUD.cs`、`WorkerSupplyIssueMenu.cs`；修改 `GlobalInit.cs`；新增只读补给缺口统计，提示食物不足、缺床、饥饿、疲劳和临界停工；UI 未直接写入 `Game.unity`，未创建 `ResourcesLocal` Prefab，提供菜单 `工具/工人补给提示/创建补给缺口 HUD 到 Game 场景`；静态验证通过，Unity 编译和 Play Mode 待人工。 |
 | [TODO] | F015 | 任务队列 HUD 摘要 | UI 数据表现 | `WorkerTaskManager.GetTaskInfo()` 主要给 DebugUI 使用，缺少玩家可读任务概览 | 玩家能快速理解当前任务压力 | 复用任务管理器已有统计，低侵入 | 低 | 中 | P2 | UIAgent + AINPCAgent | ScriptGenerateSkill | 可新增 Editor 菜单生成独立 HUD，显示建造/搬运/采集/吃饭/睡觉任务数量与进行中数量。 |
 
 ## 推荐优先开发
 
-1. F014 工人补给缺口提示系统：与 F013 强相关，价值清晰，风险低。
-2. F015 任务队列 HUD 摘要：复用已有 `WorkerTaskManager.GetTaskInfo()`，适合低侵入 UI 数据展示。
+1. F015 任务队列 HUD 摘要：复用已有 `WorkerTaskManager.GetTaskInfo()`，适合低侵入 UI 数据展示。
 
 ## 被跳过候选及原因
 
@@ -59,6 +58,7 @@
 - F001、F009 均涉及连击与战斗反馈，但 F001 是统计层，F009 是奖励倍率层，保留为不同候选。
 - F004、F011 均涉及结算，但 F004 是数据模型，F011 是自动触发链路，保留为不同候选。
 - F005、F013 均涉及 Worker，但 F005 是效率统计，F013 是饥饿/疲劳状态效果，保留为不同候选。
+- F013、F014 均涉及 Worker 状态，但 F013 是状态效果与效率后果，F014 是补给缺口解释和 UI 提示，保留为不同候选。
 - F007 与 F004 的基础评分能力重叠，已标记跳过，避免重复开发。
 
 ## 已发现可复用公共代码
@@ -68,42 +68,50 @@
   - `IsUIInputActive()`
 - `Scripts/2D/Tool/WeatherGameplayTool.cs`
   - `ApplyMultiplier()`
+- `Scripts/2D/Tool/WorkerConditionTool.cs`
+  - `GetSafeRatio()`
+  - `GetState()`
 - `Scripts/2D/Constant/PrefabConstant.cs`
 - `Scripts/2D/Constant/ResourceConstant.cs`
 - `Scripts/2D/Constant/TagConstant.cs`
 - `Scripts/2D/Constant/LayerConstant.cs`
+- `Scripts/2D/Constant/WorkerConditionConstant.cs`
+  - `GameSceneName`
+  - `FontResourcePath`
 - `Scripts/2D/Enum/PackageTypeEnum.cs`
+- `Scripts/2D/Enum/WorkerConditionState.cs`
 
 ## 本次新增公共代码
 
-- `Scripts/2D/Enum/WorkerConditionState.cs`
-  - 统一表达 Healthy、Hungry、Tired、Exhausted、Critical。
-- `Scripts/2D/Constant/WorkerConditionConstant.cs`
-  - 统一维护衰减速度、阈值、倍率、Tip 冷却、HUD 节点名、菜单路径和字体路径。
-- `Scripts/2D/Tool/WorkerConditionTool.cs`
-  - 统一计算 Worker 状态、倍率、百分比和展示文案。
+- `Scripts/2D/Enum/WorkerSupplyIssueType.cs`
+  - 统一表达 None、FoodShortage、BedShortage、HungryWorker、TiredWorker、CriticalWorker。
+- `Scripts/2D/Constant/WorkerSupplyConstant.cs`
+  - 统一维护补给扫描间隔、Tip 冷却、HUD 热键、HUD 节点名、菜单路径、默认文案和食物恢复估算值。
+- `Scripts/2D/Tool/WorkerSupplyTool.cs`
+  - 统一计算补给需求、优先问题类型、百分比、HUD 行文案和 Tip 文案。
 
 ## 本次完成候选摘要
 
-- 候选 ID：F013
+- 候选 ID：F014
 - 最终状态：[DONE]
-- 任务目录：`Agent/Reports/2026-05-09/feature_F013_WorkerCondition/`
-- 任务卡路径：`Agent/Reports/2026-05-09/feature_F013_WorkerCondition/task_feature_F013_WorkerCondition.md`
-- 验证记录路径：`Agent/Reports/2026-05-09/feature_F013_WorkerCondition/validation_feature_F013.md`
+- 任务目录：`Agent/Reports/2026-05-09/feature_F014_WorkerSupplyShortage/`
+- 任务卡路径：`Agent/Reports/2026-05-09/feature_F014_WorkerSupplyShortage/task_feature_F014_WorkerSupplyShortage.md`
+- 验证记录路径：`Agent/Reports/2026-05-09/feature_F014_WorkerSupplyShortage/validation_feature_F014.md`
 - 修改文件：
-  - `Scripts/2D/Enum/WorkerConditionState.cs`
-  - `Scripts/2D/Constant/WorkerConditionConstant.cs`
-  - `Scripts/2D/Tool/WorkerConditionTool.cs`
-  - `Scripts/2D/Gameplay/WorkerConditionManager.cs`
-  - `Scripts/2D/UI/WorkerConditionHUD.cs`
-  - `Scripts/2D/Editor/WorkerConditionMenu.cs`
-  - `Scripts/2D/Core/Seek/ASeek.cs`
-  - `Scripts/2D/Character/Worker/Task/AWorkerTask.cs`
+  - `Scripts/2D/Enum/WorkerSupplyIssueType.cs`
+  - `Scripts/2D/Constant/WorkerSupplyConstant.cs`
+  - `Scripts/2D/Tool/WorkerSupplyTool.cs`
+  - `Scripts/2D/Gameplay/WorkerSupplyIssueManager.cs`
+  - `Scripts/2D/UI/WorkerSupplyHUD.cs`
+  - `Scripts/2D/Editor/WorkerSupplyIssueMenu.cs`
   - `Scripts/2D/GlobalInit.cs`
-- 新增业务能力：工人低饥饿/低疲劳会进入统一状态，影响移动和普通任务效率，并触发 Tip/HUD 反馈。
+- 新增业务能力：自动只读统计工人饥饿、疲劳、仓库食物、床位绑定和临界停工风险，并通过 Tip/HUD 摘要提示玩家补给缺口。
 - UI 生成方式：未手写 `Game.unity`，未创建 `ResourcesLocal` Prefab；提供 Editor 菜单安全生成独立 HUD。
 - 验证结果：静态检查通过；新增运行时代码未引用 `UnityEditor`；Unity 编译和 Play Mode 待人工验证。
-- Tool 复用：复用 `Tool.GetComponentInChildren<T>()`、`Tool.IsUIInputActive()`、`WeatherGameplayTool.ApplyMultiplier()`。
-- Enum 新增：`WorkerConditionState.cs`。
-- Constant 新增：`WorkerConditionConstant.cs`。
-- 剩余风险：倍率手感和 HUD 场景生成需在 Unity Editor 内验证。
+- Tool 复用：复用 `Tool.GetComponentInChildren<T>()`、`Tool.IsUIInputActive()`、`WorkerConditionTool.GetSafeRatio()`、`WorkerConditionTool.GetState()`。
+- Tool 新增：`WorkerSupplyTool.cs`。
+- Enum 复用：`WorkerConditionState.cs`。
+- Enum 新增：`WorkerSupplyIssueType.cs`。
+- Constant 复用：`WorkerConditionConstant.GameSceneName`、`WorkerConditionConstant.FontResourcePath`。
+- Constant 新增：`WorkerSupplyConstant.cs`。
+- 剩余风险：HUD 场景生成、字体加载、屏幕位置和 Tip 节奏需在 Unity Editor / Play Mode 内验证。

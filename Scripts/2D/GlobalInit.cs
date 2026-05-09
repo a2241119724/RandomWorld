@@ -137,6 +137,9 @@
 
                 WorkerConditionManager.Instance.UpdateWorkerCondition(worker);
             }
+
+            // 只读刷新工人补给缺口提示，内部会按固定间隔节流，避免每帧输出 Tip。
+            WorkerSupplyIssueManager.Instance.Tick();
         }
     }
 
