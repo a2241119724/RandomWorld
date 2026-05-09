@@ -275,7 +275,7 @@
                 seekResult.IsReachable = false;
                 UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {
-                    LogManager.Instance.Log(this.Character.name + ":未找到路径 " + start.PosMap + "-->" + end.PosMap, LogManager.LogLevelEnum.Error);
+                    LogManager.Instance.Log(this.Character.name + ":未找到路径 " + start.PosMap + "-->" + end.PosMap, LogManager.LogLevelEnum.Trace);
                 }).Wait();
             }
 
