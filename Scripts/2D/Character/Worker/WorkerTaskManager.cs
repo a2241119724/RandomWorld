@@ -212,6 +212,24 @@
         }
 
         /// <summary>
+        /// 创建任务队列只读快照。
+        /// </summary>
+        /// <returns>任务队列快照。</returns>
+        public WorkerTaskQueueSnapshot CreateTaskQueueSnapshot()
+        {
+            return WorkerTaskSummaryTool.BuildSnapshot(this.tasks);
+        }
+
+        /// <summary>
+        /// 获取适合 HUD 展示的任务队列摘要。
+        /// </summary>
+        /// <returns>任务队列摘要文本。</returns>
+        public string GetTaskQueueSummaryText()
+        {
+            return WorkerTaskSummaryTool.BuildHudText(this.CreateTaskQueueSnapshot());
+        }
+
+        /// <summary>
         /// 获取任务信息
         /// </summary>
         /// <returns>任务信息</returns>
