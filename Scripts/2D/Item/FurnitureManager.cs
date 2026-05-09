@@ -62,6 +62,31 @@
         }
 
         /// <summary>
+        /// 释放Worker的床绑定
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        public void RemoveWorkerFromBed(AWorker worker)
+        {
+            Vector3Int key = default;
+            bool found = false;
+            foreach (KeyValuePair<Vector3Int, AWorker> kv in this.BedToWorker)
+            {
+                if (kv.Value == worker)
+                {
+                    key = kv.Key;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                this.BedToWorker[key] = null;
+                worker.BedItem = null;
+            }
+        }
+
+        /// <summary>
         /// 通过床获取Worker
         /// </summary>
         /// <param name="posMap">位置</param>
