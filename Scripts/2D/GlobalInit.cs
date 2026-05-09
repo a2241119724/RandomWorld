@@ -52,6 +52,11 @@
 
                 // A006 殖民地运营指挥中心使用独立运行时 HUD，避免直接改动复杂场景 UI 层级。
                 ColonyCommandCenterHUD.EnsureRuntimePanel();
+
+                // A007 成就系统：初始化管理器、弹窗和面板
+                AchievementManager.Instance.Initialize();
+                AchievementPopup.EnsureRuntimePopup();
+                AchievementPanel.EnsureRuntimePanel();
             }
         }
 
@@ -77,6 +82,29 @@
                     }
 
                     PanelController.Instance.Panels.Peek().OnClick_Back();
+                }
+            }
+
+            // A007 成就系统：更新进度并检查解锁
+            AchievementManager mgr = AchievementManager.Instance;
+            if (mgr != null && mgr.IsInitialized)
+            {
+                mgr.UpdateProgressAll();
+
+                // 检查是否有待展示的解锁弹窗
+                if (mgr.HasPendingUnlock)
+                {
+                    AchievementData pending = mgr.PeekPendingUnlock();
+                    if (pending != null && AchievementPopup.RuntimeInstance != null)
+                    {
+                        AchievementPopup.RuntimeInstance.Show(pending);
+                    }
+                }
+
+                // F7 切换成就面板
+                if (!Tool.IsUIInputActive() && Input.GetKeyDown(KeyCode.F7))
+                {
+                    AchievementPanel.RuntimeInstance?.TogglePanel();
                 }
             }
 
