@@ -123,13 +123,19 @@
                 AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
                 if (workerData.CurHungry > 0)
                 {
-                    workerData.CurHungry -= Time.deltaTime * 0.1f;
+                    workerData.CurHungry = Mathf.Max(
+                        0.0f,
+                        workerData.CurHungry - (Time.deltaTime * WorkerConditionConstant.HungryDecayPerSecond));
                 }
 
                 if (workerData.CurTired > 0)
                 {
-                    workerData.CurTired -= Time.deltaTime * 0.01f;
+                    workerData.CurTired = Mathf.Max(
+                        0.0f,
+                        workerData.CurTired - (Time.deltaTime * WorkerConditionConstant.TiredDecayPerSecond));
                 }
+
+                WorkerConditionManager.Instance.UpdateWorkerCondition(worker);
             }
         }
     }

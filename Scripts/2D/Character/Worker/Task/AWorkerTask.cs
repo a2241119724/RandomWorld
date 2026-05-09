@@ -158,10 +158,13 @@
             // 吃饭和睡觉任务不消耗疲劳
             if (this.TaskType != WorkerTaskTypeEnum.Eat && this.TaskType != WorkerTaskTypeEnum.Sleep)
             {
-                workerData.CurTired -= Time.deltaTime * WorkerTaskTimeConfig.WorkTiredCostPerSecond;
+                workerData.CurTired = Mathf.Max(
+                    0.0f,
+                    workerData.CurTired - (Time.deltaTime * WorkerTaskTimeConfig.WorkTiredCostPerSecond));
             }
 
             float progressMultiplier = WeatherGameplayEffect.Instance.GetWorkerTaskProgressMultiplier(this.TaskType);
+            progressMultiplier *= WorkerConditionManager.Instance.GetWorkerTaskProgressMultiplier(worker, this.TaskType);
             this.curProgress += Time.deltaTime * progressMultiplier;
             if (this.curProgress > this.maxProgress)
             {
