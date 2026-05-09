@@ -46,6 +46,11 @@
         public AItem.ItemTypeEnum Type;
 
         /// <summary>
+        /// 装备槽位（仅Equipment类型有效）
+        /// </summary>
+        public AEquipment.EquipTypeEnum EquipSlot;
+
+        /// <summary>
         /// 任务时间
         /// </summary>
         public TaskTime RelatedTaskTime;

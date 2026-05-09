@@ -348,10 +348,10 @@
             {
                 if (this.equipments.ContainsKey(equipment.Type))
                 {
-                    // 交换装备
-                    AEquipment equipment1 = this.equipments[equipment.Type];
-                    ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
-                    this.equipments[equipment.Type] = equipment1;
+                    // 交换装备：卸下旧装备放入地图，装备新装备
+                    AEquipment oldEquipment = this.equipments[equipment.Type];
+                    ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(ItemDataManager.Instance.GetById(oldEquipment.Id).EnName), new ResourceInfo(oldEquipment.Id, 1));
+                    this.equipments[equipment.Type] = equipment;
                 }
                 else
                 {
