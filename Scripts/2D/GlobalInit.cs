@@ -140,6 +140,9 @@
 
             // 只读刷新工人补给缺口提示，内部会按固定间隔节流，避免每帧输出 Tip。
             WorkerSupplyIssueManager.Instance.Tick();
+
+            // 只读刷新任务队列拥堵提示，复用现有任务快照和 Tip UI，不改变任务调度。
+            WorkerTaskCongestionAdvisor.Instance.Tick();
         }
     }
 
