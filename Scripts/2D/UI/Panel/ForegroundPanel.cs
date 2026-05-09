@@ -25,15 +25,6 @@ namespace LAB2D
         private Text clearConfirmText;
         private int pendingClearArchiveIndex = -1;
 
-        /// <summary>
-        /// 匹配数字按键
-        /// </summary>
-        public readonly IBasePanel[] ToolMenus = new IBasePanel[]
-        {
-            BuildMenuPanel.Instance, BackpackMenuPanel.Instance,
-            WorkerTaskTogglePanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
-        };
-
         public ForegroundPanel()
         {
             this.Name = "Foreground";
@@ -61,17 +52,6 @@ namespace LAB2D
             this.CreateSaveSlotPanel();
             this.CreateClearConfirmPanel();
             this.CreateRenamePanel();
-
-            // 匹配数字按键
-            Transform tools = Tool.GetComponentInChildren<Transform>(this.Panel, "Menu");
-            for (int i = 0; i < tools.childCount; i++)
-            {
-                int temp = i;
-                tools.GetChild(i).GetComponent<Button>().onClick.AddListener(() =>
-                {
-                    this.Controller.Show(this.ToolMenus[temp]);
-                });
-            }
         }
 
         /// <summary>

@@ -60,6 +60,10 @@
 
                 // A009 浮动战斗文字系统：初始化管理器和对象池
                 FloatingTextManager.Instance.EnsureInitialized();
+
+                // A008 主动技能系统：初始化技能管理器和 HUD
+                SkillManager.Instance.Initialize();
+                SkillHUD.EnsureRuntimePanel();
             }
         }
 
@@ -180,6 +184,9 @@
 
             // 只读刷新殖民地指挥中心报告，聚合人力、补给、任务拥堵和阻塞诊断，不改变任务调度。
             ColonyCommandCenterManager.Instance.Tick();
+
+            // A008 主动技能系统：刷新技能冷却计时、Buff过期检查和冲刺无敌恢复
+            SkillManager.Instance.Tick();
         }
     }
 

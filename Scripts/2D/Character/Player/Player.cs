@@ -142,6 +142,9 @@
             }
 
             this.Attack();
+
+            // A008: 主动技能系统 — 检测技能快捷键并激活
+            this.HandleSkillInput();
         }
 
         public void FixedUpdate()
@@ -316,6 +319,42 @@
 
             // 自动采集会话结算数据（F011：补齐结算系统缺失的自动触发链路）
             SessionResultAutoTrigger.NotifyPlayerDeath();
+        }
+
+        /// <summary>
+        /// A008: 处理主动技能快捷键输入。
+        /// Q/E/R/F 分别对应技能槽位 0/1/2/3。
+        /// 仅在非 UI 输入模式下生效，不干扰文本输入或面板操作。
+        /// </summary>
+        private void HandleSkillInput()
+        {
+            if (Tool.IsUIInputActive())
+            {
+                return;
+            }
+
+            SkillManager mgr = SkillManager.Instance;
+            if (mgr == null || !mgr.IsInitialized)
+            {
+                return;
+            }
+
+            if (Input.GetKeyDown(InputKeyConstant.SkillHotkey1))
+            {
+                mgr.TryActivateSkill(0);
+            }
+            else if (Input.GetKeyDown(InputKeyConstant.SkillHotkey2))
+            {
+                mgr.TryActivateSkill(1);
+            }
+            else if (Input.GetKeyDown(InputKeyConstant.SkillHotkey3))
+            {
+                mgr.TryActivateSkill(2);
+            }
+            else if (Input.GetKeyDown(InputKeyConstant.SkillHotkey4))
+            {
+                mgr.TryActivateSkill(3);
+            }
         }
 
         /// <summary>

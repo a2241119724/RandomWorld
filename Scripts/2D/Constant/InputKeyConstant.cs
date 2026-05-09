@@ -122,6 +122,35 @@ namespace LAB2D
 
         #endregion
 
+        #region 主动技能快捷键 (Q/E/R/F)
+
+        /// <summary>
+        /// 主动技能槽位1快捷键 (Q键)
+        /// 激活技能栏第1个技能（默认：旋风斩）。
+        /// 仅在非UI输入模式下生效，且技能冷却就绪、法力充足时激活。
+        /// </summary>
+        public const KeyCode SkillHotkey1 = KeyCode.Q;
+
+        /// <summary>
+        /// 主动技能槽位2快捷键 (E键)
+        /// 激活技能栏第2个技能（默认：冲刺）。
+        /// </summary>
+        public const KeyCode SkillHotkey2 = KeyCode.E;
+
+        /// <summary>
+        /// 主动技能槽位3快捷键 (R键)
+        /// 激活技能栏第3个技能（默认：力量爆发）。
+        /// </summary>
+        public const KeyCode SkillHotkey3 = KeyCode.R;
+
+        /// <summary>
+        /// 主动技能槽位4快捷键 (F键)
+        /// 激活技能栏第4个技能（默认：治疗之光）。
+        /// </summary>
+        public const KeyCode SkillHotkey4 = KeyCode.F;
+
+        #endregion
+
         #region 快捷选择 (数字键 1-9)
 
         /// <summary>
