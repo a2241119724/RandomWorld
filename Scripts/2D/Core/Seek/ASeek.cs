@@ -253,6 +253,12 @@
 
             this.Direction = worldPos - this.Character.transform.position;
             float speed = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this.Character, this.Character.MoveSpeed);
+            if (this.Character is AWorker worker)
+            {
+                // 工人的饥饿与疲劳状态会在天气倍率之后继续影响移动速度。
+                speed = WorkerConditionManager.Instance.GetAdjustedWorkerMoveSpeed(worker, speed);
+            }
+
             this.Character.transform.Translate(speed * Time.deltaTime * this.Direction.normalized, Space.World); // 向前移动
             this.UpdateLine(true);
             return false;
