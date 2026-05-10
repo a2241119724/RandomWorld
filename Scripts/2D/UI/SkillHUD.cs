@@ -9,7 +9,7 @@ namespace LAB2D
     /// 每个按钮包含冷却覆盖层、法力消耗文本、技能名称、等级和快捷键提示。
     ///
     /// 接入方式：
-    ///   1. GlobalInit.Start 调用 EnsureRuntimePanel() 自动创建独立 Canvas
+    ///   1. GlobalInit.Start 调用 EnsureRuntimePanel() 自动挂载到 UI/Foreground
     ///   2. Editor 菜单：工具 > 智能体 > 主动技能系统 > 安装技能HUD到Game场景
     ///   3. 不直接写入 Game.unity 或 ResourcesLocal Prefab
     /// </summary>
@@ -44,7 +44,7 @@ namespace LAB2D
 
         /// <summary>
         /// 确保运行时技能 HUD 已创建。若已存在则跳过。
-        /// 创建独立 Canvas（sortingOrder=80），位于屏幕底部中央。
+        /// 挂载到 UI/Foreground 下，复用 UI 的 Canvas。
         /// </summary>
         public static void EnsureRuntimePanel()
         {
@@ -61,17 +61,19 @@ namespace LAB2D
                 eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
             }
 
-            // 创建 Canvas
-            GameObject canvasObj = new GameObject(SkillConstant.SkillCanvasName);
-            Canvas canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = SkillConstant.CanvasSortingOrder;
-            canvasObj.AddComponent<CanvasScaler>();
-            canvasObj.AddComponent<GraphicRaycaster>();
+            // 查找 UI/Foreground 父节点
+            Transform uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG)?.transform;
+            Transform foreground = uiRoot?.Find("Foreground");
+            if (foreground == null)
+            {
+                Debug.LogError($"[SkillHUD] 无法找到 {TagConstant.UI_TAG}/Foreground 节点，SkillHUD 创建失败");
+                return;
+            }
 
-            // 创建 HUD 根节点
+            // 创建 HUD 根节点（挂载到 Foreground 下，使用 UI 的 Canvas）
             GameObject rootObj = new GameObject(SkillConstant.SkillHUDRootName);
-            rootObj.transform.SetParent(canvasObj.transform, false);
+            rootObj.transform.SetParent(foreground, false);
+            rootObj.transform.SetAsLastSibling();
             RectTransform rootRect = rootObj.AddComponent<RectTransform>();
             rootRect.anchorMin = new Vector2(0.5f, 0f);
             rootRect.anchorMax = new Vector2(0.5f, 0f);
@@ -108,17 +110,16 @@ namespace LAB2D
         /// </summary>
         public static void RemoveFromScene()
         {
-            // 销毁 Canvas
-            GameObject canvas = GameObject.Find(SkillConstant.SkillCanvasName);
-            if (canvas != null)
+            GameObject root = GameObject.Find(SkillConstant.SkillHUDRootName);
+            if (root != null)
             {
                 if (Application.isPlaying)
                 {
-                    Destroy(canvas);
+                    Destroy(root);
                 }
                 else
                 {
-                    DestroyImmediate(canvas);
+                    DestroyImmediate(root);
                 }
             }
 
@@ -218,7 +219,7 @@ namespace LAB2D
             cdTextRect.offsetMax = Vector2.zero;
             Text cdText = cdTextObj.AddComponent<Text>();
             cdText.alignment = TextAnchor.MiddleCenter;
-            cdText.fontSize = 60;
+            cdText.fontSize = 36;
             cdText.fontStyle = FontStyle.Bold;
             cdText.color = Color.white;
             cdText.raycastTarget = false;
@@ -233,11 +234,11 @@ namespace LAB2D
             hotkeyRect.anchorMin = new Vector2(0f, 1f);
             hotkeyRect.anchorMax = new Vector2(0f, 1f);
             hotkeyRect.pivot = new Vector2(0f, 1f);
-            hotkeyRect.anchoredPosition = new Vector2(8f, -6f);
-            hotkeyRect.sizeDelta = new Vector2(64f, 56f);
+            hotkeyRect.anchoredPosition = new Vector2(5f, -4f);
+            hotkeyRect.sizeDelta = new Vector2(38f, 34f);
             Text hotkeyText = hotkeyObj.AddComponent<Text>();
             hotkeyText.alignment = TextAnchor.MiddleLeft;
-            hotkeyText.fontSize = 32;
+            hotkeyText.fontSize = 20;
             hotkeyText.fontStyle = FontStyle.Bold;
             hotkeyText.color = new Color(1f, 0.9f, 0.3f, 1f);
             hotkeyText.raycastTarget = false;
@@ -252,11 +253,11 @@ namespace LAB2D
             manaRect.anchorMin = new Vector2(1f, 1f);
             manaRect.anchorMax = new Vector2(1f, 1f);
             manaRect.pivot = new Vector2(1f, 1f);
-            manaRect.anchoredPosition = new Vector2(-8f, -6f);
-            manaRect.sizeDelta = new Vector2(110f, 56f);
+            manaRect.anchoredPosition = new Vector2(-5f, -4f);
+            manaRect.sizeDelta = new Vector2(66f, 34f);
             Text manaText = manaObj.AddComponent<Text>();
             manaText.alignment = TextAnchor.MiddleRight;
-            manaText.fontSize = 30;
+            manaText.fontSize = 18;
             manaText.fontStyle = FontStyle.Bold;
             manaText.color = SkillConstant.ManaSufficientColor;
             manaText.raycastTarget = false;
@@ -271,11 +272,11 @@ namespace LAB2D
             nameRect.anchorMin = new Vector2(0.5f, 0f);
             nameRect.anchorMax = new Vector2(0.5f, 0f);
             nameRect.pivot = new Vector2(0.5f, 0f);
-            nameRect.anchoredPosition = new Vector2(0f, 6f);
-            nameRect.sizeDelta = new Vector2(180f, 44f);
+            nameRect.anchoredPosition = new Vector2(0f, 4f);
+            nameRect.sizeDelta = new Vector2(108f, 26f);
             Text nameText = nameObj.AddComponent<Text>();
             nameText.alignment = TextAnchor.MiddleCenter;
-            nameText.fontSize = 28;
+            nameText.fontSize = 18;
             nameText.color = Color.white;
             nameText.raycastTarget = false;
             nameText.text = "技能";
@@ -289,11 +290,11 @@ namespace LAB2D
             levelRect.anchorMin = new Vector2(1f, 0f);
             levelRect.anchorMax = new Vector2(1f, 0f);
             levelRect.pivot = new Vector2(1f, 0f);
-            levelRect.anchoredPosition = new Vector2(-6f, 6f);
-            levelRect.sizeDelta = new Vector2(60f, 40f);
+            levelRect.anchoredPosition = new Vector2(-4f, 4f);
+            levelRect.sizeDelta = new Vector2(36f, 24f);
             Text levelText = levelObj.AddComponent<Text>();
             levelText.alignment = TextAnchor.MiddleRight;
-            levelText.fontSize = 24;
+            levelText.fontSize = 16;
             levelText.color = new Color(0.5f, 1f, 0.5f, 1f);
             levelText.raycastTarget = false;
             levelText.text = "Lv1";

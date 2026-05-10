@@ -182,13 +182,13 @@ namespace LAB2D
         public const int CanvasSortingOrder = 80;
 
         /// <summary>技能按钮宽度（像素）</summary>
-        public const float SkillButtonWidth = 200f;
+        public const float SkillButtonWidth = 120f;
 
         /// <summary>技能按钮高度（像素）</summary>
-        public const float SkillButtonHeight = 200f;
+        public const float SkillButtonHeight = 120f;
 
         /// <summary>技能按钮间距（像素）</summary>
-        public const float SkillButtonSpacing = 30f;
+        public const float SkillButtonSpacing = 18f;
 
         /// <summary>HUD 底部边距（像素）</summary>
         public const float HudBottomMargin = 40f;
