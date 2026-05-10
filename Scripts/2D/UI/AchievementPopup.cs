@@ -10,7 +10,7 @@ namespace LAB2D
     /// 由 AchievementManager.OnAchievementUnlocked 事件驱动。
     ///
     /// 接入方式：
-    ///   AchievementPopup 为独立组件，挂载到动态创建的 Canvas 上。
+    ///   AchievementPopup 挂载到 UI/Foreground 下，复用 UI 的 Canvas。
     ///   AchievementManager 解锁成就时会自动触发弹窗显示。
     ///   提供静态方法 EnsureRuntimePopup() 安全创建运行时弹窗实例。
     /// </summary>
@@ -19,7 +19,6 @@ namespace LAB2D
         /// <summary>运行时弹窗单例引用</summary>
         private static AchievementPopup runtimeInstance;
 
-        private Canvas canvas;
         private CanvasGroup canvasGroup;
         private Text titleText;
         private Text nameText;
@@ -39,11 +38,22 @@ namespace LAB2D
                 return;
             }
 
-            GameObject canvasObj = AchievementTool.EnsureCanvas(
-                AchievementConstant.PopupCanvasName, 200);
+            Transform foreground = AchievementTool.FindForeground();
+            if (foreground == null)
+            {
+                Debug.LogError($"[AchievementPopup] 无法找到 {TagConstant.UI_TAG}/Foreground 节点，弹窗创建失败");
+                return;
+            }
+
+            if (UnityEngine.EventSystems.EventSystem.current == null)
+            {
+                GameObject eventSys = new GameObject("EventSystem");
+                eventSys.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            }
 
             GameObject rootObj = new GameObject(AchievementConstant.PopupRootName);
-            rootObj.transform.SetParent(canvasObj.transform, false);
+            rootObj.transform.SetParent(foreground, false);
             AchievementPopup popup = rootObj.AddComponent<AchievementPopup>();
             popup.Initialize();
             runtimeInstance = popup;
@@ -59,12 +69,6 @@ namespace LAB2D
 
         private void Initialize()
         {
-            this.canvas = this.GetComponentInParent<Canvas>();
-            if (this.canvas == null && this.transform.parent != null)
-            {
-                this.canvas = this.transform.parent.GetComponent<Canvas>();
-            }
-
             this.canvasGroup = this.gameObject.AddComponent<CanvasGroup>();
             this.rootRect = this.gameObject.AddComponent<RectTransform>();
 

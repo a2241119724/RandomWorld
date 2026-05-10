@@ -15,10 +15,11 @@ namespace LAB2D
         public bool IsInitialized { get; private set; }
 
         /// <summary>
-        /// 等待对比的装备数据：key=装备Id，value=装备属性数据
+        /// 等待对比的装备数据：key=地图坐标，value=装备属性数据
         /// 当玩家拾取装备时，从此字典查找并弹出对比弹窗。
+        /// 使用地图坐标作为 key 避免同类型装备掉落时互相覆盖。
         /// </summary>
-        private Dictionary<long, PendingEquipmentDrop> pendingDrops = new Dictionary<long, PendingEquipmentDrop>();
+        private Dictionary<Vector3Int, PendingEquipmentDrop> pendingDrops = new Dictionary<Vector3Int, PendingEquipmentDrop>();
 
         /// <summary>
         /// 待处理的装备掉落数据。
@@ -47,7 +48,7 @@ namespace LAB2D
         public void Initialize()
         {
             if (this.IsInitialized) return;
-            this.pendingDrops = new Dictionary<long, PendingEquipmentDrop>();
+            this.pendingDrops = new Dictionary<Vector3Int, PendingEquipmentDrop>();
             EquipmentBeamManager.Instance.Initialize();
             this.IsInitialized = true;
             LogManager.Instance.Log("EquipmentLootManager 初始化完成", LogManager.LogLevelEnum.Trace);
@@ -128,7 +129,7 @@ namespace LAB2D
                 EquipmentId = template.Id,
                 MapPosition = availablePos,
             };
-            this.pendingDrops[template.Id] = pending;
+            this.pendingDrops[availablePos] = pending;
 
             // 在掉落位置生成光束特效（按稀有度着色）
             Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(availablePos);
@@ -207,7 +208,7 @@ namespace LAB2D
                 EquipmentId = template.Id,
                 MapPosition = availablePos,
             };
-            this.pendingDrops[template.Id] = pending;
+            this.pendingDrops[availablePos] = pending;
 
             Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(availablePos);
             EquipmentBeamManager.Instance.SpawnBeam(availablePos, beamWorldPos, rarity);
@@ -233,14 +234,31 @@ namespace LAB2D
         {
             if (!this.IsInitialized || this.pendingDrops == null) return;
 
-            if (this.pendingDrops.TryGetValue(itemId, out PendingEquipmentDrop pending))
+            // 按 itemId 遍历查找匹配的待处理掉落
+            Vector3Int? foundKey = null;
+            PendingEquipmentDrop pending = null;
+            foreach (KeyValuePair<Vector3Int, PendingEquipmentDrop> kv in this.pendingDrops)
+            {
+                if (kv.Value.EquipmentId == itemId)
+                {
+                    foundKey = kv.Key;
+                    pending = kv.Value;
+                    break;
+                }
+            }
+
+            if (foundKey.HasValue && pending != null)
             {
                 // 移除旧位置的光束
                 EquipmentBeamManager.Instance.RemoveBeamAt(pending.MapPosition);
 
+                // 移除旧 key，用新坐标作为 key
+                this.pendingDrops.Remove(foundKey.Value);
+
                 // 更新记录的坐标
                 pending.MapPosition = posMap;
                 pending.DropPosition = TileMap.Instance.MapPosToWorldPos(posMap);
+                this.pendingDrops[posMap] = pending;
 
                 // 在仓库位置生成新光束
                 Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(posMap);
@@ -259,13 +277,25 @@ namespace LAB2D
 
             // 查找是否有待处理的稀有度信息
             EquipmentRarityType rarity = EquipmentRarityType.Common;
-            if (this.pendingDrops.TryGetValue(equipmentId, out PendingEquipmentDrop pending))
+            Vector3Int? foundKey = null;
+            PendingEquipmentDrop pending = null;
+            foreach (KeyValuePair<Vector3Int, PendingEquipmentDrop> kv in this.pendingDrops)
+            {
+                if (kv.Value.EquipmentId == equipmentId)
+                {
+                    foundKey = kv.Key;
+                    pending = kv.Value;
+                    break;
+                }
+            }
+
+            if (foundKey.HasValue && pending != null)
             {
                 rarity = pending.Rarity;
                 // 确保稀有度已应用到属性
                 EquipmentLootTool.ApplyRarityToAttributes(equipment.Attribute, rarity);
                 equipment.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
-                this.pendingDrops.Remove(equipmentId);
+                this.pendingDrops.Remove(foundKey.Value);
             }
 
             // 获取当前已装备的同槽位装备
@@ -319,6 +349,20 @@ namespace LAB2D
         }
 
         /// <summary>
+        /// 根据地图坐标查找待处理装备掉落的稀有度。
+        /// 用于拾取列表按品质着色道具名称等场景。
+        /// </summary>
+        /// <param name="mapPos">Tilemap 坐标</param>
+        /// <returns>稀有度，未找到时返回 null</returns>
+        public EquipmentRarityType? TryGetRarityByMapPosition(Vector3Int mapPos)
+        {
+            if (this.pendingDrops == null) return null;
+            if (this.pendingDrops.TryGetValue(mapPos, out PendingEquipmentDrop pending))
+                return pending.Rarity;
+            return null;
+        }
+
+        /// <summary>
         /// 根据地图坐标移除待处理掉落记录和光束特效。
         /// 由 ItemMap.DeleteTile() 在物品被拾取/移除时回调。
         /// 非装备 tile 安全：坐标不存在时无操作。
@@ -328,21 +372,7 @@ namespace LAB2D
         {
             if (this.pendingDrops == null || this.pendingDrops.Count == 0) return;
 
-            // 遍历查找匹配 MapPosition 的待处理掉落
-            long? matchedKey = null;
-            foreach (KeyValuePair<long, PendingEquipmentDrop> kv in this.pendingDrops)
-            {
-                if (kv.Value.MapPosition == mapPos)
-                {
-                    matchedKey = kv.Key;
-                    break;
-                }
-            }
-
-            if (matchedKey.HasValue)
-            {
-                this.pendingDrops.Remove(matchedKey.Value);
-            }
+            this.pendingDrops.Remove(mapPos);
 
             // 移除光束特效（安全调用：位置不存在光束时无操作）
             EquipmentBeamManager.Instance.RemoveBeamAt(mapPos);
@@ -354,10 +384,10 @@ namespace LAB2D
         public void CleanupStaleDrops()
         {
             if (this.pendingDrops == null) return;
-            List<long> staleKeys = new List<long>();
+            List<Vector3Int> staleKeys = new List<Vector3Int>();
             Vector3 playerPos = PlayerManager.Instance?.Mine?.transform.position ?? Vector3.zero;
 
-            foreach (KeyValuePair<long, PendingEquipmentDrop> kv in this.pendingDrops)
+            foreach (KeyValuePair<Vector3Int, PendingEquipmentDrop> kv in this.pendingDrops)
             {
                 float dist = Vector3.Distance(kv.Value.DropPosition, playerPos);
                 if (dist > 30f) // 30 单位外的掉落视为过期
@@ -366,7 +396,7 @@ namespace LAB2D
                 }
             }
 
-            foreach (long key in staleKeys)
+            foreach (Vector3Int key in staleKeys)
             {
                 // 移除光束特效
                 if (this.pendingDrops.TryGetValue(key, out PendingEquipmentDrop pending))

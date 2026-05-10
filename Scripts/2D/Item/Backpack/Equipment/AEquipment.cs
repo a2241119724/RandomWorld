@@ -114,15 +114,19 @@
         /// <inheritdoc/>
         public override string ToString()
         {
+            float mult = EquipmentLootTool.GetQualityStatMultiplier(this.Quality);
+
             return base.ToString() +
-                $"物理攻击力: {this.Attribute.ATN}\n" +
-                $"魔法攻击力: {this.Attribute.INT}\n" +
-                $"物理防御力: {this.Attribute.DEF}\n" +
-                $"魔法防御力: {this.Attribute.RES}\n" +
-                $"暴击率: {this.Attribute.CRT}\n" +
-                $"暴击伤害: {this.Attribute.CSD}\n" +
-                $"速度, 回避: {this.Attribute.SPD}\n" +
-                $"命中率, 连击: {this.Attribute.HIT}\n";
+                $"槽位: {EquipmentLootTool.GetSlotName(this.Type)}\n" +
+                $"品质倍率: x{mult:F1}\n" +
+                $"ATN 物理攻击: {this.Attribute.ATN:F1}\n" +
+                $"INT 魔法攻击: {this.Attribute.INT:F1}\n" +
+                $"DEF 物理防御: {this.Attribute.DEF:F1}\n" +
+                $"RES 魔法防御: {this.Attribute.RES:F1}\n" +
+                $"CRT 暴击率: {this.Attribute.CRT:P1}\n" +
+                $"CSD 暴击伤害: {this.Attribute.CSD:F1}\n" +
+                $"SPD 速度回避: {this.Attribute.SPD:F1}\n" +
+                $"HIT 命中连击: {this.Attribute.HIT:F1}\n";
         }
 
         /// <summary>

@@ -101,35 +101,13 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// 在场景中安全查找或创建 Canvas 用于成就 UI
+        /// 查找 UI/Foreground 节点，用于挂载成就 UI，复用 UI 的 Canvas
         /// </summary>
-        /// <param name="canvasName">Canvas 节点名</param>
-        /// <param name="sortingOrder">Canvas 排序层级</param>
-        /// <returns>已存在或新创建的 Canvas GameObject</returns>
-        public static GameObject EnsureCanvas(string canvasName, int sortingOrder = 100)
+        /// <returns>Foreground Transform，找不到时返回 null</returns>
+        public static Transform FindForeground()
         {
-            GameObject existing = GameObject.Find(canvasName);
-            if (existing != null)
-            {
-                return existing;
-            }
-
-            GameObject canvasObj = new GameObject(canvasName);
-            Canvas canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = sortingOrder;
-            canvasObj.AddComponent<CanvasScaler>();
-            canvasObj.AddComponent<GraphicRaycaster>();
-
-            // 检查是否已有 EventSystem，没有则创建
-            if (UnityEngine.EventSystems.EventSystem.current == null)
-            {
-                GameObject eventSys = new GameObject("EventSystem");
-                eventSys.AddComponent<UnityEngine.EventSystems.EventSystem>();
-                eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-            }
-
-            return canvasObj;
+            Transform uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG)?.transform;
+            return uiRoot?.Find("Foreground");
         }
 
         /// <summary>

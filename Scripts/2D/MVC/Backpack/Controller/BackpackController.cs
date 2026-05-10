@@ -27,6 +27,17 @@
                 List<AItem> items = ItemInstanceFactory.Instance.GenBackpackItems();
                 foreach (AItem item in items)
                 {
+                    // 为初始道具随机分配品质（使背包中的初始道具品质多样化）
+                    if (item is ABackpackItem backpackItem)
+                    {
+                        EquipmentRarityType rarity = EquipmentLootTool.RollRarity(0);
+                        backpackItem.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
+                        if (item is AEquipment eq)
+                        {
+                            EquipmentLootTool.ApplyRarityToAttributes(eq.Attribute, rarity);
+                        }
+                    }
+
                     this.AddItem(item);
                 }
             }

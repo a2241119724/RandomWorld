@@ -289,6 +289,29 @@ namespace LAB2D
         }
 
         /// <summary>
+        /// 根据品质枚举获取对应的属性倍率。
+        /// 用于 Info 面板展示品质对装备数值的影响。
+        /// </summary>
+        /// <param name="quality">品质枚举值</param>
+        /// <returns>属性倍率</returns>
+        public static float GetQualityStatMultiplier(ABackpackItem.BackpackItemQualityEnum quality)
+        {
+            switch (quality)
+            {
+                case ABackpackItem.BackpackItemQualityEnum.Gray:   return EquipmentLootConstant.CommonStatMultiplier;
+                case ABackpackItem.BackpackItemQualityEnum.White:  return 1.0f;
+                case ABackpackItem.BackpackItemQualityEnum.Green:  return EquipmentLootConstant.UncommonStatMultiplier;
+                case ABackpackItem.BackpackItemQualityEnum.Blue:   return EquipmentLootConstant.RareStatMultiplier;
+                case ABackpackItem.BackpackItemQualityEnum.Purple: return EquipmentLootConstant.EpicStatMultiplier;
+                case ABackpackItem.BackpackItemQualityEnum.Orange: return EquipmentLootConstant.LegendaryStatMultiplier;
+                case ABackpackItem.BackpackItemQualityEnum.Yellow: return 1.0f;
+                case ABackpackItem.BackpackItemQualityEnum.Red:    return EquipmentLootConstant.MythicStatMultiplier;
+                case ABackpackItem.BackpackItemQualityEnum.Black:  return 1.0f;
+                default:                                           return 1.0f;
+            }
+        }
+
+        /// <summary>
         /// 根据品质枚举获取对应的显示颜色。
         /// 用于装备面板中按品质着色槽位文字。
         /// </summary>

@@ -7,16 +7,10 @@ namespace LAB2D
     /// </summary>
     public static class AchievementConstant
     {
-        // --- UI 根节点名 ---
-
-        /// <summary>成就弹窗 Canvas 名称</summary>
-        public const string PopupCanvasName = "Ambitious_A007_AchievementPopup_Canvas";
+        // --- UI 根节点名（挂载到 UI/Foreground 下，复用 UI 的 Canvas） ---
 
         /// <summary>成就弹窗根节点名称</summary>
         public const string PopupRootName = "Ambitious_A007_AchievementPopup_Root";
-
-        /// <summary>成就面板 Canvas 名称</summary>
-        public const string PanelCanvasName = "Ambitious_A007_AchievementPanel_Canvas";
 
         /// <summary>成就面板根节点名称</summary>
         public const string PanelRootName = "Ambitious_A007_AchievementPanel_Root";
