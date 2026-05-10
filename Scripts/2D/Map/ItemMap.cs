@@ -96,6 +96,7 @@
         {
             this.AddTile(posMap, tileBase);
             InventoryManager.Instance.AddItem(posMap, resourceInfo);
+            EquipmentLootManager.Instance.TrySpawnBeamForInventory(posMap, resourceInfo.Id);
         }
 
         /// <summary>
@@ -179,6 +180,7 @@
                 BackpackController.Instance.AddItem(item);
                 // 记录物品收集统计（接入 F006 物品收集里程碑系统）
                 ItemCollectionTracker.Instance.RecordItemCollected(new ResourceInfo(item.Id, 1));
+                EquipmentLootManager.Instance.RemoveDropByMapPosition(posMap);
                 this.DeleteTile(posMap);
             }
 
@@ -194,6 +196,7 @@
                         BackpackController.Instance.AddItem(item);
                         // 记录物品收集统计（接入 F006 物品收集里程碑系统）
                         ItemCollectionTracker.Instance.RecordItemCollected(new ResourceInfo(item.Id, 1));
+                        EquipmentLootManager.Instance.RemoveDropByMapPosition(posMap);
                         this.DeleteTile(posMap);
                     }
                 }

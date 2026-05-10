@@ -62,6 +62,10 @@
             worker.SubResource(this.resourceInfo);
             InventoryManager.Instance.AddItemByPrePlace(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
 
+            // 如果是装备，在仓库位置生成光束
+            EquipmentLootManager.Instance.TrySpawnBeamForInventory(
+                Vector3IntLAB.ToVector3Int(this.TargetMap), this.resourceInfo.Id);
+
             // 如果是食物,添加饥饿任务
             if (itemType == AItem.ItemTypeEnum.Food)
             {
