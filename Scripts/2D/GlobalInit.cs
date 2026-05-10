@@ -64,6 +64,11 @@
                 // A008 主动技能系统：初始化技能管理器和 HUD
                 SkillManager.Instance.Initialize();
                 SkillHUD.EnsureRuntimePanel();
+
+                // A010 装备掉落稀有度系统：初始化管理器、对比弹窗和装备面板
+                EquipmentLootManager.Instance.Initialize();
+                EquipmentComparePopup.EnsureRuntimePopup();
+                EquipmentPanel.EnsureRuntimePanel();
             }
         }
 

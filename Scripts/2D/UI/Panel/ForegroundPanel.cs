@@ -502,10 +502,8 @@ namespace LAB2D
 
         private void Onclick_GeneratorItem()
         {
-            if (EnemyManager.Instance.Characters.Count > 0)
-            {
-                new EnemyDropManager().DropItem(PlayerManager.Instance.Mine.transform.position);
-            }
+            EquipmentLootManager.Instance.ForceDropEquipment(
+                PlayerManager.Instance.Mine.transform.position, waveNumber: 0);
         }
     }
 }

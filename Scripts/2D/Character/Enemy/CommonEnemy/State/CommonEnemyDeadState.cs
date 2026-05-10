@@ -43,6 +43,10 @@
             {
                 this.enemyDropManager.DropItem(this.Character.transform.position);
 
+                // A010：装备掉落稀有度系统 — 敌人死亡时按稀有度权重随机掉落装备
+                int waveIndex = WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveIndex - 1 : 0;
+                EquipmentLootManager.Instance.TryDropEquipment(this.Character.transform.position, Mathf.Max(0, waveIndex));
+
                 // Object.Destroy(character.gameObject); // Destroy不会立即销毁,下一帧销毁
                 PhotonNetwork.Destroy(this.Character.gameObject); // Destroy不会立即销毁,下一帧销毁
 
