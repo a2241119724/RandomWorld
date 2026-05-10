@@ -1,0 +1,519 @@
+namespace LAB2D
+{
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+    using UnityEngine.UI;
+
+    /// <summary>
+    /// 附近道具拾取 HUD。
+    /// 当玩家周围有地面掉落道具时，显示拾取列表供玩家选择拾取。
+    /// 运行时动态创建独立 Canvas，不依赖场景 Prefab。
+    /// </summary>
+    public class NearbyItemPickupHUD : MonoBehaviour
+    {
+        public static NearbyItemPickupHUD Instance { get; private set; }
+
+        private Canvas canvas;
+        private GameObject panelRoot;
+        private GameObject titleBar;
+        private GameObject contentArea;
+        private GameObject entriesContainer;
+        private ScrollRect scrollRect;
+        private GameObject emptyHint;
+        private Text titleText;
+        private float lastPollTime;
+
+        /// <summary>当前显示的条目（key=tilemap坐标）</summary>
+        private Dictionary<Vector3Int, NearbyItemEntry> currentEntries = new Dictionary<Vector3Int, NearbyItemEntry>();
+
+        /// <summary>条目对象池</summary>
+        private Stack<GameObject> entryPool = new Stack<GameObject>();
+
+        private struct NearbyItemEntry
+        {
+            public Vector3Int PosMap;
+            public int ItemId;
+            public int Count;
+            public string ItemName;
+        }
+
+        /// <summary>
+        /// 确保运行时拾取 HUD 已创建。
+        /// </summary>
+        public static void EnsureRuntimePanel()
+        {
+            if (Instance != null)
+            {
+                return;
+            }
+
+            if (UnityEngine.EventSystems.EventSystem.current == null)
+            {
+                GameObject eventSys = new GameObject("EventSystem");
+                eventSys.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            }
+
+            GameObject canvasObj = new GameObject(NearbyItemPickupConstant.CanvasName);
+            DontDestroyOnLoad(canvasObj);
+            Canvas canvas = canvasObj.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = NearbyItemPickupConstant.CanvasSortingOrder;
+
+            CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+            canvasObj.AddComponent<GraphicRaycaster>();
+
+            GameObject rootObj = new GameObject(NearbyItemPickupConstant.PanelRootName);
+            rootObj.transform.SetParent(canvasObj.transform, false);
+            RectTransform rootRect = rootObj.AddComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(1f, 1f);
+            rootRect.anchorMax = new Vector2(1f, 1f);
+            rootRect.pivot = new Vector2(1f, 1f);
+            rootRect.anchoredPosition = new Vector2(-NearbyItemPickupConstant.PanelRightMargin, NearbyItemPickupConstant.PanelTopMargin);
+            rootRect.sizeDelta = new Vector2(NearbyItemPickupConstant.PanelWidth, NearbyItemPickupConstant.PanelMaxHeight);
+
+            Image rootBg = rootObj.AddComponent<Image>();
+            rootBg.color = NearbyItemPickupConstant.PanelBgColor;
+
+            VerticalLayoutGroup rootLayout = rootObj.AddComponent<VerticalLayoutGroup>();
+            rootLayout.padding = new RectOffset((int)NearbyItemPickupConstant.Padding, (int)NearbyItemPickupConstant.Padding, (int)NearbyItemPickupConstant.Padding, (int)NearbyItemPickupConstant.Padding);
+            rootLayout.spacing = NearbyItemPickupConstant.ItemEntrySpacing;
+            rootLayout.childAlignment = TextAnchor.UpperCenter;
+            rootLayout.childControlWidth = true;
+            rootLayout.childControlHeight = false;
+            rootLayout.childForceExpandWidth = true;
+            rootLayout.childForceExpandHeight = false;
+
+            NearbyItemPickupHUD hud = canvasObj.AddComponent<NearbyItemPickupHUD>();
+            hud.canvas = canvas;
+            hud.panelRoot = rootObj;
+            hud.CreateUI();
+
+            Instance = hud;
+        }
+
+        private void CreateUI()
+        {
+            // 标题栏
+            this.titleBar = new GameObject("TitleBar");
+            this.titleBar.transform.SetParent(this.panelRoot.transform, false);
+            RectTransform titleRect = this.titleBar.AddComponent<RectTransform>();
+            titleRect.sizeDelta = new Vector2(NearbyItemPickupConstant.PanelWidth - (NearbyItemPickupConstant.Padding * 2), NearbyItemPickupConstant.TitleBarHeight);
+
+            HorizontalLayoutGroup titleLayout = this.titleBar.AddComponent<HorizontalLayoutGroup>();
+            titleLayout.childAlignment = TextAnchor.MiddleLeft;
+            titleLayout.childControlWidth = false;
+            titleLayout.childControlHeight = true;
+            titleLayout.childForceExpandWidth = false;
+            titleLayout.childForceExpandHeight = true;
+
+            // 面板标题
+            this.titleText = this.CreateText(titleBar.transform, "TitleLabel",
+                NearbyItemPickupConstant.PanelTitle, NearbyItemPickupConstant.TitleFontSize,
+                NearbyItemPickupConstant.TitleColor, TextAnchor.MiddleLeft, 140f, NearbyItemPickupConstant.TitleBarHeight);
+
+            // 关闭按钮容器
+            GameObject closeBtnObj = new GameObject("CloseBtn");
+            closeBtnObj.transform.SetParent(this.titleBar.transform, false);
+            Image closeBg = closeBtnObj.AddComponent<Image>();
+            closeBg.color = new Color(0.5f, 0.15f, 0.15f);
+            Button closeBtn = closeBtnObj.AddComponent<Button>();
+            closeBtn.onClick.AddListener(() => this.Hide());
+            RectTransform closeRect = closeBtnObj.GetComponent<RectTransform>();
+            closeRect.sizeDelta = new Vector2(32f, 32f);
+
+            this.CreateText(closeBtnObj.transform, "CloseLabel", "X", 18, Color.white, TextAnchor.MiddleCenter, 32f, 32f);
+
+            // 滚动区域
+            this.contentArea = new GameObject("ContentArea");
+            this.contentArea.transform.SetParent(this.panelRoot.transform, false);
+            RectTransform contentRect = this.contentArea.AddComponent<RectTransform>();
+            contentRect.sizeDelta = new Vector2(NearbyItemPickupConstant.PanelWidth - (NearbyItemPickupConstant.Padding * 2), NearbyItemPickupConstant.PanelMaxHeight - NearbyItemPickupConstant.TitleBarHeight - NearbyItemPickupConstant.ItemEntryHeight - 40f);
+
+            Image contentBg = this.contentArea.AddComponent<Image>();
+            contentBg.color = new Color(0.12f, 0.12f, 0.12f, 0.8f);
+
+            Mask mask = this.contentArea.AddComponent<Mask>();
+            mask.showMaskGraphic = true;
+
+            this.scrollRect = this.contentArea.AddComponent<ScrollRect>();
+            this.scrollRect.horizontal = false;
+            this.scrollRect.vertical = true;
+            this.scrollRect.movementType = ScrollRect.MovementType.Clamped;
+
+            // 滚动内容容器
+            this.entriesContainer = new GameObject("EntriesContainer");
+            this.entriesContainer.transform.SetParent(this.contentArea.transform, false);
+            RectTransform entriesRect = this.entriesContainer.AddComponent<RectTransform>();
+            entriesRect.anchorMin = new Vector2(0f, 1f);
+            entriesRect.anchorMax = new Vector2(1f, 1f);
+            entriesRect.pivot = new Vector2(0.5f, 1f);
+            entriesRect.anchoredPosition = Vector2.zero;
+            entriesRect.sizeDelta = new Vector2(0f, 0f);
+
+            VerticalLayoutGroup entriesLayout = this.entriesContainer.AddComponent<VerticalLayoutGroup>();
+            entriesLayout.spacing = NearbyItemPickupConstant.ItemEntrySpacing;
+            entriesLayout.padding = new RectOffset(4, 4, 4, 4);
+            entriesLayout.childAlignment = TextAnchor.UpperCenter;
+            entriesLayout.childControlWidth = true;
+            entriesLayout.childControlHeight = false;
+            entriesLayout.childForceExpandWidth = true;
+            entriesLayout.childForceExpandHeight = false;
+
+            ContentSizeFitter entriesCsf = this.entriesContainer.AddComponent<ContentSizeFitter>();
+            entriesCsf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            this.scrollRect.content = entriesRect;
+
+            // 空提示
+            this.emptyHint = new GameObject("EmptyHint");
+            this.emptyHint.transform.SetParent(this.panelRoot.transform, false);
+            RectTransform emptyRect = this.emptyHint.AddComponent<RectTransform>();
+            emptyRect.sizeDelta = new Vector2(NearbyItemPickupConstant.PanelWidth - (NearbyItemPickupConstant.Padding * 2), NearbyItemPickupConstant.ItemEntryHeight);
+            this.CreateText(this.emptyHint.transform, "EmptyLabel",
+                NearbyItemPickupConstant.EmptyHint, NearbyItemPickupConstant.ItemNameFontSize,
+                NearbyItemPickupConstant.CountColor, TextAnchor.MiddleCenter,
+                NearbyItemPickupConstant.PanelWidth - (NearbyItemPickupConstant.Padding * 2), NearbyItemPickupConstant.ItemEntryHeight);
+            this.emptyHint.SetActive(true);
+        }
+
+        private Text CreateText(Transform parent, string name, string text, int fontSize, Color color, TextAnchor alignment, float width, float height)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            Text txt = go.AddComponent<Text>();
+            txt.text = text;
+            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.fontSize = fontSize;
+            txt.color = color;
+            txt.alignment = alignment;
+            txt.raycastTarget = false;
+            RectTransform rt = go.GetComponent<RectTransform>();
+            if (width > 0f && height > 0f)
+            {
+                rt.sizeDelta = new Vector2(width, height);
+            }
+            else
+            {
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.sizeDelta = Vector2.zero;
+            }
+
+            return txt;
+        }
+
+        private void Update()
+        {
+            if (Time.time - this.lastPollTime < NearbyItemPickupConstant.PollInterval)
+            {
+                return;
+            }
+
+            this.lastPollTime = Time.time;
+
+            if (ItemMap.Instance == null || TileMap.Instance == null)
+            {
+                return;
+            }
+
+            this.PollNearbyItems();
+        }
+
+        private float debugLogTimer;
+        private void PollNearbyItems()
+        {
+            Player player = PlayerManager.Instance?.Mine;
+            if (player == null)
+            {
+                this.Hide();
+                return;
+            }
+
+            Vector3Int playerPosMap = TileMap.Instance.WorldPosToMapPos(player.transform.position);
+
+            Dictionary<Vector3Int, NearbyItemEntry> foundEntries = new Dictionary<Vector3Int, NearbyItemEntry>();
+            int radius = NearbyItemPickupConstant.DetectionRadius;
+            int totalTilesChecked = 0;
+            int tilesFound = 0;
+
+            for (int x = -radius; x <= radius; x++)
+            {
+                for (int y = -radius; y <= radius; y++)
+                {
+                    Vector3Int posMap = new Vector3Int(playerPosMap.x + x, playerPosMap.y + y, 0);
+                    totalTilesChecked++;
+                    TileBase tile = ItemMap.Instance.GetTile(posMap);
+                    if (tile == null)
+                    {
+                        continue;
+                    }
+
+                    tilesFound++;
+
+                    if (foundEntries.ContainsKey(posMap))
+                    {
+                        continue;
+                    }
+
+                    int itemId;
+                    int count = 1;
+                    string itemName = tile.name;
+
+                    ResourceInfo ri = DropManager.Instance.GetDropByAll(posMap);
+                    if (ri != null && ri.Id > 0)
+                    {
+                        itemId = ri.Id;
+                        count = ri.Count;
+                        ItemData itemData = ItemDataManager.Instance.GetById(ri.Id);
+                        if (itemData != null)
+                        {
+                            itemName = itemData.CnName;
+                        }
+                    }
+                    else
+                    {
+                        AItem item = ItemInstanceFactory.Instance.GetBackpackItemByName(tile.name);
+                        if (item == null)
+                        {
+                            continue;
+                        }
+
+                        itemId = item.Id;
+                        ItemData itemData = ItemDataManager.Instance.GetById(item.Id);
+                        if (itemData != null)
+                        {
+                            itemName = itemData.CnName;
+                        }
+                    }
+
+                    foundEntries[posMap] = new NearbyItemEntry
+                    {
+                        PosMap = posMap,
+                        ItemId = itemId,
+                        Count = count,
+                        ItemName = itemName,
+                    };
+                }
+            }
+
+            // 每2秒输出一次调试信息
+            if (Time.time - this.debugLogTimer > 2f)
+            {
+                this.debugLogTimer = Time.time;
+                LogManager.Instance.Log(
+                    string.Format("NearbyItemPickupHUD: 检测了{0}个tile, 发现{1}个道具tile, 收集到{2}个有效条目",
+                        totalTilesChecked, tilesFound, foundEntries.Count),
+                    LogManager.LogLevelEnum.Trace);
+            }
+
+            // 检查是否有变化
+            bool changed = foundEntries.Count != this.currentEntries.Count;
+            if (!changed)
+            {
+                foreach (KeyValuePair<Vector3Int, NearbyItemEntry> kv in foundEntries)
+                {
+                    if (!this.currentEntries.TryGetValue(kv.Key, out NearbyItemEntry existing) ||
+                        existing.ItemId != kv.Value.ItemId ||
+                        existing.Count != kv.Value.Count)
+                    {
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!changed)
+            {
+                return;
+            }
+
+            this.currentEntries = foundEntries;
+            this.RebuildUI();
+        }
+
+        private void RebuildUI()
+        {
+            // 回收所有条目
+            foreach (Transform child in this.entriesContainer.transform)
+            {
+                child.gameObject.SetActive(false);
+                this.entryPool.Push(child.gameObject);
+            }
+
+            if (this.currentEntries.Count == 0)
+            {
+                this.emptyHint.SetActive(true);
+                this.panelRoot.SetActive(false);
+                return;
+            }
+
+            this.emptyHint.SetActive(false);
+            this.panelRoot.SetActive(true);
+
+            int index = 0;
+            foreach (KeyValuePair<Vector3Int, NearbyItemEntry> kv in this.currentEntries)
+            {
+                NearbyItemEntry entry = kv.Value;
+                GameObject entryObj = this.GetOrCreateEntry();
+                entryObj.SetActive(true);
+                entryObj.transform.SetSiblingIndex(index);
+                this.PopulateEntry(entryObj, entry);
+                index++;
+            }
+        }
+
+        private GameObject GetOrCreateEntry()
+        {
+            if (this.entryPool.Count > 0)
+            {
+                return this.entryPool.Pop();
+            }
+
+            return this.CreateEntryTemplate();
+        }
+
+        private GameObject CreateEntryTemplate()
+        {
+            GameObject entryObj = new GameObject("ItemEntry");
+            entryObj.transform.SetParent(this.entriesContainer.transform, false);
+            RectTransform entryRect = entryObj.AddComponent<RectTransform>();
+            entryRect.sizeDelta = new Vector2(NearbyItemPickupConstant.PanelWidth - (NearbyItemPickupConstant.Padding * 2), NearbyItemPickupConstant.ItemEntryHeight);
+
+            Image entryBg = entryObj.AddComponent<Image>();
+            entryBg.color = NearbyItemPickupConstant.EntryBgColor;
+
+            HorizontalLayoutGroup entryLayout = entryObj.AddComponent<HorizontalLayoutGroup>();
+            entryLayout.padding = new RectOffset(8, 8, 0, 0);
+            entryLayout.spacing = 8;
+            entryLayout.childAlignment = TextAnchor.MiddleLeft;
+            entryLayout.childControlWidth = false;
+            entryLayout.childControlHeight = true;
+            entryLayout.childForceExpandWidth = false;
+            entryLayout.childForceExpandHeight = true;
+
+            // 道具名称
+            GameObject nameObj = new GameObject("ItemName");
+            nameObj.transform.SetParent(entryObj.transform, false);
+            Text nameText = nameObj.AddComponent<Text>();
+            nameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            nameText.fontSize = NearbyItemPickupConstant.ItemNameFontSize;
+            nameText.color = NearbyItemPickupConstant.ItemNameColor;
+            nameText.alignment = TextAnchor.MiddleLeft;
+            RectTransform nameRect = nameObj.GetComponent<RectTransform>();
+            nameRect.sizeDelta = new Vector2(80f, NearbyItemPickupConstant.ItemEntryHeight);
+
+            // 数量
+            GameObject countObj = new GameObject("ItemCount");
+            countObj.transform.SetParent(entryObj.transform, false);
+            Text countText = countObj.AddComponent<Text>();
+            countText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            countText.fontSize = NearbyItemPickupConstant.CountFontSize;
+            countText.color = NearbyItemPickupConstant.CountColor;
+            countText.alignment = TextAnchor.MiddleLeft;
+            RectTransform countRect = countObj.GetComponent<RectTransform>();
+            countRect.sizeDelta = new Vector2(40f, NearbyItemPickupConstant.ItemEntryHeight);
+
+            // 拾取按钮
+            GameObject btnObj = new GameObject("PickUpBtn");
+            btnObj.transform.SetParent(entryObj.transform, false);
+            Image btnBg = btnObj.AddComponent<Image>();
+            btnBg.color = NearbyItemPickupConstant.PickUpBtnColor;
+            Button btn = btnObj.AddComponent<Button>();
+            RectTransform btnRect = btnObj.GetComponent<RectTransform>();
+            btnRect.sizeDelta = new Vector2(NearbyItemPickupConstant.PickUpButtonWidth, NearbyItemPickupConstant.PickUpButtonHeight);
+
+            GameObject btnLabelObj = new GameObject("BtnLabel");
+            btnLabelObj.transform.SetParent(btnObj.transform, false);
+            Text btnLabel = btnLabelObj.AddComponent<Text>();
+            btnLabel.text = NearbyItemPickupConstant.PickUpButtonText;
+            btnLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            btnLabel.fontSize = NearbyItemPickupConstant.ButtonFontSize;
+            btnLabel.color = Color.white;
+            btnLabel.alignment = TextAnchor.MiddleCenter;
+            RectTransform btnLabelRect = btnLabelObj.GetComponent<RectTransform>();
+            btnLabelRect.anchorMin = Vector2.zero;
+            btnLabelRect.anchorMax = Vector2.one;
+            btnLabelRect.sizeDelta = Vector2.zero;
+
+            return entryObj;
+        }
+
+        private void PopulateEntry(GameObject entryObj, NearbyItemEntry entry)
+        {
+            // 名称
+            Text nameText = entryObj.transform.Find("ItemName")?.GetComponent<Text>();
+            if (nameText != null)
+            {
+                nameText.text = entry.ItemName;
+            }
+
+            // 数量
+            Text countText = entryObj.transform.Find("ItemCount")?.GetComponent<Text>();
+            if (countText != null)
+            {
+                countText.text = $"x{entry.Count}";
+            }
+
+            // 拾取按钮
+            Transform btnTransform = entryObj.transform.Find("PickUpBtn");
+            if (btnTransform != null)
+            {
+                Button btn = btnTransform.GetComponent<Button>();
+                btn.onClick.RemoveAllListeners();
+                Vector3Int posMap = entry.PosMap;
+                btn.onClick.AddListener(() =>
+                {
+                    this.OnPickUpClick(posMap);
+                });
+            }
+
+            // 交替背景色
+            Image bg = entryObj.GetComponent<Image>();
+            int siblingIndex = entryObj.transform.GetSiblingIndex();
+            bg.color = siblingIndex % 2 == 0
+                ? NearbyItemPickupConstant.EntryBgColor
+                : NearbyItemPickupConstant.EntryBgColorAlt;
+        }
+
+        private void OnPickUpClick(Vector3Int posMap)
+        {
+            ItemMap.Instance.PickUpItem(posMap);
+
+            // 立即刷新
+            this.currentEntries.Remove(posMap);
+            this.RebuildUI();
+        }
+
+        private void Hide()
+        {
+            if (this.panelRoot != null)
+            {
+                this.panelRoot.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// 显示面板（外部调用，如面板被隐藏后重新显示）。
+        /// </summary>
+        public void Show()
+        {
+            if (this.panelRoot != null)
+            {
+                this.panelRoot.SetActive(true);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+    }
+}

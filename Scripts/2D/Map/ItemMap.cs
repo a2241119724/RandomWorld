@@ -167,40 +167,33 @@
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
-            if (collision.transform.GetComponent<Player>() == null)
+            // 自动拾取已由 NearbyItemPickupHUD 接管，不再在此处自动拾取
+        }
+
+        /// <summary>
+        /// 拾取指定位置的地面道具（整合完整拾取流程）。
+        /// </summary>
+        /// <param name="posMap">道具所在 tilemap 坐标</param>
+        public void PickUpItem(Vector3Int posMap)
+        {
+            TileBase tile = this.tilemap.GetTile(posMap);
+            if (tile == null)
             {
                 return;
             }
 
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(collision.transform.position);
-            TileBase tile = this.tilemap.GetTile(posMap);
-            if (tile != null)
+            AItem item = ItemInstanceFactory.Instance.GetBackpackItemByName(tile.name);
+            BackpackController.Instance.AddItem(item);
+            ItemCollectionTracker.Instance.RecordItemCollected(new ResourceInfo(item.Id, 1));
+            EquipmentLootManager.Instance.RemoveDropByMapPosition(posMap);
+
+            ResourceInfo resourceInfo = DropManager.Instance.GetDropByAll(posMap);
+            if (resourceInfo != null)
             {
-                AItem item = ItemInstanceFactory.Instance.GetBackpackItemByName(tile.name);
-                BackpackController.Instance.AddItem(item);
-                // 记录物品收集统计（接入 F006 物品收集里程碑系统）
-                ItemCollectionTracker.Instance.RecordItemCollected(new ResourceInfo(item.Id, 1));
-                EquipmentLootManager.Instance.RemoveDropByMapPosition(posMap);
-                this.DeleteTile(posMap);
+                DropManager.Instance.SubDropByAll(posMap, resourceInfo);
             }
 
-            for (int i = -1; i < 2; i++)
-            {
-                for (int j = -1; j < 2; j++)
-                {
-                    posMap = new Vector3Int(posMap.x + i, posMap.y + j, 0);
-                    tile = this.tilemap.GetTile(posMap);
-                    if (tile != null)
-                    {
-                        AItem item = ItemInstanceFactory.Instance.GetBackpackItemByName(tile.name);
-                        BackpackController.Instance.AddItem(item);
-                        // 记录物品收集统计（接入 F006 物品收集里程碑系统）
-                        ItemCollectionTracker.Instance.RecordItemCollected(new ResourceInfo(item.Id, 1));
-                        EquipmentLootManager.Instance.RemoveDropByMapPosition(posMap);
-                        this.DeleteTile(posMap);
-                    }
-                }
-            }
+            this.DeleteTile(posMap);
         }
 
         /// <summary>
