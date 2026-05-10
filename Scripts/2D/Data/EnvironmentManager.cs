@@ -46,7 +46,8 @@
         public override string ToString()
         {
             return $"温度:{this.Temperature}\n" +
-                $"湿度:{this.Humidity}\n";
+                $"湿度:{this.Humidity}\n" +
+                $"灵气值:{this.CurEnergy:F0}/{this.MaxEnergy:F0}\n";
         }
 
         /// <summary>
