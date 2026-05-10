@@ -15,7 +15,7 @@ namespace LAB2D
     {
         /// <summary>
         /// 安装技能 HUD 到当前打开的 Game 场景。
-        /// 优先在已存在的 Canvas 下添加独立子节点；无 Canvas 时创建独立 Canvas。
+        /// 挂载到 UI/Foreground 下，复用 UI 的 Canvas。
         /// 不覆盖已有对象，重复执行会跳过。
         /// </summary>
         [MenuItem(SkillConstant.MenuRoot + SkillConstant.MenuInstallToScene, false, 0)]
@@ -32,14 +32,6 @@ namespace LAB2D
             }
 
             // 检查是否已存在
-            GameObject existingCanvas = GameObject.Find(SkillConstant.SkillCanvasName);
-            if (existingCanvas != null)
-            {
-                Debug.LogWarning(
-                    $"[SkillMenu] 技能HUD已存在于场景中 ({SkillConstant.SkillCanvasName})，跳过安装。");
-                return;
-            }
-
             GameObject existingRoot = GameObject.Find(SkillConstant.SkillHUDRootName);
             if (existingRoot != null)
             {
@@ -48,17 +40,25 @@ namespace LAB2D
                 return;
             }
 
-            // 创建 Canvas
-            GameObject canvasObj = new GameObject(SkillConstant.SkillCanvasName);
-            Canvas canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = SkillConstant.CanvasSortingOrder;
-            canvasObj.AddComponent<CanvasScaler>();
-            canvasObj.AddComponent<GraphicRaycaster>();
+            // 查找 UI/Foreground 父节点
+            GameObject uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG);
+            if (uiRoot == null)
+            {
+                Debug.LogError("[SkillMenu] 无法找到 UIRoot 节点，安装失败。");
+                return;
+            }
 
-            // 创建 HUD 根节点
+            Transform foreground = uiRoot.transform.Find("Foreground");
+            if (foreground == null)
+            {
+                Debug.LogError("[SkillMenu] 无法找到 UI/Foreground 节点，安装失败。");
+                return;
+            }
+
+            // 创建 HUD 根节点（挂载到 Foreground 下，使用 UI 的 Canvas）
             GameObject rootObj = new GameObject(SkillConstant.SkillHUDRootName);
-            rootObj.transform.SetParent(canvasObj.transform, false);
+            rootObj.transform.SetParent(foreground, false);
+            rootObj.transform.SetAsLastSibling();
             RectTransform rootRect = rootObj.AddComponent<RectTransform>();
             rootRect.anchorMin = new Vector2(0.5f, 0f);
             rootRect.anchorMax = new Vector2(0.5f, 0f);
@@ -95,8 +95,7 @@ namespace LAB2D
             EditorSceneManager.MarkSceneDirty(activeScene);
             Debug.Log(
                 $"[SkillMenu] 技能 HUD 已安装到场景 '{activeScene.name}'。" +
-                $"Canvas: {SkillConstant.SkillCanvasName}, " +
-                $"根节点: {SkillConstant.SkillHUDRootName}。" +
+                $"根节点: {SkillConstant.SkillHUDRootName}（挂载于 UI/Foreground）。" +
                 "运行时会由 SkillHUD.EnsureRuntimePanel() 自动填充完整的子 UI 元素。");
         }
 
@@ -110,16 +109,7 @@ namespace LAB2D
             Scene activeScene = SceneManager.GetActiveScene();
             bool removed = false;
 
-            // 移除 Canvas
-            GameObject canvas = GameObject.Find(SkillConstant.SkillCanvasName);
-            if (canvas != null)
-            {
-                Object.DestroyImmediate(canvas);
-                removed = true;
-                Debug.Log($"[SkillMenu] 已移除 {SkillConstant.SkillCanvasName}");
-            }
-
-            // 移除可能游离的根节点
+            // 移除根节点
             GameObject root = GameObject.Find(SkillConstant.SkillHUDRootName);
             if (root != null)
             {
