@@ -129,8 +129,21 @@
             ResourceInfo resourceInfo = this.GetDropByAll(posMap);
             if (resourceInfo != null)
             {
-                text += $"id:{resourceInfo.Id}\n" +
-                $"count:{resourceInfo.Count}\n";
+                ItemData itemData = ItemDataManager.Instance.GetById(resourceInfo.Id);
+                if (itemData != null)
+                {
+                    text += $"id:{resourceInfo.Id}\n" +
+                        $"name:{itemData.CnName}\n" +
+                        $"type:{itemData.Type}\n" +
+                        $"count:{resourceInfo.Count}\n" +
+                        $"info:{itemData.Info}\n" +
+                        $"isStackable:{itemData.IsStackable}\n";
+                }
+                else
+                {
+                    text += $"id:{resourceInfo.Id}\n" +
+                        $"count:{resourceInfo.Count}\n";
+                }
             }
 
             return text;

@@ -146,16 +146,18 @@
         {
             Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.transform.position);
             return $"{this.GetType().Name}:{this.name}\n" +
+                $"血量: {this.CharacterDataLAB.Hp:F0}/{this.CharacterDataLAB.MaxHp:F0}\n" +
+                $"蓝量: {this.CharacterDataLAB.Mp}/{this.CharacterDataLAB.MaxMp}\n" +
                 $"速度: {this.MoveSpeed}\n" +
                 $"位置: ({posMap.x},{posMap.y})\n" +
-                $"物理攻击力: {this.CharacterDataLAB.ATN}\n" +
-                $"魔法攻击力: {this.CharacterDataLAB.INT}\n" +
-                $"物理防御力: {this.CharacterDataLAB.DEF}\n" +
-                $"魔法防御力: {this.CharacterDataLAB.RES}\n" +
-                $"暴击率: {this.CharacterDataLAB.CRT}\n" +
-                $"暴击伤害: {this.CharacterDataLAB.CSD}\n" +
-                $"速度, 回避: {this.CharacterDataLAB.SPD}\n" +
-                $"命中率, 连击: {this.CharacterDataLAB.HIT}\n" +
+                $"物理攻击力: {this.CharacterDataLAB.ATN:F1}\n" +
+                $"魔法攻击力: {this.CharacterDataLAB.INT:F1}\n" +
+                $"物理防御力: {this.CharacterDataLAB.DEF:F1}\n" +
+                $"魔法防御力: {this.CharacterDataLAB.RES:F1}\n" +
+                $"暴击率: {this.CharacterDataLAB.CRT:P1}\n" +
+                $"暴击伤害: {this.CharacterDataLAB.CSD:F1}\n" +
+                $"速度/回避: {this.CharacterDataLAB.SPD:F1}\n" +
+                $"命中/连击: {this.CharacterDataLAB.HIT:F1}\n" +
                 $"等级: {this.CharacterDataLAB.Level}\n" +
                 $"经验值: {this.CharacterDataLAB.CurExperience}/{this.CharacterDataLAB.MaxExperience}\n";
         }

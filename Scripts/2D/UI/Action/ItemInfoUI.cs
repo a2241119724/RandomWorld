@@ -162,7 +162,15 @@
             if (isBuild)
             {
                 tileBase = BuildMap.Instance.GetTile(posMap);
-                this.text = "Build:";
+                if (tileBase != null)
+                {
+                    this.text = "Build:";
+                    BuildItemData buildData = ItemDataManager.Instance.GetBuildItemDataByName(tileBase.name);
+                    if (buildData != null)
+                    {
+                        this.text += $"\n可通行:{buildData.IsPass}\n需要建造:{buildData.IsNeedBuild}\n";
+                    }
+                }
             }
 
             // 如果点击的是床，则展示分配的Worker
@@ -173,17 +181,20 @@
 
             if (tileBase == null)
             {
-                this.text = "Resource:";
                 tileBase = ResourceMap.Instance.GetTile(posMap);
+                if (tileBase != null)
+                {
+                    this.text = "Resource:";
 
-                // 手动添加任务
-                if (tileBase != null && isResource && ResourceMap.Instance.TryGetGatherResourceInfo(posMap, out _))
-                {
-                    GatherUI.Instance.SetPostion(posMap);
-                }
-                else if (tileBase != null && isResource)
-                {
-                    GatherUI.Instance.Hide();
+                    // 手动添加任务
+                    if (isResource && ResourceMap.Instance.TryGetGatherResourceInfo(posMap, out _))
+                    {
+                        GatherUI.Instance.SetPostion(posMap);
+                    }
+                    else if (isResource)
+                    {
+                        GatherUI.Instance.Hide();
+                    }
                 }
             }
 

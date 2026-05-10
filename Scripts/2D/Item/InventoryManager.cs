@@ -577,9 +577,30 @@
             }
 
             ResourceInfo resourceInfo = this.posToResource[pos];
-            string text = $"id:{resourceInfo.Id}\n" +
-                $"count:{resourceInfo.Count}\n" +
-                $"prePlace:\n";
+            ItemData itemData = ItemDataManager.Instance.GetById(resourceInfo.Id);
+            string text;
+            if (itemData != null)
+            {
+                text = $"id:{resourceInfo.Id}\n" +
+                    $"name:{itemData.CnName}\n" +
+                    $"type:{itemData.Type}\n" +
+                    $"count:{resourceInfo.Count}\n" +
+                    $"info:{itemData.Info}\n" +
+                    $"isStackable:{itemData.IsStackable}\n";
+
+                AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(resourceInfo.Id);
+                if (itemType == AItem.ItemTypeEnum.Weapon || itemType == AItem.ItemTypeEnum.Equipment)
+                {
+                    text += $"equipSlot:{itemData.EquipSlot}\n";
+                }
+            }
+            else
+            {
+                text = $"id:{resourceInfo.Id}\n" +
+                    $"count:{resourceInfo.Count}\n";
+            }
+
+            text += $"prePlace:\n";
             foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
                 if (prePlace.Value.ContainsKey(pos))

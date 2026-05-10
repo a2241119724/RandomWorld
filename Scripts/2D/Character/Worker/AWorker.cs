@@ -113,7 +113,8 @@
             string resources = string.Empty;
             foreach (KeyValuePair<int, ResourceInfo> resource in this.resourceInfos)
             {
-                resources += resource.Key + ":" + resource.Value.Count + "\n";
+                ItemData itemData = ItemDataManager.Instance.GetById(resource.Key);
+                resources += $"  {itemData.CnName}(id:{resource.Key}) x{resource.Value.Count}\n";
             }
 
             WorkerData workerData = this.CharacterDataLAB as WorkerData;
@@ -124,14 +125,32 @@
                     $"TaskTarget:{workerData.Task.TargetMap}\n";
             }
 
+            string equipmentInfo = string.Empty;
+            if (workerData.Weapon != null)
+            {
+                equipmentInfo += $"  武器: {ItemDataManager.Instance.GetById(workerData.Weapon.Id).CnName}\n";
+            }
+
+            Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments = workerData.GetEquipments();
+            foreach (var item in equipments)
+            {
+                if (item.Value != null)
+                {
+                    equipmentInfo += $"  {EquipmentLootTool.GetSlotName(item.Key)}: {ItemDataManager.Instance.GetById(item.Value.Id).CnName}\n";
+                }
+            }
+
             return base.ToString() +
                 $"状态:{this.Manager.CurrentStateType}\n" +
                 taskInfo +
                 $"IsSeeking:{this.Seek.IsSeeking()}\n" +
-                $"Hungry:{workerData.CurHungry}\n" +
+                $"饥饿值: {workerData.CurHungry:F0}/{workerData.MaxHungry:F0}\n" +
+                $"疲劳值: {workerData.CurTired:F0}/{workerData.MaxTired:F0}\n" +
+                $"最大携带: {workerData.MaxResourceCount}\n" +
                 $"TargetMap:{this.Seek.TargetMap}\n" +
                 $"SeekId:{this.CharacterDataLAB.SeekId}\n" +
-                resources;
+                $"装备:\n{equipmentInfo}" +
+                $"携带资源:\n{resources}";
         }
 
         /// <summary>
