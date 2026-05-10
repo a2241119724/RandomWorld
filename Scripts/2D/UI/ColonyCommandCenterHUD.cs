@@ -122,8 +122,7 @@ namespace LAB2D
             GameObject root = new GameObject(
                 ColonyCommandCenterConstant.HudRootName,
                 typeof(RectTransform),
-                typeof(CanvasGroup),
-                typeof(ColonyCommandCenterHUD));
+                typeof(CanvasGroup));
             root.transform.SetParent(parent, false);
 
             RectTransform rootRect = root.GetComponent<RectTransform>();
@@ -189,7 +188,7 @@ namespace LAB2D
             detailRect.offsetMin = new Vector2(ColonyCommandCenterConstant.Padding, ColonyCommandCenterConstant.Padding);
             detailRect.offsetMax = new Vector2(-ColonyCommandCenterConstant.Padding, -4.0f);
 
-            ColonyCommandCenterHUD hud = root.GetComponent<ColonyCommandCenterHUD>();
+            ColonyCommandCenterHUD hud = root.AddComponent<ColonyCommandCenterHUD>();
             hud.titleText = title;
             hud.mainText = main;
             hud.detailText = detail;
