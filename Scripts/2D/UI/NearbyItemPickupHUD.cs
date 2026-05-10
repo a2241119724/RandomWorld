@@ -35,6 +35,7 @@ namespace LAB2D
             public int ItemId;
             public int Count;
             public string ItemName;
+            public ABackpackItem.BackpackItemQualityEnum Quality;
         }
 
         /// <summary>
@@ -274,6 +275,7 @@ namespace LAB2D
                     int itemId;
                     int count = 1;
                     string itemName = tile.name;
+                    ABackpackItem.BackpackItemQualityEnum quality = ABackpackItem.BackpackItemQualityEnum.Gray;
 
                     ResourceInfo ri = DropManager.Instance.GetDropByAll(posMap);
                     if (ri != null && ri.Id > 0)
@@ -300,6 +302,18 @@ namespace LAB2D
                         {
                             itemName = itemData.CnName;
                         }
+
+                        if (item is ABackpackItem bpItem)
+                        {
+                            quality = bpItem.Quality;
+                        }
+                    }
+
+                    // 装备掉落优先从 EquipmentLootManager 获取稀有度品质
+                    EquipmentRarityType? rarity = EquipmentLootManager.Instance?.TryGetRarityByMapPosition(posMap);
+                    if (rarity.HasValue)
+                    {
+                        quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
                     }
 
                     foundEntries[posMap] = new NearbyItemEntry
@@ -308,6 +322,7 @@ namespace LAB2D
                         ItemId = itemId,
                         Count = count,
                         ItemName = itemName,
+                        Quality = quality,
                     };
                 }
             }
@@ -330,7 +345,8 @@ namespace LAB2D
                 {
                     if (!this.currentEntries.TryGetValue(kv.Key, out NearbyItemEntry existing) ||
                         existing.ItemId != kv.Value.ItemId ||
-                        existing.Count != kv.Value.Count)
+                        existing.Count != kv.Value.Count ||
+                        existing.Quality != kv.Value.Quality)
                     {
                         changed = true;
                         break;
@@ -458,11 +474,12 @@ namespace LAB2D
 
         private void PopulateEntry(GameObject entryObj, NearbyItemEntry entry)
         {
-            // 名称
+            // 名称（按品质着色）
             Text nameText = entryObj.transform.Find("ItemName")?.GetComponent<Text>();
             if (nameText != null)
             {
                 nameText.text = entry.ItemName;
+                nameText.color = EquipmentLootTool.GetQualityColor(entry.Quality);
             }
 
             // 数量

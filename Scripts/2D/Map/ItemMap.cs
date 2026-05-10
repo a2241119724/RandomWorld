@@ -182,7 +182,22 @@
                 return;
             }
 
+            // 拾取前获取装备稀有度信息，避免创建新道具后品质丢失
+            EquipmentRarityType? rarity = EquipmentLootManager.Instance.TryGetRarityByMapPosition(posMap);
+
             AItem item = ItemInstanceFactory.Instance.GetBackpackItemByName(tile.name);
+
+            // 将掉落时的品质和属性应用到拾取的道具上
+            if (rarity.HasValue && item is AEquipment equipment)
+            {
+                EquipmentLootTool.ApplyRarityToAttributes(equipment.Attribute, rarity.Value);
+                equipment.Quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
+            }
+            else if (rarity.HasValue && item is ABackpackItem backpackItem)
+            {
+                backpackItem.Quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
+            }
+
             BackpackController.Instance.AddItem(item);
             ItemCollectionTracker.Instance.RecordItemCollected(new ResourceInfo(item.Id, 1));
             EquipmentLootManager.Instance.RemoveDropByMapPosition(posMap);

@@ -54,6 +54,29 @@
                 return;
             }
 
+            // 确保 content 有 GridLayoutGroup（场景中可能已配置，代码兜底）
+            GridLayoutGroup gridLayout = this.content.GetComponent<GridLayoutGroup>();
+            if (gridLayout == null)
+            {
+                gridLayout = this.content.gameObject.AddComponent<GridLayoutGroup>();
+                gridLayout.cellSize = new Vector2(100, 120);
+                gridLayout.spacing = new Vector2(5, 5);
+                gridLayout.padding = new RectOffset(5, 5, 5, 5);
+                gridLayout.childAlignment = TextAnchor.UpperCenter;
+                gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                RectTransform contentRect = this.content.GetComponent<RectTransform>();
+                float cellWidth = gridLayout.cellSize.x + gridLayout.spacing.x;
+                gridLayout.constraintCount = Mathf.Max(1, Mathf.FloorToInt((contentRect.rect.width - gridLayout.padding.left - gridLayout.padding.right + gridLayout.spacing.x) / cellWidth));
+            }
+
+            // 确保 content 有 ContentSizeFitter 以自动调整高度
+            ContentSizeFitter csf = this.content.GetComponent<ContentSizeFitter>();
+            if (csf == null)
+            {
+                csf = this.content.gameObject.AddComponent<ContentSizeFitter>();
+                csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            }
+
             this.ItemsView = new List<IV>();
         }
 
@@ -100,6 +123,15 @@
 
                 g.transform.SetParent(this.content, false);
 
+                // 根据品质设置根节点背景颜色
+                if (model.Get(type, i) is ABackpackItem backpackItem)
+                {
+                    Color qualityColor = EquipmentLootTool.GetQualityColor(backpackItem.Quality);
+                    Image rootImage = g.GetComponent<Image>();
+                    rootImage.fillCenter = true;
+                    rootImage.color = qualityColor;
+                }
+
                 // t.transform.localScale = Vector3.one; // 控制大小
                 Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = this.GetQuantity(model.Get(type, i)).ToString();
                 Image image = Tool.GetComponentInChildren<Image>(g, "ItemImage");
@@ -124,6 +156,7 @@
                 {
                     this.ShowInfo(a);
                 };
+
                 this.ItemsView.Add(itemView);
             }
         }

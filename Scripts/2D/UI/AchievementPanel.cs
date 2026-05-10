@@ -13,7 +13,6 @@ namespace LAB2D
     {
         private static AchievementPanel runtimeInstance;
 
-        private Canvas canvas;
         private CanvasGroup canvasGroup;
         private GameObject rootObj;
         private Text titleText;
@@ -37,11 +36,22 @@ namespace LAB2D
                 return;
             }
 
-            GameObject canvasObj = AchievementTool.EnsureCanvas(
-                AchievementConstant.PanelCanvasName, 150);
+            Transform foreground = AchievementTool.FindForeground();
+            if (foreground == null)
+            {
+                Debug.LogError($"[AchievementPanel] 无法找到 {TagConstant.UI_TAG}/Foreground 节点，面板创建失败");
+                return;
+            }
+
+            if (UnityEngine.EventSystems.EventSystem.current == null)
+            {
+                GameObject eventSys = new GameObject("EventSystem");
+                eventSys.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            }
 
             GameObject panelObj = new GameObject(AchievementConstant.PanelRootName);
-            panelObj.transform.SetParent(canvasObj.transform, false);
+            panelObj.transform.SetParent(foreground, false);
             AchievementPanel panel = panelObj.AddComponent<AchievementPanel>();
             panel.Initialize();
             runtimeInstance = panel;
@@ -88,7 +98,6 @@ namespace LAB2D
             this.categoryTabButtons = new Dictionary<AchievementCategory, GameObject>();
             this.activeCategory = AchievementCategory.Combat;
 
-            this.canvas = this.GetComponentInParent<Canvas>();
             this.canvasGroup = this.gameObject.AddComponent<CanvasGroup>();
             this.rootObj = this.gameObject;
 

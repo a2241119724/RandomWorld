@@ -15,7 +15,7 @@ namespace LAB2D
     {
         /// <summary>
         /// 安装成就系统 UI 到当前打开的 Game 场景
-        /// 在场景中创建独立的成就 Canvas（弹窗 + 面板），不修改已有场景对象。
+        /// 将弹窗和面板挂载到 UI/Foreground 下，复用 UI 的 Canvas。
         /// 重复执行安全：已存在时跳过创建。
         /// </summary>
         [MenuItem(AchievementConstant.EditorMenuInstallToGame)]
@@ -29,54 +29,39 @@ namespace LAB2D
                 return;
             }
 
-            // 创建弹窗 Canvas
-            GameObject popupCanvas = GameObject.Find(AchievementConstant.PopupCanvasName);
-            if (popupCanvas == null)
+            Transform foreground = AchievementTool.FindForeground();
+            if (foreground == null)
             {
-                popupCanvas = AchievementTool.EnsureCanvas(AchievementConstant.PopupCanvasName, 200);
-                Debug.Log($"[成就系统] 已创建弹窗 Canvas: {AchievementConstant.PopupCanvasName}");
+                Debug.LogError($"[成就系统] 无法找到 {TagConstant.UI_TAG}/Foreground 节点，安装失败");
+                return;
+            }
+
+            // 创建弹窗对象（挂载到 UI/Foreground 下，复用 UI 的 Canvas）
+            Transform existingPopup = foreground.Find(AchievementConstant.PopupRootName);
+            if (existingPopup == null)
+            {
+                GameObject popupObj = new GameObject(AchievementConstant.PopupRootName);
+                popupObj.transform.SetParent(foreground, false);
+                popupObj.AddComponent<AchievementPopup>();
+                Debug.Log($"[成就系统] 已创建弹窗对象: {AchievementConstant.PopupRootName}");
             }
             else
             {
-                Debug.Log($"[成就系统] 弹窗 Canvas 已存在，跳过创建: {AchievementConstant.PopupCanvasName}");
+                Debug.Log($"[成就系统] 弹窗对象已存在，跳过创建: {AchievementConstant.PopupRootName}");
             }
 
-            // 创建弹窗对象（若不存在）
-            if (popupCanvas != null)
+            // 创建面板对象（挂载到 UI/Foreground 下，复用 UI 的 Canvas）
+            Transform existingPanel = foreground.Find(AchievementConstant.PanelRootName);
+            if (existingPanel == null)
             {
-                Transform existingPopup = popupCanvas.transform.Find(AchievementConstant.PopupRootName);
-                if (existingPopup == null)
-                {
-                    GameObject popupObj = new GameObject(AchievementConstant.PopupRootName);
-                    popupObj.transform.SetParent(popupCanvas.transform, false);
-                    popupObj.AddComponent<AchievementPopup>();
-                    Debug.Log($"[成就系统] 已创建弹窗对象: {AchievementConstant.PopupRootName}");
-                }
-            }
-
-            // 创建面板 Canvas
-            GameObject panelCanvas = GameObject.Find(AchievementConstant.PanelCanvasName);
-            if (panelCanvas == null)
-            {
-                panelCanvas = AchievementTool.EnsureCanvas(AchievementConstant.PanelCanvasName, 150);
-                Debug.Log($"[成就系统] 已创建面板 Canvas: {AchievementConstant.PanelCanvasName}");
+                GameObject panelObj = new GameObject(AchievementConstant.PanelRootName);
+                panelObj.transform.SetParent(foreground, false);
+                panelObj.AddComponent<AchievementPanel>();
+                Debug.Log($"[成就系统] 已创建面板对象: {AchievementConstant.PanelRootName}");
             }
             else
             {
-                Debug.Log($"[成就系统] 面板 Canvas 已存在，跳过创建: {AchievementConstant.PanelCanvasName}");
-            }
-
-            // 创建面板对象（若不存在）
-            if (panelCanvas != null)
-            {
-                Transform existingPanel = panelCanvas.transform.Find(AchievementConstant.PanelRootName);
-                if (existingPanel == null)
-                {
-                    GameObject panelObj = new GameObject(AchievementConstant.PanelRootName);
-                    panelObj.transform.SetParent(panelCanvas.transform, false);
-                    panelObj.AddComponent<AchievementPanel>();
-                    Debug.Log($"[成就系统] 已创建面板对象: {AchievementConstant.PanelRootName}");
-                }
+                Debug.Log($"[成就系统] 面板对象已存在，跳过创建: {AchievementConstant.PanelRootName}");
             }
 
             Debug.Log("[成就系统] 安装完成！成就弹窗和面板已就绪。");
@@ -85,23 +70,23 @@ namespace LAB2D
 
         /// <summary>
         /// 从当前 Game 场景移除成就系统 UI
-        /// 安全删除：只删除独立 Canvas，不触碰其他场景对象。
+        /// 安全删除：只删除挂载在 UI/Foreground 下的成就节点，不触碰其他场景对象。
         /// </summary>
         [MenuItem(AchievementConstant.EditorMenuRemoveFromGame)]
         private static void RemoveAchievementSystemFromGame()
         {
-            GameObject popupCanvas = GameObject.Find(AchievementConstant.PopupCanvasName);
-            if (popupCanvas != null)
+            GameObject popupRoot = GameObject.Find(AchievementConstant.PopupRootName);
+            if (popupRoot != null)
             {
-                Object.DestroyImmediate(popupCanvas);
-                Debug.Log($"[成就系统] 已移除弹窗 Canvas: {AchievementConstant.PopupCanvasName}");
+                Object.DestroyImmediate(popupRoot);
+                Debug.Log($"[成就系统] 已移除弹窗: {AchievementConstant.PopupRootName}");
             }
 
-            GameObject panelCanvas = GameObject.Find(AchievementConstant.PanelCanvasName);
-            if (panelCanvas != null)
+            GameObject panelRoot = GameObject.Find(AchievementConstant.PanelRootName);
+            if (panelRoot != null)
             {
-                Object.DestroyImmediate(panelCanvas);
-                Debug.Log($"[成就系统] 已移除面板 Canvas: {AchievementConstant.PanelCanvasName}");
+                Object.DestroyImmediate(panelRoot);
+                Debug.Log($"[成就系统] 已移除面板: {AchievementConstant.PanelRootName}");
             }
 
             Debug.Log("[成就系统] 移除完成。");
@@ -113,19 +98,19 @@ namespace LAB2D
         [MenuItem(AchievementConstant.EditorMenuRoot + "验证成就系统安装状态")]
         private static void ValidateInstallation()
         {
-            bool popupOk = GameObject.Find(AchievementConstant.PopupCanvasName) != null;
-            bool panelOk = GameObject.Find(AchievementConstant.PanelCanvasName) != null;
+            bool popupOk = GameObject.Find(AchievementConstant.PopupRootName) != null;
+            bool panelOk = GameObject.Find(AchievementConstant.PanelRootName) != null;
             bool mgrOk = AchievementManager.Instance != null;
 
             Debug.Log("[成就系统] 安装状态验证：");
-            Debug.Log($"  弹窗 Canvas: {(popupOk ? "已安装" : "未安装")}");
-            Debug.Log($"  面板 Canvas: {(panelOk ? "已安装" : "未安装")}");
+            Debug.Log($"  弹窗: {(popupOk ? "已安装" : "未安装")}");
+            Debug.Log($"  面板: {(panelOk ? "已安装" : "未安装")}");
             Debug.Log($"  管理器实例: {(mgrOk ? "已初始化" : "未初始化")}");
 
             EditorUtility.DisplayDialog(
                 "成就系统安装状态",
-                $"弹窗 Canvas: {(popupOk ? "[V] 已安装" : "[ ] 未安装")}\n"
-                + $"面板 Canvas: {(panelOk ? "[V] 已安装" : "[ ] 未安装")}\n"
+                $"弹窗: {(popupOk ? "[V] 已安装" : "[ ] 未安装")}\n"
+                + $"面板: {(panelOk ? "[V] 已安装" : "[ ] 未安装")}\n"
                 + $"管理器实例: {(mgrOk ? "[V] 已初始化" : "[ ] 未初始化")}",
                 "确定");
         }

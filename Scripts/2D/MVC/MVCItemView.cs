@@ -44,6 +44,11 @@
         /// </summary>
         public bool IsDrag { get; set; }
 
+        /// <summary>
+        /// 品质背景颜色
+        /// </summary>
+        public Color QualityColor { get; set; } = Color.white;
+
         /// <inheritdoc/>
         public void OnBeginDrag(PointerEventData e)
         {

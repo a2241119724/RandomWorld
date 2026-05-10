@@ -51,6 +51,10 @@
                     ItemData itemData = ItemDataManager.Instance.GetByName(dropItem.Value.name);
                     ResourceInfo resourceInfo = new (itemData.Id, 1);
                     ItemMap.Instance.PutDownToDrop(pos, dropItem.Value, resourceInfo);
+
+                    // 为掉落道具生成光束特效
+                    Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(pos);
+                    EquipmentBeamManager.Instance.SpawnBeam(pos, beamWorldPos, EquipmentRarityType.Common);
                     break;
                 }
             }
