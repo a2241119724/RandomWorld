@@ -8,13 +8,12 @@ namespace LAB2D
     /// <summary>
     /// 附近道具拾取 HUD。
     /// 当玩家周围有地面掉落道具时，显示拾取列表供玩家选择拾取。
-    /// 运行时动态创建独立 Canvas，不依赖场景 Prefab。
+    /// 运行时动态创建，挂载到 UI/Foreground 下，复用 UI 的 Canvas。
     /// </summary>
     public class NearbyItemPickupHUD : MonoBehaviour
     {
         public static NearbyItemPickupHUD Instance { get; private set; }
 
-        private Canvas canvas;
         private GameObject panelRoot;
         private GameObject titleBar;
         private GameObject contentArea;
@@ -55,31 +54,38 @@ namespace LAB2D
                 eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
             }
 
-            GameObject canvasObj = new GameObject(NearbyItemPickupConstant.CanvasName);
-            DontDestroyOnLoad(canvasObj);
-            Canvas canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = NearbyItemPickupConstant.CanvasSortingOrder;
+            // 查找 UI/Foreground 父节点，复用 UI 的 Canvas
+            Transform uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG)?.transform;
+            Transform foreground = uiRoot?.Find("Foreground");
+            if (foreground == null)
+            {
+                Debug.LogError($"[NearbyItemPickupHUD] 无法找到 {TagConstant.UI_TAG}/Foreground 节点，创建失败");
+                return;
+            }
 
-            CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-
-            canvasObj.AddComponent<GraphicRaycaster>();
-
-            GameObject rootObj = new GameObject(NearbyItemPickupConstant.PanelRootName);
-            rootObj.transform.SetParent(canvasObj.transform, false);
+            // 创建根节点挂载到 Foreground 下
+            GameObject rootObj = new GameObject(NearbyItemPickupConstant.CanvasName);
+            rootObj.transform.SetParent(foreground, false);
+            rootObj.transform.SetAsLastSibling();
             RectTransform rootRect = rootObj.AddComponent<RectTransform>();
-            rootRect.anchorMin = new Vector2(1f, 1f);
-            rootRect.anchorMax = new Vector2(1f, 1f);
-            rootRect.pivot = new Vector2(1f, 1f);
-            rootRect.anchoredPosition = new Vector2(-NearbyItemPickupConstant.PanelRightMargin, NearbyItemPickupConstant.PanelTopMargin);
-            rootRect.sizeDelta = new Vector2(NearbyItemPickupConstant.PanelWidth, NearbyItemPickupConstant.PanelMaxHeight);
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.sizeDelta = Vector2.zero;
 
-            Image rootBg = rootObj.AddComponent<Image>();
+            // 创建面板
+            GameObject panelRootObj = new GameObject(NearbyItemPickupConstant.PanelRootName);
+            panelRootObj.transform.SetParent(rootObj.transform, false);
+            RectTransform panelRect = panelRootObj.AddComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(1f, 1f);
+            panelRect.anchorMax = new Vector2(1f, 1f);
+            panelRect.pivot = new Vector2(1f, 1f);
+            panelRect.anchoredPosition = new Vector2(-NearbyItemPickupConstant.PanelRightMargin, NearbyItemPickupConstant.PanelTopMargin);
+            panelRect.sizeDelta = new Vector2(NearbyItemPickupConstant.PanelWidth, NearbyItemPickupConstant.PanelMaxHeight);
+
+            Image rootBg = panelRootObj.AddComponent<Image>();
             rootBg.color = NearbyItemPickupConstant.PanelBgColor;
 
-            VerticalLayoutGroup rootLayout = rootObj.AddComponent<VerticalLayoutGroup>();
+            VerticalLayoutGroup rootLayout = panelRootObj.AddComponent<VerticalLayoutGroup>();
             rootLayout.padding = new RectOffset((int)NearbyItemPickupConstant.Padding, (int)NearbyItemPickupConstant.Padding, (int)NearbyItemPickupConstant.Padding, (int)NearbyItemPickupConstant.Padding);
             rootLayout.spacing = NearbyItemPickupConstant.ItemEntrySpacing;
             rootLayout.childAlignment = TextAnchor.UpperCenter;
@@ -88,10 +94,12 @@ namespace LAB2D
             rootLayout.childForceExpandWidth = true;
             rootLayout.childForceExpandHeight = false;
 
-            NearbyItemPickupHUD hud = canvasObj.AddComponent<NearbyItemPickupHUD>();
-            hud.canvas = canvas;
-            hud.panelRoot = rootObj;
+            NearbyItemPickupHUD hud = rootObj.AddComponent<NearbyItemPickupHUD>();
+            hud.panelRoot = panelRootObj;
             hud.CreateUI();
+
+            // 默认关闭，Tick 发现有道具时才激活
+            rootObj.SetActive(false);
 
             Instance = hud;
         }
@@ -207,7 +215,10 @@ namespace LAB2D
             return txt;
         }
 
-        private void Update()
+        /// <summary>
+        /// 由 GlobalInit.Update 驱动轮询，不依赖自身的 Update（因为根节点默认关闭）。
+        /// </summary>
+        public void Tick()
         {
             if (Time.time - this.lastPollTime < NearbyItemPickupConstant.PollInterval)
             {
@@ -349,9 +360,11 @@ namespace LAB2D
             {
                 this.emptyHint.SetActive(true);
                 this.panelRoot.SetActive(false);
+                this.gameObject.SetActive(false);
                 return;
             }
 
+            this.gameObject.SetActive(true);
             this.emptyHint.SetActive(false);
             this.panelRoot.SetActive(true);
 
@@ -495,6 +508,8 @@ namespace LAB2D
             {
                 this.panelRoot.SetActive(false);
             }
+
+            this.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -502,6 +517,7 @@ namespace LAB2D
         /// </summary>
         public void Show()
         {
+            this.gameObject.SetActive(true);
             if (this.panelRoot != null)
             {
                 this.panelRoot.SetActive(true);
