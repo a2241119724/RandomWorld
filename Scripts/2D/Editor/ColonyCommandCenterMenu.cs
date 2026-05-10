@@ -91,7 +91,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// 在 Game.unity 中创建独立指挥中心 HUD。
+        /// 在 Game.unity 中将指挥中心 HUD 安装到 UIRoot/Foreground 下，复用已有 UI Canvas。
         /// </summary>
         [MenuItem(ColonyCommandCenterConstant.MenuRoot + "创建指挥中心 HUD 到 Game 场景", false, 60)]
         private static void CreateHudInGameScene()
@@ -104,21 +104,21 @@ namespace LAB2D
             }
 
             Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
-            GameObject canvasObject = GameObject.Find(ColonyCommandCenterConstant.CanvasName);
-            if (canvasObject == null)
+            Transform parent = FindSceneForeground();
+            if (parent == null)
             {
-                canvasObject = ColonyCommandCenterHUD.CreateCanvasObject();
+                EditorUtility.DisplayDialog("殖民地指挥中心", "未找到 UIRoot/Foreground，无法创建指挥中心 HUD。", "确定");
+                return;
             }
 
             GameObject root = GameObject.Find(ColonyCommandCenterConstant.HudRootName);
             bool created = false;
             if (root == null)
             {
-                root = ColonyCommandCenterHUD.CreatePanelRoot(canvasObject.transform);
+                root = ColonyCommandCenterHUD.CreatePanelRoot(parent);
                 created = true;
             }
 
-            EnsureGraphicRaycaster(canvasObject);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Selection.activeGameObject = root;
@@ -126,8 +126,23 @@ namespace LAB2D
 
             EditorUtility.DisplayDialog(
                 "殖民地指挥中心",
-                created ? "已在 Game.unity 中创建 A006 指挥中心 HUD。" : "A006 指挥中心 HUD 已存在，未重复创建。",
+                created ? "已在 Game.unity 的 Foreground 下创建 A006 指挥中心 HUD。" : "A006 指挥中心 HUD 已存在，未重复创建。",
                 "确定");
+        }
+
+        /// <summary>
+        /// 在当前场景中查找 Foreground 面板 Transform。
+        /// </summary>
+        /// <returns>Foreground Transform，找不到时返回 null。</returns>
+        private static Transform FindSceneForeground()
+        {
+            GameObject uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG);
+            if (uiRoot == null)
+            {
+                return null;
+            }
+
+            return uiRoot.transform.Find("Foreground");
         }
 
         /// <summary>
@@ -158,6 +173,7 @@ namespace LAB2D
 
         /// <summary>
         /// 从当前场景移除指挥中心 UI。
+        /// 同时清理旧版独立 Canvas（若存在），兼容已安装旧 HUD 的场景。
         /// </summary>
         [MenuItem(ColonyCommandCenterConstant.MenuRoot + "从当前场景移除指挥中心 UI", false, 70)]
         private static void RemoveHudFromCurrentScene()

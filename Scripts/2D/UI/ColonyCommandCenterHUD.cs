@@ -42,7 +42,7 @@ namespace LAB2D
 
         /// <summary>
         /// 确保运行时存在指挥中心 HUD。
-        /// 该方法只会创建带 A006 前缀的独立 Canvas 和根节点，不修改已有 UI 层级。
+        /// HUD 根节点会放在 UIRoot/Foreground 下，复用已有 UI Canvas，不再创建独立 Canvas。
         /// </summary>
         /// <returns>指挥中心 HUD 组件。</returns>
         public static ColonyCommandCenterHUD EnsureRuntimePanel()
@@ -58,21 +58,38 @@ namespace LAB2D
                 }
             }
 
-            GameObject canvasObject = GameObject.Find(ColonyCommandCenterConstant.CanvasName);
-            if (canvasObject == null)
-            {
-                canvasObject = CreateCanvasObject();
-            }
-
-            GameObject root = CreatePanelRoot(canvasObject.transform);
+            Transform parent = FindHudParent();
+            GameObject root = CreatePanelRoot(parent);
             ColonyCommandCenterHUD hud = root.GetComponent<ColonyCommandCenterHUD>();
             hud.UpdateDisplay();
             return hud;
         }
 
         /// <summary>
+        /// 查找 HUD 应挂载的父节点。
+        /// 优先返回 UIRoot/Foreground，其次 UIRoot，都不存在时创建独立 Canvas 兜底。
+        /// </summary>
+        /// <returns>父节点 Transform。</returns>
+        private static Transform FindHudParent()
+        {
+            GameObject uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG);
+            if (uiRoot != null)
+            {
+                Transform foreground = uiRoot.transform.Find("Foreground");
+                if (foreground != null)
+                {
+                    return foreground;
+                }
+
+                return uiRoot.transform;
+            }
+
+            return CreateCanvasObject().transform;
+        }
+
+        /// <summary>
         /// 创建独立 Canvas 对象。
-        /// 运行时和 Editor 生成 Prefab 时共用，避免重复维护 UI 基础结构。
+        /// 仅在 Editor 生成 Prefab 或兜底场景使用；常规运行时 HUD 会挂载到 UIRoot/Foreground 下。
         /// </summary>
         /// <returns>Canvas 根对象。</returns>
         public static GameObject CreateCanvasObject()

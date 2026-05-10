@@ -193,10 +193,6 @@ namespace LAB2D
 
             // 连击伤害在数值上追加标记
             string text = FloatingTextTool.FormatDamageText(damage);
-            if (isComboDamage && damage > 0)
-            {
-                text = text; // 可在后续迭代中添加连击标记
-            }
 
             this.SpawnText(type, text, worldPos);
         }

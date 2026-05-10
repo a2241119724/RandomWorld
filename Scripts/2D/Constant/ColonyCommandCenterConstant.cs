@@ -26,14 +26,14 @@ namespace LAB2D
         public const string GameSceneName = "Game";
 
         /// <summary>
-        /// 运行时或 Editor 自动创建的独立 Canvas 名称。
-        /// 带 Ambitious 与候选编号，便于定位和回滚。
+        /// 旧版独立 Canvas 名称（仅用于回滚时清理旧场景残留）。
+        /// 新版 HUD 挂载在 UIRoot/Foreground 下复用已有 UI Canvas，不再创建独立 Canvas。
         /// </summary>
         public const string CanvasName = "Ambitious_A006_ColonyCommandCenter_Canvas";
 
         /// <summary>
         /// 指挥中心 HUD 根节点名。
-        /// 带 Ambitious 与候选编号，避免与已有 UI 节点冲突。
+        /// 挂载在 UIRoot/Foreground 下，复用已有 UI Canvas。
         /// </summary>
         public const string HudRootName = "Ambitious_A006_ColonyCommandCenterHUD_Root";
 

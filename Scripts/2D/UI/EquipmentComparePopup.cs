@@ -18,8 +18,6 @@ namespace LAB2D
 
         private Canvas canvas;
         private GameObject rootPanel;
-        private bool isVisible;
-
         /// <summary>替换回调</summary>
         private Action onReplace;
 
@@ -99,7 +97,6 @@ namespace LAB2D
             // 初始隐藏：禁用整个 Canvas 避免拦截点击
             this.canvas.enabled = false;
             this.rootPanel.SetActive(false);
-            this.isVisible = false;
         }
 
         /// <summary>
@@ -213,7 +210,6 @@ namespace LAB2D
             // 显示
             this.canvas.enabled = true;
             this.rootPanel.SetActive(true);
-            this.isVisible = true;
         }
 
         /// <summary>
@@ -231,7 +227,6 @@ namespace LAB2D
                 this.rootPanel.SetActive(false);
             }
 
-            this.isVisible = false;
             this.onReplace = null;
             this.onDiscard = null;
         }

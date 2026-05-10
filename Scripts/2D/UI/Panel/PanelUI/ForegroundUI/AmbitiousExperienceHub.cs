@@ -13,8 +13,6 @@ namespace LAB2D
     [DisallowMultipleComponent]
     public class AmbitiousExperienceHub : MonoBehaviour
     {
-        private const string SceneRootName = "ExperienceHub_Root";
-        private const string CanvasName = "ExperienceHub_Canvas";
         private const string HudRootName = "HUD_Root";
         private const string ResultPanelName = "ResultPanel";
         private const string WaveTextName = "WaveText";
@@ -28,9 +26,7 @@ namespace LAB2D
 
         private readonly Queue<string> feedMessages = new Queue<string>();
 
-        private Canvas canvas;
         private CanvasGroup hudGroup;
-        private GameObject canvasObject;
         private GameObject hudRoot;
         private GameObject resultPanel;
         private Text waveText;
@@ -77,11 +73,6 @@ namespace LAB2D
             {
                 Destroy(this.gameObject);
                 return;
-            }
-
-            if (this.gameObject.name != SceneRootName)
-            {
-                this.gameObject.name = SceneRootName;
             }
 
             this.BindExistingInterface();
@@ -151,32 +142,25 @@ namespace LAB2D
         /// <returns>是否成功绑定。</returns>
         private bool BindExistingInterface()
         {
-            Transform canvasTransform = this.transform.Find(CanvasName);
-            if (canvasTransform == null)
-            {
-                return false;
-            }
+            Transform root = this.transform;
 
-            this.canvasObject = canvasTransform.gameObject;
-            this.canvas = this.canvasObject.GetComponent<Canvas>();
-            this.hudRoot = this.FindDeepChild(canvasTransform, HudRootName)?.gameObject;
-            this.resultPanel = this.FindDeepChild(canvasTransform, ResultPanelName)?.gameObject;
+            this.hudRoot = this.FindDeepChild(root, HudRootName)?.gameObject;
+            this.resultPanel = this.FindDeepChild(root, ResultPanelName)?.gameObject;
             this.hudGroup = this.hudRoot == null ? null : this.hudRoot.GetComponent<CanvasGroup>();
-            this.waveText = this.FindDeepComponent<Text>(canvasTransform, WaveTextName);
-            this.scoreText = this.FindDeepComponent<Text>(canvasTransform, ScoreTextName);
-            this.eventFeedText = this.FindDeepComponent<Text>(canvasTransform, EventFeedTextName);
-            this.comboBurstText = this.FindDeepComponent<Text>(canvasTransform, ComboBurstTextName);
-            this.resultTitleText = this.FindDeepComponent<Text>(canvasTransform, ResultTitleTextName);
-            this.resultStatsText = this.FindDeepComponent<Text>(canvasTransform, ResultStatsTextName);
-            this.resultCloseButton = this.FindDeepComponent<Button>(canvasTransform, ResultCloseButtonName);
+            this.waveText = this.FindDeepComponent<Text>(root, WaveTextName);
+            this.scoreText = this.FindDeepComponent<Text>(root, ScoreTextName);
+            this.eventFeedText = this.FindDeepComponent<Text>(root, EventFeedTextName);
+            this.comboBurstText = this.FindDeepComponent<Text>(root, ComboBurstTextName);
+            this.resultTitleText = this.FindDeepComponent<Text>(root, ResultTitleTextName);
+            this.resultStatsText = this.FindDeepComponent<Text>(root, ResultStatsTextName);
+            this.resultCloseButton = this.FindDeepComponent<Button>(root, ResultCloseButtonName);
             if (this.resultCloseButton != null)
             {
                 this.resultCloseButton.onClick.RemoveListener(this.HideResultPanel);
                 this.resultCloseButton.onClick.AddListener(this.HideResultPanel);
             }
 
-            return this.canvas != null &&
-                   this.hudRoot != null &&
+            return this.hudRoot != null &&
                    this.resultPanel != null &&
                    this.waveText != null &&
                    this.scoreText != null &&

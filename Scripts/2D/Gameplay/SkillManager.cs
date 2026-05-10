@@ -33,11 +33,6 @@ namespace LAB2D
         public event Action<SkillData, int> OnSkillUpgraded;
 
         /// <summary>
-        /// 技能冷却就绪事件：参数为就绪的技能数据。
-        /// </summary>
-        public event Action<SkillData> OnSkillReady;
-
-        /// <summary>
         /// Buff 过期事件：参数为 Buff 失效的技能数据。
         /// </summary>
         public event Action<SkillData> OnBuffExpired;
