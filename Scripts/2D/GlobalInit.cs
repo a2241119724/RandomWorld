@@ -69,6 +69,9 @@
                 EquipmentLootManager.Instance.Initialize();
                 EquipmentComparePopup.EnsureRuntimePopup();
                 EquipmentPanel.EnsureRuntimePanel();
+
+                // A011 附近道具拾取列表：初始化拾取 HUD
+                NearbyItemPickupHUD.EnsureRuntimePanel();
             }
         }
 
