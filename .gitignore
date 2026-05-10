@@ -20,10 +20,7 @@
 !**/*.meta
 
 # Publish the full Agent folders, but keep Python caches private.
-!/Agent/**
-/Agent/Prompt_Ambitious.md
-/Agent/Prompt_Efficiency.md
-/Agent/Prompt_Feature.md
+/Agent
 !/AgentFull/**
 **/__pycache__/
 **/__pycache__/**
