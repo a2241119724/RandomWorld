@@ -195,6 +195,9 @@
 
             // A008 主动技能系统：刷新技能冷却计时、Buff过期检查和冲刺无敌恢复
             SkillManager.Instance.Tick();
+
+            // A011 附近道具拾取：轮询附近地面道具（根节点默认关闭，由 Tick 驱动）
+            NearbyItemPickupHUD.Instance?.Tick();
         }
     }
 
