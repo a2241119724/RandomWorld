@@ -60,7 +60,8 @@
         public void Show(IBasePanel basePanel)
         {
             if (this.Panels.Count > 0 && !(basePanel is ItemInfoPanel
-                || basePanel is AIChatPanel))
+                || basePanel is AIChatPanel
+                || basePanel is DialoguePanel))
             {
                 this.Panels.Peek().OnPause();
             }
