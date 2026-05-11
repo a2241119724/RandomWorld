@@ -66,7 +66,7 @@
                 SkillHUD.EnsureRuntimePanel();
 
                 // A010 装备掉落稀有度系统：初始化管理器、对比弹窗和装备面板
-                EquipmentLootManager.Instance.Initialize();
+                EnemyLootManager.Instance.Initialize();
                 EquipmentComparePopup.EnsureRuntimePopup();
                 EquipmentPanel.EnsureRuntimePanel();
 

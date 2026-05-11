@@ -114,15 +114,15 @@ namespace LAB2D
         private static void TestRarityDistribution()
         {
             // 确保管理器已初始化（Singleton<T>.Instance 自动创建实例）
-            if (!EquipmentLootManager.Instance.IsInitialized)
+            if (!EnemyLootManager.Instance.IsInitialized)
             {
-                EquipmentLootManager.Instance.Initialize();
+                EnemyLootManager.Instance.Initialize();
             }
 
             string report = "=== 装备稀有度掉落分布测试 ===\n\n";
             for (int wave = 0; wave <= 12; wave += 3)
             {
-                report += EquipmentLootManager.Instance.TestRarityDistribution(wave, 1000);
+                report += EnemyLootManager.Instance.TestRarityDistribution(wave, 1000);
                 report += "\n\n";
             }
 
