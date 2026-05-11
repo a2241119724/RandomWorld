@@ -1,6 +1,7 @@
 ﻿namespace LAB2D
 {
     using UnityEngine;
+    using UnityEngine.UI;
 
     /// <summary>
     /// 工具菜单
@@ -22,6 +23,8 @@
                 BuildMenuPanel.Instance, BackpackMenuPanel.Instance,
                 WorkerTaskTogglePanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
             };
+            Tool.GetComponentInChildren<Button>(this.gameObject, "GeneratorWorker").onClick.AddListener(this.Onclick_GeneratorWorker);
+            Tool.GetComponentInChildren<Button>(this.gameObject, "GeneratorItem").onClick.AddListener(this.Onclick_GeneratorItem);
         }
 
         public void Update()
@@ -47,6 +50,21 @@
                     break;
                 }
             }
+        }
+
+        /// <summary>
+        /// 测试生成玩家
+        /// </summary>
+        private void Onclick_GeneratorWorker()
+        {
+            WorkerManager.Instance.Create(PlayerManager.Instance.Mine.transform.position);
+        }
+
+        
+        private void Onclick_GeneratorItem()
+        {
+            EquipmentLootManager.Instance.ForceDropEquipment(
+                PlayerManager.Instance.Mine.transform.position, waveNumber: 0);
         }
     }
 }
