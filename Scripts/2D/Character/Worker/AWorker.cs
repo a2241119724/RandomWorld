@@ -81,6 +81,14 @@
             base.Start();
             this.nameUI.text = this.name;
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+
+            // 添加 NPC 对话触发器
+            NPCDialogueTrigger trigger = this.GetComponent<NPCDialogueTrigger>();
+            if (trigger == null)
+            {
+                trigger = this.gameObject.AddComponent<NPCDialogueTrigger>();
+                trigger.profileName = "Worker";
+            }
         }
 
         public void Update()
