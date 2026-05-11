@@ -2,22 +2,30 @@ namespace LAB2D
 {
     using System.Collections.Generic;
     using UnityEngine;
+    using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// 装备掉落管理器。
-    /// 在敌人死亡时按稀有度权重随机生成装备掉落，管理掉落概率和拾取对比流程。
-    /// 单例 MonoBehaviour，由 GlobalInit 初始化。
-    /// 不修改 EnemyDropManager 核心逻辑，作为额外掉落增强层运行。
+    /// 敌人掉落管理器。
+    /// 统一管理敌人死亡时的通用物品掉落（从 DropDataManager 默认配置）和装备稀有度掉落。
+    /// 单例，由 GlobalInit 初始化。
     /// </summary>
-    public class EquipmentLootManager : Singleton<EquipmentLootManager>
+    public class EnemyLootManager : Singleton<EnemyLootManager>
     {
         /// <summary>是否已初始化</summary>
         public bool IsInitialized { get; private set; }
 
         /// <summary>
+        /// 通用物品掉落概率表（来自 DropDataManager 默认掉落配置）。
+        /// key: 累积概率值, value: 掉落物品
+        /// </summary>
+        private Dictionary<int, DropItem> probToDropItem;
+
+        /// <summary>通用掉落总概率值</summary>
+        private int dropTotal;
+
+        /// <summary>
         /// 等待对比的装备数据：key=地图坐标，value=装备属性数据
         /// 当玩家拾取装备时，从此字典查找并弹出对比弹窗。
-        /// 使用地图坐标作为 key 避免同类型装备掉落时互相覆盖。
         /// </summary>
         private Dictionary<Vector3Int, PendingEquipmentDrop> pendingDrops = new Dictionary<Vector3Int, PendingEquipmentDrop>();
 
@@ -48,10 +56,63 @@ namespace LAB2D
         public void Initialize()
         {
             if (this.IsInitialized) return;
+
+            // 从 DropDataManager 默认掉落配置构建通用掉落概率表
+            this.probToDropItem = new Dictionary<int, DropItem>();
+            this.dropTotal = 0;
+            List<DropItem> dropItems = DropDataManager.Instance.GetDropItemsById(-1);
+            this.AddDropItem(10, null); // 不掉落
+            foreach (DropItem dropItem in dropItems)
+            {
+                this.AddDropItem(10, dropItem);
+            }
+
             this.pendingDrops = new Dictionary<Vector3Int, PendingEquipmentDrop>();
             EquipmentBeamManager.Instance.Initialize();
             this.IsInitialized = true;
-            LogManager.Instance.Log("EquipmentLootManager 初始化完成", LogManager.LogLevelEnum.Trace);
+            LogManager.Instance.Log("EnemyLootManager 初始化完成", LogManager.LogLevelEnum.Trace);
+        }
+
+        /// <summary>
+        /// 尝试掉落敌人战利品。
+        /// 包含通用物品掉落（来自 DropDataManager 默认配置）和装备稀有度掉落。
+        /// </summary>
+        /// <param name="worldPos">死亡世界坐标</param>
+        /// <param name="waveNumber">当前波次编号（0-based）</param>
+        public void TryDropLoot(Vector3 worldPos, int waveNumber)
+        {
+            if (!this.IsInitialized) return;
+
+            this.TryDropCommonItem(worldPos);
+            this.TryDropEquipment(worldPos, waveNumber);
+        }
+
+        /// <summary>
+        /// 从 DropDataManager 默认掉落配置中概率选取一个通用物品掉落。
+        /// </summary>
+        private void TryDropCommonItem(Vector3 worldPos)
+        {
+            if (this.dropTotal == 0) return;
+
+            int rand = Random.Range(0, this.dropTotal);
+            Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(
+                TileMap.Instance.WorldPosToMapPos(worldPos), 3, true);
+            if (pos == default) return;
+
+            foreach (KeyValuePair<int, DropItem> dropItem in this.probToDropItem)
+            {
+                if (rand <= dropItem.Key)
+                {
+                    if (dropItem.Value == null) break;
+
+                    TileBase tile = (TileBase)ResourceManager.Instance.GetAsset(dropItem.Value.Name);
+                    ItemMap.Instance.PutDownToDrop(pos, tile, dropItem.Value.ResourceInfo);
+
+                    Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(pos);
+                    EquipmentBeamManager.Instance.SpawnBeam(pos, beamWorldPos, EquipmentRarityType.Common);
+                    break;
+                }
+            }
         }
 
         /// <summary>
@@ -106,7 +167,7 @@ namespace LAB2D
             ItemData itemData = ItemDataManager.Instance.GetById(template.Id);
             if (itemData == null)
             {
-                LogManager.Instance.Log("EquipmentLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
+                LogManager.Instance.Log("EnemyLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
@@ -186,7 +247,7 @@ namespace LAB2D
             ItemData itemData = ItemDataManager.Instance.GetById(template.Id);
             if (itemData == null)
             {
-                LogManager.Instance.Log("EquipmentLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
+                LogManager.Instance.Log("EnemyLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
@@ -234,7 +295,6 @@ namespace LAB2D
         {
             if (!this.IsInitialized || this.pendingDrops == null) return;
 
-            // 按 itemId 遍历查找匹配的待处理掉落
             Vector3Int? foundKey = null;
             PendingEquipmentDrop pending = null;
             foreach (KeyValuePair<Vector3Int, PendingEquipmentDrop> kv in this.pendingDrops)
@@ -249,18 +309,13 @@ namespace LAB2D
 
             if (foundKey.HasValue && pending != null)
             {
-                // 移除旧位置的光束
                 EquipmentBeamManager.Instance.RemoveBeamAt(pending.MapPosition);
-
-                // 移除旧 key，用新坐标作为 key
                 this.pendingDrops.Remove(foundKey.Value);
 
-                // 更新记录的坐标
                 pending.MapPosition = posMap;
                 pending.DropPosition = TileMap.Instance.MapPosToWorldPos(posMap);
                 this.pendingDrops[posMap] = pending;
 
-                // 在仓库位置生成新光束
                 Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(posMap);
                 EquipmentBeamManager.Instance.SpawnBeam(posMap, beamWorldPos, pending.Rarity);
             }
@@ -275,7 +330,6 @@ namespace LAB2D
         {
             if (equipment == null) return;
 
-            // 查找是否有待处理的稀有度信息
             EquipmentRarityType rarity = EquipmentRarityType.Common;
             Vector3Int? foundKey = null;
             PendingEquipmentDrop pending = null;
@@ -292,13 +346,11 @@ namespace LAB2D
             if (foundKey.HasValue && pending != null)
             {
                 rarity = pending.Rarity;
-                // 确保稀有度已应用到属性
                 EquipmentLootTool.ApplyRarityToAttributes(equipment.Attribute, rarity);
                 equipment.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
                 this.pendingDrops.Remove(foundKey.Value);
             }
 
-            // 获取当前已装备的同槽位装备
             AEquipment.EquipTypeEnum slotType = equipment.Type;
             Character.CharacterData charData = PlayerManager.Instance?.Mine?.CharacterDataLAB;
             AEquipment currentEquipped = null;
@@ -311,7 +363,6 @@ namespace LAB2D
                 }
             }
 
-            // 显示对比弹窗
             EquipmentComparePopup popup = EquipmentComparePopup.Instance;
             if (popup == null)
             {
@@ -323,7 +374,6 @@ namespace LAB2D
             {
                 popup.ShowCompare(currentEquipped?.Attribute, equipment.Attribute, rarity, slotType, () =>
                 {
-                    // 替换：装备新装备
                     if (charData != null)
                     {
                         Vector3Int playerPos = TileMap.Instance.WorldPosToMapPos(
@@ -332,7 +382,6 @@ namespace LAB2D
                     }
                 }, () =>
                 {
-                    // 丢弃：放回地面
                     if (charData != null)
                     {
                         Vector3Int playerPos = TileMap.Instance.WorldPosToMapPos(
@@ -364,8 +413,7 @@ namespace LAB2D
 
         /// <summary>
         /// 根据地图坐标移除待处理掉落记录和光束特效。
-        /// 由 ItemMap.DeleteTile() 在物品被拾取/移除时回调。
-        /// 非装备 tile 安全：坐标不存在时无操作。
+        /// 由 ItemMap 在物品被拾取/移除时回调。
         /// </summary>
         /// <param name="mapPos">Tilemap 坐标</param>
         public void RemoveDropByMapPosition(Vector3Int mapPos)
@@ -373,8 +421,6 @@ namespace LAB2D
             if (this.pendingDrops == null || this.pendingDrops.Count == 0) return;
 
             this.pendingDrops.Remove(mapPos);
-
-            // 移除光束特效（安全调用：位置不存在光束时无操作）
             EquipmentBeamManager.Instance.RemoveBeamAt(mapPos);
         }
 
@@ -390,7 +436,7 @@ namespace LAB2D
             foreach (KeyValuePair<Vector3Int, PendingEquipmentDrop> kv in this.pendingDrops)
             {
                 float dist = Vector3.Distance(kv.Value.DropPosition, playerPos);
-                if (dist > 30f) // 30 单位外的掉落视为过期
+                if (dist > 30f)
                 {
                     staleKeys.Add(kv.Key);
                 }
@@ -398,7 +444,6 @@ namespace LAB2D
 
             foreach (Vector3Int key in staleKeys)
             {
-                // 移除光束特效
                 if (this.pendingDrops.TryGetValue(key, out PendingEquipmentDrop pending))
                 {
                     EquipmentBeamManager.Instance.RemoveBeamAt(pending.MapPosition);
@@ -407,7 +452,6 @@ namespace LAB2D
                 this.pendingDrops.Remove(key);
             }
 
-            // 同步清理光束（tile 已被移除但 pendingDrops 未记录的情况）
             EquipmentBeamManager.Instance.CleanupStaleBeams();
         }
 
@@ -443,6 +487,17 @@ namespace LAB2D
                 counts[3], 100f * counts[3] / sampleCount,
                 counts[4], 100f * counts[4] / sampleCount,
                 counts[5], 100f * counts[5] / sampleCount);
+        }
+
+        /// <summary>
+        /// 添加可掉落物品到概率表中.
+        /// </summary>
+        /// <param name="value">概率范围</param>
+        /// <param name="dropItem">掉落物品</param>
+        private void AddDropItem(int value, DropItem dropItem)
+        {
+            this.dropTotal += value;
+            this.probToDropItem.Add(this.dropTotal, dropItem);
         }
     }
 }

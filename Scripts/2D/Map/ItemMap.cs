@@ -96,7 +96,7 @@
         {
             this.AddTile(posMap, tileBase);
             InventoryManager.Instance.AddItem(posMap, resourceInfo);
-            EquipmentLootManager.Instance.TrySpawnBeamForInventory(posMap, resourceInfo.Id);
+            EnemyLootManager.Instance.TrySpawnBeamForInventory(posMap, resourceInfo.Id);
         }
 
         /// <summary>
@@ -183,7 +183,7 @@
             }
 
             // 拾取前获取装备稀有度信息，避免创建新道具后品质丢失
-            EquipmentRarityType? rarity = EquipmentLootManager.Instance.TryGetRarityByMapPosition(posMap);
+            EquipmentRarityType? rarity = EnemyLootManager.Instance.TryGetRarityByMapPosition(posMap);
 
             AItem item = ItemInstanceFactory.Instance.GetBackpackItemByName(tile.name);
 
@@ -200,7 +200,7 @@
 
             BackpackController.Instance.AddItem(item);
             ItemCollectionTracker.Instance.RecordItemCollected(new ResourceInfo(item.Id, 1));
-            EquipmentLootManager.Instance.RemoveDropByMapPosition(posMap);
+            EnemyLootManager.Instance.RemoveDropByMapPosition(posMap);
 
             ResourceInfo resourceInfo = DropManager.Instance.GetDropByAll(posMap);
             if (resourceInfo != null)

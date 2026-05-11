@@ -60,10 +60,10 @@
             WorkerManager.Instance.Create(PlayerManager.Instance.Mine.transform.position);
         }
 
-        
+
         private void Onclick_GeneratorItem()
         {
-            EquipmentLootManager.Instance.ForceDropEquipment(
+            EnemyLootManager.Instance.TryDropLoot(
                 PlayerManager.Instance.Mine.transform.position, waveNumber: 0);
         }
     }

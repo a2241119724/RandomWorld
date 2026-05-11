@@ -309,8 +309,8 @@ namespace LAB2D
                         }
                     }
 
-                    // 装备掉落优先从 EquipmentLootManager 获取稀有度品质
-                    EquipmentRarityType? rarity = EquipmentLootManager.Instance?.TryGetRarityByMapPosition(posMap);
+                    // 装备掉落优先从 EnemyLootManager 获取稀有度品质
+                    EquipmentRarityType? rarity = EnemyLootManager.Instance?.TryGetRarityByMapPosition(posMap);
                     if (rarity.HasValue)
                     {
                         quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
