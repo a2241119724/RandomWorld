@@ -37,8 +37,6 @@ namespace LAB2D
             }
 
             Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.Onclick_Setting);
-            Tool.GetComponentInChildren<Button>(this.Panel, "GeneratorWorker").onClick.AddListener(this.Onclick_GeneratorWorker);
-            Tool.GetComponentInChildren<Button>(this.Panel, "GeneratorItem").onClick.AddListener(this.Onclick_GeneratorItem);
             Button save = Tool.GetComponentInChildren<Button>(this.Panel, "Save");
             if (PhotonNetwork.IsConnected && !PhotonNetwork.IsMasterClient)
             {
@@ -125,14 +123,6 @@ namespace LAB2D
         private void Onclick_Setting()
         {
             this.Controller.Show(SettingMenuPanel.Instance);
-        }
-
-        /// <summary>
-        /// 测试生成玩家
-        /// </summary>
-        private void Onclick_GeneratorWorker()
-        {
-            WorkerManager.Instance.Create(PlayerManager.Instance.Mine.transform.position);
         }
 
         private void Onclick_Save()
@@ -498,12 +488,6 @@ namespace LAB2D
             GlobalInit.Instance.ShowTip($"保存数据: {ArchiveManager.Instance.CurrentArchiveDisplayName}");
             ArchiveManager.Instance.SaveCurrentArchive();
             this.HideSaveSlotPanel();
-        }
-
-        private void Onclick_GeneratorItem()
-        {
-            EquipmentLootManager.Instance.ForceDropEquipment(
-                PlayerManager.Instance.Mine.transform.position, waveNumber: 0);
         }
     }
 }

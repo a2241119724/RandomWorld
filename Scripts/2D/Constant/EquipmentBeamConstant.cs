@@ -35,12 +35,12 @@ namespace LAB2D
         // 光束透明度
         // ============================================================
 
-        public const float CommonBeamAlpha = 0.40f;
-        public const float UncommonBeamAlpha = 0.42f;
-        public const float RareBeamAlpha = 0.44f;
-        public const float EpicBeamAlpha = 0.46f;
-        public const float LegendaryBeamAlpha = 0.48f;
-        public const float MythicBeamAlpha = 0.50f;
+        public const float CommonBeamAlpha = 0.50f;
+        public const float UncommonBeamAlpha = 0.54f;
+        public const float RareBeamAlpha = 0.58f;
+        public const float EpicBeamAlpha = 0.62f;
+        public const float LegendaryBeamAlpha = 0.66f;
+        public const float MythicBeamAlpha = 0.70f;
 
         // ============================================================
         // 发光层（Epic+）参数
