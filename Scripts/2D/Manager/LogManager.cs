@@ -266,15 +266,18 @@
         {
             switch (level)
             {
+                // case LogLevelEnum.Trace:
+                case LogLevelEnum.Debug:
+                case LogLevelEnum.Info:
                 case LogLevelEnum.Warning:
-                    Debug.LogWarning(logMessage);
+                    Debug.Log(logMessage);
                     break;
                 case LogLevelEnum.Error:
                 case LogLevelEnum.Fatal:
                     try
                     {
                         this.suppressUnityErrorCapture++;
-                        Debug.LogError(logMessage);
+                        Debug.Log(logMessage);
                     }
                     finally
                     {

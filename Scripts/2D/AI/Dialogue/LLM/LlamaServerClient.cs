@@ -89,7 +89,7 @@ namespace LAB2D
             string url = this.serverUrl + LLMClientConfig.CHAT_COMPLETIONS_PATH;
             LogManager.Instance.Log(
                 "[LLM ChatStreamAsync] 请求参数: " + json,
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             using UnityWebRequest request = CreatePostRequest(url, json);
             this.currentRequest = request;
