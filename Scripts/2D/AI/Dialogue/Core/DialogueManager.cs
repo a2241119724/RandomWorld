@@ -190,6 +190,7 @@ namespace LAB2D
 
             try
             {
+                // ---- 玩家数据 ----
                 Player player = PlayerManager.Instance?.Mine;
                 if (player != null)
                 {
@@ -197,17 +198,60 @@ namespace LAB2D
                     context.playerLevel = player.CharacterDataLAB?.Level ?? 1;
                     context.playerHp = player.CharacterDataLAB?.Hp ?? 100;
                     context.playerMaxHp = player.CharacterDataLAB?.MaxHp ?? 100;
-
-                    // 从 PlayerData 获取额外信息
-                    if (player.CharacterDataLAB is Player.PlayerData playerData)
-                    {
-                        context.playerLevel = playerData.Level;
-                    }
                 }
 
+                // ---- 天气 ----
                 if (WeatherManager.Instance != null)
                 {
                     context.currentWeather = WeatherManager.Instance.CurrentWeather.ToString();
+                }
+
+                // ---- 环境 ----
+                if (EnvironmentManager.Instance != null)
+                {
+                    context.environmentTemperature = EnvironmentManager.Instance.Temperature;
+                    context.environmentHumidity = EnvironmentManager.Instance.Humidity;
+                    context.environmentEnergy = EnvironmentManager.Instance.CurEnergy;
+                    context.environmentMaxEnergy = EnvironmentManager.Instance.MaxEnergy;
+                }
+
+                // ---- 地图 ----
+                if (TileMap.Instance != null && TileMap.Instance.TileMapDataLAB != null)
+                {
+                    context.mapWidth = TileMap.Instance.TileMapDataLAB.Width;
+                    context.mapHeight = TileMap.Instance.TileMapDataLAB.Height;
+                }
+
+                // ---- 波次 ----
+                if (WaveManager.Instance != null)
+                {
+                    context.waveNumber = WaveManager.Instance.CurrentWaveIndex;
+                }
+
+                // ---- 工人聚合数据 ----
+                if (WorkerManager.Instance != null && WorkerManager.Instance.Characters != null)
+                {
+                    context.totalWorkerCount = WorkerManager.Instance.Characters.Count;
+                }
+
+                ColonyCommandCenterReport cmdReport = ColonyCommandCenterManager.Instance?.CurrentReport;
+                if (cmdReport != null)
+                {
+                    if (cmdReport.AssignmentReport != null)
+                    {
+                        context.idleWorkerCount = cmdReport.AssignmentReport.IdleWorkerCount;
+                        context.busyWorkerCount = cmdReport.AssignmentReport.BusyWorkerCount;
+                        context.criticalWorkerCount = cmdReport.AssignmentReport.CriticalWorkerCount;
+                        context.totalTaskCount = cmdReport.AssignmentReport.TotalTaskCount;
+                        context.blockedTaskCount = cmdReport.AssignmentReport.BlockedTaskCount;
+                    }
+
+                    if (cmdReport.SupplyReport != null)
+                    {
+                        context.hungryWorkerCount = cmdReport.SupplyReport.HungryWorkerCount;
+                        context.tiredWorkerCount = cmdReport.SupplyReport.TiredWorkerCount;
+                        context.workerWithoutBedCount = cmdReport.SupplyReport.WorkerWithoutBedCount;
+                    }
                 }
 
                 context.npcFavorability = profile != null ? profile.initialFavorability : 50;

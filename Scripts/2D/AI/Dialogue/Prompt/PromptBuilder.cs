@@ -47,7 +47,7 @@ namespace LAB2D
         {
             List<ChatMessage> messages = new List<ChatMessage>();
 
-            // 1. 系统消息
+            // 1. 系统消息（使用模板填充）
             string systemContent = this.BuildSystemPrompt(profile, gameContext, ragResults);
             messages.Add(new ChatMessage("system", systemContent));
 
@@ -74,18 +74,27 @@ namespace LAB2D
             }
 
             var sb = new StringBuilder();
-            sb.Append("请将以下对话压缩为一段简短摘要，只保留关键信息：");
-
             foreach (ChatMessage msg in dialogueToSummarize)
             {
                 string prefix = msg.role == "user" ? "玩家" : "NPC";
-                sb.Append(prefix + "：" + msg.content + "。");
+                sb.Append(prefix);
+                sb.Append("：");
+                sb.Append(msg.content);
+                sb.Append("。");
             }
+
+            string dialogueText = sb.ToString();
+            string summaryPrompt = this.templateLoader.FillTemplate(
+                "MemorySummaryTemplate",
+                new Dictionary<string, string>
+                {
+                    { "DIALOGUE_CONTENT", dialogueText },
+                });
 
             return new List<ChatMessage>
             {
-                new ChatMessage("system", "你是对话摘要助手，只输出摘要内容，不超过3句话。"),
-                new ChatMessage("user", sb.ToString()),
+                new ChatMessage("system", "你是对话摘要助手，只输出摘要，不超过3句话。"),
+                new ChatMessage("user", summaryPrompt),
             };
         }
 
@@ -94,54 +103,41 @@ namespace LAB2D
             GameStateContext gameContext,
             List<GameKnowledgeEntry> ragResults)
         {
-            string npcName = profile != null ? profile.npcName : "NPC";
-            string npcRole = profile != null ? profile.npcRole : "村民";
-            string npcLocation = profile != null ? profile.npcLocation : "未知";
-            string personality = profile != null ? profile.personalityDescription : "友善";
-            string speakingStyle = profile != null ? profile.speakingStyle : "简洁";
-            string maxSentences = profile != null ? profile.maxSentences.ToString() : "3";
-
-            var sb = new StringBuilder();
-
-            sb.Append("你是名叫");
-            sb.Append(npcName);
-            sb.Append("的NPC，职业是");
-            sb.Append(npcRole);
-            sb.Append("，位于");
-            sb.Append(npcLocation);
-            sb.Append("。你的性格");
-            sb.Append(personality);
-            sb.Append("。");
-
+            // 构建背景文本（可选）
+            string backgroundText = string.Empty;
             if (profile != null && !string.IsNullOrEmpty(profile.backgroundStory))
             {
-                sb.Append("你的背景：");
-                sb.Append(profile.backgroundStory);
-                sb.Append("。");
+                backgroundText = "背景：" + profile.backgroundStory + "。";
             }
 
-            sb.Append("你的说话风格：");
-            sb.Append(speakingStyle);
-            sb.Append("。");
-
-            sb.Append("回答不超过");
-            sb.Append(maxSentences);
-            sb.Append("句话。");
-
-            if (gameContext != null)
-            {
-                sb.Append(gameContext.ToPromptText());
-            }
-
+            // 构建 RAG 知识文本
+            string knowledgeText = string.Empty;
             if (ragResults != null && ragResults.Count > 0)
             {
+                var sb = new StringBuilder();
                 foreach (GameKnowledgeEntry entry in ragResults)
                 {
                     sb.Append(entry.ToPromptText());
                 }
+
+                knowledgeText = sb.ToString();
             }
 
-            return sb.ToString();
+            var replacements = new Dictionary<string, string>
+            {
+                { "NPC_NAME", profile != null ? profile.npcName : "NPC" },
+                { "NPC_ROLE", profile != null ? profile.npcRole : "村民" },
+                { "NPC_LOCATION", profile != null ? profile.npcLocation : "未知" },
+                { "PERSONALITY", profile != null ? profile.personalityDescription : "友善" },
+                { "BACKGROUND", backgroundText },
+                { "SPEAKING_STYLE", profile != null ? profile.speakingStyle : "简洁" },
+                { "MAX_SENTENCES", profile != null ? profile.maxSentences.ToString() : "3" },
+                { "WORLD_INFO", gameContext != null ? gameContext.ToWorldInfo() : string.Empty },
+                { "GAME_STATE", gameContext != null ? gameContext.ToPromptText() : string.Empty },
+                { "KNOWLEDGE_CONTEXT", knowledgeText },
+            };
+
+            return this.templateLoader.FillTemplate("SystemPromptTemplate", replacements);
         }
 
         private void LoadProfiles()
