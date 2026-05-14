@@ -11,8 +11,15 @@ namespace LAB2D
     public class StreamingTextView : MonoBehaviour
     {
         private Text textComponent;
+        private LayoutElement bubbleLayoutElement;
+        private LayoutElement textLayoutElement;
+        private RectTransform textRectTransform;
+        private RectTransform rebuildRoot;
         private readonly StringBuilder buffer = new StringBuilder();
         private float typewriterSpeed = 0;
+        private float minBubbleWidth = 96f;
+        private float maxBubbleWidth = 560f;
+        private float horizontalPadding = 32f;
         private bool isAnimating;
 
         /// <summary>
@@ -38,6 +45,28 @@ namespace LAB2D
         }
 
         /// <summary>
+        /// 设置聊天气泡布局刷新目标。
+        /// </summary>
+        public void ConfigureLayout(
+            LayoutElement bubbleLayout,
+            LayoutElement textLayout,
+            RectTransform textRect,
+            RectTransform root,
+            float minWidth,
+            float maxWidth,
+            float padding)
+        {
+            this.bubbleLayoutElement = bubbleLayout;
+            this.textLayoutElement = textLayout;
+            this.textRectTransform = textRect;
+            this.rebuildRoot = root;
+            this.minBubbleWidth = minWidth;
+            this.maxBubbleWidth = maxWidth;
+            this.horizontalPadding = padding;
+            this.RefreshLayout();
+        }
+
+        /// <summary>
         /// 追加 token
         /// </summary>
         public void AppendToken(string token)
@@ -57,6 +86,7 @@ namespace LAB2D
             if (this.typewriterSpeed <= 0)
             {
                 this.textComponent.text = this.buffer.ToString();
+                this.RefreshLayout();
             }
             else if (!this.isAnimating)
             {
@@ -74,15 +104,16 @@ namespace LAB2D
             {
                 this.textComponent.text = string.Empty;
             }
+
+            this.RefreshLayout();
         }
 
         private IEnumerator TypewriterEffect()
         {
             this.isAnimating = true;
-            string fullText = this.buffer.ToString();
             int displayedLength = this.textComponent != null ? this.textComponent.text.Length : 0;
 
-            while (displayedLength < fullText.Length)
+            while (displayedLength < this.buffer.Length)
             {
                 if (this.textComponent == null)
                 {
@@ -90,11 +121,55 @@ namespace LAB2D
                 }
 
                 displayedLength++;
-                this.textComponent.text = fullText.Substring(0, displayedLength);
+                this.textComponent.text = this.buffer.ToString().Substring(0, displayedLength);
+                this.RefreshLayout();
                 yield return new WaitForSeconds(1f / this.typewriterSpeed);
             }
 
             this.isAnimating = false;
+        }
+
+        private void RefreshLayout()
+        {
+            if (this.textComponent == null)
+            {
+                this.textComponent = this.GetComponentInChildren<Text>();
+                if (this.textComponent == null)
+                {
+                    return;
+                }
+            }
+
+            float preferredTextWidth = string.IsNullOrEmpty(this.textComponent.text)
+                ? 0f
+                : this.textComponent.preferredWidth;
+            float bubbleWidth = Mathf.Clamp(
+                preferredTextWidth + this.horizontalPadding,
+                this.minBubbleWidth,
+                this.maxBubbleWidth);
+            float textWidth = Mathf.Max(1f, bubbleWidth - this.horizontalPadding);
+
+            if (this.bubbleLayoutElement != null)
+            {
+                this.bubbleLayoutElement.minWidth = this.minBubbleWidth;
+                this.bubbleLayoutElement.preferredWidth = bubbleWidth;
+            }
+
+            if (this.textLayoutElement != null)
+            {
+                this.textLayoutElement.minWidth = textWidth;
+                this.textLayoutElement.preferredWidth = textWidth;
+            }
+
+            if (this.textRectTransform != null)
+            {
+                this.textRectTransform.sizeDelta = new Vector2(textWidth, this.textRectTransform.sizeDelta.y);
+            }
+
+            if (this.rebuildRoot != null)
+            {
+                LayoutRebuilder.MarkLayoutForRebuild(this.rebuildRoot);
+            }
         }
     }
 }

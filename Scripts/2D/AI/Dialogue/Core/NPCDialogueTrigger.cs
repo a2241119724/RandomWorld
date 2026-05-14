@@ -130,8 +130,8 @@ namespace LAB2D
             }
 
             DialogueManager.Instance.StartDialogue(this.npcId, this.cachedProfile);
-            DialoguePanelUI.Ensure().Open(this.npcId, this.cachedProfile);
             PanelController.Instance.Show(DialoguePanel.Instance);
+            DialoguePanelUI.Ensure().Open(this.npcId, this.cachedProfile);
 
             DialogueManager.Instance.OnDialogueEnded += this.OnDialogueEndedHandler;
         }
