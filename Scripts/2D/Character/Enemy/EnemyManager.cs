@@ -23,6 +23,27 @@
         public EnemyManagerData EnemyManagerDataLAB { get; set; } = new ();
 
         /// <summary>
+        /// 当前真实存活敌人数量。
+        /// </summary>
+        public int AliveEnemyCount
+        {
+            get
+            {
+                this.SyncAliveEnemies();
+                return this.Characters.Count;
+            }
+        }
+
+        /// <summary>
+        /// 当前是否还能生成敌人。
+        /// </summary>
+        public bool CanCreateEnemy()
+        {
+            return this.EnemyManagerDataLAB.MaxEnemyCount > 0
+                && this.AliveEnemyCount < this.EnemyManagerDataLAB.MaxEnemyCount;
+        }
+
+        /// <summary>
         /// 每隔一段时间生成敌人
         /// </summary>
         /// <returns>协程</returns>
@@ -38,6 +59,32 @@
                 }
 
                 yield return new WaitForSeconds(InstanceInterval);
+            }
+        }
+
+        /// <inheritdoc/>
+        public override GameObject Create(Vector3 worldPos = default)
+        {
+            if (!this.CanCreateEnemy())
+            {
+                return null;
+            }
+
+            return base.Create(worldPos);
+        }
+
+        /// <inheritdoc/>
+        public override void Add(AEnemy character)
+        {
+            if (character == null)
+            {
+                LogManager.Instance.Log("character is null!!!", LogManager.LogLevelEnum.Error);
+                return;
+            }
+
+            if (!this.Characters.Contains(character))
+            {
+                this.Characters.Add(character);
             }
         }
 
@@ -72,6 +119,7 @@
         /// <inheritdoc/>
         public override void SaveData()
         {
+            this.SyncAliveEnemies();
             this.EnemyManagerDataLAB.EnemyDatas = new ();
             foreach (AEnemy enemy in this.Characters)
             {
@@ -85,6 +133,25 @@
             }
 
             DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.EnemyManagerDataLAB);
+        }
+
+        private void SyncAliveEnemies()
+        {
+            this.Characters.RemoveAll(enemy => !IsAliveEnemy(enemy));
+            foreach (AEnemy enemy in UnityEngine.Object.FindObjectsOfType<AEnemy>())
+            {
+                if (IsAliveEnemy(enemy) && !this.Characters.Contains(enemy))
+                {
+                    this.Characters.Add(enemy);
+                }
+            }
+        }
+
+        private static bool IsAliveEnemy(AEnemy enemy)
+        {
+            return enemy != null
+                && enemy.CharacterDataLAB != null
+                && enemy.CharacterDataLAB.Hp > 0;
         }
 
         /// <summary>
