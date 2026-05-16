@@ -25,6 +25,7 @@
         private Slider progress;
         private Text nameUI;
         private CharacterStatusUI statusBar; // 记录实例化血条
+        private int dialoguePauseCount;
 
         /// <summary>
         /// Worker状态
@@ -40,6 +41,11 @@
         /// Worker的床
         /// </summary>
         public ABed BedItem { get; set; }
+
+        /// <summary>
+        /// 是否因为对话暂停行动。
+        /// </summary>
+        public bool IsDialoguePaused => this.dialoguePauseCount > 0;
 
         /// <summary>
         /// 状态管理器
@@ -95,6 +101,12 @@
         {
             this.transform.rotation = Quaternion.identity;
 
+            if (this.IsDialoguePaused)
+            {
+                this.UpdateDialoguePauseText();
+                return;
+            }
+
             // 执行当前状态的函数
             this.Manager.CurrentState.OnUpdate();
         }
@@ -113,6 +125,32 @@
         {
             this.progress.value = value;
             this.progress.gameObject.SetActive(enable);
+        }
+
+        /// <summary>
+        /// 对话开始时暂停 Worker 的状态机和任务进度。
+        /// </summary>
+        public void PauseForDialogue()
+        {
+            this.dialoguePauseCount++;
+            this.UpdateDialoguePauseText(true);
+        }
+
+        /// <summary>
+        /// 对话结束后恢复 Worker 原来的状态机。
+        /// </summary>
+        public void ResumeFromDialogue()
+        {
+            if (this.dialoguePauseCount <= 0)
+            {
+                return;
+            }
+
+            this.dialoguePauseCount--;
+            if (this.dialoguePauseCount == 0 && this.WorkerStateText != null)
+            {
+                this.WorkerStateText.text = this.Manager.CurrentStateType.ToString();
+            }
         }
 
         /// <inheritdoc/>
@@ -288,6 +326,28 @@
             WorkerTaskManager.Instance.GiveUpTask(workerData.Task);
             workerData.Task = null;
             this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+        }
+
+        private void UpdateDialoguePauseText(bool force = false)
+        {
+            if (!force && Time.frameCount % 60 != 0)
+            {
+                return;
+            }
+
+            if (this.WorkerStateText == null)
+            {
+                return;
+            }
+
+            AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
+            if (workerData != null && workerData.Task != null)
+            {
+                this.WorkerStateText.text = $"对话中\n暂停任务: {workerData.Task.Name}";
+                return;
+            }
+
+            this.WorkerStateText.text = "对话中";
         }
 
         /// <summary>
