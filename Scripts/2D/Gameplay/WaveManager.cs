@@ -204,8 +204,9 @@ namespace LAB2D
                 int enemiesInWave = WaveBossRewardManager.Instance.GetEnemyCountForWave(this.CurrentWaveIndex, baseEnemiesInWave);
                 for (int i = 0; i < enemiesInWave; i++)
                 {
+                    int maxAliveEnemies = this.GetEffectiveMaxAliveEnemies();
                     // 检查最大同时存活敌人限制
-                    if (this.CountAliveEnemies() >= this.Config.maxAliveEnemies)
+                    while (this.CountAliveEnemies() >= maxAliveEnemies)
                     {
                         // 等待有空位再继续生成
                         yield return new WaitForSeconds(1.0f);
@@ -295,16 +296,18 @@ namespace LAB2D
         /// </summary>
         private int CountAliveEnemies()
         {
-            int count = 0;
-            foreach (AEnemy enemy in EnemyManager.Instance.Characters)
+            return EnemyManager.Instance == null ? 0 : EnemyManager.Instance.AliveEnemyCount;
+        }
+
+        private int GetEffectiveMaxAliveEnemies()
+        {
+            int maxAliveEnemies = this.Config.maxAliveEnemies;
+            if (EnemyManager.Instance != null && EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount > 0)
             {
-                if (enemy != null)
-                {
-                    count++;
-                }
+                maxAliveEnemies = Mathf.Min(maxAliveEnemies, EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount);
             }
 
-            return count;
+            return Mathf.Max(1, maxAliveEnemies);
         }
 
         /// <summary>

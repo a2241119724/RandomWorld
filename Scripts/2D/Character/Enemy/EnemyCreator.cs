@@ -18,7 +18,7 @@
         /// <returns>实例化对象</returns>
         protected override GameObject DoCreate(Vector3 worldPos, string name, string layer)
         {
-            if (EnemyManager.Instance.Characters.Count >= EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount)
+            if (!EnemyManager.Instance.CanCreateEnemy())
             {
                 return null;
             }
