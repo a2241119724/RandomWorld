@@ -124,6 +124,10 @@
             }
 
             EnvironmentManager.Instance.UpdateEnergy();
+
+            // F019 玩家生命危险提示：只读刷新本地玩家血量警戒，复用现有 Tip UI，不改变战斗或存档数据。
+            PlayerVitalAlertManager.Instance.Tick();
+
             if (!Tool.IsUIInputActive() && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2)))
             {
                 // 关闭ItemInfo面板
