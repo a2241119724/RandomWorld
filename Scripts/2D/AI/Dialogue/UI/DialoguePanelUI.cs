@@ -110,6 +110,14 @@ namespace LAB2D
             }
         }
 
+        public void Update()
+        {
+            if (this.ShouldSubmitFromKeyboard())
+            {
+                this.OnSendClicked();
+            }
+        }
+
         /// <summary>
         /// 打开对话面板
         /// </summary>
@@ -198,6 +206,14 @@ namespace LAB2D
             this.ScrollToLatest();
         }
 
+        private void OnInputEndEdit(string text)
+        {
+            if (this.IsSubmitKeyPressed())
+            {
+                this.OnSendClicked();
+            }
+        }
+
         private void OnBackClicked()
         {
             this.Close();
@@ -269,6 +285,11 @@ namespace LAB2D
             if (this.inputField == null)
             {
                 this.inputField = FindChildComponent<InputField>(this.gameObject, "Message");
+                if (this.inputField != null)
+                {
+                    this.inputField.onEndEdit.RemoveListener(this.OnInputEndEdit);
+                    this.inputField.onEndEdit.AddListener(this.OnInputEndEdit);
+                }
             }
 
             if (this.sendButton == null)
@@ -300,6 +321,18 @@ namespace LAB2D
             {
                 this.scrollRect = FindChildComponent<ScrollRect>(this.gameObject, "ScrollView");
             }
+        }
+
+        private bool ShouldSubmitFromKeyboard()
+        {
+            return this.inputField != null &&
+                this.inputField.isFocused &&
+                this.IsSubmitKeyPressed();
+        }
+
+        private bool IsSubmitKeyPressed()
+        {
+            return Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
         }
 
         private void AddPlayerBubble(string text)

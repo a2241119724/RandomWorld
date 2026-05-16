@@ -16,7 +16,7 @@ namespace LAB2D
         /// <summary>
         /// 最大 token 数
         /// </summary>
-        public int maxTokens = 1024;
+        public int maxTokens = 256;
 
         /// <summary>
         /// TopP 采样
@@ -26,7 +26,7 @@ namespace LAB2D
         /// <summary>
         /// 重复惩罚
         /// </summary>
-        public float repeatPenalty = 1.01f;
+        public float repeatPenalty = 1.2f;
 
         /// <summary>
         /// 是否流式输出

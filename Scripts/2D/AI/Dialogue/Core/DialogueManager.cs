@@ -358,7 +358,7 @@ namespace LAB2D
             var sb = new StringBuilder();
             if (workerData.Weapon != null)
             {
-                AppendEquipmentName(sb, "武器", workerData.Weapon.Id);
+                AppendEquipmentName(sb, workerData.Weapon.Id);
             }
 
             Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments = workerData.GetEquipments();
@@ -371,14 +371,14 @@ namespace LAB2D
                         continue;
                     }
 
-                    AppendEquipmentName(sb, EquipmentLootTool.GetSlotName(pair.Key), pair.Value.Id);
+                    AppendEquipmentName(sb, pair.Value.Id);
                 }
             }
 
             return sb.Length == 0 ? "无" : sb.ToString();
         }
 
-        private static void AppendEquipmentName(StringBuilder sb, string slotName, int itemId)
+        private static void AppendEquipmentName(StringBuilder sb, int itemId)
         {
             if (sb.Length > 0)
             {
@@ -395,8 +395,6 @@ namespace LAB2D
                 }
             }
 
-            sb.Append(slotName);
-            sb.Append(':');
             sb.Append(itemName);
         }
 
