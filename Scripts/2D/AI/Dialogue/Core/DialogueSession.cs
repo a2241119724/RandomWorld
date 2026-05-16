@@ -52,14 +52,7 @@ namespace LAB2D
         {
             this.npcId = npcId;
             this.profile = profile;
-            this.options = new LLMGenerationOptions
-            {
-                temperature = 0.25f,
-                topP = 0.75f,
-                repeatPenalty = 1.12f,
-                maxTokens = 1024,
-                stream = true,
-            };
+            this.options = new LLMGenerationOptions();
         }
 
         /// <summary>

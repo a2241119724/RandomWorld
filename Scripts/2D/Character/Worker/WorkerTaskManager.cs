@@ -50,6 +50,11 @@
             List<AWorker> workers = WorkerManager.Instance.Characters;
             foreach (AWorker worker in workers)
             {
+                if (worker.IsDialoguePaused)
+                {
+                    continue;
+                }
+
                 AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
                 if (workerData.Task != null)
                 {

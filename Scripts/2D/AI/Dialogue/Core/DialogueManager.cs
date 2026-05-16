@@ -68,10 +68,12 @@ namespace LAB2D
             if (this.activeSessions.TryGetValue(npcId, out DialogueSession existingSession))
             {
                 existingSession.isActive = false;
+                this.ResumeDialogueWorker(npcId);
             }
 
             DialogueSession session = new DialogueSession(npcId, profile);
             this.activeSessions[npcId] = session;
+            this.PauseDialogueWorker(npcId);
 
             LogManager.Instance.Log(
                 "DialogueManager: 开始对话 " + profile.npcName,
@@ -180,6 +182,7 @@ namespace LAB2D
             {
                 session.isActive = false;
                 this.activeSessions.Remove(npcId);
+                this.ResumeDialogueWorker(npcId);
                 this.dialogueWorkers.Remove(npcId);
 
                 LogManager.Instance.Log(
@@ -261,6 +264,24 @@ namespace LAB2D
             }
 
             return null;
+        }
+
+        private void PauseDialogueWorker(string npcId)
+        {
+            AWorker worker = this.GetDialogueWorker(npcId);
+            if (worker != null)
+            {
+                worker.PauseForDialogue();
+            }
+        }
+
+        private void ResumeDialogueWorker(string npcId)
+        {
+            AWorker worker = this.GetDialogueWorker(npcId);
+            if (worker != null)
+            {
+                worker.ResumeFromDialogue();
+            }
         }
 
         private GameStateContext.WorkerPromptInfo BuildWorkerPromptInfo(
