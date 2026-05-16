@@ -2,6 +2,8 @@ namespace LAB2D
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
     using System.Text;
     using System.Threading.Tasks;
     using UnityEngine;
@@ -14,22 +16,44 @@ namespace LAB2D
     {
         private readonly string serverUrl;
         private readonly string modelName;
+        private readonly string modelPath;
         private readonly int timeoutSeconds;
         private UnityWebRequest currentRequest;
+        private bool modelFileStateLogged;
+        private string lastAvailabilityError = string.Empty;
 
         public LlamaServerClient(
             string serverUrl = LLMClientConfig.DEFAULT_SERVER_URL,
             string modelName = LLMClientConfig.DEFAULT_MODEL,
-            int timeoutSeconds = LLMClientConfig.TIMEOUT_SECONDS)
+            int timeoutSeconds = LLMClientConfig.TIMEOUT_SECONDS,
+            string modelPath = null)
         {
             this.serverUrl = serverUrl;
             this.modelName = modelName;
+            this.modelPath = string.IsNullOrEmpty(modelPath)
+                ? LLMClientConfig.DefaultModelPath
+                : modelPath;
             this.timeoutSeconds = timeoutSeconds;
         }
+
+        /// <summary>
+        /// 当前客户端期望使用的本地 GGUF 模型路径.
+        /// </summary>
+        public string ModelPath => this.modelPath;
 
         /// <inheritdoc/>
         public async Task<string> ChatAsync(List<ChatMessage> messages, LLMGenerationOptions options)
         {
+            if (!await this.EnsureServerAvailableAsync())
+            {
+                if (!string.IsNullOrEmpty(this.lastAvailabilityError))
+                {
+                    LogManager.Instance.Log(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
+                }
+
+                return string.Empty;
+            }
+
             string json = BuildRequestJson(messages, options, stream: false);
             string url = this.serverUrl + LLMClientConfig.CHAT_COMPLETIONS_PATH;
             LogManager.Instance.Log(
@@ -85,6 +109,16 @@ namespace LAB2D
             Action onComplete,
             Action<string> onError)
         {
+            if (!await this.EnsureServerAvailableAsync())
+            {
+                string error = string.IsNullOrEmpty(this.lastAvailabilityError)
+                    ? "内置 llama-server 未启动，无法请求本地模型"
+                    : this.lastAvailabilityError;
+                LogManager.Instance.Log(error, LogManager.LogLevelEnum.Error);
+                onError?.Invoke(error);
+                return;
+            }
+
             string json = BuildRequestJson(messages, options, stream: true);
             string url = this.serverUrl + LLMClientConfig.CHAT_COMPLETIONS_PATH;
             LogManager.Instance.Log(
@@ -155,10 +189,14 @@ namespace LAB2D
         /// <inheritdoc/>
         public async Task<bool> IsAvailableAsync()
         {
-            string url = this.serverUrl + "/v1/models";
+            return await this.EnsureServerAvailableAsync();
+        }
 
+        private async Task<bool> ProbeServerAsync(int timeoutSeconds)
+        {
+            string url = this.serverUrl + "/v1/models";
             using UnityWebRequest request = UnityWebRequest.Get(url);
-            request.timeout = 5;
+            request.timeout = timeoutSeconds;
 
             try
             {
@@ -183,6 +221,288 @@ namespace LAB2D
             request.SetRequestHeader("Content-Type", "application/json");
             request.timeout = this.timeoutSeconds;
             return request;
+        }
+
+        private async Task<bool> EnsureServerAvailableAsync()
+        {
+            this.LogModelFileStateOnce();
+            if (await this.ProbeServerAsync(2))
+            {
+                this.lastAvailabilityError = string.Empty;
+                return true;
+            }
+
+            if (!LocalLlamaServerProcess.TryStart(this.modelPath, this.serverUrl, this.modelName, out string error))
+            {
+                this.lastAvailabilityError = error;
+                LogManager.Instance.Log(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
+                return false;
+            }
+
+            int intervalMs = LLMClientConfig.SERVER_START_PROBE_INTERVAL_MS;
+            DateTime deadline = DateTime.UtcNow.AddSeconds(LLMClientConfig.SERVER_START_TIMEOUT_SECONDS);
+            while (DateTime.UtcNow < deadline)
+            {
+                if (await this.ProbeServerAsync(2))
+                {
+                    this.lastAvailabilityError = string.Empty;
+                    LogManager.Instance.Log("内置 llama-server 已就绪", LogManager.LogLevelEnum.Info);
+                    return true;
+                }
+
+                if (LocalLlamaServerProcess.StartedProcessHasExited)
+                {
+                    this.lastAvailabilityError = LocalLlamaServerProcess.GetExitError();
+                    LogManager.Instance.Log(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
+                    return false;
+                }
+
+                await Task.Delay(intervalMs);
+            }
+
+            this.lastAvailabilityError = "内置 llama-server 启动超时: " + this.serverUrl;
+            LogManager.Instance.Log(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
+            return false;
+        }
+
+        private void LogModelFileStateOnce()
+        {
+            if (this.modelFileStateLogged)
+            {
+                return;
+            }
+
+            this.modelFileStateLogged = true;
+            if (string.IsNullOrEmpty(this.modelPath))
+            {
+                return;
+            }
+
+            bool modelFileExists = File.Exists(this.modelPath);
+            LogManager.Instance.Log(
+                modelFileExists
+                    ? "LlamaServerClient 使用内置模型: " + this.modelPath
+                    : "LlamaServerClient 未找到内置模型文件: " + this.modelPath,
+                modelFileExists
+                    ? LogManager.LogLevelEnum.Info
+                    : LogManager.LogLevelEnum.Warning);
+        }
+
+        private static class LocalLlamaServerProcess
+        {
+            private static readonly object SyncRoot = new object();
+            private static Process serverProcess;
+            private static bool quitHookRegistered;
+
+            public static bool StartedProcessHasExited
+            {
+                get
+                {
+                    try
+                    {
+                        return serverProcess != null && serverProcess.HasExited;
+                    }
+                    catch
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            public static string GetExitError()
+            {
+                try
+                {
+                    if (serverProcess == null)
+                    {
+                        return "内置 llama-server 进程不存在";
+                    }
+
+                    return "内置 llama-server 进程已退出，退出码: "
+                        + serverProcess.ExitCode
+                        + "。请检查可执行文件依赖、模型格式和启动参数";
+                }
+                catch (Exception exception)
+                {
+                    return "内置 llama-server 进程已退出，读取退出信息失败: " + exception.Message;
+                }
+            }
+
+            public static bool TryStart(
+                string modelPath,
+                string serverUrl,
+                string modelAlias,
+                out string error)
+            {
+                error = string.Empty;
+
+#if !UNITY_STANDALONE && !UNITY_EDITOR
+                error = "当前平台不支持通过进程启动内置 llama-server";
+                return false;
+#else
+                if (string.IsNullOrEmpty(modelPath) || !File.Exists(modelPath))
+                {
+                    error = "未找到内置模型文件: " + modelPath;
+                    return false;
+                }
+
+                string executablePath = ResolveExecutablePath();
+                if (string.IsNullOrEmpty(executablePath))
+                {
+                    error = "未找到内置 llama-server。请将 llama-server.exe 放到 StreamingAssets/AI/llama-server.exe";
+                    return false;
+                }
+
+                lock (SyncRoot)
+                {
+                    if (IsProcessRunning())
+                    {
+                        return true;
+                    }
+
+                    if (!TryGetHostAndPort(serverUrl, out string host, out int port))
+                    {
+                        host = "127.0.0.1";
+                        port = 8080;
+                    }
+
+                    try
+                    {
+                        var startInfo = new ProcessStartInfo
+                        {
+                            FileName = executablePath,
+                            Arguments = BuildArguments(modelPath, host, port, modelAlias),
+                            WorkingDirectory = Path.GetDirectoryName(executablePath),
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                        };
+
+                        serverProcess = Process.Start(startInfo);
+                        if (serverProcess == null)
+                        {
+                            error = "启动内置 llama-server 失败: Process.Start 返回空进程";
+                            return false;
+                        }
+
+                        RegisterQuitHook();
+                        LogManager.Instance.Log(
+                            "已启动内置 llama-server: " + executablePath,
+                            LogManager.LogLevelEnum.Info);
+                        return true;
+                    }
+                    catch (Exception exception)
+                    {
+                        error = "启动内置 llama-server 失败: " + exception.Message;
+                        serverProcess = null;
+                        return false;
+                    }
+                }
+#endif
+            }
+
+            private static bool IsProcessRunning()
+            {
+                try
+                {
+                    return serverProcess != null && !serverProcess.HasExited;
+                }
+                catch
+                {
+                    serverProcess = null;
+                    return false;
+                }
+            }
+
+            private static void RegisterQuitHook()
+            {
+                if (quitHookRegistered)
+                {
+                    return;
+                }
+
+                Application.quitting += Stop;
+                quitHookRegistered = true;
+            }
+
+            private static void Stop()
+            {
+                lock (SyncRoot)
+                {
+                    try
+                    {
+                        if (serverProcess != null && !serverProcess.HasExited)
+                        {
+                            serverProcess.Kill();
+                        }
+                    }
+                    catch
+                    {
+                    }
+                    finally
+                    {
+                        serverProcess = null;
+                    }
+                }
+            }
+
+            private static string ResolveExecutablePath()
+            {
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+                string executableFile = LLMClientConfig.SERVER_EXECUTABLE_WINDOWS;
+#else
+                string executableFile = LLMClientConfig.SERVER_EXECUTABLE_UNIX;
+#endif
+                string root = Application.streamingAssetsPath;
+                string[] candidates =
+                {
+                    Path.Combine(root, LLMClientConfig.SERVER_DIRECTORY, executableFile),
+                    Path.Combine(root, executableFile),
+                    Path.Combine(root, LLMClientConfig.LEGACY_SERVER_DIRECTORY, executableFile),
+                };
+
+                foreach (string candidate in candidates)
+                {
+                    if (File.Exists(candidate))
+                    {
+                        return candidate;
+                    }
+                }
+
+                return string.Empty;
+            }
+
+            private static string BuildArguments(string modelPath, string host, int port, string modelAlias)
+            {
+                return "-m " + QuoteArgument(modelPath)
+                    + " --host " + QuoteArgument(host)
+                    + " --port " + port
+                    + " -c " + LLMClientConfig.DEFAULT_CONTEXT_SIZE
+                    + " --alias " + QuoteArgument(modelAlias);
+            }
+
+            private static bool TryGetHostAndPort(string serverUrl, out string host, out int port)
+            {
+                host = string.Empty;
+                port = 0;
+                if (!Uri.TryCreate(serverUrl, UriKind.Absolute, out Uri uri))
+                {
+                    return false;
+                }
+
+                host = uri.Host;
+                port = uri.Port;
+                return !string.IsNullOrEmpty(host) && port > 0;
+            }
+
+            private static string QuoteArgument(string value)
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    return "\"\"";
+                }
+
+                return "\"" + value.Replace("\"", "\\\"") + "\"";
+            }
         }
 
         private string BuildRequestJson(

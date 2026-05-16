@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -52,6 +53,40 @@
             this.buildDataDic = ResourceTool.LoadResources<BuildItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
             this.dropDataDic = ResourceTool.LoadResources<DropItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
             this.LoadPrefabs();
+        }
+
+        /// <summary>
+        /// 获取 StreamingAssets 下资源的绝对路径.
+        /// </summary>
+        /// <param name="relativePath">相对 StreamingAssets 的路径.</param>
+        /// <returns>绝对路径.</returns>
+        public string GetStreamingAssetPath(string relativePath)
+        {
+            if (string.IsNullOrEmpty(relativePath))
+            {
+                return Application.streamingAssetsPath;
+            }
+
+            string normalizedPath = relativePath.Replace('\\', '/');
+            return Path.Combine(Application.streamingAssetsPath, normalizedPath);
+        }
+
+        /// <summary>
+        /// 获取内置 LLM 模型的绝对路径.
+        /// </summary>
+        /// <returns>内置 LLM 模型路径.</returns>
+        public string GetBuiltinLLMModelPath()
+        {
+            return this.GetStreamingAssetPath(ResourceConstant.BUILTIN_LLM_MODEL_RELATIVE_PATH);
+        }
+
+        /// <summary>
+        /// 内置 LLM 模型文件是否存在.
+        /// </summary>
+        /// <returns>是否存在.</returns>
+        public bool HasBuiltinLLMModel()
+        {
+            return File.Exists(this.GetBuiltinLLMModelPath());
         }
 
         /// <summary>

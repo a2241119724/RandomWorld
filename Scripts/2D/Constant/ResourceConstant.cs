@@ -37,6 +37,26 @@
         /// </summary>
         public const string SCRIPTABLE_ROOT = "SO/";
 
+        /// <summary>
+        /// StreamingAssets 下的内置 AI 目录
+        /// </summary>
+        public const string STREAMING_AI_ROOT = "AI";
+
+        /// <summary>
+        /// StreamingAssets 下的内置模型目录
+        /// </summary>
+        public const string STREAMING_MODEL_ROOT = STREAMING_AI_ROOT + "/models";
+
+        /// <summary>
+        /// 内置 LLM 模型文件名
+        /// </summary>
+        public const string BUILTIN_LLM_MODEL_FILE = "Qwen2.5-0.5B-Instruct-Q8_0.gguf";
+
+        /// <summary>
+        /// 内置 LLM 模型在 StreamingAssets 下的相对路径
+        /// </summary>
+        public const string BUILTIN_LLM_MODEL_RELATIVE_PATH = STREAMING_MODEL_ROOT + "/" + BUILTIN_LLM_MODEL_FILE;
+
         // =============================================================================================================
 
         /// <summary>
