@@ -130,7 +130,7 @@ namespace LAB2D
                 { "NPC_LOCATION", profile != null ? profile.npcLocation : "未知" },
                 { "PERSONALITY", profile != null ? profile.personalityDescription : "友善" },
                 { "BACKGROUND", backgroundText },
-                { "SPEAKING_STYLE", profile != null ? profile.speakingStyle : "简洁" },
+                { "SPEAKING_STYLE", GetSpeakingStyleText(profile) },
                 { "MAX_SENTENCES", profile != null ? profile.maxSentences.ToString() : "3" },
                 { "WORLD_INFO", gameContext != null ? gameContext.ToWorldInfo() : string.Empty },
                 { "GAME_STATE", gameContext != null ? gameContext.ToPromptText() : string.Empty },
@@ -138,6 +138,20 @@ namespace LAB2D
             };
 
             return this.templateLoader.FillTemplate("SystemPromptTemplate", replacements);
+        }
+
+        private static string GetSpeakingStyleText(NPCPromptProfile profile)
+        {
+            string speakingStyle = profile == null ? "简洁" : profile.speakingStyle;
+            if (string.IsNullOrWhiteSpace(speakingStyle))
+            {
+                return "简洁";
+            }
+
+            speakingStyle = speakingStyle.Trim();
+            return speakingStyle.StartsWith("说话")
+                ? speakingStyle.Substring("说话".Length).Trim()
+                : speakingStyle;
         }
 
         private void LoadProfiles()

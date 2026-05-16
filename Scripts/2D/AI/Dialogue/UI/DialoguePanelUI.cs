@@ -28,7 +28,7 @@ namespace LAB2D
         private bool isWaitingResponse;
 
         /// <summary>
-        /// 确保 UI 实例存在（场景无预制体时自动创建）
+        /// Ensures the scene-authored UI instance is available.
         /// </summary>
         public static DialoguePanelUI Ensure()
         {
@@ -61,9 +61,20 @@ namespace LAB2D
                 }
             }
 
-            // 动态创建 UI 层级
-            CreateUIGameObject();
-            return Instance;
+            // Search inactive scene objects before reporting a missing scene setup.
+            foreach (DialoguePanelUI ui in Resources.FindObjectsOfTypeAll<DialoguePanelUI>())
+            {
+                if (ui != null && ui.gameObject.scene.IsValid())
+                {
+                    Instance = ui;
+                    return ui;
+                }
+            }
+
+            LogManager.Instance?.Log(
+                "DialoguePanelUI: scene instance is missing. Add DialoguePanelUI to Game.unity.",
+                LogManager.LogLevelEnum.Error);
+            return null;
         }
 
         public void Awake()
@@ -380,11 +391,7 @@ namespace LAB2D
                 rowRect.sizeDelta = new Vector2(0, 0);
             }
 
-            HorizontalLayoutGroup rowLayout = item.GetComponent<HorizontalLayoutGroup>();
-            if (rowLayout == null)
-            {
-                rowLayout = item.AddComponent<HorizontalLayoutGroup>();
-            }
+            HorizontalOrVerticalLayoutGroup rowLayout = GetOrAddHorizontalOrVerticalLayoutGroup(item);
 
             if (rowLayout == null)
             {
@@ -413,11 +420,7 @@ namespace LAB2D
             Transform bubble = FindChildTransform(item.transform, "Image");
             if (bubble == null)
             {
-                // 如果 prefab 中没有 "Image" 子节点，动态创建
-                GameObject bubbleGo = new GameObject("Image", typeof(RectTransform));
-                bubbleGo.transform.SetParent(item.transform, false);
-                bubbleGo.AddComponent<Image>();
-                bubble = bubbleGo.transform;
+                return null;
             }
 
             RectTransform bubbleRect = bubble.GetComponent<RectTransform>();
@@ -429,10 +432,11 @@ namespace LAB2D
                 bubbleRect.anchoredPosition = Vector2.zero;
             }
 
-            HorizontalLayoutGroup bubbleLayout = bubble.GetComponent<HorizontalLayoutGroup>();
+            HorizontalOrVerticalLayoutGroup bubbleLayout = GetOrAddHorizontalOrVerticalLayoutGroup(bubble.gameObject);
+
             if (bubbleLayout == null)
             {
-                bubbleLayout = bubble.gameObject.AddComponent<HorizontalLayoutGroup>();
+                return null;
             }
 
             bubbleLayout.padding = new RectOffset(16, 16, 10, 10);
@@ -519,6 +523,22 @@ namespace LAB2D
             return bubbleLayoutElement;
         }
 
+        private static HorizontalOrVerticalLayoutGroup GetOrAddHorizontalOrVerticalLayoutGroup(GameObject target)
+        {
+            HorizontalOrVerticalLayoutGroup layout = target.GetComponent<HorizontalOrVerticalLayoutGroup>();
+            if (layout != null)
+            {
+                return layout;
+            }
+
+            if (target.GetComponent<LayoutGroup>() != null)
+            {
+                return null;
+            }
+
+            return target.AddComponent<HorizontalLayoutGroup>();
+        }
+
         private float CalculateBubbleWidth(Text textComponent)
         {
             if (textComponent == null)
@@ -555,173 +575,6 @@ namespace LAB2D
                 Canvas.ForceUpdateCanvases();
                 this.scrollRect.verticalNormalizedPosition = 0f;
             }
-        }
-
-        private static void CreateUIGameObject()
-        {
-            // 找到 UI Canvas
-            Transform parent = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG)?.transform;
-            if (parent == null)
-            {
-                LogManager.Instance.Log("DialoguePanelUI: 未找到 UI Canvas", LogManager.LogLevelEnum.Error);
-                return;
-            }
-
-            // 创建主面板（仅占屏幕下方 1/3）
-            GameObject panelGo = new GameObject("DialoguePanelUI", typeof(RectTransform));
-            panelGo.transform.SetParent(parent, false);
-            RectTransform panelRt = panelGo.GetComponent<RectTransform>();
-            panelRt.anchorMin = new Vector2(0, 0);
-            panelRt.anchorMax = new Vector2(1, 0.42f);
-            panelRt.offsetMin = Vector2.zero;
-            panelRt.offsetMax = Vector2.zero;
-
-            // 半透明背景
-            Image bg = panelGo.AddComponent<Image>();
-            bg.color = new Color(0.05f, 0.06f, 0.07f, 0.92f);
-
-            // NpcName 文本
-            GameObject nameGo = CreateUIChild(panelRt, "NpcName");
-            RectTransform nameRt = nameGo.GetComponent<RectTransform>();
-            nameRt.anchorMin = new Vector2(0, 0.86f);
-            nameRt.anchorMax = new Vector2(1, 1);
-            nameRt.pivot = new Vector2(0.5f, 1);
-            nameRt.offsetMin = new Vector2(18, 0);
-            nameRt.offsetMax = new Vector2(-18, -2);
-            Text nameText = nameGo.AddComponent<Text>();
-            nameText.text = "NPC";
-            nameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            nameText.color = new Color(0.94f, 0.96f, 0.98f, 1f);
-            nameText.alignment = TextAnchor.MiddleLeft;
-            nameText.fontSize = 18;
-
-            // 聊天内容区域（ScrollView）
-            GameObject scrollGo = CreateUIChild(panelRt, "ScrollView");
-            RectTransform scrollRt = scrollGo.GetComponent<RectTransform>();
-            scrollRt.anchorMin = new Vector2(0, 0.22f);
-            scrollRt.anchorMax = new Vector2(1, 0.86f);
-            scrollRt.offsetMin = new Vector2(12, 4);
-            scrollRt.offsetMax = new Vector2(-12, -4);
-            ScrollRect scrollRect = scrollGo.AddComponent<ScrollRect>();
-            Image scrollBg = scrollGo.AddComponent<Image>();
-            scrollBg.color = new Color(0.09f, 0.10f, 0.12f, 0.72f);
-            Mask scrollMask = scrollGo.AddComponent<Mask>();
-            scrollMask.showMaskGraphic = false;
-
-            // Content
-            GameObject contentGo = CreateUIChild(scrollRt, "Content");
-            RectTransform contentRt = contentGo.GetComponent<RectTransform>();
-            contentRt.anchorMin = new Vector2(0, 1);
-            contentRt.anchorMax = new Vector2(1, 1);
-            contentRt.pivot = new Vector2(0, 1);
-            contentRt.anchoredPosition = Vector2.zero;
-            contentRt.sizeDelta = new Vector2(0, 0);
-            VerticalLayoutGroup layout = contentGo.AddComponent<VerticalLayoutGroup>();
-            layout.childAlignment = TextAnchor.UpperCenter;
-            layout.spacing = 8;
-            layout.padding = new RectOffset(8, 8, 8, 12);
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            ContentSizeFitter fitter = contentGo.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            scrollRect.content = contentRt;
-            scrollRect.horizontal = false;
-            scrollRect.vertical = true;
-
-            // 底部输入区域
-            GameObject bottomGo = CreateUIChild(panelRt, "BottomBar");
-            RectTransform bottomRt = bottomGo.GetComponent<RectTransform>();
-            bottomRt.anchorMin = new Vector2(0, 0);
-            bottomRt.anchorMax = new Vector2(1, 0.20f);
-            bottomRt.offsetMin = new Vector2(12, 8);
-            bottomRt.offsetMax = new Vector2(-12, -8);
-            Image bottomBg = bottomGo.AddComponent<Image>();
-            bottomBg.color = new Color(0.11f, 0.12f, 0.14f, 0.94f);
-
-            // InputField
-            GameObject inputGo = CreateUIChild(bottomRt, "Message");
-            RectTransform inputRt = inputGo.GetComponent<RectTransform>();
-            inputRt.anchorMin = Vector2.zero;
-            inputRt.anchorMax = new Vector2(0.74f, 1);
-            inputRt.offsetMin = new Vector2(8, 6);
-            inputRt.offsetMax = new Vector2(-6, -6);
-            Image inputBg = inputGo.AddComponent<Image>();
-            inputBg.color = new Color(0.95f, 0.96f, 0.94f, 1f);
-            InputField inputField = inputGo.AddComponent<InputField>();
-            GameObject inputTextGo = CreateUIChild(inputRt, "Text");
-            RectTransform inputTextRt = inputTextGo.GetComponent<RectTransform>();
-            inputTextRt.anchorMin = Vector2.zero;
-            inputTextRt.anchorMax = Vector2.one;
-            inputTextRt.offsetMin = new Vector2(5, 2);
-            inputTextRt.offsetMax = new Vector2(-5, -2);
-            Text inputText = inputTextGo.AddComponent<Text>();
-            inputText.text = string.Empty;
-            inputText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            inputText.fontSize = 16;
-            inputText.color = Color.black;
-            inputText.alignment = TextAnchor.MiddleLeft;
-            inputText.supportRichText = false;
-            inputField.textComponent = inputText;
-            GameObject placeholderGo = CreateUIChild(inputRt, "Placeholder");
-            RectTransform placeholderRt = placeholderGo.GetComponent<RectTransform>();
-            placeholderRt.anchorMin = Vector2.zero;
-            placeholderRt.anchorMax = Vector2.one;
-            placeholderRt.offsetMin = new Vector2(5, 2);
-            placeholderRt.offsetMax = new Vector2(-5, -2);
-            Text placeholderText = placeholderGo.AddComponent<Text>();
-            placeholderText.text = "输入对话...";
-            placeholderText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            placeholderText.fontSize = 16;
-            placeholderText.color = Color.gray;
-            placeholderText.alignment = TextAnchor.MiddleLeft;
-            inputField.placeholder = placeholderText;
-
-            // Send 按钮
-            GameObject sendGo = CreateUIChild(bottomRt, "Send");
-            RectTransform sendRt = sendGo.GetComponent<RectTransform>();
-            sendRt.anchorMin = new Vector2(0.76f, 0);
-            sendRt.anchorMax = new Vector2(0.88f, 1);
-            sendRt.offsetMin = new Vector2(0, 6);
-            sendRt.offsetMax = new Vector2(0, -6);
-            Image sendBg = sendGo.AddComponent<Image>();
-            sendBg.color = new Color(0.22f, 0.55f, 0.78f, 1f);
-            Button sendBtn = sendGo.AddComponent<Button>();
-            GameObject sendTextGo = CreateUIChild(sendRt, "Text");
-            RectTransform sendTextRt = sendTextGo.GetComponent<RectTransform>();
-            sendTextRt.anchorMin = Vector2.zero;
-            sendTextRt.anchorMax = Vector2.one;
-            Text sendLabel = sendTextGo.AddComponent<Text>();
-            sendLabel.text = "发送";
-            sendLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            sendLabel.fontSize = 14;
-            sendLabel.color = Color.white;
-            sendLabel.alignment = TextAnchor.MiddleCenter;
-
-            // Back 按钮
-            GameObject backGo = CreateUIChild(bottomRt, "Back");
-            RectTransform backRt = backGo.GetComponent<RectTransform>();
-            backRt.anchorMin = new Vector2(0.895f, 0);
-            backRt.anchorMax = new Vector2(1, 1);
-            backRt.offsetMin = new Vector2(0, 6);
-            backRt.offsetMax = new Vector2(-2, -6);
-            Image backBg = backGo.AddComponent<Image>();
-            backBg.color = new Color(0.34f, 0.34f, 0.38f, 1f);
-            Button backBtn = backGo.AddComponent<Button>();
-            GameObject backTextGo = CreateUIChild(backRt, "Text");
-            RectTransform backTextRt = backTextGo.GetComponent<RectTransform>();
-            backTextRt.anchorMin = Vector2.zero;
-            backTextRt.anchorMax = Vector2.one;
-            Text backLabel = backTextGo.AddComponent<Text>();
-            backLabel.text = "关闭";
-            backLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            backLabel.fontSize = 14;
-            backLabel.color = Color.white;
-            backLabel.alignment = TextAnchor.MiddleCenter;
-
-            panelGo.AddComponent<DialoguePanelUI>();
         }
 
         private static T FindChildComponent<T>(GameObject parent, string name)
@@ -761,13 +614,6 @@ namespace LAB2D
             }
 
             return null;
-        }
-
-        private static GameObject CreateUIChild(Transform parent, string name)
-        {
-            GameObject go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            return go;
         }
     }
 }

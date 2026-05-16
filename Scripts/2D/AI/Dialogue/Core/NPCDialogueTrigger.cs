@@ -32,7 +32,7 @@ namespace LAB2D
         public void SetProfile(string name)
         {
             this.profileName = name;
-            this.cachedProfile = PromptBuilder.Instance.GetProfile(name);
+            this.cachedProfile = CreateRuntimeProfile(PromptBuilder.Instance.GetProfile(name));
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace LAB2D
         /// </summary>
         public void SetProfile(NPCPromptProfile profile)
         {
-            this.cachedProfile = profile;
+            this.cachedProfile = CreateRuntimeProfile(profile);
             if (profile != null)
             {
                 this.profileName = profile.name;
@@ -56,7 +56,7 @@ namespace LAB2D
         {
             if (this.cachedProfile == null)
             {
-                this.cachedProfile = PromptBuilder.Instance.GetProfile(this.profileName);
+                this.cachedProfile = CreateRuntimeProfile(PromptBuilder.Instance.GetProfile(this.profileName));
             }
 
             if (this.cachedProfile == null)
@@ -98,7 +98,7 @@ namespace LAB2D
 
             if (this.cachedProfile == null)
             {
-                this.cachedProfile = PromptBuilder.Instance.GetProfile(this.profileName);
+                this.cachedProfile = CreateRuntimeProfile(PromptBuilder.Instance.GetProfile(this.profileName));
             }
 
             this.StartDialogue();
@@ -112,7 +112,6 @@ namespace LAB2D
         private void StartDialogue()
         {
             this.isDialogueOpen = true;
-
             // 回退：如果未找到配置，创建默认配置
             if (this.cachedProfile == null)
             {
@@ -129,9 +128,21 @@ namespace LAB2D
                 this.cachedProfile.npcName = this.gameObject.name;
             }
 
+            DialogueManager.Instance.RegisterDialogueWorker(this.npcId, this.GetComponent<AWorker>());
             DialogueManager.Instance.StartDialogue(this.npcId, this.cachedProfile);
             PanelController.Instance.Show(DialoguePanel.Instance);
-            DialoguePanelUI.Ensure().Open(this.npcId, this.cachedProfile);
+            DialoguePanelUI dialoguePanelUI = DialoguePanelUI.Ensure();
+            if (dialoguePanelUI == null)
+            {
+                LogManager.Instance?.Log(
+                    "NPCDialogueTrigger: DialoguePanelUI is missing from Game.unity.",
+                    LogManager.LogLevelEnum.Error);
+                DialogueManager.Instance.EndDialogue(this.npcId);
+                this.isDialogueOpen = false;
+                return;
+            }
+
+            dialoguePanelUI.Open(this.npcId, this.cachedProfile);
 
             DialogueManager.Instance.OnDialogueEnded += this.OnDialogueEndedHandler;
         }
@@ -143,6 +154,11 @@ namespace LAB2D
                 this.isDialogueOpen = false;
                 DialogueManager.Instance.OnDialogueEnded -= this.OnDialogueEndedHandler;
             }
+        }
+
+        private static NPCPromptProfile CreateRuntimeProfile(NPCPromptProfile profile)
+        {
+            return profile == null ? null : UnityEngine.Object.Instantiate(profile);
         }
 
 #if UNITY_EDITOR

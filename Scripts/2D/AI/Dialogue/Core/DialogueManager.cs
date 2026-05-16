@@ -16,6 +16,7 @@ namespace LAB2D
         private GameKnowledgeRetriever knowledgeRetriever => GameKnowledgeRetriever.Instance;
 
         private readonly Dictionary<string, DialogueSession> activeSessions = new Dictionary<string, DialogueSession>();
+        private readonly Dictionary<string, AWorker> dialogueWorkers = new Dictionary<string, AWorker>();
 
         /// <summary>
         /// 流式 token 回调（npcId, token）
@@ -80,6 +81,19 @@ namespace LAB2D
         }
 
         /// <summary>
+        /// 注册对话目标对应的 Worker，仅用于向 Prompt 注入该 Worker 自身数据。
+        /// </summary>
+        public void RegisterDialogueWorker(string npcId, AWorker worker)
+        {
+            if (string.IsNullOrEmpty(npcId) || worker == null)
+            {
+                return;
+            }
+
+            this.dialogueWorkers[npcId] = worker;
+        }
+
+        /// <summary>
         /// 发送玩家消息
         /// </summary>
         public async void SendMessage(string npcId, string playerInput)
@@ -100,11 +114,14 @@ namespace LAB2D
             session.AddPlayerMessage(playerInput);
             session.accumulatedResponse.Clear();
 
-            // 1. 收集游戏状态
-            GameStateContext gameContext = this.BuildGameStateContext(session.profile);
+            // 1. 收集当前对话 Worker 的自身状态
+            GameStateContext gameContext = this.BuildGameStateContext(npcId, session.profile);
 
             // 2. 获取对话历史
-            List<ChatMessage> history = this.memoryManager.GetRecentHistory(npcId, 6);
+            bool sendOnlyCurrentMessage = session.profile == null || session.profile.sendOnlyCurrentMessage;
+            List<ChatMessage> history = sendOnlyCurrentMessage
+                ? null
+                : this.memoryManager.GetRecentHistory(npcId, 6);
 
             // 3. RAG 检索
             List<GameKnowledgeEntry> ragResults = this.knowledgeRetriever.Retrieve(
@@ -163,6 +180,7 @@ namespace LAB2D
             {
                 session.isActive = false;
                 this.activeSessions.Remove(npcId);
+                this.dialogueWorkers.Remove(npcId);
 
                 LogManager.Instance.Log(
                     "DialogueManager: 结束对话 " + session.profile?.npcName,
@@ -186,75 +204,19 @@ namespace LAB2D
         /// </summary>
         public GameStateContext BuildGameStateContext(NPCPromptProfile profile)
         {
+            return this.BuildGameStateContext(string.Empty, profile);
+        }
+
+        /// <summary>
+        /// 构建当前对话 Worker 的自身状态上下文。
+        /// </summary>
+        public GameStateContext BuildGameStateContext(string npcId, NPCPromptProfile profile)
+        {
             GameStateContext context = new GameStateContext();
 
             try
             {
-                // ---- 玩家数据 ----
-                Player player = PlayerManager.Instance?.Mine;
-                if (player != null)
-                {
-                    context.playerName = player.name;
-                    context.playerLevel = player.CharacterDataLAB?.Level ?? 1;
-                    context.playerHp = player.CharacterDataLAB?.Hp ?? 100;
-                    context.playerMaxHp = player.CharacterDataLAB?.MaxHp ?? 100;
-                }
-
-                // ---- 天气 ----
-                if (WeatherManager.Instance != null)
-                {
-                    context.currentWeather = WeatherManager.Instance.CurrentWeather.ToString();
-                }
-
-                // ---- 环境 ----
-                if (EnvironmentManager.Instance != null)
-                {
-                    context.environmentTemperature = EnvironmentManager.Instance.Temperature;
-                    context.environmentHumidity = EnvironmentManager.Instance.Humidity;
-                    context.environmentEnergy = EnvironmentManager.Instance.CurEnergy;
-                    context.environmentMaxEnergy = EnvironmentManager.Instance.MaxEnergy;
-                }
-
-                // ---- 地图 ----
-                if (TileMap.Instance != null && TileMap.Instance.TileMapDataLAB != null)
-                {
-                    context.mapWidth = TileMap.Instance.TileMapDataLAB.Width;
-                    context.mapHeight = TileMap.Instance.TileMapDataLAB.Height;
-                }
-
-                // ---- 波次 ----
-                if (WaveManager.Instance != null)
-                {
-                    context.waveNumber = WaveManager.Instance.CurrentWaveIndex;
-                }
-
-                // ---- 工人聚合数据 ----
-                if (WorkerManager.Instance != null && WorkerManager.Instance.Characters != null)
-                {
-                    context.totalWorkerCount = WorkerManager.Instance.Characters.Count;
-                }
-
-                ColonyCommandCenterReport cmdReport = ColonyCommandCenterManager.Instance?.CurrentReport;
-                if (cmdReport != null)
-                {
-                    if (cmdReport.AssignmentReport != null)
-                    {
-                        context.idleWorkerCount = cmdReport.AssignmentReport.IdleWorkerCount;
-                        context.busyWorkerCount = cmdReport.AssignmentReport.BusyWorkerCount;
-                        context.criticalWorkerCount = cmdReport.AssignmentReport.CriticalWorkerCount;
-                        context.totalTaskCount = cmdReport.AssignmentReport.TotalTaskCount;
-                        context.blockedTaskCount = cmdReport.AssignmentReport.BlockedTaskCount;
-                    }
-
-                    if (cmdReport.SupplyReport != null)
-                    {
-                        context.hungryWorkerCount = cmdReport.SupplyReport.HungryWorkerCount;
-                        context.tiredWorkerCount = cmdReport.SupplyReport.TiredWorkerCount;
-                        context.workerWithoutBedCount = cmdReport.SupplyReport.WorkerWithoutBedCount;
-                    }
-                }
-
-                context.npcFavorability = profile != null ? profile.initialFavorability : 50;
+                this.FillWorkerContext(context, npcId);
             }
             catch (Exception e)
             {
@@ -264,6 +226,195 @@ namespace LAB2D
             }
 
             return context;
+        }
+
+        private void FillWorkerContext(GameStateContext context, string npcId)
+        {
+            if (context == null)
+            {
+                return;
+            }
+
+            context.workerDetails.Clear();
+            AWorker worker = this.GetDialogueWorker(npcId);
+            if (worker == null)
+            {
+                return;
+            }
+
+            if (!WorkerConditionTool.TryGetWorkerData(worker, out AWorker.WorkerData workerData))
+            {
+                return;
+            }
+
+            WorkerConditionState conditionState = WorkerConditionTool.GetState(workerData);
+            context.workerDetails.Add(this.BuildWorkerPromptInfo(worker, workerData, conditionState));
+        }
+
+        private AWorker GetDialogueWorker(string npcId)
+        {
+            if (!string.IsNullOrEmpty(npcId) &&
+                this.dialogueWorkers.TryGetValue(npcId, out AWorker worker) &&
+                worker != null)
+            {
+                return worker;
+            }
+
+            return null;
+        }
+
+        private GameStateContext.WorkerPromptInfo BuildWorkerPromptInfo(
+            AWorker worker,
+            AWorker.WorkerData workerData,
+            WorkerConditionState conditionState)
+        {
+            Vector3Int posMap = TileMap.Instance == null
+                ? Vector3Int.zero
+                : TileMap.Instance.WorldPosToMapPos(worker.transform.position);
+
+            return new GameStateContext.WorkerPromptInfo
+            {
+                workerName = worker.name,
+                level = workerData.Level,
+                hp = workerData.Hp,
+                maxHp = workerData.MaxHp,
+                positionText = FormatMapPos(posMap),
+                conditionText = WorkerConditionTool.GetStateName(conditionState),
+                stateText = worker.Manager == null
+                    ? workerData.CurrentStateType.ToString()
+                    : worker.Manager.CurrentStateType.ToString(),
+                hungry = workerData.CurHungry,
+                maxHungry = workerData.MaxHungry,
+                tired = workerData.CurTired,
+                maxTired = workerData.MaxTired,
+                hasBed = worker.BedItem != null,
+                taskText = BuildWorkerTaskText(workerData.Task),
+                equipmentText = BuildWorkerEquipmentText(workerData),
+                isSeeking = worker.Seek != null && worker.Seek.IsSeeking(),
+                seekTargetText = worker.Seek == null ? string.Empty : FormatMapPos(worker.Seek.TargetMap),
+                enabledTaskText = BuildEnabledTaskText(workerData.TaskToggle),
+            };
+        }
+
+        private static string BuildWorkerTaskText(AWorkerTask task)
+        {
+            if (task == null)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            sb.Append(WorkerTaskSummaryTool.GetTaskDisplayName(task.TaskType));
+            if (!string.IsNullOrEmpty(task.Name) && task.Name != task.TaskType.ToString())
+            {
+                sb.Append('/');
+                sb.Append(task.Name);
+            }
+
+            if (task.TaskId > 0)
+            {
+                sb.Append("(ID");
+                sb.Append(task.TaskId);
+                sb.Append(')');
+            }
+
+            if (task.TargetMap != null)
+            {
+                sb.Append('@');
+                sb.Append(FormatMapPos(task.TargetMap));
+            }
+
+            return sb.ToString();
+        }
+
+        private static string BuildWorkerEquipmentText(AWorker.WorkerData workerData)
+        {
+            if (workerData == null)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            if (workerData.Weapon != null)
+            {
+                AppendEquipmentName(sb, "武器", workerData.Weapon.Id);
+            }
+
+            Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments = workerData.GetEquipments();
+            if (equipments != null)
+            {
+                foreach (KeyValuePair<AEquipment.EquipTypeEnum, AEquipment> pair in equipments)
+                {
+                    if (pair.Value == null)
+                    {
+                        continue;
+                    }
+
+                    AppendEquipmentName(sb, EquipmentLootTool.GetSlotName(pair.Key), pair.Value.Id);
+                }
+            }
+
+            return sb.Length == 0 ? "无" : sb.ToString();
+        }
+
+        private static void AppendEquipmentName(StringBuilder sb, string slotName, int itemId)
+        {
+            if (sb.Length > 0)
+            {
+                sb.Append('/');
+            }
+
+            string itemName = "未知装备";
+            if (ItemDataManager.Instance != null)
+            {
+                ItemData itemData = ItemDataManager.Instance.GetById(itemId);
+                if (itemData != null && !string.IsNullOrEmpty(itemData.CnName))
+                {
+                    itemName = itemData.CnName;
+                }
+            }
+
+            sb.Append(slotName);
+            sb.Append(':');
+            sb.Append(itemName);
+        }
+
+        private static string BuildEnabledTaskText(bool[] taskToggle)
+        {
+            if (taskToggle == null)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            foreach (AWorkerTask.WorkerTaskTypeEnum taskType in
+                Enum.GetValues(typeof(AWorkerTask.WorkerTaskTypeEnum)))
+            {
+                int index = (int)taskType;
+                if (index < 0 || index >= taskToggle.Length || !taskToggle[index])
+                {
+                    continue;
+                }
+
+                if (sb.Length > 0)
+                {
+                    sb.Append('/');
+                }
+
+                sb.Append(WorkerTaskSummaryTool.GetTaskDisplayName(taskType));
+            }
+
+            return sb.ToString();
+        }
+
+        private static string FormatMapPos(Vector3Int posMap)
+        {
+            return "(" + posMap.x + "," + posMap.y + ")";
+        }
+
+        private static string FormatMapPos(Vector3IntLAB posMap)
+        {
+            return posMap == null ? string.Empty : "(" + posMap.X + "," + posMap.Y + ")";
         }
 
         /// <summary>
