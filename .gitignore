@@ -14,7 +14,7 @@
 !/.gitarchive/
 !/.gitarchive/*.ps1
 !/.commit-archive/
-!/.commit-archive/ProjectSnapshot.zip.aes
+/.commit-archive/ProjectSnapshot.zip.aes
 
 # Track Unity .meta files across the project, except explicitly private folders below.
 !**/*.meta
