@@ -9,6 +9,7 @@
     /// <summary>
     /// 渲染更新 Update,不受Time.timeScale影响;Time.deltaTime,受Time.timeScale影响
     /// 物理更新 FixedUpdate,受Time.timeScale影响.
+    /// 动作: Direction -> 0-Up 1-Right 2-Down 3-Left Action -> 0-Walk 1-Run 2-Idle
     /// </summary>
     public class Player : Character
     {
@@ -18,6 +19,20 @@
         private CameraMove miniCamera;
         private SpriteRenderer sprite;
         private Rigidbody2D rg;
+
+        /// <summary>
+        /// 奔跑速度倍率，默认1.6倍
+        /// </summary>
+        private float runSpeedMultiplier = 1.6f;
+
+        /// <summary>
+        /// 奔跑速度倍率，可运行时动态调整
+        /// </summary>
+        public float RunSpeedMultiplier
+        {
+            get => this.runSpeedMultiplier;
+            set => this.runSpeedMultiplier = Mathf.Max(1f, value);
+        }
 
         /// <summary>
         /// 受击无敌帧持续时间（秒），默认0.5秒，设为0可禁用无敌帧
@@ -381,13 +396,12 @@
                     this.miniCamera.Character = this;
                 }
 
-                this.animator.SetBool("IsMove", true);
+                bool isRunning = Input.GetKey(InputKeyConstant.Run);
+                this.animator.SetInteger("Action", isRunning ? 1 : 0);
 
-                // 按键控制玩家
-                this.direction.x = Input.GetAxisRaw("Horizontal"); // 在Game面板
+                this.direction.x = Input.GetAxisRaw("Horizontal");
                 this.direction.y = Input.GetAxisRaw("Vertical");
 
-                // 摇杆控制玩家
                 if (this.direction.x == 0 && this.direction.y == 0 && Joystick.Instance != null)
                 {
                     this.direction.x = Joystick.Instance.Direction.x;
@@ -396,33 +410,34 @@
 
                 if (this.direction.y > 0)
                 {
-                    // 上
                     this.animator.SetInteger("Direction", 0);
-                }
-                else if (this.direction.y < 0)
-                {
-                    // 下
-                    this.animator.SetInteger("Direction", 1);
-                }
-                else if (this.direction.x < 0)
-                {
-                    // 左
-                    this.animator.SetInteger("Direction", 2);
                 }
                 else if (this.direction.x > 0)
                 {
-                    // 右
+                    this.animator.SetInteger("Direction", 1);
+                }
+                else if (this.direction.y < 0)
+                {
+                    this.animator.SetInteger("Direction", 2);
+                }
+                else if (this.direction.x < 0)
+                {
                     this.animator.SetInteger("Direction", 3);
                 }
 
                 float speed = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this, this.MoveSpeed);
                 // A004：波间奖励移动强化在天气倍率之后应用，避免覆盖天气玩法的减速/增益。
                 speed = WaveBossRewardManager.Instance.GetAdjustedPlayerMoveSpeed(this, speed);
+                if (isRunning)
+                {
+                    speed *= this.runSpeedMultiplier;
+                }
+
                 this.rg.velocity = speed * this.direction.normalized;
             }
             else
             {
-                this.animator.SetBool("IsMove", false);
+                this.animator.SetInteger("Action", 2);
                 this.rg.velocity = Vector3.zero;
             }
         }

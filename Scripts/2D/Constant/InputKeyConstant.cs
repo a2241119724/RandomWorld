@@ -39,6 +39,13 @@ namespace LAB2D
         /// </summary>
         public const KeyCode MoveDown = KeyCode.S;
 
+        /// <summary>
+        /// 玩家奔跑键 (左Shift)
+        /// 按住Shift时玩家移动速度切换为奔跑状态（Action=1），松开恢复行走（Action=0）。
+        /// 仅在移动中生效。
+        /// </summary>
+        public const KeyCode Run = KeyCode.LeftShift;
+
         #endregion
 
         #region 通用面板操作
@@ -243,6 +250,7 @@ namespace LAB2D
 
 【玩家移动】
   W/A/S/D  —— 上下左右移动
+  Shift    —— 按住奔跑（移动中生效）
   摇杆      —— 备选移动方式
 
 【通用操作】
