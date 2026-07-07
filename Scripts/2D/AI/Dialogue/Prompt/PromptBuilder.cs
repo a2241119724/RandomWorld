@@ -1,7 +1,6 @@
 namespace LAB2D
 {
     using System.Collections.Generic;
-    using System.Text;
     using UnityEngine;
 
     /// <summary>
@@ -11,11 +10,13 @@ namespace LAB2D
     {
         private Dictionary<string, NPCPromptProfile> profileCache;
         private PromptTemplateLoader templateLoader;
+        private PromptAssemblyService promptAssemblyService;
 
         public PromptBuilder()
         {
             this.LoadProfiles();
             this.templateLoader = new PromptTemplateLoader();
+            this.promptAssemblyService = new PromptAssemblyService(this.templateLoader.FillTemplate);
         }
 
         /// <summary>
@@ -45,28 +46,31 @@ namespace LAB2D
             GameStateContext gameContext,
             List<GameKnowledgeEntry> ragResults)
         {
-            List<ChatMessage> messages = new List<ChatMessage>();
+            return this.promptAssemblyService.BuildMessages(
+                ToModel(profile),
+                playerInput,
+                history,
+                gameContext != null ? gameContext.ToWorldInfo() : string.Empty,
+                gameContext != null ? gameContext.ToPromptText() : string.Empty,
+                ToKnowledgeTexts(ragResults));
 
             // 1. 系统消息（使用模板填充）
-            string systemContent = this.BuildSystemPrompt(profile, gameContext, ragResults);
-            messages.Add(new ChatMessage("system", systemContent));
 
             // 2. 对话历史
-            if (history != null)
-            {
-                messages.AddRange(history);
-            }
 
             // 3. 当前玩家输入
-            messages.Add(new ChatMessage("user", playerInput));
-
-            return messages;
         }
 
         /// <summary>
         /// 组装对话摘要的系统消息（用于长期记忆压缩）
         /// </summary>
         public List<ChatMessage> BuildSummaryMessages(List<ChatMessage> dialogueToSummarize)
+        {
+            return this.promptAssemblyService.BuildSummaryMessages(dialogueToSummarize);
+        }
+
+        /*
+        public List<ChatMessage> BuildSummaryMessagesLegacy(List<ChatMessage> dialogueToSummarize)
         {
             if (dialogueToSummarize == null || dialogueToSummarize.Count == 0)
             {
@@ -98,6 +102,47 @@ namespace LAB2D
             };
         }
 
+        */
+
+        private static DialoguePromptProfileModel ToModel(NPCPromptProfile profile)
+        {
+            if (profile == null)
+            {
+                return DialoguePromptProfileModel.CreateDefault();
+            }
+
+            return new DialoguePromptProfileModel
+            {
+                NpcName = profile.npcName,
+                NpcRole = profile.npcRole,
+                NpcLocation = profile.npcLocation,
+                PersonalityDescription = profile.personalityDescription,
+                BackgroundStory = profile.backgroundStory,
+                SpeakingStyle = profile.speakingStyle,
+                MaxSentences = profile.maxSentences,
+            };
+        }
+
+        private static List<string> ToKnowledgeTexts(List<GameKnowledgeEntry> ragResults)
+        {
+            List<string> knowledgeTexts = new List<string>();
+            if (ragResults == null)
+            {
+                return knowledgeTexts;
+            }
+
+            foreach (GameKnowledgeEntry entry in ragResults)
+            {
+                if (entry != null)
+                {
+                    knowledgeTexts.Add(entry.ToPromptText());
+                }
+            }
+
+            return knowledgeTexts;
+        }
+
+        /*
         private string BuildSystemPrompt(
             NPCPromptProfile profile,
             GameStateContext gameContext,
@@ -153,6 +198,8 @@ namespace LAB2D
                 ? speakingStyle.Substring("说话".Length).Trim()
                 : speakingStyle;
         }
+
+        */
 
         private void LoadProfiles()
         {
