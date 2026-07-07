@@ -12,11 +12,13 @@
         private readonly List<Dictionary<AWorkerTask, bool>> tasks; // 所有任务(list中越靠前优先级越大), TODO分离正在做的任务
         private readonly List<WorkerHungryTask> hungryTasks; // 饥饿任务与pos挂钩，TODO与worker数量挂钩
         private readonly List<WorkerWearTask> wearTasks;
+        private readonly WorkerTaskAssignmentService<AWorkerTask> assignmentService;
         private KDTree taskTree = new KDTree();
 
         public WorkerTaskManager()
         {
             this.tasks = new List<Dictionary<AWorkerTask, bool>>();
+            this.assignmentService = new WorkerTaskAssignmentService<AWorkerTask>();
             for (int i = 0; i < 4; i++)
             {
                 this.tasks.Add(new Dictionary<AWorkerTask, bool>());
@@ -61,51 +63,24 @@
                     continue;
                 }
 
-                foreach (Dictionary<AWorkerTask, bool> task in this.tasks)
+                for (int priority = 0; priority < this.tasks.Count; priority++)
                 {
-                    AWorkerTask closedTask = null;
-                    float minDistance = 999999.0f;
-                    foreach (AWorkerTask task1 in task.Keys)
-                    {
-                        // 该任务是否正在被做
-                        if (task[task1])
-                        {
-                            continue;
-                        }
-
-                        // 是否满足做任务的基础条件
-                        if (!task1.IsCanWork(worker))
-                        {
-                            continue;
-                        }
-
-                        if (closedTask == null)
-                        {
-                            minDistance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.X, 2) +
-                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.Y, 2);
-                            closedTask = task1;
-                        }
-                        else
-                        {
-                            float distance = Mathf.Pow(worker.transform.position.y - task1.TargetMap.X, 2) +
-                                Mathf.Pow(worker.transform.position.x - task1.TargetMap.Y, 2);
-                            if (distance < minDistance)
-                            {
-                                minDistance = distance;
-                                closedTask = task1;
-                            }
-                        }
-                    }
+                    WorkerTaskAssignmentResult<AWorkerTask> assignment =
+                        this.assignmentService.SelectTask(
+                            this.CreateWorkerSnapshot(worker, workerData.Task == null),
+                            this.CreateTaskSnapshots(priority, worker));
 
                     // 获得任务
-                    if (closedTask != null)
+                    if (assignment.HasTask)
                     {
+                        AWorkerTask closedTask = assignment.Task;
+
                         // 先设置任务
                         workerData.Task = closedTask;
                         closedTask.Start(worker);
                         if (workerData.Task == closedTask)
                         {
-                            task[closedTask] = true;
+                            this.tasks[assignment.Priority][closedTask] = true;
                         }
 
                         DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
@@ -113,6 +88,34 @@
                     }
                 }
             }
+        }
+
+        private WorkerAgentSnapshot CreateWorkerSnapshot(AWorker worker, bool isIdle)
+        {
+            return new WorkerAgentSnapshot(
+                worker.GetInstanceID(),
+                new GameVector2(worker.transform.position.y, worker.transform.position.x),
+                isIdle,
+                worker.IsDialoguePaused);
+        }
+
+        private List<WorkerTaskSnapshot<AWorkerTask>> CreateTaskSnapshots(int priority, AWorker worker)
+        {
+            List<WorkerTaskSnapshot<AWorkerTask>> result = new ();
+            Dictionary<AWorkerTask, bool> taskGroup = this.tasks[priority];
+            foreach (KeyValuePair<AWorkerTask, bool> taskPair in taskGroup)
+            {
+                AWorkerTask task = taskPair.Key;
+                result.Add(new WorkerTaskSnapshot<AWorkerTask>(
+                    task,
+                    task.TaskId,
+                    priority,
+                    new GameVector2(task.TargetMap.X, task.TargetMap.Y),
+                    taskPair.Value,
+                    () => task.IsCanWork(worker)));
+            }
+
+            return result;
         }
 
         /// <summary>

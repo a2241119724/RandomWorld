@@ -1,0 +1,26 @@
+namespace LAB2D
+{
+    /// <summary>
+    /// Read-only Worker state used by task assignment rules.
+    /// </summary>
+    public sealed class WorkerAgentSnapshot
+    {
+        public WorkerAgentSnapshot(long workerId, GameVector2 position, bool isIdle, bool isPaused)
+        {
+            this.WorkerId = workerId;
+            this.Position = position;
+            this.IsIdle = isIdle;
+            this.IsPaused = isPaused;
+        }
+
+        public long WorkerId { get; }
+
+        public GameVector2 Position { get; }
+
+        public bool IsIdle { get; }
+
+        public bool IsPaused { get; }
+
+        public bool CanReceiveTask => this.IsIdle && !this.IsPaused;
+    }
+}
