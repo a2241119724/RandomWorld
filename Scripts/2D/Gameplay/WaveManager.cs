@@ -61,7 +61,7 @@ namespace LAB2D
         {
             get
             {
-                return 1.0f + (this.TotalWavesCompleted * this.Config.difficultyScalePerWave);
+                return this.waveRuleService.GetDifficultyScale(this.TotalWavesCompleted, this.CreateWaveConfigModel());
             }
         }
 
@@ -93,6 +93,7 @@ namespace LAB2D
         private Coroutine waveCoroutine;
         private int enemiesAliveBeforeWave;
         private int enemiesSpawnedThisWave;
+        private readonly WaveRuleService waveRuleService = new WaveRuleService();
 
         /// <summary>
         /// 启动波次系统（接管敌人生成控制权）
@@ -168,7 +169,7 @@ namespace LAB2D
             while (true)
             {
                 // 检查是否达到总波次上限
-                if (this.Config.totalWaves > 0 && this.TotalWavesCompleted >= this.Config.totalWaves)
+                if (this.waveRuleService.AreAllWavesCleared(this.TotalWavesCompleted, this.CreateWaveConfigModel()))
                 {
                     this.OnAllWavesCleared?.Invoke(this.TotalWavesCompleted);
                     this.StopWaves();
@@ -287,7 +288,7 @@ namespace LAB2D
         /// </summary>
         private int GetEnemyCountForWave(int waveIndex)
         {
-            return Mathf.Max(1, this.Config.baseEnemyCount + ((waveIndex - 1) * this.Config.enemiesPerWaveIncrease));
+            return this.waveRuleService.GetEnemyCountForWave(waveIndex, this.CreateWaveConfigModel());
         }
 
         /// <summary>
@@ -301,13 +302,28 @@ namespace LAB2D
 
         private int GetEffectiveMaxAliveEnemies()
         {
-            int maxAliveEnemies = this.Config.maxAliveEnemies;
+            int runtimeMaxEnemyCount = 0;
             if (EnemyManager.Instance != null && EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount > 0)
             {
-                maxAliveEnemies = Mathf.Min(maxAliveEnemies, EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount);
+                runtimeMaxEnemyCount = EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount;
             }
 
-            return Mathf.Max(1, maxAliveEnemies);
+            return this.waveRuleService.GetEffectiveMaxAliveEnemies(this.Config.maxAliveEnemies, runtimeMaxEnemyCount);
+        }
+
+        /// <summary>
+        /// 创建供纯规则服务使用的波次配置模型。
+        /// </summary>
+        private WaveConfigModel CreateWaveConfigModel()
+        {
+            return new WaveConfigModel
+            {
+                BaseEnemyCount = this.Config.baseEnemyCount,
+                EnemiesPerWaveIncrease = this.Config.enemiesPerWaveIncrease,
+                MaxAliveEnemies = this.Config.maxAliveEnemies,
+                TotalWaves = this.Config.totalWaves,
+                DifficultyScalePerWave = this.Config.difficultyScalePerWave,
+            };
         }
 
         /// <summary>
