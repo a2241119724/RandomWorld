@@ -17,22 +17,6 @@ namespace LAB2D
     [Serializable]
     public class SessionResultData
     {
-        /// <summary>
-        /// 评分等级阈值：S >= 8000, A >= 6000, B >= 4000, C >= 2000, D < 2000
-        /// </summary>
-        private const int ScoreGradeS = 8000;
-        private const int ScoreGradeA = 6000;
-        private const int ScoreGradeB = 4000;
-        private const int ScoreGradeC = 2000;
-
-        /// <summary>
-        /// 星级阈值：5星 >= 8000, 4星 >= 6000, 3星 >= 4000, 2星 >= 2000, 1星 < 2000
-        /// </summary>
-        private const int Star5Score = 8000;
-        private const int Star4Score = 6000;
-        private const int Star3Score = 4000;
-        private const int Star2Score = 2000;
-
         // ---- 基础信息 ----
 
         /// <summary>会话时长（秒）</summary>
@@ -97,6 +81,8 @@ namespace LAB2D
         /// <summary>存活状态（玩家死亡次数为0视为存活通关）</summary>
         public bool HasSurvived;
 
+        private static readonly SessionResultRuleService RuleService = new SessionResultRuleService();
+
         // ---- 详细统计 ----
 
         /// <summary>按敌人类型分组的击杀统计</summary>
@@ -156,97 +142,24 @@ namespace LAB2D
         /// </summary>
         private void CalculateDerivedStats()
         {
-            // 暴击率：暴击次数 / (总造成伤害次数)，用伤害值粗略估算
-            int estimatedHitCount = this.TotalDamageDealt > 0
-                ? Math.Max(1, this.TotalDamageDealt / 10)
-                : 0;
-            this.CriticalHitRate = estimatedHitCount > 0
-                ? Math.Min(100f, (float)this.CriticalHitCount / estimatedHitCount * 100f)
-                : 0f;
+            this.CriticalHitRate = RuleService.CalculateCriticalHitRate(
+                this.CriticalHitCount,
+                this.TotalDamageDealt);
 
-            // 伤害效率：输出/承受比
-            this.DamageEfficiency = this.TotalDamageTaken > 0
-                ? (float)this.TotalDamageDealt / this.TotalDamageTaken
-                : (float)this.TotalDamageDealt; // 无伤时效率取输出值
+            this.DamageEfficiency = RuleService.CalculateDamageEfficiency(
+                this.TotalDamageDealt,
+                this.TotalDamageTaken);
 
-            // ---- 战斗评分（满分 10000） ----
+            this.CombatScore = RuleService.CalculateCombatScore(
+                this.TotalDefeatedEnemyCount,
+                this.MaxCombo,
+                this.HasSurvived,
+                this.PlayerDeathCount,
+                this.DamageEfficiency,
+                this.TotalCollectedItemCount);
 
-            float score = 0f;
-
-            // 1. 击杀分 (35%, 上限 3500)
-            float killScore = Math.Min(this.TotalDefeatedEnemyCount * 100f, 3500f);
-            score += killScore;
-
-            // 2. 连击分 (25%, 上限 2500)
-            float comboScore = Math.Min(this.MaxCombo * 50f, 2500f);
-            score += comboScore;
-
-            // 3. 生存分 (20%, 上限 2000)
-            float survivalScore = 0f;
-            if (this.HasSurvived)
-            {
-                survivalScore += 2000f;
-            }
-            else
-            {
-                survivalScore = Math.Max(0f, 2000f - (this.PlayerDeathCount * 500f));
-            }
-
-            score += survivalScore;
-
-            // 4. 效率分 (15%, 上限 1500)
-            float efficiencyScore = Math.Min(this.DamageEfficiency * 300f, 1500f);
-            score += efficiencyScore;
-
-            // 5. 收集分 (5%, 上限 500)
-            float collectionScore = Math.Min(this.TotalCollectedItemCount * 5f, 500f);
-            score += collectionScore;
-
-            this.CombatScore = new GameplaySessionStatsRuleService().ToClampedScore(score, 0, 10000);
-
-            // ---- 星级评价 ----
-            if (this.CombatScore >= Star5Score)
-            {
-                this.StarRating = 5;
-            }
-            else if (this.CombatScore >= Star4Score)
-            {
-                this.StarRating = 4;
-            }
-            else if (this.CombatScore >= Star3Score)
-            {
-                this.StarRating = 3;
-            }
-            else if (this.CombatScore >= Star2Score)
-            {
-                this.StarRating = 2;
-            }
-            else
-            {
-                this.StarRating = 1;
-            }
-
-            // ---- 等级评级 ----
-            if (this.CombatScore >= ScoreGradeS)
-            {
-                this.GradeText = "S";
-            }
-            else if (this.CombatScore >= ScoreGradeA)
-            {
-                this.GradeText = "A";
-            }
-            else if (this.CombatScore >= ScoreGradeB)
-            {
-                this.GradeText = "B";
-            }
-            else if (this.CombatScore >= ScoreGradeC)
-            {
-                this.GradeText = "C";
-            }
-            else
-            {
-                this.GradeText = "D";
-            }
+            this.StarRating = RuleService.GetStarRating(this.CombatScore);
+            this.GradeText = RuleService.GetGradeText(this.CombatScore);
         }
 
         /// <summary>
