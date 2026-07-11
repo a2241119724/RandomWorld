@@ -30,6 +30,8 @@ namespace LAB2D
         /// <summary>待弹窗展示的解锁成就队列</summary>
         private readonly Queue<AchievementData> pendingUnlockQueue = new Queue<AchievementData>();
 
+        private readonly AchievementRuleService ruleService = new AchievementRuleService();
+
         /// <summary>总成就点数（所有已解锁成就的点数和）</summary>
         private int totalPointsEarned;
 
@@ -227,7 +229,7 @@ namespace LAB2D
 
             // 生存 - 存活时间（从会话开始时间计算）
             float sessionTime = Time.time;
-            int minutes = Mathf.FloorToInt(sessionTime / 60f);
+            int minutes = this.ruleService.GetElapsedMinutes(sessionTime);
             anyChanged |= this.UpdateAchievement("survival_time_30", minutes);
 
             // 生存 - 等级（从玩家数据读取）
@@ -271,7 +273,7 @@ namespace LAB2D
             }
 
             // 限制进度不超过目标值
-            int clamped = Mathf.Min(newProgress, data.TargetValue);
+            int clamped = this.ruleService.ClampProgressToTarget(newProgress, data.TargetValue);
             if (clamped == data.CurrentProgress)
             {
                 return false;

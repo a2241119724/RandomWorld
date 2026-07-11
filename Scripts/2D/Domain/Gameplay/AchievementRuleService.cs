@@ -1,0 +1,23 @@
+namespace LAB2D
+{
+    /// <summary>
+    /// Pure arithmetic rules for achievement progress.
+    /// </summary>
+    public sealed class AchievementRuleService
+    {
+        public int GetElapsedMinutes(float elapsedSeconds)
+        {
+            if (elapsedSeconds <= 0.0f)
+            {
+                return 0;
+            }
+
+            return (int)(elapsedSeconds / 60.0f);
+        }
+
+        public int ClampProgressToTarget(int progress, int target)
+        {
+            return progress < target ? progress : target;
+        }
+    }
+}
