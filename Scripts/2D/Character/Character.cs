@@ -42,6 +42,7 @@
 
         private Color originalColor; // 原来的自身颜色
         private readonly DamageCalculator damageCalculator = new DamageCalculator();
+        private readonly LevelProgressionService levelProgressionService = new LevelProgressionService();
 
         /// <summary>
         /// 当前装备的武器物体
@@ -169,14 +170,17 @@
         public virtual void AddExperienceValue(int experience)
         {
             GameplaySessionStats.Instance.RecordExperienceGained(experience);
-            this.CharacterDataLAB.CurExperience += experience;
+            LevelProgressionResult result = this.levelProgressionService.AddExperience(
+                this.CharacterDataLAB.CurExperience,
+                this.CharacterDataLAB.MaxExperience,
+                this.CharacterDataLAB.Level,
+                experience);
+            this.CharacterDataLAB.CurExperience = result.CurrentExperience;
+            this.CharacterDataLAB.MaxExperience = result.MaxExperience;
+            this.CharacterDataLAB.Level = result.Level;
 
-            // 升级
-            if (this.CharacterDataLAB.CurExperience / this.CharacterDataLAB.MaxExperience >= 1)
+            if (result.LeveledUp)
             {
-                ++this.CharacterDataLAB.Level;
-                this.CharacterDataLAB.CurExperience %= this.CharacterDataLAB.MaxExperience;
-                this.CharacterDataLAB.MaxExperience *= 2;
                 GlobalInit.Instance.ShowTip("UP " + this.CharacterDataLAB.Level);
                 this.CharacterDataLAB.ComputeAttribute();
             }
