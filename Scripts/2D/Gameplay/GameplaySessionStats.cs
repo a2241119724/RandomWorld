@@ -14,6 +14,7 @@ namespace LAB2D
         private const float DefaultComboTimeout = 4.0f;
         private const int ItemTypeIdInterval = 100000;
 
+        private readonly GameplaySessionStatsRuleService ruleService;
         private readonly Dictionary<int, int> collectedItemsById;
         private readonly Dictionary<string, int> collectedItemsBySource;
         private readonly Dictionary<AItem.ItemTypeEnum, int> collectedItemsByType;
@@ -38,6 +39,7 @@ namespace LAB2D
 
         public GameplaySessionStats()
         {
+            this.ruleService = new GameplaySessionStatsRuleService();
             this.collectedItemsById = new Dictionary<int, int>();
             this.collectedItemsBySource = new Dictionary<string, int>();
             this.collectedItemsByType = new Dictionary<AItem.ItemTypeEnum, int>();
@@ -59,7 +61,7 @@ namespace LAB2D
 
             set
             {
-                this.comboTimeout = Mathf.Max(0.1f, value);
+                this.comboTimeout = this.ruleService.ClampComboTimeout(value);
             }
         }
 
@@ -142,7 +144,7 @@ namespace LAB2D
 
         public void RecordDamageDealt(float damage, bool isCritical)
         {
-            int damageValue = Mathf.Max(0, Mathf.RoundToInt(damage));
+            int damageValue = this.ruleService.ToRecordedDamage(damage);
             if (damageValue == 0)
             {
                 return;
@@ -159,7 +161,7 @@ namespace LAB2D
 
         public void RecordDamageTaken(float damage)
         {
-            int damageValue = Mathf.Max(0, Mathf.RoundToInt(damage));
+            int damageValue = this.ruleService.ToRecordedDamage(damage);
             if (damageValue == 0)
             {
                 return;
@@ -193,7 +195,7 @@ namespace LAB2D
         {
             return new GameplaySessionStatsSnapshot
             {
-                SessionDuration = Mathf.Max(0.0f, Time.realtimeSinceStartup - this.sessionStartRealtime),
+                SessionDuration = this.ruleService.GetSessionDuration(Time.realtimeSinceStartup, this.sessionStartRealtime),
                 CriticalHitCount = this.criticalHitCount,
                 CurrentCombo = this.currentCombo,
                 MaxCombo = this.maxCombo,
@@ -236,17 +238,13 @@ namespace LAB2D
         private void UpdateCombo()
         {
             float now = Time.realtimeSinceStartup;
-            if (now - this.lastDefeatRealtime <= this.comboTimeout)
-            {
-                this.currentCombo++;
-            }
-            else
-            {
-                this.currentCombo = 1;
-            }
-
+            this.currentCombo = this.ruleService.GetNextCombo(
+                now,
+                this.lastDefeatRealtime,
+                this.comboTimeout,
+                this.currentCombo);
             this.lastDefeatRealtime = now;
-            this.maxCombo = Mathf.Max(this.maxCombo, this.currentCombo);
+            this.maxCombo = this.ruleService.GetMaxCombo(this.maxCombo, this.currentCombo);
         }
 
         private AItem.ItemTypeEnum ResolveItemType(int itemId)
