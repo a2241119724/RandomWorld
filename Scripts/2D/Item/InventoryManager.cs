@@ -16,6 +16,7 @@
         private readonly int capacity = 1000; // 单个cell的容量
         private readonly InventoryStackingService stackingService;
         private readonly InventoryFoodReservationService foodReservationService;
+        private readonly InventoryTakeReservationService takeReservationService;
 
         public InventoryManager()
         {
@@ -25,6 +26,7 @@
             this.prePlaceResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
             this.stackingService = new InventoryStackingService();
             this.foodReservationService = new InventoryFoodReservationService();
+            this.takeReservationService = new InventoryTakeReservationService();
             this.TypeToResource = new Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>>();
         }
 
@@ -536,12 +538,16 @@
                 foreach (KeyValuePair<int, ResourceInfo> need in needResource)
                 {
                     // 每个Cell预取完之后剩余Cell可预取的数量,至少取need.Value.count
-                    int remaining = Mathf.Max(need.Value.Count, workerData.MaxResourceCount);
+                    int remaining = this.takeReservationService.GetTargetTakeCount(
+                        need.Value.Count,
+                        workerData.MaxResourceCount);
 
                     // 按照Worker携带的最大值预取,如果不够最大值就取完所有资源
                     foreach (KeyValuePair<Vector3Int, ResourceInfo> resource in this.id2Resource[need.Key])
                     {
-                        int count = resource.Value.Count - this.GetPreTakeCountByPos(resource.Key);
+                        int count = this.takeReservationService.GetAvailableTakeCount(
+                            resource.Value.Count,
+                            this.GetPreTakeCountByPos(resource.Key));
                         if (count < remaining)
                         {
                             remaining -= count;
