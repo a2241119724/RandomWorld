@@ -24,6 +24,7 @@ namespace LAB2D
         /// </summary>
         public float HpRestorePercent = 0.3f;
 
+        private readonly DeathPenaltyRuleService ruleService = new DeathPenaltyRuleService();
         private float respawnDeadline = -1f;
 
         /// <summary>
@@ -31,7 +32,7 @@ namespace LAB2D
         /// </summary>
         public bool IsRespawning
         {
-            get { return this.respawnDeadline > 0f && Time.realtimeSinceStartup < this.respawnDeadline; }
+            get { return this.ruleService.IsRespawning(this.respawnDeadline, Time.realtimeSinceStartup); }
         }
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace LAB2D
                     return 0f;
                 }
 
-                return Mathf.Max(0f, this.respawnDeadline - Time.realtimeSinceStartup);
+                return this.ruleService.GetRespawnRemaining(this.respawnDeadline, Time.realtimeSinceStartup);
             }
         }
 
@@ -69,23 +70,25 @@ namespace LAB2D
             }
 
             // Apply experience penalty
-            int expLoss = Mathf.RoundToInt(player.CharacterDataLAB.CurExperience * this.ExperienceLossPercent);
+            int expLoss = this.ruleService.GetExperienceLoss(
+                player.CharacterDataLAB.CurExperience,
+                this.ExperienceLossPercent);
             if (expLoss > 0)
             {
-                player.CharacterDataLAB.CurExperience -= expLoss;
-                if (player.CharacterDataLAB.CurExperience < 0)
-                {
-                    player.CharacterDataLAB.CurExperience = 0;
-                }
+                player.CharacterDataLAB.CurExperience = this.ruleService.ApplyExperienceLoss(
+                    player.CharacterDataLAB.CurExperience,
+                    expLoss);
             }
 
             // Start respawn countdown
-            this.respawnDeadline = Time.realtimeSinceStartup + this.RespawnDelaySeconds;
+            this.respawnDeadline = this.ruleService.GetRespawnDeadline(
+                Time.realtimeSinceStartup,
+                this.RespawnDelaySeconds);
 
             // Show death screen (programmatic UI, no prefab needed)
             DeathMenuPanel.Instance.Show(
                 GameplaySessionStats.Instance.CreateSnapshot().PlayerDeathCount,
-                Mathf.CeilToInt(this.RespawnDelaySeconds));
+                this.ruleService.ToCountdownSeconds(this.RespawnDelaySeconds));
         }
 
         /// <summary>
@@ -118,7 +121,9 @@ namespace LAB2D
             player.gameObject.layer = LayerMask.NameToLayer(LayerConstant.PLAYER_LAYER);
 
             // Restore HP (30% by default) and MP
-            player.CharacterDataLAB.Hp = player.CharacterDataLAB.MaxHp * this.HpRestorePercent;
+            player.CharacterDataLAB.Hp = this.ruleService.GetRestoredHp(
+                player.CharacterDataLAB.MaxHp,
+                this.HpRestorePercent);
 
             Player.PlayerData playerData = player.CharacterDataLAB as Player.PlayerData;
             if (playerData != null)
@@ -139,7 +144,7 @@ namespace LAB2D
         /// </summary>
         public void UpdateDeathScreen()
         {
-            DeathMenuPanel.Instance.UpdateCountdown(Mathf.CeilToInt(this.RespawnRemaining));
+            DeathMenuPanel.Instance.UpdateCountdown(this.ruleService.ToCountdownSeconds(this.RespawnRemaining));
         }
     }
 }
