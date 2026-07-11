@@ -34,6 +34,17 @@ namespace LAB2D
             return currentCombo > currentMaxCombo ? currentCombo : currentMaxCombo;
         }
 
+        public int ToClampedScore(float score, int minScore, int maxScore)
+        {
+            int rounded = RoundToInt(score);
+            if (rounded < minScore)
+            {
+                return minScore;
+            }
+
+            return rounded > maxScore ? maxScore : rounded;
+        }
+
         private static int RoundToInt(float value)
         {
             return value >= 0.0f ? (int)(value + 0.5f) : (int)(value - 0.5f);

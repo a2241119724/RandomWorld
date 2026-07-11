@@ -3,7 +3,6 @@ namespace LAB2D
     using System;
     using System.Collections.Generic;
     using System.Text;
-    using UnityEngine;
 
     /// <summary>
     /// 会话结束统计数据模型 — 结构化保存一次游戏会话的完整结算数据。
@@ -203,7 +202,7 @@ namespace LAB2D
             float collectionScore = Math.Min(this.TotalCollectedItemCount * 5f, 500f);
             score += collectionScore;
 
-            this.CombatScore = Mathf.Clamp(Mathf.RoundToInt(score), 0, 10000);
+            this.CombatScore = new GameplaySessionStatsRuleService().ToClampedScore(score, 0, 10000);
 
             // ---- 星级评价 ----
             if (this.CombatScore >= Star5Score)
