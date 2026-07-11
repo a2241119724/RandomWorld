@@ -11,6 +11,8 @@ namespace LAB2D
     /// </summary>
     public static class EquipmentLootTool
     {
+        private static readonly EquipmentLootRuleService RuleService = new EquipmentLootRuleService();
+
         /// <summary>
         /// 按稀有度权重随机选择一个稀有度等级。
         /// waveNumber 越大，高稀有度的有效权重越高（低稀有度权重等比缩减）。
@@ -19,7 +21,10 @@ namespace LAB2D
         /// <returns>随机选中的稀有度等级</returns>
         public static EquipmentRarityType RollRarity(int waveNumber)
         {
-            float bonus = Mathf.Clamp(waveNumber * EquipmentLootConstant.RarityWeightBonusPerWave, 0f, 0.5f);
+            float bonus = RuleService.GetRarityWeightBonus(
+                waveNumber,
+                EquipmentLootConstant.RarityWeightBonusPerWave,
+                0.5f);
 
             float commonW = EquipmentLootConstant.CommonWeight * (1f - bonus);
             float uncommonW = EquipmentLootConstant.UncommonWeight;
