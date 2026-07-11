@@ -23,7 +23,7 @@ namespace LAB2D
 
         public int GetExperienceLoss(int currentExperience, float lossPercent)
         {
-            return RoundToInt(currentExperience * lossPercent);
+            return MathHelper.RoundToInt(currentExperience * lossPercent);
         }
 
         public int ApplyExperienceLoss(int currentExperience, int experienceLoss)
@@ -34,7 +34,7 @@ namespace LAB2D
 
         public int ToCountdownSeconds(float seconds)
         {
-            return CeilToInt(seconds);
+            return MathHelper.CeilToInt(seconds);
         }
 
         public float GetRestoredHp(float maxHp, float hpRestorePercent)
@@ -42,15 +42,5 @@ namespace LAB2D
             return maxHp * hpRestorePercent;
         }
 
-        private static int RoundToInt(float value)
-        {
-            return value >= 0.0f ? (int)(value + 0.5f) : (int)(value - 0.5f);
-        }
-
-        private static int CeilToInt(float value)
-        {
-            int integer = (int)value;
-            return value > integer ? integer + 1 : integer;
-        }
     }
 }

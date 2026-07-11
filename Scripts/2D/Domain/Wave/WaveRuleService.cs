@@ -8,7 +8,7 @@ namespace LAB2D
         public float GetDifficultyScale(int totalWavesCompleted, WaveConfigModel config)
         {
             WaveConfigModel safeConfig = config ?? new WaveConfigModel();
-            return 1.0f + (ClampMin(totalWavesCompleted, 0) * safeConfig.DifficultyScalePerWave);
+            return 1.0f + (MathHelper.ClampMin(totalWavesCompleted, 0) * safeConfig.DifficultyScalePerWave);
         }
 
         public bool AreAllWavesCleared(int totalWavesCompleted, WaveConfigModel config)
@@ -20,9 +20,9 @@ namespace LAB2D
         public int GetEnemyCountForWave(int waveIndex, WaveConfigModel config)
         {
             WaveConfigModel safeConfig = config ?? new WaveConfigModel();
-            int normalizedWaveIndex = ClampMin(waveIndex, 1);
+            int normalizedWaveIndex = MathHelper.ClampMin(waveIndex, 1);
             int count = safeConfig.BaseEnemyCount + ((normalizedWaveIndex - 1) * safeConfig.EnemiesPerWaveIncrease);
-            return ClampMin(count, 1);
+            return MathHelper.ClampMin(count, 1);
         }
 
         public int GetEffectiveMaxAliveEnemies(int configMaxAliveEnemies, int runtimeMaxEnemyCount)
@@ -30,10 +30,10 @@ namespace LAB2D
             int maxAliveEnemies = configMaxAliveEnemies;
             if (runtimeMaxEnemyCount > 0)
             {
-                maxAliveEnemies = ClampMax(maxAliveEnemies, runtimeMaxEnemyCount);
+                maxAliveEnemies = MathHelper.ClampMax(maxAliveEnemies, runtimeMaxEnemyCount);
             }
 
-            return ClampMin(maxAliveEnemies, 1);
+            return MathHelper.ClampMin(maxAliveEnemies, 1);
         }
 
         public bool IsWaveCleared(int enemiesSpawnedThisWave, int currentAliveEnemies, int aliveEnemiesBeforeWave)
@@ -47,14 +47,5 @@ namespace LAB2D
             return remaining < 0.0f ? 0.0f : remaining;
         }
 
-        private static int ClampMin(int value, int min)
-        {
-            return value < min ? min : value;
-        }
-
-        private static int ClampMax(int value, int max)
-        {
-            return value > max ? max : value;
-        }
     }
 }
