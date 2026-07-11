@@ -1,3 +1,5 @@
+using System;
+
 namespace LAB2D
 {
     /// <summary>

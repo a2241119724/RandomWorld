@@ -6,7 +6,7 @@ namespace LAB2D
     /// </summary>
     public static class WaveBossRewardTool
     {
-        private static readonly WaveruleService ruleService = new WaveruleService();
+        private static readonly WaveBossRuleService ruleService = new WaveBossRuleService();
 
         /// <summary>
         /// 判断指定波次是否为 Boss 波。

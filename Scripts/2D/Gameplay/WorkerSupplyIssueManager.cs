@@ -396,6 +396,8 @@ namespace LAB2D
     [Serializable]
     public class WorkerSupplyReport
     {
+        private readonly WorkerSupplyRuleService ruleService = new WorkerSupplyRuleService();
+
         /// <summary>参与扫描的 Worker 数量。</summary>
         public int WorkerCount;
 
