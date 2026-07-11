@@ -2,7 +2,11 @@ namespace LAB2D.Tool
 {
     using LAB2D;
     using LAB2D.Domain.Gameplay;
+    using LAB2D.Enum;
+    using LAB2D.Item.Backpack;
+    using LAB2D.Item.Backpack.Equipment;
     using System;
+    using Character = LAB2D.Character.Character;
     using System.Collections.Generic;
     using UnityEngine;
 

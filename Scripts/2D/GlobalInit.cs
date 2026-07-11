@@ -3,6 +3,8 @@ namespace LAB2D
     using System.Collections.Generic;
     using LAB2D.Core;
     using LAB2D.Domain.Common;
+    using LAB2D.Gameplay;
+    using LAB2D.UI.Panel;
     using UnityEngine;
 
     /// <summary>

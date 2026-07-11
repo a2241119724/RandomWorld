@@ -1,5 +1,7 @@
 namespace LAB2D
 {
+    using LAB2D.Data;
+
     /// <summary>
     /// 单例.
     /// </summary>

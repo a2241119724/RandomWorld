@@ -2,7 +2,7 @@ namespace LAB2D.Character.Worker.State
 {
     using LAB2D;
     using UnityEngine;
-    using static LAB2D.AWorker;
+    using static LAB2D.Character.Worker.AWorker;
 
     /// <summary>
     /// Worker逃跑状态

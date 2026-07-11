@@ -1,6 +1,8 @@
 namespace LAB2D.Character.Enemy.SeekEnemy
 {
     using LAB2D;
+    using LAB2D.Character.Enemy.SeekEnemy.State;
+    using LAB2D.Core.Seek;
     using Photon.Pun;
     using UnityEngine;
 

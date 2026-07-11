@@ -1,7 +1,9 @@
 namespace LAB2D.Tool
 {
     using LAB2D;
+    using LAB2D.Character.Worker;
     using LAB2D.Domain.Worker;
+    using LAB2D.Enum;
     /// <summary>
     /// 工人补给缺口工具类。
     /// 只负责补给缺口判断、百分比格式化和显示文案生成，不持有运行时状态，不访问 Scene、Prefab、存档、Photon 或 AssetBundle。

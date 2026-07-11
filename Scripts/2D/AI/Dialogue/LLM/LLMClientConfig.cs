@@ -1,5 +1,6 @@
 namespace LAB2D.AI.Dialogue.LLM
 {
+    using LAB2D.Constant;
     using System.IO;
     using UnityEngine;
 

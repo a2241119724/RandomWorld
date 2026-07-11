@@ -2,6 +2,8 @@ namespace LAB2D.Tool
 {
     using LAB2D;
     using LAB2D.Domain.Worker;
+    using LAB2D.Enum;
+    using LAB2D.Gameplay;
     /// <summary>
     /// 工人任务队列拥堵建议工具。
     /// 只负责根据只读任务队列快照计算拥堵等级、主积压任务类型和玩家建议文案；不新增任务、不取消任务、不调整任务优先级。

@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Enum;
     using System;
 
     /// <summary>

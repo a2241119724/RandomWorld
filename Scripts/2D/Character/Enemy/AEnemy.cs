@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Enemy
 {
     using LAB2D;
+    using LAB2D.UI.Character;
     using System;
     using System.Collections.Generic;
     using UnityEngine;

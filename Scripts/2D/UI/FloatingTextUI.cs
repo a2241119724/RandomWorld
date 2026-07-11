@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Enum;
     using UnityEngine;
     using UnityEngine.UI;
 

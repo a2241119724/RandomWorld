@@ -1,6 +1,8 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Enum;
+    using LAB2D.UI.Effect;
     using System.Collections.Generic;
     using UnityEngine;
 

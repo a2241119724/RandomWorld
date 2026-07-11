@@ -1,6 +1,7 @@
 namespace LAB2D.Item
 {
     using LAB2D;
+    using LAB2D.Character.Worker;
     using System.Collections.Generic;
     using UnityEngine;
 

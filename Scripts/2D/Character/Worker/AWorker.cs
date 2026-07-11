@@ -1,6 +1,12 @@
 namespace LAB2D.Character.Worker
 {
     using LAB2D;
+    using LAB2D.Character.Worker.State;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Core.Seek;
+    using LAB2D.Item;
+    using LAB2D.Item.Build.Furniture.Bed;
+    using LAB2D.UI.Character;
     using System;
     using System.Collections.Generic;
     using Photon.Pun;

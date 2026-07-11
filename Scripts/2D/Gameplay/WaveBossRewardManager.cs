@@ -1,6 +1,10 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Enemy;
+    using LAB2D.Character.Player;
+    using LAB2D.Enum;
+    using Character = LAB2D.Character.Character;
     using System;
     using System.Collections.Generic;
     using UnityEngine;

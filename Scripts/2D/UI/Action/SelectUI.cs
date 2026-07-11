@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using Character = LAB2D.Character.Character;
     using UnityEngine;
 
     /// <summary>

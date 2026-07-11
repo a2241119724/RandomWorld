@@ -1,6 +1,8 @@
 namespace LAB2D.Character
 {
     using LAB2D;
+    using LAB2D.Item.Backpack.Equipment;
+    using LAB2D.Item.Backpack.Equipment.Weapon;
     using LAB2D.Serializable;
     using LAB2D.Domain.Character;
     using LAB2D.Domain.Common;

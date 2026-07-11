@@ -1,6 +1,7 @@
 namespace LAB2D.Tool
 {
     using LAB2D;
+    using LAB2D.Enum;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;

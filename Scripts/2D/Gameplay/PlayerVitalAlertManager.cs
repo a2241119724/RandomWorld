@@ -2,6 +2,8 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Domain.Gameplay;
+    using LAB2D.Domain.Player;
+    using LAB2D.Enum;
     using System;
     using System.Text;
     using UnityEngine;

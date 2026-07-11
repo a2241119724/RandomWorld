@@ -1,7 +1,10 @@
 namespace LAB2D.Tool
 {
     using LAB2D;
+    using LAB2D.Character.Worker;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Worker;
+    using LAB2D.Enum;
     /// <summary>
     /// 工人饥饿与疲劳状态工具类。
     /// 只负责状态计算、倍率计算和展示文本格式化，不访问 Scene、Prefab、存档、Photon 或 AssetBundle。

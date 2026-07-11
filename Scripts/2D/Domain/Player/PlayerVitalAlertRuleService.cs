@@ -3,6 +3,7 @@ namespace LAB2D.Domain.Player
     using LAB2D;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
+    using LAB2D.Enum;
     /// <summary>
     /// 玩家生命警报比率和显示值的纯算术规则。
     /// </summary>

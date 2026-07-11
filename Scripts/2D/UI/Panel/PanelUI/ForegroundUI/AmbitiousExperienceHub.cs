@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
+    using LAB2D.Gameplay;
     using System;
     using System.Collections.Generic;
     using UnityEngine;

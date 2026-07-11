@@ -1,6 +1,8 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker;
+    using LAB2D.Character.Worker.Task;
     using System;
     using System.Collections.Generic;
     using System.Text;

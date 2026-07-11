@@ -1,6 +1,7 @@
 namespace LAB2D.Tool
 {
     using LAB2D;
+    using LAB2D.Constant;
     using System;
     using System.Collections;
     using System.Collections.Generic;

@@ -1,7 +1,9 @@
 namespace LAB2D.Item
 {
     using LAB2D;
+    using LAB2D.Character.Worker;
     using LAB2D.Domain.Inventory;
+    using LAB2D.Item;
     using System.Collections.Generic;
     using System.Linq;
     using UnityEngine;

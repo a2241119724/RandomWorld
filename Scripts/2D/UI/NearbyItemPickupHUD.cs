@@ -1,6 +1,8 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Constant;
+    using LAB2D.Item.Backpack;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;

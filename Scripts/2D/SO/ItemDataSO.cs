@@ -1,6 +1,8 @@
 namespace LAB2D.SO
 {
     using LAB2D;
+    using LAB2D.Data;
+    using LAB2D.Item;
     using System.Collections.Generic;
     using UnityEngine;
 

@@ -1,5 +1,6 @@
 namespace LAB2D.Constant
 {
+    using LAB2D.Enum;
     using UnityEngine;
 
     /// <summary>

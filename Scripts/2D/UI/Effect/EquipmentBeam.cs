@@ -1,5 +1,6 @@
 namespace LAB2D.UI.Effect
 {
+    using LAB2D.Enum;
     using UnityEngine;
 
     /// <summary>

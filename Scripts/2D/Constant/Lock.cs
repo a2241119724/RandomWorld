@@ -1,6 +1,7 @@
 namespace LAB2D.Constant
 {
     using LAB2D;
+    using LAB2D.Character.Worker;
     using UnityEngine;
 
     /// <summary>

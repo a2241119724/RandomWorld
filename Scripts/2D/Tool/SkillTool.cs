@@ -1,6 +1,7 @@
 namespace LAB2D.Tool
 {
     using LAB2D;
+    using LAB2D.Character.Enemy;
     using LAB2D.Domain.Gameplay;
     using System.Collections.Generic;
     using UnityEngine;

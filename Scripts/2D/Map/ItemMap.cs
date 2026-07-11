@@ -1,6 +1,9 @@
 namespace LAB2D.Map
 {
     using LAB2D;
+    using LAB2D.Data;
+    using LAB2D.Item;
+    using LAB2D.Item.Backpack;
     using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;

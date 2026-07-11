@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Equipment.Weapon
 {
     using LAB2D;
+    using Character = LAB2D.Character.Character;
     using System.Collections.Generic;
     using UnityEngine;
     using static UnityEngine.ParticleSystem;

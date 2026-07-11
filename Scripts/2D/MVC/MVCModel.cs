@@ -1,6 +1,9 @@
 namespace LAB2D.MVC
 {
     using LAB2D;
+    using LAB2D.Data;
+    using LAB2D.Item;
+    using LAB2D.Item.Backpack.Equipment.Weapon;
     using System.Collections;
     using System.Collections.Generic;
 

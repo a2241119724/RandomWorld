@@ -1,6 +1,7 @@
 namespace LAB2D.Core.Seek
 {
     using LAB2D;
+    using LAB2D.Character.Worker;
     public class OtherSeek : ASeek
     {
         public OtherSeek(AWorker character)

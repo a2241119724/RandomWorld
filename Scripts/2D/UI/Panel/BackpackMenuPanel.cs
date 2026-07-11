@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Item;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;

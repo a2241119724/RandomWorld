@@ -1,6 +1,7 @@
 namespace LAB2D.Data
 {
     using LAB2D;
+    using LAB2D.Enum;
     using UnityEngine;
 
     /// <summary>

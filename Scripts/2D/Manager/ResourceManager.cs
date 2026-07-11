@@ -1,6 +1,8 @@
 namespace LAB2D.Manager
 {
     using LAB2D;
+    using LAB2D.Map;
+    using LAB2D.SO;
     using System;
     using System.Collections.Generic;
     using System.IO;

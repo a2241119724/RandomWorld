@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Equipment
 {
     using LAB2D;
+    using Character = LAB2D.Character.Character;
     using System;
 
     /// <summary>

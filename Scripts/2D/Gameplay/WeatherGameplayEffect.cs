@@ -1,6 +1,9 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Manager;
+    using Character = LAB2D.Character.Character;
     using System;
     using UnityEngine;
 

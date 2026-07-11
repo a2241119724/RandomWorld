@@ -1,6 +1,8 @@
 namespace LAB2D.Data
 {
     using LAB2D;
+    using LAB2D.Item;
+    using LAB2D.Item.Backpack.Equipment;
     using System;
     using System.Collections.Generic;
     using UnityEngine;

@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Enemy.CommonEnemy
 {
     using LAB2D;
+    using LAB2D.Character.Enemy.CommonEnemy.State;
     using System;
     using Photon.Pun;
     using UnityEngine;

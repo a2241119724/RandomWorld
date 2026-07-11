@@ -1,6 +1,10 @@
 namespace LAB2D.Character.Worker
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Character.Worker.Task.Individual;
+    using LAB2D.Core.KDTree;
+    using LAB2D.Gameplay;
     using LAB2D.Serializable;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;

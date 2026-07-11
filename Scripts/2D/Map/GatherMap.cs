@@ -1,6 +1,7 @@
 namespace LAB2D.Map
 {
     using LAB2D;
+    using LAB2D.Data;
     using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;

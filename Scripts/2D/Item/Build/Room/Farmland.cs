@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Build.Room
 {
     using LAB2D;
+    using LAB2D.Item.Build.Wall;
     using System;
     using UnityEngine;
 

@@ -1,7 +1,9 @@
 namespace LAB2D.Tool
 {
+    using System;
     using LAB2D;
     using LAB2D.Domain.Wave;
+    using LAB2D.Enum;
     /// <summary>
     /// 波次 Boss 与奖励通用工具。
     /// 只负责纯计算和展示文案，不访问场景对象、Prefab、存档、Photon 或 AssetBundle。

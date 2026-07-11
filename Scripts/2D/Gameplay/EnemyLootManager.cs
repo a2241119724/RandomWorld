@@ -1,6 +1,9 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Data;
+    using LAB2D.Enum;
+    using LAB2D.Item.Backpack.Equipment;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;

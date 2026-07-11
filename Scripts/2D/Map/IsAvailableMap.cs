@@ -1,6 +1,7 @@
 namespace LAB2D.Map
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;

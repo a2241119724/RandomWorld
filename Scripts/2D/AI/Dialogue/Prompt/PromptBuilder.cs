@@ -1,6 +1,8 @@
 namespace LAB2D.AI.Dialogue.Prompt
 {
     using LAB2D;
+    using LAB2D.AI.Dialogue.LLM;
+    using LAB2D.AI.Dialogue.RAG;
     using LAB2D.Domain.Dialogue;
     using System.Collections.Generic;
     using UnityEngine;

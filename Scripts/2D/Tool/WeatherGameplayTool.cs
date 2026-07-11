@@ -3,6 +3,7 @@ namespace LAB2D.Tool
     using LAB2D;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
+    using LAB2D.Manager;
 
     /// <summary>
     /// 天气玩法工具类。

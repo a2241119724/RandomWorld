@@ -1,7 +1,10 @@
 namespace LAB2D.Tool
 {
     using LAB2D;
+    using LAB2D.Character.Player;
     using LAB2D.Domain.Gameplay;
+    using LAB2D.Domain.Player;
+    using LAB2D.Enum;
     /// <summary>
     /// 玩家生命危险提示工具类。
     /// 只负责血量比例计算、提示等级判断和展示文案格式化，不访问 Scene、Prefab、存档、Photon 或 AssetBundle。

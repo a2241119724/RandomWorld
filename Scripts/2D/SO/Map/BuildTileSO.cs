@@ -1,6 +1,7 @@
 namespace LAB2D.SO.Map
 {
     using LAB2D;
+    using LAB2D.Data;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
