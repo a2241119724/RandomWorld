@@ -1,7 +1,5 @@
 namespace LAB2D
 {
-    using UnityEngine;
-
     /// <summary>
     /// 工人饥饿与疲劳状态工具类。
     /// 只负责状态计算、倍率计算和展示文本格式化，不访问 Scene、Prefab、存档、Photon 或 AssetBundle。
@@ -9,6 +7,8 @@ namespace LAB2D
     /// </summary>
     public static class WorkerConditionTool
     {
+        private static readonly WorkerConditionRuleService RuleService = new WorkerConditionRuleService();
+
         /// <summary>
         /// 安全获取 WorkerData。
         /// </summary>
@@ -35,12 +35,7 @@ namespace LAB2D
         /// <returns>0 到 1 之间的比例；最大值无效时返回 0。</returns>
         public static float GetSafeRatio(float current, float max)
         {
-            if (max <= 0.0f)
-            {
-                return 0.0f;
-            }
-
-            return Mathf.Clamp01(current / max);
+            return RuleService.GetSafeRatio(current, max);
         }
 
         /// <summary>
@@ -229,7 +224,7 @@ namespace LAB2D
         /// <returns>百分比文本。</returns>
         public static string FormatPercent(float ratio)
         {
-            return $"{Mathf.RoundToInt(Mathf.Clamp01(ratio) * 100.0f)}%";
+            return $"{RuleService.ToPercentInt(ratio)}%";
         }
     }
 }
