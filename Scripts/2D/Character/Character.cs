@@ -219,6 +219,8 @@
         [Serializable]
         public class CharacterData : Attribute
         {
+            private static readonly DamageCalculator DamageCalculator = new DamageCalculator();
+
             /// <summary>
             /// Id
             /// </summary>
@@ -346,7 +348,7 @@
             /// <returns>伤害值</returns>
             public float GetDamage(bool isCRT)
             {
-                return isCRT ? this.ATN * this.CSD : this.ATN;
+                return DamageCalculator.GetOutgoingDamage(this.ATN, this.CSD, isCRT);
             }
 
             /// <summary>

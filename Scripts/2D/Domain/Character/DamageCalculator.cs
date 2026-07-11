@@ -18,6 +18,11 @@ namespace LAB2D
             return reducedDamage < MinAppliedDamage ? MinAppliedDamage : reducedDamage;
         }
 
+        public float GetOutgoingDamage(float attack, float criticalDamage, bool isCritical)
+        {
+            return isCritical ? attack * criticalDamage : attack;
+        }
+
         public CharacterHealthResult ApplyDamageToHealth(float currentHp, float damage)
         {
             float safeDamage = damage < 0.0f ? 0.0f : damage;
