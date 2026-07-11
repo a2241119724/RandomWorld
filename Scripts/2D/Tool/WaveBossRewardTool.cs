@@ -1,7 +1,5 @@
 namespace LAB2D
 {
-    using UnityEngine;
-
     /// <summary>
     /// 波次 Boss 与奖励通用工具。
     /// 只负责纯计算和展示文案，不访问场景对象、Prefab、存档、Photon 或 AssetBundle。
@@ -177,7 +175,7 @@ namespace LAB2D
                 case WaveRewardType.Heal:
                     return $"恢复最大生命的 {FormatPercent(value)}";
                 case WaveRewardType.Experience:
-                    return $"获得 {Mathf.RoundToInt(value)} 点经验";
+                    return $"获得 {BossRuleService.ToRoundedInt(value)} 点经验";
                 case WaveRewardType.DamageBoost:
                     return $"本局伤害 +{FormatPercent(value)}";
                 case WaveRewardType.DefenseBoost:

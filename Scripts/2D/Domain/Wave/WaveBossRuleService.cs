@@ -100,6 +100,11 @@ namespace LAB2D
             return RoundToInt(safeValue * 100.0f);
         }
 
+        public int ToRoundedInt(float value)
+        {
+            return RoundToInt(value);
+        }
+
         public float AddWithCap(float current, float add, float max)
         {
             float safeMax = max < 0.0f ? 0.0f : max;
