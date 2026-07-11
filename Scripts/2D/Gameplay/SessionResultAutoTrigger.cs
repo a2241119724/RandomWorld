@@ -200,7 +200,8 @@ namespace LAB2D
                 return;
             }
 
-            string tipText = result.CombatScore >= 6000
+            // 使用星级判断替代硬编码分数阈值，星级阈值定义在 SessionResultRuleService 中
+            string tipText = result.StarRating >= 4
                 ? $"战斗结算: {result.CombatScore} 分 ({result.GradeText}) ★{result.StarRating} — 表现卓越!"
                 : $"战斗结算: {result.CombatScore} 分 ({result.GradeText}) ★{result.StarRating}";
 
