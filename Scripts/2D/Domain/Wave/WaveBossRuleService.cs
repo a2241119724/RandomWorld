@@ -25,6 +25,24 @@ namespace LAB2D
             return count;
         }
 
+        public bool IsBossEnemySpawn(int waveIndex, int spawnIndex, int totalEnemies, int bossWaveInterval)
+        {
+            return this.IsBossWave(waveIndex, bossWaveInterval) &&
+                spawnIndex == ClampMin(0, totalEnemies - 1);
+        }
+
+        public int ClampWaveIndex(int waveIndex)
+        {
+            return ClampMin(1, waveIndex);
+        }
+
+        public int GetRewardOptionCount(int configuredOptionCount, int availableRewardTypeCount)
+        {
+            int safeConfiguredCount = ClampMin(0, configuredOptionCount);
+            int safeAvailableCount = ClampMin(0, availableRewardTypeCount);
+            return safeConfiguredCount < safeAvailableCount ? safeConfiguredCount : safeAvailableCount;
+        }
+
         public float GetNormalEnemyHealthMultiplier(
             int waveIndex,
             float difficultyScale,
@@ -112,6 +130,12 @@ namespace LAB2D
             float safeAdd = add < 0.0f ? 0.0f : add;
             float value = safeCurrent + safeAdd;
             return value > safeMax ? safeMax : value;
+        }
+
+        public float ScaleAttribute(float currentValue, float multiplier, float minValue)
+        {
+            float scaledValue = currentValue * multiplier;
+            return scaledValue < minValue ? minValue : scaledValue;
         }
 
         private static float ClampMin(float min, float value)

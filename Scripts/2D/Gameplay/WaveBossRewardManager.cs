@@ -163,8 +163,7 @@ namespace LAB2D
                 return;
             }
 
-            bool isBoss = WaveBossRewardTool.IsBossWave(waveIndex) &&
-                spawnIndex == Mathf.Max(0, totalEnemies - 1);
+            bool isBoss = WaveBossRewardTool.IsBossEnemySpawn(waveIndex, spawnIndex, totalEnemies);
             if (isBoss)
             {
                 this.ApplyBossScale(enemy, enemyData, waveIndex, difficultyScale);
@@ -204,7 +203,7 @@ namespace LAB2D
         public void CreateDebugRewardOptions(bool bossReward)
         {
             this.EnsureInitialized();
-            this.CreateRewardOptions(Mathf.Max(1, this.currentWaveIndex), bossReward);
+            this.CreateRewardOptions(WaveBossRewardTool.ClampWaveIndex(this.currentWaveIndex), bossReward);
         }
 
         /// <summary>
@@ -346,12 +345,12 @@ namespace LAB2D
             float attackMultiplier,
             float defenseMultiplier)
         {
-            enemyData.MaxHp = Mathf.Max(1.0f, enemyData.MaxHp * healthMultiplier);
+            enemyData.MaxHp = WaveBossRewardTool.ScaleAttribute(enemyData.MaxHp, healthMultiplier, 1.0f);
             enemyData.Hp = enemyData.MaxHp;
-            enemyData.ATN = Mathf.Max(0.1f, enemyData.ATN * attackMultiplier);
-            enemyData.INT = Mathf.Max(0.0f, enemyData.INT * attackMultiplier);
-            enemyData.DEF = Mathf.Max(0.0f, enemyData.DEF * defenseMultiplier);
-            enemyData.RES = Mathf.Max(0.0f, enemyData.RES * defenseMultiplier);
+            enemyData.ATN = WaveBossRewardTool.ScaleAttribute(enemyData.ATN, attackMultiplier, 0.1f);
+            enemyData.INT = WaveBossRewardTool.ScaleAttribute(enemyData.INT, attackMultiplier, 0.0f);
+            enemyData.DEF = WaveBossRewardTool.ScaleAttribute(enemyData.DEF, defenseMultiplier, 0.0f);
+            enemyData.RES = WaveBossRewardTool.ScaleAttribute(enemyData.RES, defenseMultiplier, 0.0f);
         }
 
         /// <summary>
@@ -417,7 +416,7 @@ namespace LAB2D
                 WaveRewardType.MoveSpeedBoost,
             };
 
-            int optionCount = Mathf.Min(WaveBossRewardConstant.RewardOptionCount, pool.Count);
+            int optionCount = WaveBossRewardTool.GetRewardOptionCount(WaveBossRewardConstant.RewardOptionCount, pool.Count);
             for (int i = 0; i < optionCount; i++)
             {
                 int randomIndex = UnityEngine.Random.Range(0, pool.Count);
@@ -460,7 +459,7 @@ namespace LAB2D
                 case WaveRewardType.Experience:
                     if (player != null)
                     {
-                        player.AddExperienceValue(Mathf.RoundToInt(option.Value));
+                        player.AddExperienceValue(WaveBossRewardTool.ToRoundedInt(option.Value));
                     }
 
                     break;

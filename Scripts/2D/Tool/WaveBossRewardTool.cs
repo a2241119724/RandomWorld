@@ -34,6 +34,43 @@ namespace LAB2D
         }
 
         /// <summary>
+        /// 鍒ゆ柇鏈鐢熸垚鐨勬晫浜烘槸鍚︿负 Boss銆?
+        /// </summary>
+        /// <param name="waveIndex">褰撳墠娉㈡銆?/param>
+        /// <param name="spawnIndex">鏈尝鍐呯敓鎴愬簭鍙凤紝浠?0 寮€濮嬨€?/param>
+        /// <param name="totalEnemies">鏈尝鎬绘晫浜烘暟銆?/param>
+        /// <returns>褰撳墠鐢熸垚瀵硅薄鏄惁搴旇鏍囪涓?Boss銆?/returns>
+        public static bool IsBossEnemySpawn(int waveIndex, int spawnIndex, int totalEnemies)
+        {
+            return BossRuleService.IsBossEnemySpawn(
+                waveIndex,
+                spawnIndex,
+                totalEnemies,
+                WaveBossRewardConstant.BossWaveInterval);
+        }
+
+        /// <summary>
+        /// 灏嗘尝娆℃暟淇鍒板鍔辩敓鎴愬彲鐢ㄧ殑鏈€灏忓€笺€?
+        /// </summary>
+        /// <param name="waveIndex">褰撳墠娉㈡銆?/param>
+        /// <returns>鑷冲皯涓?1 鐨勬尝娆℃暟銆?/returns>
+        public static int ClampWaveIndex(int waveIndex)
+        {
+            return BossRuleService.ClampWaveIndex(waveIndex);
+        }
+
+        /// <summary>
+        /// 鏍规嵁閰嶇疆鍜屽€欓€夋睜璁＄畻鏈濂栧姳閫夐」鏁般€?
+        /// </summary>
+        /// <param name="configuredOptionCount">閰嶇疆鐨勯€夐」鏁般€?/param>
+        /// <param name="availableRewardTypeCount">褰撳墠鍙敤濂栧姳绫诲瀷鏁般€?/param>
+        /// <returns>鏈搴旂敓鎴愮殑濂栧姳閫夐」鏁般€?/returns>
+        public static int GetRewardOptionCount(int configuredOptionCount, int availableRewardTypeCount)
+        {
+            return BossRuleService.GetRewardOptionCount(configuredOptionCount, availableRewardTypeCount);
+        }
+
+        /// <summary>
         /// 获取普通敌人的生命倍率。
         /// </summary>
         /// <param name="waveIndex">当前波次。</param>
@@ -222,6 +259,16 @@ namespace LAB2D
         }
 
         /// <summary>
+        /// 将浮点数按游戏规则转为最近的整数。
+        /// </summary>
+        /// <param name="value">待转换的数值。</param>
+        /// <returns>四舍五入后的整数。</returns>
+        public static int ToRoundedInt(float value)
+        {
+            return BossRuleService.ToRoundedInt(value);
+        }
+
+        /// <summary>
         /// 把增量累加到当前值，并限制最大值。
         /// </summary>
         /// <param name="current">当前累计值。</param>
@@ -231,6 +278,18 @@ namespace LAB2D
         public static float AddWithCap(float current, float add, float max)
         {
             return BossRuleService.AddWithCap(current, add, max);
+        }
+
+        /// <summary>
+        /// 鎸夊€嶇巼缂╂斁灞炴€у苟淇濇寔鏈€灏忓€笺€?
+        /// </summary>
+        /// <param name="currentValue">褰撳墠灞炴€у€笺€?/param>
+        /// <param name="multiplier">缂╂斁鍊嶇巼銆?/param>
+        /// <param name="minValue">缂╂斁鍚庣殑鏈€灏忓€笺€?/param>
+        /// <returns>缂╂斁骞堕挸鍒跺悗鐨勫€笺€?/returns>
+        public static float ScaleAttribute(float currentValue, float multiplier, float minValue)
+        {
+            return BossRuleService.ScaleAttribute(currentValue, multiplier, minValue);
         }
     }
 }
