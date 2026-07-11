@@ -61,7 +61,7 @@ namespace LAB2D
         {
             get
             {
-                return this.waveRuleService.GetDifficultyScale(this.TotalWavesCompleted, this.CreateWaveConfigModel());
+                return this.ruleService.GetDifficultyScale(this.TotalWavesCompleted, this.CreateWaveConfigModel());
             }
         }
 
@@ -93,7 +93,7 @@ namespace LAB2D
         private Coroutine waveCoroutine;
         private int enemiesAliveBeforeWave;
         private int enemiesSpawnedThisWave;
-        private readonly WaveRuleService waveRuleService = new WaveRuleService();
+        private readonly WaveRuleService ruleService = new WaveRuleService();
 
         /// <summary>
         /// 启动波次系统（接管敌人生成控制权）
@@ -169,7 +169,7 @@ namespace LAB2D
             while (true)
             {
                 // 检查是否达到总波次上限
-                if (this.waveRuleService.AreAllWavesCleared(this.TotalWavesCompleted, this.CreateWaveConfigModel()))
+                if (this.ruleService.AreAllWavesCleared(this.TotalWavesCompleted, this.CreateWaveConfigModel()))
                 {
                     this.OnAllWavesCleared?.Invoke(this.TotalWavesCompleted);
                     this.StopWaves();
@@ -270,7 +270,7 @@ namespace LAB2D
 
                 // 波次清理条件：波内至少生成了一只敌人，且实际存活敌人降回波前水平
                 int currentAlive = this.CountAliveEnemies();
-                bool allWaveEnemiesDefeated = this.waveRuleService.IsWaveCleared(
+                bool allWaveEnemiesDefeated = this.ruleService.IsWaveCleared(
                     this.enemiesSpawnedThisWave,
                     currentAlive,
                     this.enemiesAliveBeforeWave);
@@ -290,7 +290,7 @@ namespace LAB2D
         /// </summary>
         private int GetEnemyCountForWave(int waveIndex)
         {
-            return this.waveRuleService.GetEnemyCountForWave(waveIndex, this.CreateWaveConfigModel());
+            return this.ruleService.GetEnemyCountForWave(waveIndex, this.CreateWaveConfigModel());
         }
 
         /// <summary>
@@ -310,7 +310,7 @@ namespace LAB2D
                 runtimeMaxEnemyCount = EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount;
             }
 
-            return this.waveRuleService.GetEffectiveMaxAliveEnemies(this.Config.maxAliveEnemies, runtimeMaxEnemyCount);
+            return this.ruleService.GetEffectiveMaxAliveEnemies(this.Config.maxAliveEnemies, runtimeMaxEnemyCount);
         }
 
         /// <summary>

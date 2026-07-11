@@ -6,7 +6,7 @@ namespace LAB2D
     /// </summary>
     public static class WaveBossRewardTool
     {
-        private static readonly WaveBossRuleService BossRuleService = new WaveBossRuleService();
+        private static readonly WaveruleService ruleService = new WaveruleService();
 
         /// <summary>
         /// 判断指定波次是否为 Boss 波。
@@ -15,7 +15,7 @@ namespace LAB2D
         /// <returns>当前波次是否应生成 Boss。</returns>
         public static bool IsBossWave(int waveIndex)
         {
-            return BossRuleService.IsBossWave(waveIndex, WaveBossRewardConstant.BossWaveInterval);
+            return ruleService.IsBossWave(waveIndex, WaveBossRewardConstant.BossWaveInterval);
         }
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace LAB2D
         /// <returns>最终生成敌人数。</returns>
         public static int GetEnemyCountForWave(int baseEnemyCount, int waveIndex)
         {
-            return BossRuleService.GetEnemyCountForWave(
+            return ruleService.GetEnemyCountForWave(
                 baseEnemyCount,
                 waveIndex,
                 WaveBossRewardConstant.BossWaveInterval,
@@ -42,7 +42,7 @@ namespace LAB2D
         /// <returns>褰撳墠鐢熸垚瀵硅薄鏄惁搴旇鏍囪涓?Boss銆?/returns>
         public static bool IsBossEnemySpawn(int waveIndex, int spawnIndex, int totalEnemies)
         {
-            return BossRuleService.IsBossEnemySpawn(
+            return ruleService.IsBossEnemySpawn(
                 waveIndex,
                 spawnIndex,
                 totalEnemies,
@@ -56,7 +56,7 @@ namespace LAB2D
         /// <returns>鑷冲皯涓?1 鐨勬尝娆℃暟銆?/returns>
         public static int ClampWaveIndex(int waveIndex)
         {
-            return BossRuleService.ClampWaveIndex(waveIndex);
+            return ruleService.ClampWaveIndex(waveIndex);
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace LAB2D
         /// <returns>鏈搴旂敓鎴愮殑濂栧姳閫夐」鏁般€?/returns>
         public static int GetRewardOptionCount(int configuredOptionCount, int availableRewardTypeCount)
         {
-            return BossRuleService.GetRewardOptionCount(configuredOptionCount, availableRewardTypeCount);
+            return ruleService.GetRewardOptionCount(configuredOptionCount, availableRewardTypeCount);
         }
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace LAB2D
         /// <returns>生命倍率。</returns>
         public static float GetNormalEnemyHealthMultiplier(int waveIndex, float difficultyScale)
         {
-            return BossRuleService.GetNormalEnemyHealthMultiplier(
+            return ruleService.GetNormalEnemyHealthMultiplier(
                 waveIndex,
                 difficultyScale,
                 WaveBossRewardConstant.NormalEnemyHealthScalePerWave);
@@ -92,7 +92,7 @@ namespace LAB2D
         /// <returns>攻击倍率。</returns>
         public static float GetNormalEnemyAttackMultiplier(int waveIndex, float difficultyScale)
         {
-            return BossRuleService.GetNormalEnemyAttackMultiplier(
+            return ruleService.GetNormalEnemyAttackMultiplier(
                 waveIndex,
                 difficultyScale,
                 WaveBossRewardConstant.NormalEnemyAttackScalePerWave);
@@ -106,7 +106,7 @@ namespace LAB2D
         /// <returns>防御倍率。</returns>
         public static float GetNormalEnemyDefenseMultiplier(int waveIndex, float difficultyScale)
         {
-            return BossRuleService.GetNormalEnemyDefenseMultiplier(
+            return ruleService.GetNormalEnemyDefenseMultiplier(
                 waveIndex,
                 WaveBossRewardConstant.NormalEnemyDefenseScalePerWave);
         }
@@ -119,7 +119,7 @@ namespace LAB2D
         /// <returns>Boss 生命倍率。</returns>
         public static float GetBossHealthMultiplier(int waveIndex, float difficultyScale)
         {
-            return BossRuleService.GetBossHealthMultiplier(
+            return ruleService.GetBossHealthMultiplier(
                 GetNormalEnemyHealthMultiplier(waveIndex, difficultyScale),
                 WaveBossRewardConstant.BossHealthMultiplier);
         }
@@ -132,7 +132,7 @@ namespace LAB2D
         /// <returns>Boss 攻击倍率。</returns>
         public static float GetBossAttackMultiplier(int waveIndex, float difficultyScale)
         {
-            return BossRuleService.GetBossAttackMultiplier(
+            return ruleService.GetBossAttackMultiplier(
                 GetNormalEnemyAttackMultiplier(waveIndex, difficultyScale),
                 WaveBossRewardConstant.BossAttackMultiplier);
         }
@@ -145,7 +145,7 @@ namespace LAB2D
         /// <returns>Boss 防御倍率。</returns>
         public static float GetBossDefenseMultiplier(int waveIndex, float difficultyScale)
         {
-            return BossRuleService.GetBossDefenseMultiplier(
+            return ruleService.GetBossDefenseMultiplier(
                 GetNormalEnemyDefenseMultiplier(waveIndex, difficultyScale),
                 WaveBossRewardConstant.BossDefenseMultiplier);
         }
@@ -183,7 +183,7 @@ namespace LAB2D
         /// <returns>奖励数值。百分比类奖励使用 0.1 表示 10%。</returns>
         public static float GetRewardValue(WaveRewardType rewardType, bool isBossReward, int waveIndex)
         {
-            return BossRuleService.GetRewardValue(
+            return ruleService.GetRewardValue(
                 rewardType,
                 isBossReward,
                 waveIndex,
@@ -212,7 +212,7 @@ namespace LAB2D
                 case WaveRewardType.Heal:
                     return $"恢复最大生命的 {FormatPercent(value)}";
                 case WaveRewardType.Experience:
-                    return $"获得 {BossRuleService.ToRoundedInt(value)} 点经验";
+                    return $"获得 {ruleService.ToRoundedInt(value)} 点经验";
                 case WaveRewardType.DamageBoost:
                     return $"本局伤害 +{FormatPercent(value)}";
                 case WaveRewardType.DefenseBoost:
@@ -255,7 +255,7 @@ namespace LAB2D
         /// <returns>百分比文本。</returns>
         public static string FormatPercent(float value)
         {
-            return $"{BossRuleService.ToPercentInt(value)}%";
+            return $"{ruleService.ToPercentInt(value)}%";
         }
 
         /// <summary>
@@ -265,7 +265,7 @@ namespace LAB2D
         /// <returns>四舍五入后的整数。</returns>
         public static int ToRoundedInt(float value)
         {
-            return BossRuleService.ToRoundedInt(value);
+            return ruleService.ToRoundedInt(value);
         }
 
         /// <summary>
@@ -277,7 +277,7 @@ namespace LAB2D
         /// <returns>限制后的累计值。</returns>
         public static float AddWithCap(float current, float add, float max)
         {
-            return BossRuleService.AddWithCap(current, add, max);
+            return ruleService.AddWithCap(current, add, max);
         }
 
         /// <summary>
@@ -289,7 +289,7 @@ namespace LAB2D
         /// <returns>缂╂斁骞堕挸鍒跺悗鐨勫€笺€?/returns>
         public static float ScaleAttribute(float currentValue, float multiplier, float minValue)
         {
-            return BossRuleService.ScaleAttribute(currentValue, multiplier, minValue);
+            return ruleService.ScaleAttribute(currentValue, multiplier, minValue);
         }
     }
 }
