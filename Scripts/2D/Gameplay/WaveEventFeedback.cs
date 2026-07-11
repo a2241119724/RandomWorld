@@ -43,6 +43,7 @@ namespace LAB2D
         private bool enabled;
         private float restStartTime;
         private float restDuration;
+        private readonly WaveRuleService ruleService = new WaveRuleService();
 
         /// <summary>
         /// 构造函数：初始化默认状态
@@ -259,7 +260,7 @@ namespace LAB2D
             if (wm.IsResting)
             {
                 float elapsed = Time.time - this.restStartTime;
-                remainingRest = Mathf.Max(0f, this.restDuration - elapsed);
+                remainingRest = this.ruleService.GetRemainingRestTime(this.restDuration, elapsed);
             }
 
             this.CurrentState = new WaveFeedbackState

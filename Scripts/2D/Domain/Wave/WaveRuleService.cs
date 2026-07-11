@@ -41,6 +41,12 @@ namespace LAB2D
             return enemiesSpawnedThisWave > 0 && currentAliveEnemies <= aliveEnemiesBeforeWave;
         }
 
+        public float GetRemainingRestTime(float restDuration, float elapsed)
+        {
+            float remaining = restDuration - elapsed;
+            return remaining < 0.0f ? 0.0f : remaining;
+        }
+
         private static int ClampMin(int value, int min)
         {
             return value < min ? min : value;
