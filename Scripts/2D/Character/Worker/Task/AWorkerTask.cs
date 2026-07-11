@@ -36,6 +36,7 @@
         /// 任务需要的时间
         /// </summary>
         protected float maxProgress = WorkerTaskTimeConfig.DefaultTaskSeconds;
+        private readonly WorkerTaskProgressService progressService = new WorkerTaskProgressService();
 
         /// <summary>
         /// 任务阶段
@@ -158,17 +159,22 @@
             // 吃饭和睡觉任务不消耗疲劳
             if (this.TaskType != WorkerTaskTypeEnum.Eat && this.TaskType != WorkerTaskTypeEnum.Sleep)
             {
-                workerData.CurTired = Mathf.Max(
-                    0.0f,
-                    workerData.CurTired - (Time.deltaTime * WorkerTaskTimeConfig.WorkTiredCostPerSecond));
+                workerData.CurTired = this.progressService.ApplyTiredCost(
+                    workerData.CurTired,
+                    Time.deltaTime,
+                    WorkerTaskTimeConfig.WorkTiredCostPerSecond);
             }
 
             float progressMultiplier = WeatherGameplayEffect.Instance.GetWorkerTaskProgressMultiplier(this.TaskType);
             progressMultiplier *= WorkerConditionManager.Instance.GetWorkerTaskProgressMultiplier(worker, this.TaskType);
-            this.curProgress += Time.deltaTime * progressMultiplier;
-            if (this.curProgress > this.maxProgress)
+            WorkerTaskProgressResult progressResult = this.progressService.AdvanceProgress(
+                this.curProgress,
+                this.maxProgress,
+                Time.deltaTime,
+                progressMultiplier);
+            this.curProgress = progressResult.CurrentProgress;
+            if (progressResult.Completed)
             {
-                this.curProgress = 0;
                 worker.SetProgress(this.curProgress, false);
                 if (this.StageChangeRule(worker))
                 {
@@ -179,7 +185,7 @@
                 return false;
             }
 
-            worker.SetProgress((float)this.curProgress / this.maxProgress, true);
+            worker.SetProgress(this.progressService.GetProgressRatio(this.curProgress, this.maxProgress), true);
             return false;
         }
 
