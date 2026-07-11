@@ -8,6 +8,8 @@ namespace LAB2D
     /// </summary>
     public static class WaveBossRewardTool
     {
+        private static readonly WaveBossRuleService BossRuleService = new WaveBossRuleService();
+
         /// <summary>
         /// 判断指定波次是否为 Boss 波。
         /// </summary>
@@ -15,9 +17,7 @@ namespace LAB2D
         /// <returns>当前波次是否应生成 Boss。</returns>
         public static bool IsBossWave(int waveIndex)
         {
-            return waveIndex > 0 &&
-                WaveBossRewardConstant.BossWaveInterval > 0 &&
-                waveIndex % WaveBossRewardConstant.BossWaveInterval == 0;
+            return BossRuleService.IsBossWave(waveIndex, WaveBossRewardConstant.BossWaveInterval);
         }
 
         /// <summary>
@@ -28,13 +28,11 @@ namespace LAB2D
         /// <returns>最终生成敌人数。</returns>
         public static int GetEnemyCountForWave(int baseEnemyCount, int waveIndex)
         {
-            int count = Mathf.Max(1, baseEnemyCount);
-            if (IsBossWave(waveIndex))
-            {
-                count += Mathf.Max(0, WaveBossRewardConstant.BossGuardianExtraEnemyCount);
-            }
-
-            return count;
+            return BossRuleService.GetEnemyCountForWave(
+                baseEnemyCount,
+                waveIndex,
+                WaveBossRewardConstant.BossWaveInterval,
+                WaveBossRewardConstant.BossGuardianExtraEnemyCount);
         }
 
         /// <summary>
