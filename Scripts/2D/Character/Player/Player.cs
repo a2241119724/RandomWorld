@@ -21,6 +21,7 @@
         private Rigidbody2D rg;
         private readonly PlayerDamagePolicy damagePolicy = new PlayerDamagePolicy();
         private readonly PlayerMovementPolicy movementPolicy = new PlayerMovementPolicy();
+        private readonly DamageCalculator damageCalculator = new DamageCalculator();
 
         /// <summary>
         /// 奔跑速度倍率，默认1.6倍
@@ -218,11 +219,10 @@
         /// <param name="hp">血量.</param>
         public void AddHp(float hp)
         {
-            this.CharacterDataLAB.Hp += hp;
-            if (this.CharacterDataLAB.Hp > this.CharacterDataLAB.MaxHp)
-            {
-                this.CharacterDataLAB.Hp = this.CharacterDataLAB.MaxHp;
-            }
+            this.CharacterDataLAB.Hp = this.damageCalculator.ApplyHealingToHealth(
+                this.CharacterDataLAB.Hp,
+                this.CharacterDataLAB.MaxHp,
+                hp);
 
             PlayerData playerData = this.CharacterDataLAB as PlayerData;
             PlayerStatusUI.Instance.UpdatePlayerState(

@@ -30,6 +30,13 @@ namespace LAB2D
             bool isDead = remainingHp <= 0.0f;
             return new CharacterHealthResult(isDead ? 0.0f : remainingHp, isDead);
         }
+
+        public float ApplyHealingToHealth(float currentHp, float maxHp, float healing)
+        {
+            float safeHealing = healing < 0.0f ? 0.0f : healing;
+            float nextHp = currentHp + safeHealing;
+            return nextHp > maxHp ? maxHp : nextHp;
+        }
     }
 
     public readonly struct CharacterHealthResult
