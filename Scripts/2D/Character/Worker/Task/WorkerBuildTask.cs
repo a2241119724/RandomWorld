@@ -1,6 +1,8 @@
 namespace LAB2D.Character.Worker.Task
 {
     using LAB2D;
+    using LAB2D.Item;
+    using LAB2D.Item.Build;
     using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;

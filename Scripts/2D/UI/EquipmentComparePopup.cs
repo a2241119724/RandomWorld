@@ -1,10 +1,14 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Enum;
+    using LAB2D.Item.Backpack.Equipment;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
+    using Action = System.Action;
+    using Character = LAB2D.Character.Character;
 
     /// <summary>
     /// 装备对比弹窗。
