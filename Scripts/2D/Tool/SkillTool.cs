@@ -11,6 +11,8 @@ namespace LAB2D
     /// </summary>
     public static class SkillTool
     {
+        private static readonly SkillRuleService RuleService = new SkillRuleService();
+
         /// <summary>
         /// 计算技能实际伤害值。
         /// </summary>
@@ -20,9 +22,11 @@ namespace LAB2D
         /// <returns>最终技能伤害值，不小于1</returns>
         public static float CalculateSkillDamage(float baseAtn, float damageMultiplier, int skillLevel)
         {
-            float levelBonus = 1.0f + ((skillLevel - 1) * SkillConstant.UpgradeEffectIncrease);
-            float damage = baseAtn * damageMultiplier * levelBonus;
-            return Mathf.Max(1f, damage);
+            return RuleService.CalculateSkillDamage(
+                baseAtn,
+                damageMultiplier,
+                skillLevel,
+                SkillConstant.UpgradeEffectIncrease);
         }
 
         /// <summary>
@@ -33,9 +37,10 @@ namespace LAB2D
         /// <returns>最终冷却时间（秒），不小于0.5秒</returns>
         public static float CalculateSkillCooldown(float baseCooldown, int skillLevel)
         {
-            float reduction = (skillLevel - 1) * SkillConstant.UpgradeCooldownReduction;
-            float cooldown = baseCooldown * (1.0f - reduction);
-            return Mathf.Max(0.5f, cooldown);
+            return RuleService.CalculateSkillCooldown(
+                baseCooldown,
+                skillLevel,
+                SkillConstant.UpgradeCooldownReduction);
         }
 
         /// <summary>
@@ -52,7 +57,7 @@ namespace LAB2D
 
             return remainingSeconds < 1.0f
                 ? $"{remainingSeconds:F1}s"
-                : $"{Mathf.CeilToInt(remainingSeconds)}s";
+                : $"{RuleService.ToCooldownDisplaySeconds(remainingSeconds)}s";
         }
 
         /// <summary>
@@ -170,7 +175,7 @@ namespace LAB2D
                 return 0f;
             }
 
-            return Mathf.Clamp01(remainingSeconds / totalCooldown);
+            return RuleService.GetCooldownProgress(remainingSeconds, totalCooldown);
         }
     }
 }
