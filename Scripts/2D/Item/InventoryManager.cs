@@ -14,6 +14,7 @@
         private readonly Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // 预申请资源
         private readonly Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // 预放置资源
         private readonly int capacity = 1000; // 单个cell的容量
+        private readonly InventoryStackingService stackingService;
 
         public InventoryManager()
         {
@@ -21,6 +22,7 @@
             this.id2Resource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
             this.preTakeResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
             this.prePlaceResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
+            this.stackingService = new InventoryStackingService();
             this.TypeToResource = new Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>>();
         }
 
@@ -123,12 +125,14 @@
             {
                 foreach (KeyValuePair<Vector3Int, ResourceInfo> cell in this.id2Resource[resourceInfo.Id])
                 {
-                    if (cell.Value.Count + this.GetPrePlaceCountByPos(cell.Key) < this.capacity)
+                    int count = this.stackingService.GetAvailableCapacity(
+                        this.capacity,
+                        cell.Value.Count,
+                        this.GetPrePlaceCountByPos(cell.Key));
+                    if (count > 0)
                     {
-                        int count = this.capacity - (cell.Value.Count + this.GetPrePlaceCountByPos(cell.Key));
-
                         // 放置完了
-                        if (remaining <= count)
+                        if (this.stackingService.CanPlaceAll(remaining, count))
                         {
                             if (isPre)
                             {
@@ -171,10 +175,13 @@
                 // 该位置没有被预放置
                 if (!this.IsAreadyPrePlace(cell.Key, resourceInfo.Id))
                 {
-                    int count = this.capacity - (cell.Value.Count + this.GetPrePlaceCountByPos(cell.Key));
+                    int count = this.stackingService.GetAvailableCapacity(
+                        this.capacity,
+                        cell.Value.Count,
+                        this.GetPrePlaceCountByPos(cell.Key));
 
                     // 放置完了
-                    if (remaining <= count)
+                    if (this.stackingService.CanPlaceAll(remaining, count))
                     {
                         if (isPre)
                         {
