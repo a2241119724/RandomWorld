@@ -1,7 +1,5 @@
 namespace LAB2D
 {
-    using UnityEngine;
-
     /// <summary>
     /// 工人补给缺口工具类。
     /// 只负责补给缺口判断、百分比格式化和显示文案生成，不持有运行时状态，不访问 Scene、Prefab、存档、Photon 或 AssetBundle。
@@ -9,6 +7,9 @@ namespace LAB2D
     /// </summary>
     public static class WorkerSupplyTool
     {
+        private static readonly WorkerConditionRuleService ConditionRuleService = new WorkerConditionRuleService();
+        private static readonly WorkerSupplyRuleService SupplyRuleService = new WorkerSupplyRuleService();
+
         /// <summary>
         /// 判断 Worker 是否需要食物补给。
         /// </summary>
@@ -55,7 +56,7 @@ namespace LAB2D
                 return 0.0f;
             }
 
-            return Mathf.Max(0.0f, workerData.MaxHungry - workerData.CurHungry);
+            return SupplyRuleService.GetRecoverNeed(workerData.CurHungry, workerData.MaxHungry);
         }
 
         /// <summary>
@@ -195,7 +196,7 @@ namespace LAB2D
         /// <returns>百分比文本。</returns>
         public static string FormatPercent(float ratio)
         {
-            return $"{Mathf.RoundToInt(Mathf.Clamp01(ratio) * 100.0f)}%";
+            return $"{ConditionRuleService.ToPercentInt(ratio)}%";
         }
     }
 }
