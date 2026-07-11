@@ -19,6 +19,7 @@
         private CameraMove miniCamera;
         private SpriteRenderer sprite;
         private Rigidbody2D rg;
+        private readonly PlayerDamagePolicy damagePolicy = new PlayerDamagePolicy();
 
         /// <summary>
         /// 奔跑速度倍率，默认1.6倍
@@ -50,7 +51,7 @@
         public float InvincibilityDuration
         {
             get => this.invincibilityDuration;
-            set => this.invincibilityDuration = Mathf.Max(0f, value);
+            set => this.invincibilityDuration = this.damagePolicy.ClampInvincibilityDuration(value);
         }
 
         /// <summary>
@@ -60,8 +61,10 @@
         {
             get
             {
-                return this.invincibilityDuration > 0f &&
-                       Time.time - this.lastDamageTime < this.invincibilityDuration;
+                return this.damagePolicy.IsInvincible(
+                    Time.time,
+                    this.lastDamageTime,
+                    this.invincibilityDuration);
             }
         }
 
@@ -240,14 +243,12 @@
                 return;
             }
 
-            // Invulnerable during respawn period
-            if (DeathPenaltyManager.Instance.IsRespawning)
-            {
-                return;
-            }
-
-            // 受击无敌帧保护：在无敌时间窗口内忽略所有伤害，防止被多敌人同时攻击秒杀
-            if (this.IsInvincible)
+            if (this.damagePolicy.ShouldIgnoreDamage(
+                hp,
+                DeathPenaltyManager.Instance.IsRespawning,
+                Time.time,
+                this.lastDamageTime,
+                this.invincibilityDuration))
             {
                 return;
             }
