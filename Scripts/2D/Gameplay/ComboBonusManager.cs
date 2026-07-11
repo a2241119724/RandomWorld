@@ -30,6 +30,27 @@ namespace LAB2D
             new ComboTier { MinCombo = 50,  DamageMultiplier = 2.50f, ExperienceMultiplier = 5.0f, Label = "连击 x50! 传说!" },
         };
 
+        private static readonly int[] tierThresholds;
+        private static readonly float[] tierDamageMultipliers;
+        private static readonly float[] tierExpMultipliers;
+        private static readonly string[] tierLabels;
+        private static readonly ComboBonusRuleService comboRuleService = new ComboBonusRuleService();
+
+        static ComboBonusManager()
+        {
+            tierThresholds = new int[Tiers.Length];
+            tierDamageMultipliers = new float[Tiers.Length];
+            tierExpMultipliers = new float[Tiers.Length];
+            tierLabels = new string[Tiers.Length];
+            for (int i = 0; i < Tiers.Length; i++)
+            {
+                tierThresholds[i] = Tiers[i].MinCombo;
+                tierDamageMultipliers[i] = Tiers[i].DamageMultiplier;
+                tierExpMultipliers[i] = Tiers[i].ExperienceMultiplier;
+                tierLabels[i] = Tiers[i].Label;
+            }
+        }
+
         private int currentCombo;
         private int currentTierIndex;
         private float damageMultiplier = 1.0f;
@@ -181,19 +202,10 @@ namespace LAB2D
         /// </summary>
         private void RecalculateMultipliers()
         {
-            int newTierIndex = 0;
+            int newTierIndex = comboRuleService.FindTierIndex(this.currentCombo, tierThresholds);
 
-            for (int i = Tiers.Length - 1; i >= 0; i--)
-            {
-                if (this.currentCombo >= Tiers[i].MinCombo)
-                {
-                    newTierIndex = i;
-                    break;
-                }
-            }
-
-            float newDmgMult = Tiers[newTierIndex].DamageMultiplier;
-            float newExpMult = Tiers[newTierIndex].ExperienceMultiplier;
+            float newDmgMult = comboRuleService.GetDamageMultiplier(newTierIndex, tierDamageMultipliers);
+            float newExpMult = comboRuleService.GetExperienceMultiplier(newTierIndex, tierExpMultipliers);
 
             bool tierChanged = newTierIndex != this.currentTierIndex;
             this.currentTierIndex = newTierIndex;
@@ -203,7 +215,7 @@ namespace LAB2D
             // 连击等级提升时触发里程碑事件和即时提示
             if (tierChanged && this.currentTierIndex > 0)
             {
-                string label = Tiers[this.currentTierIndex].Label;
+                string label = comboRuleService.GetTierLabel(this.currentTierIndex, tierLabels);
                 if (!string.IsNullOrEmpty(label))
                 {
                     this.ShowComboMilestoneTip(label);
@@ -298,15 +310,8 @@ namespace LAB2D
         /// <returns>对应的伤害倍率。</returns>
         public static float GetDamageMultiplierForCombo(int combo)
         {
-            for (int i = Tiers.Length - 1; i >= 0; i--)
-            {
-                if (combo >= Tiers[i].MinCombo)
-                {
-                    return Tiers[i].DamageMultiplier;
-                }
-            }
-
-            return 1.0f;
+            int tierIndex = comboRuleService.FindTierIndex(combo, tierThresholds);
+            return comboRuleService.GetDamageMultiplier(tierIndex, tierDamageMultipliers);
         }
 
         /// <summary>
@@ -317,15 +322,8 @@ namespace LAB2D
         /// <returns>对应的经验倍率。</returns>
         public static float GetExperienceMultiplierForCombo(int combo)
         {
-            for (int i = Tiers.Length - 1; i >= 0; i--)
-            {
-                if (combo >= Tiers[i].MinCombo)
-                {
-                    return Tiers[i].ExperienceMultiplier;
-                }
-            }
-
-            return 1.0f;
+            int tierIndex = comboRuleService.FindTierIndex(combo, tierThresholds);
+            return comboRuleService.GetExperienceMultiplier(tierIndex, tierExpMultipliers);
         }
 
         #endregion
