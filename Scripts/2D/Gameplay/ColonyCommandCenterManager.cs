@@ -171,7 +171,8 @@ namespace LAB2D
                     queueSnapshot,
                     assignmentReport,
                     supplyReport,
-                    congestionReport);
+                    congestionReport,
+                    Time.time);
             }
             catch (Exception exception)
             {

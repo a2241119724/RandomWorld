@@ -108,7 +108,8 @@ namespace LAB2D
             WorkerTaskQueueSnapshot queueSnapshot,
             WorkerTaskAssignmentReport assignmentReport,
             WorkerSupplyReport supplyReport,
-            WorkerTaskCongestionReport congestionReport)
+            WorkerTaskCongestionReport congestionReport,
+            float updatedTime)
         {
             ColonyCommandCenterReport report = new ColonyCommandCenterReport
             {
@@ -116,7 +117,7 @@ namespace LAB2D
                 AssignmentReport = assignmentReport,
                 SupplyReport = supplyReport,
                 CongestionReport = congestionReport,
-                UpdatedTime = Time.time,
+                UpdatedTime = updatedTime,
             };
 
             report.AlertLevel = ResolveAlertLevel(assignmentReport, supplyReport, congestionReport, queueSnapshot);
