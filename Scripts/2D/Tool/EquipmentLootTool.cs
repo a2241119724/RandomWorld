@@ -14,12 +14,25 @@ namespace LAB2D
         private static readonly EquipmentLootRuleService RuleService = new EquipmentLootRuleService();
 
         /// <summary>
-        /// 按稀有度权重随机选择一个稀有度等级。
+        /// 按稀有度权重随机选择一个稀有度等级（Unity 随机便利方法）。
         /// waveNumber 越大，高稀有度的有效权重越高（低稀有度权重等比缩减）。
         /// </summary>
         /// <param name="waveNumber">当前波次编号（0-based）</param>
         /// <returns>随机选中的稀有度等级</returns>
         public static EquipmentRarityType RollRarity(int waveNumber)
+        {
+            float total = GetRarityTotalWeight(waveNumber);
+            float roll = UnityEngine.Random.Range(0f, total);
+            return RollRarityWithRoll(waveNumber, roll);
+        }
+
+        /// <summary>
+        /// 按稀有度权重和给定随机投点值选择一个稀有度等级（纯 C# 方法，可测试）。
+        /// </summary>
+        /// <param name="waveNumber">当前波次编号（0-based）</param>
+        /// <param name="randomRoll">随机投点值，范围 [0, GetRarityTotalWeight(waveNumber))。</param>
+        /// <returns>选中的稀有度等级</returns>
+        public static EquipmentRarityType RollRarityWithRoll(int waveNumber, float randomRoll)
         {
             float bonus = RuleService.GetRarityWeightBonus(
                 waveNumber,
@@ -33,21 +46,40 @@ namespace LAB2D
             float legendaryW = EquipmentLootConstant.LegendaryWeight * (1f + bonus * 3f);
             float mythicW = EquipmentLootConstant.MythicWeight * (1f + bonus * 5f);
 
-            float total = commonW + uncommonW + rareW + epicW + legendaryW + mythicW;
-            float roll = UnityEngine.Random.Range(0f, total);
-
             float cursor = 0f;
             cursor += commonW;
-            if (roll <= cursor) return EquipmentRarityType.Common;
+            if (randomRoll <= cursor) return EquipmentRarityType.Common;
             cursor += uncommonW;
-            if (roll <= cursor) return EquipmentRarityType.Uncommon;
+            if (randomRoll <= cursor) return EquipmentRarityType.Uncommon;
             cursor += rareW;
-            if (roll <= cursor) return EquipmentRarityType.Rare;
+            if (randomRoll <= cursor) return EquipmentRarityType.Rare;
             cursor += epicW;
-            if (roll <= cursor) return EquipmentRarityType.Epic;
+            if (randomRoll <= cursor) return EquipmentRarityType.Epic;
             cursor += legendaryW;
-            if (roll <= cursor) return EquipmentRarityType.Legendary;
+            if (randomRoll <= cursor) return EquipmentRarityType.Legendary;
             return EquipmentRarityType.Mythic;
+        }
+
+        /// <summary>
+        /// 获取稀有度随机池的总权重（用于生成随机投点范围）。
+        /// </summary>
+        /// <param name="waveNumber">当前波次编号（0-based）</param>
+        /// <returns>总权重值</returns>
+        public static float GetRarityTotalWeight(int waveNumber)
+        {
+            float bonus = RuleService.GetRarityWeightBonus(
+                waveNumber,
+                EquipmentLootConstant.RarityWeightBonusPerWave,
+                0.5f);
+
+            float commonW = EquipmentLootConstant.CommonWeight * (1f - bonus);
+            float uncommonW = EquipmentLootConstant.UncommonWeight;
+            float rareW = EquipmentLootConstant.RareWeight * (1f + bonus);
+            float epicW = EquipmentLootConstant.EpicWeight * (1f + bonus * 2f);
+            float legendaryW = EquipmentLootConstant.LegendaryWeight * (1f + bonus * 3f);
+            float mythicW = EquipmentLootConstant.MythicWeight * (1f + bonus * 5f);
+
+            return commonW + uncommonW + rareW + epicW + legendaryW + mythicW;
         }
 
         /// <summary>
