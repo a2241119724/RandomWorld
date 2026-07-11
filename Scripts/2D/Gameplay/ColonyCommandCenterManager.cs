@@ -14,6 +14,7 @@ namespace LAB2D
         private string lastSignature = string.Empty;
         private float nextRefreshTime;
         private float lastTipTime = -999.0f;
+        private readonly ColonyCommandCenterRuleService ruleService = new ColonyCommandCenterRuleService();
         private bool enabled = true;
         private bool tipEnabled = true;
 
@@ -91,7 +92,8 @@ namespace LAB2D
                 return;
             }
 
-            this.nextRefreshTime = Time.time + Mathf.Max(0.1f, ColonyCommandCenterConstant.RefreshInterval);
+            this.nextRefreshTime = Time.time + this.ruleService.ClampRefreshInterval(
+                ColonyCommandCenterConstant.RefreshInterval);
             this.Refresh(true);
         }
 
