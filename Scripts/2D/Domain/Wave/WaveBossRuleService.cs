@@ -24,5 +24,31 @@ namespace LAB2D
 
             return count;
         }
+
+        public float GetNormalEnemyHealthMultiplier(
+            int waveIndex,
+            float difficultyScale,
+            float healthScalePerWave)
+        {
+            return ClampMin(1.0f, difficultyScale + ((waveIndex - 1) * healthScalePerWave));
+        }
+
+        public float GetNormalEnemyAttackMultiplier(
+            int waveIndex,
+            float difficultyScale,
+            float attackScalePerWave)
+        {
+            return ClampMin(1.0f, difficultyScale + ((waveIndex - 1) * attackScalePerWave));
+        }
+
+        public float GetNormalEnemyDefenseMultiplier(int waveIndex, float defenseScalePerWave)
+        {
+            return ClampMin(1.0f, 1.0f + ((waveIndex - 1) * defenseScalePerWave));
+        }
+
+        private static float ClampMin(float min, float value)
+        {
+            return value < min ? min : value;
+        }
     }
 }

@@ -43,7 +43,10 @@ namespace LAB2D
         /// <returns>生命倍率。</returns>
         public static float GetNormalEnemyHealthMultiplier(int waveIndex, float difficultyScale)
         {
-            return Mathf.Max(1.0f, difficultyScale + ((waveIndex - 1) * WaveBossRewardConstant.NormalEnemyHealthScalePerWave));
+            return BossRuleService.GetNormalEnemyHealthMultiplier(
+                waveIndex,
+                difficultyScale,
+                WaveBossRewardConstant.NormalEnemyHealthScalePerWave);
         }
 
         /// <summary>
@@ -54,7 +57,10 @@ namespace LAB2D
         /// <returns>攻击倍率。</returns>
         public static float GetNormalEnemyAttackMultiplier(int waveIndex, float difficultyScale)
         {
-            return Mathf.Max(1.0f, difficultyScale + ((waveIndex - 1) * WaveBossRewardConstant.NormalEnemyAttackScalePerWave));
+            return BossRuleService.GetNormalEnemyAttackMultiplier(
+                waveIndex,
+                difficultyScale,
+                WaveBossRewardConstant.NormalEnemyAttackScalePerWave);
         }
 
         /// <summary>
@@ -65,7 +71,9 @@ namespace LAB2D
         /// <returns>防御倍率。</returns>
         public static float GetNormalEnemyDefenseMultiplier(int waveIndex, float difficultyScale)
         {
-            return Mathf.Max(1.0f, 1.0f + ((waveIndex - 1) * WaveBossRewardConstant.NormalEnemyDefenseScalePerWave));
+            return BossRuleService.GetNormalEnemyDefenseMultiplier(
+                waveIndex,
+                WaveBossRewardConstant.NormalEnemyDefenseScalePerWave);
         }
 
         /// <summary>
