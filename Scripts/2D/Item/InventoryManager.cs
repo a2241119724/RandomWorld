@@ -15,6 +15,7 @@
         private readonly Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // 预放置资源
         private readonly int capacity = 1000; // 单个cell的容量
         private readonly InventoryStackingService stackingService;
+        private readonly InventoryFoodReservationService foodReservationService;
 
         public InventoryManager()
         {
@@ -23,6 +24,7 @@
             this.preTakeResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
             this.prePlaceResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
             this.stackingService = new InventoryStackingService();
+            this.foodReservationService = new InventoryFoodReservationService();
             this.TypeToResource = new Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>>();
         }
 
@@ -284,8 +286,8 @@
             }
 
             int availableCount = resourceInfo.Count - this.GetPreTakeCountByPos(posMap);
-            int needCount = Mathf.CeilToInt(hungry / 10.0f);
-            int preTakeCount = Mathf.Min(availableCount, needCount);
+            int needCount = this.foodReservationService.GetNeededFoodCount(hungry, 10.0f);
+            int preTakeCount = this.foodReservationService.GetPreTakeCount(availableCount, needCount);
             if (preTakeCount <= 0)
             {
                 return false;
