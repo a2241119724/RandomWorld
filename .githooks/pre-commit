@@ -12,5 +12,6 @@ else
   exit 1
 fi
 
-"$PS_CMD" -NoProfile -ExecutionPolicy Bypass -File ".gitarchive/New-EncryptedProjectArchive.ps1"
-git add -f ".commit-archive/ProjectSnapshot.zip.aes"
+# Disabled: no longer auto-generate encrypted project archive on commit.
+# "$PS_CMD" -NoProfile -ExecutionPolicy Bypass -File ".gitarchive/New-EncryptedProjectArchive.ps1"
+# git add -f ".commit-archive/ProjectSnapshot.zip.aes"
