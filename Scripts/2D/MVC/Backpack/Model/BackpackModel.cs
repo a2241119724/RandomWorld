@@ -1,6 +1,7 @@
 namespace LAB2D.MVC.Backpack.Model
 {
     using LAB2D;
+    using LAB2D.Item;
     using System.Collections;
     using System.Collections.Generic;
 

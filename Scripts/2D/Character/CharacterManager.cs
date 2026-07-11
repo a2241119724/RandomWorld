@@ -1,6 +1,7 @@
 namespace LAB2D.Character
 {
     using LAB2D;
+    using LAB2D.Serializable;
     using System.Collections.Generic;
     using UnityEngine;
 

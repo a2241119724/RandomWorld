@@ -1,6 +1,10 @@
 namespace LAB2D.MVC.Backpack.View
 {
     using LAB2D;
+    using LAB2D.Constant;
+    using LAB2D.Item;
+    using LAB2D.Item.Backpack;
+    using LAB2D.MVC.Backpack.Model;
     /// <summary>
     /// 背包仓库界面
     /// </summary>

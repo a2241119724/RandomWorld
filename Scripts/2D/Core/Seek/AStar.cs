@@ -1,6 +1,7 @@
 namespace LAB2D.Core.Seek
 {
     using LAB2D;
+    using LAB2D.Serializable;
     using System.Collections.Generic;
     using PimDeWitte.UnityMainThreadDispatcher;
     using UnityEngine;
@@ -11,7 +12,7 @@ namespace LAB2D.Core.Seek
     /// </summary>
     public class AStar : ASeek
     {
-        public AStar(Character character)
+        public AStar(LAB2D.Character.Character character)
             : base(character)
         {
         }

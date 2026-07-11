@@ -1,5 +1,7 @@
 namespace LAB2D.Core.KDTree
 {
+    using LAB2D.Serializable;
+
     public class KDNode
     {
         public KDNode(Vector2ShortLAB point, int axis)

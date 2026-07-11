@@ -1,6 +1,7 @@
 namespace LAB2D.Character
 {
     using LAB2D;
+    using LAB2D.Serializable;
     using LAB2D.Domain.Character;
     using LAB2D.Domain.Common;
     using System;

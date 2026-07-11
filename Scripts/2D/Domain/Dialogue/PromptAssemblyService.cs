@@ -5,6 +5,7 @@ using System.Text;
 namespace LAB2D.Domain.Dialogue
 {
     using LAB2D;
+    using LAB2D.AI.Dialogue.LLM;
     /// <summary>
     /// 从纯文本输入和模板数据构建LLM聊天消息。
     /// </summary>

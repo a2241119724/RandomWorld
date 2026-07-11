@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.AI.Dialogue.LLM;
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;

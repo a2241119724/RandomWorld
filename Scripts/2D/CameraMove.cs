@@ -26,7 +26,7 @@ namespace LAB2D
         /// <summary>
         /// 相机跟随的目标.
         /// </summary>
-        public Character Character { get; set; }
+        public LAB2D.Character.Character Character { get; set; }
 
         /// <summary>
         /// 相机相对目标的偏移量.

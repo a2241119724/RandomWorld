@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Worker.Task.Individual
 {
     using LAB2D;
+    using LAB2D.Serializable;
     using System;
     using UnityEngine;
 

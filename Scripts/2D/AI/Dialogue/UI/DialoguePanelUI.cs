@@ -1,6 +1,7 @@
 namespace LAB2D.AI.Dialogue.UI
 {
     using LAB2D;
+    using LAB2D.AI.Dialogue.Prompt;
     using UnityEngine;
     using UnityEngine.UI;
 

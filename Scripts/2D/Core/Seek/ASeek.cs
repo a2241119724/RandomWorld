@@ -1,6 +1,7 @@
 namespace LAB2D.Core.Seek
 {
     using LAB2D;
+    using LAB2D.Serializable;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
@@ -74,7 +75,7 @@ namespace LAB2D.Core.Seek
         /// </summary>
         protected List<Spend> closeList;
 
-        public ASeek(Character character)
+        public ASeek(LAB2D.Character.Character character)
         {
             // 确保Spend池和可步行性缓存已初始化
             var tileMap = TileMap.Instance.TileMapDataLAB;
@@ -123,7 +124,7 @@ namespace LAB2D.Core.Seek
         /// <summary>
         /// 寻路进度
         /// </summary>
-        protected Character Character { get; set; }
+        protected LAB2D.Character.Character Character { get; set; }
 
         /// <summary>
         /// 是否可以抵达(不包含带有碰撞体的Tile,即使是正在建造中的)

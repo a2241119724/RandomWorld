@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Worker.State
 {
     using LAB2D;
+    using LAB2D.Serializable;
     using System.Text;
     using UnityEngine;
 

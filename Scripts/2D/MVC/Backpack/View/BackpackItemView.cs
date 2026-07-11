@@ -1,6 +1,9 @@
 namespace LAB2D.MVC.Backpack.View
 {
     using LAB2D;
+    using LAB2D.Item;
+    using LAB2D.Item.Backpack;
+    using LAB2D.UI.Panel;
     /// <summary>
     /// 背包道具UI
     /// </summary>

@@ -1,6 +1,8 @@
 namespace LAB2D.MVC.Backpack.Controller
 {
     using LAB2D;
+    using LAB2D.MVC.Backpack.Model;
+    using LAB2D.MVC.Backpack.View;
     using System.Collections.Generic;
 
     /// <summary>

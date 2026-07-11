@@ -1,6 +1,8 @@
 namespace LAB2D.MVC.Build.View
 {
     using LAB2D;
+    using LAB2D.Constant;
+    using LAB2D.MVC.Build.Model;
     /// <summary>
     /// 建造道具UI
     /// </summary>

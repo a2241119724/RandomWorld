@@ -1,6 +1,12 @@
 namespace LAB2D.AI.Dialogue.Core
 {
     using LAB2D;
+    using LAB2D.AI.Dialogue.LLM;
+    using LAB2D.Character.Worker;
+    using LAB2D.AI.Dialogue.Memory;
+    using LAB2D.AI.Dialogue.Prompt;
+    using LAB2D.AI.Dialogue.RAG;
+    using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
     using System.Text;

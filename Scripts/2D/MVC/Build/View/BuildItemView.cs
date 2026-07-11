@@ -1,6 +1,9 @@
 namespace LAB2D.MVC.Build.View
 {
     using LAB2D;
+    using LAB2D.Item;
+    using LAB2D.Item.Build;
+    using LAB2D.UI.Panel;
     /// <summary>
     /// 建造道具UI
     /// </summary>

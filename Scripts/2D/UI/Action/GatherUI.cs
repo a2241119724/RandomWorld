@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Serializable;
     using UnityEngine;
     using UnityEngine.UI;
 
