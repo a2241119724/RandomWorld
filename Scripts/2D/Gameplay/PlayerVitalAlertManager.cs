@@ -11,6 +11,7 @@ namespace LAB2D
     /// </summary>
     public class PlayerVitalAlertManager : Singleton<PlayerVitalAlertManager>
     {
+        private readonly PlayerVitalAlertRuleService ruleService = new PlayerVitalAlertRuleService();
         private PlayerVitalAlertReport currentReport;
         private string lastSignature = string.Empty;
         private float nextRefreshTime;
@@ -226,7 +227,7 @@ namespace LAB2D
                 return;
             }
 
-            bool recovered = IsDangerLevel(previousLevel) &&
+            bool recovered = this.ruleService.IsDangerLevel(previousLevel) &&
                 report.Level == PlayerVitalAlertLevel.Safe &&
                 report.HpRatio >= PlayerVitalAlertConstant.RecoveryRatio;
             bool shouldWarn = report.ShouldShowTip;
@@ -236,7 +237,7 @@ namespace LAB2D
             }
 
             float now = Time.time;
-            bool escalated = IsMoreSevere(report.Level, previousLevel);
+            bool escalated = this.ruleService.IsMoreSevere(report.Level, previousLevel);
             if (!recovered && !escalated && now - this.lastTipTime < PlayerVitalAlertConstant.TipCooldownSeconds)
             {
                 return;
@@ -254,12 +255,7 @@ namespace LAB2D
         /// </summary>
         /// <param name="level">生命提示等级。</param>
         /// <returns>受伤、濒危或复活等待时返回 true。</returns>
-        private static bool IsDangerLevel(PlayerVitalAlertLevel level)
-        {
-            return level == PlayerVitalAlertLevel.Wounded ||
-                level == PlayerVitalAlertLevel.Critical ||
-                level == PlayerVitalAlertLevel.Respawning;
-        }
+        // IsDangerLevel, IsMoreSevere, GetSeverity 已迁移至 PlayerVitalAlertRuleService
 
         /// <summary>
         /// 判断新等级是否比旧等级更严重。
@@ -267,30 +263,14 @@ namespace LAB2D
         /// <param name="next">新等级。</param>
         /// <param name="previous">旧等级。</param>
         /// <returns>新等级严重度更高时返回 true。</returns>
-        private static bool IsMoreSevere(PlayerVitalAlertLevel next, PlayerVitalAlertLevel previous)
-        {
-            return GetSeverity(next) > GetSeverity(previous);
-        }
+        // 已迁移至 PlayerVitalAlertRuleService
 
         /// <summary>
         /// 获取生命提示等级严重度。
         /// </summary>
         /// <param name="level">生命提示等级。</param>
         /// <returns>越大表示越严重。</returns>
-        private static int GetSeverity(PlayerVitalAlertLevel level)
-        {
-            switch (level)
-            {
-                case PlayerVitalAlertLevel.Wounded:
-                    return 1;
-                case PlayerVitalAlertLevel.Critical:
-                    return 2;
-                case PlayerVitalAlertLevel.Respawning:
-                    return 3;
-                default:
-                    return 0;
-            }
-        }
+        // GetSeverity 已迁移至 PlayerVitalAlertRuleService
 
         /// <summary>
         /// 显示玩家生命提示。

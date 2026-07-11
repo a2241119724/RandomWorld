@@ -51,5 +51,32 @@ namespace LAB2D
             int integer = (int)value;
             return value > integer ? integer + 1 : integer;
         }
+
+        public bool IsDangerLevel(PlayerVitalAlertLevel level)
+        {
+            return level == PlayerVitalAlertLevel.Wounded ||
+                level == PlayerVitalAlertLevel.Critical ||
+                level == PlayerVitalAlertLevel.Respawning;
+        }
+
+        public bool IsMoreSevere(PlayerVitalAlertLevel next, PlayerVitalAlertLevel previous)
+        {
+            return GetSeverity(next) > GetSeverity(previous);
+        }
+
+        public int GetSeverity(PlayerVitalAlertLevel level)
+        {
+            switch (level)
+            {
+                case PlayerVitalAlertLevel.Wounded:
+                    return 1;
+                case PlayerVitalAlertLevel.Critical:
+                    return 2;
+                case PlayerVitalAlertLevel.Respawning:
+                    return 3;
+                default:
+                    return 0;
+            }
+        }
     }
 }
