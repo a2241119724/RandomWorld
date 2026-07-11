@@ -1,0 +1,42 @@
+namespace LAB2D
+{
+    /// <summary>
+    /// Pure damage and health arithmetic shared by character adapters.
+    /// </summary>
+    public sealed class DamageCalculator
+    {
+        private const float MinAppliedDamage = 0.1f;
+
+        public float ApplyDefense(float incomingDamage, float defense)
+        {
+            if (incomingDamage <= 0.0f)
+            {
+                return 0.0f;
+            }
+
+            float reducedDamage = incomingDamage - (incomingDamage * defense / 10.0f);
+            return reducedDamage < MinAppliedDamage ? MinAppliedDamage : reducedDamage;
+        }
+
+        public CharacterHealthResult ApplyDamageToHealth(float currentHp, float damage)
+        {
+            float safeDamage = damage < 0.0f ? 0.0f : damage;
+            float remainingHp = currentHp - safeDamage;
+            bool isDead = remainingHp <= 0.0f;
+            return new CharacterHealthResult(isDead ? 0.0f : remainingHp, isDead);
+        }
+    }
+
+    public readonly struct CharacterHealthResult
+    {
+        public CharacterHealthResult(float remainingHp, bool isDead)
+        {
+            this.RemainingHp = remainingHp;
+            this.IsDead = isDead;
+        }
+
+        public float RemainingHp { get; }
+
+        public bool IsDead { get; }
+    }
+}

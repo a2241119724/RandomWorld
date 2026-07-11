@@ -41,6 +41,7 @@
         protected Attribute basicAttribute;
 
         private Color originalColor; // 原来的自身颜色
+        private readonly DamageCalculator damageCalculator = new DamageCalculator();
 
         /// <summary>
         /// 当前装备的武器物体
@@ -105,8 +106,7 @@
             hp = WaveBossRewardManager.Instance.GetAdjustedIncomingDamage(this, hp);
 
             // 根据防御力计算伤害
-            hp -= hp * this.CharacterDataLAB.DEF / 10;
-            hp = hp < 0.1f ? 0.1f : hp;
+            hp = this.damageCalculator.ApplyDefense(hp, this.CharacterDataLAB.DEF);
 
             // 记录战斗统计数据
             GameplaySessionStats.Instance.RecordDamageDealt(hp, isCRT);
@@ -132,10 +132,10 @@
             this.Invoke(nameof(this.ResetColor), 0.2f); // 一段时间后调用
 
             // if (!photonView.IsMine) return;
-            this.CharacterDataLAB.Hp -= hp;  // 更新敌人生命值
-            if (this.CharacterDataLAB.Hp <= 0)
+            CharacterHealthResult healthResult = this.damageCalculator.ApplyDamageToHealth(this.CharacterDataLAB.Hp, hp);
+            this.CharacterDataLAB.Hp = healthResult.RemainingHp;  // 更新敌人生命值
+            if (healthResult.IsDead)
             {
-                this.CharacterDataLAB.Hp = 0;
                 this.Death();
                 return;
             }
