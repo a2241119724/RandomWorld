@@ -228,59 +228,14 @@ namespace LAB2D
             }
         }
 
-        /// <summary>
-        /// 显示连击里程碑提示。
-        /// 优先通过 GlobalInit.ShowTip 显示游戏内提示，缺失时降级为 Debug.Log。
-        /// </summary>
-        /// <param name="message">提示文本。</param>
         private void ShowComboMilestoneTip(string message)
         {
-            try
-            {
-                if (GlobalInit.Instance != null)
-                {
-                    GlobalInit.Instance.ShowTip(message);
-                    return;
-                }
-            }
-            catch (Exception e)
-            {
-                LogManager.Instance.Log(
-                    $"ComboBonusManager.ShowComboMilestoneTip failed: {message}\n{e}",
-                    LogManager.LogLevelEnum.Error);
-
-                // 降级路径：GlobalInit 或 Tip Prefab 不可用时使用日志输出
-            }
-
-            Debug.Log($"[ComboBonus] {message}");
+            TipHelper.Show(message, "[ComboBonus]");
         }
 
-        /// <summary>
-        /// 显示连击中断提示。
-        /// 优先通过 GlobalInit.ShowTip 显示，缺失时降级为 Debug.Log。
-        /// </summary>
-        /// <param name="maxCombo">中断前的最高连击数。</param>
         private void ShowComboBreakTip(int maxCombo)
         {
-            string message = $"连击中断! 最高连击: {maxCombo}";
-            try
-            {
-                if (GlobalInit.Instance != null)
-                {
-                    GlobalInit.Instance.ShowTip(message);
-                    return;
-                }
-            }
-            catch (Exception e)
-            {
-                LogManager.Instance.Log(
-                    $"ComboBonusManager.ShowComboBreakTip failed: {message}\n{e}",
-                    LogManager.LogLevelEnum.Error);
-
-                // 降级路径
-            }
-
-            Debug.Log($"[ComboBonus] {message}");
+            TipHelper.Show($"连击中断! 最高连击: {maxCombo}", "[ComboBonus]");
         }
 
         #endregion
