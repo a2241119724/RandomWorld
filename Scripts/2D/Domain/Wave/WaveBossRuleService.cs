@@ -94,6 +94,12 @@ namespace LAB2D
             }
         }
 
+        public int ToPercentInt(float value)
+        {
+            float safeValue = value < 0.0f ? 0.0f : value;
+            return RoundToInt(safeValue * 100.0f);
+        }
+
         private static float ClampMin(float min, float value)
         {
             return value < min ? min : value;
@@ -102,6 +108,11 @@ namespace LAB2D
         private static int ClampMin(int min, int value)
         {
             return value < min ? min : value;
+        }
+
+        private static int RoundToInt(float value)
+        {
+            return value >= 0.0f ? (int)(value + 0.5f) : (int)(value - 0.5f);
         }
     }
 }

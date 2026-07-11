@@ -220,7 +220,7 @@ namespace LAB2D
         /// <returns>百分比文本。</returns>
         public static string FormatPercent(float value)
         {
-            return $"{Mathf.RoundToInt(Mathf.Max(0.0f, value) * 100.0f)}%";
+            return $"{BossRuleService.ToPercentInt(value)}%";
         }
 
         /// <summary>
