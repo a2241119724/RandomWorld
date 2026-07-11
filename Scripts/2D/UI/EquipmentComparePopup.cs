@@ -7,8 +7,8 @@ namespace LAB2D.UI
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
-    using Action = System.Action;
-    using Character = LAB2D.Character.Character;
+    using SystemAction = System.Action;
+    using CharacterClass = LAB2D.Character.Character;
 
     /// <summary>
     /// 装备对比弹窗。
@@ -24,10 +24,10 @@ namespace LAB2D.UI
         private Canvas canvas;
         private GameObject rootPanel;
         /// <summary>替换回调</summary>
-        private Action onReplace;
+        private SystemAction onReplace;
 
         /// <summary>丢弃回调</summary>
-        private Action onDiscard;
+        private SystemAction onDiscard;
 
         /// <summary>
         /// 确保运行时对比弹窗存在（如果不存在则创建）。
@@ -114,12 +114,12 @@ namespace LAB2D.UI
         /// <param name="onReplace">替换回调</param>
         /// <param name="onDiscard">丢弃回调</param>
         public void ShowCompare(
-            Character.Attribute oldAttr,
-            Character.Attribute newAttr,
+            CharacterClass.Attribute oldAttr,
+            CharacterClass.Attribute newAttr,
             EquipmentRarityType rarity,
             AEquipment.EquipTypeEnum slotType,
-            Action onReplace,
-            Action onDiscard)
+            SystemAction onReplace,
+            SystemAction onDiscard)
         {
             if (this.rootPanel == null)
             {
@@ -257,7 +257,7 @@ namespace LAB2D.UI
         /// <summary>
         /// 在指定父节点下创建按钮。
         /// </summary>
-        private void CreateButtonInPanel(Transform parent, string name, string text, Color bgColor, Action onClick)
+        private void CreateButtonInPanel(Transform parent, string name, string text, Color bgColor, SystemAction onClick)
         {
             GameObject go = new GameObject(name);
             go.transform.SetParent(parent, false);
