@@ -15,6 +15,7 @@ namespace LAB2D
         private string lastSignature = string.Empty;
         private float nextRefreshTime;
         private float lastTipTime = -999.0f;
+        private readonly WorkerTaskCongestionRuleService ruleService = new WorkerTaskCongestionRuleService();
         private bool enabled = true;
         private bool tipEnabled = true;
 
@@ -92,7 +93,8 @@ namespace LAB2D
                 return;
             }
 
-            this.nextRefreshTime = Time.time + Mathf.Max(0.1f, WorkerTaskCongestionConstant.MonitorRefreshInterval);
+            this.nextRefreshTime = Time.time + this.ruleService.ClampRefreshInterval(
+                WorkerTaskCongestionConstant.MonitorRefreshInterval);
             this.Refresh(true);
         }
 
