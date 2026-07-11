@@ -1,7 +1,5 @@
 namespace LAB2D
 {
-    using UnityEngine;
-
     /// <summary>
     /// 天气玩法工具类。
     /// 只负责根据天气类型计算通用倍率和展示文本，不持有运行时状态。
@@ -9,6 +7,8 @@ namespace LAB2D
     /// </summary>
     public static class WeatherGameplayTool
     {
+        private static readonly WeatherGameplayRuleService RuleService = new WeatherGameplayRuleService();
+
         /// <summary>
         /// 获取玩家移动速度倍率。
         /// </summary>
@@ -90,7 +90,7 @@ namespace LAB2D
         /// <returns>套用倍率后的安全值。</returns>
         public static float ApplyMultiplier(float baseValue, float multiplier, float minValue = 0.0f)
         {
-            return Mathf.Max(minValue, baseValue * Mathf.Max(0.0f, multiplier));
+            return RuleService.ApplyMultiplier(baseValue, multiplier, minValue);
         }
 
         /// <summary>
