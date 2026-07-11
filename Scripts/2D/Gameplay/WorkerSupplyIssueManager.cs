@@ -16,6 +16,7 @@ namespace LAB2D
         private string lastSignature = string.Empty;
         private float nextRefreshTime;
         private float lastTipTime = -999.0f;
+        private readonly WorkerSupplyRuleService ruleService = new WorkerSupplyRuleService();
         private bool enabled = true;
         private bool tipEnabled = true;
 
@@ -93,7 +94,8 @@ namespace LAB2D
                 return;
             }
 
-            this.nextRefreshTime = Time.time + Mathf.Max(0.1f, WorkerSupplyConstant.MonitorRefreshInterval);
+            this.nextRefreshTime = Time.time + this.ruleService.ClampRefreshInterval(
+                WorkerSupplyConstant.MonitorRefreshInterval);
             this.Refresh(true);
         }
 
@@ -196,7 +198,8 @@ namespace LAB2D
             if (needsFood)
             {
                 report.HungryWorkerCount++;
-                report.RequiredFoodRecoverValue += Mathf.CeilToInt(WorkerSupplyTool.GetHungryRecoverNeed(workerData));
+                report.RequiredFoodRecoverValue += this.ruleService.ToRecoverNeedCount(
+                    WorkerSupplyTool.GetHungryRecoverNeed(workerData));
             }
 
             if (needsRest)
@@ -525,7 +528,9 @@ namespace LAB2D
                 builder.AppendLine("<color=" + PixelUITheme.RichLavender + ">有疲劳工人缺少床位绑定。</color>");
             }
 
-            int issueCount = Mathf.Min(this.Issues.Count, WorkerSupplyConstant.MaxHudIssueLines);
+            int issueCount = new WorkerSupplyRuleService().GetVisibleIssueCount(
+                this.Issues.Count,
+                WorkerSupplyConstant.MaxHudIssueLines);
             for (int i = 0; i < issueCount; i++)
             {
                 builder.AppendLine(this.Issues[i].ToDisplayLine());
