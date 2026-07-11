@@ -46,6 +46,21 @@ namespace LAB2D
             return ClampMin(1.0f, 1.0f + ((waveIndex - 1) * defenseScalePerWave));
         }
 
+        public float GetBossHealthMultiplier(float normalHealthMultiplier, float bossHealthMultiplier)
+        {
+            return normalHealthMultiplier * bossHealthMultiplier;
+        }
+
+        public float GetBossAttackMultiplier(float normalAttackMultiplier, float bossAttackMultiplier)
+        {
+            return normalAttackMultiplier * bossAttackMultiplier;
+        }
+
+        public float GetBossDefenseMultiplier(float normalDefenseMultiplier, float bossDefenseMultiplier)
+        {
+            return normalDefenseMultiplier * bossDefenseMultiplier;
+        }
+
         private static float ClampMin(float min, float value)
         {
             return value < min ? min : value;

@@ -84,7 +84,9 @@ namespace LAB2D
         /// <returns>Boss 生命倍率。</returns>
         public static float GetBossHealthMultiplier(int waveIndex, float difficultyScale)
         {
-            return GetNormalEnemyHealthMultiplier(waveIndex, difficultyScale) * WaveBossRewardConstant.BossHealthMultiplier;
+            return BossRuleService.GetBossHealthMultiplier(
+                GetNormalEnemyHealthMultiplier(waveIndex, difficultyScale),
+                WaveBossRewardConstant.BossHealthMultiplier);
         }
 
         /// <summary>
@@ -95,7 +97,9 @@ namespace LAB2D
         /// <returns>Boss 攻击倍率。</returns>
         public static float GetBossAttackMultiplier(int waveIndex, float difficultyScale)
         {
-            return GetNormalEnemyAttackMultiplier(waveIndex, difficultyScale) * WaveBossRewardConstant.BossAttackMultiplier;
+            return BossRuleService.GetBossAttackMultiplier(
+                GetNormalEnemyAttackMultiplier(waveIndex, difficultyScale),
+                WaveBossRewardConstant.BossAttackMultiplier);
         }
 
         /// <summary>
@@ -106,7 +110,9 @@ namespace LAB2D
         /// <returns>Boss 防御倍率。</returns>
         public static float GetBossDefenseMultiplier(int waveIndex, float difficultyScale)
         {
-            return GetNormalEnemyDefenseMultiplier(waveIndex, difficultyScale) * WaveBossRewardConstant.BossDefenseMultiplier;
+            return BossRuleService.GetBossDefenseMultiplier(
+                GetNormalEnemyDefenseMultiplier(waveIndex, difficultyScale),
+                WaveBossRewardConstant.BossDefenseMultiplier);
         }
 
         /// <summary>
