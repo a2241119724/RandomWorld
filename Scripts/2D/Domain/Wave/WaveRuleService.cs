@@ -36,6 +36,11 @@ namespace LAB2D
             return ClampMin(maxAliveEnemies, 1);
         }
 
+        public bool IsWaveCleared(int enemiesSpawnedThisWave, int currentAliveEnemies, int aliveEnemiesBeforeWave)
+        {
+            return enemiesSpawnedThisWave > 0 && currentAliveEnemies <= aliveEnemiesBeforeWave;
+        }
+
         private static int ClampMin(int value, int min)
         {
             return value < min ? min : value;

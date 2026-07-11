@@ -270,8 +270,10 @@ namespace LAB2D
 
                 // 波次清理条件：波内至少生成了一只敌人，且实际存活敌人降回波前水平
                 int currentAlive = this.CountAliveEnemies();
-                bool allWaveEnemiesDefeated = this.enemiesSpawnedThisWave > 0
-                    && currentAlive <= this.enemiesAliveBeforeWave;
+                bool allWaveEnemiesDefeated = this.waveRuleService.IsWaveCleared(
+                    this.enemiesSpawnedThisWave,
+                    currentAlive,
+                    this.enemiesAliveBeforeWave);
 
                 if (allWaveEnemiesDefeated)
                 {
