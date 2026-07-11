@@ -232,7 +232,7 @@ namespace LAB2D
         /// <returns>限制后的累计值。</returns>
         public static float AddWithCap(float current, float add, float max)
         {
-            return Mathf.Min(Mathf.Max(0.0f, max), Mathf.Max(0.0f, current) + Mathf.Max(0.0f, add));
+            return BossRuleService.AddWithCap(current, add, max);
         }
     }
 }
