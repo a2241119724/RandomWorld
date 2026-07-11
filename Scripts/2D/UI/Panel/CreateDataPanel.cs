@@ -19,7 +19,7 @@ namespace LAB2D.UI.Panel
         {
             this.Name = "CreateData";
             this.Init();
-            Transform g1 = Tool.GetComponentInChildren<Transform>(this.Panel, "MapHeight");
+            Transform g1 = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "MapHeight");
             Slider s1 = g1.Find("Bar").GetComponent<Slider>();
             this.height = (int)s1.value;
             g1.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener(delegate(float value)
@@ -27,7 +27,7 @@ namespace LAB2D.UI.Panel
                 this.height = (int)Mathf.Floor(g1.Find("Bar").GetComponent<Slider>().value);
                 g1.Find("Count").GetComponent<Text>().text = this.height.ToString();
             });
-            Transform g2 = Tool.GetComponentInChildren<Transform>(this.Panel, "MapWidth");
+            Transform g2 = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "MapWidth");
             Slider s2 = g2.Find("Bar").GetComponent<Slider>();
             this.width = (int)s2.value;
             g2.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener((value) =>
@@ -35,7 +35,7 @@ namespace LAB2D.UI.Panel
                 this.width = (int)Mathf.Floor(g2.Find("Bar").GetComponent<Slider>().value);
                 g2.Find("Count").GetComponent<Text>().text = this.width.ToString();
             });
-            Transform g3 = Tool.GetComponentInChildren<Transform>(this.Panel, "EnemyCount");
+            Transform g3 = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "EnemyCount");
             Slider s3 = g3.Find("Bar").GetComponent<Slider>();
             this.maxEnemyCount = (int)s3.value;
             g3.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener((value) =>
@@ -43,7 +43,7 @@ namespace LAB2D.UI.Panel
                 this.maxEnemyCount = (int)Mathf.Floor(g3.Find("Bar").GetComponent<Slider>().value);
                 g3.Find("Count").GetComponent<Text>().text = this.maxEnemyCount.ToString();
             });
-            Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.Onclick_StartCreate);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.Onclick_StartCreate);
         }
 
         /// <inheritdoc/>

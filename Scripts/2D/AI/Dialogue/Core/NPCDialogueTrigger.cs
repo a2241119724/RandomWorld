@@ -71,7 +71,7 @@ namespace LAB2D.AI.Dialogue.Core
 
         public void Update()
         {
-            if (Tool.IsUIInputActive())
+            if (LAB2D.Tool.Tool.IsUIInputActive())
             {
                 return;
             }

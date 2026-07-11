@@ -41,7 +41,7 @@ namespace LAB2D.UI
 
             if (this.queueText == null)
             {
-                this.queueText = Tool.GetComponentInChildren<Text>(
+                this.queueText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(
                     this.gameObject,
                     WorkerTaskHudConstant.HudTextName);
             }
@@ -116,7 +116,7 @@ namespace LAB2D.UI
         {
             try
             {
-                return !Tool.IsUIInputActive();
+                return !LAB2D.Tool.Tool.IsUIInputActive();
             }
             catch (Exception)
             {

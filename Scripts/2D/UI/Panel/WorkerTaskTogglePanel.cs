@@ -27,10 +27,10 @@ namespace LAB2D.UI.Panel
         {
             this.Name = "WorkerTaskToggle";
             this.Init();
-            Transform title = Tool.GetComponentInChildren<Transform>(this.Panel, "Title");
+            Transform title = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Title");
             foreach (KeyValuePair<AWorkerTask.WorkerTaskTypeEnum, string> pair in TypeToChinese)
             {
-                Tool.GetComponentInChildren<Text>(title.GetChild((int)pair.Key + 1).gameObject, "Text").text = pair.Value;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(title.GetChild((int)pair.Key + 1).gameObject, "Text").text = pair.Value;
             }
         }
 

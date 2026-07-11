@@ -20,7 +20,7 @@ namespace LAB2D.MVC.Build.Model
             AsyncProgressUI.Instance.SetTip("加载建造数据...");
             Dictionary<AItem.ItemTypeEnum, ArrayList> data = DataTool.LoadDataByBinary<Dictionary<AItem.ItemTypeEnum, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
-            // Dictionary<BuildType, ArrayList> data = Tool.loadDataByJson<Dictionary<BuildType, ArrayList>>(GlobalData.ConfigFile.BuildDataFilePath);
+            // Dictionary<BuildType, ArrayList> data = LAB2D.Tool.Tool.loadDataByJson<Dictionary<BuildType, ArrayList>>(GlobalData.ConfigFile.BuildDataFilePath);
             if (data == null)
             {
                 return;
@@ -36,7 +36,7 @@ namespace LAB2D.MVC.Build.Model
         {
             DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.ItemDict);
 
-            // Tool.saveDataByJson(GlobalData.ConfigFile.BuildDataFilePath, itemDict);
+            // LAB2D.Tool.Tool.saveDataByJson(GlobalData.ConfigFile.BuildDataFilePath, itemDict);
         }
     }
 }

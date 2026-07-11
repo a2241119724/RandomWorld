@@ -72,7 +72,7 @@ namespace LAB2D.UI.Panel.PanelUI
             foreach (AWorker worker in workers)
             {
                 this.TaskItems[index].SetActive(true);
-                Tool.GetComponentInChildren<Text>(this.TaskItems[index].transform.GetChild(0).gameObject, "Text").text = worker.name;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.TaskItems[index].transform.GetChild(0).gameObject, "Text").text = worker.name;
                 AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
                 for (int i = 1; i < this.TaskItems[index].transform.childCount; i++)
                 {

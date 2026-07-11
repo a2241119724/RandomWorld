@@ -42,7 +42,7 @@ namespace LAB2D.UI
 
             if (this.effectText == null)
             {
-                this.effectText = Tool.GetComponentInChildren<Text>(this.gameObject, "WeatherText");
+                this.effectText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "WeatherText");
             }
         }
 
@@ -136,7 +136,7 @@ namespace LAB2D.UI
         {
             try
             {
-                return !Tool.IsUIInputActive();
+                return !LAB2D.Tool.Tool.IsUIInputActive();
             }
             catch (Exception)
             {

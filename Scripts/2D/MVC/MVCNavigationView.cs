@@ -27,7 +27,7 @@ namespace LAB2D.MVC
         /// <param name="item">道具</param>
         public void AddClickOnButton(AItem.ItemTypeEnum item)
         {
-            Tool.GetComponentInChildren<Button>(this.gameObject, item.ToString()).onClick.AddListener(() =>
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, item.ToString()).onClick.AddListener(() =>
             {
                 this.CurItemType = item;
                 this.OnClick?.Invoke(ItemDataManager.Instance.GetIndexByType(item));
@@ -41,7 +41,7 @@ namespace LAB2D.MVC
         /// <param name="end">道具类型结束</param>
         protected void BindButton(AItem.ItemTypeEnum start, AItem.ItemTypeEnum end)
         {
-            Tool.SplitEnum<AItem.ItemTypeEnum>(start, end).ForEach(item => this.AddClickOnButton(item));
+            LAB2D.Tool.Tool.SplitEnum<AItem.ItemTypeEnum>(start, end).ForEach(item => this.AddClickOnButton(item));
         }
 
         /// <summary>

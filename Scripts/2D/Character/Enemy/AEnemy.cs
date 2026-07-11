@@ -56,9 +56,9 @@ namespace LAB2D.Character.Enemy
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
 
             // 画视觉,听觉,攻击范围
-            // Tool.DrawSectorSolid(360, enemyData.SoundRange, new Color32(0, 0, 255, 50), this.transform);
-            this.AttackRange = Tool.DrawSectorSolid(10, enemyData.AttackRange, new Color32(255, 0, 0, 50), this.transform);
-            this.SightRange = Tool.DrawSectorSolid(enemyData.SightAngle, enemyData.SightRange, new Color32(0, 255, 0, 50), this.transform);
+            // LAB2D.Tool.Tool.DrawSectorSolid(360, enemyData.SoundRange, new Color32(0, 0, 255, 50), this.transform);
+            this.AttackRange = LAB2D.Tool.Tool.DrawSectorSolid(10, enemyData.AttackRange, new Color32(255, 0, 0, 50), this.transform);
+            this.SightRange = LAB2D.Tool.Tool.DrawSectorSolid(enemyData.SightAngle, enemyData.SightRange, new Color32(0, 255, 0, 50), this.transform);
 
             this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (this.statusBar == null)

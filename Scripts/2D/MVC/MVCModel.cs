@@ -21,7 +21,7 @@ namespace LAB2D.MVC
         public MVCModel(AItem.ItemTypeEnum start, AItem.ItemTypeEnum end)
         {
             this.ItemDict = new Dictionary<AItem.ItemTypeEnum, ArrayList>();
-            Tool.SplitEnum<AItem.ItemTypeEnum>(start, end).ForEach((item) =>
+            LAB2D.Tool.Tool.SplitEnum<AItem.ItemTypeEnum>(start, end).ForEach((item) =>
             {
                 this.ItemDict.Add(item, new ArrayList());
             });

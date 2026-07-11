@@ -21,13 +21,13 @@ namespace LAB2D.UI.Panel
             this.Init();
 
             // cameras = Object.FindObjectsOfType(typeof(Camera), true);
-            Tool.GetComponentInChildren<Transform>(this.Panel, "Angle").Find("Toggle")
+            LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Angle").Find("Toggle")
                 .GetComponent<Toggle>().onValueChanged.AddListener(this.OnClick_TogglePerspective);
-            Tool.GetComponentInChildren<Transform>(this.Panel, "Edge").Find("Toggle")
+            LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Edge").Find("Toggle")
                .GetComponent<Toggle>().onValueChanged.AddListener(this.OnClick_ToggleEdgeMove);
-            Tool.GetComponentInChildren<Transform>(this.Panel, "Speed").Find("Slider")
+            LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Speed").Find("Slider")
                .GetComponent<Slider>().onValueChanged.AddListener(this.OnClick_GameSpeed);
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
 
             this.CreateKeyBindingUI();
         }

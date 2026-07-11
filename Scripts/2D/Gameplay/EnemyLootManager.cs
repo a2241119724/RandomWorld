@@ -7,6 +7,7 @@ namespace LAB2D.Gameplay
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;
+    using GameCharacter = LAB2D.Character.Character;
 
     /// <summary>
     /// 敌人掉落管理器。
@@ -356,7 +357,7 @@ namespace LAB2D.Gameplay
             }
 
             AEquipment.EquipTypeEnum slotType = equipment.Type;
-            Character.CharacterData charData = PlayerManager.Instance?.Mine?.CharacterDataLAB;
+            GameCharacter.CharacterData charData = PlayerManager.Instance?.Mine?.CharacterDataLAB;
             AEquipment currentEquipped = null;
             if (charData != null)
             {

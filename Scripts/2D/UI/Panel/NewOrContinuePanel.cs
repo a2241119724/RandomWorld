@@ -24,7 +24,7 @@ namespace LAB2D.UI.Panel
         {
             this.Name = "NewOrContinue";
             this.Init();
-            this.content = Tool.GetComponentInChildren<RectTransform>(this.Panel, "Content");
+            this.content = LAB2D.Tool.Tool.GetComponentInChildren<RectTransform>(this.Panel, "Content");
             this.BindArchiveSlotButtons();
             this.CreateRenamePanel();
             this.CreateClearConfirmPanel();

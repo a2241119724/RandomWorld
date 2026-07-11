@@ -121,7 +121,7 @@ namespace LAB2D.Character.Player
                 this.mainCamera.DirectToPosition(this.transform.position);
                 PlayerManager.Instance.Mine = this;
                 PhotonNetwork.LocalPlayer.TagObject = this;
-                Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
                 PlayerData playerData = this.CharacterDataLAB as PlayerData;
                 PlayerStatusUI.Instance.UpdatePlayerState(
                     this.CharacterDataLAB.Hp,
@@ -134,7 +134,7 @@ namespace LAB2D.Character.Player
             }
             else if (!this.pv.IsMine)
             {
-                Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.pv.Owner.NickName;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.pv.Owner.NickName;
                 PlayerManager.Instance.Add(this);
 
                 // PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
@@ -348,7 +348,7 @@ namespace LAB2D.Character.Player
         /// </summary>
         private void HandleSkillInput()
         {
-            if (Tool.IsUIInputActive())
+            if (LAB2D.Tool.Tool.IsUIInputActive())
             {
                 return;
             }
@@ -382,7 +382,7 @@ namespace LAB2D.Character.Player
         /// </summary>
         private void Move()
         {
-            if (!Tool.IsUIInputActive() &&
+            if (!LAB2D.Tool.Tool.IsUIInputActive() &&
                 (Input.GetKey(InputKeyConstant.MoveLeft) ||
                 Input.GetKey(InputKeyConstant.MoveUp) ||
                 Input.GetKey(InputKeyConstant.MoveDown) ||

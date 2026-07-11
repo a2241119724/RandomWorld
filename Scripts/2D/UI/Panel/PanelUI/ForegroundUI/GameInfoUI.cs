@@ -23,7 +23,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         public void Awake()
         {
             Instance = this;
-            this.fps = Tool.GetComponentInChildren<Text>(this.gameObject, "FPS");
+            this.fps = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "FPS");
         }
 
         public void Start()

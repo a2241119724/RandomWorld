@@ -45,7 +45,7 @@ namespace LAB2D.UI
         public async Task Chat(string question)
         {
             GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.RIGHT_CHAT_ITEM, this.content, false);
-            Tool.GetComponentInChildren<Text>(g, "Text").text = question;
+            LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "Text").text = question;
             string text = string.Empty;
             try
             {
@@ -70,7 +70,7 @@ namespace LAB2D.UI
             {
                 g = ResourceManager.Instance.Instantiate(PrefabConstant.LEFT_CHAT_ITEM, this.content, false);
                 g.transform.SetParent(this.content);
-                Tool.GetComponentInChildren<Text>(g, "Text").text = text;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "Text").text = text;
                 this.isWorking = false;
             }
         }
@@ -79,8 +79,8 @@ namespace LAB2D.UI
         {
             Instance = this;
             this.llmClient = new LlamaServerClient();
-            this.input = Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
-            this.content = Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
+            this.input = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
+            this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
         }
     }
 }

@@ -17,9 +17,9 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
         public void Awake()
         {
-            this.gameTime = Tool.GetComponentInChildren<Text>(this.gameObject, "Text");
+            this.gameTime = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Text");
             this.globalLight = GameObject.FindGameObjectWithTag(TagConstant.GLOBAL_LIGHT_TAG).GetComponent<Light2D>();
-            this.pointer = Tool.GetComponentInChildren<Image>(this.gameObject, "Pointer").transform;
+            this.pointer = LAB2D.Tool.Tool.GetComponentInChildren<Image>(this.gameObject, "Pointer").transform;
         }
 
         public void Update()

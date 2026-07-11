@@ -7,6 +7,7 @@ namespace LAB2D.UI.Action
     using UnityEngine.EventSystems;
     using UnityEngine.Tilemaps;
     using UnityEngine.UI;
+    using GameCharacter = LAB2D.Character.Character;
 
     /// <summary>
     /// 拉矩形选框
@@ -87,14 +88,14 @@ namespace LAB2D.UI.Action
             {
                 { TileTypeEnum.Resource, new List<Vector3Int>() },
             };
-            this.options = Tool.GetComponentInChildren<Transform>(this.gameObject, "Options");
+            this.options = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Options");
             this.options.gameObject.SetActive(false);
-            Transform gather = Tool.GetComponentInChildren<Transform>(this.options.gameObject, "Gather");
-            Tool.GetComponentInChildren<Button>(gather.gameObject, "Yes").onClick.AddListener(() =>
+            Transform gather = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.options.gameObject, "Gather");
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(gather.gameObject, "Yes").onClick.AddListener(() =>
             {
                 this.Onclick_Yes(TileTypeEnum.Resource);
             });
-            Tool.GetComponentInChildren<Button>(gather.gameObject, "No").onClick.AddListener(() =>
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(gather.gameObject, "No").onClick.AddListener(() =>
             {
                 this.Onclick_No(TileTypeEnum.Resource);
             });
@@ -110,7 +111,7 @@ namespace LAB2D.UI.Action
                 }
                 else if (Input.GetMouseButtonDown(0))
                 {
-                    List<RaycastResult> results = Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
+                    List<RaycastResult> results = LAB2D.Tool.Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
 
                     // 若没有点击到options UI, 则关闭options UI
                     if (results.Count == 0)
@@ -183,7 +184,7 @@ namespace LAB2D.UI.Action
                 for (int j = start.y; j < end.y; j++)
                 {
                     Vector3Int posMap = new (i, j, 0);
-                    Character character = ItemInfoUI.Instance.GetCharacter(posMap);
+                    GameCharacter character = ItemInfoUI.Instance.GetCharacter(posMap);
 
                     // 临近的位置可能会获得多个角色, 所以这里只取第一个
                     if (character != null && SelectManagerPool.Instance.GetForCharacter(character) == null)

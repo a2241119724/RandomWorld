@@ -135,8 +135,8 @@ namespace LAB2D.MVC
                 }
 
                 // t.transform.localScale = Vector3.one; // 控制大小
-                Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = this.GetQuantity(model.Get(type, i)).ToString();
-                Image image = Tool.GetComponentInChildren<Image>(g, "ItemImage");
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = this.GetQuantity(model.Get(type, i)).ToString();
+                Image image = LAB2D.Tool.Tool.GetComponentInChildren<Image>(g, "ItemImage");
                 image.sprite = ResourceManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.Get(type, i).Id).EnName);
                 image.preserveAspect = true;
                 IV itemView = g.transform.Find("Item").GetComponent<IV>();
@@ -169,7 +169,7 @@ namespace LAB2D.MVC
         /// <param name="index">道具索引</param>
         public void ReduceQuantityUI(int index)
         {
-            Text t = Tool.GetComponentInChildren<Text>(this.content.GetChild(index).gameObject, "ItemInfo");
+            Text t = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.content.GetChild(index).gameObject, "ItemInfo");
 
             // 字符串转整数
             int count = int.Parse(t.text);

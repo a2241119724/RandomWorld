@@ -31,13 +31,13 @@ namespace LAB2D.Map
 
         public virtual void Update()
         {
-            if (!Tool.IsUIInputActive() && Input.GetKeyUp(InputKeyConstant.ShowTileInfo))
+            if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyUp(InputKeyConstant.ShowTileInfo))
             {
                 TileInfoUI.Instance.Init();
             }
 
             // 选择鼠标左键才会显示,在进度条界面不显示
-            if (Tool.IsUIInputActive() || !Input.GetKey(InputKeyConstant.ShowTileInfo) || PanelController.Instance.Panels.Peek() == AsyncProgressPanel.Instance)
+            if (LAB2D.Tool.Tool.IsUIInputActive() || !Input.GetKey(InputKeyConstant.ShowTileInfo) || PanelController.Instance.Panels.Peek() == AsyncProgressPanel.Instance)
             {
                 return;
             }

@@ -15,10 +15,10 @@ namespace LAB2D.UI.Panel.PanelUI
 
         public void Start()
         {
-            this.username = Tool.GetComponentInChildren<InputField>(this.gameObject, "Username");
-            this.password = Tool.GetComponentInChildren<InputField>(this.gameObject, "Password");
-            Tool.GetComponentInChildren<Button>(this.gameObject, "Register").onClick.AddListener(this.Onclick_Register);
-            Tool.GetComponentInChildren<Button>(this.gameObject, "Login").onClick.AddListener(this.Onclick_Login);
+            this.username = LAB2D.Tool.Tool.GetComponentInChildren<InputField>(this.gameObject, "Username");
+            this.password = LAB2D.Tool.Tool.GetComponentInChildren<InputField>(this.gameObject, "Password");
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "Register").onClick.AddListener(this.Onclick_Register);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "Login").onClick.AddListener(this.Onclick_Login);
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace LAB2D.UI.Panel.PanelUI
                 {
                     if (data.GetUsername(i) == this.username.text && data.GetPassword(i) == this.password.text)
                     {
-                        Tool.LoadScene("Menu");
+                        LAB2D.Tool.Tool.LoadScene("Menu");
                         return;
                     }
                 }

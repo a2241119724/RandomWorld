@@ -160,7 +160,7 @@ namespace LAB2D
             this.WorkerUpdate();
 
             // 退出界面(除了ForegroundPanel,CreateOrJoinPanel,CreateMenuPanel,CreateDataPanel,AsyncProgressPanel)
-            if (!Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu))
+            if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu))
             {
                 if (PanelController.Instance.Panels.Count == 0)
                 {
@@ -197,7 +197,7 @@ namespace LAB2D
                 }
 
                 // F7 切换成就面板
-                if (!Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleWorkerTaskAndAchievementHud))
+                if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleWorkerTaskAndAchievementHud))
                 {
                     AchievementPanel.RuntimeInstance?.TogglePanel();
                 }
@@ -208,7 +208,7 @@ namespace LAB2D
             // F019 玩家生命危险提示：只读刷新本地玩家血量警戒，复用现有 Tip UI，不改变战斗或存档数据。
             PlayerVitalAlertManager.Instance.Tick();
 
-            if (!Tool.IsUIInputActive() && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2)))
+            if (!LAB2D.Tool.Tool.IsUIInputActive() && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2)))
             {
                 // 关闭ItemInfo面板
                 if (PanelController.Instance.Panels.Count > 0

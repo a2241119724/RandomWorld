@@ -16,7 +16,7 @@ namespace LAB2D.Editor
         [MenuItem(Prefix + "根据代码生成道具数据")]
         private static void BuildAB()
         {
-            List<Type> types = Tool.GetChildByParent<AItem>();
+            List<Type> types = LAB2D.Tool.Tool.GetChildByParent<AItem>();
             foreach (var type in types)
             {
                 Debug.Log(type.Name);

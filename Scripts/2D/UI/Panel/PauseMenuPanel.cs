@@ -23,10 +23,10 @@ namespace LAB2D.UI.Panel
                 return;
             }
 
-            Tool.GetComponentInChildren<Button>(this.Panel, "Exit").onClick.AddListener(this.OnClick_Exit);
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackMenu").onClick.AddListener(this.OnClick_BackMenu);
-            Tool.GetComponentInChildren<Slider>(this.Panel, "Audio").onValueChanged.AddListener(this.OnClick_Audio);
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Exit").onClick.AddListener(this.OnClick_Exit);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackMenu").onClick.AddListener(this.OnClick_BackMenu);
+            LAB2D.Tool.Tool.GetComponentInChildren<Slider>(this.Panel, "Audio").onValueChanged.AddListener(this.OnClick_Audio);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
         }
 
         /// <inheritdoc/>

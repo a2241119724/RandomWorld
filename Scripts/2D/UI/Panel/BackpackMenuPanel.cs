@@ -16,9 +16,9 @@ namespace LAB2D.UI.Panel
             this.Name = "BackpackMenu";
             this.Select = new SelectItemData();
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "Equip").onClick.AddListener(this.OnClick_Equip);
-            Tool.GetComponentInChildren<Button>(this.Panel, "Abandon").onClick.AddListener(this.OnClick_Abandon);
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Equip").onClick.AddListener(this.OnClick_Equip);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Abandon").onClick.AddListener(this.OnClick_Abandon);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
         }
 
         /// <summary>

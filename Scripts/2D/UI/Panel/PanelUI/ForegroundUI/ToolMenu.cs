@@ -24,13 +24,13 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
                 BuildMenuPanel.Instance, BackpackMenuPanel.Instance,
                 WorkerTaskTogglePanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
             };
-            Tool.GetComponentInChildren<Button>(this.gameObject, "GeneratorWorker").onClick.AddListener(this.Onclick_GeneratorWorker);
-            Tool.GetComponentInChildren<Button>(this.gameObject, "GeneratorItem").onClick.AddListener(this.Onclick_GeneratorItem);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "GeneratorWorker").onClick.AddListener(this.Onclick_GeneratorWorker);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "GeneratorItem").onClick.AddListener(this.Onclick_GeneratorItem);
         }
 
         public void Update()
         {
-            if (Tool.IsUIInputActive() || !Input.anyKeyDown)
+            if (LAB2D.Tool.Tool.IsUIInputActive() || !Input.anyKeyDown)
             {
                 return;
             }

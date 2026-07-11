@@ -5,6 +5,7 @@ namespace LAB2D.Gameplay
     using System;
     using System.Collections.Generic;
     using UnityEngine;
+    using GameCharacter = LAB2D.Character.Character;
 
     /// <summary>
     /// 主动技能系统管理器。
@@ -103,7 +104,7 @@ namespace LAB2D.Gameplay
             }
 
             // 法力检查
-            Character.CharacterData playerData = player.CharacterDataLAB;
+            GameCharacter.CharacterData playerData = player.CharacterDataLAB;
             if (!SkillTool.HasEnoughMana(playerData.Mp, skill.ManaCost))
             {
                 return false;

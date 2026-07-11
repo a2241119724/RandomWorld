@@ -23,7 +23,7 @@ namespace LAB2D.MVC.Backpack.Model
             AsyncProgressUI.Instance.SetTip("加载背包数据...");
             Dictionary<AItem.ItemTypeEnum, ArrayList> data = DataTool.LoadDataByBinary<Dictionary<AItem.ItemTypeEnum, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
-            // Dictionary<Item.ItemType, ArrayList> data = Tool.loadDataByJson<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.BackpackDataFilePath);
+            // Dictionary<Item.ItemType, ArrayList> data = LAB2D.Tool.Tool.loadDataByJson<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.BackpackDataFilePath);
             if (data == null)
             {
                 return;
@@ -39,7 +39,7 @@ namespace LAB2D.MVC.Backpack.Model
         {
             DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), this.ItemDict);
 
-            // Tool.saveDataByJson<object>(GlobalData.ConfigFile.BackpackDataFilePath, itemDict);
+            // LAB2D.Tool.Tool.saveDataByJson<object>(GlobalData.ConfigFile.BackpackDataFilePath, itemDict);
         }
     }
 }

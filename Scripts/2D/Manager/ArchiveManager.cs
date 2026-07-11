@@ -181,8 +181,8 @@ namespace LAB2D.Manager
         /// </summary>
         public void SaveCurrentArchive()
         {
-            this.InvokeSaveData(Tool.GetChildByParent<ASaveData>());
-            this.InvokeSaveData(Tool.GetChildByParent<AMonoSaveData>());
+            this.InvokeSaveData(LAB2D.Tool.Tool.GetChildByParent<ASaveData>());
+            this.InvokeSaveData(LAB2D.Tool.Tool.GetChildByParent<AMonoSaveData>());
             this.EnsureArchiveMetaData(this.CurrentArchiveIndex);
         }
 
@@ -228,8 +228,8 @@ namespace LAB2D.Manager
                 this.TryMigrateLegacyArchive();
             }
 
-            List<Type> saveDatas = Tool.GetChildByParent<ASaveData>();
-            List<Type> monoSaveDatas = Tool.GetChildByParent<AMonoSaveData>();
+            List<Type> saveDatas = LAB2D.Tool.Tool.GetChildByParent<ASaveData>();
+            List<Type> monoSaveDatas = LAB2D.Tool.Tool.GetChildByParent<AMonoSaveData>();
 
             Lock.IsCompleteTileMap = true;
             AsyncProgressUI.Instance.SetTip("...");
@@ -352,7 +352,7 @@ namespace LAB2D.Manager
                     continue;
                 }
 
-                Tool.GetMethodByType(type, nameof(ASaveData.SaveData))?.Invoke(obj, null);
+                LAB2D.Tool.Tool.GetMethodByType(type, nameof(ASaveData.SaveData))?.Invoke(obj, null);
             }
         }
 
@@ -366,7 +366,7 @@ namespace LAB2D.Manager
                     continue;
                 }
 
-                Tool.GetMethodByType(type, nameof(ASaveData.LoadData))?.Invoke(obj, null);
+                LAB2D.Tool.Tool.GetMethodByType(type, nameof(ASaveData.LoadData))?.Invoke(obj, null);
                 AsyncProgressUI.Instance.AddOneProcess();
             }
         }
@@ -374,7 +374,7 @@ namespace LAB2D.Manager
         private bool TryGetInstance(Type type, out object obj)
         {
             obj = null;
-            PropertyInfo propertyInfo = Tool.GetStaticPropertyByType(type, "Instance");
+            PropertyInfo propertyInfo = LAB2D.Tool.Tool.GetStaticPropertyByType(type, "Instance");
             if (propertyInfo == null)
             {
                 return false;

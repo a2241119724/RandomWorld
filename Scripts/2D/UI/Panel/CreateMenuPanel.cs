@@ -14,8 +14,8 @@ namespace LAB2D.UI.Panel
         {
             this.Name = "CreateMenu";
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.OnClick_StartCreate);
-            Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.OnClick_StartCreate);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
         }
 
         /// <inheritdoc/>
@@ -46,7 +46,7 @@ namespace LAB2D.UI.Panel
                 return;
             }
 
-            string roomName = Tool.GetComponentInChildren<Text>(this.Panel, "RoomName").text;
+            string roomName = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.Panel, "RoomName").text;
             if (string.IsNullOrEmpty(roomName))
             {
                 GlobalInit.Instance.ShowTip("房间名不能为空");

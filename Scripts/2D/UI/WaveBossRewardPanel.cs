@@ -230,14 +230,14 @@ namespace LAB2D.UI
         {
             if (this.titleText == null)
             {
-                this.titleText = Tool.GetComponentInChildren<Text>(
+                this.titleText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(
                     this.gameObject,
                     WaveBossRewardConstant.TitleTextName);
             }
 
             if (this.summaryText == null)
             {
-                this.summaryText = Tool.GetComponentInChildren<Text>(
+                this.summaryText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(
                     this.gameObject,
                     WaveBossRewardConstant.SummaryTextName);
             }
@@ -270,8 +270,8 @@ namespace LAB2D.UI
             for (int i = 0; i < WaveBossRewardConstant.RewardOptionCount; i++)
             {
                 string buttonName = WaveBossRewardConstant.OptionButtonPrefix + (i + 1);
-                Button button = Tool.GetComponentInChildren<Button>(this.gameObject, buttonName);
-                Text optionText = Tool.GetComponentInChildren<Text>(
+                Button button = LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, buttonName);
+                Text optionText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(
                     this.gameObject,
                     WaveBossRewardConstant.OptionTextPrefix + (i + 1));
 
@@ -453,7 +453,7 @@ namespace LAB2D.UI
         /// </summary>
         private void HandleHotkeys()
         {
-            if (Tool.IsUIInputActive())
+            if (LAB2D.Tool.Tool.IsUIInputActive())
             {
                 return;
             }

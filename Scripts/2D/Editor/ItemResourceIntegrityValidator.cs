@@ -6,7 +6,7 @@ namespace LAB2D.Editor
     using System.IO;
     using System.Linq;
     using System.Text;
-    using static LAB2D.EditorReportUtility;
+    using static LAB2D.Editor.EditorReportUtility;
     using UnityEditor;
     using UnityEngine;
 

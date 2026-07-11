@@ -30,15 +30,15 @@ namespace LAB2D.UI.Panel
         {
             this.Name = "Foreground";
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "Pause").onClick.AddListener(this.OnClick_Pause);
-            Button attack = Tool.GetComponentInChildren<Button>(this.Panel, "Attack");
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Pause").onClick.AddListener(this.OnClick_Pause);
+            Button attack = LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Attack");
             if (attack != null)
             {
-                Tool.GetComponentInChildren<Button>(this.Panel, "Attack").onClick.AddListener(this.Onclick_Attack);
+                LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Attack").onClick.AddListener(this.Onclick_Attack);
             }
 
-            Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.Onclick_Setting);
-            Button save = Tool.GetComponentInChildren<Button>(this.Panel, "Save");
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.Onclick_Setting);
+            Button save = LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Save");
             if (PhotonNetwork.IsConnected && !PhotonNetwork.IsMasterClient)
             {
                 save.gameObject.SetActive(false);

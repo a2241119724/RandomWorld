@@ -4,6 +4,7 @@ namespace LAB2D.UI
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
+    using GameCharacter = LAB2D.Character.Character;
 
     /// <summary>
     /// 装备管理面板。
@@ -126,7 +127,7 @@ namespace LAB2D.UI
         {
             if (Input.GetKeyDown(EquipmentLootConstant.EquipmentPanelToggleKey))
             {
-                if (Tool.IsUIInputActive() && !this.isVisible)
+                if (LAB2D.Tool.Tool.IsUIInputActive() && !this.isVisible)
                 {
                     return;
                 }
@@ -190,7 +191,7 @@ namespace LAB2D.UI
             Player player = PlayerManager.Instance?.Mine;
             if (player == null) return;
 
-            Character.CharacterData charData = player.CharacterDataLAB;
+            GameCharacter.CharacterData charData = player.CharacterDataLAB;
             if (charData == null) return;
 
             Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments = charData.GetEquipments();
@@ -202,7 +203,7 @@ namespace LAB2D.UI
                 Text totalText = totalStatTr.GetComponent<Text>();
                 if (totalText != null)
                 {
-                    Character.Attribute equipOnlyAttr = new Character.Attribute();
+                    GameCharacter.Attribute equipOnlyAttr = new GameCharacter.Attribute();
                     if (equipments != null)
                     {
                         foreach (AEquipment eq in equipments.Values)

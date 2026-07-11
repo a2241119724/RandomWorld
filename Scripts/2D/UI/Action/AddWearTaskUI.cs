@@ -45,7 +45,7 @@ namespace LAB2D.UI.Action
                     g.transform.localScale = Vector3.one;
                 }
 
-                Tool.GetComponentInChildren<Text>(this.content.GetChild(i).gameObject, "Name").text = workers[i].name;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.content.GetChild(i).gameObject, "Name").text = workers[i].name;
                 Button button = this.content.GetChild(i).gameObject.GetComponent<Button>();
                 button.onClick.RemoveAllListeners();
 
@@ -68,18 +68,18 @@ namespace LAB2D.UI.Action
         public void Awake()
         {
             Instance = this;
-            this.content = Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
+            this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
         }
 
         public void Update()
         {
-            if (Input.GetMouseButtonDown(2) || (!Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu)))
+            if (Input.GetMouseButtonDown(2) || (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu)))
             {
                  this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }
             else if (Input.GetMouseButtonDown(0))
             {
-                List<RaycastResult> results = Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
+                List<RaycastResult> results = LAB2D.Tool.Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
 
                 // 未点击到options UI, 则关闭options UI
                 if (results.Count == 0)

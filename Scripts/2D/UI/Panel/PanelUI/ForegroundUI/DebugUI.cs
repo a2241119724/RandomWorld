@@ -27,7 +27,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
         public void Awake()
         {
-            this.text = Tool.GetComponentInChildren<Text>(this.gameObject, "Info");
+            this.text = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Info");
             Instance = this;
         }
     }

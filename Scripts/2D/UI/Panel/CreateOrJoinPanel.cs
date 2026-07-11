@@ -16,8 +16,8 @@ namespace LAB2D.UI.Panel
         {
             this.Name = "CreateOrJoin";
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "CreateRoom").onClick.AddListener(this.OnClick_CreateRoom);
-            Tool.GetComponentInChildren<Button>(this.Panel, "JoinRoom").onClick.AddListener(this.OnClick_JoinRoom);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "CreateRoom").onClick.AddListener(this.OnClick_CreateRoom);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "JoinRoom").onClick.AddListener(this.OnClick_JoinRoom);
         }
 
         /// <inheritdoc/>

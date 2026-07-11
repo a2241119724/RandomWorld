@@ -661,7 +661,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         {
             try
             {
-                return !Tool.IsUIInputActive();
+                return !LAB2D.Tool.Tool.IsUIInputActive();
             }
             catch (Exception)
             {

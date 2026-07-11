@@ -90,7 +90,7 @@ namespace LAB2D
             }
 
             // 视角缩放（仅在游戏区域Foreground上时缩放，UI面板上不缩放）
-            List<RaycastResult> uiResults = Tool.GetUIByMousePos();
+            List<RaycastResult> uiResults = LAB2D.Tool.Tool.GetUIByMousePos();
             if (Camera.main.orthographic && Input.mouseScrollDelta.y != 0
                 && (uiResults.Count == 0 || uiResults[0].gameObject.name.Equals("Foreground")))
             {

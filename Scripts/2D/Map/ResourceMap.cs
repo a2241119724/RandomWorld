@@ -32,7 +32,7 @@ namespace LAB2D.Map
         {
             base.Awake();
             Instance = this;
-            this.resourceTileMapOne = Tool.GetComponentInChildren<Tilemap>(this.transform.parent.gameObject, "ResourceMapOne");
+            this.resourceTileMapOne = LAB2D.Tool.Tool.GetComponentInChildren<Tilemap>(this.transform.parent.gameObject, "ResourceMapOne");
             this.ResourceMapDataLAB = new ResourceMapData(0, 100);
         }
 

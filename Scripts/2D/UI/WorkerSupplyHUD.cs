@@ -42,7 +42,7 @@ namespace LAB2D.UI
 
             if (this.supplyText == null)
             {
-                this.supplyText = Tool.GetComponentInChildren<Text>(
+                this.supplyText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(
                     this.gameObject,
                     WorkerSupplyConstant.HudTextName);
             }
@@ -133,7 +133,7 @@ namespace LAB2D.UI
         {
             try
             {
-                return !Tool.IsUIInputActive();
+                return !LAB2D.Tool.Tool.IsUIInputActive();
             }
             catch (Exception)
             {

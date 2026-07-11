@@ -18,9 +18,9 @@ namespace LAB2D.MVC.Build.Controller
         /// <inheritdoc/>
         public override void Awake()
         {
-            this.itemManagerView = Tool.GetComponentInChildren<BuildItemManagerView>(this.gameObject, "Inventory");
-            this.navigationView = Tool.GetComponentInChildren<BuildNavigationView>(this.gameObject, "Navigation");
-            this.infoView = Tool.GetComponentInChildren<BuildInfoView>(this.gameObject, "Info");
+            this.itemManagerView = LAB2D.Tool.Tool.GetComponentInChildren<BuildItemManagerView>(this.gameObject, "Inventory");
+            this.navigationView = LAB2D.Tool.Tool.GetComponentInChildren<BuildNavigationView>(this.gameObject, "Navigation");
+            this.infoView = LAB2D.Tool.Tool.GetComponentInChildren<BuildInfoView>(this.gameObject, "Info");
             base.Awake();
             Instance = this;
 

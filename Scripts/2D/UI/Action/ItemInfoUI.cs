@@ -43,7 +43,7 @@ namespace LAB2D.UI.Action
 
             if (Input.GetMouseButtonDown(1))
             {
-                List<RaycastResult> results = Tool.GetUIByMousePos();
+                List<RaycastResult> results = LAB2D.Tool.Tool.GetUIByMousePos();
 
                 // 过滤不是滑动主屏幕的动作
                 if (results.Count > 0 && results[0].gameObject.name != "Foreground")
@@ -53,7 +53,7 @@ namespace LAB2D.UI.Action
 
                 this.selectPos = TileMap.Instance.GetMapPosByMouse();
                 SelectUI selectUI;
-                if (!Tool.IsUIInputActive() && Input.GetKey(InputKeyConstant.ShowTileInfo))
+                if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKey(InputKeyConstant.ShowTileInfo))
                 {
                     selectUI = SelectManagerPool.Instance.CreateFreeSelect(this.selectPos);
                 }

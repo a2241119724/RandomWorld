@@ -13,8 +13,8 @@ namespace LAB2D.UI.Panel
             this.Name = "BuildMenu";
             this.Select = new SelectItemData();
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
-            Tool.GetComponentInChildren<Button>(this.Panel, "StartBuild").onClick.AddListener(this.OnClick_StartBuild);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "StartBuild").onClick.AddListener(this.OnClick_StartBuild);
         }
 
         /// <summary>

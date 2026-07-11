@@ -21,7 +21,7 @@ namespace LAB2D.UI.Panel.PanelUI
         public void Start()
         {
             PhotonNetwork.NickName = "aaa";
-            this.toggle = Tool.GetComponentInChildren<Toggle>(this.gameObject, "Clause").GetComponent<Toggle>();
+            this.toggle = LAB2D.Tool.Tool.GetComponentInChildren<Toggle>(this.gameObject, "Clause").GetComponent<Toggle>();
             this.note = this.transform.Find("Center/Note").gameObject;
             if (this.note == null)
             {
@@ -29,8 +29,8 @@ namespace LAB2D.UI.Panel.PanelUI
                 return;
             }
 
-            Tool.GetComponentInChildren<Button>(this.gameObject, "Start").onClick.AddListener(this.OnClick_Start);
-            Tool.GetComponentInChildren<Button>(this.gameObject, "NoteClose").onClick.AddListener(this.OnClick_NoteClose);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "Start").onClick.AddListener(this.OnClick_Start);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "NoteClose").onClick.AddListener(this.OnClick_NoteClose);
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace LAB2D.UI.Panel.PanelUI
         {
             if (this.toggle.isOn)
             {
-                string name = Tool.GetComponentInChildren<Text>(this.gameObject, "PlayerName").text;
+                string name = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "PlayerName").text;
                 if (name.Length <= 0)
                 {
                     GlobalInit.Instance.ShowTip("名字不能为空!!!");
@@ -48,7 +48,7 @@ namespace LAB2D.UI.Panel.PanelUI
                 }
 
                 PhotonNetwork.NickName = name;
-                Tool.LoadScene("Game");
+                LAB2D.Tool.Tool.LoadScene("Game");
             }
             else
             {

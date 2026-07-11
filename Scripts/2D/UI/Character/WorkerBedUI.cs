@@ -40,7 +40,7 @@ namespace LAB2D.UI.Character
                     g.transform.localScale = Vector3.one;
                 }
 
-                Tool.GetComponentInChildren<Text>(this.content.GetChild(i).gameObject, "Name").text = workers[i].name;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.content.GetChild(i).gameObject, "Name").text = workers[i].name;
                 Button button = this.content.GetChild(i).gameObject.GetComponent<Button>();
                 button.onClick.RemoveAllListeners();
 
@@ -61,13 +61,13 @@ namespace LAB2D.UI.Character
         public void Awake()
         {
             Instance = this;
-            this.content = Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
-            this.curWorker = Tool.GetComponentInChildren<Text>(this.gameObject, "CurWorker");
+            this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
+            this.curWorker = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "CurWorker");
         }
 
         public void Update()
         {
-            if (!Tool.IsUIInputActive() && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2) || Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu)))
+            if (!LAB2D.Tool.Tool.IsUIInputActive() && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2) || Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu)))
             {
                 // transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }

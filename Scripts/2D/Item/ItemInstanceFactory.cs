@@ -115,7 +115,7 @@ namespace LAB2D.Item
             }
 
             // 非装备(包含武器)
-            List<Type> types = Tool.GetChildByParent<ABackpackItem>();
+            List<Type> types = LAB2D.Tool.Tool.GetChildByParent<ABackpackItem>();
             foreach (Type type in types)
             {
                 if (this.backpackItemTypes.ContainsKey(type.Name))
@@ -133,7 +133,7 @@ namespace LAB2D.Item
             this.backpackItemTypes.Remove(typeof(CommonEquipment).Name);
 
             // 建造
-            types = Tool.GetChildByParent<ABuildItem>();
+            types = LAB2D.Tool.Tool.GetChildByParent<ABuildItem>();
             foreach (Type type in types)
             {
                 Type[] interfaces = type.GetInterfaces();

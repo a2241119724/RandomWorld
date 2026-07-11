@@ -16,7 +16,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         public void Awake()
         {
             Instance = this;
-            this.statsText = Tool.GetComponentInChildren<Text>(this.gameObject, "StatsText");
+            this.statsText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "StatsText");
             this.canvasGroup = this.gameObject.GetComponent<CanvasGroup>();
             if (this.canvasGroup == null)
             {
@@ -37,7 +37,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
         public void Update()
         {
-            if (!Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleGameplayStatsHud))
+            if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleGameplayStatsHud))
             {
                 bool show = this.canvasGroup.alpha < 0.5f;
                 this.canvasGroup.alpha = show ? 1f : 0f;

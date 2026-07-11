@@ -10,6 +10,7 @@ namespace LAB2D.Character
     using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
+    using PlayerCharacter = LAB2D.Character.Player.Player;
 
     /// <summary>
     /// 角色基类
@@ -367,7 +368,7 @@ namespace LAB2D.Character
             public void ComputeAttribute()
             {
                 float ratio = 1;
-                if (this is Player.PlayerData data)
+                if (this is PlayerCharacter.PlayerData data)
                 {
                     ratio += data.Level * 0.1f;
                 }

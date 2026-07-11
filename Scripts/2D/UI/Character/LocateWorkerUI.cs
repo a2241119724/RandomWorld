@@ -35,7 +35,7 @@ namespace LAB2D.UI.Character
             this.allItems.Add(worker, g);
             g.transform.SetParent(this.transform);
             g.transform.localScale = Vector3.one;
-            Tool.GetComponentInChildren<Text>(g, "Name").text = worker.name;
+            LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "Name").text = worker.name;
             g.GetComponent<Button>().onClick.AddListener(() =>
             {
                 Camera.main.GetComponent<CameraMove>().Character = worker;

@@ -42,8 +42,8 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void GetOutgoingDamage_Critical_AppliesCritMultiplier()
         {
-            float normalDamage = DamageCalculator.GetOutgoingDamage(50f, 2.0f, false);
-            float critDamage = DamageCalculator.GetOutgoingDamage(50f, 2.0f, true);
+            float normalDamage = this.calculator.GetOutgoingDamage(50f, 2.0f, false);
+            float critDamage = this.calculator.GetOutgoingDamage(50f, 2.0f, true);
             Assert.Greater(critDamage, normalDamage, "暴击伤害应高于普通伤害");
         }
 
@@ -66,15 +66,15 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void ApplyHealingToHealth_Overheal_ClampsToMax()
         {
-            var result = this.calculator.ApplyHealingToHealth(90f, 100f, 30f);
-            Assert.AreEqual(100f, result.RemainingHp, "过量治疗应被限制到最大生命值");
+            float result = this.calculator.ApplyHealingToHealth(90f, 100f, 30f);
+            Assert.AreEqual(100f, result);
         }
 
         [Test]
         public void ApplyHealingToHealth_NormalHeal_IncreasesHp()
         {
-            var result = this.calculator.ApplyHealingToHealth(40f, 100f, 30f);
-            Assert.AreEqual(70f, result.RemainingHp, 0.01f);
+            float result = this.calculator.ApplyHealingToHealth(40f, 100f, 30f);
+            Assert.AreEqual(70f, result, 0.01f);
         }
     }
 }

@@ -209,21 +209,21 @@ namespace LAB2D.UI
 
             if (this.titleText == null)
             {
-                this.titleText = Tool.GetComponentInChildren<Text>(
+                this.titleText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(
                     this.gameObject,
                     ColonyCommandCenterConstant.TitleTextName);
             }
 
             if (this.mainText == null)
             {
-                this.mainText = Tool.GetComponentInChildren<Text>(
+                this.mainText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(
                     this.gameObject,
                     ColonyCommandCenterConstant.MainTextName);
             }
 
             if (this.detailText == null)
             {
-                this.detailText = Tool.GetComponentInChildren<Text>(
+                this.detailText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(
                     this.gameObject,
                     ColonyCommandCenterConstant.DetailTextName);
             }
@@ -399,7 +399,7 @@ namespace LAB2D.UI
         {
             try
             {
-                return !Tool.IsUIInputActive();
+                return !LAB2D.Tool.Tool.IsUIInputActive();
             }
             catch (Exception)
             {

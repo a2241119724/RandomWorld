@@ -116,7 +116,7 @@ namespace LAB2D.Constant
         /// <summary>
         /// 工人任务队列 HUD + 成就面板 显示/隐藏 (F7键)
         /// 同时切换工人任务队列 HUD 和成就系统的成就列表面板。
-        /// 两者分别通过 CanUseHotkey() 和 Tool.IsUIInputActive() 守卫控制。
+        /// 两者分别通过 CanUseHotkey() 和 LAB2D.Tool.Tool.IsUIInputActive() 守卫控制。
         /// 仅在无 UI 输入框聚焦时生效。
         /// </summary>
         public const KeyCode ToggleWorkerTaskAndAchievementHud = KeyCode.F7;

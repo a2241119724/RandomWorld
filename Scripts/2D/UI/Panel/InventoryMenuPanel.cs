@@ -19,10 +19,10 @@ namespace LAB2D.UI.Panel
         {
             this.Name = "InventoryMenu";
             this.Init();
-            this.position = Tool.GetComponentInChildren<Transform>(this.Panel, "Position");
-            this.type = Tool.GetComponentInChildren<Transform>(this.Panel, "Type");
-            this.id = Tool.GetComponentInChildren<Transform>(this.Panel, "Id");
-            this.content = Tool.GetComponentInChildren<Text>(this.Panel, "Content");
+            this.position = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Position");
+            this.type = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Type");
+            this.id = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Id");
+            this.content = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.Panel, "Content");
         }
 
         /// <inheritdoc/>

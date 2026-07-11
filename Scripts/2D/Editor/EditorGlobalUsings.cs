@@ -1,0 +1,16 @@
+global using LAB2D.Constant;
+global using LAB2D.Character.Worker;
+global using LAB2D.Data;
+global using LAB2D.Enum;
+global using LAB2D.Flag;
+global using LAB2D.Gameplay;
+global using LAB2D.Item;
+global using LAB2D.Manager;
+global using LAB2D.Tool;
+global using LAB2D.UI;
+global using LAB2D.UI.Action;
+global using LAB2D.UI.Character;
+global using LAB2D.UI.Effect;
+global using LAB2D.UI.Panel;
+global using LAB2D.UI.Panel.PanelUI;
+global using LAB2D.UI.Panel.PanelUI.ForegroundUI;

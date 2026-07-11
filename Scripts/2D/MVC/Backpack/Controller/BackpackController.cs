@@ -18,9 +18,9 @@ namespace LAB2D.MVC.Backpack.Controller
         /// <inheritdoc/>
         public override void Awake()
         {
-            this.itemManagerView = Tool.GetComponentInChildren<BackpackItemManagerView>(this.gameObject, "Inventory");
-            this.navigationView = Tool.GetComponentInChildren<BackpackNavigationView>(this.gameObject, "Navigation");
-            this.infoView = Tool.GetComponentInChildren<BackpackInfoView>(this.gameObject, "Info");
+            this.itemManagerView = LAB2D.Tool.Tool.GetComponentInChildren<BackpackItemManagerView>(this.gameObject, "Inventory");
+            this.navigationView = LAB2D.Tool.Tool.GetComponentInChildren<BackpackNavigationView>(this.gameObject, "Navigation");
+            this.infoView = LAB2D.Tool.Tool.GetComponentInChildren<BackpackInfoView>(this.gameObject, "Info");
             base.Awake();
             Instance = this;
 

@@ -16,7 +16,7 @@ namespace LAB2D.MVC
         public void Start()
         {
             // info = transform.Find("Background/Message").GetComponent<Text>();
-            this.info = Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
+            this.info = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
             this.info.text = string.Empty;
         }
 

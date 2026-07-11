@@ -7,7 +7,7 @@ namespace LAB2D.Editor
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
-    using static LAB2D.EditorReportUtility;
+    using static LAB2D.Editor.EditorReportUtility;
     using UnityEditor;
     using UnityEngine;
 
