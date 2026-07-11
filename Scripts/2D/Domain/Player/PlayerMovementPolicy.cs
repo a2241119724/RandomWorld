@@ -1,0 +1,20 @@
+namespace LAB2D
+{
+    /// <summary>
+    /// Pure movement arithmetic for player-specific speed rules.
+    /// </summary>
+    public sealed class PlayerMovementPolicy
+    {
+        public float ClampRunSpeedMultiplier(float multiplier)
+        {
+            return multiplier < 1.0f ? 1.0f : multiplier;
+        }
+
+        public float ApplyRunMultiplier(float baseSpeed, bool isRunning, float runSpeedMultiplier)
+        {
+            return isRunning
+                ? baseSpeed * this.ClampRunSpeedMultiplier(runSpeedMultiplier)
+                : baseSpeed;
+        }
+    }
+}

@@ -20,6 +20,7 @@
         private SpriteRenderer sprite;
         private Rigidbody2D rg;
         private readonly PlayerDamagePolicy damagePolicy = new PlayerDamagePolicy();
+        private readonly PlayerMovementPolicy movementPolicy = new PlayerMovementPolicy();
 
         /// <summary>
         /// 奔跑速度倍率，默认1.6倍
@@ -32,7 +33,7 @@
         public float RunSpeedMultiplier
         {
             get => this.runSpeedMultiplier;
-            set => this.runSpeedMultiplier = Mathf.Max(1f, value);
+            set => this.runSpeedMultiplier = this.movementPolicy.ClampRunSpeedMultiplier(value);
         }
 
         /// <summary>
@@ -429,10 +430,7 @@
                 float speed = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this, this.MoveSpeed);
                 // A004：波间奖励移动强化在天气倍率之后应用，避免覆盖天气玩法的减速/增益。
                 speed = WaveBossRewardManager.Instance.GetAdjustedPlayerMoveSpeed(this, speed);
-                if (isRunning)
-                {
-                    speed *= this.runSpeedMultiplier;
-                }
+                speed = this.movementPolicy.ApplyRunMultiplier(speed, isRunning, this.runSpeedMultiplier);
 
                 this.rg.velocity = speed * this.direction.normalized;
             }
