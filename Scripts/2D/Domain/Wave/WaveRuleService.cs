@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure wave progression and spawn count rules.
+    /// 纯波次推进和生成数量规则。
     /// </summary>
     public sealed class WaveRuleService
     {

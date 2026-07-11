@@ -4,7 +4,7 @@
     using UnityEngine.UI;
 
     /// <summary>
-    /// Debug UI
+    /// 调试 UI
     /// </summary>
     public class DebugUI : MonoBehaviour
     {

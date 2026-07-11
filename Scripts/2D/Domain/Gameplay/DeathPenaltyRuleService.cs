@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic rules for player death penalty and respawn timing.
+    /// 玩家死亡惩罚与复活计时的纯算术规则。
     /// </summary>
     public sealed class DeathPenaltyRuleService
     {

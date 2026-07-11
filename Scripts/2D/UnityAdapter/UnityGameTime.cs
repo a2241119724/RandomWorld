@@ -3,7 +3,7 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Unity implementation of IGameTime wrapping UnityEngine.Time.
+    /// IGameTime 的 Unity 实现，封装 UnityEngine.Time。
     /// </summary>
     public sealed class UnityGameTime : IGameTime
     {

@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic rules for equipment loot rarity scaling.
+    /// 装备掉落稀有度缩放的纯算术规则。
     /// </summary>
     public sealed class EquipmentLootRuleService
     {

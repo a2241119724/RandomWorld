@@ -40,7 +40,7 @@
             bool isBuilding = true;
             this.ClearShow();
 
-            // BottomLeft
+            // 左下角
             int h_start = 0, h_end = height;
             int w_start = 0, w_end = width;
             if (rectType == AWorkerTask.RectType.Center)

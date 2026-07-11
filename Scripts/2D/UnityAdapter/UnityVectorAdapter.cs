@@ -3,13 +3,13 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Converts between Unity vector types and engine-agnostic domain value objects.
-    /// Use in Unity adapter/bridge layer only — never in pure domain code.
+    /// 在 Unity 向量类型与引擎无关的领域值对象之间进行转换。
+    /// 仅在 Unity 适配器/桥接层中使用——切勿在纯领域代码中使用。
     /// </summary>
     public static class UnityVectorAdapter
     {
         /// <summary>
-        /// Convert Unity Vector2 to domain GameVector2.
+        /// 将 Unity Vector2 转换为领域 GameVector2。
         /// </summary>
         public static GameVector2 ToGameVector2(Vector2 value)
         {
@@ -17,7 +17,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Convert domain GameVector2 to Unity Vector2.
+        /// 将领域 GameVector2 转换为 Unity Vector2。
         /// </summary>
         public static Vector2 ToUnityVector2(GameVector2 value)
         {
@@ -25,7 +25,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Convert Unity Vector3 to domain GameVector2 (uses only x, y).
+        /// 将 Unity Vector3 转换为领域 GameVector2（仅使用 x、y）。
         /// </summary>
         public static GameVector2 ToGameVector2(Vector3 value)
         {
@@ -33,7 +33,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Convert domain GameVector2 to Unity Vector3.
+        /// 将领域 GameVector2 转换为 Unity Vector3。
         /// </summary>
         public static Vector3 ToUnityVector3(GameVector2 value, float z = 0.0f)
         {
@@ -41,7 +41,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Convert Unity Vector3Int to domain GameGridPosition.
+        /// 将 Unity Vector3Int 转换为领域 GameGridPosition。
         /// </summary>
         public static GameGridPosition ToGameGridPosition(Vector3Int value)
         {
@@ -49,7 +49,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Convert domain GameGridPosition to Unity Vector3Int.
+        /// 将领域 GameGridPosition 转换为 Unity Vector3Int。
         /// </summary>
         public static Vector3Int ToUnityVector3Int(GameGridPosition value)
         {

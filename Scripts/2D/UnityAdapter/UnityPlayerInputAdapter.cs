@@ -3,10 +3,10 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Translates Unity Input (keyboard, mouse, joystick) into domain IGameCommand instances.
-    /// Called from Player.Update() or similar MonoBehaviour update loop.
+    /// 将 Unity 输入（键盘、鼠标、摇杆）转换为领域 IGameCommand 实例。
+    /// 从 Player.Update() 或类似的 MonoBehaviour 更新循环中调用。
     ///
-    /// Usage in Player.Update():
+    /// 在 Player.Update() 中的用法：
     ///   var cmd = UnityPlayerInputAdapter.PollMoveCommand(entityId, Time.deltaTime);
     ///   if (cmd != null) movementService.ProcessMove(cmd);
     ///
@@ -18,18 +18,18 @@ namespace LAB2D
     /// </summary>
     public static class UnityPlayerInputAdapter
     {
-        // Movement keys
+        // 移动按键
         private const KeyCode MoveUp = KeyCode.W;
         private const KeyCode MoveDown = KeyCode.S;
         private const KeyCode MoveLeft = KeyCode.A;
         private const KeyCode MoveRight = KeyCode.D;
         private const KeyCode RunKey = KeyCode.LeftShift;
 
-        // Action keys
+        // 动作按键
         private const KeyCode AttackKey = KeyCode.J;
         private const int AttackMouseButton = 0;
 
-        // Skill hotkeys (matching SkillTool.GetHotkeyDisplayText)
+        // 技能快捷键（与 SkillTool.GetHotkeyDisplayText 保持一致）
         private static readonly KeyCode[] SkillHotkeys =
         {
             InputKeyConstant.SkillHotkey1,  // Q
@@ -39,12 +39,12 @@ namespace LAB2D
         };
 
         /// <summary>
-        /// Poll movement input and create a PlayerMoveCommand.
-        /// Returns null when no movement input is active.
+        /// 轮询移动输入并创建 PlayerMoveCommand。
+        /// 没有移动输入时返回 null。
         /// </summary>
-        /// <param name="entityId">Player entity ID.</param>
-        /// <param name="deltaTime">Time.deltaTime from the calling MonoBehaviour.</param>
-        /// <returns>A PlayerMoveCommand or null.</returns>
+        /// <param name="entityId">玩家实体 ID。</param>
+        /// <param name="deltaTime">来自调用方 MonoBehaviour 的 Time.deltaTime。</param>
+        /// <returns>PlayerMoveCommand 或 null。</returns>
         public static PlayerMoveCommand PollMoveCommand(long entityId, float deltaTime)
         {
             float horizontal = 0f;
@@ -55,7 +55,7 @@ namespace LAB2D
             if (Input.GetKey(MoveUp) || Input.GetKey(KeyCode.W)) vertical += 1f;
             if (Input.GetKey(MoveDown) || Input.GetKey(KeyCode.S)) vertical -= 1f;
 
-            // Also support arrow keys
+            // 同时支持方向键
             if (Input.GetKey(KeyCode.RightArrow)) horizontal += 1f;
             if (Input.GetKey(KeyCode.LeftArrow)) horizontal -= 1f;
             if (Input.GetKey(KeyCode.UpArrow)) vertical += 1f;
@@ -66,7 +66,7 @@ namespace LAB2D
                 return null;
             }
 
-            // Clamp diagonal movement
+            // 限制对角线移动
             GameVector2 direction = new GameVector2(
                 Mathf.Clamp(horizontal, -1f, 1f),
                 Mathf.Clamp(vertical, -1f, 1f));
@@ -81,11 +81,11 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Check for attack input. Returns true and creates command when attack is pressed.
+        /// 检测攻击输入。当攻击按键按下时返回 true 并创建命令。
         /// </summary>
-        /// <param name="entityId">Player entity ID.</param>
-        /// <param name="command">Output attack command.</param>
-        /// <returns>True when attack is triggered this frame.</returns>
+        /// <param name="entityId">玩家实体 ID。</param>
+        /// <param name="command">输出的攻击命令。</param>
+        /// <returns>本帧触发攻击时返回 true。</returns>
         public static bool GetAttackDown(long entityId, out PlayerAttackCommand command)
         {
             command = null;
@@ -99,12 +99,12 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Check for skill activation input. Returns true and creates command when skill hotkey is pressed.
+        /// 检测技能激活输入。当技能快捷键按下时返回 true 并创建命令。
         /// </summary>
-        /// <param name="entityId">Player entity ID.</param>
-        /// <param name="slotIndex">Skill slot index (0-3).</param>
-        /// <param name="command">Output skill command.</param>
-        /// <returns>True when skill is activated this frame.</returns>
+        /// <param name="entityId">玩家实体 ID。</param>
+        /// <param name="slotIndex">技能槽位索引（0-3）。</param>
+        /// <param name="command">输出的技能命令。</param>
+        /// <returns>本帧激活技能时返回 true。</returns>
         public static bool GetSkillDown(long entityId, int slotIndex, out ActivateSkillCommand command)
         {
             command = null;

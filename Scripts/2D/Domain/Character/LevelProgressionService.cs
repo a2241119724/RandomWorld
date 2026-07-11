@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure character level progression rules.
+    /// 纯角色等级升级规则。
     /// </summary>
     public sealed class LevelProgressionService
     {

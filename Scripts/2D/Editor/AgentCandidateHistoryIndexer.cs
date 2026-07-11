@@ -11,7 +11,7 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Builds a read-only index of Agent candidate statuses across reports.
+    /// 跨报告构建Agent候选状态的只读索引。
     /// </summary>
     public static class AgentCandidateHistoryIndexer
     {

@@ -171,7 +171,7 @@
         }
 
         /// <summary>
-        /// MapPos -> WorldPos
+        /// 地图坐标转世界坐标
         /// </summary>
         /// <param name="posMap">地图位置</param>
         /// <returns>世界位置</returns>
@@ -182,7 +182,7 @@
         }
 
         /// <summary>
-        /// MapPos -> WorldPos
+        /// 地图坐标转世界坐标
         /// </summary>
         /// <param name="posMap">地图位置</param>
         /// <returns>世界位置</returns>
@@ -192,7 +192,7 @@
         }
 
         /// <summary>
-        /// MapPos -> WorldPos
+        /// 地图坐标转世界坐标
         /// </summary>
         /// <param name="posMap">地图位置</param>
         /// <returns>世界位置</returns>
@@ -202,7 +202,7 @@
         }
 
         /// <summary>
-        /// WorldPos -> MapPos
+        /// 世界坐标转地图坐标
         /// </summary>
         /// <param name="worldPos">世界位置</param>
         /// <returns>地图位置</returns>

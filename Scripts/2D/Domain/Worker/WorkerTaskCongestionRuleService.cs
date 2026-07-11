@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic rules for worker task congestion monitoring.
+    /// 工人任务拥堵监控的纯算术规则。
     /// </summary>
     public sealed class WorkerTaskCongestionRuleService
     {

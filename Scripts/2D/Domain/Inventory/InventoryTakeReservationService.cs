@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic for inventory take reservations.
+    /// 库存取物预留的纯算术规则。
     /// </summary>
     public sealed class InventoryTakeReservationService
     {

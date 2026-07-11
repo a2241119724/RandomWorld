@@ -1,16 +1,16 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Marker interface for all game commands.
-    /// Commands represent player or system intents that should be processed by domain services.
+    /// 所有游戏命令的标记接口。
+    /// 命令代表玩家或系统的意图，应由领域服务处理。
     /// </summary>
     public interface IGameCommand
     {
     }
 
     /// <summary>
-    /// Player movement intent command.
-    /// Created by input adapters and consumed by PlayerMovementPolicy.
+    /// 玩家移动意图命令。
+    /// 由输入适配器创建，由PlayerMovementPolicy消费。
     /// </summary>
     public sealed class PlayerMoveCommand : IGameCommand
     {
@@ -21,7 +21,7 @@ namespace LAB2D
     }
 
     /// <summary>
-    /// Player attack intent command.
+    /// 玩家攻击意图命令。
     /// </summary>
     public sealed class PlayerAttackCommand : IGameCommand
     {
@@ -29,7 +29,7 @@ namespace LAB2D
     }
 
     /// <summary>
-    /// Activate skill intent command.
+    /// 激活技能意图命令。
     /// </summary>
     public sealed class ActivateSkillCommand : IGameCommand
     {

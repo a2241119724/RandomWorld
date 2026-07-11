@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure damage and health arithmetic shared by character adapters.
+    /// 角色适配器共享的纯伤害与生命值算术规则。
     /// </summary>
     public sealed class DamageCalculator
     {

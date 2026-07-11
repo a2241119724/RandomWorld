@@ -3,24 +3,23 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Manages player death penalty: respawn delay, experience loss, random respawn position,
-    /// death screen display, and death tracking.
-    /// Low-intrusion singleton — does not modify Scenes, Prefabs, SO, or save data.
+    /// 管理玩家死亡惩罚：复活延迟、经验损失、随机复活位置、死亡画面显示和死亡追踪。
+    /// 低侵入式单例 —— 不修改场景、预制体、SO 或存档数据。
     /// </summary>
     public class DeathPenaltyManager : Singleton<DeathPenaltyManager>
     {
         /// <summary>
-        /// Seconds the player must wait before respawning.
+        /// 玩家复活前需要等待的秒数。
         /// </summary>
         public float RespawnDelaySeconds = 3.0f;
 
         /// <summary>
-        /// Fraction of current experience lost on death (0.0 - 1.0).
+        /// 死亡时损失当前经验的百分比（0.0 - 1.0）。
         /// </summary>
         public float ExperienceLossPercent = 0.1f;
 
         /// <summary>
-        /// Fraction of max HP restored on respawn (0.3 = 30%).
+        /// 复活时恢复的最大生命值百分比（0.3 = 30%）。
         /// </summary>
         public float HpRestorePercent = 0.3f;
 
@@ -28,7 +27,7 @@ namespace LAB2D
         private float respawnDeadline = -1f;
 
         /// <summary>
-        /// Whether the player is currently waiting to respawn.
+        /// 玩家当前是否正在等待复活。
         /// </summary>
         public bool IsRespawning
         {
@@ -36,7 +35,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Seconds remaining until respawn, or 0 if not respawning.
+        /// 距离复活剩余的秒数，不在复活状态时为 0。
         /// </summary>
         public float RespawnRemaining
         {
@@ -52,7 +51,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Total death count for the current session.
+        /// 当前会话的总死亡次数。
         /// </summary>
         public int SessionDeathCount
         {
@@ -60,7 +59,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Call from Player.Death(). Applies death penalty, shows death screen, and starts respawn timer.
+        /// 由 Player.Death() 调用。施加死亡惩罚、显示死亡画面并启动复活倒计时。
         /// </summary>
         public void HandlePlayerDeath(Player player)
         {
@@ -69,7 +68,7 @@ namespace LAB2D
                 return;
             }
 
-            // Apply experience penalty
+            // 施加经验惩罚
             int expLoss = this.ruleService.GetExperienceLoss(
                 player.CharacterDataLAB.CurExperience,
                 this.ExperienceLossPercent);
@@ -80,47 +79,47 @@ namespace LAB2D
                     expLoss);
             }
 
-            // Start respawn countdown
+            // 启动复活倒计时
             this.respawnDeadline = this.ruleService.GetRespawnDeadline(
                 Time.realtimeSinceStartup,
                 this.RespawnDelaySeconds);
 
-            // Show death screen (programmatic UI, no prefab needed)
+            // 显示死亡画面（纯代码 UI，无需预制体）
             DeathMenuPanel.Instance.Show(
                 GameplaySessionStats.Instance.CreateSnapshot().PlayerDeathCount,
                 this.ruleService.ToCountdownSeconds(this.RespawnDelaySeconds));
         }
 
         /// <summary>
-        /// Call every frame from Player. Returns true when respawn just completed.
-        /// Moves player to a random available map position, restores HP/MP, and closes death screen.
+        /// 由 Player 每帧调用。复活完成时返回 true。
+        /// 将玩家移动到随机可用地图位置，恢复 HP/MP，并关闭死亡画面。
         /// </summary>
         public bool TryCompleteRespawn(Player player)
         {
-            // No active respawn countdown
+            // 无活跃的复活倒计时
             if (this.respawnDeadline < 0f)
             {
                 return false;
             }
 
-            // Still waiting for countdown to expire
+            // 仍在等待倒计时结束
             if (Time.realtimeSinceStartup < this.respawnDeadline)
             {
                 return false;
             }
 
-            // Clear respawn state
+            // 清除复活状态
             this.respawnDeadline = -1f;
 
-            // Find random available position on the map
+            // 在地图上寻找随机可到达位置
             Vector3Int randomMapPos = TileMap.Instance.GenCanReachPos();
             Vector3 respawnWorldPos = TileMap.Instance.MapPosToWorldPos(randomMapPos);
             player.transform.position = respawnWorldPos;
 
-            // Restore player layer so enemies can detect again
+            // 恢复玩家图层，使敌人可重新检测到玩家
             player.gameObject.layer = LayerMask.NameToLayer(LayerConstant.PLAYER_LAYER);
 
-            // Restore HP (30% by default) and MP
+            // 恢复生命值（默认 30%）和魔法值
             player.CharacterDataLAB.Hp = this.ruleService.GetRestoredHp(
                 player.CharacterDataLAB.MaxHp,
                 this.HpRestorePercent);
@@ -131,7 +130,7 @@ namespace LAB2D
                 playerData.Mp = playerData.MaxMp;
             }
 
-            // Close death screen
+            // 关闭死亡画面
             DeathMenuPanel.Instance.Hide();
             GlobalInit.Instance.ShowTip("Respawned!");
 
@@ -139,8 +138,8 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Update the death screen countdown display.
-        /// Called each frame from Player.Update() during respawn.
+        /// 更新死亡画面倒计时显示。
+        /// 复活期间由 Player.Update() 每帧调用。
         /// </summary>
         public void UpdateDeathScreen()
         {

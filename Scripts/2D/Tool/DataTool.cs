@@ -122,7 +122,7 @@
             }
             else
             {
-                // Encoding.UTF8.GetString();
+                // 使用 UTF8 编码读取字符串
                 TextAsset textAsset = Resources.Load<TextAsset>(name);
                 if (textAsset == null)
                 {

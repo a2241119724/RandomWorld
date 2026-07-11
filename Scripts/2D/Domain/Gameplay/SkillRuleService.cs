@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic rules for active skill values and cooldown display.
+    /// 主动技能数值与冷却显示的纯算术规则。
     /// </summary>
     public sealed class SkillRuleService
     {

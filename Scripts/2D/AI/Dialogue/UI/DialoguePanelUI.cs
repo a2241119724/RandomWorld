@@ -28,7 +28,7 @@ namespace LAB2D
         private bool isWaitingResponse;
 
         /// <summary>
-        /// Ensures the scene-authored UI instance is available.
+        /// 确保场景中已创建的 UI 实例可用。
         /// </summary>
         public static DialoguePanelUI Ensure()
         {
@@ -61,7 +61,7 @@ namespace LAB2D
                 }
             }
 
-            // Search inactive scene objects before reporting a missing scene setup.
+            // 在报告场景设置缺失之前，先搜索未激活的场景对象。
             foreach (DialoguePanelUI ui in Resources.FindObjectsOfTypeAll<DialoguePanelUI>())
             {
                 if (ui != null && ui.gameObject.scene.IsValid())

@@ -3,7 +3,7 @@
     using UnityEngine;
 
     /// <summary>
-    /// Select UI
+    /// 选择 UI
     /// </summary>
     public class SelectUI : MonoBehaviourInit
     {

@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic rules for worker condition ratios and display values.
+    /// 工人状态比率和显示值的纯算术规则。
     /// </summary>
     public sealed class WorkerConditionRuleService
     {

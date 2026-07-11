@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure rules for boss-wave cadence and enemy count adjustment.
+    /// Boss波次节奏和敌人数量调整的纯规则。
     /// </summary>
     public sealed class WaveBossRuleService
     {

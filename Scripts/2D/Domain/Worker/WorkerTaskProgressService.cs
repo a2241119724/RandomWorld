@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic for worker task fatigue and progress.
+    /// 工人任务疲劳和进度的纯算术。
     /// </summary>
     public sealed class WorkerTaskProgressService
     {

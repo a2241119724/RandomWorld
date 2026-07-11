@@ -41,7 +41,7 @@
         /// <summary>
         /// 将镜头直接到目标,不进行过度,消除镜头初始移动的bug.
         /// </summary>
-        /// <param name="target">The target<see cref="Vector3"/>目标位置.</param>
+        /// <param name="target">目标<see cref="Vector3"/>位置.</param>
         public void DirectToPosition(Vector3 target)
         {
             // Mathf.Clamp(value,min,max) 夹逼函数,返回min与max之间的数

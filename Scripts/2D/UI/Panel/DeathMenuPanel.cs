@@ -4,10 +4,9 @@ namespace LAB2D
     using UnityEngine.UI;
 
     /// <summary>
-    /// Death screen overlay created programmatically at runtime — no prefab required.
-    /// Displays a full-screen dark overlay with "YOU DIED" title, respawn countdown,
-    /// and death counter. Replaces the ABasePanel-based approach to avoid
-    /// ResourceManager prefab-lookup errors.
+    /// 死亡画面遮罩，运行时通过代码创建，无需预制体。
+    /// 显示全屏暗色遮罩，包含"YOU DIED"标题、重生倒计时和死亡计数器。
+    /// 替代基于 ABasePanel 的方案，以避免 ResourceManager 预制体查找错误。
     /// </summary>
     public class DeathMenuPanel : Singleton<DeathMenuPanel>
     {
@@ -16,8 +15,7 @@ namespace LAB2D
         private Text deathCountText;
 
         /// <summary>
-        /// The root GameObject for this overlay. Exposed for compatibility with
-        /// DeathPenaltyManager's null-check pattern.
+        /// 此遮罩的根 GameObject。为兼容 DeathPenaltyManager 的空值检查模式而暴露。
         /// </summary>
         public GameObject Panel
         {
@@ -25,7 +23,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Show the death screen overlay.
+        /// 显示死亡画面遮罩。
         /// </summary>
         public void Show(int deathCount, int respawnSeconds)
         {
@@ -52,7 +50,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Update the countdown text each frame during respawn.
+        /// 在重生期间每帧更新倒计时文本。
         /// </summary>
         public void UpdateCountdown(int secondsRemaining)
         {
@@ -63,7 +61,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Hide the death screen overlay.
+        /// 隐藏死亡画面遮罩。
         /// </summary>
         public void Hide()
         {
@@ -81,7 +79,7 @@ namespace LAB2D
                 return;
             }
 
-            // Root object
+            // 根对象
             this.panelRoot = new GameObject("DeathMenu");
             this.panelRoot.transform.SetParent(uiRoot.transform, false);
 
@@ -91,11 +89,11 @@ namespace LAB2D
             rootRt.offsetMin = Vector2.zero;
             rootRt.offsetMax = Vector2.zero;
 
-            // Full-screen dark background
+            // 全屏暗色背景
             Image bg = this.panelRoot.AddComponent<Image>();
             bg.color = new Color(0.12f, 0.08f, 0.06f, 0.88f);
 
-            // Center text group
+            // 居中文本组
             GameObject textGroup = new GameObject("TextGroup");
             textGroup.transform.SetParent(this.panelRoot.transform, false);
             RectTransform tgRt = textGroup.AddComponent<RectTransform>();
@@ -110,8 +108,8 @@ namespace LAB2D
                 return;
             }
 
-            // "YOU DIED" title
-            this.deathCountText = null; // placeholder, we'll create title first
+            // "YOU DIED" 标题
+            this.deathCountText = null; // 占位，先创建标题
             GameObject titleGo = new GameObject("Title");
             titleGo.transform.SetParent(textGroup.transform, false);
             Text titleText = titleGo.AddComponent<Text>();
@@ -126,7 +124,7 @@ namespace LAB2D
             titleRt.offsetMin = Vector2.zero;
             titleRt.offsetMax = Vector2.zero;
 
-            // Respawn countdown
+            // 重生倒计时
             GameObject cdGo = new GameObject("Countdown");
             cdGo.transform.SetParent(textGroup.transform, false);
             this.countdownText = cdGo.AddComponent<Text>();
@@ -140,7 +138,7 @@ namespace LAB2D
             cdRt.offsetMin = Vector2.zero;
             cdRt.offsetMax = Vector2.zero;
 
-            // Death counter
+            // 死亡计数器
             GameObject dcGo = new GameObject("DeathCount");
             dcGo.transform.SetParent(textGroup.transform, false);
             this.deathCountText = dcGo.AddComponent<Text>();

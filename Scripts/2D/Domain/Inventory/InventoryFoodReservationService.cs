@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure food reservation arithmetic for inventory rules.
+    /// 库存规则的纯食物预留算术。
     /// </summary>
     public sealed class InventoryFoodReservationService
     {

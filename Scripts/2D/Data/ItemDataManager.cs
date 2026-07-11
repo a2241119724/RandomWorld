@@ -5,8 +5,8 @@
     using UnityEngine;
 
     /// <summary>
-    /// Id间隔1000
-    /// Start Id 根据枚举类型BackpackItemType,BuildItemType一致
+    /// Id按1000间隔分组
+    /// 起始Id与枚举类型BackpackItemType、BuildItemType保持一致
     /// </summary>
     public class ItemDataManager : MonoBehaviour
     {

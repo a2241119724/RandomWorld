@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic rules for colony command center monitoring.
+    /// 殖民地指挥中心监控的纯算术规则。
     /// </summary>
     public sealed class ColonyCommandCenterRuleService
     {

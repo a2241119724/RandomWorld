@@ -131,17 +131,17 @@
         /// <returns>角色信息</returns>
         public Character GetCharacter(Vector3Int posMap)
         {
-            // Player
+            // 玩家
             Character character = PlayerManager.Instance.GetCharacterByPos(posMap);
             if (character == null)
             {
-                // Enemy
+                // 敌人
                 character = EnemyManager.Instance.GetCharacterByPos(posMap);
             }
 
             if (character == null)
             {
-                // Worker
+                // 工作者
                 character = WorkerManager.Instance.GetCharacterByPos(posMap);
             }
 
@@ -218,12 +218,12 @@
 
         private string GetResource(Vector3Int posMap)
         {
-            // Drop
+            // 掉落物
             this.select = "DropResourceManager";
             string text = DropManager.Instance.ToString(posMap);
             if (text.Equals(string.Empty))
             {
-                // Inventory
+                // 仓库
                 this.select = "InventoryManager";
                 text = InventoryManager.Instance.ToString(posMap);
                 if (!text.Equals(string.Empty))

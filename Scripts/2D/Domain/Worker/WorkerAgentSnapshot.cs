@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Read-only Worker state used by task assignment rules.
+    /// 任务分配规则使用的只读Worker状态。
     /// </summary>
     public sealed class WorkerAgentSnapshot
     {

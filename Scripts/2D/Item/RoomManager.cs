@@ -10,7 +10,7 @@
     public class RoomManager : Singleton<RoomManager>
     {
         private static readonly Dictionary<string, RoomInfo> Rooms = new ();
-        private readonly int layerMask = LayerMask.GetMask("BuildTile"); // Door(Default)
+        private readonly int layerMask = LayerMask.GetMask("BuildTile"); // 门（默认层）
 
         /// <summary>
         /// 添加房间

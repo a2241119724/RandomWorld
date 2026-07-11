@@ -5,7 +5,7 @@ using System.Text;
 namespace LAB2D
 {
     /// <summary>
-    /// Builds LLM chat messages from pure text inputs and template data.
+    /// 从纯文本输入和模板数据构建LLM聊天消息。
     /// </summary>
     public sealed class PromptAssemblyService
     {

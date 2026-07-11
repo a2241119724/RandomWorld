@@ -36,37 +36,37 @@
         public enum LogLevelEnum
         {
             /// <summary>
-            /// Trace.
+            /// 跟踪级别。
             /// </summary>
             Trace = 0,
 
             /// <summary>
-            /// Debug.
+            /// 调试级别。
             /// </summary>
             Debug = 1,
 
             /// <summary>
-            /// Info.
+            /// 信息级别。
             /// </summary>
             Info = 2,
 
             /// <summary>
-            /// Warning.
+            /// 警告级别。
             /// </summary>
             Warning = 3,
 
             /// <summary>
-            /// Error.
+            /// 错误级别。
             /// </summary>
             Error = 4,
 
             /// <summary>
-            /// Fatal.
+            /// 致命级别。
             /// </summary>
             Fatal = 5,
 
             /// <summary>
-            /// Off.
+            /// 关闭日志。
             /// </summary>
             Off = 6,
         }

@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure movement arithmetic for player-specific speed rules.
+    /// 玩家专属速度规则的纯移动算术。
     /// </summary>
     public sealed class PlayerMovementPolicy
     {

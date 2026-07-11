@@ -10,7 +10,7 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Item resource binding validator.
+    /// 道具资源绑定验证器。
     /// </summary>
     public static class ItemResourceIntegrityValidator
     {

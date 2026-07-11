@@ -4,16 +4,16 @@ namespace LAB2D
     using System.Collections.Generic;
 
     /// <summary>
-    /// Centralized event bus for decoupled communication between game systems.
-    /// Pure C# — no UnityEngine dependencies. Managers publish events here;
-    /// presentation/adapters subscribe to receive them.
+    /// 集中式事件总线，用于游戏系统之间的解耦通信。
+    /// 纯C#实现 — 不依赖UnityEngine。管理器在此发布事件；
+    /// 展示层/适配器订阅以接收事件。
     ///
-    /// Usage:
-    ///   // Subscribe
+    /// 用法:
+    ///   // 订阅
     ///   EventBus.Instance.Subscribe&lt;CharacterDamagedEvent&gt;(OnCharacterDamaged);
-    ///   // Publish
+    ///   // 发布
     ///   EventBus.Instance.Publish(new CharacterDamagedEvent { ... });
-    ///   // Unsubscribe (call in OnDestroy/Disable)
+    ///   // 取消订阅（在OnDestroy/Disable中调用）
     ///   EventBus.Instance.Unsubscribe&lt;CharacterDamagedEvent&gt;(OnCharacterDamaged);
     /// </summary>
     public class EventBus
@@ -27,7 +27,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Singleton instance. Create via new EventBus() for testing.
+        /// 单例实例。测试时可通过 new EventBus() 创建。
         /// </summary>
         public static EventBus Instance
         {
@@ -43,7 +43,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Replace the singleton instance (for testing).
+        /// 替换单例实例（用于测试）。
         /// </summary>
         public static void SetInstance(EventBus newInstance)
         {
@@ -51,7 +51,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Subscribe to events of type T.
+        /// 订阅类型为T的事件。
         /// </summary>
         public void Subscribe<T>(Action<T> handler) where T : IGameEvent
         {
@@ -67,8 +67,8 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Unsubscribe from events of type T.
-        /// Safe to call even if never subscribed.
+        /// 取消订阅类型为T的事件。
+        /// 即使从未订阅也可以安全调用。
         /// </summary>
         public void Unsubscribe<T>(Action<T> handler) where T : IGameEvent
         {
@@ -88,7 +88,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Publish an event to all subscribers of type T.
+        /// 向类型T的所有订阅者发布事件。
         /// </summary>
         public void Publish<T>(T gameEvent) where T : IGameEvent
         {
@@ -103,7 +103,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Clear all subscriptions (for scene unload or testing).
+        /// 清除所有订阅（用于场景卸载或测试）。
         /// </summary>
         public void Clear()
         {
@@ -111,7 +111,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Get count of subscribers for a given event type.
+        /// 获取指定事件类型的订阅者数量。
         /// </summary>
         public int GetSubscriberCount<T>() where T : IGameEvent
         {

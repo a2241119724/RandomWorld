@@ -7,7 +7,7 @@ namespace LAB2D
     public class ItemTileSO : TileBase
     {
         /// <summary>
-        /// Êı¾İ
+        /// ç‰©å“ID
         /// </summary>
         public int ItemId;
 

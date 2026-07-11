@@ -1,18 +1,18 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Shared math utilities for all Domain RuleServices.
-    /// Eliminates duplicated RoundToInt, Clamp01, CeilToInt, ClampMin, ClampMax across 10+ files.
+    /// 所有领域RuleService的共享数学工具类。
+    /// 消除了10余个文件中重复的RoundToInt、Clamp01、CeilToInt、ClampMin、ClampMax方法。
     /// </summary>
     public static class MathHelper
     {
-        /// <summary>Round float to nearest integer (banker-like midpoint: +0.5 → up, -0.5 → down).</summary>
+        /// <summary>将float四舍五入到最接近的整数（中间值规则：+0.5向上取整，-0.5向下取整）。</summary>
         public static int RoundToInt(float value)
         {
             return value >= 0.0f ? (int)(value + 0.5f) : (int)(value - 0.5f);
         }
 
-        /// <summary>Clamp float to [0.0, 1.0].</summary>
+        /// <summary>将float限制在 [0.0, 1.0] 范围内。</summary>
         public static float Clamp01(float value)
         {
             if (value < 0.0f) return 0.0f;
@@ -20,51 +20,51 @@ namespace LAB2D
             return value;
         }
 
-        /// <summary>Ceil float to nearest integer.</summary>
+        /// <summary>将float向上取整到最接近的整数。</summary>
         public static int CeilToInt(float value)
         {
             int integer = (int)value;
             return value > integer ? integer + 1 : integer;
         }
 
-        /// <summary>Clamp int value to be at least min.</summary>
+        /// <summary>将int值限制为不小于最小值。</summary>
         public static int ClampMin(int value, int min)
         {
             return value < min ? min : value;
         }
 
-        /// <summary>Clamp float value to be at least min.</summary>
+        /// <summary>将float值限制为不小于最小值。</summary>
         public static float ClampMin(float value, float min)
         {
             return value < min ? min : value;
         }
 
-        /// <summary>Clamp int value to be at most max.</summary>
+        /// <summary>将int值限制为不大于最大值。</summary>
         public static int ClampMax(int value, int max)
         {
             return value > max ? max : value;
         }
 
-        /// <summary>Clamp float value to be at most max.</summary>
+        /// <summary>将float值限制为不大于最大值。</summary>
         public static float ClampMax(float value, float max)
         {
             return value > max ? max : value;
         }
 
-        /// <summary>Safe ratio = current / max, clamped to [0.0, 1.0]; returns 0 if max is invalid.</summary>
+        /// <summary>安全比率 = current / max，限制在 [0.0, 1.0] 范围内；若max无效则返回0。</summary>
         public static float GetSafeRatio(float current, float max)
         {
             if (max <= 0.0f) return 0.0f;
             return Clamp01(current / max);
         }
 
-        /// <summary>Convert a [0,1] ratio to a percent integer (0-100).</summary>
+        /// <summary>将 [0,1] 比率转换为百分比整数（0-100）。</summary>
         public static int ToPercentInt(float ratio)
         {
             return RoundToInt(Clamp01(ratio) * 100.0f);
         }
 
-        /// <summary>Clamp a refresh interval to at least 0.1 seconds.</summary>
+        /// <summary>将刷新间隔限制为至少0.1秒。</summary>
         public static float ClampRefreshInterval(float interval)
         {
             return interval < 0.1f ? 0.1f : interval;

@@ -3,10 +3,10 @@ using System.Collections.Generic;
 namespace LAB2D
 {
     /// <summary>
-    /// Selects the nearest assignable task from the highest available priority group.
-    /// This service is pure C# and keeps Unity object access in the caller-provided snapshots.
+    /// 从最高可用优先级组中选择最近的可分配任务。
+    /// 此服务为纯C#实现，Unity对象访问由调用方提供的快照处理。
     /// </summary>
-    /// <typeparam name="TTask">Task object type kept by the Unity compatibility layer.</typeparam>
+    /// <typeparam name="TTask">Unity兼容层维护的任务对象类型。</typeparam>
     public sealed class WorkerTaskAssignmentService<TTask>
     {
         public WorkerTaskAssignmentResult<TTask> SelectTask(

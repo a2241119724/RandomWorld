@@ -10,7 +10,7 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Read-only inventory reporter for AssetBundle and StreamingAssets context.
+    /// AssetBundle和StreamingAssets上下文的只读清单报告器。
     /// </summary>
     public static class AssetBundleInventoryReporter
     {

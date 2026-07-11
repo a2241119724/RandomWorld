@@ -3,9 +3,9 @@ using System;
 namespace LAB2D
 {
     /// <summary>
-    /// Read-only task candidate used by pure assignment rules.
+    /// 纯分配规则使用的只读任务候选。
     /// </summary>
-    /// <typeparam name="TTask">Task object type kept by the Unity compatibility layer.</typeparam>
+    /// <typeparam name="TTask">Unity兼容层维护的任务对象类型。</typeparam>
     public sealed class WorkerTaskSnapshot<TTask>
     {
         public WorkerTaskSnapshot(

@@ -3,8 +3,8 @@ namespace LAB2D
     using System;
 
     /// <summary>
-    /// Engine-agnostic grid position value object.
-    /// Replaces UnityEngine.Vector3Int in pure domain code.
+    /// 与引擎无关的网格位置值对象。
+    /// 在纯领域代码中替代UnityEngine.Vector3Int。
     /// </summary>
     public readonly struct GameGridPosition : IEquatable<GameGridPosition>
     {

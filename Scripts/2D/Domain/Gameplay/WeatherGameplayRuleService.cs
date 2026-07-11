@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic rules for weather gameplay multipliers.
+    /// 天气玩法倍率的纯算术规则。
     /// </summary>
     public sealed class WeatherGameplayRuleService
     {

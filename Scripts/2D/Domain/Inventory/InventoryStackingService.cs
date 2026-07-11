@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic for inventory stack capacity.
+    /// 库存堆叠容量的纯算术规则。
     /// </summary>
     public sealed class InventoryStackingService
     {

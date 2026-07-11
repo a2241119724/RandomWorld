@@ -169,7 +169,7 @@
         {
             Text t = Tool.GetComponentInChildren<Text>(this.content.GetChild(index).gameObject, "ItemInfo");
 
-            // string -> int
+            // 字符串转整数
             int count = int.Parse(t.text);
             --count;
             t.text = count.ToString();

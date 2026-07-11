@@ -1,17 +1,17 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure rules for combo bonus tier lookup and multiplier calculation.
+    /// 连击奖励等级查找与倍率计算的纯规则。
     /// </summary>
     public sealed class ComboBonusRuleService
     {
         /// <summary>
-        /// Find the tier index for a given combo count.
-        /// Searches from highest tier to lowest, returning the first match.
+        /// 根据给定的连击数查找等级索引。
+        /// 从最高等级向最低等级搜索，返回第一个匹配项。
         /// </summary>
-        /// <param name="combo">Current combo count.</param>
-        /// <param name="tierThresholds">Array of tier minimum combo thresholds, indexed by tier.</param>
-        /// <returns>Matching tier index (0 is the base tier).</returns>
+        /// <param name="combo">当前连击数。</param>
+        /// <param name="tierThresholds">按等级索引的连击最低阈值数组。</param>
+        /// <returns>匹配的等级索引（0为基础等级）。</returns>
         public int FindTierIndex(int combo, int[] tierThresholds)
         {
             if (tierThresholds == null || tierThresholds.Length == 0)
@@ -31,11 +31,11 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Get the damage multiplier for the tier at the given index.
+        /// 获取指定索引等级的伤害倍率。
         /// </summary>
-        /// <param name="tierIndex">Tier index.</param>
-        /// <param name="tierDamageMultipliers">Array of damage multipliers, indexed by tier.</param>
-        /// <returns>Damage multiplier for the tier.</returns>
+        /// <param name="tierIndex">等级索引。</param>
+        /// <param name="tierDamageMultipliers">按等级索引的伤害倍率数组。</param>
+        /// <returns>该等级的伤害倍率。</returns>
         public float GetDamageMultiplier(int tierIndex, float[] tierDamageMultipliers)
         {
             if (tierDamageMultipliers == null || tierDamageMultipliers.Length == 0)
@@ -48,11 +48,11 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Get the experience multiplier for the tier at the given index.
+        /// 获取指定索引等级的经验倍率。
         /// </summary>
-        /// <param name="tierIndex">Tier index.</param>
-        /// <param name="tierExpMultipliers">Array of experience multipliers, indexed by tier.</param>
-        /// <returns>Experience multiplier for the tier.</returns>
+        /// <param name="tierIndex">等级索引。</param>
+        /// <param name="tierExpMultipliers">按等级索引的经验倍率数组。</param>
+        /// <returns>该等级的经验倍率。</returns>
         public float GetExperienceMultiplier(int tierIndex, float[] tierExpMultipliers)
         {
             if (tierExpMultipliers == null || tierExpMultipliers.Length == 0)
@@ -65,11 +65,11 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Get the tier label for the tier at the given index.
+        /// 获取指定索引等级的标签。
         /// </summary>
-        /// <param name="tierIndex">Tier index.</param>
-        /// <param name="tierLabels">Array of tier labels, indexed by tier.</param>
-        /// <returns>Tier label string, or empty if not set.</returns>
+        /// <param name="tierIndex">等级索引。</param>
+        /// <param name="tierLabels">按等级索引的标签数组。</param>
+        /// <returns>等级标签字符串，若未设置则返回空。</returns>
         public string GetTierLabel(int tierIndex, string[] tierLabels)
         {
             if (tierLabels == null || tierLabels.Length == 0)

@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Unity implementation of IItemDefinitionProvider wrapping ItemDataManager.
+    /// IItemDefinitionProvider 的 Unity 实现，封装 ItemDataManager。
     /// </summary>
     public sealed class UnityItemDefinitionAdapter : IItemDefinitionProvider
     {

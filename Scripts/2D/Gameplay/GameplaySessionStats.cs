@@ -6,8 +6,8 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Runtime-only session statistics for combat, rewards, collection and task feedback.
-    /// This class does not save data, sync over network, or require a scene object.
+    /// 仅运行时使用的会话统计数据，涵盖战斗、奖励、收集和任务反馈。
+    /// 本类不保存数据、不同步网络，也不需要场景对象。
     /// </summary>
     public class GameplaySessionStats : Singleton<GameplaySessionStats>
     {

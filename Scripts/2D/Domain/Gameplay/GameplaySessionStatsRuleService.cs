@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic rules for runtime gameplay session statistics.
+    /// 运行时玩法会话统计的纯算术规则。
     /// </summary>
     public sealed class GameplaySessionStatsRuleService
     {

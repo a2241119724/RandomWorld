@@ -11,7 +11,7 @@
     {
         private Text fps;
 
-        private float accum; // fps
+        private float accum; // FPS累计
         private int frames;
 
         /// <summary>
@@ -32,7 +32,7 @@
 
         public void Update()
         {
-            // fps
+            // FPS计算
             // 添加本次可能会执行的帧数
             this.accum += Time.timeScale / Time.deltaTime;
 

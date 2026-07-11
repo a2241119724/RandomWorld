@@ -3,7 +3,7 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Unity implementation of IEnemySpawnService wrapping EnemyManager.
+    /// 基于 EnemyManager 的 IEnemySpawnService 的 Unity 实现。
     /// </summary>
     public sealed class UnityEnemySpawnAdapter : IEnemySpawnService
     {
@@ -23,7 +23,7 @@ namespace LAB2D
                 return 0;
             }
 
-            // Return the instance ID as a simple entity identifier
+            // 返回实例 ID 作为简单的实体标识符
             return enemyObj.GetInstanceID();
         }
 

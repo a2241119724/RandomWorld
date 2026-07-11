@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic rules for achievement progress.
+    /// 成就进度的纯算术规则。
     /// </summary>
     public sealed class AchievementRuleService
     {

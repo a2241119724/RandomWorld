@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Engine-agnostic wave rule configuration.
+    /// 引擎无关的波次规则配置。
     /// </summary>
     public sealed class WaveConfigModel
     {

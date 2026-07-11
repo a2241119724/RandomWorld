@@ -65,7 +65,7 @@ namespace LAB2D
         public int maxSentences = 3;
 
         /// <summary>
-        /// When enabled, each LLM request only sends the system prompt and current player input.
+        /// 启用时，每次 LLM 请求只发送系统提示词和当前玩家输入。
         /// </summary>
         public bool sendOnlyCurrentMessage = true;
     }

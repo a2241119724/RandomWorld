@@ -4,7 +4,7 @@
     using System.Collections.Generic;
 
     /// <summary>
-    /// Model
+    /// 模型
     /// 优化,只需要存id与数量
     /// </summary>
     public abstract class MVCModel : ASaveData

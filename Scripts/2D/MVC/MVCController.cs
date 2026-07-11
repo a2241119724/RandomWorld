@@ -4,10 +4,10 @@
     using UnityEngine.UI;
 
     /// <summary>
-    /// User:调用View和Controller
-    /// Model
-    /// View:事件通知Controller
-    /// Controller:调用View和Model
+    /// 用户：调用View和Controller
+    /// 模型
+    /// 视图：事件通知Controller
+    /// 控制器：调用View和Model
     /// </summary>
     /// <typeparam name="IMV">ItemManagerView</typeparam>
     /// <typeparam name="M">Model</typeparam>
@@ -22,22 +22,22 @@
         where IV_ : MVCInfoView
     {
         /// <summary>
-        /// ItemManagerView
+        /// 道具管理视图
         /// </summary>
         protected IMV itemManagerView;
 
         /// <summary>
-        /// Model
+        /// 模型
         /// </summary>
         protected M model;
 
         /// <summary>
-        /// NavigationView
+        /// 导航视图
         /// </summary>
         protected NV navigationView;
 
         /// <summary>
-        /// InfoView
+        /// 信息视图
         /// </summary>
         protected IV_ infoView;
 

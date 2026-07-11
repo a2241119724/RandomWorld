@@ -3,7 +3,7 @@ namespace LAB2D
     using System;
 
     /// <summary>
-    /// Engine-agnostic 2D vector used by pure gameplay rules.
+    /// 与引擎无关的二维向量，供纯玩法规则使用。
     /// </summary>
     public readonly struct GameVector2 : IEquatable<GameVector2>
     {

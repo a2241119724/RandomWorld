@@ -3,7 +3,7 @@ namespace LAB2D
     using System.Collections.Generic;
 
     /// <summary>
-    /// Worker task time config, in seconds.
+    /// Worker 任务时间配置，单位为秒。
     /// </summary>
     public static class WorkerTaskTimeConfig
     {

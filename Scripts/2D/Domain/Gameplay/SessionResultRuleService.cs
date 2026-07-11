@@ -3,7 +3,7 @@ using System;
 namespace LAB2D
 {
     /// <summary>
-    /// Pure rules for session result scoring, rating, and derived stats calculation.
+    /// 会话结果评分、评级与衍生统计数据计算的纯规则。
     /// </summary>
     public sealed class SessionResultRuleService
     {
@@ -31,8 +31,8 @@ namespace LAB2D
         private const int GradeCThreshold = 2000;
 
         /// <summary>
-        /// Calculate critical hit rate as a percentage (0-100).
-        /// Estimates hit count from total damage dealt.
+        /// 计算暴击率百分比（0-100）。
+        /// 根据总伤害量估算命中次数。
         /// </summary>
         public float CalculateCriticalHitRate(int criticalHitCount, int totalDamageDealt)
         {
@@ -48,7 +48,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Calculate damage efficiency (output / taken ratio).
+        /// 计算伤害效率（输出/承受比率）。
         /// </summary>
         public float CalculateDamageEfficiency(int totalDamageDealt, int totalDamageTaken)
         {
@@ -61,7 +61,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Calculate the kill score component (max 3500).
+        /// 计算击杀分数组件（上限3500）。
         /// </summary>
         public float CalculateKillScore(int totalDefeatedEnemyCount)
         {
@@ -69,7 +69,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Calculate the combo score component (max 2500).
+        /// 计算连击分数组件（上限2500）。
         /// </summary>
         public float CalculateComboScore(int maxCombo)
         {
@@ -77,7 +77,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Calculate the survival score component (max 2000).
+        /// 计算生存分数组件（上限2000）。
         /// </summary>
         public float CalculateSurvivalScore(bool hasSurvived, int playerDeathCount)
         {
@@ -92,7 +92,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Calculate the efficiency score component (max 1500).
+        /// 计算效率分数组件（上限1500）。
         /// </summary>
         public float CalculateEfficiencyScore(float damageEfficiency)
         {
@@ -100,7 +100,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Calculate the collection score component (max 500).
+        /// 计算收集分数组件（上限500）。
         /// </summary>
         public float CalculateCollectionScore(int totalCollectedItemCount)
         {
@@ -108,7 +108,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Calculate the total combat score from all components.
+        /// 从所有组件计算总战斗分数。
         /// </summary>
         public int CalculateCombatScore(
             int totalDefeatedEnemyCount,
@@ -129,7 +129,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Get star rating (1-5) from combat score.
+        /// 根据战斗分数获取星级评价（1-5星）。
         /// </summary>
         public int GetStarRating(int combatScore)
         {
@@ -141,7 +141,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// Get grade text (S/A/B/C/D) from combat score.
+        /// 根据战斗分数获取等级文本（S/A/B/C/D）。
         /// </summary>
         public string GetGradeText(int combatScore)
         {

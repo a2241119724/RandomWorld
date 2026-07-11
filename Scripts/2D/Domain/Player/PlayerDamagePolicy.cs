@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure rules for deciding whether player damage can be applied.
+    /// 判断玩家伤害是否可以生效的纯规则。
     /// </summary>
     public sealed class PlayerDamagePolicy
     {

@@ -1,8 +1,8 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Abstract time provider for domain services.
-    /// Implementations wrap Unity Time, System.DateTime, or test fakes.
+    /// 领域服务的抽象时间提供者。
+    /// 实现类封装Unity Time、System.DateTime或测试假数据。
     /// </summary>
     public interface IGameTime
     {

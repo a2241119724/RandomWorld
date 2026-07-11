@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Engine-agnostic prompt profile used by prompt assembly rules.
+    /// 与引擎无关的提示词配置，供提示词组装规则使用。
     /// </summary>
     public sealed class DialoguePromptProfileModel
     {

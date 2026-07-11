@@ -11,7 +11,7 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Read-only scanner for Agent planning context.
+    /// Agent规划上下文的只读扫描器。
     /// </summary>
     public static class AgentContextScanner
     {

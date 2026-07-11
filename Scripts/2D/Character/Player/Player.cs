@@ -140,14 +140,14 @@
 
         public void Update()
         {
-            // During respawn wait: show countdown, block all actions
+            // 复活等待期间：显示倒计时，阻止所有操作
             if (DeathPenaltyManager.Instance.IsRespawning)
             {
                 DeathPenaltyManager.Instance.UpdateDeathScreen();
                 return;
             }
 
-            // Timer just expired: complete respawn (move to random pos, restore HP/MP, hide death screen)
+            // 计时器刚到期：完成复活（移动到随机位置，恢复 HP/MP，隐藏死亡界面）
             if (DeathPenaltyManager.Instance.TryCompleteRespawn(this))
             {
                 PlayerData playerData = this.CharacterDataLAB as PlayerData;
@@ -175,7 +175,7 @@
                 return;
             }
 
-            // Block movement while respawning
+            // 复活期间阻止移动
             if (!DeathPenaltyManager.Instance.IsRespawning)
             {
                 this.Move();
@@ -327,9 +327,9 @@
         {
             GameplaySessionStats.Instance.RecordPlayerDeath();
             LogManager.Instance.Log("玩家死亡", LogManager.LogLevelEnum.Trace);
-            this.CharacterDataLAB.Hp = 1; // Keep alive at 1 HP to prevent re-death during respawn
+            this.CharacterDataLAB.Hp = 1; // 保持 1 HP 存活，防止复活期间再次死亡
 
-            // Hide from enemies by switching off the Player layer temporarily
+            // 暂时切换 Player 层以躲避敌人
             this.gameObject.layer = LayerMask.NameToLayer("Default");
 
             DeathPenaltyManager.Instance.HandlePlayerDeath(this);

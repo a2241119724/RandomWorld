@@ -1,7 +1,7 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Pure arithmetic rules for player vital alert ratios and display values.
+    /// 玩家生命警报比率和显示值的纯算术规则。
     /// </summary>
     public sealed class PlayerVitalAlertRuleService
     {

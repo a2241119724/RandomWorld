@@ -4,23 +4,22 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Centralized Tip/log fallback helper.
-    /// Eliminates the duplicated try/catch GlobalInit.ShowTip + Debug.Log pattern
-    /// that was repeated across 11 Manager classes.
+    /// 集中式 Tip/Log 兜底辅助类。
+    /// 消除了在 11 个 Manager 类中重复出现的 try/catch GlobalInit.ShowTip + Debug.Log 模式。
     ///
-    /// Usage:
+    /// 用法：
     ///   TipHelper.Show("message", "[MyPrefix]");
     ///   TipHelper.Show("message", "[MyPrefix]", OnTipRequested);
     /// </summary>
     public static class TipHelper
     {
         /// <summary>
-        /// Show a tip via GlobalInit.ShowTip, falling back to Debug.Log.
-        /// Also fires an optional event for external tip handlers.
+        /// 通过 GlobalInit.ShowTip 显示提示，失败时回退到 Debug.Log。
+        /// 同时触发一个可选事件供外部提示处理器使用。
         /// </summary>
-        /// <param name="message">Tip message.</param>
-        /// <param name="logPrefix">Prefix for Debug.Log fallback.</param>
-        /// <param name="onTipRequested">Optional event to fire before showing the tip.</param>
+        /// <param name="message">提示消息。</param>
+        /// <param name="logPrefix">Debug.Log 回退时的前缀。</param>
+        /// <param name="onTipRequested">显示提示前触发的可选事件。</param>
         public static void Show(string message, string logPrefix = "", Action<string> onTipRequested = null)
         {
             onTipRequested?.Invoke(message);

@@ -3,7 +3,7 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Unity implementation of map query interfaces wrapping BuildMap and TileMap.
+    /// 地图查询接口的 Unity 实现，封装 BuildMap 和 TileMap。
     /// </summary>
     public sealed class UnityMapAdapter : IMapWalkabilityQuery, IMapSpawnPointProvider
     {

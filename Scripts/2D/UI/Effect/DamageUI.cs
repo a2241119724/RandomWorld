@@ -68,7 +68,7 @@
         }
 
         /// <summary>
-        /// Damage 配置
+        /// 伤害配置
         /// </summary>
         public class Config
         {

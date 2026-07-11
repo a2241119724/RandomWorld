@@ -3,7 +3,7 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// Unity implementation of IGameLogger wrapping UnityEngine.Debug.
+    /// IGameLogger 的 Unity 实现，封装 UnityEngine.Debug。
     /// </summary>
     public sealed class UnityLogger : IGameLogger
     {

@@ -11,7 +11,7 @@
     public class ATileMapData
     {
         /// <summary>
-        /// value: TileBase name
+        /// 值: TileBase名称
         /// </summary>
         public Dictionary<Vector3IntLAB, string> PosMap;
 

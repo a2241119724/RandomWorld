@@ -1,16 +1,16 @@
 namespace LAB2D
 {
     /// <summary>
-    /// Marker interface for all game events.
-    /// Events are the output of domain services that are consumed by presentation/Unity adapters.
+    /// 所有游戏事件的标记接口。
+    /// 事件是领域服务的输出，由展示层/Unity适配器消费。
     /// </summary>
     public interface IGameEvent
     {
     }
 
     /// <summary>
-    /// Fired when a player moves.
-    /// Consumed by PlayerViewAdapter for Rigidbody2D/Transform/Animator updates.
+    /// 玩家移动时触发。
+    /// 由PlayerViewAdapter消费，用于Rigidbody2D/Transform/Animator更新。
     /// </summary>
     public sealed class PlayerMovedEvent : IGameEvent
     {
@@ -21,8 +21,8 @@ namespace LAB2D
     }
 
     /// <summary>
-    /// Fired when a character takes damage.
-    /// Consumed by DamageUI, FloatingTextManager, SpriteRenderer flash effects.
+    /// 角色受到伤害时触发。
+    /// 由DamageUI、FloatingTextManager、SpriteRenderer闪烁效果消费。
     /// </summary>
     public sealed class CharacterDamagedEvent : IGameEvent
     {
@@ -34,8 +34,8 @@ namespace LAB2D
     }
 
     /// <summary>
-    /// Fired when inventory state changes.
-    /// Consumed by ItemMap, ItemInfoUI, WorkerTaskManager bridge.
+    /// 库存状态变更时触发。
+    /// 由ItemMap、ItemInfoUI、WorkerTaskManager桥接消费。
     /// </summary>
     public sealed class InventoryChangedEvent : IGameEvent
     {
@@ -45,8 +45,8 @@ namespace LAB2D
     }
 
     /// <summary>
-    /// Fired when a wave state changes.
-    /// Consumed by WaveHUD, WaveEventFeedback.
+    /// 波次状态变更时触发。
+    /// 由WaveHUD、WaveEventFeedback消费。
     /// </summary>
     public sealed class WaveStateChangedEvent : IGameEvent
     {
@@ -58,13 +58,13 @@ namespace LAB2D
     }
 
     /// <summary>
-    /// Fired when a worker task is assigned or completed.
-    /// Consumed by WorkerTaskHUD, ColonyCommandCenterHUD.
+    /// Worker任务被分配或完成时触发。
+    /// 由WorkerTaskHUD、ColonyCommandCenterHUD消费。
     /// </summary>
     /// <summary>
-    /// Fired when a worker task is assigned or completed.
-    /// Uses int to avoid transitive UnityEngine dependency through AWorkerTask.WorkerTaskTypeEnum.
-    /// Cast to AWorkerTask.WorkerTaskTypeEnum at the adapter layer.
+    /// Worker任务被分配或完成时触发。
+    /// 使用int类型以避免通过AWorkerTask.WorkerTaskTypeEnum产生对UnityEngine的传递依赖。
+    /// 在适配器层转换为AWorkerTask.WorkerTaskTypeEnum。
     /// </summary>
     public sealed class WorkerTaskEvent : IGameEvent
     {
