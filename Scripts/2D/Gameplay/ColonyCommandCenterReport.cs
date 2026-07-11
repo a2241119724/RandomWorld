@@ -3,7 +3,6 @@ namespace LAB2D
     using System;
     using System.Collections.Generic;
     using System.Text;
-    using UnityEngine;
 
     /// <summary>
     /// Worker 任务分配诊断报告。
@@ -123,7 +122,7 @@ namespace LAB2D
                     .AppendLine();
             }
 
-            for (int i = 0; i < Mathf.Min(this.ReasonSummaries.Count, 5); i++)
+            for (int i = 0; i < Math.Min(this.ReasonSummaries.Count, 5); i++)
             {
                 builder.Append("- ")
                     .Append(ColonyCommandCenterTool.GetBlockReasonName(this.ReasonSummaries[i].Reason))
@@ -344,7 +343,7 @@ namespace LAB2D
             if (assignment != null && assignment.ReasonSummaries.Count > 0)
             {
                 builder.AppendLine("<color=" + PixelUITheme.RichSky + ">任务阻塞原因</color>");
-                for (int i = 0; i < Mathf.Min(assignment.ReasonSummaries.Count, 4); i++)
+                for (int i = 0; i < Math.Min(assignment.ReasonSummaries.Count, 4); i++)
                 {
                     WorkerTaskBlockReasonSummary summary = assignment.ReasonSummaries[i];
                     builder.Append("- <color=")
@@ -360,7 +359,7 @@ namespace LAB2D
             if (assignment != null && assignment.Details.Count > 0)
             {
                 builder.AppendLine("<color=" + PixelUITheme.RichSky + ">等待任务样例</color>");
-                for (int i = 0; i < Mathf.Min(assignment.Details.Count, 3); i++)
+                for (int i = 0; i < Math.Min(assignment.Details.Count, 3); i++)
                 {
                     builder.AppendLine(assignment.Details[i].ToDisplayLine());
                 }
