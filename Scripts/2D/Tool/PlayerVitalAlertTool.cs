@@ -1,7 +1,5 @@
 namespace LAB2D
 {
-    using UnityEngine;
-
     /// <summary>
     /// 玩家生命危险提示工具类。
     /// 只负责血量比例计算、提示等级判断和展示文案格式化，不访问 Scene、Prefab、存档、Photon 或 AssetBundle。
@@ -9,6 +7,8 @@ namespace LAB2D
     /// </summary>
     public static class PlayerVitalAlertTool
     {
+        private static readonly PlayerVitalAlertRuleService RuleService = new PlayerVitalAlertRuleService();
+
         /// <summary>
         /// 安全获取玩家数据。
         /// </summary>
@@ -35,12 +35,27 @@ namespace LAB2D
         /// <returns>0 到 1 之间的比例；最大值无效时返回 0。</returns>
         public static float GetSafeRatio(float current, float max)
         {
-            if (max <= 0.0f)
-            {
-                return 0.0f;
-            }
+            return RuleService.GetSafeRatio(current, max);
+        }
 
-            return Mathf.Clamp01(current / max);
+        /// <summary>
+        /// 限制刷新间隔，避免过小的监控频率。
+        /// </summary>
+        /// <param name="interval">原始刷新间隔。</param>
+        /// <returns>至少 0.1 秒的刷新间隔。</returns>
+        public static float ClampRefreshInterval(float interval)
+        {
+            return RuleService.ClampRefreshInterval(interval);
+        }
+
+        /// <summary>
+        /// 将生命比例转换为百分比整数。
+        /// </summary>
+        /// <param name="ratio">生命比例。</param>
+        /// <returns>0 到 100 的百分比整数。</returns>
+        public static int ToPercentInt(float ratio)
+        {
+            return RuleService.ToPercentInt(ratio);
         }
 
         /// <summary>
@@ -195,7 +210,7 @@ namespace LAB2D
         public static string FormatHp(float currentHp, float maxHp)
         {
             float ratio = GetSafeRatio(currentHp, maxHp);
-            return $"{Mathf.CeilToInt(Mathf.Max(0.0f, currentHp))}/{Mathf.CeilToInt(Mathf.Max(0.0f, maxHp))} ({Mathf.RoundToInt(ratio * 100.0f)}%)";
+            return $"{RuleService.ToDisplayHealth(currentHp)}/{RuleService.ToDisplayHealth(maxHp)} ({RuleService.ToPercentInt(ratio)}%)";
         }
     }
 }

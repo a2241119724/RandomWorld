@@ -92,7 +92,8 @@ namespace LAB2D
                 return;
             }
 
-            this.nextRefreshTime = Time.time + Mathf.Max(0.1f, PlayerVitalAlertConstant.MonitorRefreshInterval);
+            this.nextRefreshTime = Time.time + PlayerVitalAlertTool.ClampRefreshInterval(
+                PlayerVitalAlertConstant.MonitorRefreshInterval);
             this.Refresh(true);
         }
 
@@ -369,7 +370,7 @@ namespace LAB2D
         {
             StringBuilder builder = new StringBuilder(128);
             builder.Append(this.PlayerName).Append('|')
-                .Append(Mathf.RoundToInt(this.HpRatio * 100.0f)).Append('|')
+                .Append(PlayerVitalAlertTool.ToPercentInt(this.HpRatio)).Append('|')
                 .Append(this.Level).Append('|')
                 .Append(this.IsRespawning).Append('|')
                 .Append(this.ErrorMessage);
