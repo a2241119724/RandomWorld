@@ -148,22 +148,20 @@ namespace LAB2D
         /// <returns>奖励数值。百分比类奖励使用 0.1 表示 10%。</returns>
         public static float GetRewardValue(WaveRewardType rewardType, bool isBossReward, int waveIndex)
         {
-            switch (rewardType)
-            {
-                case WaveRewardType.Heal:
-                    return isBossReward ? WaveBossRewardConstant.BossHealPercent : WaveBossRewardConstant.NormalHealPercent;
-                case WaveRewardType.Experience:
-                    return (isBossReward ? WaveBossRewardConstant.BossExperienceBase : WaveBossRewardConstant.NormalExperienceBase) +
-                        Mathf.Max(0, waveIndex * 2);
-                case WaveRewardType.DamageBoost:
-                    return isBossReward ? WaveBossRewardConstant.BossDamageBoost : WaveBossRewardConstant.NormalDamageBoost;
-                case WaveRewardType.DefenseBoost:
-                    return isBossReward ? WaveBossRewardConstant.BossDefenseBoost : WaveBossRewardConstant.NormalDefenseBoost;
-                case WaveRewardType.MoveSpeedBoost:
-                    return isBossReward ? WaveBossRewardConstant.BossMoveSpeedBoost : WaveBossRewardConstant.NormalMoveSpeedBoost;
-                default:
-                    return 0.0f;
-            }
+            return BossRuleService.GetRewardValue(
+                rewardType,
+                isBossReward,
+                waveIndex,
+                WaveBossRewardConstant.NormalHealPercent,
+                WaveBossRewardConstant.BossHealPercent,
+                WaveBossRewardConstant.NormalExperienceBase,
+                WaveBossRewardConstant.BossExperienceBase,
+                WaveBossRewardConstant.NormalDamageBoost,
+                WaveBossRewardConstant.BossDamageBoost,
+                WaveBossRewardConstant.NormalDefenseBoost,
+                WaveBossRewardConstant.BossDefenseBoost,
+                WaveBossRewardConstant.NormalMoveSpeedBoost,
+                WaveBossRewardConstant.BossMoveSpeedBoost);
         }
 
         /// <summary>

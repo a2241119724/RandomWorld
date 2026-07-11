@@ -61,7 +61,45 @@ namespace LAB2D
             return normalDefenseMultiplier * bossDefenseMultiplier;
         }
 
+        public float GetRewardValue(
+            WaveRewardType rewardType,
+            bool isBossReward,
+            int waveIndex,
+            float normalHealPercent,
+            float bossHealPercent,
+            int normalExperienceBase,
+            int bossExperienceBase,
+            float normalDamageBoost,
+            float bossDamageBoost,
+            float normalDefenseBoost,
+            float bossDefenseBoost,
+            float normalMoveSpeedBoost,
+            float bossMoveSpeedBoost)
+        {
+            switch (rewardType)
+            {
+                case WaveRewardType.Heal:
+                    return isBossReward ? bossHealPercent : normalHealPercent;
+                case WaveRewardType.Experience:
+                    return (isBossReward ? bossExperienceBase : normalExperienceBase) +
+                        ClampMin(0, waveIndex * 2);
+                case WaveRewardType.DamageBoost:
+                    return isBossReward ? bossDamageBoost : normalDamageBoost;
+                case WaveRewardType.DefenseBoost:
+                    return isBossReward ? bossDefenseBoost : normalDefenseBoost;
+                case WaveRewardType.MoveSpeedBoost:
+                    return isBossReward ? bossMoveSpeedBoost : normalMoveSpeedBoost;
+                default:
+                    return 0.0f;
+            }
+        }
+
         private static float ClampMin(float min, float value)
+        {
+            return value < min ? min : value;
+        }
+
+        private static int ClampMin(int min, int value)
         {
             return value < min ? min : value;
         }
