@@ -13,12 +13,12 @@ namespace LAB2D
 
         public float ClampRefreshInterval(float interval)
         {
-            return interval < 0.1f ? 0.1f : interval;
+            return MathHelper.ClampRefreshInterval(interval);
         }
 
         public int ToRecoverNeedCount(float recoverNeed)
         {
-            return CeilToInt(recoverNeed);
+            return MathHelper.CeilToInt(recoverNeed);
         }
 
         public int GetVisibleIssueCount(int issueCount, int maxIssueCount)
@@ -28,10 +28,5 @@ namespace LAB2D
             return safeIssueCount < safeMaxIssueCount ? safeIssueCount : safeMaxIssueCount;
         }
 
-        private static int CeilToInt(float value)
-        {
-            int integer = (int)value;
-            return value > integer ? integer + 1 : integer;
-        }
     }
 }

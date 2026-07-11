@@ -7,7 +7,7 @@ namespace LAB2D
     {
         public float ClampRefreshInterval(float interval)
         {
-            return interval < 0.1f ? 0.1f : interval;
+            return MathHelper.ClampRefreshInterval(interval);
         }
     }
 }

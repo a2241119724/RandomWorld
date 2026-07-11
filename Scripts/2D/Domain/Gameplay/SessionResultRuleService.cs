@@ -157,24 +157,5 @@ namespace LAB2D
             return score;
         }
 
-        private static float MinFloat(float a, float b)
-        {
-            return a < b ? a : b;
-        }
-
-        private static int MaxInt(int a, int b)
-        {
-            return a > b ? a : b;
-        }
-
-        private static int ClampMin(int min, int value)
-        {
-            return value < min ? min : value;
-        }
-
-        private static int RoundToInt(float value)
-        {
-            return value >= 0.0f ? (int)(value + 0.5f) : (int)(value - 0.5f);
-        }
     }
 }

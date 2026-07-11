@@ -12,7 +12,7 @@ namespace LAB2D
 
         public int ToRecordedDamage(float damage)
         {
-            int rounded = RoundToInt(damage);
+            int rounded = MathHelper.RoundToInt(damage);
             return rounded < 0 ? 0 : rounded;
         }
 
@@ -36,7 +36,7 @@ namespace LAB2D
 
         public int ToClampedScore(float score, int minScore, int maxScore)
         {
-            int rounded = RoundToInt(score);
+            int rounded = MathHelper.RoundToInt(score);
             if (rounded < minScore)
             {
                 return minScore;
@@ -45,9 +45,5 @@ namespace LAB2D
             return rounded > maxScore ? maxScore : rounded;
         }
 
-        private static int RoundToInt(float value)
-        {
-            return value >= 0.0f ? (int)(value + 0.5f) : (int)(value - 0.5f);
-        }
     }
 }

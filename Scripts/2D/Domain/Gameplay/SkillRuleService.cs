@@ -21,7 +21,7 @@ namespace LAB2D
 
         public int ToCooldownDisplaySeconds(float remainingSeconds)
         {
-            return CeilToInt(remainingSeconds);
+            return MathHelper.CeilToInt(remainingSeconds);
         }
 
         public float GetCooldownProgress(float remainingSeconds, float totalCooldown)
@@ -31,23 +31,8 @@ namespace LAB2D
                 return 0.0f;
             }
 
-            return Clamp01(remainingSeconds / totalCooldown);
+            return MathHelper.Clamp01(remainingSeconds / totalCooldown);
         }
 
-        private static float Clamp01(float value)
-        {
-            if (value < 0.0f)
-            {
-                return 0.0f;
-            }
-
-            return value > 1.0f ? 1.0f : value;
-        }
-
-        private static int CeilToInt(float value)
-        {
-            int integer = (int)value;
-            return value > integer ? integer + 1 : integer;
-        }
     }
 }
