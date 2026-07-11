@@ -1,12 +1,12 @@
 namespace LAB2D
 {
     using System;
-    using UnityEngine;
 
     /// <summary>
     /// 技能运行时数据模型。
     /// 定义单个主动技能的全部属性：类型、效果、冷却、法力消耗、等级等。
     /// 当前为纯代码驱动（非 ScriptableObject），后续可扩展为 SO 配置。
+    /// 注意：本类不再直接使用 Time.time，冷却与 Buff 判定由调用方传入当前时间。
     /// </summary>
     [Serializable]
     public class SkillData
@@ -65,58 +65,54 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// 剩余冷却时间（秒），0 表示冷却就绪
+        /// 获取指定时间点的剩余冷却时间（秒），0 表示冷却就绪。
         /// </summary>
-        public float RemainingCooldown
+        /// <param name="currentTime">当前游戏时间（由调用方传入 Time.time）。</param>
+        /// <returns>剩余冷却秒数。</returns>
+        public float GetRemainingCooldown(float currentTime)
         {
-            get
+            if (this.LastActivateTime <= 0f)
             {
-                if (this.LastActivateTime <= 0f)
-                {
-                    return 0f;
-                }
-
-                float elapsed = Time.time - this.LastActivateTime;
-                float remaining = this.CurrentCooldown - elapsed;
-                return remaining > 0f ? remaining : 0f;
+                return 0f;
             }
+
+            float elapsed = currentTime - this.LastActivateTime;
+            float remaining = this.CurrentCooldown - elapsed;
+            return remaining > 0f ? remaining : 0f;
         }
 
         /// <summary>
-        /// 技能是否处于冷却就绪状态
+        /// 技能在指定时间点是否处于冷却就绪状态。
         /// </summary>
-        public bool IsReady
+        /// <param name="currentTime">当前游戏时间。</param>
+        /// <returns>冷却就绪时返回 true。</returns>
+        public bool IsReadyAt(float currentTime)
         {
-            get
-            {
-                return this.RemainingCooldown <= 0f;
-            }
+            return this.GetRemainingCooldown(currentTime) <= 0f;
         }
 
         /// <summary>
-        /// Buff 是否仍处于激活状态（仅 SelfBuff 类型）
+        /// Buff 在指定时间点是否仍处于激活状态（仅 SelfBuff 类型）。
         /// </summary>
-        public bool IsBuffActive
+        /// <param name="currentTime">当前游戏时间。</param>
+        /// <returns>Buff 激活中时返回 true。</returns>
+        public bool IsBuffActiveAt(float currentTime)
         {
-            get
-            {
-                return this.EffectType == SkillEffectType.AttackBuff
-                       && this.BuffEndTime > 0f
-                       && Time.time < this.BuffEndTime;
-            }
+            return this.EffectType == SkillEffectType.AttackBuff
+                   && this.BuffEndTime > 0f
+                   && currentTime < this.BuffEndTime;
         }
 
         /// <summary>
-        /// 当前 Buff 攻击力倍率（仅在 Buff 激活时有效）
+        /// 获取指定时间点的 Buff 攻击力倍率（仅在 Buff 激活时有效）。
         /// </summary>
-        public float CurrentBuffMultiplier
+        /// <param name="currentTime">当前游戏时间。</param>
+        /// <returns>Buff 倍率，未激活时返回 1.0。</returns>
+        public float GetCurrentBuffMultiplier(float currentTime)
         {
-            get
-            {
-                return this.IsBuffActive
-                    ? SkillTool.CalculateBuffMultiplier(this.EffectMultiplier, this.Level)
-                    : 1.0f;
-            }
+            return this.IsBuffActiveAt(currentTime)
+                ? SkillTool.CalculateBuffMultiplier(this.EffectMultiplier, this.Level)
+                : 1.0f;
         }
 
         /// <summary>

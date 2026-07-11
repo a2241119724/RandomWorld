@@ -327,8 +327,8 @@ namespace LAB2D
                     continue;
                 }
 
-                float remaining = skill.RemainingCooldown;
-                bool isReady = skill.IsReady;
+                float remaining = skill.GetRemainingCooldown(Time.time);
+                bool isReady = skill.IsReadyAt(Time.time);
                 bool hasMana = SkillTool.HasEnoughMana(currentMp, skill.ManaCost);
                 float progress = SkillTool.GetCooldownProgress(remaining, skill.CurrentCooldown);
 

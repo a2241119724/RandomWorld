@@ -95,7 +95,7 @@ namespace LAB2D
             }
 
             // 冷却检查
-            if (!skill.IsReady)
+            if (!skill.IsReadyAt(Time.time))
             {
                 return false;
             }
@@ -220,9 +220,9 @@ namespace LAB2D
             float maxBuff = 1.0f;
             foreach (SkillData skill in this.Skills)
             {
-                if (skill.IsBuffActive && skill.CurrentBuffMultiplier > maxBuff)
+                if (skill.IsBuffActiveAt(Time.time) && skill.GetCurrentBuffMultiplier(Time.time) > maxBuff)
                 {
-                    maxBuff = skill.CurrentBuffMultiplier;
+                    maxBuff = skill.GetCurrentBuffMultiplier(Time.time);
                 }
             }
 
