@@ -1,11 +1,14 @@
-namespace LAB2D
+namespace LAB2D.Constant
 {
+    using LAB2D;
+    using LAB2D.Domain.Worker;
     using UnityEngine;
 
     /// <summary>
     /// 工人饥饿与疲劳状态常量。
     /// 这些值会影响 Worker 移动速度、普通任务进度、HUD 文案和 Editor 菜单路径；
     /// 修改时需要同步验证工人接任务、吃饭、睡觉和 HUD 展示手感。
+    /// 规则相关值现已委托 WorkerConditionRuleService 维护；此常量类保留向后兼容引用。
     /// </summary>
     public static class WorkerConditionConstant
     {
@@ -22,64 +25,54 @@ namespace LAB2D
         public const float TiredDecayPerSecond = 0.01f;
 
         /// <summary>
-        /// 进入饥饿或疲劳提示的比例阈值。
-        /// 当前值表示低于最大值的 35% 时开始显示状态异常并套用轻度惩罚。
+        /// 进入饥饿或疲劳提示的比例阈值。委托自 WorkerConditionRuleService。
         /// </summary>
-        public const float WarningRatio = 0.35f;
+        public const float WarningRatio = WorkerConditionRuleService.WarningRatio;
 
         /// <summary>
-        /// 进入濒临停工状态的比例阈值。
-        /// 当前值表示低于最大值的 5% 时套用最强的非致命效率惩罚。
+        /// 进入濒临停工状态的比例阈值。委托自 WorkerConditionRuleService。
         /// </summary>
-        public const float CriticalRatio = 0.05f;
+        public const float CriticalRatio = WorkerConditionRuleService.CriticalRatio;
 
         /// <summary>
-        /// 单项饥饿时的移动速度倍率。
-        /// 数值低于 1 会减慢工人移动，不直接改变寻路路径。
+        /// 单项饥饿时的移动速度倍率。委托自 WorkerConditionRuleService。
         /// </summary>
-        public const float HungryMoveSpeedMultiplier = 0.86f;
+        public const float HungryMoveSpeedMultiplier = WorkerConditionRuleService.HungryMoveSpeedMultiplier;
 
         /// <summary>
-        /// 单项疲劳时的移动速度倍率。
-        /// 数值低于 1 会减慢工人移动，不直接改变寻路路径。
+        /// 单项疲劳时的移动速度倍率。委托自 WorkerConditionRuleService。
         /// </summary>
-        public const float TiredMoveSpeedMultiplier = 0.9f;
+        public const float TiredMoveSpeedMultiplier = WorkerConditionRuleService.TiredMoveSpeedMultiplier;
 
         /// <summary>
-        /// 饥饿且疲劳时的移动速度倍率。
-        /// 这是复合异常状态的惩罚，避免工人在低状态下仍保持满效率。
+        /// 饥饿且疲劳时的移动速度倍率。委托自 WorkerConditionRuleService。
         /// </summary>
-        public const float ExhaustedMoveSpeedMultiplier = 0.72f;
+        public const float ExhaustedMoveSpeedMultiplier = WorkerConditionRuleService.ExhaustedMoveSpeedMultiplier;
 
         /// <summary>
-        /// 濒临停工时的移动速度倍率。
-        /// 不设为 0，避免工人无法走向食物或床位而卡死。
+        /// 濒临停工时的移动速度倍率。委托自 WorkerConditionRuleService。
         /// </summary>
-        public const float CriticalMoveSpeedMultiplier = 0.58f;
+        public const float CriticalMoveSpeedMultiplier = WorkerConditionRuleService.CriticalMoveSpeedMultiplier;
 
         /// <summary>
-        /// 单项饥饿时的普通任务进度倍率。
-        /// 吃饭和睡觉任务不会使用该惩罚。
+        /// 单项饥饿时的普通任务进度倍率。委托自 WorkerConditionRuleService。
         /// </summary>
-        public const float HungryWorkProgressMultiplier = 0.82f;
+        public const float HungryWorkProgressMultiplier = WorkerConditionRuleService.HungryWorkProgressMultiplier;
 
         /// <summary>
-        /// 单项疲劳时的普通任务进度倍率。
-        /// 吃饭和睡觉任务不会使用该惩罚。
+        /// 单项疲劳时的普通任务进度倍率。委托自 WorkerConditionRuleService。
         /// </summary>
-        public const float TiredWorkProgressMultiplier = 0.76f;
+        public const float TiredWorkProgressMultiplier = WorkerConditionRuleService.TiredWorkProgressMultiplier;
 
         /// <summary>
-        /// 饥饿且疲劳时的普通任务进度倍率。
-        /// 用于强化生存管理的玩家反馈。
+        /// 饥饿且疲劳时的普通任务进度倍率。委托自 WorkerConditionRuleService。
         /// </summary>
-        public const float ExhaustedWorkProgressMultiplier = 0.6f;
+        public const float ExhaustedWorkProgressMultiplier = WorkerConditionRuleService.ExhaustedWorkProgressMultiplier;
 
         /// <summary>
-        /// 濒临停工时的普通任务进度倍率。
-        /// 保留少量进度，降低任务永远无法完成的风险。
+        /// 濒临停工时的普通任务进度倍率。委托自 WorkerConditionRuleService。
         /// </summary>
-        public const float CriticalWorkProgressMultiplier = 0.45f;
+        public const float CriticalWorkProgressMultiplier = WorkerConditionRuleService.CriticalWorkProgressMultiplier;
 
         /// <summary>
         /// 状态提示冷却时间，避免每帧或频繁状态刷新刷屏。

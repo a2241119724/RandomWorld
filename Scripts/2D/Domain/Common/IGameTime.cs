@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Domain.Common
 {
     /// <summary>
     /// 领域服务的抽象时间提供者。

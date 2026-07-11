@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Constant
 {
     /// <summary>
     /// 成就系统公共常量

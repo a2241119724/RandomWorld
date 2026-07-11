@@ -1,4 +1,4 @@
-﻿namespace LAB2D
+namespace LAB2D.Core.KDTree
 {
     using System;
     using System.Collections.Generic;

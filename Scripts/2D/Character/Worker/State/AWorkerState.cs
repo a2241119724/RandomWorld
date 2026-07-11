@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.State
 {
+    using LAB2D;
     using System.Text.RegularExpressions;
     using UnityEngine;
 

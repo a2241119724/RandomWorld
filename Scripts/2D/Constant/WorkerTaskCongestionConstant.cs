@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Constant
 {
+    using LAB2D;
     /// <summary>
     /// 工人任务队列拥堵提示常量。
     /// 集中维护 F016 的刷新节奏、Tip 冷却、菜单路径、默认文案和建议阈值；修改后需要验证 Tip 频率与 F015 HUD 压力文案一致。

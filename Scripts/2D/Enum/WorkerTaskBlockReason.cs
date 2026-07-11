@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Enum
 {
+    using LAB2D;
     /// <summary>
     /// Worker 任务等待或无法接取的诊断原因。
     /// 用于统一表达任务开关、饥饿、可达性、补给、仓库和任务绑定等阻塞来源，可被指挥中心 HUD、Tip、Editor 菜单和后续教程目标复用。

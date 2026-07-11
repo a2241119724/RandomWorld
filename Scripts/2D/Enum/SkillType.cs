@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Enum
 {
+    using LAB2D;
     /// <summary>
     /// 主动技能类型枚举，定义技能的释放方式和目标选择逻辑。
     /// 用于 SkillData 的类型标记和 SkillManager 的激活分支路由。

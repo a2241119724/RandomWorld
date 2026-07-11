@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Enum
 {
     /// <summary>
     /// 工人生存状态。

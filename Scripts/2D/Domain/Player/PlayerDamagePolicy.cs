@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Domain.Player
 {
+    using LAB2D;
     /// <summary>
     /// 判断玩家伤害是否可以生效的纯规则。
     /// </summary>

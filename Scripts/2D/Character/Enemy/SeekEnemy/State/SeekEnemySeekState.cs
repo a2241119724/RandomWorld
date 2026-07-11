@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Enemy.SeekEnemy.State
 {
+    using LAB2D;
     using UnityEngine;
 
     public class SeekEnemySeekState : ASeekEnemyState

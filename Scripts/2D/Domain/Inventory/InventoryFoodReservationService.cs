@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Domain.Inventory
 {
     /// <summary>
     /// 库存规则的纯食物预留算术。

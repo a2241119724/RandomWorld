@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Player
 {
+    using LAB2D;
+    using LAB2D.Domain.Character;
+    using LAB2D.Domain.Player;
     using System;
     using System.Collections.Generic;
     using Photon.Pun;

@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Item
 {
+    using LAB2D;
+    using LAB2D.Domain.Inventory;
     using System.Collections.Generic;
     using System.Linq;
     using UnityEngine;

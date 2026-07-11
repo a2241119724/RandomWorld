@@ -1,5 +1,7 @@
-namespace LAB2D
+namespace LAB2D.Gameplay
 {
+    using LAB2D;
+    using LAB2D.Domain.Wave;
     using System;
     using System.Collections;
     using System.Collections.Generic;

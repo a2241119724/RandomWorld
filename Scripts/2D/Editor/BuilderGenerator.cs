@@ -1,4 +1,4 @@
-﻿namespace LAB.Editor
+namespace LAB.Editor
 {
     using System;
     using System.Collections.Generic;

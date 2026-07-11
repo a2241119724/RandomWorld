@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.UI
 {
+    using LAB2D;
     using System.Collections;
     using UnityEngine;
     using UnityEngine.UI;

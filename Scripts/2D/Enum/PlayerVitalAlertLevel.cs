@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Enum
 {
     /// <summary>
     /// 玩家生命危险提示等级。

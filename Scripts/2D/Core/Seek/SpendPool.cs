@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Core.Seek
 {
     using System.Collections.Concurrent;
 

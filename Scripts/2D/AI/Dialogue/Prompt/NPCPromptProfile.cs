@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.AI.Dialogue.Prompt
 {
     using System.Collections.Generic;
     using UnityEngine;

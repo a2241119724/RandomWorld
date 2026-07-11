@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel
 {
+    using LAB2D;
     /// <summary>
     /// 面板基接口
     /// </summary>

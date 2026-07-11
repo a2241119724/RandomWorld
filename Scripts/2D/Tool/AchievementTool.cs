@@ -1,5 +1,7 @@
-namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Domain.Gameplay;
     using System;
     using System.Collections.Generic;
     using System.Text;

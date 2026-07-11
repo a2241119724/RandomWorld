@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel
 {
+    using LAB2D;
     using System;
     using System.Collections.Generic;
     using UnityEngine;

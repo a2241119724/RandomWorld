@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D;
+    using LAB2D.Domain.Worker;
     using System;
     using System.Collections.Generic;
     using UnityEngine;

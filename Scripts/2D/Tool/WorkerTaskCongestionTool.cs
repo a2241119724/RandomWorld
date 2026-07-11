@@ -1,5 +1,7 @@
-namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Domain.Worker;
     /// <summary>
     /// 工人任务队列拥堵建议工具。
     /// 只负责根据只读任务队列快照计算拥堵等级、主积压任务类型和玩家建议文案；不新增任务、不取消任务、不调整任务优先级。
@@ -7,6 +9,8 @@ namespace LAB2D
     /// </summary>
     public static class WorkerTaskCongestionTool
     {
+        private static readonly WorkerTaskCongestionRuleService RuleService =
+            new WorkerTaskCongestionRuleService();
         /// <summary>
         /// 根据任务队列快照构建拥堵报告。
         /// </summary>
@@ -47,27 +51,7 @@ namespace LAB2D
         /// <returns>拥堵等级。</returns>
         public static WorkerTaskCongestionLevel GetCongestionLevel(int waitingTaskCount)
         {
-            if (waitingTaskCount <= 0)
-            {
-                return WorkerTaskCongestionLevel.None;
-            }
-
-            if (waitingTaskCount >= WorkerTaskCongestionConstant.CriticalWaitingTaskThreshold)
-            {
-                return WorkerTaskCongestionLevel.Critical;
-            }
-
-            if (waitingTaskCount >= WorkerTaskCongestionConstant.CongestedWaitingTaskThreshold)
-            {
-                return WorkerTaskCongestionLevel.Congested;
-            }
-
-            if (waitingTaskCount >= WorkerTaskCongestionConstant.BusyWaitingTaskThreshold)
-            {
-                return WorkerTaskCongestionLevel.Busy;
-            }
-
-            return WorkerTaskCongestionLevel.Smooth;
+            return RuleService.GetCongestionLevel(waitingTaskCount);
         }
 
         /// <summary>
@@ -154,9 +138,9 @@ namespace LAB2D
                 return false;
             }
 
-            float ratio = (float)report.PrimaryWaitingTaskCount / report.WaitingTaskCount;
-            return report.PrimaryWaitingTaskCount >= WorkerTaskCongestionConstant.DominantTaskWaitingThreshold &&
-                ratio >= WorkerTaskCongestionConstant.DominantTaskWaitingRatio;
+            return RuleService.HasDominantTaskType(
+                report.PrimaryWaitingTaskCount,
+                report.WaitingTaskCount);
         }
 
         /// <summary>

@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D;
     /// <summary>
     /// Worker任务基
     /// </summary>

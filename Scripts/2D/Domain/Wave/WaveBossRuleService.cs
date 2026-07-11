@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Domain.Wave
 {
+    using LAB2D.Domain.Common;
     /// <summary>
     /// Boss波次节奏和敌人数量调整的纯规则。
     /// </summary>

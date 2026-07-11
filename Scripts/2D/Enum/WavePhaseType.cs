@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Enum
 {
     /// <summary>
     /// 波次体验阶段类型。

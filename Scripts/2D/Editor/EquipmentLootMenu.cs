@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Editor
 {
+    using LAB2D;
     #if UNITY_EDITOR
     using UnityEditor;
     using UnityEngine;

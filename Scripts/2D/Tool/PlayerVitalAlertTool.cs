@@ -1,5 +1,7 @@
-namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Domain.Gameplay;
     /// <summary>
     /// 玩家生命危险提示工具类。
     /// 只负责血量比例计算、提示等级判断和展示文案格式化，不访问 Scene、Prefab、存档、Photon 或 AssetBundle。
@@ -59,7 +61,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// 根据玩家血量和复活状态计算生命提示等级。
+        /// 根据玩家血量和复活状态计算生命提示等级。委托至 PlayerVitalAlertRuleService。
         /// </summary>
         /// <param name="currentHp">当前生命值。</param>
         /// <param name="maxHp">最大生命值。</param>
@@ -67,23 +69,8 @@ namespace LAB2D
         /// <returns>玩家生命提示等级。</returns>
         public static PlayerVitalAlertLevel GetLevel(float currentHp, float maxHp, bool isRespawning)
         {
-            if (isRespawning)
-            {
-                return PlayerVitalAlertLevel.Respawning;
-            }
-
             float ratio = GetSafeRatio(currentHp, maxHp);
-            if (ratio <= PlayerVitalAlertConstant.CriticalRatio)
-            {
-                return PlayerVitalAlertLevel.Critical;
-            }
-
-            if (ratio <= PlayerVitalAlertConstant.WarningRatio)
-            {
-                return PlayerVitalAlertLevel.Wounded;
-            }
-
-            return PlayerVitalAlertLevel.Safe;
+            return RuleService.GetLevel(ratio, isRespawning);
         }
 
         /// <summary>

@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Domain.Wave
 {
     /// <summary>
     /// 引擎无关的波次规则配置。

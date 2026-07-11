@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Enum
 {
     /// <summary>
     /// 装备稀有度等级枚举。

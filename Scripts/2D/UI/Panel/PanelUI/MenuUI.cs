@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel.PanelUI
 {
+    using LAB2D;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;

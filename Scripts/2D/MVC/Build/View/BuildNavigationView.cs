@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.MVC.Build.View
 {
+    using LAB2D;
     /// <summary>
     /// 建造导航按钮UI
     /// </summary>

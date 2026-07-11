@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Domain.Common
 {
+    using LAB2D;
     /// <summary>
     /// 所有游戏事件的标记接口。
     /// 事件是领域服务的输出，由展示层/Unity适配器消费。

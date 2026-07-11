@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.MVC.Build.Model
 {
+    using LAB2D;
     using System.Collections;
     using System.Collections.Generic;
 

@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Domain.Gameplay
 {
+    using LAB2D.Domain.Common;
     /// <summary>
     /// 成就进度的纯算术规则。
     /// </summary>

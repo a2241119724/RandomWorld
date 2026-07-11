@@ -1,8 +1,10 @@
-namespace LAB2D
+namespace LAB2D.Constant
 {
+    using LAB2D.Domain.Player;
     /// <summary>
     /// 玩家生命危险提示常量。
     /// 集中维护 F019 的刷新节奏、Tip 冷却、血量阈值、菜单路径和默认文案；修改后需要验证低血量提示频率和玩家状态 UI 展示是否一致。
+    /// 规则相关值现已委托 PlayerVitalAlertRuleService 维护；此常量类保留向后兼容引用。
     /// </summary>
     public static class PlayerVitalAlertConstant
     {
@@ -30,16 +32,14 @@ namespace LAB2D
         public const float TipCooldownSeconds = 8.0f;
 
         /// <summary>
-        /// 血量低于该比例时进入受伤提示。
-        /// 只影响提示文案，不改变血量、伤害、死亡惩罚或恢复数值。
+        /// 血量低于该比例时进入受伤提示。委托自 PlayerVitalAlertRuleService。
         /// </summary>
-        public const float WarningRatio = 0.35f;
+        public const float WarningRatio = PlayerVitalAlertRuleService.WarningRatio;
 
         /// <summary>
-        /// 血量低于该比例时进入濒危提示。
-        /// 只影响提示文案，不改变战斗判定。
+        /// 血量低于该比例时进入濒危提示。委托自 PlayerVitalAlertRuleService。
         /// </summary>
-        public const float CriticalRatio = 0.18f;
+        public const float CriticalRatio = PlayerVitalAlertRuleService.CriticalRatio;
 
         /// <summary>
         /// 血量恢复到该比例以上时允许显示恢复提示。

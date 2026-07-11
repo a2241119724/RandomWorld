@@ -1,7 +1,8 @@
 using System;
 
-namespace LAB2D
+namespace LAB2D.Domain.Worker
 {
+    using LAB2D.Domain.Common;
     /// <summary>
     /// 纯分配规则使用的只读任务候选。
     /// </summary>

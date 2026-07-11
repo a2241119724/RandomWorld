@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Constant
 {
+    using LAB2D;
     public class LayerConstant
     {
         /// <summary>

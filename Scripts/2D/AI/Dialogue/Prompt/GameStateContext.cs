@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.AI.Dialogue.Prompt
 {
+    using LAB2D;
     using System;
     using System.Collections.Generic;
     using System.Text;

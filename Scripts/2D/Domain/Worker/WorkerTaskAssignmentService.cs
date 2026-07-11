@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace LAB2D
+namespace LAB2D.Domain.Worker
 {
     /// <summary>
     /// 从最高可用优先级组中选择最近的可分配任务。

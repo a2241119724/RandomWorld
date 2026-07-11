@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character
 {
+    using LAB2D;
     /// <summary>
     /// 角色状态基
     /// </summary>

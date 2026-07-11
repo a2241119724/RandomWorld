@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Enemy
 {
+    using LAB2D;
     using System;
     using System.Collections;
     using System.Collections.Generic;

@@ -1,5 +1,7 @@
-namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Domain.Gameplay;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -68,7 +70,7 @@ namespace LAB2D
         /// <returns>法力充足返回 true</returns>
         public static bool HasEnoughMana(int currentMp, int manaCost)
         {
-            return currentMp >= manaCost;
+            return RuleService.HasEnoughMana(currentMp, manaCost);
         }
 
         /// <summary>
@@ -78,14 +80,7 @@ namespace LAB2D
         /// <returns>升级所需经验点数；已满级返回-1</returns>
         public static int GetUpgradeCost(int currentLevel)
         {
-            return currentLevel switch
-            {
-                1 => SkillConstant.UpgradeCostLevel1To2,
-                2 => SkillConstant.UpgradeCostLevel2To3,
-                3 => SkillConstant.UpgradeCostLevel3To4,
-                4 => SkillConstant.UpgradeCostLevel4To5,
-                _ => -1,
-            };
+            return RuleService.GetUpgradeCost(currentLevel);
         }
 
         /// <summary>
@@ -130,7 +125,10 @@ namespace LAB2D
         /// <returns>等级加成后的倍率</returns>
         public static float CalculateBuffMultiplier(float baseMultiplier, int skillLevel)
         {
-            return baseMultiplier + ((skillLevel - 1) * SkillConstant.UpgradeEffectIncrease * 0.5f);
+            return RuleService.CalculateBuffMultiplier(
+                baseMultiplier,
+                skillLevel,
+                SkillConstant.UpgradeEffectIncrease);
         }
 
         /// <summary>
@@ -142,8 +140,10 @@ namespace LAB2D
         /// <returns>等级加成后的治疗量</returns>
         public static float CalculateHealAmount(float baseHealAmount, int skillLevel)
         {
-            float levelBonus = 1.0f + ((skillLevel - 1) * SkillConstant.UpgradeEffectIncrease);
-            return baseHealAmount * levelBonus;
+            return RuleService.CalculateHealAmount(
+                baseHealAmount,
+                skillLevel,
+                SkillConstant.UpgradeEffectIncrease);
         }
 
         /// <summary>

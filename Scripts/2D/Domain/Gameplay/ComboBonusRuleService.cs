@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Domain.Gameplay
 {
     /// <summary>
     /// 连击奖励等级查找与倍率计算的纯规则。

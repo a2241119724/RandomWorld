@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Data
 {
+    using LAB2D;
     /// <summary>
     /// 抽象保存数据
     /// </summary>

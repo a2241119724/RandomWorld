@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Domain.Inventory
 {
     /// <summary>
     /// 库存取物预留的纯算术规则。

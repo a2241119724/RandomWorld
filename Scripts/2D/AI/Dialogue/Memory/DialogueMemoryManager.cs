@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.AI.Dialogue.Memory
 {
+    using LAB2D;
     using System;
     using System.Collections.Generic;
 

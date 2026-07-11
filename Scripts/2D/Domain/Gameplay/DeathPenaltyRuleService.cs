@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Domain.Gameplay
 {
+    using LAB2D.Domain.Common;
     /// <summary>
     /// 玩家死亡惩罚与复活计时的纯算术规则。
     /// </summary>

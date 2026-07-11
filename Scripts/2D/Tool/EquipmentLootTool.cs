@@ -1,5 +1,7 @@
-namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Domain.Gameplay;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -34,30 +36,11 @@ namespace LAB2D
         /// <returns>选中的稀有度等级</returns>
         public static EquipmentRarityType RollRarityWithRoll(int waveNumber, float randomRoll)
         {
-            float bonus = RuleService.GetRarityWeightBonus(
+            return RuleService.RollRarityWithRoll(
                 waveNumber,
+                randomRoll,
                 EquipmentLootConstant.RarityWeightBonusPerWave,
                 0.5f);
-
-            float commonW = EquipmentLootConstant.CommonWeight * (1f - bonus);
-            float uncommonW = EquipmentLootConstant.UncommonWeight;
-            float rareW = EquipmentLootConstant.RareWeight * (1f + bonus);
-            float epicW = EquipmentLootConstant.EpicWeight * (1f + bonus * 2f);
-            float legendaryW = EquipmentLootConstant.LegendaryWeight * (1f + bonus * 3f);
-            float mythicW = EquipmentLootConstant.MythicWeight * (1f + bonus * 5f);
-
-            float cursor = 0f;
-            cursor += commonW;
-            if (randomRoll <= cursor) return EquipmentRarityType.Common;
-            cursor += uncommonW;
-            if (randomRoll <= cursor) return EquipmentRarityType.Uncommon;
-            cursor += rareW;
-            if (randomRoll <= cursor) return EquipmentRarityType.Rare;
-            cursor += epicW;
-            if (randomRoll <= cursor) return EquipmentRarityType.Epic;
-            cursor += legendaryW;
-            if (randomRoll <= cursor) return EquipmentRarityType.Legendary;
-            return EquipmentRarityType.Mythic;
         }
 
         /// <summary>
@@ -67,19 +50,10 @@ namespace LAB2D
         /// <returns>总权重值</returns>
         public static float GetRarityTotalWeight(int waveNumber)
         {
-            float bonus = RuleService.GetRarityWeightBonus(
+            return RuleService.GetRarityTotalWeight(
                 waveNumber,
                 EquipmentLootConstant.RarityWeightBonusPerWave,
                 0.5f);
-
-            float commonW = EquipmentLootConstant.CommonWeight * (1f - bonus);
-            float uncommonW = EquipmentLootConstant.UncommonWeight;
-            float rareW = EquipmentLootConstant.RareWeight * (1f + bonus);
-            float epicW = EquipmentLootConstant.EpicWeight * (1f + bonus * 2f);
-            float legendaryW = EquipmentLootConstant.LegendaryWeight * (1f + bonus * 3f);
-            float mythicW = EquipmentLootConstant.MythicWeight * (1f + bonus * 5f);
-
-            return commonW + uncommonW + rareW + epicW + legendaryW + mythicW;
         }
 
         /// <summary>
@@ -108,16 +82,7 @@ namespace LAB2D
         /// <returns>属性倍率</returns>
         public static float GetStatMultiplier(EquipmentRarityType rarity)
         {
-            switch (rarity)
-            {
-                case EquipmentRarityType.Common:    return EquipmentLootConstant.CommonStatMultiplier;
-                case EquipmentRarityType.Uncommon:  return EquipmentLootConstant.UncommonStatMultiplier;
-                case EquipmentRarityType.Rare:      return EquipmentLootConstant.RareStatMultiplier;
-                case EquipmentRarityType.Epic:      return EquipmentLootConstant.EpicStatMultiplier;
-                case EquipmentRarityType.Legendary: return EquipmentLootConstant.LegendaryStatMultiplier;
-                case EquipmentRarityType.Mythic:    return EquipmentLootConstant.MythicStatMultiplier;
-                default:                            return 1.0f;
-            }
+            return RuleService.GetStatMultiplier(rarity);
         }
 
         /// <summary>
@@ -150,7 +115,7 @@ namespace LAB2D
         {
             if (attr == null) return;
 
-            float mult = GetStatMultiplier(rarity);
+            float mult = RuleService.GetStatMultiplier(rarity);
             attr.ATN *= mult;
             attr.INT *= mult;
             attr.DEF *= mult;
@@ -161,12 +126,11 @@ namespace LAB2D
             attr.HIT *= mult;
 
             // 传说级和神话级装备有额外极值属性
-            int extremeCount = 0;
-            if (rarity == EquipmentRarityType.Legendary) extremeCount = EquipmentLootConstant.LegendaryExtremeStatCount;
-            if (rarity == EquipmentRarityType.Mythic) extremeCount = EquipmentLootConstant.MythicExtremeStatCount;
+            int extremeCount = RuleService.GetExtremeStatCount(rarity);
 
             if (extremeCount > 0)
             {
+                float extremeMult = RuleService.GetExtremeStatMultiplier();
                 // 随机选择 extremeCount 条属性翻倍
                 List<int> indices = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7 };
                 for (int i = 0; i < extremeCount; i++)
@@ -177,14 +141,14 @@ namespace LAB2D
 
                     switch (chosen)
                     {
-                        case 0: attr.ATN *= EquipmentLootConstant.ExtremeStatMultiplier; break;
-                        case 1: attr.INT *= EquipmentLootConstant.ExtremeStatMultiplier; break;
-                        case 2: attr.DEF *= EquipmentLootConstant.ExtremeStatMultiplier; break;
-                        case 3: attr.RES *= EquipmentLootConstant.ExtremeStatMultiplier; break;
-                        case 4: attr.CRT *= EquipmentLootConstant.ExtremeStatMultiplier; break;
-                        case 5: attr.CSD *= EquipmentLootConstant.ExtremeStatMultiplier; break;
-                        case 6: attr.SPD *= EquipmentLootConstant.ExtremeStatMultiplier; break;
-                        case 7: attr.HIT *= EquipmentLootConstant.ExtremeStatMultiplier; break;
+                        case 0: attr.ATN *= extremeMult; break;
+                        case 1: attr.INT *= extremeMult; break;
+                        case 2: attr.DEF *= extremeMult; break;
+                        case 3: attr.RES *= extremeMult; break;
+                        case 4: attr.CRT *= extremeMult; break;
+                        case 5: attr.CSD *= extremeMult; break;
+                        case 6: attr.SPD *= extremeMult; break;
+                        case 7: attr.HIT *= extremeMult; break;
                     }
                 }
             }
@@ -208,12 +172,13 @@ namespace LAB2D
                 : new float[] { 0, 0, 0, 0, 0, 0, 0, 0 };
             float[] newVals = { newAttr.ATN, newAttr.INT, newAttr.DEF, newAttr.RES, newAttr.CRT, newAttr.CSD, newAttr.SPD, newAttr.HIT };
 
+            float[] diffs = RuleService.GetStatDiffs(oldVals, newVals);
+
             for (int i = 0; i < names.Length; i++)
             {
-                float diff = newVals[i] - oldVals[i];
                 string prefix;
-                if (diff > 0.001f) prefix = EquipmentLootConstant.StatUpPrefix;
-                else if (diff < -0.001f) prefix = EquipmentLootConstant.StatDownPrefix;
+                if (diffs[i] > 0.001f) prefix = EquipmentLootConstant.StatUpPrefix;
+                else if (diffs[i] < -0.001f) prefix = EquipmentLootConstant.StatDownPrefix;
                 else prefix = EquipmentLootConstant.StatEqualPrefix;
 
                 lines.Add(string.Format("{0}{1}: {2:F1}", prefix, names[i], newVals[i]));
@@ -233,16 +198,27 @@ namespace LAB2D
             if (oldAttr == null) return 8; // 空槽装备上新装备，全算提升
             if (newAttr == null) return 0;
 
-            int count = 0;
-            if (newAttr.ATN > oldAttr.ATN) count++;
-            if (newAttr.INT > oldAttr.INT) count++;
-            if (newAttr.DEF > oldAttr.DEF) count++;
-            if (newAttr.RES > oldAttr.RES) count++;
-            if (newAttr.CRT > oldAttr.CRT) count++;
-            if (newAttr.CSD > oldAttr.CSD) count++;
-            if (newAttr.SPD > oldAttr.SPD) count++;
-            if (newAttr.HIT > oldAttr.HIT) count++;
-            return count;
+            Dictionary<string, float> before = AttributeToDict(oldAttr);
+            Dictionary<string, float> after = AttributeToDict(newAttr);
+            return RuleService.CountUpgrades(before, after);
+        }
+
+        /// <summary>
+        /// 将 Character.Attribute 转换为属性名字典，供 RuleService 使用。
+        /// </summary>
+        private static Dictionary<string, float> AttributeToDict(Character.Attribute attr)
+        {
+            return new Dictionary<string, float>
+            {
+                { "ATN", attr.ATN },
+                { "INT", attr.INT },
+                { "DEF", attr.DEF },
+                { "RES", attr.RES },
+                { "CRT", attr.CRT },
+                { "CSD", attr.CSD },
+                { "SPD", attr.SPD },
+                { "HIT", attr.HIT },
+            };
         }
 
         /// <summary>

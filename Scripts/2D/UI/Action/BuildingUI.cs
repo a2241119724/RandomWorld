@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Action
 {
+    using LAB2D;
     using UnityEngine;
     using UnityEngine.EventSystems;
 

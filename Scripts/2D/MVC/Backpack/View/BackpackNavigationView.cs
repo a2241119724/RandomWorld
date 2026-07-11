@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.MVC.Backpack.View
 {
+    using LAB2D;
     /// <summary>
     /// 背包导航按钮UI
     /// </summary>

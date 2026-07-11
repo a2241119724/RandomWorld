@@ -1,5 +1,7 @@
-namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Domain.Worker;
     /// <summary>
     /// 工人饥饿与疲劳状态工具类。
     /// 只负责状态计算、倍率计算和展示文本格式化，不访问 Scene、Prefab、存档、Photon 或 AssetBundle。
@@ -50,34 +52,16 @@ namespace LAB2D
                 return WorkerConditionState.Healthy;
             }
 
-            float hungryRatio = GetSafeRatio(workerData.CurHungry, workerData.MaxHungry);
-            float tiredRatio = GetSafeRatio(workerData.CurTired, workerData.MaxTired);
-
-            bool criticalHungry = workerData.CurHungry <= 0.0f || hungryRatio <= WorkerConditionConstant.CriticalRatio;
-            bool criticalTired = workerData.CurTired <= 0.0f || tiredRatio <= WorkerConditionConstant.CriticalRatio;
-            if (criticalHungry || criticalTired)
-            {
-                return WorkerConditionState.Critical;
-            }
-
-            bool hungry = hungryRatio <= WorkerConditionConstant.WarningRatio;
-            bool tired = tiredRatio <= WorkerConditionConstant.WarningRatio;
-            if (hungry && tired)
-            {
-                return WorkerConditionState.Exhausted;
-            }
-
-            if (hungry)
-            {
-                return WorkerConditionState.Hungry;
-            }
-
-            if (tired)
-            {
-                return WorkerConditionState.Tired;
-            }
-
-            return WorkerConditionState.Healthy;
+            var snapshot = new WorkerAgentSnapshot(
+                workerId: 0L,
+                position: default,
+                isIdle: false,
+                isPaused: false,
+                curHungry: workerData.CurHungry,
+                maxHungry: workerData.MaxHungry,
+                curTired: workerData.CurTired,
+                maxTired: workerData.MaxTired);
+            return RuleService.GetState(snapshot);
         }
 
         /// <summary>
@@ -131,19 +115,7 @@ namespace LAB2D
         /// <returns>移动速度倍率，1 表示不变化。</returns>
         public static float GetMoveSpeedMultiplier(WorkerConditionState state)
         {
-            switch (state)
-            {
-                case WorkerConditionState.Hungry:
-                    return WorkerConditionConstant.HungryMoveSpeedMultiplier;
-                case WorkerConditionState.Tired:
-                    return WorkerConditionConstant.TiredMoveSpeedMultiplier;
-                case WorkerConditionState.Exhausted:
-                    return WorkerConditionConstant.ExhaustedMoveSpeedMultiplier;
-                case WorkerConditionState.Critical:
-                    return WorkerConditionConstant.CriticalMoveSpeedMultiplier;
-                default:
-                    return 1.0f;
-            }
+            return RuleService.GetMoveSpeedMultiplier(state);
         }
 
         /// <summary>
@@ -154,25 +126,9 @@ namespace LAB2D
         /// <returns>任务进度倍率，吃饭和睡觉任务始终返回 1。</returns>
         public static float GetTaskProgressMultiplier(WorkerConditionState state, AWorkerTask.WorkerTaskTypeEnum taskType)
         {
-            if (taskType == AWorkerTask.WorkerTaskTypeEnum.Eat ||
-                taskType == AWorkerTask.WorkerTaskTypeEnum.Sleep)
-            {
-                return 1.0f;
-            }
-
-            switch (state)
-            {
-                case WorkerConditionState.Hungry:
-                    return WorkerConditionConstant.HungryWorkProgressMultiplier;
-                case WorkerConditionState.Tired:
-                    return WorkerConditionConstant.TiredWorkProgressMultiplier;
-                case WorkerConditionState.Exhausted:
-                    return WorkerConditionConstant.ExhaustedWorkProgressMultiplier;
-                case WorkerConditionState.Critical:
-                    return WorkerConditionConstant.CriticalWorkProgressMultiplier;
-                default:
-                    return 1.0f;
-            }
+            bool isEatOrSleepTask = taskType == AWorkerTask.WorkerTaskTypeEnum.Eat ||
+                taskType == AWorkerTask.WorkerTaskTypeEnum.Sleep;
+            return RuleService.GetTaskProgressMultiplier(state, isEatOrSleepTask);
         }
 
         /// <summary>

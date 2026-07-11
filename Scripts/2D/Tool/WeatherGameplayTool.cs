@@ -1,84 +1,64 @@
-namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Domain.Common;
+    using LAB2D.Domain.Gameplay;
+
     /// <summary>
     /// 天气玩法工具类。
-    /// 只负责根据天气类型计算通用倍率和展示文本，不持有运行时状态。
-    /// 使用边界：不得在这里访问场景对象、Prefab、存档、Photon 或 AssetBundle。
+    /// 负责适配层映射（Manager → Domain 类型转换）和展示文本构建。
+    /// 所有游戏规则逻辑委托给 WeatherGameplayRuleService。
     /// </summary>
     public static class WeatherGameplayTool
     {
         private static readonly WeatherGameplayRuleService RuleService = new WeatherGameplayRuleService();
 
         /// <summary>
-        /// 获取玩家移动速度倍率。
+        /// 将 Manager 层天气类型映射到领域层天气类型。
         /// </summary>
-        /// <param name="weather">当前天气。</param>
-        /// <returns>玩家移动速度倍率，1 表示不变化。</returns>
-        public static float GetPlayerMoveSpeedMultiplier(WeatherManager.WeatherTypeEnum weather)
+        private static WeatherType MapToDomain(WeatherManager.WeatherTypeEnum weather)
         {
             switch (weather)
             {
                 case WeatherManager.WeatherTypeEnum.Rain:
-                    return 0.92f;
+                    return WeatherType.Rain;
                 case WeatherManager.WeatherTypeEnum.Snow:
-                    return 0.84f;
+                    return WeatherType.Snow;
                 default:
-                    return 1.0f;
+                    return WeatherType.Clear;
             }
+        }
+
+        /// <summary>
+        /// 获取玩家移动速度倍率。
+        /// </summary>
+        public static float GetPlayerMoveSpeedMultiplier(WeatherManager.WeatherTypeEnum weather)
+        {
+            return RuleService.GetPlayerMoveSpeedMultiplier(MapToDomain(weather));
         }
 
         /// <summary>
         /// 获取工人移动速度倍率。
         /// </summary>
-        /// <param name="weather">当前天气。</param>
-        /// <returns>工人移动速度倍率，1 表示不变化。</returns>
         public static float GetWorkerMoveSpeedMultiplier(WeatherManager.WeatherTypeEnum weather)
         {
-            switch (weather)
-            {
-                case WeatherManager.WeatherTypeEnum.Rain:
-                    return 0.9f;
-                case WeatherManager.WeatherTypeEnum.Snow:
-                    return 0.78f;
-                default:
-                    return 1.0f;
-            }
+            return RuleService.GetWorkerMoveSpeedMultiplier(MapToDomain(weather));
         }
 
         /// <summary>
         /// 获取工人工作进度倍率。
         /// </summary>
-        /// <param name="weather">当前天气。</param>
-        /// <returns>工人任务进度倍率，数值越低表示工作越慢。</returns>
         public static float GetWorkerTaskProgressMultiplier(WeatherManager.WeatherTypeEnum weather)
         {
-            switch (weather)
-            {
-                case WeatherManager.WeatherTypeEnum.Rain:
-                    return 0.94f;
-                case WeatherManager.WeatherTypeEnum.Snow:
-                    return 0.82f;
-                default:
-                    return 1.0f;
-            }
+            return RuleService.GetWorkerTaskProgressMultiplier(MapToDomain(weather));
         }
 
         /// <summary>
         /// 获取环境灵气恢复倍率。
         /// </summary>
-        /// <param name="weather">当前天气。</param>
-        /// <returns>灵气恢复倍率，1 表示不变化。</returns>
         public static float GetEnergyRecoveryMultiplier(WeatherManager.WeatherTypeEnum weather)
         {
-            switch (weather)
-            {
-                case WeatherManager.WeatherTypeEnum.Rain:
-                    return 1.12f;
-                case WeatherManager.WeatherTypeEnum.Snow:
-                    return 0.86f;
-                default:
-                    return 1.05f;
-            }
+            return RuleService.GetEnergyRecoveryMultiplier(MapToDomain(weather));
         }
 
         /// <summary>

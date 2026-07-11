@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Domain.Wave
 {
+    using LAB2D.Domain.Common;
     /// <summary>
     /// 纯波次推进和生成数量规则。
     /// </summary>

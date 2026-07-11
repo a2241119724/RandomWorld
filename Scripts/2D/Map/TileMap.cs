@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Map
 {
+    using LAB2D;
+    using LAB2D.Domain.Common;
     using System;
     using System.Collections;
     using Photon.Pun;
@@ -7,9 +9,9 @@
     using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// 地图
+    /// 地图 — 同时实现 ITileMapQuery 以支持其他层通过接口查询地图。
     /// </summary>
-    public class TileMap : BaseTileMap
+    public class TileMap : BaseTileMap, ITileMapQuery
     {
         /// <summary>
         /// 瓦片类型
@@ -210,6 +212,35 @@
         {
             // return new Vector3Int(Mathf.RoundToInt(worldPos.y - 0.5f), Mathf.RoundToInt(worldPos.x - 0.5f), 0);
             return new Vector3Int(Mathf.RoundToInt(worldPos.y), Mathf.RoundToInt(worldPos.x), 0);
+        }
+
+        // === ITileMapQuery 接口实现 ===
+
+        /// <inheritdoc/>
+        GameGridPosition ITileMapQuery.WorldPosToMapPos(GameVector2 worldPos)
+        {
+            Vector3 unityPos = new Vector3(worldPos.X, worldPos.Y, 0);
+            Vector3Int mapPos = this.WorldPosToMapPos(unityPos);
+            return new GameGridPosition(mapPos.x, mapPos.y);
+        }
+
+        /// <inheritdoc/>
+        bool ITileMapQuery.IsCanReach(GameGridPosition posMap)
+        {
+            return this.IsCanReach(new Vector3Int(posMap.X, posMap.Y, 0));
+        }
+
+        /// <inheritdoc/>
+        int ITileMapQuery.Width => this.TileMapDataLAB?.Width ?? 0;
+
+        /// <inheritdoc/>
+        int ITileMapQuery.Height => this.TileMapDataLAB?.Height ?? 0;
+
+        /// <inheritdoc/>
+        bool ITileMapQuery.IsInBounds(GameGridPosition posMap)
+        {
+            return posMap.X >= 0 && posMap.X < this.TileMapDataLAB?.Height
+                && posMap.Y >= 0 && posMap.Y < this.TileMapDataLAB?.Width;
         }
 
         /// <summary>

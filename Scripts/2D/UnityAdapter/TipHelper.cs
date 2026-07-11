@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.UnityAdapter
 {
+    using LAB2D;
     using System;
     using UnityEngine;
 

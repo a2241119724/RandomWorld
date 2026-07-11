@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Domain.Player
 {
+    using LAB2D;
     /// <summary>
     /// 玩家专属速度规则的纯移动算术。
     /// </summary>

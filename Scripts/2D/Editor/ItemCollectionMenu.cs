@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Editor
 {
+    using LAB2D;
     using System.Text;
     using UnityEditor;
     using UnityEngine;

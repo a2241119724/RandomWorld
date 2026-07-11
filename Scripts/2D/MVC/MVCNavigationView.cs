@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.MVC
 {
+    using LAB2D;
     using UnityEngine;
     using UnityEngine.Events;
     using UnityEngine.UI;

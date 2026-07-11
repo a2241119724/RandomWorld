@@ -1,5 +1,7 @@
-namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Domain.Worker;
     /// <summary>
     /// 工人补给缺口工具类。
     /// 只负责补给缺口判断、百分比格式化和显示文案生成，不持有运行时状态，不访问 Scene、Prefab、存档、Photon 或 AssetBundle。
@@ -22,9 +24,16 @@ namespace LAB2D
                 return false;
             }
 
-            float hungryRatio = WorkerConditionTool.GetSafeRatio(workerData.CurHungry, workerData.MaxHungry);
-            return workerData.CurHungry <= AWorker.ThresholdHungry ||
-                hungryRatio <= WorkerConditionConstant.WarningRatio;
+            var snapshot = new WorkerAgentSnapshot(
+                workerId: 0L,
+                position: default,
+                isIdle: false,
+                isPaused: false,
+                curHungry: workerData.CurHungry,
+                maxHungry: workerData.MaxHungry,
+                curTired: workerData.CurTired,
+                maxTired: workerData.MaxTired);
+            return SupplyRuleService.NeedsFood(snapshot);
         }
 
         /// <summary>
@@ -39,9 +48,16 @@ namespace LAB2D
                 return false;
             }
 
-            float tiredRatio = WorkerConditionTool.GetSafeRatio(workerData.CurTired, workerData.MaxTired);
-            return workerData.CurTired <= AWorker.ThresholdTired ||
-                tiredRatio <= WorkerConditionConstant.WarningRatio;
+            var snapshot = new WorkerAgentSnapshot(
+                workerId: 0L,
+                position: default,
+                isIdle: false,
+                isPaused: false,
+                curHungry: workerData.CurHungry,
+                maxHungry: workerData.MaxHungry,
+                curTired: workerData.CurTired,
+                maxTired: workerData.MaxTired);
+            return SupplyRuleService.NeedsRest(snapshot);
         }
 
         /// <summary>
@@ -60,7 +76,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// 获取单个 Worker 的优先补给问题类型。
+        /// 获取单个 Worker 的优先补给问题类型。委托至 WorkerSupplyRuleService。
         /// </summary>
         /// <param name="state">Worker 当前状态。</param>
         /// <param name="needsFood">是否需要食物。</param>
@@ -73,27 +89,7 @@ namespace LAB2D
             bool needsRest,
             bool missingBed)
         {
-            if (state == WorkerConditionState.Critical)
-            {
-                return WorkerSupplyIssueType.CriticalWorker;
-            }
-
-            if (missingBed)
-            {
-                return WorkerSupplyIssueType.BedShortage;
-            }
-
-            if (needsFood)
-            {
-                return WorkerSupplyIssueType.HungryWorker;
-            }
-
-            if (needsRest)
-            {
-                return WorkerSupplyIssueType.TiredWorker;
-            }
-
-            return WorkerSupplyIssueType.None;
+            return SupplyRuleService.GetWorkerPrimaryIssue(state, needsFood, needsRest, missingBed);
         }
 
         /// <summary>

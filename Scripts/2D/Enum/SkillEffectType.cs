@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Enum
 {
+    using LAB2D;
     /// <summary>
     /// 技能效果类型枚举，定义技能激活后产生的具体游戏效果。
     /// 用于 SkillData 的效果标记和 SkillManager 的效果执行分支。

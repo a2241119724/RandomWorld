@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Domain.Common
 {
     /// <summary>
     /// 所有领域RuleService的共享数学工具类。

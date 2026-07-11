@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Domain.Dialogue
 {
     /// <summary>
     /// 与引擎无关的提示词配置，供提示词组装规则使用。

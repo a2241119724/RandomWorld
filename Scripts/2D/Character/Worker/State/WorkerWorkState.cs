@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.State
 {
+    using LAB2D;
     /// <summary>
     /// Worker工作状态
     /// </summary>

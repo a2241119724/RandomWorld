@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Domain.Worker
 {
     /// <summary>
     /// 工人任务疲劳和进度的纯算术。

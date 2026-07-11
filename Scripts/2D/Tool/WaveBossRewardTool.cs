@@ -1,5 +1,7 @@
-namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Domain.Wave;
     /// <summary>
     /// 波次 Boss 与奖励通用工具。
     /// 只负责纯计算和展示文案，不访问场景对象、Prefab、存档、Photon 或 AssetBundle。
@@ -13,6 +15,7 @@ namespace LAB2D
         /// </summary>
         /// <param name="waveIndex">从 1 开始的波次索引。</param>
         /// <returns>当前波次是否应生成 Boss。</returns>
+        [Obsolete("Use WaveBossRuleService.IsBossWave directly with your constant.")]
         public static bool IsBossWave(int waveIndex)
         {
             return ruleService.IsBossWave(waveIndex, WaveBossRewardConstant.BossWaveInterval);
@@ -24,6 +27,7 @@ namespace LAB2D
         /// <param name="baseEnemyCount">WaveManager 原始敌人数。</param>
         /// <param name="waveIndex">当前波次。</param>
         /// <returns>最终生成敌人数。</returns>
+        [Obsolete("Use WaveBossRuleService.GetEnemyCountForWave directly with your constants.")]
         public static int GetEnemyCountForWave(int baseEnemyCount, int waveIndex)
         {
             return ruleService.GetEnemyCountForWave(
@@ -40,6 +44,7 @@ namespace LAB2D
         /// <param name="spawnIndex">鏈尝鍐呯敓鎴愬簭鍙凤紝浠?0 寮€濮嬨€?/param>
         /// <param name="totalEnemies">鏈尝鎬绘晫浜烘暟銆?/param>
         /// <returns>褰撳墠鐢熸垚瀵硅薄鏄惁搴旇鏍囪涓?Boss銆?/returns>
+        [Obsolete("Use WaveBossRuleService.IsBossEnemySpawn directly with your constant.")]
         public static bool IsBossEnemySpawn(int waveIndex, int spawnIndex, int totalEnemies)
         {
             return ruleService.IsBossEnemySpawn(
@@ -54,6 +59,7 @@ namespace LAB2D
         /// </summary>
         /// <param name="waveIndex">褰撳墠娉㈡銆?/param>
         /// <returns>鑷冲皯涓?1 鐨勬尝娆℃暟銆?/returns>
+        [Obsolete("Use WaveBossRuleService.ClampWaveIndex directly.")]
         public static int ClampWaveIndex(int waveIndex)
         {
             return ruleService.ClampWaveIndex(waveIndex);
@@ -65,6 +71,7 @@ namespace LAB2D
         /// <param name="configuredOptionCount">閰嶇疆鐨勯€夐」鏁般€?/param>
         /// <param name="availableRewardTypeCount">褰撳墠鍙敤濂栧姳绫诲瀷鏁般€?/param>
         /// <returns>鏈搴旂敓鎴愮殑濂栧姳閫夐」鏁般€?/returns>
+        [Obsolete("Use WaveBossRuleService.GetRewardOptionCount directly.")]
         public static int GetRewardOptionCount(int configuredOptionCount, int availableRewardTypeCount)
         {
             return ruleService.GetRewardOptionCount(configuredOptionCount, availableRewardTypeCount);
@@ -76,6 +83,7 @@ namespace LAB2D
         /// <param name="waveIndex">当前波次。</param>
         /// <param name="difficultyScale">WaveManager 当前难度倍率。</param>
         /// <returns>生命倍率。</returns>
+        [Obsolete("Use WaveBossRuleService.GetNormalEnemyHealthMultiplier directly with your constant.")]
         public static float GetNormalEnemyHealthMultiplier(int waveIndex, float difficultyScale)
         {
             return ruleService.GetNormalEnemyHealthMultiplier(
@@ -90,6 +98,7 @@ namespace LAB2D
         /// <param name="waveIndex">当前波次。</param>
         /// <param name="difficultyScale">WaveManager 当前难度倍率。</param>
         /// <returns>攻击倍率。</returns>
+        [Obsolete("Use WaveBossRuleService.GetNormalEnemyAttackMultiplier directly with your constant.")]
         public static float GetNormalEnemyAttackMultiplier(int waveIndex, float difficultyScale)
         {
             return ruleService.GetNormalEnemyAttackMultiplier(
@@ -104,6 +113,7 @@ namespace LAB2D
         /// <param name="waveIndex">当前波次。</param>
         /// <param name="difficultyScale">WaveManager 当前难度倍率。</param>
         /// <returns>防御倍率。</returns>
+        [Obsolete("Use WaveBossRuleService.GetNormalEnemyDefenseMultiplier directly with your constant.")]
         public static float GetNormalEnemyDefenseMultiplier(int waveIndex, float difficultyScale)
         {
             return ruleService.GetNormalEnemyDefenseMultiplier(
@@ -117,6 +127,7 @@ namespace LAB2D
         /// <param name="waveIndex">当前波次。</param>
         /// <param name="difficultyScale">WaveManager 当前难度倍率。</param>
         /// <returns>Boss 生命倍率。</returns>
+        [Obsolete("Use WaveBossRuleService methods to compose multiplier directly with your constants.")]
         public static float GetBossHealthMultiplier(int waveIndex, float difficultyScale)
         {
             return ruleService.GetBossHealthMultiplier(
@@ -130,6 +141,7 @@ namespace LAB2D
         /// <param name="waveIndex">当前波次。</param>
         /// <param name="difficultyScale">WaveManager 当前难度倍率。</param>
         /// <returns>Boss 攻击倍率。</returns>
+        [Obsolete("Use WaveBossRuleService methods to compose multiplier directly with your constants.")]
         public static float GetBossAttackMultiplier(int waveIndex, float difficultyScale)
         {
             return ruleService.GetBossAttackMultiplier(
@@ -143,6 +155,7 @@ namespace LAB2D
         /// <param name="waveIndex">当前波次。</param>
         /// <param name="difficultyScale">WaveManager 当前难度倍率。</param>
         /// <returns>Boss 防御倍率。</returns>
+        [Obsolete("Use WaveBossRuleService methods to compose multiplier directly with your constants.")]
         public static float GetBossDefenseMultiplier(int waveIndex, float difficultyScale)
         {
             return ruleService.GetBossDefenseMultiplier(
@@ -181,6 +194,7 @@ namespace LAB2D
         /// <param name="isBossReward">是否来自 Boss 波。</param>
         /// <param name="waveIndex">当前波次。</param>
         /// <returns>奖励数值。百分比类奖励使用 0.1 表示 10%。</returns>
+        [Obsolete("Use WaveBossRuleService.GetRewardValue directly with your constants.")]
         public static float GetRewardValue(WaveRewardType rewardType, bool isBossReward, int waveIndex)
         {
             return ruleService.GetRewardValue(
@@ -253,6 +267,7 @@ namespace LAB2D
         /// </summary>
         /// <param name="value">小数形式百分比。</param>
         /// <returns>百分比文本。</returns>
+        [Obsolete("Use WaveBossRuleService.ToPercentInt directly and append \"%\".")]
         public static string FormatPercent(float value)
         {
             return $"{ruleService.ToPercentInt(value)}%";
@@ -263,6 +278,7 @@ namespace LAB2D
         /// </summary>
         /// <param name="value">待转换的数值。</param>
         /// <returns>四舍五入后的整数。</returns>
+        [Obsolete("Use WaveBossRuleService.ToRoundedInt directly.")]
         public static int ToRoundedInt(float value)
         {
             return ruleService.ToRoundedInt(value);
@@ -275,6 +291,7 @@ namespace LAB2D
         /// <param name="add">新增值。</param>
         /// <param name="max">上限。</param>
         /// <returns>限制后的累计值。</returns>
+        [Obsolete("Use WaveBossRuleService.AddWithCap directly.")]
         public static float AddWithCap(float current, float add, float max)
         {
             return ruleService.AddWithCap(current, add, max);
@@ -287,6 +304,7 @@ namespace LAB2D
         /// <param name="multiplier">缂╂斁鍊嶇巼銆?/param>
         /// <param name="minValue">缂╂斁鍚庣殑鏈€灏忓€笺€?/param>
         /// <returns>缂╂斁骞堕挸鍒跺悗鐨勫€笺€?/returns>
+        [Obsolete("Use WaveBossRuleService.ScaleAttribute directly.")]
         public static float ScaleAttribute(float currentValue, float multiplier, float minValue)
         {
             return ruleService.ScaleAttribute(currentValue, multiplier, minValue);

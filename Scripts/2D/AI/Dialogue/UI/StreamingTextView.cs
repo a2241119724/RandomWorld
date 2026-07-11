@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.AI.Dialogue.UI
 {
+    using LAB2D;
     using System.Collections;
     using System.Text;
     using UnityEngine;

@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace LAB2D
+namespace LAB2D.Domain.Dialogue
 {
+    using LAB2D;
     /// <summary>
     /// 从纯文本输入和模板数据构建LLM聊天消息。
     /// </summary>

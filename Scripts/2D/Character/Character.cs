@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.Character
 {
+    using LAB2D;
+    using LAB2D.Domain.Character;
+    using LAB2D.Domain.Common;
     using System;
     using System.Collections.Generic;
     using Photon.Pun;
@@ -43,6 +46,7 @@
         private Color originalColor; // 原来的自身颜色
         private readonly DamageCalculator damageCalculator = new DamageCalculator();
         private readonly LevelProgressionService levelProgressionService = new LevelProgressionService();
+        private CharacterHealthComponent healthComponent;
 
         /// <summary>
         /// 当前装备的武器物体
@@ -76,10 +80,12 @@
             }
 
             this.originalColor = this.spriteRenderer.color;
+            this.healthComponent = new CharacterHealthComponent(this.damageCalculator, this.levelProgressionService);
         }
 
         /// <summary>
-        /// 角色扣血
+        /// 角色扣血 — 委托给 CharacterHealthComponent 处理伤害计算。
+        /// UI 表现（伤害数字、闪烁效果、浮动文字）通过回调处理。
         /// </summary>
         /// <param name="hp">血量</param>
         /// <param name="attacker">攻击者</param>
@@ -91,54 +97,41 @@
                 return;
             }
 
-            this.LastAttacker = attacker;
+            CharacterHealthResult healthResult = this.healthComponent.ApplyDamage(
+                this, hp, attacker, isCRT,
+                (target, finalHp, crit, isCombo) =>
+                {
+                    // UI 表现层 — 伤害预制体实例化
+                    GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.DAMAGE);
+                    if (g != null)
+                    {
+                        g.GetComponent<DamageUI>().SetDamage(finalHp, System.Convert.ToInt32(crit));
+                        g.transform.SetParent(target.transform);
+                        g.transform.localPosition = Vector3.zero;
+                    }
 
-            // 连击增益：当攻击者是玩家且拥有活跃连击时，伤害获得加成
-            if (attacker is Player)
+                    // 浮动战斗文字
+                    FloatingTextManager.Instance.SpawnDamageText(
+                        target.transform.position, finalHp, crit, isCombo);
+
+                    // 受击变红闪烁
+                    target.spriteRenderer.color = Color.red;
+                    target.Invoke(nameof(this.ResetColor), 0.2f);
+                });
+
+            // 发布领域事件（过渡期间与直接调用共存，便于逐步迁移订阅者到 EventBus）
+            EventBus.Instance.Publish(new CharacterDamagedEvent
             {
-                float mult = ComboBonusManager.Instance.DamageMultiplier;
-                hp *= mult;
+                TargetId = this.CharacterDataLAB.Id,
+                AttackerId = attacker?.CharacterDataLAB?.Id ?? 0,
+                Damage = hp,
+                IsCritical = isCRT,
+                RemainingHp = this.CharacterDataLAB.Hp,
+            });
 
-                // A004：波间奖励的玩家伤害强化只作用于玩家输出，不改变敌人或 Worker 的基础属性。
-                hp = WaveBossRewardManager.Instance.GetAdjustedPlayerOutgoingDamage(attacker, hp);
-            }
-
-            // A004：波间奖励的减伤只作用于玩家受击，禁用奖励系统后会自动回到原始伤害。
-            hp = WaveBossRewardManager.Instance.GetAdjustedIncomingDamage(this, hp);
-
-            // 根据防御力计算伤害
-            hp = this.damageCalculator.ApplyDefense(hp, this.CharacterDataLAB.DEF);
-
-            // 记录战斗统计数据
-            GameplaySessionStats.Instance.RecordDamageDealt(hp, isCRT);
-            GameplaySessionStats.Instance.RecordDamageTaken(hp);
-
-            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.DAMAGE); // 创建物体(预设,位置,角度)
-            if (g == null)
-            {
-                return;
-            }
-
-            // 暴击时显示不同的框
-            g.GetComponent<DamageUI>().SetDamage(hp, Convert.ToInt32(isCRT));
-            g.transform.SetParent(this.transform);
-            g.transform.localPosition = Vector3.zero;
-
-            // A009：生成浮动战斗文字（屏幕空间，独立于世界空间伤害预制体）
-            bool isComboDamage = attacker is Player && ComboBonusManager.Instance.DamageMultiplier > 1.0f;
-            FloatingTextManager.Instance.SpawnDamageText(this.transform.position, hp, isCRT, isComboDamage);
-
-            // 变红
-            this.spriteRenderer.color = Color.red;
-            this.Invoke(nameof(this.ResetColor), 0.2f); // 一段时间后调用
-
-            // if (!photonView.IsMine) return;
-            CharacterHealthResult healthResult = this.damageCalculator.ApplyDamageToHealth(this.CharacterDataLAB.Hp, hp);
-            this.CharacterDataLAB.Hp = healthResult.RemainingHp;  // 更新敌人生命值
             if (healthResult.IsDead)
             {
                 this.Death();
-                return;
             }
         }
 
@@ -164,20 +157,12 @@
         }
 
         /// <summary>
-        /// 增加经验值.
+        /// 增加经验值 — 委托给 CharacterHealthComponent。
         /// </summary>
         /// <param name="experience">经验值.</param>
         public virtual void AddExperienceValue(int experience)
         {
-            GameplaySessionStats.Instance.RecordExperienceGained(experience);
-            LevelProgressionResult result = this.levelProgressionService.AddExperience(
-                this.CharacterDataLAB.CurExperience,
-                this.CharacterDataLAB.MaxExperience,
-                this.CharacterDataLAB.Level,
-                experience);
-            this.CharacterDataLAB.CurExperience = result.CurrentExperience;
-            this.CharacterDataLAB.MaxExperience = result.MaxExperience;
-            this.CharacterDataLAB.Level = result.Level;
+            LevelProgressionResult result = this.healthComponent.AddExperience(this.CharacterDataLAB, experience);
 
             if (result.LeveledUp)
             {

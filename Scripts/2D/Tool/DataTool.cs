@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
     using System.IO;
     using System.Runtime.Serialization.Formatters.Binary;
     using System.Xml.Serialization;

@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Domain.Common
 {
     /// <summary>
     /// 所有游戏命令的标记接口。

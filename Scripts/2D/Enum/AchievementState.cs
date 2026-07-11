@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Enum
 {
+    using LAB2D;
     /// <summary>
     /// 成就状态枚举
     /// 用途：标识单个成就的解锁与领取状态，供 AchievementManager、AchievementPanel 和 AchievementPopup 使用。

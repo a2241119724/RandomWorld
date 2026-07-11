@@ -1,7 +1,8 @@
 using System;
 
-namespace LAB2D
+namespace LAB2D.Domain.Gameplay
 {
+    using LAB2D.Domain.Common;
     /// <summary>
     /// 会话结果评分、评级与衍生统计数据计算的纯规则。
     /// </summary>

@@ -1,5 +1,7 @@
-namespace LAB2D
+namespace LAB2D.UnityAdapter
 {
+    using LAB2D;
+    using LAB2D.Domain.Common;
     /// <summary>
     /// IItemDefinitionProvider 的 Unity 实现，封装 ItemDataManager。
     /// </summary>

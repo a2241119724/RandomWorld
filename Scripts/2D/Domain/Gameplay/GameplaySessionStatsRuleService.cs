@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.Domain.Gameplay
 {
+    using LAB2D.Domain.Common;
     /// <summary>
     /// 运行时玩法会话统计的纯算术规则。
     /// </summary>

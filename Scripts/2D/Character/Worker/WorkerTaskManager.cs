@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker
 {
+    using LAB2D;
+    using LAB2D.Domain.Common;
+    using LAB2D.Domain.Worker;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -92,11 +95,16 @@
 
         private WorkerAgentSnapshot CreateWorkerSnapshot(AWorker worker, bool isIdle)
         {
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             return new WorkerAgentSnapshot(
                 worker.GetInstanceID(),
                 new GameVector2(worker.transform.position.y, worker.transform.position.x),
                 isIdle,
-                worker.IsDialoguePaused);
+                worker.IsDialoguePaused,
+                workerData?.CurHungry ?? 0f,
+                workerData?.MaxHungry ?? 0f,
+                workerData?.CurTired ?? 0f,
+                workerData?.MaxTired ?? 0f);
         }
 
         private List<WorkerTaskSnapshot<AWorkerTask>> CreateTaskSnapshots(int priority, AWorker worker)

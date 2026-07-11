@@ -1,4 +1,4 @@
-namespace LAB2D
+namespace LAB2D.Domain.Inventory
 {
     /// <summary>
     /// 库存堆叠容量的纯算术规则。

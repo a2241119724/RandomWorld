@@ -1,26 +1,35 @@
-﻿namespace LAB2D
+namespace LAB2D
 {
     using System.Collections.Generic;
+    using LAB2D.Core;
+    using LAB2D.Domain.Common;
     using UnityEngine;
 
     /// <summary>
-    /// 全局初始化.
+    /// 全局初始化 — 游戏入口点。
+    /// 负责初始化日志、注册所有单例到 ServiceLocator、启动面板系统。
     /// </summary>
-    public class GlobalInit : MonoBehaviour
+    public class GlobalInit : MonoBehaviour, ITipService
     {
         private readonly bool initPanel = true;
         private List<IBasePanel> dontClosePanels; // ESC不可关闭的面板
+        private WorkerUpdateSystem workerUpdateSystem;
 
         /// <summary>
-        /// 单例.
+        /// 单例。保持向后兼容，新代码应使用 ServiceLocator.Get&lt;ITipService&gt;()。
         /// </summary>
         public static GlobalInit Instance { get; private set; }
 
         public void Awake()
         {
             Instance = this;
+            this.workerUpdateSystem = new WorkerUpdateSystem();
             LogManager.Instance.Init();
             Application.targetFrameRate = GlobalData.MaxFrame;
+
+            // 注册所有单例到 ServiceLocator 以实现依赖注入
+            this.RegisterServices();
+
             this.dontClosePanels = new ()
             {
                 ForegroundPanel.Instance,
@@ -30,6 +39,75 @@
                 NewOrContinuePanel.Instance,
                 PauseMenuPanel.Instance,
             };
+        }
+
+        /// <summary>
+        /// 将所有 Singleton 实例注册到 ServiceLocator。
+        /// 注册顺序：基础设施 → 数据 → 地图 → 角色 → 游戏玩法 → UI。
+        /// </summary>
+        private void RegisterServices()
+        {
+            // 基础设施服务
+            ServiceLocator.Register<ITipService>(this);
+            ServiceLocator.Register(LogManager.Instance);
+            ServiceLocator.Register(ResourceManager.Instance);
+            ServiceLocator.Register(CoroutineManager.Instance);
+            ServiceLocator.Register(WeatherManager.Instance);
+            ServiceLocator.Register(ArchiveManager.Instance);
+            ServiceLocator.Register(FrameControl.Instance);
+            ServiceLocator.Register(NetworkConnect.Instance);
+            ServiceLocator.Register(NameGenerator.Instance);
+
+            // 数据服务
+            ServiceLocator.Register(ItemDataManager.Instance);
+            ServiceLocator.Register(DropDataManager.Instance);
+            ServiceLocator.Register(EnvironmentManager.Instance);
+
+            // 地图服务
+            ServiceLocator.Register(TileMap.Instance);
+            ServiceLocator.Register(BuildMap.Instance);
+            ServiceLocator.Register(ResourceMap.Instance);
+            ServiceLocator.Register(ItemMap.Instance);
+            ServiceLocator.Register(GatherMap.Instance);
+            ServiceLocator.Register(IsAvailableMap.Instance);
+
+            // 物品服务
+            ServiceLocator.Register(InventoryManager.Instance);
+            ServiceLocator.Register(DropManager.Instance);
+            ServiceLocator.Register(RoomManager.Instance);
+            ServiceLocator.Register(FurnitureManager.Instance);
+            ServiceLocator.Register(FarmlandManager.Instance);
+            ServiceLocator.Register(ItemInstanceFactory.Instance);
+
+            // 角色管理器
+            ServiceLocator.Register(PlayerManager.Instance);
+            ServiceLocator.Register(EnemyManager.Instance);
+            ServiceLocator.Register(WorkerManager.Instance);
+
+            // 游戏玩法服务
+            ServiceLocator.Register(WaveManager.Instance);
+            ServiceLocator.Register(WaveBossRewardManager.Instance);
+            ServiceLocator.Register(AchievementManager.Instance);
+            ServiceLocator.Register(SkillManager.Instance);
+            ServiceLocator.Register(ComboBonusManager.Instance);
+            ServiceLocator.Register(DeathPenaltyManager.Instance);
+            ServiceLocator.Register(EnemyLootManager.Instance);
+            ServiceLocator.Register(FloatingTextManager.Instance);
+            ServiceLocator.Register(EquipmentBeamManager.Instance);
+            ServiceLocator.Register(GameplaySessionStats.Instance);
+            ServiceLocator.Register(SessionResultManager.Instance);
+            ServiceLocator.Register(PlayerVitalAlertManager.Instance);
+            ServiceLocator.Register(WorkerConditionManager.Instance);
+            ServiceLocator.Register(WorkerSupplyIssueManager.Instance);
+            ServiceLocator.Register(WorkerTaskCongestionAdvisor.Instance);
+            ServiceLocator.Register(WorkerEfficiencyTracker.Instance);
+            ServiceLocator.Register(ColonyCommandCenterManager.Instance);
+            ServiceLocator.Register(ItemCollectionTracker.Instance);
+            ServiceLocator.Register(WeatherGameplayEffect.Instance);
+
+            // UI 服务
+            ServiceLocator.Register(PanelController.Instance);
+            ServiceLocator.Register(AsyncProgressUI.Instance);
         }
 
         public void Start()
@@ -166,42 +244,8 @@
 
         private void WorkerUpdate()
         {
-            List<AWorker> workers = WorkerManager.Instance.Characters;
-            foreach (AWorker worker in workers)
-            {
-                // 按照时间对饥饿值与疲劳值进行自然衰减
-                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-                if (workerData.CurHungry > 0)
-                {
-                    workerData.CurHungry = Mathf.Max(
-                        0.0f,
-                        workerData.CurHungry - (Time.deltaTime * WorkerConditionConstant.HungryDecayPerSecond));
-                }
-
-                if (workerData.CurTired > 0)
-                {
-                    workerData.CurTired = Mathf.Max(
-                        0.0f,
-                        workerData.CurTired - (Time.deltaTime * WorkerConditionConstant.TiredDecayPerSecond));
-                }
-
-                WorkerConditionManager.Instance.UpdateWorkerCondition(worker);
-            }
-
-            // 只读刷新工人补给缺口提示，内部会按固定间隔节流，避免每帧输出 Tip。
-            WorkerSupplyIssueManager.Instance.Tick();
-
-            // 只读刷新任务队列拥堵提示，复用现有任务快照和 Tip UI，不改变任务调度。
-            WorkerTaskCongestionAdvisor.Instance.Tick();
-
-            // 只读刷新殖民地指挥中心报告，聚合人力、补给、任务拥堵和阻塞诊断，不改变任务调度。
-            ColonyCommandCenterManager.Instance.Tick();
-
-            // A008 主动技能系统：刷新技能冷却计时、Buff过期检查和冲刺无敌恢复
-            SkillManager.Instance.Tick();
-
-            // A011 附近道具拾取：轮询附近地面道具（根节点默认关闭，由 Tick 驱动）
-            NearbyItemPickupHUD.Instance?.Tick();
+            // 委托给独立 Tick 系统（Phase 7 重构）
+            this.workerUpdateSystem.Tick(Time.deltaTime);
         }
     }
 

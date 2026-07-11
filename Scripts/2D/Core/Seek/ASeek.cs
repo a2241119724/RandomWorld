@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Core.Seek
 {
+    using LAB2D;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
