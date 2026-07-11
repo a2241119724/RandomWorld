@@ -61,11 +61,16 @@ namespace LAB2D
     /// Fired when a worker task is assigned or completed.
     /// Consumed by WorkerTaskHUD, ColonyCommandCenterHUD.
     /// </summary>
+    /// <summary>
+    /// Fired when a worker task is assigned or completed.
+    /// Uses int to avoid transitive UnityEngine dependency through AWorkerTask.WorkerTaskTypeEnum.
+    /// Cast to AWorkerTask.WorkerTaskTypeEnum at the adapter layer.
+    /// </summary>
     public sealed class WorkerTaskEvent : IGameEvent
     {
         public long TaskId;
         public int WorkerInstanceId;
-        public AWorkerTask.WorkerTaskTypeEnum TaskType;
+        public int TaskType;
         public bool IsCompleted;
     }
 }

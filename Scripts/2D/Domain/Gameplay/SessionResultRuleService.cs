@@ -35,14 +35,14 @@ namespace LAB2D
         public float CalculateCriticalHitRate(int criticalHitCount, int totalDamageDealt)
         {
             int estimatedHitCount = totalDamageDealt > 0
-                ? MaxInt(1, totalDamageDealt / 10)
+                ? Math.Max(1, totalDamageDealt / 10)
                 : 0;
             if (estimatedHitCount <= 0)
             {
                 return 0.0f;
             }
 
-            return MinFloat(100.0f, (float)criticalHitCount / estimatedHitCount * 100.0f);
+            return Math.Min(100.0f, (float)criticalHitCount / estimatedHitCount * 100.0f);
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace LAB2D
         /// </summary>
         public float CalculateKillScore(int totalDefeatedEnemyCount)
         {
-            return MinFloat(MaxKillScore, ClampMin(0, totalDefeatedEnemyCount) * KillScorePerEnemy);
+            return Math.Min(MaxKillScore, MathHelper.ClampMin(totalDefeatedEnemyCount, 0) * KillScorePerEnemy);
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace LAB2D
         /// </summary>
         public float CalculateComboScore(int maxCombo)
         {
-            return MinFloat(MaxComboScore, ClampMin(0, maxCombo) * ComboScorePerCombo);
+            return Math.Min(MaxComboScore, MathHelper.ClampMin(maxCombo, 0) * ComboScorePerCombo);
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace LAB2D
                 return MaxSurvivalScore;
             }
 
-            float penalty = ClampMin(0, playerDeathCount) * SurvivalDeathPenalty;
+            float penalty = MathHelper.ClampMin(playerDeathCount, 0) * SurvivalDeathPenalty;
             float score = MaxSurvivalScore - penalty;
             return score < 0.0f ? 0.0f : score;
         }
@@ -94,7 +94,7 @@ namespace LAB2D
         /// </summary>
         public float CalculateEfficiencyScore(float damageEfficiency)
         {
-            return MinFloat(MaxEfficiencyScore, damageEfficiency * EfficiencyScoreMultiplier);
+            return Math.Min(MaxEfficiencyScore, damageEfficiency * EfficiencyScoreMultiplier);
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace LAB2D
         /// </summary>
         public float CalculateCollectionScore(int totalCollectedItemCount)
         {
-            return MinFloat(MaxCollectionScore, ClampMin(0, totalCollectedItemCount) * CollectionScorePerItem);
+            return Math.Min(MaxCollectionScore, MathHelper.ClampMin(totalCollectedItemCount, 0) * CollectionScorePerItem);
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace LAB2D
                 + CalculateEfficiencyScore(damageEfficiency)
                 + CalculateCollectionScore(totalCollectedItemCount);
 
-            int rounded = RoundToInt(score);
+            int rounded = MathHelper.RoundToInt(score);
             return ClampScore(rounded);
         }
 
