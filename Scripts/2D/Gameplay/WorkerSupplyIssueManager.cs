@@ -528,7 +528,7 @@ namespace LAB2D
                 builder.AppendLine("<color=" + PixelUITheme.RichLavender + ">有疲劳工人缺少床位绑定。</color>");
             }
 
-            int issueCount = new WorkerSupplyRuleService().GetVisibleIssueCount(
+            int issueCount = this.ruleService.GetVisibleIssueCount(
                 this.Issues.Count,
                 WorkerSupplyConstant.MaxHudIssueLines);
             for (int i = 0; i < issueCount; i++)
