@@ -19,5 +19,25 @@ namespace LAB2D
         {
             return progress < target ? progress : target;
         }
+
+        public float GetProgressRatio(int current, int target)
+        {
+            if (target <= 0)
+            {
+                return 1.0f;
+            }
+
+            return Clamp01((float)current / target);
+        }
+
+        private static float Clamp01(float value)
+        {
+            if (value < 0.0f)
+            {
+                return 0.0f;
+            }
+
+            return value > 1.0f ? 1.0f : value;
+        }
     }
 }

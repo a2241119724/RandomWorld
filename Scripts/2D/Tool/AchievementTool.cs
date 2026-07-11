@@ -14,6 +14,8 @@ namespace LAB2D
     /// </summary>
     public static class AchievementTool
     {
+        private static readonly AchievementRuleService RuleService = new AchievementRuleService();
+
         /// <summary>
         /// 格式化成就进度文本
         /// </summary>
@@ -38,12 +40,7 @@ namespace LAB2D
         /// <returns>0.0 到 1.0 之间的进度比例</returns>
         public static float GetProgressRatio(int current, int target)
         {
-            if (target <= 0)
-            {
-                return 1.0f;
-            }
-
-            return Mathf.Clamp01((float)current / target);
+            return RuleService.GetProgressRatio(current, target);
         }
 
         /// <summary>
