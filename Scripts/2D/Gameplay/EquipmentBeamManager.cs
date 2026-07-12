@@ -72,6 +72,28 @@ namespace LAB2D.Gameplay
             }
         }
 
+        /// <summary>
+        /// 移除指定位置的光束并返回其稀有度。
+        /// 用于搬运等场景：拾取时移除光束并记录稀有度，放下时重新生成。
+        /// </summary>
+        /// <param name="mapPos">地图坐标</param>
+        /// <returns>被移除光束的稀有度，如果该位置没有光束则返回 null</returns>
+        public EquipmentRarityType? TryRemoveBeamAt(Vector3Int mapPos)
+        {
+            if (!this.IsInitialized) return null;
+            if (this.activeBeams.TryGetValue(mapPos, out BeamEntry entry))
+            {
+                EquipmentRarityType rarity = entry.Beam != null
+                    ? entry.Beam.Rarity
+                    : EquipmentRarityType.Common;
+                this.SafeDestroy(entry);
+                this.activeBeams.Remove(mapPos);
+                return rarity;
+            }
+
+            return null;
+        }
+
         public void RemoveAllBeams()
         {
             if (!this.IsInitialized) return;

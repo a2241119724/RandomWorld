@@ -227,6 +227,14 @@ namespace LAB2D.AI.Dialogue.LLM
         private async Task<bool> EnsureServerAvailableAsync()
         {
             this.LogModelFileStateOnce();
+
+            // 快速失败：模型文件不存在时跳过网络探测，避免 2 秒超时等待
+            if (!string.IsNullOrEmpty(this.modelPath) && !File.Exists(this.modelPath))
+            {
+                this.lastAvailabilityError = "未找到内置模型文件: " + this.modelPath;
+                return false;
+            }
+
             if (await this.ProbeServerAsync(2))
             {
                 this.lastAvailabilityError = string.Empty;

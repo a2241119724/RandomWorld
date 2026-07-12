@@ -18,6 +18,11 @@ namespace LAB2D.Character.Worker.Task
         /// </summary>
         private ResourceInfo resourceInfo;
 
+        /// <summary>
+        /// 搬运时暂存的光束稀有度（取货时从原位置移除光束并记录，放货时在新位置重新生成）
+        /// </summary>
+        private EquipmentRarityType? carriedBeamRarity;
+
         public WorkerCarryTask()
             : base(WorkerTaskTypeEnum.Carry)
         {
@@ -35,8 +40,15 @@ namespace LAB2D.Character.Worker.Task
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 取货
-                ItemMap.Instance.PickUpFromDrop(Vector3IntLAB.ToVector3Int(this.TargetMap), this.resourceInfo);
+                Vector3Int pickUpPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
+                ItemMap.Instance.PickUpFromDrop(pickUpPos, this.resourceInfo);
                 worker.AddResource(this.resourceInfo);
+
+                // 移除品质光束并记录稀有度（用于放下时重新生成）
+                this.carriedBeamRarity = EquipmentBeamManager.Instance.TryRemoveBeamAt(pickUpPos);
+                // 同时清理待处理掉落记录（敌人装备掉落）
+                EnemyLootManager.Instance.RemoveDropByMapPosition(pickUpPos);
+
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.GetPosByPrePlace(worker));
                 if (this.TargetMap == default)
                 {
@@ -59,22 +71,32 @@ namespace LAB2D.Character.Worker.Task
             base.Finish(worker);
             AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(this.resourceInfo.Id);
 
+            Vector3Int targetPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
+
             // 放下拿起来的东西
-            ItemMap.Instance.AddTile(Vector3IntLAB.ToVector3Int(this.TargetMap), ResourceManager.Instance
+            ItemMap.Instance.AddTile(targetPos, ResourceManager.Instance
                 .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).EnName));
             worker.SubResource(this.resourceInfo);
-            InventoryManager.Instance.AddItemByPrePlace(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
+            InventoryManager.Instance.AddItemByPrePlace(worker, targetPos);
 
-            // 如果是装备，在仓库位置生成光束
-            EnemyLootManager.Instance.TrySpawnBeamForInventory(
-                Vector3IntLAB.ToVector3Int(this.TargetMap), this.resourceInfo.Id);
+            // 如果搬运前有品质光束，在新位置重新生成光束
+            if (this.carriedBeamRarity.HasValue)
+            {
+                Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(targetPos);
+                EquipmentBeamManager.Instance.SpawnBeam(targetPos, beamWorldPos, this.carriedBeamRarity.Value);
+            }
+            else
+            {
+                // 兼容旧逻辑：尝试从 pendingDrops 获取光束信息（非主要路径）
+                EnemyLootManager.Instance.TrySpawnBeamForInventory(targetPos, this.resourceInfo.Id);
+            }
 
             // 如果是食物,添加饥饿任务
             if (itemType == AItem.ItemTypeEnum.Food)
             {
                 WorkerTaskManager.Instance.AddTask(
                     new WorkerHungryTask.HungryTaskBuilder()
-                    .SetTarget(Vector3IntLAB.ToVector3Int(this.TargetMap)).Build(), this.TargetMap,
+                    .SetTarget(targetPos).Build(), this.TargetMap,
                     0);
             }
         }

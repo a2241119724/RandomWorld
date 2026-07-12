@@ -2,6 +2,7 @@ namespace LAB2D.AI.Dialogue.Core
 {
     using LAB2D;
     using LAB2D.AI.Dialogue.Prompt;
+    using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
@@ -27,6 +28,11 @@ namespace LAB2D.AI.Dialogue.Core
         private NPCPromptProfile cachedProfile;
         private string npcId;
         private bool isDialogueOpen;
+
+        /// <summary>
+        /// 每个 profileName 只输出一次缺失警告
+        /// </summary>
+        private static readonly HashSet<string> MissingProfileWarned = new HashSet<string>();
 
         /// <summary>
         /// 设置 NPC 配置（运行时调用）
@@ -63,9 +69,13 @@ namespace LAB2D.AI.Dialogue.Core
 
             if (this.cachedProfile == null)
             {
-                LogManager.Instance.Log(
-                    "NPCDialogueTrigger: 未找到 NPC 配置 " + this.profileName,
-                    LogManager.LogLevelEnum.Warning);
+                if (!MissingProfileWarned.Contains(this.profileName))
+                {
+                    MissingProfileWarned.Add(this.profileName);
+                    LogManager.Instance.Log(
+                        "NPCDialogueTrigger: 未找到 NPC 配置 " + this.profileName + "，将使用默认配置",
+                        LogManager.LogLevelEnum.Warning);
+                }
             }
         }
 

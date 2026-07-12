@@ -216,6 +216,18 @@ namespace LAB2D.AI.Dialogue.Prompt
                     this.profileCache[profile.name] = profile;
                 }
             }
+
+            // 确保始终有默认 Worker 配置，避免每个 Worker 都因找不到配置而输出警告
+            if (!this.profileCache.ContainsKey("Worker"))
+            {
+                NPCPromptProfile defaultProfile = ScriptableObject.CreateInstance<NPCPromptProfile>();
+                defaultProfile.name = "Worker";
+                defaultProfile.npcName = "工人";
+                defaultProfile.npcRole = "村民";
+                defaultProfile.personalityDescription = "勤劳的工人";
+                defaultProfile.speakingStyle = "说话简洁";
+                this.profileCache["Worker"] = defaultProfile;
+            }
         }
     }
 }

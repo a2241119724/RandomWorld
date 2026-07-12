@@ -1,6 +1,7 @@
 namespace LAB2D
 {
     using System.Collections.Generic;
+    using LAB2D.AI.Dialogue.Prompt;
     using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
@@ -32,6 +33,9 @@ namespace LAB2D
 
             // 注册所有单例到 ServiceLocator 以实现依赖注入
             this.RegisterServices();
+
+            // 预热 PromptBuilder，避免首次对话时触发 Resources.LoadAll 造成卡顿
+            PromptBuilder.Instance.Init();
 
             this.dontClosePanels = new ()
             {
