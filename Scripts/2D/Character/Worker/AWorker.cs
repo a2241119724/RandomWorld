@@ -1,5 +1,6 @@
 namespace LAB2D.Character.Worker
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Character.Worker.State;
     using LAB2D.Character.Worker.Task;
@@ -475,11 +476,11 @@ namespace LAB2D.Character.Worker
             {
                 // 设置默认可接受任务类型
                 this.TaskToggle = new bool[10];
-                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Eat] = true;
-                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Wear] = true;
-                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Carry] = true;
-                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Gather] = true;
-                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Exercise] = true;
+                this.TaskToggle[(int)WorkerTaskType.Eat] = true;
+                this.TaskToggle[(int)WorkerTaskType.Wear] = true;
+                this.TaskToggle[(int)WorkerTaskType.Carry] = true;
+                this.TaskToggle[(int)WorkerTaskType.Gather] = true;
+                this.TaskToggle[(int)WorkerTaskType.Exercise] = true;
             }
         }
     }

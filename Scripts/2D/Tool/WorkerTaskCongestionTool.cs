@@ -174,21 +174,21 @@ namespace LAB2D.Tool
 
             switch (report.PrimaryTaskType)
             {
-                case AWorkerTask.WorkerTaskTypeEnum.Build:
+                case WorkerTaskType.Build:
                     return "建造任务积压，建议暂停新增建造，优先确认材料和搬运链路。";
-                case AWorkerTask.WorkerTaskTypeEnum.Carry:
+                case WorkerTaskType.Carry:
                     return "搬运任务积压，建议减少集中建造或采集，保留更多工人执行搬运。";
-                case AWorkerTask.WorkerTaskTypeEnum.Gather:
+                case WorkerTaskType.Gather:
                     return "采集任务积压，建议分批下达采集，并确认目标附近可达。";
-                case AWorkerTask.WorkerTaskTypeEnum.Eat:
+                case WorkerTaskType.Eat:
                     return "吃饭任务积压，建议补充食物库存，避免饥饿工人继续排队。";
-                case AWorkerTask.WorkerTaskTypeEnum.Sleep:
+                case WorkerTaskType.Sleep:
                     return "睡觉任务积压，建议检查床位绑定，暂缓消耗疲劳的工作。";
-                case AWorkerTask.WorkerTaskTypeEnum.Wear:
+                case WorkerTaskType.Wear:
                     return "穿戴任务积压，建议确认装备可达，临时关闭非关键穿戴任务。";
-                case AWorkerTask.WorkerTaskTypeEnum.Plant:
+                case WorkerTaskType.Plant:
                     return "种植任务积压，建议先稳定搬运和采集，再继续扩张农田。";
-                case AWorkerTask.WorkerTaskTypeEnum.Exercise:
+                case WorkerTaskType.Exercise:
                     return "锻炼任务积压，建议临时关闭锻炼任务，优先处理生产队列。";
                 default:
                     return "任务队列积压，建议暂缓新增任务并观察工人可用状态。";

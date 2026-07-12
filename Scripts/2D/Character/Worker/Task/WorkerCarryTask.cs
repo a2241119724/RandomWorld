@@ -1,5 +1,6 @@
 namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Item;
     using LAB2D.Serializable;
@@ -24,7 +25,7 @@ namespace LAB2D.Character.Worker.Task
         private EquipmentRarityType? carriedBeamRarity;
 
         public WorkerCarryTask()
-            : base(WorkerTaskTypeEnum.Carry)
+            : base(WorkerTaskType.Carry)
         {
             this.stageInit.Add((AWorker worker) =>
             {

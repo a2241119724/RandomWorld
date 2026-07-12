@@ -1,6 +1,5 @@
 namespace LAB2D.Domain.Worker
 {
-    using LAB2D.Character.Worker.Task;
     using LAB2D.Enum;
     using System;
     using System.Collections.Generic;
@@ -119,7 +118,7 @@ namespace LAB2D.Domain.Worker
         public string TaskName;
 
         /// <summary>任务类型。</summary>
-        public AWorkerTask.WorkerTaskTypeEnum TaskType;
+        public WorkerTaskType TaskType;
 
         /// <summary>任务目标位置文本。</summary>
         public string TargetText;

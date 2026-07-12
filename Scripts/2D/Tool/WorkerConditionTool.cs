@@ -127,10 +127,10 @@ namespace LAB2D.Tool
         /// <param name="state">工人生存状态。</param>
         /// <param name="taskType">任务类型。</param>
         /// <returns>任务进度倍率，吃饭和睡觉任务始终返回 1。</returns>
-        public static float GetTaskProgressMultiplier(WorkerConditionState state, AWorkerTask.WorkerTaskTypeEnum taskType)
+        public static float GetTaskProgressMultiplier(WorkerConditionState state, WorkerTaskType taskType)
         {
-            bool isEatOrSleepTask = taskType == AWorkerTask.WorkerTaskTypeEnum.Eat ||
-                taskType == AWorkerTask.WorkerTaskTypeEnum.Sleep;
+            bool isEatOrSleepTask = taskType == WorkerTaskType.Eat ||
+                taskType == WorkerTaskType.Sleep;
             return RuleService.GetTaskProgressMultiplier(state, isEatOrSleepTask);
         }
 

@@ -415,8 +415,8 @@ namespace LAB2D.AI.Dialogue.Core
             }
 
             var sb = new StringBuilder();
-            foreach (AWorkerTask.WorkerTaskTypeEnum taskType in
-                Enum.GetValues(typeof(AWorkerTask.WorkerTaskTypeEnum)))
+            foreach (WorkerTaskType taskType in
+                Enum.GetValues(typeof(WorkerTaskType)))
             {
                 int index = (int)taskType;
                 if (index < 0 || index >= taskToggle.Length || !taskToggle[index])

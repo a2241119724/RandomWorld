@@ -1,6 +1,5 @@
 namespace LAB2D.Domain.Worker
 {
-    using LAB2D.Character.Worker.Task;
     using LAB2D.Enum;
     using System;
     using System.Text;
@@ -29,7 +28,7 @@ namespace LAB2D.Domain.Worker
         public bool HasPrimaryTaskType;
 
         /// <summary>主要积压任务类型。</summary>
-        public AWorkerTask.WorkerTaskTypeEnum PrimaryTaskType;
+        public WorkerTaskType PrimaryTaskType;
 
         /// <summary>主要任务类型的等待数量。</summary>
         public int PrimaryWaitingTaskCount;

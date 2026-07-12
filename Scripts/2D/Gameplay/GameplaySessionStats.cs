@@ -1,5 +1,6 @@
 namespace LAB2D.Gameplay
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Character.Enemy;
     using LAB2D.Character.Worker.Task;
@@ -177,7 +178,7 @@ namespace LAB2D.Gameplay
             this.NotifyStatsChanged();
         }
 
-        public void RecordWorkerTaskCompleted(AWorkerTask.WorkerTaskTypeEnum taskType)
+        public void RecordWorkerTaskCompleted(WorkerTaskType taskType)
         {
             this.totalWorkerTaskCompletedCount++;
             this.AddCount(this.completedWorkerTasksByType, taskType.ToString(), 1);

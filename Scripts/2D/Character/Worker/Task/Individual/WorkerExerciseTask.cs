@@ -1,5 +1,6 @@
 namespace LAB2D.Character.Worker.Task.Individual
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Serializable;
     using System;
@@ -14,7 +15,7 @@ namespace LAB2D.Character.Worker.Task.Individual
         private AWorker worker;
 
         public WorkerExerciseTask()
-            : base(WorkerTaskTypeEnum.Exercise)
+            : base(WorkerTaskType.Exercise)
         {
             this.stageInit.Add((AWorker worker) =>
             {

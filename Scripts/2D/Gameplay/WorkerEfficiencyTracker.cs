@@ -1,5 +1,6 @@
 namespace LAB2D.Gameplay
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
@@ -36,7 +37,7 @@ namespace LAB2D.Gameplay
             public int TotalTasksCompleted;
 
             /// <summary>按任务类型分组的完成数量</summary>
-            public Dictionary<AWorkerTask.WorkerTaskTypeEnum, int> TasksByType;
+            public Dictionary<WorkerTaskType, int> TasksByType;
 
             /// <summary>死亡次数</summary>
             public int DeathCount;
@@ -45,7 +46,7 @@ namespace LAB2D.Gameplay
             public float LastTaskStartTime;
 
             /// <summary>上一次任务类型</summary>
-            public AWorkerTask.WorkerTaskTypeEnum LastTaskType;
+            public WorkerTaskType LastTaskType;
 
             /// <summary>累计任务预计耗时总和（maxProgress，秒）</summary>
             public float TotalEstimatedWorkTime;
@@ -58,7 +59,7 @@ namespace LAB2D.Gameplay
 
             public WorkerEfficiencyRecord()
             {
-                this.TasksByType = new Dictionary<AWorkerTask.WorkerTaskTypeEnum, int>();
+                this.TasksByType = new Dictionary<WorkerTaskType, int>();
                 this.IsAlive = true;
             }
 
@@ -85,9 +86,9 @@ namespace LAB2D.Gameplay
             /// <summary>
             /// 获取完成最多的任务类型。
             /// </summary>
-            public AWorkerTask.WorkerTaskTypeEnum GetMostFrequentTaskType()
+            public WorkerTaskType GetMostFrequentTaskType()
             {
-                AWorkerTask.WorkerTaskTypeEnum best = AWorkerTask.WorkerTaskTypeEnum.Build;
+                WorkerTaskType best = WorkerTaskType.Build;
                 int maxCount = -1;
                 foreach (var kv in this.TasksByType)
                 {
@@ -371,7 +372,7 @@ namespace LAB2D.Gameplay
 
             sb.AppendLine();
             sb.AppendLine("--- 全局任务类型分布 ---");
-            Dictionary<AWorkerTask.WorkerTaskTypeEnum, int> globalTypeDist = new Dictionary<AWorkerTask.WorkerTaskTypeEnum, int>();
+            Dictionary<WorkerTaskType, int> globalTypeDist = new Dictionary<WorkerTaskType, int>();
             foreach (WorkerEfficiencyRecord record in this.records.Values)
             {
                 foreach (var kv in record.TasksByType)

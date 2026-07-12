@@ -1,5 +1,6 @@
 namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Item;
     using LAB2D.Serializable;
@@ -20,7 +21,7 @@ namespace LAB2D.Character.Worker.Task
         private ResourceInfo resourceInfo;
 
         public WorkerGatherTask()
-            : base(WorkerTaskTypeEnum.Gather)
+            : base(WorkerTaskType.Gather)
         {
             this.stageInit.Add((AWorker worker) =>
             {

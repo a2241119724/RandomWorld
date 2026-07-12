@@ -152,7 +152,7 @@ namespace LAB2D.Gameplay
         /// <param name="worker">目标工人。</param>
         /// <param name="taskType">任务类型。</param>
         /// <returns>任务进度倍率，禁用或无法读取时返回 1。</returns>
-        public float GetWorkerTaskProgressMultiplier(AWorker worker, AWorkerTask.WorkerTaskTypeEnum taskType)
+        public float GetWorkerTaskProgressMultiplier(AWorker worker, WorkerTaskType taskType)
         {
             if (!this.enabled)
             {
@@ -328,7 +328,7 @@ namespace LAB2D.Gameplay
                 MoveSpeedMultiplier = WorkerConditionTool.GetMoveSpeedMultiplier(state),
                 WorkProgressMultiplier = WorkerConditionTool.GetTaskProgressMultiplier(
                     state,
-                    AWorkerTask.WorkerTaskTypeEnum.Build),
+                    WorkerTaskType.Build),
             };
         }
 

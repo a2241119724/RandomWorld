@@ -1,5 +1,6 @@
 namespace LAB2D.Tool
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Worker;
@@ -21,9 +22,9 @@ namespace LAB2D.Tool
         public static WorkerTaskQueueSnapshot BuildSnapshot(
             IReadOnlyList<Dictionary<AWorkerTask, bool>> priorityTaskGroups)
         {
-            Dictionary<AWorkerTask.WorkerTaskTypeEnum, int> totalByType =
+            Dictionary<WorkerTaskType, int> totalByType =
                 CreateEmptyTaskTypeCountMap();
-            Dictionary<AWorkerTask.WorkerTaskTypeEnum, int> runningByType =
+            Dictionary<WorkerTaskType, int> runningByType =
                 CreateEmptyTaskTypeCountMap();
 
             int totalTaskCount = 0;
@@ -45,7 +46,7 @@ namespace LAB2D.Tool
                             continue;
                         }
 
-                        AWorkerTask.WorkerTaskTypeEnum taskType = task.TaskType;
+                        WorkerTaskType taskType = task.TaskType;
                         EnsureTaskType(totalByType, taskType);
                         EnsureTaskType(runningByType, taskType);
 
@@ -61,7 +62,7 @@ namespace LAB2D.Tool
             }
 
             List<WorkerTaskTypeSummary> summaries = new ();
-            foreach (AWorkerTask.WorkerTaskTypeEnum taskType in Enum.GetValues(typeof(AWorkerTask.WorkerTaskTypeEnum)))
+            foreach (WorkerTaskType taskType in Enum.GetValues(typeof(WorkerTaskType)))
             {
                 int totalCount = totalByType.ContainsKey(taskType) ? totalByType[taskType] : 0;
                 int runningCount = runningByType.ContainsKey(taskType) ? runningByType[taskType] : 0;
@@ -166,25 +167,25 @@ namespace LAB2D.Tool
         /// </summary>
         /// <param name="taskType">任务类型。</param>
         /// <returns>适合 HUD 和日志展示的中文名。</returns>
-        public static string GetTaskDisplayName(AWorkerTask.WorkerTaskTypeEnum taskType)
+        public static string GetTaskDisplayName(WorkerTaskType taskType)
         {
             switch (taskType)
             {
-                case AWorkerTask.WorkerTaskTypeEnum.Build:
+                case WorkerTaskType.Build:
                     return "建造";
-                case AWorkerTask.WorkerTaskTypeEnum.Carry:
+                case WorkerTaskType.Carry:
                     return "搬运";
-                case AWorkerTask.WorkerTaskTypeEnum.Gather:
+                case WorkerTaskType.Gather:
                     return "采集";
-                case AWorkerTask.WorkerTaskTypeEnum.Eat:
+                case WorkerTaskType.Eat:
                     return "吃饭";
-                case AWorkerTask.WorkerTaskTypeEnum.Exercise:
+                case WorkerTaskType.Exercise:
                     return "锻炼";
-                case AWorkerTask.WorkerTaskTypeEnum.Wear:
+                case WorkerTaskType.Wear:
                     return "穿戴";
-                case AWorkerTask.WorkerTaskTypeEnum.Sleep:
+                case WorkerTaskType.Sleep:
                     return "睡觉";
-                case AWorkerTask.WorkerTaskTypeEnum.Plant:
+                case WorkerTaskType.Plant:
                     return "种植";
                 default:
                     return taskType.ToString();
@@ -247,10 +248,10 @@ namespace LAB2D.Tool
         /// 创建包含所有已知任务类型的计数字典。
         /// </summary>
         /// <returns>计数字典。</returns>
-        private static Dictionary<AWorkerTask.WorkerTaskTypeEnum, int> CreateEmptyTaskTypeCountMap()
+        private static Dictionary<WorkerTaskType, int> CreateEmptyTaskTypeCountMap()
         {
-            Dictionary<AWorkerTask.WorkerTaskTypeEnum, int> result = new ();
-            foreach (AWorkerTask.WorkerTaskTypeEnum taskType in Enum.GetValues(typeof(AWorkerTask.WorkerTaskTypeEnum)))
+            Dictionary<WorkerTaskType, int> result = new ();
+            foreach (WorkerTaskType taskType in Enum.GetValues(typeof(WorkerTaskType)))
             {
                 result[taskType] = 0;
             }
@@ -264,8 +265,8 @@ namespace LAB2D.Tool
         /// <param name="counts">计数字典。</param>
         /// <param name="taskType">任务类型。</param>
         private static void EnsureTaskType(
-            Dictionary<AWorkerTask.WorkerTaskTypeEnum, int> counts,
-            AWorkerTask.WorkerTaskTypeEnum taskType)
+            Dictionary<WorkerTaskType, int> counts,
+            WorkerTaskType taskType)
         {
             if (!counts.ContainsKey(taskType))
             {

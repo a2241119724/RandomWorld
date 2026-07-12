@@ -1,12 +1,14 @@
 namespace LAB2D.Character.Worker.Task
 {
     using LAB2D;
+    using LAB2D.Enum;
     using LAB2D.Serializable;
     using LAB2D.Domain.Worker;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Events;
+    // WorkerTaskType 已提取到 LAB2D.Enum.WorkerTaskType（独立枚举）
 
     /// <summary>
     /// Worker任务
@@ -56,7 +58,7 @@ namespace LAB2D.Character.Worker.Task
         /// </summary>
         protected List<UnityAction<AWorker>> stageInit;
 
-        public AWorkerTask(WorkerTaskTypeEnum taskType)
+        public AWorkerTask(WorkerTaskType taskType)
         {
             this.TaskType = taskType;
             this.Name = taskType.ToString();
@@ -83,51 +85,8 @@ namespace LAB2D.Character.Worker.Task
             TopLeft,
         }
 
-        /// <summary>
-        /// 任务优先级，越靠前优先级越高
-        /// </summary>
-        public enum WorkerTaskTypeEnum
-        {
-            /// <summary>
-            /// 建造
-            /// </summary>
-            Build,
-
-            /// <summary>
-            /// 搬运
-            /// </summary>
-            Carry,
-
-            /// <summary>
-            /// 采集
-            /// </summary>
-            Gather,
-
-            /// <summary>
-            /// 吃饭
-            /// </summary>
-            Eat,
-
-            /// <summary>
-            /// 锻炼
-            /// </summary>
-            Exercise,
-
-            /// <summary>
-            /// 穿戴
-            /// </summary>
-            Wear,
-
-            /// <summary>
-            /// 睡觉
-            /// </summary>
-            Sleep,
-
-            /// <summary>
-            /// 种植
-            /// </summary>
-            Plant,
-        }
+        // WorkerTaskType 已提取到 LAB2D.Enum.WorkerTaskType。
+        // 本文件通过 using WorkerTaskType = LAB2D.Enum.WorkerTaskType 保持向后兼容。
 
         /// <summary>
         /// 任务ID
@@ -142,7 +101,7 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>
         /// 任务类型
         /// </summary>
-        public WorkerTaskTypeEnum TaskType { get; set; }
+        public WorkerTaskType TaskType { get; set; }
 
         /// <summary>
         /// 任务名称
@@ -160,7 +119,7 @@ namespace LAB2D.Character.Worker.Task
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
 
             // 吃饭和睡觉任务不消耗疲劳
-            if (this.TaskType != WorkerTaskTypeEnum.Eat && this.TaskType != WorkerTaskTypeEnum.Sleep)
+            if (this.TaskType != WorkerTaskType.Eat && this.TaskType != WorkerTaskType.Sleep)
             {
                 workerData.CurTired = this.progressService.ApplyTiredCost(
                     workerData.CurTired,
@@ -216,13 +175,13 @@ namespace LAB2D.Character.Worker.Task
             }
 
             // 饥饿时候不能接任务
-            if (workerData.CurHungry < AWorker.ThresholdHungry && this.TaskType != WorkerTaskTypeEnum.Eat)
+            if (workerData.CurHungry < AWorker.ThresholdHungry && this.TaskType != WorkerTaskType.Eat)
             {
                 return false;
             }
 
             // 是否有做任务的位置, 并且不是锻炼任务(由于目标位置不确定, 并且一定可以有位置做)
-            if (this.TaskType != WorkerTaskTypeEnum.Exercise && this.AvailableNeighborPos.TrueForAll(pos =>
+            if (this.TaskType != WorkerTaskType.Exercise && this.AvailableNeighborPos.TrueForAll(pos =>
             {
                 return !BuildMap.Instance.IsCanReach(Vector3IntLAB.ToVector3Int(pos + this.TargetMap));
             }))

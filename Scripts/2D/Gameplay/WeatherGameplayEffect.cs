@@ -1,5 +1,6 @@
 namespace LAB2D.Gameplay
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Manager;
@@ -182,12 +183,12 @@ namespace LAB2D.Gameplay
         /// </summary>
         /// <param name="taskType">Worker 任务类型。</param>
         /// <returns>任务进度倍率。</returns>
-        public float GetWorkerTaskProgressMultiplier(AWorkerTask.WorkerTaskTypeEnum taskType)
+        public float GetWorkerTaskProgressMultiplier(WorkerTaskType taskType)
         {
             this.EnsureInitialized();
             if (!this.enabled ||
-                taskType == AWorkerTask.WorkerTaskTypeEnum.Eat ||
-                taskType == AWorkerTask.WorkerTaskTypeEnum.Sleep)
+                taskType == WorkerTaskType.Eat ||
+                taskType == WorkerTaskType.Sleep)
             {
                 return 1.0f;
             }

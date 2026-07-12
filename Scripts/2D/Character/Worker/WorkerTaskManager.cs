@@ -1,5 +1,6 @@
 namespace LAB2D.Character.Worker
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Character.Worker.Task.Individual;
@@ -147,7 +148,7 @@ namespace LAB2D.Character.Worker
             task.TaskId = ++WorkerTaskManager.curtaskId;
 
             // 如果是饥饿任务,一个位置仅对应一个任务
-            if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Eat)
+            if (task.TaskType == WorkerTaskType.Eat)
             {
                 foreach (WorkerHungryTask hungryTask in this.hungryTasks)
                 {
@@ -159,11 +160,11 @@ namespace LAB2D.Character.Worker
 
                 this.hungryTasks.Add((WorkerHungryTask)task);
             }
-            else if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Gather)
+            else if (task.TaskType == WorkerTaskType.Gather)
             {
                 this.GatherPos.Add(Vector3IntLAB.ToVector3Int(task.TargetMap));
             }
-            else if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Wear)
+            else if (task.TaskType == WorkerTaskType.Wear)
             {
                 // 一个位置只能有一个穿衣任务
                 foreach (AWorkerTask wearTask in this.wearTasks)
@@ -193,7 +194,7 @@ namespace LAB2D.Character.Worker
             {
                 if (this.tasks[i].ContainsKey(task))
                 {
-                    if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Eat)
+                    if (task.TaskType == WorkerTaskType.Eat)
                     {
                         this.tasks[i][task] = false;
                     }
@@ -283,7 +284,7 @@ namespace LAB2D.Character.Worker
             string res = $"任务总数量: {total}\n";
             for (int i = 0; i < 10; i++)
             {
-                res += $"{(AWorkerTask.WorkerTaskTypeEnum)i}:{taskCount[i]}\n";
+                res += $"{(WorkerTaskType)i}:{taskCount[i]}\n";
             }
 
             return res;
@@ -329,7 +330,7 @@ namespace LAB2D.Character.Worker
             {
                 foreach (AWorkerTask task in this.tasks[i].Keys)
                 {
-                    if (task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Gather && task.TargetMap.X == posMap.x
+                    if (task.TaskType == WorkerTaskType.Gather && task.TargetMap.X == posMap.x
                         && task.TargetMap.Y == posMap.y)
                     {
                         this.tasks[i].Remove(task);

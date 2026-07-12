@@ -1,5 +1,6 @@
 namespace LAB2D.Character.Worker.Task.Individual
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Serializable;
     using System;
@@ -15,7 +16,7 @@ namespace LAB2D.Character.Worker.Task.Individual
         private int id; // 穿戴的装备id
 
         public WorkerWearTask()
-            : base(WorkerTaskTypeEnum.Wear)
+            : base(WorkerTaskType.Wear)
         {
             this.stageInit.Add((AWorker worker) =>
             {

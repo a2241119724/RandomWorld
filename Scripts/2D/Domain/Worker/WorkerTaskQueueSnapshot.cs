@@ -1,6 +1,6 @@
 namespace LAB2D.Domain.Worker
 {
-    using LAB2D.Character.Worker.Task;
+    using LAB2D.Enum;
     using System.Collections.Generic;
 
     /// <summary>
@@ -66,7 +66,7 @@ namespace LAB2D.Domain.Worker
         /// </summary>
         /// <param name="taskType">任务类型。</param>
         /// <returns>存在时返回统计对象，否则返回空。</returns>
-        public WorkerTaskTypeSummary GetSummary(AWorkerTask.WorkerTaskTypeEnum taskType)
+        public WorkerTaskTypeSummary GetSummary(WorkerTaskType taskType)
         {
             foreach (WorkerTaskTypeSummary summary in this.TaskTypeSummaries)
             {
@@ -93,7 +93,7 @@ namespace LAB2D.Domain.Worker
         /// <param name="totalCount">该类型任务总数。</param>
         /// <param name="runningCount">该类型进行中任务数。</param>
         public WorkerTaskTypeSummary(
-            AWorkerTask.WorkerTaskTypeEnum taskType,
+            WorkerTaskType taskType,
             int totalCount,
             int runningCount)
         {
@@ -105,7 +105,7 @@ namespace LAB2D.Domain.Worker
         /// <summary>
         /// 任务类型。
         /// </summary>
-        public AWorkerTask.WorkerTaskTypeEnum TaskType { get; }
+        public WorkerTaskType TaskType { get; }
 
         /// <summary>
         /// 该类型任务总数。

@@ -237,7 +237,7 @@ namespace LAB2D.Domain.Gameplay
 
                 hasToggleEnabled = true;
                 if (snapshot.CurHungry < AWorker.ThresholdHungry &&
-                    task.TaskType != AWorkerTask.WorkerTaskTypeEnum.Eat)
+                    task.TaskType != WorkerTaskType.Eat)
                 {
                     continue;
                 }
@@ -506,7 +506,7 @@ namespace LAB2D.Domain.Gameplay
         /// <returns>可达时返回 true。</returns>
         public bool IsTaskTargetReachable(AWorkerTask task, ColonyDiagnosticContext context)
         {
-            if (task == null || task.TaskType == AWorkerTask.WorkerTaskTypeEnum.Exercise)
+            if (task == null || task.TaskType == WorkerTaskType.Exercise)
             {
                 return true;
             }
@@ -555,7 +555,7 @@ namespace LAB2D.Domain.Gameplay
         /// <returns>开关存在且开启时返回 true。</returns>
         public bool IsTaskToggleEnabled(
             long workerId,
-            AWorkerTask.WorkerTaskTypeEnum taskType,
+            WorkerTaskType taskType,
             ColonyDiagnosticContext context)
         {
             return context.IsTaskToggleEnabled != null &&
@@ -785,7 +785,7 @@ namespace LAB2D.Domain.Gameplay
         public IMapWalkabilityQuery MapQuery;
 
         /// <summary>任务开关检查委托。参数：workerId, taskType。返回：是否开启。</summary>
-        public System.Func<long, AWorkerTask.WorkerTaskTypeEnum, bool> IsTaskToggleEnabled;
+        public System.Func<long, WorkerTaskType, bool> IsTaskToggleEnabled;
 
         /// <summary>获取建造任务所需材料字典的委托。</summary>
         public System.Func<AWorkerTask, Dictionary<int, ResourceInfo>> GetBuildNeeds;

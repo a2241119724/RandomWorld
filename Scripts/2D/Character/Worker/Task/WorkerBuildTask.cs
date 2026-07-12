@@ -1,5 +1,6 @@
 namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Item;
     using LAB2D.Item.Build;
@@ -24,7 +25,7 @@ namespace LAB2D.Character.Worker.Task
         private Vector3IntLAB buildPos;
 
         public WorkerBuildTask()
-            : base(WorkerTaskTypeEnum.Build)
+            : base(WorkerTaskType.Build)
         {
             this.stageInit.Add((AWorker worker) =>
             {

@@ -1,5 +1,6 @@
 namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Serializable;
     using System;
@@ -12,7 +13,7 @@ namespace LAB2D.Character.Worker.Task
     public class WorkerHungryTask : AWorkerTask
     {
         public WorkerHungryTask()
-            : base(WorkerTaskTypeEnum.Eat)
+            : base(WorkerTaskType.Eat)
         {
             this.stageInit.Add((AWorker worker) =>
             {
