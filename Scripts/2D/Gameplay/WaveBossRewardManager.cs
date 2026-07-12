@@ -3,6 +3,8 @@ namespace LAB2D.Gameplay
     using LAB2D;
     using LAB2D.Character.Enemy;
     using LAB2D.Character.Player;
+    using LAB2D.Constant;
+    using LAB2D.Domain.Wave;
     using LAB2D.Enum;
     using Character = LAB2D.Character.Character;
     using System;
@@ -17,6 +19,7 @@ namespace LAB2D.Gameplay
     public class WaveBossRewardManager : Singleton<WaveBossRewardManager>
     {
         private readonly List<WaveRewardOption> currentOptions;
+        private readonly WaveBossRuleService ruleService;
         private bool initialized;
         private bool enabled = true;
         private bool tipEnabled = true;
@@ -32,6 +35,7 @@ namespace LAB2D.Gameplay
         public WaveBossRewardManager()
         {
             this.currentOptions = new List<WaveRewardOption>(WaveBossRewardConstant.RewardOptionCount);
+            this.ruleService = new WaveBossRuleService();
             this.CurrentState = WaveBossRewardState.CreateDefault();
         }
 
@@ -115,7 +119,7 @@ namespace LAB2D.Gameplay
             }
 
             this.currentWaveIndex = waveIndex;
-            this.currentWaveIsBoss = WaveBossRewardTool.IsBossWave(waveIndex);
+            this.currentWaveIsBoss = this.ruleService.IsBossWave(waveIndex, WaveBossRewardConstant.BossWaveInterval);
             this.UpdateState(this.currentWaveIsBoss ? WavePhaseType.BossWave : WavePhaseType.NormalWave);
 
             if (this.currentWaveIsBoss)
@@ -137,7 +141,7 @@ namespace LAB2D.Gameplay
                 return baseEnemyCount;
             }
 
-            return WaveBossRewardTool.GetEnemyCountForWave(baseEnemyCount, waveIndex);
+            return this.ruleService.GetEnemyCountForWave(baseEnemyCount, waveIndex, WaveBossRewardConstant.BossWaveInterval, WaveBossRewardConstant.BossGuardianExtraEnemyCount);
         }
 
         /// <summary>
@@ -168,7 +172,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            bool isBoss = WaveBossRewardTool.IsBossEnemySpawn(waveIndex, spawnIndex, totalEnemies);
+            bool isBoss = this.ruleService.IsBossEnemySpawn(waveIndex, spawnIndex, totalEnemies, WaveBossRewardConstant.BossWaveInterval);
             if (isBoss)
             {
                 this.ApplyBossScale(enemy, enemyData, waveIndex, difficultyScale);
@@ -208,7 +212,7 @@ namespace LAB2D.Gameplay
         public void CreateDebugRewardOptions(bool bossReward)
         {
             this.EnsureInitialized();
-            this.CreateRewardOptions(WaveBossRewardTool.ClampWaveIndex(this.currentWaveIndex), bossReward);
+            this.CreateRewardOptions(this.ruleService.ClampWaveIndex(this.currentWaveIndex), bossReward);
         }
 
         /// <summary>
@@ -307,9 +311,9 @@ namespace LAB2D.Gameplay
         /// <param name="difficultyScale">难度倍率。</param>
         private void ApplyNormalScale(AEnemy.EnemyData enemyData, int waveIndex, float difficultyScale)
         {
-            float healthMultiplier = WaveBossRewardTool.GetNormalEnemyHealthMultiplier(waveIndex, difficultyScale);
-            float attackMultiplier = WaveBossRewardTool.GetNormalEnemyAttackMultiplier(waveIndex, difficultyScale);
-            float defenseMultiplier = WaveBossRewardTool.GetNormalEnemyDefenseMultiplier(waveIndex, difficultyScale);
+            float healthMultiplier = this.ruleService.GetNormalEnemyHealthMultiplier(waveIndex, difficultyScale, WaveBossRewardConstant.NormalEnemyHealthScalePerWave);
+            float attackMultiplier = this.ruleService.GetNormalEnemyAttackMultiplier(waveIndex, difficultyScale, WaveBossRewardConstant.NormalEnemyAttackScalePerWave);
+            float defenseMultiplier = this.ruleService.GetNormalEnemyDefenseMultiplier(waveIndex, WaveBossRewardConstant.NormalEnemyDefenseScalePerWave);
             this.ApplyEnemyScale(enemyData, healthMultiplier, attackMultiplier, defenseMultiplier);
         }
 
@@ -322,9 +326,12 @@ namespace LAB2D.Gameplay
         /// <param name="difficultyScale">难度倍率。</param>
         private void ApplyBossScale(AEnemy enemy, AEnemy.EnemyData enemyData, int waveIndex, float difficultyScale)
         {
-            float healthMultiplier = WaveBossRewardTool.GetBossHealthMultiplier(waveIndex, difficultyScale);
-            float attackMultiplier = WaveBossRewardTool.GetBossAttackMultiplier(waveIndex, difficultyScale);
-            float defenseMultiplier = WaveBossRewardTool.GetBossDefenseMultiplier(waveIndex, difficultyScale);
+            float normalHealth = this.ruleService.GetNormalEnemyHealthMultiplier(waveIndex, difficultyScale, WaveBossRewardConstant.NormalEnemyHealthScalePerWave);
+            float normalAttack = this.ruleService.GetNormalEnemyAttackMultiplier(waveIndex, difficultyScale, WaveBossRewardConstant.NormalEnemyAttackScalePerWave);
+            float normalDefense = this.ruleService.GetNormalEnemyDefenseMultiplier(waveIndex, WaveBossRewardConstant.NormalEnemyDefenseScalePerWave);
+            float healthMultiplier = this.ruleService.GetBossHealthMultiplier(normalHealth, WaveBossRewardConstant.BossHealthMultiplier);
+            float attackMultiplier = this.ruleService.GetBossAttackMultiplier(normalAttack, WaveBossRewardConstant.BossAttackMultiplier);
+            float defenseMultiplier = this.ruleService.GetBossDefenseMultiplier(normalDefense, WaveBossRewardConstant.BossDefenseMultiplier);
             this.ApplyEnemyScale(enemyData, healthMultiplier, attackMultiplier, defenseMultiplier);
 
             enemy.gameObject.name = WaveBossRewardTool.BuildBossName(enemy.gameObject.name, waveIndex);
@@ -350,12 +357,12 @@ namespace LAB2D.Gameplay
             float attackMultiplier,
             float defenseMultiplier)
         {
-            enemyData.MaxHp = WaveBossRewardTool.ScaleAttribute(enemyData.MaxHp, healthMultiplier, 1.0f);
+            enemyData.MaxHp = this.ruleService.ScaleAttribute(enemyData.MaxHp, healthMultiplier, 1.0f);
             enemyData.Hp = enemyData.MaxHp;
-            enemyData.ATN = WaveBossRewardTool.ScaleAttribute(enemyData.ATN, attackMultiplier, 0.1f);
-            enemyData.INT = WaveBossRewardTool.ScaleAttribute(enemyData.INT, attackMultiplier, 0.0f);
-            enemyData.DEF = WaveBossRewardTool.ScaleAttribute(enemyData.DEF, defenseMultiplier, 0.0f);
-            enemyData.RES = WaveBossRewardTool.ScaleAttribute(enemyData.RES, defenseMultiplier, 0.0f);
+            enemyData.ATN = this.ruleService.ScaleAttribute(enemyData.ATN, attackMultiplier, 0.1f);
+            enemyData.INT = this.ruleService.ScaleAttribute(enemyData.INT, attackMultiplier, 0.0f);
+            enemyData.DEF = this.ruleService.ScaleAttribute(enemyData.DEF, defenseMultiplier, 0.0f);
+            enemyData.RES = this.ruleService.ScaleAttribute(enemyData.RES, defenseMultiplier, 0.0f);
         }
 
         /// <summary>
@@ -370,7 +377,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            this.CreateRewardOptions(waveIndex, WaveBossRewardTool.IsBossWave(waveIndex));
+            this.CreateRewardOptions(waveIndex, this.ruleService.IsBossWave(waveIndex, WaveBossRewardConstant.BossWaveInterval));
         }
 
         /// <summary>
@@ -421,13 +428,26 @@ namespace LAB2D.Gameplay
                 WaveRewardType.MoveSpeedBoost,
             };
 
-            int optionCount = WaveBossRewardTool.GetRewardOptionCount(WaveBossRewardConstant.RewardOptionCount, pool.Count);
+            int optionCount = this.ruleService.GetRewardOptionCount(WaveBossRewardConstant.RewardOptionCount, pool.Count);
             for (int i = 0; i < optionCount; i++)
             {
                 int randomIndex = UnityEngine.Random.Range(0, pool.Count);
                 WaveRewardType rewardType = pool[randomIndex];
                 pool.RemoveAt(randomIndex);
-                float value = WaveBossRewardTool.GetRewardValue(rewardType, bossReward, waveIndex);
+                float value = this.ruleService.GetRewardValue(
+                    rewardType,
+                    bossReward,
+                    waveIndex,
+                    WaveBossRewardConstant.NormalHealPercent,
+                    WaveBossRewardConstant.BossHealPercent,
+                    WaveBossRewardConstant.NormalExperienceBase,
+                    WaveBossRewardConstant.BossExperienceBase,
+                    WaveBossRewardConstant.NormalDamageBoost,
+                    WaveBossRewardConstant.BossDamageBoost,
+                    WaveBossRewardConstant.NormalDefenseBoost,
+                    WaveBossRewardConstant.BossDefenseBoost,
+                    WaveBossRewardConstant.NormalMoveSpeedBoost,
+                    WaveBossRewardConstant.BossMoveSpeedBoost);
                 this.currentOptions.Add(new WaveRewardOption
                 {
                     Id = $"A004_W{waveIndex}_{rewardType}",
@@ -464,24 +484,24 @@ namespace LAB2D.Gameplay
                 case WaveRewardType.Experience:
                     if (player != null)
                     {
-                        player.AddExperienceValue(WaveBossRewardTool.ToRoundedInt(option.Value));
+                        player.AddExperienceValue(this.ruleService.ToRoundedInt(option.Value));
                     }
 
                     break;
                 case WaveRewardType.DamageBoost:
-                    this.playerDamageBonus = WaveBossRewardTool.AddWithCap(
+                    this.playerDamageBonus = this.ruleService.AddWithCap(
                         this.playerDamageBonus,
                         option.Value,
                         WaveBossRewardConstant.MaxPlayerDamageBonus);
                     break;
                 case WaveRewardType.DefenseBoost:
-                    this.playerDamageReduction = WaveBossRewardTool.AddWithCap(
+                    this.playerDamageReduction = this.ruleService.AddWithCap(
                         this.playerDamageReduction,
                         option.Value,
                         WaveBossRewardConstant.MaxPlayerDamageReduction);
                     break;
                 case WaveRewardType.MoveSpeedBoost:
-                    this.playerMoveSpeedBonus = WaveBossRewardTool.AddWithCap(
+                    this.playerMoveSpeedBonus = this.ruleService.AddWithCap(
                         this.playerMoveSpeedBonus,
                         option.Value,
                         WaveBossRewardConstant.MaxPlayerMoveSpeedBonus);

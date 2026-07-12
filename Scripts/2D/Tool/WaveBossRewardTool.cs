@@ -226,15 +226,15 @@ namespace LAB2D.Tool
             switch (rewardType)
             {
                 case WaveRewardType.Heal:
-                    return $"恢复最大生命的 {FormatPercent(value)}";
+                    return $"恢复最大生命的 {ruleService.ToPercentInt(value)}%";
                 case WaveRewardType.Experience:
                     return $"获得 {ruleService.ToRoundedInt(value)} 点经验";
                 case WaveRewardType.DamageBoost:
-                    return $"本局伤害 +{FormatPercent(value)}";
+                    return $"本局伤害 +{ruleService.ToPercentInt(value)}%";
                 case WaveRewardType.DefenseBoost:
-                    return $"本局受到伤害 -{FormatPercent(value)}";
+                    return $"本局受到伤害 -{ruleService.ToPercentInt(value)}%";
                 case WaveRewardType.MoveSpeedBoost:
-                    return $"本局移动速度 +{FormatPercent(value)}";
+                    return $"本局移动速度 +{ruleService.ToPercentInt(value)}%";
                 default:
                     return "奖励效果未知";
             }
@@ -261,7 +261,7 @@ namespace LAB2D.Tool
         /// <returns>适合 HUD 和 Editor 展示的文本。</returns>
         public static string BuildBuffSummary(float damageBonus, float damageReduction, float moveSpeedBonus)
         {
-            return $"伤害 +{FormatPercent(damageBonus)} | 减伤 {FormatPercent(damageReduction)} | 移动 +{FormatPercent(moveSpeedBonus)}";
+            return $"伤害 +{ruleService.ToPercentInt(damageBonus)}% | 减伤 {ruleService.ToPercentInt(damageReduction)}% | 移动 +{ruleService.ToPercentInt(moveSpeedBonus)}%";
         }
 
         /// <summary>
