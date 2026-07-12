@@ -39,8 +39,13 @@ namespace LAB2D.UI.Panel
 
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.Onclick_Setting);
             Button save = LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Save");
-            if (PhotonNetwork.IsConnected && !PhotonNetwork.IsMasterClient)
+            if (save == null)
             {
+                LogManager.Instance.Log("ForegroundPanel: Save button not found in Panel hierarchy!", LogManager.LogLevelEnum.Error);
+            }
+            else if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient)
+            {
+                // 仅在联机房间中且非房主时隐藏保存按钮
                 save.gameObject.SetActive(false);
             }
             else
@@ -262,6 +267,13 @@ namespace LAB2D.UI.Panel
 
         private void ShowSaveSlotPanel()
         {
+            if (this.saveSlotPanel == null)
+            {
+                LogManager.Instance.Log("ForegroundPanel: SaveSlotPanel not found in scene — save UI unavailable.", LogManager.LogLevelEnum.Error);
+                GlobalInit.Instance.ShowTip("存档面板未配置，请联系开发者");
+                return;
+            }
+
             this.RefreshSaveSlotButtons();
             this.saveSlotPanel.SetActive(true);
             this.saveSlotPanel.transform.SetAsLastSibling();
@@ -326,6 +338,11 @@ namespace LAB2D.UI.Panel
 
         private void CreateClearConfirmPanel()
         {
+            if (this.saveSlotPanel == null)
+            {
+                return;
+            }
+
             Transform panelTransform = this.FindChildTransform(this.saveSlotPanel.transform, "ClearConfirm");
             if (panelTransform == null)
             {
@@ -399,6 +416,11 @@ namespace LAB2D.UI.Panel
 
         private void CreateRenamePanel()
         {
+            if (this.saveSlotPanel == null)
+            {
+                return;
+            }
+
             Transform panelTransform = this.FindChildTransform(this.saveSlotPanel.transform, "RenameArchive");
             if (panelTransform == null)
             {

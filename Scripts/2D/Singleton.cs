@@ -37,7 +37,9 @@ namespace LAB2D
     }
 
     /// <summary>
-    /// 带ASaveData的单例.
+    /// 带ASaveData的单例。
+    /// 与 Singleton&lt;T&gt; 的单例逻辑重复是 C# 单继承的限制：
+    /// 必须同时继承 ASaveData（供 ArchiveManager 反射发现）并拥有 Singleton 能力。
     /// </summary>
     /// <typeparam name="T">需要单例的类.</typeparam>
     public abstract class ASingletonSaveData<T> : ASaveData
