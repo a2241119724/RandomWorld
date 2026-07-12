@@ -8,7 +8,6 @@ namespace LAB2D.Manager
     /// <summary>
     /// 没用.
     /// </summary>
-    [DefaultExecutionOrder(-100)]
     public class CoroutineManager : MonoBehaviour
     {
         // private int availableCount;

@@ -11,6 +11,7 @@ namespace LAB2D
     /// 全局初始化 — 游戏入口点。
     /// 负责初始化日志、注册所有单例到 ServiceLocator、启动面板系统。
     /// </summary>
+    [DefaultExecutionOrder(100)]
     public class GlobalInit : MonoBehaviour, ITipService
     {
         private readonly bool initPanel = true;
@@ -109,7 +110,7 @@ namespace LAB2D
 
             // UI 服务
             ServiceLocator.Register(PanelController.Instance);
-            ServiceLocator.Register(AsyncProgressUI.Instance);
+            // AsyncProgressUI 通过自身 Awake() 自注册到 ServiceLocator
         }
 
         public void Start()

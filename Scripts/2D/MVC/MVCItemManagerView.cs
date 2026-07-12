@@ -135,11 +135,34 @@ namespace LAB2D.MVC
                 }
 
                 // t.transform.localScale = Vector3.one; // 控制大小
-                LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = this.GetQuantity(model.Get(type, i)).ToString();
+                Text itemInfoText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "ItemInfo");
+                if (itemInfoText != null)
+                {
+                    itemInfoText.text = this.GetQuantity(model.Get(type, i)).ToString();
+                }
+
                 Image image = LAB2D.Tool.Tool.GetComponentInChildren<Image>(g, "ItemImage");
-                image.sprite = ResourceManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.Get(type, i).Id).EnName);
-                image.preserveAspect = true;
-                IV itemView = g.transform.Find("Item").GetComponent<IV>();
+                if (image != null)
+                {
+                    image.sprite = ResourceManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.Get(type, i).Id).EnName);
+                    image.preserveAspect = true;
+                }
+
+                Transform itemTransform = g.transform.Find("Item");
+                if (itemTransform == null)
+                {
+                    LogManager.Instance.Log($"UpdateView: 在 itemBox prefab 中找不到 'Item' 子节点，请检查 prefab 结构", LogManager.LogLevelEnum.Error);
+                    Destroy(g);
+                    continue;
+                }
+
+                IV itemView = itemTransform.GetComponent<IV>();
+                if (itemView == null)
+                {
+                    LogManager.Instance.Log($"UpdateView: 'Item' 子节点上缺少 {typeof(IV).Name} 组件，请检查 prefab 结构", LogManager.LogLevelEnum.Error);
+                    Destroy(g);
+                    continue;
+                }
 
                 // 添加到ItemView
                 itemView.ExchangeItem += (int a, int b) =>

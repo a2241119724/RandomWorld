@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI
 {
     using LAB2D;
+    using LAB2D.Core;
     using System.Collections;
     using UnityEngine;
     using UnityEngine.UI;
@@ -36,6 +37,7 @@ namespace LAB2D.UI.Panel.PanelUI
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
             this.tip = this.transform.Find("Center/Tips").GetComponent<Text>();
             if (this.tip == null)
             {
