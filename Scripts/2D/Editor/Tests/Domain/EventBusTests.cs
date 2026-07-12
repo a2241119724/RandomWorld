@@ -6,6 +6,11 @@ namespace LAB2D.Editor.Tests.Domain
     [TestFixture]
     public class EventBusTests
     {
+        /// <summary>测试用事件类型 B，验证不同类型隔离。</summary>
+        private sealed class TestEventB : IGameEvent
+        {
+        }
+
         [SetUp]
         public void SetUp()
         {
@@ -61,12 +66,12 @@ namespace LAB2D.Editor.Tests.Domain
         public void Publish_DifferentEventTypes_OnlyMatchingCalled()
         {
             bool damageCalled = false;
-            bool moveCalled = false;
+            bool otherCalled = false;
             EventBus.Instance.Subscribe<CharacterDamagedEvent>(e => { damageCalled = true; });
-            EventBus.Instance.Subscribe<PlayerMovedEvent>(e => { moveCalled = true; });
+            EventBus.Instance.Subscribe<TestEventB>(e => { otherCalled = true; });
             EventBus.Instance.Publish(new CharacterDamagedEvent());
             Assert.IsTrue(damageCalled, "匹配的事件应被调用");
-            Assert.IsFalse(moveCalled, "不匹配的事件不应被调用");
+            Assert.IsFalse(otherCalled, "不匹配的事件不应被调用");
         }
 
         [Test]

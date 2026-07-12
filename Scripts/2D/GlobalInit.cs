@@ -194,17 +194,4 @@ namespace LAB2D
             this.workerUpdateSystem.Tick(Time.deltaTime);
         }
     }
-
-    /// <summary>
-    /// 带init方法的MonoBehaviour.
-    /// </summary>
-    public abstract class MonoBehaviourInit : MonoBehaviour
-    {
-        /// <summary>
-        /// 初始化方法.
-        /// </summary>
-        public virtual void Init()
-        {
-        }
-    }
 }
