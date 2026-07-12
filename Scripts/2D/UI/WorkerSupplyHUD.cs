@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Domain.Worker;
     using LAB2D.Gameplay;
     using System;
     using UnityEngine;

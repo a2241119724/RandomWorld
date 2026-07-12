@@ -1,6 +1,8 @@
 namespace LAB2D.Editor
 {
     using LAB2D;
+    using LAB2D.Domain.Worker;
+    using LAB2D.Tool;
     using System.IO;
     using UnityEditor;
     using UnityEditor.SceneManagement;

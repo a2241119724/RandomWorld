@@ -1,7 +1,6 @@
 namespace LAB2D.MVC.Build.Model
 {
     using LAB2D;
-    using System.Collections;
     using System.Collections.Generic;
 
     /// <summary>
@@ -18,7 +17,7 @@ namespace LAB2D.MVC.Build.Model
         public override void LoadData()
         {
             AsyncProgressUI.Instance.SetTip("加载建造数据...");
-            Dictionary<AItem.ItemTypeEnum, ArrayList> data = DataTool.LoadDataByBinary<Dictionary<AItem.ItemTypeEnum, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            Dictionary<AItem.ItemTypeEnum, List<AItem>> data = DataTool.LoadDataByBinary<Dictionary<AItem.ItemTypeEnum, List<AItem>>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
             // Dictionary<BuildType, ArrayList> data = LAB2D.Tool.Tool.loadDataByJson<Dictionary<BuildType, ArrayList>>(GlobalData.ConfigFile.BuildDataFilePath);
             if (data == null)

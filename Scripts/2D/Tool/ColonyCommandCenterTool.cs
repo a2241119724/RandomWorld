@@ -526,6 +526,70 @@ namespace LAB2D.Tool
         /// <summary>
         /// BuildMap 可达性查询适配器，将 IMapWalkabilityQuery 接口适配到 BuildMap.Instance。
         /// </summary>
+        /// <summary>
+        /// 生成 WorkerTaskAssignmentReport 的纯文本摘要（扩展方法，表现层）。
+        /// </summary>
+        public static string ToPlainText(this WorkerTaskAssignmentReport report)
+        {
+            if (report == null || !string.IsNullOrEmpty(report.ErrorMessage))
+            {
+                return report?.ErrorMessage ?? string.Empty;
+            }
+
+            StringBuilder builder = new StringBuilder(512);
+            builder.AppendFormat(
+                "人力: 总 {0} | 空闲 {1} | 忙碌 {2} | 临界 {3}",
+                report.WorkerCount,
+                report.IdleWorkerCount,
+                report.BusyWorkerCount,
+                report.CriticalWorkerCount);
+            builder.AppendLine();
+            builder.AppendFormat(
+                "任务: 总 {0} | 等待 {1} | 进行中 {2} | 阻塞 {3}",
+                report.TotalTaskCount,
+                report.WaitingTaskCount,
+                report.RunningTaskCount,
+                report.BlockedTaskCount);
+            builder.AppendLine();
+
+            if (report.PrimaryBlockReason != WorkerTaskBlockReason.None)
+            {
+                builder.Append("主要阻塞: ")
+                    .Append(GetBlockReasonName(report.PrimaryBlockReason))
+                    .AppendLine();
+            }
+
+            for (int i = 0; i < Math.Min(report.ReasonSummaries.Count, 5); i++)
+            {
+                builder.Append("- ")
+                    .Append(GetBlockReasonName(report.ReasonSummaries[i].Reason))
+                    .Append(": ")
+                    .Append(report.ReasonSummaries[i].Count)
+                    .AppendLine();
+            }
+
+            return builder.ToString().TrimEnd();
+        }
+
+        /// <summary>
+        /// 生成 WorkerTaskBlockDetail 的 HUD 展示行（扩展方法，表现层）。
+        /// </summary>
+        public static string ToDisplayLine(this WorkerTaskBlockDetail detail)
+        {
+            if (detail == null)
+            {
+                return string.Empty;
+            }
+
+            string color = GetBlockReasonRichColor(detail.Reason);
+            string taskName = string.IsNullOrEmpty(detail.TaskName)
+                ? WorkerTaskSummaryTool.GetTaskDisplayName(detail.TaskType)
+                : detail.TaskName;
+            return $"<color={color}>{WorkerTaskSummaryTool.GetTaskDisplayName(detail.TaskType)}</color> " +
+                $"#{detail.TaskId} {taskName} {detail.TargetText}: " +
+                $"{GetBlockReasonName(detail.Reason)}";
+        }
+
         private sealed class BuildMapWalkabilityQuery : IMapWalkabilityQuery
         {
             public bool IsCanReach(GameGridPosition position)

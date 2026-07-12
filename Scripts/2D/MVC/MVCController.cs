@@ -123,7 +123,7 @@ namespace LAB2D.MVC
         /// <returns>索引</returns>
         public int GetIndex(AItem item)
         {
-            return this.model.GetIndex(this.navigationView.CurItemType, (AWeapon)item);
+            return this.model.GetIndex(this.navigationView.CurItemType, item);
         }
 
         /// <summary>

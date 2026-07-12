@@ -1,5 +1,7 @@
 namespace LAB2D.Editor
 {
+    using LAB2D.Domain.Worker;
+    using LAB2D.Tool;
     using UnityEditor;
     using UnityEngine;
 

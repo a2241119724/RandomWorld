@@ -3,8 +3,6 @@ namespace LAB2D.MVC
     using LAB2D;
     using LAB2D.Data;
     using LAB2D.Item;
-    using LAB2D.Item.Backpack.Equipment.Weapon;
-    using System.Collections;
     using System.Collections.Generic;
 
     /// <summary>
@@ -16,14 +14,14 @@ namespace LAB2D.MVC
         /// <summary>
         /// 道具列表
         /// </summary>
-        public Dictionary<AItem.ItemTypeEnum, ArrayList> ItemDict;
+        public Dictionary<AItem.ItemTypeEnum, List<AItem>> ItemDict;
 
         public MVCModel(AItem.ItemTypeEnum start, AItem.ItemTypeEnum end)
         {
-            this.ItemDict = new Dictionary<AItem.ItemTypeEnum, ArrayList>();
+            this.ItemDict = new Dictionary<AItem.ItemTypeEnum, List<AItem>>();
             LAB2D.Tool.Tool.SplitEnum<AItem.ItemTypeEnum>(start, end).ForEach((item) =>
             {
-                this.ItemDict.Add(item, new ArrayList());
+                this.ItemDict.Add(item, new List<AItem>());
             });
         }
 
@@ -56,7 +54,7 @@ namespace LAB2D.MVC
                 return;
             }
 
-            ArrayList itemList;
+            List<AItem> itemList;
             AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(item.Id);
             if (this.ItemDict.ContainsKey(itemType))
             {
@@ -64,7 +62,7 @@ namespace LAB2D.MVC
             }
             else
             {
-                itemList = new ArrayList();
+                itemList = new List<AItem>();
             }
 
             // 可以堆叠
@@ -73,9 +71,9 @@ namespace LAB2D.MVC
                 for (int i = 0; i < itemList.Count; i++)
                 {
                     // 包括道具
-                    if (((AItem)itemList[i]).Id == item.Id)
+                    if (itemList[i].Id == item.Id)
                     {
-                        ((AItem)itemList[i]).Quantity++;
+                        itemList[i].Quantity++;
                         return;
                     }
                 }
@@ -100,8 +98,8 @@ namespace LAB2D.MVC
                 return;
             }
 
-            ArrayList itemList = this.ItemDict[type];
-            AItem temp = (AItem)itemList[index1];
+            List<AItem> itemList = this.ItemDict[type];
+            AItem temp = itemList[index1];
             itemList[index1] = itemList[index2];
             itemList[index2] = temp;
         }
@@ -119,7 +117,7 @@ namespace LAB2D.MVC
                 return;
             }
 
-            ((AItem)this.ItemDict[type][this.GetIndex(type, (AWeapon)item)]).Quantity--;
+            this.ItemDict[type][this.GetIndex(type, item)].Quantity--;
         }
 
         /// <summary>
@@ -136,7 +134,7 @@ namespace LAB2D.MVC
                 return null;
             }
 
-            return (AItem)this.ItemDict[type][index];
+            return this.ItemDict[type][index];
         }
 
         /// <summary>
@@ -160,7 +158,7 @@ namespace LAB2D.MVC
         /// <param name="type">道具类型</param>
         /// <param name="item">道具</param>
         /// <returns>索引</returns>
-        public int GetIndex(AItem.ItemTypeEnum type, AWeapon item)
+        public int GetIndex(AItem.ItemTypeEnum type, AItem item)
         {
             if (item == null)
             {
@@ -168,10 +166,10 @@ namespace LAB2D.MVC
                 return -1;
             }
 
-            ArrayList itemList = this.ItemDict[type];
+            List<AItem> itemList = this.ItemDict[type];
             for (int i = 0; i < itemList.Count; i++)
             {
-                if (((AItem)itemList[i]).Id == item.Id)
+                if (itemList[i].Id == item.Id)
                 {
                     return i;
                 }

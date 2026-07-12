@@ -2,7 +2,6 @@ namespace LAB2D.MVC.Backpack.Model
 {
     using LAB2D;
     using LAB2D.Item;
-    using System.Collections;
     using System.Collections.Generic;
 
     /// <summary>
@@ -21,7 +20,7 @@ namespace LAB2D.MVC.Backpack.Model
         public override void LoadData()
         {
             AsyncProgressUI.Instance.SetTip("加载背包数据...");
-            Dictionary<AItem.ItemTypeEnum, ArrayList> data = DataTool.LoadDataByBinary<Dictionary<AItem.ItemTypeEnum, ArrayList>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            Dictionary<AItem.ItemTypeEnum, List<AItem>> data = DataTool.LoadDataByBinary<Dictionary<AItem.ItemTypeEnum, List<AItem>>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
             // Dictionary<Item.ItemType, ArrayList> data = LAB2D.Tool.Tool.loadDataByJson<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.BackpackDataFilePath);
             if (data == null)

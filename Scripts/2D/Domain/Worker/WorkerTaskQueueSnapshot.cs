@@ -1,11 +1,10 @@
-namespace LAB2D.Gameplay
+namespace LAB2D.Domain.Worker
 {
-    using LAB2D;
     using LAB2D.Character.Worker.Task;
     using System.Collections.Generic;
 
     /// <summary>
-    /// 工人任务队列只读快照。
+    /// 工人任务队列只读快照（纯数据）。
     /// 用于 HUD、Editor 菜单和后续运营面板展示当前任务压力；不持有任务引用，不修改任务状态。
     /// </summary>
     public class WorkerTaskQueueSnapshot
@@ -82,7 +81,7 @@ namespace LAB2D.Gameplay
     }
 
     /// <summary>
-    /// 单个 Worker 任务类型的队列统计。
+    /// 单个 Worker 任务类型的队列统计（纯数据）。
     /// 该数据只表达展示层需要的数量，不改变 WorkerTaskManager 内部字典。
     /// </summary>
     public class WorkerTaskTypeSummary

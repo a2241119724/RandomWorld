@@ -5,7 +5,6 @@ namespace LAB2D.Domain.Gameplay
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
-    using LAB2D.Gameplay;
     using LAB2D.Item;
     using LAB2D.Serializable;
     using System;

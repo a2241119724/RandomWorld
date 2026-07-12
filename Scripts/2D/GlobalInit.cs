@@ -1,11 +1,9 @@
 namespace LAB2D
 {
-    using System.Collections.Generic;
     using LAB2D.AI.Dialogue.Prompt;
     using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
-    using LAB2D.UI.Panel;
     using UnityEngine;
 
     /// <summary>
@@ -16,7 +14,6 @@ namespace LAB2D
     public class GlobalInit : MonoBehaviour, ITipService
     {
         private readonly bool initPanel = true;
-        private List<IBasePanel> dontClosePanels; // ESC不可关闭的面板
         private WorkerUpdateSystem workerUpdateSystem;
 
         /// <summary>
@@ -36,16 +33,6 @@ namespace LAB2D
 
             // 预热 PromptBuilder，避免首次对话时触发 Resources.LoadAll 造成卡顿
             PromptBuilder.Instance.Init();
-
-            this.dontClosePanels = new ()
-            {
-                ForegroundPanel.Instance,
-                CreateOrJoinPanel.Instance,
-                CreateDataPanel.Instance,
-                AsyncProgressPanel.Instance,
-                NewOrContinuePanel.Instance,
-                PauseMenuPanel.Instance,
-            };
         }
 
         /// <summary>
@@ -119,44 +106,15 @@ namespace LAB2D
 
         public void Start()
         {
-            // init panel
             if (this.initPanel)
             {
-                ForegroundPanel.Instance.Init();
                 if (PanelController.Instance == null)
                 {
                     LogManager.Instance.Log("manager Not Found!!!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 
-                PanelController.Instance.Show(CreateOrJoinPanel.Instance);
-
-                // 初始化背包
-                BackpackMenuPanel.Instance.Panel.SetActive(true);
-                BackpackMenuPanel.Instance.Panel.SetActive(false);
-
-                // A006 殖民地运营指挥中心使用独立运行时 HUD，避免直接改动复杂场景 UI 层级。
-                ColonyCommandCenterHUD.EnsureRuntimePanel();
-
-                // A007 成就系统：初始化管理器、弹窗和面板
-                AchievementManager.Instance.Initialize();
-                AchievementPopup.EnsureRuntimePopup();
-                AchievementPanel.EnsureRuntimePanel();
-
-                // A009 浮动战斗文字系统：初始化管理器和对象池
-                FloatingTextManager.Instance.EnsureInitialized();
-
-                // A008 主动技能系统：初始化技能管理器和 HUD
-                SkillManager.Instance.Initialize();
-                SkillHUD.EnsureRuntimePanel();
-
-                // A010 装备掉落稀有度系统：初始化管理器、对比弹窗和装备面板
-                EnemyLootManager.Instance.Initialize();
-                EquipmentComparePopup.EnsureRuntimePopup();
-                EquipmentPanel.EnsureRuntimePanel();
-
-                // A011 附近道具拾取列表：初始化拾取 HUD
-                NearbyItemPickupHUD.EnsureRuntimePanel();
+                GlobalPanelInitializer.InitializeAll();
             }
         }
 
@@ -164,64 +122,45 @@ namespace LAB2D
         {
             this.WorkerUpdate();
 
-            // 退出界面(除了ForegroundPanel,CreateOrJoinPanel,CreateMenuPanel,CreateDataPanel,AsyncProgressPanel)
-            if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu))
-            {
-                if (PanelController.Instance.Panels.Count == 0)
-                {
-                    BuildingUI.Instance.gameObject.SetActive(false);
-                    PanelController.Instance.Show(BuildMenuPanel.Instance);
-                    IsAvailableMap.Instance.ClearShow();
-                }
-                else
-                {
-                    // 不能关闭下面面板
-                    if (PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
-                    {
-                        ItemInfoUI.Instance.Init();
-                    }
+            // 全局输入处理（ESC 面板切换、鼠标点击关闭物品信息）
+            GlobalInputProcessor.ProcessInput();
 
-                    PanelController.Instance.Panels.Peek().OnClick_Back();
-                }
-            }
-
-            // A007 成就系统：更新进度并检查解锁
-            AchievementManager mgr = AchievementManager.Instance;
-            if (mgr != null && mgr.IsInitialized)
-            {
-                mgr.UpdateProgressAll();
-
-                // 检查是否有待展示的解锁弹窗
-                if (mgr.HasPendingUnlock)
-                {
-                    AchievementData pending = mgr.PeekPendingUnlock();
-                    if (pending != null && AchievementPopup.RuntimeInstance != null)
-                    {
-                        AchievementPopup.RuntimeInstance.Show(pending);
-                    }
-                }
-
-                // F7 切换成就面板
-                if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleWorkerTaskAndAchievementHud))
-                {
-                    AchievementPanel.RuntimeInstance?.TogglePanel();
-                }
-            }
+            // 成就系统：更新进度、检查解锁、F7 切换面板
+            this.ProcessAchievements();
 
             EnvironmentManager.Instance.UpdateEnergy();
 
-            // F019 玩家生命危险提示：只读刷新本地玩家血量警戒，复用现有 Tip UI，不改变战斗或存档数据。
+            // 玩家生命危险提示
             PlayerVitalAlertManager.Instance.Tick();
+        }
 
-            if (!LAB2D.Tool.Tool.IsUIInputActive() && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2)))
+        /// <summary>
+        /// 成就系统每帧轮询：更新进度、展示待解锁弹窗、F7 切换面板。
+        /// </summary>
+        private void ProcessAchievements()
+        {
+            AchievementManager mgr = AchievementManager.Instance;
+            if (mgr == null || !mgr.IsInitialized)
             {
-                // 关闭ItemInfo面板
-                if (PanelController.Instance.Panels.Count > 0
-                    && PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
+                return;
+            }
+
+            mgr.UpdateProgressAll();
+
+            // 检查是否有待展示的解锁弹窗
+            if (mgr.HasPendingUnlock)
+            {
+                AchievementData pending = mgr.PeekPendingUnlock();
+                if (pending != null && AchievementPopup.RuntimeInstance != null)
                 {
-                    ItemInfoUI.Instance.Init();
-                    PanelController.Instance.Close();
+                    AchievementPopup.RuntimeInstance.Show(pending);
                 }
+            }
+
+            // F7 切换成就面板
+            if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleWorkerTaskAndAchievementHud))
+            {
+                AchievementPanel.RuntimeInstance?.TogglePanel();
             }
         }
 

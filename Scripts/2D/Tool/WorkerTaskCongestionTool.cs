@@ -1,9 +1,11 @@
 namespace LAB2D.Tool
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
     using LAB2D.Gameplay;
+    using System.Text;
     /// <summary>
     /// 工人任务队列拥堵建议工具。
     /// 只负责根据只读任务队列快照计算拥堵等级、主积压任务类型和玩家建议文案；不新增任务、不取消任务、不调整任务优先级。
@@ -191,6 +193,58 @@ namespace LAB2D.Tool
                 default:
                     return "任务队列积压，建议暂缓新增任务并观察工人可用状态。";
             }
+        }
+
+        /// <summary>
+        /// 生成 WorkerTaskCongestionReport 的 HUD/Editor 摘要文本（扩展方法，表现层）。
+        /// </summary>
+        public static string ToSummaryText(this WorkerTaskCongestionReport report)
+        {
+            if (report == null || !string.IsNullOrEmpty(report.ErrorMessage))
+            {
+                return report?.ErrorMessage ?? string.Empty;
+            }
+
+            StringBuilder builder = new StringBuilder(256);
+            builder.AppendFormat(
+                "任务队列拥堵: {0} | 总数 {1} | 等待 {2} | 进行中 {3}",
+                WorkerTaskCongestionTool.GetLevelName(report.Level),
+                report.TotalTaskCount,
+                report.WaitingTaskCount,
+                report.RunningTaskCount);
+            builder.AppendLine();
+
+            if (report.HasPrimaryTaskType)
+            {
+                builder.AppendFormat(
+                    "主要积压: {0} {1} 个等待",
+                    WorkerTaskSummaryTool.GetTaskDisplayName(report.PrimaryTaskType),
+                    report.PrimaryWaitingTaskCount);
+                builder.AppendLine();
+            }
+
+            builder.Append(report.AdviceText ?? WorkerTaskCongestionConstant.NoCongestionText);
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// 生成 WorkerTaskCongestionReport 的 Tip 短文案（扩展方法，表现层）。
+        /// </summary>
+        public static string ToTipText(this WorkerTaskCongestionReport report)
+        {
+            if (report == null || !string.IsNullOrEmpty(report.ErrorMessage))
+            {
+                return report?.ErrorMessage ?? string.Empty;
+            }
+
+            string levelName = WorkerTaskCongestionTool.GetLevelName(report.Level);
+            if (report.HasPrimaryTaskType)
+            {
+                return $"任务{levelName}: 等待 {report.WaitingTaskCount}，主要积压 " +
+                    $"{WorkerTaskSummaryTool.GetTaskDisplayName(report.PrimaryTaskType)} {report.PrimaryWaitingTaskCount}。{report.AdviceText}";
+            }
+
+            return $"任务{levelName}: 等待 {report.WaitingTaskCount}。{report.AdviceText}";
         }
     }
 }

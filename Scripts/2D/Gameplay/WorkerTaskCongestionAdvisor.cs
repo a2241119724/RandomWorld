@@ -4,6 +4,7 @@ namespace LAB2D.Gameplay
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
+    using LAB2D.Tool;
     using System;
     using System.Text;
     using UnityEngine;
@@ -228,126 +229,6 @@ namespace LAB2D.Gameplay
             }
 
             Debug.Log(WorkerTaskCongestionConstant.LogPrefix + " " + message);
-        }
-    }
-
-    /// <summary>
-    /// 工人任务队列拥堵报告。
-    /// 由 WorkerTaskCongestionAdvisor 维护，供 Tip、HUD、Editor 菜单和后续任务目标系统只读查询。
-    /// </summary>
-    [Serializable]
-    public class WorkerTaskCongestionReport
-    {
-        /// <summary>当前队列中的任务总数。</summary>
-        public int TotalTaskCount;
-
-        /// <summary>等待 Worker 接取的任务数。</summary>
-        public int WaitingTaskCount;
-
-        /// <summary>已被 Worker 接取并进行中的任务数。</summary>
-        public int RunningTaskCount;
-
-        /// <summary>当前拥堵等级。</summary>
-        public WorkerTaskCongestionLevel Level;
-
-        /// <summary>是否存在主要积压任务类型。</summary>
-        public bool HasPrimaryTaskType;
-
-        /// <summary>主要积压任务类型。</summary>
-        public AWorkerTask.WorkerTaskTypeEnum PrimaryTaskType;
-
-        /// <summary>主要任务类型的等待数量。</summary>
-        public int PrimaryWaitingTaskCount;
-
-        /// <summary>面向玩家的建议文案。</summary>
-        public string AdviceText;
-
-        /// <summary>扫描异常信息，正常为空。</summary>
-        public string ErrorMessage;
-
-        /// <summary>
-        /// 是否达到可主动 Tip 的拥堵程度。
-        /// </summary>
-        public bool ShouldShowTip
-        {
-            get
-            {
-                return this.Level == WorkerTaskCongestionLevel.Congested ||
-                    this.Level == WorkerTaskCongestionLevel.Critical;
-            }
-        }
-
-        /// <summary>
-        /// 构建用于变化检测的签名。
-        /// </summary>
-        /// <returns>报告关键字段签名。</returns>
-        public string BuildSignature()
-        {
-            StringBuilder builder = new StringBuilder(128);
-            builder.Append(this.TotalTaskCount).Append('|')
-                .Append(this.WaitingTaskCount).Append('|')
-                .Append(this.RunningTaskCount).Append('|')
-                .Append(this.Level).Append('|')
-                .Append(this.HasPrimaryTaskType).Append('|')
-                .Append(this.PrimaryTaskType).Append('|')
-                .Append(this.PrimaryWaitingTaskCount).Append('|')
-                .Append(this.AdviceText);
-
-            return builder.ToString();
-        }
-
-        /// <summary>
-        /// 生成 HUD、Editor 菜单和日志使用的摘要文本。
-        /// </summary>
-        /// <returns>多行任务拥堵摘要。</returns>
-        public string ToSummaryText()
-        {
-            if (!string.IsNullOrEmpty(this.ErrorMessage))
-            {
-                return this.ErrorMessage;
-            }
-
-            StringBuilder builder = new StringBuilder(256);
-            builder.AppendFormat(
-                "任务队列拥堵: {0} | 总数 {1} | 等待 {2} | 进行中 {3}",
-                WorkerTaskCongestionTool.GetLevelName(this.Level),
-                this.TotalTaskCount,
-                this.WaitingTaskCount,
-                this.RunningTaskCount);
-            builder.AppendLine();
-
-            if (this.HasPrimaryTaskType)
-            {
-                builder.AppendFormat(
-                    "主要积压: {0} {1} 个等待",
-                    WorkerTaskSummaryTool.GetTaskDisplayName(this.PrimaryTaskType),
-                    this.PrimaryWaitingTaskCount);
-                builder.AppendLine();
-            }
-
-            builder.Append(this.AdviceText ?? WorkerTaskCongestionConstant.NoCongestionText);
-            return builder.ToString();
-        }
-
-        /// <summary>
-        /// 生成适合现有 TipUI 展示的短文案。
-        /// </summary>
-        /// <returns>短 Tip 文案。</returns>
-        public string ToTipText()
-        {
-            if (!string.IsNullOrEmpty(this.ErrorMessage))
-            {
-                return this.ErrorMessage;
-            }
-
-            string levelName = WorkerTaskCongestionTool.GetLevelName(this.Level);
-            if (this.HasPrimaryTaskType)
-            {
-                return $"任务{levelName}: 等待 {this.WaitingTaskCount}，主要积压 " +
-                    $"{WorkerTaskSummaryTool.GetTaskDisplayName(this.PrimaryTaskType)} {this.PrimaryWaitingTaskCount}。{this.AdviceText}";
-            }
-
-            return $"任务{levelName}: 等待 {this.WaitingTaskCount}。{this.AdviceText}";
         }
     }
 }
