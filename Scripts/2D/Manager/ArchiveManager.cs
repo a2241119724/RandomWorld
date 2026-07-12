@@ -404,6 +404,27 @@ namespace LAB2D.Manager
                 return;
             }
 
+            // 先验证旧数据能否被当前版本正确反序列化
+            try
+            {
+                var data = DataTool.LoadDataByBinary<LAB2D.Map.TileMap.TileMapData>(legacyTileMapPath);
+                if (data == null)
+                {
+                    Debug.LogWarning(
+                        $"[ArchiveManager] Legacy archive data at '{legacyTileMapPath}' is incompatible " +
+                        "with the current version. Migration skipped — the slot will be treated as empty. " +
+                        "Delete the old .lab files manually if you want to reclaim disk space.");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning(
+                    $"[ArchiveManager] Failed to read legacy archive data: {ex.Message}. " +
+                    "Migration skipped.");
+                return;
+            }
+
             string targetDirectory = this.GetArchiveDirectory(legacyArchiveIndex);
             Directory.CreateDirectory(targetDirectory);
             string[] legacyFiles = Directory.GetFiles(Application.persistentDataPath, "*.lab");
@@ -417,6 +438,8 @@ namespace LAB2D.Manager
 
                 File.Copy(legacyFile, targetFile);
             }
+
+            Debug.Log($"[ArchiveManager] Migrated {legacyFiles.Length} legacy archive files to {targetDirectory}");
         }
 
         private bool HasArchiveFiles(int archiveIndex)

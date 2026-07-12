@@ -98,6 +98,11 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 最大重试次数，防止无限循环
+        /// </summary>
+        private const int GEN_POS_MAX_RETRIES = 10000;
+
+        /// <summary>
         /// 生成可用的位置，返回数组下标
         /// 可以选择以哪个点为中心，不选择则为所有
         /// 包括TileMap,ResourceMap,BuildMap可达位置
@@ -106,6 +111,12 @@ namespace LAB2D.Map
         /// <returns>位置</returns>
         public Vector3Int GenCanReachPos(Vector3 centerMap = default)
         {
+            if (this.TileMapDataLAB == null)
+            {
+                LogManager.Instance.Log("TileMapDataLAB is null, cannot generate reachable position", LogManager.LogLevelEnum.Error);
+                return Vector3Int.zero;
+            }
+
             int x, y, startX = 0, endX = this.TileMapDataLAB.Height, startY = 0, endY = this.TileMapDataLAB.Width;
             if (centerMap != default)
             {
@@ -115,12 +126,21 @@ namespace LAB2D.Map
                 endY = (int)Mathf.Min(centerMap.y + 20, this.TileMapDataLAB.Width);
             }
 
+            int retries = 0;
             Vector3Int posMap;
             do
             {
                 x = UnityEngine.Random.Range(startX, endX);
                 y = UnityEngine.Random.Range(startY, endY);
                 posMap = new Vector3Int(x, y, 0);
+                retries++;
+                if (retries > GEN_POS_MAX_RETRIES)
+                {
+                    LogManager.Instance.Log(
+                        $"GenCanReachPos exceeded max retries ({GEN_POS_MAX_RETRIES}), returning fallback position",
+                        LogManager.LogLevelEnum.Error);
+                    return new Vector3Int(startX, startY, 0);
+                }
             }
             while (!(this.IsCanReach(posMap) && ResourceMap.Instance.IsCanReach(posMap) && BuildMap.Instance.IsCanReach(posMap)));
             return new Vector3Int(x, y, 0);
@@ -286,14 +306,20 @@ namespace LAB2D.Map
             this.TileMapDataLAB = DataTool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             if (this.TileMapDataLAB == null)
             {
+                // 降级方案：存档数据不可用，自动生成新地图
+                LogManager.Instance.Log("TileMap data not found in archive, generating new default map", LogManager.LogLevelEnum.Warning);
+                const int defaultHeight = 548;
+                const int defaultWidth = 548;
+                // 重置完成标记，确保 ResourceMap.GenResource 和 GenTree 等待地图生成完毕
+                Lock.IsCompleteTileMap = false;
+                this.SetProgress(defaultHeight, defaultWidth);
+                this.StartCoroutine(this.Create());
                 return;
             }
 
-            Lock.IsCompleteTileMap = true; // TODO
+            Lock.IsCompleteTileMap = true;
             this.CreateArroundTile();
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
-
-            // Worker.initMap(Height, Width);
         }
 
         /// <inheritdoc/>

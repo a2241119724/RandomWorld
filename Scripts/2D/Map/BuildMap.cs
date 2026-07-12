@@ -194,13 +194,24 @@ namespace LAB2D.Map
                 return true;
             }
 
+            if (this.BuildMapDataLAB == null || this.BuildMapDataLAB.PosMap == null)
+            {
+                return true;
+            }
+
             if (!this.BuildMapDataLAB.PosMap.ContainsKey(Vector3IntLAB.ToVector3IntLAB(posMap)))
             {
                 return true;
             }
 
-            return ItemDataManager.Instance.GetBuildItemDataByName(
-                this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(posMap)].Name).IsPass;
+            BuildTileData buildTileData = this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(posMap)];
+            if (buildTileData == null)
+            {
+                return true;
+            }
+
+            BuildItemData buildItemData = ItemDataManager.Instance.GetBuildItemDataByName(buildTileData.Name);
+            return buildItemData != null && buildItemData.IsPass;
         }
 
         /// <inheritdoc/>

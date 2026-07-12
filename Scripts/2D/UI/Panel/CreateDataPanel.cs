@@ -71,6 +71,13 @@ namespace LAB2D.UI.Panel
                 return;
             }
 
+            if (TileMap.Instance == null)
+            {
+                LogManager.Instance.Log("TileMap.Instance is null, cannot start map creation", LogManager.LogLevelEnum.Error);
+                GlobalInit.Instance.ShowTip("地图初始化失败，请检查场景配置");
+                return;
+            }
+
             this.Controller.Close();
 
             // TileMap

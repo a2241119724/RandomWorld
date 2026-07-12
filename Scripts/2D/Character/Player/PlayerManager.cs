@@ -35,13 +35,38 @@ namespace LAB2D.Character.Player
             Player.PlayerData data = DataTool.LoadDataByBinary<Player.PlayerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             if (data == null)
             {
+                // 降级方案：存档无玩家数据时，进度完成后在随机位置创建玩家
+                LogManager.Instance.Log("Player data not found in archive, will create player at random position after loading", LogManager.LogLevelEnum.Warning);
+                AsyncProgressUI.Instance.Complete += () =>
+                {
+                    GameObject g = this.Create();
+                    if (g == null)
+                    {
+                        LogManager.Instance.Log("Failed to create player at random position", LogManager.LogLevelEnum.Error);
+                        return;
+                    }
+
+                    this.Mine = g.GetComponent<Player>();
+                };
                 return;
             }
 
             AsyncProgressUI.Instance.Complete += () =>
             {
                 GameObject g = this.Create(Vector3LAB.ToVector3(data.Pos));
+                if (g == null)
+                {
+                    LogManager.Instance.Log("Failed to create player from saved data", LogManager.LogLevelEnum.Error);
+                    return;
+                }
+
                 this.Mine = g.GetComponent<Player>();
+                if (this.Mine == null)
+                {
+                    LogManager.Instance.Log("Player prefab is missing Player component", LogManager.LogLevelEnum.Error);
+                    return;
+                }
+
                 this.Mine.CharacterDataLAB = data;
                 this.Mine.CharacterDataLAB.Character = this.Mine;
             };

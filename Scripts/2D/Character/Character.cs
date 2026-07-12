@@ -70,7 +70,16 @@ namespace LAB2D.Character
         public virtual void Awake()
         {
             this.name = this.GetType().Name;
-            this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
+            GameObject characterRoot = GameObject.FindGameObjectWithTag("CharacterRoot");
+            if (characterRoot != null)
+            {
+                this.transform.SetParent(characterRoot.transform);
+            }
+            else
+            {
+                LogManager.Instance.Log("CharacterRoot GameObject not found in scene, character will be placed at root", LogManager.LogLevelEnum.Error);
+            }
+
             this.checkBug = new CheckBug();
         }
 

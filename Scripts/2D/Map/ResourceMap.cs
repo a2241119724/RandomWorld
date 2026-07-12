@@ -44,7 +44,18 @@ namespace LAB2D.Map
         {
             // 需要等待地图协程执行完后再执行
             yield return new WaitUntil(() => Lock.IsCompleteTileMap);
+            if (TileMap.Instance == null || TileMap.Instance.TileMapDataLAB == null)
+            {
+                LogManager.Instance.Log("TileMap data not available, cannot generate resources", LogManager.LogLevelEnum.Error);
+                yield break;
+            }
+
+            // 确保进度总数已注册（幂等，重复调用安全）
+            this.SetProgress();
+
             AsyncProgressUI.Instance.SetTip("生成资源...");
+            int resourcesPlaced = 0;
+            int assetMissCount = 0;
             for (int i = 0; i < TileMap.Instance.TileMapDataLAB.Height; i++)
             {
                 for (int j = 0; j < TileMap.Instance.TileMapDataLAB.Width; j++)
@@ -62,11 +73,13 @@ namespace LAB2D.Map
                         TileBase tileBase = ResourceManager.Instance.GetAssetByTileType(tileType);
                         if (tileBase == null)
                         {
+                            assetMissCount++;
                             continue;
                         }
 
                         this.tilemap.SetTile(posMap, tileBase);
                         this.ResourceMapDataLAB.Add(posMap, tileBase.name);
+                        resourcesPlaced++;
                         if (tileBase.name.Contains("_Tree"))
                         {
                             ItemData itemData = ItemDataManager.Instance.GetByName(tileBase.name);
@@ -77,6 +90,11 @@ namespace LAB2D.Map
                         }
                     }
                 }
+            }
+
+            if (resourcesPlaced == 0)
+            {
+                LogManager.Instance.Log($"GenResource: no resources placed (asset misses: {assetMissCount})", LogManager.LogLevelEnum.Warning);
             }
 
             yield return this.StartCoroutine(this.GenTree());
@@ -94,6 +112,13 @@ namespace LAB2D.Map
             {
                 if (this.ResourceMapDataLAB.TreeCurCount < this.ResourceMapDataLAB.TreeTotalCount)
                 {
+                    if (TileMap.Instance == null || TileMap.Instance.TileMapDataLAB == null)
+                    {
+                        LogManager.Instance.Log("TileMap data not available, tree generation paused", LogManager.LogLevelEnum.Error);
+                        yield return new WaitForSeconds(60.0f * 5);
+                        continue;
+                    }
+
                     Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap();
                     TileMap.MapTileTypeEnum tileType = TileMap.Instance.TileMapDataLAB.MapTiles[pos.x, pos.y];
                     TileBase tileBase = ResourceManager.Instance.GetAssetByTileType(tileType, "Tree");
@@ -182,11 +207,25 @@ namespace LAB2D.Map
             return true;
         }
 
+        private bool isProgressSet;
+
         /// <summary>
-        /// 设置进度条
+        /// 设置进度条（幂等，重复调用安全）
         /// </summary>
         public void SetProgress()
         {
+            if (this.isProgressSet)
+            {
+                return;
+            }
+
+            if (TileMap.Instance == null || TileMap.Instance.TileMapDataLAB == null)
+            {
+                LogManager.Instance.Log("TileMap data not initialized, cannot set resource generation progress", LogManager.LogLevelEnum.Error);
+                return;
+            }
+
+            this.isProgressSet = true;
             AsyncProgressUI.Instance.AddTotal(TileMap.Instance.TileMapDataLAB.Height * TileMap.Instance.TileMapDataLAB.Width);
         }
 
@@ -198,6 +237,11 @@ namespace LAB2D.Map
             this.ResourceMapDataLAB = DataTool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             if (this.ResourceMapDataLAB == null)
             {
+                // 降级方案：存档无资源数据时，等待地图生成完毕后自动生成资源
+                LogManager.Instance.Log("ResourceMap data not found in archive, will generate new resources", LogManager.LogLevelEnum.Warning);
+                this.ResourceMapDataLAB = new ResourceMapData(0, 100);
+                this.SetProgress();
+                this.StartCoroutine(this.GenResource());
                 return;
             }
 
