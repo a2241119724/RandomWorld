@@ -280,7 +280,7 @@ namespace LAB2D.Map
         public override void LoadData()
         {
             base.LoadData();
-            this.BuildMapDataLAB = DataTool.LoadDataByBinary<BuildMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            this.BuildMapDataLAB = DataTool.LoadDataByBinary<BuildMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name)) ?? new BuildMapData();
             foreach (var posMap in this.BuildMapDataLAB.PosMap)
             {
                 this.DoDirectBuild(Vector3IntLAB.ToVector3Int(posMap.Key), ResourceManager.Instance.GetAsset(posMap.Value.Name));

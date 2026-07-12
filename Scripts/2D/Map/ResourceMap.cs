@@ -196,6 +196,11 @@ namespace LAB2D.Map
             base.LoadData();
             AsyncProgressUI.Instance.SetTip("加载资源地图信息...");
             this.ResourceMapDataLAB = DataTool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (this.ResourceMapDataLAB == null)
+            {
+                return;
+            }
+
             foreach (KeyValuePair<Vector3IntLAB, string> posMap in this.ResourceMapDataLAB.PosMap)
             {
                 this.tilemap.SetTile(Vector3IntLAB.ToVector3Int(posMap.Key), (TileBase)ResourceManager.Instance.GetAsset(posMap.Value));

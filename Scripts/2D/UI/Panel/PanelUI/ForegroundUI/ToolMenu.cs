@@ -58,12 +58,24 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         /// </summary>
         private void Onclick_GeneratorWorker()
         {
+            if (PlayerManager.Instance.Mine == null)
+            {
+                LogManager.Instance.Log("玩家尚未加载完成，无法生成Worker", LogManager.LogLevelEnum.Warning);
+                return;
+            }
+
             WorkerManager.Instance.Create(PlayerManager.Instance.Mine.transform.position);
         }
 
 
         private void Onclick_GeneratorItem()
         {
+            if (PlayerManager.Instance.Mine == null)
+            {
+                LogManager.Instance.Log("玩家尚未加载完成，无法生成物品", LogManager.LogLevelEnum.Warning);
+                return;
+            }
+
             EnemyLootManager.Instance.TryDropLoot(
                 PlayerManager.Instance.Mine.transform.position, waveNumber: 0);
         }

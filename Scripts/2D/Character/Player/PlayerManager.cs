@@ -33,6 +33,11 @@ namespace LAB2D.Character.Player
         {
             AsyncProgressUI.Instance.SetTip("加载玩家管理信息...");
             Player.PlayerData data = DataTool.LoadDataByBinary<Player.PlayerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null)
+            {
+                return;
+            }
+
             AsyncProgressUI.Instance.Complete += () =>
             {
                 GameObject g = this.Create(Vector3LAB.ToVector3(data.Pos));
