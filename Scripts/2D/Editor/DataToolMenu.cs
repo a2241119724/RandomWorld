@@ -9,7 +9,7 @@ namespace LAB2D.Editor
     /// <summary>
     /// 数据工具
     /// </summary>
-    public class DataTool
+    public class DataToolMenu
     {
         private const string Prefix = "工具/数据/";
 

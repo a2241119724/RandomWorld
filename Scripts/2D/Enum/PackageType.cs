@@ -3,7 +3,7 @@ namespace LAB2D.Enum
     /// <summary>
     /// 设备类型
     /// </summary>
-    public enum PackageTypeEnum
+    public enum PackageType
     {
         /// <summary>
         /// 安卓

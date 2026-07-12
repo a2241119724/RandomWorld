@@ -12,7 +12,7 @@ namespace LAB2D.Data
         /// <summary>
         /// 打包类型(未用)
         /// </summary>
-        public static readonly PackageTypeEnum PackageType = PackageTypeEnum.PC;
+        public static readonly PackageType CurrentPackageType = PackageType.PC;
 
         /// <summary>
         /// 是否是2D游戏(未用)

@@ -1,4 +1,4 @@
-namespace LAB2D.Constant
+namespace LAB2D.Core
 {
     using LAB2D;
     using LAB2D.Character.Worker;
