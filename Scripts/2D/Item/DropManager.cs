@@ -150,32 +150,4 @@ namespace LAB2D.Item
             return text;
         }
     }
-
-    /// <summary>
-    /// 资源信息
-    /// </summary>
-    [Serializable]
-    public class ResourceInfo
-    {
-        /// <summary>
-        /// Inventory,id=-1表示空
-        /// </summary>
-        public int Id;
-
-        /// <summary>
-        /// 数量
-        /// </summary>
-        public int Count;
-
-        public ResourceInfo(int id)
-        {
-            this.Id = id;
-        }
-
-        public ResourceInfo(int id, int count)
-        {
-            this.Id = id;
-            this.Count = count;
-        }
-    }
 }
