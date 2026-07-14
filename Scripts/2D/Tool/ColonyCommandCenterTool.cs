@@ -498,6 +498,37 @@ namespace LAB2D.Tool
                 return 0L;
             };
 
+            // 将 AWorkerTask 的位置字段转换为 Domain GameGridPosition
+            context.GetTaskTargetPosition = task =>
+            {
+                if (task == null || task.TargetMap == null)
+                {
+                    return default;
+                }
+
+                Vector3IntLAB v = task.TargetMap;
+                return new GameGridPosition(v.X, v.Y, v.Z);
+            };
+
+            // 将 AWorkerTask 的邻居位置列表转换为 Domain GameGridPosition 列表
+            context.GetTaskNeighborPositions = task =>
+            {
+                List<GameGridPosition> result = new List<GameGridPosition>();
+                if (task != null && task.AvailableNeighborPos != null)
+                {
+                    for (int i = 0; i < task.AvailableNeighborPos.Count; i++)
+                    {
+                        Vector3IntLAB v = task.AvailableNeighborPos[i];
+                        if (v != null)
+                        {
+                            result.Add(new GameGridPosition(v.X, v.Y, v.Z));
+                        }
+                    }
+                }
+
+                return result;
+            };
+
             return context;
         }
 

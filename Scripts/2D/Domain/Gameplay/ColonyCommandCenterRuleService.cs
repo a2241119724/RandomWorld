@@ -4,7 +4,6 @@ namespace LAB2D.Domain.Gameplay
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
-    using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
 
@@ -24,14 +23,6 @@ namespace LAB2D.Domain.Gameplay
         public float ClampRefreshInterval(float interval)
         {
             return MathHelper.ClampRefreshInterval(interval);
-        }
-
-        /// <summary>
-        /// 将 Vector3IntLAB 转换为领域位置对象。
-        /// </summary>
-        private static GameGridPosition ToGameGridPosition(Vector3IntLAB v)
-        {
-            return v == null ? default : new GameGridPosition(v.X, v.Y, v.Z);
         }
 
         /// <summary>
@@ -139,13 +130,13 @@ namespace LAB2D.Domain.Gameplay
 
                         report.BlockedTaskCount++;
                         AddReasonCount(reasonCounts, reason);
-                        Vector3IntLAB targetMap = task.TargetMap;
+                        GameGridPosition targetPos = context.GetTaskTargetPosition?.Invoke(task) ?? default;
                         report.Details.Add(new WorkerTaskBlockDetail
                         {
                             TaskId = task.TaskId,
                             TaskName = task.Name,
                             TaskType = task.TaskType,
-                            TargetText = targetMap == null ? "(无目标)" : targetMap.ToString(),
+                            TargetText = context.GetTaskTargetPosition == null ? "(无目标)" : targetPos.ToString(),
                             Reason = reason,
                         });
                     }
@@ -401,12 +392,13 @@ namespace LAB2D.Domain.Gameplay
                 return WorkerTaskBlockReason.WorkerNotReady;
             }
 
-            if (context.IsFoodAtPosition == null || task.TargetMap == null)
+            if (context.IsFoodAtPosition == null || context.GetTaskTargetPosition == null)
             {
                 return WorkerTaskBlockReason.FoodUnavailable;
             }
 
-            return context.IsFoodAtPosition(ToGameGridPosition(task.TargetMap))
+            GameGridPosition targetPos = context.GetTaskTargetPosition(task);
+            return context.IsFoodAtPosition(targetPos)
                 ? WorkerTaskBlockReason.None
                 : WorkerTaskBlockReason.FoodUnavailable;
         }
@@ -501,9 +493,13 @@ namespace LAB2D.Domain.Gameplay
                 return true;
             }
 
-            if (task.AvailableNeighborPos == null ||
-                task.AvailableNeighborPos.Count == 0 ||
-                task.TargetMap == null)
+            if (context.GetTaskTargetPosition == null || context.GetTaskNeighborPositions == null)
+            {
+                return true;
+            }
+
+            List<GameGridPosition> neighbors = context.GetTaskNeighborPositions(task);
+            if (neighbors == null || neighbors.Count == 0)
             {
                 return true;
             }
@@ -513,16 +509,10 @@ namespace LAB2D.Domain.Gameplay
                 return true;
             }
 
-            GameGridPosition targetBase = ToGameGridPosition(task.TargetMap);
-            for (int i = 0; i < task.AvailableNeighborPos.Count; i++)
+            GameGridPosition targetBase = context.GetTaskTargetPosition(task);
+            for (int i = 0; i < neighbors.Count; i++)
             {
-                Vector3IntLAB neighbor = task.AvailableNeighborPos[i];
-                if (neighbor == null)
-                {
-                    continue;
-                }
-
-                GameGridPosition neighborPos = ToGameGridPosition(neighbor);
+                GameGridPosition neighborPos = neighbors[i];
                 GameGridPosition target = new GameGridPosition(
                     targetBase.X + neighborPos.X,
                     targetBase.Y + neighborPos.Y,
@@ -800,5 +790,11 @@ namespace LAB2D.Domain.Gameplay
 
         /// <summary>获取任务绑定的 Worker ID 的委托。参数：task, fieldName。返回：绑定 Worker 的 ID，0 表示无。</summary>
         public System.Func<AWorkerTask, string, long> GetBoundWorkerId;
+
+        /// <summary>获取任务目标位置的委托。将外层 Vector3IntLAB 转换为 Domain 的 GameGridPosition。</summary>
+        public System.Func<AWorkerTask, GameGridPosition> GetTaskTargetPosition;
+
+        /// <summary>获取任务可用邻居位置列表的委托。转换为 Domain 的 GameGridPosition 列表。</summary>
+        public System.Func<AWorkerTask, List<GameGridPosition>> GetTaskNeighborPositions;
     }
 }
