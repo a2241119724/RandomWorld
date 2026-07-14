@@ -122,11 +122,11 @@ namespace LAB2D.Constant
         public const KeyCode ToggleWorkerTaskAndAchievementHud = KeyCode.F7;
 
         /// <summary>
-        /// 殖民地指挥中心 HUD 显示/隐藏 (F8键)
+        /// 殖民地指挥中心 HUD 显示/隐藏 (F9键)
         /// 切换显示殖民地运营综合摘要、任务阻塞预警和资源状态。
         /// 仅在无 UI 输入框聚焦时生效。
         /// </summary>
-        public const KeyCode ToggleColonyCommandCenterHud = KeyCode.F8;
+        public const KeyCode ToggleColonyCommandCenterHud = KeyCode.F10;
 
         #endregion
 

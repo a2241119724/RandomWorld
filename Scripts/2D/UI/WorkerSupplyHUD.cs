@@ -35,6 +35,9 @@ namespace LAB2D.UI
 
         private void Awake()
         {
+            // 强制设置热键，防止场景序列化覆盖默认值
+            this.toggleKey = WorkerSupplyConstant.HudToggleKey;
+
             this.canvasGroup = this.GetComponent<CanvasGroup>();
             if (this.canvasGroup == null)
             {
@@ -140,6 +143,81 @@ namespace LAB2D.UI
             {
                 return true;
             }
+        }
+
+        /// <summary>
+        /// 确保运行时存在 WorkerSupplyHUD。挂载到 UIRoot/Foreground 下。
+        /// </summary>
+        public static WorkerSupplyHUD EnsureRuntimePanel()
+        {
+            GameObject existing = GameObject.Find(WorkerSupplyConstant.HudRootName);
+            if (existing != null)
+            {
+                WorkerSupplyHUD existingHud = existing.GetComponent<WorkerSupplyHUD>();
+                if (existingHud != null)
+                {
+                    HudFactory.RepairExisting(existingHud, WorkerSupplyConstant.HudToggleKey);
+                    existingHud.UpdateDisplay();
+                    return existingHud;
+                }
+            }
+
+            Transform parent = HudFactory.FindHudParent();
+            GameObject root = CreatePanelRoot(parent);
+            WorkerSupplyHUD hud = root.GetComponent<WorkerSupplyHUD>();
+            hud.UpdateDisplay();
+            return hud;
+        }
+
+        private static GameObject CreatePanelRoot(Transform parent)
+        {
+            GameObject root = new GameObject(
+                WorkerSupplyConstant.HudRootName,
+                typeof(RectTransform),
+                typeof(CanvasGroup),
+                typeof(WorkerSupplyHUD));
+            root.transform.SetParent(parent, false);
+
+            RectTransform rootRect = root.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0.0f, 1.0f);
+            rootRect.anchorMax = new Vector2(0.0f, 1.0f);
+            rootRect.pivot = new Vector2(0.0f, 1.0f);
+            rootRect.anchoredPosition = new Vector2(20.0f, -360.0f);
+            rootRect.sizeDelta = new Vector2(580.0f, 190.0f);
+
+            GameObject background = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            background.transform.SetParent(root.transform, false);
+            RectTransform bgRect = background.GetComponent<RectTransform>();
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.offsetMin = Vector2.zero;
+            bgRect.offsetMax = Vector2.zero;
+            background.GetComponent<Image>().color = PixelUITheme.DialogBoxBg;
+
+            GameObject textObj = new GameObject(
+                WorkerSupplyConstant.HudTextName,
+                typeof(RectTransform),
+                typeof(Text));
+            textObj.transform.SetParent(root.transform, false);
+            RectTransform textRect = textObj.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = new Vector2(12.0f, 8.0f);
+            textRect.offsetMax = new Vector2(-12.0f, -8.0f);
+
+            Text text = textObj.GetComponent<Text>();
+            Font font = Resources.Load<Font>(WorkerConditionConstant.FontResourcePath);
+            if (font != null) text.font = font;
+            text.fontSize = 15;
+            text.alignment = TextAnchor.UpperLeft;
+            text.supportRichText = true;
+            text.color = PixelUITheme.TextPrimary;
+            text.text = WorkerSupplyConstant.EmptyHudText;
+
+            WorkerSupplyHUD hud = root.GetComponent<WorkerSupplyHUD>();
+            hud.supplyText = text;
+            hud.SetVisible(true);
+            return root;
         }
     }
 }

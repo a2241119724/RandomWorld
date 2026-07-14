@@ -141,6 +141,9 @@ namespace LAB2D
             // 成就系统：更新进度、检查解锁、F7 切换面板
             this.ProcessAchievements();
 
+            // 殖民地指挥中心 HUD 切换 (F10)
+            this.ProcessColonyCommandHud();
+
             EnvironmentManager.Instance.UpdateEnergy();
 
             // 玩家生命危险提示
@@ -174,6 +177,25 @@ namespace LAB2D
             if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleWorkerTaskAndAchievementHud))
             {
                 AchievementPanel.RuntimeInstance?.TogglePanel();
+            }
+        }
+
+        /// <summary>
+        /// 殖民地指挥中心 HUD 显示/隐藏 (F8)。
+        /// 通过 GlobalInit 统一处理以避免 HUD 因父节点 inactive 导致 Update 不执行。
+        /// </summary>
+        private void ProcessColonyCommandHud()
+        {
+            if (Input.GetKeyDown(InputKeyConstant.ToggleColonyCommandCenterHud))
+            {
+                GameObject hudObj = GameObject.Find(ColonyCommandCenterConstant.HudRootName);
+                if (hudObj == null)
+                {
+                    ColonyCommandCenterHUD.EnsureRuntimePanel();
+                    return;
+                }
+
+                hudObj.SetActive(!hudObj.activeSelf);
             }
         }
 

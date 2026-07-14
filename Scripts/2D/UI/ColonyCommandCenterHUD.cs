@@ -56,12 +56,13 @@ namespace LAB2D.UI
                 ColonyCommandCenterHUD existingHud = existing.GetComponent<ColonyCommandCenterHUD>();
                 if (existingHud != null)
                 {
+                    HudFactory.RepairExisting(existingHud, ColonyCommandCenterConstant.HudToggleKey);
                     existingHud.UpdateDisplay();
                     return existingHud;
                 }
             }
 
-            Transform parent = FindHudParent();
+            Transform parent = HudFactory.FindHudParent();
             GameObject root = CreatePanelRoot(parent);
             ColonyCommandCenterHUD hud = root.GetComponent<ColonyCommandCenterHUD>();
             hud.UpdateDisplay();
@@ -201,6 +202,9 @@ namespace LAB2D.UI
 
         private void Awake()
         {
+            // 强制设置热键，防止场景序列化覆盖默认值导致 F8 无效
+            this.toggleKey = ColonyCommandCenterConstant.HudToggleKey;
+
             this.canvasGroup = this.GetComponent<CanvasGroup>();
             if (this.canvasGroup == null)
             {

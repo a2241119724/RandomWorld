@@ -27,6 +27,18 @@ namespace LAB2D.Core
             // A006 殖民地运营指挥中心
             ColonyCommandCenterHUD.EnsureRuntimePanel();
 
+            // F012 天气玩法 HUD (F4)
+            WeatherGameplayHUD.EnsureRuntimePanel();
+
+            // 工人状态 HUD (F5)
+            WorkerConditionHUD.EnsureRuntimePanel();
+
+            // 工人补给 HUD (F6)
+            WorkerSupplyHUD.EnsureRuntimePanel();
+
+            // 工人任务队列 HUD (F7)
+            WorkerTaskQueueHUD.EnsureRuntimePanel();
+
             // A007 成就系统
             AchievementManager.Instance.Initialize();
             AchievementPopup.EnsureRuntimePopup();

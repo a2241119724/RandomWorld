@@ -14,6 +14,9 @@ namespace LAB2D.UI
     [DisallowMultipleComponent]
     public class WeatherGameplayHUD : MonoBehaviour
     {
+        /// <summary>HUD 根节点名称，Editor 菜单和运行时共用。</summary>
+        public const string HudRootName = "Feature_F012_WeatherGameplayHUD_Root";
+
         private CanvasGroup canvasGroup;
         private float nextRefreshTime;
 
@@ -34,6 +37,9 @@ namespace LAB2D.UI
 
         private void Awake()
         {
+            // 强制设置热键，防止场景序列化覆盖默认值
+            this.toggleKey = InputKeyConstant.ToggleWeatherHud;
+
             this.canvasGroup = this.GetComponent<CanvasGroup>();
             if (this.canvasGroup == null)
             {
@@ -142,6 +148,77 @@ namespace LAB2D.UI
             {
                 return true;
             }
+        }
+
+        /// <summary>
+        /// 确保运行时存在 WeatherGameplayHUD。挂载到 UIRoot/Foreground 下。
+        /// </summary>
+        public static WeatherGameplayHUD EnsureRuntimePanel()
+        {
+            GameObject existing = GameObject.Find(HudRootName);
+            if (existing != null)
+            {
+                WeatherGameplayHUD existingHud = existing.GetComponent<WeatherGameplayHUD>();
+                if (existingHud != null)
+                {
+                    HudFactory.RepairExisting(existingHud, InputKeyConstant.ToggleWeatherHud);
+                    existingHud.UpdateDisplay(WeatherGameplayEffect.Instance?.CurrentState);
+                    return existingHud;
+                }
+            }
+
+            Transform parent = HudFactory.FindHudParent();
+            GameObject root = CreatePanelRoot(parent);
+            WeatherGameplayHUD hud = root.GetComponent<WeatherGameplayHUD>();
+            hud.UpdateDisplay(WeatherGameplayEffect.Instance?.CurrentState);
+            return hud;
+        }
+
+        private static GameObject CreatePanelRoot(Transform parent)
+        {
+            GameObject root = new GameObject(
+                HudRootName,
+                typeof(RectTransform),
+                typeof(CanvasGroup),
+                typeof(WeatherGameplayHUD));
+            root.transform.SetParent(parent, false);
+
+            RectTransform rootRect = root.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0.0f, 1.0f);
+            rootRect.anchorMax = new Vector2(0.0f, 1.0f);
+            rootRect.pivot = new Vector2(0.0f, 1.0f);
+            rootRect.anchoredPosition = new Vector2(20.0f, -96.0f);
+            rootRect.sizeDelta = new Vector2(360.0f, 86.0f);
+
+            GameObject background = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            background.transform.SetParent(root.transform, false);
+            RectTransform bgRect = background.GetComponent<RectTransform>();
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.offsetMin = Vector2.zero;
+            bgRect.offsetMax = Vector2.zero;
+            background.GetComponent<Image>().color = PixelUITheme.DialogBoxBg;
+
+            GameObject textObj = new GameObject("WeatherText", typeof(RectTransform), typeof(Text));
+            textObj.transform.SetParent(root.transform, false);
+            RectTransform textRect = textObj.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = new Vector2(12.0f, 8.0f);
+            textRect.offsetMax = new Vector2(-12.0f, -8.0f);
+
+            Text text = textObj.GetComponent<Text>();
+            text.font = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
+            text.fontSize = 18;
+            text.alignment = TextAnchor.MiddleLeft;
+            text.supportRichText = true;
+            text.color = PixelUITheme.TextPrimary;
+            text.text = "天气: 等待运行时数据";
+
+            WeatherGameplayHUD hud = root.GetComponent<WeatherGameplayHUD>();
+            hud.effectText = text;
+            hud.SetVisible(true);
+            return root;
         }
     }
 }
