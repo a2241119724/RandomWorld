@@ -134,69 +134,9 @@ namespace LAB2D
         public void Update()
         {
             this.WorkerUpdate();
-
-            // 全局输入处理（ESC 面板切换、鼠标点击关闭物品信息）
             GlobalInputProcessor.ProcessInput();
-
-            // 成就系统：更新进度、检查解锁、F7 切换面板
-            this.ProcessAchievements();
-
-            // 殖民地指挥中心 HUD 切换 (F10)
-            this.ProcessColonyCommandHud();
-
             EnvironmentManager.Instance.UpdateEnergy();
-
-            // 玩家生命危险提示
             PlayerVitalAlertManager.Instance.Tick();
-        }
-
-        /// <summary>
-        /// 成就系统每帧轮询：更新进度、展示待解锁弹窗、F7 切换面板。
-        /// </summary>
-        private void ProcessAchievements()
-        {
-            AchievementManager mgr = AchievementManager.Instance;
-            if (mgr == null || !mgr.IsInitialized)
-            {
-                return;
-            }
-
-            mgr.UpdateProgressAll();
-
-            // 检查是否有待展示的解锁弹窗
-            if (mgr.HasPendingUnlock)
-            {
-                AchievementData pending = mgr.PeekPendingUnlock();
-                if (pending != null && AchievementPopup.RuntimeInstance != null)
-                {
-                    AchievementPopup.RuntimeInstance.Show(pending);
-                }
-            }
-
-            // F7 切换成就面板
-            if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleWorkerTaskAndAchievementHud))
-            {
-                AchievementPanel.RuntimeInstance?.TogglePanel();
-            }
-        }
-
-        /// <summary>
-        /// 殖民地指挥中心 HUD 显示/隐藏 (F8)。
-        /// 通过 GlobalInit 统一处理以避免 HUD 因父节点 inactive 导致 Update 不执行。
-        /// </summary>
-        private void ProcessColonyCommandHud()
-        {
-            if (Input.GetKeyDown(InputKeyConstant.ToggleColonyCommandCenterHud))
-            {
-                GameObject hudObj = GameObject.Find(ColonyCommandCenterConstant.HudRootName);
-                if (hudObj == null)
-                {
-                    ColonyCommandCenterHUD.EnsureRuntimePanel();
-                    return;
-                }
-
-                hudObj.SetActive(!hudObj.activeSelf);
-            }
         }
 
         /// <summary>
