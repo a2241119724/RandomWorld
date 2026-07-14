@@ -11,7 +11,7 @@ namespace LAB2D.Gameplay
     /// 负责按固定间隔聚合 Worker 人力、任务队列、补给缺口、任务拥堵和阻塞诊断，并向 HUD、Tip 和 Editor 菜单提供只读报告。
     /// 本类不修改任务优先级、不新增或取消任务、不写入存档、不参与 Photon 同步。
     /// </summary>
-    public class ColonyCommandCenterManager : Singleton<ColonyCommandCenterManager>
+    public class ColonyCommandCenterManager : Singleton<ColonyCommandCenterManager>, IColonyCommandCenterService
     {
         private ColonyCommandCenterReport currentReport;
         private string lastSignature = string.Empty;

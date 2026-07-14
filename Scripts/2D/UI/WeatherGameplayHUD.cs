@@ -56,9 +56,9 @@ namespace LAB2D.UI
         {
             try
             {
-                WeatherGameplayEffect effect = WeatherGameplayEffect.Instance;
-                effect.OnWeatherEffectChanged += this.HandleWeatherChanged;
-                this.UpdateDisplay(effect.CurrentState);
+                IWeatherGameplayService weather = ServiceLocator.Get<IWeatherGameplayService>();
+                weather.OnWeatherEffectChanged += this.HandleWeatherChanged;
+                this.UpdateDisplay(weather.CurrentState);
             }
             catch (Exception exception)
             {
@@ -70,7 +70,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WeatherGameplayEffect.Instance.OnWeatherEffectChanged -= this.HandleWeatherChanged;
+                ServiceLocator.Get<IWeatherGameplayService>().OnWeatherEffectChanged -= this.HandleWeatherChanged;
             }
             catch (Exception)
             {
@@ -88,7 +88,7 @@ namespace LAB2D.UI
             if (Time.unscaledTime >= this.nextRefreshTime)
             {
                 this.nextRefreshTime = Time.unscaledTime + Mathf.Max(0.1f, this.refreshInterval);
-                this.UpdateDisplay(WeatherGameplayEffect.Instance.CurrentState);
+                this.UpdateDisplay(ServiceLocator.Get<IWeatherGameplayService>().CurrentState);
             }
         }
 
@@ -162,7 +162,7 @@ namespace LAB2D.UI
                 if (existingHud != null)
                 {
                     HudFactory.RepairExisting(existingHud, InputKeyConstant.ToggleWeatherHud);
-                    existingHud.UpdateDisplay(WeatherGameplayEffect.Instance?.CurrentState);
+                    existingHud.UpdateDisplay(ServiceLocator.Get<IWeatherGameplayService>()?.CurrentState);
                     return existingHud;
                 }
             }
@@ -170,7 +170,7 @@ namespace LAB2D.UI
             Transform parent = HudFactory.FindHudParent();
             GameObject root = CreatePanelRoot(parent);
             WeatherGameplayHUD hud = root.GetComponent<WeatherGameplayHUD>();
-            hud.UpdateDisplay(WeatherGameplayEffect.Instance?.CurrentState);
+            hud.UpdateDisplay(ServiceLocator.Get<IWeatherGameplayService>()?.CurrentState);
             return hud;
         }
 

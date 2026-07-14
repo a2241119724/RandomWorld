@@ -35,7 +35,8 @@ namespace LAB2D.Data
         {
             if (this.CurEnergy <= this.MaxEnergy)
             {
-                float recovery = Time.deltaTime * WeatherGameplayEffect.Instance.EnergyRecoveryMultiplier;
+                IWeatherGameplayService weather = ServiceLocator.Get<IWeatherGameplayService>();
+                float recovery = Time.deltaTime * weather.EnergyRecoveryMultiplier;
                 this.CurEnergy = Mathf.Min(this.MaxEnergy, this.CurEnergy + recovery);
             }
         }

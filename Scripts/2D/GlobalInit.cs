@@ -109,8 +109,10 @@ namespace LAB2D
             ServiceLocator.Register(WorkerTaskCongestionAdvisor.Instance);
             ServiceLocator.Register(WorkerEfficiencyTracker.Instance);
             ServiceLocator.Register(ColonyCommandCenterManager.Instance);
+            ServiceLocator.Register<IColonyCommandCenterService>(ColonyCommandCenterManager.Instance);
             ServiceLocator.Register(ItemCollectionTracker.Instance);
             ServiceLocator.Register(WeatherGameplayEffect.Instance);
+            ServiceLocator.Register<IWeatherGameplayService>(WeatherGameplayEffect.Instance);
 
             // UI 服务
             ServiceLocator.Register(PanelController.Instance);

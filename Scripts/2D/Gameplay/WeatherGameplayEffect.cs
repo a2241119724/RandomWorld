@@ -13,7 +13,7 @@ namespace LAB2D.Gameplay
     /// 根据 WeatherManager 的当前天气，为移动速度、工人工作进度和环境灵气恢复提供运行时倍率。
     /// 本类不修改存档结构，不写入资源，不参与 Photon 同步。
     /// </summary>
-    public class WeatherGameplayEffect : Singleton<WeatherGameplayEffect>
+    public class WeatherGameplayEffect : Singleton<WeatherGameplayEffect>, IWeatherGameplayService
     {
         private WeatherManager.WeatherTypeEnum currentWeather = WeatherManager.WeatherTypeEnum.Sunny;
         private WeatherGameplayState currentState;

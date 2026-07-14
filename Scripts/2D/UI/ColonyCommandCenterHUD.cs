@@ -237,7 +237,7 @@ namespace LAB2D.UI
         {
             try
             {
-                ColonyCommandCenterManager.Instance.OnCommandReportChanged += this.HandleCommandReportChanged;
+                ServiceLocator.Get<IColonyCommandCenterService>().OnCommandReportChanged += this.HandleCommandReportChanged;
             }
             catch (Exception exception)
             {
@@ -252,7 +252,7 @@ namespace LAB2D.UI
         {
             try
             {
-                ColonyCommandCenterManager.Instance.OnCommandReportChanged -= this.HandleCommandReportChanged;
+                ServiceLocator.Get<IColonyCommandCenterService>().OnCommandReportChanged -= this.HandleCommandReportChanged;
             }
             catch (Exception)
             {
@@ -311,7 +311,7 @@ namespace LAB2D.UI
         {
             try
             {
-                this.ApplyReport(ColonyCommandCenterManager.Instance.Refresh(false));
+                this.ApplyReport(ServiceLocator.Get<IColonyCommandCenterService>().Refresh(false));
             }
             catch (Exception exception)
             {
