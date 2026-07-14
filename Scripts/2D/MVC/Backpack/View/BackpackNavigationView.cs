@@ -1,14 +1,10 @@
 namespace LAB2D.MVC.Backpack.View
 {
-    using LAB2D;
     /// <summary>
-    /// 背包导航按钮UI
+    /// 背包导航按钮UI。
     /// </summary>
     public class BackpackNavigationView : MVCNavigationView
     {
-        /// <summary>
-        /// 单例
-        /// </summary>
         public static BackpackNavigationView Instance { get; private set; }
 
         public void Awake()
@@ -24,7 +20,7 @@ namespace LAB2D.MVC.Backpack.View
         /// <inheritdoc/>
         protected override void Init()
         {
-            BackpackMenuPanel.Instance.Select.Init();
+            // 选择逻辑已迁移至 BackpackController.OnSelectItem
         }
 
         private void OnEnable()

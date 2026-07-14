@@ -1,8 +1,7 @@
 namespace LAB2D.MVC.Build.View
 {
-    using LAB2D;
     /// <summary>
-    /// 建造导航按钮UI
+    /// 建造导航按钮UI。
     /// </summary>
     public class BuildNavigationView : MVCNavigationView
     {
@@ -14,7 +13,7 @@ namespace LAB2D.MVC.Build.View
         /// <inheritdoc/>
         protected override void Init()
         {
-            BuildMenuPanel.Instance.Select.Init();
+            // 选择逻辑已迁移至 BuildController.OnSelectItem
         }
 
         private void OnEnable()
