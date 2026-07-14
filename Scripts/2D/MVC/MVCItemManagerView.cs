@@ -47,6 +47,11 @@ namespace LAB2D.MVC
         /// </summary>
         public event Action<AItem> ShowInfo;
 
+        /// <summary>
+        /// 选择道具
+        /// </summary>
+        public event Action<int, AItem> SelectItem;
+
         public virtual void Awake()
         {
             this.content = this.transform.GetComponent<ScrollRect>().content;
@@ -180,6 +185,10 @@ namespace LAB2D.MVC
                 itemView.ShowInfo += (AItem a) =>
                 {
                     this.ShowInfo(a);
+                };
+                itemView.SelectItem += (int idx, AItem a) =>
+                {
+                    this.SelectItem?.Invoke(idx, a);
                 };
 
                 this.ItemsView.Add(itemView);

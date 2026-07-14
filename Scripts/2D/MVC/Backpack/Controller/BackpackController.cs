@@ -45,5 +45,12 @@ namespace LAB2D.MVC.Backpack.Controller
                 }
             }
         }
+
+        /// <inheritdoc/>
+        protected override void OnSelectItem(int index, AItem item)
+        {
+            BackpackMenuPanel.Instance.Select.SelectItemIndex = index;
+            BackpackMenuPanel.Instance.Select.Item = item as ABackpackItem;
+        }
     }
 }

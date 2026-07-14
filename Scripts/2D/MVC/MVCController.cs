@@ -52,6 +52,7 @@ namespace LAB2D.MVC
             this.itemManagerView.SetBorderColor += this.SetBorderColor;
             this.itemManagerView.GetItem += this.GetItem;
             this.itemManagerView.ShowInfo += this.ShowInfo;
+            this.itemManagerView.SelectItem += this.OnSelectItem;
             this.model = new M();
             this.btnOriginColor = this.navigationView.GetComponentsInChildren<Button>()[0].GetComponent<RoundCorner>().color;
             this.SetBorderColor(0, "navigation");
@@ -181,6 +182,16 @@ namespace LAB2D.MVC
         public void ReduceQuantityUI(AItem item)
         {
             this.itemManagerView.ReduceQuantityUI(this.GetIndex(item));
+        }
+
+        /// <summary>
+        /// 选择道具回调 — 子类可重写以更新 Panel 状态。
+        /// 基类默认不做任何 Panel 操作，保持 MVC 分层干净。
+        /// </summary>
+        /// <param name="index">道具索引。</param>
+        /// <param name="item">选中的道具。</param>
+        protected virtual void OnSelectItem(int index, AItem item)
+        {
         }
 
         /// <summary>

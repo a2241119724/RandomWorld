@@ -35,5 +35,12 @@ namespace LAB2D.MVC.Build.Controller
                 }
             }
         }
+
+        /// <inheritdoc/>
+        protected override void OnSelectItem(int index, AItem item)
+        {
+            BuildMenuPanel.Instance.Select.SelectItemIndex = index;
+            BuildMenuPanel.Instance.Select.Item = item as ABuildItem;
+        }
     }
 }

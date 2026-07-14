@@ -42,6 +42,12 @@ namespace LAB2D.MVC
         public event Action<AItem> ShowInfo;
 
         /// <summary>
+        /// 选择道具 — View 通知 Controller 用户选中了某个道具。
+        /// 由 Controller 负责更新 Panel 状态，View 不直接依赖 Panel 单例。
+        /// </summary>
+        public event Action<int, AItem> SelectItem;
+
+        /// <summary>
         /// 是否可以拖拽
         /// </summary>
         public bool IsDrag { get; set; }
@@ -137,15 +143,8 @@ namespace LAB2D.MVC
             int i = this.transform.parent.GetSiblingIndex();
             AItem item = this.GetItem(i);
             this.ShowInfo(item);
-            this.SetSelect(i, item);
+            this.SelectItem?.Invoke(i, item);
         }
-
-        /// <summary>
-        /// 设置选择的道具
-        /// </summary>
-        /// <param name="i">道具索引</param>
-        /// <param name="item">道具</param>
-        public abstract void SetSelect(int i, AItem item);
 
         public void Awake()
         {
