@@ -1,6 +1,5 @@
 namespace LAB2D.Domain.Gameplay
 {
-    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
@@ -77,7 +76,7 @@ namespace LAB2D.Domain.Gameplay
         /// <param name="context">外部依赖上下文（开关检查、可达性、物资查询等）。</param>
         /// <returns>任务分配诊断报告；输入为空时返回可展示的降级报告。</returns>
         public WorkerTaskAssignmentReport BuildAssignmentReport(
-            IReadOnlyList<Dictionary<AWorkerTask, bool>> priorityTaskGroups,
+            IReadOnlyList<Dictionary<IWorkerTaskInfo, bool>> priorityTaskGroups,
             IReadOnlyList<WorkerAgentSnapshot> workers,
             ColonyDiagnosticContext context)
         {
@@ -98,15 +97,15 @@ namespace LAB2D.Domain.Gameplay
 
                 for (int i = 0; i < priorityTaskGroups.Count; i++)
                 {
-                    Dictionary<AWorkerTask, bool> taskGroup = priorityTaskGroups[i];
+                    Dictionary<IWorkerTaskInfo, bool> taskGroup = priorityTaskGroups[i];
                     if (taskGroup == null)
                     {
                         continue;
                     }
 
-                    foreach (KeyValuePair<AWorkerTask, bool> pair in taskGroup)
+                    foreach (KeyValuePair<IWorkerTaskInfo, bool> pair in taskGroup)
                     {
-                        AWorkerTask task = pair.Key;
+                        IWorkerTaskInfo task = pair.Key;
                         if (task == null)
                         {
                             continue;
@@ -166,7 +165,7 @@ namespace LAB2D.Domain.Gameplay
         /// <param name="context">外部依赖上下文。</param>
         /// <returns>阻塞原因；没有明显阻塞时返回 None。</returns>
         public WorkerTaskBlockReason ResolveWaitingTaskReason(
-            AWorkerTask task,
+            IWorkerTaskInfo task,
             IReadOnlyList<WorkerAgentSnapshot> idleWorkers,
             IReadOnlyList<WorkerAgentSnapshot> allWorkers,
             ColonyDiagnosticContext context)
@@ -205,7 +204,7 @@ namespace LAB2D.Domain.Gameplay
         /// <param name="candidateWorker">通过公共门槛的候选 Worker 快照。</param>
         /// <returns>公共阻塞原因；存在候选 Worker 时返回 None。</returns>
         public WorkerTaskBlockReason ResolveCommonWorkerGate(
-            AWorkerTask task,
+            IWorkerTaskInfo task,
             IReadOnlyList<WorkerAgentSnapshot> idleWorkers,
             ColonyDiagnosticContext context,
             out WorkerAgentSnapshot candidateWorker)
@@ -273,7 +272,7 @@ namespace LAB2D.Domain.Gameplay
         /// <param name="context">外部依赖上下文。</param>
         /// <returns>专属阻塞原因；没有明显阻塞时返回 None。</returns>
         public WorkerTaskBlockReason ResolveTaskSpecificReason(
-            AWorkerTask task,
+            IWorkerTaskInfo task,
             WorkerAgentSnapshot workerSnapshot,
             IReadOnlyList<WorkerAgentSnapshot> allWorkers,
             ColonyDiagnosticContext context)
@@ -314,7 +313,7 @@ namespace LAB2D.Domain.Gameplay
         /// <param name="context">外部依赖上下文。</param>
         /// <returns>材料不足或无阻塞。</returns>
         public WorkerTaskBlockReason ResolveBuildTaskReason(
-            AWorkerTask task,
+            IWorkerTaskInfo task,
             WorkerAgentSnapshot workerSnapshot,
             ColonyDiagnosticContext context)
         {
@@ -346,7 +345,7 @@ namespace LAB2D.Domain.Gameplay
         /// <param name="context">外部依赖上下文。</param>
         /// <returns>仓库已满或无阻塞。</returns>
         public WorkerTaskBlockReason ResolveCarryTaskReason(
-            AWorkerTask task,
+            IWorkerTaskInfo task,
             WorkerAgentSnapshot workerSnapshot,
             ColonyDiagnosticContext context)
         {
@@ -378,7 +377,7 @@ namespace LAB2D.Domain.Gameplay
         /// <param name="context">外部依赖上下文。</param>
         /// <returns>食物不可用、工人不饿或无阻塞。</returns>
         public WorkerTaskBlockReason ResolveHungryTaskReason(
-            AWorkerTask task,
+            IWorkerTaskInfo task,
             WorkerAgentSnapshot workerSnapshot,
             ColonyDiagnosticContext context)
         {
@@ -413,7 +412,7 @@ namespace LAB2D.Domain.Gameplay
         /// <param name="context">外部依赖上下文。</param>
         /// <returns>绑定 Worker 不可用、缺床、状态未满足或无阻塞。</returns>
         public WorkerTaskBlockReason ResolveBoundWorkerTaskReason(
-            AWorkerTask task,
+            IWorkerTaskInfo task,
             string fieldName,
             bool requiresBed,
             IReadOnlyList<WorkerAgentSnapshot> allWorkers,
@@ -486,7 +485,7 @@ namespace LAB2D.Domain.Gameplay
         /// <param name="task">待诊断任务。</param>
         /// <param name="context">外部依赖上下文。</param>
         /// <returns>可达时返回 true。</returns>
-        public bool IsTaskTargetReachable(AWorkerTask task, ColonyDiagnosticContext context)
+        public bool IsTaskTargetReachable(IWorkerTaskInfo task, ColonyDiagnosticContext context)
         {
             if (task == null || task.TaskType == WorkerTaskType.Exercise)
             {
@@ -768,13 +767,13 @@ namespace LAB2D.Domain.Gameplay
         public System.Func<long, WorkerTaskType, bool> IsTaskToggleEnabled;
 
         /// <summary>获取建造任务所需材料字典的委托。</summary>
-        public System.Func<AWorkerTask, Dictionary<int, ResourceInfo>> GetBuildNeeds;
+        public System.Func<IWorkerTaskInfo, Dictionary<int, ResourceInfo>> GetBuildNeeds;
 
         /// <summary>检查能否满足材料需求的委托。参数：workerId, needs。返回：材料是否足够。</summary>
         public System.Func<long, Dictionary<int, ResourceInfo>, bool> CanFulfillMaterials;
 
         /// <summary>获取搬运任务资源信息的委托。</summary>
-        public System.Func<AWorkerTask, ResourceInfo> GetCarryResourceInfo;
+        public System.Func<IWorkerTaskInfo, ResourceInfo> GetCarryResourceInfo;
 
         /// <summary>检查仓库是否有空间的委托。参数：workerId, resourceInfo。返回：是否可放置。</summary>
         public System.Func<long, ResourceInfo, bool> CanPlaceInInventory;
@@ -789,12 +788,12 @@ namespace LAB2D.Domain.Gameplay
         public System.Func<long, bool> HasBed;
 
         /// <summary>获取任务绑定的 Worker ID 的委托。参数：task, fieldName。返回：绑定 Worker 的 ID，0 表示无。</summary>
-        public System.Func<AWorkerTask, string, long> GetBoundWorkerId;
+        public System.Func<IWorkerTaskInfo, string, long> GetBoundWorkerId;
 
         /// <summary>获取任务目标位置的委托。将外层 Vector3IntLAB 转换为 Domain 的 GameGridPosition。</summary>
-        public System.Func<AWorkerTask, GameGridPosition> GetTaskTargetPosition;
+        public System.Func<IWorkerTaskInfo, GameGridPosition> GetTaskTargetPosition;
 
         /// <summary>获取任务可用邻居位置列表的委托。转换为 Domain 的 GameGridPosition 列表。</summary>
-        public System.Func<AWorkerTask, List<GameGridPosition>> GetTaskNeighborPositions;
+        public System.Func<IWorkerTaskInfo, List<GameGridPosition>> GetTaskNeighborPositions;
     }
 }

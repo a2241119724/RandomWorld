@@ -67,7 +67,31 @@ namespace LAB2D.Tool
             }
 
             ColonyDiagnosticContext context = BuildDiagnosticContext(workerMap);
-            return RuleService.BuildAssignmentReport(priorityTaskGroups, snapshots, context);
+
+            // 将 Dictionary<AWorkerTask, bool> 转换为 Domain 接口类型
+            List<Dictionary<IWorkerTaskInfo, bool>> convertedGroups = null;
+            if (priorityTaskGroups != null)
+            {
+                convertedGroups = new List<Dictionary<IWorkerTaskInfo, bool>>();
+                for (int i = 0; i < priorityTaskGroups.Count; i++)
+                {
+                    Dictionary<AWorkerTask, bool> group = priorityTaskGroups[i];
+                    if (group == null)
+                    {
+                        continue;
+                    }
+
+                    Dictionary<IWorkerTaskInfo, bool> converted = new Dictionary<IWorkerTaskInfo, bool>();
+                    foreach (KeyValuePair<AWorkerTask, bool> pair in group)
+                    {
+                        converted[pair.Key] = pair.Value;
+                    }
+
+                    convertedGroups.Add(converted);
+                }
+            }
+
+            return RuleService.BuildAssignmentReport(convertedGroups, snapshots, context);
         }
 
         /// <summary>
@@ -501,12 +525,13 @@ namespace LAB2D.Tool
             // 将 AWorkerTask 的位置字段转换为 Domain GameGridPosition
             context.GetTaskTargetPosition = task =>
             {
-                if (task == null || task.TargetMap == null)
+                AWorkerTask workerTask = task as AWorkerTask;
+                if (workerTask == null || workerTask.TargetMap == null)
                 {
                     return default;
                 }
 
-                Vector3IntLAB v = task.TargetMap;
+                Vector3IntLAB v = workerTask.TargetMap;
                 return new GameGridPosition(v.X, v.Y, v.Z);
             };
 
@@ -514,11 +539,12 @@ namespace LAB2D.Tool
             context.GetTaskNeighborPositions = task =>
             {
                 List<GameGridPosition> result = new List<GameGridPosition>();
-                if (task != null && task.AvailableNeighborPos != null)
+                AWorkerTask workerTask = task as AWorkerTask;
+                if (workerTask != null && workerTask.AvailableNeighborPos != null)
                 {
-                    for (int i = 0; i < task.AvailableNeighborPos.Count; i++)
+                    for (int i = 0; i < workerTask.AvailableNeighborPos.Count; i++)
                     {
-                        Vector3IntLAB v = task.AvailableNeighborPos[i];
+                        Vector3IntLAB v = workerTask.AvailableNeighborPos[i];
                         if (v != null)
                         {
                             result.Add(new GameGridPosition(v.X, v.Y, v.Z));

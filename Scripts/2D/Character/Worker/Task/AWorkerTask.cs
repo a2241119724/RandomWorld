@@ -14,7 +14,7 @@ namespace LAB2D.Character.Worker.Task
     /// Worker任务
     /// </summary>
     [Serializable]
-    public abstract class AWorkerTask : IWorkerTask
+    public abstract class AWorkerTask : IWorkerTask, IWorkerTaskInfo
     {
         /// <summary>
         /// Worker在工作时的位置（上下左右）
