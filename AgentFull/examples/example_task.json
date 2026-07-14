@@ -1,9 +1,0 @@
-{
-  "task": "auto_discover_and_implement",
-  "description": "自动扫描 Unity 项目，发现一个低风险游戏开发辅助功能，并生成对应代码和报告。",
-  "constraints": [
-    "不要直接修改已有 Unity 文件",
-    "优先生成只读 Editor 工具",
-    "所有输出放到 AgentFull/reports 下"
-  ]
-}
