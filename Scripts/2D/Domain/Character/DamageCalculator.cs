@@ -1,6 +1,5 @@
 namespace LAB2D.Domain.Character
 {
-    using LAB2D;
     /// <summary>
     /// 角色适配器共享的纯伤害与生命值算术规则。
     /// </summary>

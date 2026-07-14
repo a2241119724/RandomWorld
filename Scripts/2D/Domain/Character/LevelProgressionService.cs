@@ -1,6 +1,5 @@
 namespace LAB2D.Domain.Character
 {
-    using LAB2D;
     /// <summary>
     /// 纯角色等级升级规则。
     /// </summary>

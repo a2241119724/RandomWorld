@@ -4,6 +4,7 @@ namespace LAB2D
     using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
+    using LAB2D.UnityAdapter;
     using UnityEngine;
 
     /// <summary>
@@ -43,6 +44,18 @@ namespace LAB2D
         {
             // 基础设施服务
             ServiceLocator.Register<ITipService>(this);
+
+            // Domain 抽象适配器 — 将 Unity 引擎 API 包装为 Domain 接口
+            ServiceLocator.Register<IGameTime>(new UnityGameTime());
+            ServiceLocator.Register<IGameLogger>(new UnityLogger());
+            ServiceLocator.Register<IEnemySpawnService>(new UnityEnemySpawnAdapter());
+            ServiceLocator.Register<IItemDefinitionProvider>(new UnityItemDefinitionAdapter());
+
+            // UnityMapAdapter 同时实现两个地图接口，注册同一实例
+            UnityMapAdapter mapAdapter = new UnityMapAdapter();
+            ServiceLocator.Register<IMapWalkabilityQuery>(mapAdapter);
+            ServiceLocator.Register<IMapSpawnPointProvider>(mapAdapter);
+
             ServiceLocator.Register(LogManager.Instance);
             ServiceLocator.Register(ResourceManager.Instance);
             ServiceLocator.Register(CoroutineManager.Instance);

@@ -1,6 +1,5 @@
 namespace LAB2D.Domain.Gameplay
 {
-    using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
@@ -18,6 +17,10 @@ namespace LAB2D.Domain.Gameplay
     public sealed class ColonyCommandCenterRuleService
     {
         private readonly WorkerConditionRuleService conditionRuleService = new WorkerConditionRuleService();
+
+        // Worker 阈值常量（与 AWorker 和 WorkerSupplyRuleService 保持一致）
+        private const float ThresholdHungry = 20.0f;
+        private const float ThresholdTired = 20.0f;
 
         public float ClampRefreshInterval(float interval)
         {
@@ -236,7 +239,7 @@ namespace LAB2D.Domain.Gameplay
                 }
 
                 hasToggleEnabled = true;
-                if (snapshot.CurHungry < AWorker.ThresholdHungry &&
+                if (snapshot.CurHungry < ThresholdHungry &&
                     task.TaskType != WorkerTaskType.Eat)
                 {
                     continue;
@@ -287,37 +290,25 @@ namespace LAB2D.Domain.Gameplay
         {
             try
             {
-                if (task is WorkerBuildTask)
+                switch (task.TaskType)
                 {
-                    return ResolveBuildTaskReason(task, workerSnapshot, context);
+                    case WorkerTaskType.Build:
+                        return ResolveBuildTaskReason(task, workerSnapshot, context);
+                    case WorkerTaskType.Carry:
+                        return ResolveCarryTaskReason(task, workerSnapshot, context);
+                    case WorkerTaskType.Eat:
+                        return ResolveHungryTaskReason(task, workerSnapshot, context);
+                    case WorkerTaskType.Sleep:
+                        return ResolveBoundWorkerTaskReason(task, "worker", true, allWorkers, context);
+                    case WorkerTaskType.Plant:
+                        return ResolvePlantTaskReason(workerSnapshot, context);
+                    case WorkerTaskType.Wear:
+                    case WorkerTaskType.Exercise:
+                        return ResolveBoundWorkerTaskReason(task, "worker", false, allWorkers, context);
+                    default:
+                        // Gather 等任务类型无需专属阻塞原因检查
+                        return WorkerTaskBlockReason.None;
                 }
-
-                if (task is WorkerCarryTask)
-                {
-                    return ResolveCarryTaskReason(task, workerSnapshot, context);
-                }
-
-                if (task is WorkerHungryTask)
-                {
-                    return ResolveHungryTaskReason(task, workerSnapshot, context);
-                }
-
-                if (task is WorkerSleepTask)
-                {
-                    return ResolveBoundWorkerTaskReason(task, "worker", true, allWorkers, context);
-                }
-
-                if (task is WorkerPlantTask)
-                {
-                    return ResolvePlantTaskReason(workerSnapshot, context);
-                }
-
-                if (task is WorkerWearTask || task is WorkerExerciseTask)
-                {
-                    return ResolveBoundWorkerTaskReason(task, "worker", false, allWorkers, context);
-                }
-
-                return WorkerTaskBlockReason.None;
             }
             catch
             {
@@ -406,7 +397,7 @@ namespace LAB2D.Domain.Gameplay
                 return WorkerTaskBlockReason.WorkerBusy;
             }
 
-            if (workerSnapshot.CurHungry > AWorker.ThresholdHungry)
+            if (workerSnapshot.CurHungry > ThresholdHungry)
             {
                 return WorkerTaskBlockReason.WorkerNotReady;
             }
@@ -466,7 +457,7 @@ namespace LAB2D.Domain.Gameplay
                     return WorkerTaskBlockReason.MissingBed;
                 }
 
-                if (boundSnapshot.CurTired >= AWorker.ThresholdTired)
+                if (boundSnapshot.CurTired >= ThresholdTired)
                 {
                     return WorkerTaskBlockReason.WorkerNotReady;
                 }

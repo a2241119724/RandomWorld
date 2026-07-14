@@ -3,6 +3,7 @@ namespace LAB2D.Tool
     using LAB2D;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
     using LAB2D.Domain.Worker;
@@ -356,8 +357,8 @@ namespace LAB2D.Tool
         {
             ColonyDiagnosticContext context = new ColonyDiagnosticContext();
 
-            // 地图可达性查询适配器
-            context.MapQuery = new BuildMapWalkabilityQuery();
+            // 地图可达性查询 — 通过 ServiceLocator 解析 Domain 接口
+            context.MapQuery = ServiceLocator.Get<IMapWalkabilityQuery>();
 
             // 任务开关检查
             context.IsTaskToggleEnabled = (workerId, taskType) =>
@@ -524,9 +525,6 @@ namespace LAB2D.Tool
         }
 
         /// <summary>
-        /// BuildMap 可达性查询适配器，将 IMapWalkabilityQuery 接口适配到 BuildMap.Instance。
-        /// </summary>
-        /// <summary>
         /// 生成 WorkerTaskAssignmentReport 的纯文本摘要（扩展方法，表现层）。
         /// </summary>
         public static string ToPlainText(this WorkerTaskAssignmentReport report)
@@ -590,17 +588,5 @@ namespace LAB2D.Tool
                 $"{GetBlockReasonName(detail.Reason)}";
         }
 
-        private sealed class BuildMapWalkabilityQuery : IMapWalkabilityQuery
-        {
-            public bool IsCanReach(GameGridPosition position)
-            {
-                if (BuildMap.Instance == null)
-                {
-                    return false;
-                }
-
-                return BuildMap.Instance.IsCanReach(new Vector3Int(position.X, position.Y, position.Z));
-            }
-        }
     }
 }
