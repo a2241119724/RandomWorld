@@ -14,5 +14,8 @@ namespace LAB2D.Gameplay
 
         /// <summary>立即刷新并返回指挥报告。</summary>
         ColonyCommandCenterReport Refresh(bool allowTip);
+
+        /// <summary>每帧 Tick，由 WorkerUpdateSystem 驱动。</summary>
+        void Tick();
     }
 }

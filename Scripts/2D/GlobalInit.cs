@@ -96,6 +96,7 @@ namespace LAB2D
             ServiceLocator.Register(WaveBossRewardManager.Instance);
             ServiceLocator.Register(AchievementManager.Instance);
             ServiceLocator.Register(SkillManager.Instance);
+            ServiceLocator.Register<ISkillManager>(SkillManager.Instance);
             ServiceLocator.Register(ComboBonusManager.Instance);
             ServiceLocator.Register(DeathPenaltyManager.Instance);
             ServiceLocator.Register(EnemyLootManager.Instance);
@@ -104,9 +105,13 @@ namespace LAB2D
             ServiceLocator.Register(GameplaySessionStats.Instance);
             ServiceLocator.Register(SessionResultManager.Instance);
             ServiceLocator.Register(PlayerVitalAlertManager.Instance);
+            ServiceLocator.Register<IPlayerVitalAlertManager>(PlayerVitalAlertManager.Instance);
             ServiceLocator.Register(WorkerConditionManager.Instance);
+            ServiceLocator.Register<IWorkerConditionManager>(WorkerConditionManager.Instance);
             ServiceLocator.Register(WorkerSupplyIssueManager.Instance);
+            ServiceLocator.Register<IWorkerSupplyIssueManager>(WorkerSupplyIssueManager.Instance);
             ServiceLocator.Register(WorkerTaskCongestionAdvisor.Instance);
+            ServiceLocator.Register<IWorkerTaskCongestionAdvisor>(WorkerTaskCongestionAdvisor.Instance);
             ServiceLocator.Register(WorkerEfficiencyTracker.Instance);
             ServiceLocator.Register(ColonyCommandCenterManager.Instance);
             ServiceLocator.Register<IColonyCommandCenterService>(ColonyCommandCenterManager.Instance);
@@ -138,7 +143,7 @@ namespace LAB2D
             this.WorkerUpdate();
             GlobalInputProcessor.ProcessInput();
             EnvironmentManager.Instance.UpdateEnergy();
-            PlayerVitalAlertManager.Instance.Tick();
+            ServiceLocator.Get<IPlayerVitalAlertManager>().Tick();
         }
 
         /// <summary>

@@ -14,7 +14,7 @@ namespace LAB2D.Gameplay
     /// 负责只读读取任务队列快照，生成拥堵等级与玩家建议，并按冷却规则请求现有 Tip UI 展示。
     /// 本类不修改 Worker 任务优先级，不新增或取消任务，不写入存档，不参与 Photon 同步。
     /// </summary>
-    public class WorkerTaskCongestionAdvisor : Singleton<WorkerTaskCongestionAdvisor>
+    public class WorkerTaskCongestionAdvisor : Singleton<WorkerTaskCongestionAdvisor>, IWorkerTaskCongestionAdvisor
     {
         private WorkerTaskCongestionReport currentReport;
         private string lastSignature = string.Empty;

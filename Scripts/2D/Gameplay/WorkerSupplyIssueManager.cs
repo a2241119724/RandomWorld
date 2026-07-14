@@ -15,7 +15,7 @@ namespace LAB2D.Gameplay
     /// 负责只读汇总工人饥饿、疲劳、食物库存和床位绑定状态，并向 Tip、HUD 和 Editor 菜单提供补给缺口报告。
     /// 本类不修改存档结构，不预取或扣减食物，不分配床位，不参与 Photon 同步。
     /// </summary>
-    public class WorkerSupplyIssueManager : Singleton<WorkerSupplyIssueManager>
+    public class WorkerSupplyIssueManager : Singleton<WorkerSupplyIssueManager>, IWorkerSupplyIssueManager
     {
         private WorkerSupplyReport currentReport;
         private string lastSignature = string.Empty;

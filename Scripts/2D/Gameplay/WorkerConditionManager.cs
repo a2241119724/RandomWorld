@@ -14,7 +14,7 @@ namespace LAB2D.Gameplay
     /// 负责在运行时汇总 Worker 状态、派发状态变化事件、提供移动与工作效率倍率，并显示低状态提示。
     /// 本类不修改存档结构，不写入资源，不参与 Photon 同步。
     /// </summary>
-    public class WorkerConditionManager : Singleton<WorkerConditionManager>
+    public class WorkerConditionManager : Singleton<WorkerConditionManager>, IWorkerConditionManager
     {
         private readonly Dictionary<int, WorkerConditionSnapshot> snapshots;
         private readonly Dictionary<int, float> lastTipTimes;

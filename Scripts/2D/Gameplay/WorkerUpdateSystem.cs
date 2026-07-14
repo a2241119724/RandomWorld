@@ -42,14 +42,14 @@ namespace LAB2D.Gameplay
                         workerData.CurTired - (deltaTime * WorkerConditionConstant.TiredDecayPerSecond));
                 }
 
-                WorkerConditionManager.Instance.UpdateWorkerCondition(worker);
+                ServiceLocator.Get<IWorkerConditionManager>().UpdateWorkerCondition(worker);
             }
 
             // 子系统定时刷新（内部有节流控制）
-            WorkerSupplyIssueManager.Instance.Tick();
-            WorkerTaskCongestionAdvisor.Instance.Tick();
-            ColonyCommandCenterManager.Instance.Tick();
-            SkillManager.Instance.Tick();
+            ServiceLocator.Get<IWorkerSupplyIssueManager>().Tick();
+            ServiceLocator.Get<IWorkerTaskCongestionAdvisor>().Tick();
+            ServiceLocator.Get<IColonyCommandCenterService>().Tick();
+            ServiceLocator.Get<ISkillManager>().Tick();
             NearbyItemPickupHUD.Instance?.Tick();
         }
     }
