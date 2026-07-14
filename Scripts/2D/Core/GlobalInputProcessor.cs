@@ -19,6 +19,56 @@ namespace LAB2D.Core
         {
             ProcessCloseOrBuildMenu();
             ProcessMouseClickCloseItemInfo();
+            ProcessAchievements();
+            ProcessColonyCommandHud();
+        }
+
+        /// <summary>
+        /// 成就系统：更新进度、检查解锁、F7 切换面板。
+        /// </summary>
+        private static void ProcessAchievements()
+        {
+            AchievementManager mgr = AchievementManager.Instance;
+            if (mgr == null || !mgr.IsInitialized)
+            {
+                return;
+            }
+
+            mgr.UpdateProgressAll();
+
+            if (mgr.HasPendingUnlock)
+            {
+                AchievementData pending = mgr.PeekPendingUnlock();
+                if (pending != null && AchievementPopup.RuntimeInstance != null)
+                {
+                    AchievementPopup.RuntimeInstance.Show(pending);
+                }
+            }
+
+            if (!LAB2D.Tool.Tool.IsUIInputActive() &&
+                Input.GetKeyDown(InputKeyConstant.ToggleWorkerTaskAndAchievementHud))
+            {
+                AchievementPanel.RuntimeInstance?.TogglePanel();
+            }
+        }
+
+        /// <summary>
+        /// 殖民地指挥中心 HUD 显示/隐藏 (F10)。
+        /// 由 GlobalInit 统一分发以避免 HUD 父节点 inactive 导致 Update 不执行。
+        /// </summary>
+        private static void ProcessColonyCommandHud()
+        {
+            if (Input.GetKeyDown(InputKeyConstant.ToggleColonyCommandCenterHud))
+            {
+                GameObject hudObj = GameObject.Find(ColonyCommandCenterConstant.HudRootName);
+                if (hudObj == null)
+                {
+                    ColonyCommandCenterHUD.EnsureRuntimePanel();
+                    return;
+                }
+
+                hudObj.SetActive(!hudObj.activeSelf);
+            }
         }
 
         /// <summary>
