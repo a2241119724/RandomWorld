@@ -102,16 +102,16 @@ namespace LAB2D.Constant
         // ============================================================
 
         /// <summary>装备面板 Canvas 名称</summary>
-        public const string EquipmentPanelCanvasName = "Ambitious_A010_EquipmentPanel_Canvas";
+        public const string EquipmentPanelCanvasName = "EquipmentPanelCanvas";
 
         /// <summary>装备对比弹窗 Canvas 名称</summary>
-        public const string ComparePopupCanvasName = "Ambitious_A010_ComparePopup_Canvas";
+        public const string ComparePopupCanvasName = "ComparePopupCanvas";
 
         /// <summary>装备面板根节点名</summary>
-        public const string EquipmentPanelRootName = "Ambitious_A010_EquipmentPanel_Root";
+        public const string EquipmentPanelRootName = "EquipmentPanelRoot";
 
         /// <summary>对比弹窗根节点名</summary>
-        public const string ComparePopupRootName = "Ambitious_A010_ComparePopup_Root";
+        public const string ComparePopupRootName = "ComparePopupRoot";
 
         // ============================================================
         // Canvas 排序层级

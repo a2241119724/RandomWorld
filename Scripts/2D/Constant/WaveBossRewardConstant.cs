@@ -16,10 +16,10 @@ namespace LAB2D.Constant
         public const string GameSceneName = "Game";
 
         /// <summary>运行时独立 Canvas 名称。</summary>
-        public const string CanvasName = "Ambitious_A004_WaveBossReward_Canvas";
+        public const string CanvasName = "WaveBossRewardCanvas";
 
         /// <summary>奖励面板根节点名称。</summary>
-        public const string PanelRootName = "Ambitious_A004_WaveBossReward_Root";
+        public const string PanelRootName = "WaveBossRewardRoot";
 
         /// <summary>奖励面板标题节点名称。</summary>
         public const string TitleTextName = "WaveBossRewardTitle";
@@ -28,10 +28,10 @@ namespace LAB2D.Constant
         public const string SummaryTextName = "WaveBossRewardSummary";
 
         /// <summary>奖励按钮节点名称前缀。</summary>
-        public const string OptionButtonPrefix = "WaveBossRewardOption_";
+        public const string OptionButtonPrefix = "WaveBossRewardOption";
 
         /// <summary>奖励按钮文本节点名称前缀。</summary>
-        public const string OptionTextPrefix = "WaveBossRewardOptionText_";
+        public const string OptionTextPrefix = "WaveBossRewardOptionText";
 
         /// <summary>字体资源路径，使用项目现有中文像素字体。</summary>
         public const string FontResourcePath = "Font/ark-pixel-12px-monospaced-zh_cn";

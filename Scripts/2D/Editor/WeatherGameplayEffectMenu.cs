@@ -15,7 +15,7 @@ namespace LAB2D.Editor
     public static class WeatherGameplayEffectMenu
     {
         private const string MenuRoot = "工具/天气玩法影响/";
-        private const string HudRootName = "Feature_F012_WeatherGameplayHUD_Root";
+        private const string HudRootName = "WeatherGameplayHUDRoot";
         private const string HudTextName = "WeatherText";
 
         /// <summary>
@@ -182,7 +182,7 @@ namespace LAB2D.Editor
         /// <returns>新建 Canvas。</returns>
         private static Canvas CreateCanvas()
         {
-            GameObject canvasObject = new GameObject("Feature_F012_WeatherGameplay_Canvas");
+            GameObject canvasObject = new GameObject("WeatherGameplayHUDCanvas");
             Canvas canvas = canvasObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvasObject.AddComponent<CanvasScaler>();

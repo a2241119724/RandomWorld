@@ -102,7 +102,7 @@ namespace LAB2D.Editor
 
         /// <summary>
         /// 从当前场景中移除技能 HUD。
-        /// 仅删除 Ambitious_A008 相关的节点，不影响其他 UI。
+        /// 仅删除 SkillHUD 相关的节点，不影响其他 UI。
         /// </summary>
         [MenuItem(SkillConstant.MenuRoot + SkillConstant.MenuRemoveFromScene, false, 1)]
         public static void RemoveSkillHUDFromScene()

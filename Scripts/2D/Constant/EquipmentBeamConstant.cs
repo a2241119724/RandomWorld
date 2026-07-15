@@ -99,13 +99,13 @@ namespace LAB2D.Constant
         public const int BeamSortingOrder = 50;
 
         /// <summary>光束 GameObject 容器名</summary>
-        public const string BeamContainerName = "Ambitious_A011_EquipmentBeam_Root";
+        public const string BeamContainerName = "EquipmentBeamRoot";
 
         /// <summary>光束对象名前缀</summary>
-        public const string BeamObjectPrefix = "EquipmentBeam_";
+        public const string BeamObjectPrefix = "EquipmentBeam";
 
         /// <summary>发光层对象名后缀</summary>
-        public const string GlowSuffix = "_Glow";
+        public const string GlowSuffix = "Glow";
 
         /// <summary>硬安全网：最大存活时间（秒）</summary>
         public const float MaxLifetime = 300f;

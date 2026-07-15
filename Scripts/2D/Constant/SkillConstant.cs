@@ -114,13 +114,13 @@ namespace LAB2D.Constant
         #region UI 节点名
 
         /// <summary>技能HUD独立Canvas名称</summary>
-        public const string SkillCanvasName = "Ambitious_A008_SkillHUD_Canvas";
+        public const string SkillCanvasName = "SkillHUDCanvas";
 
         /// <summary>技能HUD根节点名称</summary>
-        public const string SkillHUDRootName = "Ambitious_A008_SkillHUD_Root";
+        public const string SkillHUDRootName = "SkillHUDRoot";
 
         /// <summary>技能按钮前缀</summary>
-        public const string SkillButtonPrefix = "Ambitious_A008_SkillButton_";
+        public const string SkillButtonPrefix = "SkillButton";
 
         /// <summary>冷却覆盖层节点名</summary>
         public const string CooldownOverlayName = "CooldownOverlay";

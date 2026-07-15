@@ -10,10 +10,10 @@ namespace LAB2D.Constant
         // --- UI 根节点名（挂载到 UI/Foreground 下，复用 UI 的 Canvas） ---
 
         /// <summary>成就弹窗根节点名称</summary>
-        public const string PopupRootName = "Ambitious_A007_AchievementPopup_Root";
+        public const string PopupRootName = "AchievementPopupRoot";
 
         /// <summary>成就面板根节点名称</summary>
-        public const string PanelRootName = "Ambitious_A007_AchievementPanel_Root";
+        public const string PanelRootName = "AchievementPanelRoot";
 
         // --- 默认文案 ---
 

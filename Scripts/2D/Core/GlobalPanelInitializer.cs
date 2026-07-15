@@ -24,10 +24,10 @@ namespace LAB2D.Core
             BackpackMenuPanel.Instance.Panel.SetActive(true);
             BackpackMenuPanel.Instance.Panel.SetActive(false);
 
-            // A006 殖民地运营指挥中心
+            // 殖民地运营指挥中心
             ColonyCommandCenterHUD.EnsureRuntimePanel();
 
-            // F012 天气玩法 HUD (F4)
+            // 天气玩法 HUD (F4)
             WeatherGameplayHUD.EnsureRuntimePanel();
 
             // 工人状态 HUD (F5)
@@ -39,21 +39,21 @@ namespace LAB2D.Core
             // 工人任务队列 HUD (F7)
             WorkerTaskQueueHUD.EnsureRuntimePanel();
 
-            // A007 成就系统（数据初始化由 IInitializable 链路完成）
+            // 成就系统（数据初始化由 IInitializable 链路完成）
             AchievementPopup.EnsureRuntimePopup();
             AchievementPanel.EnsureRuntimePanel();
 
-            // A009 浮动战斗文字系统
+            // 浮动战斗文字系统
             FloatingTextManager.Instance.EnsureInitialized();
 
-            // A008 主动技能系统（数据初始化由 IInitializable 链路完成）
+            // 主动技能系统（数据初始化由 IInitializable 链路完成）
             SkillHUD.EnsureRuntimePanel();
 
-            // A010 装备掉落稀有度系统（数据初始化由 IInitializable 链路完成）
+            // 装备掉落稀有度系统（数据初始化由 IInitializable 链路完成）
             EquipmentComparePopup.EnsureRuntimePopup();
             EquipmentPanel.EnsureRuntimePanel();
 
-            // A011 附近道具拾取列表
+            // 附近道具拾取列表
             NearbyItemPickupHUD.EnsureRuntimePanel();
         }
     }

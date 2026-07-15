@@ -15,7 +15,7 @@ namespace LAB2D.UI
     public class WeatherGameplayHUD : MonoBehaviour
     {
         /// <summary>HUD 根节点名称，Editor 菜单和运行时共用。</summary>
-        public const string HudRootName = "Feature_F012_WeatherGameplayHUD_Root";
+        public const string HudRootName = "WeatherGameplayHUDRoot";
 
         private CanvasGroup canvasGroup;
         private float nextRefreshTime;

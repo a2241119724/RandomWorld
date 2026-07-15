@@ -30,13 +30,13 @@ namespace LAB2D.Constant
         /// 旧版独立 Canvas 名称（仅用于回滚时清理旧场景残留）。
         /// 新版 HUD 挂载在 UIRoot/Foreground 下复用已有 UI Canvas，不再创建独立 Canvas。
         /// </summary>
-        public const string CanvasName = "Ambitious_A006_ColonyCommandCenter_Canvas";
+        public const string CanvasName = "ColonyCommandCenterHUDCanvas";
 
         /// <summary>
         /// 指挥中心 HUD 根节点名。
         /// 挂载在 UIRoot/Foreground 下，复用已有 UI Canvas。
         /// </summary>
-        public const string HudRootName = "Ambitious_A006_ColonyCommandCenterHUD_Root";
+        public const string HudRootName = "ColonyCommandCenterHUDRoot";
 
         /// <summary>
         /// HUD 背景节点名。
@@ -66,9 +66,9 @@ namespace LAB2D.Constant
 
         /// <summary>
         /// ResourcesLocal UI Prefab 输出路径。
-        /// 由 Editor 菜单创建；若已存在会覆盖同名 A006 Prefab，需要在菜单执行前确认。
+        /// 由 Editor 菜单创建；若已存在会覆盖同名 Prefab，需要在菜单执行前确认。
         /// </summary>
-        public const string PrefabAssetPath = PrefabFolderPath + "/Ambitious_A006_ColonyCommandCenterHUD.prefab";
+        public const string PrefabAssetPath = PrefabFolderPath + "/ColonyCommandCenterHUD.prefab";
 
         /// <summary>
         /// 指挥中心报告刷新间隔。

@@ -29,15 +29,13 @@ namespace LAB2D.Constant
 
         /// <summary>
         /// Editor 自动创建独立 Canvas 时使用的节点名。
-        /// 带 F015 前缀，便于定位和回滚。
         /// </summary>
-        public const string HudCanvasName = "Feature_F015_WorkerTaskQueue_Canvas";
+        public const string HudCanvasName = "WorkerTaskQueueHUDCanvas";
 
         /// <summary>
         /// 任务队列 HUD 根节点名。
-        /// 带 F015 前缀，避免与已有 UI 节点冲突。
         /// </summary>
-        public const string HudRootName = "Feature_F015_WorkerTaskQueueHUD_Root";
+        public const string HudRootName = "WorkerTaskQueueHUDRoot";
 
         /// <summary>
         /// 任务队列 HUD 文本节点名。
@@ -77,7 +75,7 @@ namespace LAB2D.Constant
 
         /// <summary>
         /// HUD 默认宽度。
-        /// 调整时需要同步检查与 F013/F014 HUD 的屏幕占位。
+        /// 调整时需要同步检查与 WorkerConditionHUD/WorkerSupplyHUD 的屏幕占位。
         /// </summary>
         public const float HudWidth = 580.0f;
 
@@ -95,7 +93,7 @@ namespace LAB2D.Constant
 
         /// <summary>
         /// HUD 默认 Y 轴锚点偏移。
-        /// 默认放在 F013/F014 下方，减少覆盖已有 HUD 的概率。
+        /// 默认放在 WorkerConditionHUD/WorkerSupplyHUD 下方，减少覆盖已有 HUD 的概率。
         /// </summary>
         public const float HudAnchoredY = -560.0f;
 

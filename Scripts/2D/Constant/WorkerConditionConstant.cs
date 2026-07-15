@@ -105,15 +105,13 @@ namespace LAB2D.Constant
 
         /// <summary>
         /// Editor 自动创建独立 Canvas 时使用的节点名。
-        /// 带 F013 前缀便于查找和回滚。
         /// </summary>
-        public const string HudCanvasName = "Feature_F013_WorkerCondition_Canvas";
+        public const string HudCanvasName = "WorkerConditionHUDCanvas";
 
         /// <summary>
         /// 工人状态 HUD 根节点名。
-        /// 带 F013 前缀避免与已有 UI 节点冲突。
         /// </summary>
-        public const string HudRootName = "Feature_F013_WorkerConditionHUD_Root";
+        public const string HudRootName = "WorkerConditionHUDRoot";
 
         /// <summary>
         /// 工人状态 HUD 文本节点名。

@@ -114,16 +114,16 @@ namespace LAB2D.Constant
         // =============================================================================================================
 
         /// <summary>浮动文字 Canvas 名称</summary>
-        public const string CanvasName = "Ambitious_A009_FloatingText_Canvas";
+        public const string CanvasName = "FloatingTextCanvas";
 
         /// <summary>浮动文字根节点名称</summary>
-        public const string RootName = "Ambitious_A009_FloatingText_Root";
+        public const string RootName = "FloatingTextRoot";
 
         /// <summary>浮动文字池容器名称</summary>
-        public const string PoolContainerName = "Ambitious_A009_FloatingText_Pool";
+        public const string PoolContainerName = "FloatingTextPool";
 
         /// <summary>单个浮动文字对象前缀</summary>
-        public const string FloatingTextPrefix = "FloatingText_";
+        public const string FloatingTextPrefix = "FloatingText";
 
         // =============================================================================================================
         // 常量文案

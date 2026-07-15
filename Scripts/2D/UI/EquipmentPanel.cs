@@ -28,7 +28,7 @@ namespace LAB2D.UI
         {
             if (runtimeInstance != null && runtimeInstance.rootPanel != null) return;
 
-            GameObject go = new GameObject("Ambitious_A010_EquipmentPanel_Manager");
+            GameObject go = new GameObject("EquipmentPanelManager");
             DontDestroyOnLoad(go);
             runtimeInstance = go.AddComponent<EquipmentPanel>();
             runtimeInstance.CreateUI();
