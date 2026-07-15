@@ -5,15 +5,11 @@ namespace LAB2D.Core
     using UnityEngine;
 
     /// <summary>
-    /// 锁
+    /// 锁 — 工人任务互斥锁。
+    /// IsCompleteTileMap 已迁移至 MapInitCoordinator。
     /// </summary>
     public class Lock
     {
-        /// <summary>
-        /// 等待地图执行完，开启其他协程
-        /// </summary>
-        public static bool IsCompleteTileMap = false;
-
         /// <summary>
         /// 拥有者
         /// </summary>

@@ -231,7 +231,7 @@ namespace LAB2D.Manager
             List<Type> saveDatas = LAB2D.Tool.Tool.GetChildByParent<ASaveData>();
             List<Type> monoSaveDatas = LAB2D.Tool.Tool.GetChildByParent<AMonoSaveData>();
 
-            Lock.IsCompleteTileMap = true;
+            Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete = true;
             AsyncProgressUI.Instance.SetTip("...");
             AsyncProgressUI.Instance.AddTotal(saveDatas.Count + monoSaveDatas.Count);
 

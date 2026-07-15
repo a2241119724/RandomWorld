@@ -52,7 +52,7 @@ namespace LAB2D.Character.Enemy
         public IEnumerator GenEnemy()
         {
             // 需要等待地图协程执行完后再执行
-            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
+            yield return new WaitUntil(() => Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete);
             while (true)
             {
                 if (!IsWaveControlEnabled)

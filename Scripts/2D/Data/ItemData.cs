@@ -16,7 +16,7 @@ namespace LAB2D.Data
         /// <summary>
         /// 空物品
         /// </summary>
-        public static ItemData Empty = new ();
+        public static readonly ItemData Empty = new ();
 
         /// <summary>
         /// 唯一标识符

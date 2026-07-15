@@ -12,15 +12,20 @@ namespace LAB2D.Item
     [Serializable]
     public abstract class AItem
     {
-        /// <summary>
-        /// 道具的范围
-        /// </summary>
-        public static Dictionary<string, ItemTypeEnum[]> Ranges = new ()
+        private static readonly Dictionary<string, ItemTypeEnum[]> ranges = new ()
         {
             { "Backpack", new ItemTypeEnum[] { ItemTypeEnum.Weapon, ItemTypeEnum.BackpackOther } },
             { "Build", new ItemTypeEnum[] { ItemTypeEnum.Room, ItemTypeEnum.BuildOther } },
             { "Resource", new ItemTypeEnum[] { ItemTypeEnum.Tree, ItemTypeEnum.Null } },
         };
+
+        /// <summary>
+        /// 道具类型范围映射（只读）。
+        /// </summary>
+        public static IReadOnlyDictionary<string, ItemTypeEnum[]> Ranges
+        {
+            get { return ranges; }
+        }
 
         /// <summary>
         /// 具体道具ID

@@ -1,21 +1,20 @@
 namespace LAB2D.Constant
 {
-    using LAB2D;
     public class LayerConstant
     {
         /// <summary>
         /// 玩家层
         /// </summary>
-        public static string PLAYER_LAYER = "Player";
+        public const string PLAYER_LAYER = "Player";
 
         /// <summary>
         /// 工作者层
         /// </summary>
-        public static string WORKER_LAYER = "Worker";
+        public const string WORKER_LAYER = "Worker";
 
         /// <summary>
         /// 敌人层
         /// </summary>
-        public static string ENEMY_LAYER = "Enemy";
+        public const string ENEMY_LAYER = "Enemy";
     }
 }

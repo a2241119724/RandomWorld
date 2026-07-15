@@ -190,7 +190,7 @@ namespace LAB2D.Map
             this.TileMapDataLAB.MapTiles = tiles;
             this.CreateArroundTile();
             yield return this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
-            Lock.IsCompleteTileMap = true;
+            Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete = true;
         }
 
         /// <summary>
@@ -311,13 +311,13 @@ namespace LAB2D.Map
                 const int defaultHeight = 548;
                 const int defaultWidth = 548;
                 // 重置完成标记，确保 ResourceMap.GenResource 和 GenTree 等待地图生成完毕
-                Lock.IsCompleteTileMap = false;
+                Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete = false;
                 this.SetProgress(defaultHeight, defaultWidth);
                 this.StartCoroutine(this.Create());
                 return;
             }
 
-            Lock.IsCompleteTileMap = true;
+            Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete = true;
             this.CreateArroundTile();
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
         }

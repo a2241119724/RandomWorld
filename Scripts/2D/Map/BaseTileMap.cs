@@ -16,19 +16,31 @@ namespace LAB2D.Map
     {
         protected Tilemap tilemap;
 
-        private static string alreadyShowMap = string.Empty;
-
         /// <summary>
         /// 网络同步发送器。在线为 PunSyncSender，离线为 NullSyncSender。
-        /// 子类通过此属性发送同步数据，不再直接调用 PhotonView.RPC。
         /// </summary>
         protected ISyncSender SyncSender { get; private set; }
 
-        /// <summary>
-        /// PhotonView — 仅保留用于 [PunRPC] 接收端和 SyncDataTool。
-        /// 发送端请使用 SyncSender。
-        /// </summary>
         public PhotonView PhotonView { get; set; }
+
+        private TileInfoCoordinator tileInfoCoordinator;
+
+        private TileInfoCoordinator TileInfo
+        {
+            get
+            {
+                if (this.tileInfoCoordinator == null)
+                {
+                    if (!ServiceLocator.TryGet(out this.tileInfoCoordinator))
+                    {
+                        this.tileInfoCoordinator = new TileInfoCoordinator();
+                        ServiceLocator.Register(this.tileInfoCoordinator);
+                    }
+                }
+
+                return this.tileInfoCoordinator;
+            }
+        }
 
         public virtual void Awake()
         {
@@ -46,25 +58,24 @@ namespace LAB2D.Map
                 TileInfoUI.Instance.Init();
             }
 
-            // 选择鼠标左键才会显示,在进度条界面不显示
             if (LAB2D.Tool.Tool.IsUIInputActive() || !Input.GetKey(InputKeyConstant.ShowTileInfo) || PanelController.Instance.Panels.Peek() == AsyncProgressPanel.Instance)
             {
                 return;
             }
 
             Vector3Int posMap = TileMap.Instance.GetMapPosByMouse();
-            if (this.tilemap.HasTile(posMap) && (BaseTileMap.alreadyShowMap.Equals(string.Empty) || BaseTileMap.alreadyShowMap.Equals(this.GetType().Name)))
+            string mapType = this.GetType().Name;
+            if (this.tilemap.HasTile(posMap) && (this.TileInfo.ActiveMapType == string.Empty || this.TileInfo.ActiveMapType == mapType))
             {
-                BaseTileMap.alreadyShowMap = this.GetType().Name;
+                this.TileInfo.ActiveMapType = mapType;
                 TileInfoUI.Instance.SetContent(this.tilemap.GetTile(posMap).name);
                 TileInfoUI.Instance.SetPostion(Camera.main.ScreenToWorldPoint(Input.mousePosition));
             }
             else
             {
-                // 已经抢到显示的Map退出,则关闭显示
-                if (BaseTileMap.alreadyShowMap.Equals(this.GetType().Name))
+                if (this.TileInfo.ActiveMapType == mapType)
                 {
-                    BaseTileMap.alreadyShowMap = string.Empty;
+                    this.TileInfo.ActiveMapType = string.Empty;
                     TileInfoUI.Instance.Init();
                 }
             }

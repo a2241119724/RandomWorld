@@ -43,7 +43,7 @@ namespace LAB2D.Map
         public IEnumerator GenResource()
         {
             // 需要等待地图协程执行完后再执行
-            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
+            yield return new WaitUntil(() => Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete);
             if (TileMap.Instance == null || TileMap.Instance.TileMapDataLAB == null)
             {
                 LogManager.Instance.Log("TileMap data not available, cannot generate resources", LogManager.LogLevelEnum.Error);
@@ -107,7 +107,7 @@ namespace LAB2D.Map
         public IEnumerator GenTree()
         {
             // 需要等待地图协程执行完后再执行
-            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
+            yield return new WaitUntil(() => Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete);
             while (true)
             {
                 if (this.ResourceMapDataLAB.TreeCurCount < this.ResourceMapDataLAB.TreeTotalCount)

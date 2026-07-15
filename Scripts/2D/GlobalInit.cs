@@ -41,6 +41,9 @@ namespace LAB2D
 
         private void RegisterServices()
         {
+            // 全局协调器 — 必须在其他服务之前注册
+            ServiceLocator.Register(new MapInitCoordinator());
+
             ServiceLocator.Register<ITipService>(this);
 
             ServiceLocator.Register<IGameTime>(new UnityGameTime());

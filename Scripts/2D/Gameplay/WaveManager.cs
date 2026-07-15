@@ -166,7 +166,7 @@ namespace LAB2D.Gameplay
         private IEnumerator WaveLoop()
         {
             // 等待地图初始化完成
-            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
+            yield return new WaitUntil(() => Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete);
 
             while (true)
             {
