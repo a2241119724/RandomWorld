@@ -147,6 +147,7 @@ namespace LAB2D.Character
                 RemainingHp = this.CharacterDataLAB.Hp,
                 WorldPosX = this.transform.position.x,
                 WorldPosY = this.transform.position.y,
+                TargetTransform = this.transform,
             });
 
             if (healthResult.IsDead)

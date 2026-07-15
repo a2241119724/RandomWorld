@@ -2,6 +2,7 @@ namespace LAB2D.Character.Player
 {
     using LAB2D;
     using LAB2D.Domain.Character;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
     using System;
     using System.Collections.Generic;
@@ -123,14 +124,7 @@ namespace LAB2D.Character.Player
                 PhotonNetwork.LocalPlayer.TagObject = this;
                 LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
                 PlayerData playerData = this.CharacterDataLAB as PlayerData;
-                PlayerStatusUI.Instance.UpdatePlayerState(
-                    this.CharacterDataLAB.Hp,
-                    this.CharacterDataLAB.MaxHp,
-                    playerData.Mp,
-                    playerData.MaxMp,
-                    playerData.Level,
-                    playerData.CurExperience,
-                    playerData.MaxExperience);
+                this.RefreshUI();
             }
             else if (!this.NetworkView.IsMine)
             {
@@ -153,15 +147,7 @@ namespace LAB2D.Character.Player
             // 计时器刚到期：完成复活（移动到随机位置，恢复 HP/MP，隐藏死亡界面）
             if (DeathPenaltyManager.Instance.TryCompleteRespawn(this))
             {
-                PlayerData playerData = this.CharacterDataLAB as PlayerData;
-                PlayerStatusUI.Instance.UpdatePlayerState(
-                    this.CharacterDataLAB.Hp,
-                    this.CharacterDataLAB.MaxHp,
-                    playerData.Mp,
-                    playerData.MaxMp,
-                    playerData.Level,
-                    playerData.CurExperience,
-                    playerData.MaxExperience);
+                this.RefreshUI();
             }
 
             this.Attack();
@@ -206,14 +192,7 @@ namespace LAB2D.Character.Player
             }
 
             base.AddExperienceValue(experience);
-            PlayerStatusUI.Instance.UpdatePlayerState(
-                this.CharacterDataLAB.Hp,
-                this.CharacterDataLAB.MaxHp,
-                this.CharacterDataLAB.Mp,
-                this.CharacterDataLAB.MaxMp,
-                this.CharacterDataLAB.Level,
-                this.CharacterDataLAB.CurExperience,
-                this.CharacterDataLAB.MaxExperience);
+            this.RefreshUI();
         }
 
         /// <summary>
@@ -227,15 +206,7 @@ namespace LAB2D.Character.Player
                 this.CharacterDataLAB.MaxHp,
                 hp);
 
-            PlayerData playerData = this.CharacterDataLAB as PlayerData;
-            PlayerStatusUI.Instance.UpdatePlayerState(
-                this.CharacterDataLAB.Hp,
-                this.CharacterDataLAB.MaxHp,
-                playerData.Mp,
-                playerData.MaxMp,
-                playerData.Level,
-                playerData.CurExperience,
-                playerData.MaxExperience);
+            this.RefreshUI();
         }
 
         /// <inheritdoc/>
@@ -266,15 +237,31 @@ namespace LAB2D.Character.Player
                 return;
             }
 
+            this.RefreshUI();
+        }
+
+        /// <summary>
+        /// 发布玩家状态变化事件，通知 UI 层刷新。
+        /// 游戏逻辑层修改玩家状态后调用此方法，不再直接操作 PlayerStatusUI。
+        /// </summary>
+        public void RefreshUI()
+        {
             PlayerData playerData = this.CharacterDataLAB as PlayerData;
-            PlayerStatusUI.Instance.UpdatePlayerState(
-                this.CharacterDataLAB.Hp,
-                this.CharacterDataLAB.MaxHp,
-                playerData.Mp,
-                playerData.MaxMp,
-                playerData.Level,
-                playerData.CurExperience,
-                playerData.MaxExperience);
+            if (playerData == null)
+            {
+                return;
+            }
+
+            EventBus.Instance.Publish(new PlayerStatusChangedEvent
+            {
+                Hp = this.CharacterDataLAB.Hp,
+                MaxHp = this.CharacterDataLAB.MaxHp,
+                Mp = playerData.Mp,
+                MaxMp = playerData.MaxMp,
+                Level = playerData.Level,
+                CurExperience = playerData.CurExperience,
+                MaxExperience = playerData.MaxExperience,
+            });
         }
 
         /// <summary>

@@ -82,14 +82,10 @@ namespace LAB2D.Map
                 this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
             }
 
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC(
-                    "SyncDataResp",
-                    RpcTarget.Others,
-                    DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
-                    DataTool.ToByteArray(buildTileData));
-            }
+            this.SyncSender.Broadcast(
+                "SyncDataResp",
+                DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
+                DataTool.ToByteArray(buildTileData));
 
             return this;
         }
@@ -123,14 +119,10 @@ namespace LAB2D.Map
                 this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.Sprite);
             }
 
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC(
-                    "SyncDataResp",
-                    RpcTarget.Others,
-                    DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(vector3Int)),
-                    default);
-            }
+            this.SyncSender.Broadcast(
+                "SyncDataResp",
+                DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(vector3Int)),
+                default);
         }
 
         /// <summary>
@@ -151,15 +143,11 @@ namespace LAB2D.Map
         {
             this.tilemap.SetTile(targetMap, null);
             this.BuildMapDataLAB.PosMap.Remove(Vector3IntLAB.ToVector3IntLAB(targetMap));
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC(
+            this.SyncSender.Broadcast(
                 "SyncDataResp",
-                RpcTarget.Others,
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
                 default,
                 true);
-            }
         }
 
         /// <summary>
@@ -317,16 +305,12 @@ namespace LAB2D.Map
                 this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
             }
 
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC(
+            this.SyncSender.Broadcast(
                 "SyncDataResp",
-                RpcTarget.Others,
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
                 tile.name,
                 isPass,
                 false);
-            }
 
             return this;
         }

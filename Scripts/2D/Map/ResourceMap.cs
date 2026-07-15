@@ -128,10 +128,7 @@ namespace LAB2D.Map
                         continue;
                     }
 
-                    if (NetworkConnect.Instance.IsOnline)
-                    {
-                        this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(pos)), tileBase.name, false);
-                    }
+                    this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(pos)), tileBase.name, false);
 
                     this.ResourceMapDataLAB.TreeCurCount++;
                     this.tilemap.SetTile(pos, tileBase);
@@ -152,10 +149,7 @@ namespace LAB2D.Map
         /// <param name="posMap">位置</param>
         public void CutTree(Vector3Int posMap)
         {
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, false, true);
-            }
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, false, true);
 
             this.ResourceMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);

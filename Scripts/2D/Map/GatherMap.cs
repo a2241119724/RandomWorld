@@ -40,10 +40,7 @@ namespace LAB2D.Map
         {
             this.tilemap.SetTile(posMap, (TileBase)ResourceManager.Instance.GetAsset("Gather"));
             this.GatherMapDataLAB.Add(posMap, "Gather");
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
-            }
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
         }
 
         /// <summary>
@@ -54,10 +51,7 @@ namespace LAB2D.Map
         {
             this.tilemap.SetTile(posMap, null);
             this.GatherMapDataLAB.Remove(posMap);
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
-            }
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
         }
 
         /// <inheritdoc/>

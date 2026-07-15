@@ -1,52 +1,45 @@
 namespace LAB2D.UI.Character
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using UnityEngine;
     using UnityEngine.UI;
 
     /// <summary>
-    /// 玩家状态 UI
+    /// 玩家状态 UI — 通过 EventBus 订阅 PlayerStatusChangedEvent 实现解耦更新。
     /// </summary>
     public class PlayerStatusUI : MonoBehaviour
     {
-        private Text hp; // 显示玩家血量,蓝量,等级,经验
+        private Text hp;
         private Text mp;
         private Text level;
         private Text experience;
-        private Slider barHp; // 玩家血量,蓝量,等级进度条
+        private Slider barHp;
         private Slider barMp;
         private Slider barLevel;
 
-        /// <summary>
-        /// 单例
-        /// </summary>
         public static PlayerStatusUI Instance { get; private set; }
-
-        /// <summary>
-        /// 更新玩家状态
-        /// </summary>
-        /// <param name="hp">血量</param>
-        /// <param name="maxHp">最大血量</param>
-        /// <param name="mp">蓝量</param>
-        /// <param name="maxMp">最大蓝量</param>
-        /// <param name="level">等级</param>
-        /// <param name="currentExperience">当前经验</param>
-        /// <param name="maxExperience">当前等级的最大经验</param>
-        public void UpdatePlayerState(float hp, float maxHp, int mp, int maxMp, int level, int currentExperience, int maxExperience)
-        {
-            // 显示血量,蓝量,经验值
-            this.hp.text = $"{hp}/{maxHp} ";
-            this.mp.text = $"{mp}/{maxMp} ";
-            this.level.text = $" Level:{level}";
-            this.experience.text = $"{currentExperience}/{maxExperience} ";
-            this.barHp.value = hp / (float)maxHp;
-            this.barMp.value = mp / (float)maxMp;
-            this.barLevel.value = currentExperience / (float)maxExperience;
-        }
 
         public void Awake()
         {
             Instance = this;
+            EventBus.Instance.Subscribe<PlayerStatusChangedEvent>(this.OnPlayerStatusChanged);
+        }
+
+        public void OnDestroy()
+        {
+            EventBus.Instance.Unsubscribe<PlayerStatusChangedEvent>(this.OnPlayerStatusChanged);
+        }
+
+        private void OnPlayerStatusChanged(PlayerStatusChangedEvent e)
+        {
+            this.hp.text = $"{e.Hp}/{e.MaxHp} ";
+            this.mp.text = $"{e.Mp}/{e.MaxMp} ";
+            this.level.text = $" Level:{e.Level}";
+            this.experience.text = $"{e.CurExperience}/{e.MaxExperience} ";
+            this.barHp.value = e.Hp / e.MaxHp;
+            this.barMp.value = e.Mp / (float)e.MaxMp;
+            this.barLevel.value = e.CurExperience / (float)e.MaxExperience;
         }
 
         private void OnEnable()

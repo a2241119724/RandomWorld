@@ -114,19 +114,8 @@ namespace LAB2D.Gameplay
             // 消耗法力
             playerData.Mp -= skill.ManaCost;
 
-            // 刷新玩家状态UI（MP变化后立即更新）
-            Player.PlayerData pd = playerData as Player.PlayerData;
-            if (pd != null)
-            {
-                PlayerStatusUI.Instance.UpdatePlayerState(
-                    playerData.Hp,
-                    playerData.MaxHp,
-                    pd.Mp,
-                    pd.MaxMp,
-                    pd.Level,
-                    pd.CurExperience,
-                    pd.MaxExperience);
-            }
+            // 刷新玩家状态UI — 通过 Player.RefreshUI() 发布事件，不再直接操作 PlayerStatusUI
+            PlayerManager.Instance.Mine?.RefreshUI();
 
             // 记录激活时间
             skill.LastActivateTime = Time.time;

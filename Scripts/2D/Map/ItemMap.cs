@@ -42,10 +42,7 @@ namespace LAB2D.Map
         {
             this.ItemMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
-            }
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
         }
 
         /// <summary>
@@ -85,10 +82,7 @@ namespace LAB2D.Map
 
             this.ItemMapDataLAB.Add(posMap, tileBase.name);
             this.tilemap.SetTile(posMap, tileBase);
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
-            }
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
         }
 
         /// <summary>

@@ -2,24 +2,31 @@ namespace LAB2D.Map
 {
     using LAB2D;
     using LAB2D.Data;
+    using LAB2D.Network;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// 基地图
+    /// 基地图。
+    /// 通过 ISyncSender 解耦网络同步，不再直接持有 PhotonView。
+    /// PhotonView 仅保留用于 [PunRPC] 方法接收端。
     /// </summary>
     public abstract class BaseTileMap : AMonoSaveData
     {
-        /// <summary>
-        /// 地图
-        /// </summary>
         protected Tilemap tilemap;
 
-        private static string alreadyShowMap = string.Empty; // 所有的Map是否已经在显示
+        private static string alreadyShowMap = string.Empty;
 
         /// <summary>
-        /// 同步数据
+        /// 网络同步发送器。在线为 PunSyncSender，离线为 NullSyncSender。
+        /// 子类通过此属性发送同步数据，不再直接调用 PhotonView.RPC。
+        /// </summary>
+        protected ISyncSender SyncSender { get; private set; }
+
+        /// <summary>
+        /// PhotonView — 仅保留用于 [PunRPC] 接收端和 SyncDataTool。
+        /// 发送端请使用 SyncSender。
         /// </summary>
         public PhotonView PhotonView { get; set; }
 
@@ -27,6 +34,9 @@ namespace LAB2D.Map
         {
             this.tilemap = this.GetComponent<Tilemap>();
             this.PhotonView = this.GetComponent<PhotonView>();
+            this.SyncSender = NetworkConnect.Instance != null && NetworkConnect.Instance.IsOnline
+                ? new PunSyncSender(this.PhotonView)
+                : NullSyncSender.Instance;
         }
 
         public virtual void Update()

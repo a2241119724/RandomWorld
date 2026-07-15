@@ -13,11 +13,9 @@ namespace LAB2D.Character
     public sealed class CharacterDamageUIPresenter : MonoBehaviour
     {
         private readonly Queue<CharacterDamagedEvent> pendingEvents = new Queue<CharacterDamagedEvent>();
-        private Transform targetParent;
 
         public void Awake()
         {
-            this.targetParent = this.transform;
             EventBus.Instance.Subscribe<CharacterDamagedEvent>(this.OnCharacterDamaged);
         }
 
@@ -48,8 +46,8 @@ namespace LAB2D.Character
             if (g != null)
             {
                 g.GetComponent<DamageUI>().SetDamage(e.Damage, System.Convert.ToInt32(e.IsCritical));
-                g.transform.SetParent(this.targetParent);
-                g.transform.position = worldPos;
+                g.transform.SetParent(e.TargetTransform);
+                g.transform.localPosition = Vector3.zero;
             }
 
             FloatingTextManager.Instance.SpawnDamageText(worldPos, e.Damage, e.IsCritical, e.IsCombo);
