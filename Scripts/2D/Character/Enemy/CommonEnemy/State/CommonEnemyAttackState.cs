@@ -68,9 +68,9 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                     // if (zombieAttackAudio != null)
                     // AudioSource.PlayClipAtPoint(zombieAttackAudio, transform.position);
                     // 攻击
-                    if (NetworkConnect.Instance.IsOnline)
+                    if (this.Character.NetworkView.IsOnline)
                     {
-                        this.Character.pv.RPC("Attack", RpcTarget.All);
+                        this.Character.NetworkView.RPC("Attack", RpcTarget.All);
                     }
                     else
                     {

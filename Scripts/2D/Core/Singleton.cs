@@ -6,19 +6,17 @@ namespace LAB2D.Core
     /// 单例基类（非 MonoBehaviour）。
     /// 通过泛型继承提供线程不安全的延迟初始化 Instance。
     ///
-    /// 设计说明：
-    ///   C# 单继承限制意味着 Singleton&lt;T&gt; 和 ASingletonSaveData&lt;T&gt;
-    ///   是两条独立分支，无法组合。如果需要同时具备 Singleton + 其他基类
-    ///   （如 MonoBehaviour、MonoBehaviourPun），应使用手动 Instance 属性
-    ///   模式替代继承：
-    ///   <code>
-    ///   public class MyManager : MonoBehaviourPun
-    ///   {
-    ///       public static MyManager Instance { get; private set; }
-    ///       void Awake() { Instance = this; }
-    ///   }
-    ///   </code>
-    ///   参考：GlobalInit、PanelController 均采用此模式。
+    /// 访问约定：
+    ///   - Domain 层（纯逻辑、RuleService、Calculator）:
+    ///     必须使用 ServiceLocator.Get&lt;ISomeService&gt;()，禁止直接 .Instance。
+    ///     这保证 Domain 代码可脱离 Unity 单元测试。
+    ///   - Manager/Gameplay 层（同层间便捷访问）:
+    ///     允许使用 .Instance，但跨层访问（如 Manager→Domain）
+    ///     仍应通过 ServiceLocator.Get&lt;接口&gt;() 获取。
+    ///   - UI/Presentation 层:
+    ///     允许 .Instance 访问 Manager，但应逐步迁移至 MVC 的 ServiceLocator 路径。
+    ///
+    /// C# 单继承限制说明与 Singleton&lt;T&gt; 一致。
     /// </summary>
     /// <typeparam name="T">需要单例的类。</typeparam>
     public abstract class Singleton<T>

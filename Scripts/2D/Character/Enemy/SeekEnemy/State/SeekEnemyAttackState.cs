@@ -66,9 +66,9 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             this.Character.Direction = this.Character.Target.transform.position - this.Character.transform.position;
             AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
             weaponObject.Attack();
-            if (NetworkConnect.Instance.IsOnline)
+            if (this.Character.NetworkView.IsOnline)
             {
-                this.Character.pv.RPC("Attack", RpcTarget.All);
+                this.Character.NetworkView.RPC("Attack", RpcTarget.All);
             }
             else
             {

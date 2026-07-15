@@ -1,12 +1,13 @@
 namespace LAB2D.Data
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using UnityEngine;
 
     /// <summary>
     /// 环境管理
     /// </summary>
-    public class EnvironmentManager : Singleton<EnvironmentManager>
+    public class EnvironmentManager : Singleton<EnvironmentManager>, ITickable
     {
         /// <summary>
         /// 温度
@@ -31,12 +32,12 @@ namespace LAB2D.Data
         /// <summary>
         /// 缓慢恢复灵气
         /// </summary>
-        public void UpdateEnergy()
+        public void Tick(float deltaTime)
         {
             if (this.CurEnergy <= this.MaxEnergy)
             {
                 IWeatherGameplayService weather = ServiceLocator.Get<IWeatherGameplayService>();
-                float recovery = Time.deltaTime * weather.EnergyRecoveryMultiplier;
+                float recovery = deltaTime * weather.EnergyRecoveryMultiplier;
                 this.CurEnergy = Mathf.Min(this.MaxEnergy, this.CurEnergy + recovery);
             }
         }

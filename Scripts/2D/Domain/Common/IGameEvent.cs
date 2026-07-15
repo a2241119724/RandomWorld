@@ -13,7 +13,7 @@ namespace LAB2D.Domain.Common
 
     /// <summary>
     /// 角色受到伤害时触发。
-    /// 由 FloatingTextManager 消费以生成伤害浮动文字。
+    /// 由 CharacterDamageUIPresenter 消费以生成伤害浮动文字和受击特效。
     /// </summary>
     public sealed class CharacterDamagedEvent : IGameEvent
     {
@@ -21,6 +21,9 @@ namespace LAB2D.Domain.Common
         public long AttackerId;
         public float Damage;
         public bool IsCritical;
+        public bool IsCombo;
         public float RemainingHp;
+        public float WorldPosX;
+        public float WorldPosY;
     }
 }

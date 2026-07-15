@@ -3,6 +3,7 @@ namespace LAB2D.Character
     using LAB2D;
     using LAB2D.Item.Backpack.Equipment;
     using LAB2D.Item.Backpack.Equipment.Weapon;
+    using LAB2D.Network;
     using LAB2D.Serializable;
     using LAB2D.Domain.Character;
     using LAB2D.Domain.Common;
@@ -13,10 +14,19 @@ namespace LAB2D.Character
     using PlayerCharacter = LAB2D.Character.Player.Player;
 
     /// <summary>
-    /// 角色基类
+    /// 角色基类。
+    /// 继承自 MonoBehaviourPun 以保证向后兼容，同时通过 INetworkView 解耦网络访问。
+    /// 新增网络访问代码应使用 NetworkView 而非直接访问 pv/photonView。
+    /// 完全移除 MonoBehaviourPun 依赖的后续重构待网络层完全适配后执行。
     /// </summary>
     public abstract class Character : MonoBehaviourPun
     {
+        /// <summary>
+        /// 网络视图抽象 — 在线时包装 PhotonView，离线时为 NullNetworkView。
+        /// 新代码应使用此属性而非直接访问 pv/photonView。
+        /// </summary>
+        public INetworkView NetworkView { get; private set; }
+
         /// <summary>
         /// 移动速度
         /// </summary>
@@ -70,6 +80,11 @@ namespace LAB2D.Character
         public virtual void Awake()
         {
             this.name = this.GetType().Name;
+
+            this.NetworkView = NetworkConnect.Instance != null && NetworkConnect.Instance.IsOnline
+                ? new PunNetworkViewAdapter(this.pv)
+                : OfflineNetworkView.Instance;
+
             GameObject characterRoot = GameObject.FindGameObjectWithTag("CharacterRoot");
             if (characterRoot != null)
             {
@@ -98,7 +113,7 @@ namespace LAB2D.Character
 
         /// <summary>
         /// 角色扣血 — 委托给 CharacterHealthComponent 处理伤害计算。
-        /// UI 表现（伤害数字、闪烁效果、浮动文字）通过回调处理。
+        /// 发布 CharacterDamagedEvent 供 UI 层消费，不再直接操作 UI。
         /// </summary>
         /// <param name="hp">血量</param>
         /// <param name="attacker">攻击者</param>
@@ -110,36 +125,28 @@ namespace LAB2D.Character
                 return;
             }
 
+            float capturedDamage = hp;
+            bool capturedCombo = false;
             CharacterHealthResult healthResult = this.healthComponent.ApplyDamage(
                 this, hp, attacker, isCRT,
                 (target, finalHp, crit, isCombo) =>
                 {
-                    // UI 表现层 — 伤害预制体实例化
-                    GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.DAMAGE);
-                    if (g != null)
-                    {
-                        g.GetComponent<DamageUI>().SetDamage(finalHp, System.Convert.ToInt32(crit));
-                        g.transform.SetParent(target.transform);
-                        g.transform.localPosition = Vector3.zero;
-                    }
-
-                    // 浮动战斗文字
-                    FloatingTextManager.Instance.SpawnDamageText(
-                        target.transform.position, finalHp, crit, isCombo);
-
-                    // 受击变红闪烁
+                    capturedDamage = finalHp;
+                    capturedCombo = isCombo;
                     target.spriteRenderer.color = Color.red;
                     target.Invoke(nameof(this.ResetColor), 0.2f);
                 });
 
-            // 发布领域事件（过渡期间与直接调用共存，便于逐步迁移订阅者到 EventBus）
             EventBus.Instance.Publish(new CharacterDamagedEvent
             {
                 TargetId = this.CharacterDataLAB.Id,
                 AttackerId = attacker?.CharacterDataLAB?.Id ?? 0,
-                Damage = hp,
+                Damage = capturedDamage,
                 IsCritical = isCRT,
+                IsCombo = capturedCombo,
                 RemainingHp = this.CharacterDataLAB.Hp,
+                WorldPosX = this.transform.position.x,
+                WorldPosY = this.transform.position.y,
             });
 
             if (healthResult.IsDead)

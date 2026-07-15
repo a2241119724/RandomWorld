@@ -1,32 +1,26 @@
 namespace LAB2D.Core
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.UI.Panel;
     using UnityEngine;
 
     /// <summary>
     /// 全局输入处理器 — 从 GlobalInit 提取的职责。
     /// 负责处理 ESC 键面板切换、鼠标点击关闭物品信息面板等全局输入逻辑。
-    /// 纯静态工具类，不持有状态。
+    /// 实现 ITickable，由 GlobalInit 自动发现和驱动。
     /// </summary>
-    public static class GlobalInputProcessor
+    public sealed class GlobalInputProcessor : ITickable
     {
-        /// <summary>
-        /// 处理每帧的全���输入。
-        /// 由 GlobalInit.Update() 调用。
-        /// </summary>
-        public static void ProcessInput()
+        public void Tick(float deltaTime)
         {
-            ProcessCloseOrBuildMenu();
-            ProcessMouseClickCloseItemInfo();
-            ProcessAchievements();
-            ProcessColonyCommandHud();
+            this.ProcessCloseOrBuildMenu();
+            this.ProcessMouseClickCloseItemInfo();
+            this.ProcessAchievements();
+            this.ProcessColonyCommandHud();
         }
 
-        /// <summary>
-        /// 成就系统：更新进度、检查解锁、F7 切换面板。
-        /// </summary>
-        private static void ProcessAchievements()
+        private void ProcessAchievements()
         {
             AchievementManager mgr = AchievementManager.Instance;
             if (mgr == null || !mgr.IsInitialized)
@@ -52,11 +46,7 @@ namespace LAB2D.Core
             }
         }
 
-        /// <summary>
-        /// 殖民地指挥中心 HUD 显示/隐藏 (F10)。
-        /// 由 GlobalInit 统一分发以避免 HUD 父节点 inactive 导致 Update 不执行。
-        /// </summary>
-        private static void ProcessColonyCommandHud()
+        private void ProcessColonyCommandHud()
         {
             if (Input.GetKeyDown(InputKeyConstant.ToggleColonyCommandCenterHud))
             {
@@ -71,10 +61,7 @@ namespace LAB2D.Core
             }
         }
 
-        /// <summary>
-        /// ESC 键：退出当前面板或打开建造菜单。
-        /// </summary>
-        private static void ProcessCloseOrBuildMenu()
+        private void ProcessCloseOrBuildMenu()
         {
             if (LAB2D.Tool.Tool.IsUIInputActive() || !Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu))
             {
@@ -89,7 +76,6 @@ namespace LAB2D.Core
             }
             else
             {
-                // 不能关闭下面面板
                 if (PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
                 {
                     ItemInfoUI.Instance.Init();
@@ -99,10 +85,7 @@ namespace LAB2D.Core
             }
         }
 
-        /// <summary>
-        /// 鼠标点击（左键/中键）：关闭物品信息面板。
-        /// </summary>
-        private static void ProcessMouseClickCloseItemInfo()
+        private void ProcessMouseClickCloseItemInfo()
         {
             if (LAB2D.Tool.Tool.IsUIInputActive())
             {
@@ -114,7 +97,6 @@ namespace LAB2D.Core
                 return;
             }
 
-            // 关闭ItemInfo面板
             if (PanelController.Instance.Panels.Count > 0
                 && PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
             {

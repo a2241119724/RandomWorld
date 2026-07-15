@@ -2,6 +2,7 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Character.Player;
+    using LAB2D.Domain.Common;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -13,7 +14,7 @@ namespace LAB2D.Gameplay
     /// 通过 Singleton 模式全局访问，在 GlobalInit.Start 中初始化。
     /// 不涉及存档持久化和 Photon 同步。
     /// </summary>
-    public class SkillManager : Singleton<SkillManager>, ISkillManager
+    public class SkillManager : Singleton<SkillManager>, ISkillManager, IInitializable
     {
         /// <summary>已注册的技能列表（按 SlotIndex 排序）</summary>
         public List<SkillData> Skills { get; private set; }

@@ -112,7 +112,7 @@ namespace LAB2D.Character.Player
             }
 
             // 不在线，或者在线并且是自己
-            if (this.pv.IsMine || !NetworkConnect.Instance.IsOnline)
+            if (this.NetworkView.IsMine || !this.NetworkView.IsOnline)
             {
                 this.MoveSpeed = 5;
                 this.miniCamera = GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG).GetComponent<CameraMove>();
@@ -132,9 +132,9 @@ namespace LAB2D.Character.Player
                     playerData.CurExperience,
                     playerData.MaxExperience);
             }
-            else if (!this.pv.IsMine)
+            else if (!this.NetworkView.IsMine)
             {
-                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.pv.Owner.NickName;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.NetworkView.OwnerName;
                 PlayerManager.Instance.Add(this);
 
                 // PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
@@ -173,7 +173,7 @@ namespace LAB2D.Character.Player
         public void FixedUpdate()
         {
             // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
-            if (NetworkConnect.Instance.IsOnline && !this.pv.IsMine && PhotonNetwork.IsConnected)
+            if (this.NetworkView.IsOnline && !this.NetworkView.IsMine && PhotonNetwork.IsConnected)
             {
                 return;
             }
@@ -261,7 +261,7 @@ namespace LAB2D.Character.Player
             this.lastDamageTime = Time.time;
 
             base.ReduceHp(hp, attacker, isCRT);
-            if (NetworkConnect.Instance.IsOnline && !this.pv.IsMine && PhotonNetwork.IsConnected)
+            if (this.NetworkView.IsOnline && !this.NetworkView.IsMine && PhotonNetwork.IsConnected)
             {
                 return;
             }

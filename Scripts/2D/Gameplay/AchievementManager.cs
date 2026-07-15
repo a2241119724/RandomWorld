@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
     using System;
     using System.Collections.Generic;
@@ -21,7 +22,7 @@ namespace LAB2D.Gameplay
     ///   不直接修改任何战斗/关卡/物品逻辑，只读取已有统计数据。
     ///   不涉及 Photon 同步和存档格式修改（存档扩展由后续需求覆盖）。
     /// </summary>
-    public class AchievementManager : Singleton<AchievementManager>
+    public class AchievementManager : Singleton<AchievementManager>, IInitializable
     {
         /// <summary>所有成就定义列表（按类别分组）</summary>
         private readonly List<AchievementData> allAchievements = new List<AchievementData>();

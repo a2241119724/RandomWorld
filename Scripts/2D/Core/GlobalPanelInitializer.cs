@@ -39,20 +39,17 @@ namespace LAB2D.Core
             // 工人任务队列 HUD (F7)
             WorkerTaskQueueHUD.EnsureRuntimePanel();
 
-            // A007 成就系统
-            AchievementManager.Instance.Initialize();
+            // A007 成就系统（数据初始化由 IInitializable 链路完成）
             AchievementPopup.EnsureRuntimePopup();
             AchievementPanel.EnsureRuntimePanel();
 
             // A009 浮动战斗文字系统
             FloatingTextManager.Instance.EnsureInitialized();
 
-            // A008 主动技能系统
-            SkillManager.Instance.Initialize();
+            // A008 主动技能系统（数据初始化由 IInitializable 链路完成）
             SkillHUD.EnsureRuntimePanel();
 
-            // A010 装备掉落稀有度系统
-            EnemyLootManager.Instance.Initialize();
+            // A010 装备掉落稀有度系统（数据初始化由 IInitializable 链路完成）
             EquipmentComparePopup.EnsureRuntimePopup();
             EquipmentPanel.EnsureRuntimePanel();
 

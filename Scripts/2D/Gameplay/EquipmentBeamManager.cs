@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Enum;
     using LAB2D.UI.Effect;
     using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace LAB2D.Gameplay
     /// 在掉落装备位置生成静态半透明光柱，按稀有度着色。
     /// 使用程序化渐变 Quad Mesh，无需外部资源。
     /// </summary>
-    public class EquipmentBeamManager : Singleton<EquipmentBeamManager>
+    public class EquipmentBeamManager : Singleton<EquipmentBeamManager>, IInitializable
     {
         private Dictionary<Vector3Int, BeamEntry> activeBeams = new Dictionary<Vector3Int, BeamEntry>();
         private Transform beamContainer;

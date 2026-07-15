@@ -13,7 +13,7 @@ namespace LAB2D.Gameplay
     /// 负责只读读取本地玩家血量，生成生命危险等级与玩家建议，并按冷却规则请求现有 Tip UI 展示。
     /// 本类不修改玩家属性、不改变死亡惩罚、不写入存档、不参与 Photon 同步。
     /// </summary>
-    public class PlayerVitalAlertManager : Singleton<PlayerVitalAlertManager>, IPlayerVitalAlertManager
+    public class PlayerVitalAlertManager : Singleton<PlayerVitalAlertManager>, IPlayerVitalAlertManager, ITickable
     {
         private readonly PlayerVitalAlertRuleService ruleService = new PlayerVitalAlertRuleService();
         private PlayerVitalAlertReport currentReport;
@@ -100,6 +100,11 @@ namespace LAB2D.Gameplay
             this.nextRefreshTime = Time.time + PlayerVitalAlertTool.ClampRefreshInterval(
                 PlayerVitalAlertConstant.MonitorRefreshInterval);
             this.Refresh(true);
+        }
+
+        void ITickable.Tick(float deltaTime)
+        {
+            this.Tick();
         }
 
         /// <summary>

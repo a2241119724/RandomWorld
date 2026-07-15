@@ -2,6 +2,7 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Data;
+    using LAB2D.Domain.Common;
     using LAB2D.Enum;
     using LAB2D.Item.Backpack.Equipment;
     using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace LAB2D.Gameplay
     /// 统一管理敌人死亡时的通用物品掉落（从 DropDataManager 默认配置）和装备稀有度掉落。
     /// 单例，由 GlobalInit 初始化。
     /// </summary>
-    public class EnemyLootManager : Singleton<EnemyLootManager>
+    public class EnemyLootManager : Singleton<EnemyLootManager>, IInitializable
     {
         /// <summary>是否已初始化</summary>
         public bool IsInitialized { get; private set; }
