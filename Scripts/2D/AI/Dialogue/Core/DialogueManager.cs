@@ -24,6 +24,7 @@ namespace LAB2D.AI.Dialogue.Core
         private PromptBuilder promptBuilder => PromptBuilder.Instance;
         private DialogueMemoryManager memoryManager => DialogueMemoryManager.Instance;
         private GameKnowledgeRetriever knowledgeRetriever => GameKnowledgeRetriever.Instance;
+        private PromptTemplateLoader requestLogTemplateLoader;
 
         private readonly Dictionary<string, DialogueSession> activeSessions = new Dictionary<string, DialogueSession>();
         private readonly Dictionary<string, AWorker> dialogueWorkers = new Dictionary<string, AWorker>();
@@ -155,6 +156,8 @@ namespace LAB2D.AI.Dialogue.Core
             // 4. 组装 Prompt
             List<ChatMessage> messages = this.promptBuilder.BuildMessages(
                 session.profile, playerInput, history, gameContext, ragResults);
+
+            this.LogRequest(npcId, session, playerInput, messages, gameContext, ragResults, history);
 
             // 5. 调用 LLM
             ILLMClient client = this.GetLLMClient();
@@ -451,6 +454,154 @@ namespace LAB2D.AI.Dialogue.Core
             return posMap == null ? string.Empty : "(" + posMap.X + "," + posMap.Y + ")";
         }
 
+        private void LogRequest(
+            string npcId,
+            DialogueSession session,
+            string playerInput,
+            List<ChatMessage> messages,
+            GameStateContext gameContext,
+            List<GameKnowledgeEntry> ragResults,
+            List<ChatMessage> history)
+        {
+            NPCPromptProfile profile = session.profile;
+            if (this.requestLogTemplateLoader == null)
+            {
+                this.requestLogTemplateLoader = new PromptTemplateLoader();
+            }
+
+            var replacements = new Dictionary<string, string>
+            {
+                { "NPC_ID", npcId },
+                { "NPC_NAME", profile != null ? profile.npcName : "未知" },
+                { "NPC_ROLE", profile != null ? profile.npcRole : "未知" },
+                { "LLM_PARAMS", BuildLLMParamsText(session) },
+                { "NPC_PROFILE", BuildNPCProfileText(profile) },
+                { "GAME_STATE", BuildGameStateText(gameContext) },
+                { "RAG_KNOWLEDGE", BuildRAGText(ragResults) },
+                { "HISTORY", BuildHistoryText(history) },
+                { "PLAYER_INPUT", "  " + playerInput },
+                { "SYSTEM_PROMPT", BuildSystemPromptText(messages) },
+            };
+
+            string logText = this.requestLogTemplateLoader.FillTemplate(
+                "RequestLogTemplate", replacements);
+
+            if (string.IsNullOrEmpty(logText))
+            {
+                logText = BuildInlineLog(replacements);
+            }
+
+            LogManager.Instance.Log(logText, LogManager.LogLevelEnum.Info);
+        }
+
+        private static string BuildInlineLog(Dictionary<string, string> r)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("===== AI 请求参数 =====");
+            sb.Append("[NPC] "); sb.Append(r["NPC_NAME"]);
+            sb.Append(" ("); sb.Append(r["NPC_ROLE"]);
+            sb.Append(") | npcId="); sb.AppendLine(r["NPC_ID"]);
+            sb.Append("[生成参数] "); sb.AppendLine(r["LLM_PARAMS"]);
+            sb.AppendLine("--- NPC 身份 ---");
+            sb.Append(r["NPC_PROFILE"]);
+            sb.AppendLine("--- 自身状态 ---");
+            sb.AppendLine(r["GAME_STATE"]);
+            sb.AppendLine("--- RAG 知识 ---");
+            sb.Append(r["RAG_KNOWLEDGE"]);
+            sb.AppendLine("--- 对话历史 ---");
+            sb.Append(r["HISTORY"]);
+            sb.AppendLine("--- 当前输入 ---");
+            sb.AppendLine(r["PLAYER_INPUT"]);
+            sb.AppendLine("--- 最终系统提示词 ---");
+            sb.Append(r["SYSTEM_PROMPT"]);
+            sb.Append("=========================");
+            return sb.ToString();
+        }
+
+        private static string BuildLLMParamsText(DialogueSession session)
+        {
+            return "temperature=" + session.options.temperature
+                + " maxTokens=" + session.options.maxTokens
+                + " topP=" + session.options.topP
+                + " repeatPenalty=" + session.options.repeatPenalty
+                + " deepThinking=" + (session.options.deepThinking ? "ON" : "OFF")
+                + " stream=" + (session.options.stream ? "ON" : "OFF");
+        }
+
+        private static string BuildNPCProfileText(NPCPromptProfile profile)
+        {
+            if (profile == null)
+            {
+                return "  (无)\n";
+            }
+
+            var sb = new StringBuilder();
+            sb.Append("  姓名: "); sb.AppendLine(profile.npcName);
+            sb.Append("  角色: "); sb.AppendLine(profile.npcRole);
+            sb.Append("  地点: "); sb.AppendLine(profile.npcLocation);
+            sb.Append("  性格: "); sb.AppendLine(profile.personalityDescription);
+            if (!string.IsNullOrEmpty(profile.backgroundStory))
+            {
+                sb.Append("  背景: "); sb.AppendLine(profile.backgroundStory);
+            }
+
+            sb.Append("  说话风格: "); sb.AppendLine(StripSpeakingPrefix(profile.speakingStyle));
+            sb.Append("  最大句数: "); sb.Append(profile.maxSentences.ToString());
+            return sb.ToString();
+        }
+
+        private static string BuildGameStateText(GameStateContext gameContext)
+        {
+            return gameContext != null ? gameContext.ToPromptText() : "(空)";
+        }
+
+        private static string BuildRAGText(List<GameKnowledgeEntry> ragResults)
+        {
+            if (ragResults == null || ragResults.Count == 0)
+            {
+                return "  (无命中)\n";
+            }
+
+            var sb = new StringBuilder();
+            sb.Append("  命中 "); sb.Append(ragResults.Count); sb.AppendLine(" 条:");
+            foreach (GameKnowledgeEntry entry in ragResults)
+            {
+                sb.Append("    - "); sb.AppendLine(entry.ToPromptText());
+            }
+
+            return sb.ToString();
+        }
+
+        private static string BuildHistoryText(List<ChatMessage> history)
+        {
+            if (history == null || history.Count == 0)
+            {
+                return "  (无历史，仅发送当前消息)\n";
+            }
+
+            var sb = new StringBuilder();
+            sb.Append("  共 "); sb.Append(history.Count / 2); sb.AppendLine(" 轮:");
+            foreach (ChatMessage msg in history)
+            {
+                sb.Append("    [");
+                sb.Append(msg.role);
+                sb.Append("] ");
+                sb.AppendLine(msg.content);
+            }
+
+            return sb.ToString();
+        }
+
+        private static string BuildSystemPromptText(List<ChatMessage> messages)
+        {
+            if (messages == null || messages.Count == 0 || messages[0].role != "system")
+            {
+                return "  (无)\n";
+            }
+
+            return messages[0].content;
+        }
+
         /// <summary>
         /// 获取 NPC 问候语
         /// </summary>
@@ -469,6 +620,19 @@ namespace LAB2D.AI.Dialogue.Core
             sb.Append("。有什么我能帮你的吗？");
 
             return sb.ToString();
+        }
+
+        private static string StripSpeakingPrefix(string speakingStyle)
+        {
+            if (string.IsNullOrWhiteSpace(speakingStyle))
+            {
+                return "简洁";
+            }
+
+            speakingStyle = speakingStyle.Trim();
+            return speakingStyle.StartsWith("说话")
+                ? speakingStyle.Substring("说话".Length).Trim()
+                : speakingStyle;
         }
     }
 }

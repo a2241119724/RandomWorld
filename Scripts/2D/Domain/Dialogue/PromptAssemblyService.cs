@@ -89,7 +89,7 @@ namespace LAB2D.Domain.Dialogue
             DialoguePromptProfileModel safeProfile = profile ?? DialoguePromptProfileModel.CreateDefault();
             string backgroundText = string.IsNullOrEmpty(safeProfile.BackgroundStory)
                 ? string.Empty
-                : "Background: " + safeProfile.BackgroundStory;
+                : "背景：" + safeProfile.BackgroundStory;
 
             Dictionary<string, string> replacements = new Dictionary<string, string>
             {

@@ -88,6 +88,9 @@ namespace LAB2D.AI.Dialogue.LLM
         {
             string url = this.apiBaseUrl + LLMClientConfig.CHAT_COMPLETIONS_PATH;
             string json = BuildRequestJson(messages, options, stream: true);
+            LogManager.Instance.Log(
+                "[RemoteAPI ChatStreamAsync] 请求参数: " + json,
+                LogManager.LogLevelEnum.Info);
 
             using UnityWebRequest request = CreatePostRequest(url, json);
             this.currentRequest = request;
