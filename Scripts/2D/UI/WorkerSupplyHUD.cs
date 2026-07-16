@@ -174,8 +174,7 @@ namespace LAB2D.UI
             GameObject root = new GameObject(
                 WorkerSupplyConstant.HudRootName,
                 typeof(RectTransform),
-                typeof(CanvasGroup),
-                typeof(WorkerSupplyHUD));
+                typeof(CanvasGroup));
             root.transform.SetParent(parent, false);
 
             RectTransform rootRect = root.GetComponent<RectTransform>();
@@ -214,7 +213,7 @@ namespace LAB2D.UI
             text.color = PixelUITheme.TextPrimary;
             text.text = WorkerSupplyConstant.EmptyHudText;
 
-            WorkerSupplyHUD hud = root.GetComponent<WorkerSupplyHUD>();
+            WorkerSupplyHUD hud = root.AddComponent<WorkerSupplyHUD>();
             hud.supplyText = text;
             hud.SetVisible(true);
             return root;

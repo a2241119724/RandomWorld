@@ -179,8 +179,7 @@ namespace LAB2D.UI
             GameObject root = new GameObject(
                 HudRootName,
                 typeof(RectTransform),
-                typeof(CanvasGroup),
-                typeof(WeatherGameplayHUD));
+                typeof(CanvasGroup));
             root.transform.SetParent(parent, false);
 
             RectTransform rootRect = root.GetComponent<RectTransform>();
@@ -215,7 +214,7 @@ namespace LAB2D.UI
             text.color = PixelUITheme.TextPrimary;
             text.text = "天气: 等待运行时数据";
 
-            WeatherGameplayHUD hud = root.GetComponent<WeatherGameplayHUD>();
+            WeatherGameplayHUD hud = root.AddComponent<WeatherGameplayHUD>();
             hud.effectText = text;
             hud.SetVisible(true);
             return root;

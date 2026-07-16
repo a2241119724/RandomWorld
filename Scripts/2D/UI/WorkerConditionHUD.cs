@@ -175,8 +175,7 @@ namespace LAB2D.UI
             GameObject root = new GameObject(
                 WorkerConditionConstant.HudRootName,
                 typeof(RectTransform),
-                typeof(CanvasGroup),
-                typeof(WorkerConditionHUD));
+                typeof(CanvasGroup));
             root.transform.SetParent(parent, false);
 
             RectTransform rootRect = root.GetComponent<RectTransform>();
@@ -215,7 +214,7 @@ namespace LAB2D.UI
             text.color = PixelUITheme.TextPrimary;
             text.text = WorkerConditionConstant.EmptyHudText;
 
-            WorkerConditionHUD hud = root.GetComponent<WorkerConditionHUD>();
+            WorkerConditionHUD hud = root.AddComponent<WorkerConditionHUD>();
             hud.conditionText = text;
             hud.SetVisible(true);
             return root;
