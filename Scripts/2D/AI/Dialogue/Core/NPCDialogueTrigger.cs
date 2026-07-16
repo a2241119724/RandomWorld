@@ -34,27 +34,6 @@ namespace LAB2D.AI.Dialogue.Core
         /// </summary>
         private static readonly HashSet<string> MissingProfileWarned = new HashSet<string>();
 
-        /// <summary>
-        /// 设置 NPC 配置（运行时调用）
-        /// </summary>
-        public void SetProfile(string name)
-        {
-            this.profileName = name;
-            this.cachedProfile = CreateRuntimeProfile(PromptBuilder.Instance.GetProfile(name));
-        }
-
-        /// <summary>
-        /// 设置 NPC 配置
-        /// </summary>
-        public void SetProfile(NPCPromptProfile profile)
-        {
-            this.cachedProfile = CreateRuntimeProfile(profile);
-            if (profile != null)
-            {
-                this.profileName = profile.name;
-            }
-        }
-
         public void Awake()
         {
             this.npcId = this.GetInstanceID().ToString();

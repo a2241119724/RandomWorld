@@ -20,6 +20,7 @@ namespace LAB2D.AI.Dialogue.Core
     public class DialogueManager : Singleton<DialogueManager>
     {
         private ILLMClient llmClient;
+        private string cachedClientSource; // "local" or "remote"
         private PromptBuilder promptBuilder => PromptBuilder.Instance;
         private DialogueMemoryManager memoryManager => DialogueMemoryManager.Instance;
         private GameKnowledgeRetriever knowledgeRetriever => GameKnowledgeRetriever.Instance;
@@ -48,21 +49,34 @@ namespace LAB2D.AI.Dialogue.Core
         public event Action<string> OnDialogueEnded;
 
         /// <summary>
-        /// 设置 LLM 客户端（可在构造后替换）
+        /// 清除客户端缓存（设置变更后调用，下次请求时重建）
         /// </summary>
-        public void SetLLMClient(ILLMClient client)
+        public void ResetLLMClient()
         {
-            this.llmClient = client;
+            this.llmClient = null;
+            this.cachedClientSource = null;
         }
-
-        /// <summary>
-        /// 获取或创建 LLM 客户端
-        /// </summary>
         public ILLMClient GetLLMClient()
         {
-            if (this.llmClient == null)
+            string expectedSource = ModelSourceSettings.Current == ModelSource.Remote
+                ? "remote"
+                : "local";
+
+            if (this.llmClient == null || this.cachedClientSource != expectedSource)
             {
-                this.llmClient = new LlamaServerClient();
+                if (ModelSourceSettings.Current == ModelSource.Remote)
+                {
+                    this.llmClient = new RemoteAPIClient(
+                        ModelSourceSettings.RemoteApiBaseUrl,
+                        ModelSourceSettings.RemoteApiKey,
+                        ModelSourceSettings.RemoteModelName);
+                }
+                else
+                {
+                    this.llmClient = new LlamaServerClient();
+                }
+
+                this.cachedClientSource = expectedSource;
             }
 
             return this.llmClient;
@@ -209,14 +223,6 @@ namespace LAB2D.AI.Dialogue.Core
         {
             this.activeSessions.TryGetValue(npcId, out DialogueSession session);
             return session;
-        }
-
-        /// <summary>
-        /// 构建游戏状态上下文
-        /// </summary>
-        public GameStateContext BuildGameStateContext(NPCPromptProfile profile)
-        {
-            return this.BuildGameStateContext(string.Empty, profile);
         }
 
         /// <summary>

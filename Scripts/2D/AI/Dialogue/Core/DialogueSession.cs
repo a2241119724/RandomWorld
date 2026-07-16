@@ -1,6 +1,5 @@
 namespace LAB2D.AI.Dialogue.Core
 {
-    using LAB2D;
     using LAB2D.AI.Dialogue.LLM;
     using LAB2D.AI.Dialogue.Prompt;
     using System;
@@ -39,11 +38,6 @@ namespace LAB2D.AI.Dialogue.Core
         public List<ChatMessage> fullHistory = new List<ChatMessage>();
 
         /// <summary>
-        /// 开始时间
-        /// </summary>
-        public DateTime startedAt = DateTime.Now;
-
-        /// <summary>
         /// 是否活跃
         /// </summary>
         public bool isActive = true;
@@ -55,7 +49,10 @@ namespace LAB2D.AI.Dialogue.Core
         {
             this.npcId = npcId;
             this.profile = profile;
-            this.options = new LLMGenerationOptions();
+            this.options = new LLMGenerationOptions
+            {
+                deepThinking = ModelSourceSettings.DeepThinkingEnabled,
+            };
         }
 
         /// <summary>

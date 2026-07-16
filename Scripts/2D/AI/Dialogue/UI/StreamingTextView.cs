@@ -1,6 +1,5 @@
 namespace LAB2D.AI.Dialogue.UI
 {
-    using LAB2D;
     using System.Collections;
     using System.Text;
     using UnityEngine;
@@ -30,14 +29,6 @@ namespace LAB2D.AI.Dialogue.UI
         {
             get { return this.typewriterSpeed; }
             set { this.typewriterSpeed = value; }
-        }
-
-        /// <summary>
-        /// 获取当前完整文本
-        /// </summary>
-        public string FullText
-        {
-            get { return this.buffer.ToString(); }
         }
 
         public void Awake()

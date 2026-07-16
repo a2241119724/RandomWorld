@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.AI.Dialogue.Core;
     using LAB2D.AI.Dialogue.LLM;
     using System;
     using System.Collections.Generic;
@@ -78,7 +79,7 @@ namespace LAB2D.UI
         public void Awake()
         {
             Instance = this;
-            this.llmClient = new LlamaServerClient();
+            this.llmClient = DialogueManager.Instance.GetLLMClient();
             this.input = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
             this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
         }

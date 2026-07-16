@@ -1,7 +1,9 @@
 namespace LAB2D.AI.Dialogue.UI
 {
     using LAB2D;
+    using LAB2D.AI.Dialogue.LLM;
     using LAB2D.AI.Dialogue.Prompt;
+    using LAB2D.UI.Panel;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -24,6 +26,8 @@ namespace LAB2D.AI.Dialogue.UI
         private InputField inputField;
         private Button sendButton;
         private Button backButton;
+        private Button settingsButton;
+        private Toggle deepThinkingToggle;
         private Text npcNameText;
         private string activeNpcId;
         private StreamingTextView currentStreamingText;
@@ -154,6 +158,11 @@ namespace LAB2D.AI.Dialogue.UI
             this.AddNPCBubble(greeting);
             this.ScrollToLatest();
 
+            if (this.deepThinkingToggle != null)
+            {
+                this.deepThinkingToggle.isOn = ModelSourceSettings.DeepThinkingEnabled;
+            }
+
             if (this.inputField != null)
             {
                 this.inputField.text = string.Empty;
@@ -204,6 +213,12 @@ namespace LAB2D.AI.Dialogue.UI
                 this.currentStreamingText.TypewriterSpeed = 0;
             }
 
+            DialogueSession session = DialogueManager.Instance.GetSession(this.activeNpcId);
+            if (session != null)
+            {
+                session.options.deepThinking = ModelSourceSettings.DeepThinkingEnabled;
+            }
+
             DialogueManager.Instance.SendMessage(this.activeNpcId, text);
             this.ScrollToLatest();
         }
@@ -220,6 +235,23 @@ namespace LAB2D.AI.Dialogue.UI
         {
             this.Close();
             PanelController.Instance.Close();
+        }
+
+        private void OnSettingsClicked()
+        {
+            PanelController.Instance.Show(LLMSettingsPanel.Instance);
+        }
+
+        private void OnDeepThinkingChanged(bool isOn)
+        {
+            ModelSourceSettings.DeepThinkingEnabled = isOn;
+            ModelSourceSettings.Save();
+
+            DialogueSession session = DialogueManager.Instance.GetSession(this.activeNpcId);
+            if (session != null)
+            {
+                session.options.deepThinking = isOn;
+            }
         }
 
         private void HandleToken(string npcId, string token)
@@ -311,6 +343,26 @@ namespace LAB2D.AI.Dialogue.UI
                 {
                     this.backButton.onClick.RemoveAllListeners();
                     this.backButton.onClick.AddListener(this.OnBackClicked);
+                }
+            }
+
+            if (this.settingsButton == null)
+            {
+                this.settingsButton = FindChildComponent<Button>(this.gameObject, "Settings");
+                if (this.settingsButton != null)
+                {
+                    this.settingsButton.onClick.RemoveAllListeners();
+                    this.settingsButton.onClick.AddListener(this.OnSettingsClicked);
+                }
+            }
+
+            if (this.deepThinkingToggle == null)
+            {
+                this.deepThinkingToggle = FindChildComponent<Toggle>(this.gameObject, "DeepThinking");
+                if (this.deepThinkingToggle != null)
+                {
+                    this.deepThinkingToggle.onValueChanged.RemoveAllListeners();
+                    this.deepThinkingToggle.onValueChanged.AddListener(this.OnDeepThinkingChanged);
                 }
             }
 
@@ -647,7 +699,6 @@ namespace LAB2D.AI.Dialogue.UI
                     return child;
                 }
             }
-
             return null;
         }
     }

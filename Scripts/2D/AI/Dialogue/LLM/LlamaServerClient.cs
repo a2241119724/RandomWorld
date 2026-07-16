@@ -37,11 +37,6 @@ namespace LAB2D.AI.Dialogue.LLM
             this.timeoutSeconds = timeoutSeconds;
         }
 
-        /// <summary>
-        /// 当前客户端期望使用的本地 GGUF 模型路径.
-        /// </summary>
-        public string ModelPath => this.modelPath;
-
         /// <inheritdoc/>
         public async Task<string> ChatAsync(List<ChatMessage> messages, LLMGenerationOptions options)
         {
@@ -550,21 +545,6 @@ namespace LAB2D.AI.Dialogue.LLM
             return result;
         }
 
-        private static string EscapeJsonString(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                return string.Empty;
-            }
-
-            return text
-                .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "")
-                .Replace("\t", "\\t");
-        }
-
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
         [Serializable]
         private class ChatCompletionRequest
@@ -596,7 +576,6 @@ namespace LAB2D.AI.Dialogue.LLM
         {
             public MessageData message;
             public MessageData delta;
-            public string finish_reason;
         }
 
         [Serializable]

@@ -32,5 +32,10 @@ namespace LAB2D.AI.Dialogue.LLM
         /// 是否流式输出
         /// </summary>
         public bool stream = true;
+
+        /// <summary>
+        /// 是否启用深度思考（远程 API 支持时发送 thinking 参数）
+        /// </summary>
+        public bool deepThinking = false;
     }
 }
