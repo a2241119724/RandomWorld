@@ -24,11 +24,20 @@
 * 道具数据ItemData与地图瓦片Tile的名称关联绑定
 * 数据传输: Character -> Weapon -> WeaponEffect -> Character
 
-## 其他
+## 代码仓库
+
+项目使用双仓库策略：
+- **私有库** (`origin`)：完整项目，包含所有资源
+- **公开库** (`public`)：仅代码，不含美术资源
 
 ```powershell
-git config --unset core.hooksPath
-git config core.hooksPath .githooks
-powershell -NoProfile -ExecutionPolicy Bypass -File .\.gitarchive\Set-ArchivePassword.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\.gitarchive\Restore-EncryptedProjectArchive.ps1 -Force
+# 日常开发推送（仅私有库）
+git push origin <branch>
+
+# 一次性推送双仓库
+powershell -ExecutionPolicy Bypass -File .\Push-To-BothRepos.ps1
+
+# 指定分支 / 仅推公开库
+.\Push-To-BothRepos.ps1 -Branch main
+.\Push-To-BothRepos.ps1 -SkipPrivate
 ```
