@@ -132,32 +132,57 @@ try {
     if (-not $SkipPublic) {
         Write-Host "`n=== Pushing to PUBLIC repo (${publicRemote}) [${Branch}] ===" -ForegroundColor Cyan
 
-        Write-Host "Creating filtered snapshot..."
-
         $restrictiveIgnore | Set-Content .gitignore -Encoding UTF8
-        & git add .gitignore
 
-        $ignoredFiles = & git -c core.quotepath=false ls-files --cached --ignored --exclude-standard 2>$null
-        if ($LASTEXITCODE -eq 0 -and $ignoredFiles) {
-            foreach ($f in $ignoredFiles) {
-                $file = $f.Trim()
-                if ($file) {
-                    & git rm --cached --quiet -- $file 2>$null
+        $tempIndex = Join-Path $env:TEMP "git-index-filtered"
+        $prevIndex = $env:GIT_INDEX_FILE
+        try {
+            $env:GIT_INDEX_FILE = $tempIndex
+            Remove-Item -LiteralPath $tempIndex -Force -ErrorAction SilentlyContinue
+
+            & git add -A
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to stage filtered files."
+            }
+
+            $tree = (& git write-tree 2>&1).Trim()
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($tree)) {
+                throw "Failed to write filtered tree: $tree"
+            }
+
+            $upToDate = $false
+            $remoteRef = & git rev-parse "refs/remotes/${publicRemote}/${Branch}" 2>$null
+            if ($remoteRef) {
+                $remoteTree = (& git rev-parse "${remoteRef}^{tree}" 2>$null).Trim()
+                if ($tree -eq $remoteTree) {
+                    $upToDate = $true
                 }
             }
-        }
 
-        & git commit -m "Public snapshot (filtered)" --allow-empty
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to create public commit."
-        }
+            if ($upToDate) {
+                Write-Host "Public repo already up-to-date. Skipping." -ForegroundColor Green
+            }
+            else {
+                Write-Host "Creating filtered snapshot..."
+                $commit = (& git commit-tree $tree -p $origCommit -m "Public snapshot (filtered)" 2>&1).Trim()
+                if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($commit)) {
+                    throw "Failed to create public commit: $commit"
+                }
 
-        & git push $publicRemote "${Branch}" --force --follow-tags
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to push to public repo (${publicRemote})."
-        }
+                & git push $publicRemote "${commit}:refs/heads/${Branch}" --force
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Failed to push to public repo (${publicRemote})."
+                }
 
-        Write-Host "Public push complete." -ForegroundColor Green
+                & git update-ref "refs/remotes/${publicRemote}/${Branch}" $commit 2>$null
+
+                Write-Host "Public push complete." -ForegroundColor Green
+            }
+        }
+        finally {
+            $env:GIT_INDEX_FILE = $prevIndex
+            Remove-Item -LiteralPath $tempIndex -Force -ErrorAction SilentlyContinue
+        }
     }
 }
 finally {
