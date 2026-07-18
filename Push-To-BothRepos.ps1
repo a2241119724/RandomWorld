@@ -14,7 +14,6 @@ function Get-GitRoot {
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($gitRoot)) {
         throw "This script must run inside a Git repository."
     }
-
     return (Resolve-Path -LiteralPath $gitRoot.Trim()).Path
 }
 
@@ -30,17 +29,36 @@ if ([string]::IsNullOrWhiteSpace($Branch)) {
     $Branch = $currentBranch
 }
 
+# --- Ensure remotes are configured ---
+$remoteLines = (& git -C $repoRoot remote -v 2>$null) -join "`n"
+
+if ($remoteLines -notmatch [regex]::Escape($publicUrl)) {
+    $addError = & git -C $repoRoot remote add $publicRemote $publicUrl 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to add remote '$publicRemote': $addError" -ForegroundColor Red
+        throw "Cannot configure public remote. Does the repo exist on GitHub?"
+    }
+    Write-Host "Added remote: $publicRemote -> $publicUrl" -ForegroundColor Green
+}
+
+if ($remoteLines -notmatch [regex]::Escape($privateUrl)) {
+    $addError = & git -C $repoRoot remote add $privateRemote $privateUrl 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to add remote '$privateRemote': $addError" -ForegroundColor Red
+        throw "Cannot configure private remote. Does the repo exist on GitHub?"
+    }
+    Write-Host "Added remote: $privateRemote -> $privateUrl" -ForegroundColor Green
+}
+
 # ============================================================
 # PUSH TO PUBLIC REPO (uses restrictive .gitignore)
 # ============================================================
 if (-not $SkipPublic) {
-    Write-Host "`n=== Pushing to PUBLIC repo ($publicRemote) ===" -ForegroundColor Cyan
+    Write-Host "`n=== Pushing to PUBLIC repo ($publicRemote) [$Branch] ===" -ForegroundColor Cyan
     & git -C $repoRoot push $publicRemote "${Branch}" --follow-tags
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to push to public repo ($publicRemote)."
     }
-    Write-Host "Pushing LFS objects to public remote..."
-    & git -C $repoRoot lfs push $publicRemote "${Branch}" --all 2>$null
     Write-Host "Public push complete." -ForegroundColor Green
 }
 
@@ -48,7 +66,7 @@ if (-not $SkipPublic) {
 # PUSH TO PRIVATE REPO (uploads everything)
 # ============================================================
 if (-not $SkipPrivate) {
-    Write-Host "`n=== Pushing to PRIVATE repo ($privateRemote) ===" -ForegroundColor Cyan
+    Write-Host "`n=== Pushing to PRIVATE repo ($privateRemote) [$Branch] ===" -ForegroundColor Cyan
 
     $tempDir = Join-Path ([IO.Path]::GetTempPath()) ("rw-private-push-" + [Guid]::NewGuid().ToString("N"))
 
@@ -112,9 +130,6 @@ hs_err_pid*.log
             throw "Failed to push to private repo ($privateRemote)."
         }
 
-        Write-Host "Pushing LFS objects to private remote..."
-        & git lfs push $privateRemote $Branch --all 2>$null
-
         Write-Host "Private push complete." -ForegroundColor Green
     }
     finally {
@@ -126,4 +141,4 @@ hs_err_pid*.log
     }
 }
 
-Write-Host "`nDone - pushed to both repos." -ForegroundColor Green
+Write-Host "`nDone - pushed to both repos [$Branch]." -ForegroundColor Green
