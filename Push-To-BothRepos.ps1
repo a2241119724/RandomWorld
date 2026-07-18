@@ -66,7 +66,6 @@ $restrictiveIgnore = @"
 !*/
 !/.gitignore
 !/README.md
-!/Push-To-BothRepos.ps1
 
 /Agent
 !/AgentFull/**
