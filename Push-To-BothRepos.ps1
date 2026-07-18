@@ -140,7 +140,7 @@ try {
             $env:GIT_INDEX_FILE = $tempIndex
             Remove-Item -LiteralPath $tempIndex -Force -ErrorAction SilentlyContinue
 
-            & git add -A
+            & git -c core.autocrlf=false add -A 2>$null
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to stage filtered files."
             }
