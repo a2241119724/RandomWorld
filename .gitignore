@@ -1,47 +1,11 @@
-# Public source snapshot.
-# Default to private so new asset/resource extensions are not published by accident.
-
-*
-!*/
-
-# Repository metadata and docs.
-!/.gitignore
-!/README.md
-!/Push-To-BothRepos.ps1
-
-# Track Unity .meta files across the project, except explicitly private folders below.
-!**/*.meta
-
-# Publish the full Agent folders, but keep Python caches private.
-/Agent
-!/AgentFull/**
-**/__pycache__/
-**/__pycache__/**
-*.pyc
-*.pyo
-
-# Publish only C# files under Scripts/2D.
-!/Scripts/2D/*.cs
-!/Scripts/2D/**/*.cs
-
-# Private folders. These rules also override the global .meta allowlist.
-/AddressableAssetsData/
-/AddressableAssetsData.meta
-/TextMesh Pro/
-/TextMesh Pro.meta
-/Scripts/Reference/
-/Scripts/Reference.meta
-
-# Unity, IDE, and generated files.
-/.claude/
-/.vs/
-/Library/
-/Logs/
+﻿/Library/
 /Temp/
+/Logs/
 /Obj/
 /obj/
-/MemoryCaptures/
+/.vs/
 /UserSettings/
+/MemoryCaptures/
 *.csproj
 *.sln
 *.suo
@@ -53,12 +17,7 @@
 *.mdb
 *.opendb
 *.VC.db
-
-# Build outputs and logs.
-*.apk
-*.aab
-*.unitypackage
-*.app
-*.exe
+*.pyc
+*.pyo
 *.log
 hs_err_pid*.log
