@@ -7,6 +7,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
 
 function Get-GitRoot {
     $gitRoot = (& git rev-parse --show-toplevel 2>$null)
@@ -139,10 +140,13 @@ try {
         $restrictiveIgnore | Set-Content .gitignore -Encoding UTF8
         & git add .gitignore
 
-        $ignoredFiles = & git ls-files --cached --ignored --exclude-standard -z 2>$null
+        $ignoredFiles = & git ls-files --cached --ignored --exclude-standard 2>$null
         if ($LASTEXITCODE -eq 0 -and $ignoredFiles) {
-            $ignoredFiles.Split([char]0, [StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object {
-                & git rm --cached --quiet $_ 2>$null
+            foreach ($f in $ignoredFiles) {
+                $file = $f.Trim()
+                if ($file) {
+                    & git rm --cached --quiet -- $file 2>$null
+                }
             }
         }
 
