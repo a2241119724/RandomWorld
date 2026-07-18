@@ -68,8 +68,6 @@ $restrictiveIgnore = @"
 !/README.md
 !/Push-To-BothRepos.ps1
 
-!**/*.meta
-
 /Agent
 !/AgentFull/**
 **/__pycache__/
