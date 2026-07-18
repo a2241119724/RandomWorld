@@ -7,14 +7,7 @@
 # Repository metadata and docs.
 !/.gitignore
 !/README.md
-
-# Encrypted full-project snapshot generated before each commit.
-!/.githooks/
-!/.githooks/pre-commit
-!/.gitarchive/
-!/.gitarchive/*.ps1
-!/.commit-archive/
-/.commit-archive/ProjectSnapshot.zip.aes
+!/Push-To-BothRepos.ps1
 
 # Track Unity .meta files across the project, except explicitly private folders below.
 !**/*.meta
@@ -69,6 +62,3 @@
 *.exe
 *.log
 hs_err_pid*.log
-
-.commit-archive/
-!architecture-report.md
