@@ -1,0 +1,1 @@
+- item文件名包含Object，说明需要绑定在GameObject上

@@ -1,7 +1,6 @@
 [CmdletBinding()]
 param(
     [string]$Branch,
-    [string]$CommitMessage = "Full sync: all resources (auto-generated)",
     [switch]$SkipPublic,
     [switch]$SkipPrivate
 )
@@ -18,87 +17,84 @@ function Get-GitRoot {
 }
 
 $repoRoot = Get-GitRoot
+Push-Location $repoRoot
 
 $publicRemote = "public"
 $privateRemote = "origin"
 $publicUrl = "git@github.com:a2241119724/RandomWorld.git"
 $privateUrl = "git@github.com:a2241119724/Private-RandomWorld.git"
 
-$currentBranch = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()
+$currentBranch = (& git rev-parse --abbrev-ref HEAD 2>$null).Trim()
 if ([string]::IsNullOrWhiteSpace($Branch)) {
     $Branch = $currentBranch
 }
 
-# --- Ensure remotes are configured ---
-$remoteLines = (& git -C $repoRoot remote -v 2>$null) -join "`n"
+# --- Ensure remotes ---
+$remoteLines = (& git remote -v 2>$null) -join "`n"
 
 if ($remoteLines -notmatch [regex]::Escape($publicUrl)) {
-    $addError = & git -C $repoRoot remote add $publicRemote $publicUrl 2>&1
+    $err = & git remote add $publicRemote $publicUrl 2>&1
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Failed to add remote '$publicRemote': $addError" -ForegroundColor Red
-        throw "Cannot configure public remote. Does the repo exist on GitHub?"
+        Write-Host "Failed to add remote '${publicRemote}': $err" -ForegroundColor Red
+        throw "Cannot configure public remote."
     }
-    Write-Host "Added remote: $publicRemote -> $publicUrl" -ForegroundColor Green
+    Write-Host "Added remote: ${publicRemote} -> ${publicUrl}" -ForegroundColor Green
 }
 
 if ($remoteLines -notmatch [regex]::Escape($privateUrl)) {
-    $addError = & git -C $repoRoot remote add $privateRemote $privateUrl 2>&1
+    $err = & git remote add $privateRemote $privateUrl 2>&1
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Failed to add remote '$privateRemote': $addError" -ForegroundColor Red
-        throw "Cannot configure private remote. Does the repo exist on GitHub?"
+        Write-Host "Failed to add remote '${privateRemote}': $err" -ForegroundColor Red
+        throw "Cannot configure private remote."
     }
-    Write-Host "Added remote: $privateRemote -> $privateUrl" -ForegroundColor Green
+    Write-Host "Added remote: ${privateRemote} -> ${privateUrl}" -ForegroundColor Green
 }
 
-# ============================================================
-# PUSH TO PUBLIC REPO (uses restrictive .gitignore)
-# ============================================================
-if (-not $SkipPublic) {
-    Write-Host "`n=== Pushing to PUBLIC repo ($publicRemote) [$Branch] ===" -ForegroundColor Cyan
-    & git -C $repoRoot push $publicRemote "${Branch}" --follow-tags
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to push to public repo ($publicRemote)."
-    }
-    Write-Host "Public push complete." -ForegroundColor Green
+# --- Check clean working directory ---
+$dirty = & git status --porcelain 2>$null
+if ($dirty) {
+    throw "Working directory has uncommitted changes. Commit or stash first."
 }
 
-# ============================================================
-# PUSH TO PRIVATE REPO (uploads everything)
-# ============================================================
-if (-not $SkipPrivate) {
-    Write-Host "`n=== Pushing to PRIVATE repo ($privateRemote) [$Branch] ===" -ForegroundColor Cyan
+$origCommit = (& git rev-parse HEAD 2>$null).Trim()
 
-    $tempDir = Join-Path ([IO.Path]::GetTempPath()) ("rw-private-push-" + [Guid]::NewGuid().ToString("N"))
+$restrictiveIgnore = @"
+# Public source snapshot -- only publish code, not assets or resources.
+*
 
-    try {
-        Write-Host "Creating temporary working copy..."
-        $savedErrorAction = $ErrorActionPreference
-        $ErrorActionPreference = "Continue"
-        & git -C $repoRoot clone --branch $Branch . $tempDir 2>$null
-        $cloneOk = ($LASTEXITCODE -eq 0)
-        if (-not $cloneOk) {
-            & git -C $repoRoot clone . $tempDir 2>$null
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to create temporary clone."
-            }
-            Push-Location $tempDir
-            & git checkout $Branch 2>$null
-        }
-        else {
-            Push-Location $tempDir
-        }
-        $ErrorActionPreference = $savedErrorAction
+!*/
+!/.gitignore
+!/README.md
+!/Push-To-BothRepos.ps1
 
-        Write-Host "Replacing .gitignore for full upload..."
-        @"
+!**/*.meta
+
+/Agent
+!/AgentFull/**
+**/__pycache__/
+**/__pycache__/**
+*.pyc
+*.pyo
+
+!/Scripts/2D/*.cs
+!/Scripts/2D/**/*.cs
+
+/AddressableAssetsData/
+/AddressableAssetsData.meta
+/TextMesh Pro/
+/TextMesh Pro.meta
+/Scripts/Reference/
+/Scripts/Reference.meta
+
+/.claude/
+/.vs/
 /Library/
-/Temp/
 /Logs/
+/Temp/
 /Obj/
 /obj/
-/.vs/
-/UserSettings/
 /MemoryCaptures/
+/UserSettings/
 *.csproj
 *.sln
 *.suo
@@ -110,40 +106,64 @@ if (-not $SkipPrivate) {
 *.mdb
 *.opendb
 *.VC.db
-*.pyc
-*.pyo
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.exe
 *.log
 hs_err_pid*.log
-"@ | Set-Content -LiteralPath ".gitignore" -Encoding UTF8
+"@
 
-        Write-Host "Staging all files..."
-        & git add -A
+try {
+    # ============================================================
+    # PUSH TO PRIVATE REPO (current state: minimal .gitignore)
+    # ============================================================
+    if (-not $SkipPrivate) {
+        Write-Host "`n=== Pushing to PRIVATE repo (${privateRemote}) [${Branch}] ===" -ForegroundColor Cyan
+        & git push $privateRemote "${Branch}" --follow-tags
         if ($LASTEXITCODE -ne 0) {
-            throw "Failed to stage files."
+            throw "Failed to push to private repo (${privateRemote})."
         }
-
-        Write-Host "Creating commit..."
-        & git commit -m $CommitMessage --allow-empty
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to create commit."
-        }
-
-        Write-Host "Pushing to private remote..."
-        & git remote set-url origin $privateUrl
-        & git push origin $Branch --force --follow-tags
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to push to private repo ($privateUrl)."
-        }
-
         Write-Host "Private push complete." -ForegroundColor Green
     }
-    finally {
-        Pop-Location -ErrorAction SilentlyContinue
-        if (Test-Path -LiteralPath $tempDir) {
-            Write-Host "Cleaning up temporary directory..."
-            Remove-Item -Recurse -Force -LiteralPath $tempDir -ErrorAction SilentlyContinue
+
+    # ============================================================
+    # PUSH TO PUBLIC REPO (filtered snapshot)
+    # ============================================================
+    if (-not $SkipPublic) {
+        Write-Host "`n=== Pushing to PUBLIC repo (${publicRemote}) [${Branch}] ===" -ForegroundColor Cyan
+
+        Write-Host "Creating filtered snapshot..."
+
+        $restrictiveIgnore | Set-Content .gitignore -Encoding UTF8
+        & git add .gitignore
+
+        $ignoredFiles = & git ls-files --ignored --exclude-standard -z 2>$null
+        if ($LASTEXITCODE -eq 0 -and $ignoredFiles) {
+            $ignoredFiles.Split([char]0, [StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object {
+                & git rm --cached --quiet $_ 2>$null
+            }
         }
+
+        & git commit -m "Public snapshot (filtered)" --allow-empty
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to create public commit."
+        }
+
+        & git push $publicRemote "${Branch}" --force --follow-tags
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to push to public repo (${publicRemote})."
+        }
+
+        Write-Host "Public push complete." -ForegroundColor Green
     }
 }
+finally {
+    Write-Host "Restoring working directory..."
+    & git reset --hard $origCommit 2>$null
 
-Write-Host "`nDone - pushed to both repos [$Branch]." -ForegroundColor Green
+    Pop-Location -ErrorAction SilentlyContinue
+}
+
+Write-Host "`nDone - pushed to both repos [${Branch}]." -ForegroundColor Green

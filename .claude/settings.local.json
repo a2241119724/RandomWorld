@@ -1,0 +1,135 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk:*)",
+      "Bash(cat:*)",
+      "Bash(codex:*)",
+      "Bash(cp:*)",
+      "Bash(curl:*)",
+      "Bash(cut:*)",
+      "Bash(date:*)",
+      "Bash(deno:*)",
+      "Bash(diff:*)",
+      "Bash(echo:*)",
+      "Bash(find:*)",
+      "Bash(gemini:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git status:*)",
+      "Bash(grep:*)",
+      "Bash(head:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(printf:*)",
+      "Bash(python3:*)",
+      "Bash(rembg:*)",
+      "Bash(sed:*)",
+      "Bash(sips:*)",
+      "Bash(sort:*)",
+      "Bash(source ~/.claude/tools/rembg-env/bin/activate:*)",
+      "Bash(tail:*)",
+      "Bash(tr:*)",
+      "Bash(tree:*)",
+      "Bash(uniq:*)",
+      "Bash(wc:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:npmjs.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "WebFetch(domain:stackoverflow.com)",
+      "WebFetch(domain:unpkg.com)",
+      "WebSearch",
+      "mcp__ide__getDiagnostics"
+    ],
+    "deny": [
+      "Bash(git branch -D:*)",
+      "Bash(git checkout -- .:*)",
+      "Bash(git clean -f:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git restore .:*)",
+      "Bash(rm -f -r:*)",
+      "Bash(rm -fr:*)",
+      "Bash(rm -r -f:*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)"
+    ],
+    "ask": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /d/LAB/Unity/RandomWorld/Assets/.claude/hooks/security-scan.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /d/LAB/Unity/RandomWorld/Assets/.claude/hooks/review-on-stop.sh",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /d/LAB/Unity/RandomWorld/Assets/.claude/hooks/notify.sh input"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /d/LAB/Unity/RandomWorld/Assets/.claude/hooks/snapshot-baseline.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /d/LAB/Unity/RandomWorld/Assets/.claude/hooks/track-file-touch.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /d/LAB/Unity/RandomWorld/Assets/.claude/hooks/cleanup-session.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "codegraph"
+  ]
+}
