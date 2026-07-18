@@ -50,6 +50,11 @@ namespace LAB2D.UI
                     this.gameObject,
                     WorkerConditionConstant.HudTextName);
             }
+
+            // 默认隐藏，按 F5 切换显示
+            this.canvasGroup.alpha = 0.0f;
+            this.canvasGroup.interactable = false;
+            this.canvasGroup.blocksRaycasts = false;
         }
 
         private void OnEnable()
@@ -157,7 +162,7 @@ namespace LAB2D.UI
                 WorkerConditionHUD existingHud = existing.GetComponent<WorkerConditionHUD>();
                 if (existingHud != null)
                 {
-                    HudFactory.RepairExisting(existingHud, WorkerConditionConstant.HudToggleKey);
+                    HudFactory.RepairExisting(existingHud, WorkerConditionConstant.HudToggleKey, false);
                     existingHud.UpdateDisplay();
                     return existingHud;
                 }
@@ -216,7 +221,7 @@ namespace LAB2D.UI
 
             WorkerConditionHUD hud = root.AddComponent<WorkerConditionHUD>();
             hud.conditionText = text;
-            hud.SetVisible(true);
+            hud.SetVisible(false);
             return root;
         }
     }

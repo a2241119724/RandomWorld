@@ -50,6 +50,11 @@ namespace LAB2D.UI
             {
                 this.effectText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "WeatherText");
             }
+
+            // 默认隐藏，按 F4 切换显示
+            this.canvasGroup.alpha = 0.0f;
+            this.canvasGroup.interactable = false;
+            this.canvasGroup.blocksRaycasts = false;
         }
 
         private void OnEnable()
@@ -161,7 +166,7 @@ namespace LAB2D.UI
                 WeatherGameplayHUD existingHud = existing.GetComponent<WeatherGameplayHUD>();
                 if (existingHud != null)
                 {
-                    HudFactory.RepairExisting(existingHud, InputKeyConstant.ToggleWeatherHud);
+                    HudFactory.RepairExisting(existingHud, InputKeyConstant.ToggleWeatherHud, false);
                     existingHud.UpdateDisplay(ServiceLocator.Get<IWeatherGameplayService>()?.CurrentState);
                     return existingHud;
                 }
@@ -216,7 +221,7 @@ namespace LAB2D.UI
 
             WeatherGameplayHUD hud = root.AddComponent<WeatherGameplayHUD>();
             hud.effectText = text;
-            hud.SetVisible(true);
+            hud.SetVisible(false);
             return root;
         }
     }

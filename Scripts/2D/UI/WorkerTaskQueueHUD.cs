@@ -138,7 +138,7 @@ namespace LAB2D.UI
                 WorkerTaskQueueHUD existingHud = existing.GetComponent<WorkerTaskQueueHUD>();
                 if (existingHud != null)
                 {
-                    HudFactory.RepairExisting(existingHud, WorkerTaskHudConstant.HudToggleKey);
+                    HudFactory.RepairExisting(existingHud, WorkerTaskHudConstant.HudToggleKey, true);
                     existingHud.UpdateDisplay();
                     return existingHud;
                 }

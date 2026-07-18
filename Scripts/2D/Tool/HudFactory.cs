@@ -37,7 +37,8 @@ namespace LAB2D.Tool
         /// </summary>
         /// <param name="hud">HUD MonoBehaviour 实例。</param>
         /// <param name="toggleKey">正确的热键值。</param>
-        public static void RepairExisting(MonoBehaviour hud, KeyCode toggleKey)
+        /// <param name="defaultVisible">修复后默认可见状态。</param>
+        public static void RepairExisting(MonoBehaviour hud, KeyCode toggleKey, bool defaultVisible = true)
         {
             // 通过反射设置 toggleKey 字段（所有 HUD 均有此 public 字段）
             FieldInfo field = hud.GetType().GetField("toggleKey");
@@ -52,11 +53,11 @@ namespace LAB2D.Tool
                 hud.gameObject.SetActive(true);
             }
 
-            // 通过反射调用 SetVisible(true)
+            // 通过反射调用 SetVisible()
             System.Reflection.MethodInfo method = hud.GetType().GetMethod("SetVisible");
             if (method != null)
             {
-                method.Invoke(hud, new object[] { true });
+                method.Invoke(hud, new object[] { defaultVisible });
             }
         }
     }
