@@ -139,7 +139,7 @@ try {
         $restrictiveIgnore | Set-Content .gitignore -Encoding UTF8
         & git add .gitignore
 
-        $ignoredFiles = & git ls-files --ignored --exclude-standard -z 2>$null
+        $ignoredFiles = & git ls-files --cached --ignored --exclude-standard -z 2>$null
         if ($LASTEXITCODE -eq 0 -and $ignoredFiles) {
             $ignoredFiles.Split([char]0, [StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object {
                 & git rm --cached --quiet $_ 2>$null
