@@ -140,7 +140,7 @@ try {
         $restrictiveIgnore | Set-Content .gitignore -Encoding UTF8
         & git add .gitignore
 
-        $ignoredFiles = & git ls-files --cached --ignored --exclude-standard 2>$null
+        $ignoredFiles = & git -c core.quotepath=false ls-files --cached --ignored --exclude-standard 2>$null
         if ($LASTEXITCODE -eq 0 -and $ignoredFiles) {
             foreach ($f in $ignoredFiles) {
                 $file = $f.Trim()
