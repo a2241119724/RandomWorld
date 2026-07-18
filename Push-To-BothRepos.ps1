@@ -72,9 +72,12 @@ if (-not $SkipPrivate) {
 
     try {
         Write-Host "Creating temporary working copy..."
-        & git -C $repoRoot clone --local --branch $Branch . $tempDir 2>$null
-        if ($LASTEXITCODE -ne 0) {
-            & git -C $repoRoot clone --local . $tempDir
+        $savedErrorAction = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        & git -C $repoRoot clone --branch $Branch . $tempDir 2>$null
+        $cloneOk = ($LASTEXITCODE -eq 0)
+        if (-not $cloneOk) {
+            & git -C $repoRoot clone . $tempDir 2>$null
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to create temporary clone."
             }
@@ -84,6 +87,7 @@ if (-not $SkipPrivate) {
         else {
             Push-Location $tempDir
         }
+        $ErrorActionPreference = $savedErrorAction
 
         Write-Host "Replacing .gitignore for full upload..."
         @"
@@ -125,9 +129,10 @@ hs_err_pid*.log
         }
 
         Write-Host "Pushing to private remote..."
-        & git push $privateRemote $Branch --force --follow-tags
+        & git remote set-url origin $privateUrl
+        & git push origin $Branch --force --follow-tags
         if ($LASTEXITCODE -ne 0) {
-            throw "Failed to push to private repo ($privateRemote)."
+            throw "Failed to push to private repo ($privateUrl)."
         }
 
         Write-Host "Private push complete." -ForegroundColor Green
