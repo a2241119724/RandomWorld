@@ -85,7 +85,7 @@
 1. 公共枚举：放入 `Scripts/2D/Enum`，表达稳定业务类型、状态、结果、提示、奖励等。
 2. 公共常量：放入 `Scripts/2D/Constant`，表达稳定字符串、路径、默认值、阈值、Key、节点名、菜单路径等。
 3. 公共函数与辅助逻辑：放入 `Scripts/2D/Tool`，表达可复用计算、查找、创建、安全访问、格式化、路径处理、日志、事件辅助等。
-4. 具体业务脚本：放入 `Scripts/2D/Gameplay`、`Scripts/2D/UI`、`Scripts/2D/Feature` 或项目已有目录，只保留业务流程、状态管理、事件响应、UI 绑定和功能入口。
+4. 具体业务脚本：放入 `Scripts/2D/Gameplay`、`Scripts/2D/UI`、`Scripts/2D/Domain` 或项目已有目录，只保留业务流程、状态管理、事件响应、UI 绑定和功能入口。
 5. Editor 专用逻辑：放入 Editor 专用目录，不得让运行时代码直接依赖 `UnityEditor`。
 
 不得将公共枚举、公共常量、公共工具函数混写在单个业务脚本中。
@@ -115,7 +115,7 @@
 - 新增 Prefab 必须保留 `.meta`，不得覆盖已有 Prefab。
 - Prefab 尽量包含完整 UI 层级、默认文案、基础样式、挂载脚本和必要组件。
 - Prefab 路径、名称、默认文案、节点名称优先沉淀到 `Scripts/2D/Constant`；显示状态、交互状态、奖励状态、提示类型优先沉淀到 `Scripts/2D/Enum`。
-- Prefab 运行时脚本放入合适路径，如 `Scripts/2D/UI/`、`Scripts/2D/Gameplay/`、`Scripts/2D/Feature/`。
+- Prefab 运行时脚本放入合适路径，如 `Scripts/2D/UI/`、`Scripts/2D/Gameplay/`。
 - 若图片、字体、材质等引用无法安全判断，使用 Unity 默认 UI 组件或已有可安全引用资源。
 - 若无法生成真实 Prefab 文件，改为生成 Editor 菜单工具，由开发者在 Unity 中点击菜单自动创建 Prefab。
 
@@ -197,7 +197,7 @@ UI 实现优先级固定为：安全修改 `Game.unity` → `ResourcesLocal` 独
 
 ### 8.8 实现游戏业务新功能
 
-实现时只修改与任务直接相关的文件，优先放在 `Scripts/2D`、`Scripts/2D/Gameplay`、`Scripts/2D/UI`、`Scripts/2D/Feature`、`Scripts/2D/Editor`、`Scripts/2D/Tool`、`Scripts/2D/Enum`、`Scripts/2D/Constant`、`Agent` 或其他低侵入路径。公共函数/辅助逻辑放入 Tool；公共枚举/状态/类型/提示/奖励/结果放入 Enum；公共常量/路径/文案/节点名/Prefab 名/菜单路径/默认值/阈值/Key/事件名放入 Constant；具体业务流程、状态管理、事件响应、UI Binder、ViewModel 放入对应业务目录。
+实现时只修改与任务直接相关的文件，优先放在 `Scripts/2D`、`Scripts/2D/Gameplay`、`Scripts/2D/UI`、`Scripts/2D/Domain`、`Scripts/2D/Editor`、`Scripts/2D/Tool`、`Scripts/2D/Enum`、`Scripts/2D/Constant`、`Agent` 或其他低侵入路径。公共函数/辅助逻辑放入 Tool；公共枚举/状态/类型/提示/奖励/结果放入 Enum；公共常量/路径/文案/节点名/Prefab 名/菜单路径/默认值/阈值/Key/事件名放入 Constant；具体业务流程、状态管理、事件响应、UI Binder、ViewModel 放入对应业务目录。
 
 若包含 UI，按 `Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 UI Prefab → Editor 菜单工具 → 运行时代码动态创建 UI → 纯数据层/ViewModel/人工接入说明的顺序处理。可以新增独立脚本、业务管理器、数据结构、事件监听器、Editor 菜单、调试输出或只读报告。必须保持项目命名、目录结构和代码风格；不做无关重构；不修改用户已有无关改动；不删除、重命名、覆盖已有 Unity 资源；Unity 资源相关修改必须保留 `.meta`；若无法安全处理 `.meta`，不要直接修改资源，改为 Editor 工具或运行时代码方案。新增代码必须有清晰中文注释，说明用途、接入方式和风险边界。
 

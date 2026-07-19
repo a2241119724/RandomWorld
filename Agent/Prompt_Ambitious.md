@@ -97,7 +97,7 @@
 1. 公共枚举 → `Scripts/2D/Enum`：稳定表达游戏状态、战斗反馈、奖励状态、关卡结果、UI 类型、成长状态、验证状态等。  
 2. 公共常量 → `Scripts/2D/Constant`：稳定表达字符串、路径、菜单、文件名、文案、阈值、Key、节点名、Prefab 名、事件名等。  
 3. 公共函数/辅助逻辑 → `Scripts/2D/Tool`：UI 创建、路径处理、资源加载、格式化、事件分发、日志、安全访问、数值计算等。  
-4. 具体业务脚本 → `Scripts/2D/Gameplay`、`Scripts/2D/UI`、`Scripts/2D/Player`、`Scripts/2D/Level`、`Scripts/2D/Rewards`、`Scripts/2D/Progression` 或项目已有目录，只保留业务规则、状态流转、事件响应、UI Binder、ViewModel、表现控制、功能入口。  
+4. 具体业务脚本 → `Scripts/2D/Gameplay`、`Scripts/2D/UI`、`Scripts/2D/Character/Player`、`Scripts/2D/Domain` 或项目已有目录，只保留业务规则、状态流转、事件响应、UI Binder、ViewModel、表现控制、功能入口。  
 5. Editor 专用逻辑 → `Scripts/2D/Editor` 或已有 Editor 目录，不得让运行时代码直接依赖 `UnityEditor`。  
 
 不得将公共枚举、公共常量、公共工具函数混写到单个大型业务脚本中。中大型功能必须拆分为公共工具层、公共枚举层、公共常量层、数据层、业务层、表现层、Editor 安装层；业务层可调用公共层，表现层可调用公共层和业务层接口，Editor 安装层可调用公共层但不得让公共工具层反向依赖 Editor API；子模块通过事件、接口、数据模型或工具函数解耦，避免互相硬引用；避免所有逻辑堆入大型 Manager。
@@ -196,9 +196,9 @@ UI 优先级总结：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 U
 
 示例候选必须保留语义：
 - `A001` `[TODO]` 完整击杀奖励反馈系统（连击 HUD + 击杀弹窗 + 经验浮动 + 收集统计）：战斗与奖励反馈；来源为有击杀事件但缺少多层奖励反馈链路；提升战斗爽感、即时反馈和成长获得感；可为成就/任务/排行榜提供基础；中风险、高成本、P0；推荐 `GameplayFeatureAgent` + `RuntimeFeatureSkill`；影响 `Scripts/2D/Gameplay`、`Scripts/2D/UI`、`Game.unity`、`ResourcesLocal/UI`；优先在 `Game.unity` 生成 HUD 和击杀反馈 UI，不能安全改场景时创建 ResourcesLocal UI Prefab。
-- `A002` `[TODO]` 关卡流程完整重构（波次 → Boss → 结算 → 星级评定）：关卡与玩法；有胜负判定但缺少波次递进、Boss 阶段和星级反馈；提升关卡节奏和重玩价值；为关卡编辑器提供模板；高风险、高成本、P0；推荐 `LevelFeatureAgent` + `DataModelSkill`；影响 `Scripts/2D/Level`、`Scripts/2D/UI`、`Game.unity`、`ResourcesLocal/Prefabs/UI`；需详细回滚。
+- `A002` `[TODO]` 关卡流程完整重构（波次 → Boss → 结算 → 星级评定）：关卡与玩法；有胜负判定但缺少波次递进、Boss 阶段和星级反馈；提升关卡节奏和重玩价值；为关卡编辑器提供模板；高风险、高成本、P0；推荐 `LevelFeatureAgent` + `DataModelSkill`；影响 `Scripts/2D/Gameplay`、`Scripts/2D/UI`、`Scripts/2D/Domain/Wave`、`Game.unity`、`ResourcesLocal/Prefabs/UI`；需详细回滚。
 - `A003` `[SKIPPED]` 实时多人 PvP 对战系统：多人玩法；项目有 Photon 但无 PvP；玩家/开发价值极高，风险/成本极高，P2；推荐 `MultiplayerAgent` + `NetworkSkill`；影响全局；涉及 Photon 深度改造，边界不可控，自动跳过。
-- `A004` `[DONE]` 玩家角色成长树与技能解锁系统：成长与养成；玩家属性缺少长期成长链路；提升长期游玩动力；为任务/成就提供解锁条件；中风险、高成本、P0；推荐 `GameplayFeatureAgent` + `RuntimeFeatureSkill`；影响 `Scripts/2D/Gameplay`、`Scripts/2D/Player`、`Scripts/2D/UI`、`Resources/SO`、`ResourcesLocal/UI`；处理说明包含任务卡和验证记录路径，如 `Agent/Reports/2026-04-30/ambitious_A004_Skill_Tree/task_ambitious_A004_Skill_Tree.md`、`validation_ambitious_A004.md`。
+- `A004` `[DONE]` 玩家角色成长树与技能解锁系统：成长与养成；玩家属性缺少长期成长链路；提升长期游玩动力；为任务/成就提供解锁条件；中风险、高成本、P0；推荐 `GameplayFeatureAgent` + `RuntimeFeatureSkill`；影响 `Scripts/2D/Gameplay`、`Scripts/2D/Character/Player`、`Scripts/2D/UI`、`Resources/SO`、`ResourcesLocal/UI`；处理说明包含任务卡和验证记录路径，如 `Agent/Reports/2026-04-30/ambitious_A004_Skill_Tree/task_ambitious_A004_Skill_Tree.md`、`validation_ambitious_A004.md`。
 
 ---
 

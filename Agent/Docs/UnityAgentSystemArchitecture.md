@@ -231,7 +231,7 @@ RandomWorld 的 Agent 体系需要重点覆盖以下方向：
 当前项目重点关注：
 
 - `BuilderGenerator` 基于 `AssetPostprocessor` 自动生成 Builder。
-- `Scripts/2D/Editor/DataTool.cs`、`UITool.cs`、`OtherTool.cs`。
+- `Scripts/2D/Editor/DataToolMenu.cs`、`UITool.cs`、`OtherTool.cs`。
 - 后续可增加 Agent 面板、资源扫描、SO 批量创建、任务报告导出。
 
 推荐调用 Skill：`EditorToolSkill`、`ScriptGenerateSkill`、`CodeReviewSkill`、`DocumentSkill`。

@@ -96,7 +96,7 @@
 - `Game.unity` 的真实路径及现有 UI 层级，不要凭空假定路径。
 - `ResourcesLocal` 下已有 UI、Prefab、Panel、Popup、Debug、Tool、Report 等目录结构。
 - `Scripts/2D` 中的 TODO、FIXME、空方法、临时实现、重复模式。
-- `Scripts/2D/Editor`、`Scripts/2D/UI`、`Scripts/2D/Debug`、`Scripts/2D/Tool` 中已有工具、UI、调试逻辑。
+- `Scripts/2D/Editor`、`Scripts/2D/UI`、`Scripts/2D/Tool` 中已有工具、UI、调试逻辑（DebugUI 位于 `Scripts/2D/UI/Panel/PanelUI/ForegroundUI/DebugUI.cs`）。
 - `Scripts/2D/Tool` 下已有工具类、公共函数、辅助方法、命名空间、代码风格和可复用能力，尤其是文件扫描、路径拼接、报告生成、Markdown 表格、JSON / 配置读取、日志、空引用保护、GameObject / Component 安全获取、Resources / ResourcesLocal 路径、UI 动态创建等。
 - `Scripts/2D/Enum` 下已有枚举、命名、成员风格、用途和可复用状态，包括扫描结果、报告类型、执行状态、严重级别、验证状态、调试面板类型等。
 - `Scripts/2D/Constant` 下已有常量类、命名、分组、用途和可复用固定值，包括 Agent 报告路径、任务目录前缀、报告文件名、Editor 菜单路径、UI 文案、节点名、Prefab 名称、扫描扩展名、忽略目录、日志前缀等。
@@ -207,7 +207,7 @@
 1. 公共枚举：放入 `Scripts/2D/Enum`，用于稳定工具状态、扫描结果类型、报告类型、检查严重级别、验证状态、UI 面板类型等。
 2. 公共常量：放入 `Scripts/2D/Constant`，用于稳定字符串、路径、菜单路径、默认文件名、默认文案、默认阈值、Key、节点名、报告模板字段等。
 3. 公共函数与辅助逻辑：放入 `Scripts/2D/Tool`，用于扫描、路径处理、文件读写、报告生成、格式化、日志、UI 创建、安全访问等。
-4. 具体效率 / 工具脚本：放入 `Agent`、`Scripts/2D/Editor`、`Scripts/2D/UI`、`Scripts/2D/Debug` 或项目已有对应目录，只保留调度流程、菜单入口、扫描流程、报告生成流程、UI 绑定和功能入口。
+4. 具体效率 / 工具脚本：放入 `Agent`、`Scripts/2D/Editor`、`Scripts/2D/UI` 或项目已有对应目录，只保留调度流程、菜单入口、扫描流程、报告生成流程、UI 绑定和功能入口。
 5. Editor 专用逻辑：放入 Editor 专用目录，不得让运行时代码直接依赖 `UnityEditor`。
 
 不得将公共枚举、公共常量、公共工具函数混写在单个工具脚本中。
@@ -246,7 +246,7 @@
 - 新增 Prefab 必须保留 `.meta`，不得覆盖已有 Prefab。
 - Prefab 尽量包含完整 UI 层级、默认文案、基础样式、挂载脚本和必要组件。
 - Prefab 路径、名称、默认文案、节点名称优先沉淀到 `Scripts/2D/Constant`；显示状态、扫描结果状态、报告类型、调试面板类型优先沉淀到 `Scripts/2D/Enum`。
-- 运行时脚本放在合适路径，如 `Scripts/2D/UI/`、`Scripts/2D/Editor/`、`Scripts/2D/Debug/`、`Scripts/2D/Tool/`、`Agent/`。
+- 运行时脚本放在合适路径，如 `Scripts/2D/UI/`、`Scripts/2D/Editor/`、`Scripts/2D/Tool/`、`Agent/`。
 - 图片、字体、材质无法安全判断时，使用 Unity 默认 UI 组件或已有可安全引用资源。
 - 无法生成真实 Prefab 文件时，生成 Editor 菜单工具，由开发者在 Unity 中点击菜单自动创建 Prefab。
 
@@ -319,7 +319,7 @@ Editor 工具也不可行时，可新增运行时 UI 管理器或可选挂载组
 ## 12. 实现规则
 
 - 只修改和本任务直接相关的文件。
-- 优先放在 `Agent`、`Scripts/2D/Editor`、`Scripts/2D/UI`、`Scripts/2D/Debug`、`Scripts/2D/Tool`、`Scripts/2D/Enum`、`Scripts/2D/Constant` 或其他低侵入路径。
+- 优先放在 `Agent`、`Scripts/2D/Editor`、`Scripts/2D/UI`、`Scripts/2D/Tool`、`Scripts/2D/Enum`、`Scripts/2D/Constant` 或其他低侵入路径。
 - 公共函数、通用辅助方法、重复逻辑放入 `Scripts/2D/Tool`；公共枚举、工具状态类型、扫描结果类型、报告类型、检查级别、验证状态、UI 面板类型放入 `Scripts/2D/Enum`；公共常量、路径、菜单路径、默认文案、文件名、目录前缀、阈值、Key、日志前缀、节点名放入 `Scripts/2D/Constant`。
 - 具体扫描器、报告生成器、Editor 菜单入口、调试面板绑定逻辑放入对应功能目录。
 - UI 实现顺序：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 UI Prefab → Editor 菜单工具 → 运行时代码动态创建 UI → 纯报告 / 数据层 / 人工接入说明。

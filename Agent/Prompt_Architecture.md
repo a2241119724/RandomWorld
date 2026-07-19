@@ -20,72 +20,91 @@ namespace LAB2D
 
 ## 1. 当前项目背景
 
-这是一个 2D 生存/殖民地/战斗类 Unity 项目，已有以下核心模块：
+这是一个 2D 生存/殖民地/战斗类 Unity 项目，已完成一轮架构分层改造，核心模块如下：
 
 ```text
-Scripts/2D/Character/
-  Character.cs
-  Player/
-  Enemy/
-  Worker/
+Scripts/2D/Domain/                    # 纯规则层（不含 UnityEngine 引用）
+  Common/                             # EventBus、GameVector2、GameGridPosition、IGameCommand/Event/Time 等
+  Character/                          # DamageCalculator、LevelProgressionService
+  Gameplay/                           # AchievementRuleService、ComboBonusRuleService、SkillRuleService 等
+  Inventory/                          # InventoryFoodReservationService、InventoryStackingService 等
+  Player/                             # PlayerDamagePolicy、PlayerMovementPolicy 等
+  Wave/                               # WaveBossRuleService、WaveConfigModel、WaveRuleService
+  Worker/                             # WorkerAgentSnapshot、WorkerTaskAssignmentService 等
+  Dialogue/                           # PromptAssemblyService、DialoguePromptProfileModel 等
 
-Scripts/2D/Character/Worker/
-  WorkerTaskManager.cs
-  State/
-  Task/
+Scripts/2D/UnityAdapter/             # Unity 适配层
+  UnityGameTime.cs / UnityLogger.cs / UnityVectorAdapter.cs / UnityPlayerInputAdapter.cs
+  UnityMapAdapter.cs / UnityEnemySpawnAdapter.cs / UnityItemDefinitionAdapter.cs / TipHelper.cs
+
+Scripts/2D/Gameplay/                  # 玩法管理器（依赖 Domain 和 UnityAdapter）
+  WaveManager.cs / SkillManager.cs / WeatherGameplayEffect.cs / AchievementManager.cs
+  SessionResultManager.cs / ComboBonusManager.cs / DeathPenaltyManager.cs
+  FloatingTextManager.cs / WorkerConditionManager.cs / WorkerEfficiencyTracker.cs 等（共 29 个文件）
+
+Scripts/2D/Character/
+  Character.cs / CharacterHealthComponent.cs / CharacterDamageUIPresenter.cs
+  CharacterManager.cs / ICharacterManager.cs / ICharacterCreator.cs 等接口
+  Player/         # Player.cs / PlayerManager.cs / PlayerCreator.cs
+  Enemy/          # AEnemy.cs / EnemyManager.cs / CommonEnemy/ / SeekEnemy/
+  Worker/         # AWorker.cs / WorkerManager.cs / WorkerTaskManager.cs
+    State/        # WorkerAttack/Dead/Escape/Move/Seek/WorkState
+    Task/         # WorkerBuild/Carry/Gather/Hungry/PlantTask + Individual/
 
 Scripts/2D/Item/
-  InventoryManager.cs
-  ItemMap / Room / Furniture / Farmland / Backpack / Build
+  InventoryManager.cs / DropManager.cs / ItemInstanceFactory.cs
+  Backpack/       # Consumable / Equipment(Weapon: Gun/Sword) / Food / Material / Seed
+  Build/          # Door / Furniture(Bed) / Room / Wall
 
 Scripts/2D/Map/
-  TileMap.cs
-  BuildMap.cs
-  ItemMap.cs
-  ResourceMap.cs
-  GatherMap.cs
-
-Scripts/2D/Gameplay/
-  WaveManager.cs
-  SkillManager.cs
-  WeatherGameplayEffect.cs
-  WorkerConditionManager.cs
-  WorkerEfficiencyTracker.cs
-  DeathPenaltyManager.cs
-  ComboBonusManager.cs
-  EnemyLootManager.cs
-  FloatingTextManager.cs
-  AchievementManager.cs
-  SessionResultManager.cs
+  TileMap.cs / BuildMap.cs / ItemMap.cs / ResourceMap.cs / GatherMap.cs / IsAvailableMap.cs 等
 
 Scripts/2D/AI/Dialogue/
-  Core/
-  Prompt/
-  Memory/
-  RAG/
-  UI/
+  Core/           # DialogueManager.cs / DialogueSession.cs / NPCDialogueTrigger.cs
+  LLM/            # ILLMClient.cs / LlamaServerClient.cs / RemoteAPIClient.cs 等
+  Prompt/         # PromptBuilder.cs / PromptTemplateLoader.cs / NPCPromptProfile.cs
+  RAG/            # GameKnowledgeRetriever.cs / GameKnowledgeEntry.cs
+  Memory/         # DialogueMemoryManager.cs / ShortTermMemory.cs
+  UI/             # DialoguePanel.cs / StreamingTextView.cs
+
+Scripts/2D/Network/                   # 网络适配层
+  INetworkView.cs / NetworkViewAdapters.cs / SyncSenderAdapters.cs
 
 Scripts/2D/UI/
-Scripts/2D/Tool/
-Scripts/2D/Manager/
-Scripts/2D/Data/
-Scripts/2D/Serializable/
-Scripts/2D/Constant/
-Scripts/2D/Editor/
+  Action/         # BuildingUI / GatherUI / ItemInfoUI / SelectUI 等
+  Character/      # PlayerStatusUI / CharacterStatusUI / WorkerBedUI 等
+  Effect/         # BloodUI / DamageUI / EquipmentBeam
+  Panel/PanelUI/ForegroundUI/  # GameInfoUI / DebugUI / ToolMenu / Joystick 等
+
+Scripts/2D/MVC/                       # Backpack/ 和 Build/ 各自的 Controller/Model/View
+
+Scripts/2D/Enum/                      # 20 个公共枚举文件
+Scripts/2D/Constant/                  # 18 个公共常量文件
+Scripts/2D/Tool/                      # 20 个工具脚本
+Scripts/2D/Manager/                   # ArchiveManager / LogManager / ResourceManager 等
+Scripts/2D/Data/                      # GlobalData / ItemData / ISaveData / ISyncData 等
+Scripts/2D/Core/                      # KDTree / A* 寻路(Seek) / ServiceLocator / Singleton
+Scripts/2D/Editor/                    # Editor 工具 + Tests/Domain + Tests/Tool 单元测试
+Scripts/2D/Serializable/              # Vector3LAB 等
 ```
 
-项目已有一些自定义基础设施：
+项目已有自定义基础设施：
 
-- `Singleton<T>` / `ASingletonSaveData<T>`
-- `CharacterManager<CM, C, CC>`
-- `Vector3LAB` / `Vector3IntLAB`
-- `LogManager`
+- `Singleton<T>` / `ASingletonSaveData<T>` / `ServiceLocator`
+- `CharacterManager<CM, C, CC>` / 相关接口 `ICharacterManager` 等
+- `Vector3LAB` / `Vector3IntLAB` / `GameVector2` / `GameGridPosition`（Domain 层已有纯 C# 值类型）
+- `LogManager` / `IGameLogger`（已有 UnityAdapter 适配）
 - `ResourceManager`
-- `Tool` / `DataTool` / `VectorTool`
-- 多个 `Constant` 类保存配置常量
+- `EventBus`（Domain 层已有事件总线）
+- `Tool` / `DataTool` / `VectorTool` 等 20 个工具类
+- 20 个 `Enum` 公共枚举文件
+- 18 个 `Constant` 公共常量文件
+- `UnityAdapter/` 下 8 个适配器（Time、Input、Map、Vector、Logger、EnemySpawn、ItemDefinition、TipHelper）
+- `Network/` 下 3 个网络适配脚本（INetworkView、NetworkViewAdapters、SyncSenderAdapters）
+- `Editor/Tests/Domain` 和 `Editor/Tests/Tool` 下已有单元测试
 - 多个 `Editor` 菜单用于安装、验证和调试功能
 
-请不要一上来要求把所有内容移动到全新的目录，也不要大规模重命名。优先在现有 `Scripts/2D` 结构下做小步抽离。
+项目已完成第一轮分层改造，`Domain/` 和 `UnityAdapter/` 已有实际文件。后续改造应在现有分层基础上继续推进，优先在现有 `Scripts/2D` 结构下做小步抽离。
 
 ## 2. 改造总目标
 
@@ -124,49 +143,37 @@ Unity 适配层：Input、Time、Transform、TileMap、Resources、Photon、Mono
 
 ## 4. 分层建议
 
-优先采用与现有项目兼容的轻量目录，不强制立刻迁移全部旧代码：
+项目已完成第一轮分层，当前实际结构与推荐目标：
 
 ```text
 Assets/Scripts/2D/
-  Core/                       # 已存在，可继续放纯算法或底层规则
-  Domain/                     # 新增：纯 C# 领域模型、规则、事件、命令
-    Common/
-    Character/
-    Player/
-    Worker/
-    Inventory/
-    Wave/
-    Dialogue/
-  Application/                # 新增：用例服务，组合多个 Domain 规则
-    Player/
-    Worker/
-    Inventory/
-    Wave/
-  UnityAdapter/               # 新增：Unity 类型、输入、时间、地图、资源、Photon 的适配
-    Input/
-    Time/
-    Map/
-    Resource/
-    Network/
-    ViewBinding/
-  Presentation/               # 新增或沿用 UI/Character 等：视图、动画、HUD、特效
-    Player/
-    Worker/
-    Inventory/
-    Wave/
-    Dialogue/
+  Domain/                     # ✅ 已存在：纯 C# 领域模型、规则、事件、命令
+    Common/                   # EventBus、GameVector2、GameGridPosition、IGameCommand/Event/Time/Logger、MathHelper
+    Character/                # DamageCalculator、LevelProgressionService
+    Gameplay/                 # AchievementRuleService、ComboBonusRuleService、SkillRuleService、SessionResultRuleService 等
+    Inventory/                # InventoryFoodReservationService、InventoryStackingService、InventoryTakeReservationService
+    Player/                   # PlayerDamagePolicy、PlayerMovementPolicy、PlayerVitalAlertRuleService
+    Wave/                     # WaveBossRuleService、WaveConfigModel、WaveRuleService
+    Worker/                   # WorkerAgentSnapshot、WorkerConditionRuleService、WorkerTaskAssignmentService 等
+    Dialogue/                 # PromptAssemblyService、DialoguePromptProfileModel、ChatMessage
+  UnityAdapter/               # ✅ 已存在：Unity 类型、输入、时间、地图、资源的适配
+    UnityGameTime.cs / UnityLogger.cs / UnityVectorAdapter.cs / UnityPlayerInputAdapter.cs
+    UnityMapAdapter.cs / UnityEnemySpawnAdapter.cs / UnityItemDefinitionAdapter.cs / TipHelper.cs
+  Network/                    # ✅ 已存在：Photon 网络适配层
+    INetworkView.cs / NetworkViewAdapters.cs / SyncSenderAdapters.cs
+  Gameplay/                   # 玩法管理器（已部分引用 Domain 和 UnityAdapter，继续推进解耦）
+  Character/                  # 角色类（已有接口抽象 ICharacterCreator、ICharacterManager 等）
+  UI/ / MVC/ / Item/ / Map/   # 业务层（保持现状，逐步通过事件驱动与 Domain 交互）
+  Enum/ / Constant/ / Tool/   # 公共代码层
+  Core/                       # 底层算法（KDTree、A*、ServiceLocator、Singleton）
+  Editor/                     # Editor 工具 + Tests/Domain + Tests/Tool 单元测试
 ```
 
-如果为了降低风险，也可以先不移动文件，只在原目录旁新增纯 C# 类，例如：
+当前不再需要的目录：
+- `Application/`：未创建，用例服务逻辑可直接放在 Domain 或 Gameplay 中。
+- `Presentation/`：未创建，表现层使用现有 UI/ + Character/ 中的 Presenter 类（如 CharacterDamageUIPresenter）。
 
-```text
-Scripts/2D/Character/Player/Core/
-Scripts/2D/Character/Worker/Task/Core/
-Scripts/2D/Item/Inventory/Core/
-Scripts/2D/Gameplay/Wave/Core/
-```
-
-请根据改造范围选择最小迁移方案。
+后续改造优先在已有 `Domain/`、`UnityAdapter/` 目录中扩展，不创建新顶层目录。
 
 ## 5. 当前高耦合重点
 
@@ -188,15 +195,23 @@ Scripts/2D/Character/Player/Player.cs
 - 直接依赖 `Input`、`Time.time`、`Animator`、`Rigidbody2D`、`SpriteRenderer`、`Transform`、`Camera.main`、`GameObject.FindGameObjectWithTag`。
 - 直接调用 `PlayerStatusUI.Instance`、`ForegroundPanel.Instance`、`DeathPenaltyManager.Instance`、`SkillManager.Instance` 等全局对象。
 
+已有 Domain 抽离：
+
+- `Domain/Character/DamageCalculator.cs` — DamageCalculator
+- `Domain/Character/LevelProgressionService.cs` — LevelProgressionService
+- `Domain/Player/PlayerDamagePolicy.cs` — PlayerDamagePolicy
+- `Domain/Player/PlayerMovementPolicy.cs` — PlayerMovementPolicy
+- `Domain/Player/PlayerVitalAlertRuleService.cs` — PlayerVitalAlertRuleService
+- `CharacterDamageUIPresenter.cs` — CharacterDamageUIPresenter（表现层绑定）
+- `CharacterHealthComponent.cs` — CharacterHealthComponent
+- `UnityAdapter/UnityPlayerInputAdapter.cs` — UnityPlayerInputAdapter
+
 优先抽离方向：
 
-- `CharacterStats` / `CharacterRuntimeState`
-- `DamageCalculator`
-- `LevelProgressionService`
-- `PlayerMovementIntent`
-- `PlayerDamagePolicy`
-- `PlayerCommand`
-- `PlayerEvent`
+- `CharacterRuntimeState`
+- `PlayerMovementIntent`（配合已有 PlayerMovementPolicy）
+- `PlayerCommand` / `PlayerEvent`
+- `ICharacterCreator` 等接口（已有基础）
 
 ### Worker Task
 
@@ -213,13 +228,19 @@ Scripts/2D/Character/Worker/Task/AWorkerTask.cs
 - `AWorkerTask` 虽然不是 `MonoBehaviour`，但依赖 `UnityEngine`、`UnityAction<AWorker>`、`Time.deltaTime`、`Mathf`、`BuildMap.Instance`、`WorkerConditionManager.Instance`。
 - 任务规则依赖 `AWorker` 的 `transform.position` 和 Unity 地图对象。
 
+已有 Domain 抽离：
+
+- `Domain/Worker/WorkerTaskAssignmentService.cs` — WorkerTaskAssignmentService
+- `Domain/Worker/WorkerTaskProgressService.cs` — WorkerTaskProgressService
+- `Domain/Worker/WorkerConditionRuleService.cs` — WorkerConditionRuleService
+- `Domain/Worker/WorkerTaskCongestionRuleService.cs` — WorkerTaskCongestionRuleService
+- `Domain/Worker/WorkerSupplyRuleService.cs` — WorkerSupplyRuleService
+- `Domain/Worker/WorkerAgentSnapshot.cs` — WorkerAgentSnapshot
+
 优先抽离方向：
 
 - `WorkerTaskModel`
-- `WorkerAgentSnapshot`
 - `WorkerTaskQueue`
-- `WorkerTaskAssignmentService`
-- `WorkerTaskProgressService`
 - `IWorkerTaskMapQuery`
 - `WorkerTaskEvent`
 
@@ -239,14 +260,20 @@ Scripts/2D/Data/ItemDataManager.cs
 - 库存规则、地图格子、Worker 预占资源、UI 刷新混在一起。
 - `ToString(pos)` 同时承担调试文本和业务状态读取。
 
+已有 Domain 抽离：
+
+- `Domain/Inventory/InventoryFoodReservationService.cs` — InventoryFoodReservationService
+- `Domain/Inventory/InventoryStackingService.cs` — InventoryStackingService
+- `Domain/Inventory/InventoryTakeReservationService.cs` — InventoryTakeReservationService
+- `UnityAdapter/UnityItemDefinitionAdapter.cs` — UnityItemDefinitionAdapter
+
 优先抽离方向：
 
 - `InventoryCell`
 - `InventoryGrid`
 - `ResourceStack`
-- `InventoryReservation`
 - `InventoryService`
-- `IItemDefinitionProvider`
+- `IItemDefinitionProvider`（已有 UnityItemDefinitionAdapter 可配合）
 - `InventoryChangedEvent`
 
 ### Wave / Gameplay
@@ -264,14 +291,19 @@ Scripts/2D/Gameplay/WeatherGameplayEffect.cs
 - `WaveManager` 是普通 `Singleton<T>`，但依赖 `UnityEngine`、`Coroutine`、`WaitForSeconds`、`TileMap.Instance.StartCoroutine`、`EnemyManager.Instance.Create`、`PlayerManager.Instance.Mine.transform.position`。
 - 波次规则、等待时间、生成位置、敌人创建、UI 事件混在一个类里。
 
+已有 Domain 抽离：
+
+- `Domain/Wave/WaveRuleService.cs` — WaveRuleService
+- `Domain/Wave/WaveBossRuleService.cs` — WaveBossRuleService
+- `Domain/Wave/WaveConfigModel.cs` — WaveConfigModel
+- `UnityAdapter/UnityEnemySpawnAdapter.cs` — UnityEnemySpawnAdapter
+
 优先抽离方向：
 
 - `WaveState`
-- `WaveConfigModel`
-- `WaveRuleService`
 - `WaveSpawnRequest`
 - `WaveEvent`
-- `IEnemySpawnService`
+- `IEnemySpawnService`（已有 UnityEnemySpawnAdapter 可配合）
 - `IWaveTimeScheduler`
 - `IMapSpawnPointProvider`
 
@@ -281,27 +313,35 @@ Scripts/2D/Gameplay/WeatherGameplayEffect.cs
 
 ```text
 Scripts/2D/AI/Dialogue/Core/DialogueManager.cs
+Scripts/2D/AI/Dialogue/LLM/ILLMClient.cs
+Scripts/2D/AI/Dialogue/LLM/LlamaServerClient.cs
+Scripts/2D/AI/Dialogue/LLM/RemoteAPIClient.cs
 Scripts/2D/AI/Dialogue/Prompt/PromptBuilder.cs
 Scripts/2D/AI/Dialogue/Prompt/PromptTemplateLoader.cs
 Scripts/2D/AI/Dialogue/RAG/GameKnowledgeRetriever.cs
+Scripts/2D/AI/Dialogue/Memory/DialogueMemoryManager.cs
 Scripts/2D/AI/Dialogue/UI/
 ```
 
+已有 Domain 抽离：
+
+- `Domain/Dialogue/PromptAssemblyService.cs` — 纯 C# Prompt 组装服务
+- `Domain/Dialogue/DialoguePromptProfileModel.cs` — 纯 C# Prompt 配置模型
+- `Domain/Dialogue/ChatMessage.cs` — 纯 C# 对话消息模型
+
 常见问题：
 
-- Prompt、RAG、Memory 的核心逻辑相对适合抽离。
 - `PromptBuilder` 仍依赖 `Resources.LoadAll<NPCPromptProfile>` 和 `ScriptableObject` 配置。
-- UI、NPC 触发器、LLM 请求、游戏状态上下文需要分层。
+- LLM 客户端、UI、NPC 触发器、游戏状态上下文需要继续分层。
 
 优先抽离方向：
 
 - `DialogueContext`
 - `DialogueTurn`
-- `PromptAssemblyService`
 - `IDialogueProfileProvider`
 - `IPromptTemplateProvider`
 - `IGameKnowledgeProvider`
-- `ILLMClient` 保持接口化
+- `ILLMClient` 保持接口化（已有 `Scripts/2D/AI/Dialogue/LLM/ILLMClient.cs`）
 
 ## 6. 分析任务格式
 
@@ -536,24 +576,37 @@ public interface IItemDefinitionProvider
 
 Unity 实现放在 Adapter 或 Infrastructure 中。
 
-## 9. 本项目优先推荐的第一轮改造
+## 9. 本项目优先推荐的后续改造
 
-除非我指定其他模块，否则请优先从以下模块中选择一个做第一轮：
+项目已完成第一轮分层（`Domain/`、`UnityAdapter/`、`Network/` 已创建并有实际代码）。已完成的抽离包括但不限于：
 
-1. `Player`：输入、移动、技能热键、UI 刷新、相机和本地玩家判断混在一起，最直观。
-2. `WorkerTaskManager`：任务分配和任务队列适合抽成纯规则，同时保留 Unity Worker 适配。
-3. `InventoryManager`：库存格子、预占资源、UI 刷新、地图删除混合，规则价值高。
-4. `WaveManager`：波次规则可以先从 Coroutine 和敌人生成中抽离。
-5. `PromptBuilder`：AI 对话 Prompt 组装可以从 `Resources.LoadAll` 中抽离，风险较低。
+| 领域 | 已存在的 Domain 服务 |
+|---|---|
+| Worker | `WorkerTaskAssignmentService`、`WorkerTaskProgressService`、`WorkerConditionRuleService`、`WorkerTaskCongestionRuleService` |
+| Player | `PlayerDamagePolicy`、`PlayerMovementPolicy`、`PlayerVitalAlertRuleService` |
+| Inventory | `InventoryFoodReservationService`、`InventoryStackingService`、`InventoryTakeReservationService` |
+| Wave | `WaveRuleService`、`WaveBossRuleService`、`WaveConfigModel` |
+| Gameplay | `AchievementRuleService`、`SkillRuleService`、`ComboBonusRuleService`、`SessionResultRuleService` 等 |
+| Dialogue | `PromptAssemblyService`、`DialoguePromptProfileModel` |
+| Common | `EventBus`、`GameVector2`、`GameGridPosition`、`IGameTime`、`IGameLogger` 等 |
+| Unity Adapter | `UnityGameTime`、`UnityLogger`、`UnityVectorAdapter`、`UnityPlayerInputAdapter`、`UnityMapAdapter` 等 |
+
+后续改造优先方向（按低风险到高风险排列）：
+
+1. **继续解耦 Gameplay 管理器**：`WaveManager`、`SkillManager`、`FloatingTextManager` 等仍有部分逻辑可直接调用 Domain 服务或走事件总线。
+2. **Character/Player 深入解耦**：`Player.cs` 输入/表现/规则仍有混合，进一步推进 Command → Domain → Event 链路。
+3. **InventoryManager 深入解耦**：库存预占、格子计算仍有部分在 MonoBehaviour 中。
+4. **存档/Photon 与 Domain 桥接**：确保 Domain 模型变更时存档兼容，Photon 同步走适配层而非直接引用。
+5. **扩展单元测试**：`Editor/Tests/Domain/` 已有测试基础，继续为新增 Domain 服务补充测试。
 
 选择模块时，请说明原因：
 
 ```md
-本轮选择：WorkerTaskManager
+本轮选择：WaveManager 进一步解耦
 原因：
-- 任务分配规则相对独立，适合先抽出纯 C# 服务
-- 改造后可为 Worker 行为测试打基础
-- 可以先保留现有 WorkerTaskManager MonoBehaviour 作为桥接，降低风险
+- Domain/Wave 已有 WaveRuleService 和 WaveConfigModel
+- 可将 MonoBehaviour 中剩余的波次计时、生成调度逻辑进一步迁移
+- 风险较低，Domain 基础设施已就绪
 ```
 
 ## 10. 代码输出要求

@@ -6,17 +6,24 @@
 
 ## 当前项目画像
 
-RandomWorld 当前更接近一个 2D 随机世界/生存建造项目，已有以下工程基础：
+RandomWorld 当前更接近一个 2D 随机世界/生存建造项目，已完成一轮架构分层改造，工程基础如下：
 
-- `Scripts/2D/Map`：Tilemap、资源层、建造层、采集层、物品层、可用格检测，并参与存档和 Photon 同步。
-- `Scripts/2D/Character`：玩家、工人、敌人、状态机、工人任务、寻路与基础角色管理。
+- `Scripts/2D/Domain`：纯规则与服务层（Character、Common、Dialogue、Gameplay、Inventory、Player、Wave、Worker），不含 UnityEngine 引用。
+- `Scripts/2D/UnityAdapter`：Unity 特定适配层（Input、Time、Map、Vector、Logger、EnemySpawn 等适配器），桥接 Domain 和 Unity API。
+- `Scripts/2D/Gameplay`：玩法管理器（波次、成就、技能、结算、连击、死亡惩罚、浮动文字、天气效果、工人状态等）。
+- `Scripts/2D/Character`：玩家、工人、敌人、状态机、工人任务、寻路与基础角色管理（含接口抽象 ICharacterCreator 等）。
 - `Scripts/2D/Item`：背包物品、建造物、房间、农田、家具、墙、门、掉落、实例工厂和各类管理器。
+- `Scripts/2D/Map`：Tilemap、资源层、建造层、采集层、物品层、可用格检测，并参与存档和 Photon 同步。
 - `Scripts/2D/MVC` 与 `Scripts/2D/UI`：背包/建造 MVC、面板栈、HUD、交互提示、AI 聊天面板。
+- `Scripts/2D/Network`：Photon 网络适配层（INetworkView、NetworkViewAdapters、SyncSenderAdapters）。
 - `Scripts/2D/Data` 与 `Scripts/2D/Manager`：全局数据、存档、资源加载、日志、天气、协程管理。
+- `Scripts/2D/Enum` 与 `Scripts/2D/Constant`：公共枚举（20 个）和公共常量（18 个常量文件）。
+- `Scripts/2D/Tool`：20 个工具脚本（AchievementTool、DataTool、HudFactory、SkillTool 等）。
+- `Scripts/2D/Core`：核心工具（KDTree、A* 寻路、ServiceLocator、Singleton）。
+- `Scripts/2D/AI/Dialogue`：AI 对话系统（LLM 客户端、Prompt 组装、RAG 知识检索、Memory 管理、UI 面板）。
+- `Scripts/2D/Editor`：Editor 工具、Builder 自动生成器，以及 `Tests/Domain` 和 `Tests/Tool` 单元测试。
 - `Resources/SO`、`Resources/Tilemap`、`Resources/Images`：ScriptableObject 配置、Tile 资源和美术资源。
 - `StreamingAssets` 与 `AddressableAssetsData`：已有 AssetBundle/Addressables 相关基础。
-- `Scripts/2D/Editor`：已有数据工具、UI 工具、Builder 自动生成器等 Editor 扩展雏形。
-- `NetworkConnect`：基于 Photon PUN 的联网、房间和地图同步入口。
 
 ## 文档索引
 
