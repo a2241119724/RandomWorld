@@ -20,6 +20,8 @@ namespace LAB2D.UnityAdapter
 
         GameObject CreateEnemy(Vector3 spawnPosition);
 
+        bool TrySpawnEnemy(bool useRandomSpawnPositions, WaveSpawnRequest spawnRequest);
+
         void OnWaveStarted(int waveIndex, float difficultyScale);
 
         int GetEnemyCountForWave(int waveIndex, int baseEnemyCount);

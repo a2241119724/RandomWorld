@@ -9,24 +9,33 @@ namespace LAB2D.UnityAdapter
     /// </summary>
     public sealed class UnityWaveTimeScheduler : IWaveTimeScheduler
     {
-        public Coroutine Start(IEnumerator routine)
+        public object Start(IEnumerator routine)
         {
             return TileMap.Instance == null ? null : TileMap.Instance.StartCoroutine(routine);
         }
 
-        public void Stop(Coroutine coroutine)
+        public void Stop(object coroutine)
         {
             if (coroutine == null || TileMap.Instance == null)
             {
                 return;
             }
 
-            TileMap.Instance.StopCoroutine(coroutine);
+            Coroutine unityCoroutine = coroutine as Coroutine;
+            if (unityCoroutine != null)
+            {
+                TileMap.Instance.StopCoroutine(unityCoroutine);
+            }
         }
 
-        public YieldInstruction WaitForSeconds(float seconds)
+        public object WaitForSeconds(float seconds)
         {
             return new WaitForSeconds(seconds < 0.0f ? 0.0f : seconds);
+        }
+
+        public object WaitUntilMapReady()
+        {
+            return new WaitUntil(() => Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete);
         }
     }
 }

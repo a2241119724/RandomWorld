@@ -64,6 +64,19 @@ namespace LAB2D.UnityAdapter
             return EnemyManager.Instance == null ? null : EnemyManager.Instance.Create(spawnPosition);
         }
 
+        public bool TrySpawnEnemy(bool useRandomSpawnPositions, WaveSpawnRequest spawnRequest)
+        {
+            Vector3 spawnPosition = this.GetSpawnPosition(useRandomSpawnPositions);
+            GameObject enemyObject = this.CreateEnemy(spawnPosition);
+            if (enemyObject == null)
+            {
+                return false;
+            }
+
+            this.ConfigureSpawnedEnemy(enemyObject, spawnRequest);
+            return true;
+        }
+
         public void OnWaveStarted(int waveIndex, float difficultyScale)
         {
             WaveBossRewardManager.Instance.OnWaveStarted(waveIndex, difficultyScale);

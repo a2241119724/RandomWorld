@@ -1,7 +1,6 @@
 namespace LAB2D.UnityAdapter
 {
     using System.Collections;
-    using UnityEngine;
 
     /// <summary>
     /// Bridges wave coroutine scheduling so WaveManager does not directly depend on
@@ -9,10 +8,12 @@ namespace LAB2D.UnityAdapter
     /// </summary>
     public interface IWaveTimeScheduler
     {
-        Coroutine Start(IEnumerator routine);
+        object Start(IEnumerator routine);
 
-        void Stop(Coroutine coroutine);
+        void Stop(object coroutine);
 
-        YieldInstruction WaitForSeconds(float seconds);
+        object WaitForSeconds(float seconds);
+
+        object WaitUntilMapReady();
     }
 }

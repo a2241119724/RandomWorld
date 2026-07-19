@@ -5,7 +5,6 @@ namespace LAB2D.Gameplay
     using LAB2D.UnityAdapter;
     using System;
     using System.Collections;
-    using UnityEngine;
 
     /// <summary>
     /// 波次管理器 — 将敌人生成从固定间隔改为波次递增模式。
@@ -91,7 +90,7 @@ namespace LAB2D.Gameplay
         /// </summary>
         public event Action OnWaveStateChanged;
 
-        private Coroutine waveCoroutine;
+        private object waveCoroutine;
         private readonly WaveRuntimeState runtimeState = new WaveRuntimeState();
         private readonly WaveFlowService flowService = new WaveFlowService();
         private readonly WaveSpawnPlanService spawnPlanService = new WaveSpawnPlanService();
@@ -177,7 +176,7 @@ namespace LAB2D.Gameplay
         private IEnumerator WaveLoop()
         {
             // 等待地图初始化完成
-            yield return new WaitUntil(() => Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete);
+            yield return this.timeScheduler.WaitUntilMapReady();
 
             while (true)
             {
@@ -233,13 +232,9 @@ namespace LAB2D.Gameplay
                         yield return this.timeScheduler.WaitForSeconds(1.0f);
                     }
 
-                    // 在随机可到达位置生成敌人
-                    Vector3 spawnPos = this.sceneAdapter.GetSpawnPosition(this.Config.useRandomSpawnPositions);
-                    GameObject enemyObj = this.sceneAdapter.CreateEnemy(spawnPos);
-                    if (enemyObj != null)
+                    if (this.sceneAdapter.TrySpawnEnemy(this.Config.useRandomSpawnPositions, spawnRequest))
                     {
                         // A004：生成后立即套用普通难度缩放或 Boss 缩放，不改敌人 Prefab 本体。
-                        this.sceneAdapter.ConfigureSpawnedEnemy(enemyObj, spawnRequest);
                         this.flowService.RegisterSpawnSuccess(this.runtimeState);
                         this.SyncPublicStateFromRuntime();
                     }
