@@ -1,10 +1,10 @@
 <!-- CODEGRAPH_START -->
 ## CodeGraph
 
-In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
+在已由 CodeGraph 索引的仓库中（仓库根目录存在 `.codegraph/` 目录时），当你需要理解或定位代码时，优先使用它而非 grep/find 或读取文件：
 
-- **MCP tool** (when available): `codegraph_explore` answers most code questions in one call — the relevant symbols' verbatim source plus the call paths between them, including dynamic-dispatch hops grep can't follow. Name a file or symbol in the query to read its current line-numbered source. If it's listed but deferred, load it by name via tool search.
-- **Shell** (always works): `codegraph explore "<symbol names or question>"` prints the same output.
+- **MCP 工具**（可用时）：`codegraph_explore` 一次调用即可回答大多数代码问题——返回相关符号的原始源码及它们之间的调用路径，包括 grep 无法追踪的动态分发跳转。在查询中命名一个文件或符号即可读取其当前行号源码。如果列出但被延迟加载，通过工具搜索按名称加载。
+- **Shell**（始终可用）：`codegraph explore "<符号名称或问题>"` 输出相同的内容。
 
-If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
+如果没有 `.codegraph/` 目录，则完全跳过 CodeGraph——索引由用户决定。
 <!-- CODEGRAPH_END -->
