@@ -202,11 +202,11 @@ finally {
         [System.IO.File]::WriteAllText($gitignorePath, [string]::Join("`n", $origIgnoreContent), $utf8NoBom)
     }
 
-    $changedFiles = & git diff --name-only 2>$null
+    $changedFiles = & git -c core.autocrlf=false diff --name-only 2>$null
     if ($changedFiles) {
         $otherChanged = $changedFiles | Where-Object { $_ -ne '.gitignore' }
         if ($otherChanged) {
-            & git checkout HEAD -- @($otherChanged) 2>$null
+            & git -c core.autocrlf=false checkout HEAD -- @($otherChanged) 2>$null
         }
     }
 
