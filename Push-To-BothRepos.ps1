@@ -193,11 +193,20 @@ try {
 }
 finally {
     Write-Host "Restoring working directory..."
+
+    $gitignorePath = Join-Path $repoRoot ".gitignore"
+    if (Test-Path -LiteralPath $gitignorePath) {
+        Remove-Item -LiteralPath $gitignorePath -Force -ErrorAction SilentlyContinue
+    }
+
+    & git checkout HEAD -- .gitignore 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to restore .gitignore via checkout." -ForegroundColor Yellow
+    }
+
     & git reset --hard $origCommit 2>$null
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "git reset failed, trying checkout..." -ForegroundColor Yellow
-        & git checkout -- .gitignore 2>$null
-        & git reset --hard $origCommit 2>$null
+        Write-Host "git reset --hard failed, working directory may need manual check." -ForegroundColor Yellow
     }
 
     Pop-Location -ErrorAction SilentlyContinue
