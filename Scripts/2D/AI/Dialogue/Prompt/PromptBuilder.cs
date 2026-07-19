@@ -5,22 +5,26 @@ namespace LAB2D.AI.Dialogue.Prompt
     using LAB2D.AI.Dialogue.RAG;
     using LAB2D.Domain.Dialogue;
     using System.Collections.Generic;
-    using UnityEngine;
 
     /// <summary>
     /// Prompt 组装器，将 NPC 配置 + 游戏状态 + 历史 + 知识组合为 LLM 输入
     /// </summary>
     public class PromptBuilder : Singleton<PromptBuilder>
     {
-        private Dictionary<string, NPCPromptProfile> profileCache;
-        private PromptTemplateLoader templateLoader;
-        private PromptAssemblyService promptAssemblyService;
+        private readonly INPCPromptProfileProvider profileProvider;
+        private readonly IPromptTemplateProvider templateProvider;
+        private readonly PromptAssemblyService promptAssemblyService;
 
         public PromptBuilder()
+            : this(new ResourcesNpcPromptProfileProvider(), new PromptTemplateLoader())
         {
-            this.LoadProfiles();
-            this.templateLoader = new PromptTemplateLoader();
-            this.promptAssemblyService = new PromptAssemblyService(this.templateLoader.FillTemplate);
+        }
+
+        public PromptBuilder(INPCPromptProfileProvider profileProvider, IPromptTemplateProvider templateProvider)
+        {
+            this.profileProvider = profileProvider ?? new ResourcesNpcPromptProfileProvider();
+            this.templateProvider = templateProvider ?? new PromptTemplateLoader();
+            this.promptAssemblyService = new PromptAssemblyService(this.templateProvider);
         }
 
         /// <summary>
@@ -28,8 +32,7 @@ namespace LAB2D.AI.Dialogue.Prompt
         /// </summary>
         public NPCPromptProfile GetProfile(string name)
         {
-            this.profileCache.TryGetValue(name, out NPCPromptProfile profile);
-            return profile;
+            return this.profileProvider.GetProfile(name);
         }
 
         /// <summary>
@@ -37,7 +40,7 @@ namespace LAB2D.AI.Dialogue.Prompt
         /// </summary>
         public IEnumerable<NPCPromptProfile> GetAllProfiles()
         {
-            return this.profileCache.Values;
+            return this.profileProvider.GetAllProfiles();
         }
 
         /// <summary>
@@ -205,29 +208,5 @@ namespace LAB2D.AI.Dialogue.Prompt
 
         */
 
-        private void LoadProfiles()
-        {
-            this.profileCache = new Dictionary<string, NPCPromptProfile>();
-            NPCPromptProfile[] profiles = Resources.LoadAll<NPCPromptProfile>("SO/AI");
-            if (profiles != null)
-            {
-                foreach (NPCPromptProfile profile in profiles)
-                {
-                    this.profileCache[profile.name] = profile;
-                }
-            }
-
-            // 确保始终有默认 Worker 配置，避免每个 Worker 都因找不到配置而输出警告
-            if (!this.profileCache.ContainsKey("Worker"))
-            {
-                NPCPromptProfile defaultProfile = ScriptableObject.CreateInstance<NPCPromptProfile>();
-                defaultProfile.name = "Worker";
-                defaultProfile.npcName = "工人";
-                defaultProfile.npcRole = "村民";
-                defaultProfile.personalityDescription = "勤劳的工人";
-                defaultProfile.speakingStyle = "说话简洁";
-                this.profileCache["Worker"] = defaultProfile;
-            }
-        }
     }
 }

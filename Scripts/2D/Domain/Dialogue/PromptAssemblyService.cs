@@ -11,6 +11,11 @@ namespace LAB2D.Domain.Dialogue
     {
         private readonly Func<string, Dictionary<string, string>, string> fillTemplate;
 
+        public PromptAssemblyService(IPromptTemplateProvider templateProvider)
+            : this(templateProvider == null ? null : templateProvider.FillTemplate)
+        {
+        }
+
         public PromptAssemblyService(Func<string, Dictionary<string, string>, string> fillTemplate)
         {
             this.fillTemplate = fillTemplate;

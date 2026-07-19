@@ -1,12 +1,13 @@
 namespace LAB2D.AI.Dialogue.Prompt
 {
+    using LAB2D.Domain.Dialogue;
     using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
     /// Prompt 模板加载器，从 Resources/AI/Prompts/ 加载 TextAsset
     /// </summary>
-    public class PromptTemplateLoader
+    public class PromptTemplateLoader : IPromptTemplateProvider
     {
         private readonly Dictionary<string, string> templates = new Dictionary<string, string>();
 
