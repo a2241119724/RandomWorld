@@ -58,7 +58,9 @@ if ($dirty) {
 }
 
 $origCommit = (& git rev-parse HEAD 2>$null).Trim()
-$origIgnoreContent = & git show "${origCommit}:.gitignore" 2>$null
+$origIgnorePath = Join-Path $repoRoot ".gitignore"
+$backupIgnorePath = Join-Path $env:TEMP "gitignore-backup-$(Get-Random)"
+Copy-Item -LiteralPath $origIgnorePath -Destination $backupIgnorePath -Force
 
 $restrictiveIgnore = @"
 # Public source snapshot -- only publish code, not assets or resources.
@@ -196,17 +198,16 @@ try {
 finally {
     Write-Host "Restoring working directory..."
 
-    $gitignorePath = Join-Path $repoRoot ".gitignore"
-    if ($origIgnoreContent) {
-        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-        [System.IO.File]::WriteAllText($gitignorePath, [string]::Join("`n", $origIgnoreContent), $utf8NoBom)
+    if (Test-Path -LiteralPath $backupIgnorePath) {
+        Copy-Item -LiteralPath $backupIgnorePath -Destination $origIgnorePath -Force
+        Remove-Item -LiteralPath $backupIgnorePath -Force -ErrorAction SilentlyContinue
     }
 
-    $changedFiles = & git -c core.autocrlf=false diff --name-only 2>$null
+    $changedFiles = & git diff --name-only 2>$null
     if ($changedFiles) {
         $otherChanged = $changedFiles | Where-Object { $_ -ne '.gitignore' }
         if ($otherChanged) {
-            & git -c core.autocrlf=false checkout HEAD -- @($otherChanged) 2>$null
+            & git checkout HEAD -- @($otherChanged) 2>$null
         }
     }
 
