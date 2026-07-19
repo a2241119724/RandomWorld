@@ -2,11 +2,10 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Domain.Wave;
+    using LAB2D.UnityAdapter;
     using System;
     using System.Collections;
-    using System.Collections.Generic;
     using UnityEngine;
-    using Random = UnityEngine.Random;
 
     /// <summary>
     /// 波次管理器 — 将敌人生成从固定间隔改为波次递增模式。
@@ -96,6 +95,15 @@ namespace LAB2D.Gameplay
         private readonly WaveRuntimeState runtimeState = new WaveRuntimeState();
         private readonly WaveFlowService flowService = new WaveFlowService();
         private readonly WaveSpawnPlanService spawnPlanService = new WaveSpawnPlanService();
+        private IWaveSceneAdapter sceneAdapter = new UnityWaveSceneAdapter();
+
+        /// <summary>
+        /// 替换 WaveManager 的 Unity 场景访问桥。传入 null 会恢复默认 Unity 实现。
+        /// </summary>
+        public void SetSceneAdapter(IWaveSceneAdapter adapter)
+        {
+            this.sceneAdapter = adapter ?? new UnityWaveSceneAdapter();
+        }
 
         /// <summary>
         /// 启动波次系统（接管敌人生成控制权）
@@ -199,7 +207,7 @@ namespace LAB2D.Gameplay
 
                 // 波前存活数已交给 WaveRuntimeState 保存，Unity 侧只负责读取场景数量。
                 // A004：通知 Boss 与波间奖励系统同步当前波次阶段，保持波次系统仍为主流程。
-                WaveBossRewardManager.Instance.OnWaveStarted(waveStartedDecision.WaveIndex, waveStartedDecision.DifficultyScale);
+                this.sceneAdapter.OnWaveStarted(waveStartedDecision.WaveIndex, waveStartedDecision.DifficultyScale);
                 this.OnWaveStart?.Invoke(waveStartedDecision.WaveIndex);
                 this.OnWaveStateChanged?.Invoke();
 
@@ -217,17 +225,12 @@ namespace LAB2D.Gameplay
                     }
 
                     // 在随机可到达位置生成敌人
-                    Vector3 spawnPos = this.GetSpawnPosition();
-                    GameObject enemyObj = EnemyManager.Instance.Create(spawnPos);
+                    Vector3 spawnPos = this.sceneAdapter.GetSpawnPosition(this.Config.useRandomSpawnPositions);
+                    GameObject enemyObj = this.sceneAdapter.CreateEnemy(spawnPos);
                     if (enemyObj != null)
                     {
                         // A004：生成后立即套用普通难度缩放或 Boss 缩放，不改敌人 Prefab 本体。
-                        WaveBossRewardManager.Instance.ConfigureSpawnedEnemy(
-                            enemyObj,
-                            spawnRequest.WaveIndex,
-                            spawnRequest.SpawnIndex,
-                            spawnRequest.TotalEnemiesInWave,
-                            spawnRequest.DifficultyScale);
+                        this.sceneAdapter.ConfigureSpawnedEnemy(enemyObj, spawnRequest);
                         this.flowService.RegisterSpawnSuccess(this.runtimeState);
                         this.SyncPublicStateFromRuntime();
                     }
@@ -270,8 +273,7 @@ namespace LAB2D.Gameplay
                 yield return new WaitForSeconds(1.0f);
 
                 // 检查 Player 是否存活
-                Player player = PlayerManager.Instance?.Mine;
-                if (player == null || player.CharacterDataLAB.Hp <= 0)
+                if (!this.sceneAdapter.IsPlayerAlive())
                 {
                     // 玩家死亡，等待重生后继续当前波次
                     yield return new WaitForSeconds(3.0f);
@@ -302,7 +304,7 @@ namespace LAB2D.Gameplay
         private WaveSpawnPlan CreateSpawnPlan()
         {
             int baseEnemiesInWave = this.GetEnemyCountForWave(this.CurrentWaveIndex);
-            int adjustedEnemiesInWave = WaveBossRewardManager.Instance.GetEnemyCountForWave(this.CurrentWaveIndex, baseEnemiesInWave);
+            int adjustedEnemiesInWave = this.sceneAdapter.GetEnemyCountForWave(this.CurrentWaveIndex, baseEnemiesInWave);
             return this.spawnPlanService.CreatePlan(this.runtimeState, this.CreateWaveConfigModel(), adjustedEnemiesInWave);
         }
 
@@ -312,17 +314,12 @@ namespace LAB2D.Gameplay
         /// </summary>
         private int CountAliveEnemies()
         {
-            return EnemyManager.Instance == null ? 0 : EnemyManager.Instance.AliveEnemyCount;
+            return this.sceneAdapter.CountAliveEnemies();
         }
 
         private int GetEffectiveMaxAliveEnemies()
         {
-            int runtimeMaxEnemyCount = 0;
-            if (EnemyManager.Instance != null && EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount > 0)
-            {
-                runtimeMaxEnemyCount = EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount;
-            }
-
+            int runtimeMaxEnemyCount = this.sceneAdapter.GetRuntimeMaxEnemyCount();
             return this.flowService.GetEffectiveMaxAliveEnemies(this.Config.maxAliveEnemies, runtimeMaxEnemyCount);
         }
 
@@ -351,36 +348,6 @@ namespace LAB2D.Gameplay
             };
         }
 
-        /// <summary>
-        /// 获取敌人生成位置（优先随机可到达位置，回退到默认位置）
-        /// </summary>
-        private Vector3 GetSpawnPosition()
-        {
-            if (this.Config.useRandomSpawnPositions && TileMap.Instance != null)
-            {
-                try
-                {
-                    Vector3 centerMap = default;
-                    Player player = PlayerManager.Instance?.Mine;
-                    if (player != null)
-                    {
-                        centerMap = TileMap.Instance.WorldPosToMapPos(player.transform.position);
-                    }
-
-                    return TileMap.Instance.MapPosToWorldPos(TileMap.Instance.GenCanReachPos(centerMap));
-                }
-                catch (Exception exception)
-                {
-                    LogManager.Instance.Log(
-                        $"WaveManager.GetSpawnPosition failed, fallback to Vector3.zero.\n{exception}",
-                        LogManager.LogLevelEnum.Error);
-
-                    // 回退到默认位置
-                }
-            }
-
-            return Vector3.zero;
-        }
     }
 
     /// <summary>
