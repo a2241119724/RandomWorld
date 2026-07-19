@@ -34,8 +34,8 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         public void Update()
         {
             // FPS计算
-            // 添加本次可能会执行的帧数
-            this.accum += Time.timeScale / Time.deltaTime;
+            // 累计经过的真实时间（不受timeScale影响）
+            this.accum += Time.unscaledDeltaTime;
 
             // 一秒总共的次数
             ++this.frames;
@@ -45,17 +45,14 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         {
             while (true)
             {
-                // 每秒平均帧数
-                this.accum /= this.frames;
-
-                // if (!double.IsNaN(accum))
-                // {
-                this.fps.text = "FPS:" + this.accum.ToString("F1");
-
-                // }
+                if (this.frames > 0)
+                {
+                    float avgFps = this.frames / this.accum;
+                    this.fps.text = "FPS:" + avgFps.ToString("F1");
+                }
                 this.accum = 0.0f;
                 this.frames = 0;
-                yield return new WaitForSeconds(1.0f);
+                yield return new WaitForSecondsRealtime(1.0f);
             }
         }
     }
