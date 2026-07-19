@@ -79,6 +79,16 @@ namespace LAB2D.Gameplay
         /// </summary>
         /// <param name="slotIndex">技能槽位索引（0-3）</param>
         /// <returns>是否成功激活</returns>
+        public bool TryActivateSkill(ActivateSkillCommand command)
+        {
+            if (command == null)
+            {
+                return false;
+            }
+
+            return this.TryActivateSkill(command.SlotIndex);
+        }
+
         public bool TryActivateSkill(int slotIndex)
         {
             if (!this.IsInitialized)

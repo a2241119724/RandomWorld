@@ -4,6 +4,7 @@ namespace LAB2D.Character.Player
     using LAB2D.Domain.Character;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
+    using LAB2D.UnityAdapter;
     using System;
     using System.Collections.Generic;
     using Photon.Pun;
@@ -176,10 +177,20 @@ namespace LAB2D.Character.Player
         /// <inheritdoc/>
         public override void Attack()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (UnityPlayerInputAdapter.GetPointerAttackDown(this.GetInstanceID(), out PlayerAttackCommand command))
             {
-                ForegroundPanel.Instance.Onclick_Attack();
+                this.HandleAttackCommand(command);
             }
+        }
+
+        private void HandleAttackCommand(PlayerAttackCommand command)
+        {
+            if (command == null)
+            {
+                return;
+            }
+
+            ForegroundPanel.Instance.Onclick_Attack();
         }
 
         /// <inheritdoc/>
@@ -346,21 +357,16 @@ namespace LAB2D.Character.Player
                 return;
             }
 
-            if (Input.GetKeyDown(InputKeyConstant.SkillHotkey1))
+            for (int slotIndex = 0; slotIndex < 4; slotIndex++)
             {
-                mgr.TryActivateSkill(0);
-            }
-            else if (Input.GetKeyDown(InputKeyConstant.SkillHotkey2))
-            {
-                mgr.TryActivateSkill(1);
-            }
-            else if (Input.GetKeyDown(InputKeyConstant.SkillHotkey3))
-            {
-                mgr.TryActivateSkill(2);
-            }
-            else if (Input.GetKeyDown(InputKeyConstant.SkillHotkey4))
-            {
-                mgr.TryActivateSkill(3);
+                if (UnityPlayerInputAdapter.GetSkillDown(
+                    this.GetInstanceID(),
+                    slotIndex,
+                    out ActivateSkillCommand command))
+                {
+                    mgr.TryActivateSkill(command);
+                    return;
+                }
             }
         }
 

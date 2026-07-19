@@ -101,6 +101,22 @@ namespace LAB2D.UnityAdapter
         }
 
         /// <summary>
+        /// Detects the existing player primary attack input without enabling
+        /// additional keyboard bindings at the Player call site.
+        /// </summary>
+        public static bool GetPointerAttackDown(long entityId, out PlayerAttackCommand command)
+        {
+            command = null;
+            if (Input.GetMouseButtonDown(AttackMouseButton))
+            {
+                command = new PlayerAttackCommand { EntityId = entityId };
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// 检测技能激活输入。当技能快捷键按下时返回 true 并创建命令。
         /// </summary>
         /// <param name="entityId">玩家实体 ID。</param>
