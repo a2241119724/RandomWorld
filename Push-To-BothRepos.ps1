@@ -133,7 +133,8 @@ try {
         Write-Host "`n=== Pushing to PUBLIC repo (${publicRemote}) [${Branch}] ===" -ForegroundColor Cyan
 
         try {
-            $restrictiveIgnore | Set-Content .gitignore -Encoding UTF8
+            $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+            [System.IO.File]::WriteAllText((Join-Path $repoRoot ".gitignore"), $restrictiveIgnore, $utf8NoBom)
 
             $tempIndex = Join-Path $env:TEMP "git-index-filtered"
             $prevIndex = $env:GIT_INDEX_FILE
