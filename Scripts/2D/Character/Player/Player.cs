@@ -346,11 +346,6 @@ namespace LAB2D.Character.Player
         /// </summary>
         private void HandleSkillInput()
         {
-            if (LAB2D.Tool.Tool.IsUIInputActive())
-            {
-                return;
-            }
-
             SkillManager mgr = SkillManager.Instance;
             if (mgr == null || !mgr.IsInitialized)
             {
@@ -359,7 +354,7 @@ namespace LAB2D.Character.Player
 
             for (int slotIndex = 0; slotIndex < 4; slotIndex++)
             {
-                if (UnityPlayerInputAdapter.GetSkillDown(
+                if (UnityPlayerInputAdapter.GetGameplaySkillDown(
                     this.GetInstanceID(),
                     slotIndex,
                     out ActivateSkillCommand command))
@@ -375,12 +370,8 @@ namespace LAB2D.Character.Player
         /// </summary>
         private void Move()
         {
-            if (!LAB2D.Tool.Tool.IsUIInputActive() &&
-                (Input.GetKey(InputKeyConstant.MoveLeft) ||
-                Input.GetKey(InputKeyConstant.MoveUp) ||
-                Input.GetKey(InputKeyConstant.MoveDown) ||
-                Input.GetKey(InputKeyConstant.MoveRight) ||
-                (Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f)))
+            PlayerMoveCommand command = UnityPlayerInputAdapter.PollCurrentPlayerMoveCommand(this.GetInstanceID(), Time.deltaTime);
+            if (command != null)
             {
                 if (this.mainCamera.Character != this)
                 {
@@ -394,17 +385,11 @@ namespace LAB2D.Character.Player
                     this.miniCamera.Character = this;
                 }
 
-                bool isRunning = Input.GetKey(InputKeyConstant.Run);
+                bool isRunning = command.IsRunning;
                 this.animator.SetInteger("Action", isRunning ? 1 : 0);
 
-                this.direction.x = Input.GetAxisRaw("Horizontal");
-                this.direction.y = Input.GetAxisRaw("Vertical");
-
-                if (this.direction.x == 0 && this.direction.y == 0 && Joystick.Instance != null)
-                {
-                    this.direction.x = Joystick.Instance.Direction.x;
-                    this.direction.y = Joystick.Instance.Direction.y;
-                }
+                this.direction.x = command.Direction.X;
+                this.direction.y = command.Direction.Y;
 
                 if (this.direction.y > 0)
                 {

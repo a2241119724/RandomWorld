@@ -1,4 +1,4 @@
-namespace LAB2D.UnityAdapter
+﻿namespace LAB2D.UnityAdapter
 {
     using LAB2D;
     using LAB2D.Domain.Common;
@@ -83,11 +83,48 @@ namespace LAB2D.UnityAdapter
         }
 
         /// <summary>
-        /// 检测攻击输入。当攻击按键按下时返回 true 并创建命令。
+        /// Polls the current Player movement bindings without changing legacy
+        /// behavior: UI input blocks movement, keyboard axes take priority, and
+        /// joystick direction is used only when keyboard axes are neutral.
         /// </summary>
-        /// <param name="entityId">玩家实体 ID。</param>
-        /// <param name="command">输出的攻击命令。</param>
-        /// <returns>本帧触发攻击时返回 true。</returns>
+        public static PlayerMoveCommand PollCurrentPlayerMoveCommand(long entityId, float deltaTime)
+        {
+            if (LAB2D.Tool.Tool.IsUIInputActive())
+            {
+                return null;
+            }
+
+            bool hasKeyboardMove =
+                Input.GetKey(InputKeyConstant.MoveLeft) ||
+                Input.GetKey(InputKeyConstant.MoveUp) ||
+                Input.GetKey(InputKeyConstant.MoveDown) ||
+                Input.GetKey(InputKeyConstant.MoveRight);
+            bool hasJoystickMove = Joystick.Instance && Joystick.Instance.Direction.sqrMagnitude > 0.02f;
+            if (!hasKeyboardMove && !hasJoystickMove)
+            {
+                return null;
+            }
+
+            float horizontal = Input.GetAxisRaw("Horizontal");
+            float vertical = Input.GetAxisRaw("Vertical");
+            if (horizontal == 0.0f && vertical == 0.0f && Joystick.Instance != null)
+            {
+                horizontal = Joystick.Instance.Direction.x;
+                vertical = Joystick.Instance.Direction.y;
+            }
+
+            return new PlayerMoveCommand
+            {
+                EntityId = entityId,
+                Direction = new GameVector2(horizontal, vertical),
+                IsRunning = Input.GetKey(InputKeyConstant.Run),
+                DeltaTime = deltaTime,
+            };
+        }
+
+        /// <summary>
+        /// Detects attack input and creates a player attack command.
+        /// </summary>
         public static bool GetAttackDown(long entityId, out PlayerAttackCommand command)
         {
             command = null;
@@ -117,12 +154,20 @@ namespace LAB2D.UnityAdapter
         }
 
         /// <summary>
-        /// 检测技能激活输入。当技能快捷键按下时返回 true 并创建命令。
+        /// Detects skill input for active gameplay, preserving the existing UI
+        /// input guard used by Player.
         /// </summary>
-        /// <param name="entityId">玩家实体 ID。</param>
-        /// <param name="slotIndex">技能槽位索引（0-3）。</param>
-        /// <param name="command">输出的技能命令。</param>
-        /// <returns>本帧激活技能时返回 true。</returns>
+        public static bool GetGameplaySkillDown(long entityId, int slotIndex, out ActivateSkillCommand command)
+        {
+            command = null;
+            if (LAB2D.Tool.Tool.IsUIInputActive())
+            {
+                return false;
+            }
+
+            return GetSkillDown(entityId, slotIndex, out command);
+        }
+
         public static bool GetSkillDown(long entityId, int slotIndex, out ActivateSkillCommand command)
         {
             command = null;

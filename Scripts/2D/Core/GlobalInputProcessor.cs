@@ -3,6 +3,7 @@ namespace LAB2D.Core
     using LAB2D;
     using LAB2D.Domain.Common;
     using LAB2D.UI.Panel;
+    using LAB2D.UnityAdapter;
     using UnityEngine;
 
     /// <summary>
@@ -39,8 +40,7 @@ namespace LAB2D.Core
                 }
             }
 
-            if (!LAB2D.Tool.Tool.IsUIInputActive() &&
-                Input.GetKeyDown(InputKeyConstant.ToggleWorkerTaskAndAchievementHud))
+            if (UnityGlobalInputAdapter.GetToggleWorkerTaskAndAchievementHudDown())
             {
                 AchievementPanel.RuntimeInstance?.TogglePanel();
             }
@@ -48,7 +48,7 @@ namespace LAB2D.Core
 
         private void ProcessColonyCommandHud()
         {
-            if (Input.GetKeyDown(InputKeyConstant.ToggleColonyCommandCenterHud))
+            if (UnityGlobalInputAdapter.GetToggleColonyCommandCenterHudDown())
             {
                 GameObject hudObj = GameObject.Find(ColonyCommandCenterConstant.HudRootName);
                 if (hudObj == null)
@@ -63,7 +63,7 @@ namespace LAB2D.Core
 
         private void ProcessCloseOrBuildMenu()
         {
-            if (LAB2D.Tool.Tool.IsUIInputActive() || !Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu))
+            if (!UnityGlobalInputAdapter.GetCloseOrBuildMenuDown())
             {
                 return;
             }
@@ -87,12 +87,7 @@ namespace LAB2D.Core
 
         private void ProcessMouseClickCloseItemInfo()
         {
-            if (LAB2D.Tool.Tool.IsUIInputActive())
-            {
-                return;
-            }
-
-            if (!Input.GetMouseButtonDown(0) && !Input.GetMouseButtonDown(2))
+            if (!UnityGlobalInputAdapter.GetItemInfoCloseClickDown())
             {
                 return;
             }

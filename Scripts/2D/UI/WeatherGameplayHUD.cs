@@ -2,6 +2,7 @@ namespace LAB2D.UI
 {
     using LAB2D;
     using LAB2D.Gameplay;
+    using LAB2D.UnityAdapter;
     using System;
     using UnityEngine;
     using UnityEngine.UI;
@@ -84,7 +85,7 @@ namespace LAB2D.UI
 
         private void Update()
         {
-            if (this.CanUseHotkey() && Input.GetKeyDown(this.toggleKey))
+            if (UnityGlobalInputAdapter.GetHudToggleDown(this.toggleKey))
             {
                 bool visible = this.canvasGroup == null || this.canvasGroup.alpha < 0.5f;
                 this.SetVisible(visible);
@@ -145,14 +146,7 @@ namespace LAB2D.UI
         /// <returns>没有 UI 输入框聚焦时返回 true。</returns>
         private bool CanUseHotkey()
         {
-            try
-            {
-                return !LAB2D.Tool.Tool.IsUIInputActive();
-            }
-            catch (Exception)
-            {
-                return true;
-            }
+            return UnityGlobalInputAdapter.CanUseHudHotkey();
         }
 
         /// <summary>

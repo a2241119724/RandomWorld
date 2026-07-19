@@ -4,6 +4,7 @@ namespace LAB2D.AI.Dialogue.UI
     using LAB2D.AI.Dialogue.LLM;
     using LAB2D.AI.Dialogue.Prompt;
     using LAB2D.UI.Panel;
+    using LAB2D.UnityAdapter;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -386,7 +387,7 @@ namespace LAB2D.AI.Dialogue.UI
 
         private bool IsSubmitKeyPressed()
         {
-            return Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
+            return UnityGlobalInputAdapter.GetDialogueSubmitDown();
         }
 
         private void AddPlayerBubble(string text)

@@ -2,6 +2,7 @@ namespace LAB2D.AI.Dialogue.Core
 {
     using LAB2D;
     using LAB2D.AI.Dialogue.Prompt;
+    using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -60,12 +61,7 @@ namespace LAB2D.AI.Dialogue.Core
 
         public void Update()
         {
-            if (LAB2D.Tool.Tool.IsUIInputActive())
-            {
-                return;
-            }
-
-            if (!Input.GetKeyDown(this.interactKey))
+            if (!UnityGlobalInputAdapter.GetNpcDialogueInteractDown(this.interactKey))
             {
                 return;
             }

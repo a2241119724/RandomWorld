@@ -2,6 +2,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
     using LAB2D.Gameplay;
+    using LAB2D.UnityAdapter;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -105,12 +106,12 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
         private void Update()
         {
-            if (this.CanUseHotkey() && Input.GetKeyDown(this.toggleHudKey))
+            if (UnityGlobalInputAdapter.GetHudToggleDown(this.toggleHudKey))
             {
                 this.SetHudVisible(this.hudGroup == null || this.hudGroup.alpha < 0.5f);
             }
 
-            if (this.CanUseHotkey() && Input.GetKeyDown(this.toggleResultKey))
+            if (UnityGlobalInputAdapter.GetHudToggleDown(this.toggleResultKey))
             {
                 this.ToggleResultPanel();
             }
@@ -659,14 +660,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         /// </summary>
         private bool CanUseHotkey()
         {
-            try
-            {
-                return !LAB2D.Tool.Tool.IsUIInputActive();
-            }
-            catch (Exception)
-            {
-                return true;
-            }
+            return UnityGlobalInputAdapter.CanUseHudHotkey();
         }
 
         /// <summary>
