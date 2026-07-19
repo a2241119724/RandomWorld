@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.UnityAdapter;
     using Character = LAB2D.Character.Character;
     using System.Collections.Generic;
     using UnityEngine;
@@ -41,7 +42,7 @@ namespace LAB2D.UI.Action
                 ItemInfoPanel.Instance.SetCharacter(this.character);
             }
 
-            if (Input.GetMouseButtonDown(1))
+            if (UnityGlobalInputAdapter.GetSecondaryMouseDown())
             {
                 List<RaycastResult> results = LAB2D.Tool.Tool.GetUIByMousePos();
 
@@ -53,7 +54,7 @@ namespace LAB2D.UI.Action
 
                 this.selectPos = TileMap.Instance.GetMapPosByMouse();
                 SelectUI selectUI;
-                if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKey(InputKeyConstant.ShowTileInfo))
+                if (UnityGlobalInputAdapter.GetShowTileInfoHeld())
                 {
                     selectUI = SelectManagerPool.Instance.CreateFreeSelect(this.selectPos);
                 }

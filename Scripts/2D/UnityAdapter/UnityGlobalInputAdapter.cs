@@ -63,5 +63,97 @@ namespace LAB2D.UnityAdapter
         {
             return CanUseHudHotkey() && Input.GetKeyDown(toggleKey);
         }
+
+        public static bool GetShowTileInfoReleased()
+        {
+            return !LAB2D.Tool.Tool.IsUIInputActive() &&
+                Input.GetKeyUp(InputKeyConstant.ShowTileInfo);
+        }
+
+        public static bool GetShowTileInfoHeld()
+        {
+            return !LAB2D.Tool.Tool.IsUIInputActive() &&
+                Input.GetKey(InputKeyConstant.ShowTileInfo);
+        }
+
+        public static Vector3 GetMouseWorldPosition(Camera camera)
+        {
+            return camera.ScreenToWorldPoint(Input.mousePosition);
+        }
+
+        public static bool TryGetWaveBossRewardOptionDown(out int optionIndex)
+        {
+            optionIndex = -1;
+            if (LAB2D.Tool.Tool.IsUIInputActive())
+            {
+                return false;
+            }
+
+            if (Input.GetKeyDown(WaveBossRewardConstant.RewardOptionOneKey))
+            {
+                optionIndex = 0;
+                return true;
+            }
+
+            if (Input.GetKeyDown(WaveBossRewardConstant.RewardOptionTwoKey))
+            {
+                optionIndex = 1;
+                return true;
+            }
+
+            if (Input.GetKeyDown(WaveBossRewardConstant.RewardOptionThreeKey))
+            {
+                optionIndex = 2;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool GetEquipmentPanelToggleDown(bool isPanelVisible)
+        {
+            if (!Input.GetKeyDown(EquipmentLootConstant.EquipmentPanelToggleKey))
+            {
+                return false;
+            }
+
+            return isPanelVisible || !LAB2D.Tool.Tool.IsUIInputActive();
+        }
+
+        public static bool TryGetToolMenuIndexDown(KeyCode[] keyCodes, int menuCount, out int menuIndex)
+        {
+            menuIndex = -1;
+            if (LAB2D.Tool.Tool.IsUIInputActive() || !Input.anyKeyDown)
+            {
+                return false;
+            }
+
+            int count = Mathf.Min(menuCount, keyCodes == null ? 0 : keyCodes.Length);
+            for (int i = 0; i < count; i++)
+            {
+                if (Input.GetKeyDown(keyCodes[i]))
+                {
+                    menuIndex = i;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool GetSecondaryMouseDown()
+        {
+            return Input.GetMouseButtonDown(1);
+        }
+
+        public static bool GetPrimaryMouseDown()
+        {
+            return Input.GetMouseButtonDown(0);
+        }
+
+        public static bool GetMiddleMouseDown()
+        {
+            return Input.GetMouseButtonDown(2);
+        }
     }
 }

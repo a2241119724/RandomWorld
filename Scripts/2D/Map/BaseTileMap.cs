@@ -3,6 +3,7 @@ namespace LAB2D.Map
     using LAB2D;
     using LAB2D.Data;
     using LAB2D.Network;
+    using LAB2D.UnityAdapter;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -53,12 +54,12 @@ namespace LAB2D.Map
 
         public virtual void Update()
         {
-            if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyUp(InputKeyConstant.ShowTileInfo))
+            if (UnityGlobalInputAdapter.GetShowTileInfoReleased())
             {
                 TileInfoUI.Instance.Init();
             }
 
-            if (LAB2D.Tool.Tool.IsUIInputActive() || !Input.GetKey(InputKeyConstant.ShowTileInfo) || PanelController.Instance.Panels.Peek() == AsyncProgressPanel.Instance)
+            if (!UnityGlobalInputAdapter.GetShowTileInfoHeld() || PanelController.Instance.Panels.Peek() == AsyncProgressPanel.Instance)
             {
                 return;
             }
@@ -69,7 +70,7 @@ namespace LAB2D.Map
             {
                 this.TileInfo.ActiveMapType = mapType;
                 TileInfoUI.Instance.SetContent(this.tilemap.GetTile(posMap).name);
-                TileInfoUI.Instance.SetPostion(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+                TileInfoUI.Instance.SetPostion(UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main));
             }
             else
             {

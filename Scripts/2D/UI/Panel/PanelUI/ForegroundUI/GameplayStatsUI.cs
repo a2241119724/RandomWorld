@@ -2,6 +2,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
     using LAB2D.Gameplay;
+    using LAB2D.UnityAdapter;
     using System.Text;
     using UnityEngine;
     using UnityEngine.UI;
@@ -37,7 +38,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
         public void Update()
         {
-            if (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.ToggleGameplayStatsHud))
+            if (UnityGlobalInputAdapter.GetHudToggleDown(InputKeyConstant.ToggleGameplayStatsHud))
             {
                 bool show = this.canvasGroup.alpha < 0.5f;
                 this.canvasGroup.alpha = show ? 1f : 0f;

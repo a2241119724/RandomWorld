@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
+    using LAB2D.UnityAdapter;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -30,26 +31,18 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
         public void Update()
         {
-            if (LAB2D.Tool.Tool.IsUIInputActive() || !Input.anyKeyDown)
+            if (!UnityGlobalInputAdapter.TryGetToolMenuIndexDown(KeyCodes, this.ToolMenus.Length, out int menuIndex))
             {
                 return;
             }
 
-            for (int i = 0; i < this.ToolMenus.Length; i++)
+            if (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance)
             {
-                if (Input.GetKeyDown(KeyCodes[i]))
-                {
-                    if (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance)
-                    {
-                        PanelController.Instance.Show(this.ToolMenus[i]);
-                    }
-                    else if (PanelController.Instance.Panels.Peek() == this.ToolMenus[i])
-                    {
-                        PanelController.Instance.Close();
-                    }
-
-                    break;
-                }
+                PanelController.Instance.Show(this.ToolMenus[menuIndex]);
+            }
+            else if (PanelController.Instance.Panels.Peek() == this.ToolMenus[menuIndex])
+            {
+                PanelController.Instance.Close();
             }
         }
 

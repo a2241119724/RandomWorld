@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -125,13 +126,8 @@ namespace LAB2D.UI
         /// </summary>
         private void Update()
         {
-            if (Input.GetKeyDown(EquipmentLootConstant.EquipmentPanelToggleKey))
+            if (UnityGlobalInputAdapter.GetEquipmentPanelToggleDown(this.isVisible))
             {
-                if (LAB2D.Tool.Tool.IsUIInputActive() && !this.isVisible)
-                {
-                    return;
-                }
-
                 this.Toggle();
             }
 

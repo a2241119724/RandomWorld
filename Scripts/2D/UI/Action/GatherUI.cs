@@ -2,6 +2,7 @@ namespace LAB2D.UI.Action
 {
     using LAB2D;
     using LAB2D.Serializable;
+    using LAB2D.UnityAdapter;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -31,7 +32,7 @@ namespace LAB2D.UI.Action
         public void Update()
         {
             // 若是不在默认位置，则才返回默认位置
-            if (Input.GetMouseButtonDown(1) && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
+            if (UnityGlobalInputAdapter.GetSecondaryMouseDown() && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
             {
                 this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }

@@ -2,6 +2,7 @@ namespace LAB2D.UI
 {
     using LAB2D;
     using LAB2D.Gameplay;
+    using LAB2D.UnityAdapter;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -453,22 +454,9 @@ namespace LAB2D.UI
         /// </summary>
         private void HandleHotkeys()
         {
-            if (LAB2D.Tool.Tool.IsUIInputActive())
+            if (UnityGlobalInputAdapter.TryGetWaveBossRewardOptionDown(out int optionIndex))
             {
-                return;
-            }
-
-            if (Input.GetKeyDown(WaveBossRewardConstant.RewardOptionOneKey))
-            {
-                WaveBossRewardManager.Instance.SelectReward(0);
-            }
-            else if (Input.GetKeyDown(WaveBossRewardConstant.RewardOptionTwoKey))
-            {
-                WaveBossRewardManager.Instance.SelectReward(1);
-            }
-            else if (Input.GetKeyDown(WaveBossRewardConstant.RewardOptionThreeKey))
-            {
-                WaveBossRewardManager.Instance.SelectReward(2);
+                WaveBossRewardManager.Instance.SelectReward(optionIndex);
             }
         }
     }

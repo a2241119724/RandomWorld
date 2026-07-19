@@ -2,6 +2,7 @@ namespace LAB2D.UI.Action
 {
     using LAB2D;
     using LAB2D.Serializable;
+    using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.EventSystems;
@@ -73,11 +74,11 @@ namespace LAB2D.UI.Action
 
         public void Update()
         {
-            if (Input.GetMouseButtonDown(2) || (!LAB2D.Tool.Tool.IsUIInputActive() && Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu)))
+            if (UnityGlobalInputAdapter.GetMiddleMouseDown() || UnityGlobalInputAdapter.GetCloseOrBuildMenuDown())
             {
                  this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }
-            else if (Input.GetMouseButtonDown(0))
+            else if (UnityGlobalInputAdapter.GetPrimaryMouseDown())
             {
                 List<RaycastResult> results = LAB2D.Tool.Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
 
