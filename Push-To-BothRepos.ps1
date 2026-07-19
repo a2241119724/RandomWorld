@@ -58,6 +58,7 @@ if ($dirty) {
 }
 
 $origCommit = (& git rev-parse HEAD 2>$null).Trim()
+$origIgnoreContent = & git show "${origCommit}:.gitignore" 2>$null
 
 $restrictiveIgnore = @"
 # Public source snapshot -- only publish code, not assets or resources.
@@ -196,18 +197,15 @@ finally {
     Write-Host "Restoring working directory..."
 
     $gitignorePath = Join-Path $repoRoot ".gitignore"
-    if (Test-Path -LiteralPath $gitignorePath) {
-        Remove-Item -LiteralPath $gitignorePath -Force -ErrorAction SilentlyContinue
-    }
-
-    & git checkout HEAD -- .gitignore 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Failed to restore .gitignore via checkout." -ForegroundColor Yellow
+    if ($origIgnoreContent) {
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllText($gitignorePath, [string]::Join("`n", $origIgnoreContent), $utf8NoBom)
     }
 
     & git reset --hard $origCommit 2>$null
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "git reset --hard failed, working directory may need manual check." -ForegroundColor Yellow
+        Write-Host "git reset --hard had issues, checking status..." -ForegroundColor Yellow
+        & git checkout HEAD -- .gitignore 2>$null
     }
 
     Pop-Location -ErrorAction SilentlyContinue
