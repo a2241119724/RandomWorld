@@ -2,6 +2,7 @@ namespace LAB2D.Tool
 {
     using LAB2D;
     using LAB2D.Constant;
+    using LAB2D.UnityAdapter;
     using System;
     using System.Collections;
     using System.Collections.Generic;
@@ -241,8 +242,13 @@ namespace LAB2D.Tool
         /// <returns>UI对象</returns>
         public static List<RaycastResult> GetUIByMousePos(string tag = TagConstant.UI_TAG)
         {
+            return GetUIByScreenPos(UnityGlobalInputAdapter.GetMouseScreenPosition(), tag);
+        }
+
+        public static List<RaycastResult> GetUIByScreenPos(Vector2 screenPosition, string tag = TagConstant.UI_TAG)
+        {
             PointerEventData pointerEventData = new (EventSystem.current);
-            pointerEventData.position = Input.mousePosition;
+            pointerEventData.position = screenPosition;
             List<RaycastResult> results = new ();
             GameObject.FindGameObjectWithTag(tag).GetComponent<GraphicRaycaster>().Raycast(pointerEventData, results);
             return results;

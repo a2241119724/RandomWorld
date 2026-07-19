@@ -3,6 +3,7 @@ namespace LAB2D.Map
     using LAB2D;
     using LAB2D.Serializable;
     using LAB2D.Domain.Common;
+    using LAB2D.UnityAdapter;
     using System;
     using System.Collections;
     using Photon.Pun;
@@ -270,7 +271,7 @@ namespace LAB2D.Map
         /// <returns>Map位置</returns>
         public Vector3Int GetMapPosByMouse()
         {
-            return this.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+            return this.WorldPosToMapPos(UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main));
         }
 
         /// <summary>

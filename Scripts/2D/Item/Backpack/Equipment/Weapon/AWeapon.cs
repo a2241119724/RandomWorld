@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Equipment.Weapon
 {
     using LAB2D;
+    using LAB2D.UnityAdapter;
     using Character = LAB2D.Character.Character;
     using System;
     using System.Collections.Generic;
@@ -183,7 +184,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
             else if (this.character is Player)
             {
                 // 玩家跟随鼠标
-                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, Input.mousePosition - Camera.main.WorldToScreenPoint(PlayerManager.Instance.Mine.transform.position));
+                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, UnityGlobalInputAdapter.GetMouseScreenPosition() - Camera.main.WorldToScreenPoint(PlayerManager.Instance.Mine.transform.position));
             }
             else
             {

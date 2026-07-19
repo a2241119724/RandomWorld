@@ -81,6 +81,16 @@ namespace LAB2D.UnityAdapter
             return camera.ScreenToWorldPoint(Input.mousePosition);
         }
 
+        public static Vector3 GetMouseScreenPosition()
+        {
+            return Input.mousePosition;
+        }
+
+        public static float GetMouseScrollDeltaY()
+        {
+            return Input.mouseScrollDelta.y;
+        }
+
         public static bool TryGetWaveBossRewardOptionDown(out int optionIndex)
         {
             optionIndex = -1;
@@ -151,9 +161,27 @@ namespace LAB2D.UnityAdapter
             return Input.GetMouseButtonDown(0);
         }
 
+        public static bool GetPrimaryMouseUp()
+        {
+            return Input.GetMouseButtonUp(0);
+        }
+
         public static bool GetMiddleMouseDown()
         {
             return Input.GetMouseButtonDown(2);
+        }
+
+        public static bool GetMiddleMouseUp()
+        {
+            return Input.GetMouseButtonUp(2);
+        }
+
+        public static bool GetWorkerBedDismissDown()
+        {
+            return !LAB2D.Tool.Tool.IsUIInputActive() &&
+                (Input.GetMouseButtonDown(0) ||
+                Input.GetMouseButtonDown(2) ||
+                Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu));
         }
     }
 }

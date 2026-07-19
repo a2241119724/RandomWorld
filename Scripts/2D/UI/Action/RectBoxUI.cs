@@ -2,6 +2,7 @@ namespace LAB2D.UI.Action
 {
     using LAB2D;
     using LAB2D.Serializable;
+    using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.EventSystems;
@@ -105,11 +106,11 @@ namespace LAB2D.UI.Action
         {
             if (this.options.gameObject.activeSelf)
             {
-                if (Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2))
+                if (UnityGlobalInputAdapter.GetSecondaryMouseDown() || UnityGlobalInputAdapter.GetMiddleMouseDown())
                 {
                     this.options.gameObject.SetActive(false);
                 }
-                else if (Input.GetMouseButtonDown(0))
+                else if (UnityGlobalInputAdapter.GetPrimaryMouseDown())
                 {
                     List<RaycastResult> results = LAB2D.Tool.Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
 
@@ -123,19 +124,19 @@ namespace LAB2D.UI.Action
                 return;
             }
 
-            if (Input.GetMouseButtonDown(0) && PanelController.Instance.Panels.Count > 0 &&
+            if (UnityGlobalInputAdapter.GetPrimaryMouseDown() && PanelController.Instance.Panels.Count > 0 &&
                 (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance ||
                 PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance))
             {
                 this.options.gameObject.SetActive(false);
-                Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector3 pos = UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main);
                 this.start = pos;
                 this.transform.position = new Vector3(pos.x, pos.y, 0.0f);
                 this.isDown = true;
             }
             else if (this.isDown && PanelController.Instance.IsForeground())
             {
-                Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector3 pos = UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main);
                 float x = pos.x - this.start.x;
                 float y = pos.y - this.start.y;
                 if (x > 0 && y > 0)
@@ -154,7 +155,7 @@ namespace LAB2D.UI.Action
                 ((RectTransform)this.transform).sizeDelta = new Vector2(Mathf.Abs(x), Mathf.Abs(y));
             }
 
-            if (Input.GetMouseButtonUp(0))
+            if (UnityGlobalInputAdapter.GetPrimaryMouseUp())
             {
                 this.Select();
                 ((RectTransform)this.transform).sizeDelta = Vector2.zero;

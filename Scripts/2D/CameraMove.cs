@@ -1,5 +1,6 @@
 namespace LAB2D
 {
+    using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.EventSystems;
@@ -70,20 +71,21 @@ namespace LAB2D
 
                 // 真实坐标x对应地图坐标y
                 Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Target);
+                Vector3 mouseScreenPosition = UnityGlobalInputAdapter.GetMouseScreenPosition();
                 float offset = Time.deltaTime * EdgeSpeed;
-                if (Input.mousePosition.x > Screen.width - EdgeSize && posMap.y < TileMap.Instance.TileMapDataLAB.Width)
+                if (mouseScreenPosition.x > Screen.width - EdgeSize && posMap.y < TileMap.Instance.TileMapDataLAB.Width)
                 {
                     this.Target = new Vector3(this.Target.x + offset, this.Target.y, 0);
                 }
-                else if (Input.mousePosition.x < EdgeSize && posMap.y > 0)
+                else if (mouseScreenPosition.x < EdgeSize && posMap.y > 0)
                 {
                     this.Target = new Vector3(this.Target.x - offset, this.Target.y, 0);
                 }
-                else if (Input.mousePosition.y > Screen.height - EdgeSize && posMap.x < TileMap.Instance.TileMapDataLAB.Height)
+                else if (mouseScreenPosition.y > Screen.height - EdgeSize && posMap.x < TileMap.Instance.TileMapDataLAB.Height)
                 {
                     this.Target = new Vector3(this.Target.x, this.Target.y + offset, 0);
                 }
-                else if (Input.mousePosition.y < EdgeSize && posMap.x > 0)
+                else if (mouseScreenPosition.y < EdgeSize && posMap.x > 0)
                 {
                     this.Target = new Vector3(this.Target.x, this.Target.y - offset, 0);
                 }
@@ -91,10 +93,11 @@ namespace LAB2D
 
             // 视角缩放（仅在游戏区域Foreground上时缩放，UI面板上不缩放）
             List<RaycastResult> uiResults = LAB2D.Tool.Tool.GetUIByMousePos();
-            if (Camera.main.orthographic && Input.mouseScrollDelta.y != 0
+            float mouseScrollDeltaY = UnityGlobalInputAdapter.GetMouseScrollDeltaY();
+            if (Camera.main.orthographic && mouseScrollDeltaY != 0
                 && (uiResults.Count == 0 || uiResults[0].gameObject.name.Equals("Foreground")))
             {
-                if (Input.mouseScrollDelta.y > 0 && Camera.main.orthographicSize > this.scaleThreshold[0])
+                if (mouseScrollDeltaY > 0 && Camera.main.orthographicSize > this.scaleThreshold[0])
                 {
                     Camera.main.orthographicSize -= Time.deltaTime * ScrollSpeed;
                     WeatherManager.Instance.Scale(Camera.main.orthographicSize / 10);
@@ -103,7 +106,7 @@ namespace LAB2D
                         Camera.main.orthographicSize = this.scaleThreshold[0];
                     }
                 }
-                else if (Input.mouseScrollDelta.y < 0 && Camera.main.orthographicSize < this.scaleThreshold[1])
+                else if (mouseScrollDeltaY < 0 && Camera.main.orthographicSize < this.scaleThreshold[1])
                 {
                     Camera.main.orthographicSize += Time.deltaTime * ScrollSpeed;
                     WeatherManager.Instance.Scale(Camera.main.orthographicSize / 10);
@@ -115,27 +118,28 @@ namespace LAB2D
             }
 
             // 根据鼠标滑动移动
-            if (Input.GetMouseButtonDown(2))
+            if (UnityGlobalInputAdapter.GetMiddleMouseDown())
             {
                 this.Character = null;
 
                 // 过滤不是滑动主屏幕的动作
                 if (uiResults.Count > 0 && uiResults[0].gameObject.name.Equals("Foreground"))
                 {
-                    this.lastMousePos = Input.mousePosition;
+                    this.lastMousePos = UnityGlobalInputAdapter.GetMouseScreenPosition();
                     this.isDown = true;
                 }
             }
             else if (this.isDown)
             {
+                Vector3 mouseScreenPosition = UnityGlobalInputAdapter.GetMouseScreenPosition();
                 float mouseSpeed = MouseSpeed * Camera.main.orthographicSize / 10;
-                float detx = -(Input.mousePosition.x - this.lastMousePos.x) * mouseSpeed * Time.deltaTime;
-                float dety = -(Input.mousePosition.y - this.lastMousePos.y) * mouseSpeed * Time.deltaTime;
+                float detx = -(mouseScreenPosition.x - this.lastMousePos.x) * mouseSpeed * Time.deltaTime;
+                float dety = -(mouseScreenPosition.y - this.lastMousePos.y) * mouseSpeed * Time.deltaTime;
                 this.Target = new Vector3(this.Target.x + detx, this.Target.y + dety, 0);
-                this.lastMousePos = Input.mousePosition;
+                this.lastMousePos = mouseScreenPosition;
             }
 
-            if (Input.GetMouseButtonUp(2))
+            if (UnityGlobalInputAdapter.GetMiddleMouseUp())
             {
                 this.isDown = false;
             }

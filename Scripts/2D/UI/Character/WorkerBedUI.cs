@@ -2,6 +2,7 @@ namespace LAB2D.UI.Character
 {
     using LAB2D;
     using LAB2D.Serializable;
+    using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -67,7 +68,7 @@ namespace LAB2D.UI.Character
 
         public void Update()
         {
-            if (!LAB2D.Tool.Tool.IsUIInputActive() && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2) || Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu)))
+            if (UnityGlobalInputAdapter.GetWorkerBedDismissDown())
             {
                 // transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }
