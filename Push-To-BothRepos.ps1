@@ -202,10 +202,12 @@ finally {
         [System.IO.File]::WriteAllText($gitignorePath, [string]::Join("`n", $origIgnoreContent), $utf8NoBom)
     }
 
-    & git reset --hard $origCommit 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "git reset --hard had issues, checking status..." -ForegroundColor Yellow
-        & git checkout HEAD -- .gitignore 2>$null
+    $changedFiles = & git diff --name-only 2>$null
+    if ($changedFiles) {
+        $otherChanged = $changedFiles | Where-Object { $_ -ne '.gitignore' }
+        if ($otherChanged) {
+            & git checkout HEAD -- @($otherChanged) 2>$null
+        }
     }
 
     Pop-Location -ErrorAction SilentlyContinue
