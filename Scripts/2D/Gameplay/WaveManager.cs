@@ -95,6 +95,7 @@ namespace LAB2D.Gameplay
         private Coroutine waveCoroutine;
         private readonly WaveRuntimeState runtimeState = new WaveRuntimeState();
         private readonly WaveFlowService flowService = new WaveFlowService();
+        private readonly WaveSpawnPlanService spawnPlanService = new WaveSpawnPlanService();
 
         /// <summary>
         /// 启动波次系统（接管敌人生成控制权）
@@ -203,10 +204,10 @@ namespace LAB2D.Gameplay
                 this.OnWaveStateChanged?.Invoke();
 
                 // 生成当前波次的所有敌人
-                int baseEnemiesInWave = this.GetEnemyCountForWave(this.CurrentWaveIndex);
-                int enemiesInWave = WaveBossRewardManager.Instance.GetEnemyCountForWave(this.CurrentWaveIndex, baseEnemiesInWave);
-                for (int i = 0; i < enemiesInWave; i++)
+                WaveSpawnPlan spawnPlan = this.CreateSpawnPlan();
+                for (int i = 0; i < spawnPlan.Requests.Count; i++)
                 {
+                    WaveSpawnRequest spawnRequest = spawnPlan.Requests[i];
                     int maxAliveEnemies = this.GetEffectiveMaxAliveEnemies();
                     // 检查最大同时存活敌人限制
                     while (this.CountAliveEnemies() >= maxAliveEnemies)
@@ -221,24 +222,18 @@ namespace LAB2D.Gameplay
                     if (enemyObj != null)
                     {
                         // A004：生成后立即套用普通难度缩放或 Boss 缩放，不改敌人 Prefab 本体。
-                        WaveFlowDecision spawnDecision = this.flowService.CreateSpawnDecision(
-                            this.runtimeState,
-                            i,
-                            enemiesInWave,
-                            this.CreateWaveConfigModel());
-
                         WaveBossRewardManager.Instance.ConfigureSpawnedEnemy(
                             enemyObj,
-                            spawnDecision.WaveIndex,
-                            spawnDecision.SpawnIndex,
-                            spawnDecision.TotalEnemiesInWave,
-                            spawnDecision.DifficultyScale);
+                            spawnRequest.WaveIndex,
+                            spawnRequest.SpawnIndex,
+                            spawnRequest.TotalEnemiesInWave,
+                            spawnRequest.DifficultyScale);
                         this.flowService.RegisterSpawnSuccess(this.runtimeState);
                         this.SyncPublicStateFromRuntime();
                     }
 
                     // 波内生成间隔（第一只立即生成，后续按间隔）
-                    if (i < enemiesInWave - 1)
+                    if (i < spawnPlan.Requests.Count - 1)
                     {
                         yield return new WaitForSeconds(this.Config.spawnInterval);
                     }
@@ -302,6 +297,13 @@ namespace LAB2D.Gameplay
         private int GetEnemyCountForWave(int waveIndex)
         {
             return this.flowService.GetEnemyCountForWave(waveIndex, this.CreateWaveConfigModel());
+        }
+
+        private WaveSpawnPlan CreateSpawnPlan()
+        {
+            int baseEnemiesInWave = this.GetEnemyCountForWave(this.CurrentWaveIndex);
+            int adjustedEnemiesInWave = WaveBossRewardManager.Instance.GetEnemyCountForWave(this.CurrentWaveIndex, baseEnemiesInWave);
+            return this.spawnPlanService.CreatePlan(this.runtimeState, this.CreateWaveConfigModel(), adjustedEnemiesInWave);
         }
 
         /// <summary>
