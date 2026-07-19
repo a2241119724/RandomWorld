@@ -82,5 +82,75 @@ namespace LAB2D.Editor.Tests.Domain
             Assert.AreEqual(8, request.TotalEnemiesInWave);
             Assert.AreEqual(1.0f, request.DifficultyScale);
         }
+
+        [Test]
+        public void BeginRestAndCreateDecision_ClampsNegativeDuration()
+        {
+            WaveRuntimeState state = new WaveRuntimeState();
+            WaveFlowService service = new WaveFlowService();
+
+            WaveFlowDecision decision = service.BeginRestAndCreateDecision(state, -1.0f);
+
+            Assert.AreEqual(WaveFlowDecisionType.RestStarted, decision.Type);
+            Assert.AreEqual(0.0f, decision.RestDuration);
+            Assert.IsTrue(state.IsResting);
+        }
+
+        [Test]
+        public void BeginNextWaveAndCreateDecision_UsesNextWaveState()
+        {
+            WaveRuntimeState state = new WaveRuntimeState();
+            WaveFlowService service = new WaveFlowService();
+            WaveConfigModel config = new WaveConfigModel
+            {
+                DifficultyScalePerWave = 0.5f,
+            };
+
+            WaveFlowDecision decision = service.BeginNextWaveAndCreateDecision(state, 4, 7, config);
+
+            Assert.AreEqual(WaveFlowDecisionType.WaveStarted, decision.Type);
+            Assert.AreEqual(1, decision.WaveIndex);
+            Assert.AreEqual(7, decision.TotalEnemiesInWave);
+            Assert.AreEqual(1.0f, decision.DifficultyScale);
+            Assert.AreEqual(4, state.EnemiesAliveBeforeWave);
+        }
+
+        [Test]
+        public void CreateSpawnDecision_UsesCurrentWaveAndSpawnIndex()
+        {
+            WaveRuntimeState state = new WaveRuntimeState();
+            WaveFlowService service = new WaveFlowService();
+            WaveConfigModel config = new WaveConfigModel();
+
+            service.BeginNextWave(state, 0);
+            WaveFlowDecision decision = service.CreateSpawnDecision(state, 2, 5, config);
+
+            Assert.AreEqual(WaveFlowDecisionType.SpawnEnemy, decision.Type);
+            Assert.AreEqual(1, decision.WaveIndex);
+            Assert.AreEqual(2, decision.SpawnIndex);
+            Assert.AreEqual(5, decision.TotalEnemiesInWave);
+            Assert.AreEqual(1.0f, decision.DifficultyScale);
+        }
+
+        [Test]
+        public void TryCreateAllWavesClearedDecision_WhenLimitReached_ReturnsDecision()
+        {
+            WaveRuntimeState state = new WaveRuntimeState();
+            WaveFlowService service = new WaveFlowService();
+            WaveConfigModel config = new WaveConfigModel
+            {
+                TotalWaves = 1,
+            };
+
+            service.BeginNextWave(state, 0);
+            service.CompleteCurrentWave(state);
+
+            bool hasDecision = service.TryCreateAllWavesClearedDecision(state, config, out WaveFlowDecision decision);
+
+            Assert.IsTrue(hasDecision);
+            Assert.AreEqual(WaveFlowDecisionType.AllWavesCleared, decision.Type);
+            Assert.AreEqual(1, decision.WaveIndex);
+            Assert.AreEqual(1, decision.TotalWavesCompleted);
+        }
     }
 }

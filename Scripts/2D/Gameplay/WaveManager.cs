@@ -164,9 +164,12 @@ namespace LAB2D.Gameplay
             while (true)
             {
                 // 检查是否达到总波次上限
-                if (this.flowService.AreAllWavesCleared(this.runtimeState, this.CreateWaveConfigModel()))
+                if (this.flowService.TryCreateAllWavesClearedDecision(
+                    this.runtimeState,
+                    this.CreateWaveConfigModel(),
+                    out WaveFlowDecision allWavesClearedDecision))
                 {
-                    this.OnAllWavesCleared?.Invoke(this.TotalWavesCompleted);
+                    this.OnAllWavesCleared?.Invoke(allWavesClearedDecision.TotalWavesCompleted);
                     this.StopWaves();
                     yield break;
                 }
@@ -174,23 +177,29 @@ namespace LAB2D.Gameplay
                 // 波间休息
                 if (this.TotalWavesCompleted > 0)
                 {
-                    this.flowService.BeginRest(this.runtimeState);
+                    WaveFlowDecision restDecision = this.flowService.BeginRestAndCreateDecision(
+                        this.runtimeState,
+                        this.Config.restTimeBetweenWaves);
                     this.SyncPublicStateFromRuntime();
-                    this.OnRestStart?.Invoke(this.Config.restTimeBetweenWaves);
+                    this.OnRestStart?.Invoke(restDecision.RestDuration);
                     this.OnWaveStateChanged?.Invoke();
-                    yield return new WaitForSeconds(this.Config.restTimeBetweenWaves);
+                    yield return new WaitForSeconds(restDecision.RestDuration);
                     this.flowService.EndRest(this.runtimeState);
                     this.SyncPublicStateFromRuntime();
                 }
 
                 // 开始新波次
-                this.flowService.BeginNextWave(this.runtimeState, this.CountAliveEnemies());
+                WaveFlowDecision waveStartedDecision = this.flowService.BeginNextWaveAndCreateDecision(
+                    this.runtimeState,
+                    this.CountAliveEnemies(),
+                    0,
+                    this.CreateWaveConfigModel());
                 this.SyncPublicStateFromRuntime();
 
                 // 波前存活数已交给 WaveRuntimeState 保存，Unity 侧只负责读取场景数量。
                 // A004：通知 Boss 与波间奖励系统同步当前波次阶段，保持波次系统仍为主流程。
-                WaveBossRewardManager.Instance.OnWaveStarted(this.CurrentWaveIndex, this.CurrentDifficultyScale);
-                this.OnWaveStart?.Invoke(this.CurrentWaveIndex);
+                WaveBossRewardManager.Instance.OnWaveStarted(waveStartedDecision.WaveIndex, waveStartedDecision.DifficultyScale);
+                this.OnWaveStart?.Invoke(waveStartedDecision.WaveIndex);
                 this.OnWaveStateChanged?.Invoke();
 
                 // 生成当前波次的所有敌人
@@ -212,7 +221,7 @@ namespace LAB2D.Gameplay
                     if (enemyObj != null)
                     {
                         // A004：生成后立即套用普通难度缩放或 Boss 缩放，不改敌人 Prefab 本体。
-                        WaveSpawnRequest spawnRequest = this.flowService.CreateSpawnRequest(
+                        WaveFlowDecision spawnDecision = this.flowService.CreateSpawnDecision(
                             this.runtimeState,
                             i,
                             enemiesInWave,
@@ -220,10 +229,10 @@ namespace LAB2D.Gameplay
 
                         WaveBossRewardManager.Instance.ConfigureSpawnedEnemy(
                             enemyObj,
-                            spawnRequest.WaveIndex,
-                            spawnRequest.SpawnIndex,
-                            spawnRequest.TotalEnemiesInWave,
-                            spawnRequest.DifficultyScale);
+                            spawnDecision.WaveIndex,
+                            spawnDecision.SpawnIndex,
+                            spawnDecision.TotalEnemiesInWave,
+                            spawnDecision.DifficultyScale);
                         this.flowService.RegisterSpawnSuccess(this.runtimeState);
                         this.SyncPublicStateFromRuntime();
                     }
@@ -240,12 +249,13 @@ namespace LAB2D.Gameplay
                 this.OnWaveStateChanged?.Invoke();
 
                 // 等待波次清理：当存活敌人数量降至波次前水平时，认为波次完成
-                yield return this.WaitForWaveClear();
+                WaveFlowDecision waitDecision = this.flowService.CreateWaitForWaveClearDecision(this.runtimeState);
+                yield return this.WaitForWaveClear(waitDecision);
 
                 // 波次完成
-                this.flowService.CompleteCurrentWave(this.runtimeState);
+                WaveFlowDecision waveCompletedDecision = this.flowService.CompleteCurrentWaveAndCreateDecision(this.runtimeState);
                 this.SyncPublicStateFromRuntime();
-                this.OnWaveEnd?.Invoke(this.CurrentWaveIndex, this.TotalWavesCompleted);
+                this.OnWaveEnd?.Invoke(waveCompletedDecision.WaveIndex, waveCompletedDecision.TotalWavesCompleted);
                 this.OnWaveStateChanged?.Invoke();
             }
         }
@@ -253,8 +263,13 @@ namespace LAB2D.Gameplay
         /// <summary>
         /// 等待当前波次内所有敌人被击杀
         /// </summary>
-        private IEnumerator WaitForWaveClear()
+        private IEnumerator WaitForWaveClear(WaveFlowDecision decision)
         {
+            if (decision == null || decision.Type != WaveFlowDecisionType.WaitForWaveClear)
+            {
+                yield break;
+            }
+
             while (true)
             {
                 yield return new WaitForSeconds(1.0f);
