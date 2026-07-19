@@ -96,6 +96,7 @@ namespace LAB2D.Gameplay
         private readonly WaveFlowService flowService = new WaveFlowService();
         private readonly WaveSpawnPlanService spawnPlanService = new WaveSpawnPlanService();
         private IWaveSceneAdapter sceneAdapter = new UnityWaveSceneAdapter();
+        private IWaveTimeScheduler timeScheduler = new UnityWaveTimeScheduler();
 
         /// <summary>
         /// 替换 WaveManager 的 Unity 场景访问桥。传入 null 会恢复默认 Unity 实现。
@@ -103,6 +104,14 @@ namespace LAB2D.Gameplay
         public void SetSceneAdapter(IWaveSceneAdapter adapter)
         {
             this.sceneAdapter = adapter ?? new UnityWaveSceneAdapter();
+        }
+
+        /// <summary>
+        /// 替换 WaveManager 的协程调度桥。传入 null 会恢复默认 Unity 实现。
+        /// </summary>
+        public void SetTimeScheduler(IWaveTimeScheduler scheduler)
+        {
+            this.timeScheduler = scheduler ?? new UnityWaveTimeScheduler();
         }
 
         /// <summary>
@@ -117,7 +126,7 @@ namespace LAB2D.Gameplay
 
             EnemyManager.IsWaveControlEnabled = true;
             this.ResetState();
-            this.waveCoroutine = TileMap.Instance.StartCoroutine(this.WaveLoop());
+            this.waveCoroutine = this.timeScheduler.Start(this.WaveLoop());
         }
 
         /// <summary>
@@ -128,7 +137,7 @@ namespace LAB2D.Gameplay
             EnemyManager.IsWaveControlEnabled = false;
             if (this.waveCoroutine != null)
             {
-                TileMap.Instance.StopCoroutine(this.waveCoroutine);
+                this.timeScheduler.Stop(this.waveCoroutine);
                 this.waveCoroutine = null;
             }
 
@@ -192,7 +201,7 @@ namespace LAB2D.Gameplay
                     this.SyncPublicStateFromRuntime();
                     this.OnRestStart?.Invoke(restDecision.RestDuration);
                     this.OnWaveStateChanged?.Invoke();
-                    yield return new WaitForSeconds(restDecision.RestDuration);
+                    yield return this.timeScheduler.WaitForSeconds(restDecision.RestDuration);
                     this.flowService.EndRest(this.runtimeState);
                     this.SyncPublicStateFromRuntime();
                 }
@@ -221,7 +230,7 @@ namespace LAB2D.Gameplay
                     while (this.CountAliveEnemies() >= maxAliveEnemies)
                     {
                         // 等待有空位再继续生成
-                        yield return new WaitForSeconds(1.0f);
+                        yield return this.timeScheduler.WaitForSeconds(1.0f);
                     }
 
                     // 在随机可到达位置生成敌人
@@ -238,7 +247,7 @@ namespace LAB2D.Gameplay
                     // 波内生成间隔（第一只立即生成，后续按间隔）
                     if (i < spawnPlan.Requests.Count - 1)
                     {
-                        yield return new WaitForSeconds(this.Config.spawnInterval);
+                        yield return this.timeScheduler.WaitForSeconds(this.Config.spawnInterval);
                     }
                 }
 
@@ -270,13 +279,13 @@ namespace LAB2D.Gameplay
 
             while (true)
             {
-                yield return new WaitForSeconds(1.0f);
+                yield return this.timeScheduler.WaitForSeconds(1.0f);
 
                 // 检查 Player 是否存活
                 if (!this.sceneAdapter.IsPlayerAlive())
                 {
                     // 玩家死亡，等待重生后继续当前波次
-                    yield return new WaitForSeconds(3.0f);
+                    yield return this.timeScheduler.WaitForSeconds(3.0f);
                     continue;
                 }
 
@@ -287,7 +296,7 @@ namespace LAB2D.Gameplay
                 if (allWaveEnemiesDefeated)
                 {
                     // 额外等待一小段时间，确保敌人死亡动画和清理完成
-                    yield return new WaitForSeconds(1.0f);
+                    yield return this.timeScheduler.WaitForSeconds(1.0f);
                     break;
                 }
             }
