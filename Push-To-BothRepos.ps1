@@ -132,62 +132,73 @@ try {
     if (-not $SkipPublic) {
         Write-Host "`n=== Pushing to PUBLIC repo (${publicRemote}) [${Branch}] ===" -ForegroundColor Cyan
 
-        $restrictiveIgnore | Set-Content .gitignore -Encoding UTF8
-
-        $tempIndex = Join-Path $env:TEMP "git-index-filtered"
-        $prevIndex = $env:GIT_INDEX_FILE
         try {
-            $env:GIT_INDEX_FILE = $tempIndex
-            Remove-Item -LiteralPath $tempIndex -Force -ErrorAction SilentlyContinue
+            $restrictiveIgnore | Set-Content .gitignore -Encoding UTF8
 
-            & git -c core.autocrlf=false add -A 2>$null
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to stage filtered files."
-            }
+            $tempIndex = Join-Path $env:TEMP "git-index-filtered"
+            $prevIndex = $env:GIT_INDEX_FILE
+            try {
+                $env:GIT_INDEX_FILE = $tempIndex
+                Remove-Item -LiteralPath $tempIndex -Force -ErrorAction SilentlyContinue
 
-            $tree = (& git write-tree 2>&1).Trim()
-            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($tree)) {
-                throw "Failed to write filtered tree: $tree"
-            }
-
-            $upToDate = $false
-            $remoteRef = & git rev-parse "refs/remotes/${publicRemote}/${Branch}" 2>$null
-            if ($remoteRef) {
-                $remoteTree = (& git rev-parse "${remoteRef}^{tree}" 2>$null).Trim()
-                if ($tree -eq $remoteTree) {
-                    $upToDate = $true
-                }
-            }
-
-            if ($upToDate) {
-                Write-Host "Public repo already up-to-date. Skipping." -ForegroundColor Green
-            }
-            else {
-                Write-Host "Creating filtered snapshot..."
-                $commit = (& git commit-tree $tree -p $origCommit -m "Public snapshot (filtered)" 2>&1).Trim()
-                if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($commit)) {
-                    throw "Failed to create public commit: $commit"
-                }
-
-                & git push $publicRemote "${commit}:refs/heads/${Branch}" --force
+                & git -c core.autocrlf=false add -A 2>$null
                 if ($LASTEXITCODE -ne 0) {
-                    throw "Failed to push to public repo (${publicRemote})."
+                    throw "Failed to stage filtered files."
                 }
 
-                & git update-ref "refs/remotes/${publicRemote}/${Branch}" $commit 2>$null
+                $tree = (& git write-tree 2>&1).Trim()
+                if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($tree)) {
+                    throw "Failed to write filtered tree: $tree"
+                }
 
-                Write-Host "Public push complete." -ForegroundColor Green
+                $upToDate = $false
+                $remoteRef = & git rev-parse "refs/remotes/${publicRemote}/${Branch}" 2>$null
+                if ($remoteRef) {
+                    $remoteTree = (& git rev-parse "${remoteRef}^{tree}" 2>$null).Trim()
+                    if ($tree -eq $remoteTree) {
+                        $upToDate = $true
+                    }
+                }
+
+                if ($upToDate) {
+                    Write-Host "Public repo already up-to-date. Skipping." -ForegroundColor Green
+                }
+                else {
+                    Write-Host "Creating filtered snapshot..."
+                    $commit = (& git commit-tree $tree -p $origCommit -m "Public snapshot (filtered)" 2>&1).Trim()
+                    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($commit)) {
+                        throw "Failed to create public commit: $commit"
+                    }
+
+                    & git push $publicRemote "${commit}:refs/heads/${Branch}" --force
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Failed to push to public repo (${publicRemote})."
+                    }
+
+                    & git update-ref "refs/remotes/${publicRemote}/${Branch}" $commit 2>$null
+
+                    Write-Host "Public push complete." -ForegroundColor Green
+                }
+            }
+            finally {
+                $env:GIT_INDEX_FILE = $prevIndex
+                Remove-Item -LiteralPath $tempIndex -Force -ErrorAction SilentlyContinue
             }
         }
-        finally {
-            $env:GIT_INDEX_FILE = $prevIndex
-            Remove-Item -LiteralPath $tempIndex -Force -ErrorAction SilentlyContinue
+        catch {
+            Write-Host "Public push failed: $_" -ForegroundColor Red
+            # Continue to outer finally for cleanup
         }
     }
 }
 finally {
     Write-Host "Restoring working directory..."
     & git reset --hard $origCommit 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "git reset failed, trying checkout..." -ForegroundColor Yellow
+        & git checkout -- .gitignore 2>$null
+        & git reset --hard $origCommit 2>$null
+    }
 
     Pop-Location -ErrorAction SilentlyContinue
 }
