@@ -27,7 +27,6 @@ namespace LAB2D.Character.Player
         private readonly PlayerDamagePolicy damagePolicy = new PlayerDamagePolicy();
         private readonly PlayerMovementPolicy movementPolicy = new PlayerMovementPolicy();
         private readonly PlayerMovementService movementService = new PlayerMovementService();
-        private readonly DamageCalculator damageCalculator = new DamageCalculator();
         private readonly IGameTime gameTime = new UnityGameTime();
 
         /// <summary>
@@ -198,10 +197,9 @@ namespace LAB2D.Character.Player
         /// <inheritdoc/>
         public override void AddExperienceValue(int experience)
         {
-            // 连击增益：经验值加成（连击越高，经验倍率越大）
             if (experience > 0)
             {
-                experience = Mathf.RoundToInt(experience * ComboBonusManager.Instance.ExperienceMultiplier);
+                experience = MathHelper.RoundToInt(experience * ComboBonusManager.Instance.ExperienceMultiplier);
             }
 
             base.AddExperienceValue(experience);
@@ -214,10 +212,19 @@ namespace LAB2D.Character.Player
         /// <param name="hp">血量.</param>
         public void AddHp(float hp)
         {
-            this.CharacterDataLAB.Hp = this.damageCalculator.ApplyHealingToHealth(
+            CharacterRuntimeState state = CharacterRuntimeState.FromCharacterData(
                 this.CharacterDataLAB.Hp,
                 this.CharacterDataLAB.MaxHp,
-                hp);
+                this.CharacterDataLAB.Mp,
+                this.CharacterDataLAB.MaxMp,
+                this.CharacterDataLAB.Level,
+                this.CharacterDataLAB.CurExperience,
+                this.CharacterDataLAB.MaxExperience,
+                this.lastDamageTime,
+                DeathPenaltyManager.Instance.IsRespawning);
+
+            CharacterRuntimeState newState = this.healthComponent.ApplyHealingToState(state, hp);
+            this.CharacterDataLAB.Hp = newState.Hp;
 
             this.RefreshUI();
         }

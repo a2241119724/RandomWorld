@@ -87,6 +87,27 @@ namespace LAB2D.Character.Worker.Task
         // 本文件通过 using WorkerTaskType = LAB2D.Enum.WorkerTaskType 保持向后兼容。
 
         /// <summary>
+        /// 任务进度倍率提供者 — 组合天气效果和 Worker 状态对任务进度的倍率影响。
+        /// 默认实现访问 WeatherGameplayEffect.Instance 和 WorkerConditionManager.Instance。
+        /// 可替换为测试桩或自定义实现。
+        /// </summary>
+        public static System.Func<WorkerTaskType, AWorker, float> ProgressMultiplierProvider { get; set; }
+            = (taskType, worker) =>
+            {
+                float multiplier = WeatherGameplayEffect.Instance.GetWorkerTaskProgressMultiplier(taskType);
+                multiplier *= WorkerConditionManager.Instance.GetWorkerTaskProgressMultiplier(worker, taskType);
+                return multiplier;
+            };
+
+        /// <summary>
+        /// 地图可通过性查询 — 判断指定格子是否可到达。
+        /// 默认实现访问 BuildMap.Instance。
+        /// 可替换为测试桩或自定义实现（如 IMapWalkabilityQuery 适配器）。
+        /// </summary>
+        public static System.Func<int, int, bool> WalkabilityProvider { get; set; }
+            = (x, y) => BuildMap.Instance.IsCanReach(new UnityEngine.Vector3Int(x, y, 0));
+
+        /// <summary>
         /// 任务ID
         /// </summary>
         public long TaskId { get; set; }
@@ -125,8 +146,7 @@ namespace LAB2D.Character.Worker.Task
                     WorkerTaskTimeConfig.WorkTiredCostPerSecond);
             }
 
-            float progressMultiplier = WeatherGameplayEffect.Instance.GetWorkerTaskProgressMultiplier(this.TaskType);
-            progressMultiplier *= WorkerConditionManager.Instance.GetWorkerTaskProgressMultiplier(worker, this.TaskType);
+            float progressMultiplier = ProgressMultiplierProvider(this.TaskType, worker);
             WorkerTaskProgressResult progressResult = this.progressService.AdvanceProgress(
                 this.curProgress,
                 this.maxProgress,
@@ -181,7 +201,8 @@ namespace LAB2D.Character.Worker.Task
             // 是否有做任务的位置, 并且不是锻炼任务(由于目标位置不确定, 并且一定可以有位置做)
             if (this.TaskType != WorkerTaskType.Exercise && this.AvailableNeighborPos.TrueForAll(pos =>
             {
-                return !BuildMap.Instance.IsCanReach(Vector3IntLAB.ToVector3Int(pos + this.TargetMap));
+                Vector3IntLAB target = pos + this.TargetMap;
+                return !WalkabilityProvider(target.X, target.Y);
             }))
             {
                 return false;
