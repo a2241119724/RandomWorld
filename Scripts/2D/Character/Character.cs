@@ -57,10 +57,10 @@ namespace LAB2D.Character
         /// </summary>
         protected Attribute basicAttribute;
 
-        private Color originalColor; // 原来的自身颜色
+        protected Color originalColor; // 原来的自身颜色
         private readonly DamageCalculator damageCalculator = new DamageCalculator();
         private readonly LevelProgressionService levelProgressionService = new LevelProgressionService();
-        private CharacterHealthComponent healthComponent;
+        protected CharacterHealthComponent healthComponent;
 
         /// <summary>
         /// 当前装备的武器物体
@@ -213,7 +213,7 @@ namespace LAB2D.Character
         /// <summary>
         /// 恢复颜色
         /// </summary>
-        private void ResetColor()
+        protected void ResetColor()
         {
             this.spriteRenderer.color = this.originalColor;
         }
@@ -225,6 +225,7 @@ namespace LAB2D.Character
         public class CharacterData : Attribute
         {
             private static readonly DamageCalculator DamageCalculator = new DamageCalculator();
+            private static readonly AttributeCalculationService attributeCalcService = new AttributeCalculationService();
 
             /// <summary>
             /// Id
@@ -379,52 +380,54 @@ namespace LAB2D.Character
             }
 
             /// <summary>
-            /// 计算总属性
+            /// 计算总属性 — 委托给 Domain/Character/AttributeCalculationService。
             /// </summary>
             public void ComputeAttribute()
             {
-                float ratio = 1;
-                if (this is PlayerCharacter.PlayerData data)
-                {
-                    ratio += data.Level * 0.1f;
-                }
-
-                // 基础属性
-                this.ATN = this.Character.basicAttribute.ATN * ratio;
-                this.INT = this.Character.basicAttribute.INT * ratio;
-                this.DEF = this.Character.basicAttribute.DEF * ratio;
-                this.RES = this.Character.basicAttribute.RES * ratio;
-                this.CRT = this.Character.basicAttribute.CRT * ratio;
-                this.CSD = this.Character.basicAttribute.CSD * ratio;
-                this.SPD = this.Character.basicAttribute.SPD * ratio;
-                this.HIT = this.Character.basicAttribute.HIT * ratio;
-
+                bool isPlayer = this is PlayerCharacter.PlayerData;
+                Attribute baseAttr = this.Character.basicAttribute;
+                BattleStats baseStats = ConvertAttributeToBattleStats(baseAttr);
+                BattleStats? weaponBStats = null;
                 if (this.weapon != null)
                 {
-                    this.ATN += this.weapon.Attribute.ATN;
-                    this.INT += this.weapon.Attribute.INT;
-                    this.DEF += this.weapon.Attribute.DEF;
-                    this.RES += this.weapon.Attribute.RES;
-                    this.CRT += this.weapon.Attribute.CRT;
-                    this.CSD += this.weapon.Attribute.CSD;
-                    this.SPD += this.weapon.Attribute.SPD;
-                    this.HIT += this.weapon.Attribute.HIT;
+                    weaponBStats = ConvertAttributeToBattleStats(this.weapon.Attribute);
                 }
 
-                if (this.equipments != null)
+                System.Collections.Generic.List<BattleStats> equipmentBStats = null;
+                if (this.equipments != null && this.equipments.Count > 0)
                 {
+                    equipmentBStats = new System.Collections.Generic.List<BattleStats>();
                     foreach (var item in this.equipments)
                     {
-                        this.ATN += item.Value.Attribute.ATN;
-                        this.INT += item.Value.Attribute.INT;
-                        this.DEF += item.Value.Attribute.DEF;
-                        this.RES += item.Value.Attribute.RES;
-                        this.CRT += item.Value.Attribute.CRT;
-                        this.CSD += item.Value.Attribute.CSD;
-                        this.SPD += item.Value.Attribute.SPD;
-                        this.HIT += item.Value.Attribute.HIT;
+                        equipmentBStats.Add(ConvertAttributeToBattleStats(item.Value.Attribute));
                     }
                 }
+
+                BattleStats result = attributeCalcService.ComputeFinalStats(
+                    baseStats,
+                    this.Level,
+                    isPlayer,
+                    weaponBStats,
+                    equipmentBStats);
+
+                this.ATN = result.ATN;
+                this.INT = result.INT;
+                this.DEF = result.DEF;
+                this.RES = result.RES;
+                this.CRT = result.CRT;
+                this.CSD = result.CSD;
+                this.SPD = result.SPD;
+                this.HIT = result.HIT;
+            }
+
+            private static BattleStats ConvertAttributeToBattleStats(Attribute attr)
+            {
+                if (attr == null)
+                {
+                    return BattleStats.Zero;
+                }
+
+                return new BattleStats(attr.ATN, attr.INT, attr.DEF, attr.RES, attr.CRT, attr.CSD, attr.SPD, attr.HIT);
             }
 
             /// <summary>

@@ -28,6 +28,7 @@ namespace LAB2D.Character.Player
         private readonly PlayerMovementPolicy movementPolicy = new PlayerMovementPolicy();
         private readonly PlayerMovementService movementService = new PlayerMovementService();
         private readonly DamageCalculator damageCalculator = new DamageCalculator();
+        private readonly IGameTime gameTime = new UnityGameTime();
 
         /// <summary>
         /// 奔跑速度倍率，默认1.6倍
@@ -70,7 +71,7 @@ namespace LAB2D.Character.Player
             get
             {
                 return this.damagePolicy.IsInvincible(
-                    Time.time,
+                    this.gameTime.Time,
                     this.lastDamageTime,
                     this.invincibilityDuration);
             }
@@ -233,17 +234,65 @@ namespace LAB2D.Character.Player
             if (this.damagePolicy.ShouldIgnoreDamage(
                 hp,
                 DeathPenaltyManager.Instance.IsRespawning,
-                Time.time,
+                this.gameTime.Time,
                 this.lastDamageTime,
                 this.invincibilityDuration))
             {
                 return;
             }
 
-            // 记录本次受击时间，启动无敌帧冷却
-            this.lastDamageTime = Time.time;
+            CharacterRuntimeState state = CharacterRuntimeState.FromCharacterData(
+                this.CharacterDataLAB.Hp,
+                this.CharacterDataLAB.MaxHp,
+                this.CharacterDataLAB.Mp,
+                this.CharacterDataLAB.MaxMp,
+                this.CharacterDataLAB.Level,
+                this.CharacterDataLAB.CurExperience,
+                this.CharacterDataLAB.MaxExperience,
+                this.lastDamageTime,
+                DeathPenaltyManager.Instance.IsRespawning);
 
-            base.ReduceHp(hp, attacker, isCRT);
+            CharacterHealthDamageResult damageResult = this.healthComponent.ApplyDamageToState(
+                state,
+                this.CharacterDataLAB.DEF,
+                hp,
+                this.gameTime.Time,
+                this.invincibilityDuration,
+                isPlayer: true,
+                attackerIsPlayer: false,
+                isCRT,
+                this.damagePolicy,
+                attackerCharacter: attacker,
+                targetCharacter: this);
+
+            this.CharacterDataLAB.Hp = damageResult.NewState.Hp;
+            this.lastDamageTime = damageResult.NewState.LastDamageTime;
+
+            if (damageResult.WasBlocked)
+            {
+                return;
+            }
+
+            this.spriteRenderer.color = Color.red;
+            this.Invoke(nameof(this.ResetColor), 0.2f);
+
+            EventBus.Instance.Publish(new CharacterDamagedEvent
+            {
+                TargetId = this.CharacterDataLAB.Id,
+                AttackerId = attacker?.CharacterDataLAB?.Id ?? 0,
+                Damage = damageResult.FinalDamage,
+                IsCritical = isCRT,
+                IsCombo = false,
+                RemainingHp = this.CharacterDataLAB.Hp,
+                WorldPosX = this.transform.position.x,
+                WorldPosY = this.transform.position.y,
+            });
+
+            if (damageResult.NewState.IsDead)
+            {
+                this.Death();
+            }
+
             if (this.NetworkView.IsOnline && !this.NetworkView.IsMine && PhotonNetwork.IsConnected)
             {
                 return;

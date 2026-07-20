@@ -3,6 +3,8 @@ namespace LAB2D.Character
     using LAB2D;
     using LAB2D.Core;
     using LAB2D.Domain.Character;
+    using LAB2D.Domain.Common;
+    using LAB2D.Domain.Player;
     using LAB2D.Gameplay;
     using PlayerCharacter = LAB2D.Character.Player.Player;
 
@@ -95,6 +97,136 @@ namespace LAB2D.Character
             data.MaxExperience = result.MaxExperience;
             data.Level = result.Level;
             return result;
+        }
+
+        public CharacterHealthDamageResult ApplyDamageToState(
+            CharacterRuntimeState state,
+            float def,
+            float incomingHp,
+            float damageTime,
+            float invincibilityDuration,
+            bool isPlayer,
+            bool attackerIsPlayer,
+            bool isCRT,
+            PlayerDamagePolicy playerDamagePolicy = null,
+            Character attackerCharacter = null,
+            Character targetCharacter = null)
+        {
+            if (incomingHp <= 0f)
+            {
+                return new CharacterHealthDamageResult(state, 0f, false, false);
+            }
+
+            if (state.IsDead)
+            {
+                return new CharacterHealthDamageResult(state, 0f, false, false);
+            }
+
+            if (isPlayer && playerDamagePolicy != null)
+            {
+                if (playerDamagePolicy.ShouldIgnoreDamage(
+                    incomingHp,
+                    state.IsRespawning,
+                    damageTime,
+                    state.LastDamageTime,
+                    invincibilityDuration))
+                {
+                    return new CharacterHealthDamageResult(state, 0f, false, true);
+                }
+            }
+
+            float finalDamage = incomingHp;
+
+            if (attackerIsPlayer)
+            {
+                float comboMult = this.comboBonusManager.DamageMultiplier;
+                finalDamage *= comboMult;
+                finalDamage = this.waveBossRewardManager.GetAdjustedPlayerOutgoingDamage(attackerCharacter, finalDamage);
+            }
+
+            finalDamage = this.waveBossRewardManager.GetAdjustedIncomingDamage(targetCharacter, finalDamage);
+            finalDamage = this.damageCalculator.ApplyDefense(finalDamage, def);
+
+            CharacterHealthResult healthResult = this.damageCalculator.ApplyDamageToHealth(
+                state.Hp,
+                finalDamage);
+
+            CharacterRuntimeState newState = state.WithHpAndDamageTime(
+                healthResult.RemainingHp,
+                isPlayer ? damageTime : state.LastDamageTime);
+
+            this.gameplaySessionStats.RecordDamageDealt(finalDamage, isCRT);
+            this.gameplaySessionStats.RecordDamageTaken(finalDamage);
+
+            return new CharacterHealthDamageResult(
+                newState,
+                finalDamage,
+                isCRT,
+                false);
+        }
+
+        public CharacterRuntimeState ApplyHealingToState(
+            CharacterRuntimeState state,
+            float healAmount)
+        {
+            float newHp = this.damageCalculator.ApplyHealingToHealth(
+                state.Hp,
+                state.MaxHp,
+                healAmount);
+
+            return state.WithHp(newHp);
+        }
+
+        public CharacterExperienceResult ApplyExperienceToState(
+            CharacterRuntimeState state,
+            int experience)
+        {
+            this.gameplaySessionStats.RecordExperienceGained(experience);
+
+            LevelProgressionResult result = this.levelProgressionService.AddExperience(
+                state.CurExperience,
+                state.MaxExperience,
+                state.Level,
+                experience);
+
+            CharacterRuntimeState newState = state.WithExperience(
+                result.CurrentExperience,
+                result.MaxExperience,
+                result.Level);
+
+            return new CharacterExperienceResult(newState, result.LeveledUp);
+        }
+    }
+
+    public sealed class CharacterHealthDamageResult
+    {
+        public readonly CharacterRuntimeState NewState;
+        public readonly float FinalDamage;
+        public readonly bool IsCritical;
+        public readonly bool WasBlocked;
+
+        public CharacterHealthDamageResult(
+            CharacterRuntimeState newState,
+            float finalDamage,
+            bool isCritical,
+            bool wasBlocked)
+        {
+            this.NewState = newState;
+            this.FinalDamage = finalDamage;
+            this.IsCritical = isCritical;
+            this.WasBlocked = wasBlocked;
+        }
+    }
+
+    public sealed class CharacterExperienceResult
+    {
+        public readonly CharacterRuntimeState NewState;
+        public readonly bool LeveledUp;
+
+        public CharacterExperienceResult(CharacterRuntimeState newState, bool leveledUp)
+        {
+            this.NewState = newState;
+            this.LeveledUp = leveledUp;
         }
     }
 }
