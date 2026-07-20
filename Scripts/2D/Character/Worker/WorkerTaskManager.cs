@@ -92,7 +92,7 @@ namespace LAB2D.Character.Worker
                             this.tasks[assignment.Priority][closedTask] = true;
                         }
 
-                        DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
+                        EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
                         break;
                     }
                 }
@@ -181,7 +181,7 @@ namespace LAB2D.Character.Worker
 
             this.tasks[prior].Add(task, false);
             this.taskTree.Insert(Vector3IntLAB.ToVector2ShortLAB(taskPosMap));
-            DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
+            EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }
 
         /// <summary>
@@ -203,12 +203,12 @@ namespace LAB2D.Character.Worker
                         this.tasks[i].Remove(task);
                     }
 
-                    DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
+                    EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
                     return;
                 }
             }
 
-            DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
+            EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }
 
         /// <summary>
@@ -227,7 +227,7 @@ namespace LAB2D.Character.Worker
                 if (this.tasks[i].ContainsKey(task))
                 {
                     this.tasks[i][task] = false;
-                    DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
+                    EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
                     break;
                 }
             }
@@ -307,7 +307,7 @@ namespace LAB2D.Character.Worker
                         {
                             this.tasks[i].Remove(hungryTask);
                             this.hungryTasks.Remove(hungryTask);
-                            DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
+                            EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
                             return;
                         }
                     }
@@ -335,7 +335,7 @@ namespace LAB2D.Character.Worker
                     {
                         this.tasks[i].Remove(task);
                         this.GatherPos.Remove(Vector3IntLAB.ToVector3Int(task.TargetMap));
-                        DebugUI.Instance.UpdateInfo(this.GetTaskInfo());
+                        EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
                         return;
                     }
                 }

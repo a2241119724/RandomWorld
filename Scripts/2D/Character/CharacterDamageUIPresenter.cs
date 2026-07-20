@@ -46,8 +46,7 @@ namespace LAB2D.Character
             if (g != null)
             {
                 g.GetComponent<DamageUI>().SetDamage(e.Damage, System.Convert.ToInt32(e.IsCritical));
-                g.transform.SetParent(e.TargetTransform);
-                g.transform.localPosition = Vector3.zero;
+                g.transform.position = worldPos;
             }
 
             FloatingTextManager.Instance.SpawnDamageText(worldPos, e.Damage, e.IsCritical, e.IsCombo);

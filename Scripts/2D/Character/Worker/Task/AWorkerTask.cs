@@ -6,8 +6,6 @@ namespace LAB2D.Character.Worker.Task
     using LAB2D.Domain.Worker;
     using System;
     using System.Collections.Generic;
-    using UnityEngine;
-    using UnityEngine.Events;
     // WorkerTaskType 已提取到 LAB2D.Enum.WorkerTaskType（独立枚举）
 
     /// <summary>
@@ -56,14 +54,14 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>
         /// 任务阶段上下文
         /// </summary>
-        protected List<UnityAction<AWorker>> stageInit;
+        protected List<Action<AWorker>> stageInit;
 
         public AWorkerTask(WorkerTaskType taskType)
         {
             this.TaskType = taskType;
             this.Name = taskType.ToString();
             this.AvailableNeighborPos = new List<Vector3IntLAB>();
-            this.stageInit = new List<UnityAction<AWorker>>();
+            this.stageInit = new List<Action<AWorker>>();
             this.Init();
         }
 
@@ -113,7 +111,7 @@ namespace LAB2D.Character.Worker.Task
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否成功</returns>
-        public bool Execute(AWorker worker)
+        public bool Execute(AWorker worker, float deltaTime)
         {
             // 工作扣减疲劳值
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
@@ -123,7 +121,7 @@ namespace LAB2D.Character.Worker.Task
             {
                 workerData.CurTired = this.progressService.ApplyTiredCost(
                     workerData.CurTired,
-                    Time.deltaTime,
+                    deltaTime,
                     WorkerTaskTimeConfig.WorkTiredCostPerSecond);
             }
 
@@ -132,7 +130,7 @@ namespace LAB2D.Character.Worker.Task
             WorkerTaskProgressResult progressResult = this.progressService.AdvanceProgress(
                 this.curProgress,
                 this.maxProgress,
-                Time.deltaTime,
+                deltaTime,
                 progressMultiplier);
             this.curProgress = progressResult.CurrentProgress;
             if (progressResult.Completed)

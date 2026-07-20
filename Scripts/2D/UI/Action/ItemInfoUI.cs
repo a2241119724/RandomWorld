@@ -1,6 +1,8 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
+    using LAB2D.Domain.Inventory;
     using LAB2D.UnityAdapter;
     using Character = LAB2D.Character.Character;
     using System.Collections.Generic;
@@ -9,7 +11,7 @@ namespace LAB2D.UI.Action
     using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// 点击对象展示UI
+    /// 点击对象展示UI — 通过 EventBus 订阅 InventoryCellChangedEvent 实现解耦更新。
     /// </summary>
     public class ItemInfoUI : MonoBehaviourInit
     {
@@ -26,6 +28,26 @@ namespace LAB2D.UI.Action
         public void Awake()
         {
             Instance = this;
+            EventBus.Instance.Subscribe<InventoryCellChangedEvent>(this.OnInventoryCellChanged);
+        }
+
+        public void OnDestroy()
+        {
+            EventBus.Instance.Unsubscribe<InventoryCellChangedEvent>(this.OnInventoryCellChanged);
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
+        private void OnInventoryCellChanged(InventoryCellChangedEvent e)
+        {
+            if (this.select.Equals(e.ManagerName)
+                && this.selectPos.x == e.GridX
+                && this.selectPos.y == e.GridY)
+            {
+                ItemInfoPanel.Instance.SetItemInfo(e.CellInfo);
+            }
         }
 
         public void Update()
