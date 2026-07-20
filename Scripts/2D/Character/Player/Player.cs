@@ -26,6 +26,7 @@ namespace LAB2D.Character.Player
         private Rigidbody2D rg;
         private readonly PlayerDamagePolicy damagePolicy = new PlayerDamagePolicy();
         private readonly PlayerMovementPolicy movementPolicy = new PlayerMovementPolicy();
+        private readonly PlayerMovementService movementService = new PlayerMovementService();
         private readonly DamageCalculator damageCalculator = new DamageCalculator();
 
         /// <summary>
@@ -190,7 +191,7 @@ namespace LAB2D.Character.Player
                 return;
             }
 
-            ForegroundPanel.Instance.Onclick_Attack();
+            EventBus.Instance.Publish(new PlayerAttackRequestedEvent { EntityId = command.EntityId });
         }
 
         /// <inheritdoc/>
@@ -346,12 +347,6 @@ namespace LAB2D.Character.Player
         /// </summary>
         private void HandleSkillInput()
         {
-            SkillManager mgr = SkillManager.Instance;
-            if (mgr == null || !mgr.IsInitialized)
-            {
-                return;
-            }
-
             for (int slotIndex = 0; slotIndex < 4; slotIndex++)
             {
                 if (UnityPlayerInputAdapter.GetGameplaySkillDown(
@@ -359,7 +354,11 @@ namespace LAB2D.Character.Player
                     slotIndex,
                     out ActivateSkillCommand command))
                 {
-                    mgr.TryActivateSkill(command);
+                    EventBus.Instance.Publish(new PlayerSkillActivatedEvent
+                    {
+                        EntityId = command.EntityId,
+                        SlotIndex = command.SlotIndex,
+                    });
                     return;
                 }
             }
@@ -408,12 +407,18 @@ namespace LAB2D.Character.Player
                     this.animator.SetInteger("Direction", 3);
                 }
 
-                float speed = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this, this.MoveSpeed);
+                float weatherMultiplier = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this, 1.0f);
                 // A004：波间奖励移动强化在天气倍率之后应用，避免覆盖天气玩法的减速/增益。
-                speed = WaveBossRewardManager.Instance.GetAdjustedPlayerMoveSpeed(this, speed);
-                speed = this.movementPolicy.ApplyRunMultiplier(speed, isRunning, this.runSpeedMultiplier);
+                float waveMultiplier = WaveBossRewardManager.Instance.GetAdjustedPlayerMoveSpeed(this, 1.0f);
+                PlayerMoveResult moveResult = this.movementService.CalculateMovement(
+                    this.MoveSpeed,
+                    this.runSpeedMultiplier,
+                    isRunning,
+                    weatherMultiplier,
+                    waveMultiplier,
+                    command.Direction);
 
-                this.rg.velocity = speed * this.direction.normalized;
+                this.rg.velocity = new Vector2(moveResult.Velocity.X, moveResult.Velocity.Y);
             }
             else
             {

@@ -1,6 +1,8 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
+    using LAB2D.Domain.Player;
     using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
@@ -38,6 +40,8 @@ namespace LAB2D.UI.Panel
             }
 
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.Onclick_Setting);
+
+            EventBus.Instance.Subscribe<PlayerAttackRequestedEvent>(this.OnPlayerAttackRequested);
             Button save = LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Save");
             if (save == null)
             {
@@ -99,6 +103,16 @@ namespace LAB2D.UI.Panel
         /// 玩家攻击
         /// </summary>
         public void Onclick_Attack()
+        {
+            this.ExecuteAttack();
+        }
+
+        private void OnPlayerAttackRequested(PlayerAttackRequestedEvent e)
+        {
+            this.ExecuteAttack();
+        }
+
+        private void ExecuteAttack()
         {
             if (PlayerManager.Instance.Mine.Weapon != null)
             {

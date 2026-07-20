@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Worker.State
 {
     using LAB2D;
+    using UnityEngine;
     /// <summary>
     /// Worker工作状态
     /// </summary>

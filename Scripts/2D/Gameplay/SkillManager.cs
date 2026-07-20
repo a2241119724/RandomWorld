@@ -3,6 +3,7 @@ namespace LAB2D.Gameplay
     using LAB2D;
     using LAB2D.Character.Player;
     using LAB2D.Domain.Common;
+    using LAB2D.Domain.Player;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -71,6 +72,8 @@ namespace LAB2D.Gameplay
             this.AvailableUpgradePoints = 0;
             this.IsInitialized = true;
             this.lastRefreshTime = Time.time;
+
+            EventBus.Instance.Subscribe<PlayerSkillActivatedEvent>(this.OnPlayerSkillActivated);
         }
 
         /// <summary>
@@ -87,6 +90,11 @@ namespace LAB2D.Gameplay
             }
 
             return this.TryActivateSkill(command.SlotIndex);
+        }
+
+        private void OnPlayerSkillActivated(PlayerSkillActivatedEvent e)
+        {
+            this.TryActivateSkill(e.SlotIndex);
         }
 
         public bool TryActivateSkill(int slotIndex)
