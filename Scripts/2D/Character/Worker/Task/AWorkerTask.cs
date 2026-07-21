@@ -170,6 +170,22 @@ namespace LAB2D.Character.Worker.Task
             = (message, level) => LogManager.Instance.Log(message, level);
 
         /// <summary>
+        /// 物品类型查找提供者 — 根据物品 ID 返回物品类型枚举。
+        /// 默认实现访问 ItemDataManager.Instance.IdToType。
+        /// 可替换为测试桩。
+        /// </summary>
+        public static System.Func<int, AItem.ItemTypeEnum> ItemTypeProvider { get; set; }
+            = (id) => ItemDataManager.Instance.IdToType(id);
+
+        /// <summary>
+        /// 物品实例工厂提供者 — 根据名称创建物品实例。
+        /// 默认实现访问 ItemInstanceFactory.Instance.GetBackpackItemByName。
+        /// 可替换为测试桩。
+        /// </summary>
+        public static System.Func<string, ABackpackItem> ItemFactoryProvider { get; set; }
+            = (name) => ItemInstanceFactory.Instance.GetBackpackItemByName(name);
+
+        /// <summary>
         /// 任务ID
         /// </summary>
         public long TaskId { get; set; }

@@ -39,22 +39,22 @@ namespace LAB2D.Character.Worker.Task.Individual
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
 
             // Worker拿起装备或者武器
-            if (ItemDataManager.Instance.IdToType(this.id) == AItem.ItemTypeEnum.Weapon)
+            if (AWorkerTask.ItemTypeProvider(this.id) == AItem.ItemTypeEnum.Weapon)
             {
-                workerData.Weapon = (AWeapon)ItemInstanceFactory.Instance.GetBackpackItemByName(
-                    ItemDataManager.Instance.GetById(this.id).EnName);
+                workerData.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider(
+                    AWorkerTask.ItemDataProvider(this.id).EnName);
             }
-            else if (ItemDataManager.Instance.IdToType(this.id) == AItem.ItemTypeEnum.Equipment)
+            else if (AWorkerTask.ItemTypeProvider(this.id) == AItem.ItemTypeEnum.Equipment)
             {
                 workerData.AddEquipment(
-                    (AEquipment)ItemInstanceFactory.Instance.GetBackpackItemByName(
-                    ItemDataManager.Instance.GetById(this.id).EnName), Vector3IntLAB.ToVector3Int(this.TargetMap));
+                    (AEquipment)AWorkerTask.ItemFactoryProvider(
+                    AWorkerTask.ItemDataProvider(this.id).EnName), Vector3IntLAB.ToVector3Int(this.TargetMap));
             }
 
-            InventoryManager.Instance.SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
+            AWorkerTask.InventoryProvider().SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
 
             // 删除图标
-            ItemMap.Instance.DeleteTile(Vector3IntLAB.ToVector3Int(this.TargetMap));
+            AWorkerTask.ItemMapProvider().DeleteTile(Vector3IntLAB.ToVector3Int(this.TargetMap));
         }
 
         /// <inheritdoc/>

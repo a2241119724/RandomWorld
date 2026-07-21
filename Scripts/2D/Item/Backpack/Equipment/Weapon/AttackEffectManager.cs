@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Equipment.Weapon
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -71,7 +72,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
             this.activeEffects[name].Add(ps);
 
             // 设置角度
-            ps.transform.rotation = Quaternion.Euler(0, 0, rad * Mathf.Rad2Deg);
+            ps.transform.rotation = Quaternion.Euler(0, 0, rad * MathHelper.Rad2Deg);
             ParticleSystem.MainModule main = ps.main;
             main.startRotation = rad;
             return ps.GetComponent<ParticleSystem>();

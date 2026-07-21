@@ -247,8 +247,8 @@ namespace LAB2D.Core.Seek
 
             // 到达路径中一个目标点，切换下一个目标点
             if (result.Path.Count != 0 &&
-                Mathf.Abs(worldPos.x - this.Character.transform.position.x) < 0.1f &&
-                Mathf.Abs(worldPos.y - this.Character.transform.position.y) < 0.1f)
+                System.Math.Abs(worldPos.x - this.Character.transform.position.x) < 0.1f &&
+                System.Math.Abs(worldPos.y - this.Character.transform.position.y) < 0.1f)
             {
                 result.Path.RemoveAt(0); // --path.Count
             }

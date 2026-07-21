@@ -41,8 +41,8 @@ namespace LAB2D.Core.Seek
             start.Previous = null;
             Spend end = this.mapSpend[this.TargetMap.x, this.TargetMap.y]; // 终点
             List<Spend> path = new ();
-            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.PosMap.X - end.PosMap.X, 2)
-                + Mathf.Pow(start.PosMap.Y - end.PosMap.Y, 2));
+            float totalDistance = (float)System.Math.Sqrt((double)((start.PosMap.X - end.PosMap.X) * (start.PosMap.X - end.PosMap.X)
+                + (start.PosMap.Y - end.PosMap.Y) * (start.PosMap.Y - end.PosMap.Y)));
             this.openList.Add(start);
             while (!this.isStopThread && this.openList.Count != 0)
             {
@@ -73,8 +73,8 @@ namespace LAB2D.Core.Seek
                 }
 
                 Spend curSpend = this.openList[minIndex];
-                this.SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.PosMap.X - start.PosMap.X, 2)
-                    + Mathf.Pow(curSpend.PosMap.Y - start.PosMap.Y, 2)) / totalDistance;
+                this.SeekProgress = (float)System.Math.Sqrt((double)((curSpend.PosMap.X - start.PosMap.X) * (curSpend.PosMap.X - start.PosMap.X)
+                    + (curSpend.PosMap.Y - start.PosMap.Y) * (curSpend.PosMap.Y - start.PosMap.Y))) / totalDistance;
 
                 // 判断是否到达终点(此处只能是整数)
                 if (curSpend.PosMap == end.PosMap)
@@ -196,7 +196,7 @@ namespace LAB2D.Core.Seek
                     }
 
                     // 加权A*，使得寻路更快，但不是最短路径
-                    neighbor.H = 1.5f * (Mathf.Abs(end.PosMap.X - neighbor.PosMap.X) + Mathf.Abs(end.PosMap.Y - neighbor.PosMap.Y));
+                    neighbor.H = 1.5f * (System.Math.Abs(end.PosMap.X - neighbor.PosMap.X) + System.Math.Abs(end.PosMap.Y - neighbor.PosMap.Y));
                     neighbor.F = neighbor.G + neighbor.H;
                     neighbor.Previous = curSpend; // 链接
                 }
@@ -224,7 +224,7 @@ namespace LAB2D.Core.Seek
                     }
 
                     // 在一定path范围内, 倒叙遍历最后一个直达的位置
-                    int scope = Mathf.Min(30, path.Count - lastIndex - 1);
+                    int scope = System.Math.Min(30, path.Count - lastIndex - 1);
                     for (int i = lastIndex + scope; i >= lastIndex + 1; i--)
                     {
                         if (this.isStopThread)

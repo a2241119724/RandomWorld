@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Equipment.Weapon
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.UnityAdapter;
     using Character = LAB2D.Character.Character;
     using System;
@@ -88,7 +89,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
             if (this.recordTime >= this.attackInterval)
             {
                 // 所有武器攻击效果
-                ParticleSystem particleSystem = AttackEffectManager.Instance.GetEffect(this.attackEffect, (this.transform.rotation.eulerAngles.z + 90) * Mathf.Deg2Rad);
+                ParticleSystem particleSystem = AttackEffectManager.Instance.GetEffect(this.attackEffect, (this.transform.rotation.eulerAngles.z + 90) * MathHelper.Deg2Rad);
                 particleSystem.transform.parent = this.transform.parent.parent;
                 particleSystem.transform.position = this.Head.position;
                 particleSystem.Play();

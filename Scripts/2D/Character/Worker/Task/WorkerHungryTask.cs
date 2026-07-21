@@ -27,7 +27,7 @@ namespace LAB2D.Character.Worker.Task
         {
             base.Start(worker);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            if (!InventoryManager.Instance.IsFoodAvailableAndPreTake(
+            if (!AWorkerTask.InventoryProvider().IsFoodAvailableAndPreTake(
                 worker,
                 Vector3IntLAB.ToVector3Int(this.TargetMap),
                 workerData.MaxHungry - workerData.CurHungry,
@@ -44,7 +44,7 @@ namespace LAB2D.Character.Worker.Task
         public override void Finish(AWorker worker)
         {
             // 再取食物，并且有可能会由于该位置的食物被取完，从而删除该饥饿任务
-            ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
+            ResourceInfo resourceInfo = AWorkerTask.InventoryProvider().SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
             if (resourceInfo == null)
             {
                 base.Finish(worker);
@@ -64,7 +64,7 @@ namespace LAB2D.Character.Worker.Task
             // 饥饿值小于一定值可以接收饥饿任务
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             return workerData.CurHungry <= AWorker.ThresholdHungry
-                && InventoryManager.Instance.IsFoodAvailableAndPreTake(
+                && AWorkerTask.InventoryProvider().IsFoodAvailableAndPreTake(
                     worker,
                     Vector3IntLAB.ToVector3Int(this.TargetMap),
                     workerData.MaxHungry - workerData.CurHungry);
