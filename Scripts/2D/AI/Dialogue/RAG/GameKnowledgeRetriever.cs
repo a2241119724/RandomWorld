@@ -1,6 +1,7 @@
 namespace LAB2D.AI.Dialogue.RAG
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -17,7 +18,7 @@ namespace LAB2D.AI.Dialogue.RAG
         {
             this.knowledgeBase = GameKnowledgeEntry.LoadFromResources();
             this.BuildKeywordIndex();
-            LogManager.Instance.Log(
+            AWorkerTask.LogProvider(
                 "GameKnowledgeRetriever: 加载了 " + this.knowledgeBase.Count + " 条知识",
                 LogManager.LogLevelEnum.Info);
         }

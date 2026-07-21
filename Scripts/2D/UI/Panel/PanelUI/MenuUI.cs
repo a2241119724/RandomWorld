@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -25,7 +26,7 @@ namespace LAB2D.UI.Panel.PanelUI
             this.note = this.transform.Find("Center/Note").gameObject;
             if (this.note == null)
             {
-                LogManager.Instance.Log("note Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("note Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

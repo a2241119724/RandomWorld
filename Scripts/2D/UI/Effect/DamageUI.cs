@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Effect
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -33,7 +34,7 @@ namespace LAB2D.UI.Effect
             this.content = this.transform.Find("Text").GetComponent<Text>();
             if (this.content == null)
             {
-                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("content Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -53,7 +54,7 @@ namespace LAB2D.UI.Effect
             this.parent = this.transform.parent;
             if (this.parent == null)
             {
-                LogManager.Instance.Log("parent Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("parent Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

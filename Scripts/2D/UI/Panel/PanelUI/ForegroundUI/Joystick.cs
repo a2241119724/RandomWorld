@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using UnityEngine;
     using UnityEngine.EventSystems;
 
@@ -79,14 +80,14 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             this.baseRect = this.GetComponent<RectTransform>();
             if (this.baseRect == null)
             {
-                LogManager.Instance.Log("baseRect Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("baseRect Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             Vector2 center = new (0.5f, 0.5f);
             if (center == null)
             {
-                LogManager.Instance.Log("center assign resource Error!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("center assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -95,7 +96,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             this.originalPostion = this.background.GetComponent<RectTransform>().localPosition;
             if (this.background == null)
             {
-                LogManager.Instance.Log("background Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("background Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -105,7 +106,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             this.handle = this.background.transform.Find("Handle").GetComponent<RectTransform>();
             if (this.handle == null)
             {
-                LogManager.Instance.Log("handle Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("handle Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

@@ -99,7 +99,7 @@ namespace LAB2D.AI.Dialogue.Core
             this.activeSessions[npcId] = session;
             this.PauseDialogueWorker(npcId);
 
-            LogManager.Instance.Log(
+            AWorkerTask.LogProvider(
                 "DialogueManager: 开始对话 " + profile.npcName,
                 LogManager.LogLevelEnum.Info);
 
@@ -126,7 +126,7 @@ namespace LAB2D.AI.Dialogue.Core
         {
             if (!this.activeSessions.TryGetValue(npcId, out DialogueSession session))
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "DialogueManager: 未找到活跃会话 " + npcId,
                     LogManager.LogLevelEnum.Warning);
                 return;
@@ -178,13 +178,13 @@ namespace LAB2D.AI.Dialogue.Core
                         this.memoryManager.RecordExchange(npcId, playerInput, fullResponse);
                         this.OnDialogueComplete?.Invoke(npcId, fullResponse);
 
-                        LogManager.Instance.Log(
+                        AWorkerTask.LogProvider(
                             "DialogueManager: NPC " + session.profile.npcName + " 回复完成",
                             LogManager.LogLevelEnum.Info);
                     },
                     onError: (error) =>
                     {
-                        LogManager.Instance.Log(
+                        AWorkerTask.LogProvider(
                             "DialogueManager: 对话错误 - " + error,
                             LogManager.LogLevelEnum.Error);
                         this.OnDialogueError?.Invoke(npcId, error);
@@ -192,7 +192,7 @@ namespace LAB2D.AI.Dialogue.Core
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "DialogueManager.SendMessage 异常: " + e.Message,
                     LogManager.LogLevelEnum.Error);
                 this.OnDialogueError?.Invoke(npcId, e.Message);
@@ -211,7 +211,7 @@ namespace LAB2D.AI.Dialogue.Core
                 this.ResumeDialogueWorker(npcId);
                 this.dialogueWorkers.Remove(npcId);
 
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "DialogueManager: 结束对话 " + session.profile?.npcName,
                     LogManager.LogLevelEnum.Info);
             }
@@ -241,7 +241,7 @@ namespace LAB2D.AI.Dialogue.Core
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "DialogueManager.BuildGameStateContext: " + e.Message,
                     LogManager.LogLevelEnum.Warning);
             }
@@ -491,7 +491,7 @@ namespace LAB2D.AI.Dialogue.Core
                 logText = BuildInlineLog(replacements);
             }
 
-            LogManager.Instance.Log(logText, LogManager.LogLevelEnum.Info);
+            AWorkerTask.LogProvider(logText, LogManager.LogLevelEnum.Info);
         }
 
         private static string BuildInlineLog(Dictionary<string, string> r)

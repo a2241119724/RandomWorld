@@ -2,6 +2,7 @@ namespace LAB2D.AI.Dialogue.Memory
 {
     using LAB2D;
     using LAB2D.AI.Dialogue.LLM;
+    using LAB2D.Character.Worker.Task;
     using System;
     using System.Collections.Generic;
 
@@ -110,7 +111,7 @@ namespace LAB2D.AI.Dialogue.Memory
         {
             // 将在 DialogueManager 中异步处理
             // 触发事件或由 DialogueManager 轮询
-            LogManager.Instance.Log(
+            AWorkerTask.LogProvider(
                 "DialogueMemoryManager: NPC " + npcId + " 触发长期记忆压缩",
                 LogManager.LogLevelEnum.Info);
         }

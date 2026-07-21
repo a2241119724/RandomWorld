@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Character
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -29,14 +30,14 @@ namespace LAB2D.UI.Character
             this.slider = this.transform.Find("HpBar").GetComponent<Slider>();
             if (this.slider == null)
             {
-                LogManager.Instance.Log("slider Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("slider Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.text = this.transform.Find("HpCount").GetComponent<Text>();
             if (this.text == null)
             {
-                LogManager.Instance.Log("text Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("text Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }

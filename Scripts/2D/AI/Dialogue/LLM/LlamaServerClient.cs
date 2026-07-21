@@ -1,6 +1,7 @@
 namespace LAB2D.AI.Dialogue.LLM
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
@@ -44,7 +45,7 @@ namespace LAB2D.AI.Dialogue.LLM
             {
                 if (!string.IsNullOrEmpty(this.lastAvailabilityError))
                 {
-                    LogManager.Instance.Log(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
                 }
 
                 return string.Empty;
@@ -52,7 +53,7 @@ namespace LAB2D.AI.Dialogue.LLM
 
             string json = BuildRequestJson(messages, options, stream: false);
             string url = this.serverUrl + LLMClientConfig.CHAT_COMPLETIONS_PATH;
-            LogManager.Instance.Log(
+            AWorkerTask.LogProvider(
                 "[LLM ChatAsync] 请求参数: " + json,
                 LogManager.LogLevelEnum.Info);
 
@@ -68,7 +69,7 @@ namespace LAB2D.AI.Dialogue.LLM
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    LogManager.Instance.Log(
+                    AWorkerTask.LogProvider(
                         "LlamaServerClient.ChatAsync 失败: " + request.error,
                         LogManager.LogLevelEnum.Error);
                     return string.Empty;
@@ -86,7 +87,7 @@ namespace LAB2D.AI.Dialogue.LLM
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "LlamaServerClient.ChatAsync 异常: " + e.Message,
                     LogManager.LogLevelEnum.Error);
                 return string.Empty;
@@ -110,14 +111,14 @@ namespace LAB2D.AI.Dialogue.LLM
                 string error = string.IsNullOrEmpty(this.lastAvailabilityError)
                     ? "内置 llama-server 未启动，无法请求本地模型"
                     : this.lastAvailabilityError;
-                LogManager.Instance.Log(error, LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(error, LogManager.LogLevelEnum.Error);
                 onError?.Invoke(error);
                 return;
             }
 
             string json = BuildRequestJson(messages, options, stream: true);
             string url = this.serverUrl + LLMClientConfig.CHAT_COMPLETIONS_PATH;
-            LogManager.Instance.Log(
+            AWorkerTask.LogProvider(
                 "[LLM ChatStreamAsync] 请求参数: " + json,
                 LogManager.LogLevelEnum.Info);
 
@@ -139,7 +140,7 @@ namespace LAB2D.AI.Dialogue.LLM
                         if (request.result != UnityWebRequest.Result.Success)
                         {
                             string errorMsg = request.error ?? "未知网络错误";
-                            LogManager.Instance.Log(
+                            AWorkerTask.LogProvider(
                                 "LlamaServerClient.ChatStreamAsync 失败: " + errorMsg,
                                 LogManager.LogLevelEnum.Error);
 
@@ -161,7 +162,7 @@ namespace LAB2D.AI.Dialogue.LLM
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "LlamaServerClient.ChatStreamAsync 异常: " + e.Message,
                     LogManager.LogLevelEnum.Error);
                 onError?.Invoke(e.Message);
@@ -239,7 +240,7 @@ namespace LAB2D.AI.Dialogue.LLM
             if (!LocalLlamaServerProcess.TryStart(this.modelPath, this.serverUrl, this.modelName, out string error))
             {
                 this.lastAvailabilityError = error;
-                LogManager.Instance.Log(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
                 return false;
             }
 
@@ -250,14 +251,14 @@ namespace LAB2D.AI.Dialogue.LLM
                 if (await this.ProbeServerAsync(2))
                 {
                     this.lastAvailabilityError = string.Empty;
-                    LogManager.Instance.Log("内置 llama-server 已就绪", LogManager.LogLevelEnum.Info);
+                    AWorkerTask.LogProvider("内置 llama-server 已就绪", LogManager.LogLevelEnum.Info);
                     return true;
                 }
 
                 if (LocalLlamaServerProcess.StartedProcessHasExited)
                 {
                     this.lastAvailabilityError = LocalLlamaServerProcess.GetExitError();
-                    LogManager.Instance.Log(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
                     return false;
                 }
 
@@ -265,7 +266,7 @@ namespace LAB2D.AI.Dialogue.LLM
             }
 
             this.lastAvailabilityError = "内置 llama-server 启动超时: " + this.serverUrl;
-            LogManager.Instance.Log(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider(this.lastAvailabilityError, LogManager.LogLevelEnum.Error);
             return false;
         }
 
@@ -283,7 +284,7 @@ namespace LAB2D.AI.Dialogue.LLM
             }
 
             bool modelFileExists = File.Exists(this.modelPath);
-            LogManager.Instance.Log(
+            AWorkerTask.LogProvider(
                 modelFileExists
                     ? "LlamaServerClient 使用内置模型: " + this.modelPath
                     : "LlamaServerClient 未找到内置模型文件: " + this.modelPath,
@@ -389,7 +390,7 @@ namespace LAB2D.AI.Dialogue.LLM
                         }
 
                         RegisterQuitHook();
-                        LogManager.Instance.Log(
+                        AWorkerTask.LogProvider(
                             "已启动内置 llama-server: " + executablePath,
                             LogManager.LogLevelEnum.Info);
                         return true;
@@ -708,7 +709,7 @@ namespace LAB2D.AI.Dialogue.LLM
                 }
                 catch (Exception e)
                 {
-                    LogManager.Instance.Log(
+                    AWorkerTask.LogProvider(
                         "SSE 解析失败: " + e.Message + " data: " + data,
                         LogManager.LogLevelEnum.Warning);
                 }

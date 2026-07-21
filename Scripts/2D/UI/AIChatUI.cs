@@ -3,6 +3,7 @@ namespace LAB2D.UI
     using LAB2D;
     using LAB2D.AI.Dialogue.Core;
     using LAB2D.AI.Dialogue.LLM;
+    using LAB2D.Character.Worker.Task;
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
@@ -64,7 +65,7 @@ namespace LAB2D.UI
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log("AIChatUI请求失败: " + e, LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("AIChatUI请求失败: " + e, LogManager.LogLevelEnum.Error);
                 text = "请求失败";
             }
             finally

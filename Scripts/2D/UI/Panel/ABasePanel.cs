@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Constant;
     using UnityEngine;
 
@@ -51,7 +52,7 @@ namespace LAB2D.UI.Panel
         /// <inheritdoc/>
         public virtual void OnEnter()
         {
-            LogManager.Instance.Log("Enter: " + this.GetType().Name, LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("Enter: " + this.GetType().Name, LogManager.LogLevelEnum.Trace);
             if (this.Panel == null)
             {
                 return;
@@ -73,7 +74,7 @@ namespace LAB2D.UI.Panel
         /// <inheritdoc/>
         public virtual void OnExit()
         {
-            LogManager.Instance.Log("Exit: " + this.GetType().Name, LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("Exit: " + this.GetType().Name, LogManager.LogLevelEnum.Trace);
             this.Panel.SetActive(false);
         }
 

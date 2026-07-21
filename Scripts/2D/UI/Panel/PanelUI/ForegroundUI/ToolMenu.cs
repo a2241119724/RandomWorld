@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.UnityAdapter;
     using UnityEngine;
     using UnityEngine.UI;
@@ -53,7 +54,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         {
             if (PlayerManager.Instance.Mine == null)
             {
-                LogManager.Instance.Log("玩家尚未加载完成，无法生成Worker", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider("玩家尚未加载完成，无法生成Worker", LogManager.LogLevelEnum.Warning);
                 return;
             }
 
@@ -65,7 +66,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         {
             if (PlayerManager.Instance.Mine == null)
             {
-                LogManager.Instance.Log("玩家尚未加载完成，无法生成物品", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider("玩家尚未加载完成，无法生成物品", LogManager.LogLevelEnum.Warning);
                 return;
             }
 

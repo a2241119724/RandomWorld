@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
     using System.Collections.Generic;
@@ -45,7 +46,7 @@ namespace LAB2D.UI.Panel
             Button save = LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Save");
             if (save == null)
             {
-                LogManager.Instance.Log("ForegroundPanel: Save button not found in Panel hierarchy!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("ForegroundPanel: Save button not found in Panel hierarchy!", LogManager.LogLevelEnum.Error);
             }
             else if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient)
             {
@@ -283,7 +284,7 @@ namespace LAB2D.UI.Panel
         {
             if (this.saveSlotPanel == null)
             {
-                LogManager.Instance.Log("ForegroundPanel: SaveSlotPanel not found in scene — save UI unavailable.", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("ForegroundPanel: SaveSlotPanel not found in scene — save UI unavailable.", LogManager.LogLevelEnum.Error);
                 GlobalInit.Instance.ShowTip("存档面板未配置，请联系开发者");
                 return;
             }

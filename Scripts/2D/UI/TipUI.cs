@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -28,14 +29,14 @@ namespace LAB2D.UI
             this.roundCorner = this.GetComponent<RoundCorner>();
             if (this.roundCorner == null)
             {
-                LogManager.Instance.Log("image Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("image Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.content = this.transform.Find("Content").GetComponent<Text>();
             if (this.content == null)
             {
-                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("content Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -73,7 +74,7 @@ namespace LAB2D.UI
             this.roundCorner.color = new Color(color.r, color.g, color.b, this.colorAlpha);
             if (this.roundCorner.color == null)
             {
-                LogManager.Instance.Log("image.color assign resource Error!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("image.color assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -81,7 +82,7 @@ namespace LAB2D.UI
             this.content.color = new Color(color.r, color.g, color.b, this.colorAlpha);
             if (this.content.color == null)
             {
-                LogManager.Instance.Log("content.color assign resource Error!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("content.color assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

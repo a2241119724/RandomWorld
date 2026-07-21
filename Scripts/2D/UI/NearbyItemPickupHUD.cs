@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Constant;
     using LAB2D.Item.Backpack;
     using System.Collections.Generic;
@@ -334,7 +335,7 @@ namespace LAB2D.UI
             if (Time.time - this.debugLogTimer > 2f)
             {
                 this.debugLogTimer = Time.time;
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     string.Format("NearbyItemPickupHUD: 检测了{0}个tile, 发现{1}个道具tile, 收集到{2}个有效条目",
                         totalTilesChecked, tilesFound, foundEntries.Count),
                     LogManager.LogLevelEnum.Trace);

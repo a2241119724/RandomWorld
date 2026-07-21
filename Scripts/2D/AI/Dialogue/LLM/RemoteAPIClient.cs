@@ -1,6 +1,7 @@
 namespace LAB2D.AI.Dialogue.LLM
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System;
     using System.Collections.Generic;
     using System.Text;
@@ -49,7 +50,7 @@ namespace LAB2D.AI.Dialogue.LLM
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    LogManager.Instance.Log(
+                    AWorkerTask.LogProvider(
                         "RemoteAPIClient.ChatAsync 失败: " + request.error,
                         LogManager.LogLevelEnum.Error);
                     return string.Empty;
@@ -68,7 +69,7 @@ namespace LAB2D.AI.Dialogue.LLM
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "RemoteAPIClient.ChatAsync 异常: " + e.Message,
                     LogManager.LogLevelEnum.Error);
                 return string.Empty;
@@ -88,7 +89,7 @@ namespace LAB2D.AI.Dialogue.LLM
         {
             string url = this.apiBaseUrl + LLMClientConfig.CHAT_COMPLETIONS_PATH;
             string json = BuildRequestJson(messages, options, stream: true);
-            LogManager.Instance.Log(
+            AWorkerTask.LogProvider(
                 "[RemoteAPI ChatStreamAsync] 请求参数: " + json,
                 LogManager.LogLevelEnum.Info);
 
@@ -110,7 +111,7 @@ namespace LAB2D.AI.Dialogue.LLM
                         if (request.result != UnityWebRequest.Result.Success)
                         {
                             string errorMsg = request.error ?? "未知网络错误";
-                            LogManager.Instance.Log(
+                            AWorkerTask.LogProvider(
                                 "RemoteAPIClient.ChatStreamAsync 失败: " + errorMsg,
                                 LogManager.LogLevelEnum.Error);
                             onError?.Invoke(errorMsg);
@@ -131,7 +132,7 @@ namespace LAB2D.AI.Dialogue.LLM
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "RemoteAPIClient.ChatStreamAsync 异常: " + e.Message,
                     LogManager.LogLevelEnum.Error);
                 onError?.Invoke(e.Message);
@@ -391,7 +392,7 @@ namespace LAB2D.AI.Dialogue.LLM
                 }
                 catch (Exception e)
                 {
-                    LogManager.Instance.Log(
+                    AWorkerTask.LogProvider(
                         "RemoteSSE 解析失败: " + e.Message + " data: " + data,
                         LogManager.LogLevelEnum.Warning);
                 }

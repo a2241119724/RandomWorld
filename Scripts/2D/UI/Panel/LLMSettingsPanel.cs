@@ -3,6 +3,7 @@ namespace LAB2D.UI.Panel
     using LAB2D;
     using LAB2D.AI.Dialogue.Core;
     using LAB2D.AI.Dialogue.LLM;
+    using LAB2D.Character.Worker.Task;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -107,7 +108,7 @@ namespace LAB2D.UI.Panel
         {
             this.SaveToSettings();
             DialogueManager.Instance.ResetLLMClient();
-            LogManager.Instance.Log("LLM 模型设置已保存", LogManager.LogLevelEnum.Info);
+            AWorkerTask.LogProvider("LLM 模型设置已保存", LogManager.LogLevelEnum.Info);
             this.Controller.Close();
         }
 

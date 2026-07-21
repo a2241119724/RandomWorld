@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Core;
     using LAB2D.Domain.Common;
     using System.Collections;
@@ -42,21 +43,21 @@ namespace LAB2D.UI.Panel.PanelUI
             this.tip = this.transform.Find("Center/Tips").GetComponent<Text>();
             if (this.tip == null)
             {
-                LogManager.Instance.Log("tips Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("tips Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.percent = this.transform.Find("Center/Percent").GetComponent<Text>();
             if (this.percent == null)
             {
-                LogManager.Instance.Log("percent Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("percent Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.slider = this.transform.Find("Center/Bar").GetComponent<Slider>();
             if (this.slider == null)
             {
-                LogManager.Instance.Log("Progress/Bar Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("Progress/Bar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }
@@ -97,7 +98,7 @@ namespace LAB2D.UI.Panel.PanelUI
         {
             if (value < 0)
             {
-                LogManager.Instance.Log("不能为负值!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("不能为负值!!!", LogManager.LogLevelEnum.Error);
             }
 
             this.totalProcess += value;

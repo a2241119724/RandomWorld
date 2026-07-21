@@ -2,6 +2,7 @@ namespace LAB2D.AI.Dialogue.Core
 {
     using LAB2D;
     using LAB2D.AI.Dialogue.Prompt;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
@@ -52,7 +53,7 @@ namespace LAB2D.AI.Dialogue.Core
                 if (!MissingProfileWarned.Contains(this.profileName))
                 {
                     MissingProfileWarned.Add(this.profileName);
-                    LogManager.Instance.Log(
+                    AWorkerTask.LogProvider(
                         "NPCDialogueTrigger: 未找到 NPC 配置 " + this.profileName + "，将使用默认配置",
                         LogManager.LogLevelEnum.Warning);
                 }

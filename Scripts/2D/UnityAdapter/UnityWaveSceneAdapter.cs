@@ -2,6 +2,7 @@ namespace LAB2D.UnityAdapter
 {
     using System;
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Wave;
     using UnityEngine;
 
@@ -50,7 +51,7 @@ namespace LAB2D.UnityAdapter
                 }
                 catch (Exception exception)
                 {
-                    LogManager.Instance.Log(
+                    AWorkerTask.LogProvider(
                         $"UnityWaveSceneAdapter.GetSpawnPosition failed, fallback to Vector3.zero.\n{exception}",
                         LogManager.LogLevelEnum.Error);
                 }

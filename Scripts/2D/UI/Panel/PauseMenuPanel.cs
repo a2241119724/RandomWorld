@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -19,7 +20,7 @@ namespace LAB2D.UI.Panel
             this.audioSource = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG).GetComponent<AudioSource>();
             if (this.audioSource == null)
             {
-                LogManager.Instance.Log("audioSource Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("audioSource Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

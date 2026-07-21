@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using Photon.Pun;
     using Photon.Realtime;
@@ -74,7 +75,7 @@ namespace LAB2D.UI.Panel
 
             if (TileMap.Instance == null)
             {
-                LogManager.Instance.Log("TileMap.Instance is null, cannot start map creation", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("TileMap.Instance is null, cannot start map creation", LogManager.LogLevelEnum.Error);
                 GlobalInit.Instance.ShowTip("地图初始化失败，请检查场景配置");
                 return;
             }

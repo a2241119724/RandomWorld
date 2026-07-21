@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Item;
     using Photon.Pun;
     using UnityEngine;
@@ -72,7 +73,7 @@ namespace LAB2D.UI.Panel
                 PlayerManager.Instance.Mine.Weapon = ResourceManager.Instance.Instantiate(name, false);
                 if (PlayerManager.Instance.Mine.Weapon == null)
                 {
-                    LogManager.Instance.Log("武器实例化错误!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider("武器实例化错误!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 
@@ -105,7 +106,7 @@ namespace LAB2D.UI.Panel
                 }
                 else
                 {
-                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Trace);
+                    AWorkerTask.LogProvider("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Trace);
 
                     // 数据--
                     BackpackController.Instance.ReduceQuantity(this.Select.Item);
@@ -113,7 +114,7 @@ namespace LAB2D.UI.Panel
                     // 界面--
                     BackpackController.Instance.ReduceQuantityUI(this.Select.Item);
                     BackpackController.Instance.SetBorderColor(BackpackController.Instance.GetIndex(this.Select.Item));
-                    LogManager.Instance.Log("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Trace);
+                    AWorkerTask.LogProvider("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Trace);
 
                     // 全局数据--
                     ABackpackItem item = (ABackpackItem)this.Select.Item;
