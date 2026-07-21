@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Worker.State
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using System.Text;
     using UnityEngine;
 
@@ -45,7 +46,7 @@ namespace LAB2D.Character.Worker.State
                     if (Time.frameCount % 60 == 0)
                     {
                         this.Character.WorkerStateText.text = this.builder.Append("休息: ")
-                        .Append(Mathf.RoundToInt(this.recordTime))
+                        .Append(MathHelper.RoundToInt(this.recordTime))
                         .ToString();
                     }
 

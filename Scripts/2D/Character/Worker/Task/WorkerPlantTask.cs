@@ -22,7 +22,7 @@ namespace LAB2D.Character.Worker.Task
                 this.maxProgress = WorkerTaskTimeConfig.PlantFetchSeedSeconds;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
-                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.IsContainSeedAndPreTake(worker, true));
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryProvider().IsContainSeedAndPreTake(worker, true));
                 if (this.TargetMap == default)
                 {
                     this.GiveUpTask(worker);
@@ -61,7 +61,7 @@ namespace LAB2D.Character.Worker.Task
         protected override bool DoIsCanWork(AWorker worker)
         {
             return FarmlandManager.Instance.IsEnoughAndPrePlant(worker, null) != default &&
-                InventoryManager.Instance.IsContainSeedAndPreTake(worker) != default;
+                InventoryProvider().IsContainSeedAndPreTake(worker) != default;
         }
 
         /// <inheritdoc/>
@@ -70,7 +70,7 @@ namespace LAB2D.Character.Worker.Task
             switch (this.stage)
             {
                 case 0:
-                    this.resourceInfo = InventoryManager.Instance.SubAllItemByPos(Vector3IntLAB.ToVector3Int(this.TargetMap));
+                    this.resourceInfo = InventoryProvider().SubAllItemByPos(Vector3IntLAB.ToVector3Int(this.TargetMap));
                     worker.AddResource(this.resourceInfo);
                     this.ChangeStage(worker, 1);
                     return false;

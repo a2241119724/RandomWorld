@@ -2,6 +2,7 @@ namespace LAB2D.Character.Worker.Task
 {
     using LAB2D;
     using LAB2D.Enum;
+    using LAB2D.Item;
     using LAB2D.Serializable;
     using LAB2D.Domain.Worker;
     using System;
@@ -133,6 +134,14 @@ namespace LAB2D.Character.Worker.Task
         /// </summary>
         public static System.Action<AWorkerTask> TaskCompletionProvider { get; set; }
             = (task) => WorkerTaskManager.Instance.CompleteTask(task);
+
+        /// <summary>
+        /// 库存管理器访问提供者 — 统一库存操作入口。
+        /// 默认返回 InventoryManager.Instance。
+        /// 可替换为测试桩或自定义实现。
+        /// </summary>
+        public static System.Func<InventoryManager> InventoryProvider { get; set; }
+            = () => InventoryManager.Instance;
 
         /// <summary>
         /// 日志提供者 — 任务相关的错误/警告日志输出。

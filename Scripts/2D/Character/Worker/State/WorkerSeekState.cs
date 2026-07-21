@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Worker.State
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Serializable;
     using System.Text;
     using UnityEngine;
@@ -46,8 +47,9 @@ namespace LAB2D.Character.Worker.State
                     if (ASeek.IsCanReach(temp))
                     {
                         Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(temp);
-                        float distance = Mathf.Pow(worldPos.x - this.Character.transform.position.x, 2) +
-                            Mathf.Pow(worldPos.y - this.Character.transform.position.y, 2);
+                        float dx = worldPos.x - this.Character.transform.position.x;
+                        float dy = worldPos.y - this.Character.transform.position.y;
+                        float distance = (dx * dx) + (dy * dy);
                         if (distance < minDistance)
                         {
                             minDistance = distance;
@@ -95,7 +97,7 @@ namespace LAB2D.Character.Worker.State
                 this.builder.Clear();
                 this.Character.WorkerStateText.text = this.builder.Append(this.preString)
                     .Append("<color=" + PixelUITheme.RichGold + ">Seeking: ")
-                    .Append(Mathf.RoundToInt(this.Character.Seek.SeekProgress * 100))
+                    .Append(MathHelper.RoundToInt(this.Character.Seek.SeekProgress * 100))
                     .Append("%</color>\nTarget: ")
                     .Append(this.targetMap.x)
                     .Append(",")

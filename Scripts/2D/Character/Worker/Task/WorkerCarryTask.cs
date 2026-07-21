@@ -50,7 +50,7 @@ namespace LAB2D.Character.Worker.Task
                 // 同时清理待处理掉落记录（敌人装备掉落）
                 EnemyLootManager.Instance.RemoveDropByMapPosition(pickUpPos);
 
-                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.GetPosByPrePlace(worker));
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryProvider().GetPosByPrePlace(worker));
                 if (this.TargetMap == default)
                 {
                     LogManager.Instance.Log("仓库没有位置了", LogManager.LogLevelEnum.Error);
@@ -62,7 +62,7 @@ namespace LAB2D.Character.Worker.Task
         public override void Start(AWorker worker)
         {
             base.Start(worker);
-            InventoryManager.Instance.IsEnoughAndPrePlace(worker, this.resourceInfo, true);
+            InventoryProvider().IsEnoughAndPrePlace(worker, this.resourceInfo, true);
             this.ChangeStage(worker, 0);
         }
 
@@ -78,7 +78,7 @@ namespace LAB2D.Character.Worker.Task
             ItemMap.Instance.AddTile(targetPos, ResourceManager.Instance
                 .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).EnName));
             worker.SubResource(this.resourceInfo);
-            InventoryManager.Instance.AddItemByPrePlace(worker, targetPos);
+            InventoryProvider().AddItemByPrePlace(worker, targetPos);
 
             // 如果搬运前有品质光束，在新位置重新生成光束
             if (this.carriedBeamRarity.HasValue)
@@ -105,7 +105,7 @@ namespace LAB2D.Character.Worker.Task
         /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
-            return InventoryManager.Instance.IsEnoughAndPrePlace(worker, this.resourceInfo);
+            return InventoryProvider().IsEnoughAndPrePlace(worker, this.resourceInfo);
         }
 
         /// <inheritdoc/>

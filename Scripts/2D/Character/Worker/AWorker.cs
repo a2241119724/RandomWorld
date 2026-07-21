@@ -29,6 +29,39 @@ namespace LAB2D.Character.Worker
         /// </summary>
         public static readonly float ThresholdTired = 20.0f;
 
+        /// <summary>
+        /// Worker 放弃任务回调 — 清除资源预留并通知任务管理器。
+        /// 默认实现访问 InventoryManager.Instance 和 WorkerTaskManager.Instance。
+        /// </summary>
+        public static System.Action<AWorker, AWorkerTask> GiveUpTaskProvider { get; set; }
+            = (worker, task) =>
+            {
+                InventoryManager.Instance.DeleteWorkerPre(worker);
+                WorkerTaskManager.Instance.GiveUpTask(task);
+            };
+
+        /// <summary>
+        /// Worker 死亡回调 — 从管理器移除并记录统计数据。
+        /// 默认实现访问 NetworkConnect.Instance / WorkerManager.Instance / WorkerEfficiencyTracker.Instance。
+        /// </summary>
+        public static System.Action<AWorker> DeathProvider { get; set; }
+            = (worker) =>
+            {
+                if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
+                {
+                    WorkerManager.Instance.Remove(worker);
+                }
+
+                WorkerEfficiencyTracker.Instance.RecordWorkerDeath(worker);
+            };
+
+        /// <summary>
+        /// 日志提供者 — Worker 相关的错误/警告日志。
+        /// 默认实现访问 LogManager.Instance。
+        /// </summary>
+        public static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
+            = (msg, level) => LogManager.Instance.Log(msg, level);
+
         private Dictionary<int, ResourceInfo> resourceInfos; // 携带的资源
         private Slider progress;
         private Text nameUI;
@@ -77,7 +110,7 @@ namespace LAB2D.Character.Worker
             this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (this.statusBar == null)
             {
-                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevelEnum.Error);
+                LogProvider("statusBar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -265,7 +298,7 @@ namespace LAB2D.Character.Worker
                 }
                 else
                 {
-                    LogManager.Instance.Log("自身资源不够，仍然建造成功，错误", LogManager.LogLevelEnum.Error);
+                    LogProvider("自身资源不够，仍然建造成功，错误", LogManager.LogLevelEnum.Error);
                 }
             }
         }
@@ -287,7 +320,7 @@ namespace LAB2D.Character.Worker
             }
             else
             {
-                LogManager.Instance.Log("自身资源不够，仍然建造成功，错误", LogManager.LogLevelEnum.Error);
+                LogProvider("自身资源不够，仍然建造成功，错误", LogManager.LogLevelEnum.Error);
             }
         }
 
@@ -329,9 +362,8 @@ namespace LAB2D.Character.Worker
         /// </summary>
         public void GiveUpTask()
         {
-            InventoryManager.Instance.DeleteWorkerPre(this);
             AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
-            WorkerTaskManager.Instance.GiveUpTask(workerData.Task);
+            GiveUpTaskProvider(this, workerData.Task);
             workerData.Task = null;
             this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
         }
@@ -386,7 +418,7 @@ namespace LAB2D.Character.Worker
         {
             if (hp <= 0)
             {
-                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevelEnum.Error);
+                LogProvider("Hp can't less than zero!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -407,13 +439,8 @@ namespace LAB2D.Character.Worker
         {
             base.Death();
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
-            {
-                WorkerManager.Instance.Remove(this);
-            }
-
-            WorkerEfficiencyTracker.Instance.RecordWorkerDeath(this);
-            this.Manager.ChangeState(AWorkerState.TypeEnum.Dead); // 进入死亡状态
+            DeathProvider(this);
+            this.Manager.ChangeState(AWorkerState.TypeEnum.Dead);
         }
 
         private void OnCollisionStay2D(Collision2D collision)

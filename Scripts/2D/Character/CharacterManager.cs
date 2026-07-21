@@ -143,11 +143,13 @@ namespace LAB2D.Character
         /// <returns>角色</returns>
         public C GetCharacterByPos(Vector3Int posMap)
         {
+            Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(posMap);
             foreach (C character in this.Characters)
             {
-                Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(posMap);
-                if (Mathf.Sqrt(Mathf.Pow(character.transform.position.x - worldPos.x, 2)
-                    + Mathf.Pow(character.transform.position.y - worldPos.y, 2)) < 0.7f)
+                Vector3 cPos = character.transform.position;
+                float dx = cPos.x - worldPos.x;
+                float dy = cPos.y - worldPos.y;
+                if ((dx * dx) + (dy * dy) < 0.49f)
                 {
                     return character;
                 }

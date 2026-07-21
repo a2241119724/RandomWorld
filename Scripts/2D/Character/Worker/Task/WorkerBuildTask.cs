@@ -34,7 +34,7 @@ namespace LAB2D.Character.Worker.Task
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
-                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.GetPosByPreTake(worker));
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryProvider().GetPosByPreTake(worker));
                 if (this.TargetMap == default)
                 {
                     this.GiveUpTask(worker);
@@ -69,7 +69,7 @@ namespace LAB2D.Character.Worker.Task
 
             // 获得剩余不够的数量
             Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
-            InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining, true);
+            InventoryProvider().IsEnoughAndPreTake(worker, remaining, true);
 
             // 不够就取资源
             this.ChangeStage(worker, 0);
@@ -108,7 +108,7 @@ namespace LAB2D.Character.Worker.Task
             // 按照单个任务的资源取看是否足够
             // 获得剩余不够的数量
             Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
-            return InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining);
+            return InventoryProvider().IsEnoughAndPreTake(worker, remaining);
         }
 
         /// <inheritdoc/>
@@ -118,7 +118,7 @@ namespace LAB2D.Character.Worker.Task
             switch (this.stage)
             {
                 case 0:
-                    ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
+                    ResourceInfo resourceInfo = InventoryProvider().SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
                     worker.AddResource(resourceInfo);
 
                     // 减少需求的数量
