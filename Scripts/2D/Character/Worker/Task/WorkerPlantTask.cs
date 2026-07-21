@@ -33,7 +33,7 @@ namespace LAB2D.Character.Worker.Task
             {
                 this.maxProgress = WorkerTaskTimeConfig.PlantOneSeedSeconds;
                 this.Init();
-                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(FarmlandManager.Instance.IsEnoughAndPrePlant(worker, this.resourceInfo, true));
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(FarmlandManagerProvider().IsEnoughAndPrePlant(worker, this.resourceInfo, true));
                 if (this.TargetMap == default)
                 {
                     this.GiveUpTask(worker);
@@ -60,7 +60,7 @@ namespace LAB2D.Character.Worker.Task
         /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
-            return FarmlandManager.Instance.IsEnoughAndPrePlant(worker, null) != default &&
+            return FarmlandManagerProvider().IsEnoughAndPrePlant(worker, null) != default &&
                 InventoryProvider().IsContainSeedAndPreTake(worker) != default;
         }
 
@@ -78,7 +78,7 @@ namespace LAB2D.Character.Worker.Task
                     // 可以继续种植
                     if (this.IsCanWork(worker) && this.resourceInfo.Count > 0)
                     {
-                        FarmlandManager.Instance.PlantByPrePlant(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
+                        FarmlandManagerProvider().PlantByPrePlant(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
                         this.resourceInfo.Count--;
                         this.ChangeStage(worker, 1);
                         return false;

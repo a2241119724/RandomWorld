@@ -84,7 +84,7 @@ namespace LAB2D.Character.Worker.Task
             worker.SubResource(this.needs);
 
             // 将建造完成的Tile从Building变为Build中
-            BuildMap.Instance.SetComplete(this.buildPos);
+            BuildMapCompletionProvider(this.buildPos);
         }
 
         /// <inheritdoc/>

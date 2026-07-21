@@ -23,7 +23,7 @@ namespace LAB2D.Character.Worker.Task.Individual
                 this.Init();
 
                 // 设置Worker位置为目标位置
-                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(TileMap.Instance.WorldPosToMapPos(worker.transform.position));
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(TileMapWorldToMapProvider(worker.transform.position));
             });
         }
 

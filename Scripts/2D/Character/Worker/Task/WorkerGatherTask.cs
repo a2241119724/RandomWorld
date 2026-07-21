@@ -41,23 +41,23 @@ namespace LAB2D.Character.Worker.Task
         public override void Finish(AWorker worker)
         {
             base.Finish(worker);
-            ResourceMap.Instance.CutTree(Vector3IntLAB.ToVector3Int(this.TargetMap));
-            List<DropItem> dropItems = DropDataManager.Instance.GetDropItemsById(this.resourceInfo.Id);
+            ResourceMapProvider().CutTree(Vector3IntLAB.ToVector3Int(this.TargetMap));
+            List<DropItem> dropItems = DropDataProvider(this.resourceInfo.Id);
 
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)
             {
-                Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(Vector3IntLAB.ToVector3Int(this.TargetMap), 3, true);
+                Vector3Int pos = AvailablePositionProvider(Vector3IntLAB.ToVector3Int(this.TargetMap), 3, true);
                 if (pos == default)
                 {
                     break;
                 }
 
-                ItemMapProvider().PutDownToDrop(pos, (TileBase)ResourceManager.Instance.GetAsset(dropItems[i].Name), dropItems[i].ResourceInfo);
+                ItemMapProvider().PutDownToDrop(pos, (TileBase)ResourceLoadProvider(dropItems[i].Name), dropItems[i].ResourceInfo);
             }
 
             // 删除采摘图标
-            GatherMap.Instance.CancelGather(Vector3IntLAB.ToVector3Int(this.TargetMap));
+            GatherMapProvider().CancelGather(Vector3IntLAB.ToVector3Int(this.TargetMap));
         }
 
         /// <inheritdoc/>
@@ -90,7 +90,7 @@ namespace LAB2D.Character.Worker.Task
                 this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(targetMap);
 
                 // 显示正在采摘图标
-                GatherMap.Instance.AddGather(targetMap);
+                GatherMapProvider().AddGather(targetMap);
                 return this;
             }
 

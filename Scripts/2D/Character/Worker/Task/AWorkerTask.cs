@@ -185,6 +185,31 @@ namespace LAB2D.Character.Worker.Task
         public static System.Func<string, ABackpackItem> ItemFactoryProvider { get; set; }
             = (name) => ItemInstanceFactory.Instance.GetBackpackItemByName(name);
 
+        public static System.Func<EquipmentBeamManager> EquipmentBeamProvider { get; set; }
+            = () => EquipmentBeamManager.Instance;
+        public static System.Func<EnemyLootManager> EnemyLootProvider { get; set; }
+            = () => EnemyLootManager.Instance;
+        public static System.Func<string, object> ResourceLoadProvider { get; set; }
+            = (name) => ResourceManager.Instance.GetAsset(name);
+        public static System.Func<UnityEngine.Vector3Int, UnityEngine.Vector3> TileMapPositionProvider { get; set; }
+            = (pos) => TileMap.Instance.MapPosToWorldPos(pos);
+        public static System.Action<AWorkerTask, Vector3IntLAB, int> TaskAddProvider { get; set; }
+            = (task, pos, stage) => WorkerTaskManager.Instance.AddTask(task, pos, stage);
+        public static System.Func<ResourceMap> ResourceMapProvider { get; set; }
+            = () => ResourceMap.Instance;
+        public static System.Func<int, System.Collections.Generic.List<DropItem>> DropDataProvider { get; set; }
+            = (id) => DropDataManager.Instance.GetDropItemsById(id);
+        public static System.Func<UnityEngine.Vector3Int, int, bool, UnityEngine.Vector3Int> AvailablePositionProvider { get; set; }
+            = (pos, radius, center) => IsAvailableMap.Instance.GenAvailablePosMap(pos, radius, center);
+        public static System.Func<GatherMap> GatherMapProvider { get; set; }
+            = () => GatherMap.Instance;
+        public static System.Func<FarmlandManager> FarmlandManagerProvider { get; set; }
+            = () => FarmlandManager.Instance;
+        public static System.Action<Vector3IntLAB> BuildMapCompletionProvider { get; set; }
+            = (pos) => BuildMap.Instance.SetComplete(pos);
+        public static System.Func<UnityEngine.Vector3, UnityEngine.Vector3Int> TileMapWorldToMapProvider { get; set; }
+            = (pos) => TileMap.Instance.WorldPosToMapPos(pos);
+
         /// <summary>
         /// 任务ID
         /// </summary>
