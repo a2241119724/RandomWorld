@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Equipment.Weapon
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.UnityAdapter;
     using Character = LAB2D.Character.Character;
@@ -134,7 +135,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
             this.circleCollider2D = this.Head.GetComponent<CircleCollider2D>();
             if (this.circleCollider2D == null)
             {
-                LogManager.Instance.Log("collider Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("collider Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

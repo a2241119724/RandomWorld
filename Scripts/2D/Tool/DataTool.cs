@@ -1,6 +1,7 @@
 namespace LAB2D.Tool
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System.IO;
     using System.Runtime.Serialization.Formatters.Binary;
     using System.Xml.Serialization;
@@ -75,7 +76,7 @@ namespace LAB2D.Tool
         {
             if (!File.Exists(filePath))
             {
-                LogManager.Instance.Log(filePath + "不存在", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(filePath + "不存在", LogManager.LogLevelEnum.Error);
                 return null;
             }
 

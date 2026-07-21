@@ -1,6 +1,7 @@
 namespace LAB2D.Data
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Item;
     using LAB2D.Item.Backpack.Equipment;
     using System;
@@ -101,7 +102,7 @@ namespace LAB2D.Data
         {
             if (!this.allItemInfo.TryGetValue(id, out ItemData itemData))
             {
-                LogManager.Instance.Log("没有id的道具!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("没有id的道具!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -117,7 +118,7 @@ namespace LAB2D.Data
         {
             if (!this.TryGetByName(name, out ItemData itemData))
             {
-                LogManager.Instance.Log("没有名字为" + name + "的道具!!!", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider("没有名字为" + name + "的道具!!!", LogManager.LogLevelEnum.Warning);
                 return ItemData.Empty;
             }
 
@@ -151,7 +152,7 @@ namespace LAB2D.Data
         {
             if (id < 0)
             {
-                LogManager.Instance.Log($"id:{id}小于0!!!", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider($"id:{id}小于0!!!", LogManager.LogLevelEnum.Warning);
                 return AItem.ItemTypeEnum.Null;
             }
 
@@ -167,7 +168,7 @@ namespace LAB2D.Data
         {
             if (this.IdToType(id) != AItem.ItemTypeEnum.Equipment)
             {
-                LogManager.Instance.Log("id不是装备!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("id不是装备!!!", LogManager.LogLevelEnum.Error);
                 return AEquipment.EquipTypeEnum.Null;
             }
 

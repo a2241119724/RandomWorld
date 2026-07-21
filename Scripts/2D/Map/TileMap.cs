@@ -1,6 +1,7 @@
 namespace LAB2D.Map
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Serializable;
     using LAB2D.Domain.Common;
     using LAB2D.UnityAdapter;
@@ -114,7 +115,7 @@ namespace LAB2D.Map
         {
             if (this.TileMapDataLAB == null)
             {
-                LogManager.Instance.Log("TileMapDataLAB is null, cannot generate reachable position", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("TileMapDataLAB is null, cannot generate reachable position", LogManager.LogLevelEnum.Error);
                 return Vector3Int.zero;
             }
 
@@ -137,7 +138,7 @@ namespace LAB2D.Map
                 retries++;
                 if (retries > GEN_POS_MAX_RETRIES)
                 {
-                    LogManager.Instance.Log(
+                    AWorkerTask.LogProvider(
                         $"GenCanReachPos exceeded max retries ({GEN_POS_MAX_RETRIES}), returning fallback position",
                         LogManager.LogLevelEnum.Error);
                     return new Vector3Int(startX, startY, 0);
@@ -308,7 +309,7 @@ namespace LAB2D.Map
             if (this.TileMapDataLAB == null)
             {
                 // 降级方案：存档数据不可用，自动生成新地图
-                LogManager.Instance.Log("TileMap data not found in archive, generating new default map", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider("TileMap data not found in archive, generating new default map", LogManager.LogLevelEnum.Warning);
                 const int defaultHeight = 548;
                 const int defaultWidth = 548;
                 // 重置完成标记，确保 ResourceMap.GenResource 和 GenTree 等待地图生成完毕
@@ -335,7 +336,7 @@ namespace LAB2D.Map
         public override void SyncDataReq(byte[] data)
         {
             base.SyncDataReq(data);
-            LogManager.Instance.Log("Request: 同步地图数据", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("Request: 同步地图数据", LogManager.LogLevelEnum.Trace);
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.TileMapDataLAB);
         }
 
@@ -344,7 +345,7 @@ namespace LAB2D.Map
         public override void SyncDataResp(byte[] data)
         {
             base.SyncDataResp(data);
-            LogManager.Instance.Log("Response: 同步地图数据", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("Response: 同步地图数据", LogManager.LogLevelEnum.Trace);
             this.TileMapDataLAB = DataTool.FromByteArray<TileMapData>(data);
             this.SetProgressAsync(this.TileMapDataLAB.MapTiles.GetLength(0), this.TileMapDataLAB.MapTiles.GetLength(1));
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));

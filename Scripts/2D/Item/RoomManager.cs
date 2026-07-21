@@ -1,6 +1,7 @@
 namespace LAB2D.Item
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -22,7 +23,7 @@ namespace LAB2D.Item
         {
             if (Rooms.ContainsKey(name))
             {
-                LogManager.Instance.Log("已经有房间了", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("已经有房间了", LogManager.LogLevelEnum.Error);
             }
 
             Rooms.Add(name, roomInfo);

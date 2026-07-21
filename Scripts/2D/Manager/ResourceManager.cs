@@ -1,6 +1,7 @@
 namespace LAB2D.Manager
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Map;
     using LAB2D.SO;
     using System;
@@ -125,7 +126,7 @@ namespace LAB2D.Manager
         {
             if (!this.backpackDataDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider(name + " scriptable not found!!!", LogManager.LogLevelEnum.Warning);
                 return null;
             }
 
@@ -141,7 +142,7 @@ namespace LAB2D.Manager
         {
             if (!this.buildDataDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -157,7 +158,7 @@ namespace LAB2D.Manager
         {
             if (!this.dropDataDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -173,7 +174,7 @@ namespace LAB2D.Manager
         {
             if (!this.shaderDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " shader not found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(name + " shader not found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -194,7 +195,7 @@ namespace LAB2D.Manager
                 return (TileBase)asset;
             }
 
-            LogManager.Instance.Log(name + " asset not found!!!", LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider(name + " asset not found!!!", LogManager.LogLevelEnum.Error);
             return null;
         }
 
@@ -247,7 +248,7 @@ namespace LAB2D.Manager
                 return sprite;
             }
 
-            LogManager.Instance.Log(name + " image not found!!!", LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider(name + " image not found!!!", LogManager.LogLevelEnum.Error);
             return null;
         }
 
@@ -316,12 +317,12 @@ namespace LAB2D.Manager
                             "The AssetBundle has not been loaded. " +
                             "Check the Console for earlier [ResourceManager] messages about AssetBundle loading.";
                         Debug.LogError(errorMsg);
-                        LogManager.Instance.Log(errorMsg, LogManager.LogLevelEnum.Error);
+                        AWorkerTask.LogProvider(errorMsg, LogManager.LogLevelEnum.Error);
                     }
                     else
                     {
                         Debug.LogWarning($"[ResourceManager] Prefab '{prefabName}' not found in dictionary ({this.prefabDic.Count} entries available)");
-                        LogManager.Instance.Log(prefabName + " prefab not found!!!", LogManager.LogLevelEnum.Error);
+                        AWorkerTask.LogProvider(prefabName + " prefab not found!!!", LogManager.LogLevelEnum.Error);
                     }
 
                     return null;
@@ -344,7 +345,7 @@ namespace LAB2D.Manager
 
                 if (instance == null)
                 {
-                    LogManager.Instance.Log($"{prefabName} Instantiate Error!!!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider($"{prefabName} Instantiate Error!!!", LogManager.LogLevelEnum.Error);
                     return null;
                 }
 

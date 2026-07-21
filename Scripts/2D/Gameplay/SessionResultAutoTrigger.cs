@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Gameplay;
     using System;
     using UnityEngine;
@@ -218,7 +219,7 @@ namespace LAB2D.Gameplay
             }
             catch (System.Exception exception)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     $"SessionResultAutoTrigger.ShowCaptureTip failed.\n{exception}",
                     LogManager.LogLevelEnum.Error);
 

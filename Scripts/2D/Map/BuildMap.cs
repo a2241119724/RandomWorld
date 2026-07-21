@@ -1,6 +1,7 @@
 namespace LAB2D.Map
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Item;
     using LAB2D.Serializable;
     using System;
@@ -207,7 +208,7 @@ namespace LAB2D.Map
         public override void SyncDataReq(byte[] data)
         {
             base.SyncDataReq(data);
-            LogManager.Instance.Log("Request: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("Request: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.BuildMapDataLAB);
         }
 
@@ -216,7 +217,7 @@ namespace LAB2D.Map
         public override void SyncDataResp(byte[] data)
         {
             base.SyncDataResp(data);
-            LogManager.Instance.Log("Response: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("Response: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
             BuildMapData buildMapData = DataTool.FromByteArray<BuildMapData>(data);
             Dictionary<Vector3IntLAB, BuildTileData>.Enumerator enumerator = buildMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
@@ -241,7 +242,7 @@ namespace LAB2D.Map
         [PunRPC]
         public void SyncDataResp(byte[] vector3IntLAB, byte[] buildTileDataLAB, bool isDelete = false)
         {
-            LogManager.Instance.Log("Response: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("Response: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {

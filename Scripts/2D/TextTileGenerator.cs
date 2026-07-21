@@ -1,5 +1,6 @@
 namespace LAB2D
 {
+    using LAB2D.Character.Worker.Task;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
@@ -24,7 +25,7 @@ namespace LAB2D
         {
             if (num < 0 || num >= 1000)
             {
-                LogManager.Instance.Log("错误的输入", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("错误的输入", LogManager.LogLevelEnum.Error);
                 return null;
             }
 

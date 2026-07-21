@@ -1,6 +1,7 @@
 namespace LAB2D.Map
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Item;
     using LAB2D.Serializable;
     using System;
@@ -46,7 +47,7 @@ namespace LAB2D.Map
             yield return new WaitUntil(() => Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete);
             if (TileMap.Instance == null || TileMap.Instance.TileMapDataLAB == null)
             {
-                LogManager.Instance.Log("TileMap data not available, cannot generate resources", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("TileMap data not available, cannot generate resources", LogManager.LogLevelEnum.Error);
                 yield break;
             }
 
@@ -94,7 +95,7 @@ namespace LAB2D.Map
 
             if (resourcesPlaced == 0)
             {
-                LogManager.Instance.Log($"GenResource: no resources placed (asset misses: {assetMissCount})", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider($"GenResource: no resources placed (asset misses: {assetMissCount})", LogManager.LogLevelEnum.Warning);
             }
 
             yield return this.StartCoroutine(this.GenTree());
@@ -114,7 +115,7 @@ namespace LAB2D.Map
                 {
                     if (TileMap.Instance == null || TileMap.Instance.TileMapDataLAB == null)
                     {
-                        LogManager.Instance.Log("TileMap data not available, tree generation paused", LogManager.LogLevelEnum.Error);
+                        AWorkerTask.LogProvider("TileMap data not available, tree generation paused", LogManager.LogLevelEnum.Error);
                         yield return new WaitForSeconds(60.0f * 5);
                         continue;
                     }
@@ -215,7 +216,7 @@ namespace LAB2D.Map
 
             if (TileMap.Instance == null || TileMap.Instance.TileMapDataLAB == null)
             {
-                LogManager.Instance.Log("TileMap data not initialized, cannot set resource generation progress", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("TileMap data not initialized, cannot set resource generation progress", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -232,7 +233,7 @@ namespace LAB2D.Map
             if (this.ResourceMapDataLAB == null)
             {
                 // 降级方案：存档无资源数据时，等待地图生成完毕后自动生成资源
-                LogManager.Instance.Log("ResourceMap data not found in archive, will generate new resources", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider("ResourceMap data not found in archive, will generate new resources", LogManager.LogLevelEnum.Warning);
                 this.ResourceMapDataLAB = new ResourceMapData(0, 100);
                 this.SetProgress();
                 this.StartCoroutine(this.GenResource());
@@ -259,7 +260,7 @@ namespace LAB2D.Map
         public override void SyncDataReq(byte[] data)
         {
             base.SyncDataReq(data);
-            LogManager.Instance.Log("Request: 同步地图资源数据", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("Request: 同步地图资源数据", LogManager.LogLevelEnum.Trace);
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.ResourceMapDataLAB);
         }
 
@@ -268,7 +269,7 @@ namespace LAB2D.Map
         public override void SyncDataResp(byte[] data)
         {
             base.SyncDataResp(data);
-            LogManager.Instance.Log("Response: 同步地图资源数据", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("Response: 同步地图资源数据", LogManager.LogLevelEnum.Trace);
             this.SetProgress();
             ResourceMapData resourceMapData = DataTool.FromByteArray<ResourceMapData>(data);
             Dictionary<Vector3IntLAB, string>.Enumerator enumerator = resourceMapData.PosMap.GetEnumerator();
@@ -290,7 +291,7 @@ namespace LAB2D.Map
         [PunRPC]
         public void SyncDataResp(byte[] vector3IntLAB, string tileBaseName, bool isPass = false, bool isDelete = false)
         {
-            LogManager.Instance.Log("Response: 同步地图资源数据", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("Response: 同步地图资源数据", LogManager.LogLevelEnum.Trace);
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {

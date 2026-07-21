@@ -1,6 +1,7 @@
 namespace LAB2D.Manager
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -211,7 +212,7 @@ namespace LAB2D.Manager
             }
             catch (Exception exception)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     $"delete archive failed: {archiveDirectory}\n{exception}",
                     LogManager.LogLevelEnum.Error);
                 return false;
@@ -271,7 +272,7 @@ namespace LAB2D.Manager
                 return true;
             }
 
-            LogManager.Instance.Log($"archive index {archiveIndex} out of range", LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider($"archive index {archiveIndex} out of range", LogManager.LogLevelEnum.Error);
             return false;
         }
 
@@ -305,7 +306,7 @@ namespace LAB2D.Manager
             }
             catch (Exception exception)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     $"load archive meta failed: {archiveMetaPath}\n{exception}",
                     LogManager.LogLevelEnum.Error);
                 return null;
@@ -322,7 +323,7 @@ namespace LAB2D.Manager
             }
             catch (Exception exception)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     $"save archive meta failed: {archiveMetaPath}\n{exception}",
                     LogManager.LogLevelEnum.Error);
                 return false;

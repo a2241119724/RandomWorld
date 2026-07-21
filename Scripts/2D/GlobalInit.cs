@@ -2,6 +2,7 @@ namespace LAB2D
 {
     using LAB2D.AI.Dialogue.Prompt;
     using LAB2D.Character;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
@@ -156,7 +157,7 @@ namespace LAB2D
             {
                 if (PanelController.Instance == null)
                 {
-                    LogManager.Instance.Log("manager Not Found!!!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider("manager Not Found!!!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 

@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Item;
     using System;
     using System.Collections.Generic;
@@ -105,7 +106,7 @@ namespace LAB2D.Gameplay
             }
             catch (Exception ex)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     $"ItemCollectionTracker.FireMilestone ShowTip failed, threshold: {threshold}.\n{ex}",
                     LogManager.LogLevelEnum.Error);
             }

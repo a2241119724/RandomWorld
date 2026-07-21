@@ -1,6 +1,7 @@
 namespace LAB2D.Manager
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -58,7 +59,7 @@ namespace LAB2D.Manager
                 Transform weatherTransform = this.transform.Find(weatherType.ToString());
                 if (weatherTransform == null)
                 {
-                    LogManager.Instance.Log("天气节点缺失: " + weatherType, LogManager.LogLevelEnum.Warning);
+                    AWorkerTask.LogProvider("天气节点缺失: " + weatherType, LogManager.LogLevelEnum.Warning);
                     continue;
                 }
 

@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Gameplay;
     using System;
     using UnityEngine;
@@ -86,7 +87,7 @@ namespace LAB2D.Gameplay
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     $"ComboBonusManager.EnsureInitialized failed.\n{e}",
                     LogManager.LogLevelEnum.Error);
             }

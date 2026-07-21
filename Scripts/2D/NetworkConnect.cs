@@ -1,5 +1,6 @@
 namespace LAB2D
 {
+    using LAB2D.Character.Worker.Task;
     using Photon.Pun;
     using Photon.Realtime;
 
@@ -39,7 +40,7 @@ namespace LAB2D
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
-            LogManager.Instance.Log("已连接服务器", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("已连接服务器", LogManager.LogLevelEnum.Trace);
 
             // 设置当前大厅类型为sqlLobby
             TypedLobby typedLobby = new ("myLobby", LobbyType.SqlLobby);
@@ -54,7 +55,7 @@ namespace LAB2D
         public override void OnJoinedLobby()
         {
             base.OnJoinedLobby();
-            LogManager.Instance.Log("进入大厅", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("进入大厅", LogManager.LogLevelEnum.Trace);
         }
 
         /// <summary>
@@ -63,7 +64,7 @@ namespace LAB2D
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
-            LogManager.Instance.Log("加入房间成功", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("加入房间成功", LogManager.LogLevelEnum.Trace);
 
             // 同步地图数据
             SyncDataTool.SyncDataReqWrapper(TileMap.Instance.PhotonView);
@@ -79,7 +80,7 @@ namespace LAB2D
         public override void OnLeftLobby()
         {
             base.OnLeftLobby();
-            LogManager.Instance.Log("退出大厅", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("退出大厅", LogManager.LogLevelEnum.Trace);
         }
 
         /// <summary>
@@ -88,7 +89,7 @@ namespace LAB2D
         public override void OnLeftRoom()
         {
             base.OnLeftRoom();
-            LogManager.Instance.Log("离开房间", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("离开房间", LogManager.LogLevelEnum.Trace);
         }
 
         /// <summary>
@@ -98,7 +99,7 @@ namespace LAB2D
         public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
         {
             base.OnPlayerEnteredRoom(newPlayer);
-            LogManager.Instance.Log("新玩家加入", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("新玩家加入", LogManager.LogLevelEnum.Trace);
             GlobalInit.Instance.ShowTip("新玩家加入");
         }
 
@@ -110,7 +111,7 @@ namespace LAB2D
         public override void OnCreateRoomFailed(short returnCode, string message)
         {
             base.OnCreateRoomFailed(returnCode, message);
-            LogManager.Instance.Log("创建房间失败!!!", LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider("创建房间失败!!!", LogManager.LogLevelEnum.Error);
             GlobalInit.Instance.ShowTip("创建房间失败");
             PanelController.Instance.Close();
             PanelController.Instance.Show(JoinMenuPanel.Instance);
@@ -123,7 +124,7 @@ namespace LAB2D
         public override void OnDisconnected(DisconnectCause cause)
         {
             base.OnDisconnected(cause);
-            LogManager.Instance.Log("断开连接!!!", LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider("断开连接!!!", LogManager.LogLevelEnum.Error);
             this.IsOnline = false;
         }
     }

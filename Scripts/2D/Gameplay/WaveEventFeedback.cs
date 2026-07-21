@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Wave;
     using System;
     using UnityEngine;
@@ -106,7 +107,7 @@ namespace LAB2D.Gameplay
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     $"WaveEventFeedback.Enable failed.\n{e}",
                     LogManager.LogLevelEnum.Error);
             }
@@ -128,7 +129,7 @@ namespace LAB2D.Gameplay
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     $"WaveEventFeedback.Disable failed.\n{e}",
                     LogManager.LogLevelEnum.Error);
             }
@@ -242,7 +243,7 @@ namespace LAB2D.Gameplay
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     $"WaveEventFeedback.SyncCurrentState failed.\n{e}",
                     LogManager.LogLevelEnum.Error);
             }
@@ -309,7 +310,7 @@ namespace LAB2D.Gameplay
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     $"WaveEventFeedback.ShowTip failed: {message}\n{e}",
                     LogManager.LogLevelEnum.Error);
 

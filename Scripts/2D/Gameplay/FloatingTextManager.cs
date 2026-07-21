@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Enum;
     using LAB2D.UI;
     using System.Collections.Generic;
@@ -90,7 +91,7 @@ namespace LAB2D.Gameplay
 
             if (this.mainCamera == null)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "FloatingTextManager: 未找到主摄像机，世界坐标转换将使用 Vector3.zero 作为默认值",
                     LogManager.LogLevelEnum.Warning);
             }

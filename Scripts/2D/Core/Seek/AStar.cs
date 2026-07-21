@@ -1,6 +1,7 @@
 namespace LAB2D.Core.Seek
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Serializable;
     using System.Collections.Generic;
     using PimDeWitte.UnityMainThreadDispatcher;
@@ -31,7 +32,7 @@ namespace LAB2D.Core.Seek
             {
                 UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {
-                    LogManager.Instance.Log(this.Character.name + ":起始==终点", LogManager.LogLevelEnum.Trace);
+                    AWorkerTask.LogProvider(this.Character.name + ":起始==终点", LogManager.LogLevelEnum.Trace);
                 }).Wait();
                 this.SetResult(new SeekResult(), seekId);
                 return;
@@ -102,7 +103,7 @@ namespace LAB2D.Core.Seek
                         {
                             UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                             {
-                                LogManager.Instance.Log(this.Character.name + ":寻路出现环路", LogManager.LogLevelEnum.Error);
+                                AWorkerTask.LogProvider(this.Character.name + ":寻路出现环路", LogManager.LogLevelEnum.Error);
                             }).Wait();
                             break;
                         }
@@ -277,7 +278,7 @@ namespace LAB2D.Core.Seek
                 seekResult.IsReachable = false;
                 UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {
-                    LogManager.Instance.Log(this.Character.name + ":未找到路径 " + start.PosMap + "-->" + end.PosMap, LogManager.LogLevelEnum.Trace);
+                    AWorkerTask.LogProvider(this.Character.name + ":未找到路径 " + start.PosMap + "-->" + end.PosMap, LogManager.LogLevelEnum.Trace);
                 }).Wait();
             }
 

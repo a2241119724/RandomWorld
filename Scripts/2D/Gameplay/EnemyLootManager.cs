@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Enum;
@@ -76,7 +77,7 @@ namespace LAB2D.Gameplay
             this.pendingDrops = new Dictionary<Vector3Int, PendingEquipmentDrop>();
             EquipmentBeamManager.Instance.Initialize();
             this.IsInitialized = true;
-            LogManager.Instance.Log("EnemyLootManager 初始化完成", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("EnemyLootManager 初始化完成", LogManager.LogLevelEnum.Trace);
         }
 
         /// <summary>
@@ -173,7 +174,7 @@ namespace LAB2D.Gameplay
             ItemData itemData = ItemDataManager.Instance.GetById(template.Id);
             if (itemData == null)
             {
-                LogManager.Instance.Log("EnemyLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider("EnemyLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
@@ -206,7 +207,7 @@ namespace LAB2D.Gameplay
             string rarityLabel = EquipmentLootTool.FormatRarityLabel(rarity);
             FloatingTextManager.Instance?.SpawnStatusText(worldPos, rarityLabel);
 
-            LogManager.Instance.Log(
+            AWorkerTask.LogProvider(
                 string.Format("装备掉落: {0} [{1}] at ({2:F0},{3:F0})",
                     itemData.CnName, EquipmentLootTool.GetRarityName(rarity), worldPos.x, worldPos.y),
                 LogManager.LogLevelEnum.Trace);
@@ -253,7 +254,7 @@ namespace LAB2D.Gameplay
             ItemData itemData = ItemDataManager.Instance.GetById(template.Id);
             if (itemData == null)
             {
-                LogManager.Instance.Log("EnemyLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider("EnemyLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
@@ -283,7 +284,7 @@ namespace LAB2D.Gameplay
             string rarityLabel = EquipmentLootTool.FormatRarityLabel(rarity);
             FloatingTextManager.Instance?.SpawnStatusText(worldPos, rarityLabel);
 
-            LogManager.Instance.Log(
+            AWorkerTask.LogProvider(
                 string.Format("强制装备掉落: {0} [{1}] at ({2:F0},{3:F0})",
                     itemData.CnName, EquipmentLootTool.GetRarityName(rarity), worldPos.x, worldPos.y),
                 LogManager.LogLevelEnum.Trace);

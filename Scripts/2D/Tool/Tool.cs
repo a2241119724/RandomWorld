@@ -1,6 +1,7 @@
 namespace LAB2D.Tool
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Constant;
     using LAB2D.UnityAdapter;
     using System;
@@ -177,7 +178,7 @@ namespace LAB2D.Tool
             T[] ts = parent.GetComponentsInChildren<T>();
             if (ts.Length == 0)
             {
-                LogManager.Instance.Log(ts.GetType() + " Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(ts.GetType() + " Not Found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -204,7 +205,7 @@ namespace LAB2D.Tool
                 }
             }
 
-            LogManager.Instance.Log(name + " Not Found!!!", LogManager.LogLevelEnum.Warning);
+            AWorkerTask.LogProvider(name + " Not Found!!!", LogManager.LogLevelEnum.Warning);
             return null;
         }
 
@@ -296,7 +297,7 @@ namespace LAB2D.Tool
             Scene scene = SceneManager.GetSceneByName(sceneName);
             if (scene.buildIndex == -1)
             {
-                LogManager.Instance.Log(sceneName + " Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(sceneName + " Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

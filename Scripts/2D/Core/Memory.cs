@@ -1,5 +1,6 @@
 namespace LAB2D.Core
 {
+    using LAB2D.Character.Worker.Task;
     using System;
     using UnityEngine;
 
@@ -23,7 +24,7 @@ namespace LAB2D.Core
         {
             // 打印初始托管堆大小
             long initialHeapSize = GC.GetTotalMemory(false);
-            LogManager.Instance.Log($"Initial Heap Size: {initialHeapSize / 1024 / 1024} M", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider($"Initial Heap Size: {initialHeapSize / 1024 / 1024} M", LogManager.LogLevelEnum.Trace);
 
             // 执行一些操作来分配内存，例如创建对象
             // ...

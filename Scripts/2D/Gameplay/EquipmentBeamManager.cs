@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Enum;
     using LAB2D.UI.Effect;
@@ -43,7 +44,7 @@ namespace LAB2D.Gameplay
             this.sharedMaterial.SetInt("_ZWrite", 0);
             this.sharedMaterial.renderQueue = 3000;
             this.IsInitialized = true;
-            LogManager.Instance.Log("EquipmentBeamManager 初始化完成", LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider("EquipmentBeamManager 初始化完成", LogManager.LogLevelEnum.Trace);
         }
 
         public void SpawnBeam(Vector3Int mapPos, Vector3 worldPos, EquipmentRarityType rarity)

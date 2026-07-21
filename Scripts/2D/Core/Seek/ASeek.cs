@@ -1,6 +1,7 @@
 namespace LAB2D.Core.Seek
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Serializable;
     using System;
     using System.Collections.Concurrent;
@@ -156,7 +157,7 @@ namespace LAB2D.Core.Seek
             this.TargetMap = targetMap;
             if (this.IsSeeking())
             {
-                LogManager.Instance.Log(this.Character.name + ":重新寻路!", LogManager.LogLevelEnum.Trace);
+                AWorkerTask.LogProvider(this.Character.name + ":重新寻路!", LogManager.LogLevelEnum.Trace);
             }
 
             string seekId = this.StartSeek();
@@ -315,7 +316,7 @@ namespace LAB2D.Core.Seek
             this.activeSeekId = this.Character.CharacterDataLAB.GenerateSeekId();
             if (!ASeek.results.TryAdd(this.activeSeekId, null))
             {
-                LogManager.Instance.Log(this.Character.name + ":添加寻路任务失败!", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider(this.Character.name + ":添加寻路任务失败!", LogManager.LogLevelEnum.Warning);
             }
 
             // 刷新可步行性缓存, 避免A*循环中每次邻居检查都向主线程派发
@@ -336,7 +337,7 @@ namespace LAB2D.Core.Seek
             {
                 UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
                 {
-                    LogManager.Instance.Log(this.Character.name + seekId + "更新寻路结果失败!", LogManager.LogLevelEnum.Warning);
+                    AWorkerTask.LogProvider(this.Character.name + seekId + "更新寻路结果失败!", LogManager.LogLevelEnum.Warning);
                 }).Wait();
             }
         }

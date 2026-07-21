@@ -123,7 +123,7 @@ namespace LAB2D.Map
                 count++;
                 if (count > 100)
                 {
-                    LogManager.Instance.Log("genAvailablePosMap Error!!!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider("genAvailablePosMap Error!!!", LogManager.LogLevelEnum.Error);
                     return default;
                 }
 

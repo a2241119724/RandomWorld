@@ -230,7 +230,7 @@ namespace LAB2D.Gameplay
             }
             catch (Exception exception)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "订阅天气变化失败: " + exception.Message,
                     LogManager.LogLevelEnum.Warning);
             }
@@ -251,7 +251,7 @@ namespace LAB2D.Gameplay
             }
             catch (Exception exception)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "同步天气状态失败: " + exception.Message,
                     LogManager.LogLevelEnum.Warning);
             }
@@ -302,7 +302,7 @@ namespace LAB2D.Gameplay
             }
             catch (Exception exception)
             {
-                LogManager.Instance.Log(
+                AWorkerTask.LogProvider(
                     "显示天气提示失败: " + exception.Message,
                     LogManager.LogLevelEnum.Warning);
             }
