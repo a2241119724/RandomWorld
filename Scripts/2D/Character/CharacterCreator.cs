@@ -17,7 +17,7 @@ namespace LAB2D.Character
             {
                 if (TileMap.Instance == null)
                 {
-                    LogManager.Instance.Log("TileMap.Instance is null, cannot create character at valid position", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider("TileMap.Instance is null, cannot create character at valid position", LogManager.LogLevelEnum.Error);
                     return null;
                 }
 
@@ -47,7 +47,7 @@ namespace LAB2D.Character
             }
             else
             {
-                LogManager.Instance.Log("TileMap.Instance is null, creating character at raw world position", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider("TileMap.Instance is null, creating character at raw world position", LogManager.LogLevelEnum.Warning);
             }
 
             // 设置角色

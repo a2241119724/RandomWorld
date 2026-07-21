@@ -59,7 +59,7 @@ namespace LAB2D.Character.Worker.State
         public override void OnEnter()
         {
             base.OnEnter();
-            LogManager.Instance.Log(this.Character.name + " " + this.Character.Manager.CurrentStateType, LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider(this.Character.name + " " + this.Character.Manager.CurrentStateType, LogManager.LogLevelEnum.Trace);
             this.preString = string.Empty;
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.Task != null)

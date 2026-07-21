@@ -63,7 +63,7 @@ namespace LAB2D.Character.Enemy
             this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (this.statusBar == null)
             {
-                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("statusBar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -80,7 +80,7 @@ namespace LAB2D.Character.Enemy
         {
             if (target == null)
             {
-                LogManager.Instance.Log("target is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("target is null!!!", LogManager.LogLevelEnum.Error);
                 return false;
             }
 

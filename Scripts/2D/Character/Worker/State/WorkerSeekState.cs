@@ -60,7 +60,7 @@ namespace LAB2D.Character.Worker.State
 
                 if (closedPos == default)
                 {
-                    LogManager.Instance.Log($"{workerData.Task.TaskType}, 没有邻居位置!", LogManager.LogLevelEnum.Warning);
+                    AWorkerTask.LogProvider($"{workerData.Task.TaskType}, 没有邻居位置!", LogManager.LogLevelEnum.Warning);
                     this.Character.GiveUpTask();
                     return;
                 }
@@ -69,7 +69,7 @@ namespace LAB2D.Character.Worker.State
             }
             else
             {
-                LogManager.Instance.Log(this.Character.name + " 没有任务!", LogManager.LogLevelEnum.Trace);
+                AWorkerTask.LogProvider(this.Character.name + " 没有任务!", LogManager.LogLevelEnum.Trace);
                 ++this.seekTimes;
                 if (this.seekTimes % WorkerTaskTimeConfig.ExerciseSeekThreshold == 0)
                 {
@@ -82,7 +82,7 @@ namespace LAB2D.Character.Worker.State
                 }
             }
 
-            LogManager.Instance.Log(this.Character.name + " 寻路->" + this.targetMap, LogManager.LogLevelEnum.Trace);
+            AWorkerTask.LogProvider(this.Character.name + " 寻路->" + this.targetMap, LogManager.LogLevelEnum.Trace);
             this.Character.Seek.Seek(this.targetMap);
         }
 
@@ -137,7 +137,7 @@ namespace LAB2D.Character.Worker.State
                         this.Character.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
                     }
 
-                    LogManager.Instance.Log(this.Character.name + " 没有找到路!", LogManager.LogLevelEnum.Trace);
+                    AWorkerTask.LogProvider(this.Character.name + " 没有找到路!", LogManager.LogLevelEnum.Trace);
                     return;
                 }
 

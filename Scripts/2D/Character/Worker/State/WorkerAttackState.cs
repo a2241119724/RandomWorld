@@ -37,7 +37,7 @@ namespace LAB2D.Character.Worker.State
                 this.Character.Weapon = AWorkerTask.ResourceInstantiateProvider(name, false);
                 if (this.Character.Weapon == null)
                 {
-                    LogManager.Instance.Log("武器实例化错误!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider("武器实例化错误!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 

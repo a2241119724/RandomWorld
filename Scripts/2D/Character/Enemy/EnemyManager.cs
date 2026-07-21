@@ -80,7 +80,7 @@ namespace LAB2D.Character.Enemy
         {
             if (character == null)
             {
-                LogManager.Instance.Log("character is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("character is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

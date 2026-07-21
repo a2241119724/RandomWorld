@@ -102,7 +102,7 @@ namespace LAB2D.Character
             }
             else
             {
-                LogManager.Instance.Log("CharacterRoot GameObject not found in scene, character will be placed at root", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("CharacterRoot GameObject not found in scene, character will be placed at root", LogManager.LogLevelEnum.Error);
             }
 
             this.checkBug = new CheckBug();
@@ -113,7 +113,7 @@ namespace LAB2D.Character
             this.spriteRenderer = this.GetComponent<SpriteRenderer>();
             if (this.spriteRenderer == null)
             {
-                LogManager.Instance.Log("renderer Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("renderer Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

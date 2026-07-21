@@ -58,7 +58,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
             this.Head = this.transform.Find("Head");
             if (this.Head == null)
             {
-                LogManager.Instance.Log("enemyHead Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("enemyHead Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }

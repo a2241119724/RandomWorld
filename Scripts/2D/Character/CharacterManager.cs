@@ -40,7 +40,7 @@ namespace LAB2D.Character
         {
             if (character == null)
             {
-                LogManager.Instance.Log("character is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("character is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -55,7 +55,7 @@ namespace LAB2D.Character
         {
             if (character == null)
             {
-                LogManager.Instance.Log("character is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("character is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -71,7 +71,7 @@ namespace LAB2D.Character
         {
             if (i < 0 || i >= this.Count())
             {
-                LogManager.Instance.Log("i overflow!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("i overflow!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
