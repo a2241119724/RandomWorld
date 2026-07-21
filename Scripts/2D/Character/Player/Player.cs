@@ -425,43 +425,13 @@ namespace LAB2D.Character.Player
         /// </summary>
         private void Move()
         {
-            PlayerMoveCommand command = UnityPlayerInputAdapter.PollCurrentPlayerMoveCommand(this.GetInstanceID(), Time.deltaTime);
+            PlayerMoveCommand command = UnityPlayerInputAdapter.PollCurrentPlayerMoveCommand(this.GetInstanceID(), this.gameTime.DeltaTime);
             if (command != null)
             {
-                if (this.mainCamera.Character != this)
-                {
-                    this.mainCamera.DirectToPosition(this.transform.position);
-                    this.mainCamera.Character = this;
-                }
-
-                if (this.miniCamera.Character != this)
-                {
-                    this.miniCamera.DirectToPosition(this.transform.position);
-                    this.miniCamera.Character = this;
-                }
-
+                this.BindCameras();
                 bool isRunning = command.IsRunning;
-                this.animator.SetInteger("Action", isRunning ? 1 : 0);
-
                 this.direction.x = command.Direction.X;
                 this.direction.y = command.Direction.Y;
-
-                if (this.direction.y > 0)
-                {
-                    this.animator.SetInteger("Direction", 0);
-                }
-                else if (this.direction.x > 0)
-                {
-                    this.animator.SetInteger("Direction", 1);
-                }
-                else if (this.direction.y < 0)
-                {
-                    this.animator.SetInteger("Direction", 2);
-                }
-                else if (this.direction.x < 0)
-                {
-                    this.animator.SetInteger("Direction", 3);
-                }
 
                 float weatherMultiplier = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this, 1.0f);
                 // A004：波间奖励移动强化在天气倍率之后应用，避免覆盖天气玩法的减速/增益。
@@ -474,13 +444,59 @@ namespace LAB2D.Character.Player
                     waveMultiplier,
                     command.Direction);
 
-                this.rg.velocity = new Vector2(moveResult.Velocity.X, moveResult.Velocity.Y);
+                this.ApplyMovePresentation(command, moveResult);
             }
             else
             {
-                this.animator.SetInteger("Action", 2);
-                this.rg.velocity = Vector3.zero;
+                this.ApplyIdlePresentation();
             }
+        }
+
+        private void BindCameras()
+        {
+            if (this.mainCamera.Character != this)
+            {
+                this.mainCamera.DirectToPosition(this.transform.position);
+                this.mainCamera.Character = this;
+            }
+
+            if (this.miniCamera.Character != this)
+            {
+                this.miniCamera.DirectToPosition(this.transform.position);
+                this.miniCamera.Character = this;
+            }
+        }
+
+        private void ApplyMovePresentation(PlayerMoveCommand command, PlayerMoveResult moveResult)
+        {
+            this.animator.SetInteger("Action", command.IsRunning ? 1 : 0);
+
+            int animDir;
+            if (command.Direction.Y > 0)
+            {
+                animDir = 0;
+            }
+            else if (command.Direction.X > 0)
+            {
+                animDir = 1;
+            }
+            else if (command.Direction.Y < 0)
+            {
+                animDir = 2;
+            }
+            else
+            {
+                animDir = 3;
+            }
+
+            this.animator.SetInteger("Direction", animDir);
+            this.rg.velocity = new Vector2(moveResult.Velocity.X, moveResult.Velocity.Y);
+        }
+
+        private void ApplyIdlePresentation()
+        {
+            this.animator.SetInteger("Action", 2);
+            this.rg.velocity = Vector3.zero;
         }
 
         private void OnDestroy()

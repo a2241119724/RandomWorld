@@ -18,21 +18,16 @@ namespace LAB2D.Character.Worker
     public class WorkerTaskManager : MonoBehaviour
     {
         private static long curtaskId = 0;
-        private readonly List<Dictionary<AWorkerTask, bool>> tasks; // 所有任务(list中越靠前优先级越大), TODO分离正在做的任务
-        private readonly List<WorkerHungryTask> hungryTasks; // 饥饿任务与pos挂钩，TODO与worker数量挂钩
+        private readonly WorkerTaskQueue<AWorkerTask> taskQueue;
+        private readonly List<WorkerHungryTask> hungryTasks;
         private readonly List<WorkerWearTask> wearTasks;
         private readonly WorkerTaskAssignmentService<AWorkerTask> assignmentService;
         private KDTree taskTree = new KDTree();
 
         public WorkerTaskManager()
         {
-            this.tasks = new List<Dictionary<AWorkerTask, bool>>();
+            this.taskQueue = new WorkerTaskQueue<AWorkerTask>();
             this.assignmentService = new WorkerTaskAssignmentService<AWorkerTask>();
-            for (int i = 0; i < 4; i++)
-            {
-                this.tasks.Add(new Dictionary<AWorkerTask, bool>());
-            }
-
             this.hungryTasks = new List<WorkerHungryTask>();
             this.wearTasks = new List<WorkerWearTask>();
             this.GatherPos = new List<Vector3Int>();
@@ -72,24 +67,22 @@ namespace LAB2D.Character.Worker
                     continue;
                 }
 
-                for (int priority = 0; priority < this.tasks.Count; priority++)
+                for (int priority = 0; priority < this.taskQueue.PriorityCount; priority++)
                 {
                     WorkerTaskAssignmentResult<AWorkerTask> assignment =
                         this.assignmentService.SelectTask(
                             this.CreateWorkerSnapshot(worker, workerData.Task == null),
                             this.CreateTaskSnapshots(priority, worker));
 
-                    // 获得任务
                     if (assignment.HasTask)
                     {
                         AWorkerTask closedTask = assignment.Task;
 
-                        // 先设置任务
                         workerData.Task = closedTask;
                         closedTask.Start(worker);
                         if (workerData.Task == closedTask)
                         {
-                            this.tasks[assignment.Priority][closedTask] = true;
+                            this.taskQueue.MarkRunning(closedTask);
                         }
 
                         EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
@@ -116,7 +109,7 @@ namespace LAB2D.Character.Worker
         private List<WorkerTaskSnapshot<AWorkerTask>> CreateTaskSnapshots(int priority, AWorker worker)
         {
             List<WorkerTaskSnapshot<AWorkerTask>> result = new ();
-            Dictionary<AWorkerTask, bool> taskGroup = this.tasks[priority];
+            IReadOnlyDictionary<AWorkerTask, bool> taskGroup = this.taskQueue.GetTasksAtPriority(priority);
             foreach (KeyValuePair<AWorkerTask, bool> taskPair in taskGroup)
             {
                 AWorkerTask task = taskPair.Key;
@@ -179,7 +172,7 @@ namespace LAB2D.Character.Worker
                 this.wearTasks.Add((WorkerWearTask)task);
             }
 
-            this.tasks[prior].Add(task, false);
+            this.taskQueue.Add(task, prior);
             this.taskTree.Insert(Vector3IntLAB.ToVector2ShortLAB(taskPosMap));
             EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }
@@ -190,22 +183,13 @@ namespace LAB2D.Character.Worker
         /// <param name="task">任务</param>
         public void CompleteTask(AWorkerTask task)
         {
-            for (int i = 0; i < this.tasks.Count; i++)
+            if (task.TaskType == WorkerTaskType.Eat)
             {
-                if (this.tasks[i].ContainsKey(task))
-                {
-                    if (task.TaskType == WorkerTaskType.Eat)
-                    {
-                        this.tasks[i][task] = false;
-                    }
-                    else
-                    {
-                        this.tasks[i].Remove(task);
-                    }
-
-                    EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
-                    return;
-                }
+                this.taskQueue.MarkIdle(task);
+            }
+            else
+            {
+                this.taskQueue.Remove(task);
             }
 
             EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
@@ -222,15 +206,8 @@ namespace LAB2D.Character.Worker
                 return;
             }
 
-            for (int i = 0; i < this.tasks.Count; i++)
-            {
-                if (this.tasks[i].ContainsKey(task))
-                {
-                    this.tasks[i][task] = false;
-                    EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
-                    break;
-                }
-            }
+            this.taskQueue.MarkIdle(task);
+            EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }
 
         /// <summary>
@@ -239,7 +216,7 @@ namespace LAB2D.Character.Worker
         /// <returns>任务队列快照。</returns>
         public WorkerTaskQueueSnapshot CreateTaskQueueSnapshot()
         {
-            return WorkerTaskSummaryTool.BuildSnapshot(this.tasks);
+            return WorkerTaskSummaryTool.BuildSnapshot(this.GetTasksAsList());
         }
 
         /// <summary>
@@ -249,7 +226,18 @@ namespace LAB2D.Character.Worker
         /// <returns>任务分配诊断报告。</returns>
         public WorkerTaskAssignmentReport CreateTaskAssignmentReport()
         {
-            return ColonyCommandCenterTool.BuildAssignmentReport(this.tasks, WorkerManager.Instance.Characters);
+            return ColonyCommandCenterTool.BuildAssignmentReport(this.GetTasksAsList(), WorkerManager.Instance.Characters);
+        }
+
+        private List<Dictionary<AWorkerTask, bool>> GetTasksAsList()
+        {
+            List<Dictionary<AWorkerTask, bool>> result = new ();
+            for (int i = 0; i < this.taskQueue.PriorityCount; i++)
+            {
+                result.Add(new Dictionary<AWorkerTask, bool>(this.taskQueue.GetTasksAtPriority(i)));
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -267,16 +255,19 @@ namespace LAB2D.Character.Worker
         /// <returns>任务信息</returns>
         public string GetTaskInfo()
         {
-            int total = 0;
+            int total = this.taskQueue.TotalCount;
             int[] taskCount = new int[10];
-            foreach (Dictionary<AWorkerTask, bool> task in this.tasks)
+            for (int i = 0; i < this.taskQueue.PriorityCount; i++)
             {
-                total += task.Count;
-                foreach (AWorkerTask task1 in task.Keys)
+                foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriority(i))
                 {
-                    if (task[task1])
+                    if (pair.Value)
                     {
-                        taskCount[(int)task1.TaskType]++;
+                        int typeIndex = (int)pair.Key.TaskType;
+                        if (typeIndex >= 0 && typeIndex < taskCount.Length)
+                        {
+                            taskCount[typeIndex]++;
+                        }
                     }
                 }
             }
@@ -301,16 +292,10 @@ namespace LAB2D.Character.Worker
             {
                 if (hungryTask.TargetMap.X == pos.x && hungryTask.TargetMap.Y == pos.y)
                 {
-                    for (int i = 0; i < this.tasks.Count; i++)
-                    {
-                        if (this.tasks[i].ContainsKey(hungryTask))
-                        {
-                            this.tasks[i].Remove(hungryTask);
-                            this.hungryTasks.Remove(hungryTask);
-                            EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
-                            return;
-                        }
-                    }
+                    this.taskQueue.Remove(hungryTask);
+                    this.hungryTasks.Remove(hungryTask);
+                    EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+                    return;
                 }
             }
         }
@@ -326,19 +311,15 @@ namespace LAB2D.Character.Worker
                 return;
             }
 
-            for (int i = 0; i < this.tasks.Count; i++)
+            bool removed = this.taskQueue.RemoveWhere(task =>
+                task.TaskType == WorkerTaskType.Gather &&
+                task.TargetMap.X == posMap.x &&
+                task.TargetMap.Y == posMap.y);
+
+            if (removed)
             {
-                foreach (AWorkerTask task in this.tasks[i].Keys)
-                {
-                    if (task.TaskType == WorkerTaskType.Gather && task.TargetMap.X == posMap.x
-                        && task.TargetMap.Y == posMap.y)
-                    {
-                        this.tasks[i].Remove(task);
-                        this.GatherPos.Remove(Vector3IntLAB.ToVector3Int(task.TargetMap));
-                        EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
-                        return;
-                    }
-                }
+                this.GatherPos.Remove(posMap);
+                EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
             }
         }
     }
