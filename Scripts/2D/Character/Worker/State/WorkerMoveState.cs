@@ -42,7 +42,7 @@ namespace LAB2D.Character.Worker.State
                 AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
                 if (workerData.Task == null)
                 {
-                    this.recordTime += Time.deltaTime;
+                    this.recordTime += this.Character.DeltaTime;
                     if (Time.frameCount % 60 == 0)
                     {
                         this.Character.WorkerStateText.text = this.builder.Append("休息: ")

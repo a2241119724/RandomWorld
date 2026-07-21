@@ -61,7 +61,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             bool isTarget = this.Character.Seek.MoveByPath();
             if (isTarget)
             {
-                this.recordTime += Time.deltaTime;
+                this.recordTime += this.Character.DeltaTime;
 
                 // 休息2秒
                 if (this.recordTime < 2)

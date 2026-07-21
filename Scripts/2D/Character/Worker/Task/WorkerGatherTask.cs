@@ -53,7 +53,7 @@ namespace LAB2D.Character.Worker.Task
                     break;
                 }
 
-                ItemMap.Instance.PutDownToDrop(pos, (TileBase)ResourceManager.Instance.GetAsset(dropItems[i].Name), dropItems[i].ResourceInfo);
+                ItemMapProvider().PutDownToDrop(pos, (TileBase)ResourceManager.Instance.GetAsset(dropItems[i].Name), dropItems[i].ResourceInfo);
             }
 
             // 删除采摘图标

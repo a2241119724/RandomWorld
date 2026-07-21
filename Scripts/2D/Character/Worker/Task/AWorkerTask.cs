@@ -1,8 +1,10 @@
 namespace LAB2D.Character.Worker.Task
 {
     using LAB2D;
+    using LAB2D.Data;
     using LAB2D.Enum;
     using LAB2D.Item;
+    using LAB2D.Map;
     using LAB2D.Serializable;
     using LAB2D.Domain.Worker;
     using System;
@@ -142,6 +144,22 @@ namespace LAB2D.Character.Worker.Task
         /// </summary>
         public static System.Func<InventoryManager> InventoryProvider { get; set; }
             = () => InventoryManager.Instance;
+
+        /// <summary>
+        /// 物品数据提供者 — 根据物品 ID 获取配置数据。
+        /// 默认返回 ItemDataManager.Instance.GetById(id)。
+        /// 可替换为测试桩。
+        /// </summary>
+        public static System.Func<int, ItemData> ItemDataProvider { get; set; }
+            = (id) => ItemDataManager.Instance.GetById(id);
+
+        /// <summary>
+        /// 物品地图提供者 — 物品在地图上的放置/拾取操作。
+        /// 默认返回 ItemMap.Instance。
+        /// 可替换为测试桩。
+        /// </summary>
+        public static System.Func<ItemMap> ItemMapProvider { get; set; }
+            = () => ItemMap.Instance;
 
         /// <summary>
         /// 日志提供者 — 任务相关的错误/警告日志输出。

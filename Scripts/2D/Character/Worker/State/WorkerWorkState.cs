@@ -52,7 +52,7 @@ namespace LAB2D.Character.Worker.State
                 return;
             }
 
-            bool isComplete = workerData.Task.Execute(this.Character, Time.deltaTime);
+            bool isComplete = workerData.Task.Execute(this.Character, this.Character.DeltaTime);
             if (isComplete)
             {
                 this.waitOneFrame = true;

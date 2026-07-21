@@ -49,7 +49,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         public override void OnUpdate()
         {
             base.OnUpdate();
-            this.AttackTime += Time.deltaTime;
+            this.AttackTime += this.Character.DeltaTime;
 
             // 打击目标死亡
             if (this.Character.Target == null)
@@ -78,7 +78,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             if (!this.Character.SenseNearby(this.Character.Target.transform))
             {
                 // 追踪两秒
-                this.recordTime += Time.deltaTime;
+                this.recordTime += this.Character.DeltaTime;
                 if (this.recordTime >= 2.0f)
                 {
                     this.Character.Manager.ChangeState(TypeEnum.Seek);

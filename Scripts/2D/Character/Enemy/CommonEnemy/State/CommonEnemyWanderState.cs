@@ -62,7 +62,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             }
 
             // 漫游
-            this.recordTime += Time.deltaTime;
+            this.recordTime += this.Character.DeltaTime;
             if (this.recordTime >= this.Character.RotateInterval)
             {
                 this.rotationAngle = Random.Range(0.0f, 360.0f);

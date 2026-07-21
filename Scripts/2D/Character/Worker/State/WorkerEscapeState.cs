@@ -34,14 +34,14 @@ namespace LAB2D.Character.Worker.State
         public override void OnUpdate()
         {
             base.OnUpdate();
-            this.recordTime += Time.deltaTime;
+            this.recordTime += this.Character.DeltaTime;
             if (this.recordTime >= WorkerTaskTimeConfig.EscapeSeconds)
             {
                 this.Character.Manager.ChangeState(TypeEnum.Seek);
             }
 
             this.Character.Seek.LineRenderer.positionCount = 0;
-            this.Character.transform.Translate(this.Character.MoveSpeed * Time.deltaTime * Vector3.up, Space.World);
+            this.Character.transform.Translate(this.Character.MoveSpeed * this.Character.DeltaTime * Vector3.up, Space.World);
         }
     }
 }

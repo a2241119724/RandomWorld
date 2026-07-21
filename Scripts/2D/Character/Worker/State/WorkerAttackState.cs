@@ -59,7 +59,7 @@ namespace LAB2D.Character.Worker.State
             base.OnUpdate();
 
             // 若一段时间没有被攻击，那么回到寻路状态
-            this.recordTime += Time.deltaTime;
+            this.recordTime += this.Character.DeltaTime;
             if (this.recordTime > 5)
             {
                 this.Character.Manager.ChangeState(TypeEnum.Seek);

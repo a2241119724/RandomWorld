@@ -83,7 +83,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         public void MoveToForward()
         {
             this.MoveSpeed = UnityEngine.Random.Range(1.0f, 2.0f);
-            this.transform.Translate(this.MoveSpeed * Time.deltaTime * (this.Head.position - this.transform.position).normalized, Space.World); // 向前移动
+            this.transform.Translate(this.MoveSpeed * this.DeltaTime * (this.Head.position - this.transform.position).normalized, Space.World); // 向前移动
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         public void RotateTo(Vector3 direction)
         {
             // FromToRotation得到从自定义方向到某方向旋转的角度
-            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, Quaternion.FromToRotation(Vector3.up, direction), Time.deltaTime * this.RotationSpeed);
+            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, Quaternion.FromToRotation(Vector3.up, direction), this.DeltaTime * this.RotationSpeed);
         }
 
         /// <inheritdoc/>

@@ -5,6 +5,7 @@ namespace LAB2D.Character
     using LAB2D.Item.Backpack.Equipment.Weapon;
     using LAB2D.Network;
     using LAB2D.Serializable;
+    using LAB2D.UnityAdapter;
     using LAB2D.Domain.Character;
     using LAB2D.Domain.Common;
     using System;
@@ -58,6 +59,15 @@ namespace LAB2D.Character
         protected Attribute basicAttribute;
 
         protected Color originalColor; // 原来的自身颜色
+        protected IGameTime gameTime = new UnityGameTime();
+
+        /// <summary>
+        /// 领域安全的 DeltaTime，供状态机等子模块使用，不直接依赖 UnityEngine.Time。
+        /// </summary>
+        public float DeltaTime
+        {
+            get { return this.gameTime.DeltaTime; }
+        }
         private readonly DamageCalculator damageCalculator = new DamageCalculator();
         private readonly LevelProgressionService levelProgressionService = new LevelProgressionService();
         protected CharacterHealthComponent healthComponent;

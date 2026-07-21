@@ -29,20 +29,20 @@ namespace LAB2D.Character.Worker.Task
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
+                ItemData itemData = ItemDataProvider(this.resourceInfo.Id);
                 this.maxProgress = WorkerTaskTimeConfig.ResolveCarryTakeSeconds(itemData);
                 this.Init();
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
+                ItemData itemData = ItemDataProvider(this.resourceInfo.Id);
                 this.maxProgress = WorkerTaskTimeConfig.ResolveCarryPutDownSeconds(itemData);
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 取货
                 Vector3Int pickUpPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
-                ItemMap.Instance.PickUpFromDrop(pickUpPos, this.resourceInfo);
+                ItemMapProvider().PickUpFromDrop(pickUpPos, this.resourceInfo);
                 worker.AddResource(this.resourceInfo);
 
                 // 移除品质光束并记录稀有度（用于放下时重新生成）
@@ -53,7 +53,7 @@ namespace LAB2D.Character.Worker.Task
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryProvider().GetPosByPrePlace(worker));
                 if (this.TargetMap == default)
                 {
-                    LogManager.Instance.Log("仓库没有位置了", LogManager.LogLevelEnum.Error);
+                    LogProvider("仓库没有位置了", LogManager.LogLevelEnum.Error);
                 }
             });
         }
@@ -75,8 +75,8 @@ namespace LAB2D.Character.Worker.Task
             Vector3Int targetPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
 
             // 放下拿起来的东西
-            ItemMap.Instance.AddTile(targetPos, ResourceManager.Instance
-                .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).EnName));
+            ItemMapProvider().AddTile(targetPos, ResourceManager.Instance
+                .GetAsset(ItemDataProvider(this.resourceInfo.Id).EnName));
             worker.SubResource(this.resourceInfo);
             InventoryProvider().AddItemByPrePlace(worker, targetPos);
 

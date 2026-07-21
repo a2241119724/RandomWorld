@@ -37,7 +37,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         /// <inheritdoc/>
         public override void OnUpdate()
         {
-            this.recordTime += Time.deltaTime;
+            this.recordTime += this.Character.DeltaTime;
             if (this.recordTime > DeadTime)
             {
                 int waveIndex = WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveIndex - 1 : 0;

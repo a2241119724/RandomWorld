@@ -27,7 +27,6 @@ namespace LAB2D.Character.Player
         private readonly PlayerDamagePolicy damagePolicy = new PlayerDamagePolicy();
         private readonly PlayerMovementPolicy movementPolicy = new PlayerMovementPolicy();
         private readonly PlayerMovementService movementService = new PlayerMovementService();
-        private readonly IGameTime gameTime = new UnityGameTime();
 
         /// <summary>
         /// 奔跑速度倍率，默认1.6倍

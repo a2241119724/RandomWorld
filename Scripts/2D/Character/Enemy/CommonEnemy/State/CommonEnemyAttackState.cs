@@ -38,7 +38,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         /// <inheritdoc/>
         public override void OnUpdate()
         {
-            this.AttackTime += Time.deltaTime;
+            this.AttackTime += this.Character.DeltaTime;
             ACommonEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as ACommonEnemy.EnemyData;
 
             // 打击目标死亡
@@ -58,7 +58,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             if (this.Character.SenseNearby(this.Character.Target.transform))
             {
                 // animator.SetBool("isAttack", true);
-                this.recordTime += Time.deltaTime;
+                this.recordTime += this.Character.DeltaTime;
 
                 // 攻击间隔时间
                 if (this.recordTime > AttackInterval)
