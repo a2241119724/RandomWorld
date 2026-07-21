@@ -221,6 +221,18 @@ namespace LAB2D.Character.Worker.Task
             = (enemy) => EnemyManager.Instance.Remove(enemy);
         public static System.Func<bool> EnemyCanCreateProvider { get; set; }
             = () => EnemyManager.Instance.CanCreateEnemy();
+        public static System.Func<int> PlayerCountProvider { get; set; }
+            = () => PlayerManager.Instance.Count();
+        public static System.Func<int, Character> PlayerGetProvider { get; set; }
+            = (i) => PlayerManager.Instance.Get(i);
+        public static System.Func<int> WorkerCountProvider { get; set; }
+            = () => WorkerManager.Instance.Count();
+        public static System.Func<int, Character> WorkerGetProvider { get; set; }
+            = (i) => WorkerManager.Instance.Get(i);
+        public static System.Action<AEnemy, Character, int> EnemyDefeatedProvider { get; set; }
+            = (enemy, attacker, xp) => GameplaySessionStats.Instance.RecordEnemyDefeated(enemy, attacker, xp);
+        public static System.Func<int> WaveIndexProvider { get; set; }
+            = () => WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveIndex - 1 : 0;
 
         /// <summary>
         /// 任务ID

@@ -32,25 +32,25 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             if (this.Character.CharacterDataLAB.Weapon != null)
             {
                 // 感知到周围有活着的玩家，进入追踪状态
-                int count = PlayerManager.Instance.Count();
+                int count = AWorkerTask.PlayerCountProvider();
                 for (int i = 0; i < count; i++)
                 {
-                    if (this.Character.SenseNearby(PlayerManager.Instance.Get(i).transform))
+                    if (this.Character.SenseNearby(AWorkerTask.PlayerGetProvider(i).transform))
                     {
                         this.Character.Manager.ChangeState(TypeEnum.Attack);
-                        this.Character.Target = PlayerManager.Instance.Get(i);
+                        this.Character.Target = AWorkerTask.PlayerGetProvider(i);
                         return;
                     }
                 }
 
                 // 感知到周围有活着的Worker，进入追踪状态
-                count = WorkerManager.Instance.Count();
+                count = AWorkerTask.WorkerCountProvider();
                 for (int i = 0; i < count; i++)
                 {
-                    if (this.Character.SenseNearby(WorkerManager.Instance.Get(i).transform))
+                    if (this.Character.SenseNearby(AWorkerTask.WorkerGetProvider(i).transform))
                     {
                         this.Character.Manager.ChangeState(TypeEnum.Attack);
-                        this.Character.Target = WorkerManager.Instance.Get(i);
+                        this.Character.Target = AWorkerTask.WorkerGetProvider(i);
                         return;
                     }
                 }

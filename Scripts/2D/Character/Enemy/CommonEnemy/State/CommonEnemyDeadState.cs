@@ -27,7 +27,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             this.Character.transform.GetComponent<Collider2D>().enabled = false;
             this.Character.LastAttacker.AddExperienceValue(5); // 增加经验值
             // experienceReward=0：经验值已通过 AddExperienceValue -> RecordExperienceGained 记录，避免重复统计
-            GameplaySessionStats.Instance.RecordEnemyDefeated(this.Character, this.Character.LastAttacker, 0);
+            AWorkerTask.EnemyDefeatedProvider((AEnemy)this.Character, this.Character.LastAttacker, 0);
 
             // 播放死亡动画
             // animator.applyRootMotion = true;
@@ -40,7 +40,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             this.recordTime += this.Character.DeltaTime;
             if (this.recordTime > DeadTime)
             {
-                int waveIndex = WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveIndex - 1 : 0;
+                int waveIndex = AWorkerTask.WaveIndexProvider();
                 AWorkerTask.EnemyLootProvider().TryDropLoot(this.Character.transform.position, System.Math.Max(0, waveIndex));
 
                 // Object.Destroy(character.gameObject); // Destroy不会立即销毁,下一帧销毁
