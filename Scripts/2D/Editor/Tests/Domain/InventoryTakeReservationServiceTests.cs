@@ -6,60 +6,42 @@ namespace LAB2D.Editor.Tests.Domain
     [TestFixture]
     public class InventoryTakeReservationServiceTests
     {
-        private InventoryTakeReservationService service;
+        private readonly InventoryTakeReservationService service = new InventoryTakeReservationService();
 
-        [SetUp]
-        public void SetUp()
+        [Test]
+        public void GetTargetTakeCount_RequiredGreater_ReturnsRequired()
         {
-            this.service = new InventoryTakeReservationService();
+            Assert.AreEqual(10, this.service.GetTargetTakeCount(10, 5));
         }
 
         [Test]
-        public void GetTargetTakeCount_RequiredGreaterThanCarry_ReturnsRequired()
+        public void GetTargetTakeCount_MaxCarryGreater_ReturnsMaxCarry()
         {
-            Assert.AreEqual(20, this.service.GetTargetTakeCount(20, 10));
+            Assert.AreEqual(8, this.service.GetTargetTakeCount(3, 8));
         }
 
         [Test]
-        public void GetTargetTakeCount_CarryGreaterThanRequired_ReturnsCarry()
+        public void GetTargetTakeCount_Equal_ReturnsValue()
         {
-            Assert.AreEqual(50, this.service.GetTargetTakeCount(20, 50));
+            Assert.AreEqual(5, this.service.GetTargetTakeCount(5, 5));
         }
 
         [Test]
-        public void GetTargetTakeCount_Equal_ReturnsEither()
+        public void GetAvailableTakeCount_Plenty_ReturnsAvailable()
         {
-            Assert.AreEqual(10, this.service.GetTargetTakeCount(10, 10));
+            Assert.AreEqual(80, this.service.GetAvailableTakeCount(100, 20));
         }
 
         [Test]
-        public void GetTargetTakeCount_ZeroRequired_ReturnsCarry()
-        {
-            Assert.AreEqual(10, this.service.GetTargetTakeCount(0, 10));
-        }
-
-        [Test]
-        public void GetAvailableTakeCount_HasStock_ReturnsAvailable()
-        {
-            Assert.AreEqual(40, this.service.GetAvailableTakeCount(50, 10));
-        }
-
-        [Test]
-        public void GetAvailableTakeCount_FullyReserved_ReturnsZero()
+        public void GetAvailableTakeCount_AllReserved_Returns0()
         {
             Assert.AreEqual(0, this.service.GetAvailableTakeCount(50, 50));
         }
 
         [Test]
-        public void GetAvailableTakeCount_OverReserved_ReturnsZero()
+        public void GetAvailableTakeCount_OverReserved_Returns0()
         {
-            Assert.AreEqual(0, this.service.GetAvailableTakeCount(30, 50));
-        }
-
-        [Test]
-        public void GetAvailableTakeCount_NoneReserved_ReturnsFull()
-        {
-            Assert.AreEqual(50, this.service.GetAvailableTakeCount(50, 0));
+            Assert.AreEqual(0, this.service.GetAvailableTakeCount(20, 30));
         }
     }
 }

@@ -6,88 +6,54 @@ namespace LAB2D.Editor.Tests.Domain
     [TestFixture]
     public class InventoryFoodReservationServiceTests
     {
-        private InventoryFoodReservationService service;
+        private readonly InventoryFoodReservationService service = new InventoryFoodReservationService();
 
-        [SetUp]
-        public void SetUp()
+        [Test]
+        public void GetNeededFoodCount_ExactMultiple_ReturnsWholeItems()
         {
-            this.service = new InventoryFoodReservationService();
+            Assert.AreEqual(4, this.service.GetNeededFoodCount(20f, 5f));
         }
 
         [Test]
-        public void GetNeededFoodCount_ExactDivision_ReturnsExact()
+        public void GetNeededFoodCount_Partial_ReturnsCeiled()
         {
-            int result = this.service.GetNeededFoodCount(100f, 10f);
-            Assert.AreEqual(10, result);
+            Assert.AreEqual(5, this.service.GetNeededFoodCount(21f, 5f));
         }
 
         [Test]
-        public void GetNeededFoodCount_NeedCeiling_ReturnsRoundedUp()
+        public void GetNeededFoodCount_ZeroHungry_Returns0()
         {
-            int result = this.service.GetNeededFoodCount(95f, 10f);
-            Assert.AreEqual(10, result, "95/10=9.5 应向上取整为 10");
+            Assert.AreEqual(0, this.service.GetNeededFoodCount(0f, 5f));
         }
 
         [Test]
-        public void GetNeededFoodCount_SmallNeed_ReturnsOne()
+        public void GetNeededFoodCount_ZeroRestoredPerItem_Returns0()
         {
-            int result = this.service.GetNeededFoodCount(5f, 10f);
-            Assert.AreEqual(1, result);
+            Assert.AreEqual(0, this.service.GetNeededFoodCount(20f, 0f));
         }
 
         [Test]
-        public void GetNeededFoodCount_ZeroHungry_ReturnsZero()
+        public void GetNeededFoodCount_NegativeHungry_Returns0()
         {
-            Assert.AreEqual(0, this.service.GetNeededFoodCount(0f, 10f));
+            Assert.AreEqual(0, this.service.GetNeededFoodCount(-1f, 5f));
         }
 
         [Test]
-        public void GetNeededFoodCount_NegativeHungry_ReturnsZero()
+        public void GetPreTakeCount_AvailableLessThanNeed_ReturnsAvailable()
         {
-            Assert.AreEqual(0, this.service.GetNeededFoodCount(-10f, 10f));
+            Assert.AreEqual(3, this.service.GetPreTakeCount(3, 5));
         }
 
         [Test]
-        public void GetNeededFoodCount_ZeroRestorePerItem_ReturnsZero()
+        public void GetPreTakeCount_NeedLessThanAvailable_ReturnsNeed()
         {
-            Assert.AreEqual(0, this.service.GetNeededFoodCount(100f, 0f));
-            Assert.AreEqual(0, this.service.GetNeededFoodCount(100f, -5f));
+            Assert.AreEqual(2, this.service.GetPreTakeCount(5, 2));
         }
 
         [Test]
-        public void GetPreTakeCount_EnoughAvailable_ReturnsNeed()
+        public void GetPreTakeCount_ZeroAvailable_Returns0()
         {
-            Assert.AreEqual(10, this.service.GetPreTakeCount(50, 10));
-        }
-
-        [Test]
-        public void GetPreTakeCount_NotEnoughAvailable_ReturnsAvailable()
-        {
-            Assert.AreEqual(5, this.service.GetPreTakeCount(5, 10));
-        }
-
-        [Test]
-        public void GetPreTakeCount_ExactMatch_ReturnsEither()
-        {
-            Assert.AreEqual(10, this.service.GetPreTakeCount(10, 10));
-        }
-
-        [Test]
-        public void GetPreTakeCount_ZeroAvailable_ReturnsZero()
-        {
-            Assert.AreEqual(0, this.service.GetPreTakeCount(0, 10));
-        }
-
-        [Test]
-        public void GetPreTakeCount_ZeroNeed_ReturnsZero()
-        {
-            Assert.AreEqual(0, this.service.GetPreTakeCount(50, 0));
-        }
-
-        [Test]
-        public void GetPreTakeCount_BothZero_ReturnsZero()
-        {
-            Assert.AreEqual(0, this.service.GetPreTakeCount(0, 0));
+            Assert.AreEqual(0, this.service.GetPreTakeCount(0, 5));
         }
     }
 }

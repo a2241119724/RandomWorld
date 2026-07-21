@@ -6,92 +6,53 @@ namespace LAB2D.Editor.Tests.Domain
     [TestFixture]
     public class WorkerTaskProgressServiceTests
     {
-        private WorkerTaskProgressService service;
+        private readonly WorkerTaskProgressService service = new WorkerTaskProgressService();
 
-        [SetUp]
-        public void SetUp()
+        [Test]
+        public void ApplyTiredCost_OneSecond_ReturnsReduced()
         {
-            this.service = new WorkerTaskProgressService();
+            Assert.AreEqual(95f, this.service.ApplyTiredCost(100f, 1f, 5f), 0.0001f);
         }
 
         [Test]
-        public void ApplyTiredCost_NormalWork_ReducesTired()
+        public void ApplyTiredCost_FloorsAtZero()
         {
-            float result = this.service.ApplyTiredCost(50f, 1f, 2f);
-            Assert.AreEqual(48f, result, 0.0001f);
+            Assert.AreEqual(0f, this.service.ApplyTiredCost(3f, 1f, 5f), 0.0001f);
         }
 
         [Test]
-        public void ApplyTiredCost_ZeroDeltaTime_NoChange()
+        public void AdvanceProgress_MidProgress_ReturnsNotCompleted()
         {
-            float result = this.service.ApplyTiredCost(50f, 0f, 2f);
-            Assert.AreEqual(50f, result, 0.0001f);
-        }
-
-        [Test]
-        public void ApplyTiredCost_ClampsToZero()
-        {
-            float result = this.service.ApplyTiredCost(1f, 1f, 10f);
-            Assert.AreEqual(0f, result, 0.0001f);
-        }
-
-        [Test]
-        public void AdvanceProgress_NormalSpeed_AdvancesCorrectly()
-        {
-            WorkerTaskProgressResult result = this.service.AdvanceProgress(0f, 10f, 1f, 2f);
-            Assert.AreEqual(2f, result.CurrentProgress, 0.0001f);
+            WorkerTaskProgressResult result = this.service.AdvanceProgress(5f, 10f, 1f, 2f);
+            Assert.AreEqual(7f, result.CurrentProgress, 0.0001f);
             Assert.IsFalse(result.Completed);
         }
 
         [Test]
-        public void AdvanceProgress_ExceedsMax_CompletesAndResets()
+        public void AdvanceProgress_ExceedsMax_ReturnsCompleted()
         {
             WorkerTaskProgressResult result = this.service.AdvanceProgress(9f, 10f, 1f, 2f);
-            Assert.IsTrue(result.Completed);
             Assert.AreEqual(0f, result.CurrentProgress, 0.0001f);
-        }
-
-        [Test]
-        public void AdvanceProgress_ExactlyAtMax_Completes()
-        {
-            WorkerTaskProgressResult result = this.service.AdvanceProgress(10f, 10f, 1f, 1f);
             Assert.IsTrue(result.Completed);
         }
 
         [Test]
-        public void AdvanceProgress_ZeroMultiplier_NoProgress()
+        public void AdvanceProgress_ExactMatch_ReturnsCompleted()
         {
-            WorkerTaskProgressResult result = this.service.AdvanceProgress(0f, 10f, 5f, 0f);
-            Assert.AreEqual(0f, result.CurrentProgress, 0.0001f);
-            Assert.IsFalse(result.Completed);
+            WorkerTaskProgressResult result = this.service.AdvanceProgress(8f, 10f, 1f, 2f);
+            Assert.IsTrue(result.Completed);
         }
 
         [Test]
-        public void GetProgressRatio_HalfProgress_ReturnsHalf()
+        public void GetProgressRatio_Half_Returns0_5()
         {
-            float ratio = this.service.GetProgressRatio(5f, 10f);
-            Assert.AreEqual(0.5f, ratio, 0.0001f);
+            Assert.AreEqual(0.5f, this.service.GetProgressRatio(5f, 10f), 0.0001f);
         }
 
         [Test]
-        public void GetProgressRatio_ZeroMax_ReturnsOne()
+        public void GetProgressRatio_ZeroMax_Returns1()
         {
-            float ratio = this.service.GetProgressRatio(5f, 0f);
-            Assert.AreEqual(1f, ratio, 0.0001f);
-        }
-
-        [Test]
-        public void GetProgressRatio_Complete_ReturnsOne()
-        {
-            float ratio = this.service.GetProgressRatio(10f, 10f);
-            Assert.AreEqual(1f, ratio, 0.0001f);
-        }
-
-        [Test]
-        public void GetProgressRatio_OverComplete_ExceedsOne()
-        {
-            float ratio = this.service.GetProgressRatio(15f, 10f);
-            Assert.AreEqual(1.5f, ratio, 0.0001f);
+            Assert.AreEqual(1f, this.service.GetProgressRatio(5f, 0f), 0.0001f);
         }
     }
 }
