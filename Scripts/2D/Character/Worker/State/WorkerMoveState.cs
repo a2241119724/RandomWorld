@@ -70,7 +70,7 @@ namespace LAB2D.Character.Worker.State
 
             if (Time.frameCount % 60 == 0)
             {
-                Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
+                Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
                 this.Character.WorkerStateText.text = this.builder.Append(this.preString)
                     .Append("Target: ")
                     .Append(this.Character.Seek.TargetMap.x)

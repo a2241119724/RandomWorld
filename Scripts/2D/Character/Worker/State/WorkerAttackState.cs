@@ -33,8 +33,8 @@ namespace LAB2D.Character.Worker.State
             if (this.Character.Weapon == null && workerData.Weapon != null)
             {
                 // 实例化武器
-                string name = ItemDataManager.Instance.GetById(workerData.Weapon.Id).EnName;
-                this.Character.Weapon = ResourceManager.Instance.Instantiate(name, false);
+                string name = AWorkerTask.ItemDataProvider(workerData.Weapon.Id).EnName;
+                this.Character.Weapon = AWorkerTask.ResourceInstantiateProvider(name, false);
                 if (this.Character.Weapon == null)
                 {
                     LogManager.Instance.Log("武器实例化错误!", LogManager.LogLevelEnum.Error);

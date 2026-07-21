@@ -209,6 +209,12 @@ namespace LAB2D.Character.Worker.Task
             = (pos) => BuildMap.Instance.SetComplete(pos);
         public static System.Func<UnityEngine.Vector3, UnityEngine.Vector3Int> TileMapWorldToMapProvider { get; set; }
             = (pos) => TileMap.Instance.WorldPosToMapPos(pos);
+        public static System.Func<UnityEngine.Vector3Int, UnityEngine.Vector3Int> GenCanReachPosProvider { get; set; }
+            = (pos) => TileMap.Instance.GenCanReachPos(pos);
+        public static System.Func<string, bool, UnityEngine.GameObject> ResourceInstantiateProvider { get; set; }
+            = (name, active) => ResourceManager.Instance.Instantiate(name, active);
+        public static System.Action<AWorker> FurnitureBedProvider { get; set; }
+            = (worker) => FurnitureManager.Instance.RemoveWorkerFromBed(worker);
 
         /// <summary>
         /// 任务ID

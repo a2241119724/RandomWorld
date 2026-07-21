@@ -32,8 +32,8 @@ namespace LAB2D.Character.Worker.State
             // this.isOne = true;
 
             // 没有任务
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
-            this.targetMap = TileMap.Instance.GenCanReachPos(posMap);
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+            this.targetMap = AWorkerTask.GenCanReachPosProvider(posMap);
             if (workerData.Task != null)
             {
                 // 有任务
@@ -46,7 +46,7 @@ namespace LAB2D.Character.Worker.State
                     Vector3Int temp = new (this.targetMap.x + pos.Y, this.targetMap.y + pos.X, 0);
                     if (ASeek.IsCanReach(temp))
                     {
-                        Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(temp);
+                        Vector3 worldPos = AWorkerTask.TileMapPositionProvider(temp);
                         float dx = worldPos.x - this.Character.transform.position.x;
                         float dy = worldPos.y - this.Character.transform.position.y;
                         float distance = (dx * dx) + (dy * dy);
@@ -73,7 +73,7 @@ namespace LAB2D.Character.Worker.State
                 ++this.seekTimes;
                 if (this.seekTimes % WorkerTaskTimeConfig.ExerciseSeekThreshold == 0)
                 {
-                    WorkerTaskManager.Instance.AddTask(
+                    AWorkerTask.TaskAddProvider(
                         new WorkerExerciseTask.ExerciseTaskBuilder()
                         .SetTarget(this.targetMap)
                         .SetWorker(this.Character)
