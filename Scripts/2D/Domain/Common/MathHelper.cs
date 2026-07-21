@@ -69,5 +69,23 @@ namespace LAB2D.Domain.Common
         {
             return interval < 0.1f ? 0.1f : interval;
         }
+
+        /// <summary>三参数 Clamp：将值限制在 [min, max] 范围内。</summary>
+        public static float Clamp(float value, float min, float max)
+        {
+            if (value < min) return min;
+            if (value > max) return max;
+            return value;
+        }
+
+        /// <summary>Approximately：比较两浮点数是否在极小误差范围内相等。</summary>
+        public static bool Approximately(float a, float b)
+        {
+            return a - b < 1E-06f && b - a < 1E-06f;
+        }
+
+        public const float PI = 3.14159274f;
+        public const float Deg2Rad = PI / 180f;
+        public const float Rad2Deg = 180f / PI;
     }
 }

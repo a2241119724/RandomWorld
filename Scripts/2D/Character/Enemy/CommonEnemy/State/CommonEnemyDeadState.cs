@@ -41,7 +41,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             if (this.recordTime > DeadTime)
             {
                 int waveIndex = WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveIndex - 1 : 0;
-                EnemyLootManager.Instance.TryDropLoot(this.Character.transform.position, Mathf.Max(0, waveIndex));
+                EnemyLootManager.Instance.TryDropLoot(this.Character.transform.position, System.Math.Max(0, waveIndex));
 
                 // Object.Destroy(character.gameObject); // Destroy不会立即销毁,下一帧销毁
                 PhotonNetwork.Destroy(this.Character.gameObject); // Destroy不会立即销毁,下一帧销毁

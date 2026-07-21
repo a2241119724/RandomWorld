@@ -28,6 +28,15 @@ namespace LAB2D.Character.Player
         private readonly PlayerMovementPolicy movementPolicy = new PlayerMovementPolicy();
         private readonly PlayerMovementService movementService = new PlayerMovementService();
 
+        // --- 可替换的 Provider 委托（默认指向 MonoBehaviour 单例，测试可覆盖） ---
+        internal static Func<bool> IsRespawningProvider { get; set; } = () => DeathPenaltyManager.Instance.IsRespawning;
+        internal static Action UpdateDeathScreenProvider { get; set; } = () => DeathPenaltyManager.Instance.UpdateDeathScreen();
+        internal static Func<Player, bool> TryCompleteRespawnProvider { get; set; } = (p) => DeathPenaltyManager.Instance.TryCompleteRespawn(p);
+        internal static Action<Player> HandlePlayerDeathProvider { get; set; } = (p) => DeathPenaltyManager.Instance.HandlePlayerDeath(p);
+        internal static Func<Player, float, float> WeatherMoveSpeedProvider { get; set; } = (p, def) => WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(p, def);
+        internal static Func<Player, float, float> WaveMoveSpeedProvider { get; set; } = (p, def) => WaveBossRewardManager.Instance.GetAdjustedPlayerMoveSpeed(p, def);
+        internal static Func<float> ExperienceMultiplierProvider { get; set; } = () => ComboBonusManager.Instance.ExperienceMultiplier;
+
         /// <summary>
         /// 奔跑速度倍率，默认1.6倍
         /// </summary>
@@ -139,14 +148,14 @@ namespace LAB2D.Character.Player
         public void Update()
         {
             // 复活等待期间：显示倒计时，阻止所有操作
-            if (DeathPenaltyManager.Instance.IsRespawning)
+            if (IsRespawningProvider())
             {
-                DeathPenaltyManager.Instance.UpdateDeathScreen();
+                UpdateDeathScreenProvider();
                 return;
             }
 
             // 计时器刚到期：完成复活（移动到随机位置，恢复 HP/MP，隐藏死亡界面）
-            if (DeathPenaltyManager.Instance.TryCompleteRespawn(this))
+            if (TryCompleteRespawnProvider(this))
             {
                 this.RefreshUI();
             }
@@ -166,7 +175,7 @@ namespace LAB2D.Character.Player
             }
 
             // 复活期间阻止移动
-            if (!DeathPenaltyManager.Instance.IsRespawning)
+            if (!IsRespawningProvider())
             {
                 this.Move();
             }
@@ -198,7 +207,7 @@ namespace LAB2D.Character.Player
         {
             if (experience > 0)
             {
-                experience = MathHelper.RoundToInt(experience * ComboBonusManager.Instance.ExperienceMultiplier);
+                experience = MathHelper.RoundToInt(experience * ExperienceMultiplierProvider());
             }
 
             base.AddExperienceValue(experience);
@@ -220,7 +229,7 @@ namespace LAB2D.Character.Player
                 this.CharacterDataLAB.CurExperience,
                 this.CharacterDataLAB.MaxExperience,
                 this.lastDamageTime,
-                DeathPenaltyManager.Instance.IsRespawning);
+                IsRespawningProvider());
 
             CharacterRuntimeState newState = this.healthComponent.ApplyHealingToState(state, hp);
             this.CharacterDataLAB.Hp = newState.Hp;
@@ -239,7 +248,7 @@ namespace LAB2D.Character.Player
 
             if (this.damagePolicy.ShouldIgnoreDamage(
                 hp,
-                DeathPenaltyManager.Instance.IsRespawning,
+                IsRespawningProvider(),
                 this.gameTime.Time,
                 this.lastDamageTime,
                 this.invincibilityDuration))
@@ -256,7 +265,7 @@ namespace LAB2D.Character.Player
                 this.CharacterDataLAB.CurExperience,
                 this.CharacterDataLAB.MaxExperience,
                 this.lastDamageTime,
-                DeathPenaltyManager.Instance.IsRespawning);
+                IsRespawningProvider());
 
             CharacterHealthDamageResult damageResult = this.healthComponent.ApplyDamageToState(
                 state,
@@ -389,7 +398,7 @@ namespace LAB2D.Character.Player
             // 暂时切换 Player 层以躲避敌人
             this.gameObject.layer = LayerMask.NameToLayer("Default");
 
-            DeathPenaltyManager.Instance.HandlePlayerDeath(this);
+            HandlePlayerDeathProvider(this);
 
             // 自动采集会话结算数据（F011：补齐结算系统缺失的自动触发链路）
             SessionResultAutoTrigger.NotifyPlayerDeath();
@@ -432,9 +441,9 @@ namespace LAB2D.Character.Player
                 this.direction.x = command.Direction.X;
                 this.direction.y = command.Direction.Y;
 
-                float weatherMultiplier = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this, 1.0f);
+                float weatherMultiplier = WeatherMoveSpeedProvider(this, 1.0f);
                 // A004：波间奖励移动强化在天气倍率之后应用，避免覆盖天气玩法的减速/增益。
-                float waveMultiplier = WaveBossRewardManager.Instance.GetAdjustedPlayerMoveSpeed(this, 1.0f);
+                float waveMultiplier = WaveMoveSpeedProvider(this, 1.0f);
                 PlayerMoveResult moveResult = this.movementService.CalculateMovement(
                     this.MoveSpeed,
                     this.runSpeedMultiplier,

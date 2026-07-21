@@ -70,7 +70,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                 this.recordTime = 0.0f;
             }
 
-            Vector3 direction = new (Mathf.Sin(this.rotationAngle), Mathf.Cos(this.rotationAngle), 0);
+            Vector3 direction = new ((float)System.Math.Sin(this.rotationAngle), (float)System.Math.Cos(this.rotationAngle), 0);
             this.Character.RotateTo(direction);
 
             // 先转再移动

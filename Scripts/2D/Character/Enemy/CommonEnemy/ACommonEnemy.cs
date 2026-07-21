@@ -70,7 +70,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
 
             // 由于玩家顶着敌人会使敌人z不为0
             Vector3 pos = this.transform.position;
-            if (Mathf.Abs(pos.z) > 0.001f)
+            if (System.Math.Abs(pos.z) > 0.001f)
             {
                 pos.z = 0;
                 this.transform.position = pos;
