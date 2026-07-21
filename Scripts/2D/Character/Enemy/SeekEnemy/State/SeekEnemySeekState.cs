@@ -16,8 +16,8 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         {
             base.OnEnter();
             this.Character.Target = null;
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
-            this.targetMap = TileMap.Instance.GenCanReachPos(posMap);
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+            this.targetMap = AWorkerTask.GenCanReachPosProvider(posMap);
             this.Character.Seek.Seek(this.targetMap);
         }
 

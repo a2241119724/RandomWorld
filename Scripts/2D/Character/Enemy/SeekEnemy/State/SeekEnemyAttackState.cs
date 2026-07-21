@@ -30,8 +30,8 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             if (this.Character.Weapon == null && this.Character.CharacterDataLAB.Weapon != null)
             {
                 // 实例化武器
-                string name = ItemDataManager.Instance.GetById(this.Character.CharacterDataLAB.Weapon.Id).EnName;
-                this.Character.Weapon = ResourceManager.Instance.Instantiate(name, false);
+                string name = AWorkerTask.ItemDataProvider(this.Character.CharacterDataLAB.Weapon.Id).EnName;
+                this.Character.Weapon = AWorkerTask.ResourceInstantiateProvider(name, false);
                 if (this.Character.Weapon == null)
                 {
                     LogManager.Instance.Log("武器实例化错误!", LogManager.LogLevelEnum.Error);

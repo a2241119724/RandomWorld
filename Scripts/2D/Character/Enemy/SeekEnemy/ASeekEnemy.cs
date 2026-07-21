@@ -48,7 +48,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         public override void Awake()
         {
             base.Awake();
-            this.CharacterDataLAB.Weapon = (AWeapon)ItemInstanceFactory.Instance.GetBackpackItemByName("CustomSword");
+            this.CharacterDataLAB.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider("CustomSword");
             this.Seek = new AStar(this);
             this.Manager = new SeekEnemyStateManager<ICharacterState, ASeekEnemyState.TypeEnum, ASeekEnemy>(this);
         }
@@ -102,7 +102,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
             if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
             {
-                EnemyManager.Instance.Remove(this);
+                AWorkerTask.EnemyRemoveProvider(this);
             }
 
             this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Dead); // 进入死亡状态

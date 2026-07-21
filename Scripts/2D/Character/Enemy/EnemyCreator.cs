@@ -19,7 +19,7 @@ namespace LAB2D.Character.Enemy
         /// <returns>实例化对象</returns>
         protected override GameObject DoCreate(Vector3 worldPos, string name, string layer)
         {
-            if (!EnemyManager.Instance.CanCreateEnemy())
+            if (!AWorkerTask.EnemyCanCreateProvider())
             {
                 return null;
             }

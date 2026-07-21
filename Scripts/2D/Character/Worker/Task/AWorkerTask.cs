@@ -215,6 +215,12 @@ namespace LAB2D.Character.Worker.Task
             = (name, active) => ResourceManager.Instance.Instantiate(name, active);
         public static System.Action<AWorker> FurnitureBedProvider { get; set; }
             = (worker) => FurnitureManager.Instance.RemoveWorkerFromBed(worker);
+        public static System.Func<AttackEffectManager.EffectTypeEnum, float, UnityEngine.ParticleSystem> AttackEffectProvider { get; set; }
+            = (type, rad) => AttackEffectManager.Instance.GetEffect(type, rad);
+        public static System.Action<AEnemy> EnemyRemoveProvider { get; set; }
+            = (enemy) => EnemyManager.Instance.Remove(enemy);
+        public static System.Func<bool> EnemyCanCreateProvider { get; set; }
+            = () => EnemyManager.Instance.CanCreateEnemy();
 
         /// <summary>
         /// 任务ID
