@@ -147,7 +147,7 @@ namespace LAB2D.Character
                     target.Invoke(nameof(this.ResetColor), 0.2f);
                 });
 
-            EventBus.Instance.Publish(new CharacterDamagedEvent
+            EventBusPublishProvider(new CharacterDamagedEvent
             {
                 TargetId = this.CharacterDataLAB.Id,
                 AttackerId = attacker?.CharacterDataLAB?.Id ?? 0,
@@ -172,6 +172,9 @@ namespace LAB2D.Character
         /// </summary>
         public static System.Action<string> LevelUpTipProvider { get; set; }
             = (tip) => GlobalInit.Instance.ShowTip(tip);
+
+        internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
+            = (e) => EventBus.Instance.PublishInternal(e);
 
         /// <inheritdoc/>
         public override string ToString()

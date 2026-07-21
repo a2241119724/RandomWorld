@@ -42,7 +42,7 @@ namespace LAB2D.Character
         {
             Vector3 worldPos = new Vector3(e.WorldPosX, e.WorldPosY, 0f);
 
-            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.DAMAGE);
+            GameObject g = AWorkerTask.ResourceInstantiateProvider(PrefabConstant.DAMAGE, true);
             if (g != null)
             {
                 g.GetComponent<DamageUI>().SetDamage(e.Damage, System.Convert.ToInt32(e.IsCritical));

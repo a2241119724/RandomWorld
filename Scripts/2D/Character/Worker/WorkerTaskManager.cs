@@ -46,6 +46,9 @@ namespace LAB2D.Character.Worker
         public static System.Func<List<AWorker>> WorkerListProvider { get; set; }
             = () => WorkerManager.Instance.Characters;
 
+        internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
+            = (e) => EventBus.Instance.PublishInternal(e);
+
         /// <summary>
         /// 记录所有采摘任务的位置
         /// </summary>
@@ -93,7 +96,7 @@ namespace LAB2D.Character.Worker
                             this.taskQueue.MarkRunning(closedTask);
                         }
 
-                        EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+                        EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
                         break;
                     }
                 }
@@ -182,7 +185,7 @@ namespace LAB2D.Character.Worker
 
             this.taskQueue.Add(task, prior);
             this.taskTree.Insert(Vector3IntLAB.ToVector2ShortLAB(taskPosMap));
-            EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+            EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }
 
         /// <summary>
@@ -200,7 +203,7 @@ namespace LAB2D.Character.Worker
                 this.taskQueue.Remove(task);
             }
 
-            EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+            EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }
 
         /// <summary>
@@ -215,7 +218,7 @@ namespace LAB2D.Character.Worker
             }
 
             this.taskQueue.MarkIdle(task);
-            EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+            EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }
 
         /// <summary>
@@ -302,7 +305,7 @@ namespace LAB2D.Character.Worker
                 {
                     this.taskQueue.Remove(hungryTask);
                     this.hungryTasks.Remove(hungryTask);
-                    EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+                    EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
                     return;
                 }
             }
@@ -327,7 +330,7 @@ namespace LAB2D.Character.Worker
             if (removed)
             {
                 this.GatherPos.Remove(posMap);
-                EventBus.Instance.Publish(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+                EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
             }
         }
     }

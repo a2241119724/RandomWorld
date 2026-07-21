@@ -41,7 +41,6 @@ namespace LAB2D.Character.Player
         internal static Action<Player> PlayerRemoveProvider { get; set; } = (p) => PlayerManager.Instance.Remove(p);
         internal static Action PlayerDeathRecordProvider { get; set; } = () => GameplaySessionStats.Instance.RecordPlayerDeath();
         internal static Action<ABackpackItem> BackpackSaveProvider { get; set; } = (item) => BackpackController.Instance.AddItem(item);
-        internal static Action<IGameEvent> EventBusPublishProvider { get; set; } = (e) => EventBus.Instance.PublishInternal(e);
 
         /// <summary>
         /// 奔跑速度倍率，默认1.6倍

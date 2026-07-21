@@ -100,7 +100,7 @@ namespace LAB2D.Character.Worker
             this.basicAttribute = new Attribute(1.0f, 1.0f, 1.0f, 1.0f, 0.05f, 1.0f, 1.0f, 1.0f);
             this.CharacterDataLAB = new WorkerData();
             this.CharacterDataLAB.Character = this;
-            this.CharacterDataLAB.Weapon = (AWeapon)ItemInstanceFactory.Instance.GetBackpackItemByName("CustomSword");
+            this.CharacterDataLAB.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider("CustomSword");
             this.Manager = new WorkerStateManager<ICharacterState, AWorkerState.TypeEnum, AWorker>(this);
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
@@ -200,7 +200,7 @@ namespace LAB2D.Character.Worker
             string resources = string.Empty;
             foreach (KeyValuePair<int, ResourceInfo> resource in this.resourceInfos)
             {
-                ItemData itemData = ItemDataManager.Instance.GetById(resource.Key);
+                ItemData itemData = AWorkerTask.ItemDataProvider(resource.Key);
                 resources += $"  {itemData.CnName}(id:{resource.Key}) x{resource.Value.Count}\n";
             }
 
@@ -215,7 +215,7 @@ namespace LAB2D.Character.Worker
             string equipmentInfo = string.Empty;
             if (workerData.Weapon != null)
             {
-                equipmentInfo += $"  武器: {ItemDataManager.Instance.GetById(workerData.Weapon.Id).CnName}\n";
+                equipmentInfo += $"  武器: {AWorkerTask.ItemDataProvider(workerData.Weapon.Id).CnName}\n";
             }
 
             Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments = workerData.GetEquipments();
@@ -223,7 +223,7 @@ namespace LAB2D.Character.Worker
             {
                 if (item.Value != null)
                 {
-                    equipmentInfo += $"  {EquipmentLootTool.GetSlotName(item.Key)}: {ItemDataManager.Instance.GetById(item.Value.Id).CnName}\n";
+                    equipmentInfo += $"  {EquipmentLootTool.GetSlotName(item.Key)}: {AWorkerTask.ItemDataProvider(item.Value.Id).CnName}\n";
                 }
             }
 
@@ -273,14 +273,14 @@ namespace LAB2D.Character.Worker
                     continue;
                 }
 
-                Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(
-                TileMap.Instance.WorldPosToMapPos(this.transform.position), 3, true);
+                Vector3Int pos = AWorkerTask.AvailablePositionProvider(
+                AWorkerTask.TileMapWorldToMapProvider(this.transform.position), 3, true);
                 if (pos == default)
                 {
                     continue;
                 }
 
-                ItemMap.Instance.PutDownToDrop(pos, ItemInstanceFactory.Instance.GetBackpackItemById(resource.Key).Tile, resource.Value);
+                AWorkerTask.ItemMapProvider().PutDownToDrop(pos, ItemInstanceFactory.Instance.GetBackpackItemById(resource.Key).Tile, resource.Value);
             }
         }
 

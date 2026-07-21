@@ -21,7 +21,7 @@ namespace LAB2D.Character
                     return null;
                 }
 
-                worldPos = TileMap.Instance.MapPosToWorldPos(TileMap.Instance.GenCanReachPos());
+                worldPos = AWorkerTask.TileMapPositionProvider(AWorkerTask.GenCanReachPosProvider(default));
             }
 
             return this.DoCreate(worldPos, string.Empty, string.Empty);
