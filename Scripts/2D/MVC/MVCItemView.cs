@@ -1,6 +1,7 @@
 namespace LAB2D.MVC
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Item;
     using System;
     using UnityEngine;
@@ -156,7 +157,7 @@ namespace LAB2D.MVC
             this.parent = this.transform.parent;
             if (this.parent == null)
             {
-                LogManager.Instance.Log("parent Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("parent Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }

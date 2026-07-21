@@ -41,6 +41,7 @@ namespace LAB2D.Character.Player
         internal static Action<Player> PlayerRemoveProvider { get; set; } = (p) => PlayerManager.Instance.Remove(p);
         internal static Action PlayerDeathRecordProvider { get; set; } = () => GameplaySessionStats.Instance.RecordPlayerDeath();
         internal static Action<ABackpackItem> BackpackSaveProvider { get; set; } = (item) => BackpackController.Instance.AddItem(item);
+        internal static Action<IGameEvent> EventBusPublishProvider { get; set; } = (e) => EventBus.Instance.PublishInternal(e);
 
         /// <summary>
         /// 奔跑速度倍率，默认1.6倍
@@ -204,7 +205,7 @@ namespace LAB2D.Character.Player
                 return;
             }
 
-            EventBus.Instance.Publish(new PlayerAttackRequestedEvent { EntityId = command.EntityId });
+            EventBusPublishProvider(new PlayerAttackRequestedEvent { EntityId = command.EntityId });
         }
 
         /// <inheritdoc/>
@@ -296,7 +297,7 @@ namespace LAB2D.Character.Player
             this.spriteRenderer.color = Color.red;
             this.Invoke(nameof(this.ResetColor), 0.2f);
 
-            EventBus.Instance.Publish(new CharacterDamagedEvent
+            EventBusPublishProvider(new CharacterDamagedEvent
             {
                 TargetId = this.CharacterDataLAB.Id,
                 AttackerId = attacker?.CharacterDataLAB?.Id ?? 0,
@@ -333,7 +334,7 @@ namespace LAB2D.Character.Player
                 return;
             }
 
-            EventBus.Instance.Publish(new PlayerStatusChangedEvent
+            EventBusPublishProvider(new PlayerStatusChangedEvent
             {
                 Hp = this.CharacterDataLAB.Hp,
                 MaxHp = this.CharacterDataLAB.MaxHp,
@@ -423,7 +424,7 @@ namespace LAB2D.Character.Player
                     slotIndex,
                     out ActivateSkillCommand command))
                 {
-                    EventBus.Instance.Publish(new PlayerSkillActivatedEvent
+                    EventBusPublishProvider(new PlayerSkillActivatedEvent
                     {
                         EntityId = command.EntityId,
                         SlotIndex = command.SlotIndex,

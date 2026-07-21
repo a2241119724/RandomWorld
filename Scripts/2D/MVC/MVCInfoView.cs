@@ -1,6 +1,7 @@
 namespace LAB2D.MVC
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Item;
     using UnityEngine;
     using UnityEngine.UI;
@@ -28,7 +29,7 @@ namespace LAB2D.MVC
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

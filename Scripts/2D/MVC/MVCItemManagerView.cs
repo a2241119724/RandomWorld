@@ -1,6 +1,7 @@
 namespace LAB2D.MVC
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Item;
     using System;
@@ -58,7 +59,7 @@ namespace LAB2D.MVC
             this.content = this.transform.GetComponent<ScrollRect>().content;
             if (this.content == null)
             {
-                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("content Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -97,7 +98,7 @@ namespace LAB2D.MVC
         {
             if (model == null)
             {
-                LogManager.Instance.Log("data is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("data is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -157,7 +158,7 @@ namespace LAB2D.MVC
                 Transform itemTransform = g.transform.Find("Item");
                 if (itemTransform == null)
                 {
-                    LogManager.Instance.Log($"UpdateView: 在 itemBox prefab 中找不到 'Item' 子节点，请检查 prefab 结构", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider($"UpdateView: 在 itemBox prefab 中找不到 'Item' 子节点，请检查 prefab 结构", LogManager.LogLevelEnum.Error);
                     Destroy(g);
                     continue;
                 }
@@ -165,7 +166,7 @@ namespace LAB2D.MVC
                 IV itemView = itemTransform.GetComponent<IV>();
                 if (itemView == null)
                 {
-                    LogManager.Instance.Log($"UpdateView: 'Item' 子节点上缺少 {typeof(IV).Name} 组件，请检查 prefab 结构", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider($"UpdateView: 'Item' 子节点上缺少 {typeof(IV).Name} 组件，请检查 prefab 结构", LogManager.LogLevelEnum.Error);
                     Destroy(g);
                     continue;
                 }

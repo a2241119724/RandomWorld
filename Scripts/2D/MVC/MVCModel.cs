@@ -1,6 +1,7 @@
 namespace LAB2D.MVC
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Data;
     using LAB2D.Item;
     using System.Collections.Generic;
@@ -34,7 +35,7 @@ namespace LAB2D.MVC
         {
             if (this.ItemDict[type] == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -50,7 +51,7 @@ namespace LAB2D.MVC
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -94,7 +95,7 @@ namespace LAB2D.MVC
         {
             if (index1 < 0 || index1 >= this.Count(type) || index2 < 0 || index2 >= this.Count(type))
             {
-                LogManager.Instance.Log("index1 or index2 Not Exist!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("index1 or index2 Not Exist!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -113,7 +114,7 @@ namespace LAB2D.MVC
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -130,7 +131,7 @@ namespace LAB2D.MVC
         {
             if (index < 0 || index >= this.Count(type))
             {
-                LogManager.Instance.Log("index Not Exist!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("index Not Exist!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -162,7 +163,7 @@ namespace LAB2D.MVC
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("item is null!!!", LogManager.LogLevelEnum.Error);
                 return -1;
             }
 

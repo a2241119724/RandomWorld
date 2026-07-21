@@ -2,6 +2,7 @@ namespace LAB2D.Item
 {
     using LAB2D;
     using LAB2D.Character.Worker;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Inventory;
     using LAB2D.Item;
@@ -87,7 +88,7 @@ namespace LAB2D.Item
                 return this.prePlaceResource[worker].First().Key;
             }
 
-            LogManager.Instance.Log("没有预放置资源", LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider("没有预放置资源", LogManager.LogLevelEnum.Error);
             return default;
         }
 
@@ -218,7 +219,7 @@ namespace LAB2D.Item
             }
 
             // 有可能被预放置了
-            LogManager.Instance.Log("仓库满了", LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider("仓库满了", LogManager.LogLevelEnum.Error);
             return false;
         }
 
@@ -365,7 +366,7 @@ namespace LAB2D.Item
         {
             if (!this.prePlaceResource[worker].ContainsKey(posMap))
             {
-                LogManager.Instance.Log("没有预放置资源", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("没有预放置资源", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -399,7 +400,7 @@ namespace LAB2D.Item
                 return this.preTakeResource[worker].First().Key;
             }
 
-            LogManager.Instance.Log("没有预留资源!", LogManager.LogLevelEnum.Warning);
+            AWorkerTask.LogProvider("没有预留资源!", LogManager.LogLevelEnum.Warning);
             return default;
         }
 
@@ -412,7 +413,7 @@ namespace LAB2D.Item
         {
             if (!this.posToResource.ContainsKey(posMap))
             {
-                LogManager.Instance.Log("没有资源，错误", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("没有资源，错误", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -434,7 +435,7 @@ namespace LAB2D.Item
         {
             if (!this.posToResource.ContainsKey(posMap))
             {
-                LogManager.Instance.Log("没有资源，错误", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("没有资源，错误", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -468,7 +469,7 @@ namespace LAB2D.Item
         {
             if (!this.preTakeResource.ContainsKey(worker) || !this.preTakeResource[worker].ContainsKey(posMap))
             {
-                LogManager.Instance.Log("没有预取资源", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("没有预取资源", LogManager.LogLevelEnum.Error);
                 return null;
             }
 

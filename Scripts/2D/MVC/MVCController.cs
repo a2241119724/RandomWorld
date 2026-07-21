@@ -1,6 +1,7 @@
 namespace LAB2D.MVC
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Item;
     using UnityEngine;
     using UnityEngine.UI;
@@ -134,7 +135,7 @@ namespace LAB2D.MVC
         {
             if (this.itemManagerView == null)
             {
-                LogManager.Instance.Log("inventoryView is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("inventoryView is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -170,7 +171,7 @@ namespace LAB2D.MVC
                     btns[index].GetComponent<RoundCorner>().color = new Color(100 / 255.0f, 120 / 255.0f, 150 / 255.0f, 255 / 255.0f);
                     break;
                 default:
-                    LogManager.Instance.Log("没有该类型边框可以修改!!!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider("没有该类型边框可以修改!!!", LogManager.LogLevelEnum.Error);
                     break;
             }
         }
@@ -202,7 +203,7 @@ namespace LAB2D.MVC
         {
             if (this.infoView == null)
             {
-                LogManager.Instance.Log("infoView is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("infoView is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

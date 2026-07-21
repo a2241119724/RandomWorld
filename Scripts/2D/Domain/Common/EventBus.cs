@@ -102,6 +102,20 @@ namespace LAB2D.Domain.Common
             }
         }
 
+        public void PublishInternal(IGameEvent gameEvent)
+        {
+            if (gameEvent == null)
+            {
+                return;
+            }
+
+            Type eventType = gameEvent.GetType();
+            if (this.subscribers.TryGetValue(eventType, out Delegate existing))
+            {
+                existing.DynamicInvoke(gameEvent);
+            }
+        }
+
         /// <summary>
         /// 清除所有订阅（用于场景卸载或测试）。
         /// </summary>
