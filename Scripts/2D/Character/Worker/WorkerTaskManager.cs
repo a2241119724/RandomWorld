@@ -39,6 +39,14 @@ namespace LAB2D.Character.Worker
         public static WorkerTaskManager Instance { get; private set; }
 
         /// <summary>
+        /// Worker 列表提供者 — 获取所有 Worker 用于任务分配。
+        /// 默认实现访问 WorkerManager.Instance.Characters。
+        /// 可替换为测试桩或自定义实现。
+        /// </summary>
+        public static System.Func<List<AWorker>> WorkerListProvider { get; set; }
+            = () => WorkerManager.Instance.Characters;
+
+        /// <summary>
         /// 记录所有采摘任务的位置
         /// </summary>
         public List<Vector3Int> GatherPos { get; private set; }
@@ -53,7 +61,7 @@ namespace LAB2D.Character.Worker
         /// </summary>
         public void Update()
         {
-            List<AWorker> workers = WorkerManager.Instance.Characters;
+            List<AWorker> workers = WorkerListProvider();
             foreach (AWorker worker in workers)
             {
                 if (worker.IsDialoguePaused)
@@ -226,7 +234,7 @@ namespace LAB2D.Character.Worker
         /// <returns>任务分配诊断报告。</returns>
         public WorkerTaskAssignmentReport CreateTaskAssignmentReport()
         {
-            return ColonyCommandCenterTool.BuildAssignmentReport(this.GetTasksAsList(), WorkerManager.Instance.Characters);
+            return ColonyCommandCenterTool.BuildAssignmentReport(this.GetTasksAsList(), WorkerListProvider());
         }
 
         private List<Dictionary<AWorkerTask, bool>> GetTasksAsList()

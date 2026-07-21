@@ -108,6 +108,41 @@ namespace LAB2D.Character.Worker.Task
             = (x, y) => BuildMap.Instance.IsCanReach(new UnityEngine.Vector3Int(x, y, 0));
 
         /// <summary>
+        /// 任务生命周期回调 — 记录任务开始和完成的统计追踪。
+        /// bool 参数：true = 任务开始, false = 任务完成。
+        /// 默认实现访问 WorkerEfficiencyTracker.Instance。
+        /// 可替换为测试桩或自定义实现。
+        /// </summary>
+        public static System.Action<AWorkerTask, AWorker, bool> TaskLifecycleProvider { get; set; }
+            = (task, worker, isStart) =>
+            {
+                if (isStart)
+                {
+                    WorkerEfficiencyTracker.Instance.RecordTaskStarted(worker, task);
+                }
+                else
+                {
+                    WorkerEfficiencyTracker.Instance.RecordTaskCompleted(worker, task);
+                }
+            };
+
+        /// <summary>
+        /// 任务完成处理器 — 从任务队列中移除已完成任务。
+        /// 默认实现访问 WorkerTaskManager.Instance.CompleteTask。
+        /// 可替换为测试桩或自定义实现。
+        /// </summary>
+        public static System.Action<AWorkerTask> TaskCompletionProvider { get; set; }
+            = (task) => WorkerTaskManager.Instance.CompleteTask(task);
+
+        /// <summary>
+        /// 日志提供者 — 任务相关的错误/警告日志输出。
+        /// 默认实现访问 LogManager.Instance。
+        /// 可替换为测试桩（如静默日志）。
+        /// </summary>
+        public static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
+            = (message, level) => LogManager.Instance.Log(message, level);
+
+        /// <summary>
         /// 任务ID
         /// </summary>
         public long TaskId { get; set; }
@@ -176,7 +211,7 @@ namespace LAB2D.Character.Worker.Task
         public virtual void Start(AWorker worker)
         {
             this.curProgress = 0.0f;
-            WorkerEfficiencyTracker.Instance.RecordTaskStarted(worker, this);
+            TaskLifecycleProvider(this, worker, true);
         }
 
         /// <summary>
@@ -217,16 +252,15 @@ namespace LAB2D.Character.Worker.Task
         /// <param name="worker">Worker</param>
         public virtual void GiveUpTask(AWorker worker)
         {
-            LogManager.Instance.Log("放弃任务", LogManager.LogLevelEnum.Warning);
+            LogProvider("放弃任务", LogManager.LogLevelEnum.Warning);
             worker.GiveUpTask();
         }
 
         /// <inheritdoc/>
         public virtual void Finish(AWorker worker)
         {
-            // TODO 仅执行一次
-            WorkerTaskManager.Instance.CompleteTask(this);
-            WorkerEfficiencyTracker.Instance.RecordTaskCompleted(worker, this);
+            TaskCompletionProvider(this);
+            TaskLifecycleProvider(this, worker, false);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             workerData.Task = null;
         }
@@ -262,7 +296,7 @@ namespace LAB2D.Character.Worker.Task
         {
             if (this.stageInit.Count < stage + 1)
             {
-                LogManager.Instance.Log("没有该阶段", LogManager.LogLevelEnum.Error);
+                LogProvider("没有该阶段", LogManager.LogLevelEnum.Error);
                 return;
             }
 
