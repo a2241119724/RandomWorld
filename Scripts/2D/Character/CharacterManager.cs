@@ -143,7 +143,7 @@ namespace LAB2D.Character
         /// <returns>角色</returns>
         public C GetCharacterByPos(Vector3Int posMap)
         {
-            Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(posMap);
+            Vector3 worldPos = AWorkerTask.TileMapPositionProvider(posMap);
             foreach (C character in this.Characters)
             {
                 Vector3 cPos = character.transform.position;

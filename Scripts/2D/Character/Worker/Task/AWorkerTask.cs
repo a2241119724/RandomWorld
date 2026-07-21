@@ -233,6 +233,8 @@ namespace LAB2D.Character.Worker.Task
             = (enemy, attacker, xp) => GameplaySessionStats.Instance.RecordEnemyDefeated(enemy, attacker, xp);
         public static System.Func<int> WaveIndexProvider { get; set; }
             = () => WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveIndex - 1 : 0;
+        public static System.Action<UnityEngine.Vector3, float, bool, bool> FloatingTextProvider { get; set; }
+            = (pos, dmg, crit, combo) => FloatingTextManager.Instance.SpawnDamageText(pos, dmg, crit, combo);
 
         /// <summary>
         /// 任务ID

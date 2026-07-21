@@ -49,7 +49,7 @@ namespace LAB2D.Character
                 g.transform.position = worldPos;
             }
 
-            FloatingTextManager.Instance.SpawnDamageText(worldPos, e.Damage, e.IsCritical, e.IsCombo);
+            AWorkerTask.FloatingTextProvider(worldPos, e.Damage, e.IsCritical, e.IsCombo);
         }
     }
 }

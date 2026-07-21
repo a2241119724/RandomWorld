@@ -176,7 +176,7 @@ namespace LAB2D.Character
         /// <inheritdoc/>
         public override string ToString()
         {
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.transform.position);
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.transform.position);
             return $"{this.GetType().Name}:{this.name}\n" +
                 $"血量: {this.CharacterDataLAB.Hp:F0}/{this.CharacterDataLAB.MaxHp:F0}\n" +
                 $"蓝量: {this.CharacterDataLAB.Mp}/{this.CharacterDataLAB.MaxMp}\n" +
