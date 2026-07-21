@@ -3,6 +3,7 @@ namespace LAB2D.AI.Dialogue.UI
     using LAB2D;
     using LAB2D.AI.Dialogue.LLM;
     using LAB2D.AI.Dialogue.Prompt;
+    using LAB2D.Domain.Common;
     using LAB2D.UI.Panel;
     using LAB2D.UnityAdapter;
     using UnityEngine;
@@ -593,7 +594,7 @@ namespace LAB2D.AI.Dialogue.UI
                     textLayoutElement = textComponent.gameObject.AddComponent<LayoutElement>();
                 }
 
-                float textWidth = Mathf.Max(1f, bubbleWidth - BubbleHorizontalPadding);
+                float textWidth = System.Math.Max(1f, bubbleWidth - BubbleHorizontalPadding);
                 textLayoutElement.minWidth = textWidth;
                 textLayoutElement.preferredWidth = textWidth;
                 textLayoutElement.flexibleWidth = 0f;
@@ -637,7 +638,7 @@ namespace LAB2D.AI.Dialogue.UI
             float preferredTextWidth = string.IsNullOrEmpty(textComponent.text)
                 ? 0f
                 : textComponent.preferredWidth;
-            return Mathf.Clamp(preferredTextWidth + BubbleHorizontalPadding, BubbleMinWidth, this.GetBubbleMaxWidth());
+            return MathHelper.Clamp(preferredTextWidth + BubbleHorizontalPadding, BubbleMinWidth, this.GetBubbleMaxWidth());
         }
 
         private float GetBubbleMaxWidth()
@@ -648,7 +649,7 @@ namespace LAB2D.AI.Dialogue.UI
                 return BubbleMaxWidth;
             }
 
-            return Mathf.Clamp(contentRect.rect.width * 0.72f, 280f, BubbleMaxWidth);
+            return MathHelper.Clamp(contentRect.rect.width * 0.72f, 280f, BubbleMaxWidth);
         }
 
         private void ScrollToLatest()

@@ -29,7 +29,7 @@ namespace LAB2D.Gameplay
                 // 饥饿值自然衰减
                 if (workerData.CurHungry > 0)
                 {
-                    workerData.CurHungry = Mathf.Max(
+                    workerData.CurHungry = System.Math.Max(
                         0.0f,
                         workerData.CurHungry - (deltaTime * WorkerConditionConstant.HungryDecayPerSecond));
                 }
@@ -37,7 +37,7 @@ namespace LAB2D.Gameplay
                 // 疲劳值自然衰减
                 if (workerData.CurTired > 0)
                 {
-                    workerData.CurTired = Mathf.Max(
+                    workerData.CurTired = System.Math.Max(
                         0.0f,
                         workerData.CurTired - (deltaTime * WorkerConditionConstant.TiredDecayPerSecond));
                 }

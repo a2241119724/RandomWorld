@@ -1,6 +1,7 @@
 namespace LAB2D.UnityAdapter
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using UnityEngine;
 
     /// <summary>
@@ -138,7 +139,7 @@ namespace LAB2D.UnityAdapter
                 return false;
             }
 
-            int count = Mathf.Min(menuCount, keyCodes == null ? 0 : keyCodes.Length);
+            int count = System.Math.Min(menuCount, keyCodes == null ? 0 : keyCodes.Length);
             for (int i = 0; i < count; i++)
             {
                 if (Input.GetKeyDown(keyCodes[i]))

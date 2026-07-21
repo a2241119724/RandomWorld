@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Enum;
     using UnityEngine;
     using UnityEngine.UI;
@@ -140,7 +141,7 @@ namespace LAB2D.UI
             if (this.popAnimating)
             {
                 this.popElapsed += Time.deltaTime;
-                float popProgress = Mathf.Clamp01(this.popElapsed / FloatingTextConstant.PopAnimDuration);
+                float popProgress = MathHelper.Clamp01(this.popElapsed / FloatingTextConstant.PopAnimDuration);
 
                 if (popProgress >= 1f)
                 {
@@ -151,7 +152,7 @@ namespace LAB2D.UI
                 else
                 {
                     // 从 1 到 popScale 再回到 1（使用 sin 曲线模拟弹跳）
-                    float scale = 1f + ((this.popScale - 1f) * Mathf.Sin(popProgress * Mathf.PI));
+                    float scale = 1f + ((this.popScale - 1f) * (float)System.Math.Sin(popProgress * MathHelper.PI));
                     this.transform.localScale = new Vector3(scale, scale, 1f);
                 }
             }
@@ -167,7 +168,7 @@ namespace LAB2D.UI
             if (this.elapsedTime >= fadeStartTime && this.elapsedTime < this.lifetime + FloatingTextConstant.FadeOutDuration)
             {
                 float fadeProgress = (this.elapsedTime - fadeStartTime) / FloatingTextConstant.FadeOutDuration;
-                this.canvasGroup.alpha = 1f - Mathf.Clamp01(fadeProgress);
+                this.canvasGroup.alpha = 1f - MathHelper.Clamp01(fadeProgress);
             }
 
             // 生命周期结束，回收

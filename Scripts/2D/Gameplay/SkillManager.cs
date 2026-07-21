@@ -333,7 +333,7 @@ namespace LAB2D.Gameplay
                     // 对敌人施加防御减免
                     float defReduction = finalDamage * enemy.CharacterDataLAB.DEF / 10f;
                     finalDamage -= defReduction;
-                    finalDamage = Mathf.Max(1f, finalDamage);
+                    finalDamage = System.Math.Max(1f, finalDamage);
 
                     // 通过 Character.ReduceHp 走标准伤害管道（含浮动文字、统计等）
                     enemy.ReduceHp(finalDamage, player, false);
@@ -372,7 +372,7 @@ namespace LAB2D.Gameplay
             this.dashRestoreTime = Time.time + SkillConstant.DashInvincibilityDuration;
             this.dashOriginalInvincibility = player.InvincibilityDuration;
             this.dashPlayer = player;
-            player.InvincibilityDuration = Mathf.Max(
+            player.InvincibilityDuration = System.Math.Max(
                 player.InvincibilityDuration, SkillConstant.DashInvincibilityDuration);
         }
 

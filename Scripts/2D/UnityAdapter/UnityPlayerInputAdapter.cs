@@ -63,15 +63,15 @@
             if (Input.GetKey(KeyCode.UpArrow)) vertical += 1f;
             if (Input.GetKey(KeyCode.DownArrow)) vertical -= 1f;
 
-            if (Mathf.Approximately(horizontal, 0f) && Mathf.Approximately(vertical, 0f))
+            if (MathHelper.Approximately(horizontal, 0f) && MathHelper.Approximately(vertical, 0f))
             {
                 return null;
             }
 
             // 限制对角线移动
             GameVector2 direction = new GameVector2(
-                Mathf.Clamp(horizontal, -1f, 1f),
-                Mathf.Clamp(vertical, -1f, 1f));
+                MathHelper.Clamp(horizontal, -1f, 1f),
+                MathHelper.Clamp(vertical, -1f, 1f));
 
             return new PlayerMoveCommand
             {

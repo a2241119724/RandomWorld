@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
     using LAB2D.UnityAdapter;
     using System;
@@ -124,7 +125,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
             if (Time.unscaledTime >= this.nextRefreshRealtime)
             {
-                this.nextRefreshRealtime = Time.unscaledTime + Mathf.Max(0.05f, this.refreshInterval);
+                this.nextRefreshRealtime = Time.unscaledTime + MathHelper.ClampRefreshInterval(this.refreshInterval);
                 this.RefreshAll();
             }
         }
@@ -668,7 +669,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         /// </summary>
         private string BuildStars(int starRating)
         {
-            int stars = Mathf.Clamp(starRating, 0, 5);
+            int stars = MathHelper.Clamp(starRating, 0, 5);
             return new string('★', stars) + new string('☆', 5 - stars);
         }
 
@@ -677,7 +678,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         /// </summary>
         private string FormatDuration(float seconds)
         {
-            int totalSeconds = Mathf.Max(0, Mathf.RoundToInt(seconds));
+            int totalSeconds = System.Math.Max(0, MathHelper.RoundToInt(seconds));
             int minutes = totalSeconds / 60;
             int remainSeconds = totalSeconds % 60;
             return $"{minutes:D2}:{remainSeconds:D2}";

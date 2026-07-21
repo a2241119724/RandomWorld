@@ -2,6 +2,7 @@ namespace LAB2D.UI.Panel.PanelUI
 {
     using LAB2D;
     using LAB2D.Core;
+    using LAB2D.Domain.Common;
     using System.Collections;
     using UnityEngine;
     using UnityEngine.UI;
@@ -108,7 +109,7 @@ namespace LAB2D.UI.Panel.PanelUI
         private void Show()
         {
             this.slider.value = this.curProcess * 1.0f / this.totalProcess;
-            this.percent.text = "当前进度:" + Mathf.RoundToInt(this.slider.value * 100) + "%";
+            this.percent.text = "当前进度:" + MathHelper.RoundToInt(this.slider.value * 100) + "%";
         }
 
         private IEnumerator Complete1()

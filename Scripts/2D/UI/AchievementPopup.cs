@@ -2,6 +2,7 @@ namespace LAB2D.UI
 {
     using LAB2D;
     using LAB2D.Constant;
+    using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
     using System.Collections;
     using UnityEngine;
@@ -160,7 +161,7 @@ namespace LAB2D.UI
             while (elapsed < fadeIn)
             {
                 elapsed += Time.deltaTime;
-                this.canvasGroup.alpha = Mathf.Clamp01(elapsed / fadeIn);
+                this.canvasGroup.alpha = MathHelper.Clamp01(elapsed / fadeIn);
                 yield return null;
             }
 
@@ -175,7 +176,7 @@ namespace LAB2D.UI
             while (elapsed < fadeOut)
             {
                 elapsed += Time.deltaTime;
-                this.canvasGroup.alpha = Mathf.Clamp01(1f - (elapsed / fadeOut));
+                this.canvasGroup.alpha = MathHelper.Clamp01(1f - (elapsed / fadeOut));
                 yield return null;
             }
 

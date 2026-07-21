@@ -1,5 +1,6 @@
 namespace LAB2D.AI.Dialogue.UI
 {
+    using LAB2D.Domain.Common;
     using System.Collections;
     using System.Text;
     using UnityEngine;
@@ -135,11 +136,11 @@ namespace LAB2D.AI.Dialogue.UI
             float preferredTextWidth = string.IsNullOrEmpty(this.textComponent.text)
                 ? 0f
                 : this.textComponent.preferredWidth;
-            float bubbleWidth = Mathf.Clamp(
+            float bubbleWidth = MathHelper.Clamp(
                 preferredTextWidth + this.horizontalPadding,
                 this.minBubbleWidth,
                 this.maxBubbleWidth);
-            float textWidth = Mathf.Max(1f, bubbleWidth - this.horizontalPadding);
+            float textWidth = System.Math.Max(1f, bubbleWidth - this.horizontalPadding);
 
             if (this.bubbleLayoutElement != null)
             {

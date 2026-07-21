@@ -36,6 +36,11 @@ namespace LAB2D.Character.Player
         internal static Func<Player, float, float> WeatherMoveSpeedProvider { get; set; } = (p, def) => WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(p, def);
         internal static Func<Player, float, float> WaveMoveSpeedProvider { get; set; } = (p, def) => WaveBossRewardManager.Instance.GetAdjustedPlayerMoveSpeed(p, def);
         internal static Func<float> ExperienceMultiplierProvider { get; set; } = () => ComboBonusManager.Instance.ExperienceMultiplier;
+        internal static Action<Player> PlayerRegisterProvider { get; set; } = (p) => PlayerManager.Instance.Mine = p;
+        internal static Action<Player> PlayerAddProvider { get; set; } = (p) => PlayerManager.Instance.Add(p);
+        internal static Action<Player> PlayerRemoveProvider { get; set; } = (p) => PlayerManager.Instance.Remove(p);
+        internal static Action PlayerDeathRecordProvider { get; set; } = () => GameplaySessionStats.Instance.RecordPlayerDeath();
+        internal static Action<ABackpackItem> BackpackSaveProvider { get; set; } = (item) => BackpackController.Instance.AddItem(item);
 
         /// <summary>
         /// 奔跑速度倍率，默认1.6倍
@@ -91,7 +96,7 @@ namespace LAB2D.Character.Player
             this.direction = default;
             if (this.direction == null)
             {
-                LogManager.Instance.Log("direction assign resource Error!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("direction assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -118,7 +123,7 @@ namespace LAB2D.Character.Player
             this.animator = this.GetComponent<Animator>();
             if (this.animator == null)
             {
-                LogManager.Instance.Log("animator Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("animator Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -130,7 +135,7 @@ namespace LAB2D.Character.Player
                 this.miniCamera.DirectToPosition(this.transform.position);
                 this.mainCamera = Camera.main.GetComponent<CameraMove>();
                 this.mainCamera.DirectToPosition(this.transform.position);
-                PlayerManager.Instance.Mine = this;
+                PlayerRegisterProvider(this);
                 PhotonNetwork.LocalPlayer.TagObject = this;
                 LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
                 PlayerData playerData = this.CharacterDataLAB as PlayerData;
@@ -139,7 +144,7 @@ namespace LAB2D.Character.Player
             else if (!this.NetworkView.IsMine)
             {
                 LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.NetworkView.OwnerName;
-                PlayerManager.Instance.Add(this);
+                PlayerAddProvider(this);
 
                 // PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
             }
@@ -242,7 +247,7 @@ namespace LAB2D.Character.Player
         {
             if (hp <= 0)
             {
-                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("Hp can't less than zero!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -349,7 +354,7 @@ namespace LAB2D.Character.Player
         {
             if (pos == null)
             {
-                LogManager.Instance.Log("pos is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("pos is null!!!", LogManager.LogLevelEnum.Error);
                 return false;
             }
 
@@ -391,8 +396,8 @@ namespace LAB2D.Character.Player
         /// <inheritdoc/>
         protected override void Death()
         {
-            GameplaySessionStats.Instance.RecordPlayerDeath();
-            LogManager.Instance.Log("玩家死亡", LogManager.LogLevelEnum.Trace);
+            PlayerDeathRecordProvider();
+            AWorkerTask.LogProvider("玩家死亡", LogManager.LogLevelEnum.Trace);
             this.CharacterDataLAB.Hp = 1; // 保持 1 HP 存活，防止复活期间再次死亡
 
             // 暂时切换 Player 层以躲避敌人
@@ -509,13 +514,13 @@ namespace LAB2D.Character.Player
 
         private void OnDestroy()
         {
-            PlayerManager.Instance.Remove(this);
+            PlayerRemoveProvider(this);
 
             // 关闭游戏添加正在装备的武器
             PlayerData playerData = this.CharacterDataLAB as PlayerData;
             if (playerData.Weapon != null)
             {
-                BackpackController.Instance.AddItem(playerData.Weapon);
+                BackpackSaveProvider(playerData.Weapon);
             }
         }
 

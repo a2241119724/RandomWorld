@@ -152,7 +152,7 @@ namespace LAB2D.UI.Action
                     this.transform.position = new Vector3(this.start.x + x, this.start.y, 0.0f);
                 }
 
-                ((RectTransform)this.transform).sizeDelta = new Vector2(Mathf.Abs(x), Mathf.Abs(y));
+                ((RectTransform)this.transform).sizeDelta = new Vector2(System.Math.Abs(x), System.Math.Abs(y));
             }
 
             if (UnityGlobalInputAdapter.GetPrimaryMouseUp())

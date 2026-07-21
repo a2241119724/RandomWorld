@@ -197,12 +197,12 @@ namespace LAB2D.Gameplay
             for (int y = 0; y < h; y++)
             {
                 float vFade = 1f - ((float)y / h); // 底部=1，顶部=0
-                vFade = Mathf.Pow(vFade, 0.6f);    // 加速顶部淡出
+                vFade = (float)System.Math.Pow(vFade, 0.6f);    // 加速顶部淡出
 
                 for (int x = 0; x < w; x++)
                 {
                     float dx = (x - halfW) / halfW;
-                    float hFade = Mathf.Exp(-falloff * dx * dx);
+                    float hFade = (float)System.Math.Exp(-falloff * dx * dx);
                     float alpha = hFade * vFade;
                     pixels[y * w + x] = new Color(1f, 1f, 1f, alpha);
                 }

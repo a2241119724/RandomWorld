@@ -2,6 +2,7 @@ namespace LAB2D.Map
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -106,10 +107,10 @@ namespace LAB2D.Map
             int x, y, startX = 0, endX = TileMap.Instance.TileMapDataLAB.Height, startY = 0, endY = TileMap.Instance.TileMapDataLAB.Width;
             if (centerMap != default)
             {
-                startX = (int)Mathf.Max(centerMap.x - radius, 0);
-                startY = (int)Mathf.Max(centerMap.y - radius, 0);
-                endX = (int)Mathf.Min(centerMap.x + radius, TileMap.Instance.TileMapDataLAB.Height);
-                endY = (int)Mathf.Min(centerMap.y + radius, TileMap.Instance.TileMapDataLAB.Width);
+                startX = (int)System.Math.Max(centerMap.x - radius, 0);
+                startY = (int)System.Math.Max(centerMap.y - radius, 0);
+                endX = (int)System.Math.Min(centerMap.x + radius, TileMap.Instance.TileMapDataLAB.Height);
+                endY = (int)System.Math.Min(centerMap.y + radius, TileMap.Instance.TileMapDataLAB.Width);
             }
 
             // 如果循环次数过多,则说明没有可用的位置

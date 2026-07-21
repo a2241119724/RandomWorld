@@ -1,5 +1,6 @@
 namespace LAB2D.UI.Effect
 {
+    using LAB2D.Domain.Common;
     using LAB2D.Enum;
     using UnityEngine;
 
@@ -18,7 +19,7 @@ namespace LAB2D.UI.Effect
 
         private void Awake()
         {
-            this.pulsePhase = Random.Range(0f, Mathf.PI * 2f);
+            this.pulsePhase = Random.Range(0f, MathHelper.PI * 2f);
         }
 
         public void Initialize(EquipmentRarityType rarity)
@@ -33,7 +34,7 @@ namespace LAB2D.UI.Effect
         private void Update()
         {
             this.elapsed += Time.deltaTime;
-            float pulse = 1f + Mathf.Sin(this.elapsed * EquipmentBeamConstant.PulseSpeed + this.pulsePhase) * this.pulseAmplitude;
+            float pulse = 1f + (float)System.Math.Sin(this.elapsed * EquipmentBeamConstant.PulseSpeed + this.pulsePhase) * this.pulseAmplitude;
             this.transform.localScale = new Vector3(this.baseScale.x * pulse, this.baseScale.y, 1f);
         }
     }

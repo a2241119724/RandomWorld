@@ -1,7 +1,8 @@
 namespace LAB2D.UI
 {
-    using LAB2D;
-    using LAB2D.Gameplay;
+      using LAB2D;
+      using LAB2D.Domain.Common;
+      using LAB2D.Gameplay;
     using LAB2D.UnityAdapter;
     using System;
     using System.Collections.Generic;
@@ -145,7 +146,7 @@ namespace LAB2D.UI
             this.HandleHotkeys();
             if (Time.unscaledTime >= this.nextRefreshTime)
             {
-                this.nextRefreshTime = Time.unscaledTime + Mathf.Max(0.1f, this.refreshInterval);
+                this.nextRefreshTime = Time.unscaledTime + MathHelper.ClampRefreshInterval(this.refreshInterval);
                 this.RefreshSummary();
             }
         }

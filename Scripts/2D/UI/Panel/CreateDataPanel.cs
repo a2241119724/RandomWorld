@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using Photon.Pun;
     using Photon.Realtime;
     using UnityEngine;
@@ -24,7 +25,7 @@ namespace LAB2D.UI.Panel
             this.height = (int)s1.value;
             g1.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener(delegate(float value)
             {
-                this.height = (int)Mathf.Floor(g1.Find("Bar").GetComponent<Slider>().value);
+                this.height = (int)(int)System.Math.Floor(g1.Find("Bar").GetComponent<Slider>().value);
                 g1.Find("Count").GetComponent<Text>().text = this.height.ToString();
             });
             Transform g2 = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "MapWidth");
@@ -32,7 +33,7 @@ namespace LAB2D.UI.Panel
             this.width = (int)s2.value;
             g2.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener((value) =>
             {
-                this.width = (int)Mathf.Floor(g2.Find("Bar").GetComponent<Slider>().value);
+                this.width = (int)(int)System.Math.Floor(g2.Find("Bar").GetComponent<Slider>().value);
                 g2.Find("Count").GetComponent<Text>().text = this.width.ToString();
             });
             Transform g3 = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "EnemyCount");
@@ -40,7 +41,7 @@ namespace LAB2D.UI.Panel
             this.maxEnemyCount = (int)s3.value;
             g3.Find("Bar").GetComponent<Slider>().onValueChanged.AddListener((value) =>
             {
-                this.maxEnemyCount = (int)Mathf.Floor(g3.Find("Bar").GetComponent<Slider>().value);
+                this.maxEnemyCount = (int)(int)System.Math.Floor(g3.Find("Bar").GetComponent<Slider>().value);
                 g3.Find("Count").GetComponent<Text>().text = this.maxEnemyCount.ToString();
             });
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.Onclick_StartCreate);

@@ -121,10 +121,10 @@ namespace LAB2D.Map
             int x, y, startX = 0, endX = this.TileMapDataLAB.Height, startY = 0, endY = this.TileMapDataLAB.Width;
             if (centerMap != default)
             {
-                startX = (int)Mathf.Max(centerMap.x - 20, 0);
-                startY = (int)Mathf.Max(centerMap.y - 20, 0);
-                endX = (int)Mathf.Min(centerMap.x + 20, this.TileMapDataLAB.Height);
-                endY = (int)Mathf.Min(centerMap.y + 20, this.TileMapDataLAB.Width);
+                startX = (int)System.Math.Max(centerMap.x - 20, 0);
+                startY = (int)System.Math.Max(centerMap.y - 20, 0);
+                endX = (int)System.Math.Min(centerMap.x + 20, this.TileMapDataLAB.Height);
+                endY = (int)System.Math.Min(centerMap.y + 20, this.TileMapDataLAB.Width);
             }
 
             int retries = 0;
@@ -233,7 +233,7 @@ namespace LAB2D.Map
         public Vector3Int WorldPosToMapPos(Vector3 worldPos)
         {
             // return new Vector3Int(Mathf.RoundToInt(worldPos.y - 0.5f), Mathf.RoundToInt(worldPos.x - 0.5f), 0);
-            return new Vector3Int(Mathf.RoundToInt(worldPos.y), Mathf.RoundToInt(worldPos.x), 0);
+            return new Vector3Int(MathHelper.RoundToInt(worldPos.y), MathHelper.RoundToInt(worldPos.x), 0);
         }
 
         // === ITileMapQuery 接口实现 ===

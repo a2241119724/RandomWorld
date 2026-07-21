@@ -38,7 +38,7 @@ namespace LAB2D.Data
             {
                 IWeatherGameplayService weather = ServiceLocator.Get<IWeatherGameplayService>();
                 float recovery = deltaTime * weather.EnergyRecoveryMultiplier;
-                this.CurEnergy = Mathf.Min(this.MaxEnergy, this.CurEnergy + recovery);
+                this.CurEnergy = System.Math.Min(this.MaxEnergy, this.CurEnergy + recovery);
             }
         }
 

@@ -78,6 +78,14 @@ namespace LAB2D.Domain.Common
             return value;
         }
 
+        /// <summary>三参数 Clamp：将整数值限制在 [min, max] 范围内。</summary>
+        public static int Clamp(int value, int min, int max)
+        {
+            if (value < min) return min;
+            if (value > max) return max;
+            return value;
+        }
+
         /// <summary>Approximately：比较两浮点数是否在极小误差范围内相等。</summary>
         public static bool Approximately(float a, float b)
         {

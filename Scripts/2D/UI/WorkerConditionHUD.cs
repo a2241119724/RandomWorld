@@ -1,8 +1,9 @@
 namespace LAB2D.UI
 {
-    using LAB2D;
-    using LAB2D.Character.Worker;
-    using LAB2D.Gameplay;
+      using LAB2D;
+      using LAB2D.Character.Worker;
+      using LAB2D.Domain.Common;
+      using LAB2D.Gameplay;
     using LAB2D.UnityAdapter;
     using System;
     using UnityEngine;
@@ -92,7 +93,7 @@ namespace LAB2D.UI
 
             if (Time.unscaledTime >= this.nextRefreshTime)
             {
-                this.nextRefreshTime = Time.unscaledTime + Mathf.Max(0.1f, this.refreshInterval);
+                this.nextRefreshTime = Time.unscaledTime + MathHelper.ClampRefreshInterval(this.refreshInterval);
                 this.UpdateDisplay();
             }
         }

@@ -1,6 +1,7 @@
 namespace LAB2D.MVC
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Item;
     using System;
     using System.Collections.Generic;
@@ -73,7 +74,7 @@ namespace LAB2D.MVC
                 gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
                 RectTransform contentRect = this.content.GetComponent<RectTransform>();
                 float cellWidth = gridLayout.cellSize.x + gridLayout.spacing.x;
-                gridLayout.constraintCount = Mathf.Max(1, Mathf.FloorToInt((contentRect.rect.width - gridLayout.padding.left - gridLayout.padding.right + gridLayout.spacing.x) / cellWidth));
+                gridLayout.constraintCount = System.Math.Max(1, (int)System.Math.Floor((double)((contentRect.rect.width - gridLayout.padding.left - gridLayout.padding.right + gridLayout.spacing.x) / cellWidth)));
             }
 
             // 确保 content 有 ContentSizeFitter 以自动调整高度
