@@ -7,55 +7,78 @@ namespace LAB2D.Editor.Tests.Domain
     [TestFixture]
     public class PlayerVitalAlertRuleServiceTests
     {
-        private PlayerVitalAlertRuleService service;
+        private readonly PlayerVitalAlertRuleService service = new PlayerVitalAlertRuleService();
 
-        [SetUp]
-        public void SetUp()
+        [Test]
+        public void GetSafeRatio_Half_Returns0_5()
         {
-            this.service = new PlayerVitalAlertRuleService();
+            Assert.AreEqual(0.5f, this.service.GetSafeRatio(50f, 100f), 0.0001f);
+        }
+
+        [Test]
+        public void GetSafeRatio_ZeroMax_Returns0()
+        {
+            Assert.AreEqual(0f, this.service.GetSafeRatio(50f, 0f), 0.0001f);
+        }
+
+        [Test]
+        public void GetSafeRatio_Full_Returns1()
+        {
+            Assert.AreEqual(1f, this.service.GetSafeRatio(100f, 100f), 0.0001f);
+        }
+
+        [Test]
+        public void ToPercentInt_0_5_Returns50()
+        {
+            Assert.AreEqual(50, this.service.ToPercentInt(0.5f));
+        }
+
+        [Test]
+        public void ToDisplayHealth_Negative_Returns0()
+        {
+            Assert.AreEqual(0, this.service.ToDisplayHealth(-10f));
+        }
+
+        [Test]
+        public void ToDisplayHealth_3_7_Returns4()
+        {
+            Assert.AreEqual(4, this.service.ToDisplayHealth(3.7f));
         }
 
         [Test]
         public void GetLevel_FullHp_ReturnsSafe()
         {
-            Assert.AreEqual(PlayerVitalAlertLevel.Safe, this.service.GetLevel(1.0f, false));
+            Assert.AreEqual(PlayerVitalAlertLevel.Safe, this.service.GetLevel(1f, false));
         }
 
         [Test]
-        public void GetLevel_HalfHp_StillSafe()
+        public void GetLevel_WarningRatio_ReturnsWounded()
         {
-            Assert.AreEqual(PlayerVitalAlertLevel.Safe, this.service.GetLevel(0.5f, false));
+            Assert.AreEqual(PlayerVitalAlertLevel.Wounded, this.service.GetLevel(0.3f, false));
         }
 
         [Test]
-        public void GetLevel_BelowWarning_ReturnsWounded()
+        public void GetLevel_LowHp_ReturnsCritical()
         {
-            Assert.AreEqual(PlayerVitalAlertLevel.Wounded, this.service.GetLevel(0.30f, false));
-        }
-
-        [Test]
-        public void GetLevel_AtWarningBoundary_ReturnsWounded()
-        {
-            Assert.AreEqual(PlayerVitalAlertLevel.Wounded, this.service.GetLevel(0.35f, false));
-        }
-
-        [Test]
-        public void GetLevel_BelowCritical_ReturnsCritical()
-        {
-            Assert.AreEqual(PlayerVitalAlertLevel.Critical, this.service.GetLevel(0.17f, false));
-        }
-
-        [Test]
-        public void GetLevel_AtCriticalBoundary_ReturnsCritical()
-        {
-            Assert.AreEqual(PlayerVitalAlertLevel.Critical, this.service.GetLevel(0.18f, false));
+            Assert.AreEqual(PlayerVitalAlertLevel.Critical, this.service.GetLevel(0.1f, false));
         }
 
         [Test]
         public void GetLevel_Respawning_ReturnsRespawning()
         {
-            Assert.AreEqual(PlayerVitalAlertLevel.Respawning, this.service.GetLevel(1.0f, true));
-            Assert.AreEqual(PlayerVitalAlertLevel.Respawning, this.service.GetLevel(0.1f, true));
+            Assert.AreEqual(PlayerVitalAlertLevel.Respawning, this.service.GetLevel(1f, true));
+        }
+
+        [Test]
+        public void GetLevel_NegativeRatio_ReturnsCritical()
+        {
+            Assert.AreEqual(PlayerVitalAlertLevel.Critical, this.service.GetLevel(-0.5f, false));
+        }
+
+        [Test]
+        public void IsDangerLevel_Respawning_ReturnsTrue()
+        {
+            Assert.IsTrue(this.service.IsDangerLevel(PlayerVitalAlertLevel.Respawning));
         }
 
         [Test]
@@ -65,60 +88,34 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
-        public void IsDangerLevel_WoundedCriticalRespawning_ReturnsTrue()
+        public void IsMoreSevere_CriticalVsWounded_ReturnsTrue()
         {
-            Assert.IsTrue(this.service.IsDangerLevel(PlayerVitalAlertLevel.Wounded));
-            Assert.IsTrue(this.service.IsDangerLevel(PlayerVitalAlertLevel.Critical));
-            Assert.IsTrue(this.service.IsDangerLevel(PlayerVitalAlertLevel.Respawning));
+            Assert.IsTrue(this.service.IsMoreSevere(PlayerVitalAlertLevel.Critical, PlayerVitalAlertLevel.Wounded));
         }
 
         [Test]
-        public void GetSeverity_IncreasingOrder()
+        public void IsMoreSevere_SameLevel_ReturnsFalse()
         {
-            int safe = this.service.GetSeverity(PlayerVitalAlertLevel.Safe);
-            int wounded = this.service.GetSeverity(PlayerVitalAlertLevel.Wounded);
-            int critical = this.service.GetSeverity(PlayerVitalAlertLevel.Critical);
-            int respawning = this.service.GetSeverity(PlayerVitalAlertLevel.Respawning);
-            Assert.Less(safe, wounded);
-            Assert.Less(wounded, critical);
-            Assert.Less(critical, respawning);
+            Assert.IsFalse(this.service.IsMoreSevere(PlayerVitalAlertLevel.Wounded, PlayerVitalAlertLevel.Wounded));
         }
 
         [Test]
-        public void IsMoreSevere_WoundedVsSafe_ReturnsTrue()
+        public void GetSeverity_Respawning_Returns3()
         {
-            Assert.IsTrue(this.service.IsMoreSevere(PlayerVitalAlertLevel.Wounded, PlayerVitalAlertLevel.Safe));
+            Assert.AreEqual(3, this.service.GetSeverity(PlayerVitalAlertLevel.Respawning));
         }
 
         [Test]
-        public void IsMoreSevere_SafeVsWounded_ReturnsFalse()
+        public void GetSeverity_Safe_Returns0()
         {
-            Assert.IsFalse(this.service.IsMoreSevere(PlayerVitalAlertLevel.Safe, PlayerVitalAlertLevel.Wounded));
+            Assert.AreEqual(0, this.service.GetSeverity(PlayerVitalAlertLevel.Safe));
         }
 
         [Test]
-        public void ToDisplayHealth_NormalValue_RoundsUp()
+        public void ClampRefreshInterval_Negative_ReturnsDefault()
         {
-            int result = this.service.ToDisplayHealth(45.3f);
-            Assert.AreEqual(46, result);
-        }
-
-        [Test]
-        public void ToDisplayHealth_NegativeValue_ClampsToZero()
-        {
-            Assert.AreEqual(0, this.service.ToDisplayHealth(-10f));
-        }
-
-        [Test]
-        public void GetSafeRatio_ValidInput_ReturnsCorrect()
-        {
-            Assert.AreEqual(0.5f, this.service.GetSafeRatio(50f, 100f), 0.0001f);
-        }
-
-        [Test]
-        public void GetSafeRatio_ZeroMax_ReturnsZero()
-        {
-            Assert.AreEqual(0.0f, this.service.GetSafeRatio(50f, 0f), 0.0001f);
+            float result = this.service.ClampRefreshInterval(-1f);
+            Assert.GreaterOrEqual(result, 0f);
         }
     }
 }

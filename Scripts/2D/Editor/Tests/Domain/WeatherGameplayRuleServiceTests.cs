@@ -7,69 +7,84 @@ namespace LAB2D.Editor.Tests.Domain
     [TestFixture]
     public class WeatherGameplayRuleServiceTests
     {
-        private WeatherGameplayRuleService service;
+        private readonly WeatherGameplayRuleService service = new WeatherGameplayRuleService();
 
-        [SetUp]
-        public void SetUp()
+        [Test]
+        public void GetPlayerMoveSpeedMultiplier_Rain_Returns0_92()
         {
-            this.service = new WeatherGameplayRuleService();
+            Assert.AreEqual(0.92f, this.service.GetPlayerMoveSpeedMultiplier(WeatherType.Rain), 0.0001f);
         }
 
         [Test]
-        public void GetPlayerMoveSpeedMultiplier_Clear_ReturnsDefault()
+        public void GetPlayerMoveSpeedMultiplier_Snow_Returns0_84()
         {
-            float result = this.service.GetPlayerMoveSpeedMultiplier(WeatherType.Clear);
-            Assert.AreEqual(1.0f, result, 0.001f);
+            Assert.AreEqual(0.84f, this.service.GetPlayerMoveSpeedMultiplier(WeatherType.Snow), 0.0001f);
         }
 
         [Test]
-        public void GetPlayerMoveSpeedMultiplier_Rain_ReducesSpeed()
+        public void GetPlayerMoveSpeedMultiplier_Clear_Returns1()
         {
-            float result = this.service.GetPlayerMoveSpeedMultiplier(WeatherType.Rain);
-            Assert.Less(result, 1.0f, "雨天应降低玩家移速");
+            Assert.AreEqual(1.0f, this.service.GetPlayerMoveSpeedMultiplier(WeatherType.Clear), 0.0001f);
         }
 
         [Test]
-        public void GetPlayerMoveSpeedMultiplier_Snow_ReducesMoreThanRain()
+        public void GetWorkerMoveSpeedMultiplier_Rain_Returns0_9()
         {
-            float rainResult = this.service.GetPlayerMoveSpeedMultiplier(WeatherType.Rain);
-            float snowResult = this.service.GetPlayerMoveSpeedMultiplier(WeatherType.Snow);
-            Assert.Less(snowResult, rainResult, "雪天降低应比雨天更多");
+            Assert.AreEqual(0.9f, this.service.GetWorkerMoveSpeedMultiplier(WeatherType.Rain), 0.0001f);
         }
 
         [Test]
-        public void GetEnergyRecoveryMultiplier_Rain_IncreasesRecovery()
+        public void GetWorkerMoveSpeedMultiplier_Snow_Returns0_78()
         {
-            float result = this.service.GetEnergyRecoveryMultiplier(WeatherType.Rain);
-            Assert.Greater(result, 1.0f, "雨天应提高灵气恢复");
+            Assert.AreEqual(0.78f, this.service.GetWorkerMoveSpeedMultiplier(WeatherType.Snow), 0.0001f);
         }
 
         [Test]
-        public void GetEnergyRecoveryMultiplier_Snow_ReducesRecovery()
+        public void GetWorkerMoveSpeedMultiplier_Clear_Returns1()
         {
-            float result = this.service.GetEnergyRecoveryMultiplier(WeatherType.Snow);
-            Assert.Less(result, 1.0f, "雪天应降低灵气恢复");
+            Assert.AreEqual(1.0f, this.service.GetWorkerMoveSpeedMultiplier(WeatherType.Clear), 0.0001f);
         }
 
         [Test]
-        public void ApplyMultiplier_ValidInput_ReturnsCorrectValue()
+        public void GetWorkerTaskProgressMultiplier_Rain_Returns0_94()
         {
-            float result = this.service.ApplyMultiplier(100f, 0.5f, 10f);
-            Assert.AreEqual(50f, result, 0.001f);
+            Assert.AreEqual(0.94f, this.service.GetWorkerTaskProgressMultiplier(WeatherType.Rain), 0.0001f);
         }
 
         [Test]
-        public void ApplyMultiplier_BelowMinimum_ClampsToMin()
+        public void GetWorkerTaskProgressMultiplier_Snow_Returns0_82()
         {
-            float result = this.service.ApplyMultiplier(100f, 0.05f, 10f);
-            Assert.AreEqual(10f, result, 0.001f, "低于最小值时应夹紧到最小值");
+            Assert.AreEqual(0.82f, this.service.GetWorkerTaskProgressMultiplier(WeatherType.Snow), 0.0001f);
         }
 
         [Test]
-        public void ApplyMultiplier_NegativeMultiplier_ClampsToZero()
+        public void GetEnergyRecoveryMultiplier_Rain_Returns1_12()
         {
-            float result = this.service.ApplyMultiplier(100f, -0.5f, 10f);
-            Assert.AreEqual(10f, result, 0.001f, "负倍率应被视为0并夹紧到最小值");
+            Assert.AreEqual(1.12f, this.service.GetEnergyRecoveryMultiplier(WeatherType.Rain), 0.0001f);
+        }
+
+        [Test]
+        public void GetEnergyRecoveryMultiplier_Clear_Returns1_05()
+        {
+            Assert.AreEqual(1.05f, this.service.GetEnergyRecoveryMultiplier(WeatherType.Clear), 0.0001f);
+        }
+
+        [Test]
+        public void ApplyMultiplier_NormalCase()
+        {
+            Assert.AreEqual(50f, this.service.ApplyMultiplier(100f, 0.5f, 10f), 0.0001f);
+        }
+
+        [Test]
+        public void ApplyMultiplier_ClampedToMin()
+        {
+            Assert.AreEqual(10f, this.service.ApplyMultiplier(5f, 2f, 10f), 0.0001f);
+        }
+
+        [Test]
+        public void ApplyMultiplier_NegativeMultiplier_ReturnsMin()
+        {
+            Assert.AreEqual(10f, this.service.ApplyMultiplier(100f, -1f, 10f), 0.0001f);
         }
     }
 }

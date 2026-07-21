@@ -6,91 +6,124 @@ namespace LAB2D.Editor.Tests.Domain
     [TestFixture]
     public class SkillRuleServiceTests
     {
-        private SkillRuleService service;
+        private readonly SkillRuleService service = new SkillRuleService();
 
-        [SetUp]
-        public void SetUp()
+        [Test]
+        public void CalculateSkillDamage_Level1_BaseDamage()
         {
-            this.service = new SkillRuleService();
+            float damage = this.service.CalculateSkillDamage(100f, 1.5f, 1, 0.2f);
+            Assert.AreEqual(150f, damage, 0.0001f);
         }
 
         [Test]
-        public void CalculateSkillDamage_Level1_UsesBaseMultiplier()
+        public void CalculateSkillDamage_Level3_WithUpgradeBonus()
         {
-            float result = this.service.CalculateSkillDamage(50f, 2.0f, 1, 0.15f);
-            Assert.AreEqual(100f, result, 0.01f);
+            float damage = this.service.CalculateSkillDamage(100f, 1.5f, 3, 0.2f);
+            Assert.AreEqual(210f, damage, 0.0001f);
         }
 
         [Test]
-        public void CalculateSkillDamage_Level5_HigherDamage()
+        public void CalculateSkillDamage_VerySmall_FloorTo1()
         {
-            float level1 = this.service.CalculateSkillDamage(50f, 2.0f, 1, 0.15f);
-            float level5 = this.service.CalculateSkillDamage(50f, 2.0f, 5, 0.15f);
-            Assert.Greater(level5, level1, "5级伤害应高于1级");
+            Assert.AreEqual(1f, this.service.CalculateSkillDamage(0.1f, 0.5f, 1, 0f), 0.0001f);
         }
 
         [Test]
-        public void CalculateSkillDamage_LowAtn_ReturnsAtLeastOne()
+        public void CalculateSkillCooldown_Level1_FullCooldown()
         {
-            float result = this.service.CalculateSkillDamage(0.1f, 0.5f, 1, 0.1f);
-            Assert.GreaterOrEqual(result, 1.0f, "伤害不应低于1");
+            Assert.AreEqual(10f, this.service.CalculateSkillCooldown(10f, 1, 0.1f), 0.0001f);
         }
 
         [Test]
-        public void CalculateSkillCooldown_Level5_ShorterThanLevel1()
+        public void CalculateSkillCooldown_Level3_ReducedCooldown()
         {
-            float level1 = this.service.CalculateSkillCooldown(10f, 1, 0.1f);
-            float level5 = this.service.CalculateSkillCooldown(10f, 5, 0.1f);
-            Assert.Less(level5, level1, "高等级冷却应更短");
+            Assert.AreEqual(8f, this.service.CalculateSkillCooldown(10f, 3, 0.1f), 0.0001f);
         }
 
         [Test]
-        public void CalculateSkillCooldown_MinCooldown_ClampsToHalfSecond()
+        public void CalculateSkillCooldown_VeryShort_FloorTo0_5()
         {
-            float result = this.service.CalculateSkillCooldown(1f, 5, 0.3f);
-            Assert.GreaterOrEqual(result, 0.5f, "冷却不应低于0.5秒");
+            Assert.AreEqual(0.5f, this.service.CalculateSkillCooldown(1f, 10, 0.5f), 0.0001f);
         }
 
         [Test]
-        public void GetUpgradeCost_Level1_Returns1()
+        public void ToCooldownDisplaySeconds_2_3_Returns3()
         {
-            int cost = this.service.GetUpgradeCost(1);
-            Assert.AreEqual(1, cost);
+            Assert.AreEqual(3, this.service.ToCooldownDisplaySeconds(2.3f));
         }
 
         [Test]
-        public void GetUpgradeCost_MaxLevel_ReturnsNegative()
+        public void GetCooldownProgress_Half_Returns0_5()
         {
-            int cost = this.service.GetUpgradeCost(5);
-            Assert.Less(cost, 0, "满级应返回负值表示不可升级");
+            Assert.AreEqual(0.5f, this.service.GetCooldownProgress(5f, 10f), 0.0001f);
         }
 
         [Test]
-        public void CalculateBuffMultiplier_Level5_HigherThanLevel1()
+        public void GetCooldownProgress_ZeroTotal_Returns0()
         {
-            float level1 = this.service.CalculateBuffMultiplier(1.5f, 1, 0.15f);
-            float level5 = this.service.CalculateBuffMultiplier(1.5f, 5, 0.15f);
-            Assert.Greater(level5, level1, "高级增益倍率应更高");
+            Assert.AreEqual(0f, this.service.GetCooldownProgress(5f, 0f), 0.0001f);
         }
 
         [Test]
-        public void CalculateHealAmount_ScalesWithLevel()
+        public void GetCooldownProgress_Completed_Returns0()
         {
-            float level1 = this.service.CalculateHealAmount(20f, 1, 0.1f);
-            float level3 = this.service.CalculateHealAmount(20f, 3, 0.1f);
-            Assert.Greater(level3, level1, "高级治疗应更大");
+            Assert.AreEqual(0f, this.service.GetCooldownProgress(0f, 10f), 0.0001f);
         }
 
         [Test]
-        public void HasEnoughMana_Sufficient_ReturnsTrue()
+        public void GetUpgradeCost_Level2_Returns2()
+        {
+            Assert.AreEqual(2, this.service.GetUpgradeCost(2));
+        }
+
+        [Test]
+        public void GetUpgradeCost_Level4_Returns5()
+        {
+            Assert.AreEqual(5, this.service.GetUpgradeCost(4));
+        }
+
+        [Test]
+        public void GetUpgradeCost_MaxLevel_ReturnsNegative1()
+        {
+            Assert.AreEqual(-1, this.service.GetUpgradeCost(5));
+        }
+
+        [Test]
+        public void GetUpgradeCost_Invalid_ReturnsNegative1()
+        {
+            Assert.AreEqual(-1, this.service.GetUpgradeCost(0));
+        }
+
+        [Test]
+        public void CalculateBuffMultiplier_Level3_WithUpgrade()
+        {
+            float result = this.service.CalculateBuffMultiplier(1.0f, 3, 0.2f);
+            Assert.AreEqual(1.2f, result, 0.0001f);
+        }
+
+        [Test]
+        public void CalculateHealAmount_Level2_BoostedHeal()
+        {
+            float heal = this.service.CalculateHealAmount(50f, 2, 0.3f);
+            Assert.AreEqual(65f, heal, 0.0001f);
+        }
+
+        [Test]
+        public void HasEnoughMana_Enough_ReturnsTrue()
         {
             Assert.IsTrue(this.service.HasEnoughMana(50f, 30f));
         }
 
         [Test]
-        public void HasEnoughMana_Insufficient_ReturnsFalse()
+        public void HasEnoughMana_NotEnough_ReturnsFalse()
         {
             Assert.IsFalse(this.service.HasEnoughMana(20f, 30f));
+        }
+
+        [Test]
+        public void HasEnoughMana_ExactMatch_ReturnsTrue()
+        {
+            Assert.IsTrue(this.service.HasEnoughMana(30f, 30f));
         }
     }
 }
