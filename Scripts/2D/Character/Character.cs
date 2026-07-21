@@ -155,6 +155,14 @@ namespace LAB2D.Character
             }
         }
 
+        /// <summary>
+        /// 升级提示提供者 — 当角色升级时显示视觉提示。
+        /// 默认实现访问 GlobalInit.Instance.ShowTip。
+        /// 可替换为测试桩或自定义实现。
+        /// </summary>
+        public static System.Action<string> LevelUpTipProvider { get; set; }
+            = (tip) => GlobalInit.Instance.ShowTip(tip);
+
         /// <inheritdoc/>
         public override string ToString()
         {
@@ -186,7 +194,7 @@ namespace LAB2D.Character
 
             if (result.LeveledUp)
             {
-                GlobalInit.Instance.ShowTip("UP " + this.CharacterDataLAB.Level);
+                LevelUpTipProvider.Invoke("UP " + this.CharacterDataLAB.Level);
                 this.CharacterDataLAB.ComputeAttribute();
             }
         }
@@ -226,6 +234,21 @@ namespace LAB2D.Character
         {
             private static readonly DamageCalculator DamageCalculator = new DamageCalculator();
             private static readonly AttributeCalculationService attributeCalcService = new AttributeCalculationService();
+
+            /// <summary>
+            /// 装备交换时的卸装回调 — 将旧装备放回地图。
+            /// 默认实现访问 ItemMap.Instance / ResourceManager.Instance / ItemDataManager.Instance。
+            /// 可替换为测试桩或自定义实现。
+            /// </summary>
+            public static System.Action<AEquipment, Vector3Int> EquipmentSwapDropProvider { get; set; }
+                = (oldEquipment, posMap) =>
+                {
+                    ItemMap.Instance.PutDownToInventory(
+                        posMap,
+                        ResourceManager.Instance.GetAsset(
+                            ItemDataManager.Instance.GetById(oldEquipment.Id).EnName),
+                        new ResourceInfo(oldEquipment.Id, 1));
+                };
 
             /// <summary>
             /// Id
@@ -368,7 +391,7 @@ namespace LAB2D.Character
                 {
                     // 交换装备：卸下旧装备放入地图，装备新装备
                     AEquipment oldEquipment = this.equipments[equipment.Type];
-                    ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(ItemDataManager.Instance.GetById(oldEquipment.Id).EnName), new ResourceInfo(oldEquipment.Id, 1));
+                    EquipmentSwapDropProvider(oldEquipment, posMap);
                     this.equipments[equipment.Type] = equipment;
                 }
                 else
