@@ -6,6 +6,7 @@ namespace LAB2D.Character.Worker.Task
     using LAB2D.Item;
     using LAB2D.Map;
     using LAB2D.Serializable;
+    using LAB2D.Tool;
     using LAB2D.Domain.Worker;
     using System;
     using System.Collections.Generic;
@@ -235,6 +236,12 @@ namespace LAB2D.Character.Worker.Task
             = () => WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveIndex - 1 : 0;
         public static System.Action<UnityEngine.Vector3, float, bool, bool> FloatingTextProvider { get; set; }
             = (pos, dmg, crit, combo) => FloatingTextManager.Instance.SpawnDamageText(pos, dmg, crit, combo);
+        public static System.Func<bool> NetworkIsOnlineProvider { get; set; }
+            = () => NetworkConnect.Instance != null && NetworkConnect.Instance.IsOnline;
+        public static System.Func<int, ABackpackItem> ItemFactoryByIdProvider { get; set; }
+            = (id) => ItemInstanceFactory.Instance.GetBackpackItemById(id);
+        public static System.Func<string> NameGeneratorProvider { get; set; }
+            = () => NameGenerator.Instance.GetRandomName();
 
         /// <summary>
         /// 任务ID

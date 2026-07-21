@@ -91,7 +91,7 @@ namespace LAB2D.Character
         {
             this.name = this.GetType().Name;
 
-            this.NetworkView = NetworkConnect.Instance != null && NetworkConnect.Instance.IsOnline
+            this.NetworkView = AWorkerTask.NetworkIsOnlineProvider()
                 ? new PunNetworkViewAdapter(this.pv)
                 : OfflineNetworkView.Instance;
 

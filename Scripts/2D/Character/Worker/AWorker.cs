@@ -47,7 +47,7 @@ namespace LAB2D.Character.Worker
         public static System.Action<AWorker> DeathProvider { get; set; }
             = (worker) =>
             {
-                if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
+                if (!AWorkerTask.NetworkIsOnlineProvider() || PhotonNetwork.IsMasterClient)
                 {
                     WorkerManager.Instance.Remove(worker);
                 }
@@ -280,7 +280,7 @@ namespace LAB2D.Character.Worker
                     continue;
                 }
 
-                AWorkerTask.ItemMapProvider().PutDownToDrop(pos, ItemInstanceFactory.Instance.GetBackpackItemById(resource.Key).Tile, resource.Value);
+                AWorkerTask.ItemMapProvider().PutDownToDrop(pos, AWorkerTask.ItemFactoryByIdProvider(resource.Key).Tile, resource.Value);
             }
         }
 
