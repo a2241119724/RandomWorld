@@ -47,8 +47,8 @@ namespace LAB2D.UI
             }
 
             runtimeFallbackRegistered = true;
-            WaveBossRewardManager.Instance.OnRewardOptionsChanged -= HandleRuntimeRewardOptionsChanged;
-            WaveBossRewardManager.Instance.OnRewardOptionsChanged += HandleRuntimeRewardOptionsChanged;
+            Core.ServiceLocator.Get<WaveBossRewardManager>().OnRewardOptionsChanged -= HandleRuntimeRewardOptionsChanged;
+            Core.ServiceLocator.Get<WaveBossRewardManager>().OnRewardOptionsChanged += HandleRuntimeRewardOptionsChanged;
         }
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WaveBossRewardManager manager = WaveBossRewardManager.Instance;
+                WaveBossRewardManager manager = Core.ServiceLocator.Get<WaveBossRewardManager>();
                 manager.OnRewardOptionsChanged += this.HandleRewardOptionsChanged;
                 manager.OnStateChanged += this.HandleStateChanged;
                 this.UpdateFromManager();
@@ -132,7 +132,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WaveBossRewardManager manager = WaveBossRewardManager.Instance;
+                WaveBossRewardManager manager = Core.ServiceLocator.Get<WaveBossRewardManager>();
                 manager.OnRewardOptionsChanged -= this.HandleRewardOptionsChanged;
                 manager.OnStateChanged -= this.HandleStateChanged;
             }
@@ -178,7 +178,7 @@ namespace LAB2D.UI
         public void UpdateFromManager()
         {
             this.RefreshSummary();
-            this.RefreshOptions(WaveBossRewardManager.Instance.CurrentOptions);
+            this.RefreshOptions(Core.ServiceLocator.Get<WaveBossRewardManager>().CurrentOptions);
         }
 
         /// <summary>
@@ -285,7 +285,7 @@ namespace LAB2D.UI
 
                 int optionIndex = i;
                 button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => WaveBossRewardManager.Instance.SelectReward(optionIndex));
+                button.onClick.AddListener(() => Core.ServiceLocator.Get<WaveBossRewardManager>().SelectReward(optionIndex));
                 this.optionButtons.Add(button);
                 this.optionTexts.Add(optionText);
             }
@@ -427,7 +427,7 @@ namespace LAB2D.UI
                 return;
             }
 
-            this.summaryText.text = WaveBossRewardManager.Instance.CurrentState.ToSummaryText();
+            this.summaryText.text = Core.ServiceLocator.Get<WaveBossRewardManager>().CurrentState.ToSummaryText();
         }
 
         /// <summary>
@@ -457,7 +457,7 @@ namespace LAB2D.UI
         {
             if (UnityGlobalInputAdapter.TryGetWaveBossRewardOptionDown(out int optionIndex))
             {
-                WaveBossRewardManager.Instance.SelectReward(optionIndex);
+                Core.ServiceLocator.Get<WaveBossRewardManager>().SelectReward(optionIndex);
             }
         }
     }

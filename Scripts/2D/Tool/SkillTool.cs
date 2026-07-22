@@ -95,13 +95,13 @@ namespace LAB2D.Tool
         public static List<AEnemy> GetEnemiesInRadius(Vector3 center, float radius)
         {
             List<AEnemy> result = new List<AEnemy>();
-            if (EnemyManager.Instance == null)
+            if (Core.ServiceLocator.Get<EnemyManager>() == null)
             {
                 return result;
             }
 
             float radiusSqr = radius * radius;
-            foreach (AEnemy enemy in EnemyManager.Instance.Characters)
+            foreach (AEnemy enemy in Core.ServiceLocator.Get<EnemyManager>().Characters)
             {
                 if (enemy == null || enemy.CharacterDataLAB == null || enemy.CharacterDataLAB.Hp <= 0)
                 {

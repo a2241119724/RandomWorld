@@ -76,12 +76,12 @@ namespace LAB2D.Gameplay
             try
             {
                 // 订阅后续连击变更事件
-                GameplaySessionStats.Instance.StatsChanged += this.OnStatsChanged;
+                Core.ServiceLocator.Get<GameplaySessionStats>().StatsChanged += this.OnStatsChanged;
 
                 // 立即同步当前连击状态，防止因延迟初始化错过已累积的连击数据
                 // 例如：玩家已击杀3只敌人（combo=3）后 ComboBonusManager 才首次被访问，
                 // 此时必须主动拉取当前 combo，否则内部 currentCombo 保持 0，倍率恒为 1.0
-                GameplaySessionStatsSnapshot snapshot = GameplaySessionStats.Instance.CreateSnapshot();
+                GameplaySessionStatsSnapshot snapshot = Core.ServiceLocator.Get<GameplaySessionStats>().CreateSnapshot();
                 this.currentCombo = snapshot.CurrentCombo;
                 this.RecalculateMultipliers();
             }

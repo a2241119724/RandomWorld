@@ -63,7 +63,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WorkerSupplyIssueManager.Instance.OnWorkerSupplyReportChanged += this.HandleSupplyReportChanged;
+                Core.ServiceLocator.Get<WorkerSupplyIssueManager>().OnWorkerSupplyReportChanged += this.HandleSupplyReportChanged;
                 this.UpdateDisplay();
             }
             catch (Exception exception)
@@ -76,7 +76,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WorkerSupplyIssueManager.Instance.OnWorkerSupplyReportChanged -= this.HandleSupplyReportChanged;
+                Core.ServiceLocator.Get<WorkerSupplyIssueManager>().OnWorkerSupplyReportChanged -= this.HandleSupplyReportChanged;
             }
             catch (Exception)
             {
@@ -133,7 +133,7 @@ namespace LAB2D.UI
                 return;
             }
 
-            this.supplyText.text = WorkerSupplyIssueManager.Instance.BuildSummaryText();
+            this.supplyText.text = Core.ServiceLocator.Get<WorkerSupplyIssueManager>().BuildSummaryText();
         }
 
         /// <summary>

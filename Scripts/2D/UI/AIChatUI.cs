@@ -46,7 +46,7 @@ namespace LAB2D.UI
         /// <returns>回答</returns>
         public async Task Chat(string question)
         {
-            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.RIGHT_CHAT_ITEM, this.content, false);
+            GameObject g = Core.ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.RIGHT_CHAT_ITEM, this.content, false);
             LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "Text").text = question;
             string text = string.Empty;
             try
@@ -70,7 +70,7 @@ namespace LAB2D.UI
             }
             finally
             {
-                g = ResourceManager.Instance.Instantiate(PrefabConstant.LEFT_CHAT_ITEM, this.content, false);
+                g = Core.ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.LEFT_CHAT_ITEM, this.content, false);
                 g.transform.SetParent(this.content);
                 LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "Text").text = text;
                 this.isWorking = false;
@@ -80,7 +80,7 @@ namespace LAB2D.UI
         public void Awake()
         {
             Instance = this;
-            this.llmClient = DialogueManager.Instance.GetLLMClient();
+            this.llmClient = Core.ServiceLocator.Get<DialogueManager>().GetLLMClient();
             this.input = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
             this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
         }

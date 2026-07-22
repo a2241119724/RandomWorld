@@ -39,7 +39,7 @@ namespace LAB2D.Map
         /// <param name="posMap">位置</param>
         public void AddGather(Vector3Int posMap)
         {
-            this.tilemap.SetTile(posMap, (TileBase)ResourceManager.Instance.GetAsset("Gather"));
+            this.tilemap.SetTile(posMap, (TileBase)Core.ServiceLocator.Get<ResourceManager>().GetAsset("Gather"));
             this.GatherMapDataLAB.Add(posMap, "Gather");
             this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
         }
@@ -76,7 +76,7 @@ namespace LAB2D.Map
             {
                 this.tilemap.SetTile(
                     Vector3IntLAB.ToVector3Int(enumerator.Current.Key),
-                    (TileBase)ResourceManager.Instance.GetAsset(enumerator.Current.Value));
+                    (TileBase)Core.ServiceLocator.Get<ResourceManager>().GetAsset(enumerator.Current.Value));
             }
         }
 
@@ -98,7 +98,7 @@ namespace LAB2D.Map
                 return;
             }
 
-            this.tilemap.SetTile(vector3Int, (TileBase)ResourceManager.Instance.GetAsset(tileBaseName));
+            this.tilemap.SetTile(vector3Int, (TileBase)Core.ServiceLocator.Get<ResourceManager>().GetAsset(tileBaseName));
         }
 
         /// <summary>

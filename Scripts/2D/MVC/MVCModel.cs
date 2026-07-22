@@ -56,7 +56,7 @@ namespace LAB2D.MVC
             }
 
             List<AItem> itemList;
-            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(item.Id);
+            AItem.ItemTypeEnum itemType = Core.ServiceLocator.Get<ItemDataManager>().IdToType(item.Id);
             if (this.ItemDict.ContainsKey(itemType))
             {
                 itemList = this.ItemDict[itemType];
@@ -67,7 +67,7 @@ namespace LAB2D.MVC
             }
 
             // 可以堆叠
-            if (ItemDataManager.Instance.GetById(item.Id).IsStackable)
+            if (Core.ServiceLocator.Get<ItemDataManager>().GetById(item.Id).IsStackable)
             {
                 for (int i = 0; i < itemList.Count; i++)
                 {

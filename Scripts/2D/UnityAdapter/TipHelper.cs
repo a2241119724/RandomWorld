@@ -27,7 +27,7 @@ namespace LAB2D.UnityAdapter
 
             try
             {
-                GlobalInit init = GlobalInit.Instance;
+                var init = Core.ServiceLocator.Get<GlobalInit>();
                 if (init != null)
                 {
                     init.ShowTip(message);

@@ -309,13 +309,13 @@ namespace LAB2D.UI
         /// </summary>
         private void RefreshAllButtons()
         {
-            SkillManager mgr = SkillManager.Instance;
+            SkillManager mgr = Core.ServiceLocator.Get<SkillManager>();
             if (mgr == null || !mgr.IsInitialized)
             {
                 return;
             }
 
-            Player player = PlayerManager.Instance?.Mine;
+            Player player = Core.ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
             int currentMp = player != null && player.CharacterDataLAB != null
                 ? player.CharacterDataLAB.Mp
                 : 0;

@@ -16,7 +16,7 @@ namespace LAB2D.Gameplay
     public class WeatherGameplayEffect : Singleton<WeatherGameplayEffect>, IWeatherGameplayService
     {
         internal static System.Func<WeatherManager.WeatherTypeEnum> WeatherTypeProvider { get; set; }
-            = () => WeatherManager.Instance.CurrentWeather;
+            = () => Core.ServiceLocator.Get<WeatherManager>().CurrentWeather;
         private WeatherManager.WeatherTypeEnum currentWeather = WeatherManager.WeatherTypeEnum.Sunny;
         private WeatherGameplayState currentState;
         private bool initialized;
@@ -221,7 +221,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WeatherManager manager = WeatherManager.Instance;
+                WeatherManager manager = Core.ServiceLocator.Get<WeatherManager>();
                 if (manager == null)
                 {
                     return;
@@ -245,7 +245,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WeatherManager manager = WeatherManager.Instance;
+                WeatherManager manager = Core.ServiceLocator.Get<WeatherManager>();
                 if (manager != null)
                 {
                     this.currentWeather = manager.CurrentWeather;

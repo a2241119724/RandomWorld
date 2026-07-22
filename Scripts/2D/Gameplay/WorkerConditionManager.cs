@@ -176,14 +176,14 @@ namespace LAB2D.Gameplay
 
             try
             {
-                if (WorkerManager.Instance == null || WorkerManager.Instance.Characters == null ||
-                    WorkerManager.Instance.Characters.Count == 0)
+                if (!Core.ServiceLocator.TryGet(out WorkerManager wmgr) || wmgr.Characters == null ||
+                    wmgr.Characters.Count == 0)
                 {
                     builder.Append(WorkerConditionConstant.EmptyHudText);
                     return builder.ToString();
                 }
 
-                List<AWorker> workers = WorkerManager.Instance.Characters;
+                List<AWorker> workers = wmgr.Characters;
                 for (int i = 0; i < workers.Count; i++)
                 {
                     AWorker worker = workers[i];

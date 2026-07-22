@@ -16,7 +16,7 @@ namespace LAB2D.Data
         public DropDataManager()
         {
             this.idToDrop = new Dictionary<int, List<DropItem>>();
-            DropItemDataSO dropItemDataSO = ResourceManager.Instance.GetDropSO("DropItemDataSO");
+            DropItemDataSO dropItemDataSO = Core.ServiceLocator.Get<ResourceManager>().GetDropSO("DropItemDataSO");
 
             dropItemDataSO.ResourceDropItems.ForEach(item =>
             {
@@ -32,7 +32,7 @@ namespace LAB2D.Data
                 }
 
                 // 根据资源名称获取item信息；缺少道具数据的资源不参与采集掉落。
-                if (ItemDataManager.Instance.TryGetByName(item.Name, out ItemData itemData))
+                if (Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(item.Name, out ItemData itemData))
                 {
                     this.idToDrop.Add(itemData.Id, item.DropItems);
                 }
@@ -89,7 +89,7 @@ namespace LAB2D.Data
 
         public void Init()
         {
-            this.ResourceInfo.Id = ItemDataManager.Instance.GetByName(this.Name).Id;
+            this.ResourceInfo.Id = Core.ServiceLocator.Get<ItemDataManager>().GetByName(this.Name).Id;
         }
     }
 }

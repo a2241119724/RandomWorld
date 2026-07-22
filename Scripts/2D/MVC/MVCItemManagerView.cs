@@ -124,7 +124,7 @@ namespace LAB2D.MVC
                     continue;
                 }
 
-                GameObject g = ResourceManager.Instance.Instantiate(this.itemBox);
+                GameObject g = Core.ServiceLocator.Get<ResourceManager>().Instantiate(this.itemBox);
                 if (g == null)
                 {
                     return;
@@ -151,7 +151,7 @@ namespace LAB2D.MVC
                 Image image = LAB2D.Tool.Tool.GetComponentInChildren<Image>(g, "ItemImage");
                 if (image != null)
                 {
-                    image.sprite = ResourceManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.Get(type, i).Id).EnName);
+                    image.sprite = Core.ServiceLocator.Get<ResourceManager>().GetImage(Core.ServiceLocator.Get<ItemDataManager>().GetById(model.Get(type, i).Id).EnName);
                     image.preserveAspect = true;
                 }
 

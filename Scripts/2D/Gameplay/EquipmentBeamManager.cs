@@ -107,10 +107,10 @@ namespace LAB2D.Gameplay
         public void CleanupStaleBeams()
         {
             if (!this.IsInitialized || this.activeBeams.Count == 0) return;
-            if (ItemMap.Instance == null) return;
+            if (!Core.ServiceLocator.TryGet(out ItemMap im)) return;
             List<Vector3Int> stale = new List<Vector3Int>();
             foreach (KeyValuePair<Vector3Int, BeamEntry> kv in this.activeBeams)
-                if (kv.Value.Beam == null || ItemMap.Instance.GetTile(kv.Key) == null)
+                if (kv.Value.Beam == null || im.GetTile(kv.Key) == null)
                     stale.Add(kv.Key);
             foreach (Vector3Int p in stale)
             {

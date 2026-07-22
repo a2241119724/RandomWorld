@@ -144,7 +144,7 @@ namespace LAB2D.Map
                     return new Vector3Int(startX, startY, 0);
                 }
             }
-            while (!(this.IsCanReach(posMap) && ResourceMap.Instance.IsCanReach(posMap) && BuildMap.Instance.IsCanReach(posMap)));
+            while (!(this.IsCanReach(posMap) && Core.ServiceLocator.Get<ResourceMap>().IsCanReach(posMap) && Core.ServiceLocator.Get<BuildMap>().IsCanReach(posMap)));
             return new Vector3Int(x, y, 0);
         }
 

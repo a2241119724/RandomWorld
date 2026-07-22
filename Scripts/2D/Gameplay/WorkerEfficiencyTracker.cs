@@ -203,7 +203,7 @@ namespace LAB2D.Gameplay
             this.totalTasksCompleted++;
 
             // 激活 GameplaySessionStats 中的已有死代码：RecordWorkerTaskCompleted
-            GameplaySessionStats.Instance.RecordWorkerTaskCompleted(task.TaskType);
+            Core.ServiceLocator.Get<GameplaySessionStats>().RecordWorkerTaskCompleted(task.TaskType);
 
             // 触发事件
             this.TaskCompleted?.Invoke(worker, task);
@@ -233,7 +233,7 @@ namespace LAB2D.Gameplay
             this.totalWorkerDeaths++;
 
             // 激活 GameplaySessionStats 中的已有死代码：RecordWorkerDeath
-            GameplaySessionStats.Instance.RecordWorkerDeath();
+            Core.ServiceLocator.Get<GameplaySessionStats>().RecordWorkerDeath();
 
             // 触发事件
             this.WorkerDied?.Invoke(worker);

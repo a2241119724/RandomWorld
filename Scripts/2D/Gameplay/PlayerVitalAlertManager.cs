@@ -174,7 +174,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                Player player = PlayerManager.Instance.Mine;
+                Player player = Core.ServiceLocator.Get<PlayerManager>().Mine;
                 if (player == null)
                 {
                     return new PlayerVitalAlertReport
@@ -196,7 +196,7 @@ namespace LAB2D.Gameplay
                     };
                 }
 
-                bool isRespawning = DeathPenaltyManager.Instance.IsRespawning;
+                bool isRespawning = Core.ServiceLocator.Get<DeathPenaltyManager>().IsRespawning;
                 PlayerVitalAlertLevel level = PlayerVitalAlertTool.GetLevel(
                     playerData.Hp,
                     playerData.MaxHp,

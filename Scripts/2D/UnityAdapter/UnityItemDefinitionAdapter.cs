@@ -10,12 +10,12 @@ namespace LAB2D.UnityAdapter
         /// <inheritdoc/>
         public int GetItemTypeById(int itemId)
         {
-            if (ItemDataManager.Instance == null)
+            if (Core.ServiceLocator.Get<ItemDataManager>() == null)
             {
                 return (int)AItem.ItemTypeEnum.Null;
             }
 
-            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(itemId);
+            AItem.ItemTypeEnum itemType = Core.ServiceLocator.Get<ItemDataManager>().IdToType(itemId);
             return (int)itemType;
         }
     }

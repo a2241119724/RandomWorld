@@ -232,7 +232,7 @@ namespace LAB2D.UI
 
             this.lastPollTime = Time.time;
 
-            if (ItemMap.Instance == null || TileMap.Instance == null)
+            if (!Core.ServiceLocator.TryGet(out ItemMap im) || !Core.ServiceLocator.TryGet(out TileMap tmap))
             {
                 return;
             }
@@ -243,14 +243,14 @@ namespace LAB2D.UI
         private float debugLogTimer;
         private void PollNearbyItems()
         {
-            Player player = PlayerManager.Instance?.Mine;
+            Player player = Core.ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
             if (player == null)
             {
                 this.Hide();
                 return;
             }
 
-            Vector3Int playerPosMap = TileMap.Instance.WorldPosToMapPos(player.transform.position);
+            Vector3Int playerPosMap = Core.ServiceLocator.Get<TileMap>().WorldPosToMapPos(player.transform.position);
 
             Dictionary<Vector3Int, NearbyItemEntry> foundEntries = new Dictionary<Vector3Int, NearbyItemEntry>();
             int radius = NearbyItemPickupConstant.DetectionRadius;
@@ -263,7 +263,7 @@ namespace LAB2D.UI
                 {
                     Vector3Int posMap = new Vector3Int(playerPosMap.x + x, playerPosMap.y + y, 0);
                     totalTilesChecked++;
-                    TileBase tile = ItemMap.Instance.GetTile(posMap);
+                    TileBase tile = Core.ServiceLocator.Get<ItemMap>().GetTile(posMap);
                     if (tile == null)
                     {
                         continue;
@@ -281,12 +281,12 @@ namespace LAB2D.UI
                     string itemName = tile.name;
                     ABackpackItem.BackpackItemQualityEnum quality = ABackpackItem.BackpackItemQualityEnum.Gray;
 
-                    ResourceInfo ri = DropManager.Instance.GetDropByAll(posMap);
+                    ResourceInfo ri = Core.ServiceLocator.Get<DropManager>().GetDropByAll(posMap);
                     if (ri != null && ri.Id > 0)
                     {
                         itemId = ri.Id;
                         count = ri.Count;
-                        ItemData itemData = ItemDataManager.Instance.GetById(ri.Id);
+                        ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(ri.Id);
                         if (itemData != null)
                         {
                             itemName = itemData.CnName;
@@ -294,14 +294,14 @@ namespace LAB2D.UI
                     }
                     else
                     {
-                        AItem item = ItemInstanceFactory.Instance.GetBackpackItemByName(tile.name);
+                        AItem item = Core.ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemByName(tile.name);
                         if (item == null)
                         {
                             continue;
                         }
 
                         itemId = item.Id;
-                        ItemData itemData = ItemDataManager.Instance.GetById(item.Id);
+                        ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(item.Id);
                         if (itemData != null)
                         {
                             itemName = itemData.CnName;
@@ -314,7 +314,7 @@ namespace LAB2D.UI
                     }
 
                     // 装备掉落优先从 EnemyLootManager 获取稀有度品质
-                    EquipmentRarityType? rarity = EnemyLootManager.Instance?.TryGetRarityByMapPosition(posMap);
+                    EquipmentRarityType? rarity = Core.ServiceLocator.TryGet(out EnemyLootManager elm) ? elm.TryGetRarityByMapPosition(posMap) : null;
                     if (rarity.HasValue)
                     {
                         quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
@@ -516,7 +516,7 @@ namespace LAB2D.UI
 
         private void OnPickUpClick(Vector3Int posMap)
         {
-            ItemMap.Instance.PickUpItem(posMap);
+            Core.ServiceLocator.Get<ItemMap>().PickUpItem(posMap);
 
             // 立即刷新
             this.currentEntries.Remove(posMap);

@@ -96,8 +96,8 @@ namespace LAB2D.Item
                 this.id2Resource[-1].Remove(posMap);
                 this.cells[posMap] = plantInfo;
                 this.prePlantResource[worker].Remove(posMap);
-                ResourceMap.Instance.SetTile(posMap, ResourceManager.Instance.GetAsset(
-                    ItemDataManager.Instance.GetById(plantInfo.Id).EnName));
+                Core.ServiceLocator.Get<ResourceMap>().SetTile(posMap, Core.ServiceLocator.Get<ResourceManager>().GetAsset(
+                    Core.ServiceLocator.Get<ItemDataManager>().GetById(plantInfo.Id).EnName));
             }
         }
 
