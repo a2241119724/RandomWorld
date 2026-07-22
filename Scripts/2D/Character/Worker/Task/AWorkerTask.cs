@@ -198,6 +198,8 @@ namespace LAB2D.Character.Worker.Task
             = (pos) => TileMap.Instance.MapPosToWorldPos(pos);
         public static System.Action<AWorkerTask, Vector3IntLAB, int> TaskAddProvider { get; set; }
             = (task, pos, stage) => WorkerTaskManager.Instance.AddTask(task, pos, stage);
+        public static System.Action<UnityEngine.Vector3Int> DeleteHungryTaskProvider { get; set; }
+            = (pos) => WorkerTaskManager.Instance.DeleteHungryTask(pos);
         public static System.Func<ResourceMap> ResourceMapProvider { get; set; }
             = () => ResourceMap.Instance;
         public static System.Func<int, System.Collections.Generic.List<DropItem>> DropDataProvider { get; set; }

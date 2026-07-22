@@ -2,6 +2,7 @@ namespace LAB2D.AI.Dialogue.Core
 {
     using LAB2D;
     using LAB2D.AI.Dialogue.Prompt;
+    using LAB2D.Character.Player;
     using LAB2D.Character.Worker.Task;
     using LAB2D.UnityAdapter;
     using System.Collections.Generic;
@@ -31,6 +32,13 @@ namespace LAB2D.AI.Dialogue.Core
         private string npcId;
         private bool isDialogueOpen;
 
+        internal static System.Func<string, NPCPromptProfile> PromptBuilderProvider { get; set; }
+            = (name) => PromptBuilder.Instance.GetProfile(name);
+        internal static System.Func<Player> PlayerMineProvider { get; set; }
+            = () => PlayerManager.Instance?.Mine;
+        internal static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
+            = (msg, lv) => LogManager.Instance?.Log(msg, lv);
+
         /// <summary>
         /// 每个 profileName 只输出一次缺失警告
         /// </summary>
@@ -45,7 +53,7 @@ namespace LAB2D.AI.Dialogue.Core
         {
             if (this.cachedProfile == null)
             {
-                this.cachedProfile = CreateRuntimeProfile(PromptBuilder.Instance.GetProfile(this.profileName));
+                this.cachedProfile = CreateRuntimeProfile(PromptBuilderProvider(this.profileName));
             }
 
             if (this.cachedProfile == null)
@@ -72,7 +80,7 @@ namespace LAB2D.AI.Dialogue.Core
                 return;
             }
 
-            Player player = PlayerManager.Instance?.Mine;
+            Player player = PlayerMineProvider();
             if (player == null)
             {
                 return;
@@ -86,7 +94,7 @@ namespace LAB2D.AI.Dialogue.Core
 
             if (this.cachedProfile == null)
             {
-                this.cachedProfile = CreateRuntimeProfile(PromptBuilder.Instance.GetProfile(this.profileName));
+                this.cachedProfile = CreateRuntimeProfile(PromptBuilderProvider(this.profileName));
             }
 
             this.StartDialogue();
@@ -122,7 +130,7 @@ namespace LAB2D.AI.Dialogue.Core
             DialoguePanelUI dialoguePanelUI = DialoguePanelUI.Ensure();
             if (dialoguePanelUI == null)
             {
-                LogManager.Instance?.Log(
+                LogProvider(
                     "NPCDialogueTrigger: DialoguePanelUI is missing from Game.unity.",
                     LogManager.LogLevelEnum.Error);
                 DialogueManager.Instance.EndDialogue(this.npcId);

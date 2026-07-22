@@ -307,9 +307,7 @@ namespace LAB2D.AI.Dialogue.Core
             AWorker.WorkerData workerData,
             WorkerConditionState conditionState)
         {
-            Vector3Int posMap = TileMap.Instance == null
-                ? Vector3Int.zero
-                : TileMap.Instance.WorldPosToMapPos(worker.transform.position);
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
 
             return new GameStateContext.WorkerPromptInfo
             {
@@ -404,13 +402,10 @@ namespace LAB2D.AI.Dialogue.Core
             }
 
             string itemName = "未知装备";
-            if (ItemDataManager.Instance != null)
+            ItemData itemData = AWorkerTask.ItemDataProvider(itemId);
+            if (itemData != null && !string.IsNullOrEmpty(itemData.CnName))
             {
-                ItemData itemData = ItemDataManager.Instance.GetById(itemId);
-                if (itemData != null && !string.IsNullOrEmpty(itemData.CnName))
-                {
-                    itemName = itemData.CnName;
-                }
+                itemName = itemData.CnName;
             }
 
             sb.Append(itemName);

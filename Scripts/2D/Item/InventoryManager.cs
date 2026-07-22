@@ -15,6 +15,11 @@ namespace LAB2D.Item
     /// </summary>
     public class InventoryManager : Singleton<InventoryManager>
     {
+        internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
+            = (e) => EventBus.Instance.PublishInternal(e);
+        internal static System.Action<Vector3Int> ShowWearTaskProvider { get; set; }
+            = (pos) => AddWearTaskUI.Instance.ShowWearTask(pos);
+
         private readonly Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> id2Resource; // 同一个id对应的所有位置
         private readonly Dictionary<Vector3Int, ResourceInfo> posToResource; // 根据pos查资源
         private readonly Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // 预申请资源
@@ -102,7 +107,7 @@ namespace LAB2D.Item
         public bool IsEnoughAndPrePlace(AWorker worker, ResourceInfo resourceInfo, bool isPre = false)
         {
             // 对于不可堆叠的资源
-            if (!ItemDataManager.Instance.GetById(resourceInfo.Id).IsStackable)
+            if (!AWorkerTask.ItemDataProvider(resourceInfo.Id).IsStackable)
             {
                 if (this.id2Resource.ContainsKey(-1))
                 {
@@ -288,7 +293,7 @@ namespace LAB2D.Item
             }
 
             ResourceInfo resourceInfo = this.posToResource[posMap];
-            if (resourceInfo.Count <= 0 || ItemDataManager.Instance.IdToType(resourceInfo.Id) != AItem.ItemTypeEnum.Food)
+            if (resourceInfo.Count <= 0 || AWorkerTask.ItemTypeProvider(resourceInfo.Id) != AItem.ItemTypeEnum.Food)
             {
                 return false;
             }
@@ -353,7 +358,7 @@ namespace LAB2D.Item
                 this.posToResource[posMap].Count += resourceInfo.Count;
             }
 
-            EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
+            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
         }
 
         /// <summary>
@@ -379,12 +384,12 @@ namespace LAB2D.Item
             // 既然已经预放置了，那一定可以放置，不会超出容量
             if (this.posToResource[posMap].Id == -1)
             {
-                this.TransferResource(posMap, -1, resourceInfo.Id, AItem.ItemTypeEnum.Null, ItemDataManager.Instance.IdToType(resourceInfo.Id));
+                this.TransferResource(posMap, -1, resourceInfo.Id, AItem.ItemTypeEnum.Null, AWorkerTask.ItemTypeProvider(resourceInfo.Id));
             }
 
             this.posToResource[posMap].Id = resourceInfo.Id;
             this.posToResource[posMap].Count += resourceInfo.Count;
-            EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
+            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
             return resourceInfo;
         }
 
@@ -417,12 +422,12 @@ namespace LAB2D.Item
                 return null;
             }
 
-            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
+            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, AWorkerTask.ItemTypeProvider(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
             ResourceInfo resourceInfo = DataTool.DeepCopyByBinary(this.posToResource[posMap]);
             this.posToResource[posMap].Id = -1;
             this.posToResource[posMap].Count = 0;
-            ItemMap.Instance.DeleteTile(posMap);
-            EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
+            AWorkerTask.ItemMapProvider().DeleteTile(posMap);
+            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
             return resourceInfo;
         }
 
@@ -444,19 +449,19 @@ namespace LAB2D.Item
             // 如果正好取完
             if (this.posToResource[posMap].Count == 0)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
-                ItemMap.Instance.DeleteTile(posMap);
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, AWorkerTask.ItemTypeProvider(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
+                AWorkerTask.ItemMapProvider().DeleteTile(posMap);
 
                 // 食物被吃完删除任务
-                if (ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id) == AItem.ItemTypeEnum.Food)
+                if (AWorkerTask.ItemTypeProvider(this.posToResource[posMap].Id) == AItem.ItemTypeEnum.Food)
                 {
-                    WorkerTaskManager.Instance.DeleteHungryTask(posMap);
+                    AWorkerTask.DeleteHungryTaskProvider(posMap);
                 }
 
                 this.posToResource[posMap].Id = -1;
             }
 
-            EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
+            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
         }
 
         /// <summary>
@@ -488,19 +493,19 @@ namespace LAB2D.Item
             // 如果正好取完
             if (this.posToResource[posMap].Count <= 0)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
-                ItemMap.Instance.DeleteTile(posMap);
+                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, AWorkerTask.ItemTypeProvider(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
+                AWorkerTask.ItemMapProvider().DeleteTile(posMap);
 
                 // 食物被吃完删除任务
-                if (ItemDataManager.Instance.IdToType(this.posToResource[posMap].Id) == AItem.ItemTypeEnum.Food)
+                if (AWorkerTask.ItemTypeProvider(this.posToResource[posMap].Id) == AItem.ItemTypeEnum.Food)
                 {
-                    WorkerTaskManager.Instance.DeleteHungryTask(posMap);
+                    AWorkerTask.DeleteHungryTaskProvider(posMap);
                 }
 
                 this.posToResource[posMap].Id = -1;
             }
 
-            EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
+            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
 
             // 不够，既然我已经预取了，那说明肯定是够的
             return resourceInfo;
@@ -578,10 +583,10 @@ namespace LAB2D.Item
         /// <param name="pos">位置</param>
         public void ShowWearMenu(Vector3Int pos)
         {
-            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(this.posToResource[pos].Id);
+            AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(this.posToResource[pos].Id);
             if (itemType == AItem.ItemTypeEnum.Weapon || itemType == AItem.ItemTypeEnum.Equipment)
             {
-                AddWearTaskUI.Instance.ShowWearTask(pos);
+                ShowWearTaskProvider(pos);
             }
         }
 
@@ -598,7 +603,7 @@ namespace LAB2D.Item
             }
 
             ResourceInfo resourceInfo = this.posToResource[pos];
-            ItemData itemData = ItemDataManager.Instance.GetById(resourceInfo.Id);
+            ItemData itemData = AWorkerTask.ItemDataProvider(resourceInfo.Id);
             string text;
             if (itemData != null)
             {
@@ -609,7 +614,7 @@ namespace LAB2D.Item
                     $"info:{itemData.Info}\n" +
                     $"isStackable:{itemData.IsStackable}\n";
 
-                AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(resourceInfo.Id);
+                AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(resourceInfo.Id);
                 if (itemType == AItem.ItemTypeEnum.Weapon || itemType == AItem.ItemTypeEnum.Equipment)
                 {
                     text += $"equipSlot:{itemData.EquipSlot}\n";
@@ -708,19 +713,19 @@ namespace LAB2D.Item
                 if (this.prePlaceResource[worker].ContainsKey(pos))
                 {
                     this.prePlaceResource[worker][pos].Count += resourceInfo.Count;
-                    EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
+                    EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
                     return;
                 }
 
                 this.prePlaceResource[worker].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
-                EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
+                EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
                 return;
             }
 
             Dictionary<Vector3Int, ResourceInfo> dict = new ();
             dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
             this.prePlaceResource.Add(worker, dict);
-            EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
+            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
         }
 
         /// <summary>
@@ -778,19 +783,19 @@ namespace LAB2D.Item
                 Dictionary<Vector3Int, ResourceInfo> dict = new ();
                 dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 this.preTakeResource.Add(worker, dict);
-                EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
+                EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
                 return;
             }
 
             if (!this.preTakeResource[worker].ContainsKey(pos))
             {
                 this.preTakeResource[worker].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
-                EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
+                EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
                 return;
             }
 
             this.preTakeResource[worker][pos].Count += resourceInfo.Count;
-            EventBus.Instance.Publish(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
+            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
         }
 
         private int GetPreTakeCountByPos(Vector3Int pos)

@@ -19,6 +19,10 @@ namespace LAB2D.AI.Dialogue.UI
         /// </summary>
         public static DialoguePanelUI Instance { get; private set; }
 
+        internal static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
+            = (msg, lv) => LogManager.Instance?.Log(msg, lv);
+        internal static System.Func<string, bool, GameObject> ResourceInstantiateProvider { get; set; }
+            = (name, active) => ResourceManager.Instance.Instantiate(name, active);
         private const float BubbleMinWidth = 96f;
         private const float BubbleMaxWidth = 560f;
         private const float BubbleHorizontalPadding = 32f;
@@ -79,7 +83,7 @@ namespace LAB2D.AI.Dialogue.UI
                 }
             }
 
-            LogManager.Instance?.Log(
+            LogProvider(
                 "DialoguePanelUI: scene instance is missing. Add DialoguePanelUI to Game.unity.",
                 LogManager.LogLevelEnum.Error);
             return null;

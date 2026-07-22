@@ -6,6 +6,7 @@ namespace LAB2D.Gameplay
     using LAB2D.Domain.Common;
     using LAB2D.Enum;
     using LAB2D.Item.Backpack.Equipment;
+    using LAB2D.UI.Panel;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -18,6 +19,15 @@ namespace LAB2D.Gameplay
     /// </summary>
     public class EnemyLootManager : Singleton<EnemyLootManager>, IInitializable
     {
+        internal static System.Func<List<AItem>> ItemFactoryGenAllProvider { get; set; }
+            = () => ItemInstanceFactory.Instance.GenBackpackItems();
+        internal static System.Action<Vector3, string> FloatingTextStatusProvider { get; set; }
+            = (pos, text) => FloatingTextManager.Instance?.SpawnStatusText(pos, text);
+        internal static System.Func<Player> PlayerMineProvider { get; set; }
+            = () => PlayerManager.Instance?.Mine;
+        internal static System.Func<EquipmentComparePopup> EquipmentComparePopupProvider { get; set; }
+            = () => EquipmentComparePopup.Instance;
+
         /// <summary>是否已初始化</summary>
         public bool IsInitialized { get; private set; }
 
@@ -67,7 +77,7 @@ namespace LAB2D.Gameplay
             // 从 DropDataManager 默认掉落配置构建通用掉落概率表
             this.probToDropItem = new Dictionary<int, DropItem>();
             this.dropTotal = 0;
-            List<DropItem> dropItems = DropDataManager.Instance.GetDropItemsById(-1);
+            List<DropItem> dropItems = AWorkerTask.DropDataProvider(-1);
             this.AddDropItem(10, null); // 不掉落
             foreach (DropItem dropItem in dropItems)
             {
@@ -75,7 +85,7 @@ namespace LAB2D.Gameplay
             }
 
             this.pendingDrops = new Dictionary<Vector3Int, PendingEquipmentDrop>();
-            EquipmentBeamManager.Instance.Initialize();
+            AWorkerTask.EquipmentBeamProvider().Initialize();
             this.IsInitialized = true;
             AWorkerTask.LogProvider("EnemyLootManager 初始化完成", LogManager.LogLevelEnum.Trace);
         }
@@ -102,8 +112,8 @@ namespace LAB2D.Gameplay
             if (this.dropTotal == 0) return;
 
             int rand = Random.Range(0, this.dropTotal);
-            Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(
-                TileMap.Instance.WorldPosToMapPos(worldPos), 3, true);
+            Vector3Int pos = AWorkerTask.AvailablePositionProvider(
+                AWorkerTask.TileMapWorldToMapProvider(worldPos), 3, true);
             if (pos == default) return;
 
             foreach (KeyValuePair<int, DropItem> dropItem in this.probToDropItem)
@@ -112,11 +122,11 @@ namespace LAB2D.Gameplay
                 {
                     if (dropItem.Value == null) break;
 
-                    TileBase tile = (TileBase)ResourceManager.Instance.GetAsset(dropItem.Value.Name);
-                    ItemMap.Instance.PutDownToDrop(pos, tile, dropItem.Value.ResourceInfo);
+                    TileBase tile = (TileBase)AWorkerTask.ResourceLoadProvider(dropItem.Value.Name);
+                    AWorkerTask.ItemMapProvider().PutDownToDrop(pos, tile, dropItem.Value.ResourceInfo);
 
-                    Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(pos);
-                    EquipmentBeamManager.Instance.SpawnBeam(pos, beamWorldPos, EquipmentRarityType.Common);
+                    Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(pos);
+                    AWorkerTask.EquipmentBeamProvider().SpawnBeam(pos, beamWorldPos, EquipmentRarityType.Common);
                     break;
                 }
             }
@@ -147,7 +157,7 @@ namespace LAB2D.Gameplay
             EquipmentRarityType rarity = EquipmentLootTool.RollRarity(waveNumber);
 
             // 从已有物品工厂获取可用的装备列表
-            List<AItem> allItems = ItemInstanceFactory.Instance.GenBackpackItems();
+            List<AItem> allItems = ItemFactoryGenAllProvider();
             List<AEquipment> availableEquipment = new List<AEquipment>();
             foreach (AItem item in allItems)
             {
@@ -171,22 +181,22 @@ namespace LAB2D.Gameplay
             template.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
 
             // 通过 ItemMap 将装备放置到地面
-            ItemData itemData = ItemDataManager.Instance.GetById(template.Id);
+            ItemData itemData = AWorkerTask.ItemDataProvider(template.Id);
             if (itemData == null)
             {
                 AWorkerTask.LogProvider("EnemyLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(worldPos);
-            Vector3Int availablePos = IsAvailableMap.Instance.GenAvailablePosMap(posMap, 3, true);
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(worldPos);
+            Vector3Int availablePos = AWorkerTask.AvailablePositionProvider(posMap, 3, true);
             if (availablePos == default)
             {
                 return false;
             }
 
             ResourceInfo resourceInfo = new ResourceInfo(template.Id, 1);
-            ItemMap.Instance.PutDownToDrop(availablePos, template.Tile, resourceInfo);
+            AWorkerTask.ItemMapProvider().PutDownToDrop(availablePos, template.Tile, resourceInfo);
 
             // 记录待处理掉落，供拾取时对比使用
             PendingEquipmentDrop pending = new PendingEquipmentDrop
@@ -200,12 +210,12 @@ namespace LAB2D.Gameplay
             this.pendingDrops[availablePos] = pending;
 
             // 在掉落位置生成光束特效（按稀有度着色）
-            Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(availablePos);
-            EquipmentBeamManager.Instance.SpawnBeam(availablePos, beamWorldPos, rarity);
+            Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(availablePos);
+            AWorkerTask.EquipmentBeamProvider().SpawnBeam(availablePos, beamWorldPos, rarity);
 
             // 在掉落位置生成浮动稀有度标签
             string rarityLabel = EquipmentLootTool.FormatRarityLabel(rarity);
-            FloatingTextManager.Instance?.SpawnStatusText(worldPos, rarityLabel);
+            FloatingTextStatusProvider(worldPos, rarityLabel);
 
             AWorkerTask.LogProvider(
                 string.Format("装备掉落: {0} [{1}] at ({2:F0},{3:F0})",
@@ -232,7 +242,7 @@ namespace LAB2D.Gameplay
             EquipmentRarityType rarity = EquipmentLootTool.RollRarity(waveNumber);
 
             // 从已有物品工厂获取可用的装备列表
-            List<AItem> allItems = ItemInstanceFactory.Instance.GenBackpackItems();
+            List<AItem> allItems = ItemFactoryGenAllProvider();
             List<AEquipment> availableEquipment = new List<AEquipment>();
             foreach (AItem item in allItems)
             {
@@ -251,22 +261,22 @@ namespace LAB2D.Gameplay
             EquipmentLootTool.ApplyRarityToAttributes(template.Attribute, rarity);
             template.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
 
-            ItemData itemData = ItemDataManager.Instance.GetById(template.Id);
+            ItemData itemData = AWorkerTask.ItemDataProvider(template.Id);
             if (itemData == null)
             {
                 AWorkerTask.LogProvider("EnemyLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(worldPos);
-            Vector3Int availablePos = IsAvailableMap.Instance.GenAvailablePosMap(posMap, 5, true);
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(worldPos);
+            Vector3Int availablePos = AWorkerTask.AvailablePositionProvider(posMap, 5, true);
             if (availablePos == default)
             {
                 return false;
             }
 
             ResourceInfo resourceInfo = new ResourceInfo(template.Id, 1);
-            ItemMap.Instance.PutDownToDrop(availablePos, template.Tile, resourceInfo);
+            AWorkerTask.ItemMapProvider().PutDownToDrop(availablePos, template.Tile, resourceInfo);
 
             PendingEquipmentDrop pending = new PendingEquipmentDrop
             {
@@ -278,11 +288,11 @@ namespace LAB2D.Gameplay
             };
             this.pendingDrops[availablePos] = pending;
 
-            Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(availablePos);
-            EquipmentBeamManager.Instance.SpawnBeam(availablePos, beamWorldPos, rarity);
+            Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(availablePos);
+            AWorkerTask.EquipmentBeamProvider().SpawnBeam(availablePos, beamWorldPos, rarity);
 
             string rarityLabel = EquipmentLootTool.FormatRarityLabel(rarity);
-            FloatingTextManager.Instance?.SpawnStatusText(worldPos, rarityLabel);
+            FloatingTextStatusProvider(worldPos, rarityLabel);
 
             AWorkerTask.LogProvider(
                 string.Format("强制装备掉落: {0} [{1}] at ({2:F0},{3:F0})",
@@ -316,15 +326,15 @@ namespace LAB2D.Gameplay
 
             if (foundKey.HasValue && pending != null)
             {
-                EquipmentBeamManager.Instance.RemoveBeamAt(pending.MapPosition);
+                AWorkerTask.EquipmentBeamProvider().RemoveBeamAt(pending.MapPosition);
                 this.pendingDrops.Remove(foundKey.Value);
 
                 pending.MapPosition = posMap;
-                pending.DropPosition = TileMap.Instance.MapPosToWorldPos(posMap);
+                pending.DropPosition = AWorkerTask.TileMapPositionProvider(posMap);
                 this.pendingDrops[posMap] = pending;
 
-                Vector3 beamWorldPos = TileMap.Instance.MapPosToWorldPos(posMap);
-                EquipmentBeamManager.Instance.SpawnBeam(posMap, beamWorldPos, pending.Rarity);
+                Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(posMap);
+                AWorkerTask.EquipmentBeamProvider().SpawnBeam(posMap, beamWorldPos, pending.Rarity);
             }
         }
 
@@ -359,7 +369,7 @@ namespace LAB2D.Gameplay
             }
 
             AEquipment.EquipTypeEnum slotType = equipment.Type;
-            GameCharacter.CharacterData charData = PlayerManager.Instance?.Mine?.CharacterDataLAB;
+            GameCharacter.CharacterData charData = PlayerMineProvider()?.CharacterDataLAB;
             AEquipment currentEquipped = null;
             if (charData != null)
             {
@@ -370,11 +380,11 @@ namespace LAB2D.Gameplay
                 }
             }
 
-            EquipmentComparePopup popup = EquipmentComparePopup.Instance;
+            EquipmentComparePopup popup = EquipmentComparePopupProvider();
             if (popup == null)
             {
                 EquipmentComparePopup.EnsureRuntimePopup();
-                popup = EquipmentComparePopup.Instance;
+                popup = EquipmentComparePopupProvider();
             }
 
             if (popup != null)
@@ -383,20 +393,20 @@ namespace LAB2D.Gameplay
                 {
                     if (charData != null)
                     {
-                        Vector3Int playerPos = TileMap.Instance.WorldPosToMapPos(
-                            PlayerManager.Instance.Mine.transform.position);
+                        Vector3Int playerPos = AWorkerTask.TileMapWorldToMapProvider(
+                            PlayerMineProvider().transform.position);
                         charData.AddEquipment(equipment, playerPos);
                     }
                 }, () =>
                 {
                     if (charData != null)
                     {
-                        Vector3Int playerPos = TileMap.Instance.WorldPosToMapPos(
-                            PlayerManager.Instance.Mine.transform.position);
-                        Vector3Int dropPos = IsAvailableMap.Instance.GenAvailablePosMap(playerPos, 2, true);
+                        Vector3Int playerPos = AWorkerTask.TileMapWorldToMapProvider(
+                            PlayerMineProvider().transform.position);
+                        Vector3Int dropPos = AWorkerTask.AvailablePositionProvider(playerPos, 2, true);
                         if (dropPos != default && equipment.Tile != null)
                         {
-                            ItemMap.Instance.PutDownToDrop(dropPos, equipment.Tile,
+                            AWorkerTask.ItemMapProvider().PutDownToDrop(dropPos, equipment.Tile,
                                 new ResourceInfo(equipment.Id, 1));
                         }
                     }
@@ -428,7 +438,7 @@ namespace LAB2D.Gameplay
             if (this.pendingDrops == null || this.pendingDrops.Count == 0) return;
 
             this.pendingDrops.Remove(mapPos);
-            EquipmentBeamManager.Instance.RemoveBeamAt(mapPos);
+            AWorkerTask.EquipmentBeamProvider().RemoveBeamAt(mapPos);
         }
 
         /// <summary>
@@ -438,7 +448,7 @@ namespace LAB2D.Gameplay
         {
             if (this.pendingDrops == null) return;
             List<Vector3Int> staleKeys = new List<Vector3Int>();
-            Vector3 playerPos = PlayerManager.Instance?.Mine?.transform.position ?? Vector3.zero;
+            Vector3 playerPos = PlayerMineProvider()?.transform.position ?? Vector3.zero;
 
             foreach (KeyValuePair<Vector3Int, PendingEquipmentDrop> kv in this.pendingDrops)
             {
@@ -453,13 +463,13 @@ namespace LAB2D.Gameplay
             {
                 if (this.pendingDrops.TryGetValue(key, out PendingEquipmentDrop pending))
                 {
-                    EquipmentBeamManager.Instance.RemoveBeamAt(pending.MapPosition);
+                    AWorkerTask.EquipmentBeamProvider().RemoveBeamAt(pending.MapPosition);
                 }
 
                 this.pendingDrops.Remove(key);
             }
 
-            EquipmentBeamManager.Instance.CleanupStaleBeams();
+            AWorkerTask.EquipmentBeamProvider().CleanupStaleBeams();
         }
 
         /// <summary>
