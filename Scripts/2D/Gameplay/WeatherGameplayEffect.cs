@@ -15,6 +15,8 @@ namespace LAB2D.Gameplay
     /// </summary>
     public class WeatherGameplayEffect : Singleton<WeatherGameplayEffect>, IWeatherGameplayService
     {
+        internal static System.Func<WeatherManager.WeatherTypeEnum> WeatherTypeProvider { get; set; }
+            = () => WeatherManager.Instance.CurrentWeather;
         private WeatherManager.WeatherTypeEnum currentWeather = WeatherManager.WeatherTypeEnum.Sunny;
         private WeatherGameplayState currentState;
         private bool initialized;
@@ -294,11 +296,7 @@ namespace LAB2D.Gameplay
 
             try
             {
-                if (GlobalInit.Instance != null)
-                {
-                    GlobalInit.Instance.ShowTip(message);
-                    return;
-                }
+                AWorkerTask.ShowTipProvider(message);
             }
             catch (Exception exception)
             {

@@ -254,6 +254,8 @@ namespace LAB2D.Character.Worker.Task
             = (worker) => LocateWorkerUI.Instance.AddWorkerItem(worker);
         public static System.Action<AWorker> LocateWorkerUIRemoveProvider { get; set; }
             = (worker) => LocateWorkerUI.Instance.RemoveWorkerItem(worker);
+        public static System.Action<string> ShowTipProvider { get; set; }
+            = (message) => { if (GlobalInit.Instance != null) GlobalInit.Instance.ShowTip(message); };
 
         /// <summary>
         /// 任务ID

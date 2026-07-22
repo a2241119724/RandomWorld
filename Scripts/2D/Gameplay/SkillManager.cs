@@ -2,6 +2,7 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Character.Player;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
     using System;
@@ -17,7 +18,13 @@ namespace LAB2D.Gameplay
     /// </summary>
     public class SkillManager : Singleton<SkillManager>, ISkillManager, IInitializable
     {
-        /// <summary>已注册的技能列表（按 SlotIndex 排序）</summary>
+        internal static System.Func<Player> PlayerMineProvider { get; set; }
+            = () => PlayerManager.Instance?.Mine;
+        internal static System.Action<Vector3, float, bool, bool> FloatingTextDamageProvider { get; set; }
+            = (pos, dmg, crit, combo) => FloatingTextManager.Instance?.SpawnDamageText(pos, dmg, crit, combo);
+        internal static System.Action<Vector3, float> FloatingTextHealProvider { get; set; }
+            = (pos, heal) => FloatingTextManager.Instance?.SpawnHealText(pos, heal);
+
         public List<SkillData> Skills { get; private set; }
 
         /// <summary>是否已完成初始化</summary>
@@ -110,7 +117,7 @@ namespace LAB2D.Gameplay
             }
 
             SkillData skill = this.Skills[slotIndex];
-            Player player = PlayerManager.Instance?.Mine;
+            Player player = PlayerMineProvider();
             if (player == null || player.CharacterDataLAB == null || player.CharacterDataLAB.Hp <= 0)
             {
                 return false;
@@ -133,7 +140,7 @@ namespace LAB2D.Gameplay
             playerData.Mp -= skill.ManaCost;
 
             // 刷新玩家状态UI — 通过 Player.RefreshUI() 发布事件，不再直接操作 PlayerStatusUI
-            PlayerManager.Instance.Mine?.RefreshUI();
+            PlayerMineProvider()?.RefreshUI();
 
             // 记录激活时间
             skill.LastActivateTime = Time.time;
@@ -339,7 +346,7 @@ namespace LAB2D.Gameplay
                     enemy.ReduceHp(finalDamage, player, false);
 
                     // 生成技能伤害浮动文字（复用现有伤害文字系统）
-                    FloatingTextManager.Instance?.SpawnDamageText(
+FloatingTextDamageProvider(
                         enemy.transform.position, finalDamage, false, false);
                 }
             }
@@ -393,7 +400,7 @@ namespace LAB2D.Gameplay
             player.AddHp(healAmount);
 
             // 生成治疗浮动文字
-            FloatingTextManager.Instance?.SpawnHealText(player.transform.position, healAmount);
+            FloatingTextHealProvider(player.transform.position, healAmount);
         }
 
         /// <summary>

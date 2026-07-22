@@ -302,11 +302,7 @@ namespace LAB2D.Gameplay
 
             try
             {
-                if (GlobalInit.Instance != null)
-                {
-                    GlobalInit.Instance.ShowTip(message);
-                    return;
-                }
+                AWorkerTask.ShowTipProvider(message);
             }
             catch (Exception e)
             {

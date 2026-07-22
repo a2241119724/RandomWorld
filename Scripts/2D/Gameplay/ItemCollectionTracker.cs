@@ -99,10 +99,7 @@ namespace LAB2D.Gameplay
             // 通过 Tip 系统给予即时反馈；降级保护：Tip 预制体缺失时不崩溃
             try
             {
-                if (GlobalInit.Instance != null)
-                {
-                    GlobalInit.Instance.ShowTip(tipText);
-                }
+                AWorkerTask.ShowTipProvider(tipText);
             }
             catch (Exception ex)
             {
