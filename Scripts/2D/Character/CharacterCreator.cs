@@ -15,7 +15,7 @@ namespace LAB2D.Character
         {
             if (worldPos == default)
             {
-                if (TileMap.Instance == null)
+                if (!Core.ServiceLocator.TryGet(out TileMap tm))
                 {
                     AWorkerTask.LogProvider("TileMap.Instance is null, cannot create character at valid position", LogManager.LogLevelEnum.Error);
                     return null;
@@ -38,12 +38,12 @@ namespace LAB2D.Character
         {
             // 计算世界坐标偏移
             Vector3 spawnPos = worldPos;
-            if (TileMap.Instance != null && TileMap.Instance.gameObject != null)
+            if (Core.ServiceLocator.TryGet(out TileMap tm) && tm.gameObject != null)
             {
                 spawnPos = new Vector3(
-                    worldPos.x + TileMap.Instance.gameObject.transform.position.x,
-                    worldPos.y + TileMap.Instance.gameObject.transform.position.y,
-                    TileMap.Instance.gameObject.transform.position.z);
+                    worldPos.x + tm.gameObject.transform.position.x,
+                    worldPos.y + tm.gameObject.transform.position.y,
+                    tm.gameObject.transform.position.z);
             }
             else
             {
@@ -51,7 +51,7 @@ namespace LAB2D.Character
             }
 
             // 设置角色
-            GameObject g = ResourceManager.Instance.Instantiate(
+            GameObject g = Core.ServiceLocator.Get<ResourceManager>().Instantiate(
                 name,
                 spawnPos,
                 Quaternion.identity,

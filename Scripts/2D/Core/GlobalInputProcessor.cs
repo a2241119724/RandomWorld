@@ -23,7 +23,7 @@ namespace LAB2D.Core
 
         private void ProcessAchievements()
         {
-            AchievementManager mgr = AchievementManager.Instance;
+            AchievementManager mgr = ServiceLocator.Get<AchievementManager>();
             if (mgr == null || !mgr.IsInitialized)
             {
                 return;
@@ -68,20 +68,20 @@ namespace LAB2D.Core
                 return;
             }
 
-            if (PanelController.Instance.Panels.Count == 0)
+            if (ServiceLocator.Get<PanelController>().Panels.Count == 0)
             {
                 BuildingUI.Instance.gameObject.SetActive(false);
-                PanelController.Instance.Show(BuildMenuPanel.Instance);
-                IsAvailableMap.Instance.ClearShow();
+                ServiceLocator.Get<PanelController>().Show(BuildMenuPanel.Instance);
+                ServiceLocator.Get<IsAvailableMap>().ClearShow();
             }
             else
             {
-                if (PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
+                if (ServiceLocator.Get<PanelController>().Panels.Peek() == ItemInfoPanel.Instance)
                 {
                     ItemInfoUI.Instance.Init();
                 }
 
-                PanelController.Instance.Panels.Peek().OnClick_Back();
+                ServiceLocator.Get<PanelController>().Panels.Peek().OnClick_Back();
             }
         }
 
@@ -92,11 +92,11 @@ namespace LAB2D.Core
                 return;
             }
 
-            if (PanelController.Instance.Panels.Count > 0
-                && PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance)
+            if (ServiceLocator.Get<PanelController>().Panels.Count > 0
+                && ServiceLocator.Get<PanelController>().Panels.Peek() == ItemInfoPanel.Instance)
             {
                 ItemInfoUI.Instance.Init();
-                PanelController.Instance.Close();
+                ServiceLocator.Get<PanelController>().Close();
             }
         }
     }

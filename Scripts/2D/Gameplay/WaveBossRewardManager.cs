@@ -285,7 +285,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WaveManager manager = WaveManager.Instance;
+                WaveManager manager = Core.ServiceLocator.TryGet(out WaveManager wm) ? wm : null;
                 if (manager == null)
                 {
                     return;
@@ -472,7 +472,7 @@ namespace LAB2D.Gameplay
         /// <param name="option">奖励选项。</param>
         private void ApplyReward(WaveRewardOption option)
         {
-            Player player = PlayerManager.Instance?.Mine;
+            Player player = Core.ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
             switch (option.RewardType)
             {
                 case WaveRewardType.Heal:

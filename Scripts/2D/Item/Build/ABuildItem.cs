@@ -48,7 +48,7 @@ namespace LAB2D.Item.Build
         /// <param name="extra">额外信息</param>
         public virtual void AddBuildTask(Vector3Int centerMap, Extra extra)
         {
-            BuildMap.Instance.AddBuild(centerMap, this.TileName);
+            Core.ServiceLocator.Get<BuildMap>().AddBuild(centerMap, this.TileName);
         }
 
         public class Extra

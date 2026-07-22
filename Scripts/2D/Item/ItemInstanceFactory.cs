@@ -40,14 +40,14 @@ namespace LAB2D.Item
         public ABackpackItem GetBackpackItemByName(string name)
         {
             ABackpackItem item = (ABackpackItem)Activator.CreateInstance(this.backpackItemTypes[name]);
-            item.Id = ItemDataManager.Instance.GetByName(name).Id;
+            item.Id = Core.ServiceLocator.Get<ItemDataManager>().GetByName(name).Id;
             item.Quantity = 1;
             item.Uid = this.uid++;
-            item.Tile = ResourceManager.Instance.GetAsset(name);
+            item.Tile = Core.ServiceLocator.Get<ResourceManager>().GetAsset(name);
 
-            if (item is AEquipment equip && ItemDataManager.Instance.IdToType(item.Id) == AItem.ItemTypeEnum.Equipment)
+            if (item is AEquipment equip && Core.ServiceLocator.Get<ItemDataManager>().IdToType(item.Id) == AItem.ItemTypeEnum.Equipment)
             {
-                equip.Type = ItemDataManager.Instance.GetById(item.Id).EquipSlot;
+                equip.Type = Core.ServiceLocator.Get<ItemDataManager>().GetById(item.Id).EquipSlot;
             }
 
             return item;
@@ -60,7 +60,7 @@ namespace LAB2D.Item
         /// <returns>背包道具</returns>
         public ABackpackItem GetBackpackItemById(int id)
         {
-            ItemData itemData = ItemDataManager.Instance.GetById(id);
+            ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(id);
             return this.GetBackpackItemByName(itemData.EnName);
         }
 
@@ -142,7 +142,7 @@ namespace LAB2D.Item
                     continue;
                 }
 
-                int id = ItemDataManager.Instance.GetByName(type.Name).Id;
+                int id = Core.ServiceLocator.Get<ItemDataManager>().GetByName(type.Name).Id;
                 ABuildItem item = (ABuildItem)Activator.CreateInstance(type);
                 item.Id = id;
                 this.buildItems.Add(type.Name, item);

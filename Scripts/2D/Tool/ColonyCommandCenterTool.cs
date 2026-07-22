@@ -423,8 +423,8 @@ namespace LAB2D.Tool
                     }
 
                     Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(needs);
-                    return InventoryManager.Instance != null &&
-                        InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining);
+                    return ServiceLocator.TryGet(out InventoryManager inv) &&
+                        inv.IsEnoughAndPreTake(worker, remaining);
                 }
 
                 return false;
@@ -445,45 +445,48 @@ namespace LAB2D.Tool
                     return true;
                 }
 
-                if (workerMap.TryGetValue(workerId, out AWorker worker))
+                if (ServiceLocator.TryGet(out InventoryManager inventoryMgr))
                 {
-                    return InventoryManager.Instance != null &&
-                        InventoryManager.Instance.IsEnoughAndPrePlace(worker, resourceInfo);
+                    if (workerMap.TryGetValue(workerId, out AWorker worker))
+                    {
+                        return inventoryMgr.IsEnoughAndPrePlace(worker, resourceInfo);
+                    }
+
+                    return inventoryMgr.IsEnoughAndPrePlace(null, resourceInfo);
                 }
 
-                return InventoryManager.Instance != null &&
-                    InventoryManager.Instance.IsEnoughAndPrePlace(null, resourceInfo);
+                return false;
             };
 
             // 检查指定位置是否有食物
             context.IsFoodAtPosition = pos =>
             {
-                if (InventoryManager.Instance == null)
+                if (!ServiceLocator.TryGet(out InventoryManager inv))
                 {
                     return false;
                 }
 
                 Vector3Int unityPos = new Vector3Int(pos.X, pos.Y, pos.Z);
-                ResourceInfo ri = InventoryManager.Instance.GetResourceByPos(unityPos);
+                ResourceInfo ri = inv.GetResourceByPos(unityPos);
                 if (ri == null || ri.Count <= 0)
                 {
                     return false;
                 }
 
-                return ItemDataManager.Instance != null &&
-                    ItemDataManager.Instance.IdToType(ri.Id) == AItem.ItemTypeEnum.Food;
+                return ServiceLocator.TryGet(out ItemDataManager itemMgr) &&
+                    itemMgr.IdToType(ri.Id) == AItem.ItemTypeEnum.Food;
             };
 
             // 检查是否可种植（有种子且有空闲农田）
             context.CanPlant = workerId =>
             {
-                if (InventoryManager.Instance == null ||
-                    InventoryManager.Instance.TypeToResource == null)
+                if (!ServiceLocator.TryGet(out InventoryManager inv) ||
+                    inv.TypeToResource == null)
                 {
                     return false;
                 }
 
-                if (!InventoryManager.Instance.TypeToResource.TryGetValue(
+                if (!inv.TypeToResource.TryGetValue(
                     AItem.ItemTypeEnum.Seed,
                     out Dictionary<Vector3Int, ResourceInfo> seeds) ||
                     !HasPositiveResource(seeds))
@@ -493,8 +496,8 @@ namespace LAB2D.Tool
 
                 if (workerMap.TryGetValue(workerId, out AWorker worker))
                 {
-                    return FarmlandManager.Instance != null &&
-                        FarmlandManager.Instance.IsEnoughAndPrePlant(worker, null) != default;
+                    return ServiceLocator.TryGet(out FarmlandManager fm) &&
+                        fm.IsEnoughAndPrePlant(worker, null) != default;
                 }
 
                 return false;

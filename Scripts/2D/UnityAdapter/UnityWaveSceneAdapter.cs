@@ -15,39 +15,39 @@ namespace LAB2D.UnityAdapter
     {
         public int CountAliveEnemies()
         {
-            return EnemyManager.Instance == null ? 0 : EnemyManager.Instance.AliveEnemyCount;
+            return Core.ServiceLocator.TryGet(out EnemyManager em) ? em.AliveEnemyCount : 0;
         }
 
         public int GetRuntimeMaxEnemyCount()
         {
-            if (EnemyManager.Instance == null || EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount <= 0)
+            if (!Core.ServiceLocator.TryGet(out EnemyManager em) || em.EnemyManagerDataLAB.MaxEnemyCount <= 0)
             {
                 return 0;
             }
 
-            return EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount;
+            return em.EnemyManagerDataLAB.MaxEnemyCount;
         }
 
         public bool IsPlayerAlive()
         {
-            Player player = PlayerManager.Instance?.Mine;
+            Player player = Core.ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
             return player != null && player.CharacterDataLAB.Hp > 0;
         }
 
         public Vector3 GetSpawnPosition(bool useRandomSpawnPositions)
         {
-            if (useRandomSpawnPositions && TileMap.Instance != null)
+            if (useRandomSpawnPositions && Core.ServiceLocator.TryGet(out TileMap tileMap))
             {
                 try
                 {
                     Vector3 centerMap = default;
-                    Player player = PlayerManager.Instance?.Mine;
+                    Player player = Core.ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
                     if (player != null)
                     {
-                        centerMap = TileMap.Instance.WorldPosToMapPos(player.transform.position);
+                        centerMap = tileMap.WorldPosToMapPos(player.transform.position);
                     }
 
-                    return TileMap.Instance.MapPosToWorldPos(TileMap.Instance.GenCanReachPos(centerMap));
+                    return tileMap.MapPosToWorldPos(tileMap.GenCanReachPos(centerMap));
                 }
                 catch (Exception exception)
                 {
@@ -62,7 +62,7 @@ namespace LAB2D.UnityAdapter
 
         public GameObject CreateEnemy(Vector3 spawnPosition)
         {
-            return EnemyManager.Instance == null ? null : EnemyManager.Instance.Create(spawnPosition);
+            return Core.ServiceLocator.TryGet(out EnemyManager em) ? em.Create(spawnPosition) : null;
         }
 
         public bool TrySpawnEnemy(bool useRandomSpawnPositions, WaveSpawnRequest spawnRequest)
@@ -80,12 +80,12 @@ namespace LAB2D.UnityAdapter
 
         public void OnWaveStarted(int waveIndex, float difficultyScale)
         {
-            WaveBossRewardManager.Instance.OnWaveStarted(waveIndex, difficultyScale);
+            Core.ServiceLocator.Get<WaveBossRewardManager>().OnWaveStarted(waveIndex, difficultyScale);
         }
 
         public int GetEnemyCountForWave(int waveIndex, int baseEnemyCount)
         {
-            return WaveBossRewardManager.Instance.GetEnemyCountForWave(waveIndex, baseEnemyCount);
+            return Core.ServiceLocator.Get<WaveBossRewardManager>().GetEnemyCountForWave(waveIndex, baseEnemyCount);
         }
 
         public void ConfigureSpawnedEnemy(GameObject enemyObject, WaveSpawnRequest spawnRequest)
@@ -95,7 +95,7 @@ namespace LAB2D.UnityAdapter
                 return;
             }
 
-            WaveBossRewardManager.Instance.ConfigureSpawnedEnemy(
+            Core.ServiceLocator.Get<WaveBossRewardManager>().ConfigureSpawnedEnemy(
                 enemyObject,
                 spawnRequest.WaveIndex,
                 spawnRequest.SpawnIndex,

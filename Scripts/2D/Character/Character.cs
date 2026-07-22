@@ -256,10 +256,10 @@ namespace LAB2D.Character
             public static System.Action<AEquipment, Vector3Int> EquipmentSwapDropProvider { get; set; }
                 = (oldEquipment, posMap) =>
                 {
-                    ItemMap.Instance.PutDownToInventory(
+                    Core.ServiceLocator.Get<ItemMap>().PutDownToInventory(
                         posMap,
-                        ResourceManager.Instance.GetAsset(
-                            ItemDataManager.Instance.GetById(oldEquipment.Id).EnName),
+                        Core.ServiceLocator.Get<ResourceManager>().GetAsset(
+                            Core.ServiceLocator.Get<ItemDataManager>().GetById(oldEquipment.Id).EnName),
                         new ResourceInfo(oldEquipment.Id, 1));
                 };
 

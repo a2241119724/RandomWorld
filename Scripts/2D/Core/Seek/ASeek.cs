@@ -79,7 +79,7 @@ namespace LAB2D.Core.Seek
         public ASeek(LAB2D.Character.Character character)
         {
             // 确保Spend池和可步行性缓存已初始化
-            var tileMap = TileMap.Instance.TileMapDataLAB;
+            var tileMap = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB;
             SpendPool.Initialize(tileMap.Width, tileMap.Height);
             WalkabilityCache.Initialize(tileMap.Width, tileMap.Height);
 
@@ -134,17 +134,17 @@ namespace LAB2D.Core.Seek
         /// <returns>是否</returns>
         public static bool IsCanReach(Vector3Int posMap)
         {
-            if (!TileMap.Instance.IsCanReach(posMap))
+            if (!Core.ServiceLocator.Get<TileMap>().IsCanReach(posMap))
             {
                 return false;
             }
 
-            if (!ResourceMap.Instance.IsCanReach(posMap))
+            if (!Core.ServiceLocator.Get<ResourceMap>().IsCanReach(posMap))
             {
                 return false;
             }
 
-            if (!BuildMap.Instance.IsCanReach(posMap))
+            if (!Core.ServiceLocator.Get<BuildMap>().IsCanReach(posMap))
             {
                 return false;
             }
@@ -244,7 +244,7 @@ namespace LAB2D.Core.Seek
             }
 
             // 变为真实坐标
-            Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(result.Path[0].PosMap);
+            Vector3 worldPos = Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(result.Path[0].PosMap);
 
             // 到达路径中一个目标点，切换下一个目标点
             if (result.Path.Count != 0 &&
@@ -255,11 +255,11 @@ namespace LAB2D.Core.Seek
             }
 
             this.Direction = worldPos - this.Character.transform.position;
-            float speed = WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(this.Character, this.Character.MoveSpeed);
+            float speed = Core.ServiceLocator.Get<WeatherGameplayEffect>().GetAdjustedCharacterMoveSpeed(this.Character, this.Character.MoveSpeed);
             if (this.Character is AWorker worker)
             {
                 // 工人的饥饿与疲劳状态会在天气倍率之后继续影响移动速度。
-                speed = WorkerConditionManager.Instance.GetAdjustedWorkerMoveSpeed(worker, speed);
+                speed = Core.ServiceLocator.Get<WorkerConditionManager>().GetAdjustedWorkerMoveSpeed(worker, speed);
             }
 
             this.Character.transform.Translate(speed * Time.deltaTime * this.Direction.normalized, Space.World); // 向前移动
@@ -390,7 +390,7 @@ namespace LAB2D.Core.Seek
 
             for (int i = 0; i < result.Path.Count; i++)
             {
-                this.LineRenderer.SetPosition(result.Path.Count - i - 1, TileMap.Instance.MapPosToWorldPos(result.Path[i].PosMap));
+                this.LineRenderer.SetPosition(result.Path.Count - i - 1, Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(result.Path[i].PosMap));
             }
         }
 

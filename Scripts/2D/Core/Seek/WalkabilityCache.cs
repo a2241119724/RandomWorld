@@ -40,7 +40,7 @@ namespace LAB2D.Core.Seek
         {
             if (readCache == null)
             {
-                var tileMap = TileMap.Instance.TileMapDataLAB;
+                var tileMap = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB;
                 Initialize(tileMap.Width, tileMap.Height);
             }
 

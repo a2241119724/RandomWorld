@@ -36,8 +36,8 @@ namespace LAB2D.Character.Worker
         public static System.Action<AWorker, AWorkerTask> GiveUpTaskProvider { get; set; }
             = (worker, task) =>
             {
-                InventoryManager.Instance.DeleteWorkerPre(worker);
-                WorkerTaskManager.Instance.GiveUpTask(task);
+                Core.ServiceLocator.Get<InventoryManager>().DeleteWorkerPre(worker);
+                Core.ServiceLocator.Get<WorkerTaskManager>().GiveUpTask(task);
             };
 
         /// <summary>
@@ -49,10 +49,10 @@ namespace LAB2D.Character.Worker
             {
                 if (!AWorkerTask.NetworkIsOnlineProvider() || PhotonNetwork.IsMasterClient)
                 {
-                    WorkerManager.Instance.Remove(worker);
+                    Core.ServiceLocator.Get<WorkerManager>().Remove(worker);
                 }
 
-                WorkerEfficiencyTracker.Instance.RecordWorkerDeath(worker);
+                Core.ServiceLocator.Get<WorkerEfficiencyTracker>().RecordWorkerDeath(worker);
             };
 
         /// <summary>

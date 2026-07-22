@@ -12,50 +12,45 @@ namespace LAB2D.UnityAdapter
         /// <inheritdoc/>
         public bool IsCanReach(GameGridPosition position)
         {
-            if (BuildMap.Instance == null)
-            {
-                return false;
-            }
-
             Vector3Int unityPos = UnityVectorAdapter.ToUnityVector3Int(position);
-            return BuildMap.Instance.IsCanReach(unityPos);
+            return Core.ServiceLocator.TryGet(out BuildMap bm) && bm.IsCanReach(unityPos);
         }
 
         /// <inheritdoc/>
         public GameGridPosition GetRandomReachablePosition()
         {
-            if (TileMap.Instance == null)
+            if (!Core.ServiceLocator.TryGet(out TileMap tm))
             {
                 return new GameGridPosition(0, 0, 0);
             }
 
-            Vector3Int randomPos = TileMap.Instance.GenCanReachPos();
+            Vector3Int randomPos = tm.GenCanReachPos();
             return UnityVectorAdapter.ToGameGridPosition(randomPos);
         }
 
         /// <inheritdoc/>
         public GameGridPosition WorldPosToGridPos(GameVector2 worldPosition)
         {
-            if (TileMap.Instance == null)
+            if (!Core.ServiceLocator.TryGet(out TileMap tm))
             {
                 return new GameGridPosition(0, 0, 0);
             }
 
             Vector3 worldPos = UnityVectorAdapter.ToUnityVector3(worldPosition);
-            Vector3 gridPos = TileMap.Instance.WorldPosToMapPos(worldPos);
+            Vector3 gridPos = tm.WorldPosToMapPos(worldPos);
             return UnityVectorAdapter.ToGameGridPosition(Vector3Int.RoundToInt(gridPos));
         }
 
         /// <inheritdoc/>
         public GameVector2 GridPosToWorldPos(GameGridPosition gridPosition)
         {
-            if (TileMap.Instance == null)
+            if (!Core.ServiceLocator.TryGet(out TileMap tm))
             {
                 return new GameVector2(0f, 0f);
             }
 
             Vector3Int gridPos = UnityVectorAdapter.ToUnityVector3Int(gridPosition);
-            Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(gridPos);
+            Vector3 worldPos = tm.MapPosToWorldPos(gridPos);
             return UnityVectorAdapter.ToGameVector2(worldPos);
         }
     }

@@ -59,12 +59,12 @@ namespace LAB2D.Map
                 TileInfoUI.Instance.Init();
             }
 
-            if (!UnityGlobalInputAdapter.GetShowTileInfoHeld() || PanelController.Instance.Panels.Peek() == AsyncProgressPanel.Instance)
+            if (!UnityGlobalInputAdapter.GetShowTileInfoHeld() || Core.ServiceLocator.Get<PanelController>().Panels.Peek() == AsyncProgressPanel.Instance)
             {
                 return;
             }
 
-            Vector3Int posMap = TileMap.Instance.GetMapPosByMouse();
+            Vector3Int posMap = Core.ServiceLocator.Get<TileMap>().GetMapPosByMouse();
             string mapType = this.GetType().Name;
             if (this.tilemap.HasTile(posMap) && (this.TileInfo.ActiveMapType == string.Empty || this.TileInfo.ActiveMapType == mapType))
             {

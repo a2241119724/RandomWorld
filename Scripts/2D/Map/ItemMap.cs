@@ -54,7 +54,7 @@ namespace LAB2D.Map
         public void PickUpFromInventory(Vector3Int posMap, ResourceInfo resourceInfo)
         {
             this.DeleteTile(posMap);
-            InventoryManager.Instance.SubItem(posMap, resourceInfo);
+            Core.ServiceLocator.Get<InventoryManager>().SubItem(posMap, resourceInfo);
         }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace LAB2D.Map
         public void PickUpFromDrop(Vector3Int posMap, ResourceInfo resourceInfo)
         {
             // 删除拿起来的东西
-            DropManager.Instance.SubDropByAll(posMap, resourceInfo);
+            Core.ServiceLocator.Get<DropManager>().SubDropByAll(posMap, resourceInfo);
             this.DeleteTile(posMap);
         }
 
@@ -95,8 +95,8 @@ namespace LAB2D.Map
         public void PutDownToInventory(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
         {
             this.AddTile(posMap, tileBase);
-            InventoryManager.Instance.AddItem(posMap, resourceInfo);
-            EnemyLootManager.Instance.TrySpawnBeamForInventory(posMap, resourceInfo.Id);
+            Core.ServiceLocator.Get<InventoryManager>().AddItem(posMap, resourceInfo);
+            Core.ServiceLocator.Get<EnemyLootManager>().TrySpawnBeamForInventory(posMap, resourceInfo.Id);
         }
 
         /// <summary>
@@ -108,13 +108,13 @@ namespace LAB2D.Map
         public void PutDownToDrop(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
         {
             this.AddTile(posMap, tileBase);
-            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(resourceInfo.Id);
+            AItem.ItemTypeEnum itemType = Core.ServiceLocator.Get<ItemDataManager>().IdToType(resourceInfo.Id);
 
             // 添加到掉落物管理中
-            DropManager.Instance.AddDrop(itemType, posMap, resourceInfo);
+            Core.ServiceLocator.Get<DropManager>().AddDrop(itemType, posMap, resourceInfo);
 
             // 添加搬运任务
-            WorkerTaskManager.Instance.AddTask(
+            Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                 new WorkerCarryTask.CarryTaskBuilder()
                 .SetResourceInfo(resourceInfo).SetStartTarget(posMap).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
         }
@@ -140,7 +140,7 @@ namespace LAB2D.Map
             {
                 this.tilemap.SetTile(
                     Vector3IntLAB.ToVector3Int(enumerator.Current.Key),
-                    (TileBase)ResourceManager.Instance.GetAsset(enumerator.Current.Value));
+                    (TileBase)AWorkerTask.ResourceLoadProvider(enumerator.Current.Value));
             }
         }
 
@@ -162,7 +162,7 @@ namespace LAB2D.Map
                 return;
             }
 
-            this.tilemap.SetTile(vector3Int, (TileBase)ResourceManager.Instance.GetAsset(tileBaseName));
+            this.tilemap.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(tileBaseName));
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
@@ -183,9 +183,9 @@ namespace LAB2D.Map
             }
 
             // 拾取前获取装备稀有度信息，避免创建新道具后品质丢失
-            EquipmentRarityType? rarity = EnemyLootManager.Instance.TryGetRarityByMapPosition(posMap);
+            EquipmentRarityType? rarity = Core.ServiceLocator.Get<EnemyLootManager>().TryGetRarityByMapPosition(posMap);
 
-            AItem item = ItemInstanceFactory.Instance.GetBackpackItemByName(tile.name);
+            AItem item = Core.ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemByName(tile.name);
 
             // 将掉落时的品质和属性应用到拾取的道具上
             if (rarity.HasValue && item is AEquipment equipment)
@@ -198,14 +198,14 @@ namespace LAB2D.Map
                 backpackItem.Quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
             }
 
-            BackpackController.Instance.AddItem(item);
-            ItemCollectionTracker.Instance.RecordItemCollected(new ResourceInfo(item.Id, 1));
-            EnemyLootManager.Instance.RemoveDropByMapPosition(posMap);
+            Core.ServiceLocator.Get<BackpackController>().AddItem(item);
+            Core.ServiceLocator.Get<ItemCollectionTracker>().RecordItemCollected(new ResourceInfo(item.Id, 1));
+            Core.ServiceLocator.Get<EnemyLootManager>().RemoveDropByMapPosition(posMap);
 
-            ResourceInfo resourceInfo = DropManager.Instance.GetDropByAll(posMap);
+            ResourceInfo resourceInfo = Core.ServiceLocator.Get<DropManager>().GetDropByAll(posMap);
             if (resourceInfo != null)
             {
-                DropManager.Instance.SubDropByAll(posMap, resourceInfo);
+                Core.ServiceLocator.Get<DropManager>().SubDropByAll(posMap, resourceInfo);
             }
 
             this.DeleteTile(posMap);

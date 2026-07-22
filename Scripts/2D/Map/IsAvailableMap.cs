@@ -65,7 +65,7 @@ namespace LAB2D.Map
                 {
                     Vector3Int posMap1 = new (posMap.x + i, posMap.y + j, 0);
                     this.selectPoses.Add(posMap1);
-                    this.tilemap.SetTile(posMap1, (TileBase)ResourceManager.Instance.GetAsset("Snow"));
+                    this.tilemap.SetTile(posMap1, (TileBase)AWorkerTask.ResourceLoadProvider("Snow"));
                     this.tilemap.RemoveTileFlags(posMap1, TileFlags.LockColor);
                     if (this.IsAvailable(posMap1))
                     {
@@ -104,13 +104,13 @@ namespace LAB2D.Map
         /// <returns>位置</returns>
         public Vector3Int GenAvailablePosMap(Vector3Int centerMap = default, int radius = 10, bool isDrop = false)
         {
-            int x, y, startX = 0, endX = TileMap.Instance.TileMapDataLAB.Height, startY = 0, endY = TileMap.Instance.TileMapDataLAB.Width;
+            int x, y, startX = 0, endX = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Height, startY = 0, endY = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Width;
             if (centerMap != default)
             {
                 startX = (int)System.Math.Max(centerMap.x - radius, 0);
                 startY = (int)System.Math.Max(centerMap.y - radius, 0);
-                endX = (int)System.Math.Min(centerMap.x + radius, TileMap.Instance.TileMapDataLAB.Height);
-                endY = (int)System.Math.Min(centerMap.y + radius, TileMap.Instance.TileMapDataLAB.Width);
+                endX = (int)System.Math.Min(centerMap.x + radius, Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Height);
+                endY = (int)System.Math.Min(centerMap.y + radius, Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Width);
             }
 
             // 如果循环次数过多,则说明没有可用的位置
@@ -129,7 +129,7 @@ namespace LAB2D.Map
 
                 // 如果是放置掉落物,则需要判断是否是可放置的位置
                 bool a = !this.IsAvailable(new Vector3Int(x, y, 0));
-                flag = isDrop ? a || !ItemMap.Instance.IsFreeTile(new Vector3Int(x, y, 0)) : a;
+                flag = isDrop ? a || !Core.ServiceLocator.Get<ItemMap>().IsFreeTile(new Vector3Int(x, y, 0)) : a;
             }
             while (flag);
             return new Vector3Int(x, y, 0);
@@ -142,9 +142,9 @@ namespace LAB2D.Map
         /// <returns>是否</returns>
         private bool IsAvailable(Vector3Int posMap)
         {
-            return TileMap.Instance.IsCanReach(posMap) &&
-                BuildMap.Instance.IsFreeTile(posMap) &&
-                ResourceMap.Instance.IsFreeTile(posMap);
+return Core.ServiceLocator.Get<TileMap>().IsCanReach(posMap) &&
+            Core.ServiceLocator.Get<BuildMap>().IsFreeTile(posMap) &&
+            Core.ServiceLocator.Get<ResourceMap>().IsFreeTile(posMap);
         }
     }
 }

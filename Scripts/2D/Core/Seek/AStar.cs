@@ -24,7 +24,7 @@ namespace LAB2D.Core.Seek
             Vector3Int posMap = default;
             UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
             {
-                posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
+                posMap = Core.ServiceLocator.Get<TileMap>().WorldPosToMapPos(this.Character.transform.position);
             }).Wait();
 
             // 起点就是终点
@@ -234,9 +234,9 @@ namespace LAB2D.Core.Seek
                         }
 
                         // 上下左右平移一下射线
-                        Vector3 pos = TileMap.Instance.MapPosToWorldPos(start.PosMap);
-                        Vector3 direction = TileMap.Instance.MapPosToWorldPos(path[i].PosMap) - TileMap.Instance.MapPosToWorldPos(start.PosMap);
-                        float distance = Vector3.Distance(TileMap.Instance.MapPosToWorldPos(start.PosMap), TileMap.Instance.MapPosToWorldPos(path[i].PosMap));
+                        Vector3 pos = Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(start.PosMap);
+                        Vector3 direction = Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(path[i].PosMap) - Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(start.PosMap);
+                        float distance = Vector3.Distance(Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(start.PosMap), Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(path[i].PosMap));
 
                         bool isAllCanReach = true;
                         UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
