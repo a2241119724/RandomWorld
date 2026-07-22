@@ -1,6 +1,9 @@
 namespace LAB2D
 {
+    using LAB2D.AI.Dialogue.Core;
+    using LAB2D.AI.Dialogue.Memory;
     using LAB2D.AI.Dialogue.Prompt;
+    using LAB2D.AI.Dialogue.RAG;
     using LAB2D.Character;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Core;
@@ -24,70 +27,30 @@ namespace LAB2D
 
         public static GlobalInit Instance { get; private set; }
 
-        public void Awake()
+        /// <summary>
+        /// 在场景加载前注册所有 Singleton&lt;T&gt; 和 ASingletonSaveData&lt;T&gt; 服务。
+        /// 这些服务通过 new T() 自创建，不依赖 MonoBehaviour Awake 生命周期，
+        /// 因此可以提前注册，避免 OnEnable 时序问题。
+        /// MonoBehaviour 服务（约 11 个）仍在 RegisterServices() 中延迟注册。
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void RegisterSafeServices()
         {
-            Instance = this;
-            Application.targetFrameRate = GlobalData.MaxFrame;
-
-            LogManager.Instance.Init();
-
-            this.RegisterServices();
-            this.BuildTickableList();
-            this.BuildInitializableList();
-
-            this.gameObject.AddComponent<CharacterDamageUIPresenter>();
-
-            PromptBuilder.Instance.Init();
-        }
-
-        private void RegisterServices()
-        {
-            // 全局协调器 — 必须在其他服务之前注册
-            ServiceLocator.Register(new MapInitCoordinator());
-
-            ServiceLocator.Register<ITipService>(this);
-
-            ServiceLocator.Register<IGameTime>(new UnityGameTime());
-            ServiceLocator.Register<IGameLogger>(new UnityLogger());
-            ServiceLocator.Register<IEnemySpawnService>(new UnityEnemySpawnAdapter());
-            ServiceLocator.Register<IItemDefinitionProvider>(new UnityItemDefinitionAdapter());
-
-            UnityMapAdapter mapAdapter = new UnityMapAdapter();
-            ServiceLocator.Register<IMapWalkabilityQuery>(mapAdapter);
-            ServiceLocator.Register<IMapSpawnPointProvider>(mapAdapter);
-
             ServiceLocator.Register(LogManager.Instance);
             ServiceLocator.Register(ResourceManager.Instance);
-            ServiceLocator.Register(CoroutineManager.Instance);
-            ServiceLocator.Register(WeatherManager.Instance);
             ServiceLocator.Register(ArchiveManager.Instance);
             ServiceLocator.Register(FrameControl.Instance);
-            ServiceLocator.Register(NetworkConnect.Instance);
             ServiceLocator.Register(NameGenerator.Instance);
-
-            ServiceLocator.Register(ItemDataManager.Instance);
-            ServiceLocator.Register(DropDataManager.Instance);
             ServiceLocator.Register(EnvironmentManager.Instance);
-            ServiceLocator.Register(WorkerTaskManager.Instance);
-
-            ServiceLocator.Register(TileMap.Instance);
-            ServiceLocator.Register(BuildMap.Instance);
-            ServiceLocator.Register(ResourceMap.Instance);
-            ServiceLocator.Register(ItemMap.Instance);
-            ServiceLocator.Register(GatherMap.Instance);
-            ServiceLocator.Register(IsAvailableMap.Instance);
-
             ServiceLocator.Register(InventoryManager.Instance);
             ServiceLocator.Register(DropManager.Instance);
             ServiceLocator.Register(RoomManager.Instance);
             ServiceLocator.Register(FurnitureManager.Instance);
             ServiceLocator.Register(FarmlandManager.Instance);
             ServiceLocator.Register(ItemInstanceFactory.Instance);
-
             ServiceLocator.Register(PlayerManager.Instance);
             ServiceLocator.Register(EnemyManager.Instance);
             ServiceLocator.Register(WorkerManager.Instance);
-
             ServiceLocator.Register(WaveManager.Instance);
             ServiceLocator.Register(WaveBossRewardManager.Instance);
             ServiceLocator.Register(AchievementManager.Instance);
@@ -114,8 +77,56 @@ namespace LAB2D
             ServiceLocator.Register(ItemCollectionTracker.Instance);
             ServiceLocator.Register(WeatherGameplayEffect.Instance);
             ServiceLocator.Register<IWeatherGameplayService>(WeatherGameplayEffect.Instance);
-
             ServiceLocator.Register(PanelController.Instance);
+            ServiceLocator.Register(PromptBuilder.Instance);
+            ServiceLocator.Register(DialogueManager.Instance);
+            ServiceLocator.Register(DialogueMemoryManager.Instance);
+            ServiceLocator.Register(GameKnowledgeRetriever.Instance);
+        }
+
+        public void Awake()
+        {
+            Instance = this;
+            Application.targetFrameRate = GlobalData.MaxFrame;
+
+            LogManager.Instance.Init();
+
+            this.RegisterServices();
+            this.BuildTickableList();
+            this.BuildInitializableList();
+
+            this.gameObject.AddComponent<CharacterDamageUIPresenter>();
+
+            PromptBuilder.Instance.Init();
+        }
+
+        private void RegisterServices()
+        {
+            ServiceLocator.Register(new MapInitCoordinator());
+            ServiceLocator.Register<ITipService>(this);
+
+            ServiceLocator.Register<IGameTime>(new UnityGameTime());
+            ServiceLocator.Register<IGameLogger>(new UnityLogger());
+            ServiceLocator.Register<IEnemySpawnService>(new UnityEnemySpawnAdapter());
+            ServiceLocator.Register<IItemDefinitionProvider>(new UnityItemDefinitionAdapter());
+
+            UnityMapAdapter mapAdapter = new UnityMapAdapter();
+            ServiceLocator.Register<IMapWalkabilityQuery>(mapAdapter);
+            ServiceLocator.Register<IMapSpawnPointProvider>(mapAdapter);
+
+            ServiceLocator.Register(CoroutineManager.Instance);
+            ServiceLocator.Register(WeatherManager.Instance);
+            ServiceLocator.Register(NetworkConnect.Instance);
+            ServiceLocator.Register(ItemDataManager.Instance);
+            ServiceLocator.Register(DropDataManager.Instance);
+            ServiceLocator.Register(WorkerTaskManager.Instance);
+
+            ServiceLocator.Register(TileMap.Instance);
+            ServiceLocator.Register(BuildMap.Instance);
+            ServiceLocator.Register(ResourceMap.Instance);
+            ServiceLocator.Register(ItemMap.Instance);
+            ServiceLocator.Register(GatherMap.Instance);
+            ServiceLocator.Register(IsAvailableMap.Instance);
         }
 
         /// <summary>
