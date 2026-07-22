@@ -52,7 +52,7 @@ namespace LAB2D.Gameplay
             }
 
             // 同步记录到全局会话统计（补齐 RecordItemCollected 死代码调用）
-            GameplaySessionStats.Instance.RecordItemCollected(resourceInfo, source);
+            Core.ServiceLocator.Get<GameplaySessionStats>().RecordItemCollected(resourceInfo, source);
 
             this.totalCollected += resourceInfo.Count;
             this.CheckMilestones();

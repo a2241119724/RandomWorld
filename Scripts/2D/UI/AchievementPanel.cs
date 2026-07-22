@@ -296,7 +296,7 @@ namespace LAB2D.UI
 
         public void RefreshPanel()
         {
-            AchievementManager mgr = AchievementManager.Instance;
+            AchievementManager mgr = Core.ServiceLocator.Get<AchievementManager>();
             if (mgr == null || !mgr.IsInitialized)
             {
                 return;

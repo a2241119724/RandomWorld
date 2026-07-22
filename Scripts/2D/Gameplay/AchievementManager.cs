@@ -190,7 +190,7 @@ namespace LAB2D.Gameplay
             bool anyChanged = false;
 
             // 从 GameplaySessionStats 快照读取会话统计数据
-            GameplaySessionStats stats = GameplaySessionStats.Instance;
+            GameplaySessionStats stats = Core.ServiceLocator.Get<GameplaySessionStats>();
             GameplaySessionStatsSnapshot snap = stats?.CreateSnapshot();
             if (snap != null)
             {
@@ -207,7 +207,7 @@ namespace LAB2D.Gameplay
             }
 
             // 波次类
-            WaveManager wave = WaveManager.Instance;
+            WaveManager wave = Core.ServiceLocator.Get<WaveManager>();
             if (wave != null)
             {
                 anyChanged |= this.UpdateAchievement("wave_complete_1", wave.TotalWavesCompleted);
@@ -216,7 +216,7 @@ namespace LAB2D.Gameplay
             }
 
             // 工人运营类
-            WorkerEfficiencyTracker efficiency = WorkerEfficiencyTracker.Instance;
+            WorkerEfficiencyTracker efficiency = Core.ServiceLocator.Get<WorkerEfficiencyTracker>();
             if (efficiency != null)
             {
                 anyChanged |= this.UpdateAchievement("worker_task_10", efficiency.TotalTasksCompleted);
@@ -236,7 +236,7 @@ namespace LAB2D.Gameplay
             anyChanged |= this.UpdateAchievement("survival_time_30", minutes);
 
             // 生存 - 等级（从玩家数据读取）
-            Player player = PlayerManager.Instance?.Mine;
+            Player player = Core.ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
             if (player != null && player.CharacterDataLAB != null)
             {
                 anyChanged |= this.UpdateAchievement("survival_level_50", player.CharacterDataLAB.Level);

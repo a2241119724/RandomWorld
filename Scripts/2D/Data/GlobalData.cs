@@ -51,7 +51,7 @@ namespace LAB2D.Data
             /// <returns>文件路径</returns>
             public static string GetPath(string name)
             {
-                return ArchiveManager.Instance.GetArchivePath(name);
+                return Core.ServiceLocator.Get<ArchiveManager>().GetArchivePath(name);
             }
         }
     }

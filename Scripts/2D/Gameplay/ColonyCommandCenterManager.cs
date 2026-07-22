@@ -161,15 +161,15 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WorkerTaskManager taskManager = WorkerTaskManager.Instance;
+                WorkerTaskManager taskManager = Core.ServiceLocator.Get<WorkerTaskManager>();
                 WorkerTaskQueueSnapshot queueSnapshot = taskManager == null
                     ? null
                     : taskManager.CreateTaskQueueSnapshot();
                 WorkerTaskAssignmentReport assignmentReport = taskManager == null
-                    ? ColonyCommandCenterTool.BuildAssignmentReport(null, WorkerManager.Instance.Characters)
+                    ? ColonyCommandCenterTool.BuildAssignmentReport(null, Core.ServiceLocator.Get<WorkerManager>().Characters)
                     : taskManager.CreateTaskAssignmentReport();
-                WorkerSupplyReport supplyReport = WorkerSupplyIssueManager.Instance.Refresh(false);
-                WorkerTaskCongestionReport congestionReport = WorkerTaskCongestionAdvisor.Instance.Refresh(false);
+                WorkerSupplyReport supplyReport = Core.ServiceLocator.Get<WorkerSupplyIssueManager>().Refresh(false);
+                WorkerTaskCongestionReport congestionReport = Core.ServiceLocator.Get<WorkerTaskCongestionAdvisor>().Refresh(false);
 
                 return ColonyCommandCenterTool.BuildCommandReport(
                     queueSnapshot,

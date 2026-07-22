@@ -80,7 +80,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            WaveManager wm = WaveManager.Instance;
+            WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
             if (wm == null)
             {
                 return;
@@ -100,7 +100,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            WaveManager wm = WaveManager.Instance;
+            WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
             if (wm != null)
             {
                 wm.OnAllWavesCleared -= this.HandleAllWavesCleared;
@@ -172,7 +172,7 @@ namespace LAB2D.Gameplay
                 return null;
             }
 
-            SessionResultManager srm = SessionResultManager.Instance;
+            SessionResultManager srm = Core.ServiceLocator.Get<SessionResultManager>();
             if (srm == null)
             {
                 return null;
@@ -239,14 +239,14 @@ namespace LAB2D.Gameplay
             sb.AppendLine($"  Tip 反馈: {(this.showResultTipOnCapture ? "启用" : "禁用")}");
             sb.AppendLine($"  WaveManager 已订阅: {(this.waveSubscribed ? "是" : "否")}");
 
-            WaveManager wm = WaveManager.Instance;
+            WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
             sb.AppendLine($"  WaveManager 存在: {(wm != null ? "是" : "否")}");
             if (wm != null)
             {
                 sb.AppendLine($"  当前波次: {wm.CurrentWaveIndex}, 波次活跃: {wm.IsWaveActive}");
             }
 
-            SessionResultManager srm = SessionResultManager.Instance;
+            SessionResultManager srm = Core.ServiceLocator.Get<SessionResultManager>();
             sb.AppendLine($"  SessionResultManager 存在: {(srm != null ? "是" : "否")}");
             if (srm != null)
             {

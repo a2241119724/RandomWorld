@@ -183,7 +183,7 @@ namespace LAB2D.UI
             this.canvasGroup.alpha = 0f;
 
             // 从队列移除已展示成就
-            AchievementManager.Instance?.DequeuePendingUnlock();
+            if (Core.ServiceLocator.TryGet(out AchievementManager am)) { am.DequeuePendingUnlock(); }
         }
     }
 }

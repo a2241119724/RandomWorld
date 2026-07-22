@@ -25,7 +25,7 @@ namespace LAB2D.Core
             if (this.Owner == null)
             {
                 // 第一次概率获取锁
-                if (Random.Range(0.0f, 1.0f) > (1.0f / WorkerManager.Instance.GetCountLock()))
+                if (Random.Range(0.0f, 1.0f) > (1.0f / ServiceLocator.Get<WorkerManager>().GetCountLock()))
                 {
                     return false;
                 }

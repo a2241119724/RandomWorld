@@ -121,7 +121,7 @@ namespace LAB2D.Gameplay
             this.respawnDeadline = -1f;
 
             // 在地图上寻找随机可到达位置
-            Vector3Int randomMapPos = TileMap.Instance.GenCanReachPos();
+            Vector3Int randomMapPos = Core.ServiceLocator.Get<TileMap>().GenCanReachPos();
             Vector3 respawnWorldPos = AWorkerTask.TileMapPositionProvider(randomMapPos);
             player.transform.position = respawnWorldPos;
 

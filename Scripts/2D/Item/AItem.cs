@@ -138,7 +138,7 @@ namespace LAB2D.Item
         /// <inheritdoc/>
         public override string ToString()
         {
-            ItemData itemData = ItemDataManager.Instance.GetById(this.Id);
+            ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(this.Id);
             return $"uid: {this.Uid}\n" +
                 $"id: {this.Id}\n" +
                 $"quantity: {this.Quantity}\n" +

@@ -12,14 +12,14 @@ namespace LAB2D.UnityAdapter
         /// <inheritdoc/>
         public long CreateEnemy(GameGridPosition position)
         {
-            if (EnemyManager.Instance == null)
+            if (!Core.ServiceLocator.TryGet(out EnemyManager em))
             {
                 return 0;
             }
 
             Vector3 worldPos = UnityVectorAdapter.ToUnityVector3(
                 new GameVector2(position.X, position.Y));
-            GameObject enemyObj = EnemyManager.Instance.Create(worldPos);
+            GameObject enemyObj = em.Create(worldPos);
             if (enemyObj == null)
             {
                 return 0;
@@ -32,12 +32,12 @@ namespace LAB2D.UnityAdapter
         /// <inheritdoc/>
         public int CountAliveEnemies()
         {
-            if (EnemyManager.Instance == null)
+            if (!Core.ServiceLocator.TryGet(out EnemyManager em))
             {
                 return 0;
             }
 
-            return EnemyManager.Instance.AliveEnemyCount;
+            return em.AliveEnemyCount;
         }
     }
 }

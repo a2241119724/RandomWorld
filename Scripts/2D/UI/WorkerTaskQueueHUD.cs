@@ -101,7 +101,7 @@ namespace LAB2D.UI
 
             try
             {
-                WorkerTaskManager manager = WorkerTaskManager.Instance;
+                WorkerTaskManager manager = Core.ServiceLocator.Get<WorkerTaskManager>();
                 this.queueText.text = manager == null
                     ? WorkerTaskHudConstant.ManagerUnavailableText
                     : manager.GetTaskQueueSummaryText();

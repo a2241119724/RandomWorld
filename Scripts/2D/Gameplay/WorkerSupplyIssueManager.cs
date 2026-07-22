@@ -155,14 +155,14 @@ namespace LAB2D.Gameplay
 
             try
             {
-                if (WorkerManager.Instance == null || WorkerManager.Instance.Characters == null ||
-                    WorkerManager.Instance.Characters.Count == 0)
+                if (!Core.ServiceLocator.TryGet(out WorkerManager wmgr) || wmgr.Characters == null ||
+                    wmgr.Characters.Count == 0)
                 {
                     report.PrimaryIssue = WorkerSupplyIssueType.None;
                     return report;
                 }
 
-                List<AWorker> workers = WorkerManager.Instance.Characters;
+                List<AWorker> workers = wmgr.Characters;
                 report.WorkerCount = workers.Count;
                 for (int i = 0; i < workers.Count; i++)
                 {
@@ -251,7 +251,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                InventoryManager inventory = InventoryManager.Instance;
+                InventoryManager inventory = Core.ServiceLocator.Get<InventoryManager>();
                 if (inventory == null || inventory.TypeToResource == null ||
                     !inventory.TypeToResource.TryGetValue(AItem.ItemTypeEnum.Food, out Dictionary<Vector3Int, ResourceInfo> foods))
                 {
@@ -283,7 +283,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                FurnitureManager furniture = FurnitureManager.Instance;
+                FurnitureManager furniture = Core.ServiceLocator.Get<FurnitureManager>();
                 if (furniture == null || furniture.BedToWorker == null)
                 {
                     return;

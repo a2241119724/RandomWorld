@@ -18,7 +18,7 @@ namespace LAB2D.Core
         {
             // 基础面板
             ForegroundPanel.Instance.Init();
-            PanelController.Instance.Show(CreateOrJoinPanel.Instance);
+            Core.ServiceLocator.Get<PanelController>().Show(CreateOrJoinPanel.Instance);
 
             // 背包面板
             BackpackMenuPanel.Instance.Panel.SetActive(true);

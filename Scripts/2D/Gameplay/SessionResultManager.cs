@@ -71,7 +71,7 @@ namespace LAB2D.Gameplay
                 return null;
             }
 
-            GameplaySessionStats stats = GameplaySessionStats.Instance;
+            GameplaySessionStats stats = Core.ServiceLocator.Get<GameplaySessionStats>();
             if (stats == null)
             {
                 return null;

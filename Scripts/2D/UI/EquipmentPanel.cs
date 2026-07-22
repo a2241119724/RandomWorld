@@ -184,7 +184,7 @@ namespace LAB2D.UI
         {
             if (this.rootPanel == null) return;
 
-            Player player = PlayerManager.Instance?.Mine;
+            Player player = Core.ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
             if (player == null) return;
 
             GameCharacter.CharacterData charData = player.CharacterDataLAB;

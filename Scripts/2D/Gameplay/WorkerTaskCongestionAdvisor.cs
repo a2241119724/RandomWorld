@@ -165,7 +165,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WorkerTaskManager manager = WorkerTaskManager.Instance;
+                WorkerTaskManager manager = Core.ServiceLocator.Get<WorkerTaskManager>();
                 if (manager == null)
                 {
                     return WorkerTaskCongestionTool.BuildReport(null);

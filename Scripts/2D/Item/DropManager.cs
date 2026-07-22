@@ -130,7 +130,7 @@ namespace LAB2D.Item
             ResourceInfo resourceInfo = this.GetDropByAll(posMap);
             if (resourceInfo != null)
             {
-                ItemData itemData = ItemDataManager.Instance.GetById(resourceInfo.Id);
+                ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(resourceInfo.Id);
                 if (itemData != null)
                 {
                     text += $"id:{resourceInfo.Id}\n" +

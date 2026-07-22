@@ -30,7 +30,7 @@ namespace LAB2D.MVC
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, item.ToString()).onClick.AddListener(() =>
             {
                 this.CurItemType = item;
-                this.OnClick?.Invoke(ItemDataManager.Instance.GetIndexByType(item));
+                this.OnClick?.Invoke(Core.ServiceLocator.Get<ItemDataManager>().GetIndexByType(item));
             });
         }
 
