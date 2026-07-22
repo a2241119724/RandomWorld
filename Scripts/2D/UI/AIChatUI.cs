@@ -80,7 +80,7 @@ namespace LAB2D.UI
         public void Awake()
         {
             Instance = this;
-            this.llmClient = Core.ServiceLocator.Get<DialogueManager>().GetLLMClient();
+            this.llmClient = DialogueManager.Instance.GetLLMClient();
             this.input = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
             this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
         }

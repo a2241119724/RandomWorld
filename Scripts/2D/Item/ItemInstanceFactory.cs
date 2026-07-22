@@ -142,7 +142,7 @@ namespace LAB2D.Item
                     continue;
                 }
 
-                int id = Core.ServiceLocator.Get<ItemDataManager>().GetByName(type.Name).Id;
+                int id = ItemDataManager.Instance.GetByName(type.Name).Id;
                 ABuildItem item = (ABuildItem)Activator.CreateInstance(type);
                 item.Id = id;
                 this.buildItems.Add(type.Name, item);

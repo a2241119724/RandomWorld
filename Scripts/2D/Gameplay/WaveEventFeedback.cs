@@ -78,14 +78,9 @@ namespace LAB2D.Gameplay
         /// </summary>
         public void Enable()
         {
-            if (!this.initialized)
-            {
-                this.initialized = true;
-            }
-
             try
             {
-                WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
+                WaveManager wm = Core.ServiceLocator.TryGet(out WaveManager waveManager) ? waveManager : WaveManager.Instance;
                 if (wm == null)
                 {
                     return;
@@ -101,6 +96,7 @@ namespace LAB2D.Gameplay
                 wm.OnWaveStateChanged += this.HandleWaveStateChanged;
 
                 this.enabled = true;
+                this.initialized = true;
 
                 // 立即同步当前波次状态，避免错过已开始的波次
                 this.SyncCurrentState(wm);
@@ -121,7 +117,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
+                WaveManager wm = Core.ServiceLocator.TryGet(out WaveManager waveMgr) ? waveMgr : WaveManager.Instance;
                 if (wm != null)
                 {
                     this.DisableInternal(wm);
@@ -235,7 +231,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
+                WaveManager wm = Core.ServiceLocator.TryGet(out WaveManager waveMgr) ? waveMgr : WaveManager.Instance;
                 if (wm != null)
                 {
                     this.SyncCurrentState(wm);

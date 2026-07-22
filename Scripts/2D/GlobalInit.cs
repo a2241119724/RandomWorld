@@ -68,6 +68,7 @@ namespace LAB2D
             ServiceLocator.Register(ItemDataManager.Instance);
             ServiceLocator.Register(DropDataManager.Instance);
             ServiceLocator.Register(EnvironmentManager.Instance);
+            ServiceLocator.Register(WorkerTaskManager.Instance);
 
             ServiceLocator.Register(TileMap.Instance);
             ServiceLocator.Register(BuildMap.Instance);

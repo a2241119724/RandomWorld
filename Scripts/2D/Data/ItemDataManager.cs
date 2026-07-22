@@ -32,7 +32,7 @@ namespace LAB2D.Data
             AItem.ItemTypeEnum[] itemTypes = AItem.Ranges["Build"];
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
-                BuildItemDataSO itemDataSO = Core.ServiceLocator.Get<ResourceManager>().GetBuildSO(((AItem.ItemTypeEnum)type).ToString() + "ItemData");
+                BuildItemDataSO itemDataSO = ResourceManager.Instance.GetBuildSO(((AItem.ItemTypeEnum)type).ToString() + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -51,7 +51,7 @@ namespace LAB2D.Data
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
                 string itemType = ((AItem.ItemTypeEnum)type).ToString();
-                ItemDataSO itemDataSO = Core.ServiceLocator.Get<ResourceManager>().GetBackpackSO(itemType + "ItemData");
+                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(itemType + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -75,7 +75,7 @@ namespace LAB2D.Data
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
                 string itemType = ((AItem.ItemTypeEnum)type).ToString();
-                ItemDataSO itemDataSO = Core.ServiceLocator.Get<ResourceManager>().GetBackpackSO(itemType + "ItemData");
+                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(itemType + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -90,7 +90,7 @@ namespace LAB2D.Data
             }
 
             // 最后初始化背包道具实例
-            Core.ServiceLocator.Get<ItemInstanceFactory>().InitItemInstances(equipmentData);
+            ItemInstanceFactory.Instance.InitItemInstances(equipmentData);
         }
 
         /// <summary>
