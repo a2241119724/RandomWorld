@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Gameplay;
     using LAB2D.Domain.Player;
     using LAB2D.Enum;
@@ -292,11 +293,8 @@ namespace LAB2D.Gameplay
 
             try
             {
-                if (GlobalInit.Instance != null)
-                {
-                    GlobalInit.Instance.ShowTip(message);
-                    return;
-                }
+                AWorkerTask.ShowTipProvider(message);
+                return;
             }
             catch (Exception exception)
             {

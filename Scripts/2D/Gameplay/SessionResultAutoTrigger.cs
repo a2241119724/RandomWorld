@@ -210,12 +210,8 @@ namespace LAB2D.Gameplay
 
             try
             {
-                GlobalInit init = GlobalInit.Instance;
-                if (init != null)
-                {
-                    init.ShowTip(tipText);
-                    return;
-                }
+                AWorkerTask.ShowTipProvider(tipText);
+                return;
             }
             catch (System.Exception exception)
             {

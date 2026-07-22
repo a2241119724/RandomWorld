@@ -2,6 +2,7 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Character.Player;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Gameplay;
     using UnityEngine;
 
@@ -11,6 +12,11 @@ namespace LAB2D.Gameplay
     /// </summary>
     public class DeathPenaltyManager : Singleton<DeathPenaltyManager>
     {
+        internal static System.Func<GameplaySessionStats> GameplaySessionStatsProvider { get; set; }
+            = () => GameplaySessionStats.Instance;
+        internal static System.Func<DeathMenuPanel> DeathMenuPanelProvider { get; set; }
+            = () => DeathMenuPanel.Instance;
+
         /// <summary>
         /// 玩家复活前需要等待的秒数。
         /// </summary>
@@ -58,7 +64,7 @@ namespace LAB2D.Gameplay
         /// </summary>
         public int SessionDeathCount
         {
-            get { return GameplaySessionStats.Instance.CreateSnapshot().PlayerDeathCount; }
+            get { return GameplaySessionStatsProvider().CreateSnapshot().PlayerDeathCount; }
         }
 
         /// <summary>
@@ -88,8 +94,8 @@ namespace LAB2D.Gameplay
                 this.RespawnDelaySeconds);
 
             // 显示死亡画面（纯代码 UI，无需预制体）
-            DeathMenuPanel.Instance.Show(
-                GameplaySessionStats.Instance.CreateSnapshot().PlayerDeathCount,
+            DeathMenuPanelProvider().Show(
+                GameplaySessionStatsProvider().CreateSnapshot().PlayerDeathCount,
                 this.ruleService.ToCountdownSeconds(this.RespawnDelaySeconds));
         }
 
@@ -116,7 +122,7 @@ namespace LAB2D.Gameplay
 
             // 在地图上寻找随机可到达位置
             Vector3Int randomMapPos = TileMap.Instance.GenCanReachPos();
-            Vector3 respawnWorldPos = TileMap.Instance.MapPosToWorldPos(randomMapPos);
+            Vector3 respawnWorldPos = AWorkerTask.TileMapPositionProvider(randomMapPos);
             player.transform.position = respawnWorldPos;
 
             // 恢复玩家图层，使敌人可重新检测到玩家
@@ -134,8 +140,8 @@ namespace LAB2D.Gameplay
             }
 
             // 关闭死亡画面
-            DeathMenuPanel.Instance.Hide();
-            GlobalInit.Instance.ShowTip("Respawned!");
+            DeathMenuPanelProvider().Hide();
+            AWorkerTask.ShowTipProvider("Respawned!");
 
             return true;
         }
@@ -146,7 +152,7 @@ namespace LAB2D.Gameplay
         /// </summary>
         public void UpdateDeathScreen()
         {
-            DeathMenuPanel.Instance.UpdateCountdown(this.ruleService.ToCountdownSeconds(this.RespawnRemaining));
+            DeathMenuPanelProvider().UpdateCountdown(this.ruleService.ToCountdownSeconds(this.RespawnRemaining));
         }
     }
 }
