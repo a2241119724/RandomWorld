@@ -43,7 +43,7 @@ namespace LAB2D.Item.Build.Room
             RoomInfo roomInfo = new ();
             for (int i = 1; i < width - 1; i++)
             {
-                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.DOWN].TileName)
+                Core.ServiceLocator.Get<BuildMap>().AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.DOWN].TileName)
                     .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.TOP].TileName);
                 roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2] + i, 0));
                 roomInfo.Points.Add(new Vector3Int(boundary[1], boundary[2] + i, 0));
@@ -51,14 +51,14 @@ namespace LAB2D.Item.Build.Room
 
             for (int i = 1; i < height - 1; i++)
             {
-                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT].TileName)
+                Core.ServiceLocator.Get<BuildMap>().AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT].TileName)
                     .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT].TileName);
                 roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[2], 0));
                 roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[3], 0));
             }
 
             // 四角加门
-            BuildMap.Instance
+            Core.ServiceLocator.Get<BuildMap>()
                 .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_DOWN].TileName)
                 .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_DOWN].TileName)
                 .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_TOP].TileName)

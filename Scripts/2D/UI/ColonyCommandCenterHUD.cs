@@ -239,7 +239,8 @@ namespace LAB2D.UI
         {
             try
             {
-                ServiceLocator.Get<IColonyCommandCenterService>().OnCommandReportChanged += this.HandleCommandReportChanged;
+                IColonyCommandCenterService service = ServiceLocator.TryGet(out IColonyCommandCenterService svc) ? svc : ColonyCommandCenterManager.Instance;
+                service.OnCommandReportChanged += this.HandleCommandReportChanged;
             }
             catch (Exception exception)
             {
@@ -254,7 +255,8 @@ namespace LAB2D.UI
         {
             try
             {
-                ServiceLocator.Get<IColonyCommandCenterService>().OnCommandReportChanged -= this.HandleCommandReportChanged;
+                IColonyCommandCenterService service = ServiceLocator.TryGet(out IColonyCommandCenterService svc) ? svc : ColonyCommandCenterManager.Instance;
+                service.OnCommandReportChanged -= this.HandleCommandReportChanged;
             }
             catch (Exception)
             {

@@ -63,7 +63,7 @@ namespace LAB2D.UI
         {
             try
             {
-                IWeatherGameplayService weather = ServiceLocator.Get<IWeatherGameplayService>();
+                IWeatherGameplayService weather = ServiceLocator.TryGet(out IWeatherGameplayService svc) ? svc : WeatherGameplayEffect.Instance;
                 weather.OnWeatherEffectChanged += this.HandleWeatherChanged;
                 this.UpdateDisplay(weather.CurrentState);
             }
@@ -77,7 +77,8 @@ namespace LAB2D.UI
         {
             try
             {
-                ServiceLocator.Get<IWeatherGameplayService>().OnWeatherEffectChanged -= this.HandleWeatherChanged;
+                var weatherSvc = ServiceLocator.TryGet(out IWeatherGameplayService svc) ? svc : WeatherGameplayEffect.Instance;
+                weatherSvc.OnWeatherEffectChanged -= this.HandleWeatherChanged;
             }
             catch (Exception)
             {
@@ -95,7 +96,8 @@ namespace LAB2D.UI
             if (Time.unscaledTime >= this.nextRefreshTime)
             {
                 this.nextRefreshTime = Time.unscaledTime + MathHelper.ClampRefreshInterval(this.refreshInterval);
-                this.UpdateDisplay(ServiceLocator.Get<IWeatherGameplayService>().CurrentState);
+                IWeatherGameplayService stateProvider = ServiceLocator.TryGet(out IWeatherGameplayService svc) ? svc : WeatherGameplayEffect.Instance;
+                this.UpdateDisplay(stateProvider.CurrentState);
             }
         }
 

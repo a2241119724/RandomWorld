@@ -35,11 +35,11 @@ namespace LAB2D.Item.Build.Room
             {
                 for (int j = boundary[2]; j <= boundary[3]; j++)
                 {
-                    BuildMap.Instance.AddBuild(new Vector3Int(i, j, 0), this.soil.TileName);
+                    Core.ServiceLocator.Get<BuildMap>().AddBuild(new Vector3Int(i, j, 0), this.soil.TileName);
                 }
             }
 
-            BuildMap.Instance.AddTask();
+            Core.ServiceLocator.Get<BuildMap>().AddTask();
 
             // 添加仓库Cell
             FarmlandManager.Instance.AddCells(new Vector3Int(boundary[0], boundary[2]), width, height);

@@ -117,7 +117,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WaveBossRewardManager manager = Core.ServiceLocator.Get<WaveBossRewardManager>();
+                WaveBossRewardManager manager = Core.ServiceLocator.TryGet(out WaveBossRewardManager mgr) ? mgr : WaveBossRewardManager.Instance;
                 manager.OnRewardOptionsChanged += this.HandleRewardOptionsChanged;
                 manager.OnStateChanged += this.HandleStateChanged;
                 this.UpdateFromManager();
@@ -132,7 +132,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WaveBossRewardManager manager = Core.ServiceLocator.Get<WaveBossRewardManager>();
+                WaveBossRewardManager manager = Core.ServiceLocator.TryGet(out WaveBossRewardManager mgr) ? mgr : WaveBossRewardManager.Instance;
                 manager.OnRewardOptionsChanged -= this.HandleRewardOptionsChanged;
                 manager.OnStateChanged -= this.HandleStateChanged;
             }

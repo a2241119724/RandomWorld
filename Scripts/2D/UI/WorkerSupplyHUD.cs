@@ -63,7 +63,8 @@ namespace LAB2D.UI
         {
             try
             {
-                Core.ServiceLocator.Get<WorkerSupplyIssueManager>().OnWorkerSupplyReportChanged += this.HandleSupplyReportChanged;
+                WorkerSupplyIssueManager manager = Core.ServiceLocator.TryGet(out WorkerSupplyIssueManager mgr) ? mgr : WorkerSupplyIssueManager.Instance;
+                manager.OnWorkerSupplyReportChanged += this.HandleSupplyReportChanged;
                 this.UpdateDisplay();
             }
             catch (Exception exception)
@@ -76,7 +77,8 @@ namespace LAB2D.UI
         {
             try
             {
-                Core.ServiceLocator.Get<WorkerSupplyIssueManager>().OnWorkerSupplyReportChanged -= this.HandleSupplyReportChanged;
+                WorkerSupplyIssueManager manager = Core.ServiceLocator.TryGet(out WorkerSupplyIssueManager mgr) ? mgr : WorkerSupplyIssueManager.Instance;
+                manager.OnWorkerSupplyReportChanged -= this.HandleSupplyReportChanged;
             }
             catch (Exception)
             {

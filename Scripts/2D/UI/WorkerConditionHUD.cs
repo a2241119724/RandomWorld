@@ -63,7 +63,8 @@ namespace LAB2D.UI
         {
             try
             {
-                Core.ServiceLocator.Get<WorkerConditionManager>().OnWorkerConditionChanged += this.HandleWorkerConditionChanged;
+                WorkerConditionManager manager = Core.ServiceLocator.TryGet(out WorkerConditionManager mgr) ? mgr : WorkerConditionManager.Instance;
+                manager.OnWorkerConditionChanged += this.HandleWorkerConditionChanged;
                 this.UpdateDisplay();
             }
             catch (Exception exception)
@@ -76,7 +77,8 @@ namespace LAB2D.UI
         {
             try
             {
-                Core.ServiceLocator.Get<WorkerConditionManager>().OnWorkerConditionChanged -= this.HandleWorkerConditionChanged;
+                WorkerConditionManager manager = Core.ServiceLocator.TryGet(out WorkerConditionManager mgr) ? mgr : WorkerConditionManager.Instance;
+                manager.OnWorkerConditionChanged -= this.HandleWorkerConditionChanged;
             }
             catch (Exception)
             {
