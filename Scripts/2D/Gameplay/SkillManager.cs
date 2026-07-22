@@ -19,11 +19,11 @@ namespace LAB2D.Gameplay
     public class SkillManager : Singleton<SkillManager>, ISkillManager, IInitializable
     {
         internal static System.Func<Player> PlayerMineProvider { get; set; }
-            = () => PlayerManager.Instance?.Mine;
+            = () => ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
         internal static System.Action<Vector3, float, bool, bool> FloatingTextDamageProvider { get; set; }
-            = (pos, dmg, crit, combo) => FloatingTextManager.Instance?.SpawnDamageText(pos, dmg, crit, combo);
+            = (pos, dmg, crit, combo) => { if (ServiceLocator.TryGet(out FloatingTextManager ftm)) ftm.SpawnDamageText(pos, dmg, crit, combo); };
         internal static System.Action<Vector3, float> FloatingTextHealProvider { get; set; }
-            = (pos, heal) => FloatingTextManager.Instance?.SpawnHealText(pos, heal);
+            = (pos, heal) => { if (ServiceLocator.TryGet(out FloatingTextManager ftm)) ftm.SpawnHealText(pos, heal); };
 
         public List<SkillData> Skills { get; private set; }
 

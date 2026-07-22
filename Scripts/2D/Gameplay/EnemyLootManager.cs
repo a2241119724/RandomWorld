@@ -20,11 +20,11 @@ namespace LAB2D.Gameplay
     public class EnemyLootManager : Singleton<EnemyLootManager>, IInitializable
     {
         internal static System.Func<List<AItem>> ItemFactoryGenAllProvider { get; set; }
-            = () => ItemInstanceFactory.Instance.GenBackpackItems();
+            = () => ServiceLocator.Get<ItemInstanceFactory>().GenBackpackItems();
         internal static System.Action<Vector3, string> FloatingTextStatusProvider { get; set; }
-            = (pos, text) => FloatingTextManager.Instance?.SpawnStatusText(pos, text);
+            = (pos, text) => { if (ServiceLocator.TryGet(out FloatingTextManager ftm)) ftm.SpawnStatusText(pos, text); };
         internal static System.Func<Player> PlayerMineProvider { get; set; }
-            = () => PlayerManager.Instance?.Mine;
+            = () => ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
         internal static System.Func<EquipmentComparePopup> EquipmentComparePopupProvider { get; set; }
             = () => EquipmentComparePopup.Instance;
 

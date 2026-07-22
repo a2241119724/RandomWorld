@@ -13,7 +13,7 @@ namespace LAB2D.Gameplay
     public class DeathPenaltyManager : Singleton<DeathPenaltyManager>
     {
         internal static System.Func<GameplaySessionStats> GameplaySessionStatsProvider { get; set; }
-            = () => GameplaySessionStats.Instance;
+            = () => ServiceLocator.Get<GameplaySessionStats>();
         internal static System.Func<DeathMenuPanel> DeathMenuPanelProvider { get; set; }
             = () => DeathMenuPanel.Instance;
 

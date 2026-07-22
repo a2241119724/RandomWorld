@@ -127,8 +127,8 @@ namespace LAB2D
             {
                 new WorkerUpdateSystem(),
                 new GlobalInputProcessor(),
-                EnvironmentManager.Instance,
-                PlayerVitalAlertManager.Instance,
+                ServiceLocator.Get<EnvironmentManager>(),
+                ServiceLocator.Get<PlayerVitalAlertManager>(),
             };
         }
 
@@ -139,10 +139,10 @@ namespace LAB2D
         {
             this.orderedInitializables = new List<IInitializable>
             {
-                AchievementManager.Instance,
-                SkillManager.Instance,
-                EquipmentBeamManager.Instance,
-                EnemyLootManager.Instance,
+                ServiceLocator.Get<AchievementManager>(),
+                ServiceLocator.Get<SkillManager>(),
+                ServiceLocator.Get<EquipmentBeamManager>(),
+                ServiceLocator.Get<EnemyLootManager>(),
             };
         }
 
@@ -155,7 +155,7 @@ namespace LAB2D
 
             if (this.initPanel)
             {
-                if (PanelController.Instance == null)
+                if (ServiceLocator.Get<PanelController>() == null)
                 {
                     AWorkerTask.LogProvider("manager Not Found!!!", LogManager.LogLevelEnum.Error);
                     return;
@@ -176,7 +176,7 @@ namespace LAB2D
 
         public void ShowTip(string text)
         {
-            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.TIP);
+            GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.TIP);
             if (g == null)
             {
                 return;

@@ -44,7 +44,7 @@ namespace LAB2D.Core
             AchievementPanel.EnsureRuntimePanel();
 
             // 浮动战斗文字系统
-            FloatingTextManager.Instance.EnsureInitialized();
+            Core.ServiceLocator.Get<FloatingTextManager>().EnsureInitialized();
 
             // 主动技能系统（数据初始化由 IInitializable 链路完成）
             SkillHUD.EnsureRuntimePanel();

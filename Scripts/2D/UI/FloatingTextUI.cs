@@ -186,7 +186,7 @@ namespace LAB2D.UI
             this.isActive = false;
             this.popAnimating = false;
             this.gameObject.SetActive(false);
-            FloatingTextManager.Instance.ReturnToPool(this);
+            Core.ServiceLocator.Get<FloatingTextManager>().ReturnToPool(this);
         }
 
         /// <summary>

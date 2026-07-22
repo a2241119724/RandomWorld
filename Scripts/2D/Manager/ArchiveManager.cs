@@ -234,7 +234,7 @@ namespace LAB2D.Manager
 
             Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete = true;
             AWorkerTask.AsyncProgressSetTipProvider("...");
-            AsyncProgressUI.Instance.AddTotal(saveDatas.Count + monoSaveDatas.Count);
+            AWorkerTask.AsyncProgressAddTotalProvider(saveDatas.Count + monoSaveDatas.Count);
 
             this.InvokeLoadData(monoSaveDatas);
             this.InvokeLoadData(saveDatas);
@@ -363,12 +363,12 @@ namespace LAB2D.Manager
             {
                 if (!this.TryGetInstance(type, out object obj))
                 {
-                    AsyncProgressUI.Instance.AddOneProcess();
+                    AWorkerTask.AsyncProgressAddOneProvider();
                     continue;
                 }
 
                 LAB2D.Tool.Tool.GetMethodByType(type, nameof(ASaveData.LoadData))?.Invoke(obj, null);
-                AsyncProgressUI.Instance.AddOneProcess();
+                AWorkerTask.AsyncProgressAddOneProvider();
             }
         }
 
