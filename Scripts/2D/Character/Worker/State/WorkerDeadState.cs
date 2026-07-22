@@ -16,7 +16,7 @@ namespace LAB2D.Character.Worker.State
 
             // 删除Worker定位按钮
             // LocateWorkerUI 由 UI 层直接引用，暂不抽出 Provider
-            LocateWorkerUI.Instance.RemoveWorkerItem(this.Character);
+            AWorkerTask.LocateWorkerUIRemoveProvider((AWorker)this.Character);
 
             // 释放床绑定
             AWorkerTask.FurnitureBedProvider((AWorker)this.Character);

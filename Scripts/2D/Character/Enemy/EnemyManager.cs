@@ -93,7 +93,7 @@ namespace LAB2D.Character.Enemy
         /// <inheritdoc/>
         public override void LoadData()
         {
-            AsyncProgressUI.Instance.SetTip("加载敌人管理信息...");
+            AWorkerTask.AsyncProgressSetTipProvider("加载敌人管理信息...");
             this.EnemyManagerDataLAB = DataTool.LoadDataByBinary<EnemyManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             this.EnemyManagerDataLAB ??= new EnemyManagerData();
             this.EnemyManagerDataLAB.EnemyDatas ??= new List<AEnemy.EnemyData>();

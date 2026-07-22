@@ -7,6 +7,8 @@ namespace LAB2D.Character.Worker.Task
     using LAB2D.Map;
     using LAB2D.Serializable;
     using LAB2D.Tool;
+    using LAB2D.UI.Character;
+    using LAB2D.UI.Panel.PanelUI;
     using LAB2D.Domain.Worker;
     using System;
     using System.Collections.Generic;
@@ -242,6 +244,14 @@ namespace LAB2D.Character.Worker.Task
             = (id) => ItemInstanceFactory.Instance.GetBackpackItemById(id);
         public static System.Func<string> NameGeneratorProvider { get; set; }
             = () => NameGenerator.Instance.GetRandomName();
+        public static System.Action<string> AsyncProgressSetTipProvider { get; set; }
+            = (tip) => AsyncProgressUI.Instance.SetTip(tip);
+        public static System.Action<System.Action> AsyncProgressCompleteProvider { get; set; }
+            = (callback) => AsyncProgressUI.Instance.Complete += new AsyncProgressUI.CompleteDelegate(callback);
+        public static System.Action<AWorker> LocateWorkerUIAddProvider { get; set; }
+            = (worker) => LocateWorkerUI.Instance.AddWorkerItem(worker);
+        public static System.Action<AWorker> LocateWorkerUIRemoveProvider { get; set; }
+            = (worker) => LocateWorkerUI.Instance.RemoveWorkerItem(worker);
 
         /// <summary>
         /// 任务ID

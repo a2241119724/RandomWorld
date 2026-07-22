@@ -108,7 +108,7 @@ namespace LAB2D.Character
         public override void LoadData()
         {
             base.LoadData();
-            AsyncProgressUI.Instance.SetTip("加载角色管理信息...");
+            AWorkerTask.AsyncProgressSetTipProvider("加载角色管理信息...");
             List<Character.CharacterData> data = DataTool.LoadDataByBinary<List<Character.CharacterData>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             if (data == null)
             {
