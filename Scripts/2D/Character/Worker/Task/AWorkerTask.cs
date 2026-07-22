@@ -256,6 +256,10 @@ namespace LAB2D.Character.Worker.Task
             = (worker) => LocateWorkerUI.Instance.RemoveWorkerItem(worker);
         public static System.Action<string> ShowTipProvider { get; set; }
             = (message) => { if (GlobalInit.Instance != null) GlobalInit.Instance.ShowTip(message); };
+        public static System.Action AsyncProgressAddOneProvider { get; set; }
+            = () => AsyncProgressUI.Instance.AddOneProcess();
+        public static System.Action<int> AsyncProgressAddTotalProvider { get; set; }
+            = (total) => AsyncProgressUI.Instance.AddTotal(total);
 
         /// <summary>
         /// 任务ID

@@ -82,16 +82,16 @@ namespace LAB2D.Map
         /// <returns>迭代器</returns>
         public IEnumerator ShowTilemap(MapTileTypeEnum[,] mapTiles)
         {
-            AsyncProgressUI.Instance.SetTip("正在展示地图...");
+            AWorkerTask.AsyncProgressSetTipProvider("正在展示地图...");
 
             // 循环每一个点
             for (int i = 0; i < this.TileMapDataLAB.Height; i++)
             {
                 for (int j = 0; j < this.TileMapDataLAB.Width; j++)
                 {
-                    AsyncProgressUI.Instance.AddOneProcess();
-                    this.tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)ResourceManager.Instance.GetAsset(mapTiles[i, j].ToString()));
-                    if (FrameControl.Instance.IsNeedStop(1))
+                    AWorkerTask.AsyncProgressAddOneProvider();
+                    this.tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)AWorkerTask.ResourceLoadProvider(mapTiles[i, j].ToString()));
+                    if (Core.ServiceLocator.Get<FrameControl>().IsNeedStop(1))
                     {
                         yield return null;
                     }
@@ -154,31 +154,31 @@ namespace LAB2D.Map
         /// <returns>迭代器</returns>
         public IEnumerator Create()
         {
-            AsyncProgressUI.Instance.SetTip("正在生成随机坐标...");
+            AWorkerTask.AsyncProgressSetTipProvider("正在生成随机坐标...");
             for (int i = 0; i < this.TileMapDataLAB.RandomCount; i++)
             {
                 this.TileMapDataLAB.MapTiles[
                     UnityEngine.Random.Range(0, this.TileMapDataLAB.Height),
                     UnityEngine.Random.Range(0, this.TileMapDataLAB.Width)] = (MapTileTypeEnum)(UnityEngine.Random.Range(2, 14) / 2);
-                AsyncProgressUI.Instance.AddOneProcess();
-                if (FrameControl.Instance.IsNeedStop(1))
+                AWorkerTask.AsyncProgressAddOneProvider();
+                if (Core.ServiceLocator.Get<FrameControl>().IsNeedStop(1))
                 {
                     yield return null;
                 }
             }
 
             MapTileTypeEnum[,] tiles = new MapTileTypeEnum[this.TileMapDataLAB.Height, this.TileMapDataLAB.Width];
-            AsyncProgressUI.Instance.SetTip("正在填补地图...");
+            AWorkerTask.AsyncProgressSetTipProvider("正在填补地图...");
             for (int i = 0; i < this.TileMapDataLAB.Height; i++)
             {
                 for (int j = 0; j < this.TileMapDataLAB.Width; j++)
                 {
-                    if (FrameControl.Instance.IsNeedStop(1))
+                    if (Core.ServiceLocator.Get<FrameControl>().IsNeedStop(1))
                     {
                         yield return null;
                     }
 
-                    AsyncProgressUI.Instance.AddOneProcess();
+                    AWorkerTask.AsyncProgressAddOneProvider();
                     if (this.TileMapDataLAB.MapTiles[i, j] != MapTileTypeEnum.Default)
                     {
                         tiles[i, j] = this.TileMapDataLAB.MapTiles[i, j];
@@ -297,14 +297,14 @@ namespace LAB2D.Map
             total += this.TileMapDataLAB.RandomCount;
             total += ((width + height) * 2) + 4;
             total += width * height;
-            AsyncProgressUI.Instance.AddTotal(total);
+            AWorkerTask.AsyncProgressAddTotalProvider(total);
         }
 
         /// <inheritdoc/>
         public override void LoadData()
         {
             base.LoadData();
-            AsyncProgressUI.Instance.SetTip("加载地图数据...");
+            AWorkerTask.AsyncProgressSetTipProvider("加载地图数据...");
             this.TileMapDataLAB = DataTool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             if (this.TileMapDataLAB == null)
             {
@@ -361,7 +361,7 @@ namespace LAB2D.Map
             this.TileMapDataLAB.Width = width;
             int total = width * height;
             total += ((width + height) * 2) + 4;
-            AsyncProgressUI.Instance.AddTotal(total);
+            AWorkerTask.AsyncProgressAddTotalProvider(total);
         }
 
         /// <summary>
@@ -433,34 +433,34 @@ namespace LAB2D.Map
         /// </summary>
         private void CreateArroundTile()
         {
-            AsyncProgressUI.Instance.SetTip("创建地图四周...");
+            AWorkerTask.AsyncProgressSetTipProvider("创建地图四周...");
 
             // 上边
             for (int i = -1; i < this.TileMapDataLAB.Width; i++)
             {
-                AsyncProgressUI.Instance.AddOneProcess();
-                this.tilemap.SetTile(new Vector3Int(this.TileMapDataLAB.Height, i, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileTypeEnum.Mountain.ToString()));
+                AWorkerTask.AsyncProgressAddOneProvider();
+                this.tilemap.SetTile(new Vector3Int(this.TileMapDataLAB.Height, i, 0), (TileBase)AWorkerTask.ResourceLoadProvider(MapTileTypeEnum.Mountain.ToString()));
             }
 
             // 右边
             for (int i = 0; i <= this.TileMapDataLAB.Height; i++)
             {
-                AsyncProgressUI.Instance.AddOneProcess();
-                this.tilemap.SetTile(new Vector3Int(i, this.TileMapDataLAB.Width, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileTypeEnum.Mountain.ToString()));
+                AWorkerTask.AsyncProgressAddOneProvider();
+                this.tilemap.SetTile(new Vector3Int(i, this.TileMapDataLAB.Width, 0), (TileBase)AWorkerTask.ResourceLoadProvider(MapTileTypeEnum.Mountain.ToString()));
             }
 
             // 下边
             for (int i = 0; i <= this.TileMapDataLAB.Width; i++)
             {
-                AsyncProgressUI.Instance.AddOneProcess();
-                this.tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileTypeEnum.Mountain.ToString()));
+                AWorkerTask.AsyncProgressAddOneProvider();
+                this.tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)AWorkerTask.ResourceLoadProvider(MapTileTypeEnum.Mountain.ToString()));
             }
 
             // 左边
             for (int i = -1; i < this.TileMapDataLAB.Height; i++)
             {
-                AsyncProgressUI.Instance.AddOneProcess();
-                this.tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)ResourceManager.Instance.GetAsset(MapTileTypeEnum.Mountain.ToString()));
+                AWorkerTask.AsyncProgressAddOneProvider();
+                this.tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)AWorkerTask.ResourceLoadProvider(MapTileTypeEnum.Mountain.ToString()));
             }
         }
 

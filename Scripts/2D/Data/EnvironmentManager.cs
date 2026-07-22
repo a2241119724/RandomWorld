@@ -60,7 +60,7 @@ namespace LAB2D.Data
         /// <returns>信息</returns>
         public string ToString(Vector3Int posMap)
         {
-            RoomInfo roomInfo = RoomManager.Instance.GetRoomByPos(posMap);
+            RoomInfo roomInfo = ServiceLocator.Get<RoomManager>().GetRoomByPos(posMap);
             if (roomInfo != null)
             {
                 return roomInfo.ToString();

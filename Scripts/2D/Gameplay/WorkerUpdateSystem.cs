@@ -17,7 +17,7 @@ namespace LAB2D.Gameplay
         /// <inheritdoc/>
         public void Tick(float deltaTime)
         {
-            List<AWorker> workers = WorkerManager.Instance.Characters;
+            List<AWorker> workers = ServiceLocator.Get<WorkerManager>().Characters;
             foreach (AWorker worker in workers)
             {
                 AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;

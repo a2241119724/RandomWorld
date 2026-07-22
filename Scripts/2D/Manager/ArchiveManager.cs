@@ -233,7 +233,7 @@ namespace LAB2D.Manager
             List<Type> monoSaveDatas = LAB2D.Tool.Tool.GetChildByParent<AMonoSaveData>();
 
             Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete = true;
-            AsyncProgressUI.Instance.SetTip("...");
+            AWorkerTask.AsyncProgressSetTipProvider("...");
             AsyncProgressUI.Instance.AddTotal(saveDatas.Count + monoSaveDatas.Count);
 
             this.InvokeLoadData(monoSaveDatas);

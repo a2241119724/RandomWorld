@@ -11,12 +11,12 @@ namespace LAB2D.UnityAdapter
     {
         public object Start(IEnumerator routine)
         {
-            return TileMap.Instance == null ? null : TileMap.Instance.StartCoroutine(routine);
+            return Core.ServiceLocator.Get<TileMap>().StartCoroutine(routine);
         }
 
         public void Stop(object coroutine)
         {
-            if (coroutine == null || TileMap.Instance == null)
+            if (coroutine == null)
             {
                 return;
             }
@@ -24,7 +24,7 @@ namespace LAB2D.UnityAdapter
             Coroutine unityCoroutine = coroutine as Coroutine;
             if (unityCoroutine != null)
             {
-                TileMap.Instance.StopCoroutine(unityCoroutine);
+                Core.ServiceLocator.Get<TileMap>().StopCoroutine(unityCoroutine);
             }
         }
 
