@@ -21,9 +21,9 @@ namespace LAB2D.AI.Dialogue.Core
     {
         private ILLMClient llmClient;
         private string cachedClientSource; // "local" or "remote"
-        private PromptBuilder promptBuilder => PromptBuilder.Instance;
-        private DialogueMemoryManager memoryManager => DialogueMemoryManager.Instance;
-        private GameKnowledgeRetriever knowledgeRetriever => GameKnowledgeRetriever.Instance;
+        private PromptBuilder promptBuilder => ServiceLocator.Get<PromptBuilder>();
+        private DialogueMemoryManager memoryManager => ServiceLocator.Get<DialogueMemoryManager>();
+        private GameKnowledgeRetriever knowledgeRetriever => ServiceLocator.Get<GameKnowledgeRetriever>();
         private PromptTemplateLoader requestLogTemplateLoader;
 
         private readonly Dictionary<string, DialogueSession> activeSessions = new Dictionary<string, DialogueSession>();

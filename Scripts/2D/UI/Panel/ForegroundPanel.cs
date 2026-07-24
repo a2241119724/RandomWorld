@@ -115,13 +115,13 @@ namespace LAB2D.UI.Panel
 
         private void ExecuteAttack()
         {
-            if (PlayerManager.Instance.Mine.Weapon != null)
+            if (ServiceLocator.Get<PlayerManager>().Mine.Weapon != null)
             {
-                AWeaponObject weapon = PlayerManager.Instance.Mine.Weapon.GetComponent<AWeaponObject>();
-                weapon.IsCRT = UnityEngine.Random.Range(0.0f, 1.0f) < PlayerManager.Instance.Mine.CharacterDataLAB.CRT;
+                AWeaponObject weapon = ServiceLocator.Get<PlayerManager>().Mine.Weapon.GetComponent<AWeaponObject>();
+                weapon.IsCRT = UnityEngine.Random.Range(0.0f, 1.0f) < ServiceLocator.Get<PlayerManager>().Mine.CharacterDataLAB.CRT;
                 if (NetworkConnect.Instance.IsOnline)
                 {
-                    PlayerManager.Instance.Mine.Weapon.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
+                    ServiceLocator.Get<PlayerManager>().Mine.Weapon.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
                 }
                 else
                 {
@@ -214,7 +214,7 @@ namespace LAB2D.UI.Panel
         private void CreateSaveSlotButtons()
         {
             this.saveSlotButtons.Clear();
-            for (int i = 0; i < ArchiveManager.Instance.ArchiveCount; i++)
+            for (int i = 0; i < ServiceLocator.Get<ArchiveManager>().ArchiveCount; i++)
             {
                 int archiveIndex = i;
                 Button button = this.CreateSaveSlotButton(archiveIndex);
@@ -224,7 +224,7 @@ namespace LAB2D.UI.Panel
 
         private Button CreateSaveSlotButton(int archiveIndex)
         {
-            GameObject gameObject = ResourceManager.Instance.Instantiate(PrefabConstant.ARCHIVE_ITEM, this.saveSlotContent, false);
+            GameObject gameObject = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.ARCHIVE_ITEM, this.saveSlotContent, false);
             gameObject.name = $"SaveSlot_{archiveIndex + 1}";
             gameObject.layer = this.saveSlotContent.gameObject.layer;
             Button button = this.FindChildComponent<Button>(gameObject.transform, "Save");
@@ -307,9 +307,9 @@ namespace LAB2D.UI.Panel
         {
             for (int i = 0; i < this.saveSlotButtons.Count; i++)
             {
-                bool hasArchive = ArchiveManager.Instance.HasArchive(i);
+                bool hasArchive = ServiceLocator.Get<ArchiveManager>().HasArchive(i);
                 Text text = this.FindChildComponent<Text>(this.saveSlotButtons[i].transform, "Text");
-                string displayName = ArchiveManager.Instance.GetArchiveDisplayName(i);
+                string displayName = ServiceLocator.Get<ArchiveManager>().GetArchiveDisplayName(i);
                 string status = hasArchive ? "已有存档" : "空槽";
                 text.text = $"{displayName}\n{status}";
             }
@@ -317,7 +317,7 @@ namespace LAB2D.UI.Panel
 
         private void OnClick_SaveSlot(int archiveIndex)
         {
-            if (ArchiveManager.Instance.HasArchive(archiveIndex))
+            if (ServiceLocator.Get<ArchiveManager>().HasArchive(archiveIndex))
             {
                 this.ShowOverwriteConfirmPanel(archiveIndex);
                 return;
@@ -329,7 +329,7 @@ namespace LAB2D.UI.Panel
         private void ShowOverwriteConfirmPanel(int archiveIndex)
         {
             this.pendingOverwriteArchiveIndex = archiveIndex;
-            string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
+            string displayName = ServiceLocator.Get<ArchiveManager>().GetArchiveDisplayName(archiveIndex);
             this.overwriteConfirmText.text = $"{displayName} 已存在\n是否确认覆盖?";
             this.overwriteConfirmPanel.SetActive(true);
             this.overwriteConfirmPanel.transform.SetAsLastSibling();
@@ -385,7 +385,7 @@ namespace LAB2D.UI.Panel
                 return;
             }
 
-            if (!ArchiveManager.Instance.HasArchive(archiveIndex))
+            if (!ServiceLocator.Get<ArchiveManager>().HasArchive(archiveIndex))
             {
                 GlobalInit.Instance.ShowTip("空存档槽不能清除");
                 this.RefreshSaveSlotButtons();
@@ -393,7 +393,7 @@ namespace LAB2D.UI.Panel
             }
 
             this.pendingClearArchiveIndex = archiveIndex;
-            string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
+            string displayName = ServiceLocator.Get<ArchiveManager>().GetArchiveDisplayName(archiveIndex);
             this.clearConfirmText.text = $"确认清除存档\n{displayName}?";
             this.clearConfirmPanel.SetActive(true);
             this.clearConfirmPanel.transform.SetAsLastSibling();
@@ -416,7 +416,7 @@ namespace LAB2D.UI.Panel
                 return;
             }
 
-            if (ArchiveManager.Instance.DeleteArchive(this.pendingClearArchiveIndex))
+            if (ServiceLocator.Get<ArchiveManager>().DeleteArchive(this.pendingClearArchiveIndex))
             {
                 GlobalInit.Instance.ShowTip("存档已清除");
             }
@@ -464,14 +464,14 @@ namespace LAB2D.UI.Panel
                 return;
             }
 
-            if (!ArchiveManager.Instance.HasArchive(archiveIndex))
+            if (!ServiceLocator.Get<ArchiveManager>().HasArchive(archiveIndex))
             {
                 GlobalInit.Instance.ShowTip("空存档槽不能改名");
                 this.RefreshSaveSlotButtons();
                 return;
             }
 
-            string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
+            string displayName = ServiceLocator.Get<ArchiveManager>().GetArchiveDisplayName(archiveIndex);
             this.pendingRenameArchiveIndex = archiveIndex;
             if (this.renameTipText != null)
             {
@@ -509,7 +509,7 @@ namespace LAB2D.UI.Panel
             }
 
             string displayName = this.renameInputField == null ? string.Empty : this.renameInputField.text;
-            if (!ArchiveManager.Instance.SetArchiveDisplayName(this.pendingRenameArchiveIndex, displayName))
+            if (!ServiceLocator.Get<ArchiveManager>().SetArchiveDisplayName(this.pendingRenameArchiveIndex, displayName))
             {
                 GlobalInit.Instance.ShowTip("存档名称不能为空");
                 return;
@@ -522,9 +522,9 @@ namespace LAB2D.UI.Panel
 
         private void SaveToArchive(int archiveIndex)
         {
-            ArchiveManager.Instance.SetCurrentArchive(archiveIndex);
-            GlobalInit.Instance.ShowTip($"保存数据: {ArchiveManager.Instance.CurrentArchiveDisplayName}");
-            ArchiveManager.Instance.SaveCurrentArchive();
+            ServiceLocator.Get<ArchiveManager>().SetCurrentArchive(archiveIndex);
+            GlobalInit.Instance.ShowTip($"保存数据: {ServiceLocator.Get<ArchiveManager>().CurrentArchiveDisplayName}");
+            ServiceLocator.Get<ArchiveManager>().SaveCurrentArchive();
             this.HideSaveSlotPanel();
         }
     }

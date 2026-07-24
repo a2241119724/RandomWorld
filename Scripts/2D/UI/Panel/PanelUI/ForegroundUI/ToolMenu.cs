@@ -37,13 +37,13 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
                 return;
             }
 
-            if (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance)
+            if (ServiceLocator.Get<PanelController>().Panels.Peek() == ForegroundPanel.Instance)
             {
-                PanelController.Instance.Show(this.ToolMenus[menuIndex]);
+                ServiceLocator.Get<PanelController>().Show(this.ToolMenus[menuIndex]);
             }
-            else if (PanelController.Instance.Panels.Peek() == this.ToolMenus[menuIndex])
+            else if (ServiceLocator.Get<PanelController>().Panels.Peek() == this.ToolMenus[menuIndex])
             {
-                PanelController.Instance.Close();
+                ServiceLocator.Get<PanelController>().Close();
             }
         }
 
@@ -52,26 +52,26 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         /// </summary>
         private void Onclick_GeneratorWorker()
         {
-            if (PlayerManager.Instance.Mine == null)
+            if (ServiceLocator.Get<PlayerManager>().Mine == null)
             {
                 AWorkerTask.LogProvider("玩家尚未加载完成，无法生成Worker", LogManager.LogLevelEnum.Warning);
                 return;
             }
 
-            WorkerManager.Instance.Create(PlayerManager.Instance.Mine.transform.position);
+            ServiceLocator.Get<WorkerManager>().Create(ServiceLocator.Get<PlayerManager>().Mine.transform.position);
         }
 
 
         private void Onclick_GeneratorItem()
         {
-            if (PlayerManager.Instance.Mine == null)
+            if (ServiceLocator.Get<PlayerManager>().Mine == null)
             {
                 AWorkerTask.LogProvider("玩家尚未加载完成，无法生成物品", LogManager.LogLevelEnum.Warning);
                 return;
             }
 
-            EnemyLootManager.Instance.TryDropLoot(
-                PlayerManager.Instance.Mine.transform.position, waveNumber: 0);
+            ServiceLocator.Get<EnemyLootManager>().TryDropLoot(
+                ServiceLocator.Get<PlayerManager>().Mine.transform.position, waveNumber: 0);
         }
     }
 }

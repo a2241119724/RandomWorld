@@ -56,31 +56,31 @@ namespace LAB2D.UI.Panel
                 return;
             }
 
-            Player.PlayerData playerData = PlayerManager.Instance.Mine.CharacterDataLAB as Player.PlayerData;
-            if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == AItem.ItemTypeEnum.Weapon)
+            Player.PlayerData playerData = ServiceLocator.Get<PlayerManager>().Mine.CharacterDataLAB as Player.PlayerData;
+            if (ServiceLocator.Get<ItemDataManager>().GetById(this.Select.Item.Id).Type == AItem.ItemTypeEnum.Weapon)
             {
-                if (PlayerManager.Instance.Mine.Weapon != null)
+                if (ServiceLocator.Get<PlayerManager>().Mine.Weapon != null)
                 {
                     // 将正在穿戴的物体加入背包
                     BackpackController.Instance.AddItem(playerData.Weapon);
 
                     // 销毁武器
-                    PhotonNetwork.Destroy(PlayerManager.Instance.Mine.Weapon);
+                    PhotonNetwork.Destroy(ServiceLocator.Get<PlayerManager>().Mine.Weapon);
                 }
 
                 // 实例化武器
-                string name = ItemDataManager.Instance.GetById(this.Select.Item.Id).EnName;
-                PlayerManager.Instance.Mine.Weapon = ResourceManager.Instance.Instantiate(name, false);
-                if (PlayerManager.Instance.Mine.Weapon == null)
+                string name = ServiceLocator.Get<ItemDataManager>().GetById(this.Select.Item.Id).EnName;
+                ServiceLocator.Get<PlayerManager>().Mine.Weapon = ServiceLocator.Get<ResourceManager>().Instantiate(name, false);
+                if (ServiceLocator.Get<PlayerManager>().Mine.Weapon == null)
                 {
                     AWorkerTask.LogProvider("武器实例化错误!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 
-                PlayerManager.Instance.Mine.Weapon.name = name;
-                PlayerManager.Instance.Mine.Weapon.transform.SetParent(PlayerManager.Instance.Mine.transform, false);
-                AWeaponObject weaponObject = PlayerManager.Instance.Mine.Weapon.GetComponent<AWeaponObject>();
-                weaponObject.SetCharacter(PlayerManager.Instance.Mine);
+                ServiceLocator.Get<PlayerManager>().Mine.Weapon.name = name;
+                ServiceLocator.Get<PlayerManager>().Mine.Weapon.transform.SetParent(ServiceLocator.Get<PlayerManager>().Mine.transform, false);
+                AWeaponObject weaponObject = ServiceLocator.Get<PlayerManager>().Mine.Weapon.GetComponent<AWeaponObject>();
+                weaponObject.SetCharacter(ServiceLocator.Get<PlayerManager>().Mine);
                 weaponObject.Item = this.Select.Item;
                 GlobalInit.Instance.ShowTip("装备成功");
 
@@ -92,7 +92,7 @@ namespace LAB2D.UI.Panel
                 this.Select.SelectItemIndex = -1;
                 this.Select.Item = null;
             }
-            else if (ItemDataManager.Instance.GetById(this.Select.Item.Id).Type == AItem.ItemTypeEnum.Consumable)
+            else if (ServiceLocator.Get<ItemDataManager>().GetById(this.Select.Item.Id).Type == AItem.ItemTypeEnum.Consumable)
             {
                 ((AConsumable)this.Select.Item).Use();
 

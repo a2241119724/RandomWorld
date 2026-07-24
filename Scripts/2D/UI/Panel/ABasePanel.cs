@@ -14,7 +14,8 @@ namespace LAB2D.UI.Panel
     {
         public ABasePanel()
         {
-            this.Controller = PanelController.Instance;
+            ServiceLocator.Register((BP)(object)this);
+            this.Controller = ServiceLocator.Get<PanelController>();
         }
 
         /// <summary>
@@ -38,7 +39,7 @@ namespace LAB2D.UI.Panel
             Transform t = GameObject.FindGameObjectWithTag(root).transform.Find(this.Name);
             if (t == null)
             {
-                this.Panel = ResourceManager.Instance.Instantiate(this.Name, PanelController.Instance.Parent, false);
+                this.Panel = ServiceLocator.Get<ResourceManager>().Instantiate(this.Name, ServiceLocator.Get<PanelController>().Parent, false);
             }
             else
             {
@@ -82,7 +83,7 @@ namespace LAB2D.UI.Panel
         public virtual void OnClick_Back()
         {
             // 没有返回按钮的面板,显示暂停菜单
-            PanelController.Instance.Show(PauseMenuPanel.Instance);
+            ServiceLocator.Get<PanelController>().Show(PauseMenuPanel.Instance);
         }
     }
 }

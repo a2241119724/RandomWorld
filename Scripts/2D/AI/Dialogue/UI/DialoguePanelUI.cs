@@ -1,8 +1,10 @@
 namespace LAB2D.AI.Dialogue.UI
 {
     using LAB2D;
+    using LAB2D.AI.Dialogue.Core;
     using LAB2D.AI.Dialogue.LLM;
     using LAB2D.AI.Dialogue.Prompt;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.UI.Panel;
     using LAB2D.UnityAdapter;
@@ -20,9 +22,9 @@ namespace LAB2D.AI.Dialogue.UI
         public static DialoguePanelUI Instance { get; private set; }
 
         internal static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
-            = (msg, lv) => LogManager.Instance?.Log(msg, lv);
+            = (msg, lv) => ServiceLocator.Get<LogManager>().Log(msg, lv);
         internal static System.Func<string, bool, GameObject> ResourceInstantiateProvider { get; set; }
-            = (name, active) => ResourceManager.Instance.Instantiate(name, active);
+            = (name, active) => ServiceLocator.Get<ResourceManager>().Instantiate(name, active);
         private const float BubbleMinWidth = 96f;
         private const float BubbleMaxWidth = 560f;
         private const float BubbleHorizontalPadding = 32f;
@@ -104,21 +106,21 @@ namespace LAB2D.AI.Dialogue.UI
 
         public void OnEnable()
         {
-            if (DialogueManager.Instance != null)
+            if (ServiceLocator.Get<DialogueManager>() != null)
             {
-                DialogueManager.Instance.OnTokenReceived += this.HandleToken;
-                DialogueManager.Instance.OnDialogueComplete += this.HandleComplete;
-                DialogueManager.Instance.OnDialogueError += this.HandleError;
+                ServiceLocator.Get<DialogueManager>().OnTokenReceived += this.HandleToken;
+                ServiceLocator.Get<DialogueManager>().OnDialogueComplete += this.HandleComplete;
+                ServiceLocator.Get<DialogueManager>().OnDialogueError += this.HandleError;
             }
         }
 
         public void OnDisable()
         {
-            if (DialogueManager.Instance != null)
+            if (ServiceLocator.Get<DialogueManager>() != null)
             {
-                DialogueManager.Instance.OnTokenReceived -= this.HandleToken;
-                DialogueManager.Instance.OnDialogueComplete -= this.HandleComplete;
-                DialogueManager.Instance.OnDialogueError -= this.HandleError;
+                ServiceLocator.Get<DialogueManager>().OnTokenReceived -= this.HandleToken;
+                ServiceLocator.Get<DialogueManager>().OnDialogueComplete -= this.HandleComplete;
+                ServiceLocator.Get<DialogueManager>().OnDialogueError -= this.HandleError;
             }
         }
 
@@ -160,7 +162,7 @@ namespace LAB2D.AI.Dialogue.UI
             }
 
             // 显示问候语
-            string greeting = DialogueManager.Instance.GetGreeting(profile);
+            string greeting = ServiceLocator.Get<DialogueManager>().GetGreeting(profile);
             this.AddNPCBubble(greeting);
             this.ScrollToLatest();
 
@@ -183,7 +185,7 @@ namespace LAB2D.AI.Dialogue.UI
         {
             if (!string.IsNullOrEmpty(this.activeNpcId))
             {
-                DialogueManager.Instance.EndDialogue(this.activeNpcId);
+                ServiceLocator.Get<DialogueManager>().EndDialogue(this.activeNpcId);
             }
 
             this.activeNpcId = string.Empty;
@@ -219,13 +221,13 @@ namespace LAB2D.AI.Dialogue.UI
                 this.currentStreamingText.TypewriterSpeed = 0;
             }
 
-            DialogueSession session = DialogueManager.Instance.GetSession(this.activeNpcId);
+            DialogueSession session = ServiceLocator.Get<DialogueManager>().GetSession(this.activeNpcId);
             if (session != null)
             {
                 session.options.deepThinking = ModelSourceSettings.DeepThinkingEnabled;
             }
 
-            DialogueManager.Instance.SendMessage(this.activeNpcId, text);
+            ServiceLocator.Get<DialogueManager>().SendMessage(this.activeNpcId, text);
             this.ScrollToLatest();
         }
 
@@ -240,12 +242,12 @@ namespace LAB2D.AI.Dialogue.UI
         private void OnBackClicked()
         {
             this.Close();
-            PanelController.Instance.Close();
+            ServiceLocator.Get<PanelController>().Close();
         }
 
         private void OnSettingsClicked()
         {
-            PanelController.Instance.Show(LLMSettingsPanel.Instance);
+            ServiceLocator.Get<PanelController>().Show(LLMSettingsPanel.Instance);
         }
 
         private void OnDeepThinkingChanged(bool isOn)
@@ -253,7 +255,7 @@ namespace LAB2D.AI.Dialogue.UI
             ModelSourceSettings.DeepThinkingEnabled = isOn;
             ModelSourceSettings.Save();
 
-            DialogueSession session = DialogueManager.Instance.GetSession(this.activeNpcId);
+            DialogueSession session = ServiceLocator.Get<DialogueManager>().GetSession(this.activeNpcId);
             if (session != null)
             {
                 session.options.deepThinking = isOn;
@@ -397,12 +399,12 @@ namespace LAB2D.AI.Dialogue.UI
 
         private void AddPlayerBubble(string text)
         {
-            if (this.content == null || ResourceManager.Instance == null)
+            if (this.content == null)
             {
                 return;
             }
 
-            GameObject g = ResourceManager.Instance.Instantiate(
+            GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(
                 PrefabConstant.RIGHT_CHAT_ITEM, this.content, false);
             if (g == null)
             {
@@ -421,12 +423,12 @@ namespace LAB2D.AI.Dialogue.UI
 
         private StreamingTextView AddNPCBubble(string initialText)
         {
-            if (this.content == null || ResourceManager.Instance == null)
+            if (this.content == null)
             {
                 return null;
             }
 
-            GameObject g = ResourceManager.Instance.Instantiate(
+            GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(
                 PrefabConstant.LEFT_CHAT_ITEM, this.content, false);
             if (g == null)
             {
