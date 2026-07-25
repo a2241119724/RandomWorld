@@ -58,9 +58,9 @@ namespace LAB2D.Gameplay
         /// 默认实现调用 Player.AddHp()；可在测试中替换为无操作桩。
         /// </summary>
         public static System.Action<Character, float> ApplyHealRewardProvider { get; set; }
-            = (player, healPercent) =>
+            = (character, healPercent) =>
             {
-                if (player != null)
+                if (character is Player player)
                 {
                     player.AddHp(player.CharacterDataLAB.MaxHp * healPercent);
                 }
@@ -77,6 +77,35 @@ namespace LAB2D.Gameplay
                 {
                     player.AddExperienceValue(expAmount);
                 }
+            };
+
+        /// <summary>
+        /// 日志警告提供者 — 输出警告级别的日志消息。
+        /// 默认实现封装 Debug.LogWarning；可在测试中替换为静默桩。
+        /// </summary>
+        public static System.Action<string> LogWarningProvider { get; set; }
+            = (message) => Debug.LogWarning(message);
+
+        /// <summary>
+        /// 日志提供者 — 输出普通级别的日志消息。
+        /// 默认实现封装 Debug.Log；可在测试中替换为静默桩。
+        /// </summary>
+        public static System.Action<string> LogProvider { get; set; }
+            = (message) => Debug.Log(message);
+
+        /// <summary>
+        /// 玩家解析提供者 — 获取当前本地玩家角色的引用。
+        /// 默认实现通过 PlayerManager.Mine 获取；可在测试中替换为桩。
+        /// </summary>
+        public static System.Func<Character> PlayerResolverProvider { get; set; }
+            = () =>
+            {
+                if (Core.ServiceLocator.TryGet(out PlayerManager pm))
+                {
+                    return pm.Mine;
+                }
+
+                return null;
             };
 
         /// <summary>
@@ -300,12 +329,12 @@ namespace LAB2D.Gameplay
         /// <summary>
         /// 应用玩家移动强化。
         /// </summary>
-        /// <param name="player">玩家。</param>
+        /// <param name="character">角色（仅对玩家角色生效）。</param>
         /// <param name="baseSpeed">基础速度。</param>
         /// <returns>移动强化后的速度。</returns>
-        public float GetAdjustedPlayerMoveSpeed(Player player, float baseSpeed)
+        public float GetAdjustedPlayerMoveSpeed(Character character, float baseSpeed)
         {
-            if (!this.enabled || player == null)
+            if (!this.enabled || character == null || !character.IsPlayerCharacter)
             {
                 return baseSpeed;
             }
@@ -349,7 +378,7 @@ namespace LAB2D.Gameplay
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[WaveBossReward] 订阅波次事件失败: " + exception.Message);
+                LogWarningProvider("[WaveBossReward] 订阅波次事件失败: " + exception.Message);
             }
         }
 
@@ -514,7 +543,7 @@ namespace LAB2D.Gameplay
         /// <param name="option">奖励选项。</param>
         private void ApplyReward(WaveRewardOption option)
         {
-            Player player = Core.ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
+            Character player = PlayerResolverProvider();
             switch (option.RewardType)
             {
                 case WaveRewardType.Heal:
@@ -585,10 +614,10 @@ namespace LAB2D.Gameplay
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[WaveBossReward] 显示 Tip 失败: " + exception.Message);
+                LogWarningProvider("[WaveBossReward] 显示 Tip 失败: " + exception.Message);
             }
 
-            Debug.Log("[波次奖励] " + message);
+            LogProvider("[波次奖励] " + message);
         }
     }
 

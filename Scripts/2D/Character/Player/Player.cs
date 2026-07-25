@@ -34,7 +34,7 @@ namespace LAB2D.Character.Player
         internal static Func<Player, bool> TryCompleteRespawnProvider { get; set; } = (p) => ServiceLocator.Get<DeathPenaltyManager>().TryCompleteRespawn(p);
         internal static Action<Player> HandlePlayerDeathProvider { get; set; } = (p) => ServiceLocator.Get<DeathPenaltyManager>().HandlePlayerDeath(p);
         internal static Func<Player, float, float> WeatherMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<WeatherGameplayEffect>().GetAdjustedCharacterMoveSpeed(p, def);
-        internal static Func<Player, float, float> WaveMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<WaveBossRewardManager>().GetAdjustedPlayerMoveSpeed(p, def);
+        internal static Func<Character, float, float> WaveMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<WaveBossRewardManager>().GetAdjustedPlayerMoveSpeed(p, def);
         internal static Func<float> ExperienceMultiplierProvider { get; set; } = () => ServiceLocator.Get<ComboBonusManager>().ExperienceMultiplier;
         internal static Action<Player> PlayerRegisterProvider { get; set; } = (p) => ServiceLocator.Get<PlayerManager>().Mine = p;
         internal static Action<Player> PlayerAddProvider { get; set; } = (p) => ServiceLocator.Get<PlayerManager>().Add(p);
