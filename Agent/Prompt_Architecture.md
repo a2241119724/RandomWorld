@@ -26,7 +26,7 @@ namespace LAB2D
 Scripts/2D/Domain/                    # 纯规则层（不含 UnityEngine 引用）
   Common/                             # EventBus、GameVector2、GameGridPosition、IGameCommand/Event/Time/Logger/IInitializable/ITickable 等
   Character/                          # DamageCalculator、LevelProgressionService
-  Gameplay/                           # AchievementRuleService、ComboBonusRuleService、SkillRuleService、SessionResultRuleService、DeathPenaltyRuleService 等（9 个文件）
+  Gameplay/                           # AchievementRuleService、ComboBonusRuleService、SkillRuleService、SessionResultRuleService、DeathPenaltyRuleService、GameplaySessionStatsRuleService 等（10 个文件）
   Inventory/                          # InventoryService、InventoryGrid、InventoryCell、ResourceStack、InventoryStackingService、InventoryFoodReservationService、InventoryTakeReservationService、InventoryGridChangedEvent 等
   Player/                             # PlayerDamagePolicy、PlayerMovementPolicy、PlayerMovementService、IPlayerView、PlayerEvents 等
   Wave/                               # WaveBossRuleService、WaveRuleService、WaveFlowService、WaveSpawnPlanService、WaveConfigModel、WaveRuntimeState、WaveSpawnRequest、WaveFlowDecision、WaveEvents（4 个 IGameEvent）、IWaveStateProvider 等（12 个文件）
@@ -229,7 +229,7 @@ Assets/Scripts/2D/
     Wave/                     # WaveBossRuleService、WaveConfigModel、WaveRuleService
     Worker/                   # WorkerAgentSnapshot、WorkerConditionRuleService、WorkerTaskAssignmentService、WorkerTaskProgressService、WorkerTaskCongestionRuleService、WorkerSupplyRuleService
     Dialogue/                 # PromptAssemblyService、DialoguePromptProfileModel、ChatMessage、IPromptTemplateProvider
-  UnityAdapter/               # ✅ 已存在：Unity 类型、输入、时间、地图、资源的适配（13 个文件）
+  UnityAdapter/               # ✅ 已存在：Unity 类型、输入、时间、地图、资源的适配（14 个文件）
     UnityGameTime.cs / UnityLogger.cs / UnityVectorAdapter.cs / UnityPlayerInputAdapter.cs
     UnityMapAdapter.cs / UnityEnemySpawnAdapter.cs / UnityItemDefinitionAdapter.cs / TipHelper.cs
     UnityWaveSceneAdapter.cs / UnityWaveTimeScheduler.cs / UnityGlobalInputAdapter.cs / PlayerViewAdapter.cs
@@ -846,7 +846,7 @@ public sealed class MyNewInitializer : IInitializable
 | Gameplay | `AchievementRuleService`、`SkillRuleService`、`ComboBonusRuleService`、`SessionResultRuleService`、`DeathPenaltyRuleService`、`GameplaySessionStatsRuleService`、`WeatherGameplayRuleService`、`EquipmentLootRuleService`、`ColonyCommandCenterRuleService`、`PlayerVitalAlertRuleService`（10 个文件） |
 | Dialogue | `PromptAssemblyService`、`DialoguePromptProfileModel`、`IPromptTemplateProvider` |
 | Common | `EventBus`、`GameVector2`、`GameGridPosition`、`IGameTime`、`IGameLogger`、`ITickable`、`IInitializable` 等 |
-| Unity Adapter | `UnityGameTime`、`UnityLogger`、`UnityVectorAdapter`、`UnityPlayerInputAdapter`、`UnityMapAdapter`、`UnityGlobalInputAdapter`、`UnityWaveSceneAdapter`、`UnityWaveTimeScheduler`、`PlayerViewAdapter` 等（13 个文件） |
+| Unity Adapter | `UnityGameTime`、`UnityLogger`、`UnityVectorAdapter`、`UnityPlayerInputAdapter`、`UnityMapAdapter`、`UnityGlobalInputAdapter`、`UnityWaveSceneAdapter`、`UnityWaveTimeScheduler`、`PlayerViewAdapter` 等（14 个文件） |
 
 | 基础设施 | 状态 |
 |---|---|
@@ -1049,60 +1049,84 @@ namespace LAB2D
 - 运行测试并手动回归主场景
 ```
 
-> **当前进度**：项目已完成阶段一~五的全部工作。`Domain/` 已有丰富的纯 C# Service、Model、EventBus、值类型、生命周期接口；`UnityAdapter/` 已有 13 个文件；`ServiceLocator` 已全局落地；`AWorkerTask` Provider 委托模式已成熟。**架构改造已达平台期**——剩余耦合点均在 MonoBehaviour/物理/渲染等本质 Unity 绑定层。
+> **当前进度**：项目已完成阶段一~五的全部工作。**架构改造已达平台期**——剩余耦合点均在 MonoBehaviour/物理/渲染等本质 Unity 绑定层。
 >
-> **最近完成（2026-07 本轮会话）**：
+> **2026-07 架构改造终态报告（本轮会话完整成果）**：
 >
-> **Instance 清零**：
-> - `CharacterManager` 构造函数 `CharacterCreator<CC>.Instance` → `ServiceLocator.Get<CC>()`，非 UI .Instance 全部清零
+> ### Gameplay 层 — 零 `using UnityEngine` 的 16 个非 MonoBehaviour Manager/Singleton
 >
-> **Wave 系统完整解耦**：
-> - WaveBossRewardManager：7 Provider（BossVisual、RandomRange、ApplyHealReward、ApplyExperienceReward、LogWarning、Log、PlayerResolver），零 Unity/Player/WaveManager 引用
-> - Domain/Wave 新增 2 文件：`WaveEvents.cs`（4 IGameEvent）、`IWaveStateProvider.cs`（7 属性接口）
-> - WaveManager：实现 IWaveStateProvider + EventBus 双通道发布 + GlobalInit 接口注册
-> - WaveBossRewardManager + WaveEventFeedback：C# 事件 → EventBus.Subscribe<>() 迁移
+> PlayerVitalAlertManager, ColonyCommandCenterManager, WorkerTaskCongestionAdvisor, WaveEventFeedback,
+> WorkerConditionManager, AchievementManager, ItemCollectionTracker, WeatherGameplayEffect,
+> WorkerEfficiencyTracker, SessionResultManager, GameplaySessionStats, ComboBonusManager,
+> WorkerSupplyIssueManager, **DeathPenaltyManager**, **SkillManager**, WorkerUpdateSystem
 >
-> **InventoryManager**：
-> - `preTakeResource`/`prePlaceResource` Dictionary key：`AWorker` → `int` (worker.GetInstanceID())，字典不再持有 MonoBehaviour 强引用
+> ### Gameplay 层 — 仍 `using UnityEngine` 的 5 个文件（均为本质 Unity 绑定）
 >
-> **Gameplay 层 Manager 解耦（12 个文件零 using UnityEngine）**：
-> - 零 `using UnityEngine`（12 个）：PlayerVitalAlertManager、ColonyCommandCenterManager、WorkerTaskCongestionAdvisor、WaveEventFeedback、WorkerConditionManager、AchievementManager、ItemCollectionTracker、WeatherGameplayEffect、WorkerEfficiencyTracker、SessionResultManager、**GameplaySessionStats**（IGameTime 迁移）、**ComboBonusManager**（移除冗余 using）
-> - IGameTime/IGameLogger 迁移（3 个）：WorkerSupplyIssueManager、SkillManager、**DeathPenaltyManager**（Time.realtimeSinceStartup → IGameTime.RealtimeSinceStartup）
-> - PlayerPositionProvider（1 个）：EnemyLootManager
-> - 冗余 using UnityEngine 清理（1 个）：**WorkerUpdateSystem**
-> - 全限定名 UnityEngine 引用消除（2 个）：**SessionResultManager**（`IsPlayingProvider` 提取）、**SessionResultAutoTrigger**（复用 `SessionResultManager.IsPlayingProvider()`）
-> - DeathPenaltyManager Provider 提取（2 个新增）：**`RespawnPositionProvider`**（TileMap + 坐标转换）、**`RespawnPlacementProvider`**（Transform + GameObject.layer），累计 4 个 Provider
-> - EnemyLootManager Provider 提取（2 个新增）：**`RandomIntProvider`** + **`RandomFloatProvider`**（UnityEngine.Random.Range 封装），累计 8 个 Provider
-> - WorkerSupplyIssueManager Provider 提取（2 个新增）：**`FoodInventoryProvider`** + **`BedBindingProvider`**（Vector3Int → GameGridPosition 转换），**移除 `using UnityEngine`**，成为第 14 个零 UnityEngine 的 Gameplay 文件
-> - SkillManager Provider 提取（3 个新增）：**`PlayerWorldPositionProvider`** + **`DashMovementProvider`**（Rigidbody2D/Transform）+ **`PlayerFacingDirectionProvider`**（Animator），累计 6 个 Provider，删除私有方法 `GetPlayerFacingDirection`
-> - WorkerTaskManager 双重 Tick 修复：**帧去重保护**（`lastTickFrame`），防止 `Update()` 兼容桥 + `GlobalInit` ITickable 双重驱动导致每帧执行两次 `RunTaskAssignmentLoop()`
-> - WorkerTaskManager API 迁移收尾：**`AddTask(GameGridPosition)` 重载**（主 API），旧 `AddTask(Vector3IntLAB)` 标记 `[Obsolete]`，所有公开方法已迁移至 Domain 类型
-> - AEquipment Provider 提取：**`RandomFloatProvider`**（`RankRandom()` 中 `UnityEngine.Random.Range` → Provider），纯数据类零 UnityEngine 引用
-> - ResourceManager Provider 提取：**`RandomIntProvider`**（tile 随机选择中的 `UnityEngine.Random.Range` → Provider）
-> - DeathPenaltyManager：Provider 签名 Vector3 → GameVector2，**移除 `using UnityEngine`**
-> - SkillManager：全部 6 个 Provider 签名 Vector3 → GameVector2 + 新增 EnemyWorldPositionProvider，**移除 `using UnityEngine`**
-> - EnemyLootManager：移除 `using UnityEngine.Tilemaps`（TileBase → 全限定名），保留 `using UnityEngine`（public API 使用 Vector3/Vector3Int）
-> - NameGenerator + Lock + EquipmentLootTool：`Random.Range` → `System.Random` / Provider，**移除 `using UnityEngine`**
+> | 文件 | 保留原因 |
+> |------|----------|
+> | EnemyLootManager | public API 使用 Vector3/Vector3Int；8 个 Provider 已隔离核心逻辑 |
+> | WaveBossRewardManager | public API 使用 GameObject 参数；7 个 Provider 已隔离核心逻辑 |
+> | EquipmentBeamManager | Mesh/Texture/Material 渲染 — 纯表现层 |
+> | FloatingTextManager | Camera/Canvas/GameObject — 纯 UI 层 |
+> | SessionResultAutoTrigger | MonoBehaviour 生命周期 — 设计如此 |
 >
-> **其他**：
-> - WorkerTaskManager：`WorkerPositionProvider` 提取
-> - 全部使用统一模板：`IGameTime`/`IGameLogger` + 懒加载属性，或 Provider 委托
+> ### 跨模块清理
 >
-> **架构决策 — ABasePanel 使用 .Instance 的原因**：
-> `ABasePanel<T>` 子类构造函数自动调用 `ServiceLocator.Register(this)` 并执行 `Init()`（依赖 `GameObject.FindGameObjectWithTag`）。`.Instance` 触发懒创建 → 构造函数 → 自注册，是正确模式。`ServiceLocator.Get<T>()` 跳过懒创建，会导致 `KeyNotFoundException`（对早于 GlobalInit.Awake 执行的脚本）或 `NullReferenceException`（BeforeSceneLoad 无场景）。**结论：ABasePanel 子类保持 `.Instance`，其他已注册服务使用 `ServiceLocator.Get<T>()`。**（2026-07）
+> | 文件 | 改动 | 效果 |
+> |------|------|------|
+> | `Core/Lock.cs` | Random.Range → System.Random | 移除 using UnityEngine |
+> | `Tool/NameGenerator.cs` | Random.Range → System.Random | 移除 using UnityEngine |
+> | `Tool/EquipmentLootTool.cs` | Random.Range → RandomIntProvider/RandomFloatProvider | 隔离 Unity Random |
+> | `Item/Backpack/Equipment/AEquipment.cs` | Random.Range → RandomFloatProvider | 纯数据类零 UnityEngine |
+> | `Manager/ResourceManager.cs` | Random.Range → RandomIntProvider | 隔离 Unity Random |
+> | `Gameplay/EnemyLootManager.cs` | 移除 using UnityEngine.Tilemaps | TileBase → 全限定名 |
 >
-> **当前架构状态（2026-07）**：
+> ### Worker 层
+>
+> | 改动 | 说明 |
+> |------|------|
+> | WorkerTaskManager 双重 Tick 修复 | 帧去重保护（`lastTickFrame`），防止 Update() + GlobalInit 双重驱动 |
+> | AddTask API 迁移 | `GameGridPosition` 主重载，`Vector3IntLAB` 标记 Obsolete；10 个调用方全部迁移 |
+> | TaskAddProvider 签名更新 | `Action<AWorkerTask, Vector3IntLAB, int>` → `Action<AWorkerTask, GameGridPosition, int>` |
+>
+> ### 基础设施
+>
+> | 改动 | 说明 |
+> |------|------|
+> | GlobalInit IGameTime 注册顺序修复 | `IGameTime`/`IGameLogger` 从 RegisterServices(Awake) 提前到 RegisterSafeServices(BeforeSceneLoad) |
+> | 新增单元测试 | `Editor/Tests/Tool/ArchitectureRefactoringVerificationTests.cs` |
+>
+> ### Provider 委托完整清单
+>
+> 全项目累计新增 **17 个** Provider 委托（本轮会话），分布在：
+> - DeathPenaltyManager: 4（GameplaySessionStats, DeathMenuPanel, RespawnPosition, RespawnPlacement）
+> - EnemyLootManager: 8（+RandomIntProvider, +RandomFloatProvider）
+> - SkillManager: 6（PlayerMine, FloatingTextDamage, FloatingTextHeal, PlayerWorldPosition, DashMovement, PlayerFacingDirection, EnemyWorldPosition）
+> - WaveBossRewardManager: 7（BossVisual, RandomRange, ApplyHealReward, ApplyExperienceReward, LogWarning, Log, PlayerResolver）
+> - WorkerSupplyIssueManager: 2（FoodInventory, BedBinding）
+> - SessionResultManager: 1（IsPlayingProvider）
+> - AEquipment: 1（RandomFloatProvider）
+> - ResourceManager: 1（RandomIntProvider）
+> - EquipmentLootTool: 2（RandomFloatProvider, RandomIntProvider）
+>
+> ### Bug 修复
+>
+> - WorkerTaskManager 双重 Tick（每帧执行两次 RunTaskAssignmentLoop）→ 帧去重保护
+> - GameplaySessionStats 构造函数 KeyNotFoundException（IGameTime 未在 BeforeSceneLoad 注册）→ 注册顺序修复
+>
+> ### 架构决策
+>
+> **ABasePanel 使用 .Instance**：`ABasePanel<T>` 子类构造函数自动调用 `ServiceLocator.Register(this)`。`.Instance` 触发懒创建 → 自注册，是正确模式。**结论：ABasePanel 子类保持 `.Instance`，其他已注册服务使用 `ServiceLocator.Get<T>()`。**
+>
+> ### 当前架构状态
+>
 > - 🎉 非 UI `.Instance` 全部清零
-> - 🎉 Gameplay 层 16 个非 MonoBehaviour Manager/Singleton 零 `using UnityEngine`（本轮新增：DeathPenaltyManager + SkillManager；+6 相比初始）
-> - 🎉 Gameplay 层所有非 MonoBehaviour Manager 的 `Time.realtimeSinceStartup` 已全部迁移至 `IGameTime`（GameplaySessionStats + DeathPenaltyManager 本轮收尾）
-> - 🎉 Gameplay 层全限定名 `UnityEngine.` 引用仅存在于 Provider 默认实现中（SessionResultManager.IsPlayingProvider、WaveBossRewardManager.RandomRangeProvider）
-> - 🎉 WaveBossRewardManager：7 Provider + EventBus + 零 WaveManager/Player 引用
-> - 🎉 Wave 系统：4 IGameEvent + IWaveStateProvider + EventBus 双通道发布
-> - 🎉 InventoryManager：字典不持有 AWorker 引用（int key）
-> - 🎉 39 个 Domain 单元测试覆盖全部 RuleService
-> - 🎉 DeathPenaltyManager：4 Provider（GameplaySessionStats、DeathMenuPanel、RespawnPosition、RespawnPlacement），核心复活逻辑与 Unity API 隔离
-> - ⚠️ **平台期已到**：剩余耦合在 MonoBehaviour/物理/渲染等本质 Unity 绑定层
-> - 📋 **后续建议**：功能开发中持续小步重构，优先使用已有 Provider/EventBus/IGameTime 模式
+> - 🎉 Gameplay 层 16 个非 MonoBehaviour 零 `using UnityEngine`（+6 相比改造前）
+> - 🎉 所有 `Time.realtimeSinceStartup` 已迁移至 `IGameTime`
+> - 🎉 全限定名 `UnityEngine.` 引用仅存在于 Provider 默认实现中
+> - 🎉 39 个 Domain 单元测试 + 1 个 Provider 验证测试
+> - ⚠️ 平台期已到：剩余 5 个 Gameplay 文件 + 跨模块文件均属本质 Unity 绑定
+> - 📋 后续：功能开发中持续使用 Provider/EventBus/IGameTime 模式
 
 ## 14. 最终检查清单
 
