@@ -47,6 +47,39 @@ namespace LAB2D.Gameplay
             };
 
         /// <summary>
+        /// 随机数范围提供者 — 返回 [minInclusive, maxExclusive) 范围内的随机整数。
+        /// 默认实现封装 UnityEngine.Random.Range；可在测试中替换为确定性的桩。
+        /// </summary>
+        public static System.Func<int, int, int> RandomRangeProvider { get; set; }
+            = (minInclusive, maxExclusive) => UnityEngine.Random.Range(minInclusive, maxExclusive);
+
+        /// <summary>
+        /// 玩家治疗奖励提供者 — 对玩家角色应用治疗奖励。
+        /// 默认实现调用 Player.AddHp()；可在测试中替换为无操作桩。
+        /// </summary>
+        public static System.Action<Character, float> ApplyHealRewardProvider { get; set; }
+            = (player, healPercent) =>
+            {
+                if (player != null)
+                {
+                    player.AddHp(player.CharacterDataLAB.MaxHp * healPercent);
+                }
+            };
+
+        /// <summary>
+        /// 玩家经验奖励提供者 — 对玩家角色应用经验奖励。
+        /// 默认实现调用 Player.AddExperienceValue()；可在测试中替换为无操作桩。
+        /// </summary>
+        public static System.Action<Character, int> ApplyExperienceRewardProvider { get; set; }
+            = (player, expAmount) =>
+            {
+                if (player != null)
+                {
+                    player.AddExperienceValue(expAmount);
+                }
+            };
+
+        /// <summary>
         /// 构造函数，初始化默认状态。
         /// </summary>
         public WaveBossRewardManager()
@@ -240,7 +273,7 @@ namespace LAB2D.Gameplay
         /// <returns>奖励倍率调整后的伤害。</returns>
         public float GetAdjustedPlayerOutgoingDamage(Character attacker, float baseDamage)
         {
-            if (!this.enabled || attacker is not Player)
+            if (!this.enabled || !attacker.IsPlayerCharacter)
             {
                 return baseDamage;
             }
@@ -256,7 +289,7 @@ namespace LAB2D.Gameplay
         /// <returns>减伤后的安全伤害。</returns>
         public float GetAdjustedIncomingDamage(Character target, float baseDamage)
         {
-            if (!this.enabled || target is not Player)
+            if (!this.enabled || !target.IsPlayerCharacter)
             {
                 return baseDamage;
             }
@@ -441,7 +474,7 @@ namespace LAB2D.Gameplay
             int optionCount = this.ruleService.GetRewardOptionCount(WaveBossRewardConstant.RewardOptionCount, pool.Count);
             for (int i = 0; i < optionCount; i++)
             {
-                int randomIndex = UnityEngine.Random.Range(0, pool.Count);
+                int randomIndex = RandomRangeProvider(0, pool.Count);
                 WaveRewardType rewardType = pool[randomIndex];
                 pool.RemoveAt(randomIndex);
                 float value = this.ruleService.GetRewardValue(
@@ -485,18 +518,10 @@ namespace LAB2D.Gameplay
             switch (option.RewardType)
             {
                 case WaveRewardType.Heal:
-                    if (player != null)
-                    {
-                        player.AddHp(player.CharacterDataLAB.MaxHp * option.Value);
-                    }
-
+                    ApplyHealRewardProvider(player, option.Value);
                     break;
                 case WaveRewardType.Experience:
-                    if (player != null)
-                    {
-                        player.AddExperienceValue(this.ruleService.ToRoundedInt(option.Value));
-                    }
-
+                    ApplyExperienceRewardProvider(player, this.ruleService.ToRoundedInt(option.Value));
                     break;
                 case WaveRewardType.DamageBoost:
                     this.playerDamageBonus = this.ruleService.AddWithCap(
