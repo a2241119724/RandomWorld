@@ -1071,6 +1071,14 @@ namespace LAB2D
 > - PlayerPositionProvider（1 个）：EnemyLootManager
 > - 冗余 using UnityEngine 清理（1 个）：**WorkerUpdateSystem**
 > - 全限定名 UnityEngine 引用消除（2 个）：**SessionResultManager**（`IsPlayingProvider` 提取）、**SessionResultAutoTrigger**（复用 `SessionResultManager.IsPlayingProvider()`）
+> - DeathPenaltyManager Provider 提取（2 个新增）：**`RespawnPositionProvider`**（TileMap + 坐标转换）、**`RespawnPlacementProvider`**（Transform + GameObject.layer），累计 4 个 Provider
+> - EnemyLootManager Provider 提取（2 个新增）：**`RandomIntProvider`** + **`RandomFloatProvider`**（UnityEngine.Random.Range 封装），累计 8 个 Provider
+> - WorkerSupplyIssueManager Provider 提取（2 个新增）：**`FoodInventoryProvider`** + **`BedBindingProvider`**（Vector3Int → GameGridPosition 转换），**移除 `using UnityEngine`**，成为第 14 个零 UnityEngine 的 Gameplay 文件
+> - SkillManager Provider 提取（3 个新增）：**`PlayerWorldPositionProvider`** + **`DashMovementProvider`**（Rigidbody2D/Transform）+ **`PlayerFacingDirectionProvider`**（Animator），累计 6 个 Provider，删除私有方法 `GetPlayerFacingDirection`
+> - WorkerTaskManager 双重 Tick 修复：**帧去重保护**（`lastTickFrame`），防止 `Update()` 兼容桥 + `GlobalInit` ITickable 双重驱动导致每帧执行两次 `RunTaskAssignmentLoop()`
+> - WorkerTaskManager API 迁移收尾：**`AddTask(GameGridPosition)` 重载**（主 API），旧 `AddTask(Vector3IntLAB)` 标记 `[Obsolete]`，所有公开方法已迁移至 Domain 类型
+> - AEquipment Provider 提取：**`RandomFloatProvider`**（`RankRandom()` 中 `UnityEngine.Random.Range` → Provider），纯数据类零 UnityEngine 引用
+> - ResourceManager Provider 提取：**`RandomIntProvider`**（tile 随机选择中的 `UnityEngine.Random.Range` → Provider）
 >
 > **其他**：
 > - WorkerTaskManager：`WorkerPositionProvider` 提取
@@ -1081,13 +1089,14 @@ namespace LAB2D
 >
 > **当前架构状态（2026-07）**：
 > - 🎉 非 UI `.Instance` 全部清零
-> - 🎉 Gameplay 层 12 个非 MonoBehaviour Manager/Singleton 零 `using UnityEngine`（+2 相比上轮：GameplaySessionStats、ComboBonusManager）
+> - 🎉 Gameplay 层 14 个非 MonoBehaviour Manager/Singleton 零 `using UnityEngine`（本轮新增：WorkerSupplyIssueManager + SessionResultManager；+4 相比初始）
 > - 🎉 Gameplay 层所有非 MonoBehaviour Manager 的 `Time.realtimeSinceStartup` 已全部迁移至 `IGameTime`（GameplaySessionStats + DeathPenaltyManager 本轮收尾）
 > - 🎉 Gameplay 层全限定名 `UnityEngine.` 引用仅存在于 Provider 默认实现中（SessionResultManager.IsPlayingProvider、WaveBossRewardManager.RandomRangeProvider）
 > - 🎉 WaveBossRewardManager：7 Provider + EventBus + 零 WaveManager/Player 引用
 > - 🎉 Wave 系统：4 IGameEvent + IWaveStateProvider + EventBus 双通道发布
 > - 🎉 InventoryManager：字典不持有 AWorker 引用（int key）
 > - 🎉 39 个 Domain 单元测试覆盖全部 RuleService
+> - 🎉 DeathPenaltyManager：4 Provider（GameplaySessionStats、DeathMenuPanel、RespawnPosition、RespawnPlacement），核心复活逻辑与 Unity API 隔离
 > - ⚠️ **平台期已到**：剩余耦合在 MonoBehaviour/物理/渲染等本质 Unity 绑定层
 > - 📋 **后续建议**：功能开发中持续小步重构，优先使用已有 Provider/EventBus/IGameTime 模式
 

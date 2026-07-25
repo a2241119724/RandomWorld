@@ -7,10 +7,10 @@ namespace LAB2D.Gameplay
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
     using LAB2D.Tool;
+    using LAB2D.UnityAdapter;
     using System;
     using System.Collections.Generic;
     using System.Text;
-    using UnityEngine;
 
     /// <summary>
     /// 工人补给缺口提示管理器。
@@ -31,6 +31,51 @@ namespace LAB2D.Gameplay
 
         private IGameTime GameTime => this.gameTime ?? (this.gameTime = Core.ServiceLocator.Get<IGameTime>());
         private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = Core.ServiceLocator.Get<IGameLogger>());
+
+        /// <summary>
+        /// 食物库存提供者 — 返回所有食物格子（GameGridPosition → ResourceInfo）。
+        /// 默认实现从 InventoryManager.TypeToResource 获取并转换 Vector3Int → GameGridPosition。
+        /// </summary>
+        internal static System.Func<Dictionary<GameGridPosition, ResourceInfo>> FoodInventoryProvider { get; set; }
+            = () =>
+            {
+                Dictionary<GameGridPosition, ResourceInfo> result = new Dictionary<GameGridPosition, ResourceInfo>();
+                InventoryManager inventory = Core.ServiceLocator.Get<InventoryManager>();
+                if (inventory == null || inventory.TypeToResource == null ||
+                    !inventory.TypeToResource.TryGetValue(AItem.ItemTypeEnum.Food, out Dictionary<UnityEngine.Vector3Int, ResourceInfo> foods))
+                {
+                    return result;
+                }
+
+                foreach (KeyValuePair<UnityEngine.Vector3Int, ResourceInfo> pair in foods)
+                {
+                    result[UnityVectorAdapter.ToGameGridPosition(pair.Key)] = pair.Value;
+                }
+
+                return result;
+            };
+
+        /// <summary>
+        /// 床位绑定提供者 — 返回所有床位绑定（GameGridPosition → Worker）。
+        /// 默认实现从 FurnitureManager.BedToWorker 获取并转换 Vector3Int → GameGridPosition。
+        /// </summary>
+        internal static System.Func<Dictionary<GameGridPosition, AWorker>> BedBindingProvider { get; set; }
+            = () =>
+            {
+                Dictionary<GameGridPosition, AWorker> result = new Dictionary<GameGridPosition, AWorker>();
+                FurnitureManager furniture = Core.ServiceLocator.Get<FurnitureManager>();
+                if (furniture == null || furniture.BedToWorker == null)
+                {
+                    return result;
+                }
+
+                foreach (KeyValuePair<UnityEngine.Vector3Int, AWorker> pair in furniture.BedToWorker)
+                {
+                    result[UnityVectorAdapter.ToGameGridPosition(pair.Key)] = pair.Value;
+                }
+
+                return result;
+            };
 
         /// <summary>
         /// 补给缺口报告变化事件。
@@ -258,15 +303,9 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                InventoryManager inventory = Core.ServiceLocator.Get<InventoryManager>();
-                if (inventory == null || inventory.TypeToResource == null ||
-                    !inventory.TypeToResource.TryGetValue(AItem.ItemTypeEnum.Food, out Dictionary<Vector3Int, ResourceInfo> foods))
-                {
-                    return 0;
-                }
-
+                Dictionary<GameGridPosition, ResourceInfo> foods = FoodInventoryProvider();
                 int count = 0;
-                foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in foods)
+                foreach (KeyValuePair<GameGridPosition, ResourceInfo> pair in foods)
                 {
                     if (pair.Value != null && pair.Value.Count > 0)
                     {
@@ -290,14 +329,9 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                FurnitureManager furniture = Core.ServiceLocator.Get<FurnitureManager>();
-                if (furniture == null || furniture.BedToWorker == null)
-                {
-                    return;
-                }
-
-                report.TotalBedCount = furniture.BedToWorker.Count;
-                foreach (KeyValuePair<Vector3Int, AWorker> pair in furniture.BedToWorker)
+                Dictionary<GameGridPosition, AWorker> bedToWorker = BedBindingProvider();
+                report.TotalBedCount = bedToWorker.Count;
+                foreach (KeyValuePair<GameGridPosition, AWorker> pair in bedToWorker)
                 {
                     if (pair.Value == null)
                     {

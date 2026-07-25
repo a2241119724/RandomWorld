@@ -2,6 +2,7 @@ namespace LAB2D.Character.Worker.Task
 {
     using LAB2D.Enum;
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Item;
     using LAB2D.Serializable;
     using System;
@@ -97,7 +98,7 @@ namespace LAB2D.Character.Worker.Task
             {
                 TaskAddProvider(
                     new WorkerHungryTask.HungryTaskBuilder()
-                    .SetTarget(targetPos).Build(), this.TargetMap,
+                    .SetTarget(targetPos).Build(), new GameGridPosition(this.TargetMap.X, this.TargetMap.Y, this.TargetMap.Z),
                     0);
             }
         }

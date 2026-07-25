@@ -77,7 +77,7 @@ namespace LAB2D.Character.Worker.State
                         new WorkerExerciseTask.ExerciseTaskBuilder()
                         .SetTarget(this.targetMap)
                         .SetWorker(this.Character)
-                        .Build(), Vector3IntLAB.Zero,
+                        .Build(), new GameGridPosition(0, 0, 0),
                         3);
                 }
             }

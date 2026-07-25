@@ -2,6 +2,7 @@ namespace LAB2D.Map
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Item;
     using LAB2D.Serializable;
     using System;
@@ -86,7 +87,7 @@ namespace LAB2D.Map
                             ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tileBase.name);
                             Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                                 new WorkerGatherTask.GatherTaskBuilder()
-                                .SetTarget(posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
+                                .SetTarget(posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z));
                             this.ResourceMapDataLAB.TreeCurCount++;
                         }
                     }

@@ -3,6 +3,7 @@ namespace LAB2D.Character.Worker.Task
     using LAB2D;
     using LAB2D.Core;
     using LAB2D.Data;
+    using LAB2D.Domain.Common;
     using LAB2D.Enum;
     using LAB2D.Item;
     using LAB2D.Map;
@@ -197,7 +198,7 @@ namespace LAB2D.Character.Worker.Task
             = (name) => ServiceLocator.Get<ResourceManager>().GetAsset(name);
         public static System.Func<UnityEngine.Vector3Int, UnityEngine.Vector3> TileMapPositionProvider { get; set; }
             = (pos) => ServiceLocator.Get<TileMap>().MapPosToWorldPos(pos);
-        public static System.Action<AWorkerTask, Vector3IntLAB, int> TaskAddProvider { get; set; }
+        public static System.Action<AWorkerTask, GameGridPosition, int> TaskAddProvider { get; set; }
             = (task, pos, stage) => ServiceLocator.Get<WorkerTaskManager>().AddTask(task, pos, stage);
         public static System.Action<UnityEngine.Vector3Int> DeleteHungryTaskProvider { get; set; }
             = (pos) => ServiceLocator.Get<WorkerTaskManager>().DeleteHungryTask(

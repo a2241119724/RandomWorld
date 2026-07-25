@@ -2,6 +2,7 @@ namespace LAB2D.Map
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Item;
     using LAB2D.Serializable;
     using System;
@@ -64,7 +65,7 @@ namespace LAB2D.Map
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
                 Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(targetMap)
-                    .SetNeedResource(new Dictionary<int, ResourceInfo>(this.resourceInfos)).Build(), Vector3IntLAB.ToVector3IntLAB(targetMap));
+                    .SetNeedResource(new Dictionary<int, ResourceInfo>(this.resourceInfos)).Build(), new GameGridPosition(targetMap.x, targetMap.y, targetMap.z));
 
                 // 设置可通过并且颜色变淡
                 this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
@@ -165,7 +166,7 @@ namespace LAB2D.Map
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
                 Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(Vector3IntLAB.ToVector3Int(targetMap))
-                    .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build(), targetMap);
+                    .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build(), new GameGridPosition(targetMap.X, targetMap.Y, targetMap.Z));
             }
 
             this.BuildMapDataLAB.PosMap.Clear();

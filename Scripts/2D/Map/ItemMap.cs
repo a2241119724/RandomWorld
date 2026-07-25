@@ -3,6 +3,7 @@ namespace LAB2D.Map
     using LAB2D;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Data;
+    using LAB2D.Domain.Common;
     using LAB2D.Item;
     using LAB2D.Item.Backpack;
     using LAB2D.Serializable;
@@ -116,7 +117,7 @@ namespace LAB2D.Map
             // 添加搬运任务
             Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                 new WorkerCarryTask.CarryTaskBuilder()
-                .SetResourceInfo(resourceInfo).SetStartTarget(posMap).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
+                .SetResourceInfo(resourceInfo).SetStartTarget(posMap).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z));
         }
 
         /// <inheritdoc/>

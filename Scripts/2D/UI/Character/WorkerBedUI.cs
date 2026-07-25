@@ -2,6 +2,7 @@ namespace LAB2D.UI.Character
 {
     using LAB2D;
     using LAB2D.Core;
+    using LAB2D.Domain.Common;
     using LAB2D.Serializable;
     using LAB2D.UnityAdapter;
     using System.Collections.Generic;
@@ -52,7 +53,7 @@ namespace LAB2D.UI.Character
                 {
                     ServiceLocator.Get<WorkerTaskManager>().AddTask(
                         new WorkerSleepTask.SleepTaskBuilder()
-                        .SetTarget(posMap).SetWorker(workers[index]).Build(), Vector3IntLAB.ToVector3IntLAB(posMap),
+                        .SetTarget(posMap).SetWorker(workers[index]).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z),
                         1);
                     this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     ServiceLocator.Get<FurnitureManager>().AddWorkerToBed(posMap, workers[index]);

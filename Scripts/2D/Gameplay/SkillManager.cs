@@ -26,6 +26,55 @@ namespace LAB2D.Gameplay
         internal static System.Action<Vector3, float> FloatingTextHealProvider { get; set; }
             = (pos, heal) => { if (ServiceLocator.TryGet(out FloatingTextManager ftm)) ftm.SpawnHealText(pos, heal); };
 
+        /// <summary>
+        /// 玩家世界坐标提供者。
+        /// 默认实现访问 Transform.position；可在测试中替换为固定坐标。
+        /// </summary>
+        internal static System.Func<Player, Vector3> PlayerWorldPositionProvider { get; set; }
+            = (player) => player.transform.position;
+
+        /// <summary>
+        /// 冲刺位移提供者 — 将玩家瞬移到目标世界坐标。
+        /// 默认实现优先使用 Rigidbody2D.MovePosition，fallback 为 Transform.position。
+        /// </summary>
+        internal static System.Action<Player, Vector3> DashMovementProvider { get; set; }
+            = (player, targetPos) =>
+            {
+                Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+                if (rb != null)
+                {
+                    rb.MovePosition(targetPos);
+                }
+                else
+                {
+                    player.transform.position = targetPos;
+                }
+            };
+
+        /// <summary>
+        /// 玩家朝向方向提供者 — 基于 Animator Direction 参数返回方向向量。
+        /// 上=0:(0,1), 下=1:(0,-1), 左=2:(-1,0), 右=3:(1,0)。默认返回 Vector3.right。
+        /// </summary>
+        internal static System.Func<Player, Vector3> PlayerFacingDirectionProvider { get; set; }
+            = (player) =>
+            {
+                Animator animator = player.GetComponent<Animator>();
+                if (animator == null)
+                {
+                    return Vector3.right;
+                }
+
+                int dir = animator.GetInteger("Direction");
+                return dir switch
+                {
+                    0 => Vector3.up,
+                    1 => Vector3.down,
+                    2 => Vector3.left,
+                    3 => Vector3.right,
+                    _ => Vector3.right,
+                };
+            };
+
         public List<SkillData> Skills { get; private set; }
 
         /// <summary>是否已完成初始化</summary>
@@ -330,7 +379,7 @@ namespace LAB2D.Gameplay
             // 注意：这里不叠加自己的Buff，因为力量爆发可能还未激活
 
             List<AEnemy> enemies = SkillTool.GetEnemiesInRadius(
-                player.transform.position, skill.AoeRadius);
+                PlayerWorldPositionProvider(player), skill.AoeRadius);
 
             foreach (AEnemy enemy in enemies)
             {
@@ -363,20 +412,12 @@ FloatingTextDamageProvider(
         /// </summary>
         private void ExecuteMovement(SkillData skill, Player player)
         {
-            // 获取玩家移动方向（从 Animator Direction 参数推断）
-            Vector3 dashDirection = this.GetPlayerFacingDirection(player);
-            Vector3 targetPosition = player.transform.position + (dashDirection * skill.AoeRadius);
+            // 获取玩家朝向方向（Provider 封装 Animator 读取）
+            Vector3 dashDirection = PlayerFacingDirectionProvider(player);
+            Vector3 targetPosition = PlayerWorldPositionProvider(player) + (dashDirection * skill.AoeRadius);
 
-            // 使用 MovePosition 实现位移（如果有 Rigidbody2D）
-            Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                rb.MovePosition(targetPosition);
-            }
-            else
-            {
-                player.transform.position = targetPosition;
-            }
+            // 执行冲刺位移（Provider 封装 Rigidbody2D / Transform 操作）
+            DashMovementProvider(player, targetPosition);
 
             // 临时延长无敌帧持续时间，记录恢复时间和原始值
             this.pendingDashRestore = true;
@@ -404,32 +445,10 @@ FloatingTextDamageProvider(
             player.AddHp(healAmount);
 
             // 生成治疗浮动文字
-            FloatingTextHealProvider(player.transform.position, healAmount);
+            FloatingTextHealProvider(PlayerWorldPositionProvider(player), healAmount);
         }
 
-        /// <summary>
-        /// 获取玩家当前朝向方向（基于 Animator Direction 参数）。
-        /// 上=0: (0,1)，下=1: (0,-1)，左=2: (-1,0)，右=3: (1,0)。
-        /// 默认返回右方向。
-        /// </summary>
-        private Vector3 GetPlayerFacingDirection(Player player)
-        {
-            Animator animator = player.GetComponent<Animator>();
-            if (animator == null)
-            {
-                return Vector3.right;
-            }
 
-            int dir = animator.GetInteger("Direction");
-            return dir switch
-            {
-                0 => Vector3.up,
-                1 => Vector3.down,
-                2 => Vector3.left,
-                3 => Vector3.right,
-                _ => Vector3.right,
-            };
-        }
 
     }
 }

@@ -61,7 +61,7 @@ namespace LAB2D.UI.Action
 
                 ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerGatherTask.GatherTaskBuilder()
-                    .SetTarget(posMap).SetResourceInfo(resourceInfo).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
+                    .SetTarget(posMap).SetResourceInfo(resourceInfo).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z));
             });
         }
 

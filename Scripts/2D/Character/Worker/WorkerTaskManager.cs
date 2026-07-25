@@ -46,6 +46,11 @@ namespace LAB2D.Character.Worker
         public static WorkerTaskManager Instance { get; private set; }
 
         /// <summary>
+        /// 上次执行 Tick 的帧编号，用于防止 Update() 和 GlobalInit ITickable 双重驱动。
+        /// </summary>
+        private int lastTickFrame = -1;
+
+        /// <summary>
         /// Worker 列表提供者 — 获取所有 Worker 用于任务分配。
         /// 默认实现访问 ServiceLocator.Get<WorkerManager>().Characters。
         /// 可替换为测试桩或自定义实现。
@@ -109,9 +114,17 @@ namespace LAB2D.Character.Worker
         /// <summary>
         /// ITickable 实现：每帧执行任务分配循环。
         /// 由 GlobalInit.BuildTickableList() 统一驱动，确保与其他 ITickable 的执行顺序一致。
+        /// 内置帧去重保护：同一帧内多次调用（Update 兼容桥 + GlobalInit）只执行一次。
         /// </summary>
         public void Tick(float deltaTime)
         {
+            int currentFrame = Time.frameCount;
+            if (currentFrame == this.lastTickFrame)
+            {
+                return;
+            }
+
+            this.lastTickFrame = currentFrame;
             this.RunTaskAssignmentLoop();
         }
 
@@ -193,11 +206,26 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
-        /// 添加任务
+        /// 添加任务（Domain 类型）。
         /// </summary>
         /// <param name="task">任务</param>
-        /// <param name="taskPosMap">任务位置</param>
+        /// <param name="taskPosMap">任务位置（GameGridPosition）。</param>
         /// <param name="prior">优先级</param>
+        public void AddTask(AWorkerTask task, GameGridPosition taskPosMap, int prior = 2)
+        {
+#pragma warning disable CS0618 // 内部桥接：GameGridPosition → Vector3IntLAB，保留旧重载的完整实现
+            this.AddTask(task, new Vector3IntLAB(taskPosMap.X, taskPosMap.Y, taskPosMap.Z), prior);
+#pragma warning restore CS0618
+        }
+
+        /// <summary>
+        /// [Obsolete] 添加任务。
+        /// 请改用 AddTask(AWorkerTask, GameGridPosition, int)。
+        /// </summary>
+        /// <param name="task">任务</param>
+        /// <param name="taskPosMap">任务位置（Vector3IntLAB）。</param>
+        /// <param name="prior">优先级</param>
+        [Obsolete("Use AddTask(AWorkerTask, GameGridPosition, int) instead.")]
         public void AddTask(AWorkerTask task, Vector3IntLAB taskPosMap, int prior = 2)
         {
             if (task == null)

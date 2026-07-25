@@ -11,6 +11,12 @@ namespace LAB2D.Item.Backpack.Equipment
     public abstract class AEquipment : ABackpackItem
     {
         /// <summary>
+        /// 浮点随机数提供者（minInclusive, maxInclusive）。
+        /// 默认实现封装 UnityEngine.Random.Range 偏向低值分布算法；可在测试中替换为确定性桩。
+        /// </summary>
+        protected static Func<float, float, float> RandomFloatProvider { get; set; }
+            = (minInclusive, maxInclusive) => UnityEngine.Random.Range(minInclusive, maxInclusive);
+        /// <summary>
         /// 装备类型
         /// </summary>
         public EquipTypeEnum Type;
@@ -150,7 +156,7 @@ namespace LAB2D.Item.Backpack.Equipment
             float r; // 每次生成随机数进行判断
             for (float t = down + intervalValue; t < up; t += intervalValue)
             {
-                r = UnityEngine.Random.Range(down, up);
+                r = RandomFloatProvider(down, up);
                 if (r < t)
                 {
                     return r;

@@ -17,6 +17,12 @@ namespace LAB2D.Manager
     /// </summary>
     public class ResourceManager : Singleton<ResourceManager>
     {
+        /// <summary>
+        /// 整数随机数提供者（minInclusive, maxExclusive）。
+        /// 默认实现封装 UnityEngine.Random.Range；可在测试中替换。
+        /// </summary>
+        internal static Func<int, int, int> RandomIntProvider { get; set; }
+            = (minInclusive, maxExclusive) => UnityEngine.Random.Range(minInclusive, maxExclusive);
         private readonly Dictionary<string, GameObject> prefabDic; // <characterType,<name,prefab>>
         private readonly Dictionary<string, UnityEngine.Object> assetDic;
         private readonly Dictionary<string, Sprite> imageDic;
@@ -221,7 +227,7 @@ namespace LAB2D.Manager
 
             if (name == default)
             {
-                return (TileBase)tiles[UnityEngine.Random.Range(0, tiles.Count)];
+                return (TileBase)tiles[RandomIntProvider(0, tiles.Count)];
             }
 
             foreach (UnityEngine.Object tile in tiles)

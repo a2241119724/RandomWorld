@@ -19,6 +19,25 @@ namespace LAB2D.Gameplay
             = () => DeathMenuPanel.Instance;
 
         /// <summary>
+        /// 复活位置提供者 — 返回随机可到达的世界坐标。
+        /// 默认实现通过 TileMap + AWorkerTask.TileMapPositionProvider 获取；可在测试中替换为固定坐标。
+        /// </summary>
+        internal static System.Func<Vector3> RespawnPositionProvider { get; set; }
+            = () => AWorkerTask.TileMapPositionProvider(
+                Core.ServiceLocator.Get<TileMap>().GenCanReachPos());
+
+        /// <summary>
+        /// 复活放置提供者 — 将玩家传送到指定世界坐标并重置其碰撞图层。
+        /// 默认实现操作 Transform 和 GameObject.layer；可在测试中替换为桩。
+        /// </summary>
+        internal static System.Action<Player, Vector3> RespawnPlacementProvider { get; set; }
+            = (player, worldPos) =>
+            {
+                player.transform.position = worldPos;
+                player.gameObject.layer = LayerMask.NameToLayer(LayerConstant.PLAYER_LAYER);
+            };
+
+        /// <summary>
         /// 玩家复活前需要等待的秒数。
         /// </summary>
         public float RespawnDelaySeconds = 3.0f;
@@ -124,13 +143,9 @@ namespace LAB2D.Gameplay
             // 清除复活状态
             this.respawnDeadline = -1f;
 
-            // 在地图上寻找随机可到达位置
-            Vector3Int randomMapPos = Core.ServiceLocator.Get<TileMap>().GenCanReachPos();
-            Vector3 respawnWorldPos = AWorkerTask.TileMapPositionProvider(randomMapPos);
-            player.transform.position = respawnWorldPos;
-
-            // 恢复玩家图层，使敌人可重新检测到玩家
-            player.gameObject.layer = LayerMask.NameToLayer(LayerConstant.PLAYER_LAYER);
+            // 获取随机可到达位置并放置玩家（位置查找 + Transform + 图层重置由 Provider 封装）
+            Vector3 respawnWorldPos = RespawnPositionProvider();
+            RespawnPlacementProvider(player, respawnWorldPos);
 
             // 恢复生命值（默认 30%）和魔法值
             player.CharacterDataLAB.Hp = this.ruleService.GetRestoredHp(

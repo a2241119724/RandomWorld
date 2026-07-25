@@ -34,6 +34,20 @@ namespace LAB2D.Gameplay
         internal static System.Func<EquipmentComparePopup> EquipmentComparePopupProvider { get; set; }
             = () => EquipmentComparePopup.Instance;
 
+        /// <summary>
+        /// 整数随机数提供者（minInclusive, maxExclusive）。
+        /// 默认实现封装 UnityEngine.Random.Range；可在测试中替换为确定性桩。
+        /// </summary>
+        internal static System.Func<int, int, int> RandomIntProvider { get; set; }
+            = (minInclusive, maxExclusive) => UnityEngine.Random.Range(minInclusive, maxExclusive);
+
+        /// <summary>
+        /// 浮点随机数提供者（minInclusive, maxInclusive）。
+        /// 默认实现封装 UnityEngine.Random.Range；可在测试中替换为确定性桩。
+        /// </summary>
+        internal static System.Func<float, float, float> RandomFloatProvider { get; set; }
+            = (minInclusive, maxInclusive) => UnityEngine.Random.Range(minInclusive, maxInclusive);
+
         /// <summary>是否已初始化</summary>
         public bool IsInitialized { get; private set; }
 
@@ -117,7 +131,7 @@ namespace LAB2D.Gameplay
         {
             if (this.dropTotal == 0) return;
 
-            int rand = Random.Range(0, this.dropTotal);
+            int rand = RandomIntProvider(0, this.dropTotal);
             Vector3Int pos = AWorkerTask.AvailablePositionProvider(
                 AWorkerTask.TileMapWorldToMapProvider(worldPos), 3, true);
             if (pos == default) return;
@@ -153,7 +167,7 @@ namespace LAB2D.Gameplay
             }
 
             // 基础概率判定
-            float roll = Random.Range(0f, 1f);
+            float roll = RandomFloatProvider(0f, 1f);
             if (roll > EquipmentLootConstant.BaseEquipmentDropChance)
             {
                 return false;
@@ -179,7 +193,7 @@ namespace LAB2D.Gameplay
             }
 
             // 随机选择一个装备类型
-            AEquipment template = availableEquipment[Random.Range(0, availableEquipment.Count)];
+            AEquipment template = availableEquipment[RandomIntProvider(0, availableEquipment.Count)];
 
             // 对模板属性应用稀有度倍率
             EquipmentLootTool.ApplyRarityToAttributes(template.Attribute, rarity);
@@ -263,7 +277,7 @@ namespace LAB2D.Gameplay
                 return false;
             }
 
-            AEquipment template = availableEquipment[Random.Range(0, availableEquipment.Count)];
+            AEquipment template = availableEquipment[RandomIntProvider(0, availableEquipment.Count)];
             EquipmentLootTool.ApplyRarityToAttributes(template.Attribute, rarity);
             template.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
 
