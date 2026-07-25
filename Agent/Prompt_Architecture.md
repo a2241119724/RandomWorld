@@ -1039,7 +1039,8 @@ namespace LAB2D
 > - **Inventory 事件迁移** — `ItemInfoUI` 从 `InventoryCellChangedEvent`（携带 UI 格式化字符串）迁移至 `InventoryGridChangedEvent`（纯结构化数据）。`InventoryManager` 已停止发布旧事件（移除 11 处发布点），`InventoryService.PublishChange()` 统一发布。`InventoryCellChangedEvent` 类标记为废弃。
 > - **WorkerTaskManager ITickable + GameGridPosition 迁移** — `WorkerTaskManager` 实现 `ITickable` 接口，`Update()` 中的任务分配循环迁移至 `Tick(float deltaTime)`，由 `GlobalInit.BuildTickableList()` 统一驱动（排在 WorkerUpdateSystem 之后）。`Update()` 保留作为兼容桥（委托给 Tick）。公开 API 迁移：`GatherPositions: List<GameGridPosition>`（替代旧 `GatherPos: List<Vector3Int>`）、`DeleteHungryTask(GameGridPosition)`、`CancelGatherTask(GameGridPosition)`，旧 Vector3Int 方法标记 `[Obsolete]` 保持向后兼容。`AWorkerTask.DeleteHungryTaskProvider` 默认实现已更新。调用方 `GatherUI`、`RectBoxUI` 已切换至新 API。ITickable 实现总数增至 5 个。
 >
-> 当前应重点推进：**Character/Player 继续深入解耦**（Player.cs 的表现层已提取，下一步可考虑 `Character.cs` 基类的表现层提取、`IsArround(Vector3)` → `GameGridPosition` API 迁移、`Death()` 中的 `gameObject.layer` 操作提取）和 **存档/Photon 与 Domain 桥接**（确保 Domain 模型变更时存档兼容）。
+> - **Character 基类 ReduceHp 表现层回调提取** — 新增 `DamageFlashProvider` 静态委托（`System.Action<Character>`），将 `Character.ReduceHp()` 中内联的 `spriteRenderer.color = Color.red` + `Invoke("ResetColor")` 提取为可替换的 Provider。遵循项目已有的 AWorkerTask Provider 委托模式。`ResetColor()` 增加 null 安全检查。`ReduceHp()` 核心伤害流程不再硬编码 Unity 表现层操作，测试中可通过 `Character.DamageFlashProvider = (t) => {}` 静默。调用方无需变更。
+> 当前应重点推进：**Character/Player 继续深入解耦**（`Player.Death()` 中的 `gameObject.layer` 操作提取为 Provider、`IsArround(Vector3)` → `GameGridPosition` API 迁移）和 **存档/Photon 与 Domain 桥接**（确保 Domain 模型变更时存档兼容）。
 
 ## 14. 最终检查清单
 

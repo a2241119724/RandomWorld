@@ -73,6 +73,23 @@ namespace LAB2D.Character
         protected CharacterHealthComponent healthComponent;
 
         /// <summary>
+        /// 受击闪烁表现提供者 — 在角色受到伤害时触发视觉反馈（红色闪烁）。
+        /// 默认实现操作 SpriteRenderer 颜色并通过 Invoke 延迟恢复。
+        /// 可在测试中替换为无操作桩，或替换为自定义表现效果。
+        /// </summary>
+        public static System.Action<Character> DamageFlashProvider { get; set; }
+            = (target) =>
+            {
+                if (target == null || target.spriteRenderer == null)
+                {
+                    return;
+                }
+
+                target.spriteRenderer.color = Color.red;
+                target.Invoke(nameof(ResetColor), 0.2f);
+            };
+
+        /// <summary>
         /// 当前装备的武器物体
         /// </summary>
         public GameObject Weapon { get; set; }
@@ -143,8 +160,7 @@ namespace LAB2D.Character
                 {
                     capturedDamage = finalHp;
                     capturedCombo = isCombo;
-                    target.spriteRenderer.color = Color.red;
-                    target.Invoke(nameof(this.ResetColor), 0.2f);
+                    DamageFlashProvider(target);
                 });
 
             EventBusPublishProvider(new CharacterDamagedEvent
@@ -232,11 +248,15 @@ namespace LAB2D.Character
         }
 
         /// <summary>
-        /// 恢复颜色
+        /// 恢复颜色 — 由 DamageFlashProvider 的默认实现通过 Invoke 延迟调用。
+        /// 保留以兼容旧代码和子类直接调用；新代码应通过 DamageFlashProvider 控制受击表现。
         /// </summary>
         protected void ResetColor()
         {
-            this.spriteRenderer.color = this.originalColor;
+            if (this.spriteRenderer != null)
+            {
+                this.spriteRenderer.color = this.originalColor;
+            }
         }
 
         /// <summary>
