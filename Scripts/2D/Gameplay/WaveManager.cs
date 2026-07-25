@@ -123,7 +123,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            EnemyManager.IsWaveControlEnabled = true;
+            this.sceneAdapter.SetWaveControlEnabled(true);
             this.ResetState();
             this.waveCoroutine = this.timeScheduler.Start(this.WaveLoop());
         }
@@ -133,7 +133,7 @@ namespace LAB2D.Gameplay
         /// </summary>
         public void StopWaves()
         {
-            EnemyManager.IsWaveControlEnabled = false;
+            this.sceneAdapter.SetWaveControlEnabled(false);
             if (this.waveCoroutine != null)
             {
                 this.timeScheduler.Stop(this.waveCoroutine);

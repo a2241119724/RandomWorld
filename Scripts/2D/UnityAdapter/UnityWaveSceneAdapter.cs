@@ -102,5 +102,10 @@ namespace LAB2D.UnityAdapter
                 spawnRequest.TotalEnemiesInWave,
                 spawnRequest.DifficultyScale);
         }
+
+        public void SetWaveControlEnabled(bool enabled)
+        {
+            EnemyManager.IsWaveControlEnabled = enabled;
+        }
     }
 }

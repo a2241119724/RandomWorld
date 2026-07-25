@@ -27,5 +27,7 @@ namespace LAB2D.UnityAdapter
         int GetEnemyCountForWave(int waveIndex, int baseEnemyCount);
 
         void ConfigureSpawnedEnemy(GameObject enemyObject, WaveSpawnRequest spawnRequest);
+
+        void SetWaveControlEnabled(bool enabled);
     }
 }
