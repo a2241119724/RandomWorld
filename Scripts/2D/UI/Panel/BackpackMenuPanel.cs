@@ -2,6 +2,7 @@ namespace LAB2D.UI.Panel
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core;
     using LAB2D.Item;
     using Photon.Pun;
     using UnityEngine;
@@ -31,7 +32,7 @@ namespace LAB2D.UI.Panel
         public override void OnEnter()
         {
             base.OnEnter();
-            BackpackController.Instance.SetBorderColor(System.Convert.ToInt32(BackpackNavigationView.Instance.CurItemType), "navigation");
+            ServiceLocator.Get<BackpackController>().SetBorderColor(System.Convert.ToInt32(ServiceLocator.Get<BackpackNavigationView>().CurItemType), "navigation");
         }
 
         /// <inheritdoc/>
@@ -62,7 +63,7 @@ namespace LAB2D.UI.Panel
                 if (ServiceLocator.Get<PlayerManager>().Mine.Weapon != null)
                 {
                     // 将正在穿戴的物体加入背包
-                    BackpackController.Instance.AddItem(playerData.Weapon);
+                    ServiceLocator.Get<BackpackController>().AddItem(playerData.Weapon);
 
                     // 销毁武器
                     AWorkerTask.NetworkDestroyProvider(ServiceLocator.Get<PlayerManager>().Mine.Weapon);
@@ -82,11 +83,11 @@ namespace LAB2D.UI.Panel
                 AWeaponObject weaponObject = ServiceLocator.Get<PlayerManager>().Mine.Weapon.GetComponent<AWeaponObject>();
                 weaponObject.SetCharacter(ServiceLocator.Get<PlayerManager>().Mine);
                 weaponObject.Item = this.Select.Item;
-                GlobalInit.Instance.ShowTip("装备成功");
+                ServiceLocator.Get<GlobalInit>().ShowTip("装备成功");
 
                 // 从背包删除该道具
                 playerData.Weapon = (AWeapon)this.Select.Item;
-                BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
+                ServiceLocator.Get<BackpackController>().DeleteItem(this.Select.SelectItemIndex);
 
                 // 不能对一个武器进行多次装备
                 this.Select.SelectItemIndex = -1;
@@ -100,7 +101,7 @@ namespace LAB2D.UI.Panel
                 if (((ABackpackItem)this.Select.Item).Quantity == 1)
                 {
                     // 从背包删除该道具
-                    BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
+                    ServiceLocator.Get<BackpackController>().DeleteItem(this.Select.SelectItemIndex);
                     this.Select.SelectItemIndex = -1;
                     this.Select.Item = null;
                 }
@@ -109,11 +110,11 @@ namespace LAB2D.UI.Panel
                     AWorkerTask.LogProvider("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Trace);
 
                     // 数据--
-                    BackpackController.Instance.ReduceQuantity(this.Select.Item);
+                    ServiceLocator.Get<BackpackController>().ReduceQuantity(this.Select.Item);
 
                     // 界面--
-                    BackpackController.Instance.ReduceQuantityUI(this.Select.Item);
-                    BackpackController.Instance.SetBorderColor(BackpackController.Instance.GetIndex(this.Select.Item));
+                    ServiceLocator.Get<BackpackController>().ReduceQuantityUI(this.Select.Item);
+                    ServiceLocator.Get<BackpackController>().SetBorderColor(ServiceLocator.Get<BackpackController>().GetIndex(this.Select.Item));
                     AWorkerTask.LogProvider("数量:" + ((ABackpackItem)this.Select.Item).Quantity, LogManager.LogLevelEnum.Trace);
 
                     // 全局数据--
@@ -124,7 +125,7 @@ namespace LAB2D.UI.Panel
             }
             else
             {
-                GlobalInit.Instance.ShowTip("未实现!!!");
+                ServiceLocator.Get<GlobalInit>().ShowTip("未实现!!!");
             }
         }
 
@@ -139,7 +140,7 @@ namespace LAB2D.UI.Panel
             }
 
             // 从背包删除该道具
-            BackpackController.Instance.DeleteItem(this.Select.SelectItemIndex);
+            ServiceLocator.Get<BackpackController>().DeleteItem(this.Select.SelectItemIndex);
             this.Select.Init();
         }
     }

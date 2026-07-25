@@ -1,6 +1,7 @@
 namespace LAB2D.MVC.Backpack.Controller
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.MVC.Backpack.Model;
     using LAB2D.MVC.Backpack.View;
     using System.Collections.Generic;
@@ -23,6 +24,7 @@ namespace LAB2D.MVC.Backpack.Controller
             this.infoView = LAB2D.Tool.Tool.GetComponentInChildren<BackpackInfoView>(this.gameObject, "Info");
             base.Awake();
             Instance = this;
+            ServiceLocator.Register(this);
 
             if (this.model.IsNull(AItem.ItemTypeEnum.Weapon))
             {

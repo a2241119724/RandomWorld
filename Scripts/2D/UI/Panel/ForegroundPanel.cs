@@ -2,6 +2,7 @@ namespace LAB2D.UI.Panel
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
     using System.Collections.Generic;
@@ -42,7 +43,7 @@ namespace LAB2D.UI.Panel
 
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.Onclick_Setting);
 
-            EventBus.Instance.Subscribe<PlayerAttackRequestedEvent>(this.OnPlayerAttackRequested);
+            ServiceLocator.Get<EventBus>().Subscribe<PlayerAttackRequestedEvent>(this.OnPlayerAttackRequested);
             Button save = LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Save");
             if (save == null)
             {
@@ -119,7 +120,7 @@ namespace LAB2D.UI.Panel
             {
                 AWeaponObject weapon = ServiceLocator.Get<PlayerManager>().Mine.Weapon.GetComponent<AWeaponObject>();
                 weapon.IsCRT = UnityEngine.Random.Range(0.0f, 1.0f) < ServiceLocator.Get<PlayerManager>().Mine.CharacterDataLAB.CRT;
-                if (NetworkConnect.Instance.IsOnline)
+                if (ServiceLocator.Get<NetworkConnect>().IsOnline)
                 {
                     ServiceLocator.Get<PlayerManager>().Mine.Weapon.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
                 }
@@ -135,7 +136,7 @@ namespace LAB2D.UI.Panel
         /// </summary>
         private void OnClick_Pause()
         {
-            this.Controller.Show(PauseMenuPanel.Instance);
+            this.Controller.Show(ServiceLocator.Get<PauseMenuPanel>());
         }
 
         /// <summary>
@@ -143,7 +144,7 @@ namespace LAB2D.UI.Panel
         /// </summary>
         private void Onclick_Setting()
         {
-            this.Controller.Show(SettingMenuPanel.Instance);
+            this.Controller.Show(ServiceLocator.Get<SettingMenuPanel>());
         }
 
         private void Onclick_Save()
@@ -285,7 +286,7 @@ namespace LAB2D.UI.Panel
             if (this.saveSlotPanel == null)
             {
                 AWorkerTask.LogProvider("ForegroundPanel: SaveSlotPanel not found in scene — save UI unavailable.", LogManager.LogLevelEnum.Error);
-                GlobalInit.Instance.ShowTip("存档面板未配置，请联系开发者");
+                ServiceLocator.Get<GlobalInit>().ShowTip("存档面板未配置，请联系开发者");
                 return;
             }
 
@@ -387,7 +388,7 @@ namespace LAB2D.UI.Panel
 
             if (!ServiceLocator.Get<ArchiveManager>().HasArchive(archiveIndex))
             {
-                GlobalInit.Instance.ShowTip("空存档槽不能清除");
+                ServiceLocator.Get<GlobalInit>().ShowTip("空存档槽不能清除");
                 this.RefreshSaveSlotButtons();
                 return;
             }
@@ -418,11 +419,11 @@ namespace LAB2D.UI.Panel
 
             if (ServiceLocator.Get<ArchiveManager>().DeleteArchive(this.pendingClearArchiveIndex))
             {
-                GlobalInit.Instance.ShowTip("存档已清除");
+                ServiceLocator.Get<GlobalInit>().ShowTip("存档已清除");
             }
             else
             {
-                GlobalInit.Instance.ShowTip("清除存档失败");
+                ServiceLocator.Get<GlobalInit>().ShowTip("清除存档失败");
             }
 
             this.HideClearConfirmPanel();
@@ -466,7 +467,7 @@ namespace LAB2D.UI.Panel
 
             if (!ServiceLocator.Get<ArchiveManager>().HasArchive(archiveIndex))
             {
-                GlobalInit.Instance.ShowTip("空存档槽不能改名");
+                ServiceLocator.Get<GlobalInit>().ShowTip("空存档槽不能改名");
                 this.RefreshSaveSlotButtons();
                 return;
             }
@@ -511,11 +512,11 @@ namespace LAB2D.UI.Panel
             string displayName = this.renameInputField == null ? string.Empty : this.renameInputField.text;
             if (!ServiceLocator.Get<ArchiveManager>().SetArchiveDisplayName(this.pendingRenameArchiveIndex, displayName))
             {
-                GlobalInit.Instance.ShowTip("存档名称不能为空");
+                ServiceLocator.Get<GlobalInit>().ShowTip("存档名称不能为空");
                 return;
             }
 
-            GlobalInit.Instance.ShowTip("存档名称已修改");
+            ServiceLocator.Get<GlobalInit>().ShowTip("存档名称已修改");
             this.HideRenamePanel();
             this.RefreshSaveSlotButtons();
         }
@@ -523,7 +524,7 @@ namespace LAB2D.UI.Panel
         private void SaveToArchive(int archiveIndex)
         {
             ServiceLocator.Get<ArchiveManager>().SetCurrentArchive(archiveIndex);
-            GlobalInit.Instance.ShowTip($"保存数据: {ServiceLocator.Get<ArchiveManager>().CurrentArchiveDisplayName}");
+            ServiceLocator.Get<GlobalInit>().ShowTip($"保存数据: {ServiceLocator.Get<ArchiveManager>().CurrentArchiveDisplayName}");
             ServiceLocator.Get<ArchiveManager>().SaveCurrentArchive();
             this.HideSaveSlotPanel();
         }

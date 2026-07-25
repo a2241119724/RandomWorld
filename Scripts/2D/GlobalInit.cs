@@ -88,6 +88,7 @@ namespace LAB2D
             ServiceLocator.Register(AttackEffectManager.Instance);
             ServiceLocator.Register(EventBus.Instance);
             ServiceLocator.Register(SelectManagerPool.Instance);
+            ServiceLocator.Register(WaveEventFeedback.Instance);
         }
 
         public void Awake()
@@ -139,6 +140,9 @@ namespace LAB2D
             // 必须在 Awake 阶段（场景加载后）注册，不能放在 RegisterSafeServices（BeforeSceneLoad）。
             ServiceLocator.Register(ItemInfoPanel.Instance);
             ServiceLocator.Register(ForegroundPanel.Instance);
+            ServiceLocator.Register(BuildMenuPanel.Instance);
+            ServiceLocator.Register(PauseMenuPanel.Instance);
+            ServiceLocator.Register(SettingMenuPanel.Instance);
         }
 
         /// <summary>

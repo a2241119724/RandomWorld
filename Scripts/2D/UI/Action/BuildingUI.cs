@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Core;
     using UnityEngine;
     using UnityEngine.EventSystems;
 
@@ -20,6 +21,7 @@ namespace LAB2D.UI.Action
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
 
             // 先打开设置Instance
             this.gameObject.SetActive(false);
@@ -27,31 +29,31 @@ namespace LAB2D.UI.Action
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            ABuildItem buildItem = (ABuildItem)ItemInstanceFactory.Instance.GetBuildItemByName(ItemDataManager.Instance.GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = (ABuildItem)ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(ServiceLocator.Get<BuildMenuPanel>().Select.Item.Id).EnName);
             if (!buildItem.IsCustomSize)
             {
                 return;
             }
 
             this.isDrag = true;
-            this.startPos = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
+            this.startPos = ServiceLocator.Get<TileMap>().WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            ABuildItem buildItem = (ABuildItem)ItemInstanceFactory.Instance.GetBuildItemByName(ItemDataManager.Instance.GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = (ABuildItem)ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(ServiceLocator.Get<BuildMenuPanel>().Select.Item.Id).EnName);
             if (!buildItem.IsCustomSize)
             {
                 return;
             }
 
-            Vector3Int currentPos = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
-            IsAvailableMap.Instance.ShowRect(this.startPos, currentPos.y - this.startPos.y + 1, this.startPos.x - currentPos.x + 1, AWorkerTask.RectType.TopLeft);
+            Vector3Int currentPos = ServiceLocator.Get<TileMap>().WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
+            ServiceLocator.Get<IsAvailableMap>().ShowRect(this.startPos, currentPos.y - this.startPos.y + 1, this.startPos.x - currentPos.x + 1, AWorkerTask.RectType.TopLeft);
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            ABuildItem buildItem = (ABuildItem)ItemInstanceFactory.Instance.GetBuildItemByName(ItemDataManager.Instance.GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = (ABuildItem)ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(ServiceLocator.Get<BuildMenuPanel>().Select.Item.Id).EnName);
             if (!buildItem.IsCustomSize)
             {
                 return;
@@ -60,15 +62,15 @@ namespace LAB2D.UI.Action
             this.isDrag = false;
 
             // 没有选择任何物品
-            if (BuildMenuPanel.Instance.Select.Item == null)
+            if (ServiceLocator.Get<BuildMenuPanel>().Select.Item == null)
             {
                 return;
             }
 
-            Vector3Int currentPos = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
+            Vector3Int currentPos = ServiceLocator.Get<TileMap>().WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
 
             // 建造
-            if (IsAvailableMap.Instance.ShowRect(this.startPos, currentPos.y - this.startPos.y + 1, this.startPos.x - currentPos.x + 1, AWorkerTask.RectType.TopLeft))
+            if (ServiceLocator.Get<IsAvailableMap>().ShowRect(this.startPos, currentPos.y - this.startPos.y + 1, this.startPos.x - currentPos.x + 1, AWorkerTask.RectType.TopLeft))
             {
                 buildItem.AddBuildTask(this.startPos, new ABuildItem.Extra(currentPos.y - this.startPos.y + 1, this.startPos.x - currentPos.x + 1, AWorkerTask.RectType.TopLeft));
             }
@@ -81,14 +83,14 @@ namespace LAB2D.UI.Action
         public void OnPointerUp(PointerEventData eventData)
         {
             // 没有选择任何物品
-            if (BuildMenuPanel.Instance.Select.Item == null || this.isDrag)
+            if (ServiceLocator.Get<BuildMenuPanel>().Select.Item == null || this.isDrag)
             {
                 return;
             }
 
-            Vector3Int centerMap = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
-            ABuildItem buildItem = (ABuildItem)ItemInstanceFactory.Instance.GetBuildItemByName(ItemDataManager.Instance.GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
-            if (IsAvailableMap.Instance.ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.RectType))
+            Vector3Int centerMap = ServiceLocator.Get<TileMap>().WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
+            ABuildItem buildItem = (ABuildItem)ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(ServiceLocator.Get<BuildMenuPanel>().Select.Item.Id).EnName);
+            if (ServiceLocator.Get<IsAvailableMap>().ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.RectType))
             {
                 buildItem.AddBuildTask(centerMap, null);
             }
@@ -97,15 +99,15 @@ namespace LAB2D.UI.Action
         public void OnPointerMove(PointerEventData eventData)
         {
             // 没有选择任何物品
-            if (BuildMenuPanel.Instance.Select.Item == null || this.isDrag)
+            if (ServiceLocator.Get<BuildMenuPanel>().Select.Item == null || this.isDrag)
             {
                 return;
             }
 
             // 使用建造默认的大小
-            Vector3Int centerMap = TileMap.Instance.WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
-            ABuildItem buildItem = (ABuildItem)ItemInstanceFactory.Instance.GetBuildItemByName(ItemDataManager.Instance.GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
-            IsAvailableMap.Instance.ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.RectType);
+            Vector3Int centerMap = ServiceLocator.Get<TileMap>().WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
+            ABuildItem buildItem = (ABuildItem)ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(ServiceLocator.Get<BuildMenuPanel>().Select.Item.Id).EnName);
+            ServiceLocator.Get<IsAvailableMap>().ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.RectType);
         }
     }
 }

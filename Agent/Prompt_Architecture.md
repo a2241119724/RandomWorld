@@ -1053,9 +1053,13 @@ namespace LAB2D
 >
 > - **AWorkerTask .Instance 清零 + 未注册服务补注册** — 补注册 4 个未注册服务（`AttackEffectManager` 在 RegisterSafeServices、`AsyncProgressUI` 已自注册、`LocateWorkerUI` 和 `GlobalInit` 在 Awake 中新增 `ServiceLocator.Register(this)`）。AWorkerTask 最后 8 处 Provider 默认实现从 `.Instance` 迁移至 `ServiceLocator.Get<T>()`。同步更新 9 处 XML 文档注释。AWorkerTask.cs 实现 **100% ServiceLocator 覆盖**（零 `.Instance`，含注释）（2026-07）。
 >
-> - **ItemInfoUI + RectBoxUI ServiceLocator 迁移** — ItemInfoUI.cs（32→0）、RectBoxUI.cs（23→0）的 `.Instance` 调用全部迁移至 `ServiceLocator.Get<T>()`。补注册 6 个服务：`EventBus`、`SelectManagerPool`（RegisterSafeServices）；`GatherUI`、`WorkerBedUI`、`ItemInfoUI`、`RectBoxUI`（Awake 自注册）。`ItemInfoPanel`、`ForegroundPanel` 由 `ABasePanel<T>` 构造函数自动注册（已有机制）。UI/ 目录 .Instance 调用从 236 降至 181（-55）（2026-07）。
+> - **ItemInfoUI + RectBoxUI ServiceLocator 迁移** — ItemInfoUI.cs（32→0）、RectBoxUI.cs（23→0）的 `.Instance` 调用全部迁移至 `ServiceLocator.Get<T>()`。补注册 6 个服务：`EventBus`、`SelectManagerPool`（RegisterSafeServices）；`GatherUI`、`WorkerBedUI`、`ItemInfoUI`、`RectBoxUI`（Awake 自注册）。`ItemInfoPanel`、`ForegroundPanel` 由 `ABasePanel<T>` 构造函数自动注册（已有机制）。（2026-07）
 >
-> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**UI 层 ServiceLocator 迁移持续推进**（剩余 181 处 .Instance，重点文件：BackpackMenuPanel 10 处、ForegroundPanel 12 处、AmbitiousExperienceHub 14 处、BuildingUI 17 处、NewOrContinuePanel 21 处、GatherUI 7 处、WorkerBedUI 6 处 等）。
+> - **ABasePanel 注册时机修复** — `ABasePanel<T>` 子类构造函数调用 `Init()` → `GameObject.FindGameObjectWithTag`，不能在 `RegisterSafeServices`（BeforeSceneLoad，无场景）中注册。修正为在 `RegisterServices`（Awake，场景已加载）中注册 `ItemInfoPanel`、`ForegroundPanel`、`BuildMenuPanel`、`PauseMenuPanel`、`SettingMenuPanel`。（2026-07）
+>
+> - **BuildingUI + AmbitiousExperienceHub + ForegroundPanel + BackpackMenuPanel 迁移** — 4 个文件（17+14+12+10=53 处 .Instance）全部迁移至 `ServiceLocator.Get<T>()`。补注册 6 个服务：`WaveEventFeedback`（RegisterSafeServices）；`BuildMenuPanel`、`PauseMenuPanel`、`SettingMenuPanel`（RegisterServices）；`BackpackController`、`BackpackNavigationView`（Awake 自注册）。UI/ 目录 .Instance 从 236 降至 128（-46%）（2026-07）。
+>
+> 当前应重点推进：**单元测试扩展**、**UI 层 ServiceLocator 迁移持续推进**（剩余 128 处 .Instance，重点文件：NewOrContinuePanel 21 处、CreateDataPanel 12 处、CreateMenuPanel 8 处、JoinMenuPanel 7 处、GatherUI 7 处、AddWearTaskUI 6 处、WorkerBedUI 6 处、ItemInfoPanel 5 处 等）。
 
 ## 14. 最终检查清单
 

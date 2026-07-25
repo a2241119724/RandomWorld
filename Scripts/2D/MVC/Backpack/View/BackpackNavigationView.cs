@@ -1,5 +1,7 @@
 namespace LAB2D.MVC.Backpack.View
 {
+    using LAB2D.Core;
+
     /// <summary>
     /// 背包导航按钮UI。
     /// </summary>
@@ -10,6 +12,7 @@ namespace LAB2D.MVC.Backpack.View
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
         }
 
         public void Start()

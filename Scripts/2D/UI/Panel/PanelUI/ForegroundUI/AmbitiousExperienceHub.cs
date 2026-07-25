@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
     using LAB2D.UnityAdapter;
@@ -188,8 +189,8 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
             try
             {
-                GameplaySessionStats.Instance.StatsChanged += this.HandleStatsChanged;
-                GameplaySessionStatsSnapshot snapshot = GameplaySessionStats.Instance.CreateSnapshot();
+                ServiceLocator.Get<GameplaySessionStats>().StatsChanged += this.HandleStatsChanged;
+                GameplaySessionStatsSnapshot snapshot = ServiceLocator.Get<GameplaySessionStats>().CreateSnapshot();
                 this.latestPreviewResult = SessionResultData.FromSnapshot(snapshot);
             }
             catch (Exception exception)
@@ -199,7 +200,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
             try
             {
-                ComboBonusManager combo = ComboBonusManager.Instance;
+                ComboBonusManager combo = ServiceLocator.Get<ComboBonusManager>();
                 int _ = combo.CurrentCombo;
                 combo.OnComboMilestoneReached += this.HandleComboMilestoneReached;
                 combo.OnComboBroken += this.HandleComboBroken;
@@ -211,7 +212,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
             try
             {
-                WaveEventFeedback feedback = WaveEventFeedback.Instance;
+                WaveEventFeedback feedback = ServiceLocator.Get<WaveEventFeedback>();
                 feedback.Enable();
                 this.latestWaveState = feedback.CurrentState;
                 feedback.OnWaveFeedbackChanged += this.HandleWaveFeedbackChanged;
@@ -224,7 +225,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
             try
             {
-                SessionResultManager.Instance.OnResultCaptured += this.HandleResultCaptured;
+                ServiceLocator.Get<SessionResultManager>().OnResultCaptured += this.HandleResultCaptured;
             }
             catch (Exception exception)
             {
@@ -246,7 +247,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
             try
             {
-                GameplaySessionStats.Instance.StatsChanged -= this.HandleStatsChanged;
+                ServiceLocator.Get<GameplaySessionStats>().StatsChanged -= this.HandleStatsChanged;
             }
             catch (Exception)
             {
@@ -254,7 +255,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
             try
             {
-                ComboBonusManager combo = ComboBonusManager.Instance;
+                ComboBonusManager combo = ServiceLocator.Get<ComboBonusManager>();
                 combo.OnComboMilestoneReached -= this.HandleComboMilestoneReached;
                 combo.OnComboBroken -= this.HandleComboBroken;
             }
@@ -264,7 +265,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
             try
             {
-                WaveEventFeedback feedback = WaveEventFeedback.Instance;
+                WaveEventFeedback feedback = ServiceLocator.Get<WaveEventFeedback>();
                 feedback.OnWaveFeedbackChanged -= this.HandleWaveFeedbackChanged;
                 feedback.OnWaveTipRequested -= this.HandleWaveTipRequested;
             }
@@ -274,7 +275,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
             try
             {
-                SessionResultManager.Instance.OnResultCaptured -= this.HandleResultCaptured;
+                ServiceLocator.Get<SessionResultManager>().OnResultCaptured -= this.HandleResultCaptured;
             }
             catch (Exception)
             {
@@ -326,7 +327,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         {
             try
             {
-                GameplaySessionStatsSnapshot snapshot = GameplaySessionStats.Instance.CreateSnapshot();
+                GameplaySessionStatsSnapshot snapshot = ServiceLocator.Get<GameplaySessionStats>().CreateSnapshot();
                 this.latestPreviewResult = SessionResultData.FromSnapshot(snapshot);
             }
             catch (Exception)
@@ -350,7 +351,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             {
                 if (state == null)
                 {
-                    state = WaveEventFeedback.Instance.CurrentState;
+                    state = ServiceLocator.Get<WaveEventFeedback>().CurrentState;
                 }
             }
             catch (Exception)
@@ -395,8 +396,8 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             float experienceMultiplier = 1f;
             try
             {
-                damageMultiplier = ComboBonusManager.Instance.DamageMultiplier;
-                experienceMultiplier = ComboBonusManager.Instance.ExperienceMultiplier;
+                damageMultiplier = ServiceLocator.Get<ComboBonusManager>().DamageMultiplier;
+                experienceMultiplier = ServiceLocator.Get<ComboBonusManager>().ExperienceMultiplier;
             }
             catch (Exception)
             {
@@ -542,7 +543,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             SessionResultData latest = null;
             try
             {
-                latest = SessionResultManager.Instance.LatestResult;
+                latest = ServiceLocator.Get<SessionResultManager>().LatestResult;
             }
             catch (Exception)
             {
