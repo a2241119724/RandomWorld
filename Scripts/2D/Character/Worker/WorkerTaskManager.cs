@@ -9,19 +9,26 @@ namespace LAB2D.Character.Worker
     using LAB2D.Serializable;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
+    using LAB2D.UnityAdapter;
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
-    /// Worker任务管理器
+    /// Worker任务管理器。
+    /// 通过 ITickable 接口由 GlobalInit 统一驱动任务分配循环，
+    /// 同时保留 MonoBehaviour 作为兼容桥（Awake 注册单例）。
+    ///
+    /// API 层已迁移到 GameGridPosition，旧 Vector3Int 方法标记为 Obsolete 保持向后兼容。
     /// </summary>
-    public class WorkerTaskManager : MonoBehaviour
+    public class WorkerTaskManager : MonoBehaviour, ITickable
     {
         private static long curtaskId = 0;
         private readonly WorkerTaskQueue<AWorkerTask> taskQueue;
         private readonly List<WorkerHungryTask> hungryTasks;
         private readonly List<WorkerWearTask> wearTasks;
         private readonly WorkerTaskAssignmentService<AWorkerTask> assignmentService;
+        private readonly List<GameGridPosition> gatherPositions;
         private KDTree taskTree = new KDTree();
 
         public WorkerTaskManager()
@@ -30,7 +37,7 @@ namespace LAB2D.Character.Worker
             this.assignmentService = new WorkerTaskAssignmentService<AWorkerTask>();
             this.hungryTasks = new List<WorkerHungryTask>();
             this.wearTasks = new List<WorkerWearTask>();
-            this.GatherPos = new List<Vector3Int>();
+            this.gatherPositions = new List<GameGridPosition>();
         }
 
         /// <summary>
@@ -50,9 +57,32 @@ namespace LAB2D.Character.Worker
             = (e) => EventBus.Instance.PublishInternal(e);
 
         /// <summary>
-        /// 记录所有采摘任务的位置
+        /// 记录所有采摘任务的位置（Domain 类型）。
+        /// 替代已废弃的 GatherPos (Vector3Int)。
         /// </summary>
-        public List<Vector3Int> GatherPos { get; private set; }
+        public List<GameGridPosition> GatherPositions
+        {
+            get { return this.gatherPositions; }
+        }
+
+        /// <summary>
+        /// [Obsolete] 记录所有采摘任务的位置。
+        /// 请改用 GatherPositions (List&lt;GameGridPosition&gt;)。
+        /// </summary>
+        [Obsolete("Use GatherPositions (List<GameGridPosition>) instead.")]
+        public List<Vector3Int> GatherPos
+        {
+            get
+            {
+                List<Vector3Int> result = new List<Vector3Int>(this.gatherPositions.Count);
+                for (int i = 0; i < this.gatherPositions.Count; i++)
+                {
+                    result.Add(UnityVectorAdapter.ToVector3Int(this.gatherPositions[i]));
+                }
+
+                return result;
+            }
+        }
 
         public void Awake()
         {
@@ -60,9 +90,28 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
-        /// Worker获取任务
+        /// [Obsolete] Update 由 Unity 引擎驱动。
+        /// 任务分配循环已迁移至 Tick(float)，由 GlobalInit 统一驱动。
+        /// 保留此方法作为兼容桥：当 ITickable 未注册时仍可正常工作。
         /// </summary>
         public void Update()
+        {
+            this.Tick(Time.deltaTime);
+        }
+
+        /// <summary>
+        /// ITickable 实现：每帧执行任务分配循环。
+        /// 由 GlobalInit.BuildTickableList() 统一驱动，确保与其他 ITickable 的执行顺序一致。
+        /// </summary>
+        public void Tick(float deltaTime)
+        {
+            this.RunTaskAssignmentLoop();
+        }
+
+        /// <summary>
+        /// 任务分配主循环：遍历空闲 Worker，按优先级分配任务。
+        /// </summary>
+        private void RunTaskAssignmentLoop()
         {
             List<AWorker> workers = WorkerListProvider();
             foreach (AWorker worker in workers)
@@ -166,7 +215,8 @@ namespace LAB2D.Character.Worker
             }
             else if (task.TaskType == WorkerTaskType.Gather)
             {
-                this.GatherPos.Add(Vector3IntLAB.ToVector3Int(task.TargetMap));
+                GameGridPosition gatherPos = new GameGridPosition(task.TargetMap.X, task.TargetMap.Y, task.TargetMap.Z);
+                this.gatherPositions.Add(gatherPos);
             }
             else if (task.TaskType == WorkerTaskType.Wear)
             {
@@ -293,18 +343,19 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
-        /// 删除吃饭任务
-        /// 该位置在仓库中的食物被消耗完了
+        /// 删除吃饭任务（Domain 类型）。
+        /// 该位置在仓库中的食物被消耗完了。
         /// </summary>
-        /// <param name="pos">位置</param>
-        public void DeleteHungryTask(Vector3Int pos)
+        /// <param name="pos">位置（GameGridPosition）。</param>
+        public void DeleteHungryTask(GameGridPosition pos)
         {
-            foreach (WorkerHungryTask hungryTask in this.hungryTasks)
+            for (int i = this.hungryTasks.Count - 1; i >= 0; i--)
             {
-                if (hungryTask.TargetMap.X == pos.x && hungryTask.TargetMap.Y == pos.y)
+                WorkerHungryTask hungryTask = this.hungryTasks[i];
+                if (hungryTask.TargetMap.X == pos.X && hungryTask.TargetMap.Y == pos.Y)
                 {
                     this.taskQueue.Remove(hungryTask);
-                    this.hungryTasks.Remove(hungryTask);
+                    this.hungryTasks.RemoveAt(i);
                     EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
                     return;
                 }
@@ -312,26 +363,48 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
-        /// 取消采集任务
+        /// [Obsolete] 删除吃饭任务。
+        /// 请改用 DeleteHungryTask(GameGridPosition)。
         /// </summary>
-        /// <param name="posMap">任务位置</param>
-        public void CancelGatherTask(Vector3Int posMap)
+        /// <param name="pos">位置（Vector3Int）。</param>
+        [Obsolete("Use DeleteHungryTask(GameGridPosition) instead.")]
+        public void DeleteHungryTask(Vector3Int pos)
         {
-            if (!this.GatherPos.Contains(posMap))
+            this.DeleteHungryTask(UnityVectorAdapter.ToGameGridPosition(pos));
+        }
+
+        /// <summary>
+        /// 取消采集任务（Domain 类型）。
+        /// </summary>
+        /// <param name="posMap">任务位置（GameGridPosition）。</param>
+        public void CancelGatherTask(GameGridPosition posMap)
+        {
+            if (!this.gatherPositions.Contains(posMap))
             {
                 return;
             }
 
             bool removed = this.taskQueue.RemoveWhere(task =>
                 task.TaskType == WorkerTaskType.Gather &&
-                task.TargetMap.X == posMap.x &&
-                task.TargetMap.Y == posMap.y);
+                task.TargetMap.X == posMap.X &&
+                task.TargetMap.Y == posMap.Y);
 
             if (removed)
             {
-                this.GatherPos.Remove(posMap);
+                this.gatherPositions.Remove(posMap);
                 EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
             }
+        }
+
+        /// <summary>
+        /// [Obsolete] 取消采集任务。
+        /// 请改用 CancelGatherTask(GameGridPosition)。
+        /// </summary>
+        /// <param name="posMap">任务位置（Vector3Int）。</param>
+        [Obsolete("Use CancelGatherTask(GameGridPosition) instead.")]
+        public void CancelGatherTask(Vector3Int posMap)
+        {
+            this.CancelGatherTask(UnityVectorAdapter.ToGameGridPosition(posMap));
         }
     }
 }

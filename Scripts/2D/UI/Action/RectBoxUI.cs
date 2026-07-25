@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Serializable;
     using LAB2D.UnityAdapter;
     using System.Collections.Generic;
@@ -46,7 +47,8 @@ namespace LAB2D.UI.Action
             this.options.gameObject.SetActive(false);
             this.selects[key].ForEach((posMap) =>
             {
-                if (WorkerTaskManager.Instance.GatherPos.Contains(posMap))
+                GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+                if (WorkerTaskManager.Instance.GatherPositions.Contains(gridPos))
                 {
                     return;
                 }
@@ -72,12 +74,13 @@ namespace LAB2D.UI.Action
             this.options.gameObject.SetActive(false);
             this.selects[key].ForEach((posMap) =>
             {
-                if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap))
+                GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+                if (!WorkerTaskManager.Instance.GatherPositions.Contains(gridPos))
                 {
                     return;
                 }
 
-                WorkerTaskManager.Instance.CancelGatherTask(posMap);
+                WorkerTaskManager.Instance.CancelGatherTask(gridPos);
                 GatherMap.Instance.CancelGather(posMap);
             });
         }

@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Serializable;
     using LAB2D.UnityAdapter;
     using UnityEngine;
@@ -62,7 +63,8 @@ namespace LAB2D.UI.Action
         public void Onclick_Yes()
         {
             this.Hide();
-            if (WorkerTaskManager.Instance.GatherPos.Contains(this.posMap))
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(this.posMap);
+            if (WorkerTaskManager.Instance.GatherPositions.Contains(gridPos))
             {
                 return;
             }
@@ -83,12 +85,13 @@ namespace LAB2D.UI.Action
         public void Onclick_No()
         {
             this.Hide();
-            if (!WorkerTaskManager.Instance.GatherPos.Contains(this.posMap))
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(this.posMap);
+            if (!WorkerTaskManager.Instance.GatherPositions.Contains(gridPos))
             {
                 return;
             }
 
-            WorkerTaskManager.Instance.CancelGatherTask(this.posMap);
+            WorkerTaskManager.Instance.CancelGatherTask(gridPos);
             GatherMap.Instance.CancelGather(this.posMap);
         }
     }

@@ -134,7 +134,7 @@ Scripts/2D/Editor/                    # Editor 工具 + Tests/Domain + Tests/Too
 - `ITickable.Tick(float deltaTime)`：代替硬编码 Update 调用，由 GlobalInit 统一驱动
 - `IInitializable.Initialize()`：代替分散的 Awake/Start 初始化，按顺序批量执行
 - GlobalInit 维护 `orderedTickables` / `orderedInitializables` 列表，通过 `BuildTickableList()` / `BuildInitializableList()` 显式控制顺序
-- 当前 ITickable 实现：`WorkerUpdateSystem`、`GlobalInputProcessor`、`EnvironmentManager`、`PlayerVitalAlertManager`
+- 当前 ITickable 实现：`WorkerUpdateSystem`、`GlobalInputProcessor`、`WorkerTaskManager`、`EnvironmentManager`、`PlayerVitalAlertManager`
 - 当前 IInitializable 实现：`AchievementManager`、`SkillManager`、`EquipmentBeamManager`、`EnemyLootManager`
 
 #### 3. GlobalInputProcessor — 全局输入处理解耦
@@ -305,7 +305,7 @@ Scripts/2D/Character/Worker/Task/AWorkerTask.cs
 
 常见问题：
 
-- `WorkerTaskManager : MonoBehaviour` 负责任务队列、任务分配、距离计算、任务状态更新、Debug UI 刷新。
+- ~~`WorkerTaskManager : MonoBehaviour` 负责任务队列、任务分配、距离计算、任务状态更新、Debug UI 刷新。~~ **✅ 已解决**：已实现 `ITickable`，Update 逻辑迁移至 `Tick(float)`，由 GlobalInit 统一驱动。
 - `AWorkerTask` 虽然不是 `MonoBehaviour`，但依赖 `UnityEngine`、`UnityAction<AWorker>`、`Time.deltaTime`、`Mathf`、`BuildMap.Instance`、`WorkerConditionManager.Instance`。
 - 任务规则依赖 `AWorker` 的 `transform.position` 和 Unity 地图对象。
 
@@ -317,6 +317,13 @@ Scripts/2D/Character/Worker/Task/AWorkerTask.cs
 - `Domain/Worker/WorkerTaskCongestionRuleService.cs` — WorkerTaskCongestionRuleService
 - `Domain/Worker/WorkerSupplyRuleService.cs` — WorkerSupplyRuleService
 - `Domain/Worker/WorkerAgentSnapshot.cs` — WorkerAgentSnapshot
+- `Domain/Worker/WorkerTaskSnapshot.cs` — WorkerTaskSnapshot
+- `Domain/Worker/WorkerTaskQueueSnapshot.cs` — WorkerTaskQueueSnapshot
+- `Domain/Worker/WorkerTaskAssignmentReport.cs` — WorkerTaskAssignmentReport
+- `Domain/Worker/WorkerSupplyReport.cs` — WorkerSupplyReport
+- `Domain/Worker/WorkerTaskCongestionReport.cs` — WorkerTaskCongestionReport
+- `Domain/Worker/WorkerTaskQueue.cs` — WorkerTaskQueue（泛型多优先级任务队列）
+- `Domain/Worker/WorkerTaskQueueChangedEvent.cs` — WorkerTaskQueueChangedEvent（EventBus 事件）
 
 已完成的解耦：
 
@@ -327,13 +334,17 @@ Scripts/2D/Character/Worker/Task/AWorkerTask.cs
   - `NetworkIsOnlineProvider`、`FloatingTextProvider`、`ShowTipProvider` 等
 - `WorkerUpdateSystem` 实现 `ITickable`，由 GlobalInit 统一驱动
 - `WorkerTaskTimeConfig` 从任务中分离为独立配置类
+- ✅ **WorkerTaskManager 实现 ITickable** — `Update()` 迁移至 `Tick(float)`，GlobalInit 注册（2026-07）
+- ✅ **WorkerTaskManager API 迁移到 GameGridPosition** — `GatherPositions`、`DeleteHungryTask(GameGridPosition)`、`CancelGatherTask(GameGridPosition)`，旧 Vector3Int API 标记 Obsolete（2026-07）
+- ✅ **WorkerTaskManager 内部存储已迁移** — `gatherPositions: List<GameGridPosition>` 替代 `GatherPos: List<Vector3Int>`
+- ✅ **AWorkerTask Provider 更新** — `DeleteHungryTaskProvider` 默认实现使用 GameGridPosition 转换
 
 优先抽离方向：
 
-- `WorkerTaskModel`（纯 C# 任务数据模型）
-- `WorkerTaskQueue`（纯 C# 任务队列）
+- ~~`WorkerTaskModel`（纯 C# 任务数据模型）~~ ✅ 已完成：WorkerTaskQueue + WorkerTaskSnapshot
+- ~~`WorkerTaskQueue`（纯 C# 任务队列）~~ ✅ 已完成：Domain/Worker/WorkerTaskQueue.cs
 - `IWorkerTaskMapQuery`（地图查询接口）
-- `WorkerTaskEvent`（通过 EventBus 通知任务状态变化）
+- `WorkerTaskEvent`（通过 EventBus 通知任务状态变化）— 已有 WorkerTaskQueueChangedEvent
 
 ### Inventory / Item
 
@@ -821,7 +832,7 @@ public sealed class MyNewInitializer : IInitializable
 | 基础设施 | 状态 |
 |---|---|
 | ServiceLocator（轻量 DI） | ✅ 已全局落地，约 50 个服务注册 |
-| ITickable / IInitializable（生命周期接口） | ✅ 已实现，4 个 ITickable + 4 个 IInitializable |
+| ITickable / IInitializable（生命周期接口） | ✅ 已实现，5 个 ITickable + 4 个 IInitializable |
 | GlobalInputProcessor（输入处理解耦） | ✅ 已从 GlobalInit 提取 |
 | AWorkerTask Provider 委托模式 | ✅ 约 35 个静态 Provider 属性 |
 | EventBus + PublishInternal | ✅ 已增强，有单元测试；已有 7 种事件类型（CharacterDamaged、PlayerStatusChanged、InventoryCellChanged、InventoryGridChanged、PlayerAttackRequested、PlayerSkillActivated、WorkerTaskQueueChanged） |
@@ -830,14 +841,14 @@ public sealed class MyNewInitializer : IInitializable
 
 后续改造优先方向（按低风险到高风险排列）：
 
-1. ~~**Inventory EventBus 事件迁移**~~ ✅ 已完成：`ItemInfoUI` 已切换订阅 `InventoryGridChangedEvent`（纯结构化数据），`InventoryManager` 已停止发布 `InventoryCellChangedEvent`（2026-07）。后续可继续为 Player、Wave 模块增加更多事件类型。
-2. **Character/Player 深入解耦**：`Player.cs` 输入/表现/规则仍有混合，进一步推进 Command → Domain → Event 链路。可参考 `GlobalInputProcessor` 模式提取 Player 特定输入处理。
-3. **扩展 ITickable/IInitializable 覆盖范围**：将更多 Manager 的 Update/Start 逻辑迁移到 ITickable/IInitializable，减少 MonoBehaviour 生命周期依赖。
-4. ~~**InventoryManager 深入解耦**~~ ✅ 已完成：内部数据存储已迁移至 `InventoryService`（包装 `InventoryGrid`），public API 100% 兼容。剩余 `preTakeResource`/`prePlaceResource` 的 AWorker 解耦留待后续。
-5. **WorkerTaskManager 继续解耦**：将任务队列、任务分配等纯逻辑提取到 Domain，MonoBehaviour 只做桥接。
-6. **WaveManager Coroutine 解耦**：通过 `IWaveTimeScheduler`（已有 UnityWaveTimeScheduler）替代直接 Coroutine 依赖。
+1. ~~**Inventory EventBus 事件迁移**~~ ✅ 已完成：`ItemInfoUI` 已切换订阅 `InventoryGridChangedEvent`（纯结构化数据），`InventoryManager` 已停止发布 `InventoryCellChangedEvent`（2026-07）。
+2. **Character/Player 深入解耦**：`Player.cs` 输入/表现/规则仍有混合，进一步推进 Command → Domain → Event 链路。
+3. ~~**扩展 ITickable/IInitializable 覆盖范围**~~ 🔄 持续推进：WorkerTaskManager 已迁移至 ITickable（2026-07），当前 5 个 ITickable + 4 个 IInitializable。后续可将更多 Manager 的 Update/Start 逻辑迁移。
+4. ~~**InventoryManager 深入解耦**~~ ✅ 已完成：内部数据存储已迁移至 `InventoryService`。
+5. ~~**WorkerTaskManager 继续解耦**~~ ✅ 已完成：ITickable + GameGridPosition API 迁移（2026-07）。WorkerTaskQueue、WorkerTaskSnapshot 等纯 C# 类型已在 Domain 层。剩余 `KDTree` 和 `transform.position` 采集属于合理的算法/表现层依赖。
+6. **WaveManager Coroutine 解耦**：通过 `IWaveTimeScheduler`（已有 UnityWaveTimeScheduler）替代直接 Coroutine 依赖。WaveManager 架构已很完善，此项为可选优化。
 7. **存档/Photon 与 Domain 桥接**：确保 Domain 模型变更时存档兼容，Photon 同步走适配层而非直接引用。
-8. **扩展单元测试**：`Editor/Tests/Domain/` 已有测试基础（新增 `InventoryServiceTests` 25 个），继续为新增 Domain 服务和 Provider 委托补充测试。
+8. **扩展单元测试**：`Editor/Tests/Domain/` 已有 70+ 测试文件，覆盖大部分 Domain Service。继续为新增 Provider 委托补充测试。
 
 选择模块时，请说明原因：
 
@@ -1021,9 +1032,10 @@ namespace LAB2D
 >
 > **最近完成（2026-07）**：
 > - InventoryManager 内部重构 — 数据存储从 3 个并行 `Dictionary<Vector3Int, ...>` 迁移至 `Domain/Inventory/InventoryService`（包装 `InventoryGrid`），`InventoryGrid` 修复了空格子 id=-1 索引维护。新增 `InventoryGridChangedEvent`（纯数据事件）和 `InventoryServiceTests`（25 个单元测试）。public API 100% 兼容。
-> - **Inventory 事件迁移** — `ItemInfoUI` 从 `InventoryCellChangedEvent`（携带 UI 格式化字符串）迁移至 `InventoryGridChangedEvent`（纯结构化数据）。`InventoryManager` 已停止发布旧事件（移除 11 处发布点），`InventoryService.PublishChange()` 统一发布。`InventoryCellChangedEvent` 类标记为废弃。事件层面完全消除 UI 字符串耦合。
+> - **Inventory 事件迁移** — `ItemInfoUI` 从 `InventoryCellChangedEvent`（携带 UI 格式化字符串）迁移至 `InventoryGridChangedEvent`（纯结构化数据）。`InventoryManager` 已停止发布旧事件（移除 11 处发布点），`InventoryService.PublishChange()` 统一发布。`InventoryCellChangedEvent` 类标记为废弃。
+> - **WorkerTaskManager ITickable + GameGridPosition 迁移** — `WorkerTaskManager` 实现 `ITickable` 接口，`Update()` 中的任务分配循环迁移至 `Tick(float deltaTime)`，由 `GlobalInit.BuildTickableList()` 统一驱动（排在 WorkerUpdateSystem 之后）。`Update()` 保留作为兼容桥（委托给 Tick）。公开 API 迁移：`GatherPositions: List<GameGridPosition>`（替代旧 `GatherPos: List<Vector3Int>`）、`DeleteHungryTask(GameGridPosition)`、`CancelGatherTask(GameGridPosition)`，旧 Vector3Int 方法标记 `[Obsolete]` 保持向后兼容。`AWorkerTask.DeleteHungryTaskProvider` 默认实现已更新。调用方 `GatherUI`、`RectBoxUI` 已切换至新 API。ITickable 实现总数增至 5 个。
 >
-> 当前应重点推进：阶段五（单元测试扩展，为 Wave/Player Domain 服务补充测试）和阶段三（继续为 Player、Wave 模块增加更多 EventBus 事件类型）。
+> 当前应重点推进：**Character/Player 深入解耦**（Player.cs 继续推进 Command → Domain → Event 链路，可参考 GlobalInputProcessor 模式提取 Player 特定输入处理）和 **存档/Photon 与 Domain 桥接**（确保 Domain 模型变更时存档兼容）。
 
 ## 14. 最终检查清单
 

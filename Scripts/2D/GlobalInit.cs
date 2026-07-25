@@ -139,6 +139,7 @@ namespace LAB2D
             {
                 new WorkerUpdateSystem(),
                 new GlobalInputProcessor(),
+                ServiceLocator.Get<WorkerTaskManager>(),
                 ServiceLocator.Get<EnvironmentManager>(),
                 ServiceLocator.Get<PlayerVitalAlertManager>(),
             };
