@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Worker.Task
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Data;
     using LAB2D.Enum;
     using LAB2D.Item;
@@ -100,8 +101,8 @@ namespace LAB2D.Character.Worker.Task
         public static System.Func<WorkerTaskType, AWorker, float> ProgressMultiplierProvider { get; set; }
             = (taskType, worker) =>
             {
-                float multiplier = WeatherGameplayEffect.Instance.GetWorkerTaskProgressMultiplier(taskType);
-                multiplier *= WorkerConditionManager.Instance.GetWorkerTaskProgressMultiplier(worker, taskType);
+                float multiplier = ServiceLocator.Get<WeatherGameplayEffect>().GetWorkerTaskProgressMultiplier(taskType);
+                multiplier *= ServiceLocator.Get<WorkerConditionManager>().GetWorkerTaskProgressMultiplier(worker, taskType);
                 return multiplier;
             };
 
@@ -111,12 +112,12 @@ namespace LAB2D.Character.Worker.Task
         /// 可替换为测试桩或自定义实现（如 IMapWalkabilityQuery 适配器）。
         /// </summary>
         public static System.Func<int, int, bool> WalkabilityProvider { get; set; }
-            = (x, y) => BuildMap.Instance.IsCanReach(new UnityEngine.Vector3Int(x, y, 0));
+            = (x, y) => ServiceLocator.Get<BuildMap>().IsCanReach(new UnityEngine.Vector3Int(x, y, 0));
 
         /// <summary>
         /// 任务生命周期回调 — 记录任务开始和完成的统计追踪。
         /// bool 参数：true = 任务开始, false = 任务完成。
-        /// 默认实现访问 WorkerEfficiencyTracker.Instance。
+        /// 默认实现访问 WorkerEfficiencyTracker。
         /// 可替换为测试桩或自定义实现。
         /// </summary>
         public static System.Action<AWorkerTask, AWorker, bool> TaskLifecycleProvider { get; set; }
@@ -124,11 +125,11 @@ namespace LAB2D.Character.Worker.Task
             {
                 if (isStart)
                 {
-                    WorkerEfficiencyTracker.Instance.RecordTaskStarted(worker, task);
+                    ServiceLocator.Get<WorkerEfficiencyTracker>().RecordTaskStarted(worker, task);
                 }
                 else
                 {
-                    WorkerEfficiencyTracker.Instance.RecordTaskCompleted(worker, task);
+                    ServiceLocator.Get<WorkerEfficiencyTracker>().RecordTaskCompleted(worker, task);
                 }
             };
 
@@ -138,7 +139,7 @@ namespace LAB2D.Character.Worker.Task
         /// 可替换为测试桩或自定义实现。
         /// </summary>
         public static System.Action<AWorkerTask> TaskCompletionProvider { get; set; }
-            = (task) => WorkerTaskManager.Instance.CompleteTask(task);
+            = (task) => ServiceLocator.Get<WorkerTaskManager>().CompleteTask(task);
 
         /// <summary>
         /// 库存管理器访问提供者 — 统一库存操作入口。
@@ -146,7 +147,7 @@ namespace LAB2D.Character.Worker.Task
         /// 可替换为测试桩或自定义实现。
         /// </summary>
         public static System.Func<InventoryManager> InventoryProvider { get; set; }
-            = () => InventoryManager.Instance;
+            = () => ServiceLocator.Get<InventoryManager>();
 
         /// <summary>
         /// 物品数据提供者 — 根据物品 ID 获取配置数据。
@@ -154,7 +155,7 @@ namespace LAB2D.Character.Worker.Task
         /// 可替换为测试桩。
         /// </summary>
         public static System.Func<int, ItemData> ItemDataProvider { get; set; }
-            = (id) => ItemDataManager.Instance.GetById(id);
+            = (id) => ServiceLocator.Get<ItemDataManager>().GetById(id);
 
         /// <summary>
         /// 物品地图提供者 — 物品在地图上的放置/拾取操作。
@@ -162,7 +163,7 @@ namespace LAB2D.Character.Worker.Task
         /// 可替换为测试桩。
         /// </summary>
         public static System.Func<ItemMap> ItemMapProvider { get; set; }
-            = () => ItemMap.Instance;
+            = () => ServiceLocator.Get<ItemMap>();
 
         /// <summary>
         /// 日志提供者 — 任务相关的错误/警告日志输出。
@@ -170,7 +171,7 @@ namespace LAB2D.Character.Worker.Task
         /// 可替换为测试桩（如静默日志）。
         /// </summary>
         public static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
-            = (message, level) => LogManager.Instance.Log(message, level);
+            = (message, level) => ServiceLocator.Get<LogManager>().Log(message, level);
 
         /// <summary>
         /// 物品类型查找提供者 — 根据物品 ID 返回物品类型枚举。
@@ -178,7 +179,7 @@ namespace LAB2D.Character.Worker.Task
         /// 可替换为测试桩。
         /// </summary>
         public static System.Func<int, AItem.ItemTypeEnum> ItemTypeProvider { get; set; }
-            = (id) => ItemDataManager.Instance.IdToType(id);
+            = (id) => ServiceLocator.Get<ItemDataManager>().IdToType(id);
 
         /// <summary>
         /// 物品实例工厂提供者 — 根据名称创建物品实例。
@@ -186,71 +187,71 @@ namespace LAB2D.Character.Worker.Task
         /// 可替换为测试桩。
         /// </summary>
         public static System.Func<string, ABackpackItem> ItemFactoryProvider { get; set; }
-            = (name) => ItemInstanceFactory.Instance.GetBackpackItemByName(name);
+            = (name) => ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemByName(name);
 
         public static System.Func<EquipmentBeamManager> EquipmentBeamProvider { get; set; }
-            = () => EquipmentBeamManager.Instance;
+            = () => ServiceLocator.Get<EquipmentBeamManager>();
         public static System.Func<EnemyLootManager> EnemyLootProvider { get; set; }
-            = () => EnemyLootManager.Instance;
+            = () => ServiceLocator.Get<EnemyLootManager>();
         public static System.Func<string, object> ResourceLoadProvider { get; set; }
-            = (name) => ResourceManager.Instance.GetAsset(name);
+            = (name) => ServiceLocator.Get<ResourceManager>().GetAsset(name);
         public static System.Func<UnityEngine.Vector3Int, UnityEngine.Vector3> TileMapPositionProvider { get; set; }
-            = (pos) => TileMap.Instance.MapPosToWorldPos(pos);
+            = (pos) => ServiceLocator.Get<TileMap>().MapPosToWorldPos(pos);
         public static System.Action<AWorkerTask, Vector3IntLAB, int> TaskAddProvider { get; set; }
-            = (task, pos, stage) => WorkerTaskManager.Instance.AddTask(task, pos, stage);
+            = (task, pos, stage) => ServiceLocator.Get<WorkerTaskManager>().AddTask(task, pos, stage);
         public static System.Action<UnityEngine.Vector3Int> DeleteHungryTaskProvider { get; set; }
-            = (pos) => WorkerTaskManager.Instance.DeleteHungryTask(
+            = (pos) => ServiceLocator.Get<WorkerTaskManager>().DeleteHungryTask(
                 LAB2D.UnityAdapter.UnityVectorAdapter.ToGameGridPosition(pos));
         public static System.Func<ResourceMap> ResourceMapProvider { get; set; }
-            = () => ResourceMap.Instance;
+            = () => ServiceLocator.Get<ResourceMap>();
         public static System.Func<int, System.Collections.Generic.List<DropItem>> DropDataProvider { get; set; }
-            = (id) => DropDataManager.Instance.GetDropItemsById(id);
+            = (id) => ServiceLocator.Get<DropDataManager>().GetDropItemsById(id);
         public static System.Func<UnityEngine.Vector3Int, int, bool, UnityEngine.Vector3Int> AvailablePositionProvider { get; set; }
-            = (pos, radius, center) => IsAvailableMap.Instance.GenAvailablePosMap(pos, radius, center);
+            = (pos, radius, center) => ServiceLocator.Get<IsAvailableMap>().GenAvailablePosMap(pos, radius, center);
         public static System.Func<GatherMap> GatherMapProvider { get; set; }
-            = () => GatherMap.Instance;
+            = () => ServiceLocator.Get<GatherMap>();
         public static System.Func<FarmlandManager> FarmlandManagerProvider { get; set; }
-            = () => FarmlandManager.Instance;
+            = () => ServiceLocator.Get<FarmlandManager>();
         public static System.Action<Vector3IntLAB> BuildMapCompletionProvider { get; set; }
-            = (pos) => BuildMap.Instance.SetComplete(pos);
+            = (pos) => ServiceLocator.Get<BuildMap>().SetComplete(pos);
         public static System.Func<UnityEngine.Vector3, UnityEngine.Vector3Int> TileMapWorldToMapProvider { get; set; }
-            = (pos) => TileMap.Instance.WorldPosToMapPos(pos);
+            = (pos) => ServiceLocator.Get<TileMap>().WorldPosToMapPos(pos);
         public static System.Func<UnityEngine.Vector3Int, UnityEngine.Vector3Int> GenCanReachPosProvider { get; set; }
-            = (pos) => TileMap.Instance.GenCanReachPos(pos);
+            = (pos) => ServiceLocator.Get<TileMap>().GenCanReachPos(pos);
         public static System.Func<string, bool, UnityEngine.GameObject> ResourceInstantiateProvider { get; set; }
-            = (name, active) => ResourceManager.Instance.Instantiate(name, active);
+            = (name, active) => ServiceLocator.Get<ResourceManager>().Instantiate(name, active);
         public static System.Action<AWorker> FurnitureBedProvider { get; set; }
-            = (worker) => FurnitureManager.Instance.RemoveWorkerFromBed(worker);
+            = (worker) => ServiceLocator.Get<FurnitureManager>().RemoveWorkerFromBed(worker);
         public static System.Func<AttackEffectManager.EffectTypeEnum, float, UnityEngine.ParticleSystem> AttackEffectProvider { get; set; }
             = (type, rad) => AttackEffectManager.Instance.GetEffect(type, rad);
         public static System.Action<AEnemy> EnemyRemoveProvider { get; set; }
-            = (enemy) => EnemyManager.Instance.Remove(enemy);
+            = (enemy) => ServiceLocator.Get<EnemyManager>().Remove(enemy);
         public static System.Func<bool> EnemyCanCreateProvider { get; set; }
-            = () => EnemyManager.Instance.CanCreateEnemy();
+            = () => ServiceLocator.Get<EnemyManager>().CanCreateEnemy();
         public static System.Func<int> PlayerCountProvider { get; set; }
-            = () => PlayerManager.Instance.Count();
+            = () => ServiceLocator.Get<PlayerManager>().Count();
         public static System.Func<int, Character> PlayerGetProvider { get; set; }
-            = (i) => PlayerManager.Instance.Get(i);
+            = (i) => ServiceLocator.Get<PlayerManager>().Get(i);
         public static System.Func<int> WorkerCountProvider { get; set; }
-            = () => WorkerManager.Instance.Count();
+            = () => ServiceLocator.Get<WorkerManager>().Count();
         public static System.Func<int, Character> WorkerGetProvider { get; set; }
-            = (i) => WorkerManager.Instance.Get(i);
+            = (i) => ServiceLocator.Get<WorkerManager>().Get(i);
         public static System.Action<AEnemy, Character, int> EnemyDefeatedProvider { get; set; }
-            = (enemy, attacker, xp) => GameplaySessionStats.Instance.RecordEnemyDefeated(enemy, attacker, xp);
+            = (enemy, attacker, xp) => ServiceLocator.Get<GameplaySessionStats>().RecordEnemyDefeated(enemy, attacker, xp);
         public static System.Func<int> WaveIndexProvider { get; set; }
-            = () => WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveIndex - 1 : 0;
+            = () => ServiceLocator.Get<WaveManager>() != null ? ServiceLocator.Get<WaveManager>().CurrentWaveIndex - 1 : 0;
         public static System.Action<UnityEngine.Vector3, float, bool, bool> FloatingTextProvider { get; set; }
-            = (pos, dmg, crit, combo) => FloatingTextManager.Instance.SpawnDamageText(pos, dmg, crit, combo);
+            = (pos, dmg, crit, combo) => ServiceLocator.Get<FloatingTextManager>().SpawnDamageText(pos, dmg, crit, combo);
         public static System.Func<bool> NetworkIsOnlineProvider { get; set; }
-            = () => NetworkConnect.Instance != null && NetworkConnect.Instance.IsOnline;
+            = () => ServiceLocator.Get<NetworkConnect>() != null && ServiceLocator.Get<NetworkConnect>().IsOnline;
         public static System.Func<bool> NetworkIsMasterClientProvider { get; set; }
             = () => Photon.Pun.PhotonNetwork.IsMasterClient;
         public static System.Action<UnityEngine.GameObject> NetworkDestroyProvider { get; set; }
             = (go) => Photon.Pun.PhotonNetwork.Destroy(go);
         public static System.Func<int, ABackpackItem> ItemFactoryByIdProvider { get; set; }
-            = (id) => ItemInstanceFactory.Instance.GetBackpackItemById(id);
+            = (id) => ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemById(id);
         public static System.Func<string> NameGeneratorProvider { get; set; }
-            = () => NameGenerator.Instance.GetRandomName();
+            = () => ServiceLocator.Get<NameGenerator>().GetRandomName();
         public static System.Action<string> AsyncProgressSetTipProvider { get; set; }
             = (tip) => AsyncProgressUI.Instance.SetTip(tip);
         public static System.Action<System.Action> AsyncProgressCompleteProvider { get; set; }

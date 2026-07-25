@@ -1048,8 +1048,9 @@ namespace LAB2D
 > - **Photon 网络调用桥接** — `INetworkView` 新增 `IsMasterClient` 属性，`PunNetworkViewAdapter` / `OfflineNetworkView` 实现。`AWorkerTask` 新增 `NetworkIsMasterClientProvider` + `NetworkDestroyProvider` 两个静态委托。替换 9 处业务代码中的直接 Photon 调用：`ASeekEnemy.Death()`、`ACommonEnemy.Death()` → `NetworkView.IsMasterClient`；`AWorker.DeathProvider`、`ForegroundPanel`、`SyncDataTool`(3处) → `NetworkIsMasterClientProvider()`；`SeekEnemyDeadState`、`CommonEnemyDeadState`、`WorkerDeadState`、`BackpackMenuPanel` → `NetworkDestroyProvider`。`Player.cs` 清理 2 处冗余 `PhotonNetwork.IsConnected`（`NetworkView.IsOnline` 已封装）。**业务代码已零 Photon 直接调用**，剩余引用仅在 Adapter/Provider 层或注释中。
 > - **Player PhotonNetwork 残余引用提取** — 新增 `LocalPlayerTagObjectProvider`（`Action<Player>`）和 `LocalPlayerNameProvider`（`Func<string>`）两个 Provider 委托。将 `Player.Start()` 中最后 2 处 PhotonNetwork 直接调用（`PhotonNetwork.LocalPlayer.TagObject`、`PhotonNetwork.NickName`）替换为 Provider 调用。遵循项目已有的模式 B Provider 委托模式。Player.cs 的 PhotonNetwork 引用现已全部封装在 Provider 默认实现内部（2026-07）。
 > - **ComboBonusManager → IInitializable 迁移** — 实现 `IInitializable` 接口，`EnsureInitialized()` 私有方法提升为 `public void Initialize()`，新增 `IsInitialized` 公开属性。移除 5 个属性 getter（DamageMultiplier、ExperienceMultiplier、CurrentCombo、CurrentTierIndex、GetCurrentTierLabel）中的懒初始化守卫。由 `GlobalInit.BuildInitializableList()` 统一驱动初始化，IInitializable 实现总数增至 5 个（2026-07）。
+> - **AWorkerTask Provider 默认值 .Instance → ServiceLocator** — 将 ~35 个静态 Provider 默认实现中的 `.Instance` 调用替换为 `ServiceLocator.Get<T>()`，涵盖所有已在 GlobalInit 注册的 ~30 个服务。保留 6 处未注册服务的 .Instance（AttackEffectManager、AsyncProgressUI、LocateWorkerUI）和 GlobalInit.Instance。AWorkerTask.cs 从 45 处 .Instance 调用降至 8 处（均在未注册服务或注释中）（2026-07）。
 >
-> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**AWorkerTask Provider 默认值迁移至 GlobalInit**（消除 45 处 `.Instance` 调用）、**UI 层 ServiceLocator 迁移**（ItemInfoUI 32 处、RectBoxUI 23 处 .Instance 调用）。
+> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**未注册 ServiceLocator 的服务补注册**（AttackEffectManager、AsyncProgressUI、LocateWorkerUI 等，补注册后可完成最后 8 处 .Instance 替换）、**UI 层 ServiceLocator 迁移**（ItemInfoUI 32 处、RectBoxUI 23 处 .Instance 调用）。
 
 ## 14. 最终检查清单
 
