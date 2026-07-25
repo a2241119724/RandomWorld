@@ -170,6 +170,7 @@ namespace LAB2D
             this.orderedTickables = new List<ITickable>
             {
                 new WorkerUpdateSystem(),
+                ServiceLocator.Get<AchievementManager>(),
                 new GlobalInputProcessor(),
                 ServiceLocator.Get<WorkerTaskManager>(),
                 ServiceLocator.Get<EnvironmentManager>(),

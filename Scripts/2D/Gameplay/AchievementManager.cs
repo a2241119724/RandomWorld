@@ -22,7 +22,7 @@ namespace LAB2D.Gameplay
     ///   不直接修改任何战斗/关卡/物品逻辑，只读取已有统计数据。
     ///   不涉及 Photon 同步和存档格式修改（存档扩展由后续需求覆盖）。
     /// </summary>
-    public class AchievementManager : Singleton<AchievementManager>, IInitializable
+    public class AchievementManager : Singleton<AchievementManager>, IInitializable, ITickable
     {
         /// <summary>所有成就定义列表（按类别分组）</summary>
         private readonly List<AchievementData> allAchievements = new List<AchievementData>();
@@ -117,6 +117,29 @@ namespace LAB2D.Gameplay
             this.initialized = true;
             this.RegisterAchievements();
             this.SyncProgressFromStats();
+        }
+
+        /// <summary>
+        /// 每帧更新成就进度并展示待解锁弹窗。
+        /// 由 GlobalInit 通过 ITickable 接口统一驱动。
+        /// </summary>
+        public void Tick(float deltaTime)
+        {
+            if (!this.initialized)
+            {
+                return;
+            }
+
+            this.UpdateProgressAll();
+
+            if (this.HasPendingUnlock)
+            {
+                AchievementData pending = this.PeekPendingUnlock();
+                if (pending != null && AchievementPopup.RuntimeInstance != null)
+                {
+                    AchievementPopup.RuntimeInstance.Show(pending);
+                }
+            }
         }
 
         /// <summary>

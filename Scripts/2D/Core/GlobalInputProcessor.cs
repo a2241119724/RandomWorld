@@ -24,23 +24,6 @@ namespace LAB2D.Core
 
         private void ProcessAchievements()
         {
-            AchievementManager mgr = ServiceLocator.Get<AchievementManager>();
-            if (mgr == null || !mgr.IsInitialized)
-            {
-                return;
-            }
-
-            mgr.UpdateProgressAll();
-
-            if (mgr.HasPendingUnlock)
-            {
-                AchievementData pending = mgr.PeekPendingUnlock();
-                if (pending != null && AchievementPopup.RuntimeInstance != null)
-                {
-                    AchievementPopup.RuntimeInstance.Show(pending);
-                }
-            }
-
             if (UnityGlobalInputAdapter.GetToggleWorkerTaskAndAchievementHudDown())
             {
                 AchievementPanel.RuntimeInstance?.TogglePanel();
