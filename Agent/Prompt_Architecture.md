@@ -434,7 +434,7 @@ Scripts/2D/Gameplay/WeatherGameplayEffect.cs
 已完成解耦：
 - `WaveState` → ✅ `WaveRuntimeState`（Domain/Wave）
 - `WaveSpawnRequest` → ✅ 已存在于 Domain/Wave
-- `WaveEvent` → 部分：WaveManager 仍使用 C# 事件（OnWaveStart/OnWaveEnd 等），可后续迁移到 EventBus
+- `WaveEvent` → ✅ 已完成：4 个 IGameEvent 类型 + WaveManager EventBus 双通道发布（2026-07）
 - `IEnemySpawnService` → ✅ UnityEnemySpawnAdapter
 - `IWaveTimeScheduler` → ✅ UnityWaveTimeScheduler
 - `IMapSpawnPointProvider` → ✅ UnityMapAdapter
@@ -1051,6 +1051,9 @@ namespace LAB2D
 > - **InventoryManager preTakeResource/prePlaceResource AWorker key → int workerId** — 将两个预留字典的 key 从 `AWorker` (MonoBehaviour) 迁移为 `int` (`worker.GetInstanceID()`)。新增 `WorkerNameProvider` 静态委托（模式 B）供 `ToString()` 解析 Worker 名称。10 个公开方法签名零变更，内部通过 `worker.GetInstanceID()` 转换。`Dictionary<AWorker, ...>` → `Dictionary<int, ...>` 共涉及 17 个方法（7 个私有方法 + 循环体）。字典不再持有 MonoBehaviour 强引用，Worker 死亡后 GC 可正常回收。**InventoryManager 对 AWorker 的类型依赖仅限于方法参数，不再持久化存储引用**（2026-07）。
 > - **ColonyCommandCenterManager 移除 using UnityEngine** — 6 处 `Time.time` → `IGameTime.Time`；2 处 `Debug.LogWarning`/`Debug.Log` → `IGameLogger.LogWarning`/`IGameLogger.Log`。移除 `using UnityEngine;`。与 PlayerVitalAlertManager 相同的 Domain 接口 + 懒加载属性模式（2026-07）。
 > - **WorkerTaskCongestionAdvisor 移除 using UnityEngine** — 4 处 `Time.time` + 2 处 `Debug.Log*` → `IGameTime`/`IGameLogger`。移除 `using UnityEngine;`（2026-07）。
+> - **Wave 系统 EventBus 事件类型创建** — 新增 `Domain/Wave/WaveEvents.cs` 包含 4 个 IGameEvent 类型（`WaveStartedEvent`、`WaveEndedEvent`、`AllWavesClearedEvent`、`WaveRestStartedEvent`）。`WaveManager` 在保持 C# 事件向后兼容的同时，于 4 处事件触发点新增 `EventBus.PublishInternal()` 发布。**Wave 系统支持 EventBus 解耦订阅，新消费者无需直接依赖 WaveManager**。Domain/Wave 目录文件数：10→11（2026-07）。
+> - **SkillManager Time.time → IGameTime** — 6 处 `Time.time` → `IGameTime.Time`（懒加载属性）。因 SkillManager 使用 `Vector3` 保留 `using UnityEngine;`，但时间依赖已解耦（2026-07）。
+> - **EnemyLootManager PlayerPositionProvider 提取** — 新增 `PlayerPositionProvider` 静态委托（模式 B），封装 `PlayerMineProvider().transform.position` → `Vector3`。4 处调用点全部迁移。`EnemyLootManager` 业务逻辑零 Transform 引用（2026-07）。
 > - **Gameplay 批量 IGameTime/IGameLogger 迁移** — `WorkerSupplyIssueManager`（3x Time.time + 2x Debug.Log* → IGameTime/IGameLogger，保留 using UnityEngine 因其使用 Vector3Int）、`WorkerConditionManager`（1x + 2x，移除 using UnityEngine ✅）、`AchievementManager`（1x + 1x，移除 ✅）、`ItemCollectionTracker`（2x Debug.Log，移除 ✅）、`WeatherGameplayEffect`（1x Debug.Log，移除 ✅）。全部使用统一模板：`IGameTime`/`IGameLogger` + 懒加载属性。非 MonoBehaviour 的 Gameplay Manager 累计 8 个零 UnityEngine 引用（2026-07）。
 > - **PlayerVitalAlertManager 移除 using UnityEngine** — 4 处 `Time.time` → `IGameTime.Time`（Domain 已有接口，通过 ServiceLocator 懒加载缓存）；2 处 `Debug.LogWarning`/`Debug.Log` → `IGameLogger.Warning`/`IGameLogger.Log`（Domain 已有接口）。移除 `using UnityEngine;`。**首个移除全部 UnityEngine 引用的 Gameplay Manager**。未使用 Provider 委托，改用已有 Domain 接口 + 懒加载属性模式（2026-07）。
 > - **WorkerTaskManager CreateWorkerSnapshot transform.position → WorkerPositionProvider** — 新增 `WorkerPositionProvider` 静态委托（模式 B），将 `CreateWorkerSnapshot` 中 `worker.transform.position.x/y` 的 Transform 直接访问提取为可替换 Provider。默认实现封装坐标交换（map x ← world y, map y ← world x）。业务逻辑零 Transform 引用。WorkerTaskManager Provider 总数：2→3（WorkerList + WorkerPosition + EventBusPublish）（2026-07）。

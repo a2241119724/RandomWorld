@@ -25,6 +25,12 @@ namespace LAB2D.Gameplay
             = (pos, text) => { if (ServiceLocator.TryGet(out FloatingTextManager ftm)) ftm.SpawnStatusText(pos, text); };
         internal static System.Func<Player> PlayerMineProvider { get; set; }
             = () => ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
+        internal static System.Func<Vector3> PlayerPositionProvider { get; set; }
+            = () =>
+            {
+                Player p = ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
+                return p != null ? p.transform.position : Vector3.zero;
+            };
         internal static System.Func<EquipmentComparePopup> EquipmentComparePopupProvider { get; set; }
             = () => EquipmentComparePopup.Instance;
 
@@ -394,7 +400,7 @@ namespace LAB2D.Gameplay
                     if (charData != null)
                     {
                         Vector3Int playerPos = AWorkerTask.TileMapWorldToMapProvider(
-                            PlayerMineProvider().transform.position);
+                            PlayerPositionProvider());
                         charData.AddEquipment(equipment, playerPos);
                     }
                 }, () =>
@@ -402,7 +408,7 @@ namespace LAB2D.Gameplay
                     if (charData != null)
                     {
                         Vector3Int playerPos = AWorkerTask.TileMapWorldToMapProvider(
-                            PlayerMineProvider().transform.position);
+                            PlayerPositionProvider());
                         Vector3Int dropPos = AWorkerTask.AvailablePositionProvider(playerPos, 2, true);
                         if (dropPos != default && equipment.Tile != null)
                         {
@@ -448,7 +454,7 @@ namespace LAB2D.Gameplay
         {
             if (this.pendingDrops == null) return;
             List<Vector3Int> staleKeys = new List<Vector3Int>();
-            Vector3 playerPos = PlayerMineProvider()?.transform.position ?? Vector3.zero;
+            Vector3 playerPos = PlayerPositionProvider();
 
             foreach (KeyValuePair<Vector3Int, PendingEquipmentDrop> kv in this.pendingDrops)
             {

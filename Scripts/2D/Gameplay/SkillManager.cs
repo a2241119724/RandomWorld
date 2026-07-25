@@ -57,6 +57,9 @@ namespace LAB2D.Gameplay
         private float dashRestoreTime;
         private float dashOriginalInvincibility;
         private Player dashPlayer;
+        private IGameTime gameTime;
+
+        private IGameTime GameTime => this.gameTime ?? (this.gameTime = Core.ServiceLocator.Get<IGameTime>());
 
         /// <summary>
         /// 初始化技能系统，注册4个默认技能。
@@ -79,7 +82,7 @@ namespace LAB2D.Gameplay
 
             this.AvailableUpgradePoints = 0;
             this.IsInitialized = true;
-            this.lastRefreshTime = Time.time;
+            this.lastRefreshTime = this.GameTime.Time;
 
             ServiceLocator.Get<EventBus>().Subscribe<PlayerSkillActivatedEvent>(this.OnPlayerSkillActivated);
         }
@@ -125,7 +128,7 @@ namespace LAB2D.Gameplay
             }
 
             // 冷却检查
-            if (!skill.IsReadyAt(Time.time))
+            if (!skill.IsReadyAt(this.GameTime.Time))
             {
                 return false;
             }
@@ -144,7 +147,7 @@ namespace LAB2D.Gameplay
             PlayerMineProvider()?.RefreshUI();
 
             // 记录激活时间
-            skill.LastActivateTime = Time.time;
+            skill.LastActivateTime = this.GameTime.Time;
 
             // 根据技能类型执行效果
             this.ExecuteSkillEffect(skill, player);
@@ -239,9 +242,9 @@ namespace LAB2D.Gameplay
             float maxBuff = 1.0f;
             foreach (SkillData skill in this.Skills)
             {
-                if (skill.IsBuffActiveAt(Time.time) && skill.GetCurrentBuffMultiplier(Time.time) > maxBuff)
+                if (skill.IsBuffActiveAt(this.GameTime.Time) && skill.GetCurrentBuffMultiplier(this.GameTime.Time) > maxBuff)
                 {
-                    maxBuff = skill.GetCurrentBuffMultiplier(Time.time);
+                    maxBuff = skill.GetCurrentBuffMultiplier(this.GameTime.Time);
                 }
             }
 
@@ -259,7 +262,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            float now = Time.time;
+            float now = this.GameTime.Time;
 
             // 节流：按 HUD 刷新间隔检查事件
             if (now - this.lastRefreshTime < SkillConstant.HudRefreshInterval)
@@ -377,7 +380,7 @@ FloatingTextDamageProvider(
 
             // 临时延长无敌帧持续时间，记录恢复时间和原始值
             this.pendingDashRestore = true;
-            this.dashRestoreTime = Time.time + SkillConstant.DashInvincibilityDuration;
+            this.dashRestoreTime = this.GameTime.Time + SkillConstant.DashInvincibilityDuration;
             this.dashOriginalInvincibility = player.InvincibilityDuration;
             this.dashPlayer = player;
             player.InvincibilityDuration = System.Math.Max(
@@ -389,7 +392,7 @@ FloatingTextDamageProvider(
         /// </summary>
         private void ExecuteSelfBuff(SkillData skill, Player player)
         {
-            skill.BuffEndTime = Time.time + skill.BuffDuration;
+            skill.BuffEndTime = this.GameTime.Time + skill.BuffDuration;
         }
 
         /// <summary>

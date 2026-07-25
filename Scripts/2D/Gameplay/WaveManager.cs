@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Wave;
     using LAB2D.UnityAdapter;
     using System;
@@ -96,6 +97,20 @@ namespace LAB2D.Gameplay
         private readonly WaveSpawnPlanService spawnPlanService = new WaveSpawnPlanService();
         private IWaveSceneAdapter sceneAdapter = new UnityWaveSceneAdapter();
         private IWaveTimeScheduler timeScheduler = new UnityWaveTimeScheduler();
+        private EventBus eventBus;
+
+        private EventBus EventBus
+        {
+            get
+            {
+                if (this.eventBus == null)
+                {
+                    this.eventBus = Core.ServiceLocator.Get<EventBus>();
+                }
+
+                return this.eventBus;
+            }
+        }
 
         /// <summary>
         /// 替换 WaveManager 的 Unity 场景访问桥。传入 null 会恢复默认 Unity 实现。
@@ -187,6 +202,7 @@ namespace LAB2D.Gameplay
                     out WaveFlowDecision allWavesClearedDecision))
                 {
                     this.OnAllWavesCleared?.Invoke(allWavesClearedDecision.TotalWavesCompleted);
+                    this.EventBus.PublishInternal(new AllWavesClearedEvent { TotalWavesCompleted = allWavesClearedDecision.TotalWavesCompleted });
                     this.StopWaves();
                     yield break;
                 }
@@ -199,6 +215,7 @@ namespace LAB2D.Gameplay
                         this.Config.restTimeBetweenWaves);
                     this.SyncPublicStateFromRuntime();
                     this.OnRestStart?.Invoke(restDecision.RestDuration);
+                    this.EventBus.PublishInternal(new WaveRestStartedEvent { RestDuration = restDecision.RestDuration });
                     this.OnWaveStateChanged?.Invoke();
                     yield return this.timeScheduler.WaitForSeconds(restDecision.RestDuration);
                     this.flowService.EndRest(this.runtimeState);
@@ -217,6 +234,7 @@ namespace LAB2D.Gameplay
                 // A004：通知 Boss 与波间奖励系统同步当前波次阶段，保持波次系统仍为主流程。
                 this.sceneAdapter.OnWaveStarted(waveStartedDecision.WaveIndex, waveStartedDecision.DifficultyScale);
                 this.OnWaveStart?.Invoke(waveStartedDecision.WaveIndex);
+                this.EventBus.PublishInternal(new WaveStartedEvent { WaveIndex = waveStartedDecision.WaveIndex, DifficultyScale = waveStartedDecision.DifficultyScale });
                 this.OnWaveStateChanged?.Invoke();
 
                 // 生成当前波次的所有敌人
@@ -258,6 +276,7 @@ namespace LAB2D.Gameplay
                 WaveFlowDecision waveCompletedDecision = this.flowService.CompleteCurrentWaveAndCreateDecision(this.runtimeState);
                 this.SyncPublicStateFromRuntime();
                 this.OnWaveEnd?.Invoke(waveCompletedDecision.WaveIndex, waveCompletedDecision.TotalWavesCompleted);
+                this.EventBus.PublishInternal(new WaveEndedEvent { WaveIndex = waveCompletedDecision.WaveIndex, TotalWavesCompleted = waveCompletedDecision.TotalWavesCompleted });
                 this.OnWaveStateChanged?.Invoke();
             }
         }
