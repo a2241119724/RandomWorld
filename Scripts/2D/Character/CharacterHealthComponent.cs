@@ -6,8 +6,6 @@ namespace LAB2D.Character
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
     using LAB2D.Gameplay;
-    using PlayerCharacter = LAB2D.Character.Player.Player;
-
     /// <summary>
     /// Applies character health, damage, and experience rules outside Unity UI presentation.
     /// Manager dependencies are resolved via ServiceLocator with .Instance fallback
@@ -60,7 +58,7 @@ namespace LAB2D.Character
             target.LastAttacker = attacker;
 
             bool isComboDamage = false;
-            if (attacker is PlayerCharacter)
+            if (attacker != null && attacker.IsPlayerCharacter)
             {
                 float comboMult = this.comboBonusManager.DamageMultiplier;
                 incomingHp *= comboMult;

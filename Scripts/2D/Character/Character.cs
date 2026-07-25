@@ -168,6 +168,7 @@ namespace LAB2D.Character
                     DamageFlashProvider(target);
                 });
 
+            GameVector2 worldPos = WorldPositionProvider(this);
             EventBusPublishProvider(new CharacterDamagedEvent
             {
                 TargetId = this.CharacterDataLAB.Id,
@@ -176,8 +177,8 @@ namespace LAB2D.Character
                 IsCritical = isCRT,
                 IsCombo = capturedCombo,
                 RemainingHp = this.CharacterDataLAB.Hp,
-                WorldPosX = this.transform.position.x,
-                WorldPosY = this.transform.position.y,
+                WorldPosX = worldPos.X,
+                WorldPosY = worldPos.Y,
             });
 
             if (healthResult.IsDead)
@@ -196,6 +197,13 @@ namespace LAB2D.Character
 
         internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
             = (e) => ServiceLocator.Get<EventBus>().PublishInternal(e);
+
+        /// <summary>
+        /// 世界坐标提供者 — 获取角色当前世界位置。
+        /// 默认实现访问 Transform.position；可在测试中替换为固定坐标桩。
+        /// </summary>
+        public static System.Func<Character, GameVector2> WorldPositionProvider { get; set; }
+            = (c) => new GameVector2(c.transform.position.x, c.transform.position.y);
 
         // --- Unity 组件初始化 Provider（可替换为测试桩，隔离 UnityEngine 依赖） ---
 
