@@ -357,24 +357,16 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 订阅波次生命周期事件。
+        /// 订阅波次生命周期事件（通过 EventBus 解耦，不直接依赖 WaveManager）。
         /// </summary>
         private void SubscribeWaveManager()
         {
             try
             {
-                WaveManager manager = Core.ServiceLocator.TryGet(out WaveManager wm) ? wm : null;
-                if (manager == null)
-                {
-                    return;
-                }
-
-                manager.OnWaveEnd -= this.HandleWaveEnd;
-                manager.OnRestStart -= this.HandleRestStart;
-                manager.OnAllWavesCleared -= this.HandleAllWavesCleared;
-                manager.OnWaveEnd += this.HandleWaveEnd;
-                manager.OnRestStart += this.HandleRestStart;
-                manager.OnAllWavesCleared += this.HandleAllWavesCleared;
+                EventBus eventBus = Core.ServiceLocator.Get<EventBus>();
+                eventBus.Subscribe<WaveEndedEvent>(this.HandleWaveEnded);
+                eventBus.Subscribe<WaveRestStartedEvent>(this.HandleRestStarted);
+                eventBus.Subscribe<AllWavesClearedEvent>(this.HandleAllWavesClearedEvent);
             }
             catch (Exception exception)
             {
@@ -438,26 +430,25 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 波次结束后生成奖励选项。
+        /// 波次结束后生成奖励选项（EventBus 订阅回调）。
         /// </summary>
-        /// <param name="waveIndex">刚结束的波次。</param>
-        /// <param name="totalCompleted">已完成波次数。</param>
-        private void HandleWaveEnd(int waveIndex, int totalCompleted)
+        /// <param name="e">波次结束事件。</param>
+        private void HandleWaveEnded(WaveEndedEvent e)
         {
-            if (!this.enabled)
+            if (!this.enabled || e == null)
             {
                 return;
             }
 
-            this.CreateRewardOptions(waveIndex, this.ruleService.IsBossWave(waveIndex, WaveBossRewardConstant.BossWaveInterval));
+            this.CreateRewardOptions(e.WaveIndex, this.ruleService.IsBossWave(e.WaveIndex, WaveBossRewardConstant.BossWaveInterval));
         }
 
         /// <summary>
-        /// 波间休息开始回调。
+        /// 波间休息开始回调（EventBus 订阅回调）。
         /// 如果仍有待选奖励，保持奖励选择阶段，避免 UI 被休息阶段覆盖。
         /// </summary>
-        /// <param name="duration">休息时长。</param>
-        private void HandleRestStart(float duration)
+        /// <param name="e">波间休息事件。</param>
+        private void HandleRestStarted(WaveRestStartedEvent e)
         {
             if (!this.enabled || this.currentOptions.Count > 0)
             {
@@ -468,10 +459,10 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 全部波次完成回调。
+        /// 全部波次完成回调（EventBus 订阅回调）。
         /// </summary>
-        /// <param name="totalWaves">总完成波次。</param>
-        private void HandleAllWavesCleared(int totalWaves)
+        /// <param name="e">全部波次完成事件。</param>
+        private void HandleAllWavesClearedEvent(AllWavesClearedEvent e)
         {
             if (!this.enabled)
             {
