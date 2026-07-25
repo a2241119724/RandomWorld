@@ -1,4 +1,4 @@
-﻿# RandomWorld Unity C# 架构改造 Prompt
+# RandomWorld Unity C# 架构改造 Prompt
 
 你是一名资深 Unity 游戏架构师和 C# 工程师。请基于当前 `RandomWorld` 项目代码，帮助我做可落地、渐进式的架构改造，而不是给一份脱离项目现状的通用方案。
 
@@ -20,27 +20,34 @@ namespace LAB2D
 
 ## 1. 当前项目背景
 
-这是一个 2D 生存/殖民地/战斗类 Unity 项目，已完成一轮架构分层改造，核心模块如下：
+这是一个 2D 生存/殖民地/战斗类 Unity 项目，已完成多轮架构分层改造，核心模块如下：
 
 ```text
 Scripts/2D/Domain/                    # 纯规则层（不含 UnityEngine 引用）
-  Common/                             # EventBus、GameVector2、GameGridPosition、IGameCommand/Event/Time 等
+  Common/                             # EventBus、GameVector2、GameGridPosition、IGameCommand/Event/Time/Logger/IInitializable/ITickable 等
   Character/                          # DamageCalculator、LevelProgressionService
   Gameplay/                           # AchievementRuleService、ComboBonusRuleService、SkillRuleService 等
   Inventory/                          # InventoryFoodReservationService、InventoryStackingService 等
   Player/                             # PlayerDamagePolicy、PlayerMovementPolicy 等
   Wave/                               # WaveBossRuleService、WaveConfigModel、WaveRuleService
-  Worker/                             # WorkerAgentSnapshot、WorkerTaskAssignmentService 等
-  Dialogue/                           # PromptAssemblyService、DialoguePromptProfileModel 等
+  Worker/                             # WorkerAgentSnapshot、WorkerTaskAssignmentService、WorkerTaskProgressService、WorkerConditionRuleService 等
+  Dialogue/                           # PromptAssemblyService、DialoguePromptProfileModel、IPromptTemplateProvider、ChatMessage 等
 
 Scripts/2D/UnityAdapter/             # Unity 适配层
   UnityGameTime.cs / UnityLogger.cs / UnityVectorAdapter.cs / UnityPlayerInputAdapter.cs
   UnityMapAdapter.cs / UnityEnemySpawnAdapter.cs / UnityItemDefinitionAdapter.cs / TipHelper.cs
+  UnityWaveSceneAdapter.cs / UnityWaveTimeScheduler.cs / UnityGlobalInputAdapter.cs
+
+Scripts/2D/Core/                      # 基础设施层
+  ServiceLocator.cs                   # 轻量级服务定位器（DI 过渡方案）
+  GlobalInputProcessor.cs             # 全局输入处理器（ITickable 实现）
+  KDTree / A* 寻路(Seek) / Singleton / Lock / GlobalPanelInitializer / MonoBehaviourInit
 
 Scripts/2D/Gameplay/                  # 玩法管理器（依赖 Domain 和 UnityAdapter）
   WaveManager.cs / SkillManager.cs / WeatherGameplayEffect.cs / AchievementManager.cs
   SessionResultManager.cs / ComboBonusManager.cs / DeathPenaltyManager.cs
-  FloatingTextManager.cs / WorkerConditionManager.cs / WorkerEfficiencyTracker.cs 等（共 29 个文件）
+  FloatingTextManager.cs / WorkerConditionManager.cs / WorkerEfficiencyTracker.cs
+  WorkerUpdateSystem.cs / ColonyCommandCenterManager.cs 等（共 29+ 个文件）
 
 Scripts/2D/Character/
   Character.cs / CharacterHealthComponent.cs / CharacterDamageUIPresenter.cs
@@ -49,7 +56,7 @@ Scripts/2D/Character/
   Enemy/          # AEnemy.cs / EnemyManager.cs / CommonEnemy/ / SeekEnemy/
   Worker/         # AWorker.cs / WorkerManager.cs / WorkerTaskManager.cs
     State/        # WorkerAttack/Dead/Escape/Move/Seek/WorkState
-    Task/         # WorkerBuild/Carry/Gather/Hungry/PlantTask + Individual/
+    Task/         # AWorkerTask.cs（Provider 委托模式）、WorkerBuild/Carry/Gather/Hungry/PlantTask + Individual/
 
 Scripts/2D/Item/
   InventoryManager.cs / DropManager.cs / ItemInstanceFactory.cs
@@ -62,7 +69,7 @@ Scripts/2D/Map/
 Scripts/2D/AI/Dialogue/
   Core/           # DialogueManager.cs / DialogueSession.cs / NPCDialogueTrigger.cs
   LLM/            # ILLMClient.cs / LlamaServerClient.cs / RemoteAPIClient.cs 等
-  Prompt/         # PromptBuilder.cs / PromptTemplateLoader.cs / NPCPromptProfile.cs
+  Prompt/         # PromptBuilder.cs / PromptTemplateLoader.cs / NPCPromptProfile.cs / INPCPromptProfileProvider.cs / ResourcesNpcPromptProfileProvider.cs
   RAG/            # GameKnowledgeRetriever.cs / GameKnowledgeEntry.cs
   Memory/         # DialogueMemoryManager.cs / ShortTermMemory.cs
   UI/             # DialoguePanel.cs / StreamingTextView.cs
@@ -83,28 +90,92 @@ Scripts/2D/Constant/                  # 18 个公共常量文件
 Scripts/2D/Tool/                      # 20 个工具脚本
 Scripts/2D/Manager/                   # ArchiveManager / LogManager / ResourceManager 等
 Scripts/2D/Data/                      # GlobalData / ItemData / ISaveData / ISyncData 等
-Scripts/2D/Core/                      # KDTree / A* 寻路(Seek) / ServiceLocator / Singleton
-Scripts/2D/Editor/                    # Editor 工具 + Tests/Domain + Tests/Tool 单元测试
 Scripts/2D/Serializable/              # Vector3LAB 等
+Scripts/2D/Editor/                    # Editor 工具 + Tests/Domain + Tests/Tool 单元测试
 ```
 
 项目已有自定义基础设施：
 
-- `Singleton<T>` / `ASingletonSaveData<T>` / `ServiceLocator`
+- `Singleton<T>` / `ASingletonSaveData<T>` / `ServiceLocator`（轻量级 DI 容器，已全局应用）
+- `ITickable` / `IInitializable`（Domain 层生命周期接口，GlobalInit 统一驱动）
 - `CharacterManager<CM, C, CC>` / 相关接口 `ICharacterManager` 等
 - `Vector3LAB` / `Vector3IntLAB` / `GameVector2` / `GameGridPosition`（Domain 层已有纯 C# 值类型）
 - `LogManager` / `IGameLogger`（已有 UnityAdapter 适配）
 - `ResourceManager`
-- `EventBus`（Domain 层已有事件总线）
+- `EventBus`（Domain 层纯 C# 事件总线，支持泛型 Publish + DynamicInvoke PublishInternal）
 - `Tool` / `DataTool` / `VectorTool` 等 20 个工具类
 - 20 个 `Enum` 公共枚举文件
 - 18 个 `Constant` 公共常量文件
-- `UnityAdapter/` 下 8 个适配器（Time、Input、Map、Vector、Logger、EnemySpawn、ItemDefinition、TipHelper）
+- `UnityAdapter/` 下 11 个适配器（Time、Input、Map、Vector、Logger、EnemySpawn、ItemDefinition、TipHelper、WaveScene、WaveTimeScheduler、GlobalInputAdapter）
 - `Network/` 下 3 个网络适配脚本（INetworkView、NetworkViewAdapters、SyncSenderAdapters）
 - `Editor/Tests/Domain` 和 `Editor/Tests/Tool` 下已有单元测试
 - 多个 `Editor` 菜单用于安装、验证和调试功能
 
-项目已完成第一轮分层改造，`Domain/` 和 `UnityAdapter/` 已有实际文件。后续改造应在现有分层基础上继续推进，优先在现有 `Scripts/2D` 结构下做小步抽离。
+### 已完成的关键架构改造
+
+项目已完成多轮分层改造，以下是已落地的基础设施：
+
+#### 1. ServiceLocator — 轻量级服务定位器
+
+位于 `Scripts/2D/Core/ServiceLocator.cs`。从 Singleton 到依赖注入的过渡方案，不依赖反射/自动装配。
+
+- 所有服务注册由 `GlobalInit` 在启动时显式完成
+- 服务分两批注册：
+  - `RegisterSafeServices()`：`[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` 提前注册约 40 个 `Singleton<T>`/`ASingletonSaveData<T>` 服务
+  - `RegisterServices()`：Awake 中注册约 11 个 MonoBehaviour 服务和 UnityAdapter 实例
+- 支持按接口类型和具体类型注册（如 `ServiceLocator.Register<ISkillManager>(SkillManager.Instance)`）
+- 提供 `Get<T>()`、`TryGet<T>()`、`GetAll<T>()`、`IsRegistered<T>()`、`Reset()` 等方法
+- 已全局替换直接 `.Instance` 调用为 `ServiceLocator.Get<T>()` 获取
+
+#### 2. ITickable / IInitializable — 生命周期接口（Domain 层）
+
+位于 `Scripts/2D/Domain/Common/IInitializable.cs`。纯 C# 接口，无 UnityEngine 依赖。
+
+- `ITickable.Tick(float deltaTime)`：代替硬编码 Update 调用，由 GlobalInit 统一驱动
+- `IInitializable.Initialize()`：代替分散的 Awake/Start 初始化，按顺序批量执行
+- GlobalInit 维护 `orderedTickables` / `orderedInitializables` 列表，通过 `BuildTickableList()` / `BuildInitializableList()` 显式控制顺序
+- 当前 ITickable 实现：`WorkerUpdateSystem`、`GlobalInputProcessor`、`EnvironmentManager`、`PlayerVitalAlertManager`
+- 当前 IInitializable 实现：`AchievementManager`、`SkillManager`、`EquipmentBeamManager`、`EnemyLootManager`
+
+#### 3. GlobalInputProcessor — 全局输入处理解耦
+
+位于 `Scripts/2D/Core/GlobalInputProcessor.cs`。从 GlobalInit 中提取的职责，实现 `ITickable`。
+
+- 处理 ESC 键面板切换、鼠标点击关闭物品信息、成就面板切换、殖民地命令中心 HUD
+- 分离了 Update 逻辑与输入处理逻辑
+
+#### 4. AWorkerTask Provider 委托模式 — 依赖注入的轻量替代
+
+位于 `Scripts/2D/Character/Worker/Task/AWorkerTask.cs`。使用静态 `Func`/`Action` 属性实现可替换的外部依赖。
+
+- 约 35 个静态 Provider 属性，覆盖日志、地图、库存、物品、网络、UI 等外部依赖
+- 每个 Provider 都有默认实现（访问现有 Singleton），可在测试中替换为桩
+- 关键 Provider 示例：
+  - `LogProvider`：日志输出（替代 `LogManager.Instance`）
+  - `ProgressMultiplierProvider`：任务进度倍率（组合天气 + Worker 状态）
+  - `WalkabilityProvider`：地图可通过性查询
+  - `TaskLifecycleProvider`：任务生命周期追踪
+  - `TaskCompletionProvider`：任务队列移除
+  - `InventoryProvider`、`ItemDataProvider`、`ItemMapProvider`：库存/物品操作
+  - `NetworkIsOnlineProvider`：网络状态查询
+  - `ShowTipProvider`、`FloatingTextProvider`：UI 通知
+- 各子类任务（`WorkerBuildTask`、`WorkerCarryTask` 等）通过 Provider 调用外部服务，不再直接依赖 Singleton
+
+#### 5. EventBus 增强
+
+位于 `Scripts/2D/Domain/Common/EventBus.cs`。纯 C# 实现。
+
+- 支持泛型 `Publish<T>(T gameEvent) where T : IGameEvent`
+- 新增 `PublishInternal(IGameEvent gameEvent)`：通过 DynamicInvoke 支持非泛型发布
+- 已有单元测试覆盖：`EventBusTests.cs`、`DomainEventTests.cs`
+
+#### 6. Dialogue 层接口抽象
+
+- `INPCPromptProfileProvider`：NPC 配置提供者接口（`Scripts/2D/AI/Dialogue/Prompt/`）
+- `ResourcesNpcPromptProfileProvider`：基于 `Resources.LoadAll` 的实现
+- `IPromptTemplateProvider`：Domain 层 Prompt 模板提供者接口
+- `PromptAssemblyService`：Domain 层纯 C# Prompt 组装服务
+- `PromptBuilder`：支持构造函数注入 provider，可通过 `ServiceLocator` 获取
 
 ## 2. 改造总目标
 
@@ -131,10 +202,10 @@ Unity 适配层：Input、Time、Transform、TileMap、Resources、Photon、Mono
 1. 不要一次性重构全部项目。
 2. 不要破坏现有玩法、Prefab 绑定、Inspector 字段、AssetBundle、Photon 同步和 Editor 菜单。
 3. 不要为了设计模式而设计模式。
-4. 不要引入大型依赖注入框架，除非项目已经在使用。
-5. 不要把所有 Singleton 一次性替换掉，可以先包一层接口或 Facade。
+4. 不要引入大型依赖注入框架；项目已使用 `ServiceLocator` + Provider 委托模式作为过渡方案。
+5. 不要把所有 Singleton 一次性替换掉，可以先用 `ServiceLocator` 注册 + Provider 委托包装。
 6. 不要把 Unity `ScriptableObject` 强行移出 Unity；它可以作为配置源，但核心规则不要直接依赖它。
-7. 不要让 `GameCore`、`Domain` 或纯规则类使用 `using UnityEngine;`。
+7. 不要让 `Domain` 或纯规则类使用 `using UnityEngine;`。
 8. 不要让纯规则类继承 `MonoBehaviour`、`MonoBehaviourPun` 或使用 Unity 生命周期方法。
 9. 不要让核心规则直接调用 UI，例如 `PlayerStatusUI.Instance`、`ItemInfoUI.Instance`、`DebugUI.Instance`。
 10. 不要让核心规则直接播放动画、音效、特效、生成 Prefab。
@@ -143,29 +214,30 @@ Unity 适配层：Input、Time、Transform、TileMap、Resources、Photon、Mono
 
 ## 4. 分层建议
 
-项目已完成第一轮分层，当前实际结构与推荐目标：
+项目已完成多轮分层，当前实际结构与推荐目标：
 
 ```text
 Assets/Scripts/2D/
-  Domain/                     # ✅ 已存在：纯 C# 领域模型、规则、事件、命令
-    Common/                   # EventBus、GameVector2、GameGridPosition、IGameCommand/Event/Time/Logger、MathHelper
+  Domain/                     # ✅ 已存在：纯 C# 领域模型、规则、事件、命令、生命周期接口
+    Common/                   # EventBus(IInitializable/ITickable)、GameVector2、GameGridPosition、IGameCommand/Event/Time/Logger、MathHelper
     Character/                # DamageCalculator、LevelProgressionService
     Gameplay/                 # AchievementRuleService、ComboBonusRuleService、SkillRuleService、SessionResultRuleService 等
     Inventory/                # InventoryFoodReservationService、InventoryStackingService、InventoryTakeReservationService
     Player/                   # PlayerDamagePolicy、PlayerMovementPolicy、PlayerVitalAlertRuleService
     Wave/                     # WaveBossRuleService、WaveConfigModel、WaveRuleService
-    Worker/                   # WorkerAgentSnapshot、WorkerConditionRuleService、WorkerTaskAssignmentService 等
-    Dialogue/                 # PromptAssemblyService、DialoguePromptProfileModel、ChatMessage
-  UnityAdapter/               # ✅ 已存在：Unity 类型、输入、时间、地图、资源的适配
+    Worker/                   # WorkerAgentSnapshot、WorkerConditionRuleService、WorkerTaskAssignmentService、WorkerTaskProgressService、WorkerTaskCongestionRuleService、WorkerSupplyRuleService
+    Dialogue/                 # PromptAssemblyService、DialoguePromptProfileModel、ChatMessage、IPromptTemplateProvider
+  UnityAdapter/               # ✅ 已存在：Unity 类型、输入、时间、地图、资源的适配（11 个文件）
     UnityGameTime.cs / UnityLogger.cs / UnityVectorAdapter.cs / UnityPlayerInputAdapter.cs
     UnityMapAdapter.cs / UnityEnemySpawnAdapter.cs / UnityItemDefinitionAdapter.cs / TipHelper.cs
+    UnityWaveSceneAdapter.cs / UnityWaveTimeScheduler.cs / UnityGlobalInputAdapter.cs
+  Core/                       # ✅ 已存在：ServiceLocator / GlobalInputProcessor / KDTree / A* 寻路 / Singleton / Lock
   Network/                    # ✅ 已存在：Photon 网络适配层
     INetworkView.cs / NetworkViewAdapters.cs / SyncSenderAdapters.cs
-  Gameplay/                   # 玩法管理器（已部分引用 Domain 和 UnityAdapter，继续推进解耦）
-  Character/                  # 角色类（已有接口抽象 ICharacterCreator、ICharacterManager 等）
+  Gameplay/                   # 玩法管理器（已大量通过 ServiceLocator 获取依赖，继续推进通过 EventBus 解耦）
+  Character/                  # 角色类（已有接口 + AWorkerTask Provider 委托模式）
   UI/ / MVC/ / Item/ / Map/   # 业务层（保持现状，逐步通过事件驱动与 Domain 交互）
   Enum/ / Constant/ / Tool/   # 公共代码层
-  Core/                       # 底层算法（KDTree、A*、ServiceLocator、Singleton）
   Editor/                     # Editor 工具 + Tests/Domain + Tests/Tool 单元测试
 ```
 
@@ -173,7 +245,7 @@ Assets/Scripts/2D/
 - `Application/`：未创建，用例服务逻辑可直接放在 Domain 或 Gameplay 中。
 - `Presentation/`：未创建，表现层使用现有 UI/ + Character/ 中的 Presenter 类（如 CharacterDamageUIPresenter）。
 
-后续改造优先在已有 `Domain/`、`UnityAdapter/` 目录中扩展，不创建新顶层目录。
+后续改造优先在已有 `Domain/`、`UnityAdapter/`、`Core/` 目录中扩展，不创建新顶层目录。
 
 ## 5. 当前高耦合重点
 
@@ -205,6 +277,14 @@ Scripts/2D/Character/Player/Player.cs
 - `CharacterDamageUIPresenter.cs` — CharacterDamageUIPresenter（表现层绑定）
 - `CharacterHealthComponent.cs` — CharacterHealthComponent
 - `UnityAdapter/UnityPlayerInputAdapter.cs` — UnityPlayerInputAdapter
+- `UnityAdapter/UnityGlobalInputAdapter.cs` — UnityGlobalInputAdapter（全局快捷键输入）
+- `Core/GlobalInputProcessor.cs` — GlobalInputProcessor（ITickable，从 GlobalInit 提取）
+
+已完成的解耦：
+
+- 项目范围的 Singleton 直接调用已替换为 `ServiceLocator.Get<T>()`
+- GlobalInit 的输入处理已提取到 `GlobalInputProcessor`
+- 部分 UI 调用已通过 `AWorkerTask` Provider 委托模式解耦
 
 优先抽离方向：
 
@@ -237,12 +317,22 @@ Scripts/2D/Character/Worker/Task/AWorkerTask.cs
 - `Domain/Worker/WorkerSupplyRuleService.cs` — WorkerSupplyRuleService
 - `Domain/Worker/WorkerAgentSnapshot.cs` — WorkerAgentSnapshot
 
+已完成的解耦：
+
+- **AWorkerTask Provider 委托模式**：约 35 个静态 `Func`/`Action` 属性替代了直接 Singleton 调用
+  - `LogProvider`、`WalkabilityProvider`、`ProgressMultiplierProvider`
+  - `TaskLifecycleProvider`、`TaskCompletionProvider`
+  - `InventoryProvider`、`ItemDataProvider`、`ItemMapProvider`
+  - `NetworkIsOnlineProvider`、`FloatingTextProvider`、`ShowTipProvider` 等
+- `WorkerUpdateSystem` 实现 `ITickable`，由 GlobalInit 统一驱动
+- `WorkerTaskTimeConfig` 从任务中分离为独立配置类
+
 优先抽离方向：
 
-- `WorkerTaskModel`
-- `WorkerTaskQueue`
-- `IWorkerTaskMapQuery`
-- `WorkerTaskEvent`
+- `WorkerTaskModel`（纯 C# 任务数据模型）
+- `WorkerTaskQueue`（纯 C# 任务队列）
+- `IWorkerTaskMapQuery`（地图查询接口）
+- `WorkerTaskEvent`（通过 EventBus 通知任务状态变化）
 
 ### Inventory / Item
 
@@ -266,6 +356,7 @@ Scripts/2D/Data/ItemDataManager.cs
 - `Domain/Inventory/InventoryStackingService.cs` — InventoryStackingService
 - `Domain/Inventory/InventoryTakeReservationService.cs` — InventoryTakeReservationService
 - `UnityAdapter/UnityItemDefinitionAdapter.cs` — UnityItemDefinitionAdapter
+- `AWorkerTask` 中的 `InventoryProvider`、`ItemDataProvider`、`ItemMapProvider` 等委托
 
 优先抽离方向：
 
@@ -297,6 +388,8 @@ Scripts/2D/Gameplay/WeatherGameplayEffect.cs
 - `Domain/Wave/WaveBossRuleService.cs` — WaveBossRuleService
 - `Domain/Wave/WaveConfigModel.cs` — WaveConfigModel
 - `UnityAdapter/UnityEnemySpawnAdapter.cs` — UnityEnemySpawnAdapter
+- `UnityAdapter/UnityWaveSceneAdapter.cs` — UnityWaveSceneAdapter
+- `UnityAdapter/UnityWaveTimeScheduler.cs` — UnityWaveTimeScheduler
 
 优先抽离方向：
 
@@ -304,8 +397,8 @@ Scripts/2D/Gameplay/WeatherGameplayEffect.cs
 - `WaveSpawnRequest`
 - `WaveEvent`
 - `IEnemySpawnService`（已有 UnityEnemySpawnAdapter 可配合）
-- `IWaveTimeScheduler`
-- `IMapSpawnPointProvider`
+- `IWaveTimeScheduler`（已有 UnityWaveTimeScheduler）
+- `IMapSpawnPointProvider`（已有 UnityMapAdapter 实现）
 
 ### AI Dialogue
 
@@ -328,20 +421,43 @@ Scripts/2D/AI/Dialogue/UI/
 - `Domain/Dialogue/PromptAssemblyService.cs` — 纯 C# Prompt 组装服务
 - `Domain/Dialogue/DialoguePromptProfileModel.cs` — 纯 C# Prompt 配置模型
 - `Domain/Dialogue/ChatMessage.cs` — 纯 C# 对话消息模型
+- `Domain/Dialogue/IPromptTemplateProvider.cs` — 纯 C# 模板提供者接口
+
+已完成的解耦：
+
+- `INPCPromptProfileProvider` 接口 + `ResourcesNpcPromptProfileProvider` 实现
+- `PromptBuilder` 支持构造函数注入 provider（`INPCPromptProfileProvider`、`IPromptTemplateProvider`）
+- `PromptBuilder` 通过 `ServiceLocator` 注册和获取
 
 常见问题：
 
-- `PromptBuilder` 仍依赖 `Resources.LoadAll<NPCPromptProfile>` 和 `ScriptableObject` 配置。
-- LLM 客户端、UI、NPC 触发器、游戏状态上下文需要继续分层。
+- `PromptTemplateLoader` 仍依赖 `Resources.Load` 加载模板（但已实现 `IPromptTemplateProvider` 接口）
+- LLM 客户端、UI、NPC 触发器、游戏状态上下文需要继续分层
 
 优先抽离方向：
 
 - `DialogueContext`
 - `DialogueTurn`
-- `IDialogueProfileProvider`
-- `IPromptTemplateProvider`
+- `IDialogueProfileProvider`（已有 INPCPromptProfileProvider）
+- `IPromptTemplateProvider`（已在 Domain 定义，PromptTemplateLoader 已实现）
 - `IGameKnowledgeProvider`
 - `ILLMClient` 保持接口化（已有 `Scripts/2D/AI/Dialogue/LLM/ILLMClient.cs`）
+
+### 全局 Manager 耦合
+
+已完成的解耦：
+
+- 全面替换 `Singleton.Instance` 为 `ServiceLocator.Get<T>()`
+- GlobalInit 分两批注册服务（BeforeSceneLoad + Awake）
+- 输入处理提取到 `GlobalInputProcessor : ITickable`
+- Worker 更新提取到 `WorkerUpdateSystem : ITickable`
+- 多个 Manager 已注册接口类型（`ISkillManager`、`IPlayerVitalAlertManager`、`IWorkerConditionManager`、`IColonyCommandCenterService` 等）
+
+剩余问题：
+
+- 部分 UI 类仍直接调用 `ServiceLocator.Get<T>()`，未通过 EventBus 解耦
+- 部分 Manager 的 MonoBehaviour 生命周期和业务逻辑仍有混合
+- 部分 Manager 直接操作 `GameObject`、`Transform`、`Resources` 等 Unity 类型
 
 ## 6. 分析任务格式
 
@@ -364,7 +480,8 @@ Scripts/2D/AI/Dialogue/UI/
 - 直接读取 Input
 - 直接使用 Time
 - 直接使用 Transform/Physics
-- 直接调用全局 Singleton
+- 直接调用全局 Singleton（应改为 ServiceLocator 或 Provider 委托）
+- 直接调用 ServiceLocator（应改为接口注入或 EventBus）
 - 地图/库存/任务互相强依赖
 - Photon 网络逻辑与本地规则混合
 - 难以单元测试
@@ -405,7 +522,68 @@ Scripts/2D/AI/Dialogue/UI/
 
 ## 8. 典型改造方式
 
-### 输入使用 Command
+项目已有多种解耦模式，选择时请优先考虑项目已有的模式：
+
+### 8.1 已有的三种核心解耦模式
+
+#### 模式 A：ServiceLocator 获取（最常用，已全局落地）
+
+```csharp
+// 注册（GlobalInit）
+ServiceLocator.Register<ISkillManager>(SkillManager.Instance);
+
+// 获取（业务代码中）
+ISkillManager skillMgr = ServiceLocator.Get<ISkillManager>();
+```
+
+适用场景：需要在方法内部临时获取服务，或作为构造函数注入的 fallback。
+
+#### 模式 B：Provider 委托模式（AWorkerTask 已大量使用）
+
+```csharp
+// 定义可替换的静态委托（在 AWorkerTask 等类中）
+public static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
+    = (message, level) => LogManager.Instance.Log(message, level);
+
+public static System.Func<int, int, bool> WalkabilityProvider { get; set; }
+    = (x, y) => BuildMap.Instance.IsCanReach(new UnityEngine.Vector3Int(x, y, 0));
+
+// 使用（任务子类中）
+LogProvider("任务开始", LogManager.LogLevelEnum.Info);
+if (!WalkabilityProvider(x, y)) { return false; }
+
+// 测试时替换
+AWorkerTask.LogProvider = (msg, level) => { /* 静默 */ };
+AWorkerTask.WalkabilityProvider = (x, y) => true;
+```
+
+适用场景：
+- 需要解耦静态上下文中的外部依赖（如抽象类的非 MonoBehaviour 子类）
+- 不想修改现有调用方签名
+- 需要在测试中快速替换实现
+
+#### 模式 C：EventBus 事件驱动
+
+```csharp
+// Domain 侧发布事件
+EventBus.Instance.Publish(new CharacterDamagedEvent { ... });
+
+// Unity 侧订阅事件（OnEnable/Start）
+EventBus.Instance.Subscribe<CharacterDamagedEvent>(OnCharacterDamaged);
+
+// Unity 侧取消订阅（OnDisable/OnDestroy）
+EventBus.Instance.Unsubscribe<CharacterDamagedEvent>(OnCharacterDamaged);
+
+// 非泛型发布（适用于框架代码）
+EventBus.Instance.PublishInternal(gameEvent);
+```
+
+适用场景：
+- 核心规则通知表现层（UI、动画、音效）
+- 跨模块解耦通信
+- 一对多通知
+
+### 8.2 输入使用 Command
 
 不要让核心规则直接读 `UnityEngine.Input`。
 
@@ -438,12 +616,12 @@ Unity 侧只负责把键盘、鼠标、摇杆转换为 Command：
 
 ```text
 Input.GetKey / Joystick.Direction
-  -> UnityPlayerInputAdapter
+  -> UnityPlayerInputAdapter / UnityGlobalInputAdapter
   -> PlayerMoveCommand
   -> PlayerMovementService
 ```
 
-### 结果使用 Event
+### 8.3 结果使用 Event
 
 不要让核心规则直接刷新 UI 或播放动画。
 
@@ -491,7 +669,7 @@ InventoryChangedEvent
   -> ItemMap / ItemInfoUI / WorkerTaskManager bridge
 ```
 
-### Unity 类型使用 Adapter 转换
+### 8.4 Unity 类型使用 Adapter 转换
 
 核心层不要使用 `Vector2`、`Vector3`、`Vector3Int`。
 
@@ -545,7 +723,7 @@ public static class UnityVectorAdapter
 }
 ```
 
-### 外部能力使用接口
+### 8.5 外部能力使用接口
 
 核心规则需要外部能力时，用接口隔离：
 
@@ -574,30 +752,79 @@ public interface IItemDefinitionProvider
 }
 ```
 
-Unity 实现放在 Adapter 或 Infrastructure 中。
+Unity 实现放在 Adapter 中，通过 `ServiceLocator` 注册接口类型。
+
+### 8.6 生命周期使用 ITickable / IInitializable
+
+新增需要 Update 驱动或初始化顺序的组件时，实现 Domain 层接口：
+
+```csharp
+public sealed class MyNewSystem : ITickable
+{
+    public void Tick(float deltaTime)
+    {
+        // 每帧逻辑
+    }
+}
+
+public sealed class MyNewInitializer : IInitializable
+{
+    public void Initialize()
+    {
+        // 初始化逻辑
+    }
+}
+```
+
+在 `GlobalInit.BuildTickableList()` 或 `BuildInitializableList()` 中添加实例即可。
+
+### 8.7 选择改造模式的原则
+
+| 场景 | 推荐模式 |
+|---|---|
+| MonoBehaviour 中需要获取其他服务 | ServiceLocator.Get<T>() |
+| 非 MonoBehaviour 类需要外部依赖 | Provider 委托模式 或 构造函数注入 |
+| 核心规则通知表现层 | EventBus 事件驱动 |
+| Unity 类型替换为纯 C# 类型 | Adapter 转换 |
+| 新增定期执行的逻辑 | ITickable 接口 |
+| 新增需要初始化顺序的逻辑 | IInitializable 接口 |
+| 需要替换实现以支持测试 | 接口 + ServiceLocator 或 Provider 委托 |
 
 ## 9. 本项目优先推荐的后续改造
 
-项目已完成第一轮分层（`Domain/`、`UnityAdapter/`、`Network/` 已创建并有实际代码）。已完成的抽离包括但不限于：
+项目已完成多轮分层（`Domain/`、`UnityAdapter/`、`Core/`、`Network/` 已创建并有实际代码）。已完成的抽离包括但不限于：
 
 | 领域 | 已存在的 Domain 服务 |
 |---|---|
-| Worker | `WorkerTaskAssignmentService`、`WorkerTaskProgressService`、`WorkerConditionRuleService`、`WorkerTaskCongestionRuleService` |
+| Worker | `WorkerTaskAssignmentService`、`WorkerTaskProgressService`、`WorkerConditionRuleService`、`WorkerTaskCongestionRuleService`、`WorkerSupplyRuleService` |
 | Player | `PlayerDamagePolicy`、`PlayerMovementPolicy`、`PlayerVitalAlertRuleService` |
 | Inventory | `InventoryFoodReservationService`、`InventoryStackingService`、`InventoryTakeReservationService` |
 | Wave | `WaveRuleService`、`WaveBossRuleService`、`WaveConfigModel` |
 | Gameplay | `AchievementRuleService`、`SkillRuleService`、`ComboBonusRuleService`、`SessionResultRuleService` 等 |
-| Dialogue | `PromptAssemblyService`、`DialoguePromptProfileModel` |
-| Common | `EventBus`、`GameVector2`、`GameGridPosition`、`IGameTime`、`IGameLogger` 等 |
-| Unity Adapter | `UnityGameTime`、`UnityLogger`、`UnityVectorAdapter`、`UnityPlayerInputAdapter`、`UnityMapAdapter` 等 |
+| Dialogue | `PromptAssemblyService`、`DialoguePromptProfileModel`、`IPromptTemplateProvider` |
+| Common | `EventBus`、`GameVector2`、`GameGridPosition`、`IGameTime`、`IGameLogger`、`ITickable`、`IInitializable` 等 |
+| Unity Adapter | `UnityGameTime`、`UnityLogger`、`UnityVectorAdapter`、`UnityPlayerInputAdapter`、`UnityMapAdapter`、`UnityGlobalInputAdapter`、`UnityWaveSceneAdapter`、`UnityWaveTimeScheduler` 等（11 个文件） |
+
+| 基础设施 | 状态 |
+|---|---|
+| ServiceLocator（轻量 DI） | ✅ 已全局落地，约 50 个服务注册 |
+| ITickable / IInitializable（生命周期接口） | ✅ 已实现，4 个 ITickable + 4 个 IInitializable |
+| GlobalInputProcessor（输入处理解耦） | ✅ 已从 GlobalInit 提取 |
+| AWorkerTask Provider 委托模式 | ✅ 约 35 个静态 Provider 属性 |
+| EventBus + PublishInternal | ✅ 已增强，有单元测试 |
+| Dialogue 接口抽象 | ✅ INPCPromptProfileProvider + IPromptTemplateProvider |
+| 全局 Singleton → ServiceLocator 替换 | ✅ 已完成 |
 
 后续改造优先方向（按低风险到高风险排列）：
 
-1. **继续解耦 Gameplay 管理器**：`WaveManager`、`SkillManager`、`FloatingTextManager` 等仍有部分逻辑可直接调用 Domain 服务或走事件总线。
-2. **Character/Player 深入解耦**：`Player.cs` 输入/表现/规则仍有混合，进一步推进 Command → Domain → Event 链路。
-3. **InventoryManager 深入解耦**：库存预占、格子计算仍有部分在 MonoBehaviour 中。
-4. **存档/Photon 与 Domain 桥接**：确保 Domain 模型变更时存档兼容，Photon 同步走适配层而非直接引用。
-5. **扩展单元测试**：`Editor/Tests/Domain/` 已有测试基础，继续为新增 Domain 服务补充测试。
+1. **继续扩展 EventBus 事件驱动**：在现有 EventBus 基础上，为 Player、Inventory、Wave 模块增加更多事件类型，减少 Manager 对 UI 的直接调用。
+2. **Character/Player 深入解耦**：`Player.cs` 输入/表现/规则仍有混合，进一步推进 Command → Domain → Event 链路。可参考 `GlobalInputProcessor` 模式提取 Player 特定输入处理。
+3. **扩展 ITickable/IInitializable 覆盖范围**：将更多 Manager 的 Update/Start 逻辑迁移到 ITickable/IInitializable，减少 MonoBehaviour 生命周期依赖。
+4. **InventoryManager 深入解耦**：参考 `AWorkerTask` 的 Provider 委托模式，为 Inventory 操作提供可替换的委托。
+5. **WorkerTaskManager 继续解耦**：将任务队列、任务分配等纯逻辑提取到 Domain，MonoBehaviour 只做桥接。
+6. **WaveManager Coroutine 解耦**：通过 `IWaveTimeScheduler`（已有 UnityWaveTimeScheduler）替代直接 Coroutine 依赖。
+7. **存档/Photon 与 Domain 桥接**：确保 Domain 模型变更时存档兼容，Photon 同步走适配层而非直接引用。
+8. **扩展单元测试**：`Editor/Tests/Domain/` 已有测试基础，继续为新增 Domain 服务和 Provider 委托补充测试。
 
 选择模块时，请说明原因：
 
@@ -605,8 +832,9 @@ Unity 实现放在 Adapter 或 Infrastructure 中。
 本轮选择：WaveManager 进一步解耦
 原因：
 - Domain/Wave 已有 WaveRuleService 和 WaveConfigModel
+- UnityAdapter 已有 UnityWaveTimeScheduler 和 UnityWaveSceneAdapter
 - 可将 MonoBehaviour 中剩余的波次计时、生成调度逻辑进一步迁移
-- 风险较低，Domain 基础设施已就绪
+- 风险较低，Domain 和 Adapter 基础设施已就绪
 ```
 
 ## 10. 代码输出要求
@@ -623,6 +851,8 @@ Unity 实现放在 Adapter 或 Infrastructure 中。
 8. 如果涉及 Photon，本轮不要改变网络所有权逻辑，先把本地规则抽出来。
 9. 如果涉及存档，必须说明新旧数据如何兼容。
 10. 如果涉及 UI，必须说明事件订阅和取消订阅位置。
+11. 优先使用项目已有的解耦模式（ServiceLocator、Provider 委托、EventBus、ITickable/IInitializable）。
+12. 新增功能需要 Update 驱动时，优先实现 `ITickable` 而非直接写在 MonoBehaviour 中。
 
 代码块格式：
 
@@ -653,7 +883,7 @@ namespace LAB2D
 6. 如果有 EditMode 测试，运行对应纯 C# 单元测试。
 ```
 
-如果无法运行 Unity，请明确说明“未运行 Unity 验证”，并给出静态检查结果和建议手测路径。
+如果无法运行 Unity，请明确说明"未运行 Unity 验证"，并给出静态检查结果和建议手测路径。
 
 ## 12. 迁移复用分析格式
 
@@ -666,9 +896,13 @@ namespace LAB2D
 |---|---|---|---|
 | Worker 任务分配规则 | Domain/Worker | 可复用 | 不依赖 UnityEngine，只处理快照和任务模型 |
 | WorkerTaskManager MonoBehaviour | Character/Worker | 需要重写 | 依赖 Unity 生命周期、Worker 实例、DebugUI |
+| AWorkerTask Provider 委托 | Character/Worker/Task | 部分可复用 | 默认实现依赖 Unity Singleton，但委托本身可替换 |
 | Player 输入适配 | UnityAdapter/Input | 需要重写 | 依赖 Unity Input 和 Joystick |
 | InventoryGrid | Domain/Inventory | 可复用 | 纯 C# 数据结构 |
 | ItemMap 同步 | UnityAdapter/Map | 需要重写 | 依赖 TileMap 和 Unity Tilemap |
+| EventBus | Domain/Common | 可复用 | 纯 C# 实现，零 UnityEngine 依赖 |
+| ServiceLocator | Core | 可复用 | 纯 C# 实现，零 UnityEngine 依赖 |
+| ITickable/IInitializable | Domain/Common | 可复用 | 纯 C# 接口，引擎层重新实现驱动即可 |
 ```
 
 ## 13. 渐进式改造计划模板
@@ -770,6 +1004,8 @@ namespace LAB2D
 - 运行测试并手动回归主场景
 ```
 
+> **当前进度**：项目已完成阶段一~四的大部分工作。`Domain/` 已有丰富的纯 C# Service、Model、EventBus、值类型、生命周期接口；`UnityAdapter/` 已有 11 个适配器；`ServiceLocator` 已全局落地；`AWorkerTask` Provider 委托模式已成熟。当前应重点推进阶段三（EventBus 事件驱动扩展）和阶段五（单元测试扩展）。
+
 ## 14. 最终检查清单
 
 每轮方案最后输出：
@@ -787,6 +1023,9 @@ namespace LAB2D
 - [ ] Unity 类型通过 Adapter 转换
 - [ ] 输入通过 Command 或明确的参数进入规则层
 - [ ] 规则结果通过 Event、返回值或回调通知表现层
+- [ ] 新增外部依赖使用 ServiceLocator、Provider 委托或接口注入
+- [ ] 新增 Update 逻辑优先使用 ITickable 接口
+- [ ] 新增初始化逻辑优先使用 IInitializable 接口
 - [ ] 旧 MonoBehaviour 仍可作为兼容桥接
 - [ ] 保留现有 Prefab / Inspector / Photon 行为
 - [ ] 给出可执行验证步骤
@@ -806,3 +1045,4 @@ namespace LAB2D
 - 先保留兼容层，再替换调用方
 - 先抽规则和数据，再抽事件和适配
 - 每轮只改一个清晰模块
+- 优先使用项目已有的解耦模式，不引入新的基础设施
