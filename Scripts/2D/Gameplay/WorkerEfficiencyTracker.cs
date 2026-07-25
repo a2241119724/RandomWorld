@@ -4,10 +4,10 @@ namespace LAB2D.Gameplay
     using LAB2D;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using System;
     using System.Collections.Generic;
     using System.Text;
-    using UnityEngine;
 
     /// <summary>
     /// 工人工作效率追踪器。
@@ -42,7 +42,7 @@ namespace LAB2D.Gameplay
             /// <summary>死亡次数</summary>
             public int DeathCount;
 
-            /// <summary>上一次任务开始的时间（Time.time）</summary>
+            /// <summary>上一次任务开始的时间（this.GameTime.Time）</summary>
             public float LastTaskStartTime;
 
             /// <summary>上一次任务类型</summary>
@@ -51,10 +51,10 @@ namespace LAB2D.Gameplay
             /// <summary>累计任务预计耗时总和（maxProgress，秒）</summary>
             public float TotalEstimatedWorkTime;
 
-            /// <summary>记录创建时间（Time.time）</summary>
+            /// <summary>记录创建时间（this.GameTime.Time）</summary>
             public float CreatedTime;
 
-            /// <summary>最近一次完成任务的时间（Time.time）</summary>
+            /// <summary>最近一次完成任务的时间（this.GameTime.Time）</summary>
             public float LastCompletionTime;
 
             public WorkerEfficiencyRecord()
@@ -111,6 +111,9 @@ namespace LAB2D.Gameplay
 
         /// <summary>全局 Worker 死亡总数</summary>
         private int totalWorkerDeaths;
+        private IGameTime gameTime;
+
+        private IGameTime GameTime => this.gameTime ?? (this.gameTime = Core.ServiceLocator.Get<IGameTime>());
 
         /// <summary>Worker 效率变化事件（参数：Worker 名称）</summary>
         public event Action<string> WorkerEfficiencyChanged;
@@ -165,7 +168,7 @@ namespace LAB2D.Gameplay
 
             int instanceId = worker.GetInstanceID();
             WorkerEfficiencyRecord record = this.GetOrCreateRecord(worker, instanceId);
-            record.LastTaskStartTime = Time.time;
+            record.LastTaskStartTime = this.GameTime.Time;
             record.LastTaskType = task.TaskType;
         }
 
@@ -197,7 +200,7 @@ namespace LAB2D.Gameplay
             }
 
             record.TotalEstimatedWorkTime += 2.0f; // maxProgress 默认值为 2 秒
-            record.LastCompletionTime = Time.time;
+            record.LastCompletionTime = this.GameTime.Time;
 
             // 更新全局统计
             this.totalTasksCompleted++;
@@ -427,7 +430,7 @@ namespace LAB2D.Gameplay
             {
                 WorkerName = worker.name,
                 WorkerInstanceId = instanceId,
-                CreatedTime = Time.time,
+                CreatedTime = this.GameTime.Time,
             };
 
             this.records[instanceId] = record;
