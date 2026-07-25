@@ -16,6 +16,23 @@ namespace LAB2D.UI.Panel
     /// </summary>
     public class ForegroundPanel : ABasePanel<ForegroundPanel>
     {
+        /// <summary>
+        /// 武器攻击 RPC 提供者 — 在线模式下通过 PhotonView.RPC 广播攻击，
+        /// 离线模式下直接调用 weapon.Attack()。
+        /// 默认实现使用 GetComponent&lt;PhotonView&gt;.RPC，可在测试中替换为桩。
+        /// </summary>
+        internal static System.Action<GameObject, AWeaponObject> WeaponAttackRPCProvider { get; set; }
+            = (weaponGO, weapon) =>
+            {
+                if (Core.ServiceLocator.Get<NetworkConnect>().IsOnline)
+                {
+                    weaponGO.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
+                }
+                else
+                {
+                    weapon.Attack();
+                }
+            };
         private readonly List<Button> saveSlotButtons = new ();
         private GameObject saveSlotPanel;
         private GameObject overwriteConfirmPanel;
@@ -116,18 +133,12 @@ namespace LAB2D.UI.Panel
 
         private void ExecuteAttack()
         {
-            if (ServiceLocator.Get<PlayerManager>().Mine.Weapon != null)
+            GameObject weaponObj = ServiceLocator.Get<PlayerManager>().Mine?.Weapon;
+            if (weaponObj != null)
             {
-                AWeaponObject weapon = ServiceLocator.Get<PlayerManager>().Mine.Weapon.GetComponent<AWeaponObject>();
+                AWeaponObject weapon = weaponObj.GetComponent<AWeaponObject>();
                 weapon.IsCRT = UnityEngine.Random.Range(0.0f, 1.0f) < ServiceLocator.Get<PlayerManager>().Mine.CharacterDataLAB.CRT;
-                if (ServiceLocator.Get<NetworkConnect>().IsOnline)
-                {
-                    ServiceLocator.Get<PlayerManager>().Mine.Weapon.GetComponent<PhotonView>().RPC("Attack", RpcTarget.All);
-                }
-                else
-                {
-                    weapon.Attack();
-                }
+                WeaponAttackRPCProvider(weaponObj, weapon);
             }
         }
 
