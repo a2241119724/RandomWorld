@@ -56,6 +56,30 @@ namespace LAB2D.Character.Player
             };
 
         /// <summary>
+        /// 本地玩家 TagObject 设置提供者 — 将 Player 实例绑定到 Photon LocalPlayer.TagObject。
+        /// 默认实现使用 PhotonNetwork.LocalPlayer。
+        /// 可在测试中替换为无操作桩。
+        /// </summary>
+        internal static Action<Player> LocalPlayerTagObjectProvider { get; set; }
+            = (player) =>
+            {
+                if (player == null)
+                {
+                    return;
+                }
+
+                PhotonNetwork.LocalPlayer.TagObject = player;
+            };
+
+        /// <summary>
+        /// 本地玩家昵称提供者 — 获取 Photon 本地玩家的昵称。
+        /// 默认实现使用 PhotonNetwork.NickName。
+        /// 可在测试或离线模式中替换。
+        /// </summary>
+        internal static Func<string> LocalPlayerNameProvider { get; set; }
+            = () => PhotonNetwork.NickName;
+
+        /// <summary>
         /// 奔跑速度倍率，默认1.6倍
         /// </summary>
         private float runSpeedMultiplier = 1.6f;
@@ -161,8 +185,8 @@ namespace LAB2D.Character.Player
                     this.originalColor);
 
                 PlayerRegisterProvider(this);
-                PhotonNetwork.LocalPlayer.TagObject = this;
-                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
+                LocalPlayerTagObjectProvider(this);
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = LocalPlayerNameProvider();
                 PlayerData playerData = this.CharacterDataLAB as PlayerData;
                 this.RefreshUI();
             }

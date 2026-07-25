@@ -135,7 +135,7 @@ Scripts/2D/Editor/                    # Editor 工具 + Tests/Domain + Tests/Too
 - `IInitializable.Initialize()`：代替分散的 Awake/Start 初始化，按顺序批量执行
 - GlobalInit 维护 `orderedTickables` / `orderedInitializables` 列表，通过 `BuildTickableList()` / `BuildInitializableList()` 显式控制顺序
 - 当前 ITickable 实现：`WorkerUpdateSystem`、`GlobalInputProcessor`、`WorkerTaskManager`、`EnvironmentManager`、`PlayerVitalAlertManager`
-- 当前 IInitializable 实现：`AchievementManager`、`SkillManager`、`EquipmentBeamManager`、`EnemyLootManager`
+- 当前 IInitializable 实现：`AchievementManager`、`SkillManager`、`EquipmentBeamManager`、`EnemyLootManager`、`ComboBonusManager`
 
 #### 3. GlobalInputProcessor — 全局输入处理解耦
 
@@ -835,7 +835,7 @@ public sealed class MyNewInitializer : IInitializable
 | 基础设施 | 状态 |
 |---|---|
 | ServiceLocator（轻量 DI） | ✅ 已全局落地，约 50 个服务注册 |
-| ITickable / IInitializable（生命周期接口） | ✅ 已实现，5 个 ITickable + 4 个 IInitializable |
+| ITickable / IInitializable（生命周期接口） | ✅ 已实现，5 个 ITickable + 5 个 IInitializable |
 | GlobalInputProcessor（输入处理解耦） | ✅ 已从 GlobalInit 提取 |
 | AWorkerTask Provider 委托模式 | ✅ 约 35 个静态 Provider 属性 |
 | EventBus + PublishInternal | ✅ 已增强，有单元测试；已有 7 种事件类型（CharacterDamaged、PlayerStatusChanged、InventoryCellChanged、InventoryGridChanged、PlayerAttackRequested、PlayerSkillActivated、WorkerTaskQueueChanged） |
@@ -846,7 +846,7 @@ public sealed class MyNewInitializer : IInitializable
 
 1. ~~**Inventory EventBus 事件迁移**~~ ✅ 已完成：`ItemInfoUI` 已切换订阅 `InventoryGridChangedEvent`（纯结构化数据），`InventoryManager` 已停止发布 `InventoryCellChangedEvent`（2026-07）。
 2. **Character/Player 深入解耦**：`Player.cs` 输入/表现/规则仍有混合，进一步推进 Command → Domain → Event 链路。
-3. ~~**扩展 ITickable/IInitializable 覆盖范围**~~ 🔄 持续推进：WorkerTaskManager 已迁移至 ITickable（2026-07），当前 5 个 ITickable + 4 个 IInitializable。后续可将更多 Manager 的 Update/Start 逻辑迁移。
+3. ~~**扩展 ITickable/IInitializable 覆盖范围**~~ 🔄 持续推进：WorkerTaskManager 已迁移至 ITickable（2026-07），当前 5 个 ITickable + 5 个 IInitializable。后续可将更多 Manager 的 Update/Start 逻辑迁移。
 4. ~~**InventoryManager 深入解耦**~~ ✅ 已完成：内部数据存储已迁移至 `InventoryService`。
 5. ~~**WorkerTaskManager 继续解耦**~~ ✅ 已完成：ITickable + GameGridPosition API 迁移（2026-07）。WorkerTaskQueue、WorkerTaskSnapshot 等纯 C# 类型已在 Domain 层。剩余 `KDTree` 和 `transform.position` 采集属于合理的算法/表现层依赖。
 6. **WaveManager Coroutine 解耦**：通过 `IWaveTimeScheduler`（已有 UnityWaveTimeScheduler）替代直接 Coroutine 依赖。WaveManager 架构已很完善，此项为可选优化。
@@ -1046,8 +1046,10 @@ namespace LAB2D
 > - **Character 基类综合解耦** — 新增 `MoveSpeedProvider`（模式 B 委托）；`CheckBug` 嵌套类提取为独立 `CollisionBugDetector` 工具类（`Tool/CollisionBugDetector.cs`）；`CharacterData.ComputeAttribute()` 参数化，接受 `Attribute basicAttribute` 替代通过 `this.Character.basicAttribute` 反向引用，减弱 `CharacterData` → `Character`（MonoBehaviour）耦合。
 >
 > - **Photon 网络调用桥接** — `INetworkView` 新增 `IsMasterClient` 属性，`PunNetworkViewAdapter` / `OfflineNetworkView` 实现。`AWorkerTask` 新增 `NetworkIsMasterClientProvider` + `NetworkDestroyProvider` 两个静态委托。替换 9 处业务代码中的直接 Photon 调用：`ASeekEnemy.Death()`、`ACommonEnemy.Death()` → `NetworkView.IsMasterClient`；`AWorker.DeathProvider`、`ForegroundPanel`、`SyncDataTool`(3处) → `NetworkIsMasterClientProvider()`；`SeekEnemyDeadState`、`CommonEnemyDeadState`、`WorkerDeadState`、`BackpackMenuPanel` → `NetworkDestroyProvider`。`Player.cs` 清理 2 处冗余 `PhotonNetwork.IsConnected`（`NetworkView.IsOnline` 已封装）。**业务代码已零 Photon 直接调用**，剩余引用仅在 Adapter/Provider 层或注释中。
+> - **Player PhotonNetwork 残余引用提取** — 新增 `LocalPlayerTagObjectProvider`（`Action<Player>`）和 `LocalPlayerNameProvider`（`Func<string>`）两个 Provider 委托。将 `Player.Start()` 中最后 2 处 PhotonNetwork 直接调用（`PhotonNetwork.LocalPlayer.TagObject`、`PhotonNetwork.NickName`）替换为 Provider 调用。遵循项目已有的模式 B Provider 委托模式。Player.cs 的 PhotonNetwork 引用现已全部封装在 Provider 默认实现内部（2026-07）。
+> - **ComboBonusManager → IInitializable 迁移** — 实现 `IInitializable` 接口，`EnsureInitialized()` 私有方法提升为 `public void Initialize()`，新增 `IsInitialized` 公开属性。移除 5 个属性 getter（DamageMultiplier、ExperienceMultiplier、CurrentCombo、CurrentTierIndex、GetCurrentTierLabel）中的懒初始化守卫。由 `GlobalInit.BuildInitializableList()` 统一驱动初始化，IInitializable 实现总数增至 5 个（2026-07）。
 >
-> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**WaveManager 架构完善**（已有 `WaveRuleService`/`WaveBossRuleService`/`UnityWaveTimeScheduler`，可进一步迁移 Coroutine 调度）。
+> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**AWorkerTask Provider 默认值迁移至 GlobalInit**（消除 45 处 `.Instance` 调用）、**UI 层 ServiceLocator 迁移**（ItemInfoUI 32 处、RectBoxUI 23 处 .Instance 调用）。
 
 ## 14. 最终检查清单
 

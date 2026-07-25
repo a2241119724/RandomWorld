@@ -156,6 +156,7 @@ namespace LAB2D
                 ServiceLocator.Get<SkillManager>(),
                 ServiceLocator.Get<EquipmentBeamManager>(),
                 ServiceLocator.Get<EnemyLootManager>(),
+                ServiceLocator.Get<ComboBonusManager>(),
             };
         }
 

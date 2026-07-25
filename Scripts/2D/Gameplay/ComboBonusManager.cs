@@ -2,6 +2,7 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
     using System;
     using UnityEngine;
@@ -17,7 +18,7 @@ namespace LAB2D.Gameplay
     /// - Player.AddExperienceValue 中自动应用 ExperienceMultiplier
     /// - 外部系统可订阅 OnComboChanged / OnComboMilestoneReached / OnComboBroken 事件
     /// </summary>
-    public class ComboBonusManager : Singleton<ComboBonusManager>
+    public class ComboBonusManager : Singleton<ComboBonusManager>, IInitializable
     {
         /// <summary>
         /// 连击等级配置表：按连击数阈值定义伤害倍率和经验倍率。
@@ -61,11 +62,17 @@ namespace LAB2D.Gameplay
         private bool initialized;
 
         /// <summary>
-        /// 延迟初始化：首次访问任意公开属性或方法时，订阅 GameplaySessionStats 的 StatsChanged 事件，
-        /// 并立即同步当前连击状态，避免错过已累积的连击数据。
-        /// 采用延迟订阅而非构造函数中订阅，避免与 GameplaySessionStats 的构造顺序产生竞态。
+        /// 是否已完成初始化。由 GlobalInit.Start() 通过 IInitializable 接口统一调用 Initialize() 后置为 true。
         /// </summary>
-        private void EnsureInitialized()
+        public bool IsInitialized => this.initialized;
+
+        /// <summary>
+        /// 初始化连击系统：订阅 GameplaySessionStats 的 StatsChanged 事件，
+        /// 并立即同步当前连击状态，避免错过已累积的连击数据。
+        /// 由 GlobalInit.Start() 通过 IInitializable 接口统一调用，确保在 GameplaySessionStats 之后初始化。
+        /// 重复调用安全（幂等）。
+        /// </summary>
+        public void Initialize()
         {
             if (this.initialized)
             {
@@ -105,7 +112,6 @@ namespace LAB2D.Gameplay
         {
             get
             {
-                this.EnsureInitialized();
                 return this.damageMultiplier;
             }
         }
@@ -118,7 +124,6 @@ namespace LAB2D.Gameplay
         {
             get
             {
-                this.EnsureInitialized();
                 return this.experienceMultiplier;
             }
         }
@@ -130,7 +135,6 @@ namespace LAB2D.Gameplay
         {
             get
             {
-                this.EnsureInitialized();
                 return this.currentCombo;
             }
         }
@@ -142,7 +146,6 @@ namespace LAB2D.Gameplay
         {
             get
             {
-                this.EnsureInitialized();
                 return this.currentTierIndex;
             }
         }
@@ -253,7 +256,6 @@ namespace LAB2D.Gameplay
         /// <returns>等级标签，无等级时返回空字符串。</returns>
         public string GetCurrentTierLabel()
         {
-            this.EnsureInitialized();
             if (this.currentTierIndex >= 0 && this.currentTierIndex < Tiers.Length)
             {
                 return Tiers[this.currentTierIndex].Label;
