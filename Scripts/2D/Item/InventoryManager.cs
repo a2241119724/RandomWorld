@@ -5,13 +5,22 @@ namespace LAB2D.Item
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Inventory;
+    using LAB2D.UnityAdapter;
     using LAB2D.Item;
     using System.Collections.Generic;
     using System.Linq;
     using UnityEngine;
 
     /// <summary>
-    /// 仓库管理
+    /// 仓库管理（Singleton）。
+    ///
+    /// 本轮改造（v2）：
+    ///   - 内部数据存储已从 3 个并行 Dictionary 迁移到 Domain/InventoryService（包装 InventoryGrid）
+    ///   - posToResource / id2Resource / TypeToResource 不再作为独立字典维护，
+    ///     所有物品数据操作委托给 InventoryService，由 InventoryGrid 统一管理位置索引
+    ///   - preTakeResource / prePlaceResource 保留在 Manager 中（依赖 AWorker MonoBehaviour 引用）
+    ///   - 所有 public API 签名保持不变，调用方无需修改
+    ///   - Vector3Int ↔ GameGridPosition 转换在方法边界通过 UnityVectorAdapter 完成
     /// </summary>
     public class InventoryManager : Singleton<InventoryManager>
     {
@@ -20,63 +29,106 @@ namespace LAB2D.Item
         internal static System.Action<Vector3Int> ShowWearTaskProvider { get; set; }
             = (pos) => AddWearTaskUI.Instance.ShowWearTask(pos);
 
-        private readonly Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> id2Resource; // 同一个id对应的所有位置
-        private readonly Dictionary<Vector3Int, ResourceInfo> posToResource; // 根据pos查资源
+        // ---- v2: 纯数据操作委托给 Domain InventoryService ----
+        private InventoryService inventoryService;
+
+        // ---- Worker 相关的预留字典（依赖 AWorker MonoBehaviour，保留在 Manager 中） ----
         private readonly Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // 预申请资源
         private readonly Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // 预放置资源
+
         private readonly int capacity = 1000; // 单个cell的容量
-        private readonly InventoryStackingService stackingService;
-        private readonly InventoryFoodReservationService foodReservationService;
-        private readonly InventoryTakeReservationService takeReservationService;
 
         public InventoryManager()
         {
-            this.posToResource = new Dictionary<Vector3Int, ResourceInfo>();
-            this.id2Resource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
             this.preTakeResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
             this.prePlaceResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
-            this.stackingService = new InventoryStackingService();
-            this.foodReservationService = new InventoryFoodReservationService();
-            this.takeReservationService = new InventoryTakeReservationService();
-            this.TypeToResource = new Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>>();
         }
 
         /// <summary>
-        /// 同一个类型对应的所有位置
+        /// 初始化库存服务（延迟初始化，在 AddCells 时完成）。
+        /// 支持重复调用以重建网格（如地图变更时）。
         /// </summary>
-        public Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> TypeToResource { get; set; }
+        private void EnsureInventoryService(int width, int height)
+        {
+            if (this.inventoryService == null)
+            {
+                this.inventoryService = new InventoryService(
+                    managerName: this.GetType().Name,
+                    gridWidth: width,
+                    gridHeight: height,
+                    cellCapacity: this.capacity,
+                    itemTypeResolver: (itemId) => (int)AWorkerTask.ItemTypeProvider(itemId),
+                    eventPublisher: (e) => EventBusPublishProvider(e));
+            }
+        }
 
         /// <summary>
-        /// 新建仓库时，插入cell
-        /// posToResource,idToResource,typeToResource中的ResourceInfo公用
+        /// 同一个类型对应的所有位置。
+        /// [v2] 已废弃：改为通过 InventoryService.GetPositionsByType() 查询。
+        /// 保留属性以兼容旧调用方，但返回的是实时查询结果（每次访问新建 Dictionary，性能劣于旧实现）。
+        /// 建议新代码直接调用 GetPositionsByType()。
+        /// </summary>
+        public Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> TypeToResource
+        {
+            get
+            {
+                var result = new Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>>();
+                if (this.inventoryService == null)
+                {
+                    return result;
+                }
+
+                // 遍历所有已知物品类型
+                foreach (AItem.ItemTypeEnum itemType in System.Enum.GetValues(typeof(AItem.ItemTypeEnum)))
+                {
+                    var positions = this.inventoryService.GetPositionsByType((int)itemType);
+                    if (positions.Count > 0)
+                    {
+                        var dict = new Dictionary<Vector3Int, ResourceInfo>();
+                        foreach (GameGridPosition pos in positions)
+                        {
+                            ResourceInfo info = this.inventoryService.GetResourceInfo(pos);
+                            if (info != null && info.Id >= 0)
+                            {
+                                dict[UnityVectorAdapter.ToVector3Int(pos)] = info;
+                            }
+                        }
+
+                        if (dict.Count > 0)
+                        {
+                            result[itemType] = dict;
+                        }
+                    }
+                }
+
+                return result;
+            }
+            set
+            {
+                // [v2] 不再支持直接设置 TypeToResource。
+                // 设置操作被忽略，数据源已迁移至 InventoryService。
+                // 如需批量初始化，请使用 AddCells()。
+            }
+        }
+
+        /// <summary>
+        /// 新建仓库时，插入cell。
+        /// [v2] 初始化 InventoryService 网格。
         /// </summary>
         /// <param name="startPos">起始位置</param>
         /// <param name="width">宽度</param>
         /// <param name="length">高度</param>
         public void AddCells(Vector3Int startPos, int width = 10, int length = 7)
         {
-            // 外层字典需要拷贝,由于idTo中仅包含相同id的信息
-            if (!this.id2Resource.ContainsKey(-1))
-            {
-                this.id2Resource.Add(-1, new Dictionary<Vector3Int, ResourceInfo>());
-            }
+            this.EnsureInventoryService(width, length);
 
-            Dictionary<Vector3Int, ResourceInfo> resources = this.id2Resource[-1];
-            if (!this.TypeToResource.ContainsKey(AItem.ItemTypeEnum.Null))
-            {
-                this.TypeToResource.Add(AItem.ItemTypeEnum.Null, new Dictionary<Vector3Int, ResourceInfo>());
-            }
-
-            Dictionary<Vector3Int, ResourceInfo> typeTo = this.TypeToResource[AItem.ItemTypeEnum.Null];
             for (int i = 0; i < length; i++)
             {
                 for (int j = 0; j < width; j++)
                 {
                     Vector3Int pos = VectorTool.Add(startPos, i, j);
-                    ResourceInfo resourceInfo = new (-1, 0);
-                    this.posToResource.Add(pos, resourceInfo);
-                    resources.Add(pos, resourceInfo);
-                    typeTo.Add(pos, resourceInfo);
+                    GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(pos);
+                    this.inventoryService.EnsureCell(gridPos, this.capacity);
                 }
             }
         }
@@ -106,22 +158,28 @@ namespace LAB2D.Item
         /// <returns>是否足够</returns>
         public bool IsEnoughAndPrePlace(AWorker worker, ResourceInfo resourceInfo, bool isPre = false)
         {
+            if (this.inventoryService == null)
+            {
+                return false;
+            }
+
             // 对于不可堆叠的资源
             if (!AWorkerTask.ItemDataProvider(resourceInfo.Id).IsStackable)
             {
-                if (this.id2Resource.ContainsKey(-1))
+                // 查找空格子（id=-1）
+                var emptyPositions = this.inventoryService.GetPositionsById(-1);
+                if (emptyPositions.Count > 0)
                 {
-                    foreach (KeyValuePair<Vector3Int, ResourceInfo> cell in this.id2Resource[-1])
+                    foreach (GameGridPosition pos in emptyPositions)
                     {
-                        // 该位置没有被预放置
-                        if (this.IsAreadyPrePlace(cell.Key, resourceInfo.Id))
+                        if (this.IsAreadyPrePlace(UnityVectorAdapter.ToVector3Int(pos), resourceInfo.Id))
                         {
                             continue;
                         }
 
                         if (isPre)
                         {
-                            this.PrePlace(worker, cell.Key, resourceInfo);
+                            this.PrePlace(worker, UnityVectorAdapter.ToVector3Int(pos), resourceInfo);
                         }
 
                         return true;
@@ -132,26 +190,34 @@ namespace LAB2D.Item
             }
 
             // 对于可以堆叠的资源，先判断是否有相同的资源
-            Dictionary<Vector3Int, ResourceInfo> pre = new ();
+            Dictionary<Vector3Int, ResourceInfo> pre = new();
             int remaining = resourceInfo.Count;
 
-            // 若仓库中存在该id,对应位置的资源数量与该位置预放置资源的数量之和是否超过容量
-            if (this.id2Resource.ContainsKey(resourceInfo.Id))
+            // 若仓库中存在该id
+            var sameIdPositions = this.inventoryService.GetPositionsById(resourceInfo.Id);
+            if (sameIdPositions.Count > 0)
             {
-                foreach (KeyValuePair<Vector3Int, ResourceInfo> cell in this.id2Resource[resourceInfo.Id])
+                foreach (GameGridPosition pos in sameIdPositions)
                 {
-                    int count = this.stackingService.GetAvailableCapacity(
+                    Vector3Int unityPos = UnityVectorAdapter.ToVector3Int(pos);
+                    InventoryCell cell = this.inventoryService.GetCell(pos);
+                    if (cell == null)
+                    {
+                        continue;
+                    }
+
+                    int availableCapacity = this.inventoryService.Stacking.GetAvailableCapacity(
                         this.capacity,
-                        cell.Value.Count,
-                        this.GetPrePlaceCountByPos(cell.Key));
-                    if (count > 0)
+                        cell.Count,
+                        this.GetPrePlaceCountByPos(unityPos));
+                    if (availableCapacity > 0)
                     {
                         // 放置完了
-                        if (this.stackingService.CanPlaceAll(remaining, count))
+                        if (this.inventoryService.Stacking.CanPlaceAll(remaining, availableCapacity))
                         {
                             if (isPre)
                             {
-                                pre.Add(cell.Key, new ResourceInfo(resourceInfo.Id, remaining));
+                                pre.Add(unityPos, new ResourceInfo(resourceInfo.Id, remaining));
                                 foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in pre)
                                 {
                                     this.PrePlace(worker, pair.Key, pair.Value);
@@ -166,60 +232,67 @@ namespace LAB2D.Item
                         {
                             if (isPre)
                             {
-                                pre.Add(cell.Key, new ResourceInfo(resourceInfo.Id, count));
+                                pre.Add(unityPos, new ResourceInfo(resourceInfo.Id, availableCapacity));
                             }
 
-                            remaining -= count;
+                            remaining -= availableCapacity;
                         }
                     }
                 }
-
-                // 该id对应的所有cell满了不能放置资源，需要寻找空的cell
             }
 
             // 仓库中没有对应id的cell,需要寻找空的cell
-            if (!this.id2Resource.ContainsKey(-1))
+            var emptyPositionsForStack = this.inventoryService.GetPositionsById(-1);
+            if (emptyPositionsForStack.Count == 0)
             {
-                // LogManager.Instance.log("仓库满了", LogManager.LogLevel.Error);
+                AWorkerTask.LogProvider("仓库满了", LogManager.LogLevelEnum.Error);
                 return false;
             }
 
             // 找到没有预放置的位置
-            foreach (KeyValuePair<Vector3Int, ResourceInfo> cell in this.id2Resource[-1])
+            foreach (GameGridPosition pos in emptyPositionsForStack)
             {
-                // 该位置没有被预放置
-                if (!this.IsAreadyPrePlace(cell.Key, resourceInfo.Id))
+                Vector3Int unityPos = UnityVectorAdapter.ToVector3Int(pos);
+                if (this.IsAreadyPrePlace(unityPos, resourceInfo.Id))
                 {
-                    int count = this.stackingService.GetAvailableCapacity(
-                        this.capacity,
-                        cell.Value.Count,
-                        this.GetPrePlaceCountByPos(cell.Key));
+                    continue;
+                }
 
-                    // 放置完了
-                    if (this.stackingService.CanPlaceAll(remaining, count))
+                InventoryCell cell = this.inventoryService.GetCell(pos);
+                if (cell == null)
+                {
+                    continue;
+                }
+
+                int availableCapacity = this.inventoryService.Stacking.GetAvailableCapacity(
+                    this.capacity,
+                    cell.Count,
+                    this.GetPrePlaceCountByPos(unityPos));
+
+                // 放置完了
+                if (this.inventoryService.Stacking.CanPlaceAll(remaining, availableCapacity))
+                {
+                    if (isPre)
                     {
-                        if (isPre)
+                        pre.Add(unityPos, new ResourceInfo(resourceInfo.Id, remaining));
+                        foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in pre)
                         {
-                            pre.Add(cell.Key, new ResourceInfo(resourceInfo.Id, remaining));
-                            foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in pre)
-                            {
-                                this.PrePlace(worker, pair.Key, pair.Value);
-                            }
+                            this.PrePlace(worker, pair.Key, pair.Value);
                         }
-
-                        return true;
                     }
 
-                    // 没有放置完
-                    else
-                    {
-                        if (isPre)
-                        {
-                            pre.Add(cell.Key, new ResourceInfo(resourceInfo.Id, count));
-                        }
+                    return true;
+                }
 
-                        remaining -= count;
+                // 没有放置完
+                else
+                {
+                    if (isPre)
+                    {
+                        pre.Add(unityPos, new ResourceInfo(resourceInfo.Id, availableCapacity));
                     }
+
+                    remaining -= availableCapacity;
                 }
             }
 
@@ -230,7 +303,6 @@ namespace LAB2D.Item
 
         /// <summary>
         /// 判断仓库中是否对应类型的物品，并预申请资源
-        /// TODO 没有预取
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <param name="hungry">饥饿值</param>
@@ -238,22 +310,35 @@ namespace LAB2D.Item
         /// <returns>是否足够</returns>
         public bool IsEnoughFoodAndPreTake(AWorker worker, float hungry, bool isPre = false)
         {
-            if (!this.TypeToResource.ContainsKey(AItem.ItemTypeEnum.Food))
+            if (this.inventoryService == null)
             {
                 return false;
             }
 
-            Dictionary<Vector3Int, ResourceInfo> foods = new ();
-            foreach (KeyValuePair<Vector3Int, ResourceInfo> food in this.TypeToResource[AItem.ItemTypeEnum.Food])
+            var foodPositions = this.inventoryService.GetPositionsByType((int)AItem.ItemTypeEnum.Food);
+            if (foodPositions.Count == 0)
             {
-                float hungry1 = food.Value.Count * 10.0f;
+                return false;
+            }
+
+            Dictionary<Vector3Int, ResourceInfo> foods = new();
+            foreach (GameGridPosition pos in foodPositions)
+            {
+                Vector3Int unityPos = UnityVectorAdapter.ToVector3Int(pos);
+                InventoryCell cell = this.inventoryService.GetCell(pos);
+                if (cell == null || cell.IsEmpty)
+                {
+                    continue;
+                }
+
+                float hungryFromCell = cell.Count * 10.0f;
 
                 // 足够吃饱
-                if (hungry1 >= hungry)
+                if (hungryFromCell >= hungry)
                 {
                     if (isPre)
                     {
-                        foods.Add(food.Key, new ResourceInfo(food.Value.Id, (int)(hungry / 10.0f)));
+                        foods.Add(unityPos, new ResourceInfo(cell.ItemId, (int)(hungry / 10.0f)));
                         foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in foods)
                         {
                             this.PreTake(worker, pair.Key, pair.Value);
@@ -266,10 +351,10 @@ namespace LAB2D.Item
                 // 当前id吃不饱
                 else
                 {
-                    hungry -= hungry1;
+                    hungry -= hungryFromCell;
                     if (isPre)
                     {
-                        foods.Add(food.Key, DataTool.DeepCopyByBinary(food.Value));
+                        foods.Add(unityPos, new ResourceInfo(cell.ItemId, cell.Count));
                     }
                 }
             }
@@ -287,20 +372,26 @@ namespace LAB2D.Item
         /// <returns>是否有可吃的食物</returns>
         public bool IsFoodAvailableAndPreTake(AWorker worker, Vector3Int posMap, float hungry, bool isPre = false)
         {
-            if (!this.posToResource.ContainsKey(posMap))
+            if (this.inventoryService == null)
             {
                 return false;
             }
 
-            ResourceInfo resourceInfo = this.posToResource[posMap];
-            if (resourceInfo.Count <= 0 || AWorkerTask.ItemTypeProvider(resourceInfo.Id) != AItem.ItemTypeEnum.Food)
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+            InventoryCell cell = this.inventoryService.GetCell(gridPos);
+            if (cell == null || cell.IsEmpty)
             {
                 return false;
             }
 
-            int availableCount = resourceInfo.Count - this.GetPreTakeCountByPos(posMap);
-            int needCount = this.foodReservationService.GetNeededFoodCount(hungry, 10.0f);
-            int preTakeCount = this.foodReservationService.GetPreTakeCount(availableCount, needCount);
+            if (AWorkerTask.ItemTypeProvider(cell.ItemId) != AItem.ItemTypeEnum.Food)
+            {
+                return false;
+            }
+
+            int availableCount = cell.Count - this.GetPreTakeCountByPos(posMap);
+            int needCount = this.inventoryService.FoodReservation.GetNeededFoodCount(hungry, 10.0f);
+            int preTakeCount = this.inventoryService.FoodReservation.GetPreTakeCount(availableCount, needCount);
             if (preTakeCount <= 0)
             {
                 return false;
@@ -308,7 +399,7 @@ namespace LAB2D.Item
 
             if (isPre)
             {
-                this.PreTake(worker, posMap, new ResourceInfo(resourceInfo.Id, preTakeCount));
+                this.PreTake(worker, posMap, new ResourceInfo(cell.ItemId, preTakeCount));
             }
 
             return true;
@@ -322,19 +413,27 @@ namespace LAB2D.Item
         /// <returns>位置</returns>
         public Vector3Int IsContainSeedAndPreTake(AWorker worker, bool isPre = false)
         {
-            if (!this.TypeToResource.ContainsKey(AItem.ItemTypeEnum.Seed) || this.TypeToResource[AItem.ItemTypeEnum.Seed].Count == 0)
+            if (this.inventoryService == null)
             {
                 return default;
             }
 
-            Dictionary<Vector3Int, ResourceInfo>.Enumerator enumerator = this.TypeToResource[AItem.ItemTypeEnum.Seed].GetEnumerator();
-            enumerator.MoveNext();
-            if (isPre)
+            var seedPositions = this.inventoryService.GetPositionsByType((int)AItem.ItemTypeEnum.Seed);
+            if (seedPositions.Count == 0)
             {
-                this.PreTake(worker, enumerator.Current.Key, enumerator.Current.Value);
+                return default;
             }
 
-            return enumerator.Current.Key;
+            GameGridPosition firstPos = seedPositions[0];
+            Vector3Int unityPos = UnityVectorAdapter.ToVector3Int(firstPos);
+            InventoryCell cell = this.inventoryService.GetCell(firstPos);
+
+            if (isPre && cell != null && !cell.IsEmpty)
+            {
+                this.PreTake(worker, unityPos, new ResourceInfo(cell.ItemId, cell.Count));
+            }
+
+            return unityPos;
         }
 
         /// <summary>
@@ -344,21 +443,35 @@ namespace LAB2D.Item
         /// <param name="resourceInfo">资源信息</param>
         public void AddItem(Vector3Int posMap, ResourceInfo resourceInfo)
         {
-            if (!this.posToResource.ContainsKey(posMap))
+            if (this.inventoryService == null)
             {
-                this.posToResource.Add(posMap, resourceInfo);
-            }
-            else
-            {
-                if (resourceInfo.Id != this.posToResource[posMap].Id)
-                {
-                    return;
-                }
-
-                this.posToResource[posMap].Count += resourceInfo.Count;
+                return;
             }
 
-            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+
+            // 确保格子存在
+            this.inventoryService.EnsureCell(gridPos, this.capacity);
+
+            // 检查是否同 ID（不同 ID 不允许在同一格子叠加）
+            InventoryCell cell = this.inventoryService.GetCell(gridPos);
+            if (cell != null && !cell.IsEmpty && cell.ItemId != resourceInfo.Id)
+            {
+                return;
+            }
+
+            if (!this.inventoryService.AddItem(gridPos, resourceInfo.Id, resourceInfo.Count))
+            {
+                return;
+            }
+
+            EventBusPublishProvider(new InventoryCellChangedEvent
+            {
+                ManagerName = this.GetType().Name,
+                GridX = posMap.x,
+                GridY = posMap.y,
+                CellInfo = this.ToString(posMap),
+            });
         }
 
         /// <summary>
@@ -369,7 +482,7 @@ namespace LAB2D.Item
         /// <returns>资源信息</returns>
         public ResourceInfo AddItemByPrePlace(AWorker worker, Vector3Int posMap)
         {
-            if (!this.prePlaceResource[worker].ContainsKey(posMap))
+            if (!this.prePlaceResource.ContainsKey(worker) || !this.prePlaceResource[worker].ContainsKey(posMap))
             {
                 AWorkerTask.LogProvider("没有预放置资源", LogManager.LogLevelEnum.Error);
                 return null;
@@ -381,15 +494,20 @@ namespace LAB2D.Item
             this.prePlaceResource[worker].Remove(posMap);
 
             // 添加到仓库真正的数据
-            // 既然已经预放置了，那一定可以放置，不会超出容量
-            if (this.posToResource[posMap].Id == -1)
+            if (this.inventoryService != null)
             {
-                this.TransferResource(posMap, -1, resourceInfo.Id, AItem.ItemTypeEnum.Null, AWorkerTask.ItemTypeProvider(resourceInfo.Id));
+                GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+                this.inventoryService.EnsureCell(gridPos, this.capacity);
+                this.inventoryService.AddItem(gridPos, resourceInfo.Id, resourceInfo.Count);
             }
 
-            this.posToResource[posMap].Id = resourceInfo.Id;
-            this.posToResource[posMap].Count += resourceInfo.Count;
-            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
+            EventBusPublishProvider(new InventoryCellChangedEvent
+            {
+                ManagerName = this.GetType().Name,
+                GridX = posMap.x,
+                GridY = posMap.y,
+                CellInfo = this.ToString(posMap),
+            });
             return resourceInfo;
         }
 
@@ -416,18 +534,30 @@ namespace LAB2D.Item
         /// <returns>资源信息</returns>
         public ResourceInfo SubAllItemByPos(Vector3Int posMap)
         {
-            if (!this.posToResource.ContainsKey(posMap))
+            if (this.inventoryService == null)
+            {
+                return null;
+            }
+
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+            InventoryCell cell = this.inventoryService.GetCell(gridPos);
+            if (cell == null || cell.IsEmpty)
             {
                 AWorkerTask.LogProvider("没有资源，错误", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
-            this.TransferResource(posMap, this.posToResource[posMap].Id, -1, AWorkerTask.ItemTypeProvider(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
-            ResourceInfo resourceInfo = DataTool.DeepCopyByBinary(this.posToResource[posMap]);
-            this.posToResource[posMap].Id = -1;
-            this.posToResource[posMap].Count = 0;
+            ResourceInfo resourceInfo = new ResourceInfo(cell.ItemId, cell.Count);
+            this.inventoryService.ClearCell(gridPos);
             AWorkerTask.ItemMapProvider().DeleteTile(posMap);
-            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
+
+            EventBusPublishProvider(new InventoryCellChangedEvent
+            {
+                ManagerName = this.GetType().Name,
+                GridX = posMap.x,
+                GridY = posMap.y,
+                CellInfo = this.ToString(posMap),
+            });
             return resourceInfo;
         }
 
@@ -438,30 +568,41 @@ namespace LAB2D.Item
         /// <param name="resourceInfo">资源信息</param>
         public void SubItem(Vector3Int posMap, ResourceInfo resourceInfo)
         {
-            if (!this.posToResource.ContainsKey(posMap))
+            if (this.inventoryService == null)
+            {
+                return;
+            }
+
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+            InventoryCell cell = this.inventoryService.GetCell(gridPos);
+            if (cell == null || cell.IsEmpty)
             {
                 AWorkerTask.LogProvider("没有资源，错误", LogManager.LogLevelEnum.Error);
                 return;
             }
 
-            this.posToResource[posMap].Count -= resourceInfo.Count;
+            int taken = this.inventoryService.TakeItem(gridPos, resourceInfo.Count);
 
             // 如果正好取完
-            if (this.posToResource[posMap].Count == 0)
+            cell = this.inventoryService.GetCell(gridPos);
+            if (cell == null || cell.IsEmpty)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, AWorkerTask.ItemTypeProvider(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
                 AWorkerTask.ItemMapProvider().DeleteTile(posMap);
 
                 // 食物被吃完删除任务
-                if (AWorkerTask.ItemTypeProvider(this.posToResource[posMap].Id) == AItem.ItemTypeEnum.Food)
+                if (AWorkerTask.ItemTypeProvider(cell != null ? cell.ItemId : -1) == AItem.ItemTypeEnum.Food)
                 {
                     AWorkerTask.DeleteHungryTaskProvider(posMap);
                 }
-
-                this.posToResource[posMap].Id = -1;
             }
 
-            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
+            EventBusPublishProvider(new InventoryCellChangedEvent
+            {
+                ManagerName = this.GetType().Name,
+                GridX = posMap.x,
+                GridY = posMap.y,
+                CellInfo = this.ToString(posMap),
+            });
         }
 
         /// <summary>
@@ -488,26 +629,33 @@ namespace LAB2D.Item
             }
 
             // 减少仓库真正的数据
-            this.posToResource[posMap].Count -= resourceInfo.Count;
-
-            // 如果正好取完
-            if (this.posToResource[posMap].Count <= 0)
+            if (this.inventoryService != null)
             {
-                this.TransferResource(posMap, this.posToResource[posMap].Id, -1, AWorkerTask.ItemTypeProvider(this.posToResource[posMap].Id), AItem.ItemTypeEnum.Null);
-                AWorkerTask.ItemMapProvider().DeleteTile(posMap);
+                GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+                this.inventoryService.TakeItem(gridPos, resourceInfo.Count);
 
-                // 食物被吃完删除任务
-                if (AWorkerTask.ItemTypeProvider(this.posToResource[posMap].Id) == AItem.ItemTypeEnum.Food)
+                InventoryCell cell = this.inventoryService.GetCell(gridPos);
+                if (cell == null || cell.IsEmpty)
                 {
-                    AWorkerTask.DeleteHungryTaskProvider(posMap);
-                }
+                    AWorkerTask.ItemMapProvider().DeleteTile(posMap);
 
-                this.posToResource[posMap].Id = -1;
+                    // 食物被吃完删除任务
+                    int itemId = cell != null ? cell.ItemId : -1;
+                    if (itemId >= 0 && AWorkerTask.ItemTypeProvider(itemId) == AItem.ItemTypeEnum.Food)
+                    {
+                        AWorkerTask.DeleteHungryTaskProvider(posMap);
+                    }
+                }
             }
 
-            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = posMap.x, GridY = posMap.y, CellInfo = this.ToString(posMap) });
+            EventBusPublishProvider(new InventoryCellChangedEvent
+            {
+                ManagerName = this.GetType().Name,
+                GridX = posMap.x,
+                GridY = posMap.y,
+                CellInfo = this.ToString(posMap),
+            });
 
-            // 不够，既然我已经预取了，那说明肯定是够的
             return resourceInfo;
         }
 
@@ -520,23 +668,16 @@ namespace LAB2D.Item
         /// <returns>是否足够</returns>
         public bool IsEnoughAndPreTake(AWorker worker, Dictionary<int, ResourceInfo> needResource, bool isPre = false)
         {
+            if (this.inventoryService == null)
+            {
+                return false;
+            }
+
             foreach (KeyValuePair<int, ResourceInfo> need in needResource)
             {
-                if (this.id2Resource.ContainsKey(need.Key))
-                {
-                    int count = 0;
-                    foreach (KeyValuePair<Vector3Int, ResourceInfo> resource in this.id2Resource[need.Key])
-                    {
-                        count += resource.Value.Count;
-                    }
-
-                    // id对应的总数量减去预取的资源数量，小于需求数量，不满足
-                    if (count - this.GetPreTakeCountById(need.Key) < need.Value.Count)
-                    {
-                        return false;
-                    }
-                }
-                else
+                int totalAvailable = this.inventoryService.GetTotalCount(need.Key);
+                int preTaken = this.GetPreTakeCountById(need.Key);
+                if (totalAvailable - preTaken < need.Value.Count)
                 {
                     return false;
                 }
@@ -548,26 +689,31 @@ namespace LAB2D.Item
                 AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
                 foreach (KeyValuePair<int, ResourceInfo> need in needResource)
                 {
-                    // 每个Cell预取完之后剩余Cell可预取的数量,至少取need.Value.count
-                    int remaining = this.takeReservationService.GetTargetTakeCount(
+                    int remaining = this.inventoryService.TakeReservation.GetTargetTakeCount(
                         need.Value.Count,
                         workerData.MaxResourceCount);
 
-                    // 按照Worker携带的最大值预取,如果不够最大值就取完所有资源
-                    foreach (KeyValuePair<Vector3Int, ResourceInfo> resource in this.id2Resource[need.Key])
+                    var positions = this.inventoryService.GetPositionsById(need.Key);
+                    foreach (GameGridPosition pos in positions)
                     {
-                        int count = this.takeReservationService.GetAvailableTakeCount(
-                            resource.Value.Count,
-                            this.GetPreTakeCountByPos(resource.Key));
-                        if (count < remaining)
+                        Vector3Int unityPos = UnityVectorAdapter.ToVector3Int(pos);
+                        InventoryCell cell = this.inventoryService.GetCell(pos);
+                        if (cell == null || cell.IsEmpty)
                         {
-                            remaining -= count;
-                            this.PreTake(worker, resource.Key, new ResourceInfo(need.Key, count));
+                            continue;
+                        }
+
+                        int availableCount = this.inventoryService.TakeReservation.GetAvailableTakeCount(
+                            cell.Count,
+                            this.GetPreTakeCountByPos(unityPos));
+                        if (availableCount < remaining)
+                        {
+                            remaining -= availableCount;
+                            this.PreTake(worker, unityPos, new ResourceInfo(need.Key, availableCount));
                         }
                         else
                         {
-                            // 当前id取够了，不需要再取了
-                            this.PreTake(worker, resource.Key, new ResourceInfo(need.Key, remaining));
+                            this.PreTake(worker, unityPos, new ResourceInfo(need.Key, remaining));
                             break;
                         }
                     }
@@ -583,7 +729,19 @@ namespace LAB2D.Item
         /// <param name="pos">位置</param>
         public void ShowWearMenu(Vector3Int pos)
         {
-            AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(this.posToResource[pos].Id);
+            if (this.inventoryService == null)
+            {
+                return;
+            }
+
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(pos);
+            InventoryCell cell = this.inventoryService.GetCell(gridPos);
+            if (cell == null || cell.IsEmpty)
+            {
+                return;
+            }
+
+            AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(cell.ItemId);
             if (itemType == AItem.ItemTypeEnum.Weapon || itemType == AItem.ItemTypeEnum.Equipment)
             {
                 ShowWearTaskProvider(pos);
@@ -597,27 +755,46 @@ namespace LAB2D.Item
         /// <returns>信息</returns>
         public string ToString(Vector3Int pos)
         {
-            if (!this.posToResource.ContainsKey(pos))
+            if (this.inventoryService == null)
             {
                 return string.Empty;
             }
 
-            ResourceInfo resourceInfo = this.posToResource[pos];
-            ItemData itemData = AWorkerTask.ItemDataProvider(resourceInfo.Id);
-            string text;
-            if (itemData != null)
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(pos);
+            InventoryCell cell = this.inventoryService.GetCell(gridPos);
+            if (cell == null)
             {
-                text = $"id:{resourceInfo.Id}\n" +
-                    $"name:{itemData.CnName}\n" +
-                    $"type:{itemData.Type}\n" +
-                    $"count:{resourceInfo.Count}\n" +
-                    $"info:{itemData.Info}\n" +
-                    $"isStackable:{itemData.IsStackable}\n";
+                return string.Empty;
+            }
 
-                AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(resourceInfo.Id);
-                if (itemType == AItem.ItemTypeEnum.Weapon || itemType == AItem.ItemTypeEnum.Equipment)
+            ResourceInfo resourceInfo = cell.IsEmpty
+                ? new ResourceInfo(-1, 0)
+                : new ResourceInfo(cell.ItemId, cell.Count);
+
+            // 空格子（id=-1）不需要查询 ItemData，避免 "没有id的道具" 错误日志
+            string text;
+            if (resourceInfo.Id >= 0)
+            {
+                ItemData itemData = AWorkerTask.ItemDataProvider(resourceInfo.Id);
+                if (itemData != null)
                 {
-                    text += $"equipSlot:{itemData.EquipSlot}\n";
+                    text = $"id:{resourceInfo.Id}\n" +
+                        $"name:{itemData.CnName}\n" +
+                        $"type:{itemData.Type}\n" +
+                        $"count:{resourceInfo.Count}\n" +
+                        $"info:{itemData.Info}\n" +
+                        $"isStackable:{itemData.IsStackable}\n";
+
+                    AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(resourceInfo.Id);
+                    if (itemType == AItem.ItemTypeEnum.Weapon || itemType == AItem.ItemTypeEnum.Equipment)
+                    {
+                        text += $"equipSlot:{itemData.EquipSlot}\n";
+                    }
+                }
+                else
+                {
+                    text = $"id:{resourceInfo.Id}\n" +
+                        $"count:{resourceInfo.Count}\n";
                 }
             }
             else
@@ -650,18 +827,20 @@ namespace LAB2D.Item
         }
 
         /// <summary>
-        /// 通过位置获取资源
+        /// 通过位置获取资源。
+        /// [v2] 返回新建的 ResourceInfo 副本，不再返回内部可变引用。
         /// </summary>
         /// <param name="posMap">位置</param>
         /// <returns>资源</returns>
         public ResourceInfo GetResourceByPos(Vector3Int posMap)
         {
-            if (this.posToResource.ContainsKey(posMap))
+            if (this.inventoryService == null)
             {
-                return this.posToResource[posMap];
+                return null;
             }
 
-            return null;
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+            return this.inventoryService.GetResourceInfo(gridPos);
         }
 
         /// <summary>
@@ -681,6 +860,19 @@ namespace LAB2D.Item
             }
         }
 
+        // ---- v2 新增：Domain 层查询方法（供测试和未来迁移使用） ----
+
+        /// <summary>
+        /// [v2] 获取内部 InventoryService 实例（供测试和未来迁移使用）。
+        /// 外部代码应优先使用现有 public API；此方法为过渡期提供。
+        /// </summary>
+        public InventoryService GetInventoryService()
+        {
+            return this.inventoryService;
+        }
+
+        // ---- 私有方法 ----
+
         /// <summary>
         /// 通过pos获取预放置资源的数量
         /// </summary>
@@ -693,7 +885,7 @@ namespace LAB2D.Item
             {
                 if (prePlace.Value.ContainsKey(pos))
                 {
-                    count += prePlace.Value.Count;
+                    count += prePlace.Value[pos].Count;
                 }
             }
 
@@ -722,7 +914,7 @@ namespace LAB2D.Item
                 return;
             }
 
-            Dictionary<Vector3Int, ResourceInfo> dict = new ();
+            Dictionary<Vector3Int, ResourceInfo> dict = new();
             dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
             this.prePlaceResource.Add(worker, dict);
             EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
@@ -738,7 +930,6 @@ namespace LAB2D.Item
         {
             foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
-                // 其他的id已经预放置了，换下一个Cell
                 if (prePlace.Value.ContainsKey(pos) && prePlace.Value[pos].Id != id)
                 {
                     return true;
@@ -746,28 +937,6 @@ namespace LAB2D.Item
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// 通过id获取预放置资源的数量
-        /// </summary>
-        /// <param name="id">ID</param>
-        /// <returns>预放置的数量</returns>
-        private int GetPrePlaceCountById(int id)
-        {
-            int count = 0;
-            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
-            {
-                foreach (KeyValuePair<Vector3Int, ResourceInfo> pre in prePlace.Value)
-                {
-                    if (pre.Value.Id == id)
-                    {
-                        count += pre.Value.Count;
-                    }
-                }
-            }
-
-            return count;
         }
 
         /// <summary>
@@ -780,7 +949,7 @@ namespace LAB2D.Item
         {
             if (!this.preTakeResource.ContainsKey(worker))
             {
-                Dictionary<Vector3Int, ResourceInfo> dict = new ();
+                Dictionary<Vector3Int, ResourceInfo> dict = new();
                 dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 this.preTakeResource.Add(worker, dict);
                 EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
@@ -815,55 +984,18 @@ namespace LAB2D.Item
         private int GetPreTakeCountById(int id)
         {
             int count = 0;
-            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.preTakeResource)
+            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> pre in this.preTakeResource)
             {
-                foreach (KeyValuePair<Vector3Int, ResourceInfo> pre in prePlace.Value)
+                foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in pre.Value)
                 {
-                    if (pre.Value.Id == id)
+                    if (pair.Value.Id == id)
                     {
-                        count += pre.Value.Count;
+                        count += pair.Value.Count;
                     }
                 }
             }
 
             return count;
-        }
-
-        /// <summary>
-        /// 更新idToResource,typeToResource
-        /// </summary>
-        /// <param name="pos">位置</param>
-        /// <param name="oldId">旧的ID</param>
-        /// <param name="newId">新的ID</param>
-        /// <param name="oldType">旧的类型</param>
-        /// <param name="newType">新的类型</param>
-        private void TransferResource(Vector3Int pos, int oldId, int newId, AItem.ItemTypeEnum oldType, AItem.ItemTypeEnum newType)
-        {
-            // idToResource
-            this.id2Resource[oldId].Remove(pos);
-            if (this.id2Resource.ContainsKey(newId))
-            {
-                this.id2Resource[newId].Add(pos, this.posToResource[pos]);
-            }
-            else
-            {
-                Dictionary<Vector3Int, ResourceInfo> dict = new ();
-                dict.Add(pos, this.posToResource[pos]);
-                this.id2Resource.Add(newId, dict);
-            }
-
-            // typeToResource
-            this.TypeToResource[oldType].Remove(pos);
-            if (this.TypeToResource.ContainsKey(newType))
-            {
-                this.TypeToResource[newType].Add(pos, this.posToResource[pos]);
-            }
-            else
-            {
-                Dictionary<Vector3Int, ResourceInfo> dict = new ();
-                dict.Add(pos, this.posToResource[pos]);
-                this.TypeToResource.Add(newType, dict);
-            }
         }
     }
 }

@@ -39,6 +39,9 @@ namespace LAB2D.Domain.Inventory
             InventoryCell cell = new InventoryCell(capacity);
             this.cellsByPos[position] = cell;
             this.CellCount++;
+
+            // 空格子加入 id=-1 索引，供 IsEnoughAndPrePlace 等查找可用空格子
+            this.AddToEmptyIndex(position);
             return cell;
         }
 
@@ -53,6 +56,11 @@ namespace LAB2D.Domain.Inventory
             if (!cell.IsEmpty)
             {
                 this.RemoveFromIndex(cell.ItemId, position);
+            }
+            else
+            {
+                // 空格子从 id=-1 索引中移除
+                this.RemoveFromEmptyIndex(position);
             }
 
             this.cellsByPos.Remove(position);
@@ -84,6 +92,8 @@ namespace LAB2D.Domain.Inventory
 
             if (wasEmpty)
             {
+                // 从空格子索引移除，再加入新物品索引
+                this.RemoveFromEmptyIndex(position);
                 this.AddToIndex(itemId, position);
             }
             else if (oldItemId != itemId)
@@ -103,10 +113,13 @@ namespace LAB2D.Domain.Inventory
                 return 0;
             }
 
+            int oldItemId = cell.ItemId;
             int taken = cell.Take(amount);
             if (taken > 0 && cell.IsEmpty)
             {
-                this.RemoveFromIndex(cell.ItemId < 0 ? -1 : -1, position);
+                // 物品被取完：从旧物品索引移除，加入空格子索引
+                this.RemoveFromIndex(oldItemId, position);
+                this.AddToEmptyIndex(position);
             }
 
             return taken;
@@ -191,7 +204,8 @@ namespace LAB2D.Domain.Inventory
                 list.Add(position);
             }
 
-            if (this.itemTypeResolver != null)
+            // 类型索引仅对真实物品维护（id>=0），空格子（id=-1）不需要类型索引
+            if (this.itemTypeResolver != null && itemId >= 0)
             {
                 int type = this.itemTypeResolver(itemId);
                 if (!this.positionsByType.TryGetValue(type, out List<GameGridPosition> typeList))
@@ -209,7 +223,8 @@ namespace LAB2D.Domain.Inventory
 
         private void RemoveFromIndex(int itemId, GameGridPosition position)
         {
-            if (itemId >= 0 && this.positionsById.TryGetValue(itemId, out List<GameGridPosition> list))
+            // positionsById 始终维护（包括 id=-1 的空格子索引）
+            if (this.positionsById.TryGetValue(itemId, out List<GameGridPosition> list))
             {
                 list.Remove(position);
                 if (list.Count == 0)
@@ -218,6 +233,7 @@ namespace LAB2D.Domain.Inventory
                 }
             }
 
+            // 类型索引仅对真实物品维护（id>=0）
             if (this.itemTypeResolver != null && itemId >= 0)
             {
                 int type = this.itemTypeResolver(itemId);
@@ -228,6 +244,38 @@ namespace LAB2D.Domain.Inventory
                     {
                         this.positionsByType.Remove(type);
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 将空格子加入 id=-1 索引。
+        /// </summary>
+        private void AddToEmptyIndex(GameGridPosition position)
+        {
+            if (!this.positionsById.TryGetValue(-1, out List<GameGridPosition> list))
+            {
+                list = new List<GameGridPosition>();
+                this.positionsById[-1] = list;
+            }
+
+            if (!list.Contains(position))
+            {
+                list.Add(position);
+            }
+        }
+
+        /// <summary>
+        /// 从 id=-1 索引中移除空格子。
+        /// </summary>
+        private void RemoveFromEmptyIndex(GameGridPosition position)
+        {
+            if (this.positionsById.TryGetValue(-1, out List<GameGridPosition> list))
+            {
+                list.Remove(position);
+                if (list.Count == 0)
+                {
+                    this.positionsById.Remove(-1);
                 }
             }
         }

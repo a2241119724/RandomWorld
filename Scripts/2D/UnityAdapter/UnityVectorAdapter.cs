@@ -56,5 +56,14 @@ namespace LAB2D.UnityAdapter
         {
             return new Vector3Int(value.X, value.Y, value.Z);
         }
+
+        /// <summary>
+        /// 将领域 GameGridPosition 转换为 Unity Vector3Int（便捷别名）。
+        /// 与 ToUnityVector3Int 行为相同，命名更简洁。
+        /// </summary>
+        public static Vector3Int ToVector3Int(GameGridPosition value)
+        {
+            return new Vector3Int(value.X, value.Y, value.Z);
+        }
     }
 }
