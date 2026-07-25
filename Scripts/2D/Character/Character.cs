@@ -49,9 +49,9 @@ namespace LAB2D.Character
         protected SpriteRenderer spriteRenderer;
 
         /// <summary>
-        /// 检测bug
+        /// 碰撞 Bug 检测器。
         /// </summary>
-        protected CheckBug checkBug;
+        protected CollisionBugDetector collisionBugDetector;
 
         /// <summary>
         /// 角色基础属性
@@ -90,6 +90,14 @@ namespace LAB2D.Character
             };
 
         /// <summary>
+        /// 移动速度提供者 — 获取角色当前移动速度。
+        /// 默认实现返回实例字段 MoveSpeed。
+        /// 可在测试中替换以模拟不同速度配置。
+        /// </summary>
+        public static System.Func<Character, float> MoveSpeedProvider { get; set; }
+            = (c) => c.MoveSpeed;
+
+        /// <summary>
         /// 当前装备的武器物体
         /// </summary>
         public GameObject Weapon { get; set; }
@@ -122,7 +130,7 @@ namespace LAB2D.Character
                 AWorkerTask.LogProvider("CharacterRoot GameObject not found in scene, character will be placed at root", LogManager.LogLevelEnum.Error);
             }
 
-            this.checkBug = new CheckBug();
+            this.collisionBugDetector = new CollisionBugDetector();
         }
 
         public virtual void Start()
@@ -224,7 +232,7 @@ namespace LAB2D.Character
             if (result.LeveledUp)
             {
                 LevelUpTipProvider.Invoke("UP " + this.CharacterDataLAB.Level);
-                this.CharacterDataLAB.ComputeAttribute();
+                this.CharacterDataLAB.ComputeAttribute(this.basicAttribute);
             }
         }
 
@@ -372,7 +380,10 @@ namespace LAB2D.Character
                 set
                 {
                     this.character = value;
-                    this.ComputeAttribute();
+                    if (this.character != null)
+                    {
+                        this.ComputeAttribute(this.character.basicAttribute);
+                    }
                 }
             }
 
@@ -386,7 +397,10 @@ namespace LAB2D.Character
                 set
                 {
                     this.weapon = value;
-                    this.ComputeAttribute();
+                    if (this.character != null)
+                    {
+                        this.ComputeAttribute(this.character.basicAttribute);
+                    }
                 }
             }
 
@@ -432,17 +446,20 @@ namespace LAB2D.Character
                     this.equipments.Add(equipment.Type, equipment);
                 }
 
-                this.ComputeAttribute();
+                if (this.character != null)
+                {
+                    this.ComputeAttribute(this.character.basicAttribute);
+                }
             }
 
             /// <summary>
             /// 计算总属性 — 委托给 Domain/Character/AttributeCalculationService。
             /// </summary>
-            public void ComputeAttribute()
+            /// <param name="basicAttribute">角色基础属性（由 Character.basicAttribute 提供）。</param>
+            public void ComputeAttribute(Attribute basicAttribute)
             {
                 bool isPlayer = this is PlayerCharacter.PlayerData;
-                Attribute baseAttr = this.Character.basicAttribute;
-                BattleStats baseStats = ConvertAttributeToBattleStats(baseAttr);
+                BattleStats baseStats = ConvertAttributeToBattleStats(basicAttribute);
                 BattleStats? weaponBStats = null;
                 if (this.weapon != null)
                 {
@@ -565,58 +582,5 @@ namespace LAB2D.Character
             }
         }
 
-        /// <summary>
-        /// 检查bug
-        /// </summary>
-        protected class CheckBug
-        {
-            /// <summary>
-            /// 上一次碰撞时间
-            /// </summary>
-            public long LastTime;
-
-            /// <summary>
-            /// 连续碰撞次数
-            /// </summary>
-            public int ColliderCount;
-
-            private const double Interval = 3e5;
-            private const int Threshold = 100;
-
-            /// <summary>
-            /// 是否有bug
-            /// </summary>
-            /// <param name="name">出bug的角色名称</param>
-            /// <param name="threshold">检测bug的碰撞阈值</param>
-            /// <returns>是否有bug.</returns>
-            public bool IsBug(string name, int threshold = Threshold)
-            {
-                bool bug = this.ColliderCount > threshold;
-                if (bug)
-                {
-                    // LogManager.Instance.log(name + "碰撞次数:" + colliderCount, LogManager.LogLevel.Info);
-                }
-
-                return bug;
-            }
-
-            /// <summary>
-            /// 添加碰撞次数
-            /// </summary>
-            /// <param name="time">当前时间</param>
-            public void AddColliderCount(long time)
-            {
-                if (time - this.LastTime < Interval)
-                {
-                    this.ColliderCount++;
-                }
-                else
-                {
-                    this.ColliderCount = 1;
-                }
-
-                this.LastTime = time;
-            }
-        }
     }
 }

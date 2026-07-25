@@ -445,8 +445,8 @@ namespace LAB2D.Character.Worker
 
         private void OnCollisionStay2D(Collision2D collision)
         {
-            this.checkBug.AddColliderCount(DateTime.Now.Ticks);
-            if (this.checkBug.IsBug(this.name, 1000))
+            this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks);
+            if (this.collisionBugDetector.IsBug(this.name, 1000))
             {
                 this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             }

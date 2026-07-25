@@ -40,6 +40,22 @@ namespace LAB2D.Character.Player
         internal static Action<ABackpackItem> BackpackSaveProvider { get; set; } = (item) => BackpackController.Instance.AddItem(item);
 
         /// <summary>
+        /// 死亡时层切换提供者 — 玩家死亡时暂时切换到 Default 层以躲避敌人。
+        /// 默认实现直接操作 gameObject.layer。
+        /// 可在测试中替换为无操作桩。
+        /// </summary>
+        internal static Action<Player> DeathLayerSwitchProvider { get; set; }
+            = (player) =>
+            {
+                if (player == null)
+                {
+                    return;
+                }
+
+                player.gameObject.layer = LayerMask.NameToLayer("Default");
+            };
+
+        /// <summary>
         /// 奔跑速度倍率，默认1.6倍
         /// </summary>
         private float runSpeedMultiplier = 1.6f;
@@ -355,10 +371,12 @@ namespace LAB2D.Character.Player
         }
 
         /// <summary>
-        /// 某位置是否在玩家周围.
+        /// 某位置是否在玩家周围（世界坐标版本）。
+        /// 已废弃：请使用 <see cref="IsArround(GameGridPosition)"/> 替代。
         /// </summary>
-        /// <param name="pos">位置.</param>
+        /// <param name="pos">世界坐标位置.</param>
         /// <returns>是否.</returns>
+        [System.Obsolete("Use IsArround(GameGridPosition) instead.")]
         public bool IsArround(Vector3 pos)
         {
             if (pos == null)
@@ -371,6 +389,21 @@ namespace LAB2D.Character.Player
                 pos.x > this.transform.position.x - 50 &&
                 pos.y > this.transform.position.y - 50 &&
                 pos.y < this.transform.position.y + 50;
+        }
+
+        /// <summary>
+        /// 某网格位置是否在玩家周围。
+        /// 使用 Domain 层 GameGridPosition 替代 UnityEngine.Vector3。
+        /// </summary>
+        /// <param name="pos">网格位置.</param>
+        /// <param name="range">判定范围（网格单位），默认 50.</param>
+        /// <returns>是否在范围内.</returns>
+        public bool IsArround(GameGridPosition pos, int range = 50)
+        {
+            Vector3Int playerMapPos = AWorkerTask.TileMapWorldToMapProvider(this.transform.position);
+            int dx = pos.X - playerMapPos.x;
+            int dy = pos.Y - playerMapPos.y;
+            return dx > -range && dx < range && dy > -range && dy < range;
         }
 
         /// <summary>
@@ -390,7 +423,7 @@ namespace LAB2D.Character.Player
             this.CharacterDataLAB.Hp = 1; // 保持 1 HP 存活，防止复活期间再次死亡
 
             // 暂时切换 Player 层以躲避敌人
-            this.gameObject.layer = LayerMask.NameToLayer("Default");
+            DeathLayerSwitchProvider(this);
 
             HandlePlayerDeathProvider(this);
 

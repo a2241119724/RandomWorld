@@ -1040,7 +1040,12 @@ namespace LAB2D
 > - **WorkerTaskManager ITickable + GameGridPosition 迁移** — `WorkerTaskManager` 实现 `ITickable` 接口，`Update()` 中的任务分配循环迁移至 `Tick(float deltaTime)`，由 `GlobalInit.BuildTickableList()` 统一驱动（排在 WorkerUpdateSystem 之后）。`Update()` 保留作为兼容桥（委托给 Tick）。公开 API 迁移：`GatherPositions: List<GameGridPosition>`（替代旧 `GatherPos: List<Vector3Int>`）、`DeleteHungryTask(GameGridPosition)`、`CancelGatherTask(GameGridPosition)`，旧 Vector3Int 方法标记 `[Obsolete]` 保持向后兼容。`AWorkerTask.DeleteHungryTaskProvider` 默认实现已更新。调用方 `GatherUI`、`RectBoxUI` 已切换至新 API。ITickable 实现总数增至 5 个。
 >
 > - **Character 基类 ReduceHp 表现层回调提取** — 新增 `DamageFlashProvider` 静态委托（`System.Action<Character>`），将 `Character.ReduceHp()` 中内联的 `spriteRenderer.color = Color.red` + `Invoke("ResetColor")` 提取为可替换的 Provider。遵循项目已有的 AWorkerTask Provider 委托模式。`ResetColor()` 增加 null 安全检查。`ReduceHp()` 核心伤害流程不再硬编码 Unity 表现层操作，测试中可通过 `Character.DamageFlashProvider = (t) => {}` 静默。调用方无需变更。
-> 当前应重点推进：**Character/Player 继续深入解耦**（`Player.Death()` 中的 `gameObject.layer` 操作提取为 Provider、`IsArround(Vector3)` → `GameGridPosition` API 迁移）和 **存档/Photon 与 Domain 桥接**（确保 Domain 模型变更时存档兼容）。
+> - **Player.Death() 层切换提取** — 新增 `DeathLayerSwitchProvider` 静态委托（`Action<Player>`），将 `Player.Death()` 中的 `gameObject.layer = LayerMask.NameToLayer("Default")` 提取为可替换的 Provider。遵循项目已有的 Provider 委托模式。Player.cs 中 `Death()` 不再直接操作 `gameObject.layer`。
+>
+> - **Player.IsArround GameGridPosition API 迁移** — 新增 `IsArround(GameGridPosition pos, int range = 50)` 重载，使用 Domain 层 `GameGridPosition` 替代 `UnityEngine.Vector3`。内部通过 `TileMapWorldToMapProvider` 转换玩家世界坐标到网格坐标。旧 `IsArround(Vector3)` 标记 `[Obsolete]`。零调用方，无迁移成本。
+> - **Character 基类综合解耦** — 新增 `MoveSpeedProvider`（模式 B 委托）；`CheckBug` 嵌套类提取为独立 `CollisionBugDetector` 工具类（`Tool/CollisionBugDetector.cs`）；`CharacterData.ComputeAttribute()` 参数化，接受 `Attribute basicAttribute` 替代通过 `this.Character.basicAttribute` 反向引用，减弱 `CharacterData` → `Character`（MonoBehaviour）耦合。
+>
+> 当前应重点推进：**存档/Photon 与 Domain 桥接**（确保 Domain 模型变更时存档兼容）、**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）。
 
 ## 14. 最终检查清单
 
