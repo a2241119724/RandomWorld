@@ -6,9 +6,9 @@ namespace LAB2D.Gameplay
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
+    using LAB2D.UnityAdapter;
     using System;
     using System.Collections.Generic;
-    using UnityEngine;
     using GameCharacter = LAB2D.Character.Character;
 
     /// <summary>
@@ -21,57 +21,65 @@ namespace LAB2D.Gameplay
     {
         internal static System.Func<Player> PlayerMineProvider { get; set; }
             = () => ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
-        internal static System.Action<Vector3, float, bool, bool> FloatingTextDamageProvider { get; set; }
-            = (pos, dmg, crit, combo) => { if (ServiceLocator.TryGet(out FloatingTextManager ftm)) ftm.SpawnDamageText(pos, dmg, crit, combo); };
-        internal static System.Action<Vector3, float> FloatingTextHealProvider { get; set; }
-            = (pos, heal) => { if (ServiceLocator.TryGet(out FloatingTextManager ftm)) ftm.SpawnHealText(pos, heal); };
+        internal static System.Action<GameVector2, float, bool, bool> FloatingTextDamageProvider { get; set; }
+            = (pos, dmg, crit, combo) => { if (ServiceLocator.TryGet(out FloatingTextManager ftm)) ftm.SpawnDamageText(UnityVectorAdapter.ToUnityVector3(pos, 0f), dmg, crit, combo); };
+        internal static System.Action<GameVector2, float> FloatingTextHealProvider { get; set; }
+            = (pos, heal) => { if (ServiceLocator.TryGet(out FloatingTextManager ftm)) ftm.SpawnHealText(UnityVectorAdapter.ToUnityVector3(pos, 0f), heal); };
 
         /// <summary>
-        /// 玩家世界坐标提供者。
-        /// 默认实现访问 Transform.position；可在测试中替换为固定坐标。
+        /// 玩家世界坐标提供者（Domain 类型）。
+        /// 默认实现访问 Transform.position 并转换为 GameVector2；可在测试中替换。
         /// </summary>
-        internal static System.Func<Player, Vector3> PlayerWorldPositionProvider { get; set; }
-            = (player) => player.transform.position;
+        internal static System.Func<Player, GameVector2> PlayerWorldPositionProvider { get; set; }
+            = (player) => UnityVectorAdapter.ToGameVector2(player.transform.position);
+
+        /// <summary>
+        /// 敌人世界坐标提供者（Domain 类型）。
+        /// 默认实现访问 Transform.position 并转换为 GameVector2；可在测试中替换。
+        /// </summary>
+        internal static System.Func<AEnemy, GameVector2> EnemyWorldPositionProvider { get; set; }
+            = (enemy) => UnityVectorAdapter.ToGameVector2(enemy.transform.position);
 
         /// <summary>
         /// 冲刺位移提供者 — 将玩家瞬移到目标世界坐标。
         /// 默认实现优先使用 Rigidbody2D.MovePosition，fallback 为 Transform.position。
         /// </summary>
-        internal static System.Action<Player, Vector3> DashMovementProvider { get; set; }
+        internal static System.Action<Player, GameVector2> DashMovementProvider { get; set; }
             = (player, targetPos) =>
             {
-                Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+                UnityEngine.Vector3 unityTarget = UnityVectorAdapter.ToUnityVector3(targetPos, 0f);
+                UnityEngine.Rigidbody2D rb = player.GetComponent<UnityEngine.Rigidbody2D>();
                 if (rb != null)
                 {
-                    rb.MovePosition(targetPos);
+                    rb.MovePosition(unityTarget);
                 }
                 else
                 {
-                    player.transform.position = targetPos;
+                    player.transform.position = unityTarget;
                 }
             };
 
         /// <summary>
-        /// 玩家朝向方向提供者 — 基于 Animator Direction 参数返回方向向量。
-        /// 上=0:(0,1), 下=1:(0,-1), 左=2:(-1,0), 右=3:(1,0)。默认返回 Vector3.right。
+        /// 玩家朝向方向提供者 — 基于 Animator Direction 参数返回方向向量（Domain 类型）。
+        /// 上=0:(0,1), 下=1:(0,-1), 左=2:(-1,0), 右=3:(1,0)。默认返回 (1,0)。
         /// </summary>
-        internal static System.Func<Player, Vector3> PlayerFacingDirectionProvider { get; set; }
+        internal static System.Func<Player, GameVector2> PlayerFacingDirectionProvider { get; set; }
             = (player) =>
             {
-                Animator animator = player.GetComponent<Animator>();
+                UnityEngine.Animator animator = player.GetComponent<UnityEngine.Animator>();
                 if (animator == null)
                 {
-                    return Vector3.right;
+                    return new GameVector2(1f, 0f);
                 }
 
                 int dir = animator.GetInteger("Direction");
                 return dir switch
                 {
-                    0 => Vector3.up,
-                    1 => Vector3.down,
-                    2 => Vector3.left,
-                    3 => Vector3.right,
-                    _ => Vector3.right,
+                    0 => new GameVector2(0f, 1f),
+                    1 => new GameVector2(0f, -1f),
+                    2 => new GameVector2(-1f, 0f),
+                    3 => new GameVector2(1f, 0f),
+                    _ => new GameVector2(1f, 0f),
                 };
             };
 
@@ -379,7 +387,7 @@ namespace LAB2D.Gameplay
             // 注意：这里不叠加自己的Buff，因为力量爆发可能还未激活
 
             List<AEnemy> enemies = SkillTool.GetEnemiesInRadius(
-                PlayerWorldPositionProvider(player), skill.AoeRadius);
+                UnityVectorAdapter.ToUnityVector3(PlayerWorldPositionProvider(player), 0f), skill.AoeRadius);
 
             foreach (AEnemy enemy in enemies)
             {
@@ -400,7 +408,7 @@ namespace LAB2D.Gameplay
 
                     // 生成技能伤害浮动文字（复用现有伤害文字系统）
 FloatingTextDamageProvider(
-                        enemy.transform.position, finalDamage, false, false);
+                        EnemyWorldPositionProvider(enemy), finalDamage, false, false);
                 }
             }
         }
@@ -413,8 +421,8 @@ FloatingTextDamageProvider(
         private void ExecuteMovement(SkillData skill, Player player)
         {
             // 获取玩家朝向方向（Provider 封装 Animator 读取）
-            Vector3 dashDirection = PlayerFacingDirectionProvider(player);
-            Vector3 targetPosition = PlayerWorldPositionProvider(player) + (dashDirection * skill.AoeRadius);
+            GameVector2 dashDirection = PlayerFacingDirectionProvider(player);
+            GameVector2 targetPosition = PlayerWorldPositionProvider(player) + (dashDirection * skill.AoeRadius);
 
             // 执行冲刺位移（Provider 封装 Rigidbody2D / Transform 操作）
             DashMovementProvider(player, targetPosition);

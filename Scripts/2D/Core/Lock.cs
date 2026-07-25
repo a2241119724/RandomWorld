@@ -2,7 +2,7 @@ namespace LAB2D.Core
 {
     using LAB2D;
     using LAB2D.Character.Worker;
-    using UnityEngine;
+    using System;
 
     /// <summary>
     /// 锁 — 工人任务互斥锁。
@@ -10,6 +10,7 @@ namespace LAB2D.Core
     /// </summary>
     public class Lock
     {
+        private readonly System.Random random = new System.Random();
         /// <summary>
         /// 拥有者
         /// </summary>
@@ -25,7 +26,7 @@ namespace LAB2D.Core
             if (this.Owner == null)
             {
                 // 第一次概率获取锁
-                if (Random.Range(0.0f, 1.0f) > (1.0f / ServiceLocator.Get<WorkerManager>().GetCountLock()))
+                if (this.random.NextDouble() > (1.0 / ServiceLocator.Get<WorkerManager>().GetCountLock()))
                 {
                     return false;
                 }

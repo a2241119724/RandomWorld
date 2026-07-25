@@ -9,7 +9,6 @@ namespace LAB2D.Gameplay
     using LAB2D.UI.Panel;
     using System.Collections.Generic;
     using UnityEngine;
-    using UnityEngine.Tilemaps;
     using GameCharacter = LAB2D.Character.Character;
 
     /// <summary>
@@ -142,7 +141,7 @@ namespace LAB2D.Gameplay
                 {
                     if (dropItem.Value == null) break;
 
-                    TileBase tile = (TileBase)AWorkerTask.ResourceLoadProvider(dropItem.Value.Name);
+                    UnityEngine.Tilemaps.TileBase tile = (UnityEngine.Tilemaps.TileBase)AWorkerTask.ResourceLoadProvider(dropItem.Value.Name);
                     AWorkerTask.ItemMapProvider().PutDownToDrop(pos, tile, dropItem.Value.ResourceInfo);
 
                     Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(pos);

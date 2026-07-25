@@ -1079,6 +1079,10 @@ namespace LAB2D
 > - WorkerTaskManager API 迁移收尾：**`AddTask(GameGridPosition)` 重载**（主 API），旧 `AddTask(Vector3IntLAB)` 标记 `[Obsolete]`，所有公开方法已迁移至 Domain 类型
 > - AEquipment Provider 提取：**`RandomFloatProvider`**（`RankRandom()` 中 `UnityEngine.Random.Range` → Provider），纯数据类零 UnityEngine 引用
 > - ResourceManager Provider 提取：**`RandomIntProvider`**（tile 随机选择中的 `UnityEngine.Random.Range` → Provider）
+> - DeathPenaltyManager：Provider 签名 Vector3 → GameVector2，**移除 `using UnityEngine`**
+> - SkillManager：全部 6 个 Provider 签名 Vector3 → GameVector2 + 新增 EnemyWorldPositionProvider，**移除 `using UnityEngine`**
+> - EnemyLootManager：移除 `using UnityEngine.Tilemaps`（TileBase → 全限定名），保留 `using UnityEngine`（public API 使用 Vector3/Vector3Int）
+> - NameGenerator + Lock + EquipmentLootTool：`Random.Range` → `System.Random` / Provider，**移除 `using UnityEngine`**
 >
 > **其他**：
 > - WorkerTaskManager：`WorkerPositionProvider` 提取
@@ -1089,7 +1093,7 @@ namespace LAB2D
 >
 > **当前架构状态（2026-07）**：
 > - 🎉 非 UI `.Instance` 全部清零
-> - 🎉 Gameplay 层 14 个非 MonoBehaviour Manager/Singleton 零 `using UnityEngine`（本轮新增：WorkerSupplyIssueManager + SessionResultManager；+4 相比初始）
+> - 🎉 Gameplay 层 16 个非 MonoBehaviour Manager/Singleton 零 `using UnityEngine`（本轮新增：DeathPenaltyManager + SkillManager；+6 相比初始）
 > - 🎉 Gameplay 层所有非 MonoBehaviour Manager 的 `Time.realtimeSinceStartup` 已全部迁移至 `IGameTime`（GameplaySessionStats + DeathPenaltyManager 本轮收尾）
 > - 🎉 Gameplay 层全限定名 `UnityEngine.` 引用仅存在于 Provider 默认实现中（SessionResultManager.IsPlayingProvider、WaveBossRewardManager.RandomRangeProvider）
 > - 🎉 WaveBossRewardManager：7 Provider + EventBus + 零 WaveManager/Player 引用

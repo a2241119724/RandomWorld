@@ -1,14 +1,16 @@
 namespace LAB2D.Tool
 {
+    using System;
     using System.Collections.Generic;
     using LAB2D.Core;
-    using UnityEngine;
 
     /// <summary>
     /// 名字生成器.
     /// </summary>
     public class NameGenerator : Singleton<NameGenerator>
     {
+        private readonly System.Random random = new System.Random();
+
         // 预定义的名字列表
         private readonly List<string> firstNames = new ()
         {
@@ -45,8 +47,8 @@ namespace LAB2D.Tool
         /// <returns>生成随机的名字.</returns>
         public string GetRandomName()
         {
-            int surnameIndex = Random.Range(0, this.lastNames.Count);
-            int firstNameIndex = Random.Range(0, this.firstNames.Count);
+            int surnameIndex = this.random.Next(0, this.lastNames.Count);
+            int firstNameIndex = this.random.Next(0, this.firstNames.Count);
             return this.firstNames[firstNameIndex] + this.lastNames[surnameIndex];
         }
     }

@@ -5,7 +5,7 @@ namespace LAB2D.Gameplay
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
-    using UnityEngine;
+    using LAB2D.UnityAdapter;
 
     /// <summary>
     /// 管理玩家死亡惩罚：复活延迟、经验损失、随机复活位置、死亡画面显示和死亡追踪。
@@ -22,19 +22,20 @@ namespace LAB2D.Gameplay
         /// 复活位置提供者 — 返回随机可到达的世界坐标。
         /// 默认实现通过 TileMap + AWorkerTask.TileMapPositionProvider 获取；可在测试中替换为固定坐标。
         /// </summary>
-        internal static System.Func<Vector3> RespawnPositionProvider { get; set; }
-            = () => AWorkerTask.TileMapPositionProvider(
-                Core.ServiceLocator.Get<TileMap>().GenCanReachPos());
+        internal static System.Func<GameVector2> RespawnPositionProvider { get; set; }
+            = () => UnityVectorAdapter.ToGameVector2(
+                AWorkerTask.TileMapPositionProvider(
+                    Core.ServiceLocator.Get<TileMap>().GenCanReachPos()));
 
         /// <summary>
         /// 复活放置提供者 — 将玩家传送到指定世界坐标并重置其碰撞图层。
         /// 默认实现操作 Transform 和 GameObject.layer；可在测试中替换为桩。
         /// </summary>
-        internal static System.Action<Player, Vector3> RespawnPlacementProvider { get; set; }
+        internal static System.Action<Player, GameVector2> RespawnPlacementProvider { get; set; }
             = (player, worldPos) =>
             {
-                player.transform.position = worldPos;
-                player.gameObject.layer = LayerMask.NameToLayer(LayerConstant.PLAYER_LAYER);
+                player.transform.position = UnityVectorAdapter.ToUnityVector3(worldPos, 0f);
+                player.gameObject.layer = UnityEngine.LayerMask.NameToLayer(LayerConstant.PLAYER_LAYER);
             };
 
         /// <summary>
@@ -144,7 +145,7 @@ namespace LAB2D.Gameplay
             this.respawnDeadline = -1f;
 
             // 获取随机可到达位置并放置玩家（位置查找 + Transform + 图层重置由 Provider 封装）
-            Vector3 respawnWorldPos = RespawnPositionProvider();
+            GameVector2 respawnWorldPos = RespawnPositionProvider();
             RespawnPlacementProvider(player, respawnWorldPos);
 
             // 恢复生命值（默认 30%）和魔法值

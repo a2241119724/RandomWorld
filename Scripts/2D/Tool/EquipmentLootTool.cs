@@ -20,6 +20,20 @@ namespace LAB2D.Tool
         private static readonly EquipmentLootRuleService RuleService = new EquipmentLootRuleService();
 
         /// <summary>
+        /// 浮点随机数提供者（minInclusive, maxInclusive）。
+        /// 默认实现封装 UnityEngine.Random.Range；可在测试中替换为确定性桩。
+        /// </summary>
+        internal static Func<float, float, float> RandomFloatProvider { get; set; }
+            = (min, max) => UnityEngine.Random.Range(min, max);
+
+        /// <summary>
+        /// 整数随机数提供者（minInclusive, maxExclusive）。
+        /// 默认实现封装 UnityEngine.Random.Range；可在测试中替换为确定性桩。
+        /// </summary>
+        internal static Func<int, int, int> RandomIntProvider { get; set; }
+            = (min, max) => UnityEngine.Random.Range(min, max);
+
+        /// <summary>
         /// 按稀有度权重随机选择一个稀有度等级（Unity 随机便利方法）。
         /// waveNumber 越大，高稀有度的有效权重越高（低稀有度权重等比缩减）。
         /// </summary>
@@ -28,7 +42,7 @@ namespace LAB2D.Tool
         public static EquipmentRarityType RollRarity(int waveNumber)
         {
             float total = GetRarityTotalWeight(waveNumber);
-            float roll = UnityEngine.Random.Range(0f, total);
+            float roll = RandomFloatProvider(0f, total);
             return RollRarityWithRoll(waveNumber, roll);
         }
 
@@ -139,7 +153,7 @@ namespace LAB2D.Tool
                 List<int> indices = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7 };
                 for (int i = 0; i < extremeCount; i++)
                 {
-                    int idx = UnityEngine.Random.Range(0, indices.Count);
+                    int idx = RandomIntProvider(0, indices.Count);
                     int chosen = indices[idx];
                     indices.RemoveAt(idx);
 
