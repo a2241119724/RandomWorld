@@ -27,7 +27,7 @@ Scripts/2D/Domain/                    # 纯规则层（不含 UnityEngine 引用
   Common/                             # EventBus、GameVector2、GameGridPosition、IGameCommand/Event/Time/Logger/IInitializable/ITickable 等
   Character/                          # DamageCalculator、LevelProgressionService
   Gameplay/                           # AchievementRuleService、ComboBonusRuleService、SkillRuleService 等
-  Inventory/                          # InventoryFoodReservationService、InventoryStackingService 等
+  Inventory/                          # InventoryService、InventoryGrid、InventoryCell、ResourceStack、InventoryStackingService、InventoryFoodReservationService、InventoryTakeReservationService、InventoryGridChangedEvent 等
   Player/                             # PlayerDamagePolicy、PlayerMovementPolicy 等
   Wave/                               # WaveBossRuleService、WaveConfigModel、WaveRuleService
   Worker/                             # WorkerAgentSnapshot、WorkerTaskAssignmentService、WorkerTaskProgressService、WorkerConditionRuleService 等
@@ -211,6 +211,7 @@ Unity 适配层：Input、Time、Transform、TileMap、Resources、Photon、Mono
 10. 不要让核心规则直接播放动画、音效、特效、生成 Prefab。
 11. 输出代码时必须给完整文件内容，不能只给片段。
 12. 如果信息不足，请基于已读代码给出最小可执行方案，不要空泛回答。
+13. **每次根据本 Prompt 完成代码改造后，必须同步更新本 Prompt 文件**（`Agent/Prompt_Architecture.md`），反映最新的模块结构、Domain 服务清单、解耦进度、后续优先级变化。避免文档与代码脱节。
 
 ## 4. 分层建议
 
@@ -222,7 +223,7 @@ Assets/Scripts/2D/
     Common/                   # EventBus(IInitializable/ITickable)、GameVector2、GameGridPosition、IGameCommand/Event/Time/Logger、MathHelper
     Character/                # DamageCalculator、LevelProgressionService
     Gameplay/                 # AchievementRuleService、ComboBonusRuleService、SkillRuleService、SessionResultRuleService 等
-    Inventory/                # InventoryFoodReservationService、InventoryStackingService、InventoryTakeReservationService
+    Inventory/                # InventoryService、InventoryGrid、InventoryCell、ResourceStack、InventoryStackingService、InventoryFoodReservationService、InventoryTakeReservationService、InventoryGridChangedEvent
     Player/                   # PlayerDamagePolicy、PlayerMovementPolicy、PlayerVitalAlertRuleService
     Wave/                     # WaveBossRuleService、WaveConfigModel、WaveRuleService
     Worker/                   # WorkerAgentSnapshot、WorkerConditionRuleService、WorkerTaskAssignmentService、WorkerTaskProgressService、WorkerTaskCongestionRuleService、WorkerSupplyRuleService
@@ -352,20 +353,31 @@ Scripts/2D/Data/ItemDataManager.cs
 
 已有 Domain 抽离：
 
-- `Domain/Inventory/InventoryFoodReservationService.cs` — InventoryFoodReservationService
+- `Domain/Inventory/InventoryService.cs` — InventoryService（✅ 新增：纯 C# 库存服务，包装 InventoryGrid + 3 个 Service）
+- `Domain/Inventory/InventoryGrid.cs` — InventoryGrid（纯 C# 网格模型，含位置/ID/类型三层索引 + 空格子 id=-1 索引）
+- `Domain/Inventory/InventoryCell.cs` — InventoryCell（纯 C# 格子模型，包装 ResourceStack）
+- `Domain/Inventory/ResourceStack.cs` — ResourceStack（不可变资源堆栈值对象）
+- `Domain/Inventory/InventoryGridChangedEvent.cs` — InventoryGridChangedEvent（✅ 新增：纯数据事件）
 - `Domain/Inventory/InventoryStackingService.cs` — InventoryStackingService
+- `Domain/Inventory/InventoryFoodReservationService.cs` — InventoryFoodReservationService
 - `Domain/Inventory/InventoryTakeReservationService.cs` — InventoryTakeReservationService
 - `UnityAdapter/UnityItemDefinitionAdapter.cs` — UnityItemDefinitionAdapter
+- `UnityAdapter/UnityVectorAdapter.cs` — ToGameGridPosition / ToVector3Int（✅ 新增 ToVector3Int 便捷方法）
 - `AWorkerTask` 中的 `InventoryProvider`、`ItemDataProvider`、`ItemMapProvider` 等委托
 
-优先抽离方向：
+已完成的解耦：
 
-- `InventoryCell`
-- `InventoryGrid`
-- `ResourceStack`
-- `InventoryService`
-- `IItemDefinitionProvider`（已有 UnityItemDefinitionAdapter 可配合）
-- `InventoryChangedEvent`
+- ✅ `InventoryManager` 内部数据存储已从 3 个并行 Dictionary 迁移至 `InventoryService`（包装 `InventoryGrid`）
+- ✅ `posToResource` / `id2Resource` / `TypeToResource` 不再作为独立字典维护
+- ✅ `Vector3Int` ↔ `GameGridPosition` 转换在 API 边界通过 `UnityVectorAdapter` 完成
+- ✅ 所有 public API 签名保持 100% 兼容
+- ✅ `Editor/Tests/Domain/InventoryServiceTests.cs`（25 个单元测试）
+
+剩余工作：
+
+- `preTakeResource` / `prePlaceResource` 仍以 `AWorker` 为 key（依赖 MonoBehaviour），未下沉到 Domain
+- `InventoryCellChangedEvent.CellInfo` 仍携带 UI 格式化字符串（保留兼容），新事件 `InventoryGridChangedEvent` 已就绪但 UI 层尚未切换订阅
+- `TypeToResource` getter 每次动态计算（兼容层），建议后续调用方迁移到 `GetPositionsByType()`
 
 ### Wave / Gameplay
 
@@ -798,7 +810,7 @@ public sealed class MyNewInitializer : IInitializable
 |---|---|
 | Worker | `WorkerTaskAssignmentService`、`WorkerTaskProgressService`、`WorkerConditionRuleService`、`WorkerTaskCongestionRuleService`、`WorkerSupplyRuleService` |
 | Player | `PlayerDamagePolicy`、`PlayerMovementPolicy`、`PlayerVitalAlertRuleService` |
-| Inventory | `InventoryFoodReservationService`、`InventoryStackingService`、`InventoryTakeReservationService` |
+| Inventory | `InventoryService`、`InventoryGrid`、`InventoryCell`、`ResourceStack`、`InventoryStackingService`、`InventoryFoodReservationService`、`InventoryTakeReservationService`、`InventoryGridChangedEvent` |
 | Wave | `WaveRuleService`、`WaveBossRuleService`、`WaveConfigModel` |
 | Gameplay | `AchievementRuleService`、`SkillRuleService`、`ComboBonusRuleService`、`SessionResultRuleService` 等 |
 | Dialogue | `PromptAssemblyService`、`DialoguePromptProfileModel`、`IPromptTemplateProvider` |
@@ -811,20 +823,20 @@ public sealed class MyNewInitializer : IInitializable
 | ITickable / IInitializable（生命周期接口） | ✅ 已实现，4 个 ITickable + 4 个 IInitializable |
 | GlobalInputProcessor（输入处理解耦） | ✅ 已从 GlobalInit 提取 |
 | AWorkerTask Provider 委托模式 | ✅ 约 35 个静态 Provider 属性 |
-| EventBus + PublishInternal | ✅ 已增强，有单元测试 |
+| EventBus + PublishInternal | ✅ 已增强，有单元测试；已有 7 种事件类型（CharacterDamaged、PlayerStatusChanged、InventoryCellChanged、InventoryGridChanged、PlayerAttackRequested、PlayerSkillActivated、WorkerTaskQueueChanged） |
 | Dialogue 接口抽象 | ✅ INPCPromptProfileProvider + IPromptTemplateProvider |
 | 全局 Singleton → ServiceLocator 替换 | ✅ 已完成 |
 
 后续改造优先方向（按低风险到高风险排列）：
 
-1. **继续扩展 EventBus 事件驱动**：在现有 EventBus 基础上，为 Player、Inventory、Wave 模块增加更多事件类型，减少 Manager 对 UI 的直接调用。
+1. **继续扩展 EventBus 事件驱动**：在现有 EventBus 基础上，为 Player、Wave 模块增加更多事件类型；逐步让 UI 层从订阅旧 `InventoryCellChangedEvent`（携带 UI 字符串）迁移到新 `InventoryGridChangedEvent`（纯结构化数据）。
 2. **Character/Player 深入解耦**：`Player.cs` 输入/表现/规则仍有混合，进一步推进 Command → Domain → Event 链路。可参考 `GlobalInputProcessor` 模式提取 Player 特定输入处理。
 3. **扩展 ITickable/IInitializable 覆盖范围**：将更多 Manager 的 Update/Start 逻辑迁移到 ITickable/IInitializable，减少 MonoBehaviour 生命周期依赖。
-4. **InventoryManager 深入解耦**：参考 `AWorkerTask` 的 Provider 委托模式，为 Inventory 操作提供可替换的委托。
+4. ~~**InventoryManager 深入解耦**~~ ✅ 已完成：内部数据存储已迁移至 `InventoryService`（包装 `InventoryGrid`），public API 100% 兼容。剩余 `preTakeResource`/`prePlaceResource` 的 AWorker 解耦留待后续。
 5. **WorkerTaskManager 继续解耦**：将任务队列、任务分配等纯逻辑提取到 Domain，MonoBehaviour 只做桥接。
 6. **WaveManager Coroutine 解耦**：通过 `IWaveTimeScheduler`（已有 UnityWaveTimeScheduler）替代直接 Coroutine 依赖。
 7. **存档/Photon 与 Domain 桥接**：确保 Domain 模型变更时存档兼容，Photon 同步走适配层而非直接引用。
-8. **扩展单元测试**：`Editor/Tests/Domain/` 已有测试基础，继续为新增 Domain 服务和 Provider 委托补充测试。
+8. **扩展单元测试**：`Editor/Tests/Domain/` 已有测试基础（新增 `InventoryServiceTests` 25 个），继续为新增 Domain 服务和 Provider 委托补充测试。
 
 选择模块时，请说明原因：
 
@@ -1004,7 +1016,11 @@ namespace LAB2D
 - 运行测试并手动回归主场景
 ```
 
-> **当前进度**：项目已完成阶段一~四的大部分工作。`Domain/` 已有丰富的纯 C# Service、Model、EventBus、值类型、生命周期接口；`UnityAdapter/` 已有 11 个适配器；`ServiceLocator` 已全局落地；`AWorkerTask` Provider 委托模式已成熟。当前应重点推进阶段三（EventBus 事件驱动扩展）和阶段五（单元测试扩展）。
+> **当前进度**：项目已完成阶段一~四的大部分工作。`Domain/` 已有丰富的纯 C# Service、Model、EventBus、值类型、生命周期接口；`UnityAdapter/` 已有 12 个文件（新增 `ToVector3Int` 便捷方法）；`ServiceLocator` 已全局落地；`AWorkerTask` Provider 委托模式已成熟。
+>
+> **最近完成（2026-07）**：InventoryManager 内部重构 — 数据存储从 3 个并行 `Dictionary<Vector3Int, ...>` 迁移至 `Domain/Inventory/InventoryService`（包装 `InventoryGrid`），`InventoryGrid` 修复了空格子 id=-1 索引维护。新增 `InventoryGridChangedEvent`（纯数据事件）和 `InventoryServiceTests`（25 个单元测试）。public API 100% 兼容。
+>
+> 当前应重点推进：阶段三（EventBus 事件驱动扩展，让 UI 层迁移到新 `InventoryGridChangedEvent`）和阶段五（单元测试扩展，为 Wave/Player Domain 服务补充测试）。
 
 ## 14. 最终检查清单
 
