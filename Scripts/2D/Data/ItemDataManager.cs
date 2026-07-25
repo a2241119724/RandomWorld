@@ -27,13 +27,14 @@ namespace LAB2D.Data
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register<ItemDataManager>(this);
             this.nameToId = new Dictionary<string, int>();
             this.allItemInfo = new Dictionary<int, ItemData>();
 
             AItem.ItemTypeEnum[] itemTypes = AItem.Ranges["Build"];
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
-                BuildItemDataSO itemDataSO = ResourceManager.Instance.GetBuildSO(((AItem.ItemTypeEnum)type).ToString() + "ItemData");
+                BuildItemDataSO itemDataSO = ServiceLocator.Get<ResourceManager>().GetBuildSO(((AItem.ItemTypeEnum)type).ToString() + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -52,7 +53,7 @@ namespace LAB2D.Data
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
                 string itemType = ((AItem.ItemTypeEnum)type).ToString();
-                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(itemType + "ItemData");
+                ItemDataSO itemDataSO = ServiceLocator.Get<ResourceManager>().GetBackpackSO(itemType + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -76,7 +77,7 @@ namespace LAB2D.Data
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
                 string itemType = ((AItem.ItemTypeEnum)type).ToString();
-                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(itemType + "ItemData");
+                ItemDataSO itemDataSO = ServiceLocator.Get<ResourceManager>().GetBackpackSO(itemType + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
