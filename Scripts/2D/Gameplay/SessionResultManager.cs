@@ -23,6 +23,13 @@ namespace LAB2D.Gameplay
         private readonly List<SessionResultData> resultHistory;
 
         /// <summary>
+        /// 应用程序 Play Mode 检测提供者。
+        /// 默认实现封装 UnityEngine.Application.isPlaying；可在测试中替换为始终返回 true 的桩。
+        /// </summary>
+        internal static System.Func<bool> IsPlayingProvider { get; set; }
+            = () => UnityEngine.Application.isPlaying;
+
+        /// <summary>
         /// 构造函数：初始化历史列表，订阅 GameplaySessionStats 的数据变更事件
         /// 以便在会话关键节点自动采集结算数据
         /// </summary>
@@ -65,7 +72,7 @@ namespace LAB2D.Gameplay
         /// <returns>本次采集的结算数据，非 Play Mode 时返回 null</returns>
         public SessionResultData CaptureResult()
         {
-            if (!UnityEngine.Application.isPlaying)
+            if (!IsPlayingProvider())
             {
                 return null;
             }

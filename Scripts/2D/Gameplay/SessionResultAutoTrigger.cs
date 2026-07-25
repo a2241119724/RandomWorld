@@ -167,7 +167,7 @@ namespace LAB2D.Gameplay
         /// <returns>采集到的结算数据，失败返回 null</returns>
         private static SessionResultData TryCaptureDirect()
         {
-            if (!UnityEngine.Application.isPlaying)
+            if (!SessionResultManager.IsPlayingProvider())
             {
                 return null;
             }

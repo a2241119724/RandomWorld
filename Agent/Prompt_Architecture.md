@@ -1070,6 +1070,7 @@ namespace LAB2D
 > - IGameTime/IGameLogger 迁移（3 个）：WorkerSupplyIssueManager、SkillManager、**DeathPenaltyManager**（Time.realtimeSinceStartup → IGameTime.RealtimeSinceStartup）
 > - PlayerPositionProvider（1 个）：EnemyLootManager
 > - 冗余 using UnityEngine 清理（1 个）：**WorkerUpdateSystem**
+> - 全限定名 UnityEngine 引用消除（2 个）：**SessionResultManager**（`IsPlayingProvider` 提取）、**SessionResultAutoTrigger**（复用 `SessionResultManager.IsPlayingProvider()`）
 >
 > **其他**：
 > - WorkerTaskManager：`WorkerPositionProvider` 提取
@@ -1082,6 +1083,7 @@ namespace LAB2D
 > - 🎉 非 UI `.Instance` 全部清零
 > - 🎉 Gameplay 层 12 个非 MonoBehaviour Manager/Singleton 零 `using UnityEngine`（+2 相比上轮：GameplaySessionStats、ComboBonusManager）
 > - 🎉 Gameplay 层所有非 MonoBehaviour Manager 的 `Time.realtimeSinceStartup` 已全部迁移至 `IGameTime`（GameplaySessionStats + DeathPenaltyManager 本轮收尾）
+> - 🎉 Gameplay 层全限定名 `UnityEngine.` 引用仅存在于 Provider 默认实现中（SessionResultManager.IsPlayingProvider、WaveBossRewardManager.RandomRangeProvider）
 > - 🎉 WaveBossRewardManager：7 Provider + EventBus + 零 WaveManager/Player 引用
 > - 🎉 Wave 系统：4 IGameEvent + IWaveStateProvider + EventBus 双通道发布
 > - 🎉 InventoryManager：字典不持有 AWorker 引用（int key）
