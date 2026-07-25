@@ -31,6 +31,22 @@ namespace LAB2D.Gameplay
         private float playerMoveSpeedBonus;
 
         /// <summary>
+        /// Boss 视觉表现提供者 — 应用 Boss 敌人的视觉缩放、重命名和颜色调整。
+        /// 默认实现操作 GameObject/Transform/SpriteRenderer；可在测试中替换为无操作桩。
+        /// </summary>
+        public static System.Action<AEnemy, int> BossVisualProvider { get; set; }
+            = (enemy, waveIndex) =>
+            {
+                enemy.gameObject.name = WaveBossRewardTool.BuildBossName(enemy.gameObject.name, waveIndex);
+                enemy.transform.localScale *= WaveBossRewardConstant.BossVisualScale;
+                SpriteRenderer renderer = enemy.GetComponent<SpriteRenderer>();
+                if (renderer != null)
+                {
+                    renderer.color = Color.Lerp(renderer.color, new Color32(255, 120, 90, 255), 0.45f);
+                }
+            };
+
+        /// <summary>
         /// 构造函数，初始化默认状态。
         /// </summary>
         public WaveBossRewardManager()
@@ -335,14 +351,7 @@ namespace LAB2D.Gameplay
             float defenseMultiplier = this.ruleService.GetBossDefenseMultiplier(normalDefense, WaveBossRewardConstant.BossDefenseMultiplier);
             this.ApplyEnemyScale(enemyData, healthMultiplier, attackMultiplier, defenseMultiplier);
 
-            enemy.gameObject.name = WaveBossRewardTool.BuildBossName(enemy.gameObject.name, waveIndex);
-            enemy.transform.localScale *= WaveBossRewardConstant.BossVisualScale;
-
-            SpriteRenderer renderer = enemy.GetComponent<SpriteRenderer>();
-            if (renderer != null)
-            {
-                renderer.color = Color.Lerp(renderer.color, new Color32(255, 120, 90, 255), 0.45f);
-            }
+            BossVisualProvider(enemy, waveIndex);
         }
 
         /// <summary>
