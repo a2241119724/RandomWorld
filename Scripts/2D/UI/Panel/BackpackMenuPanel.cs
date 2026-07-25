@@ -65,7 +65,7 @@ namespace LAB2D.UI.Panel
                     BackpackController.Instance.AddItem(playerData.Weapon);
 
                     // 销毁武器
-                    PhotonNetwork.Destroy(ServiceLocator.Get<PlayerManager>().Mine.Weapon);
+                    AWorkerTask.NetworkDestroyProvider(ServiceLocator.Get<PlayerManager>().Mine.Weapon);
                 }
 
                 // 实例化武器

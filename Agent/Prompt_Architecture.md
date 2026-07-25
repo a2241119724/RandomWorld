@@ -1045,9 +1045,9 @@ namespace LAB2D
 > - **Player.IsArround GameGridPosition API 迁移** — 新增 `IsArround(GameGridPosition pos, int range = 50)` 重载，使用 Domain 层 `GameGridPosition` 替代 `UnityEngine.Vector3`。内部通过 `TileMapWorldToMapProvider` 转换玩家世界坐标到网格坐标。旧 `IsArround(Vector3)` 标记 `[Obsolete]`。零调用方，无迁移成本。
 > - **Character 基类综合解耦** — 新增 `MoveSpeedProvider`（模式 B 委托）；`CheckBug` 嵌套类提取为独立 `CollisionBugDetector` 工具类（`Tool/CollisionBugDetector.cs`）；`CharacterData.ComputeAttribute()` 参数化，接受 `Attribute basicAttribute` 替代通过 `this.Character.basicAttribute` 反向引用，减弱 `CharacterData` → `Character`（MonoBehaviour）耦合。
 >
-> - **Photon 网络调用桥接** — `INetworkView` 新增 `IsMasterClient` 属性，`PunNetworkViewAdapter` / `OfflineNetworkView` 实现。`AWorkerTask` 新增 `NetworkIsMasterClientProvider` + `NetworkDestroyProvider` 两个静态委托。替换 6 处业务代码中的直接 `PhotonNetwork.IsMasterClient` / `PhotonNetwork.Destroy` 调用：`ASeekEnemy.Death()`、`ACommonEnemy.Death()`、`AWorker.DeathProvider` → `NetworkView.IsMasterClient` / Provider；`SeekEnemyDeadState`、`CommonEnemyDeadState`、`WorkerDeadState` → `NetworkDestroyProvider`。`Player.cs` 清理 2 处冗余 `PhotonNetwork.IsConnected`（`NetworkView.IsOnline` 已封装）。
+> - **Photon 网络调用桥接** — `INetworkView` 新增 `IsMasterClient` 属性，`PunNetworkViewAdapter` / `OfflineNetworkView` 实现。`AWorkerTask` 新增 `NetworkIsMasterClientProvider` + `NetworkDestroyProvider` 两个静态委托。替换 9 处业务代码中的直接 Photon 调用：`ASeekEnemy.Death()`、`ACommonEnemy.Death()` → `NetworkView.IsMasterClient`；`AWorker.DeathProvider`、`ForegroundPanel`、`SyncDataTool`(3处) → `NetworkIsMasterClientProvider()`；`SeekEnemyDeadState`、`CommonEnemyDeadState`、`WorkerDeadState`、`BackpackMenuPanel` → `NetworkDestroyProvider`。`Player.cs` 清理 2 处冗余 `PhotonNetwork.IsConnected`（`NetworkView.IsOnline` 已封装）。**业务代码已零 Photon 直接调用**，剩余引用仅在 Adapter/Provider 层或注释中。
 >
-> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**存量代码 Photon 清理**（`ForegroundPanel`、`SyncDataTool` 等 UI/Tool 层仍有少量直接 Photon 调用）。
+> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**WaveManager 架构完善**（已有 `WaveRuleService`/`WaveBossRuleService`/`UnityWaveTimeScheduler`，可进一步迁移 Coroutine 调度）。
 
 ## 14. 最终检查清单
 
