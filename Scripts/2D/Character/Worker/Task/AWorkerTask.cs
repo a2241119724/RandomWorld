@@ -95,7 +95,7 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 任务进度倍率提供者 — 组合天气效果和 Worker 状态对任务进度的倍率影响。
-        /// 默认实现访问 WeatherGameplayEffect.Instance 和 WorkerConditionManager.Instance。
+        /// 默认实现访问 ServiceLocator.Get&lt;WeatherGameplayEffect&gt;() 和 ServiceLocator.Get&lt;WorkerConditionManager&gt;()。
         /// 可替换为测试桩或自定义实现。
         /// </summary>
         public static System.Func<WorkerTaskType, AWorker, float> ProgressMultiplierProvider { get; set; }
@@ -108,7 +108,7 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 地图可通过性查询 — 判断指定格子是否可到达。
-        /// 默认实现访问 BuildMap.Instance。
+        /// 默认实现访问 ServiceLocator.Get&lt;BuildMap&gt;()。
         /// 可替换为测试桩或自定义实现（如 IMapWalkabilityQuery 适配器）。
         /// </summary>
         public static System.Func<int, int, bool> WalkabilityProvider { get; set; }
@@ -135,7 +135,7 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 任务完成处理器 — 从任务队列中移除已完成任务。
-        /// 默认实现访问 WorkerTaskManager.Instance.CompleteTask。
+        /// 默认实现访问 ServiceLocator.Get&lt;WorkerTaskManager&gt;().CompleteTask。
         /// 可替换为测试桩或自定义实现。
         /// </summary>
         public static System.Action<AWorkerTask> TaskCompletionProvider { get; set; }
@@ -143,7 +143,7 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 库存管理器访问提供者 — 统一库存操作入口。
-        /// 默认返回 InventoryManager.Instance。
+        /// 默认返回 ServiceLocator.Get&lt;InventoryManager&gt;()。
         /// 可替换为测试桩或自定义实现。
         /// </summary>
         public static System.Func<InventoryManager> InventoryProvider { get; set; }
@@ -151,7 +151,7 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 物品数据提供者 — 根据物品 ID 获取配置数据。
-        /// 默认返回 ItemDataManager.Instance.GetById(id)。
+        /// 默认返回 ServiceLocator.Get&lt;ItemDataManager&gt;().GetById(id)。
         /// 可替换为测试桩。
         /// </summary>
         public static System.Func<int, ItemData> ItemDataProvider { get; set; }
@@ -159,7 +159,7 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 物品地图提供者 — 物品在地图上的放置/拾取操作。
-        /// 默认返回 ItemMap.Instance。
+        /// 默认返回 ServiceLocator.Get&lt;ItemMap&gt;()。
         /// 可替换为测试桩。
         /// </summary>
         public static System.Func<ItemMap> ItemMapProvider { get; set; }
@@ -167,7 +167,7 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 日志提供者 — 任务相关的错误/警告日志输出。
-        /// 默认实现访问 LogManager.Instance。
+        /// 默认实现访问 ServiceLocator.Get&lt;LogManager&gt;()。
         /// 可替换为测试桩（如静默日志）。
         /// </summary>
         public static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
@@ -175,7 +175,7 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 物品类型查找提供者 — 根据物品 ID 返回物品类型枚举。
-        /// 默认实现访问 ItemDataManager.Instance.IdToType。
+        /// 默认实现访问 ServiceLocator.Get&lt;ItemDataManager&gt;().IdToType。
         /// 可替换为测试桩。
         /// </summary>
         public static System.Func<int, AItem.ItemTypeEnum> ItemTypeProvider { get; set; }
@@ -183,7 +183,7 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 物品实例工厂提供者 — 根据名称创建物品实例。
-        /// 默认实现访问 ItemInstanceFactory.Instance.GetBackpackItemByName。
+        /// 默认实现访问 ServiceLocator.Get&lt;ItemInstanceFactory&gt;().GetBackpackItemByName。
         /// 可替换为测试桩。
         /// </summary>
         public static System.Func<string, ABackpackItem> ItemFactoryProvider { get; set; }
@@ -223,7 +223,7 @@ namespace LAB2D.Character.Worker.Task
         public static System.Action<AWorker> FurnitureBedProvider { get; set; }
             = (worker) => ServiceLocator.Get<FurnitureManager>().RemoveWorkerFromBed(worker);
         public static System.Func<AttackEffectManager.EffectTypeEnum, float, UnityEngine.ParticleSystem> AttackEffectProvider { get; set; }
-            = (type, rad) => AttackEffectManager.Instance.GetEffect(type, rad);
+            = (type, rad) => ServiceLocator.Get<AttackEffectManager>().GetEffect(type, rad);
         public static System.Action<AEnemy> EnemyRemoveProvider { get; set; }
             = (enemy) => ServiceLocator.Get<EnemyManager>().Remove(enemy);
         public static System.Func<bool> EnemyCanCreateProvider { get; set; }
@@ -253,19 +253,19 @@ namespace LAB2D.Character.Worker.Task
         public static System.Func<string> NameGeneratorProvider { get; set; }
             = () => ServiceLocator.Get<NameGenerator>().GetRandomName();
         public static System.Action<string> AsyncProgressSetTipProvider { get; set; }
-            = (tip) => AsyncProgressUI.Instance.SetTip(tip);
+            = (tip) => ServiceLocator.Get<AsyncProgressUI>().SetTip(tip);
         public static System.Action<System.Action> AsyncProgressCompleteProvider { get; set; }
-            = (callback) => AsyncProgressUI.Instance.Complete += new AsyncProgressUI.CompleteDelegate(callback);
+            = (callback) => ServiceLocator.Get<AsyncProgressUI>().Complete += new AsyncProgressUI.CompleteDelegate(callback);
         public static System.Action<AWorker> LocateWorkerUIAddProvider { get; set; }
-            = (worker) => LocateWorkerUI.Instance.AddWorkerItem(worker);
+            = (worker) => ServiceLocator.Get<LocateWorkerUI>().AddWorkerItem(worker);
         public static System.Action<AWorker> LocateWorkerUIRemoveProvider { get; set; }
-            = (worker) => LocateWorkerUI.Instance.RemoveWorkerItem(worker);
+            = (worker) => ServiceLocator.Get<LocateWorkerUI>().RemoveWorkerItem(worker);
         public static System.Action<string> ShowTipProvider { get; set; }
-            = (message) => { if (GlobalInit.Instance != null) GlobalInit.Instance.ShowTip(message); };
+            = (message) => { if (ServiceLocator.Get<GlobalInit>() != null) ServiceLocator.Get<GlobalInit>().ShowTip(message); };
         public static System.Action AsyncProgressAddOneProvider { get; set; }
-            = () => AsyncProgressUI.Instance.AddOneProcess();
+            = () => ServiceLocator.Get<AsyncProgressUI>().AddOneProcess();
         public static System.Action<int> AsyncProgressAddTotalProvider { get; set; }
-            = (total) => AsyncProgressUI.Instance.AddTotal(total);
+            = (total) => ServiceLocator.Get<AsyncProgressUI>().AddTotal(total);
 
         /// <summary>
         /// 任务ID

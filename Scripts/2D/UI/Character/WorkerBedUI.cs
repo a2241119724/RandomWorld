@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Character
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Serializable;
     using LAB2D.UnityAdapter;
     using System.Collections.Generic;
@@ -62,6 +63,7 @@ namespace LAB2D.UI.Character
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
             this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
             this.curWorker = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "CurWorker");
         }

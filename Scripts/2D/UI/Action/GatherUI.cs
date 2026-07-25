@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Serializable;
     using LAB2D.UnityAdapter;
@@ -22,6 +23,7 @@ namespace LAB2D.UI.Action
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
         }
 
         public void Start()

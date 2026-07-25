@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Serializable;
     using LAB2D.UnityAdapter;
@@ -48,17 +49,17 @@ namespace LAB2D.UI.Action
             this.selects[key].ForEach((posMap) =>
             {
                 GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
-                if (WorkerTaskManager.Instance.GatherPositions.Contains(gridPos))
+                if (ServiceLocator.Get<WorkerTaskManager>().GatherPositions.Contains(gridPos))
                 {
                     return;
                 }
 
-                if (!ResourceMap.Instance.TryGetGatherResourceInfo(posMap, out ResourceInfo resourceInfo))
+                if (!ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(posMap, out ResourceInfo resourceInfo))
                 {
                     return;
                 }
 
-                WorkerTaskManager.Instance.AddTask(
+                ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerGatherTask.GatherTaskBuilder()
                     .SetTarget(posMap).SetResourceInfo(resourceInfo).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
             });
@@ -75,19 +76,20 @@ namespace LAB2D.UI.Action
             this.selects[key].ForEach((posMap) =>
             {
                 GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
-                if (!WorkerTaskManager.Instance.GatherPositions.Contains(gridPos))
+                if (!ServiceLocator.Get<WorkerTaskManager>().GatherPositions.Contains(gridPos))
                 {
                     return;
                 }
 
-                WorkerTaskManager.Instance.CancelGatherTask(gridPos);
-                GatherMap.Instance.CancelGather(posMap);
+                ServiceLocator.Get<WorkerTaskManager>().CancelGatherTask(gridPos);
+                ServiceLocator.Get<GatherMap>().CancelGather(posMap);
             });
         }
 
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
             this.selects = new Dictionary<TileTypeEnum, List<Vector3Int>>
             {
                 { TileTypeEnum.Resource, new List<Vector3Int>() },
@@ -127,9 +129,9 @@ namespace LAB2D.UI.Action
                 return;
             }
 
-            if (UnityGlobalInputAdapter.GetPrimaryMouseDown() && PanelController.Instance.Panels.Count > 0 &&
-                (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance ||
-                PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance))
+            if (UnityGlobalInputAdapter.GetPrimaryMouseDown() && ServiceLocator.Get<PanelController>().Panels.Count > 0 &&
+                (ServiceLocator.Get<PanelController>().Panels.Peek() == ServiceLocator.Get<ForegroundPanel>() ||
+                ServiceLocator.Get<PanelController>().Panels.Peek() == ServiceLocator.Get<ItemInfoPanel>()))
             {
                 this.options.gameObject.SetActive(false);
                 Vector3 pos = UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main);
@@ -137,7 +139,7 @@ namespace LAB2D.UI.Action
                 this.transform.position = new Vector3(pos.x, pos.y, 0.0f);
                 this.isDown = true;
             }
-            else if (this.isDown && PanelController.Instance.IsForeground())
+            else if (this.isDown && ServiceLocator.Get<PanelController>().IsForeground())
             {
                 Vector3 pos = UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main);
                 float x = pos.x - this.start.x;
@@ -177,9 +179,9 @@ namespace LAB2D.UI.Action
                 this.selects[key].Clear();
             }
 
-            SelectManagerPool.Instance.ReleaseAll();
-            Vector3Int start = TileMap.Instance.WorldPosToMapPos(this.transform.position);
-            Vector3Int end = TileMap.Instance.WorldPosToMapPos(new Vector3(
+            ServiceLocator.Get<SelectManagerPool>().ReleaseAll();
+            Vector3Int start = ServiceLocator.Get<TileMap>().WorldPosToMapPos(this.transform.position);
+            Vector3Int end = ServiceLocator.Get<TileMap>().WorldPosToMapPos(new Vector3(
                 this.transform.position.x + ((RectTransform)this.transform).sizeDelta.x,
                 this.transform.position.y - ((RectTransform)this.transform).sizeDelta.y,
                 this.transform.position.z));
@@ -188,35 +190,35 @@ namespace LAB2D.UI.Action
                 for (int j = start.y; j < end.y; j++)
                 {
                     Vector3Int posMap = new (i, j, 0);
-                    GameCharacter character = ItemInfoUI.Instance.GetCharacter(posMap);
+                    GameCharacter character = ServiceLocator.Get<ItemInfoUI>().GetCharacter(posMap);
 
                     // 临近的位置可能会获得多个角色, 所以这里只取第一个
-                    if (character != null && SelectManagerPool.Instance.GetForCharacter(character) == null)
+                    if (character != null && ServiceLocator.Get<SelectManagerPool>().GetForCharacter(character) == null)
                     {
-                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        SelectUI selectUI = ServiceLocator.Get<SelectManagerPool>().CreateFreeSelect(posMap);
                         selectUI.Character = character;
                     }
 
-                    ResourceInfo resourceInfo = DropManager.Instance.GetDropByAll(posMap);
+                    ResourceInfo resourceInfo = ServiceLocator.Get<DropManager>().GetDropByAll(posMap);
                     if (resourceInfo != null)
                     {
-                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        SelectUI selectUI = ServiceLocator.Get<SelectManagerPool>().CreateFreeSelect(posMap);
                         selectUI.SetTarget(posMap);
                     }
 
-                    resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
+                    resourceInfo = ServiceLocator.Get<InventoryManager>().GetResourceByPos(posMap);
                     if (resourceInfo != null && resourceInfo.Id != -1 && resourceInfo.Count != 0)
                     {
-                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        SelectUI selectUI = ServiceLocator.Get<SelectManagerPool>().CreateFreeSelect(posMap);
                         selectUI.SetTarget(posMap);
                     }
 
-                    TileBase tileBase = ItemInfoUI.Instance.GetTile(posMap, false, false, false);
+                    TileBase tileBase = ServiceLocator.Get<ItemInfoUI>().GetTile(posMap, false, false, false);
                     if (tileBase != null)
                     {
-                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        SelectUI selectUI = ServiceLocator.Get<SelectManagerPool>().CreateFreeSelect(posMap);
                         selectUI.SetTarget(posMap);
-                        if (ResourceMap.Instance.TryGetGatherResourceInfo(posMap, out _))
+                        if (ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(posMap, out _))
                         {
                             this.selects[TileTypeEnum.Resource].Add(posMap);
                         }

@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Inventory;
     using LAB2D.UnityAdapter;
@@ -28,12 +29,13 @@ namespace LAB2D.UI.Action
         public void Awake()
         {
             Instance = this;
-            EventBus.Instance.Subscribe<InventoryGridChangedEvent>(this.OnInventoryGridChanged);
+            ServiceLocator.Register(this);
+            ServiceLocator.Get<EventBus>().Subscribe<InventoryGridChangedEvent>(this.OnInventoryGridChanged);
         }
 
         public void OnDestroy()
         {
-            EventBus.Instance.Unsubscribe<InventoryGridChangedEvent>(this.OnInventoryGridChanged);
+            ServiceLocator.Get<EventBus>().Unsubscribe<InventoryGridChangedEvent>(this.OnInventoryGridChanged);
             if (Instance == this)
             {
                 Instance = null;
@@ -48,8 +50,8 @@ namespace LAB2D.UI.Action
             {
                 // 通过 UnityAdapter 转换 Domain 坐标为 Unity 坐标，重新获取格式化文本
                 Vector3Int unityPos = UnityVectorAdapter.ToVector3Int(e.Position);
-                string cellInfo = InventoryManager.Instance.ToString(unityPos);
-                ItemInfoPanel.Instance.SetItemInfo(cellInfo);
+                string cellInfo = ServiceLocator.Get<InventoryManager>().ToString(unityPos);
+                ServiceLocator.Get<ItemInfoPanel>().SetItemInfo(cellInfo);
             }
         }
 
@@ -58,13 +60,13 @@ namespace LAB2D.UI.Action
             // 实时更新Character信息
             if (this.character != null)
             {
-                if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
+                if (ServiceLocator.Get<PanelController>().Panels.Peek() != ServiceLocator.Get<ItemInfoPanel>())
                 {
-                    PanelController.Instance.Show(ItemInfoPanel.Instance);
+                    ServiceLocator.Get<PanelController>().Show(ServiceLocator.Get<ItemInfoPanel>());
                 }
 
-                ItemInfoPanel.Instance.SetItemInfo(this.character.ToString());
-                ItemInfoPanel.Instance.SetCharacter(this.character);
+                ServiceLocator.Get<ItemInfoPanel>().SetItemInfo(this.character.ToString());
+                ServiceLocator.Get<ItemInfoPanel>().SetCharacter(this.character);
             }
 
             if (UnityGlobalInputAdapter.GetSecondaryMouseDown())
@@ -77,15 +79,15 @@ namespace LAB2D.UI.Action
                     return;
                 }
 
-                this.selectPos = TileMap.Instance.GetMapPosByMouse();
+                this.selectPos = ServiceLocator.Get<TileMap>().GetMapPosByMouse();
                 SelectUI selectUI;
                 if (UnityGlobalInputAdapter.GetShowTileInfoHeld())
                 {
-                    selectUI = SelectManagerPool.Instance.CreateFreeSelect(this.selectPos);
+                    selectUI = ServiceLocator.Get<SelectManagerPool>().CreateFreeSelect(this.selectPos);
                 }
                 else
                 {
-                    selectUI = SelectManagerPool.Instance.ReleaseAllAndGetOne();
+                    selectUI = ServiceLocator.Get<SelectManagerPool>().ReleaseAllAndGetOne();
                 }
 
                 do
@@ -94,7 +96,7 @@ namespace LAB2D.UI.Action
                     if (this.character != null)
                     {
                         this.text = this.character.ToString();
-                        SelectUI selectUI1 = SelectManagerPool.Instance.GetForCharacter(this.character);
+                        SelectUI selectUI1 = ServiceLocator.Get<SelectManagerPool>().GetForCharacter(this.character);
                         if (selectUI1 != null)
                         {
                             selectUI = selectUI1;
@@ -102,7 +104,7 @@ namespace LAB2D.UI.Action
 
                         selectUI.SetTarget(this.selectPos);
                         selectUI.Character = this.character;
-                        ItemInfoPanel.Instance.SetCharacter(this.character);
+                        ServiceLocator.Get<ItemInfoPanel>().SetCharacter(this.character);
                         break;
                     }
 
@@ -125,16 +127,16 @@ namespace LAB2D.UI.Action
                     }
 
                     this.text += $"{tileBase.name}\n" +
-                        EnvironmentManager.Instance.ToString(this.selectPos);
+                        ServiceLocator.Get<EnvironmentManager>().ToString(this.selectPos);
                     break;
                 }
                 while (true);
-                if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
+                if (ServiceLocator.Get<PanelController>().Panels.Peek() != ServiceLocator.Get<ItemInfoPanel>())
                 {
-                    PanelController.Instance.Show(ItemInfoPanel.Instance);
+                    ServiceLocator.Get<PanelController>().Show(ServiceLocator.Get<ItemInfoPanel>());
                 }
 
-                ItemInfoPanel.Instance.SetItemInfo(this.text);
+                ServiceLocator.Get<ItemInfoPanel>().SetItemInfo(this.text);
             }
         }
 
@@ -148,7 +150,7 @@ namespace LAB2D.UI.Action
         {
             if (this.select.Equals(name) && this.selectPos.x == pos.x && this.selectPos.y == pos.y)
             {
-                ItemInfoPanel.Instance.SetItemInfo(text);
+                ServiceLocator.Get<ItemInfoPanel>().SetItemInfo(text);
             }
         }
 
@@ -160,17 +162,17 @@ namespace LAB2D.UI.Action
         public Character GetCharacter(Vector3Int posMap)
         {
             // 玩家
-            Character character = PlayerManager.Instance.GetCharacterByPos(posMap);
+            Character character = ServiceLocator.Get<PlayerManager>().GetCharacterByPos(posMap);
             if (character == null)
             {
                 // 敌人
-                character = EnemyManager.Instance.GetCharacterByPos(posMap);
+                character = ServiceLocator.Get<EnemyManager>().GetCharacterByPos(posMap);
             }
 
             if (character == null)
             {
                 // 工作者
-                character = WorkerManager.Instance.GetCharacterByPos(posMap);
+                character = ServiceLocator.Get<WorkerManager>().GetCharacterByPos(posMap);
             }
 
             return character;
@@ -189,11 +191,11 @@ namespace LAB2D.UI.Action
             TileBase tileBase = null;
             if (isBuild)
             {
-                tileBase = BuildMap.Instance.GetTile(posMap);
+                tileBase = ServiceLocator.Get<BuildMap>().GetTile(posMap);
                 if (tileBase != null)
                 {
                     this.text = "Build:";
-                    BuildItemData buildData = ItemDataManager.Instance.GetBuildItemDataByName(tileBase.name);
+                    BuildItemData buildData = ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileBase.name);
                     if (buildData != null)
                     {
                         this.text += $"\n可通行:{buildData.IsPass}\n需要建造:{buildData.IsNeedBuild}\n";
@@ -204,24 +206,24 @@ namespace LAB2D.UI.Action
             // 如果点击的是床，则展示分配的Worker
             if (tileBase != null && tileBase.name.Contains("Bed"))
             {
-                WorkerBedUI.Instance.ShowWorkerBed(posMap);
+                ServiceLocator.Get<WorkerBedUI>().ShowWorkerBed(posMap);
             }
 
             if (tileBase == null)
             {
-                tileBase = ResourceMap.Instance.GetTile(posMap);
+                tileBase = ServiceLocator.Get<ResourceMap>().GetTile(posMap);
                 if (tileBase != null)
                 {
                     this.text = "Resource:";
 
                     // 手动添加任务
-                    if (isResource && ResourceMap.Instance.TryGetGatherResourceInfo(posMap, out _))
+                    if (isResource && ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(posMap, out _))
                     {
-                        GatherUI.Instance.SetPostion(posMap);
+                        ServiceLocator.Get<GatherUI>().SetPostion(posMap);
                     }
                     else if (isResource)
                     {
-                        GatherUI.Instance.Hide();
+                        ServiceLocator.Get<GatherUI>().Hide();
                     }
                 }
             }
@@ -229,7 +231,7 @@ namespace LAB2D.UI.Action
             if (tileBase == null && isTile)
             {
                 this.text = "Tile:";
-                tileBase = TileMap.Instance.GetTile(posMap);
+                tileBase = ServiceLocator.Get<TileMap>().GetTile(posMap);
             }
 
             return tileBase;
@@ -248,15 +250,15 @@ namespace LAB2D.UI.Action
         {
             // 掉落物
             this.select = "DropResourceManager";
-            string text = DropManager.Instance.ToString(posMap);
+            string text = ServiceLocator.Get<DropManager>().ToString(posMap);
             if (text.Equals(string.Empty))
             {
                 // 仓库
                 this.select = "InventoryManager";
-                text = InventoryManager.Instance.ToString(posMap);
+                text = ServiceLocator.Get<InventoryManager>().ToString(posMap);
                 if (!text.Equals(string.Empty))
                 {
-                    InventoryManager.Instance.ShowWearMenu(posMap);
+                    ServiceLocator.Get<InventoryManager>().ShowWearMenu(posMap);
                 }
             }
 

@@ -330,11 +330,12 @@ Scripts/2D/Character/Worker/Task/AWorkerTask.cs
 
 已完成的解耦：
 
-- **AWorkerTask Provider 委托模式**：约 35 个静态 `Func`/`Action` 属性替代了直接 Singleton 调用
+- **AWorkerTask Provider 委托模式**：约 35 个静态 `Func`/`Action` 属性替代了直接 Singleton 调用，**100% ServiceLocator 覆盖**（零 .Instance）
   - `LogProvider`、`WalkabilityProvider`、`ProgressMultiplierProvider`
   - `TaskLifecycleProvider`、`TaskCompletionProvider`
   - `InventoryProvider`、`ItemDataProvider`、`ItemMapProvider`
-  - `NetworkIsOnlineProvider`、`FloatingTextProvider`、`ShowTipProvider` 等
+  - `NetworkIsOnlineProvider`、`FloatingTextProvider`、`ShowTipProvider`、`AttackEffectProvider`、`AsyncProgressProvider`×4、`LocateWorkerUIProvider`×2 等
+  - 补注册 4 个服务：`AttackEffectManager`、`AsyncProgressUI`（已自注册）、`LocateWorkerUI`、`GlobalInit`（2026-07）
 - `WorkerUpdateSystem` 实现 `ITickable`，由 GlobalInit 统一驱动
 - `WorkerTaskTimeConfig` 从任务中分离为独立配置类
 - ✅ **WorkerTaskManager 实现 ITickable** — `Update()` 迁移至 `Tick(float)`，GlobalInit 注册（2026-07）
@@ -1048,9 +1049,13 @@ namespace LAB2D
 > - **Photon 网络调用桥接** — `INetworkView` 新增 `IsMasterClient` 属性，`PunNetworkViewAdapter` / `OfflineNetworkView` 实现。`AWorkerTask` 新增 `NetworkIsMasterClientProvider` + `NetworkDestroyProvider` 两个静态委托。替换 9 处业务代码中的直接 Photon 调用：`ASeekEnemy.Death()`、`ACommonEnemy.Death()` → `NetworkView.IsMasterClient`；`AWorker.DeathProvider`、`ForegroundPanel`、`SyncDataTool`(3处) → `NetworkIsMasterClientProvider()`；`SeekEnemyDeadState`、`CommonEnemyDeadState`、`WorkerDeadState`、`BackpackMenuPanel` → `NetworkDestroyProvider`。`Player.cs` 清理 2 处冗余 `PhotonNetwork.IsConnected`（`NetworkView.IsOnline` 已封装）。**业务代码已零 Photon 直接调用**，剩余引用仅在 Adapter/Provider 层或注释中。
 > - **Player PhotonNetwork 残余引用提取** — 新增 `LocalPlayerTagObjectProvider`（`Action<Player>`）和 `LocalPlayerNameProvider`（`Func<string>`）两个 Provider 委托。将 `Player.Start()` 中最后 2 处 PhotonNetwork 直接调用（`PhotonNetwork.LocalPlayer.TagObject`、`PhotonNetwork.NickName`）替换为 Provider 调用。遵循项目已有的模式 B Provider 委托模式。Player.cs 的 PhotonNetwork 引用现已全部封装在 Provider 默认实现内部（2026-07）。
 > - **ComboBonusManager → IInitializable 迁移** — 实现 `IInitializable` 接口，`EnsureInitialized()` 私有方法提升为 `public void Initialize()`，新增 `IsInitialized` 公开属性。移除 5 个属性 getter（DamageMultiplier、ExperienceMultiplier、CurrentCombo、CurrentTierIndex、GetCurrentTierLabel）中的懒初始化守卫。由 `GlobalInit.BuildInitializableList()` 统一驱动初始化，IInitializable 实现总数增至 5 个（2026-07）。
-> - **AWorkerTask Provider 默认值 .Instance → ServiceLocator** — 将 ~35 个静态 Provider 默认实现中的 `.Instance` 调用替换为 `ServiceLocator.Get<T>()`，涵盖所有已在 GlobalInit 注册的 ~30 个服务。保留 6 处未注册服务的 .Instance（AttackEffectManager、AsyncProgressUI、LocateWorkerUI）和 GlobalInit.Instance。AWorkerTask.cs 从 45 处 .Instance 调用降至 8 处（均在未注册服务或注释中）（2026-07）。
+> - **AWorkerTask Provider 默认值 .Instance → ServiceLocator（完成）** — 将 ~35 个静态 Provider 默认实现中的 `.Instance` 调用全部替换为 `ServiceLocator.Get<T>()`。分两阶段完成：(1) 约 27 个已注册服务 → ServiceLocator（2026-07 前）；(2) 剩余 8 个未注册服务 → 补注册 AttackEffectManager、AsyncProgressUI、LocateWorkerUI、GlobalInit 后替换（2026-07）。AWorkerTask.cs 现已 **零 .Instance 调用**（代码和注释均清零）。
 >
-> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**未注册 ServiceLocator 的服务补注册**（AttackEffectManager、AsyncProgressUI、LocateWorkerUI 等，补注册后可完成最后 8 处 .Instance 替换）、**UI 层 ServiceLocator 迁移**（ItemInfoUI 32 处、RectBoxUI 23 处 .Instance 调用）。
+> - **AWorkerTask .Instance 清零 + 未注册服务补注册** — 补注册 4 个未注册服务（`AttackEffectManager` 在 RegisterSafeServices、`AsyncProgressUI` 已自注册、`LocateWorkerUI` 和 `GlobalInit` 在 Awake 中新增 `ServiceLocator.Register(this)`）。AWorkerTask 最后 8 处 Provider 默认实现从 `.Instance` 迁移至 `ServiceLocator.Get<T>()`。同步更新 9 处 XML 文档注释。AWorkerTask.cs 实现 **100% ServiceLocator 覆盖**（零 `.Instance`，含注释）（2026-07）。
+>
+> - **ItemInfoUI + RectBoxUI ServiceLocator 迁移** — ItemInfoUI.cs（32→0）、RectBoxUI.cs（23→0）的 `.Instance` 调用全部迁移至 `ServiceLocator.Get<T>()`。补注册 6 个服务：`EventBus`、`SelectManagerPool`（RegisterSafeServices）；`GatherUI`、`WorkerBedUI`、`ItemInfoUI`、`RectBoxUI`（Awake 自注册）。`ItemInfoPanel`、`ForegroundPanel` 由 `ABasePanel<T>` 构造函数自动注册（已有机制）。UI/ 目录 .Instance 调用从 236 降至 181（-55）（2026-07）。
+>
+> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**UI 层 ServiceLocator 迁移持续推进**（剩余 181 处 .Instance，重点文件：BackpackMenuPanel 10 处、ForegroundPanel 12 处、AmbitiousExperienceHub 14 处、BuildingUI 17 处、NewOrContinuePanel 21 处、GatherUI 7 处、WorkerBedUI 6 处 等）。
 
 ## 14. 最终检查清单
 

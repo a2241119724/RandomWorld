@@ -2,6 +2,7 @@ namespace LAB2D.UI.Character
 {
     using LAB2D;
     using LAB2D.Character.Worker;
+    using LAB2D.Core;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -22,6 +23,7 @@ namespace LAB2D.UI.Character
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
             this.allItems = new Dictionary<AWorker, GameObject>();
         }
 

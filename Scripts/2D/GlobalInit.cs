@@ -9,6 +9,9 @@ namespace LAB2D
     using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
+    using LAB2D.Item.Backpack.Equipment.Weapon;
+    using LAB2D.UI.Action;
+    using LAB2D.UI.Panel;
     using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
@@ -82,11 +85,15 @@ namespace LAB2D
             ServiceLocator.Register(DialogueManager.Instance);
             ServiceLocator.Register(DialogueMemoryManager.Instance);
             ServiceLocator.Register(GameKnowledgeRetriever.Instance);
+            ServiceLocator.Register(AttackEffectManager.Instance);
+            ServiceLocator.Register(EventBus.Instance);
+            ServiceLocator.Register(SelectManagerPool.Instance);
         }
 
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
             Application.targetFrameRate = GlobalData.MaxFrame;
 
             LogManager.Instance.Init();
@@ -127,6 +134,11 @@ namespace LAB2D
             ServiceLocator.Register(ItemMap.Instance);
             ServiceLocator.Register(GatherMap.Instance);
             ServiceLocator.Register(IsAvailableMap.Instance);
+
+            // ABasePanel<T> 子类 — 构造函数调用 Init() 依赖 GameObject.FindGameObjectWithTag，
+            // 必须在 Awake 阶段（场景加载后）注册，不能放在 RegisterSafeServices（BeforeSceneLoad）。
+            ServiceLocator.Register(ItemInfoPanel.Instance);
+            ServiceLocator.Register(ForegroundPanel.Instance);
         }
 
         /// <summary>
