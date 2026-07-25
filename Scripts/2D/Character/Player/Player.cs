@@ -199,7 +199,7 @@ namespace LAB2D.Character.Player
         public void FixedUpdate()
         {
             // 如果观察的当期的角色并且连接服务器,防止误操作别的玩家
-            if (this.NetworkView.IsOnline && !this.NetworkView.IsMine && PhotonNetwork.IsConnected)
+            if (this.NetworkView.IsOnline && !this.NetworkView.IsMine)
             {
                 return;
             }
@@ -338,7 +338,7 @@ namespace LAB2D.Character.Player
                 this.Death();
             }
 
-            if (this.NetworkView.IsOnline && !this.NetworkView.IsMine && PhotonNetwork.IsConnected)
+            if (this.NetworkView.IsOnline && !this.NetworkView.IsMine)
             {
                 return;
             }

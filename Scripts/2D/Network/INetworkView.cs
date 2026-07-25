@@ -15,6 +15,9 @@ namespace LAB2D.Network
         /// <summary>在线模式是否已连接。</summary>
         bool IsOnline { get; }
 
+        /// <summary>是否为 MasterClient。离线模式下始终为 true。</summary>
+        bool IsMasterClient { get; }
+
         /// <summary>
         /// 调用 RPC 方法。
         /// 离线模式下为空操作。

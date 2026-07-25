@@ -35,7 +35,7 @@ namespace LAB2D.Character.Worker.State
             // 丢弃拿取的东西
             this.Character.DropResource();
 
-            PhotonNetwork.Destroy(this.Character.gameObject);
+            AWorkerTask.NetworkDestroyProvider(this.Character.gameObject);
         }
     }
 }

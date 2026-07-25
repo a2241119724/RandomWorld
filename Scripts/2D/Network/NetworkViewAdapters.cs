@@ -27,6 +27,11 @@ namespace LAB2D.Network
             get { return Photon.Pun.PhotonNetwork.IsConnected; }
         }
 
+        public bool IsMasterClient
+        {
+            get { return Photon.Pun.PhotonNetwork.IsMasterClient; }
+        }
+
         public void RPC(string methodName, object target, params object[] args)
         {
             if (this.photonView == null || !this.IsOnline)
@@ -39,7 +44,7 @@ namespace LAB2D.Network
     }
 
     /// <summary>
-    /// 离线模式网络视图 — 所有 RPC 调用为空操作，IsMine 始终为 true。
+    /// 离线模式网络视图 — 所有 RPC 调用为空操作，IsMine/IsMasterClient 始终为 true。
     /// </summary>
     public sealed class OfflineNetworkView : INetworkView
     {
@@ -50,6 +55,8 @@ namespace LAB2D.Network
         public string OwnerName { get { return "LocalPlayer"; } }
 
         public bool IsOnline { get { return false; } }
+
+        public bool IsMasterClient { get { return true; } }
 
         public void RPC(string methodName, object target, params object[] args)
         {

@@ -128,7 +128,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         {
             base.Death();
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            if (!AWorkerTask.NetworkIsOnlineProvider() || PhotonNetwork.IsMasterClient)
+            if (!this.NetworkView.IsOnline || this.NetworkView.IsMasterClient)
             {
                 AWorkerTask.EnemyRemoveProvider(this);
             }

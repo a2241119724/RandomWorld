@@ -47,7 +47,7 @@ namespace LAB2D.Character.Worker
         public static System.Action<AWorker> DeathProvider { get; set; }
             = (worker) =>
             {
-                if (!AWorkerTask.NetworkIsOnlineProvider() || PhotonNetwork.IsMasterClient)
+                if (!AWorkerTask.NetworkIsOnlineProvider() || AWorkerTask.NetworkIsMasterClientProvider())
                 {
                     Core.ServiceLocator.Get<WorkerManager>().Remove(worker);
                 }

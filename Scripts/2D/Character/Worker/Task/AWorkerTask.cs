@@ -243,6 +243,10 @@ namespace LAB2D.Character.Worker.Task
             = (pos, dmg, crit, combo) => FloatingTextManager.Instance.SpawnDamageText(pos, dmg, crit, combo);
         public static System.Func<bool> NetworkIsOnlineProvider { get; set; }
             = () => NetworkConnect.Instance != null && NetworkConnect.Instance.IsOnline;
+        public static System.Func<bool> NetworkIsMasterClientProvider { get; set; }
+            = () => Photon.Pun.PhotonNetwork.IsMasterClient;
+        public static System.Action<UnityEngine.GameObject> NetworkDestroyProvider { get; set; }
+            = (go) => Photon.Pun.PhotonNetwork.Destroy(go);
         public static System.Func<int, ABackpackItem> ItemFactoryByIdProvider { get; set; }
             = (id) => ItemInstanceFactory.Instance.GetBackpackItemById(id);
         public static System.Func<string> NameGeneratorProvider { get; set; }

@@ -44,7 +44,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                 AWorkerTask.EnemyLootProvider().TryDropLoot(this.Character.transform.position, System.Math.Max(0, waveIndex));
 
                 // Object.Destroy(character.gameObject); // Destroy不会立即销毁,下一帧销毁
-                PhotonNetwork.Destroy(this.Character.gameObject); // Destroy不会立即销毁,下一帧销毁
+                AWorkerTask.NetworkDestroyProvider(this.Character.gameObject); // Destroy不会立即销毁,下一帧销毁
 
                 // 执行OnExit并关闭脚本
                 this.Character.Manager.ChangeState(TypeEnum.Wander);
