@@ -19,7 +19,7 @@ namespace LAB2D.Item
     ///   - 内部数据存储已从 3 个并行 Dictionary 迁移到 Domain/InventoryService（包装 InventoryGrid）
     ///   - posToResource / id2Resource / TypeToResource 不再作为独立字典维护，
     ///     所有物品数据操作委托给 InventoryService，由 InventoryGrid 统一管理位置索引
-    ///   - preTakeResource / prePlaceResource 保留在 Manager 中（依赖 AWorker MonoBehaviour 引用）
+    ///   - preTakeResource / prePlaceResource 的 key 已从 AWorker (MonoBehaviour) 迁移为 int (worker.GetInstanceID())
     ///   - 所有 public API 签名保持不变，调用方无需修改
     ///   - Vector3Int ↔ GameGridPosition 转换在方法边界通过 UnityVectorAdapter 完成
     /// </summary>
@@ -30,19 +30,40 @@ namespace LAB2D.Item
         internal static System.Action<Vector3Int> ShowWearTaskProvider { get; set; }
             = (pos) => ServiceLocator.Get<AddWearTaskUI>().ShowWearTask(pos);
 
+        /// <summary>
+        /// Worker 名称提供者 — 根据 worker instance ID 返回 Worker 的 GameObject 名称。
+        /// 默认实现通过 WorkerManager 查询；可在测试中替换为桩。
+        /// </summary>
+        internal static System.Func<int, string> WorkerNameProvider { get; set; }
+            = (workerId) =>
+            {
+                if (Core.ServiceLocator.TryGet(out WorkerManager wm))
+                {
+                    foreach (AWorker w in wm.Characters)
+                    {
+                        if (w != null && w.GetInstanceID() == workerId)
+                        {
+                            return w.name;
+                        }
+                    }
+                }
+
+                return $"worker_{workerId}";
+            };
+
         // ---- v2: 纯数据操作委托给 Domain InventoryService ----
         private InventoryService inventoryService;
 
-        // ---- Worker 相关的预留字典（依赖 AWorker MonoBehaviour，保留在 Manager 中） ----
-        private readonly Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // 预申请资源
-        private readonly Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // 预放置资源
+        // ---- Worker 相关的预留字典（v3: key 已从 AWorker 迁移为 int workerId） ----
+        private readonly Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // 预申请资源
+        private readonly Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // 预放置资源
 
         private readonly int capacity = 1000; // 单个cell的容量
 
         public InventoryManager()
         {
-            this.preTakeResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
-            this.prePlaceResource = new Dictionary<AWorker, Dictionary<Vector3Int, ResourceInfo>>();
+            this.preTakeResource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
+            this.prePlaceResource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
         }
 
         /// <summary>
@@ -141,9 +162,10 @@ namespace LAB2D.Item
         /// <returns>位置</returns>
         public Vector3Int GetPosByPrePlace(AWorker worker)
         {
-            if (this.prePlaceResource.ContainsKey(worker))
+            int workerId = worker.GetInstanceID();
+            if (this.prePlaceResource.ContainsKey(workerId))
             {
-                return this.prePlaceResource[worker].First().Key;
+                return this.prePlaceResource[workerId].First().Key;
             }
 
             AWorkerTask.LogProvider("没有预放置资源", LogManager.LogLevelEnum.Error);
@@ -475,16 +497,17 @@ namespace LAB2D.Item
         /// <returns>资源信息</returns>
         public ResourceInfo AddItemByPrePlace(AWorker worker, Vector3Int posMap)
         {
-            if (!this.prePlaceResource.ContainsKey(worker) || !this.prePlaceResource[worker].ContainsKey(posMap))
+            int workerId = worker.GetInstanceID();
+            if (!this.prePlaceResource.ContainsKey(workerId) || !this.prePlaceResource[workerId].ContainsKey(posMap))
             {
                 AWorkerTask.LogProvider("没有预放置资源", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
-            ResourceInfo resourceInfo = this.prePlaceResource[worker][posMap];
+            ResourceInfo resourceInfo = this.prePlaceResource[workerId][posMap];
 
             // 删除预放置的资源
-            this.prePlaceResource[worker].Remove(posMap);
+            this.prePlaceResource[workerId].Remove(posMap);
 
             // 添加到仓库真正的数据
             if (this.inventoryService != null)
@@ -504,9 +527,10 @@ namespace LAB2D.Item
         /// <returns>位置</returns>
         public Vector3Int GetPosByPreTake(AWorker worker)
         {
-            if (this.preTakeResource.ContainsKey(worker) && this.preTakeResource[worker].Count > 0)
+            int workerId = worker.GetInstanceID();
+            if (this.preTakeResource.ContainsKey(workerId) && this.preTakeResource[workerId].Count > 0)
             {
-                return this.preTakeResource[worker].First().Key;
+                return this.preTakeResource[workerId].First().Key;
             }
 
             AWorkerTask.LogProvider("没有预留资源!", LogManager.LogLevelEnum.Warning);
@@ -584,19 +608,20 @@ namespace LAB2D.Item
         /// <returns>返回从仓库中扣减的数量(预取的资源)</returns>
         public ResourceInfo SubItemByPreTake(AWorker worker, Vector3Int posMap)
         {
-            if (!this.preTakeResource.ContainsKey(worker) || !this.preTakeResource[worker].ContainsKey(posMap))
+            int workerId = worker.GetInstanceID();
+            if (!this.preTakeResource.ContainsKey(workerId) || !this.preTakeResource[workerId].ContainsKey(posMap))
             {
                 AWorkerTask.LogProvider("没有预取资源", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
-            ResourceInfo resourceInfo = this.preTakeResource[worker][posMap];
+            ResourceInfo resourceInfo = this.preTakeResource[workerId][posMap];
 
             // 删除预取的资源
-            this.preTakeResource[worker].Remove(posMap);
-            if (this.preTakeResource[worker].Count == 0)
+            this.preTakeResource[workerId].Remove(posMap);
+            if (this.preTakeResource[workerId].Count == 0)
             {
-                this.preTakeResource.Remove(worker);
+                this.preTakeResource.Remove(workerId);
             }
 
             // 减少仓库真正的数据
@@ -767,21 +792,21 @@ namespace LAB2D.Item
             }
 
             text += $"prePlace:\n";
-            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
+            foreach (KeyValuePair<int, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
                 if (prePlace.Value.ContainsKey(pos))
                 {
-                    text += prePlace.Key.name + ":\n"
+                    text += WorkerNameProvider(prePlace.Key) + ":\n"
                         + "    " + prePlace.Value[pos].Id + " " + prePlace.Value[pos].Count + "\n";
                 }
             }
 
             text += "preTake:\n";
-            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
+            foreach (KeyValuePair<int, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
             {
                 if (preTake.Value.ContainsKey(pos))
                 {
-                    text += preTake.Key.name + ":\n"
+                    text += WorkerNameProvider(preTake.Key) + ":\n"
                         + "    " + preTake.Value[pos].Id + " " + preTake.Value[pos].Count + "\n";
                 }
             }
@@ -812,14 +837,15 @@ namespace LAB2D.Item
         /// <param name="worker">Worker</param>
         public void DeleteWorkerPre(AWorker worker)
         {
-            if (this.prePlaceResource.ContainsKey(worker))
+            int workerId = worker.GetInstanceID();
+            if (this.prePlaceResource.ContainsKey(workerId))
             {
-                this.prePlaceResource.Remove(worker);
+                this.prePlaceResource.Remove(workerId);
             }
 
-            if (this.preTakeResource.ContainsKey(worker))
+            if (this.preTakeResource.ContainsKey(workerId))
             {
-                this.preTakeResource.Remove(worker);
+                this.preTakeResource.Remove(workerId);
             }
         }
 
@@ -844,7 +870,7 @@ namespace LAB2D.Item
         private int GetPrePlaceCountByPos(Vector3Int pos)
         {
             int count = 0;
-            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
+            foreach (KeyValuePair<int, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
                 if (prePlace.Value.ContainsKey(pos))
                 {
@@ -863,21 +889,22 @@ namespace LAB2D.Item
         /// <param name="resourceInfo">资源信息</param>
         private void PrePlace(AWorker worker, Vector3Int pos, ResourceInfo resourceInfo)
         {
-            if (this.prePlaceResource.ContainsKey(worker))
+            int workerId = worker.GetInstanceID();
+            if (this.prePlaceResource.ContainsKey(workerId))
             {
-                if (this.prePlaceResource[worker].ContainsKey(pos))
+                if (this.prePlaceResource[workerId].ContainsKey(pos))
                 {
-                    this.prePlaceResource[worker][pos].Count += resourceInfo.Count;
+                    this.prePlaceResource[workerId][pos].Count += resourceInfo.Count;
                     return;
                 }
 
-                this.prePlaceResource[worker].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
+                this.prePlaceResource[workerId].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 return;
             }
 
             Dictionary<Vector3Int, ResourceInfo> dict = new();
             dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
-            this.prePlaceResource.Add(worker, dict);
+            this.prePlaceResource.Add(workerId, dict);
         }
 
         /// <summary>
@@ -888,7 +915,7 @@ namespace LAB2D.Item
         /// <returns>是否已经预放置过了</returns>
         private bool IsAreadyPrePlace(Vector3Int pos, int id)
         {
-            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
+            foreach (KeyValuePair<int, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
                 if (prePlace.Value.ContainsKey(pos) && prePlace.Value[pos].Id != id)
                 {
@@ -907,27 +934,28 @@ namespace LAB2D.Item
         /// <param name="resourceInfo">资源信息</param>
         private void PreTake(AWorker worker, Vector3Int pos, ResourceInfo resourceInfo)
         {
-            if (!this.preTakeResource.ContainsKey(worker))
+            int workerId = worker.GetInstanceID();
+            if (!this.preTakeResource.ContainsKey(workerId))
             {
                 Dictionary<Vector3Int, ResourceInfo> dict = new();
                 dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
-                this.preTakeResource.Add(worker, dict);
+                this.preTakeResource.Add(workerId, dict);
                 return;
             }
 
-            if (!this.preTakeResource[worker].ContainsKey(pos))
+            if (!this.preTakeResource[workerId].ContainsKey(pos))
             {
-                this.preTakeResource[worker].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
+                this.preTakeResource[workerId].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 return;
             }
 
-            this.preTakeResource[worker][pos].Count += resourceInfo.Count;
+            this.preTakeResource[workerId][pos].Count += resourceInfo.Count;
         }
 
         private int GetPreTakeCountByPos(Vector3Int pos)
         {
             int count = 0;
-            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
+            foreach (KeyValuePair<int, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
             {
                 if (preTake.Value.ContainsKey(pos))
                 {
@@ -941,7 +969,7 @@ namespace LAB2D.Item
         private int GetPreTakeCountById(int id)
         {
             int count = 0;
-            foreach (KeyValuePair<AWorker, Dictionary<Vector3Int, ResourceInfo>> pre in this.preTakeResource)
+            foreach (KeyValuePair<int, Dictionary<Vector3Int, ResourceInfo>> pre in this.preTakeResource)
             {
                 foreach (KeyValuePair<Vector3Int, ResourceInfo> pair in pre.Value)
                 {
