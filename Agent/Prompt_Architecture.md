@@ -866,7 +866,7 @@ public sealed class MyNewInitializer : IInitializable
 4. ✅ **InventoryManager 深入解耦** — InventoryService + int key
 5. ✅ **WorkerTaskManager 解耦** — ITickable + GameGridPosition + WorkerPositionProvider
 6. ✅ **Wave 系统解耦** — 7 Provider + 4 EventBus 事件 + IWaveStateProvider + EventBus 订阅迁移
-7. ✅ **Gameplay 层 UnityEngine 清理** — 10 个 Manager 移除/迁移
+7. ✅ **Gameplay 层 UnityEngine 清理** — 12 个非 MonoBehaviour Manager/Singleton 零 `using UnityEngine`，所有 `Time.realtimeSinceStartup` 已迁移至 `IGameTime`（2026-07 终态收尾）
 8. 🔒 **存档/Photon 桥接** — Photon 层已通过 INetworkView/ISyncSender 完善覆盖，存档 BinaryFormatter 迁移风险高，建议保持现状
 9. 🔒 **WaveManager Coroutine** — 已通过 IWaveTimeScheduler 解耦，可选优化
 10. 📋 **扩展单元测试** — 39 个 Domain 测试文件覆盖全部 RuleService，可继续为 Provider 委托补充测试
@@ -1065,10 +1065,11 @@ namespace LAB2D
 > **InventoryManager**：
 > - `preTakeResource`/`prePlaceResource` Dictionary key：`AWorker` → `int` (worker.GetInstanceID())，字典不再持有 MonoBehaviour 强引用
 >
-> **Gameplay 层 Manager 解耦（10 个文件）**：
-> - 零 `using UnityEngine`（8 个）：PlayerVitalAlertManager、ColonyCommandCenterManager、WorkerTaskCongestionAdvisor、WaveEventFeedback、WorkerConditionManager、AchievementManager、ItemCollectionTracker、WeatherGameplayEffect、WorkerEfficiencyTracker、SessionResultManager
-> - IGameTime/IGameLogger 迁移（2 个）：WorkerSupplyIssueManager、SkillManager
+> **Gameplay 层 Manager 解耦（12 个文件零 using UnityEngine）**：
+> - 零 `using UnityEngine`（12 个）：PlayerVitalAlertManager、ColonyCommandCenterManager、WorkerTaskCongestionAdvisor、WaveEventFeedback、WorkerConditionManager、AchievementManager、ItemCollectionTracker、WeatherGameplayEffect、WorkerEfficiencyTracker、SessionResultManager、**GameplaySessionStats**（IGameTime 迁移）、**ComboBonusManager**（移除冗余 using）
+> - IGameTime/IGameLogger 迁移（3 个）：WorkerSupplyIssueManager、SkillManager、**DeathPenaltyManager**（Time.realtimeSinceStartup → IGameTime.RealtimeSinceStartup）
 > - PlayerPositionProvider（1 个）：EnemyLootManager
+> - 冗余 using UnityEngine 清理（1 个）：**WorkerUpdateSystem**
 >
 > **其他**：
 > - WorkerTaskManager：`WorkerPositionProvider` 提取
@@ -1079,7 +1080,8 @@ namespace LAB2D
 >
 > **当前架构状态（2026-07）**：
 > - 🎉 非 UI `.Instance` 全部清零
-> - 🎉 Gameplay 层 10 个非 MonoBehaviour Manager 零 `using UnityEngine`
+> - 🎉 Gameplay 层 12 个非 MonoBehaviour Manager/Singleton 零 `using UnityEngine`（+2 相比上轮：GameplaySessionStats、ComboBonusManager）
+> - 🎉 Gameplay 层所有非 MonoBehaviour Manager 的 `Time.realtimeSinceStartup` 已全部迁移至 `IGameTime`（GameplaySessionStats + DeathPenaltyManager 本轮收尾）
 > - 🎉 WaveBossRewardManager：7 Provider + EventBus + 零 WaveManager/Player 引用
 > - 🎉 Wave 系统：4 IGameEvent + IWaveStateProvider + EventBus 双通道发布
 > - 🎉 InventoryManager：字典不持有 AWorker 引用（int key）

@@ -7,10 +7,10 @@ namespace LAB2D.Gameplay
     using LAB2D.Domain.Gameplay;
     using LAB2D.Item;
     using Character = LAB2D.Character.Character;
+    using LAB2D.Domain.Common;
     using System;
     using System.Collections.Generic;
     using System.Text;
-    using UnityEngine;
 
     /// <summary>
     /// 仅运行时使用的会话统计数据，涵盖战斗、奖励、收集和任务反馈。
@@ -32,6 +32,9 @@ namespace LAB2D.Gameplay
         private float comboTimeout;
         private float lastDefeatRealtime;
         private float sessionStartRealtime;
+        private IGameTime gameTime;
+
+        private IGameTime GameTime => this.gameTime ?? (this.gameTime = Core.ServiceLocator.Get<IGameTime>());
         private int criticalHitCount;
         private int currentCombo;
         private int maxCombo;
@@ -74,7 +77,7 @@ namespace LAB2D.Gameplay
 
         public void ResetSession()
         {
-            this.sessionStartRealtime = Time.realtimeSinceStartup;
+            this.sessionStartRealtime = this.GameTime.RealtimeSinceStartup;
             this.lastDefeatRealtime = -this.comboTimeout;
             this.criticalHitCount = 0;
             this.currentCombo = 0;
@@ -202,7 +205,7 @@ namespace LAB2D.Gameplay
         {
             return new GameplaySessionStatsSnapshot
             {
-                SessionDuration = this.ruleService.GetSessionDuration(Time.realtimeSinceStartup, this.sessionStartRealtime),
+                SessionDuration = this.ruleService.GetSessionDuration(this.GameTime.RealtimeSinceStartup, this.sessionStartRealtime),
                 CriticalHitCount = this.criticalHitCount,
                 CurrentCombo = this.currentCombo,
                 MaxCombo = this.maxCombo,
@@ -244,7 +247,7 @@ namespace LAB2D.Gameplay
 
         private void UpdateCombo()
         {
-            float now = Time.realtimeSinceStartup;
+            float now = this.GameTime.RealtimeSinceStartup;
             this.currentCombo = this.ruleService.GetNextCombo(
                 now,
                 this.lastDefeatRealtime,

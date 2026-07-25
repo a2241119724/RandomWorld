@@ -3,6 +3,7 @@ namespace LAB2D.Gameplay
     using LAB2D;
     using LAB2D.Character.Player;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
     using UnityEngine;
 
@@ -34,13 +35,16 @@ namespace LAB2D.Gameplay
 
         private readonly DeathPenaltyRuleService ruleService = new DeathPenaltyRuleService();
         private float respawnDeadline = -1f;
+        private IGameTime gameTime;
+
+        private IGameTime GameTime => this.gameTime ?? (this.gameTime = Core.ServiceLocator.Get<IGameTime>());
 
         /// <summary>
         /// 玩家当前是否正在等待复活。
         /// </summary>
         public bool IsRespawning
         {
-            get { return this.ruleService.IsRespawning(this.respawnDeadline, Time.realtimeSinceStartup); }
+            get { return this.ruleService.IsRespawning(this.respawnDeadline, this.GameTime.RealtimeSinceStartup); }
         }
 
         /// <summary>
@@ -55,7 +59,7 @@ namespace LAB2D.Gameplay
                     return 0f;
                 }
 
-                return this.ruleService.GetRespawnRemaining(this.respawnDeadline, Time.realtimeSinceStartup);
+                return this.ruleService.GetRespawnRemaining(this.respawnDeadline, this.GameTime.RealtimeSinceStartup);
             }
         }
 
@@ -90,7 +94,7 @@ namespace LAB2D.Gameplay
 
             // 启动复活倒计时
             this.respawnDeadline = this.ruleService.GetRespawnDeadline(
-                Time.realtimeSinceStartup,
+                this.GameTime.RealtimeSinceStartup,
                 this.RespawnDelaySeconds);
 
             // 显示死亡画面（纯代码 UI，无需预制体）
@@ -112,7 +116,7 @@ namespace LAB2D.Gameplay
             }
 
             // 仍在等待倒计时结束
-            if (Time.realtimeSinceStartup < this.respawnDeadline)
+            if (this.GameTime.RealtimeSinceStartup < this.respawnDeadline)
             {
                 return false;
             }

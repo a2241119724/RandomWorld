@@ -5,7 +5,6 @@ namespace LAB2D.Gameplay
     using LAB2D.Constant;
     using LAB2D.Domain.Common;
     using System.Collections.Generic;
-    using UnityEngine;
 
     /// <summary>
     /// 工人更新系统 — 从 GlobalInit 提取的独立 Tick 系统。
