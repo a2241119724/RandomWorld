@@ -80,7 +80,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WaveManager wm = Core.ServiceLocator.TryGet(out WaveManager waveManager) ? waveManager : WaveManager.Instance;
+                WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
                 if (wm == null)
                 {
                     return;
@@ -117,7 +117,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WaveManager wm = Core.ServiceLocator.TryGet(out WaveManager waveMgr) ? waveMgr : WaveManager.Instance;
+                WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
                 if (wm != null)
                 {
                     this.DisableInternal(wm);
@@ -231,7 +231,7 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WaveManager wm = Core.ServiceLocator.TryGet(out WaveManager waveMgr) ? waveMgr : WaveManager.Instance;
+                WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
                 if (wm != null)
                 {
                     this.SyncCurrentState(wm);

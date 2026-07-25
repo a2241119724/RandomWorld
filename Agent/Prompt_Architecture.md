@@ -853,8 +853,8 @@ public sealed class MyNewInitializer : IInitializable
 4. ~~**InventoryManager 深入解耦**~~ ✅ 已完成：内部数据存储已迁移至 `InventoryService`。
 5. ~~**WorkerTaskManager 继续解耦**~~ ✅ 已完成：ITickable + GameGridPosition API 迁移（2026-07）。WorkerTaskQueue、WorkerTaskSnapshot 等纯 C# 类型已在 Domain 层。剩余 `KDTree` 和 `transform.position` 采集属于合理的算法/表现层依赖。
 6. **WaveManager Coroutine 解耦**：通过 `IWaveTimeScheduler`（已有 UnityWaveTimeScheduler）替代直接 Coroutine 依赖。WaveManager 架构已很完善，此项为可选优化。
-7. **存档/Photon 与 Domain 桥接**：确保 Domain 模型变更时存档兼容，Photon 同步走适配层而非直接引用。
-8. **扩展单元测试**：`Editor/Tests/Domain/` 已有 70+ 测试文件，覆盖大部分 Domain Service。继续为新增 Provider 委托补充测试。
+7. **存档/Photon 与 Domain 桥接**：确保 Domain 模型变更时存档兼容，Photon 同步走适配层而非直接引用。存档使用 BinaryFormatter + 反射驱动架构，大规模迁移风险高。Photon 层 `INetworkView`/`ISyncSender` 已覆盖主体路径，Weapon 层和 UI Lobby 管理仍直接依赖 Photon API。
+8. **扩展单元测试**：`Editor/Tests/Domain/` 从 36 增至 37 个测试文件（新增 `PlayerMovementPolicyTests`）。**Gameplay 目录 .Instance 清零**（`ComboBonusManager`、`WaveEventFeedback` 已迁移至 ServiceLocator）。所有 Domain Service 均已覆盖测试。后续继续为 Provider 委托补充测试。
 
 选择模块时，请说明原因：
 
@@ -1037,6 +1037,7 @@ namespace LAB2D
 > **当前进度**：项目已完成阶段一~四的大部分工作。`Domain/` 已有丰富的纯 C# Service、Model、EventBus、值类型、生命周期接口；`UnityAdapter/` 已有 12 个文件（新增 `ToVector3Int` 便捷方法）；`ServiceLocator` 已全局落地；`AWorkerTask` Provider 委托模式已成熟。
 >
 > **最近完成（2026-07）**：
+> - **扩展单元测试 + Gameplay .Instance 清零** — 新增 `PlayerMovementPolicyTests`（11 个测试用例），覆盖 `ClampRunSpeedMultiplier`（5 个）和 `ApplyRunMultiplier`（6 个）—— 唯一缺少测试的纯 Domain 服务。Gameplay 目录 `.Instance` 零化：`ComboBonusManager` 中 `GameplaySessionStats.Instance` 回退 → `ServiceLocator.Get<GameplaySessionStats>()`；`WaveEventFeedback` 中 3 处 `WaveManager.Instance` 回退 → `ServiceLocator.Get<WaveManager>()`。`WorkerUpdateSystem.NearbyItemPickupHUD.Instance` 保留（动态创建 GameObject，null-conditional 访问是最安全模式）。Domain 测试文件总数从 36 增至 37（2026-07）。
 > - **Character/Player Unity 初始化 Provider 提取** — Player.cs 新增 5 个静态 Provider（`RigidbodySetupProvider`、`AnimatorProvider`、`MainCameraProvider`、`MiniCameraProvider`、`PlayerNameDisplayProvider`），将 `Awake()`/`Start()` 中 `GetComponent<Rigidbody2D>()`、`GetComponent<Animator>()`、`GameObject.FindGameObjectWithTag`、`Camera.main`、`Tool.GetComponentInChildren<Text>` 等 Unity 组件初始化代码提取为可替换委托。删除死代码 `private Vector3 direction` 字段（赋值后从未读取）及其初始化。`ReduceHp()` 事件中的 `transform.position.x/y` 提取为局部变量显式边界。Player.cs 从 555 行变为 625 行（+70 行，主要是 5 个 Provider + XML 注释）。Character.cs 新增 `CharacterRootParentProvider` 和 `SpriteRendererSetupProvider` 2 个 Provider，提取 `Awake()` 中 `GameObject.FindGameObjectWithTag("CharacterRoot")` + `SetParent` 和 `Start()` 中 `GetComponent<SpriteRenderer>()` 初始化。新增虚属性 `Character.IsPlayerCharacter`（默认 false，Player 重写为 true），`CharacterData.ComputeAttribute()` 接受 `bool isPlayer` 参数替代 `this is PlayerData` 类型检查。移除 `using PlayerCharacter` 别名导入，消除 `CharacterData` → `Player.PlayerData` 反向类型依赖。**Player.cs Provider 委托总数增至 20 个**（原有 15 个 + 新增 5 个）。Character.cs 新增 2 个 Provider（2026-07）。
 > - **Player 表现层提取** — 新增 `IPlayerView` 接口（`Domain/Player/`）和 `PlayerViewAdapter`（`UnityAdapter/`）。Player.cs 中 `Animator`/`Rigidbody2D`/`SpriteRenderer`/`Camera` 的直接操作（~60 行）已移至 Adapter：受击闪烁（`PlayHitFlash` 替代 `spriteRenderer.color` + `Invoke`）、移动动画（`ApplyMoveAnimation`/`ApplyIdleAnimation`）、摄像机跟随（`EnsureCameraFollow`）、边缘特效 + 闪烁计时器（`Tick`）、视角切换（`TogglePerspective`）。移除 `BindCameras`/`ApplyMovePresentation`/`ApplyIdlePresentation` 三个私有方法。Player.cs 从 555 行缩减至 497 行。`IPlayerView` 零 `using UnityEngine`，可被任意引擎实现。
 > - InventoryManager 内部重构 — 数据存储从 3 个并行 `Dictionary<Vector3Int, ...>` 迁移至 `Domain/Inventory/InventoryService`（包装 `InventoryGrid`），`InventoryGrid` 修复了空格子 id=-1 索引维护。新增 `InventoryGridChangedEvent`（纯数据事件）和 `InventoryServiceTests`（25 个单元测试）。public API 100% 兼容。
@@ -1071,7 +1072,7 @@ namespace LAB2D
 > **架构决策 — ABasePanel 使用 .Instance 的原因**：
 > `ABasePanel<T>` 子类构造函数自动调用 `ServiceLocator.Register(this)` 并执行 `Init()`（依赖 `GameObject.FindGameObjectWithTag`）。`.Instance` 触发懒创建 → 构造函数 → 自注册，是正确模式。`ServiceLocator.Get<T>()` 跳过懒创建，会导致 `KeyNotFoundException`（对早于 GlobalInit.Awake 执行的脚本）或 `NullReferenceException`（BeforeSceneLoad 无场景）。**结论：ABasePanel 子类保持 `.Instance`，其他已注册服务使用 `ServiceLocator.Get<T>()`。**（2026-07）
 >
-> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**非 UI 目录的 .Instance 迁移**（Character/、Gameplay/、Map/、Item/、MVC/ 等目录仍有 .Instance 调用）。
+> 当前应重点推进：**存档/Photon 桥接架构调研**（确认可行的渐进迁移方案）、**非 UI 目录 .Instance 尾量迁移**（Map/、MVC/、Core/ 等目录）。Gameplay 目录 .Instance 已清零。
 
 ## 14. 最终检查清单
 

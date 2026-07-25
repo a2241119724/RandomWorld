@@ -81,7 +81,7 @@ namespace LAB2D.Gameplay
 
             try
             {
-                GameplaySessionStats stats = Core.ServiceLocator.TryGet(out GameplaySessionStats gs) ? gs : GameplaySessionStats.Instance;
+                GameplaySessionStats stats = Core.ServiceLocator.Get<GameplaySessionStats>();
 
                 // 订阅后续连击变更事件
                 stats.StatsChanged += this.OnStatsChanged;
