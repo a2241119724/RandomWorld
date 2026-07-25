@@ -26,10 +26,10 @@ namespace LAB2D
 Scripts/2D/Domain/                    # 纯规则层（不含 UnityEngine 引用）
   Common/                             # EventBus、GameVector2、GameGridPosition、IGameCommand/Event/Time/Logger/IInitializable/ITickable 等
   Character/                          # DamageCalculator、LevelProgressionService
-  Gameplay/                           # AchievementRuleService、ComboBonusRuleService、SkillRuleService 等
+  Gameplay/                           # AchievementRuleService、ComboBonusRuleService、SkillRuleService、SessionResultRuleService、DeathPenaltyRuleService 等（9 个文件）
   Inventory/                          # InventoryService、InventoryGrid、InventoryCell、ResourceStack、InventoryStackingService、InventoryFoodReservationService、InventoryTakeReservationService、InventoryGridChangedEvent 等
   Player/                             # PlayerDamagePolicy、PlayerMovementPolicy、PlayerMovementService、IPlayerView、PlayerEvents 等
-  Wave/                               # WaveBossRuleService、WaveConfigModel、WaveRuleService
+  Wave/                               # WaveBossRuleService、WaveRuleService、WaveFlowService、WaveSpawnPlanService、WaveConfigModel、WaveRuntimeState、WaveSpawnRequest、WaveFlowDecision 等（10 个文件）
   Worker/                             # WorkerAgentSnapshot、WorkerTaskAssignmentService、WorkerTaskProgressService、WorkerConditionRuleService 等
   Dialogue/                           # PromptAssemblyService、DialoguePromptProfileModel、IPromptTemplateProvider、ChatMessage 等
 
@@ -37,6 +37,7 @@ Scripts/2D/UnityAdapter/             # Unity 适配层
   UnityGameTime.cs / UnityLogger.cs / UnityVectorAdapter.cs / UnityPlayerInputAdapter.cs
   UnityMapAdapter.cs / UnityEnemySpawnAdapter.cs / UnityItemDefinitionAdapter.cs / TipHelper.cs
   UnityWaveSceneAdapter.cs / UnityWaveTimeScheduler.cs / UnityGlobalInputAdapter.cs / PlayerViewAdapter.cs
+  IWaveSceneAdapter.cs / IWaveTimeScheduler.cs / PlayerViewAdapter.cs
 
 Scripts/2D/Core/                      # 基础设施层
   ServiceLocator.cs                   # 轻量级服务定位器（DI 过渡方案）
@@ -134,8 +135,8 @@ Scripts/2D/Editor/                    # Editor 工具 + Tests/Domain + Tests/Too
 - `ITickable.Tick(float deltaTime)`：代替硬编码 Update 调用，由 GlobalInit 统一驱动
 - `IInitializable.Initialize()`：代替分散的 Awake/Start 初始化，按顺序批量执行
 - GlobalInit 维护 `orderedTickables` / `orderedInitializables` 列表，通过 `BuildTickableList()` / `BuildInitializableList()` 显式控制顺序
-- 当前 ITickable 实现：`WorkerUpdateSystem`、`GlobalInputProcessor`、`WorkerTaskManager`、`EnvironmentManager`、`PlayerVitalAlertManager`
-- 当前 IInitializable 实现：`AchievementManager`、`SkillManager`、`EquipmentBeamManager`、`EnemyLootManager`、`ComboBonusManager`
+- 当前 ITickable 实现（6 个）：`WorkerUpdateSystem`、`AchievementManager`、`GlobalInputProcessor`、`WorkerTaskManager`、`EnvironmentManager`、`PlayerVitalAlertManager`
+- 当前 IInitializable 实现（5 个）：`AchievementManager`、`SkillManager`、`EquipmentBeamManager`、`EnemyLootManager`、`ComboBonusManager`
 
 #### 3. GlobalInputProcessor — 全局输入处理解耦
 
@@ -222,16 +223,17 @@ Assets/Scripts/2D/
   Domain/                     # ✅ 已存在：纯 C# 领域模型、规则、事件、命令、生命周期接口
     Common/                   # EventBus(IInitializable/ITickable)、GameVector2、GameGridPosition、IGameCommand/Event/Time/Logger、MathHelper
     Character/                # DamageCalculator、LevelProgressionService
-    Gameplay/                 # AchievementRuleService、ComboBonusRuleService、SkillRuleService、SessionResultRuleService 等
+    Gameplay/                 # AchievementRuleService、ComboBonusRuleService、SkillRuleService、SessionResultRuleService 等（9 个文件）
     Inventory/                # InventoryService、InventoryGrid、InventoryCell、ResourceStack、InventoryStackingService、InventoryFoodReservationService、InventoryTakeReservationService、InventoryGridChangedEvent
     Player/                   # PlayerDamagePolicy、PlayerMovementPolicy、PlayerVitalAlertRuleService
     Wave/                     # WaveBossRuleService、WaveConfigModel、WaveRuleService
     Worker/                   # WorkerAgentSnapshot、WorkerConditionRuleService、WorkerTaskAssignmentService、WorkerTaskProgressService、WorkerTaskCongestionRuleService、WorkerSupplyRuleService
     Dialogue/                 # PromptAssemblyService、DialoguePromptProfileModel、ChatMessage、IPromptTemplateProvider
-  UnityAdapter/               # ✅ 已存在：Unity 类型、输入、时间、地图、资源的适配（11 个文件）
+  UnityAdapter/               # ✅ 已存在：Unity 类型、输入、时间、地图、资源的适配（13 个文件）
     UnityGameTime.cs / UnityLogger.cs / UnityVectorAdapter.cs / UnityPlayerInputAdapter.cs
     UnityMapAdapter.cs / UnityEnemySpawnAdapter.cs / UnityItemDefinitionAdapter.cs / TipHelper.cs
-    UnityWaveSceneAdapter.cs / UnityWaveTimeScheduler.cs / UnityGlobalInputAdapter.cs
+    UnityWaveSceneAdapter.cs / UnityWaveTimeScheduler.cs / UnityGlobalInputAdapter.cs / PlayerViewAdapter.cs
+    IWaveSceneAdapter.cs / IWaveTimeScheduler.cs
   Core/                       # ✅ 已存在：ServiceLocator / GlobalInputProcessor / KDTree / A* 寻路 / Singleton / Lock
   Network/                    # ✅ 已存在：Photon 网络适配层
     INetworkView.cs / NetworkViewAdapters.cs / SyncSenderAdapters.cs
@@ -294,12 +296,11 @@ Scripts/2D/Character/Player/Player.cs
 - ✅ **CharacterHealthComponent 类型检查消除** — `ApplyDamage()` 中 `attacker is PlayerCharacter` 替换为 `attacker.IsPlayerCharacter` 虚属性调用，移除 `using PlayerCharacter = LAB2D.Character.Player.Player` 别名导入，消除 `CharacterHealthComponent` → `Player` 具体类型的反向依赖（2026-07）
 - ✅ **Character.ReduceHp WorldPositionProvider 提取** — 新增 `WorldPositionProvider` 静态委托（`Func<Character, GameVector2>`），将 `ReduceHp()` 中 `this.transform.position.x/y` 的 Transform 直接访问提取为可替换 Provider。默认实现封装 Transform 访问，测试中可替换为固定坐标桩。Character.cs Provider 委托总数增至 21 个（2026-07）
 
-优先抽离方向：
+优先抽离方向（本轮会话已完成 Character/Player 深入解耦全部标注项）：
 
-- `CharacterRuntimeState`（✅ 已存在于 Domain/Common）
-- `PlayerMovementIntent`（配合已有 PlayerMovementPolicy）
+- `PlayerMovementIntent`（配合已有 PlayerMovementPolicy + PlayerMovementService）
 - `PlayerCommand` / `PlayerEvent`（✅ 部分已实现：PlayerAttackCommand、ActivateSkillCommand、PlayerAttackRequestedEvent、PlayerSkillActivatedEvent、PlayerStatusChangedEvent）
-- `ICharacterCreator` 等接口（已有基础）
+- `ICharacterCreator` 等接口（已有基础，`CharacterManager` 中 `CharacterCreator<CC>.Instance` 为最后 1 处非 UI .Instance）
 
 ### Worker Task
 
@@ -423,10 +424,15 @@ Scripts/2D/Gameplay/WeatherGameplayEffect.cs
 - `UnityAdapter/UnityWaveSceneAdapter.cs` — UnityWaveSceneAdapter
 - `UnityAdapter/UnityWaveTimeScheduler.cs` — UnityWaveTimeScheduler
 
+已完成的解耦：
+
+- ✅ **EnemyManager.IsWaveControlEnabled 适配器封装** — `IWaveSceneAdapter` 新增 `SetWaveControlEnabled(bool)`，WaveManager 零直接 EnemyManager 引用（2026-07）
+- ✅ **WaveBossRewardManager BossVisualProvider 提取** — 新增 `BossVisualProvider` 静态委托（模式 B），`ApplyBossScale()` 中 Transform/SpriteRenderer/Color 操作已提取（2026-07）
+
 优先抽离方向：
 
 - `WaveState`
-- `WaveSpawnRequest`
+- `WaveSpawnRequest`（✅ 已存在于 Domain/Wave）
 - `WaveEvent`
 - `IEnemySpawnService`（已有 UnityEnemySpawnAdapter 可配合）
 - `IWaveTimeScheduler`（已有 UnityWaveTimeScheduler）
@@ -831,16 +837,16 @@ public sealed class MyNewInitializer : IInitializable
 | Worker | `WorkerTaskAssignmentService`、`WorkerTaskProgressService`、`WorkerConditionRuleService`、`WorkerTaskCongestionRuleService`、`WorkerSupplyRuleService` |
 | Player | `PlayerDamagePolicy`、`PlayerMovementPolicy`、`PlayerVitalAlertRuleService` |
 | Inventory | `InventoryService`、`InventoryGrid`、`InventoryCell`、`ResourceStack`、`InventoryStackingService`、`InventoryFoodReservationService`、`InventoryTakeReservationService`、`InventoryGridChangedEvent` |
-| Wave | `WaveRuleService`、`WaveBossRuleService`、`WaveConfigModel` |
-| Gameplay | `AchievementRuleService`、`SkillRuleService`、`ComboBonusRuleService`、`SessionResultRuleService` 等 |
+| Wave | `WaveRuleService`、`WaveBossRuleService`、`WaveFlowService`、`WaveSpawnPlanService`、`WaveConfigModel`、`WaveRuntimeState`、`WaveSpawnRequest`、`WaveFlowDecision`（10 个文件） |
+| Gameplay | `AchievementRuleService`、`SkillRuleService`、`ComboBonusRuleService`、`SessionResultRuleService`、`DeathPenaltyRuleService`、`GameplaySessionStatsRuleService`、`WeatherGameplayRuleService`、`EquipmentLootRuleService`、`ColonyCommandCenterRuleService`（9 个文件） |
 | Dialogue | `PromptAssemblyService`、`DialoguePromptProfileModel`、`IPromptTemplateProvider` |
 | Common | `EventBus`、`GameVector2`、`GameGridPosition`、`IGameTime`、`IGameLogger`、`ITickable`、`IInitializable` 等 |
-| Unity Adapter | `UnityGameTime`、`UnityLogger`、`UnityVectorAdapter`、`UnityPlayerInputAdapter`、`UnityMapAdapter`、`UnityGlobalInputAdapter`、`UnityWaveSceneAdapter`、`UnityWaveTimeScheduler` 等（11 个文件） |
+| Unity Adapter | `UnityGameTime`、`UnityLogger`、`UnityVectorAdapter`、`UnityPlayerInputAdapter`、`UnityMapAdapter`、`UnityGlobalInputAdapter`、`UnityWaveSceneAdapter`、`UnityWaveTimeScheduler`、`PlayerViewAdapter` 等（13 个文件） |
 
 | 基础设施 | 状态 |
 |---|---|
 | ServiceLocator（轻量 DI） | ✅ 已全局落地，约 50 个服务注册 |
-| ITickable / IInitializable（生命周期接口） | ✅ 已实现，5 个 ITickable + 5 个 IInitializable |
+| ITickable / IInitializable（生命周期接口） | ✅ 已实现，6 个 ITickable + 5 个 IInitializable |
 | GlobalInputProcessor（输入处理解耦） | ✅ 已从 GlobalInit 提取 |
 | AWorkerTask Provider 委托模式 | ✅ 约 35 个静态 Provider 属性 |
 | EventBus + PublishInternal | ✅ 已增强，有单元测试；已有 7 种事件类型（CharacterDamaged、PlayerStatusChanged、InventoryCellChanged、InventoryGridChanged、PlayerAttackRequested、PlayerSkillActivated、WorkerTaskQueueChanged） |
@@ -851,7 +857,7 @@ public sealed class MyNewInitializer : IInitializable
 
 1. ~~**Inventory EventBus 事件迁移**~~ ✅ 已完成：`ItemInfoUI` 已切换订阅 `InventoryGridChangedEvent`（纯结构化数据），`InventoryManager` 已停止发布 `InventoryCellChangedEvent`（2026-07）。
 2. **Character/Player 深入解耦**：✅ 已完成 — 所有标注的耦合点已解决：`CharacterHealthComponent.ApplyDamage()` 中 `attacker is PlayerCharacter` → `attacker.IsPlayerCharacter`；`Character.ReduceHp()` 的 `transform.position` → `WorldPositionProvider` 委托。Player Provider 总数 20 个，Character Provider 总数 21 个。剩余可推进方向：`Character.ToString()` 中的 `transform.position` 访问（Debug 用途，低优先级）；非 UI 目录 `.Instance` 尾量迁移（2026-07）。
-3. ~~**扩展 ITickable/IInitializable 覆盖范围**~~ 🔄 持续推进：WorkerTaskManager 已迁移至 ITickable（2026-07），当前 5 个 ITickable + 5 个 IInitializable。后续可将更多 Manager 的 Update/Start 逻辑迁移。
+3. ~~**扩展 ITickable/IInitializable 覆盖范围**~~ 🔄 持续推进：WorkerTaskManager 已迁移至 ITickable（2026-07），AchievementManager 已实现 ITickable（2026-07）。当前 6 个 ITickable + 5 个 IInitializable。后续可将更多 Manager 的 Update/Start 逻辑迁移。
 4. ~~**InventoryManager 深入解耦**~~ ✅ 已完成：内部数据存储已迁移至 `InventoryService`。
 5. ~~**WorkerTaskManager 继续解耦**~~ ✅ 已完成：ITickable + GameGridPosition API 迁移（2026-07）。WorkerTaskQueue、WorkerTaskSnapshot 等纯 C# 类型已在 Domain 层。剩余 `KDTree` 和 `transform.position` 采集属于合理的算法/表现层依赖。
 6. **WaveManager Coroutine 解耦**：通过 `IWaveTimeScheduler`（已有 UnityWaveTimeScheduler）替代直接 Coroutine 依赖。WaveManager 架构已很完善，此项为可选优化。
@@ -1036,7 +1042,7 @@ namespace LAB2D
 - 运行测试并手动回归主场景
 ```
 
-> **当前进度**：项目已完成阶段一~四的大部分工作。`Domain/` 已有丰富的纯 C# Service、Model、EventBus、值类型、生命周期接口；`UnityAdapter/` 已有 12 个文件（新增 `ToVector3Int` 便捷方法）；`ServiceLocator` 已全局落地；`AWorkerTask` Provider 委托模式已成熟。
+> **当前进度**：项目已完成阶段一~四的大部分工作。`Domain/` 已有丰富的纯 C# Service、Model、EventBus、值类型、生命周期接口；`UnityAdapter/` 已有 13 个文件；`ServiceLocator` 已全局落地；`AWorkerTask` Provider 委托模式已成熟。
 >
 > **最近完成（2026-07）**：
 > - **扩展单元测试 + Gameplay .Instance 清零** — 新增 `PlayerMovementPolicyTests`（11 个测试用例），覆盖 `ClampRunSpeedMultiplier`（5 个）和 `ApplyRunMultiplier`（6 个）—— 唯一缺少测试的纯 Domain 服务。Gameplay 目录 `.Instance` 零化：`ComboBonusManager` 中 `GameplaySessionStats.Instance` 回退 → `ServiceLocator.Get<GameplaySessionStats>()`；`WaveEventFeedback` 中 3 处 `WaveManager.Instance` 回退 → `ServiceLocator.Get<WaveManager>()`。`WorkerUpdateSystem.NearbyItemPickupHUD.Instance` 保留（动态创建 GameObject，null-conditional 访问是最安全模式）。Domain 测试文件总数从 36 增至 37。**Core 目录调研**：大部分 .Instance 为 ABasePanel 子类（正确模式）或注释/外部工具类引用，无需迁移。**ForegroundPanel Photon 泄漏修复**：新增 `WeaponAttackRPCProvider` 静态委托（模式 B），将 `ExecuteAttack()` 中 `GetComponent<PhotonView>().RPC("Attack", RpcTarget.All)` 直接 Photon 调用提取为可替换 Provider。ForegroundPanel 可执行代码现已零 Photon 直接引用（2026-07）。
@@ -1080,7 +1086,7 @@ namespace LAB2D
 > **架构决策 — ABasePanel 使用 .Instance 的原因**：
 > `ABasePanel<T>` 子类构造函数自动调用 `ServiceLocator.Register(this)` 并执行 `Init()`（依赖 `GameObject.FindGameObjectWithTag`）。`.Instance` 触发懒创建 → 构造函数 → 自注册，是正确模式。`ServiceLocator.Get<T>()` 跳过懒创建，会导致 `KeyNotFoundException`（对早于 GlobalInit.Awake 执行的脚本）或 `NullReferenceException`（BeforeSceneLoad 无场景）。**结论：ABasePanel 子类保持 `.Instance`，其他已注册服务使用 `ServiceLocator.Get<T>()`。**（2026-07）
 >
-> 当前应重点推进：**Character/ 目录 .Instance 尾量**（最后 1 处 CharacterManager.cs `CharacterCreator<CC>.Instance`，涉及泛型类型注册）、**存档/Photon 桥接架构调研**。Gameplay/、Data/、Item/、Core/Seek/ 目录 .Instance 已全部清零。非 UI 目录总计 33→1。
+> 当前应重点推进：**Wave 系统继续解耦**（WaveBossRewardManager 仍有 Config/Player 耦合 + 存档/Photon 桥接调研）、**最后 1 处非 UI .Instance**（CharacterManager.cs `CharacterCreator<CC>.Instance`，涉及泛型类型注册）。Gameplay/、Data/、Item/、Core/Seek/ 目录 .Instance 已全部清零。非 UI 目录总计 33→1。ITickable: 5→6。Wave 系统: 2 项解耦完成。Character/Player 深入解耦全部完成。
 
 ## 14. 最终检查清单
 
