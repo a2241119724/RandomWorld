@@ -130,8 +130,8 @@ namespace LAB2D.UI.Action
             }
 
             if (UnityGlobalInputAdapter.GetPrimaryMouseDown() && ServiceLocator.Get<PanelController>().Panels.Count > 0 &&
-                (ServiceLocator.Get<PanelController>().Panels.Peek() == ServiceLocator.Get<ForegroundPanel>() ||
-                ServiceLocator.Get<PanelController>().Panels.Peek() == ServiceLocator.Get<ItemInfoPanel>()))
+                (ServiceLocator.Get<PanelController>().Panels.Peek() == ForegroundPanel.Instance ||
+                ServiceLocator.Get<PanelController>().Panels.Peek() == ItemInfoPanel.Instance))
             {
                 this.options.gameObject.SetActive(false);
                 Vector3 pos = UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main);

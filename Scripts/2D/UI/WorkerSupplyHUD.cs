@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
       using LAB2D;
+    using LAB2D.Core;
       using LAB2D.Domain.Common;
       using LAB2D.Domain.Worker;
     using LAB2D.Gameplay;
@@ -63,7 +64,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WorkerSupplyIssueManager manager = Core.ServiceLocator.TryGet(out WorkerSupplyIssueManager mgr) ? mgr : WorkerSupplyIssueManager.Instance;
+                WorkerSupplyIssueManager manager = Core.ServiceLocator.TryGet(out WorkerSupplyIssueManager mgr) ? mgr : ServiceLocator.Get<WorkerSupplyIssueManager>();
                 manager.OnWorkerSupplyReportChanged += this.HandleSupplyReportChanged;
                 this.UpdateDisplay();
             }
@@ -77,7 +78,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WorkerSupplyIssueManager manager = Core.ServiceLocator.TryGet(out WorkerSupplyIssueManager mgr) ? mgr : WorkerSupplyIssueManager.Instance;
+                WorkerSupplyIssueManager manager = Core.ServiceLocator.TryGet(out WorkerSupplyIssueManager mgr) ? mgr : ServiceLocator.Get<WorkerSupplyIssueManager>();
                 manager.OnWorkerSupplyReportChanged -= this.HandleSupplyReportChanged;
             }
             catch (Exception)

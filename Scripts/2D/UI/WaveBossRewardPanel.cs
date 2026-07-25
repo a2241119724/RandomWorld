@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
       using LAB2D;
+    using LAB2D.Core;
       using LAB2D.Domain.Common;
       using LAB2D.Gameplay;
     using LAB2D.UnityAdapter;
@@ -117,7 +118,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WaveBossRewardManager manager = Core.ServiceLocator.TryGet(out WaveBossRewardManager mgr) ? mgr : WaveBossRewardManager.Instance;
+                WaveBossRewardManager manager = Core.ServiceLocator.TryGet(out WaveBossRewardManager mgr) ? mgr : ServiceLocator.Get<WaveBossRewardManager>();
                 manager.OnRewardOptionsChanged += this.HandleRewardOptionsChanged;
                 manager.OnStateChanged += this.HandleStateChanged;
                 this.UpdateFromManager();
@@ -132,7 +133,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WaveBossRewardManager manager = Core.ServiceLocator.TryGet(out WaveBossRewardManager mgr) ? mgr : WaveBossRewardManager.Instance;
+                WaveBossRewardManager manager = Core.ServiceLocator.TryGet(out WaveBossRewardManager mgr) ? mgr : ServiceLocator.Get<WaveBossRewardManager>();
                 manager.OnRewardOptionsChanged -= this.HandleRewardOptionsChanged;
                 manager.OnStateChanged -= this.HandleStateChanged;
             }

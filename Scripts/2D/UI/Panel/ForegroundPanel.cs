@@ -136,7 +136,7 @@ namespace LAB2D.UI.Panel
         /// </summary>
         private void OnClick_Pause()
         {
-            this.Controller.Show(ServiceLocator.Get<PauseMenuPanel>());
+            this.Controller.Show(PauseMenuPanel.Instance);
         }
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace LAB2D.UI.Panel
         /// </summary>
         private void Onclick_Setting()
         {
-            this.Controller.Show(ServiceLocator.Get<SettingMenuPanel>());
+            this.Controller.Show(SettingMenuPanel.Instance);
         }
 
         private void Onclick_Save()

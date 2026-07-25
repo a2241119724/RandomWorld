@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI
 {
     using LAB2D;
+    using LAB2D.Core;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -23,7 +24,7 @@ namespace LAB2D.UI.Panel.PanelUI
         {
             int x = toggle.transform.parent.GetSiblingIndex() - 1;
             int y = toggle.transform.GetSiblingIndex() - 1;
-            List<AWorker> workers = WorkerManager.Instance.Characters;
+            List<AWorker> workers = ServiceLocator.Get<WorkerManager>().Characters;
             AWorker.WorkerData workerData = workers[x].CharacterDataLAB as AWorker.WorkerData;
             workerData.TaskToggle[y] = toggle.isOn;
         }
@@ -39,7 +40,7 @@ namespace LAB2D.UI.Panel.PanelUI
 
         private void OnEnable()
         {
-            List<AWorker> workers = WorkerManager.Instance.Characters;
+            List<AWorker> workers = ServiceLocator.Get<WorkerManager>().Characters;
 
             // UI不够,创建
             int count = workers.Count - (this.transform.childCount - 1);
@@ -47,7 +48,7 @@ namespace LAB2D.UI.Panel.PanelUI
             {
                 for (int i = count; i > 0; i--)
                 {
-                    GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.TASK_ITEM, this.transform, false);
+                    GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.TASK_ITEM, this.transform, false);
                     this.TaskItems.Add(g);
 
                     // 添加事件

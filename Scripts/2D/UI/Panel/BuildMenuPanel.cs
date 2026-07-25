@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Core;
     using UnityEngine.UI;
 
     /// <summary>
@@ -57,7 +58,7 @@ namespace LAB2D.UI.Panel
                 this.Controller.Close();
             }
 
-            BuildingUI.Instance.gameObject.SetActive(true);
+            ServiceLocator.Get<BuildingUI>().gameObject.SetActive(true);
         }
     }
 }

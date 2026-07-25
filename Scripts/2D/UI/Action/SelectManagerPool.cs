@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Core;
     using Character = LAB2D.Character.Character;
     using System.Collections.Generic;
     using System.Linq;
@@ -69,7 +70,7 @@ namespace LAB2D.UI.Action
             }
 
             // 没有更多的SelectUI,创建新的
-            select = ResourceManager.Instance.Instantiate(PrefabConstant.SELECT, true).GetComponent<SelectUI>();
+            select = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.SELECT, true).GetComponent<SelectUI>();
             select.transform.SetParent(GameObject.FindGameObjectWithTag(TagConstant.ACTION_UI_TAG).transform);
             this.Selects.Add(select, true);
             return select;

@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Character.Worker.Task;
     using Photon.Pun;
     using UnityEngine;
@@ -16,7 +17,7 @@ namespace LAB2D.UI.Panel.PanelUI
 
         public void Awake()
         {
-            GlobalInit.Instance.ShowTip("登录成功!!!");
+            ServiceLocator.Get<GlobalInit>().ShowTip("登录成功!!!");
         }
 
         public void Start()
@@ -44,7 +45,7 @@ namespace LAB2D.UI.Panel.PanelUI
                 string name = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "PlayerName").text;
                 if (name.Length <= 0)
                 {
-                    GlobalInit.Instance.ShowTip("名字不能为空!!!");
+                    ServiceLocator.Get<GlobalInit>().ShowTip("名字不能为空!!!");
                     return;
                 }
 
@@ -53,7 +54,7 @@ namespace LAB2D.UI.Panel.PanelUI
             }
             else
             {
-                GlobalInit.Instance.ShowTip("未勾选条款!!!");
+                ServiceLocator.Get<GlobalInit>().ShowTip("未勾选条款!!!");
             }
         }
 

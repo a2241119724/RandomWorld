@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
       using LAB2D;
+    using LAB2D.Core;
       using LAB2D.Character.Worker;
       using LAB2D.Domain.Common;
       using LAB2D.Gameplay;
@@ -63,7 +64,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WorkerConditionManager manager = Core.ServiceLocator.TryGet(out WorkerConditionManager mgr) ? mgr : WorkerConditionManager.Instance;
+                WorkerConditionManager manager = Core.ServiceLocator.TryGet(out WorkerConditionManager mgr) ? mgr : ServiceLocator.Get<WorkerConditionManager>();
                 manager.OnWorkerConditionChanged += this.HandleWorkerConditionChanged;
                 this.UpdateDisplay();
             }
@@ -77,7 +78,7 @@ namespace LAB2D.UI
         {
             try
             {
-                WorkerConditionManager manager = Core.ServiceLocator.TryGet(out WorkerConditionManager mgr) ? mgr : WorkerConditionManager.Instance;
+                WorkerConditionManager manager = Core.ServiceLocator.TryGet(out WorkerConditionManager mgr) ? mgr : ServiceLocator.Get<WorkerConditionManager>();
                 manager.OnWorkerConditionChanged -= this.HandleWorkerConditionChanged;
             }
             catch (Exception)

@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Core;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -29,13 +30,13 @@ namespace LAB2D.UI.Panel
         public override void OnEnter()
         {
             base.OnEnter();
-            Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> typeToResource = InventoryManager.Instance.TypeToResource;
+            Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> typeToResource = ServiceLocator.Get<InventoryManager>().TypeToResource;
             int count = 0;
             foreach (KeyValuePair<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> pair in typeToResource)
             {
                 if (count >= this.type.childCount)
                 {
-                    GameObject buttonItem = ResourceManager.Instance.Instantiate(PrefabConstant.BUTTON_ITEM);
+                    GameObject buttonItem = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.BUTTON_ITEM);
                     buttonItem.transform.SetParent(this.type);
                     buttonItem.transform.localScale = Vector3.one;
                 }

@@ -33,7 +33,7 @@ namespace LAB2D.UI.Character
         /// <param name="worker">Worker</param>
         public void AddWorkerItem(AWorker worker)
         {
-            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.LOCATE_WORKER_ITEM, true);
+            GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.LOCATE_WORKER_ITEM, true);
             this.allItems.Add(worker, g);
             g.transform.SetParent(this.transform);
             g.transform.localScale = Vector3.one;

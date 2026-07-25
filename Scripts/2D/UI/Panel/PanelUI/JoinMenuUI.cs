@@ -40,7 +40,7 @@ namespace LAB2D.UI.Panel.PanelUI
 
             foreach (Photon.Realtime.RoomInfo room in roomList)
             {
-                GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.ROOM_ITEM, true);
+                GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.ROOM_ITEM, true);
                 g.GetComponent<Button>().onClick.AddListener(
                     () =>
                     {

@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Character
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using UnityEngine;
@@ -24,12 +25,12 @@ namespace LAB2D.UI.Character
         public void Awake()
         {
             Instance = this;
-            EventBus.Instance.Subscribe<PlayerStatusChangedEvent>(this.OnPlayerStatusChanged);
+            ServiceLocator.Get<EventBus>().Subscribe<PlayerStatusChangedEvent>(this.OnPlayerStatusChanged);
         }
 
         public void OnDestroy()
         {
-            EventBus.Instance.Unsubscribe<PlayerStatusChangedEvent>(this.OnPlayerStatusChanged);
+            ServiceLocator.Get<EventBus>().Unsubscribe<PlayerStatusChangedEvent>(this.OnPlayerStatusChanged);
         }
 
         private void OnPlayerStatusChanged(PlayerStatusChangedEvent e)

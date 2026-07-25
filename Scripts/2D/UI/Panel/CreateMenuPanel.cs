@@ -34,7 +34,7 @@ namespace LAB2D.UI.Panel
         public override void OnClick_Back()
         {
             this.Controller.Close();
-            this.Controller.Show(ServiceLocator.Get<CreateOrJoinPanel>());
+            this.Controller.Show(CreateOrJoinPanel.Instance);
         }
 
         private void OnClick_StartCreate()
@@ -82,7 +82,7 @@ namespace LAB2D.UI.Panel
             }
 
             this.Controller.Close();
-            this.Controller.Show(ServiceLocator.Get<NewOrContinuePanel>());
+            this.Controller.Show(NewOrContinuePanel.Instance);
         }
     }
 }

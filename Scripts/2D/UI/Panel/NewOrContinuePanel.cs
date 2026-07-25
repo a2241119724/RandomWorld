@@ -313,14 +313,14 @@ namespace LAB2D.UI.Panel
         {
             this.Controller.Close();
             GlobalData.IsNew = true;
-            this.Controller.Show(ServiceLocator.Get<CreateDataPanel>());
+            this.Controller.Show(CreateDataPanel.Instance);
         }
 
         private void LoadArchive()
         {
             this.Controller.Close();
             GlobalData.IsNew = false;
-            this.Controller.Show(ServiceLocator.Get<AsyncProgressPanel>());
+            this.Controller.Show(AsyncProgressPanel.Instance);
             ServiceLocator.Get<ArchiveManager>().LoadCurrentArchive();
         }
     }

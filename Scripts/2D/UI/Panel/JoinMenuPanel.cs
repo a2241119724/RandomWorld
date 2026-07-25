@@ -40,7 +40,7 @@ namespace LAB2D.UI.Panel
         public override void OnClick_Back()
         {
             this.Controller.Close();
-            this.Controller.Show(ServiceLocator.Get<CreateOrJoinPanel>());
+            this.Controller.Show(CreateOrJoinPanel.Instance);
         }
 
         private void OnClick_StartJoin()
@@ -60,7 +60,7 @@ namespace LAB2D.UI.Panel
             }
 
             this.Controller.Close();
-            this.Controller.Show(ServiceLocator.Get<AsyncProgressPanel>());
+            this.Controller.Show(AsyncProgressPanel.Instance);
             ServiceLocator.Get<AsyncProgressUI>().SetTip("正在同步数据...");
         }
 

@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Core;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -85,7 +86,7 @@ namespace LAB2D.UI.Panel
         /// </summary>
         private void OnClick_TogglePerspective(bool is2D)
         {
-            PlayerManager.Instance.Mine.TogglePerspective(is2D);
+            ServiceLocator.Get<PlayerManager>().Mine.TogglePerspective(is2D);
         }
 
         /// <summary>

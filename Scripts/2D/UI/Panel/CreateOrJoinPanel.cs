@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Core;
     using Photon.Pun;
     using Photon.Realtime;
     using UnityEngine.UI;
@@ -52,7 +53,7 @@ namespace LAB2D.UI.Panel
             }
             else
             {
-                GlobalInit.Instance.ShowTip("请稍后再试");
+                ServiceLocator.Get<GlobalInit>().ShowTip("请稍后再试");
             }
         }
     }

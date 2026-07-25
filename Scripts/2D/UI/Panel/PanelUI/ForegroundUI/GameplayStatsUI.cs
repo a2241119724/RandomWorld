@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Gameplay;
     using LAB2D.UnityAdapter;
     using System.Text;
@@ -27,13 +28,13 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
         public void OnEnable()
         {
-            GameplaySessionStats.Instance.StatsChanged += this.OnStatsChanged;
+            ServiceLocator.Get<GameplaySessionStats>().StatsChanged += this.OnStatsChanged;
             this.Refresh();
         }
 
         public void OnDisable()
         {
-            GameplaySessionStats.Instance.StatsChanged -= this.OnStatsChanged;
+            ServiceLocator.Get<GameplaySessionStats>().StatsChanged -= this.OnStatsChanged;
         }
 
         public void Update()
@@ -54,7 +55,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
         private void Refresh()
         {
-            this.UpdateDisplay(GameplaySessionStats.Instance.CreateSnapshot());
+            this.UpdateDisplay(ServiceLocator.Get<GameplaySessionStats>().CreateSnapshot());
         }
 
         private void UpdateDisplay(GameplaySessionStatsSnapshot snapshot)

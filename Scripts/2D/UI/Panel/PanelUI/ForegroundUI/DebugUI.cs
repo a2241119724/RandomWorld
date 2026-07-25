@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
     using UnityEngine;
@@ -34,12 +35,12 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         {
             this.text = Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Info");
             Instance = this;
-            EventBus.Instance.Subscribe<WorkerTaskQueueChangedEvent>(this.OnTaskQueueChanged);
+            ServiceLocator.Get<EventBus>().Subscribe<WorkerTaskQueueChangedEvent>(this.OnTaskQueueChanged);
         }
 
         public void OnDestroy()
         {
-            EventBus.Instance.Unsubscribe<WorkerTaskQueueChangedEvent>(this.OnTaskQueueChanged);
+            ServiceLocator.Get<EventBus>().Unsubscribe<WorkerTaskQueueChangedEvent>(this.OnTaskQueueChanged);
         }
 
         private void OnTaskQueueChanged(WorkerTaskQueueChangedEvent e)

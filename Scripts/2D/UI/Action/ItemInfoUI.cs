@@ -51,7 +51,7 @@ namespace LAB2D.UI.Action
                 // 通过 UnityAdapter 转换 Domain 坐标为 Unity 坐标，重新获取格式化文本
                 Vector3Int unityPos = UnityVectorAdapter.ToVector3Int(e.Position);
                 string cellInfo = ServiceLocator.Get<InventoryManager>().ToString(unityPos);
-                ServiceLocator.Get<ItemInfoPanel>().SetItemInfo(cellInfo);
+                ItemInfoPanel.Instance.SetItemInfo(cellInfo);
             }
         }
 
@@ -60,13 +60,13 @@ namespace LAB2D.UI.Action
             // 实时更新Character信息
             if (this.character != null)
             {
-                if (ServiceLocator.Get<PanelController>().Panels.Peek() != ServiceLocator.Get<ItemInfoPanel>())
+                if (ServiceLocator.Get<PanelController>().Panels.Peek() != ItemInfoPanel.Instance)
                 {
-                    ServiceLocator.Get<PanelController>().Show(ServiceLocator.Get<ItemInfoPanel>());
+                    ServiceLocator.Get<PanelController>().Show(ItemInfoPanel.Instance);
                 }
 
-                ServiceLocator.Get<ItemInfoPanel>().SetItemInfo(this.character.ToString());
-                ServiceLocator.Get<ItemInfoPanel>().SetCharacter(this.character);
+                ItemInfoPanel.Instance.SetItemInfo(this.character.ToString());
+                ItemInfoPanel.Instance.SetCharacter(this.character);
             }
 
             if (UnityGlobalInputAdapter.GetSecondaryMouseDown())
@@ -104,7 +104,7 @@ namespace LAB2D.UI.Action
 
                         selectUI.SetTarget(this.selectPos);
                         selectUI.Character = this.character;
-                        ServiceLocator.Get<ItemInfoPanel>().SetCharacter(this.character);
+                        ItemInfoPanel.Instance.SetCharacter(this.character);
                         break;
                     }
 
@@ -131,12 +131,12 @@ namespace LAB2D.UI.Action
                     break;
                 }
                 while (true);
-                if (ServiceLocator.Get<PanelController>().Panels.Peek() != ServiceLocator.Get<ItemInfoPanel>())
+                if (ServiceLocator.Get<PanelController>().Panels.Peek() != ItemInfoPanel.Instance)
                 {
-                    ServiceLocator.Get<PanelController>().Show(ServiceLocator.Get<ItemInfoPanel>());
+                    ServiceLocator.Get<PanelController>().Show(ItemInfoPanel.Instance);
                 }
 
-                ServiceLocator.Get<ItemInfoPanel>().SetItemInfo(this.text);
+                ItemInfoPanel.Instance.SetItemInfo(this.text);
             }
         }
 
@@ -150,7 +150,7 @@ namespace LAB2D.UI.Action
         {
             if (this.select.Equals(name) && this.selectPos.x == pos.x && this.selectPos.y == pos.y)
             {
-                ServiceLocator.Get<ItemInfoPanel>().SetItemInfo(text);
+                ItemInfoPanel.Instance.SetItemInfo(text);
             }
         }
 

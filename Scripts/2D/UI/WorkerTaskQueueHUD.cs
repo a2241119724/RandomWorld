@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
       using LAB2D;
+    using LAB2D.Core;
       using LAB2D.Domain.Common;
       using LAB2D.UnityAdapter;
     using System;
@@ -101,7 +102,7 @@ namespace LAB2D.UI
 
             try
             {
-                WorkerTaskManager manager = Core.ServiceLocator.TryGet(out WorkerTaskManager mgr) ? mgr : WorkerTaskManager.Instance;
+                WorkerTaskManager manager = Core.ServiceLocator.TryGet(out WorkerTaskManager mgr) ? mgr : ServiceLocator.Get<WorkerTaskManager>();
                 this.queueText.text = manager == null
                     ? WorkerTaskHudConstant.ManagerUnavailableText
                     : manager.GetTaskQueueSummaryText();

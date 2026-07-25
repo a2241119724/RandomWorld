@@ -47,7 +47,7 @@ namespace LAB2D.UI.Panel
         public override void OnRun()
         {
             base.OnRun();
-            Time.timeScale = ServiceLocator.Get<ForegroundPanel>().TimeScale;
+            Time.timeScale = ForegroundPanel.Instance.TimeScale;
         }
 
         /// <summary>

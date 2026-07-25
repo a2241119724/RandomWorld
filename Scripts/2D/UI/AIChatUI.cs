@@ -2,6 +2,7 @@ namespace LAB2D.UI
 {
     using LAB2D;
     using LAB2D.AI.Dialogue.Core;
+    using LAB2D.Core;
     using LAB2D.AI.Dialogue.LLM;
     using LAB2D.Character.Worker.Task;
     using System;
@@ -80,7 +81,8 @@ namespace LAB2D.UI
         public void Awake()
         {
             Instance = this;
-            this.llmClient = DialogueManager.Instance.GetLLMClient();
+            ServiceLocator.Register(this);
+            this.llmClient = ServiceLocator.Get<DialogueManager>().GetLLMClient();
             this.input = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
             this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
         }

@@ -1061,7 +1061,14 @@ namespace LAB2D
 >
 > - **NewOrContinuePanel + CreateDataPanel + CreateMenuPanel + JoinMenuPanel + GatherUI + AddWearTaskUI + WorkerBedUI + ItemInfoPanel 迁移** — 8 个文件（21+12+8+7+7+6+6+5=72 处 .Instance）全部迁移至 `ServiceLocator.Get<T>()`。补注册 7 个服务：`NewOrContinuePanel`、`CreateDataPanel`、`CreateMenuPanel`、`JoinMenuPanel`、`AsyncProgressPanel`（RegisterServices）；`AddWearTaskUI`、`JoinMenuUI`（Awake 自注册）。UI/ 目录 .Instance 从 128 降至 56（累计 -76%）（2026-07）。
 >
-> 当前应重点推进：**单元测试扩展**、**UI 层收尾**（剩余 56 处 .Instance 在 29 个文件中，大部分为 ≤3 处/文件的尾量：CreateOrJoinPanel 3、BuildMenuPanel 3、AsyncProgressPanel 2、ColonyCommandCenterHUD 2、PlayerStatusUI 2、RegisterAndLoginUI 4 等）。已迁移文件覆盖所有高频文件（10+ 处 .Instance）。
+> - **UI 目录尾量清零** — 剩余 29 个文件、56 处 .Instance 引用全部批量迁移至 `ServiceLocator.Get<T>()`。补注册 4 个服务：`CreateOrJoinPanel`、`WorkerTaskTogglePanel`、`InventoryMenuPanel`、`AIChatPanel`（RegisterServices）；`AIChatUI`（Awake 自注册）。覆盖服务：DialogueManager、ColonyCommandCenterManager、WeatherGameplayEffect、WaveBossRewardManager、WorkerSupplyIssueManager、WorkerConditionManager、WeatherManager、GameplaySessionStats、PrefabManager（注释中）、EventBus、ResourceManager、PlayerManager、ForegroundPanel、TileMap、InventoryManager、PanelController、GlobalInit、WorkerManager、BuildMenuPanel、BackpackMenuPanel、PauseMenuPanel、CreateMenuPanel、JoinMenuPanel、CreateOrJoinPanel、BuildingUI、AIChatUI、AIChatPanel、WorkerTaskTogglePanel、InventoryMenuPanel、SettingMenuPanel、SelectManagerPool。**UI/ 目录 236→0（可执行代码），仅剩 1 处注释引用**（2026-07）。
+>
+> **🎉 UI 层 ServiceLocator 迁移已全部完成。**
+>
+> **架构决策 — ABasePanel 使用 .Instance 的原因**：
+> `ABasePanel<T>` 子类构造函数自动调用 `ServiceLocator.Register(this)` 并执行 `Init()`（依赖 `GameObject.FindGameObjectWithTag`）。`.Instance` 触发懒创建 → 构造函数 → 自注册，是正确模式。`ServiceLocator.Get<T>()` 跳过懒创建，会导致 `KeyNotFoundException`（对早于 GlobalInit.Awake 执行的脚本）或 `NullReferenceException`（BeforeSceneLoad 无场景）。**结论：ABasePanel 子类保持 `.Instance`，其他已注册服务使用 `ServiceLocator.Get<T>()`。**（2026-07）
+>
+> 当前应重点推进：**单元测试扩展**（为新增 Provider 委托和 Domain Service 补充测试）、**非 UI 目录的 .Instance 迁移**（Character/、Gameplay/、Map/、Item/、MVC/ 等目录仍有 .Instance 调用）。
 
 ## 14. 最终检查清单
 

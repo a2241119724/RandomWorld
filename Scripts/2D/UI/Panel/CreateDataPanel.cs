@@ -59,7 +59,7 @@ namespace LAB2D.UI.Panel
         public override void OnExit()
         {
             base.OnExit();
-            this.Controller.Show(ServiceLocator.Get<AsyncProgressPanel>());
+            this.Controller.Show(AsyncProgressPanel.Instance);
         }
 
         /// <summary>

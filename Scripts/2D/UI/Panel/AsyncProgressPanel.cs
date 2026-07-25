@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Core;
     /// <summary>
     /// 进度条面板
     /// </summary>
@@ -17,7 +18,7 @@ namespace LAB2D.UI.Panel
                 if (GlobalData.IsNew)
                 {
                     // 新游戏, 创建玩家在随机位置, 否则在角色管理中创建
-                    PlayerManager.Instance.Create();
+                    ServiceLocator.Get<PlayerManager>().Create();
                 }
             };
         }

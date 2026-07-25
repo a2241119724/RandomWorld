@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Character.Worker.Task;
     using Photon.Pun;
     using UnityEngine;
@@ -67,8 +68,8 @@ namespace LAB2D.UI.Panel
         /// </summary>
         private void OnClick_BackMenu()
         {
-            PanelController.Instance.Close();
-            PanelController.Instance.Show(CreateOrJoinPanel.Instance);
+            ServiceLocator.Get<PanelController>().Close();
+            ServiceLocator.Get<PanelController>().Show(CreateOrJoinPanel.Instance);
         }
 
         /// <summary>

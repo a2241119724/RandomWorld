@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using UnityEngine;
     using UnityEngine.Rendering.Universal;
@@ -31,7 +32,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             if (last != (int)(this.curGameTime / GlobalData.GameDayTime))
             {
                 // 每天开始随机天气
-                WeatherManager.Instance.RandWeather();
+                ServiceLocator.Get<WeatherManager>().RandWeather();
             }
 
             double time = this.curGameTime * this.rate;
