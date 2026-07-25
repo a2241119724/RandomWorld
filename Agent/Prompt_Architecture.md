@@ -28,7 +28,7 @@ Scripts/2D/Domain/                    # 纯规则层（不含 UnityEngine 引用
   Character/                          # DamageCalculator、LevelProgressionService
   Gameplay/                           # AchievementRuleService、ComboBonusRuleService、SkillRuleService 等
   Inventory/                          # InventoryService、InventoryGrid、InventoryCell、ResourceStack、InventoryStackingService、InventoryFoodReservationService、InventoryTakeReservationService、InventoryGridChangedEvent 等
-  Player/                             # PlayerDamagePolicy、PlayerMovementPolicy 等
+  Player/                             # PlayerDamagePolicy、PlayerMovementPolicy、PlayerMovementService、IPlayerView、PlayerEvents 等
   Wave/                               # WaveBossRuleService、WaveConfigModel、WaveRuleService
   Worker/                             # WorkerAgentSnapshot、WorkerTaskAssignmentService、WorkerTaskProgressService、WorkerConditionRuleService 等
   Dialogue/                           # PromptAssemblyService、DialoguePromptProfileModel、IPromptTemplateProvider、ChatMessage 等
@@ -36,7 +36,7 @@ Scripts/2D/Domain/                    # 纯规则层（不含 UnityEngine 引用
 Scripts/2D/UnityAdapter/             # Unity 适配层
   UnityGameTime.cs / UnityLogger.cs / UnityVectorAdapter.cs / UnityPlayerInputAdapter.cs
   UnityMapAdapter.cs / UnityEnemySpawnAdapter.cs / UnityItemDefinitionAdapter.cs / TipHelper.cs
-  UnityWaveSceneAdapter.cs / UnityWaveTimeScheduler.cs / UnityGlobalInputAdapter.cs
+  UnityWaveSceneAdapter.cs / UnityWaveTimeScheduler.cs / UnityGlobalInputAdapter.cs / PlayerViewAdapter.cs
 
 Scripts/2D/Core/                      # 基础设施层
   ServiceLocator.cs                   # 轻量级服务定位器（DI 过渡方案）
@@ -279,6 +279,8 @@ Scripts/2D/Character/Player/Player.cs
 - `CharacterHealthComponent.cs` — CharacterHealthComponent
 - `UnityAdapter/UnityPlayerInputAdapter.cs` — UnityPlayerInputAdapter
 - `UnityAdapter/UnityGlobalInputAdapter.cs` — UnityGlobalInputAdapter（全局快捷键输入）
+- `UnityAdapter/PlayerViewAdapter.cs` — PlayerViewAdapter（Animator/Rigidbody2D/SpriteRenderer/Camera 表现封装）
+- `Domain/Player/IPlayerView.cs` — IPlayerView（表现层抽象接口）
 - `Core/GlobalInputProcessor.cs` — GlobalInputProcessor（ITickable，从 GlobalInit 提取）
 
 已完成的解耦：
@@ -286,6 +288,7 @@ Scripts/2D/Character/Player/Player.cs
 - 项目范围的 Singleton 直接调用已替换为 `ServiceLocator.Get<T>()`
 - GlobalInit 的输入处理已提取到 `GlobalInputProcessor`
 - 部分 UI 调用已通过 `AWorkerTask` Provider 委托模式解耦
+- ✅ **Player 表现层提取** — `Animator`/`Rigidbody2D`/`SpriteRenderer`/`Camera` 操作从 Player.cs 移至 `PlayerViewAdapter`，通过 `IPlayerView` 接口隔离（2026-07）
 
 优先抽离方向：
 
@@ -1031,11 +1034,12 @@ namespace LAB2D
 > **当前进度**：项目已完成阶段一~四的大部分工作。`Domain/` 已有丰富的纯 C# Service、Model、EventBus、值类型、生命周期接口；`UnityAdapter/` 已有 12 个文件（新增 `ToVector3Int` 便捷方法）；`ServiceLocator` 已全局落地；`AWorkerTask` Provider 委托模式已成熟。
 >
 > **最近完成（2026-07）**：
+> - **Player 表现层提取** — 新增 `IPlayerView` 接口（`Domain/Player/`）和 `PlayerViewAdapter`（`UnityAdapter/`）。Player.cs 中 `Animator`/`Rigidbody2D`/`SpriteRenderer`/`Camera` 的直接操作（~60 行）已移至 Adapter：受击闪烁（`PlayHitFlash` 替代 `spriteRenderer.color` + `Invoke`）、移动动画（`ApplyMoveAnimation`/`ApplyIdleAnimation`）、摄像机跟随（`EnsureCameraFollow`）、边缘特效 + 闪烁计时器（`Tick`）、视角切换（`TogglePerspective`）。移除 `BindCameras`/`ApplyMovePresentation`/`ApplyIdlePresentation` 三个私有方法。Player.cs 从 555 行缩减至 497 行。`IPlayerView` 零 `using UnityEngine`，可被任意引擎实现。
 > - InventoryManager 内部重构 — 数据存储从 3 个并行 `Dictionary<Vector3Int, ...>` 迁移至 `Domain/Inventory/InventoryService`（包装 `InventoryGrid`），`InventoryGrid` 修复了空格子 id=-1 索引维护。新增 `InventoryGridChangedEvent`（纯数据事件）和 `InventoryServiceTests`（25 个单元测试）。public API 100% 兼容。
 > - **Inventory 事件迁移** — `ItemInfoUI` 从 `InventoryCellChangedEvent`（携带 UI 格式化字符串）迁移至 `InventoryGridChangedEvent`（纯结构化数据）。`InventoryManager` 已停止发布旧事件（移除 11 处发布点），`InventoryService.PublishChange()` 统一发布。`InventoryCellChangedEvent` 类标记为废弃。
 > - **WorkerTaskManager ITickable + GameGridPosition 迁移** — `WorkerTaskManager` 实现 `ITickable` 接口，`Update()` 中的任务分配循环迁移至 `Tick(float deltaTime)`，由 `GlobalInit.BuildTickableList()` 统一驱动（排在 WorkerUpdateSystem 之后）。`Update()` 保留作为兼容桥（委托给 Tick）。公开 API 迁移：`GatherPositions: List<GameGridPosition>`（替代旧 `GatherPos: List<Vector3Int>`）、`DeleteHungryTask(GameGridPosition)`、`CancelGatherTask(GameGridPosition)`，旧 Vector3Int 方法标记 `[Obsolete]` 保持向后兼容。`AWorkerTask.DeleteHungryTaskProvider` 默认实现已更新。调用方 `GatherUI`、`RectBoxUI` 已切换至新 API。ITickable 实现总数增至 5 个。
 >
-> 当前应重点推进：**Character/Player 深入解耦**（Player.cs 继续推进 Command → Domain → Event 链路，可参考 GlobalInputProcessor 模式提取 Player 特定输入处理）和 **存档/Photon 与 Domain 桥接**（确保 Domain 模型变更时存档兼容）。
+> 当前应重点推进：**Character/Player 继续深入解耦**（Player.cs 的表现层已提取，下一步可考虑 `Character.cs` 基类的表现层提取、`IsArround(Vector3)` → `GameGridPosition` API 迁移、`Death()` 中的 `gameObject.layer` 操作提取）和 **存档/Photon 与 Domain 桥接**（确保 Domain 模型变更时存档兼容）。
 
 ## 14. 最终检查清单
 

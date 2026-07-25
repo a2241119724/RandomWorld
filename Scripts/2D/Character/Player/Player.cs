@@ -18,12 +18,9 @@ namespace LAB2D.Character.Player
     /// </summary>
     public class Player : Character
     {
-        private Animator animator;
         private Vector3 direction; // 按键玩家移动方向
-        private CameraMove mainCamera;
-        private CameraMove miniCamera;
-        private SpriteRenderer sprite;
         private Rigidbody2D rg;
+        private IPlayerView playerView;
         private readonly PlayerDamagePolicy damagePolicy = new PlayerDamagePolicy();
         private readonly PlayerMovementPolicy movementPolicy = new PlayerMovementPolicy();
         private readonly PlayerMovementService movementService = new PlayerMovementService();
@@ -104,7 +101,6 @@ namespace LAB2D.Character.Player
             this.basicAttribute = new Attribute(1.0f, 1.0f, 1.0f, 1.0f, 0.05f, 1.0f, 1.0f, 1.0f);
             this.CharacterDataLAB = new PlayerData();
             this.CharacterDataLAB.Character = this;
-            this.sprite = this.gameObject.GetComponent<SpriteRenderer>();
             this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAYER, LayerConstant.WORKER_LAYER);
             this.AttackTags = new List<string>
             {
@@ -120,8 +116,9 @@ namespace LAB2D.Character.Player
         public override void Start()
         {
             base.Start();
-            this.animator = this.GetComponent<Animator>();
-            if (this.animator == null)
+
+            Animator animator = this.GetComponent<Animator>();
+            if (animator == null)
             {
                 AWorkerTask.LogProvider("animator Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
@@ -131,10 +128,22 @@ namespace LAB2D.Character.Player
             if (this.NetworkView.IsMine || !this.NetworkView.IsOnline)
             {
                 this.MoveSpeed = 5;
-                this.miniCamera = GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG).GetComponent<CameraMove>();
-                this.miniCamera.DirectToPosition(this.transform.position);
-                this.mainCamera = Camera.main.GetComponent<CameraMove>();
-                this.mainCamera.DirectToPosition(this.transform.position);
+                CameraMove miniCamera = GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG).GetComponent<CameraMove>();
+                miniCamera.DirectToPosition(this.transform.position);
+                CameraMove mainCamera = Camera.main.GetComponent<CameraMove>();
+                mainCamera.DirectToPosition(this.transform.position);
+
+                // 创建表现层适配器，注入所有 Unity 表现组件
+                this.playerView = new PlayerViewAdapter(
+                    animator,
+                    this.rg,
+                    this.spriteRenderer,
+                    this.transform,
+                    mainCamera,
+                    miniCamera,
+                    this,
+                    this.originalColor);
+
                 PlayerRegisterProvider(this);
                 PhotonNetwork.LocalPlayer.TagObject = this;
                 LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = PhotonNetwork.NickName;
@@ -185,7 +194,8 @@ namespace LAB2D.Character.Player
                 this.Move();
             }
 
-            this.sprite.material.SetTexture("_MainTex", this.sprite.sprite.texture); // 设置边缘特效
+            // 表现层每帧更新（受击闪烁计时器、边缘特效等）
+            this.playerView?.Tick(Time.fixedDeltaTime);
         }
 
         /// <inheritdoc/>
@@ -293,8 +303,7 @@ namespace LAB2D.Character.Player
                 return;
             }
 
-            this.spriteRenderer.color = Color.red;
-            this.Invoke(nameof(this.ResetColor), 0.2f);
+            this.playerView?.PlayHitFlash();
 
             EventBusPublishProvider(new CharacterDamagedEvent
             {
@@ -370,27 +379,7 @@ namespace LAB2D.Character.Player
         /// <param name="is_2_5D">是否是2.5D视角.</param>
         public void TogglePerspective(bool is_2_5D)
         {
-            float rotationX = 0;
-            if (is_2_5D)
-            {
-                rotationX = -45;
-            }
-
-            this.transform.rotation = Quaternion.Euler(rotationX, this.transform.rotation.y, this.transform.rotation.z);
-            Camera.main.transform.rotation = Quaternion.Euler(new Vector3(rotationX, 0, 0));
-
-            if (is_2_5D)
-            {
-                Camera.main.orthographic = false;
-                Camera.main.fieldOfView = 100;
-                this.mainCamera.Offset = new Vector3(0, -6, 14);
-            }
-            else
-            {
-                Camera.main.orthographic = true;
-                Camera.main.orthographicSize = 10;
-                this.mainCamera.Offset = new Vector3(0, 0, 0);
-            }
+            this.playerView?.TogglePerspective(is_2_5D);
         }
 
         /// <inheritdoc/>
@@ -441,7 +430,7 @@ namespace LAB2D.Character.Player
             PlayerMoveCommand command = UnityPlayerInputAdapter.PollCurrentPlayerMoveCommand(this.GetInstanceID(), this.gameTime.DeltaTime);
             if (command != null)
             {
-                this.BindCameras();
+                this.playerView?.EnsureCameraFollow(new GameVector2(this.transform.position.x, this.transform.position.y));
                 bool isRunning = command.IsRunning;
                 this.direction.x = command.Direction.X;
                 this.direction.y = command.Direction.Y;
@@ -457,59 +446,12 @@ namespace LAB2D.Character.Player
                     waveMultiplier,
                     command.Direction);
 
-                this.ApplyMovePresentation(command, moveResult);
+                this.playerView?.ApplyMoveAnimation(command, moveResult);
             }
             else
             {
-                this.ApplyIdlePresentation();
+                this.playerView?.ApplyIdleAnimation();
             }
-        }
-
-        private void BindCameras()
-        {
-            if (this.mainCamera.Character != this)
-            {
-                this.mainCamera.DirectToPosition(this.transform.position);
-                this.mainCamera.Character = this;
-            }
-
-            if (this.miniCamera.Character != this)
-            {
-                this.miniCamera.DirectToPosition(this.transform.position);
-                this.miniCamera.Character = this;
-            }
-        }
-
-        private void ApplyMovePresentation(PlayerMoveCommand command, PlayerMoveResult moveResult)
-        {
-            this.animator.SetInteger("Action", command.IsRunning ? 1 : 0);
-
-            int animDir;
-            if (command.Direction.Y > 0)
-            {
-                animDir = 0;
-            }
-            else if (command.Direction.X > 0)
-            {
-                animDir = 1;
-            }
-            else if (command.Direction.Y < 0)
-            {
-                animDir = 2;
-            }
-            else
-            {
-                animDir = 3;
-            }
-
-            this.animator.SetInteger("Direction", animDir);
-            this.rg.velocity = new Vector2(moveResult.Velocity.X, moveResult.Velocity.Y);
-        }
-
-        private void ApplyIdlePresentation()
-        {
-            this.animator.SetInteger("Action", 2);
-            this.rg.velocity = Vector3.zero;
         }
 
         private void OnDestroy()
