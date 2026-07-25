@@ -24,7 +24,7 @@ namespace LAB2D.Character
         public CharacterManager()
         {
             this.Characters = new List<C>();
-            this.creator = CharacterCreator<CC>.Instance;
+            this.creator = Core.ServiceLocator.Get<CC>();
         }
 
         /// <summary>

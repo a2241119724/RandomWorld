@@ -6,6 +6,9 @@ namespace LAB2D
     using LAB2D.AI.Dialogue.RAG;
     using LAB2D.AI.Dialogue.UI;
     using LAB2D.Character;
+    using LAB2D.Character.Enemy;
+    using LAB2D.Character.Player;
+    using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Core;
     using LAB2D.Domain.Common;
@@ -54,6 +57,11 @@ namespace LAB2D
             ServiceLocator.Register(FurnitureManager.Instance);
             ServiceLocator.Register(FarmlandManager.Instance);
             ServiceLocator.Register(ItemInstanceFactory.Instance);
+            // CharacterCreator 必须在对应的 Manager 之前注册，
+            // 因为 CharacterManager 构造函数通过 ServiceLocator.Get<CC>() 获取 Creator。
+            ServiceLocator.Register(PlayerCreator.Instance);
+            ServiceLocator.Register(EnemyCreator.Instance);
+            ServiceLocator.Register(WorkerCreator.Instance);
             ServiceLocator.Register(PlayerManager.Instance);
             ServiceLocator.Register(EnemyManager.Instance);
             ServiceLocator.Register(WorkerManager.Instance);
