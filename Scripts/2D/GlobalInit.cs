@@ -4,12 +4,14 @@ namespace LAB2D
     using LAB2D.AI.Dialogue.Memory;
     using LAB2D.AI.Dialogue.Prompt;
     using LAB2D.AI.Dialogue.RAG;
+    using LAB2D.AI.Dialogue.UI;
     using LAB2D.Character;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
     using LAB2D.Item.Backpack.Equipment.Weapon;
+    using LAB2D.Network;
     using LAB2D.UI.Action;
     using LAB2D.UI.Panel;
     using LAB2D.UnityAdapter;
@@ -89,6 +91,8 @@ namespace LAB2D
             ServiceLocator.Register(EventBus.Instance);
             ServiceLocator.Register(SelectManagerPool.Instance);
             ServiceLocator.Register(WaveEventFeedback.Instance);
+            ServiceLocator.Register(OfflineNetworkView.Instance);
+            ServiceLocator.Register(NullSyncSender.Instance);
         }
 
         public void Awake()
@@ -152,6 +156,7 @@ namespace LAB2D
             ServiceLocator.Register(WorkerTaskTogglePanel.Instance);
             ServiceLocator.Register(InventoryMenuPanel.Instance);
             ServiceLocator.Register(AIChatPanel.Instance);
+            ServiceLocator.Register(DialoguePanel.Instance);
         }
 
         /// <summary>

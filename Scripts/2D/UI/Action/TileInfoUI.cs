@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Core;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -19,6 +20,7 @@ namespace LAB2D.UI.Action
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
             this.content = this.transform.Find("Content").GetComponent<Text>();
         }
 

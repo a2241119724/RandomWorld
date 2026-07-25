@@ -1,6 +1,7 @@
 namespace LAB2D.Map
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Data;
     using LAB2D.Network;
     using LAB2D.UnityAdapter;
@@ -69,8 +70,8 @@ namespace LAB2D.Map
             if (this.tilemap.HasTile(posMap) && (this.TileInfo.ActiveMapType == string.Empty || this.TileInfo.ActiveMapType == mapType))
             {
                 this.TileInfo.ActiveMapType = mapType;
-                TileInfoUI.Instance.SetContent(this.tilemap.GetTile(posMap).name);
-                TileInfoUI.Instance.SetPostion(UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main));
+                ServiceLocator.Get<TileInfoUI>().SetContent(this.tilemap.GetTile(posMap).name);
+                ServiceLocator.Get<TileInfoUI>().SetPostion(UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main));
             }
             else
             {

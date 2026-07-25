@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Equipment.Weapon
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using System;
     using System.Collections.Generic;
@@ -65,7 +66,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
             // 如果没有可用的粒子系统, 则创建一个
             if (!this.availableEffects.ContainsKey(name) || this.availableEffects[name].Count == 0)
             {
-                this.availableEffects[name].Enqueue(ResourceManager.Instance.Instantiate(name.ToString() + "Effect").GetComponent<ParticleSystem>());
+                this.availableEffects[name].Enqueue(ServiceLocator.Get<ResourceManager>().Instantiate(name.ToString() + "Effect").GetComponent<ParticleSystem>());
             }
 
             ParticleSystem ps = this.availableEffects[name].Dequeue();

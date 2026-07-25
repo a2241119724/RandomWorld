@@ -57,10 +57,10 @@ namespace LAB2D.Character.Worker
 
         /// <summary>
         /// 日志提供者 — Worker 相关的错误/警告日志。
-        /// 默认实现访问 LogManager.Instance。
+        /// 默认实现访问 ServiceLocator.Get<LogManager>()。
         /// </summary>
         public static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
-            = (msg, level) => LogManager.Instance.Log(msg, level);
+            = (msg, level) => ServiceLocator.Get<LogManager>().Log(msg, level);
 
         private Dictionary<int, ResourceInfo> resourceInfos; // 携带的资源
         private Slider progress;

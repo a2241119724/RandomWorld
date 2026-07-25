@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Food
 {
     using LAB2D;
+    using LAB2D.Core;
     using System;
     using UnityEngine.Tilemaps;
 
@@ -12,7 +13,7 @@ namespace LAB2D.Item.Backpack.Food
     {
         public Apple()
         {
-            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("Apple");
+            this.Tile = (TileBase)ServiceLocator.Get<ResourceManager>().GetAsset("Apple");
         }
 
         /// <inheritdoc/>

@@ -2,6 +2,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core;
     using UnityEngine;
     using UnityEngine.EventSystems;
 
@@ -73,6 +74,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
         }
 
         public void Start()

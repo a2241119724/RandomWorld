@@ -1,6 +1,7 @@
 namespace LAB2D.Character
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Item.Backpack.Equipment;
     using LAB2D.Item.Backpack.Equipment.Weapon;
     using LAB2D.Network;
@@ -118,7 +119,7 @@ namespace LAB2D.Character
 
             this.NetworkView = AWorkerTask.NetworkIsOnlineProvider()
                 ? new PunNetworkViewAdapter(this.pv)
-                : OfflineNetworkView.Instance;
+                : ServiceLocator.Get<OfflineNetworkView>();
 
             GameObject characterRoot = GameObject.FindGameObjectWithTag("CharacterRoot");
             if (characterRoot != null)
@@ -191,14 +192,14 @@ namespace LAB2D.Character
 
         /// <summary>
         /// 升级提示提供者 — 当角色升级时显示视觉提示。
-        /// 默认实现访问 GlobalInit.Instance.ShowTip。
+        /// 默认实现访问 ServiceLocator.Get&lt;GlobalInit&gt;().ShowTip。
         /// 可替换为测试桩或自定义实现。
         /// </summary>
         public static System.Action<string> LevelUpTipProvider { get; set; }
-            = (tip) => GlobalInit.Instance.ShowTip(tip);
+            = (tip) => ServiceLocator.Get<GlobalInit>().ShowTip(tip);
 
         internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
-            = (e) => EventBus.Instance.PublishInternal(e);
+            = (e) => ServiceLocator.Get<EventBus>().PublishInternal(e);
 
         /// <inheritdoc/>
         public override string ToString()

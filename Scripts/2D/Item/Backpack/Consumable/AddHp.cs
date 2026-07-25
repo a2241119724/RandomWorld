@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Consumable
 {
     using LAB2D;
+    using LAB2D.Core;
     using System;
     using UnityEngine.Tilemaps;
 
@@ -12,13 +13,13 @@ namespace LAB2D.Item.Backpack.Consumable
     {
         public AddHp()
         {
-            this.Tile = (TileBase)ResourceManager.Instance.GetAsset("AddHp");
+            this.Tile = (TileBase)ServiceLocator.Get<ResourceManager>().GetAsset("AddHp");
         }
 
         /// <inheritdoc/>
         public override void Use()
         {
-            PlayerManager.Instance.Mine.AddHp(10);
+            ServiceLocator.Get<PlayerManager>().Mine.AddHp(10);
         }
     }
 }

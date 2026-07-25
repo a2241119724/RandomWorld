@@ -93,6 +93,7 @@ namespace LAB2D.AI.Dialogue.UI
 
         public void Awake()
         {
+            ServiceLocator.Register(this);
             if (Instance != null && Instance != this)
             {
                 Destroy(this.gameObject);

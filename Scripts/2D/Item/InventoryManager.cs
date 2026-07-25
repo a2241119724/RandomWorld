@@ -1,6 +1,7 @@
 namespace LAB2D.Item
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
@@ -25,9 +26,9 @@ namespace LAB2D.Item
     public class InventoryManager : Singleton<InventoryManager>
     {
         internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
-            = (e) => EventBus.Instance.PublishInternal(e);
+            = (e) => ServiceLocator.Get<EventBus>().PublishInternal(e);
         internal static System.Action<Vector3Int> ShowWearTaskProvider { get; set; }
-            = (pos) => AddWearTaskUI.Instance.ShowWearTask(pos);
+            = (pos) => ServiceLocator.Get<AddWearTaskUI>().ShowWearTask(pos);
 
         // ---- v2: 纯数据操作委托给 Domain InventoryService ----
         private InventoryService inventoryService;

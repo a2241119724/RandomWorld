@@ -2,6 +2,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.UnityAdapter;
     using Character = LAB2D.Character.Character;
@@ -90,7 +91,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
             if (this.recordTime >= this.attackInterval)
             {
                 // 所有武器攻击效果
-                ParticleSystem particleSystem = AttackEffectManager.Instance.GetEffect(this.attackEffect, (this.transform.rotation.eulerAngles.z + 90) * MathHelper.Deg2Rad);
+                ParticleSystem particleSystem = ServiceLocator.Get<AttackEffectManager>().GetEffect(this.attackEffect, (this.transform.rotation.eulerAngles.z + 90) * MathHelper.Deg2Rad);
                 particleSystem.transform.parent = this.transform.parent.parent;
                 particleSystem.transform.position = this.Head.position;
                 particleSystem.Play();
@@ -178,15 +179,15 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
                 this.transform.rotation = Quaternion.FromToRotation(Vector3.up, this.minDistanceCharacter.position - this.transform.position);
                 this.minDistanceCharacter = null;
             }
-            else if (Joystick.Instance && Joystick.Instance.Direction.magnitude > 1.0f)
+            else if (ServiceLocator.Get<Joystick>() && ServiceLocator.Get<Joystick>().Direction.magnitude > 1.0f)
             {
                 // 跟随摇杆
-                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, Joystick.Instance.Direction);
+                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, ServiceLocator.Get<Joystick>().Direction);
             }
             else if (this.character is Player)
             {
                 // 玩家跟随鼠标
-                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, UnityGlobalInputAdapter.GetMouseScreenPosition() - Camera.main.WorldToScreenPoint(PlayerManager.Instance.Mine.transform.position));
+                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, UnityGlobalInputAdapter.GetMouseScreenPosition() - Camera.main.WorldToScreenPoint(ServiceLocator.Get<PlayerManager>().Mine.transform.position));
             }
             else
             {

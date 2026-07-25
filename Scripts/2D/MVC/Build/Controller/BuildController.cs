@@ -1,6 +1,7 @@
 namespace LAB2D.MVC.Build.Controller
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.MVC.Build.Model;
     using LAB2D.MVC.Build.View;
     using System.Collections.Generic;
@@ -28,7 +29,7 @@ namespace LAB2D.MVC.Build.Controller
             this.navigationView.CurItemType = AItem.ItemTypeEnum.Room;
             if (this.model.IsNull(this.navigationView.CurItemType))
             {
-                List<AItem> items = ItemInstanceFactory.Instance.GetBuildItems();
+                List<AItem> items = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItems();
                 foreach (AItem item in items)
                 {
                     this.AddItem(item);

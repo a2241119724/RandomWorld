@@ -2,6 +2,7 @@ namespace LAB2D.AI.Dialogue.Core
 {
     using LAB2D;
     using LAB2D.AI.Dialogue.Prompt;
+    using LAB2D.Core;
     using LAB2D.Character.Player;
     using LAB2D.Character.Worker.Task;
     using LAB2D.UnityAdapter;
@@ -33,11 +34,11 @@ namespace LAB2D.AI.Dialogue.Core
         private bool isDialogueOpen;
 
         internal static System.Func<string, NPCPromptProfile> PromptBuilderProvider { get; set; }
-            = (name) => PromptBuilder.Instance.GetProfile(name);
+            = (name) => ServiceLocator.Get<PromptBuilder>().GetProfile(name);
         internal static System.Func<Player> PlayerMineProvider { get; set; }
-            = () => PlayerManager.Instance?.Mine;
+            = () => ServiceLocator.Get<PlayerManager>()?.Mine;
         internal static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
-            = (msg, lv) => LogManager.Instance?.Log(msg, lv);
+            = (msg, lv) => ServiceLocator.Get<LogManager>()?.Log(msg, lv);
 
         /// <summary>
         /// 每个 profileName 只输出一次缺失警告
@@ -102,7 +103,7 @@ namespace LAB2D.AI.Dialogue.Core
 
         public void OnDestroy()
         {
-            DialogueManager.Instance.OnDialogueEnded -= this.OnDialogueEndedHandler;
+            ServiceLocator.Get<DialogueManager>().OnDialogueEnded -= this.OnDialogueEndedHandler;
         }
 
         private void StartDialogue()
@@ -124,23 +125,23 @@ namespace LAB2D.AI.Dialogue.Core
                 this.cachedProfile.npcName = this.gameObject.name;
             }
 
-            DialogueManager.Instance.RegisterDialogueWorker(this.npcId, this.GetComponent<AWorker>());
-            DialogueManager.Instance.StartDialogue(this.npcId, this.cachedProfile);
-            PanelController.Instance.Show(DialoguePanel.Instance);
+            ServiceLocator.Get<DialogueManager>().RegisterDialogueWorker(this.npcId, this.GetComponent<AWorker>());
+            ServiceLocator.Get<DialogueManager>().StartDialogue(this.npcId, this.cachedProfile);
+            ServiceLocator.Get<PanelController>().Show(DialoguePanel.Instance);
             DialoguePanelUI dialoguePanelUI = DialoguePanelUI.Ensure();
             if (dialoguePanelUI == null)
             {
                 LogProvider(
                     "NPCDialogueTrigger: DialoguePanelUI is missing from Game.unity.",
                     LogManager.LogLevelEnum.Error);
-                DialogueManager.Instance.EndDialogue(this.npcId);
+                ServiceLocator.Get<DialogueManager>().EndDialogue(this.npcId);
                 this.isDialogueOpen = false;
                 return;
             }
 
             dialoguePanelUI.Open(this.npcId, this.cachedProfile);
 
-            DialogueManager.Instance.OnDialogueEnded += this.OnDialogueEndedHandler;
+            ServiceLocator.Get<DialogueManager>().OnDialogueEnded += this.OnDialogueEndedHandler;
         }
 
         private void OnDialogueEndedHandler(string npcId)
@@ -148,7 +149,7 @@ namespace LAB2D.AI.Dialogue.Core
             if (npcId == this.npcId)
             {
                 this.isDialogueOpen = false;
-                DialogueManager.Instance.OnDialogueEnded -= this.OnDialogueEndedHandler;
+                ServiceLocator.Get<DialogueManager>().OnDialogueEnded -= this.OnDialogueEndedHandler;
             }
         }
 

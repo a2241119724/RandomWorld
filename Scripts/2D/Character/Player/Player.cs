@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Player
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Domain.Character;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
@@ -26,18 +27,18 @@ namespace LAB2D.Character.Player
         private readonly PlayerMovementService movementService = new PlayerMovementService();
 
         // --- 可替换的 Provider 委托（默认指向 MonoBehaviour 单例，测试可覆盖） ---
-        internal static Func<bool> IsRespawningProvider { get; set; } = () => DeathPenaltyManager.Instance.IsRespawning;
-        internal static Action UpdateDeathScreenProvider { get; set; } = () => DeathPenaltyManager.Instance.UpdateDeathScreen();
-        internal static Func<Player, bool> TryCompleteRespawnProvider { get; set; } = (p) => DeathPenaltyManager.Instance.TryCompleteRespawn(p);
-        internal static Action<Player> HandlePlayerDeathProvider { get; set; } = (p) => DeathPenaltyManager.Instance.HandlePlayerDeath(p);
-        internal static Func<Player, float, float> WeatherMoveSpeedProvider { get; set; } = (p, def) => WeatherGameplayEffect.Instance.GetAdjustedCharacterMoveSpeed(p, def);
-        internal static Func<Player, float, float> WaveMoveSpeedProvider { get; set; } = (p, def) => WaveBossRewardManager.Instance.GetAdjustedPlayerMoveSpeed(p, def);
-        internal static Func<float> ExperienceMultiplierProvider { get; set; } = () => ComboBonusManager.Instance.ExperienceMultiplier;
-        internal static Action<Player> PlayerRegisterProvider { get; set; } = (p) => PlayerManager.Instance.Mine = p;
-        internal static Action<Player> PlayerAddProvider { get; set; } = (p) => PlayerManager.Instance.Add(p);
-        internal static Action<Player> PlayerRemoveProvider { get; set; } = (p) => PlayerManager.Instance.Remove(p);
-        internal static Action PlayerDeathRecordProvider { get; set; } = () => GameplaySessionStats.Instance.RecordPlayerDeath();
-        internal static Action<ABackpackItem> BackpackSaveProvider { get; set; } = (item) => BackpackController.Instance.AddItem(item);
+        internal static Func<bool> IsRespawningProvider { get; set; } = () => ServiceLocator.Get<DeathPenaltyManager>().IsRespawning;
+        internal static Action UpdateDeathScreenProvider { get; set; } = () => ServiceLocator.Get<DeathPenaltyManager>().UpdateDeathScreen();
+        internal static Func<Player, bool> TryCompleteRespawnProvider { get; set; } = (p) => ServiceLocator.Get<DeathPenaltyManager>().TryCompleteRespawn(p);
+        internal static Action<Player> HandlePlayerDeathProvider { get; set; } = (p) => ServiceLocator.Get<DeathPenaltyManager>().HandlePlayerDeath(p);
+        internal static Func<Player, float, float> WeatherMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<WeatherGameplayEffect>().GetAdjustedCharacterMoveSpeed(p, def);
+        internal static Func<Player, float, float> WaveMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<WaveBossRewardManager>().GetAdjustedPlayerMoveSpeed(p, def);
+        internal static Func<float> ExperienceMultiplierProvider { get; set; } = () => ServiceLocator.Get<ComboBonusManager>().ExperienceMultiplier;
+        internal static Action<Player> PlayerRegisterProvider { get; set; } = (p) => ServiceLocator.Get<PlayerManager>().Mine = p;
+        internal static Action<Player> PlayerAddProvider { get; set; } = (p) => ServiceLocator.Get<PlayerManager>().Add(p);
+        internal static Action<Player> PlayerRemoveProvider { get; set; } = (p) => ServiceLocator.Get<PlayerManager>().Remove(p);
+        internal static Action PlayerDeathRecordProvider { get; set; } = () => ServiceLocator.Get<GameplaySessionStats>().RecordPlayerDeath();
+        internal static Action<ABackpackItem> BackpackSaveProvider { get; set; } = (item) => ServiceLocator.Get<BackpackController>().AddItem(item);
 
         /// <summary>
         /// 死亡时层切换提供者 — 玩家死亡时暂时切换到 Default 层以躲避敌人。

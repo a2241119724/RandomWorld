@@ -2,6 +2,7 @@ namespace LAB2D.Core
 {
     using LAB2D;
     using LAB2D.Domain.Common;
+    using LAB2D.UI.Action;
     using LAB2D.UI.Panel;
     using LAB2D.UnityAdapter;
     using UnityEngine;
@@ -70,7 +71,7 @@ namespace LAB2D.Core
 
             if (ServiceLocator.Get<PanelController>().Panels.Count == 0)
             {
-                BuildingUI.Instance.gameObject.SetActive(false);
+                ServiceLocator.Get<BuildingUI>().gameObject.SetActive(false);
                 ServiceLocator.Get<PanelController>().Show(BuildMenuPanel.Instance);
                 ServiceLocator.Get<IsAvailableMap>().ClearShow();
             }
@@ -78,7 +79,7 @@ namespace LAB2D.Core
             {
                 if (ServiceLocator.Get<PanelController>().Panels.Peek() == ItemInfoPanel.Instance)
                 {
-                    ItemInfoUI.Instance.Init();
+                    ServiceLocator.Get<ItemInfoUI>().Init();
                 }
 
                 ServiceLocator.Get<PanelController>().Panels.Peek().OnClick_Back();
@@ -95,7 +96,7 @@ namespace LAB2D.Core
             if (ServiceLocator.Get<PanelController>().Panels.Count > 0
                 && ServiceLocator.Get<PanelController>().Panels.Peek() == ItemInfoPanel.Instance)
             {
-                ItemInfoUI.Instance.Init();
+                ServiceLocator.Get<ItemInfoUI>().Init();
                 ServiceLocator.Get<PanelController>().Close();
             }
         }

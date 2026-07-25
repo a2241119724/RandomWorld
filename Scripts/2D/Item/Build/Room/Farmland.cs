@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Build.Room
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Item.Build.Wall;
     using System;
     using UnityEngine;
@@ -42,7 +43,7 @@ namespace LAB2D.Item.Build.Room
             Core.ServiceLocator.Get<BuildMap>().AddTask();
 
             // 添加仓库Cell
-            FarmlandManager.Instance.AddCells(new Vector3Int(boundary[0], boundary[2]), width, height);
+            ServiceLocator.Get<FarmlandManager>().AddCells(new Vector3Int(boundary[0], boundary[2]), width, height);
         }
     }
 }

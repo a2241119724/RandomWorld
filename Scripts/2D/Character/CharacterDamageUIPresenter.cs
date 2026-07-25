@@ -16,12 +16,12 @@ namespace LAB2D.Character
 
         public void Awake()
         {
-            EventBus.Instance.Subscribe<CharacterDamagedEvent>(this.OnCharacterDamaged);
+            ServiceLocator.Get<EventBus>().Subscribe<CharacterDamagedEvent>(this.OnCharacterDamaged);
         }
 
         public void OnDestroy()
         {
-            EventBus.Instance.Unsubscribe<CharacterDamagedEvent>(this.OnCharacterDamaged);
+            ServiceLocator.Get<EventBus>().Unsubscribe<CharacterDamagedEvent>(this.OnCharacterDamaged);
         }
 
         public void LateUpdate()

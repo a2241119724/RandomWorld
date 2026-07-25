@@ -1,6 +1,7 @@
 namespace LAB2D.Data
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Item;
     using LAB2D.Item.Backpack.Equipment;
@@ -90,7 +91,7 @@ namespace LAB2D.Data
             }
 
             // 最后初始化背包道具实例
-            ItemInstanceFactory.Instance.InitItemInstances(equipmentData);
+            ServiceLocator.Get<ItemInstanceFactory>().InitItemInstances(equipmentData);
         }
 
         /// <summary>

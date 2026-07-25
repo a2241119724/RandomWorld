@@ -1,6 +1,7 @@
 ﻿namespace LAB2D.UnityAdapter
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using UnityEngine;
 

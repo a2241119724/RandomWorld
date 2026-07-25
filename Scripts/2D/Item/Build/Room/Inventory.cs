@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Build.Room
 {
     using LAB2D;
+    using LAB2D.Core;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -59,7 +60,7 @@ namespace LAB2D.Item.Build.Room
                 .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_TOP].TileName);
 
             // 添加仓库Cell
-            InventoryManager.Instance.AddCells(new Vector3Int(boundary[0], boundary[2]), width, height);
+            ServiceLocator.Get<InventoryManager>().AddCells(new Vector3Int(boundary[0], boundary[2]), width, height);
         }
     }
 }

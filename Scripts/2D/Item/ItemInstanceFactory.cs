@@ -1,6 +1,7 @@
 namespace LAB2D.Item
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Data;
     using LAB2D.Item;
     using LAB2D.Item.Backpack;

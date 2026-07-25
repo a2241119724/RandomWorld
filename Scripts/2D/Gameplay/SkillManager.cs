@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Character.Player;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
@@ -80,7 +81,7 @@ namespace LAB2D.Gameplay
             this.IsInitialized = true;
             this.lastRefreshTime = Time.time;
 
-            EventBus.Instance.Subscribe<PlayerSkillActivatedEvent>(this.OnPlayerSkillActivated);
+            ServiceLocator.Get<EventBus>().Subscribe<PlayerSkillActivatedEvent>(this.OnPlayerSkillActivated);
         }
 
         /// <summary>

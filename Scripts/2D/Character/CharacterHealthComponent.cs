@@ -30,9 +30,9 @@ namespace LAB2D.Character
         {
             this.damageCalculator = damageCalculator ?? new DamageCalculator();
             this.levelProgressionService = levelProgressionService ?? new LevelProgressionService();
-            this.comboBonusManager = ResolveOrDefault(comboBonusManager, ComboBonusManager.Instance);
-            this.waveBossRewardManager = ResolveOrDefault(waveBossRewardManager, WaveBossRewardManager.Instance);
-            this.gameplaySessionStats = ResolveOrDefault(gameplaySessionStats, GameplaySessionStats.Instance);
+            this.comboBonusManager = ResolveOrDefault(comboBonusManager, ServiceLocator.Get<ComboBonusManager>());
+            this.waveBossRewardManager = ResolveOrDefault(waveBossRewardManager, ServiceLocator.Get<WaveBossRewardManager>());
+            this.gameplaySessionStats = ResolveOrDefault(gameplaySessionStats, ServiceLocator.Get<GameplaySessionStats>());
         }
 
         private static T ResolveOrDefault<T>(T existing, T fallback) where T : class

@@ -29,9 +29,9 @@ namespace LAB2D.AI.Dialogue.UI
 
         private void OnBackClicked()
         {
-            if (DialoguePanelUI.Instance != null)
+            if (ServiceLocator.Get<DialoguePanelUI>() != null)
             {
-                DialoguePanelUI.Instance.Close();
+                ServiceLocator.Get<DialoguePanelUI>().Close();
             }
 
             this.Controller.Close();

@@ -47,14 +47,14 @@ namespace LAB2D.Character.Worker
 
         /// <summary>
         /// Worker 列表提供者 — 获取所有 Worker 用于任务分配。
-        /// 默认实现访问 WorkerManager.Instance.Characters。
+        /// 默认实现访问 ServiceLocator.Get<WorkerManager>().Characters。
         /// 可替换为测试桩或自定义实现。
         /// </summary>
         public static System.Func<List<AWorker>> WorkerListProvider { get; set; }
-            = () => WorkerManager.Instance.Characters;
+            = () => ServiceLocator.Get<WorkerManager>().Characters;
 
         internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
-            = (e) => EventBus.Instance.PublishInternal(e);
+            = (e) => ServiceLocator.Get<EventBus>().PublishInternal(e);
 
         /// <summary>
         /// 记录所有采摘任务的位置（Domain 类型）。

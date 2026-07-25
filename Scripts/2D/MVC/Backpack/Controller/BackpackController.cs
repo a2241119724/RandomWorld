@@ -29,7 +29,7 @@ namespace LAB2D.MVC.Backpack.Controller
             if (this.model.IsNull(AItem.ItemTypeEnum.Weapon))
             {
                 // addItem(ItemFactory.Instance.getBackpackItemByName("SingleGun"));
-                List<AItem> items = ItemInstanceFactory.Instance.GenBackpackItems();
+                List<AItem> items = ServiceLocator.Get<ItemInstanceFactory>().GenBackpackItems();
                 foreach (AItem item in items)
                 {
                     // 为初始道具随机分配品质（使背包中的初始道具品质多样化）

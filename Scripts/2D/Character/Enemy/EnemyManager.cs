@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Enemy
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Serializable;
     using System;
     using System.Collections;
@@ -115,7 +116,7 @@ namespace LAB2D.Character.Enemy
                 enemy.CharacterDataLAB.Character = enemy;
             }
 
-            TileMap.Instance.StartCoroutine(this.GenEnemy());
+            ServiceLocator.Get<TileMap>().StartCoroutine(this.GenEnemy());
         }
 
         /// <inheritdoc/>
