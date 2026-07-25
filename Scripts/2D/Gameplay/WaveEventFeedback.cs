@@ -108,26 +108,32 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
-                if (wm == null)
-                {
-                    return;
-                }
+                EventBus eventBus = Core.ServiceLocator.Get<EventBus>();
 
                 // 先取消旧订阅，防止重复订阅
-                this.DisableInternal(wm);
+                this.DisableInternal(eventBus);
 
-                wm.OnWaveStart += this.HandleWaveStart;
-                wm.OnWaveEnd += this.HandleWaveEnd;
-                wm.OnAllWavesCleared += this.HandleAllWavesCleared;
-                wm.OnRestStart += this.HandleRestStart;
-                wm.OnWaveStateChanged += this.HandleWaveStateChanged;
+                eventBus.Subscribe<WaveStartedEvent>(this.HandleWaveStarted);
+                eventBus.Subscribe<WaveEndedEvent>(this.HandleWaveEnded);
+                eventBus.Subscribe<AllWavesClearedEvent>(this.HandleAllWavesCleared);
+                eventBus.Subscribe<WaveRestStartedEvent>(this.HandleRestStartedEvent);
+
+                // OnWaveStateChanged 暂无 EventBus 事件类型，通过 WaveManager C# 事件保持兼容
+                WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
+                if (wm != null)
+                {
+                    wm.OnWaveStateChanged -= this.HandleWaveStateChanged;
+                    wm.OnWaveStateChanged += this.HandleWaveStateChanged;
+                }
+
+                // 通过接口同步状态（不直接依赖 WaveManager 属性）
+                if (Core.ServiceLocator.TryGet(out IWaveStateProvider wsp))
+                {
+                    this.SyncCurrentState(wsp);
+                }
 
                 this.enabled = true;
                 this.initialized = true;
-
-                // 立即同步当前波次状态，避免错过已开始的波次
-                this.SyncCurrentState(wm);
             }
             catch (Exception e)
             {
@@ -138,17 +144,20 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 禁用波次事件反馈：取消订阅 WaveManager 的全部事件。
+        /// 禁用波次事件反馈：取消订阅所有波次事件。
         /// 不会销毁已记录的波次状态数据，外部仍可查询 CurrentState。
         /// </summary>
         public void Disable()
         {
             try
             {
+                EventBus eventBus = Core.ServiceLocator.Get<EventBus>();
+                this.DisableInternal(eventBus);
+
                 WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
                 if (wm != null)
                 {
-                    this.DisableInternal(wm);
+                    wm.OnWaveStateChanged -= this.HandleWaveStateChanged;
                 }
             }
             catch (Exception e)
@@ -163,20 +172,19 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 取消订阅 WaveManager 的所有事件（内部方法，不检查 enabled 标志）
+        /// 取消订阅所有波次事件（内部方法，不检查 enabled 标志）
         /// </summary>
-        private void DisableInternal(WaveManager wm)
+        private void DisableInternal(EventBus eventBus)
         {
-            if (wm == null)
+            if (eventBus == null)
             {
                 return;
             }
 
-            wm.OnWaveStart -= this.HandleWaveStart;
-            wm.OnWaveEnd -= this.HandleWaveEnd;
-            wm.OnAllWavesCleared -= this.HandleAllWavesCleared;
-            wm.OnRestStart -= this.HandleRestStart;
-            wm.OnWaveStateChanged -= this.HandleWaveStateChanged;
+            eventBus.Unsubscribe<WaveStartedEvent>(this.HandleWaveStarted);
+            eventBus.Unsubscribe<WaveEndedEvent>(this.HandleWaveEnded);
+            eventBus.Unsubscribe<AllWavesClearedEvent>(this.HandleAllWavesCleared);
+            eventBus.Unsubscribe<WaveRestStartedEvent>(this.HandleRestStartedEvent);
         }
 
         #region 事件处理器
@@ -184,57 +192,56 @@ namespace LAB2D.Gameplay
         /// <summary>
         /// 波次开始回调：显示波次来袭提示
         /// </summary>
-        /// <param name="waveIndex">当前波次索引（从1开始）</param>
-        private void HandleWaveStart(int waveIndex)
+        /// <param name="e">波次开始事件。</param>
+        private void HandleWaveStarted(WaveStartedEvent e)
         {
-            string message = $"第 {waveIndex} 波来袭! 准备迎战!";
+            if (e == null) return;
+            string message = $"第 {e.WaveIndex} 波来袭! 准备迎战!";
             this.ShowTip(message);
             this.SyncCurrentState();
             this.NotifyStateChanged();
         }
 
         /// <summary>
-        /// 波次结束回调：显示波次清除提示，包含已完成波次总数
+        /// 波次结束回调（EventBus 订阅）：显示波次清除提示。
         /// </summary>
-        /// <param name="waveIndex">刚完成的波次索引</param>
-        /// <param name="totalCompleted">已完成的波次总数</param>
-        private void HandleWaveEnd(int waveIndex, int totalCompleted)
+        /// <param name="e">波次结束事件。</param>
+        private void HandleWaveEnded(WaveEndedEvent e)
         {
-            string message = $"第 {waveIndex} 波已清除! (共完成 {totalCompleted} 波)";
+            if (e == null) return;
+            string message = $"第 {e.WaveIndex} 波已清除! (共完成 {e.TotalWavesCompleted} 波)";
             this.ShowTip(message);
-
-            // 波次结束时停止休息倒计时（如果有的话）
             this.StopRestCountdown();
             this.SyncCurrentState();
             this.NotifyStateChanged();
         }
 
         /// <summary>
-        /// 全部波次完成回调：显示通关提示
+        /// 全部波次完成回调（EventBus 订阅）：显示通关提示。
         /// </summary>
-        /// <param name="totalWaves">已完成的波次总数</param>
-        private void HandleAllWavesCleared(int totalWaves)
+        /// <param name="e">全部波次完成事件。</param>
+        private void HandleAllWavesCleared(AllWavesClearedEvent e)
         {
-            string message = $"全部 {totalWaves} 波已清除! 你已征服所有波次!";
+            if (e == null) return;
+            string message = $"全部 {e.TotalWavesCompleted} 波已清除! 你已征服所有波次!";
             this.ShowTip(message);
-
             this.StopRestCountdown();
             this.SyncCurrentState();
             this.NotifyStateChanged();
         }
 
         /// <summary>
-        /// 波间休息开始回调：显示休息倒计时提示，启动休息倒计时协程
+        /// 波间休息开始回调（EventBus 订阅）：显示休息倒计时提示。
         /// </summary>
-        /// <param name="duration">休息时长（秒）</param>
-        private void HandleRestStart(float duration)
+        /// <param name="e">波间休息事件。</param>
+        private void HandleRestStartedEvent(WaveRestStartedEvent e)
         {
+            if (e == null) return;
             this.restStartTime = this.GameTime.Time;
-            this.restDuration = duration;
+            this.restDuration = e.RestDuration;
 
-            string message = $"休息中... {duration:F0} 秒后下一波开始";
+            string message = $"休息中... {e.RestDuration:F0} 秒后下一波开始";
             this.ShowTip(message);
-
             this.SyncCurrentState();
             this.NotifyStateChanged();
         }
@@ -259,10 +266,9 @@ namespace LAB2D.Gameplay
         {
             try
             {
-                WaveManager wm = Core.ServiceLocator.Get<WaveManager>();
-                if (wm != null)
+                if (Core.ServiceLocator.TryGet(out IWaveStateProvider wsp))
                 {
-                    this.SyncCurrentState(wm);
+                    this.SyncCurrentState(wsp);
                 }
             }
             catch (Exception e)
@@ -274,17 +280,17 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 从指定 WaveManager 实例同步状态
+        /// 从 IWaveStateProvider 同步波次状态（接口解耦，不直接依赖 WaveManager）。
         /// </summary>
-        private void SyncCurrentState(WaveManager wm)
+        private void SyncCurrentState(IWaveStateProvider wsp)
         {
-            if (wm == null)
+            if (wsp == null)
             {
                 return;
             }
 
             float remainingRest = 0f;
-            if (wm.IsResting)
+            if (wsp.IsResting)
             {
                 float elapsed = this.GameTime.Time - this.restStartTime;
                 remainingRest = this.ruleService.GetRemainingRestTime(this.restDuration, elapsed);
@@ -292,13 +298,13 @@ namespace LAB2D.Gameplay
 
             this.CurrentState = new WaveFeedbackState
             {
-                currentWaveIndex = wm.CurrentWaveIndex,
-                totalWavesCompleted = wm.TotalWavesCompleted,
-                enemiesAliveInWave = wm.EnemiesAliveInWave,
-                enemiesDefeatedInWave = wm.EnemiesDefeatedInWave,
-                isWaveActive = wm.IsWaveActive,
-                isResting = wm.IsResting,
-                difficultyScale = wm.CurrentDifficultyScale,
+                currentWaveIndex = wsp.CurrentWaveIndex,
+                totalWavesCompleted = wsp.TotalWavesCompleted,
+                enemiesAliveInWave = wsp.EnemiesAliveInWave,
+                enemiesDefeatedInWave = wsp.EnemiesDefeatedInWave,
+                isWaveActive = wsp.IsWaveActive,
+                isResting = wsp.IsResting,
+                difficultyScale = wsp.CurrentDifficultyScale,
                 restDuration = this.restDuration,
                 restRemaining = remainingRest,
                 feedbackEnabled = this.enabled,

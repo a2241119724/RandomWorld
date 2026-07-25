@@ -66,6 +66,7 @@ namespace LAB2D
             ServiceLocator.Register(EnemyManager.Instance);
             ServiceLocator.Register(WorkerManager.Instance);
             ServiceLocator.Register(WaveManager.Instance);
+            ServiceLocator.Register<IWaveStateProvider>(WaveManager.Instance);
             ServiceLocator.Register(WaveBossRewardManager.Instance);
             ServiceLocator.Register(AchievementManager.Instance);
             ServiceLocator.Register(SkillManager.Instance);

@@ -439,7 +439,9 @@ Scripts/2D/Gameplay/WeatherGameplayEffect.cs
 - `IWaveTimeScheduler` → ✅ UnityWaveTimeScheduler
 - `IMapSpawnPointProvider` → ✅ UnityMapAdapter
 - `IWaveSceneAdapter` → ✅ UnityWaveSceneAdapter（含 SetWaveControlEnabled、OnWaveStarted、TrySpawnEnemy、CountAliveEnemies 等）
-- `WaveBossRewardManager` → ✅ 7 个 Provider 完成解耦（BossVisual、RandomRange、ApplyHealReward、ApplyExperienceReward、LogWarning、Log、PlayerResolver）
+- `WaveBossRewardManager` → ✅ 7 个 Provider + EventBus 订阅 + 零 WaveManager 引用
+- `WaveEventFeedback` → ✅ EventBus 订阅 + IWaveStateProvider 状态读取
+- `IWaveStateProvider` → ✅ Domain/Wave 接口（WaveManager 实现）
 
 ### AI Dialogue
 
@@ -1052,7 +1054,9 @@ namespace LAB2D
 > - **ColonyCommandCenterManager 移除 using UnityEngine** — 6 处 `Time.time` → `IGameTime.Time`；2 处 `Debug.LogWarning`/`Debug.Log` → `IGameLogger.LogWarning`/`IGameLogger.Log`。移除 `using UnityEngine;`。与 PlayerVitalAlertManager 相同的 Domain 接口 + 懒加载属性模式（2026-07）。
 > - **WorkerTaskCongestionAdvisor 移除 using UnityEngine** — 4 处 `Time.time` + 2 处 `Debug.Log*` → `IGameTime`/`IGameLogger`。移除 `using UnityEngine;`（2026-07）。
 > - **Wave 系统 EventBus 事件类型创建** — 新增 `Domain/Wave/WaveEvents.cs` 包含 4 个 IGameEvent 类型（`WaveStartedEvent`、`WaveEndedEvent`、`AllWavesClearedEvent`、`WaveRestStartedEvent`）。`WaveManager` 在保持 C# 事件向后兼容的同时，于 4 处事件触发点新增 `EventBus.PublishInternal()` 发布。Domain/Wave 目录文件数：10→11（2026-07）。
-> - **WaveBossRewardManager 迁移到 EventBus 订阅** — `SubscribeWaveManager` 从 `WaveManager.OnWaveEnd/OnRestStart/OnAllWavesCleared` C# 事件订阅迁移为 `EventBus.Subscribe<WaveEndedEvent/WaveRestStartedEvent/AllWavesClearedEvent>()`。Handler 签名更新为接受 EventBus 事件对象。**WaveBossRewardManager 现已零 WaveManager 直接依赖**，通过 EventBus 完全解耦（2026-07）。
+> - **WaveBossRewardManager 迁移到 EventBus 订阅** — 3 个 handler 从 WaveManager C# 事件迁移为 EventBus.Subscribe<>()。**零 WaveManager 直接依赖**（2026-07）。
+> - **WaveEventFeedback 迁移到 EventBus 订阅** — 4/5 个事件迁移为 EventBus。OnWaveStateChanged 保留 C# 事件（2026-07）。
+> - **IWaveStateProvider 接口提取** — 新增 `Domain/Wave/IWaveStateProvider.cs`（7 个只读属性：CurrentWaveIndex、TotalWavesCompleted、EnemiesAliveInWave、EnemiesDefeatedInWave、IsWaveActive、IsResting、CurrentDifficultyScale）。`WaveManager` 实现该接口，`GlobalInit` 按接口类型注册。`WaveEventFeedback.SyncCurrentState` 从直接读取 `WaveManager` 属性迁移为通过 `IWaveStateProvider` 接口。**WaveEventFeedback 状态读取已完全解耦**，仅剩 OnWaveStateChanged C# 事件订阅保留 WaveManager 引用。Domain/Wave 目录文件数：11→12（2026-07）。
 > - **SkillManager Time.time → IGameTime** — 6 处 `Time.time` → `IGameTime.Time`（懒加载属性）。因 SkillManager 使用 `Vector3` 保留 `using UnityEngine;`，但时间依赖已解耦（2026-07）。
 > - **EnemyLootManager PlayerPositionProvider 提取** — 新增 `PlayerPositionProvider` 静态委托（模式 B），封装 `PlayerMineProvider().transform.position` → `Vector3`。4 处调用点全部迁移。`EnemyLootManager` 业务逻辑零 Transform 引用（2026-07）。
 > - **Gameplay 批量 IGameTime/IGameLogger 迁移** — `WorkerSupplyIssueManager`（3x Time.time + 2x Debug.Log* → IGameTime/IGameLogger，保留 using UnityEngine 因其使用 Vector3Int）、`WorkerConditionManager`（1x + 2x，移除 using UnityEngine ✅）、`AchievementManager`（1x + 1x，移除 ✅）、`ItemCollectionTracker`（2x Debug.Log，移除 ✅）、`WeatherGameplayEffect`（1x Debug.Log，移除 ✅）。全部使用统一模板：`IGameTime`/`IGameLogger` + 懒加载属性。非 MonoBehaviour 的 Gameplay Manager 累计 8 个零 UnityEngine 引用（2026-07）。

@@ -18,7 +18,7 @@ namespace LAB2D.Gameplay
     ///   3. Editor 菜单：工具 > 波次管理 > 开始波次 / 停止波次
     ///   4. 不需要波次时调用 StopWaves() 恢复默认的固定间隔生成模式
     /// </summary>
-    public class WaveManager : Singleton<WaveManager>
+    public class WaveManager : Singleton<WaveManager>, IWaveStateProvider
     {
         /// <summary>
         /// 波次配置
