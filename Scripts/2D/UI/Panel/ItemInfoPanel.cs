@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Core;
     using Character = LAB2D.Character.Character;
     using System;
     using System.Collections.Generic;
@@ -46,7 +47,7 @@ namespace LAB2D.UI.Panel
         public override void OnRun()
         {
             base.OnRun();
-            Time.timeScale = ForegroundPanel.Instance.TimeScale;
+            Time.timeScale = ServiceLocator.Get<ForegroundPanel>().TimeScale;
         }
 
         /// <summary>
@@ -82,8 +83,8 @@ namespace LAB2D.UI.Panel
                 AWeapon weapon = workerData.Weapon;
                 if (weapon != null)
                 {
-                    worker.Find("Weapon/Image").GetComponent<Image>().sprite = ResourceManager.Instance.GetImage(
-                        ItemDataManager.Instance.GetById(weapon.Id).EnName);
+                    worker.Find("Weapon/Image").GetComponent<Image>().sprite = ServiceLocator.Get<ResourceManager>().GetImage(
+                        ServiceLocator.Get<ItemDataManager>().GetById(weapon.Id).EnName);
                 }
 
                 // 先清空所有装备槽位图片
@@ -107,8 +108,8 @@ namespace LAB2D.UI.Panel
                 {
                     if (item.Value != null)
                     {
-                        worker.Find(item.Key.ToString() + "/Image").GetComponent<Image>().sprite = ResourceManager.Instance.GetImage(
-                            ItemDataManager.Instance.GetById(item.Value.Id).EnName);
+                        worker.Find(item.Key.ToString() + "/Image").GetComponent<Image>().sprite = ServiceLocator.Get<ResourceManager>().GetImage(
+                            ServiceLocator.Get<ItemDataManager>().GetById(item.Value.Id).EnName);
                     }
                 }
             }

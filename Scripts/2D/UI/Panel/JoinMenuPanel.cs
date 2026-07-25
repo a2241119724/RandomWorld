@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Core;
     using Photon.Pun;
     using UnityEngine.UI;
 
@@ -23,7 +24,7 @@ namespace LAB2D.UI.Panel
         public override void OnEnter()
         {
             base.OnEnter();
-            JoinMenuUI.Instance.ClickAndShow += this.Show;
+            ServiceLocator.Get<JoinMenuUI>().ClickAndShow += this.Show;
 
             // 回调OnRoomListUpdate
             PhotonNetwork.GetCustomRoomList(PhotonNetwork.CurrentLobby, "C0 = 1");
@@ -33,20 +34,20 @@ namespace LAB2D.UI.Panel
         public override void OnExit()
         {
             base.OnExit();
-            JoinMenuUI.Instance.ClickAndShow -= this.Show;
+            ServiceLocator.Get<JoinMenuUI>().ClickAndShow -= this.Show;
         }
 
         public override void OnClick_Back()
         {
             this.Controller.Close();
-            this.Controller.Show(CreateOrJoinPanel.Instance);
+            this.Controller.Show(ServiceLocator.Get<CreateOrJoinPanel>());
         }
 
         private void OnClick_StartJoin()
         {
             if (string.IsNullOrEmpty(this.selectRoomName))
             {
-                GlobalInit.Instance.ShowTip("房间名不能为空");
+                ServiceLocator.Get<GlobalInit>().ShowTip("房间名不能为空");
                 return;
             }
 
@@ -54,13 +55,13 @@ namespace LAB2D.UI.Panel
             bool success = PhotonNetwork.JoinRoom(this.selectRoomName);
             if (!success)
             {
-                GlobalInit.Instance.ShowTip("房间名字不存在");
+                ServiceLocator.Get<GlobalInit>().ShowTip("房间名字不存在");
                 return;
             }
 
             this.Controller.Close();
-            this.Controller.Show(AsyncProgressPanel.Instance);
-            AsyncProgressUI.Instance.SetTip("正在同步数据...");
+            this.Controller.Show(ServiceLocator.Get<AsyncProgressPanel>());
+            ServiceLocator.Get<AsyncProgressUI>().SetTip("正在同步数据...");
         }
 
         private void Show(string str)

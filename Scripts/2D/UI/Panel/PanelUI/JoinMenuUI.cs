@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI
 {
     using LAB2D;
+    using LAB2D.Core;
     using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
@@ -25,6 +26,7 @@ namespace LAB2D.UI.Panel.PanelUI
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
         }
 
         /// <inheritdoc/>

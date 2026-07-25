@@ -2,6 +2,7 @@ namespace LAB2D.UI.Panel
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
     using Photon.Pun;
     using Photon.Realtime;
@@ -58,7 +59,7 @@ namespace LAB2D.UI.Panel
         public override void OnExit()
         {
             base.OnExit();
-            this.Controller.Show(AsyncProgressPanel.Instance);
+            this.Controller.Show(ServiceLocator.Get<AsyncProgressPanel>());
         }
 
         /// <summary>
@@ -67,34 +68,34 @@ namespace LAB2D.UI.Panel
         private void Onclick_StartCreate()
         {
             if (PhotonNetwork.NetworkClientState != ClientState.Joined
-                && NetworkConnect.Instance.IsOnline)
+                && ServiceLocator.Get<NetworkConnect>().IsOnline)
             {
-                GlobalInit.Instance.ShowTip("请稍后再试");
+                ServiceLocator.Get<GlobalInit>().ShowTip("请稍后再试");
                 return;
             }
 
-            if (TileMap.Instance == null)
+            if (ServiceLocator.Get<TileMap>() == null)
             {
-                AWorkerTask.LogProvider("TileMap.Instance is null, cannot start map creation", LogManager.LogLevelEnum.Error);
-                GlobalInit.Instance.ShowTip("地图初始化失败，请检查场景配置");
+                AWorkerTask.LogProvider("ServiceLocator.Get<TileMap>() is null, cannot start map creation", LogManager.LogLevelEnum.Error);
+                ServiceLocator.Get<GlobalInit>().ShowTip("地图初始化失败，请检查场景配置");
                 return;
             }
 
             this.Controller.Close();
 
             // TileMap
-            TileMap.Instance.SetProgress(this.height, this.width);
-            TileMap.Instance.StartCoroutine(TileMap.Instance.Create());
+            ServiceLocator.Get<TileMap>().SetProgress(this.height, this.width);
+            ServiceLocator.Get<TileMap>().StartCoroutine(ServiceLocator.Get<TileMap>().Create());
 
             // ResourceMap
-            ResourceMap.Instance.SetProgress();
-            ResourceMap.Instance.StartCoroutine(ResourceMap.Instance.GenResource());
+            ServiceLocator.Get<ResourceMap>().SetProgress();
+            ServiceLocator.Get<ResourceMap>().StartCoroutine(ServiceLocator.Get<ResourceMap>().GenResource());
 
             // EnemyManager
-            EnemyManager.Instance.EnemyManagerDataLAB.MaxEnemyCount = this.maxEnemyCount;
+            ServiceLocator.Get<EnemyManager>().EnemyManagerDataLAB.MaxEnemyCount = this.maxEnemyCount;
 
             // EnemyCreator
-            TileMap.Instance.StartCoroutine(EnemyManager.Instance.GenEnemy());
+            ServiceLocator.Get<TileMap>().StartCoroutine(ServiceLocator.Get<EnemyManager>().GenEnemy());
         }
     }
 }

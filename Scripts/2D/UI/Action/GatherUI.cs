@@ -48,7 +48,7 @@ namespace LAB2D.UI.Action
         public void SetPostion(Vector3Int posMap)
         {
             this.posMap = posMap;
-            this.transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
+            this.transform.position = ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap);
         }
 
         /// <summary>
@@ -66,17 +66,17 @@ namespace LAB2D.UI.Action
         {
             this.Hide();
             GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(this.posMap);
-            if (WorkerTaskManager.Instance.GatherPositions.Contains(gridPos))
+            if (ServiceLocator.Get<WorkerTaskManager>().GatherPositions.Contains(gridPos))
             {
                 return;
             }
 
-            if (!ResourceMap.Instance.TryGetGatherResourceInfo(this.posMap, out ResourceInfo resourceInfo))
+            if (!ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(this.posMap, out ResourceInfo resourceInfo))
             {
                 return;
             }
 
-            WorkerTaskManager.Instance.AddTask(
+            ServiceLocator.Get<WorkerTaskManager>().AddTask(
                 new WorkerGatherTask.GatherTaskBuilder()
                 .SetTarget(this.posMap).SetResourceInfo(resourceInfo).Build(), Vector3IntLAB.ToVector3IntLAB(this.posMap));
         }
@@ -88,13 +88,13 @@ namespace LAB2D.UI.Action
         {
             this.Hide();
             GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(this.posMap);
-            if (!WorkerTaskManager.Instance.GatherPositions.Contains(gridPos))
+            if (!ServiceLocator.Get<WorkerTaskManager>().GatherPositions.Contains(gridPos))
             {
                 return;
             }
 
-            WorkerTaskManager.Instance.CancelGatherTask(gridPos);
-            GatherMap.Instance.CancelGather(this.posMap);
+            ServiceLocator.Get<WorkerTaskManager>().CancelGatherTask(gridPos);
+            ServiceLocator.Get<GatherMap>().CancelGather(this.posMap);
         }
     }
 }

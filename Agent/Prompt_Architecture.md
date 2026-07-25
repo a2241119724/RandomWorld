@@ -1059,7 +1059,9 @@ namespace LAB2D
 >
 > - **BuildingUI + AmbitiousExperienceHub + ForegroundPanel + BackpackMenuPanel 迁移** — 4 个文件（17+14+12+10=53 处 .Instance）全部迁移至 `ServiceLocator.Get<T>()`。补注册 6 个服务：`WaveEventFeedback`（RegisterSafeServices）；`BuildMenuPanel`、`PauseMenuPanel`、`SettingMenuPanel`（RegisterServices）；`BackpackController`、`BackpackNavigationView`（Awake 自注册）。UI/ 目录 .Instance 从 236 降至 128（-46%）（2026-07）。
 >
-> 当前应重点推进：**单元测试扩展**、**UI 层 ServiceLocator 迁移持续推进**（剩余 128 处 .Instance，重点文件：NewOrContinuePanel 21 处、CreateDataPanel 12 处、CreateMenuPanel 8 处、JoinMenuPanel 7 处、GatherUI 7 处、AddWearTaskUI 6 处、WorkerBedUI 6 处、ItemInfoPanel 5 处 等）。
+> - **NewOrContinuePanel + CreateDataPanel + CreateMenuPanel + JoinMenuPanel + GatherUI + AddWearTaskUI + WorkerBedUI + ItemInfoPanel 迁移** — 8 个文件（21+12+8+7+7+6+6+5=72 处 .Instance）全部迁移至 `ServiceLocator.Get<T>()`。补注册 7 个服务：`NewOrContinuePanel`、`CreateDataPanel`、`CreateMenuPanel`、`JoinMenuPanel`、`AsyncProgressPanel`（RegisterServices）；`AddWearTaskUI`、`JoinMenuUI`（Awake 自注册）。UI/ 目录 .Instance 从 128 降至 56（累计 -76%）（2026-07）。
+>
+> 当前应重点推进：**单元测试扩展**、**UI 层收尾**（剩余 56 处 .Instance 在 29 个文件中，大部分为 ≤3 处/文件的尾量：CreateOrJoinPanel 3、BuildMenuPanel 3、AsyncProgressPanel 2、ColonyCommandCenterHUD 2、PlayerStatusUI 2、RegisterAndLoginUI 4 等）。已迁移文件覆盖所有高频文件（10+ 处 .Instance）。
 
 ## 14. 最终检查清单
 

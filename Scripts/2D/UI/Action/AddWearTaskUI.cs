@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.Serializable;
     using LAB2D.UnityAdapter;
     using System.Collections.Generic;
@@ -26,9 +27,9 @@ namespace LAB2D.UI.Action
         /// <param name="posMap">位置</param>
         public void ShowWearTask(Vector3Int posMap)
         {
-            this.transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
-            List<AWorker> workers = WorkerManager.Instance.Characters;
-            ResourceInfo resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
+            this.transform.position = ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap);
+            List<AWorker> workers = ServiceLocator.Get<WorkerManager>().Characters;
+            ResourceInfo resourceInfo = ServiceLocator.Get<InventoryManager>().GetResourceByPos(posMap);
 
             // 该位置没有东西则不展示任何东西
             if (resourceInfo == null)
@@ -41,7 +42,7 @@ namespace LAB2D.UI.Action
                 // 若没有对应的物体，先创建
                 if (i > this.content.childCount - 1)
                 {
-                    GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.ADD_WEAR_TASK_ITEM, true);
+                    GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.ADD_WEAR_TASK_ITEM, true);
                     g.transform.SetParent(this.content);
                     g.transform.localScale = Vector3.one;
                 }
@@ -54,14 +55,14 @@ namespace LAB2D.UI.Action
                 int index = i;
                 button.onClick.AddListener(() =>
                 {
-                    WorkerTaskManager.Instance.AddTask(
+                    ServiceLocator.Get<WorkerTaskManager>().AddTask(
                         new WorkerWearTask.WearTaskBuilder()
                         .SetWorker(workers[index]).SetTarget(posMap).SetEquipmentId(resourceInfo.Id).Build(), Vector3IntLAB.ToVector3IntLAB(posMap),
                         1);
                     this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     Dictionary<int, ResourceInfo> dict = new ();
                     dict.Add(resourceInfo.Id, resourceInfo);
-                    InventoryManager.Instance.IsEnoughAndPreTake(workers[index], new Dictionary<int, ResourceInfo>(dict), true);
+                    ServiceLocator.Get<InventoryManager>().IsEnoughAndPreTake(workers[index], new Dictionary<int, ResourceInfo>(dict), true);
                 });
             }
         }
@@ -69,6 +70,7 @@ namespace LAB2D.UI.Action
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
             this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
         }
 

@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Core;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -46,7 +47,7 @@ namespace LAB2D.UI.Panel
 
             this.archiveSlotButtons.Clear();
 
-            for (int i = 0; i < ArchiveManager.Instance.ArchiveCount; i++)
+            for (int i = 0; i < ServiceLocator.Get<ArchiveManager>().ArchiveCount; i++)
             {
                 int archiveIndex = i;
                 Button archiveSlotButton = this.FindArchiveSlotButton(archiveIndex) ??
@@ -86,7 +87,7 @@ namespace LAB2D.UI.Panel
 
         private Button CreateArchiveSlotButton(int archiveIndex)
         {
-            GameObject gameObject = ResourceManager.Instance.Instantiate(PrefabConstant.ARCHIVE_ITEM, this.content, false);
+            GameObject gameObject = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.ARCHIVE_ITEM, this.content, false);
             gameObject.name = $"ArchiveSlot_{archiveIndex + 1}";
             gameObject.layer = this.content.gameObject.layer;
             return this.FindChildComponent<Button>(gameObject.transform, "Save");
@@ -117,9 +118,9 @@ namespace LAB2D.UI.Panel
         {
             for (int i = 0; i < this.archiveSlotButtons.Count; i++)
             {
-                bool hasArchive = ArchiveManager.Instance.HasArchive(i);
+                bool hasArchive = ServiceLocator.Get<ArchiveManager>().HasArchive(i);
                 Text text = this.FindChildComponent<Text>(this.archiveSlotButtons[i].transform, "Text");
-                string displayName = ArchiveManager.Instance.GetArchiveDisplayName(i);
+                string displayName = ServiceLocator.Get<ArchiveManager>().GetArchiveDisplayName(i);
                 string status = hasArchive ? "继续游戏" : "新游戏";
                 text.text = $"{displayName}\n{status}";
             }
@@ -155,14 +156,14 @@ namespace LAB2D.UI.Panel
 
         private void ShowRenamePanel(int archiveIndex)
         {
-            if (!ArchiveManager.Instance.HasArchive(archiveIndex))
+            if (!ServiceLocator.Get<ArchiveManager>().HasArchive(archiveIndex))
             {
-                GlobalInit.Instance.ShowTip("空存档槽不能改名");
+                ServiceLocator.Get<GlobalInit>().ShowTip("空存档槽不能改名");
                 this.RefreshArchiveSlotButtons();
                 return;
             }
 
-            string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
+            string displayName = ServiceLocator.Get<ArchiveManager>().GetArchiveDisplayName(archiveIndex);
             this.pendingRenameArchiveIndex = archiveIndex;
             if (this.renameTipText != null)
             {
@@ -205,13 +206,13 @@ namespace LAB2D.UI.Panel
             }
 
             string displayName = this.renameInputField == null ? string.Empty : this.renameInputField.text;
-            if (!ArchiveManager.Instance.SetArchiveDisplayName(this.pendingRenameArchiveIndex, displayName))
+            if (!ServiceLocator.Get<ArchiveManager>().SetArchiveDisplayName(this.pendingRenameArchiveIndex, displayName))
             {
-                GlobalInit.Instance.ShowTip("存档名称不能为空");
+                ServiceLocator.Get<GlobalInit>().ShowTip("存档名称不能为空");
                 return;
             }
 
-            GlobalInit.Instance.ShowTip("存档名称已修改");
+            ServiceLocator.Get<GlobalInit>().ShowTip("存档名称已修改");
             this.HideRenamePanel();
             this.RefreshArchiveSlotButtons();
         }
@@ -245,15 +246,15 @@ namespace LAB2D.UI.Panel
 
         private void ShowClearConfirmPanel(int archiveIndex)
         {
-            if (!ArchiveManager.Instance.HasArchive(archiveIndex))
+            if (!ServiceLocator.Get<ArchiveManager>().HasArchive(archiveIndex))
             {
-                GlobalInit.Instance.ShowTip("空存档槽不能清除");
+                ServiceLocator.Get<GlobalInit>().ShowTip("空存档槽不能清除");
                 this.RefreshArchiveSlotButtons();
                 return;
             }
 
             this.pendingClearArchiveIndex = archiveIndex;
-            string displayName = ArchiveManager.Instance.GetArchiveDisplayName(archiveIndex);
+            string displayName = ServiceLocator.Get<ArchiveManager>().GetArchiveDisplayName(archiveIndex);
             if (this.clearConfirmText != null)
             {
                 this.clearConfirmText.text = $"确认清除存档\n{displayName}?";
@@ -283,13 +284,13 @@ namespace LAB2D.UI.Panel
                 return;
             }
 
-            if (ArchiveManager.Instance.DeleteArchive(this.pendingClearArchiveIndex))
+            if (ServiceLocator.Get<ArchiveManager>().DeleteArchive(this.pendingClearArchiveIndex))
             {
-                GlobalInit.Instance.ShowTip("存档已清除");
+                ServiceLocator.Get<GlobalInit>().ShowTip("存档已清除");
             }
             else
             {
-                GlobalInit.Instance.ShowTip("清除存档失败");
+                ServiceLocator.Get<GlobalInit>().ShowTip("清除存档失败");
             }
 
             this.HideClearConfirmPanel();
@@ -298,8 +299,8 @@ namespace LAB2D.UI.Panel
 
         private void OnClick_ArchiveSlot(int archiveIndex)
         {
-            ArchiveManager.Instance.SetCurrentArchive(archiveIndex);
-            if (ArchiveManager.Instance.HasCurrentArchive())
+            ServiceLocator.Get<ArchiveManager>().SetCurrentArchive(archiveIndex);
+            if (ServiceLocator.Get<ArchiveManager>().HasCurrentArchive())
             {
                 this.LoadArchive();
                 return;
@@ -312,15 +313,15 @@ namespace LAB2D.UI.Panel
         {
             this.Controller.Close();
             GlobalData.IsNew = true;
-            this.Controller.Show(CreateDataPanel.Instance);
+            this.Controller.Show(ServiceLocator.Get<CreateDataPanel>());
         }
 
         private void LoadArchive()
         {
             this.Controller.Close();
             GlobalData.IsNew = false;
-            this.Controller.Show(AsyncProgressPanel.Instance);
-            ArchiveManager.Instance.LoadCurrentArchive();
+            this.Controller.Show(ServiceLocator.Get<AsyncProgressPanel>());
+            ServiceLocator.Get<ArchiveManager>().LoadCurrentArchive();
         }
     }
 }
