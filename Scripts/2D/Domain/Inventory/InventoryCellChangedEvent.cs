@@ -3,9 +3,10 @@ namespace LAB2D.Domain.Inventory
     using LAB2D.Domain.Common;
 
     /// <summary>
-    /// 仓库格子变更事件。
-    /// InventoryManager 在物品添加、移除、预占变更后发布此事件。
-    /// ItemInfoUI 等展示层订阅此事件以刷新实时信息面板。
+    /// [已废弃] 仓库格子变更事件 — 由 InventoryGridChangedEvent 替代。
+    /// 此事件携带 UI 格式化字符串 CellInfo，违反"核心事件不含 UI 字符串"原则。
+    /// 自 2026-07 起，InventoryManager 已停止发布此事件，ItemInfoUI 已迁移至 InventoryGridChangedEvent。
+    /// 保留此类仅用于向后兼容和现有测试引用。
     /// </summary>
     public sealed class InventoryCellChangedEvent : IGameEvent
     {

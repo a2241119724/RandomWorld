@@ -372,11 +372,12 @@ Scripts/2D/Data/ItemDataManager.cs
 - ✅ `Vector3Int` ↔ `GameGridPosition` 转换在 API 边界通过 `UnityVectorAdapter` 完成
 - ✅ 所有 public API 签名保持 100% 兼容
 - ✅ `Editor/Tests/Domain/InventoryServiceTests.cs`（25 个单元测试）
+- ✅ `ItemInfoUI` 已从 `InventoryCellChangedEvent` 迁移至 `InventoryGridChangedEvent`（纯结构化数据事件）
+- ✅ `InventoryManager` 已停止发布 `InventoryCellChangedEvent`，`InventoryGridChangedEvent` 由 `InventoryService.PublishChange()` 统一发布（2026-07）
 
 剩余工作：
 
 - `preTakeResource` / `prePlaceResource` 仍以 `AWorker` 为 key（依赖 MonoBehaviour），未下沉到 Domain
-- `InventoryCellChangedEvent.CellInfo` 仍携带 UI 格式化字符串（保留兼容），新事件 `InventoryGridChangedEvent` 已就绪但 UI 层尚未切换订阅
 - `TypeToResource` getter 每次动态计算（兼容层），建议后续调用方迁移到 `GetPositionsByType()`
 
 ### Wave / Gameplay
@@ -829,7 +830,7 @@ public sealed class MyNewInitializer : IInitializable
 
 后续改造优先方向（按低风险到高风险排列）：
 
-1. **继续扩展 EventBus 事件驱动**：在现有 EventBus 基础上，为 Player、Wave 模块增加更多事件类型；逐步让 UI 层从订阅旧 `InventoryCellChangedEvent`（携带 UI 字符串）迁移到新 `InventoryGridChangedEvent`（纯结构化数据）。
+1. ~~**Inventory EventBus 事件迁移**~~ ✅ 已完成：`ItemInfoUI` 已切换订阅 `InventoryGridChangedEvent`（纯结构化数据），`InventoryManager` 已停止发布 `InventoryCellChangedEvent`（2026-07）。后续可继续为 Player、Wave 模块增加更多事件类型。
 2. **Character/Player 深入解耦**：`Player.cs` 输入/表现/规则仍有混合，进一步推进 Command → Domain → Event 链路。可参考 `GlobalInputProcessor` 模式提取 Player 特定输入处理。
 3. **扩展 ITickable/IInitializable 覆盖范围**：将更多 Manager 的 Update/Start 逻辑迁移到 ITickable/IInitializable，减少 MonoBehaviour 生命周期依赖。
 4. ~~**InventoryManager 深入解耦**~~ ✅ 已完成：内部数据存储已迁移至 `InventoryService`（包装 `InventoryGrid`），public API 100% 兼容。剩余 `preTakeResource`/`prePlaceResource` 的 AWorker 解耦留待后续。
@@ -1018,9 +1019,11 @@ namespace LAB2D
 
 > **当前进度**：项目已完成阶段一~四的大部分工作。`Domain/` 已有丰富的纯 C# Service、Model、EventBus、值类型、生命周期接口；`UnityAdapter/` 已有 12 个文件（新增 `ToVector3Int` 便捷方法）；`ServiceLocator` 已全局落地；`AWorkerTask` Provider 委托模式已成熟。
 >
-> **最近完成（2026-07）**：InventoryManager 内部重构 — 数据存储从 3 个并行 `Dictionary<Vector3Int, ...>` 迁移至 `Domain/Inventory/InventoryService`（包装 `InventoryGrid`），`InventoryGrid` 修复了空格子 id=-1 索引维护。新增 `InventoryGridChangedEvent`（纯数据事件）和 `InventoryServiceTests`（25 个单元测试）。public API 100% 兼容。
+> **最近完成（2026-07）**：
+> - InventoryManager 内部重构 — 数据存储从 3 个并行 `Dictionary<Vector3Int, ...>` 迁移至 `Domain/Inventory/InventoryService`（包装 `InventoryGrid`），`InventoryGrid` 修复了空格子 id=-1 索引维护。新增 `InventoryGridChangedEvent`（纯数据事件）和 `InventoryServiceTests`（25 个单元测试）。public API 100% 兼容。
+> - **Inventory 事件迁移** — `ItemInfoUI` 从 `InventoryCellChangedEvent`（携带 UI 格式化字符串）迁移至 `InventoryGridChangedEvent`（纯结构化数据）。`InventoryManager` 已停止发布旧事件（移除 11 处发布点），`InventoryService.PublishChange()` 统一发布。`InventoryCellChangedEvent` 类标记为废弃。事件层面完全消除 UI 字符串耦合。
 >
-> 当前应重点推进：阶段三（EventBus 事件驱动扩展，让 UI 层迁移到新 `InventoryGridChangedEvent`）和阶段五（单元测试扩展，为 Wave/Player Domain 服务补充测试）。
+> 当前应重点推进：阶段五（单元测试扩展，为 Wave/Player Domain 服务补充测试）和阶段三（继续为 Player、Wave 模块增加更多 EventBus 事件类型）。
 
 ## 14. 最终检查清单
 

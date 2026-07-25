@@ -11,7 +11,7 @@ namespace LAB2D.UI.Action
     using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// 点击对象展示UI — 通过 EventBus 订阅 InventoryCellChangedEvent 实现解耦更新。
+    /// 点击对象展示UI — 通过 EventBus 订阅 InventoryGridChangedEvent 实现解耦更新。
     /// </summary>
     public class ItemInfoUI : MonoBehaviourInit
     {
@@ -28,25 +28,28 @@ namespace LAB2D.UI.Action
         public void Awake()
         {
             Instance = this;
-            EventBus.Instance.Subscribe<InventoryCellChangedEvent>(this.OnInventoryCellChanged);
+            EventBus.Instance.Subscribe<InventoryGridChangedEvent>(this.OnInventoryGridChanged);
         }
 
         public void OnDestroy()
         {
-            EventBus.Instance.Unsubscribe<InventoryCellChangedEvent>(this.OnInventoryCellChanged);
+            EventBus.Instance.Unsubscribe<InventoryGridChangedEvent>(this.OnInventoryGridChanged);
             if (Instance == this)
             {
                 Instance = null;
             }
         }
 
-        private void OnInventoryCellChanged(InventoryCellChangedEvent e)
+        private void OnInventoryGridChanged(InventoryGridChangedEvent e)
         {
             if (this.select.Equals(e.ManagerName)
-                && this.selectPos.x == e.GridX
-                && this.selectPos.y == e.GridY)
+                && this.selectPos.x == e.Position.X
+                && this.selectPos.y == e.Position.Y)
             {
-                ItemInfoPanel.Instance.SetItemInfo(e.CellInfo);
+                // 通过 UnityAdapter 转换 Domain 坐标为 Unity 坐标，重新获取格式化文本
+                Vector3Int unityPos = UnityVectorAdapter.ToVector3Int(e.Position);
+                string cellInfo = InventoryManager.Instance.ToString(unityPos);
+                ItemInfoPanel.Instance.SetItemInfo(cellInfo);
             }
         }
 

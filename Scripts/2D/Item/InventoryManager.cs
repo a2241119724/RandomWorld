@@ -464,14 +464,6 @@ namespace LAB2D.Item
             {
                 return;
             }
-
-            EventBusPublishProvider(new InventoryCellChangedEvent
-            {
-                ManagerName = this.GetType().Name,
-                GridX = posMap.x,
-                GridY = posMap.y,
-                CellInfo = this.ToString(posMap),
-            });
         }
 
         /// <summary>
@@ -501,13 +493,6 @@ namespace LAB2D.Item
                 this.inventoryService.AddItem(gridPos, resourceInfo.Id, resourceInfo.Count);
             }
 
-            EventBusPublishProvider(new InventoryCellChangedEvent
-            {
-                ManagerName = this.GetType().Name,
-                GridX = posMap.x,
-                GridY = posMap.y,
-                CellInfo = this.ToString(posMap),
-            });
             return resourceInfo;
         }
 
@@ -551,13 +536,6 @@ namespace LAB2D.Item
             this.inventoryService.ClearCell(gridPos);
             AWorkerTask.ItemMapProvider().DeleteTile(posMap);
 
-            EventBusPublishProvider(new InventoryCellChangedEvent
-            {
-                ManagerName = this.GetType().Name,
-                GridX = posMap.x,
-                GridY = posMap.y,
-                CellInfo = this.ToString(posMap),
-            });
             return resourceInfo;
         }
 
@@ -595,14 +573,6 @@ namespace LAB2D.Item
                     AWorkerTask.DeleteHungryTaskProvider(posMap);
                 }
             }
-
-            EventBusPublishProvider(new InventoryCellChangedEvent
-            {
-                ManagerName = this.GetType().Name,
-                GridX = posMap.x,
-                GridY = posMap.y,
-                CellInfo = this.ToString(posMap),
-            });
         }
 
         /// <summary>
@@ -647,14 +617,6 @@ namespace LAB2D.Item
                     }
                 }
             }
-
-            EventBusPublishProvider(new InventoryCellChangedEvent
-            {
-                ManagerName = this.GetType().Name,
-                GridX = posMap.x,
-                GridY = posMap.y,
-                CellInfo = this.ToString(posMap),
-            });
 
             return resourceInfo;
         }
@@ -905,19 +867,16 @@ namespace LAB2D.Item
                 if (this.prePlaceResource[worker].ContainsKey(pos))
                 {
                     this.prePlaceResource[worker][pos].Count += resourceInfo.Count;
-                    EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
                     return;
                 }
 
                 this.prePlaceResource[worker].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
-                EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
                 return;
             }
 
             Dictionary<Vector3Int, ResourceInfo> dict = new();
             dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
             this.prePlaceResource.Add(worker, dict);
-            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
         }
 
         /// <summary>
@@ -952,19 +911,16 @@ namespace LAB2D.Item
                 Dictionary<Vector3Int, ResourceInfo> dict = new();
                 dict.Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
                 this.preTakeResource.Add(worker, dict);
-                EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
                 return;
             }
 
             if (!this.preTakeResource[worker].ContainsKey(pos))
             {
                 this.preTakeResource[worker].Add(pos, DataTool.DeepCopyByBinary(resourceInfo));
-                EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
                 return;
             }
 
             this.preTakeResource[worker][pos].Count += resourceInfo.Count;
-            EventBusPublishProvider(new InventoryCellChangedEvent { ManagerName = this.GetType().Name, GridX = pos.x, GridY = pos.y, CellInfo = this.ToString(pos) });
         }
 
         private int GetPreTakeCountByPos(Vector3Int pos)
