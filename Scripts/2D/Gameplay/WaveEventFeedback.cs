@@ -2,9 +2,9 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Wave;
     using System;
-    using UnityEngine;
 
     /// <summary>
     /// 波次事件反馈管理器。
@@ -47,6 +47,34 @@ namespace LAB2D.Gameplay
         private float restStartTime;
         private float restDuration;
         private readonly WaveRuleService ruleService = new WaveRuleService();
+        private IGameTime gameTime;
+        private IGameLogger gameLogger;
+
+        private IGameTime GameTime
+        {
+            get
+            {
+                if (this.gameTime == null)
+                {
+                    this.gameTime = Core.ServiceLocator.Get<IGameTime>();
+                }
+
+                return this.gameTime;
+            }
+        }
+
+        private IGameLogger GameLogger
+        {
+            get
+            {
+                if (this.gameLogger == null)
+                {
+                    this.gameLogger = Core.ServiceLocator.Get<IGameLogger>();
+                }
+
+                return this.gameLogger;
+            }
+        }
 
         /// <summary>
         /// 构造函数：初始化默认状态
@@ -201,7 +229,7 @@ namespace LAB2D.Gameplay
         /// <param name="duration">休息时长（秒）</param>
         private void HandleRestStart(float duration)
         {
-            this.restStartTime = Time.time;
+            this.restStartTime = this.GameTime.Time;
             this.restDuration = duration;
 
             string message = $"休息中... {duration:F0} 秒后下一波开始";
@@ -258,7 +286,7 @@ namespace LAB2D.Gameplay
             float remainingRest = 0f;
             if (wm.IsResting)
             {
-                float elapsed = Time.time - this.restStartTime;
+                float elapsed = this.GameTime.Time - this.restStartTime;
                 remainingRest = this.ruleService.GetRemainingRestTime(this.restDuration, elapsed);
             }
 
@@ -309,7 +337,7 @@ namespace LAB2D.Gameplay
                 // 降级路径：GlobalInit 或 Tip Prefab 不可用时使用日志输出
             }
 
-            Debug.Log($"[WaveEvent] {message}");
+            this.GameLogger.Log($"[WaveEvent] {message}");
         }
 
         /// <summary>

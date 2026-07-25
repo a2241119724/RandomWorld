@@ -348,10 +348,12 @@ Scripts/2D/Character/Worker/Task/AWorkerTask.cs
 - ✅ **WorkerTaskManager 内部存储已迁移** — `gatherPositions: List<GameGridPosition>` 替代 `GatherPos: List<Vector3Int>`
 - ✅ **AWorkerTask Provider 更新** — `DeleteHungryTaskProvider` 默认实现使用 GameGridPosition 转换
 
-优先抽离方向：
-
-- ~~`WorkerTaskModel`（纯 C# 任务数据模型）~~ ✅ 已完成：WorkerTaskQueue + WorkerTaskSnapshot
-- ~~`WorkerTaskQueue`（纯 C# 任务队列）~~ ✅ 已完成：Domain/Worker/WorkerTaskQueue.cs
+已完成解耦：
+- ~~`WorkerTaskModel`~~ ✅ WorkerTaskQueue + WorkerTaskSnapshot（Domain/Worker）
+- ~~`WorkerTaskQueue`~~ ✅ Domain/Worker/WorkerTaskQueue.cs
+- ~~`WorkerTaskManager Update → ITickable`~~ ✅ 已完成
+- ~~`WorkerTaskManager API → GameGridPosition`~~ ✅ 已完成
+- ~~`CreateWorkerSnapshot transform.position`~~ ✅ WorkerPositionProvider（模式 B）
 - `IWorkerTaskMapQuery`（地图查询接口）
 - `WorkerTaskEvent`（通过 EventBus 通知任务状态变化）— 已有 WorkerTaskQueueChangedEvent
 
@@ -1047,6 +1049,11 @@ namespace LAB2D
 >
 > **最近完成（2026-07）**：
 > - **InventoryManager preTakeResource/prePlaceResource AWorker key → int workerId** — 将两个预留字典的 key 从 `AWorker` (MonoBehaviour) 迁移为 `int` (`worker.GetInstanceID()`)。新增 `WorkerNameProvider` 静态委托（模式 B）供 `ToString()` 解析 Worker 名称。10 个公开方法签名零变更，内部通过 `worker.GetInstanceID()` 转换。`Dictionary<AWorker, ...>` → `Dictionary<int, ...>` 共涉及 17 个方法（7 个私有方法 + 循环体）。字典不再持有 MonoBehaviour 强引用，Worker 死亡后 GC 可正常回收。**InventoryManager 对 AWorker 的类型依赖仅限于方法参数，不再持久化存储引用**（2026-07）。
+> - **ColonyCommandCenterManager 移除 using UnityEngine** — 6 处 `Time.time` → `IGameTime.Time`；2 处 `Debug.LogWarning`/`Debug.Log` → `IGameLogger.LogWarning`/`IGameLogger.Log`。移除 `using UnityEngine;`。与 PlayerVitalAlertManager 相同的 Domain 接口 + 懒加载属性模式（2026-07）。
+> - **WorkerTaskCongestionAdvisor 移除 using UnityEngine** — 4 处 `Time.time` + 2 处 `Debug.Log*` → `IGameTime`/`IGameLogger`。移除 `using UnityEngine;`（2026-07）。
+> - **WaveEventFeedback 移除 using UnityEngine** — 2 处 `Time.time` + 1 处 `Debug.Log` → `IGameTime`/`IGameLogger`。移除 `using UnityEngine;`。**Gameplay 层第四个零 UnityEngine 引用的 Manager**（2026-07）。
+> - **PlayerVitalAlertManager 移除 using UnityEngine** — 4 处 `Time.time` → `IGameTime.Time`（Domain 已有接口，通过 ServiceLocator 懒加载缓存）；2 处 `Debug.LogWarning`/`Debug.Log` → `IGameLogger.Warning`/`IGameLogger.Log`（Domain 已有接口）。移除 `using UnityEngine;`。**首个移除全部 UnityEngine 引用的 Gameplay Manager**。未使用 Provider 委托，改用已有 Domain 接口 + 懒加载属性模式（2026-07）。
+> - **WorkerTaskManager CreateWorkerSnapshot transform.position → WorkerPositionProvider** — 新增 `WorkerPositionProvider` 静态委托（模式 B），将 `CreateWorkerSnapshot` 中 `worker.transform.position.x/y` 的 Transform 直接访问提取为可替换 Provider。默认实现封装坐标交换（map x ← world y, map y ← world x）。业务逻辑零 Transform 引用。WorkerTaskManager Provider 总数：2→3（WorkerList + WorkerPosition + EventBusPublish）（2026-07）。
 > - **WaveBossRewardManager 进一步解耦（第一轮）** — 新增 3 个静态 Provider 委托（模式 B）：`RandomRangeProvider`（封装 `UnityEngine.Random.Range`）、`ApplyHealRewardProvider`（封装 `Player.AddHp()`）、`ApplyExperienceRewardProvider`（封装 `Player.AddExperienceValue()`）。`GetAdjustedPlayerOutgoingDamage`/`GetAdjustedIncomingDamage` 中 `attacker/target is not Player` 类型检查替换为 `!attacker/target.IsPlayerCharacter` 虚属性调用。Provider 总数：1→4（2026-07）。
 > - **WaveBossRewardManager 收尾解耦（第二轮）** — 新增 3 个静态 Provider 委托（模式 B）：`LogWarningProvider`（封装 `Debug.LogWarning`）、`LogProvider`（封装 `Debug.Log`）、`PlayerResolverProvider`（封装 `PlayerManager.Mine` 获取）。`GetAdjustedPlayerMoveSpeed` 参数类型从 `Player` 泛化为 `Character`，新增 `!character.IsPlayerCharacter` 守卫。`ApplyReward` 中 `PlayerManager.Mine` 直接访问替换为 `PlayerResolverProvider()`。`ShowTip` 和 `SubscribeWaveManager` 中 `Debug.LogWarning`/`Debug.Log` 替换为 Provider。`Player.cs` 中 `WaveMoveSpeedProvider` 委托签名更新为 `Func<Character, float, float>`。**WaveBossRewardManager 类本身的业务逻辑已零 UnityEngine（除 Provider 默认实现）和零 Player 具体类型引用**。Provider 总数：4→7。Wave 系统解耦项：5 项完成（2026-07）。
 > - **CharacterManager CharacterCreator&lt;CC&gt;.Instance 消除（非 UI .Instance 清零）** — 在 `GlobalInit.RegisterSafeServices()` 中新增 `PlayerCreator`、`EnemyCreator`、`WorkerCreator` 三个 CharacterCreator 的 ServiceLocator 注册（位于对应 Manager 注册之前，确保构造时序）。`CharacterManager` 构造函数中 `CharacterCreator&lt;CC&gt;.Instance` → `Core.ServiceLocator.Get&lt;CC&gt;()`。新增 3 个 using 导入（`LAB2D.Character.Player`、`LAB2D.Character.Enemy`、`LAB2D.Character.Worker`）。**非 UI 目录 .Instance 全部清零**（2026-07）。
@@ -1091,7 +1098,7 @@ namespace LAB2D
 > **架构决策 — ABasePanel 使用 .Instance 的原因**：
 > `ABasePanel<T>` 子类构造函数自动调用 `ServiceLocator.Register(this)` 并执行 `Init()`（依赖 `GameObject.FindGameObjectWithTag`）。`.Instance` 触发懒创建 → 构造函数 → 自注册，是正确模式。`ServiceLocator.Get<T>()` 跳过懒创建，会导致 `KeyNotFoundException`（对早于 GlobalInit.Awake 执行的脚本）或 `NullReferenceException`（BeforeSceneLoad 无场景）。**结论：ABasePanel 子类保持 `.Instance`，其他已注册服务使用 `ServiceLocator.Get<T>()`。**（2026-07）
 >
-> 当前应重点推进：**存档/Photon 桥接调研**、**WorkerTaskManager CreateWorkerSnapshot transform.position → PositionProvider**。Gameplay/、Data/、Item/、Core/Seek/、Character/ 目录 .Instance 已全部清零。非 UI 目录总计 33→0。ITickable: 6 个。IInitializable: 5 个。Wave 系统: 5 项解耦完成。Character/Player 深入解耦全部完成。非 UI .Instance 全部清零。WaveBossRewardManager Provider: 7 个。InventoryManager 预留字典 AWorker 引用已消除。**Wave 系统和 Inventory 的 MonoBehaviour 依赖已基本清除**（2026-07）。
+> 当前应重点推进：**ColonyCommandCenterManager 移除 UnityEngine**（Time.time + Debug.Log* → IGameTime/IGameLogger，与 PlayerVitalAlertManager 相同模式）、**存档/Photon 桥接调研**。Gameplay/、Data/、Item/、Core/Seek/、Character/ 目录 .Instance 已全部清零。非 UI 目录总计 33→0。ITickable: 6 个。IInitializable: 5 个。Wave 系统: 5 项解耦完成。Character/Player 深入解耦全部完成。非 UI .Instance 全部清零。WaveBossRewardManager Provider: 7 个。InventoryManager 预留字典 AWorker 引用已消除。**Wave 系统和 Inventory 的 MonoBehaviour 依赖已基本清除**（2026-07）。
 
 ## 14. 最终检查清单
 

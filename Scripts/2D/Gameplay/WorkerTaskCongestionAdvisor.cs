@@ -2,12 +2,12 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
     using LAB2D.Tool;
     using System;
     using System.Text;
-    using UnityEngine;
 
     /// <summary>
     /// 工人任务队列拥堵提示管理器。
@@ -23,6 +23,34 @@ namespace LAB2D.Gameplay
         private readonly WorkerTaskCongestionRuleService ruleService = new WorkerTaskCongestionRuleService();
         private bool enabled = true;
         private bool tipEnabled = true;
+        private IGameTime gameTime;
+        private IGameLogger gameLogger;
+
+        private IGameTime GameTime
+        {
+            get
+            {
+                if (this.gameTime == null)
+                {
+                    this.gameTime = Core.ServiceLocator.Get<IGameTime>();
+                }
+
+                return this.gameTime;
+            }
+        }
+
+        private IGameLogger GameLogger
+        {
+            get
+            {
+                if (this.gameLogger == null)
+                {
+                    this.gameLogger = Core.ServiceLocator.Get<IGameLogger>();
+                }
+
+                return this.gameLogger;
+            }
+        }
 
         /// <summary>
         /// 任务拥堵报告变化事件。
@@ -93,12 +121,13 @@ namespace LAB2D.Gameplay
         /// </summary>
         public void Tick()
         {
-            if (!this.enabled || Time.time < this.nextRefreshTime)
+            float now = this.GameTime.Time;
+            if (!this.enabled || now < this.nextRefreshTime)
             {
                 return;
             }
 
-            this.nextRefreshTime = Time.time + this.ruleService.ClampRefreshInterval(
+            this.nextRefreshTime = now + this.ruleService.ClampRefreshInterval(
                 WorkerTaskCongestionConstant.MonitorRefreshInterval);
             this.Refresh(true);
         }
@@ -152,7 +181,7 @@ namespace LAB2D.Gameplay
                 return false;
             }
 
-            this.lastTipTime = Time.time;
+            this.lastTipTime = this.GameTime.Time;
             this.ShowTip(report.ToTipText());
             return true;
         }
@@ -196,7 +225,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            float now = Time.time;
+            float now = this.GameTime.Time;
             if (now - this.lastTipTime < WorkerTaskCongestionConstant.TipCooldownSeconds)
             {
                 return;
@@ -221,10 +250,10 @@ namespace LAB2D.Gameplay
             }
             catch (Exception exception)
             {
-                Debug.LogWarning(WorkerTaskCongestionConstant.LogPrefix + " 显示 Tip 失败: " + exception.Message);
+                this.GameLogger.LogWarning(WorkerTaskCongestionConstant.LogPrefix + " 显示 Tip 失败: " + exception.Message);
             }
 
-            Debug.Log(WorkerTaskCongestionConstant.LogPrefix + " " + message);
+            this.GameLogger.Log(WorkerTaskCongestionConstant.LogPrefix + " " + message);
         }
     }
 }

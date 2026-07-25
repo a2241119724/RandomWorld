@@ -53,6 +53,13 @@ namespace LAB2D.Character.Worker
         public static System.Func<List<AWorker>> WorkerListProvider { get; set; }
             = () => ServiceLocator.Get<WorkerManager>().Characters;
 
+        /// <summary>
+        /// Worker 位置提供者 — 获取 Worker 的 GameVector2 位置（注意 X/Y 坐标交换：map x ← world y，map y ← world x）。
+        /// 默认实现封装 Transform.position 访问；可在测试中替换为固定坐标桩。
+        /// </summary>
+        public static System.Func<AWorker, GameVector2> WorkerPositionProvider { get; set; }
+            = (worker) => new GameVector2(worker.transform.position.y, worker.transform.position.x);
+
         internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
             = (e) => ServiceLocator.Get<EventBus>().PublishInternal(e);
 
@@ -157,7 +164,7 @@ namespace LAB2D.Character.Worker
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             return new WorkerAgentSnapshot(
                 worker.GetInstanceID(),
-                new GameVector2(worker.transform.position.y, worker.transform.position.x),
+                WorkerPositionProvider(worker),
                 isIdle,
                 worker.IsDialoguePaused,
                 workerData?.CurHungry ?? 0f,

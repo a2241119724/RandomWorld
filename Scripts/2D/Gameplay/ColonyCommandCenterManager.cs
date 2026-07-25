@@ -2,10 +2,10 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
     using LAB2D.Domain.Worker;
     using System;
-    using UnityEngine;
 
     /// <summary>
     /// A006 殖民地运营指挥中心管理器。
@@ -21,6 +21,34 @@ namespace LAB2D.Gameplay
         private readonly ColonyCommandCenterRuleService ruleService = new ColonyCommandCenterRuleService();
         private bool enabled = true;
         private bool tipEnabled = true;
+        private IGameTime gameTime;
+        private IGameLogger gameLogger;
+
+        private IGameTime GameTime
+        {
+            get
+            {
+                if (this.gameTime == null)
+                {
+                    this.gameTime = Core.ServiceLocator.Get<IGameTime>();
+                }
+
+                return this.gameTime;
+            }
+        }
+
+        private IGameLogger GameLogger
+        {
+            get
+            {
+                if (this.gameLogger == null)
+                {
+                    this.gameLogger = Core.ServiceLocator.Get<IGameLogger>();
+                }
+
+                return this.gameLogger;
+            }
+        }
 
         /// <summary>
         /// 指挥报告变化事件。
@@ -91,12 +119,13 @@ namespace LAB2D.Gameplay
         /// </summary>
         public void Tick()
         {
-            if (!this.enabled || Time.time < this.nextRefreshTime)
+            float now = this.GameTime.Time;
+            if (!this.enabled || now < this.nextRefreshTime)
             {
                 return;
             }
 
-            this.nextRefreshTime = Time.time + this.ruleService.ClampRefreshInterval(
+            this.nextRefreshTime = now + this.ruleService.ClampRefreshInterval(
                 ColonyCommandCenterConstant.RefreshInterval);
             this.Refresh(true);
         }
@@ -148,7 +177,7 @@ namespace LAB2D.Gameplay
                 return false;
             }
 
-            this.lastTipTime = Time.time;
+            this.lastTipTime = this.GameTime.Time;
             this.ShowTip(report.ToTipText());
             return true;
         }
@@ -176,7 +205,7 @@ namespace LAB2D.Gameplay
                     assignmentReport,
                     supplyReport,
                     congestionReport,
-                    Time.time);
+                    this.GameTime.Time);
             }
             catch (Exception exception)
             {
@@ -186,7 +215,7 @@ namespace LAB2D.Gameplay
                     FocusText = "指挥中心扫描暂不可用。",
                     AdviceText = "继续游戏即可，诊断层已降级为安全提示。",
                     ErrorMessage = "指挥中心扫描失败: " + exception.Message,
-                    UpdatedTime = Time.time,
+                    UpdatedTime = this.GameTime.Time,
                 };
             }
         }
@@ -202,7 +231,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            float now = Time.time;
+            float now = this.GameTime.Time;
             if (now - this.lastTipTime < ColonyCommandCenterConstant.TipCooldownSeconds)
             {
                 return;
@@ -228,10 +257,10 @@ namespace LAB2D.Gameplay
             }
             catch (Exception exception)
             {
-                Debug.LogWarning(ColonyCommandCenterConstant.LogPrefix + " 显示 Tip 失败: " + exception.Message);
+                this.GameLogger.LogWarning(ColonyCommandCenterConstant.LogPrefix + " 显示 Tip 失败: " + exception.Message);
             }
 
-            Debug.Log(ColonyCommandCenterConstant.LogPrefix + " " + message);
+            this.GameLogger.Log(ColonyCommandCenterConstant.LogPrefix + " " + message);
         }
     }
 }

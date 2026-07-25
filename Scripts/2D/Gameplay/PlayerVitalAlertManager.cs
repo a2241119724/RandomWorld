@@ -2,12 +2,12 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
     using LAB2D.Domain.Player;
     using LAB2D.Enum;
     using System;
     using System.Text;
-    using UnityEngine;
 
     /// <summary>
     /// 玩家生命危险提示管理器。
@@ -23,6 +23,34 @@ namespace LAB2D.Gameplay
         private float lastTipTime = -999.0f;
         private bool enabled = true;
         private bool tipEnabled = true;
+        private IGameTime gameTime;
+        private IGameLogger gameLogger;
+
+        private IGameTime GameTime
+        {
+            get
+            {
+                if (this.gameTime == null)
+                {
+                    this.gameTime = Core.ServiceLocator.Get<IGameTime>();
+                }
+
+                return this.gameTime;
+            }
+        }
+
+        private IGameLogger GameLogger
+        {
+            get
+            {
+                if (this.gameLogger == null)
+                {
+                    this.gameLogger = Core.ServiceLocator.Get<IGameLogger>();
+                }
+
+                return this.gameLogger;
+            }
+        }
 
         /// <summary>
         /// 玩家生命报告变化事件。
@@ -93,12 +121,13 @@ namespace LAB2D.Gameplay
         /// </summary>
         public void Tick()
         {
-            if (!this.enabled || Time.time < this.nextRefreshTime)
+            float now = this.GameTime.Time;
+            if (!this.enabled || now < this.nextRefreshTime)
             {
                 return;
             }
 
-            this.nextRefreshTime = Time.time + PlayerVitalAlertTool.ClampRefreshInterval(
+            this.nextRefreshTime = now + PlayerVitalAlertTool.ClampRefreshInterval(
                 PlayerVitalAlertConstant.MonitorRefreshInterval);
             this.Refresh(true);
         }
@@ -161,7 +190,7 @@ namespace LAB2D.Gameplay
                 return false;
             }
 
-            this.lastTipTime = Time.time;
+            this.lastTipTime = this.GameTime.Time;
             this.ShowTip(report.ToTipText());
             return true;
         }
@@ -246,7 +275,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            float now = Time.time;
+            float now = this.GameTime.Time;
             bool escalated = this.ruleService.IsMoreSevere(report.Level, previousLevel);
             if (!recovered && !escalated && now - this.lastTipTime < PlayerVitalAlertConstant.TipCooldownSeconds)
             {
@@ -298,10 +327,10 @@ namespace LAB2D.Gameplay
             }
             catch (Exception exception)
             {
-                Debug.LogWarning(PlayerVitalAlertConstant.LogPrefix + " 显示 Tip 失败: " + exception.Message);
+                this.GameLogger.LogWarning(PlayerVitalAlertConstant.LogPrefix + " 显示 Tip 失败: " + exception.Message);
             }
 
-            Debug.Log(PlayerVitalAlertConstant.LogPrefix + " " + message);
+            this.GameLogger.Log(PlayerVitalAlertConstant.LogPrefix + " " + message);
         }
     }
 
