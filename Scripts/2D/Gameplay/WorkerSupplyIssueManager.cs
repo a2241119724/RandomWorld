@@ -3,6 +3,7 @@ namespace LAB2D.Gameplay
     using LAB2D;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
     using LAB2D.Tool;
@@ -25,6 +26,11 @@ namespace LAB2D.Gameplay
         private readonly WorkerSupplyRuleService ruleService = new WorkerSupplyRuleService();
         private bool enabled = true;
         private bool tipEnabled = true;
+        private IGameTime gameTime;
+        private IGameLogger gameLogger;
+
+        private IGameTime GameTime => this.gameTime ?? (this.gameTime = Core.ServiceLocator.Get<IGameTime>());
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = Core.ServiceLocator.Get<IGameLogger>());
 
         /// <summary>
         /// 补给缺口报告变化事件。
@@ -95,12 +101,13 @@ namespace LAB2D.Gameplay
         /// </summary>
         public void Tick()
         {
-            if (!this.enabled || Time.time < this.nextRefreshTime)
+            float now = this.GameTime.Time;
+            if (!this.enabled || now < this.nextRefreshTime)
             {
                 return;
             }
 
-            this.nextRefreshTime = Time.time + this.ruleService.ClampRefreshInterval(
+            this.nextRefreshTime = now + this.ruleService.ClampRefreshInterval(
                 WorkerSupplyConstant.MonitorRefreshInterval);
             this.Refresh(true);
         }
@@ -358,7 +365,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            float now = Time.time;
+            float now = this.GameTime.Time;
             if (now - this.lastTipTime < WorkerSupplyConstant.TipCooldownSeconds)
             {
                 return;
@@ -385,10 +392,10 @@ namespace LAB2D.Gameplay
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[WorkerSupply] 显示 Tip 失败: " + exception.Message);
+                this.GameLogger.LogWarning("[WorkerSupply] 显示 Tip 失败: " + exception.Message);
             }
 
-            Debug.Log("[工人补给] " + message);
+            this.GameLogger.Log("[工人补给] " + message);
         }
     }
 

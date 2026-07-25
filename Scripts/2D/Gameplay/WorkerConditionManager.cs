@@ -3,11 +3,11 @@ namespace LAB2D.Gameplay
     using LAB2D;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Enum;
     using System;
     using System.Collections.Generic;
     using System.Text;
-    using UnityEngine;
 
     /// <summary>
     /// 工人饥饿与疲劳状态管理器。
@@ -20,6 +20,11 @@ namespace LAB2D.Gameplay
         private readonly Dictionary<int, float> lastTipTimes;
         private bool enabled = true;
         private bool tipEnabled = true;
+        private IGameTime gameTime;
+        private IGameLogger gameLogger;
+
+        private IGameTime GameTime => this.gameTime ?? (this.gameTime = Core.ServiceLocator.Get<IGameTime>());
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = Core.ServiceLocator.Get<IGameLogger>());
 
         public WorkerConditionManager()
         {
@@ -224,7 +229,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            float now = Time.time;
+            float now = this.GameTime.Time;
             if (!recovered &&
                 this.lastTipTimes.TryGetValue(snapshot.WorkerInstanceId, out float lastTipTime) &&
                 now - lastTipTime < WorkerConditionConstant.TipCooldownSeconds)
@@ -256,10 +261,10 @@ namespace LAB2D.Gameplay
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[WorkerCondition] 显示 Tip 失败: " + exception.Message);
+                this.GameLogger.LogWarning("[WorkerCondition] 显示 Tip 失败: " + exception.Message);
             }
 
-            Debug.Log("[工人状态] " + message);
+            this.GameLogger.Log("[工人状态] " + message);
         }
     }
 

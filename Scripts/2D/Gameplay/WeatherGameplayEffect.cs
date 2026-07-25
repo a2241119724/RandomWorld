@@ -3,10 +3,10 @@ namespace LAB2D.Gameplay
     using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
     using LAB2D.Manager;
     using Character = LAB2D.Character.Character;
     using System;
-    using UnityEngine;
 
     /// <summary>
     /// 天气玩法影响管理器。
@@ -22,6 +22,9 @@ namespace LAB2D.Gameplay
         private bool initialized;
         private bool enabled = true;
         private bool tipEnabled = true;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = Core.ServiceLocator.Get<IGameLogger>());
 
         /// <summary>
         /// 天气效果状态变化事件。
@@ -305,7 +308,7 @@ namespace LAB2D.Gameplay
                     LogManager.LogLevelEnum.Warning);
             }
 
-            Debug.Log("[天气玩法] " + message);
+            this.GameLogger.Log("[天气玩法] " + message);
         }
     }
 

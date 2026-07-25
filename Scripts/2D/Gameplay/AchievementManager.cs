@@ -6,8 +6,6 @@ namespace LAB2D.Gameplay
     using System;
     using System.Collections.Generic;
     using System.Text;
-    using UnityEngine;
-
     /// <summary>
     /// 成就管理器 — 管理所有成就的定义、进度跟踪、条件检测和解锁通知。
     /// 单例，在 GlobalInit.Start 中初始化。
@@ -40,6 +38,11 @@ namespace LAB2D.Gameplay
 
         /// <summary>是否已初始化</summary>
         private bool initialized;
+        private IGameTime gameTime;
+        private IGameLogger gameLogger;
+
+        private IGameTime GameTime => this.gameTime ?? (this.gameTime = Core.ServiceLocator.Get<IGameTime>());
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = Core.ServiceLocator.Get<IGameLogger>());
 
         /// <summary>成就解锁事件，参数为解锁的成就数据</summary>
         public event Action<AchievementData> OnAchievementUnlocked;
@@ -254,7 +257,7 @@ namespace LAB2D.Gameplay
             }
 
             // 生存 - 存活时间（从会话开始时间计算）
-            float sessionTime = Time.time;
+            float sessionTime = this.GameTime.Time;
             int minutes = this.ruleService.GetElapsedMinutes(sessionTime);
             anyChanged |= this.UpdateAchievement("survival_time_30", minutes);
 
@@ -326,7 +329,7 @@ namespace LAB2D.Gameplay
             this.totalPointsEarned += data.Points;
             this.pendingUnlockQueue.Enqueue(data);
             this.OnAchievementUnlocked?.Invoke(data);
-            Debug.Log($"[成就系统] 解锁成就: {data.Name} (+{data.Points}点)");
+            this.GameLogger.Log($"[成就系统] 解锁成就: {data.Name} (+{data.Points}点)");
         }
 
         /// <summary>

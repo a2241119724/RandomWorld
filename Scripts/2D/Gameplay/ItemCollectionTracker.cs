@@ -4,8 +4,8 @@ namespace LAB2D.Gameplay
     using LAB2D.Character.Worker.Task;
     using LAB2D.Item;
     using System;
+    using LAB2D.Domain.Common;
     using System.Collections.Generic;
-    using UnityEngine;
 
     /// <summary>
     /// 玩家物品收集统计与里程碑提示管理器。
@@ -28,6 +28,9 @@ namespace LAB2D.Gameplay
 
         /// <summary>累计收集物品总数</summary>
         private int totalCollected;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = Core.ServiceLocator.Get<IGameLogger>());
 
         /// <summary>里程碑触达事件（参数：里程碑值, 当前累计总数）</summary>
         public event Action<int, int> MilestoneReached;
@@ -75,7 +78,7 @@ namespace LAB2D.Gameplay
         {
             this.reachedMilestones.Clear();
             this.totalCollected = 0;
-            Debug.Log("[ItemCollectionTracker] 里程碑追踪已重置");
+            this.GameLogger.Log("[ItemCollectionTracker] 里程碑追踪已重置");
         }
 
         /// <summary>遍历阈值列表，检查是否触发新的里程碑</summary>
@@ -108,7 +111,7 @@ namespace LAB2D.Gameplay
                     LogManager.LogLevelEnum.Error);
             }
 
-            Debug.Log(string.Format(
+            this.GameLogger.Log(string.Format(
                 "[ItemCollectionTracker] 里程碑触达: {0} 个物品 (累计 {1})", threshold, this.totalCollected));
 
             this.MilestoneReached?.Invoke(threshold, this.totalCollected);
