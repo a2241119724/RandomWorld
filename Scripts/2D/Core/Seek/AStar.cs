@@ -22,7 +22,7 @@ namespace LAB2D.Core.Seek
         protected override void DoSeek(string seekId)
         {
             Vector3Int posMap = default;
-            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+            Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
             {
                 posMap = Core.ServiceLocator.Get<TileMap>().WorldPosToMapPos(this.Character.transform.position);
             }).Wait();
@@ -30,7 +30,7 @@ namespace LAB2D.Core.Seek
             // 起点就是终点
             if (posMap == this.TargetMap)
             {
-                UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
                 {
                     AWorkerTask.LogProvider(this.Character.name + ":起始==终点", LogManager.LogLevelEnum.Trace);
                 }).Wait();
@@ -101,7 +101,7 @@ namespace LAB2D.Core.Seek
                         if (quickCurSpend != null && quickCurSpend.PosMap.X == curSpend.Previous.PosMap.X
                             && quickCurSpend.PosMap.Y == curSpend.Previous.PosMap.Y)
                         {
-                            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                            Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
                             {
                                 AWorkerTask.LogProvider(this.Character.name + ":寻路出现环路", LogManager.LogLevelEnum.Error);
                             }).Wait();
@@ -239,7 +239,7 @@ namespace LAB2D.Core.Seek
                         float distance = Vector3.Distance(Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(start.PosMap), Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(path[i].PosMap));
 
                         bool isAllCanReach = true;
-                        UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                        Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
                         {
                             RaycastHit2D hit;
                             foreach (var offset in this.checkOffsets)
@@ -276,7 +276,7 @@ namespace LAB2D.Core.Seek
             else
             {
                 seekResult.IsReachable = false;
-                UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
                 {
                     AWorkerTask.LogProvider(this.Character.name + ":未找到路径 " + start.PosMap + "-->" + end.PosMap, LogManager.LogLevelEnum.Trace);
                 }).Wait();

@@ -196,7 +196,7 @@ namespace LAB2D.Core.Seek
                         // 显示路径(仅在未被新搜索打断时)
                         if (capturedGeneration == this.seekGeneration && seekId.Equals(this.activeSeekId))
                         {
-                            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                            Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
                             {
                                 this.UpdateLine(seekId);
                             }).Wait();
@@ -335,7 +335,7 @@ namespace LAB2D.Core.Seek
         {
             if (!ASeek.results.TryUpdate(seekId, result, null) && result.Path.Count != 0)
             {
-                UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
                 {
                     AWorkerTask.LogProvider(this.Character.name + seekId + "更新寻路结果失败!", LogManager.LogLevelEnum.Warning);
                 }).Wait();

@@ -15,6 +15,7 @@ namespace LAB2D
     using LAB2D.UI.Action;
     using LAB2D.UI.Panel;
     using LAB2D.UnityAdapter;
+    using PimDeWitte.UnityMainThreadDispatcher;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -157,6 +158,7 @@ namespace LAB2D
             ServiceLocator.Register(InventoryMenuPanel.Instance);
             ServiceLocator.Register(AIChatPanel.Instance);
             ServiceLocator.Register(DialoguePanel.Instance);
+            ServiceLocator.Register(UnityMainThreadDispatcher.Instance);
         }
 
         /// <summary>
