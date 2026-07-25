@@ -289,12 +289,14 @@ Scripts/2D/Character/Player/Player.cs
 - GlobalInit 的输入处理已提取到 `GlobalInputProcessor`
 - 部分 UI 调用已通过 `AWorkerTask` Provider 委托模式解耦
 - ✅ **Player 表现层提取** — `Animator`/`Rigidbody2D`/`SpriteRenderer`/`Camera` 操作从 Player.cs 移至 `PlayerViewAdapter`，通过 `IPlayerView` 接口隔离（2026-07）
+- ✅ **Player Unity 初始化 Provider 提取** — 新增 5 个 Provider（`RigidbodySetupProvider`、`AnimatorProvider`、`MainCameraProvider`、`MiniCameraProvider`、`PlayerNameDisplayProvider`），覆盖 GetComponent<Rigidbody2D>/<Animator>、Camera.main、GameObject.Find、Text 显示等 Unity 初始化调用。删除死代码 `direction` 字段。`transform.position` 在 ReduceHp 事件边界处显式提取（2026-07）
+- ✅ **Character.cs 初始化 Provider 提取 + 类型依赖消除** — 新增 `CharacterRootParentProvider`、`SpriteRendererSetupProvider` 2 个 Provider。新增虚属性 `IsPlayerCharacter` 消除 `CharacterData.ComputeAttribute()` 中 `this is PlayerData` 类型检查，移除 `using PlayerCharacter` 别名导入（2026-07）
 
 优先抽离方向：
 
-- `CharacterRuntimeState`
+- `CharacterRuntimeState`（✅ 已存在于 Domain/Common）
 - `PlayerMovementIntent`（配合已有 PlayerMovementPolicy）
-- `PlayerCommand` / `PlayerEvent`
+- `PlayerCommand` / `PlayerEvent`（✅ 部分已实现：PlayerAttackCommand、ActivateSkillCommand、PlayerAttackRequestedEvent、PlayerSkillActivatedEvent、PlayerStatusChangedEvent）
 - `ICharacterCreator` 等接口（已有基础）
 
 ### Worker Task
@@ -846,7 +848,7 @@ public sealed class MyNewInitializer : IInitializable
 后续改造优先方向（按低风险到高风险排列）：
 
 1. ~~**Inventory EventBus 事件迁移**~~ ✅ 已完成：`ItemInfoUI` 已切换订阅 `InventoryGridChangedEvent`（纯结构化数据），`InventoryManager` 已停止发布 `InventoryCellChangedEvent`（2026-07）。
-2. **Character/Player 深入解耦**：`Player.cs` 输入/表现/规则仍有混合，进一步推进 Command → Domain → Event 链路。
+2. **Character/Player 深入解耦**：🔄 已推进 — Unity 组件初始化 Provider 提取完成（Player: +5 Provider, Character: +2 Provider）。删除死代码 `direction`、消除 `ComputeAttribute` 类型依赖、移除 `using PlayerCharacter` 导入。`IsPlayerCharacter` 虚属性替代类型检查。Player Provider 总数从 15 增至 20。后续可继续推进：CharacterHealthComponent 的 `attacker is PlayerCharacter` 检查、Character.ReduceHp() `transform.position` 访问（2026-07）。
 3. ~~**扩展 ITickable/IInitializable 覆盖范围**~~ 🔄 持续推进：WorkerTaskManager 已迁移至 ITickable（2026-07），当前 5 个 ITickable + 5 个 IInitializable。后续可将更多 Manager 的 Update/Start 逻辑迁移。
 4. ~~**InventoryManager 深入解耦**~~ ✅ 已完成：内部数据存储已迁移至 `InventoryService`。
 5. ~~**WorkerTaskManager 继续解耦**~~ ✅ 已完成：ITickable + GameGridPosition API 迁移（2026-07）。WorkerTaskQueue、WorkerTaskSnapshot 等纯 C# 类型已在 Domain 层。剩余 `KDTree` 和 `transform.position` 采集属于合理的算法/表现层依赖。
@@ -1035,6 +1037,7 @@ namespace LAB2D
 > **当前进度**：项目已完成阶段一~四的大部分工作。`Domain/` 已有丰富的纯 C# Service、Model、EventBus、值类型、生命周期接口；`UnityAdapter/` 已有 12 个文件（新增 `ToVector3Int` 便捷方法）；`ServiceLocator` 已全局落地；`AWorkerTask` Provider 委托模式已成熟。
 >
 > **最近完成（2026-07）**：
+> - **Character/Player Unity 初始化 Provider 提取** — Player.cs 新增 5 个静态 Provider（`RigidbodySetupProvider`、`AnimatorProvider`、`MainCameraProvider`、`MiniCameraProvider`、`PlayerNameDisplayProvider`），将 `Awake()`/`Start()` 中 `GetComponent<Rigidbody2D>()`、`GetComponent<Animator>()`、`GameObject.FindGameObjectWithTag`、`Camera.main`、`Tool.GetComponentInChildren<Text>` 等 Unity 组件初始化代码提取为可替换委托。删除死代码 `private Vector3 direction` 字段（赋值后从未读取）及其初始化。`ReduceHp()` 事件中的 `transform.position.x/y` 提取为局部变量显式边界。Player.cs 从 555 行变为 625 行（+70 行，主要是 5 个 Provider + XML 注释）。Character.cs 新增 `CharacterRootParentProvider` 和 `SpriteRendererSetupProvider` 2 个 Provider，提取 `Awake()` 中 `GameObject.FindGameObjectWithTag("CharacterRoot")` + `SetParent` 和 `Start()` 中 `GetComponent<SpriteRenderer>()` 初始化。新增虚属性 `Character.IsPlayerCharacter`（默认 false，Player 重写为 true），`CharacterData.ComputeAttribute()` 接受 `bool isPlayer` 参数替代 `this is PlayerData` 类型检查。移除 `using PlayerCharacter` 别名导入，消除 `CharacterData` → `Player.PlayerData` 反向类型依赖。**Player.cs Provider 委托总数增至 20 个**（原有 15 个 + 新增 5 个）。Character.cs 新增 2 个 Provider（2026-07）。
 > - **Player 表现层提取** — 新增 `IPlayerView` 接口（`Domain/Player/`）和 `PlayerViewAdapter`（`UnityAdapter/`）。Player.cs 中 `Animator`/`Rigidbody2D`/`SpriteRenderer`/`Camera` 的直接操作（~60 行）已移至 Adapter：受击闪烁（`PlayHitFlash` 替代 `spriteRenderer.color` + `Invoke`）、移动动画（`ApplyMoveAnimation`/`ApplyIdleAnimation`）、摄像机跟随（`EnsureCameraFollow`）、边缘特效 + 闪烁计时器（`Tick`）、视角切换（`TogglePerspective`）。移除 `BindCameras`/`ApplyMovePresentation`/`ApplyIdlePresentation` 三个私有方法。Player.cs 从 555 行缩减至 497 行。`IPlayerView` 零 `using UnityEngine`，可被任意引擎实现。
 > - InventoryManager 内部重构 — 数据存储从 3 个并行 `Dictionary<Vector3Int, ...>` 迁移至 `Domain/Inventory/InventoryService`（包装 `InventoryGrid`），`InventoryGrid` 修复了空格子 id=-1 索引维护。新增 `InventoryGridChangedEvent`（纯数据事件）和 `InventoryServiceTests`（25 个单元测试）。public API 100% 兼容。
 > - **Inventory 事件迁移** — `ItemInfoUI` 从 `InventoryCellChangedEvent`（携带 UI 格式化字符串）迁移至 `InventoryGridChangedEvent`（纯结构化数据）。`InventoryManager` 已停止发布旧事件（移除 11 处发布点），`InventoryService.PublishChange()` 统一发布。`InventoryCellChangedEvent` 类标记为废弃。

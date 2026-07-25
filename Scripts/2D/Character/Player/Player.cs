@@ -19,9 +19,11 @@ namespace LAB2D.Character.Player
     /// </summary>
     public class Player : Character
     {
-        private Vector3 direction; // 按键玩家移动方向
         private Rigidbody2D rg;
         private IPlayerView playerView;
+
+        /// <inheritdoc/>
+        public override bool IsPlayerCharacter => true;
         private readonly PlayerDamagePolicy damagePolicy = new PlayerDamagePolicy();
         private readonly PlayerMovementPolicy movementPolicy = new PlayerMovementPolicy();
         private readonly PlayerMovementService movementService = new PlayerMovementService();
@@ -80,6 +82,89 @@ namespace LAB2D.Character.Player
         internal static Func<string> LocalPlayerNameProvider { get; set; }
             = () => PhotonNetwork.NickName;
 
+        // --- Unity 组件初始化 Provider（可替换为测试桩，隔离 UnityEngine 依赖） ---
+
+        /// <summary>
+        /// Rigidbody2D 初始化提供者 — 获取并配置玩家的 Rigidbody2D 组件。
+        /// 默认实现设置 freezeRotation=true 和 interpolation=Interpolate。
+        /// 可在测试中替换为返回桩 Rigidbody2D 的实现。
+        /// </summary>
+        internal static Func<Player, Rigidbody2D> RigidbodySetupProvider { get; set; }
+            = (player) =>
+            {
+                Rigidbody2D rg = player.GetComponent<Rigidbody2D>();
+                rg.freezeRotation = true;
+                rg.interpolation = RigidbodyInterpolation2D.Interpolate;
+                return rg;
+            };
+
+        /// <summary>
+        /// Animator 组件提供者 — 获取玩家身上的 Animator 组件。
+        /// 默认实现使用 GetComponent&lt;Animator&gt;。
+        /// 可在测试中替换为返回桩 Animator 的实现。
+        /// </summary>
+        internal static Func<Player, Animator> AnimatorProvider { get; set; }
+            = (player) => player.GetComponent<Animator>();
+
+        /// <summary>
+        /// 主摄像机提供者 — 获取 Camera.main 上的 CameraMove 组件并初始化位置。
+        /// 默认实现从 Camera.main 获取。
+        /// 可在测试中替换。
+        /// </summary>
+        internal static Func<Player, CameraMove> MainCameraProvider { get; set; }
+            = (player) =>
+            {
+                CameraMove cam = Camera.main != null
+                    ? Camera.main.GetComponent<CameraMove>()
+                    : null;
+                if (cam != null)
+                {
+                    cam.DirectToPosition(player.transform.position);
+                }
+
+                return cam;
+            };
+
+        /// <summary>
+        /// 小地图摄像机提供者 — 通过 Minimap 标签查找 CameraMove 组件并初始化位置。
+        /// 默认实现使用 GameObject.FindGameObjectWithTag + GetComponent。
+        /// 可在测试中替换。
+        /// </summary>
+        internal static Func<Player, CameraMove> MiniCameraProvider { get; set; }
+            = (player) =>
+            {
+                GameObject miniObj = GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG);
+                CameraMove cam = miniObj != null
+                    ? miniObj.GetComponent<CameraMove>()
+                    : null;
+                if (cam != null)
+                {
+                    cam.DirectToPosition(player.transform.position);
+                }
+
+                return cam;
+            };
+
+        /// <summary>
+        /// 玩家名字显示提供者 — 在玩家 GameObject 的 "Name" 子节点上显示名字文本。
+        /// 默认实现使用 Tool.GetComponentInChildren&lt;Text&gt; 查找并设置文本。
+        /// 可在测试中替换为无操作桩。
+        /// </summary>
+        internal static Action<Player, string> PlayerNameDisplayProvider { get; set; }
+            = (player, name) =>
+            {
+                if (player == null)
+                {
+                    return;
+                }
+
+                Text nameText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(player.gameObject, "Name");
+                if (nameText != null)
+                {
+                    nameText.text = name;
+                }
+            };
+
         /// <summary>
         /// 奔跑速度倍率，默认1.6倍
         /// </summary>
@@ -131,13 +216,6 @@ namespace LAB2D.Character.Player
         public override void Awake()
         {
             base.Awake();
-            this.direction = default;
-            if (this.direction == null)
-            {
-                AWorkerTask.LogProvider("direction assign resource Error!!!", LogManager.LogLevelEnum.Error);
-                return;
-            }
-
             this.name = "Player";
             this.basicAttribute = new Attribute(1.0f, 1.0f, 1.0f, 1.0f, 0.05f, 1.0f, 1.0f, 1.0f);
             this.CharacterDataLAB = new PlayerData();
@@ -148,9 +226,7 @@ namespace LAB2D.Character.Player
                 "Enemy",
                 "Worker",
             };
-            this.rg = this.GetComponent<Rigidbody2D>();
-            this.rg.freezeRotation = true; // 防止旋转
-            this.rg.interpolation = RigidbodyInterpolation2D.Interpolate; // 插值让移动更平滑，解决角色卡顿
+            this.rg = RigidbodySetupProvider(this);
         }
 
         /// <inheritdoc/>
@@ -158,7 +234,7 @@ namespace LAB2D.Character.Player
         {
             base.Start();
 
-            Animator animator = this.GetComponent<Animator>();
+            Animator animator = AnimatorProvider(this);
             if (animator == null)
             {
                 AWorkerTask.LogProvider("animator Not Found!!!", LogManager.LogLevelEnum.Error);
@@ -169,10 +245,8 @@ namespace LAB2D.Character.Player
             if (this.NetworkView.IsMine || !this.NetworkView.IsOnline)
             {
                 this.MoveSpeed = 5;
-                CameraMove miniCamera = GameObject.FindGameObjectWithTag(TagConstant.MINIMAP_TAG).GetComponent<CameraMove>();
-                miniCamera.DirectToPosition(this.transform.position);
-                CameraMove mainCamera = Camera.main.GetComponent<CameraMove>();
-                mainCamera.DirectToPosition(this.transform.position);
+                CameraMove miniCamera = MiniCameraProvider(this);
+                CameraMove mainCamera = MainCameraProvider(this);
 
                 // 创建表现层适配器，注入所有 Unity 表现组件
                 this.playerView = new PlayerViewAdapter(
@@ -187,13 +261,13 @@ namespace LAB2D.Character.Player
 
                 PlayerRegisterProvider(this);
                 LocalPlayerTagObjectProvider(this);
-                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = LocalPlayerNameProvider();
+                PlayerNameDisplayProvider(this, LocalPlayerNameProvider());
                 PlayerData playerData = this.CharacterDataLAB as PlayerData;
                 this.RefreshUI();
             }
             else if (!this.NetworkView.IsMine)
             {
-                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Name").text = this.NetworkView.OwnerName;
+                PlayerNameDisplayProvider(this, this.NetworkView.OwnerName);
                 PlayerAddProvider(this);
 
                 // PhotonNetwork.PlayerList[PhotonNetwork.PlayerList.Length - 1].TagObject = this;
@@ -346,6 +420,8 @@ namespace LAB2D.Character.Player
 
             this.playerView?.PlayHitFlash();
 
+            float worldPosX = this.transform.position.x;
+            float worldPosY = this.transform.position.y;
             EventBusPublishProvider(new CharacterDamagedEvent
             {
                 TargetId = this.CharacterDataLAB.Id,
@@ -354,8 +430,8 @@ namespace LAB2D.Character.Player
                 IsCritical = isCRT,
                 IsCombo = false,
                 RemainingHp = this.CharacterDataLAB.Hp,
-                WorldPosX = this.transform.position.x,
-                WorldPosY = this.transform.position.y,
+                WorldPosX = worldPosX,
+                WorldPosY = worldPosY,
             });
 
             if (damageResult.NewState.IsDead)
@@ -490,8 +566,6 @@ namespace LAB2D.Character.Player
             {
                 this.playerView?.EnsureCameraFollow(new GameVector2(this.transform.position.x, this.transform.position.y));
                 bool isRunning = command.IsRunning;
-                this.direction.x = command.Direction.X;
-                this.direction.y = command.Direction.Y;
 
                 float weatherMultiplier = WeatherMoveSpeedProvider(this, 1.0f);
                 // A004：波间奖励移动强化在天气倍率之后应用，避免覆盖天气玩法的减速/增益。

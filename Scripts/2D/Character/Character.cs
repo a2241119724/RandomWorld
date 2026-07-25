@@ -13,7 +13,6 @@ namespace LAB2D.Character
     using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
-    using PlayerCharacter = LAB2D.Character.Player.Player;
 
     /// <summary>
     /// 角色基类。
@@ -28,6 +27,13 @@ namespace LAB2D.Character
         /// 新代码应使用此属性而非直接访问 pv/photonView。
         /// </summary>
         public INetworkView NetworkView { get; private set; }
+
+        /// <summary>
+        /// 是否为玩家角色 — 用于属性计算时区分玩家和敌人/Worker 的等级加成逻辑。
+        /// Player 子类重写为返回 true；其他子类保持默认 false。
+        /// 消除 CharacterData.ComputeAttribute 中 <c>this is PlayerData</c> 的反向类型检查。
+        /// </summary>
+        public virtual bool IsPlayerCharacter => false;
 
         /// <summary>
         /// 移动速度
@@ -121,29 +127,19 @@ namespace LAB2D.Character
                 ? new PunNetworkViewAdapter(this.pv)
                 : ServiceLocator.Get<OfflineNetworkView>();
 
-            GameObject characterRoot = GameObject.FindGameObjectWithTag("CharacterRoot");
-            if (characterRoot != null)
-            {
-                this.transform.SetParent(characterRoot.transform);
-            }
-            else
-            {
-                AWorkerTask.LogProvider("CharacterRoot GameObject not found in scene, character will be placed at root", LogManager.LogLevelEnum.Error);
-            }
+            CharacterRootParentProvider(this);
 
             this.collisionBugDetector = new CollisionBugDetector();
         }
 
         public virtual void Start()
         {
-            this.spriteRenderer = this.GetComponent<SpriteRenderer>();
+            SpriteRendererSetupProvider(this);
             if (this.spriteRenderer == null)
             {
-                AWorkerTask.LogProvider("renderer Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
-            this.originalColor = this.spriteRenderer.color;
             this.healthComponent = new CharacterHealthComponent(this.damageCalculator, this.levelProgressionService);
         }
 
@@ -201,6 +197,57 @@ namespace LAB2D.Character
         internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
             = (e) => ServiceLocator.Get<EventBus>().PublishInternal(e);
 
+        // --- Unity 组件初始化 Provider（可替换为测试桩，隔离 UnityEngine 依赖） ---
+
+        /// <summary>
+        /// CharacterRoot 父节点设置提供者 — 将角色挂载到场景中的 CharacterRoot 节点下。
+        /// 默认实现使用 GameObject.FindGameObjectWithTag("CharacterRoot")。
+        /// 可在测试中替换为无操作桩。
+        /// </summary>
+        internal static System.Action<Character> CharacterRootParentProvider { get; set; }
+            = (c) =>
+            {
+                if (c == null)
+                {
+                    return;
+                }
+
+                GameObject characterRoot = GameObject.FindGameObjectWithTag("CharacterRoot");
+                if (characterRoot != null)
+                {
+                    c.transform.SetParent(characterRoot.transform);
+                }
+                else
+                {
+                    AWorkerTask.LogProvider(
+                        "CharacterRoot GameObject not found in scene, character will be placed at root",
+                        LogManager.LogLevelEnum.Error);
+                }
+            };
+
+        /// <summary>
+        /// SpriteRenderer 初始化提供者 — 获取角色身上的 SpriteRenderer 组件并捕获原始颜色。
+        /// 默认实现使用 GetComponent&lt;SpriteRenderer&gt;() + 记录 .color。
+        /// 可在测试中替换。
+        /// </summary>
+        internal static System.Action<Character> SpriteRendererSetupProvider { get; set; }
+            = (c) =>
+            {
+                if (c == null)
+                {
+                    return;
+                }
+
+                c.spriteRenderer = c.GetComponent<SpriteRenderer>();
+                if (c.spriteRenderer == null)
+                {
+                    AWorkerTask.LogProvider("renderer Not Found!!!", LogManager.LogLevelEnum.Error);
+                    return;
+                }
+
+                c.originalColor = c.spriteRenderer.color;
+            };
+
         /// <inheritdoc/>
         public override string ToString()
         {
@@ -233,7 +280,7 @@ namespace LAB2D.Character
             if (result.LeveledUp)
             {
                 LevelUpTipProvider.Invoke("UP " + this.CharacterDataLAB.Level);
-                this.CharacterDataLAB.ComputeAttribute(this.basicAttribute);
+                this.CharacterDataLAB.ComputeAttribute(this.basicAttribute, this.IsPlayerCharacter);
             }
         }
 
@@ -383,7 +430,7 @@ namespace LAB2D.Character
                     this.character = value;
                     if (this.character != null)
                     {
-                        this.ComputeAttribute(this.character.basicAttribute);
+                        this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter);
                     }
                 }
             }
@@ -400,7 +447,7 @@ namespace LAB2D.Character
                     this.weapon = value;
                     if (this.character != null)
                     {
-                        this.ComputeAttribute(this.character.basicAttribute);
+                        this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter);
                     }
                 }
             }
@@ -449,17 +496,18 @@ namespace LAB2D.Character
 
                 if (this.character != null)
                 {
-                    this.ComputeAttribute(this.character.basicAttribute);
+                    this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter);
                 }
+
             }
 
             /// <summary>
             /// 计算总属性 — 委托给 Domain/Character/AttributeCalculationService。
             /// </summary>
             /// <param name="basicAttribute">角色基础属性（由 Character.basicAttribute 提供）。</param>
-            public void ComputeAttribute(Attribute basicAttribute)
+            /// <param name="isPlayer">是否为玩家角色 — 影响等级加成倍率。</param>
+            public void ComputeAttribute(Attribute basicAttribute, bool isPlayer)
             {
-                bool isPlayer = this is PlayerCharacter.PlayerData;
                 BattleStats baseStats = ConvertAttributeToBattleStats(basicAttribute);
                 BattleStats? weaponBStats = null;
                 if (this.weapon != null)
