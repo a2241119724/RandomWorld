@@ -78,7 +78,7 @@ Canvas 上挂载了自定义 MonoBehaviour：
 
 ```text
 m_Script GUID:
-4d8eda0c8c2b6aa4e9d2ab21723ce68c
+4d8eda0c8c2b6aa4e9d2ab21723ce68c (GlobalInit.cs)
 ```
 
 该组件负责 `initPanel`、`initFont` 等初始化逻辑。
@@ -153,11 +153,26 @@ ABasePanel<BP>
 ResourceManager.Instantiate()
 ```
 
-从以下目录运行时加载：
+运行时实例化。`ResourceManager` 通过**双重机制**加载 Prefab：
 
-```text
-Resources/
-ResourcesLocal/Prefabs/
+**机制一：Unity Resources 系统**
+
+`ResourceTool.LoadResources<GameObject>("Prefabs/")` → `Resources.LoadAll<GameObject>("Prefabs/")`，
+
+从 `Assets/Resources/Prefabs/` 加载。
+
+**机制二：AssetBundle**
+
+`LoadPrefabs()` 从 `StreamingAssets/prefab`（或 `StreamingAssets/Prefab`）AssetBundle 补充加载。
+
+此外，项目中大量使用直接的 `Resources.Load` 调用：
+
+```csharp
+Resources.Load<UIFontConfig>("SO/UIFontConfig")
+Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn")
+Resources.LoadAll<TextAsset>("GameKnowledge")
+Resources.LoadAll<NPCPromptProfile>("SO/AI")
+Resources.LoadAll<TextAsset>("AI/Prompts")
 ```
 
 因此：
@@ -165,15 +180,18 @@ ResourcesLocal/Prefabs/
 * 不是所有 UI 都存在于场景 YAML 中；
 * 不得仅根据 `.unity` 文件判断完整 UI；
 * 修改前必须确认目标节点是场景对象还是运行时加载 Prefab；
-* Prefab 中的公共修改可能影响多个场景。
+* Prefab 中的公共修改可能影响多个场景；
+* 修改 `Resources/` 目录下的资源路径、文件名或 GUID 可能直接影响 `Resources.Load` 调用。
 
-ItemBox 等列表项主要位于：
+ItemBox 等列表项 Prefab 源文件位于：
 
 ```text
-ResourcesLocal/Prefabs/ItemBox/
+Assets/ResourcesLocal/Prefabs/ItemBox/
 ```
 
-不得递归修改整个 `Resources/` 目录。
+注：`ResourcesLocal/` 目录名不含 Unity 要求的 `Resources` 关键字，不会被 `Resources.Load` 直接识别，可能是 AssetBundle 构建源目录。修改该目录下的 Prefab 前必须确认其实际加载路径。
+
+不得递归修改整个 `Resources/` 或 `ResourcesLocal/` 目录。
 
 只允许修改：
 
@@ -185,7 +203,7 @@ ResourcesLocal/Prefabs/ItemBox/
 
 ## 1.4 脚本查找子节点模式
 
-项目中存在以下三类节点查找方式。
+项目中存在以下四类节点查找方式。
 
 ### 模式一：按名称递归查找
 
@@ -194,6 +212,8 @@ FindChildTransform(panelTransform, "SaveSlotPanel")
 transform.Find("Center/Note")
 ```
 
+**特别注意**：`transform.Find("Center/Note")` 使用层级路径，路径中**任何一层**节点名称被修改都会导致查找失败——即使只改了 `Center`，`Note` 未改名，`"Center/Note"` 也会失效。
+
 ### 模式二：按名称查找组件
 
 ```csharp
@@ -201,7 +221,17 @@ Tool.GetComponentInChildren<Button>(gameObject, "Start")
 Tool.GetComponentInChildren<Text>(gameObject, "PlayerName")
 ```
 
-### 模式三：按索引查找子节点
+### 模式三：按名称查找组件（泛型封装）
+
+```csharp
+FindChildComponent<Text>(gameObject, "NpcName")
+FindChildComponent<Button>(gameObject, "Send")
+FindChildComponent<ScrollRect>(gameObject, "ScrollView")
+```
+
+该方法通过 `GetComponentsInChildren<T>(true)` 递归搜索所有子节点，再按 `name` 匹配。与模式二本质相同但封装方式不同，名称约束同样适用。
+
+### 模式四：按索引查找子节点
 
 ```csharp
 transform.GetChild(i)
@@ -210,14 +240,15 @@ transform.GetChild(0)
 
 ### 强制规则
 
-对于模式一和模式二：
+对于模式一、二、三：
 
 * 保持相关节点名称不变；
 * 保持必要的父子路径不变；
 * 不得移动到其他父节点；
-* 不得增加同名兄弟节点造成查找歧义。
+* 不得增加同名兄弟节点造成查找歧义；
+* 对于层级路径（如 `Center/Note`），路径中每一层节点名称都不可修改。
 
-对于模式三：
+对于模式四：
 
 * 禁止修改对应父节点下的子节点顺序；
 * 禁止插入新的子节点；
@@ -229,10 +260,12 @@ transform.GetChild(0)
 ```text
 transform.Find
 FindChildTransform
+FindChildComponent
 GetComponentInChildren
 GetChild
 GameObject.Find
 Resources.Load
+Resources.LoadAll
 ResourceManager.Instantiate
 Panel.Name
 ```
@@ -683,10 +716,12 @@ RectMask2D
 transform.Find
 GameObject.Find
 FindChildTransform
+FindChildComponent
 GetComponentInChildren
 GetChild
 Panel.Name
 Resources.Load
+Resources.LoadAll
 ResourceManager.Instantiate
 序列化字符串路径
 配置文件节点名
@@ -1062,11 +1097,13 @@ m_SourcePrefab
 ```text
 transform.Find
 FindChildTransform
+FindChildComponent
 GetComponentInChildren
 GetChild
 GameObject.Find
 GameObject.FindGameObjectWithTag
 Resources.Load
+Resources.LoadAll
 ResourceManager.Instantiate
 Panel.Name
 ```
