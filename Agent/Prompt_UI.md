@@ -367,6 +367,31 @@ m_LocalRotation
 
 ---
 
+### Scale 与 Anchor/SizeDelta 联动规则（强制）
+
+修改 `m_LocalScale` 时，视觉尺寸 = 逻辑尺寸 × Scale。必须同步补偿。
+
+**规则**：当 Scale 从 `S_old` 改为 `S_new`，缩放因子 `k = S_new / S_old`，则：
+
+| 参数 | 补偿方式 | 公式 |
+|------|----------|------|
+| `m_AnchorMax` | 如果 AnchorMin≠AnchorMax（拉伸模式） | `AnchorMax_new = AnchorMax_old / k` |
+| `m_SizeDelta` | 如果 AnchorMin=AnchorMax（固定模式） | `SizeDelta_new = SizeDelta_old / k` |
+| `m_FontSize` (Text) | 如果该节点有 Text 组件 | `FontSize_new = FontSize_old / k` |
+| `m_AnchoredPosition` | 如果 Pivot 不在原点 | 按 k 反比调整 |
+
+**典型场景**：项目中大量使用 `Scale (0.5, 0.5, 1)` + `AnchorMax (2, 2)` + `FontSize 40` 等效实现 20px 文本和父容器尺寸。
+
+改为 `Scale (1, 1, 1)` 时（k=2），必须同步：
+- `AnchorMax`: (2, 2) → (1, 1)
+- `FontSize`: 40 → 20
+
+**禁止**只改 Scale 而不补偿 Anchor/SizeDelta/FontSize。
+
+**查找遗漏**：修改 Scale 后，必须遍历该节点所在父容器下的**所有子节点**（含孙子节点），检查并修改所有存在同样 Scale 旧值的 RectTransform。
+
+---
+
 ### Canvas
 
 允许检查 Canvas 配置。
