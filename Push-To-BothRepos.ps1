@@ -156,7 +156,10 @@ try {
                 }
 
                 $upToDate = $false
-                $remoteRef = & git rev-parse "refs/remotes/${publicRemote}/${Branch}" 2>$null
+                $prevEAP = $ErrorActionPreference
+                $ErrorActionPreference = "Continue"
+                $remoteRef = (& git rev-parse "refs/remotes/${publicRemote}/${Branch}" 2>$null).Trim()
+                $ErrorActionPreference = $prevEAP
                 if ($remoteRef) {
                     $remoteTree = (& git rev-parse "${remoteRef}^{tree}" 2>$null).Trim()
                     if ($tree -eq $remoteTree) {
