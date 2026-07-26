@@ -46,7 +46,11 @@ namespace LAB2D.UI
             if (panelTransform != null)
             {
                 runtimeInstance = panelTransform.GetComponent<AchievementPanel>();
-                if (runtimeInstance == null)
+                if (runtimeInstance != null)
+                {
+                    runtimeInstance.EnsureReferences();
+                }
+                else
                 {
                     Debug.LogWarning($"[AchievementPanel] 场景中存在 {AchievementConstant.PanelRootName} 但未挂载 AchievementPanel 组件。");
                 }
@@ -60,6 +64,85 @@ namespace LAB2D.UI
         public static AchievementPanel RuntimeInstance
         {
             get { return runtimeInstance; }
+        }
+
+        private void Awake()
+        {
+            this.EnsureReferences();
+        }
+
+        public void EnsureReferences()
+        {
+            if (this.rootObj != null) return;
+
+            this.rootObj = this.gameObject;
+            this.canvasGroup = this.GetComponent<CanvasGroup>();
+            this.categoryTabButtons = new Dictionary<AchievementCategory, GameObject>();
+            this.activeCategory = AchievementCategory.Combat;
+
+            this.summaryText = this.transform.Find("Summary")?.GetComponent<Text>();
+            this.currentCategoryText = this.transform.Find("CategoryTitle")?.GetComponent<Text>();
+            this.categoryTabs = this.transform.Find("CategoryTabs")?.GetComponent<RectTransform>();
+            this.scrollViewObj = this.transform.Find("ScrollView")?.gameObject;
+            if (this.scrollViewObj != null)
+            {
+                // 尝试标准路径和直接子节点两种层级
+                Transform contentT = this.scrollViewObj.transform.Find("Viewport/Content")
+                    ?? this.scrollViewObj.transform.Find("Content");
+                this.contentArea = contentT?.GetComponent<RectTransform>();
+            }
+
+            // 从场景查找已有 Tab 按钮并连线
+            this.WireUpCategoryTabs();
+        }
+
+        private void WireUpCategoryTabs()
+        {
+            if (this.categoryTabs == null) return;
+
+            // 构建反向查找: 显示名称 → AchievementCategory
+            var nameToCategory = new Dictionary<string, AchievementCategory>();
+            foreach (AchievementCategory cat in System.Enum.GetValues(typeof(AchievementCategory)))
+            {
+                nameToCategory[AchievementTool.GetCategoryDisplayName(cat)] = cat;
+            }
+
+            foreach (Transform child in this.categoryTabs)
+            {
+                if (!child.name.StartsWith("Tab_")) continue;
+
+                string displayName = child.name.Substring(4); // 去掉 "Tab_" 前缀
+                if (!nameToCategory.TryGetValue(displayName, out AchievementCategory cat)) continue;
+
+                GameObject tabObj = child.gameObject;
+                this.categoryTabButtons[cat] = tabObj;
+
+                Button tabBtn = tabObj.GetComponent<Button>();
+                if (tabBtn != null)
+                {
+                    tabBtn.onClick.RemoveAllListeners();
+                    AchievementCategory captured = cat;
+                    tabBtn.onClick.AddListener(() =>
+                    {
+                        this.activeCategory = captured;
+                        this.RefreshPanel();
+                        this.HighlightActiveTab(captured);
+                    });
+                }
+            }
+        }
+
+        private void HighlightActiveTab(AchievementCategory active)
+        {
+            foreach (var kvp in this.categoryTabButtons)
+            {
+                Image img = kvp.Value.GetComponent<Image>();
+                if (img != null)
+                {
+                    img.color = kvp.Key == active ?
+                        new Color(0.3f, 0.5f, 0.8f) : new Color(0.2f, 0.2f, 0.25f);
+                }
+            }
         }
 
         public void TogglePanel()
@@ -301,9 +384,12 @@ namespace LAB2D.UI
             int unlocked = mgr.UnlockedCount;
             int total = mgr.TotalCount;
             int points = mgr.TotalPointsEarned;
-            this.summaryText.text = $"已解锁 {unlocked}/{total} 个成就 | 成就点数: {points}";
-            this.currentCategoryText.text = AchievementTool.GetCategoryDisplayName(this.activeCategory);
+            if (this.summaryText != null)
+                this.summaryText.text = $"已解锁 {unlocked}/{total} 个成就 | 成就点数: {points}";
+            if (this.currentCategoryText != null)
+                this.currentCategoryText.text = AchievementTool.GetCategoryDisplayName(this.activeCategory);
 
+            if (this.contentArea == null) return;
             foreach (Transform child in this.contentArea)
             {
                 Destroy(child.gameObject);

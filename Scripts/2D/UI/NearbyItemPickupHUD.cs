@@ -59,7 +59,11 @@ namespace LAB2D.UI
             if (rootTransform != null)
             {
                 Instance = rootTransform.GetComponent<NearbyItemPickupHUD>();
-                if (Instance == null)
+                if (Instance != null)
+                {
+                    Instance.EnsureReferences();
+                }
+                else
                 {
                     Debug.LogWarning($"[NearbyItemPickupHUD] 场景中存在 {NearbyItemPickupConstant.CanvasName} 但未挂载 NearbyItemPickupHUD 组件。");
                 }
@@ -68,6 +72,25 @@ namespace LAB2D.UI
             }
 
             Debug.LogWarning($"[NearbyItemPickupHUD] 场景中未找到 {NearbyItemPickupConstant.CanvasName}，请手动创建。");
+        }
+
+        private void Awake()
+        {
+            this.EnsureReferences();
+        }
+
+        public void EnsureReferences()
+        {
+            if (this.panelRoot != null) return;
+
+            Transform panelT = this.transform.Find(NearbyItemPickupConstant.PanelRootName);
+            this.panelRoot = panelT?.gameObject;
+            this.titleBar = panelT?.Find("TitleBar")?.gameObject;
+            this.titleText = panelT?.Find("TitleBar/TitleLabel")?.GetComponent<Text>();
+            this.contentArea = panelT?.Find("ContentArea")?.gameObject;
+            this.scrollRect = panelT?.Find("ContentArea")?.GetComponent<ScrollRect>();
+            this.entriesContainer = panelT?.Find("ContentArea/EntriesContainer")?.gameObject;
+            this.emptyHint = panelT?.Find("EmptyHint")?.gameObject;
         }
 
         private void CreateUI()

@@ -60,7 +60,11 @@ namespace LAB2D.UI
             if (hudTransform != null)
             {
                 RuntimeInstance = hudTransform.GetComponent<SkillHUD>();
-                if (RuntimeInstance == null)
+                if (RuntimeInstance != null)
+                {
+                    RuntimeInstance.EnsureReferences();
+                }
+                else
                 {
                     Debug.LogWarning($"[SkillHUD] 场景中存在 {SkillConstant.SkillHUDRootName} 但未挂载 SkillHUD 组件。");
                 }
@@ -99,6 +103,39 @@ namespace LAB2D.UI
             }
 
             RuntimeInstance = null;
+        }
+
+        private void Awake()
+        {
+            this.EnsureReferences();
+        }
+
+        public void EnsureReferences()
+        {
+            if (this.skillButtonImages != null) return;
+
+            int count = 4;
+            this.skillButtonImages = new Image[count];
+            this.cooldownOverlays = new Image[count];
+            this.cooldownTexts = new Text[count];
+            this.manaCostTexts = new Text[count];
+            this.skillNameTexts = new Text[count];
+            this.skillLevelTexts = new Text[count];
+            this.hotkeyTexts = new Text[count];
+
+            for (int i = 0; i < count; i++)
+            {
+                Transform btnTransform = this.transform.Find($"{SkillConstant.SkillButtonPrefix}{i}");
+                if (btnTransform == null) continue;
+
+                this.skillButtonImages[i] = btnTransform.GetComponent<Image>();
+                this.cooldownOverlays[i] = btnTransform.Find(SkillConstant.CooldownOverlayName)?.GetComponent<Image>();
+                this.cooldownTexts[i] = btnTransform.Find("CooldownText")?.GetComponent<Text>();
+                this.hotkeyTexts[i] = btnTransform.Find(SkillConstant.SkillHotkeyTextName)?.GetComponent<Text>();
+                this.manaCostTexts[i] = btnTransform.Find(SkillConstant.ManaCostTextName)?.GetComponent<Text>();
+                this.skillNameTexts[i] = btnTransform.Find(SkillConstant.SkillNameTextName)?.GetComponent<Text>();
+                this.skillLevelTexts[i] = btnTransform.Find(SkillConstant.SkillLevelTextName)?.GetComponent<Text>();
+            }
         }
 
         private void Update()

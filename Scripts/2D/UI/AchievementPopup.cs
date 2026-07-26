@@ -47,7 +47,11 @@ namespace LAB2D.UI
             if (popupTransform != null)
             {
                 runtimeInstance = popupTransform.GetComponent<AchievementPopup>();
-                if (runtimeInstance == null)
+                if (runtimeInstance != null)
+                {
+                    runtimeInstance.EnsureReferences();
+                }
+                else
                 {
                     Debug.LogWarning($"[AchievementPopup] 场景中存在 {AchievementConstant.PopupRootName} 但未挂载 AchievementPopup 组件。");
                 }
@@ -64,6 +68,23 @@ namespace LAB2D.UI
         public static AchievementPopup RuntimeInstance
         {
             get { return runtimeInstance; }
+        }
+
+        private void Awake()
+        {
+            this.EnsureReferences();
+        }
+
+        public void EnsureReferences()
+        {
+            if (this.nameText != null) return;
+
+            this.canvasGroup = this.GetComponent<CanvasGroup>();
+            this.rootRect = this.GetComponent<RectTransform>();
+            this.backgroundImage = this.GetComponent<Image>();
+            this.titleText = this.transform.Find("Title")?.GetComponent<Text>();
+            this.nameText = this.transform.Find("Name")?.GetComponent<Text>();
+            this.pointsText = this.transform.Find("Points")?.GetComponent<Text>();
         }
 
         private void Initialize()
