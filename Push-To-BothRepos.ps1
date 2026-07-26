@@ -136,6 +136,11 @@ try {
         Write-Host "`n=== Pushing to PUBLIC repo (${publicRemote}) [${Branch}] ===" -ForegroundColor Cyan
 
         try {
+            # Fetch public remote first so we have up-to-date tracking refs
+            Write-Host "Fetching public remote..."
+            cmd /c "git fetch $publicRemote 2>&1 >nul"
+            # fetch failure is non-fatal — we just can't check up-to-date status
+
             $utf8NoBom = New-Object System.Text.UTF8Encoding $false
             [System.IO.File]::WriteAllText((Join-Path $repoRoot ".gitignore"), $restrictiveIgnore, $utf8NoBom)
 
@@ -156,18 +161,13 @@ try {
                 }
 
                 $upToDate = $false
-                $prevEAP = $ErrorActionPreference
-                $ErrorActionPreference = "Continue"
-                try {
-                    $remoteRef = (& git rev-parse "refs/remotes/${publicRemote}/${Branch}" 2>$null).Trim()
-                    if ($remoteRef -and $LASTEXITCODE -eq 0) {
-                        $remoteTree = (& git rev-parse "${remoteRef}^{tree}" 2>$null).Trim()
-                        if ($LASTEXITCODE -eq 0 -and $remoteTree -and $tree -eq $remoteTree) {
-                            $upToDate = $true
-                        }
+                $remoteRef = $null
+                $remoteRef = cmd /c "git rev-parse refs/remotes/${publicRemote}/${Branch} 2>&1"
+                if ($LASTEXITCODE -eq 0 -and $remoteRef) {
+                    $remoteTree = cmd /c "git rev-parse ${remoteRef}^{tree} 2>&1"
+                    if ($LASTEXITCODE -eq 0 -and $remoteTree -and ($tree -eq $remoteTree.Trim())) {
+                        $upToDate = $true
                     }
-                } finally {
-                    $ErrorActionPreference = $prevEAP
                 }
 
                 if ($upToDate) {
