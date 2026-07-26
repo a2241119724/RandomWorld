@@ -142,8 +142,9 @@ Scripts/2D/Editor/                    # Editor 工具 + Tests/Domain + Tests/Too
 
 位于 `Scripts/2D/Core/GlobalInputProcessor.cs`。从 GlobalInit 中提取的职责，实现 `ITickable`。
 
-- 处理 ESC 键面板切换、鼠标点击关闭物品信息、成就面板切换、殖民地命令中心 HUD
+- 处理 ESC 键面板切换、鼠标点击关闭物品信息、成就面板切换
 - 分离了 Update 逻辑与输入处理逻辑
+- 已移除 ColonyCommandHud 输入处理（该逻辑已由 ColonyCommandCenterHUD 自行管理）
 
 #### 4. AWorkerTask Provider 委托模式 — 依赖注入的轻量替代
 
@@ -177,6 +178,21 @@ Scripts/2D/Editor/                    # Editor 工具 + Tests/Domain + Tests/Too
 - `IPromptTemplateProvider`：Domain 层 Prompt 模板提供者接口
 - `PromptAssemblyService`：Domain 层纯 C# Prompt 组装服务
 - `PromptBuilder`：支持构造函数注入 provider，可通过 `ServiceLocator` 获取
+
+#### 7. UI 系统手动创建节点范式 — 移除动态自动生成
+
+2026-07 完成。所有 UI 组件从"自动创建节点、挂载组件"改为"查找场景中已有节点"。
+
+- **核心原则**：UI 节点需提前在 Scene 或 Prefab 中手动创建配置，代码只负责查找和绑定
+- **查找失败处理**：节点不存在时输出警告提示开发者手动创建，不再自动生成
+- **移除的自动创建逻辑**：
+  - 移除自动创建 EventSystem 的逻辑
+  - 移除冗余的 Canvas 自动创建代码
+  - 移除 FloatingTextManager 中 Canvas 和对象池容器的自动创建
+  - 移除 EquipmentBeamManager 中 beamContainer 的自动创建
+- **简化的 Editor 工具**：AchievementMenu、ColonyCommandCenterMenu、SkillMenu、WeatherGameplayEffectMenu 等 Editor 菜单工具已简化
+- **EnsureReferences 模式**：多个 UI 面板抽取统一的 `EnsureReferences()` 方法，在 Awake 中自动调用，消除重复的组件查找初始化代码
+- **涉及的 UI 模块**：AchievementPanel、AchievementPopup、NearbyItemPickupHUD、SkillHUD、ColonyCommandCenterHUD、WeatherGameplayHUD、WorkerConditionHUD、WorkerSupplyHUD、WorkerTaskQueueHUD、FloatingTextManager、EquipmentBeamManager
 
 ## 2. 改造总目标
 
@@ -867,9 +883,11 @@ public sealed class MyNewInitializer : IInitializable
 5. ✅ **WorkerTaskManager 解耦** — ITickable + GameGridPosition + WorkerPositionProvider
 6. ✅ **Wave 系统解耦** — 7 Provider + 4 EventBus 事件 + IWaveStateProvider + EventBus 订阅迁移
 7. ✅ **Gameplay 层 UnityEngine 清理** — 12 个非 MonoBehaviour Manager/Singleton 零 `using UnityEngine`，所有 `Time.realtimeSinceStartup` 已迁移至 `IGameTime`（2026-07 终态收尾）
-8. 🔒 **存档/Photon 桥接** — Photon 层已通过 INetworkView/ISyncSender 完善覆盖，存档 BinaryFormatter 迁移风险高，建议保持现状
-9. 🔒 **WaveManager Coroutine** — 已通过 IWaveTimeScheduler 解耦，可选优化
-10. 📋 **扩展单元测试** — 39 个 Domain 测试文件覆盖全部 RuleService，可继续为 Provider 委托补充测试
+8. ✅ **UI 系统手动创建节点范式** — 所有 UI 组件从自动创建节点改为查找场景已有节点，移除自动创建 EventSystem/Canvas/对象池容器逻辑，Editor 菜单工具简化，抽取 EnsureReferences 通用模式（2026-07）
+9. ✅ **GlobalInputProcessor 精简** — 移除 ColonyCommandHud 输入处理逻辑，该逻辑已由 ColonyCommandCenterHUD 自行管理（2026-07）
+10. 🔒 **存档/Photon 桥接** — Photon 层已通过 INetworkView/ISyncSender 完善覆盖，存档 BinaryFormatter 迁移风险高，建议保持现状
+11. 🔒 **WaveManager Coroutine** — 已通过 IWaveTimeScheduler 解耦，可选优化
+12. 📋 **扩展单元测试** — 39 个 Domain 测试文件覆盖全部 RuleService，可继续为 Provider 委托补充测试
 
 选择模块时，请说明原因：
 

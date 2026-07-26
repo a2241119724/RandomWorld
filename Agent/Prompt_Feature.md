@@ -43,7 +43,7 @@
 - 工具方法必须有中文注释，说明用途、参数、返回值、使用边界和风险限制。
 - 涉及 `UnityEditor` API 的公共逻辑不得污染运行时代码；优先放入 Editor 专用目录，或拆分为运行时工具类 + Editor 调用层，避免打包报错。
 
-优先放入或复用 `Scripts/2D/Tool` 的逻辑包括但不限于：通用 UI 创建辅助，Canvas / Panel / Text / Button / Image 查找或创建，GameObject 查找/创建/挂载组件，组件安全获取、空引用保护、默认值处理，Resources / ResourcesLocal 路径辅助，数值/时间/分数/奖励文本格式化，事件分发、消息通知、状态提示，日志输出、Debug 文本生成，列表/字典/配置读取安全访问，以及可被多个业务功能复用的计算逻辑。
+优先放入或复用 `Scripts/2D/Tool` 的逻辑包括但不限于：通用 UI 节点查找辅助（FindChildComponent/GetComponentInChildren），Canvas / Panel / Text / Button / Image 安全查找，GameObject 查找/挂载组件，组件安全获取、空引用保护、默认值处理，Resources / ResourcesLocal 路径辅助，数值/时间/分数/奖励文本格式化，事件分发、消息通知、状态提示，日志输出、Debug 文本生成，列表/字典/配置读取安全访问，以及可被多个业务功能复用的计算逻辑。
 
 若公共逻辑只服务本次功能但未来明显可复用，也应优先设计为工具方法；若强依赖本次功能状态、具体业务流程或具体 UI 面板，则保留在本功能脚本中。不得为了复用让 `Scripts/2D/Tool` 反向依赖具体业务模块。工具类尽量使用静态方法或低状态对象，避免全局副作用。修改已有工具类必须兼容已有调用方，不破坏原有方法签名和行为。
 
@@ -119,17 +119,45 @@
 - 若图片、字体、材质等引用无法安全判断，使用 Unity 默认 UI 组件或已有可安全引用资源。
 - 若无法生成真实 Prefab 文件，改为生成 Editor 菜单工具，由开发者在 Unity 中点击菜单自动创建 Prefab。
 
-### 5.3 最后才退回代码或说明
+### 5.3 再次生成 Editor 菜单工具
 
-只有在找不到或无法安全修改 `Game.unity`、无法确认 Scene / Prefab YAML、当前环境无法运行 Unity Editor 或可靠生成 Prefab、缺少 UI 包或组件、资源路径/字体/图片/Canvas 结构无法确定、自动修改可能破坏已有引用时，才允许退回低侵入方案：
+若不能安全改 `Game.unity` 且不能可靠创建 Prefab，则生成 Editor 菜单工具。建议菜单：
 
-- 新增运行时 UI 管理器，在运行时自动创建 Canvas / Panel / Text / Button。
-- 新增可选挂载组件，由开发者挂到 GameObject 后自动生成 UI。
-- 新增 Editor 菜单工具，如 `Tools/Game Features/Create <功能名> UI In Game Scene` 或 `Tools/Game Features/Create <功能名> Prefab In ResourcesLocal`。
-- 新增 ViewModel / UI 数据源 / UI Binder，方便后续接入。
-- 在任务卡写明：为什么没有直接生成到 `Game.unity`，为什么没有创建 `ResourcesLocal` 预制体，后续如何手动或通过菜单工具接入，需要挂载到哪个场景对象或 Canvas 下。
+- `Tools/Game Features/Create <功能名> UI In Game Scene`
+- `Tools/Game Features/Create <功能名> Prefab In ResourcesLocal`
 
-UI 实现优先级固定为：安全修改 `Game.unity` → `ResourcesLocal` 独立 UI Prefab → Editor 菜单工具 → 运行时代码动态创建 UI → 仅数据层 / ViewModel / 人工接入说明。选择第 3、4、5 种方式时，必须在任务卡和验证记录中写明原因。
+要求：
+- 放在 Editor 目录或已有 Editor 工具目录。
+- 菜单命名清晰，菜单路径优先使用 `Scripts/2D/Constant`；执行状态、生成类型优先使用 `Scripts/2D/Enum`。
+- 执行时检查 `Game.unity` 是否存在、目标目录是否存在，不存在则创建。
+- 不覆盖已有 Prefab 或场景对象；重复执行应安全退出或生成带序号新对象。
+- 工具生成的 UI 节点、Prefab、配置文件必须命名清晰并有回滚说明。
+- 工具代码注释必须中文。
+
+### 5.4 然后用运行时代码查找已有节点
+
+Editor 工具也不可行时，新增运行时 UI 管理器或可选挂载组件：
+
+- **重要变更（2026-07）**：运行时代码**不得自动创建** UI 节点、Canvas、EventSystem。只能通过 `FindChildComponent`、`FindChildTransform`、`GetComponentInChildren` 等方法查找场景中已手动创建的节点。
+- 节点不存在时，输出警告日志提示开发者手动创建，不得自动生成。
+- 自动检查 Canvas 和 EventSystem 是否存在；缺失时输出警告，不自动创建。
+- 运行时 UI 独立命名，不污染已有 UI；默认状态可控，避免进入游戏破坏原流程。
+- 调试型或示例型 UI 提供开关，避免影响正式体验。
+- 必须说明接入方式与风险边界。
+- 节点名、默认文案、尺寸、显示时长、显示开关 Key 优先使用 `Scripts/2D/Constant`；显示状态、面板类型、奖励/引导状态优先使用 `Scripts/2D/Enum`。
+
+### 5.5 最后才退回纯代码或说明
+
+仅在找不到或无法安全修改 `Game.unity`、无法确认 Scene / Prefab YAML、当前环境无法运行 Unity Editor 且不能可靠生成 Prefab、项目缺少必要 UI 包或组件、资源路径/字体/图片/Canvas 结构无法确定、自动修改可能破坏引用时，才允许退回代码或说明。任务卡必须写明：
+- 为什么未直接生成到 `Game.unity`；
+- 为什么未创建 `ResourcesLocal` 预制体；
+- 是否提供 Editor 菜单工具；
+- 是否提供运行时查找已有节点的代码；
+- 哪些 UI 仍需人工接入；
+- 后续挂载到哪个场景对象、Canvas 或 Prefab；
+- 如何验证 UI 接入成功。
+
+UI 优先级总结：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 UI Prefab → Editor 菜单工具 → 运行时代码查找已有节点（不得自动创建）→ 纯业务逻辑 / ViewModel / 数据层 / 人工接入说明。若使用第 3/4/5 种方式，必须在任务卡、回滚方案、验证记录说明原因。
 
 ## 6. 候选状态与候选表
 
@@ -199,7 +227,7 @@ UI 实现优先级固定为：安全修改 `Game.unity` → `ResourcesLocal` 独
 
 实现时只修改与任务直接相关的文件，优先放在 `Scripts/2D`、`Scripts/2D/Gameplay`、`Scripts/2D/UI`、`Scripts/2D/Domain`、`Scripts/2D/Editor`、`Scripts/2D/Tool`、`Scripts/2D/Enum`、`Scripts/2D/Constant`、`Agent` 或其他低侵入路径。公共函数/辅助逻辑放入 Tool；公共枚举/状态/类型/提示/奖励/结果放入 Enum；公共常量/路径/文案/节点名/Prefab 名/菜单路径/默认值/阈值/Key/事件名放入 Constant；具体业务流程、状态管理、事件响应、UI Binder、ViewModel 放入对应业务目录。
 
-若包含 UI，按 `Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 UI Prefab → Editor 菜单工具 → 运行时代码动态创建 UI → 纯数据层/ViewModel/人工接入说明的顺序处理。可以新增独立脚本、业务管理器、数据结构、事件监听器、Editor 菜单、调试输出或只读报告。必须保持项目命名、目录结构和代码风格；不做无关重构；不修改用户已有无关改动；不删除、重命名、覆盖已有 Unity 资源；Unity 资源相关修改必须保留 `.meta`；若无法安全处理 `.meta`，不要直接修改资源，改为 Editor 工具或运行时代码方案。新增代码必须有清晰中文注释，说明用途、接入方式和风险边界。
+若包含 UI，按 `Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 UI Prefab → Editor 菜单工具 → 运行时代码查找已有节点（不得自动创建）→ 纯数据层/ViewModel/人工接入说明的顺序处理。运行时代码只能查找场景中已手动创建的节点（使用 `FindChildComponent`、`GetComponentInChildren` 等），节点不存在时输出警告日志，不得自动生成 Canvas、EventSystem 或 UI 节点。可以新增独立脚本、业务管理器、数据结构、事件监听器、Editor 菜单、调试输出或只读报告。UI 节点需提前在场景中手动创建，代码只通过 `FindChildComponent`/`GetComponentInChildren` 查找已有节点。必须保持项目命名、目录结构和代码风格；不做无关重构；不修改用户已有无关改动；不删除、重命名、覆盖已有 Unity 资源；Unity 资源相关修改必须保留 `.meta`；若无法安全处理 `.meta`，不要直接修改资源，改为 Editor 工具或运行时代码方案。新增代码必须有清晰中文注释，说明用途、接入方式和风险边界。
 
 ### 8.9 Editor 专用逻辑要求
 
@@ -217,7 +245,7 @@ UI 实现优先级固定为：安全修改 `Game.unity` → `ResourcesLocal` 独
 
 ### 8.11 更新任务卡结果区
 
-结果区必须写入：最终状态 `[DONE]`、`[PARTIAL]` 或 `[BLOCKED]`；已完成内容；修改文件；新增游戏业务能力；玩家侧效果；UI 生成位置，包括是否写入 `Game.unity`、是否创建 `ResourcesLocal` Prefab、是否改用 Editor 工具、是否改用运行时代码动态创建；开发侧接入方式；验证结果；验证记录路径；未完成项；剩余风险；是否复用 `Scripts/2D/Tool`；是否新增或修改 Tool；新增公共工具类或函数路径及用途；是否复用 `Scripts/2D/Enum`；是否新增或修改 Enum；新增公共枚举路径及用途；是否复用 `Scripts/2D/Constant`；是否新增或修改 Constant；新增公共常量路径及用途；后续建议；是否存在未抽取的重复逻辑、重复枚举、重复常量或魔法值。
+结果区必须写入：最终状态 `[DONE]`、`[PARTIAL]` 或 `[BLOCKED]`；已完成内容；修改文件；新增游戏业务能力；玩家侧效果；UI 生成位置，包括是否写入 `Game.unity`、是否创建 `ResourcesLocal` Prefab、是否改用 Editor 工具、是否改用运行时查找已有节点；开发侧接入方式；验证结果；验证记录路径；未完成项；剩余风险；是否复用 `Scripts/2D/Tool`；是否新增或修改 Tool；新增公共工具类或函数路径及用途；是否复用 `Scripts/2D/Enum`；是否新增或修改 Enum；新增公共枚举路径及用途；是否复用 `Scripts/2D/Constant`；是否新增或修改 Constant；新增公共常量路径及用途；后续建议；是否存在未抽取的重复逻辑、重复枚举、重复常量或魔法值。
 
 ### 8.12 回写全局功能发现报告
 

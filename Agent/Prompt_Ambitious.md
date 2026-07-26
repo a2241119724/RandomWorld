@@ -51,7 +51,7 @@
 
 ### 3.1 `Scripts/2D/Tool` 公共工具类优先
 
-开发前必须扫描并复用 `Scripts/2D/Tool`。已有可复用方法必须优先调用，不得重复实现。多个子模块共享的公共能力应优先沉淀到 `Scripts/2D/Tool`，包括但不限于：UI 创建辅助，Canvas / EventSystem / Panel / Text / Button / Image / ScrollView 安全创建或查找，GameObject 创建/命名/查找/挂载组件，Component 安全获取，空引用保护，默认值处理，Resources / ResourcesLocal 路径拼接与规范化，资源加载，Prefab 实例化，父节点挂载，层级命名，数值/时间/分数/奖励文本格式化，伤害/经验/金币/星级/评分展示文本生成，通用事件分发、状态通知、消息广播、日志、Debug 文本、运行时状态摘要，列表/字典/配置安全访问，以及可被战斗、奖励、关卡、成长、UI 复用的计算逻辑。
+开发前必须扫描并复用 `Scripts/2D/Tool`。已有可复用方法必须优先调用，不得重复实现。多个子模块共享的公共能力应优先沉淀到 `Scripts/2D/Tool`，包括但不限于：UI 节点查找辅助（FindChildComponent/GetComponentInChildren），Canvas / EventSystem / Panel / Text / Button / Image / ScrollView 安全查找，GameObject 查找/命名/挂载组件，Component 安全获取，空引用保护，默认值处理，Resources / ResourcesLocal 路径拼接与规范化，资源加载，Prefab 实例化，父节点挂载，层级命名，数值/时间/分数/奖励文本格式化，伤害/经验/金币/星级/评分展示文本生成，通用事件分发、状态通知、消息广播、日志、Debug 文本、运行时状态摘要，列表/字典/配置安全访问，以及可被战斗、奖励、关卡、成长、UI 复用的计算逻辑。
 
 约束：
 - 业务脚本只保留强相关业务规则、状态流转、事件响应、UI Binder、数据模型、表现控制。
@@ -156,10 +156,12 @@
 - 工具生成的 UI 节点、Prefab、配置文件必须命名清晰并有回滚说明。
 - 工具代码注释必须中文。
 
-### 4.4 然后用运行时代码动态创建 UI
+### 4.4 然后用运行时代码查找已有节点
 
 Editor 工具也不可行时，新增运行时 UI 管理器或可选挂载组件：
-- 自动检查 Canvas 和 EventSystem；缺失时创建独立节点。
+- **重要变更（2026-07）**：运行时代码**不得自动创建** UI 节点、Canvas、EventSystem。只能通过 `FindChildComponent`、`FindChildTransform`、`GetComponentInChildren` 等方法查找场景中已手动创建的节点。
+- 节点不存在时，输出警告日志提示开发者手动创建，不得自动生成。
+- 自动检查 Canvas 和 EventSystem 是否存在；缺失时输出警告，不自动创建。
 - 动态 UI 独立命名，不污染已有 UI；默认状态可控，避免进入游戏破坏原流程。
 - 调试型或示例型 UI 提供开关，避免影响正式体验。
 - 必须说明接入方式与风险边界。
@@ -171,12 +173,12 @@ Editor 工具也不可行时，新增运行时 UI 管理器或可选挂载组件
 - 为什么未直接生成到 `Game.unity`；
 - 为什么未创建 `ResourcesLocal` 预制体；
 - 是否提供 Editor 菜单工具；
-- 是否提供运行时代码动态创建 UI；
+- 是否提供运行时查找已有节点的代码；
 - 哪些 UI 仍需人工接入；
 - 后续挂载到哪个场景对象、Canvas 或 Prefab；
 - 如何验证 UI 接入成功。
 
-UI 优先级总结：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 UI Prefab → Editor 菜单工具 → 运行时代码动态 UI → 纯业务逻辑 / ViewModel / 数据层 / 人工接入说明。若使用第 3/4/5 种方式，必须在任务卡、回滚方案、验证记录说明原因。
+UI 优先级总结：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 UI Prefab → Editor 菜单工具 → 运行时代码查找已有节点（不得自动创建）→ 纯业务逻辑 / ViewModel / 数据层 / 人工接入说明。若使用第 3/4/5 种方式，必须在任务卡、回滚方案、验证记录说明原因。
 
 ---
 
@@ -329,7 +331,7 @@ UI 优先级总结：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 U
 - 战斗、关卡、奖励、成长、任务、成就等业务逻辑放对应业务目录。
 - UI Controller / UI Binder / ViewModel / Panel 控制放 `Scripts/2D/UI` 或已有 UI 目录。
 - Editor 菜单、安装器、Prefab 生成器放 `Scripts/2D/Editor` 或已有 Editor 目录。
-- UI 实现按优先级：`Game.unity` → `ResourcesLocal` Prefab → Editor 工具 → 运行时代码动态创建 → 纯业务逻辑/ViewModel/数据层/人工接入说明。
+- UI 实现按优先级：`Game.unity` → `ResourcesLocal` Prefab → Editor 工具 → 运行时代码查找已有节点（不得自动创建）→ 纯业务逻辑/ViewModel/数据层/人工接入说明。
 - 修改 Scene / Prefab / ScriptableObject / StreamingAssets 前，在任务卡记录修改前状态；保留/同步 `.meta`；尽量新增而非修改；已有字段/节点只追加不破坏；已有 UI 层级只追加独立节点，不重排或删除。
 - 保持现有命名、目录结构、代码风格；不做无关重构；不修改用户已有无关改动。
 - 新增代码中文注释必须说明用途、接入方式、子模块关系、风险边界；修改已有代码时用中文注释标注修改原因和范围。
@@ -348,7 +350,7 @@ UI 优先级总结：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 U
 - 修改 Scene / Prefab / ScriptableObject：`.meta` 是否同步、已有字段是否保留、新增内容是否挂载、回滚路径是否有效。
 - 新增 UI 到 `Game.unity`：路径、根节点命名、Canvas 层级、锚点/布局/字体/默认显示状态、是否避免破坏已有 UI。
 - 新增 UI Prefab 到 `ResourcesLocal`：路径规范、`.meta`、UI 层级、脚本引用、接入方式。
-- 运行时代码动态 UI：Canvas / EventSystem 检查、默认启用策略、空引用保护、销毁/隐藏逻辑。
+- 运行时代码查找已有节点：Canvas / EventSystem 存在性检查（不自动创建）、节点查找逻辑、缺失警告输出、空引用保护、销毁/隐藏逻辑。
 - `Scripts/2D/Tool` 新增/修改：路径、命名空间、是否错误引用 `UnityEditor`、是否影响运行时构建、是否破坏调用方、空引用保护、异常保护/失败返回、是否适用于多个子模块、中文注释。
 - `Scripts/2D/Enum` 新增/修改：路径、命名、语义、是否重复/冲突、是否错误修改/删除/重命名/改变显式值、中文注释、各模块是否正确引用而非重复定义、多个子模块是否复用。
 - `Scripts/2D/Constant` 新增/修改：路径、命名、分组、是否重复/冲突、是否错误改值/删除/重命名、中文注释、各模块是否正确引用而非硬编码、多子模块是否复用。
@@ -365,7 +367,7 @@ UI 优先级总结：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 U
 - 修改文件：区分新增文件和修改文件。
 - 新增游戏体验能力。
 - 玩家侧效果。
-- UI 生成位置：是否写入 `Game.unity`、是否创建 `ResourcesLocal` Prefab、是否改用 Editor 工具、是否改用运行时代码动态创建、哪些 UI 仍需人工接入。
+- UI 生成位置：是否写入 `Game.unity`、是否创建 `ResourcesLocal` Prefab、是否改用 Editor 工具、是否改用运行时查找已有节点、哪些 UI 仍需人工接入。
 - 开发侧接入方式、验证结果、验证记录路径。
 - 回滚方案验证：是否验证回滚路径有效。
 - 未完成项、剩余风险、后续建议（人工调整 UI 布局、平衡数值、添加美术资源等）。

@@ -97,10 +97,10 @@
 - `ResourcesLocal` 下已有 UI、Prefab、Panel、Popup、Debug、Tool、Report 等目录结构。
 - `Scripts/2D` 中的 TODO、FIXME、空方法、临时实现、重复模式。
 - `Scripts/2D/Editor`、`Scripts/2D/UI`、`Scripts/2D/Tool` 中已有工具、UI、调试逻辑（DebugUI 位于 `Scripts/2D/UI/Panel/PanelUI/ForegroundUI/DebugUI.cs`）。
-- `Scripts/2D/Tool` 下已有工具类、公共函数、辅助方法、命名空间、代码风格和可复用能力，尤其是文件扫描、路径拼接、报告生成、Markdown 表格、JSON / 配置读取、日志、空引用保护、GameObject / Component 安全获取、Resources / ResourcesLocal 路径、UI 动态创建等。
+- `Scripts/2D/Tool` 下已有工具类、公共函数、辅助方法、命名空间、代码风格和可复用能力，尤其是文件扫描、路径拼接、报告生成、Markdown 表格、JSON / 配置读取、日志、空引用保护、GameObject / Component 安全获取（FindChildComponent/GetComponentInChildren）、Resources / ResourcesLocal 路径、UI 节点查找等。
 - `Scripts/2D/Enum` 下已有枚举、命名、成员风格、用途和可复用状态，包括扫描结果、报告类型、执行状态、严重级别、验证状态、调试面板类型等。
 - `Scripts/2D/Constant` 下已有常量类、命名、分组、用途和可复用固定值，包括 Agent 报告路径、任务目录前缀、报告文件名、Editor 菜单路径、UI 文案、节点名、Prefab 名称、扫描扩展名、忽略目录、日志前缀等。
-- 当前项目中重复的扫描逻辑、报告格式化逻辑、路径处理逻辑、文件读写逻辑、UI 创建逻辑；本次功能会继续使用类似逻辑时，优先复用或抽取到 `Scripts/2D/Tool`。
+- 当前项目中重复的扫描逻辑、报告格式化逻辑、路径处理逻辑、文件读写逻辑、UI 节点查找逻辑；本次功能会继续使用类似逻辑时，优先复用或抽取到 `Scripts/2D/Tool`。
 - 当前项目中重复的工具状态枚举、扫描结果枚举、报告类型枚举、严重级别枚举；本次功能会继续使用类似枚举时，优先复用或抽取到 `Scripts/2D/Enum`。
 - 当前项目中重复的路径字符串、菜单路径、报告文件名、UI 文案、默认阈值、日志前缀、扩展名列表等魔法值；本次功能会继续使用类似固定值时，优先复用或抽取到 `Scripts/2D/Constant`。
 - `Resources/SO`、`Resources/Tilemap`、`Resources/Images` 中的资源绑定缺口。
@@ -144,7 +144,7 @@
 3. 优先 Agent 脚本、只读扫描器、Editor 工具、报告生成器、模板生成器、资源检查器、调试面板、可视化报告入口。
 4. 候选涉及 UI、Scene、Prefab 时，先尝试低风险独立新增，不直接跳过。
 5. 候选涉及已有 Scene、已有 Prefab、ScriptableObject、StreamingAssets、存档、Photon、AssetBundle 的直接修改时，跳过并标记 `[SKIPPED]`。
-6. UI、Scene、Prefab 无法自动安全接入时，先实现底层工具逻辑、Editor 生成工具、运行时 UI 创建逻辑或报告输出逻辑，并在任务卡写明人工接入方式。
+6. UI、Scene、Prefab 无法自动安全接入时，先实现底层工具逻辑、Editor 生成工具、运行时 UI 节点查找逻辑或报告输出逻辑，并在任务卡写明人工接入方式。
 7. 如需新增公共函数、公共枚举或公共常量，必须优先规划到 `Scripts/2D/Tool`、`Scripts/2D/Enum`、`Scripts/2D/Constant`。
 
 ---
@@ -165,7 +165,7 @@
 - 原则上 `Scripts/2D/Tool` 不直接引用 `UnityEditor`；涉及 `UnityEditor` API 时，拆分为运行时通用工具 `Scripts/2D/Tool` 与 Editor 专用逻辑 `Scripts/2D/Editor`，避免正式构建报错。
 - 推荐静态方法或低状态对象，避免全局副作用；修改已有工具类时保持兼容，不破坏已有方法签名和行为。
 
-必须优先放入或复用 `Scripts/2D/Tool` 的逻辑包括：通用文件扫描、目录递归、扩展名过滤、路径拼接 / 规范化 / 相对路径转换、报告文件命名与输出路径生成、Markdown 文本 / 表格 / 摘要生成、JSON / YAML / 文本安全读取、日志输出、调试信息格式化、空引用保护、默认值处理、安全集合访问、GameObject / Component / Canvas / EventSystem 安全查找或创建、Resources / ResourcesLocal 路径辅助、UI Panel / Text / Button / Image / ScrollView 通用创建、调试面板通用刷新、多个效率工具可复用计算逻辑。
+必须优先放入或复用 `Scripts/2D/Tool` 的逻辑包括：通用文件扫描、目录递归、扩展名过滤、路径拼接 / 规范化 / 相对路径转换、报告文件命名与输出路径生成、Markdown 文本 / 表格 / 摘要生成、JSON / YAML / 文本安全读取、日志输出、调试信息格式化、空引用保护、默认值处理、安全集合访问、GameObject / Component / Canvas / EventSystem 安全查找（FindChildComponent/GetComponentInChildren）、Resources / ResourcesLocal 路径辅助、UI Panel / Text / Button / Image / ScrollView 通用查找、调试面板通用刷新、多个效率工具可复用计算逻辑。
 
 如果逻辑只服务本次功能但未来明显可复用，也优先设计为工具方法；若强依赖本次候选、具体报告结构、具体菜单入口或具体 UI 面板，则保留在本功能脚本中，不强行抽取。
 
@@ -206,7 +206,7 @@
 
 1. 公共枚举：放入 `Scripts/2D/Enum`，用于稳定工具状态、扫描结果类型、报告类型、检查严重级别、验证状态、UI 面板类型等。
 2. 公共常量：放入 `Scripts/2D/Constant`，用于稳定字符串、路径、菜单路径、默认文件名、默认文案、默认阈值、Key、节点名、报告模板字段等。
-3. 公共函数与辅助逻辑：放入 `Scripts/2D/Tool`，用于扫描、路径处理、文件读写、报告生成、格式化、日志、UI 创建、安全访问等。
+3. 公共函数与辅助逻辑：放入 `Scripts/2D/Tool`，用于扫描、路径处理、文件读写、报告生成、格式化、日志、UI 节点查找、安全访问等。
 4. 具体效率 / 工具脚本：放入 `Agent`、`Scripts/2D/Editor`、`Scripts/2D/UI` 或项目已有对应目录，只保留调度流程、菜单入口、扫描流程、报告生成流程、UI 绑定和功能入口。
 5. Editor 专用逻辑：放入 Editor 专用目录，不得让运行时代码直接依赖 `UnityEditor`。
 
@@ -267,11 +267,13 @@
 - 不覆盖已有 Prefab 或场景对象；重复执行时安全退出或生成带序号的新对象。
 - 代码注释必须中文；生成的 UI 节点、Prefab、报告文件必须有清晰命名和回滚说明。
 
-### 10.4 然后：运行时代码动态创建 UI
+### 10.4 然后：运行时代码查找已有节点
 
-Editor 工具也不可行时，可新增运行时 UI 管理器或可选挂载组件动态创建 UI。
+Editor 工具也不可行时，可新增运行时 UI 管理器或可选挂载组件。
 
-- 自动检查 Canvas 和 EventSystem；必要时创建独立节点。
+- **重要变更（2026-07）**：运行时代码**不得自动创建** UI 节点、Canvas、EventSystem。只能通过 `FindChildComponent`、`FindChildTransform`、`GetComponentInChildren` 等方法查找场景中已手动创建的节点。
+- 节点不存在时，输出警告日志提示开发者手动创建，不得自动生成。
+- 自动检查 Canvas 和 EventSystem 是否存在；缺失时输出警告，不自动创建。
 - UI 必须独立命名，避免污染已有 UI。
 - 必须提供启用 / 禁用入口，避免默认影响正式游戏流程。
 - 开发辅助 UI 默认只在 Debug、Development Build 或明确开关开启时显示。
@@ -282,14 +284,14 @@ Editor 工具也不可行时，可新增运行时 UI 管理器或可选挂载组
 
 仅在以下情况允许把 UI 无法生成部分退回到代码或说明：找不到 `Game.unity`；无法安全修改 `Game.unity`；无法确认 Unity Scene YAML / Prefab YAML 结构；当前环境无法运行 Unity Editor 且无法可靠生成 Prefab；项目缺少必要 UI 包或组件；资源路径、字体、图片、Canvas 结构无法确定；自动修改可能破坏已有资源引用。
 
-退回代码实现时，必须在任务卡中写明：为什么没有直接生成到 `Game.unity`；为什么没有创建 `ResourcesLocal` 预制体；是否提供 Editor 菜单工具；是否提供运行时代码动态创建 UI；后续如何手动接入；需要挂载到哪个场景对象、Canvas 或工具入口下。
+退回代码实现时，必须在任务卡中写明：为什么没有直接生成到 `Game.unity`；为什么没有创建 `ResourcesLocal` 预制体；是否提供 Editor 菜单工具；是否提供运行时查找已有节点的代码；后续如何手动接入；需要挂载到哪个场景对象、Canvas 或工具入口下。
 
 ### 10.6 UI 优先级总结
 
 1. 能安全修改 `Game.unity` 时，优先在 `Game.unity` 创建独立 UI 节点。
 2. 不能安全改 `Game.unity` 时，优先在 `ResourcesLocal` 创建独立 UI Prefab。
 3. 不能直接创建 Prefab 时，生成 Editor 菜单工具自动创建 UI 或 Prefab。
-4. 以上都不可行时，使用运行时代码动态创建 UI。
+4. 以上都不可行时，使用运行时代码查找已有节点（不得自动创建），缺失时输出警告。
 5. 最后才允许只写数据层、报告生成逻辑或人工接入说明。
 
 选择第 3、4、5 种方式时，必须在任务卡和验证记录中写明原因。
@@ -322,7 +324,7 @@ Editor 工具也不可行时，可新增运行时 UI 管理器或可选挂载组
 - 优先放在 `Agent`、`Scripts/2D/Editor`、`Scripts/2D/UI`、`Scripts/2D/Tool`、`Scripts/2D/Enum`、`Scripts/2D/Constant` 或其他低侵入路径。
 - 公共函数、通用辅助方法、重复逻辑放入 `Scripts/2D/Tool`；公共枚举、工具状态类型、扫描结果类型、报告类型、检查级别、验证状态、UI 面板类型放入 `Scripts/2D/Enum`；公共常量、路径、菜单路径、默认文案、文件名、目录前缀、阈值、Key、日志前缀、节点名放入 `Scripts/2D/Constant`。
 - 具体扫描器、报告生成器、Editor 菜单入口、调试面板绑定逻辑放入对应功能目录。
-- UI 实现顺序：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 UI Prefab → Editor 菜单工具 → 运行时代码动态创建 UI → 纯报告 / 数据层 / 人工接入说明。
+- UI 实现顺序：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 UI Prefab → Editor 菜单工具 → 运行时代码查找已有节点（不得自动创建）→ 纯报告 / 数据层 / 人工接入说明。
 - 可新增独立脚本、Editor 工具、报告生成器、数据结构、调试输出、扫描器、模板文件或只读分析逻辑。
 - 保持现有项目命名、目录结构和代码风格。
 - 新增代码必须有清晰中文注释，说明用途、接入方式和风险边界。
@@ -391,7 +393,7 @@ Editor 工具也不可行时，可新增运行时 UI 管理器或可选挂载组
 
 - 最终状态：`[DONE]`、`[PARTIAL]` 或 `[BLOCKED]`。
 - 已完成内容、修改文件、新增效率 / 工具能力、验证结果、验证记录路径、未完成项、剩余风险、后续建议。
-- UI 生成位置：是否写入 `Game.unity`；是否创建 `ResourcesLocal` Prefab；是否改用 Editor 工具；是否改用运行时代码动态创建。
+- UI 生成位置：是否写入 `Game.unity`；是否创建 `ResourcesLocal` Prefab；是否改用 Editor 工具；是否改用运行时查找已有节点。
 - `Scripts/2D/Tool` 情况：是否复用、复用了哪些工具类和方法、是否新增或扩展工具类、公共函数路径、用途说明、是否涉及 `UnityEditor` API、是否完成 Editor 专用逻辑与运行时工具逻辑拆分、是否存在未抽取重复逻辑。
 - `Scripts/2D/Enum` 情况：是否复用、复用了哪些枚举、是否新增或扩展枚举、新增公共枚举路径、用途说明、是否存在未抽取重复枚举。
 - `Scripts/2D/Constant` 情况：是否复用、复用了哪些常量类和字段、是否新增或扩展常量类、新增公共常量路径、用途说明、是否存在未抽取重复常量或魔法值。
