@@ -158,13 +158,16 @@ try {
                 $upToDate = $false
                 $prevEAP = $ErrorActionPreference
                 $ErrorActionPreference = "Continue"
-                $remoteRef = (& git rev-parse "refs/remotes/${publicRemote}/${Branch}" 2>$null).Trim()
-                $ErrorActionPreference = $prevEAP
-                if ($remoteRef) {
-                    $remoteTree = (& git rev-parse "${remoteRef}^{tree}" 2>$null).Trim()
-                    if ($tree -eq $remoteTree) {
-                        $upToDate = $true
+                try {
+                    $remoteRef = (& git rev-parse "refs/remotes/${publicRemote}/${Branch}" 2>$null).Trim()
+                    if ($remoteRef -and $LASTEXITCODE -eq 0) {
+                        $remoteTree = (& git rev-parse "${remoteRef}^{tree}" 2>$null).Trim()
+                        if ($LASTEXITCODE -eq 0 -and $remoteTree -and $tree -eq $remoteTree) {
+                            $upToDate = $true
+                        }
                     }
+                } finally {
+                    $ErrorActionPreference = $prevEAP
                 }
 
                 if ($upToDate) {
