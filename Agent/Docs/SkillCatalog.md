@@ -236,5 +236,5 @@ Skill 是 Agent 系统的可复用执行能力。每个 Skill 都应该明确输
 
 **输出**：视觉审计报告、问题分类列表、优化建议（含目标参数值）、优化任务卡、验证记录。
 
-**推荐使用 Prompt**：`Agent/Prompt_UIRefine.md`
+**推荐使用 Prompt**：`Agent/Prompt_UI.md`
 

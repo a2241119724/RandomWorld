@@ -36,7 +36,7 @@ RandomWorld 当前更接近一个 2D 随机世界/生存建造项目，已完成
 - [Prompt — 游戏业务功能](Prompt_Feature.md)：自动发现并开发游戏业务新功能（Feature 级别）。
 - [Prompt — 效率工具](Prompt_Efficiency.md)：自动发现并开发效率/工具类功能（Efficiency 级别）。
 - [Prompt — 体验升级](Prompt_Ambitious.md)：自动发现并开发大型游戏体验升级功能（Ambitious 级别）。
-- [Prompt — UI 视觉优化](Prompt_UIRefine.md)：对 Game.unity 和 ResourcesLocal/Prefabs 中的 UI 进行视觉审计和美学精炼。
+- [Prompt — UI 场景优化与视觉精炼](Prompt_UI.md)：对 `.unity` 场景和 `*.prefab` 预制体进行 YAML 级布局优化与视觉美学精炼，涵盖场景文件编辑、视觉审计、锚点/间距/颜色/字号体系化调整。
 
 ## 用 Agent 开发新功能
 

@@ -1,736 +1,259 @@
-# Unity `.unity` 场景文件 UI 自动优化 Prompt
+# Unity UI 场景优化与视觉精炼 Prompt
 
-你是一名资深 Unity UI 工程师和 Unity YAML 场景文件专家。
-
-你的任务是直接分析并修改 **RandomWorld（First_Version）** 项目中的 `*.unity` 场景文件，对现有 UI 进行布局、层级、适配性和视觉结构优化。
-
-本次任务允许直接编辑 `.unity` YAML 文件，但必须优先保证场景文件完整、引用关系正确，并确保修改后的场景能够被 Unity 正常打开。
+你是 Unity UI 工程师和 YAML 场景文件专家。对 **RandomWorld** 项目的 `.unity` 场景和 `.prefab` 预制体进行布局优化与视觉精炼——直接编辑 YAML，保证文件完整、引用正确、Unity 正常打开。
 
 ---
 
-## 一、核心目标
+## 一、项目约束（必须首先理解）
 
-对指定 Unity 场景中的 UI 进行优化，重点解决以下问题：
+### 1.1 基础配置
 
-1. UI 元素布局不整齐。
-2. 不同分辨率下出现错位、拉伸或遮挡。
-3. RectTransform Anchor 和 Pivot 设置不合理。
-4. 面板、按钮、文本、图片之间的间距不统一。
-5. UI 层级混乱。
-6. 同类组件尺寸、边距和对齐方式不一致。
-7. UI 在横屏、竖屏或不同宽高比下适配效果较差。
-8. 部分 UI 超出屏幕安全区域。
-9. Canvas 或 CanvasScaler 配置不合理。
-10. UI 元素存在明显重叠、截断或空白区域过大的问题。
+| 项 | 值 |
+|----|-----|
+| Unity | 2022.3.62f2c1 |
+| 序列化 | Force Text (`m_SerializationMode: 2`) |
+| 渲染管线 | URP |
+| 游戏类型 | 2D 殖民地模拟 / RPG，横屏（`defaultScreenOrientation: 4`） |
+| 美术风格 | 可爱像素风（`PixelUITheme`） |
+| 字体 | `ark-pixel-12px-monospaced-zh_cn`（`UIFontConfig` 管理） |
+| 文本系统 | Legacy `Text` + `TextMeshProUGUI` 混用 |
 
----
-
-## 二、修改范围
-
-允许修改以下内容：
-
-* `RectTransform`
-
-  * `m_AnchorMin`
-  * `m_AnchorMax`
-  * `m_AnchoredPosition`
-  * `m_SizeDelta`
-  * `m_Pivot`
-  * `m_LocalScale`
-  * `m_LocalRotation`
-* `Canvas`
-* `CanvasScaler`
-* `GraphicRaycaster`
-* `CanvasGroup`
-* `Image`
-* `RawImage`
-* `Text`
-* `TextMeshProUGUI`
-* `Button`
-* `Toggle`
-* `Slider`
-* `ScrollRect`
-* `Mask`
-* `RectMask2D`
-* `HorizontalLayoutGroup`
-* `VerticalLayoutGroup`
-* `GridLayoutGroup`
-* `ContentSizeFitter`
-* `AspectRatioFitter`
-* `LayoutElement`
-* UI 节点的父子层级顺序
-* 已有 UI 节点的名称
-* UI 节点的启用状态
-* 不影响逻辑引用的视觉参数
-
-可以在确实必要时，为已有 GameObject 添加标准 Unity UI 布局组件，但添加组件之前必须确认：
-
-1. 不会破坏已有脚本行为。
-2. 不会与已有 LayoutGroup、ContentSizeFitter 或脚本控制逻辑冲突。
-3. 能够正确生成完整 YAML 组件结构。
-4. 新组件拥有唯一且不冲突的 `fileID`。
-
----
-
-## 三、禁止事项
-
-严格禁止以下操作：
-
-1. 禁止随意修改已有对象的 `fileID`。
-2. 禁止随意修改 `m_GameObject`、`m_TransformParent`、`m_Father` 等引用字段。
-3. 禁止修改脚本组件的 `m_Script` GUID。
-4. 禁止删除未知用途的 MonoBehaviour。
-5. 禁止修改业务脚本中的序列化字段，除非任务明确要求。
-6. 禁止删除按钮、文本、图片或面板，只因为暂时看不出用途。
-7. 禁止断开 Prefab 实例和原始 Prefab 的关联。
-8. 禁止修改 Prefab 的 source GUID。
-9. 禁止修改动画、Animator、Timeline、PlayableDirector 等非 UI 内容。
-10. 禁止修改场景中的游戏逻辑对象。
-11. 禁止调整世界场景中的角色、相机、碰撞体、导航或物理组件。
-12. 禁止把整个 `.unity` 文件重新格式化。
-13. 禁止改变 YAML 文档头部结构。
-14. 禁止生成重复的 `fileID`。
-15. 禁止凭空猜测资源 GUID。
-16. 禁止把场景文件替换成伪代码或简化 YAML。
-17. 禁止把 UI 全部重建，优先复用已有节点。
-18. 禁止修改由代码动态控制的位置或大小，除非确认该字段只负责初始布局。
-19. 禁止同时使用互相冲突的布局组件，例如：
-
-    * LayoutGroup 与脚本强制设置位置冲突
-    * ContentSizeFitter 与父级 LayoutGroup 循环控制
-    * AspectRatioFitter 与 Stretch Anchor 冲突
-20. 禁止直接修改二进制资源。
-
----
-
-## 四、项目特定约束
-
-### 4.1 项目概况
-
-| 项目 | 值 |
-|------|-----|
-| **Unity 版本** | 2022.3.62f2c1 |
-| **序列化模式** | Force Text (`m_SerializationMode: 2`) |
-| **渲染管线** | URP（Universal Render Pipeline） |
-| **游戏类型** | 2D 殖民地模拟 / RPG |
-| **美术风格** | 可爱像素风（PixelUITheme） |
-| **网络层** | Photon PUN |
-| **字体** | 像素字体 `ark-pixel-12px-monospaced-zh_cn`（通过 `UIFontConfig` ScriptableObject 统一管理） |
-| **文本系统** | Legacy `UnityEngine.UI.Text` + `TextMeshProUGUI` 混用 |
-
-### 4.2 UI 架构约束（关键）
-
-本项目的 UI 架构有以下特点，修改场景文件时必须遵守：
-
-#### Canvas 配置
-
-当前场景中的 Canvas 配置：
+### 1.2 Canvas 配置（禁止修改 Render Mode）
 
 ```text
-Render Mode: Screen Space - Camera（m_RenderMode: 1）
+Render Mode: Screen Space - Camera（m_RenderMode: 1）← 禁止改为 Overlay
 UI Scale Mode: Scale With Screen Size（m_UiScaleMode: 1）
 Reference Resolution: 1920 × 1080
 Screen Match Mode: Match Width Or Height（m_ScreenMatchMode: 0）
 Match: 0（优先匹配宽度）
 ```
 
-> **重要**：项目使用 `Screen Space - Camera` 模式，Canvas 引用了场景中的 Camera。**禁止擅自将 Render Mode 改为 Screen Space - Overlay**，否则会破坏与相机 depth 相关的渲染排序。
+Canvas 上挂载了自定义初始化脚本（`initPanel` / `initFont`, GUID `4d8eda0c8c2b6aa4e9d2ab21723ce68c`），修改 Canvas 时不得移除或改动该 MonoBehaviour。
 
-Canvas 上挂载了自定义初始化脚本（`initPanel` / `initFont`），该脚本负责面板初始化和字体设置，修改 Canvas GameObject 时不得移除或修改该 MonoBehaviour。
+### 1.3 UI 架构
 
-#### UI 根节点
+- **根节点**：Tag = `"UIRoot"`（`TagConstant.UI_TAG`），代码通过 `GameObject.FindGameObjectWithTag("UIRoot")` 查找。禁止修改此 Tag。
+- **面板系统**：`PanelController` 维护 `Stack<IBasePanel>`，基类 `ABasePanel<BP>`。面板通过 `Panel.Name` 匹配 UIRoot 下的子节点名称。
+- **动态加载**：面板通过 `ResourceManager.Instantiate()` 从 `Resources/` 运行时加载——不是所有 UI 都在场景 YAML 中。
+- **Prefab 存放**：`Resources/` 和 `ResourcesLocal/Prefabs/`（ItemBox 系列列表项等）。
 
-- UI 根 GameObject 的 Tag 为 `"UIRoot"`（定义在 `TagConstant.UI_TAG`）。
-- 代码通过 `GameObject.FindGameObjectWithTag("UIRoot")` 查找 UI 根节点。
-- **禁止修改 UI 根节点的 Tag**。
-
-#### 面板系统（PanelController）
-
-项目使用栈式面板系统：
-
-- `PanelController` 维护一个 `Stack<IBasePanel>`，管理面板的显示/暂停/恢复/退出。
-- 面板基类为 `ABasePanel<BP>`，面板通过 `Panel.Name` 在 UIRoot 下查找对应子节点。
-- 面板在运行时通过 `ResourceManager.Instantiate()` 动态加载——**不是所有面板都在场景 YAML 中以 GameObject 形式存在**。
-- 修改场景中存在的面板节点时，需确认其名称与 `ABasePanel.Name` 一致（如 `"Foreground"`、`"PauseMenu"` 等）。
-
-#### 脚本查找子节点的模式
-
-项目脚本通过以下方式查找 UI 子节点，**修改节点名称或层级时必须评估影响**：
+### 1.4 脚本查找子节点的三种模式（修改名称/层级时必须评估影响）
 
 ```csharp
-// 模式1：按名称递归查找（ForegroundPanel）
-transform.Find("Center/Note")
+// ① 按名称递归查找
 FindChildTransform(panelTransform, "SaveSlotPanel")
+transform.Find("Center/Note")
 
-// 模式2：按名称查找组件（广泛使用）
-LAB2D.Tool.Tool.GetComponentInChildren<Button>(gameObject, "Start")
-LAB2D.Tool.Tool.GetComponentInChildren<Text>(gameObject, "PlayerName")
+// ② 按名称查组件（项目中最常用）
+Tool.GetComponentInChildren<Button>(gameObject, "Start")
+Tool.GetComponentInChildren<Text>(gameObject, "PlayerName")
 
-// 模式3：GetChild(index) 遍历
-transform.GetChild(i)  // 注意：修改子节点顺序可能影响此类代码
+// ③ GetChild(index) —— 修改父节点子顺序会直接影响
+transform.GetChild(i)
 ```
 
-**规则**：
-- 修改通过名称查找的节点时，**保持节点名称不变**，或同步更新对应脚本中的名称字符串。
-- 如果脚本使用 `GetChild(index)`，**禁止修改对应父节点的子对象顺序**。
+**规则**：模式①②保持节点名称不变；模式③禁止修改子对象顺序。
 
-### 4.3 UI 主题约束
+### 1.5 PixelUITheme 配色
 
-项目使用 `PixelUITheme` 定义了统一的像素风配色方案：
+| 用途 | 颜色 | 色值 |
+|------|------|------|
+| 主按钮 Normal / Hover / Pressed / Selected | 粉 → 浅粉 → 金黄 → 薄荷绿 | `#F2A0AF` / `#FCC8D5` / `#F9D56E` / `#7ECB9A` |
+| 危险按钮 | 珊瑚红 | `#E8837A` |
+| 对话框背景 | 暖白 (alpha 245) | `#FFF5EC` |
+| 模态遮罩 | 深棕 (alpha 0.5) | `#4A3829` |
+| 文本主色 / 次要 / 强调 | 深棕 / 灰棕 / 粉红 | `#4A3728` / `#8B7D72` / `#E85D75` |
+| 血量 / 魔法 / 经验 | 珊瑚 / 淡紫 / 金黄 | `#F27A6B` / `#C5B4E3` / `#F9D56E` |
+| 正面 / 信息 / 特殊 | 薄荷绿 / 天蓝 / 薰衣草 | `#7ECB9A` / `#7CB8E4` / `#C5B4E3` |
 
-| 用途 | 颜色 |
-|------|------|
-| 主按钮 Normal | `#F2A0AF`（粉红） |
-| 主按钮 Highlighted | `#FCC8D5`（浅粉） |
-| 主按钮 Pressed | `#F9D56E`（金黄） |
-| 主按钮 Selected | `#7ECB9A`（薄荷绿） |
-| 危险按钮 Normal | `#E8837A`（珊瑚红） |
-| 对话框背景 | `#FFF5EC`（暖白，alpha 245） |
-| 模态遮罩 | `#4A3829`（深棕，alpha 0.5） |
-| 文本主色 | `#4A3728`（深棕） |
-| 文本次要色 | `#8B7D72`（灰棕） |
-
-- **不要为了追求统一而破坏已有美术风格**。
-- 修改 Image 颜色时优先使用 PixelUITheme 中定义的颜色值。
-- 像素字体（ark-pixel）字号选择有限（通常为 12px 的整数倍），调整字号时需注意。
+修改颜色时**优先使用上表中的值**。不要因追求统一而破坏像素风美术风格。
 
 ---
 
-## 五、执行流程
+## 二、修改范围
 
-必须严格按照以下步骤执行。
+### 允许修改
 
-### 步骤 1：读取项目约束
+| 类别 | 具体字段 |
+|------|----------|
+| **RectTransform** | `m_AnchorMin`, `m_AnchorMax`, `m_AnchoredPosition`, `m_SizeDelta`, `m_Pivot`, `m_LocalScale`, `m_LocalRotation` |
+| **Canvas** | `m_RenderMode` 除外 |
+| **CanvasScaler** | `m_ReferenceResolution`, `m_MatchWidthOrHeight`, `m_ScreenMatchMode` |
+| **Image/RawImage** | `m_Color`（含 alpha） |
+| **Text / TMP** | `m_FontSize`, `m_Color`, `m_Alignment`, `m_LineSpacing`, `m_OverflowMode` |
+| **Button** | `m_Colors` 状态色 |
+| **LayoutGroup** | `m_Spacing`, `m_Padding`, `m_ChildAlignment` |
+| **ScrollRect** | `horizontal`, `vertical`, `movementType`, `scrollSensitivity` |
+| **其他** | `CanvasGroup.alpha`, 层级顺序, 节点启用状态, 节点名称（确认无代码引用时） |
 
-先检查以下内容：
+必要时可为已有 GameObject 添加布局组件（LayoutGroup / ContentSizeFitter / LayoutElement），前提：fileID 唯一、不破坏脚本行为、不与已有组件冲突。
 
-* `ProjectSettings/ProjectVersion.txt`
-* `ProjectSettings/EditorSettings.asset`
-* `ProjectSettings/ProjectSettings.asset`
-* `ProjectSettings/GraphicsSettings.asset`
-* 目标场景文件
-* 目标场景引用的 UI Prefab（如 `Resources/` 下的 UI 预制体）
-* 与目标 UI 相关的脚本（`Scripts/2D/UI/` 目录）
-* `UIFontConfig` 配置（`Resources/SO/UIFontConfig.asset`）
-* URP 配置（`URP/` 目录）
-* 当前 Canvas 的 Render Mode（确认是 Screen Space - Camera）
-* 当前 CanvasScaler 设置（确认 1920×1080, MatchWidthOrHeight）
+### 严格禁止
 
-确认项目已启用：
-
-```text
-Asset Serialization Mode: Force Text  ✅（已确认 m_SerializationMode: 2）
-Version Control Mode: Visible Meta Files
-```
-
-> 本项目已确认使用 Force Text 序列化，可以直接修改 `.unity` 文件。
-
----
-
-### 步骤 2：建立场景对象关系
-
-解析目标 `.unity` 文件，建立以下映射：
-
-```text
-GameObject fileID
-    ├── Transform / RectTransform fileID
-    ├── Component fileID
-    ├── MonoBehaviour fileID
-    ├── Parent fileID
-    └── Children fileID
-```
-
-需要识别：
-
-* 根 Canvas（Tag 为 "UIRoot" 或包含 Canvas 组件的顶层 GameObject）
-* EventSystem
-* 主面板（Foreground、PauseMenu 等）
-* 顶部栏
-* 底部栏
-* 左右侧面板
-* 弹窗
-* 按钮（通过名称如 "Start"、"Pause"、"Setting"、"Save" 等识别）
-* 文本（通过名称如 "PlayerName"、"Tip"、"Text" 等识别）
-* 图片
-* ScrollView（如 SaveSlotPanel 的 Viewport/Content 结构）
-* Content
-* Viewport
-* 装饰节点
-* 安全区域节点
-* 动态生成内容的容器（如 `SaveSlotContent`——运行时由 ForegroundPanel 动态创建子元素）
-
-**不得**只根据 YAML 文档出现顺序判断父子关系，必须根据 RectTransform 或 Transform 的引用关系还原层级。
+1. 修改已有 `fileID`、`m_Script` GUID、Prefab source GUID
+2. 修改 `m_GameObject`、`m_TransformParent`、`m_Father` 等引用字段
+3. 删除未知用途的 MonoBehaviour 或业务序列化字段
+4. 断开 Prefab 关联（`m_SourcePrefab` / `m_PrefabInstance`）
+5. Unpack Prefab 或将 UI 全部重建
+6. 修改动画、Animator、游戏逻辑对象、非 UI 内容
+7. 重新格式化整个 `.unity` / `.prefab` 文件、改变 YAML 头部结构
+8. 生成重复 `fileID`、凭空猜测资源 GUID
+9. 切换 Canvas Render Mode
+10. 修改由代码动态控制的位置/大小（除非确认仅用于初始布局）
+11. 布局组件冲突（LayoutGroup + 脚本强设位置、ContentSizeFitter + 父 LayoutGroup 循环）
+12. 修改字体资源 GUID、文本业务内容
 
 ---
 
-### 步骤 3：识别 UI 问题
+## 三、设计规范
 
-分析并记录：
+### 3.1 字号层级（像素字体：12px 整数倍）
 
-1. Anchor 与元素用途不匹配。
-2. Pivot 设置导致定位异常。
-3. 使用固定像素定位导致分辨率适配差。
-4. 同类按钮尺寸不一致。
-5. 文本区域过小导致截断（像素字体尤其注意）。
-6. 文本与背景边距过小。
-7. 多个元素重叠。
-8. ScrollView 的 Viewport 或 Content 配置异常。
-9. LayoutGroup 间距不统一。
-10. ContentSizeFitter 设置冲突。
-11. CanvasScaler 未使用合理的参考分辨率。
-12. UI 根节点存在异常缩放（注意：当前 Canvas 的 `m_LocalScale` 为 `{x: 0, y: 0, z: 0}`，可能由代码在运行时设置）。
-13. UI 对象的 Z 轴或 LocalScale 异常。
-14. 弹窗没有居中。
-15. 顶栏或底栏没有正确吸附屏幕边缘。
-16. Stretch Anchor 和 SizeDelta 配置冲突。
-17. 文本字号与容器不匹配。
-18. 按钮点击区域过小（像素风游戏按钮建议不小于 44×44）。
-19. 横竖屏或超宽屏下留白异常。
-20. 手机刘海屏安全区域适配缺失。
+| 层级 | 字号 | 用途 |
+|------|------|------|
+| 标题 | 36 | 面板标题、结算大标题 |
+| 副标题 | 24 | 区块标题、Tab 标签 |
+| 正文 | 12（单行）或 24（多行） | 物品名、描述、按钮文字 |
+| 辅助 | 12 | 数量、倒计时、提示小字 |
+
+行间距 ≥ 字号的 1.3 倍。同一面板内不超过 2 种字体。
+
+### 3.2 间距规范（8px 像素网格）
+
+| 用途 | 值 |
+|------|-----|
+| 元素间最小间距 | 8 |
+| 常规元素间距 | 16 |
+| 分组间距 | 24 |
+| 面板内边距 | 16-24 |
+| 页面边距 | 32 |
+| 按钮最小点击区 | 44×44（推荐 48×48） |
+
+同类元素必须保持相同高度、宽度策略、内外边距、对齐方式。
+
+### 3.3 Anchor 速查
+
+| 元素类型 | Anchor Min | Anchor Max | Pivot |
+|----------|------------|------------|-------|
+| 顶栏吸附 | (0, 1) | (1, 1) | (0.5, 1) |
+| 底栏吸附 | (0, 0) | (1, 0) | (0.5, 0) |
+| 左侧栏 | (0, 0) | (0, 1) | (0, 0.5) |
+| 右侧栏 | (1, 0) | (1, 1) | (1, 0.5) |
+| 全屏拉伸 | (0, 0) | (1, 1) | (0.5, 0.5) |
+| 居中固定 | (0.5, 0.5) | (0.5, 0.5) | (0.5, 0.5) |
+
+必须结合父节点和 UI 语义判断，不得机械套用。
+
+### 3.4 视觉层次
+
+- **前景/背景分离**：重要信息（血量、分数、倒计时）用更大字号 + 更亮颜色；装饰元素降低透明度。
+- **焦点引导**：打开面板后第一眼落点应是核心内容，而非装饰或次要按钮。
+- **留白**：元素之间保留足够间距，分组间距 > 元素间距。
+- **状态色差异**：Normal / Hover / Pressed / Disabled 四种状态颜色必须有明确区分。
+
+### 3.5 ScrollView 标准
+
+```text
+ScrollView → Viewport（含 Mask）→ Content
+
+垂直列表 Content: AnchorMin (0,1)  AnchorMax (1,1)  Pivot (0.5,1)
+```
+
+避免 LayoutGroup + ContentSizeFitter 循环布局。
 
 ---
 
-## 六、布局优化原则
+## 四、执行流程
 
-### 1. Canvas
+### 步骤 1：扫描目标
 
-本项目使用 **Screen Space - Camera** 模式：
+- 读取 `ProjectVersion.txt`、`EditorSettings.asset`、`ProjectSettings.asset`、`GraphicsSettings.asset`
+- 读取目标 `.unity` 场景和目标 UI 相关 `.prefab`
+- 读取相关脚本（`Scripts/2D/UI/` 下的对应文件）
+- 确认 Canvas Render Mode 和 CanvasScaler 参数
 
-```text
-Canvas Render Mode: Screen Space - Camera
-m_RenderMode: 1
-```
+### 步骤 2：识别问题
 
-**不要修改为 Screen Space - Overlay。** 该模式与 URP 相机渲染排序相关。
+解析 YAML，建立 GameObject → Component → Parent/Children 映射（**不得**只按文档出现顺序判断层级）。
 
-Canvas 根对象应保持（注意 Scale 可能由代码在运行时设置）：
+逐项检查：
 
-```text
-Local Position: 0, 0, 0
-Local Rotation: 0, 0, 0
-```
+| 类别 | 检查点 |
+|------|--------|
+| **布局** | Anchor/Pivot 是否匹配用途、Stretch+SizeDelta 冲突、弹窗居中、顶底栏贴边 |
+| **间距** | 同类元素间距统一、面板内边距对称、无重叠或异常空白 |
+| **尺寸** | 同类按钮/图标/格子尺寸一致、按钮 ≥ 44×44、内容不被截断 |
+| **文字** | 字号是否 12px 倍数、层级是否清晰、是否超出容器、行间距是否足够 |
+| **颜色** | 语义是否一致、按钮状态色是否区分、是否使用 PixelUITheme 色值 |
+| **层级** | 遮挡关系是否正确、是否影响 `GetChild(index)` |
+| **ScrollView** | Viewport/Content 层级是否完整、LayoutGroup+ContentSizeFitter 是否冲突 |
+| **适配** | CanvasScaler Match 值是否合理、宽屏/窄屏下表现 |
 
----
+### 步骤 3：确定修改顺序
 
-### 2. CanvasScaler
+1. 低风险高收益优先：颜色、字号、间距（不改结构）
+2. 中风险其次：Anchor、Pivot、SizeDelta（改 RectTransform 参数）
+3. 高风险跳过或只给建议：需要理解业务逻辑、涉及 Prefab 嵌套、脚本动态控制
 
-本项目当前配置：
+### 步骤 4：执行修改
 
-```text
-UI Scale Mode: Scale With Screen Size
-Reference Resolution: 1920 × 1080
-Screen Match Mode: Match Width Or Height
-Match: 0（优先匹配宽度）
-Reference Pixels Per Unit: 100
-```
+- 场景中的 UI → 修改 `.unity` YAML
+- Prefab 中的 UI → 修改 `.prefab` YAML，保留 `.meta`
+- 每次修改后立即检查 YAML 引用完整性
+- 一次只处理一个 UI 区域
 
-这是合理的横屏 16:9 配置。调整时注意：
-
-- 本项目为横屏游戏（`defaultScreenOrientation: 4`），不要改为竖屏分辨率。
-- Match 值 0 表示优先匹配宽度，适合 UI 宽度是关键约束的场景。
-- 如果 UI 在超宽屏（21:9）下拉伸严重，可考虑将 Match 调整为 0.5 或更高的值。
-
----
-
-### 3. Anchor 设置
-
-按照元素用途设置 Anchor。
-
-顶部栏：
+### 步骤 5：验证
 
 ```text
-Anchor Min: 0, 1
-Anchor Max: 1, 1
-Pivot: 0.5, 1
-```
-
-底部栏：
-
-```text
-Anchor Min: 0, 0
-Anchor Max: 1, 0
-Pivot: 0.5, 0
-```
-
-左侧栏：
-
-```text
-Anchor Min: 0, 0
-Anchor Max: 0, 1
-Pivot: 0, 0.5
-```
-
-右侧栏：
-
-```text
-Anchor Min: 1, 0
-Anchor Max: 1, 1
-Pivot: 1, 0.5
-```
-
-全屏背景：
-
-```text
-Anchor Min: 0, 0
-Anchor Max: 1, 1
-Pivot: 0.5, 0.5
-Size Delta: 0, 0
-Anchored Position: 0, 0
-```
-
-居中弹窗：
-
-```text
-Anchor Min: 0.5, 0.5
-Anchor Max: 0.5, 0.5
-Pivot: 0.5, 0.5
-Anchored Position: 0, 0
-```
-
-但必须结合当前父节点和 UI 语义判断，不得机械套用。
-
----
-
-### 4. 间距规范
-
-在没有项目现有设计规范时，使用统一的 8 像素基础网格：
-
-```text
-小间距：8
-普通间距：16
-大间距：24
-模块间距：32
-页面边距：32 或 48
-```
-
-同类元素必须保持：
-
-* 相同高度
-* 相同宽度策略
-* 相同内边距
-* 相同外边距
-* 相同对齐方式
-* 相同圆角视觉规则
-* 相同文字对齐
-
-**不要因为追求统一而破坏像素风美术风格。**
-
----
-
-### 5. 按钮
-
-检查按钮是否满足：
-
-* 点击区域足够大。
-* 文本垂直和水平居中。
-* 图标与文字间距统一。
-* 不同按钮尺寸统一。
-* 不会因为文本长度变化而溢出。
-* 不会被其他 Image 阻挡 Raycast。
-* Navigation 配置不会异常跳转。
-
-像素风游戏按钮建议点击区域不小于：
-
-```text
-44 × 44 Unity UI 像素
-```
-
-本项目按钮通过名称查找（如 `"Start"`, `"Pause"`, `"Save"`），修改名称需同步更新脚本。
-
----
-
-### 6. 文本
-
-本项目使用 Legacy `Text` 和 `TextMeshProUGUI` 混用，字体为像素字体 `ark-pixel-12px-monospaced-zh_cn`。
-
-检查：
-
-* 文本是否超出容器。
-* 是否启用了错误的自动换行。
-* 是否使用过小或过大的字号（像素字体推荐字号：12、24、36 等 12px 的整数倍）。
-* Alignment 是否合理。
-* TextMeshPro 的 Overflow Mode 是否合理。
-* Auto Size 是否导致不同文本视觉不一致。
-* 文本容器是否有合理边距。
-* 多语言文本是否有足够空间。
-
-不要修改文本业务内容。
-
-不要替换字体资源 GUID。
-
----
-
-### 7. ScrollView
-
-检查层级是否符合：
-
-```text
-ScrollView
-└── Viewport
-    └── Content
-```
-
-本项目示例：`SaveSlotPanel` 中的 `SaveSlotViewport` / `SaveSlotContent` 结构。
-
-检查以下字段：
-
-* ScrollRect.content
-* ScrollRect.viewport
-* horizontal
-* vertical
-* movementType
-* inertia
-* scrollSensitivity
-* Viewport Mask 或 RectMask2D
-* Content Anchor
-* Content Pivot
-* LayoutGroup
-* ContentSizeFitter
-
-垂直列表优先采用：
-
-```text
-Content Anchor Min: 0, 1
-Content Anchor Max: 1, 1
-Content Pivot: 0.5, 1
-```
-
-避免 LayoutGroup 与 ContentSizeFitter 形成循环布局。
-
----
-
-## 七、UI 层级优化原则
-
-可以调整同一父节点下 UI 子对象的顺序，以修复遮挡关系。
-
-调整前必须确认：
-
-* 不会破坏脚本通过 `GetChild(index)` 获取对象的逻辑。
-* 不会破坏 LayoutGroup 的元素顺序。
-* 不会改变动态列表的业务顺序（如 `SaveSlotContent` 中的运行时生成元素）。
-* 不会影响按钮、遮罩和弹窗的交互。
-
-推荐层级顺序：
-
-```text
-背景
-装饰
-主要内容
-按钮和交互控件
-提示信息
-弹窗遮罩
-弹窗
-全局提示
-加载界面
-```
-
-本项目特别注意：
-
-* `ForegroundPanel` 通过 `FindChildTransform` 递归查找子节点，不依赖 `GetChild(index)`，层级调整相对安全。
-* `MenuUI` 使用 `transform.Find("Center/Note")`，按路径查找，同层级调整不影响。
-* 动态列表（如 `SaveSlotContent`）的子节点在运行时由代码生成，仅调整场景中预先存在的节点即可。
-
-如果发现脚本使用以下方式访问节点：
-
-```csharp
-transform.GetChild(index)
-```
-
-禁止修改对应父节点的子对象顺序，除非同步修改并验证脚本。
-
----
-
-## 八、Prefab 处理规则
-
-本项目 UI Prefab 存放于 `Resources/` 目录下，通过 `ResourceManager.Instantiate()` 动态加载。场景中的 UI 结构分为两类：
-
-1. **场景内静态 UI**：直接在 `.unity` 文件中定义的 GameObject（如 Canvas、EventSystem、Foreground 面板骨架）。
-2. **动态加载 UI**：运行时从 `Resources/` 实例化的 Prefab（如面板、弹窗、列表项）。
-
-如果 UI 节点来自 Prefab 实例：
-
-1. 优先修改原始 `.prefab` 文件，而不是在每个 `.unity` 场景实例中重复添加 Override。
-2. 如果修改只适用于当前场景，可以修改场景实例 Override。
-3. 不得删除以下信息：
-
-   * `m_SourcePrefab`
-   * `m_CorrespondingSourceObject`
-   * `m_PrefabInstance`
-4. 不得随意将 Prefab 实例展开为普通 GameObject。
-5. 不得执行 Unpack Prefab。
-6. 修改 Prefab 后，应检查所有引用该 Prefab 的场景（Menu、Game、RigisterOrLogin）。
-
-如果无法确认影响范围，只输出建议，不直接修改 Prefab。
-
----
-
-## 九、安全检查
-
-修改 `.unity` 文件后，必须执行以下检查。
-
-### YAML 检查
-
-确认：
-
-* YAML 语法完整。
-* 每个文档块以正确标记开始（`--- !u!<classID> &<fileID>`）。
-* 没有重复 `fileID`。
-* 没有悬空引用。
-* 没有丢失组件引用。
-* GameObject 的 `m_Component` 列表完整。
-* RectTransform 的父子引用一致。
-* MonoBehaviour 的 `m_Script` GUID 未发生非预期变化（特别注意 Canvas 上的自定义脚本 `guid: 4d8eda0c8c2b6aa4e9d2ab21723ce68c`）。
-* Prefab 引用未断开。
-* 文件编码保持不变。
-* 换行符风格尽量保持不变。
-
-### Unity 检查
-
-如果当前环境可以启动 Unity，应使用对应 Unity 版本进行批处理验证。
-
-建议执行：
-
-```bash
-Unity \
-  -batchmode \
-  -quit \
-  -projectPath "<PROJECT_PATH>" \
-  -logFile "<PROJECT_PATH>/Logs/ui-scene-validation.log"
-```
-
-Windows 示例（本项目使用 Unity 2022.3.62f2c1）：
-
-```powershell
-& "C:\Program Files\Unity\Hub\Editor\2022.3.62f2c1\Editor\Unity.exe" `
-  -batchmode `
-  -quit `
-  -projectPath "D:\LAB\Unity\RandomWorld" `
-  -logFile "D:\LAB\Unity\RandomWorld\Logs\ui-scene-validation.log"
-```
-
-重点检查日志中是否出现：
-
-```text
-YAML parse error
-Broken text PPtr
-The referenced script is missing
-Prefab instance problem
-Deserialize
-Failed to load
-MissingReferenceException
-ArgumentException
-Assertion failed
+YAML 检查：
+  - 语法完整、文档块标记正确
+  - 无重复 fileID、无悬空引用
+  - m_Component 列表完整、RectTransform 父子引用一致
+  - m_Script GUID 未变化、Prefab 引用未断开
+
+分辨率检查（横屏游戏）：
+  - 1920×1080 / 2560×1440 / 1366×768 / 1280×720（16:9）
+  - 2560×1080 / 3440×1440（21:9 超宽屏）
+  - 1080×1920（竖屏——验证意外情况）
+
+如果环境可启动 Unity，执行批处理验证：
+  & "C:\Program Files\Unity\Hub\Editor\2022.3.62f2c1\Editor\Unity.exe" `
+    -batchmode -quit `
+    -projectPath "D:\LAB\Unity\RandomWorld" `
+    -logFile "D:\LAB\Unity\RandomWorld\Logs\ui-scene-validation.log"
+
+  检查日志关键词: YAML parse error / Missing script / Prefab instance problem /
+                  Failed to load / MissingReferenceException
 ```
 
 ---
 
-## 十、分辨率验证
+## 五、输出要求
 
-本项目为横屏 16:9 游戏（`defaultScreenOrientation: 4`），参考分辨率 1920×1080。
+### 修改摘要
 
-至少验证以下分辨率或宽高比：
+- 修改了哪些场景 / Prefab / UI 节点
+- 修改了哪些参数（RectTransform / 字号 / 颜色 / 间距 / 层级 / Anchor）
+- 是否修改了 CanvasScaler
+- 是否修改了节点名称（标注是否影响脚本查找）
 
-```text
-1920 × 1080（16:9 基准）
-2560 × 1440（16:9 2K）
-1366 × 768（16:9 笔记本）
-1280 × 720（16:9 HD）
-2560 × 1080（21:9 超宽屏）
-3440 × 1440（21:9 2K 超宽屏）
-1080 × 1920（竖屏——验证意外竖屏时的表现）
-```
-
-检查：
-
-* UI 是否超出屏幕。
-* 顶栏和底栏是否正确贴边。
-* 弹窗是否居中。
-* 按钮是否被裁切。
-* 文本是否截断。
-* ScrollView 是否可正常滚动。
-* 宽屏下是否被异常拉伸（Match=0 时宽度匹配可能导致高度不足）。
-* 窄屏下是否发生严重重叠。
-* 安全区域是否有效。
-* 不同分辨率下 UI 比例是否稳定。
-
----
-
-## 十一、版本控制要求
-
-修改前执行：
-
-```bash
-git status --short
-```
-
-只允许修改与本次 UI 优化相关的文件。
-
-禁止覆盖用户已有未提交修改。
-
-修改后输出：
-
-```bash
-git diff --stat
-git diff -- <目标场景文件>
-```
-
-不要自动提交。
-
-不要自动推送。
-
-不要执行会丢失用户修改的命令，例如：
-
-```bash
-git reset --hard
-git checkout -- .
-git clean -fd
-```
-
----
-
-## 十二、输出要求
-
-完成后必须输出以下内容。
-
-### 1. 修改摘要
-
-列出：
-
-* 修改了哪些场景。
-* 修改了哪些 Prefab。
-* 调整了哪些 UI 节点。
-* 修改了哪些 RectTransform 参数。
-* 添加或删除了哪些布局组件。
-* 是否修改了 CanvasScaler。
-* 是否调整了 UI 层级顺序。
-* 是否修改了节点名称（需标注是否影响脚本查找）。
-
-### 2. 问题与修改对照
-
-使用以下格式：
+### 问题与修改对照
 
 ```text
-问题：
-顶部状态栏使用中心 Anchor，宽屏下不能铺满。
+问题：顶部状态栏使用中心 Anchor，宽屏下不能铺满。
+修改：AnchorMin (0,1) → AnchorMax (1,1), Pivot (0.5,1), SizeDelta x=0。
 
-修改：
-将 AnchorMin 调整为 (0, 1)，AnchorMax 调整为 (1, 1)，
-Pivot 调整为 (0.5, 1)，左右 SizeDelta 调整为 0。
+问题：Pause/TitleText 字号 12 与正文无区分。
+修改：fontSize 12→24, color #8B7D72→#4A3728。
 ```
 
-### 3. 风险说明
+### 风险说明
 
-明确说明：
+- 哪些节点可能受脚本动态控制、哪些修改影响了按名称查找的节点
+- 哪些 Prefab 修改影响多个场景
+- 哪些因引用不明确而未修改、哪些需进入 Unity Editor 人工确认
 
-* 哪些节点可能受到脚本动态控制。
-* 哪些修改影响了通过 `GetComponentInChildren` 或 `FindChildTransform` 按名称查找的节点。
-* 哪些 Prefab 修改会影响其他场景。
-* 哪些节点因为引用关系不明确而没有修改。
-* 哪些调整需要进入 Unity Editor 人工确认。
-
-### 4. 验证结果
-
-输出：
+### 验证结果
 
 ```text
 YAML 结构检查：通过 / 未通过
@@ -740,97 +263,40 @@ Unity 批处理加载：通过 / 未执行 / 未通过
 多分辨率验证：通过 / 未执行 / 部分通过
 ```
 
-如果无法启动 Unity，必须明确写：
+无法启动 Unity 时：
 
 ```text
-当前环境未执行 Unity Editor 实际加载验证，
-本次只完成了 YAML 静态检查。
+当前环境未执行 Unity Editor 实际加载验证，本次只完成了 YAML 静态检查。
 ```
 
 ---
 
-## 十三、执行策略
+## 六、版本控制
 
-采用"小步修改、逐步验证"的方式：
+```bash
+# 修改前
+git status --short
 
-1. 一次只处理一个场景。
-2. 一次只优化一个 UI 区域。
-3. 每次修改后检查 YAML 引用。
-4. 不对整个场景进行大规模重写。
-5. 优先调整现有 RectTransform。
-6. 其次调整已有布局组件。
-7. 最后才考虑添加新的布局组件。
-8. 无法确认安全性的修改，只给出建议，不直接操作。
-9. 对动态 UI（`SaveSlotContent` 等运行时填充的容器）、复杂 Prefab 和脚本控制节点采取保守策略。
-10. 所有修改都必须可以通过 Git diff 清楚审查。
+# 修改后
+git diff --stat
+git diff -- <目标文件>
+```
+
+不自动提交、不自动推送。禁止 `git reset --hard`、`git checkout -- .`、`git clean -fd`。
 
 ---
 
-## 十四、本次任务参数
+## 七、任务参数
 
-项目路径：
-
-```text
-D:\LAB\Unity\RandomWorld
-```
-
-Unity 版本：
-
-```text
-2022.3.62f2c1
-```
-
-目标场景：
-
-```text
-Assets/Scenes/Menu.unity
-Assets/Scenes/Game.unity
-Assets/Scenes/RigisterOrLogin.unity
-```
-
-主要目标分辨率：
-
-```text
-1920×1080 横屏（16:9 基准，Match Width Or Height, Match=0）
-```
-
-渲染管线：
-
-```text
-URP（Universal Render Pipeline）
-```
-
-Canvas 配置：
-
-```text
-Render Mode: Screen Space - Camera（m_RenderMode: 1）
-UI Scale Mode: Scale With Screen Size（m_UiScaleMode: 1）
-Reference Resolution: 1920 × 1080
-Screen Match Mode: Match Width Or Height（m_ScreenMatchMode: 0）
-Match: 0
-```
-
-UI 架构：
-
-```text
-- UI 根节点 Tag: "UIRoot"
-- 面板系统: PanelController + ABasePanel 栈式管理
-- 面板动态加载: ResourceManager.Instantiate() from Resources/
-- 子节点查找: GetComponentInChildren + FindChildTransform（按名称）
-- 主题: PixelUITheme 可爱像素风
-- 字体: ark-pixel-12px-monospaced-zh_cn（UIFontConfig 管理）
-```
-
-重点优化区域：
-
-```text
-<例如主菜单、游戏 HUD、设置弹窗、存档面板、对话面板>
-```
-
-当前已知问题：
-
-```text
-<填写 UI 错位、遮挡、比例不统一、超宽屏拉伸等问题>
-```
-
-请先分析场景文件和关联脚本，输出问题清单，然后直接进行安全范围内的修改。修改完成后执行静态检查，并输出完整修改摘要、风险说明和验证结果。
+| 参数 | 值 |
+|------|-----|
+| 项目路径 | `D:\LAB\Unity\RandomWorld` |
+| Unity 版本 | 2022.3.62f2c1 |
+| 目标场景 | `Scenes/Menu.unity`, `Scenes/Game.unity`, `Scenes/RigisterOrLogin.unity` |
+| 目标 Prefab | `ResourcesLocal/Prefabs/ItemBox/`, `Resources/` 下的 UI Prefab |
+| 参考分辨率 | 1920×1080 横屏（16:9, MatchWidthOrHeight, Match=0） |
+| Canvas | Screen Space - Camera, Scale With Screen Size |
+| UI 根 | Tag `"UIRoot"`, 面板系统 PanelController + ABasePanel |
+| 主题 | PixelUITheme 像素风, 字体 ark-pixel-12px |
+| 重点区域 | `<主菜单 / 游戏 HUD / 设置弹窗 / 存档面板 / 对话面板 / ItemBox 列表项>` |
+| 已知问题 | `<UI 错位、遮挡、比例不统一、超宽屏拉伸、颜色不一致、字号层级混乱>` |
