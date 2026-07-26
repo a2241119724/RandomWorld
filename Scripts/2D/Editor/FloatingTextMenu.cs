@@ -29,33 +29,12 @@ namespace LAB2D.Editor
                 return;
             }
 
-            // 创建浮动文字 Canvas
+            // FloatingTextCanvas 和 FloatingTextPool 应在场景中手动创建
             GameObject canvasObj = GameObject.Find(FloatingTextConstant.CanvasName);
             if (canvasObj == null)
             {
-                canvasObj = FloatingTextTool.EnsureCanvas(FloatingTextConstant.CanvasName, 100);
-                Debug.Log($"[浮动战斗文字] 已创建 Canvas: {FloatingTextConstant.CanvasName}");
-            }
-            else
-            {
-                Debug.Log($"[浮动战斗文字] Canvas 已存在，跳过创建: {FloatingTextConstant.CanvasName}");
-            }
-
-            // 创建池容器（隐藏状态）
-            if (canvasObj != null)
-            {
-                Transform poolContainer = canvasObj.transform.Find(FloatingTextConstant.PoolContainerName);
-                if (poolContainer == null)
-                {
-                    GameObject poolObj = new GameObject(FloatingTextConstant.PoolContainerName);
-                    poolObj.transform.SetParent(canvasObj.transform, false);
-                    poolObj.SetActive(false);
-                    Debug.Log($"[浮动战斗文字] 已创建池容器: {FloatingTextConstant.PoolContainerName}");
-                }
-                else
-                {
-                    Debug.Log($"[浮动战斗文字] 池容器已存在，跳过创建");
-                }
+                Debug.LogWarning($"[浮动战斗文字] 场景中未找到 {FloatingTextConstant.CanvasName}，请手动创建。");
+                return;
             }
 
             Debug.Log("[浮动战斗文字] 安装完成。运行时 FloatingTextManager 会自动初始化并填充对象池。");

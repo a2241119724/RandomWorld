@@ -214,42 +214,14 @@ namespace LAB2D.Tool
         }
 
         /// <summary>
-        /// 安全创建或查找 Canvas，用于承载浮动文字
-        /// 重复调用安全：已存在时直接返回
+        /// 查找场景中已有的 Canvas（不再动态创建，请在场景中手动放置）。
         /// </summary>
         /// <param name="canvasName">Canvas 名称</param>
-        /// <param name="sortingOrder">渲染排序层级</param>
-        /// <returns>Canvas GameObject</returns>
+        /// <param name="sortingOrder">渲染排序层级（保留参数兼容性，不再使用）</param>
+        /// <returns>Canvas GameObject，未找到时返回 null</returns>
         public static GameObject EnsureCanvas(string canvasName, int sortingOrder)
         {
-            GameObject canvasObj = GameObject.Find(canvasName);
-            if (canvasObj != null)
-            {
-                return canvasObj;
-            }
-
-            canvasObj = new GameObject(canvasName);
-            Canvas canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = sortingOrder;
-
-            CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f;
-
-            canvasObj.AddComponent<GraphicRaycaster>();
-
-            // 确保 EventSystem 存在
-            if (UnityEngine.EventSystems.EventSystem.current == null)
-            {
-                GameObject eventSys = new GameObject("EventSystem");
-                eventSys.AddComponent<UnityEngine.EventSystems.EventSystem>();
-                eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-            }
-
-            return canvasObj;
+            return GameObject.Find(canvasName);
         }
     }
 }

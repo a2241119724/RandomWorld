@@ -37,7 +37,6 @@ namespace LAB2D.Gameplay
         public void Initialize()
         {
             if (this.IsInitialized) return;
-            this.beamContainer = new GameObject(EquipmentBeamConstant.BeamContainerName).transform;
             this.activeBeams = new Dictionary<Vector3Int, BeamEntry>();
             this.quadMesh = this.BuildQuadMesh();
             this.sharedMaterial = new Material(Shader.Find("Sprites/Default"));

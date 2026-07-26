@@ -76,15 +76,12 @@ namespace LAB2D.Gameplay
                 this.mainCamera = GameObject.FindGameObjectWithTag("MainCamera")?.GetComponent<Camera>();
             }
 
-            // 创建 Canvas
-            this.canvasObj = FloatingTextTool.EnsureCanvas(
-                FloatingTextConstant.CanvasName,
-                100); // sortingOrder=100，在普通 UI 之上
-
-            // 创建池容器
-            this.poolContainer = new GameObject(FloatingTextConstant.PoolContainerName);
-            this.poolContainer.transform.SetParent(this.canvasObj.transform, false);
-            this.poolContainer.SetActive(false); // 池容器隐藏，不影响渲染
+            // 查找场景中已有的 Canvas 和池容器
+            this.canvasObj = GameObject.Find(FloatingTextConstant.CanvasName);
+            if (this.canvasObj != null)
+            {
+                this.poolContainer = this.canvasObj.transform.Find(FloatingTextConstant.PoolContainerName)?.gameObject;
+            }
 
             // 预热对象池
             this.WarmPool(FloatingTextConstant.DefaultPoolSize);
@@ -103,6 +100,7 @@ namespace LAB2D.Gameplay
         /// <param name="count">预创建数量</param>
         private void WarmPool(int count)
         {
+            if (this.poolContainer == null) return;
             for (int i = 0; i < count; i++)
             {
                 FloatingTextUI ft = this.CreateNewPoolItem(i);
@@ -131,6 +129,8 @@ namespace LAB2D.Gameplay
         /// <returns>可用的 FloatingTextUI</returns>
         private FloatingTextUI GetFromPool()
         {
+            if (this.poolContainer == null) return null;
+
             if (this.availablePool.Count > 0)
             {
                 return this.availablePool.Dequeue();
@@ -165,7 +165,7 @@ namespace LAB2D.Gameplay
         /// <param name="ft">要回收的浮动文字</param>
         public void ReturnToPool(FloatingTextUI ft)
         {
-            if (ft == null)
+            if (ft == null || this.poolContainer == null)
             {
                 return;
             }
@@ -299,7 +299,7 @@ namespace LAB2D.Gameplay
             screenPos.x += FloatingTextTool.RandomHorizontalOffset();
 
             // 将对象移到 Canvas 下（如果不在的话）
-            if (ft.transform.parent != this.canvasObj.transform)
+            if (this.canvasObj != null && ft.transform.parent != this.canvasObj.transform)
             {
                 ft.transform.SetParent(this.canvasObj.transform, false);
             }
