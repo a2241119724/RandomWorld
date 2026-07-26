@@ -53,10 +53,11 @@ namespace LAB2D.UI
         /// <returns>指挥中心 HUD 组件。</returns>
         public static ColonyCommandCenterHUD EnsureRuntimePanel()
         {
-            GameObject existing = GameObject.Find(ColonyCommandCenterConstant.HudRootName);
-            if (existing != null)
+            Transform parent = HudFactory.FindHudParent();
+            Transform existingTransform = parent?.Find(ColonyCommandCenterConstant.HudRootName);
+            if (existingTransform != null)
             {
-                ColonyCommandCenterHUD existingHud = existing.GetComponent<ColonyCommandCenterHUD>();
+                ColonyCommandCenterHUD existingHud = existingTransform.GetComponent<ColonyCommandCenterHUD>();
                 if (existingHud != null)
                 {
                     HudFactory.RepairExisting(existingHud, ColonyCommandCenterConstant.HudToggleKey);
@@ -65,142 +66,8 @@ namespace LAB2D.UI
                 }
             }
 
-            Transform parent = HudFactory.FindHudParent();
-            GameObject root = CreatePanelRoot(parent);
-            ColonyCommandCenterHUD hud = root.GetComponent<ColonyCommandCenterHUD>();
-            hud.UpdateDisplay();
-            return hud;
-        }
-
-        /// <summary>
-        /// 查找 HUD 应挂载的父节点。
-        /// 优先返回 UIRoot/Foreground，其次 UIRoot，都不存在时创建独立 Canvas 兜底。
-        /// </summary>
-        /// <returns>父节点 Transform。</returns>
-        private static Transform FindHudParent()
-        {
-            GameObject uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG);
-            if (uiRoot != null)
-            {
-                Transform foreground = uiRoot.transform.Find("Foreground");
-                if (foreground != null)
-                {
-                    return foreground;
-                }
-
-                return uiRoot.transform;
-            }
-
-            return CreateCanvasObject().transform;
-        }
-
-        /// <summary>
-        /// 创建独立 Canvas 对象。
-        /// 仅在 Editor 生成 Prefab 或兜底场景使用；常规运行时 HUD 会挂载到 UIRoot/Foreground 下。
-        /// </summary>
-        /// <returns>Canvas 根对象。</returns>
-        public static GameObject CreateCanvasObject()
-        {
-            GameObject canvasObject = new GameObject(
-                ColonyCommandCenterConstant.CanvasName,
-                typeof(RectTransform),
-                typeof(Canvas),
-                typeof(CanvasScaler),
-                typeof(GraphicRaycaster));
-
-            Canvas canvas = canvasObject.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 120;
-
-            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920.0f, 1080.0f);
-            scaler.matchWidthOrHeight = 0.5f;
-            return canvasObject;
-        }
-
-        /// <summary>
-        /// 创建 HUD 根节点和完整 UI 层级。
-        /// </summary>
-        /// <param name="parent">Canvas 或目标父节点。</param>
-        /// <returns>HUD 根对象。</returns>
-        public static GameObject CreatePanelRoot(Transform parent)
-        {
-            GameObject root = new GameObject(
-                ColonyCommandCenterConstant.HudRootName,
-                typeof(RectTransform),
-                typeof(CanvasGroup));
-            root.transform.SetParent(parent, false);
-
-            RectTransform rootRect = root.GetComponent<RectTransform>();
-            rootRect.anchorMin = new Vector2(1.0f, 0.5f);
-            rootRect.anchorMax = new Vector2(1.0f, 0.5f);
-            rootRect.pivot = new Vector2(1.0f, 0.5f);
-            rootRect.anchoredPosition = new Vector2(
-                ColonyCommandCenterConstant.HudAnchoredX,
-                ColonyCommandCenterConstant.HudAnchoredY);
-            rootRect.sizeDelta = new Vector2(
-                ColonyCommandCenterConstant.HudWidth,
-                ColonyCommandCenterConstant.HudHeight);
-
-            GameObject background = new GameObject(
-                ColonyCommandCenterConstant.BackgroundName,
-                typeof(RectTransform),
-                typeof(Image));
-            background.transform.SetParent(root.transform, false);
-            RectTransform backgroundRect = background.GetComponent<RectTransform>();
-            backgroundRect.anchorMin = Vector2.zero;
-            backgroundRect.anchorMax = Vector2.one;
-            backgroundRect.offsetMin = Vector2.zero;
-            backgroundRect.offsetMax = Vector2.zero;
-            Image backgroundImage = background.GetComponent<Image>();
-            backgroundImage.color = new Color(
-                PixelUITheme.DialogBoxBg.r,
-                PixelUITheme.DialogBoxBg.g,
-                PixelUITheme.DialogBoxBg.b,
-                0.94f);
-            backgroundImage.raycastTarget = false;
-
-            Text title = CreateText(
-                root.transform,
-                ColonyCommandCenterConstant.TitleTextName,
-                ColonyCommandCenterConstant.TitleFontSize,
-                TextAnchor.MiddleLeft);
-            RectTransform titleRect = title.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.0f, 1.0f);
-            titleRect.anchorMax = new Vector2(1.0f, 1.0f);
-            titleRect.pivot = new Vector2(0.5f, 1.0f);
-            titleRect.offsetMin = new Vector2(ColonyCommandCenterConstant.Padding, -44.0f);
-            titleRect.offsetMax = new Vector2(-ColonyCommandCenterConstant.Padding, -8.0f);
-
-            Text main = CreateText(
-                root.transform,
-                ColonyCommandCenterConstant.MainTextName,
-                ColonyCommandCenterConstant.MainFontSize,
-                TextAnchor.UpperLeft);
-            RectTransform mainRect = main.GetComponent<RectTransform>();
-            mainRect.anchorMin = new Vector2(0.0f, 0.48f);
-            mainRect.anchorMax = new Vector2(1.0f, 0.88f);
-            mainRect.offsetMin = new Vector2(ColonyCommandCenterConstant.Padding, 0.0f);
-            mainRect.offsetMax = new Vector2(-ColonyCommandCenterConstant.Padding, 0.0f);
-
-            Text detail = CreateText(
-                root.transform,
-                ColonyCommandCenterConstant.DetailTextName,
-                ColonyCommandCenterConstant.DetailFontSize,
-                TextAnchor.UpperLeft);
-            RectTransform detailRect = detail.GetComponent<RectTransform>();
-            detailRect.anchorMin = new Vector2(0.0f, 0.0f);
-            detailRect.anchorMax = new Vector2(1.0f, 0.46f);
-            detailRect.offsetMin = new Vector2(ColonyCommandCenterConstant.Padding, ColonyCommandCenterConstant.Padding);
-            detailRect.offsetMax = new Vector2(-ColonyCommandCenterConstant.Padding, -4.0f);
-
-            ColonyCommandCenterHUD hud = root.AddComponent<ColonyCommandCenterHUD>();
-            hud.titleText = title;
-            hud.mainText = main;
-            hud.detailText = detail;
-            hud.SetVisible(true);
-            return root;
+            Debug.LogWarning($"[ColonyCommandCenterHUD] 在 Foreground 下未找到 {ColonyCommandCenterConstant.HudRootName}，请手动创建。");
+            return null;
         }
 
         private void Awake()
@@ -369,35 +236,6 @@ namespace LAB2D.UI
             {
                 this.detailText.text = report.ToDetailText();
             }
-        }
-
-        /// <summary>
-        /// 创建 Text 节点。
-        /// </summary>
-        /// <param name="parent">父节点。</param>
-        /// <param name="name">节点名。</param>
-        /// <param name="fontSize">字号。</param>
-        /// <param name="alignment">对齐方式。</param>
-        /// <returns>Text 组件。</returns>
-        private static Text CreateText(Transform parent, string name, int fontSize, TextAnchor alignment)
-        {
-            GameObject textObject = new GameObject(name, typeof(RectTransform), typeof(Text));
-            textObject.transform.SetParent(parent, false);
-            Text text = textObject.GetComponent<Text>();
-            Font font = Resources.Load<Font>(WorkerConditionConstant.FontResourcePath);
-            if (font != null)
-            {
-                text.font = font;
-            }
-
-            text.fontSize = fontSize;
-            text.alignment = alignment;
-            text.supportRichText = true;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            text.color = PixelUITheme.TextPrimary;
-            text.raycastTarget = false;
-            return text;
         }
 
         /// <summary>

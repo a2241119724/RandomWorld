@@ -56,7 +56,6 @@ namespace LAB2D.UI
         private void OnEnable()
         {
             this.nextRefreshTime = 0.0f;
-            this.UpdateDisplay();
         }
 
         private void Update()
@@ -128,10 +127,11 @@ namespace LAB2D.UI
         /// </summary>
         public static WorkerTaskQueueHUD EnsureRuntimePanel()
         {
-            GameObject existing = GameObject.Find(WorkerTaskHudConstant.HudRootName);
-            if (existing != null)
+            Transform parent = HudFactory.FindHudParent();
+            Transform existingTransform = parent?.Find(WorkerTaskHudConstant.HudRootName);
+            if (existingTransform != null)
             {
-                WorkerTaskQueueHUD existingHud = existing.GetComponent<WorkerTaskQueueHUD>();
+                WorkerTaskQueueHUD existingHud = existingTransform.GetComponent<WorkerTaskQueueHUD>();
                 if (existingHud != null)
                 {
                     HudFactory.RepairExisting(existingHud, WorkerTaskHudConstant.HudToggleKey, true);
@@ -140,69 +140,8 @@ namespace LAB2D.UI
                 }
             }
 
-            Transform parent = HudFactory.FindHudParent();
-            GameObject root = CreatePanelRoot(parent);
-            WorkerTaskQueueHUD hud = root.GetComponent<WorkerTaskQueueHUD>();
-            hud.UpdateDisplay();
-            return hud;
-        }
-
-        private static GameObject CreatePanelRoot(Transform parent)
-        {
-            GameObject root = new GameObject(
-                WorkerTaskHudConstant.HudRootName,
-                typeof(RectTransform),
-                typeof(CanvasGroup));
-            root.transform.SetParent(parent, false);
-
-            RectTransform rootRect = root.GetComponent<RectTransform>();
-            rootRect.anchorMin = new Vector2(0.0f, 1.0f);
-            rootRect.anchorMax = new Vector2(0.0f, 1.0f);
-            rootRect.pivot = new Vector2(0.0f, 1.0f);
-            rootRect.anchoredPosition = new Vector2(
-                WorkerTaskHudConstant.HudAnchoredX,
-                WorkerTaskHudConstant.HudAnchoredY);
-            rootRect.sizeDelta = new Vector2(
-                WorkerTaskHudConstant.HudWidth,
-                WorkerTaskHudConstant.HudHeight);
-
-            GameObject background = new GameObject("Background", typeof(RectTransform), typeof(Image));
-            background.transform.SetParent(root.transform, false);
-            RectTransform bgRect = background.GetComponent<RectTransform>();
-            bgRect.anchorMin = Vector2.zero;
-            bgRect.anchorMax = Vector2.one;
-            bgRect.offsetMin = Vector2.zero;
-            bgRect.offsetMax = Vector2.zero;
-            background.GetComponent<Image>().color = PixelUITheme.DialogBoxBg;
-
-            GameObject textObj = new GameObject(
-                WorkerTaskHudConstant.HudTextName,
-                typeof(RectTransform),
-                typeof(Text));
-            textObj.transform.SetParent(root.transform, false);
-            RectTransform textRect = textObj.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(
-                WorkerTaskHudConstant.HudPaddingX,
-                WorkerTaskHudConstant.HudPaddingY);
-            textRect.offsetMax = new Vector2(
-                -WorkerTaskHudConstant.HudPaddingX,
-                -WorkerTaskHudConstant.HudPaddingY);
-
-            Text text = textObj.GetComponent<Text>();
-            Font font = Resources.Load<Font>(WorkerConditionConstant.FontResourcePath);
-            if (font != null) text.font = font;
-            text.fontSize = WorkerTaskHudConstant.HudFontSize;
-            text.alignment = TextAnchor.UpperLeft;
-            text.supportRichText = true;
-            text.color = PixelUITheme.TextPrimary;
-            text.text = WorkerTaskHudConstant.NoTaskText;
-
-            WorkerTaskQueueHUD hud = root.AddComponent<WorkerTaskQueueHUD>();
-            hud.queueText = text;
-            hud.SetVisible(true);
-            return root;
+            Debug.LogWarning($"[WorkerTaskQueueHUD] 在 Foreground 下未找到 {WorkerTaskHudConstant.HudRootName}，请手动创建。");
+            return null;
         }
     }
 }

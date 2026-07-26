@@ -54,47 +54,21 @@ namespace LAB2D.UI
                 return;
             }
 
-            // 查找 EventSystem
-            if (UnityEngine.EventSystems.EventSystem.current == null)
-            {
-                GameObject eventSys = new GameObject("EventSystem");
-                eventSys.AddComponent<UnityEngine.EventSystems.EventSystem>();
-                eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-            }
-
-            // 查找 UI/Foreground 父节点
             Transform uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG)?.transform;
             Transform foreground = uiRoot?.Find("Foreground");
-            if (foreground == null)
+            Transform hudTransform = foreground?.Find(SkillConstant.SkillHUDRootName);
+            if (hudTransform != null)
             {
-                Debug.LogError($"[SkillHUD] 无法找到 {TagConstant.UI_TAG}/Foreground 节点，SkillHUD 创建失败");
+                RuntimeInstance = hudTransform.GetComponent<SkillHUD>();
+                if (RuntimeInstance == null)
+                {
+                    Debug.LogWarning($"[SkillHUD] 场景中存在 {SkillConstant.SkillHUDRootName} 但未挂载 SkillHUD 组件。");
+                }
+
                 return;
             }
 
-            // 创建 HUD 根节点（挂载到 Foreground 下，使用 UI 的 Canvas）
-            GameObject rootObj = new GameObject(SkillConstant.SkillHUDRootName);
-            rootObj.transform.SetParent(foreground, false);
-            rootObj.transform.SetAsLastSibling();
-            RectTransform rootRect = rootObj.AddComponent<RectTransform>();
-            rootRect.anchorMin = new Vector2(0.5f, 0f);
-            rootRect.anchorMax = new Vector2(0.5f, 0f);
-            rootRect.pivot = new Vector2(0.5f, 0f);
-            rootRect.anchoredPosition = new Vector2(0f, SkillConstant.HudBottomMargin);
-
-            // 添加 HorizontalLayoutGroup 自动排列技能按钮
-            HorizontalLayoutGroup layout = rootObj.AddComponent<HorizontalLayoutGroup>();
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.spacing = SkillConstant.SkillButtonSpacing;
-            layout.childControlWidth = false;
-            layout.childControlHeight = false;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = false;
-
-            // 挂载 SkillHUD 组件
-            SkillHUD hud = rootObj.AddComponent<SkillHUD>();
-            hud.CreateSkillButtons(rootObj.transform);
-
-            RuntimeInstance = hud;
+            Debug.LogWarning($"[SkillHUD] 在 Foreground 下未找到 {SkillConstant.SkillHUDRootName}，请手动创建。");
         }
 
         /// <summary>

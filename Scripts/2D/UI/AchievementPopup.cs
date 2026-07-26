@@ -43,24 +43,19 @@ namespace LAB2D.UI
             }
 
             Transform foreground = AchievementTool.FindForeground();
-            if (foreground == null)
+            Transform popupTransform = foreground?.Find(AchievementConstant.PopupRootName);
+            if (popupTransform != null)
             {
-                Debug.LogError($"[AchievementPopup] 无法找到 {TagConstant.UI_TAG}/Foreground 节点，弹窗创建失败");
+                runtimeInstance = popupTransform.GetComponent<AchievementPopup>();
+                if (runtimeInstance == null)
+                {
+                    Debug.LogWarning($"[AchievementPopup] 场景中存在 {AchievementConstant.PopupRootName} 但未挂载 AchievementPopup 组件。");
+                }
+
                 return;
             }
 
-            if (UnityEngine.EventSystems.EventSystem.current == null)
-            {
-                GameObject eventSys = new GameObject("EventSystem");
-                eventSys.AddComponent<UnityEngine.EventSystems.EventSystem>();
-                eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-            }
-
-            GameObject rootObj = new GameObject(AchievementConstant.PopupRootName);
-            rootObj.transform.SetParent(foreground, false);
-            AchievementPopup popup = rootObj.AddComponent<AchievementPopup>();
-            popup.Initialize();
-            runtimeInstance = popup;
+            Debug.LogWarning($"[AchievementPopup] 在 Foreground 下未找到 {AchievementConstant.PopupRootName}，请手动创建。");
         }
 
         /// <summary>

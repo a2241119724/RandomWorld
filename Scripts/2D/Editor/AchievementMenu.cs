@@ -30,43 +30,27 @@ namespace LAB2D.Editor
                 return;
             }
 
-            Transform foreground = AchievementTool.FindForeground();
-            if (foreground == null)
+            GameObject popupObj = GameObject.Find(AchievementConstant.PopupRootName);
+            if (popupObj == null)
             {
-                Debug.LogError($"[成就系统] 无法找到 {TagConstant.UI_TAG}/Foreground 节点，安装失败");
-                return;
-            }
-
-            // 创建弹窗对象（挂载到 UI/Foreground 下，复用 UI 的 Canvas）
-            Transform existingPopup = foreground.Find(AchievementConstant.PopupRootName);
-            if (existingPopup == null)
-            {
-                GameObject popupObj = new GameObject(AchievementConstant.PopupRootName);
-                popupObj.transform.SetParent(foreground, false);
-                popupObj.AddComponent<AchievementPopup>();
-                Debug.Log($"[成就系统] 已创建弹窗对象: {AchievementConstant.PopupRootName}");
+                Debug.LogWarning($"[成就系统] 场景中未找到 {AchievementConstant.PopupRootName}，请在场景中手动创建。");
             }
             else
             {
-                Debug.Log($"[成就系统] 弹窗对象已存在，跳过创建: {AchievementConstant.PopupRootName}");
+                Debug.Log($"[成就系统] 弹窗对象已存在: {AchievementConstant.PopupRootName}");
             }
 
-            // 创建面板对象（挂载到 UI/Foreground 下，复用 UI 的 Canvas）
-            Transform existingPanel = foreground.Find(AchievementConstant.PanelRootName);
-            if (existingPanel == null)
+            GameObject panelObj = GameObject.Find(AchievementConstant.PanelRootName);
+            if (panelObj == null)
             {
-                GameObject panelObj = new GameObject(AchievementConstant.PanelRootName);
-                panelObj.transform.SetParent(foreground, false);
-                panelObj.AddComponent<AchievementPanel>();
-                Debug.Log($"[成就系统] 已创建面板对象: {AchievementConstant.PanelRootName}");
+                Debug.LogWarning($"[成就系统] 场景中未找到 {AchievementConstant.PanelRootName}，请在场景中手动创建。");
             }
             else
             {
-                Debug.Log($"[成就系统] 面板对象已存在，跳过创建: {AchievementConstant.PanelRootName}");
+                Debug.Log($"[成就系统] 面板对象已存在: {AchievementConstant.PanelRootName}");
             }
 
-            Debug.Log("[成就系统] 安装完成！成就弹窗和面板已就绪。");
-            Debug.Log("[成就系统] 提示：按 F7 键可打开/关闭成就面板。");
+            Debug.Log("[成就系统] 检查完成。");
         }
 
         /// <summary>

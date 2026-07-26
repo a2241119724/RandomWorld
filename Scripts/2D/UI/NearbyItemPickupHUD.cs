@@ -52,61 +52,22 @@ namespace LAB2D.UI
                 return;
             }
 
-            if (UnityEngine.EventSystems.EventSystem.current == null)
-            {
-                GameObject eventSys = new GameObject("EventSystem");
-                eventSys.AddComponent<UnityEngine.EventSystems.EventSystem>();
-                eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-            }
-
-            // 查找 UI/Foreground 父节点，复用 UI 的 Canvas
+            // transform.Find 可查找 inactive 子对象
             Transform uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG)?.transform;
             Transform foreground = uiRoot?.Find("Foreground");
-            if (foreground == null)
+            Transform rootTransform = foreground?.Find(NearbyItemPickupConstant.CanvasName);
+            if (rootTransform != null)
             {
-                Debug.LogError($"[NearbyItemPickupHUD] 无法找到 {TagConstant.UI_TAG}/Foreground 节点，创建失败");
+                Instance = rootTransform.GetComponent<NearbyItemPickupHUD>();
+                if (Instance == null)
+                {
+                    Debug.LogWarning($"[NearbyItemPickupHUD] 场景中存在 {NearbyItemPickupConstant.CanvasName} 但未挂载 NearbyItemPickupHUD 组件。");
+                }
+
                 return;
             }
 
-            // 创建根节点挂载到 Foreground 下
-            GameObject rootObj = new GameObject(NearbyItemPickupConstant.CanvasName);
-            rootObj.transform.SetParent(foreground, false);
-            rootObj.transform.SetAsLastSibling();
-            RectTransform rootRect = rootObj.AddComponent<RectTransform>();
-            rootRect.anchorMin = Vector2.zero;
-            rootRect.anchorMax = Vector2.one;
-            rootRect.sizeDelta = Vector2.zero;
-
-            // 创建面板
-            GameObject panelRootObj = new GameObject(NearbyItemPickupConstant.PanelRootName);
-            panelRootObj.transform.SetParent(rootObj.transform, false);
-            RectTransform panelRect = panelRootObj.AddComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(1f, 1f);
-            panelRect.anchorMax = new Vector2(1f, 1f);
-            panelRect.pivot = new Vector2(1f, 1f);
-            panelRect.anchoredPosition = new Vector2(-NearbyItemPickupConstant.PanelRightMargin, NearbyItemPickupConstant.PanelTopMargin);
-            panelRect.sizeDelta = new Vector2(NearbyItemPickupConstant.PanelWidth, NearbyItemPickupConstant.PanelMaxHeight);
-
-            Image rootBg = panelRootObj.AddComponent<Image>();
-            rootBg.color = NearbyItemPickupConstant.PanelBgColor;
-
-            VerticalLayoutGroup rootLayout = panelRootObj.AddComponent<VerticalLayoutGroup>();
-            rootLayout.padding = new RectOffset((int)NearbyItemPickupConstant.Padding, (int)NearbyItemPickupConstant.Padding, (int)NearbyItemPickupConstant.Padding, (int)NearbyItemPickupConstant.Padding);
-            rootLayout.spacing = NearbyItemPickupConstant.ItemEntrySpacing;
-            rootLayout.childAlignment = TextAnchor.UpperCenter;
-            rootLayout.childControlWidth = true;
-            rootLayout.childControlHeight = false;
-            rootLayout.childForceExpandWidth = true;
-            rootLayout.childForceExpandHeight = false;
-
-            NearbyItemPickupHUD hud = rootObj.AddComponent<NearbyItemPickupHUD>();
-            hud.panelRoot = panelRootObj;
-            hud.CreateUI();
-
-            // 默认关闭，Tick 发现有道具时才激活
-            rootObj.SetActive(false);
-
-            Instance = hud;
+            Debug.LogWarning($"[NearbyItemPickupHUD] 场景中未找到 {NearbyItemPickupConstant.CanvasName}，请手动创建。");
         }
 
         private void CreateUI()

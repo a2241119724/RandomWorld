@@ -22,82 +22,17 @@ namespace LAB2D.Editor
         [MenuItem(SkillConstant.MenuRoot + SkillConstant.MenuInstallToScene, false, 0)]
         public static void InstallSkillHUDToScene()
         {
-            // 检查是否在 Game 场景中
             Scene activeScene = SceneManager.GetActiveScene();
-            string gameSceneName = "Game";
-            if (!activeScene.name.Contains(gameSceneName))
-            {
-                Debug.LogWarning(
-                    $"[SkillMenu] 当前场景为 '{activeScene.name}'，" +
-                    $"建议在 Game 场景中安装技能 HUD。操作已继续。");
-            }
 
-            // 检查是否已存在
             GameObject existingRoot = GameObject.Find(SkillConstant.SkillHUDRootName);
             if (existingRoot != null)
             {
-                Debug.LogWarning(
-                    $"[SkillMenu] 技能HUD根节点已存在 ({SkillConstant.SkillHUDRootName})，跳过安装。");
+                Debug.Log(
+                    $"[SkillMenu] 技能HUD根节点已存在 ({SkillConstant.SkillHUDRootName})。");
                 return;
             }
 
-            // 查找 UI/Foreground 父节点
-            GameObject uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG);
-            if (uiRoot == null)
-            {
-                Debug.LogError("[SkillMenu] 无法找到 UIRoot 节点，安装失败。");
-                return;
-            }
-
-            Transform foreground = uiRoot.transform.Find("Foreground");
-            if (foreground == null)
-            {
-                Debug.LogError("[SkillMenu] 无法找到 UI/Foreground 节点，安装失败。");
-                return;
-            }
-
-            // 创建 HUD 根节点（挂载到 Foreground 下，使用 UI 的 Canvas）
-            GameObject rootObj = new GameObject(SkillConstant.SkillHUDRootName);
-            rootObj.transform.SetParent(foreground, false);
-            rootObj.transform.SetAsLastSibling();
-            RectTransform rootRect = rootObj.AddComponent<RectTransform>();
-            rootRect.anchorMin = new Vector2(0.5f, 0f);
-            rootRect.anchorMax = new Vector2(0.5f, 0f);
-            rootRect.pivot = new Vector2(0.5f, 0f);
-            rootRect.anchoredPosition = new Vector2(0f, SkillConstant.HudBottomMargin);
-
-            // HorizontalLayoutGroup
-            HorizontalLayoutGroup layout = rootObj.AddComponent<HorizontalLayoutGroup>();
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.spacing = SkillConstant.SkillButtonSpacing;
-            layout.childControlWidth = false;
-            layout.childControlHeight = false;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = false;
-
-            // 创建4个技能按钮占位（简化版，运行时 SkillHUD 会重新创建）
-            for (int i = 0; i < 4; i++)
-            {
-                GameObject btnObj = new GameObject($"{SkillConstant.SkillButtonPrefix}{i}");
-                btnObj.transform.SetParent(rootObj.transform, false);
-                RectTransform btnRect = btnObj.AddComponent<RectTransform>();
-                btnRect.sizeDelta = new Vector2(
-                    SkillConstant.SkillButtonWidth, SkillConstant.SkillButtonHeight);
-                btnObj.AddComponent<CanvasRenderer>();
-                Image img = btnObj.AddComponent<Image>();
-                img.color = SkillConstant.CooldownReadyColor;
-            }
-
-            float totalWidth = (SkillConstant.SkillButtonWidth * 4)
-                               + (SkillConstant.SkillButtonSpacing * 3);
-            rootRect.sizeDelta = new Vector2(totalWidth + 20f, SkillConstant.SkillButtonHeight + 30f);
-
-            // 标记场景已修改
-            EditorSceneManager.MarkSceneDirty(activeScene);
-            Debug.Log(
-                $"[SkillMenu] 技能 HUD 已安装到场景 '{activeScene.name}'。" +
-                $"根节点: {SkillConstant.SkillHUDRootName}（挂载于 UI/Foreground）。" +
-                "运行时会由 SkillHUD.EnsureRuntimePanel() 自动填充完整的子 UI 元素。");
+            Debug.LogWarning($"[SkillMenu] 场景中未找到 {SkillConstant.SkillHUDRootName}，请在场景中手动创建。");
         }
 
         /// <summary>

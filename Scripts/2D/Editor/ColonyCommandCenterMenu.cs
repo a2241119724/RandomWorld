@@ -112,11 +112,13 @@ namespace LAB2D.Editor
             }
 
             GameObject root = GameObject.Find(ColonyCommandCenterConstant.HudRootName);
-            bool created = false;
             if (root == null)
             {
-                root = ColonyCommandCenterHUD.CreatePanelRoot(parent);
-                created = true;
+                EditorUtility.DisplayDialog(
+                    "殖民地指挥中心",
+                    $"场景中未找到 {ColonyCommandCenterConstant.HudRootName}，请在场景中手动创建。",
+                    "确定");
+                return;
             }
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -126,7 +128,7 @@ namespace LAB2D.Editor
 
             EditorUtility.DisplayDialog(
                 "殖民地指挥中心",
-                created ? "已在 Game.unity 的 Foreground 下创建 A006 指挥中心 HUD。" : "A006 指挥中心 HUD 已存在，未重复创建。",
+                "A006 指挥中心 HUD 已存在。",
                 "确定");
         }
 
@@ -151,23 +153,9 @@ namespace LAB2D.Editor
         [MenuItem(ColonyCommandCenterConstant.MenuRoot + "创建 ResourcesLocal HUD Prefab", false, 61)]
         private static void CreateResourcesLocalPrefab()
         {
-            Directory.CreateDirectory(ColonyCommandCenterConstant.PrefabFolderPath);
-            GameObject canvasObject = ColonyCommandCenterHUD.CreateCanvasObject();
-            ColonyCommandCenterHUD.CreatePanelRoot(canvasObject.transform);
-            EnsureGraphicRaycaster(canvasObject);
-
-            PrefabUtility.SaveAsPrefabAsset(canvasObject, ColonyCommandCenterConstant.PrefabAssetPath);
-            Object.DestroyImmediate(canvasObject);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            Object prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ColonyCommandCenterConstant.PrefabAssetPath);
-            Selection.activeObject = prefab;
-            EditorGUIUtility.PingObject(prefab);
-
             EditorUtility.DisplayDialog(
                 "殖民地指挥中心",
-                "已生成 ResourcesLocal 指挥中心 HUD Prefab。\n" + ColonyCommandCenterConstant.PrefabAssetPath,
+                "Prefab 创建功能已禁用。请在场景中手动创建指挥中心 HUD 后生成 Prefab。",
                 "确定");
         }
 

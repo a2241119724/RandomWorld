@@ -40,25 +40,21 @@ namespace LAB2D.UI
                 return;
             }
 
+            // transform.Find 可查找 inactive 子对象
             Transform foreground = AchievementTool.FindForeground();
-            if (foreground == null)
+            Transform panelTransform = foreground?.Find(AchievementConstant.PanelRootName);
+            if (panelTransform != null)
             {
-                Debug.LogError($"[AchievementPanel] 无法找到 {TagConstant.UI_TAG}/Foreground 节点，面板创建失败");
+                runtimeInstance = panelTransform.GetComponent<AchievementPanel>();
+                if (runtimeInstance == null)
+                {
+                    Debug.LogWarning($"[AchievementPanel] 场景中存在 {AchievementConstant.PanelRootName} 但未挂载 AchievementPanel 组件。");
+                }
+
                 return;
             }
 
-            if (UnityEngine.EventSystems.EventSystem.current == null)
-            {
-                GameObject eventSys = new GameObject("EventSystem");
-                eventSys.AddComponent<UnityEngine.EventSystems.EventSystem>();
-                eventSys.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-            }
-
-            GameObject panelObj = new GameObject(AchievementConstant.PanelRootName);
-            panelObj.transform.SetParent(foreground, false);
-            AchievementPanel panel = panelObj.AddComponent<AchievementPanel>();
-            panel.Initialize();
-            runtimeInstance = panel;
+            Debug.LogWarning($"[AchievementPanel] 场景中未找到 {AchievementConstant.PanelRootName}，请手动创建。");
         }
 
         public static AchievementPanel RuntimeInstance
