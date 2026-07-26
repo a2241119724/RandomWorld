@@ -19,7 +19,6 @@ namespace LAB2D.Core
             this.ProcessCloseOrBuildMenu();
             this.ProcessMouseClickCloseItemInfo();
             this.ProcessAchievements();
-            this.ProcessColonyCommandHud();
         }
 
         private void ProcessAchievements()
@@ -27,21 +26,6 @@ namespace LAB2D.Core
             if (UnityGlobalInputAdapter.GetToggleWorkerTaskAndAchievementHudDown())
             {
                 AchievementPanel.RuntimeInstance?.TogglePanel();
-            }
-        }
-
-        private void ProcessColonyCommandHud()
-        {
-            if (UnityGlobalInputAdapter.GetToggleColonyCommandCenterHudDown())
-            {
-                GameObject hudObj = GameObject.Find(ColonyCommandCenterConstant.HudRootName);
-                if (hudObj == null)
-                {
-                    ColonyCommandCenterHUD.EnsureRuntimePanel();
-                    return;
-                }
-
-                hudObj.SetActive(!hudObj.activeSelf);
             }
         }
 
