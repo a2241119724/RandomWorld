@@ -1,17 +1,9 @@
-﻿namespace LAB2D
+namespace LAB2D.MVC.Backpack.View
 {
     /// <summary>
-    /// 背包道具UI
+    /// 背包道具UI。选择逻辑已迁移至 BackpackController.OnSelectItem。
     /// </summary>
     public class BackpackItemView : MVCItemView
     {
-        /// <inheritdoc/>
-        public override void SetSelect(int i, AItem item)
-        {
-            //// 发布事件,GetSiblingIndex索引(第几个孩子)
-            // selectAndShow.select(item);
-            BackpackMenuPanel.Instance.Select.SelectItemIndex = i;
-            BackpackMenuPanel.Instance.Select.Item = (ABackpackItem)item;
-        }
     }
 }

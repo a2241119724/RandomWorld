@@ -1,5 +1,9 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Constant;
     using UnityEngine;
 
     /// <summary>
@@ -11,7 +15,8 @@
     {
         public ABasePanel()
         {
-            this.Controller = PanelController.Instance;
+            ServiceLocator.Register((BP)(object)this);
+            this.Controller = ServiceLocator.Get<PanelController>();
         }
 
         /// <summary>
@@ -35,7 +40,7 @@
             Transform t = GameObject.FindGameObjectWithTag(root).transform.Find(this.Name);
             if (t == null)
             {
-                this.Panel = ResourceManager.Instance.Instantiate(this.Name, PanelController.Instance.Parent, false);
+                this.Panel = ServiceLocator.Get<ResourceManager>().Instantiate(this.Name, ServiceLocator.Get<PanelController>().Parent, false);
             }
             else
             {
@@ -49,7 +54,7 @@
         /// <inheritdoc/>
         public virtual void OnEnter()
         {
-            LogManager.Instance.Log("Enter: " + this.GetType().Name, LogManager.LogLevelEnum.Info);
+            AWorkerTask.LogProvider("Enter: " + this.GetType().Name, LogManager.LogLevelEnum.Trace);
             if (this.Panel == null)
             {
                 return;
@@ -71,7 +76,7 @@
         /// <inheritdoc/>
         public virtual void OnExit()
         {
-            LogManager.Instance.Log("Exit: " + this.GetType().Name, LogManager.LogLevelEnum.Info);
+            AWorkerTask.LogProvider("Exit: " + this.GetType().Name, LogManager.LogLevelEnum.Trace);
             this.Panel.SetActive(false);
         }
 
@@ -79,7 +84,7 @@
         public virtual void OnClick_Back()
         {
             // 没有返回按钮的面板,显示暂停菜单
-            PanelController.Instance.Show(PauseMenuPanel.Instance);
+            ServiceLocator.Get<PanelController>().Show(PauseMenuPanel.Instance);
         }
     }
 }

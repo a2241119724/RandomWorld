@@ -1,15 +1,40 @@
-﻿namespace LAB2D
+namespace LAB2D.Character
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Item.Backpack.Equipment;
+    using LAB2D.Item.Backpack.Equipment.Weapon;
+    using LAB2D.Network;
+    using LAB2D.Serializable;
+    using LAB2D.UnityAdapter;
+    using LAB2D.Domain.Character;
+    using LAB2D.Domain.Common;
     using System;
     using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
 
     /// <summary>
-    /// 角色基类
+    /// 角色基类。
+    /// 继承自 MonoBehaviourPun 以保证向后兼容，同时通过 INetworkView 解耦网络访问。
+    /// 新增网络访问代码应使用 NetworkView 而非直接访问 pv/photonView。
+    /// 完全移除 MonoBehaviourPun 依赖的后续重构待网络层完全适配后执行。
     /// </summary>
     public abstract class Character : MonoBehaviourPun
     {
+        /// <summary>
+        /// 网络视图抽象 — 在线时包装 PhotonView，离线时为 NullNetworkView。
+        /// 新代码应使用此属性而非直接访问 pv/photonView。
+        /// </summary>
+        public INetworkView NetworkView { get; private set; }
+
+        /// <summary>
+        /// 是否为玩家角色 — 用于属性计算时区分玩家和敌人/Worker 的等级加成逻辑。
+        /// Player 子类重写为返回 true；其他子类保持默认 false。
+        /// 消除 CharacterData.ComputeAttribute 中 <c>this is PlayerData</c> 的反向类型检查。
+        /// </summary>
+        public virtual bool IsPlayerCharacter => false;
+
         /// <summary>
         /// 移动速度
         /// </summary>
@@ -31,16 +56,53 @@
         protected SpriteRenderer spriteRenderer;
 
         /// <summary>
-        /// 检测bug
+        /// 碰撞 Bug 检测器。
         /// </summary>
-        protected CheckBug checkBug;
+        protected CollisionBugDetector collisionBugDetector;
 
         /// <summary>
         /// 角色基础属性
         /// </summary>
         protected Attribute basicAttribute;
 
-        private Color originalColor; // 原来的自身颜色
+        protected Color originalColor; // 原来的自身颜色
+        protected IGameTime gameTime = new UnityGameTime();
+
+        /// <summary>
+        /// 领域安全的 DeltaTime，供状态机等子模块使用，不直接依赖 UnityEngine.Time。
+        /// </summary>
+        public float DeltaTime
+        {
+            get { return this.gameTime.DeltaTime; }
+        }
+        private readonly DamageCalculator damageCalculator = new DamageCalculator();
+        private readonly LevelProgressionService levelProgressionService = new LevelProgressionService();
+        protected CharacterHealthComponent healthComponent;
+
+        /// <summary>
+        /// 受击闪烁表现提供者 — 在角色受到伤害时触发视觉反馈（红色闪烁）。
+        /// 默认实现操作 SpriteRenderer 颜色并通过 Invoke 延迟恢复。
+        /// 可在测试中替换为无操作桩，或替换为自定义表现效果。
+        /// </summary>
+        public static System.Action<Character> DamageFlashProvider { get; set; }
+            = (target) =>
+            {
+                if (target == null || target.spriteRenderer == null)
+                {
+                    return;
+                }
+
+                target.spriteRenderer.color = Color.red;
+                target.Invoke(nameof(ResetColor), 0.2f);
+            };
+
+        /// <summary>
+        /// 移动速度提供者 — 获取角色当前移动速度。
+        /// 默认实现返回实例字段 MoveSpeed。
+        /// 可在测试中替换以模拟不同速度配置。
+        /// </summary>
+        public static System.Func<Character, float> MoveSpeedProvider { get; set; }
+            = (c) => c.MoveSpeed;
 
         /// <summary>
         /// 当前装备的武器物体
@@ -60,24 +122,30 @@
         public virtual void Awake()
         {
             this.name = this.GetType().Name;
-            this.transform.SetParent(GameObject.FindGameObjectWithTag("CharacterRoot").transform);
-            this.checkBug = new CheckBug();
+
+            this.NetworkView = AWorkerTask.NetworkIsOnlineProvider()
+                ? new PunNetworkViewAdapter(this.pv)
+                : ServiceLocator.Get<OfflineNetworkView>();
+
+            CharacterRootParentProvider(this);
+
+            this.collisionBugDetector = new CollisionBugDetector();
         }
 
         public virtual void Start()
         {
-            this.spriteRenderer = this.GetComponent<SpriteRenderer>();
+            SpriteRendererSetupProvider(this);
             if (this.spriteRenderer == null)
             {
-                LogManager.Instance.Log("renderer Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
-            this.originalColor = this.spriteRenderer.color;
+            this.healthComponent = new CharacterHealthComponent(this.damageCalculator, this.levelProgressionService);
         }
 
         /// <summary>
-        /// 角色扣血
+        /// 角色扣血 — 委托给 CharacterHealthComponent 处理伤害计算。
+        /// 发布 CharacterDamagedEvent 供 UI 层消费，不再直接操作 UI。
         /// </summary>
         /// <param name="hp">血量</param>
         /// <param name="attacker">攻击者</param>
@@ -89,72 +157,138 @@
                 return;
             }
 
-            this.LastAttacker = attacker;
+            float capturedDamage = hp;
+            bool capturedCombo = false;
+            CharacterHealthResult healthResult = this.healthComponent.ApplyDamage(
+                this, hp, attacker, isCRT,
+                (target, finalHp, crit, isCombo) =>
+                {
+                    capturedDamage = finalHp;
+                    capturedCombo = isCombo;
+                    DamageFlashProvider(target);
+                });
 
-            // 根据防御力计算伤害
-            hp -= hp * this.CharacterDataLAB.DEF / 10;
-            hp = hp < 0.1f ? 0.1f : hp;
-
-            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.DAMAGE); // 创建物体(预设,位置,角度)
-            if (g == null)
+            GameVector2 worldPos = WorldPositionProvider(this);
+            EventBusPublishProvider(new CharacterDamagedEvent
             {
-                return;
-            }
+                TargetId = this.CharacterDataLAB.Id,
+                AttackerId = attacker?.CharacterDataLAB?.Id ?? 0,
+                Damage = capturedDamage,
+                IsCritical = isCRT,
+                IsCombo = capturedCombo,
+                RemainingHp = this.CharacterDataLAB.Hp,
+                WorldPosX = worldPos.X,
+                WorldPosY = worldPos.Y,
+            });
 
-            // 暴击时显示不同的框
-            g.GetComponent<DamageUI>().SetDamage(hp, Convert.ToInt32(isCRT));
-            g.transform.SetParent(this.transform);
-            g.transform.localPosition = Vector3.zero;
-
-            // 变红
-            this.spriteRenderer.color = Color.red;
-            this.Invoke(nameof(this.ResetColor), 0.2f); // 一段时间后调用
-
-            // if (!photonView.IsMine) return;
-            this.CharacterDataLAB.Hp -= hp;  // 更新敌人生命值
-            if (this.CharacterDataLAB.Hp <= 0)
+            if (healthResult.IsDead)
             {
-                this.CharacterDataLAB.Hp = 0;
                 this.Death();
-                return;
             }
         }
+
+        /// <summary>
+        /// 升级提示提供者 — 当角色升级时显示视觉提示。
+        /// 默认实现访问 ServiceLocator.Get&lt;GlobalInit&gt;().ShowTip。
+        /// 可替换为测试桩或自定义实现。
+        /// </summary>
+        public static System.Action<string> LevelUpTipProvider { get; set; }
+            = (tip) => ServiceLocator.Get<GlobalInit>().ShowTip(tip);
+
+        internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
+            = (e) => ServiceLocator.Get<EventBus>().PublishInternal(e);
+
+        /// <summary>
+        /// 世界坐标提供者 — 获取角色当前世界位置。
+        /// 默认实现访问 Transform.position；可在测试中替换为固定坐标桩。
+        /// </summary>
+        public static System.Func<Character, GameVector2> WorldPositionProvider { get; set; }
+            = (c) => new GameVector2(c.transform.position.x, c.transform.position.y);
+
+        // --- Unity 组件初始化 Provider（可替换为测试桩，隔离 UnityEngine 依赖） ---
+
+        /// <summary>
+        /// CharacterRoot 父节点设置提供者 — 将角色挂载到场景中的 CharacterRoot 节点下。
+        /// 默认实现使用 GameObject.FindGameObjectWithTag("CharacterRoot")。
+        /// 可在测试中替换为无操作桩。
+        /// </summary>
+        internal static System.Action<Character> CharacterRootParentProvider { get; set; }
+            = (c) =>
+            {
+                if (c == null)
+                {
+                    return;
+                }
+
+                GameObject characterRoot = GameObject.FindGameObjectWithTag("CharacterRoot");
+                if (characterRoot != null)
+                {
+                    c.transform.SetParent(characterRoot.transform);
+                }
+                else
+                {
+                    AWorkerTask.LogProvider(
+                        "CharacterRoot GameObject not found in scene, character will be placed at root",
+                        LogManager.LogLevelEnum.Error);
+                }
+            };
+
+        /// <summary>
+        /// SpriteRenderer 初始化提供者 — 获取角色身上的 SpriteRenderer 组件并捕获原始颜色。
+        /// 默认实现使用 GetComponent&lt;SpriteRenderer&gt;() + 记录 .color。
+        /// 可在测试中替换。
+        /// </summary>
+        internal static System.Action<Character> SpriteRendererSetupProvider { get; set; }
+            = (c) =>
+            {
+                if (c == null)
+                {
+                    return;
+                }
+
+                c.spriteRenderer = c.GetComponent<SpriteRenderer>();
+                if (c.spriteRenderer == null)
+                {
+                    AWorkerTask.LogProvider("renderer Not Found!!!", LogManager.LogLevelEnum.Error);
+                    return;
+                }
+
+                c.originalColor = c.spriteRenderer.color;
+            };
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.transform.position);
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.transform.position);
             return $"{this.GetType().Name}:{this.name}\n" +
+                $"血量: {this.CharacterDataLAB.Hp:F0}/{this.CharacterDataLAB.MaxHp:F0}\n" +
+                $"蓝量: {this.CharacterDataLAB.Mp}/{this.CharacterDataLAB.MaxMp}\n" +
                 $"速度: {this.MoveSpeed}\n" +
                 $"位置: ({posMap.x},{posMap.y})\n" +
-                $"物理攻击力: {this.CharacterDataLAB.ATN}\n" +
-                $"魔法攻击力: {this.CharacterDataLAB.INT}\n" +
-                $"物理防御力: {this.CharacterDataLAB.DEF}\n" +
-                $"魔法防御力: {this.CharacterDataLAB.RES}\n" +
-                $"暴击率: {this.CharacterDataLAB.CRT}\n" +
-                $"暴击伤害: {this.CharacterDataLAB.CSD}\n" +
-                $"速度, 回避: {this.CharacterDataLAB.SPD}\n" +
-                $"命中率, 连击: {this.CharacterDataLAB.HIT}\n" +
+                $"物理攻击力: {this.CharacterDataLAB.ATN:F1}\n" +
+                $"魔法攻击力: {this.CharacterDataLAB.INT:F1}\n" +
+                $"物理防御力: {this.CharacterDataLAB.DEF:F1}\n" +
+                $"魔法防御力: {this.CharacterDataLAB.RES:F1}\n" +
+                $"暴击率: {this.CharacterDataLAB.CRT:P1}\n" +
+                $"暴击伤害: {this.CharacterDataLAB.CSD:F1}\n" +
+                $"速度/回避: {this.CharacterDataLAB.SPD:F1}\n" +
+                $"命中/连击: {this.CharacterDataLAB.HIT:F1}\n" +
                 $"等级: {this.CharacterDataLAB.Level}\n" +
                 $"经验值: {this.CharacterDataLAB.CurExperience}/{this.CharacterDataLAB.MaxExperience}\n";
         }
 
         /// <summary>
-        /// 增加经验值.
+        /// 增加经验值 — 委托给 CharacterHealthComponent。
         /// </summary>
         /// <param name="experience">经验值.</param>
         public virtual void AddExperienceValue(int experience)
         {
-            this.CharacterDataLAB.CurExperience += experience;
+            LevelProgressionResult result = this.healthComponent.AddExperience(this.CharacterDataLAB, experience);
 
-            // 升级
-            if (this.CharacterDataLAB.CurExperience / this.CharacterDataLAB.MaxExperience >= 1)
+            if (result.LeveledUp)
             {
-                ++this.CharacterDataLAB.Level;
-                this.CharacterDataLAB.CurExperience %= this.CharacterDataLAB.MaxExperience;
-                this.CharacterDataLAB.MaxExperience *= 2;
-                GlobalInit.Instance.ShowTip("UP " + this.CharacterDataLAB.Level);
-                this.CharacterDataLAB.ComputeAttribute();
+                LevelUpTipProvider.Invoke("UP " + this.CharacterDataLAB.Level);
+                this.CharacterDataLAB.ComputeAttribute(this.basicAttribute, this.IsPlayerCharacter);
             }
         }
 
@@ -175,15 +309,18 @@
         /// </summary>
         protected virtual void Death()
         {
-            GameObject.Destroy(this.gameObject);
         }
 
         /// <summary>
-        /// 恢复颜色
+        /// 恢复颜色 — 由 DamageFlashProvider 的默认实现通过 Invoke 延迟调用。
+        /// 保留以兼容旧代码和子类直接调用；新代码应通过 DamageFlashProvider 控制受击表现。
         /// </summary>
-        private void ResetColor()
+        protected void ResetColor()
         {
-            this.spriteRenderer.color = this.originalColor;
+            if (this.spriteRenderer != null)
+            {
+                this.spriteRenderer.color = this.originalColor;
+            }
         }
 
         /// <summary>
@@ -192,6 +329,24 @@
         [Serializable]
         public class CharacterData : Attribute
         {
+            private static readonly DamageCalculator DamageCalculator = new DamageCalculator();
+            private static readonly AttributeCalculationService attributeCalcService = new AttributeCalculationService();
+
+            /// <summary>
+            /// 装备交换时的卸装回调 — 将旧装备放回地图。
+            /// 默认实现访问 ItemMap.Instance / ResourceManager.Instance / ItemDataManager.Instance。
+            /// 可替换为测试桩或自定义实现。
+            /// </summary>
+            public static System.Action<AEquipment, Vector3Int> EquipmentSwapDropProvider { get; set; }
+                = (oldEquipment, posMap) =>
+                {
+                    Core.ServiceLocator.Get<ItemMap>().PutDownToInventory(
+                        posMap,
+                        Core.ServiceLocator.Get<ResourceManager>().GetAsset(
+                            Core.ServiceLocator.Get<ItemDataManager>().GetById(oldEquipment.Id).EnName),
+                        new ResourceInfo(oldEquipment.Id, 1));
+                };
+
             /// <summary>
             /// Id
             /// </summary>
@@ -281,7 +436,10 @@
                 set
                 {
                     this.character = value;
-                    this.ComputeAttribute();
+                    if (this.character != null)
+                    {
+                        this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter);
+                    }
                 }
             }
 
@@ -295,7 +453,10 @@
                 set
                 {
                     this.weapon = value;
-                    this.ComputeAttribute();
+                    if (this.character != null)
+                    {
+                        this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter);
+                    }
                 }
             }
 
@@ -319,7 +480,7 @@
             /// <returns>伤害值</returns>
             public float GetDamage(bool isCRT)
             {
-                return isCRT ? this.ATN * this.CSD : this.ATN;
+                return DamageCalculator.GetOutgoingDamage(this.ATN, this.CSD, isCRT);
             }
 
             /// <summary>
@@ -331,63 +492,72 @@
             {
                 if (this.equipments.ContainsKey(equipment.Type))
                 {
-                    // 交换装备
-                    AEquipment equipment1 = this.equipments[equipment.Type];
-                    ItemMap.Instance.PutDownToInventory(posMap, ResourceManager.Instance.GetAsset(equipment.ToString()), new ResourceInfo(equipment.Id, 1));
-                    this.equipments[equipment.Type] = equipment1;
+                    // 交换装备：卸下旧装备放入地图，装备新装备
+                    AEquipment oldEquipment = this.equipments[equipment.Type];
+                    EquipmentSwapDropProvider(oldEquipment, posMap);
+                    this.equipments[equipment.Type] = equipment;
                 }
                 else
                 {
                     this.equipments.Add(equipment.Type, equipment);
                 }
 
-                this.ComputeAttribute();
+                if (this.character != null)
+                {
+                    this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter);
+                }
+
             }
 
             /// <summary>
-            /// 计算总属性
+            /// 计算总属性 — 委托给 Domain/Character/AttributeCalculationService。
             /// </summary>
-            public void ComputeAttribute()
+            /// <param name="basicAttribute">角色基础属性（由 Character.basicAttribute 提供）。</param>
+            /// <param name="isPlayer">是否为玩家角色 — 影响等级加成倍率。</param>
+            public void ComputeAttribute(Attribute basicAttribute, bool isPlayer)
             {
-                float ratio = 1;
-                if (this is Player.PlayerData data)
-                {
-                    ratio += data.Level * 0.1f;
-                }
-
-                // 基础属性
-                this.ATN = this.Character.basicAttribute.ATN * ratio;
-                this.INT = this.Character.basicAttribute.INT * ratio;
-                this.DEF = this.Character.basicAttribute.DEF * ratio;
-                this.RES = this.Character.basicAttribute.RES * ratio;
-                this.CRT = this.Character.basicAttribute.CRT * ratio;
-                this.CSD = this.Character.basicAttribute.CSD * ratio;
-                this.SPD = this.Character.basicAttribute.SPD * ratio;
-                this.HIT = this.Character.basicAttribute.HIT * ratio;
-
+                BattleStats baseStats = ConvertAttributeToBattleStats(basicAttribute);
+                BattleStats? weaponBStats = null;
                 if (this.weapon != null)
                 {
-                    this.ATN += this.weapon.Attribute.ATN;
-                    this.INT += this.weapon.Attribute.INT;
-                    this.DEF += this.weapon.Attribute.DEF;
-                    this.RES += this.weapon.Attribute.RES;
-                    this.CRT += this.weapon.Attribute.CRT;
-                    this.CSD += this.weapon.Attribute.CSD;
-                    this.SPD += this.weapon.Attribute.SPD;
-                    this.HIT += this.weapon.Attribute.HIT;
+                    weaponBStats = ConvertAttributeToBattleStats(this.weapon.Attribute);
                 }
 
-                foreach (var item in this.equipments)
+                System.Collections.Generic.List<BattleStats> equipmentBStats = null;
+                if (this.equipments != null && this.equipments.Count > 0)
                 {
-                    this.ATN += item.Value.Attribute.ATN;
-                    this.INT += item.Value.Attribute.INT;
-                    this.DEF += item.Value.Attribute.DEF;
-                    this.RES += item.Value.Attribute.RES;
-                    this.CRT += item.Value.Attribute.CRT;
-                    this.CSD += item.Value.Attribute.CSD;
-                    this.SPD += item.Value.Attribute.SPD;
-                    this.HIT += item.Value.Attribute.HIT;
+                    equipmentBStats = new System.Collections.Generic.List<BattleStats>();
+                    foreach (var item in this.equipments)
+                    {
+                        equipmentBStats.Add(ConvertAttributeToBattleStats(item.Value.Attribute));
+                    }
                 }
+
+                BattleStats result = attributeCalcService.ComputeFinalStats(
+                    baseStats,
+                    this.Level,
+                    isPlayer,
+                    weaponBStats,
+                    equipmentBStats);
+
+                this.ATN = result.ATN;
+                this.INT = result.INT;
+                this.DEF = result.DEF;
+                this.RES = result.RES;
+                this.CRT = result.CRT;
+                this.CSD = result.CSD;
+                this.SPD = result.SPD;
+                this.HIT = result.HIT;
+            }
+
+            private static BattleStats ConvertAttributeToBattleStats(Attribute attr)
+            {
+                if (attr == null)
+                {
+                    return BattleStats.Zero;
+                }
+
+                return new BattleStats(attr.ATN, attr.INT, attr.DEF, attr.RES, attr.CRT, attr.CSD, attr.SPD, attr.HIT);
             }
 
             /// <summary>
@@ -401,6 +571,7 @@
             }
         }
 
+        [Serializable]
         public class Attribute
         {
             /// <summary>
@@ -468,58 +639,5 @@
             }
         }
 
-        /// <summary>
-        /// 检查bug
-        /// </summary>
-        protected class CheckBug
-        {
-            /// <summary>
-            /// 上一次碰撞时间
-            /// </summary>
-            public long LastTime;
-
-            /// <summary>
-            /// 连续碰撞次数
-            /// </summary>
-            public int ColliderCount;
-
-            private const double Interval = 3e5;
-            private const int Threshold = 100;
-
-            /// <summary>
-            /// 是否有bug
-            /// </summary>
-            /// <param name="name">出bug的角色名称</param>
-            /// <param name="threshold">检测bug的碰撞阈值</param>
-            /// <returns>是否有bug.</returns>
-            public bool IsBug(string name, int threshold = Threshold)
-            {
-                bool bug = this.ColliderCount > threshold;
-                if (bug)
-                {
-                    // LogManager.Instance.log(name + "碰撞次数:" + colliderCount, LogManager.LogLevel.Info);
-                }
-
-                return bug;
-            }
-
-            /// <summary>
-            /// 添加碰撞次数
-            /// </summary>
-            /// <param name="time">当前时间</param>
-            public void AddColliderCount(long time)
-            {
-                if (time - this.LastTime < Interval)
-                {
-                    this.ColliderCount++;
-                }
-                else
-                {
-                    this.ColliderCount = 1;
-                }
-
-                this.LastTime = time;
-            }
-        }
     }
 }

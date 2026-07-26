@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Enemy.SeekEnemy.State
 {
+    using LAB2D;
     using UnityEngine;
 
     public class SeekEnemyMoveState : ASeekEnemyState
@@ -31,25 +32,25 @@
             if (this.Character.CharacterDataLAB.Weapon != null)
             {
                 // 感知到周围有活着的玩家，进入追踪状态
-                int count = PlayerManager.Instance.Count();
+                int count = AWorkerTask.PlayerCountProvider();
                 for (int i = 0; i < count; i++)
                 {
-                    if (this.Character.SenseNearby(PlayerManager.Instance.Get(i).transform))
+                    if (this.Character.SenseNearby(AWorkerTask.PlayerGetProvider(i).transform))
                     {
                         this.Character.Manager.ChangeState(TypeEnum.Attack);
-                        this.Character.Target = PlayerManager.Instance.Get(i);
+                        this.Character.Target = AWorkerTask.PlayerGetProvider(i);
                         return;
                     }
                 }
 
                 // 感知到周围有活着的Worker，进入追踪状态
-                count = WorkerManager.Instance.Count();
+                count = AWorkerTask.WorkerCountProvider();
                 for (int i = 0; i < count; i++)
                 {
-                    if (this.Character.SenseNearby(WorkerManager.Instance.Get(i).transform))
+                    if (this.Character.SenseNearby(AWorkerTask.WorkerGetProvider(i).transform))
                     {
                         this.Character.Manager.ChangeState(TypeEnum.Attack);
-                        this.Character.Target = WorkerManager.Instance.Get(i);
+                        this.Character.Target = AWorkerTask.WorkerGetProvider(i);
                         return;
                     }
                 }
@@ -60,7 +61,7 @@
             bool isTarget = this.Character.Seek.MoveByPath();
             if (isTarget)
             {
-                this.recordTime += Time.deltaTime;
+                this.recordTime += this.Character.DeltaTime;
 
                 // 休息2秒
                 if (this.recordTime < 2)

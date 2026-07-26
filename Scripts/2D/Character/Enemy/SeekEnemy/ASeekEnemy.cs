@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Enemy.SeekEnemy
 {
+    using LAB2D;
+    using LAB2D.Character.Enemy.SeekEnemy.State;
+    using LAB2D.Core.Seek;
     using Photon.Pun;
     using UnityEngine;
 
@@ -45,7 +48,7 @@
         public override void Awake()
         {
             base.Awake();
-            this.CharacterDataLAB.Weapon = (AWeapon)ItemInstanceFactory.Instance.GetBackpackItemByName("CustomSword");
+            this.CharacterDataLAB.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider("CustomSword");
             this.Seek = new AStar(this);
             this.Manager = new SeekEnemyStateManager<ICharacterState, ASeekEnemyState.TypeEnum, ASeekEnemy>(this);
         }
@@ -97,9 +100,9 @@
         {
             base.Death();
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
+            if (!this.NetworkView.IsOnline || this.NetworkView.IsMasterClient)
             {
-                EnemyManager.Instance.Remove(this);
+                AWorkerTask.EnemyRemoveProvider(this);
             }
 
             this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Dead); // 进入死亡状态

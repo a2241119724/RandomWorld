@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.State
 {
+    using LAB2D;
     using System.Text.RegularExpressions;
     using UnityEngine;
 
@@ -58,12 +59,12 @@
         public override void OnEnter()
         {
             base.OnEnter();
-            LogManager.Instance.Log(this.Character.name + " " + this.Character.Manager.CurrentStateType);
+            AWorkerTask.LogProvider(this.Character.name + " " + this.Character.Manager.CurrentStateType, LogManager.LogLevelEnum.Trace);
             this.preString = string.Empty;
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             if (workerData.Task != null)
             {
-                this.preString += $"<color=green>任务: {workerData.Task.Name}</color>\n";
+                this.preString += $"<color={PixelUITheme.RichMint}>任务: {workerData.Task.Name}</color>\n";
             }
         }
 

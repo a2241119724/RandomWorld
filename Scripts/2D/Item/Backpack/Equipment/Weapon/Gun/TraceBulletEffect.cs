@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Item.Backpack.Equipment.Weapon.Gun
 {
+    using LAB2D;
+    using Character = LAB2D.Character.Character;
     using UnityEngine;
 
     /// <summary>

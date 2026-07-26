@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Editor
 {
+    using LAB2D;
     using System;
     using System.Text.RegularExpressions;
     using UnityEditor;
@@ -12,12 +13,12 @@
     public class UITool : MonoBehaviour
     {
         private const string Exclude = @"^$"; // 排除,不优化
-        private const string Prefix = "Tools/UI/";
+        private const string Prefix = "工具/界面/";
 
         /// <summary>
         /// 优化Text
         /// </summary>
-        [MenuItem(Prefix + "修改Text")]
+        [MenuItem(Prefix + "修改文本")]
         public static void UpdateText()
         {
             UITool.UpdateCommon(
@@ -51,7 +52,7 @@
         /// <summary>
         /// 修改RoundCorner半径
         /// </summary>
-        [MenuItem(Prefix + "修改RoundCorner")]
+        [MenuItem(Prefix + "修改圆角")]
         public static void UpdateRoundCorner()
         {
             // 寻找所有的RoundCorner
@@ -87,7 +88,7 @@
         /// <summary>
         /// 修改Button颜色
         /// </summary>
-        [MenuItem(Prefix + "修改Button")]
+        [MenuItem(Prefix + "修改按钮")]
         public static void UpdateButton()
         {
             var buttons = Resources.FindObjectsOfTypeAll(typeof(Button));
@@ -104,10 +105,10 @@
                 Undo.RecordObject(btn, btn.gameObject.name);
 
                 ColorBlock colors = btn.colors;
-                colors.normalColor = new Color32(52, 152, 219, 255);
-                colors.highlightedColor = new Color32(93, 173, 226, 255);
-                colors.pressedColor = new Color32(241, 196, 15, 255);
-                colors.selectedColor = new Color32(46, 204, 113, 255);
+                colors.normalColor = new Color32(242, 160, 175, 255);
+                colors.highlightedColor = new Color32(252, 200, 213, 255);
+                colors.pressedColor = new Color32(249, 213, 110, 255);
+                colors.selectedColor = new Color32(126, 203, 154, 255);
 
                 colors.disabledColor = new Color32(0, 0, 0, 0);
                 btn.colors = colors;
@@ -135,7 +136,7 @@
         /// <summary>
         /// 修改Slider
         /// </summary>
-        [MenuItem(Prefix + "修改Slider")]
+        [MenuItem(Prefix + "修改滑条")]
         public static void UpdateSlider()
         {
             UITool.UpdateCommon((Slider slider) =>

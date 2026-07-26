@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Data
 {
+    using LAB2D;
     /// <summary>
     /// 同步数据接口,传输字节数组
     /// </summary>

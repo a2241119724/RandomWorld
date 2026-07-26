@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Data
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System;
     using System.Collections.Generic;
 
@@ -19,7 +21,7 @@
             this.Data = new List<Row>();
             if (this.Data == null)
             {
-                LogManager.Instance.Log("data assign resource Error!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("data assign resource Error!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }

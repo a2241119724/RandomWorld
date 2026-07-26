@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Enemy.SeekEnemy.State
 {
+    using LAB2D;
     using Photon.Pun;
     using UnityEngine;
 
@@ -29,11 +30,11 @@
             if (this.Character.Weapon == null && this.Character.CharacterDataLAB.Weapon != null)
             {
                 // 实例化武器
-                string name = ItemDataManager.Instance.GetById(this.Character.CharacterDataLAB.Weapon.Id).EnName;
-                this.Character.Weapon = ResourceManager.Instance.Instantiate(name, false);
+                string name = AWorkerTask.ItemDataProvider(this.Character.CharacterDataLAB.Weapon.Id).EnName;
+                this.Character.Weapon = AWorkerTask.ResourceInstantiateProvider(name, false);
                 if (this.Character.Weapon == null)
                 {
-                    LogManager.Instance.Log("武器实例化错误!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider("武器实例化错误!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 
@@ -48,7 +49,7 @@
         public override void OnUpdate()
         {
             base.OnUpdate();
-            this.AttackTime += Time.deltaTime;
+            this.AttackTime += this.Character.DeltaTime;
 
             // 打击目标死亡
             if (this.Character.Target == null)
@@ -65,9 +66,9 @@
             this.Character.Direction = this.Character.Target.transform.position - this.Character.transform.position;
             AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
             weaponObject.Attack();
-            if (NetworkConnect.Instance.IsOnline)
+            if (this.Character.NetworkView.IsOnline)
             {
-                this.Character.pv.RPC("Attack", RpcTarget.All);
+                this.Character.NetworkView.RPC("Attack", RpcTarget.All);
             }
             else
             {
@@ -77,7 +78,7 @@
             if (!this.Character.SenseNearby(this.Character.Target.transform))
             {
                 // 追踪两秒
-                this.recordTime += Time.deltaTime;
+                this.recordTime += this.Character.DeltaTime;
                 if (this.recordTime >= 2.0f)
                 {
                     this.Character.Manager.ChangeState(TypeEnum.Seek);

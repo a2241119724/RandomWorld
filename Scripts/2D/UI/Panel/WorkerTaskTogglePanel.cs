@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel
 {
+    using LAB2D.Enum;
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -9,26 +12,26 @@
     /// </summary>
     public class WorkerTaskTogglePanel : ABasePanel<WorkerTaskTogglePanel>
     {
-        private static readonly Dictionary<AWorkerTask.WorkerTaskTypeEnum, string> TypeToChinese = new ()
+        private static readonly Dictionary<WorkerTaskType, string> TypeToChinese = new ()
         {
-            { AWorkerTask.WorkerTaskTypeEnum.Build, "建造" },
-            { AWorkerTask.WorkerTaskTypeEnum.Carry, "搬运" },
-            { AWorkerTask.WorkerTaskTypeEnum.Gather, "采摘" },
-            { AWorkerTask.WorkerTaskTypeEnum.Exercise, "锻炼" },
-            { AWorkerTask.WorkerTaskTypeEnum.Eat, "吃饭" },
-            { AWorkerTask.WorkerTaskTypeEnum.Wear, "穿戴" },
-            { AWorkerTask.WorkerTaskTypeEnum.Sleep, "睡觉" },
-            { AWorkerTask.WorkerTaskTypeEnum.Plant, "种植" },
+            { WorkerTaskType.Build, "建造" },
+            { WorkerTaskType.Carry, "搬运" },
+            { WorkerTaskType.Gather, "采摘" },
+            { WorkerTaskType.Exercise, "锻炼" },
+            { WorkerTaskType.Eat, "吃饭" },
+            { WorkerTaskType.Wear, "穿戴" },
+            { WorkerTaskType.Sleep, "睡觉" },
+            { WorkerTaskType.Plant, "种植" },
         };
 
         public WorkerTaskTogglePanel()
         {
             this.Name = "WorkerTaskToggle";
             this.Init();
-            Transform title = Tool.GetComponentInChildren<Transform>(this.Panel, "Title");
-            foreach (KeyValuePair<AWorkerTask.WorkerTaskTypeEnum, string> pair in TypeToChinese)
+            Transform title = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Title");
+            foreach (KeyValuePair<WorkerTaskType, string> pair in TypeToChinese)
             {
-                Tool.GetComponentInChildren<Text>(title.GetChild((int)pair.Key + 1).gameObject, "Text").text = pair.Value;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(title.GetChild((int)pair.Key + 1).gameObject, "Text").text = pair.Value;
             }
         }
 

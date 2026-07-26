@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
     using UnityEngine;
 
     /// <summary>

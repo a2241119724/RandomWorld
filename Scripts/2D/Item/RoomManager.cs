@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Item
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -10,7 +12,7 @@
     public class RoomManager : Singleton<RoomManager>
     {
         private static readonly Dictionary<string, RoomInfo> Rooms = new ();
-        private readonly int layerMask = LayerMask.GetMask("BuildTile"); // Door(Default)
+        private readonly int layerMask = LayerMask.GetMask("BuildTile"); // 门（默认层）
 
         /// <summary>
         /// 添加房间
@@ -21,7 +23,7 @@
         {
             if (Rooms.ContainsKey(name))
             {
-                LogManager.Instance.Log("已经有房间了", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("已经有房间了", LogManager.LogLevelEnum.Error);
             }
 
             Rooms.Add(name, roomInfo);
@@ -60,16 +62,16 @@
             }
 
             // 射线检测是否有房间
-            RaycastHit2D hitR = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.right, 1000.0f, this.layerMask);
-            RaycastHit2D hitL = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.left, 1000.0f, this.layerMask);
-            RaycastHit2D hitT = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.up, 1000.0f, this.layerMask);
-            RaycastHit2D hitD = Physics2D.Raycast(TileMap.Instance.MapPosToWorldPos(posMap), Vector3.down, 1000.0f, this.layerMask);
+            RaycastHit2D hitR = Physics2D.Raycast(Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap), Vector3.right, 1000.0f, this.layerMask);
+            RaycastHit2D hitL = Physics2D.Raycast(Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap), Vector3.left, 1000.0f, this.layerMask);
+            RaycastHit2D hitT = Physics2D.Raycast(Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap), Vector3.up, 1000.0f, this.layerMask);
+            RaycastHit2D hitD = Physics2D.Raycast(Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap), Vector3.down, 1000.0f, this.layerMask);
             int count = 0;
             Vector3Int posMap1 = default;
             if (hitR.collider != null)
             {
-                posMap1 = TileMap.Instance.WorldPosToMapPos(new Vector3(hitR.point.x + 0.5f, hitR.point.y));
-                TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
+                posMap1 = Core.ServiceLocator.Get<TileMap>().WorldPosToMapPos(new Vector3(hitR.point.x + 0.5f, hitR.point.y));
+                TileBase tileBase = Core.ServiceLocator.Get<BuildMap>().GetTile(posMap1);
                 if (tileBase != null)
                 {
                     count += tileBase.name.Contains("Wall") ? 1 : 0;
@@ -78,8 +80,8 @@
 
             if (hitL.collider != null)
             {
-                posMap1 = TileMap.Instance.WorldPosToMapPos(new Vector3(hitL.point.x - 0.5f, hitL.point.y));
-                TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
+                posMap1 = Core.ServiceLocator.Get<TileMap>().WorldPosToMapPos(new Vector3(hitL.point.x - 0.5f, hitL.point.y));
+                TileBase tileBase = Core.ServiceLocator.Get<BuildMap>().GetTile(posMap1);
                 if (tileBase != null)
                 {
                     count += tileBase.name.Contains("Wall") ? 1 : 0;
@@ -88,8 +90,8 @@
 
             if (hitT.collider != null)
             {
-                posMap1 = TileMap.Instance.WorldPosToMapPos(new Vector3(hitT.point.x, hitT.point.y + 0.5f));
-                TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
+                posMap1 = Core.ServiceLocator.Get<TileMap>().WorldPosToMapPos(new Vector3(hitT.point.x, hitT.point.y + 0.5f));
+                TileBase tileBase = Core.ServiceLocator.Get<BuildMap>().GetTile(posMap1);
                 if (tileBase != null)
                 {
                     count += tileBase.name.Contains("Wall") ? 1 : 0;
@@ -98,8 +100,8 @@
 
             if (hitD.collider != null)
             {
-                posMap1 = TileMap.Instance.WorldPosToMapPos(new Vector3(hitD.point.x, hitD.point.y - 0.5f));
-                TileBase tileBase = BuildMap.Instance.GetTile(posMap1);
+                posMap1 = Core.ServiceLocator.Get<TileMap>().WorldPosToMapPos(new Vector3(hitD.point.x, hitD.point.y - 0.5f));
+                TileBase tileBase = Core.ServiceLocator.Get<BuildMap>().GetTile(posMap1);
                 if (tileBase != null)
                 {
                     count += tileBase.name.Contains("Wall") ? 1 : 0;

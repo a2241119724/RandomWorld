@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Data
 {
+    using LAB2D;
+    using LAB2D.Item;
     using System;
     using System.Collections.Generic;
 
@@ -14,7 +16,7 @@
         public DropDataManager()
         {
             this.idToDrop = new Dictionary<int, List<DropItem>>();
-            DropItemDataSO dropItemDataSO = ResourceManager.Instance.GetDropSO("DropItemDataSO");
+            DropItemDataSO dropItemDataSO = Core.ServiceLocator.Get<ResourceManager>().GetDropSO("DropItemDataSO");
 
             dropItemDataSO.ResourceDropItems.ForEach(item =>
             {
@@ -29,8 +31,11 @@
                     return;
                 }
 
-                // 根据树的名称获取item信息
-                this.idToDrop.Add(ItemDataManager.Instance.GetByName(item.Name).Id, item.DropItems);
+                // 根据资源名称获取item信息；缺少道具数据的资源不参与采集掉落。
+                if (Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(item.Name, out ItemData itemData))
+                {
+                    this.idToDrop.Add(itemData.Id, item.DropItems);
+                }
             });
         }
 
@@ -54,6 +59,16 @@
 
             return this.idToDrop[id];
         }
+
+        /// <summary>
+        /// 是否配置了该资源的掉落信息。
+        /// </summary>
+        /// <param name="id">资源ID</param>
+        /// <returns>是否配置</returns>
+        public bool HasDropItemsById(int id)
+        {
+            return this.idToDrop.ContainsKey(id);
+        }
     }
 
     /// <summary>
@@ -74,7 +89,7 @@
 
         public void Init()
         {
-            this.ResourceInfo.Id = ItemDataManager.Instance.GetByName(this.Name).Id;
+            this.ResourceInfo.Id = Core.ServiceLocator.Get<ItemDataManager>().GetByName(this.Name).Id;
         }
     }
 }

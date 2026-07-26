@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Item.Build.Wall
 {
+    using LAB2D;
     using System;
     using UnityEngine;
 
@@ -12,7 +13,7 @@
         /// <inheritdoc/>
         public override void AddBuildTask(Vector3Int centerMap, Extra extra)
         {
-            BuildMap.Instance.AddBuild(centerMap, this.TileName);
+            Core.ServiceLocator.Get<BuildMap>().AddBuild(centerMap, this.TileName);
         }
     }
 }

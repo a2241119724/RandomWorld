@@ -11,84 +11,97 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1634bc25a36d98749aa3c85f1bc9e144, type: 3}
   m_Name: EquipmentItemData
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   ItemType: 1
   ItemDatas:
   - Id: 100000
-    CnName: "\u8170\u5E26"
+    CnName: "腰带"
     EnName: CustomBelt
-    Info: "\u8170\u5E26"
+    Info: "腰带"
     IsStackable: 0
     Type: 1
+    EquipSlot: 9
   - Id: 100001
-    CnName: "\u4E0A\u8863"
+    CnName: "上衣"
     EnName: CustomBody
-    Info: "\u4E0A\u8863"
+    Info: "上衣"
     IsStackable: 0
     Type: 1
+    EquipSlot: 1
   - Id: 100002
-    CnName: "\u624B\u956F"
+    CnName: "手镯"
     EnName: CustomBracelet
-    Info: "\u624B\u956F"
+    Info: "手镯"
     IsStackable: 0
     Type: 1
+    EquipSlot: 8
   - Id: 100003
-    CnName: "\u8033\u73AF"
+    CnName: "耳环"
     EnName: CustomEarring
-    Info: "\u8033\u73AF"
+    Info: "耳环"
     IsStackable: 0
     Type: 1
+    EquipSlot: 10
   - Id: 100004
-    CnName: "\u5934\u76D4"
+    CnName: "头盔"
     EnName: CustomHead
-    Info: "\u5934\u76D4"
+    Info: "头盔"
     IsStackable: 0
     Type: 1
+    EquipSlot: 0
   - Id: 100005
-    CnName: "\u5750\u9A91"
+    CnName: "坐骑"
     EnName: CustomMount
-    Info: "\u5750\u9A91"
+    Info: "坐骑"
     IsStackable: 0
     Type: 1
+    EquipSlot: 12
   - Id: 100006
-    CnName: "\u9879\u94FE"
+    CnName: "项链"
     EnName: CustomNecklace
-    Info: "\u9879\u94FE"
+    Info: "项链"
     IsStackable: 0
     Type: 1
+    EquipSlot: 7
   - Id: 100007
-    CnName: "\u5BA0\u7269"
+    CnName: "宠物"
     EnName: CustomPet
-    Info: "\u5BA0\u7269"
+    Info: "宠物"
     IsStackable: 0
     Type: 1
+    EquipSlot: 13
   - Id: 100008
-    CnName: "\u6212\u6307"
+    CnName: "戒指"
     EnName: CustomRing
-    Info: "\u6212\u6307"
+    Info: "戒指"
     IsStackable: 0
     Type: 1
+    EquipSlot: 6
   - Id: 100009
-    CnName: "\u76FE\u724C"
+    CnName: "盾牌"
     EnName: CustomShield
-    Info: "\u76FE\u724C"
+    Info: "盾牌"
     IsStackable: 0
     Type: 1
+    EquipSlot: 5
   - Id: 100010
-    CnName: "\u978B\u5B50"
+    CnName: "鞋子"
     EnName: CustomShoes
-    Info: "\u978B\u5B50"
+    Info: "鞋子"
     IsStackable: 0
     Type: 1
+    EquipSlot: 3
   - Id: 100011
-    CnName: "\u88E4\u5B50"
+    CnName: "裤子"
     EnName: CustomTrouser
-    Info: "\u88E4\u5B50"
+    Info: "裤子"
     IsStackable: 0
     Type: 1
+    EquipSlot: 2
   - Id: 100012
-    CnName: "\u7FC5\u8180"
+    CnName: "翅膀"
     EnName: CustomWing
-    Info: "\u7FC5\u8180"
+    Info: "翅膀"
     IsStackable: 0
     Type: 1
+    EquipSlot: 11

@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel
 {
+    using LAB2D;
+    using LAB2D.Core;
     using UnityEngine.UI;
 
     /// <summary>
@@ -11,7 +13,7 @@
         {
             this.Name = "AIChat";
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "Send").onClick.AddListener(this.OnClick_Send);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Send").onClick.AddListener(this.OnClick_Send);
         }
 
         /// <summary>
@@ -19,7 +21,7 @@
         /// </summary>
         public void OnClick_Send()
         {
-            AIChatUI.Instance.Send();
+            ServiceLocator.Get<AIChatUI>().Send();
         }
 
         /// <inheritdoc/>

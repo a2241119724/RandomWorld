@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.State
 {
+    using LAB2D;
+    using LAB2D.Domain.Common;
+    using LAB2D.Serializable;
     using System.Text;
     using UnityEngine;
 
@@ -29,8 +32,8 @@
             // this.isOne = true;
 
             // 没有任务
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
-            this.targetMap = TileMap.Instance.GenCanReachPos(posMap);
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+            this.targetMap = AWorkerTask.GenCanReachPosProvider(posMap);
             if (workerData.Task != null)
             {
                 // 有任务
@@ -43,9 +46,10 @@
                     Vector3Int temp = new (this.targetMap.x + pos.Y, this.targetMap.y + pos.X, 0);
                     if (ASeek.IsCanReach(temp))
                     {
-                        Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(temp);
-                        float distance = Mathf.Pow(worldPos.x - this.Character.transform.position.x, 2) +
-                            Mathf.Pow(worldPos.y - this.Character.transform.position.y, 2);
+                        Vector3 worldPos = AWorkerTask.TileMapPositionProvider(temp);
+                        float dx = worldPos.x - this.Character.transform.position.x;
+                        float dy = worldPos.y - this.Character.transform.position.y;
+                        float distance = (dx * dx) + (dy * dy);
                         if (distance < minDistance)
                         {
                             minDistance = distance;
@@ -56,7 +60,7 @@
 
                 if (closedPos == default)
                 {
-                    LogManager.Instance.Log($"{workerData.Task.TaskType}, 没有邻居位置!!!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider($"{workerData.Task.TaskType}, 没有邻居位置!", LogManager.LogLevelEnum.Warning);
                     this.Character.GiveUpTask();
                     return;
                 }
@@ -65,20 +69,20 @@
             }
             else
             {
-                LogManager.Instance.Log(this.Character.name + " 没有任务!");
+                AWorkerTask.LogProvider(this.Character.name + " 没有任务!", LogManager.LogLevelEnum.Trace);
                 ++this.seekTimes;
-                if (this.seekTimes % WorkerExerciseTask.SeekThreshold == 0)
+                if (this.seekTimes % WorkerTaskTimeConfig.ExerciseSeekThreshold == 0)
                 {
-                    WorkerTaskManager.Instance.AddTask(
+                    AWorkerTask.TaskAddProvider(
                         new WorkerExerciseTask.ExerciseTaskBuilder()
                         .SetTarget(this.targetMap)
                         .SetWorker(this.Character)
-                        .Build(), Vector3IntLAB.Zero,
+                        .Build(), new GameGridPosition(0, 0, 0),
                         3);
                 }
             }
 
-            LogManager.Instance.Log(this.Character.name + " 寻路->" + this.targetMap);
+            AWorkerTask.LogProvider(this.Character.name + " 寻路->" + this.targetMap, LogManager.LogLevelEnum.Trace);
             this.Character.Seek.Seek(this.targetMap);
         }
 
@@ -92,8 +96,8 @@
             {
                 this.builder.Clear();
                 this.Character.WorkerStateText.text = this.builder.Append(this.preString)
-                    .Append("<color=yellow>Seeking: ")
-                    .Append(Mathf.RoundToInt(this.Character.Seek.SeekProgress * 100))
+                    .Append("<color=" + PixelUITheme.RichGold + ">Seeking: ")
+                    .Append(MathHelper.RoundToInt(this.Character.Seek.SeekProgress * 100))
                     .Append("%</color>\nTarget: ")
                     .Append(this.targetMap.x)
                     .Append(",")
@@ -133,7 +137,7 @@
                         this.Character.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
                     }
 
-                    LogManager.Instance.Log(this.Character.name + " 没有找到路!");
+                    AWorkerTask.LogProvider(this.Character.name + " 没有找到路!", LogManager.LogLevelEnum.Trace);
                     return;
                 }
 

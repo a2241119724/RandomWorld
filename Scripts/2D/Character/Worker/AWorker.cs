@@ -1,8 +1,15 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker
 {
+    using LAB2D.Enum;
+    using LAB2D;
+    using LAB2D.Character.Worker.State;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Core.Seek;
+    using LAB2D.Item;
+    using LAB2D.Item.Build.Furniture.Bed;
+    using LAB2D.UI.Character;
     using System;
     using System.Collections.Generic;
-    using System.Threading;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -22,10 +29,44 @@
         /// </summary>
         public static readonly float ThresholdTired = 20.0f;
 
+        /// <summary>
+        /// Worker 放弃任务回调 — 清除资源预留并通知任务管理器。
+        /// 默认实现访问 InventoryManager.Instance 和 WorkerTaskManager.Instance。
+        /// </summary>
+        public static System.Action<AWorker, AWorkerTask> GiveUpTaskProvider { get; set; }
+            = (worker, task) =>
+            {
+                Core.ServiceLocator.Get<InventoryManager>().DeleteWorkerPre(worker);
+                Core.ServiceLocator.Get<WorkerTaskManager>().GiveUpTask(task);
+            };
+
+        /// <summary>
+        /// Worker 死亡回调 — 从管理器移除并记录统计数据。
+        /// 默认实现访问 NetworkConnect.Instance / WorkerManager.Instance / WorkerEfficiencyTracker.Instance。
+        /// </summary>
+        public static System.Action<AWorker> DeathProvider { get; set; }
+            = (worker) =>
+            {
+                if (!AWorkerTask.NetworkIsOnlineProvider() || AWorkerTask.NetworkIsMasterClientProvider())
+                {
+                    Core.ServiceLocator.Get<WorkerManager>().Remove(worker);
+                }
+
+                Core.ServiceLocator.Get<WorkerEfficiencyTracker>().RecordWorkerDeath(worker);
+            };
+
+        /// <summary>
+        /// 日志提供者 — Worker 相关的错误/警告日志。
+        /// 默认实现访问 ServiceLocator.Get<LogManager>()。
+        /// </summary>
+        public static System.Action<string, LogManager.LogLevelEnum> LogProvider { get; set; }
+            = (msg, level) => ServiceLocator.Get<LogManager>().Log(msg, level);
+
         private Dictionary<int, ResourceInfo> resourceInfos; // 携带的资源
         private Slider progress;
         private Text nameUI;
         private CharacterStatusUI statusBar; // 记录实例化血条
+        private int dialoguePauseCount;
 
         /// <summary>
         /// Worker状态
@@ -43,6 +84,11 @@
         public ABed BedItem { get; set; }
 
         /// <summary>
+        /// 是否因为对话暂停行动。
+        /// </summary>
+        public bool IsDialoguePaused => this.dialoguePauseCount > 0;
+
+        /// <summary>
         /// 状态管理器
         /// </summary>
         public WorkerStateManager<ICharacterState, AWorkerState.TypeEnum, AWorker> Manager { get; private set; }
@@ -54,7 +100,7 @@
             this.basicAttribute = new Attribute(1.0f, 1.0f, 1.0f, 1.0f, 0.05f, 1.0f, 1.0f, 1.0f);
             this.CharacterDataLAB = new WorkerData();
             this.CharacterDataLAB.Character = this;
-            this.CharacterDataLAB.Weapon = (AWeapon)ItemInstanceFactory.Instance.GetBackpackItemByName("CustomSword");
+            this.CharacterDataLAB.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider("CustomSword");
             this.Manager = new WorkerStateManager<ICharacterState, AWorkerState.TypeEnum, AWorker>(this);
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
@@ -64,11 +110,10 @@
             this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
             if (this.statusBar == null)
             {
-                LogManager.Instance.Log("statusBar Not Found!!!", LogManager.LogLevelEnum.Error);
+                LogProvider("statusBar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
-            ThreadPool.SetMaxThreads(2, 2);
             this.Seek = new AStar(this);
             this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAYER);
             this.AttackTags = new List<string>
@@ -83,11 +128,25 @@
             base.Start();
             this.nameUI.text = this.name;
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+
+            // 添加 NPC 对话触发器
+            NPCDialogueTrigger trigger = this.GetComponent<NPCDialogueTrigger>();
+            if (trigger == null)
+            {
+                trigger = this.gameObject.AddComponent<NPCDialogueTrigger>();
+                trigger.profileName = "Worker";
+            }
         }
 
         public void Update()
         {
             this.transform.rotation = Quaternion.identity;
+
+            if (this.IsDialoguePaused)
+            {
+                this.UpdateDialoguePauseText();
+                return;
+            }
 
             // 执行当前状态的函数
             this.Manager.CurrentState.OnUpdate();
@@ -109,13 +168,40 @@
             this.progress.gameObject.SetActive(enable);
         }
 
+        /// <summary>
+        /// 对话开始时暂停 Worker 的状态机和任务进度。
+        /// </summary>
+        public void PauseForDialogue()
+        {
+            this.dialoguePauseCount++;
+            this.UpdateDialoguePauseText(true);
+        }
+
+        /// <summary>
+        /// 对话结束后恢复 Worker 原来的状态机。
+        /// </summary>
+        public void ResumeFromDialogue()
+        {
+            if (this.dialoguePauseCount <= 0)
+            {
+                return;
+            }
+
+            this.dialoguePauseCount--;
+            if (this.dialoguePauseCount == 0 && this.WorkerStateText != null)
+            {
+                this.WorkerStateText.text = this.Manager.CurrentStateType.ToString();
+            }
+        }
+
         /// <inheritdoc/>
         public override string ToString()
         {
             string resources = string.Empty;
             foreach (KeyValuePair<int, ResourceInfo> resource in this.resourceInfos)
             {
-                resources += resource.Key + ":" + resource.Value.Count + "\n";
+                ItemData itemData = AWorkerTask.ItemDataProvider(resource.Key);
+                resources += $"  {itemData.CnName}(id:{resource.Key}) x{resource.Value.Count}\n";
             }
 
             WorkerData workerData = this.CharacterDataLAB as WorkerData;
@@ -126,14 +212,32 @@
                     $"TaskTarget:{workerData.Task.TargetMap}\n";
             }
 
+            string equipmentInfo = string.Empty;
+            if (workerData.Weapon != null)
+            {
+                equipmentInfo += $"  武器: {AWorkerTask.ItemDataProvider(workerData.Weapon.Id).CnName}\n";
+            }
+
+            Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments = workerData.GetEquipments();
+            foreach (var item in equipments)
+            {
+                if (item.Value != null)
+                {
+                    equipmentInfo += $"  {EquipmentLootTool.GetSlotName(item.Key)}: {AWorkerTask.ItemDataProvider(item.Value.Id).CnName}\n";
+                }
+            }
+
             return base.ToString() +
                 $"状态:{this.Manager.CurrentStateType}\n" +
                 taskInfo +
                 $"IsSeeking:{this.Seek.IsSeeking()}\n" +
-                $"Hungry:{workerData.CurHungry}\n" +
+                $"饥饿值: {workerData.CurHungry:F0}/{workerData.MaxHungry:F0}\n" +
+                $"疲劳值: {workerData.CurTired:F0}/{workerData.MaxTired:F0}\n" +
+                $"最大携带: {workerData.MaxResourceCount}\n" +
                 $"TargetMap:{this.Seek.TargetMap}\n" +
                 $"SeekId:{this.CharacterDataLAB.SeekId}\n" +
-                resources;
+                $"装备:\n{equipmentInfo}" +
+                $"携带资源:\n{resources}";
         }
 
         /// <summary>
@@ -169,14 +273,14 @@
                     continue;
                 }
 
-                Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap(
-                TileMap.Instance.WorldPosToMapPos(this.transform.position), 3, true);
+                Vector3Int pos = AWorkerTask.AvailablePositionProvider(
+                AWorkerTask.TileMapWorldToMapProvider(this.transform.position), 3, true);
                 if (pos == default)
                 {
-                    return;
+                    continue;
                 }
 
-                ItemMap.Instance.PutDownToDrop(pos, ItemInstanceFactory.Instance.GetBackpackItemById(resource.Key).Tile, resource.Value);
+                AWorkerTask.ItemMapProvider().PutDownToDrop(pos, AWorkerTask.ItemFactoryByIdProvider(resource.Key).Tile, resource.Value);
             }
         }
 
@@ -194,7 +298,7 @@
                 }
                 else
                 {
-                    LogManager.Instance.Log("自身资源不够，仍然建造成功，错误", LogManager.LogLevelEnum.Error);
+                    LogProvider("自身资源不够，仍然建造成功，错误", LogManager.LogLevelEnum.Error);
                 }
             }
         }
@@ -216,7 +320,7 @@
             }
             else
             {
-                LogManager.Instance.Log("自身资源不够，仍然建造成功，错误", LogManager.LogLevelEnum.Error);
+                LogProvider("自身资源不够，仍然建造成功，错误", LogManager.LogLevelEnum.Error);
             }
         }
 
@@ -258,11 +362,32 @@
         /// </summary>
         public void GiveUpTask()
         {
-            InventoryManager.Instance.DeleteWorkerPre(this);
             AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
-            WorkerTaskManager.Instance.GiveUpTask(workerData.Task);
+            GiveUpTaskProvider(this, workerData.Task);
             workerData.Task = null;
             this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+        }
+
+        private void UpdateDialoguePauseText(bool force = false)
+        {
+            if (!force && Time.frameCount % 60 != 0)
+            {
+                return;
+            }
+
+            if (this.WorkerStateText == null)
+            {
+                return;
+            }
+
+            AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
+            if (workerData != null && workerData.Task != null)
+            {
+                this.WorkerStateText.text = $"对话中\n暂停任务: {workerData.Task.Name}";
+                return;
+            }
+
+            this.WorkerStateText.text = "对话中";
         }
 
         /// <summary>
@@ -293,7 +418,7 @@
         {
             if (hp <= 0)
             {
-                LogManager.Instance.Log("Hp can't less than zero!!!", LogManager.LogLevelEnum.Error);
+                LogProvider("Hp can't less than zero!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -314,18 +439,14 @@
         {
             base.Death();
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
-            {
-                WorkerManager.Instance.Remove(this);
-            }
-
-            this.Manager.ChangeState(AWorkerState.TypeEnum.Dead); // 进入死亡状态
+            DeathProvider(this);
+            this.Manager.ChangeState(AWorkerState.TypeEnum.Dead);
         }
 
         private void OnCollisionStay2D(Collision2D collision)
         {
-            this.checkBug.AddColliderCount(DateTime.Now.Ticks);
-            if (this.checkBug.IsBug(this.name, 1000))
+            this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks);
+            if (this.collisionBugDetector.IsBug(this.name, 1000))
             {
                 this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
             }
@@ -382,11 +503,11 @@
             {
                 // 设置默认可接受任务类型
                 this.TaskToggle = new bool[10];
-                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Eat] = true;
-                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Wear] = true;
-                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Carry] = true;
-                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Gather] = true;
-                this.TaskToggle[(int)AWorkerTask.WorkerTaskTypeEnum.Exercise] = true;
+                this.TaskToggle[(int)WorkerTaskType.Eat] = true;
+                this.TaskToggle[(int)WorkerTaskType.Wear] = true;
+                this.TaskToggle[(int)WorkerTaskType.Carry] = true;
+                this.TaskToggle[(int)WorkerTaskType.Gather] = true;
+                this.TaskToggle[(int)WorkerTaskType.Exercise] = true;
             }
         }
     }

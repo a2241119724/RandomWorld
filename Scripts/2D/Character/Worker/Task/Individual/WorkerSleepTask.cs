@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.Task.Individual
 {
+    using LAB2D.Enum;
+    using LAB2D;
+    using LAB2D.Serializable;
     using System;
     using UnityEngine;
 
@@ -12,11 +15,11 @@
         private AWorker worker;
 
         public WorkerSleepTask()
-            : base(WorkerTaskTypeEnum.Sleep)
+            : base(WorkerTaskType.Sleep)
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 10.0f;
+                this.maxProgress = WorkerTaskTimeConfig.SleepSeconds;
 
                 // 获取物资
                 this.Init();
@@ -35,7 +38,7 @@
         {
             base.Finish(worker);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            workerData.CurHungry = workerData.MaxHungry;
+            workerData.CurTired = workerData.MaxTired;
         }
 
         /// <inheritdoc/>

@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character
 {
+    using LAB2D;
     using System;
     using System.Collections.Generic;
 
@@ -45,7 +46,7 @@
         {
             if (state == null)
             {
-                LogManager.Instance.Log("state is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("state is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -68,7 +69,7 @@
 
             if (!this.States.ContainsKey(type))
             {
-                LogManager.Instance.Log("states Not Contain type!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("states Not Contain type!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

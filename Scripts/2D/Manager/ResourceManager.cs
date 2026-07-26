@@ -1,7 +1,13 @@
-﻿namespace LAB2D
+namespace LAB2D.Manager
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Map;
+    using LAB2D.SO;
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -11,6 +17,12 @@
     /// </summary>
     public class ResourceManager : Singleton<ResourceManager>
     {
+        /// <summary>
+        /// 整数随机数提供者（minInclusive, maxExclusive）。
+        /// 默认实现封装 UnityEngine.Random.Range；可在测试中替换。
+        /// </summary>
+        internal static Func<int, int, int> RandomIntProvider { get; set; }
+            = (minInclusive, maxExclusive) => UnityEngine.Random.Range(minInclusive, maxExclusive);
         private readonly Dictionary<string, GameObject> prefabDic; // <characterType,<name,prefab>>
         private readonly Dictionary<string, UnityEngine.Object> assetDic;
         private readonly Dictionary<string, Sprite> imageDic;
@@ -19,6 +31,16 @@
         private readonly Dictionary<string, ItemDataSO> backpackDataDic;
         private readonly Dictionary<string, BuildItemDataSO> buildDataDic;
         private readonly Dictionary<string, DropItemDataSO> dropDataDic;
+
+        /// <summary>
+        /// 预制体字典是否已成功加载（非空即视为已加载）
+        /// </summary>
+        public bool IsPrefabLoaded => this.prefabDic.Count > 0;
+
+        /// <summary>
+        /// 资源字典是否已成功加载
+        /// </summary>
+        public bool IsAssetLoaded => this.assetDic.Count > 0;
 
         public ResourceManager()
         {
@@ -52,6 +74,54 @@
             this.buildDataDic = ResourceTool.LoadResources<BuildItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
             this.dropDataDic = ResourceTool.LoadResources<DropItemDataSO>(ResourceConstant.SCRIPTABLE_ROOT);
             this.LoadPrefabs();
+
+            // 诊断日志：告知开发者资源加载状态
+            if (this.prefabDic.Count == 0)
+            {
+                Debug.LogWarning(
+                    "[ResourceManager] prefabDic is empty after initialization. " +
+                    "Prefabs will NOT be available for Instantiate(). " +
+                    "Ensure StreamingAssets/prefab AssetBundle exists and contains prefabs, " +
+                    "or place prefabs under Resources/Prefabs/.");
+            }
+            else
+            {
+                Debug.Log($"[ResourceManager] Loaded {this.prefabDic.Count} prefabs successfully.");
+            }
+        }
+
+        /// <summary>
+        /// 获取 StreamingAssets 下资源的绝对路径.
+        /// </summary>
+        /// <param name="relativePath">相对 StreamingAssets 的路径.</param>
+        /// <returns>绝对路径.</returns>
+        public string GetStreamingAssetPath(string relativePath)
+        {
+            if (string.IsNullOrEmpty(relativePath))
+            {
+                return Application.streamingAssetsPath;
+            }
+
+            string normalizedPath = relativePath.Replace('\\', '/');
+            return Path.Combine(Application.streamingAssetsPath, normalizedPath);
+        }
+
+        /// <summary>
+        /// 获取内置 LLM 模型的绝对路径.
+        /// </summary>
+        /// <returns>内置 LLM 模型路径.</returns>
+        public string GetBuiltinLLMModelPath()
+        {
+            return this.GetStreamingAssetPath(ResourceConstant.BUILTIN_LLM_MODEL_RELATIVE_PATH);
+        }
+
+        /// <summary>
+        /// 内置 LLM 模型文件是否存在.
+        /// </summary>
+        /// <returns>是否存在.</returns>
+        public bool HasBuiltinLLMModel()
+        {
+            return File.Exists(this.GetBuiltinLLMModelPath());
         }
 
         /// <summary>
@@ -63,7 +133,7 @@
         {
             if (!this.backpackDataDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(name + " scriptable not found!!!", LogManager.LogLevelEnum.Warning);
                 return null;
             }
 
@@ -79,7 +149,7 @@
         {
             if (!this.buildDataDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -95,7 +165,7 @@
         {
             if (!this.dropDataDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -111,7 +181,7 @@
         {
             if (!this.shaderDic.ContainsKey(name))
             {
-                LogManager.Instance.Log(name + " shader not found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(name + " shader not found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -132,7 +202,7 @@
                 return (TileBase)asset;
             }
 
-            LogManager.Instance.Log(name + " asset not found!!!", LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider(name + " asset not found!!!", LogManager.LogLevelEnum.Error);
             return null;
         }
 
@@ -157,7 +227,7 @@
 
             if (name == default)
             {
-                return (TileBase)tiles[UnityEngine.Random.Range(0, tiles.Count)];
+                return (TileBase)tiles[RandomIntProvider(0, tiles.Count)];
             }
 
             foreach (UnityEngine.Object tile in tiles)
@@ -185,7 +255,7 @@
                 return sprite;
             }
 
-            LogManager.Instance.Log(name + " image not found!!!", LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider(name + " image not found!!!", LogManager.LogLevelEnum.Error);
             return null;
         }
 
@@ -239,7 +309,7 @@
         public GameObject Instantiate(string prefabName, Vector3 position, Quaternion rotation, Transform parent, bool worldPositionStays, bool isLocal)
         {
             prefabName = prefabName.ToLower();
-            if (NetworkConnect.Instance.IsOnline && !isLocal)
+            if (ServiceLocator.Get<NetworkConnect>() != null && ServiceLocator.Get<NetworkConnect>().IsOnline && !isLocal)
             {
                 return PhotonNetwork.Instantiate(prefabName, position, rotation);
             }
@@ -247,7 +317,21 @@
             {
                 if (!this.prefabDic.ContainsKey(prefabName))
                 {
-                    LogManager.Instance.Log(prefabName + " prefab not found!!!", LogManager.LogLevelEnum.Error);
+                    if (this.prefabDic.Count == 0)
+                    {
+                        string errorMsg =
+                            $"[ResourceManager] prefabDic is empty! Cannot instantiate '{prefabName}'. " +
+                            "The AssetBundle has not been loaded. " +
+                            "Check the Console for earlier [ResourceManager] messages about AssetBundle loading.";
+                        Debug.LogError(errorMsg);
+                        AWorkerTask.LogProvider(errorMsg, LogManager.LogLevelEnum.Error);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[ResourceManager] Prefab '{prefabName}' not found in dictionary ({this.prefabDic.Count} entries available)");
+                        AWorkerTask.LogProvider(prefabName + " prefab not found!!!", LogManager.LogLevelEnum.Error);
+                    }
+
                     return null;
                 }
 
@@ -268,7 +352,7 @@
 
                 if (instance == null)
                 {
-                    LogManager.Instance.Log($"{prefabName} Instantiate Error!!!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider($"{prefabName} Instantiate Error!!!", LogManager.LogLevelEnum.Error);
                     return null;
                 }
 
@@ -279,21 +363,72 @@
 
         private void LoadPrefabs()
         {
-            string prefabAB = Application.streamingAssetsPath + "/Prefab";
-            AssetBundle assetBundle = AssetBundle.LoadFromFile(prefabAB);
+            // 尝试多个可能的 AssetBundle 文件名（不同平台/构建可能使用不同命名）
+            string[] candidatePaths = new[]
+            {
+                Path.Combine(Application.streamingAssetsPath, "prefab"),
+                Path.Combine(Application.streamingAssetsPath, "Prefab"),
+            };
+
+            AssetBundle assetBundle = null;
+            string loadedPath = null;
+
+            foreach (string candidatePath in candidatePaths)
+            {
+                if (!File.Exists(candidatePath))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    assetBundle = AssetBundle.LoadFromFile(candidatePath);
+                    if (assetBundle != null)
+                    {
+                        loadedPath = candidatePath;
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[ResourceManager] Failed to load AssetBundle from '{candidatePath}': {ex.Message}");
+                }
+            }
+
             if (assetBundle == null)
             {
-                LogManager.Instance.Log("AB包:" + prefabAB + "不存在");
+                Debug.LogError(
+                    $"[ResourceManager] AssetBundle not found! " +
+                    $"Checked paths: {string.Join(", ", candidatePaths)}. " +
+                    "Please build the AssetBundle first or ensure it is in StreamingAssets.");
                 return;
             }
 
-            string[] assetPaths = assetBundle.GetAllAssetNames();
-            foreach (string path in assetPaths)
+            try
             {
-                this.prefabDic[path.Split("/")[^1].Split(".")[0]] = assetBundle.LoadAsset<GameObject>(path);
-            }
+                string[] assetPaths = assetBundle.GetAllAssetNames();
+                int prefabCount = 0;
+                foreach (string path in assetPaths)
+                {
+                    string key = path.Split('/')[^1].Split('.')[0];
+                    GameObject prefab = assetBundle.LoadAsset<GameObject>(path);
+                    if (prefab != null)
+                    {
+                        this.prefabDic[key] = prefab;
+                        prefabCount++;
+                    }
+                }
 
-            assetBundle.Unload(false);
+                Debug.Log($"[ResourceManager] Loaded {prefabCount} prefabs from AssetBundle: {loadedPath}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ResourceManager] Error reading assets from AssetBundle: {ex.Message}");
+            }
+            finally
+            {
+                assetBundle.Unload(false);
+            }
         }
     }
 }

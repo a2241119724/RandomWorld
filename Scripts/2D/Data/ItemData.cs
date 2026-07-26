@@ -1,6 +1,10 @@
-﻿namespace LAB2D
+namespace LAB2D.Data
 {
+    using LAB2D;
+    using LAB2D.Item;
+    using LAB2D.Item.Backpack.Equipment;
     using System;
+    using UnityEngine.Serialization;
 
     /// <summary>
     /// 不能将ItemData转换为json,因为需要[Serializable]修饰,而包装类没有被修饰
@@ -12,7 +16,7 @@
         /// <summary>
         /// 空物品
         /// </summary>
-        public static ItemData Empty = new ();
+        public static readonly ItemData Empty = new ();
 
         /// <summary>
         /// 唯一标识符
@@ -45,6 +49,11 @@
         public AItem.ItemTypeEnum Type;
 
         /// <summary>
+        /// 装备槽位（仅Equipment类型有效）
+        /// </summary>
+        public AEquipment.EquipTypeEnum EquipSlot;
+
+        /// <summary>
         /// 任务时间
         /// </summary>
         public TaskTime RelatedTaskTime;
@@ -54,18 +63,27 @@
             this.RelatedTaskTime = new TaskTime();
         }
 
+        public void EnsureTaskTime()
+        {
+            if (this.RelatedTaskTime == null)
+            {
+                this.RelatedTaskTime = new TaskTime();
+            }
+        }
+
         [Serializable]
         public class TaskTime
         {
             /// <summary>
-            /// 搬运任务的拾取时间/采集时间
+            /// 搬运任务的拾取时间
             /// </summary>
-            public float TaskBaseTime;
+            [FormerlySerializedAs("CarryTaskTakeTime")]
+            public float TaskBaseTime = WorkerTaskTimeConfig.CarryTakeSeconds;
 
             /// <summary>
             /// 搬运任务的放置时间
             /// </summary>
-            public float CarryTaskPutDownTime;
+            public float CarryTaskPutDownTime = WorkerTaskTimeConfig.CarryPutDownSeconds;
         }
 
         /// <summary>

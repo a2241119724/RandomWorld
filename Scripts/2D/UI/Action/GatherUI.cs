@@ -1,7 +1,11 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Action
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Domain.Common;
+    using LAB2D.Serializable;
+    using LAB2D.UnityAdapter;
     using UnityEngine;
-    using UnityEngine.Tilemaps;
     using UnityEngine.UI;
 
     /// <summary>
@@ -19,18 +23,19 @@
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
         }
 
         public void Start()
         {
-            Tool.GetComponentInChildren<Button>(this.gameObject, "Yes").onClick.AddListener(this.Onclick_Yes);
-            Tool.GetComponentInChildren<Button>(this.gameObject, "No").onClick.AddListener(this.Onclick_No);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "Yes").onClick.AddListener(this.Onclick_Yes);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "No").onClick.AddListener(this.Onclick_No);
         }
 
         public void Update()
         {
             // 若是不在默认位置，则才返回默认位置
-            if (Input.GetMouseButtonDown(1) && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
+            if (UnityGlobalInputAdapter.GetSecondaryMouseDown() && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
             {
                 this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }
@@ -43,7 +48,15 @@
         public void SetPostion(Vector3Int posMap)
         {
             this.posMap = posMap;
-            this.transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
+            this.transform.position = ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap);
+        }
+
+        /// <summary>
+        /// 隐藏采集UI。
+        /// </summary>
+        public void Hide()
+        {
+            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
         }
 
         /// <summary>
@@ -51,17 +64,21 @@
         /// </summary>
         public void Onclick_Yes()
         {
-            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
-            if (WorkerTaskManager.Instance.GatherPos.Contains(this.posMap))
+            this.Hide();
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(this.posMap);
+            if (ServiceLocator.Get<WorkerTaskManager>().GatherPositions.Contains(gridPos))
             {
                 return;
             }
 
-            TileBase tileBase = ResourceMap.Instance.GetTile(this.posMap);
-            ItemData itemData = ItemDataManager.Instance.GetByName(tileBase.name);
-            WorkerTaskManager.Instance.AddTask(
+            if (!ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(this.posMap, out ResourceInfo resourceInfo))
+            {
+                return;
+            }
+
+            ServiceLocator.Get<WorkerTaskManager>().AddTask(
                 new WorkerGatherTask.GatherTaskBuilder()
-                .SetTarget(this.posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), Vector3IntLAB.ToVector3IntLAB(this.posMap));
+                .SetTarget(this.posMap).SetResourceInfo(resourceInfo).Build(), new GameGridPosition(this.posMap.x, this.posMap.y, this.posMap.z));
         }
 
         /// <summary>
@@ -69,14 +86,15 @@
         /// </summary>
         public void Onclick_No()
         {
-            this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
-            if (!WorkerTaskManager.Instance.GatherPos.Contains(this.posMap))
+            this.Hide();
+            GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(this.posMap);
+            if (!ServiceLocator.Get<WorkerTaskManager>().GatherPositions.Contains(gridPos))
             {
                 return;
             }
 
-            WorkerTaskManager.Instance.CancelGatherTask(this.posMap);
-            GatherMap.Instance.CancelGather(this.posMap);
+            ServiceLocator.Get<WorkerTaskManager>().CancelGatherTask(gridPos);
+            ServiceLocator.Get<GatherMap>().CancelGather(this.posMap);
         }
     }
 }

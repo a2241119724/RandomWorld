@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Domain.Common;
     using UnityEngine;
     using UnityEngine.Rendering.Universal;
     using UnityEngine.UI;
@@ -16,9 +19,9 @@
 
         public void Awake()
         {
-            this.gameTime = Tool.GetComponentInChildren<Text>(this.gameObject, "Text");
+            this.gameTime = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Text");
             this.globalLight = GameObject.FindGameObjectWithTag(TagConstant.GLOBAL_LIGHT_TAG).GetComponent<Light2D>();
-            this.pointer = Tool.GetComponentInChildren<Image>(this.gameObject, "Pointer").transform;
+            this.pointer = LAB2D.Tool.Tool.GetComponentInChildren<Image>(this.gameObject, "Pointer").transform;
         }
 
         public void Update()
@@ -29,15 +32,15 @@
             if (last != (int)(this.curGameTime / GlobalData.GameDayTime))
             {
                 // 每天开始随机天气
-                WeatherManager.Instance.RandWeather();
+                ServiceLocator.Get<WeatherManager>().RandWeather();
             }
 
             double time = this.curGameTime * this.rate;
 
             // 将sin函数转为周期为1的函数
-            this.globalLight.intensity = Mathf.Clamp(Mathf.Sin(((float)this.curGameTime / GlobalData.GameDayTime * 6.2624f) - 1.55f) + 0.7f, 0.4f, 0.8f);
+            this.globalLight.intensity = MathHelper.Clamp((float)System.Math.Sin(((float)this.curGameTime / GlobalData.GameDayTime * 6.2624f) - 1.55f) + 0.7f, 0.4f, 0.8f);
             this.gameTime.text = string.Format(
-                "<color=blue>游戏时间: </color>{0:D2}天{1:D2}时{2:D2}分",
+                "<color=" + PixelUITheme.RichPink + ">游戏时间: </color>{0:D2}天{1:D2}时{2:D2}分",
                 (int)time / DayTime,
                 ((int)time % DayTime) / HourTime,
                 ((int)time % HourTime) / 60);

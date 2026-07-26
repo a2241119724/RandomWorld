@@ -1,4 +1,4 @@
-﻿namespace LAB2D
+namespace LAB2D
 {
     using UnityEngine;
     using UnityEngine.UI;
@@ -11,6 +11,8 @@
     [DisallowMultipleComponent]
     public class RoundCorner : MaskableGraphic
     {
+        private bool materialInitialized;
+
         /// <summary>
         /// 圆角半径
         /// </summary>
@@ -21,19 +23,38 @@
         protected override void Start()
         {
             base.Start();
-            this.material = this.GenerateMaterial(ResourceManager.Instance.GetShader("RoundCorner"));
-            this.material.SetFloat("_Width", this.rectTransform.rect.width);
-            this.material.SetFloat("_Height", this.rectTransform.rect.height);
-            this.material.SetFloat("_RoundRadius", this.Radius);
+            this.ApplyMaterialProperties();
         }
 
         /// <inheritdoc/>
         protected override void OnRectTransformDimensionsChange()
         {
             base.OnRectTransformDimensionsChange();
+            this.ApplyMaterialProperties();
+        }
+
+        private void ApplyMaterialProperties()
+        {
+            if (!this.materialInitialized)
+            {
+                UnityEngine.Material roundMaterial = this.GenerateMaterial(ResourceManager.Instance.GetShader("RoundCorner"));
+                if (roundMaterial == null)
+                {
+                    return;
+                }
+
+                this.material = roundMaterial;
+                this.materialInitialized = true;
+            }
+
+            if (this.material == null)
+            {
+                return;
+            }
 
             this.material.SetFloat("_Width", this.rectTransform.rect.width);
             this.material.SetFloat("_Height", this.rectTransform.rect.height);
+            this.material.SetFloat("_RoundRadius", this.Radius);
         }
 
         /// <summary>

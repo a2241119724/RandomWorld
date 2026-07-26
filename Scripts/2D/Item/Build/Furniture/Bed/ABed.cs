@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Item.Build.Furniture.Bed
 {
+    using LAB2D;
+    using LAB2D.Core;
     using System;
     using UnityEngine;
 
@@ -20,7 +22,7 @@
             base.AddBuildTask(centerMap, extra);
 
             // 添加
-            FurnitureManager.Instance.AddBed(centerMap);
+            ServiceLocator.Get<FurnitureManager>().AddBed(centerMap);
         }
     }
 }

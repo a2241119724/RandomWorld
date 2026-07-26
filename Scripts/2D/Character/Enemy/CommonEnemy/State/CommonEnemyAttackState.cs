@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Enemy.CommonEnemy.State
 {
+    using LAB2D;
     using Photon.Pun;
     using UnityEngine;
 
@@ -37,7 +38,7 @@
         /// <inheritdoc/>
         public override void OnUpdate()
         {
-            this.AttackTime += Time.deltaTime;
+            this.AttackTime += this.Character.DeltaTime;
             ACommonEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as ACommonEnemy.EnemyData;
 
             // 打击目标死亡
@@ -57,7 +58,7 @@
             if (this.Character.SenseNearby(this.Character.Target.transform))
             {
                 // animator.SetBool("isAttack", true);
-                this.recordTime += Time.deltaTime;
+                this.recordTime += this.Character.DeltaTime;
 
                 // 攻击间隔时间
                 if (this.recordTime > AttackInterval)
@@ -67,9 +68,9 @@
                     // if (zombieAttackAudio != null)
                     // AudioSource.PlayClipAtPoint(zombieAttackAudio, transform.position);
                     // 攻击
-                    if (NetworkConnect.Instance.IsOnline)
+                    if (this.Character.NetworkView.IsOnline)
                     {
-                        this.Character.pv.RPC("Attack", RpcTarget.All);
+                        this.Character.NetworkView.RPC("Attack", RpcTarget.All);
                     }
                     else
                     {

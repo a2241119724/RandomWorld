@@ -1,5 +1,9 @@
-﻿namespace LAB2D
+namespace LAB2D.Map
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Data;
+    using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
     using Photon.Pun;
@@ -35,12 +39,9 @@
         /// <param name="posMap">位置</param>
         public void AddGather(Vector3Int posMap)
         {
-            this.tilemap.SetTile(posMap, (TileBase)ResourceManager.Instance.GetAsset("Gather"));
+            this.tilemap.SetTile(posMap, (TileBase)Core.ServiceLocator.Get<ResourceManager>().GetAsset("Gather"));
             this.GatherMapDataLAB.Add(posMap, "Gather");
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
-            }
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
         }
 
         /// <summary>
@@ -51,10 +52,7 @@
         {
             this.tilemap.SetTile(posMap, null);
             this.GatherMapDataLAB.Remove(posMap);
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
-            }
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
         }
 
         /// <inheritdoc/>
@@ -62,7 +60,7 @@
         public override void SyncDataReq(byte[] data)
         {
             base.SyncDataReq(data);
-            LogManager.Instance.Log("Request: 同步地图采集数据");
+            AWorkerTask.LogProvider("Request: 同步地图采集数据", LogManager.LogLevelEnum.Trace);
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.GatherMapDataLAB);
         }
 
@@ -71,14 +69,14 @@
         public override void SyncDataResp(byte[] data)
         {
             base.SyncDataResp(data);
-            LogManager.Instance.Log("Response: 同步地图采集数据");
+            AWorkerTask.LogProvider("Response: 同步地图采集数据", LogManager.LogLevelEnum.Trace);
             GatherMapData gatherMapData = DataTool.FromByteArray<GatherMapData>(data);
             Dictionary<Vector3IntLAB, string>.Enumerator enumerator = gatherMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 this.tilemap.SetTile(
                     Vector3IntLAB.ToVector3Int(enumerator.Current.Key),
-                    (TileBase)ResourceManager.Instance.GetAsset(enumerator.Current.Value));
+                    (TileBase)Core.ServiceLocator.Get<ResourceManager>().GetAsset(enumerator.Current.Value));
             }
         }
 
@@ -91,7 +89,7 @@
         [PunRPC]
         public void SyncDataResp(byte[] vector3IntLAB, string tileBaseName, bool isDelete = false)
         {
-            LogManager.Instance.Log("Response: 同步地图采集数据");
+            AWorkerTask.LogProvider("Response: 同步地图采集数据", LogManager.LogLevelEnum.Trace);
 
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
@@ -100,7 +98,7 @@
                 return;
             }
 
-            this.tilemap.SetTile(vector3Int, (TileBase)ResourceManager.Instance.GetAsset(tileBaseName));
+            this.tilemap.SetTile(vector3Int, (TileBase)Core.ServiceLocator.Get<ResourceManager>().GetAsset(tileBaseName));
         }
 
         /// <summary>

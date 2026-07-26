@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.State
 {
+    using LAB2D;
+    using LAB2D.Domain.Common;
     using System.Text;
     using UnityEngine;
 
@@ -40,16 +42,16 @@
                 AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
                 if (workerData.Task == null)
                 {
-                    this.recordTime += Time.deltaTime;
+                    this.recordTime += this.Character.DeltaTime;
                     if (Time.frameCount % 60 == 0)
                     {
                         this.Character.WorkerStateText.text = this.builder.Append("休息: ")
-                        .Append(Mathf.RoundToInt(this.recordTime))
+                        .Append(MathHelper.RoundToInt(this.recordTime))
                         .ToString();
                     }
 
-                    // 休息2秒
-                    if (this.recordTime < 2)
+                    // 短暂休息后重新找任务
+                    if (this.recordTime < WorkerTaskTimeConfig.IdleRestSeconds)
                     {
                         return;
                     }
@@ -68,7 +70,7 @@
 
             if (Time.frameCount % 60 == 0)
             {
-                Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
+                Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
                 this.Character.WorkerStateText.text = this.builder.Append(this.preString)
                     .Append("Target: ")
                     .Append(this.Character.Seek.TargetMap.x)

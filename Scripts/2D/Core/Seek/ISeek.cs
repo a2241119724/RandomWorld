@@ -1,6 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Core.Seek
 {
     using UnityEngine;
+    using LAB2D.Serializable;
 
     /// <summary>
     /// 寻路基

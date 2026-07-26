@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel.PanelUI
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Character.Worker.Task;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -14,22 +17,22 @@
 
         public void Awake()
         {
-            GlobalInit.Instance.ShowTip("登录成功!!!");
+            ServiceLocator.Get<GlobalInit>().ShowTip("登录成功!!!");
         }
 
         public void Start()
         {
             PhotonNetwork.NickName = "aaa";
-            this.toggle = Tool.GetComponentInChildren<Toggle>(this.gameObject, "Clause").GetComponent<Toggle>();
+            this.toggle = LAB2D.Tool.Tool.GetComponentInChildren<Toggle>(this.gameObject, "Clause").GetComponent<Toggle>();
             this.note = this.transform.Find("Center/Note").gameObject;
             if (this.note == null)
             {
-                LogManager.Instance.Log("note Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("note Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
-            Tool.GetComponentInChildren<Button>(this.gameObject, "Start").onClick.AddListener(this.OnClick_Start);
-            Tool.GetComponentInChildren<Button>(this.gameObject, "NoteClose").onClick.AddListener(this.OnClick_NoteClose);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "Start").onClick.AddListener(this.OnClick_Start);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "NoteClose").onClick.AddListener(this.OnClick_NoteClose);
         }
 
         /// <summary>
@@ -39,19 +42,19 @@
         {
             if (this.toggle.isOn)
             {
-                string name = Tool.GetComponentInChildren<Text>(this.gameObject, "PlayerName").text;
+                string name = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "PlayerName").text;
                 if (name.Length <= 0)
                 {
-                    GlobalInit.Instance.ShowTip("名字不能为空!!!");
+                    ServiceLocator.Get<GlobalInit>().ShowTip("名字不能为空!!!");
                     return;
                 }
 
                 PhotonNetwork.NickName = name;
-                Tool.LoadScene("Game");
+                LAB2D.Tool.Tool.LoadScene("Game");
             }
             else
             {
-                GlobalInit.Instance.ShowTip("未勾选条款!!!");
+                ServiceLocator.Get<GlobalInit>().ShowTip("未勾选条款!!!");
             }
         }
 

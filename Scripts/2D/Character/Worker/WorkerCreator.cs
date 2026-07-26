@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker
 {
+    using LAB2D;
     using UnityEngine;
 
     /// <summary>
@@ -11,7 +12,7 @@
         protected override GameObject DoCreate(Vector3 worldPos, string name, string layer)
         {
             GameObject g = base.DoCreate(worldPos, PrefabConstant.WORKER, LayerConstant.WORKER_LAYER);
-            g.name = NameGenerator.Instance.GetRandomName();
+            g.name = AWorkerTask.NameGeneratorProvider();
             return g;
         }
     }

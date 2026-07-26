@@ -1,5 +1,9 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel.PanelUI
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Core;
+    using LAB2D.Domain.Common;
     using System.Collections;
     using UnityEngine;
     using UnityEngine.UI;
@@ -35,24 +39,25 @@
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
             this.tip = this.transform.Find("Center/Tips").GetComponent<Text>();
             if (this.tip == null)
             {
-                LogManager.Instance.Log("tips Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("tips Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.percent = this.transform.Find("Center/Percent").GetComponent<Text>();
             if (this.percent == null)
             {
-                LogManager.Instance.Log("percent Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("percent Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
             this.slider = this.transform.Find("Center/Bar").GetComponent<Slider>();
             if (this.slider == null)
             {
-                LogManager.Instance.Log("Progress/Bar Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("Progress/Bar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }
@@ -93,7 +98,7 @@
         {
             if (value < 0)
             {
-                LogManager.Instance.Log("不能为负值!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("不能为负值!!!", LogManager.LogLevelEnum.Error);
             }
 
             this.totalProcess += value;
@@ -105,7 +110,7 @@
         private void Show()
         {
             this.slider.value = this.curProcess * 1.0f / this.totalProcess;
-            this.percent.text = "当前进度:" + Mathf.RoundToInt(this.slider.value * 100) + "%";
+            this.percent.text = "当前进度:" + MathHelper.RoundToInt(this.slider.value * 100) + "%";
         }
 
         private IEnumerator Complete1()

@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker
 {
+    using LAB2D;
     using System;
 
     /// <summary>

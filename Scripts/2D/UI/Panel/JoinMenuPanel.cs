@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel
 {
+    using LAB2D;
+    using LAB2D.Core;
     using Photon.Pun;
     using UnityEngine.UI;
 
@@ -14,15 +16,15 @@
         {
             this.Name = "JoinMenu";
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "StartJoin").onClick.AddListener(this.OnClick_StartJoin);
-            Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "StartJoin").onClick.AddListener(this.OnClick_StartJoin);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
         }
 
         /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();
-            JoinMenuUI.Instance.ClickAndShow += this.Show;
+            ServiceLocator.Get<JoinMenuUI>().ClickAndShow += this.Show;
 
             // 回调OnRoomListUpdate
             PhotonNetwork.GetCustomRoomList(PhotonNetwork.CurrentLobby, "C0 = 1");
@@ -32,7 +34,7 @@
         public override void OnExit()
         {
             base.OnExit();
-            JoinMenuUI.Instance.ClickAndShow -= this.Show;
+            ServiceLocator.Get<JoinMenuUI>().ClickAndShow -= this.Show;
         }
 
         public override void OnClick_Back()
@@ -45,7 +47,7 @@
         {
             if (string.IsNullOrEmpty(this.selectRoomName))
             {
-                GlobalInit.Instance.ShowTip("房间名不能为空");
+                ServiceLocator.Get<GlobalInit>().ShowTip("房间名不能为空");
                 return;
             }
 
@@ -53,19 +55,19 @@
             bool success = PhotonNetwork.JoinRoom(this.selectRoomName);
             if (!success)
             {
-                GlobalInit.Instance.ShowTip("房间名字不存在");
+                ServiceLocator.Get<GlobalInit>().ShowTip("房间名字不存在");
                 return;
             }
 
             this.Controller.Close();
             this.Controller.Show(AsyncProgressPanel.Instance);
-            AsyncProgressUI.Instance.SetTip("正在同步数据...");
+            ServiceLocator.Get<AsyncProgressUI>().SetTip("正在同步数据...");
         }
 
         private void Show(string str)
         {
             this.selectRoomName = str;
-            Tool.GetComponentInChildren<Text>(this.Panel, "SelectRoomName").text = "选择的房间\n[" + str + "]";
+            LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.Panel, "SelectRoomName").text = "选择的房间\n[" + str + "]";
         }
     }
 }

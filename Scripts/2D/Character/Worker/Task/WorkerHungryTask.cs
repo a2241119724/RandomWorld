@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D.Enum;
+    using LAB2D;
+    using LAB2D.Serializable;
     using System;
     using UnityEngine;
 
@@ -10,11 +13,11 @@
     public class WorkerHungryTask : AWorkerTask
     {
         public WorkerHungryTask()
-            : base(WorkerTaskTypeEnum.Eat)
+            : base(WorkerTaskType.Eat)
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 1.0f;
+                this.maxProgress = WorkerTaskTimeConfig.EatSeconds;
                 this.Init();
             });
         }
@@ -24,20 +27,35 @@
         {
             base.Start(worker);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, workerData.MaxHungry - workerData.CurHungry, true);
+            if (!AWorkerTask.InventoryProvider().IsFoodAvailableAndPreTake(
+                worker,
+                Vector3IntLAB.ToVector3Int(this.TargetMap),
+                workerData.MaxHungry - workerData.CurHungry,
+                true))
+            {
+                this.GiveUpTask(worker);
+                return;
+            }
+
             this.ChangeStage(worker, 0);
         }
 
         /// <inheritdoc/>
         public override void Finish(AWorker worker)
         {
+            // 再取食物，并且有可能会由于该位置的食物被取完，从而删除该饥饿任务
+            ResourceInfo resourceInfo = AWorkerTask.InventoryProvider().SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
+            if (resourceInfo == null)
+            {
+                base.Finish(worker);
+                return;
+            }
+
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+            workerData.CurHungry = System.Math.Min(workerData.MaxHungry, workerData.CurHungry + (resourceInfo.Count * 10));
+
             // 将饥饿任务放回任务管理中
             base.Finish(worker);
-
-            // 再取食物，并且有可能会由于该位置的食物被取完，从而删除该饥饿任务
-            ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
-            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            workerData.CurHungry += resourceInfo.Count * 10;
         }
 
         /// <inheritdoc/>
@@ -46,7 +64,10 @@
             // 饥饿值小于一定值可以接收饥饿任务
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             return workerData.CurHungry <= AWorker.ThresholdHungry
-                && InventoryManager.Instance.IsEnoughFoodAndPreTake(worker, workerData.MaxHungry - workerData.CurHungry);
+                && AWorkerTask.InventoryProvider().IsFoodAvailableAndPreTake(
+                    worker,
+                    Vector3IntLAB.ToVector3Int(this.TargetMap),
+                    workerData.MaxHungry - workerData.CurHungry);
         }
 
         protected override void Init()

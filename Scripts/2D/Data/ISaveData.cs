@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Data
 {
+    using LAB2D;
     /// <summary>
     /// 赋予保存与读取数据的功能.
     /// </summary>

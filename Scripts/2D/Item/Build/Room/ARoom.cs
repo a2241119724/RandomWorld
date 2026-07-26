@@ -1,5 +1,10 @@
-﻿namespace LAB2D
+namespace LAB2D.Item.Build.Room
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Item.Build;
+    using LAB2D.Item.Build.Door;
+    using LAB2D.Item.Build.Wall;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -39,7 +44,7 @@
             RoomInfo roomInfo = new ();
             for (int i = 1; i < width - 1; i++)
             {
-                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.DOWN].TileName)
+                Core.ServiceLocator.Get<BuildMap>().AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.DOWN].TileName)
                     .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.TOP].TileName);
                 roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2] + i, 0));
                 roomInfo.Points.Add(new Vector3Int(boundary[1], boundary[2] + i, 0));
@@ -47,14 +52,14 @@
 
             for (int i = 1; i < height - 1; i++)
             {
-                BuildMap.Instance.AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT].TileName)
+                Core.ServiceLocator.Get<BuildMap>().AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT].TileName)
                     .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT].TileName);
                 roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[2], 0));
                 roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[3], 0));
             }
 
             // 四角加门
-            BuildMap.Instance
+            Core.ServiceLocator.Get<BuildMap>()
                 .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_DOWN].TileName)
                 .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_DOWN].TileName)
                 .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_TOP].TileName)
@@ -68,7 +73,7 @@
 
             // 由于多计算了一次墙,门覆盖了前面的墙
             roomInfo.Progress = roomInfo.Points.Count - 1;
-            RoomManager.Instance.AddRoom(Guid.NewGuid().ToString(), roomInfo);
+            ServiceLocator.Get<RoomManager>().AddRoom(Guid.NewGuid().ToString(), roomInfo);
         }
 
         /// <summary>
@@ -98,7 +103,7 @@
 
         public bool CheckBoundary(int[] boundary)
         {
-            if (boundary[0] < 0 || boundary[1] >= TileMap.Instance.TileMapDataLAB.Width || boundary[2] < 0 || boundary[3] >= TileMap.Instance.TileMapDataLAB.Height
+            if (boundary[0] < 0 || boundary[1] >= ServiceLocator.Get<TileMap>().TileMapDataLAB.Width || boundary[2] < 0 || boundary[3] >= ServiceLocator.Get<TileMap>().TileMapDataLAB.Height
                 || boundary[1] - boundary[0] <= 0 || boundary[3] - boundary[2] <= 0)
             {
                 return false;

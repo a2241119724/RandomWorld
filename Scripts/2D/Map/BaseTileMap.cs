@@ -1,58 +1,83 @@
-﻿namespace LAB2D
+namespace LAB2D.Map
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Data;
+    using LAB2D.Network;
+    using LAB2D.UnityAdapter;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// 基地图
+    /// 基地图。
+    /// 通过 ISyncSender 解耦网络同步，不再直接持有 PhotonView。
+    /// PhotonView 仅保留用于 [PunRPC] 方法接收端。
     /// </summary>
     public abstract class BaseTileMap : AMonoSaveData
     {
-        /// <summary>
-        /// 地图
-        /// </summary>
         protected Tilemap tilemap;
 
-        private static string alreadyShowMap = string.Empty; // 所有的Map是否已经在显示
-
         /// <summary>
-        /// 同步数据
+        /// 网络同步发送器。在线为 PunSyncSender，离线为 NullSyncSender。
         /// </summary>
+        protected ISyncSender SyncSender { get; private set; }
+
         public PhotonView PhotonView { get; set; }
+
+        private TileInfoCoordinator tileInfoCoordinator;
+
+        private TileInfoCoordinator TileInfo
+        {
+            get
+            {
+                if (this.tileInfoCoordinator == null)
+                {
+                    if (!ServiceLocator.TryGet(out this.tileInfoCoordinator))
+                    {
+                        this.tileInfoCoordinator = new TileInfoCoordinator();
+                        ServiceLocator.Register(this.tileInfoCoordinator);
+                    }
+                }
+
+                return this.tileInfoCoordinator;
+            }
+        }
 
         public virtual void Awake()
         {
             this.tilemap = this.GetComponent<Tilemap>();
             this.PhotonView = this.GetComponent<PhotonView>();
+            this.SyncSender = NetworkConnect.Instance != null && NetworkConnect.Instance.IsOnline
+                ? new PunSyncSender(this.PhotonView)
+                : NullSyncSender.Instance;
         }
 
         public virtual void Update()
         {
-            if (Input.GetKeyUp(KeyCode.LeftControl))
+            if (UnityGlobalInputAdapter.GetShowTileInfoReleased())
             {
                 TileInfoUI.Instance.Init();
             }
 
-            // 选择鼠标左键才会显示,在进度条界面不显示
-            if (!Input.GetKey(KeyCode.LeftControl) || PanelController.Instance.Panels.Peek() == AsyncProgressPanel.Instance)
+            if (!UnityGlobalInputAdapter.GetShowTileInfoHeld() || Core.ServiceLocator.Get<PanelController>().Panels.Peek() == AsyncProgressPanel.Instance)
             {
                 return;
             }
 
-            Vector3Int posMap = TileMap.Instance.GetMapPosByMouse();
-            if (this.tilemap.HasTile(posMap) && (BaseTileMap.alreadyShowMap.Equals(string.Empty) || BaseTileMap.alreadyShowMap.Equals(this.GetType().Name)))
+            Vector3Int posMap = Core.ServiceLocator.Get<TileMap>().GetMapPosByMouse();
+            string mapType = this.GetType().Name;
+            if (this.tilemap.HasTile(posMap) && (this.TileInfo.ActiveMapType == string.Empty || this.TileInfo.ActiveMapType == mapType))
             {
-                BaseTileMap.alreadyShowMap = this.GetType().Name;
-                TileInfoUI.Instance.SetContent(this.tilemap.GetTile(posMap).name);
-                TileInfoUI.Instance.SetPostion(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+                this.TileInfo.ActiveMapType = mapType;
+                ServiceLocator.Get<TileInfoUI>().SetContent(this.tilemap.GetTile(posMap).name);
+                ServiceLocator.Get<TileInfoUI>().SetPostion(UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main));
             }
             else
             {
-                // 已经抢到显示的Map退出,则关闭显示
-                if (BaseTileMap.alreadyShowMap.Equals(this.GetType().Name))
+                if (this.TileInfo.ActiveMapType == mapType)
                 {
-                    BaseTileMap.alreadyShowMap = string.Empty;
+                    this.TileInfo.ActiveMapType = string.Empty;
                     TileInfoUI.Instance.Init();
                 }
             }

@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel.PanelUI
 {
+    using LAB2D;
+    using LAB2D.Core;
     using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
@@ -24,6 +26,7 @@
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
         }
 
         /// <inheritdoc/>
@@ -37,7 +40,7 @@
 
             foreach (Photon.Realtime.RoomInfo room in roomList)
             {
-                GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.ROOM_ITEM, true);
+                GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.ROOM_ITEM, true);
                 g.GetComponent<Button>().onClick.AddListener(
                     () =>
                     {

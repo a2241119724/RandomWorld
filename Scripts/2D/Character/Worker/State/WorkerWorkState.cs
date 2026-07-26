@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.State
 {
+    using LAB2D;
+    using UnityEngine;
     /// <summary>
     /// Worker工作状态
     /// </summary>
@@ -50,7 +52,7 @@
                 return;
             }
 
-            bool isComplete = workerData.Task.Execute(this.Character);
+            bool isComplete = workerData.Task.Execute(this.Character, this.Character.DeltaTime);
             if (isComplete)
             {
                 this.waitOneFrame = true;

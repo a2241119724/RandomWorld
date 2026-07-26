@@ -1,5 +1,10 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Character
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Domain.Common;
+    using LAB2D.Serializable;
+    using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -23,22 +28,22 @@
         /// <param name="posMap">位置</param>
         public void ShowWorkerBed(Vector3Int posMap)
         {
-            AWorker worker = FurnitureManager.Instance.GetWorkerByBed(posMap);
+            AWorker worker = ServiceLocator.Get<FurnitureManager>().GetWorkerByBed(posMap);
             this.curWorker.text = $"当前: " + (worker != null ? worker.name : "没人");
 
-            this.transform.position = TileMap.Instance.MapPosToWorldPos(posMap);
-            List<AWorker> workers = WorkerManager.Instance.Characters;
+            this.transform.position = ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap);
+            List<AWorker> workers = ServiceLocator.Get<WorkerManager>().Characters;
             for (int i = 0; i < workers.Count; i++)
             {
                 // 若没有对应的物体，先创建
                 if (i > this.content.childCount - 1)
                 {
-                    GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.WORKER_BED_ITEM);
+                    GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.WORKER_BED_ITEM);
                     g.transform.SetParent(this.content);
                     g.transform.localScale = Vector3.one;
                 }
 
-                Tool.GetComponentInChildren<Text>(this.content.GetChild(i).gameObject, "Name").text = workers[i].name;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.content.GetChild(i).gameObject, "Name").text = workers[i].name;
                 Button button = this.content.GetChild(i).gameObject.GetComponent<Button>();
                 button.onClick.RemoveAllListeners();
 
@@ -46,12 +51,12 @@
                 int index = i;
                 button.onClick.AddListener(() =>
                 {
-                    WorkerTaskManager.Instance.AddTask(
+                    ServiceLocator.Get<WorkerTaskManager>().AddTask(
                         new WorkerSleepTask.SleepTaskBuilder()
-                        .SetTarget(posMap).SetWorker(workers[index]).Build(), Vector3IntLAB.ToVector3IntLAB(posMap),
+                        .SetTarget(posMap).SetWorker(workers[index]).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z),
                         1);
                     this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
-                    FurnitureManager.Instance.AddWorkerToBed(posMap, workers[index]);
+                    ServiceLocator.Get<FurnitureManager>().AddWorkerToBed(posMap, workers[index]);
                 });
             }
         }
@@ -59,13 +64,14 @@
         public void Awake()
         {
             Instance = this;
-            this.content = Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
-            this.curWorker = Tool.GetComponentInChildren<Text>(this.gameObject, "CurWorker");
+            ServiceLocator.Register(this);
+            this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
+            this.curWorker = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "CurWorker");
         }
 
         public void Update()
         {
-            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(2) || Input.GetKeyDown(KeyCode.Escape))
+            if (UnityGlobalInputAdapter.GetWorkerBedDismissDown())
             {
                 // transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }

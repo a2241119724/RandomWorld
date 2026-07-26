@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Item
 {
+    using LAB2D;
+    using LAB2D.Character.Worker;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -58,6 +60,31 @@
 
                 // TODO
                 worker.BedItem = new SingleBed();
+            }
+        }
+
+        /// <summary>
+        /// 释放Worker的床绑定
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        public void RemoveWorkerFromBed(AWorker worker)
+        {
+            Vector3Int key = default;
+            bool found = false;
+            foreach (KeyValuePair<Vector3Int, AWorker> kv in this.BedToWorker)
+            {
+                if (kv.Value == worker)
+                {
+                    key = kv.Key;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                this.BedToWorker[key] = null;
+                worker.BedItem = null;
             }
         }
 

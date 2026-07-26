@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Enemy.CommonEnemy
 {
+    using LAB2D;
+    using LAB2D.Character.Enemy.CommonEnemy.State;
     using System;
     using Photon.Pun;
     using UnityEngine;
@@ -56,7 +58,7 @@
             this.Head = this.transform.Find("Head");
             if (this.Head == null)
             {
-                LogManager.Instance.Log("enemyHead Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("enemyHead Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
         }
@@ -68,7 +70,7 @@
 
             // 由于玩家顶着敌人会使敌人z不为0
             Vector3 pos = this.transform.position;
-            if (Mathf.Abs(pos.z) > 0.001f)
+            if (System.Math.Abs(pos.z) > 0.001f)
             {
                 pos.z = 0;
                 this.transform.position = pos;
@@ -81,7 +83,7 @@
         public void MoveToForward()
         {
             this.MoveSpeed = UnityEngine.Random.Range(1.0f, 2.0f);
-            this.transform.Translate(this.MoveSpeed * Time.deltaTime * (this.Head.position - this.transform.position).normalized, Space.World); // 向前移动
+            this.transform.Translate(this.MoveSpeed * this.DeltaTime * (this.Head.position - this.transform.position).normalized, Space.World); // 向前移动
         }
 
         /// <summary>
@@ -91,7 +93,7 @@
         public void RotateTo(Vector3 direction)
         {
             // FromToRotation得到从自定义方向到某方向旋转的角度
-            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, Quaternion.FromToRotation(Vector3.up, direction), Time.deltaTime * this.RotationSpeed);
+            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, Quaternion.FromToRotation(Vector3.up, direction), this.DeltaTime * this.RotationSpeed);
         }
 
         /// <inheritdoc/>
@@ -126,9 +128,9 @@
         {
             base.Death();
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            if (!NetworkConnect.Instance.IsOnline || PhotonNetwork.IsMasterClient)
+            if (!this.NetworkView.IsOnline || this.NetworkView.IsMasterClient)
             {
-                EnemyManager.Instance.Remove(this);
+                AWorkerTask.EnemyRemoveProvider(this);
             }
 
             this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Dead); // 进入死亡状态
@@ -136,8 +138,8 @@
 
         private void OnCollisionStay2D(Collision2D collision)
         {
-            this.checkBug.AddColliderCount(DateTime.Now.Ticks);
-            if (this.checkBug.IsBug(this.name, 1000) && this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Wander)
+            this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks);
+            if (this.collisionBugDetector.IsBug(this.name, 1000) && this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Wander)
             {
                 this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Wander);
             }

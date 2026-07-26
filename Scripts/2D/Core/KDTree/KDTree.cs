@@ -1,8 +1,9 @@
-﻿namespace LAB2D
+namespace LAB2D.Core.KDTree
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using LAB2D.Serializable;
 
     public class KDTree
     {

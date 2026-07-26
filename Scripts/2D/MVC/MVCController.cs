@@ -1,13 +1,16 @@
-﻿namespace LAB2D
+namespace LAB2D.MVC
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Item;
     using UnityEngine;
     using UnityEngine.UI;
 
     /// <summary>
-    /// User:调用View和Controller
-    /// Model
-    /// View:事件通知Controller
-    /// Controller:调用View和Model
+    /// 用户：调用View和Controller
+    /// 模型
+    /// 视图：事件通知Controller
+    /// 控制器：调用View和Model
     /// </summary>
     /// <typeparam name="IMV">ItemManagerView</typeparam>
     /// <typeparam name="M">Model</typeparam>
@@ -22,22 +25,22 @@
         where IV_ : MVCInfoView
     {
         /// <summary>
-        /// ItemManagerView
+        /// 道具管理视图
         /// </summary>
         protected IMV itemManagerView;
 
         /// <summary>
-        /// Model
+        /// 模型
         /// </summary>
         protected M model;
 
         /// <summary>
-        /// NavigationView
+        /// 导航视图
         /// </summary>
         protected NV navigationView;
 
         /// <summary>
-        /// InfoView
+        /// 信息视图
         /// </summary>
         protected IV_ infoView;
 
@@ -50,6 +53,7 @@
             this.itemManagerView.SetBorderColor += this.SetBorderColor;
             this.itemManagerView.GetItem += this.GetItem;
             this.itemManagerView.ShowInfo += this.ShowInfo;
+            this.itemManagerView.SelectItem += this.OnSelectItem;
             this.model = new M();
             this.btnOriginColor = this.navigationView.GetComponentsInChildren<Button>()[0].GetComponent<RoundCorner>().color;
             this.SetBorderColor(0, "navigation");
@@ -121,7 +125,7 @@
         /// <returns>索引</returns>
         public int GetIndex(AItem item)
         {
-            return this.model.GetIndex(this.navigationView.CurItemType, (AWeapon)item);
+            return this.model.GetIndex(this.navigationView.CurItemType, item);
         }
 
         /// <summary>
@@ -131,7 +135,7 @@
         {
             if (this.itemManagerView == null)
             {
-                LogManager.Instance.Log("inventoryView is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("inventoryView is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -167,7 +171,7 @@
                     btns[index].GetComponent<RoundCorner>().color = new Color(100 / 255.0f, 120 / 255.0f, 150 / 255.0f, 255 / 255.0f);
                     break;
                 default:
-                    LogManager.Instance.Log("没有该类型边框可以修改!!!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider("没有该类型边框可以修改!!!", LogManager.LogLevelEnum.Error);
                     break;
             }
         }
@@ -182,6 +186,16 @@
         }
 
         /// <summary>
+        /// 选择道具回调 — 子类可重写以更新 Panel 状态。
+        /// 基类默认不做任何 Panel 操作，保持 MVC 分层干净。
+        /// </summary>
+        /// <param name="index">道具索引。</param>
+        /// <param name="item">选中的道具。</param>
+        protected virtual void OnSelectItem(int index, AItem item)
+        {
+        }
+
+        /// <summary>
         /// 展示道具信息
         /// </summary>
         /// <param name="data">道具</param>
@@ -189,7 +203,7 @@
         {
             if (this.infoView == null)
             {
-                LogManager.Instance.Log("infoView is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("infoView is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

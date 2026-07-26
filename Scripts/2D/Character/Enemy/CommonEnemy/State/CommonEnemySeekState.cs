@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Enemy.CommonEnemy.State
 {
+    using LAB2D;
     using UnityEngine;
 
     /// <summary>
@@ -31,7 +32,7 @@
         public override void OnUpdate()
         {
             // 如果一段时间后没有找到搜索目标,那么回到游荡状态
-            this.recordTime += Time.deltaTime;
+            this.recordTime += this.Character.DeltaTime;
             if (this.recordTime > SeekTime)
             {
                 this.Character.Manager.ChangeState(TypeEnum.Wander); // 进入游荡状态

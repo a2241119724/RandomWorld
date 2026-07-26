@@ -1,4 +1,4 @@
-﻿namespace LAB2D
+namespace LAB2D.Item.Build.Room
 {
     using System;
     using System.Collections.Generic;

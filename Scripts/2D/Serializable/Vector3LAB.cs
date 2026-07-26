@@ -1,4 +1,4 @@
-﻿namespace LAB2D
+namespace LAB2D.Serializable
 {
     using System;
     using UnityEngine;
@@ -88,7 +88,7 @@
         }
 
         /// <summary>
-        /// Vector3IntLAB to Vector3Int
+        /// Vector3IntLAB 转 Vector3Int
         /// </summary>
         /// <param name="vector3IntLAB">Vector3IntLAB</param>
         /// <returns>Vector3Int</returns>
@@ -98,7 +98,7 @@
         }
 
         /// <summary>
-        /// Vector3Int to Vector3IntLAB
+        /// Vector3Int 转 Vector3IntLAB
         /// </summary>
         /// <param name="vector3Int">Vector3Int</param>
         /// <returns>Vector3IntLAB</returns>
@@ -108,10 +108,10 @@
         }
 
         /// <summary>
-        /// Vector3Int to Vector3IntLAB
+        /// Vector3Int 转 Vector2ShortLAB
         /// </summary>
         /// <param name="vector3IntLAB">Vector3Int</param>
-        /// <returns>Vector3IntLAB</returns>
+        /// <returns>Vector2ShortLAB</returns>
         public static Vector2ShortLAB ToVector2ShortLAB(Vector3IntLAB vector3IntLAB)
         {
             return new Vector2ShortLAB((short)vector3IntLAB.X, (short)vector3IntLAB.Y);

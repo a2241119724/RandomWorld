@@ -1,0 +1,15 @@
+===== AI 请求参数 =====
+[NPC] {{NPC_NAME}} ({{NPC_ROLE}}) | npcId={{NPC_ID}}
+[生成参数] {{LLM_PARAMS}}
+--- NPC 身份 ---
+{{NPC_PROFILE}}--- 自身状态 ---
+{{GAME_STATE}}
+--- RAG 知识 ---
+{{RAG_KNOWLEDGE}}
+--- 对话历史 ---
+{{HISTORY}}
+--- 当前输入 ---
+{{PLAYER_INPUT}}
+--- 最终系统提示词 ---
+{{SYSTEM_PROMPT}}
+=========================

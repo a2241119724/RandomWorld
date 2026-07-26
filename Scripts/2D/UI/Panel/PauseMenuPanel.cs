@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Character.Worker.Task;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -18,14 +21,14 @@
             this.audioSource = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG).GetComponent<AudioSource>();
             if (this.audioSource == null)
             {
-                LogManager.Instance.Log("audioSource Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("audioSource Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
-            Tool.GetComponentInChildren<Button>(this.Panel, "Exit").onClick.AddListener(this.OnClick_Exit);
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackMenu").onClick.AddListener(this.OnClick_BackMenu);
-            Tool.GetComponentInChildren<Slider>(this.Panel, "Audio").onValueChanged.AddListener(this.OnClick_Audio);
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Exit").onClick.AddListener(this.OnClick_Exit);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackMenu").onClick.AddListener(this.OnClick_BackMenu);
+            LAB2D.Tool.Tool.GetComponentInChildren<Slider>(this.Panel, "Audio").onValueChanged.AddListener(this.OnClick_Audio);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
         }
 
         /// <inheritdoc/>
@@ -65,8 +68,8 @@
         /// </summary>
         private void OnClick_BackMenu()
         {
-            PanelController.Instance.Close();
-            PanelController.Instance.Show(CreateOrJoinPanel.Instance);
+            ServiceLocator.Get<PanelController>().Close();
+            ServiceLocator.Get<PanelController>().Show(CreateOrJoinPanel.Instance);
         }
 
         /// <summary>

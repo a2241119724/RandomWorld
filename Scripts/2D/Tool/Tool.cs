@@ -1,5 +1,9 @@
-﻿namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Constant;
+    using LAB2D.UnityAdapter;
     using System;
     using System.Collections;
     using System.Collections.Generic;
@@ -174,7 +178,7 @@
             T[] ts = parent.GetComponentsInChildren<T>();
             if (ts.Length == 0)
             {
-                LogManager.Instance.Log(ts.GetType() + " Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(ts.GetType() + " Not Found!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -201,7 +205,7 @@
                 }
             }
 
-            LogManager.Instance.Log(name + " Not Found!!!", LogManager.LogLevelEnum.Error);
+            AWorkerTask.LogProvider(name + " Not Found!!!", LogManager.LogLevelEnum.Warning);
             return null;
         }
 
@@ -222,14 +226,30 @@
         }
 
         /// <summary>
+        /// 是否有 UI 输入控件处于聚焦状态（InputField 等）。
+        /// 游戏按键检测前应调用此方法，避免输入穿透到游戏操作。
+        /// </summary>
+        /// <returns>true 表示 UI 正在接收文本输入，应屏蔽游戏按键。</returns>
+        public static bool IsUIInputActive()
+        {
+            GameObject selected = EventSystem.current?.currentSelectedGameObject;
+            return selected != null && selected.GetComponent<InputField>() != null;
+        }
+
+        /// <summary>
         /// 点击射线检测UI对象.
         /// </summary>
         /// <param name="tag">在哪个canvas下发射射线</param>
         /// <returns>UI对象</returns>
         public static List<RaycastResult> GetUIByMousePos(string tag = TagConstant.UI_TAG)
         {
+            return GetUIByScreenPos(UnityGlobalInputAdapter.GetMouseScreenPosition(), tag);
+        }
+
+        public static List<RaycastResult> GetUIByScreenPos(Vector2 screenPosition, string tag = TagConstant.UI_TAG)
+        {
             PointerEventData pointerEventData = new (EventSystem.current);
-            pointerEventData.position = Input.mousePosition;
+            pointerEventData.position = screenPosition;
             List<RaycastResult> results = new ();
             GameObject.FindGameObjectWithTag(tag).GetComponent<GraphicRaycaster>().Raycast(pointerEventData, results);
             return results;
@@ -277,7 +297,7 @@
             Scene scene = SceneManager.GetSceneByName(sceneName);
             if (scene.buildIndex == -1)
             {
-                LogManager.Instance.Log(sceneName + " Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(sceneName + " Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 

@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Data
 {
+    using LAB2D;
+    using LAB2D.Enum;
     using UnityEngine;
 
     /// <summary>
@@ -10,7 +12,7 @@
         /// <summary>
         /// 打包类型(未用)
         /// </summary>
-        public static readonly PackageTypeEnum PackageType = PackageTypeEnum.PC;
+        public static readonly PackageType CurrentPackageType = PackageType.PC;
 
         /// <summary>
         /// 是否是2D游戏(未用)
@@ -49,7 +51,7 @@
             /// <returns>文件路径</returns>
             public static string GetPath(string name)
             {
-                return Application.persistentDataPath + "/" + name + ".lab";
+                return Core.ServiceLocator.Get<ArchiveManager>().GetArchivePath(name);
             }
         }
     }

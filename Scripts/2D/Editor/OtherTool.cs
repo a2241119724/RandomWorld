@@ -1,4 +1,4 @@
-﻿namespace LAB2D
+namespace LAB2D.Editor
 {
     using System.IO;
     using UnityEditor;
@@ -9,7 +9,7 @@
     /// </summary>
     public class OtherTool
     {
-        private const string Prefix = "Tools/Other/";
+        private const string Prefix = "工具/其他/";
 
         /// <summary>
         /// 打AB包

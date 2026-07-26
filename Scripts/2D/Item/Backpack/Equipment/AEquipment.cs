@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Item.Backpack.Equipment
 {
+    using LAB2D;
+    using Character = LAB2D.Character.Character;
     using System;
 
     /// <summary>
@@ -8,6 +10,12 @@
     [Serializable]
     public abstract class AEquipment : ABackpackItem
     {
+        /// <summary>
+        /// 浮点随机数提供者（minInclusive, maxInclusive）。
+        /// 默认实现封装 UnityEngine.Random.Range 偏向低值分布算法；可在测试中替换为确定性桩。
+        /// </summary>
+        protected static Func<float, float, float> RandomFloatProvider { get; set; }
+            = (minInclusive, maxInclusive) => UnityEngine.Random.Range(minInclusive, maxInclusive);
         /// <summary>
         /// 装备类型
         /// </summary>
@@ -114,15 +122,19 @@
         /// <inheritdoc/>
         public override string ToString()
         {
+            float mult = EquipmentLootTool.GetQualityStatMultiplier(this.Quality);
+
             return base.ToString() +
-                $"物理攻击力: {this.Attribute.ATN}\n" +
-                $"魔法攻击力: {this.Attribute.INT}\n" +
-                $"物理防御力: {this.Attribute.DEF}\n" +
-                $"魔法防御力: {this.Attribute.RES}\n" +
-                $"暴击率: {this.Attribute.CRT}\n" +
-                $"暴击伤害: {this.Attribute.CSD}\n" +
-                $"速度, 回避: {this.Attribute.SPD}\n" +
-                $"命中率, 连击: {this.Attribute.HIT}\n";
+                $"槽位: {EquipmentLootTool.GetSlotName(this.Type)}\n" +
+                $"品质倍率: x{mult:F1}\n" +
+                $"ATN 物理攻击: {this.Attribute.ATN:F1}\n" +
+                $"INT 魔法攻击: {this.Attribute.INT:F1}\n" +
+                $"DEF 物理防御: {this.Attribute.DEF:F1}\n" +
+                $"RES 魔法防御: {this.Attribute.RES:F1}\n" +
+                $"CRT 暴击率: {this.Attribute.CRT:P1}\n" +
+                $"CSD 暴击伤害: {this.Attribute.CSD:F1}\n" +
+                $"SPD 速度回避: {this.Attribute.SPD:F1}\n" +
+                $"HIT 命中连击: {this.Attribute.HIT:F1}\n";
         }
 
         /// <summary>
@@ -144,7 +156,7 @@
             float r; // 每次生成随机数进行判断
             for (float t = down + intervalValue; t < up; t += intervalValue)
             {
-                r = UnityEngine.Random.Range(down, up);
+                r = RandomFloatProvider(down, up);
                 if (r < t)
                 {
                     return r;

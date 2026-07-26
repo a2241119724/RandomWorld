@@ -1,5 +1,9 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D.Enum;
+    using LAB2D;
+    using LAB2D.Item;
+    using LAB2D.Serializable;
     using System;
 
     /// <summary>
@@ -11,14 +15,14 @@
         private ResourceInfo resourceInfo;
 
         public WorkerPlantTask()
-            : base(WorkerTaskTypeEnum.Plant)
+            : base(WorkerTaskType.Plant)
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 1.0f;
+                this.maxProgress = WorkerTaskTimeConfig.PlantFetchSeedSeconds;
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
-                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.IsContainSeedAndPreTake(worker, true));
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryProvider().IsContainSeedAndPreTake(worker, true));
                 if (this.TargetMap == default)
                 {
                     this.GiveUpTask(worker);
@@ -27,9 +31,9 @@
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 1.0f;
+                this.maxProgress = WorkerTaskTimeConfig.PlantOneSeedSeconds;
                 this.Init();
-                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(FarmlandManager.Instance.IsEnoughAndPrePlant(worker, this.resourceInfo, true));
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(FarmlandManagerProvider().IsEnoughAndPrePlant(worker, this.resourceInfo, true));
                 if (this.TargetMap == default)
                 {
                     this.GiveUpTask(worker);
@@ -56,8 +60,8 @@
         /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
-            return FarmlandManager.Instance.IsEnoughAndPrePlant(worker, null) != default &&
-                InventoryManager.Instance.IsContainSeedAndPreTake(worker) != default;
+            return FarmlandManagerProvider().IsEnoughAndPrePlant(worker, null) != default &&
+                InventoryProvider().IsContainSeedAndPreTake(worker) != default;
         }
 
         /// <inheritdoc/>
@@ -66,7 +70,7 @@
             switch (this.stage)
             {
                 case 0:
-                    this.resourceInfo = InventoryManager.Instance.SubAllItemByPos(Vector3IntLAB.ToVector3Int(this.TargetMap));
+                    this.resourceInfo = InventoryProvider().SubAllItemByPos(Vector3IntLAB.ToVector3Int(this.TargetMap));
                     worker.AddResource(this.resourceInfo);
                     this.ChangeStage(worker, 1);
                     return false;
@@ -74,7 +78,7 @@
                     // 可以继续种植
                     if (this.IsCanWork(worker) && this.resourceInfo.Count > 0)
                     {
-                        FarmlandManager.Instance.PlantByPrePlant(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
+                        FarmlandManagerProvider().PlantByPrePlant(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
                         this.resourceInfo.Count--;
                         this.ChangeStage(worker, 1);
                         return false;

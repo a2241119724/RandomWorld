@@ -1,5 +1,9 @@
-﻿namespace LAB2D
+namespace LAB2D.MVC
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
+    using LAB2D.Item;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -45,13 +49,41 @@
         /// </summary>
         public event Action<AItem> ShowInfo;
 
+        /// <summary>
+        /// 选择道具
+        /// </summary>
+        public event Action<int, AItem> SelectItem;
+
         public virtual void Awake()
         {
             this.content = this.transform.GetComponent<ScrollRect>().content;
             if (this.content == null)
             {
-                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("content Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
+            }
+
+            // 确保 content 有 GridLayoutGroup（场景中可能已配置，代码兜底）
+            GridLayoutGroup gridLayout = this.content.GetComponent<GridLayoutGroup>();
+            if (gridLayout == null)
+            {
+                gridLayout = this.content.gameObject.AddComponent<GridLayoutGroup>();
+                gridLayout.cellSize = new Vector2(100, 120);
+                gridLayout.spacing = new Vector2(5, 5);
+                gridLayout.padding = new RectOffset(5, 5, 5, 5);
+                gridLayout.childAlignment = TextAnchor.UpperCenter;
+                gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                RectTransform contentRect = this.content.GetComponent<RectTransform>();
+                float cellWidth = gridLayout.cellSize.x + gridLayout.spacing.x;
+                gridLayout.constraintCount = System.Math.Max(1, (int)System.Math.Floor((double)((contentRect.rect.width - gridLayout.padding.left - gridLayout.padding.right + gridLayout.spacing.x) / cellWidth)));
+            }
+
+            // 确保 content 有 ContentSizeFitter 以自动调整高度
+            ContentSizeFitter csf = this.content.GetComponent<ContentSizeFitter>();
+            if (csf == null)
+            {
+                csf = this.content.gameObject.AddComponent<ContentSizeFitter>();
+                csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
 
             this.ItemsView = new List<IV>();
@@ -66,7 +98,7 @@
         {
             if (model == null)
             {
-                LogManager.Instance.Log("data is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("data is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -92,7 +124,7 @@
                     continue;
                 }
 
-                GameObject g = ResourceManager.Instance.Instantiate(this.itemBox);
+                GameObject g = Core.ServiceLocator.Get<ResourceManager>().Instantiate(this.itemBox);
                 if (g == null)
                 {
                     return;
@@ -100,12 +132,44 @@
 
                 g.transform.SetParent(this.content, false);
 
+                // 根据品质设置根节点背景颜色
+                if (model.Get(type, i) is ABackpackItem backpackItem)
+                {
+                    Color qualityColor = EquipmentLootTool.GetQualityColor(backpackItem.Quality);
+                    Image rootImage = g.GetComponent<Image>();
+                    rootImage.fillCenter = true;
+                    rootImage.color = qualityColor;
+                }
+
                 // t.transform.localScale = Vector3.one; // 控制大小
-                Tool.GetComponentInChildren<Text>(g, "ItemInfo").text = this.GetQuantity(model.Get(type, i)).ToString();
-                Image image = Tool.GetComponentInChildren<Image>(g, "ItemImage");
-                image.sprite = ResourceManager.Instance.GetImage(ItemDataManager.Instance.GetById(model.Get(type, i).Id).EnName);
-                image.preserveAspect = true;
-                IV itemView = g.transform.Find("Item").GetComponent<IV>();
+                Text itemInfoText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "ItemInfo");
+                if (itemInfoText != null)
+                {
+                    itemInfoText.text = this.GetQuantity(model.Get(type, i)).ToString();
+                }
+
+                Image image = LAB2D.Tool.Tool.GetComponentInChildren<Image>(g, "ItemImage");
+                if (image != null)
+                {
+                    image.sprite = Core.ServiceLocator.Get<ResourceManager>().GetImage(Core.ServiceLocator.Get<ItemDataManager>().GetById(model.Get(type, i).Id).EnName);
+                    image.preserveAspect = true;
+                }
+
+                Transform itemTransform = g.transform.Find("Item");
+                if (itemTransform == null)
+                {
+                    AWorkerTask.LogProvider($"UpdateView: 在 itemBox prefab 中找不到 'Item' 子节点，请检查 prefab 结构", LogManager.LogLevelEnum.Error);
+                    Destroy(g);
+                    continue;
+                }
+
+                IV itemView = itemTransform.GetComponent<IV>();
+                if (itemView == null)
+                {
+                    AWorkerTask.LogProvider($"UpdateView: 'Item' 子节点上缺少 {typeof(IV).Name} 组件，请检查 prefab 结构", LogManager.LogLevelEnum.Error);
+                    Destroy(g);
+                    continue;
+                }
 
                 // 添加到ItemView
                 itemView.ExchangeItem += (int a, int b) =>
@@ -124,6 +188,11 @@
                 {
                     this.ShowInfo(a);
                 };
+                itemView.SelectItem += (int idx, AItem a) =>
+                {
+                    this.SelectItem?.Invoke(idx, a);
+                };
+
                 this.ItemsView.Add(itemView);
             }
         }
@@ -134,9 +203,9 @@
         /// <param name="index">道具索引</param>
         public void ReduceQuantityUI(int index)
         {
-            Text t = Tool.GetComponentInChildren<Text>(this.content.GetChild(index).gameObject, "ItemInfo");
+            Text t = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.content.GetChild(index).gameObject, "ItemInfo");
 
-            // string -> int
+            // 字符串转整数
             int count = int.Parse(t.text);
             --count;
             t.text = count.ToString();

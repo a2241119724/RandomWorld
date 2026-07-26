@@ -1,12 +1,17 @@
-﻿namespace LAB2D
+namespace LAB2D.Data
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Item;
+    using LAB2D.Item.Backpack.Equipment;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
-    /// Id间隔1000
-    /// Start Id 根据枚举类型BackpackItemType,BuildItemType一致
+    /// Id按1000间隔分组
+    /// 起始Id与枚举类型BackpackItemType、BuildItemType保持一致
     /// </summary>
     public class ItemDataManager : MonoBehaviour
     {
@@ -22,13 +27,14 @@
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register<ItemDataManager>(this);
             this.nameToId = new Dictionary<string, int>();
             this.allItemInfo = new Dictionary<int, ItemData>();
 
             AItem.ItemTypeEnum[] itemTypes = AItem.Ranges["Build"];
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
-                BuildItemDataSO itemDataSO = ResourceManager.Instance.GetBuildSO(((AItem.ItemTypeEnum)type).ToString() + "ItemData");
+                BuildItemDataSO itemDataSO = ServiceLocator.Get<ResourceManager>().GetBuildSO(((AItem.ItemTypeEnum)type).ToString() + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -47,7 +53,7 @@
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
                 string itemType = ((AItem.ItemTypeEnum)type).ToString();
-                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(itemType + "ItemData");
+                ItemDataSO itemDataSO = ServiceLocator.Get<ResourceManager>().GetBackpackSO(itemType + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -71,7 +77,7 @@
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
                 string itemType = ((AItem.ItemTypeEnum)type).ToString();
-                ItemDataSO itemDataSO = ResourceManager.Instance.GetBackpackSO(itemType + "ItemData");
+                ItemDataSO itemDataSO = ServiceLocator.Get<ResourceManager>().GetBackpackSO(itemType + "ItemData");
                 if (itemDataSO == null)
                 {
                     continue;
@@ -86,7 +92,7 @@
             }
 
             // 最后初始化背包道具实例
-            ItemInstanceFactory.Instance.InitItemInstances(equipmentData);
+            ServiceLocator.Get<ItemInstanceFactory>().InitItemInstances(equipmentData);
         }
 
         /// <summary>
@@ -96,13 +102,13 @@
         /// <returns>道具数据</returns>
         public ItemData GetById(int id)
         {
-            if (!this.allItemInfo.ContainsKey(id))
+            if (!this.allItemInfo.TryGetValue(id, out ItemData itemData))
             {
-                LogManager.Instance.Log("没有id的道具!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("没有id的道具!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
-            return this.allItemInfo[id];
+            return itemData;
         }
 
         /// <summary>
@@ -112,13 +118,31 @@
         /// <returns>道具数据</returns>
         public ItemData GetByName(string name)
         {
-            if (!this.nameToId.ContainsKey(name))
+            if (!this.TryGetByName(name, out ItemData itemData))
             {
-                LogManager.Instance.Log("没有名字为" + name + "的道具!!!", LogManager.LogLevelEnum.Warning);
+                AWorkerTask.LogProvider("没有名字为" + name + "的道具!!!", LogManager.LogLevelEnum.Warning);
                 return ItemData.Empty;
             }
 
-            return this.GetById(this.nameToId[name]);
+            return itemData;
+        }
+
+        /// <summary>
+        /// 尝试通过名字获得数据，不打印缺失日志。
+        /// </summary>
+        /// <param name="name">名字</param>
+        /// <param name="itemData">道具数据</param>
+        /// <returns>是否存在</returns>
+        public bool TryGetByName(string name, out ItemData itemData)
+        {
+            itemData = ItemData.Empty;
+            if (!this.nameToId.TryGetValue(name, out int id))
+            {
+                return false;
+            }
+
+            itemData = this.GetById(id);
+            return itemData != null;
         }
 
         /// <summary>
@@ -130,7 +154,7 @@
         {
             if (id < 0)
             {
-                LogManager.Instance.Log($"id:{id}小于0!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider($"id:{id}小于0!!!", LogManager.LogLevelEnum.Warning);
                 return AItem.ItemTypeEnum.Null;
             }
 
@@ -146,7 +170,7 @@
         {
             if (this.IdToType(id) != AItem.ItemTypeEnum.Equipment)
             {
-                LogManager.Instance.Log("id不是装备!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("id不是装备!!!", LogManager.LogLevelEnum.Error);
                 return AEquipment.EquipTypeEnum.Null;
             }
 

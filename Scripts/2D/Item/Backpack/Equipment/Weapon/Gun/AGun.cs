@@ -1,4 +1,4 @@
-﻿namespace LAB2D
+namespace LAB2D.Item.Backpack.Equipment.Weapon.Gun
 {
     using System;
     using UnityEngine;

@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker
 {
+    using LAB2D;
     /// <summary>
     /// Worker管理器
     /// </summary>
@@ -14,7 +15,7 @@
         public override void Add(AWorker character)
         {
             base.Add(character);
-            LocateWorkerUI.Instance.AddWorkerItem(character);
+            AWorkerTask.LocateWorkerUIAddProvider(character);
         }
 
         /// <summary>

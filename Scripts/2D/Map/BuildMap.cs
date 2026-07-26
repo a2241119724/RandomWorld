@@ -1,5 +1,10 @@
-﻿namespace LAB2D
+namespace LAB2D.Map
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
+    using LAB2D.Item;
+    using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
     using Photon.Pun;
@@ -38,8 +43,8 @@
             this.resourceInfos = new ()
             {
                 {
-                    ItemDataManager.Instance.GetByName("CustomWood").Id,
-                    new ResourceInfo(ItemDataManager.Instance.GetByName("CustomWood").Id, 5)
+                    Core.ServiceLocator.Get<ItemDataManager>().GetByName("CustomWood").Id,
+                    new ResourceInfo(Core.ServiceLocator.Get<ItemDataManager>().GetByName("CustomWood").Id, 5)
                 },
             };
         }
@@ -53,14 +58,14 @@
         public BuildMap AddBuild(Vector3Int targetMap, string tileName)
         {
             Vector3IntLAB vector3IntLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
-            BuildItemData buildItemData = ItemDataManager.Instance.GetBuildItemDataByName(tileName);
-            this.tilemap.SetTile(targetMap, ResourceManager.Instance.GetAsset(tileName));
+            BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileName);
+            this.tilemap.SetTile(targetMap, (TileBase)AWorkerTask.ResourceLoadProvider(tileName));
             if (buildItemData.IsNeedBuild)
             {
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
-                WorkerTaskManager.Instance.AddTask(
+                Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(targetMap)
-                    .SetNeedResource(new Dictionary<int, ResourceInfo>(this.resourceInfos)).Build(), Vector3IntLAB.ToVector3IntLAB(targetMap));
+                    .SetNeedResource(new Dictionary<int, ResourceInfo>(this.resourceInfos)).Build(), new GameGridPosition(targetMap.x, targetMap.y, targetMap.z));
 
                 // 设置可通过并且颜色变淡
                 this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
@@ -79,14 +84,10 @@
                 this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
             }
 
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC(
-                    "SyncDataResp",
-                    RpcTarget.Others,
-                    DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
-                    DataTool.ToByteArray(buildTileData));
-            }
+            this.SyncSender.Broadcast(
+                "SyncDataResp",
+                DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
+                DataTool.ToByteArray(buildTileData));
 
             return this;
         }
@@ -112,22 +113,18 @@
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(targetMap);
             BuildTileData buildTileData = this.BuildMapDataLAB.PosMap[targetMap];
             buildTileData.IsComplete = true;
-            RoomManager.Instance.Complete(vector3Int);
-            BuildItemData buildItemData = ItemDataManager.Instance.GetBuildItemDataByName(buildTileData.Name);
+            Core.ServiceLocator.Get<RoomManager>().Complete(vector3Int);
+            BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
             this.tilemap.SetColor(vector3Int, Color.white);
             if (!buildItemData.IsPass)
             {
                 this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.Sprite);
             }
 
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC(
-                    "SyncDataResp",
-                    RpcTarget.Others,
-                    DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(vector3Int)),
-                    default);
-            }
+            this.SyncSender.Broadcast(
+                "SyncDataResp",
+                DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(vector3Int)),
+                default);
         }
 
         /// <summary>
@@ -148,15 +145,11 @@
         {
             this.tilemap.SetTile(targetMap, null);
             this.BuildMapDataLAB.PosMap.Remove(Vector3IntLAB.ToVector3IntLAB(targetMap));
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC(
+            this.SyncSender.Broadcast(
                 "SyncDataResp",
-                RpcTarget.Others,
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
                 default,
                 true);
-            }
         }
 
         /// <summary>
@@ -166,14 +159,14 @@
         {
             Dictionary<int, ResourceInfo> resourceInfos = new ();
             resourceInfos.Add(
-                ItemDataManager.Instance.GetByName("CustomWood").Id,
-                new ResourceInfo(ItemDataManager.Instance.GetByName("CustomWood").Id, 5));
+                Core.ServiceLocator.Get<ItemDataManager>().GetByName("CustomWood").Id,
+                new ResourceInfo(Core.ServiceLocator.Get<ItemDataManager>().GetByName("CustomWood").Id, 5));
             foreach (Vector3IntLAB targetMap in this.BuildMapDataLAB.PosMap.Keys)
             {
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
-                WorkerTaskManager.Instance.AddTask(
+                Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(Vector3IntLAB.ToVector3Int(targetMap))
-                    .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build(), targetMap);
+                    .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build(), new GameGridPosition(targetMap.X, targetMap.Y, targetMap.Z));
             }
 
             this.BuildMapDataLAB.PosMap.Clear();
@@ -191,13 +184,24 @@
                 return true;
             }
 
+            if (this.BuildMapDataLAB == null || this.BuildMapDataLAB.PosMap == null)
+            {
+                return true;
+            }
+
             if (!this.BuildMapDataLAB.PosMap.ContainsKey(Vector3IntLAB.ToVector3IntLAB(posMap)))
             {
                 return true;
             }
 
-            return ItemDataManager.Instance.GetBuildItemDataByName(
-                this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(posMap)].Name).IsPass;
+            BuildTileData buildTileData = this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(posMap)];
+            if (buildTileData == null)
+            {
+                return true;
+            }
+
+            BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
+            return buildItemData != null && buildItemData.IsPass;
         }
 
         /// <inheritdoc/>
@@ -205,7 +209,7 @@
         public override void SyncDataReq(byte[] data)
         {
             base.SyncDataReq(data);
-            LogManager.Instance.Log("Request: 同步地图建造数据");
+            AWorkerTask.LogProvider("Request: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.BuildMapDataLAB);
         }
 
@@ -214,13 +218,13 @@
         public override void SyncDataResp(byte[] data)
         {
             base.SyncDataResp(data);
-            LogManager.Instance.Log("Response: 同步地图建造数据");
+            AWorkerTask.LogProvider("Response: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
             BuildMapData buildMapData = DataTool.FromByteArray<BuildMapData>(data);
             Dictionary<Vector3IntLAB, BuildTileData>.Enumerator enumerator = buildMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(enumerator.Current.Key);
-                this.tilemap.SetTile(vector3Int, ResourceManager.Instance.GetAsset(enumerator.Current.Value.Name));
+                this.tilemap.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(enumerator.Current.Value.Name));
                 if (!enumerator.Current.Value.IsComplete)
                 {
                     this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.None);
@@ -239,7 +243,7 @@
         [PunRPC]
         public void SyncDataResp(byte[] vector3IntLAB, byte[] buildTileDataLAB, bool isDelete = false)
         {
-            LogManager.Instance.Log("Response: 同步地图建造数据");
+            AWorkerTask.LogProvider("Response: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {
@@ -250,10 +254,10 @@
             BuildTileData buildTileData = DataTool.FromByteArray<BuildTileData>(buildTileDataLAB);
             if (!buildTileData.Name.Equals(string.Empty))
             {
-                this.tilemap.SetTile(vector3Int, ResourceManager.Instance.GetAsset(buildTileData.Name));
+                this.tilemap.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(buildTileData.Name));
             }
 
-            BuildItemData buildItemData = ItemDataManager.Instance.GetBuildItemDataByName(buildTileData.Name);
+            BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
             if (buildTileData.IsComplete)
             {
                 this.tilemap.SetColor(vector3Int, Color.white);
@@ -277,10 +281,10 @@
         public override void LoadData()
         {
             base.LoadData();
-            this.BuildMapDataLAB = DataTool.LoadDataByBinary<BuildMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            this.BuildMapDataLAB = DataTool.LoadDataByBinary<BuildMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name)) ?? new BuildMapData();
             foreach (var posMap in this.BuildMapDataLAB.PosMap)
             {
-                this.DoDirectBuild(Vector3IntLAB.ToVector3Int(posMap.Key), ResourceManager.Instance.GetAsset(posMap.Value.Name));
+                this.DoDirectBuild(Vector3IntLAB.ToVector3Int(posMap.Key), (TileBase)AWorkerTask.ResourceLoadProvider(posMap.Value.Name));
             }
         }
 
@@ -303,16 +307,12 @@
                 this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
             }
 
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC(
+            this.SyncSender.Broadcast(
                 "SyncDataResp",
-                RpcTarget.Others,
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
                 tile.name,
                 isPass,
                 false);
-            }
 
             return this;
         }

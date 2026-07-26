@@ -1,5 +1,10 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D.Enum;
+    using LAB2D;
+    using LAB2D.Item;
+    using LAB2D.Item.Build;
+    using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -20,16 +25,16 @@
         private Vector3IntLAB buildPos;
 
         public WorkerBuildTask()
-            : base(WorkerTaskTypeEnum.Build)
+            : base(WorkerTaskType.Build)
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 1.0f;
+                this.maxProgress = WorkerTaskTimeConfig.BuildFetchResourceSeconds;
 
                 // 获取物资
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
-                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.GetPosByPreTake(worker));
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryProvider().GetPosByPreTake(worker));
                 if (this.TargetMap == default)
                 {
                     this.GiveUpTask(worker);
@@ -39,7 +44,7 @@
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 2.0f;
+                this.maxProgress = WorkerTaskTimeConfig.GetBuildConstructionSeconds(this.needs);
 
                 // 建造
                 this.Init();
@@ -64,7 +69,7 @@
 
             // 获得剩余不够的数量
             Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
-            InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining, true);
+            InventoryProvider().IsEnoughAndPreTake(worker, remaining, true);
 
             // 不够就取资源
             this.ChangeStage(worker, 0);
@@ -79,7 +84,7 @@
             worker.SubResource(this.needs);
 
             // 将建造完成的Tile从Building变为Build中
-            BuildMap.Instance.SetComplete(this.buildPos);
+            BuildMapCompletionProvider(this.buildPos);
         }
 
         /// <inheritdoc/>
@@ -103,7 +108,7 @@
             // 按照单个任务的资源取看是否足够
             // 获得剩余不够的数量
             Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
-            return InventoryManager.Instance.IsEnoughAndPreTake(worker, remaining);
+            return InventoryProvider().IsEnoughAndPreTake(worker, remaining);
         }
 
         /// <inheritdoc/>
@@ -113,7 +118,7 @@
             switch (this.stage)
             {
                 case 0:
-                    ResourceInfo resourceInfo = InventoryManager.Instance.SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
+                    ResourceInfo resourceInfo = InventoryProvider().SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
                     worker.AddResource(resourceInfo);
 
                     // 减少需求的数量

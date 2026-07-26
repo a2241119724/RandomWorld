@@ -1,5 +1,10 @@
-﻿namespace LAB2D
+namespace LAB2D.Map
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Common;
+    using LAB2D.Item;
+    using LAB2D.Serializable;
     using System;
     using System.Collections;
     using System.Collections.Generic;
@@ -29,7 +34,7 @@
         {
             base.Awake();
             Instance = this;
-            this.resourceTileMapOne = Tool.GetComponentInChildren<Tilemap>(this.transform.parent.gameObject, "ResourceMapOne");
+            this.resourceTileMapOne = LAB2D.Tool.Tool.GetComponentInChildren<Tilemap>(this.transform.parent.gameObject, "ResourceMapOne");
             this.ResourceMapDataLAB = new ResourceMapData(0, 100);
         }
 
@@ -40,40 +45,58 @@
         public IEnumerator GenResource()
         {
             // 需要等待地图协程执行完后再执行
-            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
-            AsyncProgressUI.Instance.SetTip("生成资源...");
-            for (int i = 0; i < TileMap.Instance.TileMapDataLAB.Height; i++)
+            yield return new WaitUntil(() => Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete);
+            if (!Core.ServiceLocator.TryGet(out TileMap tm) || tm.TileMapDataLAB == null)
             {
-                for (int j = 0; j < TileMap.Instance.TileMapDataLAB.Width; j++)
+                AWorkerTask.LogProvider("TileMap data not available, cannot generate resources", LogManager.LogLevelEnum.Error);
+                yield break;
+            }
+
+            // 确保进度总数已注册（幂等，重复调用安全）
+            this.SetProgress();
+
+            AWorkerTask.AsyncProgressSetTipProvider("生成资源...");
+            int resourcesPlaced = 0;
+            int assetMissCount = 0;
+            for (int i = 0; i < tm.TileMapDataLAB.Height; i++)
+            {
+                for (int j = 0; j < tm.TileMapDataLAB.Width; j++)
                 {
-                    AsyncProgressUI.Instance.AddOneProcess();
-                    if (FrameControl.Instance.IsNeedStop(1))
+                    AWorkerTask.AsyncProgressAddOneProvider();
+                    if (Core.ServiceLocator.Get<FrameControl>().IsNeedStop(1))
                     {
                         yield return null;
                     }
 
                     Vector3Int posMap = new (i, j, 0);
-                    if (TileMap.Instance.IsCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.95f)
+                    if (tm.IsCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.95f)
                     {
-                        TileMap.MapTileTypeEnum tileType = TileMap.Instance.TileMapDataLAB.MapTiles[i, j];
-                        TileBase tileBase = ResourceManager.Instance.GetAssetByTileType(tileType);
+                        TileMap.MapTileTypeEnum tileType = tm.TileMapDataLAB.MapTiles[i, j];
+                        TileBase tileBase = Core.ServiceLocator.Get<ResourceManager>().GetAssetByTileType(tileType);
                         if (tileBase == null)
                         {
+                            assetMissCount++;
                             continue;
                         }
 
                         this.tilemap.SetTile(posMap, tileBase);
                         this.ResourceMapDataLAB.Add(posMap, tileBase.name);
+                        resourcesPlaced++;
                         if (tileBase.name.Contains("_Tree"))
                         {
-                            ItemData itemData = ItemDataManager.Instance.GetByName(tileBase.name);
-                            WorkerTaskManager.Instance.AddTask(
+                            ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tileBase.name);
+                            Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                                 new WorkerGatherTask.GatherTaskBuilder()
-                                .SetTarget(posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
+                                .SetTarget(posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z));
                             this.ResourceMapDataLAB.TreeCurCount++;
                         }
                     }
                 }
+            }
+
+            if (resourcesPlaced == 0)
+            {
+                AWorkerTask.LogProvider($"GenResource: no resources placed (asset misses: {assetMissCount})", LogManager.LogLevelEnum.Warning);
             }
 
             yield return this.StartCoroutine(this.GenTree());
@@ -86,24 +109,28 @@
         public IEnumerator GenTree()
         {
             // 需要等待地图协程执行完后再执行
-            yield return new WaitUntil(() => Lock.IsCompleteTileMap);
+            yield return new WaitUntil(() => Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete);
             while (true)
             {
                 if (this.ResourceMapDataLAB.TreeCurCount < this.ResourceMapDataLAB.TreeTotalCount)
                 {
-                    Vector3Int pos = IsAvailableMap.Instance.GenAvailablePosMap();
-                    TileMap.MapTileTypeEnum tileType = TileMap.Instance.TileMapDataLAB.MapTiles[pos.x, pos.y];
-                    TileBase tileBase = ResourceManager.Instance.GetAssetByTileType(tileType, "Tree");
+                    if (!Core.ServiceLocator.TryGet(out TileMap tm) || tm.TileMapDataLAB == null)
+                    {
+                        AWorkerTask.LogProvider("TileMap data not available, tree generation paused", LogManager.LogLevelEnum.Error);
+                        yield return new WaitForSeconds(60.0f * 5);
+                        continue;
+                    }
+
+                    Vector3Int pos = Core.ServiceLocator.Get<IsAvailableMap>().GenAvailablePosMap();
+                    TileMap.MapTileTypeEnum tileType = tm.TileMapDataLAB.MapTiles[pos.x, pos.y];
+                    TileBase tileBase = Core.ServiceLocator.Get<ResourceManager>().GetAssetByTileType(tileType, "Tree");
                     if (tileBase == null)
                     {
                         yield return null;
                         continue;
                     }
 
-                    if (NetworkConnect.Instance.IsOnline)
-                    {
-                        this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(pos)), tileBase.name, false);
-                    }
+                    this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(pos)), tileBase.name, false);
 
                     this.ResourceMapDataLAB.TreeCurCount++;
                     this.tilemap.SetTile(pos, tileBase);
@@ -124,10 +151,7 @@
         /// <param name="posMap">位置</param>
         public void CutTree(Vector3Int posMap)
         {
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, false, true);
-            }
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, false, true);
 
             this.ResourceMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);
@@ -151,22 +175,75 @@
         }
 
         /// <summary>
-        /// 设置进度条
+        /// 尝试获取可采集资源的信息。
+        /// </summary>
+        /// <param name="posMap">资源位置</param>
+        /// <param name="resourceInfo">资源信息</param>
+        /// <returns>该位置是否有可采集资源</returns>
+        public bool TryGetGatherResourceInfo(Vector3Int posMap, out ResourceInfo resourceInfo)
+        {
+            resourceInfo = null;
+            TileBase tileBase = this.GetTile(posMap);
+            if (tileBase == null)
+            {
+                return false;
+            }
+
+            if (!Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(tileBase.name, out ItemData itemData))
+            {
+                return false;
+            }
+
+            if (!Core.ServiceLocator.Get<DropDataManager>().HasDropItemsById(itemData.Id))
+            {
+                return false;
+            }
+
+            resourceInfo = new ResourceInfo(itemData.Id);
+            return true;
+        }
+
+        private bool isProgressSet;
+
+        /// <summary>
+        /// 设置进度条（幂等，重复调用安全）
         /// </summary>
         public void SetProgress()
         {
-            AsyncProgressUI.Instance.AddTotal(TileMap.Instance.TileMapDataLAB.Height * TileMap.Instance.TileMapDataLAB.Width);
+            if (this.isProgressSet)
+            {
+                return;
+            }
+
+            if (!Core.ServiceLocator.TryGet(out TileMap tm) || tm.TileMapDataLAB == null)
+            {
+                AWorkerTask.LogProvider("TileMap data not initialized, cannot set resource generation progress", LogManager.LogLevelEnum.Error);
+                return;
+            }
+
+            this.isProgressSet = true;
+            AWorkerTask.AsyncProgressAddTotalProvider(tm.TileMapDataLAB.Height * tm.TileMapDataLAB.Width);
         }
 
         /// <inheritdoc/>
         public override void LoadData()
         {
             base.LoadData();
-            AsyncProgressUI.Instance.SetTip("加载资源地图信息...");
+            AWorkerTask.AsyncProgressSetTipProvider("加载资源地图信息...");
             this.ResourceMapDataLAB = DataTool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (this.ResourceMapDataLAB == null)
+            {
+                // 降级方案：存档无资源数据时，等待地图生成完毕后自动生成资源
+                AWorkerTask.LogProvider("ResourceMap data not found in archive, will generate new resources", LogManager.LogLevelEnum.Warning);
+                this.ResourceMapDataLAB = new ResourceMapData(0, 100);
+                this.SetProgress();
+                this.StartCoroutine(this.GenResource());
+                return;
+            }
+
             foreach (KeyValuePair<Vector3IntLAB, string> posMap in this.ResourceMapDataLAB.PosMap)
             {
-                this.tilemap.SetTile(Vector3IntLAB.ToVector3Int(posMap.Key), (TileBase)ResourceManager.Instance.GetAsset(posMap.Value));
+                this.tilemap.SetTile(Vector3IntLAB.ToVector3Int(posMap.Key), (TileBase)AWorkerTask.ResourceLoadProvider(posMap.Value));
             }
 
             this.StartCoroutine(this.GenTree());
@@ -184,7 +261,7 @@
         public override void SyncDataReq(byte[] data)
         {
             base.SyncDataReq(data);
-            LogManager.Instance.Log("Request: 同步地图资源数据");
+            AWorkerTask.LogProvider("Request: 同步地图资源数据", LogManager.LogLevelEnum.Trace);
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.ResourceMapDataLAB);
         }
 
@@ -193,7 +270,7 @@
         public override void SyncDataResp(byte[] data)
         {
             base.SyncDataResp(data);
-            LogManager.Instance.Log("Response: 同步地图资源数据");
+            AWorkerTask.LogProvider("Response: 同步地图资源数据", LogManager.LogLevelEnum.Trace);
             this.SetProgress();
             ResourceMapData resourceMapData = DataTool.FromByteArray<ResourceMapData>(data);
             Dictionary<Vector3IntLAB, string>.Enumerator enumerator = resourceMapData.PosMap.GetEnumerator();
@@ -201,7 +278,7 @@
             {
                 this.tilemap.SetTile(
                     Vector3IntLAB.ToVector3Int(enumerator.Current.Key),
-                    (TileBase)ResourceManager.Instance.GetAsset(enumerator.Current.Value));
+                    (TileBase)AWorkerTask.ResourceLoadProvider(enumerator.Current.Value));
             }
         }
 
@@ -215,7 +292,7 @@
         [PunRPC]
         public void SyncDataResp(byte[] vector3IntLAB, string tileBaseName, bool isPass = false, bool isDelete = false)
         {
-            LogManager.Instance.Log("Response: 同步地图资源数据");
+            AWorkerTask.LogProvider("Response: 同步地图资源数据", LogManager.LogLevelEnum.Trace);
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {
@@ -225,7 +302,7 @@
 
             if (!tileBaseName.Equals(string.Empty))
             {
-                this.tilemap.SetTile(vector3Int, ResourceManager.Instance.GetAsset(tileBaseName));
+                this.tilemap.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(tileBaseName));
             }
 
             if (isPass)

@@ -1,10 +1,13 @@
-﻿namespace LAB2D
+namespace LAB2D.MVC
 {
-    using System.Collections;
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Data;
+    using LAB2D.Item;
     using System.Collections.Generic;
 
     /// <summary>
-    /// Model
+    /// 模型
     /// 优化,只需要存id与数量
     /// </summary>
     public abstract class MVCModel : ASaveData
@@ -12,14 +15,14 @@
         /// <summary>
         /// 道具列表
         /// </summary>
-        public Dictionary<AItem.ItemTypeEnum, ArrayList> ItemDict;
+        public Dictionary<AItem.ItemTypeEnum, List<AItem>> ItemDict;
 
         public MVCModel(AItem.ItemTypeEnum start, AItem.ItemTypeEnum end)
         {
-            this.ItemDict = new Dictionary<AItem.ItemTypeEnum, ArrayList>();
-            Tool.SplitEnum<AItem.ItemTypeEnum>(start, end).ForEach((item) =>
+            this.ItemDict = new Dictionary<AItem.ItemTypeEnum, List<AItem>>();
+            LAB2D.Tool.Tool.SplitEnum<AItem.ItemTypeEnum>(start, end).ForEach((item) =>
             {
-                this.ItemDict.Add(item, new ArrayList());
+                this.ItemDict.Add(item, new List<AItem>());
             });
         }
 
@@ -32,7 +35,7 @@
         {
             if (this.ItemDict[type] == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -48,30 +51,30 @@
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
-            ArrayList itemList;
-            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(item.Id);
+            List<AItem> itemList;
+            AItem.ItemTypeEnum itemType = Core.ServiceLocator.Get<ItemDataManager>().IdToType(item.Id);
             if (this.ItemDict.ContainsKey(itemType))
             {
                 itemList = this.ItemDict[itemType];
             }
             else
             {
-                itemList = new ArrayList();
+                itemList = new List<AItem>();
             }
 
             // 可以堆叠
-            if (ItemDataManager.Instance.GetById(item.Id).IsStackable)
+            if (Core.ServiceLocator.Get<ItemDataManager>().GetById(item.Id).IsStackable)
             {
                 for (int i = 0; i < itemList.Count; i++)
                 {
                     // 包括道具
-                    if (((AItem)itemList[i]).Id == item.Id)
+                    if (itemList[i].Id == item.Id)
                     {
-                        ((AItem)itemList[i]).Quantity++;
+                        itemList[i].Quantity++;
                         return;
                     }
                 }
@@ -92,12 +95,12 @@
         {
             if (index1 < 0 || index1 >= this.Count(type) || index2 < 0 || index2 >= this.Count(type))
             {
-                LogManager.Instance.Log("index1 or index2 Not Exist!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("index1 or index2 Not Exist!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
-            ArrayList itemList = this.ItemDict[type];
-            AItem temp = (AItem)itemList[index1];
+            List<AItem> itemList = this.ItemDict[type];
+            AItem temp = itemList[index1];
             itemList[index1] = itemList[index2];
             itemList[index2] = temp;
         }
@@ -111,11 +114,11 @@
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("item is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
-            ((AItem)this.ItemDict[type][this.GetIndex(type, (AWeapon)item)]).Quantity--;
+            this.ItemDict[type][this.GetIndex(type, item)].Quantity--;
         }
 
         /// <summary>
@@ -128,11 +131,11 @@
         {
             if (index < 0 || index >= this.Count(type))
             {
-                LogManager.Instance.Log("index Not Exist!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("index Not Exist!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
-            return (AItem)this.ItemDict[type][index];
+            return this.ItemDict[type][index];
         }
 
         /// <summary>
@@ -156,18 +159,18 @@
         /// <param name="type">道具类型</param>
         /// <param name="item">道具</param>
         /// <returns>索引</returns>
-        public int GetIndex(AItem.ItemTypeEnum type, AWeapon item)
+        public int GetIndex(AItem.ItemTypeEnum type, AItem item)
         {
             if (item == null)
             {
-                LogManager.Instance.Log("item is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("item is null!!!", LogManager.LogLevelEnum.Error);
                 return -1;
             }
 
-            ArrayList itemList = this.ItemDict[type];
+            List<AItem> itemList = this.ItemDict[type];
             for (int i = 0; i < itemList.Count; i++)
             {
-                if (((AItem)itemList[i]).Id == item.Id)
+                if (itemList[i].Id == item.Id)
                 {
                     return i;
                 }

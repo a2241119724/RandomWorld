@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Constant
 {
+    using LAB2D;
     /// <summary>
     /// 预制体常量
     /// </summary>
@@ -86,6 +87,11 @@
         public const string BUTTON_ITEM = "ButtonItem";
 
         /// <summary>
+        /// 存档项
+        /// </summary>
+        public const string ARCHIVE_ITEM = "ArchiveItem";
+
+        /// <summary>
         /// 右侧聊天项
         /// </summary>
         public const string RIGHT_CHAT_ITEM = "RightChatItem";
@@ -94,5 +100,10 @@
         /// 左侧聊天项
         /// </summary>
         public const string LEFT_CHAT_ITEM = "LeftChatItem";
+
+        /// <summary>
+        /// 死亡菜单
+        /// </summary>
+        public const string DEATH_MENU = "DeathMenu";
     }
 }

@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Item.Backpack.Equipment.Weapon.Gun
 {
+    using LAB2D;
+    using LAB2D.Core;
     using System;
     using UnityEngine;
 
@@ -20,7 +22,7 @@
         protected override void DoAttack(AttackEffect attackEffect)
         {
             TraceBulletEffect traceBulletEffect = attackEffect as TraceBulletEffect;
-            traceBulletEffect.Target = EnemyManager.Instance.Get(0);
+            traceBulletEffect.Target = ServiceLocator.Get<EnemyManager>().Get(0);
             traceBulletEffect.Direction = this.GetDirection();
         }
     }

@@ -1,5 +1,9 @@
-﻿namespace LAB2D
+namespace LAB2D.MVC.Build.Controller
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.MVC.Build.Model;
+    using LAB2D.MVC.Build.View;
     using System.Collections.Generic;
 
     /// <summary>
@@ -15,9 +19,9 @@
         /// <inheritdoc/>
         public override void Awake()
         {
-            this.itemManagerView = Tool.GetComponentInChildren<BuildItemManagerView>(this.gameObject, "Inventory");
-            this.navigationView = Tool.GetComponentInChildren<BuildNavigationView>(this.gameObject, "Navigation");
-            this.infoView = Tool.GetComponentInChildren<BuildInfoView>(this.gameObject, "Info");
+            this.itemManagerView = LAB2D.Tool.Tool.GetComponentInChildren<BuildItemManagerView>(this.gameObject, "Inventory");
+            this.navigationView = LAB2D.Tool.Tool.GetComponentInChildren<BuildNavigationView>(this.gameObject, "Navigation");
+            this.infoView = LAB2D.Tool.Tool.GetComponentInChildren<BuildInfoView>(this.gameObject, "Info");
             base.Awake();
             Instance = this;
 
@@ -25,12 +29,19 @@
             this.navigationView.CurItemType = AItem.ItemTypeEnum.Room;
             if (this.model.IsNull(this.navigationView.CurItemType))
             {
-                List<AItem> items = ItemInstanceFactory.Instance.GetBuildItems();
+                List<AItem> items = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItems();
                 foreach (AItem item in items)
                 {
                     this.AddItem(item);
                 }
             }
+        }
+
+        /// <inheritdoc/>
+        protected override void OnSelectItem(int index, AItem item)
+        {
+            BuildMenuPanel.Instance.Select.SelectItemIndex = index;
+            BuildMenuPanel.Instance.Select.Item = item as ABuildItem;
         }
     }
 }

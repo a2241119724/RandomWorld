@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Map
 {
+    using LAB2D;
+    using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -11,7 +13,7 @@
     public class ATileMapData
     {
         /// <summary>
-        /// value: TileBase name
+        /// 值: TileBase名称
         /// </summary>
         public Dictionary<Vector3IntLAB, string> PosMap;
 

@@ -1,5 +1,11 @@
-﻿namespace LAB2D
+namespace LAB2D.Item
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Data;
+    using LAB2D.Item;
+    using LAB2D.Item.Backpack;
+    using LAB2D.Item.Build;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -35,10 +41,16 @@
         public ABackpackItem GetBackpackItemByName(string name)
         {
             ABackpackItem item = (ABackpackItem)Activator.CreateInstance(this.backpackItemTypes[name]);
-            item.Id = ItemDataManager.Instance.GetByName(name).Id;
+            item.Id = Core.ServiceLocator.Get<ItemDataManager>().GetByName(name).Id;
             item.Quantity = 1;
             item.Uid = this.uid++;
-            item.Tile = ResourceManager.Instance.GetAsset(name);
+            item.Tile = Core.ServiceLocator.Get<ResourceManager>().GetAsset(name);
+
+            if (item is AEquipment equip && Core.ServiceLocator.Get<ItemDataManager>().IdToType(item.Id) == AItem.ItemTypeEnum.Equipment)
+            {
+                equip.Type = Core.ServiceLocator.Get<ItemDataManager>().GetById(item.Id).EquipSlot;
+            }
+
             return item;
         }
 
@@ -49,7 +61,7 @@
         /// <returns>背包道具</returns>
         public ABackpackItem GetBackpackItemById(int id)
         {
-            ItemData itemData = ItemDataManager.Instance.GetById(id);
+            ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(id);
             return this.GetBackpackItemByName(itemData.EnName);
         }
 
@@ -104,7 +116,7 @@
             }
 
             // 非装备(包含武器)
-            List<Type> types = Tool.GetChildByParent<ABackpackItem>();
+            List<Type> types = LAB2D.Tool.Tool.GetChildByParent<ABackpackItem>();
             foreach (Type type in types)
             {
                 if (this.backpackItemTypes.ContainsKey(type.Name))
@@ -122,7 +134,7 @@
             this.backpackItemTypes.Remove(typeof(CommonEquipment).Name);
 
             // 建造
-            types = Tool.GetChildByParent<ABuildItem>();
+            types = LAB2D.Tool.Tool.GetChildByParent<ABuildItem>();
             foreach (Type type in types)
             {
                 Type[] interfaces = type.GetInterfaces();
@@ -131,7 +143,7 @@
                     continue;
                 }
 
-                int id = ItemDataManager.Instance.GetByName(type.Name).Id;
+                int id = ServiceLocator.Get<ItemDataManager>().GetByName(type.Name).Id;
                 ABuildItem item = (ABuildItem)Activator.CreateInstance(type);
                 item.Id = id;
                 this.buildItems.Add(type.Name, item);

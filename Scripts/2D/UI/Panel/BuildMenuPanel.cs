@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel
 {
+    using LAB2D;
+    using LAB2D.Core;
     using UnityEngine.UI;
 
     /// <summary>
@@ -12,8 +14,8 @@
             this.Name = "BuildMenu";
             this.Select = new SelectItemData();
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
-            Tool.GetComponentInChildren<Button>(this.Panel, "StartBuild").onClick.AddListener(this.OnClick_StartBuild);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "StartBuild").onClick.AddListener(this.OnClick_StartBuild);
         }
 
         /// <summary>
@@ -56,7 +58,7 @@
                 this.Controller.Close();
             }
 
-            BuildingUI.Instance.gameObject.SetActive(true);
+            ServiceLocator.Get<BuildingUI>().gameObject.SetActive(true);
         }
     }
 }

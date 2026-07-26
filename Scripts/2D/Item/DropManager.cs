@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Item
 {
+    using LAB2D;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -129,39 +130,24 @@
             ResourceInfo resourceInfo = this.GetDropByAll(posMap);
             if (resourceInfo != null)
             {
-                text += $"id:{resourceInfo.Id}\n" +
-                $"count:{resourceInfo.Count}\n";
+                ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(resourceInfo.Id);
+                if (itemData != null)
+                {
+                    text += $"id:{resourceInfo.Id}\n" +
+                        $"name:{itemData.CnName}\n" +
+                        $"type:{itemData.Type}\n" +
+                        $"count:{resourceInfo.Count}\n" +
+                        $"info:{itemData.Info}\n" +
+                        $"isStackable:{itemData.IsStackable}\n";
+                }
+                else
+                {
+                    text += $"id:{resourceInfo.Id}\n" +
+                        $"count:{resourceInfo.Count}\n";
+                }
             }
 
             return text;
-        }
-    }
-
-    /// <summary>
-    /// 资源信息
-    /// </summary>
-    [Serializable]
-    public class ResourceInfo
-    {
-        /// <summary>
-        /// Inventory,id=-1表示空
-        /// </summary>
-        public int Id;
-
-        /// <summary>
-        /// 数量
-        /// </summary>
-        public int Count;
-
-        public ResourceInfo(int id)
-        {
-            this.Id = id;
-        }
-
-        public ResourceInfo(int id, int count)
-        {
-            this.Id = id;
-            this.Count = count;
         }
     }
 }

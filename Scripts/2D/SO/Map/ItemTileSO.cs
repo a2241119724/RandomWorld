@@ -1,5 +1,6 @@
-namespace LAB2D
+namespace LAB2D.SO.Map
 {
+    using LAB2D;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
@@ -7,7 +8,7 @@ namespace LAB2D
     public class ItemTileSO : TileBase
     {
         /// <summary>
-        /// Êı¾İ
+        /// ç‰©å“ID
         /// </summary>
         public int ItemId;
 

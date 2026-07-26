@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Effect
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -32,7 +34,7 @@
             this.content = this.transform.Find("Text").GetComponent<Text>();
             if (this.content == null)
             {
-                LogManager.Instance.Log("content Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("content Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -41,8 +43,8 @@
             // 不能在Start中
             this.param = new List<Config>
             {
-                new Config(Color.white, 40),
-                new Config(Color.red, 50),
+                new Config(PixelUITheme.DamageNormal, 40),
+                new Config(PixelUITheme.DamageCritical, 50),
             };
         }
 
@@ -52,7 +54,7 @@
             this.parent = this.transform.parent;
             if (this.parent == null)
             {
-                LogManager.Instance.Log("parent Not Found!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("parent Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -68,7 +70,7 @@
         }
 
         /// <summary>
-        /// Damage 配置
+        /// 伤害配置
         /// </summary>
         public class Config
         {

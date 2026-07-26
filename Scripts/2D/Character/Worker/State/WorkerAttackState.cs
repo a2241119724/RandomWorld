@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.State
 {
+    using LAB2D;
     using UnityEngine;
 
     /// <summary>
@@ -32,11 +33,11 @@
             if (this.Character.Weapon == null && workerData.Weapon != null)
             {
                 // 实例化武器
-                string name = ItemDataManager.Instance.GetById(workerData.Weapon.Id).EnName;
-                this.Character.Weapon = ResourceManager.Instance.Instantiate(name, false);
+                string name = AWorkerTask.ItemDataProvider(workerData.Weapon.Id).EnName;
+                this.Character.Weapon = AWorkerTask.ResourceInstantiateProvider(name, false);
                 if (this.Character.Weapon == null)
                 {
-                    LogManager.Instance.Log("武器实例化错误!", LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider("武器实例化错误!", LogManager.LogLevelEnum.Error);
                     return;
                 }
 
@@ -58,7 +59,7 @@
             base.OnUpdate();
 
             // 若一段时间没有被攻击，那么回到寻路状态
-            this.recordTime += Time.deltaTime;
+            this.recordTime += this.Character.DeltaTime;
             if (this.recordTime > 5)
             {
                 this.Character.Manager.ChangeState(TypeEnum.Seek);

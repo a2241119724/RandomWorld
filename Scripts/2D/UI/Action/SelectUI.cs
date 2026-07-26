@@ -1,9 +1,12 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Action
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using Character = LAB2D.Character.Character;
     using UnityEngine;
 
     /// <summary>
-    /// Select UI
+    /// 选择 UI
     /// </summary>
     public class SelectUI : MonoBehaviourInit
     {
@@ -24,7 +27,7 @@
         public void SetTarget(Vector3Int posMap)
         {
             this.Target = posMap;
-            Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(posMap);
+            Vector3 worldPos = ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap);
             worldPos.z = 0;
             this.transform.position = worldPos;
         }

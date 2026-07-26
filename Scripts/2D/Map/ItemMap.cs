@@ -1,5 +1,12 @@
-﻿namespace LAB2D
+namespace LAB2D.Map
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Data;
+    using LAB2D.Domain.Common;
+    using LAB2D.Item;
+    using LAB2D.Item.Backpack;
+    using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
     using Photon.Pun;
@@ -37,10 +44,7 @@
         {
             this.ItemMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
-            }
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
         }
 
         /// <summary>
@@ -51,7 +55,7 @@
         public void PickUpFromInventory(Vector3Int posMap, ResourceInfo resourceInfo)
         {
             this.DeleteTile(posMap);
-            InventoryManager.Instance.SubItem(posMap, resourceInfo);
+            Core.ServiceLocator.Get<InventoryManager>().SubItem(posMap, resourceInfo);
         }
 
         /// <summary>
@@ -62,7 +66,7 @@
         public void PickUpFromDrop(Vector3Int posMap, ResourceInfo resourceInfo)
         {
             // 删除拿起来的东西
-            DropManager.Instance.SubDropByAll(posMap, resourceInfo);
+            Core.ServiceLocator.Get<DropManager>().SubDropByAll(posMap, resourceInfo);
             this.DeleteTile(posMap);
         }
 
@@ -80,10 +84,7 @@
 
             this.ItemMapDataLAB.Add(posMap, tileBase.name);
             this.tilemap.SetTile(posMap, tileBase);
-            if (NetworkConnect.Instance.IsOnline)
-            {
-                this.PhotonView.RPC("SyncDataResp", RpcTarget.Others, DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
-            }
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
         }
 
         /// <summary>
@@ -95,7 +96,8 @@
         public void PutDownToInventory(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
         {
             this.AddTile(posMap, tileBase);
-            InventoryManager.Instance.AddItem(posMap, resourceInfo);
+            Core.ServiceLocator.Get<InventoryManager>().AddItem(posMap, resourceInfo);
+            Core.ServiceLocator.Get<EnemyLootManager>().TrySpawnBeamForInventory(posMap, resourceInfo.Id);
         }
 
         /// <summary>
@@ -107,15 +109,15 @@
         public void PutDownToDrop(Vector3Int posMap, TileBase tileBase, ResourceInfo resourceInfo)
         {
             this.AddTile(posMap, tileBase);
-            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(resourceInfo.Id);
+            AItem.ItemTypeEnum itemType = Core.ServiceLocator.Get<ItemDataManager>().IdToType(resourceInfo.Id);
 
             // 添加到掉落物管理中
-            DropManager.Instance.AddDrop(itemType, posMap, resourceInfo);
+            Core.ServiceLocator.Get<DropManager>().AddDrop(itemType, posMap, resourceInfo);
 
             // 添加搬运任务
-            WorkerTaskManager.Instance.AddTask(
+            Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                 new WorkerCarryTask.CarryTaskBuilder()
-                .SetResourceInfo(resourceInfo).SetStartTarget(posMap).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
+                .SetResourceInfo(resourceInfo).SetStartTarget(posMap).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z));
         }
 
         /// <inheritdoc/>
@@ -123,7 +125,7 @@
         public override void SyncDataReq(byte[] data)
         {
             base.SyncDataReq(data);
-            LogManager.Instance.Log("Request: 同步地图道具数据");
+            AWorkerTask.LogProvider("Request: 同步地图道具数据", LogManager.LogLevelEnum.Trace);
             SyncDataTool.SyncDataRespWrapper(this.PhotonView, data, this.ItemMapDataLAB);
         }
 
@@ -132,14 +134,14 @@
         public override void SyncDataResp(byte[] data)
         {
             base.SyncDataResp(data);
-            LogManager.Instance.Log("Response: 同步地图道具数据");
+            AWorkerTask.LogProvider("Response: 同步地图道具数据", LogManager.LogLevelEnum.Trace);
             ItemMapData itemMapData = DataTool.FromByteArray<ItemMapData>(data);
             Dictionary<Vector3IntLAB, string>.Enumerator enumerator = itemMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 this.tilemap.SetTile(
                     Vector3IntLAB.ToVector3Int(enumerator.Current.Key),
-                    (TileBase)ResourceManager.Instance.GetAsset(enumerator.Current.Value));
+                    (TileBase)AWorkerTask.ResourceLoadProvider(enumerator.Current.Value));
             }
         }
 
@@ -152,7 +154,7 @@
         [PunRPC]
         public void SyncDataResp(byte[] vector3IntLAB, string tileBaseName, bool isDelete = false)
         {
-            LogManager.Instance.Log("Response: 同步地图道具数据");
+            AWorkerTask.LogProvider("Response: 同步地图道具数据", LogManager.LogLevelEnum.Trace);
 
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
@@ -161,37 +163,53 @@
                 return;
             }
 
-            this.tilemap.SetTile(vector3Int, (TileBase)ResourceManager.Instance.GetAsset(tileBaseName));
+            this.tilemap.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(tileBaseName));
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
-            if (collision.transform.GetComponent<Player>() == null)
+            // 自动拾取已由 NearbyItemPickupHUD 接管，不再在此处自动拾取
+        }
+
+        /// <summary>
+        /// 拾取指定位置的地面道具（整合完整拾取流程）。
+        /// </summary>
+        /// <param name="posMap">道具所在 tilemap 坐标</param>
+        public void PickUpItem(Vector3Int posMap)
+        {
+            TileBase tile = this.tilemap.GetTile(posMap);
+            if (tile == null)
             {
                 return;
             }
 
-            Vector3Int posMap = TileMap.Instance.WorldPosToMapPos(collision.transform.position);
-            TileBase tile = this.tilemap.GetTile(posMap);
-            if (tile != null)
+            // 拾取前获取装备稀有度信息，避免创建新道具后品质丢失
+            EquipmentRarityType? rarity = Core.ServiceLocator.Get<EnemyLootManager>().TryGetRarityByMapPosition(posMap);
+
+            AItem item = Core.ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemByName(tile.name);
+
+            // 将掉落时的品质和属性应用到拾取的道具上
+            if (rarity.HasValue && item is AEquipment equipment)
             {
-                BackpackController.Instance.AddItem(ItemInstanceFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
-                this.DeleteTile(posMap);
+                EquipmentLootTool.ApplyRarityToAttributes(equipment.Attribute, rarity.Value);
+                equipment.Quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
+            }
+            else if (rarity.HasValue && item is ABackpackItem backpackItem)
+            {
+                backpackItem.Quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
             }
 
-            for (int i = -1; i < 2; i++)
+            Core.ServiceLocator.Get<BackpackController>().AddItem(item);
+            Core.ServiceLocator.Get<ItemCollectionTracker>().RecordItemCollected(new ResourceInfo(item.Id, 1));
+            Core.ServiceLocator.Get<EnemyLootManager>().RemoveDropByMapPosition(posMap);
+
+            ResourceInfo resourceInfo = Core.ServiceLocator.Get<DropManager>().GetDropByAll(posMap);
+            if (resourceInfo != null)
             {
-                for (int j = -1; j < 2; j++)
-                {
-                    posMap = new Vector3Int(posMap.x + i, posMap.y + j, 0);
-                    tile = this.tilemap.GetTile(posMap);
-                    if (tile != null)
-                    {
-                        BackpackController.Instance.AddItem(ItemInstanceFactory.Instance.GetBackpackItemByName(this.tilemap.GetTile(posMap).name));
-                        this.DeleteTile(posMap);
-                    }
-                }
+                Core.ServiceLocator.Get<DropManager>().SubDropByAll(posMap, resourceInfo);
             }
+
+            this.DeleteTile(posMap);
         }
 
         /// <summary>

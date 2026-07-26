@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Enemy.CommonEnemy.State
 {
+    using LAB2D;
     using UnityEngine;
 
     /// <summary>
@@ -37,31 +38,31 @@
         public override void OnUpdate()
         {
             // 感知到周围有活着的玩家，进入追踪状态
-            int count = PlayerManager.Instance.Count();
+            int count = AWorkerTask.PlayerCountProvider();
             for (int i = 0; i < count; i++)
             {
-                if (this.Character.SenseNearby(PlayerManager.Instance.Get(i).transform))
+                if (this.Character.SenseNearby(AWorkerTask.PlayerGetProvider(i).transform))
                 {
                     this.Character.Manager.ChangeState(TypeEnum.Chase);
-                    this.Character.Target = PlayerManager.Instance.Get(i);
+                    this.Character.Target = AWorkerTask.PlayerGetProvider(i);
                     return;
                 }
             }
 
             // 感知到周围有活着的Worker，进入追踪状态
-            count = WorkerManager.Instance.Count();
+            count = AWorkerTask.WorkerCountProvider();
             for (int i = 0; i < count; i++)
             {
-                if (this.Character.SenseNearby(WorkerManager.Instance.Get(i).transform))
+                if (this.Character.SenseNearby(AWorkerTask.WorkerGetProvider(i).transform))
                 {
                     this.Character.Manager.ChangeState(TypeEnum.Chase);
-                    this.Character.Target = WorkerManager.Instance.Get(i);
+                    this.Character.Target = AWorkerTask.WorkerGetProvider(i);
                     return;
                 }
             }
 
             // 漫游
-            this.recordTime += Time.deltaTime;
+            this.recordTime += this.Character.DeltaTime;
             if (this.recordTime >= this.Character.RotateInterval)
             {
                 this.rotationAngle = Random.Range(0.0f, 360.0f);
@@ -69,7 +70,7 @@
                 this.recordTime = 0.0f;
             }
 
-            Vector3 direction = new (Mathf.Sin(this.rotationAngle), Mathf.Cos(this.rotationAngle), 0);
+            Vector3 direction = new ((float)System.Math.Sin(this.rotationAngle), (float)System.Math.Cos(this.rotationAngle), 0);
             this.Character.RotateTo(direction);
 
             // 先转再移动

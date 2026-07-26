@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.Core.Seek
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Serializable;
     using System.Collections.Generic;
     using PimDeWitte.UnityMainThreadDispatcher;
     using UnityEngine;
@@ -10,28 +13,28 @@
     /// </summary>
     public class AStar : ASeek
     {
-        public AStar(Character character)
+        public AStar(LAB2D.Character.Character character)
             : base(character)
         {
         }
 
         /// <inheritdoc/>
-        protected override void DoSeek()
+        protected override void DoSeek(string seekId)
         {
             Vector3Int posMap = default;
-            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+            Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
             {
-                posMap = TileMap.Instance.WorldPosToMapPos(this.Character.transform.position);
+                posMap = Core.ServiceLocator.Get<TileMap>().WorldPosToMapPos(this.Character.transform.position);
             }).Wait();
 
             // 起点就是终点
             if (posMap == this.TargetMap)
             {
-                UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
                 {
-                    LogManager.Instance.Log(this.Character.name + ":起始==终点");
+                    AWorkerTask.LogProvider(this.Character.name + ":起始==终点", LogManager.LogLevelEnum.Trace);
                 }).Wait();
-                this.SetResult(new SeekResult());
+                this.SetResult(new SeekResult(), seekId);
                 return;
             }
 
@@ -39,8 +42,8 @@
             start.Previous = null;
             Spend end = this.mapSpend[this.TargetMap.x, this.TargetMap.y]; // 终点
             List<Spend> path = new ();
-            float totalDistance = Mathf.Sqrt(Mathf.Pow(start.PosMap.X - end.PosMap.X, 2)
-                + Mathf.Pow(start.PosMap.Y - end.PosMap.Y, 2));
+            float totalDistance = (float)System.Math.Sqrt((double)((start.PosMap.X - end.PosMap.X) * (start.PosMap.X - end.PosMap.X)
+                + (start.PosMap.Y - end.PosMap.Y) * (start.PosMap.Y - end.PosMap.Y)));
             this.openList.Add(start);
             while (!this.isStopThread && this.openList.Count != 0)
             {
@@ -71,8 +74,8 @@
                 }
 
                 Spend curSpend = this.openList[minIndex];
-                this.SeekProgress = Mathf.Sqrt(Mathf.Pow(curSpend.PosMap.X - start.PosMap.X, 2)
-                    + Mathf.Pow(curSpend.PosMap.Y - start.PosMap.Y, 2)) / totalDistance;
+                this.SeekProgress = (float)System.Math.Sqrt((double)((curSpend.PosMap.X - start.PosMap.X) * (curSpend.PosMap.X - start.PosMap.X)
+                    + (curSpend.PosMap.Y - start.PosMap.Y) * (curSpend.PosMap.Y - start.PosMap.Y))) / totalDistance;
 
                 // 判断是否到达终点(此处只能是整数)
                 if (curSpend.PosMap == end.PosMap)
@@ -98,9 +101,9 @@
                         if (quickCurSpend != null && quickCurSpend.PosMap.X == curSpend.Previous.PosMap.X
                             && quickCurSpend.PosMap.Y == curSpend.Previous.PosMap.Y)
                         {
-                            UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                            Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
                             {
-                                LogManager.Instance.Log(this.Character.name + ":寻路出现环路", LogManager.LogLevelEnum.Error);
+                                AWorkerTask.LogProvider(this.Character.name + ":寻路出现环路", LogManager.LogLevelEnum.Error);
                             }).Wait();
                             break;
                         }
@@ -132,14 +135,8 @@
                     int x = curSpend.PosMap.X + direction.X;
                     int y = curSpend.PosMap.Y + direction.Y;
 
-                    bool isReach = true;
-                    UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
-                    {
-                        isReach = ASeek.IsCanReach(new Vector3Int(x, y, 0));
-                    }).Wait();
-
-                    // 数组下标
-                    if (!isReach)
+                    // 直接从缓存读取(后台线程安全), 无需向主线程派发
+                    if (!WalkabilityCache.IsWalkable(x, y))
                     {
                         continue;
                     }
@@ -155,13 +152,9 @@
                     float temp;
                     if (isCorner > 4)
                     {
-                        UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
-                        {
-                            isReach = ASeek.IsCanReach(new Vector3Int(x, curSpend.PosMap.Y, 0)) || ASeek.IsCanReach(new Vector3Int(curSpend.PosMap.X, y, 0));
-                        }).Wait();
-
                         // 当上下左右阻塞时，斜着不可走
-                        if (!isReach)
+                        if (!WalkabilityCache.IsWalkable(x, curSpend.PosMap.Y)
+                            && !WalkabilityCache.IsWalkable(curSpend.PosMap.X, y))
                         {
                             continue;
                         }
@@ -204,7 +197,7 @@
                     }
 
                     // 加权A*，使得寻路更快，但不是最短路径
-                    neighbor.H = 1.5f * (Mathf.Abs(end.PosMap.X - neighbor.PosMap.X) + Mathf.Abs(end.PosMap.Y - neighbor.PosMap.Y));
+                    neighbor.H = 1.5f * (System.Math.Abs(end.PosMap.X - neighbor.PosMap.X) + System.Math.Abs(end.PosMap.Y - neighbor.PosMap.Y));
                     neighbor.F = neighbor.G + neighbor.H;
                     neighbor.Previous = curSpend; // 链接
                 }
@@ -232,7 +225,7 @@
                     }
 
                     // 在一定path范围内, 倒叙遍历最后一个直达的位置
-                    int scope = Mathf.Min(30, path.Count - lastIndex - 1);
+                    int scope = System.Math.Min(30, path.Count - lastIndex - 1);
                     for (int i = lastIndex + scope; i >= lastIndex + 1; i--)
                     {
                         if (this.isStopThread)
@@ -241,12 +234,12 @@
                         }
 
                         // 上下左右平移一下射线
-                        Vector3 pos = TileMap.Instance.MapPosToWorldPos(start.PosMap);
-                        Vector3 direction = TileMap.Instance.MapPosToWorldPos(path[i].PosMap) - TileMap.Instance.MapPosToWorldPos(start.PosMap);
-                        float distance = Vector3.Distance(TileMap.Instance.MapPosToWorldPos(start.PosMap), TileMap.Instance.MapPosToWorldPos(path[i].PosMap));
+                        Vector3 pos = Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(start.PosMap);
+                        Vector3 direction = Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(path[i].PosMap) - Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(start.PosMap);
+                        float distance = Vector3.Distance(Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(start.PosMap), Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(path[i].PosMap));
 
                         bool isAllCanReach = true;
-                        UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                        Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
                         {
                             RaycastHit2D hit;
                             foreach (var offset in this.checkOffsets)
@@ -282,13 +275,14 @@
             }
             else
             {
-                UnityMainThreadDispatcher.Instance.EnqueueAsync(() =>
+                seekResult.IsReachable = false;
+                Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
                 {
-                    LogManager.Instance.Log(this.Character.name + ":未找到路径 " + start.PosMap + "-->" + end.PosMap, LogManager.LogLevelEnum.Error);
+                    AWorkerTask.LogProvider(this.Character.name + ":未找到路径 " + start.PosMap + "-->" + end.PosMap, LogManager.LogLevelEnum.Trace);
                 }).Wait();
             }
 
-            this.SetResult(seekResult);
+            this.SetResult(seekResult, seekId);
         }
     }
 }

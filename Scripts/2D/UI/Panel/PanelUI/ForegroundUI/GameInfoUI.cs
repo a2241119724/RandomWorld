@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 {
+    using LAB2D;
     using System.Collections;
     using UnityEngine;
     using UnityEngine.UI;
@@ -11,7 +12,7 @@
     {
         private Text fps;
 
-        private float accum; // fps
+        private float accum; // FPS累计
         private int frames;
 
         /// <summary>
@@ -22,7 +23,7 @@
         public void Awake()
         {
             Instance = this;
-            this.fps = Tool.GetComponentInChildren<Text>(this.gameObject, "FPS");
+            this.fps = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "FPS");
         }
 
         public void Start()
@@ -32,9 +33,9 @@
 
         public void Update()
         {
-            // fps
-            // 添加本次可能会执行的帧数
-            this.accum += Time.timeScale / Time.deltaTime;
+            // FPS计算
+            // 累计经过的真实时间（不受timeScale影响）
+            this.accum += Time.unscaledDeltaTime;
 
             // 一秒总共的次数
             ++this.frames;
@@ -44,17 +45,14 @@
         {
             while (true)
             {
-                // 每秒平均帧数
-                this.accum /= this.frames;
-
-                // if (!double.IsNaN(accum))
-                // {
-                this.fps.text = "FPS:" + this.accum.ToString("F1");
-
-                // }
+                if (this.frames > 0)
+                {
+                    float avgFps = this.frames / this.accum;
+                    this.fps.text = "FPS:" + avgFps.ToString("F1");
+                }
                 this.accum = 0.0f;
                 this.frames = 0;
-                yield return new WaitForSeconds(1.0f);
+                yield return new WaitForSecondsRealtime(1.0f);
             }
         }
     }

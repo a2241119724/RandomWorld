@@ -1,11 +1,13 @@
-﻿namespace LAB2D
+namespace LAB2D.Data
 {
+    using LAB2D;
+    using LAB2D.Domain.Common;
     using UnityEngine;
 
     /// <summary>
     /// 环境管理
     /// </summary>
-    public class EnvironmentManager : Singleton<EnvironmentManager>
+    public class EnvironmentManager : Singleton<EnvironmentManager>, ITickable
     {
         /// <summary>
         /// 温度
@@ -30,11 +32,13 @@
         /// <summary>
         /// 缓慢恢复灵气
         /// </summary>
-        public void UpdateEnergy()
+        public void Tick(float deltaTime)
         {
             if (this.CurEnergy <= this.MaxEnergy)
             {
-                this.CurEnergy += Time.deltaTime;
+                IWeatherGameplayService weather = ServiceLocator.Get<IWeatherGameplayService>();
+                float recovery = deltaTime * weather.EnergyRecoveryMultiplier;
+                this.CurEnergy = System.Math.Min(this.MaxEnergy, this.CurEnergy + recovery);
             }
         }
 
@@ -45,7 +49,8 @@
         public override string ToString()
         {
             return $"温度:{this.Temperature}\n" +
-                $"湿度:{this.Humidity}\n";
+                $"湿度:{this.Humidity}\n" +
+                $"灵气值:{this.CurEnergy:F0}/{this.MaxEnergy:F0}\n";
         }
 
         /// <summary>
@@ -55,7 +60,7 @@
         /// <returns>信息</returns>
         public string ToString(Vector3Int posMap)
         {
-            RoomInfo roomInfo = RoomManager.Instance.GetRoomByPos(posMap);
+            RoomInfo roomInfo = ServiceLocator.Get<RoomManager>().GetRoomByPos(posMap);
             if (roomInfo != null)
             {
                 return roomInfo.ToString();

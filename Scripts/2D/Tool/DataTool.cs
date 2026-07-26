@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Tool
 {
+    using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using System.IO;
     using System.Runtime.Serialization.Formatters.Binary;
     using System.Xml.Serialization;
@@ -21,6 +23,7 @@
         public static void SaveDataByBinary<T>(string filePath, T data)
             where T : class
         {
+            CreateDirectoryIfNeed(filePath);
             using FileStream fs = new (filePath, FileMode.OpenOrCreate, FileAccess.Write);
             Bf.Serialize(fs, data);
             fs.Flush();
@@ -42,8 +45,24 @@
                 return null;
             }
 
-            using FileStream fs = File.Open(filePath, FileMode.Open, FileAccess.Read);
-            return (T)Bf.Deserialize(fs);
+            try
+            {
+                using FileStream fs = File.Open(filePath, FileMode.Open, FileAccess.Read);
+                return (T)Bf.Deserialize(fs);
+            }
+            catch
+            {
+                // 反序列化失败（如类型结构变更），删除旧文件并返回 null
+                try
+                {
+                    File.Delete(filePath);
+                }
+                catch
+                {
+                }
+
+                return null;
+            }
         }
 
         /// <summary>
@@ -57,7 +76,7 @@
         {
             if (!File.Exists(filePath))
             {
-                LogManager.Instance.Log(filePath + "不存在", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider(filePath + "不存在", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -74,9 +93,21 @@
         public static void SaveDataByJson<T>(string filePath, T data)
             where T : class
         {
+            CreateDirectoryIfNeed(filePath);
             // JsonUtility无法序列化Dictionary
             string json = JsonUtility.ToJson(data);
             File.WriteAllText(filePath, json);
+        }
+
+        private static void CreateDirectoryIfNeed(string filePath)
+        {
+            string directoryPath = Path.GetDirectoryName(filePath);
+            if (string.IsNullOrEmpty(directoryPath))
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(directoryPath);
         }
 
         /// <summary>
@@ -93,7 +124,7 @@
             }
             else
             {
-                // Encoding.UTF8.GetString();
+                // 使用 UTF8 编码读取字符串
                 TextAsset textAsset = Resources.Load<TextAsset>(name);
                 if (textAsset == null)
                 {

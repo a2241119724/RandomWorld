@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel
 {
+    using LAB2D;
+    using LAB2D.Core;
     using Photon.Pun;
     using Photon.Realtime;
     using UnityEngine.UI;
@@ -15,8 +17,8 @@
         {
             this.Name = "CreateOrJoin";
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "CreateRoom").onClick.AddListener(this.OnClick_CreateRoom);
-            Tool.GetComponentInChildren<Button>(this.Panel, "JoinRoom").onClick.AddListener(this.OnClick_JoinRoom);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "CreateRoom").onClick.AddListener(this.OnClick_CreateRoom);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "JoinRoom").onClick.AddListener(this.OnClick_JoinRoom);
         }
 
         /// <inheritdoc/>
@@ -51,7 +53,7 @@
             }
             else
             {
-                GlobalInit.Instance.ShowTip("请稍后再试");
+                ServiceLocator.Get<GlobalInit>().ShowTip("请稍后再试");
             }
         }
     }

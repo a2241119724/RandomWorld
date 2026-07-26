@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.Task.Individual
 {
+    using LAB2D.Enum;
+    using LAB2D;
+    using LAB2D.Serializable;
     using System;
     using UnityEngine;
 
@@ -9,22 +12,18 @@
     [Serializable]
     public class WorkerExerciseTask : AWorkerTask
     {
-        /// <summary>
-        /// 没有任务寻路多少次添加锻炼任务
-        /// </summary>
-        public static readonly long SeekThreshold = 10;
         private AWorker worker;
 
         public WorkerExerciseTask()
-            : base(WorkerTaskTypeEnum.Exercise)
+            : base(WorkerTaskType.Exercise)
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 10.0f;
+                this.maxProgress = WorkerTaskTimeConfig.ExerciseSeconds;
                 this.Init();
 
                 // 设置Worker位置为目标位置
-                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(TileMap.Instance.WorldPosToMapPos(worker.transform.position));
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(TileMapWorldToMapProvider(worker.transform.position));
             });
         }
 

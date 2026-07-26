@@ -1,10 +1,16 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Action
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Domain.Common;
+    using LAB2D.Serializable;
+    using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.EventSystems;
     using UnityEngine.Tilemaps;
     using UnityEngine.UI;
+    using GameCharacter = LAB2D.Character.Character;
 
     /// <summary>
     /// 拉矩形选框
@@ -42,21 +48,20 @@
             this.options.gameObject.SetActive(false);
             this.selects[key].ForEach((posMap) =>
             {
-                TileBase tileBase = ResourceMap.Instance.GetTile(posMap);
-                if (tileBase == null)
+                GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+                if (ServiceLocator.Get<WorkerTaskManager>().GatherPositions.Contains(gridPos))
                 {
                     return;
                 }
 
-                if (WorkerTaskManager.Instance.GatherPos.Contains(posMap))
+                if (!ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(posMap, out ResourceInfo resourceInfo))
                 {
                     return;
                 }
 
-                ItemData itemData = ItemDataManager.Instance.GetByName(tileBase.name);
-                WorkerTaskManager.Instance.AddTask(
+                ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerGatherTask.GatherTaskBuilder()
-                    .SetTarget(posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), Vector3IntLAB.ToVector3IntLAB(posMap));
+                    .SetTarget(posMap).SetResourceInfo(resourceInfo).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z));
             });
         }
 
@@ -70,31 +75,33 @@
             this.options.gameObject.SetActive(false);
             this.selects[key].ForEach((posMap) =>
             {
-                if (!WorkerTaskManager.Instance.GatherPos.Contains(posMap))
+                GameGridPosition gridPos = UnityVectorAdapter.ToGameGridPosition(posMap);
+                if (!ServiceLocator.Get<WorkerTaskManager>().GatherPositions.Contains(gridPos))
                 {
                     return;
                 }
 
-                WorkerTaskManager.Instance.CancelGatherTask(posMap);
-                GatherMap.Instance.CancelGather(posMap);
+                ServiceLocator.Get<WorkerTaskManager>().CancelGatherTask(gridPos);
+                ServiceLocator.Get<GatherMap>().CancelGather(posMap);
             });
         }
 
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
             this.selects = new Dictionary<TileTypeEnum, List<Vector3Int>>
             {
                 { TileTypeEnum.Resource, new List<Vector3Int>() },
             };
-            this.options = Tool.GetComponentInChildren<Transform>(this.gameObject, "Options");
+            this.options = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Options");
             this.options.gameObject.SetActive(false);
-            Transform gather = Tool.GetComponentInChildren<Transform>(this.options.gameObject, "Gather");
-            Tool.GetComponentInChildren<Button>(gather.gameObject, "Yes").onClick.AddListener(() =>
+            Transform gather = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.options.gameObject, "Gather");
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(gather.gameObject, "Yes").onClick.AddListener(() =>
             {
                 this.Onclick_Yes(TileTypeEnum.Resource);
             });
-            Tool.GetComponentInChildren<Button>(gather.gameObject, "No").onClick.AddListener(() =>
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(gather.gameObject, "No").onClick.AddListener(() =>
             {
                 this.Onclick_No(TileTypeEnum.Resource);
             });
@@ -104,13 +111,13 @@
         {
             if (this.options.gameObject.activeSelf)
             {
-                if (Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2))
+                if (UnityGlobalInputAdapter.GetSecondaryMouseDown() || UnityGlobalInputAdapter.GetMiddleMouseDown())
                 {
                     this.options.gameObject.SetActive(false);
                 }
-                else if (Input.GetMouseButtonDown(0))
+                else if (UnityGlobalInputAdapter.GetPrimaryMouseDown())
                 {
-                    List<RaycastResult> results = Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
+                    List<RaycastResult> results = LAB2D.Tool.Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
 
                     // 若没有点击到options UI, 则关闭options UI
                     if (results.Count == 0)
@@ -122,19 +129,19 @@
                 return;
             }
 
-            if (Input.GetMouseButtonDown(0) && PanelController.Instance.Panels.Count > 0 &&
-                (PanelController.Instance.Panels.Peek() == ForegroundPanel.Instance ||
-                PanelController.Instance.Panels.Peek() == ItemInfoPanel.Instance))
+            if (UnityGlobalInputAdapter.GetPrimaryMouseDown() && ServiceLocator.Get<PanelController>().Panels.Count > 0 &&
+                (ServiceLocator.Get<PanelController>().Panels.Peek() == ForegroundPanel.Instance ||
+                ServiceLocator.Get<PanelController>().Panels.Peek() == ItemInfoPanel.Instance))
             {
                 this.options.gameObject.SetActive(false);
-                Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector3 pos = UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main);
                 this.start = pos;
                 this.transform.position = new Vector3(pos.x, pos.y, 0.0f);
                 this.isDown = true;
             }
-            else if (this.isDown && PanelController.Instance.IsForeground())
+            else if (this.isDown && ServiceLocator.Get<PanelController>().IsForeground())
             {
-                Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector3 pos = UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main);
                 float x = pos.x - this.start.x;
                 float y = pos.y - this.start.y;
                 if (x > 0 && y > 0)
@@ -150,10 +157,10 @@
                     this.transform.position = new Vector3(this.start.x + x, this.start.y, 0.0f);
                 }
 
-                ((RectTransform)this.transform).sizeDelta = new Vector2(Mathf.Abs(x), Mathf.Abs(y));
+                ((RectTransform)this.transform).sizeDelta = new Vector2(System.Math.Abs(x), System.Math.Abs(y));
             }
 
-            if (Input.GetMouseButtonUp(0))
+            if (UnityGlobalInputAdapter.GetPrimaryMouseUp())
             {
                 this.Select();
                 ((RectTransform)this.transform).sizeDelta = Vector2.zero;
@@ -172,9 +179,9 @@
                 this.selects[key].Clear();
             }
 
-            SelectManagerPool.Instance.ReleaseAll();
-            Vector3Int start = TileMap.Instance.WorldPosToMapPos(this.transform.position);
-            Vector3Int end = TileMap.Instance.WorldPosToMapPos(new Vector3(
+            ServiceLocator.Get<SelectManagerPool>().ReleaseAll();
+            Vector3Int start = ServiceLocator.Get<TileMap>().WorldPosToMapPos(this.transform.position);
+            Vector3Int end = ServiceLocator.Get<TileMap>().WorldPosToMapPos(new Vector3(
                 this.transform.position.x + ((RectTransform)this.transform).sizeDelta.x,
                 this.transform.position.y - ((RectTransform)this.transform).sizeDelta.y,
                 this.transform.position.z));
@@ -183,35 +190,38 @@
                 for (int j = start.y; j < end.y; j++)
                 {
                     Vector3Int posMap = new (i, j, 0);
-                    Character character = ItemInfoUI.Instance.GetCharacter(posMap);
+                    GameCharacter character = ServiceLocator.Get<ItemInfoUI>().GetCharacter(posMap);
 
                     // 临近的位置可能会获得多个角色, 所以这里只取第一个
-                    if (character != null && SelectManagerPool.Instance.GetForCharacter(character) == null)
+                    if (character != null && ServiceLocator.Get<SelectManagerPool>().GetForCharacter(character) == null)
                     {
-                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        SelectUI selectUI = ServiceLocator.Get<SelectManagerPool>().CreateFreeSelect(posMap);
                         selectUI.Character = character;
                     }
 
-                    ResourceInfo resourceInfo = DropManager.Instance.GetDropByAll(posMap);
+                    ResourceInfo resourceInfo = ServiceLocator.Get<DropManager>().GetDropByAll(posMap);
                     if (resourceInfo != null)
                     {
-                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        SelectUI selectUI = ServiceLocator.Get<SelectManagerPool>().CreateFreeSelect(posMap);
                         selectUI.SetTarget(posMap);
                     }
 
-                    resourceInfo = InventoryManager.Instance.GetResourceByPos(posMap);
+                    resourceInfo = ServiceLocator.Get<InventoryManager>().GetResourceByPos(posMap);
                     if (resourceInfo != null && resourceInfo.Id != -1 && resourceInfo.Count != 0)
                     {
-                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        SelectUI selectUI = ServiceLocator.Get<SelectManagerPool>().CreateFreeSelect(posMap);
                         selectUI.SetTarget(posMap);
                     }
 
-                    TileBase tileBase = ItemInfoUI.Instance.GetTile(posMap, false, false, false);
+                    TileBase tileBase = ServiceLocator.Get<ItemInfoUI>().GetTile(posMap, false, false, false);
                     if (tileBase != null)
                     {
-                        SelectUI selectUI = SelectManagerPool.Instance.CreateFreeSelect(posMap);
+                        SelectUI selectUI = ServiceLocator.Get<SelectManagerPool>().CreateFreeSelect(posMap);
                         selectUI.SetTarget(posMap);
-                        this.selects[TileTypeEnum.Resource].Add(posMap);
+                        if (ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(posMap, out _))
+                        {
+                            this.selects[TileTypeEnum.Resource].Add(posMap);
+                        }
                     }
                 }
             }

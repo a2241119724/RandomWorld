@@ -1,9 +1,12 @@
-﻿namespace LAB2D
+namespace LAB2D.UI
 {
+    using LAB2D;
+    using LAB2D.AI.Dialogue.Core;
+    using LAB2D.Core;
+    using LAB2D.AI.Dialogue.LLM;
+    using LAB2D.Character.Worker.Task;
     using System;
-    using System.IO;
-    using System.Net;
-    using System.Text;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using UnityEngine;
     using UnityEngine.UI;
@@ -15,6 +18,7 @@
     {
         private Text input;
         private Transform content;
+        private ILLMClient llmClient;
         private bool isWorking = false;
 
         /// <summary>
@@ -37,79 +41,39 @@
         }
 
         /// <summary>
-        /// 使用ollama对话
+        /// 使用内置 GGUF 模型对话
         /// </summary>
         /// <param name="question">问题</param>
         /// <returns>回答</returns>
         public async Task Chat(string question)
         {
-            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.RIGHT_CHAT_ITEM, this.content, false);
-            Tool.GetComponentInChildren<Text>(g, "Text").text = question;
-            string url = "http://127.0.0.1:11434/api/chat";
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            if (request == null)
-            {
-                return;
-            }
-
-            request.Method = "POST";
-            request.ContentType = "application/json";
-            request.Timeout = 1000;
-            string jsonData = @"{
-                ""model"": ""deepseek-r1:1.5b"",
-                ""messages"": [
-                    {
-                        ""role"": ""user"", 
-                        ""content"": """ + question + @"""
-                    }
-                ]
-            }";
-            byte[] body = Encoding.UTF8.GetBytes(jsonData);
+            GameObject g = Core.ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.RIGHT_CHAT_ITEM, this.content, false);
+            LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "Text").text = question;
             string text = string.Empty;
             try
             {
-                using (Stream stream = await request.GetRequestStreamAsync())
+                var messages = new List<ChatMessage>
                 {
-                    stream.Write(body, 0, body.Length);
-                }
+                    new ChatMessage("system", "你是游戏内置的中文助手，回答要简洁、自然，并且只输出最终回答。"),
+                    new ChatMessage("user", question),
+                };
 
-                HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync();
-                if (response == null)
+                text = await this.llmClient.ChatAsync(messages, new LLMGenerationOptions { stream = false });
+                if (string.IsNullOrWhiteSpace(text))
                 {
-                    return;
-                }
-
-                using (Stream stream = response.GetResponseStream())
-                {
-                    using StreamReader reader = new (stream, Encoding.UTF8);
-                    ChatData chatData;
-                    bool isStart = false;
-                    do
-                    {
-                        chatData = JsonUtility.FromJson<ChatData>(await reader.ReadLineAsync());
-                        if (isStart && !chatData.message.content.Equals("\n\n"))
-                        {
-                            text += chatData.message.content;
-                        }
-
-                        if (chatData.message.content.Equals("</think>"))
-                        {
-                            isStart = true;
-                        }
-                    }
-                    while (!chatData.done && !reader.EndOfStream);
+                    text = "模型服务未响应";
                 }
             }
             catch (Exception e)
             {
-                LogManager.Instance.Log("AIChatUI请求失败: " + e.Message, LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("AIChatUI请求失败: " + e, LogManager.LogLevelEnum.Error);
                 text = "请求失败";
             }
             finally
             {
-                g = ResourceManager.Instance.Instantiate(PrefabConstant.LEFT_CHAT_ITEM, this.content, false);
+                g = Core.ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.LEFT_CHAT_ITEM, this.content, false);
                 g.transform.SetParent(this.content);
-                Tool.GetComponentInChildren<Text>(g, "Text").text = text;
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "Text").text = text;
                 this.isWorking = false;
             }
         }
@@ -117,54 +81,10 @@
         public void Awake()
         {
             Instance = this;
-            this.input = Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
-            this.content = Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
+            ServiceLocator.Register(this);
+            this.llmClient = ServiceLocator.Get<DialogueManager>().GetLLMClient();
+            this.input = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Message");
+            this.content = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.gameObject, "Content");
         }
-
-#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-        /// <summary>
-        /// 聊天数据
-        /// </summary>
-        [Serializable]
-        public class ChatData
-        {
-            /// <summary>
-            /// 模型
-            /// </summary>
-            public string model;
-
-            /// <summary>
-            /// 创建
-            /// </summary>
-            public string created_at;
-
-            /// <summary>
-            /// 信息
-            /// </summary>
-            public Message message;
-
-            /// <summary>
-            /// 结束
-            /// </summary>
-            public bool done;
-
-            /// <summary>
-            /// 消息
-            /// </summary>
-            [Serializable]
-            public class Message
-            {
-                /// <summary>
-                /// 角色
-                /// </summary>
-                public string role;
-
-                /// <summary>
-                /// 内容
-                /// </summary>
-                public string content;
-            }
-        }
-#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
     }
 }

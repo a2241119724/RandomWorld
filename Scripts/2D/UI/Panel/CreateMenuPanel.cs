@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Panel
 {
+    using LAB2D;
+    using LAB2D.Core;
     using Photon.Pun;
     using Photon.Realtime;
     using UnityEngine.UI;
@@ -13,8 +15,8 @@
         {
             this.Name = "CreateMenu";
             this.Init();
-            Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.OnClick_StartCreate);
-            Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.OnClick_StartCreate);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);
         }
 
         /// <inheritdoc/>
@@ -39,26 +41,26 @@
         {
             if (PhotonNetwork.NetworkClientState != ClientState.ConnectedToMasterServer
                 && PhotonNetwork.NetworkClientState != ClientState.JoinedLobby
-                && NetworkConnect.Instance.IsOnline)
+                && ServiceLocator.Get<NetworkConnect>().IsOnline)
             {
-                GlobalInit.Instance.ShowTip("请稍后再试");
+                ServiceLocator.Get<GlobalInit>().ShowTip("请稍后再试");
                 return;
             }
 
-            string roomName = Tool.GetComponentInChildren<Text>(this.Panel, "RoomName").text;
+            string roomName = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.Panel, "RoomName").text;
             if (string.IsNullOrEmpty(roomName))
             {
-                GlobalInit.Instance.ShowTip("房间名不能为空");
+                ServiceLocator.Get<GlobalInit>().ShowTip("房间名不能为空");
                 return;
             }
 
             if (roomName.Length > 8)
             {
-                GlobalInit.Instance.ShowTip("房间名长度不能超过8位");
+                ServiceLocator.Get<GlobalInit>().ShowTip("房间名长度不能超过8位");
                 return;
             }
 
-            if (NetworkConnect.Instance.IsOnline)
+            if (ServiceLocator.Get<NetworkConnect>().IsOnline)
             {
                 // 创建房间,(房间名字,房子选项{最大连接人数(最大4)},大厅基本属性)
                 RoomOptions roomOptions = new ();
@@ -74,7 +76,7 @@
                 bool success = PhotonNetwork.CreateRoom(roomName, roomOptions);
                 if (!success)
                 {
-                    GlobalInit.Instance.ShowTip("房间创建失败");
+                    ServiceLocator.Get<GlobalInit>().ShowTip("房间创建失败");
                     return;
                 }
             }

@@ -1,12 +1,18 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Action
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Domain.Common;
+    using LAB2D.Domain.Inventory;
+    using LAB2D.UnityAdapter;
+    using Character = LAB2D.Character.Character;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.EventSystems;
     using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// 点击对象展示UI
+    /// 点击对象展示UI — 通过 EventBus 订阅 InventoryGridChangedEvent 实现解耦更新。
     /// </summary>
     public class ItemInfoUI : MonoBehaviourInit
     {
@@ -23,6 +29,30 @@
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
+            ServiceLocator.Get<EventBus>().Subscribe<InventoryGridChangedEvent>(this.OnInventoryGridChanged);
+        }
+
+        public void OnDestroy()
+        {
+            ServiceLocator.Get<EventBus>().Unsubscribe<InventoryGridChangedEvent>(this.OnInventoryGridChanged);
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
+        private void OnInventoryGridChanged(InventoryGridChangedEvent e)
+        {
+            if (this.select.Equals(e.ManagerName)
+                && this.selectPos.x == e.Position.X
+                && this.selectPos.y == e.Position.Y)
+            {
+                // 通过 UnityAdapter 转换 Domain 坐标为 Unity 坐标，重新获取格式化文本
+                Vector3Int unityPos = UnityVectorAdapter.ToVector3Int(e.Position);
+                string cellInfo = ServiceLocator.Get<InventoryManager>().ToString(unityPos);
+                ItemInfoPanel.Instance.SetItemInfo(cellInfo);
+            }
         }
 
         public void Update()
@@ -30,18 +60,18 @@
             // 实时更新Character信息
             if (this.character != null)
             {
-                if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
+                if (ServiceLocator.Get<PanelController>().Panels.Peek() != ItemInfoPanel.Instance)
                 {
-                    PanelController.Instance.Show(ItemInfoPanel.Instance);
+                    ServiceLocator.Get<PanelController>().Show(ItemInfoPanel.Instance);
                 }
 
                 ItemInfoPanel.Instance.SetItemInfo(this.character.ToString());
                 ItemInfoPanel.Instance.SetCharacter(this.character);
             }
 
-            if (Input.GetMouseButtonDown(1))
+            if (UnityGlobalInputAdapter.GetSecondaryMouseDown())
             {
-                List<RaycastResult> results = Tool.GetUIByMousePos();
+                List<RaycastResult> results = LAB2D.Tool.Tool.GetUIByMousePos();
 
                 // 过滤不是滑动主屏幕的动作
                 if (results.Count > 0 && results[0].gameObject.name != "Foreground")
@@ -49,15 +79,15 @@
                     return;
                 }
 
-                this.selectPos = TileMap.Instance.GetMapPosByMouse();
+                this.selectPos = ServiceLocator.Get<TileMap>().GetMapPosByMouse();
                 SelectUI selectUI;
-                if (Input.GetKey(KeyCode.LeftControl))
+                if (UnityGlobalInputAdapter.GetShowTileInfoHeld())
                 {
-                    selectUI = SelectManagerPool.Instance.CreateFreeSelect(this.selectPos);
+                    selectUI = ServiceLocator.Get<SelectManagerPool>().CreateFreeSelect(this.selectPos);
                 }
                 else
                 {
-                    selectUI = SelectManagerPool.Instance.ReleaseAllAndGetOne();
+                    selectUI = ServiceLocator.Get<SelectManagerPool>().ReleaseAllAndGetOne();
                 }
 
                 do
@@ -66,7 +96,7 @@
                     if (this.character != null)
                     {
                         this.text = this.character.ToString();
-                        SelectUI selectUI1 = SelectManagerPool.Instance.GetForCharacter(this.character);
+                        SelectUI selectUI1 = ServiceLocator.Get<SelectManagerPool>().GetForCharacter(this.character);
                         if (selectUI1 != null)
                         {
                             selectUI = selectUI1;
@@ -97,13 +127,13 @@
                     }
 
                     this.text += $"{tileBase.name}\n" +
-                        EnvironmentManager.Instance.ToString(this.selectPos);
+                        ServiceLocator.Get<EnvironmentManager>().ToString(this.selectPos);
                     break;
                 }
                 while (true);
-                if (PanelController.Instance.Panels.Peek() != ItemInfoPanel.Instance)
+                if (ServiceLocator.Get<PanelController>().Panels.Peek() != ItemInfoPanel.Instance)
                 {
-                    PanelController.Instance.Show(ItemInfoPanel.Instance);
+                    ServiceLocator.Get<PanelController>().Show(ItemInfoPanel.Instance);
                 }
 
                 ItemInfoPanel.Instance.SetItemInfo(this.text);
@@ -131,18 +161,18 @@
         /// <returns>角色信息</returns>
         public Character GetCharacter(Vector3Int posMap)
         {
-            // Player
-            Character character = PlayerManager.Instance.GetCharacterByPos(posMap);
+            // 玩家
+            Character character = ServiceLocator.Get<PlayerManager>().GetCharacterByPos(posMap);
             if (character == null)
             {
-                // Enemy
-                character = EnemyManager.Instance.GetCharacterByPos(posMap);
+                // 敌人
+                character = ServiceLocator.Get<EnemyManager>().GetCharacterByPos(posMap);
             }
 
             if (character == null)
             {
-                // Worker
-                character = WorkerManager.Instance.GetCharacterByPos(posMap);
+                // 工作者
+                character = ServiceLocator.Get<WorkerManager>().GetCharacterByPos(posMap);
             }
 
             return character;
@@ -161,32 +191,47 @@
             TileBase tileBase = null;
             if (isBuild)
             {
-                tileBase = BuildMap.Instance.GetTile(posMap);
-                this.text = "Build:";
+                tileBase = ServiceLocator.Get<BuildMap>().GetTile(posMap);
+                if (tileBase != null)
+                {
+                    this.text = "Build:";
+                    BuildItemData buildData = ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileBase.name);
+                    if (buildData != null)
+                    {
+                        this.text += $"\n可通行:{buildData.IsPass}\n需要建造:{buildData.IsNeedBuild}\n";
+                    }
+                }
             }
 
             // 如果点击的是床，则展示分配的Worker
             if (tileBase != null && tileBase.name.Contains("Bed"))
             {
-                WorkerBedUI.Instance.ShowWorkerBed(posMap);
+                ServiceLocator.Get<WorkerBedUI>().ShowWorkerBed(posMap);
             }
 
             if (tileBase == null)
             {
-                this.text = "Resource:";
-                tileBase = ResourceMap.Instance.GetTile(posMap);
-
-                // 手动添加任务
-                if (tileBase != null && isResource)
+                tileBase = ServiceLocator.Get<ResourceMap>().GetTile(posMap);
+                if (tileBase != null)
                 {
-                    GatherUI.Instance.SetPostion(posMap);
+                    this.text = "Resource:";
+
+                    // 手动添加任务
+                    if (isResource && ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(posMap, out _))
+                    {
+                        ServiceLocator.Get<GatherUI>().SetPostion(posMap);
+                    }
+                    else if (isResource)
+                    {
+                        ServiceLocator.Get<GatherUI>().Hide();
+                    }
                 }
             }
 
             if (tileBase == null && isTile)
             {
                 this.text = "Tile:";
-                tileBase = TileMap.Instance.GetTile(posMap);
+                tileBase = ServiceLocator.Get<TileMap>().GetTile(posMap);
             }
 
             return tileBase;
@@ -203,17 +248,17 @@
 
         private string GetResource(Vector3Int posMap)
         {
-            // Drop
+            // 掉落物
             this.select = "DropResourceManager";
-            string text = DropManager.Instance.ToString(posMap);
+            string text = ServiceLocator.Get<DropManager>().ToString(posMap);
             if (text.Equals(string.Empty))
             {
-                // Inventory
+                // 仓库
                 this.select = "InventoryManager";
-                text = InventoryManager.Instance.ToString(posMap);
+                text = ServiceLocator.Get<InventoryManager>().ToString(posMap);
                 if (!text.Equals(string.Empty))
                 {
-                    InventoryManager.Instance.ShowWearMenu(posMap);
+                    ServiceLocator.Get<InventoryManager>().ShowWearMenu(posMap);
                 }
             }
 

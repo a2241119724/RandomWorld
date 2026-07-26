@@ -1,5 +1,6 @@
-﻿namespace LAB2D
+namespace LAB2D.Manager
 {
+    using LAB2D;
     using System;
     using System.Collections;
     using UnityEngine;
@@ -14,9 +15,9 @@
         // private List<Coroutine> coroutines;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CoroutineManager"/> class.
+        /// 初始化 <see cref="CoroutineManager"/> 类的新实例。
         /// </summary>
-        /// <param name="maxCount">携程最大是数量.</param>
+        /// <param name="maxCount">协程最大数量。</param>
         public CoroutineManager(int maxCount)
         {
             // availableCount = maxCount;

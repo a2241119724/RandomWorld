@@ -1,5 +1,7 @@
-﻿namespace LAB2D
+namespace LAB2D.Character
 {
+    using LAB2D;
+    using LAB2D.Serializable;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -22,7 +24,7 @@
         public CharacterManager()
         {
             this.Characters = new List<C>();
-            this.creator = CharacterCreator<CC>.Instance;
+            this.creator = Core.ServiceLocator.Get<CC>();
         }
 
         /// <summary>
@@ -38,7 +40,7 @@
         {
             if (character == null)
             {
-                LogManager.Instance.Log("character is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("character is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -53,7 +55,7 @@
         {
             if (character == null)
             {
-                LogManager.Instance.Log("character is null!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("character is null!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
 
@@ -69,7 +71,7 @@
         {
             if (i < 0 || i >= this.Count())
             {
-                LogManager.Instance.Log("i overflow!!!", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider("i overflow!!!", LogManager.LogLevelEnum.Error);
                 return null;
             }
 
@@ -106,8 +108,13 @@
         public override void LoadData()
         {
             base.LoadData();
-            AsyncProgressUI.Instance.SetTip("加载角色管理信息...");
+            AWorkerTask.AsyncProgressSetTipProvider("加载角色管理信息...");
             List<Character.CharacterData> data = DataTool.LoadDataByBinary<List<Character.CharacterData>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null)
+            {
+                return;
+            }
+
             foreach (Character.CharacterData characterData in data)
             {
                 GameObject g = this.Create(Vector3LAB.ToVector3(characterData.Pos));
@@ -136,11 +143,13 @@
         /// <returns>角色</returns>
         public C GetCharacterByPos(Vector3Int posMap)
         {
+            Vector3 worldPos = AWorkerTask.TileMapPositionProvider(posMap);
             foreach (C character in this.Characters)
             {
-                Vector3 worldPos = TileMap.Instance.MapPosToWorldPos(posMap);
-                if (Mathf.Sqrt(Mathf.Pow(character.transform.position.x - worldPos.x, 2)
-                    + Mathf.Pow(character.transform.position.y - worldPos.y, 2)) < 0.7f)
+                Vector3 cPos = character.transform.position;
+                float dx = cPos.x - worldPos.x;
+                float dy = cPos.y - worldPos.y;
+                if ((dx * dx) + (dy * dy) < 0.49f)
                 {
                     return character;
                 }

@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.UI.Character
 {
+    using LAB2D;
+    using LAB2D.Character.Worker;
+    using LAB2D.Core;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -20,6 +23,7 @@
         public void Awake()
         {
             Instance = this;
+            ServiceLocator.Register(this);
             this.allItems = new Dictionary<AWorker, GameObject>();
         }
 
@@ -29,11 +33,11 @@
         /// <param name="worker">Worker</param>
         public void AddWorkerItem(AWorker worker)
         {
-            GameObject g = ResourceManager.Instance.Instantiate(PrefabConstant.LOCATE_WORKER_ITEM, true);
+            GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.LOCATE_WORKER_ITEM, true);
             this.allItems.Add(worker, g);
             g.transform.SetParent(this.transform);
             g.transform.localScale = Vector3.one;
-            Tool.GetComponentInChildren<Text>(g, "Name").text = worker.name;
+            LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "Name").text = worker.name;
             g.GetComponent<Button>().onClick.AddListener(() =>
             {
                 Camera.main.GetComponent<CameraMove>().Character = worker;

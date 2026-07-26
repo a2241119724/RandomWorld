@@ -1,7 +1,13 @@
-﻿namespace LAB2D
+namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D.Enum;
+    using LAB2D;
+    using LAB2D.Domain.Common;
+    using LAB2D.Item;
+    using LAB2D.Serializable;
     using System;
     using UnityEngine;
+    using UnityEngine.Tilemaps;
 
     /// <summary>
     /// 任务2阶段：取货，放货
@@ -15,29 +21,41 @@
         /// </summary>
         private ResourceInfo resourceInfo;
 
+        /// <summary>
+        /// 搬运时暂存的光束稀有度（取货时从原位置移除光束并记录，放货时在新位置重新生成）
+        /// </summary>
+        private EquipmentRarityType? carriedBeamRarity;
+
         public WorkerCarryTask()
-            : base(WorkerTaskTypeEnum.Carry)
+            : base(WorkerTaskType.Carry)
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
-                this.maxProgress = itemData.RelatedTaskTime.TaskBaseTime;
+                ItemData itemData = ItemDataProvider(this.resourceInfo.Id);
+                this.maxProgress = WorkerTaskTimeConfig.ResolveCarryTakeSeconds(itemData);
                 this.Init();
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                ItemData itemData = ItemDataManager.Instance.GetById(this.resourceInfo.Id);
-                this.maxProgress = itemData.RelatedTaskTime.CarryTaskPutDownTime;
+                ItemData itemData = ItemDataProvider(this.resourceInfo.Id);
+                this.maxProgress = WorkerTaskTimeConfig.ResolveCarryPutDownSeconds(itemData);
                 this.AvailableNeighborPos.Clear();
                 this.AvailableNeighborPos.Add(Neighbors[8]);
 
                 // 取货
-                ItemMap.Instance.PickUpFromDrop(Vector3IntLAB.ToVector3Int(this.TargetMap), this.resourceInfo);
+                Vector3Int pickUpPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
+                ItemMapProvider().PickUpFromDrop(pickUpPos, this.resourceInfo);
                 worker.AddResource(this.resourceInfo);
-                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryManager.Instance.GetPosByPrePlace(worker));
+
+                // 移除品质光束并记录稀有度（用于放下时重新生成）
+                this.carriedBeamRarity = EquipmentBeamProvider().TryRemoveBeamAt(pickUpPos);
+                // 同时清理待处理掉落记录（敌人装备掉落）
+                EnemyLootProvider().RemoveDropByMapPosition(pickUpPos);
+
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryProvider().GetPosByPrePlace(worker));
                 if (this.TargetMap == default)
                 {
-                    LogManager.Instance.Log("仓库没有位置了", LogManager.LogLevelEnum.Error);
+                    LogProvider("仓库没有位置了", LogManager.LogLevelEnum.Error);
                 }
             });
         }
@@ -46,7 +64,7 @@
         public override void Start(AWorker worker)
         {
             base.Start(worker);
-            InventoryManager.Instance.IsEnoughAndPrePlace(worker, this.resourceInfo, true);
+            InventoryProvider().IsEnoughAndPrePlace(worker, this.resourceInfo, true);
             this.ChangeStage(worker, 0);
         }
 
@@ -54,20 +72,33 @@
         public override void Finish(AWorker worker)
         {
             base.Finish(worker);
-            AItem.ItemTypeEnum itemType = ItemDataManager.Instance.IdToType(this.resourceInfo.Id);
+            AItem.ItemTypeEnum itemType = ItemTypeProvider(this.resourceInfo.Id);
+
+            Vector3Int targetPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
 
             // 放下拿起来的东西
-            ItemMap.Instance.AddTile(Vector3IntLAB.ToVector3Int(this.TargetMap), ResourceManager.Instance
-                .GetAsset(ItemDataManager.Instance.GetById(this.resourceInfo.Id).EnName));
+            ItemMapProvider().AddTile(targetPos, (TileBase)ResourceLoadProvider(ItemDataProvider(this.resourceInfo.Id).EnName));
             worker.SubResource(this.resourceInfo);
-            InventoryManager.Instance.AddItemByPrePlace(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));
+            InventoryProvider().AddItemByPrePlace(worker, targetPos);
+
+            // 如果搬运前有品质光束，在新位置重新生成光束
+            if (this.carriedBeamRarity.HasValue)
+            {
+                Vector3 beamWorldPos = TileMapPositionProvider(targetPos);
+                EquipmentBeamProvider().SpawnBeam(targetPos, beamWorldPos, this.carriedBeamRarity.Value);
+            }
+            else
+            {
+                // 兼容旧逻辑：尝试从 pendingDrops 获取光束信息（非主要路径）
+                EnemyLootProvider().TrySpawnBeamForInventory(targetPos, this.resourceInfo.Id);
+            }
 
             // 如果是食物,添加饥饿任务
             if (itemType == AItem.ItemTypeEnum.Food)
             {
-                WorkerTaskManager.Instance.AddTask(
+                TaskAddProvider(
                     new WorkerHungryTask.HungryTaskBuilder()
-                    .SetTarget(Vector3IntLAB.ToVector3Int(this.TargetMap)).Build(), this.TargetMap,
+                    .SetTarget(targetPos).Build(), new GameGridPosition(this.TargetMap.X, this.TargetMap.Y, this.TargetMap.Z),
                     0);
             }
         }
@@ -75,7 +106,7 @@
         /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
-            return InventoryManager.Instance.IsEnoughAndPrePlace(worker, this.resourceInfo);
+            return InventoryProvider().IsEnoughAndPrePlace(worker, this.resourceInfo);
         }
 
         /// <inheritdoc/>

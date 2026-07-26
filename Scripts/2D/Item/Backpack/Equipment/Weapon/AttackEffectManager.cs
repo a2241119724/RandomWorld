@@ -1,5 +1,8 @@
-﻿namespace LAB2D
+namespace LAB2D.Item.Backpack.Equipment.Weapon
 {
+    using LAB2D;
+    using LAB2D.Core;
+    using LAB2D.Domain.Common;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -63,14 +66,14 @@
             // 如果没有可用的粒子系统, 则创建一个
             if (!this.availableEffects.ContainsKey(name) || this.availableEffects[name].Count == 0)
             {
-                this.availableEffects[name].Enqueue(ResourceManager.Instance.Instantiate(name.ToString() + "Effect").GetComponent<ParticleSystem>());
+                this.availableEffects[name].Enqueue(ServiceLocator.Get<ResourceManager>().Instantiate(name.ToString() + "Effect").GetComponent<ParticleSystem>());
             }
 
             ParticleSystem ps = this.availableEffects[name].Dequeue();
             this.activeEffects[name].Add(ps);
 
             // 设置角度
-            ps.transform.rotation = Quaternion.Euler(0, 0, rad * Mathf.Rad2Deg);
+            ps.transform.rotation = Quaternion.Euler(0, 0, rad * MathHelper.Rad2Deg);
             ParticleSystem.MainModule main = ps.main;
             main.startRotation = rad;
             return ps.GetComponent<ParticleSystem>();
