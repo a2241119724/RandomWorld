@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1.0">
+<title>RandomWorld Menu — StartGame 像素主题原型</title>
+<style>
+/* === PixelUITheme Token 映射 === */
+:root {
+  --action-primary:    #F2A0AF;  /* ButtonNormal */
+  --action-hover:      #FCC8D5;  /* ButtonHighlighted */
+  --action-pressed:    #F9D56E;  /* ButtonPressed */
+  --state-positive:    #7ECB9A;  /* ButtonSelected */
+  --state-danger:      #E8837A;  /* DestroyNormal */
+  --surface-panel:     #FFF5EC;  /* DialogBoxBg */
+  --surface-scrim:     rgba(74, 56, 41, 0.50); /* ModalShade */
+  --text-primary:      #4A3728;  /* TextPrimary */
+  --text-secondary:    #8B7D72;  /* TextSecondary */
+  --text-accent:       #E85D75;  /* TextAccent */
+  --text-on-dark:      #FFFFFF;
+  --bg-input:          #FFFFFF;
+  --bg-placeholder:    rgba(74, 55, 40, 0.35); /* TextPrimary @35% */
+  --radius-sm:         4px;
+  --radius-md:         8px;
+}
+
+/* === 像素字体回退 (项目字体: ark-pixel-12px-monospaced-zh_cn) === */
+@font-face {
+  font-family: 'PixelUI';
+  src: local('Ark Pixel 12px monospaced zh_cn');
+  /* 回退到系统等宽字体 */
+}
+* {
+  font-family: 'PixelUI', 'Courier New', 'SimHei', monospace;
+}
+
+/* === 全局 === */
+body {
+  margin: 0;
+  width: 1920px; height: 1080px;
+  background: #2a2a3a; /* 模拟场景背景 */
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+
+/* === 背景层 === */
+.scene-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, #3d3d50 0%, #1a1a2e 100%);
+  z-index: 0;
+}
+
+/* === 主面板 === */
+.main-panel {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 24px;
+}
+
+/* === 输入框 (补偿 Scale=0.5 → 实际 800×160) === */
+.input-group {
+  display: flex; flex-direction: column;
+  width: 800px;
+}
+.input-group input {
+  width: 100%; height: 160px;
+  box-sizing: border-box;
+  background: var(--bg-input);
+  border: 3px solid var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 0 32px;
+  font-size: 80px;           /* 40pt × 2 (补偿 Scale) */
+  color: var(--text-primary);
+  text-align: center;
+  outline: none;
+  transition: border-color 0.1s;
+}
+.input-group input:focus {
+  border-color: var(--action-primary);
+}
+.input-group input::placeholder {
+  color: var(--bg-placeholder);
+  font-size: 80px;
+}
+
+/* === 按钮组 === */
+.button-group {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 24px;
+  width: 700px;              /* 350 × 2 (补偿 Scale) */
+}
+
+/* === 开始按钮 (实际 700×160) === */
+.btn-start {
+  width: 100%; height: 160px;
+  background: var(--action-primary);
+  border: 3px solid var(--text-primary);
+  border-radius: var(--radius-md);
+  font-size: 80px;           /* 40pt bold × 2 */
+  font-weight: bold;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.08s, transform 0.06s;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-start:hover  { background: var(--action-hover); }
+.btn-start:active { background: var(--action-pressed); transform: scale(0.97); }
+
+/* === 条款勾选行 === */
+.clause-row {
+  display: flex; align-items: center; gap: 24px;
+  height: 100px;             /* 50 × 2 */
+}
+.clause-row input[type="checkbox"] {
+  appearance: none;
+  width: 70px; height: 70px; /* 35 × 2 */
+  border: 3px solid var(--text-primary);
+  border-radius: 3px;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+.clause-row input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 50px; color: var(--state-positive);
+}
+.clause-row label {
+  font-size: 50px;           /* 25pt × 2 */
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.clause-row label .highlight {
+  color: var(--action-pressed); /* yellow 高亮 */
+}
+
+/* === 通知面板 (Note) === */
+.note-panel {
+  position: absolute; z-index: 10;
+  top: 20%; left: 25%; right: 25%; bottom: 20%;
+  background: var(--surface-panel);
+  border: 3px solid var(--text-primary);
+  border-radius: var(--radius-md);
+  display: flex; flex-direction: column;
+  padding: 48px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.note-panel .note-content {
+  flex: 1; overflow-y: auto;
+  font-size: 30px; line-height: 1.8;
+  color: var(--text-primary);
+  padding-right: 16px;
+}
+.note-close {
+  position: absolute; top: 0; right: 0;
+  width: 120px; height: 120px; /* 60 × 2 */
+  background: rgba(0,0,0,0.20);
+  border: none; border-radius: 0 var(--radius-md) 0 0;
+  font-size: 60px; color: white;
+  cursor: pointer;
+  transition: background 0.08s;
+}
+.note-close:hover { background: rgba(0,0,0,0.39); }
+.note-close:active { background: rgba(0,0,0,0.55); }
+
+/* === 规格文档 === */
+.specs {
+  position: fixed; bottom: 16px; right: 16px;
+  background: rgba(0,0,0,0.85); color: #ccc;
+  padding: 16px 24px; border-radius: var(--radius-sm);
+  font-size: 20px; max-width: 420px;
+  z-index: 100;
+}
+.specs h4 { margin: 0 0 8px; color: var(--action-pressed); font-size: 24px; }
+.specs code { color: var(--action-primary); font-size: 18px; }
+</style>
+</head>
+<body>
+<div class="scene-bg"></div>
+
+<!-- 主面板：StartGame 区域 (Scale=1.0 版本) -->
+<div class="main-panel">
+  <!-- InputField (800×160, 补偿原 Scale 0.5) -->
+  <div class="input-group">
+    <input type="text" placeholder="输入玩家名" value="">
+  </div>
+
+  <!-- 按钮组 -->
+  <div class="button-group">
+    <!-- Start 按钮 (700×160) -->
+    <button class="btn-start">开始游戏</button>
+
+    <!-- Clause 条款勾选 -->
+    <div class="clause-row">
+      <input type="checkbox" id="clause">
+      <label for="clause">
+        同意条款<span class="highlight">才能进入游戏</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- 通知面板 (显示/隐藏) -->
+<div class="note-panel" id="notePanel">
+  <div class="note-content">
+    亲爱的玩家：<br><br>
+    为建设绿色健康的游戏环境，使用户更好地平衡游戏与生活，合理安排时间，我们向广大用户发出健康游戏倡导。<br><br>
+    1、本公司运营的网络游戏适合年满18周岁（含）以上用户使用。<br><br>
+    2、推荐每位用户每天累计在线游戏时间不超过3小时，用户当天累计游戏时长达3小时，将弹出健康游戏提示，3小时之后每半小时提醒一次。<br><br>
+    3、累计游戏时长：用户在游戏房间内累计游戏时长，不计入游戏大厅界面时长。<br><br>
+    4、用户每日游戏累计时长每天24:00刷新，重新计算累计时长。
+  </div>
+  <button class="note-close" onclick="document.getElementById('notePanel').style.display='none'">✕</button>
+</div>
+
+<!-- 规格文档叠加层 -->
+<div class="specs">
+  <h4>PixelUITheme — 生产规格对照</h4>
+  <table style="width:100%; border-collapse:collapse;">
+    <tr><td>字体</td><td><code>ark-pixel-12px-monospaced-zh_cn</code> (GUID: 994464c…)</td></tr>
+    <tr><td>主按钮 Normal</td><td style="background:#F2A0AF;width:24px;"></td><td><code>#F2A0AF</code></td></tr>
+    <tr><td>主按钮 Hover</td><td style="background:#FCC8D5;"></td><td><code>#FCC8D5</code></td></tr>
+    <tr><td>主按钮 Pressed</td><td style="background:#F9D56E;"></td><td><code>#F9D56E</code></td></tr>
+    <tr><td>面板背景</td><td style="background:#FFF5EC;"></td><td><code>#FFF5EC</code></td></tr>
+    <tr><td>主文本</td><td style="background:#4A3728;"></td><td><code>#4A3728</code></td></tr>
+    <tr><td>Scale 修正</td><td colspan="2">0.5→1.0 (Size/Font ×2 补偿)</td></tr>
+  </table>
+</div>
+</body>
+</html>
