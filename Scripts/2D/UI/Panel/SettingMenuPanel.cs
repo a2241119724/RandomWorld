@@ -68,7 +68,7 @@ namespace LAB2D.UI.Panel
             keyGo.transform.SetParent(this.Panel.transform, false);
             this.keyBindingText = keyGo.AddComponent<Text>();
             this.keyBindingText.text = InputKeyConstant.GetKeyBindingSummary();
-            this.keyBindingText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            this.keyBindingText.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             this.keyBindingText.fontSize = 14;
             this.keyBindingText.color = new Color(0.85f, 0.85f, 0.85f, 1f);
             this.keyBindingText.alignment = TextAnchor.UpperLeft;

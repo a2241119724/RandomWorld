@@ -184,7 +184,7 @@ namespace LAB2D.UI
             go.transform.SetParent(parent, false);
             Text txt = go.AddComponent<Text>();
             txt.text = text;
-            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             txt.fontSize = fontSize;
             txt.color = color;
             txt.alignment = alignment;
@@ -417,7 +417,7 @@ namespace LAB2D.UI
             GameObject nameObj = new GameObject("ItemName");
             nameObj.transform.SetParent(entryObj.transform, false);
             Text nameText = nameObj.AddComponent<Text>();
-            nameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            nameText.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             nameText.fontSize = NearbyItemPickupConstant.ItemNameFontSize;
             nameText.color = NearbyItemPickupConstant.ItemNameColor;
             nameText.alignment = TextAnchor.MiddleLeft;
@@ -428,7 +428,7 @@ namespace LAB2D.UI
             GameObject countObj = new GameObject("ItemCount");
             countObj.transform.SetParent(entryObj.transform, false);
             Text countText = countObj.AddComponent<Text>();
-            countText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            countText.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             countText.fontSize = NearbyItemPickupConstant.CountFontSize;
             countText.color = NearbyItemPickupConstant.CountColor;
             countText.alignment = TextAnchor.MiddleLeft;
@@ -448,7 +448,7 @@ namespace LAB2D.UI
             btnLabelObj.transform.SetParent(btnObj.transform, false);
             Text btnLabel = btnLabelObj.AddComponent<Text>();
             btnLabel.text = NearbyItemPickupConstant.PickUpButtonText;
-            btnLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            btnLabel.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             btnLabel.fontSize = NearbyItemPickupConstant.ButtonFontSize;
             btnLabel.color = Color.white;
             btnLabel.alignment = TextAnchor.MiddleCenter;

@@ -268,7 +268,7 @@ namespace LAB2D.UI
             go.transform.SetParent(this.rootPanel.transform, false);
             Text txt = go.AddComponent<Text>();
             txt.text = text;
-            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             txt.fontSize = fontSize;
             txt.color = color;
             txt.alignment = alignment;

@@ -68,7 +68,7 @@ namespace LAB2D.UI
             GameObject bgGo = new GameObject("BgMask");
             bgGo.transform.SetParent(canvasGo.transform, false);
             Image bgImg = bgGo.AddComponent<Image>();
-            bgImg.color = new Color(0, 0, 0, 0.5f);
+            bgImg.color = PixelUITheme.ModalShade;
             RectTransform bgRt = bgGo.GetComponent<RectTransform>();
             bgRt.anchorMin = Vector2.zero;
             bgRt.anchorMax = Vector2.one;
@@ -245,7 +245,7 @@ namespace LAB2D.UI
             go.transform.SetParent(this.rootPanel.transform, false);
             Text txt = go.AddComponent<Text>();
             txt.text = text;
-            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             txt.fontSize = fontSize;
             txt.color = color;
             txt.alignment = alignment;
@@ -272,7 +272,7 @@ namespace LAB2D.UI
             labelGo.transform.SetParent(go.transform, false);
             Text label = labelGo.AddComponent<Text>();
             label.text = text;
-            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             label.fontSize = EquipmentLootConstant.PanelFontSize;
             label.color = Color.white;
             label.alignment = TextAnchor.MiddleCenter;

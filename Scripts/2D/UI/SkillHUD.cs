@@ -236,7 +236,7 @@ namespace LAB2D.UI
             cdText.color = Color.white;
             cdText.raycastTarget = false;
             cdText.text = string.Empty;
-            cdText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            cdText.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             this.cooldownTexts[index] = cdText;
 
             // 快捷键文本（左上角）
@@ -255,7 +255,7 @@ namespace LAB2D.UI
             hotkeyText.color = new Color(1f, 0.9f, 0.3f, 1f);
             hotkeyText.raycastTarget = false;
             hotkeyText.text = SkillTool.GetHotkeyDisplayText(index);
-            hotkeyText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            hotkeyText.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             this.hotkeyTexts[index] = hotkeyText;
 
             // 法力消耗文本（右上角）
@@ -274,7 +274,7 @@ namespace LAB2D.UI
             manaText.color = SkillConstant.ManaSufficientColor;
             manaText.raycastTarget = false;
             manaText.text = "MP:0";
-            manaText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            manaText.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             this.manaCostTexts[index] = manaText;
 
             // 技能名称文本（底部）
@@ -292,7 +292,7 @@ namespace LAB2D.UI
             nameText.color = Color.white;
             nameText.raycastTarget = false;
             nameText.text = "技能";
-            nameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            nameText.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             this.skillNameTexts[index] = nameText;
 
             // 技能等级文本（底部右侧）
@@ -310,7 +310,7 @@ namespace LAB2D.UI
             levelText.color = new Color(0.5f, 1f, 0.5f, 1f);
             levelText.raycastTarget = false;
             levelText.text = "Lv1";
-            levelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            levelText.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             this.skillLevelTexts[index] = levelText;
         }
 

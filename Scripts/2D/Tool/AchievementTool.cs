@@ -127,7 +127,7 @@ namespace LAB2D.Tool
             txt.text = text;
             txt.fontSize = fontSize;
             txt.color = Color.white;
-            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
             txt.raycastTarget = false;
             return txt;
         }

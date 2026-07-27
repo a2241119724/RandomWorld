@@ -233,7 +233,7 @@ namespace LAB2D.UI
             this.summaryText.color = new Color(0.7f, 0.7f, 0.7f);
             this.summaryText.alignment = TextAnchor.MiddleCenter;
             this.summaryText.raycastTarget = false;
-            this.summaryText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            this.summaryText.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
 
             // 类别标签栏 (y=-182, h=80)
             GameObject tabsObj = new GameObject("CategoryTabs");
