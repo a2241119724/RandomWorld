@@ -12,7 +12,7 @@ namespace LAB2D.UI.Effect
     public class DamageUI : MonoBehaviour
     {
         private const float DestroyTime = 0.75f; // 销毁时间
-        private Transform parent; // 父元素
+        private float worldX; // 初始世界 X 坐标
         private float offsetX; // 偏移量
         private Text content; // 内容
         private List<Config> param;
@@ -50,23 +50,17 @@ namespace LAB2D.UI.Effect
 
         public void Start()
         {
-            // 由于transform，不能放到Awake中
-            this.parent = this.transform.parent;
-            if (this.parent == null)
-            {
-                AWorkerTask.LogProvider("parent Not Found!!!", LogManager.LogLevelEnum.Error);
-                return;
-            }
-
+            // 记录初始世界 X 坐标，用于 Update 中固定 X 轴位置
+            this.worldX = this.transform.position.x;
             Destroy(this.gameObject, DestroyTime);
         }
 
         public void Update()
         {
             // 不随父元素旋转而旋转
-            // 不随父元素旋转而移动(通过世界坐标偏移量实现)
-            this.transform.SetPositionAndRotation(new Vector3(this.parent.position.x + this.offsetX, this.transform.position.y, 0), Quaternion.identity);
-            this.transform.Translate(2.0f * Time.deltaTime * Vector3.up, Space.World); // 使文本在垂直方向山产生一个偏移
+            // X 轴固定在初始世界坐标，Y 轴保持当前位置（随 Translate 上浮）
+            this.transform.SetPositionAndRotation(new Vector3(this.worldX + this.offsetX, this.transform.position.y, 0), Quaternion.identity);
+            this.transform.Translate(2.0f * Time.deltaTime * Vector3.up, Space.World); // 使文本在垂直方向上产生一个偏移
         }
 
         /// <summary>

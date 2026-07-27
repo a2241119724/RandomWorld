@@ -81,6 +81,11 @@ namespace LAB2D.Gameplay
             if (this.canvasObj != null)
             {
                 this.poolContainer = this.canvasObj.transform.Find(FloatingTextConstant.PoolContainerName)?.gameObject;
+                // FloatingTextPool 必须保持 active，否则其子对象在 SetActive(true) 时会冻结
+                if (this.poolContainer != null && !this.poolContainer.activeSelf)
+                {
+                    this.poolContainer.SetActive(true);
+                }
             }
 
             // 预热对象池
@@ -194,8 +199,6 @@ namespace LAB2D.Gameplay
             }
 
             FloatingTextType type = isCritical ? FloatingTextType.Critical : FloatingTextType.Damage;
-
-            // 连击伤害在数值上追加标记
             string text = FloatingTextTool.FormatDamageText(damage);
 
             this.SpawnText(type, text, worldPos);
@@ -309,7 +312,11 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 世界坐标转换为屏幕坐标
+        /// 世界坐标转换为屏幕坐标（Canvas anchoredPosition 空间）
+        ///
+        /// 注意：不直接使用 Camera.WorldToScreenPoint，因为在某些运行时状态
+        /// 下 Camera.main 可能获取到错误的摄像机或投影矩阵，导致坐标映射异常。
+        /// 改为手动正交投影计算，配合 ScreenPointToLocalPointInRectangle 转换。
         /// </summary>
         /// <param name="worldPos">世界坐标</param>
         /// <returns>屏幕坐标（anchoredPosition 空间）</returns>
@@ -320,7 +327,18 @@ namespace LAB2D.Gameplay
                 return Vector2.zero;
             }
 
-            Vector3 screenPoint = this.mainCamera.WorldToScreenPoint(worldPos);
+            // 手动正交投影：计算 viewport 坐标 → 屏幕像素坐标
+            // 避免 Camera.WorldToScreenPoint 在 Camera.main 引用错误的摄像机时返回错值
+            float orthoHeight = this.mainCamera.orthographicSize * 2f;
+            float orthoWidth = orthoHeight * Screen.width / (float)Screen.height;
+            Vector3 camPos = this.mainCamera.transform.position;
+
+            float viewportX = (worldPos.x - camPos.x) / orthoWidth + 0.5f;
+            float viewportY = (worldPos.y - camPos.y) / orthoHeight + 0.5f;
+
+            Vector2 screenPoint = new Vector2(
+                viewportX * Screen.width,
+                viewportY * Screen.height);
 
             // 屏幕坐标转 Canvas 的 anchoredPosition
             Canvas canvas = this.canvasObj?.GetComponent<Canvas>();
@@ -336,6 +354,7 @@ namespace LAB2D.Gameplay
                 screenPoint,
                 canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : this.mainCamera,
                 out anchoredPos);
+
             return anchoredPos;
         }
 

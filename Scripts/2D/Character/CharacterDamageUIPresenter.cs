@@ -42,13 +42,7 @@ namespace LAB2D.Character
         {
             Vector3 worldPos = new Vector3(e.WorldPosX, e.WorldPosY, 0f);
 
-            GameObject g = AWorkerTask.ResourceInstantiateProvider(PrefabConstant.DAMAGE, true);
-            if (g != null)
-            {
-                g.GetComponent<DamageUI>().SetDamage(e.Damage, System.Convert.ToInt32(e.IsCritical));
-                g.transform.position = worldPos;
-            }
-
+            // 浮动伤害文字（由 FloatingTextManager 统一管理，挂载在 FloatingTextCanvas 下）
             AWorkerTask.FloatingTextProvider(worldPos, e.Damage, e.IsCritical, e.IsCombo);
         }
     }

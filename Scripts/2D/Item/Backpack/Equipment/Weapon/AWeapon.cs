@@ -179,10 +179,10 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
                 this.transform.rotation = Quaternion.FromToRotation(Vector3.up, this.minDistanceCharacter.position - this.transform.position);
                 this.minDistanceCharacter = null;
             }
-            else if (ServiceLocator.Get<Joystick>() && ServiceLocator.Get<Joystick>().Direction.magnitude > 1.0f)
+            else if (ServiceLocator.TryGet<Joystick>(out Joystick joystick) && joystick.Direction.magnitude > 1.0f)
             {
                 // 跟随摇杆
-                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, ServiceLocator.Get<Joystick>().Direction);
+                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, joystick.Direction);
             }
             else if (this.character is Player)
             {
