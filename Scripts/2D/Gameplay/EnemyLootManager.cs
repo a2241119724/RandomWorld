@@ -454,10 +454,14 @@ namespace LAB2D.Gameplay
         /// <param name="mapPos">Tilemap 坐标</param>
         public void RemoveDropByMapPosition(Vector3Int mapPos)
         {
-            if (this.pendingDrops == null || this.pendingDrops.Count == 0) return;
-
-            this.pendingDrops.Remove(mapPos);
+            // 始终移除光束：普通物品掉落（TryDropCommonItem）也会生成光束，
+            // 但不会记录到 pendingDrops，因此光束移除不能依赖 pendingDrops 是否为空。
             AWorkerTask.EquipmentBeamProvider().RemoveBeamAt(mapPos);
+
+            if (this.pendingDrops != null)
+            {
+                this.pendingDrops.Remove(mapPos);
+            }
         }
 
         /// <summary>
