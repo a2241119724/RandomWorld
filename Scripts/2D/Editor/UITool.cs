@@ -75,7 +75,7 @@ namespace LAB2D.Editor
                 }
                 else
                 {
-                    rc.Radius = 0.1f;
+                    rc.Radius = 0.03f;
                 }
 
                 // 设置已改变
