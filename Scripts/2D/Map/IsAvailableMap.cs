@@ -8,10 +8,24 @@ namespace LAB2D.Map
     using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// 建造时可用地图
+    /// 建造时可用地图。
+    ///
+    /// 预览瓦片资源名可通过 Inspector 配置，默认为 "Snow"。
+    /// 建造可用性检查委托给 TerrainConfigDatabase.CanBuild()。
     /// </summary>
     public class IsAvailableMap : BaseTileMap
     {
+        /// <summary>
+        /// 预览网格使用的瓦片资源名（可在 Inspector 中修改）。
+        /// </summary>
+        [SerializeField]
+        private string previewTileResourceName = "Snow";
+
+        /// <summary>
+        /// 生成可用位置的最大重试次数。
+        /// </summary>
+        private const int GEN_POS_MAX_RETRIES = 100;
+
         /// <summary>
         /// 已经显示绿色和红色Tile
         /// </summary>
@@ -65,7 +79,7 @@ namespace LAB2D.Map
                 {
                     Vector3Int posMap1 = new (posMap.x + i, posMap.y + j, 0);
                     this.selectPoses.Add(posMap1);
-                    this.tilemap.SetTile(posMap1, (TileBase)AWorkerTask.ResourceLoadProvider("Snow"));
+                    this.tilemap.SetTile(posMap1, (TileBase)AWorkerTask.ResourceLoadProvider(this.previewTileResourceName));
                     this.tilemap.RemoveTileFlags(posMap1, TileFlags.LockColor);
                     if (this.IsAvailable(posMap1))
                     {
@@ -121,7 +135,7 @@ namespace LAB2D.Map
                 x = Random.Range(startX, endX);
                 y = Random.Range(startY, endY);
                 count++;
-                if (count > 100)
+                if (count > GEN_POS_MAX_RETRIES)
                 {
                     AWorkerTask.LogProvider("genAvailablePosMap Error!!!", LogManager.LogLevelEnum.Error);
                     return default;
@@ -136,15 +150,34 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 是否可以建造(地图与建筑)
+        /// 是否可以建造（地图地形 + 建筑 + 资源）。
+        /// 地形可建造性委托给 TerrainConfigDatabase.CanBuild()。
         /// </summary>
         /// <param name="posMap">位置</param>
         /// <returns>是否</returns>
         private bool IsAvailable(Vector3Int posMap)
         {
-return Core.ServiceLocator.Get<TileMap>().IsCanReach(posMap) &&
-            Core.ServiceLocator.Get<BuildMap>().IsFreeTile(posMap) &&
-            Core.ServiceLocator.Get<ResourceMap>().IsFreeTile(posMap);
+            if (!Core.ServiceLocator.Get<TileMap>().IsCanReach(posMap) ||
+                !Core.ServiceLocator.Get<BuildMap>().IsFreeTile(posMap) ||
+                !Core.ServiceLocator.Get<ResourceMap>().IsFreeTile(posMap))
+            {
+                return false;
+            }
+
+            // 检查地形是否允许建造（数据驱动，由 TerrainTileConfig.canBuild 控制）
+            TileMap tm = Core.ServiceLocator.Get<TileMap>();
+            if (tm.TileMapDataLAB?.MapTiles != null &&
+                posMap.x >= 0 && posMap.x < tm.TileMapDataLAB.Height &&
+                posMap.y >= 0 && posMap.y < tm.TileMapDataLAB.Width)
+            {
+                int terrainId = tm.TileMapDataLAB.MapTiles[posMap.x, posMap.y];
+                if (!Core.ServiceLocator.Get<TerrainConfigDatabase>().CanBuild(terrainId))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }
