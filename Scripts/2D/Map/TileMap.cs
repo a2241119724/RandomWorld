@@ -2,8 +2,9 @@ namespace LAB2D.Map
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
-    using LAB2D.Serializable;
+    using LAB2D.Core;
     using LAB2D.Domain.Common;
+    using LAB2D.Serializable;
     using LAB2D.UnityAdapter;
     using System;
     using System.Collections;
@@ -13,50 +14,21 @@ namespace LAB2D.Map
 
     /// <summary>
     /// 地图 — 同时实现 ITileMapQuery 以支持其他层通过接口查询地图。
+    ///
+    /// 地形类型完全由 TerrainConfigDatabase 数据驱动
+    /// （Resources/SO/TerrainConfigs/ 下的 TerrainTileConfig .asset 文件）。
     /// </summary>
     public class TileMap : BaseTileMap, ITileMapQuery
     {
         /// <summary>
-        /// 瓦片类型
+        /// 默认地图高度（存档不可用时的回退尺寸）
         /// </summary>
-        [Serializable]
-        public enum MapTileTypeEnum
-        {
-            /// <summary>
-            /// 默认,不进行渲染
-            /// </summary>
-            Default,
+        public const int DefaultHeight = 548;
 
-            /// <summary>
-            /// 沙漠
-            /// </summary>
-            Desert,
-
-            /// <summary>
-            /// 沙漠
-            /// </summary>
-            Marsh,
-
-            /// <summary>
-            /// 草
-            /// </summary>
-            Grass,
-
-            /// <summary>
-            /// 雪
-            /// </summary>
-            Snow,
-
-            /// <summary>
-            /// 山
-            /// </summary>
-            Mountain,
-
-            /// <summary>
-            /// 水
-            /// </summary>
-            Water,
-        }
+        /// <summary>
+        /// 默认地图宽度（存档不可用时的回退尺寸）
+        /// </summary>
+        public const int DefaultWidth = 548;
 
         /// <summary>
         /// 单例
@@ -68,29 +40,48 @@ namespace LAB2D.Map
         /// </summary>
         public TileMapData TileMapDataLAB { get; private set; }
 
+        /// <summary>
+        /// 地形生成策略（默认使用 RandomScatterFillGenerator）
+        /// </summary>
+        private ITerrainGenerator generator;
+
         /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
             Instance = this;
+
+            if (!ServiceLocator.TryGet(out this.generator))
+            {
+                this.generator = new RandomScatterFillGenerator();
+            }
         }
 
         /// <summary>
-        /// 显示地图
+        /// 显示地图 — 通过 TerrainConfigDatabase 查找每个瓦片的资源名。
         /// </summary>
-        /// <param name="mapTiles">所有瓦片</param>
+        /// <param name="mapTiles">地形 ID 二维数组。</param>
         /// <returns>迭代器</returns>
-        public IEnumerator ShowTilemap(MapTileTypeEnum[,] mapTiles)
+        public IEnumerator ShowTilemap(int[,] mapTiles)
         {
             AWorkerTask.AsyncProgressSetTipProvider("正在展示地图...");
 
-            // 循环每一个点
-            for (int i = 0; i < this.TileMapDataLAB.Height; i++)
+            TerrainConfigDatabase db = ServiceLocator.Get<TerrainConfigDatabase>();
+            int height = mapTiles.GetLength(0);
+            int width = mapTiles.GetLength(1);
+
+            for (int i = 0; i < height; i++)
             {
-                for (int j = 0; j < this.TileMapDataLAB.Width; j++)
+                for (int j = 0; j < width; j++)
                 {
                     AWorkerTask.AsyncProgressAddOneProvider();
-                    this.tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)AWorkerTask.ResourceLoadProvider(mapTiles[i, j].ToString()));
+                    int terrainId = mapTiles[i, j];
+                    string resourceName = db.GetTileResourceName(terrainId);
+                    if (!string.IsNullOrEmpty(resourceName) && terrainId != 0)
+                    {
+                        this.tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)AWorkerTask.ResourceLoadProvider(resourceName));
+                    }
+
                     if (Core.ServiceLocator.Get<FrameControl>().IsNeedStop(1))
                     {
                         yield return null;
@@ -149,68 +140,40 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 随机生成地图板块分布(未实例化)
+        /// 随机生成地图板块分布(未实例化)。
+        /// 委托给 ITerrainGenerator 策略执行具体算法。
         /// </summary>
         /// <returns>迭代器</returns>
         public IEnumerator Create()
         {
-            AWorkerTask.AsyncProgressSetTipProvider("正在生成随机坐标...");
-            for (int i = 0; i < this.TileMapDataLAB.RandomCount; i++)
-            {
-                this.TileMapDataLAB.MapTiles[
-                    UnityEngine.Random.Range(0, this.TileMapDataLAB.Height),
-                    UnityEngine.Random.Range(0, this.TileMapDataLAB.Width)] = (MapTileTypeEnum)(UnityEngine.Random.Range(2, 14) / 2);
-                AWorkerTask.AsyncProgressAddOneProvider();
-                if (Core.ServiceLocator.Get<FrameControl>().IsNeedStop(1))
-                {
-                    yield return null;
-                }
-            }
+            int height = this.TileMapDataLAB.Height;
+            int width = this.TileMapDataLAB.Width;
+            int randomCount = this.TileMapDataLAB.RandomCount;
 
-            MapTileTypeEnum[,] tiles = new MapTileTypeEnum[this.TileMapDataLAB.Height, this.TileMapDataLAB.Width];
-            AWorkerTask.AsyncProgressSetTipProvider("正在填补地图...");
-            for (int i = 0; i < this.TileMapDataLAB.Height; i++)
-            {
-                for (int j = 0; j < this.TileMapDataLAB.Width; j++)
-                {
-                    if (Core.ServiceLocator.Get<FrameControl>().IsNeedStop(1))
-                    {
-                        yield return null;
-                    }
+            // Step 1: 散布种子点
+            int[,] tiles = new int[height, width];
+            yield return this.StartCoroutine(this.generator.ScatterSeeds(tiles, randomCount, height, width));
 
-                    AWorkerTask.AsyncProgressAddOneProvider();
-                    if (this.TileMapDataLAB.MapTiles[i, j] != MapTileTypeEnum.Default)
-                    {
-                        tiles[i, j] = this.TileMapDataLAB.MapTiles[i, j];
-                        continue;
-                    }
-
-                    this.NeighborAndReplaceTiles(tiles, i, j);
-                }
-            }
+            // Step 2: 填充空白区域
+            yield return this.StartCoroutine(this.generator.Fill(tiles, height, width));
 
             this.TileMapDataLAB.MapTiles = tiles;
             this.CreateArroundTile();
             yield return this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
-            Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete = true;
+            Core.ServiceLocator.Get<MapInitCoordinator>().IsComplete = true;
         }
 
         /// <summary>
         /// 地图坐标转世界坐标
         /// </summary>
-        /// <param name="posMap">地图位置</param>
-        /// <returns>世界位置</returns>
         public Vector3 MapPosToWorldPos(Vector3Int posMap)
         {
-            // return new Vector3(posMap.y + 0.5f, posMap.x + 0.5f, 0);
             return new Vector3(posMap.y, posMap.x, 0);
         }
 
         /// <summary>
         /// 地图坐标转世界坐标
         /// </summary>
-        /// <param name="posMap">地图位置</param>
-        /// <returns>世界位置</returns>
         public Vector3 MapPosToWorldPos(Vector3IntLAB posMap)
         {
             return new Vector3(posMap.Y, posMap.X, 0);
@@ -219,8 +182,6 @@ namespace LAB2D.Map
         /// <summary>
         /// 地图坐标转世界坐标
         /// </summary>
-        /// <param name="posMap">地图位置</param>
-        /// <returns>世界位置</returns>
         public Vector3 MapPosToWorldPos(Vector2ShortLAB posMap)
         {
             return new Vector3(posMap.Y, posMap.X, 0);
@@ -229,11 +190,8 @@ namespace LAB2D.Map
         /// <summary>
         /// 世界坐标转地图坐标
         /// </summary>
-        /// <param name="worldPos">世界位置</param>
-        /// <returns>地图位置</returns>
         public Vector3Int WorldPosToMapPos(Vector3 worldPos)
         {
-            // return new Vector3Int(Mathf.RoundToInt(worldPos.y - 0.5f), Mathf.RoundToInt(worldPos.x - 0.5f), 0);
             return new Vector3Int(MathHelper.RoundToInt(worldPos.y), MathHelper.RoundToInt(worldPos.x), 0);
         }
 
@@ -269,7 +227,6 @@ namespace LAB2D.Map
         /// <summary>
         /// 获取鼠标位置
         /// </summary>
-        /// <returns>Map位置</returns>
         public Vector3Int GetMapPosByMouse()
         {
             return this.WorldPosToMapPos(UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main));
@@ -278,8 +235,6 @@ namespace LAB2D.Map
         /// <summary>
         /// 地图索引是否越界
         /// </summary>
-        /// <param name="posMap">坐标</param>
-        /// <returns>是否</returns>
         public bool IsOverBorder(Vector3Int posMap)
         {
             return !(posMap.x >= 0 && posMap.x < this.TileMapDataLAB.Height && posMap.y >= 0 && posMap.y < this.TileMapDataLAB.Width);
@@ -288,11 +243,9 @@ namespace LAB2D.Map
         /// <summary>
         /// 设置进度
         /// </summary>
-        /// <param name="height">高度</param>
-        /// <param name="width">宽度</param>
         public void SetProgress(int height, int width)
         {
-            this.TileMapDataLAB = new TileMapData(height, width, new MapTileTypeEnum[height, width], width * height / 2000);
+            this.TileMapDataLAB = new TileMapData(height, width, new int[height, width], width * height / 2000);
             int total = width * height;
             total += this.TileMapDataLAB.RandomCount;
             total += ((width + height) * 2) + 4;
@@ -308,18 +261,14 @@ namespace LAB2D.Map
             this.TileMapDataLAB = DataTool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             if (this.TileMapDataLAB == null)
             {
-                // 降级方案：存档数据不可用，自动生成新地图
                 AWorkerTask.LogProvider("TileMap data not found in archive, generating new default map", LogManager.LogLevelEnum.Warning);
-                const int defaultHeight = 548;
-                const int defaultWidth = 548;
-                // 重置完成标记，确保 ResourceMap.GenResource 和 GenTree 等待地图生成完毕
-                Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete = false;
-                this.SetProgress(defaultHeight, defaultWidth);
+                Core.ServiceLocator.Get<MapInitCoordinator>().IsComplete = false;
+                this.SetProgress(DefaultHeight, DefaultWidth);
                 this.StartCoroutine(this.Create());
                 return;
             }
 
-            Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete = true;
+            Core.ServiceLocator.Get<MapInitCoordinator>().IsComplete = true;
             this.CreateArroundTile();
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
         }
@@ -365,132 +314,71 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 以(i,j)为中心,找最近的非默认板块,并赋给当前默认板块
-        /// </summary>
-        /// <param name="tiles">中心默认板块</param>
-        /// <param name="i">中心横坐标</param>
-        /// <param name="j">中心纵坐标</param>
-        private void NeighborAndReplaceTiles(MapTileTypeEnum[,] tiles, int i, int j)
-        {
-            // 寻找离自己最近的非默认板块
-            for (int t = 1; t < this.TileMapDataLAB.Width; t++)
-            {
-                // 第一行
-                int k = i - t;
-                for (int l = j - t; l <= j + t; l++)
-                {
-                    if (k >= 0 && k < this.TileMapDataLAB.Height && l >= 0 && l < this.TileMapDataLAB.Width)
-                    {
-                        if (this.TileMapDataLAB.MapTiles[k, l] != MapTileTypeEnum.Default)
-                        {
-                            tiles[i, j] = this.TileMapDataLAB.MapTiles[k, l]; // 赋给当前未初始化板块
-                            return;
-                        }
-                    }
-                }
-
-                // 中间左右两列
-                for (++k; k < i + t; k++)
-                {
-                    int l = j - t;
-                    if (k >= 0 && k < this.TileMapDataLAB.Height && l >= 0 && l < this.TileMapDataLAB.Width)
-                    {
-                        if (this.TileMapDataLAB.MapTiles[k, l] != MapTileTypeEnum.Default)
-                        {
-                            tiles[i, j] = this.TileMapDataLAB.MapTiles[k, l]; // 赋给当前未初始化板块
-                            return;
-                        }
-                    }
-
-                    l = j + t;
-                    if (k >= 0 && k < this.TileMapDataLAB.Height && l >= 0 && l < this.TileMapDataLAB.Width)
-                    {
-                        if (this.TileMapDataLAB.MapTiles[k, l] != MapTileTypeEnum.Default)
-                        {
-                            tiles[i, j] = this.TileMapDataLAB.MapTiles[k, l]; // 赋给当前未初始化板块
-                            return;
-                        }
-                    }
-                }
-
-                // 最后一行
-                for (int l = j - t; l <= j + t; l++)
-                {
-                    if (k >= 0 && k < this.TileMapDataLAB.Height && l >= 0 && l < this.TileMapDataLAB.Width)
-                    {
-                        if (this.TileMapDataLAB.MapTiles[k, l] != MapTileTypeEnum.Default)
-                        {
-                            tiles[i, j] = this.TileMapDataLAB.MapTiles[k, l]; // 赋给当前未初始化板块
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// 地图四周创建山阻止出去
+        /// 地图四周创建边界地形阻止出去。
+        /// 边界地形由 TerrainTileConfig.isBorder 标记决定。
         /// </summary>
         private void CreateArroundTile()
         {
+            TerrainConfigDatabase db = ServiceLocator.Get<TerrainConfigDatabase>();
+            int borderId = db.GetBorderTerrainId();
+            string borderResourceName = db.GetTileResourceName(borderId);
+
+            if (string.IsNullOrEmpty(borderResourceName))
+            {
+                AWorkerTask.LogProvider("CreateArroundTile: 没有配置边界地形（isBorder），跳过。", LogManager.LogLevelEnum.Warning);
+                return;
+            }
+
             AWorkerTask.AsyncProgressSetTipProvider("创建地图四周...");
+
+            TileBase borderTile = (TileBase)AWorkerTask.ResourceLoadProvider(borderResourceName);
 
             // 上边
             for (int i = -1; i < this.TileMapDataLAB.Width; i++)
             {
                 AWorkerTask.AsyncProgressAddOneProvider();
-                this.tilemap.SetTile(new Vector3Int(this.TileMapDataLAB.Height, i, 0), (TileBase)AWorkerTask.ResourceLoadProvider(MapTileTypeEnum.Mountain.ToString()));
+                this.tilemap.SetTile(new Vector3Int(this.TileMapDataLAB.Height, i, 0), borderTile);
             }
 
             // 右边
             for (int i = 0; i <= this.TileMapDataLAB.Height; i++)
             {
                 AWorkerTask.AsyncProgressAddOneProvider();
-                this.tilemap.SetTile(new Vector3Int(i, this.TileMapDataLAB.Width, 0), (TileBase)AWorkerTask.ResourceLoadProvider(MapTileTypeEnum.Mountain.ToString()));
+                this.tilemap.SetTile(new Vector3Int(i, this.TileMapDataLAB.Width, 0), borderTile);
             }
 
             // 下边
             for (int i = 0; i <= this.TileMapDataLAB.Width; i++)
             {
                 AWorkerTask.AsyncProgressAddOneProvider();
-                this.tilemap.SetTile(new Vector3Int(-1, i, 0), (TileBase)AWorkerTask.ResourceLoadProvider(MapTileTypeEnum.Mountain.ToString()));
+                this.tilemap.SetTile(new Vector3Int(-1, i, 0), borderTile);
             }
 
             // 左边
             for (int i = -1; i < this.TileMapDataLAB.Height; i++)
             {
                 AWorkerTask.AsyncProgressAddOneProvider();
-                this.tilemap.SetTile(new Vector3Int(i, -1, 0), (TileBase)AWorkerTask.ResourceLoadProvider(MapTileTypeEnum.Mountain.ToString()));
+                this.tilemap.SetTile(new Vector3Int(i, -1, 0), borderTile);
             }
         }
 
         /// <summary>
-        /// 瓦片数据
+        /// 瓦片数据 — 使用 int 存储地形 ID（map 到 TerrainTileConfig.terrainId）。
         /// </summary>
         [Serializable]
         public class TileMapData
         {
-            /// <summary>
-            /// 地图纵向长度
-            /// </summary>
             public int Height;
-
-            /// <summary>
-            /// 地图横向长度
-            /// </summary>
             public int Width;
 
             /// <summary>
-            /// 地图瓦片
+            /// 地图瓦片 — 每个值为地形 ID（0 = 未初始化/不渲染）。
             /// </summary>
-            public MapTileTypeEnum[,] MapTiles;
+            public int[,] MapTiles;
 
-            /// <summary>
-            /// 随机点数量
-            /// </summary>
             public int RandomCount;
 
-            public TileMapData(int height, int width, MapTileTypeEnum[,] mapTiles, int randomCount)
+            public TileMapData(int height, int width, int[,] mapTiles, int randomCount)
             {
                 this.Height = height;
                 this.Width = width;

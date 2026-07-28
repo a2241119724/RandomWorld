@@ -26,7 +26,10 @@ namespace LAB2D.Manager
         private readonly Dictionary<string, GameObject> prefabDic; // <characterType,<name,prefab>>
         private readonly Dictionary<string, UnityEngine.Object> assetDic;
         private readonly Dictionary<string, Sprite> imageDic;
-        private readonly Dictionary<TileMap.MapTileTypeEnum, List<UnityEngine.Object>> tileDic;
+        /// <summary>
+        /// 地形 ID → 该地形上可生成的资源列表
+        /// </summary>
+        private readonly Dictionary<int, List<UnityEngine.Object>> tileDic;
         private readonly Dictionary<string, Shader> shaderDic;
         private readonly Dictionary<string, ItemDataSO> backpackDataDic;
         private readonly Dictionary<string, BuildItemDataSO> buildDataDic;
@@ -46,25 +49,35 @@ namespace LAB2D.Manager
         {
             this.prefabDic = ResourceTool.LoadResources<GameObject>(ResourceConstant.PREFAB_ROOT);
             this.assetDic = ResourceTool.LoadResources<UnityEngine.Object>(ResourceConstant.TILEMAP_ROOT);
-            this.tileDic = new Dictionary<TileMap.MapTileTypeEnum, List<UnityEngine.Object>>();
+            this.tileDic = new Dictionary<int, List<UnityEngine.Object>>();
             this.shaderDic = ResourceTool.LoadResources<Shader>(ResourceConstant.SHADER_ROOT);
+
+            // 通过 TerrainConfigDatabase 获取所有注册的地形配置，
+            // 按 tileResourceName 前缀匹配 asset 名称来构建 tileDic
+            TerrainConfigDatabase terrainDb = ServiceLocator.Get<TerrainConfigDatabase>();
             foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetDic)
             {
-                foreach (TileMap.MapTileTypeEnum tileType in Enum.GetValues(typeof(TileMap.MapTileTypeEnum)))
+                foreach (int terrainId in terrainDb.SpawnableIds)
                 {
-                    // 不包含Tile本身，仅包含其上的资源
-                    if (!asset.Key.StartsWith(tileType.ToString()) ||
-                        asset.Key.Equals(tileType.ToString()))
+                    TerrainTileConfig config = terrainDb.GetById(terrainId);
+                    if (config == null || string.IsNullOrEmpty(config.tileResourceName))
                     {
                         continue;
                     }
 
-                    if (!this.tileDic.ContainsKey(tileType))
+                    // 不包含 Tile 本身，仅包含其上的资源（前缀匹配但不等同）
+                    if (!asset.Key.StartsWith(config.tileResourceName) ||
+                        asset.Key.Equals(config.tileResourceName))
                     {
-                        this.tileDic.Add(tileType, new List<UnityEngine.Object>());
+                        continue;
                     }
 
-                    this.tileDic[tileType].Add(asset.Value);
+                    if (!this.tileDic.ContainsKey(terrainId))
+                    {
+                        this.tileDic.Add(terrainId, new List<UnityEngine.Object>());
+                    }
+
+                    this.tileDic[terrainId].Add(asset.Value);
                     break;
                 }
             }
@@ -207,20 +220,14 @@ namespace LAB2D.Manager
         }
 
         /// <summary>
-        /// 通过类型获得在Tile上的资源,默认随机获取.
+        /// 通过地形 ID 获得可放置的资源 Tile，默认随机获取。
         /// </summary>
-        /// <param name="tileType">在哪种Tile上.</param>
-        /// <param name="name">包含该名称的资源.</param>
-        /// <returns>Tile.</returns>
-        public TileBase GetAssetByTileType(TileMap.MapTileTypeEnum tileType, string name = default)
+        /// <param name="terrainId">地形 ID（对应 TerrainTileConfig.terrainId）。</param>
+        /// <param name="name">包含该名称的资源（可选过滤）。</param>
+        /// <returns>Tile，无匹配时返回 null。</returns>
+        public TileBase GetAssetByTerrainId(int terrainId, string name = default)
         {
-            if (!this.tileDic.ContainsKey(tileType))
-            {
-                return null;
-            }
-
-            List<UnityEngine.Object> tiles = this.tileDic[tileType];
-            if (tiles.Count == 0)
+            if (!this.tileDic.TryGetValue(terrainId, out List<UnityEngine.Object> tiles) || tiles.Count == 0)
             {
                 return null;
             }

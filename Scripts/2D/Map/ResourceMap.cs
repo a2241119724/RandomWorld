@@ -69,10 +69,12 @@ namespace LAB2D.Map
                     }
 
                     Vector3Int posMap = new (i, j, 0);
-                    if (tm.IsCanReach(posMap) && UnityEngine.Random.Range(0.0f, 1.0f) > 0.95f)
+                    int terrainId = tm.TileMapDataLAB.MapTiles[i, j];
+                    if (tm.IsCanReach(posMap)
+                        && Core.ServiceLocator.Get<TerrainConfigDatabase>().CanSpawnResources(terrainId)
+                        && UnityEngine.Random.Range(0.0f, 1.0f) > 0.95f)
                     {
-                        TileMap.MapTileTypeEnum tileType = tm.TileMapDataLAB.MapTiles[i, j];
-                        TileBase tileBase = Core.ServiceLocator.Get<ResourceManager>().GetAssetByTileType(tileType);
+                        TileBase tileBase = Core.ServiceLocator.Get<ResourceManager>().GetAssetByTerrainId(terrainId);
                         if (tileBase == null)
                         {
                             assetMissCount++;
@@ -122,8 +124,14 @@ namespace LAB2D.Map
                     }
 
                     Vector3Int pos = Core.ServiceLocator.Get<IsAvailableMap>().GenAvailablePosMap();
-                    TileMap.MapTileTypeEnum tileType = tm.TileMapDataLAB.MapTiles[pos.x, pos.y];
-                    TileBase tileBase = Core.ServiceLocator.Get<ResourceManager>().GetAssetByTileType(tileType, "Tree");
+                    int terrainId = tm.TileMapDataLAB.MapTiles[pos.x, pos.y];
+                    if (!Core.ServiceLocator.Get<TerrainConfigDatabase>().CanGrowTrees(terrainId))
+                    {
+                        yield return null;
+                        continue;
+                    }
+
+                    TileBase tileBase = Core.ServiceLocator.Get<ResourceManager>().GetAssetByTerrainId(terrainId, "Tree");
                     if (tileBase == null)
                     {
                         yield return null;

@@ -14,6 +14,7 @@ namespace LAB2D
     using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
     using LAB2D.Item.Backpack.Equipment.Weapon;
+    using LAB2D.Map;
     using LAB2D.Network;
     using LAB2D.UI.Action;
     using LAB2D.UI.Panel;
@@ -46,6 +47,8 @@ namespace LAB2D
         private static void RegisterSafeServices()
         {
             ServiceLocator.Register(LogManager.Instance);
+            // TerrainConfigDatabase 必须在 ResourceManager 之前注册（ResourceManager 构造函数使用它）。
+            ServiceLocator.Register(new TerrainConfigDatabase());
             ServiceLocator.Register(ResourceManager.Instance);
             ServiceLocator.Register(ArchiveManager.Instance);
             ServiceLocator.Register(FrameControl.Instance);
