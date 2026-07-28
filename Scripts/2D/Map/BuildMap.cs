@@ -17,7 +17,6 @@ namespace LAB2D.Map
     /// </summary>
     public class BuildMap : BaseTileMap
     {
-        private Dictionary<int, ResourceInfo> resourceInfos; // TODO 需要的建筑材料
         private Color initColor = new (1, 1, 1, 0.5f);
 
         /// <summary>
@@ -40,13 +39,6 @@ namespace LAB2D.Map
         public void Start()
         {
             this.BuildMapDataLAB = new BuildMapData();
-            this.resourceInfos = new ()
-            {
-                {
-                    Core.ServiceLocator.Get<ItemDataManager>().GetByName("CustomWood").Id,
-                    new ResourceInfo(Core.ServiceLocator.Get<ItemDataManager>().GetByName("CustomWood").Id, 5)
-                },
-            };
         }
 
         /// <summary>
@@ -65,7 +57,7 @@ namespace LAB2D.Map
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
                 Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(targetMap)
-                    .SetNeedResource(new Dictionary<int, ResourceInfo>(this.resourceInfos)).Build(), new GameGridPosition(targetMap.x, targetMap.y, targetMap.z));
+                    .SetNeedResource(BuildResourceDict(buildItemData)).Build(), new GameGridPosition(targetMap.x, targetMap.y, targetMap.z));
 
                 // 设置可通过并且颜色变淡
                 this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
@@ -153,20 +145,19 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 添加建造任务到地图
+        /// 添加建造任务到地图。
+        /// 每个建筑按自身 BuildItemData.BuildCosts 查找材料需求，不再使用统一的硬编码材料。
         /// </summary>
         public void AddTask()
         {
-            Dictionary<int, ResourceInfo> resourceInfos = new ();
-            resourceInfos.Add(
-                Core.ServiceLocator.Get<ItemDataManager>().GetByName("CustomWood").Id,
-                new ResourceInfo(Core.ServiceLocator.Get<ItemDataManager>().GetByName("CustomWood").Id, 5));
             foreach (Vector3IntLAB targetMap in this.BuildMapDataLAB.PosMap.Keys)
             {
+                string tileName = this.BuildMapDataLAB.PosMap[targetMap].Name;
+                BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileName);
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
                 Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(Vector3IntLAB.ToVector3Int(targetMap))
-                    .SetNeedResource(new Dictionary<int, ResourceInfo>(resourceInfos)).Build(), new GameGridPosition(targetMap.X, targetMap.Y, targetMap.Z));
+                    .SetNeedResource(BuildResourceDict(buildItemData)).Build(), new GameGridPosition(targetMap.X, targetMap.Y, targetMap.Z));
             }
 
             this.BuildMapDataLAB.PosMap.Clear();
@@ -315,6 +306,42 @@ namespace LAB2D.Map
                 false);
 
             return this;
+        }
+
+        /// <summary>
+        /// 从 BuildItemData.BuildCosts 构建资源需求字典。
+        /// 若未配置 BuildCosts，fallback 到默认 CustomWood x5（向后兼容存量 SO）。
+        /// </summary>
+        /// <param name="buildItemData">建造物品数据</param>
+        /// <returns>物品 ID → ResourceInfo 字典</returns>
+        private static Dictionary<int, ResourceInfo> BuildResourceDict(BuildItemData buildItemData)
+        {
+            Dictionary<int, ResourceInfo> dict = new ();
+            if (buildItemData.BuildCosts != null)
+            {
+                foreach (ResourceCost cost in buildItemData.BuildCosts)
+                {
+                    if (string.IsNullOrEmpty(cost.ItemName))
+                    {
+                        continue;
+                    }
+
+                    ItemData item = Core.ServiceLocator.Get<Data.ItemDataManager>().GetByName(cost.ItemName);
+                    if (item != null && item.Id > 0)
+                    {
+                        dict[item.Id] = new ResourceInfo(item.Id, cost.Count);
+                    }
+                }
+            }
+
+            // Fallback: 存量 SO 未配置 BuildCosts 时，使用默认 CustomWood x5
+            if (dict.Count == 0)
+            {
+                int woodId = Core.ServiceLocator.Get<Data.ItemDataManager>().GetByName("CustomWood").Id;
+                dict[woodId] = new ResourceInfo(woodId, 5);
+            }
+
+            return dict;
         }
 
         /// <summary>
