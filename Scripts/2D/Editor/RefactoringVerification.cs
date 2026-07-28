@@ -17,7 +17,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 执行快速编译检查（刷新资源数据库并检查是否有编译错误）。
         /// </summary>
-        [MenuItem("工具/重构/验证编译")]
+        [MenuItem("工具/重构/验证编译", false, 800)]
         public static void VerifyCompilation()
         {
             Debug.Log("[重构验证] 开始验证...");

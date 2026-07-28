@@ -11,7 +11,7 @@ namespace LAB2D.Editor
         private const string CreateConfig = MenuRoot + "创建/选中 UI 字体配置";
         private const string ApplyToScene = MenuRoot + "应用全局字体到所有 UI";
 
-        [MenuItem(CreateConfig, false, 10)]
+        [MenuItem(CreateConfig, false, 52)]
         private static void CreateOrSelectConfig()
         {
             UIFontConfig config = Resources.Load<UIFontConfig>("SO/UIFontConfig");
@@ -33,7 +33,7 @@ namespace LAB2D.Editor
             EditorGUIUtility.PingObject(config);
         }
 
-        [MenuItem(ApplyToScene, false, 11)]
+        [MenuItem(ApplyToScene, false, 53)]
         private static void ApplyFontToAllText()
         {
             UIFontConfig config = UIFontConfig.Instance;

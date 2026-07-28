@@ -26,7 +26,7 @@ namespace LAB2D.Editor
         private static readonly string[] TileExtensions = { ".asset" };
         private static readonly string[] ImageExtensions = { ".png", ".jpg", ".jpeg", ".psd", ".tga" };
 
-        [MenuItem(Prefix + "导出道具资源绑定报告")]
+        [MenuItem(Prefix + "导出道具资源绑定报告", false, 601)]
         private static void ExportReport()
         {
             DateTime now = DateTime.Now;

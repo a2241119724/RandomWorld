@@ -14,7 +14,7 @@ namespace LAB2D.Editor
     {
         private const string MenuRoot = "工具/物品收集/";
 
-        [MenuItem(MenuRoot + "查看收集统计")]
+        [MenuItem(MenuRoot + "查看收集统计", false, 520)]
         private static void ShowCollectionStats()
         {
             if (!Application.isPlaying)
@@ -75,7 +75,7 @@ namespace LAB2D.Editor
             EditorUtility.DisplayDialog("物品收集统计", sb.ToString(), "确定");
         }
 
-        [MenuItem(MenuRoot + "查看里程碑")]
+        [MenuItem(MenuRoot + "查看里程碑", false, 521)]
         private static void ShowMilestones()
         {
             if (!Application.isPlaying)
@@ -109,7 +109,7 @@ namespace LAB2D.Editor
             EditorUtility.DisplayDialog("收集里程碑", sb.ToString(), "确定");
         }
 
-        [MenuItem(MenuRoot + "重置里程碑")]
+        [MenuItem(MenuRoot + "重置里程碑", false, 522)]
         private static void ResetMilestones()
         {
             if (!Application.isPlaying)

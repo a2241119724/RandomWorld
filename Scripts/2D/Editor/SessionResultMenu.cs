@@ -18,7 +18,7 @@ namespace LAB2D.Editor
     {
         private const string MenuRoot = "工具/结算/";
 
-        [MenuItem(MenuRoot + "立即采集")]
+        [MenuItem(MenuRoot + "立即采集", false, 300)]
         private static void CaptureNow()
         {
             if (!Application.isPlaying)
@@ -51,7 +51,7 @@ namespace LAB2D.Editor
                 "OK");
         }
 
-        [MenuItem(MenuRoot + "查看最新")]
+        [MenuItem(MenuRoot + "查看最新", false, 301)]
         private static void ShowLatest()
         {
             if (!Application.isPlaying)
@@ -80,7 +80,7 @@ namespace LAB2D.Editor
                 "OK");
         }
 
-        [MenuItem(MenuRoot + "查看历史")]
+        [MenuItem(MenuRoot + "查看历史", false, 302)]
         private static void ShowHistory()
         {
             if (!Application.isPlaying)
@@ -100,7 +100,7 @@ namespace LAB2D.Editor
                 "OK");
         }
 
-        [MenuItem(MenuRoot + "清空历史")]
+        [MenuItem(MenuRoot + "清空历史", false, 303)]
         private static void ClearHistory()
         {
             if (!Application.isPlaying)

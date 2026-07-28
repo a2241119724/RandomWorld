@@ -14,7 +14,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 修改Slider样式(填充/背景/手柄)
         /// </summary>
-        [MenuItem(Prefix + "修改滑条")]
+        [MenuItem(Prefix + "修改滑条", false, 50)]
         public static void UpdateSlider()
         {
             var sliders = Resources.FindObjectsOfTypeAll(typeof(Slider));

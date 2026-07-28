@@ -13,7 +13,7 @@ namespace LAB2D.Editor
     {
         private const string Prefix = "工具/数据/";
 
-        [MenuItem(Prefix + "根据代码生成道具数据")]
+        [MenuItem(Prefix + "根据代码生成道具数据", false, 600)]
         private static void BuildAB()
         {
             List<Type> types = LAB2D.Tool.Tool.GetChildByParent<AItem>();

@@ -13,7 +13,7 @@ namespace LAB2D.Editor
     {
         private const string MenuRoot = "工具/波次/管理/";
 
-        [MenuItem(MenuRoot + "开始波次")]
+        [MenuItem(MenuRoot + "开始波次", false, 100)]
         private static void StartWaves()
         {
             if (!Application.isPlaying)
@@ -38,7 +38,7 @@ namespace LAB2D.Editor
             Debug.Log("<color=cyan>[WaveManager]</color> 波次系统已启动！");
         }
 
-        [MenuItem(MenuRoot + "停止波次")]
+        [MenuItem(MenuRoot + "停止波次", false, 101)]
         private static void StopWaves()
         {
             if (!Application.isPlaying)
@@ -59,7 +59,7 @@ namespace LAB2D.Editor
             Debug.Log("<color=cyan>[WaveManager]</color> 波次系统已停止，恢复默认生成模式。");
         }
 
-        [MenuItem(MenuRoot + "查看波次状态")]
+        [MenuItem(MenuRoot + "查看波次状态", false, 102)]
         private static void ShowWaveStatus()
         {
             if (!Application.isPlaying)
@@ -101,7 +101,7 @@ namespace LAB2D.Editor
             EditorUtility.DisplayDialog("Wave Manager Status", statusText, "OK");
         }
 
-        [MenuItem(MenuRoot + "快速查看配置")]
+        [MenuItem(MenuRoot + "快速查看配置", false, 103)]
         private static void QuickConfigure()
         {
             if (!Application.isPlaying)

@@ -15,7 +15,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 验证成就系统安装状态
         /// </summary>
-        [MenuItem(AchievementConstant.EditorMenuRoot + "验证成就系统安装状态")]
+        [MenuItem(AchievementConstant.EditorMenuRoot + "验证成就系统安装状态", false, 200)]
         private static void ValidateInstallation()
         {
             bool popupOk = GameObject.Find(AchievementConstant.PopupRootName) != null;

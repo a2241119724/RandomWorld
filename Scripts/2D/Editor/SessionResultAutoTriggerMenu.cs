@@ -28,7 +28,7 @@ namespace LAB2D.Editor
             return trigger;
         }
 
-        [MenuItem(MenuRoot + "/查看状态", false, 1)]
+        [MenuItem(MenuRoot + "/查看状态", false, 310)]
         private static void ShowStatus()
         {
             if (!Application.isPlaying)
@@ -61,7 +61,7 @@ namespace LAB2D.Editor
             EditorUtility.DisplayDialog("Session Auto Trigger — 状态", statusText, "确认");
         }
 
-        [MenuItem(MenuRoot + "/模拟玩家死亡采集", false, 2)]
+        [MenuItem(MenuRoot + "/模拟玩家死亡采集", false, 311)]
         private static void SimulatePlayerDeathCapture()
         {
             if (!Application.isPlaying)
@@ -80,7 +80,7 @@ namespace LAB2D.Editor
                 "确认");
         }
 
-        [MenuItem(MenuRoot + "/模拟波次通关采集", false, 3)]
+        [MenuItem(MenuRoot + "/模拟波次通关采集", false, 312)]
         private static void SimulateWaveClearCapture()
         {
             if (!Application.isPlaying)
@@ -129,7 +129,7 @@ namespace LAB2D.Editor
             }
         }
 
-        [MenuItem(MenuRoot + "/查看最新结果报告", false, 4)]
+        [MenuItem(MenuRoot + "/查看最新结果报告", false, 313)]
         private static void ShowLatestResultReport()
         {
             if (!Application.isPlaying)
@@ -157,7 +157,7 @@ namespace LAB2D.Editor
                 "确认");
         }
 
-        [MenuItem(MenuRoot + "/清空全部结果", false, 20)]
+        [MenuItem(MenuRoot + "/清空全部结果", false, 314)]
         private static void ClearAllResults()
         {
             if (!Application.isPlaying)

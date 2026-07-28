@@ -63,7 +63,7 @@ namespace LAB2D.Editor
             @"^\s*(public|private|protected|internal)?\s*(static\s+)?[\w<>\[\],\s]+\s+\w+\s*\([^)]*\)\s*\{\s*\}\s*$",
             RegexOptions.Compiled);
 
-        [MenuItem(MenuPath)]
+        [MenuItem(MenuPath, false, 700)]
         private static void ExportReport()
         {
             DateTime now = DateTime.Now;

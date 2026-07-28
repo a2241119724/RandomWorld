@@ -1,16 +1,12 @@
 namespace LAB2D.Editor
 {
     using LAB2D;
-    using System.IO;
     using UnityEditor;
-    using UnityEditor.SceneManagement;
     using UnityEngine;
-    using UnityEngine.SceneManagement;
-    using UnityEngine.UI;
 
     /// <summary>
     /// 天气玩法影响 Editor 菜单。
-    /// 提供运行时状态查看、天气模拟和 Game.unity HUD 创建入口。
+    /// 提供运行时状态查看和天气模拟。
     /// </summary>
     public static class WeatherGameplayEffectMenu
     {
@@ -21,7 +17,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 查看当前天气玩法影响状态。
         /// </summary>
-        [MenuItem(MenuRoot + "查看当前效果", false, 1)]
+        [MenuItem(MenuRoot + "查看当前效果", false, 460)]
         private static void ShowCurrentEffect()
         {
             if (!Application.isPlaying)
@@ -39,7 +35,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 启用天气玩法影响。
         /// </summary>
-        [MenuItem(MenuRoot + "启用玩法影响", false, 10)]
+        [MenuItem(MenuRoot + "启用玩法影响", false, 461)]
         private static void EnableEffect()
         {
             if (!Application.isPlaying)
@@ -55,7 +51,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 禁用天气玩法影响。
         /// </summary>
-        [MenuItem(MenuRoot + "禁用玩法影响", false, 11)]
+        [MenuItem(MenuRoot + "禁用玩法影响", false, 462)]
         private static void DisableEffect()
         {
             if (!Application.isPlaying)
@@ -71,7 +67,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 模拟晴天。
         /// </summary>
-        [MenuItem(MenuRoot + "模拟天气/晴天", false, 30)]
+        [MenuItem(MenuRoot + "模拟天气/晴天", false, 463)]
         private static void SimulateSunny()
         {
             SimulateWeather(WeatherManager.WeatherTypeEnum.Sunny);
@@ -80,7 +76,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 模拟雨天。
         /// </summary>
-        [MenuItem(MenuRoot + "模拟天气/雨天", false, 31)]
+        [MenuItem(MenuRoot + "模拟天气/雨天", false, 464)]
         private static void SimulateRain()
         {
             SimulateWeather(WeatherManager.WeatherTypeEnum.Rain);
@@ -89,63 +85,10 @@ namespace LAB2D.Editor
         /// <summary>
         /// 模拟雪天。
         /// </summary>
-        [MenuItem(MenuRoot + "模拟天气/雪天", false, 32)]
+        [MenuItem(MenuRoot + "模拟天气/雪天", false, 465)]
         private static void SimulateSnow()
         {
             SimulateWeather(WeatherManager.WeatherTypeEnum.Snow);
-        }
-
-        /// <summary>
-        /// 在 Game.unity 中创建独立天气 HUD。
-        /// </summary>
-        [MenuItem(MenuRoot + "创建天气 HUD 到 Game 场景", false, 60)]
-        private static void CreateHudInGameScene()
-        {
-            string scenePath = FindGameScenePath();
-            if (string.IsNullOrEmpty(scenePath))
-            {
-                EditorUtility.DisplayDialog("天气玩法影响", "未找到 Game.unity，无法创建天气 HUD。", "确定");
-                return;
-            }
-
-            Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
-            GameObject root = GameObject.Find(HudRootName);
-            if (root == null)
-            {
-                EditorUtility.DisplayDialog(
-                    "天气玩法影响",
-                    $"场景中未找到 {HudRootName}，请在场景中手动创建。",
-                    "确定");
-                return;
-            }
-
-            EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
-            Selection.activeGameObject = root;
-            EditorGUIUtility.PingObject(root);
-
-            EditorUtility.DisplayDialog(
-                "天气玩法影响",
-                "天气 HUD 已存在。",
-                "确定");
-        }
-
-        /// <summary>
-        /// 从当前场景移除天气 HUD。
-        /// </summary>
-        [MenuItem(MenuRoot + "从当前场景移除天气 HUD", false, 61)]
-        private static void RemoveHudFromCurrentScene()
-        {
-            GameObject root = GameObject.Find(HudRootName);
-            if (root == null)
-            {
-                EditorUtility.DisplayDialog("天气玩法影响", "当前场景没有天气 HUD。", "确定");
-                return;
-            }
-
-            Object.DestroyImmediate(root);
-            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
-            EditorUtility.DisplayDialog("天气玩法影响", "已移除天气 HUD。", "确定");
         }
 
         /// <summary>
@@ -170,25 +113,6 @@ namespace LAB2D.Editor
             manager.SetWeather(weather);
             WeatherGameplayEffect.Instance.Refresh();
             EditorUtility.DisplayDialog("天气玩法影响", "已切换为" + WeatherGameplayTool.GetWeatherName(weather) + "。", "确定");
-        }
-
-        /// <summary>
-        /// 查找 Game.unity 的真实路径。
-        /// </summary>
-        /// <returns>Game.unity 路径，找不到时返回空字符串。</returns>
-        private static string FindGameScenePath()
-        {
-            string[] guids = AssetDatabase.FindAssets("Game t:Scene", new[] { "Assets" });
-            foreach (string guid in guids)
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (Path.GetFileNameWithoutExtension(path) == "Game")
-                {
-                    return path;
-                }
-            }
-
-            return string.Empty;
         }
     }
 }

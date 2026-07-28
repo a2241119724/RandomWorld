@@ -13,7 +13,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 查看当前工人状态汇总。
         /// </summary>
-        [MenuItem(WorkerConditionConstant.MenuRoot + "查看状态汇总", false, 1)]
+        [MenuItem(WorkerConditionConstant.MenuRoot + "查看状态汇总", false, 410)]
         private static void ShowConditionSummary()
         {
             if (!Application.isPlaying)
@@ -30,7 +30,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 启用状态效率影响。
         /// </summary>
-        [MenuItem(WorkerConditionConstant.MenuRoot + "启用状态效果", false, 10)]
+        [MenuItem(WorkerConditionConstant.MenuRoot + "启用状态效果", false, 411)]
         private static void EnableConditionEffect()
         {
             WorkerConditionManager.Instance.Enable();
@@ -40,7 +40,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 禁用状态效率影响。
         /// </summary>
-        [MenuItem(WorkerConditionConstant.MenuRoot + "禁用状态效果", false, 11)]
+        [MenuItem(WorkerConditionConstant.MenuRoot + "禁用状态效果", false, 412)]
         private static void DisableConditionEffect()
         {
             WorkerConditionManager.Instance.Disable();
@@ -50,7 +50,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 启用状态提示。
         /// </summary>
-        [MenuItem(WorkerConditionConstant.MenuRoot + "启用状态提示", false, 20)]
+        [MenuItem(WorkerConditionConstant.MenuRoot + "启用状态提示", false, 413)]
         private static void EnableConditionTip()
         {
             WorkerConditionManager.Instance.SetTipEnabled(true);
@@ -60,7 +60,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 禁用状态提示。
         /// </summary>
-        [MenuItem(WorkerConditionConstant.MenuRoot + "禁用状态提示", false, 21)]
+        [MenuItem(WorkerConditionConstant.MenuRoot + "禁用状态提示", false, 414)]
         private static void DisableConditionTip()
         {
             WorkerConditionManager.Instance.SetTipEnabled(false);

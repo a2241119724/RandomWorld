@@ -33,7 +33,7 @@ namespace LAB2D.Editor
 
         private const string ExcludePattern = @"^$"; // 排除名称正则（默认不排除）
 
-        [MenuItem(RestoreInput, false, 22)]
+        [MenuItem(RestoreInput, false, 54)]
         private static void RestoreDefaults()
         {
             ApplyColors(DefaultInputColors, DefaultInputColors);

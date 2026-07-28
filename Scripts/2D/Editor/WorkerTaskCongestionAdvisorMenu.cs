@@ -14,7 +14,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 查看当前任务队列拥堵建议。
         /// </summary>
-        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "查看拥堵建议", false, 1)]
+        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "查看拥堵建议", false, 440)]
         private static void ShowCongestionAdvice()
         {
             if (!Application.isPlaying)
@@ -32,7 +32,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 启用任务拥堵监控。
         /// </summary>
-        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "启用拥堵监控", false, 10)]
+        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "启用拥堵监控", false, 441)]
         private static void EnableMonitor()
         {
             WorkerTaskCongestionAdvisor.Instance.Enable();
@@ -42,7 +42,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 禁用任务拥堵监控。
         /// </summary>
-        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "禁用拥堵监控", false, 11)]
+        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "禁用拥堵监控", false, 442)]
         private static void DisableMonitor()
         {
             WorkerTaskCongestionAdvisor.Instance.Disable();
@@ -52,7 +52,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 启用任务拥堵 Tip。
         /// </summary>
-        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "启用拥堵 Tip", false, 20)]
+        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "启用拥堵 Tip", false, 443)]
         private static void EnableTip()
         {
             WorkerTaskCongestionAdvisor.Instance.SetTipEnabled(true);
@@ -62,7 +62,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 禁用任务拥堵 Tip。
         /// </summary>
-        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "禁用拥堵 Tip", false, 21)]
+        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "禁用拥堵 Tip", false, 444)]
         private static void DisableTip()
         {
             WorkerTaskCongestionAdvisor.Instance.SetTipEnabled(false);
@@ -72,7 +72,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 手动触发一次当前拥堵 Tip。
         /// </summary>
-        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "立即触发一次拥堵 Tip", false, 30)]
+        [MenuItem(WorkerTaskCongestionConstant.MenuRoot + "立即触发一次拥堵 Tip", false, 445)]
         private static void ShowCurrentTip()
         {
             if (!Application.isPlaying)

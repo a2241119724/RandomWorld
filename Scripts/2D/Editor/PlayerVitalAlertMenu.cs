@@ -12,7 +12,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 查看当前玩家生命提示报告。
         /// </summary>
-        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "查看生命提示报告", false, 1)]
+        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "查看生命提示报告", false, 450)]
         private static void ShowVitalReport()
         {
             if (!Application.isPlaying)
@@ -30,7 +30,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 启用玩家生命监控。
         /// </summary>
-        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "启用生命监控", false, 10)]
+        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "启用生命监控", false, 451)]
         private static void EnableMonitor()
         {
             PlayerVitalAlertManager.Instance.Enable();
@@ -40,7 +40,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 禁用玩家生命监控。
         /// </summary>
-        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "禁用生命监控", false, 11)]
+        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "禁用生命监控", false, 452)]
         private static void DisableMonitor()
         {
             PlayerVitalAlertManager.Instance.Disable();
@@ -50,7 +50,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 启用玩家生命 Tip。
         /// </summary>
-        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "启用生命 Tip", false, 20)]
+        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "启用生命 Tip", false, 453)]
         private static void EnableTip()
         {
             PlayerVitalAlertManager.Instance.SetTipEnabled(true);
@@ -60,7 +60,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 禁用玩家生命 Tip。
         /// </summary>
-        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "禁用生命 Tip", false, 21)]
+        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "禁用生命 Tip", false, 454)]
         private static void DisableTip()
         {
             PlayerVitalAlertManager.Instance.SetTipEnabled(false);
@@ -70,7 +70,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 手动触发一次当前生命危险 Tip。
         /// </summary>
-        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "立即触发一次生命 Tip", false, 30)]
+        [MenuItem(PlayerVitalAlertConstant.MenuRoot + "立即触发一次生命 Tip", false, 455)]
         private static void ShowCurrentTip()
         {
             if (!Application.isPlaying)

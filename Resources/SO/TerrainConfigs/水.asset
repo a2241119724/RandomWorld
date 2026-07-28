@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b5491020b354f8498d4b1fed2b76565, type: 3}
   m_Name: "\u6C34"
   m_EditorClassIdentifier: 
-  terrainId: 0
+  terrainId: 6
   tileResourceName: Water
   spawnWeight: 1
   isWalkable: 0

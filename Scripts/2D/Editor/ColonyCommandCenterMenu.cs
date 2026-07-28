@@ -12,7 +12,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 查看当前指挥中心报告。
         /// </summary>
-        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "查看当前指挥报告", false, 1)]
+        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "查看当前指挥报告", false, 230)]
         private static void ShowCurrentReport()
         {
             if (!Application.isPlaying)
@@ -30,7 +30,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 启用指挥中心监控。
         /// </summary>
-        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "启用指挥中心监控", false, 10)]
+        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "启用指挥中心监控", false, 231)]
         private static void EnableMonitor()
         {
             ColonyCommandCenterManager.Instance.Enable();
@@ -40,7 +40,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 禁用指挥中心监控。
         /// </summary>
-        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "禁用指挥中心监控", false, 11)]
+        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "禁用指挥中心监控", false, 232)]
         private static void DisableMonitor()
         {
             ColonyCommandCenterManager.Instance.Disable();
@@ -50,7 +50,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 启用指挥中心 Tip。
         /// </summary>
-        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "启用指挥中心 Tip", false, 20)]
+        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "启用指挥中心 Tip", false, 233)]
         private static void EnableTip()
         {
             ColonyCommandCenterManager.Instance.SetTipEnabled(true);
@@ -60,7 +60,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 禁用指挥中心 Tip。
         /// </summary>
-        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "禁用指挥中心 Tip", false, 21)]
+        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "禁用指挥中心 Tip", false, 234)]
         private static void DisableTip()
         {
             ColonyCommandCenterManager.Instance.SetTipEnabled(false);
@@ -70,7 +70,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 手动显示当前指挥中心 Tip。
         /// </summary>
-        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "调试/显示当前 Tip", false, 30)]
+        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "调试/显示当前 Tip", false, 235)]
         private static void ShowCurrentTip()
         {
             if (!Application.isPlaying)

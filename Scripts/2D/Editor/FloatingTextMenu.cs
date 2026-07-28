@@ -15,7 +15,7 @@ namespace LAB2D.Editor
         /// 验证浮动文字系统配置完整性
         /// 检查常量、工具类、枚举和脚本文件是否就绪。
         /// </summary>
-        [MenuItem(FloatingTextConstant.EditorMenuValidate)]
+        [MenuItem(FloatingTextConstant.EditorMenuValidate, false, 210)]
         private static void ValidateFloatingTextSystem()
         {
             bool allOk = true;

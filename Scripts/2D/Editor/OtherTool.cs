@@ -20,7 +20,7 @@ namespace LAB2D.Editor
         /// GameObject g = Instantiate(assetBundleObj.LoadAsset<GameObject>("snow"));
         /// g.name = "AB资源加载方式";
         /// </summary>
-        [MenuItem(Prefix + "打AB包")]
+        [MenuItem(Prefix + "打AB包", false, 900)]
         private static void BuildAB()
         {
             BuildPipeline.BuildAssetBundles(Application.streamingAssetsPath, BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.StandaloneWindows64);
@@ -31,7 +31,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 打印所有代码行数
         /// </summary>
-        [MenuItem(Prefix + "计算代码行数")]
+        [MenuItem(Prefix + "计算代码行数", false, 901)]
         private static void PrintTotalLine()
         {
             string[] fileName = Directory.GetFiles("Assets/Scripts/2D", "*.cs", SearchOption.AllDirectories);

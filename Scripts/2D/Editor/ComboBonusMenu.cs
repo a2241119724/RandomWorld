@@ -14,7 +14,7 @@ namespace LAB2D.Editor
     {
         private const string MenuRoot = "工具/连击增益/";
 
-        [MenuItem(MenuRoot + "查看连击状态")]
+        [MenuItem(MenuRoot + "查看连击状态", false, 500)]
         private static void ShowComboStatus()
         {
             if (!Application.isPlaying)
@@ -46,7 +46,7 @@ namespace LAB2D.Editor
             EditorUtility.DisplayDialog("Combo Bonus Status", info, "OK");
         }
 
-        [MenuItem(MenuRoot + "查看全部等级")]
+        [MenuItem(MenuRoot + "查看全部等级", false, 501)]
         private static void ShowAllTiers()
         {
             StringBuilder sb = new StringBuilder();
@@ -67,7 +67,7 @@ namespace LAB2D.Editor
             EditorUtility.DisplayDialog("Combo Bonus Tiers", sb.ToString(), "OK");
         }
 
-        [MenuItem(MenuRoot + "模拟查询（连击=3）")]
+        [MenuItem(MenuRoot + "模拟查询（连击=3）", false, 502)]
         private static void SimulateCombo3()
         {
             float dmg = ComboBonusManager.GetDamageMultiplierForCombo(3);
@@ -78,7 +78,7 @@ namespace LAB2D.Editor
                 "OK");
         }
 
-        [MenuItem(MenuRoot + "模拟查询（连击=5）")]
+        [MenuItem(MenuRoot + "模拟查询（连击=5）", false, 503)]
         private static void SimulateCombo5()
         {
             float dmg = ComboBonusManager.GetDamageMultiplierForCombo(5);
@@ -89,7 +89,7 @@ namespace LAB2D.Editor
                 "OK");
         }
 
-        [MenuItem(MenuRoot + "模拟查询（连击=50）")]
+        [MenuItem(MenuRoot + "模拟查询（连击=50）", false, 504)]
         private static void SimulateCombo50()
         {
             float dmg = ComboBonusManager.GetDamageMultiplierForCombo(50);

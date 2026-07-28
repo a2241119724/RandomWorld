@@ -45,7 +45,7 @@ namespace LAB2D.Editor
         private static readonly Regex CurrentStatusRegex = new Regex(@"当前状态\s*[:：]\s*(?<value>.+)$", RegexOptions.Compiled);
         private static readonly Regex FinalStatusRegex = new Regex(@"最终状态\s*[:：]\s*(?<value>.+)$", RegexOptions.Compiled);
 
-        [MenuItem(MenuPath)]
+        [MenuItem(MenuPath, false, 710)]
         private static void ExportReport()
         {
             DateTime now = DateTime.Now;

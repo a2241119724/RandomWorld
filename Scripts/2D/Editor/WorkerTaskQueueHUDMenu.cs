@@ -13,7 +13,7 @@ namespace LAB2D.Editor
         /// <summary>
         /// 查看当前任务队列摘要。
         /// </summary>
-        [MenuItem(WorkerTaskHudConstant.MenuRoot + "查看任务队列摘要", false, 1)]
+        [MenuItem(WorkerTaskHudConstant.MenuRoot + "查看任务队列摘要", false, 430)]
         private static void ShowTaskQueueSummary()
         {
             if (!Application.isPlaying)

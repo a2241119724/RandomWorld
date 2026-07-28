@@ -23,7 +23,7 @@ namespace LAB2D.Editor
         private const string ResourcesLocalPrefabRoot = "Assets/ResourcesLocal/Prefabs";
         private const string AddressableRoot = "Assets/AddressableAssetsData";
 
-        [MenuItem(MenuPath)]
+        [MenuItem(MenuPath, false, 720)]
         private static void ExportReport()
         {
             DateTime now = DateTime.Now;

@@ -15,7 +15,7 @@ namespace LAB2D.Editor
         /// 检查所有必需的脚本文件、枚举、常量和工具类是否存在以及基本逻辑一致性。
         /// 输出验证报告到 Console。
         /// </summary>
-        [MenuItem(SkillConstant.MenuRoot + SkillConstant.MenuVerifySystem, false, 2)]
+        [MenuItem(SkillConstant.MenuRoot + SkillConstant.MenuVerifySystem, false, 220)]
         public static void VerifySkillSystem()
         {
             Debug.Log("===== 主动技能系统完整性验证 =====");

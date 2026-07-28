@@ -60,7 +60,7 @@ namespace LAB2D.Editor
             public int ButtonsWithThemeColors;
         }
 
-        [MenuItem(AuditCommand, false, 40)]
+        [MenuItem(AuditCommand, false, 55)]
         private static void GenerateReport()
         {
             var counts = new AuditCounts();

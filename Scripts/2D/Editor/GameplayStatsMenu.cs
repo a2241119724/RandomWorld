@@ -13,7 +13,7 @@ namespace LAB2D.Editor
     {
         private const string MenuRoot = "工具/玩法统计/";
 
-        [MenuItem(MenuRoot + "查看会话统计")]
+        [MenuItem(MenuRoot + "查看会话统计", false, 510)]
         private static void ShowSessionStats()
         {
             if (!Application.isPlaying)
@@ -43,7 +43,7 @@ namespace LAB2D.Editor
                 "OK");
         }
 
-        [MenuItem(MenuRoot + "重置会话统计")]
+        [MenuItem(MenuRoot + "重置会话统计", false, 511)]
         private static void ResetSessionStats()
         {
             if (!Application.isPlaying)
