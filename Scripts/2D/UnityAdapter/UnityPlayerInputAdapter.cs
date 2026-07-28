@@ -69,10 +69,15 @@
                 return null;
             }
 
-            // 限制对角线移动
-            GameVector2 direction = new GameVector2(
-                MathHelper.Clamp(horizontal, -1f, 1f),
-                MathHelper.Clamp(vertical, -1f, 1f));
+            // 归一化方向向量，防止对角线移动速度过快
+            float magnitude = Mathf.Sqrt((horizontal * horizontal) + (vertical * vertical));
+            if (magnitude > 0.0001f)
+            {
+                horizontal /= magnitude;
+                vertical /= magnitude;
+            }
+
+            GameVector2 direction = new GameVector2(horizontal, vertical);
 
             return new PlayerMoveCommand
             {
@@ -112,6 +117,14 @@
             {
                 horizontal = Joystick.Instance.Direction.x;
                 vertical = Joystick.Instance.Direction.y;
+            }
+
+            // 归一化方向向量，防止对角线移动速度过快
+            float magnitude = Mathf.Sqrt((horizontal * horizontal) + (vertical * vertical));
+            if (magnitude > 0.0001f)
+            {
+                horizontal /= magnitude;
+                vertical /= magnitude;
             }
 
             return new PlayerMoveCommand
