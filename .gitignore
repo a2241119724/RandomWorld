@@ -1,4 +1,4 @@
-﻿/Library/
+/Library/
 /Temp/
 /Logs/
 /Obj/
@@ -6,6 +6,7 @@
 /.vs/
 /UserSettings/
 /MemoryCaptures/
+/.codegraph/
 *.csproj
 *.sln
 *.suo
