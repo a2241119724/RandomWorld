@@ -2,71 +2,15 @@ namespace LAB2D.Editor
 {
     using UnityEditor;
     using UnityEngine;
-    using UnityEngine.SceneManagement;
 
     /// <summary>
-    /// 浮动战斗文字系统 Editor 菜单工具
-    /// 用途：在 Unity Editor 中提供一键安装/移除浮动文字系统 UI 的菜单项。
+    /// 浮动战斗文字系统 Editor 菜单工具 — 验证系统配置完整性。
     /// 仅在 Editor 环境下编译，不会进入运行时构建。
     ///
     /// 菜单路径：工具/战斗文字/
     /// </summary>
     public static class FloatingTextMenu
     {
-        /// <summary>
-        /// 安装浮动文字系统到当前打开的 Game 场景
-        /// 在场景中创建独立的浮动文字 Canvas，不修改已有场景对象。
-        /// 重复执行安全：已存在时跳过创建。
-        /// </summary>
-        [MenuItem(FloatingTextConstant.EditorMenuInstallToGame)]
-        private static void InstallFloatingTextToGame()
-        {
-            Scene gameScene = SceneManager.GetActiveScene();
-            if (!gameScene.IsValid() || !gameScene.name.Contains("Game"))
-            {
-                Debug.LogWarning("[浮动战斗文字] 当前场景不是 Game 场景，请在 Game 场景中执行安装。"
-                    + $"当前场景：{gameScene.name}");
-                return;
-            }
-
-            // FloatingTextCanvas 和 FloatingTextPool 应在场景中手动创建
-            GameObject canvasObj = GameObject.Find(FloatingTextConstant.CanvasName);
-            if (canvasObj == null)
-            {
-                Debug.LogWarning($"[浮动战斗文字] 场景中未找到 {FloatingTextConstant.CanvasName}，请手动创建。");
-                return;
-            }
-
-            Debug.Log("[浮动战斗文字] 安装完成。运行时 FloatingTextManager 会自动初始化并填充对象池。");
-        }
-
-        /// <summary>
-        /// 从当前 Game 场景移除浮动文字系统
-        /// 删除浮动文字 Canvas 及其所有子对象。
-        /// </summary>
-        [MenuItem(FloatingTextConstant.EditorMenuRemoveFromGame)]
-        private static void RemoveFloatingTextFromGame()
-        {
-            Scene gameScene = SceneManager.GetActiveScene();
-            if (!gameScene.IsValid() || !gameScene.name.Contains("Game"))
-            {
-                Debug.LogWarning("[浮动战斗文字] 当前场景不是 Game 场景，请在 Game 场景中执行移除。"
-                    + $"当前场景：{gameScene.name}");
-                return;
-            }
-
-            GameObject canvasObj = GameObject.Find(FloatingTextConstant.CanvasName);
-            if (canvasObj != null)
-            {
-                Object.DestroyImmediate(canvasObj);
-                Debug.Log($"[浮动战斗文字] 已移除 Canvas: {FloatingTextConstant.CanvasName}");
-            }
-            else
-            {
-                Debug.Log("[浮动战斗文字] 未找到浮动文字 Canvas，无需移除。");
-            }
-        }
-
         /// <summary>
         /// 验证浮动文字系统配置完整性
         /// 检查常量、工具类、枚举和脚本文件是否就绪。

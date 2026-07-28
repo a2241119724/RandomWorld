@@ -1,15 +1,11 @@
 namespace LAB2D.Editor
 {
-    using System.IO;
     using UnityEditor;
-    using UnityEditor.SceneManagement;
     using UnityEngine;
-    using UnityEngine.SceneManagement;
-    using UnityEngine.UI;
 
     /// <summary>
     /// A006 殖民地运营指挥中心 Editor 菜单。
-    /// 提供运行时报告查看、监控开关、Tip 开关、Game.unity UI 安装、ResourcesLocal Prefab 生成和场景 UI 回滚入口；Editor 专用逻辑不会进入运行时构建。
+    /// 提供运行时报告查看、监控开关和 Tip 开关；Editor 专用逻辑不会进入运行时构建。
     /// </summary>
     public static class ColonyCommandCenterMenu
     {
@@ -88,150 +84,6 @@ namespace LAB2D.Editor
                 "殖民地指挥中心",
                 shown ? "已请求显示当前指挥中心 Tip。" : "当前报告未达到提示等级。",
                 "确定");
-        }
-
-        /// <summary>
-        /// 在 Game.unity 中将指挥中心 HUD 安装到 UIRoot/Foreground 下，复用已有 UI Canvas。
-        /// </summary>
-        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "创建指挥中心 HUD 到 Game 场景", false, 60)]
-        private static void CreateHudInGameScene()
-        {
-            string scenePath = FindGameScenePath();
-            if (string.IsNullOrEmpty(scenePath))
-            {
-                EditorUtility.DisplayDialog("殖民地指挥中心", "未找到 Game.unity，无法创建指挥中心 HUD。", "确定");
-                return;
-            }
-
-            Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
-            Transform parent = FindSceneForeground();
-            if (parent == null)
-            {
-                EditorUtility.DisplayDialog("殖民地指挥中心", "未找到 UIRoot/Foreground，无法创建指挥中心 HUD。", "确定");
-                return;
-            }
-
-            GameObject root = GameObject.Find(ColonyCommandCenterConstant.HudRootName);
-            if (root == null)
-            {
-                EditorUtility.DisplayDialog(
-                    "殖民地指挥中心",
-                    $"场景中未找到 {ColonyCommandCenterConstant.HudRootName}，请在场景中手动创建。",
-                    "确定");
-                return;
-            }
-
-            EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
-            Selection.activeGameObject = root;
-            EditorGUIUtility.PingObject(root);
-
-            EditorUtility.DisplayDialog(
-                "殖民地指挥中心",
-                "A006 指挥中心 HUD 已存在。",
-                "确定");
-        }
-
-        /// <summary>
-        /// 在当前场景中查找 Foreground 面板 Transform。
-        /// </summary>
-        /// <returns>Foreground Transform，找不到时返回 null。</returns>
-        private static Transform FindSceneForeground()
-        {
-            GameObject uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG);
-            if (uiRoot == null)
-            {
-                return null;
-            }
-
-            return uiRoot.transform.Find("Foreground");
-        }
-
-        /// <summary>
-        /// 创建 ResourcesLocal 指挥中心 HUD Prefab。
-        /// </summary>
-        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "创建 ResourcesLocal HUD Prefab", false, 61)]
-        private static void CreateResourcesLocalPrefab()
-        {
-            EditorUtility.DisplayDialog(
-                "殖民地指挥中心",
-                "Prefab 创建功能已禁用。请在场景中手动创建指挥中心 HUD 后生成 Prefab。",
-                "确定");
-        }
-
-        /// <summary>
-        /// 从当前场景移除指挥中心 UI。
-        /// 同时清理旧版独立 Canvas（若存在），兼容已安装旧 HUD 的场景。
-        /// </summary>
-        [MenuItem(ColonyCommandCenterConstant.MenuRoot + "从当前场景移除指挥中心 UI", false, 70)]
-        private static void RemoveHudFromCurrentScene()
-        {
-            int removed = 0;
-            removed += RemoveObjectByName(ColonyCommandCenterConstant.HudRootName);
-            removed += RemoveObjectByName(ColonyCommandCenterConstant.CanvasName);
-
-            if (removed > 0)
-            {
-                EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
-            }
-
-            EditorUtility.DisplayDialog(
-                "殖民地指挥中心",
-                removed > 0 ? $"已移除 {removed} 个 A006 UI 对象。" : "当前场景没有 A006 指挥中心 UI。",
-                "确定");
-        }
-
-        /// <summary>
-        /// 确保 Canvas 具备 GraphicRaycaster。
-        /// </summary>
-        /// <param name="canvasObject">Canvas 对象。</param>
-        private static void EnsureGraphicRaycaster(GameObject canvasObject)
-        {
-            if (canvasObject == null)
-            {
-                return;
-            }
-
-            if (canvasObject.GetComponent<GraphicRaycaster>() == null)
-            {
-                canvasObject.AddComponent<GraphicRaycaster>();
-            }
-        }
-
-        /// <summary>
-        /// 查找 Game.unity 的真实路径。
-        /// </summary>
-        /// <returns>场景路径，找不到时为空字符串。</returns>
-        private static string FindGameScenePath()
-        {
-            string[] guids = AssetDatabase.FindAssets(ColonyCommandCenterConstant.GameSceneName + " t:Scene", new[] { "Assets" });
-            foreach (string guid in guids)
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (Path.GetFileNameWithoutExtension(path) == ColonyCommandCenterConstant.GameSceneName)
-                {
-                    return path;
-                }
-            }
-
-            return string.Empty;
-        }
-
-        /// <summary>
-        /// 按名称移除场景对象。
-        /// </summary>
-        /// <param name="objectName">对象名称。</param>
-        /// <returns>移除数量。</returns>
-        private static int RemoveObjectByName(string objectName)
-        {
-            GameObject gameObject = GameObject.Find(objectName);
-            if (gameObject == null)
-            {
-                return 0;
-            }
-
-            Object.DestroyImmediate(gameObject);
-            return 1;
         }
     }
 }

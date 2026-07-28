@@ -68,14 +68,5 @@ namespace LAB2D.Constant
 
         /// <summary>Editor 菜单根路径</summary>
         public const string EditorMenuRoot = "工具/成就/";
-
-        /// <summary>安装成就系统到 Game 场景菜单路径</summary>
-        public const string EditorMenuInstallToGame = EditorMenuRoot + "安装成就系统到 Game 场景";
-
-        /// <summary>从 Game 场景移除成就系统菜单路径</summary>
-        public const string EditorMenuRemoveFromGame = EditorMenuRoot + "从 Game 场景移除成就系统";
-
-        /// <summary>创建成就面板 UI Prefab 到 ResourcesLocal 菜单路径</summary>
-        public const string EditorMenuCreatePrefab = EditorMenuRoot + "创建成就面板 Prefab 到 ResourcesLocal";
     }
 }

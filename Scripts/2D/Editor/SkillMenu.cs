@@ -2,69 +2,14 @@ namespace LAB2D.Editor
 {
     using LAB2D;
     using UnityEditor;
-    using UnityEditor.SceneManagement;
     using UnityEngine;
-    using UnityEngine.SceneManagement;
-    using UnityEngine.UI;
 
     /// <summary>
-    /// 主动技能系统 Editor 菜单工具。
-    /// 提供安装/移除/验证三项功能，降低 Game 场景手动修改风险。
+    /// 主动技能系统 Editor 菜单工具 — 验证系统完整性。
     /// 仅在 Unity Editor 环境下使用，不会被打包到运行时。
     /// </summary>
     public static class SkillMenu
     {
-        /// <summary>
-        /// 安装技能 HUD 到当前打开的 Game 场景。
-        /// 挂载到 UI/Foreground 下，复用 UI 的 Canvas。
-        /// 不覆盖已有对象，重复执行会跳过。
-        /// </summary>
-        [MenuItem(SkillConstant.MenuRoot + SkillConstant.MenuInstallToScene, false, 0)]
-        public static void InstallSkillHUDToScene()
-        {
-            Scene activeScene = SceneManager.GetActiveScene();
-
-            GameObject existingRoot = GameObject.Find(SkillConstant.SkillHUDRootName);
-            if (existingRoot != null)
-            {
-                Debug.Log(
-                    $"[SkillMenu] 技能HUD根节点已存在 ({SkillConstant.SkillHUDRootName})。");
-                return;
-            }
-
-            Debug.LogWarning($"[SkillMenu] 场景中未找到 {SkillConstant.SkillHUDRootName}，请在场景中手动创建。");
-        }
-
-        /// <summary>
-        /// 从当前场景中移除技能 HUD。
-        /// 仅删除 SkillHUD 相关的节点，不影响其他 UI。
-        /// </summary>
-        [MenuItem(SkillConstant.MenuRoot + SkillConstant.MenuRemoveFromScene, false, 1)]
-        public static void RemoveSkillHUDFromScene()
-        {
-            Scene activeScene = SceneManager.GetActiveScene();
-            bool removed = false;
-
-            // 移除根节点
-            GameObject root = GameObject.Find(SkillConstant.SkillHUDRootName);
-            if (root != null)
-            {
-                Object.DestroyImmediate(root);
-                removed = true;
-                Debug.Log($"[SkillMenu] 已移除 {SkillConstant.SkillHUDRootName}");
-            }
-
-            if (removed)
-            {
-                EditorSceneManager.MarkSceneDirty(activeScene);
-                Debug.Log($"[SkillMenu] 技能 HUD 已从场景 '{activeScene.name}' 移除。");
-            }
-            else
-            {
-                Debug.Log("[SkillMenu] 场景中未找到技能 HUD，无需移除。");
-            }
-        }
-
         /// <summary>
         /// 验证主动技能系统的完整性。
         /// 检查所有必需的脚本文件、枚举、常量和工具类是否存在以及基本逻辑一致性。

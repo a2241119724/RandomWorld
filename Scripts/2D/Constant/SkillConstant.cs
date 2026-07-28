@@ -144,12 +144,6 @@ namespace LAB2D.Constant
         /// <summary>Editor 菜单根路径</summary>
         public const string MenuRoot = "工具/技能/";
 
-        /// <summary>安装技能HUD到Game场景菜单项</summary>
-        public const string MenuInstallToScene = "安装技能HUD到Game场景";
-
-        /// <summary>从Game场景移除技能HUD菜单项</summary>
-        public const string MenuRemoveFromScene = "从Game场景移除技能HUD";
-
         /// <summary>验证主动技能系统完整性菜单项</summary>
         public const string MenuVerifySystem = "验证主动技能系统完整性";
 
