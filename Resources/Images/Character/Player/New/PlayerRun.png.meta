@@ -113,10 +113,10 @@ TextureImporter:
       name: PlayerRun_0
       rect:
         serializedVersion: 2
-        x: 5
-        y: 649
-        width: 130
-        height: 194
+        x: 3
+        y: 346
+        width: 69
+        height: 104
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -134,10 +134,10 @@ TextureImporter:
       name: PlayerRun_1
       rect:
         serializedVersion: 2
-        x: 240
-        y: 650
-        width: 130
-        height: 192
+        x: 128
+        y: 346
+        width: 70
+        height: 103
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -155,10 +155,10 @@ TextureImporter:
       name: PlayerRun_2
       rect:
         serializedVersion: 2
-        x: 463
-        y: 651
-        width: 130
-        height: 192
+        x: 247
+        y: 347
+        width: 70
+        height: 103
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -176,10 +176,10 @@ TextureImporter:
       name: PlayerRun_3
       rect:
         serializedVersion: 2
-        x: 685
-        y: 649
-        width: 134
-        height: 194
+        x: 366
+        y: 346
+        width: 71
+        height: 104
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -197,10 +197,10 @@ TextureImporter:
       name: PlayerRun_4
       rect:
         serializedVersion: 2
-        x: 905
-        y: 649
-        width: 130
-        height: 194
+        x: 483
+        y: 346
+        width: 69
+        height: 104
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -218,10 +218,10 @@ TextureImporter:
       name: PlayerRun_5
       rect:
         serializedVersion: 2
-        x: 1120
-        y: 650
-        width: 132
-        height: 193
+        x: 598
+        y: 346
+        width: 70
+        height: 104
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -239,10 +239,10 @@ TextureImporter:
       name: PlayerRun_6
       rect:
         serializedVersion: 2
-        x: 11
-        y: 426
-        width: 122
-        height: 200
+        x: 6
+        y: 227
+        width: 65
+        height: 107
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -260,10 +260,10 @@ TextureImporter:
       name: PlayerRun_7
       rect:
         serializedVersion: 2
-        x: 245
-        y: 426
-        width: 122
-        height: 200
+        x: 131
+        y: 227
+        width: 65
+        height: 107
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -281,10 +281,10 @@ TextureImporter:
       name: PlayerRun_8
       rect:
         serializedVersion: 2
-        x: 471
-        y: 428
-        width: 119
-        height: 198
+        x: 252
+        y: 228
+        width: 63
+        height: 106
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -302,10 +302,10 @@ TextureImporter:
       name: PlayerRun_9
       rect:
         serializedVersion: 2
-        x: 692
-        y: 432
-        width: 120
-        height: 194
+        x: 369
+        y: 230
+        width: 64
+        height: 104
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -323,10 +323,10 @@ TextureImporter:
       name: PlayerRun_10
       rect:
         serializedVersion: 2
-        x: 915
-        y: 426
-        width: 117
-        height: 200
+        x: 488
+        y: 227
+        width: 63
+        height: 107
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -344,10 +344,10 @@ TextureImporter:
       name: PlayerRun_11
       rect:
         serializedVersion: 2
-        x: 1128
-        y: 426
-        width: 120
-        height: 200
+        x: 602
+        y: 227
+        width: 64
+        height: 107
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -365,10 +365,10 @@ TextureImporter:
       name: PlayerRun_12
       rect:
         serializedVersion: 2
-        x: 13
-        y: 219
-        width: 128
-        height: 181
+        x: 7
+        y: 116
+        width: 69
+        height: 97
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -386,10 +386,10 @@ TextureImporter:
       name: PlayerRun_13
       rect:
         serializedVersion: 2
-        x: 250
-        y: 219
-        width: 124
-        height: 181
+        x: 134
+        y: 116
+        width: 66
+        height: 97
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -407,10 +407,10 @@ TextureImporter:
       name: PlayerRun_14
       rect:
         serializedVersion: 2
-        x: 467
-        y: 218
-        width: 129
-        height: 181
+        x: 249
+        y: 116
+        width: 69
+        height: 96
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -428,10 +428,10 @@ TextureImporter:
       name: PlayerRun_15
       rect:
         serializedVersion: 2
-        x: 698
-        y: 218
-        width: 123
-        height: 182
+        x: 373
+        y: 116
+        width: 65
+        height: 97
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -449,10 +449,10 @@ TextureImporter:
       name: PlayerRun_16
       rect:
         serializedVersion: 2
-        x: 919
-        y: 218
-        width: 129
-        height: 183
+        x: 490
+        y: 116
+        width: 69
+        height: 98
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -470,10 +470,10 @@ TextureImporter:
       name: PlayerRun_17
       rect:
         serializedVersion: 2
-        x: 1131
-        y: 218
-        width: 122
-        height: 183
+        x: 603
+        y: 116
+        width: 65
+        height: 98
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -492,9 +492,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 1
-        width: 121
-        height: 183
+        y: 0
+        width: 65
+        height: 98
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -512,10 +512,10 @@ TextureImporter:
       name: PlayerRun_19
       rect:
         serializedVersion: 2
-        x: 230
+        x: 123
         y: 0
-        width: 124
-        height: 183
+        width: 66
+        height: 97
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -533,10 +533,10 @@ TextureImporter:
       name: PlayerRun_20
       rect:
         serializedVersion: 2
-        x: 456
+        x: 244
         y: 0
-        width: 120
-        height: 184
+        width: 64
+        height: 98
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -554,10 +554,10 @@ TextureImporter:
       name: PlayerRun_21
       rect:
         serializedVersion: 2
-        x: 678
-        y: 1
-        width: 121
-        height: 183
+        x: 362
+        y: 0
+        width: 64
+        height: 98
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -575,10 +575,10 @@ TextureImporter:
       name: PlayerRun_22
       rect:
         serializedVersion: 2
-        x: 898
-        y: 2
-        width: 125
-        height: 182
+        x: 479
+        y: 1
+        width: 67
+        height: 97
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -596,10 +596,10 @@ TextureImporter:
       name: PlayerRun_23
       rect:
         serializedVersion: 2
-        x: 1117
-        y: 2
-        width: 123
-        height: 182
+        x: 596
+        y: 1
+        width: 66
+        height: 97
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

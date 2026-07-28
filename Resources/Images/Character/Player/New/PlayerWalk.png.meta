@@ -113,10 +113,10 @@ TextureImporter:
       name: PlayerWalk_0
       rect:
         serializedVersion: 2
-        x: 7
-        y: 630
-        width: 106
-        height: 209
+        x: 5
+        y: 337
+        width: 56
+        height: 113
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -134,10 +134,10 @@ TextureImporter:
       name: PlayerWalk_1
       rect:
         serializedVersion: 2
-        x: 215
-        y: 630
-        width: 107
-        height: 209
+        x: 116
+        y: 337
+        width: 58
+        height: 113
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -155,10 +155,10 @@ TextureImporter:
       name: PlayerWalk_2
       rect:
         serializedVersion: 2
-        x: 423
-        y: 630
-        width: 107
-        height: 209
+        x: 227
+        y: 337
+        width: 58
+        height: 113
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -176,10 +176,10 @@ TextureImporter:
       name: PlayerWalk_3
       rect:
         serializedVersion: 2
-        x: 624
-        y: 630
-        width: 110
-        height: 209
+        x: 334
+        y: 337
+        width: 60
+        height: 113
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -197,10 +197,10 @@ TextureImporter:
       name: PlayerWalk_4
       rect:
         serializedVersion: 2
-        x: 830
-        y: 630
-        width: 109
-        height: 209
+        x: 445
+        y: 337
+        width: 58
+        height: 113
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -218,10 +218,10 @@ TextureImporter:
       name: PlayerWalk_5
       rect:
         serializedVersion: 2
-        x: 1011
-        y: 630
-        width: 108
-        height: 209
+        x: 543
+        y: 337
+        width: 56
+        height: 113
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -239,10 +239,10 @@ TextureImporter:
       name: PlayerWalk_6
       rect:
         serializedVersion: 2
-        x: 11
-        y: 411
-        width: 99
-        height: 206
+        x: 7
+        y: 219
+        width: 53
+        height: 111
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -260,10 +260,10 @@ TextureImporter:
       name: PlayerWalk_7
       rect:
         serializedVersion: 2
-        x: 219
-        y: 411
-        width: 99
-        height: 206
+        x: 118
+        y: 219
+        width: 53
+        height: 111
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -281,10 +281,10 @@ TextureImporter:
       name: PlayerWalk_8
       rect:
         serializedVersion: 2
-        x: 424
-        y: 411
-        width: 101
-        height: 206
+        x: 227
+        y: 219
+        width: 54
+        height: 111
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -302,10 +302,10 @@ TextureImporter:
       name: PlayerWalk_9
       rect:
         serializedVersion: 2
-        x: 624
-        y: 411
-        width: 101
-        height: 206
+        x: 334
+        y: 219
+        width: 55
+        height: 111
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -323,10 +323,10 @@ TextureImporter:
       name: PlayerWalk_10
       rect:
         serializedVersion: 2
-        x: 833
-        y: 411
-        width: 103
-        height: 206
+        x: 447
+        y: 219
+        width: 55
+        height: 111
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -344,10 +344,10 @@ TextureImporter:
       name: PlayerWalk_11
       rect:
         serializedVersion: 2
-        x: 1015
-        y: 411
-        width: 101
-        height: 206
+        x: 544
+        y: 219
+        width: 54
+        height: 111
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -365,10 +365,10 @@ TextureImporter:
       name: PlayerWalk_12
       rect:
         serializedVersion: 2
-        x: 22
-        y: 211
-        width: 88
-        height: 192
+        x: 13
+        y: 112
+        width: 47
+        height: 104
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -386,10 +386,10 @@ TextureImporter:
       name: PlayerWalk_13
       rect:
         serializedVersion: 2
-        x: 230
-        y: 214
-        width: 93
-        height: 189
+        x: 124
+        y: 114
+        width: 50
+        height: 102
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -407,10 +407,10 @@ TextureImporter:
       name: PlayerWalk_14
       rect:
         serializedVersion: 2
-        x: 433
-        y: 211
-        width: 95
-        height: 192
+        x: 233
+        y: 112
+        width: 51
+        height: 104
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -428,10 +428,10 @@ TextureImporter:
       name: PlayerWalk_15
       rect:
         serializedVersion: 2
-        x: 633
-        y: 210
-        width: 92
-        height: 193
+        x: 340
+        y: 112
+        width: 49
+        height: 104
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -449,10 +449,10 @@ TextureImporter:
       name: PlayerWalk_16
       rect:
         serializedVersion: 2
-        x: 829
-        y: 214
-        width: 103
-        height: 189
+        x: 444
+        y: 114
+        width: 55
+        height: 102
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -470,10 +470,10 @@ TextureImporter:
       name: PlayerWalk_17
       rect:
         serializedVersion: 2
-        x: 1029
-        y: 211
-        width: 93
-        height: 192
+        x: 551
+        y: 112
+        width: 49
+        height: 104
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -493,8 +493,8 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 92
-        height: 200
+        width: 50
+        height: 106
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -512,10 +512,10 @@ TextureImporter:
       name: PlayerWalk_19
       rect:
         serializedVersion: 2
-        x: 212
-        y: 3
-        width: 101
-        height: 196
+        x: 114
+        y: 1
+        width: 54
+        height: 104
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -533,10 +533,10 @@ TextureImporter:
       name: PlayerWalk_20
       rect:
         serializedVersion: 2
-        x: 417
+        x: 224
         y: 0
-        width: 96
-        height: 199
+        width: 52
+        height: 105
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -554,10 +554,10 @@ TextureImporter:
       name: PlayerWalk_21
       rect:
         serializedVersion: 2
-        x: 615
+        x: 330
         y: 0
-        width: 94
-        height: 199
+        width: 50
+        height: 105
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -575,10 +575,10 @@ TextureImporter:
       name: PlayerWalk_22
       rect:
         serializedVersion: 2
-        x: 825
-        y: 3
-        width: 102
-        height: 197
+        x: 442
+        y: 1
+        width: 55
+        height: 105
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -596,10 +596,10 @@ TextureImporter:
       name: PlayerWalk_23
       rect:
         serializedVersion: 2
-        x: 1020
+        x: 547
         y: 0
-        width: 98
-        height: 200
+        width: 52
+        height: 106
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
