@@ -142,7 +142,7 @@ namespace LAB2D.Constant
         #region 菜单路径
 
         /// <summary>Editor 菜单根路径</summary>
-        public const string MenuRoot = "工具/智能体/主动技能系统/";
+        public const string MenuRoot = "工具/技能/";
 
         /// <summary>安装技能HUD到Game场景菜单项</summary>
         public const string MenuInstallToScene = "安装技能HUD到Game场景";

@@ -11,7 +11,7 @@ namespace LAB2D.Editor
     /// </summary>
     public static class SessionResultAutoTriggerMenu
     {
-        private const string MenuRoot = "工具/结算自动触发";
+        private const string MenuRoot = "工具/结算/自动触发";
 
         /// <summary>
         /// 获取当前活动的 SessionResultAutoTrigger 实例（可能为 null）

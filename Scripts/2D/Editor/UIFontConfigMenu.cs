@@ -7,7 +7,7 @@ namespace LAB2D.Editor
 
     public static class UIFontConfigMenu
     {
-        private const string MenuRoot = "工具/LLM/";
+        private const string MenuRoot = "工具/界面/字体配置/";
         private const string CreateConfig = MenuRoot + "创建/选中 UI 字体配置";
         private const string ApplyToScene = MenuRoot + "应用全局字体到所有 UI";
 

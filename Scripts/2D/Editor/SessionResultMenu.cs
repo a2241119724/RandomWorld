@@ -6,7 +6,7 @@ namespace LAB2D.Editor
 
     /// <summary>
     /// Editor 菜单工具：会话结算数据的采集、查看和管理。
-    /// 菜单路径：工具 > 结算结果
+    /// 菜单路径：工具 > 结算
     ///
     /// 功能：
     ///   - Capture Now：从当前 GameplaySessionStats 采集一次结算数据
@@ -16,7 +16,7 @@ namespace LAB2D.Editor
     /// </summary>
     public static class SessionResultMenu
     {
-        private const string MenuRoot = "工具/结算结果/";
+        private const string MenuRoot = "工具/结算/";
 
         [MenuItem(MenuRoot + "立即采集")]
         private static void CaptureNow()

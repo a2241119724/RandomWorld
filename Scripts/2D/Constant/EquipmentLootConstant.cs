@@ -172,7 +172,7 @@ namespace LAB2D.Constant
         // ============================================================
 
         /// <summary>Editor 菜单根路径</summary>
-        public const string EditorMenuRoot = "工具/智能体/装备掉落系统/";
+        public const string EditorMenuRoot = "工具/装备掉落/";
 
         /// <summary>安装 UI 菜单路径</summary>
         public const string EditorMenuInstall = EditorMenuRoot + "安装装备掉落 UI 到 Game 场景";

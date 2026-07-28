@@ -10,7 +10,7 @@ namespace LAB2D.Constant
     public class WaveBossRewardConstant
     {
         /// <summary>Editor 菜单根路径。</summary>
-        public const string MenuRoot = "工具/智能体/波次Boss奖励/";
+        public const string MenuRoot = "工具/波次/Boss奖励/";
 
         /// <summary>真实 Game 场景名称。</summary>
         public const string GameSceneName = "Game";

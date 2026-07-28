@@ -97,7 +97,7 @@ namespace LAB2D.Editor
             var config = AI.Dialogue.LLM.UIFontConfig.Instance;
             if (config == null || config.font == null)
             {
-                Debug.LogWarning("[UIOneClick] 未找到 UIFontConfig，跳过字体步骤。请先运行 工具/LLM/创建 UI 字体配置。");
+                Debug.LogWarning("[UIOneClick] 未找到 UIFontConfig，跳过字体步骤。请先运行 工具/界面/字体配置/创建 UI 字体配置。");
                 return 0;
             }
 

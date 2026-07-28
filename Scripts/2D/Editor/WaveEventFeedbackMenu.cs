@@ -14,7 +14,7 @@ namespace LAB2D.Editor
     /// </summary>
     public static class WaveEventFeedbackMenu
     {
-        private const string MenuRoot = "工具/波次事件反馈/";
+        private const string MenuRoot = "工具/波次/事件反馈/";
 
         [MenuItem(MenuRoot + "查看反馈状态")]
         private static void ShowFeedbackStatus()

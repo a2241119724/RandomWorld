@@ -11,7 +11,7 @@ namespace LAB2D.Editor
     /// </summary>
     public static class WaveManagerMenu
     {
-        private const string MenuRoot = "工具/波次管理/";
+        private const string MenuRoot = "工具/波次/管理/";
 
         [MenuItem(MenuRoot + "开始波次")]
         private static void StartWaves()

@@ -18,7 +18,7 @@ namespace LAB2D.Constant
         /// Editor 菜单根路径。
         /// 仅供 Editor 脚本复用，运行时代码不会引用 UnityEditor。
         /// </summary>
-        public const string MenuRoot = "工具/智能体/A006 殖民地指挥中心/";
+        public const string MenuRoot = "工具/指挥中心/";
 
         /// <summary>
         /// Game 场景查找名称。

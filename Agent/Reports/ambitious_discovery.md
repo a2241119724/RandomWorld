@@ -106,7 +106,7 @@
   - 新增文件：`Scripts/2D/Enum/WavePhaseType.cs`、`Scripts/2D/Enum/WaveRewardType.cs`、`Scripts/2D/Constant/WaveBossRewardConstant.cs`、`Scripts/2D/Tool/WaveBossRewardTool.cs`、`Scripts/2D/Gameplay/WaveBossRewardManager.cs`、`Scripts/2D/UI/WaveBossRewardPanel.cs`、`Scripts/2D/Editor/WaveBossRewardMenu.cs` 及 `.meta`
   - 修改文件：`Scripts/2D/Gameplay/WaveManager.cs`、`Scripts/2D/Character/Character.cs`、`Scripts/2D/Character/Player/Player.cs`
   - 新增能力：Boss 波、普通敌人难度缩放、Boss 属性/视觉强化、波间三选一奖励、玩家本局伤害/减伤/移动奖励、运行时动态奖励面板、Editor 菜单安装和移除 UI
-  - UI 生成方式：未直接写入 `Game.unity`，未手写 `ResourcesLocal` Prefab；提供菜单 `工具/智能体/波次Boss奖励/创建奖励面板到 Game 场景`，并在奖励出现时运行时动态创建独立 Canvas
+  - UI 生成方式：未直接写入 `Game.unity`，未手写 `ResourcesLocal` Prefab；提供菜单 `工具/波次/Boss奖励/创建奖励面板到 Game 场景`，并在奖励出现时运行时动态创建独立 Canvas
   - Tool：复用 `WeatherGameplayTool.ApplyMultiplier()` 与 `Tool.IsUIInputActive()`，新增 `WaveBossRewardTool.cs`
   - Enum：新增 `WavePhaseType.cs`、`WaveRewardType.cs`
   - Constant：新增 `WaveBossRewardConstant.cs`

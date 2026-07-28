@@ -10,7 +10,7 @@ namespace LAB2D.Editor
     /// 用途：在 Unity Editor 中提供一键安装/移除成就系统 UI 的菜单项。
     /// 仅在 Editor 环境下编译，不会进入运行时构建。
     ///
-    /// 菜单路径：工具/智能体/成就系统/
+    /// 菜单路径：工具/成就/
     /// </summary>
     public static class AchievementMenu
     {

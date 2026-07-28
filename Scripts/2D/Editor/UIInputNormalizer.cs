@@ -15,37 +15,11 @@ namespace LAB2D.Editor
     public static class UIInputNormalizer
     {
         private const string MenuRoot = "工具/界面/";
-        private const string NormalizeInput = MenuRoot + "对齐输入组件颜色";
         private const string RestoreInput = MenuRoot + "还原输入组件默认颜色";
 
         /// <summary>
-        /// InputField 颜色方案 — 白色背景 + 像素主题交互反馈
+        /// 默认 InputField/Toggle 颜色方案
         /// </summary>
-        private static readonly ColorBlock InputFieldColors = new ColorBlock
-        {
-            normalColor      = Color.white,                           // 白色背景
-            highlightedColor = new Color32(252, 200, 213, 255),       // #FCC8D5 ButtonHighlighted
-            pressedColor     = new Color32(249, 213, 110, 255),       // #F9D56E ButtonPressed
-            selectedColor    = new Color32(252, 200, 213, 255),       // #FCC8D5 选中时高亮
-            disabledColor    = new Color32(200, 200, 200, 128),       // 半透明灰
-            colorMultiplier  = 1f,
-            fadeDuration     = 0.1f,
-        };
-
-        /// <summary>
-        /// Toggle 颜色方案
-        /// </summary>
-        private static readonly ColorBlock ToggleColors = new ColorBlock
-        {
-            normalColor      = Color.white,
-            highlightedColor = new Color32(252, 200, 213, 255),       // #FCC8D5
-            pressedColor     = new Color32(249, 213, 110, 255),       // #F9D56E
-            selectedColor    = new Color32(126, 203, 154, 255),       // #7ECB9A ButtonSelected
-            disabledColor    = new Color32(200, 200, 200, 128),
-            colorMultiplier  = 1f,
-            fadeDuration     = 0.1f,
-        };
-
         private static readonly ColorBlock DefaultInputColors = new ColorBlock
         {
             normalColor      = Color.white,
@@ -58,12 +32,6 @@ namespace LAB2D.Editor
         };
 
         private const string ExcludePattern = @"^$"; // 排除名称正则（默认不排除）
-
-        [MenuItem(NormalizeInput, false, 21)]
-        private static void NormalizeColors()
-        {
-            ApplyColors(InputFieldColors, ToggleColors);
-        }
 
         [MenuItem(RestoreInput, false, 22)]
         private static void RestoreDefaults()

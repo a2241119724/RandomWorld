@@ -9,7 +9,7 @@ namespace LAB2D.Editor
     /// 用途：在 Unity Editor 中提供一键安装/移除浮动文字系统 UI 的菜单项。
     /// 仅在 Editor 环境下编译，不会进入运行时构建。
     ///
-    /// 菜单路径：工具/智能体/浮动战斗文字/
+    /// 菜单路径：工具/战斗文字/
     /// </summary>
     public static class FloatingTextMenu
     {

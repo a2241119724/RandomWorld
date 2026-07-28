@@ -149,12 +149,12 @@ namespace LAB2D.Constant
         // =============================================================================================================
 
         /// <summary>安装浮动文字系统到 Game 场景的菜单路径</summary>
-        public const string EditorMenuInstallToGame = "工具/智能体/浮动战斗文字/安装浮动文字系统到 Game 场景";
+        public const string EditorMenuInstallToGame = "工具/战斗文字/安装浮动文字系统到 Game 场景";
 
         /// <summary>从 Game 场景移除浮动文字系统的菜单路径</summary>
-        public const string EditorMenuRemoveFromGame = "工具/智能体/浮动战斗文字/从 Game 场景移除浮动文字系统";
+        public const string EditorMenuRemoveFromGame = "工具/战斗文字/从 Game 场景移除浮动文字系统";
 
         /// <summary>验证浮动文字系统配置的菜单路径</summary>
-        public const string EditorMenuValidate = "工具/智能体/浮动战斗文字/验证浮动文字系统配置";
+        public const string EditorMenuValidate = "工具/战斗文字/验证浮动文字系统配置";
     }
 }
