@@ -2,7 +2,6 @@ namespace LAB2D.Item.Build.Room
 {
     using LAB2D;
     using LAB2D.Core;
-    using LAB2D.Item.Build.Wall;
     using System;
     using UnityEngine;
 
@@ -12,13 +11,10 @@ namespace LAB2D.Item.Build.Room
     [Serializable]
     public class Farmland : ARoom
     {
-        private readonly AWall soil;
-
         public Farmland()
         {
             this.Width = 4;
             this.Height = 3;
-            this.soil = new FarmlandWall();
         }
 
         /// <inheritdoc/>
@@ -36,11 +32,11 @@ namespace LAB2D.Item.Build.Room
             {
                 for (int j = boundary[2]; j <= boundary[3]; j++)
                 {
-                    Core.ServiceLocator.Get<BuildMap>().AddBuild(new Vector3Int(i, j, 0), this.soil.TileName);
+                    Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(i, j, 0), "FarmlandWall");
                 }
             }
 
-            Core.ServiceLocator.Get<BuildMap>().AddTask();
+            Core.ServiceLocator.Get<Map.BuildMap>().AddTask();
 
             // 添加仓库Cell
             ServiceLocator.Get<FarmlandManager>().AddCells(new Vector3Int(boundary[0], boundary[2]), width, height);

@@ -2,9 +2,6 @@ namespace LAB2D.Item.Build.Room
 {
     using LAB2D;
     using LAB2D.Core;
-    using LAB2D.Item.Build;
-    using LAB2D.Item.Build.Door;
-    using LAB2D.Item.Build.Wall;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -16,14 +13,14 @@ namespace LAB2D.Item.Build.Room
     public abstract class ARoom : ABuildItem
     {
         /// <summary>
-        /// 门
+        /// 门的瓦片名称
         /// </summary>
-        public ADoor Door;
+        public string DoorTile;
 
         /// <summary>
-        /// 房间的所有墙
+        /// 房间所有墙的方向 → 瓦片名称映射
         /// </summary>
-        public Dictionary<AWall.WallDirectionEnum, AWall> Walls;
+        public Dictionary<WallDirectionEnum, string> WallTiles;
 
         protected ARoom()
         {
@@ -44,27 +41,27 @@ namespace LAB2D.Item.Build.Room
             RoomInfo roomInfo = new ();
             for (int i = 1; i < width - 1; i++)
             {
-                Core.ServiceLocator.Get<BuildMap>().AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.DOWN].TileName)
-                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.TOP].TileName);
+                Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.WallTiles[WallDirectionEnum.DOWN])
+                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.WallTiles[WallDirectionEnum.TOP]);
                 roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2] + i, 0));
                 roomInfo.Points.Add(new Vector3Int(boundary[1], boundary[2] + i, 0));
             }
 
             for (int i = 1; i < height - 1; i++)
             {
-                Core.ServiceLocator.Get<BuildMap>().AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT].TileName)
-                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT].TileName);
+                Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT])
+                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT]);
                 roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[2], 0));
                 roomInfo.Points.Add(new Vector3Int(boundary[0] + i, boundary[3], 0));
             }
 
             // 四角加门
-            Core.ServiceLocator.Get<BuildMap>()
-                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_DOWN].TileName)
-                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_DOWN].TileName)
-                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_TOP].TileName)
-                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_TOP].TileName)
-                .AddBuild(new Vector3Int(boundary[0], boundary[2] + ((boundary[3] - boundary[2]) / 2), 0), this.Door.TileName);
+            Core.ServiceLocator.Get<Map.BuildMap>()
+                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT_DOWN])
+                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT_DOWN])
+                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT_TOP])
+                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT_TOP])
+                .AddBuild(new Vector3Int(boundary[0], boundary[2] + ((boundary[3] - boundary[2]) / 2), 0), this.DoorTile);
             roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[3], 0));
             roomInfo.Points.Add(new Vector3Int(boundary[0], boundary[2], 0));
             roomInfo.Points.Add(new Vector3Int(boundary[1], boundary[3], 0));

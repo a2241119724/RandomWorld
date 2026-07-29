@@ -2,6 +2,7 @@ namespace LAB2D.UI.Action
 {
     using LAB2D;
     using LAB2D.Core;
+    using LAB2D.Item.Build;
     using UnityEngine;
     using UnityEngine.EventSystems;
 
@@ -29,7 +30,7 @@ namespace LAB2D.UI.Action
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            ABuildItem buildItem = (ABuildItem)ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
             if (!buildItem.IsCustomSize)
             {
                 return;
@@ -41,7 +42,7 @@ namespace LAB2D.UI.Action
 
         public void OnDrag(PointerEventData eventData)
         {
-            ABuildItem buildItem = (ABuildItem)ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
             if (!buildItem.IsCustomSize)
             {
                 return;
@@ -53,7 +54,7 @@ namespace LAB2D.UI.Action
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            ABuildItem buildItem = (ABuildItem)ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
             if (!buildItem.IsCustomSize)
             {
                 return;
@@ -89,7 +90,7 @@ namespace LAB2D.UI.Action
             }
 
             Vector3Int centerMap = ServiceLocator.Get<TileMap>().WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
-            ABuildItem buildItem = (ABuildItem)ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
             if (ServiceLocator.Get<IsAvailableMap>().ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.RectType))
             {
                 buildItem.AddBuildTask(centerMap, null);
@@ -106,7 +107,7 @@ namespace LAB2D.UI.Action
 
             // 使用建造默认的大小
             Vector3Int centerMap = ServiceLocator.Get<TileMap>().WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
-            ABuildItem buildItem = (ABuildItem)ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
             ServiceLocator.Get<IsAvailableMap>().ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.RectType);
         }
     }

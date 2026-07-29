@@ -9,7 +9,7 @@ namespace LAB2D.Item.Build.Furniture.Bed
     /// 床
     /// </summary>
     [Serializable]
-    public abstract class ABed : AFurniture
+    public abstract class ABed : ABuildItem
     {
         public ABed()
         {
@@ -21,7 +21,7 @@ namespace LAB2D.Item.Build.Furniture.Bed
         {
             base.AddBuildTask(centerMap, extra);
 
-            // 添加
+            // 添加到家具管理器
             ServiceLocator.Get<FurnitureManager>().AddBed(centerMap);
         }
     }

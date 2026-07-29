@@ -16,16 +16,16 @@ namespace LAB2D.Item.Build.Room
         {
             this.Width = 10;
             this.Height = 7;
-            this.Walls = new Dictionary<AWall.WallDirectionEnum, AWall>
+            this.WallTiles = new Dictionary<WallDirectionEnum, string>
             {
-                { AWall.WallDirectionEnum.TOP, new InventoryWallT() },
-                { AWall.WallDirectionEnum.DOWN, new InventoryWallD() },
-                { AWall.WallDirectionEnum.LEFT, new InventoryWallL() },
-                { AWall.WallDirectionEnum.RIGHT, new InventoryWallR() },
-                { AWall.WallDirectionEnum.RIGHT_TOP, new InventoryWallRT() },
-                { AWall.WallDirectionEnum.RIGHT_DOWN, new InventoryWallRD() },
-                { AWall.WallDirectionEnum.LEFT_TOP, new InventoryWallLT() },
-                { AWall.WallDirectionEnum.LEFT_DOWN, new InventoryWallLD() },
+                { WallDirectionEnum.TOP, "InventoryWallT" },
+                { WallDirectionEnum.DOWN, "InventoryWallD" },
+                { WallDirectionEnum.LEFT, "InventoryWallL" },
+                { WallDirectionEnum.RIGHT, "InventoryWallR" },
+                { WallDirectionEnum.RIGHT_TOP, "InventoryWallRT" },
+                { WallDirectionEnum.RIGHT_DOWN, "InventoryWallRD" },
+                { WallDirectionEnum.LEFT_TOP, "InventoryWallLT" },
+                { WallDirectionEnum.LEFT_DOWN, "InventoryWallLD" },
             };
         }
 
@@ -42,22 +42,22 @@ namespace LAB2D.Item.Build.Room
 
             for (int i = 1; i < width - 1; i++)
             {
-                Core.ServiceLocator.Get<BuildMap>().AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.DOWN].TileName)
-                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.Walls[AWall.WallDirectionEnum.TOP].TileName);
+                Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.WallTiles[WallDirectionEnum.DOWN])
+                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.WallTiles[WallDirectionEnum.TOP]);
             }
 
             for (int i = 1; i < height - 1; i++)
             {
-                Core.ServiceLocator.Get<BuildMap>().AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT].TileName)
-                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT].TileName);
+                Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT])
+                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT]);
             }
 
-            // 四角加门
-            Core.ServiceLocator.Get<BuildMap>()
-                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_DOWN].TileName)
-                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_DOWN].TileName)
-                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.Walls[AWall.WallDirectionEnum.RIGHT_TOP].TileName)
-                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.Walls[AWall.WallDirectionEnum.LEFT_TOP].TileName);
+            // 四角
+            Core.ServiceLocator.Get<Map.BuildMap>()
+                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT_DOWN])
+                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT_DOWN])
+                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT_TOP])
+                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT_TOP]);
 
             // 添加仓库Cell
             ServiceLocator.Get<InventoryManager>().AddCells(new Vector3Int(boundary[0], boundary[2]), width, height);

@@ -502,14 +502,10 @@ namespace LAB2D.Character.Worker
             public WorkerData()
             {
                 // 设置默认可接受任务类型
-                this.TaskToggle = new Dictionary<WorkerTaskType, bool>
-                {
-                    { WorkerTaskType.Eat, true },
-                    { WorkerTaskType.Wear, true },
-                    { WorkerTaskType.Carry, true },
-                    { WorkerTaskType.Gather, true },
-                    { WorkerTaskType.Exercise, true },
-                };
+                // 空字典 = 所有任务类型默认允许。
+                // 只有玩家通过 UI 手动关闭的任务类型才会被写入 false。
+                // 参见 AWorkerTask.IsCanWork 的 opt-out 语义。
+                this.TaskToggle = new Dictionary<WorkerTaskType, bool>();
             }
         }
     }

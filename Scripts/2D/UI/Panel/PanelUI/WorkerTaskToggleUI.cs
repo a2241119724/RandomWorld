@@ -96,10 +96,17 @@ namespace LAB2D.UI.Panel.PanelUI
                     Transform toggleTransform = this.TaskItems[index].transform.GetChild(i);
                     Toggle toggle = toggleTransform.GetComponent<Toggle>();
                     TaskToggleBinding binding = toggleTransform.GetComponent<TaskToggleBinding>();
-                    if (binding != null && workerData.TaskToggle != null
-                        && workerData.TaskToggle.TryGetValue(binding.TaskType, out bool enabled))
+                    if (binding != null && workerData.TaskToggle != null)
                     {
-                        toggle.isOn = enabled;
+                        // 字典中没有记录的任务类型默认为开启（与 IsCanWork 的 opt-out 语义一致）
+                        if (workerData.TaskToggle.TryGetValue(binding.TaskType, out bool enabled))
+                        {
+                            toggle.isOn = enabled;
+                        }
+                        else
+                        {
+                            toggle.isOn = true;
+                        }
                     }
                 }
 

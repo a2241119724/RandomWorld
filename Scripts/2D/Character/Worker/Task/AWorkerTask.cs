@@ -486,7 +486,10 @@ namespace LAB2D.Character.Worker.Task
         public bool IsCanWork(AWorker worker)
         {
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            if (!workerData.TaskToggle.TryGetValue(this.TaskType, out bool enabled) || !enabled)
+
+            // 字典中没有记录的任务类型默认为允许（opt-out 语义），
+            // 这样新增 WorkerTaskType 枚举值时无需修改 WorkerData 构造函数。
+            if (workerData.TaskToggle.TryGetValue(this.TaskType, out bool enabled) && !enabled)
             {
                 return false;
             }

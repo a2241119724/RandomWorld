@@ -6,10 +6,11 @@ namespace LAB2D.Item.Build
     using UnityEngine;
 
     /// <summary>
-    /// 建造
+    /// 建造物品。
+    /// 可直接实例化用于简单建造物品，也可被子类化用于有特殊行为的物品(如房间、床)。
     /// </summary>
     [Serializable]
-    public abstract class ABuildItem : AItem
+    public class ABuildItem : AItem
     {
         /// <summary>
         /// 宽度
@@ -36,9 +37,52 @@ namespace LAB2D.Item.Build
         /// </summary>
         public string TileName;
 
+        /// <summary>
+        /// 无参构造器（供子类和反射使用）。
+        /// TileName 默认为类名。
+        /// </summary>
         public ABuildItem()
         {
             this.TileName = this.GetType().Name;
+        }
+
+        /// <summary>
+        /// 带瓦片名的构造器（供直接实例化使用）。
+        /// </summary>
+        /// <param name="tileName">瓦片名称</param>
+        public ABuildItem(string tileName)
+        {
+            this.TileName = tileName;
+        }
+
+        /// <summary>
+        /// 墙的方向
+        /// </summary>
+        public enum WallDirectionEnum
+        {
+            /// <summary>上</summary>
+            TOP,
+
+            /// <summary>下</summary>
+            DOWN,
+
+            /// <summary>左</summary>
+            LEFT,
+
+            /// <summary>右</summary>
+            RIGHT,
+
+            /// <summary>右上</summary>
+            RIGHT_TOP,
+
+            /// <summary>右下</summary>
+            RIGHT_DOWN,
+
+            /// <summary>左上</summary>
+            LEFT_TOP,
+
+            /// <summary>左下</summary>
+            LEFT_DOWN,
         }
 
         /// <summary>
@@ -48,7 +92,7 @@ namespace LAB2D.Item.Build
         /// <param name="extra">额外信息</param>
         public virtual void AddBuildTask(Vector3Int centerMap, Extra extra)
         {
-            Core.ServiceLocator.Get<BuildMap>().AddBuild(centerMap, this.TileName);
+            Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(centerMap, this.TileName);
         }
 
         public class Extra

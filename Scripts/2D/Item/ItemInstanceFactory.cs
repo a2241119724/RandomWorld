@@ -99,11 +99,7 @@ namespace LAB2D.Item
             return this.buildItems.Values.ToList<AItem>();
         }
 
-        /// <summary>
-        /// 通过反射实例化
-        /// 仅需要类名与imageName一样
-        /// </summary>
-        /// <param name="itemDatas">所有装备数据(不包含武器)</param>
+        /// <inheritdoc/>
         public void InitItemInstances(List<ItemData> itemDatas)
         {
             // 装备(不包含武器)
@@ -115,7 +111,7 @@ namespace LAB2D.Item
                 }
             }
 
-            // 非装备(包含武器)
+            // 非装备(包含武器) — 反射扫描 ABuildItem 子类
             List<Type> types = LAB2D.Tool.Tool.GetChildByParent<ABackpackItem>();
             foreach (Type type in types)
             {
@@ -133,7 +129,8 @@ namespace LAB2D.Item
             // 移除CommonEquipment, 因为CommonEquipment是所有装备的基类
             this.backpackItemTypes.Remove(typeof(CommonEquipment).Name);
 
-            // 建造
+            // ========== 建造物品 — 新逻辑 ==========
+            // 第一步：反射扫描有特殊行为的 ABuildItem 子类
             types = LAB2D.Tool.Tool.GetChildByParent<ABuildItem>();
             foreach (Type type in types)
             {
@@ -147,6 +144,34 @@ namespace LAB2D.Item
                 ABuildItem item = (ABuildItem)Activator.CreateInstance(type);
                 item.Id = id;
                 this.buildItems.Add(type.Name, item);
+            }
+
+            // 第二步：遍历 SO 中的 BuildItemData，为尚未有实例的物品创建普通 ABuildItem
+            ItemDataManager itemDataManager = ServiceLocator.Get<ItemDataManager>();
+            AItem.ItemTypeEnum[] buildTypes = AItem.Ranges["Build"];
+            for (int typeIdx = (int)buildTypes[0]; typeIdx <= (int)buildTypes[1]; typeIdx++)
+            {
+                string soName = ((AItem.ItemTypeEnum)typeIdx).ToString() + "ItemData";
+                BuildItemDataSO so = ServiceLocator.Get<ResourceManager>().GetBuildSO(soName);
+                if (so == null)
+                {
+                    continue;
+                }
+
+                foreach (BuildItemData buildItemData in so.BuildItemDatas)
+                {
+                    string enName = buildItemData.EnName;
+                    if (this.buildItems.ContainsKey(enName))
+                    {
+                        continue; // 已有特殊子类实例，跳过
+                    }
+
+                    ABuildItem item = new ABuildItem(enName)
+                    {
+                        Id = buildItemData.Id,
+                    };
+                    this.buildItems.Add(enName, item);
+                }
             }
         }
     }
