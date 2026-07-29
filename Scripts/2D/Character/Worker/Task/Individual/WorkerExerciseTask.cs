@@ -38,6 +38,12 @@ namespace LAB2D.Character.Worker.Task.Individual
             return this.worker == worker;
         }
 
+        /// <inheritdoc/>
+        protected override bool RequiresWalkableNeighbor => false;
+
+        /// <inheritdoc/>
+        public override TaskTraits Traits => TaskTraits.WorkerSpecific;
+
         protected override void Init()
         {
             this.AvailableNeighborPos.Clear();

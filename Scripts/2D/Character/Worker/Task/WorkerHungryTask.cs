@@ -70,6 +70,15 @@ namespace LAB2D.Character.Worker.Task
                     workerData.MaxHungry - workerData.CurHungry);
         }
 
+        /// <inheritdoc/>
+        protected override bool ConsumesTiredness => false;
+
+        /// <inheritdoc/>
+        protected override bool BlocksWhenHungry => false;
+
+        /// <inheritdoc/>
+        public override TaskTraits Traits => TaskTraits.OnePerPosition | TaskTraits.ReturnToIdle;
+
         protected override void Init()
         {
             this.AvailableNeighborPos.Clear();

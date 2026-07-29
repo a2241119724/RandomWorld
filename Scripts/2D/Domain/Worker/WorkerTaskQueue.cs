@@ -121,7 +121,7 @@ namespace LAB2D.Domain.Worker
 
         public int GetRunningCountByType(System.Func<TTask, int> typeSelector)
         {
-            int[] counts = new int[10];
+            var counts = new System.Collections.Generic.Dictionary<int, int>();
             for (int i = 0; i < this.priorityLevels.Count; i++)
             {
                 foreach (KeyValuePair<TTask, bool> pair in this.priorityLevels[i])
@@ -129,18 +129,16 @@ namespace LAB2D.Domain.Worker
                     if (pair.Value)
                     {
                         int typeIndex = typeSelector(pair.Key);
-                        if (typeIndex >= 0 && typeIndex < counts.Length)
-                        {
-                            counts[typeIndex]++;
-                        }
+                        counts.TryGetValue(typeIndex, out int current);
+                        counts[typeIndex] = current + 1;
                     }
                 }
             }
 
             int total = 0;
-            for (int i = 0; i < counts.Length; i++)
+            foreach (int count in counts.Values)
             {
-                total += counts[i];
+                total += count;
             }
 
             return total;

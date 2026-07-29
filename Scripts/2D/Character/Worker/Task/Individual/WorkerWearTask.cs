@@ -63,6 +63,9 @@ namespace LAB2D.Character.Worker.Task.Individual
             return this.worker == worker;
         }
 
+        /// <inheritdoc/>
+        public override TaskTraits Traits => TaskTraits.OnePerPosition | TaskTraits.WorkerSpecific;
+
         protected override void Init()
         {
             this.AvailableNeighborPos.Clear();

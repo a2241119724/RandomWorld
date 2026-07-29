@@ -49,6 +49,12 @@ namespace LAB2D.Character.Worker.Task.Individual
             return workerData.CurTired < AWorker.ThresholdTired && worker.BedItem != null && this.worker == worker;
         }
 
+        /// <inheritdoc/>
+        protected override bool ConsumesTiredness => false;
+
+        /// <inheritdoc/>
+        public override TaskTraits Traits => TaskTraits.WorkerSpecific;
+
         protected override void Init()
         {
             this.AvailableNeighborPos.Clear();

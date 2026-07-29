@@ -219,54 +219,171 @@ namespace LAB2D.Character.Worker.Task
             = (pos) => ServiceLocator.Get<TileMap>().WorldPosToMapPos(pos);
         public static System.Func<UnityEngine.Vector3Int, UnityEngine.Vector3Int> GenCanReachPosProvider { get; set; }
             = (pos) => ServiceLocator.Get<TileMap>().GenCanReachPos(pos);
-        public static System.Func<string, bool, UnityEngine.GameObject> ResourceInstantiateProvider { get; set; }
-            = (name, active) => ServiceLocator.Get<ResourceManager>().Instantiate(name, active);
-        public static System.Action<AWorker> FurnitureBedProvider { get; set; }
-            = (worker) => ServiceLocator.Get<FurnitureManager>().RemoveWorkerFromBed(worker);
-        public static System.Func<AttackEffectManager.EffectTypeEnum, float, UnityEngine.ParticleSystem> AttackEffectProvider { get; set; }
-            = (type, rad) => ServiceLocator.Get<AttackEffectManager>().GetEffect(type, rad);
-        public static System.Action<AEnemy> EnemyRemoveProvider { get; set; }
-            = (enemy) => ServiceLocator.Get<EnemyManager>().Remove(enemy);
-        public static System.Func<bool> EnemyCanCreateProvider { get; set; }
-            = () => ServiceLocator.Get<EnemyManager>().CanCreateEnemy();
-        public static System.Func<int> PlayerCountProvider { get; set; }
-            = () => ServiceLocator.Get<PlayerManager>().Count();
-        public static System.Func<int, Character> PlayerGetProvider { get; set; }
-            = (i) => ServiceLocator.Get<PlayerManager>().Get(i);
-        public static System.Func<int> WorkerCountProvider { get; set; }
-            = () => ServiceLocator.Get<WorkerManager>().Count();
-        public static System.Func<int, Character> WorkerGetProvider { get; set; }
-            = (i) => ServiceLocator.Get<WorkerManager>().Get(i);
-        public static System.Action<AEnemy, Character, int> EnemyDefeatedProvider { get; set; }
-            = (enemy, attacker, xp) => ServiceLocator.Get<GameplaySessionStats>().RecordEnemyDefeated(enemy, attacker, xp);
-        public static System.Func<int> WaveIndexProvider { get; set; }
-            = () => ServiceLocator.Get<WaveManager>() != null ? ServiceLocator.Get<WaveManager>().CurrentWaveIndex - 1 : 0;
-        public static System.Action<UnityEngine.Vector3, float, bool, bool> FloatingTextProvider { get; set; }
-            = (pos, dmg, crit, combo) => ServiceLocator.Get<FloatingTextManager>().SpawnDamageText(pos, dmg, crit, combo);
-        public static System.Func<bool> NetworkIsOnlineProvider { get; set; }
-            = () => ServiceLocator.Get<NetworkConnect>() != null && ServiceLocator.Get<NetworkConnect>().IsOnline;
-        public static System.Func<bool> NetworkIsMasterClientProvider { get; set; }
-            = () => Photon.Pun.PhotonNetwork.IsMasterClient;
-        public static System.Action<UnityEngine.GameObject> NetworkDestroyProvider { get; set; }
-            = (go) => Photon.Pun.PhotonNetwork.Destroy(go);
+        // --- 以下 Provider 已迁移至 GameServices，保留 [Obsolete] 代理确保向后兼容 ---
+
+        [System.Obsolete("Use GameServices.ResourceInstantiateProvider instead.")]
+        public static System.Func<string, bool, UnityEngine.GameObject> ResourceInstantiateProvider
+        {
+            get => Core.GameServices.ResourceInstantiateProvider;
+            set => Core.GameServices.ResourceInstantiateProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.FurnitureBedProvider instead.")]
+        public static System.Action<AWorker> FurnitureBedProvider
+        {
+            get => Core.GameServices.FurnitureBedProvider;
+            set => Core.GameServices.FurnitureBedProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.AttackEffectProvider instead.")]
+        public static System.Func<AttackEffectManager.EffectTypeEnum, float, UnityEngine.ParticleSystem> AttackEffectProvider
+        {
+            get => Core.GameServices.AttackEffectProvider;
+            set => Core.GameServices.AttackEffectProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.EnemyRemoveProvider instead.")]
+        public static System.Action<AEnemy> EnemyRemoveProvider
+        {
+            get => Core.GameServices.EnemyRemoveProvider;
+            set => Core.GameServices.EnemyRemoveProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.EnemyCanCreateProvider instead.")]
+        public static System.Func<bool> EnemyCanCreateProvider
+        {
+            get => Core.GameServices.EnemyCanCreateProvider;
+            set => Core.GameServices.EnemyCanCreateProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.PlayerCountProvider instead.")]
+        public static System.Func<int> PlayerCountProvider
+        {
+            get => Core.GameServices.PlayerCountProvider;
+            set => Core.GameServices.PlayerCountProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.PlayerGetProvider instead.")]
+        public static System.Func<int, Character> PlayerGetProvider
+        {
+            get => Core.GameServices.PlayerGetProvider;
+            set => Core.GameServices.PlayerGetProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.WorkerCountProvider instead.")]
+        public static System.Func<int> WorkerCountProvider
+        {
+            get => Core.GameServices.WorkerCountProvider;
+            set => Core.GameServices.WorkerCountProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.WorkerGetProvider instead.")]
+        public static System.Func<int, Character> WorkerGetProvider
+        {
+            get => Core.GameServices.WorkerGetProvider;
+            set => Core.GameServices.WorkerGetProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.EnemyDefeatedProvider instead.")]
+        public static System.Action<AEnemy, Character, int> EnemyDefeatedProvider
+        {
+            get => Core.GameServices.EnemyDefeatedProvider;
+            set => Core.GameServices.EnemyDefeatedProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.WaveIndexProvider instead.")]
+        public static System.Func<int> WaveIndexProvider
+        {
+            get => Core.GameServices.WaveIndexProvider;
+            set => Core.GameServices.WaveIndexProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.FloatingTextProvider instead.")]
+        public static System.Action<UnityEngine.Vector3, float, bool, bool> FloatingTextProvider
+        {
+            get => Core.GameServices.FloatingTextProvider;
+            set => Core.GameServices.FloatingTextProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.NetworkIsOnlineProvider instead.")]
+        public static System.Func<bool> NetworkIsOnlineProvider
+        {
+            get => Core.GameServices.NetworkIsOnlineProvider;
+            set => Core.GameServices.NetworkIsOnlineProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.NetworkIsMasterClientProvider instead.")]
+        public static System.Func<bool> NetworkIsMasterClientProvider
+        {
+            get => Core.GameServices.NetworkIsMasterClientProvider;
+            set => Core.GameServices.NetworkIsMasterClientProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.NetworkDestroyProvider instead.")]
+        public static System.Action<UnityEngine.GameObject> NetworkDestroyProvider
+        {
+            get => Core.GameServices.NetworkDestroyProvider;
+            set => Core.GameServices.NetworkDestroyProvider = value;
+        }
+
         public static System.Func<int, ABackpackItem> ItemFactoryByIdProvider { get; set; }
             = (id) => ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemById(id);
-        public static System.Func<string> NameGeneratorProvider { get; set; }
-            = () => ServiceLocator.Get<NameGenerator>().GetRandomName();
-        public static System.Action<string> AsyncProgressSetTipProvider { get; set; }
-            = (tip) => ServiceLocator.Get<AsyncProgressUI>().SetTip(tip);
-        public static System.Action<System.Action> AsyncProgressCompleteProvider { get; set; }
-            = (callback) => ServiceLocator.Get<AsyncProgressUI>().Complete += new AsyncProgressUI.CompleteDelegate(callback);
-        public static System.Action<AWorker> LocateWorkerUIAddProvider { get; set; }
-            = (worker) => ServiceLocator.Get<LocateWorkerUI>().AddWorkerItem(worker);
-        public static System.Action<AWorker> LocateWorkerUIRemoveProvider { get; set; }
-            = (worker) => ServiceLocator.Get<LocateWorkerUI>().RemoveWorkerItem(worker);
-        public static System.Action<string> ShowTipProvider { get; set; }
-            = (message) => { if (ServiceLocator.Get<GlobalInit>() != null) ServiceLocator.Get<GlobalInit>().ShowTip(message); };
-        public static System.Action AsyncProgressAddOneProvider { get; set; }
-            = () => ServiceLocator.Get<AsyncProgressUI>().AddOneProcess();
-        public static System.Action<int> AsyncProgressAddTotalProvider { get; set; }
-            = (total) => ServiceLocator.Get<AsyncProgressUI>().AddTotal(total);
+
+        [System.Obsolete("Use GameServices.NameGeneratorProvider instead.")]
+        public static System.Func<string> NameGeneratorProvider
+        {
+            get => Core.GameServices.NameGeneratorProvider;
+            set => Core.GameServices.NameGeneratorProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.AsyncProgressSetTipProvider instead.")]
+        public static System.Action<string> AsyncProgressSetTipProvider
+        {
+            get => Core.GameServices.AsyncProgressSetTipProvider;
+            set => Core.GameServices.AsyncProgressSetTipProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.AsyncProgressCompleteProvider instead.")]
+        public static System.Action<System.Action> AsyncProgressCompleteProvider
+        {
+            get => Core.GameServices.AsyncProgressCompleteProvider;
+            set => Core.GameServices.AsyncProgressCompleteProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.LocateWorkerUIAddProvider instead.")]
+        public static System.Action<AWorker> LocateWorkerUIAddProvider
+        {
+            get => Core.GameServices.LocateWorkerUIAddProvider;
+            set => Core.GameServices.LocateWorkerUIAddProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.LocateWorkerUIRemoveProvider instead.")]
+        public static System.Action<AWorker> LocateWorkerUIRemoveProvider
+        {
+            get => Core.GameServices.LocateWorkerUIRemoveProvider;
+            set => Core.GameServices.LocateWorkerUIRemoveProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.ShowTipProvider instead.")]
+        public static System.Action<string> ShowTipProvider
+        {
+            get => Core.GameServices.ShowTipProvider;
+            set => Core.GameServices.ShowTipProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.AsyncProgressAddOneProvider instead.")]
+        public static System.Action AsyncProgressAddOneProvider
+        {
+            get => Core.GameServices.AsyncProgressAddOneProvider;
+            set => Core.GameServices.AsyncProgressAddOneProvider = value;
+        }
+
+        [System.Obsolete("Use GameServices.AsyncProgressAddTotalProvider instead.")]
+        public static System.Action<int> AsyncProgressAddTotalProvider
+        {
+            get => Core.GameServices.AsyncProgressAddTotalProvider;
+            set => Core.GameServices.AsyncProgressAddTotalProvider = value;
+        }
 
         /// <summary>
         /// 任务ID
@@ -289,6 +406,27 @@ namespace LAB2D.Character.Worker.Task
         public string Name { get; set; }
 
         /// <summary>
+        /// 执行任务时是否消耗疲劳值。Eat/Sleep 任务重写为 false。
+        /// </summary>
+        protected virtual bool ConsumesTiredness => true;
+
+        /// <summary>
+        /// Worker 饥饿时是否阻止接此任务。Eat 任务重写为 false（饥饿时才需要吃饭）。
+        /// </summary>
+        protected virtual bool BlocksWhenHungry => true;
+
+        /// <summary>
+        /// 是否需要检查临近位置是否可行走。Exercise 任务重写为 false（原地锻炼无需外部位置）。
+        /// </summary>
+        protected virtual bool RequiresWalkableNeighbor => true;
+
+        /// <summary>
+        /// 任务特征标志，用于 WorkerTaskManager 的通用分派逻辑。
+        /// 新增任务类型时只需重写此属性，无需修改 Manager。
+        /// </summary>
+        public virtual TaskTraits Traits => TaskTraits.None;
+
+        /// <summary>
         /// 不需要重写
         /// </summary>
         /// <param name="worker">Worker</param>
@@ -298,8 +436,8 @@ namespace LAB2D.Character.Worker.Task
             // 工作扣减疲劳值
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
 
-            // 吃饭和睡觉任务不消耗疲劳
-            if (this.TaskType != WorkerTaskType.Eat && this.TaskType != WorkerTaskType.Sleep)
+            // 子类可通过 ConsumesTiredness 虚属性控制是否消耗疲劳
+            if (this.ConsumesTiredness)
             {
                 workerData.CurTired = this.progressService.ApplyTiredCost(
                     workerData.CurTired,
@@ -353,14 +491,14 @@ namespace LAB2D.Character.Worker.Task
                 return false;
             }
 
-            // 饥饿时候不能接任务
-            if (workerData.CurHungry < AWorker.ThresholdHungry && this.TaskType != WorkerTaskType.Eat)
+            // 饥饿时候不能接任务（Eat 任务通过 BlocksWhenHungry 虚属性豁免）
+            if (workerData.CurHungry < AWorker.ThresholdHungry && this.BlocksWhenHungry)
             {
                 return false;
             }
 
-            // 是否有做任务的位置, 并且不是锻炼任务(由于目标位置不确定, 并且一定可以有位置做)
-            if (this.TaskType != WorkerTaskType.Exercise && this.AvailableNeighborPos.TrueForAll(pos =>
+            // 是否有做任务的位置（Exercise 通过 RequiresWalkableNeighbor 虚属性豁免）
+            if (this.RequiresWalkableNeighbor && this.AvailableNeighborPos.TrueForAll(pos =>
             {
                 Vector3IntLAB target = pos + this.TargetMap;
                 return !WalkabilityProvider(target.X, target.Y);

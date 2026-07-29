@@ -98,7 +98,7 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <summary>
-        /// 建造者
+        /// 建造者 — TODO: 种植功能上线后通过 FarmlandManager 调用此 Builder 激活。
         /// </summary>
         public class PlantTaskBuilder
         {

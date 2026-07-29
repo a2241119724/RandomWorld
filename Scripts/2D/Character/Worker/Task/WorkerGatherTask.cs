@@ -66,6 +66,9 @@ namespace LAB2D.Character.Worker.Task
             return true;
         }
 
+        /// <inheritdoc/>
+        public override TaskTraits Traits => TaskTraits.TrackPositions;
+
         protected override void Init()
         {
             this.AvailableNeighborPos.Clear();

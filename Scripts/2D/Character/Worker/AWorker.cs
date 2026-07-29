@@ -502,7 +502,7 @@ namespace LAB2D.Character.Worker
             public WorkerData()
             {
                 // 设置默认可接受任务类型
-                this.TaskToggle = new bool[10];
+                this.TaskToggle = new bool[(int)WorkerTaskType._Count];
                 this.TaskToggle[(int)WorkerTaskType.Eat] = true;
                 this.TaskToggle[(int)WorkerTaskType.Wear] = true;
                 this.TaskToggle[(int)WorkerTaskType.Carry] = true;

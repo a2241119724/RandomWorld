@@ -3,7 +3,6 @@ namespace LAB2D.Character.Worker
     using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Character.Worker.Task;
-    using LAB2D.Character.Worker.Task.Individual;
     using LAB2D.Core.KDTree;
     using LAB2D.Gameplay;
     using LAB2D.Serializable;
@@ -25,8 +24,6 @@ namespace LAB2D.Character.Worker
     {
         private static long curtaskId = 0;
         private readonly WorkerTaskQueue<AWorkerTask> taskQueue;
-        private readonly List<WorkerHungryTask> hungryTasks;
-        private readonly List<WorkerWearTask> wearTasks;
         private readonly WorkerTaskAssignmentService<AWorkerTask> assignmentService;
         private readonly List<GameGridPosition> gatherPositions;
         private KDTree taskTree = new KDTree();
@@ -35,8 +32,6 @@ namespace LAB2D.Character.Worker
         {
             this.taskQueue = new WorkerTaskQueue<AWorkerTask>();
             this.assignmentService = new WorkerTaskAssignmentService<AWorkerTask>();
-            this.hungryTasks = new List<WorkerHungryTask>();
-            this.wearTasks = new List<WorkerWearTask>();
             this.gatherPositions = new List<GameGridPosition>();
         }
 
@@ -235,37 +230,18 @@ namespace LAB2D.Character.Worker
 
             task.TaskId = ++WorkerTaskManager.curtaskId;
 
-            // 如果是饥饿任务,一个位置仅对应一个任务
-            if (task.TaskType == WorkerTaskType.Eat)
-            {
-                foreach (WorkerHungryTask hungryTask in this.hungryTasks)
-                {
-                    if (hungryTask.TargetMap.Equals(task.TargetMap))
-                    {
-                        return;
-                    }
-                }
+            TaskTraits traits = task.Traits;
 
-                this.hungryTasks.Add((WorkerHungryTask)task);
-            }
-            else if (task.TaskType == WorkerTaskType.Gather)
+            // 通用位置去重（替代原来的 Eat/Wear 硬编码去重）
+            if (traits.HasFlag(TaskTraits.OnePerPosition) && HasTaskAtPosition(task))
             {
-                GameGridPosition gatherPos = new GameGridPosition(task.TargetMap.X, task.TargetMap.Y, task.TargetMap.Z);
-                this.gatherPositions.Add(gatherPos);
+                return;
             }
-            else if (task.TaskType == WorkerTaskType.Wear)
-            {
-                // 一个位置只能有一个穿衣任务
-                foreach (AWorkerTask wearTask in this.wearTasks)
-                {
-                    if (wearTask.TargetMap.X == task.TargetMap.X
-                        && wearTask.TargetMap.Y == task.TargetMap.Y)
-                    {
-                        return;
-                    }
-                }
 
-                this.wearTasks.Add((WorkerWearTask)task);
+            // 记录位置用于外部取消操作（替代原来的 Gather 硬编码）
+            if (traits.HasFlag(TaskTraits.TrackPositions))
+            {
+                this.gatherPositions.Add(new GameGridPosition(task.TargetMap.X, task.TargetMap.Y, task.TargetMap.Z));
             }
 
             this.taskQueue.Add(task, prior);
@@ -279,7 +255,7 @@ namespace LAB2D.Character.Worker
         /// <param name="task">任务</param>
         public void CompleteTask(AWorkerTask task)
         {
-            if (task.TaskType == WorkerTaskType.Eat)
+            if (task.Traits.HasFlag(TaskTraits.ReturnToIdle))
             {
                 this.taskQueue.MarkIdle(task);
             }
@@ -352,7 +328,8 @@ namespace LAB2D.Character.Worker
         public string GetTaskInfo()
         {
             int total = this.taskQueue.TotalCount;
-            int[] taskCount = new int[10];
+            int typeCount = (int)WorkerTaskType._Count;
+            int[] taskCount = new int[typeCount];
             for (int i = 0; i < this.taskQueue.PriorityCount; i++)
             {
                 foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriority(i))
@@ -360,7 +337,7 @@ namespace LAB2D.Character.Worker
                     if (pair.Value)
                     {
                         int typeIndex = (int)pair.Key.TaskType;
-                        if (typeIndex >= 0 && typeIndex < taskCount.Length)
+                        if (typeIndex >= 0 && typeIndex < typeCount)
                         {
                             taskCount[typeIndex]++;
                         }
@@ -369,12 +346,34 @@ namespace LAB2D.Character.Worker
             }
 
             string res = $"任务总数量: {total}\n";
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < typeCount; i++)
             {
                 res += $"{(WorkerTaskType)i}:{taskCount[i]}\n";
             }
 
             return res;
+        }
+
+        /// <summary>
+        /// 检查队列中是否已存在同位置同类型的任务（用于 OnePerPosition 去重）。
+        /// </summary>
+        private bool HasTaskAtPosition(AWorkerTask task)
+        {
+            for (int p = 0; p < this.taskQueue.PriorityCount; p++)
+            {
+                foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriority(p))
+                {
+                    AWorkerTask existing = pair.Key;
+                    if (existing.TaskType == task.TaskType &&
+                        existing.TargetMap.X == task.TargetMap.X &&
+                        existing.TargetMap.Y == task.TargetMap.Y)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -384,16 +383,14 @@ namespace LAB2D.Character.Worker
         /// <param name="pos">位置（GameGridPosition）。</param>
         public void DeleteHungryTask(GameGridPosition pos)
         {
-            for (int i = this.hungryTasks.Count - 1; i >= 0; i--)
+            bool removed = this.taskQueue.RemoveWhere(task =>
+                task.TaskType == WorkerTaskType.Eat &&
+                task.TargetMap.X == pos.X &&
+                task.TargetMap.Y == pos.Y);
+
+            if (removed)
             {
-                WorkerHungryTask hungryTask = this.hungryTasks[i];
-                if (hungryTask.TargetMap.X == pos.X && hungryTask.TargetMap.Y == pos.Y)
-                {
-                    this.taskQueue.Remove(hungryTask);
-                    this.hungryTasks.RemoveAt(i);
-                    EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
-                    return;
-                }
+                EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
             }
         }
 
