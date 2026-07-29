@@ -40,7 +40,7 @@ namespace LAB2D.Data
                     continue;
                 }
 
-                foreach (BuildItemData itemData in itemDataSO.BuildItemDatas)
+                foreach (BuildItemData itemData in itemDataSO.GetExpandedItems())
                 {
                     int id = Convert.ToInt32(itemData.Id);
                     this.allItemInfo.Add(id, itemData);

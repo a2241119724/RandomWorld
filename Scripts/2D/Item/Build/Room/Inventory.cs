@@ -18,14 +18,14 @@ namespace LAB2D.Item.Build.Room
             this.Height = 7;
             this.WallTiles = new Dictionary<WallDirectionEnum, string>
             {
-                { WallDirectionEnum.TOP, "InventoryWallT" },
-                { WallDirectionEnum.DOWN, "InventoryWallD" },
-                { WallDirectionEnum.LEFT, "InventoryWallL" },
-                { WallDirectionEnum.RIGHT, "InventoryWallR" },
-                { WallDirectionEnum.RIGHT_TOP, "InventoryWallRT" },
-                { WallDirectionEnum.RIGHT_DOWN, "InventoryWallRD" },
-                { WallDirectionEnum.LEFT_TOP, "InventoryWallLT" },
-                { WallDirectionEnum.LEFT_DOWN, "InventoryWallLD" },
+                { WallDirectionEnum.LEFT_TOP,    "InventoryWall_0" },
+                { WallDirectionEnum.TOP,         "InventoryWall_1" },
+                { WallDirectionEnum.RIGHT_TOP,   "InventoryWall_2" },
+                { WallDirectionEnum.LEFT,        "InventoryWall_3" },
+                { WallDirectionEnum.RIGHT,       "InventoryWall_4" },
+                { WallDirectionEnum.LEFT_DOWN,   "InventoryWall_5" },
+                { WallDirectionEnum.DOWN,        "InventoryWall_6" },
+                { WallDirectionEnum.RIGHT_DOWN,  "InventoryWall_7" },
             };
         }
 

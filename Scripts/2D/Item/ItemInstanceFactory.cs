@@ -158,7 +158,7 @@ namespace LAB2D.Item
                     continue;
                 }
 
-                foreach (BuildItemData buildItemData in so.BuildItemDatas)
+                foreach (BuildItemData buildItemData in so.GetExpandedItems())
                 {
                     string enName = buildItemData.EnName;
                     if (this.buildItems.ContainsKey(enName))

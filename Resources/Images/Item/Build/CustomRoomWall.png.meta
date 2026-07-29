@@ -110,7 +110,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: CustomRoomWallLT
+      name: CustomRoomWall_0
       rect:
         serializedVersion: 2
         x: 0
@@ -118,20 +118,20 @@ TextureImporter:
         width: 100
         height: 100
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c6b324da6f82de342b48c441e9567930
-      internalID: 925179246
+      spriteID: 93312fd742c6e7948a1dc70af856362b
+      internalID: -1236718802
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: CustomRoomWallT
+      name: CustomRoomWall_1
       rect:
         serializedVersion: 2
         x: 100
@@ -139,20 +139,20 @@ TextureImporter:
         width: 100
         height: 100
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 73b66b5bd27e28049a68411ff8911217
-      internalID: 1194508756
+      spriteID: d1a50d458255856419b1d3f1f848491c
+      internalID: 2035213715
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: CustomRoomWallRT
+      name: CustomRoomWall_2
       rect:
         serializedVersion: 2
         x: 200
@@ -160,20 +160,20 @@ TextureImporter:
         width: 100
         height: 100
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2ff25214fdd426041bcfe0d4563278bb
-      internalID: -1919832763
+      spriteID: b1166afc90139c046acdee6964b67249
+      internalID: -1900943522
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: CustomRoomWallL
+      name: CustomRoomWall_3
       rect:
         serializedVersion: 2
         x: 0
@@ -181,14 +181,14 @@ TextureImporter:
         width: 100
         height: 100
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 58035e44d4e2c4b4dbd0a41667cfb76a
-      internalID: 1657219675
+      spriteID: 01c909d341c2e3a48ae41826b7f4483e
+      internalID: 582646999
       vertices: []
       indices: 
       edges: []
@@ -202,20 +202,20 @@ TextureImporter:
         width: 100
         height: 100
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6aec77956ebcb624290aa5c757f98eae
+      spriteID: ada5c2bbec2dda149a08383155f74b0b
       internalID: -508857
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: CustomRoomWallR
+      name: CustomRoomWall_5
       rect:
         serializedVersion: 2
         x: 200
@@ -223,20 +223,20 @@ TextureImporter:
         width: 100
         height: 100
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e8f3e6b69d04df0409983c48481971df
-      internalID: 1347455635
+      spriteID: 8368470736f566546b018b9002721f9f
+      internalID: -1906276843
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: CustomRoomWallLD
+      name: CustomRoomWall_6
       rect:
         serializedVersion: 2
         x: 0
@@ -244,20 +244,20 @@ TextureImporter:
         width: 100
         height: 100
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 47bffe19624fab542b641a334fde9468
-      internalID: 501694652
+      spriteID: e1754a6378b0fc342b0c218c739d0bdf
+      internalID: 1541196164
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: CustomRoomWallD
+      name: CustomRoomWall_7
       rect:
         serializedVersion: 2
         x: 100
@@ -265,20 +265,20 @@ TextureImporter:
         width: 100
         height: 100
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: fc10a3708758b684e81b01e5611a607c
-      internalID: -664963349
+      spriteID: 885c311efd0fb8049af9cf7dad268e77
+      internalID: 1542711200
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: CustomRoomWallRD
+      name: CustomRoomWall_8
       rect:
         serializedVersion: 2
         x: 200
@@ -286,14 +286,14 @@ TextureImporter:
         width: 100
         height: 100
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 622f850616dd7324888ae83db14f3560
-      internalID: -631455148
+      spriteID: 2be0473e31a2c5b4792bd00259e164dd
+      internalID: 503528895
       vertices: []
       indices: 
       edges: []
@@ -309,15 +309,15 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      CustomRoomWallD: -664963349
-      CustomRoomWallL: 1657219675
-      CustomRoomWallLD: 501694652
-      CustomRoomWallLT: 925179246
-      CustomRoomWallR: 1347455635
-      CustomRoomWallRD: -631455148
-      CustomRoomWallRT: -1919832763
-      CustomRoomWallT: 1194508756
+      CustomRoomWall_0: -1236718802
+      CustomRoomWall_1: 2035213715
+      CustomRoomWall_2: -1900943522
+      CustomRoomWall_3: 582646999
       CustomRoomWall_4: -508857
+      CustomRoomWall_5: -1906276843
+      CustomRoomWall_6: 1541196164
+      CustomRoomWall_7: 1542711200
+      CustomRoomWall_8: 503528895
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

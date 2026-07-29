@@ -15,14 +15,14 @@ namespace LAB2D.Item.Build.Room
             this.Height = 7;
             this.WallTiles = new Dictionary<WallDirectionEnum, string>
             {
-                { WallDirectionEnum.TOP, "CustomRoomWallT" },
-                { WallDirectionEnum.DOWN, "CustomRoomWallD" },
-                { WallDirectionEnum.LEFT, "CustomRoomWallL" },
-                { WallDirectionEnum.RIGHT, "CustomRoomWallR" },
-                { WallDirectionEnum.RIGHT_TOP, "CustomRoomWallRT" },
-                { WallDirectionEnum.RIGHT_DOWN, "CustomRoomWallRD" },
-                { WallDirectionEnum.LEFT_TOP, "CustomRoomWallLT" },
-                { WallDirectionEnum.LEFT_DOWN, "CustomRoomWallLD" },
+                { WallDirectionEnum.LEFT_TOP,    "CustomRoomWall_0" },
+                { WallDirectionEnum.TOP,         "CustomRoomWall_1" },
+                { WallDirectionEnum.RIGHT_TOP,   "CustomRoomWall_2" },
+                { WallDirectionEnum.LEFT,        "CustomRoomWall_3" },
+                { WallDirectionEnum.RIGHT,       "CustomRoomWall_4" },
+                { WallDirectionEnum.LEFT_DOWN,   "CustomRoomWall_5" },
+                { WallDirectionEnum.DOWN,        "CustomRoomWall_6" },
+                { WallDirectionEnum.RIGHT_DOWN,  "CustomRoomWall_7" },
             };
             this.DoorTile = "CustomDoor";
         }
