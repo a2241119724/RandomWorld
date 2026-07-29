@@ -116,6 +116,12 @@ namespace LAB2D.Gameplay
         private Player dashPlayer;
         private IGameTime gameTime;
 
+        /// <summary>
+        /// 技能类型到执行器的映射，替代 switch 分支。
+        /// 新增 SkillType 时在此字典注册即可，无需修改 ExecuteSkillEffect 方法体。
+        /// </summary>
+        private Dictionary<SkillType, Action<SkillData, Player>> skillExecutors;
+
         private IGameTime GameTime => this.gameTime ?? (this.gameTime = Core.ServiceLocator.Get<IGameTime>());
 
         /// <summary>
@@ -129,12 +135,71 @@ namespace LAB2D.Gameplay
                 return;
             }
 
+            // 注册技能类型到执行器的映射（新增技能类型时在此注册即可）
+            this.skillExecutors = new Dictionary<SkillType, Action<SkillData, Player>>
+            {
+                { SkillType.SelfAOE,  this.ExecuteSelfAOE },
+                { SkillType.Movement, this.ExecuteMovement },
+                { SkillType.SelfBuff, this.ExecuteSelfBuff },
+                { SkillType.SelfHeal, this.ExecuteSelfHeal },
+            };
+
             this.Skills = new List<SkillData>
             {
-                SkillData.CreateWhirlwind(),
-                SkillData.CreateDash(),
-                SkillData.CreatePowerSurge(),
-                SkillData.CreateHealingLight(),
+                new SkillData
+                {
+                    SkillId = SkillConstant.SkillWhirlwind,
+                    SkillName = SkillConstant.DefaultSkillNameWhirlwind,
+                    Description = SkillConstant.DefaultSkillDescWhirlwind,
+                    SkillType = SkillType.SelfAOE,
+                    EffectType = SkillEffectType.PhysicalDamage,
+                    ManaCost = SkillConstant.WhirlwindManaCost,
+                    BaseCooldown = SkillConstant.WhirlwindCooldown,
+                    EffectMultiplier = SkillConstant.WhirlwindDamageMultiplier,
+                    AoeRadius = SkillConstant.WhirlwindRadius,
+                    Level = 1,
+                    SlotIndex = 0,
+                },
+                new SkillData
+                {
+                    SkillId = SkillConstant.SkillDash,
+                    SkillName = SkillConstant.DefaultSkillNameDash,
+                    Description = SkillConstant.DefaultSkillDescDash,
+                    SkillType = SkillType.Movement,
+                    EffectType = SkillEffectType.Invincibility,
+                    ManaCost = SkillConstant.DashManaCost,
+                    BaseCooldown = SkillConstant.DashCooldown,
+                    AoeRadius = SkillConstant.DashDistance,
+                    Level = 1,
+                    SlotIndex = 1,
+                },
+                new SkillData
+                {
+                    SkillId = SkillConstant.SkillPowerSurge,
+                    SkillName = SkillConstant.DefaultSkillNamePowerSurge,
+                    Description = SkillConstant.DefaultSkillDescPowerSurge,
+                    SkillType = SkillType.SelfBuff,
+                    EffectType = SkillEffectType.AttackBuff,
+                    ManaCost = SkillConstant.PowerSurgeManaCost,
+                    BaseCooldown = SkillConstant.PowerSurgeCooldown,
+                    EffectMultiplier = SkillConstant.PowerSurgeAtnMultiplier,
+                    BuffDuration = SkillConstant.PowerSurgeDuration,
+                    Level = 1,
+                    SlotIndex = 2,
+                },
+                new SkillData
+                {
+                    SkillId = SkillConstant.SkillHealingLight,
+                    SkillName = SkillConstant.DefaultSkillNameHealingLight,
+                    Description = SkillConstant.DefaultSkillDescHealingLight,
+                    SkillType = SkillType.SelfHeal,
+                    EffectType = SkillEffectType.Heal,
+                    ManaCost = SkillConstant.HealingLightManaCost,
+                    BaseCooldown = SkillConstant.HealingLightCooldown,
+                    EffectMultiplier = SkillConstant.HealingLightHealAmount,
+                    Level = 1,
+                    SlotIndex = 3,
+                },
             };
 
             this.AvailableUpgradePoints = 0;
@@ -354,24 +419,14 @@ namespace LAB2D.Gameplay
 
         /// <summary>
         /// 执行技能的具体游戏效果。
-        /// 根据 SkillType 和 SkillEffectType 分派到不同处理逻辑。
+        /// 通过 skillExecutors 字典分派，新增 SkillType 在字典注册即可。
         /// </summary>
         private void ExecuteSkillEffect(SkillData skill, Player player)
         {
-            switch (skill.SkillType)
+            if (this.skillExecutors != null
+                && this.skillExecutors.TryGetValue(skill.SkillType, out Action<SkillData, Player> executor))
             {
-                case SkillType.SelfAOE:
-                    this.ExecuteSelfAOE(skill, player);
-                    break;
-                case SkillType.Movement:
-                    this.ExecuteMovement(skill, player);
-                    break;
-                case SkillType.SelfBuff:
-                    this.ExecuteSelfBuff(skill, player);
-                    break;
-                case SkillType.SelfHeal:
-                    this.ExecuteSelfHeal(skill, player);
-                    break;
+                executor(skill, player);
             }
         }
 

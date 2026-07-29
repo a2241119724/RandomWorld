@@ -86,5 +86,10 @@ namespace LAB2D.UI.Panel
             // 没有返回按钮的面板,显示暂停菜单
             ServiceLocator.Get<PanelController>().Show(PauseMenuPanel.Instance);
         }
+
+        /// <inheritdoc/>
+        public virtual bool IsOverlay => false;
+
+        bool IBasePanel.IsOverlay => this.IsOverlay;
     }
 }

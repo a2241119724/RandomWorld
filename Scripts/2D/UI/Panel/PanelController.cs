@@ -61,9 +61,7 @@ namespace LAB2D.UI.Panel
         /// <param name="basePanel">下一个界面信息</param>
         public void Show(IBasePanel basePanel)
         {
-            if (this.Panels.Count > 0 && !(basePanel is ItemInfoPanel
-                || basePanel is AIChatPanel
-                || basePanel is DialoguePanel))
+            if (this.Panels.Count > 0 && !basePanel.IsOverlay)
             {
                 this.Panels.Peek().OnPause();
             }

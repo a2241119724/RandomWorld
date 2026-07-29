@@ -32,5 +32,11 @@ namespace LAB2D.UI.Panel
         /// 推出面板
         /// </summary>
         void OnExit();
+
+        /// <summary>
+        /// 是否为覆盖层面板。覆盖层面板显示时不会暂停下层面板。
+        /// 默认返回 false。ItemInfoPanel、AIChatPanel、DialoguePanel 返回 true。
+        /// </summary>
+        bool IsOverlay { get; }
     }
 }

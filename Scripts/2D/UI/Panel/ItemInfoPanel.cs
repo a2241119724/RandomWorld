@@ -25,6 +25,9 @@ namespace LAB2D.UI.Panel
         }
 
         /// <inheritdoc/>
+        public override bool IsOverlay => true;
+
+        /// <inheritdoc/>
         public override void OnEnter()
         {
             base.OnEnter();

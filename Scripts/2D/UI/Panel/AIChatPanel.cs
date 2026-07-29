@@ -16,6 +16,9 @@ namespace LAB2D.UI.Panel
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Send").onClick.AddListener(this.OnClick_Send);
         }
 
+        /// <inheritdoc/>
+        public override bool IsOverlay => true;
+
         /// <summary>
         /// 发送聊天请求
         /// </summary>
