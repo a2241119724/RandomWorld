@@ -8,8 +8,9 @@ namespace LAB2D.UI
     public static class PixelUITheme
     {
         // === 主按钮 (确认/通用) ===
-        public static readonly Color ButtonNormal = new Color32(242, 160, 175, 255);
-        public static readonly Color ButtonHighlighted = new Color32(252, 200, 213, 255);
+        // 使用更饱和的中粉色以提高与文字对比度，避免浅粉色在屏幕上发白看不清
+        public static readonly Color ButtonNormal = new Color32(200, 135, 152, 255);
+        public static readonly Color ButtonHighlighted = new Color32(222, 175, 188, 255);
         public static readonly Color ButtonPressed = new Color32(249, 213, 110, 255);
         public static readonly Color ButtonSelected = new Color32(126, 203, 154, 255);
         public static readonly Color ButtonDisabled = new Color(0, 0, 0, 0);
@@ -26,7 +27,8 @@ namespace LAB2D.UI
         public static readonly Color ViewportBg = new Color(0.25f, 0.18f, 0.14f, 0.30f);
 
         // === 文本颜色 ===
-        public static readonly Color TextPrimary = new Color32(74, 55, 40, 255);
+        // TextPrimary 使用更深的近黑色以提高在粉色按钮背景上的可读性
+        public static readonly Color TextPrimary = new Color32(45, 25, 16, 255);
         public static readonly Color TextSecondary = new Color32(139, 125, 114, 255);
         public static readonly Color TextAccent = new Color32(232, 93, 117, 255);
         public static readonly Color TextOnDark = Color.white;
@@ -34,7 +36,7 @@ namespace LAB2D.UI
         // === RichText 颜色 (HTML Hex) ===
         public const string RichGold = "#F9D56E";
         public const string RichSky = "#7CB8E4";
-        public const string RichPink = "#F2A0AF";
+        public const string RichPink = "#C88798";
         public const string RichCoral = "#F27A6B";
         public const string RichMint = "#7ECB9A";
         public const string RichLavender = "#C5B4E3";

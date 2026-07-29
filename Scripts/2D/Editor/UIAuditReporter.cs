@@ -20,11 +20,11 @@ namespace LAB2D.Editor
         private const string AuditCommand = MenuRoot + "生成 UI 审计报告";
 
         // === 主题参考值 ===
-        private static readonly Color ThemeNormal     = new Color32(242, 160, 175, 255);  // #F2A0AF
-        private static readonly Color ThemeHighlighted = new Color32(252, 200, 213, 255);  // #FCC8D5
+        private static readonly Color ThemeNormal     = new Color32(200, 135, 152, 255);  // #C88798
+        private static readonly Color ThemeHighlighted = new Color32(222, 175, 188, 255);  // #DEAFBC
         private static readonly Color ThemePressed     = new Color32(249, 213, 110, 255);  // #F9D56E
         private static readonly Color ThemeSelected    = new Color32(126, 203, 154, 255);  // #7ECB9A
-        private static readonly Color ThemeTextPrimary = new Color32(74, 55, 40, 255);     // #4A3728
+        private static readonly Color ThemeTextPrimary = new Color32(45, 25, 16, 255);     // #2D1910
         private const float ColorTolerance = 0.005f;
 
         // Unity 默认 InputField 颜色

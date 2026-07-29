@@ -119,8 +119,8 @@ namespace LAB2D.Editor
         {
             ColorBlock colors = new ColorBlock
             {
-                normalColor      = new Color32(242, 160, 175, 255),
-                highlightedColor = new Color32(252, 200, 213, 255),
+                normalColor      = new Color32(200, 135, 152, 255),
+                highlightedColor = new Color32(222, 175, 188, 255),
                 pressedColor     = new Color32(249, 213, 110, 255),
                 selectedColor    = new Color32(126, 203, 154, 255),
                 disabledColor    = new Color(0, 0, 0, 0),
@@ -154,9 +154,9 @@ namespace LAB2D.Editor
             var inputColors = new ColorBlock
             {
                 normalColor      = Color.white,
-                highlightedColor = new Color32(252, 200, 213, 255),
+                highlightedColor = new Color32(222, 175, 188, 255),
                 pressedColor     = new Color32(249, 213, 110, 255),
-                selectedColor    = new Color32(252, 200, 213, 255),
+                selectedColor    = new Color32(222, 175, 188, 255),
                 disabledColor    = new Color32(200, 200, 200, 128),
                 colorMultiplier  = 1f,
                 fadeDuration     = 0.1f,
@@ -165,7 +165,7 @@ namespace LAB2D.Editor
             var toggleColors = new ColorBlock
             {
                 normalColor      = Color.white,
-                highlightedColor = new Color32(252, 200, 213, 255),
+                highlightedColor = new Color32(222, 175, 188, 255),
                 pressedColor     = new Color32(249, 213, 110, 255),
                 selectedColor    = new Color32(126, 203, 154, 255),
                 disabledColor    = new Color32(200, 200, 200, 128),
