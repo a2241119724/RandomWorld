@@ -58,7 +58,7 @@ namespace LAB2D.AI.Dialogue.RAG
         public static List<GameKnowledgeEntry> LoadFromResources()
         {
             List<GameKnowledgeEntry> entries = new List<GameKnowledgeEntry>();
-            TextAsset[] assets = Resources.LoadAll<TextAsset>("GameKnowledge");
+            TextAsset[] assets = Resources.LoadAll<TextAsset>("AI/GameKnowledge");
 
             if (assets == null)
             {
