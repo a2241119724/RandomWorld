@@ -94,7 +94,7 @@ namespace LAB2D.Character.Enemy
         /// <inheritdoc/>
         public override void LoadData()
         {
-            AWorkerTask.AsyncProgressSetTipProvider("加载敌人管理信息...");
+            Core.GameServices.AsyncProgressSetTipProvider("加载敌人管理信息...");
             this.EnemyManagerDataLAB = DataTool.LoadDataByBinary<EnemyManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             this.EnemyManagerDataLAB ??= new EnemyManagerData();
             this.EnemyManagerDataLAB.EnemyDatas ??= new List<AEnemy.EnemyData>();

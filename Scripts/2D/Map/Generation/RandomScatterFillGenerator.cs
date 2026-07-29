@@ -18,7 +18,7 @@ namespace LAB2D.Map
         /// </summary>
         public IEnumerator ScatterSeeds(int[,] tiles, int randomCount, int height, int width)
         {
-            AWorkerTask.AsyncProgressSetTipProvider("正在生成随机坐标...");
+            Core.GameServices.AsyncProgressSetTipProvider("正在生成随机坐标...");
 
             TerrainConfigDatabase db = ServiceLocator.Get<TerrainConfigDatabase>();
 
@@ -28,7 +28,7 @@ namespace LAB2D.Map
                 int y = UnityEngine.Random.Range(0, width);
                 tiles[x, y] = db.GetRandomWeighted();
 
-                AWorkerTask.AsyncProgressAddOneProvider();
+                Core.GameServices.AsyncProgressAddOneProvider();
                 if (ServiceLocator.Get<FrameControl>().IsNeedStop(1))
                 {
                     yield return null;
@@ -42,7 +42,7 @@ namespace LAB2D.Map
         /// </summary>
         public IEnumerator Fill(int[,] tiles, int height, int width)
         {
-            AWorkerTask.AsyncProgressSetTipProvider("正在填补地图...");
+            Core.GameServices.AsyncProgressSetTipProvider("正在填补地图...");
 
             // 创建输出数组，同时保留源数据的副本用于读取
             int[,] source = (int[,])tiles.Clone();
@@ -57,7 +57,7 @@ namespace LAB2D.Map
                         yield return null;
                     }
 
-                    AWorkerTask.AsyncProgressAddOneProvider();
+                    Core.GameServices.AsyncProgressAddOneProvider();
 
                     if (source[i, j] != 0)
                     {

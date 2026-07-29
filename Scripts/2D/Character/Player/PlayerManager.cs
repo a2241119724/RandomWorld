@@ -31,13 +31,13 @@ namespace LAB2D.Character.Player
         /// <inheritdoc/>
         public override void LoadData()
         {
-            AWorkerTask.AsyncProgressSetTipProvider("加载玩家管理信息...");
+            Core.GameServices.AsyncProgressSetTipProvider("加载玩家管理信息...");
             Player.PlayerData data = DataTool.LoadDataByBinary<Player.PlayerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             if (data == null)
             {
                 // 降级方案：存档无玩家数据时，进度完成后在随机位置创建玩家
                 AWorkerTask.LogProvider("Player data not found in archive, will create player at random position after loading", LogManager.LogLevelEnum.Warning);
-                AWorkerTask.AsyncProgressCompleteProvider(() =>
+                Core.GameServices.AsyncProgressCompleteProvider(() =>
                 {
                     GameObject g = this.Create();
                     if (g == null)
@@ -51,7 +51,7 @@ namespace LAB2D.Character.Player
                 return;
             }
 
-            AWorkerTask.AsyncProgressCompleteProvider(() =>
+            Core.GameServices.AsyncProgressCompleteProvider(() =>
             {
                 GameObject g = this.Create(Vector3LAB.ToVector3(data.Pos));
                 if (g == null)

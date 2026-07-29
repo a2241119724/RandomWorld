@@ -161,7 +161,7 @@ namespace LAB2D.Gameplay
 
             // 关闭死亡画面
             DeathMenuPanelProvider().Hide();
-            AWorkerTask.ShowTipProvider("Respawned!");
+            Core.GameServices.ShowTipProvider("Respawned!");
 
             return true;
         }

@@ -36,7 +36,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
 
             // 发射子弹
-            ParticleSystem ps = AWorkerTask.AttackEffectProvider(AttackEffectManager.EffectTypeEnum.Bullet, (this.transform.rotation.eulerAngles.z + 90) * MathHelper.Deg2Rad);
+            ParticleSystem ps = Core.GameServices.AttackEffectProvider(AttackEffectManager.EffectTypeEnum.Bullet, (this.transform.rotation.eulerAngles.z + 90) * MathHelper.Deg2Rad);
             ps.transform.parent = this.transform.parent;
             ps.transform.position = this.Head.position;
             ps.Play();

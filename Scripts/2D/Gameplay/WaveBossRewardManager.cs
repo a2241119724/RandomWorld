@@ -600,7 +600,7 @@ namespace LAB2D.Gameplay
 
             try
             {
-                AWorkerTask.ShowTipProvider(message);
+                Core.GameServices.ShowTipProvider(message);
                 return;
             }
             catch (Exception exception)

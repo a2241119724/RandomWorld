@@ -66,7 +66,7 @@ namespace LAB2D.UI.Panel
             {
                 AWorkerTask.LogProvider("ForegroundPanel: Save button not found in Panel hierarchy!", LogManager.LogLevelEnum.Error);
             }
-            else if (AWorkerTask.NetworkIsOnlineProvider() && !AWorkerTask.NetworkIsMasterClientProvider())
+            else if (Core.GameServices.NetworkIsOnlineProvider() && !Core.GameServices.NetworkIsMasterClientProvider())
             {
                 // 仅在联机房间中且非房主时隐藏保存按钮
                 save.gameObject.SetActive(false);

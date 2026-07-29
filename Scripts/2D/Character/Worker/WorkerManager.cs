@@ -15,7 +15,7 @@ namespace LAB2D.Character.Worker
         public override void Add(AWorker character)
         {
             base.Add(character);
-            AWorkerTask.LocateWorkerUIAddProvider(character);
+            Core.GameServices.LocateWorkerUIAddProvider(character);
         }
 
         /// <summary>

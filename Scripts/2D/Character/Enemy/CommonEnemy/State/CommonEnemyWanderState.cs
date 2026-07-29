@@ -38,25 +38,25 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         public override void OnUpdate()
         {
             // 感知到周围有活着的玩家，进入追踪状态
-            int count = AWorkerTask.PlayerCountProvider();
+            int count = Core.GameServices.PlayerCountProvider();
             for (int i = 0; i < count; i++)
             {
-                if (this.Character.SenseNearby(AWorkerTask.PlayerGetProvider(i).transform))
+                if (this.Character.SenseNearby(Core.GameServices.PlayerGetProvider(i).transform))
                 {
                     this.Character.Manager.ChangeState(TypeEnum.Chase);
-                    this.Character.Target = AWorkerTask.PlayerGetProvider(i);
+                    this.Character.Target = Core.GameServices.PlayerGetProvider(i);
                     return;
                 }
             }
 
             // 感知到周围有活着的Worker，进入追踪状态
-            count = AWorkerTask.WorkerCountProvider();
+            count = Core.GameServices.WorkerCountProvider();
             for (int i = 0; i < count; i++)
             {
-                if (this.Character.SenseNearby(AWorkerTask.WorkerGetProvider(i).transform))
+                if (this.Character.SenseNearby(Core.GameServices.WorkerGetProvider(i).transform))
                 {
                     this.Character.Manager.ChangeState(TypeEnum.Chase);
-                    this.Character.Target = AWorkerTask.WorkerGetProvider(i);
+                    this.Character.Target = Core.GameServices.WorkerGetProvider(i);
                     return;
                 }
             }

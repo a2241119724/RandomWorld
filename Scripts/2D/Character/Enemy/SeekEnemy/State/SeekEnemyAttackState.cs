@@ -31,7 +31,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             {
                 // 实例化武器
                 string name = AWorkerTask.ItemDataProvider(this.Character.CharacterDataLAB.Weapon.Id).EnName;
-                this.Character.Weapon = AWorkerTask.ResourceInstantiateProvider(name, false);
+                this.Character.Weapon = Core.GameServices.ResourceInstantiateProvider(name, false);
                 if (this.Character.Weapon == null)
                 {
                     AWorkerTask.LogProvider("武器实例化错误!", LogManager.LogLevelEnum.Error);

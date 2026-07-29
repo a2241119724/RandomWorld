@@ -47,7 +47,7 @@ namespace LAB2D.Character.Worker
         public static System.Action<AWorker> DeathProvider { get; set; }
             = (worker) =>
             {
-                if (!AWorkerTask.NetworkIsOnlineProvider() || AWorkerTask.NetworkIsMasterClientProvider())
+                if (!Core.GameServices.NetworkIsOnlineProvider() || Core.GameServices.NetworkIsMasterClientProvider())
                 {
                     Core.ServiceLocator.Get<WorkerManager>().Remove(worker);
                 }
@@ -485,9 +485,9 @@ namespace LAB2D.Character.Worker
 
             /// <summary>
             /// 是否需要做任务的开关
-            /// 是否开启做该任务类型的开关(toogle的顺序与TaskType的顺序相关)
+            /// 使用 WorkerTaskType 作为键的字典，未在字典中的任务类型视为关闭。
             /// </summary>
-            public bool[] TaskToggle;
+            public Dictionary<WorkerTaskType, bool> TaskToggle;
 
             /// <summary>
             /// 当前状态
@@ -502,12 +502,14 @@ namespace LAB2D.Character.Worker
             public WorkerData()
             {
                 // 设置默认可接受任务类型
-                this.TaskToggle = new bool[(int)WorkerTaskType._Count];
-                this.TaskToggle[(int)WorkerTaskType.Eat] = true;
-                this.TaskToggle[(int)WorkerTaskType.Wear] = true;
-                this.TaskToggle[(int)WorkerTaskType.Carry] = true;
-                this.TaskToggle[(int)WorkerTaskType.Gather] = true;
-                this.TaskToggle[(int)WorkerTaskType.Exercise] = true;
+                this.TaskToggle = new Dictionary<WorkerTaskType, bool>
+                {
+                    { WorkerTaskType.Eat, true },
+                    { WorkerTaskType.Wear, true },
+                    { WorkerTaskType.Carry, true },
+                    { WorkerTaskType.Gather, true },
+                    { WorkerTaskType.Exercise, true },
+                };
             }
         }
     }

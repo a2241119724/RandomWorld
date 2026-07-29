@@ -390,11 +390,9 @@ namespace LAB2D.Tool
                 if (workerMap.TryGetValue(workerId, out AWorker worker) &&
                     WorkerConditionTool.TryGetWorkerData(worker, out AWorker.WorkerData workerData))
                 {
-                    int index = (int)taskType;
                     return workerData.TaskToggle != null &&
-                        index >= 0 &&
-                        index < workerData.TaskToggle.Length &&
-                        workerData.TaskToggle[index];
+                        workerData.TaskToggle.TryGetValue(taskType, out bool enabled) &&
+                        enabled;
                 }
 
                 return false;

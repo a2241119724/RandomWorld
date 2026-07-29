@@ -16,10 +16,10 @@ namespace LAB2D.Character.Worker.State
 
             // 删除Worker定位按钮
             // LocateWorkerUI 由 UI 层直接引用，暂不抽出 Provider
-            AWorkerTask.LocateWorkerUIRemoveProvider((AWorker)this.Character);
+            Core.GameServices.LocateWorkerUIRemoveProvider((AWorker)this.Character);
 
             // 释放床绑定
-            AWorkerTask.FurnitureBedProvider((AWorker)this.Character);
+            Core.GameServices.FurnitureBedProvider((AWorker)this.Character);
 
             // 放弃当前正在执行的任务，避免任务永久被标记为"执行中"
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
@@ -35,7 +35,7 @@ namespace LAB2D.Character.Worker.State
             // 丢弃拿取的东西
             this.Character.DropResource();
 
-            AWorkerTask.NetworkDestroyProvider(this.Character.gameObject);
+            Core.GameServices.NetworkDestroyProvider(this.Character.gameObject);
         }
     }
 }

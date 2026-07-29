@@ -15,6 +15,28 @@ namespace LAB2D.Domain.Gameplay
     {
         private readonly WorkerConditionRuleService conditionRuleService = new WorkerConditionRuleService();
 
+        /// <summary>
+        /// 任务类型到专属阻塞原因解析器的映射。
+        /// 新增 WorkerTaskType 时在此字典注册即可，无需修改 ResolveTaskSpecificReason。
+        /// </summary>
+        private readonly Dictionary<WorkerTaskType, Func<IWorkerTaskInfo, WorkerAgentSnapshot,
+            IReadOnlyList<WorkerAgentSnapshot>, ColonyDiagnosticContext, WorkerTaskBlockReason>> taskReasonResolvers;
+
+        public ColonyCommandCenterRuleService()
+        {
+            this.taskReasonResolvers = new Dictionary<WorkerTaskType, Func<IWorkerTaskInfo, WorkerAgentSnapshot,
+                IReadOnlyList<WorkerAgentSnapshot>, ColonyDiagnosticContext, WorkerTaskBlockReason>>
+            {
+                { WorkerTaskType.Build,     (task, ws, aw, ctx) => this.ResolveBuildTaskReason(task, ws, ctx) },
+                { WorkerTaskType.Carry,     (task, ws, aw, ctx) => this.ResolveCarryTaskReason(task, ws, ctx) },
+                { WorkerTaskType.Eat,       (task, ws, aw, ctx) => this.ResolveHungryTaskReason(task, ws, ctx) },
+                { WorkerTaskType.Sleep,     (task, ws, aw, ctx) => this.ResolveBoundWorkerTaskReason(task, "worker", true, aw, ctx) },
+                { WorkerTaskType.Plant,     (task, ws, aw, ctx) => this.ResolvePlantTaskReason(ws, ctx) },
+                { WorkerTaskType.Wear,      (task, ws, aw, ctx) => this.ResolveBoundWorkerTaskReason(task, "worker", false, aw, ctx) },
+                { WorkerTaskType.Exercise,  (task, ws, aw, ctx) => this.ResolveBoundWorkerTaskReason(task, "worker", false, aw, ctx) },
+            };
+        }
+
         // Worker 阈值常量（与 AWorker 和 WorkerSupplyRuleService 保持一致）
         private const float ThresholdHungry = 20.0f;
         private const float ThresholdTired = 20.0f;
@@ -279,25 +301,13 @@ namespace LAB2D.Domain.Gameplay
         {
             try
             {
-                switch (task.TaskType)
+                if (this.taskReasonResolvers.TryGetValue(task.TaskType, out var resolver))
                 {
-                    case WorkerTaskType.Build:
-                        return ResolveBuildTaskReason(task, workerSnapshot, context);
-                    case WorkerTaskType.Carry:
-                        return ResolveCarryTaskReason(task, workerSnapshot, context);
-                    case WorkerTaskType.Eat:
-                        return ResolveHungryTaskReason(task, workerSnapshot, context);
-                    case WorkerTaskType.Sleep:
-                        return ResolveBoundWorkerTaskReason(task, "worker", true, allWorkers, context);
-                    case WorkerTaskType.Plant:
-                        return ResolvePlantTaskReason(workerSnapshot, context);
-                    case WorkerTaskType.Wear:
-                    case WorkerTaskType.Exercise:
-                        return ResolveBoundWorkerTaskReason(task, "worker", false, allWorkers, context);
-                    default:
-                        // Gather 等任务类型无需专属阻塞原因检查
-                        return WorkerTaskBlockReason.None;
+                    return resolver(task, workerSnapshot, allWorkers, context);
                 }
+
+                // Gather 等任务类型无需专属阻塞原因检查
+                return WorkerTaskBlockReason.None;
             }
             catch
             {

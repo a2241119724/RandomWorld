@@ -210,7 +210,7 @@ namespace LAB2D.Gameplay
 
             try
             {
-                AWorkerTask.ShowTipProvider(tipText);
+                Core.GameServices.ShowTipProvider(tipText);
                 return;
             }
             catch (System.Exception exception)

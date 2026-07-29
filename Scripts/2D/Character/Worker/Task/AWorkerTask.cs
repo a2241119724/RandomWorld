@@ -486,7 +486,7 @@ namespace LAB2D.Character.Worker.Task
         public bool IsCanWork(AWorker worker)
         {
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            if (!workerData.TaskToggle[(int)this.TaskType])
+            if (!workerData.TaskToggle.TryGetValue(this.TaskType, out bool enabled) || !enabled)
             {
                 return false;
             }

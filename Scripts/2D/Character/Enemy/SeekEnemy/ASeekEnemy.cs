@@ -102,7 +102,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
             if (!this.NetworkView.IsOnline || this.NetworkView.IsMasterClient)
             {
-                AWorkerTask.EnemyRemoveProvider(this);
+                Core.GameServices.EnemyRemoveProvider(this);
             }
 
             this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Dead); // 进入死亡状态

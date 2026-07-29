@@ -2,6 +2,7 @@ namespace LAB2D.UI.Panel.PanelUI
 {
     using LAB2D;
     using LAB2D.Core;
+    using LAB2D.Enum;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
@@ -17,16 +18,31 @@ namespace LAB2D.UI.Panel.PanelUI
         public List<GameObject> TaskItems { get; set; }
 
         /// <summary>
-        /// 在面板中挂在在所有TaskToggle上
+        /// 在面板中挂在在所有TaskToggle上。
+        /// 通过 TaskToggleBinding 组件获取 Toggle 对应的 WorkerTaskType，
+        /// 不再依赖 UI 层级顺序隐式映射。
         /// </summary>
         /// <param name="toggle">开关UI</param>
         public void TaskToggle(Toggle toggle)
         {
+            TaskToggleBinding binding = toggle.GetComponent<TaskToggleBinding>();
+            if (binding == null)
+            {
+                return;
+            }
+
             int x = toggle.transform.parent.GetSiblingIndex() - 1;
-            int y = toggle.transform.GetSiblingIndex() - 1;
             List<AWorker> workers = ServiceLocator.Get<WorkerManager>().Characters;
+            if (x < 0 || x >= workers.Count)
+            {
+                return;
+            }
+
             AWorker.WorkerData workerData = workers[x].CharacterDataLAB as AWorker.WorkerData;
-            workerData.TaskToggle[y] = toggle.isOn;
+            if (workerData != null && workerData.TaskToggle != null)
+            {
+                workerData.TaskToggle[binding.TaskType] = toggle.isOn;
+            }
         }
 
         public void Awake()
@@ -77,7 +93,14 @@ namespace LAB2D.UI.Panel.PanelUI
                 AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
                 for (int i = 1; i < this.TaskItems[index].transform.childCount; i++)
                 {
-                    this.TaskItems[index].transform.GetChild(i).GetComponent<Toggle>().isOn = workerData.TaskToggle[i - 1];
+                    Transform toggleTransform = this.TaskItems[index].transform.GetChild(i);
+                    Toggle toggle = toggleTransform.GetComponent<Toggle>();
+                    TaskToggleBinding binding = toggleTransform.GetComponent<TaskToggleBinding>();
+                    if (binding != null && workerData.TaskToggle != null
+                        && workerData.TaskToggle.TryGetValue(binding.TaskType, out bool enabled))
+                    {
+                        toggle.isOn = enabled;
+                    }
                 }
 
                 index++;

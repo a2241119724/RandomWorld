@@ -123,7 +123,7 @@ namespace LAB2D.Character
         {
             this.name = this.GetType().Name;
 
-            this.NetworkView = AWorkerTask.NetworkIsOnlineProvider()
+            this.NetworkView = Core.GameServices.NetworkIsOnlineProvider()
                 ? new PunNetworkViewAdapter(this.pv)
                 : ServiceLocator.Get<OfflineNetworkView>();
 

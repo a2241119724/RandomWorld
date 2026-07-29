@@ -130,7 +130,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
             if (!this.NetworkView.IsOnline || this.NetworkView.IsMasterClient)
             {
-                AWorkerTask.EnemyRemoveProvider(this);
+                Core.GameServices.EnemyRemoveProvider(this);
             }
 
             this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Dead); // 进入死亡状态

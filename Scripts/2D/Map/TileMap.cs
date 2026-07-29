@@ -64,7 +64,7 @@ namespace LAB2D.Map
         /// <returns>迭代器</returns>
         public IEnumerator ShowTilemap(int[,] mapTiles)
         {
-            AWorkerTask.AsyncProgressSetTipProvider("正在展示地图...");
+            Core.GameServices.AsyncProgressSetTipProvider("正在展示地图...");
 
             TerrainConfigDatabase db = ServiceLocator.Get<TerrainConfigDatabase>();
             int height = mapTiles.GetLength(0);
@@ -74,7 +74,7 @@ namespace LAB2D.Map
             {
                 for (int j = 0; j < width; j++)
                 {
-                    AWorkerTask.AsyncProgressAddOneProvider();
+                    Core.GameServices.AsyncProgressAddOneProvider();
                     int terrainId = mapTiles[i, j];
                     string resourceName = db.GetTileResourceName(terrainId);
                     if (!string.IsNullOrEmpty(resourceName) && terrainId != 0)
@@ -250,14 +250,14 @@ namespace LAB2D.Map
             total += this.TileMapDataLAB.RandomCount;
             total += ((width + height) * 2) + 4;
             total += width * height;
-            AWorkerTask.AsyncProgressAddTotalProvider(total);
+            Core.GameServices.AsyncProgressAddTotalProvider(total);
         }
 
         /// <inheritdoc/>
         public override void LoadData()
         {
             base.LoadData();
-            AWorkerTask.AsyncProgressSetTipProvider("加载地图数据...");
+            Core.GameServices.AsyncProgressSetTipProvider("加载地图数据...");
             this.TileMapDataLAB = DataTool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             if (this.TileMapDataLAB == null)
             {
@@ -310,7 +310,7 @@ namespace LAB2D.Map
             this.TileMapDataLAB.Width = width;
             int total = width * height;
             total += ((width + height) * 2) + 4;
-            AWorkerTask.AsyncProgressAddTotalProvider(total);
+            Core.GameServices.AsyncProgressAddTotalProvider(total);
         }
 
         /// <summary>
@@ -329,35 +329,35 @@ namespace LAB2D.Map
                 return;
             }
 
-            AWorkerTask.AsyncProgressSetTipProvider("创建地图四周...");
+            Core.GameServices.AsyncProgressSetTipProvider("创建地图四周...");
 
             TileBase borderTile = (TileBase)AWorkerTask.ResourceLoadProvider(borderResourceName);
 
             // 上边
             for (int i = -1; i < this.TileMapDataLAB.Width; i++)
             {
-                AWorkerTask.AsyncProgressAddOneProvider();
+                Core.GameServices.AsyncProgressAddOneProvider();
                 this.tilemap.SetTile(new Vector3Int(this.TileMapDataLAB.Height, i, 0), borderTile);
             }
 
             // 右边
             for (int i = 0; i <= this.TileMapDataLAB.Height; i++)
             {
-                AWorkerTask.AsyncProgressAddOneProvider();
+                Core.GameServices.AsyncProgressAddOneProvider();
                 this.tilemap.SetTile(new Vector3Int(i, this.TileMapDataLAB.Width, 0), borderTile);
             }
 
             // 下边
             for (int i = 0; i <= this.TileMapDataLAB.Width; i++)
             {
-                AWorkerTask.AsyncProgressAddOneProvider();
+                Core.GameServices.AsyncProgressAddOneProvider();
                 this.tilemap.SetTile(new Vector3Int(-1, i, 0), borderTile);
             }
 
             // 左边
             for (int i = -1; i < this.TileMapDataLAB.Height; i++)
             {
-                AWorkerTask.AsyncProgressAddOneProvider();
+                Core.GameServices.AsyncProgressAddOneProvider();
                 this.tilemap.SetTile(new Vector3Int(i, -1, 0), borderTile);
             }
         }

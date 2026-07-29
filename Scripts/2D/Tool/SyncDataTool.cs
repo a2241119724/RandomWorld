@@ -15,7 +15,7 @@ namespace LAB2D.Tool
         /// <param name="methodName">rpc方法名</param>
         public static void SyncDataReqWrapper(PhotonView photonView, string methodName = "SyncDataReq")
         {
-            if (AWorkerTask.NetworkIsMasterClientProvider())
+            if (Core.GameServices.NetworkIsMasterClientProvider())
             {
                 return;
             }
@@ -33,7 +33,7 @@ namespace LAB2D.Tool
         /// <param name="methodName">rpc方法名</param>
         public static void SyncDataRespWrapper<T>(PhotonView photonView, byte[] playerId, T data, string methodName = "SyncDataResp")
         {
-            if (!AWorkerTask.NetworkIsMasterClientProvider())
+            if (!Core.GameServices.NetworkIsMasterClientProvider())
             {
                 return;
             }
@@ -51,7 +51,7 @@ namespace LAB2D.Tool
         /// <param name="methodName">rpc方法名</param>
         public static void SyncDataRespWrapper<T>(PhotonView photonView, RpcTarget rpcTarget, T data, string methodName = "SyncDataResp")
         {
-            if (!AWorkerTask.NetworkIsMasterClientProvider())
+            if (!Core.GameServices.NetworkIsMasterClientProvider())
             {
                 return;
             }

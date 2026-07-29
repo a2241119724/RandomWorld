@@ -233,8 +233,8 @@ namespace LAB2D.Manager
             List<Type> monoSaveDatas = LAB2D.Tool.Tool.GetChildByParent<AMonoSaveData>();
 
             Core.ServiceLocator.Get<Core.MapInitCoordinator>().IsComplete = true;
-            AWorkerTask.AsyncProgressSetTipProvider("...");
-            AWorkerTask.AsyncProgressAddTotalProvider(saveDatas.Count + monoSaveDatas.Count);
+            Core.GameServices.AsyncProgressSetTipProvider("...");
+            Core.GameServices.AsyncProgressAddTotalProvider(saveDatas.Count + monoSaveDatas.Count);
 
             this.InvokeLoadData(monoSaveDatas);
             this.InvokeLoadData(saveDatas);
@@ -363,12 +363,12 @@ namespace LAB2D.Manager
             {
                 if (!this.TryGetInstance(type, out object obj))
                 {
-                    AWorkerTask.AsyncProgressAddOneProvider();
+                    Core.GameServices.AsyncProgressAddOneProvider();
                     continue;
                 }
 
                 LAB2D.Tool.Tool.GetMethodByType(type, nameof(ASaveData.LoadData))?.Invoke(obj, null);
-                AWorkerTask.AsyncProgressAddOneProvider();
+                Core.GameServices.AsyncProgressAddOneProvider();
             }
         }
 

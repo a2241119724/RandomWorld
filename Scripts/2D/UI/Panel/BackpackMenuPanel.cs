@@ -66,7 +66,7 @@ namespace LAB2D.UI.Panel
                     ServiceLocator.Get<BackpackController>().AddItem(playerData.Weapon);
 
                     // 销毁武器
-                    AWorkerTask.NetworkDestroyProvider(ServiceLocator.Get<PlayerManager>().Mine.Weapon);
+                    Core.GameServices.NetworkDestroyProvider(ServiceLocator.Get<PlayerManager>().Mine.Weapon);
                 }
 
                 // 实例化武器

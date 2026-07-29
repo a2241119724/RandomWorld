@@ -43,7 +43,7 @@ namespace LAB2D.Character
             Vector3 worldPos = new Vector3(e.WorldPosX, e.WorldPosY, 0f);
 
             // 浮动伤害文字（由 FloatingTextManager 统一管理，挂载在 FloatingTextCanvas 下）
-            AWorkerTask.FloatingTextProvider(worldPos, e.Damage, e.IsCritical, e.IsCombo);
+            Core.GameServices.FloatingTextProvider(worldPos, e.Damage, e.IsCritical, e.IsCombo);
         }
     }
 }

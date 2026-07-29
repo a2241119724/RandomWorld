@@ -411,7 +411,7 @@ namespace LAB2D.AI.Dialogue.Core
             sb.Append(itemName);
         }
 
-        private static string BuildEnabledTaskText(bool[] taskToggle)
+        private static string BuildEnabledTaskText(Dictionary<WorkerTaskType, bool> taskToggle)
         {
             if (taskToggle == null)
             {
@@ -422,8 +422,7 @@ namespace LAB2D.AI.Dialogue.Core
             foreach (WorkerTaskType taskType in
                 Enum.GetValues(typeof(WorkerTaskType)))
             {
-                int index = (int)taskType;
-                if (index < 0 || index >= taskToggle.Length || !taskToggle[index])
+                if (!taskToggle.TryGetValue(taskType, out bool enabled) || !enabled)
                 {
                     continue;
                 }

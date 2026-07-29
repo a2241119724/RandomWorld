@@ -55,14 +55,14 @@ namespace LAB2D.Map
             // 确保进度总数已注册（幂等，重复调用安全）
             this.SetProgress();
 
-            AWorkerTask.AsyncProgressSetTipProvider("生成资源...");
+            Core.GameServices.AsyncProgressSetTipProvider("生成资源...");
             int resourcesPlaced = 0;
             int assetMissCount = 0;
             for (int i = 0; i < tm.TileMapDataLAB.Height; i++)
             {
                 for (int j = 0; j < tm.TileMapDataLAB.Width; j++)
                 {
-                    AWorkerTask.AsyncProgressAddOneProvider();
+                    Core.GameServices.AsyncProgressAddOneProvider();
                     if (Core.ServiceLocator.Get<FrameControl>().IsNeedStop(1))
                     {
                         yield return null;
@@ -230,14 +230,14 @@ namespace LAB2D.Map
             }
 
             this.isProgressSet = true;
-            AWorkerTask.AsyncProgressAddTotalProvider(tm.TileMapDataLAB.Height * tm.TileMapDataLAB.Width);
+            Core.GameServices.AsyncProgressAddTotalProvider(tm.TileMapDataLAB.Height * tm.TileMapDataLAB.Width);
         }
 
         /// <inheritdoc/>
         public override void LoadData()
         {
             base.LoadData();
-            AWorkerTask.AsyncProgressSetTipProvider("加载资源地图信息...");
+            Core.GameServices.AsyncProgressSetTipProvider("加载资源地图信息...");
             this.ResourceMapDataLAB = DataTool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
             if (this.ResourceMapDataLAB == null)
             {
