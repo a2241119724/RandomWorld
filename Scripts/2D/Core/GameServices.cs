@@ -3,7 +3,6 @@ namespace LAB2D.Core
     using LAB2D;
     using LAB2D.Character;
     using LAB2D.Character.Worker;
-    using LAB2D.Character.Worker.Task;
     using LAB2D.Gameplay;
     using LAB2D.UI.Character;
     using LAB2D.UI.Panel.PanelUI;
