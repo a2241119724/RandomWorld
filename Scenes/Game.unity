@@ -645,6 +645,7 @@ GameObject:
   - component: {fileID: 66547350}
   - component: {fileID: 66547352}
   - component: {fileID: 66547351}
+  - component: {fileID: 66547353}
   m_Layer: 5
   m_Name: Content
   m_TagString: Untagged
@@ -696,7 +697,7 @@ MonoBehaviour:
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
-  m_FillCenter: 0
+  m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
@@ -711,6 +712,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 66547349}
   m_CullTransparentMesh: 1
+--- !u!114 &66547353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 66547349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ShowMaskGraphic: 1
 --- !u!1 &72804371
 GameObject:
   m_ObjectHideFlags: 0
@@ -14689,7 +14703,6 @@ GameObject:
   m_Component:
   - component: {fileID: 534481052}
   - component: {fileID: 534481055}
-  - component: {fileID: 534481053}
   m_Layer: 5
   m_Name: Viewport
   m_TagString: Untagged
@@ -14717,19 +14730,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
---- !u!114 &534481053
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 534481051}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_ShowMaskGraphic: 1
 --- !u!222 &534481055
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -54236,7 +54236,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3243801717789965158}
   - component: {fileID: 3243801717789965160}
-  - component: {fileID: 4965915545768471482}
   m_Layer: 5
   m_Name: Viewport
   m_TagString: Untagged
@@ -55382,7 +55381,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 1, b: 0.8156863, a: 1}
+  m_Color: {r: 0.2901961, g: 0.21960784, b: 0.16078432, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -55392,7 +55391,7 @@ MonoBehaviour:
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
-  m_FillCenter: 0
+  m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
@@ -55993,19 +55992,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4965915545768471482
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3243801717789965157}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_ShowMaskGraphic: 1
 --- !u!224 &4973500829620226702
 RectTransform:
   m_ObjectHideFlags: 0
@@ -57127,6 +57113,7 @@ GameObject:
   - component: {fileID: 7496754195896974129}
   - component: {fileID: 3727003101190742402}
   - component: {fileID: 4280813557910372109}
+  - component: {fileID: 7496754195896974130}
   m_Layer: 5
   m_Name: Content
   m_TagString: Untagged
@@ -59872,6 +59859,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &7496754195896974130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6980863114485174740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ShowMaskGraphic: 1
 --- !u!222 &7498108758172180738
 CanvasRenderer:
   m_ObjectHideFlags: 0
