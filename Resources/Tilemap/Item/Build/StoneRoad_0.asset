@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: InventoryWallLD
+  m_Name: StoneRoad_0
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: -866802548, guid: 31bce86109c57b34c9e6089cf1a9877f, type: 3}
+  m_Sprite: {fileID: 1473754879, guid: 89bbc67511e97ac46914f73a680f6151, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1
@@ -33,4 +33,4 @@ MonoBehaviour:
     e33: 1
   m_InstancedGameObject: {fileID: 0}
   m_Flags: 1
-  m_ColliderType: 0
+  m_ColliderType: 1
