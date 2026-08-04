@@ -23,5 +23,11 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>仅特定 Worker 可接此任务（Sleep/Wear/Exercise 绑定到具体 Worker）</summary>
         WorkerSpecific = 1 << 3,
+
+        /// <summary>可过期任务 — WorkerTaskManager 需定期检查并自动清理过期悬赏</summary>
+        Expirable = 1 << 4,
+
+        /// <summary>完成时触发货币结算 — 悬赏金在 Finish 时从发布者转给执行者</summary>
+        SettleOnComplete = 1 << 5,
     }
 }

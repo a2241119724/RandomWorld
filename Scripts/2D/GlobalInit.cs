@@ -94,6 +94,7 @@ namespace LAB2D
             ServiceLocator.Register(WorkerTaskCongestionAdvisor.Instance);
             ServiceLocator.Register<IWorkerTaskCongestionAdvisor>(WorkerTaskCongestionAdvisor.Instance);
             ServiceLocator.Register(WorkerEfficiencyTracker.Instance);
+            ServiceLocator.Register(CurrencyManager.Instance);
             ServiceLocator.Register(ColonyCommandCenterManager.Instance);
             ServiceLocator.Register<IColonyCommandCenterService>(ColonyCommandCenterManager.Instance);
             ServiceLocator.Register(ItemCollectionTracker.Instance);

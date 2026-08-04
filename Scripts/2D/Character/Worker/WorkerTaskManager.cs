@@ -120,6 +120,7 @@ namespace LAB2D.Character.Worker
             }
 
             this.lastTickFrame = currentFrame;
+            this.ExpireBountyTasks();
             this.RunTaskAssignmentLoop();
         }
 
@@ -178,7 +179,8 @@ namespace LAB2D.Character.Worker
                 workerData?.CurHungry ?? 0f,
                 workerData?.MaxHungry ?? 0f,
                 workerData?.CurTired ?? 0f,
-                workerData?.MaxTired ?? 0f);
+                workerData?.MaxTired ?? 0f,
+                workerData?.Wallet ?? Domain.Worker.CurrencyAmount.Zero);
         }
 
         private List<WorkerTaskSnapshot<AWorkerTask>> CreateTaskSnapshots(int priority, AWorker worker)
@@ -198,6 +200,50 @@ namespace LAB2D.Character.Worker
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 清理过期的悬赏任务。
+        /// 遍历队列中所有 WorkerBountyTask，检查其过期时间，
+        /// 对已过期的任务退款给发布者并从队列移除。
+        /// </summary>
+        private void ExpireBountyTasks()
+        {
+            float currentGameTime = Core.ServiceLocator.Get<IGameTime>().Time;
+            List<AWorkerTask> expiredTasks = new List<AWorkerTask>();
+
+            for (int p = 0; p < this.taskQueue.PriorityCount; p++)
+            {
+                foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriority(p))
+                {
+                    if (pair.Key is WorkerBountyTask bountyTask
+                        && bountyTask.BountyInfo.IsExpired(currentGameTime)
+                        && !pair.Value) // 只在未被接取（Posted 状态）时过期
+                    {
+                        expiredTasks.Add(pair.Key);
+                    }
+                }
+            }
+
+            foreach (AWorkerTask task in expiredTasks)
+            {
+                if (task is WorkerBountyTask bounty)
+                {
+                    try
+                    {
+                        Core.ServiceLocator.Get<Gameplay.CurrencyManager>()
+                            .RefundBounty(bounty.BountyInfo.IssuerWorkerId, bounty.BountyInfo.Reward);
+                    }
+                    catch (System.Exception e)
+                    {
+                        AWorkerTask.LogProvider(
+                            $"悬赏退款失败: issuer={bounty.BountyInfo.IssuerWorkerId}, error={e.Message}",
+                            LogManager.LogLevelEnum.Error);
+                    }
+                }
+
+                this.taskQueue.Remove(task);
+            }
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Worker.State
 {
     using LAB2D;
+    using LAB2D.AI.Worker;
     using LAB2D.Domain.Common;
     using LAB2D.Serializable;
     using System.Text;
@@ -79,6 +80,10 @@ namespace LAB2D.Character.Worker.State
                         .SetWorker(this.Character)
                         .Build(), new GameGridPosition(0, 0, 0),
                         3);
+
+                    // 尝试发布悬赏任务（Worker 自主判断是否需要花钱请人代劳）
+                    WorkerBountyDecisionService bountyDecision = new WorkerBountyDecisionService();
+                    bountyDecision.TryPostOneBounty(this.Character);
                 }
             }
 

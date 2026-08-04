@@ -16,6 +16,7 @@ namespace LAB2D.Character.Worker
         {
             base.Add(character);
             Core.GameServices.LocateWorkerUIAddProvider(character);
+            Core.ServiceLocator.Get<Gameplay.CurrencyManager>().InitializeWorkerWallet(character);
         }
 
         /// <summary>

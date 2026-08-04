@@ -499,6 +499,11 @@ namespace LAB2D.Character.Worker
             /// </summary>
             public AWorkerTask Task;
 
+            /// <summary>
+            /// 货币钱包
+            /// </summary>
+            public Domain.Worker.CurrencyAmount Wallet = new Domain.Worker.CurrencyAmount(100);
+
             public WorkerData()
             {
                 // 设置默认可接受任务类型

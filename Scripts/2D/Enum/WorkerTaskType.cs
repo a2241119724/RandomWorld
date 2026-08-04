@@ -31,6 +31,9 @@ namespace LAB2D.Enum
         /// <summary>种植</summary>
         Plant,
 
+        /// <summary>悬赏 — Worker 自主发布、其他 Worker 领取完成</summary>
+        Bounty,
+
         /// <summary>哨兵值 — 必须始终在最后，用于动态数组大小</summary>
         _Count,
     }

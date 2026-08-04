@@ -187,6 +187,8 @@ namespace LAB2D.Tool
                     return "睡觉";
                 case WorkerTaskType.Plant:
                     return "种植";
+                case WorkerTaskType.Bounty:
+                    return "悬赏";
                 default:
                     return taskType.ToString();
             }

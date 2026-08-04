@@ -97,6 +97,16 @@ namespace LAB2D.Character.Worker.Task
                 return this;
             }
 
+            /// <summary>
+            /// 设置目标位置但不添加采集图标。
+            /// 用于悬赏任务的内部任务构建——该位置可能已有系统创建的采集标记。
+            /// </summary>
+            public GatherTaskBuilder SetTargetWithoutIcon(Vector3Int targetMap)
+            {
+                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(targetMap);
+                return this;
+            }
+
             public GatherTaskBuilder SetResourceInfo(ResourceInfo resourceInfo)
             {
                 this.task.resourceInfo = DataTool.DeepCopyByBinary(resourceInfo);

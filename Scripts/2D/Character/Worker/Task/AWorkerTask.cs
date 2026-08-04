@@ -427,11 +427,11 @@ namespace LAB2D.Character.Worker.Task
         public virtual TaskTraits Traits => TaskTraits.None;
 
         /// <summary>
-        /// 不需要重写
+        /// 执行任务。子类可通过 override 自定义执行逻辑（如 WorkerBountyTask 委托给内部任务）。
         /// </summary>
         /// <param name="worker">Worker</param>
         /// <returns>是否成功</returns>
-        public bool Execute(AWorker worker, float deltaTime)
+        public virtual bool Execute(AWorker worker, float deltaTime)
         {
             // 工作扣减疲劳值
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;

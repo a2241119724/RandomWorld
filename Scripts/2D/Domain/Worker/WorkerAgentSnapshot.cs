@@ -14,7 +14,8 @@ namespace LAB2D.Domain.Worker
             float curHungry,
             float maxHungry,
             float curTired,
-            float maxTired)
+            float maxTired,
+            CurrencyAmount wallet = default)
         {
             this.WorkerId = workerId;
             this.Position = position;
@@ -24,6 +25,7 @@ namespace LAB2D.Domain.Worker
             this.MaxHungry = maxHungry;
             this.CurTired = curTired;
             this.MaxTired = maxTired;
+            this.Wallet = wallet;
         }
 
         public long WorkerId { get; }
@@ -41,6 +43,8 @@ namespace LAB2D.Domain.Worker
         public float CurTired { get; }
 
         public float MaxTired { get; }
+
+        public CurrencyAmount Wallet { get; }
 
         public bool CanReceiveTask => this.IsIdle && !this.IsPaused;
     }
