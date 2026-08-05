@@ -157,6 +157,18 @@ namespace LAB2D.UI
             this.nameText.text = data.Name;
             this.pointsText.text = data.PointsText;
 
+            // 确保 GameObject 激活，否则 StartCoroutine 会报错
+            if (!this.gameObject.activeSelf)
+            {
+                this.gameObject.SetActive(true);
+            }
+
+            // 重置为完全透明，协程从淡入开始
+            if (this.canvasGroup != null)
+            {
+                this.canvasGroup.alpha = 0f;
+            }
+
             // 停掉之前的自动隐藏协程
             if (this.autoHideCoroutine != null)
             {
@@ -200,6 +212,9 @@ namespace LAB2D.UI
 
             // 从队列移除已展示成就
             if (Core.ServiceLocator.TryGet(out AchievementManager am)) { am.DequeuePendingUnlock(); }
+
+            // 弹窗播放完毕，设为 inactive 以便下次 Show 时重新激活
+            this.gameObject.SetActive(false);
         }
     }
 }
