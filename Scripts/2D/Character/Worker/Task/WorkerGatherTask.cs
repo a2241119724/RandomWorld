@@ -44,10 +44,16 @@ namespace LAB2D.Character.Worker.Task
             ResourceMapProvider().CutTree(Vector3IntLAB.ToVector3Int(this.TargetMap));
             List<DropItem> dropItems = DropDataProvider(this.resourceInfo.Id);
 
+            // 将采集者的 ID 设为掉落物拥有者
+            int workerId = worker.GetInstanceID();
+
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)
             {
                 Vector3Int targetPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
+
+                // 设置所有权：采集所得归采集者
+                dropItems[i].ResourceInfo.OwnerId = workerId;
 
                 // 可堆叠物品优先合并到周围同类堆叠，否则找空地放置
                 Vector3Int pos = TryMergeOrPlaceDrop(targetPos, dropItems[i].ResourceInfo, dropItems[i].Name);

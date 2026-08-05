@@ -15,6 +15,12 @@ namespace LAB2D.Domain.Common
         /// <summary>数量。</summary>
         public int Count;
 
+        /// <summary>
+        /// 拥有者 ID — 0=Player/无主, 正数=Worker instance ID。
+        /// 采集时设为采集者，自然生成为 0，悬赏产出归发布者。
+        /// </summary>
+        public int OwnerId;
+
         public ResourceInfo(int id)
         {
             this.Id = id;
@@ -24,6 +30,13 @@ namespace LAB2D.Domain.Common
         {
             this.Id = id;
             this.Count = count;
+        }
+
+        public ResourceInfo(int id, int count, int ownerId)
+        {
+            this.Id = id;
+            this.Count = count;
+            this.OwnerId = ownerId;
         }
     }
 }

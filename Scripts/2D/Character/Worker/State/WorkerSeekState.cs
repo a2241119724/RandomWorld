@@ -2,18 +2,22 @@ namespace LAB2D.Character.Worker.State
 {
     using LAB2D;
     using LAB2D.AI.Worker;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
+    using LAB2D.Enum;
+    using LAB2D.Gameplay;
     using LAB2D.Serializable;
+    using System.Collections.Generic;
     using System.Text;
     using UnityEngine;
 
     /// <summary>
-    /// Worker寻找状态
+    /// Worker寻找状态 — 空闲时通过 WorkerBrain 自主决策下一步行动。
     /// </summary>
     public class WorkerSeekState : AWorkerState
     {
-        // private bool isOne = true;
         private readonly StringBuilder builder = new (128); // 减少GC
+        private readonly WorkerBrain brain = new WorkerBrain(); // 自主决策引擎
         private Vector3Int targetMap;
         private long seekTimes; // 没有任务寻路的次数
 
@@ -27,17 +31,14 @@ namespace LAB2D.Character.Worker.State
         {
             base.OnEnter();
 
-            // 如果饥饿并且没有吃饭任务就进入饥饿状态,做完任务再吃饭
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
-
-            // this.isOne = true;
 
             // 没有任务
             Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
             this.targetMap = AWorkerTask.GenCanReachPosProvider(posMap);
             if (workerData.Task != null)
             {
-                // 有任务
+                // 有任务 → 寻路到任务位置
                 this.targetMap = Vector3IntLAB.ToVector3Int(workerData.Task.TargetMap);
                 float minDistance = 99999.0f;
                 Vector3Int closedPos = default;
@@ -70,25 +71,253 @@ namespace LAB2D.Character.Worker.State
             }
             else
             {
+                // 没有任务 → 自主决策
                 AWorkerTask.LogProvider(this.Character.name + " 没有任务!", LogManager.LogLevelEnum.Trace);
                 ++this.seekTimes;
+
+                // 每隔一定次数进行自主决策
                 if (this.seekTimes % WorkerTaskTimeConfig.ExerciseSeekThreshold == 0)
                 {
-                    AWorkerTask.TaskAddProvider(
-                        new WorkerExerciseTask.ExerciseTaskBuilder()
-                        .SetTarget(this.targetMap)
-                        .SetWorker(this.Character)
-                        .Build(), new GameGridPosition(0, 0, 0),
-                        3);
+                    // 先尝试自动出售资源（经济闭环：资源→金币）
+                    this.TryAutoSellResources(workerData);
 
-                    // 尝试发布悬赏任务（Worker 自主判断是否需要花钱请人代劳）
-                    WorkerBountyDecisionService bountyDecision = new WorkerBountyDecisionService();
-                    bountyDecision.TryPostOneBounty(this.Character);
+                    // 然后做自主决策
+                    this.ExecuteAutonomousDecision(workerData);
                 }
             }
 
             AWorkerTask.LogProvider(this.Character.name + " 寻路->" + this.targetMap, LogManager.LogLevelEnum.Trace);
             this.Character.Seek.Seek(this.targetMap);
+        }
+
+        /// <summary>
+        /// 执行自主决策：根据人格和状态决定下一步行动。
+        /// </summary>
+        private void ExecuteAutonomousDecision(AWorker.WorkerData workerData)
+        {
+            WorkerBrain.Decision decision = this.brain.Decide(this.Character);
+
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 自主决策: {WorkerBrain.GetDecisionLabel(decision)}",
+                LogManager.LogLevelEnum.Info);
+
+            switch (decision.Type)
+            {
+                case WorkerDecisionType.SelfGather:
+                    this.CreateSelfGatherTask(decision);
+                    break;
+
+                case WorkerDecisionType.PostBounty:
+                    this.TryPostBounty();
+                    break;
+
+                case WorkerDecisionType.AcceptBounty:
+                    // 接受悬赏由 WorkerTaskManager 的任务分配系统处理
+                    // 这里确保 Worker 处于可接任务状态
+                    AWorkerTask.LogProvider(
+                        $"{this.Character.name} 准备接受悬赏任务",
+                        LogManager.LogLevelEnum.Info);
+                    this.CreateIdleTask();
+                    break;
+
+                case WorkerDecisionType.Eat:
+                    this.CreateSelfEatTask();
+                    break;
+
+                case WorkerDecisionType.Sleep:
+                    this.CreateSelfSleepTask();
+                    break;
+
+                case WorkerDecisionType.Idle:
+                default:
+                    this.CreateIdleTask();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 创建自我采集任务。
+        /// </summary>
+        private void CreateSelfGatherTask(WorkerBrain.Decision decision)
+        {
+            if (decision.TargetPosition == default)
+            {
+                AWorkerTask.LogProvider("SelfGather: 无有效目标位置", LogManager.LogLevelEnum.Warning);
+                this.CreateIdleTask();
+                return;
+            }
+
+            WorkerGatherTask gatherTask = new WorkerGatherTask.GatherTaskBuilder()
+                .SetTarget(decision.TargetPosition)
+                .SetResourceInfo(decision.Resource)
+                .Build();
+
+            // 作为自己的任务加入（优先级 2，中优先级）
+            AWorkerTask.TaskAddProvider(
+                gatherTask,
+                new GameGridPosition(
+                    decision.TargetPosition.x,
+                    decision.TargetPosition.y,
+                    decision.TargetPosition.z),
+                2);
+
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 创建自我采集任务: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                LogManager.LogLevelEnum.Info);
+        }
+
+        /// <summary>
+        /// 尝试发布悬赏（委托给 WorkerBountyDecisionService）。
+        /// </summary>
+        private void TryPostBounty()
+        {
+            WorkerBountyDecisionService bountyDecision = new WorkerBountyDecisionService();
+            bool posted = bountyDecision.TryPostOneBounty(this.Character);
+
+            if (!posted)
+            {
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 发布悬赏失败，退回自我采集",
+                    LogManager.LogLevelEnum.Info);
+
+                // 发布失败则退化为自我采集
+                WorkerBrain.Decision fallback = this.brain.Decide(this.Character);
+                if (fallback.Type == WorkerDecisionType.SelfGather)
+                {
+                    this.CreateSelfGatherTask(fallback);
+                }
+                else
+                {
+                    this.CreateIdleTask();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 创建自我吃饭任务（需要找到食物源）。
+        /// </summary>
+        private void CreateSelfEatTask()
+        {
+            // TODO: 根据 Worker 的 Bed 或食物库存创建 Eat 任务
+            // 目前简单退化为空闲
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 尝试找食物(当前饥饿:{((AWorker.WorkerData)this.Character.CharacterDataLAB).CurHungry:F0})",
+                LogManager.LogLevelEnum.Info);
+            this.CreateIdleTask();
+        }
+
+        /// <summary>
+        /// 创建自我睡觉任务（需要找到床）。
+        /// </summary>
+        private void CreateSelfSleepTask()
+        {
+            // 从 FurnitureManager 查找分配给该 Worker 的床位置
+            Vector3Int bedPos = this.FindBedPosition();
+
+            if (bedPos != default)
+            {
+                WorkerSleepTask sleepTask = new WorkerSleepTask.SleepTaskBuilder()
+                    .SetTarget(bedPos)
+                    .SetWorker(this.Character)
+                    .Build();
+
+                AWorkerTask.TaskAddProvider(
+                    sleepTask,
+                    new GameGridPosition(bedPos.x, bedPos.y, bedPos.z),
+                    1); // 高优先级
+
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 创建睡觉任务 pos=({bedPos.x},{bedPos.y})",
+                    LogManager.LogLevelEnum.Info);
+            }
+            else
+            {
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 有床但找不到床位",
+                    LogManager.LogLevelEnum.Warning);
+                this.CreateIdleTask();
+            }
+        }
+
+        /// <summary>
+        /// 从 FurnitureManager 查找 Worker 的床位。
+        /// </summary>
+        private Vector3Int FindBedPosition()
+        {
+            var furnitureManager = Core.ServiceLocator.Get<Item.FurnitureManager>();
+            if (furnitureManager?.BedToWorker == null)
+            {
+                return default;
+            }
+
+            foreach (KeyValuePair<Vector3Int, AWorker> kv in furnitureManager.BedToWorker)
+            {
+                if (kv.Value == this.Character)
+                {
+                    return kv.Key;
+                }
+            }
+
+            return default;
+        }
+
+        /// <summary>
+        /// 自动出售资源给市场（经济闭环关键步骤）。
+        /// 当 Worker 携带有资源且事业心足够时，自动套现。
+        /// </summary>
+        private void TryAutoSellResources(AWorker.WorkerData workerData)
+        {
+            // 事业心低的人不急着卖钱
+            if (workerData.Personality.Ambition < 40f)
+            {
+                return;
+            }
+
+            int totalCarried = 0;
+            List<ResourceInfo> allResources = this.Character.GetAllResources();
+            foreach (var r in allResources)
+            {
+                totalCarried += r.Count;
+            }
+
+            // 携带量超过 60% 或携带超过 3 种不同资源时触发自动出售
+            float carryRatio = (float)totalCarried / workerData.MaxResourceCount;
+            bool shouldSell = carryRatio > 0.6f || allResources.Count >= 3;
+
+            if (!shouldSell)
+            {
+                return;
+            }
+
+            // 随机出售部分资源（模拟决策：不全卖，留一些建造用）
+            if (UnityEngine.Random.value < 0.5f)
+            {
+                Gameplay.MarketService market = Core.ServiceLocator.Get<Gameplay.MarketService>();
+                if (market != null)
+                {
+                    int earned = market.WorkerAutoSellAll(this.Character);
+                    if (earned > 0)
+                    {
+                        AWorkerTask.LogProvider(
+                            $"{this.Character.name} 自动出售资源获得 {earned}G (携带 {totalCarried}/{workerData.MaxResourceCount})",
+                            LogManager.LogLevelEnum.Info);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 创建默认空闲任务（锻炼）。
+        /// </summary>
+        private void CreateIdleTask()
+        {
+            AWorkerTask.TaskAddProvider(
+                new WorkerExerciseTask.ExerciseTaskBuilder()
+                    .SetTarget(this.targetMap)
+                    .SetWorker(this.Character)
+                    .Build(),
+                new GameGridPosition(0, 0, 0),
+                3);
         }
 
         /// <inheritdoc/>

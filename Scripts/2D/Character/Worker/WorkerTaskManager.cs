@@ -180,7 +180,8 @@ namespace LAB2D.Character.Worker
                 workerData?.MaxHungry ?? 0f,
                 workerData?.CurTired ?? 0f,
                 workerData?.MaxTired ?? 0f,
-                workerData?.Wallet ?? Domain.Worker.CurrencyAmount.Zero);
+                workerData?.Wallet ?? Domain.Worker.CurrencyAmount.Zero,
+                workerData?.Personality ?? Domain.Worker.WorkerPersonality.Neutral);
         }
 
         private List<WorkerTaskSnapshot<AWorkerTask>> CreateTaskSnapshots(int priority, AWorker worker)

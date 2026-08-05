@@ -15,6 +15,7 @@ namespace LAB2D.AI.Worker
     /// <summary>
     /// Worker 悬赏决策服务 — 判断 Worker 是否应该发布悬赏任务而非自己执行。
     /// 纯 C# 服务，不依赖 MonoBehaviour，可在测试中独立实例化。
+    /// 整合 WorkerPersonality 影响决策权重和悬赏金额。
     /// </summary>
     public class WorkerBountyDecisionService
     {
@@ -89,20 +90,30 @@ namespace LAB2D.AI.Worker
                 return true;
             }
 
-            // 条件 4: 随机概率（避免所有 Worker 同时发布悬赏）
+            // 条件 4: 人格加权的随机概率（避免所有 Worker 同时发布悬赏）
             float probability = 0.2f;
             if (workerData.CurTired < this.TiredThresholdForBounty)
             {
                 probability += 0.3f;
             }
 
+            // 人格影响：
+            // 社交高的更倾向发悬赏，事业心高的也倾向（花钱买效率）
+            WorkerPersonality p = workerData.Personality;
+            probability += (p.Sociality - 50f) * 0.005f;
+            probability += (p.Ambition - 50f) * 0.003f;
+            // 勤奋高的倾向自己干，降低发悬赏概率
+            probability -= (p.Diligence - 50f) * 0.002f;
+
             return Random.value < probability;
         }
 
         /// <summary>
-        /// 根据任务类型计算悬赏金额。
+        /// 根据任务类型计算悬赏金额（可被人格影响）。
         /// </summary>
-        public CurrencyAmount DetermineReward(WorkerTaskType taskType)
+        /// <param name="taskType">任务类型</param>
+        /// <param name="personality">可选的人格数据，用于调整悬赏金额</param>
+        public CurrencyAmount DetermineReward(WorkerTaskType taskType, WorkerPersonality personality = default)
         {
             int baseReward = taskType switch
             {
@@ -112,7 +123,22 @@ namespace LAB2D.AI.Worker
                 WorkerTaskType.Plant => this.BaseRewardPlant,
                 _ => 10,
             };
-            return new CurrencyAmount(baseReward);
+
+            // 社交高的 Worker 出价更大方（+0~30%）
+            if (personality.Sociality > 50f)
+            {
+                float bonus = (personality.Sociality - 50f) * 0.006f; // 最多 +30%
+                baseReward = (int)(baseReward * (1f + bonus));
+            }
+
+            // 事业心高的也愿意多出钱（追求效率）
+            if (personality.Ambition > 60f)
+            {
+                float bonus = (personality.Ambition - 60f) * 0.005f; // 最多 +20%
+                baseReward = (int)(baseReward * (1f + bonus));
+            }
+
+            return new CurrencyAmount(Mathf.Max(baseReward, 1));
         }
 
         /// <summary>
@@ -176,7 +202,10 @@ namespace LAB2D.AI.Worker
                     continue;
                 }
 
-                CurrencyAmount reward = this.DetermineReward(candidate.TaskType);
+                // 获取 Worker 人格用于调整悬赏金额
+                AWorker.WorkerData issuerData = worker.CharacterDataLAB as AWorker.WorkerData;
+                WorkerPersonality personality = issuerData?.Personality ?? WorkerPersonality.Neutral;
+                CurrencyAmount reward = this.DetermineReward(candidate.TaskType, personality);
                 int issuerId = worker.GetInstanceID();
 
                 // 扣款

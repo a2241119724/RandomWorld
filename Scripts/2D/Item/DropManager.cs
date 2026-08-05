@@ -16,11 +16,11 @@ namespace LAB2D.Item
         private static readonly Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> Resources = new ();
 
         /// <summary>
-        /// 添加掉落物
+        /// 添加掉落物（保持 resourceInfo 中的 OwnerId）。
         /// </summary>
         /// <param name="itemType">掉落物类型</param>
         /// <param name="posMap">掉落物位置</param>
-        /// <param name="resourceInfo">具体掉落物信息</param>
+        /// <param name="resourceInfo">具体掉落物信息（含所有权）</param>
         public void AddDrop(AItem.ItemTypeEnum itemType, Vector3Int posMap, ResourceInfo resourceInfo)
         {
             Dictionary<Vector3Int, ResourceInfo> dict;
@@ -37,11 +37,40 @@ namespace LAB2D.Item
             if (dict.ContainsKey(posMap))
             {
                 dict[posMap].Count += resourceInfo.Count;
+                // 合并时保持先到者的 OwnerId（同一位置同类型资源归同一拥有者）
             }
             else
             {
                 dict.Add(posMap, DataTool.DeepCopyByBinary(resourceInfo));
             }
+        }
+
+        /// <summary>
+        /// 检查指定拾取者是否可以拾取该位置的掉落物。
+        /// </summary>
+        /// <param name="posMap">掉落物位置</param>
+        /// <param name="pickerOwnerId">拾取者 OwnerId（Player=0, Worker=instanceId）</param>
+        /// <returns>可以拾取返回 true；位置无掉落物也返回 false</returns>
+        public bool CanPickUp(Vector3Int posMap, int pickerOwnerId)
+        {
+            ResourceInfo resource = this.GetDropByAll(posMap);
+            if (resource == null)
+            {
+                return false;
+            }
+
+            return Domain.Worker.ItemOwnershipService.CanPickUp(resource, pickerOwnerId);
+        }
+
+        /// <summary>
+        /// 获取掉落物的拥有者 ID。
+        /// </summary>
+        /// <param name="posMap">掉落物位置</param>
+        /// <returns>拥有者 ID，无掉落物返回 -1</returns>
+        public int GetOwnerId(Vector3Int posMap)
+        {
+            ResourceInfo resource = this.GetDropByAll(posMap);
+            return resource != null ? resource.OwnerId : -1;
         }
 
         /// <summary>
@@ -120,7 +149,7 @@ namespace LAB2D.Item
         }
 
         /// <summary>
-        /// 凋落物管理信息
+        /// 凋落物管理信息（含所有权）。
         /// </summary>
         /// <param name="posMap">位置</param>
         /// <returns>信息</returns>
@@ -137,13 +166,15 @@ namespace LAB2D.Item
                         $"name:{itemData.CnName}\n" +
                         $"type:{itemData.Type}\n" +
                         $"count:{resourceInfo.Count}\n" +
+                        $"owner:{Domain.Worker.ItemOwnershipService.GetOwnerLabel(resourceInfo)}\n" +
                         $"info:{itemData.Info}\n" +
                         $"isStackable:{itemData.IsStackable}\n";
                 }
                 else
                 {
                     text += $"id:{resourceInfo.Id}\n" +
-                        $"count:{resourceInfo.Count}\n";
+                        $"count:{resourceInfo.Count}\n" +
+                        $"owner:{Domain.Worker.ItemOwnershipService.GetOwnerLabel(resourceInfo)}\n";
                 }
             }
 

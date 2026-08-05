@@ -95,6 +95,23 @@ namespace LAB2D
             ServiceLocator.Register<IWorkerTaskCongestionAdvisor>(WorkerTaskCongestionAdvisor.Instance);
             ServiceLocator.Register(WorkerEfficiencyTracker.Instance);
             ServiceLocator.Register(CurrencyManager.Instance);
+            ServiceLocator.Register(MarketService.Instance);
+
+            // 注入所有权名字解析：用 WorkerManager 查 Worker 实例名
+            Domain.Worker.ItemOwnershipService.OwnerNameProvider = (ownerId) =>
+            {
+                if (ownerId == 0) return "无主(Player)";
+                var wm = ServiceLocator.Get<WorkerManager>();
+                if (wm != null)
+                {
+                    foreach (var w in wm.Characters)
+                    {
+                        if (w.GetInstanceID() == ownerId) return w.name;
+                    }
+                }
+                return $"Worker#{ownerId}";
+            };
+
             ServiceLocator.Register(ColonyCommandCenterManager.Instance);
             ServiceLocator.Register<IColonyCommandCenterService>(ColonyCommandCenterManager.Instance);
             ServiceLocator.Register(ItemCollectionTracker.Instance);

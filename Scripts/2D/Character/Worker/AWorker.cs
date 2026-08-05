@@ -234,6 +234,8 @@ namespace LAB2D.Character.Worker
                 $"饥饿值: {workerData.CurHungry:F0}/{workerData.MaxHungry:F0}\n" +
                 $"疲劳值: {workerData.CurTired:F0}/{workerData.MaxTired:F0}\n" +
                 $"最大携带: {workerData.MaxResourceCount}\n" +
+                $"钱包: {workerData.Wallet}\n" +
+                $"人格: {workerData.Personality}\n" +
                 $"TargetMap:{this.Seek.TargetMap}\n" +
                 $"SeekId:{this.CharacterDataLAB.SeekId}\n" +
                 $"装备:\n{equipmentInfo}" +
@@ -333,6 +335,24 @@ namespace LAB2D.Character.Worker
             }
 
             return 0;
+        }
+
+        /// <summary>
+        /// 获取 Worker 携带的所有资源（只读副本，供 MarketService 等使用）。
+        /// </summary>
+        /// <returns>资源信息列表</returns>
+        public List<ResourceInfo> GetAllResources()
+        {
+            List<ResourceInfo> result = new List<ResourceInfo>();
+            foreach (KeyValuePair<int, ResourceInfo> kv in this.resourceInfos)
+            {
+                if (kv.Value.Count > 0)
+                {
+                    result.Add(new ResourceInfo(kv.Value.Id, kv.Value.Count, kv.Value.OwnerId));
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -500,6 +520,17 @@ namespace LAB2D.Character.Worker
             /// </summary>
             public Domain.Worker.CurrencyAmount Wallet = new Domain.Worker.CurrencyAmount(100);
 
+            /// <summary>
+            /// 人格数值 — 心情、事业心、勤奋、社交。
+            /// 影响 Worker 自主决策行为和效率。
+            /// </summary>
+            public Domain.Worker.WorkerPersonality Personality = Domain.Worker.WorkerPersonality.Neutral;
+
+            /// <summary>
+            /// 上次空闲帧数 — 用于检测连续空闲以调整人格。
+            /// </summary>
+            public long LastActiveFrame;
+
             public WorkerData()
             {
                 // 设置默认可接受任务类型
@@ -507,6 +538,7 @@ namespace LAB2D.Character.Worker
                 // 只有玩家通过 UI 手动关闭的任务类型才会被写入 false。
                 // 参见 AWorkerTask.IsCanWork 的 opt-out 语义。
                 this.TaskToggle = new Dictionary<WorkerTaskType, bool>();
+                this.Personality = Domain.Worker.WorkerPersonality.Randomize();
             }
         }
     }
