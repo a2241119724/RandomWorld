@@ -47,13 +47,16 @@ namespace LAB2D.Character.Worker.Task
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)
             {
-                Vector3Int pos = AvailablePositionProvider(Vector3IntLAB.ToVector3Int(this.TargetMap), 3, true);
+                Vector3Int targetPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
+
+                // 可堆叠物品优先合并到周围同类堆叠，否则找空地放置
+                Vector3Int pos = TryMergeOrPlaceDrop(targetPos, dropItems[i].ResourceInfo, dropItems[i].Name);
+
                 if (pos == default)
                 {
-                    break;
+                    // 地图满到极限，放进背包不丢物品
+                    worker.AddResource(dropItems[i].ResourceInfo);
                 }
-
-                ItemMapProvider().PutDownToDrop(pos, (TileBase)ResourceLoadProvider(dropItems[i].Name), dropItems[i].ResourceInfo);
             }
 
             // 删除采摘图标

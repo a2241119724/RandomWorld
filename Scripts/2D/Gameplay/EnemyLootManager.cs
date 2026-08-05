@@ -131,9 +131,6 @@ namespace LAB2D.Gameplay
             if (this.dropTotal == 0) return;
 
             int rand = RandomIntProvider(0, this.dropTotal);
-            Vector3Int pos = AWorkerTask.AvailablePositionProvider(
-                AWorkerTask.TileMapWorldToMapProvider(worldPos), 3, true);
-            if (pos == default) return;
 
             foreach (KeyValuePair<int, DropItem> dropItem in this.probToDropItem)
             {
@@ -141,11 +138,18 @@ namespace LAB2D.Gameplay
                 {
                     if (dropItem.Value == null) break;
 
-                    UnityEngine.Tilemaps.TileBase tile = (UnityEngine.Tilemaps.TileBase)AWorkerTask.ResourceLoadProvider(dropItem.Value.Name);
-                    AWorkerTask.ItemMapProvider().PutDownToDrop(pos, tile, dropItem.Value.ResourceInfo);
+                    Vector3Int center = AWorkerTask.TileMapWorldToMapProvider(worldPos);
 
-                    Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(pos);
-                    AWorkerTask.EquipmentBeamProvider().SpawnBeam(pos, beamWorldPos, EquipmentRarityType.Common);
+                    // 可堆叠优先合并到附近同类堆叠，找不到则放空地
+                    Vector3Int pos = AWorkerTask.TryMergeOrPlaceDrop(
+                        center, dropItem.Value.ResourceInfo, dropItem.Value.Name);
+
+                    if (pos != default)
+                    {
+                        Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(pos);
+                        AWorkerTask.EquipmentBeamProvider().SpawnBeam(pos, beamWorldPos, EquipmentRarityType.Common);
+                    }
+
                     break;
                 }
             }
@@ -199,23 +203,15 @@ namespace LAB2D.Gameplay
             // 将稀有度写入装备的 Quality 字段，供装备面板持续展示
             template.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
 
-            // 通过 ItemMap 将装备放置到地面
-            ItemData itemData = AWorkerTask.ItemDataProvider(template.Id);
-            if (itemData == null)
-            {
-                AWorkerTask.LogProvider("EnemyLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
-                return false;
-            }
-
+            // 放置装备到地面（装备不可堆叠，TryMergeOrPlaceDrop 自动跳过合并）
             Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(worldPos);
-            Vector3Int availablePos = AWorkerTask.AvailablePositionProvider(posMap, 3, true);
+            ResourceInfo resourceInfo = new ResourceInfo(template.Id, 1);
+            Vector3Int availablePos = AWorkerTask.TryMergeOrPlaceDrop(
+                posMap, resourceInfo, template.Tile.name);
             if (availablePos == default)
             {
                 return false;
             }
-
-            ResourceInfo resourceInfo = new ResourceInfo(template.Id, 1);
-            AWorkerTask.ItemMapProvider().PutDownToDrop(availablePos, template.Tile, resourceInfo);
 
             // 记录待处理掉落，供拾取时对比使用
             PendingEquipmentDrop pending = new PendingEquipmentDrop
@@ -236,9 +232,11 @@ namespace LAB2D.Gameplay
             string rarityLabel = EquipmentLootTool.FormatRarityLabel(rarity);
             FloatingTextStatusProvider(worldPos, rarityLabel);
 
+            ItemData itemData = AWorkerTask.ItemDataProvider(template.Id);
+            string itemName = itemData != null ? itemData.CnName : template.Id.ToString();
             AWorkerTask.LogProvider(
                 string.Format("装备掉落: {0} [{1}] at ({2:F0},{3:F0})",
-                    itemData.CnName, EquipmentLootTool.GetRarityName(rarity), worldPos.x, worldPos.y),
+                    itemName, EquipmentLootTool.GetRarityName(rarity), worldPos.x, worldPos.y),
                 LogManager.LogLevelEnum.Trace);
 
             return true;
@@ -280,22 +278,15 @@ namespace LAB2D.Gameplay
             EquipmentLootTool.ApplyRarityToAttributes(template.Attribute, rarity);
             template.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
 
-            ItemData itemData = AWorkerTask.ItemDataProvider(template.Id);
-            if (itemData == null)
-            {
-                AWorkerTask.LogProvider("EnemyLootManager: 未找到 ItemData，Id=" + template.Id, LogManager.LogLevelEnum.Warning);
-                return false;
-            }
-
+            // 放置装备到地面（装备不可堆叠，TryMergeOrPlaceDrop 自动跳过合并）
             Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(worldPos);
-            Vector3Int availablePos = AWorkerTask.AvailablePositionProvider(posMap, 5, true);
+            ResourceInfo resourceInfo = new ResourceInfo(template.Id, 1);
+            Vector3Int availablePos = AWorkerTask.TryMergeOrPlaceDrop(
+                posMap, resourceInfo, template.Tile.name);
             if (availablePos == default)
             {
                 return false;
             }
-
-            ResourceInfo resourceInfo = new ResourceInfo(template.Id, 1);
-            AWorkerTask.ItemMapProvider().PutDownToDrop(availablePos, template.Tile, resourceInfo);
 
             PendingEquipmentDrop pending = new PendingEquipmentDrop
             {
@@ -313,9 +304,11 @@ namespace LAB2D.Gameplay
             string rarityLabel = EquipmentLootTool.FormatRarityLabel(rarity);
             FloatingTextStatusProvider(worldPos, rarityLabel);
 
+            ItemData itemData = AWorkerTask.ItemDataProvider(template.Id);
+            string itemName = itemData != null ? itemData.CnName : template.Id.ToString();
             AWorkerTask.LogProvider(
                 string.Format("强制装备掉落: {0} [{1}] at ({2:F0},{3:F0})",
-                    itemData.CnName, EquipmentLootTool.GetRarityName(rarity), worldPos.x, worldPos.y),
+                    itemName, EquipmentLootTool.GetRarityName(rarity), worldPos.x, worldPos.y),
                 LogManager.LogLevelEnum.Trace);
 
             return true;
@@ -422,11 +415,10 @@ namespace LAB2D.Gameplay
                     {
                         Vector3Int playerPos = AWorkerTask.TileMapWorldToMapProvider(
                             PlayerPositionProvider());
-                        Vector3Int dropPos = AWorkerTask.AvailablePositionProvider(playerPos, 2, true);
-                        if (dropPos != default && equipment.Tile != null)
+                        if (equipment.Tile != null)
                         {
-                            AWorkerTask.ItemMapProvider().PutDownToDrop(dropPos, equipment.Tile,
-                                new ResourceInfo(equipment.Id, 1));
+                            AWorkerTask.TryMergeOrPlaceDrop(
+                                playerPos, new ResourceInfo(equipment.Id, 1), equipment.Tile.name);
                         }
                     }
                 });

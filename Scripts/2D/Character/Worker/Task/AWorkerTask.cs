@@ -571,5 +571,155 @@ namespace LAB2D.Character.Worker.Task
             this.stageInit[stage].Invoke(worker);
             worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
         }
+
+        /// <summary>
+        /// 放置掉落物到地图。可堆叠物品优先合并到周围同类堆叠，不可堆叠或找不到则找空地放置。
+        /// 合并和放置都使用环形辐射扫描，从中心一圈一圈向外找，保证找到最近的位置。
+        /// </summary>
+        /// <param name="center">搜索中心</param>
+        /// <param name="resourceInfo">掉落物信息</param>
+        /// <param name="tileName">瓦片名称（用于创建新掉落物图标）</param>
+        /// <returns>实际放置位置，default 表示无处可放</returns>
+        public static UnityEngine.Vector3Int TryMergeOrPlaceDrop(
+            UnityEngine.Vector3Int center, ResourceInfo resourceInfo, string tileName)
+        {
+            const int mergeRadius = 5;
+            const int placeMaxRadius = 20;
+            ItemData itemData = ItemDataProvider(resourceInfo.Id);
+
+            LogProvider(
+                $"[掉落入口] center=({center.x},{center.y}) id={resourceInfo.Id} count={resourceInfo.Count} stackable={itemData?.IsStackable}",
+                LogManager.LogLevelEnum.Trace);
+
+            // 可堆叠物品：附近 5 格内找同类合并
+            if (itemData != null && itemData.IsStackable)
+            {
+                DropManager dropManager = ServiceLocator.Get<DropManager>();
+                UnityEngine.Vector3Int mergePos = FindNearbyDrop(center, mergeRadius, resourceInfo.Id, dropManager);
+                if (mergePos != default)
+                {
+                    AItem.ItemTypeEnum itemType = ItemTypeProvider(resourceInfo.Id);
+                    dropManager.AddDrop(itemType, mergePos, resourceInfo);
+                    return mergePos;
+                }
+            }
+
+            // 找不到合并或不可堆叠：环形辐射找最近的空地放置
+            UnityEngine.Vector3Int pos = FindNearestFreeTile(center, placeMaxRadius);
+
+            if (pos != default)
+            {
+                UnityEngine.Tilemaps.TileBase tile = (UnityEngine.Tilemaps.TileBase)ResourceLoadProvider(tileName);
+                ItemMapProvider().PutDownToDrop(pos, tile, resourceInfo);
+            }
+
+            return pos;
+        }
+
+        /// <summary>
+        /// 环形辐射扫描，查找周围已有的同ID掉落物位置，优先最近。
+        /// </summary>
+        private static UnityEngine.Vector3Int FindNearbyDrop(
+            UnityEngine.Vector3Int center, int maxRadius, int itemId, DropManager dropManager)
+        {
+            FindClosest(center, maxRadius, pos =>
+            {
+                ResourceInfo existing = dropManager.GetDropByAll(pos);
+                return existing != null && existing.Id == itemId;
+            }, out UnityEngine.Vector3Int found);
+
+            return found;
+        }
+
+        /// <summary>
+        /// 环形辐射扫描，查找最近的可用空地。直接复用 IsAvailableMap 的检查逻辑。
+        /// </summary>
+        private static UnityEngine.Vector3Int FindNearestFreeTile(UnityEngine.Vector3Int center, int maxRadius)
+        {
+            IsAvailableMap availableMap = ServiceLocator.Get<IsAvailableMap>();
+            int failCount = 0;
+
+            for (int r = 0; r <= maxRadius; r++)
+            {
+                bool foundInRing = FindClosest(center, r, pos =>
+                {
+                    bool free = availableMap.IsTileFreeForDrop(pos);
+                    if (!free && failCount < 3)
+                    {
+                        failCount++;
+                        TileMap tm = ServiceLocator.Get<TileMap>();
+                        bool terrainOk = true;
+                        if (tm.TileMapDataLAB?.MapTiles != null &&
+                            pos.x >= 0 && pos.x < tm.TileMapDataLAB.Height &&
+                            pos.y >= 0 && pos.y < tm.TileMapDataLAB.Width)
+                        {
+                            int tid = tm.TileMapDataLAB.MapTiles[pos.x, pos.y];
+                            terrainOk = ServiceLocator.Get<TerrainConfigDatabase>().CanBuild(tid);
+                        }
+                        LogProvider(
+                            $"[掉落诊断] r={r} ({pos.x},{pos.y}) " +
+                            $"Reach={ServiceLocator.Get<TileMap>().IsCanReach(pos)} " +
+                            $"Bld={ServiceLocator.Get<BuildMap>().IsFreeTile(pos)} " +
+                            $"Res={ServiceLocator.Get<ResourceMap>().IsFreeTile(pos)} " +
+                            $"Item={ItemMapProvider().IsFreeTile(pos)} " +
+                            $"Terrain={terrainOk}",
+                            LogManager.LogLevelEnum.Trace);
+                    }
+                    return free;
+                }, out UnityEngine.Vector3Int found);
+
+                if (foundInRing)
+                {
+                    return found;
+                }
+            }
+
+            return default;
+        }
+
+        /// <summary>
+        /// 按距离从小到大遍历周围格子（环形辐射），找到第一个满足 check 的位置。
+        /// </summary>
+        private static bool FindClosest(
+            UnityEngine.Vector3Int center, int maxRadius,
+            System.Func<UnityEngine.Vector3Int, bool> check,
+            out UnityEngine.Vector3Int result)
+        {
+            // 按 max(|dx|,|dy|) 分层，逐层遍历环边
+            for (int r = 0; r <= maxRadius; r++)
+            {
+                // 上下水平边: y = ±r, x ∈ [-r, r]
+                for (int dx = -r; dx <= r; dx++)
+                {
+                    if (TryCheck(center.x + dx, center.y - r, check, out result)) return true;
+                    if (r > 0 && TryCheck(center.x + dx, center.y + r, check, out result)) return true;
+                }
+
+                // 左右垂直边（不含角，角已在水平边处理）: x = ±r, y ∈ [-(r-1), r-1]
+                for (int dy = -r + 1; dy <= r - 1; dy++)
+                {
+                    if (TryCheck(center.x - r, center.y + dy, check, out result)) return true;
+                    if (TryCheck(center.x + r, center.y + dy, check, out result)) return true;
+                }
+            }
+
+            result = default;
+            return false;
+        }
+
+        private static bool TryCheck(int x, int y,
+            System.Func<UnityEngine.Vector3Int, bool> check,
+            out UnityEngine.Vector3Int result)
+        {
+            UnityEngine.Vector3Int pos = new UnityEngine.Vector3Int(x, y, 0);
+            if (check(pos))
+            {
+                result = pos;
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
     }
 }

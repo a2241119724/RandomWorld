@@ -150,6 +150,27 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 空地是否可放置掉落物（地形可行走 + 无建筑 + 无资源 + 无已有掉落物）。
+        /// 与建造不同，掉落物不需要地形允许建造，森林地面也能放。
+        /// </summary>
+        public bool IsTileFreeForDrop(Vector3Int posMap)
+        {
+            if (!Core.ServiceLocator.Get<TileMap>().IsCanReach(posMap) ||
+                !Core.ServiceLocator.Get<BuildMap>().IsFreeTile(posMap) ||
+                !Core.ServiceLocator.Get<ResourceMap>().IsFreeTile(posMap))
+            {
+                return false;
+            }
+
+            if (!Core.ServiceLocator.Get<ItemMap>().IsFreeTile(posMap))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// 是否可以建造（地图地形 + 建筑 + 资源）。
         /// 地形可建造性委托给 TerrainConfigDatabase.CanBuild()。
         /// </summary>

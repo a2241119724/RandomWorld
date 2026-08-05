@@ -273,14 +273,10 @@ namespace LAB2D.Character.Worker
                     continue;
                 }
 
-                Vector3Int pos = AWorkerTask.AvailablePositionProvider(
-                AWorkerTask.TileMapWorldToMapProvider(this.transform.position), 3, true);
-                if (pos == default)
-                {
-                    continue;
-                }
-
-                AWorkerTask.ItemMapProvider().PutDownToDrop(pos, AWorkerTask.ItemFactoryByIdProvider(resource.Key).Tile, resource.Value);
+                ABackpackItem item = AWorkerTask.ItemFactoryByIdProvider(resource.Key);
+                AWorkerTask.TryMergeOrPlaceDrop(
+                    AWorkerTask.TileMapWorldToMapProvider(this.transform.position),
+                    resource.Value, item.Tile.name);
             }
         }
 
