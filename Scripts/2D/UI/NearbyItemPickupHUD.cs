@@ -278,7 +278,16 @@ namespace LAB2D.UI
                     }
                     else
                     {
-                        AItem item = Core.ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemByName(tile.name);
+                        AItem item;
+                        try
+                        {
+                            item = Core.ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemByName(tile.name);
+                        }
+                        catch (System.Collections.Generic.KeyNotFoundException)
+                        {
+                            continue; // 非背包物品 tile（如 Bounty 任务栏图标），跳过
+                        }
+
                         if (item == null)
                         {
                             continue;

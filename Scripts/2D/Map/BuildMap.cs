@@ -191,8 +191,16 @@ namespace LAB2D.Map
                 return true;
             }
 
-            BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
-            return buildItemData != null && buildItemData.IsPass;
+            try
+            {
+                BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
+                return buildItemData != null && buildItemData.IsPass;
+            }
+            catch (System.InvalidCastException)
+            {
+                // 非 BuildItemData 的 tile（如 Bounty 任务栏标记），默认可通行
+                return true;
+            }
         }
 
         /// <inheritdoc/>

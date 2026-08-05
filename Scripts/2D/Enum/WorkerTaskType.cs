@@ -34,6 +34,12 @@ namespace LAB2D.Enum
         /// <summary>悬赏 — Worker 自主发布、其他 Worker 领取完成</summary>
         Bounty,
 
+        /// <summary>搬运到任务栏 — 将悬赏产出物搬运到任务栏处</summary>
+        CarryToBoard,
+
+        /// <summary>从任务栏拾取 — 发布者去任务栏取回属于自己的物品</summary>
+        PickUpFromBoard,
+
         /// <summary>哨兵值 — 必须始终在最后，用于动态数组大小</summary>
         _Count,
     }

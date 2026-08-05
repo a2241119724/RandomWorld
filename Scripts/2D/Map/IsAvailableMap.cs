@@ -141,9 +141,11 @@ namespace LAB2D.Map
                     return default;
                 }
 
-                // 如果是放置掉落物,则需要判断是否是可放置的位置
-                bool a = !this.IsAvailable(new Vector3Int(x, y, 0));
-                flag = isDrop ? a || !Core.ServiceLocator.Get<ItemMap>().IsFreeTile(new Vector3Int(x, y, 0)) : a;
+                // 掉落物使用 IsTileFreeForDrop（不检查地形可建造性，草地/沙漠等都能放）
+                // 建造/任务栏等使用 IsAvailable（要求地形可建造）
+                flag = isDrop
+                    ? !this.IsTileFreeForDrop(new Vector3Int(x, y, 0))
+                    : !this.IsAvailable(new Vector3Int(x, y, 0));
             }
             while (flag);
             return new Vector3Int(x, y, 0);

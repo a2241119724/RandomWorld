@@ -97,6 +97,7 @@ namespace LAB2D
             ServiceLocator.Register(CurrencyManager.Instance);
             ServiceLocator.Register(MarketService.Instance);
             ServiceLocator.Register(new PlayerBountyService());
+            ServiceLocator.Register(TaskBoardManager.Instance);
 
             // 注入所有权名字解析：0=Player, >0=Worker名字
             Domain.Worker.ItemOwnershipService.OwnerNameProvider = (ownerId) =>
@@ -244,6 +245,23 @@ namespace LAB2D
 
                 GlobalPanelInitializer.InitializeAll();
             }
+
+            // 订阅地图初始化完成事件，地图就绪后立即初始化任务栏
+            ServiceLocator.Get<MapInitCoordinator>().OnMapReady += this.OnMapReadyInitTaskBoard;
+        }
+
+        /// <summary>
+        /// 地图就绪回调 — 初始化任务栏位置（地图中心附近第一个可到达的空地）。
+        /// 此时 TileMapDataLAB 已加载完成，可安全访问 Height/Width。
+        /// </summary>
+        private void OnMapReadyInitTaskBoard()
+        {
+            TileMap tileMap = ServiceLocator.Get<TileMap>();
+            int centerX = tileMap.TileMapDataLAB.Height / 2;
+            int centerY = tileMap.TileMapDataLAB.Width / 2;
+            Vector3Int center = new Vector3Int(centerX, centerY, 0);
+
+            TaskBoardManager.Instance.InitPosition(center);
         }
 
         public void Update()

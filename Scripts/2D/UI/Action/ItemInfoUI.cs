@@ -65,7 +65,8 @@ namespace LAB2D.UI.Action
                     ServiceLocator.Get<PanelController>().Show(ItemInfoPanel.Instance);
                 }
 
-                ItemInfoPanel.Instance.SetItemInfo(this.character.ToString());
+                Vector3Int charMapPos = ServiceLocator.Get<TileMap>().WorldPosToMapPos(this.character.transform.position);
+                ItemInfoPanel.Instance.SetItemInfo(this.character.ToString() + $"\n位置: ({charMapPos.x}, {charMapPos.y})");
                 ItemInfoPanel.Instance.SetCharacter(this.character);
             }
 
@@ -136,6 +137,7 @@ namespace LAB2D.UI.Action
                     ServiceLocator.Get<PanelController>().Show(ItemInfoPanel.Instance);
                 }
 
+                this.text += $"\n位置: ({this.selectPos.x}, {this.selectPos.y})";
                 ItemInfoPanel.Instance.SetItemInfo(this.text);
             }
         }
@@ -195,10 +197,18 @@ namespace LAB2D.UI.Action
                 if (tileBase != null)
                 {
                     this.text = "Build:";
-                    BuildItemData buildData = ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileBase.name);
-                    if (buildData != null)
+                    try
                     {
-                        this.text += $"\n可通行:{buildData.IsPass}\n需要建造:{buildData.IsNeedBuild}\n";
+                        BuildItemData buildData = ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileBase.name);
+                        if (buildData != null)
+                        {
+                            this.text += $"\n可通行:{buildData.IsPass}\n需要建造:{buildData.IsNeedBuild}\n";
+                        }
+                    }
+                    catch (System.InvalidCastException)
+                    {
+                        // 非建造物品 tile（如 Bounty 任务栏标记），只显示名称
+                        this.text += $"\n{tileBase.name}\n";
                     }
                 }
             }

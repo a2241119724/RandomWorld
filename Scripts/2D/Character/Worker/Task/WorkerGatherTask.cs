@@ -49,8 +49,10 @@ namespace LAB2D.Character.Worker.Task
                 ? AWorkerTask.BountyOwnerOverride
                 : worker.GetInstanceID();
 
+            bool isBounty = AWorkerTask.BountyOwnerOverride != 0;
+
             AWorkerTask.LogProvider(
-                $"[GatherOwner] executor={worker.name}({worker.GetInstanceID()}) override={AWorkerTask.BountyOwnerOverride} finalOwner={workerId}",
+                $"[GatherOwner] executor={worker.name}({worker.GetInstanceID()}) override={AWorkerTask.BountyOwnerOverride} finalOwner={workerId} isBounty={isBounty}",
                 LogManager.LogLevelEnum.Info);
 
             // 采摘掉落木头,苹果
@@ -61,18 +63,68 @@ namespace LAB2D.Character.Worker.Task
                 // 设置所有权：采集所得归采集者
                 dropItems[i].ResourceInfo.OwnerId = workerId;
 
-                // 可堆叠物品优先合并到周围同类堆叠，否则找空地放置
-                Vector3Int pos = TryMergeOrPlaceDrop(targetPos, dropItems[i].ResourceInfo, dropItems[i].Name);
-
-                if (pos == default)
+                if (isBounty)
                 {
-                    // 地图满到极限，放进背包不丢物品
-                    worker.AddResource(dropItems[i].ResourceInfo);
+                    // 悬赏产出物：放置到地上 + 创建 CarryToBoardTask（搬运到任务栏）
+                    this.PlaceBountyDropAndCreateCarry(targetPos, dropItems[i]);
+                }
+                else
+                {
+                    // 普通掉落物：使用原有流程（合并+放置+自动创建 CarryTask）
+                    Vector3Int pos = TryMergeOrPlaceDrop(targetPos, dropItems[i].ResourceInfo, dropItems[i].Name);
+
+                    if (pos == default)
+                    {
+                        // 地图满到极限，放进背包不丢物品
+                        worker.AddResource(dropItems[i].ResourceInfo);
+                    }
                 }
             }
 
             // 删除采摘图标
             GatherMapProvider().CancelGather(Vector3IntLAB.ToVector3Int(this.TargetMap));
+        }
+
+        /// <summary>
+        /// 放置悬赏掉落物并创建搬运到任务栏的任务。
+        /// 与普通掉落物的区别：不调用 PutDownToDrop（它会创建普通 CarryTask），
+        /// 而是直接放置物品并创建 CarryToBoardTask。
+        /// </summary>
+        private void PlaceBountyDropAndCreateCarry(Vector3Int dropPos, DropItem dropItem)
+        {
+            // 在掉落位置附近找空地放置
+            Vector3Int placePos = AvailablePositionProvider(dropPos, 20, false);
+            if (placePos == default)
+            {
+                // 找不到空地，尝试直接用掉落位置（可能在树上，但树已砍掉）
+                placePos = dropPos;
+            }
+
+            // 直接放置瓦片图标和注册到 DropManager（跳过 PutDownToDrop 的 CarryTask 创建）
+            UnityEngine.Tilemaps.TileBase tile =
+                (UnityEngine.Tilemaps.TileBase)ResourceLoadProvider(dropItem.Name);
+            ItemMapProvider().AddTile(placePos, tile);
+            AItem.ItemTypeEnum itemType = ItemTypeProvider(dropItem.ResourceInfo.Id);
+            Core.ServiceLocator.Get<DropManager>().AddDrop(itemType, placePos, dropItem.ResourceInfo);
+
+            LogProvider(
+                $"[BountyDrop] 悬赏掉落物放置: pos=({placePos.x},{placePos.y}) id={dropItem.ResourceInfo.Id} count={dropItem.ResourceInfo.Count} owner={dropItem.ResourceInfo.OwnerId}",
+                LogManager.LogLevelEnum.Info);
+
+            // 创建搬运到任务栏的任务
+            WorkerCarryToBoardTask carryToBoard = new WorkerCarryToBoardTask.CarryToBoardTaskBuilder()
+                .SetStartTarget(placePos)
+                .SetResourceInfo(dropItem.ResourceInfo)
+                .Build();
+
+            TaskAddProvider(
+                carryToBoard,
+                new GameGridPosition(placePos.x, placePos.y, placePos.z),
+                1); // 高优先级：尽快搬运到任务栏
+
+            LogProvider(
+                $"[BountyDrop] 创建 CarryToBoardTask: from=({placePos.x},{placePos.y}) to=任务栏",
+                LogManager.LogLevelEnum.Info);
         }
 
         /// <inheritdoc/>

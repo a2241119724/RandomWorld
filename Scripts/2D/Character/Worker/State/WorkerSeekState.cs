@@ -131,6 +131,10 @@ namespace LAB2D.Character.Worker.State
                     this.CreateSelfCarryTask(decision);
                     break;
 
+                case WorkerDecisionType.PickUpFromBoard:
+                    this.CreatePickUpFromBoardTask(decision);
+                    break;
+
                 case WorkerDecisionType.Eat:
                     this.CreateSelfEatTask();
                     break;
@@ -321,6 +325,37 @@ namespace LAB2D.Character.Worker.State
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 创建自我搬运任务: 捡 id={decision.Resource?.Id} pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                LogManager.LogLevelEnum.Info);
+        }
+
+        /// <summary>
+        /// 创建去任务栏拾取任务 — 去任务栏取回属于自己的悬赏物品。
+        /// 直接分配给当前 Worker（不入全局池），确保物品不会被其他人拿走。
+        /// </summary>
+        private void CreatePickUpFromBoardTask(WorkerBrain.Decision decision)
+        {
+            var boardManager = Core.ServiceLocator.Get<Gameplay.TaskBoardManager>();
+            if (boardManager == null || !boardManager.IsInitialized)
+            {
+                AWorkerTask.LogProvider("任务栏未初始化，无法创建拾取任务", LogManager.LogLevelEnum.Warning);
+                this.CreateIdleTask();
+                return;
+            }
+
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            int ownerId = this.Character.GetInstanceID();
+
+            WorkerPickUpFromBoardTask pickUpTask = new WorkerPickUpFromBoardTask.PickUpFromBoardTaskBuilder()
+                .SetBoardPosition(boardManager.BoardPosition)
+                .SetOwnerId(ownerId)
+                .Build();
+
+            // 直接分配给当前 Worker，不入全局任务池
+            workerData.Task = pickUpTask;
+            pickUpTask.Start(this.Character);
+
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 创建任务栏拾取任务: pos=({boardManager.BoardPosition.x},{boardManager.BoardPosition.y})",
                 LogManager.LogLevelEnum.Info);
         }
 

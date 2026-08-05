@@ -581,6 +581,7 @@ namespace LAB2D.Character.Worker.Task
             }
 
             this.stage = stage;
+            this.curProgress = 0.0f;
             this.stageInit[stage].Invoke(worker);
             worker.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
         }

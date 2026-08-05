@@ -36,6 +36,9 @@ namespace LAB2D.AI.Worker
 
         /// <summary>自己去捡地上属于自己的物品</summary>
         SelfCarry,
+
+        /// <summary>去任务栏取回属于自己的悬赏物品</summary>
+        PickUpFromBoard,
     }
 
     /// <summary>
@@ -172,6 +175,13 @@ namespace LAB2D.AI.Worker
             {
                 Decision? carryDecision = this.TryMakeSelfCarryDecision(worker);
                 if (carryDecision.HasValue) return carryDecision.Value;
+            }
+
+            // === 优先：任务栏有自己悬赏的物品 → 去任务栏取 ===
+            if (p.Diligence > 30f)
+            {
+                Decision? boardDecision = this.TryMakePickUpFromBoardDecision(worker);
+                if (boardDecision.HasValue) return boardDecision.Value;
             }
 
             // === 预扫描：一次扫描供后续复用 ===
@@ -379,6 +389,39 @@ namespace LAB2D.AI.Worker
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 检查任务栏处是否有属于自己的悬赏物品，创建去任务栏拾取的决策。
+        /// </summary>
+        private Decision? TryMakePickUpFromBoardDecision(AWorker worker)
+        {
+            int ownerId = worker.GetInstanceID();
+
+            var boardManager = Core.ServiceLocator.Get<Gameplay.TaskBoardManager>();
+            if (boardManager == null || !boardManager.IsInitialized)
+            {
+                return null;
+            }
+
+            if (!boardManager.HasOwnedItemsNearBoard(ownerId))
+            {
+                return null;
+            }
+
+            var (pos, drop) = boardManager.FindOwnedItemNearBoard(ownerId);
+            if (drop == null)
+            {
+                return null;
+            }
+
+            return new Decision
+            {
+                Type = WorkerDecisionType.PickUpFromBoard,
+                TargetPosition = pos,
+                Resource = new ResourceInfo(drop.Id, drop.Count, drop.OwnerId),
+                Description = $"去任务栏取回属于自己的物品(id={drop.Id})",
+            };
         }
 
         // ---- 概率计算 ----
