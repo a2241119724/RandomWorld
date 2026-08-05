@@ -4,6 +4,7 @@ namespace LAB2D.Character.Worker.State
     using LAB2D.AI.Worker;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
+    using LAB2D.Domain.Worker;
     using LAB2D.Enum;
     using LAB2D.Gameplay;
     using LAB2D.Serializable;
@@ -84,6 +85,12 @@ namespace LAB2D.Character.Worker.State
                     // 然后做自主决策
                     this.ExecuteAutonomousDecision(workerData);
                 }
+
+                // 每 10 次无任务寻路 → 空闲惩罚：勤奋↓ 心情↓
+                if (this.seekTimes % 10 == 0 && workerData != null)
+                {
+                    workerData.Personality = workerData.Personality.AfterIdle();
+                }
             }
 
             AWorkerTask.LogProvider(this.Character.name + " 寻路->" + this.targetMap, LogManager.LogLevelEnum.Trace);
@@ -108,7 +115,7 @@ namespace LAB2D.Character.Worker.State
                     break;
 
                 case WorkerDecisionType.PostBounty:
-                    this.TryPostBounty();
+                    this.TryPostBounty(decision);
                     break;
 
                 case WorkerDecisionType.AcceptBounty:
@@ -118,6 +125,10 @@ namespace LAB2D.Character.Worker.State
                         $"{this.Character.name} 准备接受悬赏任务",
                         LogManager.LogLevelEnum.Info);
                     this.CreateIdleTask();
+                    break;
+
+                case WorkerDecisionType.SelfCarry:
+                    this.CreateSelfCarryTask(decision);
                     break;
 
                 case WorkerDecisionType.Eat:
@@ -167,42 +178,65 @@ namespace LAB2D.Character.Worker.State
         }
 
         /// <summary>
-        /// 尝试发布悬赏（委托给 WorkerBountyDecisionService）。
+        /// 发布悬赏 — 使用 WorkerBrain 预扫描的资源位置，避免重复扫描失败。
         /// </summary>
-        private void TryPostBounty()
+        private void TryPostBounty(WorkerBrain.Decision decision)
         {
+            AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
             WorkerBountyDecisionService bountyDecision = new WorkerBountyDecisionService();
-            bool posted = bountyDecision.TryPostOneBounty(this.Character);
+            bool posted = bountyDecision.TryPostOneBounty(this.Character, decision.TargetPosition, decision.Resource);
 
             if (!posted)
             {
+                string reason = "条件不满足";
+                if (wd != null)
+                {
+                    int needGold = bountyDecision.BaseRewardGather + bountyDecision.MinimumWalletReserve.Gold;
+                    if (!wd.Wallet.HasEnough(new CurrencyAmount(needGold)))
+                        reason = $"余额不足(需要{needGold}G, 有{wd.Wallet.Gold}G)";
+                    else if (wd.CurTired < bountyDecision.TiredThresholdForBounty)
+                        reason = $"太累({wd.CurTired:F0}<{bountyDecision.TiredThresholdForBounty})";
+                    else if (wd.CurHungry < bountyDecision.HungryThresholdForBounty)
+                        reason = $"太饿({wd.CurHungry:F0}<{bountyDecision.HungryThresholdForBounty})";
+                    else
+                        reason = $"概率未通过或周围无资源";
+                }
+
                 AWorkerTask.LogProvider(
-                    $"{this.Character.name} 发布悬赏失败，退回自我采集",
+                    $"{this.Character.name} 发布悬赏失败: {reason}",
                     LogManager.LogLevelEnum.Info);
 
-                // 发布失败则退化为自我采集
-                WorkerBrain.Decision fallback = this.brain.Decide(this.Character);
-                if (fallback.Type == WorkerDecisionType.SelfGather)
-                {
-                    this.CreateSelfGatherTask(fallback);
-                }
+                if (decision.TargetPosition != default)
+                    this.CreateSelfGatherTask(decision);
                 else
-                {
                     this.CreateIdleTask();
-                }
             }
         }
 
         /// <summary>
-        /// 创建自我吃饭任务（需要找到食物源）。
+        /// 创建自我吃饭任务 — 自己吃自己的，或向其他 Worker 购买。
         /// </summary>
         private void CreateSelfEatTask()
         {
-            // TODO: 根据 Worker 的 Bed 或食物库存创建 Eat 任务
-            // 目前简单退化为空闲
-            AWorkerTask.LogProvider(
-                $"{this.Character.name} 尝试找食物(当前饥饿:{((AWorker.WorkerData)this.Character.CharacterDataLAB).CurHungry:F0})",
-                LogManager.LogLevelEnum.Info);
+            AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
+
+            // 先尝试 Worker 间交易（吃自己的或买别人的）
+            WorkerTradeService trade = new WorkerTradeService();
+            bool success = trade.TryBuyFood(this.Character);
+
+            if (success)
+            {
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 成功解决饥饿 (当前饥饿:{wd?.CurHungry:F0})",
+                    LogManager.LogLevelEnum.Info);
+            }
+            else
+            {
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 无法解决饥饿，继续空闲",
+                    LogManager.LogLevelEnum.Warning);
+            }
+
             this.CreateIdleTask();
         }
 
@@ -259,6 +293,35 @@ namespace LAB2D.Character.Worker.State
             }
 
             return default;
+        }
+
+        /// <summary>
+        /// 创建自我搬运任务 — 去捡地上属于自己的物品（悬赏得来）。
+        /// </summary>
+        private void CreateSelfCarryTask(WorkerBrain.Decision decision)
+        {
+            if (decision.TargetPosition == default)
+            {
+                this.CreateIdleTask();
+                return;
+            }
+
+            WorkerCarryTask carryTask = new WorkerCarryTask.CarryTaskBuilder()
+                .SetStartTarget(decision.TargetPosition)
+                .SetResourceInfo(decision.Resource)
+                .Build();
+
+            AWorkerTask.TaskAddProvider(
+                carryTask,
+                new GameGridPosition(
+                    decision.TargetPosition.x,
+                    decision.TargetPosition.y,
+                    decision.TargetPosition.z),
+                2);
+
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 创建自我搬运任务: 捡 id={decision.Resource?.Id} pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                LogManager.LogLevelEnum.Info);
         }
 
         /// <summary>

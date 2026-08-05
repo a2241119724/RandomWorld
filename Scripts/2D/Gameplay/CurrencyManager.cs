@@ -54,28 +54,27 @@ namespace LAB2D.Gameplay
 
         /// <summary>
         /// 发布悬赏：从发布者钱包扣除悬赏金并进入托管。
+        /// 支持 Worker (issuerWorkerId>0) 和 Player (issuerWorkerId=0)。
         /// </summary>
-        /// <param name="issuerWorkerId">发布者 Worker instance ID</param>
-        /// <param name="reward">悬赏金额</param>
-        /// <returns>扣款成功返回 true，余额不足或找不到 Worker 返回 false</returns>
         public bool PostBounty(int issuerWorkerId, CurrencyAmount reward)
         {
-            AWorker worker = this.FindWorker(issuerWorkerId);
-            if (worker == null)
+            // Player (id=0): 直接操作托管，扣款由 PlayerBountyService 处理
+            if (issuerWorkerId == 0)
             {
-                return false;
+                this.escrow[0] = this.escrow.TryGetValue(0, out CurrencyAmount escrowAmount)
+                    ? escrowAmount + reward
+                    : reward;
+                this.PublishTransaction(0, 0, reward, "BountyPost(Player)");
+                return true;
             }
+
+            AWorker worker = this.FindWorker(issuerWorkerId);
+            if (worker == null) return false;
 
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            if (workerData == null)
-            {
-                return false;
-            }
+            if (workerData == null) return false;
 
-            if (!workerData.Wallet.HasEnough(reward))
-            {
-                return false;
-            }
+            if (!workerData.Wallet.HasEnough(reward)) return false;
 
             workerData.Wallet -= reward;
             this.escrow[issuerWorkerId] = this.escrow.TryGetValue(issuerWorkerId, out CurrencyAmount existing)
@@ -87,36 +86,21 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 完成悬赏：从托管交付给执行者。
+        /// 完成悬赏：从托管交付给执行者。issuerWorkerId=0 表示 Player 发布的悬赏。
         /// </summary>
-        /// <param name="issuerWorkerId">发布者 Worker instance ID</param>
-        /// <param name="executor">执行者 Worker 实例</param>
-        /// <param name="reward">悬赏金额</param>
         public void CompleteBounty(int issuerWorkerId, AWorker executor, CurrencyAmount reward)
         {
-            if (executor == null)
-            {
-                return;
-            }
+            if (executor == null) return;
 
             AWorker.WorkerData executorData = executor.CharacterDataLAB as AWorker.WorkerData;
-            if (executorData == null)
-            {
-                return;
-            }
+            if (executorData == null) return;
 
             // 从托管中扣除
             if (this.escrow.TryGetValue(issuerWorkerId, out CurrencyAmount held))
             {
                 CurrencyAmount newHeld = held - reward;
-                if (newHeld.Gold <= 0)
-                {
-                    this.escrow.Remove(issuerWorkerId);
-                }
-                else
-                {
-                    this.escrow[issuerWorkerId] = newHeld;
-                }
+                if (newHeld.Gold <= 0) this.escrow.Remove(issuerWorkerId);
+                else this.escrow[issuerWorkerId] = newHeld;
             }
 
             executorData.Wallet += reward;

@@ -623,6 +623,8 @@ namespace LAB2D.Character.Player
         [Serializable]
         public class PlayerData : CharacterData
         {
+            /// <summary>Player 钱包（初始 500G）</summary>
+            public Domain.Worker.CurrencyAmount Wallet = new Domain.Worker.CurrencyAmount(500);
         }
     }
 }

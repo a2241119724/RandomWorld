@@ -23,6 +23,13 @@ namespace LAB2D.Character.Worker.Task
     public abstract class AWorkerTask : IWorkerTask, IWorkerTaskInfo
     {
         /// <summary>
+        /// 悬赏任务覆盖 OwnerId — WorkerBountyTask 在执行前设置，
+        /// 使得 innerTask（如 Gather）产出的资源归悬赏发布者而非执行者。
+        /// 0 = 不覆盖（Unity InstanceID 可正可负，不能用 -1 判断）。
+        /// </summary>
+        public static int BountyOwnerOverride = 0;
+
+        /// <summary>
         /// Worker在工作时的位置（上下左右）
         /// </summary>
         public List<Vector3IntLAB> AvailableNeighborPos;
@@ -530,6 +537,12 @@ namespace LAB2D.Character.Worker.Task
             TaskLifecycleProvider(this, worker, false);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             workerData.Task = null;
+
+            // 完成任务 → 人格变化：心情↑ 勤奋↑ 事业心微↑
+            if (workerData != null)
+            {
+                workerData.Personality = workerData.Personality.AfterTaskComplete();
+            }
         }
 
         /// <summary>
@@ -591,11 +604,11 @@ namespace LAB2D.Character.Worker.Task
                 $"[掉落入口] center=({center.x},{center.y}) id={resourceInfo.Id} count={resourceInfo.Count} stackable={itemData?.IsStackable}",
                 LogManager.LogLevelEnum.Trace);
 
-            // 可堆叠物品：附近 5 格内找同类合并
+            // 可堆叠物品：附近 5 格内找同类合并（仅限同 Owner）
             if (itemData != null && itemData.IsStackable)
             {
                 DropManager dropManager = ServiceLocator.Get<DropManager>();
-                UnityEngine.Vector3Int mergePos = FindNearbyDrop(center, mergeRadius, resourceInfo.Id, dropManager);
+                UnityEngine.Vector3Int mergePos = FindNearbyDrop(center, mergeRadius, resourceInfo.Id, resourceInfo.OwnerId, dropManager);
                 if (mergePos != default)
                 {
                     AItem.ItemTypeEnum itemType = ItemTypeProvider(resourceInfo.Id);
@@ -617,15 +630,16 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <summary>
-        /// 环形辐射扫描，查找周围已有的同ID掉落物位置，优先最近。
+        /// 环形辐射扫描，查找周围已有的同ID+同Owner掉落物位置，优先最近。
+        /// 不同 Owner 的资源不合并，避免悬赏产物归错人。
         /// </summary>
         private static UnityEngine.Vector3Int FindNearbyDrop(
-            UnityEngine.Vector3Int center, int maxRadius, int itemId, DropManager dropManager)
+            UnityEngine.Vector3Int center, int maxRadius, int itemId, int ownerId, DropManager dropManager)
         {
             FindClosest(center, maxRadius, pos =>
             {
                 ResourceInfo existing = dropManager.GetDropByAll(pos);
-                return existing != null && existing.Id == itemId;
+                return existing != null && existing.Id == itemId && existing.OwnerId == ownerId;
             }, out UnityEngine.Vector3Int found);
 
             return found;

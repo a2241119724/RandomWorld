@@ -3,6 +3,7 @@ namespace LAB2D.AI.Worker
     using LAB2D;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
@@ -32,6 +33,9 @@ namespace LAB2D.AI.Worker
 
         /// <summary>睡觉恢复疲劳</summary>
         Sleep,
+
+        /// <summary>自己去捡地上属于自己的物品</summary>
+        SelfCarry,
     }
 
     /// <summary>
@@ -130,77 +134,168 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 综合决策：根据 Worker 状态和人格决定下一步行动。
         /// </summary>
-        /// <param name="worker">Worker 实例</param>
-        /// <returns>决策结果</returns>
         public Decision Decide(AWorker worker)
         {
             if (worker == null)
-            {
                 return Decision.Make(WorkerDecisionType.Idle, "Worker is null");
-            }
 
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             if (workerData == null)
-            {
                 return Decision.Make(WorkerDecisionType.Idle, "WorkerData is null");
-            }
 
             WorkerPersonality p = workerData.Personality;
 
             // === 第1层：生存优先 ===
 
-            // 饥饿 → 吃东西
             if (workerData.CurHungry < this.HungryThreshold)
             {
-                // 有钱就买食物，没钱自己去采集食物
                 if (workerData.Wallet.HasEnough(new CurrencyAmount(5)))
-                {
                     return Decision.Make(WorkerDecisionType.Eat,
                         $"饥饿({workerData.CurHungry:F0}/{workerData.MaxHungry:F0}), 找食物");
-                }
 
-                // 没钱，自己去采集食物
                 ResourceCandidate? foodCandidate = this.ScanForFood(worker);
                 if (foodCandidate.HasValue)
-                {
-                    return Decision.MakeGather(foodCandidate.Value.Position, foodCandidate.Value.Resource,
-                        $"饥饿且没钱，自己采集食物");
-                }
+                    return Decision.MakeGather(foodCandidate.Value.Position, foodCandidate.Value.Resource, "饥饿且没钱，自己采集食物");
 
                 return Decision.Make(WorkerDecisionType.Idle, "饥饿但找不到食物");
             }
 
-            // 疲劳 → 睡觉
             if (workerData.CurTired < this.TiredThreshold)
-            {
                 return Decision.Make(WorkerDecisionType.Sleep,
                     $"疲劳({workerData.CurTired:F0}/{workerData.MaxTired:F0}), 需要休息");
-            }
 
-            // === 第2层：赚钱驱动（事业心 + 好心情） ===
+            // === 定期刷新目标 ===
+            this.RefreshGoal(workerData);
 
-            float selfGatherProb = this.CalculateSelfGatherProbability(p);
-            bool wantsToWork = p.Ambition > this.AmbitionThreshold && p.Mood > this.MoodLowThreshold;
-
-            if (wantsToWork && Random.value < selfGatherProb)
+            // === 优先：地上有自己悬赏得来的物品 → 去捡 ===
+            if (p.Diligence > 35f)
             {
-                ResourceCandidate? candidate = this.ScanForResources(worker);
-                if (candidate.HasValue)
-                {
-                    return Decision.MakeGather(candidate.Value.Position, candidate.Value.Resource,
-                        $"事业心({p.Ambition:F0})驱使自主采集");
-                }
+                Decision? carryDecision = this.TryMakeSelfCarryDecision(worker);
+                if (carryDecision.HasValue) return carryDecision.Value;
             }
 
-            // === 第3层：社交代劳（有钱 + 社交倾向 + 不想自己干） ===
-
-            float postBountyProb = this.CalculatePostBountyProbability(p);
-            bool canAffordBounty = workerData.Wallet.HasEnough(
+            // === 预扫描：一次扫描供后续复用 ===
+            ResourceCandidate? nearbyResource = this.ScanForResources(worker);
+            bool canAfford = workerData.Wallet.HasEnough(
                 this.DetermineMinReward() + this.MinimumWalletReserve);
 
-            if (canAffordBounty && p.Sociality > this.SocialityThreshold && Random.value < postBountyProb)
+            // === 目标驱动悬赏：Worker 缺什么就发什么悬赏 ===
+            Decision? goalBounty = this.TryMakeGoalDrivenBounty(worker, workerData, canAfford);
+            if (goalBounty.HasValue) return goalBounty.Value;
+
+            // === 第2层：一般性赚钱/干活 ===
+            bool hasNearbyResource = nearbyResource.HasValue;
+            float selfProb = this.CalculateSelfGatherProbability(p);
+            float postProb = this.CalculatePostBountyProbability(p);
+
+            // 有钱+社交 → 发悬赏让别人干
+            if (canAfford && p.Sociality > this.SocialityThreshold && hasNearbyResource && Random.value < postProb)
             {
-                ResourceCandidate? candidate = this.ScanForResources(worker);
+                return new Decision
+                {
+                    Type = WorkerDecisionType.PostBounty,
+                    TargetPosition = nearbyResource.Value.Position,
+                    Resource = nearbyResource.Value.Resource,
+                    Description = $"社交({p.Sociality:F0})倾向发布悬赏",
+                };
+            }
+
+            // 事业型：自己干
+            if (p.Ambition > this.AmbitionThreshold && p.Mood > this.MoodLowThreshold && hasNearbyResource && Random.value < selfProb)
+            {
+                return Decision.MakeGather(nearbyResource.Value.Position, nearbyResource.Value.Resource,
+                    $"事业心({p.Ambition:F0})驱使自主采集");
+            }
+
+            // 有钱+社交 → 发悬赏兜底
+            if (canAfford && p.Sociality > this.SocialityThreshold && hasNearbyResource)
+            {
+                return new Decision
+                {
+                    Type = WorkerDecisionType.PostBounty,
+                    TargetPosition = nearbyResource.Value.Position,
+                    Resource = nearbyResource.Value.Resource,
+                    Description = $"自己不想干，发悬赏",
+                };
+            }
+
+            // === 第3层：勤劳接单 ===
+            float acceptProb = this.CalculateAcceptBountyProbability(p);
+            if (p.Diligence > this.DiligenceThreshold && Random.value < acceptProb)
+                return Decision.Make(WorkerDecisionType.AcceptBounty, $"勤奋({p.Diligence:F0})驱使接悬赏");
+
+            // === 第4层：默认 ===
+            if (p.Mood < this.MoodLowThreshold && workerData.CurTired < 50f)
+                return Decision.Make(WorkerDecisionType.Sleep, $"心情差({p.Mood:F0}), 休息调整");
+
+            return Decision.Make(WorkerDecisionType.Idle, $"无特别需求, {p}");
+        }
+
+        // ---- 目标系统 ----
+
+        /// <summary>目标刷新间隔（决策次数）</summary>
+        private int goalRefreshCounter;
+
+        /// <summary>
+        /// 根据人格定期刷新 Worker 目标。
+        /// 高事业心 → 想盖房；中等 → 囤粮；低 → 赚钱。
+        /// </summary>
+        private void RefreshGoal(AWorker.WorkerData workerData)
+        {
+            if (++this.goalRefreshCounter % 5 != 0) return; // 每5次决策刷新一次
+
+            WorkerPersonality p = workerData.Personality;
+
+            if (p.Ambition > 65 && workerData.Wallet.Gold >= 30)
+            {
+                // 大老板：想盖房 → 需要木材+石材
+                var materials = new System.Collections.Generic.Dictionary<int, int>();
+                // 尝试从 ItemDataManager 获取常见建材 ID
+                materials[0] = 10; // 占位：实际需要根据项目配置
+                workerData.CurrentGoal = WorkerGoal.BuildStructure("想盖新房", materials);
+            }
+            else if (p.Ambition > 50 && p.Sociality > 50)
+            {
+                workerData.CurrentGoal = WorkerGoal.StockFood(3);
+            }
+            else
+            {
+                workerData.CurrentGoal = WorkerGoal.EarnMoney();
+            }
+        }
+
+        /// <summary>
+        /// 目标驱动的悬赏：Worker 缺什么材料就发布什么悬赏。
+        /// 返回 null 表示没有目标驱动需求，走一般逻辑。
+        /// </summary>
+        private Decision? TryMakeGoalDrivenBounty(AWorker worker, AWorker.WorkerData wd, bool canAfford)
+        {
+            if (!canAfford) return null;
+            WorkerGoal goal = wd.CurrentGoal;
+
+            // 赚钱目标 → 没有特定材料需求，走一般逻辑
+            if (goal.Type == WorkerGoalType.EarnMoney || !goal.HasMaterialNeeds)
+                return null;
+
+            // 找到第一个缺失的材料
+            foreach (var kv in goal.RequiredMaterials)
+            {
+                int neededId = kv.Key;
+                int neededCount = kv.Value;
+
+                // 检查自己身上+仓库有没有
+                int have = worker.GetResourceCountById(neededId);
+                if (worker.HasInStorage(neededId, 1))
+                {
+                    var stored = worker.GetStorageResources();
+                    foreach (var s in stored)
+                        if (s.Id == neededId) { have += s.Count; break; }
+                }
+
+                if (have >= neededCount) continue; // 够了，看下一个
+
+                // 缺这个材料 → 扫描地图上有没有这个资源
+                ResourceCandidate? candidate = this.ScanForSpecificResource(worker, neededId);
                 if (candidate.HasValue)
                 {
                     return new Decision
@@ -208,36 +303,89 @@ namespace LAB2D.AI.Worker
                         Type = WorkerDecisionType.PostBounty,
                         TargetPosition = candidate.Value.Position,
                         Resource = candidate.Value.Resource,
-                        Description = $"社交({p.Sociality:F0})倾向发布悬赏",
+                        Description = $"目标「{goal.Description}」缺材料(id={neededId}), 发悬赏求购",
+                    };
+                }
+
+                // 地图上没有这个资源，跳过
+            }
+
+            // 有目标但找不到需要的资源 → 退化为一般采集
+            return null;
+        }
+
+        /// <summary>扫描特定物品ID的资源。</summary>
+        private ResourceCandidate? ScanForSpecificResource(AWorker worker, int targetItemId)
+        {
+            Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+            ResourceMap resourceMap = Core.ServiceLocator.Get<ResourceMap>();
+            if (resourceMap?.ResourceMapDataLAB == null) return null;
+
+            for (int dx = -this.ScanRadius; dx <= this.ScanRadius; dx++)
+            {
+                for (int dy = -this.ScanRadius; dy <= this.ScanRadius; dy++)
+                {
+                    Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
+                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                    if (!resourceMap.ResourceMapDataLAB.PosMap.ContainsKey(posLAB)) continue;
+
+                    string resName = resourceMap.ResourceMapDataLAB.PosMap[posLAB];
+                    if (string.IsNullOrEmpty(resName)) continue;
+                    if (!Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(resName, out ItemData itemData)) continue;
+                    if (itemData.Id != targetItemId) continue;
+
+                    return new ResourceCandidate
+                    {
+                        Position = pos,
+                        Resource = new ResourceInfo(itemData.Id),
                     };
                 }
             }
 
-            // === 第4层：勤劳接单（勤奋 + 空闲） ===
+            return null;
+        }
 
-            float acceptBountyProb = this.CalculateAcceptBountyProbability(p);
-            if (p.Diligence > this.DiligenceThreshold && Random.value < acceptBountyProb)
+        /// <summary>
+        /// 扫描地上属于该 Worker 的物品，创建 Carry 任务捡回来。
+        /// 用于悬赏完成后，发布者去捡属于自己的资源。
+        /// </summary>
+        private Decision? TryMakeSelfCarryDecision(AWorker worker)
+        {
+            int ownerId = worker.GetInstanceID();
+            Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+
+            var dropManager = Core.ServiceLocator.Get<DropManager>();
+            if (dropManager == null) return null;
+
+            // 扫描周围是否有属于该 Worker 的掉落物
+            for (int dx = -this.ScanRadius; dx <= this.ScanRadius; dx++)
             {
-                return Decision.Make(WorkerDecisionType.AcceptBounty,
-                    $"勤奋({p.Diligence:F0})驱使接悬赏");
+                for (int dy = -this.ScanRadius; dy <= this.ScanRadius; dy++)
+                {
+                    Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
+                    ResourceInfo drop = dropManager.GetDropByAll(pos);
+                    if (drop == null || drop.Count <= 0) continue;
+                    if (drop.OwnerId != ownerId) continue; // 不是自己的
+
+                    // 找到了！去捡
+                    return new Decision
+                    {
+                        Type = WorkerDecisionType.SelfCarry,
+                        TargetPosition = pos,
+                        Resource = new ResourceInfo(drop.Id, drop.Count, drop.OwnerId),
+                        Description = $"捡回属于自己的物品(id={drop.Id})",
+                    };
+                }
             }
 
-            // === 第5层：默认 ===
-
-            // 心情极差时优先休息
-            if (p.Mood < this.MoodLowThreshold && workerData.CurTired < 50f)
-            {
-                return Decision.Make(WorkerDecisionType.Sleep, $"心情差({p.Mood:F0}), 休息调整");
-            }
-
-            return Decision.Make(WorkerDecisionType.Idle, $"无特别需求, {p}");
+            return null;
         }
 
         // ---- 概率计算 ----
 
         private float CalculateSelfGatherProbability(WorkerPersonality p)
         {
-            float baseProb = 0.15f;
+            float baseProb = 0.25f;
             baseProb += (p.Ambition - 50f) * this.AmbitionSelfGatherBonus;
             baseProb += (p.Mood - 50f) * this.MoodSelfGatherBonus;
             baseProb += (p.Diligence - 50f) * 0.003f;
@@ -246,16 +394,16 @@ namespace LAB2D.AI.Worker
 
         private float CalculatePostBountyProbability(WorkerPersonality p)
         {
-            float baseProb = 0.10f;
+            float baseProb = 0.25f;
             baseProb += (p.Sociality - 50f) * this.SocialityPostBountyBonus;
-            baseProb -= (p.Diligence - 50f) * 0.002f; // 勤奋的人更倾向自己干
-            baseProb += (p.Ambition - 50f) * 0.002f;   // 事业心强也倾向发悬赏（高效）
+            baseProb -= (p.Diligence - 50f) * 0.002f;
+            baseProb += (p.Ambition - 50f) * 0.002f;
             return Mathf.Clamp01(baseProb);
         }
 
         private float CalculateAcceptBountyProbability(WorkerPersonality p)
         {
-            float baseProb = 0.10f;
+            float baseProb = 0.20f;
             baseProb += (p.Diligence - 50f) * this.DiligenceAcceptBountyBonus;
             baseProb += (p.Sociality - 50f) * 0.003f;
             return Mathf.Clamp01(baseProb);

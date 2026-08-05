@@ -44,8 +44,14 @@ namespace LAB2D.Character.Worker.Task
             ResourceMapProvider().CutTree(Vector3IntLAB.ToVector3Int(this.TargetMap));
             List<DropItem> dropItems = DropDataProvider(this.resourceInfo.Id);
 
-            // 将采集者的 ID 设为掉落物拥有者
-            int workerId = worker.GetInstanceID();
+            // 悬赏任务：OwnerId=发布者（!=0）；普通任务：OwnerId=采集者
+            int workerId = AWorkerTask.BountyOwnerOverride != 0
+                ? AWorkerTask.BountyOwnerOverride
+                : worker.GetInstanceID();
+
+            AWorkerTask.LogProvider(
+                $"[GatherOwner] executor={worker.name}({worker.GetInstanceID()}) override={AWorkerTask.BountyOwnerOverride} finalOwner={workerId}",
+                LogManager.LogLevelEnum.Info);
 
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)

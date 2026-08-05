@@ -31,11 +31,11 @@ namespace LAB2D.AI.Worker
         /// <summary>悬赏过期时间（游戏内秒数）</summary>
         public float BountyExpirationSeconds = 120f;
 
-        // 基础悬赏金额（按任务类型）
-        public int BaseRewardBuild = 15;
-        public int BaseRewardCarry = 10;
-        public int BaseRewardGather = 8;
-        public int BaseRewardPlant = 5;
+        // 基础悬赏金额（按任务类型）— 高于资源市场价，体现"花钱买时间"
+        public int BaseRewardBuild = 30;
+        public int BaseRewardCarry = 20;
+        public int BaseRewardGather = 15;
+        public int BaseRewardPlant = 10;
 
         /// <summary>
         /// 扫描候选 — 轻量数据，避免扫描时创建完整任务实例导致副作用。
@@ -90,22 +90,23 @@ namespace LAB2D.AI.Worker
                 return true;
             }
 
-            // 条件 4: 人格加权的随机概率（避免所有 Worker 同时发布悬赏）
-            float probability = 0.2f;
-            if (workerData.CurTired < this.TiredThresholdForBounty)
-            {
-                probability += 0.3f;
-            }
+            // 条件 4: 人格加权的随机概率
+            float probability = 0.5f; // 基准提高到50%
+            if (workerData.CurTired < this.TiredThresholdForBounty) probability += 0.3f;
 
-            // 人格影响：
-            // 社交高的更倾向发悬赏，事业心高的也倾向（花钱买效率）
             WorkerPersonality p = workerData.Personality;
             probability += (p.Sociality - 50f) * 0.005f;
             probability += (p.Ambition - 50f) * 0.003f;
-            // 勤奋高的倾向自己干，降低发悬赏概率
             probability -= (p.Diligence - 50f) * 0.002f;
 
-            return Random.value < probability;
+            bool pass = Random.value < probability;
+            if (!pass)
+            {
+                AWorkerTask.LogProvider(
+                    $"{worker.name} 悬赏概率检查失败: prob={probability:F2} sociality={p.Sociality:F0} ambition={p.Ambition:F0}",
+                    LogManager.LogLevelEnum.Info);
+            }
+            return pass;
         }
 
         /// <summary>
@@ -251,6 +252,56 @@ namespace LAB2D.AI.Worker
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 使用预扫描的资源位置发布悬赏（由 WorkerBrain 传入，避免重复扫描失败）。
+        /// </summary>
+        public bool TryPostOneBounty(AWorker worker, Vector3Int targetPos, ResourceInfo resource)
+        {
+            if (worker == null || resource == null || targetPos == default) return false;
+
+            WorkerTaskType taskType = WorkerTaskType.Gather; // 目前支持采集类
+
+            if (!this.ShouldPostBounty(worker, taskType)) return false;
+
+            AWorker.WorkerData issuerData = worker.CharacterDataLAB as AWorker.WorkerData;
+            WorkerPersonality personality = issuerData?.Personality ?? WorkerPersonality.Neutral;
+            CurrencyAmount reward = this.DetermineReward(taskType, personality);
+            int issuerId = worker.GetInstanceID();
+
+            var currencyManager = Core.ServiceLocator.Get<Gameplay.CurrencyManager>();
+            if (!currencyManager.PostBounty(issuerId, reward)) return false;
+
+            AWorkerTask innerTask = new WorkerGatherTask.GatherTaskBuilder()
+                .SetTarget(targetPos)
+                .SetResourceInfo(resource)
+                .Build();
+
+            if (innerTask == null)
+            {
+                currencyManager.RefundBounty(issuerId, reward);
+                return false;
+            }
+
+            float currentTime = Core.ServiceLocator.Get<IGameTime>().Time;
+            WorkerBountyTask bountyTask = new WorkerBountyTask.BountyTaskBuilder()
+                .SetInnerTask(innerTask)
+                .SetReward(reward)
+                .SetIssuer(issuerId)
+                .SetExpiration(currentTime + this.BountyExpirationSeconds)
+                .Build();
+
+            AWorkerTask.TaskAddProvider(
+                bountyTask,
+                new GameGridPosition(targetPos.x, targetPos.y, targetPos.z),
+                2);
+
+            AWorkerTask.LogProvider(
+                $"{worker.name} 发布了悬赏: Gather pos=({targetPos.x},{targetPos.y}) 悬赏金 {reward}",
+                LogManager.LogLevelEnum.Info);
+
+            return true;
         }
 
         /// <summary>

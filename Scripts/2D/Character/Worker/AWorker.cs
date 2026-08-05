@@ -150,6 +150,18 @@ namespace LAB2D.Character.Worker
 
             // 执行当前状态的函数
             this.Manager.CurrentState.OnUpdate();
+
+            // 每 60 帧更新人格：饥饿/疲劳导致心情下降
+            if (Time.frameCount % 60 == 0)
+            {
+                WorkerData wd = this.CharacterDataLAB as WorkerData;
+                if (wd != null)
+                {
+                    float hungryRatio = wd.MaxHungry > 0 ? wd.CurHungry / wd.MaxHungry : 1f;
+                    float tiredRatio = wd.MaxTired > 0 ? wd.CurTired / wd.MaxTired : 1f;
+                    wd.Personality = wd.Personality.AfterSuffer(hungryRatio, tiredRatio);
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -356,6 +368,81 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
+        /// 将携带的资源存入个人仓库。
+        /// </summary>
+        /// <param name="resourceInfo">要存入的资源（Count 为存入数量）</param>
+        public void DepositToStorage(ResourceInfo resourceInfo)
+        {
+            if (resourceInfo == null || resourceInfo.Count <= 0) return;
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            if (wd == null) return;
+
+            // 先从身上扣
+            this.SubResource(resourceInfo);
+
+            // 存入仓库（保持 OwnerId）
+            if (wd.Storage.ContainsKey(resourceInfo.Id))
+            {
+                wd.Storage[resourceInfo.Id].Count += resourceInfo.Count;
+            }
+            else
+            {
+                wd.Storage[resourceInfo.Id] = new ResourceInfo(
+                    resourceInfo.Id, resourceInfo.Count, resourceInfo.OwnerId);
+            }
+        }
+
+        /// <summary>
+        /// 从个人仓库取出资源到身上。
+        /// </summary>
+        /// <param name="id">物品ID</param>
+        /// <param name="count">取出数量</param>
+        /// <returns>实际取出的数量</returns>
+        public int WithdrawFromStorage(int id, int count)
+        {
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            if (wd == null || !wd.Storage.ContainsKey(id)) return 0;
+
+            ResourceInfo stored = wd.Storage[id];
+            int take = Math.Min(stored.Count, count);
+            if (take <= 0) return 0;
+
+            stored.Count -= take;
+            if (stored.Count <= 0) wd.Storage.Remove(id);
+
+            // 添加到身上（保持 OwnerId）
+            this.AddResource(new ResourceInfo(id, take, stored.OwnerId));
+            return take;
+        }
+
+        /// <summary>
+        /// 获取个人仓库所有资源。
+        /// </summary>
+        public List<ResourceInfo> GetStorageResources()
+        {
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            List<ResourceInfo> result = new List<ResourceInfo>();
+            if (wd?.Storage == null) return result;
+            foreach (var kv in wd.Storage)
+            {
+                if (kv.Value.Count > 0)
+                    result.Add(new ResourceInfo(kv.Value.Id, kv.Value.Count, kv.Value.OwnerId));
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 仓库中是否有指定数量的物品。
+        /// </summary>
+        public bool HasInStorage(int id, int count)
+        {
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            return wd?.Storage != null
+                && wd.Storage.TryGetValue(id, out ResourceInfo r)
+                && r.Count >= count;
+        }
+
+        /// <summary>
         /// 判断worker携带的资源够不够建造
         /// </summary>
         /// <param name="needResource">需要建造的资源</param>
@@ -531,6 +618,15 @@ namespace LAB2D.Character.Worker
             /// </summary>
             public long LastActiveFrame;
 
+            /// <summary>
+            /// 个人仓库 — Worker 可将资源存放到这里（不受携带上限限制）。
+            /// Key: 物品ID, Value: 资源信息（含所有权）。
+            /// </summary>
+            public Dictionary<int, ResourceInfo> Storage;
+
+            /// <summary>当前目标 — 驱动 Worker 的悬赏和自主行为。</summary>
+            public Domain.Worker.WorkerGoal CurrentGoal = Domain.Worker.WorkerGoal.EarnMoney();
+
             public WorkerData()
             {
                 // 设置默认可接受任务类型
@@ -539,6 +635,7 @@ namespace LAB2D.Character.Worker
                 // 参见 AWorkerTask.IsCanWork 的 opt-out 语义。
                 this.TaskToggle = new Dictionary<WorkerTaskType, bool>();
                 this.Personality = Domain.Worker.WorkerPersonality.Randomize();
+                this.Storage = new Dictionary<int, ResourceInfo>();
             }
         }
     }

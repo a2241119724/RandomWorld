@@ -20,7 +20,7 @@ namespace LAB2D.Character.Worker.Task
 
         public const float CarryTakeSeconds = 1.0f;
         public const float CarryPutDownSeconds = 0.8f;
-        public const float GatherSeconds = 4.5f;
+        public const float GatherSeconds = 8.0f;  // 增加采集时间，让"花钱买时间"变得有意义
         public const float EatSeconds = 1.2f;
         public const float ExerciseSeconds = 5.0f;
         public const long ExerciseSeekThreshold = 10;

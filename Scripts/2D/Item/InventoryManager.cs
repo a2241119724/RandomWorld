@@ -58,12 +58,16 @@ namespace LAB2D.Item
         private readonly Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> preTakeResource; // 预申请资源
         private readonly Dictionary<int, Dictionary<Vector3Int, ResourceInfo>> prePlaceResource; // 预放置资源
 
+        /// <summary>仓库物品所有权 — 位置 → OwnerId</summary>
+        private readonly Dictionary<Vector3Int, int> cellOwners;
+
         private readonly int capacity = 1000; // 单个cell的容量
 
         public InventoryManager()
         {
             this.preTakeResource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
             this.prePlaceResource = new Dictionary<int, Dictionary<Vector3Int, ResourceInfo>>();
+            this.cellOwners = new Dictionary<Vector3Int, int>();
         }
 
         /// <summary>
@@ -766,10 +770,12 @@ namespace LAB2D.Item
                 ItemData itemData = AWorkerTask.ItemDataProvider(resourceInfo.Id);
                 if (itemData != null)
                 {
+                    string ownerLabel = this.GetOwnerLabel(pos);
                     text = $"id:{resourceInfo.Id}\n" +
                         $"name:{itemData.CnName}\n" +
                         $"type:{itemData.Type}\n" +
                         $"count:{resourceInfo.Count}\n" +
+                        $"owner:{ownerLabel}\n" +
                         $"info:{itemData.Info}\n" +
                         $"isStackable:{itemData.IsStackable}\n";
 
@@ -981,6 +987,26 @@ namespace LAB2D.Item
             }
 
             return count;
+        }
+
+        /// <summary>设置仓库格子所有权。</summary>
+        public void SetOwner(Vector3Int pos, int ownerId)
+        {
+            this.cellOwners[pos] = ownerId;
+        }
+
+        /// <summary>获取仓库格子所有权。</summary>
+        public int GetOwner(Vector3Int pos)
+        {
+            return this.cellOwners.TryGetValue(pos, out int id) ? id : 0;
+        }
+
+        /// <summary>获取仓库格子的所有权显示文本。</summary>
+        public string GetOwnerLabel(Vector3Int pos)
+        {
+            int ownerId = this.GetOwner(pos);
+            if (ownerId == 0) return "无主(Player)";
+            return WorkerNameProvider(ownerId);
         }
     }
 }

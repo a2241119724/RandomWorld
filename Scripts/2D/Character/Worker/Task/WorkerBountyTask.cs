@@ -89,6 +89,13 @@ namespace LAB2D.Character.Worker.Task
             base.Start(worker);
             this.bountyData = this.bountyData.WithState(BountyState.Accepted);
             this.innerTask?.Start(worker);
+
+            // 接受悬赏 → 人格变化：社交↑ 勤奋↑ 心情↑
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+            if (wd != null)
+            {
+                wd.Personality = wd.Personality.AfterAcceptBounty();
+            }
         }
 
         /// <inheritdoc/>
@@ -104,8 +111,20 @@ namespace LAB2D.Character.Worker.Task
                 return base.Execute(worker, deltaTime);
             }
 
+            // 设置所有权覆盖：悬赏产出的资源归发布者（0=不覆盖）
+            int prevOverride = AWorkerTask.BountyOwnerOverride;
+            AWorkerTask.BountyOwnerOverride = this.bountyData.IssuerWorkerId != 0
+                ? this.bountyData.IssuerWorkerId
+                : 0; // Player 发布的悬赏 Owner 仍是 0
+            AWorkerTask.LogProvider(
+                $"[BountyOwnership] 悬赏执行: issuerId={this.bountyData.IssuerWorkerId}, executor={worker.name}",
+                LogManager.LogLevelEnum.Trace);
+
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             bool innerComplete = this.innerTask.Execute(worker, deltaTime);
+
+            // 恢复所有权覆盖
+            AWorkerTask.BountyOwnerOverride = prevOverride;
 
             // innerTask.Finish 清除了 workerData.Task，恢复为悬赏任务
             if (workerData != null)
