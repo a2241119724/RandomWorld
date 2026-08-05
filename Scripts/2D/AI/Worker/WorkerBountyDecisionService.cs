@@ -138,8 +138,8 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 根据候选数据构建完整的内部 AWorkerTask。
-        /// 使用 SetTargetWithoutIcon 等静默方法，避免重复添加地图标记。
+        /// 根据候选数据构建 innerTask（实际工作任务的实例）。
+        /// 扫描时不创建任务（避免副作用），只在发布时才构建。
         /// </summary>
         private AWorkerTask BuildInnerTask(WorkCandidate candidate)
         {
@@ -147,7 +147,7 @@ namespace LAB2D.AI.Worker
             {
                 case WorkerTaskType.Gather:
                     return new WorkerGatherTask.GatherTaskBuilder()
-                        .SetTargetWithoutIcon(candidate.Position)
+                        .SetTarget(candidate.Position)
                         .SetResourceInfo(candidate.Resource)
                         .Build();
 
@@ -159,6 +159,8 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 尝试为 Worker 发布一个悬赏任务。
         /// 综合状态判断 + 环境扫描 + 扣款 + 入队。
+        /// 构建 innerTask 包装在 WorkerBountyTask 中——innerTask 处理全部工作逻辑，
+        /// WorkerBountyTask 只负责金钱。
         /// </summary>
         /// <param name="worker">发布者 Worker</param>
         /// <returns>成功发布返回 true</returns>
@@ -184,11 +186,10 @@ namespace LAB2D.AI.Worker
                     continue;
                 }
 
-                // 构建内部任务（静默模式，不触发副作用的 builder 方法）
+                // 构建 innerTask（此时才创建，触发 SetTarget 的 GatherMap.AddGather 等副作用）
                 AWorkerTask innerTask = this.BuildInnerTask(candidate);
                 if (innerTask == null)
                 {
-                    // 构建失败，退款
                     currencyManager.RefundBounty(issuerId, reward);
                     continue;
                 }
@@ -197,7 +198,7 @@ namespace LAB2D.AI.Worker
                 float currentTime = Core.ServiceLocator.Get<IGameTime>().Time;
                 float expiration = currentTime + this.BountyExpirationSeconds;
 
-                // 构建悬赏任务
+                // 包装为悬赏任务
                 WorkerBountyTask bountyTask = new WorkerBountyTask.BountyTaskBuilder()
                     .SetInnerTask(innerTask)
                     .SetReward(reward)

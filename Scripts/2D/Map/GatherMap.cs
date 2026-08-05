@@ -40,7 +40,13 @@ namespace LAB2D.Map
         public void AddGather(Vector3Int posMap)
         {
             this.tilemap.SetTile(posMap, (TileBase)Core.ServiceLocator.Get<ResourceManager>().GetAsset("Gather"));
-            this.GatherMapDataLAB.Add(posMap, "Gather");
+
+            // 幂等：如果该位置已有采集标记，不重复添加（悬赏任务内部任务可能复用系统已标记的位置）
+            if (!this.GatherMapDataLAB.ContainKey(posMap))
+            {
+                this.GatherMapDataLAB.Add(posMap, "Gather");
+            }
+
             this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
         }
 

@@ -393,7 +393,7 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>
         /// 目标位置, 仅用于阶段性目标
         /// </summary>
-        public Vector3IntLAB TargetMap { get; protected set; }
+        public virtual Vector3IntLAB TargetMap { get; protected set; }
 
         /// <summary>
         /// 任务类型
