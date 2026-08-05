@@ -16,7 +16,7 @@ MonoBehaviour:
   tileResourceName: Marsh
   spawnWeight: 1
   isWalkable: 1
-  canBuild: 1
-  canGrowTrees: 1
-  canSpawnResources: 1
+  canBuild: 0
+  canGrowTrees: 0
+  canSpawnResources: 0
   isBorder: 0

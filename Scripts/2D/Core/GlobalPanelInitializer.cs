@@ -1,6 +1,7 @@
 namespace LAB2D.Core
 {
     using LAB2D.Gameplay;
+    using LAB2D.UI;
     using LAB2D.UI.Panel;
 
     /// <summary>
@@ -55,6 +56,9 @@ namespace LAB2D.Core
 
             // 附近道具拾取列表
             NearbyItemPickupHUD.EnsureRuntimePanel();
+
+            // 任务栏列表 HUD (数字6键)
+            TaskBoardHUD.EnsureRuntimePanel();
         }
     }
 }

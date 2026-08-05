@@ -126,6 +126,13 @@ namespace LAB2D.Constant
         /// 切换显示殖民地运营综合摘要、任务阻塞预警和资源状态。
         /// 仅在无 UI 输入框聚焦时生效。
         /// </summary>
+        /// <summary>
+        /// 任务栏列表 HUD 显示/隐藏 (数字6键)
+        /// 切换显示任务栏中存放的物品列表和所属信息。
+        /// 仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleTaskBoardHud = KeyCode.Alpha6;
+
         public const KeyCode ToggleColonyCommandCenterHud = KeyCode.F10;
 
         #endregion

@@ -4,27 +4,22 @@ namespace LAB2D.Character.Worker.Task
     using LAB2D;
     using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
-    using LAB2D.Item;
     using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
-    /// 从任务栏拾取 — 单阶段任务：走到任务栏 → 扫描捡起属于自己的物品。
+    /// 从任务栏拾取 — 单阶段任务：走到任务栏邻居位置 → 从内部存储取回属于自己的物品。
     ///
-    /// 悬赏发布者使用此任务取回任务栏处属于自己的掉落物。
+    /// 悬赏发布者使用此任务取回任务栏处属于自己的物品。
+    /// 物品存储在 TaskBoardManager 内部字典中，不在地面。
     /// 此任务不是悬赏类型，不展示在任务栏中。
-    ///
-    /// 关键设计：DoIsCanWork 检查任务栏周围是否有属于该 Worker 的掉落物，
-    /// 只有物主本人才能接此任务。
     /// </summary>
     [Serializable]
     public class WorkerPickUpFromBoardTask : AWorkerTask
     {
-        private ResourceInfo resourceInfo;
-
-        /// <summary>此任务的 OwnerId（只有该 Worker 可接）</summary>
+        /// <summary>此任务的物主 ID（只有该 Worker 可接）</summary>
         private int targetOwnerId;
 
         public WorkerPickUpFromBoardTask()
@@ -32,7 +27,7 @@ namespace LAB2D.Character.Worker.Task
         {
             this.stageInit.Add((AWorker worker) =>
             {
-                this.maxProgress = 0.5f; // 快速拾取
+                this.maxProgress = 0.5f;
                 this.Init();
             });
         }
@@ -49,84 +44,42 @@ namespace LAB2D.Character.Worker.Task
         {
             base.Finish(worker);
 
+            int workerId = worker.GetInstanceID();
             TaskBoardManager board = Core.ServiceLocator.Get<TaskBoardManager>();
-            if (board == null || !board.IsInitialized)
+
+            List<ResourceInfo> items = board.RetrieveItems(workerId);
+            if (items.Count == 0)
             {
-                LogProvider("任务栏未初始化，无法拾取", LogManager.LogLevelEnum.Error);
+                LogProvider($"{worker.name} 任务栏中没有属于自己的物品", LogManager.LogLevelEnum.Warning);
                 return;
             }
 
-            int workerId = worker.GetInstanceID();
-            List<ResourceInfo> pickedItems = new List<ResourceInfo>();
-
-            // 扫描任务栏周围，捡起所有属于自己的物品
-            for (int dx = -5; dx <= 5; dx++)
+            int totalCount = 0;
+            foreach (var ri in items)
             {
-                for (int dy = -5; dy <= 5; dy++)
-                {
-                    Vector3Int pos = new Vector3Int(
-                        board.BoardPosition.x + dx,
-                        board.BoardPosition.y + dy,
-                        0);
-
-                    DropManager dropManager = Core.ServiceLocator.Get<DropManager>();
-                    ResourceInfo drop = dropManager?.GetDropByAll(pos);
-                    if (drop == null || drop.Count <= 0 || drop.OwnerId != workerId)
-                    {
-                        continue;
-                    }
-
-                    // 捡起
-                    ItemMapProvider().PickUpFromDrop(pos, drop);
-                    worker.AddResource(drop);
-                    pickedItems.Add(drop);
-
-                    LogProvider(
-                        $"{worker.name} 从任务栏捡起物品(id={drop.Id}, count={drop.Count}, pos=({pos.x},{pos.y}))",
-                        LogManager.LogLevelEnum.Info);
-                }
+                worker.AddResource(ri);
+                totalCount += ri.Count;
             }
 
-            if (pickedItems.Count == 0)
-            {
-                LogProvider(
-                    $"{worker.name} 在任务栏周围未找到属于自己的物品",
-                    LogManager.LogLevelEnum.Warning);
-            }
-            else
-            {
-                int totalCount = 0;
-                foreach (var item in pickedItems) totalCount += item.Count;
-                LogProvider(
-                    $"{worker.name} 从任务栏拾取了 {pickedItems.Count} 种物品，共 {totalCount} 个",
-                    LogManager.LogLevelEnum.Info);
-            }
+            LogProvider(
+                $"{worker.name} 从任务栏取回 {items.Count} 种物品，共 {totalCount} 个",
+                LogManager.LogLevelEnum.Info);
         }
 
         /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
-            // 只有物主本人才能接此任务
-            if (worker.GetInstanceID() != this.targetOwnerId)
-            {
-                return false;
-            }
+            if (worker.GetInstanceID() != this.targetOwnerId) return false;
 
-            // 检查任务栏周围确实有属于自己的物品
             TaskBoardManager board = Core.ServiceLocator.Get<TaskBoardManager>();
-            if (board == null || !board.IsInitialized)
-            {
-                return false;
-            }
-
-            return board.HasOwnedItemsNearBoard(this.targetOwnerId);
+            return board != null && board.IsInitialized && board.HasDeliveredItems(this.targetOwnerId);
         }
 
         /// <inheritdoc/>
         protected override void Init()
         {
             this.AvailableNeighborPos.Clear();
-            this.AvailableNeighborPos.Add(Neighbors[8]);
+            this.AvailableNeighborPos.Add(Neighbors[8]); // 自身位置
         }
 
         // ---- Builder ----
@@ -140,10 +93,10 @@ namespace LAB2D.Character.Worker.Task
                 this.task = new WorkerPickUpFromBoardTask();
             }
 
-            /// <summary>设置任务栏位置为目标</summary>
-            public PickUpFromBoardTaskBuilder SetBoardPosition(Vector3Int boardPos)
+            /// <summary>设置任务栏邻居位置为目标</summary>
+            public PickUpFromBoardTaskBuilder SetBoardNeighbor(Vector3Int neighborPos)
             {
-                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(boardPos);
+                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(neighborPos);
                 return this;
             }
 
@@ -156,16 +109,6 @@ namespace LAB2D.Character.Worker.Task
 
             public WorkerPickUpFromBoardTask Build()
             {
-                if (this.task.TargetMap == default)
-                {
-                    // 从 TaskBoardManager 获取位置
-                    TaskBoardManager board = Core.ServiceLocator.Get<TaskBoardManager>();
-                    if (board != null && board.IsInitialized)
-                    {
-                        this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(board.BoardPosition);
-                    }
-                }
-
                 return this.task;
             }
         }

@@ -404,23 +404,20 @@ namespace LAB2D.AI.Worker
                 return null;
             }
 
-            if (!boardManager.HasOwnedItemsNearBoard(ownerId))
+            if (!boardManager.HasDeliveredItems(ownerId))
             {
                 return null;
             }
 
-            var (pos, drop) = boardManager.FindOwnedItemNearBoard(ownerId);
-            if (drop == null)
-            {
-                return null;
-            }
+            // 目标位置：任务栏四周的相邻位置
+            Vector3Int neighborPos = boardManager.GetNeighborPosition();
 
             return new Decision
             {
                 Type = WorkerDecisionType.PickUpFromBoard,
-                TargetPosition = pos,
-                Resource = new ResourceInfo(drop.Id, drop.Count, drop.OwnerId),
-                Description = $"去任务栏取回属于自己的物品(id={drop.Id})",
+                TargetPosition = neighborPos,
+                Resource = null,
+                Description = $"去任务栏取回属于自己的物品",
             };
         }
 

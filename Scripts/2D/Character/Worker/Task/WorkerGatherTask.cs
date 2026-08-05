@@ -66,7 +66,7 @@ namespace LAB2D.Character.Worker.Task
                 if (isBounty)
                 {
                     // 悬赏产出物：放置到地上 + 创建 CarryToBoardTask（搬运到任务栏）
-                    this.PlaceBountyDropAndCreateCarry(targetPos, dropItems[i]);
+                    this.PlaceBountyDropAndCreateCarry(targetPos, dropItems[i], worker);
                 }
                 else
                 {
@@ -90,40 +90,35 @@ namespace LAB2D.Character.Worker.Task
         /// 与普通掉落物的区别：不调用 PutDownToDrop（它会创建普通 CarryTask），
         /// 而是直接放置物品并创建 CarryToBoardTask。
         /// </summary>
-        private void PlaceBountyDropAndCreateCarry(Vector3Int dropPos, DropItem dropItem)
+        private void PlaceBountyDropAndCreateCarry(Vector3Int dropPos, DropItem dropItem, AWorker executor)
         {
-            // 在掉落位置附近找空地放置
-            Vector3Int placePos = AvailablePositionProvider(dropPos, 20, false);
+            // 复用现有掉落物放置逻辑：先尝试合并到周围同类，否则环形搜索空地放置
+            Vector3Int placePos = TryMergeOrPlaceDrop(dropPos, dropItem.ResourceInfo, dropItem.Name);
+
             if (placePos == default)
             {
-                // 找不到空地，尝试直接用掉落位置（可能在树上，但树已砍掉）
-                placePos = dropPos;
+                LogProvider("[BountyDrop] 周围无可用位置，物品丢失", LogManager.LogLevelEnum.Error);
+                return;
             }
 
-            // 直接放置瓦片图标和注册到 DropManager（跳过 PutDownToDrop 的 CarryTask 创建）
-            UnityEngine.Tilemaps.TileBase tile =
-                (UnityEngine.Tilemaps.TileBase)ResourceLoadProvider(dropItem.Name);
-            ItemMapProvider().AddTile(placePos, tile);
-            AItem.ItemTypeEnum itemType = ItemTypeProvider(dropItem.ResourceInfo.Id);
-            Core.ServiceLocator.Get<DropManager>().AddDrop(itemType, placePos, dropItem.ResourceInfo);
+            // TryMergeOrPlaceDrop → PutDownToDrop 自动创建了普通 CarryTask，
+            // 悬赏物品需要替换为 CarryToBoardTask（搬运到任务栏）
+            Core.ServiceLocator.Get<WorkerTaskManager>().RemoveCarryTaskAt(placePos);
 
-            LogProvider(
-                $"[BountyDrop] 悬赏掉落物放置: pos=({placePos.x},{placePos.y}) id={dropItem.ResourceInfo.Id} count={dropItem.ResourceInfo.Count} owner={dropItem.ResourceInfo.OwnerId}",
-                LogManager.LogLevelEnum.Info);
-
-            // 创建搬运到任务栏的任务
+            // 创建搬运到任务栏的任务（只允许执行悬赏的 Worker 接取）
             WorkerCarryToBoardTask carryToBoard = new WorkerCarryToBoardTask.CarryToBoardTaskBuilder()
                 .SetStartTarget(placePos)
                 .SetResourceInfo(dropItem.ResourceInfo)
+                .SetExecutor(executor.GetInstanceID())
                 .Build();
 
             TaskAddProvider(
                 carryToBoard,
                 new GameGridPosition(placePos.x, placePos.y, placePos.z),
-                1); // 高优先级：尽快搬运到任务栏
+                1); // 高优先级
 
             LogProvider(
-                $"[BountyDrop] 创建 CarryToBoardTask: from=({placePos.x},{placePos.y}) to=任务栏",
+                $"[BountyDrop] 悬赏掉落物放置: pos=({placePos.x},{placePos.y}) → 创建 CarryToBoardTask",
                 LogManager.LogLevelEnum.Info);
         }
 

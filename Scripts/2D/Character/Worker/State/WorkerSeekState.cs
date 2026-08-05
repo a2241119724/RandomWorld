@@ -346,7 +346,7 @@ namespace LAB2D.Character.Worker.State
             int ownerId = this.Character.GetInstanceID();
 
             WorkerPickUpFromBoardTask pickUpTask = new WorkerPickUpFromBoardTask.PickUpFromBoardTaskBuilder()
-                .SetBoardPosition(boardManager.BoardPosition)
+                .SetBoardNeighbor(boardManager.GetNeighborPosition())
                 .SetOwnerId(ownerId)
                 .Build();
 

@@ -360,6 +360,36 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
+        /// 移除指定位置的 Carry 任务（用于将自动创建的 CarryTask 替换为 CarryToBoardTask）。
+        /// </summary>
+        public void RemoveCarryTaskAt(Vector3Int posMap)
+        {
+            this.taskQueue.RemoveWhere(task =>
+                task.TaskType == WorkerTaskType.Carry &&
+                task.TargetMap.X == posMap.x &&
+                task.TargetMap.Y == posMap.y);
+        }
+
+        /// <summary>
+        /// 获取所有悬赏任务列表（含运行状态），供任务栏 HUD 展示。
+        /// </summary>
+        public List<(WorkerBountyTask task, bool isRunning)> GetBountyTasks()
+        {
+            var result = new List<(WorkerBountyTask, bool)>();
+            for (int p = 0; p < this.taskQueue.PriorityCount; p++)
+            {
+                foreach (var kv in this.taskQueue.GetTasksAtPriority(p))
+                {
+                    if (kv.Key is WorkerBountyTask bounty)
+                    {
+                        result.Add((bounty, kv.Value));
+                    }
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
         /// 获取适合 HUD 展示的任务队列摘要。
         /// </summary>
         /// <returns>任务队列摘要文本。</returns>
