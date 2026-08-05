@@ -60,6 +60,13 @@ namespace LAB2D.Core
                 return;
             }
 
+            // 鼠标点击在 UI 面板上时（非 Foreground 主游戏区域），不关闭 ItemInfo
+            var uiResults = LAB2D.Tool.Tool.GetUIByMousePos();
+            if (uiResults.Count > 0 && uiResults[0].gameObject.name != "Foreground")
+            {
+                return;
+            }
+
             if (ServiceLocator.Get<PanelController>().Panels.Count > 0
                 && ServiceLocator.Get<PanelController>().Panels.Peek() == ItemInfoPanel.Instance)
             {
