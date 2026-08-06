@@ -110,7 +110,9 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 生成可用位置(地图与建筑)
+        /// 生成可用位置(地图与建筑)。
+        /// 当指定 centerMap 时，使用螺旋搜索从中心向外查找最近的空闲位置（确定性）。
+        /// 当 centerMap 为 default 时，在全图范围内随机搜索（用于资源散布等场景）。
         /// </summary>
         /// <param name="centerMap">default:全图找可用位置</param>
         /// <param name="radius">半径</param>
@@ -118,18 +120,19 @@ namespace LAB2D.Map
         /// <returns>位置</returns>
         public Vector3Int GenAvailablePosMap(Vector3Int centerMap = default, int radius = 10, bool isDrop = false)
         {
-            int x, y, startX = 0, endX = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Height, startY = 0, endY = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Width;
+            // 指定中心点时使用螺旋搜索，保证找到最近的空闲位置
             if (centerMap != default)
             {
-                startX = (int)System.Math.Max(centerMap.x - radius, 0);
-                startY = (int)System.Math.Max(centerMap.y - radius, 0);
-                endX = (int)System.Math.Min(centerMap.x + radius, Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Height);
-                endY = (int)System.Math.Min(centerMap.y + radius, Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Width);
+                return this.SpiralSearch(centerMap, radius, isDrop);
             }
 
-            // 如果循环次数过多,则说明没有可用的位置
+            // 全图随机搜索（用于 ResourceMap 树木生成等场景）
+            int startX = 0, endX = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Height;
+            int startY = 0, endY = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Width;
+
             int count = 0;
             bool flag;
+            int x, y;
             do
             {
                 x = Random.Range(startX, endX);
@@ -141,14 +144,71 @@ namespace LAB2D.Map
                     return default;
                 }
 
-                // 掉落物使用 IsTileFreeForDrop（不检查地形可建造性，草地/沙漠等都能放）
-                // 建造/任务栏等使用 IsAvailable（要求地形可建造）
                 flag = isDrop
                     ? !this.IsTileFreeForDrop(new Vector3Int(x, y, 0))
                     : !this.IsAvailable(new Vector3Int(x, y, 0));
             }
             while (flag);
             return new Vector3Int(x, y, 0);
+        }
+
+        /// <summary>
+        /// 从中心点向外螺旋搜索可用位置。
+        /// 按 Chebyshev 距离分层遍历，保证找到最近的满足条件的位置。
+        /// </summary>
+        /// <param name="center">搜索中心</param>
+        /// <param name="radius">最大搜索半径</param>
+        /// <param name="isDrop">是否为掉落物（影响可用性检查逻辑）</param>
+        /// <returns>找到的位置，未找到则返回 default</returns>
+        private Vector3Int SpiralSearch(Vector3Int center, int radius, bool isDrop)
+        {
+            int mapHeight = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Height;
+            int mapWidth = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB.Width;
+
+            // 第 0 层：先检查中心点本身
+            if (this.IsPositionInBoundsAndAvailable(center, isDrop, mapHeight, mapWidth))
+            {
+                return center;
+            }
+
+            // 从内向外逐层遍历 Chebyshev 距离环
+            for (int layer = 1; layer <= radius; layer++)
+            {
+                for (int dx = -layer; dx <= layer; dx++)
+                {
+                    for (int dy = -layer; dy <= layer; dy++)
+                    {
+                        // 只检查当前层的边界（Chebyshev 距离 == layer）
+                        if (System.Math.Max(System.Math.Abs(dx), System.Math.Abs(dy)) != layer)
+                        {
+                            continue;
+                        }
+
+                        Vector3Int pos = new Vector3Int(center.x + dx, center.y + dy, 0);
+                        if (this.IsPositionInBoundsAndAvailable(pos, isDrop, mapHeight, mapWidth))
+                        {
+                            return pos;
+                        }
+                    }
+                }
+            }
+
+            return default;
+        }
+
+        /// <summary>
+        /// 检查位置是否在地图范围内且满足可用性条件。
+        /// </summary>
+        private bool IsPositionInBoundsAndAvailable(Vector3Int pos, bool isDrop, int mapHeight, int mapWidth)
+        {
+            if (pos.x < 0 || pos.x >= mapHeight || pos.y < 0 || pos.y >= mapWidth)
+            {
+                return false;
+            }
+
+            return isDrop
+                ? this.IsTileFreeForDrop(pos)
+                : this.IsAvailable(pos);
         }
 
         /// <summary>
