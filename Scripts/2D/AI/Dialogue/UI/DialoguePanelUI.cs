@@ -37,9 +37,11 @@ namespace LAB2D.AI.Dialogue.UI
         private Button settingsButton;
         private Toggle deepThinkingToggle;
         private Text npcNameText;
+        private Text tokenUsageText;
         private string activeNpcId;
         private StreamingTextView currentStreamingText;
         private bool isWaitingResponse;
+        private TokenUsageInfo currentTokenUsage;
 
         /// <summary>
         /// 确保场景中已创建的 UI 实例可用。
@@ -112,6 +114,7 @@ namespace LAB2D.AI.Dialogue.UI
                 ServiceLocator.Get<DialogueManager>().OnTokenReceived += this.HandleToken;
                 ServiceLocator.Get<DialogueManager>().OnDialogueComplete += this.HandleComplete;
                 ServiceLocator.Get<DialogueManager>().OnDialogueError += this.HandleError;
+                ServiceLocator.Get<DialogueManager>().OnTokenUsage += this.HandleTokenUsage;
             }
         }
 
@@ -122,6 +125,7 @@ namespace LAB2D.AI.Dialogue.UI
                 ServiceLocator.Get<DialogueManager>().OnTokenReceived -= this.HandleToken;
                 ServiceLocator.Get<DialogueManager>().OnDialogueComplete -= this.HandleComplete;
                 ServiceLocator.Get<DialogueManager>().OnDialogueError -= this.HandleError;
+                ServiceLocator.Get<DialogueManager>().OnTokenUsage -= this.HandleTokenUsage;
             }
         }
 
@@ -299,6 +303,59 @@ namespace LAB2D.AI.Dialogue.UI
             this.ScrollToLatest();
         }
 
+        private void HandleTokenUsage(string npcId, TokenUsageInfo usage)
+        {
+            if (npcId != this.activeNpcId)
+            {
+                return;
+            }
+
+            this.currentTokenUsage = usage;
+            this.UpdateTokenUsageDisplay();
+        }
+
+        private void UpdateTokenUsageDisplay()
+        {
+            if (this.tokenUsageText == null)
+            {
+                return;
+            }
+
+            if (this.currentTokenUsage.totalTokens <= 0)
+            {
+                this.tokenUsageText.text = string.Empty;
+                return;
+            }
+
+            var u = this.currentTokenUsage;
+            if (u.reasoningTokens > 0)
+            {
+                this.tokenUsageText.text = string.Format(
+                    "词元 输入:{0}  输出:{1}  推理:{2}  可见:{3}",
+                    FormatTokenCount(u.promptTokens),
+                    FormatTokenCount(u.completionTokens),
+                    FormatTokenCount(u.reasoningTokens),
+                    FormatTokenCount(u.visibleOutputTokens));
+            }
+            else
+            {
+                this.tokenUsageText.text = string.Format(
+                    "词元 输入:{0}  输出:{1}",
+                    FormatTokenCount(u.promptTokens),
+                    FormatTokenCount(u.completionTokens));
+            }
+        }
+
+        private static string FormatTokenCount(int count)
+        {
+            if (count >= 1000)
+            {
+                return (count / 1000.0).ToString("0.#") + "K";
+            }
+
+            return count.ToString();
+        }
+
         private void SetWaitingState(bool waiting)
         {
             this.isWaitingResponse = waiting;
@@ -323,6 +380,11 @@ namespace LAB2D.AI.Dialogue.UI
             if (this.npcNameText == null)
             {
                 this.npcNameText = FindChildComponent<Text>(this.gameObject, "NpcName");
+            }
+
+            if (this.tokenUsageText == null)
+            {
+                this.tokenUsageText = FindChildComponent<Text>(this.gameObject, "TokenUsage");
             }
 
             if (this.inputField == null)

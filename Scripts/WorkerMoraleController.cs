@@ -21,7 +21,7 @@ namespace LAB2D.AgentGenerated
 
         [Tooltip("无恢复激活时每秒损失的士气值。")]
         [Range(0f, 100f)]
-        [SerializeField] private float decayRate = 1f;
+        [SerializeField] private float decayRate = 0.2f;
 
         [Header("Thresholds")]
         [Tooltip("士气低于此值时触发 OnLowMorale 事件并禁用任务就绪状态。")]

@@ -15,19 +15,33 @@ namespace LAB2D.Gameplay
     /// </summary>
     public class CurrencyManager : Singleton<CurrencyManager>
     {
+        /// <summary>Player 钱包 ownerId</summary>
+        public const int PlayerOwnerId = 0;
+
         /// <summary>
         /// 新 Worker 初始资金。
         /// </summary>
         public CurrencyAmount InitialWorkerFunds { get; set; } = new CurrencyAmount(100);
 
         /// <summary>
+        /// Player 初始资金。
+        /// </summary>
+        public CurrencyAmount InitialPlayerFunds { get; set; } = new CurrencyAmount(200);
+
+        /// <summary>
         /// 托管资金 — Worker instance ID → 托管总额。
         /// </summary>
         private readonly Dictionary<int, CurrencyAmount> escrow;
 
+        /// <summary>
+        /// 钱包余额 — ownerId → 当前余额。ownerId=0 为 Player，>0 为 Worker instance ID。
+        /// </summary>
+        private readonly Dictionary<int, CurrencyAmount> wallets;
+
         public CurrencyManager()
         {
             this.escrow = new Dictionary<int, CurrencyAmount>();
+            this.wallets = new Dictionary<int, CurrencyAmount>();
         }
 
         /// <summary>
@@ -163,6 +177,72 @@ namespace LAB2D.Gameplay
                 Amount = amount,
                 Reason = reason,
             });
+        }
+
+        /// <summary>
+        /// 获取 Player 当前余额。ownerId=0。
+        /// </summary>
+        public CurrencyAmount GetPlayerBalance()
+        {
+            return this.wallets.TryGetValue(PlayerOwnerId, out CurrencyAmount amount)
+                ? amount
+                : CurrencyAmount.Zero;
+        }
+
+        /// <summary>
+        /// 初始化 Player 钱包（首次使用时调用）。
+        /// </summary>
+        public void EnsurePlayerWallet()
+        {
+            if (!this.wallets.ContainsKey(PlayerOwnerId))
+            {
+                this.wallets[PlayerOwnerId] = this.InitialPlayerFunds;
+                this.PublishTransaction(0, PlayerOwnerId, this.InitialPlayerFunds, "PlayerInitialFunds");
+            }
+        }
+
+        /// <summary>
+        /// Player 消费金币。余额不足时返回 false。
+        /// </summary>
+        /// <param name="amount">消费金额</param>
+        /// <returns>扣款成功返回 true</returns>
+        public bool TrySpendPlayerGold(int amount)
+        {
+            if (amount <= 0) return true;
+            this.EnsurePlayerWallet();
+            CurrencyAmount current = this.wallets[PlayerOwnerId];
+            if (current.Gold < amount) return false;
+            this.wallets[PlayerOwnerId] = new CurrencyAmount(current.Gold - amount);
+            this.PublishTransaction(PlayerOwnerId, 0, new CurrencyAmount(amount), "PlayerSpend");
+            return true;
+        }
+
+        /// <summary>
+        /// Player 获得金币。
+        /// </summary>
+        /// <param name="amount">金额</param>
+        public void AddPlayerGold(int amount)
+        {
+            if (amount <= 0) return;
+            this.EnsurePlayerWallet();
+            CurrencyAmount current = this.wallets[PlayerOwnerId];
+            this.wallets[PlayerOwnerId] = new CurrencyAmount(current.Gold + amount);
+            this.PublishTransaction(0, PlayerOwnerId, new CurrencyAmount(amount), "PlayerEarn");
+        }
+
+        /// <summary>
+        /// 获取指定 ownerId 的钱包余额（0=Player，>0=Worker）。
+        /// Worker 余额优先从 WorkerData.Wallet 读取，Player 从 wallets 字典读取。
+        /// </summary>
+        public CurrencyAmount GetWalletBalance(int ownerId)
+        {
+            if (ownerId == PlayerOwnerId)
+            {
+                return this.GetPlayerBalance();
+            }
+
+            AWorker worker = this.FindWorker(ownerId);
+            return this.GetBalance(worker);
         }
 
         private AWorker FindWorker(int instanceId)

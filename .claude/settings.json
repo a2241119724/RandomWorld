@@ -20,6 +20,10 @@
     "sandbox": true,
     "prompt_injection_protection": true
   },
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); i=$(printf '%s' \"$input\" | jq -r '.context_window.total_input_tokens // 0'); o=$(printf '%s' \"$input\" | jq -r '.context_window.total_output_tokens // 0'); printf 'in:%s out:%s' \"$i\" \"$o\""
+  },
   "hooks": {
     "UserPromptSubmit": [
       {

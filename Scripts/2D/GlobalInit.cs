@@ -98,6 +98,7 @@ namespace LAB2D
             ServiceLocator.Register(MarketService.Instance);
             ServiceLocator.Register(new PlayerBountyService());
             ServiceLocator.Register(TaskBoardManager.Instance);
+            ServiceLocator.Register(new ShopNPCGenerator());
 
             // 注入所有权名字解析：0=Player, >0=Worker名字
             Domain.Worker.ItemOwnershipService.OwnerNameProvider = (ownerId) =>
@@ -193,6 +194,7 @@ namespace LAB2D
             ServiceLocator.Register(InventoryMenuPanel.Instance);
             ServiceLocator.Register(AIChatPanel.Instance);
             ServiceLocator.Register(DialoguePanel.Instance);
+            ServiceLocator.Register(ShopPanel.Instance);
             ServiceLocator.Register(UnityMainThreadDispatcher.Instance);
         }
 
@@ -246,8 +248,9 @@ namespace LAB2D
                 GlobalPanelInitializer.InitializeAll();
             }
 
-            // 订阅地图初始化完成事件，地图就绪后立即初始化任务栏
+            // 订阅地图初始化完成事件
             ServiceLocator.Get<MapInitCoordinator>().OnMapReady += this.OnMapReadyInitTaskBoard;
+            ServiceLocator.Get<ShopNPCGenerator>().SubscribeToMapReady();
         }
 
         /// <summary>

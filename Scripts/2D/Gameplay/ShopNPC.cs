@@ -50,7 +50,16 @@ namespace LAB2D.Gameplay
             public string CnName;
         }
 
+        /// <summary>
+        /// Player 交互打开商店的回调。由 ShopPanel 在初始化时注册。
+        /// </summary>
+        public static System.Action<ShopNPC> OnShopInteract;
+
+        [Tooltip("交互按键")]
+        public KeyCode InteractKey = KeyCode.Alpha7;
+
         private MarketService market;
+        private bool isShopOpen;
 
         private void Awake()
         {
@@ -218,6 +227,14 @@ namespace LAB2D.Gameplay
             return didSomething;
         }
 
+        /// <summary>
+        /// 根据 itemId 查找商店中的商品（公开方法，供 ShopPanel 等 UI 使用）。
+        /// </summary>
+        public ShopItem FindShopItemPublic(int itemId)
+        {
+            return this.FindShopItem(itemId);
+        }
+
         private ShopItem FindShopItem(int itemId)
         {
             foreach (ShopItem item in this.ItemsForSale)
@@ -225,6 +242,118 @@ namespace LAB2D.Gameplay
                 if (item.ItemId == itemId) return item;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Player 从商店购买物品。货币通过 CurrencyManager（ownerId=0）管理。
+        /// 物品由调用方（ShopPanel）负责添加到 Player 背包。
+        /// </summary>
+        /// <param name="itemId">物品ID</param>
+        /// <param name="count">购买数量</param>
+        /// <returns>购买成功返回 true</returns>
+        public bool PlayerBuyFromShop(int itemId, int count)
+        {
+            if (count <= 0) return false;
+
+            ShopItem shopItem = this.FindShopItem(itemId);
+            if (shopItem == null)
+            {
+                AWorkerTask.LogProvider($"[{this.ShopName}] 不卖 id={itemId}", LogManager.LogLevelEnum.Warning);
+                return false;
+            }
+
+            if (shopItem.Stock >= 0 && shopItem.Stock < count)
+            {
+                AWorkerTask.LogProvider($"[{this.ShopName}] 库存不足 id={itemId}", LogManager.LogLevelEnum.Warning);
+                return false;
+            }
+
+            int totalPrice = shopItem.Price * count;
+            CurrencyManager currency = Core.ServiceLocator.Get<CurrencyManager>();
+            if (!currency.TrySpendPlayerGold(totalPrice))
+            {
+                AWorkerTask.LogProvider(
+                    $"[{this.ShopName}] Player 余额不足: 需要{totalPrice}G, 余额{currency.GetPlayerBalance().Gold}G",
+                    LogManager.LogLevelEnum.Warning);
+                return false;
+            }
+
+            // 库存减少
+            if (shopItem.Stock >= 0)
+                shopItem.Stock -= count;
+
+            AWorkerTask.LogProvider(
+                $"[{this.ShopName}] Player 购买 {count}×{shopItem.CnName}(id={itemId}) 花费 {totalPrice}G",
+                LogManager.LogLevelEnum.Info);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Player 向商店出售资源。货币通过 CurrencyManager（ownerId=0）管理。
+        /// 物品由调用方（ShopPanel）负责从 Player 背包扣除。
+        /// </summary>
+        /// <param name="itemId">物品ID</param>
+        /// <param name="count">出售数量</param>
+        /// <returns>获得的金币，出售失败返回 0</returns>
+        public int PlayerSellToShop(int itemId, int count)
+        {
+            if (count <= 0) return 0;
+
+            ShopItem shopItem = this.FindShopItem(itemId);
+            int price;
+            if (shopItem != null)
+            {
+                price = Mathf.FloorToInt(shopItem.Price * this.BuybackRate);
+            }
+            else
+            {
+                // 未配置的物品用市场底价
+                price = this.market?.GetSellPrice(itemId, count) ?? count;
+            }
+
+            if (price <= 0) return 0;
+
+            Core.ServiceLocator.Get<CurrencyManager>().AddPlayerGold(price);
+
+            // 商店库存增加（如果有限库存的话）
+            if (shopItem != null && shopItem.Stock >= 0)
+                shopItem.Stock += count;
+
+            string itemName = shopItem?.CnName ?? $"id={itemId}";
+            AWorkerTask.LogProvider(
+                $"[{this.ShopName}] Player 出售 {count}×{itemName} 获得 {price}G",
+                LogManager.LogLevelEnum.Info);
+
+            return price;
+        }
+
+        /// <summary>
+        /// Player 是否在交互范围内。
+        /// </summary>
+        public bool IsPlayerInRange()
+        {
+            var player = Core.ServiceLocator.Get<Character.Player.PlayerManager>().Mine;
+            if (player == null) return false;
+            return Vector3.Distance(player.transform.position, this.transform.position) <= this.InteractionRadius;
+        }
+
+        private void Update()
+        {
+            if (!Input.GetKeyDown(KeyCode.Alpha7) && !Input.GetKeyDown(KeyCode.Keypad7)) return;
+            if (this.isShopOpen) return;
+            if (!this.IsPlayerInRange()) return;
+
+            this.isShopOpen = true;
+            OnShopInteract?.Invoke(this);
+        }
+
+        /// <summary>
+        /// 商店面板关闭时由 ShopPanel 调用，重置交互状态。
+        /// </summary>
+        public void OnShopClosed()
+        {
+            this.isShopOpen = false;
         }
 
         private bool IsInRange(AWorker worker)

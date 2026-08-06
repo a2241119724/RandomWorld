@@ -49,7 +49,7 @@ namespace LAB2D.Domain.Worker
         public WorkerPersonality AfterTaskComplete()
         {
             return new WorkerPersonality(
-                Clamp(this.Mood + 2f),
+                Clamp(this.Mood + 5f),
                 Clamp(this.Ambition + 0.5f),
                 Clamp(this.Diligence + 1f),
                 this.Sociality);
@@ -80,7 +80,10 @@ namespace LAB2D.Domain.Worker
         /// <summary>饥饿/疲劳惩罚：心情下降。</summary>
         public WorkerPersonality AfterSuffer(float hungryRatio, float tiredRatio)
         {
-            float penalty = (1f - hungryRatio) * 5f + (1f - tiredRatio) * 5f;
+            // 使用平滑的非线性惩罚：轻度饥饿/疲劳时惩罚很小，严重时加速
+            float hungryPenalty = (1f - hungryRatio) * (1f - hungryRatio) * 1.5f;
+            float tiredPenalty = (1f - tiredRatio) * (1f - tiredRatio) * 1.5f;
+            float penalty = hungryPenalty + tiredPenalty;
             return new WorkerPersonality(
                 Clamp(this.Mood - penalty),
                 this.Ambition,
@@ -92,7 +95,7 @@ namespace LAB2D.Domain.Worker
         public WorkerPersonality AfterIdle()
         {
             return new WorkerPersonality(
-                Clamp(this.Mood - 1f),
+                Clamp(this.Mood - 0.3f),
                 this.Ambition,
                 Clamp(this.Diligence - 2f),
                 this.Sociality);

@@ -85,7 +85,8 @@ namespace LAB2D.AI.Dialogue.LLM
             LLMGenerationOptions options,
             Action<string> onToken,
             Action onComplete,
-            Action<string> onError)
+            Action<string> onError,
+            Action<TokenUsageInfo> onUsage = null)
         {
             string url = this.apiBaseUrl + LLMClientConfig.CHAT_COMPLETIONS_PATH;
             string json = BuildRequestJson(messages, options, stream: true);
@@ -96,7 +97,7 @@ namespace LAB2D.AI.Dialogue.LLM
             using UnityWebRequest request = CreatePostRequest(url, json);
             this.currentRequest = request;
 
-            var handler = new RemoteSSEDownloadHandler(onToken, onComplete, onError);
+            var handler = new RemoteSSEDownloadHandler(onToken, onComplete, onError, onUsage);
             request.downloadHandler = handler;
 
             var tcs = new TaskCompletionSource<bool>();
@@ -256,6 +257,7 @@ namespace LAB2D.AI.Dialogue.LLM
         private class RemoteChatCompletionResponse
         {
             public RemoteChoice[] choices;
+            public RemoteUsage usage;
         }
 
         [Serializable]
@@ -270,6 +272,21 @@ namespace LAB2D.AI.Dialogue.LLM
         {
             public string content;
         }
+
+        [Serializable]
+        private class RemoteUsage
+        {
+            public int prompt_tokens;
+            public int completion_tokens;
+            public int total_tokens;
+            public RemoteCompletionTokensDetails completion_tokens_details;
+        }
+
+        [Serializable]
+        private class RemoteCompletionTokensDetails
+        {
+            public int reasoning_tokens;
+        }
 #pragma warning restore SA1307
 
         private class RemoteSSEDownloadHandler : DownloadHandlerScript
@@ -277,17 +294,20 @@ namespace LAB2D.AI.Dialogue.LLM
             private readonly Action<string> onToken;
             private readonly Action onComplete;
             private readonly Action<string> onError;
+            private readonly Action<TokenUsageInfo> onUsage;
             private readonly byte[] buffer = new byte[65536];
             private int bufferPos;
 
             public RemoteSSEDownloadHandler(
                 Action<string> onToken,
                 Action onComplete,
-                Action<string> onError)
+                Action<string> onError,
+                Action<TokenUsageInfo> onUsage = null)
             {
                 this.onToken = onToken;
                 this.onComplete = onComplete;
                 this.onError = onError;
+                this.onUsage = onUsage;
                 this.bufferPos = 0;
             }
 
@@ -388,6 +408,29 @@ namespace LAB2D.AI.Dialogue.LLM
                         {
                             this.onToken?.Invoke(delta.content);
                         }
+                    }
+
+                    // 捕获 usage（通常在最后一个 chunk 中携带）
+                    if (chunk?.usage != null && chunk.usage.total_tokens > 0)
+                    {
+                        int reasoningTokens = chunk.usage.completion_tokens_details?.reasoning_tokens ?? 0;
+                        var info = new TokenUsageInfo
+                        {
+                            promptTokens = chunk.usage.prompt_tokens,
+                            completionTokens = chunk.usage.completion_tokens,
+                            totalTokens = chunk.usage.total_tokens,
+                            reasoningTokens = reasoningTokens,
+                            visibleOutputTokens = chunk.usage.completion_tokens - reasoningTokens,
+                        };
+
+                        AWorkerTask.LogProvider(
+                            "[RemoteAPI Usage] 词元 总计=" + info.totalTokens
+                            + " 输入=" + info.promptTokens
+                            + " 输出=" + info.completionTokens
+                            + " 推理=" + info.reasoningTokens
+                            + " 可见=" + info.visibleOutputTokens,
+                            LogManager.LogLevelEnum.Info);
+                        this.onUsage?.Invoke(info);
                     }
                 }
                 catch (Exception e)

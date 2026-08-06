@@ -5,6 +5,18 @@ namespace LAB2D.AI.Dialogue.LLM
     using System.Threading.Tasks;
 
     /// <summary>
+    /// Token 用量详情
+    /// </summary>
+    public struct TokenUsageInfo
+    {
+        public int promptTokens;
+        public int completionTokens;
+        public int totalTokens;
+        public int reasoningTokens;
+        public int visibleOutputTokens;
+    }
+
+    /// <summary>
     /// LLM 客户端接口
     /// </summary>
     public interface ILLMClient
@@ -22,7 +34,8 @@ namespace LAB2D.AI.Dialogue.LLM
             LLMGenerationOptions options,
             Action<string> onToken,
             Action onComplete,
-            Action<string> onError);
+            Action<string> onError,
+            Action<TokenUsageInfo> onUsage = null);
 
         /// <summary>
         /// 取消当前请求

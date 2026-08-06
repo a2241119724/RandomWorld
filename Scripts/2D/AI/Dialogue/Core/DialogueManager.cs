@@ -45,6 +45,11 @@ namespace LAB2D.AI.Dialogue.Core
         public event Action<string, string> OnDialogueError;
 
         /// <summary>
+        /// Token 用量回调（npcId, usage）
+        /// </summary>
+        public event Action<string, TokenUsageInfo> OnTokenUsage;
+
+        /// <summary>
         /// 对话结束回调（面板关闭时触发）
         /// </summary>
         public event Action<string> OnDialogueEnded;
@@ -188,6 +193,10 @@ namespace LAB2D.AI.Dialogue.Core
                             "DialogueManager: 对话错误 - " + error,
                             LogManager.LogLevelEnum.Error);
                         this.OnDialogueError?.Invoke(npcId, error);
+                    },
+                    onUsage: (usage) =>
+                    {
+                        this.OnTokenUsage?.Invoke(npcId, usage);
                     });
             }
             catch (Exception e)

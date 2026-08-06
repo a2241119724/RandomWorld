@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3458479278
+CRC: 3389183859
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 57f228991c3ffa59ef23e548cf78a2e2
+    Hash: a43748195bb42f5b5fb1ff9c331b9cd3
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 29eb2e53b37135af6f6388e7b72b3281
+    Hash: 2eefa261a77a4af4ea380f408d1e2cc4
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 57f228991c3ffa59ef23e548cf78a2e2
+    Hash: a43748195bb42f5b5fb1ff9c331b9cd3
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -42,6 +42,8 @@ ClassTypes:
   Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
 - Class: 114
@@ -83,11 +85,15 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: c47929d2f60da9240af55ff6899e615a, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: e514efe7a5781bf44b867595e8a9a707, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2f8ba1927a94b9548ba17172304ec15d, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 73763d51cd497274191814115b7be213, type: 3}
 - Class: 114
@@ -119,6 +125,8 @@ ClassTypes:
 - Class: 687078895
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
+- AssemblyName: Assembly-CSharp
+  ClassName: LAB2D.Gameplay.ShopNPC/ShopItem
 - AssemblyName: PhotonUnityNetworking
   ClassName: Photon.Pun.PhotonAnimatorView/SynchronizedLayer
 - AssemblyName: UnityEngine.CoreModule
@@ -142,6 +150,8 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Navigation
 - AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ScrollRect/ScrollRectEvent
+- AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Slider/SliderEvent
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.SpriteState
@@ -161,6 +171,8 @@ Assets:
 - Assets/ResourcesLocal/Prefabs/Border.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Gun/TraceBulletEffect.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/ButtonItem.prefab
+- Assets/ResourcesLocal/Prefabs/ItemBox/SellItem.prefab
+- Assets/ResourcesLocal/Prefabs/ScrollText.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/ArchiveItem.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/LocateWorkerItem.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Sword/CustomSword.prefab
@@ -168,10 +180,13 @@ Assets:
 - Assets/ResourcesLocal/Prefabs/Select.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Gun/BulletEffect.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Gun/TraceGun.prefab
+- Assets/ResourcesLocal/Prefabs/Shop.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/LeftChatItem.prefab
 - Assets/ResourcesLocal/Prefabs/Character/Player/Player.prefab
+- Assets/ResourcesLocal/Prefabs/Character/NPC/ShopNPC.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/TaskItem.prefab
 - Assets/ResourcesLocal/Prefabs/Damage.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/RightChatItem.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Sword/KnifeLightEffect.prefab
+- Assets/ResourcesLocal/Prefabs/ItemBox/BuyItem.prefab
 Dependencies: []
