@@ -176,14 +176,10 @@ namespace LAB2D.Character.Worker.State
                 .SetResourceInfo(decision.Resource)
                 .Build();
 
-            // 作为自己的任务加入（优先级 2，中优先级）
-            AWorkerTask.TaskAddProvider(
-                gatherTask,
-                new GameGridPosition(
-                    decision.TargetPosition.x,
-                    decision.TargetPosition.y,
-                    decision.TargetPosition.z),
-                2);
+            // 直接分配给当前 Worker，不入全局任务池，确保自己执行
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            workerData.Task = gatherTask;
+            gatherTask.Start(this.Character);
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 创建自我采集任务: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
@@ -305,13 +301,10 @@ namespace LAB2D.Character.Worker.State
                 .SetNeedResource(decision.NeededResources)
                 .Build();
 
-            AWorkerTask.TaskAddProvider(
-                buildTask,
-                new GameGridPosition(
-                    decision.TargetPosition.x,
-                    decision.TargetPosition.y,
-                    decision.TargetPosition.z),
-                2);
+            // 直接分配给当前 Worker，不入全局任务池，确保自己执行
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            workerData.Task = buildTask;
+            buildTask.Start(this.Character);
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 创建自我建造任务: pos=({decision.TargetPosition.x},{decision.TargetPosition.y}) tile={decision.BuildTileName}",
@@ -330,10 +323,10 @@ namespace LAB2D.Character.Worker.State
                 ? decision.TargetPosition
                 : Vector3Int.zero;
 
-            AWorkerTask.TaskAddProvider(
-                plantTask,
-                new GameGridPosition(taskPos.x, taskPos.y, taskPos.z),
-                2);
+            // 直接分配给当前 Worker，不入全局任务池，确保自己执行
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            workerData.Task = plantTask;
+            plantTask.Start(this.Character);
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 创建自我种植任务: pos=({taskPos.x},{taskPos.y})",
@@ -423,7 +416,8 @@ namespace LAB2D.Character.Worker.State
         }
 
         /// <summary>
-        /// 创建自我搬运任务 — 去捡地上属于自己的物品（悬赏得来）。
+        /// 创建自我拾取任务 — 从地面捡起属于自己的物品直接放入背包。
+        /// 使用 WorkerPickUpFromBoardTask 的 FromGround 模式，不走复杂的 Carry 两阶段流程。
         /// </summary>
         private void CreateSelfCarryTask(WorkerBrain.Decision decision)
         {
@@ -433,21 +427,22 @@ namespace LAB2D.Character.Worker.State
                 return;
             }
 
-            WorkerCarryTask carryTask = new WorkerCarryTask.CarryTaskBuilder()
-                .SetStartTarget(decision.TargetPosition)
-                .SetResourceInfo(decision.Resource)
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            int ownerId = this.Character.GetInstanceID();
+
+            WorkerPickUpFromBoardTask pickUpTask = new WorkerPickUpFromBoardTask.PickUpFromBoardTaskBuilder()
+                .SetMode(WorkerPickUpFromBoardTask.PickUpMode.FromGround)
+                .SetTargetPosition(decision.TargetPosition)
+                .SetGroundResource(decision.Resource)
+                .SetOwnerId(ownerId)
                 .Build();
 
-            AWorkerTask.TaskAddProvider(
-                carryTask,
-                new GameGridPosition(
-                    decision.TargetPosition.x,
-                    decision.TargetPosition.y,
-                    decision.TargetPosition.z),
-                2);
+            // 直接分配给当前 Worker，不入全局任务池
+            workerData.Task = pickUpTask;
+            pickUpTask.Start(this.Character);
 
             AWorkerTask.LogProvider(
-                $"{this.Character.name} 创建自我搬运任务: 捡 id={decision.Resource?.Id} pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                $"{this.Character.name} 创建自我拾取任务: 捡 id={decision.Resource?.Id} pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
                 LogManager.LogLevelEnum.Info);
         }
 
@@ -469,6 +464,7 @@ namespace LAB2D.Character.Worker.State
             int ownerId = this.Character.GetInstanceID();
 
             WorkerPickUpFromBoardTask pickUpTask = new WorkerPickUpFromBoardTask.PickUpFromBoardTaskBuilder()
+                .SetMode(WorkerPickUpFromBoardTask.PickUpMode.FromBoard)
                 .SetBoardNeighbor(boardManager.GetNeighborPosition())
                 .SetOwnerId(ownerId)
                 .Build();

@@ -186,7 +186,19 @@ namespace LAB2D.Map
             // 拾取前获取装备稀有度信息，避免创建新道具后品质丢失
             EquipmentRarityType? rarity = Core.ServiceLocator.Get<EnemyLootManager>().TryGetRarityByMapPosition(posMap);
 
-            AItem item = Core.ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemByName(tile.name);
+            // 安全创建物品实例（tile 名称可能不在 backpackItemTypes 中）
+            AItem item;
+            try
+            {
+                item = Core.ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemByName(tile.name);
+            }
+            catch (System.Collections.Generic.KeyNotFoundException)
+            {
+                AWorkerTask.LogProvider(
+                    $"PickUpItem: tile '{tile.name}' 不是有效的背包物品类型，无法拾取",
+                    LogManager.LogLevelEnum.Error);
+                return;
+            }
 
             // 将掉落时的品质和属性应用到拾取的道具上
             if (rarity.HasValue && item is AEquipment equipment)
@@ -199,6 +211,7 @@ namespace LAB2D.Map
                 backpackItem.Quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
             }
 
+            // 先添加到背包，成功后再清理地面数据，避免物品丢失
             Core.ServiceLocator.Get<BackpackController>().AddItem(item);
             Core.ServiceLocator.Get<ItemCollectionTracker>().RecordItemCollected(new ResourceInfo(item.Id, 1));
             Core.ServiceLocator.Get<EnemyLootManager>().RemoveDropByMapPosition(posMap);

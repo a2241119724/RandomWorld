@@ -55,6 +55,10 @@ namespace LAB2D.Character.Worker.Task
                 $"[GatherOwner] executor={worker.name}({worker.GetInstanceID()}) override={AWorkerTask.BountyOwnerOverride} finalOwner={workerId} isBounty={isBounty}",
                 LogManager.LogLevelEnum.Info);
 
+            // 记录自我采集掉落的所有位置和资源（用于链式拾取）
+            List<Vector3Int> selfDropPositions = null;
+            List<ResourceInfo> selfDropResources = null;
+
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)
             {
@@ -70,7 +74,7 @@ namespace LAB2D.Character.Worker.Task
                 }
                 else
                 {
-                    // 普通掉落物：使用原有流程（合并+放置+自动创建 CarryTask）
+                    // 普通掉落物：放置到地上
                     Vector3Int pos = TryMergeOrPlaceDrop(targetPos, dropItems[i].ResourceInfo, dropItems[i].Name);
 
                     if (pos == default)
@@ -78,11 +82,58 @@ namespace LAB2D.Character.Worker.Task
                         // 地图满到极限，放进背包不丢物品
                         worker.AddResource(dropItems[i].ResourceInfo);
                     }
+                    else
+                    {
+                        // 记录掉落位置，稍后链式拾取
+                        if (selfDropPositions == null)
+                        {
+                            selfDropPositions = new List<Vector3Int>();
+                            selfDropResources = new List<ResourceInfo>();
+                        }
+
+                        selfDropPositions.Add(pos);
+                        selfDropResources.Add(dropItems[i].ResourceInfo);
+                    }
                 }
             }
 
             // 删除采摘图标
             GatherMapProvider().CancelGather(Vector3IntLAB.ToVector3Int(this.TargetMap));
+
+            // 自我采集完成后，立即链式拾取所有掉落物
+            // 悬赏的不直接创建，等 Worker 空闲时才去任务栏拾取
+            if (!isBounty && selfDropPositions != null && selfDropPositions.Count > 0)
+            {
+                // 移除所有 PutDownToDrop 自动创建的全局 CarryTask
+                foreach (Vector3Int dropPos in selfDropPositions)
+                {
+                    Core.ServiceLocator.Get<WorkerTaskManager>().RemoveCarryTaskAt(dropPos);
+                }
+
+                // 取出首个拾取目标，剩余的作为待拾取链
+                Vector3Int firstPos = selfDropPositions[0];
+                ResourceInfo firstResource = selfDropResources[0];
+                selfDropPositions.RemoveAt(0);
+                selfDropResources.RemoveAt(0);
+
+                // 创建 FromGround 模式拾取任务，直接分配给自己
+                WorkerPickUpFromBoardTask pickUpTask = new WorkerPickUpFromBoardTask.PickUpFromBoardTaskBuilder()
+                    .SetMode(WorkerPickUpFromBoardTask.PickUpMode.FromGround)
+                    .SetTargetPosition(firstPos)
+                    .SetGroundResource(firstResource)
+                    .SetOwnerId(workerId)
+                    .SetPendingPickups(selfDropPositions, selfDropResources)
+                    .Build();
+
+                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+                workerData.Task = pickUpTask;
+                pickUpTask.Start(worker);
+
+                int totalDrops = 1 + (selfDropPositions.Count > 0 ? selfDropPositions.Count : 0);
+                LogProvider(
+                    $"{worker.name} 采集完成，开始链式拾取 {totalDrops} 个掉落物: 首个 id={firstResource.Id} pos=({firstPos.x},{firstPos.y})",
+                    LogManager.LogLevelEnum.Info);
+            }
         }
 
         /// <summary>
