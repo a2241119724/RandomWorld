@@ -203,15 +203,9 @@ namespace LAB2D.Gameplay
         {
             if (ownerId == 0) return "Player";
 
-            var wm = Core.ServiceLocator.Get<WorkerManager>();
-            if (wm != null)
-            {
-                foreach (var w in wm.Characters)
-                {
-                    if (w.GetInstanceID() == ownerId) return w.name;
-                }
-            }
-            return $"Worker#{ownerId}";
+            var cm = Core.ServiceLocator.Get<CurrencyManager>();
+            var worker = cm?.FindWorker(ownerId);
+            return worker != null ? worker.name : $"Worker#{ownerId}";
         }
 
         private static string GetItemName(int itemId)

@@ -54,12 +54,6 @@ namespace LAB2D.Domain.Worker
                 return true;
             }
 
-            // Player 可以捡任何无主之物
-            if (pickerOwnerId == PlayerOwnerId && resource.OwnerId == UnownedId)
-            {
-                return true;
-            }
-
             return false;
         }
 

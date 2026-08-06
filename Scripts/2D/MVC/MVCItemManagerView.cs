@@ -102,11 +102,6 @@ namespace LAB2D.MVC
                 return;
             }
 
-            // 销毁所有ItemBox
-            // for (int i = 0; i < content.childCount; i++)
-            // {
-            //     Destroy(content.GetChild(i).gameObject);
-            // }
             int len = this.ItemsView.Count;
             for (int i = 0; i < len; i++)
             {

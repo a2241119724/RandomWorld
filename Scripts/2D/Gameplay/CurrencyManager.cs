@@ -245,7 +245,12 @@ namespace LAB2D.Gameplay
             return this.GetBalance(worker);
         }
 
-        private AWorker FindWorker(int instanceId)
+        /// <summary>
+        /// 通过 instance ID 查找 Worker。
+        /// </summary>
+        /// <param name="instanceId">Worker instance ID</param>
+        /// <returns>找到的 Worker，未找到返回 null</returns>
+        public AWorker FindWorker(int instanceId)
         {
             System.Collections.Generic.List<AWorker> workers =
                 Core.ServiceLocator.Get<WorkerManager>().Characters;

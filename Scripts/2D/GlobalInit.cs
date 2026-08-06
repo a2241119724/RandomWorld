@@ -104,15 +104,9 @@ namespace LAB2D
             Domain.Worker.ItemOwnershipService.OwnerNameProvider = (ownerId) =>
             {
                 if (ownerId == 0) return "Player";
-                var wm = ServiceLocator.Get<WorkerManager>();
-                if (wm != null)
-                {
-                    foreach (var w in wm.Characters)
-                    {
-                        if (w.GetInstanceID() == ownerId) return w.name;
-                    }
-                }
-                return $"Worker#{ownerId}";
+                var cm = ServiceLocator.Get<CurrencyManager>();
+                var worker = cm?.FindWorker(ownerId);
+                return worker != null ? worker.name : $"Worker#{ownerId}";
             };
 
             ServiceLocator.Register(ColonyCommandCenterManager.Instance);

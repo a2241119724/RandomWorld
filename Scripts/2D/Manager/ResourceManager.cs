@@ -143,19 +143,27 @@ namespace LAB2D.Manager
         }
 
         /// <summary>
+        /// 从字典中获取资源，未找到时记录日志并返回 default。
+        /// </summary>
+        private T TryGetResource<T>(Dictionary<string, T> dict, string name, string typeLabel, LogManager.LogLevelEnum logLevel = LogManager.LogLevelEnum.Error)
+        {
+            if (dict.TryGetValue(name, out T value))
+            {
+                return value;
+            }
+
+            AWorkerTask.LogProvider($"{name} {typeLabel} not found!!!", logLevel);
+            return default;
+        }
+
+        /// <summary>
         /// 获取背包道具SO
         /// </summary>
         /// <param name="name">道具数据名称</param>
         /// <returns>道具数据</returns>
         public ItemDataSO GetBackpackSO(string name)
         {
-            if (!this.backpackDataDic.ContainsKey(name))
-            {
-                AWorkerTask.LogProvider(name + " scriptable not found!!!", LogManager.LogLevelEnum.Warning);
-                return null;
-            }
-
-            return this.backpackDataDic[name];
+            return this.TryGetResource(this.backpackDataDic, name, "scriptable", LogManager.LogLevelEnum.Warning);
         }
 
         /// <summary>
@@ -165,13 +173,7 @@ namespace LAB2D.Manager
         /// <returns>道具数据</returns>
         public BuildItemDataSO GetBuildSO(string name)
         {
-            if (!this.buildDataDic.ContainsKey(name))
-            {
-                AWorkerTask.LogProvider(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
-                return null;
-            }
-
-            return this.buildDataDic[name];
+            return this.TryGetResource(this.buildDataDic, name, "scriptable");
         }
 
         /// <summary>
@@ -181,13 +183,7 @@ namespace LAB2D.Manager
         /// <returns>道具数据</returns>
         public DropItemDataSO GetDropSO(string name)
         {
-            if (!this.dropDataDic.ContainsKey(name))
-            {
-                AWorkerTask.LogProvider(name + " scriptable not found!!!", LogManager.LogLevelEnum.Error);
-                return null;
-            }
-
-            return this.dropDataDic[name];
+            return this.TryGetResource(this.dropDataDic, name, "scriptable");
         }
 
         /// <summary>
@@ -197,13 +193,7 @@ namespace LAB2D.Manager
         /// <returns>着色器</returns>
         public Shader GetShader(string name)
         {
-            if (!this.shaderDic.ContainsKey(name))
-            {
-                AWorkerTask.LogProvider(name + " shader not found!!!", LogManager.LogLevelEnum.Error);
-                return null;
-            }
-
-            return this.shaderDic[name];
+            return this.TryGetResource(this.shaderDic, name, "shader");
         }
 
         /// <summary>
@@ -214,9 +204,8 @@ namespace LAB2D.Manager
         // public UnityEngine.Object getAsset(string name)
         public TileBase GetAsset(string name)
         {
-            if (this.assetDic.ContainsKey(name))
+            if (this.assetDic.TryGetValue(name, out UnityEngine.Object asset))
             {
-                UnityEngine.Object asset = this.assetDic[name];
                 return (TileBase)asset;
             }
 
@@ -261,14 +250,7 @@ namespace LAB2D.Manager
         /// <returns>Sprite.</returns>
         public Sprite GetImage(string name)
         {
-            if (this.imageDic.ContainsKey(name))
-            {
-                Sprite sprite = this.imageDic[name];
-                return sprite;
-            }
-
-            AWorkerTask.LogProvider(name + " image not found!!!", LogManager.LogLevelEnum.Error);
-            return null;
+            return this.TryGetResource(this.imageDic, name, "image");
         }
 
         /// <summary>

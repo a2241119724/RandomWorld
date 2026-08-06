@@ -4,6 +4,7 @@ namespace LAB2D.Character.Worker.Task
     using LAB2D.Data;
     using LAB2D.Item;
     using System.Collections.Generic;
+    using UnityEngine;
 
     /// <summary>
     /// Worker 任务时间配置，单位为秒。
@@ -46,7 +47,7 @@ namespace LAB2D.Character.Worker.Task
                 }
             }
 
-            return Clamp(BuildBaseSeconds + resourceCount * BuildSecondsPerResource, BuildBaseSeconds, BuildMaxSeconds);
+            return Mathf.Clamp(BuildBaseSeconds + resourceCount * BuildSecondsPerResource, BuildBaseSeconds, BuildMaxSeconds);
         }
 
         public static float ResolveCarryTakeSeconds(ItemData itemData)
@@ -74,19 +75,5 @@ namespace LAB2D.Character.Worker.Task
             return itemSeconds > 0.0f ? itemSeconds : fallbackSeconds;
         }
 
-        private static float Clamp(float value, float min, float max)
-        {
-            if (value < min)
-            {
-                return min;
-            }
-
-            if (value > max)
-            {
-                return max;
-            }
-
-            return value;
-        }
     }
 }
