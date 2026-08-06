@@ -25,6 +25,7 @@ namespace LAB2D.Domain.Worker
     /// 悬赏元数据 — 纯 C# 结构体，描述悬赏的金额、发布者、过期时间和状态。
     /// 不依赖 UnityEngine，供 Domain 层和 Character 层共享使用。
     /// </summary>
+    [System.Serializable]
     public struct BountyData
     {
         /// <summary>悬赏金额</summary>

@@ -6,6 +6,7 @@ namespace LAB2D.Domain.Worker
     /// 货币值对象 — 纯 C# 不可变值类型，供 Worker 经济系统使用。
     /// 遵循 GameVector2 / GameGridPosition 的模式，不依赖 UnityEngine。
     /// </summary>
+    [Serializable]
     public readonly struct CurrencyAmount : IEquatable<CurrencyAmount>
     {
         public readonly int Gold;

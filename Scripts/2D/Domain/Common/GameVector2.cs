@@ -5,6 +5,7 @@ namespace LAB2D.Domain.Common
     /// <summary>
     /// 与引擎无关的二维向量，供纯玩法规则使用。
     /// </summary>
+    [Serializable]
     public readonly struct GameVector2 : IEquatable<GameVector2>
     {
         public readonly float X;
