@@ -3,11 +3,13 @@ namespace LAB2D.Character.Worker.State
     using LAB2D;
     using LAB2D.AI.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
     using LAB2D.Gameplay;
     using LAB2D.Item;
+    using LAB2D.Map;
     using LAB2D.Serializable;
     using System.Collections.Generic;
     using System.Text;
@@ -255,6 +257,13 @@ namespace LAB2D.Character.Worker.State
             var currencyManager = Core.ServiceLocator.Get<Gameplay.CurrencyManager>();
             if (!currencyManager.PostBounty(issuerId, reward)) return false;
 
+            // 在 BuildMap 中注册建造位置（放置建造中的标记），标记为发布者所有
+            if (!string.IsNullOrEmpty(decision.BuildTileName))
+            {
+                Core.ServiceLocator.Get<BuildMap>().AddBuild(
+                    decision.TargetPosition, decision.BuildTileName);
+            }
+
             // 构建建造 innerTask
             WorkerBuildTask buildTask = new WorkerBuildTask.BuildTaskBuilder()
                 .SetBuildPos(decision.TargetPosition)
@@ -285,7 +294,8 @@ namespace LAB2D.Character.Worker.State
         }
 
         /// <summary>
-        /// 创建自我建造任务 — 自己去建造。
+        /// 创建自我建造任务 — Worker 为自己建造房屋。
+        /// 先通过 BuildMap.AddBuild 注册建造位置，再直接分配给自己执行。
         /// </summary>
         private void CreateSelfBuildTask(WorkerBrain.Decision decision)
         {
@@ -296,18 +306,25 @@ namespace LAB2D.Character.Worker.State
                 return;
             }
 
+            // 在 BuildMap 中注册建造位置（放置建造中的标记），标记为自己所有
+            if (!string.IsNullOrEmpty(decision.BuildTileName))
+            {
+                Core.ServiceLocator.Get<BuildMap>().AddBuild(
+                    decision.TargetPosition, decision.BuildTileName);
+            }
+
             WorkerBuildTask buildTask = new WorkerBuildTask.BuildTaskBuilder()
                 .SetBuildPos(decision.TargetPosition)
                 .SetNeedResource(decision.NeededResources)
                 .Build();
 
-            // 直接分配给当前 Worker，不入全局任务池，确保自己执行
+            // 直接分配给当前 Worker，不入全局任务池，确保自己建造自己的房子
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             workerData.Task = buildTask;
             buildTask.Start(this.Character);
 
             AWorkerTask.LogProvider(
-                $"{this.Character.name} 创建自我建造任务: pos=({decision.TargetPosition.x},{decision.TargetPosition.y}) tile={decision.BuildTileName}",
+                $"{this.Character.name} 为自己建造 {decision.BuildTileName}: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
                 LogManager.LogLevelEnum.Info);
         }
 
@@ -334,7 +351,7 @@ namespace LAB2D.Character.Worker.State
         }
 
         /// <summary>
-        /// 创建自我吃饭任务 — 自己吃自己的，或向其他 Worker 购买。
+        /// 创建自我吃饭任务 — 优先交易买食物，失败则自己去采集食物。
         /// </summary>
         private void CreateSelfEatTask()
         {
@@ -349,15 +366,107 @@ namespace LAB2D.Character.Worker.State
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 成功解决饥饿 (当前饥饿:{wd?.CurHungry:F0})",
                     LogManager.LogLevelEnum.Info);
-            }
-            else
-            {
-                AWorkerTask.LogProvider(
-                    $"{this.Character.name} 无法解决饥饿，继续空闲",
-                    LogManager.LogLevelEnum.Warning);
+                this.CreateIdleTask();
+                return;
             }
 
+            // 交易失败 → 自己去采集食物（扩大扫描范围）
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 交易失败, 尝试自己采集食物（扩大扫描范围）",
+                LogManager.LogLevelEnum.Info);
+
+            // 扫描食物：从小范围到大范围逐级扩大
+            Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+            for (int scanR = 20; scanR <= 80; scanR += 20)
+            {
+                ResourceInfo foodResource = this.ScanForFoodAtRange(workerPos, scanR);
+                if (foodResource != null && foodResource.Id > 0)
+                {
+                    // 找到了！找到食物所在的具体位置
+                    Vector3Int? foodPos = this.FindResourcePosition(workerPos, foodResource.Id, scanR);
+                    if (foodPos.HasValue)
+                    {
+                        var decision = WorkerBrain.Decision.MakeGather(
+                            foodPos.Value, foodResource, "交易失败后自己采集食物");
+
+                        AWorkerTask.LogProvider(
+                            $"{this.Character.name} 找到食物 id={foodResource.Id} pos=({foodPos.Value.x},{foodPos.Value.y})",
+                            LogManager.LogLevelEnum.Info);
+
+                        this.CreateSelfGatherTask(decision);
+                        return;
+                    }
+                }
+            }
+
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 扩大扫描范围内无食物可采集，继续空闲",
+                LogManager.LogLevelEnum.Warning);
             this.CreateIdleTask();
+        }
+
+        /// <summary>
+        /// 在指定范围内扫描食物资源，返回找到的第一个食物 ResourceInfo。
+        /// </summary>
+        private ResourceInfo ScanForFoodAtRange(Vector3Int workerPos, int radius)
+        {
+            var resourceMap = Core.ServiceLocator.Get<ResourceMap>();
+            if (resourceMap?.ResourceMapDataLAB?.PosMap == null) return null;
+
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dy = -radius; dy <= radius; dy++)
+                {
+                    Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
+                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                    if (!resourceMap.ResourceMapDataLAB.PosMap.ContainsKey(posLAB)) continue;
+
+                    string resName = resourceMap.ResourceMapDataLAB.PosMap[posLAB];
+                    if (string.IsNullOrEmpty(resName)) continue;
+                    if (!Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(resName, out ItemData itemData)) continue;
+                    if (AWorkerTask.ItemTypeProvider(itemData.Id) != AItem.ItemTypeEnum.Food) continue;
+
+                    return new ResourceInfo(itemData.Id);
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 在指定范围内查找特定资源 ID 的位置。
+        /// </summary>
+        private Vector3Int? FindResourcePosition(Vector3Int workerPos, int itemId, int radius)
+        {
+            var resourceMap = Core.ServiceLocator.Get<ResourceMap>();
+            if (resourceMap?.ResourceMapDataLAB?.PosMap == null) return null;
+
+            Vector3Int? best = null;
+            float bestDist = float.MaxValue;
+
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dy = -radius; dy <= radius; dy++)
+                {
+                    Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
+                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                    if (!resourceMap.ResourceMapDataLAB.PosMap.ContainsKey(posLAB)) continue;
+
+                    string resName = resourceMap.ResourceMapDataLAB.PosMap[posLAB];
+                    if (string.IsNullOrEmpty(resName)) continue;
+                    if (!Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(resName, out ItemData itemData)) continue;
+                    if (itemData.Id != itemId) continue;
+
+                    float dist = (pos - workerPos).sqrMagnitude;
+                    if (dist < bestDist)
+                    {
+                        bestDist = dist;
+                        best = pos;
+                    }
+                }
+            }
+
+            return best;
         }
 
         /// <summary>
@@ -394,10 +503,19 @@ namespace LAB2D.Character.Worker.State
         }
 
         /// <summary>
-        /// 从 FurnitureManager 查找 Worker 的床位。
+        /// 查找 Worker 的床位。
+        /// 优先从 WorkerData.HomePosition 读取（O(1)），无记录时 fallback 到 FurnitureManager 遍历。
         /// </summary>
         private Vector3Int FindBedPosition()
         {
+            // 优先：从持久化的 HomePosition 读取（null = 无家）
+            AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            if (wd?.HomePosition != null)
+            {
+                return Vector3IntLAB.ToVector3Int(wd.HomePosition);
+            }
+
+            // Fallback：遍历 FurnitureManager
             var furnitureManager = Core.ServiceLocator.Get<Item.FurnitureManager>();
             if (furnitureManager?.BedToWorker == null)
             {
@@ -480,47 +598,145 @@ namespace LAB2D.Character.Worker.State
 
         /// <summary>
         /// 自动出售资源给市场（经济闭环关键步骤）。
-        /// 当 Worker 携带有资源且事业心足够时，自动套现。
+        /// 阶梯式按比例出售：持有越多卖越多，保留合理储备。
         /// </summary>
         private void TryAutoSellResources(AWorker.WorkerData workerData)
         {
             // 事业心低的人不急着卖钱
-            if (workerData.Personality.Ambition < 40f)
-            {
-                return;
-            }
+            if (workerData.Personality.Ambition < 40f) return;
 
-            int totalCarried = 0;
             List<ResourceInfo> allResources = this.Character.GetAllResources();
+            List<ResourceInfo> sellList = new List<ResourceInfo>();
+            int totalSellCount = 0;
+
+            bool isHungry = workerData.CurHungry < AWorker.ThresholdHungry;
+            bool hasBuildGoal = workerData.CurrentGoal.Type == WorkerGoalType.BuildStructure
+                && workerData.CurrentGoal.HasMaterialNeeds;
+
             foreach (var r in allResources)
             {
-                totalCarried += r.Count;
+                if (r.Count <= 0) continue;
+
+                AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(r.Id);
+                int keepReserve = this.GetReserveCount(r.Id, itemType, isHungry, hasBuildGoal, workerData);
+                int excess = r.Count - keepReserve;
+
+                if (excess <= 0) continue;
+
+                // 根据持有量计算出售比例：持有越多卖越多
+                float sellRatio = this.GetSellRatio(r.Count, itemType, isHungry);
+                int sellCount = UnityEngine.Mathf.RoundToInt(excess * sellRatio);
+
+                if (sellCount > 0)
+                {
+                    sellList.Add(new ResourceInfo(r.Id, sellCount, r.OwnerId));
+                    totalSellCount += sellCount;
+                }
             }
 
-            // 携带量超过 60% 或携带超过 3 种不同资源时触发自动出售
+            if (sellList.Count == 0) return;
+
+            // 触发条件：携带量超过60%或有3种以上可售资源
+            int totalCarried = 0;
+            foreach (var r in allResources) totalCarried += r.Count;
             float carryRatio = (float)totalCarried / workerData.MaxResourceCount;
-            bool shouldSell = carryRatio > 0.6f || allResources.Count >= 3;
+            if (carryRatio <= 0.6f && sellList.Count < 3) return;
 
-            if (!shouldSell)
-            {
-                return;
-            }
-
-            // 随机出售部分资源（模拟决策：不全卖，留一些建造用）
+            // 执行出售
             if (UnityEngine.Random.value < 0.5f)
             {
                 Gameplay.MarketService market = Core.ServiceLocator.Get<Gameplay.MarketService>();
                 if (market != null)
                 {
-                    int earned = market.WorkerAutoSellAll(this.Character);
+                    int earned = market.WorkerAutoSellFiltered(this.Character, sellList);
                     if (earned > 0)
                     {
                         AWorkerTask.LogProvider(
-                            $"{this.Character.name} 自动出售资源获得 {earned}G (携带 {totalCarried}/{workerData.MaxResourceCount})",
+                            $"{this.Character.name} 出售{totalSellCount}个资源({sellList.Count}种)获得{earned}G (总携带{totalCarried}/{workerData.MaxResourceCount})",
                             LogManager.LogLevelEnum.Info);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 获取某种资源的保留数量（低于此数不卖）。
+        /// </summary>
+        private int GetReserveCount(int itemId, AItem.ItemTypeEnum itemType, bool isHungry, bool hasBuildGoal, AWorker.WorkerData wd)
+        {
+            // 建造目标所需的材料完全保留
+            if (hasBuildGoal && wd.CurrentGoal.RequiredMaterials.ContainsKey(itemId))
+                return int.MaxValue;
+
+            switch (itemType)
+            {
+                case AItem.ItemTypeEnum.Food:
+                    // 饥饿时保留更多食物
+                    return isHungry ? 10 : 5;
+                case AItem.ItemTypeEnum.Seed:
+                    return 3;
+                case AItem.ItemTypeEnum.Material:
+                    return 8;
+                case AItem.ItemTypeEnum.Equipment:
+                case AItem.ItemTypeEnum.Weapon:
+                    return 1; // 装备/武器只保留1件
+                default:
+                    return 3;
+            }
+        }
+
+        /// <summary>
+        /// 根据持有量计算出售比例：持有越多卖越多。
+        /// 饥饿时食物出售比例减半。
+        /// </summary>
+        private float GetSellRatio(int totalCount, AItem.ItemTypeEnum itemType, bool isHungry)
+        {
+            float ratio;
+
+            switch (itemType)
+            {
+                case AItem.ItemTypeEnum.Food:
+                    // 食物：5-10卖10%, 10-20卖25%, 20-40卖40%, 40+卖60%
+                    if (totalCount <= 5) ratio = 0f;
+                    else if (totalCount <= 10) ratio = 0.10f;
+                    else if (totalCount <= 20) ratio = 0.25f;
+                    else if (totalCount <= 40) ratio = 0.40f;
+                    else ratio = 0.60f;
+                    // 饥饿时折扣出售意愿
+                    if (isHungry) ratio *= 0.3f;
+                    break;
+
+                case AItem.ItemTypeEnum.Material:
+                    // 材料：0-10不卖, 10-20卖15%, 20-40卖35%, 40+卖55%
+                    if (totalCount <= 10) ratio = 0f;
+                    else if (totalCount <= 20) ratio = 0.15f;
+                    else if (totalCount <= 40) ratio = 0.35f;
+                    else ratio = 0.55f;
+                    break;
+
+                case AItem.ItemTypeEnum.Seed:
+                    // 种子：0-3不卖, 3-8卖20%, 8+卖40%
+                    if (totalCount <= 3) ratio = 0f;
+                    else if (totalCount <= 8) ratio = 0.20f;
+                    else ratio = 0.40f;
+                    break;
+
+                case AItem.ItemTypeEnum.Equipment:
+                case AItem.ItemTypeEnum.Weapon:
+                    // 装备武器：多于1件才卖
+                    ratio = totalCount > 1 ? 0.5f : 0f;
+                    break;
+
+                default:
+                    // 其他：0-5不卖, 5-15卖25%, 15-30卖45%, 30+卖65%
+                    if (totalCount <= 5) ratio = 0f;
+                    else if (totalCount <= 15) ratio = 0.25f;
+                    else if (totalCount <= 30) ratio = 0.45f;
+                    else ratio = 0.65f;
+                    break;
+            }
+
+            return Mathf.Clamp01(ratio);
         }
 
         /// <summary>

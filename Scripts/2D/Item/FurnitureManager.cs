@@ -2,6 +2,7 @@ namespace LAB2D.Item
 {
     using LAB2D;
     using LAB2D.Character.Worker;
+    using LAB2D.Serializable;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -52,6 +53,10 @@ namespace LAB2D.Item
 
                 // TODO
                 worker.BedItem = new SingleBed();
+
+                // 同步家位置到 WorkerData（持久化 + O(1) 查找）
+                var wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd != null) wd.HomePosition = Vector3IntLAB.ToVector3IntLAB(posMap);
             }
             else
             {
@@ -60,6 +65,10 @@ namespace LAB2D.Item
 
                 // TODO
                 worker.BedItem = new SingleBed();
+
+                // 同步家位置到 WorkerData
+                var wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd != null) wd.HomePosition = Vector3IntLAB.ToVector3IntLAB(posMap);
             }
         }
 
@@ -85,6 +94,10 @@ namespace LAB2D.Item
             {
                 this.BedToWorker[key] = null;
                 worker.BedItem = null;
+
+                // 清除 WorkerData 中的家位置
+                var wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd != null) wd.HomePosition = null;
             }
         }
 

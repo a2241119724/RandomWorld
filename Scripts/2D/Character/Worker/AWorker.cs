@@ -7,6 +7,7 @@ namespace LAB2D.Character.Worker
     using LAB2D.Core.Seek;
     using LAB2D.Item;
     using LAB2D.Item.Build.Furniture.Bed;
+    using LAB2D.Serializable;
     using LAB2D.UI.Character;
     using System;
     using System.Collections.Generic;
@@ -626,6 +627,9 @@ namespace LAB2D.Character.Worker
 
             /// <summary>当前目标 — 驱动 Worker 的悬赏和自主行为。</summary>
             public Domain.Worker.WorkerGoal CurrentGoal = Domain.Worker.WorkerGoal.EarnMoney();
+
+            /// <summary>家/床位置。default(Vector3IntLAB) 表示无家，由 FurnitureManager 分配床时同步写入。</summary>
+            public Vector3IntLAB HomePosition;
 
             public WorkerData()
             {

@@ -36,7 +36,7 @@ namespace LAB2D.Item.Build.Room
                 }
             }
 
-            Core.ServiceLocator.Get<Map.BuildMap>().AddTask();
+            // AddBuild() 已为每个 FarmlandWall tile 创建 WorkerBuildTask，无需额外调用 AddTask()
 
             // 添加仓库Cell
             ServiceLocator.Get<FarmlandManager>().AddCells(new Vector3Int(boundary[0], boundary[2]), width, height);

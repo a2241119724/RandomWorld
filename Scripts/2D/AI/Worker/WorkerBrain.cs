@@ -205,16 +205,39 @@ namespace LAB2D.AI.Worker
             WorkerPersonality p = workerData.Personality;
 
             // === 第1层：生存优先 ===
-
+            // 饥饿优先级：越低越紧急，饥饿<15 时跳过其他所有决策
             if (workerData.CurHungry < this.HungryThreshold)
             {
+                // 先扫描周围食物（无论有没有钱，食物在附近就先自己采）
+                int foodScanRadius = workerData.CurHungry < 15 ? this.ScanRadius * 2 : this.ScanRadius;
+                ResourceCandidate? foodCandidate = this.ScanForFood(worker, foodScanRadius);
+
+                if (foodCandidate.HasValue)
+                {
+                    // 饥饿严重 → 必须自己采
+                    if (workerData.CurHungry < 15)
+                        return Decision.MakeGather(foodCandidate.Value.Position, foodCandidate.Value.Resource,
+                            $"紧急饥饿({workerData.CurHungry:F0}), 自己采集食物");
+
+                    // 有钱+不紧急 → 可以交易或自己采
+                    if (workerData.Wallet.HasEnough(new CurrencyAmount(5)))
+                        return Decision.Make(WorkerDecisionType.Eat,
+                            $"饥饿({workerData.CurHungry:F0}), 有钱优先交易买食物");
+
+                    return Decision.MakeGather(foodCandidate.Value.Position, foodCandidate.Value.Resource,
+                        $"饥饿({workerData.CurHungry:F0}), 自己采集食物");
+                }
+
+                // 附近没食物 → 有钱就尝试交易
                 if (workerData.Wallet.HasEnough(new CurrencyAmount(5)))
                     return Decision.Make(WorkerDecisionType.Eat,
-                        $"饥饿({workerData.CurHungry:F0}/{workerData.MaxHungry:F0}), 找食物");
+                        $"饥饿({workerData.CurHungry:F0}), 附近无食物, 尝试交易");
 
-                ResourceCandidate? foodCandidate = this.ScanForFood(worker);
+                // 没钱+没食物 → 扩大扫描范围最后尝试
+                foodCandidate = this.ScanForFood(worker, this.ScanRadius * 3);
                 if (foodCandidate.HasValue)
-                    return Decision.MakeGather(foodCandidate.Value.Position, foodCandidate.Value.Resource, "饥饿且没钱，自己采集食物");
+                    return Decision.MakeGather(foodCandidate.Value.Position, foodCandidate.Value.Resource,
+                        $"饥饿({workerData.CurHungry:F0}), 远距离采集食物");
 
                 return Decision.Make(WorkerDecisionType.Idle, "饥饿但找不到食物");
             }
@@ -254,6 +277,13 @@ namespace LAB2D.AI.Worker
             {
                 Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, workerData, canAfford);
                 if (buildDecision.HasValue) return buildDecision.Value;
+            }
+            else if (p.Ambition > this.AmbitionThreshold - 10)
+            {
+                // 接近阈值但不满足：记录原因
+                AWorkerTask.LogProvider(
+                    $"{worker.name} 建造决策跳过: 事业心({p.Ambition:F0})略低于阈值({this.AmbitionThreshold:F0})",
+                    LogManager.LogLevelEnum.Trace);
             }
 
             // === 种植决策：有种子时扫描附近空闲农田 ===
@@ -622,8 +652,11 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 扫描周围可采集的食物资源。
         /// </summary>
-        private ResourceCandidate? ScanForFood(AWorker worker)
+        /// <param name="worker">Worker 实例</param>
+        /// <param name="radius">扫描半径，默认使用 ScanRadius</param>
+        private ResourceCandidate? ScanForFood(AWorker worker, int radius = -1)
         {
+            int scanR = radius > 0 ? radius : this.ScanRadius;
             Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
             ResourceMap resourceMap = Core.ServiceLocator.Get<ResourceMap>();
 
@@ -635,9 +668,9 @@ namespace LAB2D.AI.Worker
             ResourceCandidate? best = null;
             float bestDist = float.MaxValue;
 
-            for (int dx = -this.ScanRadius; dx <= this.ScanRadius; dx++)
+            for (int dx = -scanR; dx <= scanR; dx++)
             {
-                for (int dy = -this.ScanRadius; dy <= this.ScanRadius; dy++)
+                for (int dy = -scanR; dy <= scanR; dy++)
                 {
                     Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
                     Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
@@ -684,37 +717,152 @@ namespace LAB2D.AI.Worker
         // ---- 建造/种植决策 ----
 
         /// <summary>
-        /// 尝试创建自主建造决策。
-        /// 高事业心 Worker 扫描附近待建造位置，有钱发悬赏、没钱自己建。
+        /// 自主建造决策：Worker 决定为自己建造房屋。
+        /// 无家者优先建床，有家者考虑扩建。
+        /// 社交型+有钱 → 发建造悬赏；勤奋型+有材料 → 自己建。
         /// </summary>
         private Decision? TryMakeSelfBuildDecision(AWorker worker, AWorker.WorkerData wd, bool canAfford)
         {
-            BuildCandidate? candidate = this.ScanForBuildPositions(worker);
-            if (!candidate.HasValue) return null;
+            // 决定建造类型
+            string buildTileName;
+            Dictionary<int, ResourceInfo> needs;
+
+            // 无家可归 → 想建床
+            if (wd.HomePosition == null)
+            {
+                buildTileName = "SingleBed";
+                needs = this.GetBuildMaterialNeeds(buildTileName);
+                if (needs == null || needs.Count == 0) return null;
+            }
+            // 有家+高事业 → 扩建（简化：再建一个床/家具）
+            else if (wd.Personality.Ambition > 65)
+            {
+                buildTileName = "SingleBed"; // TODO: 扩展更多建造类型
+                needs = this.GetBuildMaterialNeeds(buildTileName);
+                if (needs == null || needs.Count == 0) return null;
+            }
+            else
+            {
+                return null;
+            }
+
+            // 找到附近的空闲建造位置
+            Vector3Int? buildPos = this.FindFreeBuildPosition(worker);
+            if (!buildPos.HasValue)
+            {
+                AWorkerTask.LogProvider(
+                    $"{worker.name} 想建{buildTileName}但附近无空闲位置",
+                    LogManager.LogLevelEnum.Trace);
+                return null;
+            }
 
             // 社交型+有钱 → 发建造悬赏
             if (canAfford && wd.Personality.Sociality > this.SocialityThreshold && Random.value < 0.4f)
             {
                 return Decision.MakeBuild(
                     WorkerDecisionType.PostBounty,
-                    candidate.Value.Position,
-                    candidate.Value.TileName,
-                    candidate.Value.NeededResources,
-                    $"发布建造悬赏: {candidate.Value.TileName} pos=({candidate.Value.Position.x},{candidate.Value.Position.y})");
+                    buildPos.Value,
+                    buildTileName,
+                    needs,
+                    $"发布建造悬赏: 自己的{buildTileName} pos=({buildPos.Value.x},{buildPos.Value.y})");
             }
 
-            // 勤奋型 → 自己建
-            if (wd.Personality.Diligence > this.DiligenceThreshold)
+            // 勤奋型 → 自己建（需有足够材料）
+            if (wd.Personality.Diligence > this.DiligenceThreshold
+                && this.HasEnoughResourcesForBuild(worker, needs))
             {
                 return Decision.MakeBuild(
                     WorkerDecisionType.SelfBuild,
-                    candidate.Value.Position,
-                    candidate.Value.TileName,
-                    candidate.Value.NeededResources,
-                    $"自己建造: {candidate.Value.TileName} pos=({candidate.Value.Position.x},{candidate.Value.Position.y})");
+                    buildPos.Value,
+                    buildTileName,
+                    needs,
+                    $"自己建造: {buildTileName} pos=({buildPos.Value.x},{buildPos.Value.y})");
+            }
+
+            AWorkerTask.LogProvider(
+                $"{worker.name} 想建{buildTileName}但条件不满足 (可支付={canAfford} 社交={wd.Personality.Sociality:F0} 勤奋={wd.Personality.Diligence:F0})",
+                LogManager.LogLevelEnum.Trace);
+
+            return null;
+        }
+
+        /// <summary>
+        /// 根据建造物品名称获取所需材料清单。
+        /// </summary>
+        private Dictionary<int, ResourceInfo> GetBuildMaterialNeeds(string tileName)
+        {
+            var itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
+            BuildItemData buildData = itemDataManager.GetBuildItemDataByName(tileName);
+            if (buildData == null) return null;
+
+            return this.BuildResourceDictFromData(buildData);
+        }
+
+        /// <summary>
+        /// 在 Worker 周围找一个空闲的可建造位置。
+        /// 检查 BuildMap 和地面是否可通行。
+        /// </summary>
+        private Vector3Int? FindFreeBuildPosition(AWorker worker)
+        {
+            Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+
+            // 从 Worker 位置向外螺旋搜索空闲位置
+            for (int r = 1; r <= 8; r++)
+            {
+                for (int dx = -r; dx <= r; dx++)
+                {
+                    for (int dy = -r; dy <= r; dy++)
+                    {
+                        if (System.Math.Abs(dx) != r && System.Math.Abs(dy) != r) continue; // 只检查外围
+
+                        Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
+
+                        // 检查是否可通行
+                        if (!ASeek.IsCanReach(pos)) continue;
+
+                        // 检查 BuildMap 是否已有建筑
+                        if (buildMap != null)
+                        {
+                            Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                            if (buildMap.BuildMapDataLAB?.PosMap != null
+                                && buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
+                                continue;
+                        }
+
+                        return pos;
+                    }
+                }
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 检查 Worker（身上携带 + 个人仓库）是否有足够资源完成建造。
+        /// </summary>
+        private bool HasEnoughResourcesForBuild(AWorker worker, Dictionary<int, ResourceInfo> needs)
+        {
+            if (needs == null || needs.Count == 0) return true;
+
+            foreach (var kv in needs)
+            {
+                int itemId = kv.Key;
+                int required = kv.Value.Count;
+                int have = worker.GetResourceCountById(itemId); // 身上携带
+
+                // 检查仓库
+                if (worker.HasInStorage(itemId, 1))
+                {
+                    var stored = worker.GetStorageResources();
+                    foreach (var s in stored)
+                        if (s.Id == itemId) { have += s.Count; break; }
+                }
+
+                if (have < required) return false;
+            }
+
+            return true;
         }
 
         /// <summary>

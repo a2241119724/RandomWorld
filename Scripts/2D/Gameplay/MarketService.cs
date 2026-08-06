@@ -217,6 +217,34 @@ namespace LAB2D.Gameplay
             return totalEarned;
         }
 
+        /// <summary>
+        /// Worker 智能出售指定的资源列表（已过滤掉食物/建材/种子等）。
+        /// </summary>
+        /// <param name="worker">Worker</param>
+        /// <param name="toSell">要出售的资源列表</param>
+        /// <returns>总获得金币</returns>
+        public int WorkerAutoSellFiltered(AWorker worker, List<ResourceInfo> toSell)
+        {
+            if (worker == null || toSell == null || toSell.Count == 0)
+            {
+                return 0;
+            }
+
+            int totalEarned = 0;
+
+            foreach (var resource in toSell)
+            {
+                if (resource.Count > 0)
+                {
+                    int earned = this.WorkerSellResource(worker,
+                        new ResourceInfo(resource.Id, resource.Count, resource.OwnerId));
+                    totalEarned += earned;
+                }
+            }
+
+            return totalEarned;
+        }
+
 
         /// <summary>
         /// 获取市场价格信息（供 UI 展示）。
