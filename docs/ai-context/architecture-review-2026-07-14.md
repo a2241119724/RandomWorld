@@ -3,6 +3,7 @@
 **日期:** 2026-07-14
 **审查范围:** 全项目（排除第三方库 Photon、TextMesh Pro）
 **审查重点:** 非 Unity 引擎层面的架构设计问题
+**状态更新 (2026-08-07):** P0-1 (UnityAdapter 注册) 已修复，P1-3 (文档填充) 已完成，其余问题持续跟踪中。Worker 经济系统（Currency/Personality/Goal/Bounty）已按 Domain 纯 C# 模式新增。
 
 ---
 

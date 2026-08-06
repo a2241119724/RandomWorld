@@ -34,6 +34,21 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - 晴/雨/雪三种天气
 - 影响玩家/工人移动速度、任务进度、灵气恢复
 
+### Worker 经济系统（v0.1.3 新增）
+- **货币系统:** `CurrencyAmount` 值对象（Domain 层纯 C#），Worker/Player 双钱包，`CurrencyManager` 管理
+- **市场交易:** `MarketService` 价格表，Worker 自主出售资源换金币，Player 购买物品
+- **Worker 自主交易 AI:** `WorkerTradeService` — 背包满时自动出售多余资源，饥饿时自主寻找食物卖家购买
+- **悬赏任务:** `BountyData` 数据结构 + `PlayerBountyService` — Player 发布悬赏→Worker 领取执行→完成结算/超时退款
+- **Worker 人格:** `WorkerPersonality` 4 维值对象（心情/事业心/勤奋/社交），动态影响工作效率、交易决策、社交行为
+- **Worker 目标:** `WorkerGoal` 目标驱动（赚钱/建筑/囤食物/做装备），驱动自主行为而非纯被动接任务
+- **物品所有权:** `ItemOwnershipService` 追踪物品归属，Worker 采集/制作/购买获得所有权
+- **Worker 大脑:** `WorkerSeekState` 空闲时根据人格/目标/状态自主选择行动（采集/出售/买食物/接悬赏）
+
+### 商店与任务板系统（v0.1.3 新增）
+- **商店 NPC:** `ShopNPC` + `ShopNPCGenerator` — 地图就绪后自动生成商店，支持 Worker/Player 买卖交互
+- **任务板:** `TaskBoardManager` — 地图中心固定位置，Worker 存取物品的中转站，内存字典存储
+- **TaskBoardHUD:** 任务板 UI 面板，展示存取记录
+
 ### 成就系统
 - 5 类别(战斗/收集/生存/波次/工人)，最多 20 个成就
 - F7 切换成就面板
@@ -62,3 +77,5 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
 - **UnityAdapter:** 适配器实现 Domain 接口，通过 ServiceLocator 注册
 - **Shared Kernel:** `LAB2D.Enum` 含 16 个跨层枚举(DDD 模式)
 - **HUD 热键:** 通过 GlobalInit.Update() 统一分发，避免子对象 inactive 时失效
+- **Worker 经济:** Domain 层纯 C# 值对象（CurrencyAmount / WorkerPersonality / WorkerGoal / BountyData），Gameplay 层 Manager 驱动运行时
+- **Worker AI 自主决策:** WorkerBrain 在空闲时根据人格+目标+状态自主选择行动，而非被动等待任务分配

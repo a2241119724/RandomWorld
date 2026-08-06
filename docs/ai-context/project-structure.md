@@ -21,7 +21,7 @@ RandomWorld/
 │   │   │   ├── Common/        # 接口、值对象、EventBus
 │   │   │   ├── Character/     # 伤害计算、等级升级
 │   │   │   ├── Gameplay/      # 9 规则服务(连击、技能、装备等)
-│   │   │   ├── Worker/        # 工人状态、补给、任务分配
+│   │   │   ├── Worker/        # 工人状态、补给、任务分配、人格/目标/货币
 │   │   │   ├── Player/        # 伤害策略、移动策略
 │   │   │   ├── Wave/          # 波次规则
 │   │   │   ├── Inventory/     # 库存规则
@@ -33,11 +33,12 @@ RandomWorld/
 │   │   ├── Core/              # 基础架构
 │   │   │   ├── Seek/          # A*, 可步行性缓存, 对象池
 │   │   │   └── KDTree/        # 空间索引
-│   │   ├── Gameplay/          # 运行时玩法系统(26 文件)
+│   │   ├── Gameplay/          # 运行时玩法系统(商店/任务板/市场/货币/悬赏等)
 │   │   ├── Manager/           # 跨领域管理(日志、存档、资源)
 │   │   ├── Map/               # 地图(TileMap, BuildMap 等)
 │   │   ├── Item/              # 物品(背包、建造、装备)
 │   │   ├── AI/Dialogue/       # LLM 对话(客户端、记忆、RAG)
+│   │   ├── AI/Worker/          # Worker AI(交易/大脑决策)
 │   │   ├── MVC/               # UI 模型-视图-控制器
 │   │   ├── UI/                # HUD、面板、特效
 │   │   ├── Tool/              # 工具类(领域服务→表现层桥接)
