@@ -53,32 +53,37 @@ namespace LAB2D.Manager
             this.shaderDic = ResourceTool.LoadResources<Shader>(ResourceConstant.SHADER_ROOT);
 
             // 通过 TerrainConfigDatabase 获取所有注册的地形配置，
-            // 按 tileResourceName 前缀匹配 asset 名称来构建 tileDic
-            TerrainConfigDatabase terrainDb = ServiceLocator.Get<TerrainConfigDatabase>();
-            foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetDic)
+            // 按 tileResourceName 前缀匹配 asset 名称来构建 tileDic。
+            // 使用 TryGet 而非 Get：Editor 模式下 RestoreLastOpenedScenes 可能在
+            // RegisterSafeServices 之前触发 ResourceManager 构造（如 RoundCorner 的
+            // [ExecuteInEditMode] 回调），此时 TerrainConfigDatabase 尚未注册。
+            if (ServiceLocator.TryGet<TerrainConfigDatabase>(out TerrainConfigDatabase terrainDb))
             {
-                foreach (int terrainId in terrainDb.SpawnableIds)
+                foreach (KeyValuePair<string, UnityEngine.Object> asset in this.assetDic)
                 {
-                    TerrainTileConfig config = terrainDb.GetById(terrainId);
-                    if (config == null || string.IsNullOrEmpty(config.tileResourceName))
+                    foreach (int terrainId in terrainDb.SpawnableIds)
                     {
-                        continue;
-                    }
+                        TerrainTileConfig config = terrainDb.GetById(terrainId);
+                        if (config == null || string.IsNullOrEmpty(config.tileResourceName))
+                        {
+                            continue;
+                        }
 
-                    // 不包含 Tile 本身，仅包含其上的资源（前缀匹配但不等同）
-                    if (!asset.Key.StartsWith(config.tileResourceName) ||
-                        asset.Key.Equals(config.tileResourceName))
-                    {
-                        continue;
-                    }
+                        // 不包含 Tile 本身，仅包含其上的资源（前缀匹配但不等同）
+                        if (!asset.Key.StartsWith(config.tileResourceName) ||
+                            asset.Key.Equals(config.tileResourceName))
+                        {
+                            continue;
+                        }
 
-                    if (!this.tileDic.ContainsKey(terrainId))
-                    {
-                        this.tileDic.Add(terrainId, new List<UnityEngine.Object>());
-                    }
+                        if (!this.tileDic.ContainsKey(terrainId))
+                        {
+                            this.tileDic.Add(terrainId, new List<UnityEngine.Object>());
+                        }
 
-                    this.tileDic[terrainId].Add(asset.Value);
-                    break;
+                        this.tileDic[terrainId].Add(asset.Value);
+                        break;
+                    }
                 }
             }
 
