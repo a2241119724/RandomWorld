@@ -7,6 +7,7 @@ namespace LAB2D.AI.Worker
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
+    using LAB2D.Item;
     using LAB2D.Map;
     using LAB2D.Serializable;
     using System.Collections.Generic;
@@ -154,6 +155,8 @@ namespace LAB2D.AI.Worker
             Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
 
             this.ScanResources(candidates, workerPos, scanRadius);
+            this.ScanBuildPositions(candidates, workerPos, scanRadius);
+            this.ScanPlantPositions(candidates, workerPos, scanRadius);
 
             // 限制每轮扫描产生的候选数量
             if (candidates.Count > 3)
@@ -177,6 +180,37 @@ namespace LAB2D.AI.Worker
                         .SetTarget(candidate.Position)
                         .SetResourceInfo(candidate.Resource)
                         .Build();
+
+                case WorkerTaskType.Build:
+                {
+                    // 获取建造材料需求
+                    var itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
+                    string tileName = this.ResolveBuildTileName(candidate.Position);
+                    if (string.IsNullOrEmpty(tileName)) return null;
+
+                    BuildItemData buildData = itemDataManager.GetBuildItemDataByName(tileName);
+                    if (buildData == null) return null;
+
+                    Dictionary<int, ResourceInfo> needs = this.BuildResourceDict(buildData);
+                    if (needs == null || needs.Count == 0) return null;
+
+                    return new WorkerBuildTask.BuildTaskBuilder()
+                        .SetBuildPos(candidate.Position)
+                        .SetNeedResource(needs)
+                        .Build();
+                }
+
+                case WorkerTaskType.Plant:
+                    return new WorkerPlantTask.PlantTaskBuilder().Build();
+
+                case WorkerTaskType.Carry:
+                {
+                    if (candidate.Resource == null || candidate.Resource.Count <= 0) return null;
+                    return new WorkerCarryTask.CarryTaskBuilder()
+                        .SetStartTarget(candidate.Position)
+                        .SetResourceInfo(candidate.Resource)
+                        .Build();
+                }
 
                 default:
                     return null;
@@ -348,6 +382,93 @@ namespace LAB2D.AI.Worker
                     });
                 }
             }
+        }
+
+        /// <summary>
+        /// 扫描 BuildMap 中 Worker 周围的待建造位置。
+        /// </summary>
+        private void ScanBuildPositions(List<WorkCandidate> candidates, Vector3Int workerPos, int radius)
+        {
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            if (buildMap?.BuildMapDataLAB?.PosMap == null) return;
+
+            foreach (var kv in buildMap.BuildMapDataLAB.PosMap)
+            {
+                if (kv.Value.IsComplete) continue;
+                Vector3Int pos = Vector3IntLAB.ToVector3Int(kv.Key);
+                float dist = (pos - workerPos).sqrMagnitude;
+                if (dist > radius * radius) continue;
+
+                candidates.Add(new WorkCandidate
+                {
+                    Position = pos,
+                    TaskType = WorkerTaskType.Build,
+                    Resource = null,
+                });
+            }
+        }
+
+        /// <summary>
+        /// 扫描 FarmlandManager 中 Worker 周围的空闲农田。
+        /// </summary>
+        private void ScanPlantPositions(List<WorkCandidate> candidates, Vector3Int workerPos, int radius)
+        {
+            var farmlandManager = Core.ServiceLocator.Get<FarmlandManager>();
+            if (farmlandManager == null) return;
+
+            // 检查是否有空闲农田（id == -1 的 cells）
+            Vector3Int farmPos = farmlandManager.IsEnoughAndPrePlant(null, null, false);
+            if (farmPos == default) return;
+
+            float dist = (farmPos - workerPos).sqrMagnitude;
+            if (dist > radius * radius) return;
+
+            candidates.Add(new WorkCandidate
+            {
+                Position = farmPos,
+                TaskType = WorkerTaskType.Plant,
+                Resource = null,
+            });
+        }
+
+        /// <summary>
+        /// 根据建造位置查询 BuildMap 获取 Tile 名称。
+        /// </summary>
+        private string ResolveBuildTileName(Vector3Int pos)
+        {
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            if (buildMap?.BuildMapDataLAB?.PosMap == null) return null;
+
+            Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+            if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out BuildMap.BuildTileData tileData))
+            {
+                return tileData.Name;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 从 BuildItemData.BuildCosts 构建资源需求字典。
+        /// </summary>
+        private Dictionary<int, ResourceInfo> BuildResourceDict(BuildItemData buildData)
+        {
+            Dictionary<int, ResourceInfo> dict = new Dictionary<int, ResourceInfo>();
+            if (buildData.BuildCosts != null)
+            {
+                foreach (ResourceCost cost in buildData.BuildCosts)
+                {
+                    if (string.IsNullOrEmpty(cost.ItemName)) continue;
+
+                    ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(cost.ItemName);
+                    if (item != null && item.Id > 0)
+                    {
+                        dict[item.Id] = new ResourceInfo(item.Id, cost.Count);
+                    }
+                }
+            }
+
+            return dict;
         }
     }
 }

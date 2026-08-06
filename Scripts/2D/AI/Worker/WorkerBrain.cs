@@ -7,6 +7,7 @@ namespace LAB2D.AI.Worker
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
+    using LAB2D.Item;
     using LAB2D.Map;
     using System.Collections.Generic;
     using UnityEngine;
@@ -39,6 +40,12 @@ namespace LAB2D.AI.Worker
 
         /// <summary>去任务栏取回属于自己的悬赏物品</summary>
         PickUpFromBoard,
+
+        /// <summary>自己去建造</summary>
+        SelfBuild,
+
+        /// <summary>自己去种植</summary>
+        SelfPlant,
     }
 
     /// <summary>
@@ -106,6 +113,12 @@ namespace LAB2D.AI.Worker
             public ResourceInfo Resource;
             public string Description;
 
+            /// <summary>建造任务需要的材料清单（仅 Build 类型使用）</summary>
+            public Dictionary<int, ResourceInfo> NeededResources;
+
+            /// <summary>建造物品的 Tile 名称（仅 Build 类型使用）</summary>
+            public string BuildTileName;
+
             public static Decision Make(WorkerDecisionType type, string desc = "")
             {
                 return new Decision { Type = type, Description = desc };
@@ -121,6 +134,31 @@ namespace LAB2D.AI.Worker
                     Description = desc,
                 };
             }
+
+            /// <summary>创建建造决策（自己建造或发悬赏建造）。</summary>
+            public static Decision MakeBuild(WorkerDecisionType type, Vector3Int buildPos, string tileName,
+                Dictionary<int, ResourceInfo> needs, string desc = "")
+            {
+                return new Decision
+                {
+                    Type = type,
+                    TargetPosition = buildPos,
+                    BuildTileName = tileName,
+                    NeededResources = needs,
+                    Description = desc,
+                };
+            }
+
+            /// <summary>创建种植决策。</summary>
+            public static Decision MakePlant(WorkerDecisionType type, Vector3Int farmlandPos, string desc = "")
+            {
+                return new Decision
+                {
+                    Type = type,
+                    TargetPosition = farmlandPos,
+                    Description = desc,
+                };
+            }
         }
 
         /// <summary>
@@ -130,6 +168,24 @@ namespace LAB2D.AI.Worker
         {
             public Vector3Int Position;
             public ResourceInfo Resource;
+        }
+
+        /// <summary>
+        /// 建造候选 — 扫描时收集的待建造位置信息。
+        /// </summary>
+        private struct BuildCandidate
+        {
+            public Vector3Int Position;
+            public string TileName;
+            public Dictionary<int, ResourceInfo> NeededResources;
+        }
+
+        /// <summary>
+        /// 种植候选 — 扫描时收集的可种植农田信息。
+        /// </summary>
+        private struct PlantCandidate
+        {
+            public Vector3Int Position;
         }
 
         // ---- 核心决策 ----
@@ -192,6 +248,20 @@ namespace LAB2D.AI.Worker
             // === 目标驱动悬赏：Worker 缺什么就发什么悬赏 ===
             Decision? goalBounty = this.TryMakeGoalDrivenBounty(worker, workerData, canAfford);
             if (goalBounty.HasValue) return goalBounty.Value;
+
+            // === 建造决策：高事业心 Worker 扫描附近待建造位置 ===
+            if (p.Ambition > this.AmbitionThreshold)
+            {
+                Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, workerData, canAfford);
+                if (buildDecision.HasValue) return buildDecision.Value;
+            }
+
+            // === 种植决策：有种子时扫描附近空闲农田 ===
+            if (p.Diligence > this.DiligenceThreshold)
+            {
+                Decision? plantDecision = this.TryMakeSelfPlantDecision(worker);
+                if (plantDecision.HasValue) return plantDecision.Value;
+            }
 
             // === 第2层：一般性赚钱/干活 ===
             bool hasNearbyResource = nearbyResource.HasValue;
@@ -258,10 +328,19 @@ namespace LAB2D.AI.Worker
 
             if (p.Ambition > 65 && workerData.Wallet.Gold >= 30)
             {
-                // 大老板：想盖房 → 需要木材+石材
+                // 大老板：想盖房 → 从 ItemDataManager 获取常见建材 ID
                 var materials = new System.Collections.Generic.Dictionary<int, int>();
-                // 尝试从 ItemDataManager 获取常见建材 ID
-                materials[0] = 10; // 占位：实际需要根据项目配置
+                var itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
+
+                // 尝试获取木材和石材的 ID（常见建材）
+                ItemData wood = itemDataManager.GetByName("CustomWood");
+                ItemData stone = itemDataManager.GetByName("CustomStone");
+                if (wood != null && wood.Id > 0) materials[wood.Id] = 10;
+                if (stone != null && stone.Id > 0) materials[stone.Id] = 8;
+
+                // 若都没有则使用默认占位
+                if (materials.Count == 0) materials[0] = 10;
+
                 workerData.CurrentGoal = WorkerGoal.BuildStructure("想盖新房", materials);
             }
             else if (p.Ambition > 50 && p.Sociality > 50)
@@ -284,7 +363,29 @@ namespace LAB2D.AI.Worker
             WorkerGoal goal = wd.CurrentGoal;
 
             // 赚钱目标 → 没有特定材料需求，走一般逻辑
-            if (goal.Type == WorkerGoalType.EarnMoney || !goal.HasMaterialNeeds)
+            if (goal.Type == WorkerGoalType.EarnMoney)
+                return null;
+
+            // 食物目标但没有指定具体材料 → 扫描食物类物品
+            if (goal.IsFoodRelated && !goal.HasMaterialNeeds)
+            {
+                ResourceCandidate? foodCandidate = this.ScanForFood(worker);
+                if (foodCandidate.HasValue)
+                {
+                    return new Decision
+                    {
+                        Type = WorkerDecisionType.PostBounty,
+                        TargetPosition = foodCandidate.Value.Position,
+                        Resource = foodCandidate.Value.Resource,
+                        Description = $"目标「{goal.Description}」, 发布食物悬赏",
+                    };
+                }
+
+                return null;
+            }
+
+            // 没有材料需求 → 走一般逻辑
+            if (!goal.HasMaterialNeeds)
                 return null;
 
             // 找到第一个缺失的材料
@@ -578,6 +679,175 @@ namespace LAB2D.AI.Worker
             }
 
             return best;
+        }
+
+        // ---- 建造/种植决策 ----
+
+        /// <summary>
+        /// 尝试创建自主建造决策。
+        /// 高事业心 Worker 扫描附近待建造位置，有钱发悬赏、没钱自己建。
+        /// </summary>
+        private Decision? TryMakeSelfBuildDecision(AWorker worker, AWorker.WorkerData wd, bool canAfford)
+        {
+            BuildCandidate? candidate = this.ScanForBuildPositions(worker);
+            if (!candidate.HasValue) return null;
+
+            // 社交型+有钱 → 发建造悬赏
+            if (canAfford && wd.Personality.Sociality > this.SocialityThreshold && Random.value < 0.4f)
+            {
+                return Decision.MakeBuild(
+                    WorkerDecisionType.PostBounty,
+                    candidate.Value.Position,
+                    candidate.Value.TileName,
+                    candidate.Value.NeededResources,
+                    $"发布建造悬赏: {candidate.Value.TileName} pos=({candidate.Value.Position.x},{candidate.Value.Position.y})");
+            }
+
+            // 勤奋型 → 自己建
+            if (wd.Personality.Diligence > this.DiligenceThreshold)
+            {
+                return Decision.MakeBuild(
+                    WorkerDecisionType.SelfBuild,
+                    candidate.Value.Position,
+                    candidate.Value.TileName,
+                    candidate.Value.NeededResources,
+                    $"自己建造: {candidate.Value.TileName} pos=({candidate.Value.Position.x},{candidate.Value.Position.y})");
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 尝试创建自主种植决策。
+        /// Worker 有种子且附近有空闲农田时触发。
+        /// </summary>
+        private Decision? TryMakeSelfPlantDecision(AWorker worker)
+        {
+            PlantCandidate? candidate = this.ScanForPlantPositions(worker);
+            if (!candidate.HasValue) return null;
+
+            return Decision.MakePlant(
+                WorkerDecisionType.SelfPlant,
+                candidate.Value.Position,
+                $"自己种植: pos=({candidate.Value.Position.x},{candidate.Value.Position.y})");
+        }
+
+        /// <summary>
+        /// 扫描附近待建造位置（BuildMap 中 IsComplete == false 的位置）。
+        /// </summary>
+        private BuildCandidate? ScanForBuildPositions(AWorker worker)
+        {
+            Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            if (buildMap?.BuildMapDataLAB?.PosMap == null) return null;
+
+            BuildCandidate? best = null;
+            float bestDist = float.MaxValue;
+
+            foreach (var kv in buildMap.BuildMapDataLAB.PosMap)
+            {
+                // 已完成的建筑不需要再建造
+                if (kv.Value.IsComplete) continue;
+
+                Vector3Int pos = Vector3IntLAB.ToVector3Int(kv.Key);
+                float dist = (pos - workerPos).sqrMagnitude;
+                if (dist > this.ScanRadius * this.ScanRadius) continue;
+
+                // 获取建造材料需求
+                var itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
+                BuildItemData buildData = itemDataManager.GetBuildItemDataByName(kv.Value.Name);
+                if (buildData == null) continue;
+
+                Dictionary<int, ResourceInfo> needs = this.BuildResourceDictFromData(buildData);
+                if (needs == null || needs.Count == 0) continue;
+
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    best = new BuildCandidate
+                    {
+                        Position = pos,
+                        TileName = kv.Value.Name,
+                        NeededResources = needs,
+                    };
+                }
+            }
+
+            return best;
+        }
+
+        /// <summary>
+        /// 从 BuildItemData.BuildCosts 构建资源需求字典（与 BuildMap.BuildResourceDict 逻辑一致）。
+        /// </summary>
+        private Dictionary<int, ResourceInfo> BuildResourceDictFromData(BuildItemData buildData)
+        {
+            Dictionary<int, ResourceInfo> dict = new Dictionary<int, ResourceInfo>();
+            if (buildData.BuildCosts != null)
+            {
+                foreach (ResourceCost cost in buildData.BuildCosts)
+                {
+                    if (string.IsNullOrEmpty(cost.ItemName)) continue;
+
+                    ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(cost.ItemName);
+                    if (item != null && item.Id > 0)
+                    {
+                        dict[item.Id] = new ResourceInfo(item.Id, cost.Count);
+                    }
+                }
+            }
+
+            // Fallback: 若未配置 BuildCosts，默认返回空字典（建造位置会存在但无材料需求）
+            return dict;
+        }
+
+        /// <summary>
+        /// 扫描附近空闲农田（FarmlandManager 中未种植的位置）。
+        /// Worker 必须携带种子或在仓库中有种子。
+        /// </summary>
+        private PlantCandidate? ScanForPlantPositions(AWorker worker)
+        {
+            // 检查 Worker 是否有种子（身上或仓库）
+            bool hasSeeds = this.WorkerHasSeeds(worker);
+            if (!hasSeeds) return null;
+
+            Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+            var farmlandManager = Core.ServiceLocator.Get<FarmlandManager>();
+            if (farmlandManager == null) return null;
+
+            // FarmlandManager 的 cells 字典中，id == -1 表示空闲农田
+            // 通过反射或直接访问内部字典有困难，使用 FarmlandManager 公开方法
+            // IsEnoughAndPrePlant 返回空闲农田位置（不传 isPre 以避免副作用）
+            Vector3Int farmPos = farmlandManager.IsEnoughAndPrePlant(worker, null, false);
+            if (farmPos == default) return null;
+
+            float dist = (farmPos - workerPos).sqrMagnitude;
+            if (dist > this.ScanRadius * this.ScanRadius) return null;
+
+            return new PlantCandidate { Position = farmPos };
+        }
+
+        /// <summary>
+        /// 检查 Worker 是否有种子（身上携带或仓库存储）。
+        /// </summary>
+        private bool WorkerHasSeeds(AWorker worker)
+        {
+            // 检查身上携带的资源中是否有种子类型
+            List<ResourceInfo> carried = worker.GetAllResources();
+            foreach (var r in carried)
+            {
+                AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(r.Id);
+                if (itemType == AItem.ItemTypeEnum.Seed) return true;
+            }
+
+            // 检查仓库中是否有种子
+            List<ResourceInfo> stored = worker.GetStorageResources();
+            foreach (var r in stored)
+            {
+                AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(r.Id);
+                if (itemType == AItem.ItemTypeEnum.Seed) return true;
+            }
+
+            return false;
         }
 
         // ---- 工具方法 ----

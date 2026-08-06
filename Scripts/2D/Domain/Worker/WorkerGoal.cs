@@ -68,13 +68,43 @@ namespace LAB2D.Domain.Worker
             {
                 Type = WorkerGoalType.StockFood,
                 Description = $"囤积{amount}份食物",
-                RequiredMaterials = null, // 需要扫描食物类物品
+                RequiredMaterials = null, // 需要扫描食物类物品，由 WorkerBrain 动态解析
                 Priority = 2,
+            };
+        }
+
+        /// <summary>
+        /// 创建囤积食物的目标，指定需要的食物 ID 和数量。
+        /// </summary>
+        /// <param name="foodMaterials">食物物品 ID → 需求数量</param>
+        /// <param name="amount">总目标数量（仅用于描述）</param>
+        public static WorkerGoal StockFoodWithIds(Dictionary<int, int> foodMaterials, int amount = 5)
+        {
+            return new WorkerGoal
+            {
+                Type = WorkerGoalType.StockFood,
+                Description = $"囤积{amount}份食物",
+                RequiredMaterials = foodMaterials ?? new Dictionary<int, int>(),
+                Priority = 2,
+            };
+        }
+
+        public static WorkerGoal CraftEquipment(string desc, Dictionary<int, int> materials)
+        {
+            return new WorkerGoal
+            {
+                Type = WorkerGoalType.CraftEquipment,
+                Description = desc,
+                RequiredMaterials = materials ?? new Dictionary<int, int>(),
+                Priority = 1,
             };
         }
 
         /// <summary>是否有需要收集的材料。</summary>
         public bool HasMaterialNeeds => this.RequiredMaterials != null && this.RequiredMaterials.Count > 0;
+
+        /// <summary>是否为食物相关目标（需要扫描食物类物品）。</summary>
+        public bool IsFoodRelated => this.Type == WorkerGoalType.StockFood;
 
         public override string ToString()
         {

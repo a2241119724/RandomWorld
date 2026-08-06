@@ -7,6 +7,7 @@ namespace LAB2D.Character.Worker.State
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
     using LAB2D.Gameplay;
+    using LAB2D.Item;
     using LAB2D.Serializable;
     using System.Collections.Generic;
     using System.Text;
@@ -135,6 +136,14 @@ namespace LAB2D.Character.Worker.State
                     this.CreatePickUpFromBoardTask(decision);
                     break;
 
+                case WorkerDecisionType.SelfBuild:
+                    this.CreateSelfBuildTask(decision);
+                    break;
+
+                case WorkerDecisionType.SelfPlant:
+                    this.CreateSelfPlantTask(decision);
+                    break;
+
                 case WorkerDecisionType.Eat:
                     this.CreateSelfEatTask();
                     break;
@@ -183,12 +192,25 @@ namespace LAB2D.Character.Worker.State
 
         /// <summary>
         /// 发布悬赏 — 使用 WorkerBrain 预扫描的资源位置，避免重复扫描失败。
+        /// 支持 Gather 和 Build 两种悬赏类型。
         /// </summary>
         private void TryPostBounty(WorkerBrain.Decision decision)
         {
             AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
             WorkerBountyDecisionService bountyDecision = new WorkerBountyDecisionService();
-            bool posted = bountyDecision.TryPostOneBounty(this.Character, decision.TargetPosition, decision.Resource);
+            bool posted;
+
+            // 建造悬赏：决策携带建造数据
+            if (decision.NeededResources != null && decision.NeededResources.Count > 0
+                && !string.IsNullOrEmpty(decision.BuildTileName))
+            {
+                posted = this.TryPostBuildBounty(decision, bountyDecision);
+            }
+            else
+            {
+                // 采集悬赏：使用预扫描位置
+                posted = bountyDecision.TryPostOneBounty(this.Character, decision.TargetPosition, decision.Resource);
+            }
 
             if (!posted)
             {
@@ -210,11 +232,112 @@ namespace LAB2D.Character.Worker.State
                     $"{this.Character.name} 发布悬赏失败: {reason}",
                     LogManager.LogLevelEnum.Info);
 
-                if (decision.TargetPosition != default)
+                // 失败时回退：建造→自己建，采集→自己采
+                if (decision.NeededResources != null && decision.NeededResources.Count > 0)
+                    this.CreateSelfBuildTask(decision);
+                else if (decision.TargetPosition != default)
                     this.CreateSelfGatherTask(decision);
                 else
                     this.CreateIdleTask();
             }
+        }
+
+        /// <summary>
+        /// 发布建造悬赏。
+        /// </summary>
+        private bool TryPostBuildBounty(WorkerBrain.Decision decision, WorkerBountyDecisionService bountyDecision)
+        {
+            AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
+
+            if (!bountyDecision.ShouldPostBounty(this.Character, WorkerTaskType.Build))
+                return false;
+
+            WorkerPersonality personality = wd?.Personality ?? WorkerPersonality.Neutral;
+            CurrencyAmount reward = bountyDecision.DetermineReward(WorkerTaskType.Build, personality);
+            int issuerId = this.Character.GetInstanceID();
+
+            var currencyManager = Core.ServiceLocator.Get<Gameplay.CurrencyManager>();
+            if (!currencyManager.PostBounty(issuerId, reward)) return false;
+
+            // 构建建造 innerTask
+            WorkerBuildTask buildTask = new WorkerBuildTask.BuildTaskBuilder()
+                .SetBuildPos(decision.TargetPosition)
+                .SetNeedResource(decision.NeededResources)
+                .Build();
+
+            float currentTime = Core.ServiceLocator.Get<IGameTime>().Time;
+            WorkerBountyTask bountyTask = new WorkerBountyTask.BountyTaskBuilder()
+                .SetInnerTask(buildTask)
+                .SetReward(reward)
+                .SetIssuer(issuerId)
+                .SetExpiration(currentTime + bountyDecision.BountyExpirationSeconds)
+                .Build();
+
+            AWorkerTask.TaskAddProvider(
+                bountyTask,
+                new GameGridPosition(
+                    decision.TargetPosition.x,
+                    decision.TargetPosition.y,
+                    decision.TargetPosition.z),
+                2);
+
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 发布了建造悬赏: pos=({decision.TargetPosition.x},{decision.TargetPosition.y}) 悬赏金 {reward}",
+                LogManager.LogLevelEnum.Info);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 创建自我建造任务 — 自己去建造。
+        /// </summary>
+        private void CreateSelfBuildTask(WorkerBrain.Decision decision)
+        {
+            if (decision.TargetPosition == default || decision.NeededResources == null)
+            {
+                AWorkerTask.LogProvider("SelfBuild: 无有效建造位置", LogManager.LogLevelEnum.Warning);
+                this.CreateIdleTask();
+                return;
+            }
+
+            WorkerBuildTask buildTask = new WorkerBuildTask.BuildTaskBuilder()
+                .SetBuildPos(decision.TargetPosition)
+                .SetNeedResource(decision.NeededResources)
+                .Build();
+
+            AWorkerTask.TaskAddProvider(
+                buildTask,
+                new GameGridPosition(
+                    decision.TargetPosition.x,
+                    decision.TargetPosition.y,
+                    decision.TargetPosition.z),
+                2);
+
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 创建自我建造任务: pos=({decision.TargetPosition.x},{decision.TargetPosition.y}) tile={decision.BuildTileName}",
+                LogManager.LogLevelEnum.Info);
+        }
+
+        /// <summary>
+        /// 创建自我种植任务 — 自己去种植。
+        /// </summary>
+        private void CreateSelfPlantTask(WorkerBrain.Decision decision)
+        {
+            WorkerPlantTask plantTask = new WorkerPlantTask.PlantTaskBuilder().Build();
+
+            // 种植任务位置由 PlantTask 内部动态确定，这里使用候选位置做空间索引
+            Vector3Int taskPos = decision.TargetPosition != default
+                ? decision.TargetPosition
+                : Vector3Int.zero;
+
+            AWorkerTask.TaskAddProvider(
+                plantTask,
+                new GameGridPosition(taskPos.x, taskPos.y, taskPos.z),
+                2);
+
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 创建自我种植任务: pos=({taskPos.x},{taskPos.y})",
+                LogManager.LogLevelEnum.Info);
         }
 
         /// <summary>
