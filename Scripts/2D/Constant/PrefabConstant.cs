@@ -105,5 +105,10 @@ namespace LAB2D.Constant
         /// 死亡菜单
         /// </summary>
         public const string DEATH_MENU = "DeathMenu";
+
+        /// <summary>
+        /// 植物生长进度条
+        /// </summary>
+        public const string PLANT_GROWTH_BAR = "PlantGrowthBar";
     }
 }

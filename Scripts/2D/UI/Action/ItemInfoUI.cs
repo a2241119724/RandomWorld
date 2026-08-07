@@ -4,6 +4,7 @@ namespace LAB2D.UI.Action
     using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Inventory;
+    using LAB2D.Item;
     using LAB2D.UnityAdapter;
     using Character = LAB2D.Character.Character;
     using System.Collections.Generic;
@@ -217,6 +218,49 @@ namespace LAB2D.UI.Action
             if (tileBase != null && tileBase.name.Contains("Bed"))
             {
                 ServiceLocator.Get<WorkerBedUI>().ShowWorkerBed(posMap);
+            }
+
+            // 农田（Farmland）：BuildMap 上有 FarmlandWall 瓦片时
+            // 需额外检查 ResourceMap 上的作物和 FarmlandManager 的空地状态
+            if (tileBase != null && tileBase.name.Contains("Farmland"))
+            {
+                // 首先检查是否已有种植的作物（ResourceMap）
+                TileBase resourceTile = ServiceLocator.Get<ResourceMap>().GetTile(posMap);
+                if (resourceTile != null)
+                {
+                    // 已种植作物 — 可采集
+                    this.text += $"\n{resourceTile.name}";
+                    if (isResource && ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(posMap, out _))
+                    {
+                        ServiceLocator.Get<GatherUI>().SetPostion(posMap);
+                    }
+                    else
+                    {
+                        ServiceLocator.Get<GatherUI>().Hide();
+                    }
+
+                    ServiceLocator.Get<PlantUI>().Hide();
+                }
+                else if (ServiceLocator.Get<FarmlandManager>().IsEmptySoil(posMap))
+                {
+                    // 空地农田 — 正在建造中不显示种植UI
+                    if (ServiceLocator.Get<BuildMap>().IsBuilding(posMap))
+                    {
+                        ServiceLocator.Get<PlantUI>().Hide();
+                        ServiceLocator.Get<GatherUI>().Hide();
+                    }
+                    else
+                    {
+                        ServiceLocator.Get<PlantUI>().Show(posMap);
+                        ServiceLocator.Get<GatherUI>().Hide();
+                    }
+                }
+                else
+                {
+                    // 非预期状态的农田格子
+                    ServiceLocator.Get<PlantUI>().Hide();
+                    ServiceLocator.Get<GatherUI>().Hide();
+                }
             }
 
             if (tileBase == null)

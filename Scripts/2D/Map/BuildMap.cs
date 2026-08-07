@@ -153,8 +153,15 @@ namespace LAB2D.Map
         /// <param name="targetMap">目标位置</param>
         public void SetComplete(Vector3IntLAB targetMap)
         {
+            if (!this.BuildMapDataLAB.PosMap.TryGetValue(targetMap, out BuildTileData buildTileData))
+            {
+                AWorkerTask.LogProvider(
+                    $"SetComplete: 位置 {targetMap} 不在 PosMap 中，可能已被取消或同步移除",
+                    LogManager.LogLevelEnum.Warning);
+                return;
+            }
+
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(targetMap);
-            BuildTileData buildTileData = this.BuildMapDataLAB.PosMap[targetMap];
             buildTileData.IsComplete = true;
             Core.ServiceLocator.Get<RoomManager>().Complete(vector3Int);
             BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
@@ -177,7 +184,12 @@ namespace LAB2D.Map
         /// <returns>是否</returns>
         public bool IsBuilding(Vector3Int target)
         {
-            return !this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(target)].IsComplete;
+            if (!this.BuildMapDataLAB.PosMap.TryGetValue(Vector3IntLAB.ToVector3IntLAB(target), out BuildTileData data))
+            {
+                return false;
+            }
+
+            return !data.IsComplete;
         }
 
         /// <summary>

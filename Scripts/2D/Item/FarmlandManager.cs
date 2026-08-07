@@ -14,6 +14,12 @@ namespace LAB2D.Item
         private readonly Dictionary<Vector3Int, PlantInfo> cells;
         private readonly Dictionary<AWorker, Dictionary<Vector3Int, PlantInfo>> preGatherResource; // 预采集资源
         private readonly Dictionary<AWorker, Dictionary<Vector3Int, PlantInfo>> prePlantResource; // 预种植资源
+        private readonly Dictionary<Vector3Int, PlantGrowthBar> growthBars; // 生长进度条
+
+        /// <summary>
+        /// 植物生长总时长（秒）
+        /// </summary>
+        private const float PlantGrowthDuration = 30f;
 
         public FarmlandManager()
         {
@@ -21,6 +27,7 @@ namespace LAB2D.Item
             this.id2Resource = new Dictionary<int, Dictionary<Vector3Int, PlantInfo>>();
             this.preGatherResource = new Dictionary<AWorker, Dictionary<Vector3Int, PlantInfo>>();
             this.prePlantResource = new Dictionary<AWorker, Dictionary<Vector3Int, PlantInfo>>();
+            this.growthBars = new Dictionary<Vector3Int, PlantGrowthBar>();
         }
 
         /// <summary>
@@ -98,6 +105,9 @@ namespace LAB2D.Item
                 this.prePlantResource[worker].Remove(posMap);
                 Core.ServiceLocator.Get<ResourceMap>().SetTile(posMap, Core.ServiceLocator.Get<ResourceManager>().GetAsset(
                     Core.ServiceLocator.Get<ItemDataManager>().GetById(plantInfo.Id).EnName));
+
+                // 创建生长进度条
+                this.CreateGrowthBar(posMap, PlantGrowthDuration);
             }
         }
 
@@ -140,6 +150,110 @@ namespace LAB2D.Item
                 this.id2Resource[-1].Add(posMap, plantInfo);
                 this.cells[posMap] = plantInfo;
                 this.preGatherResource[worker].Remove(posMap);
+
+                // 销毁生长进度条
+                this.DestroyGrowthBar(posMap);
+            }
+        }
+
+        /// <summary>
+        /// 判断指定位置是否为农田
+        /// </summary>
+        /// <param name="posMap">地图坐标</param>
+        /// <returns>是否为农田</returns>
+        public bool IsFarmland(Vector3Int posMap)
+        {
+            return this.cells.ContainsKey(posMap);
+        }
+
+        /// <summary>
+        /// 判断指定位置是否为空闲农田（可种植）
+        /// </summary>
+        /// <param name="posMap">地图坐标</param>
+        /// <returns>是否为空闲农田</returns>
+        public bool IsEmptySoil(Vector3Int posMap)
+        {
+            return this.cells.TryGetValue(posMap, out PlantInfo info) && info.Id == -1;
+        }
+
+        /// <summary>
+        /// 直接在指定位置种植（无需预种植步骤）
+        /// </summary>
+        /// <param name="posMap">地图坐标</param>
+        /// <param name="plantId">种植物品ID</param>
+        /// <param name="count">种植数量</param>
+        public void Plant(Vector3Int posMap, int plantId, int count = 1)
+        {
+            if (!this.IsEmptySoil(posMap))
+            {
+                return;
+            }
+
+            PlantInfo plantInfo = new PlantInfo(plantId, count, 0);
+
+            if (!this.id2Resource.ContainsKey(plantId))
+            {
+                this.id2Resource.Add(plantId, new Dictionary<Vector3Int, PlantInfo>());
+            }
+
+            this.id2Resource[-1].Remove(posMap);
+            this.id2Resource[plantId].Add(posMap, plantInfo);
+            this.cells[posMap] = plantInfo;
+
+            Core.ServiceLocator.Get<ResourceMap>().SetTile(posMap,
+                Core.ServiceLocator.Get<ResourceManager>().GetAsset(
+                    Core.ServiceLocator.Get<ItemDataManager>().GetById(plantId).EnName));
+
+            // 创建生长进度条
+            this.CreateGrowthBar(posMap, PlantGrowthDuration);
+        }
+
+        /// <summary>
+        /// 销毁指定位置的生长进度条。
+        /// </summary>
+        public void DestroyGrowthBar(Vector3Int posMap)
+        {
+            if (this.growthBars.TryGetValue(posMap, out PlantGrowthBar bar))
+            {
+                if (bar != null)
+                {
+                    Object.Destroy(bar.gameObject);
+                }
+
+                this.growthBars.Remove(posMap);
+            }
+        }
+
+        /// <summary>
+        /// 创建生长进度条。
+        /// </summary>
+        private void CreateGrowthBar(Vector3Int posMap, float duration)
+        {
+            this.DestroyGrowthBar(posMap);
+
+            GameObject barObj = Core.ServiceLocator.Get<ResourceManager>().Instantiate(
+                PrefabConstant.PLANT_GROWTH_BAR);
+            if (barObj == null)
+            {
+                return;
+            }
+
+            PlantGrowthBar growthBar = barObj.GetComponent<PlantGrowthBar>();
+            if (growthBar != null)
+            {
+                Vector3 worldPos = ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap)
+                    + new Vector3(0.5f, 0.5f, -5f);
+                barObj.transform.position = worldPos;
+
+                GameObject actionUI = GameObject.FindGameObjectWithTag(TagConstant.ACTION_UI_TAG);
+                if (actionUI != null)
+                {
+                    barObj.transform.SetParent(actionUI.transform);
+                }
+
+                growthBar.SetMapPos(posMap);
+                growthBar.SetDuration(duration);
+                this.growthBars[posMap] = growthBar;
             }
         }
 

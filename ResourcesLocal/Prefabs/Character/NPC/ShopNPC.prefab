@@ -202,7 +202,7 @@ CircleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0, y: -0.4}
   serializedVersion: 2
   m_Radius: 0.1
 --- !u!120 &3151373087408549328
@@ -326,6 +326,7 @@ MonoBehaviour:
   BuybackRate: 0.6
   InteractionRadius: 3
   ClearOwnershipOnSell: 1
+  InteractKey: 55
 --- !u!1 &2678603059137239990
 GameObject:
   m_ObjectHideFlags: 0
