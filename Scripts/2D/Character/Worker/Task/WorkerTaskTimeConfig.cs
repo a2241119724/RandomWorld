@@ -46,6 +46,8 @@ namespace LAB2D.Character.Worker.Task
         // ---- 锻炼 (Exercise) ----
         public static float ExerciseSeconds => Day / 225f;  // 0.444%
         public const long ExerciseSeekThreshold = 5;
+        /// <summary>锻炼经验值获取速率（/秒），每次完成锻炼任务时根据时长结算。</summary>
+        public const float ExerciseExperiencePerSecond = 0.5f;
 
         // ---- 穿戴 (Wear) ----
         public static float WearSeconds => Day / 1200f;  // 0.083%
