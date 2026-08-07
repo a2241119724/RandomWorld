@@ -208,7 +208,12 @@ namespace LAB2D.AI.Worker
             // 饥饿优先级：越低越紧急，饥饿<15 时跳过其他所有决策
             if (workerData.CurHungry < this.HungryThreshold)
             {
-                // 先扫描周围食物（无论有没有钱，食物在附近就先自己采）
+                // 优先检查自己身上/仓库是否有食物 → 直接吃，不需要扫描地图或交易
+                if (this.WorkerHasFood(worker))
+                    return Decision.Make(WorkerDecisionType.Eat,
+                        $"饥饿({workerData.CurHungry:F0}), 吃自己携带/仓库的食物");
+
+                // 扫描周围地上食物（无论有没有钱，食物在附近就先自己采）
                 int foodScanRadius = workerData.CurHungry < 15 ? this.ScanRadius * 2 : this.ScanRadius;
                 ResourceCandidate? foodCandidate = this.ScanForFood(worker, foodScanRadius);
 
@@ -228,7 +233,7 @@ namespace LAB2D.AI.Worker
                         $"饥饿({workerData.CurHungry:F0}), 自己采集食物");
                 }
 
-                // 附近没食物 → 有钱就尝试交易
+                // 身上/仓库/附近地上都没食物 → 有钱就尝试交易购买
                 if (workerData.Wallet.HasEnough(new CurrencyAmount(5)))
                     return Decision.Make(WorkerDecisionType.Eat,
                         $"饥饿({workerData.CurHungry:F0}), 附近无食物, 尝试交易");
@@ -993,6 +998,30 @@ namespace LAB2D.AI.Worker
             {
                 AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(r.Id);
                 if (itemType == AItem.ItemTypeEnum.Seed) return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 检查 Worker 是否有食物（身上携带或仓库存储）。
+        /// </summary>
+        private bool WorkerHasFood(AWorker worker)
+        {
+            // 检查身上携带的资源中是否有食物类型
+            List<ResourceInfo> carried = worker.GetAllResources();
+            foreach (var r in carried)
+            {
+                AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(r.Id);
+                if (itemType == AItem.ItemTypeEnum.Food) return true;
+            }
+
+            // 检查仓库中是否有食物
+            List<ResourceInfo> stored = worker.GetStorageResources();
+            foreach (var r in stored)
+            {
+                AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(r.Id);
+                if (itemType == AItem.ItemTypeEnum.Food) return true;
             }
 
             return false;
