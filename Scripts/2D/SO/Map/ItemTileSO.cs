@@ -14,7 +14,6 @@ namespace LAB2D.SO.Map
 
         public void OnEnable()
         {
-            Debug.Log(ItemDataManager.Instance.GetByName(this.name));
         }
     }
 }

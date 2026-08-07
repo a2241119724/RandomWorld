@@ -69,7 +69,7 @@ namespace LAB2D
                 return null;
             }
 
-            if (shader.isSupported == false)
+            if (!shader.isSupported)
             {
                 return null;
             }

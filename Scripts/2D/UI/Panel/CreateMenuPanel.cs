@@ -72,7 +72,6 @@ namespace LAB2D.UI.Panel
                 roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable { { "C0", 1 } };
                 roomOptions.CustomRoomPropertiesForLobby = new string[] { "C0" };
 
-                // bool success = PhotonNetwork.CreateRoom(roomName, roomOptions, typedLobby);
                 bool success = PhotonNetwork.CreateRoom(roomName, roomOptions);
                 if (!success)
                 {

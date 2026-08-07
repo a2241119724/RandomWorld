@@ -4,12 +4,12 @@ namespace LAB2D.Domain.Worker
 
     /// <summary>
     /// Worker 人格值对象 — 纯 C# 可变结构体，描述 Worker 的性格倾向。
-    /// 遵循 CurrencyAmount 的模式，不依赖 UnityEngine。
     /// 所有值范围 [0, 100]。
     /// </summary>
     [Serializable]
     public struct WorkerPersonality : IEquatable<WorkerPersonality>
     {
+        private static readonly System.Random Rng = new System.Random();
         /// <summary>心情 — 影响工作效率和社交意愿。0=极差, 100=极好。</summary>
         public float Mood;
 
@@ -34,10 +34,15 @@ namespace LAB2D.Domain.Worker
         public static WorkerPersonality Randomize()
         {
             return new WorkerPersonality(
-                mood: UnityEngine.Random.Range(40f, 80f),
-                ambition: UnityEngine.Random.Range(40f, 80f),
-                diligence: UnityEngine.Random.Range(40f, 80f),
-                sociality: UnityEngine.Random.Range(40f, 80f));
+                mood: NextFloat(40f, 80f),
+                ambition: NextFloat(40f, 80f),
+                diligence: NextFloat(40f, 80f),
+                sociality: NextFloat(40f, 80f));
+        }
+
+        private static float NextFloat(float min, float max)
+        {
+            return min + (float)(Rng.NextDouble() * (max - min));
         }
 
         /// <summary>所有值 50 的中性人格。</summary>

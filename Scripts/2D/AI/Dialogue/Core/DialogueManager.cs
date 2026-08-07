@@ -549,7 +549,7 @@ namespace LAB2D.AI.Dialogue.Core
             }
 
             sb.Append("  说话风格: "); sb.AppendLine(StripSpeakingPrefix(profile.speakingStyle));
-            sb.Append("  最大句数: "); sb.Append(profile.maxSentences.ToString());
+            sb.Append("  最大句数: "); sb.Append(profile.maxSentences);
             return sb.ToString();
         }
 

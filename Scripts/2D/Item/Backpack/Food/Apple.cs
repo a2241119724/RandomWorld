@@ -19,7 +19,7 @@ namespace LAB2D.Item.Backpack.Food
         /// <inheritdoc/>
         public override void Eat()
         {
-            throw new NotImplementedException();
+            // 苹果暂不支持特殊食用效果，基类已处理饱食度恢复
         }
     }
 }

@@ -8,8 +8,6 @@ namespace LAB2D.Character.Enemy
 
     public abstract class AEnemy : Character
     {
-        // MeshFilter[] meshFilters; // 需要合并的mesh
-        // private CombineInstance[] combine; // 合并用的工具
         protected const float ChangeTarget = 3.0f; // 超过当前时间被攻击会被吸引仇恨
         protected CharacterStatusUI statusBar; // 记录实例化血条
         private RaycastHit2D raycastHit2D; // 射线射中返回的结果

@@ -55,10 +55,10 @@ namespace LAB2D.UI.Panel
             Button attack = LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Attack");
             if (attack != null)
             {
-                LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Attack").onClick.AddListener(this.Onclick_Attack);
+                LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Attack").onClick.AddListener(this.OnClick_Attack);
             }
 
-            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.Onclick_Setting);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.OnClick_Setting);
 
             ServiceLocator.Get<EventBus>().Subscribe<PlayerAttackRequestedEvent>(this.OnPlayerAttackRequested);
             Button save = LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Save");
@@ -73,7 +73,7 @@ namespace LAB2D.UI.Panel
             }
             else
             {
-                save.onClick.AddListener(this.Onclick_Save);
+                save.onClick.AddListener(this.OnClick_Save);
             }
 
             this.CreateSaveSlotPanel();
@@ -121,7 +121,7 @@ namespace LAB2D.UI.Panel
         /// <summary>
         /// 玩家攻击
         /// </summary>
-        public void Onclick_Attack()
+        public void OnClick_Attack()
         {
             this.ExecuteAttack();
         }
@@ -153,12 +153,12 @@ namespace LAB2D.UI.Panel
         /// <summary>
         /// 打开设置面板
         /// </summary>
-        private void Onclick_Setting()
+        private void OnClick_Setting()
         {
             this.Controller.Show(SettingMenuPanel.Instance);
         }
 
-        private void Onclick_Save()
+        private void OnClick_Save()
         {
             this.ShowSaveSlotPanel();
         }

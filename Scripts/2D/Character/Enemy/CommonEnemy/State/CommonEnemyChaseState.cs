@@ -24,22 +24,6 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         /// <inheritdoc/>
         public override void OnUpdate()
         {
-            // int count = PlayerManager.Instance.count();
-            // for (int i = 0; i < count; i++)
-            // {
-            //     if (character.SenseNearby(PlayerManager.Instance.get(i).transform))
-            //     {
-            //         //如果玩家与敌人的距离小于敌人的攻击距离，那么进入攻击状态
-            //         if (Vector3.Distance(PlayerManager.Instance.get(i).transform.position, character.transform.position) <= character.attackRange)
-            //         {
-            //             character.manager.changeState(EnemyStateType.Attack);
-            //             return;
-            //         }
-            //         character.RotateTo(PlayerManager.Instance.get(i).transform.position - character.transform.position);
-            //         character.MoveToForward();
-            //         return;
-            //     }
-            // }
             if (this.Character.Target == null)
             {
                 this.Character.Manager.ChangeState(TypeEnum.Wander);

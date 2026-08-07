@@ -87,7 +87,6 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
         [PunRPC]
         public virtual void Attack()
         {
-            // if (!photonView.IsMine && PhotonNetwork.IsConnected) return;
             if (this.recordTime >= this.attackInterval)
             {
                 // 所有武器攻击效果

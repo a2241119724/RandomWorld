@@ -1,10 +1,12 @@
 namespace LAB2D.Domain.Worker
 {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
     /// Worker 目标类型 — 驱动悬赏和自主行为的核心。
     /// </summary>
+    [Serializable]
     public enum WorkerGoalType
     {
         /// <summary>赚钱攒钱（默认）</summary>
@@ -23,6 +25,7 @@ namespace LAB2D.Domain.Worker
     /// <summary>
     /// Worker 目标数据 — 描述 Worker 当前想达成什么、缺少什么。
     /// </summary>
+    [Serializable]
     public struct WorkerGoal
     {
         /// <summary>目标类型</summary>

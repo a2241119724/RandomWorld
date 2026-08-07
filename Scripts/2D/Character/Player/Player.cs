@@ -599,25 +599,6 @@ namespace LAB2D.Character.Player
         }
 
         /// <summary>
-        /// 都有碰撞器,其中之一勾选Is Trigger,其中之一带有刚体
-        /// </summary>
-        /// <param name="collider">collider</param>
-        // private void OnTriggerEnter2D(Collider2D collider)
-        // {
-        //     if (collider.gameObject.CompareTag("Enemy"))
-        //     {
-        //     }
-        // }
-
-        /// <summary>
-        /// 都有碰撞器,其中之一带有刚体,都不勾选Is Trigger
-        /// </summary>
-        // private void OnColisionEnter2D(Collision2D collision) {
-        //     //collision.contacts[0].point; // 碰撞的第一个点
-        //     //collision.contacts[0].normal; // 碰撞的法线
-        // }
-
-        /// <summary>
         /// 敌人数据
         /// </summary>
         [Serializable]

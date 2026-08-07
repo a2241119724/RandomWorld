@@ -11,7 +11,6 @@ namespace LAB2D.MVC
     /// </summary>
     public abstract class MVCInfoView : MonoBehaviour
     {
-        // private SelectAndShowEventSO selectAndShow;
         private Text info; // 道具信息
 
         public void Start()
@@ -36,17 +35,5 @@ namespace LAB2D.MVC
             this.info.text = item.ToString();
         }
 
-        private void OnEnable()
-        {
-            // selectAndShow = Resources.Load<SelectAndShowEventSO>("SO/SelectAndShowEvent");
-            // //订阅事件
-            // selectAndShow.OnSelectAndRun += showInfo;
-        }
-
-        // private void OnDisable()
-        // {
-        //     // 删除订阅(必要的)
-        //     selectAndShow.OnSelectAndRun -= showInfo;
-        // }
     }
 }

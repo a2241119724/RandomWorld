@@ -149,7 +149,6 @@ namespace LAB2D.MVC
 
         public void Awake()
         {
-            // selectAndShow = Resources.Load<SelectAndShowEventSO>("SO/SelectAndShowEvent");
         }
 
         public void Start()
@@ -162,45 +161,4 @@ namespace LAB2D.MVC
             }
         }
     }
-
-    /// <summary>
-    /// 通过交换盒子下面的Item实现交换
-    /// </summary>
-    /// <param name="e"></param>
-    // public void OnEndDrag(PointerEventData e)
-    // {
-    //     GameObject g = e.pointerCurrentRaycast.gameObject;
-    //     if (g.name.Equals("itemImage")) // 放到有道具位置时
-    //     {
-    //         // 数据位置变换
-    //         Item temp = myBag.itemList[index];
-    //         myBag.itemList[index] = myBag.itemList[g.transform.parent.parent.GetSiblingIndex()];
-    //         myBag.itemList[g.transform.parent.parent.GetSiblingIndex()] = temp;
-    //         // 放到拖到的位置
-    //         transform.SetParent(g.transform.parent.parent);
-    //         transform.position = transform.parent.position;
-    //         // 将item换到被拖拽的原父物体上,实现交换
-    //         g.transform.parent.position = originalParent.position;
-    //         g.transform.parent.SetParent(originalParent);
-    //     }
-    //     else if (g.name.Equals("ImageBox")) // 放到空位置时
-    //     {
-    //         // 数据位置变换
-    //         myBag.itemList[g.transform.GetSiblingIndex()] = myBag.itemList[index];
-    //         if (g.transform.GetSiblingIndex() != index)
-    //         {
-    //             myBag.itemList[index] = null;
-    //         }
-    //         // 放到拖到的位置
-    //         transform.SetParent(g.transform);
-    //         transform.position = transform.parent.position;
-    //     }
-    //     else
-    //     {
-    //         // 拖到其他位置回到原位
-    //         transform.SetParent(originalParent);
-    //         transform.position = originalParent.position;
-    //     }
-    //     GetComponent<CanvasGroup>().blocksRaycasts = true; // 是否阻止射线投射
-    // }
 }

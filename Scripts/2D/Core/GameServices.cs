@@ -34,7 +34,7 @@ namespace LAB2D.Core
             = (enemy, attacker, xp) => ServiceLocator.Get<GameplaySessionStats>().RecordEnemyDefeated(enemy, attacker, xp);
 
         public static System.Func<int> WaveIndexProvider { get; set; }
-            = () => ServiceLocator.Get<WaveManager>() != null ? ServiceLocator.Get<WaveManager>().CurrentWaveIndex - 1 : 0;
+            = () => { var wm = ServiceLocator.Get<WaveManager>(); return wm != null ? wm.CurrentWaveIndex - 1 : 0; };
 
         // --- Player ---
         public static System.Func<int> PlayerCountProvider { get; set; }

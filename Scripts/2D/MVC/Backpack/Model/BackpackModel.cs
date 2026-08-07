@@ -22,7 +22,6 @@ namespace LAB2D.MVC.Backpack.Model
             AsyncProgressUI.Instance.SetTip("加载背包数据...");
             Dictionary<AItem.ItemTypeEnum, List<AItem>> data = DataTool.LoadDataByBinary<Dictionary<AItem.ItemTypeEnum, List<AItem>>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
-            // Dictionary<Item.ItemType, ArrayList> data = LAB2D.Tool.Tool.loadDataByJson<Dictionary<Item.ItemType, ArrayList>>(GlobalData.ConfigFile.BackpackDataFilePath);
             if (data == null)
             {
                 return;

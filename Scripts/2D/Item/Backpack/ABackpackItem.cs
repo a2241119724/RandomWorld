@@ -112,22 +112,5 @@ namespace LAB2D.Item.Backpack
     /// </summary>
     public abstract class ABackpackItemObject : AItemObject
     {
-        /// <inheritdoc/>
-        protected override void Awake()
-        {
-            base.Awake();
-        }
-
-        /// <inheritdoc/>
-        protected override void Start()
-        {
-            base.Start();
-        }
-
-        /// <inheritdoc/>
-        protected override void Update()
-        {
-            base.Update();
-        }
     }
 }

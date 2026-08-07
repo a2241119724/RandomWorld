@@ -28,10 +28,6 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             this.Character.LastAttacker.AddExperienceValue(5); // 增加经验值
             // experienceReward=0：经验值已通过 AddExperienceValue -> RecordExperienceGained 记录，避免重复统计
             Core.GameServices.EnemyDefeatedProvider((AEnemy)this.Character, this.Character.LastAttacker, 0);
-
-            // 播放死亡动画
-            // animator.applyRootMotion = true;
-            // animator.SetTrigger("toDie");
         }
 
         /// <inheritdoc/>

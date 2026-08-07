@@ -19,11 +19,6 @@ namespace LAB2D.Data
         public UserData()
         {
             this.Data = new List<Row>();
-            if (this.Data == null)
-            {
-                AWorkerTask.LogProvider("data assign resource Error!!!", LogManager.LogLevelEnum.Error);
-                return;
-            }
         }
 
         /// <summary>

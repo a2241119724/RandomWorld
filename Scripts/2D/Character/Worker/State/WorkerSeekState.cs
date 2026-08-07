@@ -772,22 +772,6 @@ namespace LAB2D.Character.Worker.State
                     .ToString();
             }
 
-            // if (Worker.SeekLock.GetLock(this.Character))
-            // {
-            //     // 使用协程时,只能有一个在寻路(加锁),如果被锁了且锁的拥有者不是自己则阻塞,可重入
-            //     if (this.isOne)
-            //     {
-            //         this.isOne = false;
-            //         this.Character.ToTarget();
-            //     }
-            // }
-
-            // // 只能有一个在寻路
-            // if (this.isOne)
-            // {
-            //     this.isOne = false;
-            //     this.Character.ToTarget();
-            // }
             if (!this.Character.Seek.IsSeeking())
             {
                 // 没有找到路

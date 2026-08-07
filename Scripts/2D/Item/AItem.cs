@@ -128,8 +128,7 @@ namespace LAB2D.Item
         }
 
         /// <summary>
-        /// 不可使用反射找到该类
-        /// 不加入到BuildMenu中
+        /// 标记接口：实现此接口的类不会被反射扫描加入 BuildMenu。
         /// </summary>
         public interface IDontShow
         {

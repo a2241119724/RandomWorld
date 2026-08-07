@@ -23,7 +23,6 @@ namespace LAB2D.Core.Seek
         /// <summary>
         /// 坐标
         /// </summary>
-        // public Vector3Int PosMap;
         public Vector2ShortLAB PosMap;
 
         /// <summary>

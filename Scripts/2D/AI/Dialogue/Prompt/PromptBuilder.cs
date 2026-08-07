@@ -76,41 +76,6 @@ namespace LAB2D.AI.Dialogue.Prompt
             return this.promptAssemblyService.BuildSummaryMessages(dialogueToSummarize);
         }
 
-        /*
-        public List<ChatMessage> BuildSummaryMessagesLegacy(List<ChatMessage> dialogueToSummarize)
-        {
-            if (dialogueToSummarize == null || dialogueToSummarize.Count == 0)
-            {
-                return new List<ChatMessage>();
-            }
-
-            var sb = new StringBuilder();
-            foreach (ChatMessage msg in dialogueToSummarize)
-            {
-                string prefix = msg.role == "user" ? "玩家" : "NPC";
-                sb.Append(prefix);
-                sb.Append("：");
-                sb.Append(msg.content);
-                sb.Append("。");
-            }
-
-            string dialogueText = sb.ToString();
-            string summaryPrompt = this.templateLoader.FillTemplate(
-                "MemorySummaryTemplate",
-                new Dictionary<string, string>
-                {
-                    { "DIALOGUE_CONTENT", dialogueText },
-                });
-
-            return new List<ChatMessage>
-            {
-                new ChatMessage("system", "你是对话摘要助手，只输出摘要，不超过3句话。"),
-                new ChatMessage("user", summaryPrompt),
-            };
-        }
-
-        */
-
         private static DialoguePromptProfileModel ToModel(NPCPromptProfile profile)
         {
             if (profile == null)
@@ -148,65 +113,6 @@ namespace LAB2D.AI.Dialogue.Prompt
 
             return knowledgeTexts;
         }
-
-        /*
-        private string BuildSystemPrompt(
-            NPCPromptProfile profile,
-            GameStateContext gameContext,
-            List<GameKnowledgeEntry> ragResults)
-        {
-            // 构建背景文本（可选）
-            string backgroundText = string.Empty;
-            if (profile != null && !string.IsNullOrEmpty(profile.backgroundStory))
-            {
-                backgroundText = "背景：" + profile.backgroundStory + "。";
-            }
-
-            // 构建 RAG 知识文本
-            string knowledgeText = string.Empty;
-            if (ragResults != null && ragResults.Count > 0)
-            {
-                var sb = new StringBuilder();
-                foreach (GameKnowledgeEntry entry in ragResults)
-                {
-                    sb.Append(entry.ToPromptText());
-                }
-
-                knowledgeText = sb.ToString();
-            }
-
-            var replacements = new Dictionary<string, string>
-            {
-                { "NPC_NAME", profile != null ? profile.npcName : "NPC" },
-                { "NPC_ROLE", profile != null ? profile.npcRole : "村民" },
-                { "NPC_LOCATION", profile != null ? profile.npcLocation : "未知" },
-                { "PERSONALITY", profile != null ? profile.personalityDescription : "友善" },
-                { "BACKGROUND", backgroundText },
-                { "SPEAKING_STYLE", GetSpeakingStyleText(profile) },
-                { "MAX_SENTENCES", profile != null ? profile.maxSentences.ToString() : "3" },
-                { "WORLD_INFO", gameContext != null ? gameContext.ToWorldInfo() : string.Empty },
-                { "GAME_STATE", gameContext != null ? gameContext.ToPromptText() : string.Empty },
-                { "KNOWLEDGE_CONTEXT", knowledgeText },
-            };
-
-            return this.templateLoader.FillTemplate("SystemPromptTemplate", replacements);
-        }
-
-        private static string GetSpeakingStyleText(NPCPromptProfile profile)
-        {
-            string speakingStyle = profile == null ? "简洁" : profile.speakingStyle;
-            if (string.IsNullOrWhiteSpace(speakingStyle))
-            {
-                return "简洁";
-            }
-
-            speakingStyle = speakingStyle.Trim();
-            return speakingStyle.StartsWith("说话")
-                ? speakingStyle.Substring("说话".Length).Trim()
-                : speakingStyle;
-        }
-
-        */
 
     }
 }

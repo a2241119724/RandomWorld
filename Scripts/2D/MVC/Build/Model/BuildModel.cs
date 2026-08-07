@@ -19,7 +19,6 @@ namespace LAB2D.MVC.Build.Model
             AsyncProgressUI.Instance.SetTip("加载建造数据...");
             Dictionary<AItem.ItemTypeEnum, List<AItem>> data = DataTool.LoadDataByBinary<Dictionary<AItem.ItemTypeEnum, List<AItem>>>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
 
-            // Dictionary<BuildType, ArrayList> data = LAB2D.Tool.Tool.loadDataByJson<Dictionary<BuildType, ArrayList>>(GlobalData.ConfigFile.BuildDataFilePath);
             if (data == null)
             {
                 return;

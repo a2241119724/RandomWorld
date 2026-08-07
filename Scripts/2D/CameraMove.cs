@@ -63,7 +63,6 @@ namespace LAB2D
             this.transform.position = Vector3.Lerp(this.transform.position, ultimateTarget, Time.deltaTime * CameraSpeed); // 设置相机的位置
             this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, -20 + this.Offset.z); // 固定相机z轴的位置
 
-            // if (gameObject.GetComponent<Camera>() == Camera.main) return;
             // 相机边缘跟随鼠标移动
             if (CameraMove.IsEdgeMode)
             {

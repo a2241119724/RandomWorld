@@ -22,17 +22,5 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon.Sword
             base.Awake();
             this.raduis = 8.0f;
         }
-
-        /// <inheritdoc/>
-        protected override void Start()
-        {
-            base.Start();
-        }
-
-        /// <inheritdoc/>
-        protected override void Update()
-        {
-            base.Update();
-        }
     }
 }

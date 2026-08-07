@@ -28,7 +28,6 @@ namespace LAB2D.MVC.Backpack.Controller
 
             if (this.model.IsNull(AItem.ItemTypeEnum.Weapon))
             {
-                // addItem(ItemFactory.Instance.getBackpackItemByName("SingleGun"));
                 List<AItem> items = ServiceLocator.Get<ItemInstanceFactory>().GenBackpackItems();
                 foreach (AItem item in items)
                 {
