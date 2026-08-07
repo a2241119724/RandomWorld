@@ -273,11 +273,8 @@ namespace LAB2D.AI.Worker
             bool canAfford = workerData.Wallet.HasEnough(
                 this.DetermineMinReward() + this.MinimumWalletReserve);
 
-            // === 目标驱动悬赏：Worker 缺什么就发什么悬赏 ===
-            Decision? goalBounty = this.TryMakeGoalDrivenBounty(worker, workerData, canAfford);
-            if (goalBounty.HasValue) return goalBounty.Value;
-
             // === 建造决策：高事业心 Worker 扫描附近待建造位置 ===
+            // 放在目标驱动悬赏之前，确保建造优先于为建造目标采集材料
             if (p.Ambition > this.AmbitionThreshold)
             {
                 Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, workerData, canAfford);
@@ -290,6 +287,11 @@ namespace LAB2D.AI.Worker
                     $"{worker.name} 建造决策跳过: 事业心({p.Ambition:F0})略低于阈值({this.AmbitionThreshold:F0})",
                     LogManager.LogLevelEnum.Trace);
             }
+
+            // === 目标驱动悬赏：Worker 缺什么就发什么悬赏 ===
+            // 建造决策未触发（缺材料/缺钱）时，通过悬赏补充材料
+            Decision? goalBounty = this.TryMakeGoalDrivenBounty(worker, workerData, canAfford);
+            if (goalBounty.HasValue) return goalBounty.Value;
 
             // === 种植决策：有种子时扫描附近空闲农田 ===
             if (p.Diligence > this.DiligenceThreshold)
@@ -358,6 +360,25 @@ namespace LAB2D.AI.Worker
         private void RefreshGoal(AWorker.WorkerData workerData)
         {
             if (++this.goalRefreshCounter % 5 != 0) return; // 每5次决策刷新一次
+
+            // 无家者优先：设定建家目标
+            if (workerData.HomePosition == null)
+            {
+                var materials = new System.Collections.Generic.Dictionary<int, int>();
+                var itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
+
+                // 尝试获取木材和石材的 ID（常见建材）
+                ItemData wood = itemDataManager.GetByName("CustomWood");
+                ItemData stone = itemDataManager.GetByName("CustomStone");
+                if (wood != null && wood.Id > 0) materials[wood.Id] = 10;
+                if (stone != null && stone.Id > 0) materials[stone.Id] = 8;
+
+                // 若都没有则使用默认占位
+                if (materials.Count == 0) materials[0] = 10;
+
+                workerData.CurrentGoal = WorkerGoal.BuildStructure("建一个家", materials);
+                return;
+            }
 
             WorkerPersonality p = workerData.Personality;
 
@@ -721,23 +742,147 @@ namespace LAB2D.AI.Worker
 
         // ---- 建造/种植决策 ----
 
+        // 房间墙壁偏移（5x5 环，顺时针）：
+        // 中间 3x3 空地放床，墙壁围在第二圈
+        private static readonly Vector3Int[] WallOffsets = new Vector3Int[]
+        {
+            new Vector3Int(-2, 2, 0),  // 0: 西北角
+            new Vector3Int(-1, 2, 0),  // 1: 北边
+            new Vector3Int(0, 2, 0),   // 2: 北中
+            new Vector3Int(1, 2, 0),   // 3: 北边
+            new Vector3Int(2, 2, 0),   // 4: 东北角
+            new Vector3Int(2, 1, 0),   // 5: 东边
+            new Vector3Int(2, 0, 0),   // 6: 东中
+            new Vector3Int(2, -1, 0),  // 7: 东边
+            new Vector3Int(2, -2, 0),  // 8: 东南角
+            new Vector3Int(-1, -2, 0), // 9: 南边(门在0,-2)
+            new Vector3Int(-2, -2, 0), // 10: 西南角
+            new Vector3Int(-2, -1, 0), // 11: 西边
+            new Vector3Int(-2, 0, 0),  // 12: 西中
+            new Vector3Int(-2, 1, 0),  // 13: 西边
+        };
+        // 每块墙对应的方向变体后缀（CustomRoomWall_N）：房间外墙朝外
+        // 0=左上 1=上 2=右上 3=左 4=右 5=左下 6=下 7=右下
+        private static readonly int[] WallDirections = new int[]
+        {
+            0, 1, 1, 1, 2,  // 0-4: 北侧 → 左上/上/右上
+            4, 4, 4, 7,      // 5-8: 东侧 → 右/右下
+            6, 5,            // 9-10: 南侧 → 下/左下
+            3, 3, 3,         // 11-13: 西侧 → 左
+        };
+        private const int WallCount = 14;
+        private const int BedStage = WallCount;     // 7
+        private const int CompleteStage = WallCount + 1; // 8
+
         /// <summary>
         /// 自主建造决策：Worker 决定为自己建造房屋。
-        /// 无家者优先建床，有家者考虑扩建。
+        /// 无家者：先围墙壁（7块）形成房间（南侧留门），再在中间建床。
         /// 社交型+有钱 → 发建造悬赏；勤奋型+有材料 → 自己建。
         /// </summary>
         private Decision? TryMakeSelfBuildDecision(AWorker worker, AWorker.WorkerData wd, bool canAfford)
         {
-            // 决定建造类型
             string buildTileName;
             Dictionary<int, ResourceInfo> needs;
+            Vector3Int? buildPos;
 
-            // 无家可归 → 想建床
+            // 无家可归 → 围墙壁 + 建床
             if (wd.HomePosition == null)
             {
-                buildTileName = "SingleBed";
+                Vector3Int center = wd.PlannedHomePosition != null
+                    ? Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition)
+                    : AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+
+                if (wd.HomeBuildStage < WallCount)
+                {
+                    // 阶段 0-13：建墙壁，使用对应方向变体
+                    int dir = WallDirections[wd.HomeBuildStage];
+                    buildTileName = $"CustomRoomWall_{dir}";
+                    buildPos = center + WallOffsets[wd.HomeBuildStage];
+                }
+                else if (wd.HomeBuildStage == BedStage)
+                {
+                    // 阶段 7：建床
+                    buildTileName = "SingleBed";
+                    buildPos = center;
+                }
+                else
+                {
+                    // 阶段 8+：完成
+                    return null;
+                }
+
                 needs = this.GetBuildMaterialNeeds(buildTileName);
-                if (needs == null || needs.Count == 0) return null;
+                if (needs == null)
+                {
+                    // 物品不存在于数据库中 → 尝试降级
+                    if (buildTileName.StartsWith("CustomRoomWall"))
+                    {
+                        AWorkerTask.LogProvider(
+                            $"{worker.name} 建造: CustomRoomWall 不存在, 跳过墙壁直接建床",
+                            LogManager.LogLevelEnum.Info);
+                        wd.HomeBuildStage = BedStage;
+                        buildTileName = "SingleBed";
+                        buildPos = center;
+                        needs = this.GetBuildMaterialNeeds(buildTileName);
+                    }
+
+                    if (needs == null)
+                    {
+                        AWorkerTask.LogProvider(
+                            $"{worker.name} 建造失败: {buildTileName} 物品不存在于数据库",
+                            LogManager.LogLevelEnum.Info);
+                        return null;
+                    }
+                }
+
+                // 检查建造位置是否可用
+                if (!buildPos.HasValue || !ASeek.IsCanReach(buildPos.Value))
+                {
+                    // 位置被阻挡：检查是否是资源，是则先采集再建造
+                    if (buildPos.HasValue)
+                    {
+                        var resourceMap = Core.ServiceLocator.Get<ResourceMap>();
+                        Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(buildPos.Value);
+                        if (resourceMap?.ResourceMapDataLAB?.PosMap != null
+                            && resourceMap.ResourceMapDataLAB.PosMap.TryGetValue(posLAB, out string resName)
+                            && !string.IsNullOrEmpty(resName))
+                        {
+                            var itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
+                            if (itemDataManager.TryGetByName(resName, out ItemData itemData) && itemData.Id > 0)
+                            {
+                                AWorkerTask.LogProvider(
+                                    $"{worker.name} 建造位置有资源 {resName}, 先采集再建 {buildTileName}",
+                                    LogManager.LogLevelEnum.Info);
+                                return Decision.MakeGather(buildPos.Value,
+                                    new ResourceInfo(itemData.Id),
+                                    $"清理建造位置: {resName}");
+                            }
+                        }
+                    }
+
+                    AWorkerTask.LogProvider(
+                        $"{worker.name} 建造位置不可用: {buildTileName} pos=({buildPos?.x},{buildPos?.y})",
+                        LogManager.LogLevelEnum.Info);
+                    return null;
+                }
+
+                // 墙壁阶段检查冲突（已被占用的跳过），床阶段不检查（允许覆盖）
+                if (wd.HomeBuildStage < WallCount)
+                {
+                    var buildMap = Core.ServiceLocator.Get<BuildMap>();
+                    if (buildMap?.BuildMapDataLAB?.PosMap != null)
+                    {
+                        Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(buildPos.Value);
+                        if (buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
+                        {
+                            AWorkerTask.LogProvider(
+                                $"{worker.name} 位置已占用, 跳过墙壁{wd.HomeBuildStage + 1}: pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                LogManager.LogLevelEnum.Info);
+                            wd.HomeBuildStage++;
+                            return null;
+                        }
+                    }
+                }
             }
             // 有家+高事业 → 扩建（简化：再建一个床/家具）
             else if (wd.Personality.Ambition > 65)
@@ -745,21 +890,22 @@ namespace LAB2D.AI.Worker
                 buildTileName = "SingleBed"; // TODO: 扩展更多建造类型
                 needs = this.GetBuildMaterialNeeds(buildTileName);
                 if (needs == null || needs.Count == 0) return null;
+
+                buildPos = this.FindFreeBuildPosition(worker);
+                if (!buildPos.HasValue)
+                {
+                    AWorkerTask.LogProvider(
+                        $"{worker.name} 想建{buildTileName}但附近无空闲位置",
+                        LogManager.LogLevelEnum.Info);
+                    return null;
+                }
             }
             else
             {
                 return null;
             }
 
-            // 找到附近的空闲建造位置
-            Vector3Int? buildPos = this.FindFreeBuildPosition(worker);
-            if (!buildPos.HasValue)
-            {
-                AWorkerTask.LogProvider(
-                    $"{worker.name} 想建{buildTileName}但附近无空闲位置",
-                    LogManager.LogLevelEnum.Trace);
-                return null;
-            }
+            // ---- 共同的决策路径（无家 + 扩建都走这里）----
 
             // 社交型+有钱 → 发建造悬赏
             if (canAfford && wd.Personality.Sociality > this.SocialityThreshold && Random.value < 0.4f)
@@ -784,9 +930,25 @@ namespace LAB2D.AI.Worker
                     $"自己建造: {buildTileName} pos=({buildPos.Value.x},{buildPos.Value.y})");
             }
 
+            // 无家者兜底：有材料就自己建，没材料回退到采集
+            if (wd.HomePosition == null)
+            {
+                if (this.HasEnoughResourcesForBuild(worker, needs))
+                {
+                    return Decision.MakeBuild(
+                        WorkerDecisionType.SelfBuild,
+                        buildPos.Value,
+                        buildTileName,
+                        needs,
+                        $"建家: {buildTileName} pos=({buildPos.Value.x},{buildPos.Value.y})");
+                }
+
+                // 没材料 → 不强行建造，继续走到后面的采集/悬赏逻辑收集材料
+            }
+
             AWorkerTask.LogProvider(
-                $"{worker.name} 想建{buildTileName}但条件不满足 (可支付={canAfford} 社交={wd.Personality.Sociality:F0} 勤奋={wd.Personality.Diligence:F0})",
-                LogManager.LogLevelEnum.Trace);
+                $"{worker.name} 想建{buildTileName}但条件不满足 (可支付={canAfford} 社交={wd.Personality.Sociality:F0} 勤奋={wd.Personality.Diligence:F0} 材料够={this.HasEnoughResourcesForBuild(worker, needs)})",
+                LogManager.LogLevelEnum.Info);
 
             return null;
         }
@@ -797,20 +959,65 @@ namespace LAB2D.AI.Worker
         private Dictionary<int, ResourceInfo> GetBuildMaterialNeeds(string tileName)
         {
             var itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
-            BuildItemData buildData = itemDataManager.GetBuildItemDataByName(tileName);
-            if (buildData == null) return null;
 
-            return this.BuildResourceDictFromData(buildData);
+            // 尝试原始名字，失败则追加 _0（AutoGenerateDirections 的物品用变体名注册）
+            ItemData itemData = itemDataManager.GetByName(tileName);
+            if (itemData == null)
+            {
+                itemData = itemDataManager.GetByName(tileName + "_0");
+            }
+            if (itemData == null) return null;
+
+            // BuildItemData 且配置了 BuildCosts → 使用配置的材料清单
+            if (itemData is BuildItemData buildData && buildData.BuildCosts != null && buildData.BuildCosts.Count > 0)
+            {
+                return this.BuildResourceDictFromData(buildData);
+            }
+
+            // 物品存在但没有配置材料清单 → 使用默认材料（CustomWood x5）
+            ItemData wood = itemDataManager.GetByName("CustomWood");
+            if (wood != null && wood.Id > 0)
+            {
+                return new Dictionary<int, ResourceInfo>
+                {
+                    { wood.Id, new ResourceInfo(wood.Id, 5) },
+                };
+            }
+
+            // 连默认材料都找不到 → 免费建造
+            return new Dictionary<int, ResourceInfo>();
         }
 
         /// <summary>
         /// 在 Worker 周围找一个空闲的可建造位置。
+        /// 优先返回 PlannedHomePosition（如果仍然空闲），否则螺旋搜索新位置。
         /// 检查 BuildMap 和地面是否可通行。
         /// </summary>
         private Vector3Int? FindFreeBuildPosition(AWorker worker)
         {
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+
+            // 优先：已有规划位置且仍然空闲
+            if (wd?.PlannedHomePosition != null)
+            {
+                Vector3Int planned = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+                if (ASeek.IsCanReach(planned))
+                {
+                    var buildMap = Core.ServiceLocator.Get<BuildMap>();
+                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(planned);
+                    if (buildMap?.BuildMapDataLAB?.PosMap == null
+                        || !buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
+                    {
+                        return planned;
+                    }
+                }
+
+                // 规划位置已被占用或不可通行，清除并重新搜索
+                wd.PlannedHomePosition = null;
+            }
+
             Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
-            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            var buildMap2 = Core.ServiceLocator.Get<BuildMap>();
 
             // 从 Worker 位置向外螺旋搜索空闲位置
             for (int r = 1; r <= 8; r++)
@@ -827,11 +1034,11 @@ namespace LAB2D.AI.Worker
                         if (!ASeek.IsCanReach(pos)) continue;
 
                         // 检查 BuildMap 是否已有建筑
-                        if (buildMap != null)
+                        if (buildMap2 != null)
                         {
                             Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
-                            if (buildMap.BuildMapDataLAB?.PosMap != null
-                                && buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
+                            if (buildMap2.BuildMapDataLAB?.PosMap != null
+                                && buildMap2.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
                                 continue;
                         }
 
@@ -841,6 +1048,26 @@ namespace LAB2D.AI.Worker
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 为无家 Worker 选择建家位置。在附近扫描空地，选择最近的可建造位置。
+        /// 结果写入 WorkerData.PlannedHomePosition，后续 FindFreeBuildPosition 会优先返回该位置。
+        /// </summary>
+        public void TryPickHomeSite(AWorker worker)
+        {
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+            if (wd == null || wd.HomePosition != null) return; // 已有家
+            if (wd.PlannedHomePosition != null) return;        // 已规划过
+
+            Vector3Int? pos = this.FindFreeBuildPosition(worker);
+            if (pos.HasValue)
+            {
+                wd.PlannedHomePosition = Vector3IntLAB.ToVector3IntLAB(pos.Value);
+                AWorkerTask.LogProvider(
+                    $"{worker.name} 选定建家位置: ({pos.Value.x},{pos.Value.y})",
+                    LogManager.LogLevelEnum.Info);
+            }
         }
 
         /// <summary>

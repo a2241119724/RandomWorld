@@ -631,6 +631,12 @@ namespace LAB2D.Character.Worker
             /// <summary>家/床位置。default(Vector3IntLAB) 表示无家，由 FurnitureManager 分配床时同步写入。</summary>
             public Vector3IntLAB HomePosition;
 
+            /// <summary>规划的建家位置。default(Vector3IntLAB) 表示未规划，Worker 首次 Seek 时由 WorkerBrain 选定。</summary>
+            public Vector3IntLAB PlannedHomePosition;
+
+            /// <summary>建家阶段：0=需要建房间, 1=房间已建需要床, 2=完成。</summary>
+            public int HomeBuildStage;
+
             public WorkerData()
             {
                 // 设置默认可接受任务类型

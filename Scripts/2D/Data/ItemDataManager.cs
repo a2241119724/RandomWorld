@@ -217,7 +217,7 @@ namespace LAB2D.Data
         public BuildItemData GetBuildItemDataByName(string name)
         {
             ItemData itemData = this.GetByName(name);
-            return (BuildItemData)itemData;
+            return itemData as BuildItemData;
         }
     }
 }

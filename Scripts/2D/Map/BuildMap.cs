@@ -50,14 +50,24 @@ namespace LAB2D.Map
         public BuildMap AddBuild(Vector3Int targetMap, string tileName)
         {
             Vector3IntLAB vector3IntLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
-            BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileName);
+            ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tileName);
+            bool isNeedBuild = true;
+            Dictionary<int, ResourceInfo> buildCosts = new Dictionary<int, ResourceInfo>();
+
+            if (itemData is BuildItemData buildItemData)
+            {
+                isNeedBuild = buildItemData.IsNeedBuild;
+                buildCosts = BuildResourceDict(buildItemData);
+            }
+            // 非 BuildItemData 的物品默认需要建造，使用空材料清单
+
             this.tilemap.SetTile(targetMap, (TileBase)AWorkerTask.ResourceLoadProvider(tileName));
-            if (buildItemData.IsNeedBuild)
+            if (isNeedBuild)
             {
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
                 Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(targetMap)
-                    .SetNeedResource(BuildResourceDict(buildItemData)).Build(), new GameGridPosition(targetMap.x, targetMap.y, targetMap.z));
+                    .SetNeedResource(buildCosts).Build(), new GameGridPosition(targetMap.x, targetMap.y, targetMap.z));
 
                 // 设置可通过并且颜色变淡
                 this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
@@ -65,7 +75,7 @@ namespace LAB2D.Map
                 this.tilemap.SetColor(targetMap, this.initColor);
             }
 
-            BuildTileData buildTileData = new BuildTileData(tileName, !buildItemData.IsNeedBuild);
+            BuildTileData buildTileData = new BuildTileData(tileName, !isNeedBuild);
             if (this.BuildMapDataLAB.PosMap.ContainsKey(vector3IntLAB))
             {
                 // 门
@@ -108,7 +118,7 @@ namespace LAB2D.Map
             Core.ServiceLocator.Get<RoomManager>().Complete(vector3Int);
             BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
             this.tilemap.SetColor(vector3Int, Color.white);
-            if (!buildItemData.IsPass)
+            if (buildItemData != null && !buildItemData.IsPass)
             {
                 this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.Sprite);
             }
@@ -260,7 +270,7 @@ namespace LAB2D.Map
             if (buildTileData.IsComplete)
             {
                 this.tilemap.SetColor(vector3Int, Color.white);
-                if (!buildItemData.IsPass)
+                if (buildItemData != null && !buildItemData.IsPass)
                 {
                     this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.Sprite);
                 }
@@ -325,7 +335,7 @@ namespace LAB2D.Map
         private static Dictionary<int, ResourceInfo> BuildResourceDict(BuildItemData buildItemData)
         {
             Dictionary<int, ResourceInfo> dict = new ();
-            if (buildItemData.BuildCosts != null)
+            if (buildItemData != null && buildItemData.BuildCosts != null)
             {
                 foreach (ResourceCost cost in buildItemData.BuildCosts)
                 {

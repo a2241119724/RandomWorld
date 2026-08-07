@@ -24,6 +24,7 @@ namespace LAB2D.Character.Worker.State
         private readonly WorkerBrain brain = new WorkerBrain(); // 自主决策引擎
         private Vector3Int targetMap;
         private long seekTimes; // 没有任务寻路的次数
+        private long lastDecisionAtSeekTimes; // 上次决策时的 seekTimes，用于防止快速重复决策
 
         public WorkerSeekState(AWorker character)
             : base(character)
@@ -79,13 +80,35 @@ namespace LAB2D.Character.Worker.State
                 AWorkerTask.LogProvider(this.Character.name + " 没有任务!", LogManager.LogLevelEnum.Trace);
                 ++this.seekTimes;
 
-                // 每隔一定次数进行自主决策
-                if (this.seekTimes % WorkerTaskTimeConfig.ExerciseSeekThreshold == 0)
+                // 首次 Seek 时选定建家位置
+                if (this.seekTimes == 1)
                 {
-                    // 先尝试自动出售资源（经济闭环：资源→金币）
-                    this.TryAutoSellResources(workerData);
+                    this.brain.TryPickHomeSite(this.Character);
+                }
 
-                    // 然后做自主决策
+                // 判断是否应该立即决策：
+                // 1. 周期性决策（每 ExerciseSeekThreshold 次）
+                // 2. 无家且有材料时快速重评（但至少间隔 5 次 Seek，避免循环发布悬赏）
+                bool isPeriodic = this.seekTimes % WorkerTaskTimeConfig.ExerciseSeekThreshold == 0;
+                bool isQuickReeval = false;
+                if (!isPeriodic && workerData.HomePosition == null && workerData.Task == null)
+                {
+                    bool hasMaterials = this.Character.GetAllResources().Count > 0;
+                    bool cooldownPassed = (this.seekTimes - this.lastDecisionAtSeekTimes) >= 5;
+                    isQuickReeval = hasMaterials && cooldownPassed;
+                }
+
+                if (isPeriodic || isQuickReeval)
+                {
+                    this.lastDecisionAtSeekTimes = this.seekTimes;
+
+                    // 周期性决策时尝试自动出售资源（经济闭环：资源→金币）
+                    if (isPeriodic)
+                    {
+                        this.TryAutoSellResources(workerData);
+                    }
+
+                    // 做自主决策
                     this.ExecuteAutonomousDecision(workerData);
                 }
 
@@ -286,6 +309,9 @@ namespace LAB2D.Character.Worker.State
                     decision.TargetPosition.z),
                 2);
 
+            // 无家者发布建造悬赏后推进到下一阶段
+            this.AdvanceHomeBuildStage(wd, decision.BuildTileName);
+
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 发布了建造悬赏: pos=({decision.TargetPosition.x},{decision.TargetPosition.y}) 悬赏金 {reward}",
                 LogManager.LogLevelEnum.Info);
@@ -322,6 +348,9 @@ namespace LAB2D.Character.Worker.State
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             workerData.Task = buildTask;
             buildTask.Start(this.Character);
+
+            // 无家者建完房间后推进到下一阶段（建床）
+            this.AdvanceHomeBuildStage(workerData, decision.BuildTileName);
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 为自己建造 {decision.BuildTileName}: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
@@ -795,6 +824,39 @@ namespace LAB2D.Character.Worker.State
                 // Worker.SeekLock.ReleaseLock(this.Character);
                 // 寻路结束
                 this.Character.Manager.ChangeState(TypeEnum.Move);
+            }
+        }
+
+        /// <summary>
+        /// 无家者建造任务创建后推进建家阶段。
+        /// 阶段 0-6：墙壁，阶段 7：床，阶段 8：完成。
+        /// </summary>
+        private void AdvanceHomeBuildStage(AWorker.WorkerData wd, string buildTileName)
+        {
+            if (wd == null || wd.HomePosition != null) return;
+
+            const int wallCount = 14; // 与 WorkerBrain.WallCount 保持一致
+            int prevStage = wd.HomeBuildStage;
+            wd.HomeBuildStage++;
+
+            if (buildTileName.StartsWith("CustomRoomWall") && wd.HomeBuildStage < wallCount)
+            {
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 建家: 墙壁{prevStage + 1}/{wallCount} → 下一块",
+                    LogManager.LogLevelEnum.Info);
+            }
+            else if (buildTileName.StartsWith("CustomRoomWall") && wd.HomeBuildStage >= wallCount)
+            {
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 建家: 墙壁完成 → 接下来建床",
+                    LogManager.LogLevelEnum.Info);
+            }
+            else if (buildTileName == "SingleBed")
+            {
+                wd.HomeBuildStage = wallCount + 1; // 直接到完成
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 建家: 床完成 → 有家了!",
+                    LogManager.LogLevelEnum.Info);
             }
         }
 
