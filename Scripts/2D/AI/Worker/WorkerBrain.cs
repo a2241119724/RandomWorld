@@ -922,10 +922,16 @@ namespace LAB2D.AI.Worker
             5,              // 11: 左下角 → _5 (左下)
             6, 6, 6,        // 12-14: 左边 → _6 (下)
         };
-        private const int WallCount = 15;           // 15 面墙
-        private const int DoorStage = WallCount;    // 15: 门
-        private const int BedStage = WallCount + 1; // 16: 床
-        private const int CompleteStage = WallCount + 2; // 17: 完成
+        public const int WallCount = 15;           // 15 面墙
+        public const int DoorStage = WallCount;    // 15: 门
+        public const int BedStage = WallCount + 1; // 16: 床
+        public const int CompleteStage = WallCount + 2; // 17: 完成
+
+        /// <summary>获取房间所有墙壁偏移（供外部注册房间使用）。</summary>
+        public static IReadOnlyList<Vector3Int> GetWallOffsets() => WallOffsets;
+
+        /// <summary>门相对于中心的偏移。</summary>
+        public static readonly Vector3Int DoorOffset = new Vector3Int(0, -2, 0);
 
         /// <summary>
         /// 自主建造决策：Worker 决定为自己建造房屋。

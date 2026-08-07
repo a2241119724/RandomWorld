@@ -668,6 +668,9 @@ namespace LAB2D.Character.Worker
             /// <summary>连续地面睡眠次数（用于递增惩罚）。</summary>
             public int GroundSleepCount;
 
+            /// <summary>任务完成后强制下次 Seek 立即触发决策，跳过随机漫游。</summary>
+            public bool ForceDecisionOnNextSeek;
+
             /// <summary>当前阶段需要囤积的食物数量。</summary>
             public int FoodStockpileTarget = 3;
 

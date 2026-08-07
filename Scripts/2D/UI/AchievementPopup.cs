@@ -157,16 +157,19 @@ namespace LAB2D.UI
             this.nameText.text = data.Name;
             this.pointsText.text = data.PointsText;
 
-            // 确保 GameObject 激活，否则 StartCoroutine 会报错
-            if (!this.gameObject.activeSelf)
+            // 确保 GameObject 在层级中激活，否则 StartCoroutine 会报错
+            // 使用 activeInHierarchy 而非 activeSelf，因为父级可能不活跃
+            if (!this.gameObject.activeInHierarchy)
             {
                 this.gameObject.SetActive(true);
             }
 
-            // 重置为完全透明，协程从淡入开始
+            // 重置为完全透明并恢复交互，协程从淡入开始
             if (this.canvasGroup != null)
             {
                 this.canvasGroup.alpha = 0f;
+                this.canvasGroup.blocksRaycasts = true;
+                this.canvasGroup.interactable = true;
             }
 
             // 停掉之前的自动隐藏协程
@@ -213,8 +216,13 @@ namespace LAB2D.UI
             // 从队列移除已展示成就
             if (Core.ServiceLocator.TryGet(out AchievementManager am)) { am.DequeuePendingUnlock(); }
 
-            // 弹窗播放完毕，设为 inactive 以便下次 Show 时重新激活
-            this.gameObject.SetActive(false);
+            // 弹窗播放完毕，禁用交互及射线阻挡，避免干扰底层 UI
+            // 不再使用 SetActive(false)，防止下次 Show 时因父级 inactive 导致 StartCoroutine 失败
+            if (this.canvasGroup != null)
+            {
+                this.canvasGroup.blocksRaycasts = false;
+                this.canvasGroup.interactable = false;
+            }
         }
     }
 }

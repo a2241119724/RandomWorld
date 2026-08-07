@@ -542,6 +542,8 @@ namespace LAB2D.Character.Worker.Task
             if (workerData != null)
             {
                 workerData.Personality = workerData.Personality.AfterTaskComplete();
+                // 任务完成后强制下次 Seek 立即决策，避免无意义漫游
+                workerData.ForceDecisionOnNextSeek = true;
             }
         }
 

@@ -38,9 +38,9 @@ namespace LAB2D.Character.Worker.State
 
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
 
-            // 没有任务
             Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
-            this.targetMap = AWorkerTask.GenCanReachPosProvider(posMap);
+            bool targetExplicitlySet = false;
+            bool skipFinalSeek = false;
             if (workerData.Task != null)
             {
                 // 有任务 → 寻路到任务位置
@@ -73,6 +73,7 @@ namespace LAB2D.Character.Worker.State
                 }
 
                 this.targetMap = closedPos;
+                targetExplicitlySet = true;
             }
             else
             {
@@ -152,6 +153,13 @@ namespace LAB2D.Character.Worker.State
                     }
                 }
 
+                // 任务完成后强制立即决策，跳过无意义的漫游间隔
+                if (workerData.ForceDecisionOnNextSeek)
+                {
+                    workerData.ForceDecisionOnNextSeek = false;
+                    isQuickReeval = true;
+                }
+
                 if (isPeriodic || isQuickReeval)
                 {
                     this.lastDecisionAtSeekTimes = this.seekTimes;
@@ -164,6 +172,20 @@ namespace LAB2D.Character.Worker.State
 
                     // 做自主决策
                     this.ExecuteAutonomousDecision(workerData);
+
+                    // 决策创建了任务 → Start() 内部 ChangeState(Seek) 已触发重入 OnEnter
+                    // 重入的 OnEnter 已完成寻路到邻居位置，这里不覆盖 targetMap，不重复 Seek
+                    if (workerData.Task != null)
+                    {
+                        targetExplicitlySet = true;
+                        skipFinalSeek = true;
+                    }
+                }
+
+                // 没有任务且决策未创建新任务 → 生成随机路点进行漫游
+                if (!targetExplicitlySet)
+                {
+                    this.targetMap = AWorkerTask.GenCanReachPosProvider(posMap);
                 }
 
                 // 连续 30 次以上无任务寻路 → 游手好闲惩罚：勤奋↓ 心情↓
@@ -173,8 +195,11 @@ namespace LAB2D.Character.Worker.State
                 }
             }
 
-            AWorkerTask.LogProvider(this.Character.name + " 寻路->" + this.targetMap, LogManager.LogLevelEnum.Trace);
-            this.Character.Seek.Seek(this.targetMap);
+            if (!skipFinalSeek)
+            {
+                AWorkerTask.LogProvider(this.Character.name + " 寻路->" + this.targetMap, LogManager.LogLevelEnum.Trace);
+                this.Character.Seek.Seek(this.targetMap);
+            }
         }
 
         /// <summary>
@@ -1037,7 +1062,43 @@ namespace LAB2D.Character.Worker.State
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 建家: 床完成 → 有家了! → Settled 阶段",
                     LogManager.LogLevelEnum.Info);
+
+                // 将房间注册到 RoomManager（所有墙壁和门已建完）
+                this.RegisterWorkerRoom(wd);
             }
+        }
+
+        /// <summary>
+        /// 建家完成后，将所有墙壁和门注册到 RoomManager。
+        /// </summary>
+        private void RegisterWorkerRoom(AWorker.WorkerData wd)
+        {
+            if (wd?.PlannedHomePosition == null) return;
+
+            Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+            var roomInfo = new LAB2D.Item.RoomInfo();
+            var wallOffsets = LAB2D.AI.Worker.WorkerBrain.GetWallOffsets();
+
+            // 收集所有墙壁位置
+            for (int i = 0; i < LAB2D.AI.Worker.WorkerBrain.WallCount; i++)
+            {
+                roomInfo.Points.Add(center + wallOffsets[i]);
+            }
+
+            // 门位置
+            roomInfo.Points.Add(center + LAB2D.AI.Worker.WorkerBrain.DoorOffset);
+
+            // 所有点都已建完，进度为 0
+            roomInfo.Progress = 0;
+            roomInfo.Temperature = 25.0f;
+            roomInfo.Humidity = 25.0f;
+
+            Core.ServiceLocator.Get<LAB2D.Item.RoomManager>().AddRoom(
+                System.Guid.NewGuid().ToString(), roomInfo);
+
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 房间已注册: {roomInfo.Points.Count} 个墙壁/门位置",
+                LogManager.LogLevelEnum.Info);
         }
 
         /// <inheritdoc/>
