@@ -112,6 +112,9 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <inheritdoc/>
+        protected override float TiredCostPerSecond => WorkerTaskTimeConfig.MediumWorkTiredCostPerSecond;
+
+        /// <inheritdoc/>
         protected override bool StageChangeRule(AWorker worker)
         {
             // 只worker携带的资源不够时,取建筑材料

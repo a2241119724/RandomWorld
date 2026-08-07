@@ -173,6 +173,9 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <inheritdoc/>
+        protected override float TiredCostPerSecond => WorkerTaskTimeConfig.LightWorkTiredCostPerSecond;
+
+        /// <inheritdoc/>
         protected override void Init()
         {
             this.AvailableNeighborPos.Clear();

@@ -180,6 +180,9 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <inheritdoc/>
+        protected override float TiredCostPerSecond => WorkerTaskTimeConfig.HeavyWorkTiredCostPerSecond;
+
+        /// <inheritdoc/>
         public override TaskTraits Traits => TaskTraits.TrackPositions;
 
         protected override void Init()

@@ -1031,8 +1031,6 @@ namespace LAB2D.Character.Worker.State
             if (wd == null || wd.HomePosition != null) return;
 
             const int wallCount = 15;      // 与 WorkerBrain.WallCount 一致
-            const int doorStage = 15;      // 门
-            const int bedStage = 16;       // 床
             const int completeStage = 17;  // 完成
             int prevStage = wd.HomeBuildStage;
             wd.HomeBuildStage++;

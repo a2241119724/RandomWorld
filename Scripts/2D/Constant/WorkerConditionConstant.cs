@@ -16,33 +16,38 @@ namespace LAB2D.Constant
         /// 饥饿值自然衰减速度，沿用原 GlobalInit 中的默认表现并集中维护。
         /// 调大该值会让工人更频繁进入吃饭任务。
         /// </summary>
-        public const float HungryDecayPerSecond = 0.05f;
+        /// <summary>饥饿值自然衰减速度（约67分钟归零，一天约消耗45点，需2次进食）。</summary>
+        public const float HungryDecayPerSecond = 0.025f;
 
         /// <summary>
         /// 疲劳值自然衰减速度，沿用原 GlobalInit 中的默认表现并集中维护。
         /// 调大该值会让工人更频繁进入睡觉任务。
         /// </summary>
-        public const float TiredDecayPerSecond = 0.01f;
+        /// <summary>疲劳值自然衰减速度（一天约消耗27点基础疲劳，配合工作消耗约半天触发睡眠）。</summary>
+        public const float TiredDecayPerSecond = 0.015f;
 
         // ---- 精气神 (Spirit) 常量 ----
 
-        /// <summary>精气神基础衰减速度（约83分钟归零）。</summary>
-        public const float SpiritDecayPerSecond = 0.02f;
+        /// <summary>精气神基础衰减速度（约111分钟归零）。</summary>
+        public const float SpiritDecayPerSecond = 0.015f;
 
-        /// <summary>工作时精气神额外衰减速度。</summary>
-        public const float SpiritWorkDecayPerSecond = 0.04f;
+        /// <summary>工作时精气神额外衰减速度（工作总计0.04/s）。</summary>
+        public const float SpiritWorkDecayPerSecond = 0.025f;
 
-        /// <summary>漫游时每秒精气神恢复量。</summary>
-        public const float SpiritWanderRestorePerSecond = 0.15f;
+        /// <summary>漫游时每秒精气神恢复量（4路点×6s×0.5=12点，有意义的精神补充）。</summary>
+        public const float SpiritWanderRestorePerSecond = 0.50f;
 
         /// <summary>有床睡眠额外恢复的精气神。</summary>
         public const float SpiritSleepRestoreBonus = 30f;
 
-        /// <summary>地面睡眠恢复的精气神。</summary>
-        public const float SpiritSleepRestoreOnGround = 10f;
+        /// <summary>地面睡眠恢复的精气神（缩小与有床睡眠的差距）。</summary>
+        public const float SpiritSleepRestoreOnGround = 20f;
 
-        /// <summary>地面睡眠疲劳恢复比例（床=100%）。</summary>
-        public const float GroundSleepTiredRestoreRatio = 0.5f;
+        /// <summary>地面睡眠疲劳恢复比例（床=100%，地面65%，减少两极分化）。</summary>
+        public const float GroundSleepTiredRestoreRatio = 0.65f;
+
+        /// <summary>每个食物恢复的饥饿值（任务吃和自吃统一口径）。</summary>
+        public const float HungryRestorePerFood = 25f;
 
         /// <summary>精气神低阈值。</summary>
         public const float SpiritLowThreshold = 30f;

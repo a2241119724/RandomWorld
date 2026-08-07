@@ -110,6 +110,9 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <inheritdoc/>
+        protected override float TiredCostPerSecond => WorkerTaskTimeConfig.LightWorkTiredCostPerSecond;
+
+        /// <inheritdoc/>
         protected override bool StageChangeRule(AWorker worker)
         {
             switch (this.stage)

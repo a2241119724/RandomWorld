@@ -72,8 +72,8 @@ namespace LAB2D.AI.Worker
         /// <summary>饥饿阈值：低于此值优先找食物</summary>
         public float HungryThreshold = 30f;
 
-        /// <summary>疲劳阈值：低于此值优先睡觉</summary>
-        public float TiredThreshold = 30f;
+        /// <summary>疲劳阈值：低于此值优先睡觉（提高以更早触发睡眠，避免进入低效区）。</summary>
+        public float TiredThreshold = 35f;
 
         /// <summary>事业心阈值：高于此值驱动自主赚钱</summary>
         public float AmbitionThreshold = 50f;
@@ -418,8 +418,8 @@ namespace LAB2D.AI.Worker
                         $"Bootstrap: 采集食物({wd.CurHungry:F0})");
             }
 
-            // 2. 疲劳 < 50 → 睡觉
-            if (wd.CurTired < 50f)
+            // 2. 疲劳 < 55 → 睡觉（Bootstrap阶段更早休息保证安全）
+            if (wd.CurTired < 55f)
                 return Decision.Make(WorkerDecisionType.Sleep,
                     $"Bootstrap: 疲劳({wd.CurTired:F0}), 休息");
 

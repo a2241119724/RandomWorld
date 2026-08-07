@@ -42,17 +42,17 @@ MonoBehaviour:
     - Name: Apple
       ResourceInfo:
         Id: 500000
-        Count: 20
+        Count: 5
         OwnerId: -451824
     - Name: CustomWood
       ResourceInfo:
         Id: 300000
-        Count: 20
+        Count: 5
         OwnerId: -451824
     - Name: CustomStone
       ResourceInfo:
         Id: 300001
-        Count: 20
+        Count: 5
         OwnerId: -451824
   - Name: SnowTree
     DropItems:

@@ -418,6 +418,12 @@ namespace LAB2D.Character.Worker.Task
         protected virtual bool ConsumesTiredness => true;
 
         /// <summary>
+        /// 此任务的疲劳消耗速率（/秒）。子类可重写以实现差异化消耗。
+        /// 默认返回 WorkTiredCostPerSecond。
+        /// </summary>
+        protected virtual float TiredCostPerSecond => WorkerTaskTimeConfig.WorkTiredCostPerSecond;
+
+        /// <summary>
         /// Worker 饥饿时是否阻止接此任务。Eat 任务重写为 false（饥饿时才需要吃饭）。
         /// </summary>
         protected virtual bool BlocksWhenHungry => true;
@@ -444,12 +450,13 @@ namespace LAB2D.Character.Worker.Task
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
 
             // 子类可通过 ConsumesTiredness 虚属性控制是否消耗疲劳
+            // 通过 TiredCostPerSecond 虚属性支持差异化消耗
             if (this.ConsumesTiredness)
             {
                 workerData.CurTired = this.progressService.ApplyTiredCost(
                     workerData.CurTired,
                     deltaTime,
-                    WorkerTaskTimeConfig.WorkTiredCostPerSecond);
+                    this.TiredCostPerSecond);
             }
 
             float progressMultiplier = ProgressMultiplierProvider(this.TaskType, worker);

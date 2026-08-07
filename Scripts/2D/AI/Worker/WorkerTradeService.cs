@@ -44,7 +44,7 @@ namespace LAB2D.AI.Worker
                 buyer.SubResource(new ResourceInfo(ownFood.Id, eatCount));
 
                 // 恢复饥饿值
-                buyerData.CurHungry = Mathf.Min(buyerData.MaxHungry, buyerData.CurHungry + 30f);
+                buyerData.CurHungry = Mathf.Min(buyerData.MaxHungry, buyerData.CurHungry + Constant.WorkerConditionConstant.HungryRestorePerFood);
 
                 // 心情微升（吃到东西了）
                 buyerData.Personality = buyerData.Personality.AfterEarnGold(0); // 复用心情微升
@@ -60,7 +60,7 @@ namespace LAB2D.AI.Worker
                 ResourceInfo food = storageFoods[0];
                 int take = Mathf.Min(food.Count, 1);
                 buyer.WithdrawFromStorage(food.Id, take);
-                buyerData.CurHungry = Mathf.Min(buyerData.MaxHungry, buyerData.CurHungry + 30f);
+                buyerData.CurHungry = Mathf.Min(buyerData.MaxHungry, buyerData.CurHungry + Constant.WorkerConditionConstant.HungryRestorePerFood);
                 LogProvider($"{buyer.name} 从仓库取食物吃, 饥饿恢复至 {buyerData.CurHungry:F0}");
                 return true;
             }
@@ -113,7 +113,7 @@ namespace LAB2D.AI.Worker
 
             // 买家吃下食物
             buyer.SubResource(new ResourceInfo(sellerFood.Id, tradeCount));
-            buyerData.CurHungry = Mathf.Min(buyerData.MaxHungry, buyerData.CurHungry + 30f);
+            buyerData.CurHungry = Mathf.Min(buyerData.MaxHungry, buyerData.CurHungry + Constant.WorkerConditionConstant.HungryRestorePerFood);
 
             // 人格更新
             buyerData.Personality = buyerData.Personality.AfterSpendGold(price);

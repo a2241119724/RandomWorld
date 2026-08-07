@@ -52,7 +52,7 @@ namespace LAB2D.Character.Worker.Task
             }
 
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            workerData.CurHungry = System.Math.Min(workerData.MaxHungry, workerData.CurHungry + (resourceInfo.Count * 10));
+            workerData.CurHungry = System.Math.Min(workerData.MaxHungry, workerData.CurHungry + (resourceInfo.Count * Constant.WorkerConditionConstant.HungryRestorePerFood));
 
             // 将饥饿任务放回任务管理中
             base.Finish(worker);
