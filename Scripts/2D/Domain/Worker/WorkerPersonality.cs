@@ -116,6 +116,16 @@ namespace LAB2D.Domain.Worker
                 Clamp(this.Sociality + 1f));
         }
 
+        /// <summary>漫游恢复：心情上升，勤奋微升，不影响其他。</summary>
+        public WorkerPersonality AfterWander()
+        {
+            return new WorkerPersonality(
+                Clamp(this.Mood + 3f),
+                this.Ambition,
+                Clamp(this.Diligence + 1f),
+                this.Sociality);
+        }
+
         public override string ToString()
         {
             return $"心情:{this.Mood:F0} 事业心:{this.Ambition:F0} 勤奋:{this.Diligence:F0} 社交:{this.Sociality:F0}";

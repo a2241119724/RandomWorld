@@ -137,6 +137,13 @@ namespace LAB2D.Character.Worker
                 trigger = this.gameObject.AddComponent<NPCDialogueTrigger>();
                 trigger.profileName = "Worker";
             }
+
+            // 迁移逻辑：旧存档 Worker 有家但 LifeStage 为默认值 Bootstrap → 升级到 Settled
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            if (wd != null && wd.HomePosition != null && wd.LifeStage == Domain.Worker.WorkerLifeStage.Bootstrap)
+            {
+                wd.LifeStage = Domain.Worker.WorkerLifeStage.Settled;
+            }
         }
 
         public void Update()
@@ -152,7 +159,7 @@ namespace LAB2D.Character.Worker
             // 执行当前状态的函数
             this.Manager.CurrentState.OnUpdate();
 
-            // 每 60 帧更新人格：饥饿/疲劳导致心情下降
+            // 每 60 帧更新人格：饥饿/疲劳/精气神导致心情下降
             if (Time.frameCount % 60 == 0)
             {
                 WorkerData wd = this.CharacterDataLAB as WorkerData;
@@ -161,6 +168,18 @@ namespace LAB2D.Character.Worker
                     float hungryRatio = wd.MaxHungry > 0 ? wd.CurHungry / wd.MaxHungry : 1f;
                     float tiredRatio = wd.MaxTired > 0 ? wd.CurTired / wd.MaxTired : 1f;
                     wd.Personality = wd.Personality.AfterSuffer(hungryRatio, tiredRatio);
+
+                    // 精气神过低额外降低心情
+                    float spiritRatio = wd.MaxSpirit > 0 ? wd.CurSpirit / wd.MaxSpirit : 1f;
+                    if (spiritRatio < 0.3f)
+                    {
+                        float spiritPenalty = (1f - spiritRatio) * 2f;
+                        wd.Personality = new Domain.Worker.WorkerPersonality(
+                            Math.Max(0f, wd.Personality.Mood - spiritPenalty),
+                            wd.Personality.Ambition,
+                            wd.Personality.Diligence,
+                            wd.Personality.Sociality);
+                    }
                 }
             }
         }
@@ -606,7 +625,7 @@ namespace LAB2D.Character.Worker
             /// <summary>
             /// 货币钱包
             /// </summary>
-            public Domain.Worker.CurrencyAmount Wallet = new Domain.Worker.CurrencyAmount(100);
+            public Domain.Worker.CurrencyAmount Wallet = new Domain.Worker.CurrencyAmount(30);
 
             /// <summary>
             /// 人格数值 — 心情、事业心、勤奋、社交。
@@ -636,6 +655,24 @@ namespace LAB2D.Character.Worker
 
             /// <summary>建家阶段：0=需要建房间, 1=房间已建需要床, 2=完成。</summary>
             public int HomeBuildStage;
+
+            /// <summary>当前精气神值。</summary>
+            public float CurSpirit = 100.0f;
+
+            /// <summary>最大精气神值。</summary>
+            public float MaxSpirit = 100.0f;
+
+            /// <summary>生命周期阶段。</summary>
+            public Domain.Worker.WorkerLifeStage LifeStage = Domain.Worker.WorkerLifeStage.Bootstrap;
+
+            /// <summary>连续地面睡眠次数（用于递增惩罚）。</summary>
+            public int GroundSleepCount;
+
+            /// <summary>当前阶段需要囤积的食物数量。</summary>
+            public int FoodStockpileTarget = 3;
+
+            /// <summary>漫游剩余路点数 — >0 表示正在漫游，到达目标后递减并继续漫游。</summary>
+            public int WanderWaypointsRemaining;
 
             public WorkerData()
             {

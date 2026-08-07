@@ -12,7 +12,7 @@ namespace LAB2D.Character.Worker.Task
     public static class WorkerTaskTimeConfig
     {
         public const float DefaultTaskSeconds = 1.0f;
-        public const float WorkTiredCostPerSecond = 0.08f;
+        public const float WorkTiredCostPerSecond = 0.04f;
 
         public const float BuildFetchResourceSeconds = 0.8f;
         public const float BuildBaseSeconds = 1.5f;
@@ -27,6 +27,8 @@ namespace LAB2D.Character.Worker.Task
         public const long ExerciseSeekThreshold = 10;
         public const float WearSeconds = 0.8f;
         public const float SleepSeconds = 8.0f;
+        public const float GroundSleepSeconds = 10.0f;   // 地面睡眠更久，恢复更少
+        public const float WanderSeconds = 6.0f;          // 漫游时长
         public const float PlantFetchSeedSeconds = 0.8f;
         public const float PlantOneSeedSeconds = 1.1f;
 

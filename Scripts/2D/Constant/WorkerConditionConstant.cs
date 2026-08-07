@@ -16,13 +16,36 @@ namespace LAB2D.Constant
         /// 饥饿值自然衰减速度，沿用原 GlobalInit 中的默认表现并集中维护。
         /// 调大该值会让工人更频繁进入吃饭任务。
         /// </summary>
-        public const float HungryDecayPerSecond = 0.1f;
+        public const float HungryDecayPerSecond = 0.05f;
 
         /// <summary>
         /// 疲劳值自然衰减速度，沿用原 GlobalInit 中的默认表现并集中维护。
         /// 调大该值会让工人更频繁进入睡觉任务。
         /// </summary>
         public const float TiredDecayPerSecond = 0.01f;
+
+        // ---- 精气神 (Spirit) 常量 ----
+
+        /// <summary>精气神基础衰减速度（约83分钟归零）。</summary>
+        public const float SpiritDecayPerSecond = 0.02f;
+
+        /// <summary>工作时精气神额外衰减速度。</summary>
+        public const float SpiritWorkDecayPerSecond = 0.04f;
+
+        /// <summary>漫游时每秒精气神恢复量。</summary>
+        public const float SpiritWanderRestorePerSecond = 0.15f;
+
+        /// <summary>有床睡眠额外恢复的精气神。</summary>
+        public const float SpiritSleepRestoreBonus = 30f;
+
+        /// <summary>地面睡眠恢复的精气神。</summary>
+        public const float SpiritSleepRestoreOnGround = 10f;
+
+        /// <summary>地面睡眠疲劳恢复比例（床=100%）。</summary>
+        public const float GroundSleepTiredRestoreRatio = 0.5f;
+
+        /// <summary>精气神低阈值。</summary>
+        public const float SpiritLowThreshold = 30f;
 
         /// <summary>
         /// 进入饥饿或疲劳提示的比例阈值。委托自 WorkerConditionRuleService。

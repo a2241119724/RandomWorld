@@ -80,6 +80,45 @@ namespace LAB2D.Character.Worker.State
                 AWorkerTask.LogProvider(this.Character.name + " 没有任务!", LogManager.LogLevelEnum.Trace);
                 ++this.seekTimes;
 
+                // 漫游到达处理：到达路点后恢复精气神+心情，继续或结束漫游
+                if (workerData.WanderWaypointsRemaining > 0)
+                {
+                    workerData.WanderWaypointsRemaining--;
+                    float restoreAmount = Constant.WorkerConditionConstant.SpiritWanderRestorePerSecond
+                        * WorkerTaskTimeConfig.WanderSeconds;
+                    workerData.CurSpirit = System.Math.Min(workerData.MaxSpirit,
+                        workerData.CurSpirit + restoreAmount);
+                    workerData.Personality = workerData.Personality.AfterWander();
+
+                    // 小概率(5%)发现随机物品
+                    if (UnityEngine.Random.value < 0.05f)
+                    {
+                        AWorkerTask.LogProvider(
+                            $"{this.Character.name} 漫游中发现了一些东西!",
+                            LogManager.LogLevelEnum.Info);
+                        // TODO: 可通过 DropManager 在附近生成随机基础资源
+                    }
+
+                    if (workerData.WanderWaypointsRemaining > 0)
+                    {
+                        // 继续漫游：选下一个路点，不触发正常决策
+                        Vector3Int currentPos = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+                        this.targetMap = AWorkerTask.GenCanReachPosProvider(currentPos);
+                        this.Character.Seek.Seek(this.targetMap);
+                        AWorkerTask.LogProvider(
+                            $"{this.Character.name} 继续漫游 剩余{workerData.WanderWaypointsRemaining}路点 精气神={workerData.CurSpirit:F0}",
+                            LogManager.LogLevelEnum.Trace);
+                        return;
+                    }
+                    else
+                    {
+                        // 漫游结束，精气神已恢复，正常决策
+                        AWorkerTask.LogProvider(
+                            $"{this.Character.name} 漫游结束 精气神={workerData.CurSpirit:F0}",
+                            LogManager.LogLevelEnum.Info);
+                    }
+                }
+
                 // 首次 Seek 时选定建家位置
                 if (this.seekTimes == 1)
                 {
@@ -87,15 +126,30 @@ namespace LAB2D.Character.Worker.State
                 }
 
                 // 判断是否应该立即决策：
-                // 1. 周期性决策（每 ExerciseSeekThreshold 次）
-                // 2. 无家且有材料时快速重评（但至少间隔 5 次 Seek，避免循环发布悬赏）
-                bool isPeriodic = this.seekTimes % WorkerTaskTimeConfig.ExerciseSeekThreshold == 0;
-                bool isQuickReeval = false;
-                if (!isPeriodic && workerData.HomePosition == null && workerData.Task == null)
+                // 决策间隔根据 LifeStage 调整：Bootstrap=2, Settled=10, Established=15
+                int decisionInterval = workerData.LifeStage switch
                 {
-                    bool hasMaterials = this.Character.GetAllResources().Count > 0;
-                    bool cooldownPassed = (this.seekTimes - this.lastDecisionAtSeekTimes) >= 5;
-                    isQuickReeval = hasMaterials && cooldownPassed;
+                    Domain.Worker.WorkerLifeStage.Bootstrap => 2,
+                    Domain.Worker.WorkerLifeStage.Settled => (int)WorkerTaskTimeConfig.ExerciseSeekThreshold,
+                    Domain.Worker.WorkerLifeStage.Established => 15,
+                    _ => (int)WorkerTaskTimeConfig.ExerciseSeekThreshold,
+                };
+                bool isPeriodic = this.seekTimes % decisionInterval == 0;
+                bool isQuickReeval = false;
+                if (!isPeriodic && workerData.Task == null)
+                {
+                    if (workerData.LifeStage == Domain.Worker.WorkerLifeStage.Bootstrap)
+                    {
+                        // Bootstrap 快速重评
+                        bool cooldownPassed = (this.seekTimes - this.lastDecisionAtSeekTimes) >= 2;
+                        isQuickReeval = cooldownPassed;
+                    }
+                    else if (workerData.HomePosition == null)
+                    {
+                        bool hasMaterials = this.Character.GetAllResources().Count > 0;
+                        bool cooldownPassed = (this.seekTimes - this.lastDecisionAtSeekTimes) >= 5;
+                        isQuickReeval = hasMaterials && cooldownPassed;
+                    }
                 }
 
                 if (isPeriodic || isQuickReeval)
@@ -112,8 +166,8 @@ namespace LAB2D.Character.Worker.State
                     this.ExecuteAutonomousDecision(workerData);
                 }
 
-                // 每 10 次无任务寻路 → 空闲惩罚：勤奋↓ 心情↓
-                if (this.seekTimes % 10 == 0 && workerData != null)
+                // 连续 30 次以上无任务寻路 → 游手好闲惩罚：勤奋↓ 心情↓
+                if (this.seekTimes > 0 && this.seekTimes % 30 == 0 && workerData != null)
                 {
                     workerData.Personality = workerData.Personality.AfterIdle();
                 }
@@ -174,7 +228,12 @@ namespace LAB2D.Character.Worker.State
                     break;
 
                 case WorkerDecisionType.Sleep:
+                case WorkerDecisionType.GroundSleep:
                     this.CreateSelfSleepTask();
+                    break;
+
+                case WorkerDecisionType.Wander:
+                    this.CreateWanderTask();
                     break;
 
                 case WorkerDecisionType.Idle:
@@ -280,10 +339,10 @@ namespace LAB2D.Character.Worker.State
             var currencyManager = Core.ServiceLocator.Get<Gameplay.CurrencyManager>();
             if (!currencyManager.PostBounty(issuerId, reward)) return false;
 
-            // 在 BuildMap 中注册建造位置（放置建造中的标记），标记为发布者所有
+            // 在 BuildMap 中注册建造位置（仅注册不创建任务，避免 AddBuild 内部自动创建重复任务）
             if (!string.IsNullOrEmpty(decision.BuildTileName))
             {
-                Core.ServiceLocator.Get<BuildMap>().AddBuild(
+                Core.ServiceLocator.Get<BuildMap>().ReserveBuildPosition(
                     decision.TargetPosition, decision.BuildTileName);
             }
 
@@ -309,8 +368,8 @@ namespace LAB2D.Character.Worker.State
                     decision.TargetPosition.z),
                 2);
 
-            // 无家者发布建造悬赏后推进到下一阶段
-            this.AdvanceHomeBuildStage(wd, decision.BuildTileName);
+            // 建造悬赏不推进建家阶段（悬赏可能过期），等下次决策时重新评估
+            // this.AdvanceHomeBuildStage(wd, decision.BuildTileName);
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 发布了建造悬赏: pos=({decision.TargetPosition.x},{decision.TargetPosition.y}) 悬赏金 {reward}",
@@ -332,10 +391,10 @@ namespace LAB2D.Character.Worker.State
                 return;
             }
 
-            // 在 BuildMap 中注册建造位置（放置建造中的标记），标记为自己所有
+            // 在 BuildMap 中注册建造位置（仅注册不创建任务，避免 AddBuild 内部自动创建重复任务）
             if (!string.IsNullOrEmpty(decision.BuildTileName))
             {
-                Core.ServiceLocator.Get<BuildMap>().AddBuild(
+                Core.ServiceLocator.Get<BuildMap>().ReserveBuildPosition(
                     decision.TargetPosition, decision.BuildTileName);
             }
 
@@ -499,7 +558,7 @@ namespace LAB2D.Character.Worker.State
         }
 
         /// <summary>
-        /// 创建自我睡觉任务（需要找到床）。
+        /// 创建自我睡觉任务 — 有床优先床，无床原地地面睡眠。
         /// </summary>
         private void CreateSelfSleepTask()
         {
@@ -508,6 +567,7 @@ namespace LAB2D.Character.Worker.State
 
             if (bedPos != default)
             {
+                // 有床：去床上睡
                 WorkerSleepTask sleepTask = new WorkerSleepTask.SleepTaskBuilder()
                     .SetTarget(bedPos)
                     .SetWorker(this.Character)
@@ -519,15 +579,26 @@ namespace LAB2D.Character.Worker.State
                     1); // 高优先级
 
                 AWorkerTask.LogProvider(
-                    $"{this.Character.name} 创建睡觉任务 pos=({bedPos.x},{bedPos.y})",
+                    $"{this.Character.name} 创建睡觉任务(有床) pos=({bedPos.x},{bedPos.y})",
                     LogManager.LogLevelEnum.Info);
             }
             else
             {
+                // 无床：原地地面睡眠
+                Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+                WorkerSleepTask sleepTask = new WorkerSleepTask.SleepTaskBuilder()
+                    .SetTarget(posMap)
+                    .SetWorker(this.Character)
+                    .Build();
+
+                AWorkerTask.TaskAddProvider(
+                    sleepTask,
+                    new GameGridPosition(posMap.x, posMap.y, posMap.z),
+                    1); // 高优先级
+
                 AWorkerTask.LogProvider(
-                    $"{this.Character.name} 有床但找不到床位",
-                    LogManager.LogLevelEnum.Warning);
-                this.CreateIdleTask();
+                    $"{this.Character.name} 创建地面睡觉任务(无床) pos=({posMap.x},{posMap.y})",
+                    LogManager.LogLevelEnum.Info);
             }
         }
 
@@ -782,10 +853,109 @@ namespace LAB2D.Character.Worker.State
                 3);
         }
 
+        /// <summary>
+        /// 创建漫游任务 — 多路点持续漫游。
+        /// 随机走向远处位置，每到达一个路点恢复精气神和心情。
+        /// 与 Idle 的区别：Idle 是原地锻炼（不动），漫游是主动探索走动。
+        /// </summary>
+        private void CreateWanderTask()
+        {
+            AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            if (wd == null) return;
+
+            // 初始化漫游路点计数（3-5个路点，约18-30秒的漫游）
+            if (wd.WanderWaypointsRemaining <= 0)
+            {
+                wd.WanderWaypointsRemaining = UnityEngine.Random.Range(3, 6);
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 开始漫游 ({wd.WanderWaypointsRemaining} 个路点), 精气神={wd.CurSpirit:F0}",
+                    LogManager.LogLevelEnum.Info);
+            }
+
+            // 选一个较远的随机可到达位置（漫游半径比普通寻路更大）
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+            Vector3Int wanderTarget = default;
+            float bestDist = 0f;
+            for (int attempt = 0; attempt < 10; attempt++)
+            {
+                int dx = UnityEngine.Random.Range(-20, 21);
+                int dy = UnityEngine.Random.Range(-20, 21);
+                Vector3Int candidate = new Vector3Int(posMap.x + dx, posMap.y + dy, 0);
+                if (ASeek.IsCanReach(candidate))
+                {
+                    float dist = (candidate - posMap).sqrMagnitude;
+                    if (dist > bestDist)
+                    {
+                        bestDist = dist;
+                        wanderTarget = candidate;
+                    }
+                }
+            }
+
+            if (wanderTarget == default)
+                wanderTarget = AWorkerTask.GenCanReachPosProvider(posMap);
+
+            this.targetMap = wanderTarget;
+
+            // 每到达一个路点恢复少量精气神（到达时在下次 OnEnter 中处理）
+            // 这里先不做恢复，等到达后再处理
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 漫游 → ({wanderTarget.x},{wanderTarget.y}) 剩余{wd.WanderWaypointsRemaining}路点",
+                LogManager.LogLevelEnum.Trace);
+        }
+
         /// <inheritdoc/>
         public override void OnUpdate()
         {
             base.OnUpdate();
+
+            // 每帧紧急检测：生存值过低时强制中断任务并重新决策
+            AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            if (wd != null && !this.Character.IsDialoguePaused)
+            {
+                bool emergency = false;
+
+                // 饥饿 < 15 → 强制触发生存决策
+                if (wd.CurHungry > 0 && wd.CurHungry < 15f)
+                {
+                    if (wd.Task != null && wd.Task.TaskType != WorkerTaskType.Eat)
+                    {
+                        this.Character.GiveUpTask();
+                        emergency = true;
+                    }
+                }
+
+                // 疲劳 < 15 → 强制触发睡觉决策
+                if (wd.CurTired > 0 && wd.CurTired < 15f)
+                {
+                    if (wd.Task != null
+                        && wd.Task.TaskType != WorkerTaskType.Sleep
+                        && wd.Task.TaskType != WorkerTaskType.GroundSleep)
+                    {
+                        this.Character.GiveUpTask();
+                        emergency = true;
+                    }
+                }
+
+                // 精气神 < 10 → 强制触发漫游/休息决策
+                if (wd.CurSpirit > 0 && wd.CurSpirit < 10f)
+                {
+                    if (wd.Task != null
+                        && wd.Task.TaskType != WorkerTaskType.Wander
+                        && wd.Task.TaskType != WorkerTaskType.Sleep)
+                    {
+                        this.Character.GiveUpTask();
+                        emergency = true;
+                    }
+                }
+
+                if (emergency)
+                {
+                    this.ExecuteAutonomousDecision(wd);
+                    this.Character.Seek.Seek(this.targetMap);
+                    return;
+                }
+            }
 
             // 每60帧刷新一次
             if (Time.frameCount % 60 == 0)
@@ -835,7 +1005,10 @@ namespace LAB2D.Character.Worker.State
         {
             if (wd == null || wd.HomePosition != null) return;
 
-            const int wallCount = 14; // 与 WorkerBrain.WallCount 保持一致
+            const int wallCount = 15;      // 与 WorkerBrain.WallCount 一致
+            const int doorStage = 15;      // 门
+            const int bedStage = 16;       // 床
+            const int completeStage = 17;  // 完成
             int prevStage = wd.HomeBuildStage;
             wd.HomeBuildStage++;
 
@@ -848,14 +1021,21 @@ namespace LAB2D.Character.Worker.State
             else if (buildTileName.StartsWith("CustomRoomWall") && wd.HomeBuildStage >= wallCount)
             {
                 AWorkerTask.LogProvider(
-                    $"{this.Character.name} 建家: 墙壁完成 → 接下来建床",
+                    $"{this.Character.name} 建家: 墙壁完成 → 接下来建门",
+                    LogManager.LogLevelEnum.Info);
+            }
+            else if (buildTileName == "CustomDoor")
+            {
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 建家: 门完成 → 接下来建床",
                     LogManager.LogLevelEnum.Info);
             }
             else if (buildTileName == "SingleBed")
             {
-                wd.HomeBuildStage = wallCount + 1; // 直接到完成
+                wd.HomeBuildStage = completeStage;
+                wd.LifeStage = Domain.Worker.WorkerLifeStage.Settled;
                 AWorkerTask.LogProvider(
-                    $"{this.Character.name} 建家: 床完成 → 有家了!",
+                    $"{this.Character.name} 建家: 床完成 → 有家了! → Settled 阶段",
                     LogManager.LogLevelEnum.Info);
             }
         }

@@ -95,6 +95,42 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 仅注册建造位置（不自动创建任务）。
+        /// 用于 Worker 自主建造场景：任务由 WorkerBrain 自行创建和分配，避免 AddBuild 内部自动创建重复任务。
+        /// </summary>
+        /// <param name="targetMap">建造位置</param>
+        /// <param name="tileName">瓦片名称</param>
+        public void ReserveBuildPosition(Vector3Int targetMap, string tileName)
+        {
+            Vector3IntLAB vector3IntLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
+
+            // 放置瓦片（视觉反馈）
+            this.tilemap.SetTile(targetMap, (TileBase)AWorkerTask.ResourceLoadProvider(tileName));
+
+            // 设置为建造中外观（半透明、无碰撞）
+            this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
+            this.tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
+            this.tilemap.SetColor(targetMap, this.initColor);
+
+            // 注册到 PosMap（供碰撞检查和 IsBuilding 查询）
+            BuildTileData buildTileData = new BuildTileData(tileName, false);
+            if (this.BuildMapDataLAB.PosMap.ContainsKey(vector3IntLAB))
+            {
+                this.BuildMapDataLAB.PosMap[vector3IntLAB] = buildTileData;
+            }
+            else
+            {
+                this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
+            }
+
+            // 同步
+            this.SyncSender.Broadcast(
+                "SyncDataResp",
+                DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
+                DataTool.ToByteArray(buildTileData));
+        }
+
+        /// <summary>
         /// 直接建造完成,Worker
         /// </summary>
         /// <param name="targetMap">目标位置</param>

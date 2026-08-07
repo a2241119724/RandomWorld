@@ -76,6 +76,12 @@ namespace LAB2D.AI.Worker
                 return false;
             }
 
+            // 条件 1.5: Bootstrap 阶段不发悬赏
+            if (workerData.LifeStage < Domain.Worker.WorkerLifeStage.Settled)
+            {
+                return false;
+            }
+
             // 条件 2: Worker 状态不佳（太累或太饿）= 不想自己做
             bool isTired = workerData.CurTired < AWorker.ThresholdTired;
             bool isHungry = workerData.CurHungry < AWorker.ThresholdHungry;

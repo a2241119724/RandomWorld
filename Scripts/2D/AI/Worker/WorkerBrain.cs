@@ -46,6 +46,12 @@ namespace LAB2D.AI.Worker
 
         /// <summary>自己去种植</summary>
         SelfPlant,
+
+        /// <summary>漫游休息 — 恢复精气神和心情</summary>
+        Wander,
+
+        /// <summary>地面睡眠 — 无床时的低效睡眠</summary>
+        GroundSleep,
     }
 
     /// <summary>
@@ -86,6 +92,15 @@ namespace LAB2D.AI.Worker
 
         /// <summary>环境扫描半径（地图格子）</summary>
         public int ScanRadius = 20;
+
+        /// <summary>精气神阈值：低于此值优先漫游恢复</summary>
+        public float SpiritThreshold = 30f;
+
+        /// <summary>漫游基础概率</summary>
+        public float WanderBaseChance = 0.12f;
+
+        /// <summary>Bootstrap 阶段食物囤积目标</summary>
+        public int BootstrapFoodTarget = 3;
 
         // ---- 人格权重配置 ----
 
@@ -248,11 +263,46 @@ namespace LAB2D.AI.Worker
             }
 
             if (workerData.CurTired < this.TiredThreshold)
-                return Decision.Make(WorkerDecisionType.Sleep,
-                    $"疲劳({workerData.CurTired:F0}/{workerData.MaxTired:F0}), 需要休息");
+            {
+                // 疲劳时：有床→Sleep，无床→GroundSleep
+                if (worker.BedItem != null)
+                    return Decision.Make(WorkerDecisionType.Sleep,
+                        $"疲劳({workerData.CurTired:F0}/{workerData.MaxTired:F0}), 有床睡眠");
+                else
+                    return Decision.Make(WorkerDecisionType.GroundSleep,
+                        $"疲劳({workerData.CurTired:F0}/{workerData.MaxTired:F0}), 地面睡眠");
+            }
+
+            // === 精气神过低 → 优先漫游或休息 ===
+            if (workerData.CurSpirit < this.SpiritThreshold)
+            {
+                return Decision.Make(WorkerDecisionType.Wander,
+                    $"精气神低({workerData.CurSpirit:F0}), 漫游恢复");
+            }
+
+            // === TIER 1: Bootstrap 阶段专属决策 ===
+            if (workerData.LifeStage == Domain.Worker.WorkerLifeStage.Bootstrap)
+            {
+                return this.DecideBootstrap(worker, workerData, p);
+            }
 
             // === 定期刷新目标 ===
             this.RefreshGoal(workerData);
+
+            // 阶段升级：Settled + 食物≥5 + 金钱≥200 → Established
+            if (workerData.LifeStage == Domain.Worker.WorkerLifeStage.Settled
+                && workerData.HomePosition != null)
+            {
+                int foodCount = this.CountFoodStockpile(worker);
+                if (foodCount >= 5 && workerData.Wallet.Gold >= 200)
+                {
+                    workerData.LifeStage = Domain.Worker.WorkerLifeStage.Established;
+                    workerData.FoodStockpileTarget = 5;
+                    AWorkerTask.LogProvider(
+                        $"{worker.name} 升级到 Established 阶段!",
+                        LogManager.LogLevelEnum.Info);
+                }
+            }
 
             // === 优先：地上有自己悬赏得来的物品 → 去捡 ===
             if (p.Diligence > 35f)
@@ -273,25 +323,19 @@ namespace LAB2D.AI.Worker
             bool canAfford = workerData.Wallet.HasEnough(
                 this.DetermineMinReward() + this.MinimumWalletReserve);
 
-            // === 建造决策：高事业心 Worker 扫描附近待建造位置 ===
-            // 放在目标驱动悬赏之前，确保建造优先于为建造目标采集材料
-            if (p.Ambition > this.AmbitionThreshold)
+            // === 建造决策：无家者始终尝试建家（不受 Ambition 门控），有家者 Ambition>65 才扩建 ===
             {
                 Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, workerData, canAfford);
                 if (buildDecision.HasValue) return buildDecision.Value;
             }
-            else if (p.Ambition > this.AmbitionThreshold - 10)
-            {
-                // 接近阈值但不满足：记录原因
-                AWorkerTask.LogProvider(
-                    $"{worker.name} 建造决策跳过: 事业心({p.Ambition:F0})略低于阈值({this.AmbitionThreshold:F0})",
-                    LogManager.LogLevelEnum.Trace);
-            }
 
             // === 目标驱动悬赏：Worker 缺什么就发什么悬赏 ===
-            // 建造决策未触发（缺材料/缺钱）时，通过悬赏补充材料
-            Decision? goalBounty = this.TryMakeGoalDrivenBounty(worker, workerData, canAfford);
-            if (goalBounty.HasValue) return goalBounty.Value;
+            // 建造决策未触发（缺材料/缺钱）时，通过悬赏补充材料（需通过悬赏门槛）
+            if (this.CanPostBounty(worker, workerData, canAfford))
+            {
+                Decision? goalBounty = this.TryMakeGoalDrivenBounty(worker, workerData, canAfford);
+                if (goalBounty.HasValue) return goalBounty.Value;
+            }
 
             // === 种植决策：有种子时扫描附近空闲农田 ===
             if (p.Diligence > this.DiligenceThreshold)
@@ -304,9 +348,10 @@ namespace LAB2D.AI.Worker
             bool hasNearbyResource = nearbyResource.HasValue;
             float selfProb = this.CalculateSelfGatherProbability(p);
             float postProb = this.CalculatePostBountyProbability(p);
+            bool canPostBounty = this.CanPostBounty(worker, workerData, canAfford);
 
-            // 有钱+社交 → 发悬赏让别人干
-            if (canAfford && p.Sociality > this.SocialityThreshold && hasNearbyResource && Random.value < postProb)
+            // 有钱+社交 → 发悬赏让别人干（需通过悬赏门槛）
+            if (canPostBounty && p.Sociality > this.SocialityThreshold && hasNearbyResource && Random.value < postProb)
             {
                 return new Decision
                 {
@@ -324,28 +369,128 @@ namespace LAB2D.AI.Worker
                     $"事业心({p.Ambition:F0})驱使自主采集");
             }
 
-            // 有钱+社交 → 发悬赏兜底
-            if (canAfford && p.Sociality > this.SocialityThreshold && hasNearbyResource)
-            {
-                return new Decision
-                {
-                    Type = WorkerDecisionType.PostBounty,
-                    TargetPosition = nearbyResource.Value.Position,
-                    Resource = nearbyResource.Value.Resource,
-                    Description = $"自己不想干，发悬赏",
-                };
-            }
-
             // === 第3层：勤劳接单 ===
             float acceptProb = this.CalculateAcceptBountyProbability(p);
             if (p.Diligence > this.DiligenceThreshold && Random.value < acceptProb)
                 return Decision.Make(WorkerDecisionType.AcceptBounty, $"勤奋({p.Diligence:F0})驱使接悬赏");
 
-            // === 第4层：默认 ===
+            // === 第4层：漫游或默认 ===
+            // 精气神低或心情差 → 漫游恢复
+            if (workerData.CurSpirit < this.SpiritThreshold
+                || p.Mood < this.MoodLowThreshold)
+            {
+                return Decision.Make(WorkerDecisionType.Wander,
+                    $"精气神({workerData.CurSpirit:F0})心情({p.Mood:F0})需要调整, 漫游休息");
+            }
+
+            // 小概率漫游（12% 基础 + 心情/精气神修正）
+            float wanderChance = this.WanderBaseChance;
+            wanderChance += (50f - p.Mood) * 0.003f;
+            wanderChance += Mathf.Max(0f, (50f - workerData.CurSpirit)) * 0.002f;
+            wanderChance = Mathf.Clamp01(wanderChance);
+            if (Random.value < wanderChance)
+                return Decision.Make(WorkerDecisionType.Wander, "小概率漫游, 转换心情");
+
             if (p.Mood < this.MoodLowThreshold && workerData.CurTired < 50f)
                 return Decision.Make(WorkerDecisionType.Sleep, $"心情差({p.Mood:F0}), 休息调整");
 
             return Decision.Make(WorkerDecisionType.Idle, $"无特别需求, {p}");
+        }
+
+        // ---- Bootstrap 阶段决策 ----
+
+        /// <summary>
+        /// Bootstrap 阶段专属决策：采集食物→采集建材→建家→建床。
+        /// 绝对不发悬赏，不受 Ambition 门控。
+        /// </summary>
+        private Decision DecideBootstrap(AWorker worker, AWorker.WorkerData wd, WorkerPersonality p)
+        {
+            // 1. 饥饿 < 50 → 先吃饱（比正常阈值30更早，保持充足）
+            if (wd.CurHungry < 50f)
+            {
+                if (this.WorkerHasFood(worker))
+                    return Decision.Make(WorkerDecisionType.Eat,
+                        $"Bootstrap: 饥饿({wd.CurHungry:F0}), 吃自带食物");
+
+                ResourceCandidate? food = this.ScanForFood(worker);
+                if (food.HasValue)
+                    return Decision.MakeGather(food.Value.Position, food.Value.Resource,
+                        $"Bootstrap: 采集食物({wd.CurHungry:F0})");
+            }
+
+            // 2. 疲劳 < 50 → 睡觉
+            if (wd.CurTired < 50f)
+                return Decision.Make(WorkerDecisionType.Sleep,
+                    $"Bootstrap: 疲劳({wd.CurTired:F0}), 休息");
+
+            // 3. 精气神 < 30 → 漫游恢复
+            if (wd.CurSpirit < this.SpiritThreshold)
+                return Decision.Make(WorkerDecisionType.Wander,
+                    $"Bootstrap: 精气神低({wd.CurSpirit:F0}), 漫游");
+
+            // 4. 仓库食物不足 → 采集食物
+            int foodCount = this.CountFoodStockpile(worker);
+            if (foodCount < this.BootstrapFoodTarget)
+            {
+                ResourceCandidate? food = this.ScanForFood(worker);
+                if (food.HasValue)
+                    return Decision.MakeGather(food.Value.Position, food.Value.Resource,
+                        $"Bootstrap: 囤食物({foodCount}/{this.BootstrapFoodTarget})");
+            }
+
+            // 5. 尝试建造（不受 Ambition 门控！）
+            bool canAfford = wd.Wallet.HasEnough(
+                this.DetermineMinReward() + this.MinimumWalletReserve);
+            Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, wd, canAfford);
+            if (buildDecision.HasValue) return buildDecision.Value;
+
+            // 6. 建造条件不满足 → 采集建材
+            ResourceCandidate? nearbyResource = this.ScanForResources(worker);
+            if (nearbyResource.HasValue)
+                return Decision.MakeGather(nearbyResource.Value.Position, nearbyResource.Value.Resource,
+                    "Bootstrap: 采集建材");
+
+            // 7. 无资源可采 → 漫游探索
+            return Decision.Make(WorkerDecisionType.Wander, "Bootstrap: 漫游探索资源");
+        }
+
+        /// <summary>
+        /// 悬赏门槛检查：只有 Settled 及以上阶段才能发布悬赏。
+        /// </summary>
+        private bool CanPostBounty(AWorker worker, AWorker.WorkerData wd, bool canAfford)
+        {
+            if (!canAfford) return false;
+            if (wd.LifeStage < Domain.Worker.WorkerLifeStage.Settled) return false;
+            if (wd.HomePosition == null) return false;           // 无家不发悬赏
+            if (wd.CurHungry < 40f) return false;                // 饿了不发
+            if (wd.CurTired < 40f) return false;                 // 累了不发
+            if (wd.CurSpirit < 35f) return false;                // 没精神不发
+            int foodCount = this.CountFoodStockpile(worker);
+            if (foodCount < wd.FoodStockpileTarget) return false; // 食物储备不足
+            return true;
+        }
+
+        /// <summary>
+        /// 统计 Worker 拥有的食物数量（身上 + 仓库）。
+        /// </summary>
+        private int CountFoodStockpile(AWorker worker)
+        {
+            int count = 0;
+            foreach (var r in worker.GetAllResources())
+            {
+                AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(r.Id);
+                if (itemType == AItem.ItemTypeEnum.Food)
+                    count += r.Count;
+            }
+
+            foreach (var r in worker.GetStorageResources())
+            {
+                AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(r.Id);
+                if (itemType == AItem.ItemTypeEnum.Food)
+                    count += r.Count;
+            }
+
+            return count;
         }
 
         // ---- 目标系统 ----
@@ -742,37 +887,45 @@ namespace LAB2D.AI.Worker
 
         // ---- 建造/种植决策 ----
 
-        // 房间墙壁偏移（5x5 环，顺时针）：
-        // 中间 3x3 空地放床，墙壁围在第二圈
+        // 房间墙壁偏移（5x5 环，Unity 坐标 x=列, y=行，中心为原点）：
+        // 中间 3x3 空地放床，墙壁围在第二圈。南侧 (0,-2) 留门。
+        // ARoom 使用 x=行/y=列 坐标系（与 Unity 交换了 xy），因此方向需按 ARoom 约定：
+        //   _0=左上 _1=上 _2=右上 _3=左 _4=右 _5=左下 _6=下 _7=右下
         private static readonly Vector3Int[] WallOffsets = new Vector3Int[]
         {
-            new Vector3Int(-2, 2, 0),  // 0: 西北角
-            new Vector3Int(-1, 2, 0),  // 1: 北边
-            new Vector3Int(0, 2, 0),   // 2: 北中
-            new Vector3Int(1, 2, 0),   // 3: 北边
-            new Vector3Int(2, 2, 0),   // 4: 东北角
-            new Vector3Int(2, 1, 0),   // 5: 东边
-            new Vector3Int(2, 0, 0),   // 6: 东中
-            new Vector3Int(2, -1, 0),  // 7: 东边
-            new Vector3Int(2, -2, 0),  // 8: 东南角
-            new Vector3Int(-1, -2, 0), // 9: 南边(门在0,-2)
-            new Vector3Int(-2, -2, 0), // 10: 西南角
-            new Vector3Int(-2, -1, 0), // 11: 西边
-            new Vector3Int(-2, 0, 0),  // 12: 西中
-            new Vector3Int(-2, 1, 0),  // 13: 西边
+            new Vector3Int(-2, 2, 0),  // 0: 左上角 (ARoom: 右下) → _7
+            new Vector3Int(-1, 2, 0),  // 1: 上边   (ARoom: 右)   → _4
+            new Vector3Int(0, 2, 0),   // 2: 上中   (ARoom: 右)   → _4
+            new Vector3Int(1, 2, 0),   // 3: 上边   (ARoom: 右)   → _4
+            new Vector3Int(2, 2, 0),   // 4: 右上角 (ARoom: 右上) → _2
+            new Vector3Int(2, 1, 0),   // 5: 右边   (ARoom: 上)   → _1
+            new Vector3Int(2, 0, 0),   // 6: 右中   (ARoom: 上)   → _1
+            new Vector3Int(2, -1, 0),  // 7: 右边   (ARoom: 上)   → _1
+            new Vector3Int(2, -2, 0),  // 8: 右下角 (ARoom: 左上) → _0
+            new Vector3Int(1, -2, 0),  // 9: 下边右 (ARoom: 左)   → _3 [之前缺失!]
+            new Vector3Int(-1, -2, 0), // 10: 下边左 (ARoom: 左)   → _3 [门在(0,-2)]
+            new Vector3Int(-2, -2, 0), // 11: 左下角 (ARoom: 左下) → _5
+            new Vector3Int(-2, -1, 0), // 12: 左边   (ARoom: 下)   → _6
+            new Vector3Int(-2, 0, 0),  // 13: 左中   (ARoom: 下)   → _6
+            new Vector3Int(-2, 1, 0),  // 14: 左边   (ARoom: 下)   → _6
         };
-        // 每块墙对应的方向变体后缀（CustomRoomWall_N）：房间外墙朝外
-        // 0=左上 1=上 2=右上 3=左 4=右 5=左下 6=下 7=右下
+        // 对应每块墙的方向编号（按 ARoom 坐标约定）
         private static readonly int[] WallDirections = new int[]
         {
-            0, 1, 1, 1, 2,  // 0-4: 北侧 → 左上/上/右上
-            4, 4, 4, 7,      // 5-8: 东侧 → 右/右下
-            6, 5,            // 9-10: 南侧 → 下/左下
-            3, 3, 3,         // 11-13: 西侧 → 左
+            7,              // 0: 左上角 → _7 (右下)
+            4, 4, 4,        // 1-3: 上边 → _4 (右)
+            2,              // 4: 右上角 → _2 (右上)
+            1, 1, 1,        // 5-7: 右边 → _1 (上)
+            0,              // 8: 右下角 → _0 (左上)
+            3,              // 9: 下边右 → _3 (左) [新增]
+            3,              // 10: 下边左 → _3 (左)
+            5,              // 11: 左下角 → _5 (左下)
+            6, 6, 6,        // 12-14: 左边 → _6 (下)
         };
-        private const int WallCount = 14;
-        private const int BedStage = WallCount;     // 7
-        private const int CompleteStage = WallCount + 1; // 8
+        private const int WallCount = 15;           // 15 面墙
+        private const int DoorStage = WallCount;    // 15: 门
+        private const int BedStage = WallCount + 1; // 16: 床
+        private const int CompleteStage = WallCount + 2; // 17: 完成
 
         /// <summary>
         /// 自主建造决策：Worker 决定为自己建造房屋。
@@ -794,20 +947,26 @@ namespace LAB2D.AI.Worker
 
                 if (wd.HomeBuildStage < WallCount)
                 {
-                    // 阶段 0-13：建墙壁，使用对应方向变体
+                    // 阶段 0-14：建墙壁，使用对应方向变体
                     int dir = WallDirections[wd.HomeBuildStage];
                     buildTileName = $"CustomRoomWall_{dir}";
                     buildPos = center + WallOffsets[wd.HomeBuildStage];
                 }
+                else if (wd.HomeBuildStage == DoorStage)
+                {
+                    // 阶段 15：建门 (南侧正中间)
+                    buildTileName = "CustomDoor";
+                    buildPos = center + new Vector3Int(0, -2, 0);
+                }
                 else if (wd.HomeBuildStage == BedStage)
                 {
-                    // 阶段 7：建床
+                    // 阶段 16：建床
                     buildTileName = "SingleBed";
                     buildPos = center;
                 }
                 else
                 {
-                    // 阶段 8+：完成
+                    // 阶段 17+：完成
                     return null;
                 }
 
@@ -860,23 +1019,30 @@ namespace LAB2D.AI.Worker
                         }
                     }
 
+                    // 不是资源阻挡 → 位置本身有问题，清除规划重新选址，避免死循环
                     AWorkerTask.LogProvider(
-                        $"{worker.name} 建造位置不可用: {buildTileName} pos=({buildPos?.x},{buildPos?.y})",
+                        $"{worker.name} 建造位置不可达(非资源阻挡): {buildTileName} pos=({buildPos?.x},{buildPos?.y}), 重新选址",
                         LogManager.LogLevelEnum.Info);
-                    return null;
+                    wd.PlannedHomePosition = null;
+                    wd.HomeBuildStage = 0;
+                    this.TryPickHomeSite(worker);
+                    // 返回 Wander 触发重新评估，不 fallback 到采集
+                    return Decision.Make(WorkerDecisionType.Wander,
+                        "建家位置无效, 重新选址后漫游探索");
                 }
 
-                // 墙壁阶段检查冲突（已被占用的跳过），床阶段不检查（允许覆盖）
+                // 墙壁阶段检查冲突：仅跳过已完成的墙壁，已注册但未完成的等待其完成
                 if (wd.HomeBuildStage < WallCount)
                 {
                     var buildMap = Core.ServiceLocator.Get<BuildMap>();
                     if (buildMap?.BuildMapDataLAB?.PosMap != null)
                     {
                         Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(buildPos.Value);
-                        if (buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
+                        if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var existingTile)
+                            && existingTile.IsComplete)
                         {
                             AWorkerTask.LogProvider(
-                                $"{worker.name} 位置已占用, 跳过墙壁{wd.HomeBuildStage + 1}: pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                $"{worker.name} 位置已建造完成, 跳过墙壁{wd.HomeBuildStage + 1}: pos=({buildPos.Value.x},{buildPos.Value.y})",
                                 LogManager.LogLevelEnum.Info);
                             wd.HomeBuildStage++;
                             return null;
@@ -907,8 +1073,10 @@ namespace LAB2D.AI.Worker
 
             // ---- 共同的决策路径（无家 + 扩建都走这里）----
 
-            // 社交型+有钱 → 发建造悬赏
-            if (canAfford && wd.Personality.Sociality > this.SocialityThreshold && Random.value < 0.4f)
+            // 社交型+有钱 → 发建造悬赏（需通过悬赏门槛，Bootstrap阶段不发）
+            if (this.CanPostBounty(worker, wd, canAfford)
+                && wd.Personality.Sociality > this.SocialityThreshold
+                && Random.value < 0.4f)
             {
                 return Decision.MakeBuild(
                     WorkerDecisionType.PostBounty,

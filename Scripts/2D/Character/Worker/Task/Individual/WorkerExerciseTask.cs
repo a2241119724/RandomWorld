@@ -42,6 +42,9 @@ namespace LAB2D.Character.Worker.Task.Individual
         protected override bool RequiresWalkableNeighbor => false;
 
         /// <inheritdoc/>
+        protected override bool ConsumesTiredness => false;
+
+        /// <inheritdoc/>
         public override TaskTraits Traits => TaskTraits.WorkerSpecific;
 
         protected override void Init()

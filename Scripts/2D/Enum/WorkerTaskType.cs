@@ -40,6 +40,12 @@ namespace LAB2D.Enum
         /// <summary>从任务栏拾取 — 发布者去任务栏取回属于自己的物品</summary>
         PickUpFromBoard,
 
+        /// <summary>漫游 — 恢复精气神，小概率发现物品</summary>
+        Wander,
+
+        /// <summary>地面睡眠 — 无床时的低效睡眠</summary>
+        GroundSleep,
+
         /// <summary>哨兵值 — 必须始终在最后，用于动态数组大小</summary>
         _Count,
     }

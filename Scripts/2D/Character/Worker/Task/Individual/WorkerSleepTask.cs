@@ -38,15 +38,36 @@ namespace LAB2D.Character.Worker.Task.Individual
         {
             base.Finish(worker);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            workerData.CurTired = workerData.MaxTired;
+
+            if (worker.BedItem != null)
+            {
+                // 有床睡眠：全额恢复疲劳 + 精气神奖励
+                workerData.CurTired = workerData.MaxTired;
+                workerData.CurSpirit = System.Math.Min(
+                    workerData.MaxSpirit,
+                    workerData.CurSpirit + Constant.WorkerConditionConstant.SpiritSleepRestoreBonus);
+                workerData.GroundSleepCount = 0;
+            }
+            else
+            {
+                // 地面睡眠：部分恢复疲劳 + 少量精气神
+                float restoreAmount = workerData.MaxTired * Constant.WorkerConditionConstant.GroundSleepTiredRestoreRatio;
+                workerData.CurTired = System.Math.Min(
+                    workerData.MaxTired,
+                    workerData.CurTired + restoreAmount);
+                workerData.CurSpirit = System.Math.Min(
+                    workerData.MaxSpirit,
+                    workerData.CurSpirit + Constant.WorkerConditionConstant.SpiritSleepRestoreOnGround);
+                workerData.GroundSleepCount++;
+            }
         }
 
         /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
-            // 如果疲劳值低于阈值，并且有床，则可以睡觉
+            // 疲劳值低于阈值即可睡觉（不要求有床，无床会走地面睡眠）
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            return workerData.CurTired < AWorker.ThresholdTired && worker.BedItem != null && this.worker == worker;
+            return workerData.CurTired < AWorker.ThresholdTired && this.worker == worker;
         }
 
         /// <inheritdoc/>

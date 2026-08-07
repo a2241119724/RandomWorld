@@ -41,6 +41,29 @@ namespace LAB2D.Gameplay
                         workerData.CurTired - (deltaTime * WorkerConditionConstant.TiredDecayPerSecond));
                 }
 
+                // 精气神自然衰减
+                if (workerData.CurSpirit > 0)
+                {
+                    float spiritDecay = deltaTime * WorkerConditionConstant.SpiritDecayPerSecond;
+                    // 有任务且不是吃饭/睡觉/漫游/锻炼时，额外消耗精气神
+                    if (workerData.Task != null)
+                    {
+                        var taskType = workerData.Task.TaskType;
+                        if (taskType != Enum.WorkerTaskType.Eat
+                            && taskType != Enum.WorkerTaskType.Sleep
+                            && taskType != Enum.WorkerTaskType.GroundSleep
+                            && taskType != Enum.WorkerTaskType.Wander
+                            && taskType != Enum.WorkerTaskType.Exercise)
+                        {
+                            spiritDecay += deltaTime * WorkerConditionConstant.SpiritWorkDecayPerSecond;
+                        }
+                    }
+
+                    workerData.CurSpirit = System.Math.Max(
+                        0.0f,
+                        workerData.CurSpirit - spiritDecay);
+                }
+
                 ServiceLocator.Get<IWorkerConditionManager>().UpdateWorkerCondition(worker);
             }
 
