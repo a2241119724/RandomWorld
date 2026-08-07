@@ -610,21 +610,21 @@ namespace LAB2D.Character.Worker.State
         /// </summary>
         private void CreateSelfSleepTask()
         {
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+
             // 从 FurnitureManager 查找分配给该 Worker 的床位置
             Vector3Int bedPos = this.FindBedPosition();
 
             if (bedPos != default)
             {
-                // 有床：去床上睡
+                // 有床：直接分配给自己执行
                 WorkerSleepTask sleepTask = new WorkerSleepTask.SleepTaskBuilder()
                     .SetTarget(bedPos)
                     .SetWorker(this.Character)
                     .Build();
 
-                AWorkerTask.TaskAddProvider(
-                    sleepTask,
-                    new GameGridPosition(bedPos.x, bedPos.y, bedPos.z),
-                    1); // 高优先级
+                workerData.Task = sleepTask;
+                sleepTask.Start(this.Character);
 
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 创建睡觉任务(有床) pos=({bedPos.x},{bedPos.y})",
@@ -639,10 +639,8 @@ namespace LAB2D.Character.Worker.State
                     .SetWorker(this.Character)
                     .Build();
 
-                AWorkerTask.TaskAddProvider(
-                    sleepTask,
-                    new GameGridPosition(posMap.x, posMap.y, posMap.z),
-                    1); // 高优先级
+                workerData.Task = sleepTask;
+                sleepTask.Start(this.Character);
 
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 创建地面睡觉任务(无床) pos=({posMap.x},{posMap.y})",
@@ -1086,6 +1084,18 @@ namespace LAB2D.Character.Worker.State
 
                 // 将房间注册到 RoomManager（所有墙壁和门已建完）
                 this.RegisterWorkerRoom(wd);
+
+                // 自动绑定床到当前 Worker（床位置 = 房间中心 = PlannedHomePosition）
+                if (wd.PlannedHomePosition != null)
+                {
+                    Vector3Int bedPos = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+                    var fm = Core.ServiceLocator.Get<Item.FurnitureManager>();
+                    fm.AddBed(bedPos);
+                    fm.AddWorkerToBed(bedPos, this.Character);
+                    AWorkerTask.LogProvider(
+                        $"{this.Character.name} 床已自动绑定: pos=({bedPos.x},{bedPos.y})",
+                        LogManager.LogLevelEnum.Info);
+                }
             }
         }
 

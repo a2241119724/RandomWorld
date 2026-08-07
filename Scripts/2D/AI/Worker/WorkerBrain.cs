@@ -1119,8 +1119,8 @@ namespace LAB2D.AI.Worker
                     }
                 }
             }
-            // 有家+高事业 → 扩建（简化：再建一个床/家具）
-            else if (wd.Personality.Ambition > 65)
+            // 有家+高事业 → 扩建（已有床则跳过，避免无限重复建造）
+            else if (wd.Personality.Ambition > 65 && worker.BedItem == null)
             {
                 buildTileName = "SingleBed"; // TODO: 扩展更多建造类型
                 needs = this.GetBuildMaterialNeeds(buildTileName);
@@ -1376,12 +1376,25 @@ namespace LAB2D.AI.Worker
         /// </summary>
         private bool CanFitRoom(Vector3Int center)
         {
-            // 检查房间四角是否可达（间接验证房间不超出地图边界）
+            // 房间边界检查：5×5 房间不能超出地图范围
+            var tileMap = Core.ServiceLocator.Get<TileMap>();
+            int mapWidth = tileMap?.TileMapDataLAB?.Width ?? int.MaxValue;
+            int mapHeight = tileMap?.TileMapDataLAB?.Height ?? int.MaxValue;
+
+            // 房间四角：center ± 2
+            // 左下角必须在 (0, 0) 或以上，右上角必须在 (mapWidth-1, mapHeight-1) 或以下
+            if (center.x - 2 < 0 || center.y - 2 < 0
+                || center.x + 2 >= mapWidth || center.y + 2 >= mapHeight)
+            {
+                return false;
+            }
+
+            // 检查房间四角是否可达（验证地形可行走）
             Vector3Int[] corners = {
-                center + new Vector3Int(-2, -2, 0), // 左下
-                center + new Vector3Int(-2,  2, 0), // 左上
-                center + new Vector3Int( 2, -2, 0), // 右下
-                center + new Vector3Int( 2,  2, 0), // 右上
+                center + new Vector3Int(-2, -2, 0),
+                center + new Vector3Int(-2,  2, 0),
+                center + new Vector3Int( 2, -2, 0),
+                center + new Vector3Int( 2,  2, 0),
             };
 
             foreach (var corner in corners)
