@@ -767,6 +767,7 @@ namespace LAB2D.AI.Worker
             }
 
             List<ResourceCandidate> candidates = new List<ResourceCandidate>();
+            var gatherMap = Core.ServiceLocator.Get<GatherMap>();
 
             for (int dx = -this.ScanRadius; dx <= this.ScanRadius; dx++)
             {
@@ -776,6 +777,12 @@ namespace LAB2D.AI.Worker
                     Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
 
                     if (!resourceMap.ResourceMapDataLAB.PosMap.ContainsKey(posLAB))
+                    {
+                        continue;
+                    }
+
+                    // 跳过已被其他 Worker 认领的资源（GatherMap 中的标记）
+                    if (gatherMap?.GatherMapDataLAB?.ContainKey(pos) == true)
                     {
                         continue;
                     }
@@ -947,9 +954,15 @@ namespace LAB2D.AI.Worker
             // 无家可归 → 围墙壁 + 建床
             if (wd.HomePosition == null)
             {
-                Vector3Int center = wd.PlannedHomePosition != null
-                    ? Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition)
-                    : AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+                // 必须有规划好的建家位置，不允许使用当前位置兜底（会导致多人重叠）
+                if (wd.PlannedHomePosition == null)
+                {
+                    this.TryPickHomeSite(worker);
+                    // 刚选了位置，下次决策再建造
+                    return Decision.Make(WorkerDecisionType.Wander, "尚未选定建家位置, 漫游探索");
+                }
+
+                Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
 
                 if (wd.HomeBuildStage < WallCount)
                 {
@@ -1000,7 +1013,7 @@ namespace LAB2D.AI.Worker
                     }
                 }
 
-                // 检查建造位置是否可用
+                // 检查建造位置本身是否可用
                 if (!buildPos.HasValue || !ASeek.IsCanReach(buildPos.Value))
                 {
                     // 位置被阻挡：检查是否是资源，是则先采集再建造
@@ -1029,30 +1042,80 @@ namespace LAB2D.AI.Worker
                     AWorkerTask.LogProvider(
                         $"{worker.name} 建造位置不可达(非资源阻挡): {buildTileName} pos=({buildPos?.x},{buildPos?.y}), 重新选址",
                         LogManager.LogLevelEnum.Info);
-                    wd.PlannedHomePosition = null;
-                    wd.HomeBuildStage = 0;
-                    this.TryPickHomeSite(worker);
-                    // 返回 Wander 触发重新评估，不 fallback 到采集
+                    this.RelocateHomeSite(worker, wd);
                     return Decision.Make(WorkerDecisionType.Wander,
                         "建家位置无效, 重新选址后漫游探索");
                 }
 
-                // 墙壁阶段检查冲突：仅跳过已完成的墙壁，已注册但未完成的等待其完成
-                if (wd.HomeBuildStage < WallCount)
+                // 检查建造位置是否至少有一个可达的邻居（Worker 需要站在旁边建造）
+                if (!this.HasReachableNeighbor(buildPos.Value))
+                {
+                    AWorkerTask.LogProvider(
+                        $"{worker.name} 建造位置无可用邻居, 重新选址: {buildTileName} pos=({buildPos.Value.x},{buildPos.Value.y})",
+                        LogManager.LogLevelEnum.Warning);
+                    this.RelocateHomeSite(worker, wd);
+                    return Decision.Make(WorkerDecisionType.Wander,
+                        "建造位置无邻居可达, 重新选址后漫游");
+                }
+
+                // ---- 通用冲突检测（墙壁、门、床 所有阶段） ----
                 {
                     var buildMap = Core.ServiceLocator.Get<BuildMap>();
                     if (buildMap?.BuildMapDataLAB?.PosMap != null)
                     {
                         Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(buildPos.Value);
+
+                        // 已完成 → 墙壁阶段跳过，门/床阶段说明房间已完成 → 标记完成
                         if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var existingTile)
                             && existingTile.IsComplete)
                         {
-                            AWorkerTask.LogProvider(
-                                $"{worker.name} 位置已建造完成, 跳过墙壁{wd.HomeBuildStage + 1}: pos=({buildPos.Value.x},{buildPos.Value.y})",
-                                LogManager.LogLevelEnum.Info);
-                            wd.HomeBuildStage++;
+                            if (wd.HomeBuildStage < WallCount)
+                            {
+                                AWorkerTask.LogProvider(
+                                    $"{worker.name} 位置已建造完成, 跳过墙壁{wd.HomeBuildStage + 1}: pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                    LogManager.LogLevelEnum.Info);
+                                wd.HomeBuildStage++;
+                            }
+                            else if (wd.HomeBuildStage == DoorStage || wd.HomeBuildStage == BedStage)
+                            {
+                                // 门或床已完成 → 房间已建好，直接标记完成
+                                AWorkerTask.LogProvider(
+                                    $"{worker.name} 门/床已完成, 标记建家完成: pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                    LogManager.LogLevelEnum.Info);
+                                wd.HomeBuildStage = CompleteStage;
+                                wd.LifeStage = Domain.Worker.WorkerLifeStage.Settled;
+                            }
                             return null;
                         }
+
+                        // 被其他 Worker 注册但未完成 → 冲突，重新选址
+                        if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var registeredTile)
+                            && !registeredTile.IsComplete)
+                        {
+                            AWorkerTask.LogProvider(
+                                $"{worker.name} 建家位置被其他Worker占用(stage={wd.HomeBuildStage}), 重新选址: pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                LogManager.LogLevelEnum.Warning);
+                            this.ClearAbandonedBuildTiles(wd);
+                            wd.PlannedHomePosition = null;
+                            wd.HomeBuildStage = 0;
+                            this.TryPickHomeSite(worker);
+                            return Decision.Make(WorkerDecisionType.Wander,
+                                "建家位置冲突, 重新选址后漫游");
+                        }
+                    }
+
+                    // 位置未在 BuildMap 注册，但可能在其他 Worker 的 5×5 房间规划范围内
+                    if (this.IsHomeSiteClaimedByOther(buildPos.Value, worker))
+                    {
+                        AWorkerTask.LogProvider(
+                            $"{worker.name} 建家位置落入其他Worker规划范围(stage={wd.HomeBuildStage}), 重新选址: pos=({buildPos.Value.x},{buildPos.Value.y})",
+                            LogManager.LogLevelEnum.Warning);
+                        this.ClearAbandonedBuildTiles(wd);
+                        wd.PlannedHomePosition = null;
+                        wd.HomeBuildStage = 0;
+                        this.TryPickHomeSite(worker);
+                        return Decision.Make(WorkerDecisionType.Wander,
+                            "建家位置与其他Worker规划冲突, 重新选址后漫游");
                     }
                 }
             }
@@ -1165,17 +1228,19 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 在 Worker 周围找一个空闲的可建造位置。
         /// 优先返回 PlannedHomePosition（如果仍然空闲），否则螺旋搜索新位置。
-        /// 检查 BuildMap 和地面是否可通行。
+        /// 检查 BuildMap、地面可通行性、以及其他 Worker 的已规划建家位置。
         /// </summary>
         private Vector3Int? FindFreeBuildPosition(AWorker worker)
         {
             AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
 
-            // 优先：已有规划位置且仍然空闲
+            // 优先：已有规划位置且仍然空闲（包括不被其他 Worker 占据）
             if (wd?.PlannedHomePosition != null)
             {
                 Vector3Int planned = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
-                if (ASeek.IsCanReach(planned))
+                if (ASeek.IsCanReach(planned)
+                    && this.CanFitRoom(planned)
+                    && !this.IsHomeSiteClaimedByOther(planned, worker))
                 {
                     var buildMap = Core.ServiceLocator.Get<BuildMap>();
                     Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(planned);
@@ -1216,12 +1281,173 @@ namespace LAB2D.AI.Worker
                                 continue;
                         }
 
+                        // 检查是否被其他 Worker 规划为建家位置（防止房间重叠）
+                        if (this.IsHomeSiteClaimedByOther(pos, worker)) continue;
+
+                        // 检查 5×5 房间能否完整放置（四角都在地图内且可达）
+                        if (!this.CanFitRoom(pos)) continue;
+
                         return pos;
                     }
                 }
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 原子搬迁：先选新位置并设置 PlannedHomePosition，再清除旧位置瓦片。
+        /// 消除 PlannedHomePosition=null 的空窗期，防止其他 Worker 抢占附近位置。
+        /// </summary>
+        private void RelocateHomeSite(AWorker worker, AWorker.WorkerData wd)
+        {
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            Vector3IntLAB oldPosition = wd.PlannedHomePosition;
+
+            // 1. 先选新位置（保留旧 PlannedHomePosition，IsHomeSiteClaimedByOther 会排除旧位置自身）
+            Vector3Int? newPos = this.FindFreeBuildPosition(worker);
+            if (newPos.HasValue)
+            {
+                wd.PlannedHomePosition = Vector3IntLAB.ToVector3IntLAB(newPos.Value);
+                AWorkerTask.LogProvider(
+                    $"{worker.name} 搬迁建家位置: ({newPos.Value.x},{newPos.Value.y})",
+                    LogManager.LogLevelEnum.Info);
+            }
+            // 如果找不到新位置，PlannedHomePosition 保持旧值，Worker 下次会重试
+
+            // 2. 清除旧位置的残留瓦片
+            if (oldPosition != null && buildMap?.BuildMapDataLAB?.PosMap != null)
+            {
+                Vector3Int oldCenter = Vector3IntLAB.ToVector3Int(oldPosition);
+                for (int i = 0; i < WallCount; i++)
+                {
+                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(oldCenter + WallOffsets[i]);
+                    if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var tile)
+                        && !tile.IsComplete)
+                        buildMap.BuildMapDataLAB.PosMap.Remove(posLAB);
+                }
+                Vector3IntLAB doorLAB = Vector3IntLAB.ToVector3IntLAB(oldCenter + DoorOffset);
+                if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(doorLAB, out var d) && !d.IsComplete)
+                    buildMap.BuildMapDataLAB.PosMap.Remove(doorLAB);
+                Vector3IntLAB centerLAB = Vector3IntLAB.ToVector3IntLAB(oldCenter);
+                if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(centerLAB, out var c) && !c.IsComplete)
+                    buildMap.BuildMapDataLAB.PosMap.Remove(centerLAB);
+            }
+
+            // 3. 重置建造阶段（新位置从墙壁 0 开始）
+            wd.HomeBuildStage = 0;
+        }
+
+        /// <summary>
+        /// 清除当前 Worker 已经废弃的建造瓦片（IsComplete=false 的 BuildMap 条目）。
+        /// 当 Worker 因冲突重新选址时调用，防止残留墙壁影响后续选址。
+        /// </summary>
+        private void ClearAbandonedBuildTiles(AWorker.WorkerData wd)
+        {
+            if (wd?.PlannedHomePosition == null) return;
+
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            if (buildMap?.BuildMapDataLAB?.PosMap == null) return;
+
+            Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+
+            // 收集所有需要清理的位置（墙壁 + 门 + 床）
+            var positionsToClear = new System.Collections.Generic.List<Vector3Int>();
+            for (int i = 0; i < WallCount; i++)
+            {
+                positionsToClear.Add(center + WallOffsets[i]);
+            }
+            positionsToClear.Add(center + DoorOffset);
+            positionsToClear.Add(center);
+
+            foreach (var pos in positionsToClear)
+            {
+                Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var tile)
+                    && !tile.IsComplete)
+                {
+                    buildMap.BuildMapDataLAB.PosMap.Remove(posLAB);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 检查以该位置为中心的 5×5 房间能否完整放置（四角都在地图内且可达）。
+        /// </summary>
+        private bool CanFitRoom(Vector3Int center)
+        {
+            // 检查房间四角是否可达（间接验证房间不超出地图边界）
+            Vector3Int[] corners = {
+                center + new Vector3Int(-2, -2, 0), // 左下
+                center + new Vector3Int(-2,  2, 0), // 左上
+                center + new Vector3Int( 2, -2, 0), // 右下
+                center + new Vector3Int( 2,  2, 0), // 右上
+            };
+
+            foreach (var corner in corners)
+            {
+                if (!ASeek.IsCanReach(corner))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 检查建造位置是否至少有一个相邻格子可通行（Worker 需要站在旁边才能建造）。
+        /// </summary>
+        private bool HasReachableNeighbor(Vector3Int buildPos)
+        {
+            // 检查上下左右四个邻居
+            Vector3Int[] neighbors = {
+                new Vector3Int(0, 1, 0),   // 上
+                new Vector3Int(1, 0, 0),   // 右
+                new Vector3Int(0, -1, 0),  // 下
+                new Vector3Int(-1, 0, 0),  // 左
+            };
+
+            foreach (var offset in neighbors)
+            {
+                Vector3Int neighbor = buildPos + offset;
+                if (ASeek.IsCanReach(neighbor))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 检查以候选位置为中心的 5×5 房间矩形，是否与其他 Worker 已规划或已完成的家重叠。
+        /// 两个 5×5 矩形 ([c-2, c+2]) 重叠 ⇔ 中心距离 ≤ 4。
+        /// 依赖 RelocateHomeSite 保证 PlannedHomePosition 永远不为 null（消除空窗期）。
+        /// </summary>
+        private bool IsHomeSiteClaimedByOther(Vector3Int candidateCenter, AWorker self)
+        {
+            var workerManager = Core.ServiceLocator.Get<WorkerManager>();
+            if (workerManager?.Characters == null) return false;
+
+            foreach (AWorker other in workerManager.Characters)
+            {
+                if (other == self) continue;
+                AWorker.WorkerData otherWd = other.CharacterDataLAB as AWorker.WorkerData;
+                if (otherWd == null) continue;
+
+                Vector3IntLAB otherCenterLAB = otherWd.PlannedHomePosition ?? otherWd.HomePosition;
+                if (otherCenterLAB == default) continue;
+
+                Vector3Int otherCenter = Vector3IntLAB.ToVector3Int(otherCenterLAB);
+                if (System.Math.Abs(candidateCenter.x - otherCenter.x) <= 4
+                    && System.Math.Abs(candidateCenter.y - otherCenter.y) <= 4)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

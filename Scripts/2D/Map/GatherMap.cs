@@ -34,20 +34,23 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 添加采集物
+        /// 添加采集标记（兼作资源认领锁）。
+        /// 如果该位置已被认领则返回 false，防止多个 Worker 同时采集同一资源。
         /// </summary>
         /// <param name="posMap">位置</param>
-        public void AddGather(Vector3Int posMap)
+        /// <returns>true = 认领成功；false = 已被其他 Worker 认领</returns>
+        public bool AddGather(Vector3Int posMap)
         {
-            this.tilemap.SetTile(posMap, (TileBase)Core.ServiceLocator.Get<ResourceManager>().GetAsset("Gather"));
-
-            // 幂等：如果该位置已有采集标记，不重复添加（悬赏任务内部任务可能复用系统已标记的位置）
-            if (!this.GatherMapDataLAB.ContainKey(posMap))
+            // 已被认领 → 拒绝重复认领
+            if (this.GatherMapDataLAB.ContainKey(posMap))
             {
-                this.GatherMapDataLAB.Add(posMap, "Gather");
+                return false;
             }
 
+            this.tilemap.SetTile(posMap, (TileBase)Core.ServiceLocator.Get<ResourceManager>().GetAsset("Gather"));
+            this.GatherMapDataLAB.Add(posMap, "Gather");
             this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Gather");
+            return true;
         }
 
         /// <summary>

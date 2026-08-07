@@ -127,30 +127,22 @@ namespace LAB2D.Character.Worker.State
                 }
 
                 // 判断是否应该立即决策：
-                // 决策间隔根据 LifeStage 调整：Bootstrap=2, Settled=10, Established=15
+                // 决策间隔根据 LifeStage 调整：Bootstrap=2, Settled=5, Established=8
                 int decisionInterval = workerData.LifeStage switch
                 {
                     Domain.Worker.WorkerLifeStage.Bootstrap => 2,
-                    Domain.Worker.WorkerLifeStage.Settled => (int)WorkerTaskTimeConfig.ExerciseSeekThreshold,
-                    Domain.Worker.WorkerLifeStage.Established => 15,
-                    _ => (int)WorkerTaskTimeConfig.ExerciseSeekThreshold,
+                    Domain.Worker.WorkerLifeStage.Settled => 5,
+                    Domain.Worker.WorkerLifeStage.Established => 8,
+                    _ => 5,
                 };
                 bool isPeriodic = this.seekTimes % decisionInterval == 0;
                 bool isQuickReeval = false;
                 if (!isPeriodic && workerData.Task == null)
                 {
-                    if (workerData.LifeStage == Domain.Worker.WorkerLifeStage.Bootstrap)
-                    {
-                        // Bootstrap 快速重评
-                        bool cooldownPassed = (this.seekTimes - this.lastDecisionAtSeekTimes) >= 2;
-                        isQuickReeval = cooldownPassed;
-                    }
-                    else if (workerData.HomePosition == null)
-                    {
-                        bool hasMaterials = this.Character.GetAllResources().Count > 0;
-                        bool cooldownPassed = (this.seekTimes - this.lastDecisionAtSeekTimes) >= 5;
-                        isQuickReeval = hasMaterials && cooldownPassed;
-                    }
+                    // 所有阶段统一：距上次决策 >= 2 次 seek 即可快速重评
+                    // 防止 Settled/Established Worker 长时间卡在 Exercise 状态
+                    bool cooldownPassed = (this.seekTimes - this.lastDecisionAtSeekTimes) >= 2;
+                    isQuickReeval = cooldownPassed;
                 }
 
                 // 任务完成后强制立即决策，跳过无意义的漫游间隔
@@ -285,6 +277,16 @@ namespace LAB2D.Character.Worker.State
                 .SetResourceInfo(decision.Resource)
                 .Build();
 
+            // SetTarget 中 AddGather 认领失败 → 资源被其他 Worker 抢先认领
+            if (gatherTask == null)
+            {
+                AWorkerTask.LogProvider(
+                    $"{this.Character.name} 采集目标已被其他Worker认领, 放弃: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                    LogManager.LogLevelEnum.Warning);
+                this.CreateIdleTask();
+                return;
+            }
+
             // 直接分配给当前 Worker，不入全局任务池，确保自己执行
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             workerData.Task = gatherTask;
@@ -362,13 +364,19 @@ namespace LAB2D.Character.Worker.State
             int issuerId = this.Character.GetInstanceID();
 
             var currencyManager = Core.ServiceLocator.Get<Gameplay.CurrencyManager>();
-            if (!currencyManager.PostBounty(issuerId, reward)) return false;
-
-            // 在 BuildMap 中注册建造位置（仅注册不创建任务，避免 AddBuild 内部自动创建重复任务）
+            // 先在 BuildMap 中注册建造位置，成功后再发悬赏（避免位置冲突后无法退款）
             if (!string.IsNullOrEmpty(decision.BuildTileName))
             {
-                Core.ServiceLocator.Get<BuildMap>().ReserveBuildPosition(
+                bool reserved = Core.ServiceLocator.Get<BuildMap>().ReserveBuildPosition(
                     decision.TargetPosition, decision.BuildTileName);
+                if (!reserved) return false;
+            }
+
+            if (!currencyManager.PostBounty(issuerId, reward))
+            {
+                // 发悬赏失败 → 释放刚预约的建造位置（仅释放 IsComplete=false 的预约）
+                // 注：暂不实现复杂的回滚逻辑，BuildMap 中的未完成预约会随 Worker 重新选址自然被覆盖
+                return false;
             }
 
             // 构建建造 innerTask
@@ -419,8 +427,23 @@ namespace LAB2D.Character.Worker.State
             // 在 BuildMap 中注册建造位置（仅注册不创建任务，避免 AddBuild 内部自动创建重复任务）
             if (!string.IsNullOrEmpty(decision.BuildTileName))
             {
-                Core.ServiceLocator.Get<BuildMap>().ReserveBuildPosition(
+                bool reserved = Core.ServiceLocator.Get<BuildMap>().ReserveBuildPosition(
                     decision.TargetPosition, decision.BuildTileName);
+                if (!reserved)
+                {
+                    // 位置被其他 Worker 占用 → 重新选址
+                    AWorkerTask.LogProvider(
+                        $"{this.Character.name} 建造位置已被占用, 重新选址: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                        LogManager.LogLevelEnum.Warning);
+                    AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
+                    if (wd != null)
+                    {
+                        wd.PlannedHomePosition = null;
+                        wd.HomeBuildStage = 0;
+                    }
+                    this.CreateIdleTask();
+                    return;
+                }
             }
 
             WorkerBuildTask buildTask = new WorkerBuildTask.BuildTaskBuilder()

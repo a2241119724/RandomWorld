@@ -198,6 +198,7 @@ namespace LAB2D.Character.Worker.Task
         public class GatherTaskBuilder
         {
             private readonly WorkerGatherTask task;
+            private bool claimFailed;
 
             public GatherTaskBuilder()
             {
@@ -208,8 +209,13 @@ namespace LAB2D.Character.Worker.Task
             {
                 this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(targetMap);
 
-                // 显示正在采摘图标
-                GatherMapProvider().AddGather(targetMap);
+                // 认领资源（防止多个 Worker 同时采集同一目标）
+                if (!GatherMapProvider().AddGather(targetMap))
+                {
+                    LogProvider($"资源已被其他Worker认领: pos=({targetMap.x},{targetMap.y})", LogManager.LogLevelEnum.Warning);
+                    this.claimFailed = true;
+                }
+
                 return this;
             }
 
@@ -219,9 +225,12 @@ namespace LAB2D.Character.Worker.Task
                 return this;
             }
 
+            /// <summary>
+            /// 构建采集任务。如果资源已被其他 Worker 认领，返回 null。
+            /// </summary>
             public WorkerGatherTask Build()
             {
-                return this.task;
+                return this.claimFailed ? null : this.task;
             }
         }
     }

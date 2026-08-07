@@ -59,7 +59,8 @@ namespace LAB2D.Character.Worker.Task
         // ---- 锻炼 (Exercise) ----
         /// <summary>锻炼/空闲（8.0s, 占一天 0.44%）。</summary>
         public const float ExerciseSeconds = 8.0f;
-        public const long ExerciseSeekThreshold = 10;
+        /// <summary>空闲决策间隔阈值（已不再使用，决策间隔现由 LifeStage 直接决定）。</summary>
+        public const long ExerciseSeekThreshold = 5;
 
         // ---- 穿戴 (Wear) ----
         /// <summary>穿戴装备（1.5s, 占一天 0.08%）。</summary>
