@@ -51,8 +51,8 @@ namespace LAB2D.Character.Worker.Task
         public static float WearSeconds => Day / 1200f;  // 0.083%
 
         // ---- 睡眠 (Sleep) ----
-        public static float SleepSeconds       => Day * 0.05f;   // 5%
-        public static float GroundSleepSeconds => Day / 15f;     // 6.67%
+        public static float SleepSeconds       => Day * 0.10f;   // 10%
+        public static float GroundSleepSeconds => Day * 0.15f;   // 15%
 
         // ---- 漫游 (Wander) ----
         public static float WanderSeconds => Day / 180f;  // 0.556%
