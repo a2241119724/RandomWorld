@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 7565157228549643528}
   - component: {fileID: 3151373087408549328}
   m_Layer: 8
-  m_Name: SeekEnemy_Lv1
+  m_Name: SeekEnemy
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -173,7 +173,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d91f2910cf8cac54fa0430d766f5bbd1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MoveSpeed: 2.5
+  MoveSpeed: 1.5
   AttackLayers:
     serializedVersion: 2
     m_Bits: 0

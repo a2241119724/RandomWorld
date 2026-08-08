@@ -958,9 +958,9 @@ namespace LAB2D.Character.Worker.State
         {
             base.OnUpdate();
 
-            // 每帧紧急检测：生存值过低时强制中断任务并重新决策
+            // 紧急检测（每10帧执行一次，约167ms延迟，不可感知）
             AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
-            if (wd != null && !this.Character.IsDialoguePaused)
+            if (Time.frameCount % 10 == 0 && wd != null && !this.Character.IsDialoguePaused)
             {
                 bool emergency = false;
 

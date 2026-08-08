@@ -18,6 +18,11 @@ namespace LAB2D.Core.Seek
         private static int width;
         private static int height;
 
+        /// <summary>
+        /// 上次刷新所在的帧编号，用于同一帧内跳过重复重建。
+        /// </summary>
+        private static int lastRefreshFrame = -1;
+
         public static bool IsInitialized => readCache != null;
 
         public static void Initialize(int w, int h)
@@ -35,9 +40,18 @@ namespace LAB2D.Core.Seek
         /// <summary>
         /// 刷新整个地图的可步行性缓存 — 必须在主线程调用。
         /// 写入完成前不发布，后台线程始终读取上一次完整快照。
+        /// 同一帧内多次调用只执行一次完整重建（后续调用直接复用）。
         /// </summary>
         public static void Refresh()
         {
+            int currentFrame = UnityEngine.Time.frameCount;
+            if (currentFrame == lastRefreshFrame)
+            {
+                return;
+            }
+
+            lastRefreshFrame = currentFrame;
+
             if (readCache == null)
             {
                 var tileMap = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB;

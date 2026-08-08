@@ -31,8 +31,12 @@ namespace LAB2D.UI.Panel
                .GetComponent<Toggle>().onValueChanged.AddListener(this.OnClick_ToggleWorkerLine);
             LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "EnemyLine").Find("Toggle")
                .GetComponent<Toggle>().onValueChanged.AddListener(this.OnClick_ToggleEnemyLine);
-            LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Speed").Find("Slider")
-               .GetComponent<Slider>().onValueChanged.AddListener(this.OnClick_GameSpeed);
+            // 先同步 Slider 值为当前 TimeScale，再添加监听器，
+            // 防止 Unity onValueChanged.AddListener 立即回调时覆写默认值。
+            Slider speedSlider = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Speed").Find("Slider")
+               .GetComponent<Slider>();
+            speedSlider.value = ForegroundPanel.Instance.TimeScale;
+            speedSlider.onValueChanged.AddListener(this.OnClick_GameSpeed);
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
 
             this.CreateKeyBindingUI();

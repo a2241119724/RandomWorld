@@ -7,6 +7,11 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
     {
         private float recordTime = 0.0f;
 
+        /// <summary>
+        /// 感知目标轮询索引 — 每帧只检查一个目标（跨帧轮询所有玩家+Worker）
+        /// </summary>
+        private int senseTargetIndex = 0;
+
         public SeekEnemyMoveState(ASeekEnemy character)
         : base(character)
         {
@@ -16,6 +21,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         {
             base.OnEnter();
             this.recordTime = 0.0f;
+            this.senseTargetIndex = 0;
         }
 
         public override void OnExit()
@@ -29,28 +35,33 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             base.OnUpdate();
 
             // 没有武器, 不进入攻击状态
-            if (this.Character.CharacterDataLAB.Weapon != null)
+            // 感知检查降频：每4帧检查一次，每帧只检查一个目标（轮询）
+            if (this.Character.CharacterDataLAB.Weapon != null
+                && UnityEngine.Time.frameCount % 4 == 0)
             {
-                // 感知到周围有活着的玩家，进入追踪状态
-                int count = Core.GameServices.PlayerCountProvider();
-                for (int i = 0; i < count; i++)
-                {
-                    if (this.Character.SenseNearby(Core.GameServices.PlayerGetProvider(i).transform))
-                    {
-                        this.Character.Manager.ChangeState(TypeEnum.Attack);
-                        this.Character.Target = Core.GameServices.PlayerGetProvider(i);
-                        return;
-                    }
-                }
+                int playerCount = Core.GameServices.PlayerCountProvider();
+                int workerCount = Core.GameServices.WorkerCountProvider();
+                int totalTargets = playerCount + workerCount;
 
-                // 感知到周围有活着的Worker，进入追踪状态
-                count = Core.GameServices.WorkerCountProvider();
-                for (int i = 0; i < count; i++)
+                if (totalTargets > 0)
                 {
-                    if (this.Character.SenseNearby(Core.GameServices.WorkerGetProvider(i).transform))
+                    // 轮询到下一个目标索引
+                    this.senseTargetIndex = (this.senseTargetIndex + 1) % totalTargets;
+
+                    UnityEngine.Transform target = null;
+                    if (this.senseTargetIndex < playerCount)
+                    {
+                        target = Core.GameServices.PlayerGetProvider(this.senseTargetIndex).transform;
+                    }
+                    else
+                    {
+                        target = Core.GameServices.WorkerGetProvider(this.senseTargetIndex - playerCount).transform;
+                    }
+
+                    if (target != null && this.Character.SenseNearby(target))
                     {
                         this.Character.Manager.ChangeState(TypeEnum.Attack);
-                        this.Character.Target = Core.GameServices.WorkerGetProvider(i);
+                        this.Character.Target = target.GetComponent<LAB2D.Character.Character>();
                         return;
                     }
                 }

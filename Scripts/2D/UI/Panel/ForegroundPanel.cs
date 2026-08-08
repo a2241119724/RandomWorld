@@ -84,7 +84,7 @@ namespace LAB2D.UI.Panel
         /// <summary>
         /// 游戏速率
         /// </summary>
-        public float TimeScale { get; set; } = 3;
+        public float TimeScale { get; set; } = 1;
 
         /// <inheritdoc/>
         public override void OnEnter()

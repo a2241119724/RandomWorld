@@ -132,8 +132,18 @@ namespace LAB2D.Character.Worker
             }
 
             this.lastTickFrame = currentFrame;
-            this.ExpireBountyTasks();
-            this.RunTaskAssignmentLoop();
+
+            // 任务分配循环：每5帧执行一次（减少80%的每帧迭代开销）
+            if (currentFrame % 5 == 0)
+            {
+                this.RunTaskAssignmentLoop();
+            }
+
+            // 悬赏过期检查：每30帧执行一次（悬赏过期窗口为数分钟，半秒延迟可忽略）
+            if (currentFrame % 30 == 0)
+            {
+                this.ExpireBountyTasks();
+            }
 
             // 每60帧清理一次过期的寻路失败缓存
             if (currentFrame % 60 == 0)

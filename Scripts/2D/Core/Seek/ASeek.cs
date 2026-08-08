@@ -78,14 +78,14 @@ namespace LAB2D.Core.Seek
         protected volatile int seekGeneration = 0;
 
         /// <summary>
-        /// 待处理的板块
+        /// 待处理的板块（最小堆，O(log n)提取最小值）
         /// </summary>
-        protected List<Spend> openList;
+        protected MinHeap<Spend> openList;
 
         /// <summary>
-        /// 已处理的板块
+        /// 已处理的板块（HashSet，O(1)查找）
         /// </summary>
-        protected List<Spend> closeList;
+        protected HashSet<Spend> closeList;
 
         public ASeek(LAB2D.Character.Character character)
         {
@@ -109,8 +109,8 @@ namespace LAB2D.Core.Seek
             this.LineRenderer.sortingLayerName = "Highest";
 
             this.Character = character;
-            this.openList = new List<Spend>(128);
-            this.closeList = new List<Spend>(128);
+            this.openList = new MinHeap<Spend>(Comparer<Spend>.Create((a, b) => a.F.CompareTo(b.F)));
+            this.closeList = new HashSet<Spend>();
         }
 
         /// <summary>

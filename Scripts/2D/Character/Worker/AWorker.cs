@@ -160,6 +160,7 @@ namespace LAB2D.Character.Worker
         public override void Start()
         {
             base.Start();
+            this.MoveSpeed = 5f;
             this.nameUI.text = this.name;
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
 
@@ -357,6 +358,7 @@ namespace LAB2D.Character.Worker
                 $"状态:{this.Manager.CurrentStateType}\n" +
                 taskInfo +
                 $"IsSeeking:{this.Seek.IsSeeking()}\n" +
+                $"碰撞计数:{this.collisionBugDetector.ColliderCount}\n" +
                 $"饥饿值: {workerData.CurHungry:F0}/{workerData.MaxHungry:F0}\n" +
                 $"疲劳值: {workerData.CurTired:F0}/{workerData.MaxTired:F0}\n" +
                 $"最大携带: {workerData.MaxResourceCount}\n" +
@@ -671,9 +673,10 @@ namespace LAB2D.Character.Worker
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks);
-            if (this.collisionBugDetector.IsBug(this.name, 1000))
+            if (this.collisionBugDetector.IsBug(this.name, 500))
             {
-                this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                this.collisionBugDetector.ColliderCount = 0; // 重置计数器，防止重复触发
+                this.GiveUpTask(); // 放弃当前任务，让WorkerBrain做新决策避开阻塞点
             }
         }
 

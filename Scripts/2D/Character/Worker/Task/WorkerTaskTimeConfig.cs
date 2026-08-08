@@ -15,8 +15,8 @@ namespace LAB2D.Character.Worker.Task
         // 基准时间
         private static float Day => GlobalData.GameDayTime;
 
-        /// <summary>默认任务时长（1/900 天 ≈ 0.11%）。</summary>
-        public static float DefaultTaskSeconds => Day / 900f;
+        /// <summary>默认任务时长（1/450 天 ≈ 0.22%）。</summary>
+        public static float DefaultTaskSeconds => Day / 450f;
         // ---- 疲劳消耗速率（/秒，绝对值，不随天数缩放）----
         /// <summary>默认工作疲劳消耗速度（/秒），子类通过 TiredCostPerSecond 虚属性重写。</summary>
         public const float WorkTiredCostPerSecond = 0.04f;
@@ -28,47 +28,47 @@ namespace LAB2D.Character.Worker.Task
         public const float LightWorkTiredCostPerSecond = 0.03f;
 
         // ---- 建造 (Build) ----
-        public static float BuildFetchResourceSeconds => Day / 1200f;   // 0.083%
-        public static float BuildBaseSeconds            => Day / 600f;    // 0.167%
-        public static float BuildSecondsPerResource     => Day / 3000f;   // 0.033%
-        public static float BuildMaxSeconds             => Day / 225f;    // 0.444%
+        public static float BuildFetchResourceSeconds => Day / 600f;    // 0.167%
+        public static float BuildBaseSeconds            => Day / 300f;    // 0.333%
+        public static float BuildSecondsPerResource     => Day / 1500f;   // 0.067%
+        public static float BuildMaxSeconds             => Day / 112.5f;  // 0.889%
 
         // ---- 搬运 (Carry) ----
-        public static float CarryTakeSeconds    => Day / 900f;   // 0.111%
-        public static float CarryPutDownSeconds => Day / 1200f;  // 0.083%
+        public static float CarryTakeSeconds    => Day / 450f;   // 0.222%
+        public static float CarryPutDownSeconds => Day / 600f;   // 0.167%
 
         // ---- 采集 (Gather) ----
-        public static float GatherSeconds => Day / 150f;  // 0.667%, 一天约64次
+        public static float GatherSeconds => Day / 75f;  // 1.333%, 一天约32次
 
         // ---- 进食 (Eat) ----
-        public static float EatSeconds => Day / 600f;  // 0.167%
+        public static float EatSeconds => Day / 300f;  // 0.333%
 
         // ---- 锻炼 (Exercise) ----
-        public static float ExerciseSeconds => Day / 225f;  // 0.444%
+        public static float ExerciseSeconds => Day / 112.5f;  // 0.889%
         public const long ExerciseSeekThreshold = 5;
         /// <summary>锻炼经验值获取速率（/秒），每次完成锻炼任务时根据时长结算。</summary>
         public const float ExerciseExperiencePerSecond = 0.5f;
 
         // ---- 穿戴 (Wear) ----
-        public static float WearSeconds => Day / 1200f;  // 0.083%
+        public static float WearSeconds => Day / 600f;  // 0.167%
 
         // ---- 睡眠 (Sleep) ----
         public static float SleepSeconds       => Day * 0.10f;   // 10%
         public static float GroundSleepSeconds => Day * 0.15f;   // 15%
 
         // ---- 漫游 (Wander) ----
-        public static float WanderSeconds => Day / 180f;  // 0.556%
+        public static float WanderSeconds => Day / 90f;  // 1.111%
 
         // ---- 种植 (Plant) ----
-        public static float PlantFetchSeedSeconds => Day / 1200f;  // 0.083%
-        public static float PlantOneSeedSeconds   => Day / 900f;   // 0.111%
+        public static float PlantFetchSeedSeconds => Day / 600f;   // 0.167%
+        public static float PlantOneSeedSeconds   => Day / 450f;   // 0.222%
 
         // ---- 拆除 (Demolish) ----
-        public static float DemolishSeconds => Day / 225f;  // 0.444%，与建造最高时间相近
+        public static float DemolishSeconds => Day / 112.5f;  // 0.889%
 
         // ---- 其他 ----
-        public static float IdleRestSeconds => Day / 600f;   // 0.167%
-        public static float EscapeSeconds   => Day / 600f;   // 0.167%
+        public static float IdleRestSeconds => Day / 300f;   // 0.333%
+        public static float EscapeSeconds   => Day / 300f;   // 0.333%
 
         public static float GetBuildConstructionSeconds(Dictionary<int, ResourceInfo> needs)
         {

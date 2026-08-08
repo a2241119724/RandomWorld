@@ -168,7 +168,7 @@ GameObject:
   - component: {fileID: -8390719607907001426}
   - component: {fileID: 5612860625550054286}
   m_Layer: 8
-  m_Name: CommonEnemy_Lv1
+  m_Name: CommonEnemy
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -327,7 +327,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3cac58256ad23a4693067ffb126d61b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MoveSpeed: 2.5
+  MoveSpeed: 1.5
   AttackLayers:
     serializedVersion: 2
     m_Bits: 0

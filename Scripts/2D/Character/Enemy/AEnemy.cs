@@ -51,6 +51,7 @@ namespace LAB2D.Character.Enemy
         public override void Start()
         {
             base.Start();
+            this.MoveSpeed = 5f;
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
 
             // 画视觉,听觉,攻击范围
@@ -84,15 +85,15 @@ namespace LAB2D.Character.Enemy
 
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
 
-            // 计算玩家与敌人之间的距离
-            float dist = Vector3.Distance(target.position, this.transform.position);
+            // 使用平方距离比较，避免 Vector3.Distance 中的 sqrt 运算
+            float sqrDist = (target.position - this.transform.position).sqrMagnitude;
 
             // 如果玩家与敌人的距离小于敌人的听觉距离(一周)
             // 判断是否听到附近有玩家
-            bool isFind = dist < enemyData.SoundRange;
+            bool isFind = sqrDist < enemyData.SoundRange * enemyData.SoundRange;
 
             // 如果玩家与敌人的距离小于敌人的视觉距离(前方扇形)
-            if (dist < enemyData.SightRange && !isFind)
+            if (sqrDist < enemyData.SightRange * enemyData.SightRange && !isFind)
             {
                 // 计算玩家是否在敌人的视角内
                 Vector3 direction = target.position - this.transform.position;

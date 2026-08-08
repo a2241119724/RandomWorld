@@ -62,33 +62,13 @@ namespace LAB2D.Core.Seek
                     return;
                 }
 
-                int minIndex = 0;
-
                 if (this.isStopThread)
                 {
                     return;
                 }
 
-                // 选出当前相邻位置最小花费f在openList中的索引位置
-                for (int i = 1; i < this.openList.Count; i++)
-                {
-                    if (this.isStopThread)
-                    {
-                        return;
-                    }
-
-                    if (this.openList[i].F < this.openList[minIndex].F)
-                    {
-                        minIndex = i;
-                    }
-                }
-
-                if (this.isStopThread)
-                {
-                    return;
-                }
-
-                Spend curSpend = this.openList[minIndex];
+                // 从最小堆中提取F值最小的节点（O(log n)）
+                Spend curSpend = this.openList.ExtractMin();
                 this.SeekProgress = (float)System.Math.Sqrt((double)((curSpend.PosMap.X - start.PosMap.X) * (curSpend.PosMap.X - start.PosMap.X)
                     + (curSpend.PosMap.Y - start.PosMap.Y) * (curSpend.PosMap.Y - start.PosMap.Y))) / totalDistance;
 
@@ -139,7 +119,6 @@ namespace LAB2D.Core.Seek
                     return;
                 }
 
-                this.openList.Remove(curSpend);
                 this.closeList.Add(curSpend);
 
                 // 对邻居进行f = g + h
@@ -195,9 +174,10 @@ namespace LAB2D.Core.Seek
                             continue;
                         }
 
+                        // 更新节点：从堆中移除旧条目，更新G后重新插入以维护堆序
+                        this.openList.Remove(neighbor);
                         neighbor.G = temp;
                     }
-
                     // 不在任何列表中
                     else
                     {
@@ -207,14 +187,15 @@ namespace LAB2D.Core.Seek
                         {
                             return;
                         }
-
-                        this.openList.Add(neighbor);
                     }
 
                     // 加权A*，使得寻路更快，但不是最短路径
                     neighbor.H = 1.5f * (System.Math.Abs(end.PosMap.X - neighbor.PosMap.X) + System.Math.Abs(end.PosMap.Y - neighbor.PosMap.Y));
                     neighbor.F = neighbor.G + neighbor.H;
                     neighbor.Previous = curSpend; // 链接
+
+                    // 插入堆中（F值计算完成后插入，新节点和更新节点均需处理）
+                    this.openList.Add(neighbor);
                 }
             }
 
@@ -248,25 +229,10 @@ namespace LAB2D.Core.Seek
                             return;
                         }
 
-                        // 上下左右平移一下射线
-                        Vector3 pos = Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(start.PosMap);
-                        Vector3 direction = Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(path[i].PosMap) - Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(start.PosMap);
-                        float distance = Vector3.Distance(Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(start.PosMap), Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(path[i].PosMap));
-
-                        bool isAllCanReach = true;
-                        Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
-                        {
-                            RaycastHit2D hit;
-                            foreach (var offset in this.checkOffsets)
-                            {
-                                hit = Physics2D.Raycast(pos + offset, direction, distance);
-                                if (hit.collider != null && hit.collider.name.Contains("Map"))
-                                {
-                                    isAllCanReach = false;
-                                    break;
-                                }
-                            }
-                        }).Wait();
+                        // 网格Bresenham直线检测可直达性（替代阻塞主线程的Physics2D.Raycast）
+                        bool isAllCanReach = IsLineWalkable(
+                            start.PosMap.X, start.PosMap.Y,
+                            path[i].PosMap.X, path[i].PosMap.Y);
                         if (isAllCanReach)
                         {
                             lastIndex = i;
@@ -298,6 +264,44 @@ namespace LAB2D.Core.Seek
             }
 
             this.SetResult(seekResult, seekId);
+        }
+
+        /// <summary>
+        /// Bresenham直线算法检测从from到to的网格路径是否全部可行走。
+        /// 纯网格计算，无需主线程派发，可在后台线程安全调用。
+        /// </summary>
+        private static bool IsLineWalkable(int fromX, int fromY, int toX, int toY)
+        {
+            int dx = System.Math.Abs(toX - fromX);
+            int dy = System.Math.Abs(toY - fromY);
+            int sx = fromX < toX ? 1 : -1;
+            int sy = fromY < toY ? 1 : -1;
+            int err = dx - dy;
+            int x = fromX;
+            int y = fromY;
+
+            while (x != toX || y != toY)
+            {
+                if (!WalkabilityCache.IsWalkable(x, y))
+                {
+                    return false;
+                }
+
+                int e2 = 2 * err;
+                if (e2 > -dy)
+                {
+                    err -= dy;
+                    x += sx;
+                }
+
+                if (e2 < dx)
+                {
+                    err += dx;
+                    y += sy;
+                }
+            }
+
+            return true;
         }
     }
 }
