@@ -67,6 +67,7 @@ namespace LAB2D.Character.Worker
         private Slider progress;
         private Text nameUI;
         private Text dialogText; // Dialog/Text — 内心独白
+        private GameObject dialogRoot; // Dialog 根节点
         private float dialogTextTimer; // 独白切换计时器
         private float dialogTextSwitchInterval = 5.0f; // 下次切换独白的间隔
         private CharacterStatusUI statusBar; // 记录实例化血条
@@ -111,15 +112,29 @@ namespace LAB2D.Character.Worker
             Transform dialogTrans = this.transform.Find("Dialog");
             if (dialogTrans != null)
             {
+                this.dialogRoot = dialogTrans.gameObject;
                 Transform textTrans = dialogTrans.Find("Text");
                 if (textTrans != null)
                 {
                     this.dialogText = textTrans.GetComponent<Text>();
                     if (this.dialogText != null)
                     {
-                        this.dialogText.gameObject.SetActive(false);
+                        this.dialogRoot.SetActive(false);
+                        LogProvider($"[Monologue] {this.name} Dialog/Text 初始化成功", LogManager.LogLevelEnum.Info);
+                    }
+                    else
+                    {
+                        LogProvider($"[Monologue] {this.name} Dialog/Text 缺少 Text 组件!", LogManager.LogLevelEnum.Warning);
                     }
                 }
+                else
+                {
+                    LogProvider($"[Monologue] {this.name} Dialog 下没有 Text 子节点!", LogManager.LogLevelEnum.Warning);
+                }
+            }
+            else
+            {
+                LogProvider($"[Monologue] {this.name} 没有 Dialog 子节点!", LogManager.LogLevelEnum.Warning);
             }
             this.progress = this.transform.Find("Progress").GetComponent<Slider>();
             this.progress.gameObject.SetActive(false);
@@ -220,9 +235,10 @@ namespace LAB2D.Character.Worker
         /// 显示随机内心独白（闲逛漫游时调用）。
         /// 根据 Worker 当前状态选择合适的独白内容。
         /// </summary>
-        public void ShowRandomMonologue()
+        /// <param name="taskType">可选：当前任务类型，传入则偏向任务相关独白</param>
+        public void ShowRandomMonologue(LAB2D.Enum.WorkerTaskType? taskType = null)
         {
-            if (this.dialogText == null)
+            if (this.dialogText == null || this.dialogRoot == null)
             {
                 return;
             }
@@ -235,18 +251,33 @@ namespace LAB2D.Character.Worker
 
             // 每隔一定时间切换独白（使用 deltaTime 累计）
             this.dialogTextTimer += this.DeltaTime;
-            if (this.dialogTextTimer < this.dialogTextSwitchInterval && this.dialogText.gameObject.activeSelf)
+            if (this.dialogTextTimer < this.dialogTextSwitchInterval && this.dialogRoot.activeSelf)
             {
                 return;
             }
 
             this.dialogTextTimer = 0f;
-            this.dialogTextSwitchInterval = UnityEngine.Random.Range(4.0f, 8.0f);
-            this.dialogText.text = Constant.WorkerInnerMonologue.GetRandom(
-                wd.CurHungry, wd.MaxHungry,
-                wd.CurTired, wd.MaxTired,
-                wd.CurSpirit, wd.MaxSpirit);
-            this.dialogText.gameObject.SetActive(true);
+
+            string text;
+            if (taskType.HasValue)
+            {
+                this.dialogTextSwitchInterval = UnityEngine.Random.Range(6.0f, 12.0f);
+                text = Constant.WorkerInnerMonologue.GetRandomForTask(
+                    taskType.Value,
+                    wd.CurHungry, wd.MaxHungry,
+                    wd.CurTired, wd.MaxTired);
+            }
+            else
+            {
+                this.dialogTextSwitchInterval = UnityEngine.Random.Range(4.0f, 8.0f);
+                text = Constant.WorkerInnerMonologue.GetRandom(
+                    wd.CurHungry, wd.MaxHungry,
+                    wd.CurTired, wd.MaxTired,
+                    wd.CurSpirit, wd.MaxSpirit);
+            }
+
+            this.dialogText.text = text;
+            this.dialogRoot.SetActive(true);
         }
 
         /// <summary>
@@ -254,9 +285,9 @@ namespace LAB2D.Character.Worker
         /// </summary>
         public void HideDialogText()
         {
-            if (this.dialogText != null)
+            if (this.dialogRoot != null)
             {
-                this.dialogText.gameObject.SetActive(false);
+                this.dialogRoot.SetActive(false);
                 this.dialogTextTimer = 0f;
             }
         }

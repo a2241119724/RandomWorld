@@ -81,6 +81,7 @@ namespace LAB2D.Character.Worker.State
             }
             else
             {
+                AWorkerTask.LogProvider($"[Monologue] {this.Character.name} 移动中有任务={workerData.Task.TaskType}, 隐藏Dialog", LogManager.LogLevelEnum.Trace);
                 this.Character.HideDialogText();
             }
 

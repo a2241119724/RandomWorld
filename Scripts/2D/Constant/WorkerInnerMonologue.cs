@@ -1,9 +1,10 @@
 namespace LAB2D.Constant
 {
+    using LAB2D.Enum;
     using UnityEngine;
 
     /// <summary>
-    /// Worker 闲逛漫游时的内心独白语料库。
+    /// Worker 闲逛漫游/执行任务时的内心独白语料库。
     /// 按情境分类，支持按条件筛选后随机选取。
     /// </summary>
     public static class WorkerInnerMonologue
@@ -126,61 +127,200 @@ namespace LAB2D.Constant
             "走一走，心情好多了。",
         };
 
+        // ===== 任务相关独白 =====
+
+        /// <summary>建造时的独白。</summary>
+        private static readonly string[] TaskBuild = new[]
+        {
+            "搬砖ing...",
+            "这墙得砌结实点。",
+            "一砖一瓦，筑起家园。",
+            "锤子在手，天下我有。",
+            "这个角度得再对齐一点。",
+            "盖房子是门手艺活。",
+            "再加把劲，快完工了！",
+        };
+
+        /// <summary>采集时的独白。</summary>
+        private static readonly string[] TaskGather = new[]
+        {
+            "砍砍砍！",
+            "这棵树不错，木质很好。",
+            "多囤点，冬天不愁。",
+            "嘿咻嘿咻...",
+            "这块矿石纯度挺高。",
+            "采集是生存的基本功。",
+            "手起刀落，资源到手。",
+        };
+
+        /// <summary>搬运时的独白。</summary>
+        private static readonly string[] TaskCarry = new[]
+        {
+            "搬东西真累...",
+            "好重啊，但得搬完。",
+            "蚂蚁搬家，一趟一趟来。",
+            "搬完这趟能歇会儿吗？",
+            "物流是经济的命脉啊。",
+            "加油，快到目的地了！",
+        };
+
+        /// <summary>吃饭时的独白。</summary>
+        private static readonly string[] TaskEat = new[]
+        {
+            "终于能吃饭了！",
+            "好香啊～",
+            "人是铁，饭是钢。",
+            "吃饱了才有力气干活。",
+            "这一餐来得正是时候。",
+        };
+
+        /// <summary>锻炼时的独白。</summary>
+        private static readonly string[] TaskExercise = new[]
+        {
+            "一二三四、二二三四...",
+            "锻炼身体，建设家园。",
+            "身体是革命的本钱。",
+            "活动活动筋骨。",
+            "保持好身材！",
+        };
+
+        /// <summary>种植时的独白。</summary>
+        private static readonly string[] TaskPlant = new[]
+        {
+            "小苗苗快快长大～",
+            "种瓜得瓜，种豆得豆。",
+            "浇点水，晒晒太阳。",
+            "农耕最治愈了。",
+            "希望今年有个好收成。",
+            "这片地土质不错。",
+        };
+
+        /// <summary>睡觉时的独白。</summary>
+        private static readonly string[] TaskSleep = new[]
+        {
+            "zzZ... 呼...",
+            "好困，终于能睡了。",
+            "梦里啥都有。",
+            "充电五分钟，干活两小时。",
+        };
+
+        /// <summary>悬赏/任务栏相关独白。</summary>
+        private static readonly string[] TaskBounty = new[]
+        {
+            "这悬赏金还行。",
+            "帮人打工，赚点外快。",
+            "拿了钱就得把活干好。",
+            "悬赏任务效率优先。",
+            "看看有什么好任务...",
+        };
+
+        /// <summary>穿戴时的独白。</summary>
+        private static readonly string[] TaskWear = new[]
+        {
+            "新装备真不错！",
+            "穿上这个厉害多了。",
+            "工欲善其事，必先利其器。",
+            "这装备手感真好。",
+        };
+
         /// <summary>
-        /// 获取一条随机内心独白。
-        /// 会根据 Worker 当前状态选择合适的情境分类后随机选取。
+        /// 获取一条随机内心独白（漫游时使用）。
         /// </summary>
-        /// <param name="curHungry">当前饥饿值</param>
-        /// <param name="maxHungry">最大饥饿值</param>
-        /// <param name="curTired">当前疲劳值</param>
-        /// <param name="maxTired">最大疲劳值</param>
-        /// <param name="curSpirit">当前精气神</param>
-        /// <param name="maxSpirit">最大精气神</param>
-        /// <returns>随机内心独白字符串</returns>
         public static string GetRandom(
             float curHungry = 100f, float maxHungry = 100f,
             float curTired = 100f, float maxTired = 100f,
             float curSpirit = 100f, float maxSpirit = 100f)
         {
-            // 根据状态确定候选池：80%通用 + 20%状态相关
             float hungryRatio = maxHungry > 0 ? curHungry / maxHungry : 1f;
             float tiredRatio = maxTired > 0 ? curTired / maxTired : 1f;
             float spiritRatio = maxSpirit > 0 ? curSpirit / maxSpirit : 1f;
 
-            // 基础权重：通用独白权重最高
-            float generalWeight = 1.0f;
-            float hungryWeight = hungryRatio < 0.4f ? 0.3f : 0.05f;   // 饥饿时概率提升
-            float tiredWeight = tiredRatio < 0.4f ? 0.3f : 0.05f;     // 疲劳时概率提升
-            float spiritLowWeight = spiritRatio < 0.4f ? 0.25f : 0.05f;
-            float gatheringWeight = 0.1f;
-            float buildingWeight = 0.1f;
-            float socialWeight = 0.08f;
+            var entries = new (string[] pool, float weight)[]
+            {
+                (General, 1.0f),
+                (Hungry, hungryRatio < 0.4f ? 0.3f : 0.05f),
+                (Tired, tiredRatio < 0.4f ? 0.3f : 0.05f),
+                (SpiritLow, spiritRatio < 0.4f ? 0.25f : 0.05f),
+                (Gathering, 0.1f),
+                (Building, 0.1f),
+                (Social, 0.08f),
+            };
 
-            float totalWeight = generalWeight + hungryWeight + tiredWeight
-                + spiritLowWeight + gatheringWeight + buildingWeight + socialWeight;
+            return PickByWeight(entries);
+        }
 
-            float roll = Random.value * totalWeight;
-            float accumulator = 0f;
+        /// <summary>
+        /// 获取一条任务相关的随机内心独白（执行任务时使用）。
+        /// 任务独白 65%，通用 20%，状态补充 15%。
+        /// </summary>
+        public static string GetRandomForTask(
+            WorkerTaskType taskType,
+            float curHungry = 100f, float maxHungry = 100f,
+            float curTired = 100f, float maxTired = 100f)
+        {
+            string[] taskPool = GetTaskPool(taskType);
+            float hungryRatio = maxHungry > 0 ? curHungry / maxHungry : 1f;
+            float tiredRatio = maxTired > 0 ? curTired / maxTired : 1f;
 
-            accumulator += generalWeight;
-            if (roll <= accumulator) return PickRandom(General);
+            var entries = new (string[] pool, float weight)[]
+            {
+                (taskPool, 0.65f),
+                (General, 0.20f),
+                (Hungry, hungryRatio < 0.4f ? 0.08f : 0.02f),
+                (Tired, tiredRatio < 0.4f ? 0.08f : 0.02f),
+            };
 
-            accumulator += hungryWeight;
-            if (roll <= accumulator) return PickRandom(Hungry);
+            return PickByWeight(entries);
+        }
 
-            accumulator += tiredWeight;
-            if (roll <= accumulator) return PickRandom(Tired);
+        /// <summary>
+        /// 根据 WorkerTaskType 返回对应的独白词库。
+        /// </summary>
+        private static string[] GetTaskPool(WorkerTaskType taskType)
+        {
+            switch (taskType)
+            {
+                case WorkerTaskType.Build: return TaskBuild;
+                case WorkerTaskType.Gather: return TaskGather;
+                case WorkerTaskType.Carry:
+                case WorkerTaskType.CarryToBoard: return TaskCarry;
+                case WorkerTaskType.Eat: return TaskEat;
+                case WorkerTaskType.Exercise: return TaskExercise;
+                case WorkerTaskType.Plant: return TaskPlant;
+                case WorkerTaskType.Sleep:
+                case WorkerTaskType.GroundSleep: return TaskSleep;
+                case WorkerTaskType.Bounty:
+                case WorkerTaskType.PickUpFromBoard: return TaskBounty;
+                case WorkerTaskType.Wear: return TaskWear;
+                default: return General;
+            }
+        }
 
-            accumulator += spiritLowWeight;
-            if (roll <= accumulator) return PickRandom(SpiritLow);
+        /// <summary>
+        /// 按权重从多个池中随机选取一条。
+        /// </summary>
+        private static string PickByWeight((string[] pool, float weight)[] entries)
+        {
+            float total = 0f;
+            for (int i = 0; i < entries.Length; i++)
+            {
+                total += entries[i].weight;
+            }
 
-            accumulator += gatheringWeight;
-            if (roll <= accumulator) return PickRandom(Gathering);
+            float roll = Random.value * total;
+            float acc = 0f;
 
-            accumulator += buildingWeight;
-            if (roll <= accumulator) return PickRandom(Building);
+            for (int i = 0; i < entries.Length; i++)
+            {
+                acc += entries[i].weight;
+                if (roll <= acc)
+                {
+                    return PickRandom(entries[i].pool);
+                }
+            }
 
-            return PickRandom(Social);
+            // fallback: 返回最后一个池
+            return PickRandom(entries[entries.Length - 1].pool);
         }
 
         private static string PickRandom(string[] pool)

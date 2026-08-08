@@ -33,6 +33,7 @@ namespace LAB2D.Character.Worker.State
         public override void OnExit()
         {
             base.OnExit();
+            this.Character.HideDialogText();
         }
 
         /// <inheritdoc/>
@@ -51,6 +52,9 @@ namespace LAB2D.Character.Worker.State
             {
                 return;
             }
+
+            // 执行任务时概率显示内心独白（受内部计时器控制，6-12秒切换一次）
+            this.Character.ShowRandomMonologue(workerData.Task.TaskType);
 
             bool isComplete = workerData.Task.Execute(this.Character, this.Character.DeltaTime);
             if (isComplete)
