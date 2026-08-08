@@ -4,7 +4,9 @@ namespace LAB2D.Character.Worker
     using LAB2D;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Core.KDTree;
+    using LAB2D.Core.Seek;
     using LAB2D.Gameplay;
+    using LAB2D.Map;
     using LAB2D.Serializable;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
@@ -132,6 +134,12 @@ namespace LAB2D.Character.Worker
             this.lastTickFrame = currentFrame;
             this.ExpireBountyTasks();
             this.RunTaskAssignmentLoop();
+
+            // 每60帧清理一次过期的寻路失败缓存
+            if (currentFrame % 60 == 0)
+            {
+                ASeek.CleanFailCache();
+            }
         }
 
         /// <summary>
@@ -343,7 +351,18 @@ namespace LAB2D.Character.Worker
                 return;
             }
 
-            this.taskQueue.MarkIdle(task);
+            // 采集任务被放弃时：释放 GatherMap 认领 + 从队列彻底删除，避免其他 Worker 重复尝试
+            if (task.TaskType == WorkerTaskType.Gather)
+            {
+                Core.ServiceLocator.Get<GatherMap>().CancelGather(
+                    Vector3IntLAB.ToVector3Int(task.TargetMap));
+                this.taskQueue.Remove(task);
+            }
+            else
+            {
+                this.taskQueue.MarkIdle(task);
+            }
+
             EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }
 

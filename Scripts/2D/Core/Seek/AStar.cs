@@ -13,9 +13,16 @@ namespace LAB2D.Core.Seek
     /// </summary>
     public class AStar : ASeek
     {
+        /// <summary>
+        /// A* 最大迭代次数，根据地图尺寸动态计算，防止不可达目标时遍历全图。
+        /// </summary>
+        private readonly int maxIterations;
+
         public AStar(LAB2D.Character.Character character)
             : base(character)
         {
+            var tileMap = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB;
+            this.maxIterations = System.Math.Min(10000, tileMap.Width * tileMap.Height / 3);
         }
 
         /// <inheritdoc/>
@@ -45,8 +52,16 @@ namespace LAB2D.Core.Seek
             float totalDistance = (float)System.Math.Sqrt((double)((start.PosMap.X - end.PosMap.X) * (start.PosMap.X - end.PosMap.X)
                 + (start.PosMap.Y - end.PosMap.Y) * (start.PosMap.Y - end.PosMap.Y)));
             this.openList.Add(start);
+            int iterationCount = 0;
             while (!this.isStopThread && this.openList.Count != 0)
             {
+                // 迭代上限保护：避免不可达目标时遍历整个可达区域
+                if (++iterationCount > this.maxIterations)
+                {
+                    this.SetResult(new SeekResult { IsReachable = false }, seekId);
+                    return;
+                }
+
                 int minIndex = 0;
 
                 if (this.isStopThread)

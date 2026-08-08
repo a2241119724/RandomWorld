@@ -3,6 +3,7 @@ namespace LAB2D.Character.Worker.State
     using LAB2D;
     using LAB2D.AI.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core.Seek;
     using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
@@ -1024,6 +1025,9 @@ namespace LAB2D.Character.Worker.State
                 // 没有找到路
                 if (!this.Character.Seek.IsHavePath())
                 {
+                    // 记录寻路失败位置，防止短时间内重复尝试同一不可达目标
+                    ASeek.RecordFail(this.targetMap);
+
                     // 如果有任务
                     AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
                     if (workerData.Task != null)

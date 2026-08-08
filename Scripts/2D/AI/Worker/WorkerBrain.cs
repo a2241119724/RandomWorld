@@ -3,6 +3,7 @@ namespace LAB2D.AI.Worker
     using LAB2D;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core.Seek;
     using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
@@ -822,6 +823,10 @@ namespace LAB2D.AI.Worker
                     if (gatherMap?.GatherMapDataLAB?.ContainKey(pos) == true)
                         continue;
 
+                    // 跳过近期寻路失败的位置，避免重复尝试不可达资源
+                    if (ASeek.IsRecentFail(pos))
+                        continue;
+
                     if (!resourceMap.TryGetGatherResourceInfo(pos, out ResourceInfo resourceInfo))
                         continue;
 
@@ -884,6 +889,10 @@ namespace LAB2D.AI.Worker
                     {
                         continue;
                     }
+
+                    // 跳过近期寻路失败的位置，避免重复尝试不可达资源
+                    if (ASeek.IsRecentFail(pos))
+                        continue;
 
                     string resourceName = resourceMap.ResourceMapDataLAB.PosMap[posLAB];
                     if (string.IsNullOrEmpty(resourceName))

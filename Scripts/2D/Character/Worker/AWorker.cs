@@ -7,6 +7,7 @@ namespace LAB2D.Character.Worker
     using LAB2D.Constant;
     using LAB2D.Core.Seek;
     using LAB2D.Item;
+    using LAB2D.Map;
     using LAB2D.Item.Build.Furniture.Bed;
     using LAB2D.Serializable;
     using LAB2D.UI.Character;
@@ -579,6 +580,14 @@ namespace LAB2D.Character.Worker
         public void GiveUpTask()
         {
             AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
+
+            // 采集任务被放弃时，释放 GatherMap 认领锁（配合失败缓存防止重复选取）
+            if (workerData.Task != null && workerData.Task.TaskType == WorkerTaskType.Gather)
+            {
+                Core.ServiceLocator.Get<GatherMap>().CancelGather(
+                    Vector3IntLAB.ToVector3Int(workerData.Task.TargetMap));
+            }
+
             GiveUpTaskProvider(this, workerData.Task);
             workerData.Task = null;
             this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);

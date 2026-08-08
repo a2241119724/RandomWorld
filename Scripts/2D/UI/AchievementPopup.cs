@@ -31,6 +31,9 @@ namespace LAB2D.UI
         private RectTransform rootRect;
         private Coroutine autoHideCoroutine;
 
+        /// <summary>是否正在播放动画（淡入/保持/淡出），防止每帧重复触发 Show 导致闪烁</summary>
+        private bool isShowing;
+
         /// <summary>
         /// 确保运行时弹窗存在。若不存在则动态创建。
         /// 由 GlobalInit.Start 或 游戏启动时调用。
@@ -154,6 +157,12 @@ namespace LAB2D.UI
                 return;
             }
 
+            // 正在播放上一个成就的动画时，忽略重复调用，防止每帧重置 alpha 导致闪烁
+            if (this.isShowing)
+            {
+                return;
+            }
+
             this.nameText.text = data.Name;
             this.pointsText.text = data.PointsText;
 
@@ -191,6 +200,7 @@ namespace LAB2D.UI
                 this.StopCoroutine(this.autoHideCoroutine);
             }
 
+            this.isShowing = true;
             this.autoHideCoroutine = this.StartCoroutine(this.AutoHideRoutine());
         }
 
@@ -236,6 +246,8 @@ namespace LAB2D.UI
                 this.canvasGroup.blocksRaycasts = false;
                 this.canvasGroup.interactable = false;
             }
+
+            this.isShowing = false;
         }
     }
 }

@@ -21,6 +21,17 @@ namespace LAB2D.Core.Seek
         private static readonly SemaphoreSlim ConcurrencyLimit = new (Environment.ProcessorCount, Environment.ProcessorCount);
 
         /// <summary>
+        /// 寻路失败位置缓存：key="x_y", value=记录时间(Time.time)。
+        /// 只从主线程读写。
+        /// </summary>
+        private static readonly Dictionary<string, float> s_failCache = new ();
+
+        /// <summary>
+        /// 失败缓存有效期（秒），过期后允许重新尝试。
+        /// </summary>
+        private const float FAIL_CACHE_TTL = 30f;
+
+        /// <summary>
         /// 共享LineRenderer材质
         /// </summary>
         private static Material sharedLineMaterial;
@@ -155,6 +166,49 @@ namespace LAB2D.Core.Seek
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// 记录寻路失败位置（主线程调用）。
+        /// </summary>
+        public static void RecordFail(Vector3Int targetMap)
+        {
+            string key = $"{targetMap.x}_{targetMap.y}";
+            s_failCache[key] = Time.time;
+        }
+
+        /// <summary>
+        /// 检查位置是否在近期寻路失败过（主线程调用）。
+        /// 读取时顺便清理过期条目。
+        /// </summary>
+        public static bool IsRecentFail(Vector3Int targetMap)
+        {
+            string key = $"{targetMap.x}_{targetMap.y}";
+            if (s_failCache.TryGetValue(key, out float recordTime))
+            {
+                if (Time.time - recordTime < FAIL_CACHE_TTL)
+                    return true;
+                s_failCache.Remove(key);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 清理过期的失败缓存条目（主线程定期调用）。
+        /// </summary>
+        public static void CleanFailCache()
+        {
+            float now = Time.time;
+            var expired = new List<string>();
+            foreach (var kv in s_failCache)
+            {
+                if (now - kv.Value > FAIL_CACHE_TTL)
+                    expired.Add(kv.Key);
+            }
+
+            foreach (var key in expired)
+                s_failCache.Remove(key);
         }
 
         public void Seek(Vector3Int targetMap)
