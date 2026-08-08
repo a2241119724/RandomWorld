@@ -124,7 +124,7 @@ namespace LAB2D.Gameplay
                 list.Add(new ResourceInfo(resource.Id, resource.Count, ownerId));
             }
 
-            Debug.Log($"[TaskBoard] 物品已交付: ownerId={ownerId} id={resource.Id} count={resource.Count}");
+            AWorkerTask.LogProvider($"[TaskBoard] 物品已交付: ownerId={ownerId} id={resource.Id} count={resource.Count}", LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>

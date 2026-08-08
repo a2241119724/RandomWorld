@@ -179,7 +179,7 @@ namespace LAB2D.Gameplay
 
             AWorkerTask.LogProvider(
                 $"[PlayerBounty] {executor.name} 完成 Player 悬赏，获得 {reward}",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
     }
 }

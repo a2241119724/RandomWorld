@@ -53,7 +53,7 @@ namespace LAB2D.Character.Worker.Task
 
             AWorkerTask.LogProvider(
                 $"[GatherOwner] executor={worker.name}({worker.GetInstanceID()}) override={AWorkerTask.BountyOwnerOverride} finalOwner={workerId} isBounty={isBounty}",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             // 记录自我采集掉落的所有位置和资源（用于链式拾取）
             List<Vector3Int> selfDropPositions = null;
@@ -132,7 +132,7 @@ namespace LAB2D.Character.Worker.Task
                 int totalDrops = 1 + (selfDropPositions.Count > 0 ? selfDropPositions.Count : 0);
                 LogProvider(
                     $"{worker.name} 采集完成，开始链式拾取 {totalDrops} 个掉落物: 首个 id={firstResource.Id} pos=({firstPos.x},{firstPos.y})",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
             }
         }
 
@@ -170,7 +170,7 @@ namespace LAB2D.Character.Worker.Task
 
             LogProvider(
                 $"[BountyDrop] 悬赏掉落物放置: pos=({placePos.x},{placePos.y}) → 创建 CarryToBoardTask",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>

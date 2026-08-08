@@ -99,7 +99,7 @@ namespace LAB2D.Character.Worker.State
                     {
                         AWorkerTask.LogProvider(
                             $"{this.Character.name} 漫游中发现了一些东西!",
-                            LogManager.LogLevelEnum.Info);
+                            LogManager.LogLevelEnum.Debug);
                         // TODO: 可通过 DropManager 在附近生成随机基础资源
                     }
 
@@ -119,7 +119,7 @@ namespace LAB2D.Character.Worker.State
                         // 漫游结束，精气神已恢复，正常决策
                         AWorkerTask.LogProvider(
                             $"{this.Character.name} 漫游结束 精气神={workerData.CurSpirit:F0}",
-                            LogManager.LogLevelEnum.Info);
+                            LogManager.LogLevelEnum.Debug);
                     }
                 }
 
@@ -206,7 +206,7 @@ namespace LAB2D.Character.Worker.State
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 自主决策: {WorkerBrain.GetDecisionLabel(decision)}",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             switch (decision.Type)
             {
@@ -223,7 +223,7 @@ namespace LAB2D.Character.Worker.State
                     // 这里确保 Worker 处于可接任务状态
                     AWorkerTask.LogProvider(
                         $"{this.Character.name} 准备接受悬赏任务",
-                        LogManager.LogLevelEnum.Info);
+                        LogManager.LogLevelEnum.Debug);
                     this.CreateIdleTask();
                     break;
 
@@ -297,7 +297,7 @@ namespace LAB2D.Character.Worker.State
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 创建自我采集任务: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -340,7 +340,7 @@ namespace LAB2D.Character.Worker.State
 
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 发布悬赏失败: {reason}",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
 
                 // 失败时回退：建造→自己建，采集→自己采
                 if (decision.NeededResources != null && decision.NeededResources.Count > 0)
@@ -409,7 +409,7 @@ namespace LAB2D.Character.Worker.State
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 发布了建造悬赏: pos=({decision.TargetPosition.x},{decision.TargetPosition.y}) 悬赏金 {reward}",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             return true;
         }
@@ -464,7 +464,7 @@ namespace LAB2D.Character.Worker.State
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 为自己建造 {decision.BuildTileName}: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -486,7 +486,7 @@ namespace LAB2D.Character.Worker.State
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 创建自我种植任务: pos=({taskPos.x},{taskPos.y})",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -504,7 +504,7 @@ namespace LAB2D.Character.Worker.State
             {
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 成功解决饥饿 (当前饥饿:{wd?.CurHungry:F0})",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
                 this.CreateIdleTask();
                 return;
             }
@@ -512,7 +512,7 @@ namespace LAB2D.Character.Worker.State
             // 交易失败 → 自己去采集食物（扩大扫描范围）
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 交易失败, 尝试自己采集食物（扩大扫描范围）",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             // 扫描食物：从小范围到大范围逐级扩大
             Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
@@ -530,7 +530,7 @@ namespace LAB2D.Character.Worker.State
 
                         AWorkerTask.LogProvider(
                             $"{this.Character.name} 找到食物 id={foodResource.Id} pos=({foodPos.Value.x},{foodPos.Value.y})",
-                            LogManager.LogLevelEnum.Info);
+                            LogManager.LogLevelEnum.Debug);
 
                         this.CreateSelfGatherTask(decision);
                         return;
@@ -631,7 +631,7 @@ namespace LAB2D.Character.Worker.State
 
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 创建睡觉任务(有床) pos=({bedPos.x},{bedPos.y})",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
             }
             else
             {
@@ -647,7 +647,7 @@ namespace LAB2D.Character.Worker.State
 
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 创建地面睡觉任务(无床) pos=({posMap.x},{posMap.y})",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
             }
         }
 
@@ -710,7 +710,7 @@ namespace LAB2D.Character.Worker.State
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 创建自我拾取任务: 捡 id={decision.Resource?.Id} pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -742,7 +742,7 @@ namespace LAB2D.Character.Worker.State
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 创建任务栏拾取任务: pos=({boardManager.BoardPosition.x},{boardManager.BoardPosition.y})",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -802,7 +802,7 @@ namespace LAB2D.Character.Worker.State
                     {
                         AWorkerTask.LogProvider(
                             $"{this.Character.name} 出售{totalSellCount}个资源({sellList.Count}种)获得{earned}G (总携带{totalCarried}/{workerData.MaxResourceCount})",
-                            LogManager.LogLevelEnum.Info);
+                            LogManager.LogLevelEnum.Debug);
                     }
                 }
             }
@@ -918,7 +918,7 @@ namespace LAB2D.Character.Worker.State
                 wd.WanderWaypointsRemaining = UnityEngine.Random.Range(3, 6);
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 开始漫游 ({wd.WanderWaypointsRemaining} 个路点), 精气神={wd.CurSpirit:F0}",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
             }
 
             // 选一个较远的随机可到达位置（漫游半径比普通寻路更大）
@@ -1066,19 +1066,19 @@ namespace LAB2D.Character.Worker.State
             {
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 建家: 墙壁{prevStage + 1}/{wallCount} → 下一块",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
             }
             else if (buildTileName.StartsWith("CustomRoomWall") && wd.HomeBuildStage >= wallCount)
             {
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 建家: 墙壁完成 → 接下来建门",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
             }
             else if (buildTileName == "CustomDoor")
             {
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 建家: 门完成 → 接下来建床",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
             }
             else if (buildTileName == "SingleBed")
             {
@@ -1100,7 +1100,7 @@ namespace LAB2D.Character.Worker.State
                     fm.AddWorkerToBed(bedPos, this.Character);
                     AWorkerTask.LogProvider(
                         $"{this.Character.name} 床已自动绑定: pos=({bedPos.x},{bedPos.y})",
-                        LogManager.LogLevelEnum.Info);
+                        LogManager.LogLevelEnum.Debug);
                 }
             }
         }
@@ -1135,7 +1135,7 @@ namespace LAB2D.Character.Worker.State
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 房间已注册: {roomInfo.Points.Count} 个墙壁/门位置",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>

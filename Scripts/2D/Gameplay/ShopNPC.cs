@@ -115,7 +115,7 @@ namespace LAB2D.Gameplay
 
             AWorkerTask.LogProvider(
                 $"[{this.ShopName}] {worker.name} 出售 {resource.Count}×id={resource.Id} 获得 {earned}",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             return price;
         }
@@ -171,7 +171,7 @@ namespace LAB2D.Gameplay
 
             AWorkerTask.LogProvider(
                 $"[{this.ShopName}] {worker.name} 购买 {count}×{shopItem.CnName}(id={itemId}) 花费 {cost}",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             return true;
         }

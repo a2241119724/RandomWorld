@@ -179,7 +179,7 @@ namespace LAB2D.Gameplay
 
             AWorkerTask.LogProvider(
                 $"[Market] {worker.name} 出售 {resourceInfo.Count}×id={resourceInfo.Id} 获得 {earned}",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             return sellPrice;
         }

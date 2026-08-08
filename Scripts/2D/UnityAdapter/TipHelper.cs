@@ -43,7 +43,7 @@ namespace LAB2D.UnityAdapter
             string fullMessage = string.IsNullOrEmpty(logPrefix)
                 ? message
                 : $"{logPrefix} {message}";
-            Debug.Log(fullMessage);
+            Debug.LogWarning(fullMessage);
         }
     }
 }

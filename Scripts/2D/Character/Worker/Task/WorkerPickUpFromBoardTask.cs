@@ -103,7 +103,7 @@ namespace LAB2D.Character.Worker.Task
 
             LogProvider(
                 $"{worker.name} 从任务栏取回 {items.Count} 种物品，共 {totalCount} 个",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace LAB2D.Character.Worker.Task
 
             LogProvider(
                 $"{worker.name} 从地面捡起物品(id={this.groundResource.Id}, count={this.groundResource.Count}) pos=({posMap.x},{posMap.y})",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             // 链式拾取：还有待拾取物品时，立即创建下一个拾取任务
             if (this.pendingPositions != null && this.pendingPositions.Count > 0)

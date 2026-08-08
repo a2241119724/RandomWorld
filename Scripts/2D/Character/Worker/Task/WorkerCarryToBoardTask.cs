@@ -78,7 +78,7 @@ namespace LAB2D.Character.Worker.Task
 
             LogProvider(
                 $"{worker.name} 已将物品(id={this.resourceInfo.Id}, count={this.resourceInfo.Count}, owner={ownerId}) 交付到任务栏",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>

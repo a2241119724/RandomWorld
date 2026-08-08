@@ -211,7 +211,7 @@ namespace LAB2D.AI.Worker
 
         private static void LogProvider(string msg)
         {
-            AWorkerTask.LogProvider($"[Trade] {msg}", LogManager.LogLevelEnum.Info);
+            AWorkerTask.LogProvider($"[Trade] {msg}", LogManager.LogLevelEnum.Debug);
         }
     }
 }

@@ -44,7 +44,7 @@ namespace LAB2D.Character.Worker.Task
 
             LogProvider(
                 $"{worker.name} 拆除了建筑: pos=({this.TargetMap.X},{this.TargetMap.Y})",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>

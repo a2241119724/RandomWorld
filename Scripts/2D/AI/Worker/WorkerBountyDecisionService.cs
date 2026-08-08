@@ -111,7 +111,7 @@ namespace LAB2D.AI.Worker
             {
                 AWorkerTask.LogProvider(
                     $"{worker.name} 悬赏概率检查失败: prob={probability:F2} sociality={p.Sociality:F0} ambition={p.Ambition:F0}",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
             }
             return pass;
         }
@@ -285,7 +285,7 @@ namespace LAB2D.AI.Worker
 
                 AWorkerTask.LogProvider(
                     $"{worker.name} 发布了悬赏: {candidate.TaskType} 悬赏金 {reward}",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
 
                 // 每次扫描最多发布 1 个悬赏
                 return true;
@@ -339,7 +339,7 @@ namespace LAB2D.AI.Worker
 
             AWorkerTask.LogProvider(
                 $"{worker.name} 发布了悬赏: Gather pos=({targetPos.x},{targetPos.y}) 悬赏金 {reward}",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             return true;
         }

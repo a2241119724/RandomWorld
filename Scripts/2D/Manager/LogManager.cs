@@ -268,17 +268,19 @@ namespace LAB2D.Manager
             switch (level)
             {
                 // case LogLevelEnum.Trace:
-                case LogLevelEnum.Debug:
+                // case LogLevelEnum.Debug:  // Debug/Trace 仅写文件，不输出到 Unity 控制台
                 case LogLevelEnum.Info:
-                case LogLevelEnum.Warning:
                     Debug.Log(logMessage);
+                    break;
+                case LogLevelEnum.Warning:
+                    Debug.LogWarning(logMessage);
                     break;
                 case LogLevelEnum.Error:
                 case LogLevelEnum.Fatal:
                     try
                     {
                         this.suppressUnityErrorCapture++;
-                        Debug.Log(logMessage);
+                        Debug.LogError(logMessage);
                     }
                     finally
                     {

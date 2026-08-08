@@ -1010,7 +1010,7 @@ namespace LAB2D.AI.Worker
                     {
                         AWorkerTask.LogProvider(
                             $"{worker.name} 建房区域有资源 {roomResource.Value.Resource.Id}, 先采集 pos=({roomResource.Value.Position.x},{roomResource.Value.Position.y})",
-                            LogManager.LogLevelEnum.Info);
+                            LogManager.LogLevelEnum.Debug);
                         return Decision.MakeGather(roomResource.Value.Position,
                             roomResource.Value.Resource,
                             $"清理建房区域资源");
@@ -1050,7 +1050,7 @@ namespace LAB2D.AI.Worker
                     {
                         AWorkerTask.LogProvider(
                             $"{worker.name} 建造: CustomRoomWall 不存在, 跳过墙壁直接建床",
-                            LogManager.LogLevelEnum.Info);
+                            LogManager.LogLevelEnum.Warning);
                         wd.HomeBuildStage = BedStage;
                         buildTileName = "SingleBed";
                         buildPos = center;
@@ -1061,7 +1061,7 @@ namespace LAB2D.AI.Worker
                     {
                         AWorkerTask.LogProvider(
                             $"{worker.name} 建造失败: {buildTileName} 物品不存在于数据库",
-                            LogManager.LogLevelEnum.Info);
+                            LogManager.LogLevelEnum.Warning);
                         return null;
                     }
                 }
@@ -1080,7 +1080,7 @@ namespace LAB2D.AI.Worker
                         {
                             AWorkerTask.LogProvider(
                                 $"{worker.name} 建造位置资源已被认领, 等待释放 pos=({buildPos.Value.x},{buildPos.Value.y})",
-                                LogManager.LogLevelEnum.Info);
+                                LogManager.LogLevelEnum.Debug);
                             return Decision.Make(WorkerDecisionType.Wander, "等待资源释放");
                         }
 
@@ -1088,7 +1088,7 @@ namespace LAB2D.AI.Worker
                         {
                             AWorkerTask.LogProvider(
                                 $"{worker.name} 建造位置有资源, 先采集再建 {buildTileName} pos=({buildPos.Value.x},{buildPos.Value.y})",
-                                LogManager.LogLevelEnum.Info);
+                                LogManager.LogLevelEnum.Debug);
                             return Decision.MakeGather(buildPos.Value, resourceInfo, "清理建造位置");
                         }
                     }
@@ -1096,7 +1096,7 @@ namespace LAB2D.AI.Worker
                     // 不是资源阻挡 → 位置本身有问题，清除规划重新选址，避免死循环
                     AWorkerTask.LogProvider(
                         $"{worker.name} 建造位置不可达(非资源阻挡): {buildTileName} pos=({buildPos?.x},{buildPos?.y}), 重新选址",
-                        LogManager.LogLevelEnum.Info);
+                        LogManager.LogLevelEnum.Warning);
                     this.RelocateHomeSite(worker, wd);
                     return Decision.Make(WorkerDecisionType.Wander,
                         "建家位置无效, 重新选址后漫游探索");
@@ -1128,7 +1128,7 @@ namespace LAB2D.AI.Worker
                             {
                                 AWorkerTask.LogProvider(
                                     $"{worker.name} 位置已建造完成, 跳过墙壁{wd.HomeBuildStage + 1}: pos=({buildPos.Value.x},{buildPos.Value.y})",
-                                    LogManager.LogLevelEnum.Info);
+                                    LogManager.LogLevelEnum.Debug);
                                 wd.HomeBuildStage++;
                             }
                             else if (wd.HomeBuildStage == DoorStage || wd.HomeBuildStage == BedStage)
@@ -1136,7 +1136,7 @@ namespace LAB2D.AI.Worker
                                 // 门或床已完成 → 房间已建好，直接标记完成
                                 AWorkerTask.LogProvider(
                                     $"{worker.name} 门/床已完成, 标记建家完成: pos=({buildPos.Value.x},{buildPos.Value.y})",
-                                    LogManager.LogLevelEnum.Info);
+                                    LogManager.LogLevelEnum.Debug);
                                 wd.HomeBuildStage = CompleteStage;
                                 wd.LifeStage = Domain.Worker.WorkerLifeStage.Settled;
                             }
@@ -1188,7 +1188,7 @@ namespace LAB2D.AI.Worker
                 {
                     AWorkerTask.LogProvider(
                         $"{worker.name} 想建{buildTileName}但附近无空闲位置",
-                        LogManager.LogLevelEnum.Info);
+                        LogManager.LogLevelEnum.Debug);
                     return null;
                 }
             }
@@ -1242,7 +1242,7 @@ namespace LAB2D.AI.Worker
 
             AWorkerTask.LogProvider(
                 $"{worker.name} 想建{buildTileName}但条件不满足 (可支付={canAfford} 社交={wd.Personality.Sociality:F0} 勤奋={wd.Personality.Diligence:F0} 材料够={this.HasEnoughResourcesForBuild(worker, needs)})",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Debug);
 
             return null;
         }
@@ -1356,7 +1356,7 @@ namespace LAB2D.AI.Worker
                 wd.PlannedHomePosition = Vector3IntLAB.ToVector3IntLAB(newPos.Value);
                 AWorkerTask.LogProvider(
                     $"{worker.name} 搬迁建家位置: ({newPos.Value.x},{newPos.Value.y})",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
             }
             // 如果找不到新位置，PlannedHomePosition 保持旧值，Worker 下次会重试
 
@@ -1642,7 +1642,7 @@ namespace LAB2D.AI.Worker
                 wd.PlannedHomePosition = Vector3IntLAB.ToVector3IntLAB(pos.Value);
                 AWorkerTask.LogProvider(
                     $"{worker.name} 选定建家位置: ({pos.Value.x},{pos.Value.y})",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Debug);
             }
         }
 
