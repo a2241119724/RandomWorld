@@ -684,7 +684,7 @@ namespace LAB2D.Character.Worker.State
 
         /// <summary>
         /// 创建自我拾取任务 — 从地面捡起属于自己的物品直接放入背包。
-        /// 使用 WorkerPickUpFromBoardTask 的 FromGround 模式，不走复杂的 Carry 两阶段流程。
+        /// 使用 WorkerPickUpTask 的 FromGround 模式，不走复杂的 Carry 两阶段流程。
         /// </summary>
         private void CreateSelfCarryTask(WorkerBrain.Decision decision)
         {
@@ -697,8 +697,8 @@ namespace LAB2D.Character.Worker.State
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             int ownerId = this.Character.GetInstanceID();
 
-            WorkerPickUpFromBoardTask pickUpTask = new WorkerPickUpFromBoardTask.PickUpFromBoardTaskBuilder()
-                .SetMode(WorkerPickUpFromBoardTask.PickUpMode.FromGround)
+            WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpFromBoardTaskBuilder()
+                .SetMode(WorkerPickUpTask.PickUpMode.FromGround)
                 .SetTargetPosition(decision.TargetPosition)
                 .SetGroundResource(decision.Resource)
                 .SetOwnerId(ownerId)
@@ -730,8 +730,8 @@ namespace LAB2D.Character.Worker.State
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             int ownerId = this.Character.GetInstanceID();
 
-            WorkerPickUpFromBoardTask pickUpTask = new WorkerPickUpFromBoardTask.PickUpFromBoardTaskBuilder()
-                .SetMode(WorkerPickUpFromBoardTask.PickUpMode.FromBoard)
+            WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpFromBoardTaskBuilder()
+                .SetMode(WorkerPickUpTask.PickUpMode.FromBoard)
                 .SetBoardNeighbor(boardManager.GetNeighborPosition())
                 .SetOwnerId(ownerId)
                 .Build();

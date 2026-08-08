@@ -117,8 +117,8 @@ namespace LAB2D.Character.Worker.Task
                 selfDropResources.RemoveAt(0);
 
                 // 创建 FromGround 模式拾取任务，直接分配给自己
-                WorkerPickUpFromBoardTask pickUpTask = new WorkerPickUpFromBoardTask.PickUpFromBoardTaskBuilder()
-                    .SetMode(WorkerPickUpFromBoardTask.PickUpMode.FromGround)
+                WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpFromBoardTaskBuilder()
+                    .SetMode(WorkerPickUpTask.PickUpMode.FromGround)
                     .SetTargetPosition(firstPos)
                     .SetGroundResource(firstResource)
                     .SetOwnerId(workerId)

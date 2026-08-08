@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Data;
     using LAB2D.Domain.Common;
@@ -112,21 +113,45 @@ namespace LAB2D.Gameplay
         /// <summary>
         /// 尝试掉落敌人战利品。
         /// 包含通用物品掉落（来自 DropDataManager 默认配置）和装备稀有度掉落。
+        /// 掉落物 OwnerId 设置为最终击杀者，使掉落物归属击杀者所有。
         /// </summary>
         /// <param name="worldPos">死亡世界坐标</param>
         /// <param name="waveNumber">当前波次编号（0-based）</param>
-        public void TryDropLoot(Vector3 worldPos, int waveNumber)
+        /// <param name="killer">最终击杀者（LastAttacker），null 时掉落物为无主之物</param>
+        public void TryDropLoot(Vector3 worldPos, int waveNumber, GameCharacter killer = null)
         {
             if (!this.IsInitialized) return;
 
-            this.TryDropCommonItem(worldPos);
-            this.TryDropEquipment(worldPos, waveNumber);
+            // 根据击杀者类型计算 OwnerId：
+            // - Player 击杀 → OwnerId = 0（无主/Player，任何人都可拾取）
+            // - Worker 击杀 → OwnerId = Worker 的 instance ID（只有该 Worker 可拾取）
+            // - 无击杀者 → OwnerId = 0
+            int ownerId = ResolveOwnerId(killer);
+
+            this.TryDropCommonItem(worldPos, ownerId);
+            this.TryDropEquipment(worldPos, waveNumber, ownerId);
+        }
+
+        /// <summary>
+        /// 根据击杀者类型解析掉落物 OwnerId。
+        /// </summary>
+        private static int ResolveOwnerId(GameCharacter killer)
+        {
+            if (killer == null) return 0;
+
+            // Player 击杀：OwnerId = 0（Player/无主，任何人可拾取）
+            if (killer.IsPlayerCharacter) return 0;
+
+            // Worker 击杀：OwnerId = Worker 的 instance ID
+            return killer.GetInstanceID();
         }
 
         /// <summary>
         /// 从 DropDataManager 默认掉落配置中概率选取一个通用物品掉落。
         /// </summary>
-        private void TryDropCommonItem(Vector3 worldPos)
+        /// <param name="worldPos">掉落世界坐标</param>
+        /// <param name="ownerId">掉落物归属者 ID（最终击杀者）</param>
+        private void TryDropCommonItem(Vector3 worldPos, int ownerId)
         {
             if (this.dropTotal == 0) return;
 
@@ -140,14 +165,26 @@ namespace LAB2D.Gameplay
 
                     Vector3Int center = AWorkerTask.TileMapWorldToMapProvider(worldPos);
 
+                    // 深拷贝模板 ResourceInfo 后设置归属，避免污染共享模板
+                    ResourceInfo ownedResource = DataTool.DeepCopyByBinary(dropItem.Value.ResourceInfo);
+                    ownedResource.OwnerId = ownerId;
+
                     // 可堆叠优先合并到附近同类堆叠，找不到则放空地
                     Vector3Int pos = AWorkerTask.TryMergeOrPlaceDrop(
-                        center, dropItem.Value.ResourceInfo, dropItem.Value.Name);
+                        center, ownedResource, dropItem.Value.Name);
 
                     if (pos != default)
                     {
                         Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(pos);
                         AWorkerTask.EquipmentBeamProvider().SpawnBeam(pos, beamWorldPos, EquipmentRarityType.Common);
+
+                        // 替换自动创建的 Carry 任务为 PickUpFromBoard 拾取任务
+                        ReplaceCarryWithPickUpTask(pos, ownedResource, ownerId);
+
+                        AWorkerTask.LogProvider(
+                            string.Format("[EnemyLoot] 通用掉落: pos=({0},{1}) ownerId={2}",
+                                pos.x, pos.y, ownerId),
+                            LogManager.LogLevelEnum.Debug);
                     }
 
                     break;
@@ -156,13 +193,45 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
+        /// 替换 PutDownToDrop 自动创建的 Carry 任务为 PickUp 拾取任务。
+        /// - ownerId > 0（Worker 击杀）：专属拾取任务，只有该 Worker 可接取。
+        /// - ownerId == 0（Player 击杀/无主）：公开拾取任务，任何 Worker 可接取。
+        /// </summary>
+        private static void ReplaceCarryWithPickUpTask(Vector3Int pos, ResourceInfo resource, int ownerId)
+        {
+            // 移除 PutDownToDrop 自动创建的 WorkerCarryTask
+            ServiceLocator.Get<WorkerTaskManager>().RemoveCarryTaskAt(pos);
+
+            // 创建 FromGround 模式拾取任务
+            WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpFromBoardTaskBuilder()
+                .SetMode(WorkerPickUpTask.PickUpMode.FromGround)
+                .SetTargetPosition(pos)
+                .SetGroundResource(resource)
+                .SetOwnerId(ownerId)
+                .Build();
+
+            // 发布到任务队列（高优先级）
+            AWorkerTask.TaskAddProvider(
+                pickUpTask,
+                new GameGridPosition(pos.x, pos.y, pos.z),
+                1);
+
+            string ownerLabel = ownerId > 0 ? $"Worker#{ownerId}" : "Player/公开";
+            AWorkerTask.LogProvider(
+                string.Format("[EnemyLoot] 发布拾取任务: pos=({0},{1}) ownerId={2}({3}) taskType=PickUp",
+                    pos.x, pos.y, ownerId, ownerLabel),
+                LogManager.LogLevelEnum.Debug);
+        }
+
+        /// <summary>
         /// 尝试在敌人死亡位置生成装备掉落。
         /// 基础掉落概率由 EquipmentLootConstant.BaseEquipmentDropChance 控制。
         /// </summary>
         /// <param name="worldPos">死亡世界坐标</param>
         /// <param name="waveNumber">当前波次编号（0-based）</param>
+        /// <param name="ownerId">掉落物归属者 ID（最终击杀者）</param>
         /// <returns>是否成功生成装备掉落</returns>
-        public bool TryDropEquipment(Vector3 worldPos, int waveNumber)
+        public bool TryDropEquipment(Vector3 worldPos, int waveNumber, int ownerId = 0)
         {
             if (!this.IsInitialized)
             {
@@ -205,7 +274,7 @@ namespace LAB2D.Gameplay
 
             // 放置装备到地面（装备不可堆叠，TryMergeOrPlaceDrop 自动跳过合并）
             Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(worldPos);
-            ResourceInfo resourceInfo = new ResourceInfo(template.Id, 1);
+            ResourceInfo resourceInfo = new ResourceInfo(template.Id, 1) { OwnerId = ownerId };
             Vector3Int availablePos = AWorkerTask.TryMergeOrPlaceDrop(
                 posMap, resourceInfo, template.Tile.name);
             if (availablePos == default)
@@ -228,6 +297,9 @@ namespace LAB2D.Gameplay
             Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(availablePos);
             AWorkerTask.EquipmentBeamProvider().SpawnBeam(availablePos, beamWorldPos, rarity);
 
+            // 替换自动创建的 Carry 任务为 PickUpFromBoard 拾取任务
+            ReplaceCarryWithPickUpTask(availablePos, resourceInfo, ownerId);
+
             // 在掉落位置生成浮动稀有度标签
             string rarityLabel = EquipmentLootTool.FormatRarityLabel(rarity);
             FloatingTextStatusProvider(worldPos, rarityLabel);
@@ -235,8 +307,8 @@ namespace LAB2D.Gameplay
             ItemData itemData = AWorkerTask.ItemDataProvider(template.Id);
             string itemName = itemData != null ? itemData.CnName : template.Id.ToString();
             AWorkerTask.LogProvider(
-                string.Format("装备掉落: {0} [{1}] at ({2:F0},{3:F0})",
-                    itemName, EquipmentLootTool.GetRarityName(rarity), worldPos.x, worldPos.y),
+                string.Format("装备掉落: {0} [{1}] at ({2:F0},{3:F0}) ownerId={4}",
+                    itemName, EquipmentLootTool.GetRarityName(rarity), worldPos.x, worldPos.y, ownerId),
                 LogManager.LogLevelEnum.Trace);
 
             return true;

@@ -139,13 +139,6 @@ namespace LAB2D.Map
                     this.tilemap.SetTile(pos, tileBase);
                     this.ResourceMapDataLAB.Add(pos, tileBase.name);
 
-                    if (this.TryGetGatherResourceInfo(pos, out ResourceInfo resourceInfo))
-                    {
-                        Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
-                            new WorkerGatherTask.GatherTaskBuilder()
-                            .SetTarget(pos).SetResourceInfo(resourceInfo).Build(), new GameGridPosition(pos.x, pos.y, pos.z));
-                    }
-
                     this.RefreshRound(pos);
                 }
 

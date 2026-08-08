@@ -24,7 +24,7 @@ MonoBehaviour:
     RelatedTaskTime:
       TaskBaseTime: 1
       CarryTaskPutDownTime: 1
-  - Id: 300000
+  - Id: 300001
     CnName: "\u77F3\u5934"
     EnName: CustomStone
     Info: "\u5F00\u91C7\u5F97\u5230\u7684\u77F3\u5934\uFF0C\u53EF\u4EE5\u5EFA\u623F\u5B50"

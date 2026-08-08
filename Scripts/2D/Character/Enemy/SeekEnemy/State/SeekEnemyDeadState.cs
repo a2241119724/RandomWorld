@@ -37,7 +37,9 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             if (this.recordTime > DeadTime)
             {
                 int waveIndex = Core.GameServices.WaveIndexProvider();
-                AWorkerTask.EnemyLootProvider().TryDropLoot(this.Character.transform.position, System.Math.Max(0, waveIndex));
+                AWorkerTask.EnemyLootProvider().TryDropLoot(
+                    this.Character.transform.position, System.Math.Max(0, waveIndex),
+                    this.Character.LastAttacker);
 
                 // Object.Destroy(character.gameObject); // Destroy不会立即销毁,下一帧销毁
                 Core.GameServices.NetworkDestroyProvider(this.Character.gameObject); // Destroy不会立即销毁,下一帧销毁

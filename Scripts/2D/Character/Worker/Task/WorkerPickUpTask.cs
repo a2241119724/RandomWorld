@@ -20,7 +20,7 @@ namespace LAB2D.Character.Worker.Task
     /// 此任务不是悬赏类型，不展示在任务栏中。
     /// </summary>
     [Serializable]
-    public class WorkerPickUpFromBoardTask : AWorkerTask
+    public class WorkerPickUpTask : AWorkerTask
     {
         public enum PickUpMode
         {
@@ -43,7 +43,7 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>FromGround 链式拾取：当前物品捡完后，剩余的待拾取资源</summary>
         private List<ResourceInfo> pendingResources;
 
-        public WorkerPickUpFromBoardTask()
+        public WorkerPickUpTask()
             : base(WorkerTaskType.PickUpFromBoard)
         {
             this.stageInit.Add((AWorker worker) =>
@@ -120,6 +120,10 @@ namespace LAB2D.Character.Worker.Task
             // 直接放入 Worker 背包
             worker.AddResource(this.groundResource);
 
+            // 清除掉落物光束特效和待处理记录
+            EquipmentBeamProvider().TryRemoveBeamAt(posMap);
+            EnemyLootProvider().RemoveDropByMapPosition(posMap);
+
             LogProvider(
                 $"{worker.name} 从地面捡起物品(id={this.groundResource.Id}, count={this.groundResource.Count}) pos=({posMap.x},{posMap.y})",
                 LogManager.LogLevelEnum.Debug);
@@ -132,7 +136,7 @@ namespace LAB2D.Character.Worker.Task
                 this.pendingPositions.RemoveAt(0);
                 this.pendingResources.RemoveAt(0);
 
-                WorkerPickUpFromBoardTask nextTask = new PickUpFromBoardTaskBuilder()
+                WorkerPickUpTask nextTask = new PickUpFromBoardTaskBuilder()
                     .SetMode(PickUpMode.FromGround)
                     .SetTargetPosition(nextPos)
                     .SetGroundResource(nextResource)
@@ -153,7 +157,8 @@ namespace LAB2D.Character.Worker.Task
         /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
-            if (worker.GetInstanceID() != this.targetOwnerId) return false;
+            // targetOwnerId == 0 表示公开任务（Player 击杀掉落），任何 Worker 可接取
+            if (this.targetOwnerId != 0 && worker.GetInstanceID() != this.targetOwnerId) return false;
 
             switch (this.mode)
             {
@@ -186,11 +191,11 @@ namespace LAB2D.Character.Worker.Task
 
         public class PickUpFromBoardTaskBuilder
         {
-            private readonly WorkerPickUpFromBoardTask task;
+            private readonly WorkerPickUpTask task;
 
             public PickUpFromBoardTaskBuilder()
             {
-                this.task = new WorkerPickUpFromBoardTask();
+                this.task = new WorkerPickUpTask();
             }
 
             /// <summary>设置拾取模式（默认为 FromBoard）</summary>
@@ -241,7 +246,7 @@ namespace LAB2D.Character.Worker.Task
                 return this;
             }
 
-            public WorkerPickUpFromBoardTask Build()
+            public WorkerPickUpTask Build()
             {
                 return this.task;
             }
