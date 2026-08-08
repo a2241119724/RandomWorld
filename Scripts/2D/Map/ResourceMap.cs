@@ -93,6 +93,9 @@ namespace LAB2D.Map
                 AWorkerTask.LogProvider($"GenResource: no resources placed (asset misses: {assetMissCount})", LogManager.LogLevelEnum.Warning);
             }
 
+            // 重生上限 = 初始实际生成数量
+            this.ResourceMapDataLAB.TreeTotalCount = resourcesPlaced;
+
             yield return this.StartCoroutine(this.GenTree());
         }
 
@@ -111,7 +114,7 @@ namespace LAB2D.Map
                     if (!Core.ServiceLocator.TryGet(out TileMap tm) || tm.TileMapDataLAB == null)
                     {
                         AWorkerTask.LogProvider("TileMap data not available, tree generation paused", LogManager.LogLevelEnum.Error);
-                        yield return new WaitForSeconds(60.0f * 5);
+                        yield return new WaitForSeconds(10f);
                         continue;
                     }
 
@@ -146,7 +149,7 @@ namespace LAB2D.Map
                     this.RefreshRound(pos);
                 }
 
-                yield return new WaitForSeconds(60.0f * 5);
+                yield return new WaitForSeconds(10f);
             }
         }
 
