@@ -29,6 +29,8 @@ namespace LAB2D.UI.Panel
                .GetComponent<Toggle>().onValueChanged.AddListener(this.OnClick_ToggleEdgeMove);
             LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "WorkerLine").Find("Toggle")
                .GetComponent<Toggle>().onValueChanged.AddListener(this.OnClick_ToggleWorkerLine);
+            LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "EnemyLine").Find("Toggle")
+               .GetComponent<Toggle>().onValueChanged.AddListener(this.OnClick_ToggleEnemyLine);
             LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Speed").Find("Slider")
                .GetComponent<Slider>().onValueChanged.AddListener(this.OnClick_GameSpeed);
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
@@ -106,6 +108,14 @@ namespace LAB2D.UI.Panel
         private void OnClick_ToggleWorkerLine(bool isOn)
         {
             ASeek.ShowWorkerLine = isOn;
+        }
+
+        /// <summary>
+        /// 切换Enemy寻路引导线显示
+        /// </summary>
+        private void OnClick_ToggleEnemyLine(bool isOn)
+        {
+            ASeek.ShowEnemyLine = isOn;
         }
 
         private void OnClick_GameSpeed(float speed)

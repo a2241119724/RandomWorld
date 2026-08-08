@@ -129,6 +129,11 @@ namespace LAB2D.Core.Seek
         public static bool ShowWorkerLine { get; set; } = false;
 
         /// <summary>
+        /// 是否显示Enemy的寻路引导线（默认关闭）
+        /// </summary>
+        public static bool ShowEnemyLine { get; set; } = false;
+
+        /// <summary>
         /// 寻路路径渲染
         /// </summary>
         public LineRenderer LineRenderer { get; set; }
@@ -429,6 +434,13 @@ namespace LAB2D.Core.Seek
 
             // Worker的寻路引导线开关控制：关闭时隐藏Worker的引导线
             if (this.Character is AWorker && !ShowWorkerLine)
+            {
+                this.LineRenderer.positionCount = 0;
+                return;
+            }
+
+            // Enemy的寻路引导线开关控制：关闭时隐藏Enemy的引导线
+            if (this.Character is LAB2D.Character.Enemy.AEnemy && !ShowEnemyLine)
             {
                 this.LineRenderer.positionCount = 0;
                 return;
