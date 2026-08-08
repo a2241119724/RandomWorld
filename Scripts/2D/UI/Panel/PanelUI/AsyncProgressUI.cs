@@ -113,6 +113,27 @@ namespace LAB2D.UI.Panel.PanelUI
             this.percent.text = "当前进度:" + MathHelper.RoundToInt(this.slider.value * 100) + "%";
         }
 
+        /// <summary>
+        /// 强制将进度补足到 100% 并触发完成回调。
+        /// 在所有异步加载步骤完成后调用。
+        /// </summary>
+        public void ForceComplete()
+        {
+            if (this.curProcess < this.totalProcess)
+            {
+                this.curProcess = this.totalProcess;
+            }
+
+            this.Show();
+
+            // 触发完成回调（正常流程中由 AddOneProcess 检测 curProcess >= totalProcess 触发）
+            if (!this.isOne)
+            {
+                this.isOne = true;
+                this.StartCoroutine(this.Complete1());
+            }
+        }
+
         private IEnumerator Complete1()
         {
             yield return new WaitForSeconds(0.5f);

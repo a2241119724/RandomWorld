@@ -20,3 +20,4 @@ MonoBehaviour:
   canGrowTrees: 0
   canSpawnResources: 0
   isBorder: 0
+  isWater: 1

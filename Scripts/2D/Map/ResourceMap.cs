@@ -70,6 +70,13 @@ namespace LAB2D.Map
 
                     Vector3Int posMap = new (i, j, 0);
                     int terrainId = tm.TileMapDataLAB.MapTiles[i, j];
+
+                    // 跳过水域格，避免无效检查
+                    if (Core.ServiceLocator.Get<TerrainConfigDatabase>().IsWater(terrainId))
+                    {
+                        continue;
+                    }
+
                     if (tm.IsCanReach(posMap)
                         && Core.ServiceLocator.Get<TerrainConfigDatabase>().CanSpawnResources(terrainId)
                         && UnityEngine.Random.Range(0.0f, 1.0f) > 0.95f)
@@ -95,6 +102,9 @@ namespace LAB2D.Map
 
             // 重生上限 = 初始实际生成数量
             this.ResourceMapDataLAB.TreeTotalCount = resourcesPlaced;
+
+            // 确保进度条到达 100%（消除动态总量调整的微小缺口）
+            Core.ServiceLocator.Get<LAB2D.UI.Panel.PanelUI.AsyncProgressUI>().ForceComplete();
 
             yield return this.StartCoroutine(this.GenTree());
         }
@@ -220,7 +230,7 @@ namespace LAB2D.Map
             }
 
             this.isProgressSet = true;
-            Core.GameServices.AsyncProgressAddTotalProvider(tm.TileMapDataLAB.Height * tm.TileMapDataLAB.Width);
+            // 总量已由 TileMap.SetProgress 统一分配，此处不再重复添加
         }
 
         /// <inheritdoc/>

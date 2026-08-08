@@ -45,6 +45,11 @@ namespace LAB2D.Map
         /// </summary>
         private ITerrainGenerator generator;
 
+        /// <summary>
+        /// 缓存的海洋水格 ID，用于边界检查（避免每次调用 ServiceLocator）。
+        /// </summary>
+        private int cachedWaterTerrainId = -1;
+
         /// <inheritdoc/>
         public override void Awake()
         {
@@ -54,6 +59,12 @@ namespace LAB2D.Map
             if (!ServiceLocator.TryGet(out this.generator))
             {
                 this.generator = new RandomScatterFillGenerator();
+            }
+
+            // 缓存水格 ID，避免边界检查时频繁 ServiceLocator 查找
+            if (ServiceLocator.TryGet(out TerrainConfigDatabase db))
+            {
+                this.cachedWaterTerrainId = db.GetWaterTerrainId();
             }
         }
 
@@ -142,6 +153,9 @@ namespace LAB2D.Map
         /// <summary>
         /// 随机生成地图板块分布(未实例化)。
         /// 委托给 ITerrainGenerator 策略执行具体算法。
+        ///
+        /// 新流程：噪声岛屿遮罩 → 散布种子 → BFS 填充 → 渲染。
+        /// 海洋（水格）自然包围岛屿，不再需要矩形 Mountain 边框。
         /// </summary>
         /// <returns>迭代器</returns>
         public IEnumerator Create()
@@ -150,17 +164,81 @@ namespace LAB2D.Map
             int width = this.TileMapDataLAB.Width;
             int randomCount = this.TileMapDataLAB.RandomCount;
 
-            // Step 1: 散布种子点
+            // Step 1: 生成陆地/海洋遮罩（噪声 + 距离衰减）
             int[,] tiles = new int[height, width];
+            yield return this.StartCoroutine(this.generator.GenerateLandMask(tiles, height, width));
+
+            // 遮罩生成后统计陆地格数量，动态调整 Fill 的进度总量
+            int landCellCount = this.CountLandCells(tiles);
+            Core.GameServices.AsyncProgressAddTotalProvider(landCellCount);
+
+            // Step 2: 仅在陆地上散布地形种子
             yield return this.StartCoroutine(this.generator.ScatterSeeds(tiles, randomCount, height, width));
 
-            // Step 2: 填充空白区域
+            // Step 3: BFS 并行填充陆地空白区域
             yield return this.StartCoroutine(this.generator.Fill(tiles, height, width));
 
+            // Step 4: 清理孤立陆地碎块（BFS 无法到达的小斑块 → 转为水格）
+            //         确保进度总量与实际处理量完全一致
+            yield return this.StartCoroutine(this.CleanupUnfilledCells(tiles));
+
             this.TileMapDataLAB.MapTiles = tiles;
-            this.CreateArroundTile();
+            // 海洋即边界，不再调用 CreateArroundTile
             yield return this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
             Core.ServiceLocator.Get<MapInitCoordinator>().IsComplete = true;
+        }
+
+        /// <summary>
+        /// 统计 tiles 中的陆地格数量（值不为水格 ID 的格子）。
+        /// </summary>
+        private int CountLandCells(int[,] tiles)
+        {
+            int count = 0;
+            int h = tiles.GetLength(0);
+            int w = tiles.GetLength(1);
+            for (int x = 0; x < h; x++)
+            {
+                for (int y = 0; y < w; y++)
+                {
+                    if (tiles[x, y] != this.cachedWaterTerrainId)
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// 清理 BFS 填充后残留的 0 格（孤立陆地碎块，无种子可达）。
+        /// 将它们转为水格并上报进度，确保进度总量精确匹配。
+        /// </summary>
+        private IEnumerator CleanupUnfilledCells(int[,] tiles)
+        {
+            int h = tiles.GetLength(0);
+            int w = tiles.GetLength(1);
+            FrameControl frameControl = ServiceLocator.Get<FrameControl>();
+            int batchCount = 0;
+
+            for (int x = 0; x < h; x++)
+            {
+                for (int y = 0; y < w; y++)
+                {
+                    if (tiles[x, y] == 0)
+                    {
+                        tiles[x, y] = this.cachedWaterTerrainId;
+                        Core.GameServices.AsyncProgressAddOneProvider();
+                        batchCount++;
+                    }
+
+                    if (batchCount >= 5000 && frameControl.IsNeedStop(1))
+                    {
+                        batchCount = 0;
+                        yield return null;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -220,8 +298,22 @@ namespace LAB2D.Map
         /// <inheritdoc/>
         bool ITileMapQuery.IsInBounds(GameGridPosition posMap)
         {
-            return posMap.X >= 0 && posMap.X < this.TileMapDataLAB?.Height
-                && posMap.Y >= 0 && posMap.Y < this.TileMapDataLAB?.Width;
+            if (posMap.X < 0 || posMap.X >= this.TileMapDataLAB?.Height
+                || posMap.Y < 0 || posMap.Y >= this.TileMapDataLAB?.Width)
+            {
+                return false;
+            }
+
+            // 水域格视为界外（使用缓存 ID 避免频繁查找）
+            if (this.TileMapDataLAB?.MapTiles != null && this.cachedWaterTerrainId > 0)
+            {
+                if (this.TileMapDataLAB.MapTiles[posMap.X, posMap.Y] == this.cachedWaterTerrainId)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -233,23 +325,41 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 地图索引是否越界
+        /// 地图索引是否越界。
+        /// 数组越界或位于水域格（海洋）均视为越界。
+        /// 使用缓存的 waterTerrainId 避免频繁 ServiceLocator 查找。
         /// </summary>
         public bool IsOverBorder(Vector3Int posMap)
         {
-            return !(posMap.x >= 0 && posMap.x < this.TileMapDataLAB.Height && posMap.y >= 0 && posMap.y < this.TileMapDataLAB.Width);
+            if (posMap.x < 0 || posMap.x >= this.TileMapDataLAB.Height
+                || posMap.y < 0 || posMap.y >= this.TileMapDataLAB.Width)
+            {
+                return true;
+            }
+
+            // 水域格（海洋）视为边界外
+            if (this.TileMapDataLAB.MapTiles != null && this.cachedWaterTerrainId > 0)
+            {
+                if (this.TileMapDataLAB.MapTiles[posMap.x, posMap.y] == this.cachedWaterTerrainId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
-        /// 设置进度
+        /// 设置进度（包含 TileMap 和 ResourceMap 的所有步骤）。
         /// </summary>
         public void SetProgress(int height, int width)
         {
             this.TileMapDataLAB = new TileMapData(height, width, new int[height, width], width * height / 2000);
-            int total = width * height;
-            total += this.TileMapDataLAB.RandomCount;
-            total += ((width + height) * 2) + 4;
-            total += width * height;
+            int total = width * height;                       // GenerateLandMask 全格扫描
+            total += this.TileMapDataLAB.RandomCount;         // ScatterSeeds 种子散布
+            // Fill 的进度在遮罩生成后动态统计（只知道陆地格数才知道精确值）
+            total += width * height;                          // ShowTilemap 渲染
+            total += width * height;                          // ResourceMap.GenResource 资源生成
             Core.GameServices.AsyncProgressAddTotalProvider(total);
         }
 
@@ -269,7 +379,7 @@ namespace LAB2D.Map
             }
 
             Core.ServiceLocator.Get<MapInitCoordinator>().IsComplete = true;
-            this.CreateArroundTile();
+            // 海洋即边界，不再需要矩形边框
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
         }
 
@@ -298,25 +408,25 @@ namespace LAB2D.Map
             this.TileMapDataLAB = DataTool.FromByteArray<TileMapData>(data);
             this.SetProgressAsync(this.TileMapDataLAB.MapTiles.GetLength(0), this.TileMapDataLAB.MapTiles.GetLength(1));
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
-            this.CreateArroundTile();
+            // 海洋即边界，不再需要矩形边框
         }
 
         /// <summary>
-        /// 同步数据设置进度
+        /// 同步数据设置进度（网络同步加载已有地图，只需渲染）。
         /// </summary>
         private void SetProgressAsync(int height, int width)
         {
             this.TileMapDataLAB.Height = height;
             this.TileMapDataLAB.Width = width;
-            int total = width * height;
-            total += ((width + height) * 2) + 4;
+            int total = width * height; // ShowTilemap 渲染
             Core.GameServices.AsyncProgressAddTotalProvider(total);
         }
 
         /// <summary>
-        /// 地图四周创建边界地形阻止出去。
-        /// 边界地形由 TerrainTileConfig.isBorder 标记决定。
+        /// [已废弃] 地图四周创建矩形边界地形。
+        /// 新流程使用噪声岛屿 + 海洋包围，不再需要矩形 Mountain 边框。
         /// </summary>
+        [Obsolete("新流程使用海洋包围岛屿，不再需要矩形边框。保留以兼容旧存档。")]
         private void CreateArroundTile()
         {
             TerrainConfigDatabase db = ServiceLocator.Get<TerrainConfigDatabase>();

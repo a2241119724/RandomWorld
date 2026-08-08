@@ -181,6 +181,31 @@ namespace LAB2D.Map
             return this.GetById(terrainId)?.effectData?.workerHungryDecayMultiplier ?? 1.0f;
         }
 
+        /// <summary>
+        /// 获取水域地形 ID。遍历配置查找首个 isWater==true 的地形，未找到回退为 6。
+        /// </summary>
+        public int GetWaterTerrainId()
+        {
+            foreach (var kvp in this.configById)
+            {
+                if (kvp.Value.isWater)
+                {
+                    return kvp.Key;
+                }
+            }
+
+            return 6; // fallback: 已知的 Water 地形 ID
+        }
+
+        /// <summary>
+        /// 检查指定 terrainId 是否为水域地形。
+        /// </summary>
+        public bool IsWater(int terrainId)
+        {
+            TerrainTileConfig config = this.GetById(terrainId);
+            return config != null && config.isWater;
+        }
+
         public IReadOnlyList<int> SpawnableIds => this.spawnableIds.AsReadOnly();
         public int Count => this.configById.Count;
 

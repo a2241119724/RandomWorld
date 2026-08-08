@@ -64,6 +64,12 @@ namespace LAB2D.Map
         public bool isBorder;
 
         /// <summary>
+        /// 是否为水域地形（海洋/湖泊）。水域格不可行走、不可建造，在噪声岛屿生成中用作海洋。
+        /// </summary>
+        [Tooltip("是否为水域地形（海洋/湖泊）。")]
+        public bool isWater;
+
+        /// <summary>
         /// 地形玩法效果配置（移速、疲劳消耗等）。
         /// </summary>
         [Tooltip("地形玩法效果（移速、疲劳消耗等）。")]
