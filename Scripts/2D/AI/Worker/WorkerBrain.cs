@@ -1104,8 +1104,10 @@ namespace LAB2D.AI.Worker
                         }
                     }
 
-                    // 位置未在 BuildMap 注册，但可能在其他 Worker 的 5×5 房间规划范围内
-                    if (this.IsHomeSiteClaimedByOther(buildPos.Value, worker))
+                    // 位置未在 BuildMap 注册，但可能在其他 Worker 的 5×5 房间范围内
+                    // 注意：此处比较的是单个建造位置 vs 房间中心，用 ≤ 2（房间半径），
+                    // 而非 IsHomeSiteClaimedByOther 的 ≤ 4（中心距）。
+                    if (this.IsPositionInsideOtherWorkerRoom(buildPos.Value, worker))
                     {
                         AWorkerTask.LogProvider(
                             $"{worker.name} 建家位置落入其他Worker规划范围(stage={wd.HomeBuildStage}), 重新选址: pos=({buildPos.Value.x},{buildPos.Value.y})",
@@ -1240,15 +1242,10 @@ namespace LAB2D.AI.Worker
                 Vector3Int planned = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
                 if (ASeek.IsCanReach(planned)
                     && this.CanFitRoom(planned)
-                    && !this.IsHomeSiteClaimedByOther(planned, worker))
+                    && !this.IsHomeSiteClaimedByOther(planned, worker)
+                    && !this.IsRoomAreaBlockedInBuildMap(planned))
                 {
-                    var buildMap = Core.ServiceLocator.Get<BuildMap>();
-                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(planned);
-                    if (buildMap?.BuildMapDataLAB?.PosMap == null
-                        || !buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
-                    {
-                        return planned;
-                    }
+                    return planned;
                 }
 
                 // 规划位置已被占用或不可通行，清除并重新搜索
@@ -1256,7 +1253,6 @@ namespace LAB2D.AI.Worker
             }
 
             Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
-            var buildMap2 = Core.ServiceLocator.Get<BuildMap>();
 
             // 从 Worker 位置向外螺旋搜索空闲位置
             for (int r = 1; r <= 8; r++)
@@ -1272,19 +1268,13 @@ namespace LAB2D.AI.Worker
                         // 检查是否可通行
                         if (!ASeek.IsCanReach(pos)) continue;
 
-                        // 检查 BuildMap 是否已有建筑
-                        if (buildMap2 != null)
-                        {
-                            Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
-                            if (buildMap2.BuildMapDataLAB?.PosMap != null
-                                && buildMap2.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
-                                continue;
-                        }
+                        // 检查 5×5 房间区域是否与 BuildMap 冲突（包括墙壁、门、床位置）
+                        if (this.IsRoomAreaBlockedInBuildMap(pos)) continue;
 
                         // 检查是否被其他 Worker 规划为建家位置（防止房间重叠）
                         if (this.IsHomeSiteClaimedByOther(pos, worker)) continue;
 
-                        // 检查 5×5 房间能否完整放置（四角都在地图内且可达）
+                        // 检查 5×5 房间能否完整放置（所有墙壁/门位置都可达）
                         if (!this.CanFitRoom(pos)) continue;
 
                         return pos;
@@ -1372,7 +1362,8 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 检查以该位置为中心的 5×5 房间能否完整放置（四角都在地图内且可达）。
+        /// 检查以该位置为中心的 5×5 房间能否完整放置。
+        /// 检查所有墙壁和门位置的可达性（不仅仅是四角），防止选址在部分不可达的位置。
         /// </summary>
         private bool CanFitRoom(Vector3Int center)
         {
@@ -1389,20 +1380,27 @@ namespace LAB2D.AI.Worker
                 return false;
             }
 
-            // 检查房间四角是否可达（验证地形可行走）
-            Vector3Int[] corners = {
-                center + new Vector3Int(-2, -2, 0),
-                center + new Vector3Int(-2,  2, 0),
-                center + new Vector3Int( 2, -2, 0),
-                center + new Vector3Int( 2,  2, 0),
-            };
-
-            foreach (var corner in corners)
+            // 检查所有墙壁位置是否可达（不仅仅是四角）
+            for (int i = 0; i < WallCount; i++)
             {
-                if (!ASeek.IsCanReach(corner))
+                Vector3Int wallPos = center + WallOffsets[i];
+                if (!ASeek.IsCanReach(wallPos))
                 {
                     return false;
                 }
+            }
+
+            // 检查门位置是否可达
+            Vector3Int doorPos = center + DoorOffset;
+            if (!ASeek.IsCanReach(doorPos))
+            {
+                return false;
+            }
+
+            // 检查中心位置（床的位置）是否可达
+            if (!ASeek.IsCanReach(center))
+            {
+                return false;
             }
 
             return true;
@@ -1434,7 +1432,83 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 检查以候选位置为中心的 5×5 房间矩形，是否与其他 Worker 已规划或已完成的家重叠。
+        /// 检查 5×5 房间区域的任何瓦片是否已被 BuildMap 占用（已完成或建造中）。
+        /// 这是对 IsHomeSiteClaimedByOther 的补充：
+        /// IsHomeSiteClaimedByOther 检查其他 Worker 的 PlannedHomePosition/HomePosition，
+        /// 本方法检查 BuildMap 中的实际建筑瓦片（包括非 Worker 来源的建筑、已完成墙壁等）。
+        /// </summary>
+        /// <param name="center">房间中心位置</param>
+        /// <returns>true 表示区域内有 BuildMap 瓦片占用</returns>
+        private bool IsRoomAreaBlockedInBuildMap(Vector3Int center)
+        {
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            if (buildMap?.BuildMapDataLAB?.PosMap == null) return false;
+
+            // 检查所有墙壁位置
+            for (int i = 0; i < WallCount; i++)
+            {
+                Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(center + WallOffsets[i]);
+                if (buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
+                {
+                    return true;
+                }
+            }
+
+            // 检查门位置
+            Vector3IntLAB doorLAB = Vector3IntLAB.ToVector3IntLAB(center + DoorOffset);
+            if (buildMap.BuildMapDataLAB.PosMap.ContainsKey(doorLAB))
+            {
+                return true;
+            }
+
+            // 检查床位置（中心）
+            Vector3IntLAB centerLAB = Vector3IntLAB.ToVector3IntLAB(center);
+            if (buildMap.BuildMapDataLAB.PosMap.ContainsKey(centerLAB))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 检查某个建造位置（墙壁/门/床的具体坐标）是否落入其他 Worker 的房间范围内。
+        /// 房间范围 = 中心 ±2（5×5），因此阈值是 ≤ 2。
+        /// 与 IsHomeSiteClaimedByOther 不同：IsHomeSiteClaimedByOther 比较的是
+        /// 两个房间中心之间的距离（阈值 ≤ 4），本方法比较的是单个建造位置
+        /// 与另一个房间中心之间的距离（阈值 ≤ 2）。
+        /// </summary>
+        /// <param name="buildPos">墙壁/门/床的具体坐标</param>
+        /// <param name="self">当前 Worker</param>
+        /// <returns>true 表示该建造位置在另一个 Worker 的房间范围内</returns>
+        private bool IsPositionInsideOtherWorkerRoom(Vector3Int buildPos, AWorker self)
+        {
+            var workerManager = Core.ServiceLocator.Get<WorkerManager>();
+            if (workerManager?.Characters == null) return false;
+
+            foreach (AWorker other in workerManager.Characters)
+            {
+                if (other == self) continue;
+                AWorker.WorkerData otherWd = other.CharacterDataLAB as AWorker.WorkerData;
+                if (otherWd == null) continue;
+
+                Vector3IntLAB otherCenterLAB = otherWd.PlannedHomePosition ?? otherWd.HomePosition;
+                if (otherCenterLAB == default) continue;
+
+                Vector3Int otherCenter = Vector3IntLAB.ToVector3Int(otherCenterLAB);
+                // 房间范围 ±2：单个位置与另一个房间中心距离 ≤ 2 才在房间内
+                if (System.Math.Abs(buildPos.x - otherCenter.x) <= 2
+                    && System.Math.Abs(buildPos.y - otherCenter.y) <= 2)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 检查以该位置为中心的 5×5 房间矩形，是否与其他 Worker 已规划或已完成的家重叠。
         /// 两个 5×5 矩形 ([c-2, c+2]) 重叠 ⇔ 中心距离 ≤ 4。
         /// 依赖 RelocateHomeSite 保证 PlannedHomePosition 永远不为 null（消除空窗期）。
         /// </summary>

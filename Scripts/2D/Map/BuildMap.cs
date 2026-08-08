@@ -148,6 +148,23 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 完成建造（带建造者和所属者信息）,设置颜色透明度为1,不可通过的添加碰撞体
+        /// </summary>
+        /// <param name="targetMap">目标位置</param>
+        /// <param name="builderName">建造者 Worker 名称</param>
+        /// <param name="ownerName">所属者 Worker 名称</param>
+        public void SetComplete(Vector3IntLAB targetMap, string builderName, string ownerName)
+        {
+            if (this.BuildMapDataLAB.PosMap.TryGetValue(targetMap, out BuildTileData buildTileData))
+            {
+                buildTileData.BuilderName = builderName ?? string.Empty;
+                buildTileData.OwnerName = ownerName ?? string.Empty;
+            }
+
+            this.SetComplete(targetMap);
+        }
+
+        /// <summary>
         /// 完成建造,设置颜色透明度为1,不可通过的添加碰撞体
         /// </summary>
         /// <param name="targetMap">目标位置</param>
@@ -175,6 +192,23 @@ namespace LAB2D.Map
                 "SyncDataResp",
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(vector3Int)),
                 default);
+        }
+
+        /// <summary>
+        /// 获取指定位置的建造瓦片数据
+        /// </summary>
+        /// <param name="pos">位置</param>
+        /// <returns>建造瓦片数据，若不存在则返回 null</returns>
+        public BuildTileData GetBuildTileData(Vector3Int pos)
+        {
+            if (this.BuildMapDataLAB?.PosMap == null)
+            {
+                return null;
+            }
+
+            Vector3IntLAB key = Vector3IntLAB.ToVector3IntLAB(pos);
+            this.BuildMapDataLAB.PosMap.TryGetValue(key, out BuildTileData data);
+            return data;
         }
 
         /// <summary>
@@ -449,10 +483,22 @@ namespace LAB2D.Map
             /// </summary>
             public bool IsComplete;
 
+            /// <summary>
+            /// 建造者 Worker 名称
+            /// </summary>
+            public string BuilderName;
+
+            /// <summary>
+            /// 所属者 Worker 名称（悬赏发布者，或建造者自己）
+            /// </summary>
+            public string OwnerName;
+
             public BuildTileData(string name, bool isComplete)
             {
                 this.Name = name;
                 this.IsComplete = isComplete;
+                this.BuilderName = string.Empty;
+                this.OwnerName = string.Empty;
             }
         }
     }

@@ -2,6 +2,7 @@ namespace LAB2D.Character.Worker.Task
 {
     using LAB2D.Enum;
     using LAB2D;
+    using LAB2D.Character.Worker;
     using LAB2D.Item;
     using LAB2D.Item.Build;
     using LAB2D.Serializable;
@@ -83,8 +84,22 @@ namespace LAB2D.Character.Worker.Task
             // 减少worker携带的资源
             worker.SubResource(this.needs);
 
+            // 确定建造者和所属者
+            string builderName = worker.name;
+            string ownerName = builderName;
+
+            if (BountyOwnerOverride != 0)
+            {
+                var workers = Core.ServiceLocator.Get<WorkerManager>().Characters;
+                var owner = workers.Find(w => w.GetInstanceID() == BountyOwnerOverride);
+                if (owner != null)
+                {
+                    ownerName = owner.name;
+                }
+            }
+
             // 将建造完成的Tile从Building变为Build中
-            BuildMapCompletionProvider(this.buildPos);
+            Core.ServiceLocator.Get<BuildMap>().SetComplete(this.buildPos, builderName, ownerName);
         }
 
         /// <inheritdoc/>

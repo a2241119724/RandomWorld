@@ -2,6 +2,7 @@ namespace LAB2D.UI.Panel
 {
     using LAB2D;
     using LAB2D.Core;
+    using LAB2D.Core.Seek;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -26,6 +27,8 @@ namespace LAB2D.UI.Panel
                 .GetComponent<Toggle>().onValueChanged.AddListener(this.OnClick_TogglePerspective);
             LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Edge").Find("Toggle")
                .GetComponent<Toggle>().onValueChanged.AddListener(this.OnClick_ToggleEdgeMove);
+            LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "WorkerLine").Find("Toggle")
+               .GetComponent<Toggle>().onValueChanged.AddListener(this.OnClick_ToggleWorkerLine);
             LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Speed").Find("Slider")
                .GetComponent<Slider>().onValueChanged.AddListener(this.OnClick_GameSpeed);
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
@@ -95,6 +98,14 @@ namespace LAB2D.UI.Panel
         private void OnClick_ToggleEdgeMove(bool isEdge)
         {
             CameraMove.IsEdgeMode = isEdge;
+        }
+
+        /// <summary>
+        /// 切换Worker寻路引导线显示
+        /// </summary>
+        private void OnClick_ToggleWorkerLine(bool isOn)
+        {
+            ASeek.ShowWorkerLine = isOn;
         }
 
         private void OnClick_GameSpeed(float speed)

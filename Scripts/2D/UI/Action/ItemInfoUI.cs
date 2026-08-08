@@ -211,6 +211,17 @@ namespace LAB2D.UI.Action
                         // 非建造物品 tile（如 Bounty 任务栏标记），只显示名称
                         this.text += $"\n{tileBase.name}\n";
                     }
+
+                    // 显示建造者和所属者信息
+                    BuildMap.BuildTileData tileData = ServiceLocator.Get<BuildMap>().GetBuildTileData(posMap);
+                    if (tileData != null && !string.IsNullOrEmpty(tileData.BuilderName))
+                    {
+                        this.text += $"建造者: {tileData.BuilderName}\n";
+                        string ownerDisplay = (!string.IsNullOrEmpty(tileData.OwnerName) && tileData.OwnerName != tileData.BuilderName)
+                            ? tileData.OwnerName
+                            : "自己";
+                        this.text += $"所属者: {ownerDisplay}\n";
+                    }
                 }
             }
 

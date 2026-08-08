@@ -157,11 +157,24 @@ namespace LAB2D.UI
             this.nameText.text = data.Name;
             this.pointsText.text = data.PointsText;
 
-            // 确保 GameObject 在层级中激活，否则 StartCoroutine 会报错
-            // 使用 activeInHierarchy 而非 activeSelf，因为父级可能不活跃
+            // 确保 GameObject 及其所有父级在层级中激活，否则 StartCoroutine 会报错
+            // 仅 SetActive(true) 自身不够 —— 若父级 inactive，activeInHierarchy 仍为 false
             if (!this.gameObject.activeInHierarchy)
             {
-                this.gameObject.SetActive(true);
+                // 收集自身及所有未激活的祖先（从自身往上），再从顶层往下逐级激活
+                var inactiveChain = new System.Collections.Generic.List<GameObject>();
+                Transform t = this.transform;
+                while (t != null)
+                {
+                    if (!t.gameObject.activeSelf)
+                        inactiveChain.Add(t.gameObject);
+                    t = t.parent;
+                }
+
+                for (int i = inactiveChain.Count - 1; i >= 0; i--)
+                {
+                    inactiveChain[i].SetActive(true);
+                }
             }
 
             // 重置为完全透明并恢复交互，协程从淡入开始
