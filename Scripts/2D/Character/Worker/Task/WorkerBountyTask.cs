@@ -66,6 +66,9 @@ namespace LAB2D.Character.Worker.Task
             }
         }
 
+        /// <inheritdoc/>
+        public override int OwnerWorkerId => this.bountyData.IssuerWorkerId;
+
         // ---- lifecycle 属性：委托给 innerTask ----
 
         /// <inheritdoc/>

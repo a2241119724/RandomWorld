@@ -440,6 +440,14 @@ namespace LAB2D.Character.Worker.Task
         public virtual TaskTraits Traits => TaskTraits.None;
 
         /// <summary>
+        /// 任务专属 Worker 的 instance ID。默认 0 表示不专属任何 Worker。
+        /// WorkerSpecific 任务（Wear/Sleep/Exercise）、Bounty 发布者、
+        /// PickUp 目标所有者等应重写此属性。
+        /// Worker 死亡时，WorkerTaskManager 会清除所有 OwnerWorkerId 匹配的任务。
+        /// </summary>
+        public virtual int OwnerWorkerId => 0;
+
+        /// <summary>
         /// 执行任务。子类可通过 override 自定义执行逻辑（如 WorkerBountyTask 委托给内部任务）。
         /// </summary>
         /// <param name="worker">Worker</param>

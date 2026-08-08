@@ -29,6 +29,9 @@ namespace LAB2D.Character.Worker.State
                 workerData.Task = null;
             }
 
+            // 删除任务管理器中所有与该Worker相关的任务（悬赏发布、专属任务等）
+            Core.ServiceLocator.Get<WorkerTaskManager>().RemoveTasksForWorker(this.Character.GetInstanceID());
+
             // 删除搬运任务的预设
             AWorkerTask.InventoryProvider().DeleteWorkerPre(this.Character);
 

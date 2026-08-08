@@ -82,7 +82,7 @@ Scripts/2D/UI/
   Action/         # BuildingUI / GatherUI / ItemInfoUI / SelectUI 等
   Character/      # PlayerStatusUI / CharacterStatusUI / WorkerBedUI 等
   Effect/         # BloodUI / DamageUI / EquipmentBeam
-  Panel/PanelUI/ForegroundUI/  # GameInfoUI / DebugUI / ToolMenu / Joystick 等
+  Panel/PanelUI/ForegroundUI/  # GameInfoUI / ToolMenu / Joystick 等
 
 Scripts/2D/MVC/                       # Backpack/ 和 Build/ 各自的 Controller/Model/View
 
@@ -224,7 +224,7 @@ Unity 适配层：Input、Time、Transform、TileMap、Resources、Photon、Mono
 6. 不要把 Unity `ScriptableObject` 强行移出 Unity；它可以作为配置源，但核心规则不要直接依赖它。
 7. 不要让 `Domain` 或纯规则类使用 `using UnityEngine;`。
 8. 不要让纯规则类继承 `MonoBehaviour`、`MonoBehaviourPun` 或使用 Unity 生命周期方法。
-9. 不要让核心规则直接调用 UI，例如 `PlayerStatusUI.Instance`、`ItemInfoUI.Instance`、`DebugUI.Instance`。
+9. 不要让核心规则直接调用 UI，例如 `PlayerStatusUI.Instance`、`ItemInfoUI.Instance`。
 10. 不要让核心规则直接播放动画、音效、特效、生成 Prefab。
 11. 输出代码时必须给完整文件内容，不能只给片段。
 12. 如果信息不足，请基于已读代码给出最小可执行方案，不要空泛回答。
@@ -941,7 +941,7 @@ namespace LAB2D
 1. 打开原有测试场景或主场景。
 2. 进入游戏，确认玩家移动、攻击、技能热键行为不变。
 3. 创建 Worker 任务，确认任务仍会分配给最近可执行 Worker。
-4. 打开 DebugUI / WorkerTaskQueueHUD，确认显示数量不重复、不丢失。
+4. 打开 WorkerTaskQueueHUD，确认显示数量不重复、不丢失。
 5. 检查 Console 是否出现 NullReferenceException。
 6. 如果有 EditMode 测试，运行对应纯 C# 单元测试。
 ```
@@ -958,7 +958,7 @@ namespace LAB2D
 | 模块 | 当前或目标位置 | 迁移到 Godot/Unreal/服务端时是否可复用 | 原因 |
 |---|---|---|---|
 | Worker 任务分配规则 | Domain/Worker | 可复用 | 不依赖 UnityEngine，只处理快照和任务模型 |
-| WorkerTaskManager MonoBehaviour | Character/Worker | 需要重写 | 依赖 Unity 生命周期、Worker 实例、DebugUI |
+| WorkerTaskManager MonoBehaviour | Character/Worker | 需要重写 | 依赖 Unity 生命周期、Worker 实例 |
 | AWorkerTask Provider 委托 | Character/Worker/Task | 部分可复用 | 默认实现依赖 Unity Singleton，但委托本身可替换 |
 | Player 输入适配 | UnityAdapter/Input | 需要重写 | 依赖 Unity Input 和 Joystick |
 | InventoryGrid | Domain/Inventory | 可复用 | 纯 C# 数据结构 |

@@ -126,7 +126,7 @@ RandomWorld 的 Agent 体系需要重点覆盖以下方向：
 - `PanelController` 的面板栈。
 - `ABasePanel<T>`、`IBasePanel`、`IPanelCommonButton`。
 - `BackpackController`、`BuildController` 和 MVC 视图。
-- `ForegroundUI`、`GameInfoUI`、`GameTimeUI`、`DebugUI`、`AIChatPanel`。
+- `ForegroundUI`、`GameInfoUI`、`GameTimeUI`、`AIChatPanel`。
 
 推荐调用 Skill：`ScriptGenerateSkill`、`SceneAnalyzeSkill`、`CodeReviewSkill`、`TestSkill`。
 

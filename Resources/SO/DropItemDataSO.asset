@@ -19,55 +19,14 @@ MonoBehaviour:
       ResourceInfo:
         Id: 200000
         Count: 1
-        OwnerId: -1111974
+        OwnerId: -900396
     - Name: Apple
       ResourceInfo:
         Id: 500000
         Count: 1
-        OwnerId: -1111974
-    - Name: CustomWood
-      ResourceInfo:
-        Id: 500000
-        Count: 10
-        OwnerId: -1111974
-  - Name: DesertCoconutTree
-    DropItems:
-    - Name: Apple
-      ResourceInfo:
-        Id: 500000
-        Count: 2
-        OwnerId: -1110060
+        OwnerId: -900396
     - Name: CustomWood
       ResourceInfo:
         Id: 300000
-        Count: 10
-        OwnerId: -1110060
-  - Name: GrassTree
-    DropItems:
-    - Name: Apple
-      ResourceInfo:
-        Id: 500000
-        Count: 5
-        OwnerId: -451824
-    - Name: CustomWood
-      ResourceInfo:
-        Id: 300000
-        Count: 10
-        OwnerId: -451824
-    - Name: CustomStone
-      ResourceInfo:
-        Id: 300001
-        Count: 2
-        OwnerId: -451824
-  - Name: SnowTree
-    DropItems:
-    - Name: Apple
-      ResourceInfo:
-        Id: 500000
-        Count: 2
-        OwnerId: -1110368
-    - Name: CustomWood
-      ResourceInfo:
-        Id: 300000
-        Count: 10
-        OwnerId: -1110368
+        Count: 30
+        OwnerId: -900396

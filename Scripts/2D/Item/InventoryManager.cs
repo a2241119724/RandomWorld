@@ -31,25 +31,11 @@ namespace LAB2D.Item
             = (pos) => ServiceLocator.Get<AddWearTaskUI>().ShowWearTask(pos);
 
         /// <summary>
-        /// Worker 名称提供者 — 根据 worker instance ID 返回 Worker 的 GameObject 名称。
-        /// 默认实现通过 WorkerManager 查询；可在测试中替换为桩。
+        /// Worker 名称提供者 — 默认委托给 <see cref="Domain.Worker.ItemOwnershipService.OwnerNameProvider"/>，
+        /// 由 GlobalInit 统一注入，保证掉落物/仓库/Worker携带所有位置显示一致。
         /// </summary>
         internal static System.Func<int, string> WorkerNameProvider { get; set; }
-            = (workerId) =>
-            {
-                if (Core.ServiceLocator.TryGet(out WorkerManager wm))
-                {
-                    foreach (AWorker w in wm.Characters)
-                    {
-                        if (w != null && w.GetInstanceID() == workerId)
-                        {
-                            return w.name;
-                        }
-                    }
-                }
-
-                return $"worker_{workerId}";
-            };
+            = (workerId) => Domain.Worker.ItemOwnershipService.OwnerNameProvider(workerId);
 
         // ---- v2: 纯数据操作委托给 Domain InventoryService ----
         private InventoryService inventoryService;

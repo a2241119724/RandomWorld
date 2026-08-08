@@ -76,6 +76,9 @@ namespace LAB2D.Character.Worker.Task.Individual
         /// <inheritdoc/>
         public override TaskTraits Traits => TaskTraits.WorkerSpecific;
 
+        /// <inheritdoc/>
+        public override int OwnerWorkerId => this.worker != null ? this.worker.GetInstanceID() : 0;
+
         protected override void Init()
         {
             this.AvailableNeighborPos.Clear();

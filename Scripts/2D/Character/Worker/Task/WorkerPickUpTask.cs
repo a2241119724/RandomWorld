@@ -253,6 +253,9 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <inheritdoc/>
+        public override int OwnerWorkerId => this.targetOwnerId;
+
+        /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
             // targetOwnerId == 0 表示公开任务（Player 击杀掉落），任何 Worker 可接取

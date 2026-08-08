@@ -48,6 +48,9 @@ namespace LAB2D.Character.Worker.Task.Individual
         public override TaskTraits Traits => TaskTraits.WorkerSpecific;
 
         /// <inheritdoc/>
+        public override int OwnerWorkerId => this.worker != null ? this.worker.GetInstanceID() : 0;
+
+        /// <inheritdoc/>
         public override void Finish(AWorker worker)
         {
             // 根据锻炼时长结算经验值

@@ -96,7 +96,7 @@
 - `Game.unity` 的真实路径及现有 UI 层级，不要凭空假定路径。
 - `ResourcesLocal` 下已有 UI、Prefab、Panel、Popup、Debug、Tool、Report 等目录结构。
 - `Scripts/2D` 中的 TODO、FIXME、空方法、临时实现、重复模式。
-- `Scripts/2D/Editor`、`Scripts/2D/UI`、`Scripts/2D/Tool` 中已有工具、UI、调试逻辑（DebugUI 位于 `Scripts/2D/UI/Panel/PanelUI/ForegroundUI/DebugUI.cs`）。
+- `Scripts/2D/Editor`、`Scripts/2D/UI`、`Scripts/2D/Tool` 中已有工具、UI、调试逻辑。
 - `Scripts/2D/Tool` 下已有工具类、公共函数、辅助方法、命名空间、代码风格和可复用能力，尤其是文件扫描、路径拼接、报告生成、Markdown 表格、JSON / 配置读取、日志、空引用保护、GameObject / Component 安全获取（FindChildComponent/GetComponentInChildren）、Resources / ResourcesLocal 路径、UI 节点查找等。
 - `Scripts/2D/Enum` 下已有枚举、命名、成员风格、用途和可复用状态，包括扫描结果、报告类型、执行状态、严重级别、验证状态、调试面板类型等。
 - `Scripts/2D/Constant` 下已有常量类、命名、分组、用途和可复用固定值，包括 Agent 报告路径、任务目录前缀、报告文件名、Editor 菜单路径、UI 文案、节点名、Prefab 名称、扫描扩展名、忽略目录、日志前缀等。
@@ -191,7 +191,7 @@
 - 可被多个效率工具、Editor 工具、扫描器、报告生成器、调试面板、UI 面板或 Agent 流程复用的常量，必须优先放入 `Scripts/2D/Constant`。
 - 只服务类内部且不复用的常量，可保留为 `private const` 或 `private static readonly`，但必须在任务卡说明不抽取原因。
 - 常见公共常量包括但不限于：`Agent/Reports/efficiency_discovery.md` 路径、`efficiency_` 任务目录前缀、任务卡 / 验证记录 / 报告文件名前缀、报告输出目录、Markdown 标题 / 表头、Editor 菜单路径、UI 默认文案、UI 节点 / 面板名称、Prefab 名称、Resources / ResourcesLocal 路径、扫描文件扩展名、忽略目录、日志前缀、默认扫描深度、默认报告数量限制、默认刷新间隔、默认颜色名或样式名、PlayerPrefs Key、工具开关 Key、错误提示文案、空结果提示文案。
-- 常量类命名遵循项目风格；无明确风格时建议：`EfficiencyConstant`、`EfficiencyConstants`、`AgentReportConstant`、`EditorMenuConstant`、`ReportPathConstant`、`ScanConstant`、`DebugUIConstant`、`ResourceAuditConstant`。
+- 常量类命名遵循项目风格；无明确风格时建议：`EfficiencyConstant`、`EfficiencyConstants`、`AgentReportConstant`、`EditorMenuConstant`、`ReportPathConstant`、`ScanConstant`、`ResourceAuditConstant`。
 - 常量按业务语义分组，不要把无关常量全部塞入一个巨大类。
 - 字段命名遵循项目风格；无明确风格时公共常量用 PascalCase，私有常量用 camelCase 或项目私有字段风格。
 - 新增常量必须有中文注释，说明用途、使用场景、默认值含义、修改风险。

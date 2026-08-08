@@ -5,7 +5,7 @@ namespace LAB2D.Domain.Worker
     /// <summary>
     /// Worker 任务队列变更事件。
     /// WorkerTaskManager 在任务添加、完成、放弃、删除、取消后发布此事件。
-    /// DebugUI 等展示层订阅此事件以更新调试 HUD。
+    /// 展示层可订阅此事件以更新调试 HUD。
     /// </summary>
     public sealed class WorkerTaskQueueChangedEvent : IGameEvent
     {

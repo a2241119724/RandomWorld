@@ -93,6 +93,9 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <inheritdoc/>
+        public override int OwnerWorkerId => this.targetWorkerId;
+
+        /// <inheritdoc/>
         protected override float TiredCostPerSecond => WorkerTaskTimeConfig.LightWorkTiredCostPerSecond;
 
         /// <inheritdoc/>
