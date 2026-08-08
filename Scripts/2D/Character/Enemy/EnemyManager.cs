@@ -13,7 +13,7 @@ namespace LAB2D.Character.Enemy
     /// </summary>
     public class EnemyManager : CharacterManager<EnemyManager, AEnemy, EnemyCreator>
     {
-        private const float InstanceInterval = 60.0f; // 实例化时间间隔
+        private const float InstanceInterval = 10.0f; // 实例化时间间隔
 
         /// <summary>
         /// 波次控制标志：true 时由 WaveManager 接管敌人生成，GenEnemy 协程不再自动生成
