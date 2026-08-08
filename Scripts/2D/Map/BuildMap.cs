@@ -2,6 +2,7 @@ namespace LAB2D.Map
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core.Seek;
     using LAB2D.Domain.Common;
     using LAB2D.Item;
     using LAB2D.Serializable;
@@ -86,6 +87,8 @@ namespace LAB2D.Map
                 this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
             }
 
+            WalkabilityCache.UpdateCell(targetMap);
+
             this.SyncSender.Broadcast(
                 "SyncDataResp",
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
@@ -125,6 +128,7 @@ namespace LAB2D.Map
             // 注册到 PosMap（供碰撞检查和 IsBuilding 查询）
             BuildTileData buildTileData = new BuildTileData(tileName, false);
             this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
+            WalkabilityCache.UpdateCell(targetMap);
 
             // 同步
             this.SyncSender.Broadcast(
@@ -188,6 +192,8 @@ namespace LAB2D.Map
                 this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.Sprite);
             }
 
+            WalkabilityCache.UpdateCell(vector3Int);
+
             this.SyncSender.Broadcast(
                 "SyncDataResp",
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(vector3Int)),
@@ -234,6 +240,7 @@ namespace LAB2D.Map
         {
             this.tilemap.SetTile(targetMap, null);
             this.BuildMapDataLAB.PosMap.Remove(Vector3IntLAB.ToVector3IntLAB(targetMap));
+            WalkabilityCache.UpdateCell(targetMap);
             this.SyncSender.Broadcast(
                 "SyncDataResp",
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
@@ -316,6 +323,8 @@ namespace LAB2D.Map
             base.SyncDataResp(data);
             AWorkerTask.LogProvider("Response: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
             BuildMapData buildMapData = DataTool.FromByteArray<BuildMapData>(data);
+            this.BuildMapDataLAB = buildMapData;
+            WalkabilityCache.Invalidate();
             Dictionary<Vector3IntLAB, BuildTileData>.Enumerator enumerator = buildMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
@@ -327,6 +336,8 @@ namespace LAB2D.Map
                     this.tilemap.RemoveTileFlags(vector3Int, TileFlags.LockColor);
                     this.tilemap.SetColor(vector3Int, this.initColor);
                 }
+
+                WalkabilityCache.UpdateCell(vector3Int);
             }
         }
 
@@ -341,13 +352,17 @@ namespace LAB2D.Map
         {
             AWorkerTask.LogProvider("Response: 同步地图建造数据", LogManager.LogLevelEnum.Trace);
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
+            Vector3IntLAB key = Vector3IntLAB.ToVector3IntLAB(vector3Int);
             if (isDelete)
             {
                 this.tilemap.SetTile(vector3Int, null);
+                this.BuildMapDataLAB.PosMap.Remove(key);
+                WalkabilityCache.UpdateCell(vector3Int);
                 return;
             }
 
             BuildTileData buildTileData = DataTool.FromByteArray<BuildTileData>(buildTileDataLAB);
+            this.BuildMapDataLAB.PosMap[key] = buildTileData;
             if (!buildTileData.Name.Equals(string.Empty))
             {
                 this.tilemap.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(buildTileData.Name));
@@ -371,6 +386,8 @@ namespace LAB2D.Map
                     this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.None);
                 }
             }
+
+            WalkabilityCache.UpdateCell(vector3Int);
         }
 
         /// <inheritdoc/>
@@ -378,6 +395,7 @@ namespace LAB2D.Map
         {
             base.LoadData();
             this.BuildMapDataLAB = DataTool.LoadDataByBinary<BuildMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name)) ?? new BuildMapData();
+            WalkabilityCache.Invalidate();
             foreach (var posMap in this.BuildMapDataLAB.PosMap)
             {
                 this.DoDirectBuild(Vector3IntLAB.ToVector3Int(posMap.Key), (TileBase)AWorkerTask.ResourceLoadProvider(posMap.Value.Name));
@@ -402,6 +420,8 @@ namespace LAB2D.Map
                 this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
                 this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
             }
+
+            WalkabilityCache.UpdateCell(targetMap);
 
             this.SyncSender.Broadcast(
                 "SyncDataResp",

@@ -1,307 +1,269 @@
 namespace LAB2D.Core.Seek
 {
-    using LAB2D;
-    using LAB2D.Character.Worker.Task;
-    using LAB2D.Serializable;
+    using System;
     using System.Collections.Generic;
-    using PimDeWitte.UnityMainThreadDispatcher;
     using UnityEngine;
 
     /// <summary>
-    /// A*寻路
-    /// TODO 周围方块更新要重新寻路
+    /// 基于扁平值数组工作区的加权 A* 寻路。
     /// </summary>
     public class AStar : ASeek
     {
-        /// <summary>
-        /// A* 最大迭代次数，根据地图尺寸动态计算，防止不可达目标时遍历全图。
-        /// </summary>
-        private readonly int maxIterations;
+        private static readonly int[] NeighborX = { 0, 1, 0, -1 };
+        private static readonly int[] NeighborY = { 1, 0, -1, 0 };
+        private int maxIterations;
+        private readonly List<int> reusablePath = new (256);
+        private readonly SeekResult reusableResult = new ();
 
         public AStar(LAB2D.Character.Character character)
             : base(character)
         {
-            var tileMap = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB;
-            this.maxIterations = System.Math.Min(10000, tileMap.Width * tileMap.Height / 3);
+            var tileMap = s_tileMap.TileMapDataLAB;
+            this.maxIterations = CalculateMaxIterations(
+                tileMap.MapTiles.GetLength(0),
+                tileMap.MapTiles.GetLength(1));
         }
 
         /// <inheritdoc/>
-        protected override void DoSeek(string seekId)
+        protected override void DoSeek(
+            int generation,
+            Vector3Int startMap,
+            Vector3Int targetMap,
+            PathfindingWorkspace workspace)
         {
-            Vector3Int posMap = default;
-            Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
+            this.maxIterations = CalculateMaxIterations(workspace.Width, workspace.Height);
+            SeekResult result = this.reusableResult;
+            result.Reset();
+            if (!workspace.IsInBounds(startMap.x, startMap.y)
+                || !workspace.IsInBounds(targetMap.x, targetMap.y))
             {
-                posMap = Core.ServiceLocator.Get<TileMap>().WorldPosToMapPos(this.Character.transform.position);
-            }).Wait();
-
-            // 起点就是终点
-            if (posMap == this.TargetMap)
-            {
-                Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
-                {
-                    AWorkerTask.LogProvider(this.Character.name + ":起始==终点", LogManager.LogLevelEnum.Trace);
-                }).Wait();
-                this.SetResult(new SeekResult(), seekId);
+                result.IsReachable = false;
+                this.TrySetResult(result, generation);
                 return;
             }
 
-            Spend start = this.mapSpend[posMap.x, posMap.y]; // 起点
-            start.Previous = null;
-            Spend end = this.mapSpend[this.TargetMap.x, this.TargetMap.y]; // 终点
-            List<Spend> path = new ();
-            float totalDistance = (float)System.Math.Sqrt((double)((start.PosMap.X - end.PosMap.X) * (start.PosMap.X - end.PosMap.X)
-                + (start.PosMap.Y - end.PosMap.Y) * (start.PosMap.Y - end.PosMap.Y)));
-            this.openList.Add(start);
-            int iterationCount = 0;
-            while (!this.isStopThread && this.openList.Count != 0)
+            if (startMap == targetMap)
             {
-                // 迭代上限保护：避免不可达目标时遍历整个可达区域
+                this.TrySetResult(result, generation);
+                return;
+            }
+
+            if (!WalkabilityCache.IsWalkable(targetMap.x, targetMap.y))
+            {
+                result.IsReachable = false;
+                this.TrySetResult(result, generation);
+                return;
+            }
+
+            workspace.BeginSearch();
+            List<int> path = this.reusablePath;
+            path.Clear();
+
+            int startIndex = workspace.ToIndex(startMap.x, startMap.y);
+            int endIndex = workspace.ToIndex(targetMap.x, targetMap.y);
+            float totalDistance = (float)Math.Sqrt(
+                ((targetMap.x - startMap.x) * (targetMap.x - startMap.x))
+                + ((targetMap.y - startMap.y) * (targetMap.y - startMap.y)));
+            workspace.AddOrDecrease(
+                startIndex,
+                0.0f,
+                CalculateHeuristic(startMap.x, startMap.y, targetMap.x, targetMap.y),
+                -1);
+
+            bool found = false;
+            int iterationCount = 0;
+            while (!this.ShouldStop(generation) && workspace.OpenCount > 0)
+            {
                 if (++iterationCount > this.maxIterations)
                 {
-                    this.SetResult(new SeekResult { IsReachable = false }, seekId);
+                    result.IsReachable = false;
+                    this.TrySetResult(result, generation);
                     return;
                 }
 
-                if (this.isStopThread)
+                int currentIndex = workspace.ExtractMin();
+                int currentX = workspace.GetX(currentIndex);
+                int currentY = workspace.GetY(currentIndex);
+                float progressedDistance = (float)Math.Sqrt(
+                    ((currentX - startMap.x) * (currentX - startMap.x))
+                    + ((currentY - startMap.y) * (currentY - startMap.y)));
+                this.SeekProgress = totalDistance > 0.0f ? progressedDistance / totalDistance : 1.0f;
+
+                if (currentIndex == endIndex)
                 {
-                    return;
-                }
-
-                // 从最小堆中提取F值最小的节点（O(log n)）
-                Spend curSpend = this.openList.ExtractMin();
-                this.SeekProgress = (float)System.Math.Sqrt((double)((curSpend.PosMap.X - start.PosMap.X) * (curSpend.PosMap.X - start.PosMap.X)
-                    + (curSpend.PosMap.Y - start.PosMap.Y) * (curSpend.PosMap.Y - start.PosMap.Y))) / totalDistance;
-
-                // 判断是否到达终点(此处只能是整数)
-                if (curSpend.PosMap == end.PosMap)
-                {
-                    // LogManager.Instance.log("找到路径!!!", LogManager.LogLevel.Info);
-                    // 找路径
-                    Vector3Int lastDet = new (0, 0);
-                    Spend quickCurSpend = curSpend;
-                    while (!this.isStopThread && curSpend != null && curSpend.Previous != null)
-                    {
-                        path.Insert(0, curSpend);
-
-                        // 可能出现循环路径
-                        if (quickCurSpend != null)
-                        {
-                            quickCurSpend = quickCurSpend.Previous;
-                            if (quickCurSpend != null)
-                            {
-                                quickCurSpend = quickCurSpend.Previous;
-                            }
-                        }
-
-                        if (quickCurSpend != null && quickCurSpend.PosMap.X == curSpend.Previous.PosMap.X
-                            && quickCurSpend.PosMap.Y == curSpend.Previous.PosMap.Y)
-                        {
-                            Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
-                            {
-                                AWorkerTask.LogProvider(this.Character.name + ":寻路出现环路", LogManager.LogLevelEnum.Error);
-                            }).Wait();
-                            break;
-                        }
-
-                        curSpend = curSpend.Previous;
-                    }
-
-                    if (this.isStopThread)
-                    {
-                        return;
-                    }
-
+                    found = this.ReconstructPath(generation, workspace, startIndex, endIndex, path);
                     break;
                 }
 
-                if (this.isStopThread)
+                float nextGCost = workspace.GetGCost(currentIndex) + 1.0f;
+                for (int i = 0; i < NeighborX.Length; i++)
                 {
-                    return;
-                }
-
-                this.closeList.Add(curSpend);
-
-                // 对邻居进行f = g + h
-                byte isCorner = 0;
-                foreach (Vector2SByteLAB direction in Neighbors)
-                {
-                    ++isCorner;
-                    int x = curSpend.PosMap.X + direction.X;
-                    int y = curSpend.PosMap.Y + direction.Y;
-
-                    // 直接从缓存读取(后台线程安全), 无需向主线程派发
-                    if (!WalkabilityCache.IsWalkable(x, y))
+                    int neighborX = currentX + NeighborX[i];
+                    int neighborY = currentY + NeighborY[i];
+                    if (!workspace.IsInBounds(neighborX, neighborY)
+                        || !WalkabilityCache.IsWalkable(neighborX, neighborY))
                     {
                         continue;
                     }
 
-                    Spend neighbor = this.mapSpend[x, y];
-
-                    // 关闭队列不计算
-                    if (this.closeList.Contains(neighbor))
+                    int neighborIndex = workspace.ToIndex(neighborX, neighborY);
+                    if (workspace.IsClosed(neighborIndex))
                     {
                         continue;
                     }
 
-                    float temp;
-                    if (isCorner > 4)
-                    {
-                        // 当上下左右阻塞时，斜着不可走
-                        if (!WalkabilityCache.IsWalkable(x, curSpend.PosMap.Y)
-                            && !WalkabilityCache.IsWalkable(curSpend.PosMap.X, y))
-                        {
-                            continue;
-                        }
-
-                        temp = curSpend.G + 1.414f; // 斜着相邻
-                    }
-                    else
-                    {
-                        temp = curSpend.G + 1.0f; // 挨着相邻
-                    }
-
-                    if (this.isStopThread)
-                    {
-                        return;
-                    }
-
-                    // 打开队列已经计算过，赋值最小的g
-                    if (this.openList.Contains(neighbor))
-                    {
-                        // 回溯,放弃该节点
-                        if (temp >= neighbor.G)
-                        {
-                            continue;
-                        }
-
-                        // 更新节点：从堆中移除旧条目，更新G后重新插入以维护堆序
-                        this.openList.Remove(neighbor);
-                        neighbor.G = temp;
-                    }
-                    // 不在任何列表中
-                    else
-                    {
-                        neighbor.G = temp;
-
-                        if (this.isStopThread)
-                        {
-                            return;
-                        }
-                    }
-
-                    // 加权A*，使得寻路更快，但不是最短路径
-                    neighbor.H = 1.5f * (System.Math.Abs(end.PosMap.X - neighbor.PosMap.X) + System.Math.Abs(end.PosMap.Y - neighbor.PosMap.Y));
-                    neighbor.F = neighbor.G + neighbor.H;
-                    neighbor.Previous = curSpend; // 链接
-
-                    // 插入堆中（F值计算完成后插入，新节点和更新节点均需处理）
-                    this.openList.Add(neighbor);
+                    workspace.AddOrDecrease(
+                        neighborIndex,
+                        nextGCost,
+                        nextGCost + CalculateHeuristic(neighborX, neighborY, targetMap.x, targetMap.y),
+                        currentIndex);
                 }
             }
 
-            if (this.isStopThread)
+            if (this.ShouldStop(generation))
             {
                 return;
             }
 
-            // 合并path
-            SeekResult seekResult = new ();
-            if (path.Count > 0)
+            if (!found || path.Count == 0)
             {
-                int lastIndex = 0;
-                while (!this.isStopThread && lastIndex < path.Count - 1)
-                {
-                    bool isUpdate = false;
-                    start = path[lastIndex];
-
-                    // 不加入起点第一个位置
-                    if (lastIndex != 0)
-                    {
-                        seekResult.Path.Add(start);
-                    }
-
-                    // 在一定path范围内, 倒叙遍历最后一个直达的位置
-                    int scope = System.Math.Min(30, path.Count - lastIndex - 1);
-                    for (int i = lastIndex + scope; i >= lastIndex + 1; i--)
-                    {
-                        if (this.isStopThread)
-                        {
-                            return;
-                        }
-
-                        // 网格Bresenham直线检测可直达性（替代阻塞主线程的Physics2D.Raycast）
-                        bool isAllCanReach = IsLineWalkable(
-                            start.PosMap.X, start.PosMap.Y,
-                            path[i].PosMap.X, path[i].PosMap.Y);
-                        if (isAllCanReach)
-                        {
-                            lastIndex = i;
-                            isUpdate = true;
-                            break;
-                        }
-                    }
-
-                    if (!isUpdate)
-                    {
-                        lastIndex++;
-                    }
-                }
-
-                if (this.isStopThread)
-                {
-                    return;
-                }
-
-                seekResult.Path.Add(path[^1]);
-            }
-            else
-            {
-                seekResult.IsReachable = false;
-                Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
-                {
-                    AWorkerTask.LogProvider(this.Character.name + ":未找到路径 " + start.PosMap + "-->" + end.PosMap, LogManager.LogLevelEnum.Trace);
-                }).Wait();
+                result.IsReachable = false;
+                this.TrySetResult(result, generation);
+                return;
             }
 
-            this.SetResult(seekResult, seekId);
+            this.CompressPath(generation, workspace, path, result.Path);
+            if (this.ShouldStop(generation))
+            {
+                return;
+            }
+
+            if (result.Path.Count == 0)
+            {
+                result.IsReachable = false;
+            }
+
+            this.TrySetResult(result, generation);
         }
 
-        /// <summary>
-        /// Bresenham直线算法检测从from到to的网格路径是否全部可行走。
-        /// 纯网格计算，无需主线程派发，可在后台线程安全调用。
-        /// </summary>
+        private static float CalculateHeuristic(int x, int y, int targetX, int targetY)
+        {
+            return 1.5f * (Math.Abs(targetX - x) + Math.Abs(targetY - y));
+        }
+
         private static bool IsLineWalkable(int fromX, int fromY, int toX, int toY)
         {
-            int dx = System.Math.Abs(toX - fromX);
-            int dy = System.Math.Abs(toY - fromY);
+            int dx = Math.Abs(toX - fromX);
+            int dy = Math.Abs(toY - fromY);
             int sx = fromX < toX ? 1 : -1;
             int sy = fromY < toY ? 1 : -1;
-            int err = dx - dy;
+            int error = dx - dy;
             int x = fromX;
             int y = fromY;
 
-            while (x != toX || y != toY)
+            while (true)
             {
                 if (!WalkabilityCache.IsWalkable(x, y))
                 {
                     return false;
                 }
 
-                int e2 = 2 * err;
-                if (e2 > -dy)
+                if (x == toX && y == toY)
                 {
-                    err -= dy;
+                    return true;
+                }
+
+                int doubledError = 2 * error;
+                if (doubledError > -dy)
+                {
+                    error -= dy;
                     x += sx;
                 }
 
-                if (e2 < dx)
+                if (doubledError < dx)
                 {
-                    err += dx;
+                    error += dx;
                     y += sy;
                 }
             }
+        }
 
+        private bool ReconstructPath(
+            int generation,
+            PathfindingWorkspace workspace,
+            int startIndex,
+            int endIndex,
+            List<int> path)
+        {
+            int currentIndex = endIndex;
+            int guard = 0;
+            while (currentIndex != startIndex && currentIndex >= 0 && guard++ <= this.maxIterations)
+            {
+                if (this.ShouldStop(generation))
+                {
+                    return false;
+                }
+
+                path.Add(currentIndex);
+                currentIndex = workspace.GetParent(currentIndex);
+            }
+
+            if (currentIndex != startIndex)
+            {
+                return false;
+            }
+
+            path.Reverse();
             return true;
+        }
+
+        private void CompressPath(
+            int generation,
+            PathfindingWorkspace workspace,
+            List<int> path,
+            List<Vector3Int> result)
+        {
+            int lastIndex = 0;
+            while (!this.ShouldStop(generation) && lastIndex < path.Count - 1)
+            {
+                int startIndex = path[lastIndex];
+                if (lastIndex != 0)
+                {
+                    result.Add(ToPosition(workspace, startIndex));
+                }
+
+                bool advanced = false;
+                int scope = Math.Min(30, path.Count - lastIndex - 1);
+                for (int i = lastIndex + scope; i >= lastIndex + 1; i--)
+                {
+                    int targetIndex = path[i];
+                    if (IsLineWalkable(
+                        workspace.GetX(startIndex),
+                        workspace.GetY(startIndex),
+                        workspace.GetX(targetIndex),
+                        workspace.GetY(targetIndex)))
+                    {
+                        lastIndex = i;
+                        advanced = true;
+                        break;
+                    }
+                }
+
+                if (!advanced)
+                {
+                    lastIndex++;
+                }
+            }
+
+            if (!this.ShouldStop(generation))
+            {
+                result.Add(ToPosition(workspace, path[path.Count - 1]));
+            }
+        }
+
+        private static Vector3Int ToPosition(PathfindingWorkspace workspace, int index)
+        {
+            return new Vector3Int(workspace.GetX(index), workspace.GetY(index), 0);
         }
     }
 }

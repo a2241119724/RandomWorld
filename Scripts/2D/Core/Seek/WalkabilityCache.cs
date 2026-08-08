@@ -1,90 +1,104 @@
 namespace LAB2D.Core.Seek
 {
-    using LAB2D;
     using System.Threading;
     using UnityEngine;
 
     /// <summary>
-    /// 静态可步行性缓存 — 避免 A* 寻路时每个邻居都向主线程派发 IsCanReach 检查。
-    ///
-    /// 并发设计：
-    ///   主线程 Refresh() 写入新数组，完成后原子交换引用。
-    ///   后台线程 IsWalkable() 始终读取已发布完成的旧数组。
-    ///   双缓冲消除 Refresh 期间的读写竞争。
+    /// 后台寻路使用的可步行性快照。
+    /// 地图加载后只进行一次全量构建，运行期间由地图变更入口按格更新。
     /// </summary>
     public static class WalkabilityCache
     {
-        private static bool[,] readCache;
+        private static int[] walkability;
         private static int width;
         private static int height;
+        private static int mapInstanceId;
+        private static volatile bool isBuilt;
 
-        /// <summary>
-        /// 上次刷新所在的帧编号，用于同一帧内跳过重复重建。
-        /// </summary>
-        private static int lastRefreshFrame = -1;
+        public static bool IsInitialized => walkability != null;
 
-        public static bool IsInitialized => readCache != null;
-
-        public static void Initialize(int w, int h)
+        public static void Initialize(int newWidth, int newHeight, int newMapInstanceId)
         {
-            if (readCache != null)
+            if (walkability != null
+                && width == newWidth
+                && height == newHeight
+                && mapInstanceId == newMapInstanceId)
             {
                 return;
             }
 
-            width = w;
-            height = h;
-            readCache = new bool[width, height];
+            isBuilt = false;
+            width = newWidth;
+            height = newHeight;
+            mapInstanceId = newMapInstanceId;
+            Volatile.Write(ref walkability, new int[checked(width * height)]);
         }
 
         /// <summary>
-        /// 刷新整个地图的可步行性缓存 — 必须在主线程调用。
-        /// 写入完成前不发布，后台线程始终读取上一次完整快照。
-        /// 同一帧内多次调用只执行一次完整重建（后续调用直接复用）。
+        /// 确保初始快照已经构建。必须在主线程调用。
+        /// 该全量扫描在一个地图生命周期内只执行一次。
         /// </summary>
-        public static void Refresh()
+        public static void EnsureBuilt()
         {
-            int currentFrame = UnityEngine.Time.frameCount;
-            if (currentFrame == lastRefreshFrame)
+            if (isBuilt)
             {
                 return;
             }
 
-            lastRefreshFrame = currentFrame;
-
-            if (readCache == null)
+            int[] cache = Volatile.Read(ref walkability);
+            for (int y = 0; y < height; y++)
             {
-                var tileMap = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB;
-                Initialize(tileMap.Width, tileMap.Height);
-            }
-
-            // 在新数组上写入，避免后台线程看到部分刷新的数据
-            bool[,] writeCache = new bool[width, height];
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
+                int rowOffset = y * width;
+                for (int x = 0; x < width; x++)
                 {
-                    writeCache[x, y] = ASeek.IsCanReach(new Vector3Int(x, y, 0));
+                    cache[rowOffset + x] = ASeek.IsCanReach(new Vector3Int(x, y, 0)) ? 1 : 0;
                 }
             }
 
-            // 原子交换：引用赋值在 .NET 中是原子的
-            Thread.MemoryBarrier();
-            readCache = writeCache;
+            isBuilt = true;
         }
 
         /// <summary>
-        /// 检查坐标是否可行走 — 可在任何线程安全调用。
+        /// 整张地图数据被替换后使快照失效；下一次寻路会重新构建一次。
+        /// </summary>
+        public static void Invalidate()
+        {
+            isBuilt = false;
+        }
+
+        /// <summary>
+        /// 地图内容改变后刷新一个格子。必须在主线程调用。
+        /// 缓存尚未完成初始构建时无需处理，首次构建会读取最新地图状态。
+        /// </summary>
+        public static void UpdateCell(Vector3Int position)
+        {
+            int[] cache = Volatile.Read(ref walkability);
+            if (!isBuilt || cache == null || !IsInBounds(position.x, position.y))
+            {
+                return;
+            }
+
+            int index = (position.y * width) + position.x;
+            Volatile.Write(ref cache[index], ASeek.IsCanReach(position) ? 1 : 0);
+        }
+
+        /// <summary>
+        /// 检查坐标是否可行走，可从任意后台线程调用。
         /// </summary>
         public static bool IsWalkable(int x, int y)
         {
-            bool[,] cache = readCache;
-            if (cache == null || x < 0 || y < 0 || x >= width || y >= height)
+            int[] cache = Volatile.Read(ref walkability);
+            if (!isBuilt || cache == null || !IsInBounds(x, y))
             {
                 return false;
             }
 
-            return cache[x, y];
+            return Volatile.Read(ref cache[(y * width) + x]) != 0;
+        }
+
+        private static bool IsInBounds(int x, int y)
+        {
+            return x >= 0 && y >= 0 && x < width && y < height;
         }
     }
 }

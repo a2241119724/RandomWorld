@@ -99,6 +99,8 @@ namespace LAB2D.Map
                     }
                 }
             }
+
+            WalkabilityCache.Invalidate();
         }
 
         /// <summary>
@@ -183,6 +185,7 @@ namespace LAB2D.Map
             yield return this.StartCoroutine(this.CleanupUnfilledCells(tiles));
 
             this.TileMapDataLAB.MapTiles = tiles;
+            WalkabilityCache.Invalidate();
             // 海洋即边界，不再调用 CreateArroundTile
             yield return this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
             Core.ServiceLocator.Get<MapInitCoordinator>().IsComplete = true;
@@ -355,6 +358,7 @@ namespace LAB2D.Map
         public void SetProgress(int height, int width)
         {
             this.TileMapDataLAB = new TileMapData(height, width, new int[height, width], width * height / 2000);
+            WalkabilityCache.Invalidate();
             int total = width * height;                       // GenerateLandMask 全格扫描
             total += this.TileMapDataLAB.RandomCount;         // ScatterSeeds 种子散布
             // Fill 的进度在遮罩生成后动态统计（只知道陆地格数才知道精确值）
@@ -369,6 +373,7 @@ namespace LAB2D.Map
             base.LoadData();
             Core.GameServices.AsyncProgressSetTipProvider("加载地图数据...");
             this.TileMapDataLAB = DataTool.LoadDataByBinary<TileMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            WalkabilityCache.Invalidate();
             if (this.TileMapDataLAB == null)
             {
                 AWorkerTask.LogProvider("TileMap data not found in archive, generating new default map", LogManager.LogLevelEnum.Warning);
@@ -406,6 +411,7 @@ namespace LAB2D.Map
             base.SyncDataResp(data);
             AWorkerTask.LogProvider("Response: 同步地图数据", LogManager.LogLevelEnum.Trace);
             this.TileMapDataLAB = DataTool.FromByteArray<TileMapData>(data);
+            WalkabilityCache.Invalidate();
             this.SetProgressAsync(this.TileMapDataLAB.MapTiles.GetLength(0), this.TileMapDataLAB.MapTiles.GetLength(1));
             this.StartCoroutine(this.ShowTilemap(this.TileMapDataLAB.MapTiles));
             // 海洋即边界，不再需要矩形边框

@@ -2,6 +2,7 @@ namespace LAB2D.Map
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core.Seek;
     using LAB2D.Domain.Common;
     using LAB2D.Item;
     using LAB2D.Serializable;
@@ -36,6 +37,13 @@ namespace LAB2D.Map
             Instance = this;
             this.resourceTileMapOne = LAB2D.Tool.Tool.GetComponentInChildren<Tilemap>(this.transform.parent.gameObject, "ResourceMapOne");
             this.ResourceMapDataLAB = new ResourceMapData(0, 100);
+        }
+
+        /// <inheritdoc/>
+        public override void SetTile(Vector3Int pos, TileBase tileBase)
+        {
+            base.SetTile(pos, tileBase);
+            WalkabilityCache.UpdateCell(pos);
         }
 
         /// <summary>
@@ -90,6 +98,7 @@ namespace LAB2D.Map
 
                         this.tilemap.SetTile(posMap, tileBase);
                         this.ResourceMapDataLAB.Add(posMap, tileBase.name);
+                        WalkabilityCache.UpdateCell(posMap);
                         resourcesPlaced++;
                     }
                 }
@@ -148,6 +157,7 @@ namespace LAB2D.Map
                     this.ResourceMapDataLAB.TreeCurCount++;
                     this.tilemap.SetTile(pos, tileBase);
                     this.ResourceMapDataLAB.Add(pos, tileBase.name);
+                    WalkabilityCache.UpdateCell(pos);
 
                     this.RefreshRound(pos);
                 }
@@ -167,6 +177,7 @@ namespace LAB2D.Map
             this.ResourceMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);
             this.ResourceMapDataLAB.TreeCurCount--;
+            WalkabilityCache.UpdateCell(posMap);
         }
 
         /// <summary>
@@ -239,6 +250,7 @@ namespace LAB2D.Map
             base.LoadData();
             Core.GameServices.AsyncProgressSetTipProvider("加载资源地图信息...");
             this.ResourceMapDataLAB = DataTool.LoadDataByBinary<ResourceMapData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            WalkabilityCache.Invalidate();
             if (this.ResourceMapDataLAB == null)
             {
                 // 降级方案：存档无资源数据时，等待地图生成完毕后自动生成资源
@@ -251,7 +263,9 @@ namespace LAB2D.Map
 
             foreach (KeyValuePair<Vector3IntLAB, string> posMap in this.ResourceMapDataLAB.PosMap)
             {
-                this.tilemap.SetTile(Vector3IntLAB.ToVector3Int(posMap.Key), (TileBase)AWorkerTask.ResourceLoadProvider(posMap.Value));
+                Vector3Int position = Vector3IntLAB.ToVector3Int(posMap.Key);
+                this.tilemap.SetTile(position, (TileBase)AWorkerTask.ResourceLoadProvider(posMap.Value));
+                WalkabilityCache.UpdateCell(position);
             }
 
             this.StartCoroutine(this.GenTree());
@@ -281,12 +295,15 @@ namespace LAB2D.Map
             AWorkerTask.LogProvider("Response: 同步地图资源数据", LogManager.LogLevelEnum.Trace);
             this.SetProgress();
             ResourceMapData resourceMapData = DataTool.FromByteArray<ResourceMapData>(data);
+            this.ResourceMapDataLAB = resourceMapData;
+            WalkabilityCache.Invalidate();
             Dictionary<Vector3IntLAB, string>.Enumerator enumerator = resourceMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 this.tilemap.SetTile(
                     Vector3IntLAB.ToVector3Int(enumerator.Current.Key),
                     (TileBase)AWorkerTask.ResourceLoadProvider(enumerator.Current.Value));
+                WalkabilityCache.UpdateCell(Vector3IntLAB.ToVector3Int(enumerator.Current.Key));
             }
         }
 
@@ -305,18 +322,23 @@ namespace LAB2D.Map
             if (isDelete)
             {
                 this.tilemap.SetTile(vector3Int, null);
+                this.ResourceMapDataLAB.Remove(vector3Int);
+                WalkabilityCache.UpdateCell(vector3Int);
                 return;
             }
 
             if (!tileBaseName.Equals(string.Empty))
             {
                 this.tilemap.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(tileBaseName));
+                this.ResourceMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(vector3Int)] = tileBaseName;
             }
 
             if (isPass)
             {
                 this.tilemap.RemoveTileFlags(vector3Int, TileFlags.LockColor);
             }
+
+            WalkabilityCache.UpdateCell(vector3Int);
         }
 
         /// <summary>

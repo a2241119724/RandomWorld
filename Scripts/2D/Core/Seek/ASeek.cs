@@ -1,100 +1,51 @@
 namespace LAB2D.Core.Seek
 {
-    using LAB2D;
     using LAB2D.Character.Worker.Task;
-    using LAB2D.Serializable;
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Threading;
     using PimDeWitte.UnityMainThreadDispatcher;
     using UnityEngine;
 
     /// <summary>
-    /// 寻路
+    /// 寻路基类。主线程提交请求，固定数量的后台工作线程执行纯数据搜索。
     /// </summary>
     public class ASeek : ISeek
     {
-        /// <summary>
-        /// 同时寻路的最大并发数
-        /// </summary>
-        private static readonly SemaphoreSlim ConcurrencyLimit = new (Environment.ProcessorCount, Environment.ProcessorCount);
-
-        /// <summary>
-        /// 寻路失败位置缓存：key="x_y", value=记录时间(Time.time)。
-        /// 只从主线程读写。
-        /// </summary>
-        private static readonly Dictionary<string, float> s_failCache = new ();
-
-        /// <summary>
-        /// 失败缓存有效期（秒），过期后允许重新尝试。
-        /// </summary>
-        private const float FAIL_CACHE_TTL = 30f;
-
-        /// <summary>
-        /// 共享LineRenderer材质
-        /// </summary>
+        private const int MaxConcurrentSearches = 2;
+        private const float FailCacheTtl = 30f;
+        private static readonly Dictionary<Vector3Int, float> FailCache = new ();
+        private static readonly Queue<ASeek> SearchQueue = new (64);
+        private static readonly object SearchQueueLock = new ();
+        private static readonly WaitCallback SearchWorkerCallback = RunSearchQueue;
+        private static int activeSearchWorkers;
         private static Material sharedLineMaterial;
 
-        /// <summary>
-        /// 邻居
-        /// </summary>
-        protected static readonly List<Vector2SByteLAB> Neighbors = new ()
-        {
-            new Vector2SByteLAB(0, 1),
-            new Vector2SByteLAB(1, 0),
-            new Vector2SByteLAB(0, -1),
-            new Vector2SByteLAB(-1, 0), // 上右下左
-        };
+        protected static TileMap s_tileMap;
+        protected static ResourceMap s_resourceMap;
+        protected static BuildMap s_buildMap;
+        protected static WeatherGameplayEffect s_weatherEffect;
+        protected static ITerrainEffectService s_terrainEffect;
+        protected static WorkerConditionManager s_workerConditionManager;
+        protected static UnityMainThreadDispatcher s_mainThreadDispatcher;
 
-        /// <summary>
-        /// Value为空时，说明正在寻路
-        /// </summary>
-        protected static ConcurrentDictionary<string, SeekResult> results = new ();
-
-        /// <summary>
-        /// 当前寻路任务的结果键。
-        /// </summary>
-        private string activeSeekId = string.Empty;
-
-        /// <summary>
-        /// 合并path时检测射线偏移
-        /// </summary>
-        protected readonly Vector3[] checkOffsets = { new Vector3(0, 0), new Vector3(-0.5f, 0), new Vector3(0.5f, 0), new Vector3(0, 0.5f), new Vector3(0, -0.5f) };
-
-        /// <summary>
-        /// 地图中板块的花费(使用共享池)
-        /// </summary>
-        protected Spend[,] mapSpend;
-
-        /// <summary>
-        /// 控制线程停止
-        /// </summary>
-        protected volatile bool isStopThread = false;
-
-        /// <summary>
-        /// 搜索代数, 每次StartSeek递增, 用于丢弃过时的搜索任务
-        /// </summary>
-        protected volatile int seekGeneration = 0;
-
-        /// <summary>
-        /// 待处理的板块（最小堆，O(log n)提取最小值）
-        /// </summary>
-        protected MinHeap<Spend> openList;
-
-        /// <summary>
-        /// 已处理的板块（HashSet，O(1)查找）
-        /// </summary>
-        protected HashSet<Spend> closeList;
+        private readonly bool isWorker;
+        private readonly bool isEnemy;
+        private readonly object requestLock = new ();
+        private bool requestScheduled;
+        private int pendingGeneration;
+        private Vector3Int pendingStartMap;
+        private Vector3Int pendingTargetMap;
+        private volatile SeekResult currentResult;
+        private volatile bool isSeeking;
+        private volatile int seekGeneration;
+        protected volatile bool isStopThread;
 
         public ASeek(LAB2D.Character.Character character)
         {
-            // 确保Spend池和可步行性缓存已初始化
-            var tileMap = Core.ServiceLocator.Get<TileMap>().TileMapDataLAB;
-            SpendPool.Initialize(tileMap.Width, tileMap.Height);
-            WalkabilityCache.Initialize(tileMap.Width, tileMap.Height);
+            InitServiceCache();
+            EnsurePathfindingStorage();
 
-            // 路径 — 使用共享材质模板, 每个实例用不同颜色
             this.LineRenderer = character.GetComponent<LineRenderer>();
             this.LineRenderer.startWidth = 0.05f;
             this.LineRenderer.endWidth = 0.05f;
@@ -103,394 +54,448 @@ namespace LAB2D.Core.Seek
                 sharedLineMaterial = new Material(Shader.Find("Unlit/Color"));
             }
 
-            Material instanceMat = new (sharedLineMaterial);
-            instanceMat.color = new Color(UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f), UnityEngine.Random.Range(0.5f, 1.0f));
-            this.LineRenderer.material = instanceMat;
+            Material instanceMaterial = new (sharedLineMaterial);
+            instanceMaterial.color = new Color(
+                UnityEngine.Random.Range(0.5f, 1.0f),
+                UnityEngine.Random.Range(0.5f, 1.0f),
+                UnityEngine.Random.Range(0.5f, 1.0f));
+            this.LineRenderer.material = instanceMaterial;
             this.LineRenderer.sortingLayerName = "Highest";
 
             this.Character = character;
-            this.openList = new MinHeap<Spend>(Comparer<Spend>.Create((a, b) => a.F.CompareTo(b.F)));
-            this.closeList = new HashSet<Spend>();
+            this.isWorker = character is AWorker;
+            this.isEnemy = character is LAB2D.Character.Enemy.AEnemy;
         }
 
-        /// <summary>
-        /// 目标地图坐标
-        /// </summary>
         public Vector3Int TargetMap { get; protected set; }
 
-        /// <summary>
-        /// 寻路进度
-        /// </summary>
         public float SeekProgress { get; protected set; }
 
-        /// <summary>
-        /// 是否显示Worker的寻路引导线（默认关闭）
-        /// </summary>
-        public static bool ShowWorkerLine { get; set; } = false;
+        public static bool ShowWorkerLine { get; set; }
 
-        /// <summary>
-        /// 是否显示Enemy的寻路引导线（默认关闭）
-        /// </summary>
-        public static bool ShowEnemyLine { get; set; } = false;
+        public static bool ShowEnemyLine { get; set; }
 
-        /// <summary>
-        /// 寻路路径渲染
-        /// </summary>
         public LineRenderer LineRenderer { get; set; }
 
-        /// <summary>
-        /// 移动的方向
-        /// </summary>
         public Vector3 Direction { get; private set; }
 
-        /// <summary>
-        /// 寻路进度
-        /// </summary>
         protected LAB2D.Character.Character Character { get; set; }
 
+        protected static int CalculateMaxIterations(int width, int height)
+        {
+            return Math.Max(1, Math.Min(10000, checked(width * height) / 3));
+        }
+
         /// <summary>
-        /// 是否可以抵达(不包含带有碰撞体的Tile,即使是正在建造中的)
+        /// 是否可以抵达，不包含资源和不可通行建筑。
+        /// 该方法访问 Unity Tilemap，只能在主线程调用。
         /// </summary>
-        /// <param name="posMap">目标坐标</param>
-        /// <returns>是否</returns>
         public static bool IsCanReach(Vector3Int posMap)
         {
-            if (!Core.ServiceLocator.Get<TileMap>().IsCanReach(posMap))
-            {
-                return false;
-            }
-
-            if (!Core.ServiceLocator.Get<ResourceMap>().IsCanReach(posMap))
-            {
-                return false;
-            }
-
-            if (!Core.ServiceLocator.Get<BuildMap>().IsCanReach(posMap))
-            {
-                return false;
-            }
-
-            return true;
+            return s_tileMap.IsCanReach(posMap)
+                && s_resourceMap.IsCanReach(posMap)
+                && s_buildMap.IsCanReach(posMap);
         }
 
-        /// <summary>
-        /// 记录寻路失败位置（主线程调用）。
-        /// </summary>
         public static void RecordFail(Vector3Int targetMap)
         {
-            string key = $"{targetMap.x}_{targetMap.y}";
-            s_failCache[key] = Time.time;
+            FailCache[targetMap] = Time.time;
         }
 
-        /// <summary>
-        /// 检查位置是否在近期寻路失败过（主线程调用）。
-        /// 读取时顺便清理过期条目。
-        /// </summary>
         public static bool IsRecentFail(Vector3Int targetMap)
         {
-            string key = $"{targetMap.x}_{targetMap.y}";
-            if (s_failCache.TryGetValue(key, out float recordTime))
+            if (FailCache.TryGetValue(targetMap, out float recordTime))
             {
-                if (Time.time - recordTime < FAIL_CACHE_TTL)
+                if (Time.time - recordTime < FailCacheTtl)
+                {
                     return true;
-                s_failCache.Remove(key);
+                }
+
+                FailCache.Remove(targetMap);
             }
 
             return false;
         }
 
-        /// <summary>
-        /// 清理过期的失败缓存条目（主线程定期调用）。
-        /// </summary>
         public static void CleanFailCache()
         {
             float now = Time.time;
-            var expired = new List<string>();
-            foreach (var kv in s_failCache)
+            List<Vector3Int> expired = null;
+            foreach (KeyValuePair<Vector3Int, float> entry in FailCache)
             {
-                if (now - kv.Value > FAIL_CACHE_TTL)
-                    expired.Add(kv.Key);
+                if (now - entry.Value <= FailCacheTtl)
+                {
+                    continue;
+                }
+
+                expired ??= new List<Vector3Int>();
+                expired.Add(entry.Key);
             }
 
-            foreach (var key in expired)
-                s_failCache.Remove(key);
+            if (expired == null)
+            {
+                return;
+            }
+
+            foreach (Vector3Int key in expired)
+            {
+                FailCache.Remove(key);
+            }
         }
 
         public void Seek(Vector3Int targetMap)
         {
-            this.TargetMap = targetMap;
             if (this.IsSeeking())
             {
                 AWorkerTask.LogProvider(this.Character.name + ":重新寻路!", LogManager.LogLevelEnum.Trace);
             }
 
-            string seekId = this.StartSeek();
+            // Unity Tilemap 查询只在首次构建时运行，后续寻路直接复用快照。
+            EnsurePathfindingStorage();
+            WalkabilityCache.EnsureBuilt();
 
-            // 捕获当前代数, 用于在等待信号量后验证搜索是否已过期
-            int capturedGeneration = this.seekGeneration;
-
-            // 使用Task.Run以支持async/await并发控制
-            _ = System.Threading.Tasks.Task.Run(async () =>
+            Vector3Int startMap = s_tileMap.WorldPosToMapPos(this.Character.transform.position);
+            this.TargetMap = targetMap;
+            int generation = this.StartSeek();
+            bool enqueue;
+            lock (this.requestLock)
             {
-                await ConcurrencyLimit.WaitAsync();
-                try
-                {
-                    lock (this)
-                    {
-                        // 在等待信号量期间, 新的StartSeek可能已递增代数 — 丢弃过期任务
-                        if (capturedGeneration != this.seekGeneration || !seekId.Equals(this.activeSeekId))
-                        {
-                            return;
-                        }
+                this.pendingGeneration = generation;
+                this.pendingStartMap = startMap;
+                this.pendingTargetMap = targetMap;
+                enqueue = !this.requestScheduled;
+                this.requestScheduled = true;
+            }
 
-                        this.isStopThread = false;
-
-                        // 从池中租借Spend数组, 搜索完成后归还
-                        this.mapSpend = SpendPool.Rent();
-                        try
-                        {
-                            this.DoSeek(seekId);
-                        }
-                        finally
-                        {
-                            SpendPool.Return(this.mapSpend);
-                            this.mapSpend = null;
-                        }
-
-                        // 显示路径(仅在未被新搜索打断时)
-                        if (capturedGeneration == this.seekGeneration && seekId.Equals(this.activeSeekId))
-                        {
-                            Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
-                            {
-                                this.UpdateLine(seekId);
-                            }).Wait();
-                        }
-                    }
-                }
-                finally
-                {
-                    ConcurrencyLimit.Release();
-                }
-            });
+            if (enqueue)
+            {
+                EnqueueSearch(this);
+            }
         }
 
-        /// <summary>
-        /// 停止移动
-        /// </summary>
         public void StopMove()
         {
-            if (!string.IsNullOrEmpty(this.activeSeekId))
+            lock (this.requestLock)
             {
-                ASeek.results.TryRemove(this.activeSeekId, out _);
-                this.activeSeekId = string.Empty;
+                this.isStopThread = true;
+                this.seekGeneration++;
+                this.isSeeking = false;
+                this.currentResult = null;
             }
 
             this.LineRenderer.positionCount = 0;
         }
 
         /// <summary>
-        /// 根据路径移动
+        /// 根据已发布的路径移动。路径使用游标推进，避免 RemoveAt(0) 搬移元素。
         /// </summary>
-        /// <returns>是否到达目标</returns>
         public bool MoveByPath()
         {
-            // 没有路径返回到达目标
-            if (string.IsNullOrEmpty(this.activeSeekId) ||
-                !ASeek.results.TryGetValue(this.activeSeekId, out SeekResult result) || result == null)
+            SeekResult result = this.currentResult;
+            if (result == null)
             {
                 return true;
             }
 
-            if (result.Path.Count == 0)
+            if (result.PathIndex >= result.Path.Count)
             {
                 this.StopMove();
                 return true;
             }
 
-            // 变为真实坐标
-            Vector3 worldPos = Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(result.Path[0].PosMap);
-
-            // 到达路径中一个目标点，切换下一个目标点
-            if (result.Path.Count != 0 &&
-                System.Math.Abs(worldPos.x - this.Character.transform.position.x) < 0.1f &&
-                System.Math.Abs(worldPos.y - this.Character.transform.position.y) < 0.1f)
+            Vector3 worldPos = s_tileMap.MapPosToWorldPos(result.Path[result.PathIndex]);
+            Vector3 characterPosition = this.Character.transform.position;
+            if (Math.Abs(worldPos.x - characterPosition.x) < 0.1f
+                && Math.Abs(worldPos.y - characterPosition.y) < 0.1f)
             {
-                result.Path.RemoveAt(0); // --path.Count
+                result.PathIndex++;
+                if (result.PathIndex >= result.Path.Count)
+                {
+                    this.StopMove();
+                    return true;
+                }
+
+                worldPos = s_tileMap.MapPosToWorldPos(result.Path[result.PathIndex]);
             }
 
             this.Direction = worldPos - this.Character.transform.position;
-            float speed = Core.ServiceLocator.Get<WeatherGameplayEffect>().GetAdjustedCharacterMoveSpeed(this.Character, this.Character.MoveSpeed);
+            float speed = s_weatherEffect.GetAdjustedCharacterMoveSpeed(this.Character, this.Character.MoveSpeed);
+            speed *= s_terrainEffect.GetMoveSpeedMultiplier(this.Character);
 
-            // 地形效果在天气之后、工人状态之前应用
-            float terrainSpeedMultiplier = Core.ServiceLocator.Get<ITerrainEffectService>().GetMoveSpeedMultiplier(this.Character);
-            speed *= terrainSpeedMultiplier;
-
-            if (this.Character is AWorker worker)
+            if (this.isWorker)
             {
-                // 工人的饥饿与疲劳状态会在天气倍率之后继续影响移动速度。
-                speed = Core.ServiceLocator.Get<WorkerConditionManager>().GetAdjustedWorkerMoveSpeed(worker, speed);
+                speed = s_workerConditionManager.GetAdjustedWorkerMoveSpeed((AWorker)this.Character, speed);
             }
 
-            this.Character.transform.Translate(speed * Time.deltaTime * this.Direction.normalized, Space.World); // 向前移动
-            this.UpdateLine(true);
+            this.Character.transform.Translate(speed * Time.deltaTime * this.Direction.normalized, Space.World);
+            if (this.ShouldShowLine())
+            {
+                this.UpdateLine(true);
+            }
+
             return false;
         }
 
-        /// <summary>
-        /// 是否正在寻路
-        /// </summary>
-        /// <returns>是否</returns>
         public bool IsSeeking()
         {
-            if (!string.IsNullOrEmpty(this.activeSeekId) &&
-                ASeek.results.TryGetValue(this.activeSeekId, out SeekResult result) && result == null)
-            {
-                return true;
-            }
-
-            return false;
+            return this.isSeeking;
         }
 
-        /// <summary>
-        /// 寻路结束后是否有路径
-        /// </summary>
-        /// <returns>是否</returns>
         public bool IsHavePath()
         {
-            if (string.IsNullOrEmpty(this.activeSeekId) ||
-                !ASeek.results.TryGetValue(this.activeSeekId, out SeekResult result))
-            {
-                return false;
-            }
-
+            SeekResult result = this.currentResult;
             return result != null && result.IsReachable;
         }
 
-        /// <summary>
-        /// 寻路初始化(主线程调用)
-        /// </summary>
-        public string StartSeek()
+        protected bool ShouldStop(int generation)
         {
-            // 停止之前的线程, 递增代数使旧搜索任务失效
-            this.isStopThread = true;
-            this.seekGeneration++;
-            this.openList.Clear();
-            this.closeList.Clear();
-            this.SeekProgress = 0.0f;
-            if (!string.IsNullOrEmpty(this.activeSeekId))
-            {
-                ASeek.results.TryRemove(this.activeSeekId, out _);
-            }
-
-            this.activeSeekId = this.Character.CharacterDataLAB.GenerateSeekId();
-            if (!ASeek.results.TryAdd(this.activeSeekId, null))
-            {
-                AWorkerTask.LogProvider(this.Character.name + ":添加寻路任务失败!", LogManager.LogLevelEnum.Warning);
-            }
-
-            // 刷新可步行性缓存, 避免A*循环中每次邻居检查都向主线程派发
-            WalkabilityCache.Refresh();
-
-            this.UpdateLine();
-            return this.activeSeekId;
+            return this.isStopThread || generation != this.seekGeneration;
         }
 
-        /// <summary>
-        /// 设置结果
-        /// </summary>
-        /// <param name="result">结果</param>
-        /// <param name="seekId">寻路结果键</param>
-        public void SetResult(SeekResult result, string seekId)
+        protected bool TrySetResult(SeekResult result, int generation)
         {
-            if (!ASeek.results.TryUpdate(seekId, result, null) && result.Path.Count != 0)
+            lock (this.requestLock)
             {
-                Core.ServiceLocator.Get<UnityMainThreadDispatcher>().EnqueueAsync(() =>
+                if (generation != this.seekGeneration)
                 {
-                    AWorkerTask.LogProvider(this.Character.name + seekId + "更新寻路结果失败!", LogManager.LogLevelEnum.Warning);
-                }).Wait();
+                    return false;
+                }
+
+                this.currentResult = result;
+                this.isSeeking = false;
+                return true;
             }
         }
 
-        protected virtual void DoSeek(string seekId)
+        protected virtual void DoSeek(
+            int generation,
+            Vector3Int startMap,
+            Vector3Int targetMap,
+            PathfindingWorkspace workspace)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// 更新路径UI
-        /// </summary>
-        /// <param name="isFirst">是否仅更新第一段线</param>
         protected void UpdateLine(bool isFirst = false)
-        {
-            this.UpdateLine(this.activeSeekId, isFirst);
-        }
-
-        /// <summary>
-        /// 更新路径UI
-        /// </summary>
-        /// <param name="seekId">寻路结果键</param>
-        /// <param name="isFirst">是否仅更新第一段线</param>
-        protected void UpdateLine(string seekId, bool isFirst = false)
         {
             if (this.LineRenderer == null)
             {
                 return;
             }
 
-            // Worker的寻路引导线开关控制：关闭时隐藏Worker的引导线
-            if (this.Character is AWorker && !ShowWorkerLine)
+            if (!this.ShouldShowLine())
             {
                 this.LineRenderer.positionCount = 0;
                 return;
             }
 
-            // Enemy的寻路引导线开关控制：关闭时隐藏Enemy的引导线
-            if (this.Character is LAB2D.Character.Enemy.AEnemy && !ShowEnemyLine)
+            SeekResult result = this.currentResult;
+            if (result == null || !result.IsReachable || result.PathIndex >= result.Path.Count)
             {
                 this.LineRenderer.positionCount = 0;
                 return;
             }
 
-            if (string.IsNullOrEmpty(seekId) || !ASeek.results.TryGetValue(seekId, out SeekResult result))
-            {
-                this.LineRenderer.positionCount = 0;
-                return;
-            }
-
-            if (result == null || !result.IsReachable)
-            {
-                this.LineRenderer.positionCount = 0;
-                return;
-            }
-
-            this.LineRenderer.positionCount = result.Path.Count + 1;
-            this.LineRenderer.SetPosition(result.Path.Count, this.Character.transform.position);
-
+            int remainingCount = result.Path.Count - result.PathIndex;
+            this.LineRenderer.positionCount = remainingCount + 1;
+            this.LineRenderer.SetPosition(remainingCount, this.Character.transform.position);
             if (isFirst)
             {
                 return;
             }
 
-            for (int i = 0; i < result.Path.Count; i++)
+            for (int i = 0; i < remainingCount; i++)
             {
-                this.LineRenderer.SetPosition(result.Path.Count - i - 1, Core.ServiceLocator.Get<TileMap>().MapPosToWorldPos(result.Path[i].PosMap));
+                this.LineRenderer.SetPosition(
+                    remainingCount - i - 1,
+                    s_tileMap.MapPosToWorldPos(result.Path[result.PathIndex + i]));
             }
         }
 
-        /// <summary>
-        /// 线程同步
-        /// </summary>
-        public class SeekResult
+        private static void InitServiceCache()
         {
-            /// <summary>
-            /// 是否可以抵达目标；起点等于终点时为true且路径为空。
-            /// </summary>
+            if (s_tileMap != null)
+            {
+                return;
+            }
+
+            s_tileMap = Core.ServiceLocator.Get<TileMap>();
+            s_resourceMap = Core.ServiceLocator.Get<ResourceMap>();
+            s_buildMap = Core.ServiceLocator.Get<BuildMap>();
+            s_weatherEffect = Core.ServiceLocator.Get<WeatherGameplayEffect>();
+            s_terrainEffect = Core.ServiceLocator.Get<ITerrainEffectService>();
+            s_workerConditionManager = Core.ServiceLocator.Get<WorkerConditionManager>();
+            s_mainThreadDispatcher = Core.ServiceLocator.Get<UnityMainThreadDispatcher>();
+        }
+
+        private static void EnsurePathfindingStorage()
+        {
+            var tileMapData = s_tileMap.TileMapDataLAB;
+            int gridWidth = tileMapData.MapTiles.GetLength(0);
+            int gridHeight = tileMapData.MapTiles.GetLength(1);
+            int maxIterations = CalculateMaxIterations(gridWidth, gridHeight);
+            PathfindingWorkspacePool.Initialize(gridWidth, gridHeight, maxIterations);
+            WalkabilityCache.Initialize(gridWidth, gridHeight, s_tileMap.GetInstanceID());
+        }
+
+        private static void EnqueueSearch(ASeek seek)
+        {
+            bool startWorker = false;
+            lock (SearchQueueLock)
+            {
+                SearchQueue.Enqueue(seek);
+                if (activeSearchWorkers < MaxConcurrentSearches)
+                {
+                    activeSearchWorkers++;
+                    startWorker = true;
+                }
+            }
+
+            if (startWorker)
+            {
+                ThreadPool.QueueUserWorkItem(SearchWorkerCallback);
+            }
+        }
+
+        private static void RunSearchQueue(object _)
+        {
+            while (true)
+            {
+                ASeek seek;
+                lock (SearchQueueLock)
+                {
+                    if (SearchQueue.Count == 0)
+                    {
+                        activeSearchWorkers--;
+                        return;
+                    }
+
+                    seek = SearchQueue.Dequeue();
+                }
+
+                try
+                {
+                    seek.ProcessPendingSearches();
+                }
+                catch (Exception exception)
+                {
+                    seek.HandleSchedulerException(exception);
+                }
+            }
+        }
+
+        private void HandleSchedulerException(Exception exception)
+        {
+            lock (this.requestLock)
+            {
+                if (this.pendingGeneration == this.seekGeneration)
+                {
+                    this.currentResult = new SeekResult { IsReachable = false };
+                    this.isSeeking = false;
+                }
+
+                this.requestScheduled = false;
+            }
+
+            s_mainThreadDispatcher.EnqueueAsync(() =>
+                AWorkerTask.LogProvider(
+                    this.Character.name + ":寻路调度异常 " + exception,
+                    LogManager.LogLevelEnum.Error));
+        }
+
+        private void ProcessPendingSearches()
+        {
+            while (true)
+            {
+                int generation;
+                Vector3Int startMap;
+                Vector3Int targetMap;
+                lock (this.requestLock)
+                {
+                    generation = this.pendingGeneration;
+                    startMap = this.pendingStartMap;
+                    targetMap = this.pendingTargetMap;
+                }
+
+                if (generation == this.seekGeneration && this.isSeeking)
+                {
+                    this.isStopThread = false;
+                    PathfindingWorkspace workspace = PathfindingWorkspacePool.Rent();
+                    try
+                    {
+                        this.DoSeek(generation, startMap, targetMap, workspace);
+                    }
+                    catch (Exception exception)
+                    {
+                        this.TrySetResult(new SeekResult { IsReachable = false }, generation);
+                        s_mainThreadDispatcher.EnqueueAsync(() =>
+                            AWorkerTask.LogProvider(
+                                this.Character.name + ":寻路异常 " + exception,
+                                LogManager.LogLevelEnum.Error));
+                    }
+                    finally
+                    {
+                        PathfindingWorkspacePool.Return(workspace);
+                    }
+
+                    if (generation == this.seekGeneration && this.ShouldShowLine())
+                    {
+                        s_mainThreadDispatcher.EnqueueAsync(() =>
+                        {
+                            if (generation == this.seekGeneration)
+                            {
+                                this.UpdateLine();
+                            }
+                        });
+                    }
+                }
+
+                lock (this.requestLock)
+                {
+                    if (this.pendingGeneration == generation)
+                    {
+                        this.requestScheduled = false;
+                        return;
+                    }
+                }
+            }
+        }
+
+        private int StartSeek()
+        {
+            int generation;
+            lock (this.requestLock)
+            {
+                this.isStopThread = true;
+                generation = ++this.seekGeneration;
+                this.SeekProgress = 0.0f;
+                this.currentResult = null;
+                this.isSeeking = true;
+            }
+
+            this.UpdateLine();
+            return generation;
+        }
+
+        private bool ShouldShowLine()
+        {
+            return (this.isWorker && ShowWorkerLine) || (this.isEnemy && ShowEnemyLine);
+        }
+
+        public sealed class SeekResult
+        {
             public bool IsReachable { get; set; } = true;
 
-            /// <summary>
-            /// 寻路结果, 在主线程执行
-            /// </summary>
-            public List<Spend> Path { get; set; } = new ();
+            public List<Vector3Int> Path { get; } = new (16);
+
+            public int PathIndex { get; set; }
+
+            internal void Reset()
+            {
+                this.IsReachable = true;
+                this.Path.Clear();
+                this.PathIndex = 0;
+            }
         }
     }
 }

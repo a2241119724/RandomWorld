@@ -4,6 +4,7 @@ namespace LAB2D.Gameplay
     using LAB2D.Character.Worker.Task;
     using LAB2D.Constant;
     using LAB2D.Core;
+    using LAB2D.Core.Seek;
     using LAB2D.Map;
     using LAB2D.Serializable;
     using System.Collections.Generic;
@@ -146,7 +147,11 @@ namespace LAB2D.Gameplay
                 buildMap.DirectBuild(shopPos, tile, true);
                 var posLAB = Vector3IntLAB.ToVector3IntLAB(shopPos);
                 if (!buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
+                {
                     buildMap.BuildMapDataLAB.PosMap[posLAB] = new BuildMap.BuildTileData(ShopAssetName, true);
+                }
+
+                WalkabilityCache.UpdateCell(shopPos);
             }
 
             // 从预制体实例化（挂 ShopNPC 组件 + Collider2D）
