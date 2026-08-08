@@ -8,7 +8,7 @@ namespace LAB2D
     /// </summary>
     public sealed class CollisionBugDetector
     {
-        private const double IntervalTicks = 3e5;
+        private const double IntervalTicks = 6e5;
         private const int DefaultThreshold = 100;
 
         /// <summary>

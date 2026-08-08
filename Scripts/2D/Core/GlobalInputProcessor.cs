@@ -14,11 +14,35 @@ namespace LAB2D.Core
     /// </summary>
     public sealed class GlobalInputProcessor : ITickable
     {
+        private const string ForceDropPrefsKey = "Debug_ForceDrop";
+
+        public GlobalInputProcessor()
+        {
+            // 启动时从 PlayerPrefs 恢复上次的开关状态
+            EnemyLootManager.ForceDrop = PlayerPrefs.GetInt(ForceDropPrefsKey, 0) == 1;
+            if (EnemyLootManager.ForceDrop)
+            {
+                Debug.Log("[ForceDrop] 100%掉落已开启（从上次会话恢复）");
+            }
+        }
+
         public void Tick(float deltaTime)
         {
             this.ProcessCloseOrBuildMenu();
             this.ProcessMouseClickCloseItemInfo();
             this.ProcessAchievements();
+            this.ProcessDebugToggles();
+        }
+
+        private void ProcessDebugToggles()
+        {
+            if (Input.GetKeyDown(KeyCode.F12))
+            {
+                EnemyLootManager.ForceDrop = !EnemyLootManager.ForceDrop;
+                PlayerPrefs.SetInt(ForceDropPrefsKey, EnemyLootManager.ForceDrop ? 1 : 0);
+                PlayerPrefs.Save();
+                Debug.Log($"[ForceDrop] 100%掉落已{(EnemyLootManager.ForceDrop ? "开启" : "关闭")}");
+            }
         }
 
         private void ProcessAchievements()

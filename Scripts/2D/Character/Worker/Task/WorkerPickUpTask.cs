@@ -5,10 +5,14 @@ namespace LAB2D.Character.Worker.Task
     using LAB2D.Domain.Common;
     using LAB2D.Gameplay;
     using LAB2D.Item;
+    using LAB2D.Item.Backpack.Equipment;
+    using LAB2D.Item.Backpack.Equipment.Weapon;
     using LAB2D.Serializable;
+    using LAB2D.Tool;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
+    using UnityEngine.Tilemaps;
 
     /// <summary>
     /// 通用拾取任务 — 单阶段任务：走到目标位置 → 拾取物品到背包。
@@ -117,12 +121,18 @@ namespace LAB2D.Character.Worker.Task
             // 从地面移除掉落物
             ItemMapProvider().PickUpFromDrop(posMap, this.groundResource);
 
-            // 直接放入 Worker 背包
-            worker.AddResource(this.groundResource);
-
             // 清除掉落物光束特效和待处理记录
             EquipmentBeamProvider().TryRemoveBeamAt(posMap);
             EnemyLootProvider().RemoveDropByMapPosition(posMap);
+
+            // 装备/武器智能穿戴：对比身上穿的，哪个好穿哪个，没有直接穿
+            bool isEquipped = TryEquipIfBetter(worker, this.groundResource, posMap);
+
+            if (!isEquipped)
+            {
+                // 非装备或不如身上穿的：放入背包
+                worker.AddResource(this.groundResource);
+            }
 
             LogProvider(
                 $"{worker.name} 从地面捡起物品(id={this.groundResource.Id}, count={this.groundResource.Count}) pos=({posMap.x},{posMap.y})",
@@ -152,6 +162,94 @@ namespace LAB2D.Character.Worker.Task
                     $"{worker.name} 链式拾取下一个: id={nextResource.Id} pos=({nextPos.x},{nextPos.y}) 剩余{this.pendingPositions.Count}个",
                     LogManager.LogLevelEnum.Trace);
             }
+        }
+
+        /// <summary>
+        /// 如果是装备/武器，对比身上穿的，哪个好穿哪个。没有直接穿。
+        /// </summary>
+        /// <param name="worker">执行拾取的 Worker</param>
+        /// <param name="resource">拾取的资源信息</param>
+        /// <param name="posMap">拾取位置（旧装备交换时放回此位置）</param>
+        /// <returns>true 表示已装备处理（不需要再放入背包）</returns>
+        private bool TryEquipIfBetter(AWorker worker, ResourceInfo resource, Vector3Int posMap)
+        {
+            AItem.ItemTypeEnum itemType = ItemTypeProvider(resource.Id);
+            if (itemType != AItem.ItemTypeEnum.Equipment && itemType != AItem.ItemTypeEnum.Weapon)
+                return false;
+
+            ItemData itemData = ItemDataProvider(resource.Id);
+            ABackpackItem item = ItemFactoryProvider(itemData.EnName);
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+
+            if (item is AWeapon newWeapon)
+            {
+                AWeapon currentWeapon = workerData.Weapon;
+                if (currentWeapon == null)
+                {
+                    // 没有武器，直接装备
+                    workerData.Weapon = newWeapon;
+                    LogProvider(
+                        $"{worker.name} 装备武器: {itemData.CnName}",
+                        LogManager.LogLevelEnum.Debug);
+                    return true;
+                }
+
+                if (EquipmentLootTool.CountUpgrades(currentWeapon.Attribute, newWeapon.Attribute) >= 5)
+                {
+                    // 新武器更好，替换。旧武器放回地面
+                    workerData.Weapon = newWeapon;
+                    DropEquipmentToGround(currentWeapon, posMap);
+                    LogProvider(
+                        $"{worker.name} 替换更好的武器: {itemData.CnName} → 旧武器放回地面",
+                        LogManager.LogLevelEnum.Debug);
+                    return true;
+                }
+
+                // 不如身上的武器，放入背包
+                return false;
+            }
+
+            if (item is AEquipment newEquip)
+            {
+                var equipments = workerData.GetEquipments();
+                if (!equipments.TryGetValue(newEquip.Type, out AEquipment currentEquip) || currentEquip == null)
+                {
+                    // 该槽位为空，直接装备
+                    workerData.AddEquipment(newEquip, posMap);
+                    LogProvider(
+                        $"{worker.name} 装备{EquipmentLootTool.GetSlotName(newEquip.Type)}: {itemData.CnName}",
+                        LogManager.LogLevelEnum.Debug);
+                    return true;
+                }
+
+                if (EquipmentLootTool.CountUpgrades(currentEquip.Attribute, newEquip.Attribute) >= 5)
+                {
+                    // 新装备更好，替换（AddEquipment 内部将旧装备放回地图）
+                    workerData.AddEquipment(newEquip, posMap);
+                    LogProvider(
+                        $"{worker.name} 替换更好的{EquipmentLootTool.GetSlotName(newEquip.Type)}: {itemData.CnName}",
+                        LogManager.LogLevelEnum.Debug);
+                    return true;
+                }
+
+                // 不如身上的装备，放入背包
+                return false;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 将旧武器放回地面（武器通过 Weapon 属性管理，不经过 AddEquipment/EquipmentSwapDropProvider）。
+        /// </summary>
+        /// <param name="oldEquipment">旧武器</param>
+        /// <param name="posMap">放置位置</param>
+        private static void DropEquipmentToGround(AEquipment oldEquipment, Vector3Int posMap)
+        {
+            ItemData itemData = ItemDataProvider(oldEquipment.Id);
+            TileBase tile = Core.ServiceLocator.Get<ResourceManager>().GetAsset(itemData.EnName);
+            // 旧武器放回地面，设为无主（任何人可拾取）
+            ItemMapProvider().PutDownToDrop(posMap, tile, new ResourceInfo(oldEquipment.Id, 1, ownerId: 0));
         }
 
         /// <inheritdoc/>

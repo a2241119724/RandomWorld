@@ -495,6 +495,12 @@ namespace LAB2D.Character
                     // 交换装备：卸下旧装备放入地图，装备新装备
                     AEquipment oldEquipment = this.equipments[equipment.Type];
                     EquipmentSwapDropProvider(oldEquipment, posMap);
+
+                    // 将旧装备的所有权写入仓库（Worker=instanceId, Player=0）
+                    int ownerId = (this.character != null && !this.character.IsPlayerCharacter)
+                        ? this.character.GetInstanceID() : 0;
+                    Core.ServiceLocator.Get<InventoryManager>().SetOwner(posMap, ownerId);
+
                     this.equipments[equipment.Type] = equipment;
                 }
                 else

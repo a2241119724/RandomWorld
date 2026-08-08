@@ -52,6 +52,12 @@ namespace LAB2D.Gameplay
         public bool IsInitialized { get; private set; }
 
         /// <summary>
+        /// 强制 100% 掉落开关（调试用）。
+        /// 开启后敌人死亡必定掉落装备/武器 + 通用物品。
+        /// </summary>
+        public static bool ForceDrop { get; set; }
+
+        /// <summary>
         /// 通用物品掉落概率表（来自 DropDataManager 默认掉落配置）。
         /// key: 累积概率值, value: 掉落物品
         /// </summary>
@@ -155,40 +161,57 @@ namespace LAB2D.Gameplay
         {
             if (this.dropTotal == 0) return;
 
-            int rand = RandomIntProvider(0, this.dropTotal);
-
-            foreach (KeyValuePair<int, DropItem> dropItem in this.probToDropItem)
+            DropItem selectedDrop;
+            if (ForceDrop)
             {
-                if (rand <= dropItem.Key)
+                // 强制掉落模式：从有效物品中随机选一个（跳过"不掉落"）
+                List<DropItem> validDrops = new List<DropItem>();
+                foreach (KeyValuePair<int, DropItem> dropItem in this.probToDropItem)
                 {
-                    if (dropItem.Value == null) break;
-
-                    Vector3Int center = AWorkerTask.TileMapWorldToMapProvider(worldPos);
-
-                    // 深拷贝模板 ResourceInfo 后设置归属，避免污染共享模板
-                    ResourceInfo ownedResource = DataTool.DeepCopyByBinary(dropItem.Value.ResourceInfo);
-                    ownedResource.OwnerId = ownerId;
-
-                    // 可堆叠优先合并到附近同类堆叠，找不到则放空地
-                    Vector3Int pos = AWorkerTask.TryMergeOrPlaceDrop(
-                        center, ownedResource, dropItem.Value.Name);
-
-                    if (pos != default)
-                    {
-                        Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(pos);
-                        AWorkerTask.EquipmentBeamProvider().SpawnBeam(pos, beamWorldPos, EquipmentRarityType.Common);
-
-                        // 替换自动创建的 Carry 任务为 PickUpFromBoard 拾取任务
-                        ReplaceCarryWithPickUpTask(pos, ownedResource, ownerId);
-
-                        AWorkerTask.LogProvider(
-                            string.Format("[EnemyLoot] 通用掉落: pos=({0},{1}) ownerId={2}",
-                                pos.x, pos.y, ownerId),
-                            LogManager.LogLevelEnum.Debug);
-                    }
-
-                    break;
+                    if (dropItem.Value != null) validDrops.Add(dropItem.Value);
                 }
+
+                if (validDrops.Count == 0) return;
+                selectedDrop = validDrops[RandomIntProvider(0, validDrops.Count)];
+            }
+            else
+            {
+                int rand = RandomIntProvider(0, this.dropTotal);
+                selectedDrop = null;
+                foreach (KeyValuePair<int, DropItem> dropItem in this.probToDropItem)
+                {
+                    if (rand <= dropItem.Key)
+                    {
+                        selectedDrop = dropItem.Value;
+                        break;
+                    }
+                }
+
+                if (selectedDrop == null) return;
+            }
+
+            Vector3Int center = AWorkerTask.TileMapWorldToMapProvider(worldPos);
+
+            // 深拷贝模板 ResourceInfo 后设置归属，避免污染共享模板
+            ResourceInfo ownedResource = DataTool.DeepCopyByBinary(selectedDrop.ResourceInfo);
+            ownedResource.OwnerId = ownerId;
+
+            // 可堆叠优先合并到附近同类堆叠，找不到则放空地
+            Vector3Int pos = AWorkerTask.TryMergeOrPlaceDrop(
+                center, ownedResource, selectedDrop.Name);
+
+            if (pos != default)
+            {
+                Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(pos);
+                AWorkerTask.EquipmentBeamProvider().SpawnBeam(pos, beamWorldPos, EquipmentRarityType.Common);
+
+                // 替换自动创建的 Carry 任务为 PickUpFromBoard 拾取任务
+                ReplaceCarryWithPickUpTask(pos, ownedResource, ownerId);
+
+                AWorkerTask.LogProvider(
+                    string.Format("[EnemyLoot] 通用掉落: pos=({0},{1}) ownerId={2}",
+                        pos.x, pos.y, ownerId),
+                    LogManager.LogLevelEnum.Debug);
             }
         }
 
@@ -214,7 +237,7 @@ namespace LAB2D.Gameplay
             AWorkerTask.TaskAddProvider(
                 pickUpTask,
                 new GameGridPosition(pos.x, pos.y, pos.z),
-                1);
+                0);
 
             string ownerLabel = ownerId > 0 ? $"Worker#{ownerId}" : "Player/公开";
             AWorkerTask.LogProvider(
@@ -238,11 +261,14 @@ namespace LAB2D.Gameplay
                 return false;
             }
 
-            // 基础概率判定
-            float roll = RandomFloatProvider(0f, 1f);
-            if (roll > EquipmentLootConstant.BaseEquipmentDropChance)
+            // 基础概率判定（ForceDrop 模式跳过）
+            if (!ForceDrop)
             {
-                return false;
+                float roll = RandomFloatProvider(0f, 1f);
+                if (roll > EquipmentLootConstant.BaseEquipmentDropChance)
+                {
+                    return false;
+                }
             }
 
             // 随机稀有度

@@ -328,7 +328,8 @@ namespace LAB2D.Character.Worker
             foreach (KeyValuePair<int, ResourceInfo> resource in this.resourceInfos)
             {
                 ItemData itemData = AWorkerTask.ItemDataProvider(resource.Key);
-                resources += $"  {itemData.CnName}(id:{resource.Key}) x{resource.Value.Count}\n";
+                string ownerLabel = Domain.Worker.ItemOwnershipService.GetOwnerLabel(resource.Value);
+                resources += $"  {itemData.CnName}(id:{resource.Key}) x{resource.Value.Count} [{ownerLabel}]\n";
             }
 
             WorkerData workerData = this.CharacterDataLAB as WorkerData;
@@ -673,7 +674,7 @@ namespace LAB2D.Character.Worker
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks);
-            if (this.collisionBugDetector.IsBug(this.name, 500))
+            if (this.collisionBugDetector.IsBug(this.name, 200))
             {
                 this.collisionBugDetector.ColliderCount = 0; // 重置计数器，防止重复触发
                 this.GiveUpTask(); // 放弃当前任务，让WorkerBrain做新决策避开阻塞点

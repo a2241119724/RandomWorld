@@ -491,6 +491,12 @@ namespace LAB2D.Item
             {
                 return;
             }
+
+            // 传播所有权：首次放入时记录 OwnerId，后续合并保持先到者
+            if (resourceInfo.OwnerId != 0 && !this.cellOwners.ContainsKey(posMap))
+            {
+                this.cellOwners[posMap] = resourceInfo.OwnerId;
+            }
         }
 
         /// <summary>
