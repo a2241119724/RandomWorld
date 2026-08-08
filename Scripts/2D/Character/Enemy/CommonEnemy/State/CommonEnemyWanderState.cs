@@ -66,7 +66,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             if (this.recordTime >= this.Character.RotateInterval)
             {
                 this.rotationAngle = Random.Range(0.0f, 360.0f);
-                this.Character.MoveSpeed = Random.Range(3.0f, 4.0f);
+                this.Character.MoveSpeed = Random.Range(4.5f, 6.0f);
                 this.recordTime = 0.0f;
             }
 

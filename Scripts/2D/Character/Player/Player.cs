@@ -244,7 +244,7 @@ namespace LAB2D.Character.Player
             // 不在线，或者在线并且是自己
             if (this.NetworkView.IsMine || !this.NetworkView.IsOnline)
             {
-                this.MoveSpeed = 5;
+                this.MoveSpeed = 6f;
                 CameraMove miniCamera = MiniCameraProvider(this);
                 CameraMove mainCamera = MainCameraProvider(this);
 

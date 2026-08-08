@@ -51,7 +51,7 @@ namespace LAB2D.Character.Enemy
         public override void Start()
         {
             base.Start();
-            this.MoveSpeed = 5f;
+            this.MoveSpeed = 6f;
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
 
             // 画视觉,听觉,攻击范围

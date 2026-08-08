@@ -38,7 +38,7 @@ namespace LAB2D.Character
         /// <summary>
         /// 移动速度
         /// </summary>
-        public float MoveSpeed = 5f;
+        public float MoveSpeed = 6f;
 
         /// <summary>
         /// 攻击的层级

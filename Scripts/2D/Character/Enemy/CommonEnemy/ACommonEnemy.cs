@@ -82,7 +82,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         /// </summary>
         public void MoveToForward()
         {
-            this.MoveSpeed = UnityEngine.Random.Range(1.0f, 2.0f);
+            this.MoveSpeed = UnityEngine.Random.Range(4.5f, 6.0f);
             this.transform.Translate(this.MoveSpeed * this.DeltaTime * (this.Head.position - this.transform.position).normalized, Space.World); // 向前移动
         }
 
