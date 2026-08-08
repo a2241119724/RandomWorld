@@ -274,6 +274,19 @@ namespace LAB2D.UI.Action
                 }
             }
 
+            // 已完成建筑（非农田）显示拆除 UI
+            if (tileBase != null && !tileBase.name.Contains("Farmland"))
+            {
+                if (!ServiceLocator.Get<BuildMap>().IsBuilding(posMap))
+                {
+                    ServiceLocator.Get<DemolishUI>().SetPosition(posMap);
+                }
+                else
+                {
+                    ServiceLocator.Get<DemolishUI>().Hide();
+                }
+            }
+
             if (tileBase == null)
             {
                 tileBase = ServiceLocator.Get<ResourceMap>().GetTile(posMap);
@@ -290,6 +303,8 @@ namespace LAB2D.UI.Action
                     {
                         ServiceLocator.Get<GatherUI>().Hide();
                     }
+
+                    ServiceLocator.Get<DemolishUI>().Hide();
                 }
             }
 
@@ -297,6 +312,7 @@ namespace LAB2D.UI.Action
             {
                 this.text = "Tile:";
                 tileBase = ServiceLocator.Get<TileMap>().GetTile(posMap);
+                ServiceLocator.Get<DemolishUI>().Hide();
             }
 
             return tileBase;

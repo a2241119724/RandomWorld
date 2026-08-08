@@ -63,6 +63,9 @@ namespace LAB2D.Character.Worker.Task
         public static float PlantFetchSeedSeconds => Day / 1200f;  // 0.083%
         public static float PlantOneSeedSeconds   => Day / 900f;   // 0.111%
 
+        // ---- 拆除 (Demolish) ----
+        public static float DemolishSeconds => Day / 225f;  // 0.444%，与建造最高时间相近
+
         // ---- 其他 ----
         public static float IdleRestSeconds => Day / 600f;   // 0.167%
         public static float EscapeSeconds   => Day / 600f;   // 0.167%

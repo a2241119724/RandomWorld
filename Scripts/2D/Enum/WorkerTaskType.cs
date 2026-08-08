@@ -46,6 +46,9 @@ namespace LAB2D.Enum
         /// <summary>地面睡眠 — 无床时的低效睡眠</summary>
         GroundSleep,
 
+        /// <summary>拆除建筑</summary>
+        Demolish,
+
         /// <summary>哨兵值 — 必须始终在最后，用于动态数组大小</summary>
         _Count,
     }

@@ -22,6 +22,7 @@ namespace LAB2D.UI.Panel
             { WorkerTaskType.Wear, "穿戴" },
             { WorkerTaskType.Sleep, "睡觉" },
             { WorkerTaskType.Plant, "种植" },
+            { WorkerTaskType.Demolish, "拆除" },
         };
 
         public WorkerTaskTogglePanel()
@@ -31,7 +32,13 @@ namespace LAB2D.UI.Panel
             Transform title = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Title");
             foreach (KeyValuePair<WorkerTaskType, string> pair in TypeToChinese)
             {
-                LAB2D.Tool.Tool.GetComponentInChildren<Text>(title.GetChild((int)pair.Key + 1).gameObject, "Text").text = pair.Value;
+                int childIndex = (int)pair.Key + 1;
+                if (childIndex >= title.childCount)
+                {
+                    continue;
+                }
+
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(title.GetChild(childIndex).gameObject, "Text").text = pair.Value;
             }
         }
 

@@ -190,6 +190,8 @@ namespace LAB2D.Tool
                     return "种植任务积压，建议先稳定搬运和采集，再继续扩张农田。";
                 case WorkerTaskType.Exercise:
                     return "锻炼任务积压，建议临时关闭锻炼任务，优先处理生产队列。";
+                case WorkerTaskType.Demolish:
+                    return "拆除任务积压，建议暂停拆除指令，让工人完成当前拆除。";
                 default:
                     return "任务队列积压，建议暂缓新增任务并观察工人可用状态。";
             }

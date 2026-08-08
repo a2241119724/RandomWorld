@@ -64,6 +64,36 @@ namespace LAB2D.Map
             this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
         }
 
+        /// <summary>
+        /// 添加拆除标记。
+        /// 如果该位置已被认领则返回 false。
+        /// </summary>
+        /// <param name="posMap">位置</param>
+        /// <returns>true = 认领成功；false = 已被认领</returns>
+        public bool AddDemolish(Vector3Int posMap)
+        {
+            if (this.GatherMapDataLAB.ContainKey(posMap))
+            {
+                return false;
+            }
+
+            this.tilemap.SetTile(posMap, (TileBase)Core.ServiceLocator.Get<ResourceManager>().GetAsset("Demolish"));
+            this.GatherMapDataLAB.Add(posMap, "Demolish");
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), "Demolish");
+            return true;
+        }
+
+        /// <summary>
+        /// 删除拆除标记
+        /// </summary>
+        /// <param name="posMap">位置</param>
+        public void CancelDemolish(Vector3Int posMap)
+        {
+            this.tilemap.SetTile(posMap, null);
+            this.GatherMapDataLAB.Remove(posMap);
+            this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
+        }
+
         /// <inheritdoc/>
         [PunRPC]
         public override void SyncDataReq(byte[] data)

@@ -29,6 +29,7 @@ namespace LAB2D.Domain.Gameplay
             {
                 { WorkerTaskType.Build,     (task, ws, aw, ctx) => this.ResolveBuildTaskReason(task, ws, ctx) },
                 { WorkerTaskType.Carry,     (task, ws, aw, ctx) => this.ResolveCarryTaskReason(task, ws, ctx) },
+                { WorkerTaskType.Demolish,  (task, ws, aw, ctx) => this.ResolveDemolishTaskReason(ctx) },
                 { WorkerTaskType.Eat,       (task, ws, aw, ctx) => this.ResolveHungryTaskReason(task, ws, ctx) },
                 { WorkerTaskType.Sleep,     (task, ws, aw, ctx) => this.ResolveBoundWorkerTaskReason(task, "worker", true, aw, ctx) },
                 { WorkerTaskType.Plant,     (task, ws, aw, ctx) => this.ResolvePlantTaskReason(ws, ctx) },
@@ -486,6 +487,17 @@ namespace LAB2D.Domain.Gameplay
                 return WorkerTaskBlockReason.SeedUnavailable;
             }
 
+            return WorkerTaskBlockReason.None;
+        }
+
+        /// <summary>
+        /// 诊断拆除任务是否有阻塞。
+        /// 拆除任务本身无特殊资源依赖，主要检查路径可达性（已在通用检查中覆盖）。
+        /// </summary>
+        /// <param name="context">外部依赖上下文。</param>
+        /// <returns>无阻塞时返回 None。</returns>
+        public WorkerTaskBlockReason ResolveDemolishTaskReason(ColonyDiagnosticContext context)
+        {
             return WorkerTaskBlockReason.None;
         }
 

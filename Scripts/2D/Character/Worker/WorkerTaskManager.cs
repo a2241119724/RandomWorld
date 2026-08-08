@@ -26,6 +26,7 @@ namespace LAB2D.Character.Worker
         private readonly WorkerTaskQueue<AWorkerTask> taskQueue;
         private readonly WorkerTaskAssignmentService<AWorkerTask> assignmentService;
         private readonly List<GameGridPosition> gatherPositions;
+        private readonly List<GameGridPosition> demolishPositions;
         private KDTree taskTree = new KDTree();
 
         public WorkerTaskManager()
@@ -33,6 +34,7 @@ namespace LAB2D.Character.Worker
             this.taskQueue = new WorkerTaskQueue<AWorkerTask>();
             this.assignmentService = new WorkerTaskAssignmentService<AWorkerTask>();
             this.gatherPositions = new List<GameGridPosition>();
+            this.demolishPositions = new List<GameGridPosition>();
         }
 
         /// <summary>
@@ -89,6 +91,14 @@ namespace LAB2D.Character.Worker
 
                 return result;
             }
+        }
+
+        /// <summary>
+        /// 记录所有拆除任务的位置（Domain 类型）。
+        /// </summary>
+        public List<GameGridPosition> DemolishPositions
+        {
+            get { return this.demolishPositions; }
         }
 
         public void Awake()
@@ -285,10 +295,18 @@ namespace LAB2D.Character.Worker
                 return;
             }
 
-            // 记录位置用于外部取消操作（替代原来的 Gather 硬编码）
+            // 记录位置用于外部取消操作（按任务类型分发到对应的位置列表）
             if (traits.HasFlag(TaskTraits.TrackPositions))
             {
-                this.gatherPositions.Add(new GameGridPosition(task.TargetMap.X, task.TargetMap.Y, task.TargetMap.Z));
+                var pos = new GameGridPosition(task.TargetMap.X, task.TargetMap.Y, task.TargetMap.Z);
+                if (task.TaskType == WorkerTaskType.Demolish)
+                {
+                    this.demolishPositions.Add(pos);
+                }
+                else
+                {
+                    this.gatherPositions.Add(pos);
+                }
             }
 
             this.taskQueue.Add(task, prior);
@@ -514,6 +532,29 @@ namespace LAB2D.Character.Worker
         public void CancelGatherTask(Vector3Int posMap)
         {
             this.CancelGatherTask(UnityVectorAdapter.ToGameGridPosition(posMap));
+        }
+
+        /// <summary>
+        /// 取消拆除任务（Domain 类型）。
+        /// </summary>
+        /// <param name="posMap">任务位置（GameGridPosition）。</param>
+        public void CancelDemolishTask(GameGridPosition posMap)
+        {
+            if (!this.demolishPositions.Contains(posMap))
+            {
+                return;
+            }
+
+            bool removed = this.taskQueue.RemoveWhere(task =>
+                task.TaskType == WorkerTaskType.Demolish &&
+                task.TargetMap.X == posMap.X &&
+                task.TargetMap.Y == posMap.Y);
+
+            if (removed)
+            {
+                this.demolishPositions.Remove(posMap);
+                EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+            }
         }
     }
 }

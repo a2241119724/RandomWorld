@@ -153,6 +153,7 @@ SpriteAtlas:
     - 89bbc67511e97ac46914f73a680f6151: 1139835085
     - 89bbc67511e97ac46914f73a680f6151: -798722615
     - 30c9ac753276cd94f8500846c6aeaba3: 21300000
+    - 36e1ac36d3a5bfc4fb24a94ae7bcfcd7: 21300000
     - c9bf745660f2fc141a37814b931a838e: -1883716092
     - c9bf745660f2fc141a37814b931a838e: -1985953036
     - c9bf745660f2fc141a37814b931a838e: -247301171
@@ -324,6 +325,7 @@ SpriteAtlas:
   - {fileID: 1139835085, guid: 89bbc67511e97ac46914f73a680f6151, type: 3}
   - {fileID: -798722615, guid: 89bbc67511e97ac46914f73a680f6151, type: 3}
   - {fileID: 21300000, guid: 30c9ac753276cd94f8500846c6aeaba3, type: 3}
+  - {fileID: 21300000, guid: 36e1ac36d3a5bfc4fb24a94ae7bcfcd7, type: 3}
   - {fileID: -1883716092, guid: c9bf745660f2fc141a37814b931a838e, type: 3}
   - {fileID: -1985953036, guid: c9bf745660f2fc141a37814b931a838e, type: 3}
   - {fileID: -247301171, guid: c9bf745660f2fc141a37814b931a838e, type: 3}
@@ -494,6 +496,7 @@ SpriteAtlas:
   - StoneRoad_9
   - StoneRoad_8
   - DesertCactus
+  - Demolish
   - SnowPool_8
   - SnowPool_5
   - SnowPool_4
