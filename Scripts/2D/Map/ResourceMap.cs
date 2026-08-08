@@ -84,14 +84,6 @@ namespace LAB2D.Map
                         this.tilemap.SetTile(posMap, tileBase);
                         this.ResourceMapDataLAB.Add(posMap, tileBase.name);
                         resourcesPlaced++;
-                        if (tileBase.name.Contains("_Tree"))
-                        {
-                            ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tileBase.name);
-                            Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
-                                new WorkerGatherTask.GatherTaskBuilder()
-                                .SetTarget(posMap).SetResourceInfo(new ResourceInfo(itemData.Id)).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z));
-                            this.ResourceMapDataLAB.TreeCurCount++;
-                        }
                     }
                 }
             }
@@ -131,7 +123,7 @@ namespace LAB2D.Map
                         continue;
                     }
 
-                    TileBase tileBase = Core.ServiceLocator.Get<ResourceManager>().GetAssetByTerrainId(terrainId, "Tree");
+                    TileBase tileBase = Core.ServiceLocator.Get<ResourceManager>().GetAssetByTerrainId(terrainId);
                     if (tileBase == null)
                     {
                         yield return null;
@@ -144,8 +136,13 @@ namespace LAB2D.Map
                     this.tilemap.SetTile(pos, tileBase);
                     this.ResourceMapDataLAB.Add(pos, tileBase.name);
 
-                    // WorkerTaskManager.Instance.addTask(new WorkerGatherTask.GatherTaskBuilder()
-                    //     .setTarget(pos).setGatherName("Tree").build());
+                    if (this.TryGetGatherResourceInfo(pos, out ResourceInfo resourceInfo))
+                    {
+                        Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
+                            new WorkerGatherTask.GatherTaskBuilder()
+                            .SetTarget(pos).SetResourceInfo(resourceInfo).Build(), new GameGridPosition(pos.x, pos.y, pos.z));
+                    }
+
                     this.RefreshRound(pos);
                 }
 
@@ -199,12 +196,9 @@ namespace LAB2D.Map
 
             if (!Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(tileBase.name, out ItemData itemData))
             {
-                return false;
-            }
-
-            if (!Core.ServiceLocator.Get<DropDataManager>().HasDropItemsById(itemData.Id))
-            {
-                return false;
+                // 资源存在于 ResourceMap 但未在 ItemDataManager 注册（如 DesertGrass），
+                // 仍允许采集，使用 Id=0 走默认掉落
+                itemData = ItemData.Empty;
             }
 
             resourceInfo = new ResourceInfo(itemData.Id);

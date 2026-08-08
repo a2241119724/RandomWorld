@@ -658,6 +658,49 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
+        /// 扫描 5×5 房间区域内未被认领的资源。
+        /// 在建造第一块墙之前调用，确保先清理区域内的所有资源。
+        /// </summary>
+        /// <param name="center">房间中心位置</param>
+        /// <returns>最近的可采集资源，无则 null</returns>
+        private ResourceCandidate? ScanRoomAreaForResource(Vector3Int center)
+        {
+            var resourceMap = Core.ServiceLocator.Get<ResourceMap>();
+            var gatherMap = Core.ServiceLocator.Get<GatherMap>();
+            ResourceCandidate? best = null;
+            float bestDist = float.MaxValue;
+
+            // 扫描整个 5×5 房间区域（含墙壁、门、床、地板）
+            for (int dx = -2; dx <= 2; dx++)
+            {
+                for (int dy = -2; dy <= 2; dy++)
+                {
+                    Vector3Int pos = new Vector3Int(center.x + dx, center.y + dy, 0);
+
+                    // 跳过已被其他 Worker 认领的资源
+                    if (gatherMap?.GatherMapDataLAB?.ContainKey(pos) == true)
+                        continue;
+
+                    if (!resourceMap.TryGetGatherResourceInfo(pos, out ResourceInfo resourceInfo))
+                        continue;
+
+                    float dist = (pos - center).sqrMagnitude;
+                    if (dist < bestDist)
+                    {
+                        bestDist = dist;
+                        best = new ResourceCandidate
+                        {
+                            Position = pos,
+                            Resource = resourceInfo,
+                        };
+                    }
+                }
+            }
+
+            return best;
+        }
+
+        /// <summary>
         /// 扫描地上属于该 Worker 的物品，创建 Carry 任务捡回来。
         /// 用于悬赏完成后，发布者去捡属于自己的资源。
         /// </summary>
@@ -774,34 +817,18 @@ namespace LAB2D.AI.Worker
                 for (int dy = -this.ScanRadius; dy <= this.ScanRadius; dy++)
                 {
                     Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
-                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
-
-                    if (!resourceMap.ResourceMapDataLAB.PosMap.ContainsKey(posLAB))
-                    {
-                        continue;
-                    }
 
                     // 跳过已被其他 Worker 认领的资源（GatherMap 中的标记）
                     if (gatherMap?.GatherMapDataLAB?.ContainKey(pos) == true)
-                    {
                         continue;
-                    }
 
-                    string resourceName = resourceMap.ResourceMapDataLAB.PosMap[posLAB];
-                    if (string.IsNullOrEmpty(resourceName))
-                    {
+                    if (!resourceMap.TryGetGatherResourceInfo(pos, out ResourceInfo resourceInfo))
                         continue;
-                    }
-
-                    if (!Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(resourceName, out ItemData itemData))
-                    {
-                        continue;
-                    }
 
                     candidates.Add(new ResourceCandidate
                     {
                         Position = pos,
-                        Resource = new ResourceInfo(itemData.Id),
+                        Resource = resourceInfo,
                     });
                 }
             }
@@ -895,7 +922,7 @@ namespace LAB2D.AI.Worker
         // ---- 建造/种植决策 ----
 
         // 房间墙壁偏移（5x5 环，Unity 坐标 x=列, y=行，中心为原点）：
-        // 中间 3x3 空地放床，墙壁围在第二圈。南侧 (0,-2) 留门。
+        // 中间 3x3 空地放床，墙壁围在第二圈。下侧/南侧 (-2,0) 留门。
         // ARoom 使用 x=行/y=列 坐标系（与 Unity 交换了 xy），因此方向需按 ARoom 约定：
         //   _0=左上 _1=上 _2=右上 _3=左 _4=右 _5=左下 _6=下 _7=右下
         private static readonly Vector3Int[] WallOffsets = new Vector3Int[]
@@ -909,12 +936,12 @@ namespace LAB2D.AI.Worker
             new Vector3Int(2, 0, 0),   // 6: 右中   (ARoom: 上)   → _1
             new Vector3Int(2, -1, 0),  // 7: 右边   (ARoom: 上)   → _1
             new Vector3Int(2, -2, 0),  // 8: 右下角 (ARoom: 左上) → _0
-            new Vector3Int(1, -2, 0),  // 9: 下边右 (ARoom: 左)   → _3 [之前缺失!]
-            new Vector3Int(-1, -2, 0), // 10: 下边左 (ARoom: 左)   → _3 [门在(0,-2)]
-            new Vector3Int(-2, -2, 0), // 11: 左下角 (ARoom: 左下) → _5
-            new Vector3Int(-2, -1, 0), // 12: 左边   (ARoom: 下)   → _6
-            new Vector3Int(-2, 0, 0),  // 13: 左中   (ARoom: 下)   → _6
-            new Vector3Int(-2, 1, 0),  // 14: 左边   (ARoom: 下)   → _6
+            new Vector3Int(1, -2, 0),  // 9: 下边右 (ARoom: 左)   → _3
+            new Vector3Int(0, -2, 0),  // 10: 下边中 (ARoom: 左)   → _3 [原门位置,现为墙]
+            new Vector3Int(-1, -2, 0), // 11: 下边左 (ARoom: 左)   → _3
+            new Vector3Int(-2, -2, 0), // 12: 左下角 (ARoom: 左下) → _5
+            new Vector3Int(-2, -1, 0), // 13: 左边下 (ARoom: 下)   → _6
+            new Vector3Int(-2, 1, 0),  // 14: 左边上 (ARoom: 下)   → _6 [门在(-2,0)]
         };
         // 对应每块墙的方向编号（按 ARoom 坐标约定）
         private static readonly int[] WallDirections = new int[]
@@ -924,10 +951,12 @@ namespace LAB2D.AI.Worker
             2,              // 4: 右上角 → _2 (右上)
             1, 1, 1,        // 5-7: 右边 → _1 (上)
             0,              // 8: 右下角 → _0 (左上)
-            3,              // 9: 下边右 → _3 (左) [新增]
-            3,              // 10: 下边左 → _3 (左)
-            5,              // 11: 左下角 → _5 (左下)
-            6, 6, 6,        // 12-14: 左边 → _6 (下)
+            3,              // 9: 下边右 → _3 (左)
+            3,              // 10: 下边中 → _3 (左) [原门位置,现为墙]
+            3,              // 11: 下边左 → _3 (左)
+            5,              // 12: 左下角 → _5 (左下)
+            6,              // 13: 左边下 → _6 (下)
+            6,              // 14: 左边上 → _6 (下)
         };
         public const int WallCount = 15;           // 15 面墙
         public const int DoorStage = WallCount;    // 15: 门
@@ -937,8 +966,8 @@ namespace LAB2D.AI.Worker
         /// <summary>获取房间所有墙壁偏移（供外部注册房间使用）。</summary>
         public static IReadOnlyList<Vector3Int> GetWallOffsets() => WallOffsets;
 
-        /// <summary>门相对于中心的偏移。</summary>
-        public static readonly Vector3Int DoorOffset = new Vector3Int(0, -2, 0);
+        /// <summary>门相对于中心的偏移（左墙/下侧中间）。</summary>
+        public static readonly Vector3Int DoorOffset = new Vector3Int(-2, 0, 0);
 
         /// <summary>
         /// 自主建造决策：Worker 决定为自己建造房屋。
@@ -964,6 +993,21 @@ namespace LAB2D.AI.Worker
 
                 Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
 
+                // 建造前先扫描房间区域内的资源，有资源先采集
+                if (wd.HomeBuildStage == 0)
+                {
+                    ResourceCandidate? roomResource = this.ScanRoomAreaForResource(center);
+                    if (roomResource.HasValue)
+                    {
+                        AWorkerTask.LogProvider(
+                            $"{worker.name} 建房区域有资源 {roomResource.Value.Resource.Id}, 先采集 pos=({roomResource.Value.Position.x},{roomResource.Value.Position.y})",
+                            LogManager.LogLevelEnum.Info);
+                        return Decision.MakeGather(roomResource.Value.Position,
+                            roomResource.Value.Resource,
+                            $"清理建房区域资源");
+                    }
+                }
+
                 if (wd.HomeBuildStage < WallCount)
                 {
                     // 阶段 0-14：建墙壁，使用对应方向变体
@@ -973,9 +1017,9 @@ namespace LAB2D.AI.Worker
                 }
                 else if (wd.HomeBuildStage == DoorStage)
                 {
-                    // 阶段 15：建门 (南侧正中间)
+                    // 阶段 15：建门
                     buildTileName = "CustomDoor";
-                    buildPos = center + new Vector3Int(0, -2, 0);
+                    buildPos = center + DoorOffset;
                 }
                 else if (wd.HomeBuildStage == BedStage)
                 {
@@ -1020,21 +1064,23 @@ namespace LAB2D.AI.Worker
                     if (buildPos.HasValue)
                     {
                         var resourceMap = Core.ServiceLocator.Get<ResourceMap>();
-                        Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(buildPos.Value);
-                        if (resourceMap?.ResourceMapDataLAB?.PosMap != null
-                            && resourceMap.ResourceMapDataLAB.PosMap.TryGetValue(posLAB, out string resName)
-                            && !string.IsNullOrEmpty(resName))
+                        var gatherMap = Core.ServiceLocator.Get<GatherMap>();
+
+                        // 检查是否已被其他 Worker 认领
+                        if (gatherMap?.GatherMapDataLAB?.ContainKey(buildPos.Value) == true)
                         {
-                            var itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
-                            if (itemDataManager.TryGetByName(resName, out ItemData itemData) && itemData.Id > 0)
-                            {
-                                AWorkerTask.LogProvider(
-                                    $"{worker.name} 建造位置有资源 {resName}, 先采集再建 {buildTileName}",
-                                    LogManager.LogLevelEnum.Info);
-                                return Decision.MakeGather(buildPos.Value,
-                                    new ResourceInfo(itemData.Id),
-                                    $"清理建造位置: {resName}");
-                            }
+                            AWorkerTask.LogProvider(
+                                $"{worker.name} 建造位置资源已被认领, 等待释放 pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                LogManager.LogLevelEnum.Info);
+                            return Decision.Make(WorkerDecisionType.Wander, "等待资源释放");
+                        }
+
+                        if (resourceMap.TryGetGatherResourceInfo(buildPos.Value, out ResourceInfo resourceInfo))
+                        {
+                            AWorkerTask.LogProvider(
+                                $"{worker.name} 建造位置有资源, 先采集再建 {buildTileName} pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                LogManager.LogLevelEnum.Info);
+                            return Decision.MakeGather(buildPos.Value, resourceInfo, "清理建造位置");
                         }
                     }
 
@@ -1305,23 +1351,34 @@ namespace LAB2D.AI.Worker
             }
             // 如果找不到新位置，PlannedHomePosition 保持旧值，Worker 下次会重试
 
-            // 2. 清除旧位置的残留瓦片
+            // 2. 清除旧位置的残留瓦片（包括 tilemap 视觉和 BuildMap 数据）
             if (oldPosition != null && buildMap?.BuildMapDataLAB?.PosMap != null)
             {
                 Vector3Int oldCenter = Vector3IntLAB.ToVector3Int(oldPosition);
                 for (int i = 0; i < WallCount; i++)
                 {
-                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(oldCenter + WallOffsets[i]);
+                    Vector3Int wallPos = oldCenter + WallOffsets[i];
+                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(wallPos);
                     if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var tile)
                         && !tile.IsComplete)
+                    {
                         buildMap.BuildMapDataLAB.PosMap.Remove(posLAB);
+                        buildMap.CancelBuilding(wallPos);
+                    }
                 }
-                Vector3IntLAB doorLAB = Vector3IntLAB.ToVector3IntLAB(oldCenter + DoorOffset);
+                Vector3Int oldDoor = oldCenter + DoorOffset;
+                Vector3IntLAB doorLAB = Vector3IntLAB.ToVector3IntLAB(oldDoor);
                 if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(doorLAB, out var d) && !d.IsComplete)
+                {
                     buildMap.BuildMapDataLAB.PosMap.Remove(doorLAB);
+                    buildMap.CancelBuilding(oldDoor);
+                }
                 Vector3IntLAB centerLAB = Vector3IntLAB.ToVector3IntLAB(oldCenter);
                 if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(centerLAB, out var c) && !c.IsComplete)
+                {
                     buildMap.BuildMapDataLAB.PosMap.Remove(centerLAB);
+                    buildMap.CancelBuilding(oldCenter);
+                }
             }
 
             // 3. 重置建造阶段（新位置从墙壁 0 开始）
@@ -1357,6 +1414,7 @@ namespace LAB2D.AI.Worker
                     && !tile.IsComplete)
                 {
                     buildMap.BuildMapDataLAB.PosMap.Remove(posLAB);
+                    buildMap.CancelBuilding(pos); // 同时清除 tilemap 视觉瓦片
                 }
             }
         }
@@ -1373,9 +1431,9 @@ namespace LAB2D.AI.Worker
             int mapHeight = tileMap?.TileMapDataLAB?.Height ?? int.MaxValue;
 
             // 房间四角：center ± 2
-            // 左下角必须在 (0, 0) 或以上，右上角必须在 (mapWidth-1, mapHeight-1) 或以下
-            if (center.x - 2 < 0 || center.y - 2 < 0
-                || center.x + 2 >= mapWidth || center.y + 2 >= mapHeight)
+            // 下(左墙)、左(底墙)、右(上墙)三方向留一格行走空间；上(右墙)无需
+            if (center.x - 2 < 1 || center.y - 2 < 1
+                || center.x + 2 >= mapWidth || center.y + 2 >= mapHeight - 1)
             {
                 return false;
             }
@@ -1399,6 +1457,28 @@ namespace LAB2D.AI.Worker
 
             // 检查中心位置（床的位置）是否可达
             if (!ASeek.IsCanReach(center))
+            {
+                return false;
+            }
+
+            // 检查下、左、右三面外侧的行走空间是否可通行
+            // 门在左墙 (-2,0)，外侧为 (-3,0)；左墙用下(DOWN)瓦片，故为视觉"下"侧
+            Vector3Int outsideDoor = center + new Vector3Int(-3, 0, 0);
+            if (!ASeek.IsCanReach(outsideDoor))
+            {
+                return false;
+            }
+
+            // 视觉"左"侧 = 底墙 (y=-2)，外侧为 (0,-3)
+            Vector3Int bottomOutside = center + new Vector3Int(0, -3, 0);
+            if (!ASeek.IsCanReach(bottomOutside))
+            {
+                return false;
+            }
+
+            // 视觉"右"侧 = 上墙 (y=2)，外侧为 (0,3)
+            Vector3Int topOutside = center + new Vector3Int(0, 3, 0);
+            if (!ASeek.IsCanReach(topOutside))
             {
                 return false;
             }
@@ -1508,8 +1588,8 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 检查以该位置为中心的 5×5 房间矩形，是否与其他 Worker 已规划或已完成的家重叠。
-        /// 两个 5×5 矩形 ([c-2, c+2]) 重叠 ⇔ 中心距离 ≤ 4。
+        /// 检查以该位置为中心的 5×5 房间矩形，是否与其他 Worker 已规划或已完成的家重叠或太近。
+        /// 中心距离 ≤ 5 时视为冲突，确保房间之间至少有一格行走间距。
         /// 依赖 RelocateHomeSite 保证 PlannedHomePosition 永远不为 null（消除空窗期）。
         /// </summary>
         private bool IsHomeSiteClaimedByOther(Vector3Int candidateCenter, AWorker self)
@@ -1527,8 +1607,8 @@ namespace LAB2D.AI.Worker
                 if (otherCenterLAB == default) continue;
 
                 Vector3Int otherCenter = Vector3IntLAB.ToVector3Int(otherCenterLAB);
-                if (System.Math.Abs(candidateCenter.x - otherCenter.x) <= 4
-                    && System.Math.Abs(candidateCenter.y - otherCenter.y) <= 4)
+                if (System.Math.Abs(candidateCenter.x - otherCenter.x) <= 5
+                    && System.Math.Abs(candidateCenter.y - otherCenter.y) <= 5)
                 {
                     return true;
                 }
