@@ -16,6 +16,7 @@ namespace LAB2D.Gameplay
         /// <inheritdoc/>
         public void Tick(float deltaTime)
         {
+            var terrainEffect = ServiceLocator.Get<ITerrainEffectService>();
             List<AWorker> workers = ServiceLocator.Get<WorkerManager>().Characters;
             foreach (AWorker worker in workers)
             {
@@ -25,12 +26,16 @@ namespace LAB2D.Gameplay
                     continue;
                 }
 
+                // 地形效果对衰减速率的影响
+                float tiredTerrainMult = terrainEffect.GetWorkerTiredDecayMultiplier(worker);
+                float hungryTerrainMult = terrainEffect.GetWorkerHungryDecayMultiplier(worker);
+
                 // 饥饿值自然衰减
                 if (workerData.CurHungry > 0)
                 {
                     workerData.CurHungry = System.Math.Max(
                         0.0f,
-                        workerData.CurHungry - (deltaTime * WorkerConditionConstant.HungryDecayPerSecond));
+                        workerData.CurHungry - (deltaTime * WorkerConditionConstant.HungryDecayPerSecond * hungryTerrainMult));
                 }
 
                 // 疲劳值自然衰减
@@ -38,7 +43,7 @@ namespace LAB2D.Gameplay
                 {
                     workerData.CurTired = System.Math.Max(
                         0.0f,
-                        workerData.CurTired - (deltaTime * WorkerConditionConstant.TiredDecayPerSecond));
+                        workerData.CurTired - (deltaTime * WorkerConditionConstant.TiredDecayPerSecond * tiredTerrainMult));
                 }
 
                 // 精气神自然衰减

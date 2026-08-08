@@ -133,6 +133,54 @@ namespace LAB2D.Map
             return 0;
         }
 
+        /// <summary>
+        /// 获取指定地形 ID 的效果数据。未找到返回 null。
+        /// </summary>
+        public TerrainEffectData GetEffectData(int terrainId)
+        {
+            return this.GetById(terrainId)?.effectData;
+        }
+
+        /// <summary>
+        /// 安全获取玩家移速倍率（默认 1.0）。
+        /// </summary>
+        public float GetPlayerMoveSpeedMultiplier(int terrainId)
+        {
+            return this.GetById(terrainId)?.effectData?.playerMoveSpeedMultiplier ?? 1.0f;
+        }
+
+        /// <summary>
+        /// 安全获取工人移速倍率（默认 1.0）。
+        /// </summary>
+        public float GetWorkerMoveSpeedMultiplier(int terrainId)
+        {
+            return this.GetById(terrainId)?.effectData?.workerMoveSpeedMultiplier ?? 1.0f;
+        }
+
+        /// <summary>
+        /// 安全获取敌人移速倍率（默认 1.0）。
+        /// </summary>
+        public float GetEnemyMoveSpeedMultiplier(int terrainId)
+        {
+            return this.GetById(terrainId)?.effectData?.enemyMoveSpeedMultiplier ?? 1.0f;
+        }
+
+        /// <summary>
+        /// 安全获取工人疲劳衰减倍率（默认 1.0）。
+        /// </summary>
+        public float GetWorkerTiredDecayMultiplier(int terrainId)
+        {
+            return this.GetById(terrainId)?.effectData?.workerTiredDecayMultiplier ?? 1.0f;
+        }
+
+        /// <summary>
+        /// 安全获取工人饥饿衰减倍率（默认 1.0）。
+        /// </summary>
+        public float GetWorkerHungryDecayMultiplier(int terrainId)
+        {
+            return this.GetById(terrainId)?.effectData?.workerHungryDecayMultiplier ?? 1.0f;
+        }
+
         public IReadOnlyList<int> SpawnableIds => this.spawnableIds.AsReadOnly();
         public int Count => this.configById.Count;
 

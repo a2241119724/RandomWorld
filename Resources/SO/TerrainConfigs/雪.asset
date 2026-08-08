@@ -20,3 +20,9 @@ MonoBehaviour:
   canGrowTrees: 1
   canSpawnResources: 1
   isBorder: 0
+  effectData:
+    playerMoveSpeedMultiplier: 1.15
+    workerMoveSpeedMultiplier: 1.15
+    enemyMoveSpeedMultiplier: 1.1
+    workerTiredDecayMultiplier: 0.85
+    workerHungryDecayMultiplier: 0.95

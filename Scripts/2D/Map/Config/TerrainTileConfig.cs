@@ -62,5 +62,54 @@ namespace LAB2D.Map
         /// </summary>
         [Tooltip("是否用作地图边界（包围地图四周）。每张地图只有一个边界地形。")]
         public bool isBorder;
+
+        /// <summary>
+        /// 地形玩法效果配置（移速、疲劳消耗等）。
+        /// </summary>
+        [Tooltip("地形玩法效果（移速、疲劳消耗等）。")]
+        public TerrainEffectData effectData = new TerrainEffectData();
+    }
+
+    /// <summary>
+    /// 地形效果数据 — 各地形对角色移速和工人疲劳/饥饿消耗的影响。
+    /// 所有倍率默认 1.0（无影响），在 Inspector 中按需调整。
+    /// </summary>
+    [System.Serializable]
+    public class TerrainEffectData
+    {
+        /// <summary>
+        /// 玩家在此地形上的移动速度倍率（1.0 = 无变化）。
+        /// </summary>
+        [Tooltip("玩家在此地形上的移动速度倍率。")]
+        [UnityEngine.Range(0.1f, 3.0f)]
+        public float playerMoveSpeedMultiplier = 1.0f;
+
+        /// <summary>
+        /// 工人在此地形的移动速度倍率。
+        /// </summary>
+        [Tooltip("工人在此地形的移动速度倍率。")]
+        [UnityEngine.Range(0.1f, 3.0f)]
+        public float workerMoveSpeedMultiplier = 1.0f;
+
+        /// <summary>
+        /// 敌人在此地形的移动速度倍率。
+        /// </summary>
+        [Tooltip("敌人在此地形的移动速度倍率。")]
+        [UnityEngine.Range(0.1f, 3.0f)]
+        public float enemyMoveSpeedMultiplier = 1.0f;
+
+        /// <summary>
+        /// 工人疲劳自然衰减速率倍率（1.0 = 默认 0.015/s），>1 表示更快疲劳。
+        /// </summary>
+        [Tooltip("工人疲劳自然衰减速率倍率（>1 = 更快疲劳）。")]
+        [UnityEngine.Range(0.5f, 3.0f)]
+        public float workerTiredDecayMultiplier = 1.0f;
+
+        /// <summary>
+        /// 工人饥饿自然衰减速率倍率（1.0 = 默认 0.025/s），>1 表示更快饥饿。
+        /// </summary>
+        [Tooltip("工人饥饿自然衰减速率倍率（>1 = 更快饥饿）。")]
+        [UnityEngine.Range(0.5f, 3.0f)]
+        public float workerHungryDecayMultiplier = 1.0f;
     }
 }

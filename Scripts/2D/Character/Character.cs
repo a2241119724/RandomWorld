@@ -105,6 +105,25 @@ namespace LAB2D.Character
             = (c) => c.MoveSpeed;
 
         /// <summary>
+        /// 获取角色在当前环境下的有效移动速度（含地形等被动修正，不含主动技能/跑步）。
+        /// 子类可重写以叠加天气、波次奖励等额外修正。
+        /// </summary>
+        public virtual float GetEffectiveMoveSpeed()
+        {
+            float terrainMultiplier = 1.0f;
+            try
+            {
+                terrainMultiplier = ServiceLocator.Get<ITerrainEffectService>().GetMoveSpeedMultiplier(this);
+            }
+            catch
+            {
+                // 服务未注册时降级为基础速度
+            }
+
+            return this.MoveSpeed * terrainMultiplier;
+        }
+
+        /// <summary>
         /// 当前装备的武器物体
         /// </summary>
         public GameObject Weapon { get; set; }
@@ -263,7 +282,7 @@ namespace LAB2D.Character
             return $"{this.GetType().Name}:{this.name}\n" +
                 $"血量: {this.CharacterDataLAB.Hp:F0}/{this.CharacterDataLAB.MaxHp:F0}\n" +
                 $"蓝量: {this.CharacterDataLAB.Mp}/{this.CharacterDataLAB.MaxMp}\n" +
-                $"速度: {this.MoveSpeed}\n" +
+                $"速度: {this.GetEffectiveMoveSpeed():F1}\n" +
                 $"位置: ({posMap.x},{posMap.y})\n" +
                 $"物理攻击力: {this.CharacterDataLAB.ATN:F1}\n" +
                 $"魔法攻击力: {this.CharacterDataLAB.INT:F1}\n" +

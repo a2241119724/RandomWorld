@@ -114,6 +114,8 @@ namespace LAB2D
             ServiceLocator.Register(ItemCollectionTracker.Instance);
             ServiceLocator.Register(WeatherGameplayEffect.Instance);
             ServiceLocator.Register<IWeatherGameplayService>(WeatherGameplayEffect.Instance);
+            ServiceLocator.Register(TerrainEffectManager.Instance);
+            ServiceLocator.Register<ITerrainEffectService>(TerrainEffectManager.Instance);
             ServiceLocator.Register(PanelController.Instance);
             ServiceLocator.Register(PromptBuilder.Instance);
             ServiceLocator.Register(DialogueManager.Instance);

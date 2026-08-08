@@ -320,6 +320,11 @@ namespace LAB2D.Core.Seek
 
             this.Direction = worldPos - this.Character.transform.position;
             float speed = Core.ServiceLocator.Get<WeatherGameplayEffect>().GetAdjustedCharacterMoveSpeed(this.Character, this.Character.MoveSpeed);
+
+            // 地形效果在天气之后、工人状态之前应用
+            float terrainSpeedMultiplier = Core.ServiceLocator.Get<ITerrainEffectService>().GetMoveSpeedMultiplier(this.Character);
+            speed *= terrainSpeedMultiplier;
+
             if (this.Character is AWorker worker)
             {
                 // 工人的饥饿与疲劳状态会在天气倍率之后继续影响移动速度。

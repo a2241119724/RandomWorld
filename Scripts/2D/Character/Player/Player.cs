@@ -35,6 +35,7 @@ namespace LAB2D.Character.Player
         internal static Action<Player> HandlePlayerDeathProvider { get; set; } = (p) => ServiceLocator.Get<DeathPenaltyManager>().HandlePlayerDeath(p);
         internal static Func<Player, float, float> WeatherMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<WeatherGameplayEffect>().GetAdjustedCharacterMoveSpeed(p, def);
         internal static Func<Character, float, float> WaveMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<WaveBossRewardManager>().GetAdjustedPlayerMoveSpeed(p, def);
+        internal static Func<Player, float, float> TerrainMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<ITerrainEffectService>().GetAdjustedCharacterMoveSpeed(p, def);
         internal static Func<float> ExperienceMultiplierProvider { get; set; } = () => ServiceLocator.Get<ComboBonusManager>().ExperienceMultiplier;
         internal static Action<Player> PlayerRegisterProvider { get; set; } = (p) => ServiceLocator.Get<PlayerManager>().Mine = p;
         internal static Action<Player> PlayerAddProvider { get; set; } = (p) => ServiceLocator.Get<PlayerManager>().Add(p);
@@ -557,6 +558,18 @@ namespace LAB2D.Character.Player
         }
 
         /// <summary>
+        /// 获取玩家在当前环境下的有效移动速度（含地形、天气、波次、跑步倍率）。
+        /// </summary>
+        public override float GetEffectiveMoveSpeed()
+        {
+            float terrainMultiplier = TerrainMoveSpeedProvider(this, 1.0f);
+            float weatherMultiplier = WeatherMoveSpeedProvider(this, 1.0f);
+            float waveMultiplier = WaveMoveSpeedProvider(this, 1.0f);
+            float runMultiplier = Input.GetKey(LAB2D.Constant.InputKeyConstant.Run) ? this.runSpeedMultiplier : 1.0f;
+            return this.MoveSpeed * terrainMultiplier * weatherMultiplier * waveMultiplier * runMultiplier;
+        }
+
+        /// <summary>
         /// 玩家移动.
         /// </summary>
         private void Move()
@@ -567,14 +580,18 @@ namespace LAB2D.Character.Player
                 this.playerView?.EnsureCameraFollow(new GameVector2(this.transform.position.x, this.transform.position.y));
                 bool isRunning = command.IsRunning;
 
+                float terrainMultiplier = TerrainMoveSpeedProvider(this, 1.0f);
                 float weatherMultiplier = WeatherMoveSpeedProvider(this, 1.0f);
-                // A004：波间奖励移动强化在天气倍率之后应用，避免覆盖天气玩法的减速/增益。
+                // 地形效果与天气效果乘法叠加
+                float combinedEnvMultiplier = terrainMultiplier * weatherMultiplier;
+
+                // A004：波间奖励移动强化在天气/地形倍率之后应用，避免覆盖环境玩法的减速/增益。
                 float waveMultiplier = WaveMoveSpeedProvider(this, 1.0f);
                 PlayerMoveResult moveResult = this.movementService.CalculateMovement(
                     this.MoveSpeed,
                     this.runSpeedMultiplier,
                     isRunning,
-                    weatherMultiplier,
+                    combinedEnvMultiplier,
                     waveMultiplier,
                     command.Direction);
 
