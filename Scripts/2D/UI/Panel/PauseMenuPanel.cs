@@ -18,17 +18,18 @@ namespace LAB2D.UI.Panel
         {
             this.Name = "PauseMenu";
             this.Init();
-            this.audioSource = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG).GetComponent<AudioSource>();
+
+            // 查找 AudioSource — 如果不存在则记录错误但不阻断按钮注册
+            this.audioSource = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG)?.GetComponent<AudioSource>();
             if (this.audioSource == null)
             {
-                AWorkerTask.LogProvider("audioSource Not Found!!!", LogManager.LogLevelEnum.Error);
-                return;
+                AWorkerTask.LogProvider("audioSource Not Found on UIRoot, audio slider will be disabled.", LogManager.LogLevelEnum.Warning);
             }
 
-            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Exit").onClick.AddListener(this.OnClick_Exit);
-            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackMenu").onClick.AddListener(this.OnClick_BackMenu);
-            LAB2D.Tool.Tool.GetComponentInChildren<Slider>(this.Panel, "Audio").onValueChanged.AddListener(this.OnClick_Audio);
-            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Exit")?.onClick.AddListener(this.OnClick_Exit);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackMenu")?.onClick.AddListener(this.OnClick_BackMenu);
+            LAB2D.Tool.Tool.GetComponentInChildren<Slider>(this.Panel, "Audio")?.onValueChanged.AddListener(this.OnClick_Audio);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame")?.onClick.AddListener(this.OnClick_Back);
         }
 
         /// <inheritdoc/>
@@ -77,7 +78,10 @@ namespace LAB2D.UI.Panel
         /// </summary>
         private void OnClick_Audio(float value)
         {
-            this.audioSource.volume = value;
+            if (this.audioSource != null)
+            {
+                this.audioSource.volume = value;
+            }
         }
     }
 }
