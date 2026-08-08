@@ -84,6 +84,11 @@ namespace LAB2D.Constant
         public const string TASK_ITEM = "TaskItem";
 
         /// <summary>
+        /// 任务标题项
+        /// </summary>
+        public const string TASK_TITLE_ITEM = "TaskTitleItem";
+
+        /// <summary>
         /// 建造项
         /// </summary>
         public const string BUILD_ITEM = "BuildItem";

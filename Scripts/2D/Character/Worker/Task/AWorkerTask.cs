@@ -501,8 +501,8 @@ namespace LAB2D.Character.Worker.Task
         {
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
 
-            // 字典中没有记录的任务类型默认为允许（opt-out 语义），
-            // 这样新增 WorkerTaskType 枚举值时无需修改 WorkerData 构造函数。
+            // 所有任务类型默认为开启（opt-out 语义）：只有字典中显式记录 false 时才阻止。
+            // WorkerData 构造函数中已将所有 WorkerTaskType 初始化为 true。
             if (workerData.TaskToggle.TryGetValue(this.TaskType, out bool enabled) && !enabled)
             {
                 return false;

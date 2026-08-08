@@ -34,11 +34,34 @@ namespace LAB2D.UI.Action
 
         public void Update()
         {
-            // 若是不在默认位置，则才返回默认位置
-            if (UnityGlobalInputAdapter.GetSecondaryMouseDown() && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
+            // 左键/右键点击空白处时将采集UI移到屏幕外（隐藏）
+            // 点击在 UI 元素上时不隐藏，避免误吞按钮点击
+            if ((UnityGlobalInputAdapter.GetPrimaryMouseDown() || UnityGlobalInputAdapter.GetSecondaryMouseDown())
+                && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x
+                && this.IsClickOnEmptySpace())
             {
                 this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
             }
+        }
+
+        /// <summary>
+        /// 检测当前鼠标点击是否在空白处（非 UI 元素上）
+        /// </summary>
+        private bool IsClickOnEmptySpace()
+        {
+            var uiResults = LAB2D.Tool.Tool.GetUIByMousePos(TagConstant.UI_TAG);
+            if (uiResults.Count > 0 && uiResults[0].gameObject.name != "Foreground")
+            {
+                return false;
+            }
+
+            var actionResults = LAB2D.Tool.Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
+            if (actionResults.Count > 0 && actionResults[0].gameObject.name != "Foreground")
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>

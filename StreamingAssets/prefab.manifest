@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2893381658
+CRC: 270447752
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 929e0bb8cfa9e3be084f5ac0272c637b
+    Hash: 23d4a16bef38a013cc8efad5932789e0
   TypeTreeHash:
     serializedVersion: 2
     Hash: 2fc04c31a1cbd489a339ca2c5e0da118
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 929e0bb8cfa9e3be084f5ac0272c637b
+    Hash: 23d4a16bef38a013cc8efad5932789e0
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -176,6 +176,7 @@ Assets:
 - Assets/ResourcesLocal/Prefabs/ItemBox/ButtonItem.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/SellItem.prefab
 - Assets/ResourcesLocal/Prefabs/ScrollText.prefab
+- Assets/ResourcesLocal/Prefabs/ItemBox/TaskTitleItem.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/ArchiveItem.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/LocateWorkerItem.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Sword/CustomSword.prefab

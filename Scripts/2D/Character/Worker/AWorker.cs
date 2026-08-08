@@ -781,11 +781,12 @@ namespace LAB2D.Character.Worker
 
             public WorkerData()
             {
-                // 设置默认可接受任务类型
-                // 空字典 = 所有任务类型默认允许。
-                // 只有玩家通过 UI 手动关闭的任务类型才会被写入 false。
-                // 参见 AWorkerTask.IsCanWork 的 opt-out 语义。
+                // 所有任务类型默认开启（opt-out 语义：只有玩家通过 UI 手动关闭的才会被写入 false）
                 this.TaskToggle = new Dictionary<WorkerTaskType, bool>();
+                for (WorkerTaskType t = 0; t < WorkerTaskType._Count; t++)
+                {
+                    this.TaskToggle[t] = true;
+                }
                 this.Personality = Domain.Worker.WorkerPersonality.Randomize();
                 this.Storage = new Dictionary<int, ResourceInfo>();
             }

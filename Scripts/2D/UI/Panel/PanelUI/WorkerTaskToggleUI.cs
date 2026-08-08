@@ -57,6 +57,7 @@ namespace LAB2D.UI.Panel.PanelUI
         private void OnEnable()
         {
             List<AWorker> workers = ServiceLocator.Get<WorkerManager>().Characters;
+            List<WorkerTaskType> taskTypeOrder = WorkerTaskTogglePanel.TaskTypeOrder;
 
             // UI不够,创建
             int count = workers.Count - (this.transform.childCount - 1);
@@ -67,15 +68,8 @@ namespace LAB2D.UI.Panel.PanelUI
                     GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.TASK_ITEM, this.transform, false);
                     this.TaskItems.Add(g);
 
-                    // 添加事件
-                    for (int j = 1; j < g.transform.childCount; j++)
-                    {
-                        Toggle toggle = g.transform.GetChild(j).GetComponent<Toggle>();
-                        toggle.onValueChanged.AddListener((bool isOn) =>
-                        {
-                            this.TaskToggle(toggle);
-                        });
-                    }
+                    // 动态生成 Toggle 列（而非依赖 prefab 中预放置的子对象）
+                    this.SyncToggleColumns(g, taskTypeOrder);
                 }
             }
 
@@ -88,29 +82,134 @@ namespace LAB2D.UI.Panel.PanelUI
             int index = 0;
             foreach (AWorker worker in workers)
             {
-                this.TaskItems[index].SetActive(true);
-                LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.TaskItems[index].transform.GetChild(0).gameObject, "Text").text = worker.name;
+                GameObject taskItem = this.TaskItems[index];
+                taskItem.SetActive(true);
+                LAB2D.Tool.Tool.GetComponentInChildren<Text>(taskItem.transform.GetChild(0).gameObject, "Text").text = worker.name;
                 AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-                for (int i = 1; i < this.TaskItems[index].transform.childCount; i++)
+
+                // 确保 Toggle 列与 TaskTypeOrder 一致（处理旧 TaskItem 列数不匹配的情况）
+                this.EnsureToggleColumnsSynced(taskItem, taskTypeOrder);
+
+                // 按 TaskTypeOrder 顺序设置每个 Toggle 的值
+                for (int i = 0; i < taskTypeOrder.Count; i++)
                 {
-                    Transform toggleTransform = this.TaskItems[index].transform.GetChild(i);
+                    int childIndex = i + 1; // child 0 是 Worker 名称
+                    if (childIndex >= taskItem.transform.childCount)
+                    {
+                        break;
+                    }
+
+                    Transform toggleTransform = taskItem.transform.GetChild(childIndex);
                     Toggle toggle = toggleTransform.GetComponent<Toggle>();
                     TaskToggleBinding binding = toggleTransform.GetComponent<TaskToggleBinding>();
-                    if (binding != null && workerData.TaskToggle != null)
+                    if (binding != null)
                     {
-                        // 字典中没有记录的任务类型默认为开启（与 IsCanWork 的 opt-out 语义一致）
-                        if (workerData.TaskToggle.TryGetValue(binding.TaskType, out bool enabled))
+                        // 所有任务类型默认为开启，只有玩家手动关闭的才会显示为关闭
+                        bool enabled = true;
+                        if (workerData.TaskToggle != null)
                         {
-                            toggle.isOn = enabled;
+                            workerData.TaskToggle.TryGetValue(binding.TaskType, out enabled);
                         }
-                        else
-                        {
-                            toggle.isOn = true;
-                        }
+
+                        toggle.isOn = enabled;
                     }
                 }
 
                 index++;
+            }
+        }
+
+        /// <summary>
+        /// 动态同步 TaskItem 的 Toggle 子对象：确保数量与 TaskTypeOrder 一致，
+        /// 每个 Toggle 绑定正确的 TaskToggleBinding.TaskType 和 onValueChanged 监听器。
+        /// 多余列从末尾销毁，不足列从模板 Instantiate 补齐。
+        /// </summary>
+        /// <param name="taskItem">TaskItem GameObject</param>
+        /// <param name="taskTypeOrder">任务类型顺序列表</param>
+        private void SyncToggleColumns(GameObject taskItem, List<WorkerTaskType> taskTypeOrder)
+        {
+            int neededCount = taskTypeOrder.Count;
+            int currentToggleCount = taskItem.transform.childCount - 1; // 减去名称列
+
+            if (currentToggleCount <= 0 && neededCount <= 0)
+            {
+                return;
+            }
+
+            // 保存模板（第一个 Toggle，若存在）
+            GameObject template = currentToggleCount > 0
+                ? taskItem.transform.GetChild(1).gameObject
+                : null;
+
+            // 销毁多余的 Toggle 子对象（从末尾往前删）
+            for (int i = currentToggleCount - 1; i >= neededCount; i--)
+            {
+                Object.Destroy(taskItem.transform.GetChild(i + 1).gameObject);
+            }
+
+            // 创建不足的 Toggle 子对象
+            for (int i = currentToggleCount; i < neededCount; i++)
+            {
+                GameObject newToggle;
+                if (template != null)
+                {
+                    newToggle = Object.Instantiate(template, taskItem.transform);
+                }
+                else
+                {
+                    // 无模板时的兜底：从零创建基础 Toggle
+                    newToggle = new GameObject("Toggle");
+                    newToggle.AddComponent<Toggle>();
+                    newToggle.transform.SetParent(taskItem.transform);
+                    newToggle.transform.localScale = Vector3.one;
+                }
+
+                newToggle.name = "Toggle_" + taskTypeOrder[i].ToString();
+            }
+
+            // 设置每个 Toggle 的绑定和事件监听
+            for (int i = 0; i < neededCount; i++)
+            {
+                Transform t = taskItem.transform.GetChild(i + 1);
+                TaskToggleBinding binding = t.GetComponent<TaskToggleBinding>();
+                if (binding == null)
+                {
+                    binding = t.gameObject.AddComponent<TaskToggleBinding>();
+                }
+
+                binding.TaskType = taskTypeOrder[i];
+
+                // 任务开关列宽度设为50（第一列名称列保持原宽度100）
+                RectTransform toggleRect = t.GetComponent<RectTransform>();
+                if (toggleRect != null)
+                {
+                    toggleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 50f);
+                }
+
+                Toggle toggle = t.GetComponent<Toggle>();
+                if (toggle != null)
+                {
+                    toggle.onValueChanged.RemoveAllListeners();
+                    Toggle capturedToggle = toggle;
+                    toggle.onValueChanged.AddListener((bool isOn) =>
+                    {
+                        this.TaskToggle(capturedToggle);
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// 轻量检查：若 Toggle 列数与 TaskTypeOrder 不一致则触发完整同步。
+        /// </summary>
+        private void EnsureToggleColumnsSynced(GameObject taskItem, List<WorkerTaskType> taskTypeOrder)
+        {
+            int neededCount = taskTypeOrder.Count;
+            int currentToggleCount = taskItem.transform.childCount - 1;
+
+            if (currentToggleCount != neededCount)
+            {
+                this.SyncToggleColumns(taskItem, taskTypeOrder);
             }
         }
     }
