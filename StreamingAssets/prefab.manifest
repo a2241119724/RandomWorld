@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2126992931
+CRC: 2893381658
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: a496db54afb5f92ba71c55dc9e2af0a4
+    Hash: 929e0bb8cfa9e3be084f5ac0272c637b
   TypeTreeHash:
     serializedVersion: 2
     Hash: 2fc04c31a1cbd489a339ca2c5e0da118
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: a496db54afb5f92ba71c55dc9e2af0a4
+    Hash: 929e0bb8cfa9e3be084f5ac0272c637b
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -162,7 +162,7 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/ResourcesLocal/Prefabs/Character/Worker/Worker.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/BuildItem.prefab
-- Assets/ResourcesLocal/Prefabs/Character/Enemy/SeekEnemy_Lv1.prefab
+- Assets/ResourcesLocal/Prefabs/Character/Enemy/SeekEnemy.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/RoomItem.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Gun/SingleGun.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/WorkerBedItem.prefab
@@ -179,7 +179,7 @@ Assets:
 - Assets/ResourcesLocal/Prefabs/ItemBox/ArchiveItem.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/LocateWorkerItem.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Sword/CustomSword.prefab
-- Assets/ResourcesLocal/Prefabs/Character/Enemy/CommonEnemy_Lv1.prefab
+- Assets/ResourcesLocal/Prefabs/Character/Enemy/CommonEnemy.prefab
 - Assets/ResourcesLocal/Prefabs/Select.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Gun/BulletEffect.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Gun/TraceGun.prefab

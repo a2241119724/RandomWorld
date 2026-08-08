@@ -2,6 +2,7 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Constant;
     using LAB2D.Core;
     using LAB2D.Map;
     using LAB2D.Serializable;
@@ -128,7 +129,7 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>Shop 预制体 / Tile 资源名称</summary>
-        private const string ShopAssetName = "Shop";
+        private const string ShopAssetName = PrefabConstant.SHOP;
 
         /// <summary>
         /// 创建商店 NPC：Tilemap 放图标 + 预制体挂组件。

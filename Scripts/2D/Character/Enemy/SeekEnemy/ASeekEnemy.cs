@@ -2,6 +2,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy
 {
     using LAB2D;
     using LAB2D.Character.Enemy.SeekEnemy.State;
+    using LAB2D.Constant;
     using LAB2D.Core.Seek;
     using Photon.Pun;
     using UnityEngine;
@@ -48,7 +49,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         public override void Awake()
         {
             base.Awake();
-            this.CharacterDataLAB.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider("CustomSword");
+            this.CharacterDataLAB.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider(PrefabConstant.CUSTOM_SWORD);
             this.Seek = new AStar(this);
             this.Manager = new SeekEnemyStateManager<ICharacterState, ASeekEnemyState.TypeEnum, ASeekEnemy>(this);
         }

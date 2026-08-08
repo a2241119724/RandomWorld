@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Equipment.Weapon.Sword
 {
     using LAB2D;
+    using LAB2D.Constant;
     using System;
 
     /// <summary>
@@ -12,7 +13,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon.Sword
         protected override void Awake()
         {
             base.Awake();
-            this.name = "CustomSword";
+            this.name = PrefabConstant.CUSTOM_SWORD;
             this.attackInterval = 0.5f;
             this.attackEffect = AttackEffectManager.EffectTypeEnum.KnifeLight;
         }

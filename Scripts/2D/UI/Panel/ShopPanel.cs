@@ -2,6 +2,7 @@ namespace LAB2D.UI.Panel
 {
     using LAB2D;
     using LAB2D.Character.Player;
+    using LAB2D.Constant;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Core;
     using LAB2D.Data;
@@ -154,7 +155,7 @@ namespace LAB2D.UI.Panel
 
         private void CreateItemRow(Transform parent, ShopNPC.ShopItem item)
         {
-            GameObject go = Core.ServiceLocator.Get<ResourceManager>().Instantiate("BuyItem", parent, false);
+            GameObject go = Core.ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.BUY_ITEM, parent, false);
             if (go == null) return;
 
             string stockText = item.Stock < 0 ? "∞" : item.Stock.ToString();
@@ -181,7 +182,7 @@ namespace LAB2D.UI.Panel
 
         private void CreateSellRow(Transform parent, int itemId, string itemName, int count, int price)
         {
-            GameObject go = Core.ServiceLocator.Get<ResourceManager>().Instantiate("SellItem", parent, false);
+            GameObject go = Core.ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.SELL_ITEM, parent, false);
             if (go == null) return;
 
             SetChildText(go.transform, "Name", $"{itemName} ×{count}");

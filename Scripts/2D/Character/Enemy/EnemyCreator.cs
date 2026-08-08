@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Enemy
 {
     using LAB2D;
+    using LAB2D.Constant;
     using UnityEngine;
 
     /// <summary>
@@ -8,7 +9,7 @@ namespace LAB2D.Character.Enemy
     /// </summary>
     public class EnemyCreator : CharacterCreator<EnemyCreator>
     {
-        private string[] enemyNames = new string[] { "CommonEnemy_Lv1", "SeekEnemy_Lv1" };
+        private string[] enemyNames = new string[] { PrefabConstant.COMMON_ENEMY, PrefabConstant.SEEK_ENEMY };
 
         /// <summary>
         /// 实例化在玩家附近的敌人

@@ -4,6 +4,7 @@ namespace LAB2D.Character.Worker
     using LAB2D;
     using LAB2D.Character.Worker.State;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Constant;
     using LAB2D.Core.Seek;
     using LAB2D.Item;
     using LAB2D.Item.Build.Furniture.Bed;
@@ -105,7 +106,7 @@ namespace LAB2D.Character.Worker
             this.basicAttribute = new Attribute(1.0f, 1.0f, 1.0f, 1.0f, 0.05f, 1.0f, 1.0f, 1.0f);
             this.CharacterDataLAB = new WorkerData();
             this.CharacterDataLAB.Character = this;
-            this.CharacterDataLAB.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider("CustomSword");
+            this.CharacterDataLAB.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider(PrefabConstant.CUSTOM_SWORD);
             this.Manager = new WorkerStateManager<ICharacterState, AWorkerState.TypeEnum, AWorker>(this);
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();

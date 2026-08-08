@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Backpack.Equipment.Weapon.Gun
 {
     using LAB2D;
+    using LAB2D.Constant;
     using System;
 
     /// <summary>
@@ -13,7 +14,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon.Gun
         {
             base.Awake();
             this.attackInterval = 0.5f;
-            this.name = "SingleGun";
+            this.name = PrefabConstant.SINGLE_GUN;
             this.attackEffect = AttackEffectManager.EffectTypeEnum.Bullet;
         }
 
