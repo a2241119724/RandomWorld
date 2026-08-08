@@ -43,6 +43,8 @@ namespace LAB2D.Character.Worker.State
             bool skipFinalSeek = false;
             if (workerData.Task != null)
             {
+                // 有任务时隐藏内心独白
+                this.Character.HideDialogText();
                 // 有任务 → 寻路到任务位置
                 this.targetMap = Vector3IntLAB.ToVector3Int(workerData.Task.TargetMap);
                 float minDistance = 99999.0f;

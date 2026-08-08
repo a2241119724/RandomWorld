@@ -29,6 +29,7 @@ namespace LAB2D.Character.Worker.State
         public override void OnExit()
         {
             base.OnExit();
+            this.Character.HideDialogText();
         }
 
         /// <inheritdoc/>
@@ -36,13 +37,17 @@ namespace LAB2D.Character.Worker.State
         {
             base.OnUpdate();
             this.builder.Clear();
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             bool isTarget = this.Character.Seek.MoveByPath();
             if (isTarget)
             {
-                AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
                 if (workerData.Task == null)
                 {
                     this.recordTime += this.Character.DeltaTime;
+
+                    // 闲逛到达路点后短暂休息，显示内心独白
+                    this.Character.ShowRandomMonologue();
+
                     if (Time.frameCount % 60 == 0)
                     {
                         this.Character.WorkerStateText.text = this.builder.Append("休息: ")
@@ -61,11 +66,22 @@ namespace LAB2D.Character.Worker.State
                 }
                 else
                 {
-                    // 有任务就进入工作状态
+                    // 有任务就进入工作状态，隐藏内心独白
+                    this.Character.HideDialogText();
                     this.Character.Manager.ChangeState(TypeEnum.Work);
                 }
 
                 return;
+            }
+
+            // 移动中：无任务时显示内心独白
+            if (workerData.Task == null)
+            {
+                this.Character.ShowRandomMonologue();
+            }
+            else
+            {
+                this.Character.HideDialogText();
             }
 
             if (Time.frameCount % 60 == 0)

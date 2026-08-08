@@ -66,6 +66,9 @@ namespace LAB2D.Character.Worker
         private Dictionary<int, ResourceInfo> resourceInfos; // 携带的资源
         private Slider progress;
         private Text nameUI;
+        private Text dialogText; // Dialog/Text — 内心独白
+        private float dialogTextTimer; // 独白切换计时器
+        private float dialogTextSwitchInterval = 5.0f; // 下次切换独白的间隔
         private CharacterStatusUI statusBar; // 记录实例化血条
         private int dialoguePauseCount;
 
@@ -105,6 +108,19 @@ namespace LAB2D.Character.Worker
             this.Manager = new WorkerStateManager<ICharacterState, AWorkerState.TypeEnum, AWorker>(this);
             this.nameUI = this.transform.Find("Name").GetComponent<Text>();
             this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
+            Transform dialogTrans = this.transform.Find("Dialog");
+            if (dialogTrans != null)
+            {
+                Transform textTrans = dialogTrans.Find("Text");
+                if (textTrans != null)
+                {
+                    this.dialogText = textTrans.GetComponent<Text>();
+                    if (this.dialogText != null)
+                    {
+                        this.dialogText.gameObject.SetActive(false);
+                    }
+                }
+            }
             this.progress = this.transform.Find("Progress").GetComponent<Slider>();
             this.progress.gameObject.SetActive(false);
             this.resourceInfos = new Dictionary<int, ResourceInfo>();
@@ -198,6 +214,51 @@ namespace LAB2D.Character.Worker
         {
             this.progress.value = value;
             this.progress.gameObject.SetActive(enable);
+        }
+
+        /// <summary>
+        /// 显示随机内心独白（闲逛漫游时调用）。
+        /// 根据 Worker 当前状态选择合适的独白内容。
+        /// </summary>
+        public void ShowRandomMonologue()
+        {
+            if (this.dialogText == null)
+            {
+                return;
+            }
+
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            if (wd == null)
+            {
+                return;
+            }
+
+            // 每隔一定时间切换独白（使用 deltaTime 累计）
+            this.dialogTextTimer += this.DeltaTime;
+            if (this.dialogTextTimer < this.dialogTextSwitchInterval && this.dialogText.gameObject.activeSelf)
+            {
+                return;
+            }
+
+            this.dialogTextTimer = 0f;
+            this.dialogTextSwitchInterval = UnityEngine.Random.Range(4.0f, 8.0f);
+            this.dialogText.text = Constant.WorkerInnerMonologue.GetRandom(
+                wd.CurHungry, wd.MaxHungry,
+                wd.CurTired, wd.MaxTired,
+                wd.CurSpirit, wd.MaxSpirit);
+            this.dialogText.gameObject.SetActive(true);
+        }
+
+        /// <summary>
+        /// 隐藏内心独白（Worker 获得任务或进入非漫游状态时调用）。
+        /// </summary>
+        public void HideDialogText()
+        {
+            if (this.dialogText != null)
+            {
+                this.dialogText.gameObject.SetActive(false);
+                this.dialogTextTimer = 0f;
+            }
         }
 
         /// <summary>
