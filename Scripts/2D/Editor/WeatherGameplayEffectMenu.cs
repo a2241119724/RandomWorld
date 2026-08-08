@@ -11,7 +11,7 @@ namespace LAB2D.Editor
     public static class WeatherGameplayEffectMenu
     {
         private const string MenuRoot = "工具/天气玩法影响/";
-        private const string HudRootName = "WeatherGameplayHUDRoot";
+        private const string HudRootName = "WeatherGameplayHUD";
         private const string HudTextName = "WeatherText";
 
         /// <summary>

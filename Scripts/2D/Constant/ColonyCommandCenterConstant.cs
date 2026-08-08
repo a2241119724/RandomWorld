@@ -36,7 +36,7 @@ namespace LAB2D.Constant
         /// 指挥中心 HUD 根节点名。
         /// 挂载在 UIRoot/Foreground 下，复用已有 UI Canvas。
         /// </summary>
-        public const string HudRootName = "ColonyCommandCenterHUDRoot";
+        public const string HudRootName = "ColonyCommandCenterHUD";
 
         /// <summary>
         /// HUD 背景节点名。

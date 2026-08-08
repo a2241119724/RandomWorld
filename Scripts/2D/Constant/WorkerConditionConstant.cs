@@ -139,7 +139,7 @@ namespace LAB2D.Constant
         /// <summary>
         /// 工人状态 HUD 根节点名。
         /// </summary>
-        public const string HudRootName = "WorkerConditionHUDRoot";
+        public const string HudRootName = "WorkerConditionHUD";
 
         /// <summary>
         /// 工人状态 HUD 文本节点名。

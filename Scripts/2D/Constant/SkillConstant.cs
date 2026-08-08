@@ -117,7 +117,7 @@ namespace LAB2D.Constant
         public const string SkillCanvasName = "SkillHUDCanvas";
 
         /// <summary>技能HUD根节点名称</summary>
-        public const string SkillHUDRootName = "SkillHUDRoot";
+        public const string SkillHUDRootName = "SkillHUD";
 
         /// <summary>技能按钮前缀</summary>
         public const string SkillButtonPrefix = "SkillButton";

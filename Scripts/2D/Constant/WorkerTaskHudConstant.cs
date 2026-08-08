@@ -35,7 +35,7 @@ namespace LAB2D.Constant
         /// <summary>
         /// 任务队列 HUD 根节点名。
         /// </summary>
-        public const string HudRootName = "WorkerTaskQueueHUDRoot";
+        public const string HudRootName = "WorkerTaskQueueHUD";
 
         /// <summary>
         /// 任务队列 HUD 文本节点名。

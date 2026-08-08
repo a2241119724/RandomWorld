@@ -6135,7 +6135,7 @@ GameObject:
   - component: {fileID: 341177388}
   - component: {fileID: 341177387}
   m_Layer: 0
-  m_Name: WorkerConditionHUDRoot
+  m_Name: WorkerConditionHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -12157,7 +12157,7 @@ GameObject:
   - component: {fileID: 399319969}
   - component: {fileID: 399319968}
   m_Layer: 0
-  m_Name: AchievementPanelRoot
+  m_Name: AchievementPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -20161,7 +20161,7 @@ GameObject:
   - component: {fileID: 797631445}
   - component: {fileID: 797631444}
   m_Layer: 5
-  m_Name: leftchatitem
+  m_Name: LeftChatItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 15862784
@@ -20959,7 +20959,7 @@ GameObject:
   - component: {fileID: 846117239}
   - component: {fileID: 846117238}
   m_Layer: 0
-  m_Name: NearbyItemPickupPanelRoot
+  m_Name: NearbyItemPickupPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -24598,7 +24598,7 @@ GameObject:
   - component: {fileID: 1040815985}
   - component: {fileID: 1040815984}
   m_Layer: 0
-  m_Name: AchievementPopupRoot
+  m_Name: AchievementPopup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25707,7 +25707,7 @@ GameObject:
   - component: {fileID: 1118208783}
   - component: {fileID: 1118208782}
   m_Layer: 0
-  m_Name: WeatherGameplayHUDRoot
+  m_Name: WeatherGameplayHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -26387,7 +26387,7 @@ GameObject:
   - component: {fileID: 1176197735}
   - component: {fileID: 1176197734}
   m_Layer: 0
-  m_Name: WorkerTaskQueueHUDRoot
+  m_Name: WorkerTaskQueueHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27522,7 +27522,7 @@ GameObject:
   - component: {fileID: 1248237043}
   - component: {fileID: 1248237044}
   m_Layer: 0
-  m_Name: NearbyItemPickupCanvas
+  m_Name: NearbyItemPickupUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29091,7 +29091,7 @@ GameObject:
   - component: {fileID: 1316141411}
   - component: {fileID: 1316141410}
   m_Layer: 0
-  m_Name: ColonyCommandCenterHUDRoot
+  m_Name: ColonyCommandCenterHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29432,7 +29432,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1341264672}
   m_Layer: 0
-  m_Name: EquipmentBeamRoot
+  m_Name: EquipmentBeam
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -38189,7 +38189,7 @@ GameObject:
   - component: {fileID: 1558969078}
   - component: {fileID: 1558969077}
   m_Layer: 0
-  m_Name: FloatingTextCanvas
+  m_Name: FloatingTextUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -39460,7 +39460,7 @@ GameObject:
   - component: {fileID: 1613280277}
   - component: {fileID: 1613280276}
   m_Layer: 0
-  m_Name: SkillHUDRoot
+  m_Name: SkillHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46449,7 +46449,7 @@ GameObject:
   - component: {fileID: 1955388641}
   - component: {fileID: 1955388640}
   m_Layer: 0
-  m_Name: WorkerSupplyHUDRoot
+  m_Name: WorkerSupplyHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -51422,7 +51422,7 @@ GameObject:
   - component: {fileID: 900100000000000011}
   - component: {fileID: 900100000000000012}
   m_Layer: 5
-  m_Name: ExperienceHub
+  m_Name: ExperiencePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -51477,7 +51477,7 @@ GameObject:
   - component: {fileID: 900100000000000021}
   - component: {fileID: 900100000000000022}
   m_Layer: 5
-  m_Name: HUD_Root
+  m_Name: ExperienceHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -62816,7 +62816,7 @@ GameObject:
   - component: {fileID: 6430007892838496107}
   - component: {fileID: 3848388863922727277}
   m_Layer: 5
-  m_Name: TaskBoardHUDRoot
+  m_Name: TaskBoardHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

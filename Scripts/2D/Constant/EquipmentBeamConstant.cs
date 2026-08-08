@@ -99,7 +99,7 @@ namespace LAB2D.Constant
         public const int BeamSortingOrder = 50;
 
         /// <summary>光束 GameObject 容器名</summary>
-        public const string BeamContainerName = "EquipmentBeamRoot";
+        public const string BeamContainerName = "EquipmentBeam";
 
         /// <summary>光束对象名前缀</summary>
         public const string BeamObjectPrefix = "EquipmentBeam";

@@ -114,7 +114,7 @@ namespace LAB2D.Constant
         // =============================================================================================================
 
         /// <summary>浮动文字 Canvas 名称</summary>
-        public const string CanvasName = "FloatingTextCanvas";
+        public const string CanvasName = "FloatingTextUI";
 
         /// <summary>浮动文字根节点名称</summary>
         public const string RootName = "FloatingTextRoot";

@@ -46,7 +46,7 @@ namespace LAB2D.Constant
         /// <summary>
         /// 工人补给缺口 HUD 根节点名。
         /// </summary>
-        public const string HudRootName = "WorkerSupplyHUDRoot";
+        public const string HudRootName = "WorkerSupplyHUD";
 
         /// <summary>
         /// 工人补给缺口 HUD 文本节点名。

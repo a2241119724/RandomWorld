@@ -18,7 +18,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
     [DisallowMultipleComponent]
     public class AmbitiousExperienceHub : MonoBehaviour
     {
-        private const string HudRootName = "HUD_Root";
+        private const string HudRootName = "ExperienceHUD";
         private const string ResultPanelName = "ResultPanel";
         private const string WaveTextName = "WaveText";
         private const string ScoreTextName = "ScoreText";

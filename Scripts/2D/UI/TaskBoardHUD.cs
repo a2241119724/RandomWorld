@@ -21,7 +21,7 @@ namespace LAB2D.UI
         private Text boardText;
         private float nextRefreshTime;
         private const float RefreshInterval = 0.5f;
-        private const string HudRootName = "TaskBoardHUDRoot";
+        private const string HudRootName = "TaskBoardHUD";
         private const string HudTextName = "TaskBoardText";
 
         public KeyCode toggleKey = InputKeyConstant.ToggleTaskBoardHud;
