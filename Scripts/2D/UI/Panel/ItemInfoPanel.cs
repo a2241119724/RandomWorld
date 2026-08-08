@@ -9,7 +9,7 @@ namespace LAB2D.UI.Panel
     using UnityEngine.UI;
 
     /// <summary>
-    /// 物品信心面板
+    /// 物品信息面板
     /// </summary>
     public class ItemInfoPanel : ABasePanel<ItemInfoPanel>
     {

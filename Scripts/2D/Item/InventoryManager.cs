@@ -771,33 +771,34 @@ namespace LAB2D.Item
                 if (itemData != null)
                 {
                     string ownerLabel = this.GetOwnerLabel(pos);
-                    text = $"id:{resourceInfo.Id}\n" +
-                        $"name:{itemData.CnName}\n" +
-                        $"type:{itemData.Type}\n" +
-                        $"count:{resourceInfo.Count}\n" +
-                        $"owner:{ownerLabel}\n" +
-                        $"info:{itemData.Info}\n" +
-                        $"isStackable:{itemData.IsStackable}\n";
+                    text = $"ID:{resourceInfo.Id}\n" +
+                        $"名称:{itemData.CnName}\n" +
+                        $"英文名:{itemData.EnName}\n" +
+                        $"类型:{itemData.Type}\n" +
+                        $"数量:{resourceInfo.Count}\n" +
+                        $"拥有者:{ownerLabel}\n" +
+                        $"信息:{itemData.Info}\n" +
+                        $"可堆叠:{itemData.IsStackable}\n";
 
                     AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(resourceInfo.Id);
                     if (itemType == AItem.ItemTypeEnum.Weapon || itemType == AItem.ItemTypeEnum.Equipment)
                     {
-                        text += $"equipSlot:{itemData.EquipSlot}\n";
+                        text += $"装备槽位:{itemData.EquipSlot}\n";
                     }
                 }
                 else
                 {
-                    text = $"id:{resourceInfo.Id}\n" +
-                        $"count:{resourceInfo.Count}\n";
+                    text = $"ID:{resourceInfo.Id}\n" +
+                        $"数量:{resourceInfo.Count}\n";
                 }
             }
             else
             {
-                text = $"id:{resourceInfo.Id}\n" +
-                    $"count:{resourceInfo.Count}\n";
+                text = $"ID:{resourceInfo.Id}\n" +
+                    $"数量:{resourceInfo.Count}\n";
             }
 
-            text += $"prePlace:\n";
+            text += $"预放置:\n";
             foreach (KeyValuePair<int, Dictionary<Vector3Int, ResourceInfo>> prePlace in this.prePlaceResource)
             {
                 if (prePlace.Value.ContainsKey(pos))
@@ -807,7 +808,7 @@ namespace LAB2D.Item
                 }
             }
 
-            text += "preTake:\n";
+            text += "预取:\n";
             foreach (KeyValuePair<int, Dictionary<Vector3Int, ResourceInfo>> preTake in this.preTakeResource)
             {
                 if (preTake.Value.ContainsKey(pos))

@@ -149,7 +149,7 @@ namespace LAB2D.Item
         }
 
         /// <summary>
-        /// 凋落物管理信息（含所有权）。
+        /// 掉落物管理信息（含所有权）。
         /// </summary>
         /// <param name="posMap">位置</param>
         /// <returns>信息</returns>
@@ -162,19 +162,25 @@ namespace LAB2D.Item
                 ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(resourceInfo.Id);
                 if (itemData != null)
                 {
-                    text += $"id:{resourceInfo.Id}\n" +
-                        $"name:{itemData.CnName}\n" +
-                        $"type:{itemData.Type}\n" +
-                        $"count:{resourceInfo.Count}\n" +
-                        $"owner:{Domain.Worker.ItemOwnershipService.GetOwnerLabel(resourceInfo)}\n" +
-                        $"info:{itemData.Info}\n" +
-                        $"isStackable:{itemData.IsStackable}\n";
+                    text += $"ID:{resourceInfo.Id}\n" +
+                        $"名称:{itemData.CnName}\n" +
+                        $"英文名:{itemData.EnName}\n" +
+                        $"类型:{itemData.Type}\n" +
+                        $"数量:{resourceInfo.Count}\n" +
+                        $"拥有者:{Domain.Worker.ItemOwnershipService.GetOwnerLabel(resourceInfo)}\n" +
+                        $"信息:{itemData.Info}\n" +
+                        $"可堆叠:{itemData.IsStackable}\n";
+
+                    if (itemData.Type == AItem.ItemTypeEnum.Weapon || itemData.Type == AItem.ItemTypeEnum.Equipment)
+                    {
+                        text += $"装备槽位:{itemData.EquipSlot}\n";
+                    }
                 }
                 else
                 {
-                    text += $"id:{resourceInfo.Id}\n" +
-                        $"count:{resourceInfo.Count}\n" +
-                        $"owner:{Domain.Worker.ItemOwnershipService.GetOwnerLabel(resourceInfo)}\n";
+                    text += $"ID:{resourceInfo.Id}\n" +
+                        $"数量:{resourceInfo.Count}\n" +
+                        $"拥有者:{Domain.Worker.ItemOwnershipService.GetOwnerLabel(resourceInfo)}\n";
                 }
             }
 
