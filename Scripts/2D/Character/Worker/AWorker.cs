@@ -16,6 +16,8 @@ namespace LAB2D.Character.Worker
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
+    using LAB2D.Data;
+    using LAB2D.Domain.Common;
 
     /// <summary>
     /// Worker
@@ -66,6 +68,11 @@ namespace LAB2D.Character.Worker
             = (msg, level) => ServiceLocator.Get<LogManager>().Log(msg, level);
 
         private Dictionary<int, ResourceInfo> resourceInfos; // 携带的资源
+        private float lastPotionUseTime = float.MinValue;
+        private const float PotionCooldownSeconds = 3.0f;
+        private const float LowHpThreshold = 0.3f;
+        private const float HealAmount = 10.0f;
+        private static int? cachedAddHpItemId;
         private Slider progress;
         private Text nameUI;
         private Text dialogText; // Dialog/Text — 内心独白
@@ -190,8 +197,16 @@ namespace LAB2D.Character.Worker
                 return;
             }
 
-            // 执行当前状态的函数
+            // 执行当前状态的函数（状态可能在 OnUpdate 中切换）
+            AWorkerState.TypeEnum stateBefore = this.Manager.CurrentStateType;
             this.Manager.CurrentState.OnUpdate();
+
+            // 脱离战斗时尝试使用血瓶
+            if (stateBefore == AWorkerState.TypeEnum.Attack
+                && this.Manager.CurrentStateType != AWorkerState.TypeEnum.Attack)
+            {
+                this.TryConsumeHealthPotion();
+            }
 
             // 每 60 帧更新人格：饥饿/疲劳/精气神导致心情下降
             if (Time.frameCount % 60 == 0)
@@ -214,6 +229,15 @@ namespace LAB2D.Character.Worker
                             wd.Personality.Diligence,
                             wd.Personality.Sociality);
                     }
+                }
+
+                // 检查血量是否过低，尝试使用血瓶
+                float hpRatio = this.CharacterDataLAB.MaxHp > 0f
+                    ? this.CharacterDataLAB.Hp / this.CharacterDataLAB.MaxHp
+                    : 1f;
+                if (hpRatio > 0f && hpRatio < LowHpThreshold)
+                {
+                    this.TryConsumeHealthPotion();
                 }
             }
         }
@@ -652,14 +676,124 @@ namespace LAB2D.Character.Worker
 
             base.ReduceHp(hp, attacker, isCRT);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
-            if (this.Manager.CurrentStateType != AWorkerState.TypeEnum.Attack)
+
+            // 仅存活时切换状态（防止覆盖 Dead 状态）
+            if (this.CharacterDataLAB.Hp > 0f)
             {
-                this.Manager.ChangeState(AWorkerState.TypeEnum.Attack);
+                if (this.Manager.CurrentStateType != AWorkerState.TypeEnum.Attack)
+                {
+                    this.Manager.ChangeState(AWorkerState.TypeEnum.Attack);
+                }
+                else
+                {
+                    this.Manager.CurrentState.Reset();
+                }
             }
-            else
+        }
+
+        /// <summary>
+        /// 获取 AddHp 血瓶的物品 ID（静态懒加载缓存）。
+        /// </summary>
+        /// <returns>物品 ID，失败返回 -1</returns>
+        private static int GetAddHpItemId()
+        {
+            if (!cachedAddHpItemId.HasValue)
             {
-                this.Manager.CurrentState.Reset();
+                ItemData itemData = ServiceLocator.Get<ItemDataManager>().GetByName("AddHp");
+                cachedAddHpItemId = (itemData != null && itemData != ItemData.Empty)
+                    ? itemData.Id
+                    : -1;
             }
+
+            return cachedAddHpItemId.Value;
+        }
+
+        /// <summary>
+        /// 给 Worker 加血，使用 CharacterHealthComponent 统一处理回血逻辑。
+        /// </summary>
+        /// <param name="hp">回复的血量</param>
+        private void AddHp(float hp)
+        {
+            CharacterRuntimeState state = CharacterRuntimeState.FromCharacterData(
+                this.CharacterDataLAB.Hp,
+                this.CharacterDataLAB.MaxHp,
+                this.CharacterDataLAB.Mp,
+                this.CharacterDataLAB.MaxMp,
+                this.CharacterDataLAB.Level,
+                this.CharacterDataLAB.CurExperience,
+                this.CharacterDataLAB.MaxExperience);
+            CharacterRuntimeState newState = this.healthComponent.ApplyHealingToState(state, hp);
+            this.CharacterDataLAB.Hp = newState.Hp;
+            this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+        }
+
+        /// <summary>
+        /// 尝试消耗一个血瓶回血。
+        /// 优先消耗身上携带的，身上没有再消耗个人仓库的。
+        /// 受冷却时间限制，HP 已满或已死亡时跳过。
+        /// </summary>
+        /// <returns>是否成功使用了血瓶</returns>
+        private bool TryConsumeHealthPotion()
+        {
+            // HP 已满，不浪费血瓶
+            if (this.CharacterDataLAB.Hp >= this.CharacterDataLAB.MaxHp)
+            {
+                return false;
+            }
+
+            // 已死亡，跳过
+            if (this.CharacterDataLAB.Hp <= 0f)
+            {
+                return false;
+            }
+
+            // 冷却检查
+            float now = this.gameTime.Time;
+            if (now - this.lastPotionUseTime < PotionCooldownSeconds)
+            {
+                return false;
+            }
+
+            // 获取血瓶物品 ID
+            int itemId = GetAddHpItemId();
+            if (itemId < 0)
+            {
+                return false;
+            }
+
+            bool consumed = false;
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+
+            // 优先从身上携带的资源中消耗
+            if (this.resourceInfos.TryGetValue(itemId, out ResourceInfo carried)
+                && carried.Count > 0)
+            {
+                this.SubResource(new ResourceInfo(itemId, 1, carried.OwnerId));
+                consumed = true;
+            }
+            // 身上没有则从个人仓库中消耗
+            else if (wd?.Storage != null
+                && wd.Storage.TryGetValue(itemId, out ResourceInfo stored)
+                && stored.Count > 0)
+            {
+                stored.Count -= 1;
+                if (stored.Count <= 0)
+                {
+                    wd.Storage.Remove(itemId);
+                }
+
+                consumed = true;
+            }
+
+            if (!consumed)
+            {
+                return false;
+            }
+
+            // 应用回血
+            this.AddHp(HealAmount);
+            this.lastPotionUseTime = now;
+            return true;
         }
 
         /// <inheritdoc/>
