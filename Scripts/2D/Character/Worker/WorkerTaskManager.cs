@@ -454,6 +454,12 @@ namespace LAB2D.Character.Worker
                     continue;
                 }
 
+                // 位置属于某 Worker 的规划房间区域（预注册的 Self-Build 墙壁）→ 跳过
+                if (this.IsPartOfWorkerPlannedRoom(pos))
+                {
+                    continue;
+                }
+
                 // 无任务覆盖 → 重新创建建造任务
                 Dictionary<int, ResourceInfo> buildCosts = BuildMap.GetBuildCost(tileData.Name);
                 if (buildCosts == null || buildCosts.Count == 0)
@@ -511,6 +517,41 @@ namespace LAB2D.Character.Worker
                 {
                     return true;
                 }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 检查指定位置是否属于某 Worker 的规划房间区域（预注册的 Self-Build 墙壁/门/床）。
+        /// 若属于规划房间，则该位置由 Worker 自行建造，不应创建全局任务。
+        /// </summary>
+        private bool IsPartOfWorkerPlannedRoom(Vector3Int pos)
+        {
+            List<AWorker> workers = WorkerListProvider();
+            var wallOffsets = LAB2D.AI.Worker.WorkerBrain.GetWallOffsets();
+            var doorOffset = LAB2D.AI.Worker.WorkerBrain.DoorOffset;
+            int wallCount = LAB2D.AI.Worker.WorkerBrain.WallCount;
+
+            foreach (AWorker worker in workers)
+            {
+                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd?.PlannedHomePosition == null) continue;
+                if (wd.HomeBuildStage >= LAB2D.AI.Worker.WorkerBrain.CompleteStage) continue;
+
+                Vector3Int center = LAB2D.Serializable.Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+
+                // 检查是否匹配墙壁位置
+                for (int i = 0; i < wallCount; i++)
+                {
+                    if (pos == center + wallOffsets[i]) return true;
+                }
+
+                // 检查是否匹配门位置
+                if (pos == center + doorOffset) return true;
+
+                // 检查是否匹配床位置（房间中心）
+                if (pos == center) return true;
             }
 
             return false;

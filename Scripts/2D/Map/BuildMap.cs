@@ -298,6 +298,12 @@ namespace LAB2D.Map
                 return true;
             }
 
+            // 未建造完成的瓦片（预注册/建造中）一律可通行，因为碰撞体已被移除
+            if (!buildTileData.IsComplete)
+            {
+                return true;
+            }
+
             try
             {
                 BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);

@@ -1308,19 +1308,30 @@ namespace LAB2D.AI.Worker
                             return null;
                         }
 
-                        // 被其他 Worker 注册但未完成 → 冲突，重新选址
+                        // 已在 BuildMap 中但未完成 → 可能是自己预注册的，或被他人占用
                         if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var registeredTile)
                             && !registeredTile.IsComplete)
                         {
-                            AWorkerTask.LogProvider(
-                                $"{worker.name} 建家位置被其他Worker占用(stage={wd.HomeBuildStage}), 重新选址: pos=({buildPos.Value.x},{buildPos.Value.y})",
-                                LogManager.LogLevelEnum.Warning);
-                            this.ClearAbandonedBuildTiles(wd);
-                            wd.PlannedHomePosition = null;
-                            wd.HomeBuildStage = 0;
-                            this.TryPickHomeSite(worker);
-                            return Decision.Make(WorkerDecisionType.Wander,
-                                "建家位置冲突, 重新选址后漫游");
+                            // BuilderName 为空 → 自己或他人的预注册，跳过冲突检测（预注册就是为了占据位置）
+                            if (string.IsNullOrEmpty(registeredTile.BuilderName))
+                            {
+                                AWorkerTask.LogProvider(
+                                    $"{worker.name} 建造位置已有预注册(自己/他人), 继续建造: pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                    LogManager.LogLevelEnum.Trace);
+                                // 继续正常流程，不视为冲突
+                            }
+                            else
+                            {
+                                AWorkerTask.LogProvider(
+                                    $"{worker.name} 建家位置被其他Worker占用(stage={wd.HomeBuildStage}), 重新选址: pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                    LogManager.LogLevelEnum.Warning);
+                                this.ClearAbandonedBuildTiles(wd);
+                                wd.PlannedHomePosition = null;
+                                wd.HomeBuildStage = 0;
+                                this.TryPickHomeSite(worker);
+                                return Decision.Make(WorkerDecisionType.Wander,
+                                    "建家位置冲突, 重新选址后漫游");
+                            }
                         }
                     }
 
@@ -1594,6 +1605,15 @@ namespace LAB2D.AI.Worker
                         // 已完成 → 可接受（可能是其他 Worker 建的公共墙）
                         AWorkerTask.LogProvider(
                             $"{worker.name} 预注册: 位置已完成, 跳过 {tileName} pos=({pos.x},{pos.y})",
+                            LogManager.LogLevelEnum.Debug);
+                        continue;
+                    }
+
+                    // 未完成且 BuilderName 为空 → 是之前预注册的残留（如 Gather 资源后重新进入此阶段），跳过
+                    if (string.IsNullOrEmpty(existing.BuilderName))
+                    {
+                        AWorkerTask.LogProvider(
+                            $"{worker.name} 预注册: 位置已有预注册, 跳过 {tileName} pos=({pos.x},{pos.y})",
                             LogManager.LogLevelEnum.Debug);
                         continue;
                     }

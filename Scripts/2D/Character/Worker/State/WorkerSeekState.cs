@@ -1088,7 +1088,8 @@ namespace LAB2D.Character.Worker.State
 
         /// <summary>
         /// 无家者建造任务创建后推进建家阶段。
-        /// 阶段 0-6：墙壁，阶段 7：床，阶段 8：完成。
+        /// 阶段 0-14：墙壁，阶段 15：门，阶段 16：床，阶段 17：完成。
+        /// 墙壁和门建完后立即注册房间，之后再建床。
         /// </summary>
         private void AdvanceHomeBuildStage(AWorker.WorkerData wd, string buildTileName)
         {
@@ -1113,8 +1114,10 @@ namespace LAB2D.Character.Worker.State
             }
             else if (buildTileName == "CustomDoor")
             {
+                // 墙壁和门建完 → 立即注册为房间，之后再建床
+                this.RegisterWorkerRoom(wd);
                 AWorkerTask.LogProvider(
-                    $"{this.Character.name} 建家: 门完成 → 接下来建床",
+                    $"{this.Character.name} 建家: 门完成 → 房间已注册 → 接下来建床",
                     LogManager.LogLevelEnum.Debug);
             }
             else if (buildTileName == "SingleBed")
@@ -1124,9 +1127,6 @@ namespace LAB2D.Character.Worker.State
                 AWorkerTask.LogProvider(
                     $"{this.Character.name} 建家: 床完成 → 有家了! → Settled 阶段",
                     LogManager.LogLevelEnum.Info);
-
-                // 将房间注册到 RoomManager（所有墙壁和门已建完）
-                this.RegisterWorkerRoom(wd);
 
                 // 自动绑定床到当前 Worker（床位置 = 房间中心 = PlannedHomePosition）
                 if (wd.PlannedHomePosition != null)
@@ -1143,7 +1143,8 @@ namespace LAB2D.Character.Worker.State
         }
 
         /// <summary>
-        /// 建家完成后，将所有墙壁和门注册到 RoomManager。
+        /// 墙壁和门建完后，将所有墙壁和门位置注册到 RoomManager 形成房间。
+        /// 注册后 Worker 可以继续在房间内建床。
         /// </summary>
         private void RegisterWorkerRoom(AWorker.WorkerData wd)
         {
