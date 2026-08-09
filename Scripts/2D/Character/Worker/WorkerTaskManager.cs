@@ -3,6 +3,7 @@ namespace LAB2D.Character.Worker
     using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Constant;
     using LAB2D.Core.KDTree;
     using LAB2D.Core.Seek;
     using LAB2D.Gameplay;
@@ -194,6 +195,43 @@ namespace LAB2D.Character.Worker
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 尝试将玩家悬赏任务（优先级 0）分配给指定 Worker。
+        /// WorkerSeekState 在自主决策前调用，确保玩家任务优先于 Worker 自我任务。
+        /// </summary>
+        /// <param name="worker">目标 Worker</param>
+        /// <returns>成功分配返回 true</returns>
+        public bool TryAssignPlayerTask(AWorker worker)
+        {
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+            if (workerData == null || workerData.Task != null)
+            {
+                return false;
+            }
+
+            WorkerAgentSnapshot snapshot = this.CreateWorkerSnapshot(worker, true);
+            IReadOnlyList<WorkerTaskSnapshot<AWorkerTask>> tasks = this.CreateTaskSnapshots(
+                WorkerTaskPriority.PlayerBounty, worker);
+
+            WorkerTaskAssignmentResult<AWorkerTask> result =
+                this.assignmentService.SelectTask(snapshot, tasks);
+
+            if (result.HasTask)
+            {
+                workerData.Task = result.Task;
+                result.Task.Start(worker);
+                if (workerData.Task == result.Task)
+                {
+                    this.taskQueue.MarkRunning(result.Task);
+                }
+
+                EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+                return true;
+            }
+
+            return false;
         }
 
         private WorkerAgentSnapshot CreateWorkerSnapshot(AWorker worker, bool isIdle)

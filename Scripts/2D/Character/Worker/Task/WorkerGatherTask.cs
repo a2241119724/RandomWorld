@@ -1,5 +1,6 @@
 namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D.Constant;
     using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Item;
@@ -175,7 +176,7 @@ namespace LAB2D.Character.Worker.Task
             TaskAddProvider(
                 carryToBoard,
                 new GameGridPosition(placePos.x, placePos.y, placePos.z),
-                1); // 高优先级
+                WorkerTaskPriority.WorkerBounty); // 高优先级：悬赏掉落搬运
 
             LogProvider(
                 $"[BountyDrop] Worker 悬赏掉落物放置: pos=({placePos.x},{placePos.y}) → 创建 CarryTask(ToBoard)",

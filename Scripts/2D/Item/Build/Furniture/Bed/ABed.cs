@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Build.Furniture.Bed
 {
     using LAB2D;
+    using LAB2D.Constant;
     using LAB2D.Core;
     using System;
     using UnityEngine;
@@ -17,9 +18,9 @@ namespace LAB2D.Item.Build.Furniture.Bed
         }
 
         /// <inheritdoc/>
-        public override void AddBuildTask(Vector3Int centerMap, Extra extra)
+        public override void AddBuildTask(Vector3Int centerMap, Extra extra, int priority = WorkerTaskPriority.SystemDefault)
         {
-            base.AddBuildTask(centerMap, extra);
+            base.AddBuildTask(centerMap, extra, priority);
 
             // 添加到家具管理器
             ServiceLocator.Get<FurnitureManager>().AddBed(centerMap);

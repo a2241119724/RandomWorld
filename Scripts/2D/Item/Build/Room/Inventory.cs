@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Build.Room
 {
     using LAB2D;
+    using LAB2D.Constant;
     using LAB2D.Core;
     using System;
     using System.Collections.Generic;
@@ -30,7 +31,7 @@ namespace LAB2D.Item.Build.Room
         }
 
         /// <inheritdoc/>
-        public override void AddBuildTask(Vector3Int centerMap, Extra extra)
+        public override void AddBuildTask(Vector3Int centerMap, Extra extra, int priority = WorkerTaskPriority.SystemDefault)
         {
             int[] boundary = this.GetBoundary(centerMap, extra);
             int width = boundary[3] - boundary[2] + 1;
@@ -42,22 +43,22 @@ namespace LAB2D.Item.Build.Room
 
             for (int i = 1; i < width - 1; i++)
             {
-                Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.WallTiles[WallDirectionEnum.DOWN])
-                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.WallTiles[WallDirectionEnum.TOP]);
+                Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(boundary[0], boundary[2] + i, 0), this.WallTiles[WallDirectionEnum.DOWN], priority)
+                    .AddBuild(new Vector3Int(boundary[1], boundary[2] + i, 0), this.WallTiles[WallDirectionEnum.TOP], priority);
             }
 
             for (int i = 1; i < height - 1; i++)
             {
-                Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT])
-                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT]);
+                Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(boundary[0] + i, boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT], priority)
+                    .AddBuild(new Vector3Int(boundary[0] + i, boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT], priority);
             }
 
             // 四角
             Core.ServiceLocator.Get<Map.BuildMap>()
-                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT_DOWN])
-                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT_DOWN])
-                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT_TOP])
-                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT_TOP]);
+                .AddBuild(new Vector3Int(boundary[0], boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT_DOWN], priority)
+                .AddBuild(new Vector3Int(boundary[0], boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT_DOWN], priority)
+                .AddBuild(new Vector3Int(boundary[1], boundary[3], 0), this.WallTiles[WallDirectionEnum.RIGHT_TOP], priority)
+                .AddBuild(new Vector3Int(boundary[1], boundary[2], 0), this.WallTiles[WallDirectionEnum.LEFT_TOP], priority);
 
             // 添加仓库Cell
             ServiceLocator.Get<InventoryManager>().AddCells(new Vector3Int(boundary[0], boundary[2]), width, height);

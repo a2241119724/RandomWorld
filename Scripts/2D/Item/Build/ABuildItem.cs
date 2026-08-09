@@ -2,6 +2,7 @@ namespace LAB2D.Item.Build
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Constant;
     using System;
     using UnityEngine;
 
@@ -90,9 +91,10 @@ namespace LAB2D.Item.Build
         /// </summary>
         /// <param name="centerMap">位置</param>
         /// <param name="extra">额外信息</param>
-        public virtual void AddBuildTask(Vector3Int centerMap, Extra extra)
+        /// <param name="priority">任务优先级，默认系统默认</param>
+        public virtual void AddBuildTask(Vector3Int centerMap, Extra extra, int priority = WorkerTaskPriority.SystemDefault)
         {
-            Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(centerMap, this.TileName);
+            Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(centerMap, this.TileName, priority);
         }
 
         public class Extra

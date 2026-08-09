@@ -3,6 +3,7 @@ namespace LAB2D.Gameplay
     using LAB2D;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Constant;
     using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Enum;
@@ -236,11 +237,11 @@ namespace LAB2D.Gameplay
                 .SetOwnerId(ownerId)
                 .Build();
 
-            // 发布到任务队列（高优先级）
+            // 发布到任务队列（最高优先级：敌人战利品）
             AWorkerTask.TaskAddProvider(
                 pickUpTask,
                 new GameGridPosition(pos.x, pos.y, pos.z),
-                0);
+                WorkerTaskPriority.PlayerBounty);
 
             string ownerLabel = ownerId > 0 ? $"Worker#{ownerId}" : "Player/公开";
             AWorkerTask.LogProvider(

@@ -3,6 +3,7 @@ namespace LAB2D.AI.Worker
     using LAB2D;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Constant;
     using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
@@ -276,12 +277,12 @@ namespace LAB2D.AI.Worker
                     .SetExpiration(expiration)
                     .Build();
 
-                // 入队（优先级 2，中等优先级）
+                // 入队（优先级 1，Worker 自主悬赏）
                 AWorkerTask.TaskAddProvider(
                     bountyTask,
                     new GameGridPosition(
                         candidate.Position.x, candidate.Position.y, candidate.Position.z),
-                    2);
+                    WorkerTaskPriority.WorkerBounty);
 
                 AWorkerTask.LogProvider(
                     $"{worker.name} 发布了悬赏: {candidate.TaskType} 悬赏金 {reward}",
@@ -335,7 +336,7 @@ namespace LAB2D.AI.Worker
             AWorkerTask.TaskAddProvider(
                 bountyTask,
                 new GameGridPosition(targetPos.x, targetPos.y, targetPos.z),
-                2);
+                WorkerTaskPriority.WorkerBounty);
 
             AWorkerTask.LogProvider(
                 $"{worker.name} 发布了悬赏: Gather pos=({targetPos.x},{targetPos.y}) 悬赏金 {reward}",

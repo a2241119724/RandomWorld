@@ -1,6 +1,7 @@
 namespace LAB2D.Item.Build.Room
 {
     using LAB2D;
+    using LAB2D.Constant;
     using LAB2D.Core;
     using System;
     using UnityEngine;
@@ -18,7 +19,7 @@ namespace LAB2D.Item.Build.Room
         }
 
         /// <inheritdoc/>
-        public override void AddBuildTask(Vector3Int centerMap, Extra extra)
+        public override void AddBuildTask(Vector3Int centerMap, Extra extra, int priority = WorkerTaskPriority.SystemDefault)
         {
             int[] boundary = this.GetBoundary(centerMap, extra);
             int width = boundary[3] - boundary[2] + 1;
@@ -32,7 +33,7 @@ namespace LAB2D.Item.Build.Room
             {
                 for (int j = boundary[2]; j <= boundary[3]; j++)
                 {
-                    Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(i, j, 0), "FarmlandWall");
+                    Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(new Vector3Int(i, j, 0), "FarmlandWall", priority);
                 }
             }
 

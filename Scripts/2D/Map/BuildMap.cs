@@ -2,6 +2,7 @@ namespace LAB2D.Map
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Constant;
     using LAB2D.Core.Seek;
     using LAB2D.Domain.Common;
     using LAB2D.Item;
@@ -47,8 +48,9 @@ namespace LAB2D.Map
         /// </summary>
         /// <param name="targetMap">建造位置</param>
         /// <param name="tileName">瓦片名称</param>
+        /// <param name="priority">任务优先级，默认系统默认</param>
         /// <returns>链式</returns>
-        public BuildMap AddBuild(Vector3Int targetMap, string tileName)
+        public BuildMap AddBuild(Vector3Int targetMap, string tileName, int priority = WorkerTaskPriority.SystemDefault)
         {
             Vector3IntLAB vector3IntLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
             ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tileName);
@@ -68,7 +70,8 @@ namespace LAB2D.Map
                 // 不能再这里设置第一个坐标点，即Target，因为此时Inventory可能没有材料，返回default
                 Core.ServiceLocator.Get<WorkerTaskManager>().AddTask(
                     new WorkerBuildTask.BuildTaskBuilder().SetBuildPos(targetMap)
-                    .SetNeedResource(buildCosts).Build(), new GameGridPosition(targetMap.x, targetMap.y, targetMap.z));
+                    .SetNeedResource(buildCosts).Build(), new GameGridPosition(targetMap.x, targetMap.y, targetMap.z),
+                    priority);
 
                 // 设置可通过并且颜色变淡
                 this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);

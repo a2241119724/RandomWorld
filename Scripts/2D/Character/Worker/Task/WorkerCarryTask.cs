@@ -1,5 +1,6 @@
 namespace LAB2D.Character.Worker.Task
 {
+    using LAB2D.Constant;
     using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Domain.Common;
@@ -153,7 +154,7 @@ namespace LAB2D.Character.Worker.Task
                 TaskAddProvider(
                     new WorkerHungryTask.HungryTaskBuilder()
                     .SetTarget(targetPos).Build(), new GameGridPosition(this.TargetMap.X, this.TargetMap.Y, this.TargetMap.Z),
-                    0);
+                    WorkerTaskPriority.PlayerBounty);
             }
         }
 

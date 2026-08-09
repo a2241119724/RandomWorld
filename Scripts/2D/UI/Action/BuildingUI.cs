@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Constant;
     using LAB2D.Core;
     using LAB2D.Item.Build;
     using UnityEngine;
@@ -73,7 +74,7 @@ namespace LAB2D.UI.Action
             // 建造
             if (ServiceLocator.Get<IsAvailableMap>().ShowRect(this.startPos, currentPos.y - this.startPos.y + 1, this.startPos.x - currentPos.x + 1, AWorkerTask.RectType.TopLeft))
             {
-                buildItem.AddBuildTask(this.startPos, new ABuildItem.Extra(currentPos.y - this.startPos.y + 1, this.startPos.x - currentPos.x + 1, AWorkerTask.RectType.TopLeft));
+                buildItem.AddBuildTask(this.startPos, new ABuildItem.Extra(currentPos.y - this.startPos.y + 1, this.startPos.x - currentPos.x + 1, AWorkerTask.RectType.TopLeft), WorkerTaskPriority.PlayerBounty);
             }
         }
 
@@ -93,7 +94,7 @@ namespace LAB2D.UI.Action
             ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildPanel.Instance.Select.Item.Id).EnName);
             if (ServiceLocator.Get<IsAvailableMap>().ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.RectType))
             {
-                buildItem.AddBuildTask(centerMap, null);
+                buildItem.AddBuildTask(centerMap, null, WorkerTaskPriority.PlayerBounty);
             }
         }
 

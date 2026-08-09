@@ -3,6 +3,7 @@ namespace LAB2D.Character.Worker.State
     using LAB2D;
     using LAB2D.AI.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Constant;
     using LAB2D.Core.Seek;
     using LAB2D.Data;
     using LAB2D.Domain.Common;
@@ -127,6 +128,14 @@ namespace LAB2D.Character.Worker.State
                 if (this.seekTimes == 1)
                 {
                     this.brain.TryPickHomeSite(this.Character);
+                }
+
+                // 优先检查是否有玩家发布的任务（优先级 0），不受决策节流限制
+                if (Core.ServiceLocator.Get<WorkerTaskManager>().TryAssignPlayerTask(this.Character))
+                {
+                    // 成功接取玩家任务 → 跳过自主决策
+                    // Start() 内部 ChangeState(Seek) 会触发 OnEnter 重入，这里直接 return
+                    return;
                 }
 
                 // 判断是否应该立即决策：
@@ -402,7 +411,7 @@ namespace LAB2D.Character.Worker.State
                     decision.TargetPosition.x,
                     decision.TargetPosition.y,
                     decision.TargetPosition.z),
-                2);
+                WorkerTaskPriority.WorkerBounty);
 
             // 建造悬赏不推进建家阶段（悬赏可能过期），等下次决策时重新评估
             // this.AdvanceHomeBuildStage(wd, decision.BuildTileName);
@@ -899,7 +908,7 @@ namespace LAB2D.Character.Worker.State
                     .SetWorker(this.Character)
                     .Build(),
                 new GameGridPosition(0, 0, 0),
-                3);
+                WorkerTaskPriority.Idle);
         }
 
         /// <summary>

@@ -8,6 +8,7 @@ namespace LAB2D.Gameplay
     using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
+    using LAB2D.Constant;
     using LAB2D.Enum;
     using LAB2D.Map;
     using UnityEngine;
@@ -95,7 +96,7 @@ namespace LAB2D.Gameplay
             AWorkerTask.TaskAddProvider(
                 bounty,
                 new GameGridPosition(targetPos.x, targetPos.y, targetPos.z),
-                2);
+                WorkerTaskPriority.PlayerBounty);
 
             AWorkerTask.LogProvider(
                 $"[PlayerBounty] 发布采集悬赏 pos=({targetPos.x},{targetPos.y}) 悬赏金{cost}",
@@ -147,7 +148,7 @@ namespace LAB2D.Gameplay
             AWorkerTask.TaskAddProvider(
                 bounty,
                 new GameGridPosition(targetPos.x, targetPos.y, targetPos.z),
-                2);
+                WorkerTaskPriority.PlayerBounty);
 
             AWorkerTask.LogProvider(
                 $"[PlayerBounty] 发布建造悬赏 pos=({targetPos.x},{targetPos.y}) 悬赏金{cost}",
@@ -203,7 +204,7 @@ namespace LAB2D.Gameplay
             AWorkerTask.TaskAddProvider(
                 bounty,
                 new GameGridPosition(targetPos.x, targetPos.y, targetPos.z),
-                2);
+                WorkerTaskPriority.PlayerBounty);
 
             AWorkerTask.LogProvider(
                 $"[PlayerBounty] 发布拆除悬赏 pos=({targetPos.x},{targetPos.y}) 悬赏金{cost}",

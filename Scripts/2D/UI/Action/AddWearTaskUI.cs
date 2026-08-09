@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Constant;
     using LAB2D.Core;
     using LAB2D.Domain.Common;
     using LAB2D.Serializable;
@@ -59,7 +60,7 @@ namespace LAB2D.UI.Action
                     ServiceLocator.Get<WorkerTaskManager>().AddTask(
                         new WorkerWearTask.WearTaskBuilder()
                         .SetWorker(workers[index]).SetTarget(posMap).SetEquipmentId(resourceInfo.Id).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z),
-                        1);
+                        WorkerTaskPriority.PlayerBounty);
                     this.transform.position = ResourceConstant.VECTOR3_DEFAULT;
                     Dictionary<int, ResourceInfo> dict = new ();
                     dict.Add(resourceInfo.Id, resourceInfo);
