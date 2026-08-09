@@ -394,7 +394,7 @@ namespace LAB2D.Character.Worker.State
             if (!string.IsNullOrEmpty(decision.BuildTileName))
             {
                 bool reserved = Core.ServiceLocator.Get<BuildMap>().ReserveBuildPosition(
-                    decision.TargetPosition, decision.BuildTileName);
+                    decision.TargetPosition, decision.BuildTileName, this.Character.name);
                 if (!reserved) return false;
             }
 
@@ -467,7 +467,7 @@ namespace LAB2D.Character.Worker.State
                 else
                 {
                     bool reserved = Core.ServiceLocator.Get<BuildMap>().ReserveBuildPosition(
-                        decision.TargetPosition, decision.BuildTileName);
+                        decision.TargetPosition, decision.BuildTileName, this.Character.name);
                     if (!reserved)
                     {
                         // 位置被其他 Worker 占用 → 重新选址

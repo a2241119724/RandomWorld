@@ -106,8 +106,9 @@ namespace LAB2D.Map
         /// </summary>
         /// <param name="targetMap">建造位置</param>
         /// <param name="tileName">瓦片名称</param>
+        /// <param name="builderName">建造者 Worker 名称（用于 VerifyBuildTasks 恢复指派关系）。</param>
         /// <returns>true = 预约成功；false = 位置已被占用</returns>
-        public bool ReserveBuildPosition(Vector3Int targetMap, string tileName)
+        public bool ReserveBuildPosition(Vector3Int targetMap, string tileName, string builderName = null)
         {
             Vector3IntLAB vector3IntLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
 
@@ -130,6 +131,11 @@ namespace LAB2D.Map
 
             // 注册到 PosMap（供碰撞检查和 IsBuilding 查询）
             BuildTileData buildTileData = new BuildTileData(tileName, false);
+            if (!string.IsNullOrEmpty(builderName))
+            {
+                buildTileData.BuilderName = builderName;
+            }
+
             this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
             WalkabilityCache.UpdateCell(targetMap);
 

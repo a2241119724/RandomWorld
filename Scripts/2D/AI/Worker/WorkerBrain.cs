@@ -1312,8 +1312,9 @@ namespace LAB2D.AI.Worker
                         if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var registeredTile)
                             && !registeredTile.IsComplete)
                         {
-                            // BuilderName 为空 → 自己或他人的预注册，跳过冲突检测（预注册就是为了占据位置）
-                            if (string.IsNullOrEmpty(registeredTile.BuilderName))
+                            // BuilderName 为空或为自己 → 自己或他人的预注册，跳过冲突检测
+                            if (string.IsNullOrEmpty(registeredTile.BuilderName)
+                                || registeredTile.BuilderName == worker.name)
                             {
                                 AWorkerTask.LogProvider(
                                     $"{worker.name} 建造位置已有预注册(自己/他人), 继续建造: pos=({buildPos.Value.x},{buildPos.Value.y})",
@@ -1618,6 +1619,15 @@ namespace LAB2D.AI.Worker
                         continue;
                     }
 
+                    // 未完成且 BuilderName 是自己 → 自己之前的预留，跳过
+                    if (existing.BuilderName == worker.name)
+                    {
+                        AWorkerTask.LogProvider(
+                            $"{worker.name} 预注册: 位置已被自己预留, 跳过 {tileName} pos=({pos.x},{pos.y})",
+                            LogManager.LogLevelEnum.Debug);
+                        continue;
+                    }
+
                     // 被其他 Worker 占用且未完成 → 冲突
                     AWorkerTask.LogProvider(
                         $"{worker.name} 预注册失败: 位置被占用 {tileName} pos=({pos.x},{pos.y}) 被 {existing.BuilderName}",
@@ -1636,7 +1646,7 @@ namespace LAB2D.AI.Worker
                     continue;
                 }
 
-                if (!buildMap.ReserveBuildPosition(pos, tileName))
+                if (!buildMap.ReserveBuildPosition(pos, tileName, worker.name))
                 {
                     AWorkerTask.LogProvider(
                         $"{worker.name} 预注册执行失败: {tileName} pos=({pos.x},{pos.y})",

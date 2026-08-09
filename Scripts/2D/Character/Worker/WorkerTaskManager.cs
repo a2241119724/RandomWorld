@@ -472,6 +472,27 @@ namespace LAB2D.Character.Worker
                     .SetNeedResource(buildCosts)
                     .Build();
 
+                // 优先尝试找回原 Worker 并直接指派（保持 Self-Build 语义）
+                if (!string.IsNullOrEmpty(tileData.BuilderName))
+                {
+                    AWorker owner = WorkerListProvider().Find(w => w.name == tileData.BuilderName);
+                    if (owner != null)
+                    {
+                        AWorker.WorkerData wd = owner.CharacterDataLAB as AWorker.WorkerData;
+                        if (wd != null)
+                        {
+                            wd.Task = newTask;
+                            newTask.Start(owner);
+
+                            AWorkerTask.LogProvider(
+                                $"VerifyBuildTasks: 重新指派建造任务给 {owner.name} pos=({pos.x},{pos.y}) tile={tileData.Name}",
+                                LogManager.LogLevelEnum.Warning);
+                            continue;
+                        }
+                    }
+                }
+
+                // Fallback: 原 Worker 已不存在 → 创建公共任务
                 this.AddTask(newTask, new GameGridPosition(pos.x, pos.y, pos.z));
 
                 AWorkerTask.LogProvider(
