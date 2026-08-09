@@ -88,13 +88,21 @@ namespace LAB2D.Character.Worker.Task
             string builderName = worker.name;
             string ownerName = builderName;
 
-            if (BountyOwnerOverride != 0)
+            if (AWorkerTask.IsBountyExecution)
             {
-                var workers = Core.ServiceLocator.Get<WorkerManager>().Characters;
-                var owner = workers.Find(w => w.GetInstanceID() == BountyOwnerOverride);
-                if (owner != null)
+                if (BountyOwnerOverride == 0)
                 {
-                    ownerName = owner.name;
+                    // Player 发布的建造悬赏，所有者是 Player
+                    ownerName = "Player";
+                }
+                else
+                {
+                    var workers = Core.ServiceLocator.Get<WorkerManager>().Characters;
+                    var owner = workers.Find(w => w.GetInstanceID() == BountyOwnerOverride);
+                    if (owner != null)
+                    {
+                        ownerName = owner.name;
+                    }
                 }
             }
 

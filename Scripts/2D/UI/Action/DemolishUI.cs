@@ -84,7 +84,7 @@ namespace LAB2D.UI.Action
         }
 
         /// <summary>
-        /// 确定拆除
+        /// 确定拆除 — 发布为悬赏任务，Player 支付赏金，Worker 获得金币。
         /// </summary>
         public void Onclick_Yes()
         {
@@ -95,9 +95,9 @@ namespace LAB2D.UI.Action
                 return;
             }
 
-            ServiceLocator.Get<WorkerTaskManager>().AddTask(
-                new WorkerDemolishTask.DemolishTaskBuilder()
-                .SetTarget(this.posMap).Build(), new GameGridPosition(this.posMap.x, this.posMap.y, this.posMap.z));
+            var player = ServiceLocator.Get<PlayerManager>().Mine;
+            var bountyService = ServiceLocator.Get<PlayerBountyService>();
+            bountyService.PostDemolishBounty(player, this.posMap);
         }
 
         /// <summary>

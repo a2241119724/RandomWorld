@@ -30,6 +30,7 @@ namespace LAB2D.Gameplay
         public int BaseRewardCarry = 25;
         public int BaseRewardGather = 20;
         public int BaseRewardPlant = 12;
+        public int BaseRewardDemolish = 15;
 
         /// <summary>
         /// Player 发布一个采集悬赏（在指定位置采集资源）。
@@ -70,6 +71,17 @@ namespace LAB2D.Gameplay
                 .SetTarget(targetPos)
                 .SetResourceInfo(resource)
                 .Build();
+
+            // 资源已被其他 Worker 认领，退款
+            if (innerTask == null)
+            {
+                pd.Wallet += cost;
+                cm.RefundBounty(PlayerOwnerId, cost);
+                AWorkerTask.LogProvider(
+                    $"[PlayerBounty] 资源已被认领, 退款: pos=({targetPos.x},{targetPos.y})",
+                    LogManager.LogLevelEnum.Warning);
+                return false;
+            }
 
             // 包装为悬赏（issuer=0 表示 Player）
             float currentTime = Core.ServiceLocator.Get<IGameTime>().Time;
@@ -145,6 +157,62 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
+        /// Player 发布拆除悬赏。
+        /// </summary>
+        public bool PostDemolishBounty(Player player, Vector3Int targetPos, int reward = 0)
+        {
+            if (player == null) return false;
+
+            Player.PlayerData pd = player.CharacterDataLAB as Player.PlayerData;
+            if (pd == null) return false;
+
+            if (reward <= 0) reward = this.BaseRewardDemolish;
+            CurrencyAmount cost = new CurrencyAmount(reward);
+
+            if (!pd.Wallet.HasEnough(cost))
+            {
+                AWorkerTask.LogProvider(
+                    $"[PlayerBounty] 余额不足: 需要{cost}, 余额{pd.Wallet}",
+                    LogManager.LogLevelEnum.Warning);
+                return false;
+            }
+
+            pd.Wallet -= cost;
+            var cm = Core.ServiceLocator.Get<CurrencyManager>();
+            cm.PostBounty(PlayerOwnerId, cost);
+
+            WorkerDemolishTask innerTask = new WorkerDemolishTask.DemolishTaskBuilder()
+                .SetTarget(targetPos)
+                .Build();
+
+            if (innerTask == null)
+            {
+                pd.Wallet += cost;
+                cm.RefundBounty(PlayerOwnerId, cost);
+                return false;
+            }
+
+            float currentTime = Core.ServiceLocator.Get<IGameTime>().Time;
+            WorkerBountyTask bounty = new WorkerBountyTask.BountyTaskBuilder()
+                .SetInnerTask(innerTask)
+                .SetReward(cost)
+                .SetIssuer(PlayerOwnerId)
+                .SetExpiration(currentTime + this.BountyExpirationSeconds)
+                .Build();
+
+            AWorkerTask.TaskAddProvider(
+                bounty,
+                new GameGridPosition(targetPos.x, targetPos.y, targetPos.z),
+                2);
+
+            AWorkerTask.LogProvider(
+                $"[PlayerBounty] 发布拆除悬赏 pos=({targetPos.x},{targetPos.y}) 悬赏金{cost}",
+                LogManager.LogLevelEnum.Info);
+
+            return true;
+        }
+
+        /// <summary>
         /// 根据任务类型获取推荐悬赏金额。
         /// </summary>
         public int GetRecommendedReward(WorkerTaskType taskType)
@@ -155,6 +223,7 @@ namespace LAB2D.Gameplay
                 WorkerTaskType.Carry => this.BaseRewardCarry,
                 WorkerTaskType.Gather => this.BaseRewardGather,
                 WorkerTaskType.Plant => this.BaseRewardPlant,
+                WorkerTaskType.Demolish => this.BaseRewardDemolish,
                 _ => 10,
             };
         }

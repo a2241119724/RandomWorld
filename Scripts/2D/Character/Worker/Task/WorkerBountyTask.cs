@@ -61,13 +61,24 @@ namespace LAB2D.Character.Worker.Task
                         combined |= TaskTraits.OnePerPosition;
                     if ((innerTraits & TaskTraits.TrackPositions) != 0)
                         combined |= TaskTraits.TrackPositions;
+                    if ((innerTraits & TaskTraits.WorkerSpecific) != 0)
+                        combined |= TaskTraits.WorkerSpecific;
                 }
                 return combined;
             }
         }
 
         /// <inheritdoc/>
-        public override int OwnerWorkerId => this.bountyData.IssuerWorkerId;
+        /// <remarks>WorkerSpecific 的 innerTask 委托给 innerTask.OwnerWorkerId。</remarks>
+        public override int OwnerWorkerId
+        {
+            get
+            {
+                if (this.innerTask != null && (this.innerTask.Traits & TaskTraits.WorkerSpecific) != 0)
+                    return this.innerTask.OwnerWorkerId;
+                return this.bountyData.IssuerWorkerId;
+            }
+        }
 
         // ---- lifecycle 属性：委托给 innerTask ----
 
@@ -114,11 +125,11 @@ namespace LAB2D.Character.Worker.Task
                 return base.Execute(worker, deltaTime);
             }
 
-            // 设置所有权覆盖：悬赏产出的资源归发布者（0=不覆盖）
+            // 设置所有权覆盖：悬赏产出的资源归发布者
             int prevOverride = AWorkerTask.BountyOwnerOverride;
-            AWorkerTask.BountyOwnerOverride = this.bountyData.IssuerWorkerId != 0
-                ? this.bountyData.IssuerWorkerId
-                : 0; // Player 发布的悬赏 Owner 仍是 0
+            bool prevIsBounty = AWorkerTask.IsBountyExecution;
+            AWorkerTask.BountyOwnerOverride = this.bountyData.IssuerWorkerId;
+            AWorkerTask.IsBountyExecution = true;
             AWorkerTask.LogProvider(
                 $"[BountyOwnership] 悬赏执行: issuerId={this.bountyData.IssuerWorkerId}, executor={worker.name}",
                 LogManager.LogLevelEnum.Trace);
@@ -128,6 +139,7 @@ namespace LAB2D.Character.Worker.Task
 
             // 恢复所有权覆盖
             AWorkerTask.BountyOwnerOverride = prevOverride;
+            AWorkerTask.IsBountyExecution = prevIsBounty;
 
             // innerTask.Finish 清除了 workerData.Task，恢复为悬赏任务
             if (workerData != null)
@@ -177,7 +189,12 @@ namespace LAB2D.Character.Worker.Task
                 return false;
             if (this.bountyData.State != BountyState.Posted)
                 return false;
-            return this.innerTask != null;
+            if (this.innerTask == null)
+                return false;
+            // WorkerSpecific 的 innerTask（Wear/Sleep）委托校验 Worker 匹配
+            if ((this.innerTask.Traits & TaskTraits.WorkerSpecific) != 0)
+                return this.innerTask.IsCanWork(worker);
+            return true;
         }
 
         /// <inheritdoc/>

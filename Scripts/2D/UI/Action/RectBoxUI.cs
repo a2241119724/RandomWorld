@@ -59,9 +59,9 @@ namespace LAB2D.UI.Action
                     return;
                 }
 
-                ServiceLocator.Get<WorkerTaskManager>().AddTask(
-                    new WorkerGatherTask.GatherTaskBuilder()
-                    .SetTarget(posMap).SetResourceInfo(resourceInfo).Build(), new GameGridPosition(posMap.x, posMap.y, posMap.z));
+                var player = ServiceLocator.Get<PlayerManager>().Mine;
+                var bountyService = ServiceLocator.Get<PlayerBountyService>();
+                bountyService.PostGatherBounty(player, posMap, resourceInfo.Id);
             });
         }
 

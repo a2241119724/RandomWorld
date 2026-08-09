@@ -19,14 +19,14 @@ MonoBehaviour:
       ResourceInfo:
         Id: 200000
         Count: 1
-        OwnerId: -900396
+        OwnerId: -118186
     - Name: Apple
       ResourceInfo:
         Id: 500000
         Count: 1
-        OwnerId: -900396
+        OwnerId: -118186
     - Name: CustomWood
       ResourceInfo:
         Id: 300000
-        Count: 30
-        OwnerId: -900396
+        Count: 50
+        OwnerId: -118186

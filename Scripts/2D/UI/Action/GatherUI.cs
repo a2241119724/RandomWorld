@@ -83,7 +83,7 @@ namespace LAB2D.UI.Action
         }
 
         /// <summary>
-        /// 确定采集
+        /// 确定采集 — 发布为悬赏任务，所得物品归 Player，Worker 获得赏金。
         /// </summary>
         public void Onclick_Yes()
         {
@@ -99,9 +99,9 @@ namespace LAB2D.UI.Action
                 return;
             }
 
-            ServiceLocator.Get<WorkerTaskManager>().AddTask(
-                new WorkerGatherTask.GatherTaskBuilder()
-                .SetTarget(this.posMap).SetResourceInfo(resourceInfo).Build(), new GameGridPosition(this.posMap.x, this.posMap.y, this.posMap.z));
+            var player = ServiceLocator.Get<PlayerManager>().Mine;
+            var bountyService = ServiceLocator.Get<PlayerBountyService>();
+            bountyService.PostGatherBounty(player, this.posMap, resourceInfo.Id);
         }
 
         /// <summary>

@@ -25,9 +25,17 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>
         /// 悬赏任务覆盖 OwnerId — WorkerBountyTask 在执行前设置，
         /// 使得 innerTask（如 Gather）产出的资源归悬赏发布者而非执行者。
-        /// 0 = 不覆盖（Unity InstanceID 可正可负，不能用 -1 判断）。
+        /// 0 = 不覆盖 / Player（配合 IsBountyExecution 区分）。
+        /// Unity InstanceID 可正可负，不能用 -1 判断。
         /// </summary>
         public static int BountyOwnerOverride = 0;
+
+        /// <summary>
+        /// 是否正在执行悬赏任务 — 与 BountyOwnerOverride 配合使用。
+        /// BountyOwnerOverride=0 存在歧义：可能是"无悬赏"也可能是"Player 发布的悬赏(ownerId=0)"。
+        /// IsBountyExecution=true 时，BountyOwnerOverride=0 表示 Player 悬赏。
+        /// </summary>
+        public static bool IsBountyExecution = false;
 
         /// <summary>
         /// Worker在工作时的位置（上下左右）
