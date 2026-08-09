@@ -115,10 +115,9 @@ namespace LAB2D.UI.Action
             this.transform.position = ServiceLocator.Get<TileMap>().MapPosToWorldPos(posMap);
 
             // 获取背包中的种子
-            BackpackController backpackCtrl = BackpackController.Instance;
-            if (backpackCtrl == null)
+            if (!ServiceLocator.TryGet(out BackpackController backpackCtrl))
             {
-                this.GameLogger.LogWarning("PlantUI.Show: BackpackController.Instance 为 null");
+                this.GameLogger.LogWarning("PlantUI.Show: BackpackController 未注册");
                 this.Hide();
                 return;
             }
@@ -193,7 +192,7 @@ namespace LAB2D.UI.Action
             AItem selectedSeed = this.availableSeeds[seedIndex];
 
             // 从背包移除种子
-            bool removed = BackpackController.Instance.RemoveSeedByUid(selectedSeed.Uid);
+            bool removed = ServiceLocator.Get<BackpackController>().RemoveSeedByUid(selectedSeed.Uid);
             if (!removed)
             {
                 this.GameLogger.LogWarning("PlantUI: 从背包移除种子失败");
@@ -202,7 +201,7 @@ namespace LAB2D.UI.Action
             }
 
             // 直接在农田上种植
-            FarmlandManager.Instance.Plant(this.posMap, selectedSeed.Id, 1);
+            ServiceLocator.Get<FarmlandManager>().Plant(this.posMap, selectedSeed.Id, 1);
 
             this.Hide();
         }

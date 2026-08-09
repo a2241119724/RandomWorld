@@ -910,6 +910,7 @@ public sealed class MyNewInitializer : IInitializable
 17. ✅ **建造任务恢复 + 卡死重试** — 位置预注册 → 任务恢复；最多 3 次卡死重试（2026-08）
 18. ✅ **装备对比弹窗** — 拾取装备自动弹出属性差异对比，支持替换/丢弃（2026-07）
 19. ✅ **房间列表面板** — RoomListPanel，IsOverlay 模式不暂停游戏（2026-08）
+20. ✅ **PlantUI ServiceLocator 一致性** — BackpackController.Instance → ServiceLocator.TryGet/Get；FarmlandManager.Instance → ServiceLocator.Get。BackpackController 已在 Awake 中自注册 ServiceLocator，无需修改 GlobalInit。ABasePanel 子类保持 .Instance（架构决策：懒创建触发自注册）。全项目非 ABasePanel 的 .Instance 清零（2026-08）
 
 选择模块时，请说明原因：
 
@@ -1160,7 +1161,7 @@ namespace LAB2D
 >
 > ### 当前架构状态
 >
-> - 🎉 非 UI `.Instance` 全部清零
+> - 🎉 非 UI `.Instance` 全部清零；UI 层非 ABasePanel `.Instance` 全部清零（PlantUI 收尾，2026-08）
 > - 🎉 Gameplay 层 16 个非 MonoBehaviour 零 `using UnityEngine`（+6 相比改造前）
 > - 🎉 所有 `Time.realtimeSinceStartup` 已迁移至 `IGameTime`
 > - 🎉 全限定名 `UnityEngine.` 引用仅存在于 Provider 默认实现中
