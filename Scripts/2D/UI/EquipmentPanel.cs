@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Manager;
     using LAB2D.UnityAdapter;
     using System.Collections.Generic;
     using UnityEngine;
@@ -10,7 +11,7 @@ namespace LAB2D.UI
     /// <summary>
     /// 装备管理面板。
     /// 展示玩家所有装备槽位及其属性，支持卸下装备。
-    /// F9 切换显示/隐藏，运行时动态创建独立 Canvas。
+    /// F9 切换显示/隐藏，通过预制体（EquipmentPanel）加载 UI 结构，运行时从 AssetBundle 实例化。
     /// MonoBehaviour 组件，通过 EnsureRuntimePanel() 静态方法安全创建。
     /// </summary>
     public class EquipmentPanel : MonoBehaviour
@@ -23,16 +24,22 @@ namespace LAB2D.UI
         private bool isVisible;
 
         /// <summary>
-        /// 确保运行时装备面板存在（如果不存在则创建）。
+        /// 确保运行时装备面板存在（如果不存在则从预制体创建）。
         /// </summary>
         public static void EnsureRuntimePanel()
         {
             if (runtimeInstance != null && runtimeInstance.rootPanel != null) return;
 
-            GameObject go = new GameObject("EquipmentPanelManager");
+            GameObject go = Core.ServiceLocator.Get<ResourceManager>().Instantiate("EquipmentPanel", isLocal: false);
+            go.name = "EquipmentPanelManager";
             DontDestroyOnLoad(go);
-            runtimeInstance = go.AddComponent<EquipmentPanel>();
-            runtimeInstance.CreateUI();
+            runtimeInstance = go.GetComponent<EquipmentPanel>();
+            if (runtimeInstance == null)
+            {
+                runtimeInstance = go.AddComponent<EquipmentPanel>();
+            }
+
+            runtimeInstance.InitializeReferences();
         }
 
         /// <summary>
@@ -44,80 +51,28 @@ namespace LAB2D.UI
         }
 
         /// <summary>
-        /// 创建装备面板 UI（独立 Canvas + 槽位列表）。
+        /// 从预制体初始化引用（替代代码生成 UI）。
         /// </summary>
-        private void CreateUI()
+        private void InitializeReferences()
         {
-            // 创建独立 Canvas
-            GameObject canvasGo = new GameObject(EquipmentLootConstant.EquipmentPanelCanvasName);
-            canvasGo.transform.SetParent(this.transform, false);
-            this.canvas = canvasGo.AddComponent<Canvas>();
-            this.canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            this.canvas.sortingOrder = EquipmentLootConstant.EquipmentPanelSortingOrder;
-            canvasGo.AddComponent<CanvasScaler>();
-            canvasGo.AddComponent<GraphicRaycaster>();
-
-            // 创建根面板
-            this.rootPanel = new GameObject(EquipmentLootConstant.EquipmentPanelRootName);
-            this.rootPanel.transform.SetParent(canvasGo.transform, false);
-            Image panelImg = this.rootPanel.AddComponent<Image>();
-            panelImg.color = new Color(0.1f, 0.1f, 0.12f, 0.95f);
-            RectTransform panelRt = this.rootPanel.GetComponent<RectTransform>();
-            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
-            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRt.sizeDelta = new Vector2(EquipmentLootConstant.PanelWidth, EquipmentLootConstant.PanelHeight);
-
-            // 内容排列
-            VerticalLayoutGroup vlg = this.rootPanel.AddComponent<VerticalLayoutGroup>();
-            vlg.padding = new RectOffset(24, 24, 20, 20);
-            vlg.spacing = 8;
-            vlg.childAlignment = TextAnchor.UpperCenter;
-            vlg.childControlWidth = true;
-            vlg.childControlHeight = false;
-            vlg.childForceExpandWidth = true;
-            vlg.childForceExpandHeight = false;
-
-            // 标题
-            this.CreateTextInPanel("Title", EquipmentLootConstant.EquipmentPanelTitle,
-                EquipmentLootConstant.TitleFontSize, Color.white, TextAnchor.MiddleCenter);
-
-            // 提示行
-            this.CreateTextInPanel("Hint", "按 F9 关闭 | 显示所有已装备物品属性",
-                24, new Color(0.6f, 0.6f, 0.6f), TextAnchor.MiddleCenter);
-
-            // 总属性标题
-            this.CreateTextInPanel("TotalTitle", "── 总属性加成 ──",
-                EquipmentLootConstant.PanelFontSize, new Color(0.9f, 0.9f, 0.3f), TextAnchor.MiddleCenter);
-
-            // 总属性文本（动态更新）
-            this.CreateTextInPanel("TotalStats", "加载中...",
-                EquipmentLootConstant.PanelFontSize, Color.white, TextAnchor.MiddleCenter);
-
-            // 分隔线
-            this.CreateTextInPanel("Separator", "──────────────",
-                EquipmentLootConstant.PanelFontSize, Color.gray, TextAnchor.MiddleCenter);
-
-            // 槽位标题
-            this.CreateTextInPanel("SlotTitle", "── 装备槽位 ──",
-                EquipmentLootConstant.PanelFontSize, new Color(0.9f, 0.9f, 0.3f), TextAnchor.MiddleCenter);
-
-            // 为每个装备槽位创建一行
-            AEquipment.EquipTypeEnum[] slotTypes = (AEquipment.EquipTypeEnum[])
-                System.Enum.GetValues(typeof(AEquipment.EquipTypeEnum));
-
-            foreach (AEquipment.EquipTypeEnum slotType in slotTypes)
+            this.canvas = this.transform.Find(EquipmentLootConstant.EquipmentPanelCanvasName)?.GetComponent<Canvas>();
+            Transform rootTr = this.transform.Find(EquipmentLootConstant.EquipmentPanelCanvasName + "/" + EquipmentLootConstant.EquipmentPanelRootName);
+            if (rootTr != null)
             {
-                if (slotType == AEquipment.EquipTypeEnum.Null) continue;
-
-                string slotName = EquipmentLootTool.GetSlotName(slotType);
-                string slotKey = "Slot_" + slotType.ToString();
-                this.CreateTextInPanel(slotKey, slotName + ": " + EquipmentLootConstant.EmptySlotText,
-                    EquipmentLootConstant.PanelFontSize, new Color(0.7f, 0.7f, 0.7f), TextAnchor.MiddleLeft);
+                this.rootPanel = rootTr.gameObject;
             }
 
-            // 初始隐藏：禁用整个 Canvas 避免拦截点击
-            this.canvas.enabled = false;
-            this.rootPanel.SetActive(false);
+            // 初始隐藏
+            if (this.canvas != null)
+            {
+                this.canvas.enabled = false;
+            }
+
+            if (this.rootPanel != null)
+            {
+                this.rootPanel.SetActive(false);
+            }
+
             this.isVisible = false;
         }
 
@@ -144,8 +99,10 @@ namespace LAB2D.UI
         {
             if (this.rootPanel == null)
             {
-                this.CreateUI();
+                this.InitializeReferences();
             }
+
+            if (this.rootPanel == null) return;
 
             this.isVisible = !this.isVisible;
             if (this.canvas != null)
@@ -257,24 +214,6 @@ namespace LAB2D.UI
                     slotText.color = new Color(0.5f, 0.5f, 0.5f);
                 }
             }
-        }
-
-        /// <summary>
-        /// 在根面板中创建文本对象。
-        /// </summary>
-        private void CreateTextInPanel(string name, string text, int fontSize, Color color, TextAnchor alignment)
-        {
-            GameObject go = new GameObject(name);
-            go.transform.SetParent(this.rootPanel.transform, false);
-            Text txt = go.AddComponent<Text>();
-            txt.text = text;
-            txt.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();
-            txt.fontSize = fontSize;
-            txt.color = color;
-            txt.alignment = alignment;
-            txt.horizontalOverflow = HorizontalWrapMode.Overflow;
-            RectTransform rt = go.GetComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(EquipmentLootConstant.PanelWidth - 48, fontSize + 20);
         }
     }
 }

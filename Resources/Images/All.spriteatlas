@@ -191,6 +191,7 @@ SpriteAtlas:
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: 582646999
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: -1236718802
     - 47c70dfbf8dc3dc44aa73ae7118c8b23: 2035213715
+    - 597f3c5c92c74f16bf66b0697d0af8ce: 21300000
     - c72a406cb521f4a4c8209a43e2a6356d: 21300000
     - 9657166c2057b3a4b833b7983ad27826: 21300000
     - f9e0779c2e93e1341aff88ecb1e43614: 21300000
@@ -363,6 +364,7 @@ SpriteAtlas:
   - {fileID: 582646999, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: -1236718802, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
   - {fileID: 2035213715, guid: 47c70dfbf8dc3dc44aa73ae7118c8b23, type: 3}
+  - {fileID: 21300000, guid: 597f3c5c92c74f16bf66b0697d0af8ce, type: 3}
   - {fileID: 21300000, guid: c72a406cb521f4a4c8209a43e2a6356d, type: 3}
   - {fileID: 21300000, guid: 9657166c2057b3a4b833b7983ad27826, type: 3}
   - {fileID: 21300000, guid: f9e0779c2e93e1341aff88ecb1e43614, type: 3}
@@ -534,6 +536,7 @@ SpriteAtlas:
   - CustomRoomWall_3
   - CustomRoomWall_0
   - CustomRoomWall_1
+  - CustomStone
   - DesertBushes
   - CustomDoor
   - SingleBed

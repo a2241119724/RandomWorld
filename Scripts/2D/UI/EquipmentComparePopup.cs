@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Manager;
     using LAB2D.Enum;
     using LAB2D.Item.Backpack.Equipment;
     using System;
@@ -13,7 +14,7 @@ namespace LAB2D.UI
     /// <summary>
     /// 装备对比弹窗。
     /// 当玩家拾取装备时，自动弹出对比弹窗，显示当前已装备 vs 新装备的属性差异。
-    /// 使用运行时动态创建独立 Canvas 的方式生成 UI。
+    /// 通过预制体（ComparePopupPanel）加载 UI 结构，运行时从 AssetBundle 实例化。
     /// MonoBehaviour 组件，通过 EnsureRuntimePopup() 静态方法安全创建。
     /// </summary>
     public class EquipmentComparePopup : MonoBehaviour
@@ -30,16 +31,22 @@ namespace LAB2D.UI
         private SystemAction onDiscard;
 
         /// <summary>
-        /// 确保运行时对比弹窗存在（如果不存在则创建）。
+        /// 确保运行时对比弹窗存在（如果不存在则从预制体创建）。
         /// </summary>
         public static void EnsureRuntimePopup()
         {
             if (runtimeInstance != null && runtimeInstance.rootPanel != null) return;
 
-            GameObject go = new GameObject("ComparePopupManager");
+            GameObject go = Core.ServiceLocator.Get<ResourceManager>().Instantiate("ComparePopupPanel", isLocal: false);
+            go.name = "ComparePopupManager";
             DontDestroyOnLoad(go);
-            runtimeInstance = go.AddComponent<EquipmentComparePopup>();
-            runtimeInstance.CreateUI();
+            runtimeInstance = go.GetComponent<EquipmentComparePopup>();
+            if (runtimeInstance == null)
+            {
+                runtimeInstance = go.AddComponent<EquipmentComparePopup>();
+            }
+
+            runtimeInstance.InitializeReferences();
         }
 
         /// <summary>
@@ -51,57 +58,27 @@ namespace LAB2D.UI
         }
 
         /// <summary>
-        /// 创建对比弹窗 UI（独立 Canvas + Panel）。
+        /// 从预制体初始化引用（替代代码生成 UI）。
         /// </summary>
-        private void CreateUI()
+        private void InitializeReferences()
         {
-            // 创建独立 Canvas
-            GameObject canvasGo = new GameObject(EquipmentLootConstant.ComparePopupCanvasName);
-            canvasGo.transform.SetParent(this.transform, false);
-            this.canvas = canvasGo.AddComponent<Canvas>();
-            this.canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            this.canvas.sortingOrder = EquipmentLootConstant.ComparePopupSortingOrder;
-            canvasGo.AddComponent<CanvasScaler>();
-            canvasGo.AddComponent<GraphicRaycaster>();
+            this.canvas = this.transform.Find(EquipmentLootConstant.ComparePopupCanvasName)?.GetComponent<Canvas>();
+            Transform rootTr = this.transform.Find(EquipmentLootConstant.ComparePopupCanvasName + "/" + EquipmentLootConstant.ComparePopupRootName);
+            if (rootTr != null)
+            {
+                this.rootPanel = rootTr.gameObject;
+            }
 
-            // 创建背景遮罩（半透明黑色，点击空白区域关闭）
-            GameObject bgGo = new GameObject("BgMask");
-            bgGo.transform.SetParent(canvasGo.transform, false);
-            Image bgImg = bgGo.AddComponent<Image>();
-            bgImg.color = PixelUITheme.ModalShade;
-            RectTransform bgRt = bgGo.GetComponent<RectTransform>();
-            bgRt.anchorMin = Vector2.zero;
-            bgRt.anchorMax = Vector2.one;
-            bgRt.sizeDelta = Vector2.zero;
-            Button bgBtn = bgGo.AddComponent<Button>();
-            bgBtn.onClick.AddListener(() => this.Hide());
+            // 初始隐藏
+            if (this.canvas != null)
+            {
+                this.canvas.enabled = false;
+            }
 
-            // 创建根面板
-            this.rootPanel = new GameObject(EquipmentLootConstant.ComparePopupRootName);
-            this.rootPanel.transform.SetParent(canvasGo.transform, false);
-            Image panelImg = this.rootPanel.AddComponent<Image>();
-            panelImg.color = new Color(0.15f, 0.15f, 0.15f, 0.95f);
-            RectTransform panelRt = this.rootPanel.GetComponent<RectTransform>();
-            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
-            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRt.sizeDelta = new Vector2(EquipmentLootConstant.ComparePopupWidth, EquipmentLootConstant.ComparePopupHeight);
-
-            // 创建 VerticalLayoutGroup 用于内容排列
-            VerticalLayoutGroup vlg = this.rootPanel.AddComponent<VerticalLayoutGroup>();
-            vlg.padding = new RectOffset(32, 32, 24, 24);
-            vlg.spacing = 12;
-            vlg.childAlignment = TextAnchor.UpperCenter;
-            vlg.childControlWidth = true;
-            vlg.childControlHeight = false;
-            vlg.childForceExpandWidth = true;
-            vlg.childForceExpandHeight = false;
-
-            ContentSizeFitter csf = this.rootPanel.AddComponent<ContentSizeFitter>();
-            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            // 初始隐藏：禁用整个 Canvas 避免拦截点击
-            this.canvas.enabled = false;
-            this.rootPanel.SetActive(false);
+            if (this.rootPanel != null)
+            {
+                this.rootPanel.SetActive(false);
+            }
         }
 
         /// <summary>
@@ -123,8 +100,10 @@ namespace LAB2D.UI
         {
             if (this.rootPanel == null)
             {
-                this.CreateUI();
+                this.InitializeReferences();
             }
+
+            if (this.rootPanel == null) return;
 
             this.onReplace = onReplace;
             this.onDiscard = onDiscard;
