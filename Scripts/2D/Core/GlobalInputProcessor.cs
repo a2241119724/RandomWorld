@@ -60,6 +60,12 @@ namespace LAB2D.Core
                 return;
             }
 
+            // 优先关闭可见的 HUD 面板（F6/F7 等热键切换型 HUD），而非触发面板栈的 OnClick_Back
+            if (this.TryCloseVisibleHud())
+            {
+                return;
+            }
+
             if (ServiceLocator.Get<PanelController>().Panels.Count == 0)
             {
                 ServiceLocator.Get<BuildingUI>().gameObject.SetActive(false);
@@ -75,6 +81,90 @@ namespace LAB2D.Core
 
                 ServiceLocator.Get<PanelController>().Panels.Peek().OnClick_Back();
             }
+        }
+
+        /// <summary>
+        /// 已知的热键切换型 HUD / 面板元信息。
+        /// visibility 取值: "CanvasGroup" — 通过 CanvasGroup.alpha 判断; "ActiveSelf" — 通过 gameObject.activeSelf 判断.
+        /// closeTarget: 实际关闭操作的目标 GameObject 名（对于 SetActive 型面板，有时 visibility 检查节点和关闭目标不同）。
+        /// </summary>
+        private struct HudCloseEntry
+        {
+            public string Name;          // 用于检测可见性的 GameObject 名
+            public string VisibilityType; // "CanvasGroup" or "ActiveSelf"
+            public string CloseTarget;   // 实际要 SetActive(false) 的目标名；若为空则用 Name 自身
+        }
+
+        private static readonly HudCloseEntry[] HudCloseList =
+        {
+            // 数字6 — 成就面板
+            new () { Name = "AchievementPanel", VisibilityType = "ActiveSelf" },
+            // 数字7 — 装备面板 (DontDestroyOnLoad)
+            // 可见性检查 EquipmentPanelRoot, Hide() 在父节点 EquipmentPanelManager 上
+            new () { Name = "EquipmentPanelRoot", VisibilityType = "ActiveSelf", CloseTarget = "EquipmentPanelManager" },
+        };
+
+        /// <summary>
+        /// 尝试关闭当前可见的热键切换型 HUD/面板。
+        /// 优先关闭已展开的面板，阻止 Esc 继续触发 PausePanel。
+        /// </summary>
+        /// <returns>是否关闭了至少一个可见的 HUD/面板。</returns>
+        private bool TryCloseVisibleHud()
+        {
+            bool closedAny = false;
+            foreach (HudCloseEntry entry in HudCloseList)
+            {
+                GameObject hudGo = GameObject.Find(entry.Name);
+                if (hudGo == null)
+                {
+                    continue;
+                }
+
+                bool isVisible;
+                if (entry.VisibilityType == "ActiveSelf")
+                {
+                    isVisible = hudGo.activeSelf;
+                }
+                else
+                {
+                    CanvasGroup cg = hudGo.GetComponent<CanvasGroup>();
+                    isVisible = cg != null && cg.alpha >= 0.5f;
+                }
+
+                if (!isVisible)
+                {
+                    continue;
+                }
+
+                // 关闭
+                GameObject closeTarget = hudGo;
+                if (!string.IsNullOrEmpty(entry.CloseTarget))
+                {
+                    closeTarget = GameObject.Find(entry.CloseTarget) ?? hudGo;
+                }
+
+                if (entry.VisibilityType == "ActiveSelf")
+                {
+                    // 优先尝试通过 SendMessage 调用 Hide() 方法以保持组件内部状态一致
+                    closeTarget.SendMessage("Hide", SendMessageOptions.DontRequireReceiver);
+                    // 兜底: 如果可见性检测目标仍然 active（说明 Hide() 未生效或不存在），直接 SetActive(false)
+                    if (hudGo.activeSelf)
+                    {
+                        hudGo.SetActive(false);
+                    }
+                }
+                else
+                {
+                    CanvasGroup cg = hudGo.GetComponent<CanvasGroup>();
+                    cg.alpha = 0.0f;
+                    cg.interactable = false;
+                    cg.blocksRaycasts = false;
+                }
+
+                closedAny = true;
+            }
+
+            return closedAny;
         }
 
         private void ProcessMouseClickCloseItemInfo()

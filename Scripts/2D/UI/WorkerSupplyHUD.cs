@@ -102,6 +102,14 @@ namespace LAB2D.UI
         }
 
         /// <summary>
+        /// 判断 HUD 当前是否可见。
+        /// </summary>
+        private bool IsVisible()
+        {
+            return this.canvasGroup != null && this.canvasGroup.alpha >= 0.5f;
+        }
+
+        /// <summary>
         /// 设置 HUD 是否可见。
         /// </summary>
         /// <param name="visible">是否显示。</param>
