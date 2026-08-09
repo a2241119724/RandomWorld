@@ -19,4 +19,6 @@ MonoBehaviour:
   canBuild: 0
   canGrowTrees: 0
   canSpawnResources: 0
+  isWater: 0
+  isDiggable: 1
   isBorder: 1

@@ -106,6 +106,76 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
+        /// Player 发布一个地形挖掘悬赏（在指定位置挖掘山脉/岩石）。
+        /// </summary>
+        /// <param name="player">Player 实例</param>
+        /// <param name="targetPos">目标地图位置</param>
+        /// <param name="terrainId">要挖掘的地形 ID</param>
+        /// <param name="reward">悬赏金额（0=自动计算）</param>
+        /// <returns>成功发布返回 true</returns>
+        public bool PostDigBounty(Player player, Vector3Int targetPos, int terrainId, int reward = 0)
+        {
+            if (player == null) return false;
+
+            Player.PlayerData pd = player.CharacterDataLAB as Player.PlayerData;
+            if (pd == null) return false;
+
+            if (reward <= 0) reward = this.BaseRewardGather;
+            CurrencyAmount cost = new CurrencyAmount(reward);
+
+            if (!pd.Wallet.HasEnough(cost))
+            {
+                AWorkerTask.LogProvider(
+                    $"[PlayerBounty] 余额不足: 需要{cost}, 余额{pd.Wallet}",
+                    LogManager.LogLevelEnum.Warning);
+                return false;
+            }
+
+            // 扣款
+            pd.Wallet -= cost;
+
+            // 托管追踪
+            var cm = Core.ServiceLocator.Get<CurrencyManager>();
+            cm.PostBounty(PlayerOwnerId, cost);
+
+            // 构建 innerTask（使用 SetTerrainTarget 而非 SetTarget）
+            WorkerGatherTask innerTask = new WorkerGatherTask.GatherTaskBuilder()
+                .SetTerrainTarget(targetPos, terrainId)
+                .Build();
+
+            // 位置已被其他 Worker 认领，退款
+            if (innerTask == null)
+            {
+                pd.Wallet += cost;
+                cm.RefundBounty(PlayerOwnerId, cost);
+                AWorkerTask.LogProvider(
+                    $"[PlayerBounty] 挖掘位置已被认领, 退款: pos=({targetPos.x},{targetPos.y})",
+                    LogManager.LogLevelEnum.Warning);
+                return false;
+            }
+
+            // 包装为悬赏（issuer=0 表示 Player）
+            float currentTime = Core.ServiceLocator.Get<IGameTime>().Time;
+            WorkerBountyTask bounty = new WorkerBountyTask.BountyTaskBuilder()
+                .SetInnerTask(innerTask)
+                .SetReward(cost)
+                .SetIssuer(PlayerOwnerId)
+                .SetExpiration(currentTime + this.BountyExpirationSeconds)
+                .Build();
+
+            AWorkerTask.TaskAddProvider(
+                bounty,
+                new GameGridPosition(targetPos.x, targetPos.y, targetPos.z),
+                WorkerTaskPriority.PlayerBounty);
+
+            AWorkerTask.LogProvider(
+                $"[PlayerBounty] 发布挖掘悬赏 pos=({targetPos.x},{targetPos.y}) terrainId={terrainId} 悬赏金{cost}",
+                LogManager.LogLevelEnum.Info);
+
+            return true;
+        }
+
+        /// <summary>
         /// Player 发布建造悬赏。
         /// </summary>
         public bool PostBuildBounty(Player player, Vector3Int targetPos, ABuildItem buildItem, int reward = 0)

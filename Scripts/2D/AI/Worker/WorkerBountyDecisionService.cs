@@ -47,6 +47,12 @@ namespace LAB2D.AI.Worker
             public Vector3Int Position;
             public WorkerTaskType TaskType;
             public ResourceInfo Resource;
+
+            /// <summary>是否为地形挖掘候选（而非 ResourceMap 资源）。</summary>
+            public bool IsTerrainDig;
+
+            /// <summary>要挖掘的地形 ID（仅 IsTerrainDig=true 时有效）。</summary>
+            public int TerrainId;
         }
 
         /// <summary>
@@ -162,6 +168,7 @@ namespace LAB2D.AI.Worker
             Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
 
             this.ScanResources(candidates, workerPos, scanRadius);
+            this.ScanDiggableTerrain(candidates, workerPos, scanRadius);
             this.ScanBuildPositions(candidates, workerPos, scanRadius);
             this.ScanPlantPositions(candidates, workerPos, scanRadius);
 
@@ -183,10 +190,19 @@ namespace LAB2D.AI.Worker
             switch (candidate.TaskType)
             {
                 case WorkerTaskType.Gather:
-                    return new WorkerGatherTask.GatherTaskBuilder()
-                        .SetTarget(candidate.Position)
-                        .SetResourceInfo(candidate.Resource)
-                        .Build();
+                    if (candidate.IsTerrainDig)
+                    {
+                        return new WorkerGatherTask.GatherTaskBuilder()
+                            .SetTerrainTarget(candidate.Position, candidate.TerrainId)
+                            .Build();
+                    }
+                    else
+                    {
+                        return new WorkerGatherTask.GatherTaskBuilder()
+                            .SetTarget(candidate.Position)
+                            .SetResourceInfo(candidate.Resource)
+                            .Build();
+                    }
 
                 case WorkerTaskType.Build:
                 {
@@ -297,10 +313,12 @@ namespace LAB2D.AI.Worker
 
         /// <summary>
         /// 使用预扫描的资源位置发布悬赏（由 WorkerBrain 传入，避免重复扫描失败）。
+        /// 支持资源采集和地形挖掘两种类型。
         /// </summary>
-        public bool TryPostOneBounty(AWorker worker, Vector3Int targetPos, ResourceInfo resource)
+        public bool TryPostOneBounty(AWorker worker, Vector3Int targetPos, ResourceInfo resource,
+            bool isTerrainDig = false, int terrainId = 0)
         {
-            if (worker == null || resource == null || targetPos == default) return false;
+            if (worker == null || targetPos == default) return false;
 
             WorkerTaskType taskType = WorkerTaskType.Gather; // 目前支持采集类
 
@@ -314,10 +332,21 @@ namespace LAB2D.AI.Worker
             var currencyManager = Core.ServiceLocator.Get<Gameplay.CurrencyManager>();
             if (!currencyManager.PostBounty(issuerId, reward)) return false;
 
-            AWorkerTask innerTask = new WorkerGatherTask.GatherTaskBuilder()
-                .SetTarget(targetPos)
-                .SetResourceInfo(resource)
-                .Build();
+            AWorkerTask innerTask;
+            if (isTerrainDig)
+            {
+                innerTask = new WorkerGatherTask.GatherTaskBuilder()
+                    .SetTerrainTarget(targetPos, terrainId)
+                    .Build();
+            }
+            else
+            {
+                if (resource == null) { currencyManager.RefundBounty(issuerId, reward); return false; }
+                innerTask = new WorkerGatherTask.GatherTaskBuilder()
+                    .SetTarget(targetPos)
+                    .SetResourceInfo(resource)
+                    .Build();
+            }
 
             if (innerTask == null)
             {
@@ -338,8 +367,9 @@ namespace LAB2D.AI.Worker
                 new GameGridPosition(targetPos.x, targetPos.y, targetPos.z),
                 WorkerTaskPriority.WorkerBounty);
 
+            string actionName = isTerrainDig ? "挖掘" : "Gather";
             AWorkerTask.LogProvider(
-                $"{worker.name} 发布了悬赏: Gather pos=({targetPos.x},{targetPos.y}) 悬赏金 {reward}",
+                $"{worker.name} 发布了悬赏: {actionName} pos=({targetPos.x},{targetPos.y}) 悬赏金 {reward}",
                 LogManager.LogLevelEnum.Debug);
 
             return true;
@@ -386,6 +416,52 @@ namespace LAB2D.AI.Worker
                         Position = pos,
                         TaskType = WorkerTaskType.Gather,
                         Resource = new ResourceInfo(itemData.Id),
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// 扫描 TileMap 中 Worker 周围的可挖掘地形（如山）。
+        /// 只收集轻量候选数据，不创建任务实例。
+        /// </summary>
+        private void ScanDiggableTerrain(List<WorkCandidate> candidates, Vector3Int workerPos, int radius)
+        {
+            TileMap tileMap = Core.ServiceLocator.Get<TileMap>();
+            TerrainConfigDatabase db = Core.ServiceLocator.Get<TerrainConfigDatabase>();
+            var gatherMap = Core.ServiceLocator.Get<GatherMap>();
+
+            if (tileMap?.TileMapDataLAB?.MapTiles == null || db == null)
+            {
+                return;
+            }
+
+            int maxX = System.Math.Min(workerPos.x + radius, tileMap.TileMapDataLAB.Height - 1);
+            int maxY = System.Math.Min(workerPos.y + radius, tileMap.TileMapDataLAB.Width - 1);
+
+            for (int x = System.Math.Max(workerPos.x - radius, 0); x <= maxX; x++)
+            {
+                for (int y = System.Math.Max(workerPos.y - radius, 0); y <= maxY; y++)
+                {
+                    int terrainId = tileMap.TileMapDataLAB.MapTiles[x, y];
+                    if (!db.IsDiggable(terrainId))
+                    {
+                        continue;
+                    }
+
+                    Vector3Int pos = new Vector3Int(x, y, 0);
+                    if (gatherMap?.GatherMapDataLAB?.ContainKey(pos) == true)
+                    {
+                        continue;
+                    }
+
+                    candidates.Add(new WorkCandidate
+                    {
+                        Position = pos,
+                        TaskType = WorkerTaskType.Gather,
+                        Resource = new ResourceInfo(0), // 占位，实际掉落由任务执行时确定
+                        IsTerrainDig = true,
+                        TerrainId = terrainId,
                     });
                 }
             }

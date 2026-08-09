@@ -206,6 +206,15 @@ namespace LAB2D.Map
             return config != null && config.isWater;
         }
 
+        /// <summary>
+        /// 检查指定 terrainId 是否为可挖掘地形（如山）。
+        /// </summary>
+        public bool IsDiggable(int terrainId)
+        {
+            TerrainTileConfig config = this.GetById(terrainId);
+            return config != null && config.isDiggable;
+        }
+
         public IReadOnlyList<int> SpawnableIds => this.spawnableIds.AsReadOnly();
         public int Count => this.configById.Count;
 

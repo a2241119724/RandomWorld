@@ -70,6 +70,13 @@ namespace LAB2D.Map
         public bool isWater;
 
         /// <summary>
+        /// 是否可以被 Worker 挖掘（山脉、岩石等阻挡地形）。
+        /// 挖掘后该格替换为周围可通行地形中最多的那种。
+        /// </summary>
+        [Tooltip("是否可以被 Worker 挖掘（山/岩石）。")]
+        public bool isDiggable;
+
+        /// <summary>
         /// 地形玩法效果配置（移速、疲劳消耗等）。
         /// </summary>
         [Tooltip("地形玩法效果（移速、疲劳消耗等）。")]

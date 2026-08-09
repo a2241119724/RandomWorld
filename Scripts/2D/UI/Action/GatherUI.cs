@@ -3,6 +3,7 @@ namespace LAB2D.UI.Action
     using LAB2D;
     using LAB2D.Core;
     using LAB2D.Domain.Common;
+    using LAB2D.Map;
     using LAB2D.Serializable;
     using LAB2D.UnityAdapter;
     using UnityEngine;
@@ -84,6 +85,7 @@ namespace LAB2D.UI.Action
 
         /// <summary>
         /// 确定采集 — 发布为悬赏任务，所得物品归 Player，Worker 获得赏金。
+        /// 支持 ResourceMap 资源采集和 TileMap 地形挖掘两种类型。
         /// </summary>
         public void Onclick_Yes()
         {
@@ -94,14 +96,27 @@ namespace LAB2D.UI.Action
                 return;
             }
 
-            if (!ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(this.posMap, out ResourceInfo resourceInfo))
+            var player = ServiceLocator.Get<PlayerManager>().Mine;
+            var bountyService = ServiceLocator.Get<PlayerBountyService>();
+
+            // 优先尝试 ResourceMap 资源采集
+            if (ServiceLocator.Get<ResourceMap>().TryGetGatherResourceInfo(this.posMap, out ResourceInfo resourceInfo))
             {
+                bountyService.PostGatherBounty(player, this.posMap, resourceInfo.Id);
                 return;
             }
 
-            var player = ServiceLocator.Get<PlayerManager>().Mine;
-            var bountyService = ServiceLocator.Get<PlayerBountyService>();
-            bountyService.PostGatherBounty(player, this.posMap, resourceInfo.Id);
+            // 回退：检查是否为可挖掘地形（如山）
+            TileMap tileMap = ServiceLocator.Get<TileMap>();
+            TerrainConfigDatabase terrainDb = ServiceLocator.Get<TerrainConfigDatabase>();
+            if (tileMap?.TileMapDataLAB?.MapTiles != null && terrainDb != null)
+            {
+                int terrainId = tileMap.TileMapDataLAB.MapTiles[this.posMap.x, this.posMap.y];
+                if (terrainDb.IsDiggable(terrainId))
+                {
+                    bountyService.PostDigBounty(player, this.posMap, terrainId);
+                }
+            }
         }
 
         /// <summary>

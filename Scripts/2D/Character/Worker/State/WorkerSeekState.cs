@@ -284,16 +284,27 @@ namespace LAB2D.Character.Worker.State
                 return;
             }
 
-            WorkerGatherTask gatherTask = new WorkerGatherTask.GatherTaskBuilder()
-                .SetTarget(decision.TargetPosition)
-                .SetResourceInfo(decision.Resource)
-                .Build();
+            WorkerGatherTask gatherTask;
 
-            // SetTarget 中 AddGather 认领失败 → 资源被其他 Worker 抢先认领
+            if (decision.IsTerrainDig)
+            {
+                gatherTask = new WorkerGatherTask.GatherTaskBuilder()
+                    .SetTerrainTarget(decision.TargetPosition, decision.TerrainId)
+                    .Build();
+            }
+            else
+            {
+                gatherTask = new WorkerGatherTask.GatherTaskBuilder()
+                    .SetTarget(decision.TargetPosition)
+                    .SetResourceInfo(decision.Resource)
+                    .Build();
+            }
+
+            // SetTarget/SetTerrainTarget 中 AddGather 认领失败 → 目标被其他 Worker 抢先认领
             if (gatherTask == null)
             {
                 AWorkerTask.LogProvider(
-                    $"{this.Character.name} 采集目标已被其他Worker认领, 放弃: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                    $"{this.Character.name} 采集/挖掘目标已被其他Worker认领, 放弃: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
                     LogManager.LogLevelEnum.Warning);
                 this.CreateIdleTask();
                 return;
@@ -304,8 +315,9 @@ namespace LAB2D.Character.Worker.State
             workerData.Task = gatherTask;
             gatherTask.Start(this.Character);
 
+            string actionName = decision.IsTerrainDig ? "挖掘" : "采集";
             AWorkerTask.LogProvider(
-                $"{this.Character.name} 创建自我采集任务: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                $"{this.Character.name} 创建自我{actionName}任务: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
                 LogManager.LogLevelEnum.Debug);
         }
 
@@ -327,8 +339,10 @@ namespace LAB2D.Character.Worker.State
             }
             else
             {
-                // 采集悬赏：使用预扫描位置
-                posted = bountyDecision.TryPostOneBounty(this.Character, decision.TargetPosition, decision.Resource);
+                // 采集悬赏/挖掘悬赏：使用预扫描位置
+                posted = bountyDecision.TryPostOneBounty(
+                    this.Character, decision.TargetPosition, decision.Resource,
+                    decision.IsTerrainDig, decision.TerrainId);
             }
 
             if (!posted)

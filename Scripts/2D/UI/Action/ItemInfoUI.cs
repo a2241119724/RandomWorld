@@ -5,6 +5,7 @@ namespace LAB2D.UI.Action
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Inventory;
     using LAB2D.Item;
+    using LAB2D.Map;
     using LAB2D.UnityAdapter;
     using Character = LAB2D.Character.Character;
     using System.Collections.Generic;
@@ -313,6 +314,22 @@ namespace LAB2D.UI.Action
                 this.text = "Tile:";
                 tileBase = ServiceLocator.Get<TileMap>().GetTile(posMap);
                 ServiceLocator.Get<DemolishUI>().Hide();
+
+                // 可挖掘地形（如山）→ 显示采集 UI，让玩家发布挖掘悬赏
+                TileMap tileMap = ServiceLocator.Get<TileMap>();
+                TerrainConfigDatabase terrainDb = ServiceLocator.Get<TerrainConfigDatabase>();
+                if (tileMap?.TileMapDataLAB?.MapTiles != null && terrainDb != null)
+                {
+                    int terrainId = tileMap.TileMapDataLAB.MapTiles[posMap.x, posMap.y];
+                    if (terrainDb.IsDiggable(terrainId))
+                    {
+                        ServiceLocator.Get<GatherUI>().SetPostion(posMap);
+                    }
+                    else
+                    {
+                        ServiceLocator.Get<GatherUI>().Hide();
+                    }
+                }
             }
 
             return tileBase;

@@ -135,6 +135,12 @@ namespace LAB2D.AI.Worker
             /// <summary>建造物品的 Tile 名称（仅 Build 类型使用）</summary>
             public string BuildTileName;
 
+            /// <summary>是否为地形挖掘（而非资源采集）。</summary>
+            public bool IsTerrainDig;
+
+            /// <summary>要挖掘的地形 ID（仅 IsTerrainDig=true 时有效）。</summary>
+            public int TerrainId;
+
             public static Decision Make(WorkerDecisionType type, string desc = "")
             {
                 return new Decision { Type = type, Description = desc };
@@ -184,6 +190,12 @@ namespace LAB2D.AI.Worker
         {
             public Vector3Int Position;
             public ResourceInfo Resource;
+
+            /// <summary>是否为地形挖掘候选（而非 ResourceMap 资源）。</summary>
+            public bool IsTerrainDig;
+
+            /// <summary>要挖掘的地形 ID（仅 IsTerrainDig=true 时有效）。</summary>
+            public int TerrainId;
         }
 
         /// <summary>
@@ -360,14 +372,26 @@ namespace LAB2D.AI.Worker
                     TargetPosition = nearbyResource.Value.Position,
                     Resource = nearbyResource.Value.Resource,
                     Description = $"社交({p.Sociality:F0})倾向发布悬赏",
+                    IsTerrainDig = nearbyResource.Value.IsTerrainDig,
+                    TerrainId = nearbyResource.Value.TerrainId,
                 };
             }
 
             // 事业型：自己干
             if (p.Ambition > this.AmbitionThreshold && p.Mood > this.MoodLowThreshold && hasNearbyResource && Random.value < selfProb)
             {
-                return Decision.MakeGather(nearbyResource.Value.Position, nearbyResource.Value.Resource,
-                    $"事业心({p.Ambition:F0})驱使自主采集");
+                var rc = nearbyResource.Value;
+                return new Decision
+                {
+                    Type = WorkerDecisionType.SelfGather,
+                    TargetPosition = rc.Position,
+                    Resource = rc.Resource,
+                    Description = rc.IsTerrainDig
+                        ? $"事业心({p.Ambition:F0})驱使自主挖掘地形"
+                        : $"事业心({p.Ambition:F0})驱使自主采集",
+                    IsTerrainDig = rc.IsTerrainDig,
+                    TerrainId = rc.TerrainId,
+                };
             }
 
             // === 第3层：勤劳接单 ===
@@ -448,8 +472,18 @@ namespace LAB2D.AI.Worker
             // 6. 建造条件不满足 → 采集建材
             ResourceCandidate? nearbyResource = this.ScanForResources(worker);
             if (nearbyResource.HasValue)
-                return Decision.MakeGather(nearbyResource.Value.Position, nearbyResource.Value.Resource,
-                    "Bootstrap: 采集建材");
+            {
+                var rc = nearbyResource.Value;
+                return new Decision
+                {
+                    Type = WorkerDecisionType.SelfGather,
+                    TargetPosition = rc.Position,
+                    Resource = rc.Resource,
+                    Description = rc.IsTerrainDig ? "Bootstrap: 挖掘地形获取建材" : "Bootstrap: 采集建材",
+                    IsTerrainDig = rc.IsTerrainDig,
+                    TerrainId = rc.TerrainId,
+                };
+            }
 
             // 7. 无资源可采 → 漫游探索
             return Decision.Make(WorkerDecisionType.Wander, "Bootstrap: 漫游探索资源");
@@ -838,6 +872,10 @@ namespace LAB2D.AI.Worker
                 }
             }
 
+            // 同时扫描可挖掘地形（山脉等）
+            List<ResourceCandidate> terrainCandidates = this.ScanForDiggableTerrain(worker);
+            candidates.AddRange(terrainCandidates);
+
             if (candidates.Count == 0)
             {
                 return null;
@@ -857,6 +895,96 @@ namespace LAB2D.AI.Worker
             }
 
             return best;
+        }
+
+        /// <summary>
+        /// 扫描周围可挖掘的地形瓦片（如山脉）。
+        /// 地形瓦片存在于 TileMap.MapTiles，不在 ResourceMap 中。
+        /// </summary>
+        private List<ResourceCandidate> ScanForDiggableTerrain(AWorker worker)
+        {
+            List<ResourceCandidate> candidates = new List<ResourceCandidate>();
+            Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+            TileMap tileMap = Core.ServiceLocator.Get<TileMap>();
+            TerrainConfigDatabase db = Core.ServiceLocator.Get<TerrainConfigDatabase>();
+            var gatherMap = Core.ServiceLocator.Get<GatherMap>();
+
+            if (tileMap?.TileMapDataLAB?.MapTiles == null || db == null)
+            {
+                return candidates;
+            }
+
+            int maxX = System.Math.Min(workerPos.x + this.ScanRadius, tileMap.TileMapDataLAB.Height - 1);
+            int maxY = System.Math.Min(workerPos.y + this.ScanRadius, tileMap.TileMapDataLAB.Width - 1);
+
+            for (int x = System.Math.Max(workerPos.x - this.ScanRadius, 0); x <= maxX; x++)
+            {
+                for (int y = System.Math.Max(workerPos.y - this.ScanRadius, 0); y <= maxY; y++)
+                {
+                    Vector3Int pos = new Vector3Int(x, y, 0);
+
+                    // 跳过已被认领的位置
+                    if (gatherMap?.GatherMapDataLAB?.ContainKey(pos) == true)
+                    {
+                        continue;
+                    }
+
+                    // 跳过近期寻路失败的位置
+                    if (ASeek.IsRecentFail(pos))
+                    {
+                        continue;
+                    }
+
+                    int terrainId = tileMap.TileMapDataLAB.MapTiles[x, y];
+                    if (!db.IsDiggable(terrainId))
+                    {
+                        continue;
+                    }
+
+                    // 检查是否有至少一个可行走的邻居（Worker 需要站在旁边工作）
+                    if (!this.HasWalkableNeighborForDig(pos, tileMap, db))
+                    {
+                        continue;
+                    }
+
+                    candidates.Add(new ResourceCandidate
+                    {
+                        Position = pos,
+                        IsTerrainDig = true,
+                        TerrainId = terrainId,
+                        Resource = new ResourceInfo(0), // 占位，实际掉落由 Finish() 确定
+                    });
+                }
+            }
+
+            return candidates;
+        }
+
+        /// <summary>
+        /// 检查挖掘目标是否有至少一个可行走邻居（Worker 需要站在旁边工作）。
+        /// </summary>
+        private bool HasWalkableNeighborForDig(Vector3Int pos, TileMap tileMap, TerrainConfigDatabase db)
+        {
+            int[] dxArr = { 0, 1, 0, -1 };
+            int[] dyArr = { 1, 0, -1, 0 };
+            for (int i = 0; i < 4; i++)
+            {
+                int nx = pos.x + dxArr[i];
+                int ny = pos.y + dyArr[i];
+                if (nx < 0 || nx >= tileMap.TileMapDataLAB.Height
+                    || ny < 0 || ny >= tileMap.TileMapDataLAB.Width)
+                {
+                    continue;
+                }
+
+                int neighborId = tileMap.TileMapDataLAB.MapTiles[nx, ny];
+                if (db.IsWalkable(neighborId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

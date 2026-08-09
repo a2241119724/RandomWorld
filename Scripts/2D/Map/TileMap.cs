@@ -8,6 +8,7 @@ namespace LAB2D.Map
     using LAB2D.UnityAdapter;
     using System;
     using System.Collections;
+    using System.Collections.Generic;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -350,6 +351,176 @@ namespace LAB2D.Map
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 挖掘指定位置的地形瓦片（如山），将其替换为8邻域中最常见的可行走地形。
+        /// </summary>
+        /// <param name="posMap">要挖掘的地图位置</param>
+        /// <returns>替换后的地形 ID，失败返回 0</returns>
+        public int DigTerrain(Vector3Int posMap)
+        {
+            if (this.TileMapDataLAB?.MapTiles == null)
+            {
+                AWorkerTask.LogProvider("DigTerrain: TileMapData is null", LogManager.LogLevelEnum.Error);
+                return 0;
+            }
+
+            int oldTerrainId = this.TileMapDataLAB.MapTiles[posMap.x, posMap.y];
+            int newTerrainId = this.FindMostCommonWalkableNeighbor(posMap);
+
+            // 更新地图数据
+            this.TileMapDataLAB.MapTiles[posMap.x, posMap.y] = newTerrainId;
+
+            // 更新视觉瓦片
+            TerrainConfigDatabase db = ServiceLocator.Get<TerrainConfigDatabase>();
+            string resourceName = db.GetTileResourceName(newTerrainId);
+            if (!string.IsNullOrEmpty(resourceName))
+            {
+                this.tilemap.SetTile(
+                    new Vector3Int(posMap.x, posMap.y, 0),
+                    (TileBase)AWorkerTask.ResourceLoadProvider(resourceName));
+            }
+
+            // 更新寻路缓存
+            WalkabilityCache.UpdateCell(posMap);
+
+            // 网络同步
+            this.SyncSender.Broadcast(
+                "SyncTerrainChange",
+                DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)),
+                newTerrainId);
+
+            AWorkerTask.LogProvider(
+                $"DigTerrain: pos=({posMap.x},{posMap.y}) terrainId {oldTerrainId} -> {newTerrainId}",
+                LogManager.LogLevelEnum.Info);
+
+            return newTerrainId;
+        }
+
+        /// <summary>
+        /// 查找指定位置8邻域中最常见的可行走地形 ID。
+        /// </summary>
+        private int FindMostCommonWalkableNeighbor(Vector3Int posMap)
+        {
+            TerrainConfigDatabase db = ServiceLocator.Get<TerrainConfigDatabase>();
+            Dictionary<int, int> frequency = new Dictionary<int, int>();
+
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    if (dx == 0 && dy == 0)
+                    {
+                        continue;
+                    }
+
+                    int nx = posMap.x + dx;
+                    int ny = posMap.y + dy;
+
+                    if (nx < 0 || nx >= this.TileMapDataLAB.Height
+                        || ny < 0 || ny >= this.TileMapDataLAB.Width)
+                    {
+                        continue;
+                    }
+
+                    int neighborId = this.TileMapDataLAB.MapTiles[nx, ny];
+
+                    // 跳过水域
+                    if (neighborId == this.cachedWaterTerrainId)
+                    {
+                        continue;
+                    }
+
+                    // 只统计可行走的地形
+                    if (!db.IsWalkable(neighborId))
+                    {
+                        continue;
+                    }
+
+                    frequency.TryGetValue(neighborId, out int count);
+                    frequency[neighborId] = count + 1;
+                }
+            }
+
+            // 找出频率最高的
+            if (frequency.Count > 0)
+            {
+                int bestId = 0;
+                int bestCount = -1;
+                foreach (KeyValuePair<int, int> kv in frequency)
+                {
+                    if (kv.Value > bestCount)
+                    {
+                        bestCount = kv.Value;
+                        bestId = kv.Key;
+                    }
+                }
+
+                return bestId;
+            }
+
+            // 回退：无可行走邻居 → 使用全局最高权重的可行走地形
+            AWorkerTask.LogProvider(
+                $"DigTerrain: pos=({posMap.x},{posMap.y}) 周围无可通行邻居，使用回退地形",
+                LogManager.LogLevelEnum.Warning);
+            return this.GetFallbackWalkableTerrainId(db);
+        }
+
+        /// <summary>
+        /// 获取回退可行走地形 ID（无可行走邻居时使用）。
+        /// 遍历所有地形配置，返回 spawnWeight 最高的可行走地形；仍找不到则返回 1（草地）。
+        /// </summary>
+        private int GetFallbackWalkableTerrainId(TerrainConfigDatabase db)
+        {
+            int bestId = 1;
+            float bestWeight = -1f;
+
+            foreach (int id in db.SpawnableIds)
+            {
+                if (db.IsWalkable(id))
+                {
+                    TerrainTileConfig config = db.GetById(id);
+                    if (config != null && config.spawnWeight > bestWeight)
+                    {
+                        bestWeight = config.spawnWeight;
+                        bestId = id;
+                    }
+                }
+            }
+
+            return bestId;
+        }
+
+        /// <summary>
+        /// 接收来自其他客户端的地形变更同步（单格）。
+        /// </summary>
+        /// <param name="vector3IntLABBytes">位置</param>
+        /// <param name="newTerrainId">新的地形 ID</param>
+        [PunRPC]
+        public void SyncTerrainChange(byte[] vector3IntLABBytes, int newTerrainId)
+        {
+            AWorkerTask.LogProvider("Response: 同步地形变更", LogManager.LogLevelEnum.Trace);
+            Vector3Int pos = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLABBytes));
+
+            if (pos.x < 0 || pos.x >= this.TileMapDataLAB.Height
+                || pos.y < 0 || pos.y >= this.TileMapDataLAB.Width)
+            {
+                return;
+            }
+
+            this.TileMapDataLAB.MapTiles[pos.x, pos.y] = newTerrainId;
+
+            TerrainConfigDatabase db = ServiceLocator.Get<TerrainConfigDatabase>();
+            string resourceName = db.GetTileResourceName(newTerrainId);
+            if (!string.IsNullOrEmpty(resourceName))
+            {
+                this.tilemap.SetTile(
+                    new Vector3Int(pos.x, pos.y, 0),
+                    (TileBase)AWorkerTask.ResourceLoadProvider(resourceName));
+            }
+
+            WalkabilityCache.UpdateCell(pos);
         }
 
         /// <summary>

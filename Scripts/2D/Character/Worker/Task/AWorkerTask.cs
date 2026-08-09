@@ -220,6 +220,8 @@ namespace LAB2D.Character.Worker.Task
                 LAB2D.UnityAdapter.UnityVectorAdapter.ToGameGridPosition(pos));
         public static System.Func<ResourceMap> ResourceMapProvider { get; set; }
             = () => ServiceLocator.Get<ResourceMap>();
+        public static System.Func<TileMap> TileMapProvider { get; set; }
+            = () => ServiceLocator.Get<TileMap>();
         public static System.Func<int, System.Collections.Generic.List<DropItem>> DropDataProvider { get; set; }
             = (id) => ServiceLocator.Get<DropDataManager>().GetDropItemsById(id);
         public static System.Func<UnityEngine.Vector3Int, int, bool, UnityEngine.Vector3Int> AvailablePositionProvider { get; set; }

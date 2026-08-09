@@ -21,6 +21,16 @@ namespace LAB2D.Character.Worker.Task
         /// </summary>
         private ResourceInfo resourceInfo;
 
+        /// <summary>
+        /// 是否为地形挖掘（而非资源采集）。true 时 Finish() 调用 TileMap.DigTerrain。
+        /// </summary>
+        private bool isTerrainDig;
+
+        /// <summary>
+        /// 要挖掘的地形 ID（仅 isTerrainDig=true 时有效）。
+        /// </summary>
+        private int terrainIdToDig;
+
         public WorkerGatherTask()
             : base(WorkerTaskType.Gather)
         {
@@ -42,8 +52,61 @@ namespace LAB2D.Character.Worker.Task
         public override void Finish(AWorker worker)
         {
             base.Finish(worker);
-            ResourceMapProvider().CutTree(Vector3IntLAB.ToVector3Int(this.TargetMap));
-            List<DropItem> dropItems = DropDataProvider(this.resourceInfo.Id);
+
+            Vector3Int posMap = Vector3IntLAB.ToVector3Int(this.TargetMap);
+
+            // 地形挖掘分支：替换 TileMap 瓦片而非移除 ResourceMap 资源
+            if (this.isTerrainDig)
+            {
+                int oldTerrainId = this.terrainIdToDig;
+                int newTerrainId = TileMapProvider().DigTerrain(posMap);
+
+                LogProvider(
+                    $"地形挖掘完成: pos=({posMap.x},{posMap.y}) terrainId {oldTerrainId} -> {newTerrainId}",
+                    LogManager.LogLevelEnum.Info);
+
+                // 查找石头掉落（优先 CustomStone，其次按名称匹配）
+                int dropItemId = this.resourceInfo?.Id ?? 0;
+                if (dropItemId <= 0)
+                {
+                    // 尝试通过地形名称查找物品数据
+                    if (Core.ServiceLocator.Get<ItemDataManager>().TryGetByName("CustomStone", out ItemData stoneData))
+                    {
+                        dropItemId = stoneData.Id;
+                    }
+                }
+
+                List<DropItem> dropItems = dropItemId > 0
+                    ? DropDataProvider(dropItemId)
+                    : new List<DropItem>();
+
+                // 地形挖掘的掉落处理（复用下方公共逻辑）
+                this.ProcessDrops(worker, dropItems, posMap);
+
+                // 删除采集/挖掘标记
+                GatherMapProvider().CancelGather(posMap);
+                return;
+            }
+
+            // 资源采集分支（原有逻辑）
+            ResourceMapProvider().CutTree(posMap);
+            List<DropItem> resourceDropItems = DropDataProvider(this.resourceInfo.Id);
+
+            this.ProcessDrops(worker, resourceDropItems, posMap);
+
+            // 删除采摘图标
+            GatherMapProvider().CancelGather(posMap);
+        }
+
+        /// <summary>
+        /// 统一处理掉落物（资源采集和地形挖掘共用）。
+        /// </summary>
+        private void ProcessDrops(AWorker worker, List<DropItem> dropItems, Vector3Int targetPos)
+        {
+            if (dropItems == null || dropItems.Count == 0)
+            {
+                return;
+            }
 
             // 悬赏任务：OwnerId=发布者；普通任务：OwnerId=采集者
             bool isBounty = AWorkerTask.IsBountyExecution;
@@ -62,8 +125,6 @@ namespace LAB2D.Character.Worker.Task
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)
             {
-                Vector3Int targetPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
-
                 // 设置所有权：采集所得归采集者
                 dropItems[i].ResourceInfo.OwnerId = workerId;
 
@@ -96,9 +157,6 @@ namespace LAB2D.Character.Worker.Task
                     }
                 }
             }
-
-            // 删除采摘图标
-            GatherMapProvider().CancelGather(Vector3IntLAB.ToVector3Int(this.TargetMap));
 
             // 自我采集完成后，立即链式拾取所有掉落物
             // 悬赏的不直接创建，等 Worker 空闲时才去任务栏拾取
@@ -218,11 +276,32 @@ namespace LAB2D.Character.Worker.Task
             public GatherTaskBuilder SetTarget(Vector3Int targetMap)
             {
                 this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(targetMap);
+                this.task.isTerrainDig = false;
 
                 // 认领资源（防止多个 Worker 同时采集同一目标）
                 if (!GatherMapProvider().AddGather(targetMap))
                 {
                     LogProvider($"资源已被其他Worker认领: pos=({targetMap.x},{targetMap.y})", LogManager.LogLevelEnum.Warning);
+                    this.claimFailed = true;
+                }
+
+                return this;
+            }
+
+            /// <summary>
+            /// 设置目标为可挖掘地形（如山）。
+            /// 地形不在 ResourceMap 中，认领复用 GatherMap。
+            /// </summary>
+            public GatherTaskBuilder SetTerrainTarget(Vector3Int targetMap, int terrainId)
+            {
+                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(targetMap);
+                this.task.isTerrainDig = true;
+                this.task.terrainIdToDig = terrainId;
+
+                // 认领位置（复用 GatherMap，防止多个 Worker 同时挖掘同一位置）
+                if (!GatherMapProvider().AddGather(targetMap))
+                {
+                    LogProvider($"挖掘位置已被其他Worker认领: pos=({targetMap.x},{targetMap.y})", LogManager.LogLevelEnum.Warning);
                     this.claimFailed = true;
                 }
 
