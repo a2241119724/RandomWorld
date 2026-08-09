@@ -289,7 +289,7 @@ namespace LAB2D.Constant
                 case WorkerTaskType.Sleep:
                 case WorkerTaskType.GroundSleep: return TaskSleep;
                 case WorkerTaskType.Bounty:
-                case WorkerTaskType.PickUpFromBoard: return TaskBounty;
+                case WorkerTaskType.PickUp: return TaskBounty;
                 case WorkerTaskType.Wear: return TaskWear;
                 default: return General;
             }

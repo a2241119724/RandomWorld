@@ -48,7 +48,7 @@ namespace LAB2D.Character.Worker.Task
         private List<ResourceInfo> pendingResources;
 
         public WorkerPickUpTask()
-            : base(WorkerTaskType.PickUpFromBoard)
+            : base(WorkerTaskType.PickUp)
         {
             this.stageInit.Add((AWorker worker) =>
             {
@@ -146,7 +146,7 @@ namespace LAB2D.Character.Worker.Task
                 this.pendingPositions.RemoveAt(0);
                 this.pendingResources.RemoveAt(0);
 
-                WorkerPickUpTask nextTask = new PickUpFromBoardTaskBuilder()
+                WorkerPickUpTask nextTask = new PickUpTaskBuilder()
                     .SetMode(PickUpMode.FromGround)
                     .SetTargetPosition(nextPos)
                     .SetGroundResource(nextResource)
@@ -290,52 +290,52 @@ namespace LAB2D.Character.Worker.Task
 
         // ---- Builder ----
 
-        public class PickUpFromBoardTaskBuilder
+        public class PickUpTaskBuilder
         {
             private readonly WorkerPickUpTask task;
 
-            public PickUpFromBoardTaskBuilder()
+            public PickUpTaskBuilder()
             {
                 this.task = new WorkerPickUpTask();
             }
 
             /// <summary>设置拾取模式（默认为 FromBoard）</summary>
-            public PickUpFromBoardTaskBuilder SetMode(PickUpMode mode)
+            public PickUpTaskBuilder SetMode(PickUpMode mode)
             {
                 this.task.mode = mode;
                 return this;
             }
 
             /// <summary>设置任务栏邻居位置为目标（FromBoard 模式）</summary>
-            public PickUpFromBoardTaskBuilder SetBoardNeighbor(Vector3Int neighborPos)
+            public PickUpTaskBuilder SetBoardNeighbor(Vector3Int neighborPos)
             {
                 this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(neighborPos);
                 return this;
             }
 
             /// <summary>设置地面物品位置为目标（FromGround 模式）</summary>
-            public PickUpFromBoardTaskBuilder SetTargetPosition(Vector3Int targetPos)
+            public PickUpTaskBuilder SetTargetPosition(Vector3Int targetPos)
             {
                 this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(targetPos);
                 return this;
             }
 
             /// <summary>设置目标物主 ID（只有该 Worker 可接）</summary>
-            public PickUpFromBoardTaskBuilder SetOwnerId(int ownerId)
+            public PickUpTaskBuilder SetOwnerId(int ownerId)
             {
                 this.task.targetOwnerId = ownerId;
                 return this;
             }
 
             /// <summary>设置地面资源信息（FromGround 模式）</summary>
-            public PickUpFromBoardTaskBuilder SetGroundResource(ResourceInfo resourceInfo)
+            public PickUpTaskBuilder SetGroundResource(ResourceInfo resourceInfo)
             {
                 this.task.groundResource = DataTool.DeepCopyByBinary(resourceInfo);
                 return this;
             }
 
             /// <summary>设置链式拾取的待拾取列表（FromGround 模式）</summary>
-            public PickUpFromBoardTaskBuilder SetPendingPickups(
+            public PickUpTaskBuilder SetPendingPickups(
                 List<Vector3Int> positions, List<ResourceInfo> resources)
             {
                 this.task.pendingPositions = positions != null

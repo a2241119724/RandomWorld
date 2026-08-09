@@ -40,7 +40,7 @@ namespace LAB2D.AI.Worker
         SelfCarry,
 
         /// <summary>去任务栏取回属于自己的悬赏物品</summary>
-        PickUpFromBoard,
+        PickUp,
 
         /// <summary>自己去建造</summary>
         SelfBuild,
@@ -315,7 +315,7 @@ namespace LAB2D.AI.Worker
             // === 优先：任务栏有自己悬赏的物品 → 去任务栏取 ===
             if (p.Diligence > 30f)
             {
-                Decision? boardDecision = this.TryMakePickUpFromBoardDecision(worker);
+                Decision? boardDecision = this.TryMakePickUpDecision(worker);
                 if (boardDecision.HasValue) return boardDecision.Value;
             }
 
@@ -740,7 +740,7 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 检查任务栏处是否有属于自己的悬赏物品，创建去任务栏拾取的决策。
         /// </summary>
-        private Decision? TryMakePickUpFromBoardDecision(AWorker worker)
+        private Decision? TryMakePickUpDecision(AWorker worker)
         {
             int ownerId = worker.GetInstanceID();
 
@@ -760,7 +760,7 @@ namespace LAB2D.AI.Worker
 
             return new Decision
             {
-                Type = WorkerDecisionType.PickUpFromBoard,
+                Type = WorkerDecisionType.PickUp,
                 TargetPosition = neighborPos,
                 Resource = null,
                 Description = $"去任务栏取回属于自己的物品",

@@ -209,7 +209,7 @@ namespace LAB2D.Gameplay
                 Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(pos);
                 AWorkerTask.EquipmentBeamProvider().SpawnBeam(pos, beamWorldPos, EquipmentRarityType.Common);
 
-                // 替换自动创建的 Carry 任务为 PickUpFromBoard 拾取任务
+                // 替换自动创建的 Carry 任务为 PickUp 拾取任务
                 ReplaceCarryWithPickUpTask(pos, ownedResource, ownerId);
 
                 AWorkerTask.LogProvider(
@@ -230,7 +230,7 @@ namespace LAB2D.Gameplay
             ServiceLocator.Get<WorkerTaskManager>().RemoveCarryTaskAt(pos);
 
             // 创建 FromGround 模式拾取任务
-            WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpFromBoardTaskBuilder()
+            WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpTaskBuilder()
                 .SetMode(WorkerPickUpTask.PickUpMode.FromGround)
                 .SetTargetPosition(pos)
                 .SetGroundResource(resource)
@@ -327,7 +327,7 @@ namespace LAB2D.Gameplay
             Vector3 beamWorldPos = AWorkerTask.TileMapPositionProvider(availablePos);
             AWorkerTask.EquipmentBeamProvider().SpawnBeam(availablePos, beamWorldPos, rarity);
 
-            // 替换自动创建的 Carry 任务为 PickUpFromBoard 拾取任务
+            // 替换自动创建的 Carry 任务为 PickUp 拾取任务
             ReplaceCarryWithPickUpTask(availablePos, resourceInfo, ownerId);
 
             // 在掉落位置生成浮动稀有度标签

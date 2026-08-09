@@ -16,7 +16,7 @@ namespace LAB2D.Gameplay
     /// 职责：
     /// - 存储任务栏世界坐标（BuildMap 上有 Bounty 图标）
     /// - 内部存储交付物品（按物主 Worker ID 分组），不在地面创建图标
-    /// - 提供任务栏四周的相邻位置（用于 Carry(ToBoard) / PickUpFromBoard 寻路目标）
+    /// - 提供任务栏四周的相邻位置（用于 Carry(ToBoard) / PickUp 寻路目标）
     /// - 提供物品存取接口
     /// </summary>
     public class TaskBoardManager : Singleton<TaskBoardManager>
@@ -138,7 +138,7 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 取回属于自己的所有物品（由 PickUpFromBoardTask 调用）。
+        /// 取回属于自己的所有物品（由 PickUpTask 调用）。
         /// </summary>
         public List<ResourceInfo> RetrieveItems(int workerId)
         {

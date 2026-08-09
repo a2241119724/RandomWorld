@@ -240,8 +240,8 @@ namespace LAB2D.Character.Worker.State
                     this.CreateSelfCarryTask(decision);
                     break;
 
-                case WorkerDecisionType.PickUpFromBoard:
-                    this.CreatePickUpFromBoardTask(decision);
+                case WorkerDecisionType.PickUp:
+                    this.CreatePickUpTask(decision);
                     break;
 
                 case WorkerDecisionType.SelfBuild:
@@ -706,7 +706,7 @@ namespace LAB2D.Character.Worker.State
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             int ownerId = this.Character.GetInstanceID();
 
-            WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpFromBoardTaskBuilder()
+            WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpTaskBuilder()
                 .SetMode(WorkerPickUpTask.PickUpMode.FromGround)
                 .SetTargetPosition(decision.TargetPosition)
                 .SetGroundResource(decision.Resource)
@@ -726,7 +726,7 @@ namespace LAB2D.Character.Worker.State
         /// 创建去任务栏拾取任务 — 去任务栏取回属于自己的悬赏物品。
         /// 直接分配给当前 Worker（不入全局池），确保物品不会被其他人拿走。
         /// </summary>
-        private void CreatePickUpFromBoardTask(WorkerBrain.Decision decision)
+        private void CreatePickUpTask(WorkerBrain.Decision decision)
         {
             var boardManager = Core.ServiceLocator.Get<Gameplay.TaskBoardManager>();
             if (boardManager == null || !boardManager.IsInitialized)
@@ -739,7 +739,7 @@ namespace LAB2D.Character.Worker.State
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
             int ownerId = this.Character.GetInstanceID();
 
-            WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpFromBoardTaskBuilder()
+            WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpTaskBuilder()
                 .SetMode(WorkerPickUpTask.PickUpMode.FromBoard)
                 .SetBoardNeighbor(boardManager.GetNeighborPosition())
                 .SetOwnerId(ownerId)
