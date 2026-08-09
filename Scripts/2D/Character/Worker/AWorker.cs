@@ -608,6 +608,12 @@ namespace LAB2D.Character.Worker
         {
             AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
 
+            // 重置建造卡死重试计数
+            if (workerData != null)
+            {
+                workerData.BuildStuckRetryCount = 0;
+            }
+
             // 采集任务被放弃时，释放 GatherMap 认领锁（配合失败缓存防止重复选取）
             if (workerData.Task != null && workerData.Task.TaskType == WorkerTaskType.Gather)
             {
@@ -811,6 +817,26 @@ namespace LAB2D.Character.Worker
             if (this.collisionBugDetector.IsBug(this.name, 100))
             {
                 this.collisionBugDetector.ColliderCount = 0; // 重置计数器，防止重复触发
+
+                AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
+
+                // 建造任务：碰撞 Bug 触发时优先重试重新寻路，而非直接放弃。
+                // 建造现场通常空间狭窄，碰撞频繁但并非真正阻塞。
+                // 最大 3 次重试，每次触发提供约 1.6 秒额外调整时间（总计约 5 秒）。
+                const int maxRetries = 3;
+                if (workerData?.Task != null && workerData.Task.TaskType == WorkerTaskType.Build)
+                {
+                    workerData.BuildStuckRetryCount++;
+                    if (workerData.BuildStuckRetryCount < maxRetries)
+                    {
+                        // 重新寻路绕过阻塞，不放弃任务
+                        this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                        return;
+                    }
+
+                    workerData.BuildStuckRetryCount = 0;
+                }
+
                 this.GiveUpTask(); // 放弃当前任务，让WorkerBrain做新决策避开阻塞点
             }
         }
@@ -916,6 +942,13 @@ namespace LAB2D.Character.Worker
 
             /// <summary>漫游剩余路点数 — >0 表示正在漫游，到达目标后递减并继续漫游。</summary>
             public int WanderWaypointsRemaining;
+
+            /// <summary>
+            /// 建造任务卡死重试计数 — 碰撞 Bug 触发时递增，任务完成/切换时重置。
+            /// [NonSerialized] 因为是瞬时运行时计数器。
+            /// </summary>
+            [NonSerialized]
+            public int BuildStuckRetryCount;
 
             public WorkerData()
             {

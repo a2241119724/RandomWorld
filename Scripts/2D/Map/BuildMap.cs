@@ -473,6 +473,17 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 按瓦片名称获取建造资源需求（用于重新创建丢失的建造任务）。
+        /// </summary>
+        /// <param name="tileName">瓦片名称。</param>
+        /// <returns>物品 ID → ResourceInfo 字典，若无法解析则返回空字典。</returns>
+        public static Dictionary<int, ResourceInfo> GetBuildCost(string tileName)
+        {
+            BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileName);
+            return BuildResourceDict(buildItemData);
+        }
+
+        /// <summary>
         /// 建造数据
         /// </summary>
         [Serializable]

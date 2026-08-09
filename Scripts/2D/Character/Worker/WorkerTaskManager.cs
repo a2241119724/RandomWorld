@@ -151,6 +151,12 @@ namespace LAB2D.Character.Worker
             {
                 ASeek.CleanFailCache();
             }
+
+            // 每300帧（约5秒）扫描 BuildMap 中未完成建造，确保存在对应任务
+            if (currentFrame % 300 == 0)
+            {
+                this.VerifyBuildTasks();
+            }
         }
 
         /// <summary>
@@ -412,6 +418,102 @@ namespace LAB2D.Character.Worker
             }
 
             EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+        }
+
+        /// <summary>
+        /// 扫描 BuildMap.PosMap 中所有未完成的建造位置，确保它们有对应的活跃/闲置任务。
+        /// 用于恢复因 Self-Build 任务不在全局队列中而永久丢失的建造任务。
+        /// </summary>
+        private void VerifyBuildTasks()
+        {
+            BuildMap buildMap = Core.ServiceLocator.Get<BuildMap>();
+            if (buildMap?.BuildMapDataLAB?.PosMap == null)
+            {
+                return;
+            }
+
+            foreach (var kv in buildMap.BuildMapDataLAB.PosMap)
+            {
+                BuildMap.BuildTileData tileData = kv.Value;
+                if (tileData.IsComplete)
+                {
+                    continue;
+                }
+
+                Vector3Int pos = Vector3IntLAB.ToVector3Int(kv.Key);
+
+                // 已有运行中或闲置的建造任务 → 跳过
+                if (this.HasBuildTaskAtPosition(pos))
+                {
+                    continue;
+                }
+
+                // 已有 Worker 正在携带该位置的建造任务（Self-Build 场景）→ 跳过
+                if (this.HasWorkerCarryingBuildTaskAt(pos))
+                {
+                    continue;
+                }
+
+                // 无任务覆盖 → 重新创建建造任务
+                Dictionary<int, ResourceInfo> buildCosts = BuildMap.GetBuildCost(tileData.Name);
+                if (buildCosts == null || buildCosts.Count == 0)
+                {
+                    continue;
+                }
+
+                WorkerBuildTask newTask = new WorkerBuildTask.BuildTaskBuilder()
+                    .SetBuildPos(pos)
+                    .SetNeedResource(buildCosts)
+                    .Build();
+
+                this.AddTask(newTask, new GameGridPosition(pos.x, pos.y, pos.z));
+
+                AWorkerTask.LogProvider(
+                    $"VerifyBuildTasks: 为未完成建造重新创建任务 pos=({pos.x},{pos.y}) tile={tileData.Name}",
+                    LogManager.LogLevelEnum.Warning);
+            }
+        }
+
+        /// <summary>
+        /// 检查任务队列中是否已存在指定位置的建造任务（含运行中和闲置）。
+        /// </summary>
+        private bool HasBuildTaskAtPosition(Vector3Int pos)
+        {
+            for (int p = 0; p < this.taskQueue.PriorityCount; p++)
+            {
+                foreach (var kv in this.taskQueue.GetTasksAtPriority(p))
+                {
+                    if (kv.Key.TaskType == WorkerTaskType.Build
+                        && kv.Key.TargetMap.X == pos.x
+                        && kv.Key.TargetMap.Y == pos.y)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 检查是否已有 Worker 正在携带指定位置的建造任务（Self-Build 场景中任务不经过全局队列）。
+        /// </summary>
+        private bool HasWorkerCarryingBuildTaskAt(Vector3Int pos)
+        {
+            List<AWorker> workers = WorkerListProvider();
+            foreach (AWorker worker in workers)
+            {
+                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd?.Task != null
+                    && wd.Task.TaskType == WorkerTaskType.Build
+                    && wd.Task.TargetMap.X == pos.x
+                    && wd.Task.TargetMap.Y == pos.y)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
