@@ -451,24 +451,38 @@ namespace LAB2D.Character.Worker.State
             }
 
             // 在 BuildMap 中注册建造位置（仅注册不创建任务，避免 AddBuild 内部自动创建重复任务）
+            // 如果位置已在 HomeBuildStage==0 时预注册，跳过 ReserveBuildPosition
             if (!string.IsNullOrEmpty(decision.BuildTileName))
             {
-                bool reserved = Core.ServiceLocator.Get<BuildMap>().ReserveBuildPosition(
-                    decision.TargetPosition, decision.BuildTileName);
-                if (!reserved)
+                var buildMap = Core.ServiceLocator.Get<BuildMap>();
+                var existingTile = buildMap?.GetBuildTileData(decision.TargetPosition);
+
+                if (existingTile != null && !existingTile.IsComplete)
                 {
-                    // 位置被其他 Worker 占用 → 重新选址
+                    // 位置已预注册（HomeBuildStage>0 时的正常情况），跳过注册
                     AWorkerTask.LogProvider(
-                        $"{this.Character.name} 建造位置已被占用, 重新选址: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
-                        LogManager.LogLevelEnum.Warning);
-                    AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
-                    if (wd != null)
+                        $"{this.Character.name} 建造位置已预注册, 跳过: {decision.BuildTileName} pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                        LogManager.LogLevelEnum.Trace);
+                }
+                else
+                {
+                    bool reserved = Core.ServiceLocator.Get<BuildMap>().ReserveBuildPosition(
+                        decision.TargetPosition, decision.BuildTileName);
+                    if (!reserved)
                     {
-                        wd.PlannedHomePosition = null;
-                        wd.HomeBuildStage = 0;
+                        // 位置被其他 Worker 占用 → 重新选址
+                        AWorkerTask.LogProvider(
+                            $"{this.Character.name} 建造位置已被占用, 重新选址: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                            LogManager.LogLevelEnum.Warning);
+                        AWorker.WorkerData wd = this.Character.CharacterDataLAB as AWorker.WorkerData;
+                        if (wd != null)
+                        {
+                            wd.PlannedHomePosition = null;
+                            wd.HomeBuildStage = 0;
+                        }
+                        this.CreateIdleTask();
+                        return;
                     }
-                    this.CreateIdleTask();
-                    return;
                 }
             }
 

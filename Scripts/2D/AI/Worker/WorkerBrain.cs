@@ -1133,6 +1133,18 @@ namespace LAB2D.AI.Worker
                 // 建造前先扫描房间区域内的资源，有资源先采集
                 if (wd.HomeBuildStage == 0)
                 {
+                    // 先预注册所有房间位置到 BuildMap，阻止 GenTree 在这些位置生成树
+                    if (!this.PreReserveAllRoomPositions(center, worker))
+                    {
+                        // 预注册失败（位置冲突）→ 重新选址
+                        AWorkerTask.LogProvider(
+                            $"{worker.name} 建房区域预注册失败, 重新选址",
+                            LogManager.LogLevelEnum.Warning);
+                        this.RelocateHomeSite(worker, wd);
+                        return Decision.Make(WorkerDecisionType.Wander,
+                            "建家位置预注册失败, 重新选址后漫游");
+                    }
+
                     ResourceCandidate? roomResource = this.ScanRoomAreaForResource(center);
                     if (roomResource.HasValue)
                     {
@@ -1218,6 +1230,31 @@ namespace LAB2D.AI.Worker
                                 $"{worker.name} 建造位置有资源, 先采集再建 {buildTileName} pos=({buildPos.Value.x},{buildPos.Value.y})",
                                 LogManager.LogLevelEnum.Debug);
                             return Decision.MakeGather(buildPos.Value, resourceInfo, "清理建造位置");
+                        }
+
+                        // 检查是否是地形可挖掘（如山/树等 terrain tile，不在 ResourceMap 中）
+                        var tileMap = Core.ServiceLocator.Get<TileMap>();
+                        var terrainDb = Core.ServiceLocator.Get<TerrainConfigDatabase>();
+                        if (tileMap?.TileMapDataLAB?.MapTiles != null && terrainDb != null
+                            && buildPos.Value.x >= 0 && buildPos.Value.x < tileMap.TileMapDataLAB.Height
+                            && buildPos.Value.y >= 0 && buildPos.Value.y < tileMap.TileMapDataLAB.Width)
+                        {
+                            int terrainId = tileMap.TileMapDataLAB.MapTiles[buildPos.Value.x, buildPos.Value.y];
+                            if (terrainDb.IsDiggable(terrainId))
+                            {
+                                AWorkerTask.LogProvider(
+                                    $"{worker.name} 建造位置有可挖掘地形(terrainId={terrainId}), 先挖掘再建 {buildTileName} pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                    LogManager.LogLevelEnum.Debug);
+                                return new Decision
+                                {
+                                    Type = WorkerDecisionType.SelfGather,
+                                    TargetPosition = buildPos.Value,
+                                    Resource = null,
+                                    Description = "挖掘建造位置地形",
+                                    IsTerrainDig = true,
+                                    TerrainId = terrainId,
+                                };
+                            }
                         }
                     }
 
@@ -1523,20 +1560,95 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 清除当前 Worker 已经废弃的建造瓦片（IsComplete=false 的 BuildMap 条目）。
-        /// 当 Worker 因冲突重新选址时调用，防止残留墙壁影响后续选址。
+        /// 预注册房间所有建造位置到 BuildMap，阻止 GenTree 在墙/门/床位置生成树。
+        /// 在 HomeBuildStage==0 时调用一次，后续 CreateSelfBuildTask 跳过已注册位置。
         /// </summary>
-        private void ClearAbandonedBuildTiles(AWorker.WorkerData wd)
+        /// <param name="center">房间中心</param>
+        /// <param name="worker">当前 Worker（仅用于日志）</param>
+        /// <returns>true = 全部注册成功；false = 存在冲突，需重新选址</returns>
+        private bool PreReserveAllRoomPositions(Vector3Int center, AWorker worker)
         {
-            if (wd?.PlannedHomePosition == null) return;
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            if (buildMap == null) return false;
+
+            // 收集所有需要预注册的位置及其 tileName
+            var positionsToReserve = new List<(Vector3Int pos, string tileName)>(WallCount + 2);
+
+            for (int i = 0; i < WallCount; i++)
+            {
+                int dir = WallDirections[i];
+                string tileName = $"CustomRoomWall_{dir}";
+                positionsToReserve.Add((center + WallOffsets[i], tileName));
+            }
+            positionsToReserve.Add((center + DoorOffset, "CustomDoor"));
+            positionsToReserve.Add((center, "SingleBed"));
+
+            // 两阶段：先检查全部可用，再统一注册（避免部分注册后失败难以回滚）
+            foreach (var (pos, tileName) in positionsToReserve)
+            {
+                Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var existing))
+                {
+                    if (existing.IsComplete)
+                    {
+                        // 已完成 → 可接受（可能是其他 Worker 建的公共墙）
+                        AWorkerTask.LogProvider(
+                            $"{worker.name} 预注册: 位置已完成, 跳过 {tileName} pos=({pos.x},{pos.y})",
+                            LogManager.LogLevelEnum.Debug);
+                        continue;
+                    }
+
+                    // 被其他 Worker 占用且未完成 → 冲突
+                    AWorkerTask.LogProvider(
+                        $"{worker.name} 预注册失败: 位置被占用 {tileName} pos=({pos.x},{pos.y}) 被 {existing.BuilderName}",
+                        LogManager.LogLevelEnum.Warning);
+                    return false;
+                }
+            }
+
+            // 全部可用 → 执行注册
+            foreach (var (pos, tileName) in positionsToReserve)
+            {
+                Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                if (buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
+                {
+                    // 已在 PosMap 中（已完成，上面已跳过）→ 不重复注册
+                    continue;
+                }
+
+                if (!buildMap.ReserveBuildPosition(pos, tileName))
+                {
+                    AWorkerTask.LogProvider(
+                        $"{worker.name} 预注册执行失败: {tileName} pos=({pos.x},{pos.y})",
+                        LogManager.LogLevelEnum.Error);
+                    // 清理已注册的位置（回滚）
+                    this.ClearAbandonedBuildTilesCore(wd: null, center);
+                    return false;
+                }
+            }
+
+            AWorkerTask.LogProvider(
+                $"{worker.name} 预注册完成: 15面墙+门+床 共{positionsToReserve.Count}个位置",
+                LogManager.LogLevelEnum.Debug);
+            return true;
+        }
+
+        /// <summary>
+        /// 清除指定中心位置的所有建造瓦片（内部实现，不依赖 WorkerData）。
+        /// </summary>
+        private void ClearAbandonedBuildTilesCore(AWorker.WorkerData wd, Vector3Int center)
+        {
+            // 如果 wd 为 null，使用给定 center；否则从 wd.PlannedHomePosition 推导
+            if (wd != null)
+            {
+                if (wd.PlannedHomePosition == null) return;
+                center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+            }
 
             var buildMap = Core.ServiceLocator.Get<BuildMap>();
             if (buildMap?.BuildMapDataLAB?.PosMap == null) return;
 
-            Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
-
-            // 收集所有需要清理的位置（墙壁 + 门 + 床）
-            var positionsToClear = new System.Collections.Generic.List<Vector3Int>();
+            var positionsToClear = new List<Vector3Int>(WallCount + 2);
             for (int i = 0; i < WallCount; i++)
             {
                 positionsToClear.Add(center + WallOffsets[i]);
@@ -1551,9 +1663,19 @@ namespace LAB2D.AI.Worker
                     && !tile.IsComplete)
                 {
                     buildMap.BuildMapDataLAB.PosMap.Remove(posLAB);
-                    buildMap.CancelBuilding(pos); // 同时清除 tilemap 视觉瓦片
+                    buildMap.CancelBuilding(pos);
                 }
             }
+        }
+
+        /// <summary>
+        /// 清除当前 Worker 已经废弃的建造瓦片（IsComplete=false 的 BuildMap 条目）。
+        /// 当 Worker 因冲突重新选址时调用，防止残留墙壁影响后续选址。
+        /// </summary>
+        private void ClearAbandonedBuildTiles(AWorker.WorkerData wd)
+        {
+            if (wd?.PlannedHomePosition == null) return;
+            this.ClearAbandonedBuildTilesCore(wd, default);
         }
 
         /// <summary>
