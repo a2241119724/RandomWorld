@@ -114,26 +114,33 @@ namespace LAB2D.Constant
         public const KeyCode ToggleWorkerSupplyHud = KeyCode.F6;
 
         /// <summary>
-        /// 工人任务队列 HUD + 成就面板 显示/隐藏 (F7键)
+        /// 工人任务队列 HUD + 成就面板 显示/隐藏 (数字6键)
         /// 同时切换工人任务队列 HUD 和成就系统的成就列表面板。
         /// 两者分别通过 CanUseHotkey() 和 LAB2D.Tool.Tool.IsUIInputActive() 守卫控制。
         /// 仅在无 UI 输入框聚焦时生效。
         /// </summary>
-        public const KeyCode ToggleWorkerTaskAndAchievementHud = KeyCode.F7;
+        public const KeyCode ToggleWorkerTaskAndAchievementHud = KeyCode.Alpha6;
+
+        /// <summary>
+        /// 工人任务队列 HUD 显示/隐藏 (F10键)
+        /// 单独切换工人任务队列 HUD 的显示和隐藏。
+        /// 仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleWorkerTaskQueueHud = KeyCode.F10;
+
+        /// <summary>
+        /// 任务栏列表 HUD 显示/隐藏 (F7键)
+        /// 切换显示任务栏中存放的物品列表和所属信息。
+        /// 仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleTaskBoardHud = KeyCode.F7;
 
         /// <summary>
         /// 殖民地指挥中心 HUD 显示/隐藏 (F9键)
         /// 切换显示殖民地运营综合摘要、任务阻塞预警和资源状态。
         /// 仅在无 UI 输入框聚焦时生效。
         /// </summary>
-        /// <summary>
-        /// 任务栏列表 HUD 显示/隐藏 (数字6键)
-        /// 切换显示任务栏中存放的物品列表和所属信息。
-        /// 仅在无 UI 输入框聚焦时生效。
-        /// </summary>
-        public const KeyCode ToggleTaskBoardHud = KeyCode.Alpha6;
-
-        public const KeyCode ToggleColonyCommandCenterHud = KeyCode.F10;
+        public const KeyCode ToggleColonyCommandCenterHud = KeyCode.F9;
 
         #endregion
 
@@ -265,15 +272,18 @@ namespace LAB2D.Constant
   Esc      —— 关闭面板 / 打开建造菜单
   左Ctrl   —— 按住查看地块信息
 
-【HUD 切换 (F1-F8)】
+【HUD 切换 (F1-F7, F9, 数字键)】
   F1       —— 游戏统计面板 (波次/击杀/时间)
   F2       —— 体验中枢 HUD (经验/等级/属性)
   F3       —— 体验中枢结算预览面板
   F4       —— 天气玩法 HUD (天气类型/效果)
   F5       —— 工人状态 HUD (饥饿/疲劳)
   F6       —— 工人补给缺口 HUD (食物/床位)
-  F7       —— 工人任务队列 + 成就面板
-  F8       —— 殖民地指挥中心 HUD
+  F7       —— 任务栏列表 HUD
+  F9       —— 殖民地指挥中心 HUD
+  6        —— 成就面板
+  F10      —— 工人任务队列 HUD
+  7        —— 装备面板切换
 
 【快捷选择 (数字键)】
   1-9      —— 工具菜单快捷切换

@@ -19,7 +19,7 @@ namespace LAB2D.Constant
         /// 任务队列 HUD 默认显示隐藏热键。
         /// 只在没有 UI 输入框聚焦时生效，避免输入穿透。
         /// </summary>
-        public const KeyCode HudToggleKey = InputKeyConstant.ToggleWorkerTaskAndAchievementHud;
+        public const KeyCode HudToggleKey = InputKeyConstant.ToggleWorkerTaskQueueHud;
 
         /// <summary>
         /// 任务队列 HUD Editor 菜单根路径。

@@ -127,8 +127,8 @@ namespace LAB2D.Constant
         // 快捷键
         // ============================================================
 
-        /// <summary>装备面板切换键（F9）</summary>
-        public const KeyCode EquipmentPanelToggleKey = KeyCode.F9;
+        /// <summary>装备面板切换键（数字7键）</summary>
+        public const KeyCode EquipmentPanelToggleKey = KeyCode.Alpha7;
 
         // ============================================================
         // 默认文案

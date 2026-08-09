@@ -18,8 +18,9 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
     [DisallowMultipleComponent]
     public class AmbitiousExperienceHub : MonoBehaviour
     {
-        private const string HudRootName = "ExperienceHUD";
-        private const string ResultPanelName = "ResultPanel";
+        private const string RightWaveHUDName = "RightWaveHUD";
+        private const string EventFeedHUDName = "EventFeedHUD";
+        private const string ResultCardName = "ResultCard";
         private const string WaveTextName = "WaveText";
         private const string ScoreTextName = "ScoreText";
         private const string EventFeedTextName = "EventFeedText";
@@ -31,9 +32,9 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
 
         private readonly Queue<string> feedMessages = new Queue<string>();
 
-        private CanvasGroup hudGroup;
-        private GameObject hudRoot;
-        private GameObject resultPanel;
+        private GameObject rightWaveHUD;
+        private GameObject eventFeedHUD;
+        private GameObject resultCard;
         private Text waveText;
         private Text scoreText;
         private Text eventFeedText;
@@ -94,10 +95,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             this.SubscribeGameplayEvents();
             this.RefreshAll();
 
-            if (this.hudGroup != null)
-            {
-                this.SetHudVisible(this.showHudOnStart);
-            }
+            this.SetHudVisible(this.showHudOnStart);
         }
 
         private void Start()
@@ -110,7 +108,8 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         {
             if (UnityGlobalInputAdapter.GetHudToggleDown(this.toggleHudKey))
             {
-                this.SetHudVisible(this.hudGroup == null || this.hudGroup.alpha < 0.5f);
+                bool currentVisible = this.rightWaveHUD != null && this.rightWaveHUD.activeSelf;
+                this.SetHudVisible(!currentVisible);
             }
 
             if (UnityGlobalInputAdapter.GetHudToggleDown(this.toggleResultKey))
@@ -147,11 +146,16 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         /// <returns>是否成功绑定。</returns>
         private bool BindExistingInterface()
         {
-            Transform root = this.transform;
+            // 从 Foreground 查找所有独立面板，不再依赖 ExperienceHUD 父节点
+            Transform root = this.transform.parent;
+            if (root == null)
+            {
+                return false;
+            }
 
-            this.hudRoot = this.FindDeepChild(root, HudRootName)?.gameObject;
-            this.resultPanel = this.FindDeepChild(root, ResultPanelName)?.gameObject;
-            this.hudGroup = this.hudRoot == null ? null : this.hudRoot.GetComponent<CanvasGroup>();
+            this.rightWaveHUD = this.FindDeepChild(root, RightWaveHUDName)?.gameObject;
+            this.eventFeedHUD = this.FindDeepChild(root, EventFeedHUDName)?.gameObject;
+            this.resultCard = this.FindDeepChild(root, ResultCardName)?.gameObject;
             this.waveText = this.FindDeepComponent<Text>(root, WaveTextName);
             this.scoreText = this.FindDeepComponent<Text>(root, ScoreTextName);
             this.eventFeedText = this.FindDeepComponent<Text>(root, EventFeedTextName);
@@ -165,11 +169,12 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
                 this.resultCloseButton.onClick.AddListener(this.HideResultPanel);
             }
 
-            return this.hudRoot != null &&
-                   this.resultPanel != null &&
+            return this.rightWaveHUD != null &&
+                   this.eventFeedHUD != null &&
                    this.waveText != null &&
                    this.scoreText != null &&
                    this.eventFeedText != null &&
+                   this.resultCard != null &&
                    this.resultTitleText != null &&
                    this.resultStatsText != null &&
                    this.resultCloseButton != null;
@@ -495,12 +500,12 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         /// </summary>
         private void ShowResultPanel(SessionResultData result, bool isPreview)
         {
-            if (result == null || this.resultPanel == null)
+            if (result == null || this.resultCard == null)
             {
                 return;
             }
 
-            this.resultPanel.SetActive(true);
+            this.resultCard.SetActive(true);
             if (this.resultTitleText != null)
             {
                 this.resultTitleText.text = isPreview ? "实时表现预览" : "关卡结算";
@@ -523,9 +528,9 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         /// </summary>
         private void HideResultPanel()
         {
-            if (this.resultPanel != null)
+            if (this.resultCard != null)
             {
-                this.resultPanel.SetActive(false);
+                this.resultCard.SetActive(false);
             }
         }
 
@@ -534,7 +539,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         /// </summary>
         private void ToggleResultPanel()
         {
-            if (this.resultPanel != null && this.resultPanel.activeSelf)
+            if (this.resultCard != null && this.resultCard.activeSelf)
             {
                 this.HideResultPanel();
                 return;
@@ -598,14 +603,15 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         /// </summary>
         private void SetHudVisible(bool visible)
         {
-            if (this.hudGroup == null)
+            if (this.rightWaveHUD != null)
             {
-                return;
+                this.rightWaveHUD.SetActive(visible);
             }
 
-            this.hudGroup.alpha = visible ? 1f : 0f;
-            this.hudGroup.interactable = false;
-            this.hudGroup.blocksRaycasts = false;
+            if (this.eventFeedHUD != null)
+            {
+                this.eventFeedHUD.SetActive(visible);
+            }
         }
 
         /// <summary>

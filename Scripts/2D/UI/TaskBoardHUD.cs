@@ -39,6 +39,9 @@ namespace LAB2D.UI
             {
                 this.boardText = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, HudTextName);
             }
+
+            // 默认关闭，按 F7 切换显示
+            this.SetVisible(false);
         }
 
         private void Update()
