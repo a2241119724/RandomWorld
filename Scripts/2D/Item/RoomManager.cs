@@ -50,6 +50,12 @@ namespace LAB2D.Item
         }
 
         /// <summary>
+        /// 获取所有房间的只读字典。
+        /// </summary>
+        /// <returns>房间名到 RoomInfo 的映射</returns>
+        public IReadOnlyDictionary<string, RoomInfo> GetAllRooms() => Rooms;
+
+        /// <summary>
         /// 根据位置获取房间
         /// </summary>
         /// <param name="posMap">位置</param>
@@ -149,6 +155,11 @@ namespace LAB2D.Item
         /// </summary>
         public float Humidity;
 
+        /// <summary>
+        /// 房间所有者名称
+        /// </summary>
+        public string OwnerName;
+
         public RoomInfo()
         {
             this.Points = new List<Vector3Int>();
@@ -157,7 +168,8 @@ namespace LAB2D.Item
         /// <inheritdoc/>
         public override string ToString()
         {
-            return $"温度:{this.Temperature}\n" +
+            return $"所有者:{this.OwnerName}\n" +
+                $"温度:{this.Temperature}\n" +
                 $"湿度:{this.Humidity}\n" +
                 $"进度:{this.Progress}";
         }

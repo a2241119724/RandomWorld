@@ -1152,6 +1152,7 @@ namespace LAB2D.Character.Worker.State
             roomInfo.Progress = 0;
             roomInfo.Temperature = 25.0f;
             roomInfo.Humidity = 25.0f;
+            roomInfo.OwnerName = this.Character.name;
 
             Core.ServiceLocator.Get<LAB2D.Item.RoomManager>().AddRoom(
                 System.Guid.NewGuid().ToString(), roomInfo);

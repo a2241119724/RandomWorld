@@ -56,7 +56,7 @@ namespace LAB2D.Gameplay
         public static System.Action<ShopNPC> OnShopInteract;
 
         [Tooltip("交互按键")]
-        public KeyCode InteractKey = KeyCode.Alpha7;
+        public KeyCode InteractKey = KeyCode.Alpha0;
 
         private MarketService market;
         private bool isShopOpen;
@@ -340,7 +340,7 @@ namespace LAB2D.Gameplay
 
         private void Update()
         {
-            if (!Input.GetKeyDown(KeyCode.Alpha7) && !Input.GetKeyDown(KeyCode.Keypad7)) return;
+            if (!Input.GetKeyDown(KeyCode.Alpha0) && !Input.GetKeyDown(KeyCode.Keypad0)) return;
             if (this.isShopOpen) return;
             if (!this.IsPlayerInRange()) return;
 

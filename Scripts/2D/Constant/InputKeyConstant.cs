@@ -119,7 +119,7 @@ namespace LAB2D.Constant
         /// 两者分别通过 CanUseHotkey() 和 LAB2D.Tool.Tool.IsUIInputActive() 守卫控制。
         /// 仅在无 UI 输入框聚焦时生效。
         /// </summary>
-        public const KeyCode ToggleWorkerTaskAndAchievementHud = KeyCode.Alpha6;
+        public const KeyCode ToggleWorkerTaskAndAchievementHud = KeyCode.Alpha9;
 
         /// <summary>
         /// 工人任务队列 HUD 显示/隐藏 (F10键)

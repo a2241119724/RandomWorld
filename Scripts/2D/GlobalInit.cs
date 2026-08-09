@@ -191,6 +191,7 @@ namespace LAB2D
             ServiceLocator.Register(AIChatPanel.Instance);
             ServiceLocator.Register(DialoguePanel.Instance);
             ServiceLocator.Register(ShopPanel.Instance);
+            ServiceLocator.Register(RoomListPanel.Instance);
             ServiceLocator.Register(UnityMainThreadDispatcher.Instance);
         }
 

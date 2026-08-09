@@ -114,6 +114,11 @@ namespace LAB2D.Constant
         public const string ROOM_ITEM = "RoomItem";
 
         /// <summary>
+        /// Worker 房间列表项
+        /// </summary>
+        public const string WORKER_ROOM_ITEM = "WorkerRoomItem";
+
+        /// <summary>
         /// 右侧聊天项
         /// </summary>
         public const string RIGHT_CHAT_ITEM = "RightChatItem";

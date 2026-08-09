@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 4013330050
+CRC: 3861111554
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 301734eafe1cd2746adffc392bf7660a
+    Hash: 80095023b82cc35c635b090e43dd9784
   TypeTreeHash:
     serializedVersion: 2
     Hash: 1af579248e147a6cd007e4af908e3982
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 301734eafe1cd2746adffc392bf7660a
+    Hash: 80095023b82cc35c635b090e43dd9784
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -181,6 +181,7 @@ Assets:
 - Assets/ResourcesLocal/Prefabs/Tip.prefab
 - Assets/ResourcesLocal/Prefabs/Blood.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/AddWearTaskItem.prefab
+- Assets/ResourcesLocal/Prefabs/ItemBox/WorkerRoomItem.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/BackpackItem.prefab
 - Assets/ResourcesLocal/Prefabs/Border.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Gun/TraceBulletEffect.prefab

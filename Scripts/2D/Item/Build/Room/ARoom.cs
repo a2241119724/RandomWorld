@@ -71,6 +71,7 @@ namespace LAB2D.Item.Build.Room
 
             // 由于多计算了一次墙,门覆盖了前面的墙
             roomInfo.Progress = roomInfo.Points.Count - 1;
+            roomInfo.OwnerName = "玩家";
             ServiceLocator.Get<RoomManager>().AddRoom(Guid.NewGuid().ToString(), roomInfo);
         }
 

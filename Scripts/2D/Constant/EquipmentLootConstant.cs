@@ -128,7 +128,7 @@ namespace LAB2D.Constant
         // ============================================================
 
         /// <summary>装备面板切换键（数字7键）</summary>
-        public const KeyCode EquipmentPanelToggleKey = KeyCode.Alpha7;
+        public const KeyCode EquipmentPanelToggleKey = KeyCode.Alpha0;
 
         // ============================================================
         // 默认文案

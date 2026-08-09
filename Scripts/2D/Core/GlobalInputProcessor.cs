@@ -35,6 +35,7 @@ namespace LAB2D.Core
             this.ProcessMouseClickCloseItemInfo();
             this.ProcessAchievements();
             this.ProcessDebugToggles();
+            this.ProcessRoomListToggle();
         }
 
         private void ProcessDebugToggles()
@@ -45,6 +46,25 @@ namespace LAB2D.Core
                 PlayerPrefs.SetInt(ForceDropPrefsKey, EnemyLootManager.ForceDrop ? 1 : 0);
                 PlayerPrefs.Save();
                 this.GameLogger.Log($"[ForceDrop] 100%掉落已{(EnemyLootManager.ForceDrop ? "开启" : "关闭")}");
+            }
+        }
+
+        /// <summary>
+        /// 数字6 — 房间列表面板切换
+        /// </summary>
+        private void ProcessRoomListToggle()
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha6))
+            {
+                var controller = ServiceLocator.Get<PanelController>();
+                if (controller.Panels.Count > 0 && controller.Panels.Peek() == RoomListPanel.Instance)
+                {
+                    controller.Close();
+                }
+                else
+                {
+                    controller.Show(RoomListPanel.Instance);
+                }
             }
         }
 
@@ -100,10 +120,9 @@ namespace LAB2D.Core
 
         private static readonly HudCloseEntry[] HudCloseList =
         {
-            // 数字6 — 成就面板
+            // 数字9 — 成就面板
             new () { Name = "AchievementPanel", VisibilityType = "ActiveSelf" },
-            // 数字7 — 装备面板 (DontDestroyOnLoad)
-            // 可见性检查 EquipmentPanelRoot, Hide() 在父节点 EquipmentPanelManager 上
+            // 数字0 — 装备面板 (DontDestroyOnLoad)
             new () { Name = "EquipmentPanelRoot", VisibilityType = "ActiveSelf", CloseTarget = "EquipmentPanelManager" },
         };
 
