@@ -8,15 +8,15 @@ namespace LAB2D.UI.Panel
     using UnityEngine.UI;
 
     /// <summary>
-    /// 暂停菜单面板
+    /// 暂停面板
     /// </summary>
-    public class PauseMenuPanel : ABasePanel<PauseMenuPanel>
+    public class PausePanel : ABasePanel<PausePanel>
     {
         private readonly AudioSource audioSource; // 被控制
 
-        public PauseMenuPanel()
+        public PausePanel()
         {
-            this.Name = "PauseMenu";
+            this.Name = "PausePanel";
             this.Init();
 
             // 查找 AudioSource — 如果不存在则记录错误但不阻断按钮注册

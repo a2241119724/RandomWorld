@@ -64,6 +64,15 @@ namespace LAB2D.Gameplay
 
             Transform tilemapParent = tileMap.gameObject.transform;
 
+            // 将商店图标放到 All/Building 下
+            Transform buildingParent = GameObject.Find("All/Building")?.transform;
+            if (buildingParent == null)
+            {
+                buildingParent = new GameObject("Building").transform;
+                GameObject all = GameObject.Find("All");
+                if (all != null) buildingParent.SetParent(all.transform);
+            }
+
             for (int i = 0; i < this.ShopCount; i++)
             {
                 Vector3Int shopPos = this.FindValidShopPosition(tileMap);
@@ -77,7 +86,7 @@ namespace LAB2D.Gameplay
                 }
 
                 Vector3 worldPos = tileMap.MapPosToWorldPos(shopPos) + tilemapParent.position;
-                ShopNPC shop = this.CreateShopAt(shopPos, worldPos, tilemapParent, i);
+                ShopNPC shop = this.CreateShopAt(shopPos, worldPos, buildingParent, i);
                 if (shop != null)
                 {
                     this.spawnedPositions.Add(shopPos);

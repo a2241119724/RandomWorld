@@ -20,7 +20,7 @@ namespace LAB2D.UI.Panel
 
         public CreateDataPanel()
         {
-            this.Name = "CreateData";
+            this.Name = "CreateDataPanel";
             this.Init();
             Transform g1 = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "MapHeight");
             Slider s1 = g1.Find("Bar").GetComponent<Slider>();

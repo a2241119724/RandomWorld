@@ -9,11 +9,11 @@ namespace LAB2D.UI.Panel
     /// <summary>
     /// 创建面板
     /// </summary>
-    public class CreateMenuPanel : ABasePanel<CreateMenuPanel>
+    public class CreatePanel : ABasePanel<CreatePanel>
     {
-        public CreateMenuPanel()
+        public CreatePanel()
         {
-            this.Name = "CreateMenu";
+            this.Name = "CreatePanel";
             this.Init();
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "StartCreate").onClick.AddListener(this.OnClick_StartCreate);
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);

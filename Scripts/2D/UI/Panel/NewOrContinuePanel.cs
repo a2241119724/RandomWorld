@@ -23,7 +23,7 @@ namespace LAB2D.UI.Panel
 
         public NewOrContinuePanel()
         {
-            this.Name = "NewOrContinue";
+            this.Name = "NewOrContinuePanel";
             this.Init();
             this.content = LAB2D.Tool.Tool.GetComponentInChildren<RectTransform>(this.Panel, "Content");
             this.BindArchiveSlotButtons();

@@ -84,7 +84,7 @@ namespace LAB2D.UI.Panel
         public virtual void OnClick_Back()
         {
             // 没有返回按钮的面板,显示暂停菜单
-            ServiceLocator.Get<PanelController>().Show(PauseMenuPanel.Instance);
+            ServiceLocator.Get<PanelController>().Show(PausePanel.Instance);
         }
 
         /// <inheritdoc/>

@@ -9,7 +9,7 @@ namespace LAB2D.UI.Panel
     {
         public AsyncProgressPanel()
         {
-            this.Name = "AsyncProgress";
+            this.Name = "AsyncProgressPanel";
             this.Init();
             this.Panel.transform.GetComponent<AsyncProgressUI>().Complete += () =>
             {

@@ -6,15 +6,15 @@ namespace LAB2D.UI.Panel
     using UnityEngine.UI;
 
     /// <summary>
-    /// 加入菜单面板
+    /// 加入面板
     /// </summary>
-    public class JoinMenuPanel : ABasePanel<JoinMenuPanel>
+    public class JoinPanel : ABasePanel<JoinPanel>
     {
         private string selectRoomName; // 当前选择的房间名称
 
-        public JoinMenuPanel()
+        public JoinPanel()
         {
-            this.Name = "JoinMenu";
+            this.Name = "JoinPanel";
             this.Init();
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "StartJoin").onClick.AddListener(this.OnClick_StartJoin);
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Back").onClick.AddListener(this.OnClick_Back);

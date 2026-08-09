@@ -331,7 +331,12 @@ namespace LAB2D.Manager
 
                 GameObject prefab = this.prefabDic[prefabName];
                 GameObject instance;
-                if (!position.Equals(default) || !rotation.Equals(default))
+                if ((!position.Equals(default) || !rotation.Equals(default)) && parent != null)
+                {
+                    // 同时指定位置和父节点：使用带 parent 的位置重载，确保实例挂到正确的层级下
+                    instance = GameObject.Instantiate(prefab, position, rotation, parent) as GameObject;
+                }
+                else if (!position.Equals(default) || !rotation.Equals(default))
                 {
                     instance = GameObject.Instantiate(prefab, position, rotation) as GameObject;
                 }

@@ -114,7 +114,7 @@ namespace LAB2D
             AWorkerTask.LogProvider("创建房间失败!!!", LogManager.LogLevelEnum.Error);
             GlobalInit.Instance.ShowTip("创建房间失败");
             PanelController.Instance.Close();
-            PanelController.Instance.Show(JoinMenuPanel.Instance);
+            PanelController.Instance.Show(JoinPanel.Instance);
         }
 
         /// <summary>

@@ -15,7 +15,7 @@ namespace LAB2D.UI.Panel
 
         public CreateOrJoinPanel()
         {
-            this.Name = "CreateOrJoin";
+            this.Name = "CreateOrJoinPanel";
             this.Init();
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "CreateRoom").onClick.AddListener(this.OnClick_CreateRoom);
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "JoinRoom").onClick.AddListener(this.OnClick_JoinRoom);
@@ -39,7 +39,7 @@ namespace LAB2D.UI.Panel
         {
             // 进入创建房间面板
             this.Controller.Close();
-            this.Controller.Show(CreateMenuPanel.Instance);
+            this.Controller.Show(CreatePanel.Instance);
         }
 
         private void OnClick_JoinRoom()
@@ -49,7 +49,7 @@ namespace LAB2D.UI.Panel
             {
                 // 进入加入房间面板
                 this.Controller.Close();
-                this.Controller.Show(JoinMenuPanel.Instance);
+                this.Controller.Show(JoinPanel.Instance);
             }
             else
             {

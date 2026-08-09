@@ -178,12 +178,12 @@ namespace LAB2D
             ServiceLocator.Register(ItemInfoPanel.Instance);
             ServiceLocator.Register(ForegroundPanel.Instance);
             ServiceLocator.Register(BuildMenuPanel.Instance);
-            ServiceLocator.Register(PauseMenuPanel.Instance);
+            ServiceLocator.Register(PausePanel.Instance);
             ServiceLocator.Register(SettingMenuPanel.Instance);
             ServiceLocator.Register(NewOrContinuePanel.Instance);
             ServiceLocator.Register(CreateDataPanel.Instance);
-            ServiceLocator.Register(CreateMenuPanel.Instance);
-            ServiceLocator.Register(JoinMenuPanel.Instance);
+            ServiceLocator.Register(CreatePanel.Instance);
+            ServiceLocator.Register(JoinPanel.Instance);
             ServiceLocator.Register(AsyncProgressPanel.Instance);
             ServiceLocator.Register(CreateOrJoinPanel.Instance);
             ServiceLocator.Register(WorkerTaskTogglePanel.Instance);

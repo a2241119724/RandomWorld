@@ -147,7 +147,7 @@ namespace LAB2D.UI.Panel
         /// </summary>
         private void OnClick_Pause()
         {
-            this.Controller.Show(PauseMenuPanel.Instance);
+            this.Controller.Show(PausePanel.Instance);
         }
 
         /// <summary>
