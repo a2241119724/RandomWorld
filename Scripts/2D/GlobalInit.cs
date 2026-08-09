@@ -177,9 +177,9 @@ namespace LAB2D
             // 必须在 Awake 阶段（场景加载后）注册，不能放在 RegisterSafeServices（BeforeSceneLoad）。
             ServiceLocator.Register(ItemInfoPanel.Instance);
             ServiceLocator.Register(ForegroundPanel.Instance);
-            ServiceLocator.Register(BuildMenuPanel.Instance);
+            ServiceLocator.Register(BuildPanel.Instance);
             ServiceLocator.Register(PausePanel.Instance);
-            ServiceLocator.Register(SettingMenuPanel.Instance);
+            ServiceLocator.Register(SettingPanel.Instance);
             ServiceLocator.Register(NewOrContinuePanel.Instance);
             ServiceLocator.Register(CreateDataPanel.Instance);
             ServiceLocator.Register(CreatePanel.Instance);
@@ -187,7 +187,7 @@ namespace LAB2D
             ServiceLocator.Register(AsyncProgressPanel.Instance);
             ServiceLocator.Register(CreateOrJoinPanel.Instance);
             ServiceLocator.Register(WorkerTaskTogglePanel.Instance);
-            ServiceLocator.Register(InventoryMenuPanel.Instance);
+            ServiceLocator.Register(InventoryPanel.Instance);
             ServiceLocator.Register(AIChatPanel.Instance);
             ServiceLocator.Register(DialoguePanel.Instance);
             ServiceLocator.Register(ShopPanel.Instance);

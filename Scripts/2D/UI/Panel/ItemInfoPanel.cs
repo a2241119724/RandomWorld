@@ -18,7 +18,7 @@ namespace LAB2D.UI.Panel
 
         public ItemInfoPanel()
         {
-            this.Name = "ItemInfo";
+            this.Name = "ItemInfoPanel";
             this.Init();
             this.textUI = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.Panel, "Info");
             this.character = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Character");

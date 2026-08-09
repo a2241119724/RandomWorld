@@ -5,13 +5,13 @@ namespace LAB2D.UI.Panel
     using UnityEngine.UI;
 
     /// <summary>
-    /// 建造菜单面板
+    /// 建造面板
     /// </summary>
-    public class BuildMenuPanel : ABasePanel<BuildMenuPanel>
+    public class BuildPanel : ABasePanel<BuildPanel>
     {
-        public BuildMenuPanel()
+        public BuildPanel()
         {
-            this.Name = "BuildMenu";
+            this.Name = "BuildPanel";
             this.Select = new SelectItemData();
             this.Init();
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "BackGame").onClick.AddListener(this.OnClick_Back);

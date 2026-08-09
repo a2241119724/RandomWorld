@@ -155,7 +155,7 @@ namespace LAB2D.UI.Panel
         /// </summary>
         private void OnClick_Setting()
         {
-            this.Controller.Show(SettingMenuPanel.Instance);
+            this.Controller.Show(SettingPanel.Instance);
         }
 
         private void OnClick_Save()

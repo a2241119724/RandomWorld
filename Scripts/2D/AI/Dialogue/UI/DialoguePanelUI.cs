@@ -252,7 +252,7 @@ namespace LAB2D.AI.Dialogue.UI
 
         private void OnSettingsClicked()
         {
-            ServiceLocator.Get<PanelController>().Show(LLMSettingsPanel.Instance);
+            ServiceLocator.Get<PanelController>().Show(LLMSettingPanel.Instance);
         }
 
         private void OnDeepThinkingChanged(bool isOn)

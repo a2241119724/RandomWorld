@@ -11,7 +11,7 @@ namespace LAB2D.UI.Panel
     {
         public AIChatPanel()
         {
-            this.Name = "AIChat";
+            this.Name = "AIChatPanel";
             this.Init();
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Send").onClick.AddListener(this.OnClick_Send);
         }

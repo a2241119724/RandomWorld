@@ -63,7 +63,7 @@ namespace LAB2D.Core
             if (ServiceLocator.Get<PanelController>().Panels.Count == 0)
             {
                 ServiceLocator.Get<BuildingUI>().gameObject.SetActive(false);
-                ServiceLocator.Get<PanelController>().Show(BuildMenuPanel.Instance);
+                ServiceLocator.Get<PanelController>().Show(BuildPanel.Instance);
                 ServiceLocator.Get<IsAvailableMap>().ClearShow();
             }
             else

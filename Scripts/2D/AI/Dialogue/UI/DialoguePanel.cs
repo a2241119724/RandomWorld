@@ -9,7 +9,7 @@ namespace LAB2D.AI.Dialogue.UI
     {
         public DialoguePanel()
         {
-            this.Name = "DialoguePanelUI";
+            this.Name = "DialoguePanel";
             DialoguePanelUI.Ensure();
             this.Init();
         }

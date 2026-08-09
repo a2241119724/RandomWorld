@@ -7,19 +7,19 @@ namespace LAB2D.UI.Panel
     using UnityEngine.UI;
 
     /// <summary>
-    /// 设置菜单面板
+    /// 设置面板
     /// 包含游戏速度、视角切换、边缘移动和按键操作说明。
     /// </summary>
-    public class SettingMenuPanel : ABasePanel<SettingMenuPanel>
+    public class SettingPanel : ABasePanel<SettingPanel>
     {
         /// <summary>
         /// 按键说明文本组件（运行时创建）。
         /// </summary>
         private Text keyBindingText;
 
-        public SettingMenuPanel()
+        public SettingPanel()
         {
-            this.Name = "SettingMenu";
+            this.Name = "SettingPanel";
             this.Init();
 
             // cameras = Object.FindObjectsOfType(typeof(Camera), true);

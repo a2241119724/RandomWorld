@@ -22,8 +22,8 @@ namespace LAB2D.Core
             Core.ServiceLocator.Get<PanelController>().Show(CreateOrJoinPanel.Instance);
 
             // 背包面板
-            BackpackMenuPanel.Instance.Panel.SetActive(true);
-            BackpackMenuPanel.Instance.Panel.SetActive(false);
+            BackpackPanel.Instance.Panel.SetActive(true);
+            BackpackPanel.Instance.Panel.SetActive(false);
 
             // 殖民地运营指挥中心
             ColonyCommandCenterHUD.EnsureRuntimePanel();

@@ -9,13 +9,13 @@ namespace LAB2D.UI.Panel
     using UnityEngine.UI;
 
     /// <summary>
-    /// 背包菜单面板
+    /// 背包面板
     /// </summary>
-    public class BackpackMenuPanel : ABasePanel<BackpackMenuPanel>
+    public class BackpackPanel : ABasePanel<BackpackPanel>
     {
-        public BackpackMenuPanel()
+        public BackpackPanel()
         {
-            this.Name = "BackpackMenu";
+            this.Name = "BackpackPanel";
             this.Select = new SelectItemData();
             this.Init();
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Equip").onClick.AddListener(this.OnClick_Equip);
@@ -142,31 +142,6 @@ namespace LAB2D.UI.Panel
             // 从背包删除该道具
             ServiceLocator.Get<BackpackController>().DeleteItem(this.Select.SelectItemIndex);
             this.Select.Init();
-        }
-    }
-
-    /// <summary>
-    /// 再背包中选择的道具类型
-    /// </summary>
-    public class SelectItemData
-    {
-        /// <summary>
-        /// 选中的道具索引(在背包中)
-        /// </summary>
-        public int SelectItemIndex = -1;
-
-        /// <summary>
-        /// 选中的道具数据
-        /// </summary>
-        public AItem Item = null;
-
-        /// <summary>
-        /// 初始化
-        /// </summary>
-        public void Init()
-        {
-            this.SelectItemIndex = -1;
-            this.Item = null;
         }
     }
 }

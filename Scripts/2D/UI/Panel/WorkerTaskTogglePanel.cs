@@ -51,7 +51,7 @@ namespace LAB2D.UI.Panel
 
         public WorkerTaskTogglePanel()
         {
-            this.Name = "WorkerTaskToggle";
+            this.Name = "WorkerTaskTogglePanel";
             this.Init();
         }
 

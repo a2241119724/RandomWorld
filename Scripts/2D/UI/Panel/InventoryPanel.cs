@@ -7,18 +7,18 @@ namespace LAB2D.UI.Panel
     using UnityEngine.UI;
 
     /// <summary>
-    /// 仓库菜单面板
+    /// 仓库面板
     /// </summary>
-    public class InventoryMenuPanel : ABasePanel<InventoryMenuPanel>
+    public class InventoryPanel : ABasePanel<InventoryPanel>
     {
         private readonly Transform position;
         private readonly Transform type;
         private readonly Transform id;
         private readonly Text content;
 
-        public InventoryMenuPanel()
+        public InventoryPanel()
         {
-            this.Name = "InventoryMenu";
+            this.Name = "InventoryPanel";
             this.Init();
             this.position = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Position");
             this.type = LAB2D.Tool.Tool.GetComponentInChildren<Transform>(this.Panel, "Type");

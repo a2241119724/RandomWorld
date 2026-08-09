@@ -8,7 +8,7 @@ namespace LAB2D.UI.Panel
     using UnityEngine;
     using UnityEngine.UI;
 
-    public class LLMSettingsPanel : ABasePanel<LLMSettingsPanel>
+    public class LLMSettingPanel : ABasePanel<LLMSettingPanel>
     {
         private Dropdown modelSourceDropdown;
         private InputField apiUrlField;
@@ -17,9 +17,9 @@ namespace LAB2D.UI.Panel
         private InputField modelNameField;
         private Toggle deepThinkingToggle;
 
-        public LLMSettingsPanel()
+        public LLMSettingPanel()
         {
-            this.Name = "LLMSettings";
+            this.Name = "LLMSettingPanel";
             this.Init();
             if (this.Panel == null)
             {

@@ -24,8 +24,8 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         {
             this.ToolMenus = new IBasePanel[]
             {
-                BuildMenuPanel.Instance, BackpackMenuPanel.Instance,
-                WorkerTaskTogglePanel.Instance, InventoryMenuPanel.Instance, AIChatPanel.Instance,
+                BuildPanel.Instance, BackpackPanel.Instance,
+                WorkerTaskTogglePanel.Instance, InventoryPanel.Instance, AIChatPanel.Instance,
             };
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "GeneratorWorker").onClick.AddListener(this.Onclick_GeneratorWorker);
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.gameObject, "GeneratorItem").onClick.AddListener(this.Onclick_GeneratorItem);

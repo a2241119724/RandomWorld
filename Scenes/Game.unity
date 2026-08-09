@@ -4312,7 +4312,7 @@ GameObject:
   - component: {fileID: 254186394}
   - component: {fileID: 254186395}
   m_Layer: 5
-  m_Name: WorkerTaskToggle
+  m_Name: WorkerTaskTogglePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11168,7 +11168,7 @@ GameObject:
   - component: {fileID: 374011027}
   - component: {fileID: 374011026}
   m_Layer: 5
-  m_Name: DialoguePanelUI
+  m_Name: DialoguePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -22866,7 +22866,7 @@ GameObject:
   - component: {fileID: 967411027}
   - component: {fileID: 967411028}
   m_Layer: 5
-  m_Name: ItemInfo
+  m_Name: ItemInfoPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25654,7 +25654,7 @@ GameObject:
   - component: {fileID: 1185127270}
   - component: {fileID: 1185127269}
   m_Layer: 5
-  m_Name: InventoryMenu
+  m_Name: InventoryPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -36680,7 +36680,7 @@ GameObject:
   - component: {fileID: 1520152199}
   - component: {fileID: 1520152198}
   m_Layer: 5
-  m_Name: AIChat
+  m_Name: AIChatPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46680,7 +46680,7 @@ GameObject:
   - component: {fileID: 2022198168}
   - component: {fileID: 2022198169}
   m_Layer: 5
-  m_Name: BuildMenu
+  m_Name: BuildPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -49421,7 +49421,7 @@ GameObject:
   - component: {fileID: 2142602038}
   - component: {fileID: 2142602037}
   m_Layer: 5
-  m_Name: LLMSettings
+  m_Name: LLMSettingPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -55145,7 +55145,7 @@ GameObject:
   - component: {fileID: 3243801717388545594}
   - component: {fileID: 3243801717388545595}
   m_Layer: 5
-  m_Name: BackpackMenu
+  m_Name: BackpackPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -58259,7 +58259,7 @@ GameObject:
   - component: {fileID: 6264361987207266647}
   - component: {fileID: 6264361987207266646}
   m_Layer: 5
-  m_Name: SettingMenu
+  m_Name: SettingPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

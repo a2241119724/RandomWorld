@@ -30,7 +30,7 @@ namespace LAB2D.UI.Action
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildPanel.Instance.Select.Item.Id).EnName);
             if (!buildItem.IsCustomSize)
             {
                 return;
@@ -42,7 +42,7 @@ namespace LAB2D.UI.Action
 
         public void OnDrag(PointerEventData eventData)
         {
-            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildPanel.Instance.Select.Item.Id).EnName);
             if (!buildItem.IsCustomSize)
             {
                 return;
@@ -54,7 +54,7 @@ namespace LAB2D.UI.Action
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildPanel.Instance.Select.Item.Id).EnName);
             if (!buildItem.IsCustomSize)
             {
                 return;
@@ -63,7 +63,7 @@ namespace LAB2D.UI.Action
             this.isDrag = false;
 
             // 没有选择任何物品
-            if (BuildMenuPanel.Instance.Select.Item == null)
+            if (BuildPanel.Instance.Select.Item == null)
             {
                 return;
             }
@@ -84,13 +84,13 @@ namespace LAB2D.UI.Action
         public void OnPointerUp(PointerEventData eventData)
         {
             // 没有选择任何物品
-            if (BuildMenuPanel.Instance.Select.Item == null || this.isDrag)
+            if (BuildPanel.Instance.Select.Item == null || this.isDrag)
             {
                 return;
             }
 
             Vector3Int centerMap = ServiceLocator.Get<TileMap>().WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
-            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildPanel.Instance.Select.Item.Id).EnName);
             if (ServiceLocator.Get<IsAvailableMap>().ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.RectType))
             {
                 buildItem.AddBuildTask(centerMap, null);
@@ -100,14 +100,14 @@ namespace LAB2D.UI.Action
         public void OnPointerMove(PointerEventData eventData)
         {
             // 没有选择任何物品
-            if (BuildMenuPanel.Instance.Select.Item == null || this.isDrag)
+            if (BuildPanel.Instance.Select.Item == null || this.isDrag)
             {
                 return;
             }
 
             // 使用建造默认的大小
             Vector3Int centerMap = ServiceLocator.Get<TileMap>().WorldPosToMapPos(Camera.main.ScreenToWorldPoint(eventData.position));
-            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildMenuPanel.Instance.Select.Item.Id).EnName);
+            ABuildItem buildItem = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItemByName(ServiceLocator.Get<ItemDataManager>().GetById(BuildPanel.Instance.Select.Item.Id).EnName);
             ServiceLocator.Get<IsAvailableMap>().ShowRect(centerMap, buildItem.Width, buildItem.Height, buildItem.RectType);
         }
     }
