@@ -45,7 +45,7 @@ namespace LAB2D.UI
                 return;
             }
 
-            Transform foreground = AchievementTool.FindForeground();
+            Transform foreground = AchievementTool.FindUIRoot()?.Find("Foreground");
             Transform popupTransform = foreground?.Find(AchievementConstant.PopupRootName);
             if (popupTransform != null)
             {

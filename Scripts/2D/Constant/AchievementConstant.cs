@@ -7,7 +7,7 @@ namespace LAB2D.Constant
     /// </summary>
     public static class AchievementConstant
     {
-        // --- UI 根节点名（挂载到 UI/Foreground 下，复用 UI 的 Canvas） ---
+        // --- UI 根节点名（挂载到 UI/ 下，复用 UI 的 Canvas） ---
 
         /// <summary>成就弹窗根节点名称</summary>
         public const string PopupRootName = "AchievementPopup";

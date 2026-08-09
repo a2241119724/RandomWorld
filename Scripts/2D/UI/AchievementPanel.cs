@@ -40,9 +40,9 @@ namespace LAB2D.UI
                 return;
             }
 
-            // transform.Find 可查找 inactive 子对象
-            Transform foreground = AchievementTool.FindForeground();
-            Transform panelTransform = foreground?.Find(AchievementConstant.PanelRootName);
+            // transform.Find 可查找 inactive 子对象，面板已移至 UI/ 下
+            Transform uiRoot = AchievementTool.FindUIRoot();
+            Transform panelTransform = uiRoot?.Find(AchievementConstant.PanelRootName);
             if (panelTransform != null)
             {
                 runtimeInstance = panelTransform.GetComponent<AchievementPanel>();

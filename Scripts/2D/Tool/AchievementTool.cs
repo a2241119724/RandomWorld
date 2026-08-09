@@ -102,13 +102,12 @@ namespace LAB2D.Tool
         }
 
         /// <summary>
-        /// 查找 UI/Foreground 节点，用于挂载成就 UI，复用 UI 的 Canvas
+        /// 查找 UI 根节点，用于挂载成就 UI，复用 UI 的 Canvas
         /// </summary>
-        /// <returns>Foreground Transform，找不到时返回 null</returns>
-        public static Transform FindForeground()
+        /// <returns>UI 根 Transform，找不到时返回 null</returns>
+        public static Transform FindUIRoot()
         {
-            Transform uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG)?.transform;
-            return uiRoot?.Find("Foreground");
+            return GameObject.FindGameObjectWithTag(TagConstant.UI_TAG)?.transform;
         }
 
         /// <summary>

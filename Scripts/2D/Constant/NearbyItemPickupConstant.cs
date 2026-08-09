@@ -11,7 +11,7 @@ namespace LAB2D.Constant
         // UI 节点名
         // ============================================================
 
-        public const string CanvasName = "NearbyItemPickupUI";
+        public const string CanvasName = "NearbyItemPickup";
         public const string PanelRootName = "NearbyItemPickupPanel";
 
         // ============================================================

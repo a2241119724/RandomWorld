@@ -170,7 +170,8 @@ namespace LAB2D.UI.Panel
 
         private bool BindSceneSaveSlotPanel()
         {
-            Transform panelTransform = this.FindChildTransform(this.Panel.transform, "SaveSlotPanel");
+            // SaveSlotPanel 已移至 UI/ 下，从 UI 根节点查找而非 Foreground 自身
+            Transform panelTransform = this.FindChildTransform(this.Panel.transform.parent, "SaveSlotPanel");
             if (panelTransform == null)
             {
                 return false;
