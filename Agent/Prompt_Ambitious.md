@@ -213,6 +213,22 @@ UI 优先级总结：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 U
 5. 资源与收集：局内金币 / 资源掉落（生成 + 拾取 + 磁铁 + 统计）、宝箱 / 奖励房间（宝箱 → 动画 → 随机奖励 → 稀有度）、收集品图鉴（定义 → UI → 进度 → 奖励）、每日 / 每周任务（刷新 → 进度 → 奖励 → 红点）、成就系统（条件 → 解锁通知 → 列表 → 点数）。
 6. 叙事与氛围：剧情对话（触发 → UI → 选项分支 → 记录）、环境叙事（可交互叙事物件 + 文字提示 + 收集品描述）、音乐 / 音效管理（BGM 切换 + 音效优先级 + 音量控制 + 音频混合）、天气 / 环境效果（天气变化 → 视觉特效 → 游戏性影响）。
 
+### 6.1 当前 v0.1.3 已实现功能（避免重复建议）
+
+候选发现阶段必须检查以下已完成系统，避免生成重复候选：
+- Worker 经济生态：货币/市场/自主交易/人格(4维)/目标驱动/物品所有权
+- Worker 大脑 AI：WorkerBrain 空闲自主决策
+- 血瓶自动使用：HP<30% 触发，3 秒冷却
+- 商店 NPC：ShopNPC + ShopNPCGenerator
+- 任务板：TaskBoardManager + TaskBoardHUD
+- 悬赏任务：PlayerBountyService + BountyData + WorkerBountyTask
+- 建造韧性：8 方向变体 + 快速创建器 + 任务恢复 + 卡死重试(3次)
+- 地形挖掘：GatherTask 扩展 + GatherMap 认领
+- 装备对比弹窗：EquipmentComparePopup（替换/丢弃）
+- 房间列表面板：RoomListPanel（IsOverlay）
+- GameLoggerFactory：统一日志工厂（31 文件迁移）
+- TaskPriority 常量：统一优先级管理
+
 ---
 
 ## 7. 执行步骤

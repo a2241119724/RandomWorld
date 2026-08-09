@@ -97,6 +97,7 @@
 - `ResourcesLocal` 下已有 UI、Prefab、Panel、Popup、Debug、Tool、Report 等目录结构。
 - `Scripts/2D` 中的 TODO、FIXME、空方法、临时实现、重复模式。
 - `Scripts/2D/Editor`、`Scripts/2D/UI`、`Scripts/2D/Tool` 中已有工具、UI、调试逻辑。
+- `Scripts/2D/Domain/Common/GameLoggerFactory.cs`：统一日志工厂，通过 `ServiceLocator.Get<IGameLogger>()` 获取，不要再使用 `Debug.Log` 硬编码。
 - `Scripts/2D/Tool` 下已有工具类、公共函数、辅助方法、命名空间、代码风格和可复用能力，尤其是文件扫描、路径拼接、报告生成、Markdown 表格、JSON / 配置读取、日志、空引用保护、GameObject / Component 安全获取（FindChildComponent/GetComponentInChildren）、Resources / ResourcesLocal 路径、UI 节点查找等。
 - `Scripts/2D/Enum` 下已有枚举、命名、成员风格、用途和可复用状态，包括扫描结果、报告类型、执行状态、严重级别、验证状态、调试面板类型等。
 - `Scripts/2D/Constant` 下已有常量类、命名、分组、用途和可复用固定值，包括 Agent 报告路径、任务目录前缀、报告文件名、Editor 菜单路径、UI 文案、节点名、Prefab 名称、扫描扩展名、忽略目录、日志前缀等。

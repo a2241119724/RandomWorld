@@ -30,7 +30,7 @@ Scripts/2D/Domain/                    # 纯规则层（不含 UnityEngine 引用
   Inventory/                          # InventoryService、InventoryGrid、InventoryCell、ResourceStack、InventoryStackingService、InventoryFoodReservationService、InventoryTakeReservationService、InventoryGridChangedEvent 等
   Player/                             # PlayerDamagePolicy、PlayerMovementPolicy、PlayerMovementService、IPlayerView、PlayerEvents 等
   Wave/                               # WaveBossRuleService、WaveRuleService、WaveFlowService、WaveSpawnPlanService、WaveConfigModel、WaveRuntimeState、WaveSpawnRequest、WaveFlowDecision、WaveEvents（4 个 IGameEvent）、IWaveStateProvider 等（12 个文件）
-  Worker/                             # WorkerAgentSnapshot、WorkerTaskAssignmentService、WorkerTaskProgressService、WorkerConditionRuleService 等
+  Worker/                             # WorkerAgentSnapshot、WorkerTaskAssignmentService、WorkerTaskProgressService、WorkerConditionRuleService、WorkerEfficiencyRuleService、CurrencyManager/CurrencyAmount、WorkerPersonality、WorkerGoal、BountyData 等
   Dialogue/                           # PromptAssemblyService、DialoguePromptProfileModel、IPromptTemplateProvider、ChatMessage 等
 
 Scripts/2D/UnityAdapter/             # Unity 适配层
@@ -48,7 +48,8 @@ Scripts/2D/Gameplay/                  # 玩法管理器（依赖 Domain 和 Unit
   WaveManager.cs / SkillManager.cs / WeatherGameplayEffect.cs / AchievementManager.cs
   SessionResultManager.cs / ComboBonusManager.cs / DeathPenaltyManager.cs
   FloatingTextManager.cs / WorkerConditionManager.cs / WorkerEfficiencyTracker.cs
-  WorkerUpdateSystem.cs / ColonyCommandCenterManager.cs 等（共 29+ 个文件）
+  WorkerUpdateSystem.cs / ColonyCommandCenterManager.cs / TaskBoardManager.cs
+  PlayerBountyService.cs / ShopNPCGenerator.cs / TerrainEffectManager.cs 等（共 30+ 个文件）
 
 Scripts/2D/Character/
   Character.cs / CharacterHealthComponent.cs / CharacterDamageUIPresenter.cs
@@ -57,7 +58,7 @@ Scripts/2D/Character/
   Enemy/          # AEnemy.cs / EnemyManager.cs / CommonEnemy/ / SeekEnemy/
   Worker/         # AWorker.cs / WorkerManager.cs / WorkerTaskManager.cs
     State/        # WorkerAttack/Dead/Escape/Move/Seek/WorkState
-    Task/         # AWorkerTask.cs（Provider 委托模式）、WorkerBuild/Carry/Gather/Hungry/PlantTask + Individual/
+    Task/         # AWorkerTask.cs（Provider 委托模式）、WorkerBuild/Carry/Gather(采集+挖掘)/Hungry/Plant/Home/BountyTask + Individual/
 
 Scripts/2D/Item/
   InventoryManager.cs / DropManager.cs / ItemInstanceFactory.cs
@@ -137,6 +138,14 @@ Scripts/2D/Editor/                    # Editor 工具 + Tests/Domain + Tests/Too
 - GlobalInit 维护 `orderedTickables` / `orderedInitializables` 列表，通过 `BuildTickableList()` / `BuildInitializableList()` 显式控制顺序
 - 当前 ITickable 实现（6 个）：`WorkerUpdateSystem`、`AchievementManager`、`GlobalInputProcessor`、`WorkerTaskManager`、`EnvironmentManager`、`PlayerVitalAlertManager`
 - 当前 IInitializable 实现（5 个）：`AchievementManager`、`SkillManager`、`EquipmentBeamManager`、`EnemyLootManager`、`ComboBonusManager`
+
+#### 3. GameLoggerFactory — 统一日志工厂
+
+位于 `Scripts/2D/Domain/Common/GameLoggerFactory.cs`。统一获取 `IGameLogger`，替换所有硬编码 `Debug.Log`。
+
+- 31 个文件已完成迁移（Gameplay/ Manager/ UI/ Character 等各层）
+- 通过 `ServiceLocator.Get<IGameLogger>()` 获取，日志实现由 `UnityLogger` 适配器提供
+- 消除了跨模块的 `Debug.Log` 硬编码依赖
 
 #### 3. GlobalInputProcessor — 全局输入处理解耦
 
@@ -873,8 +882,14 @@ public sealed class MyNewInitializer : IInitializable
 | EventBus + PublishInternal | ✅ 已增强，有单元测试；已有 11 种事件类型（CharacterDamaged、PlayerStatusChanged、InventoryCellChanged、InventoryGridChanged、PlayerAttackRequested、PlayerSkillActivated、WorkerTaskQueueChanged、WaveStarted、WaveEnded、AllWavesCleared、WaveRestStarted） |
 | Dialogue 接口抽象 | ✅ INPCPromptProfileProvider + IPromptTemplateProvider |
 | 全局 Singleton → ServiceLocator 替换 | ✅ 已完成 |
+| GameLoggerFactory（统一日志工厂） | ✅ 31 文件迁移，替换硬编码 Debug.Log |
+| Worker 生存与建造韧性 | ✅ 血瓶自动使用（HP<30%，3s 冷却）+ 建造任务恢复 + 卡死重试（3 次） |
+| 地形挖掘 | ✅ GatherTask 扩展 + GatherMap 认领防多人冲突 |
+| 装备对比弹窗 | ✅ 拾取装备时自动弹出属性差异对比，支持替换/丢弃 |
+| 房间列表面板 | ✅ RoomListPanel，IsOverlay 模式不暂停游戏 |
+| TaskPriority 常量 | ✅ 任务优先级统一常量管理，消除魔法数字 |
 
-后续改造状态（2026-07 终态）：
+后续改造状态（2026-08 更新）：
 
 1. ✅ **Inventory EventBus 事件迁移** — ItemInfoUI → InventoryGridChangedEvent
 2. ✅ **Character/Player 深入解耦** — IsPlayerCharacter + WorldPositionProvider + CharacterCreator ServiceLocator
@@ -888,6 +903,13 @@ public sealed class MyNewInitializer : IInitializable
 10. 🔒 **存档/Photon 桥接** — Photon 层已通过 INetworkView/ISyncSender 完善覆盖，存档 BinaryFormatter 迁移风险高，建议保持现状
 11. 🔒 **WaveManager Coroutine** — 已通过 IWaveTimeScheduler 解耦，可选优化
 12. 📋 **扩展单元测试** — 39 个 Domain 测试文件覆盖全部 RuleService，可继续为 Provider 委托补充测试
+13. ✅ **GameLoggerFactory 统一日志** — 31 文件从 Debug.Log 迁移至 IGameLogger（2026-07）
+14. ✅ **TaskPriority 常量管理** — 任务优先级统一使用常量类，消除魔法数字（2026-07）
+15. ✅ **地形挖掘功能** — GatherTask 扩展支持地形挖掘，复用 GatherMap 认领机制（2026-08）
+16. ✅ **血瓶自动使用** — Worker HP<30% 自动消耗背包血瓶，3 秒冷却（2026-08）
+17. ✅ **建造任务恢复 + 卡死重试** — 位置预注册 → 任务恢复；最多 3 次卡死重试（2026-08）
+18. ✅ **装备对比弹窗** — 拾取装备自动弹出属性差异对比，支持替换/丢弃（2026-07）
+19. ✅ **房间列表面板** — RoomListPanel，IsOverlay 模式不暂停游戏（2026-08）
 
 选择模块时，请说明原因：
 

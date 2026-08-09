@@ -28,7 +28,7 @@ RandomWorld/
 │   │   │   └── Dialogue/      # LLM 提示词组装
 │   │   ├── Character/         # 角色系统(泛型状态机)
 │   │   │   ├── Player/
-│   │   │   ├── Worker/Task/   # 8 种工人任务
+│   │   │   ├── Worker/Task/   # 10+ 种工人任务（建造/搬运/采集/挖掘/种植/吃饭/睡觉/锻炼/穿戴/建家/悬赏）
 │   │   │   └── Enemy/         # 两种 AI(寻路/追踪)
 │   │   ├── Core/              # 基础架构
 │   │   │   ├── Seek/          # A*, 可步行性缓存, 对象池
@@ -38,7 +38,7 @@ RandomWorld/
 │   │   ├── Map/               # 地图(TileMap, BuildMap 等)
 │   │   ├── Item/              # 物品(背包、建造、装备)
 │   │   ├── AI/Dialogue/       # LLM 对话(客户端、记忆、RAG)
-│   │   ├── AI/Worker/          # Worker AI(交易/大脑决策)
+│   │   ├── AI/Worker/          # Worker AI(交易/大脑决策/自主行为)
 │   │   ├── MVC/               # UI 模型-视图-控制器
 │   │   ├── UI/                # HUD、面板、特效
 │   │   ├── Tool/              # 工具类(领域服务→表现层桥接)

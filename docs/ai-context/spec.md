@@ -12,10 +12,13 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 ## Core Features
 
 ### 殖民地管理
-- **工人系统:** 招募工人执行建造、搬运、采集、种植、吃饭、睡觉、锻炼、穿戴 8 种任务
+- **工人系统:** 招募工人执行建造、搬运、采集、种植、吃饭、睡觉、锻炼、穿戴、挖掘 9 种任务
 - **任务队列:** 优先级队列(0-3)，KD 树空间查询分配最近任务
 - **补给监控:** 饥饿/疲劳状态机 (Healthy → Hungry → Tired → Exhausted → Critical)
 - **殖民地指挥中心 (F10):** 实时诊断报告 — 人力分析、任务阻塞原因、补给缺口、拥堵等级
+- **建造任务恢复:** 游戏重启/场景加载后自动找回原建造者恢复建造任务
+- **建造卡死重试:** 碰撞 Bug 触发时最多 3 次重试（每次约 1.6 秒调整时间），避免任务误放弃
+- **建造位置预注册:** 建造位置冲突时自我预留跳过，配合建造者名称参数实现任务恢复
 
 ### 战斗系统
 - **波次敌人:** 普通波 + Boss 波(每 3 波)，难度渐进缩放
@@ -23,6 +26,17 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **连击系统:** 多阶连击伤害/经验加成
 - **装备稀有度:** Common → Uncommon → Rare → Epic → Legendary → Mythic，属性倍率递增
 - **死亡惩罚:** 经验损失 + 复活计时器
+- **装备对比弹窗:** 拾取装备时自动弹出对比面板，显示当前装备 vs 新装备属性差异，支持替换/丢弃操作
+
+### Worker 自动生存
+- **血瓶自动使用:** HP 低于 30% 时自动消耗背包中的血瓶（3 秒冷却），战斗结束后和低血量检测时触发
+- **自主交易:** 背包满时自动出售多余资源，饥饿时自主寻找食物卖家
+- **自主决策:** 空闲时 WorkerBrain 根据人格/目标/状态自主选择行动
+
+### 地形系统
+- **地形挖掘:** Worker 可挖掘可挖掘地形（如山），复用 GatherTask + GatherMap 认领机制防止多人同时挖掘
+- **地形生成:** 程序化地形生成（7 种地形），随机散布 + 最近邻填充
+- **地形配置:** TerrainTileConfig ScriptableObject，支持可行走/可建造/可生长树木/可生成资源配置
 
 ### LLM NPC 对话
 - 本地 llama-server 驱动的 NPC 对话
@@ -48,6 +62,10 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **商店 NPC:** `ShopNPC` + `ShopNPCGenerator` — 地图就绪后自动生成商店，支持 Worker/Player 买卖交互
 - **任务板:** `TaskBoardManager` — 地图中心固定位置，Worker 存取物品的中转站，内存字典存储
 - **TaskBoardHUD:** 任务板 UI 面板，展示存取记录
+
+### 房间系统
+- **房间列表面板 (RoomListPanel):** 展示 RoomManager 中所有已建造房间及状态，IsOverlay 模式不暂停游戏
+- **房间判定:** 射线检测封闭房间，计算温湿度
 
 ### 成就系统
 - 5 类别(战斗/收集/生存/波次/工人)，最多 20 个成就
@@ -79,3 +97,7 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
 - **HUD 热键:** 通过 GlobalInit.Update() 统一分发，避免子对象 inactive 时失效
 - **Worker 经济:** Domain 层纯 C# 值对象（CurrencyAmount / WorkerPersonality / WorkerGoal / BountyData），Gameplay 层 Manager 驱动运行时
 - **Worker AI 自主决策:** WorkerBrain 在空闲时根据人格+目标+状态自主选择行动，而非被动等待任务分配
+- **日志统一:** `GameLoggerFactory` 统一获取 `IGameLogger`，替换所有硬编码 `Debug.Log`（31 文件迁移）
+- **建造韧性:** 位置预注册 + 建造者名称参数 → 任务恢复；最多 3 次卡死重试 → 避免建造任务误放弃
+- **TaskPriority 常量管理:** 任务优先级统一使用常量类（`TaskPriorityConstant`），避免魔法数字
+- **UI 预制体加载:** 装备面板改用预制体加载（`ResourceManager.Instantiate`），替代硬编码 UI 层级

@@ -182,6 +182,22 @@ UI 优先级总结：`Game.unity` 独立 UI 节点 → `ResourcesLocal` 独立 U
 - UI 数据与表现类：结算面板、奖励弹窗、任务目标提示面板、玩家状态展示 UI、战斗反馈浮字、拾取提示条、交互提示框、冷却提示 UI、新手引导提示框、UI 文案配置读取、红点状态计算逻辑、面板 ViewModel 与 Binder。
 - 低风险业务辅助类：业务事件总线、游戏内事件统计器、任务条件检查器、奖励配置只读校验、关卡配置只读校验、玩家行为日志、Debug 面板数据输出、运行时状态报告。
 
+### 7.1 当前 v0.1.3 已实现业务功能（避免重复建议）
+
+扫描和候选发现阶段必须检查以下已完成系统，避免生成重复候选：
+- Worker 经济生态：货币/市场/自主交易/人格(4维)/目标驱动/物品所有权
+- Worker 大脑 AI：WorkerBrain 空闲自主决策
+- 血瓶自动使用：HP<30% 触发，3 秒冷却
+- 商店 NPC：ShopNPC + ShopNPCGenerator
+- 任务板：TaskBoardManager + TaskBoardHUD
+- 悬赏任务：PlayerBountyService + BountyData + WorkerBountyTask
+- 建造韧性：8 方向变体 + 快速创建器 + 任务恢复 + 卡死重试(3次)
+- 地形挖掘：GatherTask 扩展 + GatherMap 认领
+- 装备对比弹窗：EquipmentComparePopup（替换/丢弃）
+- 房间列表面板：RoomListPanel（IsOverlay）
+- GameLoggerFactory：统一日志工厂（31 文件迁移）
+- TaskPriority 常量：统一优先级管理
+
 ## 8. 执行步骤
 
 ### 8.1 读取 Agent 体系文件
