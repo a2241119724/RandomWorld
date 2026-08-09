@@ -6,7 +6,10 @@ namespace LAB2D.Gameplay
     using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Enum;
+    using LAB2D.Item;
     using LAB2D.Item.Backpack.Equipment;
+    using LAB2D.Map;
+    using LAB2D.MVC.Backpack.Controller;
     using LAB2D.UI.Panel;
     using System.Collections.Generic;
     using UnityEngine;
@@ -453,7 +456,8 @@ namespace LAB2D.Gameplay
         /// </summary>
         /// <param name="equipment">被拾取的装备</param>
         /// <param name="equipmentId">装备 Id</param>
-        public void OnEquipmentPickup(AEquipment equipment, long equipmentId)
+        /// <param name="posMap">装备所在 tilemap 坐标（用于清理地面）</param>
+        public void OnEquipmentPickup(AEquipment equipment, long equipmentId, Vector3Int posMap)
         {
             if (equipment == null) return;
 
@@ -501,14 +505,27 @@ namespace LAB2D.Gameplay
             {
                 popup.ShowCompare(currentEquipped?.Attribute, equipment.Attribute, rarity, slotType, () =>
                 {
+                    // 替换：旧装备放入背包，新装备装备上
                     if (charData != null)
                     {
+                        Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments = charData.GetEquipments();
+                        if (equipments != null && equipments.TryGetValue(slotType, out AEquipment oldEquipment))
+                        {
+                            // 先从槽位移除旧装备，避免 AddEquipment 内部调用 EquipmentSwapDropProvider 放回地面
+                            equipments.Remove(slotType);
+                            // 旧装备放入玩家背包
+                            Core.ServiceLocator.Get<BackpackController>().AddItem(oldEquipment);
+                        }
+
                         Vector3Int playerPos = AWorkerTask.TileMapWorldToMapProvider(
                             PlayerPositionProvider());
                         charData.AddEquipment(equipment, playerPos);
                     }
+
+                    CleanupEquipmentPickup(posMap, equipment);
                 }, () =>
                 {
+                    // 丢弃：将新装备放回地面（玩家当前位置），不入背包
                     if (charData != null)
                     {
                         Vector3Int playerPos = AWorkerTask.TileMapWorldToMapProvider(
@@ -519,8 +536,37 @@ namespace LAB2D.Gameplay
                                 playerPos, new ResourceInfo(equipment.Id, 1), equipment.Tile.name);
                         }
                     }
+
+                    CleanupEquipmentPickup(posMap, equipment);
                 });
             }
+        }
+
+        /// <summary>
+        /// 装备拾取后的地面清理：记录收集、清理 DropManager。
+        /// 替换和丢弃回调均需调用此方法。
+        /// </summary>
+        private static void CleanupEquipmentPickup(Vector3Int posMap, AEquipment equipment)
+        {
+            // 记录收集
+            Core.ServiceLocator.Get<ItemCollectionTracker>().RecordItemCollected(
+                new ResourceInfo(equipment.Id, 1));
+
+            // 清理 DropManager
+            if (Core.ServiceLocator.TryGet(out DropManager dropManager))
+            {
+                ResourceInfo resourceInfo = dropManager.GetDropByAll(posMap);
+                if (resourceInfo != null)
+                {
+                    dropManager.SubDropByAll(posMap, resourceInfo);
+                }
+            }
+
+            // 移除光束特效
+            AWorkerTask.EquipmentBeamProvider().RemoveBeamAt(posMap);
+
+            // 删除地面 tile
+            ItemMap.Instance?.DeleteTile(posMap);
         }
 
         /// <summary>

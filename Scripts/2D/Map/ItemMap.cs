@@ -200,13 +200,16 @@ namespace LAB2D.Map
                 return;
             }
 
-            // 将掉落时的品质和属性应用到拾取的道具上
-            if (rarity.HasValue && item is AEquipment equipment)
+            // 装备物品：交给 EnemyLootManager 触发对比弹窗，不直接入背包。
+            // 稀有度、属性、地面清理均由 OnEquipmentPickup 内部处理。
+            if (item is AEquipment equipment)
             {
-                EquipmentLootTool.ApplyRarityToAttributes(equipment.Attribute, rarity.Value);
-                equipment.Quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
+                Core.ServiceLocator.Get<EnemyLootManager>().OnEquipmentPickup(equipment, equipment.Id, posMap);
+                return;
             }
-            else if (rarity.HasValue && item is ABackpackItem backpackItem)
+
+            // 将掉落时的品质应用到拾取的非装备道具上
+            if (rarity.HasValue && item is ABackpackItem backpackItem)
             {
                 backpackItem.Quality = EquipmentLootTool.MapRarityToQuality(rarity.Value);
             }
