@@ -52,11 +52,23 @@ namespace LAB2D.UI.Action
                 return;
             }
 
-            // 若不在默认位置，右键点击时：
+            if (this.transform.position.x == ResourceConstant.VECTOR3_DEFAULT.x)
+            {
+                return;
+            }
+
+            // 左键点击空白处 → 隐藏
+            // 点击在 UI 元素上时不隐藏，避免误吞按钮点击
+            if (UnityGlobalInputAdapter.GetPrimaryMouseDown() && this.IsClickOnEmptySpace())
+            {
+                this.Hide();
+                return;
+            }
+
+            // 右键点击时：
             // - 点在空地农田上 → 不隐藏（ItemInfoUI 会刷新列表到新位置）
             // - 点在非农田位置 → 隐藏
-            if (UnityGlobalInputAdapter.GetSecondaryMouseDown()
-                && this.transform.position.x != ResourceConstant.VECTOR3_DEFAULT.x)
+            if (UnityGlobalInputAdapter.GetSecondaryMouseDown())
             {
                 Vector3Int clickPos = ServiceLocator.Get<TileMap>().GetMapPosByMouse();
                 if (!ServiceLocator.Get<FarmlandManager>().IsEmptySoil(clickPos))
@@ -64,6 +76,26 @@ namespace LAB2D.UI.Action
                     this.Hide();
                 }
             }
+        }
+
+        /// <summary>
+        /// 检测当前鼠标点击是否在空白处（非 UI 元素上）
+        /// </summary>
+        private bool IsClickOnEmptySpace()
+        {
+            var uiResults = LAB2D.Tool.Tool.GetUIByMousePos(TagConstant.UI_TAG);
+            if (uiResults.Count > 0 && uiResults[0].gameObject.name != "Foreground")
+            {
+                return false;
+            }
+
+            var actionResults = LAB2D.Tool.Tool.GetUIByMousePos(TagConstant.ACTION_UI_TAG);
+            if (actionResults.Count > 0 && actionResults[0].gameObject.name != "Foreground")
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
