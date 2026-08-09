@@ -14,7 +14,6 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon.Sword
         {
             base.Awake();
             this.name = PrefabConstant.CUSTOM_SWORD;
-            this.attackInterval = 0.5f;
             this.attackEffect = AttackEffectManager.EffectTypeEnum.KnifeLight;
         }
 

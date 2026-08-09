@@ -13,7 +13,6 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon.Gun
         protected override void Awake()
         {
             base.Awake();
-            this.attackInterval = 0.5f;
             this.name = PrefabConstant.SINGLE_GUN;
             this.attackEffect = AttackEffectManager.EffectTypeEnum.Bullet;
         }
