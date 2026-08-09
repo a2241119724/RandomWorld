@@ -1,4 +1,4 @@
-# Prime Command
+# 初始化命令
 
 Load core context for the project before working on it. **Default is a LIGHT prime** (~4–6k tokens: spec TOC + opening invariants + structure Map + task-relevant spec sections). `--full` loads the entire docs — reserve for design/architecture/spec-review sessions where broad context genuinely pays.
 

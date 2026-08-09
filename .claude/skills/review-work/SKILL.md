@@ -1,6 +1,6 @@
 ---
 name: review-work
-description: Review uncommitted code changes using parallel Claude sub-agents (Bug Hunter, Rules Auditor, optional Architect). The invoking agent triages the diff by file path into impacted modules and risk surfaces, then spawns reviewers scaled to the change. Each reviewer self-primes via /prime, verifies any API/library claim via Context7 (mandatory — unverified claims are auto-discarded), and reports an intent verdict against progress.md before its findings. Catches bugs, security issues, CLAUDE.md compliance, and test-coverage gaps. Skip for trivial typos/formatting. Use after substantive implementation work, or when the Stop hook requests it. Also invocable manually with /review-work.
+description: 使用并行子代理审查未提交的代码改动（Bug 猎人、规则审计、可选架构师）。按文件路径将 diff 分流至受影响的模块和风险面，然后按改动规模生成审查者。捕获 bug、安全问题、CLAUDE.md 合规性和测试覆盖缺口。在实质性实现工作完成后使用，或手动调用 /review-work。
 user_invocable: true
 ---
 

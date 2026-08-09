@@ -1,6 +1,6 @@
 ---
 name: image-gen
-description: Generate character art and image variations using AI image generation (Google Gemini) with reference images for style and character consistency. Use this skill when the user asks to generate new character poses, mascot variations, art assets, illustrations, or any AI-generated images — especially when maintaining consistency with an existing character or style.
+description: 使用 AI (Google Gemini) 生成角色图和图片变体，支持参考图保持风格和角色一致性。当用户要求生成新角色姿势、吉祥物变体、美术资源、插画或任何 AI 生成图片时使用。
 user_invocable: true
 ---
 

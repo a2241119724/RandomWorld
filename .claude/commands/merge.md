@@ -1,4 +1,4 @@
-# Merge Command
+# 合并命令
 
 Finalize work on a branch: verify docs + tree are clean, merge to main, clean up. Supports both standard `git checkout -b` branches and `git worktree` flows — auto-detected at pre-flight.
 

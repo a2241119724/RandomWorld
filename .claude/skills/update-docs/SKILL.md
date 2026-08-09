@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: Update project documentation after code changes. Maintains the 4 core ai-context files (spec, project-structure, progress, deployment-infrastructure) and CLAUDE.md. Use after completing features, refactors, or any changes that affect project structure, capabilities, or status. Also creates initial documentation if files don't exist yet.
+description: 在代码改动后更新项目文档。维护 4 个核心 ai-context 文件（spec、project-structure、progress、deployment-infrastructure）和 CLAUDE.md。在完成功能、重构或任何影响项目结构、能力或状态的改动后使用。
 user_invocable: true
 ---
 

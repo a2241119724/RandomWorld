@@ -1,6 +1,6 @@
 ---
 name: context7-guidance
-description: Fetch CURRENT library/framework/API/CLI documentation via Context7 instead of relying on training data. Use whenever the user mentions a specific library, framework, SDK, API, or cloud service, asks a setup/configuration question, plans a version migration, or is debugging library-specific behavior. Triggers on common web frameworks, APIs, and cloud services — even well-known ones, since training data may be stale.
+description: 通过 Context7 获取最新的库/框架/API/CLI 文档，而非依赖训练数据。当用户提到特定库、框架、SDK、API 或云服务，询问配置问题，计划版本迁移，或调试库相关行为时使用。
 ---
 
 # Context7 Guidance — Current Docs Over Training Data

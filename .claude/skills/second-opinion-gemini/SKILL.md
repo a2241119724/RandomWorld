@@ -1,6 +1,6 @@
 ---
 name: second-opinion-gemini
-description: Get a second opinion from Google's Gemini Pro via the locally installed Gemini CLI (defaults to gemini-3.1-pro-preview; override with the CLAUDE_SECOND_OPINION_MODEL env var). This is the explicit / fallback engine — invoke ONLY when the user explicitly says "ask Gemini", "Gemini's take", "what does Gemini think", or "ask both" (run alongside the default engine and synthesize). Do NOT trigger on a generic "second opinion", "another perspective", or "cross-check this" — those route to the default `second-opinion` skill. Reserve this for when the user specifically wants Gemini, or as a fallback when the default engine is unavailable. Reports unavailability rather than falling back to a weaker model.
+description: 从本地 Gemini CLI 获取 Google Gemini Pro 的第二意见。仅在用户明确说"ask Gemini"、"Gemini 怎么看"或"ask both"时调用。通用的"second opinion"请求路由到默认的 second-opinion 技能。
 user_invocable: false
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: image-edit
-description: Edit images with precision — crop, resize, mirror, rotate, trim, and reframe. Use this skill whenever the user asks to crop, resize, trim, mirror, flip, rotate, reframe, or otherwise manipulate an image. Also use for creating square crops, portraits/headshots from full-body images, icon sizes, or any image transformation. Even if the request sounds simple, this skill prevents common pitfalls and ensures correct results on the first try.
+description: 精确编辑图片——裁剪、调整大小、镜像、旋转、修剪和重构。当用户要求裁剪、调整大小、修剪、镜像、翻转、旋转、重构或以其他方式处理图片时使用。
 user_invocable: true
 ---
 

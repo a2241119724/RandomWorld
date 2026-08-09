@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: Test and deploy changes safely. Discovers deploy targets, runs fail-stop gates before going live, optionally shadow-deploys and swaps, then runs report-only post-deploy checks. This is a TEMPLATE — customize the commands and checks for your specific deployment pipeline.
+description: 安全地测试和部署改动。发现部署目标，上线前运行门禁检查，可选影子部署和切换，然后运行部署后检查。此为模板——请根据实际部署流程自定义命令和检查项。
 user_invocable: true
 ---
 

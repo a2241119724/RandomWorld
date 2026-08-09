@@ -1,4 +1,4 @@
-# Verify Command
+# 验证命令
 
 Run the app or its tests to confirm a change **actually works** — observed behavior, not just "it compiles." Compiling proves the types line up; it does not prove the feature does what you intended. This command makes you exercise the change and watch the result.
 

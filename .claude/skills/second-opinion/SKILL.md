@@ -1,6 +1,6 @@
 ---
 name: second-opinion
-description: Get a second opinion from OpenAI's Codex CLI running locally. Use this skill when in Plan Mode for large or critical tasks, when stuck on a debugging dead end, when facing architecture trade-offs, for subtle edge cases in code review, or any situation where an independent perspective would add value. Also use when the user explicitly asks for a "second opinion", "another perspective", "cross-check this", "ask Codex", or "ask GPT". This is the DEFAULT second-opinion engine — Codex runs a completely different model architecture from Claude, so it catches blind spots Claude shares with itself. For a Gemini second opinion specifically, the user says "ask Gemini" (separate second-opinion-gemini skill); "ask both" runs this skill and that one, then synthesizes.
+description: 从本地运行的 OpenAI Codex CLI 获取第二意见。适用于大型或关键任务的计划阶段、调试陷入死胡同时、架构权衡决策、代码审查中的细微边界情况，或任何需要独立视角的场景。这是默认的第二意见引擎。用户说"ask Gemini"则使用 Gemini 版本；"ask both"则同时运行两者并综合结果。
 user_invocable: false
 ---
 
