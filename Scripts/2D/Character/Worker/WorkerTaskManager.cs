@@ -379,7 +379,7 @@ namespace LAB2D.Character.Worker
         /// <summary>
         /// 删除队列中所有与指定 Worker 相关的任务。
         /// Worker 死亡时调用，清理：悬赏发布、专属任务（Wear/Sleep/Exercise）、
-        /// PickUp 目标所有、CarryToBoard 指定执行者。
+        /// PickUp 目标所有、Carry(ToBoard) 指定执行者。
         /// </summary>
         /// <param name="workerInstanceId">Worker 的 GameObject instance ID。</param>
         public void RemoveTasksForWorker(int workerInstanceId)
@@ -427,7 +427,7 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
-        /// 移除指定位置的 Carry 任务（用于将自动创建的 CarryTask 替换为 CarryToBoardTask）。
+        /// 移除指定位置的 Carry 任务（用于将自动创建的 CarryTask 替换为 CarryTask(ToBoard)）。
         /// </summary>
         public void RemoveCarryTaskAt(Vector3Int posMap)
         {

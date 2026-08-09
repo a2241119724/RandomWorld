@@ -282,8 +282,7 @@ namespace LAB2D.Constant
             {
                 case WorkerTaskType.Build: return TaskBuild;
                 case WorkerTaskType.Gather: return TaskGather;
-                case WorkerTaskType.Carry:
-                case WorkerTaskType.CarryToBoard: return TaskCarry;
+                case WorkerTaskType.Carry: return TaskCarry;
                 case WorkerTaskType.Eat: return TaskEat;
                 case WorkerTaskType.Exercise: return TaskExercise;
                 case WorkerTaskType.Plant: return TaskPlant;

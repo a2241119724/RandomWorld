@@ -69,7 +69,7 @@ namespace LAB2D.Character.Worker.Task
 
                 if (isBounty)
                 {
-                    // 悬赏产出物：放置到地上 + 创建 CarryToBoardTask（搬运到任务栏）
+                    // 悬赏产出物：放置到地上 + 创建 CarryTask(ToBoard)（搬运到任务栏）
                     this.PlaceBountyDropAndCreateCarry(targetPos, dropItems[i], worker);
                 }
                 else
@@ -139,7 +139,7 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>
         /// 放置悬赏掉落物并创建搬运到任务栏的任务。
         /// 与普通掉落物的区别：不调用 PutDownToDrop（它会创建普通 CarryTask），
-        /// 而是直接放置物品并创建 CarryToBoardTask。
+        /// 而是直接放置物品并创建 CarryTask(ToBoard 模式)。
         /// </summary>
         private void PlaceBountyDropAndCreateCarry(Vector3Int dropPos, DropItem dropItem, AWorker executor)
         {
@@ -153,11 +153,12 @@ namespace LAB2D.Character.Worker.Task
             }
 
             // TryMergeOrPlaceDrop → PutDownToDrop 自动创建了普通 CarryTask，
-            // 悬赏物品需要替换为 CarryToBoardTask（搬运到任务栏）
+            // 悬赏物品需要替换为 CarryTask(ToBoard 模式)（搬运到任务栏）
             Core.ServiceLocator.Get<WorkerTaskManager>().RemoveCarryTaskAt(placePos);
 
             // 创建搬运到任务栏的任务（只允许执行悬赏的 Worker 接取）
-            WorkerCarryToBoardTask carryToBoard = new WorkerCarryToBoardTask.CarryToBoardTaskBuilder()
+            WorkerCarryTask carryToBoard = new WorkerCarryTask.CarryTaskBuilder()
+                .SetMode(WorkerCarryTask.CarryMode.ToBoard)
                 .SetStartTarget(placePos)
                 .SetResourceInfo(dropItem.ResourceInfo)
                 .SetExecutor(executor.GetInstanceID())
@@ -169,7 +170,7 @@ namespace LAB2D.Character.Worker.Task
                 1); // 高优先级
 
             LogProvider(
-                $"[BountyDrop] 悬赏掉落物放置: pos=({placePos.x},{placePos.y}) → 创建 CarryToBoardTask",
+                $"[BountyDrop] 悬赏掉落物放置: pos=({placePos.x},{placePos.y}) → 创建 CarryTask(ToBoard)",
                 LogManager.LogLevelEnum.Debug);
         }
 
