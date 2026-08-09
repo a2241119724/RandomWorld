@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Gameplay;
     using System;
@@ -40,6 +41,9 @@ namespace LAB2D.Gameplay
 
         /// <summary>单例实例引用（不依赖 Singleton 基类，由 GlobalInit 或手动挂载）</summary>
         private static SessionResultAutoTrigger instance;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>获取当前实例（可能为 null）</summary>
         public static SessionResultAutoTrigger Instance
@@ -185,7 +189,7 @@ namespace LAB2D.Gameplay
             }
 
             // 输出结算摘要到控制台
-            Debug.Log($"[SessionResultAutoTrigger] 自动采集会话结算数据 — 评分: {result.CombatScore}, " +
+            GameLoggerFactory.Get().Log($"[SessionResultAutoTrigger] 自动采集会话结算数据 — 评分: {result.CombatScore}, " +
                       $"星级: {result.StarRating}/5, 等级: {result.GradeText}, " +
                       $"击杀: {result.TotalDefeatedEnemyCount}, 存活: {result.HasSurvived}");
 
@@ -222,7 +226,7 @@ namespace LAB2D.Gameplay
                 // Tip 显示失败，降级到 Debug.Log
             }
 
-            Debug.Log($"[SessionResultAutoTrigger] {tipText}");
+            GameLoggerFactory.Get().Log($"[SessionResultAutoTrigger] {tipText}");
         }
 
         /// <summary>

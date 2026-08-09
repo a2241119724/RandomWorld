@@ -1,6 +1,7 @@
 namespace LAB2D.Manager
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Character.Worker.Task;
     using System;
     using System.Collections.Generic;
@@ -25,6 +26,9 @@ namespace LAB2D.Manager
         public const int ArchiveDisplayNameMaxLength = 16;
         private readonly int archiveCount = ArchiveSlotCount;
         private bool isLegacyArchiveChecked;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         [Serializable]
         private class ArchiveMetaData
@@ -410,7 +414,7 @@ namespace LAB2D.Manager
                 var data = DataTool.LoadDataByBinary<LAB2D.Map.TileMap.TileMapData>(legacyTileMapPath);
                 if (data == null)
                 {
-                    Debug.LogWarning(
+                    this.GameLogger.LogWarning(
                         $"[ArchiveManager] Legacy archive data at '{legacyTileMapPath}' is incompatible " +
                         "with the current version. Migration skipped — the slot will be treated as empty. " +
                         "Delete the old .lab files manually if you want to reclaim disk space.");
@@ -419,7 +423,7 @@ namespace LAB2D.Manager
             }
             catch (Exception ex)
             {
-                Debug.LogWarning(
+                this.GameLogger.LogWarning(
                     $"[ArchiveManager] Failed to read legacy archive data: {ex.Message}. " +
                     "Migration skipped.");
                 return;
@@ -439,7 +443,7 @@ namespace LAB2D.Manager
                 File.Copy(legacyFile, targetFile);
             }
 
-            Debug.Log($"[ArchiveManager] Migrated {legacyFiles.Length} legacy archive files to {targetDirectory}");
+            this.GameLogger.Log($"[ArchiveManager] Migrated {legacyFiles.Length} legacy archive files to {targetDirectory}");
         }
 
         private bool HasArchiveFiles(int archiveIndex)

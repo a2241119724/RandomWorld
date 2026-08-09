@@ -44,6 +44,9 @@ namespace LAB2D.Gameplay
         /// 不在地面创建 DropManager/ItemMap 图标，发布者直接从此字典取回。
         /// </summary>
         private readonly Dictionary<int, List<ResourceInfo>> deliveredItems = new Dictionary<int, List<ResourceInfo>>();
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         // ---- 初始化 ----
 
@@ -59,11 +62,10 @@ namespace LAB2D.Gameplay
             else
             {
                 this.BoardPosition = mapCenter;
-                Debug.LogWarning($"[TaskBoard] 未找到空闲位置，使用地图中心: ({mapCenter.x}, {mapCenter.y})");
             }
 
             this.PlaceBoardIcon(this.BoardPosition);
-            Debug.Log($"[TaskBoard] 任务栏初始化完成: ({this.BoardPosition.x}, {this.BoardPosition.y})");
+            this.GameLogger.Log($"[TaskBoard] 任务栏初始化完成: ({this.BoardPosition.x}, {this.BoardPosition.y})");
         }
 
         private void PlaceBoardIcon(Vector3Int pos)

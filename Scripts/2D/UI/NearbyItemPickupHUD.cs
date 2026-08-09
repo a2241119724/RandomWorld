@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Constant;
     using LAB2D.Item.Backpack;
@@ -26,6 +27,9 @@ namespace LAB2D.UI
         private GameObject emptyHint;
         private Text titleText;
         private float lastPollTime;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>当前显示的条目（key=tilemap坐标）</summary>
         private Dictionary<Vector3Int, NearbyItemEntry> currentEntries = new Dictionary<Vector3Int, NearbyItemEntry>();
@@ -65,13 +69,13 @@ namespace LAB2D.UI
                 }
                 else
                 {
-                    Debug.LogWarning($"[NearbyItemPickupHUD] 场景中存在 {NearbyItemPickupConstant.CanvasName} 但未挂载 NearbyItemPickupHUD 组件。");
+                    GameLoggerFactory.Get().LogWarning($"[NearbyItemPickupHUD] 场景中存在 {NearbyItemPickupConstant.CanvasName} 但未挂载 NearbyItemPickupHUD 组件。");
                 }
 
                 return;
             }
 
-            Debug.LogWarning($"[NearbyItemPickupHUD] 场景中未找到 {NearbyItemPickupConstant.CanvasName}，请手动创建。");
+            GameLoggerFactory.Get().LogWarning($"[NearbyItemPickupHUD] 场景中未找到 {NearbyItemPickupConstant.CanvasName}，请手动创建。");
         }
 
         private void Awake()

@@ -33,6 +33,9 @@ namespace LAB2D.UI
 
         /// <summary>是否正在播放动画（淡入/保持/淡出），防止每帧重复触发 Show 导致闪烁</summary>
         private bool isShowing;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>
         /// 确保运行时弹窗存在。若不存在则动态创建。
@@ -56,13 +59,13 @@ namespace LAB2D.UI
                 }
                 else
                 {
-                    Debug.LogWarning($"[AchievementPopup] 场景中存在 {AchievementConstant.PopupRootName} 但未挂载 AchievementPopup 组件。");
+                    GameLoggerFactory.Get().LogWarning($"[AchievementPopup] 场景中存在 {AchievementConstant.PopupRootName} 但未挂载 AchievementPopup 组件。");
                 }
 
                 return;
             }
 
-            Debug.LogWarning($"[AchievementPopup] 在 Foreground 下未找到 {AchievementConstant.PopupRootName}，请手动创建。");
+            GameLoggerFactory.Get().LogWarning($"[AchievementPopup] 在 Foreground 下未找到 {AchievementConstant.PopupRootName}，请手动创建。");
         }
 
         /// <summary>

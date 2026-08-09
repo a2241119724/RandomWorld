@@ -30,7 +30,7 @@ namespace LAB2D.Gameplay
         private int totalCollected;
         private IGameLogger gameLogger;
 
-        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = Core.ServiceLocator.Get<IGameLogger>());
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>里程碑触达事件（参数：里程碑值, 当前累计总数）</summary>
         public event Action<int, int> MilestoneReached;

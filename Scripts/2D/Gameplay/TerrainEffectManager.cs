@@ -4,6 +4,7 @@ namespace LAB2D.Gameplay
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Core;
+    using LAB2D.Domain.Common;
     using LAB2D.Map;
     using Character = LAB2D.Character.Character;
     using System.Collections.Generic;
@@ -29,7 +30,7 @@ namespace LAB2D.Gameplay
             {
                 if (this.gameLogger == null)
                 {
-                    this.gameLogger = ServiceLocator.Get<IGameLogger>();
+                    this.gameLogger = GameLoggerFactory.Get();
                 }
 
                 return this.gameLogger;

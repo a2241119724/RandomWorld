@@ -20,6 +20,9 @@ namespace LAB2D.UI
     {
         private CanvasGroup canvasGroup;
         private float nextRefreshTime;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>
         /// 标题文本。
@@ -66,7 +69,7 @@ namespace LAB2D.UI
                 }
             }
 
-            Debug.LogWarning($"[ColonyCommandCenterHUD] 在 Foreground 下未找到 {ColonyCommandCenterConstant.HudRootName}，请手动创建。");
+            GameLoggerFactory.Get().LogWarning($"[ColonyCommandCenterHUD] 在 Foreground 下未找到 {ColonyCommandCenterConstant.HudRootName}，请手动创建。");
             return null;
         }
 
@@ -112,7 +115,7 @@ namespace LAB2D.UI
             }
             catch (Exception exception)
             {
-                Debug.LogWarning(ColonyCommandCenterConstant.LogPrefix + " 绑定报告事件失败: " + exception.Message);
+                this.GameLogger.LogWarning(ColonyCommandCenterConstant.LogPrefix + " 绑定报告事件失败: " + exception.Message);
             }
 
             this.nextRefreshTime = 0.0f;

@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Action
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Constant;
     using LAB2D.Core;
     using LAB2D.Item;
@@ -23,6 +24,9 @@ namespace LAB2D.UI.Action
 
         private int showFrame = -1; // Show() 被调用的帧
         private int hideFrame = -1; // Hide() 被调用的帧
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>
         /// 单例
@@ -82,7 +86,7 @@ namespace LAB2D.UI.Action
             BackpackController backpackCtrl = BackpackController.Instance;
             if (backpackCtrl == null)
             {
-                Debug.LogWarning("PlantUI.Show: BackpackController.Instance 为 null");
+                this.GameLogger.LogWarning("PlantUI.Show: BackpackController.Instance 为 null");
                 this.Hide();
                 return;
             }
@@ -101,7 +105,7 @@ namespace LAB2D.UI.Action
             Transform seedList = this.transform.Find("Right/SeedList");
             if (seedList == null)
             {
-                Debug.LogError("PlantUI.Show: 找不到 Right/SeedList 子节点！");
+                this.GameLogger.LogError("PlantUI.Show: 找不到 Right/SeedList 子节点！");
                 this.Hide();
                 return;
             }
@@ -160,7 +164,7 @@ namespace LAB2D.UI.Action
             bool removed = BackpackController.Instance.RemoveSeedByUid(selectedSeed.Uid);
             if (!removed)
             {
-                Debug.LogWarning("PlantUI: 从背包移除种子失败");
+                this.GameLogger.LogWarning("PlantUI: 从背包移除种子失败");
                 this.Hide();
                 return;
             }

@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Character.Enemy;
     using LAB2D.Character.Player;
     using LAB2D.Character.Worker.Task;
@@ -84,14 +85,14 @@ namespace LAB2D.Gameplay
         /// 默认实现封装 Debug.LogWarning；可在测试中替换为静默桩。
         /// </summary>
         public static System.Action<string> LogWarningProvider { get; set; }
-            = (message) => Debug.LogWarning(message);
+            = (message) => GameLoggerFactory.Get().LogWarning(message);
 
         /// <summary>
         /// 日志提供者 — 输出普通级别的日志消息。
         /// 默认实现封装 Debug.Log；可在测试中替换为静默桩。
         /// </summary>
         public static System.Action<string> LogProvider { get; set; }
-            = (message) => Debug.Log(message);
+            = (message) => GameLoggerFactory.Get().Log(message);
 
         /// <summary>
         /// 玩家解析提供者 — 获取当前本地玩家角色的引用。

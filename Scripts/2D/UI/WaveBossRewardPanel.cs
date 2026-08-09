@@ -25,6 +25,9 @@ namespace LAB2D.UI
         private readonly List<Text> optionTexts = new List<Text>(WaveBossRewardConstant.RewardOptionCount);
         private CanvasGroup canvasGroup;
         private float nextRefreshTime;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>标题文本。</summary>
         public Text titleText;
@@ -125,7 +128,7 @@ namespace LAB2D.UI
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[WaveBossRewardPanel] 绑定奖励数据失败: " + exception.Message);
+                this.GameLogger.LogWarning("[WaveBossRewardPanel] 绑定奖励数据失败: " + exception.Message);
             }
         }
 

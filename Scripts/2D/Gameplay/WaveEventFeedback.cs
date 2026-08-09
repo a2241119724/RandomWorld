@@ -69,7 +69,7 @@ namespace LAB2D.Gameplay
             {
                 if (this.gameLogger == null)
                 {
-                    this.gameLogger = Core.ServiceLocator.Get<IGameLogger>();
+                    this.gameLogger = GameLoggerFactory.Get();
                 }
 
                 return this.gameLogger;

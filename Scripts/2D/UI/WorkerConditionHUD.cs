@@ -20,6 +20,9 @@ namespace LAB2D.UI
     {
         private CanvasGroup canvasGroup;
         private float nextRefreshTime;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>
         /// 工人状态显示文本。
@@ -70,7 +73,7 @@ namespace LAB2D.UI
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[WorkerConditionHUD] 绑定工人状态数据失败: " + exception.Message);
+                this.GameLogger.LogWarning("[WorkerConditionHUD] 绑定工人状态数据失败: " + exception.Message);
             }
         }
 
@@ -167,7 +170,7 @@ namespace LAB2D.UI
                 }
             }
 
-            Debug.LogWarning($"[WorkerConditionHUD] 在 Foreground 下未找到 {WorkerConditionConstant.HudRootName}，请手动创建。");
+            GameLoggerFactory.Get().LogWarning($"[WorkerConditionHUD] 在 Foreground 下未找到 {WorkerConditionConstant.HudRootName}，请手动创建。");
             return null;
         }
     }

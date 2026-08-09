@@ -24,7 +24,7 @@ namespace LAB2D.Gameplay
         private bool tipEnabled = true;
         private IGameLogger gameLogger;
 
-        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = Core.ServiceLocator.Get<IGameLogger>());
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>
         /// 天气效果状态变化事件。

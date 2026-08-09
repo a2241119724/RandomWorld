@@ -1,6 +1,7 @@
 namespace LAB2D.Manager
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Core;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Map;
@@ -23,6 +24,9 @@ namespace LAB2D.Manager
         /// </summary>
         internal static Func<int, int, int> RandomIntProvider { get; set; }
             = (minInclusive, maxExclusive) => UnityEngine.Random.Range(minInclusive, maxExclusive);
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
         private readonly Dictionary<string, GameObject> prefabDic; // <characterType,<name,prefab>>
         private readonly Dictionary<string, UnityEngine.Object> assetDic;
         private readonly Dictionary<string, Sprite> imageDic;
@@ -96,7 +100,7 @@ namespace LAB2D.Manager
             // 诊断日志：告知开发者资源加载状态
             if (this.prefabDic.Count == 0)
             {
-                Debug.LogWarning(
+                this.GameLogger.LogWarning(
                     "[ResourceManager] prefabDic is empty after initialization. " +
                     "Prefabs will NOT be available for Instantiate(). " +
                     "Ensure StreamingAssets/prefab AssetBundle exists and contains prefabs, " +
@@ -104,7 +108,7 @@ namespace LAB2D.Manager
             }
             else
             {
-                Debug.Log($"[ResourceManager] Loaded {this.prefabDic.Count} prefabs successfully.");
+                this.GameLogger.Log($"[ResourceManager] Loaded {this.prefabDic.Count} prefabs successfully.");
             }
         }
 
@@ -317,12 +321,12 @@ namespace LAB2D.Manager
                             $"[ResourceManager] prefabDic is empty! Cannot instantiate '{prefabName}'. " +
                             "The AssetBundle has not been loaded. " +
                             "Check the Console for earlier [ResourceManager] messages about AssetBundle loading.";
-                        Debug.LogError(errorMsg);
+                        this.GameLogger.LogError(errorMsg);
                         AWorkerTask.LogProvider(errorMsg, LogManager.LogLevelEnum.Error);
                     }
                     else
                     {
-                        Debug.LogWarning($"[ResourceManager] Prefab '{prefabName}' not found in dictionary ({this.prefabDic.Count} entries available)");
+                        this.GameLogger.LogWarning($"[ResourceManager] Prefab '{prefabName}' not found in dictionary ({this.prefabDic.Count} entries available)");
                         AWorkerTask.LogProvider(prefabName + " prefab not found!!!", LogManager.LogLevelEnum.Error);
                     }
 
@@ -390,13 +394,13 @@ namespace LAB2D.Manager
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[ResourceManager] Failed to load AssetBundle from '{candidatePath}': {ex.Message}");
+                    this.GameLogger.LogError($"[ResourceManager] Failed to load AssetBundle from '{candidatePath}': {ex.Message}");
                 }
             }
 
             if (assetBundle == null)
             {
-                Debug.LogError(
+                this.GameLogger.LogError(
                     $"[ResourceManager] AssetBundle not found! " +
                     $"Checked paths: {string.Join(", ", candidatePaths)}. " +
                     "Please build the AssetBundle first or ensure it is in StreamingAssets.");
@@ -418,11 +422,11 @@ namespace LAB2D.Manager
                     }
                 }
 
-                Debug.Log($"[ResourceManager] Loaded {prefabCount} prefabs from AssetBundle: {loadedPath}");
+                this.GameLogger.Log($"[ResourceManager] Loaded {prefabCount} prefabs from AssetBundle: {loadedPath}");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[ResourceManager] Error reading assets from AssetBundle: {ex.Message}");
+                this.GameLogger.LogError($"[ResourceManager] Error reading assets from AssetBundle: {ex.Message}");
             }
             finally
             {

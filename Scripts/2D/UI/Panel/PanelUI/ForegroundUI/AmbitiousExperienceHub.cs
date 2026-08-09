@@ -47,6 +47,9 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         private float comboBurstHideTime;
         private float nextRefreshRealtime;
         private bool subscribed;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>
         /// 进入 Game 场景后是否自动显示 HUD。
@@ -88,7 +91,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         {
             if (!this.BindExistingInterface())
             {
-                Debug.LogWarning("[AmbitiousExperienceHub] 未找到 Game.unity 中预置的体验中枢 UI 层级。");
+                this.GameLogger.LogWarning("[AmbitiousExperienceHub] 未找到 Game.unity 中预置的体验中枢 UI 层级。");
                 return;
             }
 
@@ -200,7 +203,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[AmbitiousExperienceHub] 订阅会话统计失败: " + exception.Message);
+                this.GameLogger.LogWarning("[AmbitiousExperienceHub] 订阅会话统计失败: " + exception.Message);
             }
 
             try
@@ -212,7 +215,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[AmbitiousExperienceHub] 订阅连击事件失败: " + exception.Message);
+                this.GameLogger.LogWarning("[AmbitiousExperienceHub] 订阅连击事件失败: " + exception.Message);
             }
 
             try
@@ -225,7 +228,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[AmbitiousExperienceHub] 订阅波次反馈失败: " + exception.Message);
+                this.GameLogger.LogWarning("[AmbitiousExperienceHub] 订阅波次反馈失败: " + exception.Message);
             }
 
             try
@@ -234,7 +237,7 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[AmbitiousExperienceHub] 订阅结算事件失败: " + exception.Message);
+                this.GameLogger.LogWarning("[AmbitiousExperienceHub] 订阅结算事件失败: " + exception.Message);
             }
         }
 

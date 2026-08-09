@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using LAB2D;
+using LAB2D.Domain.Common;
 using UnityEngine;
 
 namespace LAB2D.AgentGenerated
@@ -32,6 +34,9 @@ namespace LAB2D.AgentGenerated
         private readonly List<int> speedEffectIDs = new List<int>();
         private readonly List<int> damageEffectIDs = new List<int>();
         private int nextEffectId;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         private void Awake()
         {
@@ -40,7 +45,7 @@ namespace LAB2D.AgentGenerated
                 target = GetComponent<IStatusEffectTarget>();
                 if (target == null)
                 {
-                    Debug.LogWarning($"StatusEffectController on {gameObject.name}: No IStatusEffectTarget found. Controller disabled.", this);
+                    this.GameLogger.LogWarning($"StatusEffectController on {gameObject.name}: No IStatusEffectTarget found. Controller disabled.");
                     enabled = false;
                 }
             }
@@ -97,7 +102,7 @@ namespace LAB2D.AgentGenerated
         {
             if (target == null)
             {
-                Debug.LogError("Cannot add effect: no valid IStatusEffectTarget.");
+                this.GameLogger.LogError("Cannot add effect: no valid IStatusEffectTarget.");
                 return -1;
             }
 

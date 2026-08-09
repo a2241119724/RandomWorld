@@ -18,6 +18,9 @@ namespace LAB2D.UI
     {
         private CanvasGroup canvasGroup;
         private float nextRefreshTime;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>
         /// 任务队列显示文本。
@@ -109,7 +112,7 @@ namespace LAB2D.UI
             catch (Exception exception)
             {
                 this.queueText.text = WorkerTaskHudConstant.ManagerUnavailableText;
-                Debug.LogWarning("[WorkerTaskQueueHUD] 刷新任务队列失败: " + exception.Message);
+                this.GameLogger.LogWarning("[WorkerTaskQueueHUD] 刷新任务队列失败: " + exception.Message);
             }
         }
 
@@ -140,7 +143,7 @@ namespace LAB2D.UI
                 }
             }
 
-            Debug.LogWarning($"[WorkerTaskQueueHUD] 在 Foreground 下未找到 {WorkerTaskHudConstant.HudRootName}，请手动创建。");
+            GameLoggerFactory.Get().LogWarning($"[WorkerTaskQueueHUD] 在 Foreground 下未找到 {WorkerTaskHudConstant.HudRootName}，请手动创建。");
             return null;
         }
     }

@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using LAB2D.Constant;
     using LAB2D.Enum;
     using LAB2D.Gameplay;
@@ -28,6 +29,9 @@ namespace LAB2D.UI
         private Dictionary<AchievementCategory, GameObject> categoryTabButtons;
         private AchievementCategory activeCategory;
         private bool isVisible;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         // 面板尺寸常量 — 2x 放大版
         private const float PanelWidth = 1800f;
@@ -52,13 +56,13 @@ namespace LAB2D.UI
                 }
                 else
                 {
-                    Debug.LogWarning($"[AchievementPanel] 场景中存在 {AchievementConstant.PanelRootName} 但未挂载 AchievementPanel 组件。");
+                    GameLoggerFactory.Get().LogWarning($"[AchievementPanel] 场景中存在 {AchievementConstant.PanelRootName} 但未挂载 AchievementPanel 组件。");
                 }
 
                 return;
             }
 
-            Debug.LogWarning($"[AchievementPanel] 场景中未找到 {AchievementConstant.PanelRootName}，请手动创建。");
+            GameLoggerFactory.Get().LogWarning($"[AchievementPanel] 场景中未找到 {AchievementConstant.PanelRootName}，请手动创建。");
         }
 
         public static AchievementPanel RuntimeInstance

@@ -20,6 +20,9 @@ namespace LAB2D.UI
         private CanvasGroup canvasGroup;
         private Text boardText;
         private float nextRefreshTime;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
         private const float RefreshInterval = 0.5f;
         private const string HudRootName = "TaskBoardHUD";
         private const string HudTextName = "TaskBoardText";
@@ -105,7 +108,7 @@ namespace LAB2D.UI
                 }
             }
 
-            Debug.LogWarning($"[TaskBoardHUD] 在 Foreground 下未找到 {HudRootName}，请在 Game.unity 中手动创建。");
+            GameLoggerFactory.Get().LogWarning($"[TaskBoardHUD] 在 Foreground 下未找到 {HudRootName}，请在 Game.unity 中手动创建。");
             return null;
         }
     }

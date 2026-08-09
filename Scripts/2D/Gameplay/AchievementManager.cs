@@ -42,7 +42,7 @@ namespace LAB2D.Gameplay
         private IGameLogger gameLogger;
 
         private IGameTime GameTime => this.gameTime ?? (this.gameTime = Core.ServiceLocator.Get<IGameTime>());
-        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = Core.ServiceLocator.Get<IGameLogger>());
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>成就解锁事件，参数为解锁的成就数据</summary>
         public event Action<AchievementData> OnAchievementUnlocked;

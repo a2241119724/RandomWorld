@@ -20,6 +20,9 @@ namespace LAB2D.UI
     {
         private CanvasGroup canvasGroup;
         private float nextRefreshTime;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>
         /// 补给缺口显示文本。
@@ -70,7 +73,7 @@ namespace LAB2D.UI
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[WorkerSupplyHUD] 绑定补给缺口数据失败: " + exception.Message);
+                this.GameLogger.LogWarning("[WorkerSupplyHUD] 绑定补给缺口数据失败: " + exception.Message);
             }
         }
 
@@ -174,7 +177,7 @@ namespace LAB2D.UI
                 }
             }
 
-            Debug.LogWarning($"[WorkerSupplyHUD] 在 Foreground 下未找到 {WorkerSupplyConstant.HudRootName}，请手动创建。");
+            GameLoggerFactory.Get().LogWarning($"[WorkerSupplyHUD] 在 Foreground 下未找到 {WorkerSupplyConstant.HudRootName}，请手动创建。");
             return null;
         }
     }

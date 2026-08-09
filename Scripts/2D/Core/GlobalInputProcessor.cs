@@ -15,6 +15,9 @@ namespace LAB2D.Core
     public sealed class GlobalInputProcessor : ITickable
     {
         private const string ForceDropPrefsKey = "Debug_ForceDrop";
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         public GlobalInputProcessor()
         {
@@ -22,7 +25,7 @@ namespace LAB2D.Core
             EnemyLootManager.ForceDrop = PlayerPrefs.GetInt(ForceDropPrefsKey, 0) == 1;
             if (EnemyLootManager.ForceDrop)
             {
-                Debug.Log("[ForceDrop] 100%掉落已开启（从上次会话恢复）");
+                this.GameLogger.Log("[ForceDrop] 100%掉落已开启（从上次会话恢复）");
             }
         }
 
@@ -41,7 +44,7 @@ namespace LAB2D.Core
                 EnemyLootManager.ForceDrop = !EnemyLootManager.ForceDrop;
                 PlayerPrefs.SetInt(ForceDropPrefsKey, EnemyLootManager.ForceDrop ? 1 : 0);
                 PlayerPrefs.Save();
-                Debug.Log($"[ForceDrop] 100%掉落已{(EnemyLootManager.ForceDrop ? "开启" : "关闭")}");
+                this.GameLogger.Log($"[ForceDrop] 100%掉落已{(EnemyLootManager.ForceDrop ? "开启" : "关闭")}");
             }
         }
 

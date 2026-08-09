@@ -1,6 +1,7 @@
 namespace LAB2D.UI
 {
     using LAB2D;
+    using LAB2D.Domain.Common;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -42,6 +43,9 @@ namespace LAB2D.UI
 
         private bool isVisible = true;
         private float lastRefreshTime;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>
         /// 确保运行时技能 HUD 已创建。若已存在则跳过。
@@ -66,13 +70,13 @@ namespace LAB2D.UI
                 }
                 else
                 {
-                    Debug.LogWarning($"[SkillHUD] 场景中存在 {SkillConstant.SkillHUDRootName} 但未挂载 SkillHUD 组件。");
+                    GameLoggerFactory.Get().LogWarning($"[SkillHUD] 场景中存在 {SkillConstant.SkillHUDRootName} 但未挂载 SkillHUD 组件。");
                 }
 
                 return;
             }
 
-            Debug.LogWarning($"[SkillHUD] 在 Foreground 下未找到 {SkillConstant.SkillHUDRootName}，请手动创建。");
+            GameLoggerFactory.Get().LogWarning($"[SkillHUD] 在 Foreground 下未找到 {SkillConstant.SkillHUDRootName}，请手动创建。");
         }
 
         /// <summary>

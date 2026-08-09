@@ -22,6 +22,9 @@ namespace LAB2D.UI
 
         private CanvasGroup canvasGroup;
         private float nextRefreshTime;
+        private IGameLogger gameLogger;
+
+        private IGameLogger GameLogger => this.gameLogger ?? (this.gameLogger = GameLoggerFactory.Get());
 
         /// <summary>
         /// 天气效果显示文本。
@@ -69,7 +72,7 @@ namespace LAB2D.UI
             }
             catch (Exception exception)
             {
-                Debug.LogWarning("[WeatherGameplayHUD] 绑定天气玩法数据失败: " + exception.Message);
+                this.GameLogger.LogWarning("[WeatherGameplayHUD] 绑定天气玩法数据失败: " + exception.Message);
             }
         }
 
@@ -170,7 +173,7 @@ namespace LAB2D.UI
                 }
             }
 
-            Debug.LogWarning($"[WeatherGameplayHUD] 在 Foreground 下未找到 {HudRootName}，请手动创建。");
+            GameLoggerFactory.Get().LogWarning($"[WeatherGameplayHUD] 在 Foreground 下未找到 {HudRootName}，请手动创建。");
             return null;
         }
     }
