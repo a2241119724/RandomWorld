@@ -674,7 +674,7 @@ namespace LAB2D.Character.Worker
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks);
-            if (this.collisionBugDetector.IsBug(this.name, 200))
+            if (this.collisionBugDetector.IsBug(this.name, 100))
             {
                 this.collisionBugDetector.ColliderCount = 0; // 重置计数器，防止重复触发
                 this.GiveUpTask(); // 放弃当前任务，让WorkerBrain做新决策避开阻塞点

@@ -139,7 +139,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks);
-            if (this.collisionBugDetector.IsBug(this.name, 1000) && this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Wander)
+            if (this.collisionBugDetector.IsBug(this.name, 100) && this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Wander)
             {
                 this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Wander);
             }
