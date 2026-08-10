@@ -122,6 +122,8 @@ namespace LAB2D.Core.Seek
 
             if (this.ShouldStop(generation))
             {
+                result.IsReachable = false;
+                this.TrySetResult(result, generation);
                 return;
             }
 
@@ -135,6 +137,8 @@ namespace LAB2D.Core.Seek
             this.CompressPath(generation, workspace, path, result.Path);
             if (this.ShouldStop(generation))
             {
+                result.IsReachable = false;
+                this.TrySetResult(result, generation);
                 return;
             }
 

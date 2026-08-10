@@ -12,7 +12,19 @@ namespace LAB2D.Core.Seek
     /// </summary>
     public class ASeek : ISeek
     {
-        private const int MaxConcurrentSearches = 2;
+        /// <summary>
+        /// 动态并发数：基于 Worker 数量自动调节，最少 2 个，最多 16 个。
+        /// 约每 10 个 Worker 分配 1 个额外线程。
+        /// </summary>
+        private static int MaxConcurrentSearches
+        {
+            get
+            {
+                int workerCount = Core.GameServices.WorkerCountProvider?.Invoke() ?? 0;
+                return Math.Clamp(Math.Max(2, (workerCount / 10) + 2), 2, 16);
+            }
+        }
+
         private const float FailCacheTtl = 30f;
         private static readonly Dictionary<Vector3Int, float> FailCache = new ();
         private static readonly Queue<ASeek> SearchQueue = new (64);
