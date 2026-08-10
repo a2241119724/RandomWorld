@@ -71,7 +71,7 @@ namespace LAB2D.Character.Worker.State
 
                 if (closedPos == default)
                 {
-                    AWorkerTask.LogProvider($"{workerData.Task.TaskType}, 没有邻居位置!", LogManager.LogLevelEnum.Warning);
+                    AWorkerTask.LogProvider($"{workerData.Task.TaskType}, 没有邻居位置! workerPos=({posMap.x},{posMap.y}) targetMap=({this.targetMap.x},{this.targetMap.y})", LogManager.LogLevelEnum.Warning);
                     this.Character.GiveUpTask();
                     return;
                 }

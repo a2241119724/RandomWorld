@@ -393,7 +393,7 @@ namespace LAB2D.Map
 
             AWorkerTask.LogProvider(
                 $"DigTerrain: pos=({posMap.x},{posMap.y}) terrainId {oldTerrainId} -> {newTerrainId}",
-                LogManager.LogLevelEnum.Info);
+                LogManager.LogLevelEnum.Trace);
 
             return newTerrainId;
         }
