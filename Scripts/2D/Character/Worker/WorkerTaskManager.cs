@@ -240,6 +240,51 @@ namespace LAB2D.Character.Worker
             return false;
         }
 
+        /// <summary>
+        /// 尝试将非玩家悬赏的全局任务（优先级 1→2：WorkerBounty → SystemDefault）分配给指定 Worker。
+        /// 不包括 PlayerBounty(0)——玩家指令由 TryAssignPlayerTask 单独在最前面处理。
+        /// 不包括 Idle(3)——那是 Worker 自用的锻炼任务。
+        /// 调用方应在确认 Worker 无需自保（不饥饿、不疲劳）后才调用，
+        /// 确保 Worker 优先处理生存需求再帮助全局队列。
+        /// </summary>
+        /// <param name="worker">目标 Worker</param>
+        /// <returns>成功分配返回 true</returns>
+        public bool TryAssignGlobalTask(AWorker worker)
+        {
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+            if (workerData == null || workerData.Task != null)
+            {
+                return false;
+            }
+
+            WorkerAgentSnapshot snapshot = this.CreateWorkerSnapshot(worker, true);
+
+            // 从 WorkerBounty(1) 开始，跳过已处理的 PlayerBounty(0) 和自用的 Idle(3)
+            for (int priority = WorkerTaskPriority.WorkerBounty; priority < WorkerTaskPriority.Idle; priority++)
+            {
+                IReadOnlyList<WorkerTaskSnapshot<AWorkerTask>> tasks =
+                    this.CreateTaskSnapshots(priority, worker);
+
+                WorkerTaskAssignmentResult<AWorkerTask> result =
+                    this.assignmentService.SelectTask(snapshot, tasks);
+
+                if (result.HasTask)
+                {
+                    workerData.Task = result.Task;
+                    result.Task.Start(worker);
+                    if (workerData.Task == result.Task)
+                    {
+                        this.taskQueue.MarkRunning(result.Task);
+                    }
+
+                    EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private WorkerAgentSnapshot CreateWorkerSnapshot(AWorker worker, bool isIdle)
         {
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;

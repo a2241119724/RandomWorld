@@ -24,54 +24,55 @@ namespace LAB2D.Editor.Tests.Domain
         public void GetCongestionLevel_Small_ReturnsSmooth()
         {
             Assert.AreEqual(WorkerTaskCongestionLevel.Smooth, this.service.GetCongestionLevel(1));
+            Assert.AreEqual(WorkerTaskCongestionLevel.Smooth, this.service.GetCongestionLevel(29));
         }
 
         [Test]
         public void GetCongestionLevel_BusyThreshold_ReturnsBusy()
         {
-            Assert.AreEqual(WorkerTaskCongestionLevel.Busy, this.service.GetCongestionLevel(4));
+            Assert.AreEqual(WorkerTaskCongestionLevel.Busy, this.service.GetCongestionLevel(30));
         }
 
         [Test]
         public void GetCongestionLevel_CongestedThreshold_ReturnsCongested()
         {
-            Assert.AreEqual(WorkerTaskCongestionLevel.Congested, this.service.GetCongestionLevel(10));
+            Assert.AreEqual(WorkerTaskCongestionLevel.Congested, this.service.GetCongestionLevel(100));
         }
 
         [Test]
         public void GetCongestionLevel_AboveCongested_ReturnsCongested()
         {
-            Assert.AreEqual(WorkerTaskCongestionLevel.Congested, this.service.GetCongestionLevel(13));
+            Assert.AreEqual(WorkerTaskCongestionLevel.Congested, this.service.GetCongestionLevel(150));
         }
 
         [Test]
         public void GetCongestionLevel_CriticalThreshold_ReturnsCritical()
         {
-            Assert.AreEqual(WorkerTaskCongestionLevel.Critical, this.service.GetCongestionLevel(18));
+            Assert.AreEqual(WorkerTaskCongestionLevel.Critical, this.service.GetCongestionLevel(250));
         }
 
         [Test]
         public void GetCongestionLevel_BeyondCritical_ReturnsCritical()
         {
-            Assert.AreEqual(WorkerTaskCongestionLevel.Critical, this.service.GetCongestionLevel(50));
+            Assert.AreEqual(WorkerTaskCongestionLevel.Critical, this.service.GetCongestionLevel(500));
         }
 
         [Test]
         public void HasDominantTaskType_EnoughCountAndRatio_ReturnsTrue()
         {
-            Assert.IsTrue(this.service.HasDominantTaskType(3, 4));
+            Assert.IsTrue(this.service.HasDominantTaskType(15, 30));
         }
 
         [Test]
         public void HasDominantTaskType_NotEnoughCount_ReturnsFalse()
         {
-            Assert.IsFalse(this.service.HasDominantTaskType(2, 4));
+            Assert.IsFalse(this.service.HasDominantTaskType(10, 20));
         }
 
         [Test]
         public void HasDominantTaskType_NotEnoughRatio_ReturnsFalse()
         {
-            Assert.IsFalse(this.service.HasDominantTaskType(3, 10));
+            Assert.IsFalse(this.service.HasDominantTaskType(15, 40));
         }
 
         [Test]

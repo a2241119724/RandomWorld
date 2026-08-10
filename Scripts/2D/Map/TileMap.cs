@@ -51,6 +51,51 @@ namespace LAB2D.Map
         /// </summary>
         private int cachedWaterTerrainId = -1;
 
+        /// <summary>
+        /// 每个 Chunk 的边长（瓦片数）。1000×1000 地图 ≈ 256 个 Chunk。
+        /// </summary>
+        private const int CHUNK_SIZE = 64;
+
+        /// <summary>
+        /// Chunk 索引 → Tilemap 组件的映射。
+        /// </summary>
+        private readonly Dictionary<Vector2Int, Tilemap> chunkTilemaps = new Dictionary<Vector2Int, Tilemap>();
+
+        /// <summary>
+        /// 所有 Chunk 的父节点 Transform（Grid 的子节点，与 TileMap 同级）。
+        /// </summary>
+        private Transform chunksRoot;
+
+        /// <summary>
+        /// 缓存的 Chunk 索引 — 用于 ShowTilemap 顺序遍历时避免反复字典查找。
+        /// </summary>
+        private Vector2Int cachedChunkIndex = new Vector2Int(int.MinValue, int.MinValue);
+
+        /// <summary>
+        /// 缓存的 Chunk Tilemap — 对应 cachedChunkIndex。
+        /// </summary>
+        private Tilemap cachedChunkTilemap;
+
+        /// <summary>
+        /// 缓存的 Grid cellSize — 用于 Chunk 定位（考虑 YXZ swizzle）。
+        /// </summary>
+        private Vector3 gridCellSize = Vector3.one;
+
+        /// <summary>
+        /// 缓存的原始 TilemapRenderer 材质，复制给 Chunk TilemapRenderer。
+        /// </summary>
+        private Material chunkMaterial;
+
+        /// <summary>
+        /// 缓存的原始 TilemapRenderer sortingLayerID。
+        /// </summary>
+        private int chunkSortingLayerID;
+
+        /// <summary>
+        /// 缓存的原始 TilemapRenderer sortingOrder。
+        /// </summary>
+        private int chunkSortingOrder;
+
         /// <inheritdoc/>
         public override void Awake()
         {
@@ -67,6 +112,137 @@ namespace LAB2D.Map
             {
                 this.cachedWaterTerrainId = db.GetWaterTerrainId();
             }
+
+            // 初始化 Chunk 系统
+            this.InitChunkSystem();
+        }
+
+        /// <summary>
+        /// 初始化 Chunk 系统：获取 Grid 配置、创建 Chunk 父节点、
+        /// 缓存渲染器配置、禁用原始 TilemapRenderer。
+        /// </summary>
+        private void InitChunkSystem()
+        {
+            Grid grid = this.GetComponentInParent<Grid>();
+            if (grid != null)
+            {
+                this.gridCellSize = grid.cellSize;
+            }
+
+            // chunksRoot 作为 Grid 的子节点（与 TileMap 同级，共享同一个 Grid）
+            Transform gridParent = grid != null ? grid.transform : this.transform.parent;
+            this.chunksRoot = new GameObject("TileChunks").transform;
+            this.chunksRoot.SetParent(gridParent);
+            this.chunksRoot.localPosition = Vector3.zero;
+
+            // 缓存原始 TilemapRenderer 配置，供 Chunk TilemapRenderer 复制
+            TilemapRenderer originalRenderer = this.GetComponent<TilemapRenderer>();
+            if (originalRenderer != null)
+            {
+                this.chunkMaterial = originalRenderer.material;
+                this.chunkSortingLayerID = originalRenderer.sortingLayerID;
+                this.chunkSortingOrder = originalRenderer.sortingOrder;
+                // 禁用原始 Renderer：主 Tilemap 不再直接存储瓦片
+                originalRenderer.enabled = false;
+            }
+        }
+
+        /// <summary>
+        /// 计算地图坐标 (x, y) 所属的 Chunk 索引。
+        /// </summary>
+        private static Vector2Int GetChunkIndex(int x, int y)
+        {
+            return new Vector2Int(
+                Mathf.FloorToInt((float)x / CHUNK_SIZE),
+                Mathf.FloorToInt((float)y / CHUNK_SIZE));
+        }
+
+        /// <summary>
+        /// 计算地图坐标 (x, y) 在 Chunk (cx, cy) 内的局部坐标。
+        /// </summary>
+        private static Vector3Int GetLocalPos(int x, int y, int cx, int cy)
+        {
+            return new Vector3Int(x - (cx * CHUNK_SIZE), y - (cy * CHUNK_SIZE), 0);
+        }
+
+        /// <summary>
+        /// 获取或创建指定索引的 Chunk Tilemap。
+        /// Chunk 定位需考虑 Grid 的 YXZ swizzle：
+        /// chunk (cx, cy) → Grid-local position = (cy*S*cellSize.y, cx*S*cellSize.x, 0)
+        /// </summary>
+        private Tilemap GetOrCreateChunk(Vector2Int chunkIndex)
+        {
+            if (this.chunkTilemaps.TryGetValue(chunkIndex, out Tilemap existing))
+            {
+                return existing;
+            }
+
+            int cx = chunkIndex.x;
+            int cy = chunkIndex.y;
+
+            GameObject chunkGO = new GameObject($"Chunk_{cx}_{cy}");
+            chunkGO.transform.SetParent(this.chunksRoot);
+            // YXZ swizzle: chunk (cx, cy) 定位在 (cy*S*cellSize.y, cx*S*cellSize.x)
+            chunkGO.transform.localPosition = new Vector3(
+                cy * CHUNK_SIZE * this.gridCellSize.y,
+                cx * CHUNK_SIZE * this.gridCellSize.x,
+                0f);
+
+            Tilemap tm = chunkGO.AddComponent<Tilemap>();
+            TilemapRenderer tmr = chunkGO.AddComponent<TilemapRenderer>();
+
+            // 复制原始渲染器配置
+            if (this.chunkMaterial != null)
+            {
+                tmr.material = this.chunkMaterial;
+            }
+
+            tmr.sortingLayerID = this.chunkSortingLayerID;
+            tmr.sortingOrder = this.chunkSortingOrder;
+
+            this.chunkTilemaps[chunkIndex] = tm;
+            return tm;
+        }
+
+        /// <summary>
+        /// 带缓存的 Chunk 获取 — 用于 ShowTilemap 顺序遍历时加速。
+        /// </summary>
+        private Tilemap GetChunkForPos(int x, int y)
+        {
+            Vector2Int idx = GetChunkIndex(x, y);
+            if (idx == this.cachedChunkIndex && this.cachedChunkTilemap != null)
+            {
+                return this.cachedChunkTilemap;
+            }
+
+            this.cachedChunkIndex = idx;
+            this.cachedChunkTilemap = this.GetOrCreateChunk(idx);
+            return this.cachedChunkTilemap;
+        }
+
+        /// <summary>
+        /// 销毁所有 Chunk GameObject 并清理缓存。
+        /// </summary>
+        private void ClearAllChunks()
+        {
+            foreach (Tilemap tm in this.chunkTilemaps.Values)
+            {
+                if (tm != null && tm.gameObject != null)
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(tm.gameObject);
+                    }
+                    else
+                    {
+                        DestroyImmediate(tm.gameObject);
+                    }
+                }
+            }
+
+            this.chunkTilemaps.Clear();
+            this.cachedChunkIndex = new Vector2Int(int.MinValue, int.MinValue);
+            this.cachedChunkTilemap = null;
         }
 
         /// <summary>
@@ -77,6 +253,9 @@ namespace LAB2D.Map
         public IEnumerator ShowTilemap(int[,] mapTiles)
         {
             Core.GameServices.AsyncProgressSetTipProvider("正在展示地图...");
+
+            // 清理旧 Chunk，确保重新渲染时状态干净
+            this.ClearAllChunks();
 
             TerrainConfigDatabase db = ServiceLocator.Get<TerrainConfigDatabase>();
             int height = mapTiles.GetLength(0);
@@ -91,7 +270,10 @@ namespace LAB2D.Map
                     string resourceName = db.GetTileResourceName(terrainId);
                     if (!string.IsNullOrEmpty(resourceName) && terrainId != 0)
                     {
-                        this.tilemap.SetTile(new Vector3Int(i, j, 0), (TileBase)AWorkerTask.ResourceLoadProvider(resourceName));
+                        int cx = Mathf.FloorToInt((float)i / CHUNK_SIZE);
+                        int cy = Mathf.FloorToInt((float)j / CHUNK_SIZE);
+                        Vector3Int localPos = GetLocalPos(i, j, cx, cy);
+                        this.GetChunkForPos(i, j).SetTile(localPos, (TileBase)AWorkerTask.ResourceLoadProvider(resourceName));
                     }
 
                     if (Core.ServiceLocator.Get<FrameControl>().IsNeedStop(1))
@@ -353,6 +535,48 @@ namespace LAB2D.Map
             return false;
         }
 
+        /// <inheritdoc/>
+        public override void SetTile(Vector3Int pos, TileBase tileBase)
+        {
+            Vector2Int chunkIndex = GetChunkIndex(pos.x, pos.y);
+            Vector3Int localPos = GetLocalPos(pos.x, pos.y, chunkIndex.x, chunkIndex.y);
+            Tilemap chunk = this.GetOrCreateChunk(chunkIndex);
+            chunk.SetTile(localPos, tileBase);
+        }
+
+        /// <inheritdoc/>
+        public override TileBase GetTile(Vector3Int pos)
+        {
+            Vector2Int chunkIndex = GetChunkIndex(pos.x, pos.y);
+            if (this.chunkTilemaps.TryGetValue(chunkIndex, out Tilemap chunk))
+            {
+                Vector3Int localPos = GetLocalPos(pos.x, pos.y, chunkIndex.x, chunkIndex.y);
+                return chunk.GetTile(localPos);
+            }
+
+            return null;
+        }
+
+        /// <inheritdoc/>
+        public override bool IsFreeTile(Vector3Int posMap)
+        {
+            return this.GetTile(posMap) == null;
+        }
+
+        /// <inheritdoc/>
+        public override bool IsCanReach(Vector3Int posMap)
+        {
+            Vector2Int chunkIndex = GetChunkIndex(posMap.x, posMap.y);
+            if (this.chunkTilemaps.TryGetValue(chunkIndex, out Tilemap chunk))
+            {
+                Vector3Int localPos = GetLocalPos(posMap.x, posMap.y, chunkIndex.x, chunkIndex.y);
+                return chunk.GetColliderType(localPos) == Tile.ColliderType.None;
+            }
+
+            // 没有 Chunk = 没有瓦片 = 没有碰撞体 = 可以到达
+            return true;
+        }
+
         /// <summary>
         /// 挖掘指定位置的地形瓦片（如山），将其替换为8邻域中最常见的可行走地形。
         /// </summary>
@@ -377,7 +601,7 @@ namespace LAB2D.Map
             string resourceName = db.GetTileResourceName(newTerrainId);
             if (!string.IsNullOrEmpty(resourceName))
             {
-                this.tilemap.SetTile(
+                this.SetTile(
                     new Vector3Int(posMap.x, posMap.y, 0),
                     (TileBase)AWorkerTask.ResourceLoadProvider(resourceName));
             }
@@ -515,7 +739,7 @@ namespace LAB2D.Map
             string resourceName = db.GetTileResourceName(newTerrainId);
             if (!string.IsNullOrEmpty(resourceName))
             {
-                this.tilemap.SetTile(
+                this.SetTile(
                     new Vector3Int(pos.x, pos.y, 0),
                     (TileBase)AWorkerTask.ResourceLoadProvider(resourceName));
             }

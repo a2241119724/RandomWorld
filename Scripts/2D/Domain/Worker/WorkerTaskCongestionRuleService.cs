@@ -7,17 +7,17 @@ namespace LAB2D.Domain.Worker
     /// </summary>
     public sealed class WorkerTaskCongestionRuleService
     {
-        /// <summary>繁忙等待任务阈值（等待任务数 >= 该值判定为繁忙）。</summary>
-        public const int BusyWaitingTaskThreshold = 4;
+        /// <summary>繁忙等待任务阈值（等待任务数 >= 该值判定为繁忙）。适配数十到上千 Worker 的殖民地规模。</summary>
+        public const int BusyWaitingTaskThreshold = 30;
 
         /// <summary>拥堵等待任务阈值（等待任务数 >= 该值判定为拥堵）。</summary>
-        public const int CongestedWaitingTaskThreshold = 10;
+        public const int CongestedWaitingTaskThreshold = 100;
 
         /// <summary>严重拥堵等待任务阈值（等待任务数 >= 该值判定为严重拥堵）。</summary>
-        public const int CriticalWaitingTaskThreshold = 18;
+        public const int CriticalWaitingTaskThreshold = 250;
 
-        /// <summary>主积压任务类型的最少等待数量阈值。</summary>
-        public const int DominantTaskWaitingThreshold = 3;
+        /// <summary>主积压任务类型的最少等待数量阈值。需要超过该数量才会触发针对性建议。</summary>
+        public const int DominantTaskWaitingThreshold = 15;
 
         /// <summary>主积压任务类型占等待任务的最小比例。</summary>
         public const float DominantTaskWaitingRatio = 0.5f;

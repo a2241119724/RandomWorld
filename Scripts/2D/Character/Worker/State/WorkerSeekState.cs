@@ -130,12 +130,28 @@ namespace LAB2D.Character.Worker.State
                     this.brain.TryPickHomeSite(this.Character);
                 }
 
-                // 优先检查是否有玩家发布的任务（优先级 0），不受决策节流限制
+                // 步骤1: 始终优先检查玩家悬赏任务（优先级 0），玩家指令不受 Worker 自身状态限制。
+                // 注：即使 Worker 饥饿，TryAssignPlayerTask 内部也会因 BlocksWhenHungry 对非 Eat 任务
+                // 返回 false，饥饿 Worker 只会接到玩家发布的 Eat 相关任务。
                 if (Core.ServiceLocator.Get<WorkerTaskManager>().TryAssignPlayerTask(this.Character))
                 {
-                    // 成功接取玩家任务 → 跳过自主决策
-                    // Start() 内部 ChangeState(Seek) 会触发 OnEnter 重入，这里直接 return
+                    // 成功接取玩家任务 → 跳过后续决策
                     return;
+                }
+
+                // 步骤2: 检查自保需求。饥饿或疲劳的 Worker 优先处理自身生存，
+                // 不参与全局 WorkerBounty/SystemDefault 任务分配。
+                bool needsSelfPreservation = workerData.CurHungry < AWorker.ThresholdHungry
+                    || workerData.CurTired < AWorker.ThresholdTired;
+
+                if (!needsSelfPreservation)
+                {
+                    // Worker 状态良好 → 尝试接取全局任务（优先级 1→2：WorkerBounty → SystemDefault）
+                    // 避免 Worker 因自主决策持续创建锻炼/漫游任务而从不接取全局队列任务
+                    if (Core.ServiceLocator.Get<WorkerTaskManager>().TryAssignGlobalTask(this.Character))
+                    {
+                        return;
+                    }
                 }
 
                 // 判断是否应该立即决策：

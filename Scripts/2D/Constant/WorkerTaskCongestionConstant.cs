@@ -33,14 +33,15 @@ namespace LAB2D.Constant
         /// <summary>
         /// 严重拥堵等待任务阈值。
         /// 只影响提示文案强度，不改变任务调度或优先级。
+        /// 适配数十到上千 Worker 的殖民地规模。
         /// </summary>
-        public const int CriticalWaitingTaskThreshold = WorkerTaskHudConstant.HighWaitingTaskThreshold + 8;
+        public const int CriticalWaitingTaskThreshold = 250;
 
         /// <summary>
         /// 主要积压任务类型的最少等待数量。
         /// 低于该值时不把单一任务类型当作主要问题。
         /// </summary>
-        public const int DominantTaskWaitingThreshold = 3;
+        public const int DominantTaskWaitingThreshold = 15;
 
         /// <summary>
         /// 主要积压任务类型占等待任务的最小比例。

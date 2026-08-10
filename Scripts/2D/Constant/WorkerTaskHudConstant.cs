@@ -64,14 +64,15 @@ namespace LAB2D.Constant
         /// <summary>
         /// 等待中任务达到该数量时显示为繁忙。
         /// 该阈值只影响 UI 文案，不影响任务调度。
+        /// 适配数十到上千 Worker 的殖民地规模。
         /// </summary>
-        public const int MediumWaitingTaskThreshold = 4;
+        public const int MediumWaitingTaskThreshold = 30;
 
         /// <summary>
         /// 等待中任务达到该数量时显示为拥堵。
         /// 该阈值只影响 UI 文案，不影响任务调度。
         /// </summary>
-        public const int HighWaitingTaskThreshold = 10;
+        public const int HighWaitingTaskThreshold = 100;
 
         /// <summary>
         /// HUD 默认宽度。
