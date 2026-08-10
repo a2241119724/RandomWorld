@@ -473,31 +473,36 @@ namespace LAB2D.Character.Worker
                     .Build();
 
                 // 优先尝试找回原 Worker 并直接指派（保持 Self-Build 语义）
+                // 但仅在 Worker 空闲时指派，避免中断正在执行的任务（Sleep/Eat/Gather 等）
+                bool assignedDirectly = false;
                 if (!string.IsNullOrEmpty(tileData.BuilderName))
                 {
                     AWorker owner = WorkerListProvider().Find(w => w.name == tileData.BuilderName);
                     if (owner != null)
                     {
                         AWorker.WorkerData wd = owner.CharacterDataLAB as AWorker.WorkerData;
-                        if (wd != null)
+                        if (wd != null && wd.Task == null)
                         {
                             wd.Task = newTask;
                             newTask.Start(owner);
+                            assignedDirectly = true;
 
                             AWorkerTask.LogProvider(
                                 $"VerifyBuildTasks: 重新指派建造任务给 {owner.name} pos=({pos.x},{pos.y}) tile={tileData.Name}",
                                 LogManager.LogLevelEnum.Warning);
-                            continue;
                         }
                     }
                 }
 
-                // Fallback: 原 Worker 已不存在 → 创建公共任务
-                this.AddTask(newTask, new GameGridPosition(pos.x, pos.y, pos.z));
+                if (!assignedDirectly)
+                {
+                    // Fallback: 原 Worker 正忙或不存在 → 创建公共任务入队
+                    this.AddTask(newTask, new GameGridPosition(pos.x, pos.y, pos.z));
 
-                AWorkerTask.LogProvider(
-                    $"VerifyBuildTasks: 为未完成建造重新创建任务 pos=({pos.x},{pos.y}) tile={tileData.Name}",
-                    LogManager.LogLevelEnum.Warning);
+                    AWorkerTask.LogProvider(
+                        $"VerifyBuildTasks: 为未完成建造重新创建任务 pos=({pos.x},{pos.y}) tile={tileData.Name}",
+                        LogManager.LogLevelEnum.Warning);
+                }
             }
         }
 

@@ -927,16 +927,22 @@ namespace LAB2D.Character.Worker.State
 
         /// <summary>
         /// 创建默认空闲任务（锻炼）。
+        /// 直接分配给当前 Worker 执行，不走全局任务队列。
+        /// 与其他 Self 任务（SelfGather/SelfBuild 等）保持一致：自己创建、自己执行。
+        /// 走全局队列会导致锻炼任务堆积：Worker 创建任务后继续漫游，
+        /// 分配循环（每5帧）来不及分配，同一 Worker 可能连续创建多个锻炼任务。
         /// </summary>
         private void CreateIdleTask()
         {
-            AWorkerTask.TaskAddProvider(
-                new WorkerExerciseTask.ExerciseTaskBuilder()
-                    .SetTarget(this.targetMap)
-                    .SetWorker(this.Character)
-                    .Build(),
-                new GameGridPosition(0, 0, 0),
-                WorkerTaskPriority.Idle);
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            WorkerExerciseTask exerciseTask = new WorkerExerciseTask.ExerciseTaskBuilder()
+                .SetTarget(this.targetMap)
+                .SetWorker(this.Character)
+                .Build();
+
+            // 直接分配给当前 Worker，不入全局任务池，确保自己执行
+            workerData.Task = exerciseTask;
+            exerciseTask.Start(this.Character);
         }
 
         /// <summary>
