@@ -112,6 +112,8 @@ namespace LAB2D.Core
             new () { Name = "AchievementPanel", VisibilityType = "ActiveSelf" },
             // 数字0 — 装备面板 (DontDestroyOnLoad)
             new () { Name = "EquipmentPanelRoot", VisibilityType = "ActiveSelf", CloseTarget = "EquipmentPanelManager" },
+            // ESC — 存档面板 (ForegroundPanel 管理的子面板)
+            new () { Name = "SaveSlotPanel", VisibilityType = "ActiveSelf" },
         };
 
         /// <summary>

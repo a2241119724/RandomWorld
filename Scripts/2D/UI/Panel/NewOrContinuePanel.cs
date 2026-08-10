@@ -38,6 +38,13 @@ namespace LAB2D.UI.Panel
             this.RefreshArchiveSlotButtons();
         }
 
+        /// <inheritdoc/>
+        public override void OnClick_Back()
+        {
+            this.Controller.Close();
+            this.Controller.Show(CreatePanel.Instance);
+        }
+
         private void BindArchiveSlotButtons()
         {
             if (this.content == null)

@@ -56,6 +56,13 @@ namespace LAB2D.UI.Panel
         }
 
         /// <inheritdoc/>
+        public override void OnClick_Back()
+        {
+            this.Controller.Close();
+            this.Controller.Show(NewOrContinuePanel.Instance);
+        }
+
+        /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();

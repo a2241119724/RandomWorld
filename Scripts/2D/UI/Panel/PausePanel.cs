@@ -65,12 +65,18 @@ namespace LAB2D.UI.Panel
         }
 
         /// <summary>
-        /// 返回菜单
+        /// 返回菜单 - 清空整个面板栈后回到主菜单
         /// </summary>
         private void OnClick_BackMenu()
         {
-            ServiceLocator.Get<PanelController>().Close();
-            ServiceLocator.Get<PanelController>().Show(CreateOrJoinPanel.Instance);
+            // 逐层关闭所有面板，确保每层的 OnExit 被正确调用
+            PanelController controller = ServiceLocator.Get<PanelController>();
+            while (controller.Panels.Count > 0)
+            {
+                controller.Close();
+            }
+
+            controller.Show(CreateOrJoinPanel.Instance);
         }
 
         /// <summary>
