@@ -221,7 +221,7 @@ namespace LAB2D.Character.Player
             this.basicAttribute = new Attribute(1.0f, 1.0f, 1.0f, 1.0f, 0.05f, 1.0f, 1.0f, 1.0f);
             this.CharacterDataLAB = new PlayerData();
             this.CharacterDataLAB.Character = this;
-            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAYER, LayerConstant.WORKER_LAYER);
+            this.AttackLayers = LayerMask.GetMask("Tile", "BuildTile", LayerConstant.ENEMY_LAYER, LayerConstant.WORKER_LAYER);
             this.AttackTags = new List<string>
             {
                 "Enemy",

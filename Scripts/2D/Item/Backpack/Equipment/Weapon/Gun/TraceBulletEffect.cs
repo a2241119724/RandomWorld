@@ -91,6 +91,12 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon.Gun
             if (this.ps.isPlaying)
             {
                 this.transform.Translate(this.Direction * this.AttackSpeed * Time.deltaTime);
+
+                // 检测是否碰到墙壁（Tile 层），碰到则停止
+                if (Physics2D.OverlapPoint(this.transform.position, LayerMask.GetMask("Tile", "BuildTile")) != null)
+                {
+                    this.ps.Stop();
+                }
             }
         }
     }

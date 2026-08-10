@@ -76,6 +76,9 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
 
                 c.ReduceHp(this.Damage, this.Onwer, this.IsCRT);
             }
+
+            // 子弹碰到任何碰撞体（墙壁或角色）后停止特效
+            this.ps.Stop();
         }
     }
 }

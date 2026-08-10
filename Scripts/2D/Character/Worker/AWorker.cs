@@ -156,7 +156,7 @@ namespace LAB2D.Character.Worker
             }
 
             this.Seek = new AStar(this);
-            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.ENEMY_LAYER);
+            this.AttackLayers = LayerMask.GetMask("Tile", "BuildTile", LayerConstant.ENEMY_LAYER);
             this.AttackTags = new List<string>
             {
                 "Enemy",

@@ -36,7 +36,7 @@ namespace LAB2D.Character.Enemy
         public override void Awake()
         {
             base.Awake();
-            this.AttackLayers = LayerMask.GetMask("Tile", LayerConstant.PLAYER_LAYER, LayerConstant.WORKER_LAYER);
+            this.AttackLayers = LayerMask.GetMask("Tile", "BuildTile", LayerConstant.PLAYER_LAYER, LayerConstant.WORKER_LAYER);
             this.AttackTags = new List<string>
             {
                 "Player",

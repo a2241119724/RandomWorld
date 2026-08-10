@@ -2,8 +2,10 @@ namespace LAB2D.UI.Panel
 {
     using LAB2D;
     using LAB2D.Core;
+    using LAB2D.Gameplay;
     using Photon.Pun;
     using Photon.Realtime;
+    using UnityEngine;
     using UnityEngine.UI;
 
     /// <summary>
@@ -19,6 +21,7 @@ namespace LAB2D.UI.Panel
             this.Init();
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "CreateRoom").onClick.AddListener(this.OnClick_CreateRoom);
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "JoinRoom").onClick.AddListener(this.OnClick_JoinRoom);
+            LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Test").onClick.AddListener(this.OnClick_Test);
         }
 
         /// <inheritdoc/>
@@ -40,6 +43,14 @@ namespace LAB2D.UI.Panel
             // 进入创建房间面板
             this.Controller.Close();
             this.Controller.Show(CreatePanel.Instance);
+        }
+
+        private void OnClick_Test()
+        {
+            EnemyLootManager.ForceDrop = !EnemyLootManager.ForceDrop;
+            PlayerPrefs.SetInt("Debug_ForceDrop", EnemyLootManager.ForceDrop ? 1 : 0);
+            PlayerPrefs.Save();
+            Debug.Log($"[ForceDrop] 100%掉落已{(EnemyLootManager.ForceDrop ? "开启" : "关闭")}");
         }
 
         private void OnClick_JoinRoom()

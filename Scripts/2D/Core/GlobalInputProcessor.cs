@@ -34,19 +34,7 @@ namespace LAB2D.Core
             this.ProcessCloseOrBuildMenu();
             this.ProcessMouseClickCloseItemInfo();
             this.ProcessAchievements();
-            this.ProcessDebugToggles();
             this.ProcessRoomListToggle();
-        }
-
-        private void ProcessDebugToggles()
-        {
-            if (Input.GetKeyDown(KeyCode.F12))
-            {
-                EnemyLootManager.ForceDrop = !EnemyLootManager.ForceDrop;
-                PlayerPrefs.SetInt(ForceDropPrefsKey, EnemyLootManager.ForceDrop ? 1 : 0);
-                PlayerPrefs.Save();
-                this.GameLogger.Log($"[ForceDrop] 100%掉落已{(EnemyLootManager.ForceDrop ? "开启" : "关闭")}");
-            }
         }
 
         /// <summary>

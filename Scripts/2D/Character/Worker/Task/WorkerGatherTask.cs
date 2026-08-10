@@ -65,7 +65,7 @@ namespace LAB2D.Character.Worker.Task
 
                 LogProvider(
                     $"地形挖掘完成: pos=({posMap.x},{posMap.y}) terrainId {oldTerrainId} -> {newTerrainId}",
-                    LogManager.LogLevelEnum.Info);
+                    LogManager.LogLevelEnum.Trace);
 
                 // 通过地形配置的 tileResourceName 查找掉落（如 "Mountain"）
                 string terrainResourceName = Core.ServiceLocator.Get<TerrainConfigDatabase>()
