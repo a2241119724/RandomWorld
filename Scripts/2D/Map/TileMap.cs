@@ -96,6 +96,11 @@ namespace LAB2D.Map
         /// </summary>
         private int chunkSortingOrder;
 
+        /// <summary>
+        /// 缓存的原始 GameObject layer，复制给 Chunk GameObject。
+        /// </summary>
+        private int chunkLayer;
+
         /// <inheritdoc/>
         public override void Awake()
         {
@@ -129,6 +134,9 @@ namespace LAB2D.Map
                 this.gridCellSize = grid.cellSize;
             }
 
+            // 缓存原始 GameObject 的 layer，供 Chunk 使用
+            this.chunkLayer = this.gameObject.layer;
+
             // chunksRoot 作为 Grid 的子节点（与 TileMap 同级，共享同一个 Grid）
             Transform gridParent = grid != null ? grid.transform : this.transform.parent;
             this.chunksRoot = new GameObject("TileChunks").transform;
@@ -144,6 +152,14 @@ namespace LAB2D.Map
                 this.chunkSortingOrder = originalRenderer.sortingOrder;
                 // 禁用原始 Renderer：主 Tilemap 不再直接存储瓦片
                 originalRenderer.enabled = false;
+            }
+
+            // 禁用原始 TilemapCollider2D：主 Tilemap 不再直接存储瓦片，
+            // 碰撞体由各 Chunk 的 TilemapCollider2D 生成
+            TilemapCollider2D originalCollider = this.GetComponent<TilemapCollider2D>();
+            if (originalCollider != null)
+            {
+                originalCollider.enabled = false;
             }
         }
 
@@ -181,6 +197,7 @@ namespace LAB2D.Map
             int cy = chunkIndex.y;
 
             GameObject chunkGO = new GameObject($"Chunk_{cx}_{cy}");
+            chunkGO.layer = this.chunkLayer;
             chunkGO.transform.SetParent(this.chunksRoot);
             // YXZ swizzle: chunk (cx, cy) 定位在 (cy*S*cellSize.y, cx*S*cellSize.x)
             chunkGO.transform.localPosition = new Vector3(
@@ -190,6 +207,8 @@ namespace LAB2D.Map
 
             Tilemap tm = chunkGO.AddComponent<Tilemap>();
             TilemapRenderer tmr = chunkGO.AddComponent<TilemapRenderer>();
+            // 为每个 Chunk 添加 TilemapCollider2D，使地形瓦片（山、水等）的碰撞体生效
+            chunkGO.AddComponent<TilemapCollider2D>();
 
             // 复制原始渲染器配置
             if (this.chunkMaterial != null)

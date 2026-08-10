@@ -512,40 +512,50 @@ namespace LAB2D.Character.Worker
                     continue;
                 }
 
-                WorkerBuildTask newTask = new WorkerBuildTask.BuildTaskBuilder()
+                // 找回原建造者（如果 BuilderName 有记录）
+                AWorker owner = !string.IsNullOrEmpty(tileData.BuilderName)
+                    ? WorkerListProvider().Find(w => w.name == tileData.BuilderName)
+                    : null;
+
+                WorkerBuildTask.BuildTaskBuilder builder = new WorkerBuildTask.BuildTaskBuilder()
                     .SetBuildPos(pos)
-                    .SetNeedResource(buildCosts)
-                    .Build();
+                    .SetNeedResource(buildCosts);
+
+                // 有原 Builder → 设置 Owner，保证只有他能接（即使走 AddTask 入全局队列）
+                if (owner != null)
+                {
+                    builder.SetOwnerWorkerId(owner.GetInstanceID());
+                }
+
+                WorkerBuildTask newTask = builder.Build();
 
                 // 优先尝试找回原 Worker 并直接指派（保持 Self-Build 语义）
                 // 但仅在 Worker 空闲时指派，避免中断正在执行的任务（Sleep/Eat/Gather 等）
                 bool assignedDirectly = false;
-                if (!string.IsNullOrEmpty(tileData.BuilderName))
+                if (owner != null)
                 {
-                    AWorker owner = WorkerListProvider().Find(w => w.name == tileData.BuilderName);
-                    if (owner != null)
+                    AWorker.WorkerData wd = owner.CharacterDataLAB as AWorker.WorkerData;
+                    if (wd != null && wd.Task == null)
                     {
-                        AWorker.WorkerData wd = owner.CharacterDataLAB as AWorker.WorkerData;
-                        if (wd != null && wd.Task == null)
-                        {
-                            wd.Task = newTask;
-                            newTask.Start(owner);
-                            assignedDirectly = true;
+                        wd.Task = newTask;
+                        newTask.Start(owner);
+                        assignedDirectly = true;
 
-                            AWorkerTask.LogProvider(
-                                $"VerifyBuildTasks: 重新指派建造任务给 {owner.name} pos=({pos.x},{pos.y}) tile={tileData.Name}",
-                                LogManager.LogLevelEnum.Warning);
-                        }
+                        AWorkerTask.LogProvider(
+                            $"VerifyBuildTasks: 重新指派建造任务给 {owner.name} pos=({pos.x},{pos.y}) tile={tileData.Name}",
+                            LogManager.LogLevelEnum.Warning);
                     }
                 }
 
                 if (!assignedDirectly)
                 {
-                    // Fallback: 原 Worker 正忙或不存在 → 创建公共任务入队
+                    // Fallback: 原 Worker 正忙或不存在 → 创建任务入队
+                    // 如果有原 Builder，任务已设置 OwnerWorkerId，只有该 Builder 可接
                     this.AddTask(newTask, new GameGridPosition(pos.x, pos.y, pos.z));
 
+                    string ownerInfo = owner != null ? $" (专属 {owner.name})" : string.Empty;
                     AWorkerTask.LogProvider(
-                        $"VerifyBuildTasks: 为未完成建造重新创建任务 pos=({pos.x},{pos.y}) tile={tileData.Name}",
+                        $"VerifyBuildTasks: 为未完成建造重新创建任务{ownerInfo} pos=({pos.x},{pos.y}) tile={tileData.Name}",
                         LogManager.LogLevelEnum.Warning);
                 }
             }

@@ -25,6 +25,12 @@ namespace LAB2D.Character.Worker.Task
         /// </summary>
         private Vector3IntLAB buildPos;
 
+        /// <summary>
+        /// 建造任务的专属 Owner（0 = 公开任务，任何 Worker 可接）。
+        /// VerifyBuildTasks 恢复 Self-Build 任务时设置，防止其他 Worker 抢建别人的墙。
+        /// </summary>
+        private int ownerWorkerId = 0;
+
         public WorkerBuildTask()
             : base(WorkerTaskType.Build)
         {
@@ -120,8 +126,17 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <inheritdoc/>
+        public override int OwnerWorkerId => this.ownerWorkerId;
+
+        /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
+            // ownerWorkerId != 0 表示专属建造任务（Self-Build 恢复），只有原 Builder 可接
+            if (this.ownerWorkerId != 0 && worker.GetInstanceID() != this.ownerWorkerId)
+            {
+                return false;
+            }
+
             // 如果worker携带的资源已经满足建造
             if (worker.IsEnough(this.needs))
             {
@@ -214,6 +229,13 @@ namespace LAB2D.Character.Worker.Task
             {
                 this.task.temp = DataTool.DeepCopyByBinary(needResource);
                 this.task.needs = DataTool.DeepCopyByBinary(needResource);
+                return this;
+            }
+
+            /// <summary>设置建造任务的专属 Owner（0 = 公开任务）。Self-Build 恢复时使用。</summary>
+            public BuildTaskBuilder SetOwnerWorkerId(int workerId)
+            {
+                this.task.ownerWorkerId = workerId;
                 return this;
             }
 
