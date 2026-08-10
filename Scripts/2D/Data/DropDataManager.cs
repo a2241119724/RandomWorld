@@ -11,11 +11,13 @@ namespace LAB2D.Data
     public class DropDataManager : Singleton<DropDataManager>
     {
         private static readonly List<DropItem> Empty = new ();
-        private readonly Dictionary<int, List<DropItem>> idToDrop; // 资源, 与对应的掉落物, -1为默认掉落物
+        private readonly Dictionary<int, List<DropItem>> idToDrop; // 资源ID → 掉落物, -1为默认掉落物
+        private readonly Dictionary<string, List<DropItem>> nameToDrop; // 资源名称 → 掉落物（支持地形名等非ItemData名称）
 
         public DropDataManager()
         {
             this.idToDrop = new Dictionary<int, List<DropItem>>();
+            this.nameToDrop = new Dictionary<string, List<DropItem>>();
             DropItemDataSO dropItemDataSO = Core.ServiceLocator.Get<ResourceManager>().GetDropSO("DropItemDataSO");
 
             dropItemDataSO.ResourceDropItems.ForEach(item =>
@@ -31,7 +33,10 @@ namespace LAB2D.Data
                     return;
                 }
 
-                // 根据资源名称获取item信息；缺少道具数据的资源不参与采集掉落。
+                // 按名称索引（支持地形 tileResourceName 等非 ItemData 名称）
+                this.nameToDrop[item.Name] = item.DropItems;
+
+                // 同时按 ItemData ID 索引（兼容通过 ItemData.Id 查询的旧路径）
                 if (Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(item.Name, out ItemData itemData))
                 {
                     this.idToDrop.Add(itemData.Id, item.DropItems);
@@ -46,18 +51,55 @@ namespace LAB2D.Data
         /// <returns>掉落物</returns>
         public List<DropItem> GetDropItemsById(int id)
         {
-            if (!this.idToDrop.ContainsKey(id))
+            if (!this.idToDrop.TryGetValue(id, out List<DropItem> drops))
             {
-                // 默认使用默认掉落物
-                if (this.idToDrop.ContainsKey(-1))
-                {
-                    return this.idToDrop[-1];
-                }
-
-                return Empty;
+                return this.GetDefaultDrops();
             }
 
-            return this.idToDrop[id];
+            return drops;
+        }
+
+        /// <summary>
+        /// 根据资源名称获取掉落物（支持地形 tileResourceName 如 "Mountain"）。
+        /// 优先按名称精确匹配，其次通过 ItemData 名称查找，最后回退默认掉落。
+        /// </summary>
+        /// <param name="resourceName">资源名称（对应 DropItemDataSO 中 ResourceDropItem.Name）</param>
+        /// <returns>掉落物列表</returns>
+        public List<DropItem> GetDropItemsByResourceName(string resourceName)
+        {
+            if (string.IsNullOrEmpty(resourceName))
+            {
+                return this.GetDefaultDrops();
+            }
+
+            // 1. 按名称精确匹配（支持地形名如 "Mountain"）
+            if (this.nameToDrop.TryGetValue(resourceName, out List<DropItem> drops))
+            {
+                return drops;
+            }
+
+            // 2. 尝试通过 ItemData 名称查找（兼容旧路径）
+            if (Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(resourceName, out ItemData itemData)
+                && this.idToDrop.TryGetValue(itemData.Id, out drops))
+            {
+                return drops;
+            }
+
+            // 3. 回退默认掉落
+            return this.GetDefaultDrops();
+        }
+
+        /// <summary>
+        /// 获取默认掉落物。
+        /// </summary>
+        private List<DropItem> GetDefaultDrops()
+        {
+            if (this.idToDrop.TryGetValue(-1, out List<DropItem> defaultDrops))
+            {
+                return defaultDrops;
+            }
+
+            return Empty;
         }
 
         /// <summary>

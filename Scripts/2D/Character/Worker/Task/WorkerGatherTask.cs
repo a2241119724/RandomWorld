@@ -1,9 +1,11 @@
 namespace LAB2D.Character.Worker.Task
 {
     using LAB2D.Constant;
+    using LAB2D.Data;
     using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Item;
+    using LAB2D.Map;
     using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
@@ -65,19 +67,11 @@ namespace LAB2D.Character.Worker.Task
                     $"地形挖掘完成: pos=({posMap.x},{posMap.y}) terrainId {oldTerrainId} -> {newTerrainId}",
                     LogManager.LogLevelEnum.Info);
 
-                // 查找石头掉落（优先 CustomStone，其次按名称匹配）
-                int dropItemId = this.resourceInfo?.Id ?? 0;
-                if (dropItemId <= 0)
-                {
-                    // 尝试通过地形名称查找物品数据
-                    if (Core.ServiceLocator.Get<ItemDataManager>().TryGetByName("CustomStone", out ItemData stoneData))
-                    {
-                        dropItemId = stoneData.Id;
-                    }
-                }
-
-                List<DropItem> dropItems = dropItemId > 0
-                    ? DropDataProvider(dropItemId)
+                // 通过地形配置的 tileResourceName 查找掉落（如 "Mountain"）
+                string terrainResourceName = Core.ServiceLocator.Get<TerrainConfigDatabase>()
+                    .GetTileResourceName(oldTerrainId);
+                List<DropItem> dropItems = !string.IsNullOrEmpty(terrainResourceName)
+                    ? Core.ServiceLocator.Get<DropDataManager>().GetDropItemsByResourceName(terrainResourceName)
                     : new List<DropItem>();
 
                 // 地形挖掘的掉落处理（复用下方公共逻辑）

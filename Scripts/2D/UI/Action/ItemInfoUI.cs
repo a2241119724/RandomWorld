@@ -320,10 +320,20 @@ namespace LAB2D.UI.Action
                 TerrainConfigDatabase terrainDb = ServiceLocator.Get<TerrainConfigDatabase>();
                 if (tileMap?.TileMapDataLAB?.MapTiles != null && terrainDb != null)
                 {
-                    int terrainId = tileMap.TileMapDataLAB.MapTiles[posMap.x, posMap.y];
-                    if (terrainDb.IsDiggable(terrainId))
+                    // 边界检查：鼠标可能在地图外，posMap 坐标需在 MapTiles 数组范围内
+                    var mapData = tileMap.TileMapDataLAB;
+                    if (posMap.x >= 0 && posMap.x < mapData.Height &&
+                        posMap.y >= 0 && posMap.y < mapData.Width)
                     {
-                        ServiceLocator.Get<GatherUI>().SetPostion(posMap);
+                        int terrainId = mapData.MapTiles[posMap.x, posMap.y];
+                        if (terrainDb.IsDiggable(terrainId))
+                        {
+                            ServiceLocator.Get<GatherUI>().SetPostion(posMap);
+                        }
+                        else
+                        {
+                            ServiceLocator.Get<GatherUI>().Hide();
+                        }
                     }
                     else
                     {

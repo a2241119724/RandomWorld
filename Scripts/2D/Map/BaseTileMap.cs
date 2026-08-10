@@ -67,10 +67,10 @@ namespace LAB2D.Map
 
             Vector3Int posMap = Core.ServiceLocator.Get<TileMap>().GetMapPosByMouse();
             string mapType = this.GetType().Name;
-            if (this.tilemap.HasTile(posMap) && (this.TileInfo.ActiveMapType == string.Empty || this.TileInfo.ActiveMapType == mapType))
+            if (this.HasTile(posMap) && (this.TileInfo.ActiveMapType == string.Empty || this.TileInfo.ActiveMapType == mapType))
             {
                 this.TileInfo.ActiveMapType = mapType;
-                ServiceLocator.Get<TileInfoUI>().SetContent(this.tilemap.GetTile(posMap).name);
+                ServiceLocator.Get<TileInfoUI>().SetContent(this.GetTile(posMap).name);
                 ServiceLocator.Get<TileInfoUI>().SetPostion(UnityGlobalInputAdapter.GetMouseWorldPosition(Camera.main));
             }
             else
@@ -111,6 +111,16 @@ namespace LAB2D.Map
         public virtual bool IsFreeTile(Vector3Int posMap)
         {
             return this.tilemap.GetTile(posMap) == null;
+        }
+
+        /// <summary>
+        /// 判断该坐标是否有瓦片（虚方法，子类可用 Chunk 系统重写）
+        /// </summary>
+        /// <param name="pos">位置</param>
+        /// <returns>是否有瓦片</returns>
+        public virtual bool HasTile(Vector3Int pos)
+        {
+            return this.tilemap.HasTile(pos);
         }
 
         /// <summary>

@@ -30,3 +30,10 @@ MonoBehaviour:
         Id: 300000
         Count: 50
         OwnerId: -118186
+  - Name: Mountain
+    DropItems:
+    - Name: CustomStone
+      ResourceInfo:
+        Id: 200000
+        Count: 5
+        OwnerId: -118186
