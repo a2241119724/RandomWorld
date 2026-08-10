@@ -340,6 +340,17 @@ namespace LAB2D.AI.Worker
             {
                 Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, workerData, canAfford);
                 if (buildDecision.HasValue) return buildDecision.Value;
+
+                // 建造决策未触发（缺材料/缺钱）→ 尝试优先采集建造所需材料的资源
+                HashSet<int> missingBuildIds = this.GetMissingBuildMaterialIds(workerData);
+                if (missingBuildIds != null && missingBuildIds.Count > 0)
+                {
+                    ResourceCandidate? targetedResource = this.ScanForResources(worker, missingBuildIds);
+                    if (targetedResource.HasValue)
+                    {
+                        nearbyResource = targetedResource;
+                    }
+                }
             }
 
             // === 目标驱动悬赏：Worker 缺什么就发什么悬赏 ===
@@ -469,8 +480,15 @@ namespace LAB2D.AI.Worker
             Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, wd, canAfford);
             if (buildDecision.HasValue) return buildDecision.Value;
 
-            // 6. 建造条件不满足 → 采集建材
-            ResourceCandidate? nearbyResource = this.ScanForResources(worker);
+            // 6. 建造条件不满足 → 采集建材（优先采集能产出建造所需材料的资源）
+            HashSet<int> missingBuildMaterialIds = this.GetMissingBuildMaterialIds(wd);
+            ResourceCandidate? nearbyResource = this.ScanForResources(worker, missingBuildMaterialIds);
+
+            // 没有匹配建材的资源 → 退回到通用扫描
+            if (!nearbyResource.HasValue)
+            {
+                nearbyResource = this.ScanForResources(worker);
+            }
             if (nearbyResource.HasValue)
             {
                 var rc = nearbyResource.Value;
@@ -834,7 +852,9 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 扫描周围可采集的资源。
         /// </summary>
-        private ResourceCandidate? ScanForResources(AWorker worker)
+        /// <param name="worker">目标 Worker</param>
+        /// <param name="requiredMaterialIds">可选：只返回能产出这些材料 ID 之一的资源。null 时不限制。</param>
+        private ResourceCandidate? ScanForResources(AWorker worker, HashSet<int> requiredMaterialIds = null)
         {
             Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
             ResourceMap resourceMap = Core.ServiceLocator.Get<ResourceMap>();
@@ -864,6 +884,11 @@ namespace LAB2D.AI.Worker
                     if (!resourceMap.TryGetGatherResourceInfo(pos, out ResourceInfo resourceInfo))
                         continue;
 
+                    // 材料过滤：只保留能产出所需材料的资源
+                    if (requiredMaterialIds != null && requiredMaterialIds.Count > 0
+                        && !this.ResourceProducesAnyMaterial(resourceInfo.Id, requiredMaterialIds))
+                        continue;
+
                     candidates.Add(new ResourceCandidate
                     {
                         Position = pos,
@@ -872,8 +897,8 @@ namespace LAB2D.AI.Worker
                 }
             }
 
-            // 同时扫描可挖掘地形（山脉等）
-            List<ResourceCandidate> terrainCandidates = this.ScanForDiggableTerrain(worker);
+            // 同时扫描可挖掘地形（山脉等），与 ResourceMap 资源使用相同的材料过滤策略。
+            List<ResourceCandidate> terrainCandidates = this.ScanForDiggableTerrain(worker, requiredMaterialIds);
             candidates.AddRange(terrainCandidates);
 
             if (candidates.Count == 0)
@@ -898,15 +923,38 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
+        /// 检查指定资源 ID 的掉落物中是否包含至少一种所需材料。
+        /// </summary>
+        /// <param name="resourceId">资源 ItemData ID</param>
+        /// <param name="requiredMaterialIds">需要的材料 ID 集合</param>
+        /// <returns>true 表示该资源能产出至少一种所需材料</returns>
+        private bool ResourceProducesAnyMaterial(int resourceId, HashSet<int> requiredMaterialIds)
+        {
+            List<DropItem> drops = AWorkerTask.DropDataProvider(resourceId);
+            if (drops == null || drops.Count == 0) return false;
+
+            foreach (DropItem drop in drops)
+            {
+                if (requiredMaterialIds.Contains(drop.ResourceInfo.Id))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// 扫描周围可挖掘的地形瓦片（如山脉）。
         /// 地形瓦片存在于 TileMap.MapTiles，不在 ResourceMap 中。
         /// </summary>
-        private List<ResourceCandidate> ScanForDiggableTerrain(AWorker worker)
+        /// <param name="worker">目标 Worker</param>
+        /// <param name="requiredMaterialIds">可选：只返回能产出这些材料 ID 之一的地形。null 时不限制。</param>
+        private List<ResourceCandidate> ScanForDiggableTerrain(AWorker worker, HashSet<int> requiredMaterialIds = null)
         {
             List<ResourceCandidate> candidates = new List<ResourceCandidate>();
             Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
             TileMap tileMap = Core.ServiceLocator.Get<TileMap>();
             TerrainConfigDatabase db = Core.ServiceLocator.Get<TerrainConfigDatabase>();
+            DropDataManager dropDataMgr = Core.ServiceLocator.Get<DropDataManager>();
             var gatherMap = Core.ServiceLocator.Get<GatherMap>();
 
             if (tileMap?.TileMapDataLAB?.MapTiles == null || db == null)
@@ -939,6 +987,37 @@ namespace LAB2D.AI.Worker
                     if (!db.IsDiggable(terrainId))
                     {
                         continue;
+                    }
+
+                    // 材料过滤：检查该地形掉落物是否包含所需材料
+                    if (requiredMaterialIds != null && requiredMaterialIds.Count > 0)
+                    {
+                        string terrainResourceName = db.GetTileResourceName(terrainId);
+                        if (string.IsNullOrEmpty(terrainResourceName))
+                        {
+                            continue; // 无法确定地形资源名，跳过
+                        }
+
+                        List<DropItem> terrainDrops = dropDataMgr.GetDropItemsByResourceName(terrainResourceName);
+                        if (terrainDrops == null || terrainDrops.Count == 0)
+                        {
+                            continue; // 无掉落配置，跳过
+                        }
+
+                        bool producesNeeded = false;
+                        foreach (DropItem drop in terrainDrops)
+                        {
+                            if (requiredMaterialIds.Contains(drop.ResourceInfo.Id))
+                            {
+                                producesNeeded = true;
+                                break;
+                            }
+                        }
+
+                        if (!producesNeeded)
+                        {
+                            continue; // 该地形不产出所需材料，跳过
+                        }
                     }
 
                     // 检查是否有至少一个可行走的邻居（Worker 需要站在旁边工作）
@@ -1924,6 +2003,31 @@ namespace LAB2D.AI.Worker
                     $"{worker.name} 选定建家位置: ({pos.Value.x},{pos.Value.y})",
                     LogManager.LogLevelEnum.Debug);
             }
+        }
+
+        /// <summary>
+        /// 获取当前建造阶段缺少的材料 ID 集合。
+        /// 用于 ScanForResources 过滤：Worker 缺少建造材料时优先采集能产出这些材料的资源。
+        /// </summary>
+        /// <param name="wd">Worker 数据</param>
+        /// <returns>材料 ID 集合，不在建造阶段或无规划位置时返回 null</returns>
+        private HashSet<int> GetMissingBuildMaterialIds(AWorker.WorkerData wd)
+        {
+            if (wd == null || wd.PlannedHomePosition == null) return null;
+
+            string buildTileName = null;
+            if (wd.HomeBuildStage < WallCount)
+                buildTileName = $"CustomRoomWall_{WallDirections[wd.HomeBuildStage]}";
+            else if (wd.HomeBuildStage == DoorStage)
+                buildTileName = "CustomDoor";
+            else if (wd.HomeBuildStage == BedStage)
+                buildTileName = "SingleBed";
+            else
+                return null; // 建造阶段完成
+
+            Dictionary<int, ResourceInfo> needs = this.GetBuildMaterialNeeds(buildTileName);
+            if (needs == null || needs.Count == 0) return null;
+            return new HashSet<int>(needs.Keys);
         }
 
         /// <summary>

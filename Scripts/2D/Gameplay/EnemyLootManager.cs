@@ -133,9 +133,9 @@ namespace LAB2D.Gameplay
             if (!this.IsInitialized) return;
 
             // 根据击杀者类型计算 OwnerId：
-            // - Player 击杀 → OwnerId = 0（无主/Player，任何人都可拾取）
+            // - Player 击杀 → OwnerId = 0（物品留地，Player 自行拾取，不入 Worker 队列）
             // - Worker 击杀 → OwnerId = Worker 的 instance ID（只有该 Worker 可拾取）
-            // - 无击杀者 → OwnerId = 0
+            // - 无击杀者 → OwnerId = 0（物品留地）
             int ownerId = ResolveOwnerId(killer);
 
             this.TryDropCommonItem(worldPos, ownerId);
@@ -221,15 +221,26 @@ namespace LAB2D.Gameplay
 
         /// <summary>
         /// 替换 PutDownToDrop 自动创建的 Carry 任务为 PickUp 拾取任务。
-        /// - ownerId > 0（Worker 击杀）：专属拾取任务，只有该 Worker 可接取。
-        /// - ownerId == 0（Player 击杀/无主）：公开拾取任务，任何 Worker 可接取。
+        /// - ownerId > 0（Worker 击杀）：专属拾取任务，只有该 Worker 可接取，发布到 Worker 任务队列。
+        /// - ownerId == 0（Player 击杀/无主）：物品留在地上，不入 Worker 任务队列，由 Player 自行拾取。
         /// </summary>
         private static void ReplaceCarryWithPickUpTask(Vector3Int pos, ResourceInfo resource, int ownerId)
         {
             // 移除 PutDownToDrop 自动创建的 WorkerCarryTask
             ServiceLocator.Get<WorkerTaskManager>().RemoveCarryTaskAt(pos);
 
-            // 创建 FromGround 模式拾取任务
+            // ownerId == 0 表示 Player 击杀掉落，不创建 Worker 拾取任务。
+            // 物品留在地上（带光束特效），Player 通过自己的交互系统拾取。
+            if (ownerId == 0)
+            {
+                AWorkerTask.LogProvider(
+                    string.Format("[EnemyLoot] Player 击杀掉落: pos=({0},{1}) 物品留地, 不入Worker队列",
+                        pos.x, pos.y),
+                    LogManager.LogLevelEnum.Debug);
+                return;
+            }
+
+            // Worker 击杀：创建专属拾取任务，只有该 Worker 可接取
             WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpTaskBuilder()
                 .SetMode(WorkerPickUpTask.PickUpMode.FromGround)
                 .SetTargetPosition(pos)
@@ -243,10 +254,9 @@ namespace LAB2D.Gameplay
                 new GameGridPosition(pos.x, pos.y, pos.z),
                 WorkerTaskPriority.PlayerBounty);
 
-            string ownerLabel = ownerId > 0 ? $"Worker#{ownerId}" : "Player/公开";
             AWorkerTask.LogProvider(
-                string.Format("[EnemyLoot] 发布拾取任务: pos=({0},{1}) ownerId={2}({3}) taskType=PickUp",
-                    pos.x, pos.y, ownerId, ownerLabel),
+                string.Format("[EnemyLoot] 发布 Worker 专属拾取任务: pos=({0},{1}) ownerId={2}(Worker#{2}) taskType=PickUp",
+                    pos.x, pos.y, ownerId),
                 LogManager.LogLevelEnum.Debug);
         }
 

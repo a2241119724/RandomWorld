@@ -14,10 +14,18 @@ namespace LAB2D.Data
         private readonly Dictionary<int, List<DropItem>> idToDrop; // 资源ID → 掉落物, -1为默认掉落物
         private readonly Dictionary<string, List<DropItem>> nameToDrop; // 资源名称 → 掉落物（支持地形名等非ItemData名称）
 
+        /// <summary>
+        /// 反向索引：材料 ID → 产出该材料的资源名称集合。
+        /// 供 WorkerBrain 等决策层查询"哪些资源能产出我需要的材料"。
+        /// 在构造函数中与正向索引同步构建。
+        /// </summary>
+        private readonly Dictionary<int, HashSet<string>> materialToSourceNames;
+
         public DropDataManager()
         {
             this.idToDrop = new Dictionary<int, List<DropItem>>();
             this.nameToDrop = new Dictionary<string, List<DropItem>>();
+            this.materialToSourceNames = new Dictionary<int, HashSet<string>>();
             DropItemDataSO dropItemDataSO = Core.ServiceLocator.Get<ResourceManager>().GetDropSO("DropItemDataSO");
 
             dropItemDataSO.ResourceDropItems.ForEach(item =>
@@ -40,6 +48,18 @@ namespace LAB2D.Data
                 if (Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(item.Name, out ItemData itemData))
                 {
                     this.idToDrop.Add(itemData.Id, item.DropItems);
+                }
+
+                // 构建反向索引：材料 ID → 产出该材料的资源名称
+                foreach (DropItem dropItem in item.DropItems)
+                {
+                    int materialId = dropItem.ResourceInfo.Id;
+                    if (!this.materialToSourceNames.ContainsKey(materialId))
+                    {
+                        this.materialToSourceNames[materialId] = new HashSet<string>();
+                    }
+
+                    this.materialToSourceNames[materialId].Add(item.Name);
                 }
             });
         }
@@ -110,6 +130,18 @@ namespace LAB2D.Data
         public bool HasDropItemsById(int id)
         {
             return this.idToDrop.ContainsKey(id);
+        }
+
+        /// <summary>
+        /// 查询哪些资源名称能产出指定材料。
+        /// 供决策层使用：Worker 需要建造材料 X 时，可优先采集产出 X 的资源。
+        /// </summary>
+        /// <param name="materialId">材料物品 ID</param>
+        /// <param name="sourceNames">产出该材料的资源名称集合（输出）</param>
+        /// <returns>是否找到对应资源</returns>
+        public bool TryGetSourceNamesForMaterial(int materialId, out HashSet<string> sourceNames)
+        {
+            return this.materialToSourceNames.TryGetValue(materialId, out sourceNames);
         }
     }
 
