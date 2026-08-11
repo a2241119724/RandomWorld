@@ -130,10 +130,6 @@ namespace LAB2D.Character.Worker.Task
             bool prevIsBounty = AWorkerTask.IsBountyExecution;
             AWorkerTask.BountyOwnerOverride = this.bountyData.IssuerWorkerId;
             AWorkerTask.IsBountyExecution = true;
-            AWorkerTask.LogProvider(
-                $"[BountyOwnership] 悬赏执行: issuerId={this.bountyData.IssuerWorkerId}, executor={worker.name}",
-                LogManager.LogLevelEnum.Trace);
-
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             bool innerComplete = this.innerTask.Execute(worker, deltaTime);
 

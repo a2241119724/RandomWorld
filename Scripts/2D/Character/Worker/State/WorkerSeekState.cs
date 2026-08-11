@@ -87,7 +87,6 @@ namespace LAB2D.Character.Worker.State
             else
             {
                 // 没有任务 → 自主决策
-                AWorkerTask.LogProvider(this.Character.name + " 没有任务!", LogManager.LogLevelEnum.Trace);
                 ++this.seekTimes;
 
                 // 漫游到达处理：到达路点后恢复精气神+心情，继续或结束漫游
@@ -481,9 +480,6 @@ namespace LAB2D.Character.Worker.State
                 if (existingTile != null && !existingTile.IsComplete)
                 {
                     // 位置已预注册（HomeBuildStage>0 时的正常情况），跳过注册
-                    AWorkerTask.LogProvider(
-                        $"{this.Character.name} 建造位置已预注册, 跳过: {decision.BuildTileName} pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
-                        LogManager.LogLevelEnum.Trace);
                 }
                 else
                 {
@@ -510,6 +506,7 @@ namespace LAB2D.Character.Worker.State
             WorkerBuildTask buildTask = new WorkerBuildTask.BuildTaskBuilder()
                 .SetBuildPos(decision.TargetPosition)
                 .SetNeedResource(decision.NeededResources)
+                .SetBuildTileName(decision.BuildTileName)
                 .Build();
 
             // 直接分配给当前 Worker，不入全局任务池，确保自己建造自己的房子
@@ -517,8 +514,8 @@ namespace LAB2D.Character.Worker.State
             workerData.Task = buildTask;
             buildTask.Start(this.Character);
 
-            // 无家者建完房间后推进到下一阶段（建床）
-            this.AdvanceHomeBuildStage(workerData, decision.BuildTileName);
+            // 注意: HomeBuildStage 的推进已移至 WorkerBuildTask.Finish()，
+            // 确保只有在建造真正完成时才推进阶段，防止任务中断导致墙壁被跳过。
 
             AWorkerTask.LogProvider(
                 $"{this.Character.name} 为自己建造 {decision.BuildTileName}: pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
@@ -1111,97 +1108,6 @@ namespace LAB2D.Character.Worker.State
                 // 寻路结束
                 this.Character.Manager.ChangeState(TypeEnum.Move);
             }
-        }
-
-        /// <summary>
-        /// 无家者建造任务创建后推进建家阶段。
-        /// 阶段 0-14：墙壁，阶段 15：门，阶段 16：床，阶段 17：完成。
-        /// 墙壁和门建完后立即注册房间，之后再建床。
-        /// </summary>
-        private void AdvanceHomeBuildStage(AWorker.WorkerData wd, string buildTileName)
-        {
-            if (wd == null || wd.HomePosition != null) return;
-
-            const int wallCount = 15;      // 与 WorkerBrain.WallCount 一致
-            const int completeStage = 17;  // 完成
-            int prevStage = wd.HomeBuildStage;
-            wd.HomeBuildStage++;
-
-            if (buildTileName.StartsWith("CustomRoomWall") && wd.HomeBuildStage < wallCount)
-            {
-                AWorkerTask.LogProvider(
-                    $"{this.Character.name} 建家: 墙壁{prevStage + 1}/{wallCount} → 下一块",
-                    LogManager.LogLevelEnum.Debug);
-            }
-            else if (buildTileName.StartsWith("CustomRoomWall") && wd.HomeBuildStage >= wallCount)
-            {
-                AWorkerTask.LogProvider(
-                    $"{this.Character.name} 建家: 墙壁完成 → 接下来建门",
-                    LogManager.LogLevelEnum.Debug);
-            }
-            else if (buildTileName == "CustomDoor")
-            {
-                // 墙壁和门建完 → 立即注册为房间，之后再建床
-                this.RegisterWorkerRoom(wd);
-                AWorkerTask.LogProvider(
-                    $"{this.Character.name} 建家: 门完成 → 房间已注册 → 接下来建床",
-                    LogManager.LogLevelEnum.Debug);
-            }
-            else if (buildTileName == "SingleBed")
-            {
-                wd.HomeBuildStage = completeStage;
-                wd.LifeStage = Domain.Worker.WorkerLifeStage.Settled;
-                AWorkerTask.LogProvider(
-                    $"{this.Character.name} 建家: 床完成 → 有家了! → Settled 阶段",
-                    LogManager.LogLevelEnum.Info);
-
-                // 自动绑定床到当前 Worker（床位置 = 房间中心 = PlannedHomePosition）
-                if (wd.PlannedHomePosition != null)
-                {
-                    Vector3Int bedPos = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
-                    var fm = Core.ServiceLocator.Get<Item.FurnitureManager>();
-                    fm.AddBed(bedPos);
-                    fm.AddWorkerToBed(bedPos, this.Character);
-                    AWorkerTask.LogProvider(
-                        $"{this.Character.name} 床已自动绑定: pos=({bedPos.x},{bedPos.y})",
-                        LogManager.LogLevelEnum.Debug);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 墙壁和门建完后，将所有墙壁和门位置注册到 RoomManager 形成房间。
-        /// 注册后 Worker 可以继续在房间内建床。
-        /// </summary>
-        private void RegisterWorkerRoom(AWorker.WorkerData wd)
-        {
-            if (wd?.PlannedHomePosition == null) return;
-
-            Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
-            var roomInfo = new LAB2D.Item.RoomInfo();
-            var wallOffsets = LAB2D.AI.Worker.WorkerBrain.GetWallOffsets();
-
-            // 收集所有墙壁位置
-            for (int i = 0; i < LAB2D.AI.Worker.WorkerBrain.WallCount; i++)
-            {
-                roomInfo.Points.Add(center + wallOffsets[i]);
-            }
-
-            // 门位置
-            roomInfo.Points.Add(center + LAB2D.AI.Worker.WorkerBrain.DoorOffset);
-
-            // 所有点都已建完，进度为 0
-            roomInfo.Progress = 0;
-            roomInfo.Temperature = 25.0f;
-            roomInfo.Humidity = 25.0f;
-            roomInfo.OwnerName = this.Character.name;
-
-            Core.ServiceLocator.Get<LAB2D.Item.RoomManager>().AddRoom(
-                System.Guid.NewGuid().ToString(), roomInfo);
-
-            AWorkerTask.LogProvider(
-                $"{this.Character.name} 房间已注册: {roomInfo.Points.Count} 个墙壁/门位置",
-                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>

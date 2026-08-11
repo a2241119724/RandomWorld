@@ -47,6 +47,9 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>FromGround 链式拾取：当前物品捡完后，剩余的待拾取资源</summary>
         private List<ResourceInfo> pendingResources;
 
+        /// <summary>拾取链全部完成后要启动的搬运任务（如一次性的 CarryTask(ToBoard)）</summary>
+        private WorkerCarryTask chainCompleteTask;
+
         public WorkerPickUpTask()
             : base(WorkerTaskType.PickUp)
         {
@@ -152,6 +155,7 @@ namespace LAB2D.Character.Worker.Task
                     .SetGroundResource(nextResource)
                     .SetOwnerId(this.targetOwnerId)
                     .SetPendingPickups(this.pendingPositions, this.pendingResources)
+                    .SetChainCompleteTask(this.chainCompleteTask)
                     .Build();
 
                 AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
@@ -161,6 +165,17 @@ namespace LAB2D.Character.Worker.Task
                 LogProvider(
                     $"{worker.name} 链式拾取下一个: id={nextResource.Id} pos=({nextPos.x},{nextPos.y}) 剩余{this.pendingPositions.Count}个",
                     LogManager.LogLevelEnum.Trace);
+            }
+            else if (this.chainCompleteTask != null)
+            {
+                // 拾取链全部完成，启动后续搬运任务（如一次性 CarryTask(ToBoard)）
+                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+                workerData.Task = this.chainCompleteTask;
+                this.chainCompleteTask.Start(worker);
+
+                LogProvider(
+                    $"{worker.name} 拾取链完成 → 启动搬运任务 {this.chainCompleteTask.GetType().Name}",
+                    LogManager.LogLevelEnum.Debug);
             }
         }
 
@@ -344,6 +359,13 @@ namespace LAB2D.Character.Worker.Task
                 this.task.pendingResources = resources != null
                     ? new List<ResourceInfo>(resources)
                     : null;
+                return this;
+            }
+
+            /// <summary>设置拾取链全部完成后要启动的搬运任务（如一次性 CarryTask(ToBoard)）</summary>
+            public PickUpTaskBuilder SetChainCompleteTask(WorkerCarryTask carryTask)
+            {
+                this.task.chainCompleteTask = carryTask;
                 return this;
             }
 

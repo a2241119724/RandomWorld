@@ -55,8 +55,14 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>批量搬运时已拾取的资源汇总（用于 Finish 时统一交付）</summary>
         private List<ResourceInfo> carriedResources;
 
+        /// <summary>预收集资源：物品已提前由 PickUpTask 链拾取到 Worker 背包，跳过地面拾取阶段，直接送货到 Board</summary>
+        private List<ResourceInfo> preCollectedResources;
+
         /// <summary>是否启用批量搬运模式</summary>
         private bool IsBatchMode => this.batchPickupPositions != null && this.batchPickupPositions.Count > 1;
+
+        /// <summary>是否启用预收集模式（物品已在 Worker 身上，无需从地面拾取）</summary>
+        private bool IsPreCollected => this.preCollectedResources != null && this.preCollectedResources.Count > 0;
 
         public WorkerCarryTask()
             : base(WorkerTaskType.Carry)
@@ -110,10 +116,19 @@ namespace LAB2D.Character.Worker.Task
                 }
 
                 // 计算交付阶段耗时（基于首个物品类型）
-                ItemData firstItemData = this.batchResources != null && this.batchResources.Count > 0
-                    ? ItemDataProvider(this.batchResources[0].Id)
-                    : ItemDataProvider(this.resourceInfo.Id);
+                ItemData firstItemData = this.IsPreCollected
+                    ? ItemDataProvider(this.preCollectedResources[0].Id)
+                    : this.batchResources != null && this.batchResources.Count > 0
+                        ? ItemDataProvider(this.batchResources[0].Id)
+                        : ItemDataProvider(this.resourceInfo.Id);
                 this.maxProgress = WorkerTaskTimeConfig.ResolveCarryPutDownSeconds(firstItemData);
+
+                // 预收集模式：物品已在 Worker 背包中，跳过地面拾取
+                if (this.IsPreCollected)
+                {
+                    this.TargetMap = Vector3IntLAB.ToVector3IntLAB(destTarget);
+                    return;
+                }
 
                 // 从地上捡起掉落物
                 if (this.IsBatchMode)
@@ -172,6 +187,14 @@ namespace LAB2D.Character.Worker.Task
 
             // 重置批量搬运状态（任务可能因 GiveUp 后重新接取而需要清理）
             this.carriedResources = null;
+
+            // 预收集模式：物品已通过 PickUpTask 链拾取到 Worker 背包，直接跳转到送货阶段
+            if (this.IsPreCollected)
+            {
+                this.carriedResources = new List<ResourceInfo>(this.preCollectedResources);
+                this.ChangeStage(worker, 1);
+                return;
+            }
 
             if (this.mode == CarryMode.ToInventory)
             {
@@ -391,6 +414,18 @@ namespace LAB2D.Character.Worker.Task
             public CarryTaskBuilder SetExecutor(int workerId)
             {
                 this.task.targetWorkerId = workerId;
+                return this;
+            }
+
+            /// <summary>
+            /// 设置预收集资源列表（预收集模式）。
+            /// 物品已通过 PickUpTask 链拾取到 Worker 背包，CarryTask 跳过地面拾取直接送货到 Board。
+            /// </summary>
+            public CarryTaskBuilder SetPreCollectedResources(List<ResourceInfo> resources)
+            {
+                this.task.preCollectedResources = resources != null
+                    ? new List<ResourceInfo>(resources)
+                    : null;
                 return this;
             }
 

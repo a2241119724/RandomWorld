@@ -2,7 +2,9 @@ namespace LAB2D.Character.Worker.Task
 {
     using LAB2D.Enum;
     using LAB2D;
+    using LAB2D.AI.Worker;
     using LAB2D.Character.Worker;
+    using LAB2D.Domain.Worker;
     using LAB2D.Item;
     using LAB2D.Item.Build;
     using LAB2D.Serializable;
@@ -59,9 +61,9 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <summary>
-        /// 没用
+        /// 建造的瓦片名称（用于完成时推进建家阶段）
         /// </summary>
-        public ABuildItem BuildItem { get; private set; }
+        public string BuildTileName { get; private set; }
 
         /// <inheritdoc/>
         public override void Start(AWorker worker)
@@ -114,6 +116,98 @@ namespace LAB2D.Character.Worker.Task
 
             // 将建造完成的Tile从Building变为Build中
             Core.ServiceLocator.Get<BuildMap>().SetComplete(this.buildPos, builderName, ownerName);
+
+            // 推进建家阶段（在任务完成时而非创建时推进，防止任务中断导致墙壁跳过）
+            this.AdvanceHomeBuildStageOnComplete(worker);
+        }
+
+        /// <summary>
+        /// 建造完成后推进 Worker 的建家阶段。
+        /// 从 WorkerSeekState.AdvanceHomeBuildStage 迁移至此，
+        /// 确保只有在建造真正完成时才推进阶段，避免任务中断导致墙壁被跳过。
+        /// </summary>
+        private void AdvanceHomeBuildStageOnComplete(AWorker worker)
+        {
+            if (string.IsNullOrEmpty(this.BuildTileName)) return;
+
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+            if (wd == null || wd.HomePosition != null) return;
+
+            const int wallCount = 15;
+            const int completeStage = 17;
+            int prevStage = wd.HomeBuildStage;
+            wd.HomeBuildStage++;
+
+            if (this.BuildTileName.StartsWith("CustomRoomWall") && wd.HomeBuildStage < wallCount)
+            {
+                LogProvider(
+                    $"{worker.name} 建家: 墙壁{prevStage + 1}/{wallCount} → 下一块",
+                    LogManager.LogLevelEnum.Debug);
+            }
+            else if (this.BuildTileName.StartsWith("CustomRoomWall") && wd.HomeBuildStage >= wallCount)
+            {
+                LogProvider(
+                    $"{worker.name} 建家: 墙壁完成 → 接下来建门",
+                    LogManager.LogLevelEnum.Debug);
+            }
+            else if (this.BuildTileName == "CustomDoor")
+            {
+                // 墙壁和门建完 → 立即注册为房间，之后再建床
+                this.RegisterWorkerRoom(wd, worker.name);
+                LogProvider(
+                    $"{worker.name} 建家: 门完成 → 房间已注册 → 接下来建床",
+                    LogManager.LogLevelEnum.Debug);
+            }
+            else if (this.BuildTileName == "SingleBed")
+            {
+                wd.HomeBuildStage = completeStage;
+                wd.LifeStage = LAB2D.Domain.Worker.WorkerLifeStage.Settled;
+                LogProvider(
+                    $"{worker.name} 建家: 床完成 → 有家了! → Settled 阶段",
+                    LogManager.LogLevelEnum.Info);
+
+                // 自动绑定床到当前 Worker（床位置 = 房间中心 = PlannedHomePosition）
+                if (wd.PlannedHomePosition != null)
+                {
+                    Vector3Int bedPos = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+                    var fm = Core.ServiceLocator.Get<Item.FurnitureManager>();
+                    fm.AddBed(bedPos);
+                    fm.AddWorkerToBed(bedPos, worker);
+                    LogProvider(
+                        $"{worker.name} 床已自动绑定: pos=({bedPos.x},{bedPos.y})",
+                        LogManager.LogLevelEnum.Debug);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 墙壁和门建完后，将所有墙壁和门位置注册到 RoomManager 形成房间。
+        /// </summary>
+        private void RegisterWorkerRoom(AWorker.WorkerData wd, string ownerName)
+        {
+            if (wd?.PlannedHomePosition == null) return;
+
+            Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+            var roomInfo = new LAB2D.Item.RoomInfo();
+            var wallOffsets = LAB2D.AI.Worker.WorkerBrain.GetWallOffsets();
+
+            for (int i = 0; i < LAB2D.AI.Worker.WorkerBrain.WallCount; i++)
+            {
+                roomInfo.Points.Add(center + wallOffsets[i]);
+            }
+
+            roomInfo.Points.Add(center + LAB2D.AI.Worker.WorkerBrain.DoorOffset);
+            roomInfo.Progress = 0;
+            roomInfo.Temperature = 25.0f;
+            roomInfo.Humidity = 25.0f;
+            roomInfo.OwnerName = ownerName;
+
+            Core.ServiceLocator.Get<LAB2D.Item.RoomManager>().AddRoom(
+                System.Guid.NewGuid().ToString(), roomInfo);
+
+            LogProvider(
+                $"{ownerName} 房间已注册: {roomInfo.Points.Count} 个墙壁/门位置",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>
@@ -215,7 +309,13 @@ namespace LAB2D.Character.Worker.Task
 
             public BuildTaskBuilder SetBuild(ABuildItem buildItem)
             {
-                this.task.BuildItem = buildItem;
+                this.task.BuildTileName = buildItem?.TileName;
+                return this;
+            }
+
+            public BuildTaskBuilder SetBuildTileName(string tileName)
+            {
+                this.task.BuildTileName = tileName;
                 return this;
             }
 

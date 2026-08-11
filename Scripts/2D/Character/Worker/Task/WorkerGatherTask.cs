@@ -94,8 +94,8 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 统一处理掉落物（资源采集和地形挖掘共用）。
-        /// Worker 悬赏的掉落物会被收集起来，在循环结束后统一创建一个批量 CarryTask(ToBoard)，
-        /// 让 Worker 一次性搬运所有物品到任务栏，避免逐个搬运的低效往返。
+        /// Worker 悬赏的掉落物会为每个物品单独创建一个 CarryTask(ToBoard)，
+        /// 让 Worker 一个一个搬运到任务栏。
         /// </summary>
         private void ProcessDrops(AWorker worker, List<DropItem> dropItems, Vector3Int targetPos)
         {
@@ -114,7 +114,7 @@ namespace LAB2D.Character.Worker.Task
                 $"[GatherOwner] executor={worker.name}({worker.GetInstanceID()}) override={AWorkerTask.BountyOwnerOverride} finalOwner={workerId} isBounty={isBounty}",
                 LogManager.LogLevelEnum.Debug);
 
-            // 收集 Worker 悬赏掉落位置和资源（用于批量创建 CarryTask）
+            // 收集 Worker 悬赏掉落位置和资源（用于逐个创建 CarryTask）
             List<Vector3Int> bountyPositions = null;
             List<ResourceInfo> bountyResources = null;
 
@@ -139,7 +139,7 @@ namespace LAB2D.Character.Worker.Task
                 }
 
                 // TryMergeOrPlaceDrop → PutDownToDrop 自动创建了普通 CarryTask，
-                // 移除之（悬赏物品走批量搬运，普通物品走链式拾取）
+                // 移除之（悬赏物品走 PickUpTask 链+一次性搬运，普通物品走链式拾取）
                 Core.ServiceLocator.Get<WorkerTaskManager>().RemoveCarryTaskAt(pos);
 
                 if (isBounty)
@@ -172,10 +172,42 @@ namespace LAB2D.Character.Worker.Task
                 }
             }
 
-            // Worker 悬赏：统一创建一个批量 CarryTask(ToBoard)，一次性搬运所有物品
+            // Worker 悬赏：逐个捡取所有掉落物，链式完成后一次性搬运到 Board
             if (bountyPositions != null && bountyPositions.Count > 0)
             {
-                this.CreateBatchCarryToBoard(bountyPositions, bountyResources, worker);
+                int totalDrops = bountyPositions.Count;
+
+                // 创建最终的搬运任务（预收集模式：物品已在 Worker 背包，直接送货到 Board）
+                // 注意：必须在操作 bountyResources 之前传入完整列表
+                WorkerCarryTask finalCarry = new WorkerCarryTask.CarryTaskBuilder()
+                    .SetMode(WorkerCarryTask.CarryMode.ToBoard)
+                    .SetPreCollectedResources(bountyResources)
+                    .SetExecutor(worker.GetInstanceID())
+                    .Build();
+
+                // 取出首个拾取目标，剩余的作为待拾取链
+                Vector3Int firstPos = bountyPositions[0];
+                ResourceInfo firstResource = bountyResources[0];
+                bountyPositions.RemoveAt(0);
+                bountyResources.RemoveAt(0);
+
+                // 创建 PickUpTask 链：逐个走到每个掉落点捡起，链全部完成后启动 finalCarry 一次性搬运到 Board
+                WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpTaskBuilder()
+                    .SetMode(WorkerPickUpTask.PickUpMode.FromGround)
+                    .SetTargetPosition(firstPos)
+                    .SetGroundResource(firstResource)
+                    .SetOwnerId(workerId)
+                    .SetPendingPickups(bountyPositions, bountyResources)
+                    .SetChainCompleteTask(finalCarry)
+                    .Build();
+
+                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+                workerData.Task = pickUpTask;
+                pickUpTask.Start(worker);
+
+                LogProvider(
+                    $"[BountyDrop] Worker 悬赏: {totalDrops} 个掉落物 → 逐个捡取({totalDrops}次) → 1次搬运到 Board",
+                    LogManager.LogLevelEnum.Debug);
             }
 
             // 自我采集完成后，立即链式拾取所有掉落物
@@ -205,33 +237,6 @@ namespace LAB2D.Character.Worker.Task
                     $"{worker.name} 采集完成，开始链式拾取 {totalDrops} 个掉落物: 首个 id={firstResource.Id} pos=({firstPos.x},{firstPos.y})",
                     LogManager.LogLevelEnum.Debug);
             }
-        }
-
-        /// <summary>
-        /// 为 Worker 悬赏掉落物创建批量 CarryTask(ToBoard)。
-        /// 多个掉落物合并为一个任务，Worker 一次性搬运全部物品到任务栏。
-        /// </summary>
-        /// <param name="positions">所有掉落物的地图位置列表</param>
-        /// <param name="resources">所有掉落物的资源信息列表（与 positions 一一对应）</param>
-        /// <param name="executor">执行悬赏的 Worker</param>
-        private void CreateBatchCarryToBoard(
-            List<Vector3Int> positions, List<ResourceInfo> resources, AWorker executor)
-        {
-            WorkerCarryTask carryToBoard = new WorkerCarryTask.CarryTaskBuilder()
-                .SetMode(WorkerCarryTask.CarryMode.ToBoard)
-                .SetResourceInfo(resources[0])          // 首个资源用于兼容
-                .SetBatchResources(positions, resources) // 批量资源（自动设置首个位置为 TargetMap）
-                .SetExecutor(executor.GetInstanceID())
-                .Build();
-
-            TaskAddProvider(
-                carryToBoard,
-                new GameGridPosition(positions[0].x, positions[0].y, 0),
-                WorkerTaskPriority.WorkerBounty);
-
-            LogProvider(
-                $"[BountyDrop] Worker 悬赏批量掉落: {positions.Count} 个物品 → 1 个批量 CarryTask(ToBoard) pos=({positions[0].x},{positions[0].y})",
-                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>

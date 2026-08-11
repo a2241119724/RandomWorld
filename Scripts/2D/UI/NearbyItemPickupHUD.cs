@@ -328,14 +328,17 @@ namespace LAB2D.UI
                 }
             }
 
-            // 每2秒输出一次调试信息
+            // 每2秒输出一次调试信息（仅在有道具时输出）
             if (Time.time - this.debugLogTimer > 2f)
             {
                 this.debugLogTimer = Time.time;
-                AWorkerTask.LogProvider(
-                    string.Format("NearbyItemPickupHUD: 检测了{0}个tile, 发现{1}个道具tile, 收集到{2}个有效条目",
-                        totalTilesChecked, tilesFound, foundEntries.Count),
-                    LogManager.LogLevelEnum.Trace);
+                if (foundEntries.Count > 0)
+                {
+                    AWorkerTask.LogProvider(
+                        string.Format("NearbyItemPickupHUD: 检测了{0}个tile, 发现{1}个道具tile, 收集到{2}个有效条目",
+                            totalTilesChecked, tilesFound, foundEntries.Count),
+                        LogManager.LogLevelEnum.Trace);
+                }
             }
 
             // 检查是否有变化

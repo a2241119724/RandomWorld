@@ -129,7 +129,6 @@ namespace LAB2D.Character.Worker
                     if (this.dialogText != null)
                     {
                         this.dialogRoot.SetActive(false);
-                        LogProvider($"[Monologue] {this.name} Dialog/Text 初始化成功", LogManager.LogLevelEnum.Trace);
                     }
                     else
                     {
