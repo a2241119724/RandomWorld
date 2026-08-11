@@ -47,6 +47,7 @@ namespace LAB2D.Character.Worker.Task
         private int targetWorkerId;
 
         /// <summary>批量搬运时多个待拾取位置（含首个位置，与 batchResources 一一对应）</summary>
+        [NonSerialized]
         private List<Vector3Int> batchPickupPositions;
 
         /// <summary>批量搬运时多个待拾取资源（与 batchPickupPositions 一一对应）</summary>

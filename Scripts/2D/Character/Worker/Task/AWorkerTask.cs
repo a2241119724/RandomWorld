@@ -77,6 +77,7 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>
         /// 任务阶段上下文
         /// </summary>
+        [NonSerialized]
         protected List<Action<AWorker>> stageInit;
 
         public AWorkerTask(WorkerTaskType taskType)

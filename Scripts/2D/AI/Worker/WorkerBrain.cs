@@ -1551,7 +1551,7 @@ namespace LAB2D.AI.Worker
                 if (ASeek.IsCanReach(planned)
                     && this.CanFitRoom(planned)
                     && !this.IsHomeSiteClaimedByOther(planned, worker)
-                    && !this.IsRoomAreaBlockedInBuildMap(planned))
+                    && !this.IsRoomAreaBlockedInBuildMap(planned, worker))
                 {
                     return planned;
                 }
@@ -1875,33 +1875,43 @@ namespace LAB2D.AI.Worker
         /// </summary>
         /// <param name="center">房间中心位置</param>
         /// <returns>true 表示区域内有 BuildMap 瓦片占用</returns>
-        private bool IsRoomAreaBlockedInBuildMap(Vector3Int center)
+        /// <summary>
+        /// 检查房间区域（墙壁/门/床位置）是否与 BuildMap 冲突。
+        /// 如果指定了 worker，则跳过该 worker 自己建造的瓦片（用于读档后验证已有规划位置）。
+        /// </summary>
+        private bool IsRoomAreaBlockedInBuildMap(Vector3Int center, AWorker self = null)
         {
             var buildMap = Core.ServiceLocator.Get<BuildMap>();
             if (buildMap?.BuildMapDataLAB?.PosMap == null) return false;
+
+            string selfName = self != null ? self.name : null;
 
             // 检查所有墙壁位置
             for (int i = 0; i < WallCount; i++)
             {
                 Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(center + WallOffsets[i]);
-                if (buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
+                if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var tile))
                 {
+                    // 跳过自己建造的瓦片（读档后已建好的墙壁不应视为冲突）
+                    if (selfName != null && tile.BuilderName == selfName) continue;
                     return true;
                 }
             }
 
             // 检查门位置
             Vector3IntLAB doorLAB = Vector3IntLAB.ToVector3IntLAB(center + DoorOffset);
-            if (buildMap.BuildMapDataLAB.PosMap.ContainsKey(doorLAB))
+            if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(doorLAB, out var doorTile))
             {
-                return true;
+                if (selfName != null && doorTile.BuilderName == selfName) { /* 跳过自己 */ }
+                else return true;
             }
 
             // 检查床位置（中心）
             Vector3IntLAB centerLAB = Vector3IntLAB.ToVector3IntLAB(center);
-            if (buildMap.BuildMapDataLAB.PosMap.ContainsKey(centerLAB))
+            if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(centerLAB, out var bedTile))
             {
-                return true;
+                if (selfName != null && bedTile.BuilderName == selfName) { /* 跳过自己 */ }
+                else return true;
             }
 
             return false;

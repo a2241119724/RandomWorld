@@ -1,6 +1,10 @@
 namespace LAB2D.Character.Worker
 {
     using LAB2D;
+    using LAB2D.Data;
+    using LAB2D.Domain.Common;
+    using System.Collections.Generic;
+
     /// <summary>
     /// Worker管理器
     /// </summary>
@@ -42,6 +46,43 @@ namespace LAB2D.Character.Worker
             else
             {
                 return --this.countLock;
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            // 存档前：将携带资源从 MonoBehaviour 同步到 WorkerData
+            foreach (AWorker worker in this.Characters)
+            {
+                if (worker == null) continue;
+                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd != null)
+                {
+                    Dictionary<int, ResourceInfo> carried = worker.GetCarriedResources();
+                    wd.CarriedResources = carried != null && carried.Count > 0
+                        ? new Dictionary<int, ResourceInfo>(carried)
+                        : null;
+                }
+            }
+
+            base.SaveData();
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+
+            // 读档后：将携带资源从 WorkerData 恢复到 MonoBehaviour
+            foreach (AWorker worker in this.Characters)
+            {
+                if (worker == null) continue;
+                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd?.CarriedResources != null && wd.CarriedResources.Count > 0)
+                {
+                    worker.RestoreCarriedResources(new Dictionary<int, ResourceInfo>(wd.CarriedResources));
+                }
             }
         }
     }

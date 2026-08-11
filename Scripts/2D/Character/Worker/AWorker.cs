@@ -395,6 +395,22 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
+        /// 获取携带的全部资源（用于存档）。
+        /// </summary>
+        internal Dictionary<int, ResourceInfo> GetCarriedResources()
+        {
+            return this.resourceInfos;
+        }
+
+        /// <summary>
+        /// 恢复携带的全部资源（用于读档）。
+        /// </summary>
+        internal void RestoreCarriedResources(Dictionary<int, ResourceInfo> resources)
+        {
+            this.resourceInfos = resources ?? new Dictionary<int, ResourceInfo>();
+        }
+
+        /// <summary>
         /// 添加携带的资源
         /// </summary>
         /// <param name="resourceInfo">资源</param>
@@ -969,6 +985,12 @@ namespace LAB2D.Character.Worker
             [NonSerialized]
             public int BuildStuckRetryCount;
 
+            /// <summary>
+            /// 当前携带的资源（用于存档持久化）。
+            /// 与 AWorker.resourceInfos 双向同步：SaveData 时从 resourceInfos 写入、LoadData 时写回 resourceInfos。
+            /// </summary>
+            public Dictionary<int, ResourceInfo> CarriedResources;
+
             public WorkerData()
             {
                 // 所有任务类型默认开启（opt-out 语义：只有玩家通过 UI 手动关闭的才会被写入 false）
@@ -979,6 +1001,7 @@ namespace LAB2D.Character.Worker
                 }
                 this.Personality = Domain.Worker.WorkerPersonality.Randomize();
                 this.Storage = new Dictionary<int, ResourceInfo>();
+                this.CarriedResources = new Dictionary<int, ResourceInfo>();
             }
         }
     }

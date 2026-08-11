@@ -42,6 +42,7 @@ namespace LAB2D.Character.Worker.Task
         private ResourceInfo groundResource;
 
         /// <summary>FromGround 链式拾取：当前物品捡完后，剩余的待拾取位置</summary>
+        [NonSerialized]
         private List<Vector3Int> pendingPositions;
 
         /// <summary>FromGround 链式拾取：当前物品捡完后，剩余的待拾取资源</summary>
