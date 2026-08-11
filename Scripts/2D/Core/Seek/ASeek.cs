@@ -1,6 +1,7 @@
 namespace LAB2D.Core.Seek
 {
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Manager;
     using System;
     using System.Collections.Generic;
     using System.Threading;
@@ -32,6 +33,13 @@ namespace LAB2D.Core.Seek
         private static readonly WaitCallback SearchWorkerCallback = RunSearchQueue;
         private static int activeSearchWorkers;
         private static Material sharedLineMaterial;
+        private static bool quitHookRegistered;
+
+        /// <summary>
+        /// 全局关闭标志 — 应用退出时置为 true，阻止新寻路请求入队，
+        /// 并让正在运行的后台线程快速退出。
+        /// </summary>
+        protected static volatile bool isShuttingDown;
 
         protected static TileMap s_tileMap;
         protected static ResourceMap s_resourceMap;
@@ -92,6 +100,32 @@ namespace LAB2D.Core.Seek
         public Vector3 Direction { get; private set; }
 
         protected LAB2D.Character.Character Character { get; set; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            Application.quitting -= Shutdown;
+            isShuttingDown = false;
+            quitHookRegistered = false;
+            s_tileMap = null;
+            s_resourceMap = null;
+            s_buildMap = null;
+            s_weatherEffect = null;
+            s_terrainEffect = null;
+            s_workerConditionManager = null;
+            s_mainThreadDispatcher = null;
+            sharedLineMaterial = null;
+
+            lock (SearchQueueLock)
+            {
+                SearchQueue.Clear();
+                activeSearchWorkers = 0;
+            }
+
+            FailCache.Clear();
+            PathfindingWorkspacePool.Clear();
+            WalkabilityCache.Clear();
+        }
 
         protected static int CalculateMaxIterations(int width, int height)
         {
@@ -155,8 +189,45 @@ namespace LAB2D.Core.Seek
             }
         }
 
+        /// <summary>
+        /// 应用退出时调用，停止所有后台寻路线程并清空队列。
+        /// 防止 ThreadPool 线程在 Unity 销毁 GameObject 后仍访问静态状态导致卡死。
+        /// 幂等：多次调用安全。
+        /// </summary>
+        public static void Shutdown()
+        {
+            if (isShuttingDown)
+            {
+                return;
+            }
+
+            isShuttingDown = true;
+
+            lock (SearchQueueLock)
+            {
+                SearchQueue.Clear();
+                activeSearchWorkers = 0;
+            }
+
+            FailCache.Clear();
+            PathfindingWorkspacePool.Clear();
+            WalkabilityCache.Clear();
+
+            if (sharedLineMaterial != null)
+            {
+                UnityEngine.Object.Destroy(sharedLineMaterial);
+                sharedLineMaterial = null;
+            }
+        }
+
         public void Seek(Vector3Int targetMap)
         {
+            // 应用正在关闭，拒绝新的寻路请求
+            if (isShuttingDown)
+            {
+                return;
+            }
+
             if (this.IsSeeking())
             {
                 AWorkerTask.LogProvider(this.Character.name + ":重新寻路!", LogManager.LogLevelEnum.Trace);
@@ -261,7 +332,7 @@ namespace LAB2D.Core.Seek
 
         protected bool ShouldStop(int generation)
         {
-            return this.isStopThread || generation != this.seekGeneration;
+            return this.isStopThread || generation != this.seekGeneration || isShuttingDown;
         }
 
         protected bool TrySetResult(SeekResult result, int generation)
@@ -338,6 +409,13 @@ namespace LAB2D.Core.Seek
             s_terrainEffect = Core.ServiceLocator.Get<ITerrainEffectService>();
             s_workerConditionManager = Core.ServiceLocator.Get<WorkerConditionManager>();
             s_mainThreadDispatcher = Core.ServiceLocator.Get<UnityMainThreadDispatcher>();
+
+            if (!quitHookRegistered)
+            {
+                Application.quitting -= Shutdown;
+                Application.quitting += Shutdown;
+                quitHookRegistered = true;
+            }
         }
 
         private static void EnsurePathfindingStorage()
@@ -352,9 +430,20 @@ namespace LAB2D.Core.Seek
 
         private static void EnqueueSearch(ASeek seek)
         {
+            // 应用正在关闭，不再入队新搜索
+            if (isShuttingDown)
+            {
+                return;
+            }
+
             bool startWorker = false;
             lock (SearchQueueLock)
             {
+                if (isShuttingDown)
+                {
+                    return;
+                }
+
                 SearchQueue.Enqueue(seek);
                 if (activeSearchWorkers < MaxConcurrentSearches)
                 {
@@ -371,27 +460,37 @@ namespace LAB2D.Core.Seek
 
         private static void RunSearchQueue(object _)
         {
-            while (true)
+            try
             {
-                ASeek seek;
-                lock (SearchQueueLock)
+                while (!isShuttingDown)
                 {
-                    if (SearchQueue.Count == 0)
+                    ASeek seek;
+                    lock (SearchQueueLock)
                     {
-                        activeSearchWorkers--;
-                        return;
+                        if (SearchQueue.Count == 0)
+                        {
+                            return;
+                        }
+
+                        seek = SearchQueue.Dequeue();
                     }
 
-                    seek = SearchQueue.Dequeue();
+                    try
+                    {
+                        seek.ProcessPendingSearches();
+                    }
+                    catch (Exception exception)
+                    {
+                        AWorkerTask.LogProvider($"寻路调度异常: {exception}", LogManager.LogLevelEnum.Error);
+                        seek.HandleSchedulerException(exception);
+                    }
                 }
-
-                try
+            }
+            finally
+            {
+                lock (SearchQueueLock)
                 {
-                    seek.ProcessPendingSearches();
-                }
-                catch (Exception exception)
-                {
-                    seek.HandleSchedulerException(exception);
+                    activeSearchWorkers = Math.Max(0, activeSearchWorkers - 1);
                 }
             }
         }
@@ -409,15 +508,19 @@ namespace LAB2D.Core.Seek
                 this.requestScheduled = false;
             }
 
-            s_mainThreadDispatcher.EnqueueAsync(() =>
-                AWorkerTask.LogProvider(
-                    this.Character.name + ":寻路调度异常 " + exception,
-                    LogManager.LogLevelEnum.Error));
+            // 关闭时不尝试回调主线程
+            if (!isShuttingDown && s_mainThreadDispatcher != null)
+            {
+                s_mainThreadDispatcher.EnqueueAsync(() =>
+                    AWorkerTask.LogProvider(
+                        this.Character.name + ":寻路调度异常 " + exception,
+                        LogManager.LogLevelEnum.Error));
+            }
         }
 
         private void ProcessPendingSearches()
         {
-            while (true)
+            while (!isShuttingDown)
             {
                 int generation;
                 Vector3Int startMap;
@@ -439,11 +542,15 @@ namespace LAB2D.Core.Seek
                     }
                     catch (Exception exception)
                     {
+                        AWorkerTask.LogProvider($"寻路异常: {exception}", LogManager.LogLevelEnum.Error);
                         this.TrySetResult(new SeekResult { IsReachable = false }, generation);
-                        s_mainThreadDispatcher.EnqueueAsync(() =>
-                            AWorkerTask.LogProvider(
-                                this.Character.name + ":寻路异常 " + exception,
-                                LogManager.LogLevelEnum.Error));
+                        if (!isShuttingDown && s_mainThreadDispatcher != null)
+                        {
+                            s_mainThreadDispatcher.EnqueueAsync(() =>
+                                AWorkerTask.LogProvider(
+                                    this.Character.name + ":寻路异常 " + exception,
+                                    LogManager.LogLevelEnum.Error));
+                        }
                     }
                     finally
                     {
@@ -452,13 +559,16 @@ namespace LAB2D.Core.Seek
 
                     if (generation == this.seekGeneration && this.ShouldShowLine())
                     {
-                        s_mainThreadDispatcher.EnqueueAsync(() =>
+                        if (!isShuttingDown && s_mainThreadDispatcher != null)
                         {
-                            if (generation == this.seekGeneration)
+                            s_mainThreadDispatcher.EnqueueAsync(() =>
                             {
-                                this.UpdateLine();
-                            }
-                        });
+                                if (generation == this.seekGeneration)
+                                {
+                                    this.UpdateLine();
+                                }
+                            });
+                        }
                     }
                 }
 

@@ -108,5 +108,24 @@ namespace LAB2D.Character.Enemy.SeekEnemy
 
             this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Dead); // 进入死亡状态
         }
+
+        /// <summary>
+        /// GameObject 销毁时停止寻路线程，
+        /// 防止关闭游戏时后台 ThreadPool 线程访问已销毁对象导致卡死。
+        /// </summary>
+        protected void OnDestroy()
+        {
+            this.Seek?.StopMove();
+
+            // 清理 LineRenderer 的材质实例
+            if (this.Seek?.LineRenderer != null)
+            {
+                Material mat = this.Seek.LineRenderer.material;
+                if (mat != null)
+                {
+                    Destroy(mat);
+                }
+            }
+        }
     }
 }

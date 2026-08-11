@@ -1,8 +1,8 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
-    using LAB2D.Core;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Core;
     using Photon.Pun;
     using UnityEngine;
     using UnityEngine.UI;
@@ -13,6 +13,7 @@ namespace LAB2D.UI.Panel
     public class PausePanel : ABasePanel<PausePanel>
     {
         private readonly AudioSource audioSource; // 被控制
+        private bool isExitRequested;
 
         public PausePanel()
         {
@@ -54,14 +55,41 @@ namespace LAB2D.UI.Panel
         /// </summary>
         private void OnClick_Exit()
         {
-            // 需要关闭连接
-            PhotonNetwork.LeaveLobby();
-            PhotonNetwork.Disconnect();
+            if (this.isExitRequested)
+            {
+                return;
+            }
+
+            this.isExitRequested = true;
+            try
+            {
+                LAB2D.Core.Seek.ASeek.Shutdown();
+
+                if (PhotonNetwork.IsConnected)
+                {
+                    if (PhotonNetwork.InRoom)
+                    {
+                        PhotonNetwork.LeaveRoom(false);
+                    }
+                    else if (PhotonNetwork.InLobby)
+                    {
+                        PhotonNetwork.LeaveLobby();
+                    }
+
+                    PhotonNetwork.Disconnect();
+                }
+
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
+                UnityEditor.EditorApplication.isPlaying = false;
 #else
-        Application.Quit();
+                Application.Quit();
 #endif
+            }
+            catch (System.Exception ex)
+            {
+                this.isExitRequested = false;
+                Debug.LogError($"[ExitFlow] 异常: {ex}");
+            }
         }
 
         /// <summary>

@@ -811,6 +811,26 @@ namespace LAB2D.Character.Worker
             this.Manager.ChangeState(AWorkerState.TypeEnum.Dead);
         }
 
+        /// <summary>
+        /// GameObject 销毁时停止寻路线程并清理资源，
+        /// 防止关闭游戏时后台 ThreadPool 线程访问已销毁对象导致卡死。
+        /// </summary>
+        protected void OnDestroy()
+        {
+            // 停止寻路，让后台线程检测到 isStopThread 后退出
+            this.Seek?.StopMove();
+
+            // 清理 LineRenderer 的材质实例（每个 Worker 在 ASeek 构造中创建了一个）
+            if (this.Seek?.LineRenderer != null)
+            {
+                Material mat = this.Seek.LineRenderer.material;
+                if (mat != null)
+                {
+                    Destroy(mat);
+                }
+            }
+        }
+
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks);

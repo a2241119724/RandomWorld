@@ -71,6 +71,26 @@ namespace LAB2D.Core.Seek
                 }
             }
         }
+
+        /// <summary>
+        /// 应用退出时释放所有工作区的大数组引用，
+        /// 避免 Mono GC 在 Unity 关闭流程中回收 200MB+ 数组导致长时间卡顿。
+        /// </summary>
+        public static void Clear()
+        {
+            lock (PoolLock)
+            {
+                while (Pool.Count > 0)
+                {
+                    Pool.Pop()?.ReleaseArrays();
+                }
+
+                initialized = false;
+                width = 0;
+                height = 0;
+                maxIterations = 0;
+            }
+        }
     }
 
     /// <summary>
@@ -80,12 +100,12 @@ namespace LAB2D.Core.Seek
     public sealed class PathfindingWorkspace
     {
         private const int ClosedHeapPosition = -2;
-        private readonly int[] visitGenerations;
-        private readonly float[] gCosts;
-        private readonly float[] fCosts;
-        private readonly int[] parents;
-        private readonly int[] heapPositions;
-        private readonly int[] heap;
+        private int[] visitGenerations;
+        private float[] gCosts;
+        private float[] fCosts;
+        private int[] parents;
+        private int[] heapPositions;
+        private int[] heap;
         private int searchGeneration;
         private int heapCount;
 
@@ -109,6 +129,21 @@ namespace LAB2D.Core.Seek
         public int Height { get; }
 
         public int OpenCount => this.heapCount;
+
+        /// <summary>
+        /// 释放所有内部数组引用，帮助 GC 回收大对象。
+        /// 仅在应用退出时调用。
+        /// </summary>
+        public void ReleaseArrays()
+        {
+            // 将数组引用置 null，释放 ~20MB 托管内存
+            this.visitGenerations = null;
+            this.gCosts = null;
+            this.fCosts = null;
+            this.parents = null;
+            this.heapPositions = null;
+            this.heap = null;
+        }
 
         public void BeginSearch()
         {

@@ -52,9 +52,24 @@ namespace LAB2D.Map
         private int cachedWaterTerrainId = -1;
 
         /// <summary>
-        /// 每个 Chunk 的边长（瓦片数）。1000×1000 地图 ≈ 256 个 Chunk。
+        /// 每个 Chunk 的边长（瓦片数）。由 ComputeChunkSize 根据地图尺寸动态计算，
+        /// 保证总 Chunk 数 ≤ MaxChunksPerDim²。
         /// </summary>
-        private const int CHUNK_SIZE = 64;
+        private static int chunkSize = 64;
+
+        /// <summary>
+        /// 目标每维度最大 Chunk 数。总 Chunk = MaxChunksPerDim²。
+        /// </summary>
+        private const int MaxChunksPerDim = 2;
+
+        /// <summary>
+        /// 根据地图尺寸计算 Chunk 边长，保证总 Chunk 数不超过 MaxChunksPerDim²。
+        /// </summary>
+        private void ComputeChunkSize(int mapWidth, int mapHeight)
+        {
+            int maxDim = Mathf.Max(mapWidth, mapHeight);
+            chunkSize = Mathf.Max(Mathf.CeilToInt((float)maxDim / MaxChunksPerDim), 32);
+        }
 
         /// <summary>
         /// 幽灵瓦片的透明颜色缓存 — 幽灵瓦片仅供 Rule Tile 查询邻居，不参与渲染。
@@ -125,6 +140,9 @@ namespace LAB2D.Map
 
             // 初始化 Chunk 系统
             this.InitChunkSystem();
+
+            // chunksRoot 使用 DontSaveInEditor：Editor 退出 Play Mode 时 Unity 自动销毁，
+            // 在 Undo 序列化之前完成，无需手动清理。Build 中无 Undo 系统，无需处理。
         }
 
         /// <summary>
@@ -142,11 +160,20 @@ namespace LAB2D.Map
             // 缓存原始 GameObject 的 layer，供 Chunk 使用
             this.chunkLayer = this.gameObject.layer;
 
-            // chunksRoot 作为 Grid 的子节点（与 TileMap 同级，共享同一个 Grid）
-            Transform gridParent = grid != null ? grid.transform : this.transform.parent;
+            // chunksRoot 使用 DontSaveInEditor：Unity Editor 退出时自动销毁，在 Undo 序列化之前
             this.chunksRoot = new GameObject("TileChunks").transform;
-            this.chunksRoot.SetParent(gridParent);
+            this.chunksRoot.gameObject.hideFlags = HideFlags.DontSaveInEditor;
+            this.chunksRoot.SetParent(this.transform);
             this.chunksRoot.localPosition = Vector3.zero;
+
+            // 在 chunksRoot 上挂 CompositeCollider2D，合并所有 Chunk 的碰撞体为一个
+            // 退出时只需序列化 1 个复合碰撞体，而非 N 个独立的 TilemapCollider2D
+            Rigidbody2D rb = this.chunksRoot.gameObject.AddComponent<Rigidbody2D>();
+            rb.bodyType = RigidbodyType2D.Static;
+            rb.hideFlags = HideFlags.DontSaveInEditor;
+            CompositeCollider2D cc = this.chunksRoot.gameObject.AddComponent<CompositeCollider2D>();
+            cc.hideFlags = HideFlags.DontSaveInEditor;
+            cc.geometryType = CompositeCollider2D.GeometryType.Polygons;
 
             // 缓存原始 TilemapRenderer 配置，供 Chunk TilemapRenderer 复制
             TilemapRenderer originalRenderer = this.GetComponent<TilemapRenderer>();
@@ -174,8 +201,8 @@ namespace LAB2D.Map
         private static Vector2Int GetChunkIndex(int x, int y)
         {
             return new Vector2Int(
-                Mathf.FloorToInt((float)x / CHUNK_SIZE),
-                Mathf.FloorToInt((float)y / CHUNK_SIZE));
+                Mathf.FloorToInt((float)x / chunkSize),
+                Mathf.FloorToInt((float)y / chunkSize));
         }
 
         /// <summary>
@@ -183,7 +210,7 @@ namespace LAB2D.Map
         /// </summary>
         private static Vector3Int GetLocalPos(int x, int y, int cx, int cy)
         {
-            return new Vector3Int(x - (cx * CHUNK_SIZE), y - (cy * CHUNK_SIZE), 0);
+            return new Vector3Int(x - (cx * chunkSize), y - (cy * chunkSize), 0);
         }
 
         /// <summary>
@@ -202,21 +229,27 @@ namespace LAB2D.Map
             int cy = chunkIndex.y;
 
             GameObject chunkGO = new GameObject($"Chunk_{cx}_{cy}");
+            chunkGO.hideFlags = HideFlags.DontSaveInEditor; // Editor 退出时自动销毁，在 Undo 序列化之前
             chunkGO.layer = this.chunkLayer;
             chunkGO.transform.SetParent(this.chunksRoot);
             // YXZ swizzle: chunk (cx, cy) 定位在 (cy*S*cellSize.y, cx*S*cellSize.x)
             chunkGO.transform.localPosition = new Vector3(
-                cy * CHUNK_SIZE * this.gridCellSize.y,
-                cx * CHUNK_SIZE * this.gridCellSize.x,
+                cy * chunkSize * this.gridCellSize.y,
+                cx * chunkSize * this.gridCellSize.x,
                 0f);
 
             Tilemap tm = chunkGO.AddComponent<Tilemap>();
+            tm.hideFlags = HideFlags.DontSaveInEditor; // GameObject 的 DontSave 不会传递到组件，需单独设置
             // 同步原始 Tilemap 的 tileAnchor（场景中配置为 (0,0,0) 左下角），
             // 否则运行时创建的 Tilemap 默认 anchor 为 (0.5,0.5,0) 中心，导致半格偏移。
             tm.tileAnchor = this.tilemap.tileAnchor;
             TilemapRenderer tmr = chunkGO.AddComponent<TilemapRenderer>();
-            // 为每个 Chunk 添加 TilemapCollider2D，使地形瓦片（山、水等）的碰撞体生效
-            chunkGO.AddComponent<TilemapCollider2D>();
+            tmr.hideFlags = HideFlags.DontSaveInEditor;
+            // 为每个 Chunk 添加 TilemapCollider2D，usedByComposite 使其几何体合并到 CompositeCollider2D
+            TilemapCollider2D tc = chunkGO.AddComponent<TilemapCollider2D>();
+            tc.hideFlags = HideFlags.DontSaveInEditor;
+            tc.usedByComposite = true;
+            tc.enabled = false; // 地图生成完毕后再统一启用
 
             // 复制原始渲染器配置
             if (this.chunkMaterial != null)
@@ -308,23 +341,23 @@ namespace LAB2D.Map
             if (lx == 0)
             {
                 // 1) 当前 Chunk 的 (-1, ly) ← 来自 (cx-1, cy) 的 (63, ly)
-                TileBase neighborTile = this.TryGetTileFromChunk(cx - 1, cy, CHUNK_SIZE - 1, ly);
+                TileBase neighborTile = this.TryGetTileFromChunk(cx - 1, cy, chunkSize - 1, ly);
                 if (neighborTile != null)
                 {
                     this.SetTileDirect(chunkIndex, new Vector3Int(-1, ly, 0), neighborTile);
                 }
 
                 // 2) 相邻 Chunk (cx-1, cy) 的 (64, ly) ← 当前瓦片
-                this.SetTileDirect(new Vector2Int(cx - 1, cy), new Vector3Int(CHUNK_SIZE, ly, 0), tileBase);
+                this.SetTileDirect(new Vector2Int(cx - 1, cy), new Vector3Int(chunkSize, ly, 0), tileBase);
             }
 
-            if (lx == CHUNK_SIZE - 1)
+            if (lx == chunkSize - 1)
             {
                 // 1) 当前 Chunk 的 (64, ly) ← 来自 (cx+1, cy) 的 (0, ly)
                 TileBase neighborTile = this.TryGetTileFromChunk(cx + 1, cy, 0, ly);
                 if (neighborTile != null)
                 {
-                    this.SetTileDirect(chunkIndex, new Vector3Int(CHUNK_SIZE, ly, 0), neighborTile);
+                    this.SetTileDirect(chunkIndex, new Vector3Int(chunkSize, ly, 0), neighborTile);
                 }
 
                 // 2) 相邻 Chunk (cx+1, cy) 的 (-1, ly) ← 当前瓦片
@@ -333,21 +366,21 @@ namespace LAB2D.Map
 
             if (ly == 0)
             {
-                TileBase neighborTile = this.TryGetTileFromChunk(cx, cy - 1, lx, CHUNK_SIZE - 1);
+                TileBase neighborTile = this.TryGetTileFromChunk(cx, cy - 1, lx, chunkSize - 1);
                 if (neighborTile != null)
                 {
                     this.SetTileDirect(chunkIndex, new Vector3Int(lx, -1, 0), neighborTile);
                 }
 
-                this.SetTileDirect(new Vector2Int(cx, cy - 1), new Vector3Int(lx, CHUNK_SIZE, 0), tileBase);
+                this.SetTileDirect(new Vector2Int(cx, cy - 1), new Vector3Int(lx, chunkSize, 0), tileBase);
             }
 
-            if (ly == CHUNK_SIZE - 1)
+            if (ly == chunkSize - 1)
             {
                 TileBase neighborTile = this.TryGetTileFromChunk(cx, cy + 1, lx, 0);
                 if (neighborTile != null)
                 {
-                    this.SetTileDirect(chunkIndex, new Vector3Int(lx, CHUNK_SIZE, 0), neighborTile);
+                    this.SetTileDirect(chunkIndex, new Vector3Int(lx, chunkSize, 0), neighborTile);
                 }
 
                 this.SetTileDirect(new Vector2Int(cx, cy + 1), new Vector3Int(lx, -1, 0), tileBase);
@@ -356,29 +389,29 @@ namespace LAB2D.Map
             // === 四个角 ===
             if (lx == 0 && ly == 0)
             {
-                TileBase nt = this.TryGetTileFromChunk(cx - 1, cy - 1, CHUNK_SIZE - 1, CHUNK_SIZE - 1);
+                TileBase nt = this.TryGetTileFromChunk(cx - 1, cy - 1, chunkSize - 1, chunkSize - 1);
                 if (nt != null) this.SetTileDirect(chunkIndex, new Vector3Int(-1, -1, 0), nt);
-                this.SetTileDirect(new Vector2Int(cx - 1, cy - 1), new Vector3Int(CHUNK_SIZE, CHUNK_SIZE, 0), tileBase);
+                this.SetTileDirect(new Vector2Int(cx - 1, cy - 1), new Vector3Int(chunkSize, chunkSize, 0), tileBase);
             }
 
-            if (lx == CHUNK_SIZE - 1 && ly == 0)
+            if (lx == chunkSize - 1 && ly == 0)
             {
-                TileBase nt = this.TryGetTileFromChunk(cx + 1, cy - 1, 0, CHUNK_SIZE - 1);
-                if (nt != null) this.SetTileDirect(chunkIndex, new Vector3Int(CHUNK_SIZE, -1, 0), nt);
-                this.SetTileDirect(new Vector2Int(cx + 1, cy - 1), new Vector3Int(-1, CHUNK_SIZE, 0), tileBase);
+                TileBase nt = this.TryGetTileFromChunk(cx + 1, cy - 1, 0, chunkSize - 1);
+                if (nt != null) this.SetTileDirect(chunkIndex, new Vector3Int(chunkSize, -1, 0), nt);
+                this.SetTileDirect(new Vector2Int(cx + 1, cy - 1), new Vector3Int(-1, chunkSize, 0), tileBase);
             }
 
-            if (lx == 0 && ly == CHUNK_SIZE - 1)
+            if (lx == 0 && ly == chunkSize - 1)
             {
-                TileBase nt = this.TryGetTileFromChunk(cx - 1, cy + 1, CHUNK_SIZE - 1, 0);
-                if (nt != null) this.SetTileDirect(chunkIndex, new Vector3Int(-1, CHUNK_SIZE, 0), nt);
-                this.SetTileDirect(new Vector2Int(cx - 1, cy + 1), new Vector3Int(CHUNK_SIZE, -1, 0), tileBase);
+                TileBase nt = this.TryGetTileFromChunk(cx - 1, cy + 1, chunkSize - 1, 0);
+                if (nt != null) this.SetTileDirect(chunkIndex, new Vector3Int(-1, chunkSize, 0), nt);
+                this.SetTileDirect(new Vector2Int(cx - 1, cy + 1), new Vector3Int(chunkSize, -1, 0), tileBase);
             }
 
-            if (lx == CHUNK_SIZE - 1 && ly == CHUNK_SIZE - 1)
+            if (lx == chunkSize - 1 && ly == chunkSize - 1)
             {
                 TileBase nt = this.TryGetTileFromChunk(cx + 1, cy + 1, 0, 0);
-                if (nt != null) this.SetTileDirect(chunkIndex, new Vector3Int(CHUNK_SIZE, CHUNK_SIZE, 0), nt);
+                if (nt != null) this.SetTileDirect(chunkIndex, new Vector3Int(chunkSize, chunkSize, 0), nt);
                 this.SetTileDirect(new Vector2Int(cx + 1, cy + 1), new Vector3Int(-1, -1, 0), tileBase);
             }
         }
@@ -400,10 +433,13 @@ namespace LAB2D.Map
         /// 全面同步所有 Chunk 边界：将每个 Chunk 的 4 条边 + 4 个角的瓦片
         /// 复制为相邻 Chunk 的幽灵瓦片，然后 RefreshTile 所有边界瓦片
         /// 使 Rule Tile 能跨 Chunk 重新评估。
+        ///
+        /// Phase 2 的 RefreshTile 会触发 Rule Tile 邻居评估，在 chunkSize 较大时
+        /// 耗时较长，因此按 Chunk 分帧 yield 避免卡死。
         /// </summary>
-        private void SyncAllChunkBorders()
+        private IEnumerator SyncAllChunkBordersCoroutine()
         {
-            // Phase 1: 为每个 Chunk 的边界放置幽灵瓦片
+            // Phase 1: 为每个 Chunk 的边界放置幽灵瓦片（只读 + SetTile，较快）
             foreach (var kv in this.chunkTilemaps)
             {
                 Vector2Int ci = kv.Key;
@@ -412,34 +448,52 @@ namespace LAB2D.Map
                 int cy = ci.y;
 
                 // 左/右边缘
-                for (int i = 0; i < CHUNK_SIZE; i++)
+                for (int i = 0; i < chunkSize; i++)
                 {
                     this.SyncBorderToNeighbor(ci, new Vector3Int(0, i, 0), tm.GetTile(new Vector3Int(0, i, 0)));
-                    this.SyncBorderToNeighbor(ci, new Vector3Int(CHUNK_SIZE - 1, i, 0), tm.GetTile(new Vector3Int(CHUNK_SIZE - 1, i, 0)));
+                    this.SyncBorderToNeighbor(ci, new Vector3Int(chunkSize - 1, i, 0), tm.GetTile(new Vector3Int(chunkSize - 1, i, 0)));
                 }
 
                 // 下/上边缘（跳过四角避免重复）
-                for (int i = 1; i < CHUNK_SIZE - 1; i++)
+                for (int i = 1; i < chunkSize - 1; i++)
                 {
                     this.SyncBorderToNeighbor(ci, new Vector3Int(i, 0, 0), tm.GetTile(new Vector3Int(i, 0, 0)));
-                    this.SyncBorderToNeighbor(ci, new Vector3Int(i, CHUNK_SIZE - 1, 0), tm.GetTile(new Vector3Int(i, CHUNK_SIZE - 1, 0)));
+                    this.SyncBorderToNeighbor(ci, new Vector3Int(i, chunkSize - 1, 0), tm.GetTile(new Vector3Int(i, chunkSize - 1, 0)));
                 }
             }
 
-            // Phase 2: 刷新所有 Chunk 的边界瓦片，使 Rule Tile 利用幽灵邻居重新评估
+            // Phase 2: 刷新所有 Chunk 的边界瓦片，使 Rule Tile 利用幽灵邻居重新评估。
+            // RefreshTile 触发 Rule Tile 邻居评估，每个 Chunk 边界有 ~4*chunkSize 个瓦片需要刷新。
+            // 在 chunkSize=250 时每 Chunk 约 1000 次刷新，按 Chunk 分帧避免卡死。
+            int chunkCount = 0;
             foreach (var kv in this.chunkTilemaps)
             {
                 Tilemap tm = kv.Value;
 
-                for (int i = 0; i < CHUNK_SIZE; i++)
+                for (int i = 0; i < chunkSize; i++)
                 {
                     tm.RefreshTile(new Vector3Int(0, i, 0));
-                    tm.RefreshTile(new Vector3Int(CHUNK_SIZE - 1, i, 0));
+                    tm.RefreshTile(new Vector3Int(chunkSize - 1, i, 0));
                     tm.RefreshTile(new Vector3Int(i, 0, 0));
-                    tm.RefreshTile(new Vector3Int(i, CHUNK_SIZE - 1, 0));
+                    tm.RefreshTile(new Vector3Int(i, chunkSize - 1, 0));
+                }
+
+                // 每处理完 4 个 Chunk 的 RefreshTile 就 yield 一帧
+                if (++chunkCount % 4 == 0)
+                {
+                    yield return null;
                 }
             }
         }
+
+        /// <summary>
+        /// 每帧处理的瓦片数 — 与总 Chunk 数成反比。
+        /// 16384 / (MaxChunksPerDim²)：
+        ///   1 chunk  → 16384 tiles/frame
+        ///   4 chunks →  4096 tiles/frame
+        ///  16 chunks →  1024 tiles/frame
+        /// </summary>
+        private const int TILES_PER_YIELD = 16384 / (MaxChunksPerDim * MaxChunksPerDim);
 
         /// <summary>
         /// 显示地图 — 通过 TerrainConfigDatabase 查找每个瓦片的资源名。
@@ -457,6 +511,13 @@ namespace LAB2D.Map
             int height = mapTiles.GetLength(0);
             int width = mapTiles.GetLength(1);
 
+            // 根据地图尺寸动态调整 chunkSize，保证最多 MaxChunksPerDim² 个 Chunk
+            this.ComputeChunkSize(height, width);
+
+            // 缓存已加载的 TileBase，避免重复调用 ResourceLoadProvider（地形类型通常在 10 种以内）
+            var tileCache = new Dictionary<string, TileBase>();
+
+            int tilesProcessed = 0;
             for (int i = 0; i < height; i++)
             {
                 for (int j = 0; j < width; j++)
@@ -466,13 +527,20 @@ namespace LAB2D.Map
                     string resourceName = db.GetTileResourceName(terrainId);
                     if (!string.IsNullOrEmpty(resourceName) && terrainId != 0)
                     {
-                        int cx = Mathf.FloorToInt((float)i / CHUNK_SIZE);
-                        int cy = Mathf.FloorToInt((float)j / CHUNK_SIZE);
+                        if (!tileCache.TryGetValue(resourceName, out TileBase tile))
+                        {
+                            tile = (TileBase)AWorkerTask.ResourceLoadProvider(resourceName);
+                            tileCache[resourceName] = tile;
+                        }
+
+                        int cx = Mathf.FloorToInt((float)i / chunkSize);
+                        int cy = Mathf.FloorToInt((float)j / chunkSize);
                         Vector3Int localPos = GetLocalPos(i, j, cx, cy);
-                        this.GetChunkForPos(i, j).SetTile(localPos, (TileBase)AWorkerTask.ResourceLoadProvider(resourceName));
+                        this.GetChunkForPos(i, j).SetTile(localPos, tile);
                     }
 
-                    if (Core.ServiceLocator.Get<FrameControl>().IsNeedStop(1))
+                    // 基于计数器的分帧，比 IsNeedStop(1) 更均匀、更可预测
+                    if (++tilesProcessed % TILES_PER_YIELD == 0)
                     {
                         yield return null;
                     }
@@ -480,9 +548,30 @@ namespace LAB2D.Map
             }
 
             // 同步所有 Chunk 边界幽灵瓦片，使 Rule Tile 能跨 Chunk 查询邻居
-            this.SyncAllChunkBorders();
+            yield return this.SyncAllChunkBordersCoroutine();
+
+            // 瓦片已全部就位，此时统一启用所有 Collider（一次性生成碰撞几何体，远快于逐瓦片重建）
+            this.EnableAllChunkColliders();
 
             WalkabilityCache.Invalidate();
+        }
+
+        /// <summary>
+        /// 统一启用所有 Chunk 的 TilemapCollider2D — 在所有瓦片和边界同步完成后调用。
+        /// </summary>
+        private void EnableAllChunkColliders()
+        {
+            foreach (Tilemap tm in this.chunkTilemaps.Values)
+            {
+                if (tm != null)
+                {
+                    var c = tm.GetComponent<TilemapCollider2D>();
+                    if (c != null)
+                    {
+                        c.enabled = true;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -745,7 +834,7 @@ namespace LAB2D.Map
             // 若瓦片位于 Chunk 边界，同步幽灵瓦片到相邻 Chunk
             int lx = localPos.x;
             int ly = localPos.y;
-            if (lx == 0 || lx == CHUNK_SIZE - 1 || ly == 0 || ly == CHUNK_SIZE - 1)
+            if (lx == 0 || lx == chunkSize - 1 || ly == 0 || ly == chunkSize - 1)
             {
                 this.SyncBorderToNeighbor(chunkIndex, localPos, tileBase);
             }

@@ -17,6 +17,18 @@ namespace LAB2D.Core.Seek
 
         public static bool IsInitialized => walkability != null;
 
+        /// <summary>
+        /// 应用退出时释放可步行性快照数组，帮助 GC 回收。
+        /// </summary>
+        public static void Clear()
+        {
+            walkability = null;
+            isBuilt = false;
+            width = 0;
+            height = 0;
+            mapInstanceId = 0;
+        }
+
         public static void Initialize(int newWidth, int newHeight, int newMapInstanceId)
         {
             if (walkability != null

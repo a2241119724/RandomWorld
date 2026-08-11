@@ -18,9 +18,15 @@
 		/// </summary>
 		public static UnityMainThreadDispatcher Instance { get; set; }
 
+		/// <summary>
+		/// 是否正在关闭 — OnDestroy 后置为 true，阻止后台线程继续入队。
+		/// </summary>
+		public static bool IsShuttingDown { get; private set; }
+
 		public void Awake()
 		{
 			Instance = this;
+			IsShuttingDown = false;
 		}
 
 		public void Update()
@@ -35,16 +41,49 @@
 		}
 
 		/// <summary>
+		/// 应用退出 / GameObject 销毁时，清空待执行队列，设置关闭标志。
+		/// 阻止后台线程（如 ASeek 寻路线程）在 Unity 对象销毁后
+		/// 继续调用 Enqueue/EnqueueAsync 导致挂起。
+		/// </summary>
+		public void OnDestroy()
+		{
+			IsShuttingDown = true;
+			Instance = null;
+
+			lock (ExecutionQueue)
+			{
+				ExecutionQueue.Clear();
+			}
+		}
+
+		/// <summary>
+		/// 应用退出时最早触发，提前停止所有后台寻路线程。
+		/// </summary>
+		public void OnApplicationQuit()
+		{
+			IsShuttingDown = true;
+			LAB2D.Core.Seek.ASeek.Shutdown();
+		}
+
+		/// <summary>
 		/// 入队
 		/// </summary>
 		/// <param name="action">任务</param>
 		public void Enqueue(IEnumerator action)
 		{
+			if (IsShuttingDown)
+			{
+				return;
+			}
+
 			lock (ExecutionQueue)
 			{
 				ExecutionQueue.Enqueue(() =>
 				{
-					this.StartCoroutine(action);
+					if (!IsShuttingDown)
+					{
+						this.StartCoroutine(action);
+					}
 				});
 			}
 		}
@@ -55,6 +94,11 @@
 		/// <param name="action">任务</param>
 		public void Enqueue(Action action)
 		{
+			if (IsShuttingDown)
+			{
+				return;
+			}
+
 			this.Enqueue(this.ActionWrapper(action));
 		}
 
@@ -65,6 +109,11 @@
 		/// <returns>执行任务</returns>
 		public Task EnqueueAsync(Action action)
 		{
+			if (IsShuttingDown)
+			{
+				return Task.CompletedTask;
+			}
+
 			var tcs = new TaskCompletionSource<bool>();
 
 			void WrappedAction()
