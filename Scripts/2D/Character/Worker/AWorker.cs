@@ -34,6 +34,10 @@ namespace LAB2D.Character.Worker
         /// </summary>
         public static readonly float ThresholdTired = 20.0f;
 
+        /// <inheritdoc/>
+        /// <remarks>Worker 获得每级 +5% 的属性加成（玩家的减半版本）。</remarks>
+        public override bool IsWorkerCharacter => true;
+
         /// <summary>
         /// Worker 放弃任务回调 — 清除资源预留并通知任务管理器。
         /// 默认实现访问 InventoryManager.Instance 和 WorkerTaskManager.Instance。
@@ -857,8 +861,8 @@ namespace LAB2D.Character.Worker
 
         private void OnCollisionStay2D(Collision2D collision)
         {
-            this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks);
-            if (this.collisionBugDetector.IsBug(this.name, 100))
+            this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks, this.transform.position);
+            if (this.collisionBugDetector.IsBug(this.name))
             {
                 this.collisionBugDetector.ColliderCount = 0; // 重置计数器，防止重复触发
 
@@ -879,6 +883,13 @@ namespace LAB2D.Character.Worker
                     }
 
                     workerData.BuildStuckRetryCount = 0;
+                }
+
+                // 放弃当前任务前记录失败点位，防止WorkerBrain立即重新选择同一目标
+                Vector3Int currentTarget = this.Seek.TargetMap;
+                if (currentTarget != Vector3Int.zero)
+                {
+                    ASeek.RecordFail(currentTarget);
                 }
 
                 this.GiveUpTask(); // 放弃当前任务，让WorkerBrain做新决策避开阻塞点

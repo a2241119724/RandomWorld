@@ -19,7 +19,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void ComputeFinalStats_NonPlayer_ReturnsBaseStatsUnchanged()
         {
             BattleStats baseStats = new BattleStats(10f, 5f, 3f, 2f, 0.1f, 1.5f, 2f, 1f);
-            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, null, null);
+            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, false, null, null);
             Assert.AreEqual(10f, result.ATN, 0.0001f);
             Assert.AreEqual(5f, result.INT, 0.0001f);
         }
@@ -28,7 +28,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void ComputeFinalStats_PlayerLevel1_AppliesLevelRatio()
         {
             BattleStats baseStats = new BattleStats(10f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
-            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, true, null, null);
+            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, true, false, null, null);
             Assert.AreEqual(11f, result.ATN, 0.0001f);
         }
 
@@ -36,7 +36,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void ComputeFinalStats_PlayerLevel5_AppliesHigherRatio()
         {
             BattleStats baseStats = new BattleStats(100f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
-            BattleStats result = this.service.ComputeFinalStats(baseStats, 5, true, null, null);
+            BattleStats result = this.service.ComputeFinalStats(baseStats, 5, true, false, null, null);
             Assert.AreEqual(150f, result.ATN, 0.0001f);
         }
 
@@ -45,7 +45,7 @@ namespace LAB2D.Editor.Tests.Domain
         {
             BattleStats baseStats = new BattleStats(10f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
             BattleStats weaponStats = new BattleStats(5f, 3f, 0f, 0f, 0f, 0f, 0f, 0f);
-            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, weaponStats, null);
+            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, false, weaponStats, null);
             Assert.AreEqual(15f, result.ATN, 0.0001f);
             Assert.AreEqual(3f, result.INT, 0.0001f);
         }
@@ -59,7 +59,7 @@ namespace LAB2D.Editor.Tests.Domain
                 new BattleStats(2f, 0f, 0f, 0f, 0f, 0f, 0f, 0f),
                 new BattleStats(3f, 0f, 0f, 0f, 0f, 0f, 0f, 0f),
             };
-            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, null, equipments);
+            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, false, null, equipments);
             Assert.AreEqual(15f, result.ATN, 0.0001f);
         }
 
@@ -74,7 +74,7 @@ namespace LAB2D.Editor.Tests.Domain
                 new BattleStats(0f, 5f, 0f, 10f, 0.01f, 0.3f, 0f, 3f),
             };
 
-            BattleStats result = this.service.ComputeFinalStats(baseStats, 3, true, weaponStats, equipments);
+            BattleStats result = this.service.ComputeFinalStats(baseStats, 3, true, false, weaponStats, equipments);
 
             float ratio = 1f + 3 * 0.1f;
             Assert.AreEqual(100f * ratio + 20f + 5f + 0f, result.ATN, 0.0001f);
@@ -85,7 +85,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void ComputeFinalStats_NullWeapon_NoEffect()
         {
             BattleStats baseStats = new BattleStats(10f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
-            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, null, null);
+            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, false, null, null);
             Assert.AreEqual(10f, result.ATN, 0.0001f);
         }
 
@@ -93,7 +93,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void ComputeFinalStats_NullEquipments_NoEffect()
         {
             BattleStats baseStats = new BattleStats(10f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
-            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, null, null);
+            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, false, null, null);
             Assert.AreEqual(10f, result.ATN, 0.0001f);
         }
 
@@ -102,7 +102,7 @@ namespace LAB2D.Editor.Tests.Domain
         {
             BattleStats baseStats = new BattleStats(10f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
             List<BattleStats> equipments = new List<BattleStats>();
-            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, null, equipments);
+            BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, false, null, equipments);
             Assert.AreEqual(10f, result.ATN, 0.0001f);
         }
     }

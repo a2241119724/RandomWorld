@@ -672,6 +672,7 @@ namespace LAB2D.Character.Worker
         /// 删除队列中所有与指定 Worker 相关的任务。
         /// Worker 死亡时调用，清理：悬赏发布、专属任务（Wear/Sleep/Exercise）、
         /// PickUp 目标所有、Carry(ToBoard) 指定执行者。
+        /// 同时退款所有待接取悬赏的托管资金。
         /// </summary>
         /// <param name="workerInstanceId">Worker 的 GameObject instance ID。</param>
         public void RemoveTasksForWorker(int workerInstanceId)
@@ -681,11 +682,69 @@ namespace LAB2D.Character.Worker
                 return;
             }
 
+            // 先收集并退款所有待接取悬赏的托管资金
+            var cm = Core.ServiceLocator.Get<Gameplay.CurrencyManager>();
+            // 尝试标准退款（Worker GameObject 可能还存活）
+            for (int p = 0; p < this.taskQueue.PriorityCount; p++)
+            {
+                foreach (var pair in this.taskQueue.GetTasksAtPriority(p))
+                {
+                    if (pair.Key is WorkerBountyTask bounty
+                        && bounty.OwnerWorkerId == workerInstanceId
+                        && bounty.BountyInfo.State == BountyState.Posted)
+                    {
+                        try
+                        {
+                            cm.RefundBounty(bounty.BountyInfo.IssuerWorkerId, bounty.BountyInfo.Reward);
+                        }
+                        catch (System.Exception e)
+                        {
+                            AWorkerTask.LogProvider(
+                                $"死亡Worker[{workerInstanceId}]悬赏退款失败: {e.Message}",
+                                LogManager.LogLevelEnum.Error);
+                        }
+                    }
+                }
+            }
+
+            // 释放剩余托管余额（RefundBounty 未处理的，例如已执行中的悬赏）
+            cm.ReleaseDeadIssuerEscrow(workerInstanceId);
+
             bool removed = this.taskQueue.RemoveWhere(task => task.OwnerWorkerId == workerInstanceId);
             if (removed)
             {
                 EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
             }
+        }
+
+        /// <summary>
+        /// 检查是否存在距离可接受的待接取悬赏（用于 Worker 决策时过滤过远悬赏）。
+        /// </summary>
+        /// <param name="workerPos">Worker 地图坐标。</param>
+        /// <param name="maxDistance">最大接受距离（格）。</param>
+        /// <returns>存在可用附近悬赏返回 true。</returns>
+        public bool HasNearbyBounty(Vector3IntLAB workerPos, float maxDistance)
+        {
+            Vector3 workerWorldPos = new Vector3(workerPos.X, workerPos.Y, 0);
+            for (int p = 0; p < this.taskQueue.PriorityCount; p++)
+            {
+                foreach (var pair in this.taskQueue.GetTasksAtPriority(p))
+                {
+                    if (pair.Key is WorkerBountyTask bounty
+                        && bounty.BountyInfo.State == BountyState.Posted)
+                    {
+                        Vector3 taskWorldPos = new Vector3(
+                            bounty.TargetMap.X, bounty.TargetMap.Y, 0);
+                        float distance = Vector3.Distance(workerWorldPos, taskWorldPos);
+                        if (distance <= maxDistance)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

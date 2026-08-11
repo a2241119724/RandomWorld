@@ -36,6 +36,11 @@ namespace LAB2D.Character
         public virtual bool IsPlayerCharacter => false;
 
         /// <summary>
+        /// Worker 子类重写为返回 true；用于等级属性加成（每级 +5%）。
+        /// </summary>
+        public virtual bool IsWorkerCharacter => false;
+
+        /// <summary>
         /// 移动速度
         /// </summary>
         public float MoveSpeed = 6f;
@@ -307,7 +312,7 @@ namespace LAB2D.Character
             if (result.LeveledUp)
             {
                 LevelUpTipProvider.Invoke("UP " + this.CharacterDataLAB.Level);
-                this.CharacterDataLAB.ComputeAttribute(this.basicAttribute, this.IsPlayerCharacter);
+                this.CharacterDataLAB.ComputeAttribute(this.basicAttribute, this.IsPlayerCharacter, this.IsWorkerCharacter);
             }
         }
 
@@ -462,7 +467,7 @@ namespace LAB2D.Character
                     this.character = value;
                     if (this.character != null)
                     {
-                        this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter);
+                        this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter, this.character.IsWorkerCharacter);
                     }
                 }
             }
@@ -479,7 +484,7 @@ namespace LAB2D.Character
                     this.weapon = value;
                     if (this.character != null)
                     {
-                        this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter);
+                        this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter, this.character.IsWorkerCharacter);
                     }
                 }
             }
@@ -534,7 +539,7 @@ namespace LAB2D.Character
 
                 if (this.character != null)
                 {
-                    this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter);
+                    this.ComputeAttribute(this.character.basicAttribute, this.character.IsPlayerCharacter, this.character.IsWorkerCharacter);
                 }
 
             }
@@ -544,7 +549,8 @@ namespace LAB2D.Character
             /// </summary>
             /// <param name="basicAttribute">角色基础属性（由 Character.basicAttribute 提供）。</param>
             /// <param name="isPlayer">是否为玩家角色 — 影响等级加成倍率。</param>
-            public void ComputeAttribute(Attribute basicAttribute, bool isPlayer)
+            /// <param name="isWorker">是否为 Worker — Worker 获得减半的等级加成。</param>
+            public void ComputeAttribute(Attribute basicAttribute, bool isPlayer, bool isWorker = false)
             {
                 BattleStats baseStats = ConvertAttributeToBattleStats(basicAttribute);
                 BattleStats? weaponBStats = null;
@@ -567,6 +573,7 @@ namespace LAB2D.Character
                     baseStats,
                     this.Level,
                     isPlayer,
+                    isWorker,
                     weaponBStats,
                     equipmentBStats);
 

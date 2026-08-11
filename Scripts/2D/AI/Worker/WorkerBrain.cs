@@ -117,6 +117,9 @@ namespace LAB2D.AI.Worker
         /// <summary>勤奋对接悬赏概率的加成</summary>
         public float DiligenceAcceptBountyBonus = 0.005f;
 
+        /// <summary>接取悬赏的最大距离（格），超过此距离拒绝接取。</summary>
+        public float MaxBountyAcceptDistance = 150.0f;
+
         // ---- 决策结果 ----
 
         /// <summary>
@@ -405,9 +408,10 @@ namespace LAB2D.AI.Worker
                 };
             }
 
-            // === 第3层：勤劳接单 ===
+            // === 第3层：勤劳接单（忽略过远悬赏） ===
             float acceptProb = this.CalculateAcceptBountyProbability(p);
-            if (p.Diligence > this.DiligenceThreshold && Random.value < acceptProb)
+            if (p.Diligence > this.DiligenceThreshold && Random.value < acceptProb
+                && this.HasNearbyBounty(worker))
                 return Decision.Make(WorkerDecisionType.AcceptBounty, $"勤奋({p.Diligence:F0})驱使接悬赏");
 
             // === 第4层：漫游或默认 ===
@@ -848,6 +852,20 @@ namespace LAB2D.AI.Worker
             baseProb += (p.Diligence - 50f) * this.DiligenceAcceptBountyBonus;
             baseProb += (p.Sociality - 50f) * 0.003f;
             return Mathf.Clamp01(baseProb);
+        }
+
+        /// <summary>
+        /// 检查是否有距离可接受的悬赏任务（距离 ≤ MaxBountyAcceptDistance）。
+        /// 避免 Worker 在大地图上跨越整张地图接悬赏。
+        /// </summary>
+        private bool HasNearbyBounty(AWorker worker)
+        {
+            var taskManager = Core.ServiceLocator.Get<WorkerTaskManager>();
+            if (taskManager == null) return false;
+
+            Vector3Int mapPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+            Vector3IntLAB workerPos = new Vector3IntLAB(mapPos.x, mapPos.y, mapPos.z);
+            return taskManager.HasNearbyBounty(workerPos, this.MaxBountyAcceptDistance);
         }
 
         // ---- 环境扫描 ----
@@ -1996,6 +2014,12 @@ namespace LAB2D.AI.Worker
             if (wd == null || wd.HomePosition != null) return; // 已有家
             if (wd.PlannedHomePosition != null) return;        // 已规划过
 
+            // 优先检查是否有遗弃的空床（死亡 Worker 留下的完整房间）
+            if (this.TryInheritAbandonedHome(worker, wd))
+            {
+                return;
+            }
+
             Vector3Int? pos = this.FindFreeBuildPosition(worker);
             if (pos.HasValue)
             {
@@ -2004,6 +2028,39 @@ namespace LAB2D.AI.Worker
                     $"{worker.name} 选定建家位置: ({pos.Value.x},{pos.Value.y})",
                     LogManager.LogLevelEnum.Debug);
             }
+        }
+
+        /// <summary>
+        /// 尝试继承遗弃的房间（死亡 Worker 留下）。如果遗弃房间结构完整，
+        /// 直接绑定 Worker 到该床，跳过建造流程。
+        /// </summary>
+        private bool TryInheritAbandonedHome(AWorker worker, AWorker.WorkerData wd)
+        {
+            var fm = Core.ServiceLocator.Get<FurnitureManager>();
+            if (fm == null) return false;
+
+            Vector3Int? abandonedBed = fm.GetAbandonedBedPosition();
+            if (!abandonedBed.HasValue) return false;
+
+            Vector3Int pos = abandonedBed.Value;
+
+            // 验证房间结构：床位置所在瓦片必须可站立
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            if (buildMap != null && !buildMap.IsCanReach(pos))
+            {
+                // 房间结构已损坏，清理无效的床记录
+                fm.BedToWorker.Remove(pos);
+                return false;
+            }
+
+            // 直接绑定 Worker 到遗弃床
+            fm.AddWorkerToBed(pos, worker);
+            wd.HomeBuildStage = 2; // 建造完成
+            wd.PlannedHomePosition = Vector3IntLAB.ToVector3IntLAB(pos);
+            AWorkerTask.LogProvider(
+                $"{worker.name} 继承遗弃房间: ({pos.x},{pos.y})，跳过建造流程",
+                LogManager.LogLevelEnum.Debug);
+            return true;
         }
 
         /// <summary>

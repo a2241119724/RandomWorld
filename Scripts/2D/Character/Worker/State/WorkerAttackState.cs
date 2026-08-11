@@ -58,16 +58,22 @@ namespace LAB2D.Character.Worker.State
         {
             base.OnUpdate();
 
-            // 若一段时间没有被攻击，那么回到寻路状态
+            // 超时退出：1.5秒足够完成 1-2 次攻击，避免剑光碰墙后持续无效攻击
             this.recordTime += this.Character.DeltaTime;
-            if (this.recordTime > 5)
+            if (this.recordTime > 1.5f)
             {
                 this.Character.Manager.ChangeState(TypeEnum.Seek);
                 return;
             }
 
-            AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
-            weaponObject.Attack();
+            if (this.Character.Weapon != null)
+            {
+                AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
+                if (weaponObject != null)
+                {
+                    weaponObject.Attack();
+                }
+            }
         }
 
         public override void OnExit()

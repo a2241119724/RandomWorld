@@ -138,10 +138,25 @@ namespace LAB2D.Character.Enemy.CommonEnemy
 
         private void OnCollisionStay2D(Collision2D collision)
         {
-            this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks);
-            if (this.collisionBugDetector.IsBug(this.name, 100) && this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Wander)
+            this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks, this.transform.position);
+            if (this.collisionBugDetector.IsBug(this.name))
             {
-                this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Wander);
+                this.collisionBugDetector.ColliderCount = 0; // 重置计数器，对齐 Worker 行为
+
+                ACommonEnemyState.TypeEnum currentState = this.Manager.CurrentStateType;
+
+                // Wander 状态：重新随机方向
+                if (currentState == ACommonEnemyState.TypeEnum.Wander)
+                {
+                    this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Wander);
+                }
+                // Chase/Attack/Seek 状态：切换到 Seek 重新搜索路径
+                else if (currentState == ACommonEnemyState.TypeEnum.Chase
+                    || currentState == ACommonEnemyState.TypeEnum.Attack
+                    || currentState == ACommonEnemyState.TypeEnum.Seek)
+                {
+                    this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Seek);
+                }
             }
         }
     }

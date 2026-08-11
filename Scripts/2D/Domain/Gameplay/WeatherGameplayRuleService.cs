@@ -28,6 +28,11 @@ namespace LAB2D.Domain.Gameplay
         private const float EnergyRecoverySnow = 0.86f;
         private const float EnergyRecoveryDefault = 1.05f;
 
+        // 工人疲劳衰减倍率常量（雨雪天加速疲劳，倾向于回家休息）
+        private const float FatigueDecayRain = 1.2f;
+        private const float FatigueDecaySnow = 1.5f;
+        private const float FatigueDecayDefault = 1.0f;
+
         /// <summary>
         /// 获取玩家移动速度倍率。
         /// </summary>
@@ -89,6 +94,22 @@ namespace LAB2D.Domain.Gameplay
                     return EnergyRecoverySnow;
                 default:
                     return EnergyRecoveryDefault;
+            }
+        }
+
+        /// <summary>
+        /// 获取工人疲劳衰减倍率（雨雪天加速疲劳）。
+        /// </summary>
+        public float GetFatigueDecayMultiplier(WeatherType weather)
+        {
+            switch (weather)
+            {
+                case WeatherType.Rain:
+                    return FatigueDecayRain;
+                case WeatherType.Snow:
+                    return FatigueDecaySnow;
+                default:
+                    return FatigueDecayDefault;
             }
         }
 

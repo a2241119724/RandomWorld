@@ -4,6 +4,7 @@ namespace LAB2D.Gameplay
     using LAB2D.Character.Worker;
     using LAB2D.Constant;
     using LAB2D.Domain.Common;
+    using LAB2D.Tool;
     using System.Collections.Generic;
 
     /// <summary>
@@ -38,12 +39,24 @@ namespace LAB2D.Gameplay
                         workerData.CurHungry - (deltaTime * WorkerConditionConstant.HungryDecayPerSecond * hungryTerrainMult));
                 }
 
-                // 疲劳值自然衰减
+                // 疲劳值自然衰减（受地形 + 天气影响，雨雪天加速）
                 if (workerData.CurTired > 0)
                 {
+                    float weatherMult = 1.0f;
+                    try
+                    {
+                        var weatherMgr = ServiceLocator.Get<WeatherManager>();
+                        if (weatherMgr != null)
+                        {
+                            weatherMult = WeatherGameplayTool.GetFatigueDecayMultiplier(weatherMgr.CurrentWeather);
+                        }
+                    }
+                    catch { /* 天气系统未注册时保持默认倍率 */ }
+
                     workerData.CurTired = System.Math.Max(
                         0.0f,
-                        workerData.CurTired - (deltaTime * WorkerConditionConstant.TiredDecayPerSecond * tiredTerrainMult));
+                        workerData.CurTired - (deltaTime * WorkerConditionConstant.TiredDecayPerSecond
+                            * tiredTerrainMult * weatherMult));
                 }
 
                 // 精气神自然衰减

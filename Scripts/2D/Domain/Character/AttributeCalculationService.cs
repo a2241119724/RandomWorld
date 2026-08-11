@@ -12,13 +12,18 @@ namespace LAB2D.Domain.Character
             BattleStats baseStats,
             int level,
             bool isPlayer,
-            BattleStats? weaponStats,
-            IReadOnlyList<BattleStats> equipmentStats)
+            bool isWorker = false,
+            BattleStats? weaponStats = null,
+            IReadOnlyList<BattleStats> equipmentStats = null)
         {
             float ratio = 1.0f;
             if (isPlayer)
             {
-                ratio += level * 0.1f;
+                ratio += level * 0.1f; // 玩家每级 +10%
+            }
+            else if (isWorker)
+            {
+                ratio += level * 0.05f; // Worker 每级 +5%（减半加成）
             }
 
             BattleStats result = baseStats * ratio;

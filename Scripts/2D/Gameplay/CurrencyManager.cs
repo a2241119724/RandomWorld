@@ -148,6 +148,63 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
+        /// 释放死亡 Worker 的托管资金，平均分配给其他存活 Worker。
+        /// Worker 死亡时调用，用于清理未被 RefundBounty 处理的托管余额。
+        /// </summary>
+        /// <param name="deadWorkerId">死亡 Worker 的 instance ID</param>
+        public void ReleaseDeadIssuerEscrow(int deadWorkerId)
+        {
+            if (!this.escrow.TryGetValue(deadWorkerId, out CurrencyAmount held) || held.Gold <= 0)
+            {
+                return;
+            }
+
+            this.escrow.Remove(deadWorkerId);
+
+            var workerManager = Core.ServiceLocator.Get<WorkerManager>();
+            if (workerManager == null)
+            {
+                return;
+            }
+
+            // 收集存活 Worker（排除死者自身）
+            var aliveWorkers = new List<AWorker>();
+            foreach (AWorker w in workerManager.Characters)
+            {
+                if (w != null && w.GetInstanceID() != deadWorkerId
+                    && w.CharacterDataLAB != null && w.CharacterDataLAB.Hp > 0)
+                {
+                    aliveWorkers.Add(w);
+                }
+            }
+
+            if (aliveWorkers.Count > 0)
+            {
+                CurrencyAmount share = new CurrencyAmount(held.Gold / aliveWorkers.Count);
+                foreach (AWorker w in aliveWorkers)
+                {
+                    AWorker.WorkerData wd = w.CharacterDataLAB as AWorker.WorkerData;
+                    if (wd != null)
+                    {
+                        wd.Wallet += share;
+                    }
+                }
+
+                AWorkerTask.LogProvider(
+                    $"死亡Worker[{deadWorkerId}]悬赏托管资金 {held} 已均分给 {aliveWorkers.Count} 个存活Worker",
+                    LogManager.LogLevelEnum.Info);
+            }
+            else
+            {
+                AWorkerTask.LogProvider(
+                    $"死亡Worker[{deadWorkerId}]悬赏托管资金 {held} 无法分配（无其他存活Worker）",
+                    LogManager.LogLevelEnum.Warning);
+            }
+
+            this.PublishTransaction(deadWorkerId, 0, held, "DeadEscrowRelease");
+        }
+
+        /// <summary>
         /// 获取 Worker 余额。
         /// </summary>
         /// <param name="worker">Worker 实例</param>

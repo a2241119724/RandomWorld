@@ -104,6 +104,23 @@ namespace LAB2D.Item
         }
 
         /// <summary>
+        /// 获取一个无主床（遗弃房间）的位置，供新 Worker 继承。
+        /// </summary>
+        /// <returns>第一个空床的位置，没有则返回 null</returns>
+        public Vector3Int? GetAbandonedBedPosition()
+        {
+            foreach (KeyValuePair<Vector3Int, AWorker> kv in this.BedToWorker)
+            {
+                if (kv.Value == null)
+                {
+                    return kv.Key;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// 通过床获取Worker
         /// </summary>
         /// <param name="posMap">位置</param>

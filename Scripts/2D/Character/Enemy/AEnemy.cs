@@ -8,7 +8,7 @@ namespace LAB2D.Character.Enemy
 
     public abstract class AEnemy : Character
     {
-        protected const float ChangeTarget = 3.0f; // 超过当前时间被攻击会被吸引仇恨
+        protected const float ChangeTarget = 5.0f; // 超过当前时间被攻击会被吸引仇恨（延长专注期避免频繁扭头）
         protected CharacterStatusUI statusBar; // 记录实例化血条
         private RaycastHit2D raycastHit2D; // 射线射中返回的结果
 
@@ -42,7 +42,27 @@ namespace LAB2D.Character.Enemy
                 "Player",
                 "Worker",
             };
-            this.basicAttribute = new Attribute(5.0f, 5.0f, 2.0f, 2.0f, 0.05f, 1.0f, 1.0f, 1.0f);
+            // 根据当前波次难度缩放敌人基础属性（波次越后敌人越强）
+            float difficultyScale = 1.0f;
+            try
+            {
+                var waveManager = Core.ServiceLocator.Get<Gameplay.WaveManager>();
+                if (waveManager != null)
+                {
+                    difficultyScale = Mathf.Max(1.0f, waveManager.CurrentDifficultyScale);
+                }
+            }
+            catch { /* WaveManager 未注册时保持基础属性 */ }
+            this.basicAttribute = new Attribute(
+                5.0f * difficultyScale,
+                5.0f * difficultyScale,
+                2.0f * difficultyScale,
+                2.0f * difficultyScale,
+                Mathf.Min(1.0f, 0.05f * difficultyScale),
+                1.0f * difficultyScale,
+                1.0f * difficultyScale,
+                1.0f * difficultyScale);
+
             this.CharacterDataLAB = new EnemyData();
             this.CharacterDataLAB.Character = this;
         }
@@ -124,6 +144,21 @@ namespace LAB2D.Character.Enemy
         public override void Attack()
         {
             throw new System.NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            string targetInfo = this.Target != null
+                ? $"Target: {this.Target.name}\n"
+                : string.Empty;
+            return base.ToString()
+                + targetInfo
+                + $"碰撞计数: {this.collisionBugDetector.ColliderCount}\n"
+                + $"听觉范围: {((EnemyData)this.CharacterDataLAB).SoundRange}\n"
+                + $"视觉范围: {((EnemyData)this.CharacterDataLAB).SightRange}/{((EnemyData)this.CharacterDataLAB).SightAngle}°\n"
+                + $"攻击范围: {((EnemyData)this.CharacterDataLAB).AttackRange}\n"
+                + $"子弹速度: {((EnemyData)this.CharacterDataLAB).BulletSpeed}\n";
         }
 
         /// <inheritdoc/>

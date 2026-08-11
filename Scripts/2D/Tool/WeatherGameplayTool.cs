@@ -63,6 +63,14 @@ namespace LAB2D.Tool
         }
 
         /// <summary>
+        /// 获取工人疲劳衰减倍率（雨雪天加速疲劳下降）。
+        /// </summary>
+        public static float GetFatigueDecayMultiplier(WeatherManager.WeatherTypeEnum weather)
+        {
+            return RuleService.GetFatigueDecayMultiplier(MapToDomain(weather));
+        }
+
+        /// <summary>
         /// 按倍率计算数值，并保证结果不低于最小值。
         /// </summary>
         /// <param name="baseValue">基础值。</param>

@@ -89,6 +89,20 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
         {
             if (this.recordTime >= this.attackInterval)
             {
+                // 视线检测：如果目标在墙后，跳过攻击避免剑光出生即碰墙消失
+                if (this.minDistanceCharacter != null)
+                {
+                    Vector3 direction = this.minDistanceCharacter.position - this.Head.position;
+                    float distance = direction.magnitude;
+                    RaycastHit2D hit = Physics2D.Raycast(this.Head.position, direction.normalized, distance,
+                        LayerMask.GetMask("Tile", "BuildTile"));
+                    if (hit.collider != null)
+                    {
+                        // 目标被墙壁遮挡，跳过本次攻击
+                        return;
+                    }
+                }
+
                 // 所有武器攻击效果
                 ParticleSystem particleSystem = ServiceLocator.Get<AttackEffectManager>().GetEffect(this.attackEffect, (this.transform.rotation.eulerAngles.z + 90) * MathHelper.Deg2Rad);
                 particleSystem.transform.parent = this.transform.parent.parent;

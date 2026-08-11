@@ -5,6 +5,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy
     using LAB2D.Constant;
     using LAB2D.Core.Seek;
     using Photon.Pun;
+    using System;
     using UnityEngine;
 
     public abstract class ASeekEnemy : AEnemy
@@ -107,6 +108,27 @@ namespace LAB2D.Character.Enemy.SeekEnemy
             }
 
             this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Dead); // 进入死亡状态
+        }
+
+        /// <summary>
+        /// 碰撞 Bug 检测：SeekEnemy 使用 A* 寻路，卡墙后停止当前移动并重新寻路。
+        /// </summary>
+        private void OnCollisionStay2D(Collision2D collision)
+        {
+            this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks, this.transform.position);
+            if (this.collisionBugDetector.IsBug(this.name))
+            {
+                this.collisionBugDetector.ColliderCount = 0; // 重置计数器
+
+                // 停止当前寻路，以当前 Target 为目标重新发起寻路
+                if (this.Seek != null && this.Target != null)
+                {
+                    this.Seek.StopMove();
+                    Vector3 targetPos = this.Target.transform.position;
+                    Vector3Int targetMap = AWorkerTask.TileMapWorldToMapProvider(targetPos);
+                    this.Seek.Seek(targetMap);
+                }
+            }
         }
 
         /// <summary>

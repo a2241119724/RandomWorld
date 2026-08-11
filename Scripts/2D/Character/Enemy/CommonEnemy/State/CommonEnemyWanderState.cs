@@ -61,11 +61,19 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                 }
             }
 
-            // 漫游
+            // 漫游：随机间隔和方向，过滤小角度变化避免"左右摇头"
             this.recordTime += this.Character.DeltaTime;
-            if (this.recordTime >= this.Character.RotateInterval)
+            float rotateInterval = Random.Range(12.0f, 18.0f); // 动态间隔
+            if (this.recordTime >= rotateInterval)
             {
-                this.rotationAngle = Random.Range(0.0f, 360.0f);
+                float newAngle = Random.Range(0.0f, 360.0f);
+                float angleDiff = Mathf.Abs(Mathf.DeltaAngle(this.rotationAngle, newAngle));
+                if (angleDiff < 30.0f)
+                {
+                    newAngle = (newAngle + 180.0f) % 360.0f; // 确保显著转向
+                }
+
+                this.rotationAngle = newAngle;
                 this.Character.MoveSpeed = Random.Range(4.5f, 6.0f);
                 this.recordTime = 0.0f;
             }
