@@ -184,6 +184,12 @@ namespace LAB2D.Character.Worker
             {
                 wd.LifeStage = Domain.Worker.WorkerLifeStage.Settled;
             }
+
+            // 初始化状态（从 Awake 移至此处，确保读档时 CharacterDataLAB 已被覆盖后再进入状态）
+            if (this.Manager.CurrentState == null)
+            {
+                this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+            }
         }
 
         public void Update()
@@ -198,7 +204,10 @@ namespace LAB2D.Character.Worker
 
             // 执行当前状态的函数（状态可能在 OnUpdate 中切换）
             AWorkerState.TypeEnum stateBefore = this.Manager.CurrentStateType;
-            this.Manager.CurrentState.OnUpdate();
+            if (this.Manager.CurrentState != null)
+            {
+                this.Manager.CurrentState.OnUpdate();
+            }
 
             // 脱离战斗时尝试使用血瓶
             if (stateBefore == AWorkerState.TypeEnum.Attack

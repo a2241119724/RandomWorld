@@ -118,7 +118,14 @@ namespace LAB2D.Character
             foreach (Character.CharacterData characterData in data)
             {
                 GameObject g = this.Create(Vector3LAB.ToVector3(characterData.Pos));
-                g.GetComponent<C>().CharacterDataLAB = characterData;
+                C character = g.GetComponent<C>();
+                character.CharacterDataLAB = characterData;
+
+                // 恢复名字（覆盖 Create 过程中随机生成的名字）
+                if (!string.IsNullOrEmpty(characterData.Name))
+                {
+                    character.name = characterData.Name;
+                }
             }
         }
 
@@ -130,6 +137,7 @@ namespace LAB2D.Character
             foreach (C character in this.Characters)
             {
                 character.CharacterDataLAB.Pos = Vector3LAB.ToVector3LAB(character.transform.position);
+                character.CharacterDataLAB.Name = character.name;
                 characterDatas.Add(character.CharacterDataLAB);
             }
 

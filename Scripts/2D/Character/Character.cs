@@ -372,6 +372,11 @@ namespace LAB2D.Character
             public long Id = 0;
 
             /// <summary>
+            /// 角色名称（持久化，用于跨存档识别）
+            /// </summary>
+            public string Name;
+
+            /// <summary>
             /// 血量
             /// </summary>
             public float Hp = 100;

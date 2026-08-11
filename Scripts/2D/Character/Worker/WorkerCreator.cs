@@ -12,7 +12,16 @@ namespace LAB2D.Character.Worker
         protected override GameObject DoCreate(Vector3 worldPos, string name, string layer)
         {
             GameObject g = base.DoCreate(worldPos, PrefabConstant.WORKER, LayerConstant.WORKER_LAYER);
-            g.name = Core.GameServices.NameGeneratorProvider();
+            string workerName = Core.GameServices.NameGeneratorProvider();
+            g.name = workerName;
+
+            // 持久化名字到 CharacterData，确保读档后 BuildMap.BuilderName 能匹配
+            AWorker worker = g.GetComponent<AWorker>();
+            if (worker?.CharacterDataLAB != null)
+            {
+                worker.CharacterDataLAB.Name = workerName;
+            }
+
             return g;
         }
     }

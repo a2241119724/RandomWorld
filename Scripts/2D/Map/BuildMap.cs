@@ -413,7 +413,30 @@ namespace LAB2D.Map
             WalkabilityCache.Invalidate();
             foreach (var posMap in this.BuildMapDataLAB.PosMap)
             {
-                this.DoDirectBuild(Vector3IntLAB.ToVector3Int(posMap.Key), (TileBase)AWorkerTask.ResourceLoadProvider(posMap.Value.Name));
+                Vector3Int pos = Vector3IntLAB.ToVector3Int(posMap.Key);
+                BuildTileData tileData = posMap.Value;
+                TileBase tile = (TileBase)AWorkerTask.ResourceLoadProvider(tileData.Name);
+                this.tilemap.SetTile(pos, tile);
+
+                if (tileData.IsComplete)
+                {
+                    // 已完成：全色 + 根据 IsPass 设置碰撞体
+                    this.tilemap.SetColor(pos, Color.white);
+                    BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileData.Name);
+                    if (buildItemData != null && !buildItemData.IsPass)
+                    {
+                        this.tilemap.SetColliderType(pos, Tile.ColliderType.Sprite);
+                    }
+                }
+                else
+                {
+                    // 未完成：半透明 + 无碰撞体
+                    this.tilemap.RemoveTileFlags(pos, TileFlags.LockColor);
+                    this.tilemap.SetColor(pos, this.initColor);
+                    this.tilemap.SetColliderType(pos, Tile.ColliderType.None);
+                }
+
+                WalkabilityCache.UpdateCell(pos);
             }
         }
 

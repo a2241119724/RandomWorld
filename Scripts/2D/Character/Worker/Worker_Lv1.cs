@@ -19,8 +19,7 @@ namespace LAB2D.Character.Worker
             this.Manager.AddState(AWorkerState.TypeEnum.Escape, new WorkerEscapeState(this));
             this.Manager.AddState(AWorkerState.TypeEnum.Dead, new WorkerDeadState(this));
 
-            // 初始化状态
-            this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+            // 初始化状态 — 移至 Start()，确保读档时 CharacterDataLAB 已被覆盖后再进入状态
         }
     }
 }
