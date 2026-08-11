@@ -1,6 +1,7 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D;
+    using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Wave;
     using LAB2D.UnityAdapter;
@@ -18,7 +19,7 @@ namespace LAB2D.Gameplay
     ///   3. Editor 菜单：工具 > 波次管理 > 开始波次 / 停止波次
     ///   4. 不需要波次时调用 StopWaves() 恢复默认的固定间隔生成模式
     /// </summary>
-    public class WaveManager : Singleton<WaveManager>, IWaveStateProvider
+    public class WaveManager : ASingletonSaveData<WaveManager>, IWaveStateProvider
     {
         /// <summary>
         /// 波次配置
@@ -369,6 +370,75 @@ namespace LAB2D.Gameplay
                 TotalWaves = this.Config.totalWaves,
                 DifficultyScalePerWave = this.Config.difficultyScalePerWave,
             };
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            WaveManagerData data = new WaveManagerData
+            {
+                CurrentWaveIndex = this.CurrentWaveIndex,
+                TotalWavesCompleted = this.TotalWavesCompleted,
+                EnemiesAliveBeforeWave = this.runtimeState.EnemiesAliveBeforeWave,
+                EnemiesSpawnedThisWave = this.runtimeState.EnemiesSpawnedThisWave,
+                IsWaveActive = this.IsWaveActive,
+                IsResting = this.IsResting,
+            };
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), data);
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            WaveManagerData data = DataTool.LoadDataByBinary<WaveManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null)
+            {
+                return;
+            }
+
+            // 恢复运行时状态：如果是波次进行中，视为已完成该波次（防止读档后重复生成敌人）
+            int totalWavesCompleted = data.TotalWavesCompleted;
+            bool isWaveActive = data.IsWaveActive;
+            if (isWaveActive)
+            {
+                totalWavesCompleted++;
+                isWaveActive = false;
+            }
+
+            this.runtimeState.RestoreFrom(
+                data.CurrentWaveIndex,
+                totalWavesCompleted,
+                data.EnemiesAliveBeforeWave,
+                data.EnemiesSpawnedThisWave,
+                isWaveActive,
+                false); // 读档时不在休息状态
+            this.SyncPublicStateFromRuntime();
+
+            // 如果之前已经启动过波次系统，读档后自动恢复
+            if (totalWavesCompleted > 0)
+            {
+                this.sceneAdapter.SetWaveControlEnabled(true);
+                Core.GameServices.AsyncProgressCompleteProvider(() =>
+                {
+                    this.waveCoroutine = this.timeScheduler.Start(this.WaveLoop());
+                });
+            }
+        }
+
+        /// <summary>
+        /// 波次管理存档数据
+        /// </summary>
+        [Serializable]
+        public class WaveManagerData
+        {
+            public int CurrentWaveIndex;
+            public int TotalWavesCompleted;
+            public int EnemiesAliveBeforeWave;
+            public int EnemiesSpawnedThisWave;
+            public bool IsWaveActive;
+            public bool IsResting;
         }
 
     }

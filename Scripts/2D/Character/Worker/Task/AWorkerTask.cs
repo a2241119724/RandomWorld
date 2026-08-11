@@ -408,6 +408,23 @@ namespace LAB2D.Character.Worker.Task
         public long TaskId { get; set; }
 
         /// <summary>
+        /// 任务最后一次因目标不可达而失败的时间戳（0=从未失败）。
+        /// 设置后任务进入冷却期，冷却期内不会被分配；冷却结束后可被其他 Worker 重试。
+        /// </summary>
+        public float LastFailedTime { get; set; }
+
+        /// <summary>
+        /// 任务失败后冷却时长（秒），冷却期内任务不会被分配。
+        /// </summary>
+        public const float FailedCooldownSeconds = 10f;
+
+        /// <summary>
+        /// 是否处于冷却期（冷却期内任务不可被任何 Worker 接取）。
+        /// </summary>
+        public bool IsInCooldown => this.LastFailedTime > 0
+            && UnityEngine.Time.time - this.LastFailedTime < FailedCooldownSeconds;
+
+        /// <summary>
         /// 目标位置, 仅用于阶段性目标
         /// </summary>
         public virtual Vector3IntLAB TargetMap { get; protected set; }

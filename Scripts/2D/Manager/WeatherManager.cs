@@ -2,14 +2,15 @@ namespace LAB2D.Manager
 {
     using LAB2D;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Data;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
-    /// 天气管理
+    /// 天气管理（AMonoSaveData）。
     /// </summary>
-    public class WeatherManager : MonoBehaviour
+    public class WeatherManager : AMonoSaveData
     {
         private readonly Dictionary<WeatherTypeEnum, GameObject> weathers = new ();
         private WeatherTypeEnum currentWeather = WeatherTypeEnum.Sunny;
@@ -123,6 +124,40 @@ namespace LAB2D.Manager
             {
                 this.transform.GetChild(i).localScale = new Vector3(rate, rate, 1);
             }
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            WeatherManagerData data = new WeatherManagerData
+            {
+                CurrentWeather = (int)this.currentWeather,
+            };
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), data);
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            WeatherManagerData data = DataTool.LoadDataByBinary<WeatherManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null)
+            {
+                return;
+            }
+
+            WeatherTypeEnum loadedWeather = (WeatherTypeEnum)data.CurrentWeather;
+            if (this.weathers.ContainsKey(loadedWeather))
+            {
+                this.SetWeather(loadedWeather, false);
+            }
+        }
+
+        [Serializable]
+        public class WeatherManagerData
+        {
+            public int CurrentWeather;
         }
     }
 }

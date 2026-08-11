@@ -3,13 +3,14 @@ namespace LAB2D.AI.Dialogue.Memory
     using LAB2D;
     using LAB2D.AI.Dialogue.LLM;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Data;
     using System;
     using System.Collections.Generic;
 
     /// <summary>
-    /// 对话记忆管理器，管理短期和长期记忆
+    /// 对话记忆管理器，管理短期和长期记忆（ASingletonSaveData）。
     /// </summary>
-    public class DialogueMemoryManager : Singleton<DialogueMemoryManager>
+    public class DialogueMemoryManager : ASingletonSaveData<DialogueMemoryManager>
     {
         /// <summary>
         /// 触发长期记忆压缩的轮数阈值
@@ -114,6 +115,145 @@ namespace LAB2D.AI.Dialogue.Memory
             AWorkerTask.LogProvider(
                 "DialogueMemoryManager: NPC " + npcId + " 触发长期记忆压缩",
                 LogManager.LogLevelEnum.Info);
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            DialogueMemoryManagerData data = new DialogueMemoryManagerData();
+
+            // 保存短期记忆
+            foreach (KeyValuePair<string, ShortTermMemory> kv in this.shortTermMemories)
+            {
+                List<ChatMessage> messages = kv.Value.GetAllMessages();
+                if (messages.Count > 0)
+                {
+                    data.ShortTermEntries.Add(new ShortTermMemoryEntry
+                    {
+                        NpcId = kv.Key,
+                        Messages = messages,
+                    });
+                }
+            }
+
+            // 保存长期记忆
+            foreach (KeyValuePair<string, List<LongTermMemorySummary>> kv in this.longTermSummaries)
+            {
+                foreach (LongTermMemorySummary summary in kv.Value)
+                {
+                    data.LongTermEntries.Add(new LongTermMemoryEntry
+                    {
+                        NpcId = kv.Key,
+                        SummaryText = summary.summaryText,
+                        KeyTopics = summary.keyTopics ?? new List<string>(),
+                        CreatedAt = summary.createdAt,
+                        ExchangeCountCovered = summary.exchangeCountCovered,
+                    });
+                }
+            }
+
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), data);
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            DialogueMemoryManagerData data = DataTool.LoadDataByBinary<DialogueMemoryManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null)
+            {
+                return;
+            }
+
+            // 恢复短期记忆
+            this.shortTermMemories.Clear();
+            if (data.ShortTermEntries != null)
+            {
+                foreach (ShortTermMemoryEntry entry in data.ShortTermEntries)
+                {
+                    if (entry.Messages == null || entry.Messages.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    ShortTermMemory stm = new ShortTermMemory();
+                    foreach (ChatMessage msg in entry.Messages)
+                    {
+                        if (msg != null && !string.IsNullOrEmpty(msg.role))
+                        {
+                            if (msg.role == "user")
+                            {
+                                // 需要成对添加 — 先收集 user，等待 assistant
+                                string playerText = msg.content;
+                                // 简单方案：按顺序重放（每两个消息为一轮）
+                            }
+                        }
+                    }
+
+                    // 按轮次重建（每两个消息为 user + assistant 一轮）
+                    List<ChatMessage> msgs = entry.Messages;
+                    for (int i = 0; i + 1 < msgs.Count; i += 2)
+                    {
+                        ChatMessage userMsg = msgs[i];
+                        ChatMessage assistantMsg = msgs[i + 1];
+                        if (userMsg != null && assistantMsg != null
+                            && userMsg.role == "user" && assistantMsg.role == "assistant")
+                        {
+                            stm.AddExchange(userMsg.content, assistantMsg.content);
+                        }
+                    }
+
+                    this.shortTermMemories[entry.NpcId] = stm;
+                }
+            }
+
+            // 恢复长期记忆
+            this.longTermSummaries.Clear();
+            if (data.LongTermEntries != null)
+            {
+                foreach (LongTermMemoryEntry entry in data.LongTermEntries)
+                {
+                    if (!this.longTermSummaries.TryGetValue(entry.NpcId, out List<LongTermMemorySummary> list))
+                    {
+                        list = new List<LongTermMemorySummary>();
+                        this.longTermSummaries[entry.NpcId] = list;
+                    }
+
+                    list.Add(new LongTermMemorySummary
+                    {
+                        npcId = entry.NpcId,
+                        summaryText = entry.SummaryText,
+                        keyTopics = entry.KeyTopics ?? new List<string>(),
+                        createdAt = entry.CreatedAt,
+                        exchangeCountCovered = entry.ExchangeCountCovered,
+                    });
+                }
+            }
+        }
+
+        [Serializable]
+        public class DialogueMemoryManagerData
+        {
+            public List<ShortTermMemoryEntry> ShortTermEntries = new List<ShortTermMemoryEntry>();
+            public List<LongTermMemoryEntry> LongTermEntries = new List<LongTermMemoryEntry>();
+        }
+
+        [Serializable]
+        public class ShortTermMemoryEntry
+        {
+            public string NpcId;
+            public List<ChatMessage> Messages = new List<ChatMessage>();
+        }
+
+        [Serializable]
+        public class LongTermMemoryEntry
+        {
+            public string NpcId;
+            public string SummaryText;
+            public List<string> KeyTopics = new List<string>();
+            public string CreatedAt;
+            public int ExchangeCountCovered;
         }
     }
 }

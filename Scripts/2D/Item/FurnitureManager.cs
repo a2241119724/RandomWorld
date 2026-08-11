@@ -2,14 +2,16 @@ namespace LAB2D.Item
 {
     using LAB2D;
     using LAB2D.Character.Worker;
+    using LAB2D.Data;
     using LAB2D.Serializable;
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
-    /// 家具管理
+    /// 家具管理（ASingletonSaveData）。
     /// </summary>
-    public class FurnitureManager : Singleton<FurnitureManager>
+    public class FurnitureManager : ASingletonSaveData<FurnitureManager>
     {
         /// <summary>
         /// Worker与床绑定
@@ -114,6 +116,87 @@ namespace LAB2D.Item
             }
 
             return this.BedToWorker[posMap];
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            FurnitureManagerData data = new FurnitureManagerData();
+
+            foreach (KeyValuePair<Vector3Int, AWorker> kv in this.BedToWorker)
+            {
+                data.Beds.Add(new BedEntry
+                {
+                    PosX = kv.Key.x,
+                    PosY = kv.Key.y,
+                    PosZ = kv.Key.z,
+                    // 保存绑定的 Worker 名称（用于读档后重建绑定）
+                    WorkerName = kv.Value != null ? kv.Value.name : string.Empty,
+                });
+            }
+
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), data);
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            FurnitureManagerData data = DataTool.LoadDataByBinary<FurnitureManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null || data.Beds == null)
+            {
+                return;
+            }
+
+            foreach (BedEntry entry in data.Beds)
+            {
+                Vector3Int pos = new Vector3Int(entry.PosX, entry.PosY, entry.PosZ);
+                this.AddBed(pos);
+
+                // 尝试重建 Worker 绑定
+                if (!string.IsNullOrEmpty(entry.WorkerName))
+                {
+                    AWorker worker = this.FindWorkerByName(entry.WorkerName);
+                    if (worker != null)
+                    {
+                        this.BedToWorker[pos] = worker;
+                        worker.BedItem = new SingleBed();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 通过名称查找 Worker（用于读档恢复绑定）。
+        /// </summary>
+        private AWorker FindWorkerByName(string workerName)
+        {
+            List<AWorker> workers = Core.ServiceLocator.Get<WorkerManager>().Characters;
+            foreach (AWorker w in workers)
+            {
+                if (w != null && w.name == workerName)
+                {
+                    return w;
+                }
+            }
+
+            return null;
+        }
+
+        [Serializable]
+        public class FurnitureManagerData
+        {
+            public List<BedEntry> Beds = new List<BedEntry>();
+        }
+
+        [Serializable]
+        public class BedEntry
+        {
+            public int PosX;
+            public int PosY;
+            public int PosZ;
+            public string WorkerName;
         }
     }
 }

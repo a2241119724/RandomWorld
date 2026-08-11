@@ -54,6 +54,7 @@ namespace LAB2D
             ServiceLocator.Register(FrameControl.Instance);
             ServiceLocator.Register(NameGenerator.Instance);
             ServiceLocator.Register(EnvironmentManager.Instance);
+            ServiceLocator.Register(GameTimeManager.Instance);
             // IGameTime + IGameLogger 必须在任何可能访问时间的 Singleton 之前注册。
             // UnityGameTime 仅封装 UnityEngine.Time，无场景依赖，可在 BeforeSceneLoad 安全注册。
             ServiceLocator.Register<IGameTime>(new UnityGameTime());

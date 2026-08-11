@@ -191,6 +191,20 @@ namespace LAB2D.Domain.Inventory
             return this.cellsByPos.ContainsKey(position);
         }
 
+        /// <summary>
+        /// 获取所有非空格子（用于存档）。
+        /// </summary>
+        public IEnumerable<KeyValuePair<GameGridPosition, InventoryCell>> GetAllNonEmptyCells()
+        {
+            foreach (KeyValuePair<GameGridPosition, InventoryCell> pair in this.cellsByPos)
+            {
+                if (!pair.Value.IsEmpty)
+                {
+                    yield return pair;
+                }
+            }
+        }
+
         private void AddToIndex(int itemId, GameGridPosition position)
         {
             if (!this.positionsById.TryGetValue(itemId, out List<GameGridPosition> list))

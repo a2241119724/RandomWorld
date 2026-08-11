@@ -3,6 +3,7 @@ namespace LAB2D.Domain.Worker
     /// <summary>
     /// 工人任务疲劳和进度的纯算术。
     /// </summary>
+    [System.Serializable]
     public sealed class WorkerTaskProgressService
     {
         public float ApplyTiredCost(float currentTired, float deltaTime, float tiredCostPerSecond)

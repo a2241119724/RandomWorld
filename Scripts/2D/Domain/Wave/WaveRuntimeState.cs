@@ -79,5 +79,26 @@ namespace LAB2D.Domain.Wave
             this.IsWaveActive = false;
             this.IsResting = false;
         }
+
+        /// <summary>
+        /// 从存档恢复运行时状态（仅 WaveManager 调用）。
+        /// </summary>
+        public void RestoreFrom(
+            int currentWaveIndex,
+            int totalWavesCompleted,
+            int enemiesAliveBeforeWave,
+            int enemiesSpawnedThisWave,
+            bool isWaveActive,
+            bool isResting)
+        {
+            this.CurrentWaveIndex = currentWaveIndex;
+            this.TotalWavesCompleted = totalWavesCompleted;
+            this.EnemiesAliveBeforeWave = enemiesAliveBeforeWave;
+            this.EnemiesSpawnedThisWave = enemiesSpawnedThisWave;
+            this.IsWaveActive = isWaveActive;
+            this.IsResting = isResting;
+            this.EnemiesAliveInWave = 0;
+            this.EnemiesDefeatedInWave = 0;
+        }
     }
 }

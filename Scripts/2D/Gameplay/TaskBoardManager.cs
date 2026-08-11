@@ -3,9 +3,11 @@ namespace LAB2D.Gameplay
     using LAB2D;
     using LAB2D.Character.Worker;
     using LAB2D.Core;
+    using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Map;
     using LAB2D.Serializable;
+    using System;
     using System.Collections.Generic;
     using System.Text;
     using UnityEngine;
@@ -19,7 +21,7 @@ namespace LAB2D.Gameplay
     /// - 提供任务栏四周的相邻位置（用于 Carry(ToBoard) / PickUp 寻路目标）
     /// - 提供物品存取接口
     /// </summary>
-    public class TaskBoardManager : Singleton<TaskBoardManager>
+    public class TaskBoardManager : ASingletonSaveData<TaskBoardManager>
     {
         /// <summary>搜索初始化位置的最大半径</summary>
         private const int DeliverySearchRadius = 15;
@@ -221,6 +223,94 @@ namespace LAB2D.Gameplay
             {
                 return $"item_{itemId}";
             }
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            TaskBoardManagerData data = new TaskBoardManagerData
+            {
+                BoardPosX = this.BoardPosition.x,
+                BoardPosY = this.BoardPosition.y,
+                BoardPosZ = this.BoardPosition.z,
+            };
+
+            foreach (KeyValuePair<int, List<ResourceInfo>> kv in this.deliveredItems)
+            {
+                foreach (ResourceInfo ri in kv.Value)
+                {
+                    data.DeliveredItems.Add(new DeliveredItemEntry
+                    {
+                        OwnerId = kv.Key,
+                        ItemId = ri.Id,
+                        Count = ri.Count,
+                    });
+                }
+            }
+
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), data);
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            TaskBoardManagerData data = DataTool.LoadDataByBinary<TaskBoardManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null)
+            {
+                return;
+            }
+
+            // 恢复任务栏位置
+            if (data.BoardPosX != 0 || data.BoardPosY != 0)
+            {
+                this.BoardPosition = new Vector3Int(data.BoardPosX, data.BoardPosY, data.BoardPosZ);
+                // 重建任务栏图标（InitPosition 会因 IsInitialized=true 跳过）
+                this.PlaceBoardIcon(this.BoardPosition);
+            }
+
+            // 恢复已交付物品
+            this.deliveredItems.Clear();
+            if (data.DeliveredItems != null)
+            {
+                foreach (DeliveredItemEntry entry in data.DeliveredItems)
+                {
+                    if (!this.deliveredItems.TryGetValue(entry.OwnerId, out List<ResourceInfo> list))
+                    {
+                        list = new List<ResourceInfo>();
+                        this.deliveredItems[entry.OwnerId] = list;
+                    }
+
+                    // 同 ID 合并
+                    ResourceInfo existing = list.Find(r => r.Id == entry.ItemId);
+                    if (existing != null)
+                    {
+                        existing.Count += entry.Count;
+                    }
+                    else
+                    {
+                        list.Add(new ResourceInfo(entry.ItemId, entry.Count, entry.OwnerId));
+                    }
+                }
+            }
+        }
+
+        [Serializable]
+        public class TaskBoardManagerData
+        {
+            public int BoardPosX;
+            public int BoardPosY;
+            public int BoardPosZ;
+            public List<DeliveredItemEntry> DeliveredItems = new List<DeliveredItemEntry>();
+        }
+
+        [Serializable]
+        public class DeliveredItemEntry
+        {
+            public int OwnerId;
+            public int ItemId;
+            public int Count;
         }
     }
 }

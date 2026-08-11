@@ -15,30 +15,34 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         private Text gameTime;
         private Light2D globalLight; // 白天黑天显示
         private Transform pointer; // 指针
-        private double curGameTime;
+
+        private GameTimeManager gameTimeManager;
 
         public void Awake()
         {
             this.gameTime = LAB2D.Tool.Tool.GetComponentInChildren<Text>(this.gameObject, "Text");
             this.globalLight = GameObject.FindGameObjectWithTag(TagConstant.GLOBAL_LIGHT_TAG).GetComponent<Light2D>();
             this.pointer = LAB2D.Tool.Tool.GetComponentInChildren<Image>(this.gameObject, "Pointer").transform;
+            this.gameTimeManager = GameTimeManager.Instance;
         }
 
         public void Update()
         {
             // 根据真实游戏时间换算成30分钟一天对应的时间
-            int last = (int)(this.curGameTime / GlobalData.GameDayTime);
-            this.curGameTime += Time.deltaTime;
-            if (last != (int)(this.curGameTime / GlobalData.GameDayTime))
+            double curGameTime = this.gameTimeManager.CurGameTime;
+            int last = (int)(curGameTime / GlobalData.GameDayTime);
+            curGameTime += Time.deltaTime;
+            this.gameTimeManager.CurGameTime = curGameTime;
+            if (last != (int)(curGameTime / GlobalData.GameDayTime))
             {
                 // 每天开始随机天气
                 ServiceLocator.Get<WeatherManager>().RandWeather();
             }
 
-            double time = this.curGameTime * this.rate;
+            double time = curGameTime * this.rate;
 
             // 将sin函数转为周期为1的函数
-            this.globalLight.intensity = MathHelper.Clamp((float)System.Math.Sin(((float)this.curGameTime / GlobalData.GameDayTime * 6.2624f) - 1.55f) + 0.7f, 0.4f, 0.8f);
+            this.globalLight.intensity = MathHelper.Clamp((float)System.Math.Sin(((float)curGameTime / GlobalData.GameDayTime * 6.2624f) - 1.55f) + 0.7f, 0.4f, 0.8f);
             this.gameTime.text = string.Format(
                 "<color=" + PixelUITheme.RichPink + ">游戏时间: </color>{0:D2}天{1:D2}时{2:D2}分",
                 (int)time / DayTime,

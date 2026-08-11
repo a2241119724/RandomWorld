@@ -4,16 +4,18 @@ namespace LAB2D.Item
     using LAB2D.Core;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Inventory;
     using LAB2D.UnityAdapter;
     using LAB2D.Item;
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using UnityEngine;
 
     /// <summary>
-    /// 仓库管理（Singleton）。
+    /// 仓库管理（ASingletonSaveData）。
     ///
     /// 本轮改造（v2）：
     ///   - 内部数据存储已从 3 个并行 Dictionary 迁移到 Domain/InventoryService（包装 InventoryGrid）
@@ -23,7 +25,7 @@ namespace LAB2D.Item
     ///   - 所有 public API 签名保持不变，调用方无需修改
     ///   - Vector3Int ↔ GameGridPosition 转换在方法边界通过 UnityVectorAdapter 完成
     /// </summary>
-    public class InventoryManager : Singleton<InventoryManager>
+    public class InventoryManager : ASingletonSaveData<InventoryManager>
     {
         internal static System.Action<IGameEvent> EventBusPublishProvider { get; set; }
             = (e) => ServiceLocator.Get<EventBus>().PublishInternal(e);
@@ -1000,6 +1002,111 @@ namespace LAB2D.Item
             int ownerId = this.GetOwner(pos);
             if (ownerId == 0) return "无主(Player)";
             return WorkerNameProvider(ownerId);
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            InventoryManagerData data = new InventoryManagerData();
+
+            if (this.inventoryService != null)
+            {
+                data.GridWidth = this.inventoryService.GridWidth;
+                data.GridHeight = this.inventoryService.GridHeight;
+
+                foreach (KeyValuePair<GameGridPosition, InventoryCell> pair in this.inventoryService.GetAllNonEmptyCells())
+                {
+                    data.Cells.Add(new CellEntry
+                    {
+                        PosX = pair.Key.X,
+                        PosY = pair.Key.Y,
+                        PosZ = pair.Key.Z,
+                        ItemId = pair.Value.ItemId,
+                        Count = pair.Value.Count,
+                        Capacity = pair.Value.Capacity,
+                    });
+                }
+            }
+
+            foreach (KeyValuePair<Vector3Int, int> kv in this.cellOwners)
+            {
+                data.CellOwners.Add(new OwnerEntry
+                {
+                    PosX = kv.Key.x,
+                    PosY = kv.Key.y,
+                    PosZ = kv.Key.z,
+                    OwnerId = kv.Value,
+                });
+            }
+
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), data);
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            InventoryManagerData data = DataTool.LoadDataByBinary<InventoryManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null)
+            {
+                return;
+            }
+
+            // 确保库存服务已初始化
+            this.EnsureInventoryService(
+                data.GridWidth > 0 ? data.GridWidth : 10,
+                data.GridHeight > 0 ? data.GridHeight : 7);
+
+            // 恢复有物品的格子
+            if (data.Cells != null)
+            {
+                foreach (CellEntry entry in data.Cells)
+                {
+                    GameGridPosition pos = new GameGridPosition(entry.PosX, entry.PosY, entry.PosZ);
+                    this.inventoryService.EnsureCell(pos, entry.Capacity);
+                    this.inventoryService.AddItem(pos, entry.ItemId, entry.Count);
+                }
+            }
+
+            // 恢复格子所有权
+            this.cellOwners.Clear();
+            if (data.CellOwners != null)
+            {
+                foreach (OwnerEntry entry in data.CellOwners)
+                {
+                    this.cellOwners[new Vector3Int(entry.PosX, entry.PosY, entry.PosZ)] = entry.OwnerId;
+                }
+            }
+        }
+
+        [Serializable]
+        public class InventoryManagerData
+        {
+            public int GridWidth;
+            public int GridHeight;
+            public List<CellEntry> Cells = new List<CellEntry>();
+            public List<OwnerEntry> CellOwners = new List<OwnerEntry>();
+        }
+
+        [Serializable]
+        public class CellEntry
+        {
+            public int PosX;
+            public int PosY;
+            public int PosZ;
+            public int ItemId;
+            public int Count;
+            public int Capacity;
+        }
+
+        [Serializable]
+        public class OwnerEntry
+        {
+            public int PosX;
+            public int PosY;
+            public int PosZ;
+            public int OwnerId;
         }
     }
 }

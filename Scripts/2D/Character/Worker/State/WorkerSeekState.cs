@@ -72,6 +72,11 @@ namespace LAB2D.Character.Worker.State
                 if (closedPos == default)
                 {
                     AWorkerTask.LogProvider($"{workerData.Task.TaskType}, 没有邻居位置! workerPos=({posMap.x},{posMap.y}) targetMap=({this.targetMap.x},{this.targetMap.y})", LogManager.LogLevelEnum.Warning);
+
+                    // 标记任务失败时间，进入冷却期（10s），防止立即被重新分配形成死循环。
+                    // 冷却结束后其他 Worker 可能可达（障碍物消失/位置变更），不永久删除。
+                    workerData.Task.LastFailedTime = UnityEngine.Time.time;
+
                     this.Character.GiveUpTask();
                     return;
                 }

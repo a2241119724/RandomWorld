@@ -337,6 +337,30 @@ namespace LAB2D.Domain.Inventory
             get { return this.managerName; }
         }
 
+        /// <summary>
+        /// 获取所有非空格子（用于存档）。
+        /// </summary>
+        public IEnumerable<KeyValuePair<GameGridPosition, InventoryCell>> GetAllNonEmptyCells()
+        {
+            return this.grid.GetAllNonEmptyCells();
+        }
+
+        /// <summary>
+        /// 网格宽度（用于存档恢复）。
+        /// </summary>
+        public int GridWidth
+        {
+            get { return this.grid.Width; }
+        }
+
+        /// <summary>
+        /// 网格高度（用于存档恢复）。
+        /// </summary>
+        public int GridHeight
+        {
+            get { return this.grid.Height; }
+        }
+
         // ---- 内部方法 ----
 
         private void PublishChange(

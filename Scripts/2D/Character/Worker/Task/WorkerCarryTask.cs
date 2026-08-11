@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Worker.Task
 {
     using LAB2D.Constant;
+    using LAB2D.Core.Seek;
     using LAB2D.Enum;
     using LAB2D;
     using LAB2D.Domain.Common;
@@ -8,6 +9,7 @@ namespace LAB2D.Character.Worker.Task
     using LAB2D.Item;
     using LAB2D.Serializable;
     using System;
+    using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
@@ -44,6 +46,18 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>指定执行搬运的 Worker ID（ToBoard 模式使用，0=任何人可接）</summary>
         private int targetWorkerId;
 
+        /// <summary>批量搬运时多个待拾取位置（含首个位置，与 batchResources 一一对应）</summary>
+        private List<Vector3Int> batchPickupPositions;
+
+        /// <summary>批量搬运时多个待拾取资源（与 batchPickupPositions 一一对应）</summary>
+        private List<ResourceInfo> batchResources;
+
+        /// <summary>批量搬运时已拾取的资源汇总（用于 Finish 时统一交付）</summary>
+        private List<ResourceInfo> carriedResources;
+
+        /// <summary>是否启用批量搬运模式</summary>
+        private bool IsBatchMode => this.batchPickupPositions != null && this.batchPickupPositions.Count > 1;
+
         public WorkerCarryTask()
             : base(WorkerTaskType.Carry)
         {
@@ -55,42 +69,99 @@ namespace LAB2D.Character.Worker.Task
             });
             this.stageInit.Add((AWorker worker) =>
             {
-                ItemData itemData = ItemDataProvider(this.resourceInfo.Id);
-                this.maxProgress = WorkerTaskTimeConfig.ResolveCarryPutDownSeconds(itemData);
-
-                // 从地上捡起掉落物（两种模式共有逻辑）
-                Vector3Int pickUpPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
-                ItemMapProvider().PickUpFromDrop(pickUpPos, this.resourceInfo);
-                worker.AddResource(this.resourceInfo);
-
+                // 先确定搬运目标位置并验证可达性，再捡起物品，避免捡了运不走
+                Vector3Int destTarget;
                 switch (this.mode)
                 {
                     case CarryMode.ToBoard:
-                        // 目标切换为任务栏四周的相邻位置
-                        Vector3Int neighbor = this.GetBoardNeighbor();
-                        this.TargetMap = Vector3IntLAB.ToVector3IntLAB(neighbor);
-                        this.AvailableNeighborPos.Clear();
-                        this.AvailableNeighborPos.Add(Neighbors[8]); // 自身
+                        destTarget = this.GetBoardNeighbor();
                         break;
 
                     case CarryMode.ToInventory:
                     default:
-                        // 移除品质光束并记录稀有度（用于放下时重新生成）
-                        this.carriedBeamRarity = EquipmentBeamProvider().TryRemoveBeamAt(pickUpPos);
-                        // 清理待处理掉落记录（敌人装备掉落）
-                        EnemyLootProvider().RemoveDropByMapPosition(pickUpPos);
-
-                        // 目标切换为仓库预留位置
-                        this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryProvider().GetPosByPrePlace(worker));
-                        if (this.TargetMap == default)
+                        destTarget = InventoryProvider().GetPosByPrePlace(worker);
+                        if (destTarget == default)
                         {
-                            LogProvider("仓库没有位置了", LogManager.LogLevelEnum.Error);
+                            LogProvider("仓库没有位置了，搬运取消", LogManager.LogLevelEnum.Error);
+                            Core.ServiceLocator.Get<WorkerTaskManager>().RemoveTask(this);
+                            worker.GiveUpTask();
+                            return;
                         }
 
-                        this.AvailableNeighborPos.Clear();
-                        this.AvailableNeighborPos.Add(Neighbors[8]);
                         break;
                 }
+
+                // 验证目的地是否可达（在捡起物品前检查，防止捡了运不走）
+                this.AvailableNeighborPos.Clear();
+                this.AvailableNeighborPos.Add(Neighbors[8]); // 自身位置
+                Vector3Int checkPos = new Vector3Int(
+                    destTarget.x + Neighbors[8].Y,
+                    destTarget.y + Neighbors[8].X, 0);
+                if (!ASeek.IsCanReach(checkPos))
+                {
+                    LogProvider(
+                        $"搬运目标不可达: dest=({destTarget.x},{destTarget.y}), 进入冷却期",
+                        LogManager.LogLevelEnum.Error);
+
+                    // 标记冷却而非永久删除：障碍物消失后其他 Worker 可能可达
+                    this.LastFailedTime = UnityEngine.Time.time;
+                    worker.GiveUpTask();
+                    return;
+                }
+
+                // 计算交付阶段耗时（基于首个物品类型）
+                ItemData firstItemData = this.batchResources != null && this.batchResources.Count > 0
+                    ? ItemDataProvider(this.batchResources[0].Id)
+                    : ItemDataProvider(this.resourceInfo.Id);
+                this.maxProgress = WorkerTaskTimeConfig.ResolveCarryPutDownSeconds(firstItemData);
+
+                // 从地上捡起掉落物
+                if (this.IsBatchMode)
+                {
+                    // 批量模式：拾取所有位置的物品
+                    this.carriedResources = new List<ResourceInfo>();
+                    for (int i = 0; i < this.batchPickupPositions.Count; i++)
+                    {
+                        Vector3Int pos = this.batchPickupPositions[i];
+                        ResourceInfo ri = this.batchResources[i];
+                        ItemMapProvider().PickUpFromDrop(pos, ri);
+                        worker.AddResource(ri);
+
+                        if (this.mode == CarryMode.ToInventory)
+                        {
+                            EquipmentBeamProvider().TryRemoveBeamAt(pos);
+                            EnemyLootProvider().RemoveDropByMapPosition(pos);
+                        }
+
+                        this.carriedResources.Add(ri);
+                    }
+
+                    LogProvider(
+                        $"{worker.name} 批量拾取 {this.carriedResources.Count} 个物品",
+                        LogManager.LogLevelEnum.Debug);
+                }
+                else
+                {
+                    // 单物品模式：拾取一个物品
+                    Vector3Int pickUpPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
+                    ItemMapProvider().PickUpFromDrop(pickUpPos, this.resourceInfo);
+                    worker.AddResource(this.resourceInfo);
+
+                    this.carriedResources = new List<ResourceInfo> { this.resourceInfo };
+
+                    // 模式特定的副作用处理
+                    switch (this.mode)
+                    {
+                        case CarryMode.ToInventory:
+                        default:
+                            this.carriedBeamRarity = EquipmentBeamProvider().TryRemoveBeamAt(pickUpPos);
+                            EnemyLootProvider().RemoveDropByMapPosition(pickUpPos);
+                            break;
+                    }
+                }
+
+                // 切换目标到已验证的目的地
+                this.TargetMap = Vector3IntLAB.ToVector3IntLAB(destTarget);
             });
         }
 
@@ -99,9 +170,23 @@ namespace LAB2D.Character.Worker.Task
         {
             base.Start(worker);
 
+            // 重置批量搬运状态（任务可能因 GiveUp 后重新接取而需要清理）
+            this.carriedResources = null;
+
             if (this.mode == CarryMode.ToInventory)
             {
-                InventoryProvider().IsEnoughAndPrePlace(worker, this.resourceInfo, true);
+                if (this.IsBatchMode)
+                {
+                    // 批量模式：为所有资源预占仓库空间
+                    foreach (var ri in this.batchResources)
+                    {
+                        InventoryProvider().IsEnoughAndPrePlace(worker, ri, true);
+                    }
+                }
+                else
+                {
+                    InventoryProvider().IsEnoughAndPrePlace(worker, this.resourceInfo, true);
+                }
             }
 
             this.ChangeStage(worker, 0);
@@ -162,14 +247,34 @@ namespace LAB2D.Character.Worker.Task
         private void FinishToBoard(AWorker worker)
         {
             TaskBoardManager board = Core.ServiceLocator.Get<TaskBoardManager>();
-            int ownerId = this.resourceInfo.OwnerId;
-            board.DeliverItem(ownerId, this.resourceInfo);
+            int totalCount = 0;
 
-            worker.SubResource(this.resourceInfo);
+            if (this.carriedResources != null && this.carriedResources.Count > 0)
+            {
+                // 批量/单物品统一交付
+                int ownerId = this.carriedResources[0].OwnerId;
+                foreach (var ri in this.carriedResources)
+                {
+                    board.DeliverItem(ownerId, ri);
+                    worker.SubResource(ri);
+                    totalCount += ri.Count;
+                }
 
-            LogProvider(
-                $"{worker.name} 已将物品(id={this.resourceInfo.Id}, count={this.resourceInfo.Count}, owner={ownerId}) 交付到任务栏",
-                LogManager.LogLevelEnum.Debug);
+                LogProvider(
+                    $"{worker.name} 已将 {this.carriedResources.Count} 种物品(共{totalCount}个, owner={ownerId}) 交付到任务栏",
+                    LogManager.LogLevelEnum.Debug);
+            }
+            else
+            {
+                // 回退：单物品（无 carriedResources 时）
+                int ownerId = this.resourceInfo.OwnerId;
+                board.DeliverItem(ownerId, this.resourceInfo);
+                worker.SubResource(this.resourceInfo);
+
+                LogProvider(
+                    $"{worker.name} 已将物品(id={this.resourceInfo.Id}, count={this.resourceInfo.Count}, owner={ownerId}) 交付到任务栏",
+                    LogManager.LogLevelEnum.Debug);
+            }
         }
 
         /// <inheritdoc/>
@@ -181,6 +286,23 @@ namespace LAB2D.Character.Worker.Task
                     // 只有指定的执行者才能接此搬运任务（targetWorkerId=0 时允许任何人）
                     if (this.targetWorkerId != 0 && worker.GetInstanceID() != this.targetWorkerId)
                         return false;
+
+                    // 批量模式：验证所有拾取位置仍有掉落物（防止物品已被其他 Worker 捡走）
+                    if (this.IsBatchMode)
+                    {
+                        for (int i = 0; i < this.batchPickupPositions.Count; i++)
+                        {
+                            if (Core.ServiceLocator.Get<DropManager>().GetDropByAll(
+                                this.batchPickupPositions[i]) == null)
+                            {
+                                LogProvider(
+                                    $"批量搬运位置 {this.batchPickupPositions[i]} 已无掉落物，任务取消",
+                                    LogManager.LogLevelEnum.Debug);
+                                return false;
+                            }
+                        }
+                    }
+
                     return true;
 
                 case CarryMode.ToInventory:
@@ -269,6 +391,37 @@ namespace LAB2D.Character.Worker.Task
             public CarryTaskBuilder SetExecutor(int workerId)
             {
                 this.task.targetWorkerId = workerId;
+                return this;
+            }
+
+            /// <summary>
+            /// 设置批量搬运的资源列表和对应取货位置（批量模式）。
+            /// 调用此方法后，第一个位置自动成为任务的初始 TargetMap。
+            /// positions 和 resources 必须一一对应且长度一致。
+            /// </summary>
+            public CarryTaskBuilder SetBatchResources(
+                List<Vector3Int> positions, List<ResourceInfo> resources)
+            {
+                if (positions == null || resources == null
+                    || positions.Count == 0 || resources.Count == 0
+                    || positions.Count != resources.Count)
+                {
+                    AWorkerTask.LogProvider(
+                        "SetBatchResources: positions and resources must be non-empty and equal length",
+                        LogManager.LogLevelEnum.Error);
+                    return this;
+                }
+
+                this.task.batchPickupPositions = new List<Vector3Int>(positions);
+                this.task.batchResources = new List<ResourceInfo>(resources.Count);
+                foreach (var r in resources)
+                {
+                    this.task.batchResources.Add(DataTool.DeepCopyByBinary(r));
+                }
+
+                // 第一个位置作为初始 TargetMap
+                this.task.TargetMap = Vector3IntLAB.ToVector3IntLAB(positions[0]);
+
                 return this;
             }
 

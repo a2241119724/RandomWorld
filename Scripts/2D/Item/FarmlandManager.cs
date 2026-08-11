@@ -2,14 +2,16 @@ namespace LAB2D.Item
 {
     using LAB2D;
     using LAB2D.Character.Worker;
+    using LAB2D.Data;
     using LAB2D.UI.Action;
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
-    /// 农作物管理
+    /// 农作物管理（ASingletonSaveData）。
     /// </summary>
-    public class FarmlandManager : Singleton<FarmlandManager>
+    public class FarmlandManager : ASingletonSaveData<FarmlandManager>
     {
         private readonly Dictionary<int, Dictionary<Vector3Int, PlantInfo>> id2Resource; // 同一个id对应的所有位置
         private readonly Dictionary<Vector3Int, PlantInfo> cells;
@@ -218,7 +220,7 @@ namespace LAB2D.Item
             {
                 if (bar != null)
                 {
-                    Object.Destroy(bar.gameObject);
+                    UnityEngine.Object.Destroy(bar.gameObject);
                 }
 
                 this.growthBars.Remove(posMap);
@@ -284,6 +286,112 @@ namespace LAB2D.Item
                 this.Count = count;
                 this.Time = time;
             }
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            FarmlandManagerData data = new FarmlandManagerData();
+
+            foreach (KeyValuePair<Vector3Int, PlantInfo> kv in this.cells)
+            {
+                PlantInfo info = kv.Value;
+                // 只保存有种植物的格子（Id >= 0），空地由 AddCells 重建
+                if (info.Id < 0)
+                {
+                    continue;
+                }
+
+                float growthElapsed = 0f;
+                if (this.growthBars.TryGetValue(kv.Key, out PlantGrowthBar bar) && bar != null)
+                {
+                    growthElapsed = bar.Elapsed;
+                }
+
+                data.Cells.Add(new FarmlandCellEntry
+                {
+                    PosX = kv.Key.x,
+                    PosY = kv.Key.y,
+                    PosZ = kv.Key.z,
+                    PlantId = info.Id,
+                    Count = info.Count,
+                    GrowthElapsed = growthElapsed,
+                });
+            }
+
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), data);
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            FarmlandManagerData data = DataTool.LoadDataByBinary<FarmlandManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null || data.Cells == null || data.Cells.Count == 0)
+            {
+                return;
+            }
+
+            foreach (FarmlandCellEntry entry in data.Cells)
+            {
+                Vector3Int pos = new Vector3Int(entry.PosX, entry.PosY, entry.PosZ);
+
+                // 如果该位置尚未通过 AddCells 创建，则先创建
+                if (!this.cells.ContainsKey(pos))
+                {
+                    if (!this.id2Resource.ContainsKey(-1))
+                    {
+                        this.id2Resource[-1] = new Dictionary<Vector3Int, PlantInfo>();
+                    }
+
+                    this.cells[pos] = new PlantInfo(-1, 0, 0);
+                    this.id2Resource[-1][pos] = new PlantInfo(-1, 0, 0);
+                }
+
+                // 恢复植物数据
+                PlantInfo plantInfo = new PlantInfo(entry.PlantId, entry.Count, 0);
+                if (!this.id2Resource.ContainsKey(entry.PlantId))
+                {
+                    this.id2Resource[entry.PlantId] = new Dictionary<Vector3Int, PlantInfo>();
+                }
+
+                // 从空地索引移除
+                if (this.id2Resource.ContainsKey(-1) && this.id2Resource[-1].ContainsKey(pos))
+                {
+                    this.id2Resource[-1].Remove(pos);
+                }
+
+                this.id2Resource[entry.PlantId][pos] = plantInfo;
+                this.cells[pos] = plantInfo;
+
+                // 恢复生长进度条
+                if (entry.GrowthElapsed < PlantGrowthDuration)
+                {
+                    this.CreateGrowthBar(pos, PlantGrowthDuration);
+                    if (this.growthBars.TryGetValue(pos, out PlantGrowthBar bar) && bar != null)
+                    {
+                        bar.SetElapsed(entry.GrowthElapsed);
+                    }
+                }
+            }
+        }
+
+        [Serializable]
+        public class FarmlandManagerData
+        {
+            public List<FarmlandCellEntry> Cells = new List<FarmlandCellEntry>();
+        }
+
+        [Serializable]
+        public class FarmlandCellEntry
+        {
+            public int PosX;
+            public int PosY;
+            public int PosZ;
+            public int PlantId;
+            public int Count;
+            public float GrowthElapsed;
         }
     }
 }

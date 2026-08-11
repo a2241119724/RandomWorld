@@ -93,8 +93,28 @@ namespace LAB2D.UI.Action
         public bool IsComplete => this.isComplete;
 
         /// <summary>
+        /// 已生长时间（秒），用于存档。
+        /// </summary>
+        public float Elapsed => this.elapsed;
+
+        /// <summary>
         /// 获取地图坐标。
         /// </summary>
         public Vector3Int MapPos => this.mapPos;
+
+        /// <summary>
+        /// 设置已生长时间（用于读档恢复）。
+        /// </summary>
+        public void SetElapsed(float elapsed)
+        {
+            this.elapsed = elapsed;
+            float progress = Mathf.Clamp01(this.elapsed / this.growthDuration);
+            if (this.slider != null) this.slider.value = progress;
+            if (this.fillImage != null) this.fillImage.fillAmount = progress;
+            if (progress >= 1f)
+            {
+                this.OnGrowthComplete();
+            }
+        }
     }
 }

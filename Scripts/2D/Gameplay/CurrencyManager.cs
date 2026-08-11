@@ -1,8 +1,10 @@
 namespace LAB2D.Gameplay
 {
     using LAB2D.Character.Worker;
+    using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
@@ -13,7 +15,7 @@ namespace LAB2D.Gameplay
     /// 完成时从托管池交付给执行者，过期时退回发布者。
     /// 交易通过 EventBus 发布 CurrencyTransactionEvent 供 UI 和日志订阅。
     /// </summary>
-    public class CurrencyManager : Singleton<CurrencyManager>
+    public class CurrencyManager : ASingletonSaveData<CurrencyManager>
     {
         /// <summary>Player 钱包 ownerId</summary>
         public const int PlayerOwnerId = 0;
@@ -263,6 +265,77 @@ namespace LAB2D.Gameplay
             }
 
             return null;
+        }
+
+        /// <inheritdoc/>
+        public override void SaveData()
+        {
+            base.SaveData();
+            CurrencyManagerData data = new CurrencyManagerData();
+
+            // 保存 Player 钱包（Worker 钱包在 WorkerData.Wallet 中由 WorkerManager 保存）
+            foreach (KeyValuePair<int, CurrencyAmount> kv in this.wallets)
+            {
+                data.WalletEntries.Add(new WalletEntry { OwnerId = kv.Key, Gold = kv.Value.Gold });
+            }
+
+            // 保存托管资金
+            foreach (KeyValuePair<int, CurrencyAmount> kv in this.escrow)
+            {
+                data.EscrowEntries.Add(new EscrowEntry { OwnerId = kv.Key, Gold = kv.Value.Gold });
+            }
+
+            DataTool.SaveDataByBinary(GlobalData.ConfigFile.GetPath(this.GetType().Name), data);
+        }
+
+        /// <inheritdoc/>
+        public override void LoadData()
+        {
+            base.LoadData();
+            CurrencyManagerData data = DataTool.LoadDataByBinary<CurrencyManagerData>(GlobalData.ConfigFile.GetPath(this.GetType().Name));
+            if (data == null)
+            {
+                return;
+            }
+
+            this.wallets.Clear();
+            if (data.WalletEntries != null)
+            {
+                foreach (WalletEntry entry in data.WalletEntries)
+                {
+                    this.wallets[entry.OwnerId] = new CurrencyAmount(entry.Gold);
+                }
+            }
+
+            this.escrow.Clear();
+            if (data.EscrowEntries != null)
+            {
+                foreach (EscrowEntry entry in data.EscrowEntries)
+                {
+                    this.escrow[entry.OwnerId] = new CurrencyAmount(entry.Gold);
+                }
+            }
+        }
+
+        [Serializable]
+        public class CurrencyManagerData
+        {
+            public List<WalletEntry> WalletEntries = new List<WalletEntry>();
+            public List<EscrowEntry> EscrowEntries = new List<EscrowEntry>();
+        }
+
+        [Serializable]
+        public class WalletEntry
+        {
+            public int OwnerId;
+            public int Gold;
+        }
+
+        [Serializable]
+        public class EscrowEntry
+        {
+            public int OwnerId;
+            public int Gold;
         }
     }
 }

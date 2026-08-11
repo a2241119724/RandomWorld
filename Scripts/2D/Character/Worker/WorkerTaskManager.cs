@@ -308,6 +308,13 @@ namespace LAB2D.Character.Worker
             foreach (KeyValuePair<AWorkerTask, bool> taskPair in taskGroup)
             {
                 AWorkerTask task = taskPair.Key;
+
+                // 跳过冷却期内的任务（目标不可达等失败后暂时不可分配）
+                if (task.IsInCooldown)
+                {
+                    continue;
+                }
+
                 result.Add(new WorkerTaskSnapshot<AWorkerTask>(
                     task,
                     task.TaskId,
@@ -462,6 +469,29 @@ namespace LAB2D.Character.Worker
                 this.taskQueue.MarkIdle(task);
             }
 
+            EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+        }
+
+        /// <summary>
+        /// 从任务队列中永久移除任务（不可达目标等致命失败场景使用）。
+        /// 与 GiveUpTask 的区别：GiveUpTask 对非 Gather 任务仅标记 Idle 允许重试，
+        /// 此方法直接删除任务，阻止任何 Worker 再次接取。
+        /// </summary>
+        /// <param name="task">要移除的任务</param>
+        public void RemoveTask(AWorkerTask task)
+        {
+            if (task == null)
+            {
+                return;
+            }
+
+            if (task.TaskType == WorkerTaskType.Gather)
+            {
+                Core.ServiceLocator.Get<GatherMap>().CancelGather(
+                    Vector3IntLAB.ToVector3Int(task.TargetMap));
+            }
+
+            this.taskQueue.Remove(task);
             EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }
 
