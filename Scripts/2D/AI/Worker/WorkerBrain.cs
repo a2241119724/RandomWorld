@@ -80,7 +80,7 @@ namespace LAB2D.AI.Worker
         public float AmbitionThreshold = 50f;
 
         /// <summary>社交阈值：高于此值倾向发悬赏/接悬赏</summary>
-        public float SocialityThreshold = 45f;
+        public float SocialityThreshold = 55f;
 
         /// <summary>勤奋阈值：高于此值倾向主动工作</summary>
         public float DiligenceThreshold = 45f;
@@ -112,7 +112,7 @@ namespace LAB2D.AI.Worker
         public float AmbitionSelfGatherBonus = 0.005f;
 
         /// <summary>社交对发布悬赏概率的加成</summary>
-        public float SocialityPostBountyBonus = 0.005f;
+        public float SocialityPostBountyBonus = 0.003f;
 
         /// <summary>勤奋对接悬赏概率的加成</summary>
         public float DiligenceAcceptBountyBonus = 0.005f;
@@ -509,17 +509,20 @@ namespace LAB2D.AI.Worker
 
         /// <summary>
         /// 悬赏门槛检查：只有 Settled 及以上阶段才能发布悬赏。
+        /// 包含 90 秒冷却时间，避免频繁发布。
         /// </summary>
         private bool CanPostBounty(AWorker worker, AWorker.WorkerData wd, bool canAfford)
         {
             if (!canAfford) return false;
             if (wd.LifeStage < Domain.Worker.WorkerLifeStage.Settled) return false;
             if (wd.HomePosition == null) return false;           // 无家不发悬赏
-            if (wd.CurHungry < 40f) return false;                // 饿了不发
-            if (wd.CurTired < 40f) return false;                 // 累了不发
-            if (wd.CurSpirit < 35f) return false;                // 没精神不发
+            if (wd.CurHungry < 50f) return false;                // 饿了不发
+            if (wd.CurTired < 50f) return false;                 // 累了不发
+            if (wd.CurSpirit < 45f) return false;                // 没精神不发
             int foodCount = this.CountFoodStockpile(worker);
             if (foodCount < wd.FoodStockpileTarget) return false; // 食物储备不足
+            // 悬赏发布冷却：距上次发布至少 90 秒
+            if (Time.time - wd.LastBountyPostTime < 90f) return false;
             return true;
         }
 
@@ -832,7 +835,7 @@ namespace LAB2D.AI.Worker
 
         private float CalculatePostBountyProbability(WorkerPersonality p)
         {
-            float baseProb = 0.25f;
+            float baseProb = 0.10f;
             baseProb += (p.Sociality - 50f) * this.SocialityPostBountyBonus;
             baseProb -= (p.Diligence - 50f) * 0.002f;
             baseProb += (p.Ambition - 50f) * 0.002f;

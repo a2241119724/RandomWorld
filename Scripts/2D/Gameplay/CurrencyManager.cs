@@ -23,7 +23,7 @@ namespace LAB2D.Gameplay
         /// <summary>
         /// 新 Worker 初始资金。
         /// </summary>
-        public CurrencyAmount InitialWorkerFunds { get; set; } = new CurrencyAmount(100);
+        public CurrencyAmount InitialWorkerFunds { get; set; } = new CurrencyAmount(50);
 
         /// <summary>
         /// Player 初始资金。

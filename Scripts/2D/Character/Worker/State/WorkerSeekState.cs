@@ -159,13 +159,13 @@ namespace LAB2D.Character.Worker.State
                 }
 
                 // 判断是否应该立即决策：
-                // 决策间隔根据 LifeStage 调整：Bootstrap=2, Settled=5, Established=8
+                // 决策间隔根据 LifeStage 调整：Bootstrap=3, Settled=10, Established=20
                 int decisionInterval = workerData.LifeStage switch
                 {
-                    Domain.Worker.WorkerLifeStage.Bootstrap => 2,
-                    Domain.Worker.WorkerLifeStage.Settled => 5,
-                    Domain.Worker.WorkerLifeStage.Established => 8,
-                    _ => 5,
+                    Domain.Worker.WorkerLifeStage.Bootstrap => 3,
+                    Domain.Worker.WorkerLifeStage.Settled => 10,
+                    Domain.Worker.WorkerLifeStage.Established => 20,
+                    _ => 10,
                 };
                 bool isPeriodic = this.seekTimes % decisionInterval == 0;
                 bool isQuickReeval = false;
@@ -392,6 +392,11 @@ namespace LAB2D.Character.Worker.State
                     this.CreateSelfGatherTask(decision);
                 else
                     this.CreateIdleTask();
+            }
+            else if (wd != null)
+            {
+                // 发布成功后记录冷却时间
+                wd.LastBountyPostTime = Time.time;
             }
         }
 
@@ -840,14 +845,14 @@ namespace LAB2D.Character.Worker.State
 
             if (sellList.Count == 0) return;
 
-            // 触发条件：携带量超过60%或有3种以上可售资源
+            // 触发条件：携带量超过75%或有5种以上可售资源
             int totalCarried = 0;
             foreach (var r in allResources) totalCarried += r.Count;
             float carryRatio = (float)totalCarried / workerData.MaxResourceCount;
-            if (carryRatio <= 0.6f && sellList.Count < 3) return;
+            if (carryRatio <= 0.75f && sellList.Count < 5) return;
 
-            // 执行出售
-            if (UnityEngine.Random.value < 0.5f)
+            // 执行出售（概率从50%降到35%）
+            if (UnityEngine.Random.value < 0.35f)
             {
                 Gameplay.MarketService market = Core.ServiceLocator.Get<Gameplay.MarketService>();
                 if (market != null)
@@ -876,16 +881,16 @@ namespace LAB2D.Character.Worker.State
             {
                 case AItem.ItemTypeEnum.Food:
                     // 饥饿时保留更多食物
-                    return isHungry ? 10 : 5;
+                    return isHungry ? 15 : 10;
                 case AItem.ItemTypeEnum.Seed:
-                    return 3;
+                    return 5;
                 case AItem.ItemTypeEnum.Material:
-                    return 8;
+                    return 15;
                 case AItem.ItemTypeEnum.Equipment:
                 case AItem.ItemTypeEnum.Weapon:
                     return 1; // 装备/武器只保留1件
                 default:
-                    return 3;
+                    return 5;
             }
         }
 
@@ -900,29 +905,29 @@ namespace LAB2D.Character.Worker.State
             switch (itemType)
             {
                 case AItem.ItemTypeEnum.Food:
-                    // 食物：5-10卖10%, 10-20卖25%, 20-40卖40%, 40+卖60%
+                    // 食物：5-10卖5%, 10-20卖15%, 20-40卖25%, 40+卖40%
                     if (totalCount <= 5) ratio = 0f;
-                    else if (totalCount <= 10) ratio = 0.10f;
-                    else if (totalCount <= 20) ratio = 0.25f;
-                    else if (totalCount <= 40) ratio = 0.40f;
-                    else ratio = 0.60f;
+                    else if (totalCount <= 10) ratio = 0.05f;
+                    else if (totalCount <= 20) ratio = 0.15f;
+                    else if (totalCount <= 40) ratio = 0.25f;
+                    else ratio = 0.40f;
                     // 饥饿时折扣出售意愿
                     if (isHungry) ratio *= 0.3f;
                     break;
 
                 case AItem.ItemTypeEnum.Material:
-                    // 材料：0-10不卖, 10-20卖15%, 20-40卖35%, 40+卖55%
+                    // 材料：0-10不卖, 10-20卖10%, 20-40卖25%, 40+卖40%
                     if (totalCount <= 10) ratio = 0f;
-                    else if (totalCount <= 20) ratio = 0.15f;
-                    else if (totalCount <= 40) ratio = 0.35f;
-                    else ratio = 0.55f;
+                    else if (totalCount <= 20) ratio = 0.10f;
+                    else if (totalCount <= 40) ratio = 0.25f;
+                    else ratio = 0.40f;
                     break;
 
                 case AItem.ItemTypeEnum.Seed:
-                    // 种子：0-3不卖, 3-8卖20%, 8+卖40%
-                    if (totalCount <= 3) ratio = 0f;
-                    else if (totalCount <= 8) ratio = 0.20f;
-                    else ratio = 0.40f;
+                    // 种子：0-5不卖, 5-10卖15%, 10+卖30%
+                    if (totalCount <= 5) ratio = 0f;
+                    else if (totalCount <= 10) ratio = 0.15f;
+                    else ratio = 0.30f;
                     break;
 
                 case AItem.ItemTypeEnum.Equipment:
@@ -932,11 +937,11 @@ namespace LAB2D.Character.Worker.State
                     break;
 
                 default:
-                    // 其他：0-5不卖, 5-15卖25%, 15-30卖45%, 30+卖65%
+                    // 其他：0-5不卖, 5-15卖20%, 15-30卖35%, 30+卖50%
                     if (totalCount <= 5) ratio = 0f;
-                    else if (totalCount <= 15) ratio = 0.25f;
-                    else if (totalCount <= 30) ratio = 0.45f;
-                    else ratio = 0.65f;
+                    else if (totalCount <= 15) ratio = 0.20f;
+                    else if (totalCount <= 30) ratio = 0.35f;
+                    else ratio = 0.50f;
                     break;
             }
 
@@ -953,6 +958,14 @@ namespace LAB2D.Character.Worker.State
         private void CreateIdleTask()
         {
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+
+            // 余额不足 2G → 免费漫游恢复，而不是付费锻炼
+            if (workerData != null && !workerData.Wallet.HasEnough(new Domain.Worker.CurrencyAmount(2)))
+            {
+                this.CreateWanderTask();
+                return;
+            }
+
             WorkerExerciseTask exerciseTask = new WorkerExerciseTask.ExerciseTaskBuilder()
                 .SetTarget(this.targetMap)
                 .SetWorker(this.Character)

@@ -134,8 +134,8 @@ namespace LAB2D.Character.Worker
 
             this.lastTickFrame = currentFrame;
 
-            // 任务分配循环：每5帧执行一次（减少80%的每帧迭代开销）
-            if (currentFrame % 5 == 0)
+            // 任务分配循环：每15帧执行一次（约250ms @60fps，大幅减少迭代开销）
+            if (currentFrame % 15 == 0)
             {
                 this.RunTaskAssignmentLoop();
             }

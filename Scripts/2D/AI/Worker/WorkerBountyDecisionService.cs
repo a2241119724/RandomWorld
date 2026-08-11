@@ -31,13 +31,16 @@ namespace LAB2D.AI.Worker
         public CurrencyAmount MinimumWalletReserve = new CurrencyAmount(20);
 
         /// <summary>悬赏过期时间（游戏内秒数）</summary>
-        public float BountyExpirationSeconds = 120f;
+        public float BountyExpirationSeconds = 240f;
+
+        /// <summary>悬赏交易手续费率（15%），作为货币销毁机制不进入托管不退还</summary>
+        public const float BountyTransactionFeeRate = 0.15f;
 
         // 基础悬赏金额（按任务类型）— 高于资源市场价，体现"花钱买时间"
-        public int BaseRewardBuild = 30;
-        public int BaseRewardCarry = 20;
-        public int BaseRewardGather = 15;
-        public int BaseRewardPlant = 10;
+        public int BaseRewardBuild = 22;
+        public int BaseRewardCarry = 15;
+        public int BaseRewardGather = 10;
+        public int BaseRewardPlant = 8;
 
         /// <summary>
         /// 扫描候选 — 轻量数据，避免扫描时创建完整任务实例导致副作用。
@@ -75,9 +78,10 @@ namespace LAB2D.AI.Worker
             }
 
             CurrencyAmount reward = this.DetermineReward(taskType);
-            CurrencyAmount totalNeeded = reward + this.MinimumWalletReserve;
+            int fee = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(reward.Gold * BountyTransactionFeeRate));
+            CurrencyAmount totalNeeded = reward + this.MinimumWalletReserve + new CurrencyAmount(fee);
 
-            // 条件 1: 余额充足
+            // 条件 1: 余额充足（含手续费+保留金）
             if (!workerData.Wallet.HasEnough(totalNeeded))
             {
                 return false;
@@ -245,6 +249,7 @@ namespace LAB2D.AI.Worker
         /// 综合状态判断 + 环境扫描 + 扣款 + 入队。
         /// 构建 innerTask 包装在 WorkerBountyTask 中——innerTask 处理全部工作逻辑，
         /// WorkerBountyTask 只负责金钱。
+        /// 发布时额外扣除 15% 手续费（不进入托管，不退还），作为货币销毁机制。
         /// </summary>
         /// <param name="worker">发布者 Worker</param>
         /// <returns>成功发布返回 true</returns>
@@ -266,10 +271,26 @@ namespace LAB2D.AI.Worker
                 CurrencyAmount reward = this.DetermineReward(candidate.TaskType, personality);
                 int issuerId = worker.GetInstanceID();
 
-                // 扣款
+                // 计算手续费（至少 1G）
+                int fee = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(reward.Gold * BountyTransactionFeeRate));
+                CurrencyAmount totalCost = new CurrencyAmount(reward.Gold + fee);
+
+                // 检查余额是否够 reward + fee
+                if (!issuerData.Wallet.HasEnough(totalCost))
+                {
+                    AWorkerTask.LogProvider(
+                        $"{worker.name} 余额不足以支付悬赏+手续费: 需要{totalCost}, 余额{issuerData.Wallet}",
+                        LogManager.LogLevelEnum.Debug);
+                    continue;
+                }
+
+                // 扣款：手续费直接销毁，悬赏金进托管
+                issuerData.Wallet -= totalCost;
                 var currencyManager = Core.ServiceLocator.Get<Gameplay.CurrencyManager>();
                 if (!currencyManager.PostBounty(issuerId, reward))
                 {
+                    // 托管失败，退款
+                    issuerData.Wallet += totalCost;
                     continue;
                 }
 
@@ -278,6 +299,7 @@ namespace LAB2D.AI.Worker
                 if (innerTask == null)
                 {
                     currencyManager.RefundBounty(issuerId, reward);
+                    issuerData.Wallet += reward; // 只退悬赏金，手续费不退
                     continue;
                 }
 
@@ -301,7 +323,7 @@ namespace LAB2D.AI.Worker
                     WorkerTaskPriority.WorkerBounty);
 
                 AWorkerTask.LogProvider(
-                    $"{worker.name} 发布了悬赏: {candidate.TaskType} 悬赏金 {reward}",
+                    $"{worker.name} 发布了悬赏: {candidate.TaskType} 悬赏金 {reward} 手续费{fee}G",
                     LogManager.LogLevelEnum.Debug);
 
                 // 每次扫描最多发布 1 个悬赏
@@ -314,6 +336,7 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 使用预扫描的资源位置发布悬赏（由 WorkerBrain 传入，避免重复扫描失败）。
         /// 支持资源采集和地形挖掘两种类型。
+        /// 发布时额外扣除 15% 手续费（不进入托管，不退还），作为货币销毁机制。
         /// </summary>
         public bool TryPostOneBounty(AWorker worker, Vector3Int targetPos, ResourceInfo resource,
             bool isTerrainDig = false, int terrainId = 0)
@@ -329,8 +352,27 @@ namespace LAB2D.AI.Worker
             CurrencyAmount reward = this.DetermineReward(taskType, personality);
             int issuerId = worker.GetInstanceID();
 
+            // 计算手续费（至少 1G）
+            int fee = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(reward.Gold * BountyTransactionFeeRate));
+            CurrencyAmount totalCost = new CurrencyAmount(reward.Gold + fee);
+
+            // 检查余额是否够 reward + fee
+            if (!issuerData.Wallet.HasEnough(totalCost))
+            {
+                AWorkerTask.LogProvider(
+                    $"{worker.name} 余额不足以支付悬赏+手续费: 需要{totalCost}, 余额{issuerData.Wallet}",
+                    LogManager.LogLevelEnum.Debug);
+                return false;
+            }
+
+            // 扣款：手续费直接销毁，悬赏金进托管
+            issuerData.Wallet -= totalCost;
             var currencyManager = Core.ServiceLocator.Get<Gameplay.CurrencyManager>();
-            if (!currencyManager.PostBounty(issuerId, reward)) return false;
+            if (!currencyManager.PostBounty(issuerId, reward))
+            {
+                issuerData.Wallet += totalCost;
+                return false;
+            }
 
             AWorkerTask innerTask;
             if (isTerrainDig)
@@ -341,7 +383,7 @@ namespace LAB2D.AI.Worker
             }
             else
             {
-                if (resource == null) { currencyManager.RefundBounty(issuerId, reward); return false; }
+                if (resource == null) { currencyManager.RefundBounty(issuerId, reward); issuerData.Wallet += reward; return false; }
                 innerTask = new WorkerGatherTask.GatherTaskBuilder()
                     .SetTarget(targetPos)
                     .SetResourceInfo(resource)
@@ -351,6 +393,7 @@ namespace LAB2D.AI.Worker
             if (innerTask == null)
             {
                 currencyManager.RefundBounty(issuerId, reward);
+                issuerData.Wallet += reward; // 只退悬赏金，手续费不退
                 return false;
             }
 
@@ -369,7 +412,7 @@ namespace LAB2D.AI.Worker
 
             string actionName = isTerrainDig ? "挖掘" : "Gather";
             AWorkerTask.LogProvider(
-                $"{worker.name} 发布了悬赏: {actionName} pos=({targetPos.x},{targetPos.y}) 悬赏金 {reward}",
+                $"{worker.name} 发布了悬赏: {actionName} pos=({targetPos.x},{targetPos.y}) 悬赏金 {reward} 手续费{fee}G",
                 LogManager.LogLevelEnum.Debug);
 
             return true;

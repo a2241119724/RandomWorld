@@ -60,8 +60,13 @@ namespace LAB2D.AgentGenerated
         /// </summary>
         public float CurrentMorale => currentMorale;
 
+        private int frameCounter;
+
         private void Update()
         {
+            // 每30帧执行一次衰减（约0.5秒），士气是长期缓慢变化的值
+            if (++this.frameCounter % 30 != 0) return;
+
             ApplyChanges();
             ClampMorale();
             CheckThresholds();

@@ -26,6 +26,9 @@ namespace LAB2D.Gameplay
         /// <summary>悬赏过期时间（游戏内秒数）</summary>
         public float BountyExpirationSeconds = 300f;
 
+        /// <summary>Player 悬赏交易手续费率（10%），低于 Worker 以鼓励玩家发布悬赏</summary>
+        public const float PlayerBountyTransactionFeeRate = 0.10f;
+
         // 基础悬赏金额 — Player 出价更高（Player 更有钱）
         public int BaseRewardBuild = 40;
         public int BaseRewardCarry = 25;
@@ -50,19 +53,22 @@ namespace LAB2D.Gameplay
 
             if (reward <= 0) reward = this.BaseRewardGather;
             CurrencyAmount cost = new CurrencyAmount(reward);
+            int fee = Mathf.Max(1, Mathf.RoundToInt(reward * PlayerBountyTransactionFeeRate));
+            CurrencyAmount feeAmt = new CurrencyAmount(fee);
+            CurrencyAmount totalCost = cost + feeAmt;
 
-            if (!pd.Wallet.HasEnough(cost))
+            if (!pd.Wallet.HasEnough(totalCost))
             {
                 AWorkerTask.LogProvider(
-                    $"[PlayerBounty] 余额不足: 需要{cost}, 余额{pd.Wallet}",
+                    $"[PlayerBounty] 余额不足: 需要{totalCost}(含手续费{feeAmt}), 余额{pd.Wallet}",
                     LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
-            // 扣款
-            pd.Wallet -= cost;
+            // 扣款（reward + fee，fee 销毁不进托管）
+            pd.Wallet -= totalCost;
 
-            // 托管追踪
+            // 托管追踪（只托管 reward）
             var cm = Core.ServiceLocator.Get<CurrencyManager>();
             cm.PostBounty(PlayerOwnerId, cost);
 
@@ -73,7 +79,7 @@ namespace LAB2D.Gameplay
                 .SetResourceInfo(resource)
                 .Build();
 
-            // 资源已被其他 Worker 认领，退款
+            // 资源已被其他 Worker 认领，退款（只退 reward，手续费不退）
             if (innerTask == null)
             {
                 pd.Wallet += cost;
@@ -122,19 +128,22 @@ namespace LAB2D.Gameplay
 
             if (reward <= 0) reward = this.BaseRewardGather;
             CurrencyAmount cost = new CurrencyAmount(reward);
+            int fee = Mathf.Max(1, Mathf.RoundToInt(reward * PlayerBountyTransactionFeeRate));
+            CurrencyAmount feeAmt = new CurrencyAmount(fee);
+            CurrencyAmount totalCost = cost + feeAmt;
 
-            if (!pd.Wallet.HasEnough(cost))
+            if (!pd.Wallet.HasEnough(totalCost))
             {
                 AWorkerTask.LogProvider(
-                    $"[PlayerBounty] 余额不足: 需要{cost}, 余额{pd.Wallet}",
+                    $"[PlayerBounty] 余额不足: 需要{totalCost}(含手续费{feeAmt}), 余额{pd.Wallet}",
                     LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
-            // 扣款
-            pd.Wallet -= cost;
+            // 扣款（reward + fee，fee 销毁不进托管）
+            pd.Wallet -= totalCost;
 
-            // 托管追踪
+            // 托管追踪（只托管 reward）
             var cm = Core.ServiceLocator.Get<CurrencyManager>();
             cm.PostBounty(PlayerOwnerId, cost);
 
@@ -143,7 +152,7 @@ namespace LAB2D.Gameplay
                 .SetTerrainTarget(targetPos, terrainId)
                 .Build();
 
-            // 位置已被其他 Worker 认领，退款
+            // 位置已被其他 Worker 认领，退款（只退 reward，手续费不退）
             if (innerTask == null)
             {
                 pd.Wallet += cost;
@@ -187,18 +196,21 @@ namespace LAB2D.Gameplay
 
             if (reward <= 0) reward = this.BaseRewardBuild;
             CurrencyAmount cost = new CurrencyAmount(reward);
+            int fee = Mathf.Max(1, Mathf.RoundToInt(reward * PlayerBountyTransactionFeeRate));
+            CurrencyAmount feeAmt = new CurrencyAmount(fee);
+            CurrencyAmount totalCost = cost + feeAmt;
 
-            if (!pd.Wallet.HasEnough(cost))
+            if (!pd.Wallet.HasEnough(totalCost))
             {
                 AWorkerTask.LogProvider(
-                    $"[PlayerBounty] 余额不足: 需要{cost}, 余额{pd.Wallet}",
+                    $"[PlayerBounty] 余额不足: 需要{totalCost}(含手续费{feeAmt}), 余额{pd.Wallet}",
                     LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
-            pd.Wallet -= cost;
+            pd.Wallet -= totalCost;
 
-            // 托管追踪
+            // 托管追踪（只托管 reward）
             var cm = Core.ServiceLocator.Get<CurrencyManager>();
             cm.PostBounty(PlayerOwnerId, cost);
 
@@ -239,16 +251,19 @@ namespace LAB2D.Gameplay
 
             if (reward <= 0) reward = this.BaseRewardDemolish;
             CurrencyAmount cost = new CurrencyAmount(reward);
+            int fee = Mathf.Max(1, Mathf.RoundToInt(reward * PlayerBountyTransactionFeeRate));
+            CurrencyAmount feeAmt = new CurrencyAmount(fee);
+            CurrencyAmount totalCost = cost + feeAmt;
 
-            if (!pd.Wallet.HasEnough(cost))
+            if (!pd.Wallet.HasEnough(totalCost))
             {
                 AWorkerTask.LogProvider(
-                    $"[PlayerBounty] 余额不足: 需要{cost}, 余额{pd.Wallet}",
+                    $"[PlayerBounty] 余额不足: 需要{totalCost}(含手续费{feeAmt}), 余额{pd.Wallet}",
                     LogManager.LogLevelEnum.Warning);
                 return false;
             }
 
-            pd.Wallet -= cost;
+            pd.Wallet -= totalCost;
             var cm = Core.ServiceLocator.Get<CurrencyManager>();
             cm.PostBounty(PlayerOwnerId, cost);
 

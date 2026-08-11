@@ -23,7 +23,7 @@ namespace LAB2D.Constant
         /// 玩家生命监控刷新间隔。
         /// 调低会更实时，但会增加只读血量检查和字符串构建频率。
         /// </summary>
-        public const float MonitorRefreshInterval = 0.25f;
+        public const float MonitorRefreshInterval = 0.5f;
 
         /// <summary>
         /// 低血量 Tip 冷却时间。

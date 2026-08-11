@@ -13,7 +13,7 @@ namespace LAB2D.Constant
         /// 任务队列 HUD 默认刷新间隔。
         /// 调低会更实时，但会增加任务队列统计和文本拼接频率。
         /// </summary>
-        public const float HudRefreshInterval = 0.5f;
+        public const float HudRefreshInterval = 1.0f;
 
         /// <summary>
         /// 任务队列 HUD 默认显示隐藏热键。

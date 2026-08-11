@@ -938,6 +938,12 @@ namespace LAB2D.Character.Worker
             public Domain.Worker.CurrencyAmount Wallet = new Domain.Worker.CurrencyAmount(30);
 
             /// <summary>
+            /// 上次发布悬赏的时间（Time.time），用于冷却控制。
+            /// 初始值设为极小值，确保首次可立即发布。
+            /// </summary>
+            public float LastBountyPostTime = -999f;
+
+            /// <summary>
             /// 人格数值 — 心情、事业心、勤奋、社交。
             /// 影响 Worker 自主决策行为和效率。
             /// </summary>

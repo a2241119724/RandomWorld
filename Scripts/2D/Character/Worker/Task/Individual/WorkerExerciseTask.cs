@@ -50,9 +50,19 @@ namespace LAB2D.Character.Worker.Task.Individual
         /// <inheritdoc/>
         public override int OwnerWorkerId => this.worker != null ? this.worker.GetInstanceID() : 0;
 
+        /// <summary>每次锻炼消耗的金币（训练费）</summary>
+        private const int ExerciseCost = 2;
+
         /// <inheritdoc/>
         public override void Finish(AWorker worker)
         {
+            // 扣除锻炼费用 — 有钱才扣，没钱免费锻炼
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+            if (wd != null && wd.Wallet.HasEnough(new Domain.Worker.CurrencyAmount(ExerciseCost)))
+            {
+                wd.Wallet -= new Domain.Worker.CurrencyAmount(ExerciseCost);
+            }
+
             // 根据锻炼时长结算经验值
             int experienceGained = Mathf.RoundToInt(
                 this.maxProgress * WorkerTaskTimeConfig.ExerciseExperiencePerSecond);
