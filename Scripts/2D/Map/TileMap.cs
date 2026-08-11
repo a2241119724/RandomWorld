@@ -166,8 +166,9 @@ namespace LAB2D.Map
             this.chunksRoot.SetParent(this.transform);
             this.chunksRoot.localPosition = Vector3.zero;
 
-            // 在 chunksRoot 上挂 CompositeCollider2D，合并所有 Chunk 的碰撞体为一个
-            // 退出时只需序列化 1 个复合碰撞体，而非 N 个独立的 TilemapCollider2D
+            // CompositeCollider2D 合并所有 Chunk 碰撞体：各 Chunk 的 TilemapCollider2D
+            // 设 usedByComposite=true 后，其独立几何体被复合体"吸收"，退出时只需序列化
+            // 1 个复合体 + N 个轻量 Collider，而非 N 个完整碰撞几何体，解决退出卡死。
             Rigidbody2D rb = this.chunksRoot.gameObject.AddComponent<Rigidbody2D>();
             rb.bodyType = RigidbodyType2D.Static;
             rb.hideFlags = HideFlags.DontSaveInEditor;
@@ -245,7 +246,8 @@ namespace LAB2D.Map
             tm.tileAnchor = this.tilemap.tileAnchor;
             TilemapRenderer tmr = chunkGO.AddComponent<TilemapRenderer>();
             tmr.hideFlags = HideFlags.DontSaveInEditor;
-            // 为每个 Chunk 添加 TilemapCollider2D，usedByComposite 使其几何体合并到 CompositeCollider2D
+            // TilemapCollider2D 设 usedByComposite=true，几何体合并到 CompositeCollider2D，
+            // 退出时各 Chunk Collider 本身轻量，不会造成序列化卡死。
             TilemapCollider2D tc = chunkGO.AddComponent<TilemapCollider2D>();
             tc.hideFlags = HideFlags.DontSaveInEditor;
             tc.usedByComposite = true;
@@ -514,10 +516,16 @@ namespace LAB2D.Map
             // 根据地图尺寸动态调整 chunkSize，保证最多 MaxChunksPerDim² 个 Chunk
             this.ComputeChunkSize(height, width);
 
+            AWorkerTask.LogProvider(
+                $"[TileMap] 地图={width}×{height}, chunkSize={chunkSize}, chunks={MaxChunksPerDim}², TILES_PER_YIELD={TILES_PER_YIELD}",
+                LogManager.LogLevelEnum.Info);
+
             // 缓存已加载的 TileBase，避免重复调用 ResourceLoadProvider（地形类型通常在 10 种以内）
             var tileCache = new Dictionary<string, TileBase>();
 
             int tilesProcessed = 0;
+            int tilesSet = 0;
+            int frameCount = 0;
             for (int i = 0; i < height; i++)
             {
                 for (int j = 0; j < width; j++)
@@ -531,27 +539,36 @@ namespace LAB2D.Map
                         {
                             tile = (TileBase)AWorkerTask.ResourceLoadProvider(resourceName);
                             tileCache[resourceName] = tile;
+                            AWorkerTask.LogProvider(
+                                $"[TileMap] 加载资源 {tileCache.Count}: {resourceName}",
+                                LogManager.LogLevelEnum.Info);
                         }
 
                         int cx = Mathf.FloorToInt((float)i / chunkSize);
                         int cy = Mathf.FloorToInt((float)j / chunkSize);
                         Vector3Int localPos = GetLocalPos(i, j, cx, cy);
                         this.GetChunkForPos(i, j).SetTile(localPos, tile);
+                        tilesSet++;
                     }
 
-                    // 基于计数器的分帧，比 IsNeedStop(1) 更均匀、更可预测
                     if (++tilesProcessed % TILES_PER_YIELD == 0)
                     {
                         yield return null;
+                        frameCount++;
                     }
                 }
             }
 
+            AWorkerTask.LogProvider(
+                $"[TileMap] 瓦片设置完毕: 总数={tilesProcessed}, 有效={tilesSet}, 分{frameCount}帧, 资源类型={tileCache.Count}",
+                LogManager.LogLevelEnum.Info);
+
             // 同步所有 Chunk 边界幽灵瓦片，使 Rule Tile 能跨 Chunk 查询邻居
             yield return this.SyncAllChunkBordersCoroutine();
 
-            // 瓦片已全部就位，此时统一启用所有 Collider（一次性生成碰撞几何体，远快于逐瓦片重建）
+            // 所有处理完成后，最后统一启用碰撞体
             this.EnableAllChunkColliders();
+            AWorkerTask.LogProvider("[TileMap] Collider 已启用", LogManager.LogLevelEnum.Info);
 
             WalkabilityCache.Invalidate();
         }
