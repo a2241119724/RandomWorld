@@ -1203,7 +1203,8 @@ namespace LAB2D.AI.Worker
 
         /// <summary>
         /// 根据房间参数动态生成墙壁布局。
-        /// 支持宽度 5/7、高度 5/7 的矩形房间，门在任意一边。
+        /// 支持宽度 5/7、高度 5/7 的矩形房间（5×5~7×7），门在任意一边。
+        /// 家具块 tile 空间 3×2（床+仓库），5×5 房间（内部 3×3）也能放下。
         /// </summary>
         /// <param name="width">外墙宽度（奇数 5 或 7）</param>
         /// <param name="height">外墙高度（奇数 5 或 7）</param>
@@ -1258,28 +1259,37 @@ namespace LAB2D.AI.Worker
                 layout.WallDirections.Add(6);
             }
 
-            // 床+仓库布局：根据门的位置动态摆放，确保家具在门的对面一侧
-            // 家具块 3×2（仓库 2×2 在左 + 床 1×2 在右），与四面墙保持至少 1 格间距
+            // 床+仓库布局：根据门的位置动态摆放，确保家具在门的对面一侧。
+            // 注意：真实坐标是 Tile 坐标沿 45° 转置（世界X=tileY、世界Y=tileX）。
+            // 家具块 tile 空间 3 宽 × 2 高（仓库 2×2 在左 + 床 1×2 竖放在右），
+            // 转置到屏幕后床落在仓库正上方（上下布局），与墙保持至少 1 格间距。
+            // 3×2 是最紧凑布局，允许房间最小 5×5（内部 3×3 恰好放下）。
             int interiorW = 2 * (hw - 1) + 1; // 内部可走区域宽度
             int interiorH = 2 * (hh - 1) + 1; // 内部可走区域高度
-            const int furnW = 3; // 家具总宽度（仓库 2 列 + 床 1 列）
-            const int furnH = 2; // 家具总高度
+            const int furnW = 3; // 家具块宽度（仓库 2 列 + 床 1 列）
+            const int furnH = 2; // 家具块高度（仓库 2 行）
 
             int furnLeft, furnBottom; // 家具块左下角（相对于房间中心）
 
-            // 内部高度足够（7×7）时，家具与对面墙保持 2 格间距；
-            // 5×5 内部仅 3 格高，只能留 1 格（否则家具会贴到门）
-            bool roomyV = interiorH >= furnH + 3; // 7×7: 5 >= 5 → true；5×5: 3 >= 5 → false
+            // 内部高度充裕（7 高：内部 5 ≥ furnH+3）时，家具与对面墙留 2 格间距；
+            // 5 高内部仅 3 格高，只能留 1 格。
+            bool roomyV = interiorH >= furnH + 3;
 
             switch (doorSide)
             {
                 case 2: // 门在上边 → 家具靠下，水平居中
-                    furnLeft = -(hw - 1) + System.Math.Max(0, (interiorW - furnW) / 2);
+                    // 家具块 tile x 下移 1 格（屏幕 Y+1）：床视觉 Y 落到 [0,1]，
+                    // 配合 GenerateRandomRoomParams 让门 index 避开床所在列，
+                    // 使门（屏幕右墙）不再紧贴床。
+                    furnLeft = -(hw - 1) + System.Math.Max(0, (interiorW - furnW) / 2) + 1;
                     furnBottom = roomyV ? -(hh - 2) : -(hh - 1);
                     break;
                 case 3: // 门在下边 → 家具靠上，水平居中
-                    furnLeft = -(hw - 1) + System.Math.Max(0, (interiorW - furnW) / 2);
-                    furnBottom = roomyV ? (hh - furnH - 1) : (hh - furnH);
+                    // 同 doorSide=2：下移 1 格使床避开屏幕左墙的门。
+                    furnLeft = -(hw - 1) + System.Math.Max(0, (interiorW - furnW) / 2) + 1;
+                    // 床主格 y=furnBottom+2 必须落在内部（≤hh-1，即 5 高房间 y=1），
+                    // 否则床 sprite 转置后会在屏幕右侧墙上（X=hh）。故取 furnBottom=-1。
+                    furnBottom = roomyV ? (hh - furnH - 2) : (hh - furnH - 1);
                     break;
                 case 0: // 门在左边 → 家具靠右，垂直居中
                     furnLeft = hw - furnW; // 右边 = hw-1（距右墙 1 格）
@@ -1295,9 +1305,9 @@ namespace LAB2D.AI.Worker
                     break;
             }
 
-            // 床 1×2 竖放在家具块右侧。只设置床参考点（左下角，RectType=BottomLeft），
-            // 副格（上格）由 RoomLayout.BedSecondOffset 从 SingleBed 定义派生。
-            layout.BedOffset = new Vector3Int(furnLeft + 2, furnBottom, 0);  // 床参考点（左下角）
+            // 床 1×2 竖放在仓库右侧（tile 空间），转置后屏幕上位于仓库正上方。
+            // 只设置床参考点（左下角，RectType=BottomLeft），副格（上格）由 BedSecondOffset 派生。
+            layout.BedOffset = new Vector3Int(furnLeft, furnBottom + 2, 0);  // 床参考点（左下角）
 
             // 4 格仓库形成 2×2 "田"字方块，放在床左侧
             layout.StorageOffsets.Add(new Vector3Int(furnLeft, furnBottom + 1, 0));     // 左上
@@ -1328,7 +1338,7 @@ namespace LAB2D.AI.Worker
         /// <summary>为 Worker 随机生成房间参数并存储到 WorkerData。</summary>
         private static void GenerateRandomRoomParams(AWorker.WorkerData wd)
         {
-            // 随机尺寸：50% 5×5, 50% 7×7
+            // 宽高都随机 5/7（5×5~7×7）：家具块 tile 空间 3×2，5×5 房间（内部 3×3）也能放下。
             wd.HomeRoomWidth = UnityEngine.Random.value < 0.5f ? 5 : 7;
             wd.HomeRoomHeight = UnityEngine.Random.value < 0.5f ? 5 : 7;
             // 随机门朝向
@@ -1338,7 +1348,107 @@ namespace LAB2D.AI.Worker
                 ? wd.HomeRoomHeight : wd.HomeRoomWidth;
             int maxIndex = sideLen - 3; // 非角位置数量 - 1
             if (maxIndex < 0) maxIndex = 0;
-            wd.HomeDoorIndex = maxIndex > 0 ? UnityEngine.Random.Range(0, maxIndex + 1) : 0;
+
+            List<int> validIndices;
+
+            if (wd.HomeDoorSide == 2 || wd.HomeDoorSide == 3)
+            {
+                // 门在 tile 顶/底墙，转置后靠屏幕右/左墙（X=±hh）。
+                // 家具下移后床占 tile 列 x∈[0,1]（屏幕 Y∈[0,1]），
+                // 门 tile x 需避开该列，否则门会紧贴床。
+                int hw = (wd.HomeRoomWidth - 1) / 2;
+                validIndices = new List<int>();
+                for (int i = 0; i <= maxIndex; i++)
+                {
+                    int doorX = -hw + 1 + i;
+                    if (doorX < 0 || doorX > 1) // 避开床 tile 列 x∈[0,1]
+                    {
+                        validIndices.Add(i);
+                    }
+                }
+            }
+            else if (wd.HomeDoorSide == 0)
+            {
+                // 门在 tile 左墙，转置后靠屏幕底墙（Y=-hh），门屏幕 X=doorY。
+                // 床视觉固定在屏幕 X=1（右内侧），门需避开同列（doorY=1）以免堵床。
+                int hh = (wd.HomeRoomHeight - 1) / 2;
+                validIndices = new List<int>();
+                for (int i = 0; i <= maxIndex; i++)
+                {
+                    int doorY = hh - 1 - i;
+                    if (doorY != 1) // 避开床所在列 X=1
+                    {
+                        validIndices.Add(i);
+                    }
+                }
+            }
+            else
+            {
+                // doorSide=1 门在 tile 右墙，转置后靠屏幕顶墙（Y=hw），
+                // 与床视觉 Y 相差 ≥2 行，天然不贴床，无需避开。
+                validIndices = new List<int>();
+                for (int i = 0; i <= maxIndex; i++)
+                {
+                    validIndices.Add(i);
+                }
+            }
+
+            wd.HomeDoorIndex = validIndices.Count > 0
+                ? validIndices[UnityEngine.Random.Range(0, validIndices.Count)]
+                : 0;
+
+            // 调试：打印新房间布局字符画（屏幕/世界坐标，即转置后视角）
+            PrintRoomLayout(wd);
+        }
+
+        /// <summary>
+        /// 用字符画打印房间布局到日志（屏幕/世界坐标，即 45° 转置后视角）。
+        /// 图例: #=墙 D=门 B=床 S=仓库 .=空地
+        /// 屏幕 (X,Y) 对应 tile 偏移 (ox=Y, oy=X)，与 MapPosToWorldPos 一致。
+        /// </summary>
+        private static void PrintRoomLayout(AWorker.WorkerData wd)
+        {
+            var layout = GenerateRoomLayout(
+                wd.HomeRoomWidth, wd.HomeRoomHeight,
+                wd.HomeDoorSide, wd.HomeDoorIndex);
+            int hw = (wd.HomeRoomWidth - 1) / 2;  // tile 半宽
+            int hh = (wd.HomeRoomHeight - 1) / 2; // tile 半高
+
+            // 床 sprite 永远竖向（上下）显示。
+            // tile 逻辑上床 1×2 竖放（主格 BedOffset + 副格 y+1），转置到屏幕成横向 2 格；
+            // 但床 sprite 只在主格世界坐标绘制并向上延伸，视觉上是竖向 1×2。
+            // 打印按视觉显示：主格 tile 与其 tile-x+1 相邻格（世界坐标竖向）。
+            Vector3Int bedMain = layout.BedOffset;
+            Vector3Int bedVis = new Vector3Int(bedMain.x + 1, bedMain.y, 0);
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"== 房间布局 {wd.HomeRoomWidth}x{wd.HomeRoomHeight} | 门=边{wd.HomeDoorSide} idx{wd.HomeDoorIndex} ==");
+            sb.AppendLine("图例: #=墙 D=门 B=床 S=仓库 .=空地");
+            sb.Append("    ");
+            for (int X = -hh; X <= hh; X++)
+            {
+                sb.Append($"{X,2} ");
+            }
+            sb.AppendLine();
+
+            // 行 Y 从上到下（hw→-hw），列 X 从左到右（-hh→hh）
+            for (int Y = hw; Y >= -hw; Y--)
+            {
+                sb.Append($"{Y,3} ");
+                for (int X = -hh; X <= hh; X++)
+                {
+                    Vector3Int off = new Vector3Int(Y, X, 0); // tile 偏移 (ox=Y, oy=X)
+                    char c = '.';
+                    if (off == layout.DoorOffset) c = 'D';
+                    else if (layout.StorageOffsets.Contains(off)) c = 'S';
+                    else if (off == bedMain || off == bedVis) c = 'B';
+                    else if (layout.WallOffsets.Contains(off)) c = '#';
+                    sb.Append($" {c} ");
+                }
+                sb.AppendLine();
+            }
+
+            AWorkerTask.LogProvider(sb.ToString(), LogManager.LogLevelEnum.Info);
         }
 
         /// <summary>从 WorkerData 参数生成房间布局。如果参数未设置则自动生成。</summary>
@@ -1432,25 +1542,25 @@ namespace LAB2D.AI.Worker
                 }
                 else if (wd.HomeBuildStage == layout.StorageStage1)
                 {
-                    // 建仓库1（床左上）
+                    // 建仓库1（2×2 仓库块左上角）
                     buildTileName = $"{StorageTileName}_{layout.StorageDirections[0]}";
                     buildPos = center + layout.StorageOffsets[0];
                 }
                 else if (wd.HomeBuildStage == layout.StorageStage2)
                 {
-                    // 建仓库2（床右上）
+                    // 建仓库2（2×2 仓库块左下角）
                     buildTileName = $"{StorageTileName}_{layout.StorageDirections[1]}";
                     buildPos = center + layout.StorageOffsets[1];
                 }
                 else if (wd.HomeBuildStage == layout.StorageStage3)
                 {
-                    // 建仓库3（床左下）
+                    // 建仓库3（2×2 仓库块右上角）
                     buildTileName = $"{StorageTileName}_{layout.StorageDirections[2]}";
                     buildPos = center + layout.StorageOffsets[2];
                 }
                 else if (wd.HomeBuildStage == layout.StorageStage4)
                 {
-                    // 建仓库4（床右下）
+                    // 建仓库4（2×2 仓库块右下角）
                     buildTileName = $"{StorageTileName}_{layout.StorageDirections[3]}";
                     buildPos = center + layout.StorageOffsets[3];
                 }
