@@ -143,6 +143,29 @@ namespace LAB2D.Core.Seek
                 && s_buildMap.IsCanReach(posMap);
         }
 
+        /// <summary>
+        /// 角色感知的通行检查 — 在静态 IsCanReach 基础上增加房间访问权限控制。
+        /// Enemy 不能进入 Worker 房间；Worker 不能进入其他 Worker 的房间。
+        /// </summary>
+        /// <param name="posMap">目标地图坐标。</param>
+        /// <returns>该角色是否可以到达该位置。</returns>
+        public bool CanCharacterReach(Vector3Int posMap)
+        {
+            if (!IsCanReach(posMap)) return false;
+
+            try
+            {
+                var roomManager = Core.ServiceLocator.Get<Item.RoomManager>();
+                if (roomManager != null && !roomManager.CanCharacterEnter(posMap, this.Character))
+                {
+                    return false;
+                }
+            }
+            catch { /* RoomManager 未注册时允许通行 */ }
+
+            return true;
+        }
+
         public static void RecordFail(Vector3Int targetMap)
         {
             FailCache[targetMap] = Time.time;
@@ -310,7 +333,7 @@ namespace LAB2D.Core.Seek
                 speed = s_workerConditionManager.GetAdjustedWorkerMoveSpeed((AWorker)this.Character, speed);
             }
 
-            this.Character.transform.Translate(speed * Time.deltaTime * this.Direction.normalized, Space.World);
+            this.Character.transform.Translate(speed * Time.fixedDeltaTime * this.Direction.normalized, Space.World);
             if (this.ShouldShowLine())
             {
                 this.UpdateLine(true);

@@ -640,29 +640,37 @@ namespace LAB2D.Character.Worker
         private bool IsPartOfWorkerPlannedRoom(Vector3Int pos)
         {
             List<AWorker> workers = WorkerListProvider();
-            var wallOffsets = LAB2D.AI.Worker.WorkerBrain.GetWallOffsets();
-            var doorOffset = LAB2D.AI.Worker.WorkerBrain.DoorOffset;
-            int wallCount = LAB2D.AI.Worker.WorkerBrain.WallCount;
 
             foreach (AWorker worker in workers)
             {
                 AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
                 if (wd?.PlannedHomePosition == null) continue;
-                if (wd.HomeBuildStage >= LAB2D.AI.Worker.WorkerBrain.CompleteStage) continue;
+                // 如果房间参数尚未生成，跳过（旧数据兼容）
+                if (wd.HomeRoomWidth == 0) continue;
+
+                var layout = LAB2D.AI.Worker.WorkerBrain.GetRoomLayout(wd);
+                if (wd.HomeBuildStage >= layout.CompleteStage) continue;
 
                 Vector3Int center = LAB2D.Serializable.Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
 
                 // 检查是否匹配墙壁位置
-                for (int i = 0; i < wallCount; i++)
+                for (int i = 0; i < layout.WallCount; i++)
                 {
-                    if (pos == center + wallOffsets[i]) return true;
+                    if (pos == center + layout.WallOffsets[i]) return true;
                 }
 
                 // 检查是否匹配门位置
-                if (pos == center + doorOffset) return true;
+                if (pos == center + layout.DoorOffset) return true;
 
-                // 检查是否匹配床位置（房间中心）
-                if (pos == center) return true;
+                // 检查是否匹配床位置（1×2 两格）
+                if (pos == center + layout.BedOffset) return true;
+                if (pos == center + layout.BedSecondOffset) return true;
+
+                // 检查是否匹配仓库位置
+                foreach (var so in layout.StorageOffsets)
+                {
+                    if (pos == center + so) return true;
+                }
             }
 
             return false;

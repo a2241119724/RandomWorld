@@ -12,6 +12,7 @@ namespace LAB2D.Character.Worker.State
     {
         private readonly StringBuilder builder = new (128); // 减少GC
         private float recordTime = 0.0f;
+        private bool isTargetReached = false;
 
         public WorkerMoveState(AWorker worker)
             : base(worker)
@@ -38,8 +39,8 @@ namespace LAB2D.Character.Worker.State
             base.OnUpdate();
             this.builder.Clear();
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
-            bool isTarget = this.Character.Seek.MoveByPath();
-            if (isTarget)
+
+            if (this.isTargetReached)
             {
                 if (workerData.Task == null)
                 {
@@ -98,6 +99,13 @@ namespace LAB2D.Character.Worker.State
                     .Append(posMap.y)
                     .ToString();
             }
+        }
+
+        /// <inheritdoc/>
+        public override void OnFixedUpdate()
+        {
+            base.OnFixedUpdate();
+            this.isTargetReached = this.Character.Seek.MoveByPath();
         }
     }
 }

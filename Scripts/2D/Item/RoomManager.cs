@@ -1,6 +1,9 @@
 namespace LAB2D.Item
 {
     using LAB2D;
+    using LAB2D.Character;
+    using LAB2D.Character.Enemy;
+    using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
     using System.Collections.Generic;
     using UnityEngine;
@@ -26,6 +29,8 @@ namespace LAB2D.Item
                 AWorkerTask.LogProvider("已经有房间了", LogManager.LogLevelEnum.Error);
             }
 
+            // 计算房间内部包围盒
+            roomInfo.ComputeBounds();
             Rooms.Add(name, roomInfo);
         }
 
@@ -44,6 +49,7 @@ namespace LAB2D.Item
                     {
                         room.Value.Temperature = 25.0f;
                         room.Value.Humidity = 25.0f;
+                        room.Value.ComputeBounds(); // 完成后重新计算包围盒
                     }
                 }
             }
@@ -128,6 +134,63 @@ namespace LAB2D.Item
 
             return null;
         }
+
+        /// <summary>
+        /// 检查指定位置是否在某个已完成房间的内部区域（非墙壁/门位置）。
+        /// 使用包围盒快速判断，避免每帧射线检测的性能开销。
+        /// </summary>
+        /// <param name="posMap">地图坐标。</param>
+        /// <returns>该位置所在的房间信息，不在任何房间内返回 null。</returns>
+        public RoomInfo GetRoomInterior(Vector3Int posMap)
+        {
+            foreach (KeyValuePair<string, RoomInfo> kv in Rooms)
+            {
+                RoomInfo room = kv.Value;
+                if (room.Progress != 0) continue; // 建造中不限制
+                if (!room.IsInterior(posMap)) continue;
+                return room;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 检查角色是否可以进入指定位置的房间内部。
+        /// Enemy 不能进入任何 Worker 房间；Worker 只能进入自己的房间。
+        /// </summary>
+        /// <param name="posMap">目标位置。</param>
+        /// <param name="character">要进入的角色。</param>
+        /// <returns>是否可以进入。</returns>
+        public bool CanCharacterEnter(Vector3Int posMap, Character character)
+        {
+            RoomInfo room = this.GetRoomInterior(posMap);
+            if (room == null) return true; // 不在任何房间内，可以进入
+
+            // 公共房间（OwnerName="玩家"）所有人可进入
+            if (room.OwnerName == "玩家") return true;
+
+            // Enemy 不能进入任何私人房间
+            if (character is AEnemy) return false;
+
+            // Worker 只能进入自己的房间
+            if (character is AWorker && !string.IsNullOrEmpty(room.OwnerName))
+            {
+                return room.OwnerName == character.name;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 获取房间所有者名称。
+        /// </summary>
+        /// <param name="posMap">地图坐标。</param>
+        /// <returns>所有者名称，不在房间内返回 null。</returns>
+        public string GetRoomOwner(Vector3Int posMap)
+        {
+            RoomInfo room = this.GetRoomInterior(posMap);
+            return room?.OwnerName;
+        }
     }
 
     /// <summary>
@@ -160,9 +223,52 @@ namespace LAB2D.Item
         /// </summary>
         public string OwnerName;
 
+        /// <summary>房间内部包围盒（不含墙壁），用于快速判断位置是否在房间内部。</summary>
+        public int MinX { get; private set; }
+        public int MaxX { get; private set; }
+        public int MinY { get; private set; }
+        public int MaxY { get; private set; }
+
         public RoomInfo()
         {
             this.Points = new List<Vector3Int>();
+        }
+
+        /// <summary>
+        /// 根据墙壁/门位置计算房间内部包围盒。
+        /// 内部区域 = 墙壁包围盒向内收缩一格。
+        /// </summary>
+        public void ComputeBounds()
+        {
+            if (this.Points == null || this.Points.Count == 0) return;
+
+            int minX = int.MaxValue, maxX = int.MinValue;
+            int minY = int.MaxValue, maxY = int.MinValue;
+
+            foreach (Vector3Int p in this.Points)
+            {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            }
+
+            // 内部区域 = 墙壁向内收缩一格
+            this.MinX = minX + 1;
+            this.MaxX = maxX - 1;
+            this.MinY = minY + 1;
+            this.MaxY = maxY - 1;
+        }
+
+        /// <summary>
+        /// 判断指定位置是否在房间内部（非墙壁/门）。
+        /// </summary>
+        public bool IsInterior(Vector3Int posMap)
+        {
+            if (this.Points == null || this.Points.Count == 0) return false;
+            if (this.Points.Contains(posMap)) return false; // 墙壁/门位置不算内部
+            return posMap.x >= this.MinX && posMap.x <= this.MaxX
+                && posMap.y >= this.MinY && posMap.y <= this.MaxY;
         }
 
         /// <inheritdoc/>
@@ -175,3 +281,4 @@ namespace LAB2D.Item
         }
     }
 }
+

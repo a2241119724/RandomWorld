@@ -52,11 +52,19 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                 return;
             }
 
+            // TODO可以奔跑搜索，以后实现
+        }
+
+        /// <inheritdoc/>
+        public override void OnFixedUpdate()
+        {
+            base.OnFixedUpdate();
+
+            if (this.Character.Target == null) return;
+
             // 如果受到攻击,那么向着玩家方向进行搜索
             this.Character.RotateTo(this.Character.Target.transform.position - this.Character.transform.position);
             this.Character.MoveToForward();
-
-            // TODO可以奔跑搜索，以后实现
         }
     }
 }

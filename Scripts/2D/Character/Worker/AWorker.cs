@@ -254,6 +254,15 @@ namespace LAB2D.Character.Worker
             }
         }
 
+        public void FixedUpdate()
+        {
+            if (this.IsDialoguePaused) return;
+            if (this.Manager.CurrentState != null)
+            {
+                this.Manager.CurrentState.OnFixedUpdate();
+            }
+        }
+
         /// <inheritdoc/>
         public override void Attack()
         {
@@ -862,7 +871,17 @@ namespace LAB2D.Character.Worker
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks, this.transform.position);
-            if (this.collisionBugDetector.IsBug(this.name))
+            BugCheckResult bugResult = this.collisionBugDetector.CheckBug(this.name);
+
+            if (bugResult == BugCheckResult.Sliding)
+            {
+                // 贴墙滑动或长时间低强度碰撞 → 预防性重新寻路绕开障碍
+                this.collisionBugDetector.ColliderCount = 0;
+                this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                return;
+            }
+
+            if (bugResult == BugCheckResult.Stuck)
             {
                 this.collisionBugDetector.ColliderCount = 0; // 重置计数器，防止重复触发
 
@@ -870,7 +889,7 @@ namespace LAB2D.Character.Worker
 
                 // 建造任务：碰撞 Bug 触发时优先重试重新寻路，而非直接放弃。
                 // 建造现场通常空间狭窄，碰撞频繁但并非真正阻塞。
-                // 最大 3 次重试，每次触发提供约 1.6 秒额外调整时间（总计约 5 秒）。
+                // 最大 3 次重试。
                 const int maxRetries = 3;
                 if (workerData?.Task != null && workerData.Task.TaskType == WorkerTaskType.Build)
                 {
@@ -982,6 +1001,18 @@ namespace LAB2D.Character.Worker
 
             /// <summary>建家阶段：0=需要建房间, 1=房间已建需要床, 2=完成。</summary>
             public int HomeBuildStage;
+
+            /// <summary>房间外墙宽度（5-8）。0 表示尚未生成布局。</summary>
+            public int HomeRoomWidth;
+
+            /// <summary>房间外墙高度（5-8）。</summary>
+            public int HomeRoomHeight;
+
+            /// <summary>门所在边: 0=左 1=右 2=上 3=下。</summary>
+            public int HomeDoorSide;
+
+            /// <summary>门在该边的位置索引（0-based，不含角）。</summary>
+            public int HomeDoorIndex;
 
             /// <summary>当前精气神值。</summary>
             public float CurSpirit = 100.0f;

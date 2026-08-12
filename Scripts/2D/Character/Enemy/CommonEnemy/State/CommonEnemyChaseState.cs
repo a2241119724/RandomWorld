@@ -41,17 +41,23 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                     this.Character.Manager.ChangeState(TypeEnum.Attack);
                     return;
                 }
-
-                // character.GetComponent<PhotonView>().RPC("RotateTo", RpcTarget.All, character.target.transform.position - character.transform.position);
-                this.Character.RotateTo(this.Character.Target.transform.position - this.Character.transform.position);
-
-                // character.GetComponent<PhotonView>().RPC("MoveToForward", RpcTarget.All);
-                this.Character.MoveToForward();
-                return;
             }
+            else
+            {
+                // 如果敌人感知范围内没有玩家，进入搜索状态
+                this.Character.Manager.ChangeState(TypeEnum.Seek);
+            }
+        }
 
-            // 如果敌人感知范围内没有玩家，进入搜索状态
-            this.Character.Manager.ChangeState(TypeEnum.Seek);
+        /// <inheritdoc/>
+        public override void OnFixedUpdate()
+        {
+            base.OnFixedUpdate();
+
+            if (this.Character.Target == null) return;
+
+            this.Character.RotateTo(this.Character.Target.transform.position - this.Character.transform.position);
+            this.Character.MoveToForward();
         }
     }
 }

@@ -68,6 +68,11 @@ namespace LAB2D.Character.Enemy.SeekEnemy
             this.Manager.CurrentState.OnUpdate();
         }
 
+        public void FixedUpdate()
+        {
+            this.Manager.CurrentState.OnFixedUpdate();
+        }
+
         /// <inheritdoc/>
         public override void ReduceHp(float hp, Character attacker, bool isCRT = false)
         {
@@ -116,7 +121,23 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks, this.transform.position);
-            if (this.collisionBugDetector.IsBug(this.name))
+            BugCheckResult bugResult = this.collisionBugDetector.CheckBug(this.name);
+
+            if (bugResult == BugCheckResult.Sliding)
+            {
+                // 贴墙滑动 → 预防性重新寻路
+                this.collisionBugDetector.ColliderCount = 0;
+                if (this.Seek != null && this.Target != null)
+                {
+                    this.Seek.StopMove();
+                    Vector3 targetPos = this.Target.transform.position;
+                    Vector3Int targetMap = AWorkerTask.TileMapWorldToMapProvider(targetPos);
+                    this.Seek.Seek(targetMap);
+                }
+                return;
+            }
+
+            if (bugResult == BugCheckResult.Stuck)
             {
                 this.collisionBugDetector.ColliderCount = 0; // 重置计数器
 

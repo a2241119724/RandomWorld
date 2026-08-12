@@ -77,6 +77,12 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                 this.Character.MoveSpeed = Random.Range(4.5f, 6.0f);
                 this.recordTime = 0.0f;
             }
+        }
+
+        /// <inheritdoc/>
+        public override void OnFixedUpdate()
+        {
+            base.OnFixedUpdate();
 
             Vector3 direction = new ((float)System.Math.Sin(this.rotationAngle), (float)System.Math.Cos(this.rotationAngle), 0);
             this.Character.RotateTo(direction);

@@ -133,8 +133,9 @@ namespace LAB2D.Character.Worker.Task
             AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
             if (wd == null || wd.HomePosition != null) return;
 
-            const int wallCount = 15;
-            const int completeStage = 17;
+            var layout = LAB2D.AI.Worker.WorkerBrain.GetRoomLayout(wd);
+            int wallCount = layout.WallCount;
+            int completeStage = layout.CompleteStage;
             int prevStage = wd.HomeBuildStage;
             wd.HomeBuildStage++;
 
@@ -152,29 +153,58 @@ namespace LAB2D.Character.Worker.Task
             }
             else if (this.BuildTileName == "CustomDoor")
             {
-                // 墙壁和门建完 → 立即注册为房间，之后再建床
+                // 墙壁和门建完 → 立即注册为房间，之后再建床和仓库
                 this.RegisterWorkerRoom(wd, worker.name);
                 LogProvider(
-                    $"{worker.name} 建家: 门完成 → 房间已注册 → 接下来建床",
+                    $"{worker.name} 建家: 门完成 → 房间已注册 → 接下来建床和仓库",
                     LogManager.LogLevelEnum.Debug);
             }
             else if (this.BuildTileName == "SingleBed")
             {
-                wd.HomeBuildStage = completeStage;
-                wd.LifeStage = LAB2D.Domain.Worker.WorkerLifeStage.Settled;
                 LogProvider(
-                    $"{worker.name} 建家: 床完成 → 有家了! → Settled 阶段",
-                    LogManager.LogLevelEnum.Info);
+                    $"{worker.name} 建家: 床完成 → 接下来建仓库",
+                    LogManager.LogLevelEnum.Debug);
 
-                // 自动绑定床到当前 Worker（床位置 = 房间中心 = PlannedHomePosition）
+                // 自动绑定床到当前 Worker（床位置 = 房间中心 + BedOffset）
                 if (wd.PlannedHomePosition != null)
                 {
-                    Vector3Int bedPos = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+                    Vector3Int roomCenter = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+                    Vector3Int bedPos = roomCenter + layout.BedOffset;
                     var fm = Core.ServiceLocator.Get<Item.FurnitureManager>();
                     fm.AddBed(bedPos);
                     fm.AddWorkerToBed(bedPos, worker);
                     LogProvider(
                         $"{worker.name} 床已自动绑定: pos=({bedPos.x},{bedPos.y})",
+                        LogManager.LogLevelEnum.Debug);
+                }
+            }
+            else if (this.BuildTileName.StartsWith("InventoryWall"))
+            {
+                if (wd.HomeBuildStage == layout.StorageStage4 + 1)
+                {
+                    // 第四个仓库完成 → 建家全部完成
+                    wd.HomeBuildStage = completeStage;
+                    wd.LifeStage = LAB2D.Domain.Worker.WorkerLifeStage.Settled;
+                    LogProvider(
+                        $"{worker.name} 建家: 仓库4完成 → 建家全部完成! → Settled 阶段",
+                        LogManager.LogLevelEnum.Info);
+                }
+                else if (wd.HomeBuildStage == layout.StorageStage3 + 1)
+                {
+                    LogProvider(
+                        $"{worker.name} 建家: 仓库3完成 → 接下来建仓库4",
+                        LogManager.LogLevelEnum.Debug);
+                }
+                else if (wd.HomeBuildStage == layout.StorageStage2 + 1)
+                {
+                    LogProvider(
+                        $"{worker.name} 建家: 仓库2完成 → 接下来建仓库3",
+                        LogManager.LogLevelEnum.Debug);
+                }
+                else
+                {
+                    LogProvider(
+                        $"{worker.name} 建家: 仓库1完成 → 接下来建仓库2",
                         LogManager.LogLevelEnum.Debug);
                 }
             }
@@ -188,15 +218,15 @@ namespace LAB2D.Character.Worker.Task
             if (wd?.PlannedHomePosition == null) return;
 
             Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+            var layout = LAB2D.AI.Worker.WorkerBrain.GetRoomLayout(wd);
             var roomInfo = new LAB2D.Item.RoomInfo();
-            var wallOffsets = LAB2D.AI.Worker.WorkerBrain.GetWallOffsets();
 
-            for (int i = 0; i < LAB2D.AI.Worker.WorkerBrain.WallCount; i++)
+            for (int i = 0; i < layout.WallCount; i++)
             {
-                roomInfo.Points.Add(center + wallOffsets[i]);
+                roomInfo.Points.Add(center + layout.WallOffsets[i]);
             }
 
-            roomInfo.Points.Add(center + LAB2D.AI.Worker.WorkerBrain.DoorOffset);
+            roomInfo.Points.Add(center + layout.DoorOffset);
             roomInfo.Progress = 0;
             roomInfo.Temperature = 25.0f;
             roomInfo.Humidity = 25.0f;

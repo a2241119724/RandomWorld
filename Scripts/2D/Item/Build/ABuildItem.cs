@@ -4,6 +4,7 @@ namespace LAB2D.Item.Build
     using LAB2D.Character.Worker.Task;
     using LAB2D.Constant;
     using System;
+    using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
@@ -87,14 +88,96 @@ namespace LAB2D.Item.Build
         }
 
         /// <summary>
-        /// 添加建造任务
+        /// 添加建造任务。对于多格物品（如 1×2 SingleBed、2×2 DoubleBed）：
+        /// 主格注册为建造任务（visual tile + 任务），副格注册为碰撞体（IsComplete=true，无建造任务）。
         /// </summary>
-        /// <param name="centerMap">位置</param>
-        /// <param name="extra">额外信息</param>
+        /// <param name="centerMap">参考位置（Center=中心，BottomLeft=左下角，TopLeft=左上角）</param>
+        /// <param name="extra">额外信息（尺寸/RectType 覆盖）</param>
         /// <param name="priority">任务优先级，默认系统默认</param>
         public virtual void AddBuildTask(Vector3Int centerMap, Extra extra, int priority = WorkerTaskPriority.SystemDefault)
         {
-            Core.ServiceLocator.Get<Map.BuildMap>().AddBuild(centerMap, this.TileName, priority);
+            var buildMap = Core.ServiceLocator.Get<Map.BuildMap>();
+            // 使用 extra 中的尺寸（如果有的话），否则使用自身的 Width/Height
+            int effectiveWidth = extra?.Width ?? this.Width;
+            int effectiveHeight = extra?.Height ?? this.Height;
+            AWorkerTask.RectType effectiveRectType = extra?.RectType ?? this.RectType;
+
+            var allPositions = GetOccupiedPositions(centerMap, effectiveWidth, effectiveHeight, effectiveRectType);
+
+            // 主格：正常注册（创建建造任务 + visual tile）
+            Vector3Int primaryPos = allPositions[0];
+            buildMap.AddBuild(primaryPos, this.TileName, priority,
+                effectiveWidth, effectiveHeight, effectiveRectType);
+
+            // 副格：注册为碰撞体（IsComplete=true，无建造任务，不广播）
+            // SetComplete 的多格逻辑会在建造完成时自动同步所有副格
+            for (int i = 1; i < allPositions.Count; i++)
+            {
+                buildMap.RegisterCollisionTile(allPositions[i], this.TileName, null,
+                    effectiveWidth, effectiveHeight, effectiveRectType);
+            }
+        }
+
+        /// <summary>
+        /// 计算多格建造物品占用的所有地图坐标。
+        /// 逻辑与 IsAvailableMap.ShowRect 保持一致。
+        /// </summary>
+        /// <param name="centerMap">参考位置（含义由 rectType 决定）</param>
+        /// <param name="width">宽度</param>
+        /// <param name="height">高度</param>
+        /// <param name="rectType">矩形类型：
+        ///   Center=centerMap 为中心；
+        ///   BottomLeft=centerMap 为左下角，向上+向右延伸；
+        ///   TopLeft=centerMap 为左上角，向下+向右延伸</param>
+        /// <returns>所有占用的地图坐标列表（第一项为主格）</returns>
+        public static List<Vector3Int> GetOccupiedPositions(Vector3Int centerMap, int width, int height, AWorkerTask.RectType rectType)
+        {
+            List<Vector3Int> positions = new List<Vector3Int>();
+
+            int h_start, h_end, w_start, w_end;
+            if (rectType == AWorkerTask.RectType.Center)
+            {
+                h_start = -height / 2;
+                h_end = height - (height / 2);
+                w_start = -width / 2;
+                w_end = width - (width / 2);
+            }
+            else if (rectType == AWorkerTask.RectType.BottomLeft)
+            {
+                // 参考点为左下角，向上+向右延伸
+                h_start = 0;
+                h_end = height;
+                w_start = 0;
+                w_end = width;
+            }
+            else // TopLeft
+            {
+                // 参考点为左上角，向下+向右延伸
+                h_start = 1 - height;
+                h_end = 1;
+                w_start = 0;
+                w_end = width;
+            }
+
+            for (int i = h_start; i < h_end; i++)
+            {
+                for (int j = w_start; j < w_end; j++)
+                {
+                    positions.Add(new Vector3Int(centerMap.x + j, centerMap.y + i, 0));
+                }
+            }
+
+            return positions;
+        }
+
+        /// <summary>
+        /// 计算该物品占用的所有地图坐标（使用自身 Width/Height/RectType）。
+        /// 第一项为主格（参考点），其余为副格。
+        /// </summary>
+        /// <param name="centerMap">参考位置（含义由 RectType 决定）</param>
+        public List<Vector3Int> GetOccupiedPositions(Vector3Int centerMap)
+        {
+            return GetOccupiedPositions(centerMap, this.Width, this.Height, this.RectType);
         }
 
         public class Extra

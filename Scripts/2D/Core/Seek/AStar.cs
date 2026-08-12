@@ -164,6 +164,8 @@ namespace LAB2D.Core.Seek
             int error = dx - dy;
             int x = fromX;
             int y = fromY;
+            int prevX = x;
+            int prevY = y;
 
             while (true)
             {
@@ -172,11 +174,31 @@ namespace LAB2D.Core.Seek
                     return false;
                 }
 
+                // 角落检测：当一步中同时移动了 X 和 Y（对角线移动），
+                // 检查对角是否由两个不可通行瓦片形成"缝隙"。
+                // 例如：不可通行 (x,y) 和 (x+1,y+1) 形成对角阻挡，
+                // 不允许从 (x,y+1) 到 (x+1,y) 穿过缝隙。
+                if (x != prevX && y != prevY)
+                {
+                    int corner1X = prevX;
+                    int corner1Y = y;
+                    int corner2X = x;
+                    int corner2Y = prevY;
+
+                    if (!WalkabilityCache.IsWalkable(corner1X, corner1Y)
+                        && !WalkabilityCache.IsWalkable(corner2X, corner2Y))
+                    {
+                        return false;
+                    }
+                }
+
                 if (x == toX && y == toY)
                 {
                     return true;
                 }
 
+                prevX = x;
+                prevY = y;
                 int doubledError = 2 * error;
                 if (doubledError > -dy)
                 {

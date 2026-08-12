@@ -79,15 +79,6 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                     // Object.Destroy(g, 1.0f);
                 }
 
-                Vector3 direction = this.Character.Target.transform.position - this.Character.transform.position;
-                this.Character.RotateTo(direction); // 旋转
-
-                // 2米之外向玩家移动
-                if (direction.magnitude > 3.0f)
-                {
-                    this.Character.MoveToForward();
-                }
-
                 // animator.SetBool("isAttack", false);
                 return;
             }
@@ -96,6 +87,23 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             this.Character.Manager.ChangeState(TypeEnum.Seek);
 
             // animator.SetBool("isAttack", false);
+        }
+
+        /// <inheritdoc/>
+        public override void OnFixedUpdate()
+        {
+            base.OnFixedUpdate();
+
+            if (this.Character.Target == null) return;
+
+            Vector3 direction = this.Character.Target.transform.position - this.Character.transform.position;
+            this.Character.RotateTo(direction); // 旋转
+
+            // 2米之外向玩家移动
+            if (direction.magnitude > 3.0f)
+            {
+                this.Character.MoveToForward();
+            }
         }
     }
 }

@@ -11,6 +11,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         /// 感知目标轮询索引 — 每帧只检查一个目标（跨帧轮询所有玩家+Worker）
         /// </summary>
         private int senseTargetIndex = 0;
+        private bool isTargetReached = false;
 
         public SeekEnemyMoveState(ASeekEnemy character)
         : base(character)
@@ -69,8 +70,8 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
 
             // 设置视觉角度
             this.Character.SightRange.transform.rotation = Quaternion.FromToRotation(Vector3.up, this.Character.Direction);
-            bool isTarget = this.Character.Seek.MoveByPath();
-            if (isTarget)
+
+            if (this.isTargetReached)
             {
                 this.recordTime += this.Character.DeltaTime;
 
@@ -82,6 +83,13 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
 
                 this.Character.Manager.ChangeState(TypeEnum.Seek);
             }
+        }
+
+        /// <inheritdoc/>
+        public override void OnFixedUpdate()
+        {
+            base.OnFixedUpdate();
+            this.isTargetReached = this.Character.Seek.MoveByPath();
         }
     }
 }

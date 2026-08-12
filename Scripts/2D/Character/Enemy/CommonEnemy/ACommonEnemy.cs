@@ -77,13 +77,18 @@ namespace LAB2D.Character.Enemy.CommonEnemy
             }
         }
 
+        public void FixedUpdate()
+        {
+            this.Manager.CurrentState.OnFixedUpdate();
+        }
+
         /// <summary>
         /// 向前移动.
         /// </summary>
         public void MoveToForward()
         {
             this.MoveSpeed = UnityEngine.Random.Range(4.5f, 6.0f);
-            this.transform.Translate(this.MoveSpeed * this.DeltaTime * (this.Head.position - this.transform.position).normalized, Space.World); // 向前移动
+            this.transform.Translate(this.MoveSpeed * Time.fixedDeltaTime * (this.Head.position - this.transform.position).normalized, Space.World); // 向前移动
         }
 
         /// <summary>
@@ -93,7 +98,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         public void RotateTo(Vector3 direction)
         {
             // FromToRotation得到从自定义方向到某方向旋转的角度
-            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, Quaternion.FromToRotation(Vector3.up, direction), this.DeltaTime * this.RotationSpeed);
+            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, Quaternion.FromToRotation(Vector3.up, direction), Time.fixedDeltaTime * this.RotationSpeed);
         }
 
         /// <inheritdoc/>
@@ -139,9 +144,19 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks, this.transform.position);
-            if (this.collisionBugDetector.IsBug(this.name))
+            BugCheckResult bugResult = this.collisionBugDetector.CheckBug(this.name);
+
+            if (bugResult == BugCheckResult.Sliding)
             {
-                this.collisionBugDetector.ColliderCount = 0; // 重置计数器，对齐 Worker 行为
+                // 贴墙滑动 → 预防性重新寻路
+                this.collisionBugDetector.ColliderCount = 0;
+                this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Seek);
+                return;
+            }
+
+            if (bugResult == BugCheckResult.Stuck)
+            {
+                this.collisionBugDetector.ColliderCount = 0; // 重置计数器
 
                 ACommonEnemyState.TypeEnum currentState = this.Manager.CurrentStateType;
 

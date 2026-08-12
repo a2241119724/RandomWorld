@@ -6,6 +6,7 @@ namespace LAB2D.Map
     using LAB2D.Core.Seek;
     using LAB2D.Domain.Common;
     using LAB2D.Item;
+    using LAB2D.Item.Build;
     using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
@@ -50,7 +51,8 @@ namespace LAB2D.Map
         /// <param name="tileName">瓦片名称</param>
         /// <param name="priority">任务优先级，默认系统默认</param>
         /// <returns>链式</returns>
-        public BuildMap AddBuild(Vector3Int targetMap, string tileName, int priority = WorkerTaskPriority.SystemDefault)
+        public BuildMap AddBuild(Vector3Int targetMap, string tileName, int priority = WorkerTaskPriority.SystemDefault,
+            int width = 1, int height = 1, AWorkerTask.RectType rectType = AWorkerTask.RectType.Center)
         {
             Vector3IntLAB vector3IntLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
             ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tileName);
@@ -79,7 +81,8 @@ namespace LAB2D.Map
                 this.tilemap.SetColor(targetMap, this.initColor);
             }
 
-            BuildTileData buildTileData = new BuildTileData(tileName, !isNeedBuild);
+            BuildTileData buildTileData = new BuildTileData(tileName, !isNeedBuild, width, height);
+            buildTileData.RectType = rectType;
             if (this.BuildMapDataLAB.PosMap.ContainsKey(vector3IntLAB))
             {
                 // 门
@@ -107,13 +110,17 @@ namespace LAB2D.Map
         /// <param name="targetMap">建造位置</param>
         /// <param name="tileName">瓦片名称</param>
         /// <param name="builderName">建造者 Worker 名称（用于 VerifyBuildTasks 恢复指派关系）。</param>
+        /// <param name="width">物品宽度</param>
+        /// <param name="height">物品高度</param>
+        /// <param name="rectType">Rect 类型（多格物品自动为副格注册碰撞体）</param>
         /// <returns>true = 预约成功；false = 位置已被占用</returns>
-        public bool ReserveBuildPosition(Vector3Int targetMap, string tileName, string builderName = null)
+        public bool ReserveBuildPosition(Vector3Int targetMap, string tileName, string builderName = null,
+            int width = 1, int height = 1, AWorkerTask.RectType rectType = AWorkerTask.RectType.Center)
         {
-            Vector3IntLAB vector3IntLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
+            Vector3IntLAB primaryLAB = Vector3IntLAB.ToVector3IntLAB(targetMap);
 
-            // 位置已被其他 Worker 预约（IsComplete=false）或已完成建造 → 拒绝覆盖
-            if (this.BuildMapDataLAB.PosMap.TryGetValue(vector3IntLAB, out var existing))
+            // 1. 检查主格是否可用
+            if (this.BuildMapDataLAB.PosMap.TryGetValue(primaryLAB, out var existing))
             {
                 AWorkerTask.LogProvider(
                     $"ReserveBuildPosition: 位置已被占用 tile={existing.Name} complete={existing.IsComplete}",
@@ -121,31 +128,94 @@ namespace LAB2D.Map
                 return false;
             }
 
-            // 放置瓦片（视觉反馈）
-            this.tilemap.SetTile(targetMap, (TileBase)AWorkerTask.ResourceLoadProvider(tileName));
-
-            // 设置为建造中外观（半透明、无碰撞）
-            this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
-            this.tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
-            this.tilemap.SetColor(targetMap, this.initColor);
-
-            // 注册到 PosMap（供碰撞检查和 IsBuilding 查询）
-            BuildTileData buildTileData = new BuildTileData(tileName, false);
-            if (!string.IsNullOrEmpty(builderName))
+            // 2. 多格物品：检查所有副格是否可用
+            if (width > 1 || height > 1)
             {
-                buildTileData.BuilderName = builderName;
+                var allPositions = ABuildItem.GetOccupiedPositions(targetMap, width, height, rectType);
+                foreach (var pos in allPositions)
+                {
+                    if (pos == targetMap) continue;
+                    Vector3IntLAB secLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                    if (this.BuildMapDataLAB.PosMap.TryGetValue(secLAB, out var secExisting))
+                    {
+                        AWorkerTask.LogProvider(
+                            $"ReserveBuildPosition: 副格已被占用 tile={secExisting.Name} pos=({pos.x},{pos.y})",
+                            LogManager.LogLevelEnum.Warning);
+                        return false;
+                    }
+                }
             }
 
-            this.BuildMapDataLAB.PosMap.Add(vector3IntLAB, buildTileData);
+            // 3. 注册主格（visual tile + IsComplete=false → 需要建造任务）
+            TileBase tile = (TileBase)AWorkerTask.ResourceLoadProvider(tileName);
+            if (tile != null)
+            {
+                this.tilemap.SetTile(targetMap, tile);
+                this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
+                this.tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
+                this.tilemap.SetColor(targetMap, this.initColor);
+            }
+
+            BuildTileData primaryData = new BuildTileData(tileName, false, width, height);
+            primaryData.RectType = rectType;
+            if (!string.IsNullOrEmpty(builderName))
+            {
+                primaryData.BuilderName = builderName;
+            }
+            this.BuildMapDataLAB.PosMap.Add(primaryLAB, primaryData);
             WalkabilityCache.UpdateCell(targetMap);
 
-            // 同步
             this.SyncSender.Broadcast(
                 "SyncDataResp",
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
-                DataTool.ToByteArray(buildTileData));
+                DataTool.ToByteArray(primaryData));
+
+            // 4. 多格物品：注册副格（纯本地碰撞体，不广播避免远程重复 visual tile）
+            if (width > 1 || height > 1)
+            {
+                var allPositions = ABuildItem.GetOccupiedPositions(targetMap, width, height, rectType);
+                foreach (var pos in allPositions)
+                {
+                    if (pos == targetMap) continue;
+                    Vector3IntLAB secLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                    BuildTileData secData = new BuildTileData(tileName, true, width, height);
+                    secData.RectType = rectType;
+                    secData.BuilderName = builderName ?? string.Empty;
+                    secData.OwnerName = builderName ?? string.Empty;
+                    this.BuildMapDataLAB.PosMap.Add(secLAB, secData);
+                    this.tilemap.SetColliderType(pos, Tile.ColliderType.Sprite);
+                    WalkabilityCache.UpdateCell(pos);
+                    // 不广播：主格同步 + SetComplete 多格逻辑会让远程也完成副格
+                }
+            }
 
             return true;
+        }
+
+        /// <summary>
+        /// 为多格物品注册副格碰撞体（无 visual tile，IsComplete=true，纯阻挡寻路）。
+        /// 调用前应确保位置可用。
+        /// </summary>
+        /// <param name="pos">副格地图坐标</param>
+        /// <param name="tileName">瓦片名称（与主格相同）</param>
+        /// <param name="builderName">建造者名称</param>
+        /// <param name="width">物品宽度</param>
+        /// <param name="height">物品高度</param>
+        /// <param name="rectType">矩形类型</param>
+        public void RegisterCollisionTile(Vector3Int pos, string tileName, string builderName,
+            int width, int height, AWorkerTask.RectType rectType)
+        {
+            Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+            if (this.BuildMapDataLAB.PosMap.ContainsKey(posLAB)) return;
+
+            BuildTileData secData = new BuildTileData(tileName, true, width, height);
+            secData.RectType = rectType;
+            secData.BuilderName = builderName ?? string.Empty;
+            secData.OwnerName = builderName ?? string.Empty;
+            this.BuildMapDataLAB.PosMap.Add(posLAB, secData);
+            this.tilemap.SetColliderType(pos, Tile.ColliderType.Sprite);
+            WalkabilityCache.UpdateCell(pos);
+            // 不广播：主格同步 + SetComplete 多格逻辑会让远程也完成副格
         }
 
         /// <summary>
@@ -172,6 +242,28 @@ namespace LAB2D.Map
             {
                 buildTileData.BuilderName = builderName ?? string.Empty;
                 buildTileData.OwnerName = ownerName ?? string.Empty;
+
+                // 多格物品：同步完成所有占用格
+                if (buildTileData.Width > 1 || buildTileData.Height > 1)
+                {
+                    Vector3Int centerMap = Vector3IntLAB.ToVector3Int(targetMap);
+                    var allPositions = ABuildItem.GetOccupiedPositions(
+                        centerMap, buildTileData.Width, buildTileData.Height,
+                        buildTileData.RectType);
+                    foreach (var pos in allPositions)
+                    {
+                        Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                        if (this.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out BuildTileData otherTile)
+                            && !otherTile.IsComplete
+                            && otherTile.Name == buildTileData.Name)
+                        {
+                            otherTile.BuilderName = builderName ?? string.Empty;
+                            otherTile.OwnerName = ownerName ?? string.Empty;
+                            this.SetComplete(posLAB);
+                        }
+                    }
+                    return; // SetComplete 已在循环中调用，无需再调用
+                }
             }
 
             this.SetComplete(targetMap);
@@ -277,49 +369,54 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 是否可以通行,Worker寻路时使用
+        /// 是否可以通行,Worker寻路时使用。
+        /// 先查 PosMap（捕获无 visual tile 的碰撞体/多格副格），再 fallback 到 IsFreeTile。
         /// </summary>
         /// <param name="posMap">位置</param>
         /// <returns>是否</returns>
         public override bool IsCanReach(Vector3Int posMap)
         {
-            if (this.IsFreeTile(posMap))
+            if (this.BuildMapDataLAB?.PosMap != null)
             {
-                return true;
+                Vector3IntLAB key = Vector3IntLAB.ToVector3IntLAB(posMap);
+                if (this.BuildMapDataLAB.PosMap.TryGetValue(key, out BuildTileData data) && data != null)
+                {
+                    // 未建造完成（预注册/建造中）→ 可通行（碰撞体已被移除）
+                    if (!data.IsComplete)
+                    {
+                        return true;
+                    }
+
+                    // 已完成 → 查 BuildItemData.IsPass
+                    // 碰撞体（Name="BedCollision"等无对应 BuildItemData 的条目）→ GetBuildItemDataByName 返回 null → 不可通行
+                    try
+                    {
+                        BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
+                        return buildItemData != null && buildItemData.IsPass;
+                    }
+                    catch (System.InvalidCastException)
+                    {
+                        // 非 BuildItemData 的 tile（如 Bounty 任务栏标记），默认可通行
+                        return true;
+                    }
+                }
             }
 
-            if (this.BuildMapDataLAB == null || this.BuildMapDataLAB.PosMap == null)
-            {
-                return true;
-            }
+            // 不在 PosMap → fallback 到 visual tile 检查
+            return this.IsFreeTile(posMap);
+        }
 
-            if (!this.BuildMapDataLAB.PosMap.ContainsKey(Vector3IntLAB.ToVector3IntLAB(posMap)))
-            {
-                return true;
-            }
-
-            BuildTileData buildTileData = this.BuildMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(posMap)];
-            if (buildTileData == null)
-            {
-                return true;
-            }
-
-            // 未建造完成的瓦片（预注册/建造中）一律可通行，因为碰撞体已被移除
-            if (!buildTileData.IsComplete)
-            {
-                return true;
-            }
-
-            try
-            {
-                BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
-                return buildItemData != null && buildItemData.IsPass;
-            }
-            catch (System.InvalidCastException)
-            {
-                // 非 BuildItemData 的 tile（如 Bounty 任务栏标记），默认可通行
-                return true;
-            }
+        /// <summary>
+        /// 获取指定地图位置的建造数据，用于外部查询（如视线检测）。
+        /// </summary>
+        /// <param name="posMap">地图坐标。</param>
+        /// <returns>该位置的 BuildTileData，若不存在则返回 null。</returns>
+        public BuildTileData GetBuildData(Vector3Int posMap)
+        {
+            if (this.BuildMapDataLAB?.PosMap == null) return null;
+            Vector3IntLAB key = Vector3IntLAB.ToVector3IntLAB(posMap);
+            this.BuildMapDataLAB.PosMap.TryGetValue(key, out BuildTileData data);
+            return data;
         }
 
         /// <inheritdoc/>
@@ -562,12 +659,36 @@ namespace LAB2D.Map
             /// </summary>
             public string OwnerName;
 
-            public BuildTileData(string name, bool isComplete)
+            /// <summary>
+            /// 不可见碰撞体的标记名称（用于床等物品的第二格阻挡寻路）。
+            /// </summary>
+            public const string CollisionBlockName = "BedCollision";
+
+            /// <summary>
+            /// 物品宽度（用于多格建造物的占用格计算）
+            /// </summary>
+            public int Width;
+
+            /// <summary>
+            /// 物品高度（用于多格建造物的占用格计算）
+            /// </summary>
+            public int Height;
+
+            /// <summary>
+            /// Rect 类型（Center/TopLeft/BottomLeft），用于多格建造物完成时正确计算所有占用格。
+            /// 默认 Center，向后兼容旧存档。
+            /// </summary>
+            public AWorkerTask.RectType RectType;
+
+            public BuildTileData(string name, bool isComplete, int width = 1, int height = 1)
             {
                 this.Name = name;
                 this.IsComplete = isComplete;
                 this.BuilderName = string.Empty;
                 this.OwnerName = string.Empty;
+                this.Width = width;
+                this.Height = height;
+                this.RectType = AWorkerTask.RectType.Center;
             }
         }
     }

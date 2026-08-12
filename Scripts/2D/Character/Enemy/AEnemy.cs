@@ -126,7 +126,17 @@ namespace LAB2D.Character.Enemy
 
             if (isFind)
             {
-                // 判断玩家和敌人之间是否存在遮挡物
+                // 网格级视线遮挡检查：Bresenham 遍历两点之间的网格，
+                // 检测建造中/已完成的墙壁和不可通过地形，弥补物理射线无法检测无碰撞体瓦片的缺陷。
+                if (!this.HasGridLineOfSight(target.position))
+                {
+                    isFind = false;
+                }
+            }
+
+            // 物理射线检测作为补充（检测动态障碍物等）
+            if (isFind)
+            {
                 Vector3 direction = target.position - this.transform.position;
                 this.raycastHit2D = Physics2D.Raycast(this.transform.position, direction, enemyData.SightRange, this.AttackLayers); // (源,方向,距离,层级)
 
@@ -144,6 +154,83 @@ namespace LAB2D.Character.Enemy
         public override void Attack()
         {
             throw new System.NotImplementedException();
+        }
+
+        /// <summary>
+        /// 网格级视线检查 — 使用 Bresenham 算法遍历两点之间的网格，
+        /// 检测是否有不可通过的 BuildTile 或 TerrainTile 阻挡视线。
+        /// 物理射线无法检测建造中（无碰撞体）的墙壁和门洞，此方法弥补该缺陷。
+        /// </summary>
+        /// <param name="targetWorldPos">目标世界坐标。</param>
+        /// <returns>两点之间是否有畅通的网格视线。</returns>
+        private bool HasGridLineOfSight(Vector3 targetWorldPos)
+        {
+            var tileMap = Core.ServiceLocator.Get<TileMap>();
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            if (tileMap == null)
+            {
+                return true; // 无 TileMap 时不做网格检测，回退到物理射线
+            }
+
+            Vector3Int fromMap = tileMap.WorldPosToMapPos(this.transform.position);
+            Vector3Int toMap = tileMap.WorldPosToMapPos(targetWorldPos);
+
+            int x0 = fromMap.x;
+            int y0 = fromMap.y;
+            int x1 = toMap.x;
+            int y1 = toMap.y;
+
+            int dx = Mathf.Abs(x1 - x0);
+            int dy = Mathf.Abs(y1 - y0);
+            int sx = x0 < x1 ? 1 : -1;
+            int sy = y0 < y1 ? 1 : -1;
+            int err = dx - dy;
+
+            int x = x0;
+            int y = y0;
+            int steps = 0;
+            const int maxSteps = 200; // 安全上限，防止无限循环
+
+            while (steps++ < maxSteps)
+            {
+                // 跳过起点和终点（起点是敌人自身，终点是目标）
+                if ((x != x0 || y != y0) && (x != x1 || y != y1))
+                {
+                    Vector3Int checkPos = new Vector3Int(x, y, 0);
+
+                    // 检查 BuildMap：已完成且不可通过的建筑瓦片阻挡视线
+                    if (buildMap != null && !buildMap.IsCanReach(checkPos))
+                    {
+                        return false;
+                    }
+
+                    // 检查 TileMap：不可通过的地形瓦片阻挡视线
+                    if (!tileMap.IsCanReach(checkPos))
+                    {
+                        return false;
+                    }
+                }
+
+                if (x == x1 && y == y1)
+                {
+                    break;
+                }
+
+                int e2 = 2 * err;
+                if (e2 > -dy)
+                {
+                    err -= dy;
+                    x += sx;
+                }
+
+                if (e2 < dx)
+                {
+                    err += dx;
+                    y += sy;
+                }
+            }
+
+            return true;
         }
 
         /// <inheritdoc/>

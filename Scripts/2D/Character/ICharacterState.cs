@@ -25,5 +25,10 @@ namespace LAB2D.Character
         /// 退出执行
         /// </summary>
         public void OnExit();
+
+        /// <summary>
+        /// FixedUpdate 中执行（物理相关逻辑，如移动）。
+        /// </summary>
+        public void OnFixedUpdate();
     }
 }

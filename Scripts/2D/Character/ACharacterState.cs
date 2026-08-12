@@ -37,5 +37,10 @@ namespace LAB2D.Character
         public virtual void OnUpdate()
         {
         }
+
+        /// <inheritdoc/>
+        public virtual void OnFixedUpdate()
+        {
+        }
     }
 }

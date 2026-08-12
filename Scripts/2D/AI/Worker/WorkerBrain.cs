@@ -9,6 +9,7 @@ namespace LAB2D.AI.Worker
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
     using LAB2D.Item;
+    using LAB2D.Item.Build.Furniture.Bed;
     using LAB2D.Map;
     using System.Collections.Generic;
     using UnityEngine;
@@ -718,22 +719,26 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 扫描 5×5 房间区域内未被认领的资源。
+        /// 扫描 7×7 房间区域内未被认领的资源。
         /// 在建造第一块墙之前调用，确保先清理区域内的所有资源。
         /// </summary>
         /// <param name="center">房间中心位置</param>
         /// <returns>最近的可采集资源，无则 null</returns>
-        private ResourceCandidate? ScanRoomAreaForResource(Vector3Int center)
+        private ResourceCandidate? ScanRoomAreaForResource(Vector3Int center, AWorker.WorkerData wd)
         {
             var resourceMap = Core.ServiceLocator.Get<ResourceMap>();
             var gatherMap = Core.ServiceLocator.Get<GatherMap>();
             ResourceCandidate? best = null;
             float bestDist = float.MaxValue;
 
-            // 扫描整个 5×5 房间区域（含墙壁、门、床、地板）
-            for (int dx = -2; dx <= 2; dx++)
+            // 根据房间参数动态计算扫描范围
+            int hw = (wd.HomeRoomWidth - 1) / 2;
+            int hh = (wd.HomeRoomHeight - 1) / 2;
+
+            // 扫描整个房间区域（含墙壁、门、床、仓库、地板）
+            for (int dx = -hw; dx <= hw; dx++)
             {
-                for (int dy = -2; dy <= 2; dy++)
+                for (int dy = -hh; dy <= hh; dy++)
                 {
                     Vector3Int pos = new Vector3Int(center.x + dx, center.y + dy, 0);
 
@@ -1156,59 +1161,207 @@ namespace LAB2D.AI.Worker
             return best;
         }
 
-        // ---- 建造/种植决策 ----
+        // ---- 房间布局生成 ----
 
-        // 房间墙壁偏移（5x5 环，Unity 坐标 x=列, y=行，中心为原点）：
-        // 中间 3x3 空地放床，墙壁围在第二圈。下侧/南侧 (-2,0) 留门。
-        // ARoom 使用 x=行/y=列 坐标系（与 Unity 交换了 xy），因此方向需按 ARoom 约定：
-        //   _0=左上 _1=上 _2=右上 _3=左 _4=右 _5=左下 _6=下 _7=右下
-        private static readonly Vector3Int[] WallOffsets = new Vector3Int[]
+        /// <summary>
+        /// 动态生成的房间布局数据，替代旧的静态硬编码常量。
+        /// </summary>
+        public class RoomLayout
         {
-            new Vector3Int(-2, 2, 0),  // 0: 左上角 (ARoom: 右下) → _7
-            new Vector3Int(-1, 2, 0),  // 1: 上边   (ARoom: 右)   → _4
-            new Vector3Int(0, 2, 0),   // 2: 上中   (ARoom: 右)   → _4
-            new Vector3Int(1, 2, 0),   // 3: 上边   (ARoom: 右)   → _4
-            new Vector3Int(2, 2, 0),   // 4: 右上角 (ARoom: 右上) → _2
-            new Vector3Int(2, 1, 0),   // 5: 右边   (ARoom: 上)   → _1
-            new Vector3Int(2, 0, 0),   // 6: 右中   (ARoom: 上)   → _1
-            new Vector3Int(2, -1, 0),  // 7: 右边   (ARoom: 上)   → _1
-            new Vector3Int(2, -2, 0),  // 8: 右下角 (ARoom: 左上) → _0
-            new Vector3Int(1, -2, 0),  // 9: 下边右 (ARoom: 左)   → _3
-            new Vector3Int(0, -2, 0),  // 10: 下边中 (ARoom: 左)   → _3 [原门位置,现为墙]
-            new Vector3Int(-1, -2, 0), // 11: 下边左 (ARoom: 左)   → _3
-            new Vector3Int(-2, -2, 0), // 12: 左下角 (ARoom: 左下) → _5
-            new Vector3Int(-2, -1, 0), // 13: 左边下 (ARoom: 下)   → _6
-            new Vector3Int(-2, 1, 0),  // 14: 左边上 (ARoom: 下)   → _6 [门在(-2,0)]
-        };
-        // 对应每块墙的方向编号（按 ARoom 坐标约定）
-        private static readonly int[] WallDirections = new int[]
+            /// <summary>
+            /// 床的定义（1×2，RectType=BottomLeft）。主格/副格占用关系由此派生，
+            /// 而非在 WorkerBrain 硬编码偏移，保证与 ABuildItem.AddBuildTask 的多格逻辑一致。
+            /// </summary>
+            internal static readonly SingleBed BedDef = new SingleBed();
+
+            public List<Vector3Int> WallOffsets = new List<Vector3Int>();
+            public List<int> WallDirections = new List<int>();
+            public Vector3Int DoorOffset;
+            public Vector3Int BedOffset;  // 床参考点（左下角）在房间内的偏移（家具布局）
+
+            /// <summary>
+            /// 床副格（上格）偏移。由 SingleBed 的 Height=2 + RectType=BottomLeft 派生：
+            /// 主格（参考点）上方 1 格，不再硬编码。
+            /// </summary>
+            public Vector3Int BedSecondOffset => BedDef.GetOccupiedPositions(this.BedOffset)[1];
+
+            public List<Vector3Int> StorageOffsets = new List<Vector3Int>();     // 4 格仓库偏移
+            public List<int> StorageDirections = new List<int>();                // 4 格仓库方向
+
+            public int WallCount => this.WallOffsets.Count;
+            public int DoorStage => this.WallCount;
+            public int BedStage => this.WallCount + 1;
+            public int StorageStage1 => this.WallCount + 2;
+            public int StorageStage2 => this.WallCount + 3;
+            public int StorageStage3 => this.WallCount + 4;
+            public int StorageStage4 => this.WallCount + 5;
+            public int CompleteStage => this.WallCount + 6;
+        }
+
+        /// <summary>仓库建造瓦片名称前缀（实际使用时追加方向后缀 _0~_7）。</summary>
+        private const string StorageTileName = "InventoryWall";
+
+        /// <summary>
+        /// 根据房间参数动态生成墙壁布局。
+        /// 支持宽度 5/7、高度 5/7 的矩形房间，门在任意一边。
+        /// </summary>
+        /// <param name="width">外墙宽度（奇数 5 或 7）</param>
+        /// <param name="height">外墙高度（奇数 5 或 7）</param>
+        /// <param name="doorSide">门所在边: 0=左 1=右 2=上 3=下</param>
+        /// <param name="doorIndex">门在该边的非角位置索引（0-based）</param>
+        private static RoomLayout GenerateRoomLayout(int width, int height, int doorSide, int doorIndex)
         {
-            7,              // 0: 左上角 → _7 (右下)
-            4, 4, 4,        // 1-3: 上边 → _4 (右)
-            2,              // 4: 右上角 → _2 (右上)
-            1, 1, 1,        // 5-7: 右边 → _1 (上)
-            0,              // 8: 右下角 → _0 (左上)
-            3,              // 9: 下边右 → _3 (左)
-            3,              // 10: 下边中 → _3 (左) [原门位置,现为墙]
-            3,              // 11: 下边左 → _3 (左)
-            5,              // 12: 左下角 → _5 (左下)
-            6,              // 13: 左边下 → _6 (下)
-            6,              // 14: 左边上 → _6 (下)
-        };
-        public const int WallCount = 15;           // 15 面墙
-        public const int DoorStage = WallCount;    // 15: 门
-        public const int BedStage = WallCount + 1; // 16: 床
-        public const int CompleteStage = WallCount + 2; // 17: 完成
+            RoomLayout layout = new RoomLayout();
+            int hw = (width - 1) / 2;   // 半宽
+            int hh = (height - 1) / 2;  // 半高
+
+            // 门位置
+            layout.DoorOffset = GetDoorPosition(hw, hh, doorSide, doorIndex);
+
+            // 上边 (y = hh): x 从 -hw 到 hw → 方向 _4
+            for (int x = -hw; x <= hw; x++)
+            {
+                Vector3Int pos = new Vector3Int(x, hh, 0);
+                if (doorSide == 2 && pos == layout.DoorOffset) continue; // 门在顶上
+                layout.WallOffsets.Add(pos);
+                // 角: x==-hw→_7, x==hw→_2, 中间→_4
+                int dir = (x == -hw) ? 7 : (x == hw) ? 2 : 4;
+                layout.WallDirections.Add(dir);
+            }
+
+            // 右边 (x = hw): y 从 hh-1 到 -hh+1 → 方向 _1
+            for (int y = hh - 1; y >= -hh + 1; y--)
+            {
+                Vector3Int pos = new Vector3Int(hw, y, 0);
+                if (doorSide == 1 && pos == layout.DoorOffset) continue;
+                layout.WallOffsets.Add(pos);
+                layout.WallDirections.Add(1);
+            }
+
+            // 下边 (y = -hh): x 从 hw 到 -hw → 方向 _3
+            for (int x = hw; x >= -hw; x--)
+            {
+                Vector3Int pos = new Vector3Int(x, -hh, 0);
+                if (doorSide == 3 && pos == layout.DoorOffset) continue;
+                layout.WallOffsets.Add(pos);
+                // 角: x==hw→_0, x==-hw→_5, 中间→_3
+                int dir = (x == hw) ? 0 : (x == -hw) ? 5 : 3;
+                layout.WallDirections.Add(dir);
+            }
+
+            // 左边 (x = -hw): y 从 -hh+1 到 hh-1 → 方向 _6
+            for (int y = -hh + 1; y <= hh - 1; y++)
+            {
+                Vector3Int pos = new Vector3Int(-hw, y, 0);
+                if (doorSide == 0 && pos == layout.DoorOffset) continue;
+                layout.WallOffsets.Add(pos);
+                layout.WallDirections.Add(6);
+            }
+
+            // 床+仓库布局：根据门的位置动态摆放，确保家具在门的对面一侧
+            // 家具块 3×2（仓库 2×2 在左 + 床 1×2 在右），与四面墙保持至少 1 格间距
+            int interiorW = 2 * (hw - 1) + 1; // 内部可走区域宽度
+            int interiorH = 2 * (hh - 1) + 1; // 内部可走区域高度
+            const int furnW = 3; // 家具总宽度（仓库 2 列 + 床 1 列）
+            const int furnH = 2; // 家具总高度
+
+            int furnLeft, furnBottom; // 家具块左下角（相对于房间中心）
+
+            // 内部高度足够（7×7）时，家具与对面墙保持 2 格间距；
+            // 5×5 内部仅 3 格高，只能留 1 格（否则家具会贴到门）
+            bool roomyV = interiorH >= furnH + 3; // 7×7: 5 >= 5 → true；5×5: 3 >= 5 → false
+
+            switch (doorSide)
+            {
+                case 2: // 门在上边 → 家具靠下，水平居中
+                    furnLeft = -(hw - 1) + System.Math.Max(0, (interiorW - furnW) / 2);
+                    furnBottom = roomyV ? -(hh - 2) : -(hh - 1);
+                    break;
+                case 3: // 门在下边 → 家具靠上，水平居中
+                    furnLeft = -(hw - 1) + System.Math.Max(0, (interiorW - furnW) / 2);
+                    furnBottom = roomyV ? (hh - furnH - 1) : (hh - furnH);
+                    break;
+                case 0: // 门在左边 → 家具靠右，垂直居中
+                    furnLeft = hw - furnW; // 右边 = hw-1（距右墙 1 格）
+                    furnBottom = -(hh - 1) + System.Math.Max(0, (interiorH - furnH) / 2);
+                    break;
+                case 1: // 门在右边 → 家具靠左，垂直居中
+                    furnLeft = -(hw - 1); // 左边距左墙 1 格
+                    furnBottom = -(hh - 1) + System.Math.Max(0, (interiorH - furnH) / 2);
+                    break;
+                default:
+                    furnLeft = -(hw - 1);
+                    furnBottom = -(hh - 1);
+                    break;
+            }
+
+            // 床 1×2 竖放在家具块右侧。只设置床参考点（左下角，RectType=BottomLeft），
+            // 副格（上格）由 RoomLayout.BedSecondOffset 从 SingleBed 定义派生。
+            layout.BedOffset = new Vector3Int(furnLeft + 2, furnBottom, 0);  // 床参考点（左下角）
+
+            // 4 格仓库形成 2×2 "田"字方块，放在床左侧
+            layout.StorageOffsets.Add(new Vector3Int(furnLeft, furnBottom + 1, 0));     // 左上
+            layout.StorageDirections.Add(7);
+            layout.StorageOffsets.Add(new Vector3Int(furnLeft, furnBottom, 0));         // 左下
+            layout.StorageDirections.Add(5);
+            layout.StorageOffsets.Add(new Vector3Int(furnLeft + 1, furnBottom + 1, 0)); // 右上
+            layout.StorageDirections.Add(2);
+            layout.StorageOffsets.Add(new Vector3Int(furnLeft + 1, furnBottom, 0));     // 右下
+            layout.StorageDirections.Add(0);
+
+            return layout;
+        }
+
+        /// <summary>根据门参数计算门在房间外墙上的绝对偏移。</summary>
+        private static Vector3Int GetDoorPosition(int hw, int hh, int doorSide, int doorIndex)
+        {
+            return doorSide switch
+            {
+                0 => new Vector3Int(-hw, hh - 1 - doorIndex, 0),       // 左边，从上往下
+                1 => new Vector3Int(hw, hh - 1 - doorIndex, 0),        // 右边，从上往下
+                2 => new Vector3Int(-hw + 1 + doorIndex, hh, 0),       // 上边，从左往右
+                3 => new Vector3Int(-hw + 1 + doorIndex, -hh, 0),      // 下边，从左往右
+                _ => new Vector3Int(-hw, 0, 0),
+            };
+        }
+
+        /// <summary>为 Worker 随机生成房间参数并存储到 WorkerData。</summary>
+        private static void GenerateRandomRoomParams(AWorker.WorkerData wd)
+        {
+            // 随机尺寸：50% 5×5, 50% 7×7
+            wd.HomeRoomWidth = UnityEngine.Random.value < 0.5f ? 5 : 7;
+            wd.HomeRoomHeight = UnityEngine.Random.value < 0.5f ? 5 : 7;
+            // 随机门朝向
+            wd.HomeDoorSide = UnityEngine.Random.Range(0, 4);
+            // 随机门位置（非角位置数量 = 对应边长度 - 2）
+            int sideLen = (wd.HomeDoorSide == 0 || wd.HomeDoorSide == 1)
+                ? wd.HomeRoomHeight : wd.HomeRoomWidth;
+            int maxIndex = sideLen - 3; // 非角位置数量 - 1
+            if (maxIndex < 0) maxIndex = 0;
+            wd.HomeDoorIndex = maxIndex > 0 ? UnityEngine.Random.Range(0, maxIndex + 1) : 0;
+        }
+
+        /// <summary>从 WorkerData 参数生成房间布局。如果参数未设置则自动生成。</summary>
+        public static RoomLayout GetRoomLayout(AWorker.WorkerData wd)
+        {
+            if (wd.HomeRoomWidth == 0)
+            {
+                GenerateRandomRoomParams(wd);
+            }
+            return GenerateRoomLayout(
+                wd.HomeRoomWidth, wd.HomeRoomHeight,
+                wd.HomeDoorSide, wd.HomeDoorIndex);
+        }
 
         /// <summary>获取房间所有墙壁偏移（供外部注册房间使用）。</summary>
-        public static IReadOnlyList<Vector3Int> GetWallOffsets() => WallOffsets;
-
-        /// <summary>门相对于中心的偏移（左墙/下侧中间）。</summary>
-        public static readonly Vector3Int DoorOffset = new Vector3Int(-2, 0, 0);
+        public static IReadOnlyList<Vector3Int> GetWallOffsets(AWorker.WorkerData wd)
+        {
+            return GetRoomLayout(wd).WallOffsets;
+        }
 
         /// <summary>
         /// 自主建造决策：Worker 决定为自己建造房屋。
-        /// 无家者：先围墙壁（7块）形成房间（南侧留门），再在中间建床。
+        /// 无家者：先围墙壁（23块）形成房间（左墙留门），再在中间建床，最后建4格仓库。
         /// 社交型+有钱 → 发建造悬赏；勤奋型+有材料 → 自己建。
         /// </summary>
         private Decision? TryMakeSelfBuildDecision(AWorker worker, AWorker.WorkerData wd, bool canAfford)
@@ -1229,12 +1382,13 @@ namespace LAB2D.AI.Worker
                 }
 
                 Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+                var layout = GetRoomLayout(wd);
 
                 // 建造前先扫描房间区域内的资源，有资源先采集
                 if (wd.HomeBuildStage == 0)
                 {
                     // 先预注册所有房间位置到 BuildMap，阻止 GenTree 在这些位置生成树
-                    if (!this.PreReserveAllRoomPositions(center, worker))
+                    if (!this.PreReserveAllRoomPositions(center, worker, wd))
                     {
                         // 预注册失败（位置冲突）→ 重新选址
                         AWorkerTask.LogProvider(
@@ -1245,7 +1399,7 @@ namespace LAB2D.AI.Worker
                             "建家位置预注册失败, 重新选址后漫游");
                     }
 
-                    ResourceCandidate? roomResource = this.ScanRoomAreaForResource(center);
+                    ResourceCandidate? roomResource = this.ScanRoomAreaForResource(center, wd);
                     if (roomResource.HasValue)
                     {
                         AWorkerTask.LogProvider(
@@ -1257,28 +1411,52 @@ namespace LAB2D.AI.Worker
                     }
                 }
 
-                if (wd.HomeBuildStage < WallCount)
+                if (wd.HomeBuildStage < layout.WallCount)
                 {
-                    // 阶段 0-14：建墙壁，使用对应方向变体
-                    int dir = WallDirections[wd.HomeBuildStage];
+                    // 阶段 0-N：建墙壁，使用对应方向变体
+                    int dir = layout.WallDirections[wd.HomeBuildStage];
                     buildTileName = $"CustomRoomWall_{dir}";
-                    buildPos = center + WallOffsets[wd.HomeBuildStage];
+                    buildPos = center + layout.WallOffsets[wd.HomeBuildStage];
                 }
-                else if (wd.HomeBuildStage == DoorStage)
+                else if (wd.HomeBuildStage == layout.DoorStage)
                 {
-                    // 阶段 15：建门
+                    // 建门
                     buildTileName = "CustomDoor";
-                    buildPos = center + DoorOffset;
+                    buildPos = center + layout.DoorOffset;
                 }
-                else if (wd.HomeBuildStage == BedStage)
+                else if (wd.HomeBuildStage == layout.BedStage)
                 {
-                    // 阶段 16：建床
+                    // 建床（1×2，上格先建）
                     buildTileName = "SingleBed";
-                    buildPos = center;
+                    buildPos = center + layout.BedOffset;
+                }
+                else if (wd.HomeBuildStage == layout.StorageStage1)
+                {
+                    // 建仓库1（床左上）
+                    buildTileName = $"{StorageTileName}_{layout.StorageDirections[0]}";
+                    buildPos = center + layout.StorageOffsets[0];
+                }
+                else if (wd.HomeBuildStage == layout.StorageStage2)
+                {
+                    // 建仓库2（床右上）
+                    buildTileName = $"{StorageTileName}_{layout.StorageDirections[1]}";
+                    buildPos = center + layout.StorageOffsets[1];
+                }
+                else if (wd.HomeBuildStage == layout.StorageStage3)
+                {
+                    // 建仓库3（床左下）
+                    buildTileName = $"{StorageTileName}_{layout.StorageDirections[2]}";
+                    buildPos = center + layout.StorageOffsets[2];
+                }
+                else if (wd.HomeBuildStage == layout.StorageStage4)
+                {
+                    // 建仓库4（床右下）
+                    buildTileName = $"{StorageTileName}_{layout.StorageDirections[3]}";
+                    buildPos = center + layout.StorageOffsets[3];
                 }
                 else
                 {
-                    // 阶段 17+：完成
+                    // 阶段 29+：完成
                     return null;
                 }
 
@@ -1291,9 +1469,9 @@ namespace LAB2D.AI.Worker
                         AWorkerTask.LogProvider(
                             $"{worker.name} 建造: CustomRoomWall 不存在, 跳过墙壁直接建床",
                             LogManager.LogLevelEnum.Warning);
-                        wd.HomeBuildStage = BedStage;
+                        wd.HomeBuildStage = layout.BedStage;
                         buildTileName = "SingleBed";
-                        buildPos = center;
+                        buildPos = center + layout.BedOffset;
                         needs = this.GetBuildMaterialNeeds(buildTileName);
                     }
 
@@ -1389,21 +1567,27 @@ namespace LAB2D.AI.Worker
                         if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var existingTile)
                             && existingTile.IsComplete)
                         {
-                            if (wd.HomeBuildStage < WallCount)
+                            if (wd.HomeBuildStage < layout.WallCount)
                             {
                                 AWorkerTask.LogProvider(
                                     $"{worker.name} 位置已建造完成, 跳过墙壁{wd.HomeBuildStage + 1}: pos=({buildPos.Value.x},{buildPos.Value.y})",
                                     LogManager.LogLevelEnum.Debug);
                                 wd.HomeBuildStage++;
                             }
-                            else if (wd.HomeBuildStage == DoorStage || wd.HomeBuildStage == BedStage)
+                            else if (wd.HomeBuildStage >= layout.DoorStage && wd.HomeBuildStage < layout.CompleteStage)
                             {
-                                // 门或床已完成 → 房间已建好，直接标记完成
+                                // 门/床/仓库已完成 → 推进阶段，到 CompleteStage 时标记完成
                                 AWorkerTask.LogProvider(
-                                    $"{worker.name} 门/床已完成, 标记建家完成: pos=({buildPos.Value.x},{buildPos.Value.y})",
+                                    $"{worker.name} 已完成阶段{wd.HomeBuildStage}, 推进: pos=({buildPos.Value.x},{buildPos.Value.y})",
                                     LogManager.LogLevelEnum.Debug);
-                                wd.HomeBuildStage = CompleteStage;
-                                wd.LifeStage = Domain.Worker.WorkerLifeStage.Settled;
+                                wd.HomeBuildStage++;
+                                if (wd.HomeBuildStage >= layout.CompleteStage)
+                                {
+                                    wd.LifeStage = Domain.Worker.WorkerLifeStage.Settled;
+                                    AWorkerTask.LogProvider(
+                                        $"{worker.name} 建家全部完成 (含仓库)! → Settled 阶段",
+                                        LogManager.LogLevelEnum.Info);
+                                }
                             }
                             return null;
                         }
@@ -1433,9 +1617,9 @@ namespace LAB2D.AI.Worker
                         }
                     }
 
-                    // 位置未在 BuildMap 注册，但可能在其他 Worker 的 5×5 房间范围内
-                    // 注意：此处比较的是单个建造位置 vs 房间中心，用 ≤ 2（房间半径），
-                    // 而非 IsHomeSiteClaimedByOther 的 ≤ 4（中心距）。
+                    // 位置未在 BuildMap 注册，但可能在其他 Worker 的 7×7 房间范围内
+                    // 注意：此处比较的是单个建造位置 vs 房间中心，用 ≤ 3（房间半径），
+                    // 而非 IsHomeSiteClaimedByOther 的 ≤ 7（中心距）。
                     if (this.IsPositionInsideOtherWorkerRoom(buildPos.Value, worker))
                     {
                         AWorkerTask.LogProvider(
@@ -1570,9 +1754,9 @@ namespace LAB2D.AI.Worker
             {
                 Vector3Int planned = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
                 if (ASeek.IsCanReach(planned)
-                    && this.CanFitRoom(planned)
+                    && this.CanFitRoom(planned, wd)
                     && !this.IsHomeSiteClaimedByOther(planned, worker)
-                    && !this.IsRoomAreaBlockedInBuildMap(planned, worker))
+                    && !this.IsRoomAreaBlockedInBuildMap(planned, worker, wd))
                 {
                     return planned;
                 }
@@ -1597,14 +1781,14 @@ namespace LAB2D.AI.Worker
                         // 检查是否可通行
                         if (!ASeek.IsCanReach(pos)) continue;
 
-                        // 检查 5×5 房间区域是否与 BuildMap 冲突（包括墙壁、门、床位置）
-                        if (this.IsRoomAreaBlockedInBuildMap(pos)) continue;
+                        // 检查房间区域是否与 BuildMap 冲突
+                        if (this.IsRoomAreaBlockedInBuildMap(pos, worker, wd)) continue;
 
                         // 检查是否被其他 Worker 规划为建家位置（防止房间重叠）
                         if (this.IsHomeSiteClaimedByOther(pos, worker)) continue;
 
-                        // 检查 5×5 房间能否完整放置（所有墙壁/门位置都可达）
-                        if (!this.CanFitRoom(pos)) continue;
+                        // 检查房间能否完整放置（所有墙壁/门位置都可达）
+                        if (!this.CanFitRoom(pos, wd)) continue;
 
                         return pos;
                     }
@@ -1637,10 +1821,11 @@ namespace LAB2D.AI.Worker
             // 2. 清除旧位置的残留瓦片（包括 tilemap 视觉和 BuildMap 数据）
             if (oldPosition != null && buildMap?.BuildMapDataLAB?.PosMap != null)
             {
+                var oldLayout = GetRoomLayout(wd);
                 Vector3Int oldCenter = Vector3IntLAB.ToVector3Int(oldPosition);
-                for (int i = 0; i < WallCount; i++)
+                for (int i = 0; i < oldLayout.WallCount; i++)
                 {
-                    Vector3Int wallPos = oldCenter + WallOffsets[i];
+                    Vector3Int wallPos = oldCenter + oldLayout.WallOffsets[i];
                     Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(wallPos);
                     if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var tile)
                         && !tile.IsComplete)
@@ -1649,18 +1834,37 @@ namespace LAB2D.AI.Worker
                         buildMap.CancelBuilding(wallPos);
                     }
                 }
-                Vector3Int oldDoor = oldCenter + DoorOffset;
+                Vector3Int oldDoor = oldCenter + oldLayout.DoorOffset;
                 Vector3IntLAB doorLAB = Vector3IntLAB.ToVector3IntLAB(oldDoor);
                 if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(doorLAB, out var d) && !d.IsComplete)
                 {
                     buildMap.BuildMapDataLAB.PosMap.Remove(doorLAB);
                     buildMap.CancelBuilding(oldDoor);
                 }
-                Vector3IntLAB centerLAB = Vector3IntLAB.ToVector3IntLAB(oldCenter);
-                if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(centerLAB, out var c) && !c.IsComplete)
+                // 清理床两格：主格未完成时同时清理副格碰撞体
+                Vector3IntLAB oldBed1LAB = Vector3IntLAB.ToVector3IntLAB(oldCenter + oldLayout.BedOffset);
+                bool oldBed1Incomplete = buildMap.BuildMapDataLAB.PosMap.TryGetValue(oldBed1LAB, out var oldBed1) && !oldBed1.IsComplete;
+                if (oldBed1Incomplete)
                 {
-                    buildMap.BuildMapDataLAB.PosMap.Remove(centerLAB);
-                    buildMap.CancelBuilding(oldCenter);
+                    buildMap.BuildMapDataLAB.PosMap.Remove(oldBed1LAB);
+                    buildMap.CancelBuilding(oldCenter + oldLayout.BedOffset);
+                }
+                Vector3IntLAB oldBed2LAB = Vector3IntLAB.ToVector3IntLAB(oldCenter + oldLayout.BedSecondOffset);
+                if (oldBed1Incomplete && buildMap.BuildMapDataLAB.PosMap.TryGetValue(oldBed2LAB, out var oldBed2) && oldBed2.IsComplete)
+                {
+                    buildMap.BuildMapDataLAB.PosMap.Remove(oldBed2LAB);
+                    buildMap.CancelBuilding(oldCenter + oldLayout.BedSecondOffset);
+                }
+                // 清理仓库位置
+                foreach (var so in oldLayout.StorageOffsets)
+                {
+                    Vector3Int sPos = oldCenter + so;
+                    Vector3IntLAB sLAB = Vector3IntLAB.ToVector3IntLAB(sPos);
+                    if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(sLAB, out var st) && !st.IsComplete)
+                    {
+                        buildMap.BuildMapDataLAB.PosMap.Remove(sLAB);
+                        buildMap.CancelBuilding(sPos);
+                    }
                 }
             }
 
@@ -1675,22 +1879,30 @@ namespace LAB2D.AI.Worker
         /// <param name="center">房间中心</param>
         /// <param name="worker">当前 Worker（仅用于日志）</param>
         /// <returns>true = 全部注册成功；false = 存在冲突，需重新选址</returns>
-        private bool PreReserveAllRoomPositions(Vector3Int center, AWorker worker)
+        private bool PreReserveAllRoomPositions(Vector3Int center, AWorker worker, AWorker.WorkerData wd)
         {
             var buildMap = Core.ServiceLocator.Get<BuildMap>();
             if (buildMap == null) return false;
 
-            // 收集所有需要预注册的位置及其 tileName
-            var positionsToReserve = new List<(Vector3Int pos, string tileName)>(WallCount + 2);
+            var layout = GetRoomLayout(wd);
 
-            for (int i = 0; i < WallCount; i++)
+            // 收集所有需要预注册的位置及其 tileName
+            var positionsToReserve = new List<(Vector3Int pos, string tileName)>(layout.WallCount + 6);
+
+            for (int i = 0; i < layout.WallCount; i++)
             {
-                int dir = WallDirections[i];
+                int dir = layout.WallDirections[i];
                 string tileName = $"CustomRoomWall_{dir}";
-                positionsToReserve.Add((center + WallOffsets[i], tileName));
+                positionsToReserve.Add((center + layout.WallOffsets[i], tileName));
             }
-            positionsToReserve.Add((center + DoorOffset, "CustomDoor"));
-            positionsToReserve.Add((center, "SingleBed"));
+            positionsToReserve.Add((center + layout.DoorOffset, "CustomDoor"));
+            // 床预注册主格（建造任务位置 = BedOffset），副格通过 RegisterCollisionTile 添加
+            positionsToReserve.Add((center + layout.BedOffset, "SingleBed"));
+            for (int i = 0; i < layout.StorageOffsets.Count; i++)
+            {
+                string storageTileName = $"{StorageTileName}_{layout.StorageDirections[i]}";
+                positionsToReserve.Add((center + layout.StorageOffsets[i], storageTileName));
+            }
 
             // 两阶段：先检查全部可用，再统一注册（避免部分注册后失败难以回滚）
             foreach (var (pos, tileName) in positionsToReserve)
@@ -1734,19 +1946,27 @@ namespace LAB2D.AI.Worker
                     continue;
                 }
 
-                if (!buildMap.ReserveBuildPosition(pos, tileName, worker.name))
+                int w = 1, h = 1;
+
+                if (!buildMap.ReserveBuildPosition(pos, tileName, worker.name, w, h))
                 {
                     AWorkerTask.LogProvider(
                         $"{worker.name} 预注册执行失败: {tileName} pos=({pos.x},{pos.y})",
                         LogManager.LogLevelEnum.Error);
                     // 清理已注册的位置（回滚）
-                    this.ClearAbandonedBuildTilesCore(wd: null, center);
+                    this.ClearAbandonedBuildTilesCore(wd, center);
                     return false;
                 }
             }
 
+            // 为床第二格注册碰撞体（IsComplete=true，同一 Name + BuilderName，纯阻挡寻路）
+            // 尺寸与 RectType 从 SingleBed 定义派生，而非硬编码
+            Vector3Int bed2Pos = center + layout.BedSecondOffset;
+            buildMap.RegisterCollisionTile(bed2Pos, "SingleBed", worker.name,
+                RoomLayout.BedDef.Width, RoomLayout.BedDef.Height, RoomLayout.BedDef.RectType);
+
             AWorkerTask.LogProvider(
-                $"{worker.name} 预注册完成: 15面墙+门+床 共{positionsToReserve.Count}个位置",
+                $"{worker.name} 预注册完成: {layout.WallCount}面墙+门+床+4仓库 共{positionsToReserve.Count}个位置",
                 LogManager.LogLevelEnum.Debug);
             return true;
         }
@@ -1766,13 +1986,30 @@ namespace LAB2D.AI.Worker
             var buildMap = Core.ServiceLocator.Get<BuildMap>();
             if (buildMap?.BuildMapDataLAB?.PosMap == null) return;
 
-            var positionsToClear = new List<Vector3Int>(WallCount + 2);
-            for (int i = 0; i < WallCount; i++)
+            // 获取布局（wd 为 null 时回退到默认尺寸）
+            RoomLayout layout;
+            if (wd != null && wd.HomeRoomWidth > 0)
             {
-                positionsToClear.Add(center + WallOffsets[i]);
+                layout = GetRoomLayout(wd);
             }
-            positionsToClear.Add(center + DoorOffset);
-            positionsToClear.Add(center);
+            else
+            {
+                // 回退：使用最大尺寸清理，确保不残留
+                layout = GenerateRoomLayout(7, 7, 0, 1);
+            }
+
+            var positionsToClear = new List<Vector3Int>(layout.WallCount + 6);
+            for (int i = 0; i < layout.WallCount; i++)
+            {
+                positionsToClear.Add(center + layout.WallOffsets[i]);
+            }
+            positionsToClear.Add(center + layout.DoorOffset);
+            positionsToClear.Add(center + layout.BedOffset);
+            positionsToClear.Add(center + layout.BedSecondOffset);
+            foreach (var so in layout.StorageOffsets)
+            {
+                positionsToClear.Add(center + so);
+            }
 
             foreach (var pos in positionsToClear)
             {
@@ -1782,6 +2019,23 @@ namespace LAB2D.AI.Worker
                 {
                     buildMap.BuildMapDataLAB.PosMap.Remove(posLAB);
                     buildMap.CancelBuilding(pos);
+                }
+            }
+
+            // 清理床第二格碰撞体：只在主格未完成时清理（主格完成=床已建完不应清理）
+            Vector3Int bed1Pos = center + layout.BedOffset;
+            Vector3IntLAB bed1LAB2 = Vector3IntLAB.ToVector3IntLAB(bed1Pos);
+            bool bed1Complete = buildMap.BuildMapDataLAB.PosMap.TryGetValue(bed1LAB2, out var bed1Data) && bed1Data.IsComplete;
+
+            if (!bed1Complete)
+            {
+                Vector3Int bed2Pos = center + layout.BedSecondOffset;
+                Vector3IntLAB bed2LAB2 = Vector3IntLAB.ToVector3IntLAB(bed2Pos);
+                if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(bed2LAB2, out var bed2Data)
+                    && bed2Data.IsComplete)
+                {
+                    buildMap.BuildMapDataLAB.PosMap.Remove(bed2LAB2);
+                    buildMap.CancelBuilding(bed2Pos);
                 }
             }
         }
@@ -1797,28 +2051,31 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 检查以该位置为中心的 5×5 房间能否完整放置。
+        /// 检查以该位置为中心的 7×7 房间能否完整放置。
         /// 检查所有墙壁和门位置的可达性（不仅仅是四角），防止选址在部分不可达的位置。
         /// </summary>
-        private bool CanFitRoom(Vector3Int center)
+        private bool CanFitRoom(Vector3Int center, AWorker.WorkerData wd)
         {
-            // 房间边界检查：5×5 房间不能超出地图范围
+            // 房间边界检查：根据房间参数动态计算
             var tileMap = Core.ServiceLocator.Get<TileMap>();
             int mapWidth = tileMap?.TileMapDataLAB?.Width ?? int.MaxValue;
             int mapHeight = tileMap?.TileMapDataLAB?.Height ?? int.MaxValue;
 
-            // 房间四角：center ± 2
-            // 下(左墙)、左(底墙)、右(上墙)三方向留一格行走空间；上(右墙)无需
-            if (center.x - 2 < 1 || center.y - 2 < 1
-                || center.x + 2 >= mapWidth || center.y + 2 >= mapHeight - 1)
+            var layout = GetRoomLayout(wd);
+            int hw = (wd.HomeRoomWidth - 1) / 2;
+            int hh = (wd.HomeRoomHeight - 1) / 2;
+
+            // 房间边界检查
+            if (center.x - hw < 1 || center.y - hh < 1
+                || center.x + hw >= mapWidth || center.y + hh >= mapHeight - 1)
             {
                 return false;
             }
 
-            // 检查所有墙壁位置是否可达（不仅仅是四角）
-            for (int i = 0; i < WallCount; i++)
+            // 检查所有墙壁位置是否可达
+            for (int i = 0; i < layout.WallCount; i++)
             {
-                Vector3Int wallPos = center + WallOffsets[i];
+                Vector3Int wallPos = center + layout.WallOffsets[i];
                 if (!ASeek.IsCanReach(wallPos))
                 {
                     return false;
@@ -1826,39 +2083,36 @@ namespace LAB2D.AI.Worker
             }
 
             // 检查门位置是否可达
-            Vector3Int doorPos = center + DoorOffset;
+            Vector3Int doorPos = center + layout.DoorOffset;
             if (!ASeek.IsCanReach(doorPos))
             {
                 return false;
             }
 
-            // 检查中心位置（床的位置）是否可达
-            if (!ASeek.IsCanReach(center))
+            // 检查床格是否可达（仅第一格，第二格由碰撞体覆盖）
+            if (!ASeek.IsCanReach(center + layout.BedOffset))
             {
                 return false;
             }
 
-            // 检查下、左、右三面外侧的行走空间是否可通行
-            // 门在左墙 (-2,0)，外侧为 (-3,0)；左墙用下(DOWN)瓦片，故为视觉"下"侧
-            Vector3Int outsideDoor = center + new Vector3Int(-3, 0, 0);
-            if (!ASeek.IsCanReach(outsideDoor))
+            // 检查 4 个仓库位置是否可达
+            foreach (var so in layout.StorageOffsets)
             {
-                return false;
+                if (!ASeek.IsCanReach(center + so))
+                {
+                    return false;
+                }
             }
 
-            // 视觉"左"侧 = 底墙 (y=-2)，外侧为 (0,-3)
-            Vector3Int bottomOutside = center + new Vector3Int(0, -3, 0);
-            if (!ASeek.IsCanReach(bottomOutside))
-            {
-                return false;
-            }
-
-            // 视觉"右"侧 = 上墙 (y=2)，外侧为 (0,3)
-            Vector3Int topOutside = center + new Vector3Int(0, 3, 0);
-            if (!ASeek.IsCanReach(topOutside))
-            {
-                return false;
-            }
+            // 四边外侧各检查一点确保有行走空间（与旧逻辑一致：下/左/右三面留 1 格）
+            // 上边外侧
+            if (!ASeek.IsCanReach(center + new Vector3Int(0, hh + 1, 0))) return false;
+            // 下边外侧
+            if (!ASeek.IsCanReach(center + new Vector3Int(0, -hh - 1, 0))) return false;
+            // 左边外侧
+            if (!ASeek.IsCanReach(center + new Vector3Int(-hw - 1, 0, 0))) return false;
+            // 右边外侧
+            if (!ASeek.IsCanReach(center + new Vector3Int(hw + 1, 0, 0))) return false;
 
             return true;
         }
@@ -1889,7 +2143,7 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 检查 5×5 房间区域的任何瓦片是否已被 BuildMap 占用（已完成或建造中）。
+        /// 检查 7×7 房间区域的任何瓦片是否已被 BuildMap 占用（已完成或建造中）。
         /// 这是对 IsHomeSiteClaimedByOther 的补充：
         /// IsHomeSiteClaimedByOther 检查其他 Worker 的 PlannedHomePosition/HomePosition，
         /// 本方法检查 BuildMap 中的实际建筑瓦片（包括非 Worker 来源的建筑、已完成墙壁等）。
@@ -1900,17 +2154,18 @@ namespace LAB2D.AI.Worker
         /// 检查房间区域（墙壁/门/床位置）是否与 BuildMap 冲突。
         /// 如果指定了 worker，则跳过该 worker 自己建造的瓦片（用于读档后验证已有规划位置）。
         /// </summary>
-        private bool IsRoomAreaBlockedInBuildMap(Vector3Int center, AWorker self = null)
+        private bool IsRoomAreaBlockedInBuildMap(Vector3Int center, AWorker self, AWorker.WorkerData wd)
         {
             var buildMap = Core.ServiceLocator.Get<BuildMap>();
             if (buildMap?.BuildMapDataLAB?.PosMap == null) return false;
 
             string selfName = self != null ? self.name : null;
+            var layout = GetRoomLayout(wd);
 
             // 检查所有墙壁位置
-            for (int i = 0; i < WallCount; i++)
+            for (int i = 0; i < layout.WallCount; i++)
             {
-                Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(center + WallOffsets[i]);
+                Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(center + layout.WallOffsets[i]);
                 if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(posLAB, out var tile))
                 {
                     // 跳过自己建造的瓦片（读档后已建好的墙壁不应视为冲突）
@@ -1920,19 +2175,36 @@ namespace LAB2D.AI.Worker
             }
 
             // 检查门位置
-            Vector3IntLAB doorLAB = Vector3IntLAB.ToVector3IntLAB(center + DoorOffset);
+            Vector3IntLAB doorLAB = Vector3IntLAB.ToVector3IntLAB(center + layout.DoorOffset);
             if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(doorLAB, out var doorTile))
             {
                 if (selfName != null && doorTile.BuilderName == selfName) { /* 跳过自己 */ }
                 else return true;
             }
 
-            // 检查床位置（中心）
-            Vector3IntLAB centerLAB = Vector3IntLAB.ToVector3IntLAB(center);
-            if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(centerLAB, out var bedTile))
+            // 检查床两格位置
+            Vector3IntLAB bed1LAB = Vector3IntLAB.ToVector3IntLAB(center + layout.BedOffset);
+            if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(bed1LAB, out var bedTile))
             {
                 if (selfName != null && bedTile.BuilderName == selfName) { /* 跳过自己 */ }
                 else return true;
+            }
+            Vector3IntLAB bed2LAB = Vector3IntLAB.ToVector3IntLAB(center + layout.BedSecondOffset);
+            if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(bed2LAB, out var bed2Tile))
+            {
+                if (selfName != null && bed2Tile.BuilderName == selfName) { /* 跳过自己 */ }
+                else return true;
+            }
+
+            // 检查仓库位置
+            foreach (var so in layout.StorageOffsets)
+            {
+                Vector3IntLAB sLAB = Vector3IntLAB.ToVector3IntLAB(center + so);
+                if (buildMap.BuildMapDataLAB.PosMap.TryGetValue(sLAB, out var st))
+                {
+                    if (selfName != null && st.BuilderName == selfName) { /* 跳过自己 */ }
+                    else return true;
+                }
             }
 
             return false;
@@ -1940,10 +2212,10 @@ namespace LAB2D.AI.Worker
 
         /// <summary>
         /// 检查某个建造位置（墙壁/门/床的具体坐标）是否落入其他 Worker 的房间范围内。
-        /// 房间范围 = 中心 ±2（5×5），因此阈值是 ≤ 2。
+        /// 房间范围 = 中心 ±3（7×7），因此阈值是 ≤ 3。
         /// 与 IsHomeSiteClaimedByOther 不同：IsHomeSiteClaimedByOther 比较的是
-        /// 两个房间中心之间的距离（阈值 ≤ 4），本方法比较的是单个建造位置
-        /// 与另一个房间中心之间的距离（阈值 ≤ 2）。
+        /// 两个房间中心之间的距离（阈值 ≤ 6），本方法比较的是单个建造位置
+        /// 与另一个房间中心之间的距离（阈值 ≤ 3）。
         /// </summary>
         /// <param name="buildPos">墙壁/门/床的具体坐标</param>
         /// <param name="self">当前 Worker</param>
@@ -1963,9 +2235,11 @@ namespace LAB2D.AI.Worker
                 if (otherCenterLAB == default) continue;
 
                 Vector3Int otherCenter = Vector3IntLAB.ToVector3Int(otherCenterLAB);
-                // 房间范围 ±2：单个位置与另一个房间中心距离 ≤ 2 才在房间内
-                if (System.Math.Abs(buildPos.x - otherCenter.x) <= 2
-                    && System.Math.Abs(buildPos.y - otherCenter.y) <= 2)
+                // 根据其他 Worker 的房间参数动态计算范围（默认回退到 ±3 即 7×7）
+                int otherHw = otherWd.HomeRoomWidth > 0 ? (otherWd.HomeRoomWidth - 1) / 2 : 3;
+                int otherHh = otherWd.HomeRoomHeight > 0 ? (otherWd.HomeRoomHeight - 1) / 2 : 3;
+                if (System.Math.Abs(buildPos.x - otherCenter.x) <= otherHw
+                    && System.Math.Abs(buildPos.y - otherCenter.y) <= otherHh)
                 {
                     return true;
                 }
@@ -1975,8 +2249,8 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 检查以该位置为中心的 5×5 房间矩形，是否与其他 Worker 已规划或已完成的家重叠或太近。
-        /// 中心距离 ≤ 5 时视为冲突，确保房间之间至少有一格行走间距。
+        /// 检查以该位置为中心的 7×7 房间矩形，是否与其他 Worker 已规划或已完成的家重叠或太近。
+        /// 中心距离 ≤ 7 时视为冲突，确保房间之间至少有一格行走间距。
         /// 依赖 RelocateHomeSite 保证 PlannedHomePosition 永远不为 null（消除空窗期）。
         /// </summary>
         private bool IsHomeSiteClaimedByOther(Vector3Int candidateCenter, AWorker self)
@@ -1994,8 +2268,8 @@ namespace LAB2D.AI.Worker
                 if (otherCenterLAB == default) continue;
 
                 Vector3Int otherCenter = Vector3IntLAB.ToVector3Int(otherCenterLAB);
-                if (System.Math.Abs(candidateCenter.x - otherCenter.x) <= 5
-                    && System.Math.Abs(candidateCenter.y - otherCenter.y) <= 5)
+                if (System.Math.Abs(candidateCenter.x - otherCenter.x) <= 7
+                    && System.Math.Abs(candidateCenter.y - otherCenter.y) <= 7)
                 {
                     return true;
                 }
@@ -2013,6 +2287,12 @@ namespace LAB2D.AI.Worker
             AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
             if (wd == null || wd.HomePosition != null) return; // 已有家
             if (wd.PlannedHomePosition != null) return;        // 已规划过
+
+            // 先生成随机房间参数（后续所有方法都需要这些参数）
+            if (wd.HomeRoomWidth == 0)
+            {
+                GenerateRandomRoomParams(wd);
+            }
 
             // 优先检查是否有遗弃的空床（死亡 Worker 留下的完整房间）
             if (this.TryInheritAbandonedHome(worker, wd))
@@ -2055,8 +2335,10 @@ namespace LAB2D.AI.Worker
 
             // 直接绑定 Worker 到遗弃床
             fm.AddWorkerToBed(pos, worker);
-            wd.HomeBuildStage = 2; // 建造完成
-            wd.PlannedHomePosition = Vector3IntLAB.ToVector3IntLAB(pos);
+            // PlannedHomePosition 是房间中心，床在中心 + BedOffset 处
+            var layout = GetRoomLayout(wd);
+            wd.PlannedHomePosition = Vector3IntLAB.ToVector3IntLAB(pos - layout.BedOffset);
+            wd.HomeBuildStage = layout.CompleteStage; // 建造完成（继承遗弃房间）
             AWorkerTask.LogProvider(
                 $"{worker.name} 继承遗弃房间: ({pos.x},{pos.y})，跳过建造流程",
                 LogManager.LogLevelEnum.Debug);
@@ -2073,13 +2355,23 @@ namespace LAB2D.AI.Worker
         {
             if (wd == null || wd.PlannedHomePosition == null) return null;
 
+            var layout = GetRoomLayout(wd);
+
             string buildTileName = null;
-            if (wd.HomeBuildStage < WallCount)
-                buildTileName = $"CustomRoomWall_{WallDirections[wd.HomeBuildStage]}";
-            else if (wd.HomeBuildStage == DoorStage)
+            if (wd.HomeBuildStage < layout.WallCount)
+                buildTileName = $"CustomRoomWall_{layout.WallDirections[wd.HomeBuildStage]}";
+            else if (wd.HomeBuildStage == layout.DoorStage)
                 buildTileName = "CustomDoor";
-            else if (wd.HomeBuildStage == BedStage)
+            else if (wd.HomeBuildStage == layout.BedStage)
                 buildTileName = "SingleBed";
+            else if (wd.HomeBuildStage == layout.StorageStage1)
+                buildTileName = $"{StorageTileName}_{layout.StorageDirections[0]}";
+            else if (wd.HomeBuildStage == layout.StorageStage2)
+                buildTileName = $"{StorageTileName}_{layout.StorageDirections[1]}";
+            else if (wd.HomeBuildStage == layout.StorageStage3)
+                buildTileName = $"{StorageTileName}_{layout.StorageDirections[2]}";
+            else if (wd.HomeBuildStage == layout.StorageStage4)
+                buildTileName = $"{StorageTileName}_{layout.StorageDirections[3]}";
             else
                 return null; // 建造阶段完成
 

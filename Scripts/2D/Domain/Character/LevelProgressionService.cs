@@ -21,7 +21,9 @@ namespace LAB2D.Domain.Character
             {
                 newLevel++;
                 newExperience %= safeMaxExperience;
-                newMaxExperience = safeMaxExperience * 2;
+                // 线性增长曲线：每级所需经验 = 4 + 当前等级 * 3
+                // Lv1→2:4, Lv2→3:7, Lv3→4:10, ..., 到10级仅需约175经验
+                newMaxExperience = 4 + newLevel * 3;
                 leveledUp = true;
             }
 
