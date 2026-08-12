@@ -6,6 +6,7 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 
 ## Recent Changes
 
+- 2026-08 — `refactor(worker home)`: 修复 Worker 建房布局中床与墙/门重叠问题，统一"高2横3"家具块，门 index 避开床所在行列，并修复 interiorW 硬编码 7
 - 2026-08 — `refactor(worker build)`: 优化工人建造位置预留和任务恢复逻辑，新增建造者名称参数和自我预留跳过
 - 2026-08 — `refactor(worker home build)`: 优化工人建家流程与碰撞逻辑，新增位置预注册机制
 - 2026-08 — `refactor(worker)`: 新增建造任务恢复（重启时找回原建造者）和卡死重试逻辑（最多 3 次）

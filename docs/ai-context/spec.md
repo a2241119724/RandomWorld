@@ -67,6 +67,15 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **房间列表面板 (RoomListPanel):** 展示 RoomManager 中所有已建造房间及状态，IsOverlay 模式不暂停游戏
 - **房间判定:** 射线检测封闭房间，计算温湿度
 
+#### Worker 建房布局
+- **建房流程:** Worker 围墙壁 → 门 → 床 → 4 格仓库，布局由 `WorkerBrain.GenerateRoomLayout` 依据 `HomeRoomWidth/Height/DoorSide/DoorIndex` 动态生成
+- **房间尺寸:** 宽高 5~7（5×5 ~ 7×7），门在任意一边（doorSide 0-3）的非角位置
+- **家具块 "高2横3":** 仓库 2×2 + 床 1×2，tile 空间 3 列 2 行；5×5 房间内部 3×3 恰好放下
+- **床显示方向:** 床 sprite 永远竖向（上下）显示，但床 tile 逻辑占用为 1×2 竖放，转置后屏幕是横向 2 格。布局调试打印按 sprite 视觉（主格 + 屏幕上方 1 格）而非 tile 副格，以反映实际画面
+- **床位置:** `BedOffset=(furnLeft, furnBottom+2)`，床视觉固定在屏幕 `X=furnBottom+2`（右内侧）、`Y=furnLeft..furnLeft+1`，与仓库视觉 `X=furnBottom..furnBottom+1` 不相交
+- **门避开床:** 门在 tile 顶/底（doorSide 2/3）时家具 tile x 下移 1 格且门 index 避开床所在列 `x∈[0,1]`；门在 tile 左（doorSide 0）时门 index 避开床所在列 `doorY=1`；门在 tile 右（doorSide 1）天然错开（屏幕顶墙与床视觉 Y 相差 ≥2 行）
+- **日志级别:** 布局调试用 `LogManager.LogLevelEnum.Info` 才会输出到 Unity Console（Trace/Debug 仅写 game.log）
+
 ### 成就系统
 - 5 类别(战斗/收集/生存/波次/工人)，最多 20 个成就
 - F7 切换成就面板
@@ -91,6 +100,7 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
 ```
 
 ### 关键设计决策
+- **45° 转置坐标系:** 世界坐标 = tile 坐标转置（`TileMap.MapPosToWorldPos`：world = (tile.y, tile.x)）。所有 tile↔世界转换遵循此规则；房间/家具/门的布局必须在转置后视角验证，否则床/门/墙会错位。注意方向错位：tile 顶墙=屏幕右墙、tile 右墙=屏幕顶墙、tile 左墙=屏幕底墙、tile 底墙=屏幕左墙
 - **Domain 纯 C#:** 无 UnityEngine 引用，12 个接口定义在最内层
 - **UnityAdapter:** 适配器实现 Domain 接口，通过 ServiceLocator 注册
 - **Shared Kernel:** `LAB2D.Enum` 含 16 个跨层枚举(DDD 模式)
