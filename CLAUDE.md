@@ -10,6 +10,7 @@
 - **停止并重新规划规则**：如果方法失败或发现意外的复杂性，停下来重新评估，而不是强行推进。
 - **主动使用可用技能**：`/review-work` 进行代码审查，`/update-docs` 在重大更改后更新文档，`/deploy` 进行部署。
 - **Context7 优先**：处理外部库时，先通过 Context7 检查当前文档，再依赖训练数据。
+- **想看什么就加日志**：排查运行时问题需要观察某个状态时，直接添加诊断日志，不要问询或犹豫。统一通道与级别约定见 §4「日志调试约定」。
 
 ## 2. 操作者模型
 
@@ -62,6 +63,17 @@
 | 文档更新 | `/update-docs` 技能 |
 | 部署 | `/deploy` 技能 |
 | 日志 bug 分析 | `log-bug-fixer` 子代理（读日志前先查 `docs/ai-context/bug-fixes.md`） |
+| 运行时状态诊断 | 直接添加 `AWorkerTask.LogProvider` 诊断日志（约定见下） |
+
+### 日志调试约定
+
+**想看什么就加什么日志**——排查 bug 需要观察某个运行时状态时，直接添加诊断日志，不要问询或犹豫。
+
+- **统一通道**：`AWorkerTask.LogProvider(msg, LogManager.LogLevelEnum.X)`（`global using LAB2D.Manager` 已就绪）。
+- **级别**：Debug/Trace 只进 `game.log`（不刷 Unity Console），Warning/Error 才进 Console。高频细节用 Trace，关键事件用 Debug。
+- **前缀**：`[BrainDiag]`/`[StateDiag]`/`[TaskDiag]`/`[SeekDiag]`/`[MapDiag]`/`[MoveDiag]`/`[StuckDiag]`/`[EnemyDiag]`/`[BuildDiag]`，消息带角色名与坐标。
+- **只加在事件点**（状态切换/任务成败/寻路结果/建造状态变化），绝不在每帧/逐格循环加；日志参数构造廉价（禁止 ServiceLocator 查询）。
+- **避免重复**：同类事件已有日志时优先增强而非新增；历史教训（高频 Trace 曾致卡顿）见 `docs/ai-context/bug-fixes.md`。
 
 ## 5. 技术文档
 
