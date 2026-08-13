@@ -1182,8 +1182,9 @@ namespace LAB2D.AI.Worker
         public class RoomLayout
         {
             /// <summary>
-            /// 床的定义（1×2，RectType=BottomLeft）。主格/副格占用关系由此派生，
-            /// 而非在 WorkerBrain 硬编码偏移，保证与 ABuildItem.AddBuildTask 的多格逻辑一致。
+            /// 床的定义（1×2，RectType=BottomLeft）。仅用于向 RegisterCollisionTile 提供
+            /// Width/Height/RectType 等建造元数据。碰撞/寻路的副格不再由此派生——
+            /// 物理足迹取主格 tile-x+1（见 BedSecondOffset），与床 sprite 实际延伸一致。
             /// </summary>
             internal static readonly SingleBed BedDef = new SingleBed();
 
@@ -1193,10 +1194,14 @@ namespace LAB2D.AI.Worker
             public Vector3Int BedOffset;  // 床参考点（左下角）在房间内的偏移（家具布局）
 
             /// <summary>
-            /// 床副格（上格）偏移。由 SingleBed 的 Height=2 + RectType=BottomLeft 派生：
-            /// 主格（参考点）上方 1 格，不再硬编码。
+            /// 床副格偏移 — 取床 sprite 实际延伸的格（主格 tile-x + 1），
+            /// 而非 GetOccupiedPositions 的逻辑副格（tile-y + 1）。
+            /// 床 sprite 在"主格世界坐标绘制并向上延伸"（视觉竖向 1×2），
+            /// 碰撞体随 sprite 覆盖主格与 tile-x+1 格；若碰撞瓦片注册在逻辑副格（y+1），
+            /// 则 WalkabilityCache 与实际物理阻挡错位——A* 认为 tile-x+1 可通行而径直穿过床，
+            /// 实际移动被 sprite 碰撞体挡住 → 触发 Sliding 无限重寻路（观测 53 次/人，从不入睡）。
             /// </summary>
-            public Vector3Int BedSecondOffset => BedDef.GetOccupiedPositions(this.BedOffset)[1];
+            public Vector3Int BedSecondOffset => new Vector3Int(this.BedOffset.x + 1, this.BedOffset.y, 0);
 
             public List<Vector3Int> StorageOffsets = new List<Vector3Int>();     // 4 格仓库偏移
             public List<int> StorageDirections = new List<int>();                // 4 格仓库方向
@@ -1318,8 +1323,9 @@ namespace LAB2D.AI.Worker
                     break;
             }
 
-            // 床 1×2 竖放在仓库右侧（tile 空间），转置后屏幕上位于仓库正上方。
-            // 只设置床参考点（左下角，RectType=BottomLeft），副格（上格）由 BedSecondOffset 派生。
+            // 床 1×2 横放在仓库正上方（tile 空间，主格+副格 x+1），转置到屏幕后成竖向 1×2，
+            // 视觉上位于仓库正上方并向上延伸。副格（世界/屏幕方向的上格）由 BedSecondOffset 派生。
+            // 只设置床参考点（左下角，RectType=BottomLeft）。
             layout.BedOffset = new Vector3Int(furnLeft, furnBottom + 2, 0);  // 床参考点（左下角）
 
             // 4 格仓库形成 2×2 "田"字方块，放在床左侧
@@ -1351,67 +1357,82 @@ namespace LAB2D.AI.Worker
         /// <summary>为 Worker 随机生成房间参数并存储到 WorkerData。</summary>
         private static void GenerateRandomRoomParams(AWorker.WorkerData wd)
         {
-            // 宽高都随机 5/7（5×5~7×7）：家具块 tile 空间 3×2，5×5 房间（内部 3×3）也能放下。
-            wd.HomeRoomWidth = UnityEngine.Random.value < 0.5f ? 5 : 7;
-            wd.HomeRoomHeight = UnityEngine.Random.value < 0.5f ? 5 : 7;
-            // 随机门朝向
-            wd.HomeDoorSide = UnityEngine.Random.Range(0, 4);
-            // 随机门位置（非角位置数量 = 对应边长度 - 2）
-            int sideLen = (wd.HomeDoorSide == 0 || wd.HomeDoorSide == 1)
-                ? wd.HomeRoomHeight : wd.HomeRoomWidth;
-            int maxIndex = sideLen - 3; // 非角位置数量 - 1
-            if (maxIndex < 0) maxIndex = 0;
-
-            List<int> validIndices;
-
-            if (wd.HomeDoorSide == 2 || wd.HomeDoorSide == 3)
+            // 重试生成参数，直到门位可用。逐个候选门位置验证进门第一格（entry）不落在
+            // 家具占位（床主格/床副格/仓库）上——否则从预注册那一刻起该格被注册为不可通行
+            // 碰撞体，房间入口封死，Worker 永远无法进入（观测 50 次/人"没有找到路"重试）。
+            // 旧逻辑只避开床主格所在列，漏掉床副格列与仓库列，5 宽房间（家具块占满内部
+            // 宽度）doorSide=0 时所有门位全堵，必须换参数重试而非接受一个封死的门。
+            const int maxAttempts = 8;
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                // 门在 tile 顶/底墙，转置后靠屏幕右/左墙（X=±hh）。
-                // 家具下移后床占 tile 列 x∈[0,1]（屏幕 Y∈[0,1]），
-                // 门 tile x 需避开该列，否则门会紧贴床。
-                int hw = (wd.HomeRoomWidth - 1) / 2;
-                validIndices = new List<int>();
+                // 宽高都随机 5/7（5×5~7×7）：家具块 tile 空间 3×2，5×5 房间（内部 3×3）也能放下。
+                wd.HomeRoomWidth = UnityEngine.Random.value < 0.5f ? 5 : 7;
+                wd.HomeRoomHeight = UnityEngine.Random.value < 0.5f ? 5 : 7;
+                // 随机门朝向
+                wd.HomeDoorSide = UnityEngine.Random.Range(0, 4);
+                // 随机门位置（非角位置数量 = 对应边长度 - 2）
+                int sideLen = (wd.HomeDoorSide == 0 || wd.HomeDoorSide == 1)
+                    ? wd.HomeRoomHeight : wd.HomeRoomWidth;
+                int maxIndex = sideLen - 3; // 非角位置数量 - 1
+                if (maxIndex < 0) maxIndex = 0;
+
+                List<int> validIndices = new List<int>();
                 for (int i = 0; i <= maxIndex; i++)
                 {
-                    int doorX = -hw + 1 + i;
-                    if (doorX < 0 || doorX > 1) // 避开床 tile 列 x∈[0,1]
+                    RoomLayout probe = GenerateRoomLayout(
+                        wd.HomeRoomWidth, wd.HomeRoomHeight, wd.HomeDoorSide, i);
+                    if (!IsDoorEntryBlockedByFurniture(probe, wd.HomeDoorSide))
                     {
                         validIndices.Add(i);
                     }
                 }
-            }
-            else if (wd.HomeDoorSide == 0)
-            {
-                // 门在 tile 左墙，转置后靠屏幕底墙（Y=-hh），门屏幕 X=doorY。
-                // 床视觉固定在屏幕 X=1（右内侧），门需避开同列（doorY=1）以免堵床。
-                int hh = (wd.HomeRoomHeight - 1) / 2;
-                validIndices = new List<int>();
-                for (int i = 0; i <= maxIndex; i++)
-                {
-                    int doorY = hh - 1 - i;
-                    if (doorY != 1) // 避开床所在列 X=1
-                    {
-                        validIndices.Add(i);
-                    }
-                }
-            }
-            else
-            {
-                // doorSide=1 门在 tile 右墙，转置后靠屏幕顶墙（Y=hw），
-                // 与床视觉 Y 相差 ≥2 行，天然不贴床，无需避开。
-                validIndices = new List<int>();
-                for (int i = 0; i <= maxIndex; i++)
-                {
-                    validIndices.Add(i);
-                }
+
+                if (validIndices.Count == 0) continue; // 该组合所有门位都堵，换参数重试
+
+                wd.HomeDoorIndex = validIndices[UnityEngine.Random.Range(0, validIndices.Count)];
+
+                // 调试：打印新房间布局字符画（屏幕/世界坐标，即转置后视角）
+                PrintRoomLayout(wd);
+                return;
             }
 
-            wd.HomeDoorIndex = validIndices.Count > 0
-                ? validIndices[UnityEngine.Random.Range(0, validIndices.Count)]
-                : 0;
-
-            // 调试：打印新房间布局字符画（屏幕/世界坐标，即转置后视角）
+            // 兜底：极端几何下随机组合连续全堵。7×7 内部宽度/高度 5，家具块仅占 3 列，
+            // 任一墙面（左右墙 x 向、上下墙 y 向）的进门第一格都与家具块相距 ≥1 格，永不堵门
+            // ——用确定的可用组合收尾，而不是接受一个封死房间（那会复现本次修复要消灭的 bug）。
+            wd.HomeRoomWidth = 7;
+            wd.HomeRoomHeight = 7;
+            wd.HomeDoorSide = 1; // 右墙：家具靠左，进门格在右侧
+            wd.HomeDoorIndex = 0;
             PrintRoomLayout(wd);
+        }
+
+        /// <summary>
+        /// 判断门位是否会导致"进门第一格"落在家具占位上（房间被封死）。
+        /// 门在墙上，Worker 从门外朝内走 1 格即进房；若这一格是床/仓库占位，
+        /// 则该占位在预注册阶段就被注册为不可通行碰撞体，入口形同虚设。
+        /// </summary>
+        /// <param name="layout">该门位的候选布局</param>
+        /// <param name="doorSide">门所在边: 0=左 1=右 2=上 3=下</param>
+        /// <returns>true = 进门第一格被家具挡住</returns>
+        private static bool IsDoorEntryBlockedByFurniture(RoomLayout layout, int doorSide)
+        {
+            Vector3Int entry = doorSide switch
+            {
+                0 => layout.DoorOffset + new Vector3Int(1, 0, 0),  // 左墙 → 向右进
+                1 => layout.DoorOffset + new Vector3Int(-1, 0, 0), // 右墙 → 向左进
+                2 => layout.DoorOffset + new Vector3Int(0, -1, 0), // 上墙 → 向下进
+                3 => layout.DoorOffset + new Vector3Int(0, 1, 0),  // 下墙 → 向上进
+                _ => layout.DoorOffset,
+            };
+
+            if (entry == layout.BedOffset) return true;
+            if (entry == layout.BedSecondOffset) return true;
+            foreach (Vector3Int so in layout.StorageOffsets)
+            {
+                if (entry == so) return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -1428,8 +1449,8 @@ namespace LAB2D.AI.Worker
             int hh = (wd.HomeRoomHeight - 1) / 2; // tile 半高
 
             // 床 sprite 永远竖向（上下）显示。
-            // tile 逻辑上床 1×2 竖放（主格 BedOffset + 副格 y+1），转置到屏幕成横向 2 格；
-            // 但床 sprite 只在主格世界坐标绘制并向上延伸，视觉上是竖向 1×2。
+            // 床物理足迹 = 主格 BedOffset + 副格 tile-x+1（BedSecondOffset），转置到屏幕即世界坐标竖向延伸；
+            // 碰撞瓦片注册与打印均以此为准（避免与旧 GetOccupiedPositions 的逻辑副格 y+1 错位）。
             // 打印按视觉显示：主格 tile 与其 tile-x+1 相邻格（世界坐标竖向）。
             Vector3Int bedMain = layout.BedOffset;
             Vector3Int bedVis = new Vector3Int(bedMain.x + 1, bedMain.y, 0);

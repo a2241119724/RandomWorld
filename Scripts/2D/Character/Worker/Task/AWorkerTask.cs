@@ -704,7 +704,8 @@ namespace LAB2D.Character.Worker.Task
                 bool foundInRing = FindClosest(center, r, pos =>
                 {
                     bool free = availableMap.IsTileFreeForDrop(pos);
-                    if (!free && failCount < 3)
+                    // 每次放置只输出第一条失败诊断，避免逐格刷屏（日志观测 [掉落诊断] 3k+ 条，含 5 次 ServiceLocator 查询）
+                    if (!free && failCount < 1)
                     {
                         failCount++;
                         TileMap tm = ServiceLocator.Get<TileMap>();

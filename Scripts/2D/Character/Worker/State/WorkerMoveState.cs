@@ -13,6 +13,8 @@ namespace LAB2D.Character.Worker.State
         private readonly StringBuilder builder = new (128); // 减少GC
         private float recordTime = 0.0f;
         private bool isTargetReached = false;
+        private Vector3Int lastSlidingTarget; // 上次 Sliding 时的寻路目标，用于统计累计次数
+        private int slidingStreak;            // 同一目标累计 Sliding 次数（熔断用）
 
         public WorkerMoveState(AWorker worker)
             : base(worker)
@@ -118,7 +120,25 @@ namespace LAB2D.Character.Worker.State
             BugCheckResult stuckResult = this.Character.Seek.LastStuckResult;
             if (stuckResult == BugCheckResult.Sliding)
             {
-                // 位移不足但未完全卡死 → 预防性重新寻路绕开障碍
+                // 位移不足但未完全卡死 → 预防性重新寻路绕开障碍。
+                // 但若同一目标累计 Sliding 过多（A* 认为可通而物理被挡，如路径穿过床 sprite），
+                // 静默重寻路会无限循环且无任何日志/失败缓存。累计 N 次后视为卡死，
+                // 走统一的 HandleMovementStuck：建造任务保留 3 次重试，其他任务
+                // RecordFail + GiveUpTask（决策层经 IsRecentFail 失败缓存进入冷却），
+                // 打破"Sliding→重寻路→Sliding"死循环（观测 53 次/人，从不入睡）。
+                if (this.lastSlidingTarget != this.Character.Seek.TargetMap)
+                {
+                    this.lastSlidingTarget = this.Character.Seek.TargetMap;
+                    this.slidingStreak = 0;
+                }
+
+                if (++this.slidingStreak >= 4)
+                {
+                    this.slidingStreak = 0;
+                    this.Character.HandleMovementStuck(); // 内部已切回 Seek / 放弃任务
+                    return;
+                }
+
                 this.Character.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
                 return;
             }

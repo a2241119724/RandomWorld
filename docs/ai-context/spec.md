@@ -71,9 +71,9 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **建房流程:** Worker 围墙壁 → 门 → 床 → 4 格仓库，布局由 `WorkerBrain.GenerateRoomLayout` 依据 `HomeRoomWidth/Height/DoorSide/DoorIndex` 动态生成
 - **房间尺寸:** 宽高 5~7（5×5 ~ 7×7），门在任意一边（doorSide 0-3）的非角位置
 - **家具块 "高2横3":** 仓库 2×2 + 床 1×2，tile 空间 3 列 2 行；5×5 房间内部 3×3 恰好放下
-- **床显示方向:** 床 sprite 永远竖向（上下）显示，但床 tile 逻辑占用为 1×2 竖放，转置后屏幕是横向 2 格。布局调试打印按 sprite 视觉（主格 + 屏幕上方 1 格）而非 tile 副格，以反映实际画面
+- **床显示方向与足迹:** 床 sprite 永远竖向（上下）显示。物理足迹 = 主格 + 副格 tile-x+1（`BedSecondOffset`，tile 空间横放），转置到屏幕即竖向 1×2；碰撞瓦片注册、寻路与布局打印统一走该足迹（不再用 `ABuildItem.GetOccupiedPositions` 的 tile-y+1 逻辑副格，避免与 sprite 实际阻挡错位）
 - **床位置:** `BedOffset=(furnLeft, furnBottom+2)`，床视觉固定在屏幕 `X=furnBottom+2`（右内侧）、`Y=furnLeft..furnLeft+1`，与仓库视觉 `X=furnBottom..furnBottom+1` 不相交
-- **门避开床:** 门在 tile 顶/底（doorSide 2/3）时家具 tile x 下移 1 格且门 index 避开床所在列 `x∈[0,1]`；门在 tile 左（doorSide 0）时门 index 避开床所在列 `doorY=1`；门在 tile 右（doorSide 1）天然错开（屏幕顶墙与床视觉 Y 相差 ≥2 行）
+- **门避免堵家具:** `GenerateRandomRoomParams` 逐个候选门位验证"进门第一格"不落在家具占位（床主格/床副格/仓库）上（helper `IsDoorEntryBlockedByFurniture`）；全部门位被堵时换参数重试（最多 8 次），极端几何回退 7×7 可用组合
 - **日志级别:** 布局调试用 `LogManager.LogLevelEnum.Info` 才会输出到 Unity Console（Trace/Debug 仅写 game.log）
 
 ### 成就系统
