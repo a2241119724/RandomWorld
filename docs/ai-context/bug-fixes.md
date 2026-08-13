@@ -66,3 +66,19 @@
   - **诊断日志也可能引入回归**：在"Execute 后仍使用 workerData.Task"的位置加日志前，要意识到 `Finish` 会把任务置空或替换，**日志/后续逻辑必须用 Execute 前捕获的引用**。
   - **任何任务类型的 Finish 都会置空 workerData.Task**（AWorkerTask.cs:595），不只是 PickUp：无掉落采集、单阶段 Build 等所有"Finish 不重建后继"的任务完成都会踩同一 NRE。`WorkerWorkState` 是唯一在 Execute 后 deref workerData.Task 的位置，已修复；架构级建议：把"任务完成→置空"与"成功后续任务接管"的职责收口（如 Finish 返回后继任务），避免子类遗漏重建。
   - 自定义 LogManager 与 Unity 原生异常日志分离：**日志驱动排查时，"无异常记录"≠"无异常"**，要结合行为证据（静默 Worker、缺失的 StateDiag 行）推断被吞掉的异常。
+
+## 2026-08-13 SeekEnemy 被障碍物卡死刷屏：漫游卡死无自救（33k StuckDiag）
+
+- **现象**：用户报告"很多 SeekEnemy 被各种障碍物卡住了"。单次运行（23:39:14–23:52:42）`[StuckDiag] seekenemy 结算=Stuck` 33,164 条、Sliding 77 条（另 494 条 StuckDiag 为 Worker，Worker 能自救）。卡死随时间**线性累积**（23:40 每分钟 1 条 → 23:52 每分钟 5,944 条），位置遍布全图（Top 卡点 (314,474)/(862,318)/(598,330) 各 1,307/1,215/1,183 条），`ratio=0.00` 占 31,727 条（纹丝不动），`pathIdx=0/N`（连路径首节点都到不了，如 pos=(598,330) 目标 (332,598) 仅隔 2 格）。seekenemy `提交寻路` 7,217 vs `到达终点` 7,140（差≈卡死未完成数）；`→ Move` 7,274 vs `← Move` 7,192（差≈仍卡在 Move）。状态机仍在流转，但单个敌人卡死每秒刷一条 StuckDiag 永不消散。
+- **根因**（命中历史记录族：决策循环 bug—失败后未进入冷却/失败缓存；及 WalkabilityCache 与物理碰撞体不同步的未根治深层问题）：
+  1. **物理阻挡（诱发）**：敌人被物理碰撞体挡住而 A* 缓存判定可通（卡点附近 MapDiag 仅稀疏 GenTree 记录，绝大多数阻挡来自缓存与物理不同步，见 2026-08-13 Worker 卡死循环条目教训）。`MovementStuckDetector` 每秒结算 `Stuck ratio=0.00`。
+  2. **无自救（主缺陷）**：`ASeekEnemy.HandleMovementStuck` 只在 `this.Target != null` 时执行（StopMove+重新寻路），而漫游态（`SeekEnemySeekState.OnEnter` 设 `Target=null`）**空操作** → 不 StopMove、不重新寻路 → 下一帧继续喂同一被挡路径 → 每秒再结算 Stuck → 无限循环。对比 Worker：`AWorker.HandleMovementStuck` 有熔断（建造重试3次→RecordFail+任务冷却+救援传送+GiveUpTask），敌人侧完全没有熔断/放弃/失败缓存。
+- **修复**（`Scripts/2D/Character/Enemy/SeekEnemy/ASeekEnemy.cs` + `.../State/SeekEnemyMoveState.cs`，**行为变更需用户确认，未提交**）：
+  - `ASeekEnemy.HandleMovementStuck`：`Target==null`（漫游）时改以 `Seek.TargetMap` 为目标重新寻路，不再空操作。
+  - 新增 `ASeekEnemy.AbandonMovementStuck`：卡死熔断——StopMove + ResetStuckDetection + 回 Seek 状态换新漫游目标。**不调用 RecordFail**（失败缓存是 Worker 决策层共享状态，敌人点位记入会污染 Worker 资源目标）。
+  - `SeekEnemyMoveState` 镜像 WorkerMoveState 熔断：`MaxStuckStreak=4` + `stuckTarget`/`stuckStreak`；`LastStuckResult != None` 时按目标累计，≥4 次→`AbandonMovementStuck`，否则 `HandleMovementStuck`；目标变化/进入 Move 重置计数。到达（isTargetReached）**不**重置计数（与 Worker 一致，避免寻路间隙假到达清空熔断）。
+- **验证**：重跑游戏观察——`[StuckDiag] seekenemy 结算=Stuck` 不再无限刷屏，同一敌人同坐标 Stuck 应 ≤4 条后出现 `[EnemyDiag] seekenemy 卡死熔断 ... → 放弃回 Seek`；`→ Move` 与 `← Move` 计数差不再随时间拉大；`到达终点` 计数回升。需在 Unity 中确认敌人会绕开/放弃被挡点位、不会反复抽搐。
+- **教训**：
+  - **"失败后是否有冷却/失败缓存/放弃机制"是决策循环 bug 的第一检查项**：Worker 有熔断而敌人没有，是同一族缺陷在敌人侧的缺失。
+  - **`HandleMovementStuck` 等重寻路方法在"目标为空/漫游"路径必须兜底**：只处理 `Target!=null` 的重寻路会在漫游态静默失效，让卡死刷屏。
+  - WalkabilityCache 与物理不同步是**跨 Worker/敌人**的共同诱发根因，本次未根治（修复让敌人能自救脱离，但反复触发仍会有偶发 Stuck）；建议架构级跟进：统一物理足迹与 A* 缓存数据源 + 并发缓存原子写入。

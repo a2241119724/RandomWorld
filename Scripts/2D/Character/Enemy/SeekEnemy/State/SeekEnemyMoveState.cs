@@ -13,6 +13,12 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         private int senseTargetIndex = 0;
         private bool isTargetReached = false;
 
+        // 卡死熔断：同一目标连续卡死（Sliding/Stuck 结算）次数上限，超过则放弃当前目标换新。
+        // 镜像 WorkerMoveState 的 Sliding 熔断（Worker 侧累计 4 次→HandleMovementStuck）。
+        private const int MaxStuckStreak = 4;
+        private Vector3Int stuckTarget;
+        private int stuckStreak;
+
         public SeekEnemyMoveState(ASeekEnemy character)
         : base(character)
         {
@@ -28,6 +34,10 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             AWorkerTask.LogProvider(
                 $"[EnemyDiag] {this.Character.name} → Move",
                 LogManager.LogLevelEnum.Debug);
+
+            // 重置卡死熔断计数（新目标/新进入移动 → 从头计数）
+            this.stuckStreak = 0;
+            this.stuckTarget = default;
         }
 
         public override void OnExit()
@@ -112,11 +122,30 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             }
 
             BugCheckResult stuckResult = this.Character.Seek.LastStuckResult;
-            if (stuckResult != BugCheckResult.None)
+            if (stuckResult == BugCheckResult.None)
             {
-                // 位移不足/卡死 → 停止当前寻路，以当前 Target 重新寻路（与旧 OnCollisionStay2D 一致）
-                this.Character.HandleMovementStuck();
+                return; // 有实质进展
             }
+
+            // 目标变化 → 重置熔断计数（镜像 WorkerMoveState 的 lastSlidingTarget 逻辑）
+            if (this.stuckTarget != this.Character.Seek.TargetMap)
+            {
+                this.stuckTarget = this.Character.Seek.TargetMap;
+                this.stuckStreak = 0;
+            }
+
+            if (++this.stuckStreak >= MaxStuckStreak)
+            {
+                // 熔断：连续卡死 → 放弃当前漫游/追击目标，回 Seek 状态换新目标。
+                // 否则"卡死→重新寻路→再卡死"无限循环（原实现漫游时 HandleMovementStuck 为空操作，
+                // [StuckDiag] 每秒刷屏 ratio=0.00 永不消散，见 bug-fixes.md 2026-08-13）。
+                this.stuckStreak = 0;
+                this.Character.AbandonMovementStuck();
+                return;
+            }
+
+            // 位移不足/卡死 → 停止当前寻路，以当前目标重新寻路（与旧 OnCollisionStay2D 一致）
+            this.Character.HandleMovementStuck();
         }
     }
 }

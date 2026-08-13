@@ -115,18 +115,52 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         }
 
         /// <summary>
-        /// 处理卡死：停止当前寻路，以当前 Target 为目标重新发起寻路。
+        /// 处理卡死：停止当前寻路，重新发起寻路。
+        /// 追击（Target!=null）→ 以目标实时位置重新寻路；
+        /// 漫游（Target==null）→ 以当前寻路目标重新寻路。
+        /// 原实现 Target==null 时是空操作，导致漫游卡死永不自救——
+        /// [StuckDiag] 结算=Stuck ratio=0.00 每秒刷屏、位置永不变化（见 bug-fixes.md 2026-08-13）。
         /// 由每秒位移检测（MovementStuckDetector）在 Move 状态下触发。
         /// </summary>
         public void HandleMovementStuck()
         {
-            if (this.Seek != null && this.Target != null)
+            if (this.Seek == null)
             {
-                this.Seek.StopMove();
-                Vector3 targetPos = this.Target.transform.position;
-                Vector3Int targetMap = AWorkerTask.TileMapWorldToMapProvider(targetPos);
-                this.Seek.Seek(targetMap);
+                return;
             }
+
+            this.Seek.StopMove();
+            Vector3Int targetMap = this.Target != null
+                ? AWorkerTask.TileMapWorldToMapProvider(this.Target.transform.position)
+                : this.Seek.TargetMap;
+            this.Seek.Seek(targetMap);
+        }
+
+        /// <summary>
+        /// 卡死熔断：连续多次卡死结算后放弃当前目标，回 Seek 状态换新漫游目标，
+        /// 打破"卡死→重新寻路→再卡死"的静默循环。
+        /// 触发场景：A* 缓存（WalkabilityCache）判定可通而物理实际被挡（树/家具/墙），
+        /// 重寻路仍返回同一路径。不调用 RecordFail：失败缓存是 Worker 决策层共享状态，
+        /// 敌人漫游点位记入会污染 Worker 资源目标选择。
+        /// </summary>
+        public void AbandonMovementStuck()
+        {
+            if (this.Seek == null)
+            {
+                return;
+            }
+
+            bool wasPursuit = this.Target != null;
+            Vector3Int stuckTarget = this.Seek.TargetMap;
+            this.Seek.StopMove();
+            this.Seek.ResetStuckDetection(); // 清空卡死计数，避免污染下一目标
+
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.name} 卡死熔断 目标=({stuckTarget.x},{stuckTarget.y}) 追击={wasPursuit} → 放弃回 Seek",
+                LogManager.LogLevelEnum.Debug);
+
+            this.Target = null;
+            this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Seek);
         }
 
         /// <summary>
