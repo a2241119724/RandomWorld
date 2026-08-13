@@ -25,6 +25,9 @@ namespace LAB2D.Character.Worker.Task
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryProvider().IsContainSeedAndPreTake(worker, true));
                 if (this.TargetMap == default)
                 {
+                    LogProvider(
+                        $"[TaskDiag] {worker.name} 种植任务失败: 仓库无种子可取",
+                        LogManager.LogLevelEnum.Debug);
                     this.GiveUpTask(worker);
                     return;
                 }
@@ -36,6 +39,9 @@ namespace LAB2D.Character.Worker.Task
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(FarmlandManagerProvider().IsEnoughAndPrePlant(worker, this.resourceInfo, true));
                 if (this.TargetMap == default)
                 {
+                    LogProvider(
+                        $"[TaskDiag] {worker.name} 种植任务失败: 无可用耕地",
+                        LogManager.LogLevelEnum.Debug);
                     this.GiveUpTask(worker);
                     return;
                 }

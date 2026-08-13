@@ -73,7 +73,16 @@ namespace LAB2D.Character.Enemy
                 return null;
             }
 
-            return base.Create(worldPos);
+            GameObject g = base.Create(worldPos);
+            if (g != null)
+            {
+                // 敌人生成事件（一次性）
+                AWorkerTask.LogProvider(
+                    $"[EnemyDiag] 生成敌人 {g.name} alive={this.Characters.Count} pos=({worldPos.x:F1},{worldPos.y:F1})",
+                    LogManager.LogLevelEnum.Debug);
+            }
+
+            return g;
         }
 
         /// <inheritdoc/>

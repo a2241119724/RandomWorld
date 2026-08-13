@@ -33,6 +33,9 @@ namespace LAB2D.Character.Worker.Task
                 workerData.MaxHungry - workerData.CurHungry,
                 true))
             {
+                LogProvider(
+                    $"[TaskDiag] {worker.name} 进食任务失败: 目标位置无可用食物",
+                    LogManager.LogLevelEnum.Debug);
                 this.GiveUpTask(worker);
                 return;
             }

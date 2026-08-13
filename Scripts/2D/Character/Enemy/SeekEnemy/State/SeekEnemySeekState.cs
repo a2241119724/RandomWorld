@@ -19,6 +19,11 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
             this.targetMap = AWorkerTask.GenCanReachPosProvider(posMap);
             this.Character.Seek.Seek(this.targetMap);
+
+            // 状态切换：进入寻路状态（一次性事件，非每帧）
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} → Seek target=({this.targetMap.x},{this.targetMap.y})",
+                LogManager.LogLevelEnum.Debug);
         }
 
         public override void OnUpdate()
@@ -29,6 +34,15 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             {
                 // Worker.SeekLock.ReleaseLock(this.Character);
                 // 寻路结束
+                // 寻路失败事件（一次性）：目标不可达/无路径时记录目标坐标
+                if (!this.Character.Seek.IsHavePath())
+                {
+                    AWorkerTask.LogProvider(
+                        $"[EnemyDiag] {this.Character.name} 寻路失败 target=({this.targetMap.x},{this.targetMap.y}) " +
+                        $"pos=({this.Character.transform.position.x:F1},{this.Character.transform.position.y:F1})",
+                        LogManager.LogLevelEnum.Debug);
+                }
+
                 this.Character.Manager.ChangeState(TypeEnum.Move);
             }
         }

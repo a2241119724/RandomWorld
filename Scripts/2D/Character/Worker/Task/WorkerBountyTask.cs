@@ -148,6 +148,11 @@ namespace LAB2D.Character.Worker.Task
                 this.SettleReward(worker);
                 this.bountyData = this.bountyData.WithState(BountyState.Completed);
 
+                // [TaskDiag] 悬赏结算完成（悬赏本体不走 base.Finish，在此补记完成事件）
+                LogProvider(
+                    $"[TaskDiag] {worker.name} 完成悬赏 inner={this.innerTask.TaskType} target=({this.innerTask.TargetMap.X},{this.innerTask.TargetMap.Y})",
+                    LogManager.LogLevelEnum.Debug);
+
                 TaskCompletionProvider(this);
                 TaskLifecycleProvider(this, worker, false);
                 if (workerData != null)

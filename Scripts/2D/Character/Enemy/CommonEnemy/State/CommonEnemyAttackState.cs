@@ -27,12 +27,22 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         {
             base.OnEnter();
             this.AttackTime = 0.0f;
+
+            // 状态切换：进入攻击状态（一次性事件，非每帧攻击循环）
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} → Attack target={this.Character.Target?.name}",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
+
+            // 状态切换：离开攻击状态
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} ← Attack",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>
@@ -74,6 +84,11 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                     {
                         this.Character.Attack();
                     }
+
+                    // 攻击执行事件（受 AttackInterval 1s 门控，非每帧）
+                    AWorkerTask.LogProvider(
+                        $"[EnemyDiag] {this.Character.name} 攻击执行 target={this.Character.Target?.name}",
+                        LogManager.LogLevelEnum.Debug);
 
                     // g.GetComponent<Rigidbody2D>().velocity = g.transform.TransformDirection(character.characterForward.normalized * character.characterBulletSpeed); // 刚体的速度
                     // Object.Destroy(g, 1.0f);

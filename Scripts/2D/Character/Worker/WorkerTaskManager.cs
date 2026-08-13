@@ -197,6 +197,11 @@ namespace LAB2D.Character.Worker
                         }
 
                         EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+
+                        // [TaskDiag] 记录任务分配：谁接到了什么任务（任务调度主循环）
+                        AWorkerTask.LogProvider(
+                            $"[TaskDiag] {worker.name} 分配任务 type={closedTask.TaskType} target=({closedTask.TargetMap.X},{closedTask.TargetMap.Y}) pri={priority}",
+                            LogManager.LogLevelEnum.Debug);
                         break;
                     }
                 }
@@ -234,6 +239,11 @@ namespace LAB2D.Character.Worker
                 }
 
                 EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+
+                // [TaskDiag] 记录玩家悬赏分配
+                AWorkerTask.LogProvider(
+                    $"[TaskDiag] {worker.name} 分配玩家悬赏 type={result.Task.TaskType} target=({result.Task.TargetMap.X},{result.Task.TargetMap.Y})",
+                    LogManager.LogLevelEnum.Debug);
                 return true;
             }
 
@@ -278,6 +288,11 @@ namespace LAB2D.Character.Worker
                     }
 
                     EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+
+                    // [TaskDiag] 记录全局任务分配
+                    AWorkerTask.LogProvider(
+                        $"[TaskDiag] {worker.name} 分配全局任务 type={result.Task.TaskType} target=({result.Task.TargetMap.X},{result.Task.TargetMap.Y}) pri={priority}",
+                        LogManager.LogLevelEnum.Debug);
                     return true;
                 }
             }
@@ -426,6 +441,11 @@ namespace LAB2D.Character.Worker
             this.taskQueue.Add(task, prior);
             this.taskTree.Insert(Vector3IntLAB.ToVector2ShortLAB(taskPosMap));
             EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+
+            // [TaskDiag] 记录任务创建/入队（含目标坐标与优先级）
+            AWorkerTask.LogProvider(
+                $"[TaskDiag] 创建任务 type={task.TaskType} target=({taskPosMap.X},{taskPosMap.Y}) pri={prior}",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -468,6 +488,12 @@ namespace LAB2D.Character.Worker
             {
                 this.taskQueue.MarkIdle(task);
             }
+
+            // [TaskDiag] 记录队列认领释放：Gather 移除队列（释放认领锁），其他类型标记空闲可重试
+            string releaseAction = task.TaskType == WorkerTaskType.Gather ? "移除队列(Gather认领)" : "标记Idle可重试";
+            AWorkerTask.LogProvider(
+                $"[TaskDiag] 队列释放 type={task.TaskType} target=({task.TargetMap.X},{task.TargetMap.Y}) {releaseAction}",
+                LogManager.LogLevelEnum.Debug);
 
             EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }

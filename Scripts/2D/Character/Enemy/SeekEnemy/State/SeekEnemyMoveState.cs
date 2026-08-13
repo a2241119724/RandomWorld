@@ -23,12 +23,22 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             base.OnEnter();
             this.recordTime = 0.0f;
             this.senseTargetIndex = 0;
+
+            // 状态切换：进入移动状态（一次性事件，非每帧）
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} → Move",
+                LogManager.LogLevelEnum.Debug);
         }
 
         public override void OnExit()
         {
             base.OnExit();
             this.Character.Seek.StopMove();
+
+            // 状态切换：离开移动状态
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} ← Move",
+                LogManager.LogLevelEnum.Debug);
         }
 
         public override void OnUpdate()
@@ -63,6 +73,11 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                     {
                         this.Character.Manager.ChangeState(TypeEnum.Attack);
                         this.Character.Target = target.GetComponent<LAB2D.Character.Character>();
+
+                        // 攻击目标选定事件（一次性）
+                        AWorkerTask.LogProvider(
+                            $"[EnemyDiag] {this.Character.name} 攻击目标选定 target={target.name}",
+                            LogManager.LogLevelEnum.Debug);
                         return;
                     }
                 }

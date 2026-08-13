@@ -287,6 +287,16 @@ namespace LAB2D.Character.Worker.State
                 $"{this.Character.name} 自主决策: {WorkerBrain.GetDecisionLabel(decision)}",
                 LogManager.LogLevelEnum.Debug);
 
+            // 决策诊断（事件点，单次字典查询构造廉价）：决策选中的目标是否仍在近期失败缓存
+            // (IsRecentFail) 中。若频繁命中，说明"失败→重建任务→又失败"的冷却/失败缓存未生效，
+            // 会形成死循环刷屏（历史观测：30ms 内重试 5+ 次）。
+            if (decision.TargetPosition != default && ASeek.IsRecentFail(decision.TargetPosition))
+            {
+                AWorkerTask.LogProvider(
+                    $"[StateDiag] {this.Character.name} 决策重新选中近期失败目标: {decision.Type} pos=({decision.TargetPosition.x},{decision.TargetPosition.y})",
+                    LogManager.LogLevelEnum.Warning);
+            }
+
             switch (decision.Type)
             {
                 case WorkerDecisionType.SelfGather:
@@ -1124,6 +1134,11 @@ namespace LAB2D.Character.Worker.State
 
                 if (emergency)
                 {
+                    // 紧急打断诊断（事件点）：生存阈值触发强制放弃任务+重新决策，记录各项状态值。
+                    // 若同一 Worker 频繁紧急打断，说明生存压力下决策未真正解决问题（如饥饿无食物可采）。
+                    AWorkerTask.LogProvider(
+                        $"[StateDiag] {this.Character.name} 紧急打断重决策: 饥饿={wd.CurHungry:F0} 疲劳={wd.CurTired:F0} 精气神={wd.CurSpirit:F0}",
+                        LogManager.LogLevelEnum.Debug);
                     this.ExecuteAutonomousDecision(wd);
                     this.Character.Seek.Seek(this.targetMap);
                     return;

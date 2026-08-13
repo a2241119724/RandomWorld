@@ -46,6 +46,9 @@ namespace LAB2D.Character.Worker.Task
                 this.TargetMap = Vector3IntLAB.ToVector3IntLAB(InventoryProvider().GetPosByPreTake(worker));
                 if (this.TargetMap == default)
                 {
+                    LogProvider(
+                        $"[TaskDiag] {worker.name} 建造任务失败: 仓库无取料位置",
+                        LogManager.LogLevelEnum.Debug);
                     this.GiveUpTask(worker);
                 }
 
@@ -68,6 +71,11 @@ namespace LAB2D.Character.Worker.Task
         /// <inheritdoc/>
         public override void Start(AWorker worker)
         {
+            // [TaskDiag] 开始任务（Build 不走 base.Start，需在此补记）
+            LogProvider(
+                $"[TaskDiag] {worker.name} 开始任务 type={this.TaskType} target=({this.TargetMap.X},{this.TargetMap.Y})",
+                LogManager.LogLevelEnum.Debug);
+
             // 自身携带资源足够
             if (worker.IsEnough(this.needs))
             {

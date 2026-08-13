@@ -2,6 +2,7 @@ namespace LAB2D.Character.Worker.State
 {
     using LAB2D;
     using Photon.Pun;
+    using UnityEngine;
 
     public class WorkerDeadState : AWorkerState
     {
@@ -13,6 +14,12 @@ namespace LAB2D.Character.Worker.State
         public override void OnEnter()
         {
             base.OnEnter();
+
+            // 死亡诊断（事件点）：记录 Worker 死亡位置，供复盘死亡原因与地理位置。
+            Vector3Int deadPos = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+            AWorkerTask.LogProvider(
+                $"[StateDiag] {this.Character.name} Worker死亡 pos=({deadPos.x},{deadPos.y})",
+                LogManager.LogLevelEnum.Warning);
 
             // 删除Worker定位按钮
             // LocateWorkerUI 由 UI 层直接引用，暂不抽出 Provider

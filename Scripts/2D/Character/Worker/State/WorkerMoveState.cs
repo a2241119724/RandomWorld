@@ -135,6 +135,12 @@ namespace LAB2D.Character.Worker.State
                 if (++this.slidingStreak >= 4)
                 {
                     this.slidingStreak = 0;
+                    // 熔断诊断：记录卡住格的地图坐标与通行判定，交叉验证"碰撞已注册而 A* 仍判可通"。
+                    Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+                    AWorkerTask.LogProvider(
+                        $"[MoveDiag] {this.Character.name} Sliding 熔断 目标=({this.Character.Seek.TargetMap.x},{this.Character.Seek.TargetMap.y}) " +
+                        $"posMap=({posMap.x},{posMap.y}) 可通行={LAB2D.Core.Seek.ASeek.IsCanReach(posMap)} → HandleMovementStuck",
+                        LogManager.LogLevelEnum.Debug);
                     this.Character.HandleMovementStuck(); // 内部已切回 Seek / 放弃任务
                     return;
                 }
@@ -146,6 +152,12 @@ namespace LAB2D.Character.Worker.State
             if (stuckResult == BugCheckResult.Stuck)
             {
                 // 真卡死 → 建造重试3次 / 记录失败点位并放弃任务
+                // 卡墙诊断：记录卡住格的地图坐标与通行判定，确认是否已陷入墙/家具碰撞体。
+                Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+                AWorkerTask.LogProvider(
+                    $"[MoveDiag] {this.Character.name} Stuck 目标=({this.Character.Seek.TargetMap.x},{this.Character.Seek.TargetMap.y}) " +
+                    $"posMap=({posMap.x},{posMap.y}) 可通行={LAB2D.Core.Seek.ASeek.IsCanReach(posMap)} → HandleMovementStuck",
+                    LogManager.LogLevelEnum.Debug);
                 this.Character.HandleMovementStuck();
             }
         }

@@ -164,6 +164,9 @@ namespace LAB2D.Map
             }
             this.BuildMapDataLAB.PosMap.Add(primaryLAB, primaryData);
             WalkabilityCache.UpdateCell(targetMap);
+            AWorkerTask.LogProvider(
+                $"[MapDiag] ReserveBuildPosition pos=({targetMap.x},{targetMap.y}) tile={tileName} size={width}x{height}",
+                LogManager.LogLevelEnum.Trace);
 
             this.SyncSender.Broadcast(
                 "SyncDataResp",
@@ -215,6 +218,11 @@ namespace LAB2D.Map
             this.BuildMapDataLAB.PosMap.Add(posLAB, secData);
             this.tilemap.SetColliderType(pos, Tile.ColliderType.Sprite);
             WalkabilityCache.UpdateCell(pos);
+            // 碰撞注册诊断（Trace）：与卡墙日志（[StuckDiag]/[MoveDiag]）交叉验证
+            // "碰撞体已注册但 A* 仍判可通行" 的区域性缓存失真。
+            AWorkerTask.LogProvider(
+                $"RegisterCollisionTile pos=({pos.x},{pos.y}) tile={tileName} builder={builderName} w={width} h={height} rect={rectType}",
+                LogManager.LogLevelEnum.Trace);
             // 不广播：主格同步 + SetComplete 多格逻辑会让远程也完成副格
         }
 
@@ -240,6 +248,12 @@ namespace LAB2D.Map
         {
             if (this.BuildMapDataLAB.PosMap.TryGetValue(targetMap, out BuildTileData buildTileData))
             {
+                // 建造完成事件（一次性）：在主格处聚合记录，避免多格副格重复刷
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] 建造完成 item={buildTileData.Name} pos=({targetMap.X},{targetMap.Y}) " +
+                    $"size={buildTileData.Width}x{buildTileData.Height} builder={builderName}",
+                    LogManager.LogLevelEnum.Debug);
+
                 buildTileData.BuilderName = builderName ?? string.Empty;
                 buildTileData.OwnerName = ownerName ?? string.Empty;
 
@@ -293,6 +307,11 @@ namespace LAB2D.Map
                 this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.Sprite);
             }
 
+            // 建造完成是通行判定变化的关键事件（卡墙排查：建成后不可通行建筑阻挡寻路）。
+            AWorkerTask.LogProvider(
+                $"[MapDiag] SetComplete pos=({vector3Int.x},{vector3Int.y}) tile={buildTileData.Name} pass={(buildItemData != null && buildItemData.IsPass)}",
+                LogManager.LogLevelEnum.Debug);
+
             WalkabilityCache.UpdateCell(vector3Int);
 
             this.SyncSender.Broadcast(
@@ -339,9 +358,17 @@ namespace LAB2D.Map
         /// <param name="targetMap">建造目标</param>
         public void CancelBuilding(Vector3Int targetMap)
         {
+            // 取消/拆除事件：记录被移除的物品类型与坐标（补充 tile 名，便于核对多格占用格）
+            string cancelTileName = this.BuildMapDataLAB.PosMap.TryGetValue(Vector3IntLAB.ToVector3IntLAB(targetMap), out BuildTileData cancelData)
+                ? cancelData.Name
+                : null;
+
             this.tilemap.SetTile(targetMap, null);
             this.BuildMapDataLAB.PosMap.Remove(Vector3IntLAB.ToVector3IntLAB(targetMap));
             WalkabilityCache.UpdateCell(targetMap);
+            AWorkerTask.LogProvider(
+                $"[MapDiag] CancelBuilding pos=({targetMap.x},{targetMap.y}) tile={cancelTileName ?? "null"}",
+                LogManager.LogLevelEnum.Trace);
             this.SyncSender.Broadcast(
                 "SyncDataResp",
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),

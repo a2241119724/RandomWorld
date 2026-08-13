@@ -18,7 +18,21 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         {
             base.OnEnter();
 
-            // LogManager.Instance.log("ChaseState", LogManager.LogLevel.Info);
+            // 状态切换：进入追击状态（一次性事件，非每帧追击循环）
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} → Chase target={this.Character.Target?.name}",
+                LogManager.LogLevelEnum.Debug);
+        }
+
+        /// <inheritdoc/>
+        public override void OnExit()
+        {
+            base.OnExit();
+
+            // 状态切换：离开追击状态
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} ← Chase",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>

@@ -49,6 +49,10 @@ namespace LAB2D.Character.Worker.State
             }
             else
             {
+                // 攻击入口诊断（事件点）：进入攻击状态但无可用武器，立即转为逃跑。
+                AWorkerTask.LogProvider(
+                    $"[StateDiag] {this.Character.name} 进入攻击状态但无武器, 转为逃跑",
+                    LogManager.LogLevelEnum.Debug);
                 this.Character.Manager.ChangeState(TypeEnum.Escape);
             }
         }

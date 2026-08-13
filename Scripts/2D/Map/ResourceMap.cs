@@ -158,6 +158,10 @@ namespace LAB2D.Map
                     this.tilemap.SetTile(pos, tileBase);
                     this.ResourceMapDataLAB.Add(pos, tileBase.name);
                     WalkabilityCache.UpdateCell(pos);
+                    // 资源生成 → 该格变为不可通行（卡墙排查：新树阻挡原路径）。
+                    AWorkerTask.LogProvider(
+                        $"[MapDiag] GenTree pos=({pos.x},{pos.y}) tile={tileBase.name}",
+                        LogManager.LogLevelEnum.Trace);
 
                     this.RefreshRound(pos);
                 }
@@ -178,6 +182,10 @@ namespace LAB2D.Map
             this.tilemap.SetTile(posMap, null);
             this.ResourceMapDataLAB.TreeCurCount--;
             WalkabilityCache.UpdateCell(posMap);
+            // 资源移除 → 该格变为可通行（卡墙排查：砍树后路径重新打通）。
+            AWorkerTask.LogProvider(
+                $"[MapDiag] CutTree pos=({posMap.x},{posMap.y}) remain={this.ResourceMapDataLAB.TreeCurCount}",
+                LogManager.LogLevelEnum.Trace);
         }
 
         /// <summary>

@@ -25,13 +25,21 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             // 为了再一次进入会直接转动方向
             this.recordTime = 9999.0f;
 
-            // LogManager.Instance.log("WanderState", LogManager.LogLevel.Info);
+            // 状态切换：进入漫游状态（一次性事件，非每帧）
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} → Wander",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>
         public override void OnExit()
         {
             base.OnExit();
+
+            // 状态切换：离开漫游状态
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} ← Wander",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>
@@ -45,6 +53,11 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                 {
                     this.Character.Manager.ChangeState(TypeEnum.Chase);
                     this.Character.Target = Core.GameServices.PlayerGetProvider(i);
+
+                    // 攻击目标选定事件（一次性）：Wander → Chase
+                    AWorkerTask.LogProvider(
+                        $"[EnemyDiag] {this.Character.name} 攻击目标选定 target={this.Character.Target.name}",
+                        LogManager.LogLevelEnum.Debug);
                     return;
                 }
             }
@@ -57,6 +70,11 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                 {
                     this.Character.Manager.ChangeState(TypeEnum.Chase);
                     this.Character.Target = Core.GameServices.WorkerGetProvider(i);
+
+                    // 攻击目标选定事件（一次性）：Wander → Chase
+                    AWorkerTask.LogProvider(
+                        $"[EnemyDiag] {this.Character.name} 攻击目标选定 target={this.Character.Target.name}",
+                        LogManager.LogLevelEnum.Debug);
                     return;
                 }
             }

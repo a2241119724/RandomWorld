@@ -33,6 +33,11 @@ namespace LAB2D.Character.Worker.State
             if (!this.IsAtTaskPosition(workerData.Task))
             {
                 this.Character.HideDialogText();
+                // 工作入口诊断（事件点）：Move 状态"误判到达"导致未到位就进 Work，强制切回 Seek 重寻路。
+                // 若高频出现，说明到位判定仍有缺陷，Worker 会反复"Work→Seek"振荡。
+                AWorkerTask.LogProvider(
+                    $"[StateDiag] {this.Character.name} 进入Work未到位, 切回Seek重寻路: 任务={workerData.Task.TaskType} 目标=({workerData.Task.TargetMap.X},{workerData.Task.TargetMap.Y})",
+                    LogManager.LogLevelEnum.Debug);
                 this.Character.Manager.ChangeState(TypeEnum.Seek);
                 return;
             }
@@ -91,6 +96,11 @@ namespace LAB2D.Character.Worker.State
             bool isComplete = workerData.Task.Execute(this.Character, this.Character.DeltaTime);
             if (isComplete)
             {
+                // 任务完成诊断（事件点）：记录完成的任务类型与目标，下一帧切回 Seek 触发再决策。
+                // 用于核对任务生命周期是否正常收尾（而非被 GiveUpTask 中断）。
+                AWorkerTask.LogProvider(
+                    $"[StateDiag] {this.Character.name} 任务完成: {workerData.Task.TaskType} 目标=({workerData.Task.TargetMap.X},{workerData.Task.TargetMap.Y})",
+                    LogManager.LogLevelEnum.Debug);
                 this.waitOneFrame = true;
             }
         }

@@ -661,6 +661,15 @@ namespace LAB2D.Character.Worker
                     Vector3IntLAB.ToVector3Int(workerData.Task.TargetMap));
             }
 
+            // [TaskDiag] 记录放弃事件：任务类型 + 目标坐标（GiveUpTask 是任务失败的终端事件点）
+            AWorkerTask giveUpTask = workerData.Task;
+            if (giveUpTask != null)
+            {
+                AWorkerTask.LogProvider(
+                    $"[TaskDiag] {this.name} 放弃任务 type={giveUpTask.TaskType} target=({giveUpTask.TargetMap.X},{giveUpTask.TargetMap.Y})",
+                    LogManager.LogLevelEnum.Debug);
+            }
+
             GiveUpTaskProvider(this, workerData.Task);
             workerData.Task = null;
             this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
@@ -888,6 +897,11 @@ namespace LAB2D.Character.Worker
                 workerData.BuildStuckRetryCount++;
                 if (workerData.BuildStuckRetryCount < maxRetries)
                 {
+                    // [TaskDiag] 卡死路由：建造任务重试重新寻路，不放弃
+                    AWorkerTask.LogProvider(
+                        $"[TaskDiag] {this.name} 卡死→重试({workerData.BuildStuckRetryCount}/{maxRetries}) 任务={workerData.Task.TaskType} 目标=({this.Seek.TargetMap.x},{this.Seek.TargetMap.y})",
+                        LogManager.LogLevelEnum.Debug);
+
                     // 重新寻路绕过阻塞，不放弃任务
                     this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
                     return;
@@ -902,6 +916,11 @@ namespace LAB2D.Character.Worker
             {
                 ASeek.RecordFail(currentTarget);
             }
+
+            // [TaskDiag] 卡死路由：已 RecordFail 失败点位，放弃当前任务让决策层避开阻塞点
+            AWorkerTask.LogProvider(
+                $"[TaskDiag] {this.name} 卡死→放弃(已RecordFail) 任务={workerData?.Task?.TaskType} 目标=({currentTarget.x},{currentTarget.y})",
+                LogManager.LogLevelEnum.Debug);
 
             this.GiveUpTask(); // 放弃当前任务，让WorkerBrain做新决策避开阻塞点
         }

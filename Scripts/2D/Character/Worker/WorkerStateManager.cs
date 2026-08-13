@@ -26,8 +26,20 @@ namespace LAB2D.Character.Worker
         public override void ChangeState(CST type)
         {
             // 先执行,可以在Enter中更改,不然会被覆盖
+            CST from = this.CurrentStateType;
+            bool hadPriorState = this.CurrentState != null;
             this.Character.WorkerStateText.text = this.CurrentStateType.ToString();
             base.ChangeState(type);
+
+            // 状态切换诊断轨迹（事件点，Debug 只进 game.log）：记录 from→to + 角色名，
+            // 用于排查同一对状态来回切换的异常振荡（如 Seek→Seek 重入、任务完成→寻路→移动循环）。
+            // 首次切换（无前置状态）不记录，避免 enum 默认值造成"Move→X"的误导。
+            if (hadPriorState)
+            {
+                AWorkerTask.LogProvider(
+                    $"[StateDiag] {this.Character.name} 状态切换 {from} -> {type}",
+                    LogManager.LogLevelEnum.Debug);
+            }
         }
     }
 }

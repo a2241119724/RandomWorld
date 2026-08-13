@@ -272,6 +272,9 @@ namespace LAB2D.Core.Seek
             WalkabilityCache.EnsureBuilt();
 
             Vector3Int startMap = s_tileMap.WorldPosToMapPos(this.Character.transform.position);
+            AWorkerTask.LogProvider(
+                $"[SeekDiag] {this.Character.name} 提交寻路 start=({startMap.x},{startMap.y}) target=({targetMap.x},{targetMap.y})",
+                LogManager.LogLevelEnum.Debug);
             this.TargetMap = targetMap;
             this.RestartStuckWindow(); // 新路径 → 新窗口，但保留连续卡住计数（重新寻路不赦免）
             int generation = this.StartSeek();
@@ -320,6 +323,9 @@ namespace LAB2D.Core.Seek
         /// </summary>
         private void CompleteMovement()
         {
+            AWorkerTask.LogProvider(
+                $"[SeekDiag] {this.Character.name} 到达终点 target=({this.TargetMap.x},{this.TargetMap.y})",
+                LogManager.LogLevelEnum.Trace);
             this.StopMove(); // 内部 RestartWindow（保留计数）
             this.stuckDetector.Reset(); // 真正到达 → 清空计数
             this.LastStuckResult = LAB2D.BugCheckResult.None;
@@ -379,6 +385,16 @@ namespace LAB2D.Core.Seek
             // 卡死检测：必须在 Translate 之前，用物理结算后的真实位置喂入，
             // 否则会测出 Translate 穿透墙体的"假位移"，永远测不出卡死。
             this.LastStuckResult = this.stuckDetector.Feed(Time.fixedDeltaTime, characterPosition, speed);
+            // 卡墙诊断：Sliding/Stuck 结算时输出一次 Debug（检测窗口 1s，最多每秒一条，不刷屏）。
+            // 记录结算结果、实时位置、寻路目标与位移比例，用于定位"A* 认为可通而物理被挡"。
+            if (this.LastStuckResult != LAB2D.BugCheckResult.None)
+            {
+                AWorkerTask.LogProvider(
+                    $"[StuckDiag] {this.Character.name} 结算={this.LastStuckResult} " +
+                    $"pos=({characterPosition.x:F2},{characterPosition.y:F2}) target=({this.TargetMap.x},{this.TargetMap.y}) " +
+                    $"ratio={this.stuckDetector.LastRatio:F2} speed={speed:F2} pathIdx={result.PathIndex}/{result.Path.Count}",
+                    LogManager.LogLevelEnum.Debug);
+            }
 
             this.Character.transform.Translate(speed * Time.fixedDeltaTime * this.Direction.normalized, Space.World);
             if (this.ShouldShowLine())
@@ -407,6 +423,7 @@ namespace LAB2D.Core.Seek
 
         protected bool TrySetResult(SeekResult result, int generation)
         {
+            Vector3Int targetMap;
             lock (this.requestLock)
             {
                 if (generation != this.seekGeneration)
@@ -416,8 +433,21 @@ namespace LAB2D.Core.Seek
 
                 this.currentResult = result;
                 this.isSeeking = false;
-                return true;
+                targetMap = this.pendingTargetMap;
             }
+
+            // 寻路结果落地。TrySetResult 由后台工作线程调用，LogProvider 不可在线程池内直接调用，
+            // 故"不可达"结果通过 s_mainThreadDispatcher 回主线程后记录（卡墙/困住排查关键事件）。
+            if (!result.IsReachable && !isShuttingDown && s_mainThreadDispatcher != null)
+            {
+                LAB2D.Character.Character character = this.Character;
+                s_mainThreadDispatcher.EnqueueAsync(() =>
+                    AWorkerTask.LogProvider(
+                        $"[SeekDiag] {(character != null ? character.name : "?")} 寻路不可达 target=({targetMap.x},{targetMap.y})",
+                        LogManager.LogLevelEnum.Debug));
+            }
+
+            return true;
         }
 
         protected virtual void DoSeek(

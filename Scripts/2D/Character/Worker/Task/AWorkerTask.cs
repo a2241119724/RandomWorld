@@ -526,6 +526,11 @@ namespace LAB2D.Character.Worker.Task
         {
             this.curProgress = 0.0f;
             TaskLifecycleProvider(this, worker, true);
+
+            // [TaskDiag] 记录任务开始（通用事件点，覆盖直接指派与队列分配的启动）
+            LogProvider(
+                $"[TaskDiag] {worker.name} 开始任务 type={this.TaskType} target=({this.TargetMap.X},{this.TargetMap.Y})",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -569,13 +574,21 @@ namespace LAB2D.Character.Worker.Task
         /// <param name="worker">Worker</param>
         public virtual void GiveUpTask(AWorker worker)
         {
-            LogProvider("放弃任务", LogManager.LogLevelEnum.Warning);
+            // [TaskDiag] 任务侧放弃通知（含任务类型与目标），终端执行见 AWorker.GiveUpTask
+            LogProvider(
+                $"[TaskDiag] {worker.name} 放弃任务 type={this.TaskType} target=({this.TargetMap.X},{this.TargetMap.Y})",
+                LogManager.LogLevelEnum.Warning);
             worker.GiveUpTask();
         }
 
         /// <inheritdoc/>
         public virtual void Finish(AWorker worker)
         {
+            // [TaskDiag] 记录任务完成（通用事件点）
+            LogProvider(
+                $"[TaskDiag] {worker.name} 完成任务 type={this.TaskType} target=({this.TargetMap.X},{this.TargetMap.Y})",
+                LogManager.LogLevelEnum.Debug);
+
             TaskCompletionProvider(this);
             TaskLifecycleProvider(this, worker, false);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;

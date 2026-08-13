@@ -140,7 +140,10 @@ namespace LAB2D.Map
                 count++;
                 if (count > GEN_POS_MAX_RETRIES)
                 {
-                    AWorkerTask.LogProvider("genAvailablePosMap Error!!!", LogManager.LogLevelEnum.Error);
+                    // 生成失败：记录地图边界与重试原因（此前排查中唯一未探索的路径）。
+                    AWorkerTask.LogProvider(
+                        $"[MapDiag] GenAvailablePosMap 失败(>{GEN_POS_MAX_RETRIES}次未找到) isDrop={isDrop} map={endX}x{endY}",
+                        LogManager.LogLevelEnum.Error);
                     return default;
                 }
 
@@ -193,6 +196,9 @@ namespace LAB2D.Map
                 }
             }
 
+            AWorkerTask.LogProvider(
+                $"[MapDiag] SpiralSearch 未找到可用位置 center=({center.x},{center.y}) radius={radius} isDrop={isDrop} map={mapHeight}x{mapWidth}",
+                LogManager.LogLevelEnum.Debug);
             return default;
         }
 

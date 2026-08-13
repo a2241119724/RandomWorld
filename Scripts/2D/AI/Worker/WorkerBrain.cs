@@ -290,6 +290,13 @@ namespace LAB2D.AI.Worker
                 if (workerData.LastSleepFailTime > 0
                     && UnityEngine.Time.time - workerData.LastSleepFailTime < this.SleepFailCooldownSeconds)
                 {
+                    // 失败冷却生效诊断（事件点）：确认 LastSleepFailTime/SleepFailCooldown 是否
+                    // 阻止了"睡眠失败→立即重试→又失败"的循环。此处高频出现说明冷却在起作用；
+                    // 若此处罕见但睡眠失败日志仍刷屏，说明冷却通道未打通（如 LastSleepFailTime 未同步）。
+                    float elapsed = UnityEngine.Time.time - workerData.LastSleepFailTime;
+                    AWorkerTask.LogProvider(
+                        $"[BrainDiag] {worker.name} 睡眠失败冷却生效: 距上次失败{elapsed:F1}s < {this.SleepFailCooldownSeconds}s, 改发漫游",
+                        LogManager.LogLevelEnum.Debug);
                     return Decision.Make(WorkerDecisionType.Wander,
                         $"疲劳({workerData.CurTired:F0}/{workerData.MaxTired:F0}), 睡眠位置异常冷却中");
                 }
@@ -2475,6 +2482,11 @@ namespace LAB2D.AI.Worker
             if (wd.HomeRoomWidth == 0)
             {
                 GenerateRandomRoomParams(wd);
+                // 建家参数选定诊断（事件点）：记录房间尺寸与门位参数，便于核对布局生成是否
+                // 与 PrintRoomLayout 的字符画一致，以及门位是否避开家具（封门 bug 族）。
+                AWorkerTask.LogProvider(
+                    $"[BrainDiag] {worker.name} 建家参数选定: {wd.HomeRoomWidth}x{wd.HomeRoomHeight} 门=边{wd.HomeDoorSide} idx{wd.HomeDoorIndex}",
+                    LogManager.LogLevelEnum.Debug);
             }
 
             // 优先检查是否有遗弃的空床（死亡 Worker 留下的完整房间）

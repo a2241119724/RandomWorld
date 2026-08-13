@@ -116,6 +116,14 @@ namespace LAB2D.Item.Build
                 buildMap.RegisterCollisionTile(allPositions[i], this.TileName, null,
                     effectiveWidth, effectiveHeight, effectiveRectType);
             }
+
+            // 建造诊断（Debug）：记录物品类型、主格坐标与全部占用格，
+            // 用于比对"副格 vs sprite 足迹错位"历史 bug（床逻辑副格与碰撞注册一致性）。
+            AWorkerTask.LogProvider(
+                $"[BuildDiag] 建造注册 item={this.TileName} primary=({primaryPos.x},{primaryPos.y}) " +
+                $"size={effectiveWidth}x{effectiveHeight} rect={effectiveRectType} " +
+                $"cells=[{string.Join(",", allPositions)}]",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>

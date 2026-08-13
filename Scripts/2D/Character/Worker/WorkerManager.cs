@@ -21,6 +21,11 @@ namespace LAB2D.Character.Worker
             base.Add(character);
             Core.GameServices.LocateWorkerUIAddProvider(character);
             Core.ServiceLocator.Get<Gameplay.CurrencyManager>().InitializeWorkerWallet(character);
+
+            // [TaskDiag] 记录 Worker 生成（任务执行者生命周期起点）
+            AWorkerTask.LogProvider(
+                $"[TaskDiag] Worker 生成 {character.name}",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>

@@ -21,11 +21,20 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         {
             // LogManager.Instance.log("SeekState", LogManager.LogLevel.Info);
             this.recordTime = 0.0f;
+
+            // 状态切换：进入搜索状态（一次性事件）
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} → Seek target={this.Character.Target?.name}",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>
         public override void OnExit()
         {
+            // 状态切换：离开搜索状态
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} ← Seek",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>

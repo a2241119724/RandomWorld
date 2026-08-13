@@ -30,6 +30,11 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             this.Character.LastAttacker.AddExperienceValue(expReward); // 增加经验值
             // experienceReward=0：经验值已通过 AddExperienceValue -> RecordExperienceGained 记录，避免重复统计
             Core.GameServices.EnemyDefeatedProvider((AEnemy)this.Character, this.Character.LastAttacker, 0);
+
+            // 状态切换：进入死亡状态（一次性事件）
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} → Dead attacker={this.Character.LastAttacker?.name}",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>
@@ -56,6 +61,11 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         {
             base.OnExit();
             this.Character.GetComponent<ACommonEnemy>().enabled = false;
+
+            // 状态切换：离开死亡状态
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} ← Dead",
+                LogManager.LogLevelEnum.Debug);
         }
     }
 }

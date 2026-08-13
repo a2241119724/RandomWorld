@@ -58,6 +58,7 @@ namespace LAB2D.Core.Seek
             }
 
             int[] cache = Volatile.Read(ref walkability);
+            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
             for (int y = 0; y < height; y++)
             {
                 int rowOffset = y * width;
@@ -68,6 +69,11 @@ namespace LAB2D.Core.Seek
             }
 
             isBuilt = true;
+            sw.Stop();
+            // WalkabilityCache 与物理碰撞体失配是历史卡墙根因之一 → 构建完成后记录尺寸与耗时。
+            AWorkerTask.LogProvider(
+                $"[MapDiag] WalkabilityCache 构建完成 size={width}x{height} cells={width * height} elapsed={sw.ElapsedMilliseconds}ms",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -76,6 +82,9 @@ namespace LAB2D.Core.Seek
         public static void Invalidate()
         {
             isBuilt = false;
+            AWorkerTask.LogProvider(
+                $"[MapDiag] WalkabilityCache 失效 size={width}x{height}",
+                LogManager.LogLevelEnum.Trace);
         }
 
         /// <summary>

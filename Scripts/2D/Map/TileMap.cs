@@ -619,8 +619,18 @@ namespace LAB2D.Map
             {
                 // clamp 中心点到地图内：centerMap 可能来自越界角色位置，
                 // 若 startX > endX，Random.Range 会生成越界坐标（历史 bug 来源之一）。
-                int cx = Mathf.Clamp(Mathf.RoundToInt(centerMap.x), 0, Mathf.Max(0, height - 1));
-                int cy = Mathf.Clamp(Mathf.RoundToInt(centerMap.y), 0, Mathf.Max(0, width - 1));
+                int roundX = Mathf.RoundToInt(centerMap.x);
+                int roundY = Mathf.RoundToInt(centerMap.y);
+                int cx = Mathf.Clamp(roundX, 0, Mathf.Max(0, height - 1));
+                int cy = Mathf.Clamp(roundY, 0, Mathf.Max(0, width - 1));
+                if (cx != roundX || cy != roundY)
+                {
+                    // 坐标越界兜底触发（历史 bug：地图外坐标导致睡眠死循环）→ 记录 clamp 前后坐标。
+                    AWorkerTask.LogProvider(
+                        $"[MapDiag] GenCanReachPos clamp 触发 center=({roundX},{roundY}) -> ({cx},{cy}) map={height}x{width}",
+                        LogManager.LogLevelEnum.Debug);
+                }
+
                 startX = System.Math.Max(cx - 20, 0);
                 startY = System.Math.Max(cy - 20, 0);
                 endX = System.Math.Min(cx + 20, height);
@@ -902,6 +912,9 @@ namespace LAB2D.Map
             // 没有 Chunk = 地图外 = 不可到达。
             // 地图边界外的格子不可被当作可通行，否则寻路/生成可达点会越出地图，
             // 导致角色被引导到地图外后陷入死循环（无法回家/无法睡觉）。
+            AWorkerTask.LogProvider(
+                $"[MapDiag] IsCanReach 越界 pos=({posMap.x},{posMap.y}) chunk=({chunkIndex.x},{chunkIndex.y}) 地图外=不可到达",
+                LogManager.LogLevelEnum.Debug);
             return false;
         }
 

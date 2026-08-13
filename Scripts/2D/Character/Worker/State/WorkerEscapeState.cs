@@ -22,6 +22,10 @@ namespace LAB2D.Character.Worker.State
             base.OnEnter();
             this.recordTime = 0.0f;
             this.Character.WorkerStateText.text = this.preString;
+            // 逃跑入口诊断（事件点）：记录进入逃跑状态（通常由攻击无武器或受到威胁触发）。
+            AWorkerTask.LogProvider(
+                $"[StateDiag] {this.Character.name} 进入逃跑状态",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>

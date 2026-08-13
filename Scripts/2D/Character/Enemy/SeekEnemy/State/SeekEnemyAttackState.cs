@@ -43,6 +43,11 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
                 weaponObject.SetCharacter(this.Character);
             }
+
+            // 状态切换：进入攻击状态（一次性事件，非每帧攻击循环）
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} → Attack target={this.Character.Target?.name}",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>
@@ -101,6 +106,11 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 GameObject.Destroy(this.Character.Weapon.gameObject);
                 this.Character.Weapon = null;
             }
+
+            // 状态切换：离开攻击状态
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} ← Attack",
+                LogManager.LogLevelEnum.Debug);
         }
 
         public override void Reset()
