@@ -17,7 +17,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **补给监控:** 饥饿/疲劳状态机 (Healthy → Hungry → Tired → Exhausted → Critical)
 - **殖民地指挥中心 (F10):** 实时诊断报告 — 人力分析、任务阻塞原因、补给缺口、拥堵等级
 - **建造任务恢复:** 游戏重启/场景加载后自动找回原建造者恢复建造任务
-- **建造卡死重试:** 碰撞 Bug 触发时最多 3 次重试（每次约 1.6 秒调整时间），避免任务误放弃
+- **建造卡死重试:** `MovementStuckDetector` 每秒位移检测（1 秒窗口净位移 < 期望 15% 且连续 2 窗口）判定卡死后最多 3 次重试，避免任务误放弃
 - **建造位置预注册:** 建造位置冲突时自我预留跳过，配合建造者名称参数实现任务恢复
 
 ### 战斗系统
@@ -108,6 +108,6 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
 - **Worker 经济:** Domain 层纯 C# 值对象（CurrencyAmount / WorkerPersonality / WorkerGoal / BountyData），Gameplay 层 Manager 驱动运行时
 - **Worker AI 自主决策:** WorkerBrain 在空闲时根据人格+目标+状态自主选择行动，而非被动等待任务分配
 - **日志统一:** `GameLoggerFactory` 统一获取 `IGameLogger`，替换所有硬编码 `Debug.Log`（31 文件迁移）
-- **建造韧性:** 位置预注册 + 建造者名称参数 → 任务恢复；最多 3 次卡死重试 → 避免建造任务误放弃
+- **建造韧性:** 位置预注册 + 建造者名称参数 → 任务恢复；每秒位移卡死检测（`MovementStuckDetector`：位移不足 < 期望 40% 先预防性重寻路，连续硬卡死窗口后最多 3 次重试）→ 避免建造任务误放弃
 - **TaskPriority 常量管理:** 任务优先级统一使用常量类（`TaskPriorityConstant`），避免魔法数字
 - **UI 预制体加载:** 装备面板改用预制体加载（`ResourceManager.Instantiate`），替代硬编码 UI 层级

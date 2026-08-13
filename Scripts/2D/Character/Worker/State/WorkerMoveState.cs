@@ -106,6 +106,25 @@ namespace LAB2D.Character.Worker.State
         {
             base.OnFixedUpdate();
             this.isTargetReached = this.Character.Seek.MoveByPath();
+
+            if (this.isTargetReached)
+            {
+                return; // 到达/无路径：MoveByPath 内部已重置检测
+            }
+
+            BugCheckResult stuckResult = this.Character.Seek.LastStuckResult;
+            if (stuckResult == BugCheckResult.Sliding)
+            {
+                // 位移不足但未完全卡死 → 预防性重新寻路绕开障碍
+                this.Character.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                return;
+            }
+
+            if (stuckResult == BugCheckResult.Stuck)
+            {
+                // 真卡死 → 建造重试3次 / 记录失败点位并放弃任务
+                this.Character.HandleMovementStuck();
+            }
         }
     }
 }

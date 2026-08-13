@@ -1570,6 +1570,12 @@ namespace LAB2D.AI.Worker
                     return null;
                 }
 
+                // 仓库不需要建造，直接成功：透明度直接设为 1，无需材料与建造任务
+                if (wd.HomeBuildStage >= layout.StorageStage1 && wd.HomeBuildStage <= layout.StorageStage4)
+                {
+                    return this.CompleteStorageDirectly(worker, wd, layout, buildPos, buildTileName);
+                }
+
                 needs = this.GetBuildMaterialNeeds(buildTileName);
                 if (needs == null)
                 {
@@ -1813,6 +1819,39 @@ namespace LAB2D.AI.Worker
                 LogManager.LogLevelEnum.Debug);
 
             return null;
+        }
+
+        /// <summary>
+        /// 仓库不需要建造，直接成功：将仓库瓦片直接标记完成（透明度设为 1），
+        /// 推进建家阶段，并在全部完成时进入 Settled 阶段。
+        /// </summary>
+        private Decision CompleteStorageDirectly(AWorker worker, AWorker.WorkerData wd, RoomLayout layout,
+            Vector3Int? buildPos, string buildTileName)
+        {
+            if (buildPos.HasValue)
+            {
+                Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(buildPos.Value);
+                Core.ServiceLocator.Get<BuildMap>().SetComplete(posLAB, worker.name, worker.name);
+            }
+
+            // 推进建家阶段（与 WorkerBuildTask.AdvanceHomeBuildStageOnComplete 的仓库分支保持一致）
+            wd.HomeBuildStage++;
+            if (wd.HomeBuildStage >= layout.CompleteStage)
+            {
+                wd.HomeBuildStage = layout.CompleteStage;
+                wd.LifeStage = Domain.Worker.WorkerLifeStage.Settled;
+                AWorkerTask.LogProvider(
+                    $"{worker.name} 建家全部完成 (含仓库)! → Settled 阶段",
+                    LogManager.LogLevelEnum.Info);
+            }
+            else
+            {
+                AWorkerTask.LogProvider(
+                    $"{worker.name} 仓库直接完成 {buildTileName}, 推进到阶段 {wd.HomeBuildStage}",
+                    LogManager.LogLevelEnum.Debug);
+            }
+
+            return Decision.Make(WorkerDecisionType.Wander, "仓库直接完成, 继续建家");
         }
 
         /// <summary>

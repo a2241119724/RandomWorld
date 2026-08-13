@@ -99,6 +99,17 @@ namespace LAB2D.Core.Seek
 
         public Vector3 Direction { get; private set; }
 
+        /// <summary>
+        /// 每秒位移卡死检测器 — 纯逻辑、无 Unity 组件依赖（仅用 UnityEngine.Vector3），
+        /// 随 ASeek 生命周期存在。
+        /// </summary>
+        private readonly LAB2D.MovementStuckDetector stuckDetector = new LAB2D.MovementStuckDetector();
+
+        /// <summary>
+        /// 最近一次卡死检测结果（由 MoveByPath 每固定帧更新）。
+        /// </summary>
+        public LAB2D.BugCheckResult LastStuckResult { get; private set; } = LAB2D.BugCheckResult.None;
+
         protected LAB2D.Character.Character Character { get; set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -262,6 +273,7 @@ namespace LAB2D.Core.Seek
 
             Vector3Int startMap = s_tileMap.WorldPosToMapPos(this.Character.transform.position);
             this.TargetMap = targetMap;
+            this.RestartStuckWindow(); // 新路径 → 新窗口，但保留连续卡住计数（重新寻路不赦免）
             int generation = this.StartSeek();
             bool enqueue;
             lock (this.requestLock)
@@ -290,6 +302,36 @@ namespace LAB2D.Core.Seek
             }
 
             this.LineRenderer.positionCount = 0;
+
+            this.RestartStuckWindow(); // 停止移动 → 保留连续卡住计数（重新寻路不赦免）
+        }
+
+        /// <summary>
+        /// 重启卡死窗口（保留连续卡住计数），用于重新寻路/停止移动。
+        /// </summary>
+        private void RestartStuckWindow()
+        {
+            this.stuckDetector.RestartWindow();
+            this.LastStuckResult = LAB2D.BugCheckResult.None;
+        }
+
+        /// <summary>
+        /// 到达终点：停止寻路并完全清空卡死状态（含连续卡住计数）。
+        /// </summary>
+        private void CompleteMovement()
+        {
+            this.StopMove(); // 内部 RestartWindow（保留计数）
+            this.stuckDetector.Reset(); // 真正到达 → 清空计数
+            this.LastStuckResult = LAB2D.BugCheckResult.None;
+        }
+
+        /// <summary>
+        /// 完全清空卡死状态（放弃任务时调用，避免污染下一任务）。
+        /// </summary>
+        public void ResetStuckDetection()
+        {
+            this.stuckDetector.Reset();
+            this.LastStuckResult = LAB2D.BugCheckResult.None;
         }
 
         /// <summary>
@@ -300,12 +342,13 @@ namespace LAB2D.Core.Seek
             SeekResult result = this.currentResult;
             if (result == null)
             {
+                this.RestartStuckWindow(); // 寻路间隙（重新寻路进行中）→ 保留卡住计数
                 return true;
             }
 
             if (result.PathIndex >= result.Path.Count)
             {
-                this.StopMove();
+                this.CompleteMovement(); // 到达终点 → 完全清空
                 return true;
             }
 
@@ -317,7 +360,7 @@ namespace LAB2D.Core.Seek
                 result.PathIndex++;
                 if (result.PathIndex >= result.Path.Count)
                 {
-                    this.StopMove();
+                    this.CompleteMovement(); // 到达终点 → 完全清空
                     return true;
                 }
 
@@ -332,6 +375,10 @@ namespace LAB2D.Core.Seek
             {
                 speed = s_workerConditionManager.GetAdjustedWorkerMoveSpeed((AWorker)this.Character, speed);
             }
+
+            // 卡死检测：必须在 Translate 之前，用物理结算后的真实位置喂入，
+            // 否则会测出 Translate 穿透墙体的"假位移"，永远测不出卡死。
+            this.LastStuckResult = this.stuckDetector.Feed(Time.fixedDeltaTime, characterPosition, speed);
 
             this.Character.transform.Translate(speed * Time.fixedDeltaTime * this.Direction.normalized, Space.World);
             if (this.ShouldShowLine())

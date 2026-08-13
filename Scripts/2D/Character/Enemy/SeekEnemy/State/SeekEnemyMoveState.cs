@@ -90,6 +90,18 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         {
             base.OnFixedUpdate();
             this.isTargetReached = this.Character.Seek.MoveByPath();
+
+            if (this.isTargetReached)
+            {
+                return;
+            }
+
+            BugCheckResult stuckResult = this.Character.Seek.LastStuckResult;
+            if (stuckResult != BugCheckResult.None)
+            {
+                // 位移不足/卡死 → 停止当前寻路，以当前 Target 重新寻路（与旧 OnCollisionStay2D 一致）
+                this.Character.HandleMovementStuck();
+            }
         }
     }
 }

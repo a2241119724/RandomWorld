@@ -404,7 +404,7 @@ namespace LAB2D.Character.Worker
                 $"状态:{this.Manager.CurrentStateType}\n" +
                 taskInfo +
                 $"IsSeeking:{this.Seek.IsSeeking()}\n" +
-                $"碰撞计数:{this.collisionBugDetector.ColliderCount}\n" +
+                $"卡死检测:{this.Seek.LastStuckResult}\n" +
                 $"饥饿值: {workerData.CurHungry:F0}/{workerData.MaxHungry:F0}\n" +
                 $"疲劳值: {workerData.CurTired:F0}/{workerData.MaxTired:F0}\n" +
                 $"最大携带: {workerData.MaxResourceCount}\n" +
@@ -651,6 +651,9 @@ namespace LAB2D.Character.Worker
                 workerData.BuildStuckRetryCount = 0;
             }
 
+            // 放弃任务 → 完全清空卡死状态，避免污染下一任务
+            this.Seek.ResetStuckDetection();
+
             // 采集任务被放弃时，释放 GatherMap 认领锁（配合失败缓存防止重复选取）
             if (workerData.Task != null && workerData.Task.TaskType == WorkerTaskType.Gather)
             {
@@ -868,51 +871,39 @@ namespace LAB2D.Character.Worker
             }
         }
 
-        private void OnCollisionStay2D(Collision2D collision)
+        /// <summary>
+        /// 处理卡死：建造任务重试最多 3 次，否则记录失败点位并放弃任务。
+        /// 由每秒位移检测（MovementStuckDetector）在 Move 状态下触发。
+        /// </summary>
+        public void HandleMovementStuck()
         {
-            this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks, this.transform.position);
-            BugCheckResult bugResult = this.collisionBugDetector.CheckBug(this.name);
+            AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
 
-            if (bugResult == BugCheckResult.Sliding)
+            // 建造任务：卡死触发时优先重试重新寻路，而非直接放弃。
+            // 建造现场通常空间狭窄，碰撞频繁但并非真正阻塞。
+            // 最大 3 次重试。
+            const int maxRetries = 3;
+            if (workerData?.Task != null && workerData.Task.TaskType == WorkerTaskType.Build)
             {
-                // 贴墙滑动或长时间低强度碰撞 → 预防性重新寻路绕开障碍
-                this.collisionBugDetector.ColliderCount = 0;
-                this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
-                return;
-            }
-
-            if (bugResult == BugCheckResult.Stuck)
-            {
-                this.collisionBugDetector.ColliderCount = 0; // 重置计数器，防止重复触发
-
-                AWorker.WorkerData workerData = this.CharacterDataLAB as AWorker.WorkerData;
-
-                // 建造任务：碰撞 Bug 触发时优先重试重新寻路，而非直接放弃。
-                // 建造现场通常空间狭窄，碰撞频繁但并非真正阻塞。
-                // 最大 3 次重试。
-                const int maxRetries = 3;
-                if (workerData?.Task != null && workerData.Task.TaskType == WorkerTaskType.Build)
+                workerData.BuildStuckRetryCount++;
+                if (workerData.BuildStuckRetryCount < maxRetries)
                 {
-                    workerData.BuildStuckRetryCount++;
-                    if (workerData.BuildStuckRetryCount < maxRetries)
-                    {
-                        // 重新寻路绕过阻塞，不放弃任务
-                        this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
-                        return;
-                    }
-
-                    workerData.BuildStuckRetryCount = 0;
+                    // 重新寻路绕过阻塞，不放弃任务
+                    this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                    return;
                 }
 
-                // 放弃当前任务前记录失败点位，防止WorkerBrain立即重新选择同一目标
-                Vector3Int currentTarget = this.Seek.TargetMap;
-                if (currentTarget != Vector3Int.zero)
-                {
-                    ASeek.RecordFail(currentTarget);
-                }
-
-                this.GiveUpTask(); // 放弃当前任务，让WorkerBrain做新决策避开阻塞点
+                workerData.BuildStuckRetryCount = 0;
             }
+
+            // 放弃当前任务前记录失败点位，防止WorkerBrain立即重新选择同一目标
+            Vector3Int currentTarget = this.Seek.TargetMap;
+            if (currentTarget != Vector3Int.zero)
+            {
+                ASeek.RecordFail(currentTarget);
+            }
+
+            this.GiveUpTask(); // 放弃当前任务，让WorkerBrain做新决策避开阻塞点
         }
 
         /// <summary>
