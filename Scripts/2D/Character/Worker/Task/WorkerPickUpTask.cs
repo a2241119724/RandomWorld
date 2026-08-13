@@ -301,7 +301,17 @@ namespace LAB2D.Character.Worker.Task
         protected override void Init()
         {
             this.AvailableNeighborPos.Clear();
-            this.AvailableNeighborPos.Add(Neighbors[8]); // 自身位置
+            // 自身位置（掉落物所在格）优先
+            this.AvailableNeighborPos.Add(Neighbors[8]);
+
+            // 对齐 Gather/Build/Demolish 历史修复：扩展 4 正交邻居。
+            // 否则 worker 相邻格时 "没有邻居位置" 直接放弃（日志观测华广 3 次），
+            // 拥挤/碰撞体挡路时无法在掉落物旁边完成拾取。
+            // FinishFromGround 以 TargetMap 定位掉落物，不受拾取格影响，扩展安全。
+            this.AvailableNeighborPos.Add(Neighbors[0]);
+            this.AvailableNeighborPos.Add(Neighbors[1]);
+            this.AvailableNeighborPos.Add(Neighbors[2]);
+            this.AvailableNeighborPos.Add(Neighbors[3]);
         }
 
         // ---- Builder ----

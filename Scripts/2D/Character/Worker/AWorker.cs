@@ -917,12 +917,85 @@ namespace LAB2D.Character.Worker
                 ASeek.RecordFail(currentTarget);
             }
 
-            // [TaskDiag] 卡死路由：已 RecordFail 失败点位，放弃当前任务让决策层避开阻塞点
+            // 核心修复：放弃前让任务进入冷却（LastFailedTime + FailedCooldownSeconds=10s）。
+            // 此前只 RecordFail 了寻路目标（邻居格）而未设置 Task.LastFailedTime，
+            // 导致 IsInCooldown=false → GiveUpTask 回池 → CreateTaskSnapshots 不跳过 →
+            // 分配循环立即把同一任务重接回同一 Worker → "卡死→放弃→重接→再卡死"无限循环
+            // （日志观测黄良/熊茂霖等 7 人各数百次 Stuck/放弃，Worker 卡在 PickUp/Build 不动）。
+            if (workerData?.Task != null)
+            {
+                workerData.Task.LastFailedTime = UnityEngine.Time.time;
+
+                // 任务自身目标也记入失败缓存：Seek.TargetMap 只是邻居格，
+                // 决策层 ScanForResources/ScanForFood 用 IsRecentFail(任务目标) 过滤。
+                // TargetMap 是引用类型，个别任务可能未设置，判空防 NRE。
+                if (workerData.Task.TargetMap != null)
+                {
+                    Vector3Int taskTarget = Vector3IntLAB.ToVector3Int(workerData.Task.TargetMap);
+                    if (taskTarget != Vector3Int.zero)
+                    {
+                        ASeek.RecordFail(taskTarget);
+                    }
+                }
+            }
+
+            // 救援传送：Worker 当前格不可通行（被新完成建筑/床碰撞体困住，可通行=False）时，
+            // 即使任务进入冷却，Worker 仍被物理困在原地，无法执行任何任务。
+            // 螺旋搜索最近可通行格并传送，解冻卡在碰撞体上的 Worker（黄良/苏茂/宋树/周刚豪）。
+            this.TryRescueFromUnwalkableTile();
+
+            // [TaskDiag] 卡死路由：已 RecordFail + 任务进入冷却，放弃当前任务让决策层避开阻塞点
             AWorkerTask.LogProvider(
-                $"[TaskDiag] {this.name} 卡死→放弃(已RecordFail) 任务={workerData?.Task?.TaskType} 目标=({currentTarget.x},{currentTarget.y})",
+                $"[TaskDiag] {this.name} 卡死→放弃(已RecordFail+冷却) 任务={workerData?.Task?.TaskType} 目标=({currentTarget.x},{currentTarget.y})",
                 LogManager.LogLevelEnum.Debug);
 
             this.GiveUpTask(); // 放弃当前任务，让WorkerBrain做新决策避开阻塞点
+        }
+
+        /// <summary>
+        /// 救援传送：若 Worker 当前所在格不可通行（被新完成建筑/床的碰撞体困住），
+        /// 用螺旋搜索在附近找最近的可通行格并传送过去。
+        /// 避免 Worker 卡在碰撞体上导致"站着不动"且无法执行任何任务。
+        /// </summary>
+        private void TryRescueFromUnwalkableTile()
+        {
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.transform.position);
+            if (ASeek.IsCanReach(posMap))
+            {
+                return; // 当前格可通行，无需救援
+            }
+
+            // 螺旋搜索：从内向外按 Chebyshev 距离层遍历，找最近的可行走格。
+            // 半径 6 足够覆盖房间家具（床/仓库 3x2 块）附近的空地，且避免远距离瞬移。
+            const int maxRadius = 6;
+            for (int layer = 1; layer <= maxRadius; layer++)
+            {
+                for (int dx = -layer; dx <= layer; dx++)
+                {
+                    for (int dy = -layer; dy <= layer; dy++)
+                    {
+                        if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) != layer)
+                        {
+                            continue;
+                        }
+
+                        Vector3Int candidate = new Vector3Int(posMap.x + dx, posMap.y + dy, 0);
+                        if (ASeek.IsCanReach(candidate))
+                        {
+                            this.transform.position = AWorkerTask.TileMapPositionProvider(candidate);
+                            AWorkerTask.LogProvider(
+                                $"[MoveDiag] {this.name} 卡死在不可通行格({posMap.x},{posMap.y}) → 救援传送至({candidate.x},{candidate.y})",
+                                LogManager.LogLevelEnum.Warning);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // 附近全不可通行：兜底记录，不做传送（避免传送到远处不连贯位置）
+            AWorkerTask.LogProvider(
+                $"[MoveDiag] {this.name} 卡死在不可通行格({posMap.x},{posMap.y}) 但附近{maxRadius}格无可行走格，无法救援",
+                LogManager.LogLevelEnum.Warning);
         }
 
         /// <summary>
