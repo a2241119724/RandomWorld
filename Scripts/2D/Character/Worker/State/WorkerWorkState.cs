@@ -90,16 +90,22 @@ namespace LAB2D.Character.Worker.State
                 return;
             }
 
-            // 执行任务时概率显示内心独白（受内部计时器控制，6-12秒切换一次）
-            this.Character.ShowRandomMonologue(workerData.Task.TaskType);
+            // Execute 前捕获任务引用：Execute 内部 Finish() 会把 workerData.Task 置空
+            //（若 Finish 未重建后继任务，如拾取链最后一项 / 无掉落采集任务），
+            // 因此完成日志必须用捕获的 currentTask，不能 deref workerData.Task
+            //（否则 NullReference 中断 waitOneFrame 流转，Worker 永久卡在 Work 状态"站着不动"）。
+            AWorkerTask currentTask = workerData.Task;
 
-            bool isComplete = workerData.Task.Execute(this.Character, this.Character.DeltaTime);
+            // 执行任务时概率显示内心独白（受内部计时器控制，6-12秒切换一次）
+            this.Character.ShowRandomMonologue(currentTask.TaskType);
+
+            bool isComplete = currentTask.Execute(this.Character, this.Character.DeltaTime);
             if (isComplete)
             {
                 // 任务完成诊断（事件点）：记录完成的任务类型与目标，下一帧切回 Seek 触发再决策。
                 // 用于核对任务生命周期是否正常收尾（而非被 GiveUpTask 中断）。
                 AWorkerTask.LogProvider(
-                    $"[StateDiag] {this.Character.name} 任务完成: {workerData.Task.TaskType} 目标=({workerData.Task.TargetMap.X},{workerData.Task.TargetMap.Y})",
+                    $"[StateDiag] {this.Character.name} 任务完成: {currentTask.TaskType} 目标=({currentTask.TargetMap.X},{currentTask.TargetMap.Y})",
                     LogManager.LogLevelEnum.Debug);
                 this.waitOneFrame = true;
             }
