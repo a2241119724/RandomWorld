@@ -77,6 +77,12 @@ namespace LAB2D.Character.Worker.State
                 {
                     AWorkerTask.LogProvider($"{workerData.Task.TaskType}, 没有邻居位置! workerPos=({posMap.x},{posMap.y}) targetMap=({this.targetMap.x},{this.targetMap.y})", LogManager.LogLevelEnum.Warning);
 
+                    // 记入寻路失败缓存（FailCacheTtl=30s）：WorkerBrain 决策的
+                    // ScanForResources 通过 IsRecentFail 跳过该目标。否则 GiveUpTask
+                    // 释放 GatherMap 认领后，决策会立即重新选中同一目标，形成
+                    // "失败→重建任务→又失败"的同帧死循环刷屏（观测：30ms 内重试 5+ 次）。
+                    ASeek.RecordFail(this.targetMap);
+
                     // 标记任务失败时间，进入冷却期（10s），防止立即被重新分配形成死循环。
                     // 冷却结束后其他 Worker 可能可达（障碍物消失/位置变更），不永久删除。
                     workerData.Task.LastFailedTime = UnityEngine.Time.time;

@@ -24,6 +24,9 @@ namespace LAB2D.Character.Worker.State
         {
             base.OnEnter();
             this.recordTime = 0.0f;
+            // 修复：进入 Move 状态时重置到达标记。
+            // 避免上次任务到达后的 isTargetReached 残留，导致新任务未走到位就误判到达并切 Work。
+            this.isTargetReached = false;
         }
 
         /// <inheritdoc/>

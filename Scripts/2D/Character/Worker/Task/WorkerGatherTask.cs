@@ -254,8 +254,13 @@ namespace LAB2D.Character.Worker.Task
         protected override void Init()
         {
             this.AvailableNeighborPos.Clear();
-            this.AvailableNeighborPos.Add(Neighbors[1]);
-            this.AvailableNeighborPos.Add(Neighbors[3]);
+            // 4 个正交方向（与 Build/Demolish 任务一致）：密集资源区中目标格的
+            // 上下两侧可能同时被树/障碍占据，只查 2 个方向会大量触发
+            // "没有邻居位置"失败；4 方向提高找到站位点的概率。
+            this.AvailableNeighborPos.Add(Neighbors[0]); // 上
+            this.AvailableNeighborPos.Add(Neighbors[1]); // 右
+            this.AvailableNeighborPos.Add(Neighbors[2]); // 下
+            this.AvailableNeighborPos.Add(Neighbors[3]); // 左
         }
 
         /// <summary>
