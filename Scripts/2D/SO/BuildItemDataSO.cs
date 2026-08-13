@@ -17,11 +17,13 @@ namespace LAB2D.SO
         /// <summary>
         /// 物品类型
         /// </summary>
+        [Tooltip("物品类型")]
         public AItem.ItemTypeEnum ItemType;
 
         /// <summary>
         /// 物品数据（仅包含源条目，不含自动生成的变体）
         /// </summary>
+        [Tooltip("物品数据（仅包含源条目，不含自动生成的变体）")]
         public List<BuildItemData> BuildItemDatas;
 
         private static readonly int TypeInterval = 100000; // 类型间隔
@@ -62,7 +64,7 @@ namespace LAB2D.SO
                 for (int i = 0; i < BuildItemData.DirectionCnNames.Length; i++)
                 {
                     BuildItemData variant = item.Clone();
-                    variant.EnName = item.EnName + "_" + i;
+                    variant.Name = item.Name + "_" + i;
                     variant.CnName = BuildItemData.DirectionCnNames[i] + item.CnName;
                     expanded.Add(variant);
                 }

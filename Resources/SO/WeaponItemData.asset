@@ -16,19 +16,19 @@ MonoBehaviour:
   ItemDatas:
   - Id: 0
     CnName: "\u5355\u53D1\u67AA"
-    EnName: SingleGun
+    Name: SingleGun
     Info: "\u4E00\u628A\u53EF\u4EE5\u5355\u5C04\u7684\u67AA"
     IsStackable: 0
     Type: 0
   - Id: 0
     CnName: "\u5B9D\u5251"
-    EnName: CustomSword
+    Name: CustomSword
     Info: "\u4E00\u628A\u53EF\u4EE5\u653B\u51FB\u7684\u5251"
     IsStackable: 0
     Type: 0
   - Id: 0
     CnName: "\u8DDF\u8E2A\u67AA"
-    EnName: TraceGun
+    Name: TraceGun
     Info: "\u4E00\u628A\u53EF\u4EE5\u5B50\u5F39\u8DDF\u8E2A\u7684\u67AA"
     IsStackable: 0
     Type: 0

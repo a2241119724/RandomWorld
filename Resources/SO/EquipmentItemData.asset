@@ -16,91 +16,91 @@ MonoBehaviour:
   ItemDatas:
   - Id: 100000
     CnName: "腰带"
-    EnName: CustomBelt
+    Name: CustomBelt
     Info: "腰带"
     IsStackable: 0
     Type: 1
     EquipSlot: 9
   - Id: 100001
     CnName: "上衣"
-    EnName: CustomBody
+    Name: CustomBody
     Info: "上衣"
     IsStackable: 0
     Type: 1
     EquipSlot: 1
   - Id: 100002
     CnName: "手镯"
-    EnName: CustomBracelet
+    Name: CustomBracelet
     Info: "手镯"
     IsStackable: 0
     Type: 1
     EquipSlot: 8
   - Id: 100003
     CnName: "耳环"
-    EnName: CustomEarring
+    Name: CustomEarring
     Info: "耳环"
     IsStackable: 0
     Type: 1
     EquipSlot: 10
   - Id: 100004
     CnName: "头盔"
-    EnName: CustomHead
+    Name: CustomHead
     Info: "头盔"
     IsStackable: 0
     Type: 1
     EquipSlot: 0
   - Id: 100005
     CnName: "坐骑"
-    EnName: CustomMount
+    Name: CustomMount
     Info: "坐骑"
     IsStackable: 0
     Type: 1
     EquipSlot: 12
   - Id: 100006
     CnName: "项链"
-    EnName: CustomNecklace
+    Name: CustomNecklace
     Info: "项链"
     IsStackable: 0
     Type: 1
     EquipSlot: 7
   - Id: 100007
     CnName: "宠物"
-    EnName: CustomPet
+    Name: CustomPet
     Info: "宠物"
     IsStackable: 0
     Type: 1
     EquipSlot: 13
   - Id: 100008
     CnName: "戒指"
-    EnName: CustomRing
+    Name: CustomRing
     Info: "戒指"
     IsStackable: 0
     Type: 1
     EquipSlot: 6
   - Id: 100009
     CnName: "盾牌"
-    EnName: CustomShield
+    Name: CustomShield
     Info: "盾牌"
     IsStackable: 0
     Type: 1
     EquipSlot: 5
   - Id: 100010
     CnName: "鞋子"
-    EnName: CustomShoes
+    Name: CustomShoes
     Info: "鞋子"
     IsStackable: 0
     Type: 1
     EquipSlot: 3
   - Id: 100011
     CnName: "裤子"
-    EnName: CustomTrouser
+    Name: CustomTrouser
     Info: "裤子"
     IsStackable: 0
     Type: 1
     EquipSlot: 2
   - Id: 100012
     CnName: "翅膀"
-    EnName: CustomWing
+    Name: CustomWing
     Info: "翅膀"
     IsStackable: 0
     Type: 1

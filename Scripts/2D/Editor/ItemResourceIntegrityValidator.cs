@@ -49,7 +49,7 @@ namespace LAB2D.Editor
             HashSet<string> tileNames = new (tileRecords.Select(record => record.Name), StringComparer.Ordinal);
             HashSet<string> imageNames = new (imageRecords.Select(record => record.Name), StringComparer.Ordinal);
             List<string> itemNames = itemRecords
-                .Select(record => record.EnName)
+                .Select(record => record.Name)
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(name => name, StringComparer.Ordinal)
                 .ToList();
@@ -64,7 +64,7 @@ namespace LAB2D.Editor
                 .ToList();
 
             List<IGrouping<string, ItemRecord>> duplicateItems = itemRecords
-                .GroupBy(record => record.EnName, StringComparer.Ordinal)
+                .GroupBy(record => record.Name, StringComparer.Ordinal)
                 .Where(group => group.Count() > 1)
                 .OrderBy(group => group.Key, StringComparer.Ordinal)
                 .ToList();
@@ -98,12 +98,12 @@ namespace LAB2D.Editor
             sb.AppendLine();
             sb.AppendLine("| 项目 | 数量 |");
             sb.AppendLine("| --- | ---: |");
-            sb.AppendLine("| SO EnName | " + itemNames.Count + " |");
+            sb.AppendLine("| SO Name | " + itemNames.Count + " |");
             sb.AppendLine("| Item Tile 资源 | " + tileRecords.Count + " |");
             sb.AppendLine("| Item Image 资源 | " + imageRecords.Count + " |");
             sb.AppendLine("| 缺失 Tile 绑定 | " + missingTiles.Count + " |");
             sb.AppendLine("| 缺失 Image 绑定 | " + missingImages.Count + " |");
-            sb.AppendLine("| 重复 EnName | " + duplicateItems.Count + " |");
+            sb.AppendLine("| 重复 Name | " + duplicateItems.Count + " |");
             sb.AppendLine("| 重复 Tile 名称 | " + duplicateTiles.Count + " |");
             sb.AppendLine("| 重复 Image 名称 | " + duplicateImages.Count + " |");
             sb.AppendLine("| 缺失 .meta | " + missingMetaFiles.Count + " |");
@@ -111,18 +111,18 @@ namespace LAB2D.Editor
 
             AppendStringList(sb, "缺失 Tile 绑定", missingTiles, "未发现缺失 Tile 绑定。", wrapValuesInCode: true);
             AppendStringList(sb, "缺失 Image 绑定", missingImages, "未发现缺失 Image 绑定。", wrapValuesInCode: true);
-            AppendItemDuplicateList(sb, "重复 EnName", duplicateItems);
+            AppendItemDuplicateList(sb, "重复 Name", duplicateItems);
             AppendAssetDuplicateList(sb, "重复 Tile 名称", duplicateTiles);
             AppendAssetDuplicateList(sb, "重复 Image 名称", duplicateImages);
             AppendStringList(sb, "缺失 .meta", missingMetaFiles, "未发现缺失 .meta。", wrapValuesInCode: true);
 
             sb.AppendLine("## Item 记录");
             sb.AppendLine();
-            sb.AppendLine("| EnName | SO |");
+            sb.AppendLine("| Name | SO |");
             sb.AppendLine("| --- | --- |");
-            foreach (ItemRecord record in itemRecords.OrderBy(record => record.EnName, StringComparer.Ordinal))
+            foreach (ItemRecord record in itemRecords.OrderBy(record => record.Name, StringComparer.Ordinal))
             {
-                sb.AppendLine("| " + EscapeTable(record.EnName) + " | `" + record.SourcePath + "` |");
+                sb.AppendLine("| " + EscapeTable(record.Name) + " | `" + record.SourcePath + "` |");
             }
 
             return sb.ToString();
@@ -150,7 +150,7 @@ namespace LAB2D.Editor
                 SerializedProperty iterator = serializedObject.GetIterator();
                 while (iterator.NextVisible(true))
                 {
-                    if (iterator.name != "EnName" || iterator.propertyType != SerializedPropertyType.String)
+                    if (iterator.name != "Name" || iterator.propertyType != SerializedPropertyType.String)
                     {
                         continue;
                     }
@@ -233,12 +233,12 @@ namespace LAB2D.Editor
 
         private readonly struct ItemRecord
         {
-            public readonly string EnName;
+            public readonly string Name;
             public readonly string SourcePath;
 
             public ItemRecord(string enName, string sourcePath)
             {
-                this.EnName = enName;
+                this.Name = enName;
                 this.SourcePath = sourcePath;
             }
         }

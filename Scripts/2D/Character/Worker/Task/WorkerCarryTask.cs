@@ -241,7 +241,7 @@ namespace LAB2D.Character.Worker.Task
             Vector3Int targetPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
 
             // 放下拿起来的东西
-            ItemMapProvider().AddTile(targetPos, (TileBase)ResourceLoadProvider(ItemDataProvider(this.resourceInfo.Id).EnName));
+            ItemMapProvider().AddTile(targetPos, (TileBase)ResourceLoadProvider(ItemDataProvider(this.resourceInfo.Id).Name));
             worker.SubResource(this.resourceInfo);
             InventoryProvider().AddItemByPrePlace(worker, targetPos);
 

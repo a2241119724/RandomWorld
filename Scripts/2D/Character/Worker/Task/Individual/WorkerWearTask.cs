@@ -42,13 +42,13 @@ namespace LAB2D.Character.Worker.Task.Individual
             if (AWorkerTask.ItemTypeProvider(this.id) == AItem.ItemTypeEnum.Weapon)
             {
                 workerData.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider(
-                    AWorkerTask.ItemDataProvider(this.id).EnName);
+                    AWorkerTask.ItemDataProvider(this.id).Name);
             }
             else if (AWorkerTask.ItemTypeProvider(this.id) == AItem.ItemTypeEnum.Equipment)
             {
                 workerData.AddEquipment(
                     (AEquipment)AWorkerTask.ItemFactoryProvider(
-                    AWorkerTask.ItemDataProvider(this.id).EnName), Vector3IntLAB.ToVector3Int(this.TargetMap));
+                    AWorkerTask.ItemDataProvider(this.id).Name), Vector3IntLAB.ToVector3Int(this.TargetMap));
             }
 
             AWorkerTask.InventoryProvider().SubItemByPreTake(worker, Vector3IntLAB.ToVector3Int(this.TargetMap));

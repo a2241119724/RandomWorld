@@ -87,7 +87,7 @@ namespace LAB2D.UI.Panel
                 if (weapon != null)
                 {
                     worker.Find("Weapon/Image").GetComponent<Image>().sprite = ServiceLocator.Get<ResourceManager>().GetImage(
-                        ServiceLocator.Get<ItemDataManager>().GetById(weapon.Id).EnName);
+                        ServiceLocator.Get<ItemDataManager>().GetById(weapon.Id).Name);
                 }
 
                 // 先清空所有装备槽位图片
@@ -112,7 +112,7 @@ namespace LAB2D.UI.Panel
                     if (item.Value != null)
                     {
                         worker.Find(item.Key.ToString() + "/Image").GetComponent<Image>().sprite = ServiceLocator.Get<ResourceManager>().GetImage(
-                            ServiceLocator.Get<ItemDataManager>().GetById(item.Value.Id).EnName);
+                            ServiceLocator.Get<ItemDataManager>().GetById(item.Value.Id).Name);
                     }
                 }
             }

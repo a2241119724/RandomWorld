@@ -12,7 +12,7 @@ namespace LAB2D.Item
 
     /// <summary>
     /// 道具实例化工厂
-    /// EnName==对应类名==图片名
+    /// Name==对应类名==图片名
     /// </summary>
     public class ItemInstanceFactory : Singleton<ItemInstanceFactory>
     {
@@ -62,7 +62,7 @@ namespace LAB2D.Item
         public ABackpackItem GetBackpackItemById(int id)
         {
             ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(id);
-            return this.GetBackpackItemByName(itemData.EnName);
+            return this.GetBackpackItemByName(itemData.Name);
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace LAB2D.Item
             {
                 if (itemData.Type == AItem.ItemTypeEnum.Equipment)
                 {
-                    this.backpackItemTypes.Add(itemData.EnName, typeof(CommonEquipment));
+                    this.backpackItemTypes.Add(itemData.Name, typeof(CommonEquipment));
                 }
             }
 
@@ -160,7 +160,7 @@ namespace LAB2D.Item
 
                 foreach (BuildItemData buildItemData in so.GetExpandedItems())
                 {
-                    string enName = buildItemData.EnName;
+                    string enName = buildItemData.Name;
                     if (this.buildItems.ContainsKey(enName))
                     {
                         continue; // 已有特殊子类实例，跳过

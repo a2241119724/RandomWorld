@@ -146,7 +146,7 @@ namespace LAB2D.MVC
                 Image image = LAB2D.Tool.Tool.GetComponentInChildren<Image>(g, "ItemImage");
                 if (image != null)
                 {
-                    image.sprite = Core.ServiceLocator.Get<ResourceManager>().GetImage(Core.ServiceLocator.Get<ItemDataManager>().GetById(model.Get(type, i).Id).EnName);
+                    image.sprite = Core.ServiceLocator.Get<ResourceManager>().GetImage(Core.ServiceLocator.Get<ItemDataManager>().GetById(model.Get(type, i).Id).Name);
                     image.preserveAspect = true;
                 }
 

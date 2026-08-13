@@ -33,7 +33,7 @@ namespace LAB2D.Character.Worker.State
             if (this.Character.Weapon == null && workerData.Weapon != null)
             {
                 // 实例化武器
-                string name = AWorkerTask.ItemDataProvider(workerData.Weapon.Id).EnName;
+                string name = AWorkerTask.ItemDataProvider(workerData.Weapon.Id).Name;
                 this.Character.Weapon = Core.GameServices.ResourceInstantiateProvider(name, false);
                 if (this.Character.Weapon == null)
                 {

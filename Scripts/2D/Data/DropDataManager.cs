@@ -4,6 +4,7 @@ namespace LAB2D.Data
     using LAB2D.Item;
     using System;
     using System.Collections.Generic;
+    using UnityEngine;
 
     /// <summary>
     /// 掉落物管理
@@ -154,11 +155,13 @@ namespace LAB2D.Data
         /// <summary>
         /// 名称
         /// </summary>
+        [Tooltip("名称")]
         public string Name;
 
         /// <summary>
         /// 掉落物信息
         /// </summary>
+        [Tooltip("掉落物信息")]
         public ResourceInfo ResourceInfo;
 
         public void Init()

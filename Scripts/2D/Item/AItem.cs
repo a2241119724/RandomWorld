@@ -143,7 +143,7 @@ namespace LAB2D.Item
                 $"quantity: {this.Quantity}\n" +
                 $"info: {itemData.Info}\n" +
                 $"isStackable: {itemData.IsStackable}\n" +
-                $"imageName: {itemData.EnName}\n" +
+                $"imageName: {itemData.Name}\n" +
                 $"itemName: {itemData.CnName}\n";
         }
     }

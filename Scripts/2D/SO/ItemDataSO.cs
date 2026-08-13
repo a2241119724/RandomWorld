@@ -15,11 +15,13 @@ namespace LAB2D.SO
         /// <summary>
         /// 物品类型
         /// </summary>
+        [Tooltip("物品类型")]
         public AItem.ItemTypeEnum ItemType;
 
         /// <summary>
         /// 物品数据
         /// </summary>
+        [Tooltip("物品数据")]
         public List<ItemData> ItemDatas;
 
         private static readonly int TypeInterval = 100000; // 类型间隔

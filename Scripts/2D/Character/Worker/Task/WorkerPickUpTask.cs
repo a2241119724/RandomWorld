@@ -194,7 +194,7 @@ namespace LAB2D.Character.Worker.Task
                 return false;
 
             ItemData itemData = ItemDataProvider(resource.Id);
-            ABackpackItem item = ItemFactoryProvider(itemData.EnName);
+            ABackpackItem item = ItemFactoryProvider(itemData.Name);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
 
             if (item is AWeapon newWeapon)
@@ -263,7 +263,7 @@ namespace LAB2D.Character.Worker.Task
         private static void DropEquipmentToGround(AEquipment oldEquipment, Vector3Int posMap)
         {
             ItemData itemData = ItemDataProvider(oldEquipment.Id);
-            TileBase tile = Core.ServiceLocator.Get<ResourceManager>().GetAsset(itemData.EnName);
+            TileBase tile = Core.ServiceLocator.Get<ResourceManager>().GetAsset(itemData.Name);
             // 旧武器放回地面，设为无主（任何人可拾取）
             ItemMapProvider().PutDownToDrop(posMap, tile, new ResourceInfo(oldEquipment.Id, 1, ownerId: 0));
         }

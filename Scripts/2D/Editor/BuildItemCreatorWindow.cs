@@ -183,7 +183,7 @@ namespace LAB2D.Editor
             EditorGUILayout.LabelField("2. 道具配置", EditorStyles.boldLabel);
 
             this.cnName = EditorGUILayout.TextField("中文名称", this.cnName);
-            this.enName = EditorGUILayout.TextField("英文名称(EnName)", this.enName);
+            this.enName = EditorGUILayout.TextField("英文名称(Name)", this.enName);
             this.info = EditorGUILayout.TextField("描述信息", this.info);
             this.itemType = (AItem.ItemTypeEnum)EditorGUILayout.EnumPopup("道具类型", this.itemType);
 
@@ -199,7 +199,7 @@ namespace LAB2D.Editor
                 EditorGUILayout.HelpBox(
                     "开启后，系统会从这一条配置自动生成 8 个方向变体" +
                     "（上/下/左/右/左上/右上/左下/右下）。\n" +
-                    "Tile 文件名格式：{EnName}_0 ~ {EnName}_7，对应 8 个方向。",
+                    "Tile 文件名格式：{Name}_0 ~ {Name}_7，对应 8 个方向。",
                     MessageType.Info);
             }
 
@@ -241,7 +241,7 @@ namespace LAB2D.Editor
             {
                 EditorGUILayout.BeginHorizontal();
                 this.buildCosts[i].itemName = EditorGUILayout.TextField(
-                    "材料名称(EnName)",
+                    "材料名称(Name)",
                     this.buildCosts[i].itemName);
                 this.buildCosts[i].count = EditorGUILayout.IntField(
                     "数量",
@@ -522,7 +522,7 @@ namespace LAB2D.Editor
 
             // 设置各字段
             this.SetSerializedProperty(elementProp, "CnName", this.cnName);
-            this.SetSerializedProperty(elementProp, "EnName", this.enName);
+            this.SetSerializedProperty(elementProp, "Name", this.enName);
             this.SetSerializedProperty(elementProp, "Info", this.info);
             this.SetSerializedProperty(elementProp, "IsPass", this.isPass);
             this.SetSerializedProperty(elementProp, "IsNeedBuild", this.isNeedBuild);

@@ -70,7 +70,7 @@ namespace LAB2D.UI.Panel
                 }
 
                 // 实例化武器
-                string name = ServiceLocator.Get<ItemDataManager>().GetById(this.Select.Item.Id).EnName;
+                string name = ServiceLocator.Get<ItemDataManager>().GetById(this.Select.Item.Id).Name;
                 ServiceLocator.Get<PlayerManager>().Mine.Weapon = ServiceLocator.Get<ResourceManager>().Instantiate(name, false);
                 if (ServiceLocator.Get<PlayerManager>().Mine.Weapon == null)
                 {

@@ -107,7 +107,7 @@ namespace LAB2D.Item
                 this.cells[posMap] = plantInfo;
                 this.prePlantResource[worker].Remove(posMap);
                 Core.ServiceLocator.Get<ResourceMap>().SetTile(posMap, Core.ServiceLocator.Get<ResourceManager>().GetAsset(
-                    Core.ServiceLocator.Get<ItemDataManager>().GetById(plantInfo.Id).EnName));
+                    Core.ServiceLocator.Get<ItemDataManager>().GetById(plantInfo.Id).Name));
 
                 // 创建生长进度条
                 this.CreateGrowthBar(posMap, PlantGrowthDuration);
@@ -205,7 +205,7 @@ namespace LAB2D.Item
 
             Core.ServiceLocator.Get<ResourceMap>().SetTile(posMap,
                 Core.ServiceLocator.Get<ResourceManager>().GetAsset(
-                    Core.ServiceLocator.Get<ItemDataManager>().GetById(plantId).EnName));
+                    Core.ServiceLocator.Get<ItemDataManager>().GetById(plantId).Name));
 
             // 创建生长进度条
             this.CreateGrowthBar(posMap, PlantGrowthDuration);

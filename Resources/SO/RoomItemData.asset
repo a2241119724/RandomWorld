@@ -16,7 +16,7 @@ MonoBehaviour:
   BuildItemDatas:
   - Id: 800000
     CnName: "\u623F\u5B50"
-    EnName: CustomRoom
+    Name: CustomRoom
     Info: "\u591A\u4E2A\u5899\u7EC4\u5408\u6210\u7684\u623F\u5B50"
     IsStackable: 0
     Type: 8
@@ -24,7 +24,7 @@ MonoBehaviour:
     IsNeedBuild: 0
   - Id: 800001
     CnName: "\u4ED3\u5E93"
-    EnName: Inventory
+    Name: Inventory
     Info: "\u591A\u4E2A\u8FB9\u6846\u7EC4\u5408\u6210\u7684\u4ED3\u5E93"
     IsStackable: 0
     Type: 8
@@ -32,7 +32,7 @@ MonoBehaviour:
     IsNeedBuild: 0
   - Id: 800002
     CnName: "\u519C\u7530"
-    EnName: Farmland
+    Name: Farmland
     Info: "\u591A\u4E2A\u8FB9\u6846\u7EC4\u5408\u6210\u7684\u519C\u7530"
     IsStackable: 0
     Type: 8

@@ -16,7 +16,7 @@ MonoBehaviour:
   ItemDatas:
   - Id: 200000
     CnName: "\u8840\u74F6"
-    EnName: AddHp
+    Name: AddHp
     Info: "\u4E00\u74F6\u53EF\u4EE5\u56DE\u590D10\u8840\u91CF\u7684\u836F\u6C34"
     IsStackable: 1
     Type: 2

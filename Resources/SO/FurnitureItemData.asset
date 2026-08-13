@@ -16,7 +16,7 @@ MonoBehaviour:
   BuildItemDatas:
   - Id: 0
     CnName: "\u5355\u4EBA\u5E8A"
-    EnName: SingleBed
+    Name: SingleBed
     Info: "\u4E00\u4E2A\u5355\u4EBA\u7761\u89C9\u7684\u5E8A"
     IsStackable: 0
     Type: 0
@@ -24,7 +24,7 @@ MonoBehaviour:
     IsNeedBuild: 1
   - Id: 0
     CnName: "\u53CC\u4EBA\u5E8A"
-    EnName: DoubleBed
+    Name: DoubleBed
     Info: "\u4E00\u4E2A\u53CC\u4EBA\u7761\u89C9\u7684\u5E8A"
     IsStackable: 0
     Type: 0

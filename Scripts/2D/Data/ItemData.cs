@@ -4,6 +4,7 @@ namespace LAB2D.Data
     using LAB2D.Item;
     using LAB2D.Item.Backpack.Equipment;
     using System;
+    using UnityEngine;
     using UnityEngine.Serialization;
 
     /// <summary>
@@ -21,41 +22,49 @@ namespace LAB2D.Data
         /// <summary>
         /// 唯一标识符
         /// </summary>
+        [Tooltip("唯一标识符")]
         public int Id;
 
         /// <summary>
         /// 中文名称
         /// </summary>
+        [Tooltip("中文名称")]
         public string CnName;
 
         /// <summary>
         /// 英文名称(图片)
         /// </summary>
-        public string EnName;
+        [Tooltip("英文名称(图片)，与 Tile 资源/图片名一致")]
+        public string Name;
 
         /// <summary>
         /// 物品信息
         /// </summary>
+        [Tooltip("物品信息")]
         public string Info;
 
         /// <summary>
         /// 是否可堆叠
         /// </summary>
+        [Tooltip("是否可堆叠")]
         public bool IsStackable;
 
         /// <summary>
         /// 物品类型
         /// </summary>
+        [Tooltip("物品类型")]
         public AItem.ItemTypeEnum Type;
 
         /// <summary>
         /// 装备槽位（仅Equipment类型有效）
         /// </summary>
+        [Tooltip("装备槽位（仅 Equipment 类型有效）")]
         public AEquipment.EquipTypeEnum EquipSlot;
 
         /// <summary>
         /// 任务时间
         /// </summary>
+        [Tooltip("任务时间")]
         public TaskTime RelatedTaskTime;
 
         public ItemData()
@@ -77,12 +86,14 @@ namespace LAB2D.Data
             /// <summary>
             /// 搬运任务的拾取时间
             /// </summary>
+            [Tooltip("搬运任务的拾取时间")]
             [FormerlySerializedAs("CarryTaskTakeTime")]
             public float TaskBaseTime = WorkerTaskTimeConfig.CarryTakeSeconds;
 
             /// <summary>
             /// 搬运任务的放置时间
             /// </summary>
+            [Tooltip("搬运任务的放置时间")]
             public float CarryTaskPutDownTime = WorkerTaskTimeConfig.CarryPutDownSeconds;
         }
 
@@ -112,7 +123,7 @@ namespace LAB2D.Data
 
             public ItemDataBuilder SetImageName(string imageName)
             {
-                this.itemData.EnName = imageName;
+                this.itemData.Name = imageName;
                 return this;
             }
 

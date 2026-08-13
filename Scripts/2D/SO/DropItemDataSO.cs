@@ -15,6 +15,7 @@ namespace LAB2D.SO
         /// <summary>
         /// 掉落信息
         /// </summary>
+        [Tooltip("掉落信息")]
         public List<ResourceDropItem> ResourceDropItems;
 
         /// <summary>
@@ -26,11 +27,13 @@ namespace LAB2D.SO
             /// <summary>
             /// 资源名称
             /// </summary>
+            [Tooltip("资源名称")]
             public string Name;
 
             /// <summary>
             /// key: 资源名称
             /// </summary>
+            [Tooltip("掉落数据")]
             public List<DropItem> DropItems;
         }
     }

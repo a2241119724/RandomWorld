@@ -44,7 +44,7 @@ namespace LAB2D.Data
                 {
                     int id = Convert.ToInt32(itemData.Id);
                     this.allItemInfo.Add(id, itemData);
-                    this.nameToId.Add(itemData.EnName, id);
+                    this.nameToId.Add(itemData.Name, id);
                 }
             }
 
@@ -63,7 +63,7 @@ namespace LAB2D.Data
                 {
                     int id = Convert.ToInt32(itemData.Id);
                     this.allItemInfo.Add(id, itemData);
-                    this.nameToId.Add(itemData.EnName, id);
+                    this.nameToId.Add(itemData.Name, id);
                 }
 
                 // 初始化装备实例
@@ -87,7 +87,7 @@ namespace LAB2D.Data
                 {
                     int id = Convert.ToInt32(itemData.Id);
                     this.allItemInfo.Add(id, itemData);
-                    this.nameToId.Add(itemData.EnName, id);
+                    this.nameToId.Add(itemData.Name, id);
                 }
             }
 

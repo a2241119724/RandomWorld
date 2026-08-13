@@ -16,7 +16,7 @@ MonoBehaviour:
   ItemDatas:
   - Id: 1200000
     CnName: GrassTree
-    EnName: GrassTree
+    Name: GrassTree
     Info: 
     IsStackable: 0
     Type: 12
@@ -25,7 +25,7 @@ MonoBehaviour:
       CarryTaskPutDownTime: 0
   - Id: 1200001
     CnName: DesertCoconutTree
-    EnName: DesertCoconutTree
+    Name: DesertCoconutTree
     Info: 
     IsStackable: 0
     Type: 12
@@ -34,7 +34,7 @@ MonoBehaviour:
       CarryTaskPutDownTime: 0
   - Id: 1200002
     CnName: SnowTree
-    EnName: SnowTree
+    Name: SnowTree
     Info: 
     IsStackable: 0
     Type: 12
@@ -43,7 +43,7 @@ MonoBehaviour:
       CarryTaskPutDownTime: 0
   - Id: 1200003
     CnName: SnowTreeRoot
-    EnName: SnowTreeRoot
+    Name: SnowTreeRoot
     Info:
     IsStackable: 0
     Type: 12
@@ -52,7 +52,7 @@ MonoBehaviour:
       CarryTaskPutDownTime: 0
   - Id: 1200004
     CnName: "荒漠灌木丛"
-    EnName: DesertBushes
+    Name: DesertBushes
     Info:
     IsStackable: 0
     Type: 12

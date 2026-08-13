@@ -367,7 +367,7 @@ namespace LAB2D.Character
                     Core.ServiceLocator.Get<ItemMap>().PutDownToInventory(
                         posMap,
                         Core.ServiceLocator.Get<ResourceManager>().GetAsset(
-                            Core.ServiceLocator.Get<ItemDataManager>().GetById(oldEquipment.Id).EnName),
+                            Core.ServiceLocator.Get<ItemDataManager>().GetById(oldEquipment.Id).Name),
                         new ResourceInfo(oldEquipment.Id, 1));
                 };
 

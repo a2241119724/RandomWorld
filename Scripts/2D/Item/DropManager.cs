@@ -164,7 +164,7 @@ namespace LAB2D.Item
                 {
                     text += $"ID:{resourceInfo.Id}\n" +
                         $"名称:{itemData.CnName}\n" +
-                        $"英文名:{itemData.EnName}\n" +
+                        $"英文名:{itemData.Name}\n" +
                         $"类型:{itemData.Type}\n" +
                         $"数量:{resourceInfo.Count}\n" +
                         $"拥有者:{Domain.Worker.ItemOwnershipService.GetOwnerLabel(resourceInfo)}\n" +
