@@ -6,6 +6,7 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 
 ## Recent Changes
 
+- 2026-08 — `fix(worker gather)`: 修复 Gather "没有邻居位置"死循环刷屏（25k 次）。根因：失败未调用 `ASeek.RecordFail`，决策 `ScanForResources` 的 `IsRecentFail` 过滤失效，GiveUpTask 释放认领后无限重选同一目标。修复：失败块补 `RecordFail` + Gather 邻居 2→4 正交方向。存档见 `docs/ai-context/bug-fixes.md`
 - 2026-08 — `refactor(stuck-detection)`: 用每秒位移检测（MovementStuckDetector）替换失效的 OnCollisionStay2D 卡死检测（IntervalTicks 20ms 与 Fixed Timestep 0.02 相撞导致永不触发）；Worker+SeekEnemy 改由 ASeek.LastStuckResult 驱动，位移不足重寻路、真卡死重试/放弃
 - 2026-08 — `refactor(worker home)`: 修复 Worker 建房布局中床与墙/门重叠问题，统一"高2横3"家具块，门 index 避开床所在行列，并修复 interiorW 硬编码 7
 - 2026-08 — `refactor(worker build)`: 优化工人建造位置预留和任务恢复逻辑，新增建造者名称参数和自我预留跳过

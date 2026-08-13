@@ -61,6 +61,7 @@
 | 第二意见 | 请求"second opinion"（默认 Codex；说"ask Gemini"用 Gemini，"ask both"同时运行两者） |
 | 文档更新 | `/update-docs` 技能 |
 | 部署 | `/deploy` 技能 |
+| 日志 bug 分析 | `log-bug-fixer` 子代理（读日志前先查 `docs/ai-context/bug-fixes.md`） |
 
 ## 5. 技术文档
 
@@ -73,6 +74,9 @@
 - **将已发布功能合并到 `spec.md`。** 功能文档在开发期间放在 `docs/` 中，
   发布后合并到 `spec.md`（现在时）——之后归档功能文档。
   架构在 `spec.md` 中，永远不在对话记忆中。
+- **bug 修复思路存 `bug-fixes.md`。** 每次日志驱动的 bug 修复把思路追加到
+  `docs/ai-context/bug-fixes.md`（现象/根因/修复/验证/教训）。开始新排查前先通读，
+  命中历史记录直接引用验证，避免重复排查。
 
 重大更改后运行 `/update-docs` 保持文档与代码同步。
 
