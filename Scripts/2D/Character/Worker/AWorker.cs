@@ -965,6 +965,13 @@ namespace LAB2D.Character.Worker
             public float LastBountyPostTime = -999f;
 
             /// <summary>
+            /// 上次睡眠任务因"无邻居位置"失败的时间（Time.time）。
+            /// 用于决策冷却：失败后的一段时间内不再重复发起睡眠任务，
+            /// 防止 worker 卡死时每帧创建任务→放弃的死循环刷屏。
+            /// </summary>
+            public float LastSleepFailTime = -999f;
+
+            /// <summary>
             /// 人格数值 — 心情、事业心、勤奋、社交。
             /// 影响 Worker 自主决策行为和效率。
             /// </summary>

@@ -40,6 +40,10 @@ namespace LAB2D.Character.Worker.State
 
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
 
+            // 位置越界兜底：worker 卡在地图外时寻路对越界起点直接失败，
+            // 需要先传回地图内才能恢复正常行为。
+            this.EnsureValidPosition(workerData);
+
             Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
             bool targetExplicitlySet = false;
             bool skipFinalSeek = false;
@@ -76,6 +80,10 @@ namespace LAB2D.Character.Worker.State
                     // 标记任务失败时间，进入冷却期（10s），防止立即被重新分配形成死循环。
                     // 冷却结束后其他 Worker 可能可达（障碍物消失/位置变更），不永久删除。
                     workerData.Task.LastFailedTime = UnityEngine.Time.time;
+
+                    // 同步记录睡眠失败时间，供 WorkerBrain 决策冷却使用：
+                    // 防止 worker 卡死时"决策睡眠→无邻居→放弃"每帧死循环刷屏。
+                    workerData.LastSleepFailTime = UnityEngine.Time.time;
 
                     this.Character.GiveUpTask();
                     return;
@@ -224,6 +232,42 @@ namespace LAB2D.Character.Worker.State
                 AWorkerTask.LogProvider(this.Character.name + " 寻路->" + this.targetMap, LogManager.LogLevelEnum.Trace);
                 this.Character.Seek.Seek(this.targetMap);
             }
+        }
+
+        /// <summary>
+        /// 位置合法性兜底：若 worker 的 map 坐标超出地图范围，强制传送到
+        /// 地图内中心附近的可达位置。越界 worker 的寻路起点不被 A* 接受，
+        /// 无法自行返回，必须先重置位置才能恢复正常行为。
+        /// </summary>
+        private void EnsureValidPosition(AWorker.WorkerData workerData)
+        {
+            if (workerData == null)
+            {
+                return;
+            }
+
+            TileMap tileMap = Core.ServiceLocator.Get<TileMap>();
+            int height = tileMap?.TileMapDataLAB?.Height ?? 0;
+            int width = tileMap?.TileMapDataLAB?.Width ?? 0;
+            if (height <= 0 || width <= 0)
+            {
+                return; // 地图尚未就绪，等待下次进入时再检查
+            }
+
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
+            if (posMap.x >= 0 && posMap.y >= 0 && posMap.x < height && posMap.y < width)
+            {
+                return; // 在地图内，无需处理
+            }
+
+            // 越界 → 传送到地图中心附近的可达位置
+            Vector3Int center = new Vector3Int(height / 2, width / 2, 0);
+            Vector3Int target = tileMap.GenCanReachPos(center);
+            this.Character.transform.position = AWorkerTask.TileMapPositionProvider(target);
+
+            AWorkerTask.LogProvider(
+                $"{this.Character.name} 位置越界({posMap.x},{posMap.y}), 已重置到地图内({target.x},{target.y})",
+                LogManager.LogLevelEnum.Warning);
         }
 
         /// <summary>

@@ -611,13 +611,20 @@ namespace LAB2D.Map
                 return Vector3Int.zero;
             }
 
-            int x, y, startX = 0, endX = this.TileMapDataLAB.Height, startY = 0, endY = this.TileMapDataLAB.Width;
+            int x, y;
+            int height = this.TileMapDataLAB.Height;
+            int width = this.TileMapDataLAB.Width;
+            int startX = 0, endX = height, startY = 0, endY = width;
             if (centerMap != default)
             {
-                startX = (int)System.Math.Max(centerMap.x - 20, 0);
-                startY = (int)System.Math.Max(centerMap.y - 20, 0);
-                endX = (int)System.Math.Min(centerMap.x + 20, this.TileMapDataLAB.Height);
-                endY = (int)System.Math.Min(centerMap.y + 20, this.TileMapDataLAB.Width);
+                // clamp 中心点到地图内：centerMap 可能来自越界角色位置，
+                // 若 startX > endX，Random.Range 会生成越界坐标（历史 bug 来源之一）。
+                int cx = Mathf.Clamp(Mathf.RoundToInt(centerMap.x), 0, Mathf.Max(0, height - 1));
+                int cy = Mathf.Clamp(Mathf.RoundToInt(centerMap.y), 0, Mathf.Max(0, width - 1));
+                startX = System.Math.Max(cx - 20, 0);
+                startY = System.Math.Max(cy - 20, 0);
+                endX = System.Math.Min(cx + 20, height);
+                endY = System.Math.Min(cy + 20, width);
             }
 
             int retries = 0;
@@ -892,8 +899,10 @@ namespace LAB2D.Map
                 return chunk.GetColliderType(localPos) == Tile.ColliderType.None;
             }
 
-            // 没有 Chunk = 没有瓦片 = 没有碰撞体 = 可以到达
-            return true;
+            // 没有 Chunk = 地图外 = 不可到达。
+            // 地图边界外的格子不可被当作可通行，否则寻路/生成可达点会越出地图，
+            // 导致角色被引导到地图外后陷入死循环（无法回家/无法睡觉）。
+            return false;
         }
 
         /// <summary>

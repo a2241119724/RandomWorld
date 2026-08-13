@@ -77,6 +77,10 @@ namespace LAB2D.AI.Worker
         /// <summary>疲劳阈值：低于此值优先睡觉（提高以更早触发睡眠，避免进入低效区）。</summary>
         public float TiredThreshold = 35f;
 
+        /// <summary>睡眠失败冷却时长（秒）：睡眠任务因找不到邻居位置失败后，
+        /// 这段时间内不再重复发起睡眠决策，改为漫游，避免卡死刷屏。</summary>
+        public float SleepFailCooldownSeconds = 10f;
+
         /// <summary>事业心阈值：高于此值驱动自主赚钱</summary>
         public float AmbitionThreshold = 50f;
 
@@ -281,6 +285,15 @@ namespace LAB2D.AI.Worker
 
             if (workerData.CurTired < this.TiredThreshold)
             {
+                // 睡眠位置失败冷却：睡眠任务因"没有邻居位置"失败后，短时间内不再
+                // 重复发起睡眠决策（改为漫游），等待位置/障碍变化，防止死循环刷屏。
+                if (workerData.LastSleepFailTime > 0
+                    && UnityEngine.Time.time - workerData.LastSleepFailTime < this.SleepFailCooldownSeconds)
+                {
+                    return Decision.Make(WorkerDecisionType.Wander,
+                        $"疲劳({workerData.CurTired:F0}/{workerData.MaxTired:F0}), 睡眠位置异常冷却中");
+                }
+
                 // 疲劳时：有床→Sleep，无床→GroundSleep
                 if (worker.BedItem != null)
                     return Decision.Make(WorkerDecisionType.Sleep,
