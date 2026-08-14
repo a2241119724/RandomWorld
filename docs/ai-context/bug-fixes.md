@@ -40,7 +40,7 @@
   - **碰撞注册位置必须与 sprite 实际足迹一致**：家具的多格占用关系（`GetOccupiedPositions`）是"逻辑占位"，不代表物理碰撞体覆盖范围；多格家具注册碰撞瓦片时应以视觉/物理足迹为准。
   - **门规避要验证"进门第一格"而非只避开家具主格所在行列**：家具块 3×2 占满 5 宽房间内部时，任何列都可能是入口格。
   - **Trace 级高频日志（掉落诊断/房间布局 dump）应降频或降级**：每次 ServiceLocator 查询在 3k+ 次规模下贡献明显卡顿。
-  - 建议架构级跟进：将床的物理足迹（sprite/碰撞体）与逻辑占位统一为单一数据源（如让 `BedDef.GetOccupiedPositions` 返回世界坐标足迹），避免同类错位再次出现。
+  - 架构级跟进**已解决（2026-08-14）**：见下方「床足迹错位」条目——统一了 `GetOccupiedPositions` 的轴语义，床的逻辑占用与物理足迹不再分叉。
 
 ## 2026-08-13 Worker 卡死循环：放弃任务未进冷却 → 立即重接同一任务（PickUp/Build 站着不动）
 
@@ -82,3 +82,30 @@
   - **"失败后是否有冷却/失败缓存/放弃机制"是决策循环 bug 的第一检查项**：Worker 有熔断而敌人没有，是同一族缺陷在敌人侧的缺失。
   - **`HandleMovementStuck` 等重寻路方法在"目标为空/漫游"路径必须兜底**：只处理 `Target!=null` 的重寻路会在漫游态静默失效，让卡死刷屏。
   - WalkabilityCache 与物理不同步是**跨 Worker/敌人**的共同诱发根因，本次未根治（修复让敌人能自救脱离，但反复触发仍会有偶发 Stuck）；建议架构级跟进：统一物理足迹与 A* 缓存数据源 + 并发缓存原子写入。
+
+## 2026-08-14 SeekEnemy 卡死救援传送（镜像 Worker TryRescueFromUnwalkableTile）
+
+- **现象**：敌人熔断（AbandonMovementStuck）后虽放弃目标回 Seek，但若当前格本身不可通行（被新完成建筑/床的碰撞体困住），仍物理困在原地，无法执行移动，卡死仍会复发。
+- **根因**：敌人侧缺少"卡在不可通行格上"的解冻机制；Worker 侧 `AWorker.TryRescueFromUnwalkableTile`（螺旋搜索半径 6 传送）已存在且有效。
+- **修复**（`Scripts/2D/Character/Enemy/SeekEnemy/ASeekEnemy.cs`）：新增 `ASeekEnemy.TryRescueFromUnwalkableTile`（镜像 Worker 实现：当前格 `!ASeek.IsCanReach` 时螺旋搜索最近可通行格传送），在 `AbandonMovementStuck` 熔断放弃时调用。
+- **设计取舍**：救援传送只在**熔断放弃**时触发，而非每次 `HandleMovementStuck` 重寻路时——先重寻路尝试绕开，多次无效才传送，避免滥用传送导致敌人闪现。Worker 侧则每次卡死都查（Worker 有任务上下文，频繁传送影响小）。
+- **验证**：观察 `[EnemyDiag] <name> 卡死在不可通行格(...) → 救援传送至(...)`（Warning 级进 Console），熔断后敌人应能移动去新漫游点而非原地。
+- **教训**：**角色被不可通行格困住时，"换目标/重寻路"都不够，必须提供物理解冻**（传送脱困）。Worker 有、敌人没有，是同一族自救机制的缺失。
+
+## 2026-08-14 床足迹错位：逻辑副格(y+1) vs sprite 物理足迹(x+1)，A* 判可通行而物理被挡
+
+- **现象**：Worker/SeekEnemy 在床旁卡死（`[StuckDiag] ratio=0.00`），"缓存判可通行、物理被挡"的最终机制之一。玩家建造/远程同步的床卡人，自动建家路径却不卡。
+- **根因**（WalkabilityCache 与物理不同步的跨 Worker/敌人共同根因，最终定位）：
+  - `TileMap.MapPosToWorldPos`(TileMap.cs:757) 做 **90° 转置**：tile (x,y) → 世界 (y,x)。床 sprite 视觉**竖向**（世界 Y 延伸）= tile 空间沿 **x+1** 延伸 → 物理碰撞体覆盖主格与 **tile (x+1,y)**。
+  - **根本缺陷——`ABuildItem.GetOccupiedPositions` 轴语义写反**：注释自称"逻辑与 IsAvailableMap.ShowRect 保持一致"，但代码 `positions.Add(x + j, y + i)`（j=width 循环扩展 x、i=height 循环扩展 y）与 `ShowRect` 的 `(x+i, y+j)`（i=height 扩展 x、j=width 扩展 y）**恰恰相反**。对 `SingleBed`（Width=1, Height=2, BottomLeft）按错误语义算出副格 **tile (x,y+1)** = 世界横向 → 与 sprite 物理足迹错位 90°。
+  - 结果：碰撞瓦片注册在错误的 (x,y+1)；真正被挡的 (x+1,y) 无 PosMap 条目 → `BuildMap.IsCanReach(x+1,y)` fallback `IsFreeTile` 返回 true → **A* 判可通行、物理被挡**。
+  - `WorkerBrain.cs:1204-1211` 开发者已自记此机制，且自动建家路径用 `BedSecondOffset=(x+1,y)` 修复（观测 53 次/人从不入睡）；但玩家建造（`BuildingUI → AddBuildTask`）与远程同步（`SetComplete` 多格传播）仍用 `GetOccupiedPositions` 的错误足迹。
+- **修复**（`Scripts/2D/Item/Build/ABuildItem.cs`，**根因修复，用户确认，不设每物品开关**）：
+  - `GetOccupiedPositions` 循环改为 `positions.Add(x + i, y + j)`：**height 沿 tile-x 扩展、width 沿 tile-y 扩展**，与 `ShowRect`/`ARoom.GetBoundary` 轴语义统一。`SingleBed` 1×2（BottomLeft）自动得到主格 (x,y)+副格 **(x+1,y)**，与 sprite 物理足迹一致。
+  - `AddBuildTask` 删除交换逻辑（曾暂加的 `SwapFootprintDimensions` 虚属性及 `ABed` override 全部移除）：直接以视觉宽高 `effectiveWidth/effectiveHeight` 调用 `GetOccupiedPositions`/`AddBuild`/`RegisterCollisionTile`。`BuildTileData.Width/Height` 存视觉宽高 → `SetComplete` 多格传播用同一函数自动一致。
+  - `WorkerBrain.cs` 两处注释同步：`BedSecondOffset=(x+1,y)` 与修正后的 `GetOccupiedPositions` 逻辑副格一致，不再有"旧逻辑副格 y+1"的过时描述。
+  - 影响面核验：`ReserveBuildPosition`(BuildMap.cs:134,179) 只被 1×1 墙/门/仓库调用，无副格、不受影响；房间类（ARoom/Inventory/Farmland）各自 override `AddBuildTask` 且用 `GetBoundary`，隔离不受影响；DoubleBed 2×2 正方形无影响。
+- **验证**：玩家建造床后，观察 `[BuildDiag] 建造注册 ... cells=[(x,y),(x+1,y)]` 且 `[MapDiag] RegisterCollisionTile pos=(x+1,y)`——副格应从 y+1 变 x+1；再在该格放 Worker/敌人应能绕开而非卡死。重跑游戏看 `[StuckDiag]` 床旁卡点是否消失。
+- **教训**：
+  - **多格物品的"占用格"必须与 sprite 实际物理足迹一致**，否则 A* 缓存与物理脱节。坐标转置（MapPosToWorldPos）是这类错位的温床——检查多格物品时同时核对"定义宽高 → 占用格 → sprite 覆盖格"三段。
+  - **注释声称的轴语义必须与实现核对**：`GetOccupiedPositions` 注释写"与 ShowRect 保持一致"而代码相反，此错位藏了整条 bug 族。当"预览对、注册错"时，优先怀疑共享的占用格函数，而不是给单个物品打补丁——修根因函数让所有物品统一，胜过每物品开关。

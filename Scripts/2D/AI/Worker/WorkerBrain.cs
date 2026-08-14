@@ -1189,9 +1189,10 @@ namespace LAB2D.AI.Worker
         public class RoomLayout
         {
             /// <summary>
-            /// 床的定义（1×2，RectType=BottomLeft）。仅用于向 RegisterCollisionTile 提供
-            /// Width/Height/RectType 等建造元数据。碰撞/寻路的副格不再由此派生——
-            /// 物理足迹取主格 tile-x+1（见 BedSecondOffset），与床 sprite 实际延伸一致。
+            /// 床的定义（1×2，RectType=BottomLeft）。用于向 RegisterCollisionTile 提供
+            /// Width/Height/RectType 等建造元数据。副格坐标取主格 tile-x+1（BedSecondOffset），
+            /// 与修正后的 GetOccupiedPositions（height→x, width→y，见 bug-fixes.md 2026-08-14）
+            /// 一致：SingleBed 1×2 逻辑副格与物理足迹同为 (x+1,y)。
             /// </summary>
             internal static readonly SingleBed BedDef = new SingleBed();
 
@@ -1457,7 +1458,7 @@ namespace LAB2D.AI.Worker
 
             // 床 sprite 永远竖向（上下）显示。
             // 床物理足迹 = 主格 BedOffset + 副格 tile-x+1（BedSecondOffset），转置到屏幕即世界坐标竖向延伸；
-            // 碰撞瓦片注册与打印均以此为准（避免与旧 GetOccupiedPositions 的逻辑副格 y+1 错位）。
+            // 与修正后的 GetOccupiedPositions（height→x, width→y）逻辑副格一致（见 bug-fixes.md 2026-08-14）。
             // 打印按视觉显示：主格 tile 与其 tile-x+1 相邻格（世界坐标竖向）。
             Vector3Int bedMain = layout.BedOffset;
             Vector3Int bedVis = new Vector3Int(bedMain.x + 1, bedMain.y, 0);

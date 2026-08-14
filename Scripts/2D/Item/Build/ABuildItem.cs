@@ -102,6 +102,10 @@ namespace LAB2D.Item.Build
             int effectiveHeight = extra?.Height ?? this.Height;
             AWorkerTask.RectType effectiveRectType = extra?.RectType ?? this.RectType;
 
+            // 视觉宽高直接传入：GetOccupiedPositions 内部已统一 height→x、width→y 轴语义，
+            // 床 1×2（BottomLeft）自动得到主格 (x,y)+副格 (x+1,y)，与 sprite 物理足迹一致
+            // （见 bug-fixes.md 2026-08-14）。AddBuild 存入的也是视觉宽高，SetComplete
+            // 多格传播用同一函数自然一致；UI 预览 ShowRect 用视觉宽高，三方对齐。
             var allPositions = GetOccupiedPositions(centerMap, effectiveWidth, effectiveHeight, effectiveRectType);
 
             // 主格：正常注册（创建建造任务 + visual tile）
@@ -128,7 +132,10 @@ namespace LAB2D.Item.Build
 
         /// <summary>
         /// 计算多格建造物品占用的所有地图坐标。
-        /// 逻辑与 IsAvailableMap.ShowRect 保持一致。
+        /// 轴语义与 IsAvailableMap.ShowRect、ARoom.GetBoundary 保持一致：
+        /// height 沿 tile-x 扩展、width 沿 tile-y 扩展（因 MapPosToWorldPos 的 (x,y)→(y,x) 转置，
+        /// 视觉竖向的宽高映射到 tile 空间需交换轴）。例如 SingleBed 1×2（BottomLeft）
+        /// 占用主格 (x,y) + 副格 (x+1,y)，与 sprite 物理足迹一致（见 bug-fixes.md 2026-08-14）。
         /// </summary>
         /// <param name="centerMap">参考位置（含义由 rectType 决定）</param>
         /// <param name="width">宽度</param>
@@ -171,7 +178,10 @@ namespace LAB2D.Item.Build
             {
                 for (int j = w_start; j < w_end; j++)
                 {
-                    positions.Add(new Vector3Int(centerMap.x + j, centerMap.y + i, 0));
+                    // height（i）沿 tile-x 扩展，width（j）沿 tile-y 扩展。
+                    // 与 ShowRect/ARoom 轴语义一致；旧实现 (x+j, y+i) 写反导致
+                    // 床副格落在 (x,y+1) 与物理足迹 (x+1,y) 错位（见 bug-fixes.md 2026-08-14）。
+                    positions.Add(new Vector3Int(centerMap.x + i, centerMap.y + j, 0));
                 }
             }
 
