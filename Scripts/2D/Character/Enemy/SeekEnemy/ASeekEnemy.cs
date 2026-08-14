@@ -159,8 +159,60 @@ namespace LAB2D.Character.Enemy.SeekEnemy
                 $"[EnemyDiag] {this.name} 卡死熔断 目标=({stuckTarget.x},{stuckTarget.y}) 追击={wasPursuit} → 放弃回 Seek",
                 LogManager.LogLevelEnum.Debug);
 
+            // 救援传送：若敌人当前格不可通行（被新完成建筑/床的碰撞体困住，可通行=False），
+            // 即使放弃目标回 Seek，敌人仍被物理困在原地无法移动。
+            // 螺旋搜索最近可通行格并传送脱困，镜像 AWorker.TryRescueFromUnwalkableTile。
+            this.TryRescueFromUnwalkableTile();
+
             this.Target = null;
             this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Seek);
+        }
+
+        /// <summary>
+        /// 救援传送：若敌人当前所在格不可通行（被新完成建筑/床的碰撞体困住），
+        /// 螺旋搜索在附近找最近的可通行格并传送过去。
+        /// 避免敌人卡在碰撞体上导致"站着不动"且移动状态持续结算卡死。
+        /// 镜像 AWorker.TryRescueFromUnwalkableTile。
+        /// </summary>
+        private void TryRescueFromUnwalkableTile()
+        {
+            Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.transform.position);
+            if (ASeek.IsCanReach(posMap))
+            {
+                return; // 当前格可通行，无需救援
+            }
+
+            // 螺旋搜索：从内向外按 Chebyshev 距离层遍历，找最近的可行走格。
+            // 半径 6 足够覆盖房间家具（床/仓库 3x2 块）附近的空地，且避免远距离瞬移。
+            const int maxRadius = 6;
+            for (int layer = 1; layer <= maxRadius; layer++)
+            {
+                for (int dx = -layer; dx <= layer; dx++)
+                {
+                    for (int dy = -layer; dy <= layer; dy++)
+                    {
+                        if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) != layer)
+                        {
+                            continue;
+                        }
+
+                        Vector3Int candidate = new Vector3Int(posMap.x + dx, posMap.y + dy, 0);
+                        if (ASeek.IsCanReach(candidate))
+                        {
+                            this.transform.position = AWorkerTask.TileMapPositionProvider(candidate);
+                            AWorkerTask.LogProvider(
+                                $"[EnemyDiag] {this.name} 卡死在不可通行格({posMap.x},{posMap.y}) → 救援传送至({candidate.x},{candidate.y})",
+                                LogManager.LogLevelEnum.Warning);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // 附近全不可通行：兜底记录，不做传送（避免传送到远处不连贯位置）
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.name} 卡死在不可通行格({posMap.x},{posMap.y}) 但附近{maxRadius}格无可行走格，无法救援",
+                LogManager.LogLevelEnum.Warning);
         }
 
         /// <summary>
