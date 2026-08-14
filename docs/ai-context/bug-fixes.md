@@ -126,3 +126,43 @@
 - **验证**：观察敌人不再从门进房间；日志 `[EnemyDiag] ... 目标(...)在私人房间内, 校正到(...)` 出现；追击房间内 Worker/Player 时停在门口/房间外徘徊（Move 休息 2s → Seek 换新漫游点）。
 - **范围**：只覆盖 AStar 寻路敌人（SeekEnemy_Lv1 类）。普通敌人 `ACommonEnemy` 用 `transform.Translate` 直接移动不走此路径（但被墙碰撞体阻挡）；门无碰撞体，普通敌人物理穿门是另一潜在入口，未处理。
 - **教训**：**"规则已实现但未接入实际执行路径"是最隐蔽的死代码**——`CanCharacterEnter`/`CanCharacterReach` 定义了完整规则却零调用。修这类"行为不该发生却发生"的 bug 时，先确认语义规则是否存在、再查它是否被实际路径（寻路/决策/移动）调用。**统一入口（如 `Seek()`）是补角色感知的杠杆点**：一处校正覆盖漫游/追击/重寻路全部分支，胜过在每个状态各自加判断。
+
+## 2026-08-15 敌人状态切换/寻路日志刷屏致帧率 20 多（game.log 181 万行/61 分钟）
+
+- **现象**：用户报告"帧率在 20 多"，让看日志。`game.log` 61 分钟 **1,810,240 行 / 155MB**（01:32→02:33）。刷屏源：
+  - `[EnemyDiag]` **107 万行**状态切换日志：`seekenemy →/← Move` 各 24.3 万；`commonenemy →/← Wander` 各 14.3 万；`→/← Seek` 等。
+  - `[SeekDiag]` **53 万行**寻路日志：`提交寻路` 26.7 万 + `到达终点` 25.7 万，seekenemy 占 93%。
+  - `LogManager` 每 10 条 `File.AppendAllText`（Open+Write+Close）→ 每秒 ~30 次文件写 + 主线程锁阻塞。
+- **根因**（两个刷屏源 + 一个 I/O 放大）：
+  1. **seekenemy 正常漫游但日志过密**：~16 个实例，每个每 ~2.5s 漫游一次（寻路+走路+休息），每次打 5 条日志（← Move/提交寻路/→ Seek/→ Move/到达终点）。寻路成功率 96%（提交 24.8 万 vs 到达 23.9 万），属正常行为非 bug。
+  2. **commonenemy 卡墙乒乓（无效状态往返）**：`ACommonEnemy.OnCollisionStay2D`（Sliding 检测）在 `Target==null` 时也 `ChangeState(Seek)`；`CommonEnemySeekState.OnUpdate` 第一帧发现 `Target==null` 立即 `ChangeState(Wander)`。形成 `← Wander → Seek ← Seek → Wander` **同毫秒 4 条**的无效乒乓，每 ~1s 一次。既有日志刷屏也是 CPU 浪费。
+  3. **LogManager 落盘频繁**：`maxLogCount=10` → 每 10 条一次 `File.AppendAllText`（Open/Write/Close 三次系统调用），高频日志下主线程阻塞明显。
+- **修复**：
+  1. **`LogManager.maxLogCount` 10→100**：文件写频率降 10 倍，日志内容不变（最多滞后 ~0.3-1s，Quit/关闭时 Flush 兜底）。
+  2. **修 commonenemy 乒乓**（`ACommonEnemy.OnCollisionStay2D`）：Sliding/Stuck 时 `Target==null` 不进 Seek，改重入 Wander 换方向（OnEnter recordTime=9999 立即随机新方向）。
+  3. **状态切换日志节流**（新增 `AWorkerTask.LogProviderThrottled(key, intervalSec, msg, level)`，静态字典按 key 节流）：seekenemy/commonenemy 全部 `→/← Move/Seek/Wander/Chase/Attack` 改用节流版本（`{name}|XxxIn/Out`，2s/条）。低频一次性事件日志（`→/← Dead`、攻击目标选定、攻击执行、卡死熔断、救援传送、生成敌人）保留不节流——死亡稀少但每次击杀的 attacker/经验归因珍贵，节流会丢归因（review 2026-08-15 修正）。节流器对 `elapsed<0`（Time.time 重置，如关闭域重载的新会话）放行并更新时间戳，避免旧时间戳整体抑制日志。
+  4. **寻路日志降级+节流**（`ASeek.cs`）：`提交寻路` Debug→Trace + 节流 2s/条；`到达终点` Trace + 节流；`寻路不可达` 保持 Debug（关键事件）+ 节流。
+- **验证**：重跑后 game.log 体积应降 ~10 倍（状态切换每敌人每 2s 一条，提交/到达 Trace+节流）。文件写次数降 10 倍。帧率应回升（日志 I/O 不再拖主线程）。
+- **教训**：
+  - **"正常行为 + 事件级日志 + 立即落盘"= 静默性能杀手**。漫游/感知这类每秒几十次的"正常"事件，即使每次只打 1 条 Debug，也会撑爆 game.log 并拖累主线程。高频事件日志应**节流或降级**（与 2026-08-13 的"高频 Trace 降频"一脉相承）。
+  - **状态切换日志要警惕"无效往返"**：`→ X` 立即 `← X`（同毫秒）说明进了不该进的状态。`ACommonEnemy` 的 `Target==null 进 Seek` 就是典型——Seek 兜底逻辑（Target==null 退回 Wander）反而掩盖了入口不该进 Seek 的问题。修这类问题修**入口**（不该进），而非依赖状态内兜底。
+  - **日志降频优先于日志降级**：降级到 Trace 仍写盘、不减 I/O（Trace 与 Debug 同通道进 game.log）；真正减 I/O 靠**减条数**（节流）或**增大批量**（LogManager maxLogCount）。
+
+## 2026-08-15 MovementStuckDetector 用净位移误判正常绕路 → Worker 正常走路一卡一卡
+
+- **现象**：用户报告「Worker 正常走路一卡一卡的（非碰撞卡死），是刚才引入的问题」。`game.log` 统计 1542 条 `结算=Sliding` 中 **32%（490 条）ratio 落在 0.15-0.4**（位移不足、非硬卡死）。样本如钱俊：`pos=(417.40,411.40)→(418.69,412.99)`、`pathIdx=0/2→2/4`（路径在推进、位置在移动），却判 `ratio=0.20/0.29` 为 Sliding。
+- **根因**：`MovementStuckDetector`（`03fbc182` 引入，替换失效碰撞回调）用**窗口净位移**（`Vector3.Distance(窗口起点, 当前位置)`）判定卡死：`ratio=净位移/(期望速度×1s)`，`<0.4→Sliding`。Worker 走长距离路径（采集/建造/找目标）时**蛇形绕障碍**，1 秒内实际走了很多路，但净位移（起点→终点直线）远小于路程 → ratio 偏低 → 误判 Sliding → `WorkerMoveState` 每次 Sliding **无条件 `ChangeState(Seek)` 重新寻路** → 停顿 → 视觉一卡一卡。改动前用碰撞回调，正常走路从不触发；位移阈值对任何位移不足敏感，把「绕路」当「卡住」。
+- **修复**：`MovementStuckDetector.Feed` 结算改用**窗口内累计位移**（每帧 `Vector3.Distance(prevPosition, position)` 之和）替代净位移。正常蛇形绕路每帧仍前进 → 累计≈实际路程 → ratio≈1 不误判；真卡死（撞墙穿透→物理推回→回到原点）每帧位移≈0 → 累计≈0 → 照常检出 Stuck。`Reset`/`RestartWindow`/结算后同步重置 `actualDistance`/`prevPosition`。
+- **验证**：改后正常绕路 ratio≈1 不再误判 Sliding；真卡死累计位移≈0 仍走 Stuck（重试/放弃）逻辑。需游戏内实测确认走路流畅、且真卡墙仍能自救。
+- **教训**：**位移不足 ≠ 卡住**。判定"卡死"应看"实际有没有在动"（每帧位移之和），而非"起点到终点差多远"（净位移）。净位移会被正常蛇形行进/绕障碍误伤——这也解释了为何位移检测器替换碰撞回调后引入回归：碰撞回调只响应真实碰撞，位移阈值则对任何位移不足敏感。若后续需要检测"绕圈但无进展"（净位移低但累计位移高），应单独加"路径推进停滞"判定，而非退回净位移。
+
+## 2026-08-15 Worker 持续走路抖动（不停下）：FixedUpdate 步进与渲染采样错配
+
+- **现象**：累计位移修复后（上一条）Sliding=0 不误判了，但用户报告「走路还是一卡一卡的」，澄清为**「持续走路但抖动（不停下）」**——不是走走停停。低帧率（20 帧左右）下尤其明显。
+- **根因**：`96d26170`（08-12）把移动从 `OnUpdate(Time.deltaTime)` 移到 `OnFixedUpdate(Time.fixedDeltaTime)`。Worker/SeekEnemy 是 **Dynamic Rigidbody2D** + `transform.Translate` 直接写 transform + `m_Interpolate:0`（插值关闭）。物理步进 50Hz，渲染帧率 ~20fps：每个渲染帧内物理步进 2-3 次，Translate 每 FixedUpdate 移固定距离，渲染采样点落在不同物理时刻 → 每渲染帧看到的位移量不均匀 → 位置跳变 → 持续抖动。插值关闭意味着物理位置直接驱动渲染，无平滑。Player 用 `rb.velocity`（物理通道驱动、天然平滑）无此问题，佐证差异在移动通道。
+- **修复**（方案 A：MovePosition + 开启插值）：
+  1. **`ASeek.MoveByPath`**：`transform.Translate` → `Rigidbody2D.MovePosition`（FixedUpdate 内物理同步，位置走刚体统一物理通道；无刚体回退 Translate）。MovePosition 基准用 `characterPosition`（transform.position），与 `stuckDetector.Feed` 同一坐标，保证检测位移与实际移动一致。
+  2. **开启插值**：Worker.prefab / SeekEnemy.prefab `m_Interpolate: 0→1`——Rigidbody2D 插值在渲染帧之间平滑物理位置，消除 FixedUpdate 步进与渲染采样错配的抖动。
+  3. **卡死检测兼容**：MovePosition 受碰撞约束不穿透，撞墙时位置停住 → MovementStuckDetector 累计位移≈0 → 仍检出 Stuck；SeekEnemyMoveState/WorkerMoveState 的 Sliding/Stuck 熔断（MaxStuckStreak=4）不变。
+- **验证**：需游戏内实测。低帧率下走路应连续平滑不再抖动；真卡墙时累计位移≈0 仍走 Stuck 自救。已知遗留：Worker/SeekEnemy `gravityScale=1`（Dynamic Rigidbody 上的重力），MovePosition 与重力 velocity 可能冲突致 Y 轴抖动——保守未动，若仍抖动再处理。
+- **教训**：**移动逻辑移到 FixedUpdate 必须走物理通道 + 开插值**。物理帧步进与渲染采样天然错配，纯 `transform.Translate`（绕过刚体直接写 transform）+ 插值关闭，在低帧率下必然抖动。物理驱动移动应 `MovePosition`/`velocity`（物理通道），并开启 Rigidbody2D Interpolate 由渲染层平滑；若坚持 Transform 移动则需放在 Update（渲染帧、deltaTime）里。

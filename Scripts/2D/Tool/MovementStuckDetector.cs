@@ -3,11 +3,12 @@ namespace LAB2D
     using UnityEngine;
 
     /// <summary>
-    /// 每秒位移卡死检测器 — 对比"窗口净位移"与"期望位移"，判断角色是否被卡住。
+    /// 每秒位移卡死检测器 — 对比"窗口累计位移"与"期望位移"，判断角色是否被卡住。
     /// 纯逻辑、无 Unity 组件依赖，由寻路移动每固定帧喂入移动数据。
-    /// position 必须传"移动前（物理结算后）"的真实位置：
-    /// transform.Translate 会穿透墙体，物理求解器在物理帧稍后把角色推回，
-    /// 只有移动前的位置才能反映帧间真实进展。
+    /// position 传"移动前"的真实位置：MovePosition 受碰撞约束不穿透，
+    /// 撞墙时位置停在约束处不再前进，累计位移≈0 → 检出 Stuck。
+    /// 结算用"每帧位移之和"而非"窗口净位移"：Worker 长距离蛇形绕障碍时净位移远小于
+    /// 实际路程，用净位移会误判 Sliding → 正常走路一卡一卡（见 bug-fixes.md 2026-08-15）。
     /// </summary>
     public sealed class MovementStuckDetector
     {
@@ -34,7 +35,8 @@ namespace LAB2D
 
         private float windowRemaining;
         private float expectedDistance;
-        private Vector3 windowStartPosition;
+        private float actualDistance; // 窗口内累计位移（每帧位移之和）
+        private Vector3 prevPosition; // 上一帧位置，用于累计本帧位移
         private bool hasWindowStart;
         private int blockedWindowStreak;
         private BugCheckResult lastResult = BugCheckResult.None;
@@ -46,6 +48,7 @@ namespace LAB2D
         {
             this.windowRemaining = 0f;
             this.expectedDistance = 0f;
+            this.actualDistance = 0f;
             this.hasWindowStart = false;
             this.blockedWindowStreak = 0;
             this.lastResult = BugCheckResult.None;
@@ -59,6 +62,7 @@ namespace LAB2D
         {
             this.windowRemaining = 0f;
             this.expectedDistance = 0f;
+            this.actualDistance = 0f;
             this.hasWindowStart = false;
             this.lastResult = BugCheckResult.None;
         }
@@ -81,15 +85,19 @@ namespace LAB2D
             {
                 this.windowRemaining = this.WindowSeconds;
                 this.expectedDistance = 0f;
+                this.actualDistance = 0f;
                 this.hasWindowStart = false;
             }
 
-            if (!this.hasWindowStart)
+            if (this.hasWindowStart)
             {
-                this.windowStartPosition = position;
-                this.hasWindowStart = true;
+                // 累计每帧位移（prev→cur）：正常蛇形绕路每帧仍前进，累计≈实际路程；
+                // 真卡死（撞墙穿透→物理推回→回到原点）每帧位移≈0 → 累计≈0 → 检出 Stuck。
+                this.actualDistance += Vector3.Distance(this.prevPosition, position);
             }
 
+            this.prevPosition = position;
+            this.hasWindowStart = true;
             this.expectedDistance += expectedSpeed * deltaTime;
             this.windowRemaining -= deltaTime;
 
@@ -98,8 +106,10 @@ namespace LAB2D
                 return this.lastResult = BugCheckResult.None;
             }
 
-            // 窗口到期结算：用净位移（起点→当前）抵消卡墙振荡（穿透→推出→穿透）
-            float actualDistance = Vector3.Distance(this.windowStartPosition, position);
+            // 窗口到期结算：用窗口内累计位移（每帧位移之和）对比期望位移。
+            // 修复（2026-08-15）：原用窗口起点→终点的净位移，Worker 长距离蛇形绕障碍时
+            // 净位移远小于路程 → 误判 Sliding → 正常走路一卡一卡（日志观测 32% Sliding
+            // ratio 落在 0.15-0.4，样本 pathIdx 推进、位置移动但被判位移不足）。
             BugCheckResult result;
             if (this.expectedDistance < this.MinExpectedDistance)
             {
@@ -108,7 +118,7 @@ namespace LAB2D
             }
             else
             {
-                float ratio = actualDistance / this.expectedDistance;
+                float ratio = this.actualDistance / this.expectedDistance;
                 this.LastRatio = ratio;
                 if (ratio < this.SlidingRatio)
                 {
@@ -128,6 +138,7 @@ namespace LAB2D
             this.lastResult = result;
             this.windowRemaining = this.WindowSeconds;
             this.expectedDistance = 0f;
+            this.actualDistance = 0f;
             this.hasWindowStart = false;
             return result;
         }

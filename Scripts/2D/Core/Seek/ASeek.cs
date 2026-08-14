@@ -51,6 +51,7 @@ namespace LAB2D.Core.Seek
 
         private readonly bool isWorker;
         private readonly bool isEnemy;
+        private readonly Rigidbody2D rb; // 移动目标刚体（MovePosition 物理帧移动 + 渲染插值，消除 FixedUpdate 步进抖动）
         private readonly object requestLock = new ();
         private bool requestScheduled;
         private int pendingGeneration;
@@ -85,6 +86,7 @@ namespace LAB2D.Core.Seek
             this.Character = character;
             this.isWorker = character is AWorker;
             this.isEnemy = character is LAB2D.Character.Enemy.AEnemy;
+            this.rb = character.GetComponent<Rigidbody2D>();
         }
 
         public Vector3Int TargetMap { get; protected set; }
@@ -317,9 +319,13 @@ namespace LAB2D.Core.Seek
             WalkabilityCache.EnsureBuilt();
 
             Vector3Int startMap = s_tileMap.WorldPosToMapPos(this.Character.transform.position);
-            AWorkerTask.LogProvider(
+            // 寻路提交高频（seekenemy 漫游每 2.5s/实例，峰值每秒数十次），降 Trace + 节流 2s/条
+            // （game.log 181 万行/61 分钟刷屏源之一，见 bug-fixes.md 2026-08-15）。
+            // 关键结果（不可达/到达）仍保留；提交细节需要时在 Trace 档查看。
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|SeekSubmit", 2f,
                 $"[SeekDiag] {this.Character.name} 提交寻路 start=({startMap.x},{startMap.y}) target=({targetMap.x},{targetMap.y})",
-                LogManager.LogLevelEnum.Debug);
+                LogManager.LogLevelEnum.Trace);
             this.TargetMap = targetMap;
             this.RestartStuckWindow(); // 新路径 → 新窗口，但保留连续卡住计数（重新寻路不赦免）
             int generation = this.StartSeek();
@@ -368,7 +374,9 @@ namespace LAB2D.Core.Seek
         /// </summary>
         private void CompleteMovement()
         {
-            AWorkerTask.LogProvider(
+            // 到达终点高频（随漫游），Trace + 节流 2s/条（见 bug-fixes.md 2026-08-15）。
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|SeekArrive", 2f,
                 $"[SeekDiag] {this.Character.name} 到达终点 target=({this.TargetMap.x},{this.TargetMap.y})",
                 LogManager.LogLevelEnum.Trace);
             this.StopMove(); // 内部 RestartWindow（保留计数）
@@ -427,8 +435,8 @@ namespace LAB2D.Core.Seek
                 speed = s_workerConditionManager.GetAdjustedWorkerMoveSpeed((AWorker)this.Character, speed);
             }
 
-            // 卡死检测：必须在 Translate 之前，用物理结算后的真实位置喂入，
-            // 否则会测出 Translate 穿透墙体的"假位移"，永远测不出卡死。
+            // 卡死检测：必须在移动之前，用当前真实位置喂入（MovePosition 受碰撞约束，
+            // 撞墙时位置停住，累计位移≈0 → 检出 Stuck）。
             this.LastStuckResult = this.stuckDetector.Feed(Time.fixedDeltaTime, characterPosition, speed);
             // 卡墙诊断：Sliding/Stuck 结算时输出一次 Debug（检测窗口 1s，最多每秒一条，不刷屏）。
             // 记录结算结果、实时位置、寻路目标与位移比例，用于定位"A* 认为可通而物理被挡"。
@@ -441,7 +449,20 @@ namespace LAB2D.Core.Seek
                     LogManager.LogLevelEnum.Debug);
             }
 
-            this.Character.transform.Translate(speed * Time.fixedDeltaTime * this.Direction.normalized, Space.World);
+            // 移动：有刚体用 MovePosition（物理帧移动，配合 Rigidbody2D 插值渲染平滑），
+            // 无刚体回退 transform.Translate。MovePosition 受碰撞约束不穿透，
+            // 卡死时位置不再前进 → MovementStuckDetector 累计位移≈0 → 检出 Stuck。
+            Vector3 moveOffset = speed * Time.fixedDeltaTime * this.Direction.normalized;
+            if (this.rb != null)
+            {
+                // 基准用 characterPosition（transform.position），与上方 stuckDetector.Feed 同一坐标，
+                // 保证"检测位移"与"实际移动"严格一致。
+                this.rb.MovePosition(new Vector2(characterPosition.x, characterPosition.y) + new Vector2(moveOffset.x, moveOffset.y));
+            }
+            else
+            {
+                this.Character.transform.Translate(moveOffset, Space.World);
+            }
             if (this.ShouldShowLine())
             {
                 this.UpdateLine(true);
@@ -486,8 +507,10 @@ namespace LAB2D.Core.Seek
             if (!result.IsReachable && !isShuttingDown && s_mainThreadDispatcher != null)
             {
                 LAB2D.Character.Character character = this.Character;
+                // 关键事件：保持 Debug，节流 2s/条防连续失败刷屏（见 bug-fixes.md 2026-08-15）。
                 s_mainThreadDispatcher.EnqueueAsync(() =>
-                    AWorkerTask.LogProvider(
+                    AWorkerTask.LogProviderThrottled(
+                        $"{(character != null ? character.name : "?")}|SeekUnreachable", 2f,
                         $"[SeekDiag] {(character != null ? character.name : "?")} 寻路不可达 target=({targetMap.x},{targetMap.y})",
                         LogManager.LogLevelEnum.Debug));
             }
