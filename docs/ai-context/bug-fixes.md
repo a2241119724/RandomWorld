@@ -109,3 +109,20 @@
 - **教训**：
   - **多格物品的"占用格"必须与 sprite 实际物理足迹一致**，否则 A* 缓存与物理脱节。坐标转置（MapPosToWorldPos）是这类错位的温床——检查多格物品时同时核对"定义宽高 → 占用格 → sprite 覆盖格"三段。
   - **注释声称的轴语义必须与实现核对**：`GetOccupiedPositions` 注释写"与 ShowRect 保持一致"而代码相反，此错位藏了整条 bug 族。当"预览对、注册错"时，优先怀疑共享的占用格函数，而不是给单个物品打补丁——修根因函数让所有物品统一，胜过每物品开关。
+
+## 2026-08-15 SeekEnemy 寻路进入 Worker 房间：CanCharacterEnter 规则未接入寻路（死代码）
+
+- **现象**：用户报告"敌人不应该能寻路进入 Worker 的房间，但出现了"。敌人从房间**门**走进去（墙正常阻挡，门被穿过）。
+- **根因**（三类事实叠加）：
+  1. **门 `CustomDoor` IsPass=1（可通行）**——`Resources/SO/WallItemData.asset` 配置，Info"可以通过的门"，Worker 要进出房间；墙 `CustomRoomWall` IsPass=0（不可通行，`.asset` m_ColliderType=1 有碰撞体）。
+  2. **敌人寻路用角色无关判定**——`ASeekEnemy.Awake` 用 `new AStar(this)`（与 Worker 共用），AStar 障碍判定只走共享的 `WalkabilityCache`（`ASeek.IsCanReach` = tileMap+resourceMap+buildMap 物理碰撞）。门无碰撞体 → 房间内部格物理可通行 → 敌人 A* 路径穿门直达房间内目标（漫游点 `GenCanReachPosProvider` 落在房间内，或追击 Worker/Player 目标在房间内）。
+  3. **房间规则是死代码**——`RoomManager.CanCharacterEnter`（RoomManager.cs:164）已实现"Enemy 不能进入任何私人房间；Worker 只能进自己的房间"，`ASeek.CanCharacterReach`（ASeek.cs:163）也封装了它，但 **AStar 从未调用**。规则从定义起就没接入任何寻路路径。
+- **修复**（`Scripts/2D/Core/Seek/ASeek.cs`，统一入口校正）：
+  - `ASeek.Seek(targetMap)` 开头（isShuttingDown 检查后）：`if (this.isEnemy && !this.CanCharacterReach(targetMap))` → `FindNearestReachable` 螺旋搜索（半径 30，覆盖房间尺寸）校正目标到最近的角色可达格（房间外/门口），打 `[EnemyDiag] 目标(...)在私人房间内, 校正到(...)`（Debug）。
+  - 新增 `FindNearestReachable`：螺旋遍历每层边界，返回第一个 `CanCharacterReach` 为 true 的格；全不可达返回原目标（让寻路失败自然处理）。
+  - **为什么放 Seek()**：敌人所有寻路入口（漫游 `SeekEnemySeekState.OnEnter`、追击/卡死重寻路 `HandleMovementStuck`、熔断 `AbandonMovementStuck` 回 Seek）最终都走 `ASeek.Seek`，一处覆盖全部。`ASeek` 构造函数已有 `isEnemy = character is AEnemy`（:87），按角色区分本就是设计意图，本次只是把规则接上用。
+  - 校正只对 `isEnemy` 生效，Worker 寻路完全不受影响（Worker 进自己房间 CanCharacterEnter=true 不拦）。
+  - 敌人已在房间内时能正常寻路出来（房间外格 CanCharacterReach=true）；门格非房间内部（`RoomInfo.IsInterior` 对 Points 返回 false）→ 敌人可寻路到门口。建造中的房间（Progress!=0）不限制（`GetRoomInterior` 跳过），完成后才生效。
+- **验证**：观察敌人不再从门进房间；日志 `[EnemyDiag] ... 目标(...)在私人房间内, 校正到(...)` 出现；追击房间内 Worker/Player 时停在门口/房间外徘徊（Move 休息 2s → Seek 换新漫游点）。
+- **范围**：只覆盖 AStar 寻路敌人（SeekEnemy_Lv1 类）。普通敌人 `ACommonEnemy` 用 `transform.Translate` 直接移动不走此路径（但被墙碰撞体阻挡）；门无碰撞体，普通敌人物理穿门是另一潜在入口，未处理。
+- **教训**：**"规则已实现但未接入实际执行路径"是最隐蔽的死代码**——`CanCharacterEnter`/`CanCharacterReach` 定义了完整规则却零调用。修这类"行为不该发生却发生"的 bug 时，先确认语义规则是否存在、再查它是否被实际路径（寻路/决策/移动）调用。**统一入口（如 `Seek()`）是补角色感知的杠杆点**：一处校正覆盖漫游/追击/重寻路全部分支，胜过在每个状态各自加判断。
