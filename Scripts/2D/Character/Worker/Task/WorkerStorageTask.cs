@@ -191,20 +191,34 @@ namespace LAB2D.Character.Worker.Task
         public static void RefreshStorageIcons(AWorker worker)
         {
             AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
-            if (wd == null || wd.PlannedHomePosition == null || wd.Storage == null) return;
+            if (wd == null || wd.PlannedHomePosition == null || wd.Storage == null)
+            {
+                LogProvider(
+                    $"[TaskDiag] {worker.name} 刷新仓库图标跳过: 无家位置/无仓库数据",
+                    LogManager.LogLevelEnum.Debug);
+                return;
+            }
 
             var layout = WorkerBrain.GetRoomLayout(wd);
-            if (wd.HomeBuildStage < layout.CompleteStage) return; // 家未建完，无仓库格
+            if (wd.HomeBuildStage < layout.CompleteStage)
+            {
+                LogProvider(
+                    $"[TaskDiag] {worker.name} 刷新仓库图标跳过: 家未建完 stage={wd.HomeBuildStage}/{layout.CompleteStage}",
+                    LogManager.LogLevelEnum.Debug);
+                return; // 家未建完，无仓库格
+            }
 
             Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
 
             // 清空 4 格旧图标
+            int cleared = 0;
             foreach (Vector3Int so in layout.StorageOffsets)
             {
                 Vector3Int pos = center + so;
                 if (ItemMapProvider().HasTile(pos))
                 {
                     ItemMapProvider().DeleteTile(pos);
+                    cleared++;
                 }
             }
 
@@ -213,18 +227,44 @@ namespace LAB2D.Character.Worker.Task
             // 避免 NRE 中断 Finish（RefreshStorageIcons 在 Finish 中调用，异常会连带
             // 断掉 chainCompleteTask 接力）。与 Carry 不同，Storage 键来自持久化存档，可能失效。
             int index = 0;
+            int drawn = 0;
+            int skipped = 0;
             foreach (KeyValuePair<int, ResourceInfo> kv in wd.Storage)
             {
                 if (index >= layout.StorageOffsets.Count) break;
                 if (kv.Value == null || kv.Value.Count <= 0) continue;
                 ItemData itemData = ItemDataProvider(kv.Key);
-                if (itemData == null) continue;
+                if (itemData == null)
+                {
+                    LogProvider(
+                        $"[TaskDiag] {worker.name} 仓库图标跳过: id={kv.Key} 物品数据缺失(旧存档失效)",
+                        LogManager.LogLevelEnum.Debug);
+                    skipped++;
+                    continue;
+                }
+
                 TileBase tile = ResourceLoadProvider(itemData.Name) as TileBase;
-                if (tile == null) continue;
+                if (tile == null)
+                {
+                    LogProvider(
+                        $"[TaskDiag] {worker.name} 仓库图标跳过: {itemData.Name}(id={kv.Key}) 无对应 Tile 资源",
+                        LogManager.LogLevelEnum.Warning);
+                    skipped++;
+                    continue;
+                }
+
                 Vector3Int pos = center + layout.StorageOffsets[index];
                 ItemMapProvider().AddTile(pos, tile);
+                LogProvider(
+                    $"[TaskDiag] {worker.name} 仓库图标绘制: {itemData.Name}(id={kv.Key}) pos=({pos.x},{pos.y})",
+                    LogManager.LogLevelEnum.Trace);
                 index++;
+                drawn++;
             }
+
+            LogProvider(
+                $"[TaskDiag] {worker.name} 仓库图标刷新完成: 清除{cleared} 绘制{drawn} 跳过{skipped} (仓库{wd.Storage.Count}种) center=({center.x},{center.y})",
+                LogManager.LogLevelEnum.Debug);
         }
 
         // ---- Builder ----
