@@ -25,8 +25,9 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             // 为了再一次进入会直接转动方向
             this.recordTime = 9999.0f;
 
-            // 状态切换：进入漫游状态（一次性事件，非每帧）
-            AWorkerTask.LogProvider(
+            // 状态切换：进入漫游状态（高频漫游事件，节流 2s/条，见 bug-fixes.md 2026-08-15）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|WanderIn", 2f,
                 $"[EnemyDiag] {this.Character.name} → Wander",
                 LogManager.LogLevelEnum.Debug);
         }
@@ -36,8 +37,9 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         {
             base.OnExit();
 
-            // 状态切换：离开漫游状态
-            AWorkerTask.LogProvider(
+            // 状态切换：离开漫游状态（节流 2s/条）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|WanderOut", 2f,
                 $"[EnemyDiag] {this.Character.name} ← Wander",
                 LogManager.LogLevelEnum.Debug);
         }

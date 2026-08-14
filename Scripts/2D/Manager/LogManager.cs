@@ -15,7 +15,9 @@ namespace LAB2D.Manager
         private readonly string logPath = Path.Combine(Application.persistentDataPath, "game.log");
         private readonly string errorLogPath = Path.Combine(Application.persistentDataPath, "error.log");
         private readonly List<string> logs = new List<string>();
-        private readonly int maxLogCount = 10; // 每条日志立即落盘，方便运行时查看game.log.
+        private readonly int maxLogCount = 100; // 每 100 条批量落盘一次。10 时每秒 ~30 次 File.AppendAllText（Open/Write/Close），
+                                                // 在高频日志（敌人状态切换/寻路）下主线程阻塞显著；100 将文件写频率降 10 倍。
+                                                // 影响：game.log 最多滞后 ~0.3-1 秒（Flush 在退出/关停时兜底）。
         private LogLevelEnum minLogLevel = LogLevelEnum.Trace; // 最小的日志级别.
         private bool isSave = true;
         private bool logFileAvailable = true;

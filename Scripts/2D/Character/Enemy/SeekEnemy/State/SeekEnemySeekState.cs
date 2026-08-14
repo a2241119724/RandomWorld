@@ -20,8 +20,9 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             this.targetMap = AWorkerTask.GenCanReachPosProvider(posMap);
             this.Character.Seek.Seek(this.targetMap);
 
-            // 状态切换：进入寻路状态（一次性事件，非每帧）
-            AWorkerTask.LogProvider(
+            // 状态切换：进入寻路状态（高频漫游事件，节流 2s/条）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|SeekIn", 2f,
                 $"[EnemyDiag] {this.Character.name} → Seek target=({this.targetMap.x},{this.targetMap.y})",
                 LogManager.LogLevelEnum.Debug);
         }
@@ -37,7 +38,8 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 // 寻路失败事件（一次性）：目标不可达/无路径时记录目标坐标
                 if (!this.Character.Seek.IsHavePath())
                 {
-                    AWorkerTask.LogProvider(
+                    AWorkerTask.LogProviderThrottled(
+                        $"{this.Character.name}|SeekFail", 2f,
                         $"[EnemyDiag] {this.Character.name} 寻路失败 target=({this.targetMap.x},{this.targetMap.y}) " +
                         $"pos=({this.Character.transform.position.x:F1},{this.Character.transform.position.y:F1})",
                         LogManager.LogLevelEnum.Debug);

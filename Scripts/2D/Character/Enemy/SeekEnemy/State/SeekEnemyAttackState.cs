@@ -44,8 +44,9 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 weaponObject.SetCharacter(this.Character);
             }
 
-            // 状态切换：进入攻击状态（一次性事件，非每帧攻击循环）
-            AWorkerTask.LogProvider(
+            // 状态切换：进入攻击状态（节流 2s/条，见 bug-fixes.md 2026-08-15）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|AttackIn", 2f,
                 $"[EnemyDiag] {this.Character.name} → Attack target={this.Character.Target?.name}",
                 LogManager.LogLevelEnum.Debug);
         }
@@ -107,8 +108,9 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 this.Character.Weapon = null;
             }
 
-            // 状态切换：离开攻击状态
-            AWorkerTask.LogProvider(
+            // 状态切换：离开攻击状态（节流 2s/条）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|AttackOut", 2f,
                 $"[EnemyDiag] {this.Character.name} ← Attack",
                 LogManager.LogLevelEnum.Debug);
         }

@@ -31,7 +31,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             // experienceReward=0：经验值已通过 AddExperienceValue -> RecordExperienceGained 记录，避免重复统计
             Core.GameServices.EnemyDefeatedProvider((AEnemy)this.Character, this.Character.LastAttacker, 0);
 
-            // 状态切换：进入死亡状态（一次性事件）
+            // 状态切换：进入死亡状态（低频一次性事件，不节流——死亡稀少，保留每次击杀的 attacker/经验归因）
             AWorkerTask.LogProvider(
                 $"[EnemyDiag] {this.Character.name} → Dead attacker={this.Character.LastAttacker?.name}",
                 LogManager.LogLevelEnum.Debug);
@@ -62,7 +62,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             base.OnExit();
             this.Character.GetComponent<ACommonEnemy>().enabled = false;
 
-            // 状态切换：离开死亡状态
+            // 状态切换：离开死亡状态（低频一次性事件，不节流）
             AWorkerTask.LogProvider(
                 $"[EnemyDiag] {this.Character.name} ← Dead",
                 LogManager.LogLevelEnum.Debug);

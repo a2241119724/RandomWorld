@@ -148,9 +148,15 @@ namespace LAB2D.Character.Enemy.CommonEnemy
 
             if (bugResult == BugCheckResult.Sliding)
             {
-                // 贴墙滑动 → 预防性重新寻路
+                // 贴墙滑动 → 预防性重新寻路/换向。
+                // 无目标时不能进 Seek：CommonEnemySeekState.OnUpdate 在 Target==null 时第一帧就退回
+                // Wander，形成 ← Wander → Seek ← Seek → Wander 的同毫秒无效乒乓（每 ~1s 一次，
+                // 刷爆 [EnemyDiag] 日志，见 bug-fixes.md 2026-08-15）。直接重入 Wander 让 OnEnter
+                // (recordTime=9999) 立即换新方向。
                 this.collisionBugDetector.ColliderCount = 0;
-                this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Seek);
+                this.Manager.ChangeState(this.Target != null
+                    ? ACommonEnemyState.TypeEnum.Seek
+                    : ACommonEnemyState.TypeEnum.Wander);
                 return;
             }
 
@@ -165,12 +171,15 @@ namespace LAB2D.Character.Enemy.CommonEnemy
                 {
                     this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Wander);
                 }
-                // Chase/Attack/Seek 状态：切换到 Seek 重新搜索路径
+                // Chase/Attack/Seek 状态：切换到 Seek 重新搜索路径。
+                // 无目标时进 Seek 会立即退回 Wander（同上），改回 Wander 避免无效乒乓。
                 else if (currentState == ACommonEnemyState.TypeEnum.Chase
                     || currentState == ACommonEnemyState.TypeEnum.Attack
                     || currentState == ACommonEnemyState.TypeEnum.Seek)
                 {
-                    this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Seek);
+                    this.Manager.ChangeState(this.Target != null
+                        ? ACommonEnemyState.TypeEnum.Seek
+                        : ACommonEnemyState.TypeEnum.Wander);
                 }
             }
         }

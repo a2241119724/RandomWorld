@@ -30,8 +30,9 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             this.recordTime = 0.0f;
             this.senseTargetIndex = 0;
 
-            // 状态切换：进入移动状态（一次性事件，非每帧）
-            AWorkerTask.LogProvider(
+            // 状态切换：进入移动状态（高频漫游事件，节流 2s/条，见 bug-fixes.md 2026-08-15）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|MoveIn", 2f,
                 $"[EnemyDiag] {this.Character.name} → Move",
                 LogManager.LogLevelEnum.Debug);
 
@@ -45,8 +46,9 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             base.OnExit();
             this.Character.Seek.StopMove();
 
-            // 状态切换：离开移动状态
-            AWorkerTask.LogProvider(
+            // 状态切换：离开移动状态（节流 2s/条）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|MoveOut", 2f,
                 $"[EnemyDiag] {this.Character.name} ← Move",
                 LogManager.LogLevelEnum.Debug);
         }

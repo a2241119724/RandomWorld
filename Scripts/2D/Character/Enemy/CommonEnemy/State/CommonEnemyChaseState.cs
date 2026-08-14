@@ -18,8 +18,9 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         {
             base.OnEnter();
 
-            // 状态切换：进入追击状态（一次性事件，非每帧追击循环）
-            AWorkerTask.LogProvider(
+            // 状态切换：进入追击状态（节流 2s/条，见 bug-fixes.md 2026-08-15）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|ChaseIn", 2f,
                 $"[EnemyDiag] {this.Character.name} → Chase target={this.Character.Target?.name}",
                 LogManager.LogLevelEnum.Debug);
         }
@@ -29,8 +30,9 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         {
             base.OnExit();
 
-            // 状态切换：离开追击状态
-            AWorkerTask.LogProvider(
+            // 状态切换：离开追击状态（节流 2s/条）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|ChaseOut", 2f,
                 $"[EnemyDiag] {this.Character.name} ← Chase",
                 LogManager.LogLevelEnum.Debug);
         }

@@ -22,8 +22,9 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             // LogManager.Instance.log("SeekState", LogManager.LogLevel.Info);
             this.recordTime = 0.0f;
 
-            // 状态切换：进入搜索状态（一次性事件）
-            AWorkerTask.LogProvider(
+            // 状态切换：进入搜索状态（高频漫游事件，节流 2s/条）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|SeekIn", 2f,
                 $"[EnemyDiag] {this.Character.name} → Seek target={this.Character.Target?.name}",
                 LogManager.LogLevelEnum.Debug);
         }
@@ -31,8 +32,9 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         /// <inheritdoc/>
         public override void OnExit()
         {
-            // 状态切换：离开搜索状态
-            AWorkerTask.LogProvider(
+            // 状态切换：离开搜索状态（节流 2s/条）
+            AWorkerTask.LogProviderThrottled(
+                $"{this.Character.name}|SeekOut", 2f,
                 $"[EnemyDiag] {this.Character.name} ← Seek",
                 LogManager.LogLevelEnum.Debug);
         }

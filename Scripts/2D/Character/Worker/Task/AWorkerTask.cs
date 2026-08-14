@@ -191,6 +191,39 @@ namespace LAB2D.Character.Worker.Task
             = (message, level) => ServiceLocator.Get<LogManager>().Log(message, level);
 
         /// <summary>
+        /// 节流版日志 — 同一 key 在 intervalSec 秒内最多输出一条。
+        /// 用于高频状态切换/寻路日志（敌人漫游每秒数十次 → game.log 181 万行/61 分钟的刷屏源，
+        /// 见 bug-fixes.md 2026-08-15）。在保留诊断能力的同时避免刷爆日志。
+        /// key 建议用 "{角色名}|{事件类型}" 区分不同角色与事件；打点处独立维护 key 即可。
+        /// 注意 elapsed&lt;0（Time.time 重置，如关闭域重载的新 play 会话）会放行并更新时间戳，
+        /// 否则残留的旧时间戳会把该 key 的日志整体抑制到 time 追平为止。
+        /// </summary>
+        private static readonly System.Collections.Generic.Dictionary<string, float> s_logThrottleLastTime
+            = new System.Collections.Generic.Dictionary<string, float>();
+        private static readonly object s_logThrottleLock = new object();
+
+        public static void LogProviderThrottled(
+            string key, float intervalSec, string message, LogManager.LogLevelEnum level)
+        {
+            float now = UnityEngine.Time.time;
+            lock (s_logThrottleLock)
+            {
+                if (s_logThrottleLastTime.TryGetValue(key, out float last))
+                {
+                    float elapsed = now - last;
+                    if (elapsed >= 0f && elapsed < intervalSec)
+                    {
+                        return;
+                    }
+                }
+
+                s_logThrottleLastTime[key] = now;
+            }
+
+            LogProvider(message, level);
+        }
+
+        /// <summary>
         /// 物品类型查找提供者 — 根据物品 ID 返回物品类型枚举。
         /// 默认实现访问 ServiceLocator.Get&lt;ItemDataManager&gt;().IdToType。
         /// 可替换为测试桩。
