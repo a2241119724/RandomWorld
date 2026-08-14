@@ -177,6 +177,36 @@ namespace LAB2D.Core.Seek
             return true;
         }
 
+        /// <summary>
+        /// 螺旋搜索目标周围最近的角色可达格（Enemy 目标在私人房间内时校正用）。
+        /// 找不到可达格（如目标被完全封闭）返回原目标，让后续寻路失败自然处理。
+        /// </summary>
+        private Vector3Int FindNearestReachable(Vector3Int targetMap)
+        {
+            const int maxRadius = 30;
+            for (int layer = 1; layer <= maxRadius; layer++)
+            {
+                for (int dx = -layer; dx <= layer; dx++)
+                {
+                    for (int dy = -layer; dy <= layer; dy++)
+                    {
+                        if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != layer)
+                        {
+                            continue;
+                        }
+
+                        Vector3Int candidate = new Vector3Int(targetMap.x + dx, targetMap.y + dy, 0);
+                        if (this.CanCharacterReach(candidate))
+                        {
+                            return candidate;
+                        }
+                    }
+                }
+            }
+
+            return targetMap;
+        }
+
         public static void RecordFail(Vector3Int targetMap)
         {
             FailCache[targetMap] = Time.time;
@@ -260,6 +290,21 @@ namespace LAB2D.Core.Seek
             if (isShuttingDown)
             {
                 return;
+            }
+
+            // 敌人角色感知校正：Enemy 不能寻路进入 Worker 私人房间。
+            // AStar 障碍判定用角色无关的 WalkabilityCache（门 IsPass=1 → 房间内部格物理可通行），
+            // 若不在此校正，敌人会从门寻路进房间（RoomManager.CanCharacterEnter 规则未接入寻路）。
+            if (this.isEnemy && !this.CanCharacterReach(targetMap))
+            {
+                Vector3Int corrected = this.FindNearestReachable(targetMap);
+                if (corrected != targetMap)
+                {
+                    AWorkerTask.LogProvider(
+                        $"[EnemyDiag] {this.Character.name} 目标({targetMap.x},{targetMap.y})在私人房间内, 校正到({corrected.x},{corrected.y})",
+                        LogManager.LogLevelEnum.Debug);
+                    targetMap = corrected;
+                }
             }
 
             if (this.IsSeeking())
