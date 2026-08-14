@@ -1593,19 +1593,29 @@ namespace LAB2D.AI.Worker
             Dictionary<int, ResourceInfo> needs;
             Vector3Int? buildPos;
 
-            // 无家可归 → 围墙壁 + 建床
-            if (wd.HomePosition == null)
+            var layout = GetRoomLayout(wd);
+
+            // 仍在建家中（墙/门/床/仓库未全部完成）→ 继续建家。
+            // 不能仅凭 HomePosition == null 判断：床完成时 AddWorkerToBed 已设置 HomePosition，
+            // 但仓库阶段（StorageStage1-4）尚未完成。若只看 HomePosition，床后仓库会永远
+            // 卡在预注册的半透明状态（透明度不为 1，且图标/存取均不可用）。
+            if (wd.HomeBuildStage < layout.CompleteStage)
             {
                 // 必须有规划好的建家位置，不允许使用当前位置兜底（会导致多人重叠）
                 if (wd.PlannedHomePosition == null)
                 {
+                    // 有家者理论上必有规划位置（异常状态直接放弃建家分支）；无家者重新选址
+                    if (wd.HomePosition != null)
+                    {
+                        return null;
+                    }
+
                     this.TryPickHomeSite(worker);
                     // 刚选了位置，下次决策再建造
                     return Decision.Make(WorkerDecisionType.Wander, "尚未选定建家位置, 漫游探索");
                 }
 
                 Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
-                var layout = GetRoomLayout(wd);
 
                 // 建造前先扫描房间区域内的资源，有资源先采集
                 if (wd.HomeBuildStage == 0)
@@ -1886,8 +1896,12 @@ namespace LAB2D.AI.Worker
 
             // ---- 共同的决策路径（无家 + 扩建都走这里）----
 
-            // 社交型+有钱 → 发建造悬赏（需通过悬赏门槛，Bootstrap阶段不发）
-            if (this.CanPostBounty(worker, wd, canAfford)
+            // 社交型+有钱 → 发建造悬赏（仅建家完成后的扩建）。
+            // 建家中（HomeBuildStage < CompleteStage）绝不能发悬赏：CanPostBounty 只看
+            // LifeStage + HomePosition，旧存档迁移/家损坏重建的 worker 已是 Settled+有家
+            // 但建家未完成，会通过门槛发布悬赏让自己的墙被别人建、归属混乱。必须自己建。
+            if (wd.HomeBuildStage >= layout.CompleteStage
+                && this.CanPostBounty(worker, wd, canAfford)
                 && wd.Personality.Sociality > this.SocialityThreshold
                 && Random.value < 0.4f)
             {
@@ -1911,8 +1925,10 @@ namespace LAB2D.AI.Worker
                     $"自己建造: {buildTileName} pos=({buildPos.Value.x},{buildPos.Value.y})");
             }
 
-            // 无家者兜底：有材料就自己建，没材料回退到采集
-            if (wd.HomePosition == null)
+            // 建家兜底（无家者 或 有家但建家未完成）：有材料就自己建，没材料回退到采集。
+            // 覆盖 HomePosition != null 但 HomeBuildStage < CompleteStage 的旧存档/回退 worker——
+            // 它们已 Settled 且发悬赏被上面拦截，若不兜底会 return null 导致建家永久停滞。
+            if (wd.HomePosition == null || wd.HomeBuildStage < layout.CompleteStage)
             {
                 if (this.HasEnoughResourcesForBuild(worker, needs))
                 {
