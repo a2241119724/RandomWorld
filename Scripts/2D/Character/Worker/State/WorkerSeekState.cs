@@ -332,6 +332,14 @@ namespace LAB2D.Character.Worker.State
                     this.CreateSelfPlantTask(decision);
                     break;
 
+                case WorkerDecisionType.Store:
+                    this.CreateStorageStoreTask(decision);
+                    break;
+
+                case WorkerDecisionType.Withdraw:
+                    this.CreateStorageWithdrawTask(decision);
+                    break;
+
                 case WorkerDecisionType.Eat:
                     this.CreateSelfEatTask();
                     break;
@@ -349,6 +357,79 @@ namespace LAB2D.Character.Worker.State
                 default:
                     this.CreateIdleTask();
                     break;
+            }
+        }
+
+        /// <summary>
+        /// 创建"回家存仓库"任务：收集全部可存物品 → 走到仓库瓦片邻居格 → 存入个人仓库。
+        /// 无物可存/无可达仓库 → 记冷却并回退 Idle（决策层以此防死循环）。
+        /// </summary>
+        private void CreateStorageStoreTask(WorkerBrain.Decision decision)
+        {
+            AWorker worker = this.Character;
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+
+            // 决策时已检查可达性；这里再兜底确认一次（防目标移动/建家未完成）
+            Vector3Int tile = decision.TargetPosition;
+            if (tile == default) tile = WorkerStorageTask.PickStorageTile(worker);
+            if (tile == default)
+            {
+                this.CreateIdleTask();
+                return;
+            }
+
+            // 收集全部可存物品（与决策一致：只存"现在不需要"的，一趟尽量腾够空间）。
+            // 用一次性收集 GetDepositableResources：单件挑选器无副作用，
+            // 若在 while 循环里反复调用会无限返回同一物品导致主线程挂死。
+            List<ResourceInfo> deposits = worker.GetDepositableResources();
+
+            if (deposits.Count == 0)
+            {
+                // 无物可存 → 记冷却防反复重试（与决策层冷却联动）
+                if (wd != null) wd.LastStorageAccessFailTime = UnityEngine.Time.time;
+                this.CreateIdleTask();
+                return;
+            }
+
+            WorkerStorageTask store = new WorkerStorageTask.StorageTaskBuilder()
+                .SetMode(WorkerStorageTask.StorageMode.Store)
+                .SetTarget(tile)
+                .SetDepositResources(deposits)
+                .Build();
+
+            if (wd != null)
+            {
+                wd.Task = store;
+                store.Start(worker);
+            }
+        }
+
+        /// <summary>
+        /// 创建"回家取料"任务：走到仓库瓦片邻居格 → 按 WithdrawNeeds 从个人仓库取到身上。
+        /// </summary>
+        private void CreateStorageWithdrawTask(WorkerBrain.Decision decision)
+        {
+            AWorker worker = this.Character;
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+
+            Vector3Int tile = decision.TargetPosition;
+            if (tile == default) tile = WorkerStorageTask.PickStorageTile(worker);
+            if (tile == default || decision.WithdrawNeeds == null || decision.WithdrawNeeds.Count == 0)
+            {
+                this.CreateIdleTask();
+                return;
+            }
+
+            WorkerStorageTask withdraw = new WorkerStorageTask.StorageTaskBuilder()
+                .SetMode(WorkerStorageTask.StorageMode.Withdraw)
+                .SetTarget(tile)
+                .SetWithdrawNeeds(decision.WithdrawNeeds)
+                .Build();
+
+            if (wd != null)
+            {
+                wd.Task = withdraw;
+                withdraw.Start(worker);
             }
         }
 

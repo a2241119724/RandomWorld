@@ -84,6 +84,12 @@ namespace LAB2D.Character.Worker.Task
                 return;
             }
 
+            // 注意：身上缺料时不在此处放弃重决策取个人仓库料。
+            // 个人仓库取料由决策层 TryMakeWithdrawForBuild 在发出自建/扩建决策前包装 Withdraw
+            // 处理（任务创建前料已备齐）；全局建造任务（非自建）没有 Withdraw 补偿路径，
+            // 若在此 GiveUp 会形成"接任务→放弃→再接"死循环（历史上已发生过）。
+            // 缺料统一走下方 IsEnoughAndPreTake 全局仓库兜底。
+
             // 获得剩余不够的数量
             Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(this.needs);
             InventoryProvider().IsEnoughAndPreTake(worker, remaining, true);

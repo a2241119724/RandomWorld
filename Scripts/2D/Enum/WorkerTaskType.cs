@@ -46,6 +46,9 @@ namespace LAB2D.Enum
         /// <summary>拆除建筑</summary>
         Demolish,
 
+        /// <summary>存取个人四格仓库（自建任务，不入全局任务队列）</summary>
+        Storage,
+
         /// <summary>哨兵值 — 必须始终在最后，用于动态数组大小</summary>
         _Count,
     }

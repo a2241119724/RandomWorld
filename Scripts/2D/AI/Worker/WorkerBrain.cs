@@ -54,6 +54,12 @@ namespace LAB2D.AI.Worker
 
         /// <summary>地面睡眠 — 无床时的低效睡眠</summary>
         GroundSleep,
+
+        /// <summary>回家把身上多余物品存入个人四格仓库</summary>
+        Store,
+
+        /// <summary>回家从个人四格仓库取任务材料</summary>
+        Withdraw,
     }
 
     /// <summary>
@@ -108,6 +114,12 @@ namespace LAB2D.AI.Worker
         /// <summary>Bootstrap 阶段食物囤积目标</summary>
         public int BootstrapFoodTarget = 3;
 
+        /// <summary>身上容量占比阈值：超过此比例决策回家存仓库腾空间（0~1）</summary>
+        public float StorageOverflowThreshold = 0.8f;
+
+        /// <summary>仓库存取失败/溢出后的决策冷却时长（秒），防反复重试死循环</summary>
+        public float StorageRetryCooldownSeconds = 10f;
+
         // ---- 人格权重配置 ----
 
         /// <summary>心情对自我采集概率的加成（每点偏差）</summary>
@@ -149,6 +161,9 @@ namespace LAB2D.AI.Worker
             /// <summary>要挖掘的地形 ID（仅 IsTerrainDig=true 时有效）。</summary>
             public int TerrainId;
 
+            /// <summary>Withdraw 决策要取的物料（id→数量，仅 Withdraw 类型使用）。</summary>
+            public Dictionary<int, int> WithdrawNeeds;
+
             public static Decision Make(WorkerDecisionType type, string desc = "")
             {
                 return new Decision { Type = type, Description = desc };
@@ -186,6 +201,18 @@ namespace LAB2D.AI.Worker
                 {
                     Type = type,
                     TargetPosition = farmlandPos,
+                    Description = desc,
+                };
+            }
+
+            /// <summary>创建"回家从个人仓库取料"决策。</summary>
+            public static Decision MakeWithdraw(Vector3Int tile, Dictionary<int, int> needs, string desc = "")
+            {
+                return new Decision
+                {
+                    Type = WorkerDecisionType.Withdraw,
+                    TargetPosition = tile,
+                    WithdrawNeeds = needs,
                     Description = desc,
                 };
             }
@@ -355,6 +382,12 @@ namespace LAB2D.AI.Worker
                 if (boardDecision.HasValue) return boardDecision.Value;
             }
 
+            // === 优先：身上快满 → 先回家存多余物品（腾空间，后续采集/建造才能继续） ===
+            {
+                Decision? storeDecision = this.TryMakeStoreDecision(worker, workerData);
+                if (storeDecision.HasValue) return storeDecision.Value;
+            }
+
             // === 预扫描：一次扫描供后续复用 ===
             ResourceCandidate? nearbyResource = this.ScanForResources(worker);
             bool canAfford = workerData.Wallet.HasEnough(
@@ -363,7 +396,17 @@ namespace LAB2D.AI.Worker
             // === 建造决策：无家者始终尝试建家（不受 Ambition 门控），有家者 Ambition>65 才扩建 ===
             {
                 Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, workerData, canAfford);
-                if (buildDecision.HasValue) return buildDecision.Value;
+                if (buildDecision.HasValue)
+                {
+                    // SelfBuild 但身上材料不足而个人仓库有料 → 先回家取料再建
+                    if (buildDecision.Value.Type == WorkerDecisionType.SelfBuild)
+                    {
+                        Decision? withdraw = this.TryMakeWithdrawForBuild(worker, workerData, buildDecision.Value);
+                        if (withdraw.HasValue) return withdraw.Value;
+                    }
+
+                    return buildDecision.Value;
+                }
 
                 // 建造决策未触发（缺材料/缺钱）→ 尝试优先采集建造所需材料的资源
                 HashSet<int> missingBuildIds = this.GetMissingBuildMaterialIds(workerData);
@@ -389,7 +432,14 @@ namespace LAB2D.AI.Worker
             if (p.Diligence > this.DiligenceThreshold)
             {
                 Decision? plantDecision = this.TryMakeSelfPlantDecision(worker);
-                if (plantDecision.HasValue) return plantDecision.Value;
+                if (plantDecision.HasValue)
+                {
+                    // 身上无种子但仓库有种子 → 先回家取种子再种
+                    Decision? withdraw = this.TryMakeWithdrawForPlant(worker, workerData);
+                    if (withdraw.HasValue) return withdraw.Value;
+
+                    return plantDecision.Value;
+                }
             }
 
             // === 第2层：一般性赚钱/干活 ===
@@ -503,7 +553,17 @@ namespace LAB2D.AI.Worker
             bool canAfford = wd.Wallet.HasEnough(
                 this.DetermineMinReward() + this.MinimumWalletReserve);
             Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, wd, canAfford);
-            if (buildDecision.HasValue) return buildDecision.Value;
+            if (buildDecision.HasValue)
+            {
+                // SelfBuild 但身上材料不足而个人仓库有料 → 先回家取料再建
+                if (buildDecision.Value.Type == WorkerDecisionType.SelfBuild)
+                {
+                    Decision? withdraw = this.TryMakeWithdrawForBuild(worker, wd, buildDecision.Value);
+                    if (withdraw.HasValue) return withdraw.Value;
+                }
+
+                return buildDecision.Value;
+            }
 
             // 6. 建造条件不满足 → 采集建材（优先采集能产出建造所需材料的资源）
             HashSet<int> missingBuildMaterialIds = this.GetMissingBuildMaterialIds(wd);
@@ -806,6 +866,17 @@ namespace LAB2D.AI.Worker
                     ResourceInfo drop = dropManager.GetDropByAll(pos);
                     if (drop == null || drop.Count <= 0) continue;
                     if (drop.OwnerId != ownerId) continue; // 不是自己的
+
+                    // [防刷屏] 身上装不下该掉落且上次拾取溢出在冷却内 → 跳过这个掉落。
+                    // 否则每轮 Seek 都会"重接拾取→溢出→GiveUp→掉落留地→再重接"，
+                    // TryRedirectOverflowToStorage 失败路径的 Warning 会 Console 级刷屏
+                    // （bug-fixes.md 多次记录的"失败未进冷却→决策循环"教训）。
+                    AWorker.WorkerData selfWd = worker.CharacterDataLAB as AWorker.WorkerData;
+                    if (selfWd != null && !worker.CanCarry(drop.Count)
+                        && UnityEngine.Time.time - selfWd.LastStorageOverflowTime < this.StorageRetryCooldownSeconds)
+                    {
+                        continue; // 跳过此掉落，继续扫描（可能有更小的能装下）
+                    }
 
                     // 找到了！去捡
                     return new Decision
@@ -2616,6 +2687,130 @@ namespace LAB2D.AI.Worker
                 WorkerDecisionType.SelfPlant,
                 candidate.Value.Position,
                 $"自己种植: pos=({candidate.Value.Position.x},{candidate.Value.Position.y})");
+        }
+
+        /// <summary>
+        /// 仓库维护决策：身上容量超过阈值且家已建完 → 回家把"现在不需要"的物品存入仓库腾空间。
+        /// 冷却（LastStorageOverflowTime/LastStorageAccessFailTime）内不重复决策，防死循环。
+        /// </summary>
+        private Decision? TryMakeStoreDecision(AWorker worker, AWorker.WorkerData wd)
+        {
+            if (wd == null || wd.PlannedHomePosition == null) return null;
+
+            var layout = GetRoomLayout(wd);
+            if (wd.HomeBuildStage < layout.CompleteStage) return null; // 家未建完
+
+            // 冷却：上次溢出/存取失败后不立即重试
+            float now = UnityEngine.Time.time;
+            if (now - wd.LastStorageOverflowTime < this.StorageRetryCooldownSeconds) return null;
+            if (now - wd.LastStorageAccessFailTime < this.StorageRetryCooldownSeconds) return null;
+
+            // 身上容量未超阈值 → 不需要腾空间
+            int carried = worker.GetTotalCarriedCount();
+            if (wd.MaxResourceCount <= 0
+                || (float)carried / wd.MaxResourceCount <= this.StorageOverflowThreshold) return null;
+
+            // 无可存物品 → 不决策
+            if (!worker.TryPickDepositableResource(out _)) return null;
+
+            // 无可达仓库瓦片 → 不决策
+            Vector3Int tile = WorkerStorageTask.PickStorageTile(worker);
+            if (tile == default) return null;
+
+            return new Decision
+            {
+                Type = WorkerDecisionType.Store,
+                TargetPosition = tile,
+                Description = $"身上快满({carried}/{wd.MaxResourceCount}), 回家存仓库腾空间",
+            };
+        }
+
+        /// <summary>
+        /// 建造取料决策：SelfBuild 但身上材料不足 → 优先从个人仓库取（先回家取料再建）。
+        /// 只取 min(仓库量, 缺量, 身上空位)，仓库取空后建造走全局玩家仓库兜底。
+        /// </summary>
+        private Decision? TryMakeWithdrawForBuild(AWorker worker, AWorker.WorkerData wd, Decision buildDecision)
+        {
+            Dictionary<int, ResourceInfo> needs = buildDecision.NeededResources;
+            if (wd == null || needs == null || needs.Count == 0) return null;
+            if (worker.IsEnough(needs)) return null; // 身上材料已够，无需取
+
+            Dictionary<int, ResourceInfo> remaining = worker.GetRemaining(needs);
+
+            // 身上空位不足则无法取料（WithdrawFromStorage 无容量检查，需决策层限额）
+            int freeSlots = wd.MaxResourceCount - worker.GetTotalCarriedCount();
+            if (freeSlots <= 0) return null;
+
+            List<ResourceInfo> stored = worker.GetStorageResources();
+            Dictionary<int, int> withdrawNeeds = new ();
+            foreach (KeyValuePair<int, ResourceInfo> kv in remaining)
+            {
+                int needId = kv.Key;
+                int needCount = kv.Value.Count;
+                if (needCount <= 0) continue;
+
+                // 仓库有该料
+                int storedCount = 0;
+                foreach (ResourceInfo s in stored)
+                {
+                    if (s.Id == needId) { storedCount = s.Count; break; }
+                }
+
+                if (storedCount <= 0) continue;
+
+                int take = storedCount;
+                if (take > needCount) take = needCount;
+                if (take > freeSlots) take = freeSlots;
+                if (take <= 0) continue;
+
+                withdrawNeeds[needId] = take;
+                freeSlots -= take;
+            }
+
+            if (withdrawNeeds.Count == 0) return null;
+
+            Vector3Int tile = WorkerStorageTask.PickStorageTile(worker);
+            if (tile == default) return null;
+
+            return Decision.MakeWithdraw(tile, withdrawNeeds,
+                $"建造缺料({buildDecision.BuildTileName}), 先回家取仓库料");
+        }
+
+        /// <summary>
+        /// 种植取种决策：身上无种子但个人仓库有种子 → 先回家取 1 颗再种。
+        /// </summary>
+        private Decision? TryMakeWithdrawForPlant(AWorker worker, AWorker.WorkerData wd)
+        {
+            // 身上已有种子 → 无需取
+            foreach (ResourceInfo r in worker.GetAllResources())
+            {
+                if (AWorkerTask.ItemTypeProvider(r.Id) == AItem.ItemTypeEnum.Seed) return null;
+            }
+
+            // 仓库有种子 → 取 1 颗
+            int seedId = 0;
+            foreach (ResourceInfo r in worker.GetStorageResources())
+            {
+                if (AWorkerTask.ItemTypeProvider(r.Id) == AItem.ItemTypeEnum.Seed)
+                {
+                    seedId = r.Id;
+                    break;
+                }
+            }
+
+            if (seedId == 0) return null;
+
+            // 身上必须至少 1 空位才能取种子（WithdrawFromStorage 无容量检查，
+            // 与 TryMakeWithdrawForBuild 的 freeSlots 限额保持一致，防止越上限）
+            if (wd == null) return null;
+            int freeSlots = wd.MaxResourceCount - worker.GetTotalCarriedCount();
+            if (freeSlots <= 0) return null;
+
+            Vector3Int tile = WorkerStorageTask.PickStorageTile(worker);
+            if (tile == default) return null;
+
+            return Decision.MakeWithdraw(tile, new Dictionary<int, int> { { seedId, 1 } },
+                "身上无种子, 回家取仓库种子");
         }
 
         /// <summary>

@@ -546,14 +546,48 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
+        /// 身上携带的物品总数量（resourceInfos 各 Count 之和）。
+        /// 用于容量判断：MaxResourceCount 是硬上限，超出后不能再拾取。
+        /// </summary>
+        public int GetTotalCarriedCount()
+        {
+            int total = 0;
+            foreach (KeyValuePair<int, ResourceInfo> kv in this.resourceInfos)
+            {
+                total += kv.Value.Count;
+            }
+
+            return total;
+        }
+
+        /// <summary>
+        /// 身上再加 additional 是否仍不超过 MaxResourceCount（硬上限判断）。
+        /// </summary>
+        /// <param name="additional">要增加的数量</param>
+        /// <returns>能装下返回 true</returns>
+        public bool CanCarry(int additional)
+        {
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            return wd == null || this.GetTotalCarriedCount() + additional <= wd.MaxResourceCount;
+        }
+
+        /// <summary>
         /// 将携带的资源存入个人仓库。
         /// </summary>
         /// <param name="resourceInfo">要存入的资源（Count 为存入数量）</param>
-        public void DepositToStorage(ResourceInfo resourceInfo)
+        /// <returns>是否成功存入（仓库最多 4 种物品，槽满且非同类型时失败）</returns>
+        public bool DepositToStorage(ResourceInfo resourceInfo)
         {
-            if (resourceInfo == null || resourceInfo.Count <= 0) return;
+            if (resourceInfo == null || resourceInfo.Count <= 0) return false;
             WorkerData wd = this.CharacterDataLAB as WorkerData;
-            if (wd == null) return;
+            if (wd == null || wd.Storage == null) return false;
+
+            // 四格语义：仓库最多 4 种物品；已有同 ID 则叠加，否则需要空槽。
+            // 先查再扣，槽满时失败且身上不被误扣。
+            if (!wd.Storage.ContainsKey(resourceInfo.Id) && wd.Storage.Count >= 4)
+            {
+                return false;
+            }
 
             // 先从身上扣
             this.SubResource(resourceInfo);
@@ -568,6 +602,8 @@ namespace LAB2D.Character.Worker
                 wd.Storage[resourceInfo.Id] = new ResourceInfo(
                     resourceInfo.Id, resourceInfo.Count, resourceInfo.OwnerId);
             }
+
+            return true;
         }
 
         /// <summary>
@@ -618,6 +654,112 @@ namespace LAB2D.Character.Worker
             return wd?.Storage != null
                 && wd.Storage.TryGetValue(id, out ResourceInfo r)
                 && r.Count >= count;
+        }
+
+        /// <summary>
+        /// 个人仓库是否还能存放指定物品（已有同类型可叠加，否则需要空槽）。
+        /// 四格语义：仓库最多 4 种物品。
+        /// 旧存档（pre-Storage，Storage == null）返回 false，与 DepositToStorage /
+        /// GetDepositableResources 的空判定一致，避免决策层发出注定失败的 Store 任务。
+        /// </summary>
+        public bool HasStorageSpaceFor(int id)
+        {
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            return wd?.Storage != null
+                && (wd.Storage.ContainsKey(id) || wd.Storage.Count < 4);
+        }
+
+        /// <summary>
+        /// 挑一件可存入仓库的"现在不需要"物品（优先大额，一趟腾最多空间）。
+        /// 排除：食物（留身上吃）、种子（留种）、装备/武器、别人的悬赏物、当前目标需要的材料。
+        /// 无物可存返回 false（不修改任何状态）。
+        /// </summary>
+        /// <param name="deposit">挑出的物品（Count 为可存数量，调用方负责存取）</param>
+        public bool TryPickDepositableResource(out ResourceInfo deposit)
+        {
+            deposit = null;
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            if (wd == null) return false;
+
+            int selfId = this.GetInstanceID();
+            List<ResourceInfo> candidates = this.GetAllResources();
+            candidates.Sort((a, b) => b.Count.CompareTo(a.Count)); // 大额优先
+
+            foreach (ResourceInfo r in candidates)
+            {
+                // 只存"现在不需要"的（食物/种子/药水/装备/武器/他人悬赏物/目标材料 均排除）
+                if (!this.IsDepositable(r, selfId)) continue;
+                if (!this.HasStorageSpaceFor(r.Id)) continue;            // 仓库新槽满
+
+                deposit = r;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 一次性收集身上所有可存入仓库的"现在不需要"物品（供 Store 任务使用）。
+        /// 与 TryPickDepositableResource 同过滤规则，但收集全部而非单件——
+        /// 单件挑选器无副作用，若在 while 循环里反复调用会无限返回同一物品导致挂死。
+        /// 带四格槽位预留：仓库已有种类 + 本次新收集的种类不超过 4，保证收集项都能存进。
+        /// </summary>
+        public List<ResourceInfo> GetDepositableResources()
+        {
+            List<ResourceInfo> result = new List<ResourceInfo>();
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            if (wd == null || wd.Storage == null) return result;
+
+            int selfId = this.GetInstanceID();
+            List<ResourceInfo> candidates = this.GetAllResources();
+            candidates.Sort((a, b) => b.Count.CompareTo(a.Count)); // 大额优先，一趟腾最多空间
+
+            int reservedNewTypes = 0; // 本次新收集的不同种类（占新槽）
+            foreach (ResourceInfo r in candidates)
+            {
+                // 只存"现在不需要"的（食物/种子/药水/装备/武器/他人悬赏物/目标材料 均排除）
+                if (!this.IsDepositable(r, selfId)) continue;
+
+                if (wd.Storage.ContainsKey(r.Id))
+                {
+                    result.Add(r); // 已有同类型，可叠加，不占新槽
+                    continue;
+                }
+
+                if (wd.Storage.Count + reservedNewTypes >= 4) continue; // 新槽满，跳过新类型
+                reservedNewTypes++;
+                result.Add(r);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 是否属于可存入个人仓库的"现在不需要"物品（TryPickDepositableResource /
+        /// GetDepositableResources 共用过滤规则，避免谓词漂移）。
+        /// 排除：食物（留身上吃）、种子（留种）、消耗品（药水留身上喝，避免与
+        /// TryConsumeHealthPotion 的存取竞态——Store 任务快照过期时 DepositToStorage
+        /// 会 SubResource 超扣）、装备/武器、他人悬赏物、当前目标材料。
+        /// </summary>
+        private bool IsDepositable(ResourceInfo r, int selfId)
+        {
+            if (r == null || r.Count <= 0) return false;
+
+            AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(r.Id);
+            if (itemType == AItem.ItemTypeEnum.Food) return false;        // 食物留身上吃
+            if (itemType == AItem.ItemTypeEnum.Seed) return false;        // 种子留种
+            if (itemType == AItem.ItemTypeEnum.Consumable) return false;  // 药水留身上喝
+            if (itemType == AItem.ItemTypeEnum.Equipment
+                || itemType == AItem.ItemTypeEnum.Weapon) return false;   // 装备/武器
+            if (r.OwnerId != 0 && r.OwnerId != selfId) return false;      // 只存自己/无主物品
+
+            // 当前目标需要的材料不存（与 TryAutoSellResources 保留物判定一致）
+            // CurrentGoal 是 struct（非空值类型），仅 RequiredMaterials(Dictionary) 需判空
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            if (wd != null && wd.CurrentGoal.RequiredMaterials != null
+                && wd.CurrentGoal.RequiredMaterials.ContainsKey(r.Id)) return false;
+
+            return true;
         }
 
         /// <summary>
@@ -1027,7 +1169,7 @@ namespace LAB2D.Character.Worker
             /// <summary>
             /// 最大持有资源数量
             /// </summary>
-            public int MaxResourceCount = 30;
+            public int MaxResourceCount = 500;
 
             /// <summary>
             /// 是否需要做任务的开关
@@ -1062,6 +1204,18 @@ namespace LAB2D.Character.Worker
             /// 防止 worker 卡死时每帧创建任务→放弃的死循环刷屏。
             /// </summary>
             public float LastSleepFailTime = -999f;
+
+            /// <summary>
+            /// 上次拾取溢出且无物可存的时间（Time.time）。
+            /// 决策层用其做冷却：冷却期内不再对同一目标反复创建拾取任务，
+            /// 防止"溢出→放弃→又拾取→又溢出"的死循环。
+            /// </summary>
+            public float LastStorageOverflowTime = -999f;
+
+            /// <summary>
+            /// 上次仓库存取任务失败的时间（Time.time），用于决策冷却。
+            /// </summary>
+            public float LastStorageAccessFailTime = -999f;
 
             /// <summary>
             /// 人格数值 — 心情、事业心、勤奋、社交。

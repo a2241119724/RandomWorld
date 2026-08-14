@@ -122,6 +122,16 @@ namespace LAB2D.Character.Worker.Task
         {
             Vector3Int posMap = Vector3IntLAB.ToVector3Int(this.TargetMap);
 
+            // [容量强制] 非装备/武器且捡起会超 MaxResourceCount → 先回家存"现在不需要"的，
+            // 再回来拾取。必须在 PickUpFromDrop 之前判断：失败时不移除地面掉落，可被"回来拾取"。
+            AItem.ItemTypeEnum itemType = ItemTypeProvider(this.groundResource.Id);
+            if (itemType != AItem.ItemTypeEnum.Equipment && itemType != AItem.ItemTypeEnum.Weapon
+                && !worker.CanCarry(this.groundResource.Count))
+            {
+                this.TryRedirectOverflowToStorage(worker, posMap);
+                return; // 未拾取，掉落保留在地面
+            }
+
             // 从地面移除掉落物
             ItemMapProvider().PickUpFromDrop(posMap, this.groundResource);
 
@@ -178,6 +188,70 @@ namespace LAB2D.Character.Worker.Task
                     $"{worker.name} 拾取链完成 → 启动搬运任务 {this.chainCompleteTask.GetType().Name}",
                     LogManager.LogLevelEnum.Debug);
             }
+        }
+
+        /// <summary>
+        /// 拾取溢出重定向：身上装不下目标物 → 先回家把"现在不需要"的物品存入仓库腾空间，
+        /// 再回来继续拾取（复用链式机制）。腾不出空间/无家可存 → 放弃并记冷却防死循环。
+        /// 调用时机在 PickUpFromDrop 之前，失败时掉落保留在地面。
+        /// </summary>
+        private void TryRedirectOverflowToStorage(AWorker worker, Vector3Int posMap)
+        {
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+            if (wd == null)
+            {
+                this.GiveUpTask(worker);
+                return;
+            }
+
+            // 收集所有可存的"现在不需要"物品，一趟尽量腾够空间。
+            // 注意：用一次性收集 GetDepositableResources，勿用 TryPickDepositableResource
+            // while 循环——单件挑选器无副作用，反复调用会无限返回同一物品挂死。
+            List<ResourceInfo> deposits = worker.GetDepositableResources();
+
+            int freed = 0;
+            foreach (ResourceInfo d in deposits) freed += d.Count;
+
+            Vector3Int storageTile = WorkerStorageTask.PickStorageTile(worker);
+
+            // 成功路径：能腾出"装不下"的多余数量（carried + drop - Max）且有可达仓库
+            // → 先存再回来拾取。只需腾 overflow 而非整个掉落物，避免过严拒绝可用方案。
+            // 此分支由 !CanCarry 进入，carried + drop > Max 恒成立，needToFree >= 1。
+            int needToFree = this.groundResource.Count - (wd.MaxResourceCount - worker.GetTotalCarriedCount());
+            if (freed >= needToFree && storageTile != default)
+            {
+                // 回来继续拾取：当前掉落 + 剩余待拾取链 + 原 chainCompleteTask 全保留
+                WorkerPickUpTask resume = new PickUpTaskBuilder()
+                    .SetMode(PickUpMode.FromGround)
+                    .SetTargetPosition(posMap)
+                    .SetGroundResource(this.groundResource)
+                    .SetOwnerId(this.targetOwnerId)
+                    .SetPendingPickups(this.pendingPositions, this.pendingResources)
+                    .SetChainCompleteTask(this.chainCompleteTask)
+                    .Build();
+
+                WorkerStorageTask store = new WorkerStorageTask.StorageTaskBuilder()
+                    .SetMode(WorkerStorageTask.StorageMode.Store)
+                    .SetTarget(storageTile)
+                    .SetDepositResources(deposits)
+                    .SetChainCompleteTask(resume)
+                    .Build();
+
+                wd.Task = store;
+                store.Start(worker);
+
+                LogProvider(
+                    $"[TaskDiag] {worker.name} 拾取溢出(id={this.groundResource.Id} x{this.groundResource.Count}) → 先回家存{freed}个再回来拾取 pos=({posMap.x},{posMap.y})",
+                    LogManager.LogLevelEnum.Debug);
+                return;
+            }
+
+            // 失败路径：腾不出空间/无家可存 → 放弃，掉落留地面 + 冷却防反复重试死循环
+            wd.LastStorageOverflowTime = UnityEngine.Time.time;
+            LogProvider(
+                $"[TaskDiag] {worker.name} 拾取溢出且无物可存, 放弃拾取 pos=({posMap.x},{posMap.y})",
+                LogManager.LogLevelEnum.Warning);
+            this.GiveUpTask(worker);
         }
 
         /// <summary>
