@@ -62,6 +62,7 @@ namespace LAB2D.Character.Worker
                 }
 
                 Core.ServiceLocator.Get<WorkerEfficiencyTracker>().RecordWorkerDeath(worker);
+                Core.ServiceLocator.Get<Gameplay.FavorabilityManager>().RemoveDeadWorker(worker.GetInstanceID());
             };
 
         /// <summary>
@@ -873,6 +874,25 @@ namespace LAB2D.Character.Worker
 
             base.ReduceHp(hp, attacker, isCRT);
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+
+            // 好感度：攻击者关系惩罚（Player 打 Worker → 对玩家好感下降；Worker 互殴 → 受害对肇事下降）
+            if (attacker != null)
+            {
+                FavorabilityManager fm = Core.ServiceLocator.Get<FavorabilityManager>();
+                if (fm != null)
+                {
+                    if (attacker.IsPlayerCharacter)
+                    {
+                        float delta = FavorabilityConstant.AttackToPlayerDelta;
+                        if (this.CharacterDataLAB.Hp <= 0f) delta += FavorabilityConstant.KillToPlayerBonus; // 致死额外惩罚
+                        fm.ModifyWithPlayer(this, delta, "被玩家攻击");
+                    }
+                    else if (attacker.IsWorkerCharacter)
+                    {
+                        fm.ModifyFavorability(this, attacker.GetInstanceID(), FavorabilityConstant.WorkerAttackDelta, "被其他工人攻击");
+                    }
+                }
+            }
 
             // 仅存活时切换状态（防止覆盖 Dead 状态）
             if (this.CharacterDataLAB.Hp > 0f)

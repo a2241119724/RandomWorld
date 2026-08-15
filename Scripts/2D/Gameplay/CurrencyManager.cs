@@ -121,6 +121,23 @@ namespace LAB2D.Gameplay
 
             executorData.Wallet += reward;
             this.PublishTransaction(issuerWorkerId, executor.GetInstanceID(), reward, "BountyReward");
+
+            // 好感度：悬赏完成奖励。issuer==0 → 完成玩家悬赏（低奖励少加分）；issuer>0 → Worker 间协作双向加分。
+            FavorabilityManager fm = Core.ServiceLocator.Get<FavorabilityManager>();
+            if (fm != null)
+            {
+                if (issuerWorkerId == 0)
+                {
+                    float gain = reward.Gold < FavorabilityConstant.PlayerBountyLowReward
+                        ? FavorabilityConstant.PlayerBountyCompleteLowDelta
+                        : FavorabilityConstant.PlayerBountyCompleteDelta;
+                    fm.ModifyWithPlayer(executor, gain, "完成玩家悬赏");
+                }
+                else
+                {
+                    fm.ModifyFavorability(executor, issuerWorkerId, FavorabilityConstant.WorkerBountyCompleteDelta, "完成工人悬赏");
+                }
+            }
         }
 
         /// <summary>

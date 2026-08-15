@@ -64,6 +64,9 @@ namespace LAB2D.AI.Dialogue.Prompt
             public string seekTargetText;
             public string enabledTaskText;
 
+            /// <summary>对玩家好感态度描述（数值 + 标签），LLM 据此调整对话态度。</summary>
+            public string favorabilityText;
+
             public string ToPromptText()
             {
                 var sb = new StringBuilder();
@@ -95,6 +98,11 @@ namespace LAB2D.AI.Dialogue.Prompt
 
                 sb.Append("- 装备：");
                 sb.Append(string.IsNullOrEmpty(this.equipmentText) ? "无" : this.equipmentText);
+                sb.Append('。');
+
+                sb.Append('\n');
+                sb.Append("- 对你的好感：");
+                sb.Append(string.IsNullOrEmpty(this.favorabilityText) ? "未知" : this.favorabilityText);
                 sb.Append('。');
 
                 return sb.ToString();

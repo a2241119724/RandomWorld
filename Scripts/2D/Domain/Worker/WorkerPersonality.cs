@@ -116,6 +116,16 @@ namespace LAB2D.Domain.Worker
                 Clamp(this.Sociality + 1f));
         }
 
+        /// <summary>好感度变化后调整心情：Mood += moodDelta（delta 已由 FavorabilityRuleService.GetMoodDelta 计算并 clamp）。</summary>
+        public WorkerPersonality AfterFavorabilityChange(float moodDelta)
+        {
+            return new WorkerPersonality(
+                Clamp(this.Mood + moodDelta),
+                this.Ambition,
+                this.Diligence,
+                this.Sociality);
+        }
+
         /// <summary>漫游恢复：心情上升，勤奋微升，不影响其他。</summary>
         public WorkerPersonality AfterWander()
         {

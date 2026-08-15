@@ -40,6 +40,9 @@ namespace LAB2D.Core
             // 工人任务队列 HUD (F7)
             WorkerTaskQueueHUD.EnsureRuntimePanel();
 
+            // 好感度 HUD (F11)
+            FavorabilityHUD.EnsureRuntimePanel();
+
             // 成就系统（数据初始化由 IInitializable 链路完成）
             AchievementPopup.EnsureRuntimePopup();
             AchievementPanel.EnsureRuntimePanel();

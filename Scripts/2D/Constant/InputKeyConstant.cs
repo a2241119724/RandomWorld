@@ -136,6 +136,13 @@ namespace LAB2D.Constant
         public const KeyCode ToggleTaskBoardHud = KeyCode.F7;
 
         /// <summary>
+        /// 好感度 HUD 显示/隐藏 (F11键)
+        /// 切换显示每名 Worker 对玩家的好感值+态度标签，以及最强 Worker↔Worker 关系。
+        /// 仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleFavorabilityHud = KeyCode.F11;
+
+        /// <summary>
         /// 殖民地指挥中心 HUD 显示/隐藏 (F9键)
         /// 切换显示殖民地运营综合摘要、任务阻塞预警和资源状态。
         /// 仅在无 UI 输入框聚焦时生效。
@@ -289,6 +296,7 @@ namespace LAB2D.Constant
   F9       —— 殖民地指挥中心 HUD
   F10      —— 工人任务队列 HUD
   6        —— 房间列表面板
+  F11      —— 好感度 HUD (对玩家好感/态度)
   9        —— 成就面板
   0        —— 装备面板切换
 

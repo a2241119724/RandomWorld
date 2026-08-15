@@ -1,6 +1,7 @@
 namespace LAB2D.AI.Dialogue.Core
 {
     using LAB2D;
+    using LAB2D.Core;
     using LAB2D.AI.Dialogue.LLM;
     using LAB2D.AI.Dialogue.Memory;
     using LAB2D.AI.Dialogue.Prompt;
@@ -218,7 +219,11 @@ namespace LAB2D.AI.Dialogue.Core
                 session.isActive = false;
                 this.activeSessions.Remove(npcId);
                 this.ResumeDialogueWorker(npcId);
-                this.dialogueWorkers.Remove(npcId);
+                this.dialogueWorkers.Remove(npcId, out AWorker worker);
+                if (worker != null)
+                {
+                    ServiceLocator.Get<FavorabilityManager>()?.NotifyConversationEnd(worker);
+                }
 
                 AWorkerTask.LogProvider(
                     "DialogueManager: 结束对话 " + session.profile?.npcName,
@@ -339,7 +344,16 @@ namespace LAB2D.AI.Dialogue.Core
                 isSeeking = worker.Seek != null && worker.Seek.IsSeeking(),
                 seekTargetText = worker.Seek == null ? string.Empty : FormatMapPos(worker.Seek.TargetMap),
                 enabledTaskText = BuildEnabledTaskText(workerData.TaskToggle),
+                favorabilityText = BuildFavorabilityText(worker),
             };
+        }
+
+        /// <summary>对玩家好感的态度描述（数值 + 标签），LLM 据此调整对话态度。</summary>
+        private static string BuildFavorabilityText(AWorker worker)
+        {
+            FavorabilityManager fm = ServiceLocator.Get<FavorabilityManager>();
+            if (fm == null) return string.Empty;
+            return $"{fm.GetFavorabilityWithPlayer(worker):F0}（{fm.GetAttitudeLabel(worker)}）";
         }
 
         private static string BuildWorkerTaskText(AWorkerTask task)

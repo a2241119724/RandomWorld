@@ -192,6 +192,22 @@ namespace LAB2D.Character.Worker.Task
                 return false;
             if (this.innerTask == null)
                 return false;
+
+            // 好感度门控：对发布者好感过低则拒绝接悬赏（issuer==0 为 Player 发布）
+            FavorabilityManager fm = Core.ServiceLocator.Get<FavorabilityManager>();
+            if (fm != null)
+            {
+                if (this.bountyData.IssuerWorkerId == 0)
+                {
+                    if (!fm.IsWillingForPlayerBounty(worker))
+                        return false;
+                }
+                else if (!fm.IsWillingForWorkerBounty(worker, this.bountyData.IssuerWorkerId))
+                {
+                    return false;
+                }
+            }
+
             // WorkerSpecific 的 innerTask（Wear/Sleep）委托校验 Worker 匹配
             if ((this.innerTask.Traits & TaskTraits.WorkerSpecific) != 0)
                 return this.innerTask.IsCanWork(worker);

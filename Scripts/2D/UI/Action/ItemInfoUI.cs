@@ -68,7 +68,19 @@ namespace LAB2D.UI.Action
                 }
 
                 Vector3Int charMapPos = ServiceLocator.Get<TileMap>().WorldPosToMapPos(this.character.transform.position);
-                ItemInfoPanel.Instance.SetItemInfo(this.character.ToString() + $"\n位置: ({charMapPos.x}, {charMapPos.y})");
+                string infoText = this.character.ToString() + $"\n位置: ({charMapPos.x}, {charMapPos.y})";
+
+                // 好感度：点击 Worker 时显示其对玩家的好感值与态度标签
+                if (this.character is AWorker worker)
+                {
+                    FavorabilityManager fm = ServiceLocator.Get<FavorabilityManager>();
+                    if (fm != null)
+                    {
+                        infoText += $"\n对你好感: {fm.GetFavorabilityWithPlayer(worker):F0}（{fm.GetAttitudeLabel(worker)}）";
+                    }
+                }
+
+                ItemInfoPanel.Instance.SetItemInfo(infoText);
                 ItemInfoPanel.Instance.SetCharacter(this.character);
             }
 

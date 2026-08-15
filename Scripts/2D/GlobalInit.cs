@@ -96,6 +96,7 @@ namespace LAB2D
             ServiceLocator.Register<IWorkerTaskCongestionAdvisor>(WorkerTaskCongestionAdvisor.Instance);
             ServiceLocator.Register(WorkerEfficiencyTracker.Instance);
             ServiceLocator.Register(CurrencyManager.Instance);
+            ServiceLocator.Register(FavorabilityManager.Instance);
             ServiceLocator.Register(MarketService.Instance);
             ServiceLocator.Register(new PlayerBountyService());
             ServiceLocator.Register(TaskBoardManager.Instance);
@@ -210,6 +211,7 @@ namespace LAB2D
                 ServiceLocator.Get<WorkerTaskManager>(),
                 ServiceLocator.Get<EnvironmentManager>(),
                 ServiceLocator.Get<PlayerVitalAlertManager>(),
+                ServiceLocator.Get<FavorabilityManager>(),
             };
         }
 

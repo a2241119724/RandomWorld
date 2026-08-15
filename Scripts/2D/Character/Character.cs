@@ -208,6 +208,12 @@ namespace LAB2D.Character
                 WorldPosY = worldPos.Y,
             });
 
+            // 好感度：Player 击伤敌方 → 附近 Worker 对玩家好感上升（启发式，30s 冷却/Worker）
+            if (attacker != null && attacker.IsPlayerCharacter && !this.IsPlayerCharacter && !this.IsWorkerCharacter)
+            {
+                Core.ServiceLocator.Get<FavorabilityManager>()?.NotifyPlayerHelpsNearby(worldPos.X, worldPos.Y);
+            }
+
             if (healthResult.IsDead)
             {
                 this.Death();
