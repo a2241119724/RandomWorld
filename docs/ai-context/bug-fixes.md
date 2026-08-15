@@ -165,4 +165,7 @@
   2. **开启插值**：Worker.prefab / SeekEnemy.prefab `m_Interpolate: 0→1`——Rigidbody2D 插值在渲染帧之间平滑物理位置，消除 FixedUpdate 步进与渲染采样错配的抖动。
   3. **卡死检测兼容**：MovePosition 受碰撞约束不穿透，撞墙时位置停住 → MovementStuckDetector 累计位移≈0 → 仍检出 Stuck；SeekEnemyMoveState/WorkerMoveState 的 Sliding/Stuck 熔断（MaxStuckStreak=4）不变。
 - **验证**：需游戏内实测。低帧率下走路应连续平滑不再抖动；真卡墙时累计位移≈0 仍走 Stuck 自救。已知遗留：Worker/SeekEnemy `gravityScale=1`（Dynamic Rigidbody 上的重力），MovePosition 与重力 velocity 可能冲突致 Y 轴抖动——保守未动，若仍抖动再处理。
-- **教训**：**移动逻辑移到 FixedUpdate 必须走物理通道 + 开插值**。物理帧步进与渲染采样天然错配，纯 `transform.Translate`（绕过刚体直接写 transform）+ 插值关闭，在低帧率下必然抖动。物理驱动移动应 `MovePosition`/`velocity`（物理通道），并开启 Rigidbody2D Interpolate 由渲染层平滑；若坚持 Transform 移动则需放在 Update（渲染帧、deltaTime）里。
+- **迭代（MovePosition 失败 → 又慢又卡顿）**：方案 A 用 `Rigidbody2D.MovePosition` + Interpolate，用户重打 AB 包后实测**「走的又慢，又卡顿」**。根因：**MovePosition 受碰撞约束**——Worker 碰撞体与地面/障碍持续接触时，位移被物理求解削减（慢），且每 FixedUpdate 做接触求解（卡顿）；速度不再是精确的 `speed`。插值本身没问题（200fps 下物理帧间插值能平滑），问题在 MovePosition 的移动方式。
+- **最终修复（方案 B：velocity 驱动，Player 同款）**：`MoveByPath` 改为每 FixedUpdate `rb.velocity = Direction.normalized * speed`。物理引擎积分速度推进位置：**速度精确**、**撞墙碰撞求解器阻挡不穿透**、**Interpolate 对物理位置插值渲染平滑**（200fps 渲染 vs 50Hz 物理不跳变）。`StopMove`/`result==null`（寻路间隙）调用 `ClearVelocity()` 防 velocity 残留滑行。改动全部在 `ASeek.cs`（代码），编译即生效，无需重打 AB 包；Interpolate=1 需 prefab 改动进 AB 包（已重打）。
+- **验证**：200fps 下走路应连续平滑、速度正常、碰墙不穿透不抖；真卡墙 velocity 被挡 → 位置不动 → 累计位移≈0 → 仍检出 Stuck。
+- **教训**：**物理帧内移动的三种方式里，只有 `rb.velocity` 高帧率下既平滑又速度精确**。`MovePosition` 受碰撞约束削减位移（又慢又卡）；`transform.Translate` 绕过刚体、无碰撞约束（穿透）、且插值对非物理移动不生效（跳变）。物理通道移动的正解是 `velocity`（Player 早已如此），配 Interpolate 渲染平滑。

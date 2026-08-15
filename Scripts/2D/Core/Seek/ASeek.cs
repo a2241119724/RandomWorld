@@ -356,8 +356,20 @@ namespace LAB2D.Core.Seek
             }
 
             this.LineRenderer.positionCount = 0;
+            this.ClearVelocity(); // 停止移动 → 清刚体速度，防止 velocity 残留滑行
 
             this.RestartStuckWindow(); // 停止移动 → 保留连续卡住计数（重新寻路不赦免）
+        }
+
+        /// <summary>
+        /// 清空刚体速度（velocity 驱动模式下停止/寻路间隙必须清零，否则角色滑行）。
+        /// </summary>
+        private void ClearVelocity()
+        {
+            if (this.rb != null)
+            {
+                this.rb.velocity = Vector2.zero;
+            }
         }
 
         /// <summary>
@@ -401,6 +413,7 @@ namespace LAB2D.Core.Seek
             SeekResult result = this.currentResult;
             if (result == null)
             {
+                this.ClearVelocity(); // 寻路间隙（重新寻路进行中）→ 清速度防滑行
                 this.RestartStuckWindow(); // 寻路间隙（重新寻路进行中）→ 保留卡住计数
                 return true;
             }
@@ -435,8 +448,8 @@ namespace LAB2D.Core.Seek
                 speed = s_workerConditionManager.GetAdjustedWorkerMoveSpeed((AWorker)this.Character, speed);
             }
 
-            // 卡死检测：必须在移动之前，用当前真实位置喂入（MovePosition 受碰撞约束，
-            // 撞墙时位置停住，累计位移≈0 → 检出 Stuck）。
+            // 卡死检测：必须在移动之前，用当前真实位置喂入（velocity 撞墙被挡，
+            // 位置停住，累计位移≈0 → 检出 Stuck）。
             this.LastStuckResult = this.stuckDetector.Feed(Time.fixedDeltaTime, characterPosition, speed);
             // 卡墙诊断：Sliding/Stuck 结算时输出一次 Debug（检测窗口 1s，最多每秒一条，不刷屏）。
             // 记录结算结果、实时位置、寻路目标与位移比例，用于定位"A* 认为可通而物理被挡"。
@@ -449,19 +462,18 @@ namespace LAB2D.Core.Seek
                     LogManager.LogLevelEnum.Debug);
             }
 
-            // 移动：有刚体用 MovePosition（物理帧移动，配合 Rigidbody2D 插值渲染平滑），
-            // 无刚体回退 transform.Translate。MovePosition 受碰撞约束不穿透，
-            // 卡死时位置不再前进 → MovementStuckDetector 累计位移≈0 → 检出 Stuck。
-            Vector3 moveOffset = speed * Time.fixedDeltaTime * this.Direction.normalized;
+            // 移动：有刚体用 velocity 驱动（Player 同款，PlayerViewAdapter 验证平滑）。
+            // 物理引擎每 FixedUpdate 推进位置：速度正确、撞墙碰撞求解器阻挡不穿透，
+            // 配合 Rigidbody2D Interpolate 渲染插值（200fps 渲染 vs 50Hz 物理不跳变）。
+            // 不用 MovePosition —— 它受碰撞约束削减位移，实测"又慢又卡顿"。
+            // 卡死检测不受影响：velocity 撞墙被挡 → 位置不动 → 累计位移≈0 → 检出 Stuck。
             if (this.rb != null)
             {
-                // 基准用 characterPosition（transform.position），与上方 stuckDetector.Feed 同一坐标，
-                // 保证"检测位移"与"实际移动"严格一致。
-                this.rb.MovePosition(new Vector2(characterPosition.x, characterPosition.y) + new Vector2(moveOffset.x, moveOffset.y));
+                this.rb.velocity = new Vector2(this.Direction.x, this.Direction.y).normalized * speed;
             }
             else
             {
-                this.Character.transform.Translate(moveOffset, Space.World);
+                this.Character.transform.Translate(speed * Time.fixedDeltaTime * this.Direction.normalized, Space.World);
             }
             if (this.ShouldShowLine())
             {
