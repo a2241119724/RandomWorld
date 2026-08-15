@@ -57,5 +57,29 @@ namespace LAB2D.Editor.Tests.Tool
             var walls = new HashSet<(int, int)> { (1, 0) };
             Assert.IsFalse(AStar.IsLineWalkable(0, 0, 2, 0, (x, y) => IsWalkable(walls, x, y)));
         }
+
+        /// <summary>
+        /// 宽度检查（回归 2026-08-16 合并路径卡死）：直线格中心全可通，但主导方向（水平）
+        /// 一侧邻格是墙 → 必须拒绝。合并检测是零宽度格中心线，实际移动是半径 0.1 的圆、
+        /// 从格内偏移点出发，直线边缘擦墙会卡死（见 bug-fixes.md 合并路径宽度条目）。
+        /// </summary>
+        [Test]
+        public void IsLineWalkable_SideWallAlongHorizontal_Rejects()
+        {
+            // 直线 y=0 上 (0,0)(1,0)(2,0) 全可通，但 (1,1) 是墙（主导水平 → 查 (x,y±1)）→ 拒绝。
+            var walls = new HashSet<(int, int)> { (1, 1) };
+            Assert.IsFalse(AStar.IsLineWalkable(0, 0, 2, 0, (x, y) => IsWalkable(walls, x, y)));
+        }
+
+        /// <summary>
+        /// 宽度检查（对称）：主导垂直方向（|dy|>|dx|）一侧邻格是墙 → 同样拒绝。
+        /// </summary>
+        [Test]
+        public void IsLineWalkable_SideWallAlongVertical_Rejects()
+        {
+            // 直线 x=0 上 (0,0)(0,1)(0,2) 全可通，但 (1,1) 是墙（主导垂直 → 查 (x±1,y)）→ 拒绝。
+            var walls = new HashSet<(int, int)> { (1, 1) };
+            Assert.IsFalse(AStar.IsLineWalkable(0, 0, 0, 2, (x, y) => IsWalkable(walls, x, y)));
+        }
     }
 }

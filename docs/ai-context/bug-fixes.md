@@ -271,3 +271,23 @@
 - **修复**：`TileVisualSpawner` 构造函数 `ResolveMaterial` 复制宿主 TilemapRenderer 的 sharedMaterial（与 `TileMap.cs` chunk 材质复制同模式）；无 renderer 时 fallback `Shader.Find("Universal Render Pipeline/2D/Sprite-Lit-Default")`。创建 SpriteRenderer 时 `sr.sharedMaterial = material`。构造打一条 `[BuildDiag] TileVisualSpawner ... mat=<shader.name>` Debug 日志便于验证。
 - **验证**：编译待 Unity 确认；运行时看 game.log `[BuildDiag]` 应显示 lit shader 名、建筑/树恢复光照。
 - **教训**：**拆分渲染路径（TilemapRenderer → SpriteRenderer）时材质不随组件自动迁移**——Tilemap 的 lit 材质是 TilemapRenderer 序列化引用，新建 SpriteRenderer 必须显式复制，否则静默退 unlit、2D Light 失效。凡"某类对象不受光/不受后处理"，先查其 renderer 材质 shader 是否 lit，而非只查 sorting layer。
+
+## 2026-08-16 床副格碰撞体注册失效：SetColliderType 对无 tile 格无效，A* 穿过副格列撞床主格卡死
+
+- **现象**：舒宏才"直接走向床"被卡死。`[MoveDiag] 正对墙 hit=BuildMap:(101,184) 网格可通=True 缓存可通=True`（物理挡但网格/缓存判可通），A* 原始 path 头 `(101,184)(101,185)...`（穿过床副格列），Stuck→重试3次→放弃，同一 Build 任务反复重试不脱困。此前姜兴庆卡的是床主格（SetComplete 正常、缓存不可通，是另一种情况）；本次卡的是**床副格**。
+- **根因**：`RegisterCollisionTile`（BuildMap.cs:249）对副格只 `SetColliderType(pos, Sprite)`、**不 SetTile**。Unity Tilemap 对**无 tile 的格子 SetColliderType 无效**：`TilemapCollider2D` 不生成物理 shape、`GetColliderType` 返回 None → 副格网格可通（`BuildMap.IsCanReach`=tilemap 真值）、缓存可通（`UpdateCell` 判可通）、物理无碰撞。但床主格 SetComplete 后有 Sprite shape，物理覆盖主格顶边；A* 因副格"可通"而沿副格列走，角色到达副格时身体（半径 0.1）与邻格主格碰撞体重叠 → 撞上卡死。
+- **放大因素**：`WorkerBrain.PreReserveAllRoomPositions` 把床主格 `ReserveBuildPosition(..., w=1, h=1)`（统一 1×1）→ 主格 `BuildTileData.Width/Height=1×1` → `SetComplete` 的多格同步分支（`Width>1 || Height>1`）不触发 → 副格永远走不到 SetComplete，只能靠 RegisterCollisionTile（无效）。而玩家建造路径 `ABuildItem.AddBuildTask` 用 `AddBuild(1×2)` 触发多格逻辑，两条路径尺寸不一致。即便改成 1×2，ReserveBuildPosition 的多格副格注册（BuildMap.cs:219）同样只 SetColliderType 不 SetTile → 依旧无效。
+- **修复**（BuildMap.cs `IsCanReach`）：tilemap 判可通后追加 PosMap 补充真值——该格在 `BuildMapDataLAB.PosMap` 中且 `IsComplete=true` 且对应 BuildItem `IsPass=false` → 判不可通。床副格（RegisterCollisionTile 建的 `IsComplete=true`，SingleBed `IsPass=false`）因此正确不可通，A* 绕开整张床。未完成墙主格（IsComplete=false）仍可通，普通地面（PosMap 无记录）不受影响，主格（tilemap=Sprite）仍走 tilemap 真值。
+- **验证**：编译待 Unity 确认。运行时看新局：奚武/舒宏才床副格 `[MapDiag] 缓存更新 pos=(101,184) 判不可通`（RegisterCollisionTile 时 UpdateCell 用新 IsCanReach）；舒宏才路径不再沿副格列穿过床，`[StuckDiag]` 床旁卡点消失。
+- **教训**：**Tilemap 物理碰撞体的唯一真值是"有 tile + ColliderType"，`SetColliderType` 对无 tile 格静默无效**（不报错、不生成 shape、GetColliderType 返回 None）——凡"注册了碰撞体但寻路仍穿过"先核对目标格是否真的有 tile。**多格物品的副格注册必须同时 SetTile**（或让通行判定以 PosMap 数据为补充），否则"纯阻挡寻路"的副格名存实亡。**两条建造路径（WorkerBrain 预注册 vs ABuildItem.AddBuildTask）的多格尺寸必须一致**，否则 SetComplete 多格同步与副格状态分叉。blockCell 由 `WorldPosToMapPos(hit.point)` 取整，邻格贴边撞击可能标到相邻格，判读正对墙日志时以"物理 shape 实际覆盖"为准而非仅看 hit 坐标。
+
+## 2026-08-16 合并路径卡死：IsLineWalkable 是零宽度格中心线，实际移动是有宽度圆 → 合并后直线擦墙
+
+- **现象**：用户报告"合并路径有问题，本来可以走的，合并之后就不行了"。开启 WorkerPathMerge（合并）后 Worker 走压缩直线卡死；关闭合并（走 A* 原始逐格路径）不卡。
+- **根因**：`CompressPath` 的合并判定 `IsLineWalkable` 只做 **Bresenham 格中心线走查**（零宽度），从 `path[0]`（=start 格 = Worker 提交寻路时所在格的**格中心**，`ASeek.cs:363` WorldPosToMapPos 取整）开始。但实际移动 `MoveByPath`（`ASeek.cs:529`）从 Worker **实际位置**（格内任意偏移点，半径 0.1 的圆）走向路点格中心。两处不一致：
+  - **起点偏移**：合并假设从格中心出发，实际从格边（滑墙后停住的偏移点）出发，轨迹整体平移 → 擦墙角；
+  - **宽度缺失**：格中心线可通但直线边缘擦过物理碰撞体（床主格 Sprite、墙边），角色半径 0.1 撞上；
+  - **长跳 + 短探测**：合并第一跳可跨最多 30 格（`AStar.cs:345` scope），`WallProbeMax=0.3`（`ASeek.cs:138`）只探测即将碰撞的一小段，中间撞墙时 CircleCast 预检测覆盖不到 → 直接撞上、无机会 Sliding → 卡死。
+- **修复**（`AStar.cs` `IsLineWalkable`）：按主导方向（|dx|>=|dy| 为水平）检查直线每格的垂直方向两侧邻格是否可通，模拟"碰撞体两端切面射线"——合并直线要求≥3 格宽通道，两侧有缓冲、不贴墙角。合并失败 → 回退 A* 原始逐格路径（原本可走），**安全兜底不卡死，只损失一点路径长度**。后台线程安全（纯格子查询，不碰物理/transform）。
+- **验证**：`AStarLineWalkableTests` 新增 `SideWallAlongHorizontal_Rejects`/`SideWallAlongVertical_Rejects` 锁死侧墙语义（现有 4 例在宽度检查下仍全过：`OtherCornerWall` 提前被宽度检查拒绝、`OpenDiagonal` 无墙放行）。编译待 Unity 确认。
+- **教训**：**寻路压缩的"可通行直线"验证必须与移动执行同一几何口径**——格中心线验证（零宽度、从格中心出发）与实体移动（有宽度圆、从实际位置出发）不一致，是合并后"本来能走却走不了"的机制根因。压缩检测应在后台线程用格子级宽度近似（检查法向两侧邻格）模拟碰撞体切面；物理 CircleCast 只覆盖即将碰撞的短距离，护不住跨格长跳的中段，不能替代合并时的直线级验证。

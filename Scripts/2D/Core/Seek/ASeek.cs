@@ -462,6 +462,34 @@ namespace LAB2D.Core.Seek
             }
 
             Vector3 characterPosition = this.Character.transform.position;
+
+            // 新路径首次消费：记录压缩路径点 + 后台线程填写的 A* 原始 path/压缩跳转诊断，
+            // 验证合并路径是否合理（门口卡住排查 2026-08-16）。Trace + 节流 2s/条。
+            if (result.PathIndex == 0 && (result.Path.Count > 0 || result.RawPathDiag != null))
+            {
+                string pathDesc = string.Empty;
+                for (int i = 0; i < result.Path.Count; i++)
+                {
+                    pathDesc += $"({result.Path[i].x},{result.Path[i].y})";
+                }
+
+                string diag = string.Empty;
+                if (result.RawPathDiag != null)
+                {
+                    diag += $" A*原始={result.RawPathDiag}";
+                }
+
+                if (result.CompressJumpDiag != null)
+                {
+                    diag += $" 跳转={result.CompressJumpDiag}";
+                }
+
+                AWorkerTask.LogProviderThrottled(
+                    $"{this.Character.name}|SeekPath", 2f,
+                    $"[SeekDiag] {this.Character.name} 压缩路径[{result.Path.Count}] {pathDesc}{diag}",
+                    LogManager.LogLevelEnum.Trace);
+            }
+
             Vector3 worldPos;
             bool unreachableBlocked = false;
             if (result.PathIndex >= result.Path.Count)
@@ -582,12 +610,24 @@ namespace LAB2D.Core.Seek
 
                         // 诊断：正对墙事件点（节流 2s/条）。记录命中碰撞体的瓦片名与格子坐标，
                         // 交叉验证「可通行=物理真值」是否一致（见 bug-fixes.md）。
+                        // 卡床排查 2026-08-16：追加命中格的「网格判定/缓存判定」分叉诊断——
+                        // 物理碰撞体存在（此分支已命中）但网格/缓存判可通即分叉，锁定 UpdateCell 失效点。
                         Vector3Int blockCell = s_tileMap.WorldPosToMapPos(new Vector3(hit.point.x, hit.point.y, 0));
                         string blocker = hit.collider != null ? $"{hit.collider.name}:({blockCell.x},{blockCell.y})" : "?";
+                        bool blockGridReach = ASeek.IsCanReach(blockCell);
+                        bool blockCacheWalk = WalkabilityCache.IsWalkable(blockCell.x, blockCell.y);
+                        string neighborDiag = string.Empty;
+                        if (blockGridReach || blockCacheWalk)
+                        {
+                            Vector3Int cur = s_tileMap.WorldPosToMapPos(new Vector3(characterPosition.x, characterPosition.y, 0));
+                            neighborDiag = $" 站在=({cur.x},{cur.y}) 网格可通={ASeek.IsCanReach(cur)} 缓存可通={WalkabilityCache.IsWalkable(cur.x, cur.y)}";
+                        }
+
                         AWorkerTask.LogProviderThrottled(
                             $"{this.Character.name}|WallHeadOn", 2f,
                             $"[MoveDiag] {this.Character.name} 正对墙(保持速度,物理挡) dist={hit.distance:F2} " +
-                            $"pos=({characterPosition.x:F2},{characterPosition.y:F2}) hit={blocker}",
+                            $"pos=({characterPosition.x:F2},{characterPosition.y:F2}) hit={blocker} " +
+                            $"网格可通={blockGridReach} 缓存可通={blockCacheWalk}{neighborDiag}",
                             LogManager.LogLevelEnum.Debug);
                     }
                 }
@@ -951,11 +991,25 @@ namespace LAB2D.Core.Seek
 
             public int PathIndex { get; set; }
 
+            /// <summary>
+            /// 卡床排查 2026-08-16：A* 原始 path 头几跳（后台线程填充，纯字符串无 Unity 依赖）。
+            /// 主线程 MoveByPath 在 PathIndex==0 时打印，用于核对「压缩首点需经过缓存不可通格」矛盾。
+            /// 后台线程只写、主线程只在 currentResult 就位后读，无并发写入同一实例的窗口。
+            /// </summary>
+            public string RawPathDiag;
+
+            /// <summary>
+            /// 卡床排查 2026-08-16：压缩跳转轨迹（起点→落点 + 最近失败候选），后台线程填充。
+            /// </summary>
+            public string CompressJumpDiag;
+
             internal void Reset()
             {
                 this.IsReachable = true;
                 this.Path.Clear();
                 this.PathIndex = 0;
+                this.RawPathDiag = null;
+                this.CompressJumpDiag = null;
             }
         }
     }

@@ -2,6 +2,8 @@ namespace LAB2D.Core.Seek
 {
     using System.Threading;
     using UnityEngine;
+    using LAB2D.Character.Worker.Task;
+    using LAB2D.Manager;
 
     /// <summary>
     /// 后台寻路使用的可步行性快照。
@@ -96,11 +98,38 @@ namespace LAB2D.Core.Seek
             int[] cache = Volatile.Read(ref walkability);
             if (!isBuilt || cache == null || !IsInBounds(position.x, position.y))
             {
+                // 卡床排查 2026-08-16：UpdateCell 被跳过 → 缓存停留初始构建值（可通）。
+                // 记录跳过原因（isBuilt/越界），用于定位「缓存判可通而物理有碰撞体」分叉根因。
+                if (!isBuilt)
+                {
+                    AWorkerTask.LogProviderThrottled(
+                        $"CacheSkipNotBuilt|{position.x},{position.y}", 1f,
+                        $"[MapDiag] 缓存更新跳过 pos=({position.x},{position.y}) 原因=未构建",
+                        LogManager.LogLevelEnum.Trace);
+                }
+                else if (!IsInBounds(position.x, position.y))
+                {
+                    AWorkerTask.LogProviderThrottled(
+                        $"CacheSkipOOB|{position.x},{position.y}", 1f,
+                        $"[MapDiag] 缓存更新跳过 pos=({position.x},{position.y}) 原因=越界 size={width}x{height}",
+                        LogManager.LogLevelEnum.Trace);
+                }
+
                 return;
             }
 
             int index = (position.y * width) + position.x;
-            Volatile.Write(ref cache[index], ASeek.IsCanReach(position) ? 1 : 0);
+            bool reach = ASeek.IsCanReach(position);
+            Volatile.Write(ref cache[index], reach ? 1 : 0);
+            // 卡床排查 2026-08-16：阻挡格（不可通）写入记录，确认 UpdateCell 确实生效。
+            // 若此处已写「不可通」但压缩路径仍穿过该格 → 另有机制回写可通，需继续追。
+            if (!reach)
+            {
+                AWorkerTask.LogProviderThrottled(
+                    $"CacheWriteBlock|{position.x},{position.y}", 1f,
+                    $"[MapDiag] 缓存更新 pos=({position.x},{position.y}) 判不可通",
+                    LogManager.LogLevelEnum.Trace);
+            }
         }
 
         /// <summary>

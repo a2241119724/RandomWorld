@@ -9,6 +9,47 @@ namespace LAB2D.Core.Seek
     /// </summary>
     public class AStar : ASeek
     {
+        /// <summary>
+        /// 路径合并开关（设置面板 WorkerPathMerge 控制，默认 true=压缩路径）。
+        /// false = 直接输出 A* 原始逐格 path（不压缩），用于验证「压缩产生的跨格直线」是否为
+        /// 门口卡死根因：关闭后仍卡 → 问题在 A* path 本身或缓存；不卡 → 问题在压缩逻辑。
+        /// 切换只影响后续生成的路径，已发布的路径不受影响。
+        /// </summary>
+        public static bool EnablePathMerge { get; set; } = true;
+
+        /// <summary>
+        /// 设置面板 WorkerPathMerge Toggle 的 onValueChanged 绑定入口（Unity 支持绑定静态方法）。
+        /// </summary>
+        public static void SetPathMerge(bool enabled)
+        {
+            EnablePathMerge = enabled;
+            LAB2D.Character.Worker.Task.AWorkerTask.LogProvider(
+                $"[SeekDiag] 路径合并开关={enabled}",
+                LAB2D.Manager.LogManager.LogLevelEnum.Debug);
+        }
+
+        /// <summary>
+        /// 启动时自动查找设置面板「WorkerPathMerge」容器下的 Toggle 并绑定到 SetPathMerge。
+        /// 同步初始状态为 EnablePathMerge（默认 true=合并），与「默认合并」语义一致，
+        /// 避免场景 Toggle 初始 m_IsOn=0 但实际合并生效的 UI/逻辑不一致。
+        /// 用户运行时切换 Toggle 即实时控制后续寻路的路径合并。
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void AutoBindPathMergeToggle()
+        {
+            UnityEngine.UI.Toggle[] toggles = UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.Toggle>(true);
+            foreach (UnityEngine.UI.Toggle toggle in toggles)
+            {
+                if (toggle.transform.parent != null && toggle.transform.parent.name == "WorkerPathMerge")
+                {
+                    toggle.onValueChanged.RemoveAllListeners();
+                    toggle.onValueChanged.AddListener(SetPathMerge);
+                    toggle.isOn = EnablePathMerge; // 触发一次 SetPathMerge(true)，同步显示为勾选
+                    return;
+                }
+            }
+        }
+
         private static readonly int[] NeighborX = { 0, 1, 0, -1 };
         private static readonly int[] NeighborY = { 1, 0, -1, 0 };
         private int maxIterations;
@@ -134,7 +175,7 @@ namespace LAB2D.Core.Seek
                 return;
             }
 
-            this.CompressPath(generation, workspace, path, result.Path);
+            this.CompressPath(generation, workspace, path, result);
             if (this.ShouldStop(generation))
             {
                 result.IsReachable = false;
@@ -168,6 +209,8 @@ namespace LAB2D.Core.Seek
         {
             int dx = Math.Abs(toX - fromX);
             int dy = Math.Abs(toY - fromY);
+            // 直线主导方向：压缩后角色沿主导方向长距离直行，宽度需求在垂直方向两侧。
+            bool dominantX = dx >= dy;
             int sx = fromX < toX ? 1 : -1;
             int sy = fromY < toY ? 1 : -1;
             int error = dx - dy;
@@ -196,6 +239,26 @@ namespace LAB2D.Core.Seek
 
                     if (!isWalkable(corner1X, corner1Y)
                         || !isWalkable(corner2X, corner2Y))
+                    {
+                        return false;
+                    }
+                }
+
+                // 宽度检查（模拟碰撞体两端切面，2026-08-16）：合并检测的是零宽度格中心线，
+                // 实际移动是半径 0.1 的圆、从格内偏移点出发——格中心可通但直线边缘擦物理碰撞体
+                // （床主格 Sprite、墙边）会卡死。要求主导方向两侧邻格可通（≥3 格宽通道），
+                // 保证合并直线两侧有缓冲、不贴墙角；Worker 在格内任意偏移仍留安全余量。
+                // 合并失败 → 回退 A* 逐格路径（原本可走），安全兜底不卡死。
+                if (dominantX)
+                {
+                    if (!isWalkable(x, y - 1) || !isWalkable(x, y + 1))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!isWalkable(x - 1, y) || !isWalkable(x + 1, y))
                     {
                         return false;
                     }
@@ -256,19 +319,53 @@ namespace LAB2D.Core.Seek
             int generation,
             PathfindingWorkspace workspace,
             List<int> path,
-            List<Vector3Int> result)
+            SeekResult result)
         {
+            // 卡床排查 2026-08-16：后台线程不调 LogProvider（ASeek 约定：LogProvider 不可在线程池内
+            // 直接调用），改为把诊断字符串填到 result 字段，主线程 MoveByPath 在 PathIndex==0 时打印。
+            // 目标：定位「压缩首点需经过缓存不可通格」矛盾——(205,400) 缓存不可通，压缩首点 (204,402)
+            // 按 Bresenham 必经 (205,400)，此日志直接显示 A* path[0]/path[1] 与压缩跳转判定。
+            if (this.Character != null)
+            {
+                int head = Math.Min(path.Count, 6);
+                string raw = string.Empty;
+                for (int j = 0; j < head; j++)
+                {
+                    raw += $"({workspace.GetX(path[j])},{workspace.GetY(path[j])})";
+                }
+
+                if (path.Count > head)
+                {
+                    raw += "...(" + path.Count + ")";
+                }
+
+                result.RawPathDiag = $"path[{path.Count}] 头{raw}";
+            }
+
+            // 路径合并开关（WorkerPathMerge）关闭：直接输出 A* 原始逐格 path，不做跨格直线压缩。
+            // 用于验证压缩逻辑是否为卡死根因（若关闭后不再卡 → 根因在压缩产生的跨格直线）。
+            if (!EnablePathMerge)
+            {
+                for (int i = 0; i < path.Count; i++)
+                {
+                    result.Path.Add(ToPosition(workspace, path[i]));
+                }
+
+                return;
+            }
+
             int lastIndex = 0;
             while (!this.ShouldStop(generation) && lastIndex < path.Count - 1)
             {
                 int startIndex = path[lastIndex];
                 if (lastIndex != 0)
                 {
-                    result.Add(ToPosition(workspace, startIndex));
+                    result.Path.Add(ToPosition(workspace, startIndex));
                 }
 
                 bool advanced = false;
                 int scope = Math.Min(30, path.Count - lastIndex - 1);
+                int attemptedTarget = -1;
                 for (int i = lastIndex + scope; i >= lastIndex + 1; i--)
                 {
                     int targetIndex = path[i];
@@ -282,17 +379,27 @@ namespace LAB2D.Core.Seek
                         advanced = true;
                         break;
                     }
+
+                    // 记录最近一次直线不可通候选（i 递减，最终为最接近 startIndex 的失败候选）。
+                    attemptedTarget = targetIndex;
                 }
 
                 if (!advanced)
                 {
                     lastIndex++;
                 }
+                else if (this.Character != null && attemptedTarget >= 0)
+                {
+                    // 本轮压缩跳转成功但存在失败候选——记录跳转轨迹，供主线程打印核对直线判定。
+                    result.CompressJumpDiag = $"({workspace.GetX(startIndex)},{workspace.GetY(startIndex)})→" +
+                        $"({workspace.GetX(path[lastIndex])},{workspace.GetY(path[lastIndex])}) " +
+                        $"最近失败候选→({workspace.GetX(attemptedTarget)},{workspace.GetY(attemptedTarget)})";
+                }
             }
 
             if (!this.ShouldStop(generation))
             {
-                result.Add(ToPosition(workspace, path[path.Count - 1]));
+                result.Path.Add(ToPosition(workspace, path[path.Count - 1]));
             }
         }
 

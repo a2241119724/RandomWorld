@@ -342,6 +342,19 @@ namespace LAB2D.Map
 
             WalkabilityCache.UpdateCell(vector3Int);
 
+            // 卡床排查 2026-08-16：UpdateCell 后立即回读，确认网格判定与缓存判定是否同步。
+            // 仅对阻挡格（pass=False → Sprite 碰撞体）记录：若 colliderType=Sprite 但 cacheWalk=True，
+            // 说明 UpdateCell 未生效（isBuilt/越界/坐标错位），锁定根因。
+            if (buildItemData != null && !buildItemData.IsPass)
+            {
+                AWorkerTask.LogProviderThrottled(
+                    $"SetCompleteDiag|{vector3Int.x},{vector3Int.y}", 1f,
+                    $"[MapDiag] SetComplete后 pos=({vector3Int.x},{vector3Int.y}) " +
+                    $"colliderType={this.tilemap.GetColliderType(vector3Int)} " +
+                    $"cacheWalk={WalkabilityCache.IsWalkable(vector3Int.x, vector3Int.y)}",
+                    LogManager.LogLevelEnum.Debug);
+            }
+
             // 视觉同步：重读 GetColor=白（半透明→实心）+ 刷新 8 邻域（RuleTile 邻居变化）
             this.visuals.CreateOrUpdate(vector3Int);
             this.visuals.RefreshAround(vector3Int);
@@ -462,7 +475,30 @@ namespace LAB2D.Map
         /// <returns>是否</returns>
         public override bool IsCanReach(Vector3Int posMap)
         {
-            return this.tilemap.GetColliderType(posMap) == Tile.ColliderType.None;
+            if (this.tilemap.GetColliderType(posMap) != Tile.ColliderType.None)
+            {
+                return false;
+            }
+
+            // 床/家具副格：无 tile → tilemap 判可通，但 PosMap 登记为完成且阻挡。
+            // RegisterCollisionTile 的 SetColliderType 对无 tile 格无效（不生成物理 shape、
+            // GetColliderType 返回 None），导致 A* 穿过床副格列、撞床主格物理边卡死
+            // （舒宏才/奚武床 2026-08-16，见 bug-fixes.md）。以 PosMap 数据为补充真值：
+            // 完成 + IsPass=false → 同样不可通行。
+            if (this.BuildMapDataLAB?.PosMap != null)
+            {
+                Vector3IntLAB key = Vector3IntLAB.ToVector3IntLAB(posMap);
+                if (this.BuildMapDataLAB.PosMap.TryGetValue(key, out BuildTileData data) && data.IsComplete)
+                {
+                    BuildItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
+                    if (item != null && !item.IsPass)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
