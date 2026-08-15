@@ -2,6 +2,7 @@ namespace LAB2D.Character
 {
     using LAB2D;
     using LAB2D.Core;
+    using LAB2D.Render;
     using LAB2D.Item.Backpack.Equipment;
     using LAB2D.Item.Backpack.Equipment.Weapon;
     using LAB2D.Network;
@@ -164,6 +165,8 @@ namespace LAB2D.Character
                 return;
             }
 
+            YSortRegisterProvider(this);
+
             this.healthComponent = new CharacterHealthComponent(this.damageCalculator, this.levelProgressionService);
         }
 
@@ -278,6 +281,21 @@ namespace LAB2D.Character
                 }
 
                 c.originalColor = c.spriteRenderer.color;
+            };
+
+        /// <summary>
+        /// y 排序注册提供者 — 将角色 SpriteRenderer 注册到全局 y 排序器（按视觉底端 y 分配 order）。
+        /// 默认实现调用 WorldYSortManager.Ensure().Register；可在测试中替换为无操作桩。
+        /// </summary>
+        internal static System.Action<Character> YSortRegisterProvider { get; set; }
+            = (c) =>
+            {
+                if (c == null || c.spriteRenderer == null)
+                {
+                    return;
+                }
+
+                WorldYSortManager.Ensure().Register(c.spriteRenderer);
             };
 
         /// <inheritdoc/>

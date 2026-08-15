@@ -23,6 +23,12 @@ namespace LAB2D.Map
         private Color initColor = new (1, 1, 1, 0.5f);
 
         /// <summary>
+        /// 建筑视觉拆分器：把建筑 tile 渲染到独立 SpriteRenderer（Character 层），
+        /// 参与按视觉底端 y 的全局排序。tilemap 保留碰撞/数据/存档/网络，TilemapRenderer 已禁用。
+        /// </summary>
+        private TileVisualSpawner visuals;
+
+        /// <summary>
         /// 单例
         /// </summary>
         public static BuildMap Instance { get; private set; }
@@ -37,6 +43,16 @@ namespace LAB2D.Map
         {
             base.Awake();
             Instance = this;
+            // 建筑视觉已拆分到独立 SpriteRenderer（Character 层参与 y 排序），
+            // 禁用 TilemapRenderer 防双重渲染。碰撞体由 TilemapCollider2D 从数据生成，
+            // 与 Renderer 无关，IsCanReach（GetColliderType）不受影响。
+            TilemapRenderer renderer = this.GetComponent<TilemapRenderer>();
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+            }
+
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "BuildVisual");
         }
 
         public void Start()
@@ -100,6 +116,10 @@ namespace LAB2D.Map
             }
 
             WalkabilityCache.UpdateCell(targetMap);
+
+            // 视觉同步：按当前 tile 状态建/更视觉（半透明），并刷新 8 邻域（RuleTile 墙角形态）
+            this.visuals.CreateOrUpdate(targetMap);
+            this.visuals.RefreshAround(targetMap);
 
             this.SyncSender.Broadcast(
                 "SyncDataResp",
@@ -178,6 +198,10 @@ namespace LAB2D.Map
                 "SyncDataResp",
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
                 DataTool.ToByteArray(primaryData));
+
+            // 视觉同步：主格半透明视觉 + 刷新 8 邻域（副格无 tile，CreateOrUpdate 自动跳过）
+            this.visuals.CreateOrUpdate(targetMap);
+            this.visuals.RefreshAround(targetMap);
 
             // 4. 多格物品：注册副格（纯本地碰撞体，不广播避免远程重复 visual tile）
             if (width > 1 || height > 1)
@@ -318,6 +342,10 @@ namespace LAB2D.Map
 
             WalkabilityCache.UpdateCell(vector3Int);
 
+            // 视觉同步：重读 GetColor=白（半透明→实心）+ 刷新 8 邻域（RuleTile 邻居变化）
+            this.visuals.CreateOrUpdate(vector3Int);
+            this.visuals.RefreshAround(vector3Int);
+
             this.SyncSender.Broadcast(
                 "SyncDataResp",
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(vector3Int)),
@@ -373,6 +401,10 @@ namespace LAB2D.Map
             AWorkerTask.LogProvider(
                 $"[MapDiag] CancelBuilding pos=({targetMap.x},{targetMap.y}) tile={cancelTileName ?? "null"}",
                 LogManager.LogLevelEnum.Trace);
+
+            // 视觉同步：删除该格视觉 + 刷新 8 邻域（拆墙后邻格墙角变直墙）
+            this.visuals.Delete(targetMap);
+            this.visuals.RefreshAround(targetMap);
             this.SyncSender.Broadcast(
                 "SyncDataResp",
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(targetMap)),
@@ -484,6 +516,9 @@ namespace LAB2D.Map
 
                 WalkabilityCache.UpdateCell(vector3Int);
             }
+
+            // 全量同步完成：按新 tile 状态重建视觉（旧数据残留的 cell 一并清理）
+            this.visuals.RebuildAll();
         }
 
         /// <summary>
@@ -503,6 +538,10 @@ namespace LAB2D.Map
                 this.tilemap.SetTile(vector3Int, null);
                 this.BuildMapDataLAB.PosMap.Remove(key);
                 WalkabilityCache.UpdateCell(vector3Int);
+
+                // 视觉同步：删除远端取消/拆除的建筑视觉 + 刷新 8 邻域
+                this.visuals.Delete(vector3Int);
+                this.visuals.RefreshAround(vector3Int);
                 return;
             }
 
@@ -529,6 +568,10 @@ namespace LAB2D.Map
             }
 
             WalkabilityCache.UpdateCell(vector3Int);
+
+            // 视觉同步：远端增量更新建筑视觉（含建造中/完成颜色）+ 刷新 8 邻域
+            this.visuals.CreateOrUpdate(vector3Int);
+            this.visuals.RefreshAround(vector3Int);
         }
 
         /// <inheritdoc/>
@@ -561,6 +604,9 @@ namespace LAB2D.Map
 
                 WalkabilityCache.UpdateCell(pos);
             }
+
+            // 读档完成：按恢复的 tile 状态重建建筑视觉
+            this.visuals.RebuildAll();
         }
 
         /// <inheritdoc/>
@@ -586,6 +632,10 @@ namespace LAB2D.Map
             this.ApplyCollider(targetMap, true, isPass);
 
             WalkabilityCache.UpdateCell(targetMap);
+
+            // 视觉同步：直接建造完成（实心白色）+ 刷新 8 邻域
+            this.visuals.CreateOrUpdate(targetMap);
+            this.visuals.RefreshAround(targetMap);
 
             this.SyncSender.Broadcast(
                 "SyncDataResp",

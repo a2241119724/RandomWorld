@@ -21,6 +21,17 @@ namespace LAB2D.Map
         private Tilemap resourceTileMapOne; // 仅占一格的资源，解决遮盖问题
 
         /// <summary>
+        /// 树视觉拆分器（this.tilemap）：渲染到独立 SpriteRenderer（Character 层）参与 y 排序。
+        /// Tilemap 保留碰撞/数据/存档/网络，TilemapRenderer 已禁用。
+        /// </summary>
+        private TileVisualSpawner visuals;
+
+        /// <summary>
+        /// 单格资源视觉拆分器（resourceTileMapOne，场景静态装饰）：同样拆到 Character 层参与 y 排序。
+        /// </summary>
+        private TileVisualSpawner visualsOne;
+
+        /// <summary>
         /// 单例
         /// </summary>
         public static ResourceMap Instance { get; private set; }
@@ -37,6 +48,28 @@ namespace LAB2D.Map
             Instance = this;
             this.resourceTileMapOne = LAB2D.Tool.Tool.GetComponentInChildren<Tilemap>(this.transform.parent.gameObject, "ResourceMapOne");
             this.ResourceMapDataLAB = new ResourceMapData(0, 100);
+
+            // 树/资源视觉已拆分到独立 SpriteRenderer（Character 层参与 y 排序），
+            // 禁用两个 TilemapRenderer 防双重渲染。碰撞体由 TilemapCollider2D 从数据生成，
+            // 与 Renderer 无关，IsCanReach（GetColliderType）不受影响。
+            TilemapRenderer renderer = this.GetComponent<TilemapRenderer>();
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+            }
+
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "TreeVisual");
+            if (this.resourceTileMapOne != null)
+            {
+                TilemapRenderer rendererOne = this.resourceTileMapOne.GetComponent<TilemapRenderer>();
+                if (rendererOne != null)
+                {
+                    rendererOne.enabled = false;
+                }
+
+                this.visualsOne = new TileVisualSpawner(this.resourceTileMapOne, this.transform, "Character", "TreeVisualOne");
+                this.visualsOne.RebuildAll(); // 静态场景装饰，一次性建视觉
+            }
         }
 
         /// <inheritdoc/>
@@ -44,6 +77,9 @@ namespace LAB2D.Map
         {
             base.SetTile(pos, tileBase);
             WalkabilityCache.UpdateCell(pos);
+            // 视觉同步（统一写路径入口）：有 tile 建/更，无 tile 删；刷新 8 邻域防树形态错乱
+            this.visuals?.CreateOrUpdate(pos);
+            this.visuals?.RefreshAround(pos);
         }
 
         /// <summary>
@@ -96,7 +132,7 @@ namespace LAB2D.Map
                             continue;
                         }
 
-                        this.tilemap.SetTile(posMap, tileBase);
+                        this.SetTile(posMap, tileBase);
                         this.ResourceMapDataLAB.Add(posMap, tileBase.name);
                         WalkabilityCache.UpdateCell(posMap);
                         resourcesPlaced++;
@@ -155,7 +191,7 @@ namespace LAB2D.Map
                     this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(pos)), tileBase.name, false);
 
                     this.ResourceMapDataLAB.TreeCurCount++;
-                    this.tilemap.SetTile(pos, tileBase);
+                    this.SetTile(pos, tileBase);
                     this.ResourceMapDataLAB.Add(pos, tileBase.name);
                     WalkabilityCache.UpdateCell(pos);
                     // 资源生成 → 该格变为不可通行（卡墙排查：新树阻挡原路径）。
@@ -179,7 +215,7 @@ namespace LAB2D.Map
             this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, false, true);
 
             this.ResourceMapDataLAB.Remove(posMap);
-            this.tilemap.SetTile(posMap, null);
+            this.SetTile(posMap, null);
             this.ResourceMapDataLAB.TreeCurCount--;
             WalkabilityCache.UpdateCell(posMap);
             // 资源移除 → 该格变为可通行（卡墙排查：砍树后路径重新打通）。
@@ -272,9 +308,12 @@ namespace LAB2D.Map
             foreach (KeyValuePair<Vector3IntLAB, string> posMap in this.ResourceMapDataLAB.PosMap)
             {
                 Vector3Int position = Vector3IntLAB.ToVector3Int(posMap.Key);
-                this.tilemap.SetTile(position, (TileBase)AWorkerTask.ResourceLoadProvider(posMap.Value));
+                this.SetTile(position, (TileBase)AWorkerTask.ResourceLoadProvider(posMap.Value));
                 WalkabilityCache.UpdateCell(position);
             }
+
+            // 读档完成：按恢复的 tile 状态重建树视觉（清理残留 cell）
+            this.visuals?.RebuildAll();
 
             this.StartCoroutine(this.GenTree());
         }
@@ -308,11 +347,14 @@ namespace LAB2D.Map
             Dictionary<Vector3IntLAB, string>.Enumerator enumerator = resourceMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
-                this.tilemap.SetTile(
+                this.SetTile(
                     Vector3IntLAB.ToVector3Int(enumerator.Current.Key),
                     (TileBase)AWorkerTask.ResourceLoadProvider(enumerator.Current.Value));
                 WalkabilityCache.UpdateCell(Vector3IntLAB.ToVector3Int(enumerator.Current.Key));
             }
+
+            // 全量同步完成：按新数据重建树视觉（清理旧数据残留的 cell）
+            this.visuals?.RebuildAll();
         }
 
         /// <summary>
@@ -329,7 +371,7 @@ namespace LAB2D.Map
             Vector3Int vector3Int = Vector3IntLAB.ToVector3Int(DataTool.FromByteArray<Vector3IntLAB>(vector3IntLAB));
             if (isDelete)
             {
-                this.tilemap.SetTile(vector3Int, null);
+                this.SetTile(vector3Int, null);
                 this.ResourceMapDataLAB.Remove(vector3Int);
                 WalkabilityCache.UpdateCell(vector3Int);
                 return;
@@ -337,7 +379,7 @@ namespace LAB2D.Map
 
             if (!tileBaseName.Equals(string.Empty))
             {
-                this.tilemap.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(tileBaseName));
+                this.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(tileBaseName));
                 this.ResourceMapDataLAB.PosMap[Vector3IntLAB.ToVector3IntLAB(vector3Int)] = tileBaseName;
             }
 

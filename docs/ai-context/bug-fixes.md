@@ -254,3 +254,11 @@
 - **删除排查诊断**：jitter 帧位移窗口（字段+诊断块）、MoveSample vel/grav/drag 采样——两者是排查用的临时 Trace 日志，问题已定位，删除以免 game.log 噪音。保留事件点 Debug 诊断：`WallHeadOn`（正对墙+阻挡碰撞体）、`WallSlideEnter`（进入滑动）、`StuckDiag`（结算结果）。
 - **验证**：Assembly-CSharp.dll 编译通过（无 error）；grep 确认 `appliedMoveSpeed`/`jitter`/`MoveSample` 无残留。
 - **当前状态**：`ASeek` 移动核心 = velocity 驱动 + CircleCast 预检测（滑动/正对墙物理挡）+ MovementStuckDetector 熔断 + 运行时 freezeRotation/gravity=0/drag=0。抖动根因链全部落档（本条目族）。
+
+## 2026-08-15 Player 恒最顶（y-sort 后仍盖所有物体）：过期 AB 包内旧 sorting layer
+
+- **现象**：y-sort 三阶段（角色/建筑/树统一 Character 层排序）落地后，Worker 遮挡正确，但 Player 始终排序最顶、盖住一切树/建筑/其他角色。
+- **根因**：`ResourceManager.Instantiate` 从 `StreamingAssets/prefab` AB 包加载 prefab。角色 prefab 已改为 `Character` 层（磁盘 `m_SortingLayerID:-1403816847`），但 AB 包（构建于 prefab 改动前）内仍是旧层：Player 在 `Player` 层（index 4，在 Character index 3 之上）→ 无论排序器给多少 order 都恒盖 Character 层；CommonEnemy/SeekEnemy 仍在 `Enemy` 层（index 2）→ 恒被树盖。Worker 碰巧正确：Worker 层改名 Character 时 uniqueID（2891150449）不变，旧包里的层 ID 现解析为 Character。
+- **定位**：`WorldYSortManager` 加事件点诊断日志（`YSortRegister` 打 sortingLayerName、`YSortTop` 打当前最顶条目 + bottomY）。日志显示：`YSortTop top=TreeVisual_24_91`（地图最低端树，排序本身正确）唯一一条 → 排序机制正常；`YSortRegister layer=Player`/`layer=Enemy` 与磁盘 prefab（Character）矛盾 → 运行时资产非磁盘 prefab → 锁定 AB 包陈旧（bundle 18:11 vs prefab 20:00）。
+- **修复**：`工具/其他/打AB包` 重建 `StreamingAssets/prefab`（`BuildPipeline.BuildAssetBundles`）。重建后运行时 `YSortRegister layer=Character`，Player/敌人都正确参与 y 排序。
+- **教训**：**Character 层排序成立的前提是所有参与 renderer 在 Character 层，而角色层由 AB 包 prefab 决定——改 prefab 层后忘记重打 AB 包，排序会静默失效且症状隐蔽（按层隔离，表现为"某对象恒最顶/恒被盖"而非排序错误）**。排查此类问题要看"运行时实际值"（`sr.sortingLayerName`）而非磁盘 prefab；事件点诊断日志（Register 打 layer + sprite + offset、Top 打最顶条目）能高效区分"排序本身错"与"资产与磁盘不符"。

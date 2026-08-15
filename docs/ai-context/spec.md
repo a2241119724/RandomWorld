@@ -111,3 +111,11 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
 - **建造韧性:** 位置预注册 + 建造者名称参数 → 任务恢复；每秒位移卡死检测（`MovementStuckDetector`：位移不足 < 期望 40% 先预防性重寻路，连续硬卡死窗口后最多 3 次重试）→ 避免建造任务误放弃
 - **TaskPriority 常量管理:** 任务优先级统一使用常量类（`TaskPriorityConstant`），避免魔法数字
 - **UI 预制体加载:** 装备面板改用预制体加载（`ResourceManager.Instantiate`），替代硬编码 UI 层级
+
+### 渲染排序（y-sort）
+- **统一层:** 参与排序的 renderer 全部在 `Character` sorting layer（index 3，由 Worker 层改名而来，uniqueID 不变）。武器（`Item`）、寻路线/光束（`Highest`）、Tool 调试（`Enemy`）不参与。
+- **排序:** `WorldYSortManager`（`Scripts/2D/Render/`，MonoBehaviour 单例，DontDestroyOnLoad）每帧 `LateUpdate` 按"视觉底端世界 y"降序分配唯一 `sortingOrder`（0..N-1）：底端 y 大（屏幕上方/远处）→ order 小（先绘制，被覆盖）；底端 y 小（下方/近处）→ order 大（后绘制，盖住）。`YSortAlgorithm.AssignOrders` 是纯函数，可单测。
+- **底端 y:** `position.y + bottomOffset`；`bottomOffset = sprite.bounds.min.y - position.y`，仅 sprite 引用或 lossyScale 变化时重算（Player 换动画帧等），不做每帧 bounds。
+- **注册:** 角色在 `Character.Start` 经 `YSortRegisterProvider` 注册；建筑/树视觉由 `TileVisualSpawner`（`Scripts/2D/Map/`）创建时注册。注销不强制，LateUpdate 懒清扫已销毁 renderer（覆盖延迟销毁/Player 永不销毁）。
+- **建筑/树视觉拆分:** `TileVisualSpawner` 把 tile 视觉拆到独立 SpriteRenderer（挂 host 下 `VisualSprites` 子节点，Character 层），参与 y 排序；Tilemap 保留碰撞体/寻路/数据/存档/网络，`TilemapRenderer` 在宿主 Awake 禁用防双重渲染。多格物品副格（纯碰撞无 tile）不建视觉。
+- **约束:** Character 层内 renderer 必须全部注册（未注册者 order 固定 0 会错乱）。角色 layer 由 prefab 经 AB 包（`StreamingAssets/prefab`）加载——**改 prefab 层后必须重打 AB 包**（`工具/其他/打AB包`），否则加载到旧层导致排序按层隔离而失效。
