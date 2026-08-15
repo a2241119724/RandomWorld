@@ -262,3 +262,12 @@
 - **定位**：`WorldYSortManager` 加事件点诊断日志（`YSortRegister` 打 sortingLayerName、`YSortTop` 打当前最顶条目 + bottomY）。日志显示：`YSortTop top=TreeVisual_24_91`（地图最低端树，排序本身正确）唯一一条 → 排序机制正常；`YSortRegister layer=Player`/`layer=Enemy` 与磁盘 prefab（Character）矛盾 → 运行时资产非磁盘 prefab → 锁定 AB 包陈旧（bundle 18:11 vs prefab 20:00）。
 - **修复**：`工具/其他/打AB包` 重建 `StreamingAssets/prefab`（`BuildPipeline.BuildAssetBundles`）。重建后运行时 `YSortRegister layer=Character`，Player/敌人都正确参与 y 排序。
 - **教训**：**Character 层排序成立的前提是所有参与 renderer 在 Character 层，而角色层由 AB 包 prefab 决定——改 prefab 层后忘记重打 AB 包，排序会静默失效且症状隐蔽（按层隔离，表现为"某对象恒最顶/恒被盖"而非排序错误）**。排查此类问题要看"运行时实际值"（`sr.sortingLayerName`）而非磁盘 prefab；事件点诊断日志（Register 打 layer + sprite + offset、Top 打最顶条目）能高效区分"排序本身错"与"资产与磁盘不符"。
+
+## 2026-08-15 建筑/树无光照（tile 视觉拆分到 SpriteRenderer 后）：新 SpriteRenderer 用默认 unlit 材质
+
+- **现象**：y-sort 落地（`TileVisualSpawner` 把建筑/树视觉从 TilemapRenderer 拆到独立 SpriteRenderer）后，建筑与资源不再接收 2D Light 光照（角色仍有光）。
+- **根因**：`AddComponent<SpriteRenderer>()` 默认材质是 `Sprites-Default`（unlit），URP 2D 的 Light2D 只照亮 lit 材质（`Universal Render Pipeline/2D/Sprite-Lit-Default`）。拆分前 TilemapRenderer 显式引用 lit 材质（场景 Game.unity 中 7 个 TilemapRenderer 共用 guid `a97c105638bdf8b4a8650670310a4cd3`）→ 有光照；拆分后新 SpriteRenderer 无材质赋值 → unlit → 无光照。角色 prefab 显式引用 lit 材质（`f36a54b0b21e1db4c9bc02407eeab188`）→ 角色正常，正好解释"只有建筑与资源没光"。光照 targetSortingLayers 已含 Character/ResourceMap/Tile 层，层配置无误（解码 GlobalLight 的 `m_ApplyToSortingLayers` 验证）。
+- **定位**：解码场景 GlobalLight `m_ApplyToSortingLayers` 确认光照作用层齐全；对比拆分前后渲染材质差异锁定 unlit 根因（与"恒最顶"按层隔离的症状不同，本次是材质差异）。
+- **修复**：`TileVisualSpawner` 构造函数 `ResolveMaterial` 复制宿主 TilemapRenderer 的 sharedMaterial（与 `TileMap.cs` chunk 材质复制同模式）；无 renderer 时 fallback `Shader.Find("Universal Render Pipeline/2D/Sprite-Lit-Default")`。创建 SpriteRenderer 时 `sr.sharedMaterial = material`。构造打一条 `[BuildDiag] TileVisualSpawner ... mat=<shader.name>` Debug 日志便于验证。
+- **验证**：编译待 Unity 确认；运行时看 game.log `[BuildDiag]` 应显示 lit shader 名、建筑/树恢复光照。
+- **教训**：**拆分渲染路径（TilemapRenderer → SpriteRenderer）时材质不随组件自动迁移**——Tilemap 的 lit 材质是 TilemapRenderer 序列化引用，新建 SpriteRenderer 必须显式复制，否则静默退 unlit、2D Light 失效。凡"某类对象不受光/不受后处理"，先查其 renderer 材质 shader 是否 lit，而非只查 sorting layer。

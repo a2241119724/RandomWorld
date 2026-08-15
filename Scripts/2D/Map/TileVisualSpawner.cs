@@ -1,6 +1,7 @@
 namespace LAB2D.Map
 {
     using System.Collections.Generic;
+    using LAB2D.Manager;
     using LAB2D.Render;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -28,6 +29,7 @@ namespace LAB2D.Map
         private readonly Transform parent;
         private readonly string sortingLayerName;
         private readonly string objectNamePrefix;
+        private readonly Material material; // tile 视觉材质（复制宿主 TilemapRenderer，保证拆分后仍接收 2D Light）
         private readonly Dictionary<Vector3Int, SpriteRenderer> visual = new Dictionary<Vector3Int, SpriteRenderer>();
 
         /// <summary>
@@ -40,8 +42,36 @@ namespace LAB2D.Map
             this.tilemap = tilemap;
             this.sortingLayerName = sortingLayerName;
             this.objectNamePrefix = objectNamePrefix;
+            this.material = ResolveMaterial(tilemap);
             this.parent = new GameObject(ParentName).transform;
             this.parent.SetParent(hostTransform, false);
+
+            // 诊断（事件点：每 TileVisualSpawner 构造一次）：暴露材质解析结果，验证拆分后仍接收 2D Light
+            AWorkerTask.LogProvider(
+                $"[BuildDiag] TileVisualSpawner layer={sortingLayerName} prefix={objectNamePrefix} " +
+                $"mat={(this.material != null ? this.material.shader.name : "null(退默认unlit)")}",
+                LogManager.LogLevelEnum.Debug);
+        }
+
+        /// <summary>
+        /// 解析 tile 视觉材质：优先复制宿主 TilemapRenderer 的材质（拆分前 Tilemap 用的
+        /// lit 材质，保证建筑/树继续接收 2D Light）；宿主无 renderer 时退回 URP 2D lit shader。
+        /// </summary>
+        private static Material ResolveMaterial(Tilemap tilemap)
+        {
+            TilemapRenderer renderer = tilemap != null ? tilemap.GetComponent<TilemapRenderer>() : null;
+            if (renderer != null && renderer.sharedMaterial != null)
+            {
+                return renderer.sharedMaterial;
+            }
+
+            Shader lit = Shader.Find("Universal Render Pipeline/2D/Sprite-Lit-Default");
+            if (lit != null)
+            {
+                return new Material(lit);
+            }
+
+            return null; // 极端兜底：不设置则退 SpriteRenderer 默认 unlit 材质（无光照但不会崩）
         }
 
         /// <summary>
@@ -65,6 +95,11 @@ namespace LAB2D.Map
                 sr = go.AddComponent<SpriteRenderer>();
                 sr.sortingLayerName = this.sortingLayerName;
                 sr.sortingOrder = 0; // 每帧由 WorldYSortManager 统一分配
+                if (this.material != null)
+                {
+                    sr.sharedMaterial = this.material; // 沿用宿主 lit 材质，保持接收 2D Light
+                }
+
                 this.visual.Add(cell, sr);
                 WorldYSortManager.Ensure().Register(sr);
             }
