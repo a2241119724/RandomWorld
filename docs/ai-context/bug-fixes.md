@@ -291,3 +291,18 @@
 - **修复**（`AStar.cs` `IsLineWalkable`）：按主导方向（|dx|>=|dy| 为水平）检查直线每格的垂直方向两侧邻格是否可通，模拟"碰撞体两端切面射线"——合并直线要求≥3 格宽通道，两侧有缓冲、不贴墙角。合并失败 → 回退 A* 原始逐格路径（原本可走），**安全兜底不卡死，只损失一点路径长度**。后台线程安全（纯格子查询，不碰物理/transform）。
 - **验证**：`AStarLineWalkableTests` 新增 `SideWallAlongHorizontal_Rejects`/`SideWallAlongVertical_Rejects` 锁死侧墙语义（现有 4 例在宽度检查下仍全过：`OtherCornerWall` 提前被宽度检查拒绝、`OpenDiagonal` 无墙放行）。编译待 Unity 确认。
 - **教训**：**寻路压缩的"可通行直线"验证必须与移动执行同一几何口径**——格中心线验证（零宽度、从格中心出发）与实体移动（有宽度圆、从实际位置出发）不一致，是合并后"本来能走却走不了"的机制根因。压缩检测应在后台线程用格子级宽度近似（检查法向两侧邻格）模拟碰撞体切面；物理 CircleCast 只覆盖即将碰撞的短距离，护不住跨格长跳的中段，不能替代合并时的直线级验证。
+
+## 2026-08-16 Worker 死亡后房间全部发布为悬赏：预注册未完成瓦片失去规划归属 → VerifyBuildTasks 逐格重建无主任务
+
+- **现象**：开局创建多个 Worker，突然某个 Worker 把自己的整间房间全部发布为建造悬赏（任务板刷满一房间的 CustomRoomWall_0~7/CustomDoor/SingleBed/InventoryWall_0~7 任务）。
+- **根因**（用户观察"是 Worker 死亡导致的"后定位）：
+  1. **建房预注册**：`WorkerBrain.PreReserveAllRoomPositions` 在建房时把整间房（墙/门/床/仓库）预注册为 `IsComplete=false` 的半透明瓦片。
+  2. **死亡失去归属**：`IsPartOfWorkerPlannedRoom` 只查**存活** Worker，死亡 Worker 的房间瓦片不再被任何房间认领（PlannedHomePosition 归属判定失效）。
+  3. **扫描重建**：`VerifyBuildTasks`（WorkerTaskManager.cs:528）每 300 帧（约 5 秒）扫描未完成 BuildMap 瓦片，发现"无主"瓦片就重建无主建造任务 → 整间房逐格发布为悬赏。日志铁证：何飞死亡 pos=(214,271) 后 0.8 秒内 VerifyBuildTasks 重建 20+ 条任务覆盖 212~218×268~274 整片房间。
+  4. 排除项：被攻击本身（`ReduceHp`）只切 Attack/Escape 状态，`AttackEffect.OnParticleCollision` 只对 AttackTags 角色造成伤害、不破坏建筑——不是"被攻击破坏房间"。
+- **修复**（用户选定"死亡清理"方案，而非"VerifyBuildTasks 跳过无主房间"）：
+  - `Scripts/2D/AI/Worker/WorkerBrain.cs`：`ClearAbandonedBuildTilesCore` 从 instance 改为 `private static`（方法不使用实例状态，全部静态服务访问），同步修复行 2235/2328 两处调用点去掉 `this.` 前缀；新增 `public static void ClearDeadWorkerRoomTiles(AWorker.WorkerData wd)` 包装方法——从 `wd.PlannedHomePosition` 推导 center，复用核心清理逻辑，对房间布局（墙 WallOffsets/门 DoorOffset/床两格 BedOffset+BedSecondOffset/仓库 StorageOffsets）中每个 `IsComplete=false` 的瓦片执行 `PosMap.Remove` + `buildMap.CancelBuilding(pos)`，另单独处理床第二格碰撞体。
+  - `Scripts/2D/Character/Worker/State/WorkerDeadState.cs`：`RemoveTasksForWorker` 之后、`DeleteWorkerPre` 之前插入 `WorkerBrain.ClearDeadWorkerRoomTiles(workerData)`，带死亡清理语义注释。
+  - 语义边界：**已建成的瓦片（IsComplete=true）保留**——那是真实建筑，死亡不影响已有建筑；只清理预注册未完成（IsComplete=false）的规划瓦片。
+- **验证**：编译待 Unity 确认（Unity 项目无法命令行直接编译）。运行时观察：Worker 死亡后其房间未完成瓦片立即被清除（不会刷出半透明残留 5 秒），任务板不再刷满"房间全部发布"的任务。
+- **教训**：**"任务凭空刷满"类问题先查"归属判定失效 + 定时扫描重建"的组合**——预注册瓦片的归属依赖存活 Worker，死亡/移除后归属消失，周期性扫描把"无主"变成"新任务"。生命周期事件（死亡/删除）必须同时清理其在共享数据结构中的挂账（未完成瓦片），而不是等周期性扫描兜底；兜底扫描是为异常情况设计的，不应承担正常生命周期的清理责任。清理时以 `IsComplete` 区分"规划"与"真实建筑"，只清未完成，避免误删建成物。

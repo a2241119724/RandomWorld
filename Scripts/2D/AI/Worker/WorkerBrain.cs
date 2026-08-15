@@ -2232,7 +2232,7 @@ namespace LAB2D.AI.Worker
                         $"{worker.name} 预注册执行失败: {tileName} pos=({pos.x},{pos.y})",
                         LogManager.LogLevelEnum.Error);
                     // 清理已注册的位置（回滚）
-                    this.ClearAbandonedBuildTilesCore(wd, center);
+                    ClearAbandonedBuildTilesCore(wd, center);
                     return false;
                 }
             }
@@ -2252,7 +2252,7 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 清除指定中心位置的所有建造瓦片（内部实现，不依赖 WorkerData）。
         /// </summary>
-        private void ClearAbandonedBuildTilesCore(AWorker.WorkerData wd, Vector3Int center)
+        private static void ClearAbandonedBuildTilesCore(AWorker.WorkerData wd, Vector3Int center)
         {
             // 如果 wd 为 null，使用给定 center；否则从 wd.PlannedHomePosition 推导
             if (wd != null)
@@ -2325,7 +2325,21 @@ namespace LAB2D.AI.Worker
         private void ClearAbandonedBuildTiles(AWorker.WorkerData wd)
         {
             if (wd?.PlannedHomePosition == null) return;
-            this.ClearAbandonedBuildTilesCore(wd, default);
+            ClearAbandonedBuildTilesCore(wd, default);
+        }
+
+        /// <summary>
+        /// 死亡清理：清除 Worker 预注册但未完成的房间瓦片（墙/门/床/仓库）。
+        /// Worker 死亡后这些瓦片会失去规划归属（IsPartOfWorkerPlannedRoom 只查存活 Worker），
+        /// VerifyBuildTasks 每 5 秒扫描会把整间房逐格重建为无主建造任务——
+        /// 观测：死亡后 0.8s 内整间房 20+ 条"为未完成建造重新创建任务"（见 bug-fixes.md）。
+        /// 死亡时清理，避免"房间全部被发布"。已建成的瓦片（IsComplete=true）保留——那是真实建筑。
+        /// </summary>
+        /// <param name="wd">死亡 Worker 的数据</param>
+        public static void ClearDeadWorkerRoomTiles(AWorker.WorkerData wd)
+        {
+            if (wd?.PlannedHomePosition == null) return;
+            ClearAbandonedBuildTilesCore(wd, default);
         }
 
         /// <summary>

@@ -39,6 +39,12 @@ namespace LAB2D.Character.Worker.State
             // 删除任务管理器中所有与该Worker相关的任务（悬赏发布、专属任务等）
             Core.ServiceLocator.Get<WorkerTaskManager>().RemoveTasksForWorker(this.Character.GetInstanceID());
 
+            // 死亡清理：清除该 Worker 预注册但未完成的房间瓦片（墙/门/床/仓库）。
+            // Worker 死亡后这些瓦片失去规划归属（IsPartOfWorkerPlannedRoom 只查存活 Worker），
+            // VerifyBuildTasks 每 5 秒扫描会把整间房逐格重建为无主任务（"房间全部发布"）。
+            // 死亡即清理，避免该现象。已建成的瓦片（IsComplete=true）保留——那是真实建筑。
+            LAB2D.AI.Worker.WorkerBrain.ClearDeadWorkerRoomTiles(workerData);
+
             // 删除搬运任务的预设
             AWorkerTask.InventoryProvider().DeleteWorkerPre(this.Character);
 
