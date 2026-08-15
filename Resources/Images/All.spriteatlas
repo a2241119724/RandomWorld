@@ -116,6 +116,7 @@ SpriteAtlas:
     - 12d43024f62af5748b701ac60a373841: -610297877
     - 7b0b66244a6e8f946abeedbe4c5d3fb0: 21300000
     - 688ead34808ef2b419d687dee2f0a30e: 21300000
+    - 75b7af54c1cf7b246a4dc38b013eb2b8: 21300000
     - 066cc7941702be2409b4c86b8dac4ea9: 21300000
     - 246e45d494fd97147b62e2029ab6d843: 21300000
     - bf8f8fe4b96b7614abb94bcf1894eb86: 21300000
@@ -174,6 +175,7 @@ SpriteAtlas:
     - 7b27ca280966603469889370360bc8d1: 21300000
     - 7084aa58cdc3f8a46a7b8831f10a5d7d: 21300000
     - 09af350af6a771f48880a30c8445ddd8: 21300000
+    - 4b313a1ae39d84a44b4cd2be2cc17431: 21300000
     - 8445965a066fea04fa05959443863a4a: 21300000
     - 3e79d56a71e8ee244b66ccb81e78b651: 21300000
     - 41caefdaac0306b48b5e88eb4ecb624a: 21300000
@@ -289,6 +291,7 @@ SpriteAtlas:
   - {fileID: -610297877, guid: 12d43024f62af5748b701ac60a373841, type: 3}
   - {fileID: 21300000, guid: 7b0b66244a6e8f946abeedbe4c5d3fb0, type: 3}
   - {fileID: 21300000, guid: 688ead34808ef2b419d687dee2f0a30e, type: 3}
+  - {fileID: 21300000, guid: 75b7af54c1cf7b246a4dc38b013eb2b8, type: 3}
   - {fileID: 21300000, guid: 066cc7941702be2409b4c86b8dac4ea9, type: 3}
   - {fileID: 21300000, guid: 246e45d494fd97147b62e2029ab6d843, type: 3}
   - {fileID: 21300000, guid: bf8f8fe4b96b7614abb94bcf1894eb86, type: 3}
@@ -347,6 +350,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 7b27ca280966603469889370360bc8d1, type: 3}
   - {fileID: 21300000, guid: 7084aa58cdc3f8a46a7b8831f10a5d7d, type: 3}
   - {fileID: 21300000, guid: 09af350af6a771f48880a30c8445ddd8, type: 3}
+  - {fileID: 21300000, guid: 4b313a1ae39d84a44b4cd2be2cc17431, type: 3}
   - {fileID: 21300000, guid: 8445965a066fea04fa05959443863a4a, type: 3}
   - {fileID: 21300000, guid: 3e79d56a71e8ee244b66ccb81e78b651, type: 3}
   - {fileID: 21300000, guid: 41caefdaac0306b48b5e88eb4ecb624a, type: 3}
@@ -461,6 +465,7 @@ SpriteAtlas:
   - Skill_0
   - Gather
   - Desert
+  - Torch
   - CustomSword
   - CustomTrouser
   - CustomEarring
@@ -519,6 +524,7 @@ SpriteAtlas:
   - "\u5546\u5E97"
   - SnowMushroom1
   - Gradient
+  - AddHp1
   - "\u5546\u5E972"
   - Soil
   - CustomShield
