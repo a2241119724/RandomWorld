@@ -87,6 +87,21 @@ namespace LAB2D.Core.Seek
             this.isWorker = character is AWorker;
             this.isEnemy = character is LAB2D.Character.Enemy.AEnemy;
             this.rb = character.GetComponent<Rigidbody2D>();
+            // 俯视角世界无重力：Player/CommonEnemy 用 Rigidbody Constraints 冻结 Y 抵消 gravityScale=1，
+            // Worker/SeekEnemy 走 velocity 网格移动（需保留 Y 自由度，不能冻结 Y），故此处运行时清重力。
+            // gravity 每 FixedUpdate 污染 velocity（y += g*dt），与 tile 碰撞体接触时与求解器竞争，
+            // 产生"碰到东西就抖动/卡顿、隐藏碰撞体即消失"的物理接触抖动（见 bug-fixes.md 2026-08-15）。
+            // linearDrag 每帧按比例衰减 velocity，叠加接触约束使实际位移偏离期望，一并清零。
+            // freezeRotation（冻结 Z 旋转）：用户实测"把刚体 Z 冻结后抖动消失"——抖动主因是
+            // velocity 重设下碰撞接触点的切向力产生扭矩 → 刚体绕 Z 轴旋转 → 接触几何变化 →
+            // 求解器位置修正方向反复改变 → 位置跳动/视觉抖动。圆碰撞体虽旋转不变量，但物理
+            // 求解器的旋转积分在数值上仍改变接触反馈。俯视角角色方向由移动/视觉控制，无旋转自由度需求，冻结安全。
+            if (this.rb != null)
+            {
+                this.rb.gravityScale = 0f;
+                this.rb.drag = 0f;
+                this.rb.freezeRotation = true;
+            }
         }
 
         public Vector3Int TargetMap { get; protected set; }
@@ -106,6 +121,28 @@ namespace LAB2D.Core.Seek
         /// 随 ASeek 生命周期存在。
         /// </summary>
         private readonly LAB2D.MovementStuckDetector stuckDetector = new LAB2D.MovementStuckDetector();
+
+        /// <summary>
+        /// 移动前方碰撞预检测（仅平滑滑动）。
+        /// 原因：velocity 斜向撞墙时 Box2D 求解器消法向、保切向 → 角色沿墙弹偏一下 = 视觉「被推偏」；
+        /// MovementStuckDetector 只看位移模长、不看方向，被推偏仍在动 → ratio≈1 检测不到。
+        /// 方案：设 velocity 前沿移动方向 CircleCast 探测 Tile/BuildTile 碰撞体，命中且可滑动 →
+        /// 把方向投影到墙面切向提前转向（角色不碰墙）；正对墙/滑向死角 → 不干预，
+        /// 物理求解器自然消法向挡住，现有 MovementStuckDetector → Sliding → 状态机重寻路熔断接管。
+        /// 不再内部重寻路/升级：卡死中 99% 场景网格判可通而物理挡路（可通行=True），
+        /// 重寻路走同一条路空转只会误杀正常角色（见 bug-fixes.md 2026-08-15）。
+        /// </summary>
+        private const float WallProbeRadius = 0.1f;           // 扫掠圆半径 = 角色 CircleCollider2D.radius
+        private const float WallProbeDistanceFactor = 2f;     // 探测距离 = speed * fixedDeltaTime * 此值（≈2 帧位移，只探测即将碰撞）
+        private const float WallProbeMin = 0.15f;             // 探测距离下限
+        private const float WallProbeMax = 0.3f;              // 探测距离上限（避免提前很远误判）
+        private const float HeadOnSlideSqr = 0.15f;           // |slide|² < 此值 → 正对墙（移动方向在法线±23°内）
+        private const float WaypointTooCloseMargin = 0.15f;   // 路点比墙近此量则忽略命中（拐点紧邻墙角属正常）
+        private const float WallContactEpsilon = 0.02f; // 探测距离≈0（已接触墙）→ 停下，避免贴墙摩擦拖拽
+        private static readonly LayerMask s_wallLayerMask = LayerMask.GetMask("Tile", "BuildTile");
+
+        private bool slidingAlongWall;         // 贴墙滑动中：探测用固定进入方向，防 Direction 旋转漏墙振荡
+        private Vector2 slideEnterDir;         // 进入滑动时的探测方向（指向墙），滑动期间固定
 
         /// <summary>
         /// 最近一次卡死检测结果（由 MoveByPath 每固定帧更新）。
@@ -294,6 +331,11 @@ namespace LAB2D.Core.Seek
                 return;
             }
 
+            // 新寻路目标（外部触发）→ 退出贴墙滑动，新路径用新的滑动状态。
+            // Worker Move→Seek 不经过 StopMove（WorkerMoveState.OnExit 不调用），旧 slideEnterDir
+            // 会残留到新路径首帧探测（见 review 2026-08-15），在此统一复位。
+            this.slidingAlongWall = false;
+
             // 敌人角色感知校正：Enemy 不能寻路进入 Worker 私人房间。
             // AStar 障碍判定用角色无关的 WalkabilityCache（门 IsPass=1 → 房间内部格物理可通行），
             // 若不在此校正，敌人会从门寻路进房间（RoomManager.CanCharacterEnter 规则未接入寻路）。
@@ -357,6 +399,7 @@ namespace LAB2D.Core.Seek
 
             this.LineRenderer.positionCount = 0;
             this.ClearVelocity(); // 停止移动 → 清刚体速度，防止 velocity 残留滑行
+            this.slidingAlongWall = false; // 停止 → 退出贴墙滑动（新路径用新的滑动状态）
 
             this.RestartStuckWindow(); // 停止移动 → 保留连续卡住计数（重新寻路不赦免）
         }
@@ -418,25 +461,41 @@ namespace LAB2D.Core.Seek
                 return true;
             }
 
+            Vector3 characterPosition = this.Character.transform.position;
+            Vector3 worldPos;
+            bool unreachableBlocked = false;
             if (result.PathIndex >= result.Path.Count)
             {
-                this.CompleteMovement(); // 到达终点 → 完全清空
-                return true;
-            }
-
-            Vector3 worldPos = s_tileMap.MapPosToWorldPos(result.Path[result.PathIndex]);
-            Vector3 characterPosition = this.Character.transform.position;
-            if (Math.Abs(worldPos.x - characterPosition.x) < 0.1f
-                && Math.Abs(worldPos.y - characterPosition.y) < 0.1f)
-            {
-                result.PathIndex++;
-                if (result.PathIndex >= result.Path.Count)
+                if (result.IsReachable)
                 {
                     this.CompleteMovement(); // 到达终点 → 完全清空
                     return true;
                 }
 
+                // 目标不可达（A* 确认无路）：原地停住，Feed(真实 speed) → Sliding → 状态机熔断接管。
+                // 不再内部重寻路/升级：网格判可通而物理挡路时重寻路走同一条路，只会空转误杀（见 bug-fixes.md）。
+                unreachableBlocked = true;
+                worldPos = characterPosition; // 哨兵：原地停住
+            }
+            else
+            {
                 worldPos = s_tileMap.MapPosToWorldPos(result.Path[result.PathIndex]);
+            }
+
+            if (!unreachableBlocked)
+            {
+                if (Math.Abs(worldPos.x - characterPosition.x) < 0.1f
+                    && Math.Abs(worldPos.y - characterPosition.y) < 0.1f)
+                {
+                    result.PathIndex++;
+                    if (result.PathIndex >= result.Path.Count)
+                    {
+                        this.CompleteMovement(); // 到达终点 → 完全清空
+                        return true;
+                    }
+
+                    worldPos = s_tileMap.MapPosToWorldPos(result.Path[result.PathIndex]);
+                }
             }
 
             this.Direction = worldPos - this.Character.transform.position;
@@ -448,9 +507,97 @@ namespace LAB2D.Core.Seek
                 speed = s_workerConditionManager.GetAdjustedWorkerMoveSpeed((AWorker)this.Character, speed);
             }
 
+            // 移动前方碰撞预检测：设 velocity 前沿移动方向 CircleCast 探测 Tile/BuildTile 碰撞体。
+            // 命中且可滑动 → 把方向投影到墙面切向平滑滑动（贴墙平行走时投影≈原方向，天然不误判）；
+            // 正对墙/滑向死角 → 保持原速度交给物理求解器自然消法向（角色停在墙前，
+            // 由下方 Feed(真实 speed) 结算 Sliding/Stuck → 现有状态机熔断接管，不内部重寻路）。
+            // 必须在 Feed 之前：预检测决定最终速度，Feed 用一致速度，避免期望位移虚高假 Stuck。
+            Vector2 velocityDir = new Vector2(this.Direction.x, this.Direction.y).normalized;
+            Vector2 toWp = new Vector2(worldPos.x - characterPosition.x, worldPos.y - characterPosition.y);
+            // 到路点的 2D 距离（CircleCast 是 2D 探测，距离比较必须同维度；Vector3.Distance 会引入
+            // 角色 z 分量虚高 distToWp → 路点紧邻时误判滑动，见 review 2026-08-15）。
+            float distToWp = toWp.magnitude;
+            if (toWp.sqrMagnitude > 0f)
+            {
+                toWp.Normalize();
+            }
+
+            if (unreachableBlocked)
+            {
+                // 目标不可达：不探测（零方向 CircleCast 无意义）、原地停住，
+                // Feed(真实 speed) → 1s 窗口 ratio≈0 → Sliding → 状态机熔断接管。
+                velocityDir = Vector2.zero;
+            }
+            else
+            {
+                float probeDist = Mathf.Clamp(speed * Time.fixedDeltaTime * WallProbeDistanceFactor, WallProbeMin, WallProbeMax);
+                // 探测方向：滑动中用"进入滑动时的固定方向"（指向墙），而非当前 Direction。
+                // 角色沿墙移动时 Direction 随位置旋转，短探测会漏掉旁边的墙 → 逐帧在
+                // 「滑↔走向路点(撞墙)」间切换，角色贴墙抖动、被物理弹开"瞬移一段"（见 bug-fixes.md）。
+                // 固定方向保证墙一直在探测窗口内（角色到墙垂直距离滑动中不变），直到真正绕过墙
+                // （探测落空）才退出滑动。
+                Vector2 probeDir = this.slidingAlongWall ? this.slideEnterDir : velocityDir;
+                RaycastHit2D hit = Physics2D.CircleCast(characterPosition, WallProbeRadius, probeDir, probeDist, s_wallLayerMask);
+
+                if (hit.collider == null)
+                {
+                    this.slidingAlongWall = false; // 通路恢复/滑动已绕过墙 → 退出滑动
+                }
+                else if (hit.distance < distToWp - WaypointTooCloseMargin)
+                {
+                    // 路点比墙近则忽略本次命中（拐点紧邻墙角属正常），否则投影滑动。
+                    Vector2 slideDir;
+                    bool canSlide = TryGetSlideDirection(probeDir, hit.normal, out slideDir);
+                    if (canSlide && hit.distance >= WallContactEpsilon)
+                    {
+                        Vector2 slideN = slideDir.normalized;
+                        // 滑动背离路点（dot<=0）说明滑向死角而非绕过墙角 → 不算滑动，交给物理挡停。
+                        if (Vector2.Dot(slideN, toWp) > 0f)
+                        {
+                            velocityDir = slideN; // 切向投影 → 平滑滑动
+                            if (!this.slidingAlongWall)
+                            {
+                                this.slideEnterDir = probeDir; // 进入滑动：固定探测方向（指向墙）
+                                this.slidingAlongWall = true;
+                                AWorkerTask.LogProviderThrottled(
+                                    $"{this.Character.name}|WallSlideEnter", 2f,
+                                    $"[MoveDiag] {this.Character.name} 贴墙滑动 dir=({slideN.x:F2},{slideN.y:F2}) " +
+                                    $"pos=({characterPosition.x:F2},{characterPosition.y:F2})",
+                                    LogManager.LogLevelEnum.Debug);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // 正对墙 / 已几乎接触墙（探测≈0）：保持原速度，物理求解器自然消法向挡住。
+                        // 抖动由 freezeRotation（冻结 Z 旋转）根治——接触扭矩不再旋转刚体、
+                        // 位置修正稳定（见 bug-fixes.md 2026-08-15 根因修正）；此前尝试"按探测距离
+                        // 减速停住"（运动学防穿透）实测无效（非根因）已回退。
+                        // 不做任何事、不内部重寻路——重寻路在「网格判可通而物理挡路」时走同一条路空转（见 bug-fixes.md）。
+                        // 注意：此前曾在此处加"段失效→StopMove+Seek 重寻路"（修复 E），实测造成
+                        // 建墙时角色被刚建墙围困 → 重寻路路径仍穿过新墙 → 每 2s 段失效死循环、角色卡死不动
+                        // （于发祥 pos=(70.40,130.81) 17:07:40-50 六次同坐标，见 bug-fixes.md 2026-08-15）。
+                        // 回归纯物理挡 + MovementStuckDetector 熔断（Sliding→状态机重寻路→同目标4次放弃）。
+                        this.slidingAlongWall = false;
+
+                        // 诊断：正对墙事件点（节流 2s/条）。记录命中碰撞体的瓦片名与格子坐标，
+                        // 交叉验证「可通行=物理真值」是否一致（见 bug-fixes.md）。
+                        Vector3Int blockCell = s_tileMap.WorldPosToMapPos(new Vector3(hit.point.x, hit.point.y, 0));
+                        string blocker = hit.collider != null ? $"{hit.collider.name}:({blockCell.x},{blockCell.y})" : "?";
+                        AWorkerTask.LogProviderThrottled(
+                            $"{this.Character.name}|WallHeadOn", 2f,
+                            $"[MoveDiag] {this.Character.name} 正对墙(保持速度,物理挡) dist={hit.distance:F2} " +
+                            $"pos=({characterPosition.x:F2},{characterPosition.y:F2}) hit={blocker}",
+                            LogManager.LogLevelEnum.Debug);
+                    }
+                }
+            }
+
             // 卡死检测：必须在移动之前，用当前真实位置喂入（velocity 撞墙被挡，
             // 位置停住，累计位移≈0 → 检出 Stuck）。
-            this.LastStuckResult = this.stuckDetector.Feed(Time.fixedDeltaTime, characterPosition, speed);
+            // 恒喂真实 speed：预检测不再手动停/内部重寻路，正对墙由物理挡 + 本检测 1s 窗口结算 Sliding。
+            float appliedSpeed = speed;
+            this.LastStuckResult = this.stuckDetector.Feed(Time.fixedDeltaTime, characterPosition, appliedSpeed);
             // 卡墙诊断：Sliding/Stuck 结算时输出一次 Debug（检测窗口 1s，最多每秒一条，不刷屏）。
             // 记录结算结果、实时位置、寻路目标与位移比例，用于定位"A* 认为可通而物理被挡"。
             if (this.LastStuckResult != LAB2D.BugCheckResult.None)
@@ -469,18 +616,30 @@ namespace LAB2D.Core.Seek
             // 卡死检测不受影响：velocity 撞墙被挡 → 位置不动 → 累计位移≈0 → 检出 Stuck。
             if (this.rb != null)
             {
-                this.rb.velocity = new Vector2(this.Direction.x, this.Direction.y).normalized * speed;
+                this.rb.velocity = velocityDir * speed;
             }
             else
             {
-                this.Character.transform.Translate(speed * Time.fixedDeltaTime * this.Direction.normalized, Space.World);
+                this.Character.transform.Translate(speed * Time.fixedDeltaTime * (Vector3)velocityDir, Space.World);
             }
+
             if (this.ShouldShowLine())
             {
                 this.UpdateLine(true);
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 纯函数：把移动方向投影到墙面切向。返回 false = 正对墙（切向分量太小，|slide|² &lt; HeadOnSlideSqr）。
+        /// public 供 Editor 测试访问（与 MovementStuckDetector 测试同模式，见 ASeekSlideDirectionTests）。
+        /// </summary>
+        public static bool TryGetSlideDirection(Vector2 moveDir, Vector2 wallNormal, out Vector2 slideDir)
+        {
+            Vector2 d = moveDir.normalized;
+            slideDir = d - wallNormal * Vector2.Dot(d, wallNormal);
+            return slideDir.sqrMagnitude >= HeadOnSlideSqr;
         }
 
         public bool IsSeeking()

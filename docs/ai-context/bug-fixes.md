@@ -169,3 +169,88 @@
 - **最终修复（方案 B：velocity 驱动，Player 同款）**：`MoveByPath` 改为每 FixedUpdate `rb.velocity = Direction.normalized * speed`。物理引擎积分速度推进位置：**速度精确**、**撞墙碰撞求解器阻挡不穿透**、**Interpolate 对物理位置插值渲染平滑**（200fps 渲染 vs 50Hz 物理不跳变）。`StopMove`/`result==null`（寻路间隙）调用 `ClearVelocity()` 防 velocity 残留滑行。改动全部在 `ASeek.cs`（代码），编译即生效，无需重打 AB 包；Interpolate=1 需 prefab 改动进 AB 包（已重打）。
 - **验证**：200fps 下走路应连续平滑、速度正常、碰墙不穿透不抖；真卡墙 velocity 被挡 → 位置不动 → 累计位移≈0 → 仍检出 Stuck。
 - **教训**：**物理帧内移动的三种方式里，只有 `rb.velocity` 高帧率下既平滑又速度精确**。`MovePosition` 受碰撞约束削减位移（又慢又卡）；`transform.Translate` 绕过刚体、无碰撞约束（穿透）、且插值对非物理移动不生效（跳变）。物理通道移动的正解是 `velocity`（Player 早已如此），配 Interpolate 渲染平滑。
+## 2026-08-15 碰撞预检测过度干预：9 分钟 924 次升级 Stuck（瞬移/卡顿/任务失败）
+
+- **现象**：预检测落地后用户反馈「碰到碰撞体后刚体保留速度、会瞬移一段、还卡顿」「刚体是不是有问题」。日志 9 分钟窗口：`内部重寻路` **1401 次**、`内部重寻路耗尽`（升级）**924 次**、`结算=Stuck` **1017 次**、`贴墙滑动` **744 次**。卡死样本 `汤峰 结算=Stuck pos=(94.69,74.20) target=(77,93) ratio=0.00 pathIdx=0/1`——角色从起点就没动过。
+- **根因**（两类叠加）：
+  1. **网格-物理不一致是宿主场景**：1201 次卡死 `可通行=True` vs 仅 15 次 `可通行=False`。`WalkabilityCache`（`ASeek.IsCanReach` = tile+resource+build 三层 `GetColliderType==None`）判格子可通，但 **Tile/BuildTile 的物理碰撞体在该处挡路**（碰撞体形状与格子判定分叉，见 2026-08-14 床足迹错位同源）。
+  2. **预检测的"停→内部重寻路→升级"链条在宿主场景下空转**：角色被 CircleCast 探测判"受阻"→ 停 → 内部 `Seek()` 重寻路——**网格判可通时 A* 永远走同一条路**，重寻路不改变任何东西；3 次后升级 Stuck → `MovementStuckDetector` 喂 `speed` 但位置不动 → 1s 窗口 `ratio≈0` → Stuck → 状态机放弃任务。每个 Worker 每 ~30s 就误杀一次。`rb.velocity` 0↔恢复 + 重寻路间隙 `ClearVelocity` 交替 → 视觉"瞬移一段 + 卡顿"。
+- **修复**（`Scripts/2D/Core/Seek/ASeek.cs`，把预检测砍回**纯平滑滑动**）：
+  - **删除整条"停→重寻路→升级"链路**：`HandleWallBlock`、`ClearWallBlockState`、`wallBlockFrames`、`wallRepathStreak`、`lastWallCheckPathIndex`、`waitingForRepath`、`escalatedToStuckDetector`、`wallRepathInFlight` 及其 Seek() 预算清理块全部移除。
+  - **预检测只保留"可滑动→投影切向滑动"**：`CircleCast` 命中且 `TryGetSlideDirection` 可滑、且 `slideDir·toWp>0`（不滑向死角）→ `velocityDir=slideN` 平滑绕墙。这是消除"碰一下偏一下"的唯一目的。
+  - **正对墙/不可滑/已接触（distance<epsilon）→ 保持原速度，交给物理求解器消法向挡住**，不再手动 `velocity=0`、不再内部重寻路。由下方 `Feed(真实 speed)` 1s 窗口结算 Sliding → 现有状态机熔断接管（Worker `HandleMovementStuck` / Enemy `AbandonMovementStuck`，同目标 4 次后放弃）。
+  - **探测距离缩短**：`speed*dt*3→*2`，clamp `0.2~0.5→0.15~0.3`——只探测即将碰撞的 2 帧，避免在"网格可通但物理挡"区域提前很远触发误判。
+  - **Feed 恒用真实 speed**：不再有 `headOnStop 时喂 0` 的静默等待期（内部重寻路已删除，等待期不存在）。
+  - **review 跟进（2026-08-15）**：① 距离比较改 2D——`Vector3.Distance(worldPos,characterPosition)` 会引入角色 z 分量虚高 distToWp，路点紧邻时误判滑动；改用 `toWp.magnitude`（CircleCast 本就是 2D）。② `Seek()` 入口复位 `slidingAlongWall`——Worker Move→Seek 不经过 StopMove，旧 `slideEnterDir` 会残留到新路径首帧探测。
+- **验证**：重跑后 `WallRepath`/`WallEscalate`/`WallUnreachable` 日志应消失；`结算=Stuck` 应回到与改动前（2026-08-14）相当的低频；正常走路无瞬移无卡顿。真卡墙（正对墙）由物理挡 + Stuck 熔断兜底，行为与预检测前一致。
+- **教训**：
+  - **探测/熔断机制必须与"失败时的宿主场景"兼容**：预检测针对的是"物理挡路但网格判可通"这一必然出现的场景。任何"受阻后内部重寻路"的兜底都在该场景下**空转**（A* 用同一缓存判同一条路可通）——兜底重寻路不改变结果，只会放大次数、最终升级 Stuck。**不要在同一判定域内叠加第二套重寻路**；把熔断留给已有的状态机链（Sliding→Seek 重寻路→同目标 4 次→放弃）。
+  - **`ratio=0.00` + `pathIdx` 卡在起点 = 系统性误判信号**。单个卡死样本可归因于"撞到墙"，但同一角色在两个不同目标上卡在**同一起点坐标**、且 99% 卡死都 `可通行=True`，说明是预检测把正常角色系统性判死，而非个别物理碰撞。批量统计结算分布（True/False 比例、pathIdx、位置重复）能区分"个别碰撞"和"系统误判"。
+  - **网格-物理不一致是长期宿主**（2026-08-13/08-14/08-15 三次均见）：`WalkabilityCache` 用格子碰撞体判定、物理用实际碰撞体形状，二者在墙角/家具/床位处分叉。治本方向是让 `IsCanReach` 与实际物理碰撞体一致（或在探测层容忍一致差异），移动层只是缓解症状。
+
+## 2026-08-15 治本：网格-物理碰撞体真值统一（IsCanReach 读真实碰撞体）
+
+- **现象**：薛彬 15:51:03 卡死，`可通行=True` 但正对刚建成的墙。历史 1201/1216 次卡死都是这一类别——**网格判可通、物理碰撞体挡路**（前三条 08-13/08-14/08-15 已三次定性为长期宿主）。用户选"治本"：不再加移动层补丁，统一判定真值。
+- **根因**（三个触发源）：
+  1. **数据源分叉（主）**：`BuildMap.IsCanReach`（BuildMap.cs）读逻辑模型（PosMap 字典 + `BuildItemData.IsPass` + `IsFreeTile` fallback），而物理碰撞体由 `tilemap.SetColliderType` 驱动。`GetColliderType==Tile.ColliderType.None` 才是物理真值（`BaseTileMap.IsCanReach` :131-134 早已用它，与 TilemapCollider2D 实际生成的碰撞一致）。
+  2. **时序**：墙在寻路后才 `SetComplete` → 旧路径穿过新墙 → 角色直走撞墙。
+  3. **压缩路径切墙角**：`AStar.IsLineWalkable`（AStar.cs:181-193）对角移动要求 **both** 角格不可通才拒绝（`&&`）——标准 no-corner-cutting 应为 **either**（`||`）。薛彬 (141,106)→(142,108) 穿过刚建墙 (142,106) 的角。
+- **修复**（A+B 必须同一改动集原子上线，R1）：
+  - **A. `BuildMap.IsCanReach` 读真实碰撞体**：整体替换为 `this.tilemap.GetColliderType(posMap) == Tile.ColliderType.None`。删 PosMap 查询、`GetBuildItemDataByName`、`IsFreeTile` fallback。连带影响（期望）：`UnityMapAdapter`、`ShopNPCGenerator`、`AEnemy` 视线、`AWorkerTask.IsCanWork`、WorkerBrain 建房选址、救援传送全部与物理一致。
+  - **B. 统一碰撞体不变量** `ApplyCollider(pos, isComplete, isPass)`：`!isComplete || isPass ? None : Sprite`。接入全部写路径：`AddBuild` 的 `!isNeedBuild` 完成分支（此前依赖资产默认）、`SetComplete`（:305 改 `ApplyCollider(..., buildItemData?.IsPass == true)`）、`SyncDataResp` 全量（补 else 完成分支）、`SyncDataResp` 单格（未完成**无条件** None，顺带修 `buildItemData.IsPass` NRE）、`LoadData` 完成分支、`DoDirectBuild`。**关键**：单独上 A 会让远端建造中墙（同步路径未改）在远端带 Sprite → 网格误判不可通行（反向不一致），故 A+B 原子。
+  - **C. `IsLineWalkable` 角检测 `&&`→`||` + 可测试化重构**：`AStar.cs` 拆私有转发重载（生产传 `WalkabilityCache.IsWalkable`）+ `public static` 委托注入重载（测试 + 修复 E 复用）。
+  - **D. 正对墙日志记录阻挡碰撞体身份**：`ASeek.cs` WallHeadOn 日志追加 `hit={collider.name}:({cellX},{cellY})`。
+  - **E. 在飞路径段重验证 + 重寻路**（收尾网）：A+B 后网格=物理真值，重寻路不再空转（旧教训 924 Stuck→5 的前提已消失）。PathIndex 推进后验证 `Path[PathIndex-1]→Path[PathIndex]` 段仍可通（`IsLineWalkable`），失效则 `StopMove()+Seek(TargetMap)` 打 `[MoveDiag] PathStale`；正对墙分支同款验证，段仍可通则维持现状（交给物理 + Stuck 熔断）。`PathIndex==0` 验证 `Path[0]`。
+  - **F. 单测**：新建 `Scripts/2D/Editor/Tests/Tool/AStarLineWalkableTests.cs`（4 例）与 `BuildColliderInvariantTests.cs`（3 例）。
+- **验证**：
+  - 编译：`BuildMap.cs/AStar.cs/ASeek.cs` 改动后 Assembly-CSharp.dll 用 Unity Roslyn csc 编译通过（无 error CS）。
+  - 逻辑：两测试文件用 Unity shims（`NetStandard/compat/2.1.0/shims/{netstandard,netfx}`，.NET Standard 2.1 真实基础库）独立编译通过 + 迷你 runner 实际执行 **8/8 断言 PASS**——对角角格 (1,0)/(0,1) 为墙→拒绝（旧 `&&` 放行）、开阔对角→放行、直线穿墙→拒绝；`ColliderFor` 四个不变量全对。**关键教训（编译配置）**：测试文件必须用 **Unity 的 shims 全套** 而非 Mono 4.7.1-api 基础库——后者与 netstandard 2.1 引用重复定义（CS0518/CS0433/CS8356）；shims 是类型转发 facade，不冲突。
+  - 运行时（待 Unity 编辑器内确认）：`可通行=False` 提前改道、`PathStale` 重寻路日志、`hit=BuildMap:(x,y)`、远端建造中墙全程 None、床两格不可通行、空地漫游无新增 Stuck。
+- **教训**：
+  - **"判可通行"必须读与移动碰撞体同一个数据源**。`IsCanReach` 与 `SetColliderType` 分叉（一个查逻辑模型、一个写 tile cell）是全部三类卡死的宿主——任何移动层兜底（预检测重寻路、滑动、Stuck 熔断）都只缓解症状。让**判定函数直接读物理真值 `GetColliderType`**，A*、WalkabilityCache、救援、视线全部自动一致。
+  - **写路径必须维护同一不变量**：只改读取不改写入（或反过来）会制造反向不一致（远端建造中墙误判不可通）。把所有 SetTile/SetColliderType 写点收敛到 `ApplyCollider(pos, isComplete, isPass)` 一个入口。
+  - **once 被放弃的方案前提变了就要重新评估**：内部重寻路因"网格判可通时重寻路走同一条路空转"被放弃；A+B 让网格=物理真值后，重寻路会走新路，是安全且必要的收尾网（E）。修复文档里的旧教训要标注失效前提。
+  - **UnityEditor 测试编译的 .NET profile 泥潭**：csproj（LangVersion 9 / .NET Framework 引用）过期不可信；`csc` 引用必须用 Unity 安装目录的 `NetStandard/ref/2.1.0` + `compat/2.1.0/shims`，路径用 Windows 格式（`D:/...`，Git Bash 的 `/d/...` 会让 Windows csc CS0006 找不到元数据）。
+
+## 2026-08-15 Worker 停止时滑行：MoveByPath 最后一次 velocity 残留
+
+- **现象**：用户报告"Worker 在停止时还会滑行"。
+- **根因**：`WorkerMoveState.OnExit` 只在切换移动状态时清速度（`SeekEnemyMoveState.OnExit` 有 `StopMove`），而 Worker 缺；`MoveByPath` 每 FixedUpdate 设 `rb.velocity = velocityDir * speed`，停下后最后一次 velocity 残留；诊断修复又把 `rb.drag` 设 0（防每帧按比例衰减速度造成位移偏差）→ 残留速度永不衰减 → 滑行明显。
+- **修复**：`Scripts/2D/Character/Worker/State/WorkerMoveState.cs` `OnExit()` 追加 `this.Character.Seek?.StopMove()`（`StopMove` 内部 `ClearVelocity()` 已把 `rb.velocity=0`），与 `SeekEnemyMoveState.OnExit` 对齐。
+- **教训**：**drag=0 的 velocity 驱动移动，必须由状态机在"停止移动"语义点显式清速度**。靠 drag 衰减（=1 时每帧留 63%，滑动明显）或不动（=0）都不是可依赖的停止机制；`StopMove`/`ClearVelocity` 是唯一停止通道，任何离开移动的路径都要调用。
+
+## 2026-08-15 修复 E 段失效重寻路死循环（回退）：建墙时角色被刚建墙围困 → 每 2s 重寻路空转
+
+- **现象**：于发祥 pos=(70.40,130.81) 17:07:40-50 六次同坐标卡死不动；建墙现场角色被刚建墙围困。
+- **根因（修复 E 引入的回归）**：修复 E 在"正对墙"分支做"段失效 → `StopMove()+Seek` 重寻路"。当角色被刚建墙四面围困时，**重寻路路径仍穿过新墙**（A+B 后 `GetColliderType` 判新墙不可通，但角色站在墙中间/紧贴新墙，可绕行的邻居格也全部被墙占，A* 只能再次穿墙）→ 段检查再次失效 → 每 2s（重寻路节流）死循环，角色卡死不动。与"网格判可通而物理挡路"的历史空转不同：这里网格**正确**判不可通，但**无路可绕**，重寻路不可能产生新解。
+- **修复（回退 E 的正对墙分支）**：`ASeek.cs` 删除正对墙分支的段失效重寻路块，回归纯物理挡 + `MovementStuckDetector` 熔断（`Sliding`→状态机重寻路→同目标 4 次放弃，见 08-13 Sliding 熔断条目）。保留 D 的 WallHeadOn 阻挡碰撞体日志。PathIndex 推进处的段失效验证（E1）保留——它在"路径中段被新墙阻断"且**有绕行空间**时仍有效，与正对墙被围困场景正交。
+- **教训**：**"段失效→重寻路"只在网格判可通而物理挡路（判定不一致）时有解；网格已正确判不可通但被围困（判定一致、无路可绕）时，重寻路必然空转**。重寻路前必须确认存在替代解——把"可通行判定"与"是否存在可达绕行路"分开判断，否则任何"验证+重寻路"网络在围困几何下都会变成死循环。诊断日志先于修复上线（jitter 帧位移窗口 + WallHeadOn hit 身份），用帧级数据确认抖动形态后再定最终修法。
+
+## 2026-08-15 卡顿根因（最终）：velocity 硬闯碰撞体 → 求解器位置修正 → 卡帧+瞬移帧抖动，瞬移推入床格
+
+- **现象**：用户报告"卡顿没有解决"+"出现了之前被床卡住的bug"。jitter 帧位移诊断（本会话加入）给出决定性数据：**正常走路 `min≈0.07-0.09 max≈0.10-0.18 avg≈expect`（干净连续）；`滑=True`（碰撞接触）时 `min=0.000 max=0.44~1.12`（多帧完全不动 + 单帧瞬移 8-10 倍）并存**——即"卡-跳循环"。avg≈expect 掩盖了它（窗口内多数帧正常），故之前的 vel/expect 采样（只在设置瞬间）与 avg 诊断都看不出问题，必须看窗口 min/max。
+- **根因**：`ASeek.MoveByPath` 正对墙分支"保持原速度，物理求解器自然消法向挡住"——velocity 每帧推入碰撞体，求解器每帧位置修正（位移≈0 卡帧），穿透积累到修正量超过 1 格时单帧瞬移（max=1.0+）；**瞬移帧可能把角色推入/穿过相邻碰撞格（床/墙）→ 站进可通行=False 的格 → "被床卡住"**。与"隐藏碰撞体就不卡"（无碰撞体→无求解器→无修正）完全吻合。这也解释了 150 次 Stuck 里多数 `可通行=True` 却 ratio≈0 卡住（在碰撞格旁被挡，非判定不一致）。
+- **修复**（`ASeek.cs` MoveByPath，运动学防穿透）：正对墙分支**不再保持速度硬闯**，改为按 CircleCast 命中距离平滑减速，在墙前停下、**不侵入碰撞体**：
+  ```csharp
+  float wallGap = Mathf.Max(0f, hit.distance - WallProbeRadius - WallContactEpsilon);
+  appliedMoveSpeed = Mathf.Min(speed, wallGap / Time.fixedDeltaTime);
+  ```
+  新增 `float appliedMoveSpeed = speed`（默认满速，仅正对墙分支收缩）；velocity 与 Translate 用 `appliedMoveSpeed`；**`MovementStuckDetector.Feed` 仍用原始 `speed`**（期望位移不变）——否则 `expectedDistance < MinExpectedDistance(0.5)` 会跳过判定，角色停在墙前却不报卡死。减速停住后实际位移≈0 → ratio≈0 → 照常结算 Sliding/Stuck → 状态机熔断（Worker 4 次 / SeekEnemy 4 次）接管。物理求解器全程不介入 → 无抖动、无瞬移、不推入床格。
+- **验证**：Assembly-CSharp.dll 编译通过（无 error）。待运行时：`滑=True` 采样应消失 min=0/max 跳变（减速后 `speed=` 显示收缩值）；"被床卡住"（可通行=False 的 Stuck）应不再新增，存量由救援传送兜底。
+- **教训**：**velocity 驱动角色严禁"保持速度硬闯"碰撞体**——物理求解器对持续侵入的位置修正就是视觉抖动源，且修正过大会把角色瞬移进相邻碰撞格。正对墙的正确行为是**按探测距离运动学减速停住**（角色永不接触碰撞体），用探测结果完全接管"接近墙"的执行，物理只作漏探测兜底。**诊断必须看窗口 min/max 而非 avg**：卡-跳循环的 avg 会被多数正常帧稀释成"正常"。**改速度必须同步检查卡死检测的期望位移口径**：Feed 的 expectedSpeed 与实际移动速度分离，减速不能污染期望值，否则熔断失效。
+
+## 2026-08-15 抖动根因修正：主因是刚体旋转自由度（冻结 Z 有效），位置侵入只是次要放大
+
+- **现象**：上一条减速修复（运动学防穿透）后用户实测**抖动未解决**；用户自行尝试"把刚体 Z 冻结"后**抖动消失**——这是决定性反证：抖动主因不是位置侵入，而是**旋转自由度**。
+- **根因（修正）**：`rb.velocity = velocityDir * speed` 每 FixedUpdate 重设下，角色贴墙/滑动/正对墙时，碰撞接触点的**切向力（摩擦）产生扭矩 → 刚体绕 Z 轴旋转** → 旋转改变接触几何与求解器反馈方向 → 位置修正反复变化 → 视觉抖动 + jitter 的 min=0/max=1.0。我的减速修复只消除"位置侵入"（正对墙硬闯），不涉及旋转，故无效；冻结 Z 旋转后接触稳定，抖动消失。jitter 的 max 跳变是**旋转诱导的接触/修正变化**，不是纯位置修正。隐藏碰撞体无接触 → 无扭矩 → 无旋转 → 不抖，与此一致。
+- **修复**：`ASeek` 构造函数运行时设置 `this.rb.freezeRotation = true`（Rigidbody2D 冻结 Z 旋转，与 gravityScale=0/drag=0 同处；prefab 走 AB 包改不了，必须代码设）。俯视角角色朝向由移动/视觉（`Direction`）控制，物理旋转自由度无任何消费方，冻结安全。Player/CommonEnemy 若同样抖动也可照此处理（它们冻结了 Y 但未冻结旋转）。
+- **验证**：编译通过。待运行时：`滑=True` 采样的 min=0/max 跳变应消失；正对墙减速分支的 `speed=` 收缩保留（防侵入，与冻结旋转互补）。
+- **教训（方法论）**：**"隐藏碰撞体就不抖"的定位是"接触参与物理"，但不等于"位置侵入"**——接触的副作用还有扭矩/旋转。jitter min=0/max=1.0 是"接触时物理反馈不稳"的通用信号，具体机制（位置修正 vs 旋转）需要对照实验区分（这次用户手动冻结 Z 就是最好的对照）。**先复现用户的最小改动再定根因**——减速修复若未经验证就上线，会白改一轮。运行时物理配置（重力/拖拽/旋转）统一收敛到 ASeek 构造函数一处，便于用单一开关对照排查。
+
+## 2026-08-15 收尾：回退减速修复、删除排查诊断，最终方案 = 冻结 Z 旋转
+
+- **最终修复**（保留）：`ASeek` 构造函数 `this.rb.freezeRotation = true`（运行时冻结 Z 旋转）+ 既有 `gravityScale=0`/`drag=0`。抖动与被床卡住一并根治（用户实测）。
+- **回退**：上一轮"正对墙按探测距离运动学减速停住"（`appliedMoveSpeed` + `wallGap`）——用户实测无效（抖动主因是旋转非位置侵入），且引入"停在墙前→Sliding"的额外行为。正对墙分支恢复"保持速度，物理求解器挡"（原语义），保留 WallHeadOn 事件点诊断。
+- **删除排查诊断**：jitter 帧位移窗口（字段+诊断块）、MoveSample vel/grav/drag 采样——两者是排查用的临时 Trace 日志，问题已定位，删除以免 game.log 噪音。保留事件点 Debug 诊断：`WallHeadOn`（正对墙+阻挡碰撞体）、`WallSlideEnter`（进入滑动）、`StuckDiag`（结算结果）。
+- **验证**：Assembly-CSharp.dll 编译通过（无 error）；grep 确认 `appliedMoveSpeed`/`jitter`/`MoveSample` 无残留。
+- **当前状态**：`ASeek` 移动核心 = velocity 驱动 + CircleCast 预检测（滑动/正对墙物理挡）+ MovementStuckDetector 熔断 + 运行时 freezeRotation/gravity=0/drag=0。抖动根因链全部落档（本条目族）。

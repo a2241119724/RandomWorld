@@ -80,6 +80,12 @@ namespace LAB2D.Map
                 this.tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
                 this.tilemap.SetColor(targetMap, this.initColor);
             }
+            else
+            {
+                // 无需建造（放置即完成）：显式按 IsPass 设置碰撞体，不依赖资产默认。
+                // isNeedBuild=false 只可能来自 BuildItemData.IsNeedBuild=false，故 cast 必非空。
+                this.ApplyCollider(targetMap, true, ((BuildItemData)itemData).IsPass);
+            }
 
             BuildTileData buildTileData = new BuildTileData(tileName, !isNeedBuild, width, height);
             buildTileData.RectType = rectType;
@@ -302,10 +308,8 @@ namespace LAB2D.Map
             Core.ServiceLocator.Get<RoomManager>().Complete(vector3Int);
             BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
             this.tilemap.SetColor(vector3Int, Color.white);
-            if (buildItemData != null && !buildItemData.IsPass)
-            {
-                this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.Sprite);
-            }
+            // 统一不变量：完成 + IsPass → None；完成 + 阻挡 → Sprite（显式设置，不依赖资产默认）
+            this.ApplyCollider(vector3Int, true, buildItemData != null && buildItemData.IsPass);
 
             // 建造完成是通行判定变化的关键事件（卡墙排查：建成后不可通行建筑阻挡寻路）。
             AWorkerTask.LogProvider(
@@ -396,41 +400,37 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 纯函数：统一碰撞体不变量（未完成→None；完成→IsPass?None:Sprite）。
+        /// public 供 Editor 纯函数单测（BuildColliderInvariantTests）。
+        /// </summary>
+        public static Tile.ColliderType ColliderFor(bool isComplete, bool isPass)
+        {
+            return !isComplete || isPass ? Tile.ColliderType.None : Tile.ColliderType.Sprite;
+        }
+
+        /// <summary>
+        /// 统一碰撞体不变量：未完成→None；完成→IsPass?None:Sprite。
+        /// 所有写路径（AddBuild/SetComplete/SyncDataResp/LoadData/DoDirectBuild）都通过此方法
+        /// 设置碰撞体，保证 tilemap.GetColliderType == None 即网格可通行 == 物理可通行。
+        /// </summary>
+        private void ApplyCollider(Vector3Int pos, bool isComplete, bool isPass)
+        {
+            this.tilemap.SetColliderType(pos, ColliderFor(isComplete, isPass));
+        }
+
+        /// <summary>
         /// 是否可以通行,Worker寻路时使用。
-        /// 先查 PosMap（捕获无 visual tile 的碰撞体/多格副格），再 fallback 到 IsFreeTile。
+        /// 以物理碰撞体为唯一真值：GetColliderType 读取 cell 当前碰撞体
+        /// （SetTile 时取 tile 资产默认 m_ColliderType，SetColliderType 覆盖它），
+        /// 与 BaseTileMap.IsCanReach（Tile layer）同一真值链，彻底消除
+        /// "逻辑模型判可通、物理碰撞体阻挡"的数据源分叉（见 bug-fixes.md）。
+        /// 必须用 this.tilemap（BuildTile layer），不能 base.IsCanReach（那是 Tile layer）。
         /// </summary>
         /// <param name="posMap">位置</param>
         /// <returns>是否</returns>
         public override bool IsCanReach(Vector3Int posMap)
         {
-            if (this.BuildMapDataLAB?.PosMap != null)
-            {
-                Vector3IntLAB key = Vector3IntLAB.ToVector3IntLAB(posMap);
-                if (this.BuildMapDataLAB.PosMap.TryGetValue(key, out BuildTileData data) && data != null)
-                {
-                    // 未建造完成（预注册/建造中）→ 可通行（碰撞体已被移除）
-                    if (!data.IsComplete)
-                    {
-                        return true;
-                    }
-
-                    // 已完成 → 查 BuildItemData.IsPass
-                    // 碰撞体（Name="BedCollision"等无对应 BuildItemData 的条目）→ GetBuildItemDataByName 返回 null → 不可通行
-                    try
-                    {
-                        BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
-                        return buildItemData != null && buildItemData.IsPass;
-                    }
-                    catch (System.InvalidCastException)
-                    {
-                        // 非 BuildItemData 的 tile（如 Bounty 任务栏标记），默认可通行
-                        return true;
-                    }
-                }
-            }
-
-            // 不在 PosMap → fallback 到 visual tile 检查
-            return this.IsFreeTile(posMap);
+            return this.tilemap.GetColliderType(posMap) == Tile.ColliderType.None;
         }
 
         /// <summary>
@@ -475,6 +475,12 @@ namespace LAB2D.Map
                     this.tilemap.RemoveTileFlags(vector3Int, TileFlags.LockColor);
                     this.tilemap.SetColor(vector3Int, this.initColor);
                 }
+                else
+                {
+                    // 完成格：显式按 IsPass 设置碰撞体，与本地一致（不依赖资产默认）
+                    BuildItemData d = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(enumerator.Current.Value.Name);
+                    this.ApplyCollider(vector3Int, true, d != null && d.IsPass);
+                }
 
                 WalkabilityCache.UpdateCell(vector3Int);
             }
@@ -511,19 +517,15 @@ namespace LAB2D.Map
             if (buildTileData.IsComplete)
             {
                 this.tilemap.SetColor(vector3Int, Color.white);
-                if (buildItemData != null && !buildItemData.IsPass)
-                {
-                    this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.Sprite);
-                }
+                this.ApplyCollider(vector3Int, true, buildItemData != null && buildItemData.IsPass);
             }
             else
             {
                 this.tilemap.RemoveTileFlags(vector3Int, TileFlags.LockColor);
                 this.tilemap.SetColor(vector3Int, new Color(1, 1, 1, 0.5f));
-                if (buildItemData.IsPass)
-                {
-                    this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.None);
-                }
+                // 未完成：无条件可通行。修复远端建造中墙保留资产默认 Sprite 碰撞体 → 网格误判
+                // "建造中不可通行"的反向不一致；同时消除原 buildItemData.IsPass 的潜在 NRE。
+                this.ApplyCollider(vector3Int, false, true);
             }
 
             WalkabilityCache.UpdateCell(vector3Int);
@@ -544,20 +546,17 @@ namespace LAB2D.Map
 
                 if (tileData.IsComplete)
                 {
-                    // 已完成：全色 + 根据 IsPass 设置碰撞体
+                    // 已完成：全色 + 统一不变量（完成 + IsPass → None；阻挡 → Sprite）
                     this.tilemap.SetColor(pos, Color.white);
                     BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileData.Name);
-                    if (buildItemData != null && !buildItemData.IsPass)
-                    {
-                        this.tilemap.SetColliderType(pos, Tile.ColliderType.Sprite);
-                    }
+                    this.ApplyCollider(pos, true, buildItemData != null && buildItemData.IsPass);
                 }
                 else
                 {
                     // 未完成：半透明 + 无碰撞体
                     this.tilemap.RemoveTileFlags(pos, TileFlags.LockColor);
                     this.tilemap.SetColor(pos, this.initColor);
-                    this.tilemap.SetColliderType(pos, Tile.ColliderType.None);
+                    this.ApplyCollider(pos, false, true);
                 }
 
                 WalkabilityCache.UpdateCell(pos);
@@ -582,6 +581,9 @@ namespace LAB2D.Map
                 this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
                 this.tilemap.SetColor(targetMap, new Color(1, 1, 1, 0.99f));
             }
+
+            // 直接建造完成：显式设置碰撞体（完成 + isPass 不变量），不依赖资产默认
+            this.ApplyCollider(targetMap, true, isPass);
 
             WalkabilityCache.UpdateCell(targetMap);
 

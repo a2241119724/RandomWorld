@@ -36,6 +36,9 @@ namespace LAB2D.Character.Worker.State
         {
             base.OnExit();
             this.Character.HideDialogText();
+            // 状态切换离开移动：清速度，防止 MoveByPath 最后一次 velocity 残留导致停止滑行。
+            // 与 SeekEnemyMoveState.OnExit 对齐；drag=0 时残留速度不衰减，滑行尤其明显（见 bug-fixes.md 2026-08-15）。
+            this.Character.Seek?.StopMove();
         }
 
         /// <inheritdoc/>

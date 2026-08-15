@@ -157,6 +157,15 @@ namespace LAB2D.Core.Seek
 
         private static bool IsLineWalkable(int fromX, int fromY, int toX, int toY)
         {
+            return IsLineWalkable(fromX, fromY, toX, toY, WalkabilityCache.IsWalkable);
+        }
+
+        /// <summary>
+        /// 直线可通行性走查（Bresenham）。public 供 ASeek 路径段重验证
+        /// 与 Editor 纯函数单测复用（委托注入可通行判定，见 ASeekSlideDirectionTests 模式）。
+        /// </summary>
+        public static bool IsLineWalkable(int fromX, int fromY, int toX, int toY, Func<int, int, bool> isWalkable)
+        {
             int dx = Math.Abs(toX - fromX);
             int dy = Math.Abs(toY - fromY);
             int sx = fromX < toX ? 1 : -1;
@@ -169,15 +178,15 @@ namespace LAB2D.Core.Seek
 
             while (true)
             {
-                if (!WalkabilityCache.IsWalkable(x, y))
+                if (!isWalkable(x, y))
                 {
                     return false;
                 }
 
                 // 角落检测：当一步中同时移动了 X 和 Y（对角线移动），
-                // 检查对角是否由两个不可通行瓦片形成"缝隙"。
-                // 例如：不可通行 (x,y) 和 (x+1,y+1) 形成对角阻挡，
-                // 不允许从 (x,y+1) 到 (x+1,y) 穿过缝隙。
+                // 任一角格不可通行即拒绝——标准 no-corner-cutting。
+                // 修复前用 &&（要求 both 不可通）会放行压缩后的对角路径穿过墙角
+                // （网格判可通、物理 Sprite 碰撞体挡 → 卡死，见 bug-fixes.md）。
                 if (x != prevX && y != prevY)
                 {
                     int corner1X = prevX;
@@ -185,8 +194,8 @@ namespace LAB2D.Core.Seek
                     int corner2X = x;
                     int corner2Y = prevY;
 
-                    if (!WalkabilityCache.IsWalkable(corner1X, corner1Y)
-                        && !WalkabilityCache.IsWalkable(corner2X, corner2Y))
+                    if (!isWalkable(corner1X, corner1Y)
+                        || !isWalkable(corner2X, corner2Y))
                     {
                         return false;
                     }
