@@ -17,7 +17,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **补给监控:** 饥饿/疲劳状态机 (Healthy → Hungry → Tired → Exhausted → Critical)
 - **殖民地指挥中心 (F10):** 实时诊断报告 — 人力分析、任务阻塞原因、补给缺口、拥堵等级
 - **建造任务恢复:** 游戏重启/场景加载后自动找回原建造者恢复建造任务
-- **建造卡死重试:** `MovementStuckDetector` 每秒位移检测（1 秒窗口净位移 < 期望 15% 且连续 2 窗口）判定卡死后最多 3 次重试，避免任务误放弃
+- **建造卡死重试:** `MovementStuckDetector` 每秒位移检测，位移不足先预防性重寻路，硬卡死窗口后最多 3 次重试，避免任务误放弃
 - **建造位置预注册:** 建造位置冲突时自我预留跳过，配合建造者名称参数实现任务恢复
 
 ### 战斗系统
@@ -48,7 +48,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - 晴/雨/雪三种天气
 - 影响玩家/工人移动速度、任务进度、灵气恢复
 
-### Worker 经济系统（v0.1.3 新增）
+### Worker 经济系统
 - **货币系统:** `CurrencyAmount` 值对象（Domain 层纯 C#），Worker/Player 双钱包，`CurrencyManager` 管理
 - **市场交易:** `MarketService` 价格表，Worker 自主出售资源换金币，Player 购买物品
 - **Worker 自主交易 AI:** `WorkerTradeService` — 背包满时自动出售多余资源，饥饿时自主寻找食物卖家购买
@@ -58,7 +58,22 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **物品所有权:** `ItemOwnershipService` 追踪物品归属，Worker 采集/制作/购买获得所有权
 - **Worker 大脑:** `WorkerSeekState` 空闲时根据人格/目标/状态自主选择行动（采集/出售/买食物/接悬赏）
 
-### 商店与任务板系统（v0.1.3 新增）
+### 好感度系统
+- **定向关系:** Worker↔Worker（双向）+ Worker→Player，数值 [0, 100] 初始 50。运行时键 `Worker.GetInstanceID()`，Player 恒为 `PlayerId=0`（与 `PlayerBountyService.PlayerOwnerId` 一致）；懒初始化零预填
+- **分层:** `FavorabilityRuleService`（Domain/Worker 纯 C#，集中阈值/增减量/价格纯函数，可单测）+ `FavorabilityManager`（Gameplay，仿 CurrencyManager：ASingletonSaveData + ITickable）
+- **态度标签:** <30 敌对 / 30-49 疏远 / 50-69 友好 / 70-84 亲近 / ≥85 挚友（`GetAttitudeLabel`）
+- **行为门控（四项）:**
+  - **悬赏接取:** `WorkerBountyTask.IsCanWork` — 对玩家好感 <35（`PlayerBountyRefuseThreshold`）拒接玩家悬赏；对发布 Worker 好感 <40 拒接其悬赏
+  - **交易:** 卖者对买者好感 <30（`TradeRefuseThreshold`）拒卖；价格乘数 `1+(50-好感)×0.004` clamp [0.7, 1.3]，高好感折扣/低好感加价（`WorkerTradeService`）
+  - **对话:** 好感数值+态度标签写入 LLM 提示词（`GameStateContext.favorabilityText`），LLM 据此调整对话态度
+  - **协作互助:** Player 击伤敌方后受击点 4 格半径内 Worker 对玩家好感 +8（30s 冷却/Worker，`Character.ReduceHp` 触发）
+- **增减触发:** 攻击（Player 打 Worker 每次命中 -15，致死额外 -10；Worker 互殴受害→肇事 -10）；悬赏完成（Player +8 / 低奖励<40 金币 +4，Worker 间双向 +6，`CurrencyManager.RewardBounty`）；交易（成功 buyer→seller +4 / seller→buyer +2，被拒 buyer→seller -3）；对话（结束 +2，每日上限 10，按游戏日 600s 重置）；接近/共事（3s 节流扫描，半径 4 格，Worker↔Worker 每 tick +0.1、与 Player +0.15，每对累计上限 10）
+- **Mood 联动:** 好感变动 |delta| ≥5 时 `WorkerPersonality.AfterFavorabilityChange` 将 Mood ± delta×0.05（clamp ±5）
+- **存档:** ASingletonSaveData 二进制，按 Name 稳定匹配（"PLAYER" 哨兵），旧档无此文件零迁移；Worker 死亡 `RemoveDeadWorker` 清理档案与引用
+- **UI:** F11 好感度 HUD（`FavorabilityHUD`：对玩家好感+态度标签、Top3 Worker↔Worker 关系、空态提示）；`ItemInfoUI` 点击 Worker 显示"对你好感: X（标签）"
+- **初始好感:** 取 `NPCPromptProfile.initialFavorability`（Worker profile），默认 50
+
+### 商店与任务板系统
 - **商店 NPC:** `ShopNPC` + `ShopNPCGenerator` — 地图就绪后自动生成商店，支持 Worker/Player 买卖交互
 - **任务板:** `TaskBoardManager` — 地图中心固定位置，Worker 存取物品的中转站，内存字典存储
 - **TaskBoardHUD:** 任务板 UI 面板，展示存取记录
@@ -106,9 +121,10 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
 - **Shared Kernel:** `LAB2D.Enum` 含 16 个跨层枚举(DDD 模式)
 - **HUD 热键:** 通过 GlobalInit.Update() 统一分发，避免子对象 inactive 时失效
 - **Worker 经济:** Domain 层纯 C# 值对象（CurrencyAmount / WorkerPersonality / WorkerGoal / BountyData），Gameplay 层 Manager 驱动运行时
+- **好感度:** 规则纯函数在 Domain（`FavorabilityRuleService`，零 Unity 依赖可单测），运行时状态在 Gameplay（`FavorabilityManager`，仿 CurrencyManager：ASingletonSaveData + ITickable）；定向好感（Worker↔Worker/Worker→Player）懒初始化零预填
 - **Worker AI 自主决策:** WorkerBrain 在空闲时根据人格+目标+状态自主选择行动，而非被动等待任务分配
 - **日志统一:** `GameLoggerFactory` 统一获取 `IGameLogger`，替换所有硬编码 `Debug.Log`（31 文件迁移）
-- **建造韧性:** 位置预注册 + 建造者名称参数 → 任务恢复；每秒位移卡死检测（`MovementStuckDetector`：位移不足 < 期望 40% 先预防性重寻路，连续硬卡死窗口后最多 3 次重试）→ 避免建造任务误放弃
+- **建造韧性:** 位置预注册 + 建造者名称参数 → 任务恢复；每秒位移卡死检测（`MovementStuckDetector`：窗口累计位移 < 期望 40%（`SlidingRatio`）先预防性重寻路，< 15%（`StuckRatio`）判硬卡死窗口，连续硬卡死后最多 3 次重试）→ 避免建造任务误放弃
 - **TaskPriority 常量管理:** 任务优先级统一使用常量类（`TaskPriorityConstant`），避免魔法数字
 - **UI 预制体加载:** 装备面板改用预制体加载（`ResourceManager.Instantiate`），替代硬编码 UI 层级
 

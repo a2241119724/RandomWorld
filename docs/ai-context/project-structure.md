@@ -21,7 +21,7 @@ RandomWorld/
 │   │   │   ├── Common/        # 接口、值对象、EventBus
 │   │   │   ├── Character/     # 伤害计算、等级升级
 │   │   │   ├── Gameplay/      # 9 规则服务(连击、技能、装备等)
-│   │   │   ├── Worker/        # 工人状态、补给、任务分配、人格/目标/货币
+│   │   │   ├── Worker/        # 工人状态、补给、任务分配、人格/目标/货币/好感度
 │   │   │   ├── Player/        # 伤害策略、移动策略
 │   │   │   ├── Wave/          # 波次规则
 │   │   │   ├── Inventory/     # 库存规则
@@ -33,7 +33,7 @@ RandomWorld/
 │   │   ├── Core/              # 基础架构
 │   │   │   ├── Seek/          # A*, 可步行性缓存, 对象池
 │   │   │   └── KDTree/        # 空间索引
-│   │   ├── Gameplay/          # 运行时玩法系统(商店/任务板/市场/货币/悬赏等)
+│   │   ├── Gameplay/          # 运行时玩法系统(商店/任务板/市场/货币/悬赏/好感度等)
 │   │   ├── Manager/           # 跨领域管理(日志、存档、资源)
 │   │   ├── Render/            # y-sort 渲染排序(WorldYSortManager, YSortAlgorithm)
 │   │   ├── Map/               # 地图(TileMap, BuildMap, TileVisualSpawner 等)

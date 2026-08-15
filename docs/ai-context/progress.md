@@ -6,6 +6,7 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 
 ## Recent Changes
 
+- 2026-08 — `feat(favorability)`: 好感度系统——Worker↔Worker/Worker→Player 定向好感（0~100 初始 50），四项行为门控（玩家悬赏<35/Worker悬赏<40 拒接、交易<30 拒卖+价格乘数、对话态度入 LLM 提示词、协作互助），增减触发含攻击/致死/互殴/悬赏/交易/对话(日上限10)/接近共事(3s 扫描)，Mood 联动，F11 好感度 HUD。Domain 纯 C# 规则 + ASingletonSaveData 存档，单测 `FavorabilityRuleServiceTests`
 - 2026-08 — `feat(render)`: 按图标底端世界 y 全局渲染排序（`WorldYSortManager` + `YSortAlgorithm` + `TileVisualSpawner`），角色/建筑/树统一 `Character` 层交叉排序；修复 Player 恒最顶（过期 AB 包内旧 sorting layer）。存档见 `docs/ai-context/bug-fixes.md`
 - 2026-08 — `fix(worker home)`: 修复床副格碰撞与 sprite 足迹错位（寻路穿过床）+ 门位堵家具封死房间（含门规避重写与兜底回归修复）；Sliding 熔断复用 `HandleMovementStuck` 保留建造重试。存档见 `docs/ai-context/bug-fixes.md`
 - 2026-08 — `fix(worker gather)`: 修复 Gather "没有邻居位置"死循环刷屏（25k 次）。根因：失败未调用 `ASeek.RecordFail`，决策 `ScanForResources` 的 `IsRecentFail` 过滤失效，GiveUpTask 释放认领后无限重选同一目标。修复：失败块补 `RecordFail` + Gather 邻居 2→4 正交方向。存档见 `docs/ai-context/bug-fixes.md`
@@ -56,6 +57,7 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 | 13 | 房间列表面板（RoomListPanel） | 2026-08 |
 | 14 | Worker 建造任务恢复 + 卡死重试逻辑 | 2026-08 |
 | 15 | 渲染排序：按视觉底端 y 全局排序（角色/建筑/树） | 2026-08 |
+| 16 | 好感度系统（定向关系 + 四项行为门控 + Mood 联动 + HUD） | 2026-08 |
 
 ## Current Work
 

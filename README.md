@@ -93,6 +93,18 @@ Assets/
   └──── 完成/中断 ←── 执行任务 ←──┘
 ```
 
+### 好感度系统
+
+Worker 之间存在定向好感关系，影响悬赏、交易与对话行为：
+
+| 系统 | 说明 |
+|------|------|
+| **FavorabilityManager + FavorabilityRuleService** | 好感数值 [0,100] 初始 50，Worker↔Worker/Worker→Player 定向关系，Domain 纯 C# 规则层 |
+| **四项行为门控** | 悬赏接取（对玩家<35 / 对 Worker<40 拒绝）、交易（好感<30 拒卖 + 价格乘数 [0.7,1.3]）、对话态度（LLM 提示词）、协作互助 |
+| **增减触发** | 攻击/致死/互殴、悬赏完成、交易成败、对话（每日上限 10）、接近共事（3s 节流扫描） |
+| **Mood 联动** | 好感变动写回 WorkerPersonality.Mood |
+| **FavorabilityHUD（F11）** | 每名 Worker 对玩家好感 + 态度标签 + Top3 Worker↔Worker 关系 |
+
 ### Worker 生存与建造韧性
 
 | 系统 | 说明 |
