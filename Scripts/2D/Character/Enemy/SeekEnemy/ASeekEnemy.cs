@@ -59,6 +59,15 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         public override void Awake()
         {
             base.Awake();
+
+            // SeekEnemy 初始攻击/防御减半（相对普通敌人 AEnemy.Awake 的基础属性）。
+            // 改 basicAttribute 而非 CharacterData 计算结果：随后 Weapon setter 会触发
+            // ComputeAttribute 用基础属性重算，直接改计算结果会被覆盖。
+            this.basicAttribute.ATN *= 0.5f; // 物理攻击
+            this.basicAttribute.INT *= 0.5f; // 魔法攻击
+            this.basicAttribute.DEF *= 0.5f; // 物理防御
+            this.basicAttribute.RES *= 0.5f; // 魔法防御
+
             this.CharacterDataLAB.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider(PrefabConstant.CUSTOM_SWORD);
             this.Seek = new AStar(this);
             this.Manager = new SeekEnemyStateManager<ICharacterState, ASeekEnemyState.TypeEnum, ASeekEnemy>(this);
