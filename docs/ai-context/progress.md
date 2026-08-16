@@ -6,6 +6,7 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 
 ## Recent Changes
 
+- 2026-08 — `feat(worker home)`: Worker 建房屋顶——房间注册完成时 `RoofManager` 生成覆盖整个房间矩形的 Roof 屋顶（挂 All/Building、Highest 层、无碰撞），本地玩家进出房间隐藏/显示屋顶；拆除房间边界建筑（墙/门）时移除房间与屋顶
 - 2026-08 — `feat(render)`: 掉落物/仓库物品（ItemMap）接入 y 排序——`ItemData` 上移 `IsBottomLayer`（默认开启，`BuildItemData` 继承），`ItemMap` 混合渲染：恒底层物品由 TilemapRenderer 直接渲染在 Map 上（不建视觉）、角色下；取消勾选的非恒底层物品 tile 置透明、单独创建 `ItemVisual_*` SpriteRenderer 参与动态排序。spec 见渲染排序节
 - 2026-08 — `feat(favorability)`: 好感度系统——Worker↔Worker/Worker→Player 定向好感（0~100 初始 50），四项行为门控（玩家悬赏<35/Worker悬赏<40 拒接、交易<30 拒卖+价格乘数、对话态度入 LLM 提示词、协作互助），增减触发含攻击/致死/互殴/悬赏/交易/对话(日上限10)/接近共事(3s 扫描)，Mood 联动，F11 好感度 HUD。Domain 纯 C# 规则 + ASingletonSaveData 存档，单测 `FavorabilityRuleServiceTests`
 - 2026-08 — `feat(render)`: 按图标底端世界 y 全局渲染排序（`WorldYSortManager` + `YSortAlgorithm` + `TileVisualSpawner`），角色/建筑/树统一 `Character` 层交叉排序；修复 Player 恒最顶（过期 AB 包内旧 sorting layer）。存档见 `docs/ai-context/bug-fixes.md`

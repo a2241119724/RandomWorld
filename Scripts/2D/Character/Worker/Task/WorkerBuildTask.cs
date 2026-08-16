@@ -249,6 +249,10 @@ namespace LAB2D.Character.Worker.Task
             Core.ServiceLocator.Get<LAB2D.Item.RoomManager>().AddRoom(
                 System.Guid.NewGuid().ToString(), roomInfo);
 
+            // 房间创建完成 → 生成覆盖整个房间矩形的屋顶（本地玩家进入房间时隐藏，离开恢复显示）
+            LAB2D.Item.RoofManager.Ensure().AddRoof(
+                roomInfo, center, wd.HomeRoomWidth, wd.HomeRoomHeight, ownerName);
+
             LogProvider(
                 $"{ownerName} 房间已注册: {roomInfo.Points.Count} 个墙壁/门位置",
                 LogManager.LogLevelEnum.Debug);

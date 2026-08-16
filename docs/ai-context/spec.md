@@ -92,6 +92,12 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **外墙外圈无不可采集碰撞体:** 建房选址 `CanFitRoom` 校验外墙体外一圈（墙外 1 格，含角）不存在"阻挡且不可采集/不可挖掘"的瓦片（水/其他建筑/墙等）；可通行、可采集资源（树/矿）、可挖掘地形（山）允许——Worker 建墙须站外圈，此类瓦片无法清除会导致建造卡死
 - **日志级别:** 布局调试用 `LogManager.LogLevelEnum.Info` 才会输出到 Unity Console（Trace/Debug 仅写 game.log）
 
+#### Worker 建房屋顶
+- **生成:** 门建完 → `RegisterWorkerRoom` 注册房间后调 `RoofManager.Ensure().AddRoof`，Roof sprite 覆盖整个房间矩形，挂 `All/Building` 下，`sortingLayer=Highest`（盖住屋内一切）、无 Collider（纯视觉，不影响寻路/射线）
+- **覆盖尺寸（转置陷阱）:** 世界坐标 = tile 45° 转置，`localScale=(roomHeight/10.24, roomWidth/10.24)`（Roof sprite 原始 1024px/PPU100=10.24 世界单位）；传参顺序不可换，否则覆盖矩形横竖颠倒
+- **进出显隐:** `RoofManager.Update` 以本地玩家地图坐标判定——在房间内部（`RoomManager.GetRoomInterior`）**或站在该房间墙壁/门格上**（`RoomInfo.Points` 含墙）即隐藏屋顶，出房恢复；仅可见性切换时打 `[BuildDiag]` 日志
+- **拆除清理:** 房间边界建筑（墙/门）被 `WorkerDemolishTask` 拆除 → `RoomManager.NotifyBuildingDemolished` 从 `Rooms` 摘除房间 + `RoofManager.RemoveRoof` 销毁屋顶；拆床/仓库等房内家具不影响房间。`RelocateHomeSite`/`ClearAbandonedBuildTilesCore` 只清未完成瓦片，不触发清理
+
 ### 成就系统
 - 5 类别(战斗/收集/生存/波次/工人)，最多 20 个成就
 - F7 切换成就面板

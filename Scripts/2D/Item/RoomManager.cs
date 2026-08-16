@@ -191,6 +191,59 @@ namespace LAB2D.Item
             RoomInfo room = this.GetRoomInterior(posMap);
             return room?.OwnerName;
         }
+
+        /// <summary>
+        /// 移除房间（房间失效时调用）。幂等：房间不存在返回 false。
+        /// </summary>
+        /// <param name="roomInfo">要移除的房间信息。</param>
+        /// <returns>是否成功移除。</returns>
+        public bool RemoveRoom(RoomInfo roomInfo)
+        {
+            if (roomInfo == null) return false;
+
+            string foundKey = null;
+            foreach (KeyValuePair<string, RoomInfo> kv in Rooms)
+            {
+                if (ReferenceEquals(kv.Value, roomInfo))
+                {
+                    foundKey = kv.Key;
+                    break;
+                }
+            }
+
+            if (foundKey == null) return false;
+            Rooms.Remove(foundKey);
+            return true;
+        }
+
+        /// <summary>
+        /// 建筑被拆除回调：若拆除位置是某房间的墙/门位置，则该房间失效——
+        /// 从 Rooms 移除并通知 RoofManager 移除对应屋顶（修复拆除后孤屋顶残留）。
+        /// 床/仓库等房内家具不在房间 Points 中，拆除它们不影响房间。
+        /// </summary>
+        /// <param name="posMap">被拆除建筑的地图坐标。</param>
+        public void NotifyBuildingDemolished(Vector3Int posMap)
+        {
+            // 先收集目标房间再退出循环，避免迭代中 RemoveRoom 修改 Rooms 引发枚举异常
+            RoomInfo targetRoom = null;
+            foreach (KeyValuePair<string, RoomInfo> kv in Rooms)
+            {
+                RoomInfo room = kv.Value;
+                if (room.Points != null && room.Points.Contains(posMap))
+                {
+                    targetRoom = room;
+                    break;
+                }
+            }
+
+            if (targetRoom != null && this.RemoveRoom(targetRoom))
+            {
+                RoofManager.Ensure().RemoveRoof(targetRoom);
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] 房间边界建筑被拆除 → 房间失效并移除屋顶: {targetRoom.OwnerName} pos=({posMap.x},{posMap.y})",
+                    LogManager.LogLevelEnum.Debug);
+            }
+        }
     }
 
     /// <summary>

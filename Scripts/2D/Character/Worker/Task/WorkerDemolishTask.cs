@@ -39,8 +39,11 @@ namespace LAB2D.Character.Worker.Task
             GatherMapProvider().CancelDemolish(Vector3IntLAB.ToVector3Int(this.TargetMap));
 
             // 移除建筑（CancelBuilding 对已完成和未完成建筑均适用）
-            Core.ServiceLocator.Get<Map.BuildMap>().CancelBuilding(
-                Vector3IntLAB.ToVector3Int(this.TargetMap));
+            Vector3Int demolishPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
+            Core.ServiceLocator.Get<Map.BuildMap>().CancelBuilding(demolishPos);
+
+            // 拆除的是房间边界建筑（墙/门）→ 房间失效：移除屋顶 + 从 RoomManager 摘除
+            Core.ServiceLocator.Get<LAB2D.Item.RoomManager>().NotifyBuildingDemolished(demolishPos);
 
             LogProvider(
                 $"{worker.name} 拆除了建筑: pos=({this.TargetMap.X},{this.TargetMap.Y})",
