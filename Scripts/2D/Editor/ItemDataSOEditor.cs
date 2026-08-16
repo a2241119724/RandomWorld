@@ -35,7 +35,20 @@ namespace LAB2D.Editor
                     ? nameProp.stringValue
                     : $"元素 {i}";
 
+                // 折叠标题 + 行尾移除按钮（−）
+                EditorGUILayout.BeginHorizontal();
                 element.isExpanded = EditorGUILayout.Foldout(element.isExpanded, label, true);
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    // 内联序列化的 class 数组，单次 DeleteArrayElementAtIndex 即移除并缩容
+                    list.DeleteArrayElementAtIndex(i);
+                    i--;
+                    EditorGUILayout.EndHorizontal();
+                    continue;
+                }
+                EditorGUILayout.EndHorizontal();
+
                 if (element.isExpanded)
                 {
                     EditorGUI.indentLevel++;
@@ -43,6 +56,15 @@ namespace LAB2D.Editor
                     EditorGUI.indentLevel--;
                 }
             }
+
+            // 尾部：添加按钮（+）
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("+", GUILayout.Width(24), GUILayout.Height(22)))
+            {
+                list.InsertArrayElementAtIndex(list.arraySize);
+            }
+            EditorGUILayout.EndHorizontal();
 
             EditorGUI.indentLevel--;
         }
