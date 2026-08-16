@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 93056105
+CRC: 65976947
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d7c2240c6e70a6bbc7552ec616e49425
+    Hash: c31e71adb587cf850cbbab10f6164e78
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 1af579248e147a6cd007e4af908e3982
+    Hash: 9d81a95bd0476d0bd0cffce6d9581b7e
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d7c2240c6e70a6bbc7552ec616e49425
+    Hash: c31e71adb587cf850cbbab10f6164e78
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -101,6 +101,8 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: c47929d2f60da9240af55ff6899e615a, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: e514efe7a5781bf44b867595e8a9a707, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 2f8ba1927a94b9548ba17172304ec15d, type: 3}
@@ -183,6 +185,7 @@ Assets:
 - Assets/ResourcesLocal/Prefabs/ItemBox/AddWearTaskItem.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/WorkerRoomItem.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/BackpackItem.prefab
+- Assets/ResourcesLocal/Prefabs/Item/Backpack/Consumable/Torch.prefab
 - Assets/ResourcesLocal/Prefabs/Border.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Gun/TraceBulletEffect.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/ButtonItem.prefab

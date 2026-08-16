@@ -20,3 +20,17 @@ MonoBehaviour:
     Info: "\u4E00\u74F6\u53EF\u4EE5\u56DE\u590D10\u8840\u91CF\u7684\u836F\u6C34"
     IsStackable: 1
     Type: 2
+    EquipSlot: 0
+    RelatedTaskTime:
+      TaskBaseTime: 4
+      CarryTaskPutDownTime: 3
+  - Id: 200000
+    CnName: "\u706B\u628A"
+    Name: Torch
+    Info: "\u706B\u628A"
+    IsStackable: 1
+    Type: 2
+    EquipSlot: 14
+    RelatedTaskTime:
+      TaskBaseTime: 1
+      CarryTaskPutDownTime: 1
