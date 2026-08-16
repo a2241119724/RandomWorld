@@ -20,7 +20,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         /// <summary>
         /// 敌人旋转的速度.
         /// </summary>
-        public readonly float RotationSpeed = 2.0f;
+        public readonly float RotationSpeed = 5.0f;
 
         /// <summary>
         /// 敌人状态管理器.
