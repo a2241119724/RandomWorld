@@ -2357,9 +2357,9 @@ namespace LAB2D.AI.Worker
             int hw = (wd.HomeRoomWidth - 1) / 2;
             int hh = (wd.HomeRoomHeight - 1) / 2;
 
-            // 房间边界检查
-            if (center.x - hw < 1 || center.y - hh < 1
-                || center.x + hw >= mapWidth || center.y + hh >= mapHeight - 1)
+            // 房间边界检查（含外圈：外圈整圈也必须在图内，Worker 要站外圈建墙）
+            if (center.x - hw - 1 < 0 || center.y - hh - 1 < 0
+                || center.x + hw + 1 >= mapWidth || center.y + hh + 1 >= mapHeight)
             {
                 return false;
             }
@@ -2396,15 +2396,105 @@ namespace LAB2D.AI.Worker
                 }
             }
 
-            // 四边外侧各检查一点确保有行走空间（与旧逻辑一致：下/左/右三面留 1 格）
-            // 上边外侧
-            if (!ASeek.IsCanReach(center + new Vector3Int(0, hh + 1, 0))) return false;
-            // 下边外侧
-            if (!ASeek.IsCanReach(center + new Vector3Int(0, -hh - 1, 0))) return false;
-            // 左边外侧
-            if (!ASeek.IsCanReach(center + new Vector3Int(-hw - 1, 0, 0))) return false;
-            // 右边外侧
-            if (!ASeek.IsCanReach(center + new Vector3Int(hw + 1, 0, 0))) return false;
+            // 房间外墙体外一圈不允许有"阻挡且不可采集/不可挖掘"的瓦片（水/建筑/他房墙等）。
+            // 外圈允许可通行、可采集资源（树/矿）、可挖掘地形（山）——Worker 建墙本就要先清它们。
+            if (!this.IsRoomOuterRingClear(center, hw, hh))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 检查房间外墙体外一圈（墙外 1 格，含角）是否不存在"阻挡且不可采集/不可挖掘"的瓦片。
+        /// 外圈瓦片满足其一即通过：可通行、可采集资源（ResourceMap 树/矿）、可挖掘地形（山）。
+        /// 仅当同时「阻挡」且「不可采集且不可挖掘」（水、其他建筑/墙等）时判定不合格——
+        /// 因为 Worker 建墙必须站在外圈，此类瓦片永远无法清除会导致建造卡死。
+        /// </summary>
+        /// <param name="center">房间中心</param>
+        /// <param name="hw">房间半宽（外墙宽 (width-1)/2）</param>
+        /// <param name="hh">房间半高（外墙高 (height-1)/2）</param>
+        /// <returns>true = 外圈无不可采集碰撞体</returns>
+        private bool IsRoomOuterRingClear(Vector3Int center, int hw, int hh)
+        {
+            var resourceMap = Core.ServiceLocator.Get<ResourceMap>();
+            var terrainDb = Core.ServiceLocator.Get<TerrainConfigDatabase>();
+
+            // 上边外圈 y = hh+1（含两角）
+            for (int x = -hw - 1; x <= hw + 1; x++)
+            {
+                if (this.IsObstructingNonGatherable(center + new Vector3Int(x, hh + 1, 0), resourceMap, terrainDb))
+                {
+                    return false;
+                }
+            }
+
+            // 下边外圈 y = -hh-1（含两角）
+            for (int x = -hw - 1; x <= hw + 1; x++)
+            {
+                if (this.IsObstructingNonGatherable(center + new Vector3Int(x, -hh - 1, 0), resourceMap, terrainDb))
+                {
+                    return false;
+                }
+            }
+
+            // 左边外圈 x = -hw-1（不含角，角已由上/下边覆盖）
+            for (int y = -hh; y <= hh; y++)
+            {
+                if (this.IsObstructingNonGatherable(center + new Vector3Int(-hw - 1, y, 0), resourceMap, terrainDb))
+                {
+                    return false;
+                }
+            }
+
+            // 右边外圈 x = hw+1
+            for (int y = -hh; y <= hh; y++)
+            {
+                if (this.IsObstructingNonGatherable(center + new Vector3Int(hw + 1, y, 0), resourceMap, terrainDb))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 判断位置是否为"阻挡且不可采集/不可挖掘"的瓦片（水、其他建筑/墙等）。
+        /// 可通行（无碰撞体）→ false；可采集资源（ResourceMap 树/矿）→ false；可挖掘地形（山）→ false。
+        /// </summary>
+        /// <param name="pos">地图坐标</param>
+        /// <param name="resourceMap">资源地图（可为 null）</param>
+        /// <param name="terrainDb">地形配置（可为 null）</param>
+        /// <returns>true = 阻挡且不可采集不可挖掘（外圈不允许）</returns>
+        private bool IsObstructingNonGatherable(Vector3Int pos, ResourceMap resourceMap, TerrainConfigDatabase terrainDb)
+        {
+            // 可通行（无碰撞体）→ 不阻挡
+            if (ASeek.IsCanReach(pos))
+            {
+                return false;
+            }
+
+            // 可采集资源（树/矿等）→ Worker 采集后即可通行
+            if (resourceMap != null && resourceMap.TryGetGatherResourceInfo(pos, out _))
+            {
+                return false;
+            }
+
+            // 可挖掘地形（山等）→ Worker 挖掘后即可通行
+            var tileMap = Core.ServiceLocator.Get<TileMap>();
+            if (terrainDb != null && tileMap?.TileMapDataLAB?.MapTiles != null
+                && pos.x >= 0 && pos.y >= 0
+                && pos.x < tileMap.TileMapDataLAB.MapTiles.GetLength(0)
+                && pos.y < tileMap.TileMapDataLAB.MapTiles.GetLength(1))
+            {
+                int terrainId = tileMap.TileMapDataLAB.MapTiles[pos.x, pos.y];
+                if (terrainDb.IsDiggable(terrainId))
+                {
+                    return false;
+                }
+            }
 
             return true;
         }

@@ -89,6 +89,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **床显示方向与足迹:** 床 sprite 永远竖向（上下）显示。物理足迹 = 主格 + 副格 tile-x+1（`BedSecondOffset`，tile 空间横放），转置到屏幕即竖向 1×2；碰撞瓦片注册、寻路与布局打印统一走该足迹（不再用 `ABuildItem.GetOccupiedPositions` 的 tile-y+1 逻辑副格，避免与 sprite 实际阻挡错位）
 - **床位置:** `BedOffset=(furnLeft, furnBottom+2)`，床视觉固定在屏幕 `X=furnBottom+2`（右内侧）、`Y=furnLeft..furnLeft+1`，与仓库视觉 `X=furnBottom..furnBottom+1` 不相交
 - **门避免堵家具:** `GenerateRandomRoomParams` 逐个候选门位验证"进门第一格"不落在家具占位（床主格/床副格/仓库）上（helper `IsDoorEntryBlockedByFurniture`）；全部门位被堵时换参数重试（最多 8 次），极端几何回退 7×7 可用组合
+- **外墙外圈无不可采集碰撞体:** 建房选址 `CanFitRoom` 校验外墙体外一圈（墙外 1 格，含角）不存在"阻挡且不可采集/不可挖掘"的瓦片（水/其他建筑/墙等）；可通行、可采集资源（树/矿）、可挖掘地形（山）允许——Worker 建墙须站外圈，此类瓦片无法清除会导致建造卡死
 - **日志级别:** 布局调试用 `LogManager.LogLevelEnum.Info` 才会输出到 Unity Console（Trace/Debug 仅写 game.log）
 
 ### 成就系统
