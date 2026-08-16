@@ -12,23 +12,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1634bc25a36d98749aa3c85f1bc9e144, type: 3}
   m_Name: WeaponItemData
   m_EditorClassIdentifier: 
-  IDStartIndex: 0
+  ItemType: 0
   ItemDatas:
   - Id: 0
     CnName: "\u5355\u53D1\u67AA"
     Name: SingleGun
     Info: "\u4E00\u628A\u53EF\u4EE5\u5355\u5C04\u7684\u67AA"
     IsStackable: 0
+    IsBottomLayer: 0
     Type: 0
-  - Id: 0
+    EquipSlot: 0
+    RelatedTaskTime:
+      TaskBaseTime: 4
+      CarryTaskPutDownTime: 3
+  - Id: 1
     CnName: "\u5B9D\u5251"
     Name: CustomSword
     Info: "\u4E00\u628A\u53EF\u4EE5\u653B\u51FB\u7684\u5251"
     IsStackable: 0
+    IsBottomLayer: 0
     Type: 0
-  - Id: 0
+    EquipSlot: 0
+    RelatedTaskTime:
+      TaskBaseTime: 4
+      CarryTaskPutDownTime: 3
+  - Id: 2
     CnName: "\u8DDF\u8E2A\u67AA"
     Name: TraceGun
     Info: "\u4E00\u628A\u53EF\u4EE5\u5B50\u5F39\u8DDF\u8E2A\u7684\u67AA"
     IsStackable: 0
+    IsBottomLayer: 0
     Type: 0
+    EquipSlot: 0
+    RelatedTaskTime:
+      TaskBaseTime: 4
+      CarryTaskPutDownTime: 3
