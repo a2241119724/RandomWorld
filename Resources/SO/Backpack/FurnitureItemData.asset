@@ -22,6 +22,7 @@ MonoBehaviour:
     Type: 0
     IsPass: 0
     IsNeedBuild: 1
+    IsBottomLayer: 1
   - Id: 0
     CnName: "\u53CC\u4EBA\u5E8A"
     Name: DoubleBed
@@ -30,3 +31,4 @@ MonoBehaviour:
     Type: 0
     IsPass: 0
     IsNeedBuild: 1
+    IsBottomLayer: 1

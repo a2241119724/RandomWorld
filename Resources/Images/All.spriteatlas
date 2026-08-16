@@ -166,7 +166,6 @@ SpriteAtlas:
     - c9bf745660f2fc141a37814b931a838e: -142445368
     - bf84d3862eec7fc40a05bc44b5732702: 21300000
     - 48c0d4d6bebaa934384b07aa1e2f8184: 21300000
-    - 291d8517a9d9fd940adcfa096eb5501a: 21300000
     - e53d66275d3d5564d9291cdce631a96e: 21300000
     - e4138b27a34b2ac49af1807ed1ae80df: 21300000
     - 451f3f67253aa2148a29e0413f951b47: 21300000
@@ -175,7 +174,10 @@ SpriteAtlas:
     - 7b27ca280966603469889370360bc8d1: 21300000
     - 7084aa58cdc3f8a46a7b8831f10a5d7d: 21300000
     - 09af350af6a771f48880a30c8445ddd8: 21300000
-    - 4b313a1ae39d84a44b4cd2be2cc17431: 21300000
+    - 4b313a1ae39d84a44b4cd2be2cc17431: 954764739
+    - 4b313a1ae39d84a44b4cd2be2cc17431: 2053003492
+    - 4b313a1ae39d84a44b4cd2be2cc17431: 2119564132
+    - 4b313a1ae39d84a44b4cd2be2cc17431: 384868377
     - 8445965a066fea04fa05959443863a4a: 21300000
     - 3e79d56a71e8ee244b66ccb81e78b651: 21300000
     - 41caefdaac0306b48b5e88eb4ecb624a: 21300000
@@ -341,7 +343,6 @@ SpriteAtlas:
   - {fileID: -142445368, guid: c9bf745660f2fc141a37814b931a838e, type: 3}
   - {fileID: 21300000, guid: bf84d3862eec7fc40a05bc44b5732702, type: 3}
   - {fileID: 21300000, guid: 48c0d4d6bebaa934384b07aa1e2f8184, type: 3}
-  - {fileID: 21300000, guid: 291d8517a9d9fd940adcfa096eb5501a, type: 3}
   - {fileID: 21300000, guid: e53d66275d3d5564d9291cdce631a96e, type: 3}
   - {fileID: 21300000, guid: e4138b27a34b2ac49af1807ed1ae80df, type: 3}
   - {fileID: 21300000, guid: 451f3f67253aa2148a29e0413f951b47, type: 3}
@@ -350,7 +351,10 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 7b27ca280966603469889370360bc8d1, type: 3}
   - {fileID: 21300000, guid: 7084aa58cdc3f8a46a7b8831f10a5d7d, type: 3}
   - {fileID: 21300000, guid: 09af350af6a771f48880a30c8445ddd8, type: 3}
-  - {fileID: 21300000, guid: 4b313a1ae39d84a44b4cd2be2cc17431, type: 3}
+  - {fileID: 954764739, guid: 4b313a1ae39d84a44b4cd2be2cc17431, type: 3}
+  - {fileID: 2053003492, guid: 4b313a1ae39d84a44b4cd2be2cc17431, type: 3}
+  - {fileID: 2119564132, guid: 4b313a1ae39d84a44b4cd2be2cc17431, type: 3}
+  - {fileID: 384868377, guid: 4b313a1ae39d84a44b4cd2be2cc17431, type: 3}
   - {fileID: 21300000, guid: 8445965a066fea04fa05959443863a4a, type: 3}
   - {fileID: 21300000, guid: 3e79d56a71e8ee244b66ccb81e78b651, type: 3}
   - {fileID: 21300000, guid: 41caefdaac0306b48b5e88eb4ecb624a, type: 3}
@@ -515,7 +519,6 @@ SpriteAtlas:
   - SnowPool_2
   - CustomBracelet
   - AllAxis_Outline_Arrows
-  - AddHp
   - DesertCoconutTree
   - Marsh
   - SingleGun
@@ -524,7 +527,10 @@ SpriteAtlas:
   - "\u5546\u5E97"
   - SnowMushroom1
   - Gradient
-  - AddHp1
+  - AddHp_0
+  - AddHp_3
+  - AddHp_2
+  - AddHp
   - "\u5546\u5E972"
   - Soil
   - CustomShield

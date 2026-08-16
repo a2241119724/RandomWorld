@@ -22,6 +22,7 @@ MonoBehaviour:
     Type: 8
     IsPass: 0
     IsNeedBuild: 0
+    IsBottomLayer: 1
   - Id: 800001
     CnName: "\u4ED3\u5E93"
     Name: Inventory
@@ -30,6 +31,7 @@ MonoBehaviour:
     Type: 8
     IsPass: 0
     IsNeedBuild: 0
+    IsBottomLayer: 1
   - Id: 800002
     CnName: "\u519C\u7530"
     Name: Farmland
@@ -38,3 +40,4 @@ MonoBehaviour:
     Type: 8
     IsPass: 0
     IsNeedBuild: 0
+    IsBottomLayer: 1
