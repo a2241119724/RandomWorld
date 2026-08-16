@@ -293,7 +293,7 @@ SO 的 `OnEnable()` / `GetExpandedItems()` 会自动分配 ID。
 
 #### 2.1 新增地形类型
 
-1. 在 `Resources/SO/TerrainConfigs/` 右键 → `Create` → `LAB2D` → `Terrain Config`
+1. 在 `Resources/SO/TerrainConfigs/` 右键 → `Create` → `SO` → `TerrainTileConfig`
 2. 配置 `TerrainTileConfig` 字段：
 
 | 字段 | 类型 | 说明 |

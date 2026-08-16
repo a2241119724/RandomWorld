@@ -4,12 +4,12 @@ namespace LAB2D.Map
 
     /// <summary>
     /// 地形瓦片可配置属性 — 数据驱动的地形定义。
-    /// 添加新地形：Create → LAB2D → Terrain Config，填写属性即可，无需修改任何 .cs 代码。
+    /// 添加新地形：Create → SO → TerrainTileConfig，填写属性即可，无需修改任何 .cs 代码。
     ///
     /// 每个资产代表一种地形类型。terrainId 在存档/网络同步中使用；
     /// tileResourceName 对应通过 ResourceLoadProvider 加载的 Unity Tile 资源名称。
     /// </summary>
-    [CreateAssetMenu(menuName = "LAB2D/Terrain Config")]
+    [CreateAssetMenu(menuName = "SO/TerrainTileConfig")]
     public class TerrainTileConfig : ScriptableObject
     {
         /// <summary>
