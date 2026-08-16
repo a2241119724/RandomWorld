@@ -56,7 +56,6 @@ global using LAB2D.MVC.Build.Model;
 global using LAB2D.MVC.Build.View;
 global using LAB2D.Serializable;
 global using LAB2D.SO;
-global using LAB2D.SO.Map;
 global using LAB2D.Tool;
 global using LAB2D.UI;
 global using LAB2D.UI.Action;
