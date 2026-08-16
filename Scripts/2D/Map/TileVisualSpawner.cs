@@ -13,6 +13,10 @@ namespace LAB2D.Map
     /// Tilemap 本体仍承担碰撞体/寻路/数据/存档/网络，其 TilemapRenderer 由宿主
     /// （BuildMap/ResourceMap）在 Awake 禁用，防双重渲染。
     ///
+    /// 恒底层（bottomLayerResolver）：可选委托按 cell 判定是否为"恒底层"建筑
+    /// （BuildItemData.IsBottomLayer 开关）。恒底层建筑不注册进 WorldYSortManager，
+    /// 固定 sortingOrder=WorldYSortManager.BottomLayerOrder，永远渲染在角色/其他建筑之下。
+    ///
     /// 幂等约束：
     /// - CreateOrUpdate 以 tilemap 当前状态为准（GetSprite/GetColor/GetTransformMatrix）；
     ///   无 tile 的 cell 视为删除 → 多格物品副格（纯碰撞无 tile）自动不建视觉。
@@ -30,6 +34,7 @@ namespace LAB2D.Map
         private readonly string sortingLayerName;
         private readonly string objectNamePrefix;
         private readonly Material material; // tile 视觉材质（复制宿主 TilemapRenderer，保证拆分后仍接收 2D Light）
+        private readonly System.Func<Vector3Int, bool> bottomLayerResolver; // 非空时按 cell 判定"恒底层"建筑（SO 开关）
         private readonly Dictionary<Vector3Int, SpriteRenderer> visual = new Dictionary<Vector3Int, SpriteRenderer>();
 
         /// <summary>
@@ -37,11 +42,15 @@ namespace LAB2D.Map
         /// </summary>
         /// <param name="sortingLayerName">视觉 sprite 所在 sorting layer（须与角色同层才能交叉排序）。</param>
         /// <param name="objectNamePrefix">视觉对象命名前缀（如 "BuildVisual"）。</param>
-        public TileVisualSpawner(Tilemap tilemap, Transform hostTransform, string sortingLayerName, string objectNamePrefix)
+        /// <param name="bottomLayerResolver">可选：按 cell 判定是否"恒底层"建筑（如 BuildItemData.IsBottomLayer）。
+        /// 返回 true 时该格视觉不参与 y 排序，固定最底层；null 表示全部参与 y 排序（树/装饰）。</param>
+        public TileVisualSpawner(Tilemap tilemap, Transform hostTransform, string sortingLayerName, string objectNamePrefix,
+            System.Func<Vector3Int, bool> bottomLayerResolver = null)
         {
             this.tilemap = tilemap;
             this.sortingLayerName = sortingLayerName;
             this.objectNamePrefix = objectNamePrefix;
+            this.bottomLayerResolver = bottomLayerResolver;
             this.material = ResolveMaterial(tilemap);
             this.parent = new GameObject(ParentName).transform;
             this.parent.SetParent(hostTransform, false);
@@ -94,14 +103,23 @@ namespace LAB2D.Map
                 go.transform.SetParent(this.parent, false);
                 sr = go.AddComponent<SpriteRenderer>();
                 sr.sortingLayerName = this.sortingLayerName;
-                sr.sortingOrder = 0; // 每帧由 WorldYSortManager 统一分配
+                if (this.bottomLayerResolver != null && this.bottomLayerResolver(cell))
+                {
+                    // 恒底层建筑（SO 开关）：不参与 y 排序，固定最底层（角色/其他建筑永远盖在其上）
+                    sr.sortingOrder = WorldYSortManager.BottomLayerOrder;
+                }
+                else
+                {
+                    sr.sortingOrder = 0; // 每帧由 WorldYSortManager 统一分配
+                    WorldYSortManager.Ensure().Register(sr);
+                }
+
                 if (this.material != null)
                 {
                     sr.sharedMaterial = this.material; // 沿用宿主 lit 材质，保持接收 2D Light
                 }
 
                 this.visual.Add(cell, sr);
-                WorldYSortManager.Ensure().Register(sr);
             }
 
             // 位置：GetCellCenterWorld 自动应用网格 transform（45° 转置坐标系）

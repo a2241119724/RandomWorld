@@ -17,6 +17,13 @@ namespace LAB2D.Render
     /// </summary>
     public class WorldYSortManager : MonoBehaviour
     {
+        /// <summary>
+        /// 不参与 y 排序的"恒底层"渲染器固定 sortingOrder。
+        /// 动态排序占用 0..N-1，恒底层用负值固定在最底（永远先绘制、被覆盖），
+        /// 角色/其他建筑在其后绘制永远盖住它。
+        /// </summary>
+        public const int BottomLayerOrder = -1000;
+
         private class Entry
         {
             public SpriteRenderer renderer;

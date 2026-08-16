@@ -134,4 +134,5 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
 - **底端 y:** `position.y + bottomOffset`；`bottomOffset = sprite.bounds.min.y - position.y`，仅 sprite 引用或 lossyScale 变化时重算（Player 换动画帧等），不做每帧 bounds。
 - **注册:** 角色在 `Character.Start` 经 `YSortRegisterProvider` 注册；建筑/树视觉由 `TileVisualSpawner`（`Scripts/2D/Map/`）创建时注册。注销不强制，LateUpdate 懒清扫已销毁 renderer（覆盖延迟销毁/Player 永不销毁）。
 - **建筑/树视觉拆分:** `TileVisualSpawner` 把 tile 视觉拆到独立 SpriteRenderer（挂 host 下 `VisualSprites` 子节点，Character 层），参与 y 排序；Tilemap 保留碰撞体/寻路/数据/存档/网络，`TilemapRenderer` 在宿主 Awake 禁用防双重渲染。多格物品副格（纯碰撞无 tile）不建视觉。
-- **约束:** Character 层内 renderer 必须全部注册（未注册者 order 固定 0 会错乱）。角色 layer 由 prefab 经 AB 包（`StreamingAssets/prefab`）加载——**改 prefab 层后必须重打 AB 包**（`工具/其他/打AB包`），否则加载到旧层导致排序按层隔离而失效。
+- **恒底层建筑:** `BuildItemData.IsBottomLayer`（SO 开关，**默认开启**）的建筑不注册进 `WorldYSortManager`，固定 `sortingOrder = WorldYSortManager.BottomLayerOrder`（-1000，低于动态 0..N-1），永远渲染在角色/其他建筑之下。默认所有建筑恒底层；需要参与 y 排序（如高墙/树遮挡角色）的建筑取消勾选。判定委托由 `BuildMap` 注入 `TileVisualSpawner`（`IsBottomLayerBuilding`，经 `GetBuildTileData` → `GetBuildItemDataByName`）。
+- **约束:** Character 层内 renderer 必须全部注册（未注册者 order 固定 0 会错乱）；唯一例外是 `IsBottomLayer` 恒底层建筑（固定负 order，恒在最底，不会错乱）。角色 layer 由 prefab 经 AB 包（`StreamingAssets/prefab`）加载——**改 prefab 层后必须重打 AB 包**（`工具/其他/打AB包`），否则加载到旧层导致排序按层隔离而失效。

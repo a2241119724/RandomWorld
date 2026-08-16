@@ -52,7 +52,7 @@ namespace LAB2D.Map
                 renderer.enabled = false;
             }
 
-            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "BuildVisual");
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "BuildVisual", this.IsBottomLayerBuilding);
         }
 
         public void Start()
@@ -363,6 +363,25 @@ namespace LAB2D.Map
                 "SyncDataResp",
                 DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(vector3Int)),
                 default);
+        }
+
+        /// <summary>
+        /// 该格建筑是否为"恒底层"建筑（BuildItemData.IsBottomLayer 开关）。
+        /// 恒底层建筑不参与 y 排序，固定渲染在最底层（角色/其他建筑永远盖在其上）。
+        /// 供 TileVisualSpawner 的 bottomLayerResolver 使用。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>是否为恒底层建筑；PosMap 无数据（如 DirectBuild）时安全返回 false。</returns>
+        private bool IsBottomLayerBuilding(Vector3Int cell)
+        {
+            BuildTileData data = this.GetBuildTileData(cell);
+            if (data == null)
+            {
+                return false;
+            }
+
+            BuildItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
+            return item != null && item.IsBottomLayer;
         }
 
         /// <summary>
