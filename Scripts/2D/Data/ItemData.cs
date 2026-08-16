@@ -50,6 +50,14 @@ namespace LAB2D.Data
         public bool IsStackable;
 
         /// <summary>
+        /// 恒底层物品开关（默认开启）。
+        /// 开启后该物品的地面视觉不参与按 y 的全局排序，固定显示在地图上面、角色之下；
+        /// 需要参与 y 排序（与角色/建筑/树交叉遮挡）的物品取消勾选。
+        /// </summary>
+        [Tooltip("恒底层物品开关（默认开启）：不参与 y 排序，固定显示在地图上面、角色之下；需要按视觉底端 y 与角色/建筑交叉遮挡的物品取消勾选。")]
+        public bool IsBottomLayer = true;
+
+        /// <summary>
         /// 物品类型
         /// </summary>
         [Tooltip("物品类型")]

@@ -13,8 +13,8 @@ namespace LAB2D.Map
     /// Tilemap 本体仍承担碰撞体/寻路/数据/存档/网络，其 TilemapRenderer 由宿主
     /// （BuildMap/ResourceMap）在 Awake 禁用，防双重渲染。
     ///
-    /// 恒底层（bottomLayerResolver）：可选委托按 cell 判定是否为"恒底层"建筑
-    /// （BuildItemData.IsBottomLayer 开关）。恒底层建筑不注册进 WorldYSortManager，
+    /// 恒底层（bottomLayerResolver）：可选委托按 cell 判定是否为"恒底层"视觉
+    /// （ItemData.IsBottomLayer 开关，建筑/掉落物通用）。恒底层视觉不注册进 WorldYSortManager，
     /// 固定 sortingOrder=WorldYSortManager.BottomLayerOrder，永远渲染在角色/其他建筑之下。
     ///
     /// 幂等约束：
@@ -34,7 +34,8 @@ namespace LAB2D.Map
         private readonly string sortingLayerName;
         private readonly string objectNamePrefix;
         private readonly Material material; // tile 视觉材质（复制宿主 TilemapRenderer，保证拆分后仍接收 2D Light）
-        private readonly System.Func<Vector3Int, bool> bottomLayerResolver; // 非空时按 cell 判定"恒底层"建筑（SO 开关）
+        private readonly System.Func<Vector3Int, bool> bottomLayerResolver; // 非空时按 cell 判定"恒底层"视觉（SO 开关）
+        private readonly bool useTilemapColor; // false 时 SpriteRenderer 颜色强制白色（不读 tilemap 颜色）
         private readonly Dictionary<Vector3Int, SpriteRenderer> visual = new Dictionary<Vector3Int, SpriteRenderer>();
 
         /// <summary>
@@ -42,15 +43,18 @@ namespace LAB2D.Map
         /// </summary>
         /// <param name="sortingLayerName">视觉 sprite 所在 sorting layer（须与角色同层才能交叉排序）。</param>
         /// <param name="objectNamePrefix">视觉对象命名前缀（如 "BuildVisual"）。</param>
-        /// <param name="bottomLayerResolver">可选：按 cell 判定是否"恒底层"建筑（如 BuildItemData.IsBottomLayer）。
+        /// <param name="bottomLayerResolver">可选：按 cell 判定是否"恒底层"视觉（如 ItemData.IsBottomLayer）。
         /// 返回 true 时该格视觉不参与 y 排序，固定最底层；null 表示全部参与 y 排序（树/装饰）。</param>
+        /// <param name="useTilemapColor">true 时 SpriteRenderer 颜色跟随 tilemap 颜色；false 时强制白色
+        /// （ItemMap 非恒底层 tile 用透明隐藏 TilemapRenderer 双重渲染，拆出视觉需不透明）。</param>
         public TileVisualSpawner(Tilemap tilemap, Transform hostTransform, string sortingLayerName, string objectNamePrefix,
-            System.Func<Vector3Int, bool> bottomLayerResolver = null)
+            System.Func<Vector3Int, bool> bottomLayerResolver = null, bool useTilemapColor = true)
         {
             this.tilemap = tilemap;
             this.sortingLayerName = sortingLayerName;
             this.objectNamePrefix = objectNamePrefix;
             this.bottomLayerResolver = bottomLayerResolver;
+            this.useTilemapColor = useTilemapColor;
             this.material = ResolveMaterial(tilemap);
             this.parent = new GameObject(ParentName).transform;
             this.parent.SetParent(hostTransform, false);
@@ -132,8 +136,9 @@ namespace LAB2D.Map
                 sr.sprite = sprite;
             }
 
-            // 颜色：建造中半透明/完成白色，与 SetColor 保持同步
-            Color color = this.tilemap.GetColor(cell);
+            // 颜色：默认跟随 tilemap.SetColor（建造中半透明/完成白色）；
+            // useTilemapColor=false 时强制白色（ItemMap 非恒底层 tile 用透明隐藏 TilemapRenderer 渲染）
+            Color color = this.useTilemapColor ? this.tilemap.GetColor(cell) : Color.white;
             if (sr.color != color)
             {
                 sr.color = color;

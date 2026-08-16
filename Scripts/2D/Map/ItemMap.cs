@@ -28,12 +28,26 @@ namespace LAB2D.Map
         /// </summary>
         public ItemMapData ItemMapDataLAB { get; private set; }
 
+        /// <summary>
+        /// 物品视觉拆分器：仅管理"非恒底层"物品（ItemData.IsBottomLayer=false）的独立
+        /// SpriteRenderer（Character 层 ItemVisual_*，参与 y 排序）。
+        /// 恒底层物品（默认开启）由 ItemMap 的 TilemapRenderer 直接渲染在 Map 上，不建 ItemVisual_*。
+        /// </summary>
+        private TileVisualSpawner visuals;
+
         /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
             Instance = this;
             this.ItemMapDataLAB = new ItemMapData();
+
+            // 物品视觉混合模式：
+            // - 恒底层物品（ItemData.IsBottomLayer 默认开启）：由 TilemapRenderer 直接渲染在 Map 上，
+            //   不创建 ItemVisual_*（TilemapRenderer 保持启用）。
+            // - 非恒底层物品：tile 保留数据/碰撞，颜色透明隐藏 TilemapRenderer 双重渲染，
+            //   由独立 SpriteRenderer（Character 层 ItemVisual_*）参与 y 排序。
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "ItemVisual", this.IsBottomLayerItem, useTilemapColor: false);
         }
 
         /// <summary>
@@ -44,6 +58,8 @@ namespace LAB2D.Map
         {
             this.ItemMapDataLAB.Remove(posMap);
             this.tilemap.SetTile(posMap, null);
+            // 视觉同步：tilemap tile 已删（恒底层视觉随之消失）；删独立 SpriteRenderer（非恒底层）
+            this.visuals?.Delete(posMap);
             this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), string.Empty, true);
         }
 
@@ -84,6 +100,9 @@ namespace LAB2D.Map
 
             this.ItemMapDataLAB.Add(posMap, tileBase.name);
             this.tilemap.SetTile(posMap, tileBase);
+            // 视觉分流：恒底层由 TilemapRenderer 渲染在 Map 上；非恒底层单独建 SpriteRenderer 参与 y 排序
+            // （解除 LockColor 与 SetColor 统一在 ApplyTileVisual 内处理）
+            this.ApplyTileVisual(posMap);
             this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
         }
 
@@ -136,12 +155,14 @@ namespace LAB2D.Map
             base.SyncDataResp(data);
             AWorkerTask.LogProvider("Response: 同步地图道具数据", LogManager.LogLevelEnum.Trace);
             ItemMapData itemMapData = DataTool.FromByteArray<ItemMapData>(data);
+            // 全量同步：先清空 ItemVisual_*，视觉以新数据为准重建（恒底层由 TilemapRenderer 渲染）
+            this.visuals?.ClearAll();
             Dictionary<Vector3IntLAB, string>.Enumerator enumerator = itemMapData.PosMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
-                this.tilemap.SetTile(
-                    Vector3IntLAB.ToVector3Int(enumerator.Current.Key),
-                    (TileBase)AWorkerTask.ResourceLoadProvider(enumerator.Current.Value));
+                Vector3Int pos = Vector3IntLAB.ToVector3Int(enumerator.Current.Key);
+                this.tilemap.SetTile(pos, (TileBase)AWorkerTask.ResourceLoadProvider(enumerator.Current.Value));
+                this.ApplyTileVisual(pos);
             }
         }
 
@@ -160,10 +181,12 @@ namespace LAB2D.Map
             if (isDelete)
             {
                 this.tilemap.SetTile(vector3Int, null);
+                this.visuals?.Delete(vector3Int);
                 return;
             }
 
             this.tilemap.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(tileBaseName));
+            this.ApplyTileVisual(vector3Int);
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
@@ -226,6 +249,58 @@ namespace LAB2D.Map
             }
 
             this.DeleteTile(posMap);
+        }
+
+        /// <summary>
+        /// 该格物品是否为"恒底层"物品（ItemData.IsBottomLayer 开关）。
+        /// 恒底层物品不参与 y 排序，固定显示在地图上面（角色/其他建筑永远盖在其上）；
+        /// 供 TileVisualSpawner 的 bottomLayerResolver 使用。tile 名查不到数据时按恒底层处理。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>是否为恒底层物品。</returns>
+        private bool IsBottomLayerItem(Vector3Int cell)
+        {
+            TileBase tile = this.tilemap.GetTile(cell);
+            if (tile == null)
+            {
+                return false;
+            }
+
+            ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
+            return item != null && item.IsBottomLayer;
+        }
+
+        /// <summary>
+        /// 按该格物品 IsBottomLayer 分流视觉：
+        /// 恒底层 → 由 ItemMap TilemapRenderer 直接渲染（恢复白色，不建 ItemVisual_*）；
+        /// 非恒底层 → tilemap 颜色透明隐藏（避免 TilemapRenderer 双重渲染，数据/碰撞保留），
+        ///            单独建 SpriteRenderer（ItemVisual_*）参与 y 排序。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        private void ApplyTileVisual(Vector3Int cell)
+        {
+            if (!this.tilemap.HasTile(cell))
+            {
+                this.visuals?.Delete(cell);
+                return;
+            }
+
+            // 先解除 LockColor：否则 SetColor 不生效，非恒底层 tile 的透明隐藏会失败
+            // （BuildMap/ResourceMap 同款前置写法）
+            this.tilemap.RemoveTileFlags(cell, TileFlags.LockColor);
+
+            if (this.IsBottomLayerItem(cell))
+            {
+                // 恒底层：恢复颜色由 TilemapRenderer 渲染在 Map 上；确保不残留 ItemVisual_*
+                this.tilemap.SetColor(cell, Color.white);
+                this.visuals?.Delete(cell);
+            }
+            else
+            {
+                // 非恒底层：tilemap 透明隐藏（数据/碰撞保留），视觉由独立 SpriteRenderer 呈现
+                this.tilemap.SetColor(cell, new Color(1f, 1f, 1f, 0f));
+                this.visuals?.CreateOrUpdate(cell);
+            }
         }
 
         /// <summary>
