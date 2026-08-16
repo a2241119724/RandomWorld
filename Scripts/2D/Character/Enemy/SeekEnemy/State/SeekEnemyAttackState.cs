@@ -44,6 +44,17 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 weaponObject.SetCharacter(this.Character);
             }
 
+            // 拿起武器后立即朝攻击目标（初始朝向），避免武器 prefab 默认朝上（z=0）导致"拿起即拐到一边再拐回来"。
+            // 后续武器朝向由 AWeaponObject.Update 按范围内最近目标持续动态跟踪，不固定（见 bug-fixes.md 2026-08-16）。
+            if (this.Character.Weapon != null && this.Character.Target != null)
+            {
+                Vector3 dirToTarget = this.Character.Target.transform.position - this.Character.transform.position;
+                if (dirToTarget.sqrMagnitude > 0.001f)
+                {
+                    this.Character.Weapon.transform.rotation = Quaternion.FromToRotation(Vector3.up, dirToTarget);
+                }
+            }
+
             // 状态切换：进入攻击状态（节流 2s/条，见 bug-fixes.md 2026-08-15）
             AWorkerTask.LogProviderThrottled(
                 $"{this.Character.name}|AttackIn", 2f,
@@ -64,13 +75,46 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 return;
             }
 
-            // 设置视觉，攻击觉方向
-            this.Character.SightRange.transform.rotation = this.Character.Weapon.transform.rotation;
-            this.Character.AttackRange.transform.rotation = this.Character.Weapon.transform.rotation;
-
             // 玩家朝向设置为攻击方向
-            this.Character.Direction = this.Character.Target.transform.position - this.Character.transform.position;
+            Vector3 dirToTarget = this.Character.Target.transform.position - this.Character.transform.position;
+            this.Character.Direction = dirToTarget;
+
+            // 设置视觉，攻击方向（直接用目标方向，不依赖武器 rotation：武器由
+            // AWeaponObject.Update 动态跟踪，进攻击状态首帧可能尚未矫正，跟随它会导致
+            // AttackRange 朝空方向闪一下再拐回，见 bug-fixes.md 2026-08-16）
+            Quaternion attackRotation = dirToTarget.sqrMagnitude > 0.001f
+                ? Quaternion.FromToRotation(Vector3.up, dirToTarget)
+                : this.Character.Weapon.transform.rotation;
+            this.Character.SightRange.transform.rotation = attackRotation;
+            this.Character.AttackRange.transform.rotation = attackRotation;
+
+            // 攻击方向诊断（事件点，仅武器明显偏离攻击目标时记录 + 节流 0.5s）：定位"拐到其他方向攻击"
+            {
+                Vector3 weaponUp = this.Character.Weapon.transform.up;
+                Vector3 toTarget = this.Character.Target.transform.position - this.Character.transform.position;
+                float aimAngle = Mathf.Atan2(weaponUp.y, weaponUp.x) * MathHelper.Rad2Deg;
+                float targetAngle = Mathf.Atan2(toTarget.y, toTarget.x) * MathHelper.Rad2Deg;
+                float dev = Mathf.Abs(Mathf.DeltaAngle(aimAngle, targetAngle));
+                if (dev > 20f)
+                {
+                    Vector3 selfPos = this.Character.transform.position;
+                    Vector3 targetPos = this.Character.Target.transform.position;
+                    AWorkerTask.LogProviderThrottled(
+                        $"{this.Character.name}|AimDev", 0.5f,
+                        $"[EnemyDiag] {this.Character.name}@({selfPos.x:F0},{selfPos.y:F0}) 攻击方向偏差 {dev:0.0}° 武器={aimAngle:0.0}° 目标={this.Character.Target.name}@({targetPos.x:F0},{targetPos.y:F0}) 目标角={targetAngle:0.0}°",
+                        LogManager.LogLevelEnum.Debug);
+                }
+            }
+
             AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
+
+            // 武器跟踪攻击目标（而非范围内最近目标）：防止武器拐向旁边的其他角色，
+            // 造成"攻击 player、武器却朝最近的韩东瑜"的方向不一致（见 bug-fixes.md 2026-08-16）。
+            if (this.Character.Target != null)
+            {
+                weaponObject.AimTarget = this.Character.Target.transform;
+            }
+
             weaponObject.Attack();
             if (this.Character.NetworkView.IsOnline)
             {
@@ -104,6 +148,11 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             // 放下武器
             if (this.Character.Weapon != null)
             {
+                AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
+                if (weaponObject != null)
+                {
+                    weaponObject.AimTarget = null; // 退出攻击，不再锁定攻击目标
+                }
                 GameObject.Destroy(this.Character.Weapon.gameObject);
                 this.Character.Weapon = null;
             }

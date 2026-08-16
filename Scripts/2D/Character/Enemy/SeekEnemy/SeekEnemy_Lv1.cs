@@ -12,7 +12,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         public override void Start()
         {
             EnemyData enemyData = this.CharacterDataLAB as EnemyData;
-            enemyData.AttackRange = enemyData.SightRange = 7.0f;
+            enemyData.AttackRange = enemyData.SightRange = 6.5f;
             enemyData.SoundRange = 4.0f;
             base.Start();
 

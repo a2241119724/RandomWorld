@@ -46,6 +46,17 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         }
 
         /// <inheritdoc/>
+        public override string GetStateLabel() => this.Manager.CurrentStateType switch
+        {
+            ACommonEnemyState.TypeEnum.Wander => "漫游",
+            ACommonEnemyState.TypeEnum.Seek => "搜索",
+            ACommonEnemyState.TypeEnum.Chase => "追踪",
+            ACommonEnemyState.TypeEnum.Attack => "攻击",
+            ACommonEnemyState.TypeEnum.Dead => "死亡",
+            _ => this.Manager.CurrentStateType.ToString(),
+        };
+
+        /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
@@ -104,9 +115,13 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         /// <inheritdoc/>
         public override void ReduceHp(float hp, Character attacker, bool isCRT = false)
         {
+            // 被打换目标需排除"打我的就是当前攻击目标"：否则单目标战斗中敌人每攻击几秒
+            // 被反击一次就切 Seek → 又切回 Attack，武器反复销毁重建，拿起瞬间方向跳变
+            // （同 ASeekEnemy.ReduceHp，见 bug-fixes.md 2026-08-16）。只有被其他目标打才换。
             if (this.Manager.CurrentStateType != ACommonEnemyState.TypeEnum.Attack ||
                 (this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Attack
-                && ((CommonEnemyAttackState)this.Manager.CurrentState).AttackTime > ChangeTarget))
+                && ((CommonEnemyAttackState)this.Manager.CurrentState).AttackTime > ChangeTarget
+                && attacker != this.Target))
             {
                 this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Seek); // 进入搜索状态
             }

@@ -306,3 +306,34 @@
   - 语义边界：**已建成的瓦片（IsComplete=true）保留**——那是真实建筑，死亡不影响已有建筑；只清理预注册未完成（IsComplete=false）的规划瓦片。
 - **验证**：编译待 Unity 确认（Unity 项目无法命令行直接编译）。运行时观察：Worker 死亡后其房间未完成瓦片立即被清除（不会刷出半透明残留 5 秒），任务板不再刷满"房间全部发布"的任务。
 - **教训**：**"任务凭空刷满"类问题先查"归属判定失效 + 定时扫描重建"的组合**——预注册瓦片的归属依赖存活 Worker，死亡/移除后归属消失，周期性扫描把"无主"变成"新任务"。生命周期事件（死亡/删除）必须同时清理其在共享数据结构中的挂账（未完成瓦片），而不是等周期性扫描兜底；兜底扫描是为异常情况设计的，不应承担正常生命周期的清理责任。清理时以 `IsComplete` 区分"规划"与"真实建筑"，只清未完成，避免误删建成物。
+
+## 2026-08-16 Worker/SeekEnemy 攻击"拐到其他方向攻击一次"：多目标跟错 + 攻击→移动→攻击切换时序（两处根因）
+
+- **现象**：用户报告 Worker 与 SeekEnemy 攻击时"总是会拐到其他方向攻击一次"——武器突然转到旁边另一方向打一下再回来。反复日志（`[WeaponDiag]` 实例化/拐向/攻击 + 攻击状态偏差日志）最终定位：
+  ```
+  seekenemy@(51,111) CustomSword 实例化 初始z=83.8           ← OnEnter 已把武器初始朝向对准 Target(player)
+  seekenemy@(51,111) CustomSword 武器拐向 108.9° 目标=韩东瑜   ← 武器 Update 拐向范围内"最近目标"韩东瑜
+  seekenemy@(51,111) CustomSword 攻击 武器指向=108.9°         ← 朝韩东瑜打
+  seekenemy@(51,111) 攻击方向偏差 64.9° 武器=108.9° 目标=player 目标角=173.8°  ← 攻击状态锁定 player，武器却朝韩东瑜
+  ```
+- **真正根因**：**武器方向由 `AWeaponObject.Update` 的"范围内重叠碰撞最近目标"（`minDistanceCharacter`）决定，而攻击状态锁定的目标（`SeekEnemyAttackState.Target` / `WorkerAttackState.LastAttacker`）是另一个角色**。战场混战时武器范围内同时有多个角色，武器每帧拐向最近的那个并在它们之间切换——视觉上"拐到其他方向攻击一次"。第一击方向正确（`aimInitialized` 门控 + OnEnter 初始朝向已验证生效，日志 `攻击 武器指向=目标角` 恒等），错的不是第一击，而是**持续攻击期间武器跟错了目标**。
+- **前置修复**（保留，解决"拿起瞬间朝上突转"与"退出→重进销毁重建"两处表面问题）：
+  1. `AWeapon.cs` `AWeaponObject` 新增 `bool aimInitialized`：`Update()` 首帧置 true；`Attack()` 开头 `if (!this.aimInitialized) return;`——武器刚实例化朝向未矫正时跳过攻击。
+  2. 攻击状态 `OnEnter` 拿起武器后一次性设初始朝向为攻击目标（`WorkerAttackState` 朝 `LastAttacker`、`SeekEnemyAttackState` 朝 `Target`），消除拿起瞬间朝上。
+  3. `WorkerAttackState` 超时（1.5s）先判 `IsStillUnderAttack()`（`LastAttacker` 存活且距离 <= 8）再决定是否退出——避免敌人持续攻击时"退出攻击→瞬间又被打回攻击"反复销毁重建武器。SeekEnemy 侧无此问题（退出需 2s 感知失败、重进需经实际寻路）。
+- **最终修复（根治"跟错目标"）**：`AWeaponObject` 新增 `public Transform AimTarget`，攻击状态 `OnUpdate` 把锁定目标传给武器（`SeekEnemyAttackState` → `Target`、`WorkerAttackState` → `LastAttacker`）；`AWeaponObject.Update` 的跟踪目标改为 `AimTarget ?? minDistanceCharacter`（攻击目标优先，范围内最近目标兜底）；退出攻击状态时清空 `AimTarget`。视线检测（墙遮挡跳过攻击）也改为用 `AimTarget` 优先。
+- **验证**：编译待 Unity 确认（Unity 项目无法命令行直接编译）。运行时观察：SeekEnemy 锁定 player 后武器持续朝 player（不再拐向旁边的韩东瑜/邵元/凤敬）；`攻击方向偏差` 日志从 64.9° 降到 <5°；Worker 反击 `LastAttacker` 同理。
+- **教训**：
+  1. **"武器方向"与"攻击目标"是两个独立数据源，必须显式对齐**：`AWeaponObject.Update` 的 `minDistanceCharacter`（范围内最近目标）是 Player 常驻武器的通用跟踪逻辑，攻击状态必须把锁定的 `Target`/`LastAttacker` 传给武器，否则混战时武器会跟旁边更近的角色而拐走。武器层的通用"最近目标"逻辑只应做兜底。
+  2. **诊断日志要同时记录"武器指向"与"攻击状态锁定的目标角"**：单看武器方向看不出错，只有 `武器=108.9° 目标=player 目标角=173.8°` 这种并排对比才能暴露"跟错目标"。`攻击方向偏差` 日志（武器 vs 锁定目标角度差）是关键指标。
+  3. **注意属性 getter 语义**：`ASeekEnemy.Direction` 优先返回寻路方向 `Seek.Direction`，`Direction = X` 赋值仅写私有字段且只在 `Seek.Direction==zero` 时被读到——"用了属性设方向却仍朝旧方向"先查 getter 是否有更高优先级来源。
+  4. **诊断日志要区分"角色名"与"实例"**：敌人无名字（`Character.Awake` 设类型名），同类敌人数个时日志必须带坐标（`name@(x,y)`）区分；"拐弯很快 <0.5s"的事件点日志不能用长节流，改用方向变化触发（>5° 即记、不限频）。
+- **补充（同日二次定位，真正的用户现象）**：用户澄清"拐向的是**没有角色的空方向**，且发生在攻击中突然切到移动状态、又切回攻击状态时"——不是多目标切换。真正根因是 **`SeekEnemyMoveState` 先 `ChangeState(Attack)` 后赋 `Target`**：`ChangeState` 是**同步**调用（立即执行 `OnEnter`），此时 `Target` 仍是 null（或上一轮旧值），`OnEnter` 的初始朝向不生效 → 武器保持 prefab 默认朝上（z=0，即空方向）；同帧 `SeekEnemyAttackState.OnUpdate` 里 `AttackRange/SightRange` 跟随武器 rotation 朝上 → 视觉"拐向空方向攻击一次"，下一帧武器矫正回目标 = "拐回去"。触发链路：SeekEnemy 攻击玩家 >5s 被反击（`ReduceHp` → `ChangeState(Move)`，武器销毁）→ Move 感知到目标又 `ChangeState(Attack)`（武器重建、方向朝上）。Worker 侧无此问题：`LastAttacker` 在 `CharacterHealthComponent.ApplyDamage`（`ReduceHp` 内）已先于 `ChangeState(Attack)` 赋值，OnEnter 初始朝向有值。
+  - **修复**：
+    - `SeekEnemyMoveState.cs`：先赋 `Target` 再 `ChangeState(Attack)`，OnEnter 初始朝向才能读到新目标。
+    - `SeekEnemyAttackState.cs`：`AttackRange/SightRange` 直接用目标方向（`Quaternion.FromToRotation(Vector3.up, dirToTarget)`）计算，不再跟随武器 rotation——武器由 `AWeaponObject.Update` 动态矫正，进攻击状态首帧可能尚未矫正，视觉范围不应依赖它。
+  - **教训（补充）**：**先 `ChangeState` 后赋状态数据 = 初始化代码读到旧值/null**。`ChangeState` 同步执行 `OnEnter`，"进状态时要读的目标/参数"必须在调用 `ChangeState` 之前准备好。
+- **补充（同日三次定位，单目标复现确认，真正的周期来源）**：用户明确"**单目标**也复现：先攻击几秒 → 突然 Move → 瞬间又攻击"。触发源不在切换瞬间，而在 **`ReduceHp` 的换目标条件**：`在攻击状态 && AttackTime > ChangeTarget(5s) && 被反击 → 切 Move/Seek`（`ASeekEnemy.ReduceHp`、`ACommonEnemy.ReduceHp`）。单目标战斗中敌人攻击玩家几秒、玩家反击 → 条件成立 → 切走 → 目标仍在感知范围 → 下一感知帧立刻切回攻击 → 武器销毁重建 → **每 ~5s 循环一次**（正是用户"时不时"、且单目标也出现的现象）。修复：条件加 `attacker != this.Target` —— 被**当前攻击目标**反击时不换目标、继续攻击；被**其他目标**打才切（保留多目标换仇恨的设计）。
+- **补充（同日四次，Worker 同构改动）**：用户确认 Enemy 修复有效后，要求 Worker 同样"被攻击就切换目标 → 改为和 Enemy 一样"。Worker 原把 `LastAttacker`（每次 `ReduceHp` 由 `CharacterHealthComponent.ApplyDamage` 更新为最新攻击者）直接当武器 `AimTarget`——被旁边目标打一下就换目标，没有锁定语义。改：`AWorker` 新增 `AttackTarget`（反击锁定目标）；`WorkerAttackState.OnEnter` 锁定 `LastAttacker`、`OnUpdate` 与 `IsStillUnderAttack` 改用 `AttackTarget`、`OnExit` 清空；`AWorker.ReduceHp` 攻击分支只在 `attacker != AttackTarget` 时更新目标（与 Enemy.ReduceHp 对称）。注意：批量替换 `LastAttacker→AttackTarget` 时把 OnEnter 的锁定赋值误替换成自赋值（`AttackTarget = AttackTarget`），需人工检查。
+- **补充（同日五次，Worker 专注期·失败尝试）**：用户测试四次改动后反馈"**谁攻击 Worker 他就会转头，没有 Enemy 的持续攻击几秒**"。四次改动只加了锁定语义（`attacker != AttackTarget` 才换），没有**时间门控**。尝试：`WorkerAttackState` 新增 `public float AttackTime { get; private set; }`（OnEnter 置 0、OnUpdate 累加 `DeltaTime`、`Reset()` 不重置），`AWorker.ReduceHp` 攻击分支改为 `attackState.AttackTime > ChangeTarget(5s)` 才换。**此方案无效**（用户复测仍转头），根因：`AttackTime` 是"进入攻击状态的累计时长"，而用户场景是 Worker 与 Enemy **互殴**——Worker 早已攻击超过 5 秒，`AttackTime` 恒 `>5s`，此时玩家一打立即满足换目标条件 → 转头。专注期必须基于"**被打时刻**"而非"进入攻击时长"。
+- **补充（同日六次，Worker 被打锁定期·有效）**：五次方案失败的教训——"持续攻击几秒"指**被打后**继续攻击当前目标几秒，与 Worker 已经攻击了多久无关。最终修复：`WorkerAttackState` 新增 `FocusDuration = 5.0f` 常量与 `focusEndTime` 字段（OnEnter 重置为 `float.MinValue`，以 `AttackTime` 为时间轴）；新增 `OnHit()`（被打时若当前不在锁定中则 `focusEndTime = AttackTime + FocusDuration`，锁定中再次被打**不刷新**——否则持续被打会永远刷新锁定、永不换目标）与 `CanSwitchTarget()`（`AttackTime > focusEndTime`）。`AWorker.ReduceHp` 攻击分支：先 `attackState.OnHit()`，再 `attackState.CanSwitchTarget() && attacker != null && attacker != AttackTarget` 才换目标；换目标时 `LogProviderThrottled`（`[StateDiag]` 换反击目标，2s 节流）便于复现定位。语义：**任何人打 Worker → 锁定当前目标 5 秒（期间继续攻击不转头）→ 5 秒后若再被其他目标打才换**；被当前攻击目标打永远不换（对称）。该方案同时覆盖"互殴很久后被打"与"刚进攻击被打"两种情况。`AWorker.ChangeTarget` 常量随之删除（移入 AttackState 为 `FocusDuration`）。

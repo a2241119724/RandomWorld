@@ -79,6 +79,11 @@ namespace LAB2D.UI.Action
                         infoText += $"\n对你好感: {fm.GetFavorabilityWithPlayer(worker):F0}（{fm.GetAttitudeLabel(worker)}）";
                     }
                 }
+                else if (this.character is AEnemy enemy)
+                {
+                    // 状态：点击敌人时显示其当前状态机状态（漫游/搜索/追踪/攻击/寻路/移动/死亡）
+                    infoText += $"\n状态: {enemy.GetStateLabel()}";
+                }
 
                 ItemInfoPanel.Instance.SetItemInfo(infoText);
                 ItemInfoPanel.Instance.SetCharacter(this.character);

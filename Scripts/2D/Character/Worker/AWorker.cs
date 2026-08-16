@@ -39,6 +39,13 @@ namespace LAB2D.Character.Worker
         public override bool IsWorkerCharacter => true;
 
         /// <summary>
+        /// 当前反击锁定目标（攻击状态持有）。进入攻击状态时锁定为 LastAttacker，
+        /// 之后只有被其他目标攻击才更新——被当前攻击目标打保持不换，
+        /// 与 Enemy.ReduceHp 的 Target 语义对称（见 bug-fixes.md 2026-08-16）。
+        /// </summary>
+        public Character AttackTarget { get; set; }
+
+        /// <summary>
         /// Worker 放弃任务回调 — 清除资源预留并通知任务管理器。
         /// 默认实现访问 InventoryManager.Instance 和 WorkerTaskManager.Instance。
         /// </summary>
@@ -899,10 +906,27 @@ namespace LAB2D.Character.Worker
             {
                 if (this.Manager.CurrentStateType != AWorkerState.TypeEnum.Attack)
                 {
-                    this.Manager.ChangeState(AWorkerState.TypeEnum.Attack);
+                    this.Manager.ChangeState(AWorkerState.TypeEnum.Attack); // OnEnter 锁定 AttackTarget = LastAttacker
                 }
                 else
                 {
+                    // 被打刷新当前目标的锁定期（被打后继续攻击几秒不转头，与 Enemy 的"持续攻击
+                    // 几秒"等效），锁定期过后被其他目标打才换。锁定基于"被打时刻"而非"进入攻击
+                    // 时长"：Worker 攻击当前目标再久，被打后也先继续攻击几秒，不会一被打就转头
+                    // （见 bug-fixes.md 2026-08-16）。
+                    if (this.Manager.CurrentState is WorkerAttackState attackState)
+                    {
+                        attackState.OnHit();
+                        if (attackState.CanSwitchTarget() && attacker != null && attacker != this.AttackTarget)
+                        {
+                            this.AttackTarget = attacker;
+                            AWorkerTask.LogProviderThrottled(
+                                $"{this.name}|TargetSwitch", 2f,
+                                $"[StateDiag] {this.name} 换反击目标 → {attacker.name}（锁定期过后被打）",
+                                LogManager.LogLevelEnum.Debug);
+                        }
+                    }
+
                     this.Manager.CurrentState.Reset();
                 }
             }

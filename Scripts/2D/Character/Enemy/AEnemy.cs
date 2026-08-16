@@ -248,6 +248,12 @@ namespace LAB2D.Character.Enemy
                 + $"子弹速度: {((EnemyData)this.CharacterDataLAB).BulletSpeed}\n";
         }
 
+        /// <summary>
+        /// 当前状态机状态的中文描述（ItemInfo 面板显示用）。
+        /// 各敌人子类按自己的状态枚举实现。
+        /// </summary>
+        public virtual string GetStateLabel() => string.Empty;
+
         /// <inheritdoc/>
         protected override void Death()
         {

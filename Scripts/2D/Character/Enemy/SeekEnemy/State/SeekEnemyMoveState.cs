@@ -83,8 +83,12 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
 
                     if (target != null && this.Character.SenseNearby(target))
                     {
-                        this.Character.Manager.ChangeState(TypeEnum.Attack);
+                        // 先赋 Target 再切攻击状态：ChangeState 同步触发 OnEnter，若 Target
+                        // 在 ChangeState 之后才赋值，OnEnter 初始朝向读不到目标，武器保持
+                        // prefab 默认朝上（z=0），同帧 AttackRange 跟随武器朝空方向闪一下
+                        // 再拐回——即"攻击时拐向没有角色的地方攻击一次"（见 bug-fixes.md 2026-08-16）。
                         this.Character.Target = target.GetComponent<LAB2D.Character.Character>();
+                        this.Character.Manager.ChangeState(TypeEnum.Attack);
 
                         // 攻击目标选定事件（一次性）
                         AWorkerTask.LogProvider(
