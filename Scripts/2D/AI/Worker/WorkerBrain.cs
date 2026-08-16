@@ -2725,27 +2725,68 @@ namespace LAB2D.AI.Worker
         /// </summary>
         private Decision? TryMakeStoreDecision(AWorker worker, AWorker.WorkerData wd)
         {
-            if (wd == null || wd.PlannedHomePosition == null) return null;
+            if (wd == null || wd.PlannedHomePosition == null)
+            {
+                AWorkerTask.LogProviderThrottled($"{worker.name}|StoreNoHome", 30f,
+                    $"[BrainDiag] {worker.name} Store跳过: 无家位置", LogManager.LogLevelEnum.Debug);
+                return null;
+            }
 
             var layout = GetRoomLayout(wd);
-            if (wd.HomeBuildStage < layout.CompleteStage) return null; // 家未建完
+            if (wd.HomeBuildStage < layout.CompleteStage)
+            {
+                AWorkerTask.LogProviderThrottled($"{worker.name}|StoreNotBuilt", 30f,
+                    $"[BrainDiag] {worker.name} Store跳过: 家未建完 {wd.HomeBuildStage}/{layout.CompleteStage}",
+                    LogManager.LogLevelEnum.Debug);
+                return null; // 家未建完
+            }
 
             // 冷却：上次溢出/存取失败后不立即重试
             float now = UnityEngine.Time.time;
-            if (now - wd.LastStorageOverflowTime < this.StorageRetryCooldownSeconds) return null;
-            if (now - wd.LastStorageAccessFailTime < this.StorageRetryCooldownSeconds) return null;
+            if (now - wd.LastStorageOverflowTime < this.StorageRetryCooldownSeconds)
+            {
+                AWorkerTask.LogProviderThrottled($"{worker.name}|StoreOverflowCooldown", 30f,
+                    $"[BrainDiag] {worker.name} Store跳过: 溢出冷却 {(now - wd.LastStorageOverflowTime):F1}s < {this.StorageRetryCooldownSeconds}s",
+                    LogManager.LogLevelEnum.Debug);
+                return null;
+            }
+            if (now - wd.LastStorageAccessFailTime < this.StorageRetryCooldownSeconds)
+            {
+                AWorkerTask.LogProviderThrottled($"{worker.name}|StoreFailCooldown", 30f,
+                    $"[BrainDiag] {worker.name} Store跳过: 存取失败冷却 {(now - wd.LastStorageAccessFailTime):F1}s < {this.StorageRetryCooldownSeconds}s",
+                    LogManager.LogLevelEnum.Debug);
+                return null;
+            }
 
             // 身上容量未超阈值 → 不需要腾空间
             int carried = worker.GetTotalCarriedCount();
             if (wd.MaxResourceCount <= 0
-                || (float)carried / wd.MaxResourceCount <= this.StorageOverflowThreshold) return null;
+                || (float)carried / wd.MaxResourceCount <= this.StorageOverflowThreshold)
+            {
+                AWorkerTask.LogProviderThrottled($"{worker.name}|StoreNotFull", 30f,
+                    $"[BrainDiag] {worker.name} Store跳过: 携带{carried}/{wd.MaxResourceCount} ({(float)carried / wd.MaxResourceCount:P0} <= {this.StorageOverflowThreshold:P0})",
+                    LogManager.LogLevelEnum.Debug);
+                return null;
+            }
 
             // 无可存物品 → 不决策
-            if (!worker.TryPickDepositableResource(out _)) return null;
+            if (!worker.TryPickDepositableResource(out _))
+            {
+                AWorkerTask.LogProviderThrottled($"{worker.name}|StoreNoDepositable", 30f,
+                    $"[BrainDiag] {worker.name} Store跳过: 无可存物品 携带{carried} 目标={wd.CurrentGoal.Type}",
+                    LogManager.LogLevelEnum.Debug);
+                return null;
+            }
 
             // 无可达仓库瓦片 → 不决策
             Vector3Int tile = WorkerStorageTask.PickStorageTile(worker);
-            if (tile == default) return null;
+            if (tile == default)
+            {
+                AWorkerTask.LogProviderThrottled($"{worker.name}|StoreTileUnreachable", 30f,
+                    $"[BrainDiag] {worker.name} Store跳过: 仓库瓦片不可达",
+                    LogManager.LogLevelEnum.Debug);
+                return null;
+            }
 
             return new Decision
             {

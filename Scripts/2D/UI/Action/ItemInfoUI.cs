@@ -138,6 +138,16 @@ namespace LAB2D.UI.Action
                         break;
                     }
 
+                    // Worker 家庭仓库格（4槽）：物品图标画在 ItemMap 上，未注册进
+                    // DropManager/InventoryManager，直接读取仓库数据展示数量等信息。
+                    if (WorkerStorageTask.TryGetStorageItemAt(
+                            this.selectPos, out AWorker storageWorker, out ResourceInfo storageItem))
+                    {
+                        this.select = "WorkerStorage";
+                        this.text = this.BuildStorageItemText(storageWorker, storageItem);
+                        break;
+                    }
+
                     // 没有物品,显示地图Tile
                     this.select = "Tile";
                     TileBase tileBase = this.GetTile(this.selectPos);
@@ -385,6 +395,42 @@ namespace LAB2D.UI.Action
                 {
                     ServiceLocator.Get<InventoryManager>().ShowWearMenu(posMap);
                 }
+            }
+
+            return text;
+        }
+
+        /// <summary>
+        /// 构造 Worker 仓库格的物品信息文本（右键仓库格时展示）。
+        /// </summary>
+        /// <param name="owner">仓库所属 Worker</param>
+        /// <param name="resourceInfo">该格的仓库物品</param>
+        /// <returns>格式化文本</returns>
+        private string BuildStorageItemText(AWorker owner, ResourceInfo resourceInfo)
+        {
+            string text = $"ID:{resourceInfo.Id}\n";
+            ItemData itemData = ServiceLocator.Get<ItemDataManager>().GetById(resourceInfo.Id);
+            if (itemData != null)
+            {
+                text += $"名称:{itemData.CnName}\n" +
+                    $"英文名:{itemData.Name}\n" +
+                    $"类型:{itemData.Type}\n" +
+                    $"数量:{resourceInfo.Count}\n" +
+                    $"所属Worker:{owner.name}\n" +
+                    $"拥有者:{Domain.Worker.ItemOwnershipService.GetOwnerLabel(resourceInfo)}\n" +
+                    $"信息:{itemData.Info}\n" +
+                    $"可堆叠:{itemData.IsStackable}\n";
+
+                if (itemData.Type == AItem.ItemTypeEnum.Weapon || itemData.Type == AItem.ItemTypeEnum.Equipment)
+                {
+                    text += $"装备槽位:{itemData.EquipSlot}\n";
+                }
+            }
+            else
+            {
+                text += $"数量:{resourceInfo.Count}\n" +
+                    $"所属Worker:{owner.name}\n" +
+                    $"拥有者:{Domain.Worker.ItemOwnershipService.GetOwnerLabel(resourceInfo)}\n";
             }
 
             return text;

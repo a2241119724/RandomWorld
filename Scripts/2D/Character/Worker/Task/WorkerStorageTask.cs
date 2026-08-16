@@ -267,6 +267,63 @@ namespace LAB2D.Character.Worker.Task
                 LogManager.LogLevelEnum.Debug);
         }
 
+        /// <summary>
+        /// 查询 posMap 是否为某 Worker 的仓库格；若是返回所属 Worker 与该格对应的仓库物品。
+        /// 与 RefreshStorageIcons 完全同规则（仓库内容按字典序一格一个、跳过无效条目），
+        /// 保证 ItemInfoUI 右键展示的正是图标绘制对应的那件物品。
+        /// 仅右键时调用（遍历全部 Worker），非每帧逻辑。
+        /// </summary>
+        /// <param name="posMap">查询的地图格</param>
+        /// <param name="owner">命中的仓库所属 Worker（未命中为 null）</param>
+        /// <param name="item">该格对应的仓库物品（未命中为 null）</param>
+        /// <returns>命中返回 true</returns>
+        public static bool TryGetStorageItemAt(Vector3Int posMap, out AWorker owner, out ResourceInfo item)
+        {
+            owner = null;
+            item = null;
+
+            WorkerManager manager = Core.ServiceLocator.Get<WorkerManager>();
+            if (manager == null || manager.Characters == null || manager.Characters.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (AWorker worker in manager.Characters)
+            {
+                if (worker == null) continue;
+                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd == null || wd.Storage == null || wd.PlannedHomePosition == null) continue;
+
+                var layout = WorkerBrain.GetRoomLayout(wd);
+                if (wd.HomeBuildStage < layout.CompleteStage) continue; // 家未建完，无仓库格
+
+                Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+
+                // 与 RefreshStorageIcons 相同的逐格映射：有效条目按序占一个 StorageOffset
+                int index = 0;
+                foreach (KeyValuePair<int, ResourceInfo> kv in wd.Storage)
+                {
+                    if (index >= layout.StorageOffsets.Count) break;
+                    if (kv.Value == null || kv.Value.Count <= 0) continue;
+
+                    ItemData itemData = ItemDataProvider(kv.Key);
+                    if (itemData == null) continue;
+                    if (ResourceLoadProvider(itemData.Name) as TileBase == null) continue;
+
+                    Vector3Int pos = center + layout.StorageOffsets[index];
+                    index++;
+                    if (pos == posMap)
+                    {
+                        owner = worker;
+                        item = kv.Value;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         // ---- Builder ----
 
         public class StorageTaskBuilder

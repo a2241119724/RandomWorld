@@ -337,3 +337,53 @@
 - **补充（同日四次，Worker 同构改动）**：用户确认 Enemy 修复有效后，要求 Worker 同样"被攻击就切换目标 → 改为和 Enemy 一样"。Worker 原把 `LastAttacker`（每次 `ReduceHp` 由 `CharacterHealthComponent.ApplyDamage` 更新为最新攻击者）直接当武器 `AimTarget`——被旁边目标打一下就换目标，没有锁定语义。改：`AWorker` 新增 `AttackTarget`（反击锁定目标）；`WorkerAttackState.OnEnter` 锁定 `LastAttacker`、`OnUpdate` 与 `IsStillUnderAttack` 改用 `AttackTarget`、`OnExit` 清空；`AWorker.ReduceHp` 攻击分支只在 `attacker != AttackTarget` 时更新目标（与 Enemy.ReduceHp 对称）。注意：批量替换 `LastAttacker→AttackTarget` 时把 OnEnter 的锁定赋值误替换成自赋值（`AttackTarget = AttackTarget`），需人工检查。
 - **补充（同日五次，Worker 专注期·失败尝试）**：用户测试四次改动后反馈"**谁攻击 Worker 他就会转头，没有 Enemy 的持续攻击几秒**"。四次改动只加了锁定语义（`attacker != AttackTarget` 才换），没有**时间门控**。尝试：`WorkerAttackState` 新增 `public float AttackTime { get; private set; }`（OnEnter 置 0、OnUpdate 累加 `DeltaTime`、`Reset()` 不重置），`AWorker.ReduceHp` 攻击分支改为 `attackState.AttackTime > ChangeTarget(5s)` 才换。**此方案无效**（用户复测仍转头），根因：`AttackTime` 是"进入攻击状态的累计时长"，而用户场景是 Worker 与 Enemy **互殴**——Worker 早已攻击超过 5 秒，`AttackTime` 恒 `>5s`，此时玩家一打立即满足换目标条件 → 转头。专注期必须基于"**被打时刻**"而非"进入攻击时长"。
 - **补充（同日六次，Worker 被打锁定期·有效）**：五次方案失败的教训——"持续攻击几秒"指**被打后**继续攻击当前目标几秒，与 Worker 已经攻击了多久无关。最终修复：`WorkerAttackState` 新增 `FocusDuration = 5.0f` 常量与 `focusEndTime` 字段（OnEnter 重置为 `float.MinValue`，以 `AttackTime` 为时间轴）；新增 `OnHit()`（被打时若当前不在锁定中则 `focusEndTime = AttackTime + FocusDuration`，锁定中再次被打**不刷新**——否则持续被打会永远刷新锁定、永不换目标）与 `CanSwitchTarget()`（`AttackTime > focusEndTime`）。`AWorker.ReduceHp` 攻击分支：先 `attackState.OnHit()`，再 `attackState.CanSwitchTarget() && attacker != null && attacker != AttackTarget` 才换目标；换目标时 `LogProviderThrottled`（`[StateDiag]` 换反击目标，2s 节流）便于复现定位。语义：**任何人打 Worker → 锁定当前目标 5 秒（期间继续攻击不转头）→ 5 秒后若再被其他目标打才换**；被当前攻击目标打永远不换（对称）。该方案同时覆盖"互殴很久后被打"与"刚进攻击被打"两种情况。`AWorker.ChangeTarget` 常量随之删除（移入 AttackState 为 `FocusDuration`）。
+
+## 2026-08-16 Worker 携带>80% 仍不入仓：溢出冷却死循环 + 目标材料硬排除 + 出售抢跑 → 保留量+超额可存、溢出先出售、存储先于出售
+
+- **现象**：Worker 有家且携带量长期 >80%（最高 195/200）仍不入仓。日志统计（grep game.log）：
+  - 195 次"溢出冷却"（大部分 0.0s）——拾取溢出失败设 `LastStorageOverflowTime` → 10s 内 Store 被冷却阻止 → 期间继续采集 → 再溢出 → 无限循环；
+  - 42 次"无可存物品"，目标分布 BuildStructure(6)/StockFood(5)/EarnMoney(2)——目标材料/食物被 `IsDepositable` 硬排除；
+  - 出售仅移除 1 个资源（`出售1个资源(1种)获得1G (总携带163/200)`），压不下 80%；
+  - 全程 `type=Store` 决策 0 次下发。
+- **根因**：① 仓库入仓判定 `IsDepositable` 硬排除 Food/Seed/Consumable/Equipment/Weapon/目标材料——溢出时"无物可存"；② 溢出失败只设冷却、无出售出路，冷却期间继续采集再溢出 = 死循环；③ 出售阈值(0.75)低于存储阈值(0.8)，出售先触发但只卖 1 个，把携带量始终卡在 80% 附近且 Store 永不触发。
+- **修复**（用户选定三方向，全部落地）：
+  1. **AWorker 入仓判定改为"保留量+超额可存"**：`IsDepositable` → `GetDepositableCount(ResourceInfo)`（public）。新规则：他人悬赏物不可存；当前建房目标材料按 `RequiredMaterials` 所需数量保留、超额可存（与出售不同——出售完全保留不卖）；其余按类型保留（抽公共 `GetTypeKeepReserve`：食物10/饥饿15、种子5、材料15、药水5、装备武器1、默认5）。`GetDepositableResources` 同步返回超额数量。`DepositToStorage` 加防超扣保护（`actualCount = Math.Min(resourceInfo.Count, GetResourceCountById(id))`，`actualCount<=0` 直接 false）。
+  2. **溢出失败先出售腾空间**：`WorkerPickUpTask.TryRedirectOverflowToStorage` 失败路径先调 `worker.GetSellableSurplus()`（新增 public，镜像出售保留规则：建房目标材料 ContainsKey 跳过不卖、其余按类型保留、他人悬赏物不卖），可售超额 `>= needToFree` 时 `MarketService.WorkerAutoSellFiltered` 出售 → 链回 resume PickUpTask 继续拾取；否则才放弃+冷却。
+  3. **存储先于出售**：`WorkerSeekState.TryAutoSellResources` 触发门槛 `0.75f → 0.85f`（`carryRatio <= 0.85f && sellList < 5` 才跳过），存储阈值 0.8 恒定低于出售——0.8~0.85 区间只触发 Store，>0.85 才卖（存储放不下再卖）。
+- **验证**：编译待 Unity 确认（Unity 项目无法命令行直接编译）。运行时观察：Worker 携带过 80% → `type=Store` 决策下发、`[TaskDiag] ... 存入仓库` 出现；溢出拾取时 `[TaskDiag] ... 出售N个腾空间` 或 `先回家存N个再回来拾取`，不再出现"溢出冷却"刷屏。
+- **教训**：
+  1. **"有仓库却不入仓"先查三件事：入仓判定是否硬排除目标类物品、溢出失败是否有出路、存储/出售阈值顺序是否让出售抢跑**。三处任一失衡都会让携带量卡死在高位。
+  2. **"携带量 >80% 但 Store 决策 0 次"这类矛盾，日志要同时统计"冷却次数/无可存物品/Store 下发次数"三个计数器**才能定位是"决策被挡"（冷却）还是"决策无内容"（无可存）还是"决策从没走到"。
+  3. **入仓与出售的"保留量"语义不同，必须分开实现**：入仓只需保留建造所需量（超额可存，材料进仓不算浪费）；出售对目标材料完全保留不卖（材料卖掉建不了房）。两者共用一个"按类型保留"底层，只让目标材料分支不同——抽公共方法避免谓词漂移。
+  4. **出售"按种类 1 个 1 个卖"压不下携带量**：触发出售时应卖"超过保留量的全部超额"而非只卖 1 个。
+
+## 2026-08-16 入仓保留量改为「携带上限百分比」：消耗品2.5%、材料4%，建房目标不再特殊保留
+
+- **现象**：仓库存储修复后血瓶/石头开始入仓，但木材（CustomWood，带 8~10 个）仍不入仓。日志铁证：入仓记录只有 id=200000(血瓶)/300001(石头)/500000，木材(300000)从未入仓。
+- **根因**：`GetKeepReserve` 对**当前建房目标材料**（BuildStructure 默认 `{CustomWood:10, CustomStone:8}`）保留 `RequiredMaterials` 所需数量。木材是建房主料保留 10，而身上木材 ≤10 → 超额 0 → 永不入仓。血瓶/石头超额多所以入仓（石头也是目标材料但保留只 8、掉落多、超额大）。
+- **用户决策**（多轮澄清后）：① 不要因建房目标特殊保留材料——建房不够可以从仓库取（`TryMakeWithdrawForBuild`）；② 保留量用**百分比结构**而非绝对数（MaxResourceCount=200 将来可能修改，绝对数不随 Max 缩放）。
+- **关键数字约束**：木材实测带 8~10，要让木材入仓，保留量必须 <8 → 材料比例必须 ≤4%（200×4%=8）。用户最初提的"材料 1/4=50"、"1/3=66"都远高于实测持有量，会导致血瓶/石头/木材全部不入仓、仓库停摆——**比例定太高，物品永远入不了仓**。反推日志：石头带 20~30 → 入仓 x12~x22 推出保留 8；血瓶带 9~17 → 入仓 x4~x12 推出保留 5。
+- **修复**（`AWorker.cs` `GetKeepReserve`）：
+  - 消耗品（血瓶等）：`MaxResourceCount * ConsumableKeepRatio(2.5%)`（200→5）
+  - 材料（木头/石头等）：`MaxResourceCount * MaterialKeepRatio(4%)`（200→8）
+  - 其他（食物/种子/装备）：保留现状类型保留（食物10/饥饿15、种子5、装备1）
+  - 删除建房目标 `RequiredMaterials` 特殊保留分支。
+  - 百分比提取为命名常量，Max 修改自动缩放。
+- **效果**（Max=200）：血瓶带 9~17 入仓 4~12、石头带 20~30 入仓 12~22（与日志吻合）；木材带 9/10 首次能入仓 1~2。入仓量 = 持有 − 保留量（只放超额，不整类清空）。
+- **教训**：
+  1. **设计"占最大值的比例"前先看日志实测单种持有量**——否则比例定太高（1/3、1/4）会让所有物品都达不到阈值、仓库停摆。保留量必须 < 目标物品的实测最小持有量。
+  2. **绝对数与百分比的选择**：Max 可能改的系统必须用百分比结构，但百分比要按"当前 Max × 百分比 ≤ 目标实测持有量"反推，而不是拍脑袋。
+  3. **物品 ID 要先映射**：日志里 300000=木材/300001=石头/200000=血瓶/500000=装备类（SO 在 `Resources/SO/Backpack/MaterialItemData.asset`/`ConsumableItemData.asset`），先建立 id→类型映射再分析"为什么某类不入仓"。
+
+## 2026-08-16 Worker 家庭仓库格右键：ItemInfo 显示数量等信息（图标在 ItemMap 上、未注册进 Drop/Inventory）
+
+- **现象**：右键 Worker 家庭仓库（4 槽，`PlannedHomePosition + StorageOffsets[i]`）的物品图标，ItemInfo 只显示 `Build: InventoryWall...`，看不到数量/名称等物品信息。
+- **根因**：仓库物品图标由 `WorkerStorageTask.RefreshStorageIcons` 画在 **ItemMap**（`ItemMapProvider().AddTile`），但只画图标，数据仍在 `wd.Storage`（`Dictionary<int, ResourceInfo>`）。`ItemInfoUI.GetResource` 只查 `DropManager`（掉落物注册表）与 `InventoryManager`（玩家仓库格）——Worker 仓库格都不在其中 → 返回空 → 落回 `GetTile` 显示 BuildMap 的 InventoryWall 瓦片信息。
+- **修复**：
+  1. `WorkerStorageTask.TryGetStorageItemAt(posMap, out AWorker owner, out ResourceInfo item)`（public static）：遍历 `WorkerManager.Characters`，对每个有家且建完（`HomeBuildStage >= layout.CompleteStage`）的 Worker，**复刻 RefreshStorageIcons 的逐格映射**（仓库内容按字典序一格一个、跳过 itemData==null / tile 资源缺失条目）比对 `center + StorageOffsets[index] == posMap`，命中即返回所属 Worker 与该格物品。仅在右键时调用（遍历全部 Worker），非每帧逻辑。
+  2. `ItemInfoUI.Update` 右键流程：`GetResource` 落空后、落回 `GetTile` 前插入分支，命中仓库格 → `select = "WorkerStorage"`，`BuildStorageItemText(owner, item)` 输出 `ID/名称/英文名/类型/数量/所属Worker/拥有者/信息/可堆叠`（格式对齐 `DropManager.ToString`），物品数据缺失时兜底只显示 ID/数量/所属Worker/拥有者。
+- **验证**：编译待 Unity 确认。运行时观察：右键仓库有物品的格 → ItemInfo 显示名称与数量；右键空格 → 仍显示 InventoryWall 建造信息。
+- **教训**：
+  1. **"地图上有图标 ≠ 有数据可查"**：Worker 仓库图标画在 ItemMap 是纯表现层，查询必须回 `wd.Storage`；ItemInfoUI 的三条查询路径（Character/Drop/Inventory）都不覆盖它，须显式加第四路。
+  2. **位置→数据映射必须与图标绘制同一规则**（同一套跳过条件、同一 `StorageOffsets` 索引），否则右键展示的物品与玩家看到的图标错位。
+  3. **复用 `WorkerManager.Characters` 全量遍历即可**（Worker 数量级小、仅右键触发），无需为仓库格建空间索引。

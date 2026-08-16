@@ -597,18 +597,24 @@ namespace LAB2D.Character.Worker
                 return false;
             }
 
+            // 防快照过期超扣：Store 任务创建时收集的 deposit 数量在步行回家途中可能已变
+            //（吃了/卖了/被取走），实际扣减不得超过当前持有量，否则身上变负数且仓库虚增。
+            int carriedNow = this.GetResourceCountById(resourceInfo.Id);
+            int actualCount = Math.Min(resourceInfo.Count, carriedNow);
+            if (actualCount <= 0) return false;
+
             // 先从身上扣
-            this.SubResource(resourceInfo);
+            this.SubResource(new ResourceInfo(resourceInfo.Id, actualCount, resourceInfo.OwnerId));
 
             // 存入仓库（保持 OwnerId）
             if (wd.Storage.ContainsKey(resourceInfo.Id))
             {
-                wd.Storage[resourceInfo.Id].Count += resourceInfo.Count;
+                wd.Storage[resourceInfo.Id].Count += actualCount;
             }
             else
             {
                 wd.Storage[resourceInfo.Id] = new ResourceInfo(
-                    resourceInfo.Id, resourceInfo.Count, resourceInfo.OwnerId);
+                    resourceInfo.Id, actualCount, resourceInfo.OwnerId);
             }
 
             return true;
@@ -678,8 +684,9 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
-        /// 挑一件可存入仓库的"现在不需要"物品（优先大额，一趟腾最多空间）。
-        /// 排除：食物（留身上吃）、种子（留种）、装备/武器、别人的悬赏物、当前目标需要的材料。
+        /// 挑一件可存入仓库的物品（优先大额，一趟腾最多空间）。
+        /// 可存部分 = 保留量之外的数量：食物/种子/药水/材料按类型保留量留底，
+        /// 目标材料保留建房所需数，超额可存；他人悬赏物不可存。
         /// 无物可存返回 false（不修改任何状态）。
         /// </summary>
         /// <param name="deposit">挑出的物品（Count 为可存数量，调用方负责存取）</param>
@@ -689,17 +696,17 @@ namespace LAB2D.Character.Worker
             WorkerData wd = this.CharacterDataLAB as WorkerData;
             if (wd == null) return false;
 
-            int selfId = this.GetInstanceID();
             List<ResourceInfo> candidates = this.GetAllResources();
             candidates.Sort((a, b) => b.Count.CompareTo(a.Count)); // 大额优先
 
             foreach (ResourceInfo r in candidates)
             {
-                // 只存"现在不需要"的（食物/种子/药水/装备/武器/他人悬赏物/目标材料 均排除）
-                if (!this.IsDepositable(r, selfId)) continue;
+                // 只存保留量之外的部分（他人悬赏物不可存）
+                int depositable = this.GetDepositableCount(r);
+                if (depositable <= 0) continue;
                 if (!this.HasStorageSpaceFor(r.Id)) continue;            // 仓库新槽满
 
-                deposit = r;
+                deposit = new ResourceInfo(r.Id, depositable, r.OwnerId);
                 return true;
             }
 
@@ -707,7 +714,7 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
-        /// 一次性收集身上所有可存入仓库的"现在不需要"物品（供 Store 任务使用）。
+        /// 一次性收集身上所有可存入仓库的物品（供 Store 任务使用），Count 为可存数量（超额部分）。
         /// 与 TryPickDepositableResource 同过滤规则，但收集全部而非单件——
         /// 单件挑选器无副作用，若在 while 循环里反复调用会无限返回同一物品导致挂死。
         /// 带四格槽位预留：仓库已有种类 + 本次新收集的种类不超过 4，保证收集项都能存进。
@@ -718,56 +725,141 @@ namespace LAB2D.Character.Worker
             WorkerData wd = this.CharacterDataLAB as WorkerData;
             if (wd == null || wd.Storage == null) return result;
 
-            int selfId = this.GetInstanceID();
             List<ResourceInfo> candidates = this.GetAllResources();
             candidates.Sort((a, b) => b.Count.CompareTo(a.Count)); // 大额优先，一趟腾最多空间
 
             int reservedNewTypes = 0; // 本次新收集的不同种类（占新槽）
             foreach (ResourceInfo r in candidates)
             {
-                // 只存"现在不需要"的（食物/种子/药水/装备/武器/他人悬赏物/目标材料 均排除）
-                if (!this.IsDepositable(r, selfId)) continue;
+                // 只存保留量之外的部分（他人悬赏物不可存）
+                int depositable = this.GetDepositableCount(r);
+                if (depositable <= 0) continue;
 
+                ResourceInfo deposit = new ResourceInfo(r.Id, depositable, r.OwnerId);
                 if (wd.Storage.ContainsKey(r.Id))
                 {
-                    result.Add(r); // 已有同类型，可叠加，不占新槽
+                    result.Add(deposit); // 已有同类型，可叠加，不占新槽
                     continue;
                 }
 
                 if (wd.Storage.Count + reservedNewTypes >= 4) continue; // 新槽满，跳过新类型
                 reservedNewTypes++;
-                result.Add(r);
+                result.Add(deposit);
             }
 
             return result;
         }
 
         /// <summary>
-        /// 是否属于可存入个人仓库的"现在不需要"物品（TryPickDepositableResource /
-        /// GetDepositableResources 共用过滤规则，避免谓词漂移）。
-        /// 排除：食物（留身上吃）、种子（留种）、消耗品（药水留身上喝，避免与
-        /// TryConsumeHealthPotion 的存取竞态——Store 任务快照过期时 DepositToStorage
-        /// 会 SubResource 超扣）、装备/武器、他人悬赏物、当前目标材料。
+        /// 某物品可存入个人仓库的数量 = 当前持有 - 保留量（超额才存）。
+        /// 保留量规则（TryPickDepositableResource / GetDepositableResources 共用，避免谓词漂移）：
+        /// - 他人悬赏物：不可存（返回 0）
+        /// - 入仓保留量按携带上限百分比：消耗品 2.5%、材料 4%（Max 修改自动缩放）
+        /// - 食物/种子/装备等：按类型保留（食物10/饥饿15、种子5、装备武器1、默认5）
+        /// 返回 0 表示无可存超额。
         /// </summary>
-        private bool IsDepositable(ResourceInfo r, int selfId)
+        public int GetDepositableCount(ResourceInfo r)
         {
-            if (r == null || r.Count <= 0) return false;
+            if (r == null || r.Count <= 0) return 0;
+            int selfId = this.GetInstanceID();
+            if (r.OwnerId != 0 && r.OwnerId != selfId) return 0; // 他人悬赏物不可存
 
-            AItem.ItemTypeEnum itemType = AWorkerTask.ItemTypeProvider(r.Id);
-            if (itemType == AItem.ItemTypeEnum.Food) return false;        // 食物留身上吃
-            if (itemType == AItem.ItemTypeEnum.Seed) return false;        // 种子留种
-            if (itemType == AItem.ItemTypeEnum.Consumable) return false;  // 药水留身上喝
-            if (itemType == AItem.ItemTypeEnum.Equipment
-                || itemType == AItem.ItemTypeEnum.Weapon) return false;   // 装备/武器
-            if (r.OwnerId != 0 && r.OwnerId != selfId) return false;      // 只存自己/无主物品
+            int keep = this.GetKeepReserve(r.Id);
+            int excess = r.Count - keep;
+            return excess > 0 ? excess : 0;
+        }
 
-            // 当前目标需要的材料不存（与 TryAutoSellResources 保留物判定一致）
-            // CurrentGoal 是 struct（非空值类型），仅 RequiredMaterials(Dictionary) 需判空
+        /// <summary>
+        /// 入仓保留量：单种物品低于此数量不存仓库（留身上使用）。
+        /// 按"携带上限的百分比"计算（Max 修改时自动缩放，不用绝对数）：
+        /// - 消耗品（血瓶等）：2.5%（Max=200 → 5）
+        /// - 材料（木头/石头等）：4%（Max=200 → 8）
+        /// 不再因建房目标特殊保留——建房材料不够时 Worker 从仓库取（TryMakeWithdrawForBuild）。
+        /// 超过保留量的部分才入仓（只放超额，不整类清空）。
+        /// </summary>
+        /// <summary>入仓保留量：消耗品（血瓶等）占携带上限的比例（Max=200 → 5）。</summary>
+        private const float ConsumableKeepRatio = 0.025f;
+        /// <summary>入仓保留量：材料（木头/石头等）占携带上限的比例（Max=200 → 8）。</summary>
+        private const float MaterialKeepRatio = 0.04f;
+
+        private int GetKeepReserve(int itemId)
+        {
             WorkerData wd = this.CharacterDataLAB as WorkerData;
-            if (wd != null && wd.CurrentGoal.RequiredMaterials != null
-                && wd.CurrentGoal.RequiredMaterials.ContainsKey(r.Id)) return false;
+            if (wd == null || wd.MaxResourceCount <= 0) return 0;
 
-            return true;
+            AItem.ItemTypeEnum type = AWorkerTask.ItemTypeProvider(itemId);
+            switch (type)
+            {
+                case AItem.ItemTypeEnum.Consumable:
+                    return (int)(wd.MaxResourceCount * ConsumableKeepRatio); // 消耗品留 2.5%
+                case AItem.ItemTypeEnum.Material:
+                    return (int)(wd.MaxResourceCount * MaterialKeepRatio);   // 材料留 4%
+                default:
+                    // 食物/种子/装备等：保留现状类型保留量
+                    bool isHungry = wd.CurHungry < ThresholdHungry;
+                    return this.GetTypeKeepReserve(itemId, isHungry);
+            }
+        }
+
+        /// <summary>
+        /// 按类型保留量（入仓/出售共用，避免谓词漂移）。
+        /// 食物10/饥饿15、种子5、材料15、药水5、装备武器1、默认5。
+        /// </summary>
+        private int GetTypeKeepReserve(int itemId, bool isHungry)
+        {
+            switch (AWorkerTask.ItemTypeProvider(itemId))
+            {
+                case AItem.ItemTypeEnum.Food:
+                    return isHungry ? 15 : 10;      // 饥饿时保留更多食物
+                case AItem.ItemTypeEnum.Seed:
+                    return 5;
+                case AItem.ItemTypeEnum.Material:
+                    return 15;
+                case AItem.ItemTypeEnum.Consumable:
+                    return 5;
+                case AItem.ItemTypeEnum.Equipment:
+                case AItem.ItemTypeEnum.Weapon:
+                    return 1;
+                default:
+                    return 5;
+            }
+        }
+
+        /// <summary>
+        /// 溢出失败兜底：收集"可出售的超额物资"（超过出售保留量的部分），供溢出时出售腾空间。
+        /// 出售保留量规则与 WorkerSeekState.GetReserveCount 一致：建房目标材料完全保留不卖
+        /// （ContainsKey 直接跳过），其余按类型保留（GetTypeKeepReserve），超额部分可卖。
+        /// 仅出售自己/无主之物，他人悬赏物不卖。
+        /// </summary>
+        public List<ResourceInfo> GetSellableSurplus()
+        {
+            List<ResourceInfo> result = new List<ResourceInfo>();
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            if (wd == null) return result;
+
+            bool isHungry = wd.CurHungry < ThresholdHungry;
+            bool hasBuildGoal = wd.CurrentGoal.Type == Domain.Worker.WorkerGoalType.BuildStructure
+                && wd.CurrentGoal.HasMaterialNeeds;
+            int selfId = this.GetInstanceID();
+
+            foreach (ResourceInfo r in this.GetAllResources())
+            {
+                if (r.Count <= 0) continue;
+                if (r.OwnerId != 0 && r.OwnerId != selfId) continue; // 他人悬赏物不卖
+
+                // 建房目标材料完全保留不卖
+                if (hasBuildGoal && wd.CurrentGoal.RequiredMaterials != null
+                    && wd.CurrentGoal.RequiredMaterials.ContainsKey(r.Id))
+                {
+                    continue;
+                }
+
+                int excess = r.Count - this.GetTypeKeepReserve(r.Id, isHungry);
+                if (excess <= 0) continue;
+                result.Add(new ResourceInfo(r.Id, excess, r.OwnerId));
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -1213,7 +1305,7 @@ namespace LAB2D.Character.Worker
             /// <summary>
             /// 最大持有资源数量
             /// </summary>
-            public int MaxResourceCount = 500;
+            public int MaxResourceCount = 200;
 
             /// <summary>
             /// 是否需要做任务的开关

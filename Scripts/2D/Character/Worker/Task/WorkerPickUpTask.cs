@@ -246,7 +246,38 @@ namespace LAB2D.Character.Worker.Task
                 return;
             }
 
-            // 失败路径：腾不出空间/无家可存 → 放弃，掉落留地面 + 冷却防反复重试死循环
+            // 失败路径：腾不出空间/无家可存 → 先尝试出售超额物资腾空间，够再回来拾取
+            List<ResourceInfo> sellable = worker.GetSellableSurplus();
+            int sellableCount = 0;
+            foreach (ResourceInfo s in sellable) sellableCount += s.Count;
+
+            if (sellableCount >= needToFree && sellable.Count > 0)
+            {
+                MarketService market = Core.ServiceLocator.Get<MarketService>();
+                if (market != null)
+                {
+                    int earned = market.WorkerAutoSellFiltered(worker, sellable);
+                    // 出售后空间已够 → 回来继续拾取（无需再绕仓库，出售即腾出背负空间）
+                    WorkerPickUpTask resume = new PickUpTaskBuilder()
+                        .SetMode(PickUpMode.FromGround)
+                        .SetTargetPosition(posMap)
+                        .SetGroundResource(this.groundResource)
+                        .SetOwnerId(this.targetOwnerId)
+                        .SetPendingPickups(this.pendingPositions, this.pendingResources)
+                        .SetChainCompleteTask(this.chainCompleteTask)
+                        .Build();
+
+                    wd.Task = resume;
+                    resume.Start(worker);
+
+                    LogProvider(
+                        $"[TaskDiag] {worker.name} 拾取溢出(id={this.groundResource.Id} x{this.groundResource.Count}) → 出售{sellableCount}个腾空间 获{earned}G, 再回来拾取 pos=({posMap.x},{posMap.y})",
+                        LogManager.LogLevelEnum.Debug);
+                    return;
+                }
+            }
+
+            // 出售也腾不出空间 → 放弃，掉落留地面 + 冷却防反复重试死循环
             wd.LastStorageOverflowTime = UnityEngine.Time.time;
             LogProvider(
                 $"[TaskDiag] {worker.name} 拾取溢出且无物可存, 放弃拾取 pos=({posMap.x},{posMap.y})",

@@ -986,11 +986,12 @@ namespace LAB2D.Character.Worker.State
 
             if (sellList.Count == 0) return;
 
-            // 触发条件：携带量超过75%或有5种以上可售资源
+            // 触发条件：携带量超过85%或有5种以上可售资源
+            // 门槛高于存储阈值(0.8)：让"先入仓、存不下再卖"成为优先策略，存储决策先于出售
             int totalCarried = 0;
             foreach (var r in allResources) totalCarried += r.Count;
             float carryRatio = (float)totalCarried / workerData.MaxResourceCount;
-            if (carryRatio <= 0.75f && sellList.Count < 5) return;
+            if (carryRatio <= 0.85f && sellList.Count < 5) return;
 
             // 执行出售（概率从50%降到35%）
             if (UnityEngine.Random.value < 0.35f)
