@@ -34,6 +34,8 @@ namespace LAB2D.Character.Player
         internal static Func<Player, bool> TryCompleteRespawnProvider { get; set; } = (p) => ServiceLocator.Get<DeathPenaltyManager>().TryCompleteRespawn(p);
         internal static Action<Player> HandlePlayerDeathProvider { get; set; } = (p) => ServiceLocator.Get<DeathPenaltyManager>().HandlePlayerDeath(p);
         internal static Func<Player, float, float> WeatherMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<WeatherGameplayEffect>().GetAdjustedCharacterMoveSpeed(p, def);
+        internal static Func<Player, float, float> TemperatureMoveSpeedProvider { get; set; }
+            = (p, def) => ServiceLocator.TryGet<ITemperatureEffectService>(out var tempEffect) ? tempEffect.GetAdjustedCharacterMoveSpeed(p, def) : def;
         internal static Func<Character, float, float> WaveMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<WaveBossRewardManager>().GetAdjustedPlayerMoveSpeed(p, def);
         internal static Func<Player, float, float> TerrainMoveSpeedProvider { get; set; } = (p, def) => ServiceLocator.Get<ITerrainEffectService>().GetAdjustedCharacterMoveSpeed(p, def);
         internal static Func<float> ExperienceMultiplierProvider { get; set; } = () => ServiceLocator.Get<ComboBonusManager>().ExperienceMultiplier;
@@ -564,9 +566,10 @@ namespace LAB2D.Character.Player
         {
             float terrainMultiplier = TerrainMoveSpeedProvider(this, 1.0f);
             float weatherMultiplier = WeatherMoveSpeedProvider(this, 1.0f);
+            float temperatureMultiplier = TemperatureMoveSpeedProvider(this, 1.0f);
             float waveMultiplier = WaveMoveSpeedProvider(this, 1.0f);
             float runMultiplier = Input.GetKey(LAB2D.Constant.InputKeyConstant.Run) ? this.runSpeedMultiplier : 1.0f;
-            return this.MoveSpeed * terrainMultiplier * weatherMultiplier * waveMultiplier * runMultiplier;
+            return this.MoveSpeed * terrainMultiplier * weatherMultiplier * waveMultiplier * runMultiplier * temperatureMultiplier;
         }
 
         /// <summary>
@@ -582,8 +585,9 @@ namespace LAB2D.Character.Player
 
                 float terrainMultiplier = TerrainMoveSpeedProvider(this, 1.0f);
                 float weatherMultiplier = WeatherMoveSpeedProvider(this, 1.0f);
-                // 地形效果与天气效果乘法叠加
-                float combinedEnvMultiplier = terrainMultiplier * weatherMultiplier;
+                float temperatureMultiplier = TemperatureMoveSpeedProvider(this, 1.0f);
+                // 地形效果与天气效果、温度效果乘法叠加
+                float combinedEnvMultiplier = terrainMultiplier * weatherMultiplier * temperatureMultiplier;
 
                 // A004：波间奖励移动强化在天气/地形倍率之后应用，避免覆盖环境玩法的减速/增益。
                 float waveMultiplier = WaveMoveSpeedProvider(this, 1.0f);

@@ -47,6 +47,7 @@ namespace LAB2D.Core.Seek
         protected static WeatherGameplayEffect s_weatherEffect;
         protected static ITerrainEffectService s_terrainEffect;
         protected static WorkerConditionManager s_workerConditionManager;
+        protected static ITemperatureEffectService s_temperatureEffect;
         protected static UnityMainThreadDispatcher s_mainThreadDispatcher;
 
         private readonly bool isWorker;
@@ -163,6 +164,7 @@ namespace LAB2D.Core.Seek
             s_weatherEffect = null;
             s_terrainEffect = null;
             s_workerConditionManager = null;
+            s_temperatureEffect = null;
             s_mainThreadDispatcher = null;
             sharedLineMaterial = null;
 
@@ -529,6 +531,7 @@ namespace LAB2D.Core.Seek
             this.Direction = worldPos - this.Character.transform.position;
             float speed = s_weatherEffect.GetAdjustedCharacterMoveSpeed(this.Character, this.Character.MoveSpeed);
             speed *= s_terrainEffect.GetMoveSpeedMultiplier(this.Character);
+            speed *= s_temperatureEffect != null ? s_temperatureEffect.GetCharacterMoveSpeedMultiplier(this.Character) : 1.0f;
 
             if (this.isWorker)
             {
@@ -788,6 +791,10 @@ namespace LAB2D.Core.Seek
             s_terrainEffect = Core.ServiceLocator.Get<ITerrainEffectService>();
             s_workerConditionManager = Core.ServiceLocator.Get<WorkerConditionManager>();
             s_mainThreadDispatcher = Core.ServiceLocator.Get<UnityMainThreadDispatcher>();
+            if (Core.ServiceLocator.TryGet<ITemperatureEffectService>(out var tempEffect))
+            {
+                s_temperatureEffect = tempEffect;
+            }
 
             if (!quitHookRegistered)
             {

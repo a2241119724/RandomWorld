@@ -387,3 +387,17 @@
   1. **"地图上有图标 ≠ 有数据可查"**：Worker 仓库图标画在 ItemMap 是纯表现层，查询必须回 `wd.Storage`；ItemInfoUI 的三条查询路径（Character/Drop/Inventory）都不覆盖它，须显式加第四路。
   2. **位置→数据映射必须与图标绘制同一规则**（同一套跳过条件、同一 `StorageOffsets` 索引），否则右键展示的物品与玩家看到的图标错位。
   3. **复用 `WorkerManager.Characters` 全量遍历即可**（Worker 数量级小、仅右键触发），无需为仓库格建空间索引。
+
+## 2026-08-16 温度系统落地 + 非房间位置误判为房间内部（右键显示 25）
+
+- **现象**：右键点击**非房间内**位置（野外空地），ItemInfo 显示 `温度:25`（房间默认温度），而非室外温度。
+- **根因**：`EnvironmentManager.ToString(posMap)` 调用 `RoomManager.GetRoomByPos` —— 四方向 1000 单位 `Physics2D.Raycast` + `count >= 2` 即判"在房间中"；且 `posMap1` 在四个方向命中时被反复覆盖（最后一次命中为准），野外点只要两个方向能打到远处墙（如远处房子的墙）就误判，随后用 `posMap1` 查 `Points` 命中便返回写死 `Temperature=25` 的房间。
+- **修复**：
+  1. `EnvironmentManager.ToString(posMap)` 改用 `RoomManager.GetRoomInterior(posMap)`（包围盒精确判断、避免射线）；`GetRoomByPos` 加 `[Obsolete]`（唯一调用者已移除）。
+  2. 顺带建立完整温度系统（本次主变更）：
+     - 新建 `TemperatureRuleService`（纯规则）：季节基础温度（春18/夏30/秋18/冬2）+ 天气偏移（晴0/雨-6/雪-12）+ 昼夜波动（±4，相位与 GameTimeUI 光照一致）；房间 = 室外 + 保温6 + ΣHeatPower；温度→移动倍率/疲劳倍率映射。
+     - 新建 `TemperatureEffect`（Singleton + ITickable）：室外温度平滑 0.5℃/s、每 1.5s 扫描房间热源刷新 `RoomInfo.Temperature`（直接写字段，RoomListUI/ItemInfo 自动变实时）、每 0.5s 缓存角色位置温度避免每帧全房间遍历。
+     - 接入点（乘法叠加）：`Player` 移动、`ASeek` 工人移动、`WorkerUpdateSystem` 疲劳衰减。
+     - `BuildItemData.HeatPower` 数据驱动供暖（本期 SO 不配数值，后续配置即生效）；`EnvironmentManager.Temperature` 死字段删除，湿度占位值 -10 → 25。
+- **验证**：右键野外 → 显示实时室外温度；房间内 → 室外+6。单测 `TemperatureRuleServiceTests` 覆盖季节循环/天气偏移/倍率/边界。
+- **教训**：**射线判房间不可靠** —— 物理射线命中任意障碍物（含远处房间的墙），无法区分"站在房间内"与"朝向房间"。房间内部判断必须用房间自己的包围盒几何（`IsInterior`，向内收缩一格），与物理世界解耦。

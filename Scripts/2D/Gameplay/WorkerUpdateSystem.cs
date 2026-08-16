@@ -39,7 +39,7 @@ namespace LAB2D.Gameplay
                         workerData.CurHungry - (deltaTime * WorkerConditionConstant.HungryDecayPerSecond * hungryTerrainMult));
                 }
 
-                // 疲劳值自然衰减（受地形 + 天气影响，雨雪天加速）
+                // 疲劳值自然衰减（受地形 + 天气 + 温度影响，雨雪天/严寒加速）
                 if (workerData.CurTired > 0)
                 {
                     float weatherMult = 1.0f;
@@ -53,10 +53,21 @@ namespace LAB2D.Gameplay
                     }
                     catch { /* 天气系统未注册时保持默认倍率 */ }
 
+                    float temperatureMult = 1.0f;
+                    try
+                    {
+                        var tempEffect = ServiceLocator.Get<ITemperatureEffectService>();
+                        if (tempEffect != null)
+                        {
+                            temperatureMult = tempEffect.GetWorkerFatigueDecayMultiplier(worker);
+                        }
+                    }
+                    catch { /* 温度系统未注册时保持默认倍率 */ }
+
                     workerData.CurTired = System.Math.Max(
                         0.0f,
                         workerData.CurTired - (deltaTime * WorkerConditionConstant.TiredDecayPerSecond
-                            * tiredTerrainMult * weatherMult));
+                            * tiredTerrainMult * weatherMult * temperatureMult));
                 }
 
                 // 精气神自然衰减

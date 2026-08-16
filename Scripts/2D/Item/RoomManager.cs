@@ -47,6 +47,7 @@ namespace LAB2D.Item
                     room.Value.Progress -= room.Value.Points.Contains(posMap) ? 1 : 0;
                     if (room.Value.Progress == 0)
                     {
+                        // 初始值；TemperatureEffect 每 1.5s 刷新为实时温度（室外+保温+供暖）
                         room.Value.Temperature = 25.0f;
                         room.Value.Humidity = 25.0f;
                         room.Value.ComputeBounds(); // 完成后重新计算包围盒
@@ -62,10 +63,11 @@ namespace LAB2D.Item
         public IReadOnlyDictionary<string, RoomInfo> GetAllRooms() => Rooms;
 
         /// <summary>
-        /// 根据位置获取房间
+        /// 根据位置获取房间（已废弃：四方向射线检测会误判野外点为房间内部，请改用 GetRoomInterior）。
         /// </summary>
         /// <param name="posMap">位置</param>
         /// <returns>房间信息</returns>
+        [System.Obsolete("射线检测误判野外位置为房间内部，请改用 GetRoomInterior。")]
         public RoomInfo GetRoomByPos(Vector3Int posMap)
         {
             if (Rooms.Count == 0)

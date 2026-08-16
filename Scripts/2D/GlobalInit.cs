@@ -116,6 +116,8 @@ namespace LAB2D
             ServiceLocator.Register(ItemCollectionTracker.Instance);
             ServiceLocator.Register(WeatherGameplayEffect.Instance);
             ServiceLocator.Register<IWeatherGameplayService>(WeatherGameplayEffect.Instance);
+            ServiceLocator.Register(TemperatureEffect.Instance);
+            ServiceLocator.Register<ITemperatureEffectService>(TemperatureEffect.Instance);
             ServiceLocator.Register(TerrainEffectManager.Instance);
             ServiceLocator.Register<ITerrainEffectService>(TerrainEffectManager.Instance);
             ServiceLocator.Register(PanelController.Instance);
@@ -209,6 +211,7 @@ namespace LAB2D
                 ServiceLocator.Get<AchievementManager>(),
                 new GlobalInputProcessor(),
                 ServiceLocator.Get<WorkerTaskManager>(),
+                ServiceLocator.Get<TemperatureEffect>(),
                 ServiceLocator.Get<EnvironmentManager>(),
                 ServiceLocator.Get<PlayerVitalAlertManager>(),
                 ServiceLocator.Get<FavorabilityManager>(),
