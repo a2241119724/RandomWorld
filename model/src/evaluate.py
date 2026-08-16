@@ -1,0 +1,138 @@
+"""评估与对比：在测试集上对比效用函数 baseline 与 MLP。
+
+用法（在 model/ 目录下）：
+    python src/evaluate.py
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import numpy as np
+import yaml
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from src.actions import ACTIONS, ACTION_LABELS_ZH  # noqa: E402
+from src.train import load_data, split  # noqa: E402
+
+
+def top_k_accuracy(y_true: np.ndarray, proba: np.ndarray, k: int) -> float:
+    top = np.argsort(proba, axis=1)[:, -k:]
+    hits = np.array([y_true[i] in top[i] for i in range(len(y_true))])
+    return float(hits.mean())
+
+
+def kl_divergence(y_true: np.ndarray, proba: np.ndarray) -> float:
+    """真实标签分布 vs 模型预测平均分布的 KL 散度（越小越一致）。"""
+    n_classes = proba.shape[1]
+    true_dist = np.bincount(y_true, minlength=n_classes).astype(float)
+    true_dist = true_dist / true_dist.sum()
+    pred_dist = proba.mean(axis=0)
+    # 加平滑避免 log(0)
+    eps = 1e-9
+    pred_dist = np.clip(pred_dist, eps, 1.0)
+    return float(np.sum(true_dist * np.log(true_dist / pred_dist)))
+
+
+def evaluate_baseline(X_te, y_te, export_dir: Path) -> dict | None:
+    import joblib
+    path = export_dir / "baseline.joblib"
+    if not path.exists():
+        print("[evaluate] 未找到 baseline.joblib，跳过")
+        return None
+    model = joblib.load(path)
+    proba = model.predict_proba(X_te)
+    pred = model.predict(X_te)
+    return {
+        "acc": float((pred == y_te).mean()),
+        "top3": top_k_accuracy(y_te, proba, 3),
+        "kl": kl_divergence(y_te, proba),
+        "proba": proba,
+    }
+
+
+def evaluate_mlp(X_te, y_te, export_dir: Path, device="cpu") -> dict | None:
+    import torch
+    import torch.nn.functional as F
+    from src.models.mlp import WorkerMLP
+    from src.actions import NUM_ACTIONS
+
+    path = export_dir / "mlp.pt"
+    if not path.exists():
+        print("[evaluate] 未找到 mlp.pt，跳过")
+        return None
+    ckpt = torch.load(path, map_location=device, weights_only=False)
+    model = WorkerMLP(
+        input_dim=ckpt["input_dim"],
+        num_actions=ckpt["num_actions"],
+        hidden_dims=ckpt["hidden_dims"],
+        activation=ckpt["activation"],
+    )
+    model.load_state_dict(ckpt["state_dict"])
+    model.eval()
+
+    Xt = torch.as_tensor(X_te, dtype=torch.float32)
+    with torch.no_grad():
+        logits = model(Xt)
+        proba = F.softmax(logits, dim=1).numpy()
+        pred = logits.argmax(dim=1).numpy()
+    return {
+        "acc": float((pred == y_te).mean()),
+        "top3": top_k_accuracy(y_te, proba, 3),
+        "kl": kl_divergence(y_te, proba),
+        "proba": proba,
+    }
+
+
+def main():
+    cfg = yaml.safe_load((ROOT / "config" / "model_config.yaml").read_text(encoding="utf-8"))
+    export_dir = ROOT / cfg["paths"]["export_dir"]
+
+    X, y = load_data(cfg)
+    _, _, (X_te, y_te) = split(
+        X, y, cfg["split"]["val_ratio"], cfg["split"]["test_ratio"], cfg["data"]["seed"])
+
+    print(f"[evaluate] 测试集 {len(y_te)} 条，行为数 {len(ACTIONS)}\n")
+
+    rows = []
+    base = evaluate_baseline(X_te, y_te, export_dir)
+    if base:
+        rows.append(("baseline(效用函数)", base))
+    mlp = evaluate_mlp(X_te, y_te, export_dir)
+    if mlp:
+        rows.append(("mlp(神经网络)", mlp))
+
+    if not rows:
+        print("[evaluate] 没有任何已训练模型，请先运行 src/train.py")
+        return
+
+    print(f"{'模型':<20s} {'准确率':>8s} {'Top-3':>8s} {'KL散度':>8s}")
+    print("-" * 48)
+    for name, r in rows:
+        print(f"{name:<20s} {r['acc']*100:7.2f}% {r['top3']*100:7.2f}% {r['kl']:8.4f}")
+
+    # 行为分布对比（真实 vs 各模型）
+    print("\n[行为分布] 真实 vs 预测（Top-1）:")
+    true_dist = np.bincount(y_te, minlength=len(ACTIONS)).astype(float)
+    true_dist = true_dist / true_dist.sum()
+    print(f"{'行为':<16s} {'真实':>8s}", end="")
+    for name, r in rows:
+        pred_dist = np.bincount(r["proba"].argmax(axis=1), minlength=len(ACTIONS)).astype(float)
+        pred_dist = pred_dist / pred_dist.sum()
+        _ = pred_dist
+        print(f"{name.split('(')[0]:>12s}", end="")
+    print()
+    for i, a in enumerate(ACTIONS):
+        zh = ACTION_LABELS_ZH.get(a, a)
+        line = f"{a:<16s} {true_dist[i]*100:7.2f}%"
+        for name, r in rows:
+            pred_dist = np.bincount(r["proba"].argmax(axis=1), minlength=len(ACTIONS)).astype(float)
+            pred_dist = pred_dist / pred_dist.sum()
+            line += f" {pred_dist[i]*100:11.2f}%"
+        print(line)
+
+
+if __name__ == "__main__":
+    main()

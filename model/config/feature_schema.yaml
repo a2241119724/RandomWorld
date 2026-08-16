@@ -1,0 +1,71 @@
+# =============================================================================
+# Worker 行为决策模型 —— 特征 Schema（可扩展输入的核心机制）
+# =============================================================================
+# 新增特征只需在此文件加一个条目，src/features.py 会自动读入并生成特征向量。
+#
+# kind 取值：
+#   ratio        → value / max_key  （用于「当前值/最大值」型字段）
+#   minmax       → (value - min) / (max - min)
+#   log          → log1p(value) / log1p(max)  （用于金币这类长尾非负量）
+#   onehot       → 按 categories 展开为 one-hot 向量
+#   passthrough  → 原样输出（要求 value 已归一化到 [0,1]）
+#
+# 对应状态字典由 src/simulator.py 生成（key 需与 state 字段一致）。
+# =============================================================================
+version: 1
+
+features:
+  # ---- 生存 ----
+  - { name: hungry_ratio,  group: survival,   kind: ratio,      key: hungry,  max_key: hungry_max }
+  - { name: tired_ratio,   group: survival,   kind: ratio,      key: tired,   max_key: tired_max }
+  - { name: spirit_ratio,  group: survival,   kind: ratio,      key: spirit,  max_key: spirit_max }
+
+  # ---- 生命 / 成长 ----
+  - { name: hp_ratio,      group: vitals,     kind: ratio,      key: hp,      max_key: hp_max }
+  - { name: mp_ratio,      group: vitals,     kind: ratio,      key: mp,      max_key: mp_max }
+  - { name: level,         group: vitals,     kind: minmax,     key: level,   min: 1,   max: 20 }
+  - { name: exp_ratio,     group: vitals,     kind: ratio,      key: exp,     max_key: exp_max }
+  # 8 维战斗属性（Character.Attribute）
+  - { name: atn,           group: vitals,     kind: minmax,     key: atn,     min: 0,   max: 100 }
+  - { name: int_,          group: vitals,     kind: minmax,     key: int_,    min: 0,   max: 100 }
+  - { name: def_,          group: vitals,     kind: minmax,     key: def_,    min: 0,   max: 100 }
+  - { name: res,           group: vitals,     kind: minmax,     key: res,     min: 0,   max: 100 }
+  - { name: crt,           group: vitals,     kind: minmax,     key: crt,     min: 0,   max: 100 }
+  - { name: csd,           group: vitals,     kind: minmax,     key: csd,     min: 0,   max: 100 }
+  - { name: spd,           group: vitals,     kind: minmax,     key: spd,     min: 0,   max: 100 }
+  - { name: hit,           group: vitals,     kind: minmax,     key: hit,     min: 0,   max: 100 }
+
+  # ---- 人格（4 维现有 + 2 维预留扩展）----
+  - { name: mood,          group: personality, kind: minmax,    key: mood,        min: 0, max: 100 }
+  - { name: ambition,      group: personality, kind: minmax,    key: ambition,    min: 0, max: 100 }
+  - { name: diligence,     group: personality, kind: minmax,    key: diligence,   min: 0, max: 100 }
+  - { name: sociality,     group: personality, kind: minmax,    key: sociality,   min: 0, max: 100 }
+  # 预留扩展位：贪婪 / 懒惰（现实社会数值，默认 50，未来可接入 C# WorkerPersonality）
+  - { name: greed,         group: personality, kind: minmax,    key: greed,       min: 0, max: 100 }
+  - { name: laziness,      group: personality, kind: minmax,    key: laziness,    min: 0, max: 100 }
+
+  # ---- 经济 ----
+  - { name: gold,          group: economy,    kind: log,       key: gold,   max: 1000 }
+
+  # ---- 阶段 / 目标（one-hot）----
+  - { name: bed_available, group: stage,      kind: passthrough, key: bed_available }
+  - { name: life_stage,    group: stage,      kind: onehot,    key: life_stage,
+      categories: [bootstrap, settled, established] }
+  - { name: home_build_stage, group: stage,   kind: onehot,    key: home_build_stage,
+      categories: [0, 1, 2] }
+  - { name: current_goal,  group: goal,       kind: onehot,    key: current_goal,
+      categories: [earn_money, build_structure, stock_food, craft_equipment] }
+
+  # ---- 社交 ----
+  - { name: favorability,  group: social,     kind: minmax,    key: favorability, min: 0, max: 100 }
+
+  # ---- 全局上下文（世界信息）----
+  - { name: weather_temperature, group: global_context, kind: minmax, key: weather_temperature, min: -20, max: 40 }
+  - { name: task_pressure,       group: global_context, kind: minmax, key: task_pressure,       min: 0,   max: 100 }
+  - { name: time_of_day,         group: global_context, kind: minmax, key: time_of_day,         min: 0,   max: 24 }
+
+  # ---- 局部视野（Worker 周围半径内信息）----
+  - { name: nearby_food,       group: local_context, kind: minmax, key: nearby_food,       min: 0, max: 20 }
+  - { name: nearby_resource,   group: local_context, kind: minmax, key: nearby_resource,   min: 0, max: 20 }
+  - { name: nearby_building,   group: local_context, kind: minmax, key: nearby_building,   min: 0, max: 20 }
+  - { name: nearby_worker,     group: local_context, kind: minmax, key: nearby_worker,     min: 0, max: 20 }

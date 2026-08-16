@@ -1,0 +1,143 @@
+// =============================================================================
+// WorkerModelInference.cs.example —— Unity C# 侧 MLP 推理层模板（纯 C#，零外部依赖）
+// =============================================================================
+// 用途：加载 export.py 导出的 mlp_weights.json，在游戏内做前向传播，输出行为 index。
+//
+// 接入步骤（后续 Unity 接入阶段再实施）：
+//   1. 把 model/experiments/mlp_weights.json 复制到 Unity 的 Resources/ 下。
+//   2. 用 Newtonsoft.Json（项目已有，见 Scripts/2D/Data/UserData.cs）解析。
+//   3. 在 WorkerBrain.Decide() 里：从 WorkerData + 世界信息构造 float[] 特征向量
+//      （维度与 feature_names 顺序一致），调用 ArgMax() 得到行为 index，
+//      映射回 WorkerBrain.Decision（保留现有 WorkerSeekState 的 switch 分派不动）。
+//
+// 注意：本文件是 .example 模板，不代表最终接入实现；特征提取需按 feature_schema.yaml
+// 的顺序严格对应。
+// =============================================================================
+using System;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+
+namespace LAB2D.AI.Worker.Model
+{
+    [Serializable]
+    public class WeightLayer
+    {
+        public float[][] W; // 形状 [out, in]
+        public float[] b;   // 形状 [out]
+    }
+
+    [Serializable]
+    public class ModelWeights
+    {
+        public string model;
+        public int input_dim;
+        public int num_actions;
+        public string activation;        // "relu" / "tanh" / "none"
+        public List<WeightLayer> layers;  // 每个元素一个 Linear 层
+        public List<string> action_names;
+        public List<string> feature_names;
+    }
+
+    /// <summary>Worker 行为决策模型的纯 C# 推理器。</summary>
+    public class WorkerModelInference
+    {
+        private readonly ModelWeights weights;
+
+        public WorkerModelInference(string json)
+        {
+            this.weights = JsonConvert.DeserializeObject<ModelWeights>(json);
+        }
+
+        /// <summary>前向传播，返回各行为的 logits（长度 = num_actions）。</summary>
+        public float[] PredictLogits(float[] features)
+        {
+            float[] x = features;
+            for (int i = 0; i < this.weights.layers.Count; i++)
+            {
+                WeightLayer layer = this.weights.layers[i];
+                x = MatMul(layer.W, x, layer.b);
+                bool isLast = i == this.weights.layers.Count - 1;
+                if (!isLast)
+                {
+                    x = Activate(x);
+                }
+            }
+
+            return x; // logits（未过 softmax；argmax 结果与 softmax 一致）
+        }
+
+        /// <summary>取最高分行为的 index（对应 actions.py 的 ACTIONS 顺序）。</summary>
+        public int ArgMax(float[] features)
+        {
+            float[] logits = this.PredictLogits(features);
+            int best = 0;
+            for (int i = 1; i < logits.Length; i++)
+            {
+                if (logits[i] > logits[best])
+                {
+                    best = i;
+                }
+            }
+
+            return best;
+        }
+
+        /// <summary>softmax 概率（可选，用于带概率的决策门控）。</summary>
+        public float[] SoftmaxProbabilities(float[] features)
+        {
+            float[] logits = this.PredictLogits(features);
+            float max = float.NegativeInfinity;
+            for (int i = 0; i < logits.Length; i++)
+            {
+                max = Math.Max(max, logits[i]);
+            }
+
+            float sum = 0f;
+            float[] prob = new float[logits.Length];
+            for (int i = 0; i < logits.Length; i++)
+            {
+                prob[i] = (float)Math.Exp(logits[i] - max);
+                sum += prob[i];
+            }
+
+            for (int i = 0; i < prob.Length; i++)
+            {
+                prob[i] /= sum;
+            }
+
+            return prob;
+        }
+
+        private static float[] MatMul(float[][] W, float[] x, float[] b)
+        {
+            int outDim = W.Length;
+            float[] y = new float[outDim];
+            for (int i = 0; i < outDim; i++)
+            {
+                float sum = b != null ? b[i] : 0f;
+                float[] row = W[i];
+                for (int j = 0; j < x.Length; j++)
+                {
+                    sum += row[j] * x[j];
+                }
+
+                y[i] = sum;
+            }
+
+            return y;
+        }
+
+        private float[] Activate(float[] x)
+        {
+            float[] y = new float[x.Length];
+            for (int i = 0; i < x.Length; i++)
+            {
+                y[i] = this.weights.activation == "relu"
+                    ? Math.Max(0f, x[i])
+                    : (float)Math.Tanh(x[i]);
+            }
+
+            return y;
+        }
+    }
+}

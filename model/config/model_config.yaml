@@ -1,0 +1,37 @@
+# Worker 行为决策模型 —— 训练/模型超参数
+
+paths:
+  schema: config/feature_schema.yaml
+  raw_dir: data/raw
+  processed_dir: data/processed
+  export_dir: experiments
+
+data:
+  num_samples: 200000          # 模拟器采样条数
+  seed: 42                     # 复现用随机种子
+  save_raw_csv: true           # 是否落盘原始 (state, action) CSV
+
+split:
+  val_ratio: 0.2
+  test_ratio: 0.1
+
+baseline:
+  # 效用函数用逻辑回归（sklearn）学习权重；C 为正则化强度的倒数
+  C: 1.0
+  max_iter: 2000
+
+mlp:
+  hidden_dims: [128, 64]       # 隐藏层维度
+  dropout: 0.1
+  activation: relu
+
+training:
+  batch_size: 256
+  epochs: 50
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  patience: 8                  # 早停：验证 loss 连续不降的轮数
+
+export:
+  onnx: true                   # 导出 ONNX
+  weights_json: true           # 导出纯权重 JSON（供 C# 手写前向传播）
