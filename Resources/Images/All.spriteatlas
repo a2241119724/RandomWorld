@@ -178,6 +178,7 @@ SpriteAtlas:
     - 4b313a1ae39d84a44b4cd2be2cc17431: 2053003492
     - 4b313a1ae39d84a44b4cd2be2cc17431: 2119564132
     - 4b313a1ae39d84a44b4cd2be2cc17431: 384868377
+    - 8460822a335e1d24faa46e4ac85a1bb8: 21300000
     - 8445965a066fea04fa05959443863a4a: 21300000
     - 3e79d56a71e8ee244b66ccb81e78b651: 21300000
     - 41caefdaac0306b48b5e88eb4ecb624a: 21300000
@@ -355,6 +356,7 @@ SpriteAtlas:
   - {fileID: 2053003492, guid: 4b313a1ae39d84a44b4cd2be2cc17431, type: 3}
   - {fileID: 2119564132, guid: 4b313a1ae39d84a44b4cd2be2cc17431, type: 3}
   - {fileID: 384868377, guid: 4b313a1ae39d84a44b4cd2be2cc17431, type: 3}
+  - {fileID: 21300000, guid: 8460822a335e1d24faa46e4ac85a1bb8, type: 3}
   - {fileID: 21300000, guid: 8445965a066fea04fa05959443863a4a, type: 3}
   - {fileID: 21300000, guid: 3e79d56a71e8ee244b66ccb81e78b651, type: 3}
   - {fileID: 21300000, guid: 41caefdaac0306b48b5e88eb4ecb624a, type: 3}
@@ -531,6 +533,7 @@ SpriteAtlas:
   - AddHp_3
   - AddHp_2
   - AddHp
+  - Roof
   - "\u5546\u5E972"
   - Soil
   - CustomShield
