@@ -1,12 +1,37 @@
+# Public source snapshot -- only publish code, not assets or resources.
+*
+
+!*/
+!/.gitignore
+!/README.md
+
+/Agent
+!/AgentFull/**
+**/__pycache__/
+**/__pycache__/**
+*.pyc
+*.pyo
+
+!/Scripts/2D/*.cs
+!/Scripts/2D/**/*.cs
+
+/AddressableAssetsData/
+/AddressableAssetsData.meta
+/TextMesh Pro/
+/TextMesh Pro.meta
+/Scripts/Reference/
+/Scripts/Reference.meta
+
+/.claude/
+/.codegraph/
+/.vs/
 /Library/
-/Temp/
 /Logs/
+/Temp/
 /Obj/
 /obj/
-/.vs/
-/UserSettings/
 /MemoryCaptures/
-/.codegraph/
+/UserSettings/
 *.csproj
 *.sln
 *.suo
@@ -18,7 +43,10 @@
 *.mdb
 *.opendb
 *.VC.db
-*.pyc
-*.pyo
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.exe
 *.log
 hs_err_pid*.log
