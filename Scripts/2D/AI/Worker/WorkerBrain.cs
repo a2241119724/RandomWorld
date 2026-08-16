@@ -105,6 +105,13 @@ namespace LAB2D.AI.Worker
         /// <summary>环境扫描半径（地图格子）</summary>
         public int ScanRadius = 20;
 
+        /// <summary>
+        /// 是否启用模型决策（A/B 开关）。默认 false = 纯硬规则。
+        /// true 时，正常态（生存/Bootstrap 之外的自主行为）改由 MLP 模型决策，
+        /// 模型不可用或输出不可行时自动回退到下方硬规则级联。
+        /// </summary>
+        public bool UseModelDecision = true;
+
         /// <summary>精气神阈值：低于此值优先漫游恢复</summary>
         public float SpiritThreshold = 30f;
 
@@ -368,6 +375,19 @@ namespace LAB2D.AI.Worker
                 }
             }
 
+            // === 模型决策（正常态 A/B）：开关开启且模型可用时，正常态自主行为交给 MLP ===
+            // 生存优先与 Bootstrap 建家仍是硬规则兜底；模型只决策「不饿/不累/精气神充足」的
+            // 正常态行为。模型未加载或输出不可行（如附近无资源却要采集）时回退下方硬规则级联。
+            if (this.UseModelDecision)
+            {
+                Decision? modelDecision = this.ModelDecide(worker, workerData);
+                if (modelDecision.HasValue)
+                {
+                    return modelDecision.Value;
+                }
+                // 模型不可用/不可行 → 继续走硬规则级联
+            }
+
             // === 优先：地上有自己悬赏得来的物品 → 去捡 ===
             if (p.Diligence > 35f)
             {
@@ -506,6 +526,143 @@ namespace LAB2D.AI.Worker
                 return Decision.Make(WorkerDecisionType.Sleep, $"心情差({p.Mood:F0}), 休息调整");
 
             return Decision.Make(WorkerDecisionType.Idle, $"无特别需求, {p}");
+        }
+
+        // ---- 模型决策 ----
+
+        /// <summary>
+        /// 模型决策：提取 41 维特征 → MLP 前向 → argmax 行为类型 → 用现有扫描逻辑填充参数。
+        ///
+        /// 仅覆盖「正常态」自主行为（采集/悬赏/建造/种植/存取/漫游/空闲等）。
+        /// 模型输出生存类行为（Eat/Sleep/GroundSleep）或 Withdraw 时返回 null —— 这些需要
+        /// 更精确的状态上下文（饿了没、缺什么料），由硬规则（生存优先 / Bootstrap / 建造取料
+        /// 包装）兜底更可靠；模型输出的其余类型若参数填充失败（如附近无资源却要采集）也返回
+        /// null，调用方回退硬规则级联。
+        /// </summary>
+        /// <param name="worker">目标 Worker。</param>
+        /// <param name="wd">Worker 数据。</param>
+        /// <returns>可执行的决策；null 表示模型不可用或输出不可行，应回退硬规则。</returns>
+        private Decision? ModelDecide(AWorker worker, AWorker.WorkerData wd)
+        {
+            WorkerModelInference model = WorkerModelInference.Instance;
+            if (!model.IsLoaded)
+            {
+                AWorkerTask.LogProviderThrottled($"{worker.name}|ModelNotLoaded", 60f,
+                    $"[ModelDiag] {worker.name} 模型未加载，回退硬规则", LogManager.LogLevelEnum.Debug);
+                return null;
+            }
+
+            float[] features = WorkerFeatureExtractor.Extract(worker, this.ScanRadius);
+            int actionIndex = model.PredictActionIndex(features);
+            if (actionIndex < 0 || actionIndex >= 14)
+            {
+                AWorkerTask.LogProviderThrottled($"{worker.name}|ModelBadIndex", 60f,
+                    $"[ModelDiag] {worker.name} 模型输出异常索引 {actionIndex}，回退硬规则",
+                    LogManager.LogLevelEnum.Warning);
+                return null;
+            }
+
+            WorkerDecisionType type = (WorkerDecisionType)actionIndex;
+
+            // 成功路径：记录模型实际输出的行为类型（按 name+type 节流，便于 A/B 观察行为分布）
+            AWorkerTask.LogProviderThrottled($"{worker.name}|ModelDecide|{type}", 5f,
+                $"[ModelDiag] {worker.name} 模型决策: {type} (index={actionIndex})",
+                LogManager.LogLevelEnum.Debug);
+
+            switch (type)
+            {
+                // ---- 正常态自主行为 ----
+
+                case WorkerDecisionType.Idle:
+                    return Decision.Make(WorkerDecisionType.Idle, $"模型: 空闲/锻炼");
+
+                case WorkerDecisionType.SelfGather:
+                {
+                    ResourceCandidate? rc = this.ScanForResources(worker);
+                    if (!rc.HasValue) return null; // 附近无资源，回退硬规则
+                    return new Decision
+                    {
+                        Type = WorkerDecisionType.SelfGather,
+                        TargetPosition = rc.Value.Position,
+                        Resource = rc.Value.Resource,
+                        Description = rc.Value.IsTerrainDig ? "模型: 自主挖掘地形" : "模型: 自主采集",
+                        IsTerrainDig = rc.Value.IsTerrainDig,
+                        TerrainId = rc.Value.TerrainId,
+                    };
+                }
+
+                case WorkerDecisionType.PostBounty:
+                {
+                    bool canAfford = wd.Wallet.HasEnough(
+                        this.DetermineMinReward() + this.MinimumWalletReserve);
+                    if (!this.CanPostBounty(worker, wd, canAfford)) return null; // 悬赏门槛不满足
+                    ResourceCandidate? rc = this.ScanForResources(worker);
+                    if (!rc.HasValue) return null;
+                    return new Decision
+                    {
+                        Type = WorkerDecisionType.PostBounty,
+                        TargetPosition = rc.Value.Position,
+                        Resource = rc.Value.Resource,
+                        Description = "模型: 发布采集悬赏",
+                        IsTerrainDig = rc.Value.IsTerrainDig,
+                        TerrainId = rc.Value.TerrainId,
+                    };
+                }
+
+                case WorkerDecisionType.AcceptBounty:
+                    if (!this.HasNearbyBounty(worker)) return null;
+                    return Decision.Make(WorkerDecisionType.AcceptBounty, "模型: 接取悬赏");
+
+                case WorkerDecisionType.SelfCarry:
+                    return this.TryMakeSelfCarryDecision(worker);
+
+                case WorkerDecisionType.PickUp:
+                    return this.TryMakePickUpDecision(worker);
+
+                case WorkerDecisionType.SelfBuild:
+                {
+                    bool canAfford = wd.Wallet.HasEnough(
+                        this.DetermineMinReward() + this.MinimumWalletReserve);
+                    Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, wd, canAfford);
+                    if (!buildDecision.HasValue) return null;
+
+                    // 与硬规则级联一致：SelfBuild 但身上料不足而仓库有料 → 先回家取料
+                    if (buildDecision.Value.Type == WorkerDecisionType.SelfBuild)
+                    {
+                        Decision? withdraw = this.TryMakeWithdrawForBuild(worker, wd, buildDecision.Value);
+                        if (withdraw.HasValue) return withdraw.Value;
+                    }
+
+                    return buildDecision.Value;
+                }
+
+                case WorkerDecisionType.SelfPlant:
+                {
+                    Decision? plantDecision = this.TryMakeSelfPlantDecision(worker);
+                    if (!plantDecision.HasValue) return null;
+
+                    // 与硬规则级联一致：无种子但仓库有种子 → 先回家取种子
+                    Decision? withdraw = this.TryMakeWithdrawForPlant(worker, wd);
+                    if (withdraw.HasValue) return withdraw.Value;
+
+                    return plantDecision.Value;
+                }
+
+                case WorkerDecisionType.Wander:
+                    return Decision.Make(WorkerDecisionType.Wander, "模型: 漫游恢复");
+
+                case WorkerDecisionType.Store:
+                    return this.TryMakeStoreDecision(worker, wd);
+
+                // ---- 生存类 / Withdraw：回退硬规则（更可靠的状态上下文） ----
+
+                case WorkerDecisionType.Eat:
+                case WorkerDecisionType.Sleep:
+                case WorkerDecisionType.GroundSleep:
+                case WorkerDecisionType.Withdraw:
+                default:
+                    return null;
+            }
         }
 
         // ---- Bootstrap 阶段决策 ----

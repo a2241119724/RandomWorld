@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import struct
 import sys
 from pathlib import Path
 
@@ -92,6 +93,9 @@ def export_mlp(export_dir: Path, cfg: dict) -> None:
     weights_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     print(f"[export] MLP 权重 -> {weights_path}")
 
+    # ---- 1.5 导出 Unity 二进制权重（C# BinaryReader 直接读取，零 JSON 依赖）----
+    _export_mlp_binary(export_dir, linear_layers)
+
     # ---- 2. 导出 ONNX ----
     if cfg.get("export", {}).get("onnx", True):
         onnx_path = export_dir / "mlp.onnx"
@@ -107,6 +111,30 @@ def export_mlp(export_dir: Path, cfg: dict) -> None:
             opset_version=18,
         )
         print(f"[export] MLP ONNX -> {onnx_path}")
+
+
+def _export_mlp_binary(export_dir: Path, linear_layers: list[dict]) -> None:
+    """导出 Unity 友好的扁平二进制权重（小端 float32）。
+
+    布局（与 C# `WorkerModelInference.Load` 一一对应）：
+        int32  num_layers
+        对每层：
+            int32  out_dim
+            int32  in_dim
+            float32[out_dim * in_dim]  W（行主序，第 o 行 = 第 o 个输出神经元的权重）
+            float32[out_dim]           b
+    """
+    out = export_dir / "mlp_weights.bytes"
+    with open(out, "wb") as f:
+        f.write(struct.pack("<i", len(linear_layers)))
+        for layer in linear_layers:
+            w = np.asarray(layer["W"], dtype=np.float32)  # (out, in)
+            b = np.asarray(layer["b"], dtype=np.float32)  # (out,)
+            out_dim, in_dim = w.shape
+            f.write(struct.pack("<ii", out_dim, in_dim))
+            w.tofile(f)  # C-order 行主序
+            b.tofile(f)
+    print(f"[export] Unity 二进制权重 -> {out}")
 
 
 def _load_feature_names() -> list[str]:

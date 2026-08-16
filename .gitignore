@@ -20,5 +20,27 @@
 *.VC.db
 *.pyc
 *.pyo
+__pycache__/
+__pycache__.meta
+
+# Worker 模型：训练数据与中间产物（可由 generate_data.py / train.py / export.py 重新生成）
+model/data/raw/samples.csv
+model/data/raw/samples.csv.meta
+model/data/processed/*.npy
+model/data/processed/*.npy.meta
+model/experiments/*.pt
+model/experiments/*.pt.meta
+model/experiments/*.onnx
+model/experiments/*.onnx.meta
+model/experiments/*.onnx.data
+model/experiments/*.onnx.data.meta
+model/experiments/*.joblib
+model/experiments/*.joblib.meta
+model/experiments/*.npz
+model/experiments/*.npz.meta
+model/experiments/baseline_weights.json
+model/experiments/baseline_weights.json.meta
+model/experiments/mlp_weights.json
+model/experiments/mlp_weights.json.meta
 *.log
 hs_err_pid*.log

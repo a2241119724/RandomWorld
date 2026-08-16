@@ -74,6 +74,7 @@ $restrictiveIgnore = @"
 !/AgentFull/**
 **/__pycache__/
 **/__pycache__/**
+**/__pycache__.meta
 *.pyc
 *.pyo
 
