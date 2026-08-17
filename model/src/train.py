@@ -69,31 +69,34 @@ def train_baseline(X, y, cfg, seed):
     return model, results
 
 
-def train_mlp(X, y, cfg, seed):
+def _train_torch(model, X, y, cfg, seed, ckpt_name, ckpt_meta):
+    """共享的 PyTorch 训练循环：split / DataLoader / Adam / 交叉熵 / 早停 / 测试评估 / 保存。
+
+    ckpt_meta 为随 checkpoint 一起保存的模型结构参数（重建模型用），含 input_dim/num_actions。
+    """
     import torch
     import torch.nn as nn
     from torch.utils.data import DataLoader
     from src.dataset import WorkerDecisionDataset
-    from src.models.mlp import WorkerMLP
+    from rich.console import Console
+    from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
 
     torch.manual_seed(seed)
+
+    # 有 CUDA 版 torch 时自动用 GPU，否则回退 CPU
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    console = Console()
+    console.print(f"    设备: {device}")
 
     (X_tr, y_tr), (X_va, y_va), (X_te, y_te) = split(
         X, y, cfg["split"]["val_ratio"], cfg["split"]["test_ratio"], seed)
 
-    input_dim = X.shape[1]
     train_loader = DataLoader(WorkerDecisionDataset(X_tr, y_tr),
                               batch_size=cfg["training"]["batch_size"], shuffle=True)
     val_loader = DataLoader(WorkerDecisionDataset(X_va, y_va),
                             batch_size=cfg["training"]["batch_size"], shuffle=False)
 
-    model = WorkerMLP(
-        input_dim=input_dim,
-        num_actions=NUM_ACTIONS,
-        hidden_dims=cfg["mlp"]["hidden_dims"],
-        dropout=cfg["mlp"]["dropout"],
-        activation=cfg["mlp"]["activation"],
-    )
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=cfg["training"]["learning_rate"],
@@ -107,16 +110,29 @@ def train_mlp(X, y, cfg, seed):
     best_state = None
     bad_epochs = 0
 
+    # 每个 epoch 一条原地刷新的活进度条（batch 级），跑完打印一行指标摘要
+    early_stop_epoch = None
     for epoch in range(1, epochs + 1):
         model.train()
         total_loss = 0.0
-        for xb, yb in train_loader:
-            optimizer.zero_grad()
-            logits = model(xb)
-            loss = criterion(logits, yb)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item() * len(yb)
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TimeElapsedColumn(),
+            console=console,
+            transient=True,
+        ) as progress:
+            task = progress.add_task(f"epoch {epoch}/{epochs}", total=len(train_loader))
+            for xb, yb in train_loader:
+                xb, yb = xb.to(device), yb.to(device)
+                optimizer.zero_grad()
+                logits = model(xb)
+                loss = criterion(logits, yb)
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.item() * len(yb)
+                progress.update(task, advance=1)
         avg_loss = total_loss / len(y_tr)
 
         model.eval()
@@ -124,14 +140,12 @@ def train_mlp(X, y, cfg, seed):
         total = 0
         with torch.no_grad():
             for xb, yb in val_loader:
+                xb, yb = xb.to(device), yb.to(device)
                 logits = model(xb)
                 pred = logits.argmax(dim=1)
                 correct += (pred == yb).sum().item()
                 total += len(yb)
         val_acc = correct / total
-
-        if epoch % 5 == 0 or epoch == 1:
-            print(f"    epoch {epoch:3d}/{epochs}  loss={avg_loss:.4f}  val_acc={val_acc:.4f}")
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
@@ -139,9 +153,24 @@ def train_mlp(X, y, cfg, seed):
             bad_epochs = 0
         else:
             bad_epochs += 1
-            if bad_epochs >= patience:
-                print(f"    早停于 epoch {epoch}（val_acc 连续 {patience} 轮不升）")
-                break
+
+        # 每个 epoch 一行指标摘要（保留历史，便于观察 loss/val_acc 变化）
+        console.print(
+            f"    epoch [bold]{epoch:3d}[/bold]/{epochs} "
+            f"loss=[white]{avg_loss:.4f}[/white]  "
+            f"val_acc=[yellow]{val_acc:.4f}[/yellow]  "
+            f"best=[green]{best_val_acc:.4f}[/green]"
+        )
+
+        if bad_epochs >= patience:
+            early_stop_epoch = epoch
+            break
+
+    if early_stop_epoch is not None:
+        console.print(
+            f"    [red]早停于 epoch {early_stop_epoch}[/red]"
+            f"（val_acc 连续 {patience} 轮不升）"
+        )
 
     model.load_state_dict(best_state)
     model.eval()
@@ -153,6 +182,7 @@ def train_mlp(X, y, cfg, seed):
     total = 0
     with torch.no_grad():
         for xb, yb in test_loader:
+            xb, yb = xb.to(device), yb.to(device)
             pred = model(xb).argmax(dim=1)
             correct += (pred == yb).sum().item()
             total += len(yb)
@@ -163,19 +193,63 @@ def train_mlp(X, y, cfg, seed):
     export_dir.mkdir(parents=True, exist_ok=True)
     torch.save({
         "state_dict": {k: v.cpu() for k, v in best_state.items()},
-        "input_dim": input_dim,
-        "num_actions": NUM_ACTIONS,
-        "hidden_dims": cfg["mlp"]["hidden_dims"],
-        "activation": cfg["mlp"]["activation"],
-    }, export_dir / "mlp.pt")
+        **ckpt_meta,
+    }, export_dir / ckpt_name)
 
     results = {"val_acc": best_val_acc, "test_acc": test_acc}
     return model, results
 
 
+def train_mlp(X, y, cfg, seed):
+    from src.models.mlp import WorkerMLP
+
+    input_dim = X.shape[1]
+    model = WorkerMLP(
+        input_dim=input_dim,
+        num_actions=NUM_ACTIONS,
+        hidden_dims=cfg["mlp"]["hidden_dims"],
+        dropout=cfg["mlp"]["dropout"],
+        activation=cfg["mlp"]["activation"],
+    )
+    ckpt_meta = {
+        "input_dim": input_dim,
+        "num_actions": NUM_ACTIONS,
+        "hidden_dims": cfg["mlp"]["hidden_dims"],
+        "activation": cfg["mlp"]["activation"],
+    }
+    return _train_torch(model, X, y, cfg, seed, "mlp.pt", ckpt_meta)
+
+
+def train_attention(X, y, cfg, seed):
+    from src.models.attention import WorkerAttention
+
+    input_dim = X.shape[1]
+    a = cfg["attention"]
+    model = WorkerAttention(
+        input_dim=input_dim,
+        num_actions=NUM_ACTIONS,
+        d_model=a["d_model"],
+        n_heads=a["n_heads"],
+        n_layers=a["n_layers"],
+        dim_feedforward=a["dim_feedforward"],
+        dropout=a["dropout"],
+        head_dims=a["head_dims"],
+    )
+    ckpt_meta = {
+        "input_dim": input_dim,
+        "num_actions": NUM_ACTIONS,
+        "d_model": a["d_model"],
+        "n_heads": a["n_heads"],
+        "n_layers": a["n_layers"],
+        "dim_feedforward": a["dim_feedforward"],
+        "head_dims": a["head_dims"],
+    }
+    return _train_torch(model, X, y, cfg, seed, "attention.pt", ckpt_meta)
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", choices=["baseline", "mlp"], required=True)
+    parser.add_argument("--model", choices=["baseline", "mlp", "attention"], required=True)
     parser.add_argument("--config", default="config/model_config.yaml")
     args = parser.parse_args()
 
@@ -189,9 +263,12 @@ def main():
     if args.model == "baseline":
         print("[train] 训练效用函数 baseline（逻辑回归）...")
         model, results = train_baseline(X, y, cfg, seed)
-    else:
+    elif args.model == "mlp":
         print("[train] 训练 MLP ...")
         model, results = train_mlp(X, y, cfg, seed)
+    else:
+        print("[train] 训练注意力模型（FT-Transformer）...")
+        model, results = train_attention(X, y, cfg, seed)
 
     print(f"[train] 完成 {args.model}: {results}")
 

@@ -53,27 +53,23 @@ def evaluate_baseline(X_te, y_te, export_dir: Path) -> dict | None:
     }
 
 
-def evaluate_mlp(X_te, y_te, export_dir: Path, device="cpu") -> dict | None:
+def _evaluate_torch(ckpt_path: Path, build_model, X_te, y_te, device="auto") -> dict | None:
+    """共享的 torch 模型评估：加载 checkpoint、重建模型、算 acc / Top-3 / KL。"""
     import torch
     import torch.nn.functional as F
-    from src.models.mlp import WorkerMLP
-    from src.actions import NUM_ACTIONS
 
-    path = export_dir / "mlp.pt"
-    if not path.exists():
-        print("[evaluate] 未找到 mlp.pt，跳过")
+    if device == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if not ckpt_path.exists():
+        print(f"[evaluate] 未找到 {ckpt_path.name}，跳过")
         return None
-    ckpt = torch.load(path, map_location=device, weights_only=False)
-    model = WorkerMLP(
-        input_dim=ckpt["input_dim"],
-        num_actions=ckpt["num_actions"],
-        hidden_dims=ckpt["hidden_dims"],
-        activation=ckpt["activation"],
-    )
+    ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+    model = build_model(ckpt)
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
 
-    Xt = torch.as_tensor(X_te, dtype=torch.float32)
+    Xt = torch.as_tensor(X_te, dtype=torch.float32, device=device)
     with torch.no_grad():
         logits = model(Xt)
         proba = F.softmax(logits, dim=1).numpy()
@@ -84,6 +80,37 @@ def evaluate_mlp(X_te, y_te, export_dir: Path, device="cpu") -> dict | None:
         "kl": kl_divergence(y_te, proba),
         "proba": proba,
     }
+
+
+def evaluate_mlp(X_te, y_te, export_dir: Path, device="auto") -> dict | None:
+    from src.models.mlp import WorkerMLP
+
+    def build(ckpt):
+        return WorkerMLP(
+            input_dim=ckpt["input_dim"],
+            num_actions=ckpt["num_actions"],
+            hidden_dims=ckpt["hidden_dims"],
+            activation=ckpt["activation"],
+        )
+
+    return _evaluate_torch(export_dir / "mlp.pt", build, X_te, y_te, device)
+
+
+def evaluate_attention(X_te, y_te, export_dir: Path, device="auto") -> dict | None:
+    from src.models.attention import WorkerAttention
+
+    def build(ckpt):
+        return WorkerAttention(
+            input_dim=ckpt["input_dim"],
+            num_actions=ckpt["num_actions"],
+            d_model=ckpt["d_model"],
+            n_heads=ckpt["n_heads"],
+            n_layers=ckpt["n_layers"],
+            dim_feedforward=ckpt["dim_feedforward"],
+            head_dims=ckpt["head_dims"],
+        )
+
+    return _evaluate_torch(export_dir / "attention.pt", build, X_te, y_te, device)
 
 
 def main():
@@ -103,6 +130,9 @@ def main():
     mlp = evaluate_mlp(X_te, y_te, export_dir)
     if mlp:
         rows.append(("mlp(神经网络)", mlp))
+    att = evaluate_attention(X_te, y_te, export_dir)
+    if att:
+        rows.append(("attention(注意力)", att))
 
     if not rows:
         print("[evaluate] 没有任何已训练模型，请先运行 src/train.py")

@@ -25,6 +25,14 @@ mlp:
   dropout: 0.1
   activation: relu
 
+attention:
+  d_model: 256                 # token 维度（需能被 n_heads 整除）
+  n_heads: 4                   # 多头注意力头数（256/4 = 每头 64）
+  n_layers: 2                  # Transformer 编码器层数
+  dim_feedforward: 1024        # FFN 隐藏维度（4× d_model）
+  dropout: 0.2                 # 大模型 + 小数据，加大正则防过拟合
+  head_dims: [128]             # MLP 分类头隐藏层
+
 training:
   batch_size: 256
   epochs: 50

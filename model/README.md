@@ -23,7 +23,8 @@ model/
 │   ├── dataset.py            # PyTorch Dataset
 │   ├── models/
 │   │   ├── baseline_utility.py  # 效用函数 baseline（逻辑回归）
-│   │   └── mlp.py               # MLP 策略网络
+│   │   ├── mlp.py               # MLP 策略网络
+│   │   └── attention.py         # 注意力前端 + MLP 分类头（FT-Transformer）
 │   ├── train.py              # 训练（baseline / mlp）
 │   ├── evaluate.py           # 评估与对比
 │   └── export.py             # 导出 ONNX + 纯权重 JSON
@@ -44,9 +45,10 @@ pip install -r requirements.txt
 # 1. 生成训练数据（模拟器采样）
 python data/generate_data.py
 
-# 2. 训练（两个模型）
+# 2. 训练（三个模型）
 python src/train.py --model baseline
 python src/train.py --model mlp
+python src/train.py --model attention
 
 # 3. 评估对比
 python src/evaluate.py
@@ -104,8 +106,25 @@ Unity 接入阶段决定。
 - 简单 MLP：`export.py` 导出 `mlp_weights.json`，C# 手写前向传播（见
   `unity_bridge/WorkerModelInference.cs.example`），零外部依赖。
 - 复杂模型（CNN/Attention 处理局部视野）：导出 ONNX + Unity Barracuda / Sentis。
+- 注意力模型（`--model attention`）：`export.py` 只导出 `attention.onnx`，不导出纯权重
+  JSON/bytes（attention 无法压平成 Linear 层），Unity 侧需 ONNX + Sentis/Barracuda。
 - 接入点：`WorkerBrain.Decide()` 替换为模型推理，输出映射回 `WorkerBrain.Decision`
   结构体，`WorkerSeekState` 的分派 switch 不动（稳定边界）。
+
+## 模型对比结论（2026-08-17 实验）
+
+测试集（20k 条）三模型对比：
+
+| 模型 | 准确率 | Top-3 | KL 散度 |
+|------|--------|-------|---------|
+| baseline（效用函数） | 75.41% | 93.03% | 0.0001 |
+| mlp（神经网络） | 87.72% | 96.65% | 0.0007 |
+| attention（注意力） | 88.18% | 95.72% | 0.0013 |
+
+结论：**attention 与 MLP 基本持平**——top-1 略高（+0.46pp），但 Top-3 略低、KL 略高，
+在 41 维扁平 tabular 特征上多头注意力未带来实质收益，还多出 ONNX 运行时的部署成本。
+保留 MLP 为默认；attention 的价值在于后续把局部视野改成 per-entity token 后
+建模实体间关系，届时再启用（见「Unity 对接」的 ONNX 路径）。
 
 ## 注意事项
 

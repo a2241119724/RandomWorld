@@ -13,6 +13,11 @@ from pathlib import Path
 import numpy as np
 import yaml
 
+# Windows 控制台默认 GBK 编码，会撞上 torch.onnx 新导出器打印的 emoji（✅ 等）导致
+# UnicodeEncodeError。强制 stdout 用 UTF-8 输出，保证导出在中文 Windows 下不崩。
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
@@ -137,6 +142,50 @@ def _export_mlp_binary(export_dir: Path, linear_layers: list[dict]) -> None:
     print(f"[export] Unity 二进制权重 -> {out}")
 
 
+def export_attention(export_dir: Path, cfg: dict) -> None:
+    """导出注意力模型为 ONNX。
+
+    注意：attention 无法压平成 Linear 层，故不导出纯权重 JSON/bytes（现有 C# 手写推理
+    不适用），Unity 侧需走 ONNX + Sentis/Barracuda。
+    """
+    import torch
+
+    ckpt_path = export_dir / "attention.pt"
+    if not ckpt_path.exists():
+        print("[export] 未找到 attention.pt，跳过 attention 导出")
+        return
+
+    from src.models.attention import WorkerAttention
+
+    ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    model = WorkerAttention(
+        input_dim=ckpt["input_dim"],
+        num_actions=ckpt["num_actions"],
+        d_model=ckpt["d_model"],
+        n_heads=ckpt["n_heads"],
+        n_layers=ckpt["n_layers"],
+        dim_feedforward=ckpt["dim_feedforward"],
+        head_dims=ckpt["head_dims"],
+    )
+    model.load_state_dict(ckpt["state_dict"])
+    model.eval()
+
+    input_dim = ckpt["input_dim"]
+
+    if cfg.get("export", {}).get("onnx", True):
+        onnx_path = export_dir / "attention.onnx"
+        dummy = torch.randn(1, input_dim)
+        torch.onnx.export(
+            model,
+            dummy,
+            str(onnx_path),
+            input_names=["state"],
+            output_names=["logits"],
+            opset_version=18,
+        )
+        print(f"[export] 注意力 ONNX -> {onnx_path}")
+
+
 def _load_feature_names() -> list[str]:
     processed = ROOT / "data" / "processed"
     f = processed / "feature_names.txt"
@@ -152,6 +201,7 @@ def main():
 
     export_baseline_weights(export_dir)
     export_mlp(export_dir, cfg)
+    export_attention(export_dir, cfg)
 
 
 if __name__ == "__main__":
