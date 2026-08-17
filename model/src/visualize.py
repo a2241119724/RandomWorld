@@ -198,7 +198,7 @@ def render_pngs(data: dict, out_dir: Path):
     for i, m in enumerate(MODEL_NAMES):
         rec = models[m]["recall"]
         ax.barh(y - (i - 1) * h, rec, height=h, color=CAT_LIGHT[m],
-                label=MODEL_LABELS_ZH[m], zorder=3)
+                label=m, zorder=3)
     ax.set_yticks(y)
     ax.set_yticklabels(actions, fontsize=8)
     ax.set_xlim(0, 1)
@@ -217,7 +217,7 @@ def render_pngs(data: dict, out_dir: Path):
         cm = np.array(models[m]["cm"], dtype=float)
         cm = cm / cm.sum(axis=1, keepdims=True)
         im = ax.imshow(cm, cmap="Blues", vmin=0, vmax=1, aspect="auto")
-        ax.set_title(MODEL_LABELS_ZH[m], color=INK_LIGHT, fontsize=12)
+        ax.set_title(m, color=INK_LIGHT, fontsize=12)
         ax.set_xticks(range(n_act)); ax.set_xticklabels(actions, rotation=90, fontsize=6)
         ax.set_yticks(range(n_act)); ax.set_yticklabels(actions, fontsize=6)
         for i in range(n_act):
@@ -258,7 +258,7 @@ def render_pngs(data: dict, out_dir: Path):
         vals = imp[i][top_idx]
         vals = vals / vals.max() if vals.max() > 0 else vals
         ax.bar(x - (i - 1) * w, vals, width=w, color=CAT_LIGHT[m],
-               label=MODEL_LABELS_ZH[m], zorder=3)
+               label=m, zorder=3)
     ax.set_xticks(x)
     ax.set_xticklabels([data["feature_names"][i] for i in top_idx],
                        rotation=45, ha="right", fontsize=8)
@@ -287,6 +287,15 @@ def render_pngs(data: dict, out_dir: Path):
     fig.savefig(out_dir / "model_architecture.png", dpi=150, bbox_inches="tight",
                 facecolor=SURFACE_LIGHT)
     plt.close(fig)
+
+    # matplotlib 3.11 可能输出带 alpha 的 RGBA；统一转成不透明 RGB，兼容性更好
+    from PIL import Image
+    for p in out_dir.glob("*.png"):
+        im = Image.open(p)
+        if im.mode == "RGBA":
+            bg = Image.new("RGB", im.size, SURFACE_LIGHT)
+            bg.paste(im, mask=im.split()[3])
+            bg.save(p)
 
 
 def _draw_fc(ax, layers):
