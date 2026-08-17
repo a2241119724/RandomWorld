@@ -38,7 +38,8 @@ training:
   epochs: 50
   learning_rate: 0.001
   weight_decay: 0.0001
-  patience: 8                  # 早停：验证 loss 连续不降的轮数
+  patience: 8                  # 早停：验证 loss 连续 patience 轮不降即停止
+  class_weight: sqrt_inv       # 类别权重缓解长尾标签被大类主导：none / sqrt_inv(推荐) / inverse
 
 export:
   onnx: true                   # 导出 ONNX

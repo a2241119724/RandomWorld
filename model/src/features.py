@@ -112,7 +112,10 @@ class FeatureSchema:
             if str(c) == value_str:
                 vec[i] = 1.0
                 return vec
-        # 未知类别 → 全零（不报错，保持鲁棒）
+        # 未知类别 → 全零（不报错，保持鲁棒）。
+        # 注意：全零向量对模型而言等价于「第 N+1 类」，但训练集从不出现；
+        # 若 Unity 侧新增枚举值却未同步 schema，会静默掉进这里而非报错——
+        # 排查「模型行为异常」时优先检查 C# 枚举与 feature_schema 是否对齐。
         return vec
 
 

@@ -43,6 +43,31 @@ def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return float((y_true == y_pred).mean())
 
 
+def compute_class_weights(y: np.ndarray, mode: str) -> np.ndarray | None:
+    """按训练集类别频率计算交叉熵权重，缓解长尾标签被大类主导。
+
+    mode 取值：
+      - ``none``       → 返回 None（不加权）
+      - ``sqrt_inv``   → 1/sqrt(freq)，温和（稀有类权重被拉高但不极端，推荐）
+      - ``inverse``    → 1/freq，激进（接近完全平衡，可能过度触发稀有行为）
+
+    权重归一化到加权平均 = 1，保持 loss 量级不随加权放大，无需重调 learning rate。
+    只在训练集上计算，避免从验证/测试集泄漏类别分布信息。
+    """
+    if mode in (None, "none", ""):
+        return None
+    counts = np.bincount(y)
+    freqs = counts / counts.sum()
+    if mode == "sqrt_inv":
+        w = 1.0 / np.sqrt(freqs + 1e-6)
+    elif mode == "inverse":
+        w = 1.0 / (freqs + 1e-6)
+    else:
+        raise ValueError(f"未知 class_weight 模式: {mode}（可选 none/sqrt_inv/inverse）")
+    w = w / (w * freqs).sum()  # 加权平均 = 1
+    return w
+
+
 def train_baseline(X, y, cfg, seed):
     (X_tr, y_tr), (X_va, y_va), (X_te, y_te) = split(
         X, y, cfg["split"]["val_ratio"], cfg["split"]["test_ratio"], seed)
@@ -102,10 +127,17 @@ def _train_torch(model, X, y, cfg, seed, ckpt_name, ckpt_meta):
         lr=cfg["training"]["learning_rate"],
         weight_decay=cfg["training"]["weight_decay"],
     )
-    criterion = nn.CrossEntropyLoss()
+    # 类别权重：缓解长尾标签被大类主导（默认 sqrt_inv，见 compute_class_weights）
+    class_weights = compute_class_weights(
+        y_tr, cfg["training"].get("class_weight", "none"))
+    criterion = nn.CrossEntropyLoss(
+        weight=torch.as_tensor(class_weights, dtype=torch.float32, device=device)
+        if class_weights is not None else None,
+    )
 
     epochs = cfg["training"]["epochs"]
     patience = cfg["training"]["patience"]
+    best_val_loss = float("inf")
     best_val_acc = 0.0
     best_state = None
     bad_epochs = 0
@@ -136,30 +168,36 @@ def _train_torch(model, X, y, cfg, seed, ckpt_name, ckpt_meta):
         avg_loss = total_loss / len(y_tr)
 
         model.eval()
+        val_loss = 0.0
         correct = 0
         total = 0
         with torch.no_grad():
             for xb, yb in val_loader:
                 xb, yb = xb.to(device), yb.to(device)
                 logits = model(xb)
+                val_loss += criterion(logits, yb).item() * len(yb)
                 pred = logits.argmax(dim=1)
                 correct += (pred == yb).sum().item()
                 total += len(yb)
+        val_loss /= total
         val_acc = correct / total
 
-        if val_acc > best_val_acc:
+        # 早停监控验证 loss（比 acc 更稳，且加类别权重后方向性不漂移）
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
             best_val_acc = val_acc
             best_state = {k: v.clone() for k, v in model.state_dict().items()}
             bad_epochs = 0
         else:
             bad_epochs += 1
 
-        # 每个 epoch 一行指标摘要（保留历史，便于观察 loss/val_acc 变化）
+        # 每个 epoch 一行指标摘要（保留历史，便于观察 loss/val_loss/val_acc 变化）
         console.print(
             f"    epoch [bold]{epoch:3d}[/bold]/{epochs} "
             f"loss=[white]{avg_loss:.4f}[/white]  "
+            f"val_loss=[cyan]{val_loss:.4f}[/cyan]  "
             f"val_acc=[yellow]{val_acc:.4f}[/yellow]  "
-            f"best=[green]{best_val_acc:.4f}[/green]"
+            f"best_loss=[green]{best_val_loss:.4f}[/green]"
         )
 
         if bad_epochs >= patience:
@@ -169,7 +207,7 @@ def _train_torch(model, X, y, cfg, seed, ckpt_name, ckpt_meta):
     if early_stop_epoch is not None:
         console.print(
             f"    [red]早停于 epoch {early_stop_epoch}[/red]"
-            f"（val_acc 连续 {patience} 轮不升）"
+            f"（val_loss 连续 {patience} 轮不降）"
         )
 
     model.load_state_dict(best_state)
@@ -196,7 +234,7 @@ def _train_torch(model, X, y, cfg, seed, ckpt_name, ckpt_meta):
         **ckpt_meta,
     }, export_dir / ckpt_name)
 
-    results = {"val_acc": best_val_acc, "test_acc": test_acc}
+    results = {"val_loss": best_val_loss, "val_acc": best_val_acc, "test_acc": test_acc}
     return model, results
 
 
