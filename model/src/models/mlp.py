@@ -14,7 +14,7 @@ class WorkerMLP(nn.Module):
         self,
         input_dim: int,
         num_actions: int,
-        hidden_dims: list[int] | tuple[int, ...] = (128, 64),
+        hidden_dims: list[int] | tuple[int, ...] = (256, 128),
         dropout: float = 0.1,
         activation: str = "relu",
     ):

@@ -21,7 +21,7 @@ baseline:
   max_iter: 2000
 
 mlp:
-  hidden_dims: [128, 64]       # 隐藏层维度
+  hidden_dims: [256, 128]      # 隐藏层维度
   dropout: 0.1
   activation: relu
 
