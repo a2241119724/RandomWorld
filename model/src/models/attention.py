@@ -18,6 +18,9 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
+from .registry import register
+from .torch_adapter import TorchDecisionModel
+
 
 class WorkerAttention(nn.Module):
     def __init__(
@@ -75,3 +78,15 @@ class WorkerAttention(nn.Module):
         out = self.encoder(tokens)                            # (B, input_dim+1, d_model)
         cls_out = out[:, 0]                                   # (B, d_model)
         return self.head(cls_out)                             # (B, num_actions)
+
+
+@register("attention")
+class AttentionModel(TorchDecisionModel):
+    """注意力模型的 DecisionModel 适配（注册名 "attention"）。"""
+
+    filename = "attention.pt"
+    section = "attention"
+    net_cls = WorkerAttention
+    meta_keys = ("d_model", "n_heads", "n_layers", "dim_feedforward",
+                 "dropout", "head_dims")
+    flattenable = False

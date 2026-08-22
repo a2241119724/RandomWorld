@@ -1,15 +1,14 @@
-"""可视化所有端到端模型：baseline(效用函数) / mlp / attention。
+"""可视化注册表内所有已训练模型：评估指标、混淆矩阵、per-class 召回、
+特征权重/重要性、行为分布与模型结构。
 
-从 experiments/ 加载三个模型，在测试集上计算评估指标、混淆矩阵、per-class
-召回、特征权重/重要性、行为分布与模型结构，导出：
-
+从 experiments/ 加载模型，在独立现实测试集上计算，导出：
 - ``experiments/viz/*.png`` —— 6 张 matplotlib 静态图（插入文档用）
 - ``experiments/viz/model_report.html`` —— 自包含交互面板（浏览器直接打开）
 
 用法（在 model/ 目录下）：
     python src/visualize.py
 
-配色遵循 dataviz 参考调色板（三模型 = categorical slot 1/2/3）。
+新增模型注册后自动纳入，无需改本文件。
 """
 from __future__ import annotations
 
@@ -21,22 +20,22 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
-import yaml  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from src.actions import ACTIONS, ACTION_LABELS_ZH, NUM_ACTIONS  # noqa: E402
-from src.train import load_data, split  # noqa: E402
+from src.config import ModelConfig  # noqa: E402
+from src.dataio import load_test  # noqa: E402
 from src.evaluate import per_class_report, top_k_accuracy, kl_divergence  # noqa: E402
+from src.models import list_models, load_model  # noqa: E402
 
 # ---------------------------------------------------------------------------
-# 调色板（dataviz 参考实例，categorical slot 1/2/3 分配给三个模型）
+# 调色板（dataviz 参考实例，categorical slot 1/2/3 分配给注册表前三模型）
 # ---------------------------------------------------------------------------
-MODEL_NAMES = ["baseline", "mlp", "attention"]
-MODEL_LABELS_ZH = {"baseline": "效用函数", "mlp": "神经网络", "attention": "注意力"}
-CAT_LIGHT = {"baseline": "#2a78d6", "mlp": "#eb6834", "attention": "#1baf7a"}
-CAT_DARK = {"baseline": "#3987e5", "mlp": "#d95926", "attention": "#199e70"}
+CAT_LIGHT = {"mlp": "#eb6834", "attention": "#1baf7a"}
+CAT_DARK = {"mlp": "#d95926", "attention": "#199e70"}
+FALLBACK_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#8e6fd8", "#c9a227"]
 SURFACE_LIGHT = "#fcfcfb"
 SURFACE_DARK = "#1a1a19"
 INK_LIGHT = "#0b0b0b"
@@ -44,84 +43,34 @@ INK_DARK = "#ffffff"
 MUTED = "#898781"
 GRID_LIGHT = "#e1e0d9"
 GRID_DARK = "#2c2c2a"
-SEQ_BLUE = ["#cde2fb", "#86b6ef", "#3987e5", "#256abf", "#184f95"]
-DIV_RED = "#d03b3b"   # 与 sequential blue 组成 diverging 的暖极
-DIV_MID = "#f0efec"
 
 
-# ---------------------------------------------------------------------------
-# 模型加载 / 推理
-# ---------------------------------------------------------------------------
-def load_model(name: str, export_dir: Path, device: str = "cpu"):
-    if name == "baseline":
-        import joblib
-        return joblib.load(export_dir / "baseline.joblib")
-
-    import torch
-    from src.models.mlp import WorkerMLP
-    from src.models.attention import WorkerAttention
-    if name == "mlp":
-        ckpt = torch.load(export_dir / "mlp.pt", map_location="cpu", weights_only=False)
-        m = WorkerMLP(ckpt["input_dim"], ckpt["num_actions"],
-                      hidden_dims=ckpt["hidden_dims"], activation=ckpt["activation"])
-    else:
-        ckpt = torch.load(export_dir / "attention.pt", map_location="cpu", weights_only=False)
-        m = WorkerAttention(ckpt["input_dim"], ckpt["num_actions"],
-                            d_model=ckpt["d_model"], n_heads=ckpt["n_heads"],
-                            n_layers=ckpt["n_layers"], dim_feedforward=ckpt["dim_feedforward"],
-                            head_dims=ckpt["head_dims"])
-    m.load_state_dict(ckpt["state_dict"])
-    m.eval()
-    return m.to(device)
-
-
-def predict_proba(name: str, model, X: np.ndarray, device: str = "cpu") -> np.ndarray:
-    if name == "baseline":
-        return model.predict_proba(X)
-    import torch
-    import torch.nn.functional as F
-    Xt = torch.as_tensor(X, dtype=torch.float32, device=device)
-    with torch.no_grad():
-        return F.softmax(model(Xt), dim=1).cpu().numpy()
-
-
-def feature_importance(name: str, model) -> np.ndarray:
-    """每特征重要性（归一化前）：baseline=|coef|均值，mlp=第一层权重列范数，
-    attention=feature_embed 向量范数。"""
-    if name == "baseline":
-        return np.abs(model.weights).mean(axis=0)
-    import torch
-    if name == "mlp":
-        return model.net[0].weight.detach().cpu().norm(dim=0).numpy()
-    return model.feature_embed.detach().cpu().norm(dim=1).numpy()
-
-
-def model_structure(name: str) -> dict:
-    if name == "mlp":
-        return {"kind": "mlp", "input": 41, "hidden": [128, 64], "output": 14,
-                "activation": "ReLU", "dropout": 0.1}
-    return {"kind": "attention", "input": 41, "d_model": 256, "n_heads": 4,
-            "n_layers": 2, "dim_feedforward": 1024, "head": [128], "output": 14,
-            "dropout": 0.2}
+def _color(name: str, dark: bool = False) -> str:
+    table = CAT_DARK if dark else CAT_LIGHT
+    if name in table:
+        return table[name]
+    idx = list_models().index(name) if name in list_models() else 0
+    return FALLBACK_COLORS[idx % len(FALLBACK_COLORS)]
 
 
 # ---------------------------------------------------------------------------
 # 汇总计算
 # ---------------------------------------------------------------------------
 def compute_all(cfg: dict) -> dict:
-    export_dir = ROOT / cfg["paths"]["export_dir"]
+    export_dir = cfg.export_dir
     device = "cpu"  # 小模型 + 一次性评估，CPU 稳定，避免 attention 全批 GPU OOM
-    X, y = load_data(cfg)
-    _, _, (X_te, y_te) = split(X, y, cfg["split"]["val_ratio"],
-                                cfg["split"]["test_ratio"], cfg["data"]["seed"])
-    feature_names = (ROOT / cfg["paths"]["processed_dir"] / "feature_names.txt") \
+    X_te, y_te = load_test(cfg)
+    feature_names = (cfg.processed_dir / "feature_names.txt") \
         .read_text(encoding="utf-8").splitlines()
 
     true_dist = np.bincount(y_te, minlength=NUM_ACTIONS).astype(float) / len(y_te)
     models = {}
-    for name in MODEL_NAMES:
-        model = load_model(name, export_dir, device)
-        proba = predict_proba(name, model, X_te, device)
+    for name in list_models():
+        model = load_model(name, export_dir, cfg.raw, device)
+        if model is None:
+            print(f"[visualize] 未找到 {name} 产物，跳过")
+            continue
+        proba = model.predict_proba(X_te)
         pred = proba.argmax(axis=1)
         rep = per_class_report(y_te, pred, NUM_ACTIONS)
         entry = {
@@ -135,11 +84,9 @@ def compute_all(cfg: dict) -> dict:
             "cm": rep["cm"].tolist(),
             "pred_dist": (np.bincount(pred, minlength=NUM_ACTIONS).astype(float)
                           / len(pred)).tolist(),
-            "importance": feature_importance(name, model).tolist(),
-            "structure": model_structure(name),
+            "importance": model.feature_importance().tolist(),
+            "structure": model.structure(),
         }
-        if name == "baseline":
-            entry["coef"] = model.weights.tolist()  # (14, 41)
         models[name] = entry
 
     return {
@@ -149,6 +96,7 @@ def compute_all(cfg: dict) -> dict:
         "true_dist": true_dist.tolist(),
         "n_test": int(len(y_te)),
         "models": models,
+        "models_order": [m for m in list_models() if m in models],
     }
 
 
@@ -169,6 +117,7 @@ def _style_axes(ax):
 def render_pngs(data: dict, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
     models = data["models"]
+    order = data["models_order"]
     actions = data["actions"]
     n_act = len(actions)
 
@@ -176,9 +125,8 @@ def render_pngs(data: dict, out_dir: Path):
     fig, axes = plt.subplots(1, 3, figsize=(12, 3.6))
     metrics = [("acc", "Accuracy"), ("top3", "Top-3"), ("macro_f1", "Macro-F1")]
     for ax, (key, label) in zip(axes, metrics):
-        vals = [models[m][key] for m in MODEL_NAMES]
-        bars = ax.bar(MODEL_NAMES, vals, color=[CAT_LIGHT[m] for m in MODEL_NAMES],
-                      width=0.62)
+        vals = [models[m][key] for m in order]
+        bars = ax.bar(order, vals, color=[_color(m) for m in order], width=0.62)
         ax.set_title(label, color=INK_LIGHT, fontsize=11, pad=8)
         ax.set_ylim(0, 1.0)
         for b, v in zip(bars, vals):
@@ -195,9 +143,9 @@ def render_pngs(data: dict, out_dir: Path):
     fig, ax = plt.subplots(figsize=(8, 7))
     y = np.arange(n_act)
     h = 0.26
-    for i, m in enumerate(MODEL_NAMES):
+    for i, m in enumerate(order):
         rec = models[m]["recall"]
-        ax.barh(y - (i - 1) * h, rec, height=h, color=CAT_LIGHT[m],
+        ax.barh(y - (i - 1) * h, rec, height=h, color=_color(m),
                 label=m, zorder=3)
     ax.set_yticks(y)
     ax.set_yticklabels(actions, fontsize=8)
@@ -211,11 +159,14 @@ def render_pngs(data: dict, out_dir: Path):
                 facecolor=SURFACE_LIGHT)
     plt.close(fig)
 
-    # 3) 混淆矩阵（3 并排）
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-    for ax, m in zip(axes, MODEL_NAMES):
+    # 3) 混淆矩阵（并排）
+    fig, axes = plt.subplots(1, len(order), figsize=(6 * len(order), 6))
+    if len(order) == 1:
+        axes = [axes]
+    for ax, m in zip(axes, order):
         cm = np.array(models[m]["cm"], dtype=float)
-        cm = cm / cm.sum(axis=1, keepdims=True)
+        rowsum = cm.sum(axis=1, keepdims=True)
+        cm = np.divide(cm, rowsum, out=np.zeros_like(cm), where=rowsum > 0)
         im = ax.imshow(cm, cmap="Blues", vmin=0, vmax=1, aspect="auto")
         ax.set_title(m, color=INK_LIGHT, fontsize=12)
         ax.set_xticks(range(n_act)); ax.set_xticklabels(actions, rotation=90, fontsize=6)
@@ -232,32 +183,17 @@ def render_pngs(data: dict, out_dir: Path):
                 facecolor=SURFACE_LIGHT)
     plt.close(fig)
 
-    # 4) baseline 权重热力图（diverging：蓝负红正）
-    coef = np.array(models["baseline"]["coef"])
-    fig, ax = plt.subplots(figsize=(16, 6))
-    vmax = np.abs(coef).max()
-    im = ax.imshow(coef, cmap="RdBu_r", vmin=-vmax, vmax=vmax, aspect="auto")
-    ax.set_xticks(range(len(data["feature_names"])))
-    ax.set_xticklabels(data["feature_names"], rotation=90, fontsize=6)
-    ax.set_yticks(range(n_act)); ax.set_yticklabels(actions, fontsize=7)
-    ax.set_title("Baseline utility weights (coef, action × feature)", fontsize=12)
-    fig.colorbar(im, ax=ax, shrink=0.6)
-    fig.tight_layout()
-    fig.savefig(out_dir / "feature_weights_baseline.png", dpi=150, bbox_inches="tight",
-                facecolor=SURFACE_LIGHT)
-    plt.close(fig)
-
-    # 5) 特征重要性（top 15 特征，三模型对比）
-    imp = np.array([models[m]["importance"] for m in MODEL_NAMES])  # (3, 41)
+    # 4) 特征重要性（top 15 特征，多模型对比）
+    imp = np.array([models[m]["importance"] for m in order])  # (n_models, n_feat)
     mean_imp = imp.mean(axis=0)
     top_idx = np.argsort(mean_imp)[::-1][:15]
     fig, ax = plt.subplots(figsize=(9, 4.5))
     x = np.arange(len(top_idx))
     w = 0.26
-    for i, m in enumerate(MODEL_NAMES):
+    for i, m in enumerate(order):
         vals = imp[i][top_idx]
         vals = vals / vals.max() if vals.max() > 0 else vals
-        ax.bar(x - (i - 1) * w, vals, width=w, color=CAT_LIGHT[m],
+        ax.bar(x - (i - 1) * w, vals, width=w, color=_color(m),
                label=m, zorder=3)
     ax.set_xticks(x)
     ax.set_xticklabels([data["feature_names"][i] for i in top_idx],
@@ -271,22 +207,28 @@ def render_pngs(data: dict, out_dir: Path):
                 facecolor=SURFACE_LIGHT)
     plt.close(fig)
 
-    # 6) 模型结构示意（mlp 左 / attention 右）
-    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
-    for ax, m in zip(axes, MODEL_NAMES[1:]):  # 只画 mlp 与 attention
-        ax.axis("off")
-        st = models[m]["structure"]
-        if st["kind"] == "mlp":
-            layers = [("input", 41)] + [("h", h) for h in st["hidden"]] + [("out", 14)]
-            _draw_fc(ax, layers)
-            ax.set_title("MLP (ReLU + Dropout)", color=INK_LIGHT, fontsize=12)
-        else:
-            _draw_attention(ax, st)
-            ax.set_title("FT-Transformer", color=INK_LIGHT, fontsize=12)
-    fig.tight_layout()
-    fig.savefig(out_dir / "model_architecture.png", dpi=150, bbox_inches="tight",
-                facecolor=SURFACE_LIGHT)
-    plt.close(fig)
+    # 5) 模型结构示意（mlp / attention，跳过 linear）
+    struct_models = [m for m in order if models[m]["structure"]["kind"] != "linear"]
+    if struct_models:
+        fig, axes = plt.subplots(1, len(struct_models), figsize=(6.5 * len(struct_models), 5))
+        if len(struct_models) == 1:
+            axes = [axes]
+        for ax, m in zip(axes, struct_models):
+            ax.axis("off")
+            st = models[m]["structure"]
+            if st["kind"] == "mlp":
+                layers = [("input", st["input"])] + [("h", h) for h in st["hidden"]] \
+                    + [("out", st["output"])]
+                _draw_fc(ax, layers)
+                ax.set_title(f"MLP (activation={st['activation']})",
+                             color=INK_LIGHT, fontsize=12)
+            else:
+                _draw_attention(ax, st)
+                ax.set_title("FT-Transformer", color=INK_LIGHT, fontsize=12)
+        fig.tight_layout()
+        fig.savefig(out_dir / "model_architecture.png", dpi=150, bbox_inches="tight",
+                    facecolor=SURFACE_LIGHT)
+        plt.close(fig)
 
     # matplotlib 3.11 可能输出带 alpha 的 RGBA；统一转成不透明 RGB，兼容性更好
     from PIL import Image
@@ -331,6 +273,7 @@ def _draw_attention(ax, st):
 # ---------------------------------------------------------------------------
 def render_html(data: dict, out_path: Path):
     payload = json.dumps(data, ensure_ascii=False)
+    order_json = json.dumps(data["models_order"])
     html = f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -343,7 +286,7 @@ def render_html(data: dict, out_path: Path):
     --surface: {SURFACE_LIGHT}; --page: #f9f9f7;
     --ink: {INK_LIGHT}; --ink2: #52514e; --muted: {MUTED};
     --grid: {GRID_LIGHT};
-    --b: {CAT_LIGHT['baseline']}; --m: {CAT_LIGHT['mlp']}; --a: {CAT_LIGHT['attention']};
+    --m: {_color('mlp')}; --a: {_color('attention')};
     --ring: rgba(11,11,11,0.10);
   }}
   :root[data-theme="dark"] {{
@@ -351,7 +294,7 @@ def render_html(data: dict, out_path: Path):
     --surface: {SURFACE_DARK}; --page: #0d0d0d;
     --ink: {INK_DARK}; --ink2: #c3c2b7; --muted: {MUTED};
     --grid: {GRID_DARK};
-    --b: {CAT_DARK['baseline']}; --m: {CAT_DARK['mlp']}; --a: {CAT_DARK['attention']};
+    --m: {_color('mlp', dark=True)}; --a: {_color('attention', dark=True)};
     --ring: rgba(255,255,255,0.10);
   }}
   * {{ box-sizing: border-box; }}
@@ -409,7 +352,7 @@ def render_html(data: dict, out_path: Path):
 <header>
   <div>
     <h1>Worker 行为决策模型 — 可视化报告</h1>
-    <div class="sub">测试集 {data['n_test']} 条 · baseline / mlp / attention 三模型对比</div>
+    <div class="sub">测试集 {data['n_test']} 条 · {data['models_order'].__len__()} 模型对比</div>
   </div>
   <button onclick="toggleTheme()">切换主题</button>
 </header>
@@ -418,29 +361,20 @@ def render_html(data: dict, out_path: Path):
 
 <section>
   <h2>1 · 概览指标</h2>
-  <p class="desc">准确率、Top-3、KL 散度、Macro-F1（越低/越高方向见各卡）。</p>
-  <div class="legend"><span><span class="sw" style="background:var(--b)"></span>效用函数</span>
-    <span><span class="sw" style="background:var(--m)"></span>神经网络</span>
-    <span><span class="sw" style="background:var(--a)"></span>注意力</span></div>
+  <p class="desc">准确率、Top-3、KL 散度、Macro-F1。</p>
+  <div class="legend" id="legend-top"></div>
   <div class="cards" id="cards"></div>
 </section>
 
 <section>
   <h2>2 · 行为分布（真实 vs 预测）</h2>
   <p class="desc">Top-1 预测的边际分布是否贴合真实行为占比。</p>
-  <div class="legend"><span><span class="sw" style="background:var(--muted)"></span>真实</span>
-    <span><span class="sw" style="background:var(--b)"></span>效用函数</span>
-    <span><span class="sw" style="background:var(--m)"></span>神经网络</span>
-    <span><span class="sw" style="background:var(--a)"></span>注意力</span></div>
   <div id="dist"></div>
 </section>
 
 <section>
   <h2>3 · 每行为召回率（稀有类检测）</h2>
   <p class="desc">长尾标签下 accuracy 会被大类主导，召回率才能暴露稀有行为是否真正学到。</p>
-  <div class="legend"><span><span class="sw" style="background:var(--b)"></span>效用函数</span>
-    <span><span class="sw" style="background:var(--m)"></span>神经网络</span>
-    <span><span class="sw" style="background:var(--a)"></span>注意力</span></div>
   <div id="recall"></div>
   <h3 style="font-size:14px;margin:18px 0 8px">表格视图</h3>
   <table id="recall-table"></table>
@@ -454,26 +388,35 @@ def render_html(data: dict, out_path: Path):
 
 <section>
   <h2>5 · 特征权重 / 重要性</h2>
-  <p class="desc">baseline 的线性效用权重（蓝负红正），与三模型每特征重要性（各自归一化，取均值排序 top 15）。</p>
-  <div id="feat-heat"></div>
+  <p class="desc">各模型每特征重要性（各自归一化，取均值排序 top 15）。</p>
   <div id="feat-imp"></div>
 </section>
 
 <section>
   <h2>6 · 模型结构</h2>
-  <p class="desc">前向架构示意（特征维度 → 隐藏层 → 14 行为 logits）。</p>
+  <p class="desc">前向架构示意（特征维度 → 隐藏层 → 行为 logits）。</p>
   <div id="struct"></div>
 </section>
 
 <script>
 const D = {payload};
-const MODELS = {["baseline", "mlp", "attention"]};
-const COL = {{ baseline: "var(--b)", mlp: "var(--m)", attention: "var(--a)" }};
+const MODELS = {order_json};
 const tip = document.getElementById("tip");
+const palette = ["#2a78d6", "#eb6834", "#1baf7a", "#8e6fd8", "#c9a227"];
+const COL = {{}};
+MODELS.forEach((m, i) => {{ COL[m] = "var(--c" + i + ")"; }});
 function showTip(e, html) {{ tip.innerHTML = html; tip.style.display = "block";
   tip.style.left = (e.clientX + 12) + "px"; tip.style.top = (e.clientY + 12) + "px"; }}
 function hideTip() {{ tip.style.display = "none"; }}
 function pct(v) {{ return (v * 100).toFixed(1) + "%"; }}
+
+// 顶栏图例
+const lt = document.getElementById("legend-top");
+MODELS.forEach(m => {{
+  const s = document.createElement("span");
+  s.innerHTML = `<span class="sw" style="background:${{COL[m]}}"></span>${{m}}`;
+  lt.appendChild(s);
+}});
 
 // 1 概览
 const cards = document.getElementById("cards");
@@ -524,7 +467,8 @@ D.actions.forEach((a, i) => {{
   MODELS.forEach((m, k) => {{
     const v = D.models[m].recall[i];
     const seg = document.createElement("div"); seg.className = "seg";
-    seg.style.left = (k * 33.3) + "%"; seg.style.width = (v * 33.3) + "%";
+    seg.style.left = (k * 100 / MODELS.length) + "%";
+    seg.style.width = (v * 100 / MODELS.length) + "%";
     seg.style.background = COL[m];
     seg.onmousemove = e => showTip(e, `${{m}} · ${{a}}<br>recall ${{pct(v)}}`);
     seg.onmouseleave = hideTip;
@@ -546,14 +490,13 @@ MODELS.forEach(m => {{
   const box = document.createElement("div");
   const cm = D.models[m].cm;
   const n = D.actions.length;
-  const cellSize = "100%";
   box.innerHTML = `<div style="font-weight:600;margin-bottom:6px">${{m}}</div>`;
   const heat = document.createElement("div"); heat.className = "heat";
   heat.style.gridTemplateColumns = `repeat(${{n}}, 1fr)`;
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {{
     const v = cm[i][j] / (cm[i].reduce((s, x) => s + x, 0) || 1);
     const cell = document.createElement("div"); cell.className = "cell";
-    const c0 = [205, 226, 251], c1 = [24, 79, 149]; // light → dark blue (sequential)
+    const c0 = [205, 226, 251], c1 = [24, 79, 149]; // light → dark blue
     const cc = c0.map((a, idx) => Math.round(a + (c1[idx] - a) * v));
     cell.style.background = v > 0 ? `rgb(${{cc.join(",")}})` : "var(--grid)";
     cell.onmousemove = e => showTip(e, `${{D.actions[i]}} → ${{D.actions[j]}}<br>${{(v * 100).toFixed(1)}}%`);
@@ -563,27 +506,7 @@ MODELS.forEach(m => {{
   box.appendChild(heat); cmWrap.appendChild(box);
 }});
 
-// 5 特征权重（baseline coef 热力）+ 重要性
-const fh = document.getElementById("feat-heat");
-if (D.models.baseline.coef) {{
-  const coef = D.models.baseline.coef;
-  const nf = D.feature_names.length;
-  const maxAbs = Math.max(...coef.flat().map(Math.abs));
-  fh.innerHTML = `<h3 style="font-size:14px;margin:0 0 8px">baseline 效用权重（action × feature）</h3>`;
-  const heat = document.createElement("div"); heat.className = "heat";
-  heat.style.gridTemplateColumns = `repeat(${{nf}}, 1fr)`;
-  for (let i = 0; i < D.actions.length; i++) for (let j = 0; j < nf; j++) {{
-    const v = coef[i][j] / maxAbs; // -1..1
-    const cell = document.createElement("div"); cell.className = "cell";
-    cell.style.background = v >= 0
-      ? `rgba(208,59,59,${{Math.abs(v).toFixed(2)}})`
-      : `rgba(57,135,229,${{Math.abs(v).toFixed(2)}})`;
-    cell.onmousemove = e => showTip(e, `${{D.actions[i]}} × ${{D.feature_names[j]}}<br>coef = ${{coef[i][j].toFixed(3)}}`);
-    cell.onmouseleave = hideTip;
-    heat.appendChild(cell);
-  }}
-  fh.appendChild(heat);
-}}
+// 5 特征重要性
 const fi = document.getElementById("feat-imp");
 {{
   const imp = MODELS.map(m => D.models[m].importance);
@@ -615,21 +538,21 @@ const fi = document.getElementById("feat-imp");
 // 6 模型结构
 const st = document.getElementById("struct");
 function node(html) {{ return `<div class="node">${{html}}</div>`; }}
-for (const m of ["mlp", "attention"]) {{
+for (const m of MODELS) {{
   const s = D.models[m].structure;
   const box = document.createElement("div"); box.style.marginBottom = "18px";
   if (s.kind === "mlp") {{
-    box.innerHTML = `<div style="font-weight:600;margin-bottom:8px">MLP（神经网络）</div>
-      <div class="struct">${{node(`<b>input</b>41 特征`)}}
-      <span class="arrow">→</span>${{node(`<b>Linear</b>128 · ReLU · Dropout`)}}
-      <span class="arrow">→</span>${{node(`<b>Linear</b>64 · ReLU · Dropout`)}}
-      <span class="arrow">→</span>${{node(`<b>Linear</b>14 logits`)}}</div>`;
-  }} else {{
-    box.innerHTML = `<div style="font-weight:600;margin-bottom:8px">FT-Transformer（注意力）</div>
-      <div class="struct">${{node(`<b>input</b>41 特征`)}}
-      <span class="arrow">→</span>${{node(`<b>feature_embed</b>每特征 → 256d`)}}
-      <span class="arrow">→</span>${{node(`<b>[CLS] + 2×Encoder</b>4 heads · ff 1024`)}}
-      <span class="arrow">→</span>${{node(`<b>MLP head</b>128 → 14 logits`)}}</div>`;
+    box.innerHTML = `<div style="font-weight:600;margin-bottom:8px">MLP（${{m}}）</div>
+      <div class="struct">${{node(`<b>input</b>${{s.input}} 特征`)}}
+      <span class="arrow">→</span>` + s.hidden.map(h =>
+      node(`<b>Linear</b>${{h}} · ${{s.activation}} · Dropout`)).join('<span class="arrow">→</span>') +
+      `<span class="arrow">→</span>${{node(`<b>Linear</b>${{s.output}} logits`)}}</div>`;
+  }} else if (s.kind === "attention") {{
+    box.innerHTML = `<div style="font-weight:600;margin-bottom:8px">FT-Transformer（${{m}}）</div>
+      <div class="struct">${{node(`<b>input</b>${{s.input}} 特征`)}}
+      <span class="arrow">→</span>${{node(`<b>feature_embed</b>每特征 → ${{s.d_model}}d`)}}
+      <span class="arrow">→</span>${{node(`<b>[CLS] + ${{s.n_layers}}×Encoder</b>${{s.n_heads}} heads · ff ${{s.dim_feedforward}}`)}}
+      <span class="arrow">→</span>${{node(`<b>MLP head</b>${{s.head[0]}} → ${{s.output}} logits`)}}</div>`;
   }}
   st.appendChild(box);
 }}
@@ -647,12 +570,12 @@ function toggleTheme() {{
 
 # ---------------------------------------------------------------------------
 def main():
-    cfg = yaml.safe_load((ROOT / "config" / "model_config.yaml").read_text(encoding="utf-8"))
-    export_dir = ROOT / cfg["paths"]["export_dir"]
+    cfg = ModelConfig()
+    export_dir = cfg.export_dir
     viz_dir = export_dir / "viz"
-    print(f"[visualize] 计算三模型指标 ...")
+    print(f"[visualize] 计算 {len(list_models())} 个模型指标 ...")
     data = compute_all(cfg)
-    for m in MODEL_NAMES:
+    for m in data["models_order"]:
         r = data["models"][m]
         print(f"[visualize] {m:<10s} acc={r['acc']*100:5.2f}%  "
               f"macro_f1={r['macro_f1']*100:5.2f}%  top3={r['top3']*100:5.2f}%")

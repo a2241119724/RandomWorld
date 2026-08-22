@@ -26,6 +26,10 @@ __pycache__.meta
 # Worker 模型：训练数据与中间产物（可由 generate_data.py / train.py / export.py 重新生成）
 model/data/raw/samples.csv
 model/data/raw/samples.csv.meta
+model/data/raw/*.csv
+model/data/raw/*.csv.meta
+model/data/cache/
+model/data/cache/*.meta
 model/data/processed/*.npy
 model/data/processed/*.npy.meta
 model/experiments/*.pt

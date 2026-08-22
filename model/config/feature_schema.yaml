@@ -10,7 +10,8 @@
 #   onehot       → 按 categories 展开为 one-hot 向量
 #   passthrough  → 原样输出（要求 value 已归一化到 [0,1]）
 #
-# 对应状态字典由 src/simulator.py 生成（key 需与 state 字段一致）。
+# 对应状态字典由 data/generate_data.py 经 src/rules.py 规则表生成
+# （key 需与 state 字段一致）。
 # =============================================================================
 version: 1
 

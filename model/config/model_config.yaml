@@ -7,21 +7,22 @@ paths:
   export_dir: experiments
 
 data:
-  num_samples: 200000          # 模拟器采样条数
-  seed: 42                     # 复现用随机种子
-  save_raw_csv: true           # 是否落盘原始 (state, action) CSV
+  rules: config/decision_rules.yaml   # 规则表：label_source=rule 时打标签；llm 时作对比基线 + 失败兜底
+  label_source: llm                   # 标签来源: rule(规则表打标签, 旧路径) / llm(DeepSeek 按现实常识打)
+  n_train_per_rule: 512               # 每条规则最多生成的训练样本数（train_sampling=boundary 时生效）
+  repeats: 16                         # 每个条件边界组合重复次数（train_sampling=boundary 时生效）。用户方案：保持 boundary 极值语义，但极值组合要枚举足够多不同状态（364→约2000），否则 MLP 学不会决策、拷贝拉比例空转
+  n_default_train: 128                # 兜底规则专属训练样本数（train_sampling=boundary 时生效）
+  train_sampling: boundary            # [固定] 训练集采样固定 boundary（uniform 采样代码已删）。用户指定：状态覆盖决策边界，比例靠 sample_proportions 拷贝拉到现实分布
+  n_train_total: 10000                # [弃用] uniform 采样时代的训练集条数；uniform 代码已删，仅保留作 LLM 缓存 key 稳定，boundary 模式不使用
+  n_test: 20000                       # 现实分布测试集条数
+  seed: 42                            # 复现用随机种子
+  save_raw_csv: true                  # 是否落盘原始 (state, action) CSV
 
 split:
-  val_ratio: 0.2
-  test_ratio: 0.1
-
-baseline:
-  # 效用函数用逻辑回归（sklearn）学习权重；C 为正则化强度的倒数
-  C: 1.0
-  max_iter: 2000
+  val_ratio: 0.25                     # 仅用于训练边界集内部切分 train/val（早停监控）
 
 mlp:
-  hidden_dims: [256, 128]      # 隐藏层维度
+  hidden_dims: [64, 32]        # 隐藏层维度（256-128 ≈10万参数对 384 条训练样本严重过参数化→过拟合坍缩到主类；64-32 ≈5千参数才匹配小数据）
   dropout: 0.1
   activation: relu
 
@@ -34,13 +35,30 @@ attention:
   head_dims: [128]             # MLP 分类头隐藏层
 
 training:
-  batch_size: 256
+  batch_size: 32               # 训练集 10000 条时每 epoch=312 步（此前 364 条 + batch 256 时每 epoch≈1 步导致欠训练，已弃用）
   epochs: 50
-  learning_rate: 0.001
+  learning_rate: 0.0001              # 用户要求调低（0.001→0.0001），让模型更平滑地学，避免过早震荡
   weight_decay: 0.0001
   patience: 8                  # 早停：验证 loss 连续 patience 轮不降即停止
-  class_weight: sqrt_inv       # 类别权重缓解长尾标签被大类主导：none / sqrt_inv(推荐) / inverse
+  class_weight: none           # loss 权重缓解长尾（none/sqrt_inv/inverse）；sample_proportions 开启时被重采样替代，置 none
+  sample_proportions:          # 每 epoch 重采样训练集的目标行为比例（训练时各类别占比 == 游戏内正常比例）。sum≈1，只覆盖训练集已观测类；改比例后重新 train 即可
+    self_gather: 0.60          # 干活主导（对齐 Gather:Sleep≈9:1 方向），游戏内正常比例初始值
+    self_build: 0.15
+    idle: 0.10
+    eat: 0.08
+    sleep: 0.04
+    ground_sleep: 0.03
 
 export:
   onnx: true                   # 导出 ONNX
   weights_json: true           # 导出纯权重 JSON（供 C# 手写前向传播）
+
+llm:
+  provider: deepseek           # OpenAI 兼容端点，后续可换 provider
+  model: deepseek-chat
+  base_url: https://api.deepseek.com
+  temperature: 0.0             # 确定性（配合缓存固化，数据可复现）
+  batch_size: 32               # 每批状态条数
+  timeout: 60                  # 单次请求超时（秒）
+  max_retries: 3               # 非法/超时重试次数
+  cache_dir: data/cache        # LLM 标签缓存目录（同 seed + 同 prompt 幂等复用）

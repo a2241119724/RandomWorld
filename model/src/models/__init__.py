@@ -1,15 +1,15 @@
-"""模型定义：效用函数 baseline、MLP 策略网络与注意力模型。"""
-from .baseline_utility import UtilityBaseline
+"""模型包：导入各模型模块触发注册，并导出 registry 工厂。
 
-# MLP / 注意力依赖 torch；未安装时 baseline 仍可独立训练/评估
-try:
-    from .mlp import WorkerMLP
-except ImportError:  # pragma: no cover
-    WorkerMLP = None
+新增模型只需在 models/ 下实现 DecisionModel 子类 + @register，然后在本文件
+import 该模块即可自动纳入 train/evaluate/export/visualize 流程。
+"""
+from .registry import MODEL_REGISTRY, register, create_model, load_model, list_models
+from .base import DecisionModel
 
-try:
-    from .attention import WorkerAttention
-except ImportError:  # pragma: no cover
-    WorkerAttention = None
+from .mlp import MlpModel  # noqa: F401  （触发注册）
+from .attention import AttentionModel  # noqa: F401
 
-__all__ = ["UtilityBaseline", "WorkerMLP", "WorkerAttention"]
+__all__ = [
+    "MODEL_REGISTRY", "register", "create_model", "load_model", "list_models",
+    "DecisionModel", "MlpModel", "AttentionModel",
+]

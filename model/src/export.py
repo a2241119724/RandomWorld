@@ -1,207 +1,42 @@
-"""导出：把训练好的模型导出为 ONNX 与纯权重 JSON（供 Unity C# 侧推理）。
+"""导出入口：按注册表遍历，把已训练模型导出为 Unity 可消费产物。
 
 用法（在 model/ 目录下）：
     python src/export.py
+
+每个模型实现自己的 ``export``（unity_export 提供共享助手），本文件只负责
+遍历 registry + 加载产物 + 调用，新增模型无需改动。
 """
 from __future__ import annotations
 
-import json
-import struct
 import sys
 from pathlib import Path
 
-import numpy as np
-import yaml
-
-# Windows 控制台默认 GBK 编码，会撞上 torch.onnx 新导出器打印的 emoji（✅ 等）导致
-# UnicodeEncodeError。强制 stdout 用 UTF-8 输出，保证导出在中文 Windows 下不崩。
+# Windows 控制台默认 GBK 编码，会撞上 torch.onnx 新导出器打印的 emoji（✅ 等）
+# 导致 UnicodeEncodeError。强制 stdout 用 UTF-8 输出，保证导出在中文 Windows 下不崩。
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.actions import ACTIONS  # noqa: E402
-
-
-def _tolist(x) -> list:
-    return x.tolist()
-
-
-def export_baseline_weights(export_dir: Path) -> None:
-    """把 baseline 的线性效用权重导出为单层权重 JSON。"""
-    npz_path = export_dir / "baseline.npz"
-    if not npz_path.exists():
-        print("[export] 未找到 baseline.npz，跳过 baseline 导出")
-        return
-    data = np.load(npz_path)
-    coef = data["coef"]          # (num_actions, input_dim)
-    intercept = data["intercept"]  # (num_actions,)
-
-    feature_names = _load_feature_names()
-    payload = {
-        "model": "baseline",
-        "input_dim": int(coef.shape[1]),
-        "num_actions": int(coef.shape[0]),
-        "activation": "none",     # 单层线性 + softmax
-        "layers": [{"W": _tolist(coef), "b": _tolist(intercept)}],
-        "action_names": ACTIONS,
-        "feature_names": feature_names,
-    }
-    out = export_dir / "baseline_weights.json"
-    out.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    print(f"[export] baseline 权重 -> {out}")
-
-
-def export_mlp(export_dir: Path, cfg: dict) -> None:
-    """导出 MLP：ONNX + 纯权重 JSON。"""
-    import torch
-
-    ckpt_path = export_dir / "mlp.pt"
-    if not ckpt_path.exists():
-        print("[export] 未找到 mlp.pt，跳过 MLP 导出")
-        return
-
-    from src.models.mlp import WorkerMLP
-
-    ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-    model = WorkerMLP(
-        input_dim=ckpt["input_dim"],
-        num_actions=ckpt["num_actions"],
-        hidden_dims=ckpt["hidden_dims"],
-        activation=ckpt["activation"],
-    )
-    model.load_state_dict(ckpt["state_dict"])
-    model.eval()
-
-    input_dim = ckpt["input_dim"]
-
-    # ---- 1. 提取纯权重（Linear 层顺序 + 统一激活函数）----
-    linear_layers = []
-    for module in model.net:
-        if isinstance(module, torch.nn.Linear):
-            linear_layers.append({
-                "W": _tolist(module.weight.detach()),  # (out, in)
-                "b": _tolist(module.bias.detach()),    # (out,)
-            })
-
-    payload = {
-        "model": "mlp",
-        "input_dim": input_dim,
-        "num_actions": ckpt["num_actions"],
-        "activation": ckpt["activation"],   # 除最后一层外每层 Linear 后应用
-        "layers": linear_layers,
-        "action_names": ACTIONS,
-        "feature_names": _load_feature_names(),
-    }
-    weights_path = export_dir / "mlp_weights.json"
-    weights_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    print(f"[export] MLP 权重 -> {weights_path}")
-
-    # ---- 1.5 导出 Unity 二进制权重（C# BinaryReader 直接读取，零 JSON 依赖）----
-    _export_mlp_binary(export_dir, linear_layers)
-
-    # ---- 2. 导出 ONNX ----
-    if cfg.get("export", {}).get("onnx", True):
-        onnx_path = export_dir / "mlp.onnx"
-        dummy = torch.randn(1, input_dim)
-        # opset 18：torch 2.x 新 exporter 的最低支持版本（opset 13 会触发版本转换失败）。
-        # 注：Unity 侧走 Barracuda（需低 opset）时，优先用 mlp_weights.json 纯权重手写推理。
-        torch.onnx.export(
-            model,
-            dummy,
-            str(onnx_path),
-            input_names=["state"],
-            output_names=["logits"],
-            opset_version=18,
-        )
-        print(f"[export] MLP ONNX -> {onnx_path}")
-
-
-def _export_mlp_binary(export_dir: Path, linear_layers: list[dict]) -> None:
-    """导出 Unity 友好的扁平二进制权重（小端 float32）。
-
-    布局（与 C# `WorkerModelInference.Load` 一一对应）：
-        int32  num_layers
-        对每层：
-            int32  out_dim
-            int32  in_dim
-            float32[out_dim * in_dim]  W（行主序，第 o 行 = 第 o 个输出神经元的权重）
-            float32[out_dim]           b
-    """
-    out = export_dir / "mlp_weights.bytes"
-    with open(out, "wb") as f:
-        f.write(struct.pack("<i", len(linear_layers)))
-        for layer in linear_layers:
-            w = np.asarray(layer["W"], dtype=np.float32)  # (out, in)
-            b = np.asarray(layer["b"], dtype=np.float32)  # (out,)
-            out_dim, in_dim = w.shape
-            f.write(struct.pack("<ii", out_dim, in_dim))
-            w.tofile(f)  # C-order 行主序
-            b.tofile(f)
-    print(f"[export] Unity 二进制权重 -> {out}")
-
-
-def export_attention(export_dir: Path, cfg: dict) -> None:
-    """导出注意力模型为 ONNX。
-
-    注意：attention 无法压平成 Linear 层，故不导出纯权重 JSON/bytes（现有 C# 手写推理
-    不适用），Unity 侧需走 ONNX + Sentis/Barracuda。
-    """
-    import torch
-
-    ckpt_path = export_dir / "attention.pt"
-    if not ckpt_path.exists():
-        print("[export] 未找到 attention.pt，跳过 attention 导出")
-        return
-
-    from src.models.attention import WorkerAttention
-
-    ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-    model = WorkerAttention(
-        input_dim=ckpt["input_dim"],
-        num_actions=ckpt["num_actions"],
-        d_model=ckpt["d_model"],
-        n_heads=ckpt["n_heads"],
-        n_layers=ckpt["n_layers"],
-        dim_feedforward=ckpt["dim_feedforward"],
-        head_dims=ckpt["head_dims"],
-    )
-    model.load_state_dict(ckpt["state_dict"])
-    model.eval()
-
-    input_dim = ckpt["input_dim"]
-
-    if cfg.get("export", {}).get("onnx", True):
-        onnx_path = export_dir / "attention.onnx"
-        dummy = torch.randn(1, input_dim)
-        torch.onnx.export(
-            model,
-            dummy,
-            str(onnx_path),
-            input_names=["state"],
-            output_names=["logits"],
-            opset_version=18,
-        )
-        print(f"[export] 注意力 ONNX -> {onnx_path}")
-
-
-def _load_feature_names() -> list[str]:
-    processed = ROOT / "data" / "processed"
-    f = processed / "feature_names.txt"
-    if f.exists():
-        return f.read_text(encoding="utf-8").splitlines()
-    return []
+from src.config import ModelConfig  # noqa: E402
+from src.models import list_models, load_model  # noqa: E402
 
 
 def main():
-    cfg = yaml.safe_load((ROOT / "config" / "model_config.yaml").read_text(encoding="utf-8"))
-    export_dir = ROOT / cfg["paths"]["export_dir"]
+    cfg = ModelConfig()
+    export_dir = cfg.export_dir
     export_dir.mkdir(parents=True, exist_ok=True)
 
-    export_baseline_weights(export_dir)
-    export_mlp(export_dir, cfg)
-    export_attention(export_dir, cfg)
+    for name in list_models():
+        model = load_model(name, export_dir, cfg.raw)
+        if model is None:
+            print(f"[export] 未找到 {name} 产物，跳过")
+            continue
+        print(f"[export] 导出 {name} ...")
+        paths = model.export(export_dir, cfg.raw)
+        for p in paths:
+            print(f"[export]   -> {p}")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,9 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
+from .registry import register
+from .torch_adapter import TorchDecisionModel
+
 
 class WorkerMLP(nn.Module):
     def __init__(
@@ -34,3 +37,14 @@ class WorkerMLP(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.net(x)
+
+
+@register("mlp")
+class MlpModel(TorchDecisionModel):
+    """MLP 的 DecisionModel 适配（注册名 "mlp"）。"""
+
+    filename = "mlp.pt"
+    section = "mlp"
+    net_cls = WorkerMLP
+    meta_keys = ("hidden_dims", "dropout", "activation")
+    flattenable = True

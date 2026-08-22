@@ -1,0 +1,146 @@
+# =============================================================================
+# Worker 行为决策 —— 人工维护的「条件→行为」规则表
+# =============================================================================
+# 训练集（边界覆盖：连续特征取 min/max、枚举取全值）与测试集（现实分布：随机小数）
+# 都由本表驱动生成并打标签。规则自上而下匹配，第一条命中即生效，全部不命中落到
+# when:{} 兜底规则（有且必须一条）。
+#
+# 条件值语义（引用原始状态 key，与 feature_schema.yaml 的 key 一致）：
+#   { max: X }            value <= X
+#   { min: X }            value >= X
+#   { min: A, max: B }    A <= value <= B
+#   { eq: V }             value == V（枚举 / 整数）
+#   { in: [a, b, ...] }   枚举值列表
+# 连续键（minmax/ratio/log）只用 min/max；枚举键（onehot）只用 eq/in。
+# action 必须 ∈ src.actions.ACTIONS（与 C# WorkerDecisionType 顺序一致）。
+#
+# 更新规则后运行：python data/generate_data.py 重新生成训练/测试数据，
+# 再 python src/train.py --model all 重新训练。
+# =============================================================================
+version: 2
+
+# 采样边界补充（feature_schema 未直接给出的信息）
+sampling_overrides:
+  ratio_max:               # ratio 特征 max_key 的取值（schema 无此信息，缺省 100）
+    hungry_max: 100
+    tired_max: 100
+    spirit_max: 100
+    hp_max: 100
+    mp_max: 100
+    exp_max: 100
+  int_keys:                # 本应是整数的连续键（生成/测试时取整）
+    - level
+    - bed_available
+    - nearby_food
+    - nearby_resource
+    - nearby_building
+    - nearby_worker
+
+rules:
+  # ---- 生存优先（最高优先级）----
+  - name: 饥饿且有食物可吃
+    when:
+      hungry: { max: 30 }
+      nearby_food: { min: 1 }
+    action: eat
+
+  - name: 饥饿但无食物 → 采集
+    when:
+      hungry: { max: 30 }
+      nearby_food: { eq: 0 }
+    action: self_gather
+
+  - name: 疲劳且有床 → 睡觉
+    when:
+      tired: { max: 35 }
+      bed_available: { eq: 1 }
+    action: sleep
+
+  - name: 疲劳且无床 → 地面睡
+    when:
+      tired: { max: 35 }
+      bed_available: { eq: 0 }
+    action: ground_sleep
+
+  - name: 精气神低 → 漫游恢复
+    when:
+      spirit: { max: 30 }
+    action: wander
+
+  # ---- 天气与现实权衡 ----
+  - name: 严寒 + 无生存压力 + 事业心低 → 不愿出门
+    when:
+      weather_temperature: { max: 2 }
+      hungry: { min: 36 }
+      gold: { min: 21 }
+      ambition: { max: 49 }
+    action: idle
+
+  - name: 炎热 + 生存压力 → 出门采集
+    when:
+      weather_temperature: { min: 32 }
+      hungry: { max: 35 }
+    action: self_gather
+
+  # ---- 阶段 / 建造 ----
+  - name: bootstrap 建家（钱够）
+    when:
+      life_stage: { eq: bootstrap }
+      home_build_stage: { in: [0, 1] }
+      gold: { min: 30 }
+    action: self_build
+
+  - name: bootstrap 建家缺钱 → 取仓库
+    when:
+      life_stage: { eq: bootstrap }
+      home_build_stage: { in: [0, 1] }
+      gold: { max: 29 }
+    action: withdraw
+
+  - name: bootstrap 已建家 → 囤食物
+    when:
+      life_stage: { eq: bootstrap }
+      home_build_stage: { eq: 2 }
+      nearby_food: { min: 1 }
+    action: self_gather
+
+  # ---- 目标驱动 ----
+  - name: 目标建造 → 自主建造
+    when:
+      current_goal: { eq: build_structure }
+    action: self_build
+
+  - name: 目标囤食物且附近有食物 → 采集
+    when:
+      current_goal: { eq: stock_food }
+      nearby_food: { min: 1 }
+    action: self_gather
+
+  # ---- 社交 / 人格 ----
+  - name: 有钱 + 社交高 → 发布悬赏
+    when:
+      gold: { min: 41 }
+      sociality: { min: 56 }
+    action: post_bounty
+
+  - name: 勤奋 + 好感高 → 接受悬赏
+    when:
+      diligence: { min: 46 }
+      favorability: { min: 36 }
+    action: accept_bounty
+
+  - name: 贪婪高 → 存入仓库
+    when:
+      greed: { min: 71 }
+    action: store
+
+  - name: 勤快 + 附近有资源 → 拾取
+    when:
+      diligence: { min: 46 }
+      nearby_resource: { min: 1 }
+    action: pickup
+
+  # ---- 兜底（必须恰有一条，when 为空 = 任意状态）----
+  - name: 兜底 → 空闲
+    when: {}
+    action: idle
