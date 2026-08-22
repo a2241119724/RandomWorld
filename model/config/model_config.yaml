@@ -51,6 +51,7 @@ export:
 llm:
   provider: web                # 标签教师：deepseek=OpenAI 兼容 API（付费）/ web=网页版浏览器自动化（免费，可反复重打）
   model: deepseek-chat         # 仅 deepseek 教师使用
+  model_fallbacks: [deepseek-reasoner]  # 当前模型重试耗尽后换模型再试（用户要求失败不兜底 idle）
   base_url: https://api.deepseek.com
   temperature: 0.0             # 确定性（配合缓存固化，数据可复现；web 教师无法控制，靠缓存固化）
   batch_size: 32               # 每批状态条数
@@ -58,11 +59,13 @@ llm:
   max_retries: 3               # 非法/超时重试次数
   cache_dir: data/cache        # LLM 标签缓存目录（同 seed + 同 prompt 幂等复用）
   web:                         # 网页版浏览器自动化打标签（免费，避免特征扩展后反复付费）
+    platforms: [deepseek, wenxin, qianwen, mimo]  # 参与打标的平台（ark 已删：在线体验有时限；doubao 已删：大 prompt 整批回显 + 触发人机验证）
     batch_size: 64             # 每批状态条数（网页版推理快，64 条/批生成约 5s；实测关深度思考后提速明显）
-    headless: false            # 有头模式：首次需手动登录 chat.deepseek.com（一次性，profile 复用）
-    profile_dir: data/browser_profile   # 浏览器登录会话（不存密码）
+    headless: false            # 有头模式：首次需手动登录各平台（一次性，profile 复用，每平台一个子目录）
+    profile_dir: data/browser_profile   # 浏览器登录会话根目录（每平台 <profile_dir>/<平台名>/，不存密码）
     delay_sec: 2               # 批间停顿（秒），降低触发限流/反爬概率（生成后已留稳定等待）
     stable_sec: 3              # 回复稳定判定秒数；回复以 `}` 结尾时 1.5s 即完成
     chat_timeout: 240          # 单条回复等待上限（秒）
     login_timeout: 300         # 登录等待上限（秒）
+    check_timeout: 60          # 并行池可用性快速判定超时（秒）：未登录/未校准的平台快速排除（6 浏览器并行启动负载高，30s 不够）
     max_test_relabel_batches: 60   # 网页版重打测试集批数上限（20000/32=625 批不可行，超限自动拒绝）

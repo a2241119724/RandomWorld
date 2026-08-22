@@ -97,14 +97,17 @@ def main() -> None:
     schema = FeatureSchema.load(cfg.schema_path)
     seed = cfg.data_seed
 
-    # ---- 标签器：api=OpenAI 兼容端点（付费）/ web=网页版浏览器自动化（免费）----
+    # ---- 标签器：api=OpenAI 兼容端点（付费）/ web=网页版浏览器自动化多平台并行（免费）----
     from src.llm_teacher import LLMTeacher
-    from src.web_labeler import WebTeacher
+    from src.web_labeler import make_pool
 
     llm_cfg = cfg["llm"]
     provider = llm_cfg.get("provider", "deepseek")
     if provider == "web":
-        teacher = WebTeacher(cfg, schema)
+        names = llm_cfg.get("web", {}).get("platforms", [])
+        if not names:
+            names = ["deepseek", "wenxin", "qianwen", "mimo"]
+        teacher = make_pool(cfg, schema, names)
     elif provider == "deepseek":
         teacher = LLMTeacher(cfg, schema)
     else:
@@ -116,7 +119,7 @@ def main() -> None:
     te_cache_key = _sampling_signature(data_cfg, seed, teacher._system_prompt, "test", teacher.source)
 
     # 网页版打标签：训练集断点续跑文件（进程中断后重跑从断点继续）
-    if isinstance(teacher, WebTeacher):
+    if provider == "web":
         teacher.progress_file = Path(cache_dir) / f"web_progress_{tr_cache_key}.json"
 
     # 护栏：网页版不自动重打超大规模测试集（625 批不可行）

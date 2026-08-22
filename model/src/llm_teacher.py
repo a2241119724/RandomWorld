@@ -19,7 +19,7 @@ import re
 from typing import Any
 
 from .actions import ACTIONS, ACTION_LABELS_ZH
-from .rules import DEFAULT_ACTION, derive_state_bounds
+from .rules import derive_state_bounds
 
 # ---------------------------------------------------------------------------
 # 状态字段中文说明（key → 语义；数值范围由 derive_state_bounds 自动补充）
@@ -156,7 +156,8 @@ def build_user_prompt(batch: list[dict[str, Any]]) -> str:
         f"请判断以下 {len(batch)} 名工人各自此刻最应该做的一件事。\n"
         "只输出一个 JSON 对象（不要任何其他文字），格式：\n"
         '{"labels": ["行为英文名", "行为英文名", ...]}\n'
-        f"labels 的长度必须等于 {len(batch)}，每个元素必须是【可选行为】中的英文名。\n"
+        f"labels 的长度必须正好等于 {len(batch)}，一个都不能少；禁止省略、分批输出或向我提问。\n"
+        "输出必须一次完整给出全部结果，除那个 JSON 对象外禁止任何解释文字。\n"
         f"工人状态列表：\n{payload}"
     )
 
@@ -181,8 +182,12 @@ def _parse_labels(text: str, n: int) -> list[str | None] | None:
     if not isinstance(data, dict):
         return None
     raw = data.get("labels")
-    if not isinstance(raw, list) or len(raw) != n:
+    # 容忍 ±2 数量偏差（如 wenxin 实测多输出 1 个）：多出截断为前 n 个，不足用 None 补齐（None → 兜底 idle）
+    if not isinstance(raw, list) or abs(len(raw) - n) > 2:
         return None
+    if len(raw) > n:
+        raw = raw[:n]
+    raw = raw + [None] * (n - len(raw))
     return [v if isinstance(v, str) and v in ACTIONS else None for v in raw]
 
 
@@ -196,6 +201,8 @@ class LLMTeacher:
         llm_cfg = cfg["llm"] if isinstance(cfg, dict) else cfg.get("llm", {})
         self.source = "api"  # 标签来源标记：纳入缓存 key，防不同教师缓存串扰
         self.model = llm_cfg.get("model", "deepseek-chat")
+        # 换模型兜底：当前模型重试耗尽后依次尝试这些模型（用户要求失败不兜底 idle）
+        self.model_fallbacks = list(llm_cfg.get("model_fallbacks", []))
         self.base_url = llm_cfg.get("base_url", "https://api.deepseek.com")
         self.temperature = llm_cfg.get("temperature", 0.0)
         self.batch_size = llm_cfg.get("batch_size", 32)
@@ -226,28 +233,29 @@ class LLMTeacher:
 
     # ---- 内部 ----
     def _label_batch(self, batch: list[dict[str, Any]]) -> list[str]:
+        """打一个批次：当前模型重试耗尽后换 fallback 模型重试；全部失败抛异常（不兜底 idle）。"""
+        models = [self.model, *self.model_fallbacks]
         last_err: Exception | None = None
-        for attempt in range(self.max_retries + 1):
-            try:
-                text = self._call_api(batch)
-                parsed = _parse_labels(text, len(batch))
-                if parsed is not None:
-                    # 逐条：非法项回退主类 idle（其余保持 LLM 结果）
-                    return [
-                        a if a is not None else DEFAULT_ACTION
-                        for a in parsed
-                    ]
-                last_err = ValueError(f"输出无法解析/长度不符: {text[:120]!r}")
-            except Exception as e:  # 网络/超时/限流等
-                last_err = e
-            if attempt < self.max_retries:
-                print(f"[llm_teacher] 批次重试 {attempt + 1}/{self.max_retries}: {last_err}")
-        print(f"[llm_teacher] WARN 批次 {self.max_retries + 1} 次失败，主类兜底: {last_err}")
-        return [DEFAULT_ACTION] * len(batch)
+        for model in models:
+            for attempt in range(self.max_retries + 1):
+                try:
+                    text = self._call_api(batch, model)
+                    parsed = _parse_labels(text, len(batch))
+                    if parsed is not None and all(a is not None for a in parsed):
+                        # 批内个别非法项也算失败（用户要求不兜底）：只有全合法才接受
+                        return parsed
+                    last_err = ValueError(f"输出无法解析/长度不符: {text[:120]!r}")
+                except Exception as e:  # 网络/超时/限流等
+                    last_err = e
+                if attempt < self.max_retries:
+                    print(f"[llm_teacher] 批次重试 {attempt + 1}/{self.max_retries} ({model}): {last_err}")
+            if model != models[-1]:
+                print(f"[llm_teacher] 模型 {model} 重试耗尽，换模型 {models[models.index(model) + 1]}")
+        raise RuntimeError(f"批次 {len(batch)} 条所有模型重试失败，不兜底默认 action: {last_err}")
 
-    def _call_api(self, batch: list[dict[str, Any]]) -> str:
+    def _call_api(self, batch: list[dict[str, Any]], model: str | None = None) -> str:
         resp = self.client.chat.completions.create(
-            model=self.model,
+            model=model or self.model,
             messages=[
                 {"role": "system", "content": self._system_prompt},
                 {"role": "user", "content": build_user_prompt(batch)},
