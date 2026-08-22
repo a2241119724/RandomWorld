@@ -32,11 +32,12 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-from .actions import ACTIONS
+from .actions import ACTIONS, ACTION_LABELS_ZH
 from .config import ModelConfig
 from .features import FeatureSchema
-from .llm_teacher import build_system_prompt, build_user_prompt, _parse_labels, _rounded
-from .rules import derive_state_bounds, generate_training_samples, state_key
+from .llm_teacher import (KEY_ZH, _parse_labels, _range_text,
+                          build_system_prompt, build_user_prompt)
+from .rules import derive_state_bounds, generate_training_samples
 from .web_platforms import PLATFORM_DEFS, get_platform
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -44,12 +45,113 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # 冒烟/可用性探针提示词：极简，任何模型都应按字面回复一个短词
 PROBE_PROMPT = "请只回复 OK 两个英文字母，不要输出任何其他内容。"
 
-# 多数投票平局优先级（干活/生产优先于休息/闲逛；index 小 = 更优先）
-VOTE_PRIORITY = [
-    "self_gather", "self_build", "self_plant", "pickup",
-    "store", "withdraw", "post_bounty", "accept_bounty",
-    "self_carry", "eat", "sleep", "ground_sleep", "wander", "idle",
-]
+
+# ---------------------------------------------------------------------------
+# 规则生成（--gen-rules）：让每个模型把「状态 → 行为」决策逻辑写成结构化规则
+# ---------------------------------------------------------------------------
+def build_rule_fields(schema) -> dict[str, dict]:
+    """程序从 schema 生成字段描述（模型不需重复写字段信息，规则文件仍完整可审查）。"""
+    bounds = derive_state_bounds(schema)
+    fields: dict[str, dict] = {}
+    for key, bound in bounds.items():
+        line = _range_text(key, bound)
+        if line is not None:
+            fields[key] = {"desc": line}
+    return fields
+
+
+def build_rule_prompt(schema) -> str:
+    """构造「写规则」prompt：字段描述 + 行为定义 + 规则 JSON 格式要求。"""
+    fields = build_rule_fields(schema)
+    state_lines = "\n".join(f"- {key} {info['desc']}" for key, info in fields.items())
+    action_lines = "\n".join(f"- {name:<12s} {zh}" for name, zh in ACTION_LABELS_ZH.items())
+    return f"""你是村庄生存模拟游戏中工人行为决策系统。请把「工人状态 → 此刻最该做的一件事」的决策逻辑写成一组可执行规则，规则要体现【现实生活优先级】。
+
+【状态字段与取值范围】（字段名 + 中文含义 + 取值）
+{state_lines}
+
+【可选行为】（action 只能取其中一个英文名）
+{action_lines}
+
+【规则格式】严格只输出一个 JSON 对象，不要任何其他文字、不要 markdown 代码块：
+{{"rules": [{{"when": {{"字段名": {{"运算符": 阈值}}}}, "action": "行为"}}, ...]}}
+
+要求：
+- when 内所有约束需同时满足（AND）；一条规则只约束最相关的 1~3 个字段
+- 数值字段运算符：lt(<) / lte(<=) / gt(>) / gte(>=) / btw(区间 [下限, 上限])
+  例：{{"hungry": {{"lte": 30}}}} 表示 hungry<=30；{{"hungry": {{"btw": [30, 70]}}}} 表示 30<=hungry<=70
+- 枚举字段运算符：eq(等于) / in(在列表中)
+  例：{{"current_goal": {{"eq": "earn_money"}}}}；{{"life_stage": {{"in": ["bootstrap", "settled"]}}}}
+- 规则按优先级排列（先紧急后常态），覆盖关键现实情形：
+  1) 真正饿了（hungry 很低）→ 附近有食物 eat，没食物 self_gather（或 withdraw 取仓库）
+  2) 累到极限（tired 很高）→ 有床 sleep，没床 ground_sleep
+  3) 生命/精气神危险（hp/spirit 很低）→ 先恢复
+  4) 有明确目标且状态正常 → 推进目标（赚钱→self_gather/pickup、建造→self_build、囤粮→采集食物、造装备→采集资源）
+  5) 精力旺盛无压力 → 经营/社交/拾取搬运（store/withdraw/post_bounty/self_carry/self_plant/pickup）
+  6) 实在无事可做才 idle/wander
+- 字段名必须是上面列出的；action 必须是行为英文名；阈值须在字段取值范围内
+- 最后建议加一条兜底规则（when 为空对象 {}，或最宽泛条件），保证任何状态都能匹配到行为
+  （如 {{"when": {{}}, "action": "idle"}}）；若你确认前面规则已覆盖全部情况可不加
+- 输出 8~20 条规则，宁可多覆盖不要漏场景"""
+
+
+def _parse_rules(text: str) -> list[dict] | None:
+    """解析模型输出的规则 JSON（容忍 markdown 代码块/多余文字）。成功返回规则 dict 列表。"""
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```[a-zA-Z]*\n?", "", cleaned)
+        cleaned = re.sub(r"\n?```$", "", cleaned).strip()
+    data = None
+    try:
+        data = json.loads(cleaned)
+    except json.JSONDecodeError:
+        m = re.search(r"\{.*\}", cleaned, re.S)
+        if m:
+            try:
+                data = json.loads(m.group(0))
+            except json.JSONDecodeError:
+                data = None
+    if isinstance(data, dict) and isinstance(data.get("rules"), list):
+        return [r for r in data["rules"] if isinstance(r, dict)]
+    return None
+
+
+def _validate_rules(rules: list[dict], schema_keys: list[str]) -> list[dict]:
+    """校验规则：字段名在 schema_keys、约束运算符/值类型合法、action 在 ACTIONS。返回合法子集。"""
+    from .rule_teacher import _SYM_OPS  # 共享运算符归一（避免重复定义）
+
+    valid = []
+    for r in rules:
+        when = r.get("when")
+        action = r.get("action")
+        if not isinstance(when, dict) or not when or action not in ACTIONS:
+            continue
+        ok = True
+        for field, cond in when.items():
+            if field not in schema_keys or not isinstance(cond, dict) or not cond:
+                ok = False
+                break
+            for op, target in cond.items():
+                op = _SYM_OPS.get(op, op) if isinstance(op, str) else op
+                if op in ("lt", "lte", "gt", "gte"):
+                    if not isinstance(target, (int, float)):
+                        ok = False
+                elif op == "btw":
+                    if not (isinstance(target, (list, tuple)) and len(target) == 2
+                            and all(isinstance(x, (int, float)) for x in target)):
+                        ok = False
+                elif op == "in":
+                    if not isinstance(target, (list, tuple)) or not target:
+                        ok = False
+                elif op != "eq":
+                    ok = False  # 未知运算符
+                if not ok:
+                    break
+            if not ok:
+                break
+        if ok:
+            valid.append(r)
+    return valid
 
 
 def _first_visible(page, selectors: tuple[str, ...]) -> Any:
@@ -493,6 +595,46 @@ class WebTeacher:
             return False
 
     # ------------------------------------------------------------------
+    # 规则生成（--gen-rules）：让本平台写一份结构化规则
+    # ------------------------------------------------------------------
+    def generate_rule_set(self, schema, rule_dir: Path) -> dict | None:
+        """让本平台写一份结构化规则文件内容；失败返回 None（重试 max_retries 次）。
+
+        返回 ``{version, platform, schema_keys, fields, rules}``（fields 由程序填充，
+        rules 为模型所写并经 ``_validate_rules`` 校验）。
+        """
+        schema_keys = list(derive_state_bounds(schema))
+        prompt = build_rule_prompt(schema)
+        for attempt in range(self.max_retries + 1):
+            try:
+                self._ensure_ready()
+                self._new_chat()
+                self._disable_toggles()
+                n_before = len(self._assistant_texts())
+                self._send_prompt(prompt)
+                text = self._wait_reply(n_before)
+                parsed = _parse_rules(text)
+                valid = _validate_rules(parsed, schema_keys) if parsed else []
+                if valid:
+                    print(f"[gen-rules:{self.platform.name}] 模型写规则 {len(parsed)} 条，"
+                          f"校验通过 {len(valid)} 条")
+                    return {
+                        "version": 2,
+                        "platform": self.platform.name,
+                        "schema_keys": schema_keys,
+                        "fields": build_rule_fields(schema),
+                        "rules": valid,
+                    }
+                print(f"[gen-rules:{self.platform.name}] 规则校验失败: "
+                      f"len={len(text)} 开头={text[:120]!r}")
+            except Exception as e:
+                print(f"[gen-rules:{self.platform.name}] 失败: {e}")
+            if attempt < self.max_retries:
+                print(f"[gen-rules:{self.platform.name}] 重试 {attempt + 1}/{self.max_retries}")
+                time.sleep(self.delay_sec)
+        return None
+
+    # ------------------------------------------------------------------
     # 断点续跑
     # ------------------------------------------------------------------
     def _load_progress(self, n: int) -> list[Optional[str]]:
@@ -686,68 +828,48 @@ class WebTeacherPool:
             self.progress_file.write_text(json.dumps(arr, ensure_ascii=False), encoding="utf-8")
 
     # ------------------------------------------------------------------
-    # 多数投票（生成规则文件，供 provider: rules 离线打标）
+    # 规则生成（--gen-rules）：每个可用平台各写一份结构化规则文件
     # ------------------------------------------------------------------
-    def vote(self, states: list[dict[str, Any]], schema_keys: list[str],
-             rule_file: Path, progress_file: Optional[Path] = None,
-             seed: int | None = None) -> list[str]:
-        """多数投票打标并生成规则文件。
+    def generate_rules(self, schema, rule_dir: Path) -> dict[str, int]:
+        """让每个可用平台各写一份规则文件到 rule_dir/<platform>.json（断点续跑：已存在跳过）。
 
-        每个可用平台对**全部** states 重复打标（非分摊），各平台票逐批落盘断点续跑；
-        全部完成后按 state_key 聚合各平台票，多数投票取标签最多者（平局按
-        VOTE_PRIORITY 取高者）。规则文件固化每状态投票明细与最终标签。
-
-        返回每状态最终标签列表（len(states)）。
+        平台冒烟失败/写规则失败 → 跳过不阻塞其余平台。返回 {platform: 规则条数}。
         """
-        from collections import Counter, defaultdict
-
-        n = len(states)
-        if not self.teachers:
-            raise RuntimeError("没有可用的网页平台（web.platforms 为空）")
-        keys = [state_key(st, schema_keys) for st in states]
-        votes = {t.platform.name: [None] * n for t in self.teachers}
-        if progress_file and Path(progress_file).exists():
-            try:
-                saved = json.loads(Path(progress_file).read_text(encoding="utf-8"))
-                if isinstance(saved, dict):
-                    for pname, arr in saved.items():
-                        if pname in votes and isinstance(arr, list) and len(arr) == n:
-                            votes[pname] = [a if isinstance(a, str) else None for a in arr]
-                            print(f"[vote] 断点续跑：{pname} 已投 {sum(1 for a in arr if a)}/{n} 票")
-            except Exception:
-                pass
+        rule_dir = Path(rule_dir)
+        if not rule_dir.is_absolute():
+            rule_dir = PROJECT_ROOT / rule_dir
+        rule_dir.mkdir(parents=True, exist_ok=True)
+        results: dict[str, int] = {}
         lock = threading.Lock()
-        usable: set[str] = set()
-        t0 = time.monotonic()
-
-        def save() -> None:
-            if progress_file:
-                Path(progress_file).parent.mkdir(parents=True, exist_ok=True)
-                Path(progress_file).write_text(
-                    json.dumps(votes, ensure_ascii=False), encoding="utf-8")
 
         def worker(t: WebTeacher) -> None:
+            pname = t.platform.name
+            out = rule_dir / f"{pname}.json"
+            if out.exists():
+                try:
+                    data = json.loads(out.read_text(encoding="utf-8"))
+                    n = len(data.get("rules", [])) if isinstance(data, dict) else 0
+                    print(f"[gen-rules] 断点续跑：{pname} 已生成（{n} 条规则），跳过")
+                    with lock:
+                        results[pname] = n
+                except Exception:
+                    pass
+                t._close()
+                return
             if not t.check_usable(self.check_timeout):
                 t._close()
                 return
-            with lock:
-                usable.add(t.platform.name)
-            arr = votes[t.platform.name]
             try:
-                for i in range(0, n, t.batch_size):
-                    if all(x is not None for x in arr[i:i + t.batch_size]):
-                        continue
-                    labels = t._label_batch(states[i:i + t.batch_size])
-                    with lock:
-                        arr[i:i + t.batch_size] = labels
-                        save()
-                        done = sum(1 for x in arr if x is not None)
-                        print(f"[vote:{t.platform.name}] 已投 {done}/{n} 票"
-                              f"（总耗时 {time.monotonic() - t0:.0f}s）")
-            except Exception as e:
-                print(f"[vote:{t.platform.name}] 投票中断：{e}（已投票保留，重跑续跑）")
+                doc = t.generate_rule_set(schema, rule_dir)
             finally:
                 t._close()
+            if doc is None:
+                print(f"[gen-rules:{pname}] 写规则失败，跳过")
+                return
+            out.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+            with lock:
+                results[pname] = len(doc["rules"])
+            print(f"[gen-rules] {pname} 规则已写入 {out}")
 
         threads = [threading.Thread(target=worker, args=(t,), daemon=True)
                    for t in self.teachers]
@@ -755,47 +877,7 @@ class WebTeacherPool:
             th.start()
         for th in threads:
             th.join()
-
-        if not usable:
-            raise RuntimeError("所有平台均不可用（未登录/选择器未校准/冒烟失败），无法生成规则文件")
-
-        # 汇总：按 state_key 聚合各平台票 → 多数，平局按 VOTE_PRIORITY 取高者
-        vote_by_key: dict[str, Counter] = defaultdict(Counter)
-        first_idx: dict[str, int] = {}
-        for i, k in enumerate(keys):
-            first_idx.setdefault(k, i)
-            for pname, arr in votes.items():
-                lab = arr[i]
-                if lab is not None:
-                    vote_by_key[k][lab] += 1
-        winner = {
-            k: max(cnt.items(), key=lambda kv: (kv[1], -VOTE_PRIORITY.index(kv[0])))[0]
-            for k, cnt in vote_by_key.items()
-        }
-        # 规则文件：仅唯一状态，含投票明细（可审查）
-        gen_by = sorted(p for p, arr in votes.items() if any(x is not None for x in arr))
-        entries = []
-        for k, cnt in vote_by_key.items():
-            idx = first_idx[k]
-            entries.append({
-                "key": k,
-                "state": [_rounded(states[idx][sk]) for sk in schema_keys],
-                "label": winner[k],
-                "vote": {p: votes[p][idx] for p in gen_by},
-            })
-        rule_file.parent.mkdir(parents=True, exist_ok=True)
-        rule_file.write_text(json.dumps({
-            "version": 1,
-            "schema_keys": schema_keys,
-            "seed": seed,
-            "n": len(entries),
-            "generated_by": gen_by,
-            "votes_total": len(gen_by),
-            "entries": entries,
-        }, ensure_ascii=False, indent=1), encoding="utf-8")
-        print(f"[vote] 规则文件已生成 -> {rule_file}（{len(entries)} 个唯一状态，"
-              f"参与平台 {len(gen_by)}: {gen_by}）")
-        return [winner[k] for k in keys]
+        return results
 
 
 # ---------------------------------------------------------------------------
@@ -876,10 +958,10 @@ def main() -> None:
     ap.add_argument("--probe-all", action="store_true", help="逐个打开全部平台，登录后判可用性 + dump DOM")
     ap.add_argument("--probe", type=str, metavar="NAME", help="单平台探活（如 deepseek）")
     ap.add_argument("--platforms", type=str, help="覆盖 web.platforms，逗号分隔（如 deepseek,wenxin）")
-    ap.add_argument("--states", type=int, default=None, help="冒烟/投票状态条数（默认 4 条冒烟；--vote-rules 不带则打全量训练集）")
+    ap.add_argument("--states", type=int, default=None, help="冒烟状态条数（默认 4 条冒烟）")
     ap.add_argument("--train", action="store_true", help="打整个训练集（走 generate_data 缓存）")
-    ap.add_argument("--vote-rules", action="store_true",
-                    help="用全部可用平台对训练集多数投票，生成规则文件（provider: rules 的输入）")
+    ap.add_argument("--gen-rules", action="store_true",
+                    help="让每个可用平台各写一份结构化规则文件到 llm.rule_dir（provider: rules 的输入）")
     args = ap.parse_args()
 
     cfg, schema = _cfg()
@@ -890,23 +972,19 @@ def main() -> None:
 
     names = _platform_names(args)
     print(f"[web_labeler] 平台: {names}")
-    if args.vote_rules:
-        from collections import Counter
-        schema_keys = list(derive_state_bounds(schema))
-        rule_file = Path(cfg["llm"].get("rule_file") or "data/rules/rule_train.json")
-        if not rule_file.is_absolute():
-            rule_file = PROJECT_ROOT / rule_file
-        vote_prog = PROJECT_ROOT / cfg["llm"]["cache_dir"] / f"vote_progress_{cfg.data_seed}.json"
-        tr_states, _ = generate_training_samples(schema, cfg.raw, cfg.data_seed, label_fn=None)
-        states = tr_states[: args.states] if args.states else tr_states
-        print(f"[vote] 对 {len(states)} 条训练集状态多数投票（平台 {names}），"
-              f"进度 -> {vote_prog}")
+    if args.gen_rules:
+        rule_dir = Path(cfg["llm"].get("rule_dir") or "data/rules/models")
+        if not rule_dir.is_absolute():
+            rule_dir = PROJECT_ROOT / rule_dir
+        print(f"[gen-rules] 让 {names} 各写一份规则文件 -> {rule_dir}/（已存在跳过）")
         pool = make_pool(cfg, schema, names)
-        final = pool.vote(states, schema_keys, rule_file, vote_prog, seed=cfg.data_seed)
-        dist = Counter(final)
-        for a, c in dist.most_common():
-            print(f"[vote]   {a:<14s} {c:5d} ({c / len(final) * 100:4.1f}%)")
-        print(f"[vote] 完成。运行 generate_data（llm.provider: rules）用规则文件打训练集。")
+        results = pool.generate_rules(schema, rule_dir)
+        if not results:
+            print("[gen-rules] 无平台成功生成规则（未登录/冒烟失败/规则校验失败）")
+            return 1
+        for pname, n in results.items():
+            print(f"[gen-rules]   {pname:<10s} {n} 条规则")
+        print(f"[gen-rules] 完成。运行 generate_data（llm.provider: rules）用这些规则打训练集。")
         return
     pool = make_pool(cfg, schema, names)
     if args.train:

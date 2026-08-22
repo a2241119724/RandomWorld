@@ -107,12 +107,12 @@ def main() -> None:
     if not names:
         names = ["deepseek", "wenxin", "qianwen"]
     if provider == "rules":
-        # 规则打标：训练集从多模型投票生成的规则文件查表（离线，不依赖浏览器），测试集沿用网页版
+        # 规则打标：训练集用各模型规则文件推导 + 多数投票（离线，不依赖浏览器），测试集沿用网页版
         from src.rule_teacher import RuleTeacher
-        rule_file = llm_cfg.get("rule_file")
-        if not rule_file:
-            raise ValueError("provider=rules 需配置 llm.rule_file（先运行 --vote-rules 生成）")
-        train_teacher = RuleTeacher(cfg, schema, rule_file)
+        rule_dir = llm_cfg.get("rule_dir")
+        if not rule_dir:
+            raise ValueError("provider=rules 需配置 llm.rule_dir（先运行 --gen-rules 生成各模型规则文件）")
+        train_teacher = RuleTeacher(cfg, schema, rule_dir)
         test_teacher = make_pool(cfg, schema, names)
     elif provider == "web":
         train_teacher = test_teacher = make_pool(cfg, schema, names)

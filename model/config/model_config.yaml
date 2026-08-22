@@ -61,11 +61,10 @@ export:
   weights_json: true           # 导出纯权重 JSON（供 C# 手写前向传播）
 
 llm:
-  provider: web                # 标签教师：deepseek=OpenAI 兼容 API（付费）/ web=网页版浏览器自动化（免费，可反复重打）/ rules=规则文件查表打标（离线，训练集用多模型投票规则；测试集仍走 web）
-  rule_file: data/rules/rule_train.json   # provider=rules 时训练集规则文件（--vote-rules 生成：所有可用平台对训练集多数投票）
-  vote:                        # --vote-rules 生成规则文件的配置
-    platforms: []              # 参与投票的平台（空=用 web.platforms；欠费/风控平台从这里移出）
-    priority: []               # 平局优先级（空=代码默认 VOTE_PRIORITY：干活/生产优先）
+  provider: web                # 标签教师：deepseek=OpenAI 兼容 API（付费）/ web=网页版浏览器自动化（免费，可反复重打）/ rules=各模型规则文件推导+多数投票（离线；训练集用，测试集仍走 web）
+  rule_dir: data/rules/models   # provider=rules 时训练集规则目录（--gen-rules 生成：每个可用平台各写一份结构化规则文件，多数投票见 src/rule_teacher.py）
+  gen_rules:                   # --gen-rules 生成规则文件的配置
+    platforms: []              # 参与生成规则的平台（空=用 web.platforms；欠费/风控平台从这里移出）
   model: deepseek-chat         # 仅 deepseek 教师使用
   model_fallbacks: [deepseek-reasoner]  # 当前模型重试耗尽后换模型再试（用户要求失败不兜底 idle）
   base_url: https://api.deepseek.com
