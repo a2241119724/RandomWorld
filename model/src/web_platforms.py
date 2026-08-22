@@ -7,8 +7,11 @@
 平台 URL（用户提供，2026-08-22）：
     deepseek  chat.deepseek.com                    已校准
     wenxin    wenxin.baidu.com（文心一言，重定向到 yiyan）
-    qianwen   platform.qianwenai.com/try-ai/chat?models=qwen3.7-flash（通义千问，URL 锚定 qwen3.7-flash）
+    qianwen   platform.qianwenai.com/try-ai/chat?models=qwen3.8-max（通义千问，URL 锚定 qwen3.8-max）
     doubao    www.doubao.com/chat/                 未校准（曾移除后加回，batch 调小重试）
+    yuanbao   yuanbao.tencent.com/chat/naQivTmsDa  未校准（2026-08-22 加入）
+    kimi      www.kimi.com/                        未校准（2026-08-22 加入）
+    chatgpt   chatgpt.com/                         未校准（2026-08-22 加入）
 
 已移除：ark（ark.volcengine.com 在线体验页有时间使用限制）、mimo（aistudio.xiaomimimo.com，
 页面无深度思考开关，关不掉深度思考）——均用户 2026-08-22 决定不用。
@@ -71,15 +74,38 @@ PLATFORM_DEFS: dict[str, Platform] = {
         note="文心一言（已校准 2026-08-22；长输入疑似被输入框截断→batch_size=16，配合追问补全兜底）",
     ),
     "qianwen": Platform(
-        name="qianwen", url="https://platform.qianwenai.com/try-ai/chat?models=qwen3.7-flash",
+        name="qianwen", url="https://platform.qianwenai.com/try-ai/chat?models=qwen3.8-max",
         toggles=("深度思考", "联网搜索", "搜索"),
-        note="通义千问（URL 直接锚定模型 qwen3.7-flash，无需手动选择）",
+        batch_size=32,  # 64 条长输出末尾被截断 → 每批缺 1-4 个 labels 触发追问补全；降到 32 减半输出长度
+        note="通义千问（URL 直接锚定模型 qwen3.8-max，无需手动选择）",
     ),
     "doubao": Platform(
         name="doubao", url="https://www.doubao.com/chat/",
         toggles=("深度思考", "联网搜索", "搜索"),
         batch_size=16,  # 2026-08-22 曾因大 prompt（64 条整批回显不执行）被移除 → 先降到 16 实测
         note="豆包（未校准 2026-08-22；曾因大 prompt 整批回显不执行 + 触发人机验证被移除后加回，batch=16 重试，选择器待 --probe 校准）",
+    ),
+    "yuanbao": Platform(
+        name="yuanbao", url="https://yuanbao.tencent.com/chat/naQivTmsDa",
+        toggles=("深度思考", "联网搜索"),
+        batch_size=32,  # 新平台先按 32 防长输出截断（参照 qianwen 64 截断教训）
+        note="腾讯元宝（未校准 2026-08-22；URL 为用户提供会话链接，选择器待 --probe 校准回填）",
+    ),
+    "kimi": Platform(
+        name="kimi", url="https://www.kimi.com/",
+        toggles=("深度思考", "联网搜索"),
+        batch_size=32,  # 新平台先按 32 防长输出截断（参照 qianwen 64 截断教训）
+        note="Kimi（未校准 2026-08-22；选择器待 --probe 校准回填）",
+    ),
+    "chatgpt": Platform(
+        name="chatgpt", url="https://chatgpt.com/",
+        editor=("#prompt-textarea", "[contenteditable='true']", "[role='textbox']"),
+        markdown=("[class*='markdown']", "[class*='message-content']"),
+        new_chat=("button:has-text('New chat')", "button:has-text('新建聊天')", "a[href='/']"),
+        toggles=("Reasoning", "Search the web", "深度思考", "联网搜索"),  # 界面以英文为主，中英双语；找不到静默跳过
+        send_keys=("Enter",),
+        batch_size=32,  # 新平台先按 32 防长输出截断（参照 qianwen 64 截断教训）
+        note="ChatGPT（未校准 2026-08-22；选择器为预估初值，待 --probe 校准回填；风控严可能触发验证/登录门槛）",
     ),
 }
 
