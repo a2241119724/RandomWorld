@@ -29,6 +29,17 @@ attention:
   dropout: 0.2                 # 大模型 + 小数据，加大正则防过拟合
   head_dims: [128]             # MLP 分类头隐藏层
 
+gbdt:                          # sklearn GBDT（注册名 gbdt）。树阈值分裂能从极值点泛化到中间态
+  algorithm: hist_gradient_boosting   # hist_gradient_boosting | random_forest（RF 实测同样坍缩，仅备选）
+  max_iter: 300                # HGB 最大提升轮数（RF 映射为 n_estimators）
+  learning_rate: 0.05          # 低学习率 → 更平滑的概率斜坡（RF 忽略）
+  max_leaf_nodes: 15           # 子树叶数上限（小 → 平滑、抗过拟合）
+  min_samples_leaf: 5          # 叶最小样本数（抗物理拷贝重复样本过拟合）
+  l2_regularization: 1.0       # HGB 叶值 L2（RF 忽略）
+  early_stopping: true         # 外部 val_logloss 早停（warm_start 续训）；不用 HGB 内置——stratify 在单样本类上崩溃
+  patience: 8                  # val_logloss 连续 patience 次不降即停（对齐 training.patience）
+  class_weight: none           # HGB 不支持 class_weight；靠 sample_proportions 拷贝控类分布
+
 training:
   batch_size: 32               # 训练集 10000 条时每 epoch=312 步（此前 364 条 + batch 256 时每 epoch≈1 步导致欠训练，已弃用）
   epochs: 50

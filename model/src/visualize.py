@@ -33,8 +33,8 @@ from src.models import list_models, load_model  # noqa: E402
 # ---------------------------------------------------------------------------
 # 调色板（dataviz 参考实例，categorical slot 1/2/3 分配给注册表前三模型）
 # ---------------------------------------------------------------------------
-CAT_LIGHT = {"mlp": "#eb6834", "attention": "#1baf7a"}
-CAT_DARK = {"mlp": "#d95926", "attention": "#199e70"}
+CAT_LIGHT = {"mlp": "#eb6834", "attention": "#1baf7a", "gbdt": "#2a78d6"}
+CAT_DARK = {"mlp": "#d95926", "attention": "#199e70", "gbdt": "#2561c4"}
 FALLBACK_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#8e6fd8", "#c9a227"]
 SURFACE_LIGHT = "#fcfcfb"
 SURFACE_DARK = "#1a1a19"
@@ -222,6 +222,10 @@ def render_pngs(data: dict, out_dir: Path):
                 _draw_fc(ax, layers)
                 ax.set_title(f"MLP (activation={st['activation']})",
                              color=INK_LIGHT, fontsize=12)
+            elif st["kind"] == "gbdt":
+                _draw_gbdt(ax, st)
+                ax.set_title(f"{st['algorithm']} ({st['n_iterations']} trees)",
+                             color=INK_LIGHT, fontsize=12)
             else:
                 _draw_attention(ax, st)
                 ax.set_title("FT-Transformer", color=INK_LIGHT, fontsize=12)
@@ -264,6 +268,20 @@ def _draw_attention(ax, st):
             fontsize=8, color=INK_LIGHT,
             bbox=dict(boxstyle="round,pad=0.3", fc="#cde2fb", ec="#3987e5"))
     for x0, x1 in [(0.06, 0.24), (0.32, 0.52), (0.60, 0.80)]:
+        ax.plot([x0, x1], [0.78, 0.78], color=MUTED, lw=0.8)
+    ax.set_xlim(0, 1); ax.set_ylim(0.6, 0.95)
+
+
+def _draw_gbdt(ax, st):
+    ax.text(0.02, 0.78, f"input\n{st['input']}", ha="center", va="center", fontsize=8,
+            color=INK_LIGHT, bbox=dict(boxstyle="round,pad=0.3", fc="#cde2fb", ec="#3987e5"))
+    ax.text(0.38, 0.78, f"{st['algorithm']}\n{st['n_iterations']} trees\nleaf≤{st['max_leaf_nodes']}",
+            ha="center", va="center", fontsize=8, color=INK_LIGHT,
+            bbox=dict(boxstyle="round,pad=0.3", fc="#86b6ef", ec="#3987e5"))
+    ax.text(0.82, 0.78, f"softmax\n{st['output']} logits", ha="center", va="center",
+            fontsize=8, color=INK_LIGHT,
+            bbox=dict(boxstyle="round,pad=0.3", fc="#cde2fb", ec="#3987e5"))
+    for x0, x1 in [(0.06, 0.34), (0.42, 0.78)]:
         ax.plot([x0, x1], [0.78, 0.78], color=MUTED, lw=0.8)
     ax.set_xlim(0, 1); ax.set_ylim(0.6, 0.95)
 
@@ -404,7 +422,7 @@ const MODELS = {order_json};
 const tip = document.getElementById("tip");
 const palette = ["#2a78d6", "#eb6834", "#1baf7a", "#8e6fd8", "#c9a227"];
 const COL = {{}};
-MODELS.forEach((m, i) => {{ COL[m] = "var(--c" + i + ")"; }});
+MODELS.forEach((m, i) => {{ COL[m] = palette[i % palette.length]; }});
 function showTip(e, html) {{ tip.innerHTML = html; tip.style.display = "block";
   tip.style.left = (e.clientX + 12) + "px"; tip.style.top = (e.clientY + 12) + "px"; }}
 function hideTip() {{ tip.style.display = "none"; }}
@@ -553,6 +571,11 @@ for (const m of MODELS) {{
       <span class="arrow">→</span>${{node(`<b>feature_embed</b>每特征 → ${{s.d_model}}d`)}}
       <span class="arrow">→</span>${{node(`<b>[CLS] + ${{s.n_layers}}×Encoder</b>${{s.n_heads}} heads · ff ${{s.dim_feedforward}}`)}}
       <span class="arrow">→</span>${{node(`<b>MLP head</b>${{s.head[0]}} → ${{s.output}} logits`)}}</div>`;
+  }} else if (s.kind === "gbdt") {{
+    box.innerHTML = `<div style="font-weight:600;margin-bottom:8px">GBDT / RandomForest（${{m}}）</div>
+      <div class="struct">${{node(`<b>input</b>${{s.input}} 特征`)}}
+      <span class="arrow">→</span>${{node(`<b>${{s.algorithm}}</b>${{s.n_iterations}} trees · leaf≤${{s.max_leaf_nodes}}`)}}
+      <span class="arrow">→</span>${{node(`<b>softmax</b>${{s.output}} logits`)}}</div>`;
   }}
   st.appendChild(box);
 }}

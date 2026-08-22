@@ -42,7 +42,8 @@ model/
 │   │   ├── registry.py          # 注册表 + create/load 工厂
 │   │   ├── torch_adapter.py     # 统一 nn.Module 的适配器（fit/save/export 通用）
 │   │   ├── mlp.py               # MLP 策略网络（注册名 mlp）
-│   │   └── attention.py         # FT-Transformer（注册名 attention）
+│   │   ├── attention.py         # FT-Transformer（注册名 attention）
+│   │   └── gbdt.py              # sklearn GBDT/RandomForest（注册名 gbdt，algorithm 可切）
 │   ├── train.py                 # 训练（--model all 遍历注册表）
 │   ├── evaluate.py              # 评估与对比
 │   ├── export.py                # 导出（遍历注册表）
@@ -162,9 +163,9 @@ Unity 接入阶段决定。
 
 ## 模型结论（2026-08-22 LLM 标签 + 纯极值训练集 + 现实比例拷贝）
 
-当前方案：纯极值随机组合训练集（`n_train_total: 10000` 条不同状态）+ 训练时按
-`training.sample_proportions` 物理拷贝（~10000 条）拉现实比例。仅保留 mlp
-（baseline / attention 旧产物已移除，规则表已删除）。
+当前方案：纯极值随机组合训练集（`n_train_total: 1000` 条不同状态）+ 训练时按
+`training.sample_proportions` 物理拷贝（~10000 条）拉现实比例。注册表含
+mlp / attention / gbdt 三个模型（规则表已删除）。
 
 - 测试真值 = LLM 常识，acc 是「模型 vs LLM 常识」一致性；准确率~50% **不是退化**——
   LLM 标签本身在 hungry=0.5 等中间态上「50% 吃、50% 不吃」，argmax 天然只对一半。
@@ -173,6 +174,13 @@ Unity 接入阶段决定。
   学到的极值规则在现实测试集（连续中间态）上几乎不触发 → 全判 gather。
   `learning_rate` 调低（0.001→0.0001）只让坍缩更平滑、不改变坍缩本身——这不是超参
   问题，是**极值训练分布 ↔ 中间态测试分布不匹配**的结构性局限。
+- **gbdt（sklearn HGB，2026-08-22 新增）**：决策树阈值分裂能从极值点泛化到
+  中间态，但训练标签本身不含斜坡（hungry 两端 eat 都是 13%），故 test_acc 仍
+  ≈ 主类基线（实测 0.406 vs mlp 0.424）。真实收益在**概率分布**：KL 0.248 <
+  mlp 0.403、预测 gather 占比 89% < mlp 99%，对 Unity 侧带概率决策门控更友好，
+  且提供 sklearn 可解释性基线（feature_importance）。导出 `gbdt_tree.json`
+  （自定义树结构，C# 树遍历，零新依赖；叶值已含 lr，推理**不再乘 lr**）。
+  RF 备选（`algorithm: random_forest`）实测同样坍缩，仅作对照。
 - **历史对照（uniform 10000 条时代，已弃用）**：数据量是 NN 学不会斜坡的根因——
   384 条过拟合坍缩到主类，10000 条不同状态 + hidden_dims [64,32] 后学会连续斜坡
   （hungry→eat 概率逐桶贴合 LLM 真值）。uniform 采样与规则表均已被用户否决/删除，

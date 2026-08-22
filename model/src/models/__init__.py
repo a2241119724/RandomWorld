@@ -8,8 +8,9 @@ from .base import DecisionModel
 
 from .mlp import MlpModel  # noqa: F401  （触发注册）
 from .attention import AttentionModel  # noqa: F401
+from .gbdt import GbdtModel  # noqa: F401
 
 __all__ = [
     "MODEL_REGISTRY", "register", "create_model", "load_model", "list_models",
-    "DecisionModel", "MlpModel", "AttentionModel",
+    "DecisionModel", "MlpModel", "AttentionModel", "GbdtModel",
 ]
