@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.actions import ACTIONS, ACTION_LABELS_ZH  # noqa: E402
 from src.config import ModelConfig  # noqa: E402
-from src.dataio import load_test  # noqa: E402
+from src.dataio import load_test, load_val  # noqa: E402
 from src.models import list_models, load_model  # noqa: E402
 
 
@@ -39,6 +39,19 @@ def kl_divergence(y_true: np.ndarray, proba: np.ndarray) -> float:
     terms = np.zeros_like(true_dist)
     terms[mask] = true_dist[mask] * np.log(true_dist[mask] / pred_dist[mask])
     return float(terms.sum())
+
+
+def per_action_acc(y_true: np.ndarray, pred: np.ndarray,
+                   n_classes: int) -> tuple[np.ndarray, np.ndarray]:
+    """每个 action 的正确率（该 action 样本中 argmax 命中的比例）与各类样本数。
+
+    样本数为 0 的类正确率记 0（配合样本数列，可区分「无样本」与「0 正确」）。
+    """
+    cm = np.zeros((n_classes, n_classes), dtype=np.int64)
+    np.add.at(cm, (y_true, pred), 1)
+    n = cm.sum(axis=1)
+    acc = np.divide(np.diag(cm), n, out=np.zeros(n_classes, dtype=float), where=n > 0)
+    return acc, n
 
 
 def per_class_report(y_true: np.ndarray, pred: np.ndarray, n_classes: int) -> dict:
@@ -83,9 +96,11 @@ def main():
     cfg = ModelConfig()
     export_dir = cfg.export_dir
 
+    X_va, y_va = load_val(cfg)
     X_te, y_te = load_test(cfg)
     n_classes = len(ACTIONS)
-    print(f"[evaluate] 现实测试集 {len(y_te)} 条，行为数 {n_classes}\n")
+    print(f"[evaluate] 现实分布集 {len(y_va) + len(y_te)} 条"
+          f" = 验证 {len(y_va)} + 测试 {len(y_te)}，行为数 {n_classes}\n")
 
     rows = []
     for name in list_models():
@@ -97,6 +112,11 @@ def main():
         rep = per_class_report(y_te, r["proba"].argmax(axis=1), n_classes)
         r["_recall"] = rep["recall"]
         r["_macro_f1"] = rep["macro_f1"]
+        # 验证集 / 测试集各自的 per-action 正确率
+        r["_va_acc"], r["_va_n"] = per_action_acc(y_va,
+                                                  model.predict_proba(X_va).argmax(axis=1),
+                                                  n_classes)
+        r["_te_acc"], r["_te_n"] = per_action_acc(y_te, r["proba"].argmax(axis=1), n_classes)
         rows.append((name, r))
 
     if not rows:
@@ -108,6 +128,18 @@ def main():
     for name, r in rows:
         print(f"{name:<16s} {r['acc']*100:7.2f}% {r['top3']*100:7.2f}% "
               f"{r['kl']:8.4f} {r['_macro_f1']*100:9.2f}%")
+
+    # per-action 正确率（验证集 vs 测试集）
+    for name, r in rows:
+        print(f"\n[{name} per-action 正确率] 该行为样本中 argmax 命中比例，val vs test:")
+        print(f"{'行为':<16s} {'val正确':>9s} {'val样本':>7s} {'test正确':>9s} {'test样本':>8s}")
+        print("-" * 60)
+        for i, a in enumerate(ACTIONS):
+            va = r["_va_acc"][i] * 100 if r["_va_n"][i] > 0 else float("nan")
+            te = r["_te_acc"][i] * 100 if r["_te_n"][i] > 0 else float("nan")
+            va_s = f"{va:7.2f}%" if r["_va_n"][i] > 0 else "     -"
+            te_s = f"{te:7.2f}%" if r["_te_n"][i] > 0 else "     -"
+            print(f"{a:<16s} {va_s:>9s} {r['_va_n'][i]:7d} {te_s:>9s} {r['_te_n'][i]:8d}")
 
     # per-class 召回率
     print(f"\n[稀有类召回] 每行为 recall (%)（长尾标签体检）:")

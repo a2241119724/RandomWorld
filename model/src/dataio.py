@@ -39,6 +39,13 @@ def load_train_val(cfg, seed: int):
     return (X, y), (X_va, y_va)
 
 
+def load_val(cfg):
+    """返回现实分布验证集（``split.val_ratio`` 切出的前段，与测试集不相交）。"""
+    _, _, X_te_full, y_te_full = _load_arrays(cfg.processed_dir)
+    (X_va, y_va), _ = _split_test(X_te_full, y_te_full, cfg)
+    return X_va, y_va
+
+
 def load_test(cfg):
     """返回独立现实分布测试集（``split.val_ratio`` 切出的后段，与验证集不相交）。"""
     _, _, X_te_full, y_te_full = _load_arrays(cfg.processed_dir)
