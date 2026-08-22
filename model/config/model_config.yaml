@@ -14,20 +14,20 @@ data:
   save_raw_csv: true                  # 是否落盘原始 (state, action) CSV
 
 split:
-  val_ratio: 0.25                     # 仅用于训练边界集内部切分 train/val（早停监控）
+  val_ratio: 0.5                      # 现实分布测试集切给验证集的比例（早停监控中间态真实泛化；其余为独立测试集）。训练集全部用于训练，不再内部切分
 
 mlp:
-  hidden_dims: [64, 32]        # 隐藏层维度（256-128 ≈10万参数对 384 条训练样本严重过参数化→过拟合坍缩到主类；64-32 ≈5千参数才匹配小数据）
+  hidden_dims: [64, 64, 64, 32]  # 隐藏层维度（256-128 ≈10万参数对 384 条训练样本严重过参数化→过拟合坍缩到主类；64-64-64-32 = 4 隐藏+1 输出共 5 层，约 11k 参数，用户要求加深）
   dropout: 0.1
   activation: relu
 
 attention:
   d_model: 256                 # token 维度（需能被 n_heads 整除）
   n_heads: 4                   # 多头注意力头数（256/4 = 每头 64）
-  n_layers: 2                  # Transformer 编码器层数
+  n_layers: 5                  # Transformer 编码器层数（用户要求 2→5；加深 + 小数据 → 过拟合更早，val 早停兜底）
   dim_feedforward: 1024        # FFN 隐藏维度（4× d_model）
   dropout: 0.2                 # 大模型 + 小数据，加大正则防过拟合
-  head_dims: [128]             # MLP 分类头隐藏层
+  head_dims: [128, 64]         # MLP 分类头隐藏层（用户要求加深：2 隐藏+1 输出）
 
 gbdt:                          # sklearn GBDT（注册名 gbdt）。树阈值分裂能从极值点泛化到中间态
   algorithm: hist_gradient_boosting   # hist_gradient_boosting | random_forest（RF 实测同样坍缩，仅备选）
@@ -42,8 +42,8 @@ gbdt:                          # sklearn GBDT（注册名 gbdt）。树阈值分
 
 training:
   batch_size: 32               # 训练集 10000 条时每 epoch=312 步（此前 364 条 + batch 256 时每 epoch≈1 步导致欠训练，已弃用）
-  epochs: 50
-  learning_rate: 0.0001              # 用户要求调低（0.001→0.0001），让模型更平滑地学，避免过早震荡
+  epochs: 100                  # 用户降 lr 实验配套：0.0001 在 50 epoch 内收敛，0.00001 收敛慢需加倍 epoch，避免欠拟合误判
+  learning_rate: 0.00001             # 用户要求再降（0.001→0.0001→0.00001）；README 已记 0.0001 只让坍缩更平滑不改变坍缩，本轮做量级对照排除 lr
   weight_decay: 0.0001
   patience: 8                  # 早停：验证 loss 连续 patience 轮不降即停止
   class_weight: none           # loss 权重缓解长尾（none/sqrt_inv/inverse）；sample_proportions 开启时被重采样替代，置 none

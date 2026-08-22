@@ -9,8 +9,10 @@
 直接判断**。两种教师任选（`llm.provider`）：`deepseek` = OpenAI 兼容 API（付费、快）；
 `web` = **网页版浏览器自动化**（免费，特征/输出扩展后反复重打不花钱）。训练集为
 **纯极值随机组合**（连续特征只取极值 {min,max}、枚举取全值，随机组合
-`n_train_total` 条），测试集 20000 条独立现实分布。训练时按
-`training.sample_proportions` 的目标比例**物理拷贝**训练集（对齐游戏内现实比例）。
+`n_train_total` 条，全部用于训练不再内部切）。现实分布集（`n_test` 条）确定性
+切成两份：前 `split.val_ratio` 做验证集（早停监控中间态真实泛化）、其余做独立
+测试集。训练时按 `training.sample_proportions` 的目标比例**物理拷贝**训练集
+（对齐游戏内现实比例）。
 规则表已删除——采样边界信息全在 `feature_schema.yaml`（`max_value` / `dtype:int`），
 `src/rules.py` 只负责采样不再打标签。
 
@@ -33,7 +35,7 @@ model/
 │   ├── llm_teacher.py           # LLM 教师：DeepSeek API 按现实常识打标签（provider=deepseek）
 │   ├── web_labeler.py           # 网页版教师：浏览器自动化免费打标签（provider=web）
 │   ├── config.py                # ModelConfig 配置门面
-│   ├── dataio.py                # 训练/验证/测试数据加载与确定性切分
+│   ├── dataio.py                # 数据加载：训练集全量 + 现实分布集切 val/test（确定性）
 │   ├── dataset.py               # PyTorch Dataset
 │   ├── training.py              # 共享 torch 训练循环（早停/类别权重）
 │   ├── unity_export.py          # 共享导出助手（weights.json / .bytes / ONNX）
@@ -113,10 +115,11 @@ python src/visualize.py
 
 训练集 = **纯极值随机组合**（`n_train_total` 条：连续特征每维随机取 {min,max} 极值、
 枚举取全值随机、固定值取定值，组合成不同状态），训练时由
-`training.sample_proportions` **物理拷贝**拉到游戏内现实比例；测试集 = 现实分布
-均匀采样 `n_test` 条、独立于训练集。已知局限：纯极值下模型看不到 hungry=50 等
-中间态，学不会连续决策斜坡（hungry 降 → eat 概率升），现实测试集上易坍缩到主类——
-这是当前方案的取舍。
+`training.sample_proportions` **物理拷贝**拉到游戏内现实比例；现实分布集
+（`n_test` 条、独立于训练集）确定性切成前 `split.val_ratio` 验证集 + 后段独立
+测试集——早停监控的是中间态真实泛化（不再用纯极值内部切 val）。已知局限：纯极值
+下模型看不到 hungry=50 等中间态，学不会连续决策斜坡（hungry 降 → eat 概率升），
+现实测试集上易坍缩到主类——这是当前方案的取舍。
 
 ## 遗传算法定位（结论）
 
@@ -163,9 +166,10 @@ Unity 接入阶段决定。
 
 ## 模型结论（2026-08-22 LLM 标签 + 纯极值训练集 + 现实比例拷贝）
 
-当前方案：纯极值随机组合训练集（`n_train_total: 1000` 条不同状态）+ 训练时按
-`training.sample_proportions` 物理拷贝（~10000 条）拉现实比例。注册表含
-mlp / attention / gbdt 三个模型（规则表已删除）。
+当前方案：纯极值随机组合训练集（`n_train_total: 1000` 条不同状态，**全部用于
+训练**）+ 训练时按 `training.sample_proportions` 物理拷贝（~10000 条）拉现实比例；
+现实分布集（`n_test: 500` 条）确定性切 250 验证（早停）+ 250 测试（独立评估，
+`split.val_ratio: 0.5`）。注册表含 mlp / attention / gbdt 三个模型（规则表已删除）。
 
 - 测试真值 = LLM 常识，acc 是「模型 vs LLM 常识」一致性；准确率~50% **不是退化**——
   LLM 标签本身在 hungry=0.5 等中间态上「50% 吃、50% 不吃」，argmax 天然只对一半。
@@ -174,12 +178,22 @@ mlp / attention / gbdt 三个模型（规则表已删除）。
   学到的极值规则在现实测试集（连续中间态）上几乎不触发 → 全判 gather。
   `learning_rate` 调低（0.001→0.0001）只让坍缩更平滑、不改变坍缩本身——这不是超参
   问题，是**极值训练分布 ↔ 中间态测试分布不匹配**的结构性局限。
+- **加深层数无改善（2026-08-22 对照）**：mlp 3 层→5 层（[64,64,64,32]）test_acc
+  持平 0.408；attention 2→5 层 encoder + 分类头加深，test_acc 反而 0.404→0.376
+  （加深加剧过拟合）。容量不是瓶颈——训练集不含中间态斜坡，加再深也学不到。
+  config 现保留 5 层结构作对照，结论依赖 gbdt（树浅 + 集成，抗过拟合）。
+- **降低学习率对照（2026-08-22）**：training.lr 0.0001→0.00001（epochs 50→100）：
+  mlp test_acc 纹丝不动（0.408）——学习率不是 mlp 坍缩根因；attention 5 层
+  0.376→0.408（低 lr 缓解其过拟合），但 KL 反升（0.61→0.69）、macro-F1 反降，
+  属过拟合↔拟合不足的混合信号，仍不敌 gbdt（0.416）。根因始终是极值训练分布
+  无中间态斜坡。config 现保留 lr=0.00001 + epochs 100。
 - **gbdt（sklearn HGB，2026-08-22 新增）**：决策树阈值分裂能从极值点泛化到
   中间态，但训练标签本身不含斜坡（hungry 两端 eat 都是 13%），故 test_acc 仍
-  ≈ 主类基线（实测 0.406 vs mlp 0.424）。真实收益在**概率分布**：KL 0.248 <
-  mlp 0.403、预测 gather 占比 89% < mlp 99%，对 Unity 侧带概率决策门控更友好，
-  且提供 sklearn 可解释性基线（feature_importance）。导出 `gbdt_tree.json`
-  （自定义树结构，C# 树遍历，零新依赖；叶值已含 lr，推理**不再乘 lr**）。
+  ≈ 主类基线（250 条现实 test 实测 0.416 vs mlp 0.408、attention 0.404）。
+  真实收益在**概率分布**：预测 gather 占比 95% < mlp 100%、KL 0.274（≈mlp），
+  对 Unity 侧带概率决策门控更友好，且提供 sklearn 可解释性基线
+  （feature_importance）。导出 `gbdt_tree.json`（自定义树结构，C# 树遍历，
+  零新依赖；叶值已含 lr，推理**不再乘 lr**）。
   RF 备选（`algorithm: random_forest`）实测同样坍缩，仅作对照。
 - **历史对照（uniform 10000 条时代，已弃用）**：数据量是 NN 学不会斜坡的根因——
   384 条过拟合坍缩到主类，10000 条不同状态 + hidden_dims [64,32] 后学会连续斜坡

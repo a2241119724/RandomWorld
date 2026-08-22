@@ -4,7 +4,8 @@
     python src/train.py --model all
     python src/train.py --model mlp
 
-数据：训练边界集内部确定性切 train/val（早停监控），测试用独立现实分布集。
+数据：训练集 = 全部纯极值边界集（不内部切）；验证集/测试集 = 现实分布集确定性切
+前段/后段（val 供早停监控中间态泛化，test 独立评估，互不相交）。
 新增模型无需改本文件——实现 DecisionModel 子类并注册即自动纳入。
 """
 from __future__ import annotations
@@ -36,8 +37,9 @@ def main():
     (X_tr, y_tr), (X_va, y_va) = load_train_val(cfg, seed)
     X_te, y_te = load_test(cfg)
     input_dim = X_tr.shape[1]
-    print(f"[train] 训练集 {X_tr.shape}（val {len(y_va)} 条早停）"
-          f"  测试集 {X_te.shape}  行为数={NUM_ACTIONS}")
+    print(f"[train] 训练集 {X_tr.shape}（全量，无内部切分）"
+          f"  验证集 {X_va.shape}（现实分布，早停）"
+          f"  测试集 {X_te.shape}（现实分布，独立评估）  行为数={NUM_ACTIONS}")
 
     if args.model == "all":
         names = list_models()

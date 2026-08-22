@@ -71,9 +71,12 @@ class GbdtModel(DecisionModel):
         Xo, yo = (oversample_by_proportions(X_tr, y_tr, sp) if sp else (X_tr, y_tr))
 
         if self._hp["algorithm"] == "random_forest":
+            print(f"[gbdt] 一次性拟合 {self._hp['max_iter']} 棵（RF 无逐树进度）")
             clf = self._build(self._hp["max_iter"])
             clf.fit(Xo, yo)
         elif not self._hp["early_stopping"]:
+            print(f"[gbdt] 一次性拟合 max_iter={self._hp['max_iter']}"
+                  f"（early_stopping=False，无中间进度）")
             clf = self._build(self._hp["max_iter"])
             clf.fit(Xo, yo)
         else:
@@ -81,29 +84,57 @@ class GbdtModel(DecisionModel):
             # （store=1 / pickup=2 物理拷贝）触发 train_test_split(stratify)
             # ValueError。改为 warm_start 续训 + val_logloss 外部早停，
             # 语义对齐 torch 的「早停保留最优」。
+            #
+            # 进度：sklearn 不暴露逐树回调，HGB 每次 fit 仍是单次黑盒调用，只能按
+            # step 续训步进推进 rich 进度条（每续训一批更新一次，对齐 torch 的反馈）。
+            from rich.console import Console
+            from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+
+            console = Console()
             step = max(1, self._hp["max_iter"] // 10)
-            clf = self._build(step)
-            clf.fit(Xo, yo)
             _labels = range(NUM_ACTIONS)  # val 集只含部分类，显式对齐 14 列
-            best = log_loss(y_va, self._proba_full(clf, X_va), labels=_labels)
-            best_iter = step
-            bad = 0
-            cur = step
-            while cur < self._hp["max_iter"]:
-                cur = min(cur + step, self._hp["max_iter"])
-                clf.set_params(max_iter=cur)
+            best, best_iter, bad, cur = float("inf"), 0, 0, 0
+            with Progress(
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                TimeElapsedColumn(),
+                console=console,
+                transient=True,
+            ) as progress:
+                task = progress.add_task("gbdt 迭代", total=self._hp["max_iter"])
+                clf = self._build(step)
                 clf.fit(Xo, yo)
-                v = log_loss(y_va, self._proba_full(clf, X_va), labels=_labels)
-                if v < best - 1e-4:
-                    best, best_iter = v, cur
-                    bad = 0
-                else:
-                    bad += 1
-                    if bad >= self._hp["patience"]:
-                        break
+                cur = step
+                best = log_loss(y_va, self._proba_full(clf, X_va), labels=_labels)
+                best_iter = cur
+                progress.update(task, advance=step,
+                                description=f"iter {cur}/{self._hp['max_iter']}  "
+                                            f"val_logloss={best:.4f}")
+                while cur < self._hp["max_iter"]:
+                    nxt = min(cur + step, self._hp["max_iter"])
+                    clf.set_params(max_iter=nxt)
+                    clf.fit(Xo, yo)
+                    v = log_loss(y_va, self._proba_full(clf, X_va), labels=_labels)
+                    progress.update(
+                        task, advance=nxt - cur,
+                        description=f"iter {nxt}/{self._hp['max_iter']}  "
+                                    f"val_logloss={v:.4f}  best={best:.4f}@{best_iter}")
+                    cur = nxt
+                    if v < best - 1e-4:
+                        best, best_iter = v, cur
+                        bad = 0
+                    else:
+                        bad += 1
+                        if bad >= self._hp["patience"]:
+                            break
             if best_iter != cur:  # 重新拟合到最优迭代（确定性，同 seed 可复现）
                 clf = self._build(best_iter)
                 clf.fit(Xo, yo)
+            console.print(
+                f"    gbdt [cyan]早停于 iter {best_iter}[/cyan]"
+                f"（val_logloss 连续 {self._hp['patience']} 步不降，最佳 {best:.4f}）"
+            )
         self.clf = clf
 
         pva = self.predict_proba(X_va)
