@@ -8,10 +8,11 @@ namespace LAB2D.AI.Worker
     /// <summary>
     /// Worker 行为决策 MLP 的纯 C# 推理层。
     ///
-    /// 从 <c>Resources/model/mlp_weights.bytes</c> 加载权重（由 <c>model/src/export.py</c>
-    /// 的 <c>_export_mlp_binary</c> 导出的扁平小端 float32 二进制），手写前向传播
-    /// （41 → 64 ReLU → 32 ReLU → 14 logits），输出 14 类行为的 argmax 索引。
+    /// 从 <c>Resources/model/mlp_weights.bytes</c> 加载权重（由 <c>model/src/unity_export.py</c>
+    /// 的 <c>write_binary_bytes</c> 导出的扁平小端 float32 二进制），手写前向传播，
+    /// 隐藏层 ReLU、输出层保持 logits，取 argmax 作为行为索引。
     /// 层维度不硬编码：从 .bytes 头逐层读取，hidden_dims 变化无需改 C#。
+    /// 当前模型为 5 层（41 → 64 → 64 → 64 → 32 → 14）。
     ///
     /// 零第三方依赖，不继承 MonoBehaviour，可在测试中独立实例化。加载失败时
     /// <see cref="IsLoaded"/> 为 false，调用方（WorkerBrain）回退到硬规则决策。

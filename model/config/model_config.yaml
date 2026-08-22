@@ -8,7 +8,7 @@ paths:
 
 data:
   train_sampling: extreme             # [固定] 训练集采样：纯极值随机组合（连续特征只取 {min,max}、枚举取全值，随机组合 n_train_total 条）。规则表已删除，采样信息全在 feature_schema（ratio.max_value / dtype:int）；值含于 LLM 缓存 key，改采样方式需换新值使旧标签缓存失效
-  n_train_total: 5000                 # 训练集条数（纯极值随机组合，每条为不同极值状态组合；组合空间≈770亿故抽样而非枚举）
+  n_train_total: 10000                 # 训练集条数（纯极值随机组合，每条为不同极值状态组合；组合空间≈770亿故抽样而非枚举）
   n_test: 500                         # 现实分布测试集条数（原 20000 → 用户改为 500，网页版打标快）
   seed: 42                            # 复现用随机种子
   save_raw_csv: true                  # 是否落盘原始 (state, action) CSV
@@ -37,7 +37,7 @@ gbdt:                          # sklearn GBDT（注册名 gbdt）。树阈值分
   min_samples_leaf: 5          # 叶最小样本数（抗物理拷贝重复样本过拟合）
   l2_regularization: 1.0       # HGB 叶值 L2（RF 忽略）
   early_stopping: true         # 外部 val_logloss 早停（warm_start 续训）；不用 HGB 内置——stratify 在单样本类上崩溃
-  patience: 20                # val_logloss 连续 patience 次不降即停（用户 8→100，放宽早停；对齐 training.patience）
+  patience: 8                # val_logloss 连续 patience 次不降即停（用户 8→100，放宽早停；对齐 training.patience）
   class_weight: none           # HGB 不支持 class_weight；靠 sample_proportions 拷贝控类分布
 
 training:
@@ -45,7 +45,7 @@ training:
   epochs: 100                  # 用户降 lr 实验配套：0.0001 在 50 epoch 内收敛，0.00001 收敛慢需加倍 epoch，避免欠拟合误判
   learning_rate: 0.00001             # 用户要求再降（0.001→0.0001→0.00001）；README 已记 0.0001 只让坍缩更平滑不改变坍缩，本轮做量级对照排除 lr
   weight_decay: 0.0001
-  patience: 50                # 早停：验证 loss 连续 patience 轮不降即停止（用户 8→100，几乎不触发早停，跑满 epochs 100）
+  patience: 8                # 早停：验证 loss 连续 patience 轮不降即停止（用户 8→100，几乎不触发早停，跑满 epochs 100）
   class_weight: none           # loss 权重缓解长尾（none/sqrt_inv/inverse）；sample_mode 拷贝开启时被硬控类分布替代，置 none
   sample_mode: balanced            # 训练集物理拷贝模式：none=不拷贝 | real=按 sample_proportions 拉游戏内现实比例 | balanced=1:1 均衡（每个已观测类拷贝到最频繁类条数）
   sample_proportions:          # sample_mode=real 时生效：每 epoch 重采样训练集的目标行为比例（训练时各类别占比 == 游戏内正常比例）。sum≈1，只覆盖训练集已观测类；改比例后重新 train 即可
@@ -61,7 +61,7 @@ export:
   weights_json: true           # 导出纯权重 JSON（供 C# 手写前向传播）
 
 llm:
-  provider: web                # 标签教师：deepseek=OpenAI 兼容 API（付费）/ web=网页版浏览器自动化（免费，可反复重打）/ rules=各模型规则文件推导+多数投票（离线；训练集用，测试集仍走 web）
+  provider: rules                # 标签教师：deepseek=OpenAI 兼容 API（付费）/ web=网页版浏览器自动化（免费，可反复重打）/ rules=各模型规则文件推导+多数投票（离线；训练集用，测试集仍走 web）
   rule_dir: data/rules/models   # provider=rules 时训练集规则目录（--gen-rules 生成：每个可用平台各写一份结构化规则文件，多数投票见 src/rule_teacher.py）
   gen_rules:                   # --gen-rules 生成规则文件的配置
     platforms: []              # 参与生成规则的平台（空=用 web.platforms；欠费/风控平台从这里移出）
