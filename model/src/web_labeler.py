@@ -714,9 +714,11 @@ class WebTeacher:
                 text = self._wait_reply(n_before)
                 parsed = _parse_rules(text)
                 valid = _validate_rules(parsed, schema_keys) if parsed else []
+                if not valid:
+                    # wenxin 惰性输出：首轮只有「规划/元话语」没有规则 JSON → 同一会话追问「只输出 JSON」补全
+                    valid = self._complete_rules(schema_keys)
                 if valid:
-                    print(f"[gen-rules:{self.platform.name}] 模型写规则 {len(parsed)} 条，"
-                          f"校验通过 {len(valid)} 条")
+                    print(f"[gen-rules:{self.platform.name}] 模型写规则 {len(valid)} 条")
                     return {
                         "version": 2,
                         "platform": self.platform.name,
@@ -733,6 +735,30 @@ class WebTeacher:
                 print(f"[gen-rules:{self.platform.name}] 重试 {attempt + 1}/{self.max_retries}")
                 time.sleep(self.delay_sec)
         return None
+
+    def _complete_rules(self, schema_keys: list[str]) -> list[dict]:
+        """处理惰性输出：首轮只有「规划/元话语」没有规则 JSON → 同一会话追问「只输出 JSON」。
+
+        与打标路径 ``_complete_labels`` 同款模式：追问轮只要求输出规则 JSON 本身，
+        最多补 3 轮；返回校验通过的规则列表，仍拿不到返回 []（走外层重试）。
+        """
+        for _ in range(3):
+            n_before = len(self._assistant_texts())
+            self._send_prompt(
+                "请直接输出规则 JSON 对象本身，只输出 {\"rules\": [...]}，"
+                "不要任何解释、计划、开头语或额外文字。")
+            try:
+                text = self._wait_reply(n_before, timeout=90)
+            except Exception as e:
+                print(f"[gen-rules:{self.platform.name}] 追问轮失败: {e}")
+                break
+            parsed = _parse_rules(text)
+            valid = _validate_rules(parsed, schema_keys) if parsed else []
+            if valid:
+                print(f"[gen-rules:{self.platform.name}] 追问补全规则 {len(valid)} 条")
+                return valid
+            print(f"[gen-rules:{self.platform.name}] 追问轮无可解析规则: {text[:100]!r}")
+        return []
 
     # ------------------------------------------------------------------
     # 断点续跑
