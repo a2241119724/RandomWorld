@@ -7,7 +7,7 @@
 平台 URL（用户提供，2026-08-22）：
     deepseek  chat.deepseek.com                    已校准
     wenxin    wenxin.baidu.com（文心一言，重定向到 yiyan）
-    qianwen   platform.qianwenai.com/try-ai/chat?models=qwen-max（通义千问，URL 锚定 qwen-max）
+    qianwen   platform.qianwenai.com/try-ai/chat?models=qwen3.7-flash（通义千问，URL 锚定 qwen3.7-flash）
     doubao    www.doubao.com/chat/                 未校准（曾移除后加回，batch 调小重试）
 
 已移除：ark（ark.volcengine.com 在线体验页有时间使用限制）、mimo（aistudio.xiaomimimo.com，
@@ -71,9 +71,9 @@ PLATFORM_DEFS: dict[str, Platform] = {
         note="文心一言（已校准 2026-08-22；长输入疑似被输入框截断→batch_size=16，配合追问补全兜底）",
     ),
     "qianwen": Platform(
-        name="qianwen", url="https://platform.qianwenai.com/try-ai/chat?models=qwen-max",
+        name="qianwen", url="https://platform.qianwenai.com/try-ai/chat?models=qwen3.7-flash",
         toggles=("深度思考", "联网搜索", "搜索"),
-        note="通义千问（URL 直接锚定模型 qwen-max，无需手动选择）",
+        note="通义千问（URL 直接锚定模型 qwen3.7-flash，无需手动选择）",
     ),
     "doubao": Platform(
         name="doubao", url="https://www.doubao.com/chat/",
