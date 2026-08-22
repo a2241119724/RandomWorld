@@ -390,10 +390,12 @@ class WebTeacher:
                 parsed = _parse_labels(text, len(batch))
                 # 批内个别非法项也算失败（用户要求不兜底）：只有全合法才接受
                 if parsed is not None and all(a is not None for a in parsed):
+                    time.sleep(self.delay_sec)  # 批间降速：成功一批后停顿，防触发限流（此前只在重试时 sleep，批间无停顿）
                     return parsed
                 # wenxin 惰性输出：只给部分 labels 还反问「要不要补全」→ 追问拿剩余
                 completed = self._complete_labels(text, len(batch))
                 if completed is not None:
+                    time.sleep(self.delay_sec)
                     return completed
                 last_err = ValueError(
                     f"输出无法解析/长度不符: len={len(text)} 开头={text[:150]!r} 结尾={text[-150:]!r}")

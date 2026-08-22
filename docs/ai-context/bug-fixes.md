@@ -401,3 +401,11 @@
      - `BuildItemData.HeatPower` 数据驱动供暖（本期 SO 不配数值，后续配置即生效）；`EnvironmentManager.Temperature` 死字段删除，湿度占位值 -10 → 25。
 - **验证**：右键野外 → 显示实时室外温度；房间内 → 室外+6。单测 `TemperatureRuleServiceTests` 覆盖季节循环/天气偏移/倍率/边界。
 - **教训**：**射线判房间不可靠** —— 物理射线命中任意障碍物（含远处房间的墙），无法区分"站在房间内"与"朝向房间"。房间内部判断必须用房间自己的包围盒几何（`IsInterior`，向内收缩一格），与物理世界解耦。
+
+## 2026-08-22 web_labeler 批间延迟不生效：delay_sec 只挂在重试分支，成功路径零停顿
+
+- **现象**：用户反馈「model_config.yaml 的 delay_sec（已设 100）好像不起作用，打标速度很快」。批间几乎无停顿，多平台连续猛打。
+- **根因**：`src/web_labeler.py` `WebTeacher._label_batch` 中全文件唯一的 `time.sleep(self.delay_sec)` 位于**批次失败重试分支**（`if attempt < max_retries: ... time.sleep(self.delay_sec)`，行 ~404）。**成功路径直接 `return parsed`，批间无任何 sleep**；`WebTeacherPool` 的 worker 每批成功后立刻拉下一批。`delay_sec` 的注释语义是「批间停顿」（`web_platforms.py:49`），但实现只把它当「重试间隔」——成功批次之间从未消费它，配置再大也不起作用。
+- **修复**：`_label_batch` 的两个成功返回点（完整解析通过、追问补全完成）前补 `time.sleep(self.delay_sec)`，让批间降速真正生效（单教师顺序版与 pool 并行版共用该方法，一并覆盖）。
+- **验证**：重跑打标，每批成功后应停顿 delay_sec（当前 100s），单平台请求频率降至 ~1 批/100s，符合「降速防风控」意图。
+- **教训**：**「名义节流/延时」配置必须核对成功路径是否消费**——`delay_sec` 语义是批间停顿，实现却只挂在重试（异常）分支，成功路径永不触发，形成"配置大、行为快"的静默失效。排查"延时/频率配置不生效"时，先 grep 配置项的所有消费点，确认它挂在主路径而非仅异常兜底路径。

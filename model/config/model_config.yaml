@@ -75,7 +75,7 @@ llm:
     batch_size: 64             # 每批状态条数（网页版推理快，64 条/批生成约 5s；实测关深度思考后提速明显）
     headless: false            # 有头模式：首次需手动登录各平台（一次性，profile 复用，每平台一个子目录）
     profile_dir: data/browser_profile   # 浏览器登录会话根目录（每平台 <profile_dir>/<平台名>/，不存密码）
-    delay_sec: 100             # 批间停顿（秒）：风控收紧后整体降速，保守慢慢打
+    delay_sec: 60             # 批间停顿（秒）：风控收紧后整体降速，保守慢慢打
     stable_sec: 3              # 回复稳定判定秒数；回复以 `}` 结尾时 1.5s 即完成
     chat_timeout: 240          # 单条回复等待上限（秒）
     login_timeout: 300         # 登录等待上限（秒）
