@@ -36,10 +36,6 @@ class ModelConfig:
         return PROJECT_ROOT / self._raw["paths"]["schema"]
 
     @property
-    def rules_path(self) -> Path:
-        return PROJECT_ROOT / self._raw["data"].get("rules", "config/decision_rules.yaml")
-
-    @property
     def processed_dir(self) -> Path:
         return PROJECT_ROOT / self._raw["paths"]["processed_dir"]
 

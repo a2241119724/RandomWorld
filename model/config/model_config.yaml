@@ -7,13 +7,8 @@ paths:
   export_dir: experiments
 
 data:
-  rules: config/decision_rules.yaml   # 规则表：label_source=rule 时打标签；llm 时作对比基线 + 失败兜底
-  label_source: llm                   # 标签来源: rule(规则表打标签, 旧路径) / llm(DeepSeek 按现实常识打)
-  n_train_per_rule: 512               # 每条规则最多生成的训练样本数（train_sampling=boundary 时生效）
-  repeats: 16                         # 每个条件边界组合重复次数（train_sampling=boundary 时生效）。用户方案：保持 boundary 极值语义，但极值组合要枚举足够多不同状态（364→约2000），否则 MLP 学不会决策、拷贝拉比例空转
-  n_default_train: 128                # 兜底规则专属训练样本数（train_sampling=boundary 时生效）
-  train_sampling: boundary            # [固定] 训练集采样固定 boundary（uniform 采样代码已删）。用户指定：状态覆盖决策边界，比例靠 sample_proportions 拷贝拉到现实分布
-  n_train_total: 10000                # [弃用] uniform 采样时代的训练集条数；uniform 代码已删，仅保留作 LLM 缓存 key 稳定，boundary 模式不使用
+  train_sampling: extreme             # [固定] 训练集采样：纯极值随机组合（连续特征只取 {min,max}、枚举取全值，随机组合 n_train_total 条）。规则表已删除，采样信息全在 feature_schema（ratio.max_value / dtype:int）；值含于 LLM 缓存 key，改采样方式需换新值使旧标签缓存失效
+  n_train_total: 1000                 # 训练集条数（纯极值随机组合，每条为不同极值状态组合；组合空间≈770亿故抽样而非枚举）
   n_test: 20000                       # 现实分布测试集条数
   seed: 42                            # 复现用随机种子
   save_raw_csv: true                  # 是否落盘原始 (state, action) CSV

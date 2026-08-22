@@ -4,28 +4,32 @@
 # 新增特征只需在此文件加一个条目，src/features.py 会自动读入并生成特征向量。
 #
 # kind 取值：
-#   ratio        → value / max_key  （用于「当前值/最大值」型字段）
+#   ratio        → value / max_key  （用于「当前值/最大值」型字段；max_value 给出 max_key 的取值）
 #   minmax       → (value - min) / (max - min)
 #   log          → log1p(value) / log1p(max)  （用于金币这类长尾非负量）
 #   onehot       → 按 categories 展开为 one-hot 向量
 #   passthrough  → 原样输出（要求 value 已归一化到 [0,1]）
 #
-# 对应状态字典由 data/generate_data.py 经 src/rules.py 规则表生成
+# 可选字段：
+#   max_value    → ratio 特征的 max_key 取值（缺省 100）
+#   dtype: int   → 采样/生成时按整数处理（连续键默认可含小数）
+#
+# 对应状态字典由 data/generate_data.py 经 src/rules.py 纯极值采样生成
 # （key 需与 state 字段一致）。
 # =============================================================================
 version: 1
 
 features:
   # ---- 生存 ----
-  - { name: hungry_ratio,  group: survival,   kind: ratio,      key: hungry,  max_key: hungry_max }
-  - { name: tired_ratio,   group: survival,   kind: ratio,      key: tired,   max_key: tired_max }
-  - { name: spirit_ratio,  group: survival,   kind: ratio,      key: spirit,  max_key: spirit_max }
+  - { name: hungry_ratio,  group: survival,   kind: ratio,      key: hungry,  max_key: hungry_max, max_value: 100 }
+  - { name: tired_ratio,   group: survival,   kind: ratio,      key: tired,   max_key: tired_max,   max_value: 100 }
+  - { name: spirit_ratio,  group: survival,   kind: ratio,      key: spirit,  max_key: spirit_max,  max_value: 100 }
 
   # ---- 生命 / 成长 ----
-  - { name: hp_ratio,      group: vitals,     kind: ratio,      key: hp,      max_key: hp_max }
-  - { name: mp_ratio,      group: vitals,     kind: ratio,      key: mp,      max_key: mp_max }
-  - { name: level,         group: vitals,     kind: minmax,     key: level,   min: 1,   max: 20 }
-  - { name: exp_ratio,     group: vitals,     kind: ratio,      key: exp,     max_key: exp_max }
+  - { name: hp_ratio,      group: vitals,     kind: ratio,      key: hp,      max_key: hp_max, max_value: 100 }
+  - { name: mp_ratio,      group: vitals,     kind: ratio,      key: mp,      max_key: mp_max, max_value: 100 }
+  - { name: level,         group: vitals,     kind: minmax,     key: level,   min: 1,   max: 20,  dtype: int }
+  - { name: exp_ratio,     group: vitals,     kind: ratio,      key: exp,     max_key: exp_max, max_value: 100 }
   # 8 维战斗属性（Character.Attribute）
   - { name: atn,           group: vitals,     kind: minmax,     key: atn,     min: 0,   max: 100 }
   - { name: int_,          group: vitals,     kind: minmax,     key: int_,    min: 0,   max: 100 }
@@ -49,7 +53,7 @@ features:
   - { name: gold,          group: economy,    kind: log,       key: gold,   max: 1000 }
 
   # ---- 阶段 / 目标（one-hot）----
-  - { name: bed_available, group: stage,      kind: passthrough, key: bed_available }
+  - { name: bed_available, group: stage,      kind: passthrough, key: bed_available, dtype: int }
   - { name: life_stage,    group: stage,      kind: onehot,    key: life_stage,
       categories: [bootstrap, settled, established] }
   - { name: home_build_stage, group: stage,   kind: onehot,    key: home_build_stage,
@@ -66,7 +70,7 @@ features:
   - { name: time_of_day,         group: global_context, kind: minmax, key: time_of_day,         min: 0,   max: 24 }
 
   # ---- 局部视野（Worker 周围半径内信息）----
-  - { name: nearby_food,       group: local_context, kind: minmax, key: nearby_food,       min: 0, max: 20 }
-  - { name: nearby_resource,   group: local_context, kind: minmax, key: nearby_resource,   min: 0, max: 20 }
-  - { name: nearby_building,   group: local_context, kind: minmax, key: nearby_building,   min: 0, max: 20 }
-  - { name: nearby_worker,     group: local_context, kind: minmax, key: nearby_worker,     min: 0, max: 20 }
+  - { name: nearby_food,       group: local_context, kind: minmax, key: nearby_food,       min: 0, max: 20, dtype: int }
+  - { name: nearby_resource,   group: local_context, kind: minmax, key: nearby_resource,   min: 0, max: 20, dtype: int }
+  - { name: nearby_building,   group: local_context, kind: minmax, key: nearby_building,   min: 0, max: 20, dtype: int }
+  - { name: nearby_worker,     group: local_context, kind: minmax, key: nearby_worker,     min: 0, max: 20, dtype: int }

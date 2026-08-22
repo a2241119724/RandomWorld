@@ -1,12 +1,12 @@
 """LLM 教师：用 DeepSeek 按「现实生活优先级」的常识对状态打标签。
 
-替代规则表（`src/rules.py`）作为训练/测试标签来源：
+训练/测试标签全部由本模块打（规则表已删除，`src/rules.py` 只负责采样）：
 - ``build_system_prompt`` 把 14 种行为定义 + 每个状态字段的中文说明与数值范围
   组装成系统 prompt（范围由 ``derive_state_bounds`` 自动推导，新增特征无需改这里）。
 - ``LLMTeacher.label(states)`` 按 ``batch_size`` 分批调用 DeepSeek（OpenAI 兼容端点），
   要求返回 ``{"labels": [...]}`` JSON；`temperature=0` 保证确定性。
-- 解析失败/超时重试 ``max_retries`` 次后，对未通过校验的条目回退到规则表
-  ``ruleset.evaluate``（规则表保留作兜底，确保数据永不残缺）。
+- 解析失败/超时重试 ``max_retries`` 次后，对未通过校验的条目回退到主类 ``idle``
+  （无规则表兜底，主类作最后防线，确保数据永不残缺）。
 
 缓存逻辑由调用方（data/generate_data.py）处理：``data/cache/llm_labels_{split}.npy``。
 key 从环境变量 ``DEEPSEEK_API_KEY`` 读取，不落库。
@@ -19,7 +19,7 @@ import re
 from typing import Any
 
 from .actions import ACTIONS, ACTION_LABELS_ZH
-from .rules import derive_state_bounds
+from .rules import DEFAULT_ACTION, derive_state_bounds
 
 # ---------------------------------------------------------------------------
 # 状态字段中文说明（key → 语义；数值范围由 derive_state_bounds 自动补充）
@@ -89,9 +89,9 @@ def _range_text(key: str, bound) -> str:
     return f"- {key} {zh}: 范围 {bound.lo}~{bound.hi}（可含小数）"
 
 
-def build_system_prompt(schema, ruleset) -> str:
-    """构造系统 prompt：行为定义 + 状态字段说明（范围自动推导）。"""
-    bounds = derive_state_bounds(schema, ruleset.sampling_overrides)
+def build_system_prompt(schema) -> str:
+    """构造系统 prompt：行为定义 + 状态字段说明（范围由 feature_schema 自动推导）。"""
+    bounds = derive_state_bounds(schema)
     state_lines = "\n".join(
         line for key, bound in bounds.items()
         if (line := _range_text(key, bound)) is not None
@@ -192,7 +192,7 @@ def _parse_labels(text: str, n: int) -> list[str | None] | None:
 class LLMTeacher:
     """DeepSeek 打标签器（OpenAI 兼容端点）。"""
 
-    def __init__(self, cfg, schema, ruleset):
+    def __init__(self, cfg, schema):
         llm_cfg = cfg["llm"] if isinstance(cfg, dict) else cfg.get("llm", {})
         self.model = llm_cfg.get("model", "deepseek-chat")
         self.base_url = llm_cfg.get("base_url", "https://api.deepseek.com")
@@ -200,7 +200,6 @@ class LLMTeacher:
         self.batch_size = llm_cfg.get("batch_size", 32)
         self.timeout = llm_cfg.get("timeout", 60)
         self.max_retries = llm_cfg.get("max_retries", 3)
-        self.ruleset = ruleset
 
         api_key = os.environ.get("DEEPSEEK_API_KEY")
         if not api_key:
@@ -208,10 +207,10 @@ class LLMTeacher:
                 "缺少 DEEPSEEK_API_KEY 环境变量。"
                 "请先设置：export DEEPSEEK_API_KEY=sk-...（Windows: $env:DEEPSEEK_API_KEY=\"sk-...\"）"
             )
-        from openai import OpenAI  # 延迟导入：rule 模式不依赖 openai 包
+        from openai import OpenAI  # 延迟导入：降低无 key 时的启动成本
 
         self.client = OpenAI(api_key=api_key, base_url=self.base_url, timeout=self.timeout)
-        self._system_prompt = build_system_prompt(schema, ruleset)
+        self._system_prompt = build_system_prompt(schema)
 
     # ---- 对外入口 ----
     def label(self, states: list[dict[str, Any]]) -> list[str]:
@@ -232,18 +231,18 @@ class LLMTeacher:
                 text = self._call_api(batch)
                 parsed = _parse_labels(text, len(batch))
                 if parsed is not None:
-                    # 逐条：非法项回退规则表（其余保持 LLM 结果）
+                    # 逐条：非法项回退主类 idle（其余保持 LLM 结果）
                     return [
-                        a if a is not None else self.ruleset.evaluate(st)
-                        for a, st in zip(parsed, batch)
+                        a if a is not None else DEFAULT_ACTION
+                        for a in parsed
                     ]
                 last_err = ValueError(f"输出无法解析/长度不符: {text[:120]!r}")
             except Exception as e:  # 网络/超时/限流等
                 last_err = e
             if attempt < self.max_retries:
                 print(f"[llm_teacher] 批次重试 {attempt + 1}/{self.max_retries}: {last_err}")
-        print(f"[llm_teacher] WARN 批次 {self.max_retries + 1} 次失败，规则表兜底: {last_err}")
-        return [self.ruleset.evaluate(st) for st in batch]
+        print(f"[llm_teacher] WARN 批次 {self.max_retries + 1} 次失败，主类兜底: {last_err}")
+        return [DEFAULT_ACTION] * len(batch)
 
     def _call_api(self, batch: list[dict[str, Any]]) -> str:
         resp = self.client.chat.completions.create(
