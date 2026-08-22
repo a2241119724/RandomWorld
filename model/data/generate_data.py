@@ -106,7 +106,7 @@ def main() -> None:
     if provider == "web":
         names = llm_cfg.get("web", {}).get("platforms", [])
         if not names:
-            names = ["deepseek", "wenxin", "qianwen", "mimo"]
+            names = ["deepseek", "wenxin", "qianwen"]
         teacher = make_pool(cfg, schema, names)
     elif provider == "deepseek":
         teacher = LLMTeacher(cfg, schema)

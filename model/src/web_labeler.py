@@ -1,7 +1,7 @@
 """网页版 AI 免费打标签器（Playwright 浏览器自动化，多平台并行）。
 
 替代付费 API 打标签：特征/输出扩展导致缓存失效时，重打标签免费（用户决策）。
-支持多个免费网页平台并行（chat.deepseek.com / 文心一言 / 通义千问 / 小米 MiMo；已移除豆包/火山方舟）：
+支持多个免费网页平台并行（chat.deepseek.com / 文心一言 / 通义千问；已移除豆包/火山方舟/小米 MiMo）：
 
 - **每平台独立持久化 profile**（``data/browser_profile/<平台>/``）：首次运行弹出浏览器
   手动登录一次，之后复用会话（不存密码）。DeepSeek 旧会话（根目录）自动迁移。
@@ -167,7 +167,7 @@ class WebTeacher:
         deadline = time.time() + (timeout if timeout is not None else self.login_timeout)
         while time.time() < deadline:
             if _first_visible(page, self.platform.editor) is not None:
-                # 登录就绪后校准一次模型选择（防 profile 漂移，如 mimo V2.5-Pro→V2.5）
+                # 登录就绪后校准一次模型选择（防 profile 漂移，平台有 model_selector 才动作）
                 if not getattr(self, "_model_selected", False):
                     self._select_model()
                     self._model_selected = True
@@ -176,7 +176,7 @@ class WebTeacher:
         raise RuntimeError(f"登录超时/未完成（{self.platform.name} 输入框一直未出现）")
 
     def _select_model(self) -> None:
-        """启动时按 platform.model_selector 校准模型选择（如 mimo 从 V2.5-Pro 切回 V2.5）。
+        """启动时按 platform.model_selector 校准模型选择（页面有目标选项才动作）。
 
         当前按钮文字匹配才动作（幂等：已是目标模型时无匹配跳过）；下拉无目标选项或点击
         失败时静默跳过，不阻塞打标（profile 已记住时此步可无操作）。
@@ -680,7 +680,7 @@ def _platform_names(ap_args) -> list[str]:
     if getattr(ap_args, "probe_all", False) or not getattr(ap_args, "platforms", None):
         names = web_cfg.get("platforms", [])
         if not names:
-            names = ["deepseek", "wenxin", "qianwen", "mimo"]
+            names = ["deepseek", "wenxin", "qianwen"]
     else:
         names = [x.strip() for x in ap_args.platforms.split(",") if x.strip()]
     return names
