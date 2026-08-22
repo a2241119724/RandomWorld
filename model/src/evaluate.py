@@ -151,17 +151,24 @@ def main():
             line += f" {r['_recall'][i]*100:10.2f}%"
         print(line)
 
-    # 行为分布对比
-    print(f"\n[行为分布] 真实 vs 预测（Top-1）:")
-    true_dist = np.bincount(y_te, minlength=n_classes).astype(float) / len(y_te)
-    print(f"{'行为':<16s} {'真实':>8s} " + " ".join(f"{name[:10]:>11s}" for name, _ in rows))
+    # 行为分布对比（每模型含「正确%」= 该类 argmax 命中数 / 总样本数）
+    print(f"\n[行为分布] 真实 vs 预测（Top-1），正确 = 该类 argmax 命中数 / 总样本数:")
+    n_te = len(y_te)
+    true_dist = np.bincount(y_te, minlength=n_classes).astype(float) / n_te
+    pred_dist, correct_dist = [], []
+    for _, r in rows:
+        pred = r["proba"].argmax(axis=1)
+        pred_dist.append(np.bincount(pred, minlength=n_classes).astype(float) / n_te)
+        correct_dist.append(np.bincount(y_te[pred == y_te], minlength=n_classes).astype(float) / n_te)
+    header = f"{'行为':<16s} {'真实':>8s}"
+    for name, _ in rows:
+        header += f" {name[:7] + '预测':>10s} {name[:7] + '正确':>10s}"
+    print(header)
+    print("-" * len(header))
     for i, a in enumerate(ACTIONS):
-        zh = ACTION_LABELS_ZH.get(a, a)
         line = f"{a:<16s} {true_dist[i]*100:7.2f}%"
-        for _, r in rows:
-            pred_dist = np.bincount(r["proba"].argmax(axis=1),
-                                    minlength=n_classes).astype(float) / len(y_te)
-            line += f" {pred_dist[i]*100:10.2f}%"
+        for pd, cd in zip(pred_dist, correct_dist):
+            line += f" {pd[i]*100:9.2f}% {cd[i]*100:9.2f}%"
         print(line)
 
 

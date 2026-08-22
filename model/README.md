@@ -11,8 +11,9 @@
 **纯极值随机组合**（连续特征只取极值 {min,max}、枚举取全值，随机组合
 `n_train_total` 条，全部用于训练不再内部切）。现实分布集（`n_test` 条）确定性
 切成两份：前 `split.val_ratio` 做验证集（早停监控中间态真实泛化）、其余做独立
-测试集。训练时按 `training.sample_proportions` 的目标比例**物理拷贝**训练集
-（对齐游戏内现实比例）。
+测试集。训练时按 `training.sample_mode` 决定训练集**物理拷贝**模式：`real` 按
+`training.sample_proportions` 拉游戏内现实比例（默认）/ `balanced` 1:1 均衡拷贝 /
+`none` 不拷贝。
 规则表已删除——采样边界信息全在 `feature_schema.yaml`（`max_value` / `dtype:int`），
 `src/rules.py` 只负责采样不再打标签。
 
@@ -115,7 +116,8 @@ python src/visualize.py
 
 训练集 = **纯极值随机组合**（`n_train_total` 条：连续特征每维随机取 {min,max} 极值、
 枚举取全值随机、固定值取定值，组合成不同状态），训练时由
-`training.sample_proportions` **物理拷贝**拉到游戏内现实比例；现实分布集
+`training.sample_mode` 决定**物理拷贝**模式（`real` 按 `sample_proportions` 拉现实
+比例，或 `balanced` 1:1 均衡、`none` 不拷贝）；现实分布集
 （`n_test` 条、独立于训练集）确定性切成前 `split.val_ratio` 验证集 + 后段独立
 测试集——早停监控的是中间态真实泛化（不再用纯极值内部切 val）。已知局限：纯极值
 下模型看不到 hungry=50 等中间态，学不会连续决策斜坡（hungry 降 → eat 概率升），
@@ -178,6 +180,10 @@ Unity 接入阶段决定。
   学到的极值规则在现实测试集（连续中间态）上几乎不触发 → 全判 gather。
   `learning_rate` 调低（0.001→0.0001）只让坍缩更平滑、不改变坍缩本身——这不是超参
   问题，是**极值训练分布 ↔ 中间态测试分布不匹配**的结构性局限。
+- **拷贝模式对照（`training.sample_mode`）**：按真实比例拷贝（`real`）会让训练集
+  60% 是 gather、进一步放大坍缩；`balanced`（1:1 均衡拷贝）消除大类 bias、
+  `none`（不拷贝）保留 LLM 原始标签分布——二者均为对照实验项，根因仍是极值训练集
+  无中间态斜坡。
 - **加深层数无改善（2026-08-22 对照）**：mlp 3 层→5 层（[64,64,64,32]）test_acc
   持平 0.408；attention 2→5 层 encoder + 分类头加深，test_acc 反而 0.404→0.376
   （加深加剧过拟合）。容量不是瓶颈——训练集不含中间态斜坡，加再深也学不到。

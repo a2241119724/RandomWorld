@@ -88,6 +88,59 @@ def oversample_by_proportions(
     return X[idx], y[idx]
 
 
+def oversample_balanced(
+    X: np.ndarray, y: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """1:1 均衡物理拷贝训练集：每个已观测类拷贝到与最频繁类同数量。
+
+    例：训练集 Gather:Sleep:Idle = 600:100:40 → 各拷贝到 600 条 → 1:1:1。
+    未观测类（LLM 常识不打 store/withdraw 等）跳过，与 oversample_by_proportions
+    一致。同样是物理拷贝——极低频类（如 3 条）会被复制上百份，模型易过拟合到
+    这几个重复样本，报告时需标注。用于消除大类 bias 对照实验（sample_mode=balanced）。
+    """
+    counts = np.bincount(y, minlength=NUM_ACTIONS)
+    max_c = int(counts.max())
+    idx_parts: list[np.ndarray] = []
+    for c in range(NUM_ACTIONS):
+        if counts[c] == 0:
+            continue
+        rep = int(np.ceil(max_c / counts[c]))
+        idx_parts.append(np.tile(np.where(y == c)[0], rep))
+    idx = np.concatenate(idx_parts)
+    return X[idx], y[idx]
+
+
+def sample_training_data(
+    X_tr: np.ndarray, y_tr: np.ndarray, cfg: dict
+) -> tuple[np.ndarray, np.ndarray, str, str]:
+    """按 ``training.sample_mode`` 决定训练集是否/如何物理拷贝（torch 与 gbdt 共用）。
+
+    mode:
+      - ``none``     → 不拷贝，返回原训练集（class_weight 由调用方恢复生效）
+      - ``real``     → 按 ``training.sample_proportions`` 拉游戏内现实比例（默认）
+      - ``balanced`` → 1:1 均衡拷贝（每个已观测类拷贝到最频繁类条数）
+
+    mode 缺省时兼容旧配置：有 sample_proportions 视为 ``real``，否则 ``none``。
+    返回 ``(Xo, yo, mode, desc)``。
+    """
+    t = cfg["training"]
+    mode = t.get("sample_mode")
+    sp = t.get("sample_proportions")
+    if mode is None:
+        mode = "real" if sp else "none"
+    if mode == "none":
+        return X_tr, y_tr, mode, "不拷贝"
+    if mode == "real":
+        if not sp:
+            raise ValueError("training.sample_mode=real 需要配置 training.sample_proportions")
+        Xo, yo = oversample_by_proportions(X_tr, y_tr, sp)
+        return Xo, yo, mode, f"按目标比例物理拷贝（{len(Xo)} 条，{len(sp)} 类）"
+    if mode == "balanced":
+        Xo, yo = oversample_balanced(X_tr, y_tr)
+        return Xo, yo, mode, f"1:1 均衡拷贝（{len(Xo)} 条）"
+    raise ValueError(f"未知 training.sample_mode: {mode!r}（可选 none/real/balanced）")
+
+
 def train_torch(
     net: nn.Module,
     X_tr, y_tr, X_va, y_va, X_te, y_te,
@@ -114,19 +167,16 @@ def train_torch(
     val_loader = DataLoader(WorkerDecisionDataset(X_va, y_va),
                             batch_size=cfg["training"]["batch_size"], shuffle=False)
 
-    # 按目标比例物理拷贝训练集（用户方案：样本拷贝到现实比例，训练集变大）
-    sample_props = cfg["training"].get("sample_proportions")
-    if sample_props:
-        X_tr, y_tr = oversample_by_proportions(X_tr, y_tr, sample_props)
-        train_loader = DataLoader(WorkerDecisionDataset(X_tr, y_tr),
-                                  batch_size=cfg["training"]["batch_size"], shuffle=True)
-        class_weights = None  # 拷贝已硬控类分布，避免与 loss 权重双重加权
-        console.print(f"    训练采样: 按目标比例物理拷贝（{len(X_tr)} 条，{len(sample_props)} 类）")
-    else:
-        train_loader = DataLoader(WorkerDecisionDataset(X_tr, y_tr),
-                                  batch_size=cfg["training"]["batch_size"], shuffle=True)
+    # 训练集物理拷贝模式（none/real/balanced）：real 按现实比例、balanced 1:1 均衡
+    X_tr, y_tr, sample_mode, sample_desc = sample_training_data(X_tr, y_tr, cfg)
+    train_loader = DataLoader(WorkerDecisionDataset(X_tr, y_tr),
+                              batch_size=cfg["training"]["batch_size"], shuffle=True)
+    if sample_mode == "none":
         class_weights = compute_class_weights(
             y_tr, cfg["training"].get("class_weight", "none"), n_classes=NUM_ACTIONS)
+    else:
+        class_weights = None  # 拷贝已硬控类分布，避免与 loss 权重双重加权
+        console.print(f"    训练采样: {sample_desc}")
 
     optimizer = torch.optim.Adam(
         net.parameters(),

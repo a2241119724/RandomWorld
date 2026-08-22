@@ -30,7 +30,7 @@ from sklearn.ensemble import (
 from sklearn.metrics import log_loss
 
 from ..actions import ACTIONS, NUM_ACTIONS
-from ..training import accuracy, oversample_by_proportions
+from ..training import accuracy, sample_training_data
 from ..unity_export import _processed_dir, load_feature_names
 from .base import DecisionModel
 from .registry import register
@@ -65,10 +65,11 @@ class GbdtModel(DecisionModel):
         inst.clf = None
         return inst
 
-    # ---- 训练：复用 oversample_by_proportions，与 torch 完全同分布 ----
+    # ---- 训练：复用 sample_training_data，与 torch 完全同分布 ----
     def fit(self, X_tr, y_tr, X_va, y_va, X_te, y_te, cfg, seed: int) -> dict:
-        sp = cfg["training"].get("sample_proportions")
-        Xo, yo = (oversample_by_proportions(X_tr, y_tr, sp) if sp else (X_tr, y_tr))
+        Xo, yo, sample_mode, sample_desc = sample_training_data(X_tr, y_tr, cfg)
+        if sample_mode != "none":
+            print(f"[gbdt] 训练采样: {sample_desc}")
 
         if self._hp["algorithm"] == "random_forest":
             print(f"[gbdt] 一次性拟合 {self._hp['max_iter']} 棵（RF 无逐树进度）")

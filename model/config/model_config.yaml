@@ -46,8 +46,9 @@ training:
   learning_rate: 0.00001             # 用户要求再降（0.001→0.0001→0.00001）；README 已记 0.0001 只让坍缩更平滑不改变坍缩，本轮做量级对照排除 lr
   weight_decay: 0.0001
   patience: 50                # 早停：验证 loss 连续 patience 轮不降即停止（用户 8→100，几乎不触发早停，跑满 epochs 100）
-  class_weight: none           # loss 权重缓解长尾（none/sqrt_inv/inverse）；sample_proportions 开启时被重采样替代，置 none
-  sample_proportions:          # 每 epoch 重采样训练集的目标行为比例（训练时各类别占比 == 游戏内正常比例）。sum≈1，只覆盖训练集已观测类；改比例后重新 train 即可
+  class_weight: none           # loss 权重缓解长尾（none/sqrt_inv/inverse）；sample_mode 拷贝开启时被硬控类分布替代，置 none
+  sample_mode: balanced            # 训练集物理拷贝模式：none=不拷贝 | real=按 sample_proportions 拉游戏内现实比例 | balanced=1:1 均衡（每个已观测类拷贝到最频繁类条数）
+  sample_proportions:          # sample_mode=real 时生效：每 epoch 重采样训练集的目标行为比例（训练时各类别占比 == 游戏内正常比例）。sum≈1，只覆盖训练集已观测类；改比例后重新 train 即可
     self_gather: 0.60          # 干活主导（对齐 Gather:Sleep≈9:1 方向），游戏内正常比例初始值
     self_build: 0.15
     idle: 0.10

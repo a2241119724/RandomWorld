@@ -14,13 +14,28 @@ import argparse
 import sys
 from pathlib import Path
 
+import numpy as np  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.actions import NUM_ACTIONS  # noqa: E402
+from src.actions import ACTIONS, ACTION_LABELS_ZH, NUM_ACTIONS  # noqa: E402
 from src.config import ModelConfig  # noqa: E402
 from src.dataio import load_train_val, load_test  # noqa: E402
 from src.models import list_models, create_model  # noqa: E402
+from src.training import sample_training_data  # noqa: E402
+
+
+def print_action_distribution(y, title):
+    """按样本数降序打印训练集各类 action 的数量与占比（行为用中文标签辅助辨识）。"""
+    counts = np.bincount(y, minlength=NUM_ACTIONS)
+    total = counts.sum()
+    print(f"[train] {title}（共 {total} 条）:")
+    for c in np.argsort(-counts):
+        if counts[c] == 0:
+            continue
+        zh = ACTION_LABELS_ZH.get(ACTIONS[c], ACTIONS[c])
+        print(f"    {ACTIONS[c]:<16s} {zh:<6s} {counts[c]:6d}  {counts[c] / total * 100:6.2f}%")
 
 
 def main():
@@ -40,6 +55,11 @@ def main():
     print(f"[train] 训练集 {X_tr.shape}（全量，无内部切分）"
           f"  验证集 {X_va.shape}（现实分布，早停）"
           f"  测试集 {X_te.shape}（现实分布，独立评估）  行为数={NUM_ACTIONS}")
+    print_action_distribution(y_tr, "训练集 action 分布（原始标签）")
+    # sample_mode 拷贝后的实际训练分布（none 时与原始一致，无需重打一份）
+    _, yo, sample_mode, sample_desc = sample_training_data(X_tr, y_tr, cfg.raw)
+    if sample_mode != "none":
+        print_action_distribution(yo, f"训练集 action 分布（{sample_desc}）")
 
     if args.model == "all":
         names = list_models()
