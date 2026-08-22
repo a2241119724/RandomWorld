@@ -39,22 +39,26 @@ def _save_states_csv(states, labels, path: Path) -> None:
     df.to_csv(path, index=False, encoding="utf-8")
 
 
-def _sampling_signature(data_cfg: dict, seed: int, system_prompt: str, split: str) -> str:
+def _sampling_signature(data_cfg: dict, seed: int, system_prompt: str, split: str,
+                        teacher_source: str = "api") -> str:
     """LLM 标签缓存键：种子 + 采样配置 + 系统 prompt 的哈希。
 
-    标签 = f(采样到的状态, prompt)，任一变化缓存即失效。此前缓存只比对长度，
+    标签 = f(采样到的状态, prompt, 教师)，任一变化缓存即失效。此前缓存只比对长度，
     若采样方式变化但条数不变会静默复用旧标签（数据污染），故把配置纳入键。
-    训练集 key 依赖 n_train_total、测试集 key 依赖 n_test：改训练规模不连带
-    重打测试标签（此前两者混入同一 key，改 n_train_total 会重打 2 万条测试集）。
+    训练集 key 依赖 n_train_total + 教师来源；测试集 key 只依赖 n_test：
+    - 改训练规模不连带重打测试标签；
+    - 切换教师（api↔web 免费打标签）只重打训练集，测试集继续复用旧缓存（0 成本）。
+      注意：测试集 key 不含教师来源，仅当 prompt/采样变化时才失效。
     """
     if split not in ("train", "test"):
         raise ValueError(f"未知 split: {split}（可选 train/test）")
     parts = [str(seed), hashlib.sha256(system_prompt.encode("utf-8")).hexdigest()[:16]]
     if split == "train":
-        # 训练集 key 依赖采样方式 + 规模：标签随训练采样配置变化
-        parts += [str(data_cfg.get("train_sampling")), str(data_cfg.get("n_train_total"))]
+        # 训练集 key 依赖采样方式 + 规模 + 教师来源：任一变化重打训练标签
+        parts += [str(data_cfg.get("train_sampling")), str(data_cfg.get("n_train_total")),
+                  str(teacher_source)]
     else:
-        # 测试集始终现实分布采样，与 train_sampling 无关：改训练配置不重打测试集
+        # 测试集始终现实分布采样，与 train_sampling / 教师无关：改训练配置不重打测试集
         parts.append(str(data_cfg.get("n_test")))
     return hashlib.md5("|".join(parts).encode("utf-8")).hexdigest()[:12]
 
@@ -93,17 +97,44 @@ def main() -> None:
     schema = FeatureSchema.load(cfg.schema_path)
     seed = cfg.data_seed
 
-    # ---- 标签器：LLM（规则表已删除，唯一来源）----
+    # ---- 标签器：api=OpenAI 兼容端点（付费）/ web=网页版浏览器自动化（免费）----
     from src.llm_teacher import LLMTeacher
+    from src.web_labeler import WebTeacher
 
-    teacher = LLMTeacher(cfg, schema)
-    cache_dir = cfg["llm"]["cache_dir"]
+    llm_cfg = cfg["llm"]
+    provider = llm_cfg.get("provider", "deepseek")
+    if provider == "web":
+        teacher = WebTeacher(cfg, schema)
+    elif provider == "deepseek":
+        teacher = LLMTeacher(cfg, schema)
+    else:
+        raise ValueError(f"未知 llm.provider: {provider}（可选 deepseek/web）")
+
+    cache_dir = llm_cfg["cache_dir"]
     cache_dir = cache_dir if Path(cache_dir).is_absolute() else ROOT / cache_dir
-    tr_cache_key = _sampling_signature(data_cfg, seed, teacher._system_prompt, "train")
-    te_cache_key = _sampling_signature(data_cfg, seed, teacher._system_prompt, "test")
+    tr_cache_key = _sampling_signature(data_cfg, seed, teacher._system_prompt, "train", teacher.source)
+    te_cache_key = _sampling_signature(data_cfg, seed, teacher._system_prompt, "test", teacher.source)
+
+    # 网页版打标签：训练集断点续跑文件（进程中断后重跑从断点继续）
+    if isinstance(teacher, WebTeacher):
+        teacher.progress_file = Path(cache_dir) / f"web_progress_{tr_cache_key}.json"
+
+    # 护栏：网页版不自动重打超大规模测试集（625 批不可行）
+    if provider == "web":
+        max_test_batches = llm_cfg.get("web", {}).get("max_test_relabel_batches", 60)
+        n_test = data_cfg["n_test"]
+        te_cache_path = Path(cache_dir) / f"llm_labels_test_{te_cache_key}.npy"
+        te_hit = te_cache_path.exists() and len(np.load(te_cache_path)) == n_test
+        if not te_hit and (n_test / teacher.batch_size) > max_test_batches:
+            raise SystemExit(
+                f"[generate_data] 网页版不打超大规模测试集：{n_test} 条 = "
+                f"{n_test / teacher.batch_size:.0f} 批 > 上限 {max_test_batches} 批。\n"
+                f"请先用 API 教师（llm.provider: deepseek）打测试集，或调小 data.n_test。"
+            )
+
     tr_label_fn = _CachedTeacher(teacher, cache_dir, "train", tr_cache_key).label
     te_label_fn = _CachedTeacher(teacher, cache_dir, "test", te_cache_key).label
-    print(f"[generate_data] 标签来源 = DeepSeek LLM（{teacher.model}）  seed={seed}  "
+    print(f"[generate_data] 标签来源 = {teacher.source}（{teacher.model}）  seed={seed}  "
           f"train_cache={tr_cache_key}  test_cache={te_cache_key}")
 
     # ---- 训练集：纯极值随机组合 ----

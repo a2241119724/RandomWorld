@@ -194,6 +194,7 @@ class LLMTeacher:
 
     def __init__(self, cfg, schema):
         llm_cfg = cfg["llm"] if isinstance(cfg, dict) else cfg.get("llm", {})
+        self.source = "api"  # 标签来源标记：纳入缓存 key，防不同教师缓存串扰
         self.model = llm_cfg.get("model", "deepseek-chat")
         self.base_url = llm_cfg.get("base_url", "https://api.deepseek.com")
         self.temperature = llm_cfg.get("temperature", 0.0)

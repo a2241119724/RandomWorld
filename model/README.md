@@ -5,12 +5,14 @@
 阶段、目标、好感度 + 全局/局部信息），输出 14 种行为之一（`WorkerDecisionType`）。
 训练后导出权重给 Unity C# 侧推理。
 
-数据不依赖模拟器教师——训练/测试标签全部由 **DeepSeek LLM 按「现实生活优先级」
-的常识直接判断**（`src/llm_teacher.py`）：训练集为**纯极值随机组合**（连续特征只取
-极值 {min,max}、枚举取全值，随机组合 `n_train_total` 条），测试集 20000 条独立现实
-分布。训练时按 `training.sample_proportions` 的目标比例**物理拷贝**训练集（对齐游戏
-内现实比例）。规则表已删除——采样边界信息全在 `feature_schema.yaml`
-（`max_value` / `dtype:int`），`src/rules.py` 只负责采样不再打标签。
+数据不依赖模拟器教师——训练/测试标签由 **DeepSeek LLM 按「现实生活优先级」的常识
+直接判断**。两种教师任选（`llm.provider`）：`deepseek` = OpenAI 兼容 API（付费、快）；
+`web` = **网页版浏览器自动化**（免费，特征/输出扩展后反复重打不花钱）。训练集为
+**纯极值随机组合**（连续特征只取极值 {min,max}、枚举取全值，随机组合
+`n_train_total` 条），测试集 20000 条独立现实分布。训练时按
+`training.sample_proportions` 的目标比例**物理拷贝**训练集（对齐游戏内现实比例）。
+规则表已删除——采样边界信息全在 `feature_schema.yaml`（`max_value` / `dtype:int`），
+`src/rules.py` 只负责采样不再打标签。
 
 ## 目录结构
 
@@ -28,7 +30,8 @@ model/
 │   ├── actions.py               # 14 种行为常量（与 C# WorkerDecisionType 对齐）
 │   ├── features.py              # 特征提取/归一化（读 feature_schema）
 │   ├── rules.py                 # 采样：纯极值随机组合训练集 + 现实分布测试集（边界推导读 feature_schema）
-│   ├── llm_teacher.py           # LLM 教师：DeepSeek 按现实常识打标签（唯一标签来源）
+│   ├── llm_teacher.py           # LLM 教师：DeepSeek API 按现实常识打标签（provider=deepseek）
+│   ├── web_labeler.py           # 网页版教师：浏览器自动化免费打标签（provider=web）
 │   ├── config.py                # ModelConfig 配置门面
 │   ├── dataio.py                # 训练/验证/测试数据加载与确定性切分
 │   ├── dataset.py               # PyTorch Dataset
@@ -57,11 +60,14 @@ cd model
 # 0. 环境：torch 对 Python 3.14 支持可能滞后，建议用 3.11/3.12 的 venv
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-export DEEPSEEK_API_KEY=sk-...      # llm 标签模式需要（Windows: $env:DEEPSEEK_API_KEY="sk-...")
+#    provider=deepseek（付费 API）需要：export DEEPSEEK_API_KEY=sk-...
+#    provider=web（免费网页版，默认）需要：一次性 `python -m playwright install chromium`
+#    web 首次运行会弹出浏览器，手动登录一次 chat.deepseek.com（profile 复用，不存密码）
 
-# 1. 生成数据（纯极值随机组合训练集 + 现实测试集，标签 = DeepSeek LLM 按现实常识打）
+# 1. 生成数据（纯极值随机组合训练集 + 现实测试集，标签按 llm.provider 由 API 或网页版打）
 python data/generate_data.py
-#    重跑同 seed 命中缓存（data/cache/llm_labels_*.npy），0 次 API 调用；
+#    重跑同 seed 命中缓存（data/cache/llm_labels_*.npy），0 次调用；
+#    web 教师自动关「深度思考/联网搜索」开关、自动开新会话、断点续跑；
 
 # 2. 训练（--model all = 注册表内全部；也可指定单个）
 python src/train.py --model all
@@ -86,14 +92,23 @@ python src/visualize.py
 2. 加 `@register("模型名")` 装饰器注册。
 3. 在 `config/model_config.yaml` 加一个超参段，并在 `src/models/__init__.py` import。
 
-## 标签来源：LLM 教师（唯一）
+## 标签来源：LLM 教师（API / 网页版）
 
-训练/测试标签全部由 `src/llm_teacher.py` 打：把 14 种行为定义 + 每个状态字段的
-中文说明与数值范围组装成系统 prompt（范围由 `derive_state_bounds` 从
-`feature_schema.yaml` 自动推导，新增特征无需改 prompt），让 DeepSeek 按**现实生活
-优先级**判断每个状态该做什么。`temperature=0` + 缓存（`data/cache/llm_labels_*.npy`，
-同 seed 重跑 0 次 API 调用）保证可复现。LLM 输出非法/超时重试失败时，逐条回退到
-主类 `idle`，确保数据永不残缺（规则表已删除，无规则兜底）。
+把 14 种行为定义 + 每个状态字段的中文说明与数值范围组装成系统 prompt（范围由
+`derive_state_bounds` 从 `feature_schema.yaml` 自动推导，新增特征无需改 prompt），
+让 DeepSeek 按**现实生活优先级**判断每个状态该做什么。两种教师（`llm.provider`）：
+
+- **`deepseek`**（`src/llm_teacher.py`，付费 API）：`temperature=0` + 缓存
+  （`data/cache/llm_labels_*.npy`，同 seed 重跑 0 次 API 调用）保证可复现。
+- **`web`**（`src/web_labeler.py`，免费网页版）：Playwright 驱动真实浏览器访问
+  chat.deepseek.com，复用持久化 profile（一次性手动登录，不存密码）；自动关
+  「深度思考/联网搜索」开关（实测提速一个数量级）、每批开新会话、逐批落盘进度
+  （崩溃/登录过期后重跑断点续传）。约 64 条/批 ≈ 5-15s。
+
+共用同一缓存机制：非法/超时/解析失败重试 `max_retries` 次后，逐条回退到主类
+`idle`，确保数据永不残缺（规则表已删除，无规则兜底）。缓存 key 纳入教师来源
+（train 段）：切换 provider 只重打训练集，测试集 key 不含教师、继续复用旧缓存
+（0 成本）。`data/browser_profile/`（登录 cookie）已 gitignore 严禁入库。
 
 训练集 = **纯极值随机组合**（`n_train_total` 条：连续特征每维随机取 {min,max} 极值、
 枚举取全值随机、固定值取定值，组合成不同状态），训练时由
@@ -171,6 +186,10 @@ Unity 接入阶段决定。
 - **训练集规模（data.n_train_total）**：纯极值随机组合的条数。提高它只枚举更多
   不同极值状态组合，缓解坍缩但无法根治（仍无中间态）。LLM 标签缓存 key 只含 seed +
   prompt + train_sampling + n_train_total，改 n_train_total 会重打训练标签。
+- **教师来源（llm.provider）**：训练集缓存 key 含教师来源，deepseek↔web 切换会重打
+  训练标签（免费）；测试集 key 不含教师、继续复用旧缓存。若测试集缓存缺失（如 prompt
+  变化）且条数超 `web.max_test_relabel_batches`，网页版会拒绝自动重打（2 万条 = 625 批
+  不可行）——大规模重打测试集前先评估 `n_test` 或用 API 教师。
 - **检查模型健康看预测分布而非 val_acc**：重叠标签区间上 argmax 只有一半对是正常的，
   看输出分布是否贴真值（健康：gather 67%/eat 23%/…；坍缩：≈100% 单类）。
 - **Unity .bytes 契约**：`experiments/mlp_weights.bytes` 布局

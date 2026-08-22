@@ -49,11 +49,20 @@ export:
   weights_json: true           # 导出纯权重 JSON（供 C# 手写前向传播）
 
 llm:
-  provider: deepseek           # OpenAI 兼容端点，后续可换 provider
-  model: deepseek-chat
+  provider: web                # 标签教师：deepseek=OpenAI 兼容 API（付费）/ web=网页版浏览器自动化（免费，可反复重打）
+  model: deepseek-chat         # 仅 deepseek 教师使用
   base_url: https://api.deepseek.com
-  temperature: 0.0             # 确定性（配合缓存固化，数据可复现）
+  temperature: 0.0             # 确定性（配合缓存固化，数据可复现；web 教师无法控制，靠缓存固化）
   batch_size: 32               # 每批状态条数
   timeout: 60                  # 单次请求超时（秒）
   max_retries: 3               # 非法/超时重试次数
   cache_dir: data/cache        # LLM 标签缓存目录（同 seed + 同 prompt 幂等复用）
+  web:                         # 网页版浏览器自动化打标签（免费，避免特征扩展后反复付费）
+    batch_size: 64             # 每批状态条数（网页版推理快，64 条/批生成约 5s；实测关深度思考后提速明显）
+    headless: false            # 有头模式：首次需手动登录 chat.deepseek.com（一次性，profile 复用）
+    profile_dir: data/browser_profile   # 浏览器登录会话（不存密码）
+    delay_sec: 2               # 批间停顿（秒），降低触发限流/反爬概率（生成后已留稳定等待）
+    stable_sec: 3              # 回复稳定判定秒数；回复以 `}` 结尾时 1.5s 即完成
+    chat_timeout: 240          # 单条回复等待上限（秒）
+    login_timeout: 300         # 登录等待上限（秒）
+    max_test_relabel_batches: 60   # 网页版重打测试集批数上限（20000/32=625 批不可行，超限自动拒绝）

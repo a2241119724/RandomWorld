@@ -30,6 +30,9 @@ model/data/raw/*.csv
 model/data/raw/*.csv.meta
 model/data/cache/
 model/data/cache/*.meta
+# 网页版打标签器（web_labeler）的浏览器登录会话：含 cookie，严禁入库
+model/data/browser_profile/
+model/data/browser_profile/*.meta
 model/data/processed/*.npy
 model/data/processed/*.npy.meta
 model/experiments/*.pt

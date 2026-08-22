@@ -21,6 +21,7 @@ class TorchDecisionModel(DecisionModel):
     net_cls: type[nn.Module] = None
     meta_keys: tuple[str, ...] = ()
     flattenable: bool = False
+    _infer_batch: int = 2048  # 推理分批上限：防 CPU 上 attention 大测试集 OOM
 
     # ---- 构造 ----
     @classmethod
@@ -61,7 +62,12 @@ class TorchDecisionModel(DecisionModel):
         dev = self._device()
         Xt = torch.as_tensor(X, dtype=torch.float32, device=dev)
         self.net.eval()
-        return self.net(Xt)
+        if Xt.shape[0] <= self._infer_batch:
+            return self.net(Xt)
+        # 大批量分批前向：attention 在 2 万条测试集单次前向会一次分配 ~2.4GB（CPU OOM）
+        chunks = [self.net(Xt[i:i + self._infer_batch])
+                  for i in range(0, Xt.shape[0], self._infer_batch)]
+        return torch.cat(chunks, dim=0)
 
     def predict_proba(self, X) -> np.ndarray:
         return F.softmax(self._logits(X), dim=1).cpu().numpy()
@@ -97,6 +103,8 @@ class TorchDecisionModel(DecisionModel):
         inst.net = cls._build_net(inst._params)
         inst.net.load_state_dict(ckpt["state_dict"])
         inst.net.eval()
+        # 注意：默认 device="auto" 保持 CPU。ONNX 导出要求 CPU 模型，
+        # 若 auto→cuda 会致 export.py 设备不匹配；大测试集 OOM 由 _logits 分批推理兜底。
         if device == "cuda" and torch.cuda.is_available():
             inst.net = inst.net.to("cuda")
         return inst
