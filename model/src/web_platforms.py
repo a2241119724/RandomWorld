@@ -7,11 +7,11 @@
 平台 URL（用户提供，2026-08-22）：
     deepseek  chat.deepseek.com                    已校准
     wenxin    wenxin.baidu.com（文心一言，重定向到 yiyan）
-    qianwen   platform.qianwenai.com/try-ai（通义千问）
+    qianwen   platform.qianwenai.com/try-ai/chat?models=qwen-max（通义千问，URL 锚定 qwen-max）
+    doubao    www.doubao.com/chat/                 未校准（曾移除后加回，batch 调小重试）
 
-已移除：ark（ark.volcengine.com 在线体验页有时间使用限制）、doubao（www.doubao.com/chat/ 大
-prompt 整批回显不执行 + 触发人机验证）、mimo（aistudio.xiaomimimo.com，页面无深度思考开关，
-关不掉深度思考）——均用户 2026-08-22 决定不用。
+已移除：ark（ark.volcengine.com 在线体验页有时间使用限制）、mimo（aistudio.xiaomimimo.com，
+页面无深度思考开关，关不掉深度思考）——均用户 2026-08-22 决定不用。
 """
 from __future__ import annotations
 
@@ -61,7 +61,7 @@ PLATFORM_DEFS: dict[str, Platform] = {
         markdown=(".ds-markdown", "[class*='markdown']"),
         new_chat=("span:has-text('开启新对话')", "button:has-text('新对话')"),
         toggles=("深度思考", "联网搜索"),
-        note="已校准（2026-08-22）；2026-08-22 被风控限制（登录可达但发消息失败/降速）→ 全局 delay_sec 已提到 10s，恢复后此平台自动重新可用",
+        note="已校准（2026-08-22）；2026-08-22 被风控限制（登录可达但发消息失败/降速）→ 全局 delay_sec 已降速，恢复后此平台自动重新可用",
     ),
     "wenxin": Platform(
         name="wenxin", url="https://wenxin.baidu.com/",
@@ -71,9 +71,15 @@ PLATFORM_DEFS: dict[str, Platform] = {
         note="文心一言（已校准 2026-08-22；长输入疑似被输入框截断→batch_size=16，配合追问补全兜底）",
     ),
     "qianwen": Platform(
-        name="qianwen", url="https://platform.qianwenai.com/try-ai",
+        name="qianwen", url="https://platform.qianwenai.com/try-ai/chat?models=qwen-max",
         toggles=("深度思考", "联网搜索", "搜索"),
-        note="通义千问（用户手动选择模型 Qwen-Max，2026-08-22）",
+        note="通义千问（URL 直接锚定模型 qwen-max，无需手动选择）",
+    ),
+    "doubao": Platform(
+        name="doubao", url="https://www.doubao.com/chat/",
+        toggles=("深度思考", "联网搜索", "搜索"),
+        batch_size=16,  # 2026-08-22 曾因大 prompt（64 条整批回显不执行）被移除 → 先降到 16 实测
+        note="豆包（未校准 2026-08-22；曾因大 prompt 整批回显不执行 + 触发人机验证被移除后加回，batch=16 重试，选择器待 --probe 校准）",
     ),
 }
 

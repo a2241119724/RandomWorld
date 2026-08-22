@@ -8,7 +8,7 @@ paths:
 
 data:
   train_sampling: extreme             # [固定] 训练集采样：纯极值随机组合（连续特征只取 {min,max}、枚举取全值，随机组合 n_train_total 条）。规则表已删除，采样信息全在 feature_schema（ratio.max_value / dtype:int）；值含于 LLM 缓存 key，改采样方式需换新值使旧标签缓存失效
-  n_train_total: 1100                 # 训练集条数（纯极值随机组合，每条为不同极值状态组合；组合空间≈770亿故抽样而非枚举）
+  n_train_total: 5000                 # 训练集条数（纯极值随机组合，每条为不同极值状态组合；组合空间≈770亿故抽样而非枚举）
   n_test: 500                         # 现实分布测试集条数（原 20000 → 用户改为 500，网页版打标快）
   seed: 42                            # 复现用随机种子
   save_raw_csv: true                  # 是否落盘原始 (state, action) CSV
@@ -37,7 +37,7 @@ gbdt:                          # sklearn GBDT（注册名 gbdt）。树阈值分
   min_samples_leaf: 5          # 叶最小样本数（抗物理拷贝重复样本过拟合）
   l2_regularization: 1.0       # HGB 叶值 L2（RF 忽略）
   early_stopping: true         # 外部 val_logloss 早停（warm_start 续训）；不用 HGB 内置——stratify 在单样本类上崩溃
-  patience: 50                # val_logloss 连续 patience 次不降即停（用户 8→100，放宽早停；对齐 training.patience）
+  patience: 20                # val_logloss 连续 patience 次不降即停（用户 8→100，放宽早停；对齐 training.patience）
   class_weight: none           # HGB 不支持 class_weight；靠 sample_proportions 拷贝控类分布
 
 training:
@@ -71,11 +71,11 @@ llm:
   max_retries: 3               # 非法/超时重试次数
   cache_dir: data/cache        # LLM 标签缓存目录（同 seed + 同 prompt 幂等复用）
   web:                         # 网页版浏览器自动化打标签（免费，避免特征扩展后反复付费）
-    platforms: [deepseek, wenxin, qianwen]  # 参与打标的平台（ark 已删：在线体验有时限；doubao 已删：大 prompt 整批回显 + 触发人机验证；mimo 已删：页面无深度思考开关，关不掉）
+    platforms: [deepseek, wenxin, qianwen, doubao]  # 参与打标的平台（ark 已删：在线体验有时限；mimo 已删：页面无深度思考开关，关不掉；doubao 曾移除后加回：大 prompt 整批回显问题 → batch 降到 16 重试，选择器待校准）
     batch_size: 64             # 每批状态条数（网页版推理快，64 条/批生成约 5s；实测关深度思考后提速明显）
     headless: false            # 有头模式：首次需手动登录各平台（一次性，profile 复用，每平台一个子目录）
     profile_dir: data/browser_profile   # 浏览器登录会话根目录（每平台 <profile_dir>/<平台名>/，不存密码）
-    delay_sec: 30              # 批间停顿（秒）：风控收紧后整体降速（deepseek 被限制、mimo 已删，剩 wenxin/qianwen 慢慢打）
+    delay_sec: 100             # 批间停顿（秒）：风控收紧后整体降速，保守慢慢打
     stable_sec: 3              # 回复稳定判定秒数；回复以 `}` 结尾时 1.5s 即完成
     chat_timeout: 240          # 单条回复等待上限（秒）
     login_timeout: 300         # 登录等待上限（秒）
