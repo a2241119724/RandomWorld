@@ -297,3 +297,62 @@ class LLMTeacher:
             response_format={"type": "json_object"},
         )
         return resp.choices[0].message.content or ""
+
+    # ------------------------------------------------------------------
+    # 规则生成（--gen-rules）：DeepSeek API 也是规则生成模型之一
+    # ------------------------------------------------------------------
+    def generate_rule_set(self, schema, rule_dir) -> dict | None:
+        """让 DeepSeek API 写一份结构化规则文件内容；失败返回 None。
+
+        规则生成用深度思考：reasoner 模型优先（思维链推理规则覆盖/边界），
+        chat 兜底。返回 ``{version, platform, schema_keys, fields, rules}``
+        （platform = "deepseek_api"，与网页平台 deepseek.json 区分）。
+        """
+        from .web_labeler import (build_rule_fields, build_rule_prompt,
+                                  _parse_rules, _validate_rules)  # 惰性导入防循环
+        schema_keys = list(derive_state_bounds(schema))
+        prompt = build_rule_prompt(schema)
+        # 深度思考优先：reasoner 在前，chat 兜底
+        models = ([m for m in [self.model, *self.model_fallbacks] if "reasoner" in m]
+                  + [m for m in [self.model, *self.model_fallbacks] if "reasoner" not in m])
+        last_err: Exception | None = None
+        for model in models:
+            for attempt in range(self.max_retries + 1):
+                try:
+                    text = self._call_rule_api(prompt, model)
+                    parsed = _parse_rules(text)
+                    valid = _validate_rules(parsed, schema_keys) if parsed else []
+                    if valid:
+                        print(f"[gen-rules:deepseek_api] 模型 {model} 写规则 "
+                              f"{len(parsed)} 条，校验通过 {len(valid)} 条")
+                        return {
+                            "version": 2,
+                            "platform": "deepseek_api",
+                            "schema_keys": schema_keys,
+                            "fields": build_rule_fields(schema),
+                            "rules": valid,
+                        }
+                    last_err = ValueError(f"规则无法解析/校验: {text[:120]!r}")
+                except Exception as e:
+                    last_err = e
+                if attempt < self.max_retries:
+                    print(f"[gen-rules:deepseek_api] 重试 {attempt + 1}/{self.max_retries} "
+                          f"({model}): {last_err}")
+            if model != models[-1]:
+                print(f"[gen-rules:deepseek_api] 模型 {model} 重试耗尽，换模型 "
+                      f"{models[models.index(model) + 1]}")
+        print(f"[gen-rules:deepseek_api] 全部模型失败，跳过: {last_err}")
+        return None
+
+    def _call_rule_api(self, prompt: str, model: str | None = None) -> str:
+        """调 DeepSeek 生成规则。reasoner 模型不支持 temperature/response_format → 区分传参。"""
+        model = model or self.model
+        kwargs: dict[str, Any] = dict(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        if "reasoner" not in model:
+            kwargs["temperature"] = self.temperature
+            kwargs["response_format"] = {"type": "json_object"}
+        resp = self.client.chat.completions.create(**kwargs)
+        return resp.choices[0].message.content or ""

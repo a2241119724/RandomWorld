@@ -90,7 +90,7 @@ def build_rule_prompt(schema) -> str:
   5) 精力旺盛无压力 → 经营/社交/拾取搬运（store/withdraw/post_bounty/self_carry/self_plant/pickup）
   6) 实在无事可做才 idle/wander
 - 字段名必须是上面列出的；action 必须是行为英文名；阈值须在字段取值范围内
-- 最后建议加一条兜底规则（when 为空对象 {}，或最宽泛条件），保证任何状态都能匹配到行为
+- 最后建议加一条兜底规则（when 为空对象 {{}}，或最宽泛条件），保证任何状态都能匹配到行为
   （如 {{"when": {{}}, "action": "idle"}}）；若你确认前面规则已覆盖全部情况可不加
 - 输出 8~20 条规则，宁可多覆盖不要漏场景"""
 
@@ -117,14 +117,21 @@ def _parse_rules(text: str) -> list[dict] | None:
 
 
 def _validate_rules(rules: list[dict], schema_keys: list[str]) -> list[dict]:
-    """校验规则：字段名在 schema_keys、约束运算符/值类型合法、action 在 ACTIONS。返回合法子集。"""
+    """校验规则：字段名在 schema_keys、约束运算符/值类型合法、action 在 ACTIONS。返回合法子集。
+
+    空 when（``{}``）= 兜底规则：任何状态都命中（``derive`` 的 ``all([])`` 恒真），
+    排到列表末尾保证「最后命中」——前置规则不匹配时兜底保底，避免全无票抛错。
+    """
     from .rule_teacher import _SYM_OPS  # 共享运算符归一（避免重复定义）
 
     valid = []
     for r in rules:
         when = r.get("when")
         action = r.get("action")
-        if not isinstance(when, dict) or not when or action not in ACTIONS:
+        if not isinstance(when, dict) or action not in ACTIONS:
+            continue
+        if not when:
+            valid.append(r)  # 兜底规则：无约束，保留并稍后重排到末尾
             continue
         ok = True
         for field, cond in when.items():
@@ -151,6 +158,8 @@ def _validate_rules(rules: list[dict], schema_keys: list[str]) -> list[dict]:
                 break
         if ok:
             valid.append(r)
+    # 兜底规则（空 when）重排到末尾：保证前置规则不匹配时才兜底
+    valid = [r for r in valid if r.get("when")] + [r for r in valid if not r.get("when")]
     return valid
 
 
@@ -396,35 +405,36 @@ class WebTeacher:
             time.sleep(1)
         return False
 
-    def _disable_toggles(self) -> None:
-        """关闭「深度思考」「联网搜索」类开关：加快生成、防搜索跑偏。
+    def _set_toggle(self, label: str, on: bool) -> None:
+        """把指定开关（按 span 文字，带 aria-pressed）设为 on/off；找不到静默跳过。
 
         各平台用带 aria-pressed 的 div 切换按钮 + span 文字标签（class 常混淆不可靠），
-        按文字找最近带 aria-pressed 的元素，若为开启态则点击关闭。
+        按文字找最近带 aria-pressed 的元素，状态不符才点击。
         """
         page = self._page
+        try:
+            page.evaluate(
+                """([label, on]) => {
+                    const spans = [...document.querySelectorAll('span')]
+                        .filter(s => s.textContent.trim() === label);
+                    for (const s of spans) {
+                        let t = s.closest('[aria-pressed]');
+                        if (!t) continue;
+                        const now = t.getAttribute('aria-pressed') === 'true'
+                            || /(selected|active)/.test(t.className || '');
+                        if (now !== on) { t.click(); return true; }
+                    }
+                    return false;
+                }""",
+                [label, on],
+            )
+        except Exception:
+            pass
+
+    def _disable_toggles(self) -> None:
+        """关闭「深度思考」「联网搜索」类开关：加快生成、防搜索跑偏（打标用）。"""
         for label in self.platform.toggles:
-            try:
-                clicked = page.evaluate(
-                    """(label) => {
-                        const spans = [...document.querySelectorAll('span')]
-                            .filter(s => s.textContent.trim() === label);
-                        for (const s of spans) {
-                            let t = s.closest('[aria-pressed]');
-                            if (!t) continue;
-                            const on = t.getAttribute('aria-pressed') === 'true'
-                                || /(selected|active)/.test(t.className || '');
-                            if (on) { t.click(); return true; }
-                        }
-                        return false;
-                    }""",
-                    label,
-                )
-                if clicked:
-                    print(f"[web_labeler:{self.platform.name}] 已关闭开关：{label}")
-                    time.sleep(0.5)
-            except Exception:
-                continue
+            self._set_toggle(label, False)
 
     def _assistant_texts(self) -> list[str]:
         page = self._page
@@ -451,6 +461,11 @@ class WebTeacher:
             texts = self._assistant_texts()
             if len(texts) > n_before:
                 cur = texts[-1]
+                # 最后一条为空 = 回复还在生成（wenxin 深度思考时思考内容先渲染、
+                # 答案容器空着排在末尾），跳过稳定性判定继续等，防空回复误判完成
+                if not cur.strip():
+                    time.sleep(2)
+                    continue
                 if cur != last_text:
                     last_text = cur
                     stable_since = time.time()
@@ -609,7 +624,11 @@ class WebTeacher:
             try:
                 self._ensure_ready()
                 self._new_chat()
-                self._disable_toggles()
+                # 写规则用深度思考（推理字段语义/覆盖边界），但关闭联网搜索（防外部信息干扰规则推导）。
+                # 平台 toggles 为空（如 wenxin 新版已无「深度思考」开关，改快速/任务模式）则此处空转，
+                # 该平台规则按普通模式生成，深度思考由 DeepSeek API 通道（deepseek-reasoner）保证。
+                for label in self.platform.toggles:
+                    self._set_toggle(label, "深度思考" in label or "Reasoning" in label)
                 n_before = len(self._assistant_texts())
                 self._send_prompt(prompt)
                 text = self._wait_reply(n_before)
@@ -961,7 +980,8 @@ def main() -> None:
     ap.add_argument("--states", type=int, default=None, help="冒烟状态条数（默认 4 条冒烟）")
     ap.add_argument("--train", action="store_true", help="打整个训练集（走 generate_data 缓存）")
     ap.add_argument("--gen-rules", action="store_true",
-                    help="让每个可用平台各写一份结构化规则文件到 llm.rule_dir（provider: rules 的输入）")
+                    help="让每个可用网页平台 + DeepSeek API 各写一份规则文件到 llm.rule_dir"
+                         "（写规则用深度思考；provider: rules 的输入）")
     args = ap.parse_args()
 
     cfg, schema = _cfg()
@@ -979,8 +999,31 @@ def main() -> None:
         print(f"[gen-rules] 让 {names} 各写一份规则文件 -> {rule_dir}/（已存在跳过）")
         pool = make_pool(cfg, schema, names)
         results = pool.generate_rules(schema, rule_dir)
+        # DeepSeek API 也作为规则生成模型（深度思考 reasoner 优先；需 DEEPSEEK_API_KEY，无则跳过）
+        api_out = rule_dir / "deepseek_api.json"
+        if api_out.exists():
+            try:
+                data = json.loads(api_out.read_text(encoding="utf-8"))
+                n = len(data.get("rules", [])) if isinstance(data, dict) else 0
+                print(f"[gen-rules] 断点续跑：deepseek_api 已生成（{n} 条规则），跳过")
+                results["deepseek_api"] = n
+            except Exception:
+                pass
+        else:
+            try:
+                from .llm_teacher import LLMTeacher
+                doc = LLMTeacher(cfg, schema).generate_rule_set(schema, rule_dir)
+                if doc:
+                    api_out.write_text(json.dumps(doc, ensure_ascii=False, indent=1),
+                                       encoding="utf-8")
+                    results["deepseek_api"] = len(doc["rules"])
+                    print(f"[gen-rules] deepseek_api 规则已写入 {api_out}")
+                else:
+                    print("[gen-rules] DeepSeek API 写规则失败，跳过")
+            except Exception as e:
+                print(f"[gen-rules] DeepSeek API 不可用（未设 DEEPSEEK_API_KEY?）：{e}")
         if not results:
-            print("[gen-rules] 无平台成功生成规则（未登录/冒烟失败/规则校验失败）")
+            print("[gen-rules] 无通道成功生成规则（未登录/冒烟失败/规则校验失败/无 API key）")
             return 1
         for pname, n in results.items():
             print(f"[gen-rules]   {pname:<10s} {n} 条规则")

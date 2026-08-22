@@ -60,6 +60,9 @@ def _match(cond: dict, value: Any) -> bool:
             if not (isinstance(target, (list, tuple)) and len(target) == 2):
                 return False
             lo, hi = target
+            if not (isinstance(v, (int, float)) and isinstance(lo, (int, float))
+                    and isinstance(hi, (int, float))):
+                return False  # 状态缺字段（None）或阈值类型不符：该约束不满足
             if not (lo <= v <= hi):
                 return False
         elif op in _CMP_OPS:

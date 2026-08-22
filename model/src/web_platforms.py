@@ -69,9 +69,9 @@ PLATFORM_DEFS: dict[str, Platform] = {
     "wenxin": Platform(
         name="wenxin", url="https://wenxin.baidu.com/",
         new_chat=("span:has-text('开启新对话')", "button:has-text('新对话')", "span:has-text('新对话')"),
-        toggles=("深度思考", "联网搜索"),
+        toggles=(),  # 2026-08-23 改版：新版已移除「深度思考」「联网搜索」开关（改为「快速/任务」输入模式，实测任务=专业技能≠深度思考）；_set_toggle 按文字找不到元素只会静默 no-op，置空避免误导
         batch_size=32,  # 新格式表格 prompt 长度约减半 → 16→32 翻倍（32 条 ≈ 旧 16 条体量）；仍配 _complete_labels 防截断追问补全
-        note="文心一言（已校准 2026-08-22；长输入疑似被输入框截断→batch_size=16，配合追问补全兜底）",
+        note="文心一言（已校准 2026-08-22；长输入疑似被输入框截断→batch_size=16，配合追问补全兜底；2026-08-23 确认新版无深度思考开关，规则生成不深度思考，靠 DeepSeek API 通道保证）",
     ),
     "qianwen": Platform(
         name="qianwen", url="https://platform.qianwenai.com/try-ai/chat?models=qwen3.8-max",
