@@ -46,6 +46,10 @@ class Platform:
     send_button: str = ""
     # 每批状态条数（0 = 用 config llm.web.batch_size；个别平台对长 prompt 处理差需调小）
     batch_size: int = 0
+    # 批间延迟秒数（0 = 用 config llm.web.delay_sec；风控严的平台调大）
+    delay_sec: float = 0
+    # 启动时自动校准模型选择：(当前按钮文字, 目标选项文字)，页面无对应下拉则静默跳过
+    model_selector: tuple = ()
     note: str = ""
 
 
@@ -75,7 +79,12 @@ PLATFORM_DEFS: dict[str, Platform] = {
         name="mimo", url="https://aistudio.xiaomimimo.com/",
         new_chat=("span:has-text('新对话')", "button:has-text('新对话')"),
         toggles=("深度思考", "联网搜索", "搜索"),
-        note="小米 MiMo（已校准 2026-08-22；回复带「已深度思考」前缀，解析用正则容错；用户手动选择模型 MiMo-V2.5）",
+        # 页面默认/漂移为 MiMo-V2.5-Pro，启动时自动切回 MiMo-V2.5（2026-08-22）
+        model_selector=(("MiMo-V2.5-Pro", "MiMo-V2.5"),),
+        # 风控：2026-08-22 因请求过快被禁言至 8/23 16:13 → batch 降到 16 + 批间 15s
+        batch_size=16,
+        delay_sec=15,
+        note="小米 MiMo（已校准 2026-08-22；回复固定带「已深度思考（用时 X 秒）」水印文案——页面无深度思考开关，0.X 秒非真思考、不影响解析；模型启动自动校准为 MiMo-V2.5；2026-08-22 被风控禁言→降速 batch16+delay15s）",
     ),
 }
 

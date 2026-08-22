@@ -103,7 +103,9 @@ class WebTeacher:
         self.batch_size = int(platform.batch_size) if platform.batch_size else int(
             web_cfg.get("batch_size", llm_cfg.get("batch_size", 32)))
         self.headless = bool(web_cfg.get("headless", False))
-        self.delay_sec = float(web_cfg.get("delay_sec", 2))
+        # 平台级延迟优先（风控严的平台在 Platform.delay_sec 调大；0 = config 全局值）
+        self.delay_sec = float(platform.delay_sec) if platform.delay_sec else float(
+            web_cfg.get("delay_sec", 2))
         self.stable_sec = float(web_cfg.get("stable_sec", 3))
         self.chat_timeout = float(web_cfg.get("chat_timeout", 240))
         self.max_retries = int(llm_cfg.get("max_retries", 3))
@@ -165,9 +167,39 @@ class WebTeacher:
         deadline = time.time() + (timeout if timeout is not None else self.login_timeout)
         while time.time() < deadline:
             if _first_visible(page, self.platform.editor) is not None:
+                # 登录就绪后校准一次模型选择（防 profile 漂移，如 mimo V2.5-Pro→V2.5）
+                if not getattr(self, "_model_selected", False):
+                    self._select_model()
+                    self._model_selected = True
                 return
             time.sleep(2)
         raise RuntimeError(f"登录超时/未完成（{self.platform.name} 输入框一直未出现）")
+
+    def _select_model(self) -> None:
+        """启动时按 platform.model_selector 校准模型选择（如 mimo 从 V2.5-Pro 切回 V2.5）。
+
+        当前按钮文字匹配才动作（幂等：已是目标模型时无匹配跳过）；下拉无目标选项或点击
+        失败时静默跳过，不阻塞打标（profile 已记住时此步可无操作）。
+        """
+        page = self._page
+        for cur, target in self.platform.model_selector:
+            try:
+                cur_el = page.locator(f"text='{cur}'").first
+                if cur_el.count() == 0 or not cur_el.is_visible():
+                    continue
+                cur_el.click()
+                time.sleep(1.0)
+                tgt_el = page.locator(f"text='{target}'").first
+                if tgt_el.count() == 0 or not tgt_el.is_visible():
+                    page.keyboard.press("Escape")
+                    continue
+                tgt_el.click()
+                time.sleep(1.0)
+                # 校验：当前按钮不再是 cur（已是目标）才算成功
+                if page.locator(f"text='{cur}'").first.count() == 0:
+                    print(f"[web_labeler:{self.platform.name}] 模型校准: {cur} -> {target}")
+            except Exception:
+                continue
 
     # ------------------------------------------------------------------
     # 对话操作

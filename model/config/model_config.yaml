@@ -9,7 +9,7 @@ paths:
 data:
   train_sampling: extreme             # [固定] 训练集采样：纯极值随机组合（连续特征只取 {min,max}、枚举取全值，随机组合 n_train_total 条）。规则表已删除，采样信息全在 feature_schema（ratio.max_value / dtype:int）；值含于 LLM 缓存 key，改采样方式需换新值使旧标签缓存失效
   n_train_total: 1000                 # 训练集条数（纯极值随机组合，每条为不同极值状态组合；组合空间≈770亿故抽样而非枚举）
-  n_test: 20000                       # 现实分布测试集条数
+  n_test: 500                         # 现实分布测试集条数（原 20000 → 用户改为 500，网页版打标快）
   seed: 42                            # 复现用随机种子
   save_raw_csv: true                  # 是否落盘原始 (state, action) CSV
 
