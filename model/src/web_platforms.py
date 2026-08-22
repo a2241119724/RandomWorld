@@ -43,6 +43,20 @@ class Platform:
     new_chat: tuple = ()
     # 需关闭的开关（span 文字，如 深度思考/联网搜索）
     toggles: tuple = ()
+    # 模式/思考强度设置（规则生成时提升推理深度）：(打开面板选择器, 展开选择器,
+    # 展开方式, 目标选项)。展开方式: "hover"/"click"/""（空=无展开步骤）；目标选项:
+    # CSS 选择器或纯文字。空 = 无强度切换（如 kimi 2026-08-23 实测：点 .current-effort
+    # 弹模型面板 → hover .effort-current 展开 → 点「进阶」；wenxin 点 .ci-input-mode-button-text
+    # 开面板 → 直接点「任务」）。区别于 toggles：toggles 是开关型，这里是级联菜单型。
+    effort_selector: tuple = ()
+    # 深度思考按钮选择器（CSS）：点开即选中（无 aria-pressed，靠 class 含 selected 标记）。
+    # 元宝等平台（2026-08-23 实测：dt-button-id="deep_think"，点后 class 加 ThinkSelector_selected、
+    # dt-model-id 切 hunyuan_t1）。区别于 toggles 的 aria-pressed 开关型。空 = 无。
+    deep_think_selector: str = ""
+    # 该平台规则生成是否走深度思考通道（toggles 深度思考/思考 / deep_think_selector /
+    # effort_selector 切强推理目标）。写入规则文件 deep_think 字段，RuleTeacher 投票权重翻倍
+    # （用户 2026-08-23 确认：doubao/chatgpt/kimi/yuanbao/deepseek_api 深度思考 ×2，wenxin 任务模式≠深度思考）。
+    deep_think: bool = False
     # 发送快捷键（依次尝试，成功以输入框清空为准）
     send_keys: tuple = ("Enter", "Control+Enter")
     # 发送按钮选择器（Enter/Ctrl+Enter 都不清空输入框时兜底点击；空 = 无按钮）
@@ -64,52 +78,63 @@ PLATFORM_DEFS: dict[str, Platform] = {
         markdown=(".ds-markdown", "[class*='markdown']"),
         new_chat=("span:has-text('开启新对话')", "button:has-text('新对话')"),
         toggles=("深度思考", "联网搜索"),
+        deep_think=True,  # 深度思考开关真实存在
         note="已校准（2026-08-22）；2026-08-22 被风控限制（登录可达但发消息失败/降速）→ 全局 delay_sec 已降速，恢复后此平台自动重新可用",
     ),
     "wenxin": Platform(
         name="wenxin", url="https://wenxin.baidu.com/",
         new_chat=("span:has-text('开启新对话')", "button:has-text('新对话')", "span:has-text('新对话')"),
         toggles=(),  # 2026-08-23 改版：新版已移除「深度思考」「联网搜索」开关（改为「快速/任务」输入模式，实测任务=专业技能≠深度思考）；_set_toggle 按文字找不到元素只会静默 no-op，置空避免误导
+        effort_selector=(".ci-input-mode-button-text", "", "", ".ci-input-mode-title:has-text('任务')"),  # 2026-08-23 实测：点「快速」胶囊开面板 → 选项直接可见点「任务」模式（专业技能，比快速更充分推理）
         batch_size=32,  # 新格式表格 prompt 长度约减半 → 16→32 翻倍（32 条 ≈ 旧 16 条体量）；仍配 _complete_labels 防截断追问补全
-        note="文心一言（已校准 2026-08-22；长输入疑似被输入框截断→batch_size=16，配合追问补全兜底；2026-08-23 确认新版无深度思考开关，规则生成不深度思考，靠 DeepSeek API 通道保证）",
+        deep_think=False,  # 任务模式≠深度思考（用户 2026-08-23 确认）
+        note="文心一言（已校准 2026-08-22；长输入疑似被输入框截断→batch_size=16，配合追问补全兜底；2026-08-23 确认新版无深度思考开关，规则生成切「任务」输入模式提升推理，靠 DeepSeek API 通道保深度）",
     ),
     "qianwen": Platform(
         name="qianwen", url="https://platform.qianwenai.com/try-ai/chat?models=qwen3.8-max",
         toggles=("深度思考", "联网搜索", "搜索"),
+        deep_think=True,  # 深度思考开关真实存在
         batch_size=64,  # 新格式表格 prompt 长度约减半 → 32→64 翻倍（64 条 ≈ 旧 32 条体量）；账号欠费中待处理
         note="通义千问（URL 直接锚定模型 qwen3.8-max，无需手动选择）",
     ),
     "doubao": Platform(
         name="doubao", url="https://www.doubao.com/chat/",
         markdown=("[class*='md-box-root']", "[class*='markdown']"),  # 2026-08-22 校准：全站 CSS Modules hash 类名，兜底 markdown 全落空致回复超时；回复正文为 md-box-root 容器，收发由 data-foundation-type=receive-* 区分
-        toggles=("深度思考", "联网搜索", "搜索"),
+        toggles=(),  # 2026-08-23 确认新版豆包无「深度思考」「联网搜索」开关（旧 toggles 纯属无效猜测）；_set_toggle 按文字找不到只会静默 no-op，置空避免误导
+        effort_selector=("[data-valid-btn='model-select-action-btn']", "", "", "[role='menuitem']:has-text('豆包 2.1')"),  # 2026-08-23 实测：模型按钮当前「豆包 快速」，点开菜单（radix dropdown）选「豆包 2.1 Turbo」（带「专家」badge），切后按钮文字真实变化；规则生成切 Turbo 提推理、打标用默认快速
+        deep_think=True,  # 用户 2026-08-23 确认：豆包 2.1 Turbo 算深度思考（虽无开关但推理更强），投票权重翻倍
         batch_size=16,  # 新格式表格 prompt 减半后 32 触发人机校验 → 降回 16（已验证零回显）；风控是主要约束，batch 不宜再升
-        note="豆包（已校准 2026-08-22：回复容器 md-box-root，data-streaming=false 标记生成完成；旧格式 batch=16 曾偶发回显、8 稳定；新格式 16 零回显；32 触发人机校验 → 定 16）",
+        note="豆包（已校准 2026-08-22：回复容器 md-box-root，data-streaming=false 标记生成完成；旧格式 batch=16 曾偶发回显、8 稳定；新格式 16 零回显；32 触发人机校验 → 定 16；2026-08-23 确认新版无深度思考开关，模型按钮 [data-valid-btn=model-select-action-btn] 从「快速」切「豆包 2.1 Turbo」）",
     ),
     "yuanbao": Platform(
         name="yuanbao", url="https://yuanbao.tencent.com/chat/naQivTmsDa",
-        toggles=("深度思考", "联网搜索"),
+        toggles=(),  # 2026-08-23 实测：元宝深度思考按钮无 aria-pressed（_set_toggle 按 aria-pressed 找不到）→ 旧 toggles=("深度思考","联网搜索") 是无效猜测，置空改走 deep_think_selector
+        deep_think_selector="[dt-button-id='deep_think']",  # 2026-08-23 实测：点后 class 加 ThinkSelector_selected、dt-model-id 切 hunyuan_t1（深度思考真实生效）
+        deep_think=True,  # 深度思考按钮真实存在
         batch_size=64,  # 新格式表格 prompt 长度约减半 → 32→64 翻倍
-        note="腾讯元宝（未校准 2026-08-22；URL 为用户提供会话链接，选择器待 --probe 校准回填）",
+        note="腾讯元宝（已校准 2026-08-23：回复容器 [class*='markdown']（hyc-common-markdown）命中默认候选；深度思考按钮 [dt-button-id='deep_think'] 无 aria-pressed、点后 class 含 ThinkSelector_selected；输入框 ql-editor contenteditable；思考过程 hyc-component-deepsearch-cot 先渲染、正文 hyc-content-md 后完成）",
     ),
     "kimi": Platform(
         name="kimi", url="https://www.kimi.com/",
         editor=("[contenteditable='true']", "[role='textbox']", "textarea"),
         new_chat=("[aria-label='新建会话']", "button:has-text('新建会话')"),
         toggles=("深度思考", "联网搜索"),
+        effort_selector=(".current-effort", ".effort-current", "hover", "进阶"),  # 2026-08-23 实测路径：点强度胶囊开面板 → hover effort-current 展开 → 点「进阶」
+        deep_think=True,  # 思考强度「进阶」= 深度推理，用户 2026-08-23 确认权重翻倍
         send_button="[class*='send-button-container']",  # 2026-08-22 校准：发送按钮是 div 容器+SVG（非 button），Enter 未触发发送须点击兜底
         batch_size=64,  # 新格式表格 prompt 长度约减半 → 32→64 翻倍
-        note="Kimi（已校准 2026-08-22：Lexical 编辑器 chat-input-editor；发送按钮 send-button-container 为 div 须点击；思考强度已在账号手动设为「标准」并持久化——默认「进阶」会拖慢/带思考输出；无独立深度思考开关，toggles 仅兜底）",
+        note="Kimi（已校准 2026-08-22：Lexical 编辑器 chat-input-editor；发送按钮 send-button-container 为 div 须点击；无独立深度思考开关，思考强度走模型面板级联菜单：点 .current-effort → hover .effort-current → 选强度（快速/标准/进阶），规则生成切「进阶」、打标用账号侧「标准」持久化）",
     ),
     "chatgpt": Platform(
         name="chatgpt", url="https://chatgpt.com/",
         editor=("#prompt-textarea", "[contenteditable='true']", "[role='textbox']"),
         markdown=("[class*='markdown']", "[class*='message-content']"),
         new_chat=("button:has-text('New chat')", "button:has-text('新建聊天')", "a[href='/']"),
-        toggles=("Reasoning", "Search the web", "深度思考", "联网搜索"),  # 界面以英文为主，中英双语；找不到静默跳过
+        toggles=("思考",),  # 2026-08-23 实测：深度思考开关是「思考」胶囊（__composer-pill，aria-pressed 翻转），非英文 Reasoning；「搜索网页」是模式按钮非开关、默认不启用，不放进 toggles
+        deep_think=True,  # 「思考」胶囊 = 深度思考
         send_keys=("Enter",),
         batch_size=64,  # 新格式表格 prompt 长度约减半 → 32→64 翻倍
-        note="ChatGPT（已校准 2026-08-22：探活冒烟通过回复 OK；输入框 ProseMirror、回复容器 markdown；界面英文为主，开关中英双语；风控严可能触发验证/登录门槛）",
+        note="ChatGPT（已校准 2026-08-22：探活冒烟通过回复 OK；输入框 ProseMirror、回复容器 markdown；2026-08-23 确认深度思考开关=「思考」胶囊 aria-pressed；风控严可能触发验证/登录门槛）",
     ),
 }
 

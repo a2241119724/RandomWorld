@@ -436,6 +436,81 @@ class WebTeacher:
         for label in self.platform.toggles:
             self._set_toggle(label, False)
 
+    def _set_effort(self) -> None:
+        """把平台模式/思考强度切到配置目标（规则生成用）。
+
+        级联菜单型（区别于 toggles 开关型）：``effort_selector = (打开面板选择器,
+        展开选择器, 展开方式, 目标选项)``。
+        - ``展开选择器``：hover/click 要作用在其上的元素（kimi `.effort-current`）；
+          wenxin 点开面板后选项直接可见则传空。
+        - ``展开方式``：``"hover"``（kimi 思考强度，popover hover 触发）或 ``"click"``
+          （点展开选择器弹选项）；传空 = 无需展开步骤。
+        - ``目标选项``：CSS 选择器（以 . # [ 开头，精确定位）或纯文字（span 文字
+          匹配，取末个可见）。
+        任一步失败静默跳过（保持默认）。
+        """
+        es = self.platform.effort_selector
+        if not es or len(es) < 3:
+            return
+        open_sel, expand_sel, expand_mode = es[0], es[1], es[2]
+        target = es[3] if len(es) > 3 else expand_sel
+        page = self._page
+        try:
+            # 1. 打开模型/强度面板
+            loc = page.locator(open_sel)
+            if loc.count() == 0 or not loc.first.is_visible():
+                return
+            loc.first.click()
+            time.sleep(1.5)
+            # 2. 展开选项（hover 或 click）
+            if expand_mode and expand_sel:
+                el = page.locator(expand_sel)
+                if el.count() and el.first.is_visible():
+                    if expand_mode == "hover":
+                        el.first.hover()
+                    else:
+                        el.first.click()
+                    time.sleep(1.2)
+            # 3. 点目标选项
+            if target.lstrip().startswith((".", "#", "[")):
+                opt = page.locator(target).first  # CSS 选择器精确定位
+            else:
+                opt = page.locator(f"span:has-text('{target}')").last  # 文字匹配
+            if opt.count() and opt.is_visible():
+                opt.click()
+                time.sleep(1.5)
+                print(f"[web_labeler:{self.platform.name}] 已切到「{target}」")
+        except Exception as e:
+            print(f"[web_labeler:{self.platform.name}] 模式/强度切换跳过: {e}")
+
+    def _set_deep_think(self) -> None:
+        """按 CSS 选择器点开深度思考按钮（元宝等无 aria-pressed 的平台，规则生成用）。
+
+        与 ``_set_toggle`` 的区别：元宝按钮用 ``dt-button-id`` + class 含 ``selected``
+        标记选中态（非 aria-pressed）。已选中则跳过，否则点击并校验 class 出现
+        ``selected``（真实切换才报成功）。
+        """
+        sel = self.platform.deep_think_selector
+        if not sel:
+            return
+        page = self._page
+        try:
+            loc = page.locator(sel).first
+            if loc.count() == 0 or not loc.is_visible():
+                return
+            cls = loc.get_attribute("class") or ""
+            if "selected" in cls:
+                return  # 已开启
+            loc.click()
+            time.sleep(2.0)
+            cls_after = loc.get_attribute("class") or ""
+            if "selected" in cls_after:
+                print(f"[web_labeler:{self.platform.name}] 深度思考已开启（{sel}）")
+            else:
+                print(f"[web_labeler:{self.platform.name}] 深度思考点击但未选中: {cls_after[:80]!r}")
+        except Exception as e:
+            print(f"[web_labeler:{self.platform.name}] 深度思考切换跳过: {e}")
+
     def _assistant_texts(self) -> list[str]:
         page = self._page
         for sel in self.platform.markdown:
@@ -625,10 +700,15 @@ class WebTeacher:
                 self._ensure_ready()
                 self._new_chat()
                 # 写规则用深度思考（推理字段语义/覆盖边界），但关闭联网搜索（防外部信息干扰规则推导）。
+                # 「思考」= 深度思考类开关文字（chatgpt 新版实测），统一按开启处理；其余（联网/搜索）关闭。
                 # 平台 toggles 为空（如 wenxin 新版已无「深度思考」开关，改快速/任务模式）则此处空转，
                 # 该平台规则按普通模式生成，深度思考由 DeepSeek API 通道（deepseek-reasoner）保证。
                 for label in self.platform.toggles:
-                    self._set_toggle(label, "深度思考" in label or "Reasoning" in label)
+                    self._set_toggle(label, "思考" in label or "Reasoning" in label or "深度" in label)
+                # 无 aria-pressed 的深度思考按钮型平台（元宝 dt-button-id）：点击开启
+                self._set_deep_think()
+                # 级联菜单型平台（如 kimi）无开关但有思考强度选项，切到目标强度提升推理深度
+                self._set_effort()
                 n_before = len(self._assistant_texts())
                 self._send_prompt(prompt)
                 text = self._wait_reply(n_before)
@@ -643,6 +723,7 @@ class WebTeacher:
                         "schema_keys": schema_keys,
                         "fields": build_rule_fields(schema),
                         "rules": valid,
+                        "deep_think": bool(self.platform.deep_think),  # RuleTeacher 投票权重翻倍依据
                     }
                 print(f"[gen-rules:{self.platform.name}] 规则校验失败: "
                       f"len={len(text)} 开头={text[:120]!r}")

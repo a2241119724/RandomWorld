@@ -90,7 +90,9 @@ def derive(rule_set: dict, st: dict[str, Any]) -> str | None:
 class RuleTeacher:
     """规则文件打标器（离线：加载全部模型规则 → 推导 + 多数投票）。"""
 
-    source = "rules"  # 标签来源：纳入 train 缓存 key，防与 web/api 教师缓存串扰
+    source = "rules-dt"  # 标签来源：纳入 train 缓存 key，防与 web/api 教师缓存串扰。
+    # 2026-08-23 改：深度思考模型权重翻倍（用户确认 doubao/chatgpt/kimi/yuanbao/deepseek_api），
+    # 标签结果变化 → source 从 "rules" 改为 "rules-dt" 使旧训练缓存失效强制重打。
 
     def __init__(self, cfg, schema, rule_dir):
         self.rule_dir = Path(rule_dir)
@@ -101,6 +103,7 @@ class RuleTeacher:
                 f"[rules] 规则目录不存在: {self.rule_dir}。"
                 f"请先运行 python -m src.web_labeler --gen-rules 生成各模型规则文件")
         self._rule_sets: list[dict] = []
+        self.n_deep_think = 0  # 深度思考模型数（权重翻倍），报告用
         for f in sorted(self.rule_dir.glob("*.json")):
             try:
                 data = json.loads(f.read_text(encoding="utf-8"))
@@ -109,7 +112,10 @@ class RuleTeacher:
                 continue
             rules = data.get("rules") if isinstance(data, dict) else None
             if isinstance(rules, list) and rules:
-                self._rule_sets.append({"platform": f.stem, "rules": rules})
+                deep = bool(data.get("deep_think", False))  # 规则文件带深度思考标记（生成端写入）
+                self._rule_sets.append({"platform": f.stem, "rules": rules, "deep_think": deep})
+                if deep:
+                    self.n_deep_think += 1
             else:
                 print(f"[rules] 跳过无规则的文件 {f.name}")
         if not self._rule_sets:
@@ -117,19 +123,23 @@ class RuleTeacher:
                 f"[rules] 规则目录 {self.rule_dir} 没有任何含合法规则的模型文件"
                 f"（请先运行 --gen-rules，或检查字段/动作是否与 schema 匹配）")
         self.n_models = len(self._rule_sets)
-        self.model = f"rules({self.n_models}模型)"
+        self.model = f"rules({self.n_models}模型,{self.n_deep_think}深度思考×2)"
         self.batch_size = 0  # 推导无批次限制
         self._system_prompt = build_system_prompt(schema)  # 缓存 key 依赖（对齐现有教师）
 
     def label(self, states: list[dict[str, Any]]) -> list[str]:
-        """逐状态用各模型规则推导 + 多数投票；全部模型都推导不到 → 抛错（不兜底）。"""
+        """逐状态用各模型规则推导 + 多数投票；全部模型都推导不到 → 抛错（不兜底）。
+
+        投票权重：深度思考模型（规则文件 deep_think=true）的票记 2，普通模型记 1——
+        深度思考生成的规则更可靠，权重翻倍（用户 2026-08-23 确认）。
+        """
         out: list[str] = []
         for st in states:
             tally: Counter = Counter()
             for rs in self._rule_sets:
                 lab = derive(rs, st)
                 if lab:
-                    tally[lab] += 1
+                    tally[lab] += 2 if rs["deep_think"] else 1
             if not tally:
                 raise RuntimeError(
                     f"[rules] {self.n_models} 个模型的规则均推导不到该状态（规则覆盖不全），不兜底。"

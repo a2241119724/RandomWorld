@@ -122,7 +122,11 @@ python src/visualize.py
   深度思考**（规则是泛化决策，需推理字段语义/覆盖边界）：有「深度思考」开关的网页平
   台开它、关「联网搜索」（wenxin 2026-08-23 改版已无此开关，按普通模式生成），DeepSeek
   API 优先 `deepseek-reasoner`（思维链）模型；不选该开关会得到肤浅规则（只有主类兜底、
-  覆盖率差）。
+  覆盖率差）。**投票权重：深度思考模型翻倍**（2026-08-23 用户确认 doubao 豆包2.1
+  Turbo / chatgpt 思考 / kimi 进阶 / yuanbao 深度思考 / deepseek_api reasoner ×2，
+  wenxin 任务模式≠深度思考不翻倍）——规则文件 `deep_think` 字段标记，`RuleTeacher`
+  计票 `×2`；权重变化使 train 缓存 key 变更（source=rules-dt），切到此版本自动重打
+  训练集。
 
 web/deepseek 教师：非法/超时/解析失败重试 `max_retries` 次后，逐条回退到主类
 `idle`，确保数据永不残缺。rules 教师相反：**规则推导不到的状态不兜底、直接抛错**

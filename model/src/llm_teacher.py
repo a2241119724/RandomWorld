@@ -331,6 +331,7 @@ class LLMTeacher:
                             "schema_keys": schema_keys,
                             "fields": build_rule_fields(schema),
                             "rules": valid,
+                            "deep_think": True,  # deepseek-reasoner = 深度思考，投票权重翻倍
                         }
                     last_err = ValueError(f"规则无法解析/校验: {text[:120]!r}")
                 except Exception as e:
