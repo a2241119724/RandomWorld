@@ -81,9 +81,10 @@ PLATFORM_DEFS: dict[str, Platform] = {
     ),
     "doubao": Platform(
         name="doubao", url="https://www.doubao.com/chat/",
+        markdown=("[class*='md-box-root']", "[class*='markdown']"),  # 2026-08-22 校准：全站 CSS Modules hash 类名，兜底 markdown 全落空致回复超时；回复正文为 md-box-root 容器，收发由 data-foundation-type=receive-* 区分
         toggles=("深度思考", "联网搜索", "搜索"),
         batch_size=16,  # 2026-08-22 曾因大 prompt（64 条整批回显不执行）被移除 → 先降到 16 实测
-        note="豆包（未校准 2026-08-22；曾因大 prompt 整批回显不执行 + 触发人机验证被移除后加回，batch=16 重试，选择器待 --probe 校准）",
+        note="豆包（已校准 2026-08-22：回复容器 md-box-root，data-streaming=false 标记生成完成；曾因大 prompt 整批回显被移除后加回，batch=16）",
     ),
     "yuanbao": Platform(
         name="yuanbao", url="https://yuanbao.tencent.com/chat/naQivTmsDa",
@@ -93,9 +94,12 @@ PLATFORM_DEFS: dict[str, Platform] = {
     ),
     "kimi": Platform(
         name="kimi", url="https://www.kimi.com/",
+        editor=("[contenteditable='true']", "[role='textbox']", "textarea"),
+        new_chat=("[aria-label='新建会话']", "button:has-text('新建会话')"),
         toggles=("深度思考", "联网搜索"),
+        send_button="[class*='send-button-container']",  # 2026-08-22 校准：发送按钮是 div 容器+SVG（非 button），Enter 未触发发送须点击兜底
         batch_size=32,  # 新平台先按 32 防长输出截断（参照 qianwen 64 截断教训）
-        note="Kimi（未校准 2026-08-22；选择器待 --probe 校准回填）",
+        note="Kimi（已校准 2026-08-22：Lexical 编辑器 chat-input-editor；发送按钮 send-button-container 为 div 须点击；思考强度已在账号手动设为「标准」并持久化——默认「进阶」会拖慢/带思考输出；无独立深度思考开关，toggles 仅兜底）",
     ),
     "chatgpt": Platform(
         name="chatgpt", url="https://chatgpt.com/",
@@ -105,7 +109,7 @@ PLATFORM_DEFS: dict[str, Platform] = {
         toggles=("Reasoning", "Search the web", "深度思考", "联网搜索"),  # 界面以英文为主，中英双语；找不到静默跳过
         send_keys=("Enter",),
         batch_size=32,  # 新平台先按 32 防长输出截断（参照 qianwen 64 截断教训）
-        note="ChatGPT（未校准 2026-08-22；选择器为预估初值，待 --probe 校准回填；风控严可能触发验证/登录门槛）",
+        note="ChatGPT（已校准 2026-08-22：探活冒烟通过回复 OK；输入框 ProseMirror、回复容器 markdown；界面英文为主，开关中英双语；风控严可能触发验证/登录门槛）",
     ),
 }
 
