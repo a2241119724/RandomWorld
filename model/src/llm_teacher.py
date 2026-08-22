@@ -147,18 +147,51 @@ def _rounded(v: Any) -> Any:
     return v  # str / np.str_ 原样（均可 JSON 序列化）
 
 
+# 字符串枚举 → 数字映射（与 config/feature_schema.yaml 的 categories 顺序一致；改 schema 需同步）
+ENUM_TO_INT: dict[str, dict[str, int]] = {
+    "life_stage": {"bootstrap": 0, "settled": 1, "established": 2},
+    "current_goal": {"earn_money": 0, "build_structure": 1, "stock_food": 2, "craft_equipment": 3},
+}
+
+
 def build_user_prompt(batch: list[dict[str, Any]]) -> str:
-    payload = json.dumps(
-        [{k: _rounded(v) for k, v in st.items()} for st in batch],
-        ensure_ascii=False,
-    )
+    """构造打标签 user prompt：状态以「列名表头 + 每行值数组」表格形式给出。
+
+    状态字段 key 固定，不再每行重复——列名只出现一次，行内只含值数组（字符串枚举
+    映射为数字，映射标注在列名里），prompt 长度约减半 → 同 token 下每批可放更多条
+    （doubao 大 prompt 整批回显的诱因就是 prompt 过长）。
+    """
+    keys = list(batch[0].keys())
+    # 列名：枚举字段标注数字化映射（0=bootstrap/1=settled/...），其余保持原名
+    header_parts = []
+    for k in keys:
+        m = ENUM_TO_INT.get(k)
+        if m:
+            mapping = " / ".join(f"{v}={i}" for v, i in m.items())
+            header_parts.append(f"{k}({mapping})")
+        else:
+            header_parts.append(k)
+    header = ", ".join(header_parts)
+    # 每行值数组：枚举映射为数字，其余 _rounded 精简为原生类型
+    rows = []
+    for i, st in enumerate(batch, 1):
+        vals = []
+        for k in keys:
+            m = ENUM_TO_INT.get(k)
+            v = st[k]
+            if m and str(v) in m:
+                vals.append(str(m[str(v)]))
+            else:
+                vals.append(str(_rounded(v)))
+        rows.append(f"工人{i}: [{', '.join(vals)}]")
     return (
         f"请判断以下 {len(batch)} 名工人各自此刻最应该做的一件事。\n"
         "只输出一个 JSON 对象（不要任何其他文字），格式：\n"
         '{"labels": ["行为英文名", "行为英文名", ...]}\n'
         f"labels 的长度必须正好等于 {len(batch)}，一个都不能少；禁止省略、分批输出或向我提问。\n"
         "输出必须一次完整给出全部结果，除那个 JSON 对象外禁止任何解释文字。\n"
-        f"工人状态列表：\n{payload}"
+        "工人状态以表格给出：第一行为列名，后续每行是一名工人，行内值按列名顺序一一对应。\n"
+        f"列名: {header}\n" + "\n".join(rows)
     )
 
 

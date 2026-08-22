@@ -103,41 +103,51 @@ def main() -> None:
 
     llm_cfg = cfg["llm"]
     provider = llm_cfg.get("provider", "deepseek")
-    if provider == "web":
-        names = llm_cfg.get("web", {}).get("platforms", [])
-        if not names:
-            names = ["deepseek", "wenxin", "qianwen"]
-        teacher = make_pool(cfg, schema, names)
+    names = llm_cfg.get("web", {}).get("platforms", [])
+    if not names:
+        names = ["deepseek", "wenxin", "qianwen"]
+    if provider == "rules":
+        # 规则打标：训练集从多模型投票生成的规则文件查表（离线，不依赖浏览器），测试集沿用网页版
+        from src.rule_teacher import RuleTeacher
+        rule_file = llm_cfg.get("rule_file")
+        if not rule_file:
+            raise ValueError("provider=rules 需配置 llm.rule_file（先运行 --vote-rules 生成）")
+        train_teacher = RuleTeacher(cfg, schema, rule_file)
+        test_teacher = make_pool(cfg, schema, names)
+    elif provider == "web":
+        train_teacher = test_teacher = make_pool(cfg, schema, names)
     elif provider == "deepseek":
-        teacher = LLMTeacher(cfg, schema)
+        train_teacher = test_teacher = LLMTeacher(cfg, schema)
     else:
-        raise ValueError(f"未知 llm.provider: {provider}（可选 deepseek/web）")
+        raise ValueError(f"未知 llm.provider: {provider}（可选 deepseek/web/rules）")
 
     cache_dir = llm_cfg["cache_dir"]
     cache_dir = cache_dir if Path(cache_dir).is_absolute() else ROOT / cache_dir
-    tr_cache_key = _sampling_signature(data_cfg, seed, teacher._system_prompt, "train", teacher.source)
-    te_cache_key = _sampling_signature(data_cfg, seed, teacher._system_prompt, "test", teacher.source)
+    tr_cache_key = _sampling_signature(data_cfg, seed, train_teacher._system_prompt,
+                                       "train", train_teacher.source)
+    te_cache_key = _sampling_signature(data_cfg, seed, test_teacher._system_prompt,
+                                       "test", test_teacher.source)
 
     # 网页版打标签：训练集断点续跑文件（进程中断后重跑从断点继续）
     if provider == "web":
-        teacher.progress_file = Path(cache_dir) / f"web_progress_{tr_cache_key}.json"
+        train_teacher.progress_file = Path(cache_dir) / f"web_progress_{tr_cache_key}.json"
 
-    # 护栏：网页版不自动重打超大规模测试集（625 批不可行）
-    if provider == "web":
+    # 护栏：网页版/规则模式不自动重打超大规模测试集（625 批不可行）
+    if provider in ("web", "rules"):
         max_test_batches = llm_cfg.get("web", {}).get("max_test_relabel_batches", 60)
         n_test = data_cfg["n_test"]
         te_cache_path = Path(cache_dir) / f"llm_labels_test_{te_cache_key}.npy"
         te_hit = te_cache_path.exists() and len(np.load(te_cache_path)) == n_test
-        if not te_hit and (n_test / teacher.batch_size) > max_test_batches:
+        if not te_hit and (n_test / test_teacher.batch_size) > max_test_batches:
             raise SystemExit(
                 f"[generate_data] 网页版不打超大规模测试集：{n_test} 条 = "
-                f"{n_test / teacher.batch_size:.0f} 批 > 上限 {max_test_batches} 批。\n"
+                f"{n_test / test_teacher.batch_size:.0f} 批 > 上限 {max_test_batches} 批。\n"
                 f"请先用 API 教师（llm.provider: deepseek）打测试集，或调小 data.n_test。"
             )
 
-    tr_label_fn = _CachedTeacher(teacher, cache_dir, "train", tr_cache_key).label
-    te_label_fn = _CachedTeacher(teacher, cache_dir, "test", te_cache_key).label
-    print(f"[generate_data] 标签来源 = {teacher.source}（{teacher.model}）  seed={seed}  "
+    tr_label_fn = _CachedTeacher(train_teacher, cache_dir, "train", tr_cache_key).label
+    te_label_fn = _CachedTeacher(test_teacher, cache_dir, "test", te_cache_key).label
+    print(f"[generate_data] 标签来源 = {train_teacher.source}（{train_teacher.model}）  seed={seed}  "
           f"train_cache={tr_cache_key}  test_cache={te_cache_key}")
 
     # ---- 训练集：纯极值随机组合 ----

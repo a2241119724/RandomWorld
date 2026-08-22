@@ -70,26 +70,26 @@ PLATFORM_DEFS: dict[str, Platform] = {
         name="wenxin", url="https://wenxin.baidu.com/",
         new_chat=("span:has-text('开启新对话')", "button:has-text('新对话')", "span:has-text('新对话')"),
         toggles=("深度思考", "联网搜索"),
-        batch_size=16,  # 输入框疑似截断长输入（32 条 26K 字符用户目测被截断）→ 再调小防截断；截断导致只输出部分 labels，配 _complete_labels 追问补全
+        batch_size=32,  # 新格式表格 prompt 长度约减半 → 16→32 翻倍（32 条 ≈ 旧 16 条体量）；仍配 _complete_labels 防截断追问补全
         note="文心一言（已校准 2026-08-22；长输入疑似被输入框截断→batch_size=16，配合追问补全兜底）",
     ),
     "qianwen": Platform(
         name="qianwen", url="https://platform.qianwenai.com/try-ai/chat?models=qwen3.8-max",
         toggles=("深度思考", "联网搜索", "搜索"),
-        batch_size=32,  # 64 条长输出末尾被截断 → 每批缺 1-4 个 labels 触发追问补全；降到 32 减半输出长度
+        batch_size=64,  # 新格式表格 prompt 长度约减半 → 32→64 翻倍（64 条 ≈ 旧 32 条体量）；账号欠费中待处理
         note="通义千问（URL 直接锚定模型 qwen3.8-max，无需手动选择）",
     ),
     "doubao": Platform(
         name="doubao", url="https://www.doubao.com/chat/",
         markdown=("[class*='md-box-root']", "[class*='markdown']"),  # 2026-08-22 校准：全站 CSS Modules hash 类名，兜底 markdown 全落空致回复超时；回复正文为 md-box-root 容器，收发由 data-foundation-type=receive-* 区分
         toggles=("深度思考", "联网搜索", "搜索"),
-        batch_size=16,  # 2026-08-22 曾因大 prompt（64 条整批回显不执行）被移除 → 先降到 16 实测
-        note="豆包（已校准 2026-08-22：回复容器 md-box-root，data-streaming=false 标记生成完成；曾因大 prompt 整批回显被移除后加回，batch=16）",
+        batch_size=16,  # 新格式表格 prompt 减半后 32 触发人机校验 → 降回 16（已验证零回显）；风控是主要约束，batch 不宜再升
+        note="豆包（已校准 2026-08-22：回复容器 md-box-root，data-streaming=false 标记生成完成；旧格式 batch=16 曾偶发回显、8 稳定；新格式 16 零回显；32 触发人机校验 → 定 16）",
     ),
     "yuanbao": Platform(
         name="yuanbao", url="https://yuanbao.tencent.com/chat/naQivTmsDa",
         toggles=("深度思考", "联网搜索"),
-        batch_size=32,  # 新平台先按 32 防长输出截断（参照 qianwen 64 截断教训）
+        batch_size=64,  # 新格式表格 prompt 长度约减半 → 32→64 翻倍
         note="腾讯元宝（未校准 2026-08-22；URL 为用户提供会话链接，选择器待 --probe 校准回填）",
     ),
     "kimi": Platform(
@@ -98,7 +98,7 @@ PLATFORM_DEFS: dict[str, Platform] = {
         new_chat=("[aria-label='新建会话']", "button:has-text('新建会话')"),
         toggles=("深度思考", "联网搜索"),
         send_button="[class*='send-button-container']",  # 2026-08-22 校准：发送按钮是 div 容器+SVG（非 button），Enter 未触发发送须点击兜底
-        batch_size=32,  # 新平台先按 32 防长输出截断（参照 qianwen 64 截断教训）
+        batch_size=64,  # 新格式表格 prompt 长度约减半 → 32→64 翻倍
         note="Kimi（已校准 2026-08-22：Lexical 编辑器 chat-input-editor；发送按钮 send-button-container 为 div 须点击；思考强度已在账号手动设为「标准」并持久化——默认「进阶」会拖慢/带思考输出；无独立深度思考开关，toggles 仅兜底）",
     ),
     "chatgpt": Platform(
@@ -108,7 +108,7 @@ PLATFORM_DEFS: dict[str, Platform] = {
         new_chat=("button:has-text('New chat')", "button:has-text('新建聊天')", "a[href='/']"),
         toggles=("Reasoning", "Search the web", "深度思考", "联网搜索"),  # 界面以英文为主，中英双语；找不到静默跳过
         send_keys=("Enter",),
-        batch_size=32,  # 新平台先按 32 防长输出截断（参照 qianwen 64 截断教训）
+        batch_size=64,  # 新格式表格 prompt 长度约减半 → 32→64 翻倍
         note="ChatGPT（已校准 2026-08-22：探活冒烟通过回复 OK；输入框 ProseMirror、回复容器 markdown；界面英文为主，开关中英双语；风控严可能触发验证/登录门槛）",
     ),
 }

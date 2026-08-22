@@ -69,6 +69,26 @@ def derive_state_bounds(schema) -> dict[str, Bound]:
     return bounds
 
 
+def _norm_val(v: Any) -> Any:
+    """数值精简：np 标量转 Python 原生、float 保留 1 位小数（供序列化 key，对齐 llm_teacher._rounded）。"""
+    if isinstance(v, (bool, np.bool_)):
+        return v
+    if isinstance(v, (int, np.integer)):
+        return int(v)
+    if isinstance(v, (float, np.floating)):
+        return round(float(v), 1)
+    return v  # str / np.str_ 原样
+
+
+def state_key(st: dict, schema_keys: list[str]) -> str:
+    """稳定序列化状态：按 schema_keys 顺序取值、规范化后 '|' 连接。
+
+    同一状态两次序列化结果一致，作规则文件/投票进度的共享 key（跨平台、跨批一致）。
+    ``schema_keys = list(derive_state_bounds(schema))``（与采样 all_keys 一致，含 *_max 常量）。
+    """
+    return "|".join(str(_norm_val(st[k])) for k in schema_keys)
+
+
 def _random_extreme(bound: Bound, rng: np.random.Generator) -> Any:
     """训练集取值：连续/int 随机取 {lo, hi} 极值，枚举随机取一个 category。"""
     if bound.kind == "enum":

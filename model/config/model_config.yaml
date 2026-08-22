@@ -61,7 +61,11 @@ export:
   weights_json: true           # 导出纯权重 JSON（供 C# 手写前向传播）
 
 llm:
-  provider: web                # 标签教师：deepseek=OpenAI 兼容 API（付费）/ web=网页版浏览器自动化（免费，可反复重打）
+  provider: web                # 标签教师：deepseek=OpenAI 兼容 API（付费）/ web=网页版浏览器自动化（免费，可反复重打）/ rules=规则文件查表打标（离线，训练集用多模型投票规则；测试集仍走 web）
+  rule_file: data/rules/rule_train.json   # provider=rules 时训练集规则文件（--vote-rules 生成：所有可用平台对训练集多数投票）
+  vote:                        # --vote-rules 生成规则文件的配置
+    platforms: []              # 参与投票的平台（空=用 web.platforms；欠费/风控平台从这里移出）
+    priority: []               # 平局优先级（空=代码默认 VOTE_PRIORITY：干活/生产优先）
   model: deepseek-chat         # 仅 deepseek 教师使用
   model_fallbacks: [deepseek-reasoner]  # 当前模型重试耗尽后换模型再试（用户要求失败不兜底 idle）
   base_url: https://api.deepseek.com
@@ -72,10 +76,10 @@ llm:
   cache_dir: data/cache        # LLM 标签缓存目录（同 seed + 同 prompt 幂等复用）
   web:                         # 网页版浏览器自动化打标签（免费，避免特征扩展后反复付费）
     platforms: [deepseek, wenxin, qianwen, doubao, yuanbao, kimi, chatgpt]  # 参与打标的平台（ark 已删：在线体验有时限；mimo 已删：页面无深度思考开关，关不掉；doubao 曾移除后加回：大 prompt 整批回显问题 → batch 降到 16 重试，选择器待校准；yuanbao/kimi/chatgpt 2026-08-22 加入，未校准）
-    batch_size: 64             # 每批状态条数（网页版推理快，64 条/批生成约 5s；实测关深度思考后提速明显）
+    batch_size: 128            # 每批状态条数（新格式表格 prompt 长度约减半 → 64→128 翻倍；平台级 batch_size 优先覆盖）
     headless: false            # 有头模式：首次需手动登录各平台（一次性，profile 复用，每平台一个子目录）
     profile_dir: data/browser_profile   # 浏览器登录会话根目录（每平台 <profile_dir>/<平台名>/，不存密码）
-    delay_sec: 30             # 批间停顿（秒）：风控收紧后整体降速，保守慢慢打
+    delay_sec: 60             # 批间停顿（秒）：风控收紧后整体降速，保守慢慢打
     stable_sec: 3              # 回复稳定判定秒数；回复以 `}` 结尾时 1.5s 即完成
     chat_timeout: 240          # 单条回复等待上限（秒）
     login_timeout: 300         # 登录等待上限（秒）

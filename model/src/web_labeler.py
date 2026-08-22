@@ -35,14 +35,21 @@ from typing import Any, Optional
 from .actions import ACTIONS
 from .config import ModelConfig
 from .features import FeatureSchema
-from .llm_teacher import build_system_prompt, build_user_prompt, _parse_labels
-from .rules import generate_training_samples
+from .llm_teacher import build_system_prompt, build_user_prompt, _parse_labels, _rounded
+from .rules import derive_state_bounds, generate_training_samples, state_key
 from .web_platforms import PLATFORM_DEFS, get_platform
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # 冒烟/可用性探针提示词：极简，任何模型都应按字面回复一个短词
 PROBE_PROMPT = "请只回复 OK 两个英文字母，不要输出任何其他内容。"
+
+# 多数投票平局优先级（干活/生产优先于休息/闲逛；index 小 = 更优先）
+VOTE_PRIORITY = [
+    "self_gather", "self_build", "self_plant", "pickup",
+    "store", "withdraw", "post_bounty", "accept_bounty",
+    "self_carry", "eat", "sleep", "ground_sleep", "wander", "idle",
+]
 
 
 def _first_visible(page, selectors: tuple[str, ...]) -> Any:
@@ -348,6 +355,8 @@ class WebTeacher:
                 else:
                     stable = time.time() - stable_since
                     if stable > self.stable_sec or (cur.strip().endswith("}") and stable > 1.5):
+                        print(f"[web_labeler:{self.platform.name}] 回复判定完成 len={len(cur)} "
+                              f"结尾={cur.strip()[-60:]!r} 稳定={stable:.1f}s 助手消息数={len(texts)}")
                         return cur
             time.sleep(2)
         raise TimeoutError(f"回复超时（{self.platform.name}）")
@@ -397,6 +406,17 @@ class WebTeacher:
                 if completed is not None:
                     time.sleep(self.delay_sec)
                     return completed
+                # 诊断：抓到什么、助手消息节点数、流式状态 → 区分截断/多节点/JSON 非法
+                try:
+                    _ts = self._assistant_texts()
+                    _dss = self._page.evaluate("""() => {
+                        const e = document.querySelector('[data-streaming]');
+                        return e ? e.getAttribute('data-streaming') : null;
+                    }""")
+                    print(f"[web_labeler:{self.platform.name}] 诊断: 助手消息数={len(_ts)} "
+                          f"各长度={[len(t) for t in _ts][-4:]} data-streaming={_dss}")
+                except Exception:
+                    pass
                 last_err = ValueError(
                     f"输出无法解析/长度不符: len={len(text)} 开头={text[:150]!r} 结尾={text[-150:]!r}")
             except Exception as e:
@@ -665,6 +685,118 @@ class WebTeacherPool:
             self.progress_file.parent.mkdir(parents=True, exist_ok=True)
             self.progress_file.write_text(json.dumps(arr, ensure_ascii=False), encoding="utf-8")
 
+    # ------------------------------------------------------------------
+    # 多数投票（生成规则文件，供 provider: rules 离线打标）
+    # ------------------------------------------------------------------
+    def vote(self, states: list[dict[str, Any]], schema_keys: list[str],
+             rule_file: Path, progress_file: Optional[Path] = None,
+             seed: int | None = None) -> list[str]:
+        """多数投票打标并生成规则文件。
+
+        每个可用平台对**全部** states 重复打标（非分摊），各平台票逐批落盘断点续跑；
+        全部完成后按 state_key 聚合各平台票，多数投票取标签最多者（平局按
+        VOTE_PRIORITY 取高者）。规则文件固化每状态投票明细与最终标签。
+
+        返回每状态最终标签列表（len(states)）。
+        """
+        from collections import Counter, defaultdict
+
+        n = len(states)
+        if not self.teachers:
+            raise RuntimeError("没有可用的网页平台（web.platforms 为空）")
+        keys = [state_key(st, schema_keys) for st in states]
+        votes = {t.platform.name: [None] * n for t in self.teachers}
+        if progress_file and Path(progress_file).exists():
+            try:
+                saved = json.loads(Path(progress_file).read_text(encoding="utf-8"))
+                if isinstance(saved, dict):
+                    for pname, arr in saved.items():
+                        if pname in votes and isinstance(arr, list) and len(arr) == n:
+                            votes[pname] = [a if isinstance(a, str) else None for a in arr]
+                            print(f"[vote] 断点续跑：{pname} 已投 {sum(1 for a in arr if a)}/{n} 票")
+            except Exception:
+                pass
+        lock = threading.Lock()
+        usable: set[str] = set()
+        t0 = time.monotonic()
+
+        def save() -> None:
+            if progress_file:
+                Path(progress_file).parent.mkdir(parents=True, exist_ok=True)
+                Path(progress_file).write_text(
+                    json.dumps(votes, ensure_ascii=False), encoding="utf-8")
+
+        def worker(t: WebTeacher) -> None:
+            if not t.check_usable(self.check_timeout):
+                t._close()
+                return
+            with lock:
+                usable.add(t.platform.name)
+            arr = votes[t.platform.name]
+            try:
+                for i in range(0, n, t.batch_size):
+                    if all(x is not None for x in arr[i:i + t.batch_size]):
+                        continue
+                    labels = t._label_batch(states[i:i + t.batch_size])
+                    with lock:
+                        arr[i:i + t.batch_size] = labels
+                        save()
+                        done = sum(1 for x in arr if x is not None)
+                        print(f"[vote:{t.platform.name}] 已投 {done}/{n} 票"
+                              f"（总耗时 {time.monotonic() - t0:.0f}s）")
+            except Exception as e:
+                print(f"[vote:{t.platform.name}] 投票中断：{e}（已投票保留，重跑续跑）")
+            finally:
+                t._close()
+
+        threads = [threading.Thread(target=worker, args=(t,), daemon=True)
+                   for t in self.teachers]
+        for th in threads:
+            th.start()
+        for th in threads:
+            th.join()
+
+        if not usable:
+            raise RuntimeError("所有平台均不可用（未登录/选择器未校准/冒烟失败），无法生成规则文件")
+
+        # 汇总：按 state_key 聚合各平台票 → 多数，平局按 VOTE_PRIORITY 取高者
+        vote_by_key: dict[str, Counter] = defaultdict(Counter)
+        first_idx: dict[str, int] = {}
+        for i, k in enumerate(keys):
+            first_idx.setdefault(k, i)
+            for pname, arr in votes.items():
+                lab = arr[i]
+                if lab is not None:
+                    vote_by_key[k][lab] += 1
+        winner = {
+            k: max(cnt.items(), key=lambda kv: (kv[1], -VOTE_PRIORITY.index(kv[0])))[0]
+            for k, cnt in vote_by_key.items()
+        }
+        # 规则文件：仅唯一状态，含投票明细（可审查）
+        gen_by = sorted(p for p, arr in votes.items() if any(x is not None for x in arr))
+        entries = []
+        for k, cnt in vote_by_key.items():
+            idx = first_idx[k]
+            entries.append({
+                "key": k,
+                "state": [_rounded(states[idx][sk]) for sk in schema_keys],
+                "label": winner[k],
+                "vote": {p: votes[p][idx] for p in gen_by},
+            })
+        rule_file.parent.mkdir(parents=True, exist_ok=True)
+        rule_file.write_text(json.dumps({
+            "version": 1,
+            "schema_keys": schema_keys,
+            "seed": seed,
+            "n": len(entries),
+            "generated_by": gen_by,
+            "votes_total": len(gen_by),
+            "entries": entries,
+        }, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"[vote] 规则文件已生成 -> {rule_file}（{len(entries)} 个唯一状态，"
+              f"参与平台 {len(gen_by)}: {gen_by}）")
+        return [winner[k] for k in keys]
+
 
 # ---------------------------------------------------------------------------
 # 工厂 + CLI
@@ -744,8 +876,10 @@ def main() -> None:
     ap.add_argument("--probe-all", action="store_true", help="逐个打开全部平台，登录后判可用性 + dump DOM")
     ap.add_argument("--probe", type=str, metavar="NAME", help="单平台探活（如 deepseek）")
     ap.add_argument("--platforms", type=str, help="覆盖 web.platforms，逗号分隔（如 deepseek,wenxin）")
-    ap.add_argument("--states", type=int, default=4, help="冒烟测试状态条数")
+    ap.add_argument("--states", type=int, default=None, help="冒烟/投票状态条数（默认 4 条冒烟；--vote-rules 不带则打全量训练集）")
     ap.add_argument("--train", action="store_true", help="打整个训练集（走 generate_data 缓存）")
+    ap.add_argument("--vote-rules", action="store_true",
+                    help="用全部可用平台对训练集多数投票，生成规则文件（provider: rules 的输入）")
     args = ap.parse_args()
 
     cfg, schema = _cfg()
@@ -756,13 +890,31 @@ def main() -> None:
 
     names = _platform_names(args)
     print(f"[web_labeler] 平台: {names}")
+    if args.vote_rules:
+        from collections import Counter
+        schema_keys = list(derive_state_bounds(schema))
+        rule_file = Path(cfg["llm"].get("rule_file") or "data/rules/rule_train.json")
+        if not rule_file.is_absolute():
+            rule_file = PROJECT_ROOT / rule_file
+        vote_prog = PROJECT_ROOT / cfg["llm"]["cache_dir"] / f"vote_progress_{cfg.data_seed}.json"
+        tr_states, _ = generate_training_samples(schema, cfg.raw, cfg.data_seed, label_fn=None)
+        states = tr_states[: args.states] if args.states else tr_states
+        print(f"[vote] 对 {len(states)} 条训练集状态多数投票（平台 {names}），"
+              f"进度 -> {vote_prog}")
+        pool = make_pool(cfg, schema, names)
+        final = pool.vote(states, schema_keys, rule_file, vote_prog, seed=cfg.data_seed)
+        dist = Counter(final)
+        for a, c in dist.most_common():
+            print(f"[vote]   {a:<14s} {c:5d} ({c / len(final) * 100:4.1f}%)")
+        print(f"[vote] 完成。运行 generate_data（llm.provider: rules）用规则文件打训练集。")
+        return
     pool = make_pool(cfg, schema, names)
     if args.train:
         # 训练集走 generate_data 的缓存（含断点续跑），入口统一在 data/generate_data.py
         print("训练集请运行: python data/generate_data.py（先配置 llm.provider=web）")
         return
     tr_states, _ = generate_training_samples(schema, cfg.raw, cfg.data_seed, label_fn=None)
-    states = tr_states[: args.states]
+    states = tr_states[: args.states or 4]
     print(f"[web_labeler] 冒烟：{len(states)} 条状态 -> 多平台并行打标签")
     labels = pool.label(states)
     for st, a in zip(states, labels):
