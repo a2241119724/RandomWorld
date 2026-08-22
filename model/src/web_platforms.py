@@ -61,7 +61,7 @@ PLATFORM_DEFS: dict[str, Platform] = {
         markdown=(".ds-markdown", "[class*='markdown']"),
         new_chat=("span:has-text('开启新对话')", "button:has-text('新对话')"),
         toggles=("深度思考", "联网搜索"),
-        note="已校准（2026-08-22）",
+        note="已校准（2026-08-22）；2026-08-22 被风控限制（登录可达但发消息失败/降速）→ 全局 delay_sec 已提到 10s，恢复后此平台自动重新可用",
     ),
     "wenxin": Platform(
         name="wenxin", url="https://wenxin.baidu.com/",
