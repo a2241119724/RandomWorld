@@ -21,7 +21,7 @@ namespace LAB2D.AI.Worker
     /// </summary>
     public class WorkerBountyDecisionService
     {
-        /// <summary>疲劳阈值：低于此值倾向发布悬赏</summary>
+        /// <summary>疲劳阈值：疲劳值高于 MaxTired-此值 倾向发布悬赏</summary>
         public float TiredThresholdForBounty = 50f;
 
         /// <summary>饥饿阈值：低于此值倾向发布悬赏</summary>
@@ -94,7 +94,7 @@ namespace LAB2D.AI.Worker
             }
 
             // 条件 2: Worker 状态不佳（太累或太饿）= 不想自己做
-            bool isTired = workerData.CurTired < AWorker.ThresholdTired;
+            bool isTired = workerData.CurTired > workerData.MaxTired - AWorker.ThresholdTired;
             bool isHungry = workerData.CurHungry < AWorker.ThresholdHungry;
 
             if (isTired || isHungry)
@@ -110,7 +110,7 @@ namespace LAB2D.AI.Worker
 
             // 条件 4: 人格加权的随机概率
             float probability = 0.5f; // 基准提高到50%
-            if (workerData.CurTired < this.TiredThresholdForBounty) probability += 0.3f;
+            if (workerData.CurTired > workerData.MaxTired - this.TiredThresholdForBounty) probability += 0.3f;
 
             WorkerPersonality p = workerData.Personality;
             probability += (p.Sociality - 50f) * 0.005f;

@@ -6,10 +6,10 @@ namespace LAB2D.Domain.Worker
     [System.Serializable]
     public sealed class WorkerTaskProgressService
     {
-        public float ApplyTiredCost(float currentTired, float deltaTime, float tiredCostPerSecond)
+        public float ApplyTiredCost(float currentTired, float maxTired, float deltaTime, float tiredCostPerSecond)
         {
-            float nextTired = currentTired - (deltaTime * tiredCostPerSecond);
-            return nextTired < 0.0f ? 0.0f : nextTired;
+            float nextTired = currentTired + (deltaTime * tiredCostPerSecond);
+            return nextTired > maxTired ? maxTired : nextTired;
         }
 
         public WorkerTaskProgressResult AdvanceProgress(

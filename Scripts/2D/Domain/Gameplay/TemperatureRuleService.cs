@@ -50,7 +50,7 @@ namespace LAB2D.Domain.Gameplay
         public const float MoveMultiplierMin = 0.5f;
         public const float MoveMultiplierMax = 1.0f;
 
-        // 疲劳消耗倍率：10~30℃ 舒适区间 1.0，每偏离 1℃ 加速 3%，clamp [1.0, 1.6]
+        // 疲劳累积倍率：10~30℃ 舒适区间 1.0，每偏离 1℃ 加速 3%，clamp [1.0, 1.6]
         public const float FatigueComfortMin = 10f;
         public const float FatigueComfortMax = 30f;
         public const float FatiguePerDegreePenalty = 0.03f;
@@ -148,7 +148,7 @@ namespace LAB2D.Domain.Gameplay
         }
 
         /// <summary>
-        /// 温度 → 疲劳消耗倍率。10~30℃ 舒适 1.0；>30℃ 每高 1℃ 加速 3%；&lt;10℃ 每低 1℃ 加速 3%。clamp [1.0, 1.6]。
+        /// 温度 → 疲劳累积倍率。10~30℃ 舒适 1.0；>30℃ 每高 1℃ 加速 3%；&lt;10℃ 每低 1℃ 加速 3%。clamp [1.0, 1.6]。
         /// </summary>
         public float GetFatigueDecayMultiplier(float temp)
         {

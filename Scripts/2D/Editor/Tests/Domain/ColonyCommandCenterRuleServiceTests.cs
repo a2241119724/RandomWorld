@@ -1,5 +1,6 @@
 namespace LAB2D.Editor.Tests.Domain
 {
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
@@ -10,6 +11,16 @@ namespace LAB2D.Editor.Tests.Domain
     public class ColonyCommandCenterRuleServiceTests
     {
         private readonly ColonyCommandCenterRuleService service = new ColonyCommandCenterRuleService();
+
+        /// <summary>测试用 IWorkerTaskInfo 最小实现。</summary>
+        private sealed class StubWorkerTaskInfo : IWorkerTaskInfo
+        {
+            public WorkerTaskType TaskType { get; set; }
+
+            public long TaskId { get; set; }
+
+            public string Name { get; set; }
+        }
 
         [Test]
         public void ResolvePrimaryReason_NonEmptyReturnFirst()
@@ -97,6 +108,46 @@ namespace LAB2D.Editor.Tests.Domain
                 IsTaskToggleEnabled = (workerId, taskType) => true,
             };
             Assert.IsTrue(this.service.IsTaskToggleEnabled(1L, WorkerTaskType.Build, context));
+        }
+
+        [Test]
+        public void ResolveBoundWorkerTaskReason_TiredBelowThreshold_ReturnsWorkerNotReady()
+        {
+            var task = new StubWorkerTaskInfo { TaskType = WorkerTaskType.Sleep, TaskId = 1L, Name = "睡眠" };
+            var workers = new List<WorkerAgentSnapshot>
+            {
+                new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 100f, 100f, 50f, 100f),
+            };
+            var context = new ColonyDiagnosticContext
+            {
+                GetBoundWorkerId = (t, fieldName) => 1L,
+                HasBed = workerId => true,
+                IsTaskToggleEnabled = (workerId, taskType) => true,
+            };
+
+            // 疲劳值 50 <= MaxTired-20(80)：未到休息线，需要床任务不满足条件。
+            Assert.AreEqual(WorkerTaskBlockReason.WorkerNotReady,
+                this.service.ResolveBoundWorkerTaskReason(task, "worker", true, workers, context));
+        }
+
+        [Test]
+        public void ResolveBoundWorkerTaskReason_TiredAboveThreshold_ReturnsNone()
+        {
+            var task = new StubWorkerTaskInfo { TaskType = WorkerTaskType.Sleep, TaskId = 1L, Name = "睡眠" };
+            var workers = new List<WorkerAgentSnapshot>
+            {
+                new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 100f, 100f, 90f, 100f),
+            };
+            var context = new ColonyDiagnosticContext
+            {
+                GetBoundWorkerId = (t, fieldName) => 1L,
+                HasBed = workerId => true,
+                IsTaskToggleEnabled = (workerId, taskType) => true,
+            };
+
+            // 疲劳值 90 > MaxTired-20(80)：已疲劳，需要床任务就绪。
+            Assert.AreEqual(WorkerTaskBlockReason.None,
+                this.service.ResolveBoundWorkerTaskReason(task, "worker", true, workers, context));
         }
 
         [Test]

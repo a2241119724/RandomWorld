@@ -20,10 +20,10 @@ namespace LAB2D.Constant
         public const float HungryDecayPerSecond = 0.025f;
 
         /// <summary>
-        /// 疲劳值自然衰减速度，沿用原 GlobalInit 中的默认表现并集中维护。
+        /// 疲劳值自然累积速度，沿用原 GlobalInit 中的默认表现并集中维护。
         /// 调大该值会让工人更频繁进入睡觉任务。
         /// </summary>
-        /// <summary>疲劳值自然衰减速度（一天约消耗27点基础疲劳，配合工作消耗约半天触发睡眠）。</summary>
+        /// <summary>疲劳值自然累积速度（一天约累积27点基础疲劳，配合工作消耗约半天触发睡眠）。</summary>
         public const float TiredDecayPerSecond = 0.015f;
 
         // ---- 精气神 (Spirit) 常量 ----
@@ -43,7 +43,7 @@ namespace LAB2D.Constant
         /// <summary>地面睡眠恢复的精气神（缩小与有床睡眠的差距）。</summary>
         public const float SpiritSleepRestoreOnGround = 20f;
 
-        /// <summary>地面睡眠疲劳恢复比例（床=100%，地面65%，减少两极分化）。</summary>
+        /// <summary>地面睡眠疲劳降低比例（床=100%清零，地面降65%，减少两极分化）。</summary>
         public const float GroundSleepTiredRestoreRatio = 0.65f;
 
         /// <summary>每个食物恢复的饥饿值（任务吃和自吃统一口径）。</summary>

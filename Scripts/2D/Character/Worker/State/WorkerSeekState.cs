@@ -160,7 +160,7 @@ namespace LAB2D.Character.Worker.State
                 // 步骤2: 检查自保需求。饥饿或疲劳的 Worker 优先处理自身生存，
                 // 不参与全局 WorkerBounty/SystemDefault 任务分配。
                 bool needsSelfPreservation = workerData.CurHungry < AWorker.ThresholdHungry
-                    || workerData.CurTired < AWorker.ThresholdTired;
+                    || workerData.CurTired > workerData.MaxTired - AWorker.ThresholdTired;
 
                 if (!needsSelfPreservation)
                 {
@@ -514,8 +514,8 @@ namespace LAB2D.Character.Worker.State
                     int needGold = bountyDecision.BaseRewardGather + bountyDecision.MinimumWalletReserve.Gold;
                     if (!wd.Wallet.HasEnough(new CurrencyAmount(needGold)))
                         reason = $"余额不足(需要{needGold}G, 有{wd.Wallet.Gold}G)";
-                    else if (wd.CurTired < bountyDecision.TiredThresholdForBounty)
-                        reason = $"太累({wd.CurTired:F0}<{bountyDecision.TiredThresholdForBounty})";
+                    else if (wd.CurTired > wd.MaxTired - bountyDecision.TiredThresholdForBounty)
+                        reason = $"太累({wd.CurTired:F0}>{wd.MaxTired - bountyDecision.TiredThresholdForBounty:F0})";
                     else if (wd.CurHungry < bountyDecision.HungryThresholdForBounty)
                         reason = $"太饿({wd.CurHungry:F0}<{bountyDecision.HungryThresholdForBounty})";
                     else
@@ -1190,8 +1190,8 @@ namespace LAB2D.Character.Worker.State
                     }
                 }
 
-                // 疲劳 < 15 → 强制触发睡觉决策
-                if (wd.CurTired > 0 && wd.CurTired < 15f)
+                // 疲劳 > MaxTired-15 → 强制触发睡觉决策
+                if (wd.CurTired < wd.MaxTired && wd.CurTired > wd.MaxTired - 15f)
                 {
                     if (wd.Task != null
                         && wd.Task.TaskType != WorkerTaskType.Sleep

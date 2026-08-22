@@ -458,7 +458,8 @@ namespace LAB2D.Domain.Gameplay
                     return WorkerTaskBlockReason.MissingBed;
                 }
 
-                if (boundSnapshot.CurTired >= ThresholdTired)
+                // 需要床的任务（如睡觉）：疲劳仍低（未到 MaxTired-阈值）时不满足条件
+                if (boundSnapshot.CurTired <= boundSnapshot.MaxTired - ThresholdTired)
                 {
                     return WorkerTaskBlockReason.WorkerNotReady;
                 }

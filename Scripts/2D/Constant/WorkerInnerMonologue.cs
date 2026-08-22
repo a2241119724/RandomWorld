@@ -228,7 +228,7 @@ namespace LAB2D.Constant
         /// </summary>
         public static string GetRandom(
             float curHungry = 100f, float maxHungry = 100f,
-            float curTired = 100f, float maxTired = 100f,
+            float curTired = 0f, float maxTired = 100f,
             float curSpirit = 100f, float maxSpirit = 100f)
         {
             float hungryRatio = maxHungry > 0 ? curHungry / maxHungry : 1f;
@@ -239,7 +239,7 @@ namespace LAB2D.Constant
             {
                 (General, 1.0f),
                 (Hungry, hungryRatio < 0.4f ? 0.3f : 0.05f),
-                (Tired, tiredRatio < 0.4f ? 0.3f : 0.05f),
+                (Tired, tiredRatio > 0.6f ? 0.3f : 0.05f),
                 (SpiritLow, spiritRatio < 0.4f ? 0.25f : 0.05f),
                 (Gathering, 0.1f),
                 (Building, 0.1f),
@@ -256,7 +256,7 @@ namespace LAB2D.Constant
         public static string GetRandomForTask(
             WorkerTaskType taskType,
             float curHungry = 100f, float maxHungry = 100f,
-            float curTired = 100f, float maxTired = 100f)
+            float curTired = 0f, float maxTired = 100f)
         {
             string[] taskPool = GetTaskPool(taskType);
             float hungryRatio = maxHungry > 0 ? curHungry / maxHungry : 1f;
@@ -267,7 +267,7 @@ namespace LAB2D.Constant
                 (taskPool, 0.65f),
                 (General, 0.20f),
                 (Hungry, hungryRatio < 0.4f ? 0.08f : 0.02f),
-                (Tired, tiredRatio < 0.4f ? 0.08f : 0.02f),
+                (Tired, tiredRatio > 0.6f ? 0.08f : 0.02f),
             };
 
             return PickByWeight(entries);

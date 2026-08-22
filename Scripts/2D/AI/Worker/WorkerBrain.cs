@@ -80,7 +80,7 @@ namespace LAB2D.AI.Worker
         /// <summary>饥饿阈值：低于此值优先找食物</summary>
         public float HungryThreshold = 30f;
 
-        /// <summary>疲劳阈值：低于此值优先睡觉（提高以更早触发睡眠，避免进入低效区）。</summary>
+        /// <summary>疲劳阈值：疲劳值高于 MaxTired-此值 优先睡觉（提高以更早触发睡眠，避免进入低效区）。</summary>
         public float TiredThreshold = 35f;
 
         /// <summary>睡眠失败冷却时长（秒）：睡眠任务因找不到邻居位置失败后，
@@ -317,7 +317,7 @@ namespace LAB2D.AI.Worker
                 return Decision.Make(WorkerDecisionType.Idle, "饥饿但找不到食物");
             }
 
-            if (workerData.CurTired < this.TiredThreshold)
+            if (workerData.CurTired > workerData.MaxTired - this.TiredThreshold)
             {
                 // 睡眠位置失败冷却：睡眠任务因"没有邻居位置"失败后，短时间内不再
                 // 重复发起睡眠决策（改为漫游），等待位置/障碍变化，防止死循环刷屏。
@@ -522,7 +522,7 @@ namespace LAB2D.AI.Worker
             if (Random.value < wanderChance)
                 return Decision.Make(WorkerDecisionType.Wander, "小概率漫游, 转换心情");
 
-            if (p.Mood < this.MoodLowThreshold && workerData.CurTired < 50f)
+            if (p.Mood < this.MoodLowThreshold && workerData.CurTired > workerData.MaxTired - 50f)
                 return Decision.Make(WorkerDecisionType.Sleep, $"心情差({p.Mood:F0}), 休息调整");
 
             return Decision.Make(WorkerDecisionType.Idle, $"无特别需求, {p}");
@@ -686,8 +686,8 @@ namespace LAB2D.AI.Worker
                         $"Bootstrap: 采集食物({wd.CurHungry:F0})");
             }
 
-            // 2. 疲劳 < 55 → 睡觉（Bootstrap阶段更早休息保证安全）
-            if (wd.CurTired < 55f)
+            // 2. 疲劳 > MaxTired-55 → 睡觉（Bootstrap阶段更早休息保证安全）
+            if (wd.CurTired > wd.MaxTired - 55f)
                 return Decision.Make(WorkerDecisionType.Sleep,
                     $"Bootstrap: 疲劳({wd.CurTired:F0}), 休息");
 
@@ -759,7 +759,7 @@ namespace LAB2D.AI.Worker
             if (wd.LifeStage < Domain.Worker.WorkerLifeStage.Settled) return false;
             if (wd.HomePosition == null) return false;           // 无家不发悬赏
             if (wd.CurHungry < 50f) return false;                // 饿了不发
-            if (wd.CurTired < 50f) return false;                 // 累了不发
+            if (wd.CurTired > wd.MaxTired - 50f) return false;   // 累了不发
             if (wd.CurSpirit < 45f) return false;                // 没精神不发
             int foodCount = this.CountFoodStockpile(worker);
             if (foodCount < wd.FoodStockpileTarget) return false; // 食物储备不足

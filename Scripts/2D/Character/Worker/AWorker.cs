@@ -30,7 +30,7 @@ namespace LAB2D.Character.Worker
         public static readonly float ThresholdHungry = 20.0f;
 
         /// <summary>
-        /// 疲劳值阈值
+        /// 疲劳值阈值：疲劳值超过 MaxTired-该值时判定为需要休息（疲劳值越大越疲）。
         /// </summary>
         public static readonly float ThresholdTired = 20.0f;
 
@@ -235,8 +235,10 @@ namespace LAB2D.Character.Worker
                 if (wd != null)
                 {
                     float hungryRatio = wd.MaxHungry > 0 ? wd.CurHungry / wd.MaxHungry : 1f;
-                    float tiredRatio = wd.MaxTired > 0 ? wd.CurTired / wd.MaxTired : 1f;
-                    wd.Personality = wd.Personality.AfterSuffer(hungryRatio, tiredRatio);
+                    float tiredRatio = wd.MaxTired > 0 ? wd.CurTired / wd.MaxTired : 0f;
+                    // AfterSuffer 的 ratio 语义为"状态充足比例"（大=状态好），
+                    // CurTired 反向后是累积疲劳值，需取 1-疲劳比例 传入。
+                    wd.Personality = wd.Personality.AfterSuffer(hungryRatio, 1f - tiredRatio);
 
                     // 精气神过低额外降低心情
                     float spiritRatio = wd.MaxSpirit > 0 ? wd.CurSpirit / wd.MaxSpirit : 1f;
@@ -1288,9 +1290,9 @@ namespace LAB2D.Character.Worker
             public float MaxTired = 100.0f;
 
             /// <summary>
-            /// 当前疲劳值
+            /// 当前疲劳值（累积疲劳，越大越疲，初始 0；工作累积、睡眠降低）。
             /// </summary>
-            public float CurTired = 100.0f;
+            public float CurTired = 0.0f;
 
             /// <summary>
             /// 最大饥饿值

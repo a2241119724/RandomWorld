@@ -31,42 +31,65 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void GetState_FullVitals_ReturnsHealthy()
         {
-            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 100f, 100f, 100f, 100f);
+            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 100f, 100f, 0f, 100f);
             Assert.AreEqual(WorkerConditionState.Healthy, this.service.GetState(snapshot));
         }
 
         [Test]
         public void GetState_LowHungry_ReturnsHungry()
         {
-            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 30f, 100f, 100f, 100f);
+            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 30f, 100f, 0f, 100f);
             Assert.AreEqual(WorkerConditionState.Hungry, this.service.GetState(snapshot));
         }
 
         [Test]
-        public void GetState_LowTired_ReturnsTired()
+        public void GetState_HighTired_ReturnsTired()
         {
-            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 100f, 100f, 30f, 100f);
+            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 100f, 100f, 70f, 100f);
             Assert.AreEqual(WorkerConditionState.Tired, this.service.GetState(snapshot));
         }
 
         [Test]
-        public void GetState_BothLow_ReturnsExhausted()
+        public void GetState_BothUnhealthy_ReturnsExhausted()
         {
-            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 30f, 100f, 30f, 100f);
+            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 30f, 100f, 70f, 100f);
             Assert.AreEqual(WorkerConditionState.Exhausted, this.service.GetState(snapshot));
         }
 
         [Test]
         public void GetState_CriticalHungry_ReturnsCritical()
         {
-            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 4f, 100f, 100f, 100f);
+            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 4f, 100f, 0f, 100f);
             Assert.AreEqual(WorkerConditionState.Critical, this.service.GetState(snapshot));
         }
 
         [Test]
         public void GetState_ZeroHungry_ReturnsCritical()
         {
-            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 0f, 100f, 100f, 100f);
+            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 0f, 100f, 0f, 100f);
+            Assert.AreEqual(WorkerConditionState.Critical, this.service.GetState(snapshot));
+        }
+
+        [Test]
+        public void GetState_ExhaustedTired_ReturnsCritical()
+        {
+            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 100f, 100f, 96f, 100f);
+            Assert.AreEqual(WorkerConditionState.Critical, this.service.GetState(snapshot));
+        }
+
+        [Test]
+        public void GetState_TiredAtMax_ReturnsCritical()
+        {
+            // CurTired >= MaxTired 短路临界分支：疲劳值已封顶。
+            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 100f, 100f, 100f, 100f);
+            Assert.AreEqual(WorkerConditionState.Critical, this.service.GetState(snapshot));
+        }
+
+        [Test]
+        public void GetState_TiredRatioExactlyCritical_ReturnsCritical()
+        {
+            // 疲劳比例恰为 1-CriticalRatio(0.95)，验证 >= 边界。
+            var snapshot = new WorkerAgentSnapshot(1L, default(GameVector2), true, false, 100f, 100f, 95f, 100f);
             Assert.AreEqual(WorkerConditionState.Critical, this.service.GetState(snapshot));
         }
 

@@ -9,15 +9,15 @@ namespace LAB2D.Editor.Tests.Domain
         private readonly WorkerTaskProgressService service = new WorkerTaskProgressService();
 
         [Test]
-        public void ApplyTiredCost_OneSecond_ReturnsReduced()
+        public void ApplyTiredCost_OneSecond_ReturnsIncreased()
         {
-            Assert.AreEqual(95f, this.service.ApplyTiredCost(100f, 1f, 5f), 0.0001f);
+            Assert.AreEqual(105f, this.service.ApplyTiredCost(100f, 200f, 1f, 5f), 0.0001f);
         }
 
         [Test]
-        public void ApplyTiredCost_FloorsAtZero()
+        public void ApplyTiredCost_CapsAtMax()
         {
-            Assert.AreEqual(0f, this.service.ApplyTiredCost(3f, 1f, 5f), 0.0001f);
+            Assert.AreEqual(100f, this.service.ApplyTiredCost(95f, 100f, 1f, 5f), 0.0001f);
         }
 
         [Test]

@@ -56,17 +56,26 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
-        public void NeedsRest_BelowThreshold_ReturnsTrue()
+        public void NeedsRest_AboveThreshold_ReturnsTrue()
         {
-            var snapshot = new WorkerAgentSnapshot(1, new LAB2D.Domain.Common.GameVector2(0, 0), true, false, 100f, 100f, 10f, 100f);
+            var snapshot = new WorkerAgentSnapshot(1, new LAB2D.Domain.Common.GameVector2(0, 0), true, false, 100f, 100f, 90f, 100f);
             Assert.IsTrue(this.service.NeedsRest(snapshot));
         }
 
         [Test]
-        public void NeedsRest_AboveThreshold_ReturnsFalse()
+        public void NeedsRest_BelowThreshold_ReturnsFalse()
         {
-            var snapshot = new WorkerAgentSnapshot(1, new LAB2D.Domain.Common.GameVector2(0, 0), true, false, 100f, 100f, 80f, 100f);
+            var snapshot = new WorkerAgentSnapshot(1, new LAB2D.Domain.Common.GameVector2(0, 0), true, false, 100f, 100f, 10f, 100f);
             Assert.IsFalse(this.service.NeedsRest(snapshot));
+        }
+
+        [Test]
+        public void NeedsRest_AboveWarningRatioOnly_ReturnsTrue()
+        {
+            // 疲劳值 70 < MaxTired-20(80) 绝对阈值未达，但疲劳比例 0.7 >= 1-WarningRatio(0.65)，
+            // 验证比例分支独立生效。
+            var snapshot = new WorkerAgentSnapshot(1, new LAB2D.Domain.Common.GameVector2(0, 0), true, false, 100f, 100f, 70f, 100f);
+            Assert.IsTrue(this.service.NeedsRest(snapshot));
         }
 
         [Test]

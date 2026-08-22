@@ -41,8 +41,8 @@ namespace LAB2D.Character.Worker.Task.Individual
 
             if (worker.BedItem != null)
             {
-                // 有床睡眠：全额恢复疲劳 + 精气神奖励
-                workerData.CurTired = workerData.MaxTired;
+                // 有床睡眠：疲劳清零 + 精气神奖励
+                workerData.CurTired = 0.0f;
                 workerData.CurSpirit = System.Math.Min(
                     workerData.MaxSpirit,
                     workerData.CurSpirit + Constant.WorkerConditionConstant.SpiritSleepRestoreBonus);
@@ -50,11 +50,11 @@ namespace LAB2D.Character.Worker.Task.Individual
             }
             else
             {
-                // 地面睡眠：部分恢复疲劳 + 少量精气神
+                // 地面睡眠：部分降低疲劳 + 少量精气神
                 float restoreAmount = workerData.MaxTired * Constant.WorkerConditionConstant.GroundSleepTiredRestoreRatio;
-                workerData.CurTired = System.Math.Min(
-                    workerData.MaxTired,
-                    workerData.CurTired + restoreAmount);
+                workerData.CurTired = System.Math.Max(
+                    0.0f,
+                    workerData.CurTired - restoreAmount);
                 workerData.CurSpirit = System.Math.Min(
                     workerData.MaxSpirit,
                     workerData.CurSpirit + Constant.WorkerConditionConstant.SpiritSleepRestoreOnGround);
@@ -65,9 +65,9 @@ namespace LAB2D.Character.Worker.Task.Individual
         /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {
-            // 疲劳值低于阈值即可睡觉（不要求有床，无床会走地面睡眠）
+            // 疲劳值高于 MaxTired-阈值 即可睡觉（不要求有床，无床会走地面睡眠）
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            return workerData.CurTired < AWorker.ThresholdTired && this.worker == worker;
+            return workerData.CurTired > workerData.MaxTired - AWorker.ThresholdTired && this.worker == worker;
         }
 
         /// <inheritdoc/>

@@ -28,6 +28,9 @@ model/data/raw/samples.csv
 model/data/raw/samples.csv.meta
 model/data/raw/*.csv
 model/data/raw/*.csv.meta
+# 规则生成产物（rule_teacher / web_labeler 生成，可重新生成，不入库）
+model/data/rules/models/
+model/data/rules/models/*.meta
 model/data/cache/
 model/data/cache/*.meta
 model/data/cache.meta

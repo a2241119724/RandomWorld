@@ -474,12 +474,12 @@ namespace LAB2D.Character.Worker.Task
         public string Name { get; set; }
 
         /// <summary>
-        /// 执行任务时是否消耗疲劳值。Eat/Sleep 任务重写为 false。
+        /// 执行任务时是否累积疲劳值（CurTired 越大越疲）。Eat/Sleep 任务重写为 false。
         /// </summary>
         protected virtual bool ConsumesTiredness => true;
 
         /// <summary>
-        /// 此任务的疲劳消耗速率（/秒）。子类可重写以实现差异化消耗。
+        /// 此任务的疲劳累积速率（/秒）。子类可重写以实现差异化累积。
         /// 默认返回 WorkTiredCostPerSecond。
         /// </summary>
         protected virtual float TiredCostPerSecond => WorkerTaskTimeConfig.WorkTiredCostPerSecond;
@@ -515,15 +515,16 @@ namespace LAB2D.Character.Worker.Task
         /// <returns>是否成功</returns>
         public virtual bool Execute(AWorker worker, float deltaTime)
         {
-            // 工作扣减疲劳值
+            // 工作累积疲劳值（CurTired 越大越疲，封顶 MaxTired）
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
 
-            // 子类可通过 ConsumesTiredness 虚属性控制是否消耗疲劳
-            // 通过 TiredCostPerSecond 虚属性支持差异化消耗
+            // 子类可通过 ConsumesTiredness 虚属性控制是否累积疲劳
+            // 通过 TiredCostPerSecond 虚属性支持差异化累积速率
             if (this.ConsumesTiredness)
             {
                 workerData.CurTired = this.progressService.ApplyTiredCost(
                     workerData.CurTired,
+                    workerData.MaxTired,
                     deltaTime,
                     this.TiredCostPerSecond);
             }

@@ -7,10 +7,10 @@ namespace LAB2D.Domain.Worker
     /// </summary>
     public sealed class WorkerConditionRuleService
     {
-        /// <summary>进入饥饿或疲劳提示的比例阈值（低于该比例触发警告）。</summary>
+        /// <summary>进入饥饿或疲劳提示的比例阈值（疲劳比例高于 1-该值 触发警告）。</summary>
         public const float WarningRatio = 0.35f;
 
-        /// <summary>进入濒临停工状态的比例阈值（低于该比例触发最强惩罚）。</summary>
+        /// <summary>进入濒临停工状态的比例阈值（疲劳比例高于 1-该值 触发最强惩罚）。</summary>
         public const float CriticalRatio = 0.05f;
 
         /// <summary>健康状况下移动速度倍率。</summary>
@@ -57,7 +57,9 @@ namespace LAB2D.Domain.Worker
 
         /// <summary>
         /// 根据 WorkerAgentSnapshot 计算工人生存状态。
-        /// 优先判定 Critical（任一属性低于 CriticalRatio），其次判定 Exhausted（双低），然后依次判定 Hungry 和 Tired。
+        /// 疲劳语义：CurTired 为累积疲劳值（越大越疲）。
+        /// 优先判定 Critical（饥饿低于临界比例 或 疲劳高于 1-CriticalRatio），
+        /// 其次判定 Exhausted（双高/双低），然后依次判定 Hungry 和 Tired。
         /// </summary>
         /// <param name="snapshot">工人只读状态快照。</param>
         /// <returns>工人生存状态。</returns>
@@ -72,14 +74,14 @@ namespace LAB2D.Domain.Worker
             float tiredRatio = GetSafeRatio(snapshot.CurTired, snapshot.MaxTired);
 
             bool criticalHungry = snapshot.CurHungry <= 0.0f || hungryRatio <= CriticalRatio;
-            bool criticalTired = snapshot.CurTired <= 0.0f || tiredRatio <= CriticalRatio;
+            bool criticalTired = snapshot.CurTired >= snapshot.MaxTired || tiredRatio >= 1.0f - CriticalRatio;
             if (criticalHungry || criticalTired)
             {
                 return WorkerConditionState.Critical;
             }
 
             bool hungry = hungryRatio <= WarningRatio;
-            bool tired = tiredRatio <= WarningRatio;
+            bool tired = tiredRatio >= 1.0f - WarningRatio;
             if (hungry && tired)
             {
                 return WorkerConditionState.Exhausted;

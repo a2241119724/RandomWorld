@@ -397,7 +397,7 @@
   2. 顺带建立完整温度系统（本次主变更）：
      - 新建 `TemperatureRuleService`（纯规则）：季节基础温度（春18/夏30/秋18/冬2）+ 天气偏移（晴0/雨-6/雪-12）+ 昼夜波动（±4，相位与 GameTimeUI 光照一致）；房间 = 室外 + 保温6 + ΣHeatPower；温度→移动倍率/疲劳倍率映射。
      - 新建 `TemperatureEffect`（Singleton + ITickable）：室外温度平滑 0.5℃/s、每 1.5s 扫描房间热源刷新 `RoomInfo.Temperature`（直接写字段，RoomListUI/ItemInfo 自动变实时）、每 0.5s 缓存角色位置温度避免每帧全房间遍历。
-     - 接入点（乘法叠加）：`Player` 移动、`ASeek` 工人移动、`WorkerUpdateSystem` 疲劳衰减。
+     - 接入点（乘法叠加）：`Player` 移动、`ASeek` 工人移动、`WorkerUpdateSystem` 疲劳累积（空闲递增，疲劳值越大越疲）。
      - `BuildItemData.HeatPower` 数据驱动供暖（本期 SO 不配数值，后续配置即生效）；`EnvironmentManager.Temperature` 死字段删除，湿度占位值 -10 → 25。
 - **验证**：右键野外 → 显示实时室外温度；房间内 → 室外+6。单测 `TemperatureRuleServiceTests` 覆盖季节循环/天气偏移/倍率/边界。
 - **教训**：**射线判房间不可靠** —— 物理射线命中任意障碍物（含远处房间的墙），无法区分"站在房间内"与"朝向房间"。房间内部判断必须用房间自己的包围盒几何（`IsInterior`，向内收缩一格），与物理世界解耦。

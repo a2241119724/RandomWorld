@@ -10,7 +10,7 @@ namespace LAB2D.Domain.Worker
         /// <summary>饥饿值绝对阈值：低于该值时判定为需要食物补给。</summary>
         public const float HungryThreshold = 20.0f;
 
-        /// <summary>疲劳值绝对阈值：低于该值时判定为需要休息。</summary>
+        /// <summary>疲劳值绝对阈值：疲劳值高于 MaxTired-该值时判定为需要休息。</summary>
         public const float TiredThreshold = 20.0f;
 
         public float GetRecoverNeed(float current, float max)
@@ -56,7 +56,8 @@ namespace LAB2D.Domain.Worker
 
         /// <summary>
         /// 判断 Worker 是否需要休息。
-        /// 当疲劳值低于绝对阈值或疲劳比例低于 WarningRatio 时返回 true。
+        /// 疲劳语义：CurTired 为累积疲劳值，疲劳值高于 MaxTired-绝对阈值
+        /// 或疲劳比例高于 1-WarningRatio 时返回 true。
         /// </summary>
         /// <param name="snapshot">工人只读状态快照。</param>
         /// <returns>需要休息时返回 true。</returns>
@@ -68,8 +69,8 @@ namespace LAB2D.Domain.Worker
             }
 
             float tiredRatio = MathHelper.GetSafeRatio(snapshot.CurTired, snapshot.MaxTired);
-            return snapshot.CurTired <= TiredThreshold ||
-                tiredRatio <= WorkerConditionRuleService.WarningRatio;
+            return snapshot.CurTired >= snapshot.MaxTired - TiredThreshold ||
+                tiredRatio >= 1.0f - WorkerConditionRuleService.WarningRatio;
         }
 
         /// <summary>

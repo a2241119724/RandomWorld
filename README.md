@@ -336,7 +336,7 @@ SO 的 `OnEnable()` / `GetExpandedItems()` 会自动分配 ID。
 - `StageChangeRule(AWorker)` — 阶段切换规则
 - `Init()` — 设置可用邻居位置
 - `Traits` — 任务特性标记（`TrackPositions`, `OnePerPosition`, `ReturnToIdle`）
-- `ConsumesTiredness` — 是否消耗体力
+- `ConsumesTiredness` — 是否累积疲劳（CurTired 越大越疲）
 - `BlocksWhenHungry` — 饥饿时是否阻塞
 
 #### 3.2 静态服务委托（依赖注入钩子）

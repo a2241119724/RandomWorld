@@ -312,7 +312,7 @@ namespace LAB2D.Gameplay
                     WorkerInstanceId = worker == null ? 0 : worker.GetInstanceID(),
                     State = WorkerConditionState.Healthy,
                     HungryRatio = 1.0f,
-                    TiredRatio = 1.0f,
+                    TiredRatio = 0.0f,
                     MoveSpeedMultiplier = 1.0f,
                     WorkProgressMultiplier = 1.0f,
                 };
