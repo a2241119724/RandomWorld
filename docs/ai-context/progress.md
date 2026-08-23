@@ -6,9 +6,11 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 
 ## Recent Changes
 
+- 2026-08 — `feat(render)`: 遮挡淡化 + 分层模式枚举——`OcclusionFader` 淡化挡住本地玩家的环境视觉（alpha→0.3）；`ItemData.LayerMode` 三态（Bottom 恒底层 / Alpha 参与排序且淡化 / Normal 参与排序不淡化）统一控制 y 排序与透明度。spec 见渲染排序节
+- 2026-08 — `feat(render)`: Worker 屋顶接入 y 排序——`RoofManager` 创建的屋顶 SpriteRenderer 注册进 `WorldYSortManager`（层仍 `Highest` 盖住屋内一切），多个房间屋顶之间按"视觉底端世界 y"分配唯一 `sortingOrder`（近处盖远处），不再固定 order=0
 - 2026-08 — `refactor(worker)`: 疲劳值语义反转——`CurTired` 从剩余体力式（初始=MaxTired、递减、低于阈值判定疲劳）反转为累积疲劳式（初始 0、工作/空闲累积、睡眠降低、疲劳 > `MaxTired-阈值` 判定需休息），20+ 文件阈值判断对称反转，AI 决策/睡眠/悬赏/状态机同步。旧档 `CurTired` 语义错位，睡一觉自愈（未做迁移）
 - 2026-08 — `feat(worker home)`: Worker 建房屋顶——房间注册完成时 `RoofManager` 生成覆盖整个房间矩形的 Roof 屋顶（挂 All/Building、Highest 层、无碰撞），本地玩家进出房间隐藏/显示屋顶；拆除房间边界建筑（墙/门）时移除房间与屋顶
-- 2026-08 — `feat(render)`: 掉落物/仓库物品（ItemMap）接入 y 排序——`ItemData` 上移 `IsBottomLayer`（默认开启，`BuildItemData` 继承），`ItemMap` 混合渲染：恒底层物品由 TilemapRenderer 直接渲染在 Map 上（不建视觉）、角色下；取消勾选的非恒底层物品 tile 置透明、单独创建 `ItemVisual_*` SpriteRenderer 参与动态排序。spec 见渲染排序节
+- 2026-08 — `feat(render)`: 掉落物/仓库物品（ItemMap）接入 y 排序——`ItemData` 上移 `LayerMode`（默认 Bottom，`BuildItemData` 继承），`ItemMap` 混合渲染：恒底层物品由 TilemapRenderer 直接渲染在 Map 上（不建视觉）、角色下；非恒底层物品 tile 置透明、单独创建 `ItemVisual_*` SpriteRenderer 参与动态排序。spec 见渲染排序节
 - 2026-08 — `feat(favorability)`: 好感度系统——Worker↔Worker/Worker→Player 定向好感（0~100 初始 50），四项行为门控（玩家悬赏<35/Worker悬赏<40 拒接、交易<30 拒卖+价格乘数、对话态度入 LLM 提示词、协作互助），增减触发含攻击/致死/互殴/悬赏/交易/对话(日上限10)/接近共事(3s 扫描)，Mood 联动，F11 好感度 HUD。Domain 纯 C# 规则 + ASingletonSaveData 存档，单测 `FavorabilityRuleServiceTests`
 - 2026-08 — `feat(render)`: 按图标底端世界 y 全局渲染排序（`WorldYSortManager` + `YSortAlgorithm` + `TileVisualSpawner`），角色/建筑/树统一 `Character` 层交叉排序；修复 Player 恒最顶（过期 AB 包内旧 sorting layer）。存档见 `docs/ai-context/bug-fixes.md`
 - 2026-08 — `fix(worker home)`: 修复床副格碰撞与 sprite 足迹错位（寻路穿过床）+ 门位堵家具封死房间（含门规避重写与兜底回归修复）；Sliding 熔断复用 `HandleMovementStuck` 保留建造重试。存档见 `docs/ai-context/bug-fixes.md`

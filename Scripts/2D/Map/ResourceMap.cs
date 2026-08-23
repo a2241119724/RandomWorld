@@ -21,7 +21,9 @@ namespace LAB2D.Map
         private Tilemap resourceTileMapOne; // 仅占一格的资源，解决遮盖问题
 
         /// <summary>
-        /// 树视觉拆分器（this.tilemap）：渲染到独立 SpriteRenderer（Character 层）参与 y 排序。
+        /// 树视觉拆分器（this.tilemap）：渲染到独立 SpriteRenderer（Character 层）。
+        /// 恒底层资源（ItemData.LayerMode=Bottom）固定最底层，不参与 y 排序/遮挡淡化；
+        /// 非恒底层资源参与 y 排序（LayerMode=Alpha 时玩家走到其后触发遮挡淡化）。
         /// Tilemap 保留碰撞/数据/存档/网络，TilemapRenderer 已禁用。
         /// </summary>
         private TileVisualSpawner visuals;
@@ -58,7 +60,7 @@ namespace LAB2D.Map
                 renderer.enabled = false;
             }
 
-            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "TreeVisual");
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "TreeVisual", this.GetResourceLayerMode);
             if (this.resourceTileMapOne != null)
             {
                 TilemapRenderer rendererOne = this.resourceTileMapOne.GetComponent<TilemapRenderer>();
@@ -67,7 +69,7 @@ namespace LAB2D.Map
                     rendererOne.enabled = false;
                 }
 
-                this.visualsOne = new TileVisualSpawner(this.resourceTileMapOne, this.transform, "Character", "TreeVisualOne");
+                this.visualsOne = new TileVisualSpawner(this.resourceTileMapOne, this.transform, "Character", "TreeVisualOne", this.GetResourceLayerMode);
                 this.visualsOne.RebuildAll(); // 静态场景装饰，一次性建视觉
             }
         }
@@ -238,6 +240,26 @@ namespace LAB2D.Map
             }
 
             return tileBase;
+        }
+
+        /// <summary>
+        /// 该格资源的分层模式（ItemData.LayerMode 开关）。
+        /// Bottom 恒底层资源不参与 y 排序，固定渲染在最底层（角色/建筑永远盖在其上），
+        /// 玩家走到其后面也不触发遮挡淡化（不注册进 OcclusionFader）；
+        /// 供 TileVisualSpawner 的 layerModeResolver 使用。tile 名查不到数据时按恒底层处理。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>该格资源的分层模式。</returns>
+        private ItemLayerMode GetResourceLayerMode(Vector3Int cell)
+        {
+            TileBase tile = this.GetTile(cell);
+            if (tile == null)
+            {
+                return ItemLayerMode.Bottom;
+            }
+
+            ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
+            return item != null ? item.LayerMode : ItemLayerMode.Bottom;
         }
 
         /// <summary>

@@ -2161,13 +2161,13 @@ namespace LAB2D.AI.Worker
                 return this.BuildResourceDictFromData(buildData);
             }
 
-            // 物品存在但没有配置材料清单 → 使用默认材料（CustomWood x5）
+            // 物品存在但没有配置材料清单 → 使用默认材料（CustomWood x2）
             ItemData wood = itemDataManager.GetByName("CustomWood");
             if (wood != null && wood.Id > 0)
             {
                 return new Dictionary<int, ResourceInfo>
                 {
-                    { wood.Id, new ResourceInfo(wood.Id, 5) },
+                    { wood.Id, new ResourceInfo(wood.Id, 2) },
                 };
             }
 

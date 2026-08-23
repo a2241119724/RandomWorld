@@ -6,7 +6,8 @@ namespace LAB2D.Item
     /// <summary>
     /// 屋顶管理 — Worker 房间创建完成后生成覆盖整个房间矩形的屋顶。
     /// 本地玩家进入房间内部时隐藏屋顶（看得到屋内），离开房间后恢复显示。
-    /// 屋顶物体挂 All/Building 下，sortingLayer=Highest（盖住房间内一切）。
+    /// 屋顶物体挂 All/Building 下，sortingLayer=Character（与角色同层，按 y 排序可被近处角色遮住）；
+    /// SpriteRenderer 注册进 WorldYSortManager 参与 y 排序（屋顶之间按底端 y 分配 order，近处盖远处）。
     /// 跟随 WorldYSortManager 的懒创建单例模式，自带 Update 做玩家位置检测。
     /// </summary>
     public class RoofManager : MonoBehaviour
@@ -95,7 +96,7 @@ namespace LAB2D.Item
 
             SpriteRenderer sr = roofGo.AddComponent<SpriteRenderer>();
             sr.sprite = roofSprite;
-            sr.sortingLayerName = "Highest";
+            sr.sortingLayerName = "Character";
             sr.sortingOrder = 0;
 
             // 世界坐标 = tile 坐标 45° 转置：tile 宽(roomWidth)→世界高、tile 高(roomHeight)→世界宽。
@@ -104,6 +105,11 @@ namespace LAB2D.Item
                 roomHeight / RoofWorldSize,
                 roomWidth / RoofWorldSize,
                 1f);
+
+            // 注册进 WorldYSortManager 参与 y 排序：屋顶在 Character 层（与角色同层交叉排序），
+            // 多个房间屋顶之间按"视觉底端世界 y"分配唯一 sortingOrder（近处屋顶盖住远处）。
+            // 移除时 Object.Destroy 由 WorldYSortManager.LateUpdate 懒清扫兜底，无需显式 Unregister。
+            LAB2D.Render.WorldYSortManager.Ensure().Register(sr);
 
             this.roofs.Add(room, sr);
 

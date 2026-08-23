@@ -8,6 +8,21 @@ namespace LAB2D.Data
     using UnityEngine.Serialization;
 
     /// <summary>
+    /// 物品地面视觉的分层模式，统一控制"是否参与 y 排序"与"角色在后面时是否淡化"。
+    /// </summary>
+    public enum ItemLayerMode
+    {
+        /// <summary>恒底层：不参与 y 排序，固定渲染在最底层，角色永远盖在其上。</summary>
+        Bottom = 0,
+
+        /// <summary>参与 y 排序，角色走到其后时淡化（透明）。</summary>
+        Alpha = 1,
+
+        /// <summary>参与 y 排序，角色走到其后不淡化（保持不透明）。</summary>
+        Normal = 2,
+    }
+
+    /// <summary>
     /// 不能将ItemData转换为json,因为需要[Serializable]修饰,而包装类没有被修饰
     /// 公共的数据，仅存储一份
     /// </summary>
@@ -50,12 +65,13 @@ namespace LAB2D.Data
         public bool IsStackable;
 
         /// <summary>
-        /// 恒底层物品开关（默认开启）。
-        /// 开启后该物品的地面视觉不参与按 y 的全局排序，固定显示在地图上面、角色之下；
-        /// 需要参与 y 排序（与角色/建筑/树交叉遮挡）的物品取消勾选。
+        /// 地面视觉分层模式：
+        /// - Bottom：恒底层，不参与 y 排序，固定渲染在最底层（角色永远盖在其上）。
+        /// - Alpha：参与 y 排序，角色走到其后时淡化（透明），保证角色可见。
+        /// - Normal：参与 y 排序，角色走到其后不淡化（保持不透明）。
         /// </summary>
-        [Tooltip("恒底层物品开关（默认开启）：不参与 y 排序，固定显示在地图上面、角色之下；需要按视觉底端 y 与角色/建筑交叉遮挡的物品取消勾选。")]
-        public bool IsBottomLayer = true;
+        [Tooltip("地面视觉分层模式：Bottom=恒底层不参与 y 排序；Alpha=参与 y 排序且角色在后时淡化；Normal=参与 y 排序但不淡化。")]
+        public ItemLayerMode LayerMode = ItemLayerMode.Bottom;
 
         /// <summary>
         /// 物品类型

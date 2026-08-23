@@ -19,7 +19,9 @@ MonoBehaviour:
     Name: GrassTree
     Info: 
     IsStackable: 0
+    LayerMode: 1
     Type: 12
+    EquipSlot: 0
     RelatedTaskTime:
       TaskBaseTime: 0
       CarryTaskPutDownTime: 0
@@ -28,7 +30,9 @@ MonoBehaviour:
     Name: DesertCoconutTree
     Info: 
     IsStackable: 0
+    LayerMode: 1
     Type: 12
+    EquipSlot: 0
     RelatedTaskTime:
       TaskBaseTime: 0
       CarryTaskPutDownTime: 0
@@ -37,25 +41,31 @@ MonoBehaviour:
     Name: SnowTree
     Info: 
     IsStackable: 0
+    LayerMode: 1
     Type: 12
+    EquipSlot: 0
     RelatedTaskTime:
       TaskBaseTime: 0
       CarryTaskPutDownTime: 0
   - Id: 1200003
     CnName: SnowTreeRoot
     Name: SnowTreeRoot
-    Info:
+    Info: 
     IsStackable: 0
+    LayerMode: 1
     Type: 12
+    EquipSlot: 0
     RelatedTaskTime:
       TaskBaseTime: 0
       CarryTaskPutDownTime: 0
   - Id: 1200004
-    CnName: "荒漠灌木丛"
+    CnName: "\u8352\u6F20\u704C\u6728\u4E1B"
     Name: DesertBushes
-    Info:
+    Info: 
     IsStackable: 0
+    LayerMode: 1
     Type: 12
+    EquipSlot: 0
     RelatedTaskTime:
       TaskBaseTime: 0
       CarryTaskPutDownTime: 0

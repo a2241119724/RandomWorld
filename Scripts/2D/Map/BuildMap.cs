@@ -52,7 +52,7 @@ namespace LAB2D.Map
                 renderer.enabled = false;
             }
 
-            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "BuildVisual", this.IsBottomLayerBuilding);
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "BuildVisual", this.GetBuildLayerMode);
         }
 
         public void Start()
@@ -366,22 +366,22 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 该格建筑是否为"恒底层"建筑（BuildItemData.IsBottomLayer 开关）。
-        /// 恒底层建筑不参与 y 排序，固定渲染在最底层（角色/其他建筑永远盖在其上）。
-        /// 供 TileVisualSpawner 的 bottomLayerResolver 使用。
+        /// 该格建筑的分层模式（BuildItemData.LayerMode 开关）。
+        /// Bottom 恒底层建筑不参与 y 排序，固定渲染在最底层（角色/其他建筑永远盖在其上）；
+        /// 供 TileVisualSpawner 的 layerModeResolver 使用。
         /// </summary>
         /// <param name="cell">地图坐标。</param>
-        /// <returns>是否为恒底层建筑；PosMap 无数据（如 DirectBuild）时安全返回 false。</returns>
-        private bool IsBottomLayerBuilding(Vector3Int cell)
+        /// <returns>该格建筑的分层模式；PosMap 无数据（如 DirectBuild）或查不到数据时安全返回 Alpha（参与 y 排序 + 淡化）。</returns>
+        private ItemLayerMode GetBuildLayerMode(Vector3Int cell)
         {
             BuildTileData data = this.GetBuildTileData(cell);
             if (data == null)
             {
-                return false;
+                return ItemLayerMode.Alpha;
             }
 
             BuildItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
-            return item != null && item.IsBottomLayer;
+            return item != null ? item.LayerMode : ItemLayerMode.Alpha;
         }
 
         /// <summary>

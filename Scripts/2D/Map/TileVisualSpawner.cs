@@ -13,9 +13,12 @@ namespace LAB2D.Map
     /// Tilemap 本体仍承担碰撞体/寻路/数据/存档/网络，其 TilemapRenderer 由宿主
     /// （BuildMap/ResourceMap）在 Awake 禁用，防双重渲染。
     ///
-    /// 恒底层（bottomLayerResolver）：可选委托按 cell 判定是否为"恒底层"视觉
-    /// （ItemData.IsBottomLayer 开关，建筑/掉落物通用）。恒底层视觉不注册进 WorldYSortManager，
-    /// 固定 sortingOrder=WorldYSortManager.BottomLayerOrder，永远渲染在角色/其他建筑之下。
+    /// 分层模式（layerModeResolver）：可选委托按 cell 判定分层模式（ItemData.LayerMode 开关，
+    /// 建筑/掉落物/资源通用）：
+    /// - Bottom：不注册 WorldYSortManager，固定 sortingOrder=WorldYSortManager.BottomLayerOrder，
+    ///   永远渲染在角色/其他建筑之下。
+    /// - Alpha：注册 WorldYSortManager 参与 y 排序，并注册 OcclusionFader（角色在后面时淡化）。
+    /// - Normal：注册 WorldYSortManager 参与 y 排序，但不注册 OcclusionFader（不淡化）。
     ///
     /// 幂等约束：
     /// - CreateOrUpdate 以 tilemap 当前状态为准（GetSprite/GetColor/GetTransformMatrix）；
@@ -34,7 +37,7 @@ namespace LAB2D.Map
         private readonly string sortingLayerName;
         private readonly string objectNamePrefix;
         private readonly Material material; // tile 视觉材质（复制宿主 TilemapRenderer，保证拆分后仍接收 2D Light）
-        private readonly System.Func<Vector3Int, bool> bottomLayerResolver; // 非空时按 cell 判定"恒底层"视觉（SO 开关）
+        private readonly System.Func<Vector3Int, ItemLayerMode> layerModeResolver; // 非空时按 cell 判定分层模式（SO 开关）
         private readonly bool useTilemapColor; // false 时 SpriteRenderer 颜色强制白色（不读 tilemap 颜色）
         private readonly Dictionary<Vector3Int, SpriteRenderer> visual = new Dictionary<Vector3Int, SpriteRenderer>();
 
@@ -43,17 +46,17 @@ namespace LAB2D.Map
         /// </summary>
         /// <param name="sortingLayerName">视觉 sprite 所在 sorting layer（须与角色同层才能交叉排序）。</param>
         /// <param name="objectNamePrefix">视觉对象命名前缀（如 "BuildVisual"）。</param>
-        /// <param name="bottomLayerResolver">可选：按 cell 判定是否"恒底层"视觉（如 ItemData.IsBottomLayer）。
-        /// 返回 true 时该格视觉不参与 y 排序，固定最底层；null 表示全部参与 y 排序（树/装饰）。</param>
+        /// <param name="layerModeResolver">可选：按 cell 判定分层模式（如 ItemData.LayerMode）。
+        /// Bottom=固定最底层；Alpha=参与 y 排序且淡化；Normal=参与 y 排序不淡化；null 默认 Alpha（参与 y 排序且淡化）。</param>
         /// <param name="useTilemapColor">true 时 SpriteRenderer 颜色跟随 tilemap 颜色；false 时强制白色
         /// （ItemMap 非恒底层 tile 用透明隐藏 TilemapRenderer 双重渲染，拆出视觉需不透明）。</param>
         public TileVisualSpawner(Tilemap tilemap, Transform hostTransform, string sortingLayerName, string objectNamePrefix,
-            System.Func<Vector3Int, bool> bottomLayerResolver = null, bool useTilemapColor = true)
+            System.Func<Vector3Int, ItemLayerMode> layerModeResolver = null, bool useTilemapColor = true)
         {
             this.tilemap = tilemap;
             this.sortingLayerName = sortingLayerName;
             this.objectNamePrefix = objectNamePrefix;
-            this.bottomLayerResolver = bottomLayerResolver;
+            this.layerModeResolver = layerModeResolver;
             this.useTilemapColor = useTilemapColor;
             this.material = ResolveMaterial(tilemap);
             this.parent = new GameObject(ParentName).transform;
@@ -107,15 +110,21 @@ namespace LAB2D.Map
                 go.transform.SetParent(this.parent, false);
                 sr = go.AddComponent<SpriteRenderer>();
                 sr.sortingLayerName = this.sortingLayerName;
-                if (this.bottomLayerResolver != null && this.bottomLayerResolver(cell))
+                ItemLayerMode mode = this.layerModeResolver != null ? this.layerModeResolver(cell) : ItemLayerMode.Alpha;
+                if (mode == ItemLayerMode.Bottom)
                 {
-                    // 恒底层建筑（SO 开关）：不参与 y 排序，固定最底层（角色/其他建筑永远盖在其上）
+                    // 恒底层（SO 开关）：不参与 y 排序，固定最底层（角色/其他建筑永远盖在其上）
                     sr.sortingOrder = WorldYSortManager.BottomLayerOrder;
                 }
                 else
                 {
                     sr.sortingOrder = 0; // 每帧由 WorldYSortManager 统一分配
                     WorldYSortManager.Ensure().Register(sr);
+                    if (mode == ItemLayerMode.Alpha)
+                    {
+                        // 遮挡淡化：仅 Alpha 层注册为候选遮挡物（玩家走到其后变半透明）
+                        OcclusionFader.Ensure().AddOccluder(sr);
+                    }
                 }
 
                 if (this.material != null)
@@ -168,6 +177,8 @@ namespace LAB2D.Map
             this.visual.Remove(cell);
             if (sr != null)
             {
+                // 视觉销毁：从遮挡淡化候选移除（若曾注册）
+                OcclusionFader.Ensure().RemoveOccluder(sr);
                 Object.Destroy(sr.gameObject);
             }
         }

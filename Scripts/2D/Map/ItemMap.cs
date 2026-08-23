@@ -29,9 +29,9 @@ namespace LAB2D.Map
         public ItemMapData ItemMapDataLAB { get; private set; }
 
         /// <summary>
-        /// 物品视觉拆分器：仅管理"非恒底层"物品（ItemData.IsBottomLayer=false）的独立
+        /// 物品视觉拆分器：仅管理"非恒底层"物品（ItemData.LayerMode != Bottom）的独立
         /// SpriteRenderer（Character 层 ItemVisual_*，参与 y 排序）。
-        /// 恒底层物品（默认开启）由 ItemMap 的 TilemapRenderer 直接渲染在 Map 上，不建 ItemVisual_*。
+        /// 恒底层物品（默认 Bottom）由 ItemMap 的 TilemapRenderer 直接渲染在 Map 上，不建 ItemVisual_*。
         /// </summary>
         private TileVisualSpawner visuals;
 
@@ -43,11 +43,11 @@ namespace LAB2D.Map
             this.ItemMapDataLAB = new ItemMapData();
 
             // 物品视觉混合模式：
-            // - 恒底层物品（ItemData.IsBottomLayer 默认开启）：由 TilemapRenderer 直接渲染在 Map 上，
+            // - 恒底层物品（ItemData.LayerMode=Bottom 默认）：由 TilemapRenderer 直接渲染在 Map 上，
             //   不创建 ItemVisual_*（TilemapRenderer 保持启用）。
             // - 非恒底层物品：tile 保留数据/碰撞，颜色透明隐藏 TilemapRenderer 双重渲染，
             //   由独立 SpriteRenderer（Character 层 ItemVisual_*）参与 y 排序。
-            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "ItemVisual", this.IsBottomLayerItem, useTilemapColor: false);
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "ItemVisual", this.GetItemLayerMode, useTilemapColor: false);
         }
 
         /// <summary>
@@ -252,26 +252,26 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 该格物品是否为"恒底层"物品（ItemData.IsBottomLayer 开关）。
-        /// 恒底层物品不参与 y 排序，固定显示在地图上面（角色/其他建筑永远盖在其上）；
-        /// 供 TileVisualSpawner 的 bottomLayerResolver 使用。tile 名查不到数据时按恒底层处理。
+        /// 该格物品的分层模式（ItemData.LayerMode 开关）。
+        /// Bottom 恒底层物品不参与 y 排序，固定显示在地图上面（角色/其他建筑永远盖在其上）；
+        /// 供 TileVisualSpawner 的 layerModeResolver 使用。tile 名查不到数据时按恒底层处理。
         /// </summary>
         /// <param name="cell">地图坐标。</param>
-        /// <returns>是否为恒底层物品。</returns>
-        private bool IsBottomLayerItem(Vector3Int cell)
+        /// <returns>该格物品的分层模式。</returns>
+        private ItemLayerMode GetItemLayerMode(Vector3Int cell)
         {
             TileBase tile = this.tilemap.GetTile(cell);
             if (tile == null)
             {
-                return false;
+                return ItemLayerMode.Bottom;
             }
 
             ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
-            return item != null && item.IsBottomLayer;
+            return item != null ? item.LayerMode : ItemLayerMode.Bottom;
         }
 
         /// <summary>
-        /// 按该格物品 IsBottomLayer 分流视觉：
+        /// 按该格物品 LayerMode 分流视觉：
         /// 恒底层 → 由 ItemMap TilemapRenderer 直接渲染（恢复白色，不建 ItemVisual_*）；
         /// 非恒底层 → tilemap 颜色透明隐藏（避免 TilemapRenderer 双重渲染，数据/碰撞保留），
         ///            单独建 SpriteRenderer（ItemVisual_*）参与 y 排序。
@@ -289,7 +289,7 @@ namespace LAB2D.Map
             // （BuildMap/ResourceMap 同款前置写法）
             this.tilemap.RemoveTileFlags(cell, TileFlags.LockColor);
 
-            if (this.IsBottomLayerItem(cell))
+            if (this.GetItemLayerMode(cell) == ItemLayerMode.Bottom)
             {
                 // 恒底层：恢复颜色由 TilemapRenderer 渲染在 Map 上；确保不残留 ItemVisual_*
                 this.tilemap.SetColor(cell, Color.white);

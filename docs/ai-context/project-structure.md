@@ -35,7 +35,7 @@ RandomWorld/
 │   │   │   └── KDTree/        # 空间索引
 │   │   ├── Gameplay/          # 运行时玩法系统(商店/任务板/市场/货币/悬赏/好感度等)
 │   │   ├── Manager/           # 跨领域管理(日志、存档、资源)
-│   │   ├── Render/            # y-sort 渲染排序(WorldYSortManager, YSortAlgorithm)
+│   │   ├── Render/            # y-sort 渲染排序(WorldYSortManager, YSortAlgorithm) + 遮挡淡化(OcclusionFader)
 │   │   ├── Map/               # 地图(TileMap, BuildMap, TileVisualSpawner 等)
 │   │   ├── Item/              # 物品(背包、建造、装备)
 │   │   ├── AI/Dialogue/       # LLM 对话(客户端、记忆、RAG)
