@@ -2,6 +2,22 @@
 
 > 每次通过日志分析并解决 bug 后，把思路追加到此文件。开始新任务前**先通读本文件**，命中历史记录时直接引用验证，避免重复排查。
 
+## 2026-08-23 沙漠/雪地资源树缺 ItemData 回退 Bottom（sortingOrder=-1000）不淡化
+
+- **现象**：用户报告 DesertCoconutTree 配 LayerMode=Alpha 却不淡化，检查 SpriteRenderer 发现 sortingOrder=-1000（= `WorldYSortManager.BottomLayerOrder`）。game.log 观测 `没有名字为DesertCactus` 36 次、`SnowMushroom2` 16 次、`SnowMushroom1` 14 次、`SnowStone` 13 次；DesertCoconutTree 0 次缺失警告。
+- **根因**：`Resources/SO/TreeItemData.asset` 只定义了 6 种资源树（GrassTree/DesertCoconutTree/SnowTree/SnowTreeRoot/DesertBushes/DesertGrass），而 `Resources/Tilemap/Map/Resource/` 下实际有 **10 种** tile（多出 DesertCactus/SnowMushroom1/SnowMushroom2/SnowStone）。`ResourceMap.GetResourceLayerMode` → `ItemDataManager.GetByName(tile.name)` 查不到 → 返回 `ItemData.Empty`（LayerMode=Bottom）→ `TileVisualSpawner` 以 Bottom 模式创建（`sr.sortingOrder = -1000` 恒底层，不注册 WorldYSortManager / OcclusionFader）→ 玩家走到其后面不淡化。用户看到的"-1000 椰子树"实为沙漠仙人掌 DesertCactus（沙漠地形 4 种绿植随机生成，外观相近）。
+- **修复**：`Resources/SO/TreeItemData.asset` 补 4 个条目（DesertCactus/SnowMushroom1/SnowMushroom2/SnowStone，LayerMode=Alpha=1）。`ItemDataSO.OnEnable` 运行时按列表顺序自动重排 Id（`index = type*100000` 逐条递增），补条目不产生 Id 冲突。补后 10 tile 与注册名单完全对齐。
+- **验证**：重进游戏触发 `visuals.RebuildAll()` 重建既有 -1000 视觉，仙人掌/蘑菇/雪石应与其他树一样参与 y 排序、玩家走到后淡化。
+- **教训**：**资源 tile 资产与 ItemData 定义必须一一对应**——`GetResourceLayerMode`/`TryGetGatherResourceInfo` 对查不到的名字静默回退 Bottom（-1000）/Id=0，缺失定义不会报错而是降级为恒底层。新增地形资源 tile 时同步补 `TreeItemData.asset`；排查"某树不淡化"先 grep game.log `没有名字为` 警告定位缺失 ItemData 的 tile。
+
+## 2026-08-23 Shop 配 LayerMode=Normal 却仍淡化（DirectBuild 生成顺序回退 Alpha）
+
+- **现象**：Shop 的 BuildItemData.LayerMode=2（Normal，不淡化），但玩家走到商店后面商店仍变半透明。
+- **根因**：`ShopNPCGenerator.CreateShopAt` 先 `DirectBuild`（内部 `visuals.CreateOrUpdate` 会读 `BuildMap.GetBuildLayerMode`）再写 PosMap。`GetBuildLayerMode` 在 PosMap 无 Shop 条目时回退 `ItemLayerMode.Alpha` → 商店以"可淡化"模式注册进 OcclusionFader，与 Normal 相悖。属生成顺序 bug（正序 bug 的同族：状态在写入前被读取）。
+- **修复**：`Scripts/2D/Gameplay/ShopNPCGenerator.cs` 将 PosMap 登记移到 `DirectBuild` 之前（`if (!PosMap.ContainsKey) PosMap[pos]=...`）。
+- **验证**：商店应保持 Normal（不注册 Occluder），玩家走到其后面不淡化。
+- **教训**：**DirectBuild 回退 Alpha 是设计上的兜底**，任何先建视觉后登记数据的路径都会踩中。排查"配了 Normal/Bottom 却淡化/未淡化"时，先确认视觉创建时刻 `GetBuildLayerMode`/`GetResourceLayerMode` 读到的数据是否已就绪（PosMap/ItemData 注册）。
+
 ## 2026-08-13 Gather 无邻居位置死循环刷屏（25k 次）
 
 - **现象**：日志中 `Gather, 没有邻居位置!` 出现 25,189 次，89% 集中在开局 20:27–20:28 两分钟。同一 worker（如"葛杉"）在 30ms 内对同一目标 `(311,411)` 重试 5+ 次，workerPos 不动：`失败 → 自主决策[SelfGather] → 创建自我采集任务 → 又失败`。

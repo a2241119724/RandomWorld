@@ -153,13 +153,16 @@ namespace LAB2D.Gameplay
             if (tile != null)
             {
                 BuildMap buildMap = Core.ServiceLocator.Get<BuildMap>();
-                buildMap.DirectBuild(shopPos, tile, true);
                 var posLAB = Vector3IntLAB.ToVector3IntLAB(shopPos);
+                // 先登记 PosMap 再建视觉：DirectBuild 内部 visuals.CreateOrUpdate 会读 GetBuildLayerMode，
+                // 若 PosMap 无 Shop 条目会回退 ItemLayerMode.Alpha，导致商店以"可淡化"模式注册进
+                // OcclusionFader，与 BuildItemData.LayerMode=Normal（不淡化）相悖（生成顺序 bug）。
                 if (!buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
                 {
                     buildMap.BuildMapDataLAB.PosMap[posLAB] = new BuildMap.BuildTileData(ShopAssetName, true);
                 }
 
+                buildMap.DirectBuild(shopPos, tile, true);
                 WalkabilityCache.UpdateCell(shopPos);
             }
 

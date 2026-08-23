@@ -69,3 +69,58 @@ MonoBehaviour:
     RelatedTaskTime:
       TaskBaseTime: 0
       CarryTaskPutDownTime: 0
+  - Id: 1200004
+    CnName: "\u6C99\u6F20\u8349"
+    Name: DesertGrass
+    Info:
+    IsStackable: 0
+    LayerMode: 1
+    Type: 12
+    EquipSlot: 0
+    RelatedTaskTime:
+      TaskBaseTime: 0
+      CarryTaskPutDownTime: 0
+  - Id: 1200005
+    CnName: "沙漠仙人掌"
+    Name: DesertCactus
+    Info:
+    IsStackable: 0
+    LayerMode: 1
+    Type: 12
+    EquipSlot: 0
+    RelatedTaskTime:
+      TaskBaseTime: 0
+      CarryTaskPutDownTime: 0
+  - Id: 1200006
+    CnName: "雪地蘑菇"
+    Name: SnowMushroom1
+    Info:
+    IsStackable: 0
+    LayerMode: 1
+    Type: 12
+    EquipSlot: 0
+    RelatedTaskTime:
+      TaskBaseTime: 0
+      CarryTaskPutDownTime: 0
+  - Id: 1200007
+    CnName: "雪地蘑菇"
+    Name: SnowMushroom2
+    Info:
+    IsStackable: 0
+    LayerMode: 1
+    Type: 12
+    EquipSlot: 0
+    RelatedTaskTime:
+      TaskBaseTime: 0
+      CarryTaskPutDownTime: 0
+  - Id: 1200008
+    CnName: "雪石"
+    Name: SnowStone
+    Info:
+    IsStackable: 0
+    LayerMode: 1
+    Type: 12
+    EquipSlot: 0
+    RelatedTaskTime:
+      TaskBaseTime: 0
+      CarryTaskPutDownTime: 0
