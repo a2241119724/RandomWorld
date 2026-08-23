@@ -59,6 +59,20 @@ Assets/
 * TaskBoard 任务板 UI 完善
 * 多人联机同步完善
 
+* 词条
+* 出租房间
+* Player Worker种植任务
+* Worker挖山任务
+* Worker结婚
+* Worker Agent
+* 楼梯碰撞器控制山体碰撞器关闭，边缘碰撞器打开可以上山
+* Animation Tile
+* 血条加入过度
+* 火把
+* 特效，闪电
+* Worker添加更多数值
+* 拾取物品动画
+
 ## 开发环境
 
 - Unity 编辑器中打开项目根目录（含本 `Assets` 文件夹）
