@@ -455,6 +455,16 @@ namespace LAB2D.Character.Worker
 
             if (this.resourceInfos.ContainsKey(resourceInfo.Id))
             {
+                // 诊断（溢出"可存=空"排查）：同 ID 叠加只加 Count 不更新 OwnerId，首个写入的 OwnerId
+                // 会"污染"该 ID 全部分类——若先收到他人悬赏物再叠加自身物品，GetDepositableCount /
+                // GetSellableSurplus 会把自身物品误判为"他人悬赏物"不可存不可卖。
+                ResourceInfo existing = this.resourceInfos[resourceInfo.Id];
+                if (existing.OwnerId != resourceInfo.OwnerId)
+                {
+                    LogProvider(
+                        $"[TaskDiag] {this.name} AddResource 同ID异Owner: id={resourceInfo.Id} 现有@{existing.OwnerId} 新@{resourceInfo.OwnerId} +{resourceInfo.Count}",
+                        LogManager.LogLevelEnum.Debug);
+                }
                 this.resourceInfos[resourceInfo.Id].Count += resourceInfo.Count;
             }
             else
@@ -493,6 +503,12 @@ namespace LAB2D.Character.Worker
                 if (this.resourceInfos.ContainsKey(need.Key))
                 {
                     this.resourceInfos[need.Key].Count -= need.Value.Count;
+                    // 扣到 0 移除字典项：残留的 Count=0 项会保留首写 OwnerId，
+                    // 下次 AddResource 同 ID 叠加时不更新 OwnerId → 污染新物品归属。
+                    if (this.resourceInfos[need.Key].Count <= 0)
+                    {
+                        this.resourceInfos.Remove(need.Key);
+                    }
                 }
                 else
                 {
@@ -515,6 +531,11 @@ namespace LAB2D.Character.Worker
             if (this.resourceInfos.ContainsKey(resourceInfo.Id))
             {
                 this.resourceInfos[resourceInfo.Id].Count -= resourceInfo.Count;
+                // 扣到 0 移除字典项（同 Dictionary 重载：防 Count=0 残留首写 OwnerId 污染）
+                if (this.resourceInfos[resourceInfo.Id].Count <= 0)
+                {
+                    this.resourceInfos.Remove(resourceInfo.Id);
+                }
             }
             else
             {
@@ -640,8 +661,8 @@ namespace LAB2D.Character.Worker
             stored.Count -= take;
             if (stored.Count <= 0) wd.Storage.Remove(id);
 
-            // 添加到身上（保持 OwnerId）
-            this.AddResource(new ResourceInfo(id, take, stored.OwnerId));
+            // 添加到身上（仓库共享物取出后归自己，避免保留仓库里的他人物归属污染背包）
+            this.AddResource(new ResourceInfo(id, take, this.GetInstanceID()));
             return take;
         }
 

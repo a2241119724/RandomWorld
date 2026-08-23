@@ -145,7 +145,18 @@ namespace LAB2D.Character.Worker.Task
             if (!isEquipped)
             {
                 // 非装备或不如身上穿的：放入背包
-                worker.AddResource(this.groundResource);
+                // 悬赏链（chainCompleteTask=ToBoard CarryTask）保留掉落物 OwnerId=发布者供交付；
+                // 普通拾取归"拾取者自己"——阻断"他人拾取采集者掉落物 → 传播采集者归属"的
+                // 污染（AddResource 同 ID 叠加不改 OwnerId，首写污染会把自用物误判为悬赏物不可存）。
+                bool isBountyChain = this.chainCompleteTask != null && this.chainCompleteTask.IsBoardMode;
+                if (isBountyChain)
+                {
+                    worker.AddResource(this.groundResource);
+                }
+                else
+                {
+                    worker.AddResource(new ResourceInfo(this.groundResource.Id, this.groundResource.Count, worker.GetInstanceID()));
+                }
             }
 
             LogProvider(
@@ -241,7 +252,7 @@ namespace LAB2D.Character.Worker.Task
                 store.Start(worker);
 
                 LogProvider(
-                    $"[TaskDiag] {worker.name} 拾取溢出(id={this.groundResource.Id} x{this.groundResource.Count}) → 先回家存{freed}个再回来拾取 pos=({posMap.x},{posMap.y})",
+                    $"[TaskDiag] {worker.name} 拾取溢出(id={this.groundResource.Id} x{this.groundResource.Count}) → 先回家存{freed}个再回来拾取 carried={worker.GetTotalCarriedCount()}/{wd.MaxResourceCount} needToFree={needToFree} pos=({posMap.x},{posMap.y})",
                     LogManager.LogLevelEnum.Debug);
                 return;
             }
@@ -280,9 +291,27 @@ namespace LAB2D.Character.Worker.Task
             // 出售也腾不出空间 → 放弃，掉落留地面 + 冷却防反复重试死循环
             wd.LastStorageOverflowTime = UnityEngine.Time.time;
             LogProvider(
-                $"[TaskDiag] {worker.name} 拾取溢出且无物可存, 放弃拾取 pos=({posMap.x},{posMap.y})",
+                $"[TaskDiag] {worker.name} 拾取溢出且无物可存, 放弃拾取 pos=({posMap.x},{posMap.y}) carried={worker.GetTotalCarriedCount()}/{wd.MaxResourceCount} needToFree={needToFree} 可存=[{FormatResourceList(deposits)}] freed={freed} 可卖=[{FormatResourceList(sellable)}] sellableCount={sellableCount} 仓库槽={wd.Storage.Count}/4",
+                LogManager.LogLevelEnum.Warning);
+
+            // 失败路径诊断：打印身上完整物品清单（id:count:ownerId）+ selfId + 仓库内容，
+            // 定位"可存=空"根因（OwnerId 污染 / 每项低于保留量 / Storage 异常）。
+            var allItems = worker.GetAllResources();
+            string itemsStr = string.Join(",", allItems.ConvertAll(r => $"{r.Id}x{r.Count}@{r.OwnerId}"));
+            string storageStr = string.Join(",", worker.GetStorageResources().ConvertAll(s => $"{s.Id}x{s.Count}@{s.OwnerId}"));
+            LogProvider(
+                $"[TaskDiag] {worker.name} 溢出无物可存 清单=[{itemsStr}] selfId={worker.GetInstanceID()} 仓库=[{storageStr}]",
                 LogManager.LogLevelEnum.Warning);
             this.GiveUpTask(worker);
+        }
+
+        /// <summary>
+        /// 格式化资源列表为日志字符串（供溢出诊断使用）。
+        /// </summary>
+        private static string FormatResourceList(List<ResourceInfo> list)
+        {
+            if (list == null || list.Count == 0) return "空";
+            return string.Join(",", list.ConvertAll(r => $"{r.Id}x{r.Count}"));
         }
 
         /// <summary>

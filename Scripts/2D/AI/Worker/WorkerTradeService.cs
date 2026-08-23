@@ -117,23 +117,21 @@ namespace LAB2D.AI.Worker
 
             int tradeCount = Mathf.Min(sellerFood.Count, 1);
             seller.SubResource(new ResourceInfo(sellerFood.Id, tradeCount));
-            buyer.AddResource(new ResourceInfo(sellerFood.Id, tradeCount, seller.GetInstanceID()));
 
             // 转账
             CurrencyAmount cost = new CurrencyAmount(price);
             buyerData.Wallet -= cost;
             sellerData.Wallet += cost;
 
-            // 买家吃下食物
-            buyer.SubResource(new ResourceInfo(sellerFood.Id, tradeCount));
+            // 买家直接吃下食物（恢复饥饿，不经背包）。食物是消耗品，原先
+            // AddResource(进背包) + SubResource(扣掉) 是多余绕圈，且首次 AddResource
+            // 的 OwnerId=卖家 会污染买家背包同 ID 物品（叠加不改 OwnerId → 自用物被
+            // 误判为他人悬赏物不可存）。
             buyerData.CurHungry = Mathf.Min(buyerData.MaxHungry, buyerData.CurHungry + Constant.WorkerConditionConstant.HungryRestorePerFood);
 
             // 人格更新
             buyerData.Personality = buyerData.Personality.AfterSpendGold(price);
             sellerData.Personality = sellerData.Personality.AfterEarnGold(price);
-
-            // 所有权转移：食物现在是买家的
-            // (已经通过 AddResource + SubResource 处理)
 
             // 好感度：交易成功，buyer→seller 好感上升（买方幅度大，卖方小）
             Core.ServiceLocator.Get<FavorabilityManager>()?.ModifyFavorability(buyer, seller.GetInstanceID(), FavorabilityConstant.TradeSuccessBuyerDelta, "交易成功");

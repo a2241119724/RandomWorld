@@ -28,7 +28,7 @@ MonoBehaviour:
     - Name: CustomWood
       ResourceInfo:
         Id: 300000
-        Count: 50
+        Count: 10
         OwnerId: -118186
   - Name: Mountain
     DropItems:

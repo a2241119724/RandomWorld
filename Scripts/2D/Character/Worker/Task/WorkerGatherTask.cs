@@ -104,7 +104,10 @@ namespace LAB2D.Character.Worker.Task
                 return;
             }
 
-            // 悬赏任务：OwnerId=发布者；普通任务：OwnerId=采集者
+            // 悬赏任务：掉落物 OwnerId=发布者（供 ToBoard 定向交付）；普通任务：OwnerId=采集者。
+            // 掉落物归属保留（Worker 的物归 Worker，防他人抢捡）；污染阻断点在"进背包"：
+            // 拾取/搬运掉落物时统一归"拾取者自己"（见 WorkerPickUpTask/WorkerCarryTask），
+            // 防止"他人拾取采集者掉落物 → 传播采集者归属 → 叠加污染自用物"。
             bool isBounty = AWorkerTask.IsBountyExecution;
             int workerId = isBounty
                 ? AWorkerTask.BountyOwnerOverride
@@ -125,7 +128,7 @@ namespace LAB2D.Character.Worker.Task
             // 采摘掉落木头,苹果
             for (int i = 0; i < dropItems.Count; i++)
             {
-                // 设置所有权：采集所得归采集者
+                // 设置所有权：采集所得归采集者（悬赏=发布者）
                 dropItems[i].ResourceInfo.OwnerId = workerId;
 
                 // 统一放置掉落物到地面

@@ -141,7 +141,11 @@ namespace LAB2D.Character.Worker.Task
                         Vector3Int pos = this.batchPickupPositions[i];
                         ResourceInfo ri = this.batchResources[i];
                         ItemMapProvider().PickUpFromDrop(pos, ri);
-                        worker.AddResource(ri);
+                        // 悬赏物（ToBoard）保留 OwnerId=发布者供交付；普通搬运（ToInventory）归"执行者自己"
+                        // ——阻断他人归属传播污染（见 WorkerPickUpTask 同注释）
+                        worker.AddResource(this.IsBoardMode
+                            ? ri
+                            : new ResourceInfo(ri.Id, ri.Count, worker.GetInstanceID()));
 
                         if (this.mode == CarryMode.ToInventory)
                         {
@@ -161,7 +165,10 @@ namespace LAB2D.Character.Worker.Task
                     // 单物品模式：拾取一个物品
                     Vector3Int pickUpPos = Vector3IntLAB.ToVector3Int(this.TargetMap);
                     ItemMapProvider().PickUpFromDrop(pickUpPos, this.resourceInfo);
-                    worker.AddResource(this.resourceInfo);
+                    // 悬赏物（ToBoard）保留 OwnerId=发布者供交付；普通搬运（ToInventory）归"执行者自己"
+                    worker.AddResource(this.IsBoardMode
+                        ? this.resourceInfo
+                        : new ResourceInfo(this.resourceInfo.Id, this.resourceInfo.Count, worker.GetInstanceID()));
 
                     this.carriedResources = new List<ResourceInfo> { this.resourceInfo };
 
@@ -334,6 +341,9 @@ namespace LAB2D.Character.Worker.Task
                     return InventoryProvider().IsEnoughAndPrePlace(worker, this.resourceInfo);
             }
         }
+
+        /// <summary>是否搬运到任务栏（悬赏交付）。ToBoard 拾取时保留掉落物 OwnerId=发布者。</summary>
+        public bool IsBoardMode => this.mode == CarryMode.ToBoard;
 
         /// <inheritdoc/>
         public override int OwnerWorkerId => this.mode == CarryMode.ToBoard ? this.targetWorkerId : 0;

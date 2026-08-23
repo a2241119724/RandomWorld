@@ -417,3 +417,40 @@
 - **修复**：`generate_rule_set` 首轮解析/校验为空时调用新增 `_complete_rules(schema_keys)`（与 `_complete_labels` 同款：同会话追问「只输出规则 JSON 对象本身，不要任何解释、计划、开头语」，最多 3 轮，`_wait_reply` timeout=90），拿到合法规则即返回；仍拿不到才走外层重试。成功打印行 `len(parsed)` 改 `len(valid)`（追问路径下外层 parsed 为 None，`len(None)` 会抛异常并丢弃已追问成功的 19 条规则）。
 - **验证**：实测重跑 `--gen-rules`：wenxin 首轮惰性输出 → 追问补全产出 19 条合法规则（日志「追问补全规则 19 条」），`len(None)` 修复后不再抛异常、规则正常写入。
 - **教训**：**同一惰性输出问题，两个入口（打标/规则生成）要成对修**——补丁只修了一个路径，另一路径复现时容易被当成「新问题」重复排查。出现「输出规划/元话语而不是内容本体」的惰性模式时，先 grep 所有解析入口，逐一对齐追问兜底。
+
+## 2026-08-23 拾取溢出"无物可存"直接放弃：建房后身上"多种少量"建材每项低于入仓保留量，掉落永留地面
+
+- **现象**：用户报告"拾取数量超过空闲空间 → 不拾取 → Worker 去仓库放物品 → 该掉落永不被拾取、任务被丢弃"。日志：`拾取溢出且无物可存, 放弃拾取` 几十次（王保/罗和泰/邬彪等），同一位置每 12-13s（>10s 冷却）反复重试；`放弃任务 type=PickUp` 26 次 vs `从地面捡起` 238 次。
+- **根因**：
+  1. **数值失衡（直接诱因）**：`DropItemDataSO.asset` Default 组砍树一次掉 **CustomWood×50**，而建房每格默认只需 CustomWood×5（`GetBuildMaterialNeeds` 兜底；所有 Build SO 的 BuildCosts 均为空）。一次砍树 = 10 格墙的材料，Worker 捡 3-4 次就 150+/200 接近上限。
+  2. **无物可存机制**：`GetDepositableCount` 只收集"超保留量"部分（材料 4%Max=8、消耗品 2.5%Max=5），`GetSellableSurplus` 同口径（且建房目标材料完全排除）。王保建房（19 墙+门+床+4 仓库）后身上剩"多种少量"建材，每种 ≤ 保留量 → 溢出时 `freed < needToFree` → `TryRedirectOverflowToStorage` 直接放弃。铁证：王保 03:30:13 存仓库只存了血瓶×5（165→160），证明可存超额 < 10。
+  3. 放弃后掉落留地面 → `LastStorageOverflowTime` 冷却 10s → 决策层重新选中 → 又溢出 → 循环。物品永不被拾取。
+- **修复**（用户选定预防方向，非溢出兜底）：
+  - `Resources/SO/DropItemDataSO.asset`：砍树 CustomWood Count 50→10（一次砍树 ≈ 5 格墙材料）。
+  - `WorkerBrain.GetBuildMaterialNeeds`：默认建房材料 CustomWood×5→×2。
+  - 效果：Worker 单次采集量从 52 降到 12，捡 16 次才满（200/12），溢出频率降一个数量级。
+- **验证**：重跑游戏，观察 `拾取溢出且无物可存, 放弃拾取` 应基本消失；王保类建房 Worker 身上携带应在采集与建房间良性循环，不再堆到近满。溢出路径已加诊断日志（`carried/Max needToFree 可存=[...] freed 可卖=[...] sellableCount 仓库槽`），若残余溢出仍出现，用日志确认构成。
+- **教训**：
+  - **掉落数量与单次消耗的数量级必须匹配**：一次砍树 = 10 格墙材料，导致 Worker 采集 3-4 次就背包近满。数值设计时掉落量应 ≈ 单位消耗量（或略高），否则 Worker 背上大量"暂时用不完"的物资。
+  - **"溢出腾空间"依赖"超额可存"，而保留量规则让"多种少量"状态无解**：建房/消耗后身上每种材料都 ≤ 保留量，总量却接近上限——溢出时 `GetDepositableResources`/`GetSellableSurplus` 都只给超额部分，腾不出空间。这是容量语义的盲区：保留量保护了"单种够用"，但没保护"总量溢出时能腾挪"。若后续仍需兜底，可让溢出场景突破保留量（每种最低留 1）。
+
+## 2026-08-23 拾取溢出"可存=空"根因确认：OwnerId 归属污染（普通掉落物携带采集者归属，拾取后污染自用物品）
+
+- **现象**：数值调整（掉落 50→10、建房 5→2）生效后溢出仍发生（10 分钟 6 次），失败日志 `可存=空` 异常——钱广 carried=200/200 但 `GetDepositableResources` 返回空。用户反馈"没有根本解决"。
+- **根因（`AWorker.AddResource` 叠加不更新 OwnerId 的首写污染）**：
+  1. 背包 `resourceInfos` 按 Id 合并物品，OwnerId 由**首个写入**决定且叠加时**只加 Count 不改 OwnerId**（AWorker.cs:449）。
+  2. 普通采集掉落物 `OwnerId=采集者`（WorkerGatherTask 旧逻辑）。掉落物留在地面后（采集者死亡掉落 / 中途放弃 / 被他人搬运），**任何工人拾取都原样保留掉落者 OwnerId**（`WorkerCarryTask` ToInventory、`WorkerPickUpTask` FromGround 直接 `AddResource(ri)`）。
+  3. 拾到他人归属物后，工人自己再采集同 Id 物品 → 叠加 → **自己的物品被判为"他人悬赏物"**。`GetDepositableCount`/`GetSellableSurplus` 排除 `OwnerId != 0 && OwnerId != self` → 溢出时可存=空 → 放弃拾取。
+  4. 铁证：酆清瑜(-9274) 17:42:11 生成，17:42:12 接近秦明(-9436)，17:43:03 起苹果与木头都已带 OwnerId=-9436；`AddResource 同ID异Owner` 390 次全为 300000/500000（木头/苹果）。附加污染源：交易 `buyer.AddResource(食物, OwnerId=卖家)` 立即吃掉后 Count=0 残留项保留卖家 OwnerId；仓库取物 `WithdrawFromStorage` 保留仓库里他人物归属。
+- **修复（用户确认完整修复）**：阻断点在"进背包"——拾取/搬运掉落物时统一归**拾取者自己**（保持"Worker 的物归 Worker"），悬赏物（ToBoard）保留发布者归属。第一版曾把普通物归 0，会把 Worker 自采物品误标为 Player 无主（用户反馈"拥有者怎么都是 0,Player 了"），已撤销改为归自己：
+  - `WorkerPickUpTask.FinishFromGround`：普通拾取 `AddResource` 归 **`worker.GetInstanceID()`**；**悬赏链**（`chainCompleteTask` 为 ToBoard CarryTask）保留 OwnerId=发布者。
+  - `WorkerCarryTask`：新增 `IsBoardMode`；ToInventory 拾取归**执行者自己**，ToBoard 保留。`SelfCarry`/`FromBoard`（悬赏物 OwnerId=自己）不受影响。
+  - `WorkerGatherTask.ProcessDrops`：**不改掉落物归属**（普通=采集者、悬赏=发布者，防他人抢捡）；污染由拾取/搬运处归"自己"阻断。
+  - `WorkerTradeService.TryBuyFood`：移除 `buyer.AddResource(食物, OwnerId=卖家)` + 立即 `SubResource` 绕圈，食物直接消耗恢复饥饿（不经背包）。
+  - `AWorker.SubResource`（两重载）：扣到 0 移除字典项，消除 Count=0 残留首写 OwnerId。
+  - `AWorker.WithdrawFromStorage`：仓库取物归自己。
+- **验证**：重跑游戏，Worker 身上物品 OwnerId=自己（非 0/Player）；`AddResource 同ID异Owner` 应消失（或仅剩悬赏物与自身物叠加的极端边角）；溢出"可存"应非空，放弃拾取基本消失。
+- **教训**：
+  - **OwnerId 语义：掉落物保留采集者/发布者归属（防抢捡），进背包时归"拾取者自己"**。背包按 Id 合并、单一 OwnerId 无法表达"既含悬赏又含自用"的同 Id 物品——一旦他人归属进背包并叠加，自用物即被污染。阻断必须在"进背包"点（拾取/搬运/仓库取物），而非改掉落物归属。
+  - **"进背包再扣掉"的绕圈是污染温床**（交易食物），消耗品应直接消耗，不进背包。
+  - 诊断日志要在失败路径打印完整清单 `id:count@ownerId` + selfId，才能区分"保留量不足"与"OwnerId 污染"两类"可存=空"。
