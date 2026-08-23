@@ -11,14 +11,16 @@ namespace LAB2D.Map
     /// "VisualSprites" 子节点，sortingLayer=Character），使建筑/树能参与按
     /// "视觉底端世界 y" 的全局排序（WorldYSortManager）。
     /// Tilemap 本体仍承担碰撞体/寻路/数据/存档/网络，其 TilemapRenderer 由宿主
-    /// （BuildMap/ResourceMap）在 Awake 禁用，防双重渲染。
+    /// （BuildMap/ResourceMap）保持启用，负责渲染恒底层（Bottom）格的视觉；非恒底层格
+    /// 的 tile 被置透明隐藏，视觉拆到独立 SpriteRenderer（防双重渲染）。
     ///
     /// 分层模式（layerModeResolver）：可选委托按 cell 判定分层模式（ItemData.LayerMode 开关，
     /// 建筑/掉落物/资源通用）：
-    /// - Bottom：不注册 WorldYSortManager，固定 sortingOrder=WorldYSortManager.BottomLayerOrder，
-    ///   永远渲染在角色/其他建筑之下。
-    /// - Alpha：注册 WorldYSortManager 参与 y 排序，并注册 OcclusionFader（角色在后面时淡化）。
-    /// - Normal：注册 WorldYSortManager 参与 y 排序，但不注册 OcclusionFader（不淡化）。
+    /// - Bottom：不建独立 SpriteRenderer，tile 恢复不透明颜色，直接由宿主 TilemapRenderer
+    ///   渲染在地图层，永远在角色/其他建筑之下。
+    /// - Alpha：tile 透明隐藏，独立 sprite 注册 WorldYSortManager 参与 y 排序，
+    ///   并注册 OcclusionFader（角色在后面时淡化）。
+    /// - Normal：tile 透明隐藏，独立 sprite 参与 y 排序，但不注册 OcclusionFader（不淡化）。
     ///
     /// 幂等约束：
     /// - CreateOrUpdate 以 tilemap 当前状态为准（GetSprite/GetColor/GetTransformMatrix）；
@@ -38,6 +40,7 @@ namespace LAB2D.Map
         private readonly string objectNamePrefix;
         private readonly Material material; // tile 视觉材质（复制宿主 TilemapRenderer，保证拆分后仍接收 2D Light）
         private readonly System.Func<Vector3Int, ItemLayerMode> layerModeResolver; // 非空时按 cell 判定分层模式（SO 开关）
+        private readonly System.Func<Vector3Int, Color> colorProvider; // 非空时提供该格视觉应显示的颜色（如 BuildMap 建造中状态色）
         private readonly bool useTilemapColor; // false 时 SpriteRenderer 颜色强制白色（不读 tilemap 颜色）
         private readonly Dictionary<Vector3Int, SpriteRenderer> visual = new Dictionary<Vector3Int, SpriteRenderer>();
 
@@ -47,16 +50,22 @@ namespace LAB2D.Map
         /// <param name="sortingLayerName">视觉 sprite 所在 sorting layer（须与角色同层才能交叉排序）。</param>
         /// <param name="objectNamePrefix">视觉对象命名前缀（如 "BuildVisual"）。</param>
         /// <param name="layerModeResolver">可选：按 cell 判定分层模式（如 ItemData.LayerMode）。
-        /// Bottom=固定最底层；Alpha=参与 y 排序且淡化；Normal=参与 y 排序不淡化；null 默认 Alpha（参与 y 排序且淡化）。</param>
+        /// Bottom=恒底层不建独立 sprite、直接由 TilemapRenderer 渲染；Alpha=参与 y 排序且淡化；
+        /// Normal=参与 y 排序不淡化；null 默认 Alpha（参与 y 排序且淡化）。</param>
+        /// <param name="colorProvider">可选：提供该格视觉应显示的颜色（含状态色，如 BuildMap 建造中半透明）；
+        /// null 时 Bottom tile 恢复白色、非 Bottom sprite 按 useTilemapColor 决定。</param>
         /// <param name="useTilemapColor">true 时 SpriteRenderer 颜色跟随 tilemap 颜色；false 时强制白色
-        /// （ItemMap 非恒底层 tile 用透明隐藏 TilemapRenderer 双重渲染，拆出视觉需不透明）。</param>
+        /// （非恒底层 tile 用透明隐藏 TilemapRenderer 双重渲染，拆出视觉需不透明）。</param>
         public TileVisualSpawner(Tilemap tilemap, Transform hostTransform, string sortingLayerName, string objectNamePrefix,
-            System.Func<Vector3Int, ItemLayerMode> layerModeResolver = null, bool useTilemapColor = true)
+            System.Func<Vector3Int, ItemLayerMode> layerModeResolver = null,
+            System.Func<Vector3Int, Color> colorProvider = null,
+            bool useTilemapColor = true)
         {
             this.tilemap = tilemap;
             this.sortingLayerName = sortingLayerName;
             this.objectNamePrefix = objectNamePrefix;
             this.layerModeResolver = layerModeResolver;
+            this.colorProvider = colorProvider;
             this.useTilemapColor = useTilemapColor;
             this.material = ResolveMaterial(tilemap);
             this.parent = new GameObject(ParentName).transform;
@@ -104,27 +113,35 @@ namespace LAB2D.Map
                 return null;
             }
 
+            // 统一前置：解除 LockColor，否则 SetColor 不生效（收敛各 Map 层 ApplyTileVisual 的做法）
+            this.tilemap.RemoveTileFlags(cell, TileFlags.LockColor);
+
+            ItemLayerMode mode = this.layerModeResolver != null ? this.layerModeResolver(cell) : ItemLayerMode.Alpha;
+            if (mode == ItemLayerMode.Bottom)
+            {
+                // 恒底层（SO 开关）：不建独立 SpriteRenderer，直接由宿主 TilemapRenderer 渲染在地图层。
+                // tile 恢复该格应显示的颜色（colorProvider 状态色 / 默认白），并清残留 sprite。
+                this.tilemap.SetColor(cell, this.colorProvider != null ? this.colorProvider(cell) : Color.white);
+                this.Delete(cell);
+                return null;
+            }
+
+            // 非恒底层：tile 透明隐藏 TilemapRenderer（避免双重渲染，数据/碰撞/存档保留），
+            // 视觉由独立 SpriteRenderer 呈现。
+            this.tilemap.SetColor(cell, new Color(1f, 1f, 1f, 0f));
+
             if (!this.visual.TryGetValue(cell, out SpriteRenderer sr))
             {
                 GameObject go = new GameObject(this.NameOf(cell));
                 go.transform.SetParent(this.parent, false);
                 sr = go.AddComponent<SpriteRenderer>();
                 sr.sortingLayerName = this.sortingLayerName;
-                ItemLayerMode mode = this.layerModeResolver != null ? this.layerModeResolver(cell) : ItemLayerMode.Alpha;
-                if (mode == ItemLayerMode.Bottom)
+                sr.sortingOrder = 0; // 每帧由 WorldYSortManager 统一分配
+                WorldYSortManager.Ensure().Register(sr);
+                if (mode == ItemLayerMode.Alpha)
                 {
-                    // 恒底层（SO 开关）：不参与 y 排序，固定最底层（角色/其他建筑永远盖在其上）
-                    sr.sortingOrder = WorldYSortManager.BottomLayerOrder;
-                }
-                else
-                {
-                    sr.sortingOrder = 0; // 每帧由 WorldYSortManager 统一分配
-                    WorldYSortManager.Ensure().Register(sr);
-                    if (mode == ItemLayerMode.Alpha)
-                    {
-                        // 遮挡淡化：仅 Alpha 层注册为候选遮挡物（玩家走到其后变半透明）
-                        OcclusionFader.Ensure().AddOccluder(sr);
-                    }
+                    // 遮挡淡化：仅 Alpha 层注册为候选遮挡物（玩家走到其后变半透明）
+                    OcclusionFader.Ensure().AddOccluder(sr);
                 }
 
                 if (this.material != null)
@@ -145,9 +162,10 @@ namespace LAB2D.Map
                 sr.sprite = sprite;
             }
 
-            // 颜色：默认跟随 tilemap.SetColor（建造中半透明/完成白色）；
-            // useTilemapColor=false 时强制白色（ItemMap 非恒底层 tile 用透明隐藏 TilemapRenderer 渲染）
-            Color color = this.useTilemapColor ? this.tilemap.GetColor(cell) : Color.white;
+            // 颜色：colorProvider 优先（状态色，如 BuildMap 建造中半透明）；否则 useTilemapColor
+            // 跟随 tilemap 颜色 / 强制白色（非恒底层 tile 已置透明，独立 sprite 需不透明）。
+            Color color = this.colorProvider != null ? this.colorProvider(cell)
+                : (this.useTilemapColor ? this.tilemap.GetColor(cell) : Color.white);
             if (sr.color != color)
             {
                 sr.color = color;

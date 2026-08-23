@@ -43,16 +43,20 @@ namespace LAB2D.Map
         {
             base.Awake();
             Instance = this;
-            // 建筑视觉已拆分到独立 SpriteRenderer（Character 层参与 y 排序），
-            // 禁用 TilemapRenderer 防双重渲染。碰撞体由 TilemapCollider2D 从数据生成，
-            // 与 Renderer 无关，IsCanReach（GetColliderType）不受影响。
+            // 建筑视觉混合模式：
+            // - 恒底层建筑（BuildItemData.LayerMode=Bottom）：由 TilemapRenderer 直接渲染在地图层，
+            //   不创建 BuildVisual_*（TilemapRenderer 保持启用）。
+            // - 非恒底层建筑：tile 保留数据/碰撞，颜色透明隐藏 TilemapRenderer 双重渲染，
+            //   由独立 SpriteRenderer（Character 层 BuildVisual_*）参与 y 排序。
+            // 碰撞体由 TilemapCollider2D 从数据生成，与 Renderer 无关，IsCanReach（GetColliderType）不受影响。
             TilemapRenderer renderer = this.GetComponent<TilemapRenderer>();
             if (renderer != null)
             {
-                renderer.enabled = false;
+                renderer.enabled = true;
             }
 
-            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "BuildVisual", this.GetBuildLayerMode);
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "BuildVisual",
+                this.GetBuildLayerMode, colorProvider: this.GetBuildVisualColor);
         }
 
         public void Start()
@@ -382,6 +386,24 @@ namespace LAB2D.Map
 
             BuildItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
             return item != null ? item.LayerMode : ItemLayerMode.Alpha;
+        }
+
+        /// <summary>
+        /// 该格建筑应显示的颜色（状态色）：完成→白；建造中→initColor 半透明；无数据→白。
+        /// 供 TileVisualSpawner 的 colorProvider 使用（Bottom 格 tile 与独立 sprite 均以此显示，
+        /// 因非恒底层 tile 已被透明隐藏、不再承载状态色）。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>该格建筑的状态色。</returns>
+        private Color GetBuildVisualColor(Vector3Int cell)
+        {
+            BuildTileData data = this.GetBuildTileData(cell);
+            if (data == null)
+            {
+                return Color.white;
+            }
+
+            return data.IsComplete ? Color.white : this.initColor;
         }
 
         /// <summary>

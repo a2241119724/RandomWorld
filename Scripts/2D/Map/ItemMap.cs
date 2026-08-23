@@ -100,9 +100,9 @@ namespace LAB2D.Map
 
             this.ItemMapDataLAB.Add(posMap, tileBase.name);
             this.tilemap.SetTile(posMap, tileBase);
-            // 视觉分流：恒底层由 TilemapRenderer 渲染在 Map 上；非恒底层单独建 SpriteRenderer 参与 y 排序
-            // （解除 LockColor 与 SetColor 统一在 ApplyTileVisual 内处理）
-            this.ApplyTileVisual(posMap);
+            // 视觉分流（TileVisualSpawner 内建）：恒底层由 TilemapRenderer 渲染在 Map 上；
+            // 非恒底层单独建 SpriteRenderer 参与 y 排序（解除 LockColor 与 SetColor 统一在 CreateOrUpdate 内处理）
+            this.visuals?.CreateOrUpdate(posMap);
             this.SyncSender.Broadcast("SyncDataResp", DataTool.ToByteArray(Vector3IntLAB.ToVector3IntLAB(posMap)), tileBase.name);
         }
 
@@ -162,7 +162,7 @@ namespace LAB2D.Map
             {
                 Vector3Int pos = Vector3IntLAB.ToVector3Int(enumerator.Current.Key);
                 this.tilemap.SetTile(pos, (TileBase)AWorkerTask.ResourceLoadProvider(enumerator.Current.Value));
-                this.ApplyTileVisual(pos);
+                this.visuals?.CreateOrUpdate(pos);
             }
         }
 
@@ -186,7 +186,7 @@ namespace LAB2D.Map
             }
 
             this.tilemap.SetTile(vector3Int, (TileBase)AWorkerTask.ResourceLoadProvider(tileBaseName));
-            this.ApplyTileVisual(vector3Int);
+            this.visuals?.CreateOrUpdate(vector3Int);
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
@@ -268,39 +268,6 @@ namespace LAB2D.Map
 
             ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
             return item != null ? item.LayerMode : ItemLayerMode.Bottom;
-        }
-
-        /// <summary>
-        /// 按该格物品 LayerMode 分流视觉：
-        /// 恒底层 → 由 ItemMap TilemapRenderer 直接渲染（恢复白色，不建 ItemVisual_*）；
-        /// 非恒底层 → tilemap 颜色透明隐藏（避免 TilemapRenderer 双重渲染，数据/碰撞保留），
-        ///            单独建 SpriteRenderer（ItemVisual_*）参与 y 排序。
-        /// </summary>
-        /// <param name="cell">地图坐标。</param>
-        private void ApplyTileVisual(Vector3Int cell)
-        {
-            if (!this.tilemap.HasTile(cell))
-            {
-                this.visuals?.Delete(cell);
-                return;
-            }
-
-            // 先解除 LockColor：否则 SetColor 不生效，非恒底层 tile 的透明隐藏会失败
-            // （BuildMap/ResourceMap 同款前置写法）
-            this.tilemap.RemoveTileFlags(cell, TileFlags.LockColor);
-
-            if (this.GetItemLayerMode(cell) == ItemLayerMode.Bottom)
-            {
-                // 恒底层：恢复颜色由 TilemapRenderer 渲染在 Map 上；确保不残留 ItemVisual_*
-                this.tilemap.SetColor(cell, Color.white);
-                this.visuals?.Delete(cell);
-            }
-            else
-            {
-                // 非恒底层：tilemap 透明隐藏（数据/碰撞保留），视觉由独立 SpriteRenderer 呈现
-                this.tilemap.SetColor(cell, new Color(1f, 1f, 1f, 0f));
-                this.visuals?.CreateOrUpdate(cell);
-            }
         }
 
         /// <summary>

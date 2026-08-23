@@ -51,25 +51,30 @@ namespace LAB2D.Map
             this.resourceTileMapOne = LAB2D.Tool.Tool.GetComponentInChildren<Tilemap>(this.transform.parent.gameObject, "ResourceMapOne");
             this.ResourceMapDataLAB = new ResourceMapData(0, 100);
 
-            // 树/资源视觉已拆分到独立 SpriteRenderer（Character 层参与 y 排序），
-            // 禁用两个 TilemapRenderer 防双重渲染。碰撞体由 TilemapCollider2D 从数据生成，
-            // 与 Renderer 无关，IsCanReach（GetColliderType）不受影响。
+            // 资源视觉混合模式：
+            // - 恒底层资源（ItemData.LayerMode=Bottom）：由 TilemapRenderer 直接渲染在地图层，
+            //   不创建 TreeVisual_*（两个 TilemapRenderer 保持启用）。
+            // - 非恒底层资源：tile 保留数据/碰撞，颜色透明隐藏 TilemapRenderer 双重渲染，
+            //   由独立 SpriteRenderer（Character 层 TreeVisual_*/TreeVisualOne_*）参与 y 排序。
+            // 碰撞体由 TilemapCollider2D 从数据生成，与 Renderer 无关，IsCanReach（GetColliderType）不受影响。
             TilemapRenderer renderer = this.GetComponent<TilemapRenderer>();
             if (renderer != null)
             {
-                renderer.enabled = false;
+                renderer.enabled = true;
             }
 
-            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "TreeVisual", this.GetResourceLayerMode);
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "TreeVisual",
+                this.GetResourceLayerMode, useTilemapColor: false);
             if (this.resourceTileMapOne != null)
             {
                 TilemapRenderer rendererOne = this.resourceTileMapOne.GetComponent<TilemapRenderer>();
                 if (rendererOne != null)
                 {
-                    rendererOne.enabled = false;
+                    rendererOne.enabled = true;
                 }
 
-                this.visualsOne = new TileVisualSpawner(this.resourceTileMapOne, this.transform, "Character", "TreeVisualOne", this.GetResourceLayerMode);
+                this.visualsOne = new TileVisualSpawner(this.resourceTileMapOne, this.transform, "Character", "TreeVisualOne",
+                    this.GetResourceLayerMode, useTilemapColor: false);
                 this.visualsOne.RebuildAll(); // 静态场景装饰，一次性建视觉
             }
         }
