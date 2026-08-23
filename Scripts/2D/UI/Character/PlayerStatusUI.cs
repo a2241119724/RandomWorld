@@ -9,6 +9,7 @@ namespace LAB2D.UI.Character
 
     /// <summary>
     /// 玩家状态 UI — 通过 EventBus 订阅 PlayerStatusChangedEvent 实现解耦更新。
+    /// HP/MP/经验条走 BarValueTransition 过渡播放队列，文字保持瞬时更新。
     /// </summary>
     public class PlayerStatusUI : MonoBehaviour
     {
@@ -19,12 +20,18 @@ namespace LAB2D.UI.Character
         private Slider barHp;
         private Slider barMp;
         private Slider barLevel;
+        private BarValueTransition hpTransition;
+        private BarValueTransition mpTransition;
+        private BarValueTransition levelTransition;
 
         public static PlayerStatusUI Instance { get; private set; }
 
         public void Awake()
         {
             Instance = this;
+
+            // 引用解析放在 Subscribe 之前：消除"事件在引用解析前到达导致 NRE"的竞态。
+            this.ResolveReferences();
             ServiceLocator.Get<EventBus>().Subscribe<PlayerStatusChangedEvent>(this.OnPlayerStatusChanged);
         }
 
@@ -39,12 +46,19 @@ namespace LAB2D.UI.Character
             this.mp.text = $"{e.Mp}/{e.MaxMp} ";
             this.level.text = $" Level:{e.Level}";
             this.experience.text = $"{e.CurExperience}/{e.MaxExperience} ";
-            this.barHp.value = e.Hp / e.MaxHp;
-            this.barMp.value = e.Mp / (float)e.MaxMp;
-            this.barLevel.value = e.CurExperience / (float)e.MaxExperience;
+            this.hpTransition?.SetTarget(MathHelper.GetSafeRatio(e.Hp, e.MaxHp));
+            this.mpTransition?.SetTarget(MathHelper.GetSafeRatio(e.Mp, e.MaxMp));
+            this.levelTransition?.SetTarget(MathHelper.GetSafeRatio(e.CurExperience, e.MaxExperience));
         }
 
-        private void OnEnable()
+        public void Update()
+        {
+            this.hpTransition?.Tick(Time.deltaTime);
+            this.mpTransition?.Tick(Time.deltaTime);
+            this.levelTransition?.Tick(Time.deltaTime);
+        }
+
+        private void ResolveReferences()
         {
             this.hp = this.transform.Find("State/Hp/Value").GetComponent<Text>();
             if (this.hp == null)
@@ -94,6 +108,19 @@ namespace LAB2D.UI.Character
                 AWorkerTask.LogProvider("Level/Bar Not Found!!!", LogManager.LogLevelEnum.Error);
                 return;
             }
+
+            this.hpTransition = new BarValueTransition(
+                () => this.barHp.value,
+                value => this.barHp.value = value,
+                duration: 0.3f);
+            this.mpTransition = new BarValueTransition(
+                () => this.barMp.value,
+                value => this.barMp.value = value,
+                duration: 0.3f);
+            this.levelTransition = new BarValueTransition(
+                () => this.barLevel.value,
+                value => this.barLevel.value = value,
+                duration: 0.4f);
         }
     }
 }
