@@ -470,3 +470,17 @@
   - **OwnerId 语义：掉落物保留采集者/发布者归属（防抢捡），进背包时归"拾取者自己"**。背包按 Id 合并、单一 OwnerId 无法表达"既含悬赏又含自用"的同 Id 物品——一旦他人归属进背包并叠加，自用物即被污染。阻断必须在"进背包"点（拾取/搬运/仓库取物），而非改掉落物归属。
   - **"进背包再扣掉"的绕圈是污染温床**（交易食物），消耗品应直接消耗，不进背包。
   - 诊断日志要在失败路径打印完整清单 `id:count@ownerId` + selfId，才能区分"保留量不足"与"OwnerId 污染"两类"可存=空"。
+
+## 2026-08-24 背包初始填充 asset not found 刷屏（背包简化引入）
+- **现象**：开局 `BackpackController.Awake → GenBackpackItems` 期间 Console 连续刷 `Torch asset not found!!!` / `Seed1~Seed14 asset not found!!!` 等 Error。
+- **根因**：背包实例化简化为"所有 Backpack SO 物品进背包"后，初始填充数量大增；`GetBackpackItemByName`（ItemInstanceFactory.cs:47）**无条件** `item.Tile = GetAsset(name)`：
+  1. `GetAsset` 是 Error 级日志（ResourceManager.cs:216），无对应 tile 资源的物品（Torch/Seed1~14）逐件刷屏；
+  2. **无条件覆盖**子类构造函数已设置的 `Tile`（AddHp/CustomWood/CustomStone/Apple 构造里 `this.Tile = GetAsset("...")`）——若 `GetAsset(name)` 返回 null 会清空子类已设的 Tile。
+- **修复**：
+  - `ResourceManager` 新增 `TryGetAsset`（`assetDic.TryGetValue` 失败返回 null，**不打日志**）。
+  - `GetBackpackItemByName`：`if (item.Tile == null) item.Tile = TryGetAsset(name)`——子类已设 Tile 不覆盖；无 tile 资源不打日志，Tile 保持 null。
+- **验证**：编译后开局无 `asset not found` 刷屏；AddHp 等仍保留构造函数设置的 Tile；Torch/Seed 等 Tile=null 不影响背包显示（UI 图标走 `GetImage`）。
+- **教训**：
+  - **可选资源查询用无日志变体（TryGetAsset），强制语义（必须有）才用 Error 级 GetAsset**。Tile 对背包物品只是"掉落/放置时"才需要的可选元数据。
+  - **`Activator.CreateInstance` 后不应无条件覆盖子类构造已初始化的字段**——先判空。
+  - 批量初始填充会放大单件日志成本（每物品×1 条），可选资源缺失必须静默。

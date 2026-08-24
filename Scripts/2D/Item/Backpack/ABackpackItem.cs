@@ -9,7 +9,7 @@ namespace LAB2D.Item.Backpack
     /// 背包道具
     /// </summary>
     [Serializable]
-    public abstract class ABackpackItem : AItem
+    public class ABackpackItem : AItem
     {
         /// <summary>
         /// 瓦片
@@ -22,7 +22,7 @@ namespace LAB2D.Item.Backpack
         /// </summary>
         public BackpackItemQualityEnum Quality;
 
-        protected ABackpackItem()
+        public ABackpackItem()
         {
             this.Quality = BackpackItemQualityEnum.Gray;
         }

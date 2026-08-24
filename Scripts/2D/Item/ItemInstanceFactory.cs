@@ -44,7 +44,12 @@ namespace LAB2D.Item
             item.Id = Core.ServiceLocator.Get<ItemDataManager>().GetByName(name).Id;
             item.Quantity = 1;
             item.Uid = this.uid++;
-            item.Tile = Core.ServiceLocator.Get<ResourceManager>().GetAsset(name);
+            // Tile 对背包物品可选：子类构造函数已设置 Tile（如 AddHp/CustomWood）则不覆盖；
+            // 未设置时宽容获取（无对应 tile 资源不打日志，保持 null 供掉落路径自行处理）。
+            if (item.Tile == null)
+            {
+                item.Tile = Core.ServiceLocator.Get<ResourceManager>().TryGetAsset(name);
+            }
 
             if (item is AEquipment equip && Core.ServiceLocator.Get<ItemDataManager>().IdToType(item.Id) == AItem.ItemTypeEnum.Equipment)
             {
@@ -99,39 +104,57 @@ namespace LAB2D.Item
             return this.buildItems.Values.ToList<AItem>();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// 初始化背包物品实例类型表。
+        /// 简化规则：遍历所有背包 SO 物品——有对应 C# 类（ABackpackItem 子类，类名==Name）用自定义类，
+        /// 没有则用默认类（装备→CommonEquipment，其余→ABackpackItem 默认实现），无需为每件物品建类。
+        /// </summary>
         public void InitItemInstances(List<ItemData> itemDatas)
         {
-            // 装备(不包含武器)
+            // 第一步：反射登记自定义类表（key=类名）。默认类（CommonEquipment）不参与覆盖。
+            Dictionary<string, Type> customTypes = new Dictionary<string, Type>();
+            foreach (Type type in LAB2D.Tool.Tool.GetChildByParent<ABackpackItem>())
+            {
+                if (type == typeof(CommonEquipment))
+                {
+                    continue;
+                }
+
+                customTypes[type.Name] = type;
+            }
+
+            // 第二步：以 SO 为准遍历所有背包物品——有类用自定义类，没类用默认类。
+            this.backpackItemTypes.Clear();
             foreach (ItemData itemData in itemDatas)
             {
-                if (itemData.Type == AItem.ItemTypeEnum.Equipment)
+                if (itemData == null)
                 {
-                    this.backpackItemTypes.Add(itemData.Name, typeof(CommonEquipment));
+                    continue;
                 }
+
+                Type resolvedType = itemData.Type == AItem.ItemTypeEnum.Equipment
+                    ? typeof(CommonEquipment)
+                    : typeof(ABackpackItem);
+                if (customTypes.TryGetValue(itemData.Name, out Type customType))
+                {
+                    resolvedType = customType;
+                }
+
+                this.backpackItemTypes[itemData.Name] = resolvedType;
             }
 
-            // 非装备(包含武器) — 反射扫描 ABuildItem 子类
-            List<Type> types = LAB2D.Tool.Tool.GetChildByParent<ABackpackItem>();
-            foreach (Type type in types)
+            // 第三步：兜底——反射到但 SO 无对应条目的自定义类也进背包（保持原行为：有类即可入包）。
+            foreach (KeyValuePair<string, Type> custom in customTypes)
             {
-                if (this.backpackItemTypes.ContainsKey(type.Name))
+                if (!this.backpackItemTypes.ContainsKey(custom.Key))
                 {
-                    // 装备类覆盖CommonEquipment
-                    this.backpackItemTypes[type.Name] = type;
-                }
-                else
-                {
-                    this.backpackItemTypes.Add(type.Name, type);
+                    this.backpackItemTypes.Add(custom.Key, custom.Value);
                 }
             }
-
-            // 移除CommonEquipment, 因为CommonEquipment是所有装备的基类
-            this.backpackItemTypes.Remove(typeof(CommonEquipment).Name);
 
             // ========== 建造物品 — 新逻辑 ==========
             // 第一步：反射扫描有特殊行为的 ABuildItem 子类
-            types = LAB2D.Tool.Tool.GetChildByParent<ABuildItem>();
+            List<Type> types = LAB2D.Tool.Tool.GetChildByParent<ABuildItem>();
             foreach (Type type in types)
             {
                 Type[] interfaces = type.GetInterfaces();

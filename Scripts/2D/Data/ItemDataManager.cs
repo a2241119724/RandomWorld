@@ -49,7 +49,7 @@ namespace LAB2D.Data
             }
 
             itemTypes = AItem.Ranges["Backpack"];
-            List<ItemData> equipmentData = null;
+            List<ItemData> backpackItemDatas = new();
             for (int type = (int)itemTypes[0]; type <= (int)itemTypes[1]; type++)
             {
                 string itemType = ((AItem.ItemTypeEnum)type).ToString();
@@ -64,12 +64,7 @@ namespace LAB2D.Data
                     int id = Convert.ToInt32(itemData.Id);
                     this.allItemInfo.Add(id, itemData);
                     this.nameToId.Add(itemData.Name, id);
-                }
-
-                // 初始化装备实例
-                if (itemType.Equals("Equipment"))
-                {
-                    equipmentData = itemDataSO.ItemDatas;
+                    backpackItemDatas.Add(itemData);
                 }
             }
 
@@ -91,8 +86,8 @@ namespace LAB2D.Data
                 }
             }
 
-            // 最后初始化背包道具实例
-            ServiceLocator.Get<ItemInstanceFactory>().InitItemInstances(equipmentData);
+            // 最后初始化背包道具实例（全量背包 SO 物品；未创建 C# 类的走默认类逻辑）
+            ServiceLocator.Get<ItemInstanceFactory>().InitItemInstances(backpackItemDatas);
         }
 
         /// <summary>

@@ -218,6 +218,22 @@ namespace LAB2D.Manager
         }
 
         /// <summary>
+        /// 尝试获得对应的 tilebase，未找到时返回 null 且不打日志。
+        /// 用于 Tile 对物品为可选的场景（如背包初始物品并非都要掉落/放置）。
+        /// </summary>
+        /// <param name="name">tilebase 名称。</param>
+        /// <returns>tilebase；不存在时 null。</returns>
+        public TileBase TryGetAsset(string name)
+        {
+            if (this.assetDic.TryGetValue(name, out UnityEngine.Object asset))
+            {
+                return (TileBase)asset;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// 通过地形 ID 获得可放置的资源 Tile，默认随机获取。
         /// </summary>
         /// <param name="terrainId">地形 ID（对应 TerrainTileConfig.terrainId）。</param>
