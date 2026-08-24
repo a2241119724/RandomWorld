@@ -42,7 +42,9 @@ namespace LAB2D.Map
         private readonly System.Func<Vector3Int, ItemLayerMode> layerModeResolver; // 非空时按 cell 判定分层模式（SO 开关）
         private readonly System.Func<Vector3Int, Color> colorProvider; // 非空时提供该格视觉应显示的颜色（如 BuildMap 建造中状态色）
         private readonly bool useTilemapColor; // false 时 SpriteRenderer 颜色强制白色（不读 tilemap 颜色）
+        private readonly System.Func<Vector3Int, string> prefabResolver; // 非空时该格优先用预制体视觉（ItemData.VisualMode == Prefab 时返回 Name）
         private readonly Dictionary<Vector3Int, SpriteRenderer> visual = new Dictionary<Vector3Int, SpriteRenderer>();
+        private readonly Dictionary<Vector3Int, GameObject> prefabVisuals = new Dictionary<Vector3Int, GameObject>();
 
         /// <summary>
         /// 注入 tilemap（数据源）与 hostTransform（视觉挂载点）。
@@ -56,10 +58,14 @@ namespace LAB2D.Map
         /// null 时 Bottom tile 恢复白色、非 Bottom sprite 按 useTilemapColor 决定。</param>
         /// <param name="useTilemapColor">true 时 SpriteRenderer 颜色跟随 tilemap 颜色；false 时强制白色
         /// （非恒底层 tile 用透明隐藏 TilemapRenderer 双重渲染，拆出视觉需不透明）。</param>
+        /// <param name="prefabResolver">可选：按 cell 返回预制体名称（如 ItemData.VisualMode == Prefab 时的 Name）。
+        /// 非空时该格视觉用完整预制体实例呈现（经 ResourceManager 按名加载，可带多部件/动画/组件）；
+        /// 空/实例化失败走默认 tile → 单 SpriteRenderer。</param>
         public TileVisualSpawner(Tilemap tilemap, Transform hostTransform, string sortingLayerName, string objectNamePrefix,
             System.Func<Vector3Int, ItemLayerMode> layerModeResolver = null,
             System.Func<Vector3Int, Color> colorProvider = null,
-            bool useTilemapColor = true)
+            bool useTilemapColor = true,
+            System.Func<Vector3Int, string> prefabResolver = null)
         {
             this.tilemap = tilemap;
             this.sortingLayerName = sortingLayerName;
@@ -67,6 +73,7 @@ namespace LAB2D.Map
             this.layerModeResolver = layerModeResolver;
             this.colorProvider = colorProvider;
             this.useTilemapColor = useTilemapColor;
+            this.prefabResolver = prefabResolver;
             this.material = ResolveMaterial(tilemap);
             this.parent = new GameObject(ParentName).transform;
             this.parent.SetParent(hostTransform, false);
@@ -120,15 +127,31 @@ namespace LAB2D.Map
             if (mode == ItemLayerMode.Bottom)
             {
                 // 恒底层（SO 开关）：不建独立 SpriteRenderer，直接由宿主 TilemapRenderer 渲染在地图层。
-                // tile 恢复该格应显示的颜色（colorProvider 状态色 / 默认白），并清残留 sprite。
+                // tile 恢复该格应显示的颜色（colorProvider 状态色 / 默认白），并清残留视觉（sprite + prefab）。
                 this.tilemap.SetColor(cell, this.colorProvider != null ? this.colorProvider(cell) : Color.white);
                 this.Delete(cell);
                 return null;
             }
 
             // 非恒底层：tile 透明隐藏 TilemapRenderer（避免双重渲染，数据/碰撞/存档保留），
-            // 视觉由独立 SpriteRenderer 呈现。
+            // 视觉由独立 SpriteRenderer 或配置的预制体呈现。
             this.tilemap.SetColor(cell, new Color(1f, 1f, 1f, 0f));
+
+            // 预制体分支：该格物品/建筑 VisualMode == Prefab（resolver 返回其英文名 Name），用完整预制体呈现视觉
+            //（可带多部件/动画/组件），而非单 SpriteRenderer。tile 仍承担数据/碰撞/存档/网络。
+            string prefabName = this.prefabResolver != null ? this.prefabResolver(cell) : null;
+            if (!string.IsNullOrEmpty(prefabName))
+            {
+                // 实例化成功用预制体视觉；失败（名字拼错/AssetBundle 未加载）落回下方 sprite 视觉
+                GameObject instance = this.CreateOrUpdatePrefab(cell, prefabName);
+                if (instance != null)
+                {
+                    return instance.GetComponent<SpriteRenderer>();
+                }
+            }
+
+            // 无预制体（或实例化失败回退）：清理可能残留的 prefab 视觉（配置回退/读档切格等场景）
+            this.DeletePrefab(cell);
 
             if (!this.visual.TryGetValue(cell, out SpriteRenderer sr))
             {
@@ -182,11 +205,102 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 预制体视觉分支：以 prefab 实例呈现 cell 的视觉（ItemData.VisualMode == Prefab 配置）。
+        /// 经 ResourceManager 按名加载/实例化（Resources/Prefabs/ 或 AssetBundle 的 prefabDic）；
+        /// 实例化失败（名字拼错/未加载）返回 null，由调用方回退 sprite 视觉。
+        /// 位置跟随 tilemap 格中心；实例内所有 SpriteRenderer 注册 WorldYSortManager 参与 y 排序
+        /// （满足 Character 层"无未注册 renderer"约束），颜色仅应用状态色 alpha（建造中半透明/完成实心），
+        /// 保留 prefab 各部件原 RGB。不注册 OcclusionFader：multi-SR 整体淡化与逐格 originalAlpha
+        /// 状态冲突，prefab 视觉暂不参与遮挡淡化。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <param name="prefabName">预制体名称（ResourceManager prefabDic 的 key）。</param>
+        /// <returns>预制体实例；加载/实例化失败时返回 null。</returns>
+        private GameObject CreateOrUpdatePrefab(Vector3Int cell, string prefabName)
+        {
+            if (!this.prefabVisuals.TryGetValue(cell, out GameObject go))
+            {
+                // 走 ResourceManager 统一通道（含 AssetBundle 加载/失败日志）。
+                // 视觉非网络对象（跨端由 tile 数据同步各自本地重建），isLocal 默认 true 本地实例化。
+                go = Core.ServiceLocator.Get<ResourceManager>().Instantiate(prefabName, this.parent, false);
+                if (go == null)
+                {
+                    // 实例化失败（名字拼错/AssetBundle 未加载）：由调用方回退 sprite 视觉
+                    AWorkerTask.LogProvider(
+                        $"[BuildDiag] 预制体实例化失败 cell=({cell.x},{cell.y}) prefab={prefabName}，回退 tile 视觉",
+                        LogManager.LogLevelEnum.Warning);
+                    return null;
+                }
+
+                go.name = this.NameOf(cell);
+                this.prefabVisuals.Add(cell, go);
+
+                // 一次性注册：实例内全部 SpriteRenderer 参与 y 排序
+                foreach (SpriteRenderer sr in go.GetComponentsInChildren<SpriteRenderer>(true))
+                {
+                    sr.sortingLayerName = this.sortingLayerName;
+                    sr.sortingOrder = 0; // 每帧由 WorldYSortManager 统一分配
+                    WorldYSortManager.Ensure().Register(sr);
+                }
+
+                // 诊断（事件点：每格 prefab 视觉创建一次）：暴露预制体实例化结果
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] TileVisualSpawner 预制体视觉 cell=({cell.x},{cell.y}) prefab={prefabName}",
+                    LogManager.LogLevelEnum.Debug);
+            }
+
+            go.transform.position = this.tilemap.GetCellCenterWorld(cell);
+
+            // 状态色 alpha：仅覆盖 alpha 通道（建造中半透明/完成实心），保留 prefab 各部件原色。
+            // 调用点仅事件点（AddBuild/SetComplete/同步），非每帧，遍历代价可接受。
+            if (this.colorProvider != null)
+            {
+                float alpha = this.colorProvider(cell).a;
+                foreach (SpriteRenderer sr in go.GetComponentsInChildren<SpriteRenderer>(true))
+                {
+                    if (sr == null)
+                    {
+                        continue;
+                    }
+
+                    if (!Mathf.Approximately(sr.color.a, alpha))
+                    {
+                        Color c = sr.color;
+                        c.a = alpha;
+                        sr.color = c;
+                    }
+                }
+            }
+
+            return go;
+        }
+
+        /// <summary>
+        /// 删除 cell 的预制体视觉（tile 已移除/取消建造/回退 tile 视觉时）。
+        /// </summary>
+        private void DeletePrefab(Vector3Int cell)
+        {
+            if (!this.prefabVisuals.TryGetValue(cell, out GameObject go))
+            {
+                return;
+            }
+
+            this.prefabVisuals.Remove(cell);
+            if (go != null)
+            {
+                // 延迟销毁，WorldYSortManager 懒清扫兜底（无需显式 Unregister）
+                Object.Destroy(go);
+            }
+        }
+
+        /// <summary>
         /// 删除 cell 的视觉（tile 已移除/取消建造时）。
         /// </summary>
         /// <param name="cell">地图坐标。</param>
         public void Delete(Vector3Int cell)
         {
+            this.DeletePrefab(cell);
+
             if (!this.visual.TryGetValue(cell, out SpriteRenderer sr))
             {
                 return;
@@ -229,6 +343,14 @@ namespace LAB2D.Map
                 }
             }
 
+            foreach (KeyValuePair<Vector3Int, GameObject> kv in this.prefabVisuals)
+            {
+                if (!this.tilemap.HasTile(kv.Key))
+                {
+                    stale.Add(kv.Key);
+                }
+            }
+
             foreach (Vector3Int cell in stale)
             {
                 this.Delete(cell);
@@ -264,6 +386,16 @@ namespace LAB2D.Map
             }
 
             this.visual.Clear();
+
+            foreach (KeyValuePair<Vector3Int, GameObject> kv in this.prefabVisuals)
+            {
+                if (kv.Value != null)
+                {
+                    Object.Destroy(kv.Value);
+                }
+            }
+
+            this.prefabVisuals.Clear();
         }
 
         /// <summary>

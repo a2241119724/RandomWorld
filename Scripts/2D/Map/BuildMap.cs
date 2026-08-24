@@ -56,7 +56,8 @@ namespace LAB2D.Map
             }
 
             this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "BuildVisual",
-                this.GetBuildLayerMode, colorProvider: this.GetBuildVisualColor);
+                this.GetBuildLayerMode, colorProvider: this.GetBuildVisualColor,
+                prefabResolver: this.GetBuildPrefabName);
         }
 
         public void Start()
@@ -386,6 +387,27 @@ namespace LAB2D.Map
 
             BuildItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
             return item != null ? item.LayerMode : ItemLayerMode.Alpha;
+        }
+
+        /// <summary>
+        /// 该格建筑的预制体名称（BuildItemData.VisualMode == Prefab 时启用）。
+        /// Tile = 返回 null，走默认 tile → 动态 SpriteRenderer 视觉（原有逻辑）；
+        /// Prefab = 直接返回英文名（Name，与 tile/图片资源名一致）作为预制体名，
+        /// 经 ResourceManager 按名实例化完整建筑（可带多部件/动画/组件）。
+        /// tile 仍保留数据/碰撞/存档/网络，预制体只是视觉层。供 TileVisualSpawner 的 prefabResolver 使用。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>该格建筑的预制体名；PosMap 无数据（如 DirectBuild）或未开启 Prefab 模式时返回 null。</returns>
+        private string GetBuildPrefabName(Vector3Int cell)
+        {
+            BuildTileData data = this.GetBuildTileData(cell);
+            if (data == null)
+            {
+                return null;
+            }
+
+            BuildItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
+            return item != null && item.VisualMode == ItemVisualMode.Prefab ? item.Name : null;
         }
 
         /// <summary>

@@ -20,6 +20,7 @@ MonoBehaviour:
     Info: "\u4E00\u74F6\u53EF\u4EE5\u56DE\u590D10\u8840\u91CF\u7684\u836F\u6C34"
     IsStackable: 1
     LayerMode: 0
+    VisualMode: 0
     Type: 2
     EquipSlot: 0
     RelatedTaskTime:
@@ -31,6 +32,7 @@ MonoBehaviour:
     Info: "\u706B\u628A"
     IsStackable: 1
     LayerMode: 2
+    VisualMode: 1
     Type: 2
     EquipSlot: 14
     RelatedTaskTime:

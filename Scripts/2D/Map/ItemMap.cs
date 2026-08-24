@@ -47,7 +47,7 @@ namespace LAB2D.Map
             //   不创建 ItemVisual_*（TilemapRenderer 保持启用）。
             // - 非恒底层物品：tile 保留数据/碰撞，颜色透明隐藏 TilemapRenderer 双重渲染，
             //   由独立 SpriteRenderer（Character 层 ItemVisual_*）参与 y 排序。
-            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "ItemVisual", this.GetItemLayerMode, useTilemapColor: false);
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "ItemVisual", this.GetItemLayerMode, useTilemapColor: false, prefabResolver: this.GetItemPrefabName);
         }
 
         /// <summary>
@@ -268,6 +268,27 @@ namespace LAB2D.Map
 
             ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
             return item != null ? item.LayerMode : ItemLayerMode.Bottom;
+        }
+
+        /// <summary>
+        /// 该格物品的预制体名称（ItemData.VisualMode == Prefab 时启用，背包掉落物/仓库/资源通用）。
+        /// Tile = 返回 null，走默认 tile → 动态 SpriteRenderer 视觉（原有逻辑）；
+        /// Prefab = 直接返回英文名（Name，与 tile/图片资源名一致）作为预制体名，
+        /// 经 ResourceManager 按名实例化地面物品（可带多部件/动画/组件）。
+        /// tile 仍保留数据/掉落管理/存档/网络，预制体只是视觉层。供 TileVisualSpawner 的 prefabResolver 使用。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>该格物品的预制体名；无 tile 或未开启 Prefab 模式时返回 null。</returns>
+        private string GetItemPrefabName(Vector3Int cell)
+        {
+            TileBase tile = this.tilemap.GetTile(cell);
+            if (tile == null)
+            {
+                return null;
+            }
+
+            ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
+            return item != null && item.VisualMode == ItemVisualMode.Prefab ? item.Name : null;
         }
 
         /// <summary>

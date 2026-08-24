@@ -95,7 +95,29 @@ namespace LAB2D.UI.Panel
             }
             else if (ServiceLocator.Get<ItemDataManager>().GetById(this.Select.Item.Id).Type == AItem.ItemTypeEnum.Consumable)
             {
-                ((AConsumable)this.Select.Item).Use();
+                // 消耗品使用：AConsumable 子类（如血瓶）走自定义 Use()；
+                // 无自定义类的默认物品若配置 Prefab 视觉，则在玩家当前位置创建预制体（如火把）。
+                ItemData itemData = ServiceLocator.Get<ItemDataManager>().GetById(this.Select.Item.Id);
+                if (this.Select.Item is AConsumable consumable)
+                {
+                    consumable.Use();
+                }
+                else if (itemData.VisualMode == ItemVisualMode.Prefab)
+                {
+                    GameObject instance = ServiceLocator.Get<ResourceManager>().Instantiate(
+                        itemData.Name,
+                        ServiceLocator.Get<PlayerManager>().Mine.transform.position,
+                        Quaternion.identity);
+                    if (instance == null)
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    ServiceLocator.Get<GlobalInit>().ShowTip("未实现!!!");
+                    return;
+                }
 
                 // 减少或删除
                 if (((ABackpackItem)this.Select.Item).Quantity == 1)

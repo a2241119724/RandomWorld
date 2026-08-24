@@ -23,6 +23,18 @@ namespace LAB2D.Data
     }
 
     /// <summary>
+    /// 物品地面视觉的呈现方式：默认 tile 视觉（原有逻辑）或预制体视觉。
+    /// </summary>
+    public enum ItemVisualMode
+    {
+        /// <summary>默认 tile 视觉：建筑/掉落物由 tilemap + 动态 SpriteRenderer 呈现（原有逻辑）。</summary>
+        Tile = 0,
+
+        /// <summary>预制体视觉：以英文名（ItemData.Name）作为预制体名，经 ResourceManager 按名实例化完整预制体呈现。</summary>
+        Prefab = 1,
+    }
+
+    /// <summary>
     /// 不能将ItemData转换为json,因为需要[Serializable]修饰,而包装类没有被修饰
     /// 公共的数据，仅存储一份
     /// </summary>
@@ -72,6 +84,15 @@ namespace LAB2D.Data
         /// </summary>
         [Tooltip("地面视觉分层模式：Bottom=恒底层不参与 y 排序；Alpha=参与 y 排序且角色在后时淡化；Normal=参与 y 排序但不淡化。")]
         public ItemLayerMode LayerMode = ItemLayerMode.Bottom;
+
+        /// <summary>
+        /// 地面视觉呈现方式：Tile = 默认 tile 视觉（tilemap + 动态 SpriteRenderer，原有逻辑）；
+        /// Prefab = 以英文名（Name，与 tile/图片资源名一致）作为预制体名，经 ResourceManager 按名
+        /// 实例化完整预制体呈现（可带多部件/动画/组件）；tile 仍保留数据/碰撞/存档/网络（视觉层替换）。
+        /// 找不到/实例化失败时自动回退默认 tile 视觉。建筑方向变体（Clone）继承同一开关，预制体名取变体自身 Name。
+        /// </summary>
+        [Tooltip("地面视觉呈现方式：Tile=默认 tile 视觉（原有逻辑）；Prefab=以英文名(Name)作为预制体名实例化预制体呈现。")]
+        public ItemVisualMode VisualMode = ItemVisualMode.Tile;
 
         /// <summary>
         /// 物品类型
