@@ -27,6 +27,14 @@ namespace LAB2D.Character.Worker.Task
         /// <summary>轻体力工作疲劳消耗（种植/搬运），0.03/s。</summary>
         public const float LightWorkTiredCostPerSecond = 0.03f;
 
+        // ---- 压力消耗速率（/秒，绝对值，不随天数缩放）----
+        /// <summary>默认工作压力累积速度（/秒）。</summary>
+        public const float WorkStressCostPerSecond = 0.08f;
+        /// <summary>重体力工作压力累积（砍树/挖矿/拆除），0.14/s。</summary>
+        public const float HeavyWorkStressCostPerSecond = 0.14f;
+        /// <summary>轻体力工作压力累积（种植/搬运/拾取/存取），0.05/s。</summary>
+        public const float LightWorkStressCostPerSecond = 0.05f;
+
         // ---- 建造 (Build) ----
         public static float BuildFetchResourceSeconds => Day / 600f;    // 0.167%
         public static float BuildBaseSeconds            => Day / 300f;    // 0.333%

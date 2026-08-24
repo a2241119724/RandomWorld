@@ -410,6 +410,16 @@ namespace LAB2D.Character.Worker
                 }
             }
 
+            // 各工种熟练度（仅已练过的工种，按中文名展示）
+            string skillInfo = string.Empty;
+            if (workerData.SkillProficiencies != null && workerData.SkillProficiencies.Count > 0)
+            {
+                foreach (KeyValuePair<WorkerTaskType, float> kv in workerData.SkillProficiencies)
+                {
+                    skillInfo += $"  {WorkerTaskSummaryTool.GetTaskDisplayName(kv.Key)}:{kv.Value:F0}\n";
+                }
+            }
+
             return base.ToString() +
                 $"状态:{this.Manager.CurrentStateType}\n" +
                 taskInfo +
@@ -417,9 +427,13 @@ namespace LAB2D.Character.Worker
                 $"卡死检测:{this.Seek.LastStuckResult}\n" +
                 $"饥饿值: {workerData.CurHungry:F0}/{workerData.MaxHungry:F0}\n" +
                 $"疲劳值: {workerData.CurTired:F0}/{workerData.MaxTired:F0}\n" +
+                $"精气神: {workerData.CurSpirit:F0}/{workerData.MaxSpirit:F0}\n" +
+                $"压力: {workerData.CurStress:F0}/{workerData.MaxStress:F0}\n" +
+                $"士气: {workerData.CurMorale:F0}/{workerData.MaxMorale:F0}\n" +
                 $"最大携带: {workerData.MaxResourceCount}\n" +
                 $"钱包: {workerData.Wallet}\n" +
-                $"人格: {workerData.Personality}\n" +
+                $"人格: {workerData.Personality} 贪婪:{workerData.Greed:F0} 懒惰:{workerData.Laziness:F0}\n" +
+                $"熟练度:\n{skillInfo}" +
                 $"TargetMap:{this.Seek.TargetMap}\n" +
                 $"SeekId:{this.CharacterDataLAB.SeekId}\n" +
                 $"装备:\n{equipmentInfo}" +
@@ -1382,6 +1396,12 @@ namespace LAB2D.Character.Worker
             /// </summary>
             public Domain.Worker.WorkerPersonality Personality = Domain.Worker.WorkerPersonality.Neutral;
 
+            /// <summary>贪婪 — 对金钱/财富的渴望。0=淡泊, 100=财迷。影响赚钱类决策权重。</summary>
+            public float Greed = 50f;
+
+            /// <summary>懒惰 — 对劳作的抗拒。0=勤快, 100=躺平。影响漫游/摸鱼倾向。</summary>
+            public float Laziness = 50f;
+
             /// <summary>
             /// 上次空闲帧数 — 用于检测连续空闲以调整人格。
             /// </summary>
@@ -1423,6 +1443,18 @@ namespace LAB2D.Character.Worker
             /// <summary>最大精气神值。</summary>
             public float MaxSpirit = 100.0f;
 
+            /// <summary>当前压力值（劳动压迫，越大越压；工作累积、休息/睡觉/漫游/吃饭降低，初始 0）。</summary>
+            public float CurStress = 0.0f;
+
+            /// <summary>最大压力值。</summary>
+            public float MaxStress = 100.0f;
+
+            /// <summary>当前士气（长期向心力/生活满意度，越大越足；困苦下降、安好回升）。</summary>
+            public float CurMorale = 100.0f;
+
+            /// <summary>最大士气。</summary>
+            public float MaxMorale = 100.0f;
+
             /// <summary>生命周期阶段。</summary>
             public Domain.Worker.WorkerLifeStage LifeStage = Domain.Worker.WorkerLifeStage.Bootstrap;
 
@@ -1451,6 +1483,12 @@ namespace LAB2D.Character.Worker
             /// </summary>
             public Dictionary<int, ResourceInfo> CarriedResources;
 
+            /// <summary>
+            /// 各工种技能熟练度（0-100）— 练习增长，提升对应工种的工作速度。
+            /// Key: WorkerTaskType, Value: 熟练度。仅核心工作类任务（采集/建造/搬运/种植/拆除/拾取/存取/悬赏）增长。
+            /// </summary>
+            public Dictionary<WorkerTaskType, float> SkillProficiencies;
+
             public WorkerData()
             {
                 // 所有任务类型默认开启（opt-out 语义：只有玩家通过 UI 手动关闭的才会被写入 false）
@@ -1460,8 +1498,11 @@ namespace LAB2D.Character.Worker
                     this.TaskToggle[t] = true;
                 }
                 this.Personality = Domain.Worker.WorkerPersonality.Randomize();
+                this.Greed = UnityEngine.Random.Range(40f, 80f);
+                this.Laziness = UnityEngine.Random.Range(40f, 80f);
                 this.Storage = new Dictionary<int, ResourceInfo>();
                 this.CarriedResources = new Dictionary<int, ResourceInfo>();
+                this.SkillProficiencies = new Dictionary<WorkerTaskType, float>();
             }
         }
     }

@@ -135,12 +135,34 @@ namespace LAB2D.Tool
         }
 
         /// <summary>
+        /// 获取压力对工作进度的惩罚倍率。
+        /// </summary>
+        /// <param name="stressRatio">压力比例（0~1）。</param>
+        /// <returns>工作进度倍率，1 表示无惩罚。</returns>
+        public static float GetStressWorkMultiplier(float stressRatio)
+        {
+            return RuleService.GetStressWorkMultiplier(stressRatio);
+        }
+
+        /// <summary>
+        /// 获取士气对工作进度的惩罚倍率。
+        /// </summary>
+        /// <param name="moraleRatio">士气比例（0~1）。</param>
+        /// <returns>工作进度倍率，1 表示无惩罚。</returns>
+        public static float GetMoraleWorkMultiplier(float moraleRatio)
+        {
+            return RuleService.GetMoraleWorkMultiplier(moraleRatio);
+        }
+
+        /// <summary>
         /// 生成单个工人的状态行。
         /// </summary>
         /// <param name="workerName">工人名称。</param>
         /// <param name="state">工人生存状态。</param>
         /// <param name="hungryRatio">饥饿比例。</param>
         /// <param name="tiredRatio">疲劳比例。</param>
+        /// <param name="stressRatio">压力比例。</param>
+        /// <param name="moraleRatio">士气比例。</param>
         /// <param name="moveMultiplier">移动速度倍率。</param>
         /// <param name="workMultiplier">工作进度倍率。</param>
         /// <returns>适合 HUD 和 Editor 展示的一行文本。</returns>
@@ -149,12 +171,15 @@ namespace LAB2D.Tool
             WorkerConditionState state,
             float hungryRatio,
             float tiredRatio,
+            float stressRatio,
+            float moraleRatio,
             float moveMultiplier,
             float workMultiplier)
         {
             string color = GetStateRichColor(state);
             return $"<color={color}>{workerName}</color> {GetStateName(state)} | " +
                 $"饥饿 {FormatPercent(hungryRatio)} | 疲劳 {FormatPercent(tiredRatio)} | " +
+                $"压力 {FormatPercent(stressRatio)} | 士气 {FormatPercent(moraleRatio)} | " +
                 $"移动 {moveMultiplier:0.00}x | 工作 {workMultiplier:0.00}x";
         }
 

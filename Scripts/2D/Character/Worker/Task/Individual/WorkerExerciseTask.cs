@@ -45,6 +45,9 @@ namespace LAB2D.Character.Worker.Task.Individual
         protected override bool ConsumesTiredness => false;
 
         /// <inheritdoc/>
+        protected override bool ConsumesStress => false;
+
+        /// <inheritdoc/>
         public override TaskTraits Traits => TaskTraits.WorkerSpecific;
 
         /// <inheritdoc/>
@@ -69,6 +72,14 @@ namespace LAB2D.Character.Worker.Task.Individual
             if (experienceGained > 0)
             {
                 worker.AddExperienceValue(experienceGained);
+            }
+
+            // 锻炼减压：出汗放松
+            if (wd != null)
+            {
+                wd.CurStress = System.Math.Max(
+                    0.0f,
+                    wd.CurStress - Constant.WorkerConditionConstant.StressExerciseRestore);
             }
 
             base.Finish(worker);

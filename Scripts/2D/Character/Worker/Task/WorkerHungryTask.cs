@@ -57,6 +57,11 @@ namespace LAB2D.Character.Worker.Task
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             workerData.CurHungry = System.Math.Min(workerData.MaxHungry, workerData.CurHungry + (resourceInfo.Count * Constant.WorkerConditionConstant.HungryRestorePerFood));
 
+            // 吃饭减压：吃饱心情好
+            workerData.CurStress = System.Math.Max(
+                0.0f,
+                workerData.CurStress - Constant.WorkerConditionConstant.StressEatRestore);
+
             // 将饥饿任务放回任务管理中
             base.Finish(worker);
         }
@@ -75,6 +80,9 @@ namespace LAB2D.Character.Worker.Task
 
         /// <inheritdoc/>
         protected override bool ConsumesTiredness => false;
+
+        /// <inheritdoc/>
+        protected override bool ConsumesStress => false;
 
         /// <inheritdoc/>
         protected override bool BlocksWhenHungry => false;

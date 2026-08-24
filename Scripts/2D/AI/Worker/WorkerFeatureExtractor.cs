@@ -123,9 +123,9 @@ namespace LAB2D.AI.Worker
             f[i++] = MinMax(wd.Personality.Diligence, 0f, 100f);
             f[i++] = MinMax(wd.Personality.Sociality, 0f, 100f);
 
-            // ---- 预留扩展位：贪婪 / 懒惰（19-20，固定中性 0.5）----
-            f[i++] = 0.5f;
-            f[i++] = 0.5f;
+            // ---- 贪婪 / 懒惰（19-20）----
+            f[i++] = MinMax(wd.Greed, 0f, 100f);
+            f[i++] = MinMax(wd.Laziness, 0f, 100f);
 
             // ---- 经济（21）----
             f[i++] = Log(wd.Wallet.Gold, 1000f);

@@ -111,8 +111,9 @@ namespace LAB2D.Character.Worker.Task
         // 本文件通过 using WorkerTaskType = LAB2D.Enum.WorkerTaskType 保持向后兼容。
 
         /// <summary>
-        /// 任务进度倍率提供者 — 组合天气效果和 Worker 状态对任务进度的倍率影响。
-        /// 默认实现访问 ServiceLocator.Get&lt;WeatherGameplayEffect&gt;() 和 ServiceLocator.Get&lt;WorkerConditionManager&gt;()。
+        /// 任务进度倍率提供者 — 组合天气效果、Worker 状态和技能熟练度对任务进度的倍率影响。
+        /// 默认实现访问 ServiceLocator.Get&lt;WeatherGameplayEffect&gt;()、ServiceLocator.Get&lt;WorkerConditionManager&gt;()
+        /// 以及 Worker 的技能熟练度（熟练工种干得更快）。
         /// 可替换为测试桩或自定义实现。
         /// </summary>
         public static System.Func<WorkerTaskType, AWorker, float> ProgressMultiplierProvider { get; set; }
@@ -120,6 +121,15 @@ namespace LAB2D.Character.Worker.Task
             {
                 float multiplier = ServiceLocator.Get<WeatherGameplayEffect>().GetWorkerTaskProgressMultiplier(taskType);
                 multiplier *= ServiceLocator.Get<WorkerConditionManager>().GetWorkerTaskProgressMultiplier(worker, taskType);
+
+                // 技能熟练度加成：熟练工种进度更快
+                AWorker.WorkerData workerData = worker?.CharacterDataLAB as AWorker.WorkerData;
+                if (workerData != null
+                    && workerData.SkillProficiencies.TryGetValue(taskType, out float proficiency))
+                {
+                    multiplier *= Domain.Worker.WorkerSkillProgressService.GetMultiplier(proficiency);
+                }
+
                 return multiplier;
             };
 
@@ -485,6 +495,35 @@ namespace LAB2D.Character.Worker.Task
         protected virtual float TiredCostPerSecond => WorkerTaskTimeConfig.WorkTiredCostPerSecond;
 
         /// <summary>
+        /// 执行任务时是否累积压力（CurStress 越大越压）。Eat/Sleep/Exercise/Wear 重写为 false。
+        /// </summary>
+        protected virtual bool ConsumesStress => true;
+
+        /// <summary>
+        /// 此任务的压力累积速率（/秒）。按任务类型分档：重活(采集/拆除)高、中活(建造/悬赏)中、轻活(种植/搬运/拾取/存取)低。
+        /// </summary>
+        protected virtual float StressCostPerSecond => this.TaskType switch
+        {
+            WorkerTaskType.Gather => WorkerTaskTimeConfig.HeavyWorkStressCostPerSecond,
+            WorkerTaskType.Demolish => WorkerTaskTimeConfig.HeavyWorkStressCostPerSecond,
+            WorkerTaskType.Build => WorkerTaskTimeConfig.WorkStressCostPerSecond,
+            WorkerTaskType.Bounty => WorkerTaskTimeConfig.WorkStressCostPerSecond,
+            WorkerTaskType.Plant => WorkerTaskTimeConfig.LightWorkStressCostPerSecond,
+            WorkerTaskType.Carry => WorkerTaskTimeConfig.LightWorkStressCostPerSecond,
+            WorkerTaskType.PickUp => WorkerTaskTimeConfig.LightWorkStressCostPerSecond,
+            WorkerTaskType.Storage => WorkerTaskTimeConfig.LightWorkStressCostPerSecond,
+            _ => WorkerTaskTimeConfig.WorkStressCostPerSecond,
+        };
+
+        /// <summary>
+        /// 完成任务是否增长对应工种的技能熟练度。仅核心工作类任务增长（吃饭/睡觉/锻炼/穿戴/漫游等不涨）。
+        /// </summary>
+        protected virtual bool GrantsSkillProficiency => this.TaskType is
+            WorkerTaskType.Build or WorkerTaskType.Carry or WorkerTaskType.Gather
+            or WorkerTaskType.Plant or WorkerTaskType.Demolish or WorkerTaskType.PickUp
+            or WorkerTaskType.Storage or WorkerTaskType.Bounty;
+
+        /// <summary>
         /// Worker 饥饿时是否阻止接此任务。Eat 任务重写为 false（饥饿时才需要吃饭）。
         /// </summary>
         protected virtual bool BlocksWhenHungry => true;
@@ -527,6 +566,15 @@ namespace LAB2D.Character.Worker.Task
                     workerData.MaxTired,
                     deltaTime,
                     this.TiredCostPerSecond);
+            }
+
+            // 工作累积压力（CurStress 越大越压，封顶 MaxStress）
+            // 子类可通过 ConsumesStress 虚属性控制是否累积（吃饭/睡觉/锻炼/穿戴不累积）
+            if (this.ConsumesStress)
+            {
+                workerData.CurStress = System.Math.Min(
+                    workerData.MaxStress,
+                    workerData.CurStress + (deltaTime * this.StressCostPerSecond));
             }
 
             float progressMultiplier = ProgressMultiplierProvider(this.TaskType, worker);
@@ -634,6 +682,15 @@ namespace LAB2D.Character.Worker.Task
                 workerData.Personality = workerData.Personality.AfterTaskComplete();
                 // 任务完成后强制下次 Seek 立即决策，避免无意义漫游
                 workerData.ForceDecisionOnNextSeek = true;
+
+                // 完成任务 → 技能熟练度提升（仅核心工作类任务，封顶 100）
+                if (this.GrantsSkillProficiency)
+                {
+                    workerData.SkillProficiencies.TryGetValue(this.TaskType, out float proficiency);
+                    workerData.SkillProficiencies[this.TaskType] = System.Math.Min(
+                        100f,
+                        proficiency + Domain.Worker.WorkerSkillProgressService.SkillGainPerCompletion);
+                }
             }
         }
 

@@ -93,6 +93,28 @@ namespace LAB2D.Gameplay
                         workerData.CurSpirit - spiritDecay);
                 }
 
+                // 压力自然衰减（无任务/轻任务时缓慢降压；工作期间 Execute 累积更快，净效果为上升）
+                if (workerData.CurStress > 0)
+                {
+                    workerData.CurStress = System.Math.Max(
+                        0.0f,
+                        workerData.CurStress - (deltaTime * WorkerConditionConstant.StressDecayPerSecond));
+                }
+
+                // 士气动态：困苦（饥饿/疲劳/高压）→ 下降；安好 → 回升。
+                // 困苦度 = 饥饿不足×0.4 + 疲劳×0.4 + 压力×0.2，安好时为 0。
+                {
+                    float hungryRatio = workerData.MaxHungry > 0 ? workerData.CurHungry / workerData.MaxHungry : 0f;
+                    float tiredRatio = workerData.MaxTired > 0 ? workerData.CurTired / workerData.MaxTired : 0f;
+                    float stressRatio = workerData.MaxStress > 0 ? workerData.CurStress / workerData.MaxStress : 0f;
+                    float suffer = ((1f - hungryRatio) * 0.4f) + (tiredRatio * 0.4f) + (stressRatio * 0.2f);
+                    float moraleDelta = (WorkerConditionConstant.MoraleRecoverPerSecond
+                        - (suffer * WorkerConditionConstant.MoraleSufferDecayPerSecond)) * deltaTime;
+                    workerData.CurMorale = System.Math.Max(
+                        0f,
+                        System.Math.Min(workerData.MaxMorale, workerData.CurMorale + moraleDelta));
+                }
+
                 ServiceLocator.Get<IWorkerConditionManager>().UpdateWorkerCondition(worker);
             }
 

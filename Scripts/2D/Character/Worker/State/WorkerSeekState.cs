@@ -111,6 +111,9 @@ namespace LAB2D.Character.Worker.State
                         * WorkerTaskTimeConfig.WanderSeconds;
                     workerData.CurSpirit = System.Math.Min(workerData.MaxSpirit,
                         workerData.CurSpirit + restoreAmount);
+                    workerData.CurStress = System.Math.Max(
+                        0.0f,
+                        workerData.CurStress - Constant.WorkerConditionConstant.StressWanderRestorePerWaypoint);
                     workerData.Personality = workerData.Personality.AfterWander();
 
                     // 小概率(5%)发现随机物品
@@ -1214,12 +1217,26 @@ namespace LAB2D.Character.Worker.State
                     }
                 }
 
+                // 压力 > MaxStress-10 → 强制漫游减压（吃饭/睡觉/漫游本身减压，不打断）
+                if (wd.CurStress < wd.MaxStress && wd.CurStress > wd.MaxStress - 10f)
+                {
+                    if (wd.Task != null
+                        && wd.Task.TaskType != WorkerTaskType.Wander
+                        && wd.Task.TaskType != WorkerTaskType.Sleep
+                        && wd.Task.TaskType != WorkerTaskType.GroundSleep
+                        && wd.Task.TaskType != WorkerTaskType.Eat)
+                    {
+                        this.Character.GiveUpTask();
+                        emergency = true;
+                    }
+                }
+
                 if (emergency)
                 {
                     // 紧急打断诊断（事件点）：生存阈值触发强制放弃任务+重新决策，记录各项状态值。
                     // 若同一 Worker 频繁紧急打断，说明生存压力下决策未真正解决问题（如饥饿无食物可采）。
                     AWorkerTask.LogProvider(
-                        $"[StateDiag] {this.Character.name} 紧急打断重决策: 饥饿={wd.CurHungry:F0} 疲劳={wd.CurTired:F0} 精气神={wd.CurSpirit:F0}",
+                        $"[StateDiag] {this.Character.name} 紧急打断重决策: 饥饿={wd.CurHungry:F0} 疲劳={wd.CurTired:F0} 精气神={wd.CurSpirit:F0} 压力={wd.CurStress:F0} 士气={wd.CurMorale:F0}",
                         LogManager.LogLevelEnum.Debug);
                     this.ExecuteAutonomousDecision(wd);
                     this.Character.Seek.Seek(this.targetMap);

@@ -165,9 +165,26 @@ namespace LAB2D.Gameplay
             }
 
             WorkerConditionSnapshot snapshot = this.GetWorkerCondition(worker);
-            return snapshot == null
-                ? 1.0f
-                : WorkerConditionTool.GetTaskProgressMultiplier(snapshot.State, taskType);
+            if (snapshot == null)
+            {
+                return 1.0f;
+            }
+
+            float multiplier = WorkerConditionTool.GetTaskProgressMultiplier(snapshot.State, taskType);
+
+            // 压力/士气惩罚：高压 → 心智涣散工作变慢；低士气 → 怠工；吃饭/睡觉/地面睡眠不受影响
+            if (taskType != WorkerTaskType.Eat
+                && taskType != WorkerTaskType.Sleep
+                && taskType != WorkerTaskType.GroundSleep
+                && WorkerConditionTool.TryGetWorkerData(worker, out AWorker.WorkerData wd))
+            {
+                multiplier *= WorkerConditionTool.GetStressWorkMultiplier(
+                    WorkerConditionTool.GetSafeRatio(wd.CurStress, wd.MaxStress));
+                multiplier *= WorkerConditionTool.GetMoraleWorkMultiplier(
+                    WorkerConditionTool.GetSafeRatio(wd.CurMorale, wd.MaxMorale));
+            }
+
+            return multiplier;
         }
 
         /// <summary>
@@ -290,6 +307,12 @@ namespace LAB2D.Gameplay
         /// <summary>当前疲劳值比例。</summary>
         public float TiredRatio;
 
+        /// <summary>当前压力值比例。</summary>
+        public float StressRatio;
+
+        /// <summary>当前士气值比例。</summary>
+        public float MoraleRatio;
+
         /// <summary>移动速度倍率。</summary>
         public float MoveSpeedMultiplier;
 
@@ -313,6 +336,8 @@ namespace LAB2D.Gameplay
                     State = WorkerConditionState.Healthy,
                     HungryRatio = 1.0f,
                     TiredRatio = 0.0f,
+                    StressRatio = 0.0f,
+                    MoraleRatio = 1.0f,
                     MoveSpeedMultiplier = 1.0f,
                     WorkProgressMultiplier = 1.0f,
                 };
@@ -326,6 +351,8 @@ namespace LAB2D.Gameplay
                 State = state,
                 HungryRatio = WorkerConditionTool.GetSafeRatio(workerData.CurHungry, workerData.MaxHungry),
                 TiredRatio = WorkerConditionTool.GetSafeRatio(workerData.CurTired, workerData.MaxTired),
+                StressRatio = WorkerConditionTool.GetSafeRatio(workerData.CurStress, workerData.MaxStress),
+                MoraleRatio = WorkerConditionTool.GetSafeRatio(workerData.CurMorale, workerData.MaxMorale),
                 MoveSpeedMultiplier = WorkerConditionTool.GetMoveSpeedMultiplier(state),
                 WorkProgressMultiplier = WorkerConditionTool.GetTaskProgressMultiplier(
                     state,
@@ -344,6 +371,8 @@ namespace LAB2D.Gameplay
                 this.State,
                 this.HungryRatio,
                 this.TiredRatio,
+                this.StressRatio,
+                this.MoraleRatio,
                 this.MoveSpeedMultiplier,
                 this.WorkProgressMultiplier);
         }

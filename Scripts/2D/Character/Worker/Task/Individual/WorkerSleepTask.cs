@@ -41,16 +41,22 @@ namespace LAB2D.Character.Worker.Task.Individual
 
             if (worker.BedItem != null)
             {
-                // 有床睡眠：疲劳清零 + 精气神奖励
+                // 有床睡眠：疲劳清零 + 精气神奖励 + 压力大减 + 士气回升
                 workerData.CurTired = 0.0f;
                 workerData.CurSpirit = System.Math.Min(
                     workerData.MaxSpirit,
                     workerData.CurSpirit + Constant.WorkerConditionConstant.SpiritSleepRestoreBonus);
+                workerData.CurStress = System.Math.Max(
+                    0.0f,
+                    workerData.CurStress - Constant.WorkerConditionConstant.StressSleepRestoreBonus);
+                workerData.CurMorale = System.Math.Min(
+                    workerData.MaxMorale,
+                    workerData.CurMorale + Constant.WorkerConditionConstant.MoraleSleepRestoreBonus);
                 workerData.GroundSleepCount = 0;
             }
             else
             {
-                // 地面睡眠：部分降低疲劳 + 少量精气神
+                // 地面睡眠：部分降低疲劳 + 少量精气神 + 部分减压 + 少量士气
                 float restoreAmount = workerData.MaxTired * Constant.WorkerConditionConstant.GroundSleepTiredRestoreRatio;
                 workerData.CurTired = System.Math.Max(
                     0.0f,
@@ -58,6 +64,12 @@ namespace LAB2D.Character.Worker.Task.Individual
                 workerData.CurSpirit = System.Math.Min(
                     workerData.MaxSpirit,
                     workerData.CurSpirit + Constant.WorkerConditionConstant.SpiritSleepRestoreOnGround);
+                workerData.CurStress = System.Math.Max(
+                    0.0f,
+                    workerData.CurStress - Constant.WorkerConditionConstant.StressSleepRestoreOnGround);
+                workerData.CurMorale = System.Math.Min(
+                    workerData.MaxMorale,
+                    workerData.CurMorale + Constant.WorkerConditionConstant.MoraleSleepRestoreOnGround);
                 workerData.GroundSleepCount++;
             }
         }
@@ -72,6 +84,9 @@ namespace LAB2D.Character.Worker.Task.Individual
 
         /// <inheritdoc/>
         protected override bool ConsumesTiredness => false;
+
+        /// <inheritdoc/>
+        protected override bool ConsumesStress => false;
 
         /// <inheritdoc/>
         public override TaskTraits Traits => TaskTraits.WorkerSpecific;

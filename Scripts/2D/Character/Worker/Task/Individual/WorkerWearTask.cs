@@ -64,6 +64,9 @@ namespace LAB2D.Character.Worker.Task.Individual
         }
 
         /// <inheritdoc/>
+        protected override bool ConsumesStress => false;
+
+        /// <inheritdoc/>
         public override TaskTraits Traits => TaskTraits.OnePerPosition | TaskTraits.WorkerSpecific;
 
         /// <inheritdoc/>

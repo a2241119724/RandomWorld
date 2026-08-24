@@ -40,6 +40,18 @@ namespace LAB2D.Domain.Worker
         /// <summary>濒临停工时的普通任务进度倍率。</summary>
         public const float CriticalWorkProgressMultiplier = 0.45f;
 
+        /// <summary>压力满时的工作进度倍率下限（70% 以上压力开始线性下滑到该值）。</summary>
+        public const float StressWorkMultiplierMin = 0.7f;
+
+        /// <summary>压力惩罚起始比例：压力比例超过该值才开始掉效率。</summary>
+        public const float StressWorkPenaltyStartRatio = 0.7f;
+
+        /// <summary>低士气下的工作进度倍率下限（士气低于 40% 开始线性下滑到该值）。</summary>
+        public const float MoraleWorkMultiplierMin = 0.75f;
+
+        /// <summary>士气惩罚起始比例：士气比例低于该值才开始掉效率。</summary>
+        public const float MoraleWorkPenaltyBelowRatio = 0.4f;
+
         public float GetSafeRatio(float current, float max)
         {
             if (max <= 0.0f)
@@ -149,6 +161,40 @@ namespace LAB2D.Domain.Worker
                 default:
                     return 1.0f;
             }
+        }
+
+        /// <summary>
+        /// 压力对工作进度的惩罚倍率：压力比例超过 <see cref="StressWorkPenaltyStartRatio"/>
+        /// 后线性下滑到 <see cref="StressWorkMultiplierMin"/>。吃饭/睡觉任务由调用方豁免。
+        /// </summary>
+        /// <param name="stressRatio">压力比例（0~1）。</param>
+        /// <returns>工作进度倍率。</returns>
+        public float GetStressWorkMultiplier(float stressRatio)
+        {
+            if (stressRatio <= StressWorkPenaltyStartRatio)
+            {
+                return 1.0f;
+            }
+
+            float t = MathHelper.Clamp01((stressRatio - StressWorkPenaltyStartRatio) / (1.0f - StressWorkPenaltyStartRatio));
+            return 1.0f - ((1.0f - StressWorkMultiplierMin) * t);
+        }
+
+        /// <summary>
+        /// 士气对工作进度的惩罚倍率：士气比例低于 <see cref="MoraleWorkPenaltyBelowRatio"/>
+        /// 后线性下滑到 <see cref="MoraleWorkMultiplierMin"/>。吃饭/睡觉任务由调用方豁免。
+        /// </summary>
+        /// <param name="moraleRatio">士气比例（0~1）。</param>
+        /// <returns>工作进度倍率。</returns>
+        public float GetMoraleWorkMultiplier(float moraleRatio)
+        {
+            if (moraleRatio >= MoraleWorkPenaltyBelowRatio)
+            {
+                return 1.0f;
+            }
+
+            float t = MathHelper.Clamp01((MoraleWorkPenaltyBelowRatio - moraleRatio) / MoraleWorkPenaltyBelowRatio);
+            return 1.0f - ((1.0f - MoraleWorkMultiplierMin) * t);
         }
     }
 }

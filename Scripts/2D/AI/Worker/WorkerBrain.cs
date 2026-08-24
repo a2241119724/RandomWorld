@@ -115,6 +115,18 @@ namespace LAB2D.AI.Worker
         /// <summary>精气神阈值：低于此值优先漫游恢复</summary>
         public float SpiritThreshold = 30f;
 
+        /// <summary>压力阈值：压力值高于 MaxStress-此值 优先漫游减压</summary>
+        public float StressThreshold = 40f;
+
+        /// <summary>士气低阈值：低于此值倾向漫游散心恢复</summary>
+        public float MoraleLowThreshold = 30f;
+
+        /// <summary>贪婪阈值：高于此值倾向主动赚钱（低事业心也会干）</summary>
+        public float GreedThreshold = 60f;
+
+        /// <summary>懒惰阈值：高于此值倾向漫游摸鱼</summary>
+        public float LazinessThreshold = 60f;
+
         /// <summary>漫游基础概率</summary>
         public float WanderBaseChance = 0.12f;
 
@@ -351,6 +363,20 @@ namespace LAB2D.AI.Worker
                     $"精气神低({workerData.CurSpirit:F0}), 漫游恢复");
             }
 
+            // === 压力过高 → 强制漫游减压（劳动压迫，需散心） ===
+            if (workerData.CurStress > workerData.MaxStress - this.StressThreshold)
+            {
+                return Decision.Make(WorkerDecisionType.Wander,
+                    $"压力高({workerData.CurStress:F0}/{workerData.MaxStress:F0}), 漫游减压");
+            }
+
+            // === 士气过低 → 漫游散心恢复 ===
+            if (workerData.CurMorale < this.MoraleLowThreshold)
+            {
+                return Decision.Make(WorkerDecisionType.Wander,
+                    $"士气低({workerData.CurMorale:F0}), 漫游散心");
+            }
+
             // === TIER 1: Bootstrap 阶段专属决策 ===
             if (workerData.LifeStage == Domain.Worker.WorkerLifeStage.Bootstrap)
             {
@@ -482,18 +508,22 @@ namespace LAB2D.AI.Worker
                 };
             }
 
-            // 事业型：自己干
-            if (p.Ambition > this.AmbitionThreshold && p.Mood > this.MoodLowThreshold && hasNearbyResource && Random.value < selfProb)
+            // 事业型/贪婪型：自己干（贪婪者即便事业心不足也会为赚钱而干）
+            if ((p.Ambition > this.AmbitionThreshold || workerData.Greed > this.GreedThreshold)
+                && p.Mood > this.MoodLowThreshold && hasNearbyResource && Random.value < selfProb)
             {
                 var rc = nearbyResource.Value;
+                string drive = p.Ambition > this.AmbitionThreshold
+                    ? $"事业心({p.Ambition:F0})"
+                    : $"贪婪({workerData.Greed:F0})";
                 return new Decision
                 {
                     Type = WorkerDecisionType.SelfGather,
                     TargetPosition = rc.Position,
                     Resource = rc.Resource,
                     Description = rc.IsTerrainDig
-                        ? $"事业心({p.Ambition:F0})驱使自主挖掘地形"
-                        : $"事业心({p.Ambition:F0})驱使自主采集",
+                        ? $"{drive}驱使自主挖掘地形"
+                        : $"{drive}驱使自主采集",
                     IsTerrainDig = rc.IsTerrainDig,
                     TerrainId = rc.TerrainId,
                 };
@@ -514,10 +544,11 @@ namespace LAB2D.AI.Worker
                     $"精气神({workerData.CurSpirit:F0})心情({p.Mood:F0})需要调整, 漫游休息");
             }
 
-            // 小概率漫游（12% 基础 + 心情/精气神修正）
+            // 小概率漫游（12% 基础 + 心情/精气神/懒惰修正）
             float wanderChance = this.WanderBaseChance;
             wanderChance += (50f - p.Mood) * 0.003f;
             wanderChance += Mathf.Max(0f, (50f - workerData.CurSpirit)) * 0.002f;
+            wanderChance += workerData.Laziness * 0.002f;
             wanderChance = Mathf.Clamp01(wanderChance);
             if (Random.value < wanderChance)
                 return Decision.Make(WorkerDecisionType.Wander, "小概率漫游, 转换心情");

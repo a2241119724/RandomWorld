@@ -52,6 +52,43 @@ namespace LAB2D.Constant
         /// <summary>精气神低阈值。</summary>
         public const float SpiritLowThreshold = 30f;
 
+        // ---- 压力 (Stress) 常量 ----
+
+        /// <summary>压力自然衰减速度（无任务/轻任务时缓慢降压，工作期间 Execute 累积更快）。</summary>
+        public const float StressDecayPerSecond = 0.02f;
+
+        /// <summary>压力高阈值：CurStress > MaxStress - 此值 视为高压，触发减压决策。</summary>
+        public const float StressHighThreshold = 40f;
+
+        /// <summary>有床睡眠恢复的压力。</summary>
+        public const float StressSleepRestoreBonus = 50f;
+
+        /// <summary>地面睡眠恢复的压力（缩小与有床睡眠的差距）。</summary>
+        public const float StressSleepRestoreOnGround = 35f;
+
+        /// <summary>每次进食恢复的压力（吃饭是减压）。</summary>
+        public const float StressEatRestore = 10f;
+
+        /// <summary>每次锻炼恢复的压力。</summary>
+        public const float StressExerciseRestore = 8f;
+
+        /// <summary>每次漫游路点到达恢复的压力。</summary>
+        public const float StressWanderRestorePerWaypoint = 4f;
+
+        // ---- 士气 (Morale) 常量 ----
+
+        /// <summary>士气基础恢复速度（安好状态，/秒）。</summary>
+        public const float MoraleRecoverPerSecond = 0.02f;
+
+        /// <summary>士气因困苦的最大衰减速度（/秒，困苦度 0~1 加权后缩放）。</summary>
+        public const float MoraleSufferDecayPerSecond = 0.06f;
+
+        /// <summary>有床睡眠额外恢复的士气。</summary>
+        public const float MoraleSleepRestoreBonus = 6f;
+
+        /// <summary>地面睡眠额外恢复的士气。</summary>
+        public const float MoraleSleepRestoreOnGround = 3f;
+
         /// <summary>
         /// 进入饥饿或疲劳提示的比例阈值。委托自 WorkerConditionRuleService。
         /// </summary>

@@ -191,6 +191,10 @@ namespace LAB2D.Tool
                     return "悬赏";
                 case WorkerTaskType.Demolish:
                     return "拆除";
+                case WorkerTaskType.PickUp:
+                    return "拾取";
+                case WorkerTaskType.Storage:
+                    return "存取";
                 default:
                     return taskType.ToString();
             }
