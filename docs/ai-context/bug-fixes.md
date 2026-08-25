@@ -484,3 +484,13 @@
   - **可选资源查询用无日志变体（TryGetAsset），强制语义（必须有）才用 Error 级 GetAsset**。Tile 对背包物品只是"掉落/放置时"才需要的可选元数据。
   - **`Activator.CreateInstance` 后不应无条件覆盖子类构造已初始化的字段**——先判空。
   - 批量初始填充会放大单件日志成本（每物品×1 条），可选资源缺失必须静默。
+
+## 2026-08-25 帧动画中心偏移（裁剪子 sprite pivot 在左下角 + 各帧裁剪框大小不一）
+
+- **现象**：用户从一张 sprite sheet（Sprite Editor）裁出 5 帧 GrassTree_0~4 做地面帧动画，动画能播但"中心位置不对"——视觉内容整体偏到格子右上。
+- **根因**（资源导入设置，非代码 bug）：
+  1. **pivot 全在左下角**：`GrassTree.png.meta` 每个子 sprite `pivot: {x:0,y:0}`（`alignment: 0`），而 `TileVisualSpawner.CreateOrUpdate` 把 `transform.position = tilemap.GetCellCenterWorld(cell)`——sprite pivot 落在格子中心，rect 从格子中心向右上铺开。以 264×646 帧算，视觉中心偏到格子右上 ~(1.32, 3.23) 世界单位。静态 tile 图正常是因为其 pivot 是中心 (0.5,0.5)。
+  2. **各帧裁剪框不一致**：GrassTree_1 宽 525，其余 ~262——即使 pivot 改中心，各帧 rect 中心不重合，播放时仍有轻微跳动。
+- **修复**：在 Sprite Editor 里把 Multiple 图的各帧 pivot 统一设为中心（全选帧 → pivot 改 Center）。曾临时写过 Editor 工具批量处理（`FramePivotTool.cs`），后按用户要求删除；如需再次批量处理可重写同逻辑（`TextureImporter.spritesheet` → 各 `SpriteMetaData.alignment=Center/pivot=(0.5,0.5)` → `SaveAndReimport`）。
+- **验证**：菜单执行后动画帧视觉中心与静态图对齐到格子中心；若 GrassTree_1（525 宽）仍明显跳，需在 Sprite Editor 里重裁该帧或统一各帧框选范围。
+- **教训**：**Sprite Editor 手动裁剪出的子 sprite 默认 pivot 在左下角，必须统一设为中心（或裁剪时保持各帧 rect 一致 + 内容对齐）**。帧动画视觉中心依赖 sprite pivot 与 `GetCellCenterWorld` 的配合，pivot 异常不会报错而是静默偏移。

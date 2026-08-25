@@ -95,6 +95,15 @@ namespace LAB2D.Data
         public ItemVisualMode VisualMode = ItemVisualMode.Tile;
 
         /// <summary>
+        /// 地面视觉帧动画开关：开启且 LayerMode != Bottom 时，以英文名（Name，与图片资源名一致）
+        /// 为前缀，自动收集 Name_0、Name_1、Name_2… 序列 Sprite 循环播放（帧数收集至首个缺失，
+        /// 无任何序列帧则回退静态 tile 图）。仅作用于独立 SpriteRenderer 视觉：
+        /// VisualMode=Prefab 的预制体视觉由预制体自身呈现动画，不受此开关影响。
+        /// </summary>
+        [Tooltip("地面视觉帧动画开关：开启且 LayerMode != Bottom 时，按英文名(Name)加 _0/_1/_2... 序列图循环播放动画。")]
+        public bool IsAnimation;
+
+        /// <summary>
         /// 物品类型
         /// </summary>
         [Tooltip("物品类型")]

@@ -47,7 +47,7 @@ namespace LAB2D.Map
             //   不创建 ItemVisual_*（TilemapRenderer 保持启用）。
             // - 非恒底层物品：tile 保留数据/碰撞，颜色透明隐藏 TilemapRenderer 双重渲染，
             //   由独立 SpriteRenderer（Character 层 ItemVisual_*）参与 y 排序。
-            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "ItemVisual", this.GetItemLayerMode, useTilemapColor: false, prefabResolver: this.GetItemPrefabName);
+            this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "ItemVisual", this.GetItemLayerMode, useTilemapColor: false, prefabResolver: this.GetItemPrefabName, animationResolver: this.GetItemAnimationPrefix);
         }
 
         /// <summary>
@@ -289,6 +289,26 @@ namespace LAB2D.Map
 
             ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
             return item != null && item.VisualMode == ItemVisualMode.Prefab ? item.Name : null;
+        }
+
+        /// <summary>
+        /// 该格物品的帧动画前缀（ItemData.IsAnimation 开启且 LayerMode != Bottom 时启用，背包掉落物/仓库/资源通用）。
+        /// 关闭/恒底层 = 返回 null，走静态 tile 图；开启且非恒底层 = 返回英文名（Name），
+        /// TileVisualSpawner 按 Name_0/Name_1/... 序列图循环播放动画（预制体视觉由预制体自管，不受此影响）。
+        /// 供 TileVisualSpawner 的 animationResolver 使用。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>该格物品的动画帧前缀；无 tile、未开启 IsAnimation 或恒底层时返回 null。</returns>
+        private string GetItemAnimationPrefix(Vector3Int cell)
+        {
+            TileBase tile = this.tilemap.GetTile(cell);
+            if (tile == null)
+            {
+                return null;
+            }
+
+            ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
+            return item != null && item.IsAnimation && item.LayerMode != ItemLayerMode.Bottom ? item.Name : null;
         }
 
         /// <summary>

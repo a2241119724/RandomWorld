@@ -6,6 +6,7 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 
 ## Recent Changes
 
+- 2026-08 — `feat(render)`: 物品地面帧动画——`ItemData.IsAnimation`（默认关）+ `SpriteFrameAnimator` 按英文名 `{Name}_0/1/2...` 序列图 6fps 循环播放（非恒底层独立视觉，预制体视觉自管）；`TileVisualSpawner` 加 `animationResolver`，每次 `CreateOrUpdate` 调和动画组件状态（挂载/切换/同格换物品重载）。ItemMap/ResourceMap/BuildMap 三处 Map 均接入。spec 见渲染排序节
 - 2026-08 — `feat(render)`: 遮挡淡化 + 分层模式枚举——`OcclusionFader` 淡化挡住本地玩家的环境视觉（alpha→0.3）；`ItemData.LayerMode` 三态（Bottom 恒底层 / Alpha 参与排序且淡化 / Normal 参与排序不淡化）统一控制 y 排序与透明度。spec 见渲染排序节
 - 2026-08 — `feat(render)`: Worker 屋顶接入 y 排序——`RoofManager` 创建的屋顶 SpriteRenderer 注册进 `WorldYSortManager`（层仍 `Highest` 盖住屋内一切），多个房间屋顶之间按"视觉底端世界 y"分配唯一 `sortingOrder`（近处盖远处），不再固定 order=0
 - 2026-08 — `refactor(worker)`: 疲劳值语义反转——`CurTired` 从剩余体力式（初始=MaxTired、递减、低于阈值判定疲劳）反转为累积疲劳式（初始 0、工作/空闲累积、睡眠降低、疲劳 > `MaxTired-阈值` 判定需休息），20+ 文件阈值判断对称反转，AI 决策/睡眠/悬赏/状态机同步。旧档 `CurTired` 语义错位，睡一觉自愈（未做迁移）

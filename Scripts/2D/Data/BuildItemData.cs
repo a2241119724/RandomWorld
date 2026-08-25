@@ -104,6 +104,7 @@ namespace LAB2D.Data
                 LayerMode = this.LayerMode,
                 HeatPower = this.HeatPower,
                 VisualMode = this.VisualMode,
+                IsAnimation = this.IsAnimation,
             };
         }
     }

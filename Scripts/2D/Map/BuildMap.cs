@@ -57,7 +57,7 @@ namespace LAB2D.Map
 
             this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "BuildVisual",
                 this.GetBuildLayerMode, colorProvider: this.GetBuildVisualColor,
-                prefabResolver: this.GetBuildPrefabName);
+                prefabResolver: this.GetBuildPrefabName, animationResolver: this.GetBuildAnimationPrefix);
         }
 
         public void Start()
@@ -408,6 +408,26 @@ namespace LAB2D.Map
 
             BuildItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
             return item != null && item.VisualMode == ItemVisualMode.Prefab ? item.Name : null;
+        }
+
+        /// <summary>
+        /// 该格建筑的帧动画前缀（BuildItemData.IsAnimation 开启且 LayerMode != Bottom 时启用）。
+        /// 关闭/恒底层 = 返回 null，走静态 tile 图；开启且非恒底层 = 返回英文名（Name），
+        /// TileVisualSpawner 按 Name_0/Name_1/... 序列图循环播放动画（方向变体继承同一开关，
+        /// 前缀取变体自身 Name）。供 TileVisualSpawner 的 animationResolver 使用。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>该格建筑的动画帧前缀；无建造数据、未开启 IsAnimation 或恒底层时返回 null。</returns>
+        private string GetBuildAnimationPrefix(Vector3Int cell)
+        {
+            BuildTileData data = this.GetBuildTileData(cell);
+            if (data == null)
+            {
+                return null;
+            }
+
+            BuildItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
+            return item != null && item.IsAnimation && item.LayerMode != ItemLayerMode.Bottom ? item.Name : null;
         }
 
         /// <summary>

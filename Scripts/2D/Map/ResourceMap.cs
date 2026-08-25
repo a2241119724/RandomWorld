@@ -64,7 +64,7 @@ namespace LAB2D.Map
             }
 
             this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "TreeVisual",
-                this.GetResourceLayerMode, useTilemapColor: false);
+                this.GetResourceLayerMode, useTilemapColor: false, animationResolver: this.GetResourceAnimationPrefix);
             if (this.resourceTileMapOne != null)
             {
                 TilemapRenderer rendererOne = this.resourceTileMapOne.GetComponent<TilemapRenderer>();
@@ -74,7 +74,7 @@ namespace LAB2D.Map
                 }
 
                 this.visualsOne = new TileVisualSpawner(this.resourceTileMapOne, this.transform, "Character", "TreeVisualOne",
-                    this.GetResourceLayerMode, useTilemapColor: false);
+                    this.GetResourceLayerMode, useTilemapColor: false, animationResolver: this.GetResourceAnimationPrefix);
                 this.visualsOne.RebuildAll(); // 静态场景装饰，一次性建视觉
             }
         }
@@ -265,6 +265,26 @@ namespace LAB2D.Map
 
             ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
             return item != null ? item.LayerMode : ItemLayerMode.Bottom;
+        }
+
+        /// <summary>
+        /// 该格资源的帧动画前缀（ItemData.IsAnimation 开启且 LayerMode != Bottom 时启用，树资源通用）。
+        /// 关闭/恒底层 = 返回 null，走静态 tile 图；开启且非恒底层 = 返回英文名（Name），
+        /// TileVisualSpawner 按 Name_0/Name_1/... 序列图循环播放动画。
+        /// 供 TileVisualSpawner 的 animationResolver 使用。tile 名查不到数据时返回 null（不动画）。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>该格资源的动画帧前缀；无 tile、未开启 IsAnimation 或恒底层时返回 null。</returns>
+        private string GetResourceAnimationPrefix(Vector3Int cell)
+        {
+            TileBase tile = this.GetTile(cell);
+            if (tile == null)
+            {
+                return null;
+            }
+
+            ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
+            return item != null && item.IsAnimation && item.LayerMode != ItemLayerMode.Bottom ? item.Name : null;
         }
 
         /// <summary>

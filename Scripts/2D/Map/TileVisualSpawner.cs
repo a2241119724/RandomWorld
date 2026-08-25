@@ -22,6 +22,11 @@ namespace LAB2D.Map
     ///   并注册 OcclusionFader（角色在后面时淡化）。
     /// - Normal：tile 透明隐藏，独立 sprite 参与 y 排序，但不注册 OcclusionFader（不淡化）。
     ///
+    /// 帧动画（animationResolver）：可选委托按 cell 返回帧动画前缀（ItemData.IsAnimation 开启且
+    /// LayerMode != Bottom 时的英文名 Name）。非空时独立 sprite 视觉挂 SpriteFrameAnimator，
+    /// 按 {prefix}_0/{prefix}_1/... 序列图循环动画（图片经 ResourceManager.TryGetImage 收集至首个缺失），
+    /// 动画格 sprite 由组件接管；找不到任何帧时回退静态 tile 图。
+    ///
     /// 幂等约束：
     /// - CreateOrUpdate 以 tilemap 当前状态为准（GetSprite/GetColor/GetTransformMatrix）；
     ///   无 tile 的 cell 视为删除 → 多格物品副格（纯碰撞无 tile）自动不建视觉。
@@ -43,6 +48,7 @@ namespace LAB2D.Map
         private readonly System.Func<Vector3Int, Color> colorProvider; // 非空时提供该格视觉应显示的颜色（如 BuildMap 建造中状态色）
         private readonly bool useTilemapColor; // false 时 SpriteRenderer 颜色强制白色（不读 tilemap 颜色）
         private readonly System.Func<Vector3Int, string> prefabResolver; // 非空时该格优先用预制体视觉（ItemData.VisualMode == Prefab 时返回 Name）
+        private readonly System.Func<Vector3Int, string> animationResolver; // 非空时该格独立 sprite 视觉挂帧动画（ItemData.IsAnimation 开启时返回英文名 Name 前缀）
         private readonly Dictionary<Vector3Int, SpriteRenderer> visual = new Dictionary<Vector3Int, SpriteRenderer>();
         private readonly Dictionary<Vector3Int, GameObject> prefabVisuals = new Dictionary<Vector3Int, GameObject>();
 
@@ -61,11 +67,15 @@ namespace LAB2D.Map
         /// <param name="prefabResolver">可选：按 cell 返回预制体名称（如 ItemData.VisualMode == Prefab 时的 Name）。
         /// 非空时该格视觉用完整预制体实例呈现（经 ResourceManager 按名加载，可带多部件/动画/组件）；
         /// 空/实例化失败走默认 tile → 单 SpriteRenderer。</param>
+        /// <param name="animationResolver">可选：按 cell 返回帧动画前缀（如 ItemData.IsAnimation 开启且
+        /// LayerMode != Bottom 时的英文名 Name）。非空时该格独立 SpriteRenderer 挂 SpriteFrameAnimator，
+        /// 按 {prefix}_0/{prefix}_1/... 序列图循环动画；找不到任何帧时回退静态 tile 图。</param>
         public TileVisualSpawner(Tilemap tilemap, Transform hostTransform, string sortingLayerName, string objectNamePrefix,
             System.Func<Vector3Int, ItemLayerMode> layerModeResolver = null,
             System.Func<Vector3Int, Color> colorProvider = null,
             bool useTilemapColor = true,
-            System.Func<Vector3Int, string> prefabResolver = null)
+            System.Func<Vector3Int, string> prefabResolver = null,
+            System.Func<Vector3Int, string> animationResolver = null)
         {
             this.tilemap = tilemap;
             this.sortingLayerName = sortingLayerName;
@@ -74,6 +84,7 @@ namespace LAB2D.Map
             this.colorProvider = colorProvider;
             this.useTilemapColor = useTilemapColor;
             this.prefabResolver = prefabResolver;
+            this.animationResolver = animationResolver;
             this.material = ResolveMaterial(tilemap);
             this.parent = new GameObject(ParentName).transform;
             this.parent.SetParent(hostTransform, false);
@@ -153,6 +164,10 @@ namespace LAB2D.Map
             // 无预制体（或实例化失败回退）：清理可能残留的 prefab 视觉（配置回退/读档切格等场景）
             this.DeletePrefab(cell);
 
+            // 帧动画：非恒底层 + ItemData.IsAnimation 时，独立 sprite 视觉按英文名(Name)加 _0/_1/_2...
+            // 序列循环播放（SpriteFrameAnimator 接管 sprite 显示，跳过下方静态 tile 图赋值）。
+            string animationPrefix = this.animationResolver != null ? this.animationResolver(cell) : null;
+
             if (!this.visual.TryGetValue(cell, out SpriteRenderer sr))
             {
                 GameObject go = new GameObject(this.NameOf(cell));
@@ -175,14 +190,21 @@ namespace LAB2D.Map
                 this.visual.Add(cell, sr);
             }
 
+            // 动画组件调和：每次以 resolver 结果为准（首次挂载 / 动画↔非动画切换 / 同格换物品重载帧序列）。
+            bool isAnimated = this.SyncAnimation(cell, sr, animationPrefix);
+
             // 位置：GetCellCenterWorld 自动应用网格 transform（45° 转置坐标系）
             sr.transform.position = this.tilemap.GetCellCenterWorld(cell);
 
             // 图：GetSprite 可解析 RuleTile（依据 8 邻域）。引用变化才写，减少 SetProperty。
-            Sprite sprite = this.tilemap.GetSprite(cell);
-            if (sr.sprite != sprite)
+            // 动画格由 SpriteFrameAnimator 接管 sprite 切换（跳过，避免覆盖动画帧）。
+            if (!isAnimated)
             {
-                sr.sprite = sprite;
+                Sprite sprite = this.tilemap.GetSprite(cell);
+                if (sr.sprite != sprite)
+                {
+                    sr.sprite = sprite;
+                }
             }
 
             // 颜色：colorProvider 优先（状态色，如 BuildMap 建造中半透明）；否则 useTilemapColor
@@ -202,6 +224,53 @@ namespace LAB2D.Map
             }
 
             return sr;
+        }
+
+        /// <summary>
+        /// 调和 cell 的帧动画组件状态：以 animationResolver 结果为准（每次 CreateOrUpdate 调用）。
+        /// 幂等重入安全，覆盖三类状态变化：
+        /// - 非动画→动画：首次挂载 SpriteFrameAnimator（补挂到已有 SpriteRenderer 所在 GameObject）。
+        /// - 动画→非动画：移除多余组件（同格 tile 换成非动画物品时，避免旧 Update 每帧覆盖静态 sprite）。
+        /// - 动画→动画但前缀变化（同格换成另一动画物品）：按新前缀重载帧序列。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <param name="sr">该格独立 SpriteRenderer。</param>
+        /// <param name="animationPrefix">当前 resolver 返回的帧动画前缀（空 = 无需动画）。</param>
+        /// <returns>该格动画是否实际生效（组件已挂载且有有效帧序列）；false 时由调用方回退静态 tile 图。</returns>
+        private bool SyncAnimation(Vector3Int cell, SpriteRenderer sr, string animationPrefix)
+        {
+            bool shouldAnimate = !string.IsNullOrEmpty(animationPrefix);
+            SpriteFrameAnimator animator = sr.GetComponent<SpriteFrameAnimator>();
+            if (!shouldAnimate)
+            {
+                // 动画→非动画：移除旧动画组件（延迟销毁，帧末后 Update 不再覆盖 sprite）
+                if (animator != null)
+                {
+                    Object.Destroy(animator);
+                }
+
+                return false;
+            }
+
+            if (animator != null && animator.Prefix == animationPrefix)
+            {
+                return true; // 组件已在且帧序列一致，动画生效
+            }
+
+            // 无组件（非动画→动画）或前缀变化（同格换成另一动画物品）：挂载并加载帧序列
+            if (animator == null)
+            {
+                animator = sr.gameObject.AddComponent<SpriteFrameAnimator>();
+            }
+
+            if (!animator.Init(animationPrefix))
+            {
+                // 无有效帧序列（找不到 {prefix}_0）：移除组件，回退静态 tile 图
+                Object.Destroy(animator);
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
