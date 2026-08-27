@@ -71,7 +71,7 @@
 
 - **统一通道**：`AWorkerTask.LogProvider(msg, LogManager.LogLevelEnum.X)`（`global using LAB2D.Manager` 已就绪）。
 - **级别**：Debug/Trace 只进 `game.log`（不刷 Unity Console），Warning/Error 才进 Console。高频细节用 Trace，关键事件用 Debug。
-- **前缀**：`[BrainDiag]`/`[StateDiag]`/`[TaskDiag]`/`[SeekDiag]`/`[MapDiag]`/`[MoveDiag]`/`[StuckDiag]`/`[EnemyDiag]`/`[BuildDiag]`，消息带角色名与坐标。
+- **前缀**：`[BrainDiag]`/`[StateDiag]`/`[TaskDiag]`/`[SeekDiag]`/`[MapDiag]`/`[MoveDiag]`/`[StuckDiag]`/`[EnemyDiag]`/`[BuildDiag]`/`[MindDiag]`，消息带角色名与坐标。
 - **只加在事件点**（状态切换/任务成败/寻路结果/建造状态变化），绝不在每帧/逐格循环加；日志参数构造廉价（禁止 ServiceLocator 查询）。
 - **避免重复**：同类事件已有日志时优先增强而非新增；历史教训（高频 Trace 曾致卡顿）见 `docs/ai-context/bug-fixes.md`。
 

@@ -73,6 +73,17 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **UI:** F11 好感度 HUD（`FavorabilityHUD`：对玩家好感+态度标签、Top3 Worker↔Worker 关系、空态提示）；`ItemInfoUI` 点击 Worker 显示"对你好感: X（标签）"
 - **初始好感:** 取 `NPCPromptProfile.initialFavorability`（Worker profile），默认 50
 
+### Worker 心智层（纯规则，无 LLM）
+- **定位:** 叠加在好感度之上（读取好感度作数值底座、行为调制在好感门控处汇合），互不写对方核心数值；拒绝/关系是**模型之外的决策门**（`UseModelDecision` 开启也不绕过，ML 41 维特征不动）
+- **数据:** `WorkerData.Mind`（`WorkerMindData`，`[Serializable]` 纯值类型）随角色二进制存档一次写入，旧档 `WorkerMindData.Ensure` 兜底零迁移；跨存档引用一律 Name 字符串 + `"PLAYER"` 哨兵；集合用 `List`（字典不落档）
+- **自主意志（拒绝/拖延/强制）:** `CommandAcceptanceRuleService.Evaluate` 体验门 + `WorkerBountyTask.DoIsCanWork` 权威门双门——**不能只挂体验门**：`RunTaskAssignmentLoop` 每 15 帧会从优先级 0 绕过 `SeekState` 重派同一玩家悬赏，权威门按怨恨≥85 或拒绝冷却中拦截。Evaluate 优先级：生存硬阻断（饥饿<15/疲劳>Max-15/精气神<10→Delay 交紧急打断）→ 拖延冷却→Delay → 好感<35→Refuse → 怨恨≥85（或 ≥60+随机）→Refuse → 感恩≥65→Accept → 意愿度<25→Delay → 6%（心情<20 时 15%）随机→Delay → Accept。`ForceCommand` 设 60s 放行窗口，代价怨恨+8（冷却中再+3）/信任-5/好感-5/计数++，强制后进 40s 冷却防刷
+- **事件记忆 + 信念:** `WorkerMindService.RecordEvent` 统一入口 → `WorkerMemoryRuleService`（记忆上限 24、逐日权重衰减）→ `WorkerBeliefRuleService`（信念 [0,100] 初始 50：信任世界/信任玩家/自尊/归属感）
+- **随机人生事件:** `WorkerLifeEventRuleService` 事件表（灵感/横财/领悟/变故/疾病/小确幸/梦魇）+ `WorkerDreamRuleService` 执念（`RefreshGoal` 人格分支前 25% 把 `CurrentGoal` 指到执念映射）。**平衡三原则**：封顶（生存单次 ≤±15、人格漂移 ≤±8）；恩典（濒危当轮不掷，一天最多 1 次）；可恢复（负事件只动士气/精气神/心情软维度，绝不扣饥饿/疲劳致死线）。`WorkerMindManager` 每 2 游戏日按日口径掷 `Random.value < 0.35`
+- **性格演化:** `PersonalityDriftRuleService` 四桶（心情/事业心/勤奋/社交）由 `RecordEvent` 按强度累积，`|v|≥12` 迁移 ±2（clamp）归零。**防横跳三机制**：滞回带（反向需积 12+6=18，`*Dir` 字段记忆方向）、每日限流（`Migrate` 日限 1）、桶饱和（±30 上限）
+- **社会关系:** `WorkerRelationshipRuleService` + `Mind.Relations`（name 键控），Kind 优先级 Grudge>Enmity>Admiration>Friendship>None；友谊 `Affinity≥40`/敌意 `≤-30`/爱慕 `Admiration≥40`/记仇（被拒交易 30、被攻击 40，每日 -2 衰减）。**四个低频行为（防经济干扰）**：①互助/回避——friend/admiration 好感门前豁免必接、enmity/grudge 拒接（`WorkerBountyTask.DoIsCanWork`）②拒卖——关系否决优先于人格（`WorkerTradeService.WillSell` 前置）③送礼——漫游决策前 5%，双方 Affinity+8、收方好感+5（`WorkerSeekState`）④嫉妒——`CurrencyManager.CompleteBounty` 节流钩子（≥30s），旁观 `Greed>60` 对完成者 Affinity-4。每日 `Decay` 淡化；死亡清理 `FavorabilityManager.RemoveDeadWorker`
+- **事件接入点:** 完成/接取悬赏、交易成败、被攻击、玩家救危、对话结束等事件点调 `RecordEvent`（TargetName=`"PLAYER"` 哨兵或 Worker 名），绝不每帧循环；`WorkerMindManager.Tick`/`ProcessDayRollover` 驱动
+- **反馈:** 拒绝理由/人生事件/关系变化统一走 `AWorker.ShowMindBubble`（语料 `WorkerInnerMonologue`，防被 `ShowRandomMonologue` 覆盖：进口气卫 + `HideDialogText` 清守卫）+ `[MindDiag]` Debug 日志 + `WorkerConditionHUD`「最近想法」行
+
 ### 商店与任务板系统
 - **商店 NPC:** `ShopNPC` + `ShopNPCGenerator` — 地图就绪后自动生成商店，支持 Worker/Player 买卖交互
 - **任务板:** `TaskBoardManager` — 地图中心固定位置，Worker 存取物品的中转站，内存字典存储
@@ -130,6 +141,7 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
 - **HUD 热键:** 通过 GlobalInit.Update() 统一分发，避免子对象 inactive 时失效
 - **Worker 经济:** Domain 层纯 C# 值对象（CurrencyAmount / WorkerPersonality / WorkerGoal / BountyData），Gameplay 层 Manager 驱动运行时
 - **好感度:** 规则纯函数在 Domain（`FavorabilityRuleService`，零 Unity 依赖可单测），运行时状态在 Gameplay（`FavorabilityManager`，仿 CurrencyManager：ASingletonSaveData + ITickable）；定向好感（Worker↔Worker/Worker→Player）懒初始化零预填
+- **Worker 心智层:** 纯规则（无 LLM）叠加在好感度之上，行为调制在好感门控处汇合；拒绝双门（体验+权威，防优先级 0 绕过）；ML 41 维不动，拒绝/关系是模型之外决策门
 - **Worker AI 自主决策:** WorkerBrain 在空闲时根据人格+目标+状态自主选择行动，而非被动等待任务分配
 - **日志统一:** `GameLoggerFactory` 统一获取 `IGameLogger`，替换所有硬编码 `Debug.Log`（31 文件迁移）
 - **建造韧性:** 位置预注册 + 建造者名称参数 → 任务恢复；每秒位移卡死检测（`MovementStuckDetector`：窗口累计位移 < 期望 40%（`SlidingRatio`）先预防性重寻路，< 15%（`StuckRatio`）判硬卡死窗口，连续硬卡死后最多 3 次重试）→ 避免建造任务误放弃
