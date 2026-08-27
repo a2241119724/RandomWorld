@@ -58,6 +58,12 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **物品所有权:** `ItemOwnershipService` 追踪物品归属，Worker 采集/制作/购买获得所有权
 - **Worker 大脑:** `WorkerSeekState` 空闲时根据人格/目标/状态自主选择行动（采集/出售/买食物/接悬赏）
 
+### Worker 生存与成长数值（压力/士气/熟练度/贪婪懒惰）
+- **压力 `CurStress` / 士气 `CurMorale`:** `WorkerUpdateSystem`（ITickable，GlobalInit 驱动）每帧更新——压力工作期 `Execute` 累积、空闲自然衰减（`StressDecayPerSecond=0.02`），睡眠/进食/锻炼/漫游恢复，`CurStress > MaxStress - 40` 视为高压触发减压决策；士气按困苦度（饥饿不足×0.4 + 疲劳×0.4 + 压力×0.2）下降、安好回升（`MoraleRecoverPerSecond=0.02`）
+- **进度倍率联动:** 压力比例 >70% 或士气 <40% 起线性惩罚任务进度（`WorkerConditionRuleService.GetStressWorkMultiplier`/`GetMoraleWorkMultiplier`，下限 0.7/0.75）；熟练度 `SkillProgress` [0,100] 每次完成核心工作类任务 +0.8，进度倍率 = 1 + 熟练度×0.004（100 点 = +40%，`WorkerSkillProgressService` 纯算术）；**吃饭/睡觉/地面睡眠任务豁免**所有进度惩罚
+- **贪婪/懒惰 `Greed`/`Laziness`:** 人格数值，入 ML 特征 19/20 维真实值（`WorkerFeatureExtractor` 41 维）；心智层嫉妒行为用 `Greed>60`
+- **倍率出口:** `WorkerConditionManager`（Singleton + IWorkerConditionManager）按 Worker 汇总快照，经 `GetAdjustedWorkerMoveSpeed`（移动）与 `GetWorkerTaskProgressMultiplier`（进度）输出，与饥饿/疲劳状态机共用同一快照机制
+
 ### 好感度系统
 - **定向关系:** Worker↔Worker（双向）+ Worker→Player，数值 [0, 100] 初始 50。运行时键 `Worker.GetInstanceID()`，Player 恒为 `PlayerId=0`（与 `PlayerBountyService.PlayerOwnerId` 一致）；懒初始化零预填
 - **分层:** `FavorabilityRuleService`（Domain/Worker 纯 C#，集中阈值/增减量/价格纯函数，可单测）+ `FavorabilityManager`（Gameplay，仿 CurrencyManager：ASingletonSaveData + ITickable）
