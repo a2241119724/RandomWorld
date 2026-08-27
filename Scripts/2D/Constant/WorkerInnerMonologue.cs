@@ -223,6 +223,190 @@ namespace LAB2D.Constant
             "这装备手感真好。",
         };
 
+        // ===== 心智层反馈语料（自主意志/人生事件/关系变化）=====
+
+        /// <summary>怨恨导致的拒绝（与玩家有积怨）。</summary>
+        private static readonly string[] RefuseResentment = new[]
+        {
+            "我不想接你的活。",
+            "上次的事，我可没忘。",
+            "你凭什么使唤我？",
+            "我不会帮你干活的。",
+            "你心里没点数吗？",
+        };
+
+        /// <summary>好感过低导致的拒绝（还不熟/疏远）。</summary>
+        private static readonly string[] RefuseFavorability = new[]
+        {
+            "我跟你还不熟。",
+            "我们不熟，别指望我。",
+            "你的忙，我不想帮。",
+        };
+
+        /// <summary>意愿低落导致的拖延（没心情/没干劲）。</summary>
+        private static readonly string[] DelayWillingness = new[]
+        {
+            "今天没心情干活。",
+            "让我歇会儿，等会儿再说。",
+            "现在不太想动。",
+            "再等等吧……",
+        };
+
+        /// <summary>随机个人因素导致的拖延（摸鱼）。</summary>
+        private static readonly string[] DelayRandomMood = new[]
+        {
+            "嗯……等会儿再说吧。",
+            "突然不想干了。",
+            "今天犯懒，先逛逛。",
+            "反正也不差这一会儿。",
+        };
+
+        /// <summary>被强制命令时的怨恨反馈。</summary>
+        private static readonly string[] Forced = new[]
+        {
+            "你逼我……",
+            "我记住这次了。",
+            "好，我干，但别想我高兴。",
+            "当牛做马的日子我记着呢。",
+        };
+
+        /// <summary>被玩家/他人攻击时的反馈。</summary>
+        private static readonly string[] EvtAttack = new[]
+        {
+            "你打我？！",
+            "这一下我记下了。",
+            "为什么要打我……",
+            "疼……这笔账记下了。",
+        };
+
+        /// <summary>被击杀时的反馈。</summary>
+        private static readonly string[] EvtKill = new[]
+        {
+            "我……就这样死了吗……",
+            "原来我一直活在恐惧里。",
+            "世界，真是残酷啊。",
+        };
+
+        /// <summary>濒死经历（极端饥饿等）的恐惧反馈。</summary>
+        private static readonly string[] EvtNearDeath = new[]
+        {
+            "刚才差点死了……",
+            "太可怕了，我不想死。",
+            "活着真好……",
+            "下次可不能这么狼狈了。",
+        };
+
+        /// <summary>交易被拒的反馈。</summary>
+        private static readonly string[] EvtTradeRejected = new[]
+        {
+            "居然不卖给我……",
+            "太不给面子了。",
+            "我自己想办法。",
+        };
+
+        /// <summary>完成悬赏的反馈。</summary>
+        private static readonly string[] EvtBountyCompleted = new[]
+        {
+            "活儿干完了，钱到手。",
+            "我挺能干的嘛。",
+            "搞定！",
+        };
+
+        /// <summary>阶段升级/成就反馈。</summary>
+        private static readonly string[] EvtStageUp = new[]
+        {
+            "我好像更有底气了。",
+            "这里越来越像家了。",
+            "感觉自己在成长。",
+        };
+
+        /// <summary>灵光一闪（正事件）。</summary>
+        private static readonly string[] EvtInsight = new[]
+        {
+            "突然有了个好点子！",
+            "灵感像闪电一样击中了我。",
+            "我好像明白了什么……",
+        };
+
+        /// <summary>横财入袋（正事件）。</summary>
+        private static readonly string[] EvtWindFall = new[]
+        {
+            "居然捡到一笔钱！",
+            "财运来了挡都挡不住。",
+            "天上掉馅饼啦！",
+        };
+
+        /// <summary>小确幸（正事件）。</summary>
+        private static readonly string[] EvtSmallJoy = new[]
+        {
+            "今天的小日子真不错。",
+            "夕阳真美……",
+            "小小的幸福也值得珍惜。",
+        };
+
+        /// <summary>顿悟（中事件）。</summary>
+        private static readonly string[] EvtEnlightenment = new[]
+        {
+            "我想通了一些事。",
+            "人生好像有了新的意义。",
+        };
+
+        /// <summary>遭遇变故（负事件）。</summary>
+        private static readonly string[] EvtMisfortune = new[]
+        {
+            "真是倒霉的一天……",
+            "屋漏偏逢连夜雨。",
+            "怎么什么坏事都让我碰上。",
+        };
+
+        /// <summary>染上小病（负事件）。</summary>
+        private static readonly string[] EvtIllness = new[]
+        {
+            "咳咳……有点不舒服。",
+            "身体好像在抗议了。",
+            "得好好休息才行。",
+        };
+
+        /// <summary>噩梦缠身（负事件）。</summary>
+        private static readonly string[] EvtNightmare = new[]
+        {
+            "昨晚做了个可怕的梦……",
+            "梦里的阴影还在心头。",
+            "为什么总会梦到那种事……",
+        };
+
+        /// <summary>关系升级为友谊。</summary>
+        private static readonly string[] RelFriendship = new[]
+        {
+            "我们成了好朋友！",
+            "有个朋友真好。",
+            "和他越来越有默契了。",
+        };
+
+        /// <summary>关系恶化为敌意。</summary>
+        private static readonly string[] RelEnmity = new[]
+        {
+            "我们成冤家了……",
+            "跟他势不两立。",
+            "以后再也不会帮他了。",
+        };
+
+        /// <summary>记仇。</summary>
+        private static readonly string[] RelGrudge = new[]
+        {
+            "这笔账我记下了。",
+            "我不会原谅他的。",
+            "等着瞧。",
+        };
+
+        /// <summary>产生爱慕。</summary>
+        private static readonly string[] RelAdmiration = new[]
+        {
+            "他真了不起！",
+            "有点崇拜他了。",
+            "要是能像他一样厉害就好了。",
+        };
+
         /// <summary>
         /// 获取一条随机内心独白（漫游时使用）。
         /// </summary>
@@ -271,6 +455,118 @@ namespace LAB2D.Constant
             };
 
             return PickByWeight(entries);
+        }
+
+        /// <summary>
+        /// 获取拒绝/拖延玩家命令的气泡理由文本（心智层自主意志反馈）。
+        /// </summary>
+        /// <param name="acceptance">接受结果（Delay/Refuse）。</param>
+        /// <param name="reasonKey">判定理由键（WorkerMindConstant.Reason*）。</param>
+        public static string GetRefusalReason(LAB2D.Domain.Worker.CommandAcceptance acceptance, string reasonKey)
+        {
+            string[] pool;
+            switch (reasonKey)
+            {
+                case WorkerMindConstant.ReasonResentment:
+                    pool = RefuseResentment;
+                    break;
+                case WorkerMindConstant.ReasonFavorability:
+                    pool = RefuseFavorability;
+                    break;
+                case WorkerMindConstant.ReasonWillingness:
+                    pool = DelayWillingness;
+                    break;
+                default: // ReasonRandomMood 等
+                    pool = DelayRandomMood;
+                    break;
+            }
+
+            return PickRandom(pool);
+        }
+
+        /// <summary>
+        /// 获取被玩家强制命令时的怨恨气泡文本。
+        /// </summary>
+        public static string GetForcedReason()
+        {
+            return PickRandom(Forced);
+        }
+
+        /// <summary>
+        /// 获取事件（被攻击/濒死/完成悬赏等）对应的气泡文本（心智层事件反馈）。
+        /// 未配置语料的类型返回空串（调用方自行决定是否弹气泡）。
+        /// </summary>
+        public static string GetEventThought(string typeKey, string targetName)
+        {
+            string[] pool;
+            switch (typeKey)
+            {
+                case WorkerMindConstant.EVT_PLAYER_ATTACK:
+                case WorkerMindConstant.EVT_WORKER_ATTACK:
+                    pool = EvtAttack;
+                    break;
+                case WorkerMindConstant.EVT_PLAYER_KILL:
+                    pool = EvtKill;
+                    break;
+                case WorkerMindConstant.EVT_NEAR_DEATH:
+                    pool = EvtNearDeath;
+                    break;
+                case WorkerMindConstant.EVT_TRADE_REJECTED:
+                    pool = EvtTradeRejected;
+                    break;
+                case WorkerMindConstant.EVT_BOUNTY_COMPLETED:
+                    pool = EvtBountyCompleted;
+                    break;
+                case WorkerMindConstant.EVT_STAGE_UP:
+                    pool = EvtStageUp;
+                    break;
+                case WorkerMindConstant.EVT_INSIGHT:
+                    pool = EvtInsight;
+                    break;
+                case WorkerMindConstant.EVT_WIND_FALL:
+                    pool = EvtWindFall;
+                    break;
+                case WorkerMindConstant.EVT_SMALL_JOY:
+                    pool = EvtSmallJoy;
+                    break;
+                case WorkerMindConstant.EVT_ENLIGHTENMENT:
+                    pool = EvtEnlightenment;
+                    break;
+                case WorkerMindConstant.EVT_MISFORTUNE:
+                    pool = EvtMisfortune;
+                    break;
+                case WorkerMindConstant.EVT_ILLNESS:
+                    pool = EvtIllness;
+                    break;
+                case WorkerMindConstant.EVT_NIGHTMARE:
+                    pool = EvtNightmare;
+                    break;
+                default:
+                    return string.Empty;
+            }
+
+            return PickRandom(pool);
+        }
+
+        /// <summary>
+        /// 获取关系等级变化的气泡文本（自发关系系统反馈：友谊建立/敌意/记仇/爱慕）。
+        /// 未配置语料的类型返回空串。
+        /// </summary>
+        public static string GetRelationThought(LAB2D.Domain.Worker.RelationKind kind)
+        {
+            switch (kind)
+            {
+                case LAB2D.Domain.Worker.RelationKind.Friendship:
+                    return PickRandom(RelFriendship);
+                case LAB2D.Domain.Worker.RelationKind.Enmity:
+                    return PickRandom(RelEnmity);
+                case LAB2D.Domain.Worker.RelationKind.Grudge:
+                    return PickRandom(RelGrudge);
+                case LAB2D.Domain.Worker.RelationKind.Admiration:
+                    return PickRandom(RelAdmiration);
+                default:
+                    return string.Empty;
+            }
         }
 
         /// <summary>

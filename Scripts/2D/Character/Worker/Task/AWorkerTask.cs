@@ -691,6 +691,19 @@ namespace LAB2D.Character.Worker.Task
                         100f,
                         proficiency + Domain.Worker.WorkerSkillProgressService.SkillGainPerCompletion);
                 }
+
+                // 心智层：完成任务事件记忆（事件点单次调用）。
+                // 跳过高频维持类任务（吃饭/睡觉/地面睡/漫游），避免最近想法被流水账刷屏。
+                WorkerTaskType tt = this.TaskType;
+                if (tt != WorkerTaskType.Eat && tt != WorkerTaskType.Sleep
+                    && tt != WorkerTaskType.GroundSleep && tt != WorkerTaskType.Wander)
+                {
+                    if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+                    {
+                        mindService.RecordEvent(worker, WorkerMindConstant.EVT_TASK_COMPLETED,
+                            MemoryValence.Positive, null, 25f, "完成了一项工作");
+                    }
+                }
             }
         }
 

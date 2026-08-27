@@ -6,6 +6,7 @@ namespace LAB2D.Gameplay
     using LAB2D.Domain.Worker;
     using System;
     using System.Collections.Generic;
+    using UnityEngine;
 
     /// <summary>
     /// 货币管理器 — 处理所有货币操作（初始化、托管转账、退款）。
@@ -39,6 +40,9 @@ namespace LAB2D.Gameplay
         /// 钱包余额 — ownerId → 当前余额。ownerId=0 为 Player，>0 为 Worker instance ID。
         /// </summary>
         private readonly Dictionary<int, CurrencyAmount> wallets;
+
+        /// <summary>旁观嫉妒钩子节流：上次嫉妒触发时间（Time.time）。</summary>
+        private float lastBountyJealousyTime = -999f;
 
         public CurrencyManager()
         {
@@ -138,6 +142,77 @@ namespace LAB2D.Gameplay
                     fm.ModifyFavorability(executor, issuerWorkerId, FavorabilityConstant.WorkerBountyCompleteDelta, "完成工人悬赏");
                 }
             }
+
+            // 心智层：完成悬赏事件记忆（issuer==0 → 目标为玩家，否则为发布者）。
+            // 强度按赏金缩放，事件点单次调用。
+            if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+            {
+                string target = WorkerMindService.ResolveTargetName(issuerWorkerId) ?? "unknown";
+                float intensity = Mathf.Clamp(reward.Gold * 0.8f, 15f, 90f);
+                mindService.RecordEvent(executor, WorkerMindConstant.EVT_BOUNTY_COMPLETED,
+                    MemoryValence.Positive, target, intensity,
+                    issuerWorkerId == 0 ? "完成了一笔悬赏" : "帮别人完成了一笔悬赏");
+            }
+
+            // 心智层：旁观嫉妒钩子（节流 ≥30s）——贪婪高的旁观者对完成者关系小幅下降，低频定性防经济干扰
+            this.ApplyBountyJealousy(issuerWorkerId, executor);
+        }
+
+        /// <summary>
+        /// 旁观嫉妒（CompleteBounty 节流钩子）：完成一笔 Worker 间悬赏后，贪婪&gt;阈值的旁观者
+        /// 对该 Worker 亲密度小幅下降。节流 30s 防每笔都刷；关系等级变化时弹一句敌意气泡。
+        /// </summary>
+        private void ApplyBountyJealousy(int issuerWorkerId, AWorker executor)
+        {
+            if (issuerWorkerId == 0)
+            {
+                return; // 玩家悬赏不触发工人间嫉妒
+            }
+
+            if (Time.time - this.lastBountyJealousyTime < WorkerMindConstant.RelationJealousyIntervalSeconds)
+            {
+                return;
+            }
+
+            this.lastBountyJealousyTime = Time.time;
+
+            WorkerManager wm = Core.ServiceLocator.Get<WorkerManager>();
+            if (wm == null || wm.Characters == null)
+            {
+                return;
+            }
+
+            int executorId = executor.GetInstanceID();
+            int day = this.GetGameDayIndex();
+            foreach (AWorker watcher in wm.Characters)
+            {
+                if (watcher == null
+                    || watcher.GetInstanceID() == executorId
+                    || watcher.GetInstanceID() == issuerWorkerId)
+                {
+                    continue;
+                }
+
+                AWorker.WorkerData wd = watcher.CharacterDataLAB as AWorker.WorkerData;
+                if (wd == null || wd.Greed <= WorkerMindConstant.RelationJealousyGreedThreshold)
+                {
+                    continue;
+                }
+
+                WorkerMindData.Ensure(wd);
+                if (WorkerRelationshipRuleService.ModifyAffinity(
+                    wd.Mind, executor.name, -WorkerMindConstant.RelationJealousyAffinityPenalty, day))
+                {
+                    watcher.ShowMindBubble(WorkerInnerMonologue.GetRelationThought(RelationKind.Enmity));
+                }
+            }
+        }
+
+        /// <summary>当前游戏日索引（沿用 FavorabilityManager 的日口径）。</summary>
+        private int GetGameDayIndex()
+        {
+            IGameTime gt = Core.ServiceLocator.Get<IGameTime>();
+            return gt == null ? 0 : (int)(gt.Time / FavorabilityConstant.GameDaySeconds);
         }
 
         /// <summary>

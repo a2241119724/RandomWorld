@@ -251,6 +251,26 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
+        /// 非破坏性检查：是否存在当前可分配给该 Worker 的玩家悬赏（优先级 0）。
+        /// 供心智层体验门使用——决定是否给出拒绝/拖延反馈，避免对不存在的命令空拒绝。
+        /// 与 TryAssignPlayerTask 共享快照/选择逻辑，但不做任何分配。
+        /// </summary>
+        public bool HasAssignablePlayerTask(AWorker worker)
+        {
+            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+            if (workerData == null || workerData.Task != null)
+            {
+                return false;
+            }
+
+            WorkerAgentSnapshot snapshot = this.CreateWorkerSnapshot(worker, true);
+            IReadOnlyList<WorkerTaskSnapshot<AWorkerTask>> tasks = this.CreateTaskSnapshots(
+                WorkerTaskPriority.PlayerBounty, worker);
+
+            return this.assignmentService.SelectTask(snapshot, tasks).HasTask;
+        }
+
+        /// <summary>
         /// 尝试将非玩家悬赏的全局任务（优先级 1→2：WorkerBounty → SystemDefault）分配给指定 Worker。
         /// 不包括 PlayerBounty(0)——玩家指令由 TryAssignPlayerTask 单独在最前面处理。
         /// 不包括 Idle(3)——那是 Worker 自用的锻炼任务。

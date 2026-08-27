@@ -110,6 +110,16 @@ namespace LAB2D.Character.Worker.Task
             {
                 wd.Personality = wd.Personality.AfterAcceptBounty();
             }
+
+            // 心智层：接取悬赏事件记忆（事件点单次调用）。
+            // issuer==0 → 目标为玩家；否则为发布者名。
+            if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+            {
+                string target = WorkerMindService.ResolveTargetName(this.bountyData.IssuerWorkerId) ?? "unknown";
+                mindService.RecordEvent(worker, WorkerMindConstant.EVT_BOUNTY_ACCEPTED,
+                    MemoryValence.Positive, target, 35f,
+                    this.bountyData.IssuerWorkerId == 0 ? "接下了玩家的悬赏" : "接下了别人的悬赏");
+            }
         }
 
         /// <inheritdoc/>
@@ -193,18 +203,62 @@ namespace LAB2D.Character.Worker.Task
             if (this.innerTask == null)
                 return false;
 
-            // 好感度门控：对发布者好感过低则拒绝接悬赏（issuer==0 为 Player 发布）
-            FavorabilityManager fm = Core.ServiceLocator.Get<FavorabilityManager>();
-            if (fm != null)
+            // 心智层关系调制（Worker 间悬赏 issuer>0）：回避——对发布者敌意/记仇拒接；
+            // 互助——朋友/爱慕对象悬赏必接（豁免好感度门控）。玩家悬赏（issuer==0）不受关系调制。
+            bool relationshipExempt = false;
+            if (this.bountyData.IssuerWorkerId > 0)
             {
-                if (this.bountyData.IssuerWorkerId == 0)
+                AWorker.WorkerData relWd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (relWd != null)
                 {
-                    if (!fm.IsWillingForPlayerBounty(worker))
-                        return false;
+                    WorkerMindData.Ensure(relWd);
+                    string issuerName = WorkerMindService.ResolveTargetName(this.bountyData.IssuerWorkerId);
+                    if (!string.IsNullOrEmpty(issuerName))
+                    {
+                        if (WorkerRelationshipRuleService.WouldRefuse(relWd.Mind, issuerName))
+                            return false;
+                        relationshipExempt = WorkerRelationshipRuleService.WouldHelp(relWd.Mind, issuerName);
+                    }
                 }
-                else if (!fm.IsWillingForWorkerBounty(worker, this.bountyData.IssuerWorkerId))
+            }
+
+            // 好感度门控：对发布者好感过低则拒绝接悬赏（issuer==0 为 Player 发布；relationshipExempt 时豁免）
+            if (!relationshipExempt)
+            {
+                FavorabilityManager fm = Core.ServiceLocator.Get<FavorabilityManager>();
+                if (fm != null)
                 {
-                    return false;
+                    if (this.bountyData.IssuerWorkerId == 0)
+                    {
+                        if (!fm.IsWillingForPlayerBounty(worker))
+                            return false;
+                    }
+                    else if (!fm.IsWillingForWorkerBounty(worker, this.bountyData.IssuerWorkerId))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            // 心智层权威门（仅玩家悬赏 issuer==0）：即使体验门被绕过
+            // （RunTaskAssignmentLoop 每 15 帧从优先级 0 重派同一悬赏），
+            // 怨恨极高或仍在拒绝冷却内的 Worker 也不能接到玩家悬赏。
+            // 强制命令放行窗口（ForceCommand 设 ForcedUntilTime）内必放行——那是玩家兜底逃生阀。
+            if (this.bountyData.IssuerWorkerId == 0)
+            {
+                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd != null)
+                {
+                    WorkerMindData.Ensure(wd);
+                    WorkerMindData mind = wd.Mind;
+                    if (Time.time >= mind.ForcedUntilTime)
+                    {
+                        if (mind.ResentmentToPlayer >= CommandAcceptanceRuleService.ResentmentRefuseHard)
+                            return false;
+                        if (Time.time - mind.LastPlayerCommandRefusalTime
+                            < WorkerMindConstant.RefusalDelayCooldownSeconds)
+                            return false;
+                    }
                 }
             }
 

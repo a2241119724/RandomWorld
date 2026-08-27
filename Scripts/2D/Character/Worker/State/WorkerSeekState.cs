@@ -151,10 +151,44 @@ namespace LAB2D.Character.Worker.State
                     this.brain.TryPickHomeSite(this.Character);
                 }
 
-                // 步骤1: 始终优先检查玩家悬赏任务（优先级 0），玩家指令不受 Worker 自身状态限制。
+                // 步骤1: 始终优先检查玩家悬赏任务（优先级 0）。
+                // 心智门（体验门）：先看是否存在可派发的玩家悬赏，再评估该 Worker 的接受意愿。
+                // 接受（或生存硬阻断）→ 尝试接取；自主拒绝/拖延 → 记录怨恨累积 + 弹理由气泡，保持自主。
                 // 注：即使 Worker 饥饿，TryAssignPlayerTask 内部也会因 BlocksWhenHungry 对非 Eat 任务
                 // 返回 false，饥饿 Worker 只会接到玩家发布的 Eat 相关任务。
-                if (Core.ServiceLocator.Get<WorkerTaskManager>().TryAssignPlayerTask(this.Character))
+                WorkerTaskManager taskManager = Core.ServiceLocator.Get<WorkerTaskManager>();
+                if (taskManager.HasAssignablePlayerTask(this.Character))
+                {
+                    WorkerMindService mindService = Core.ServiceLocator.Get<WorkerMindService>();
+                    string reasonKey;
+                    CommandAcceptance acceptance =
+                        mindService.EvaluateCommand(this.Character, UnityEngine.Random.value, out reasonKey);
+
+                    if (acceptance == CommandAcceptance.Accept
+                        || reasonKey == Constant.WorkerMindConstant.ReasonSurvival)
+                    {
+                        if (taskManager.TryAssignPlayerTask(this.Character))
+                        {
+                            // 成功接取玩家任务 → 跳过后续决策
+                            // 真实接受（非生存硬放行）时记录：感恩+、怨恨缓和（生存放行不计数）
+                            if (acceptance == CommandAcceptance.Accept)
+                            {
+                                mindService.RecordCommandOutcome(this.Character, true, acceptance, reasonKey);
+                            }
+                            return;
+                        }
+                    }
+                    else if (reasonKey != Constant.WorkerMindConstant.ReasonCooldown)
+                    {
+                        // 自主拒绝/拖延：累积怨恨 + 弹理由气泡（冷却内静默，不重复反馈）
+                        mindService.RecordCommandOutcome(this.Character, false, acceptance, reasonKey);
+                        this.Character.ShowMindBubble(Constant.WorkerInnerMonologue.GetRefusalReason(acceptance, reasonKey));
+                        AWorkerTask.LogProvider(
+                            $"[MindDiag] {this.Character.name} 拒绝玩家悬赏 理由={reasonKey}",
+                            LogManager.LogLevelEnum.Debug);
+                    }
+                }
+                else if (taskManager.TryAssignPlayerTask(this.Character))
                 {
                     // 成功接取玩家任务 → 跳过后续决策
                     return;
@@ -353,6 +387,12 @@ namespace LAB2D.Character.Worker.State
                     break;
 
                 case WorkerDecisionType.Wander:
+                    // 送礼分支（自发关系）：低概率给朋友/爱慕对象送份小礼物，双方亲密度上升 + 收礼方好感微升
+                    if (UnityEngine.Random.value < WorkerMindConstant.RelationGiftChance)
+                    {
+                        this.TryGiveGift(workerData);
+                    }
+
                     this.CreateWanderTask();
                     break;
 
@@ -361,6 +401,77 @@ namespace LAB2D.Character.Worker.State
                     this.CreateIdleTask();
                     break;
             }
+        }
+
+        /// <summary>
+        /// 送礼（自发关系，漫游决策前低概率触发）：给一位朋友/爱慕对象送份小礼物。
+        /// 双方亲密度上升 + 收礼方好感度微升（讨好）。节流：同日不重复送（LastInteractionDay）。
+        /// 无送礼目标/目标不存在/已同日互动 → 静默跳过。
+        /// </summary>
+        private void TryGiveGift(AWorker.WorkerData workerData)
+        {
+            AWorker giver = this.Character;
+            WorkerMindData.Ensure(workerData);
+            WorkerRelationEntry target = WorkerRelationshipRuleService.FindGiftTarget(workerData.Mind);
+            if (target == null)
+            {
+                return;
+            }
+
+            // 关系键为 name（跨存档稳定引用），解析回 AWorker 实例；解析失败跳过
+            WorkerManager wm = Core.ServiceLocator.Get<WorkerManager>();
+            AWorker receiver = null;
+            if (wm?.Characters != null)
+            {
+                foreach (AWorker w in wm.Characters)
+                {
+                    if (w != null && w.name == target.TargetName)
+                    {
+                        receiver = w;
+                        break;
+                    }
+                }
+            }
+
+            if (receiver == null)
+            {
+                return;
+            }
+
+            int day = this.GetGameDayIndex();
+            if (target.LastInteractionDay == day)
+            {
+                return; // 同日已互动，不重复送
+            }
+
+            WorkerRelationshipRuleService.ModifyAffinity(
+                workerData.Mind, receiver.name, WorkerMindConstant.RelationGiftAffinityGain, day);
+
+            AWorker.WorkerData receiverData = receiver.CharacterDataLAB as AWorker.WorkerData;
+            if (receiverData != null)
+            {
+                WorkerMindData.Ensure(receiverData);
+                WorkerRelationshipRuleService.ModifyAffinity(
+                    receiverData.Mind, giver.name, WorkerMindConstant.RelationGiftAffinityGain, day);
+            }
+
+            // 收礼方对送礼方好感度微升（讨好，low-frequency 防经济干扰）
+            if (Core.ServiceLocator.TryGet<FavorabilityManager>(out FavorabilityManager fm))
+            {
+                fm.ModifyFavorability(receiver, giver.GetInstanceID(), WorkerMindConstant.RelationGiftFavorabilityDelta, "收到礼物");
+            }
+
+            giver.ShowMindBubble($"给 {receiver.name} 送了份小礼物");
+            AWorkerTask.LogProvider(
+                $"[MindDiag] {giver.name} 送礼给 {receiver.name}",
+                LogManager.LogLevelEnum.Debug);
+        }
+
+        /// <summary>当前游戏日索引（沿用 FavorabilityManager 的日口径）。</summary>
+        private int GetGameDayIndex()
+        {
+            IGameTime gt = Core.ServiceLocator.Get<IGameTime>();
+            return gt == null ? 0 : (int)(gt.Time / FavorabilityConstant.GameDaySeconds);
         }
 
         /// <summary>
@@ -1238,6 +1349,16 @@ namespace LAB2D.Character.Worker.State
                     AWorkerTask.LogProvider(
                         $"[StateDiag] {this.Character.name} 紧急打断重决策: 饥饿={wd.CurHungry:F0} 疲劳={wd.CurTired:F0} 精气神={wd.CurSpirit:F0} 压力={wd.CurStress:F0} 士气={wd.CurMorale:F0}",
                         LogManager.LogLevelEnum.Debug);
+
+                    // 心智层：极端饥饿导致的濒死经历（WorkerMindService 内按游戏日节流，同天只记一次）
+                    if (wd.CurHungry > 0f && wd.CurHungry < 15f)
+                    {
+                        if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+                        {
+                            mindService.RecordNearDeath(this.Character);
+                        }
+                    }
+
                     this.ExecuteAutonomousDecision(wd);
                     this.Character.Seek.Seek(this.targetMap);
                     return;

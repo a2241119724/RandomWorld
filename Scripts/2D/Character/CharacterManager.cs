@@ -126,6 +126,13 @@ namespace LAB2D.Character
                 {
                     character.name = characterData.Name;
                 }
+
+                // 心智层读档兜底：BinaryFormatter 反序列化不跑构造函数，
+                // 老档 Mind 可能为 null，此处统一补建（AWorker.Start 与服务方法也有 Ensure 兜底）。
+                if (character is AWorker worker)
+                {
+                    WorkerMindData.Ensure(worker.CharacterDataLAB as AWorker.WorkerData);
+                }
             }
         }
 

@@ -69,7 +69,7 @@ namespace LAB2D.Character.Worker
                 }
 
                 Core.ServiceLocator.Get<WorkerEfficiencyTracker>().RecordWorkerDeath(worker);
-                Core.ServiceLocator.Get<Gameplay.FavorabilityManager>().RemoveDeadWorker(worker.GetInstanceID());
+                Core.ServiceLocator.Get<Gameplay.FavorabilityManager>().RemoveDeadWorker(worker.GetInstanceID(), worker.name);
             };
 
         /// <summary>
@@ -91,6 +91,7 @@ namespace LAB2D.Character.Worker
         private GameObject dialogRoot; // Dialog 根节点
         private float dialogTextTimer; // 独白切换计时器
         private float dialogTextSwitchInterval = 5.0f; // 下次切换独白的间隔
+        private float mindBubbleUntilTime; // 心智气泡（自主拒绝/人生事件/关系变化反馈）显示截止时间
         private CharacterStatusUI statusBar; // 记录实例化血条
         private int dialoguePauseCount;
 
@@ -197,6 +198,12 @@ namespace LAB2D.Character.Worker
                 wd.LifeStage = Domain.Worker.WorkerLifeStage.Settled;
             }
 
+            // 心智层读档兜底：老档 Mind 为 null（BinaryFormatter 不跑构造函数），确保非空
+            if (wd != null)
+            {
+                Domain.Worker.WorkerMindData.Ensure(wd);
+            }
+
             // 初始化状态（从 Awake 移至此处，确保读档时 CharacterDataLAB 已被覆盖后再进入状态）
             if (this.Manager.CurrentState == null)
             {
@@ -290,6 +297,27 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
+        /// 显示心智气泡（自主意志拒绝/人生事件/关系变化等反馈）。
+        /// 与内心独白共用 dialogText，但用 mindBubbleUntilTime 守卫，
+        /// 防止独白定时器立即覆盖心智气泡。任务开始时 HideDialogText 会清除守卫。
+        /// </summary>
+        /// <param name="text">气泡文本。</param>
+        /// <param name="duration">显示时长（秒）。</param>
+        public void ShowMindBubble(string text, float duration = 3.5f)
+        {
+            if (this.dialogText == null || this.dialogRoot == null)
+            {
+                return;
+            }
+
+            this.dialogText.text = text;
+            this.dialogRoot.SetActive(true);
+            this.dialogTextTimer = 0f;
+            this.dialogTextSwitchInterval = duration;
+            this.mindBubbleUntilTime = UnityEngine.Time.time + duration;
+        }
+
+        /// <summary>
         /// 显示随机内心独白（闲逛漫游时调用）。
         /// 根据 Worker 当前状态选择合适的独白内容。
         /// </summary>
@@ -297,6 +325,12 @@ namespace LAB2D.Character.Worker
         public void ShowRandomMonologue(LAB2D.Enum.WorkerTaskType? taskType = null)
         {
             if (this.dialogText == null || this.dialogRoot == null)
+            {
+                return;
+            }
+
+            // 心智气泡展示期间不覆盖（拒绝/事件/关系反馈优先）
+            if (UnityEngine.Time.time < this.mindBubbleUntilTime)
             {
                 return;
             }
@@ -347,6 +381,7 @@ namespace LAB2D.Character.Worker
             {
                 this.dialogRoot.SetActive(false);
                 this.dialogTextTimer = 0f;
+                this.mindBubbleUntilTime = 0f; // 清除心智气泡守卫
             }
         }
 
@@ -1014,18 +1049,45 @@ namespace LAB2D.Character.Worker
             // 好感度：攻击者关系惩罚（Player 打 Worker → 对玩家好感下降；Worker 互殴 → 受害对肇事下降）
             if (attacker != null)
             {
+                bool lethal = this.CharacterDataLAB.Hp <= 0f;
                 FavorabilityManager fm = Core.ServiceLocator.Get<FavorabilityManager>();
                 if (fm != null)
                 {
                     if (attacker.IsPlayerCharacter)
                     {
                         float delta = FavorabilityConstant.AttackToPlayerDelta;
-                        if (this.CharacterDataLAB.Hp <= 0f) delta += FavorabilityConstant.KillToPlayerBonus; // 致死额外惩罚
+                        if (lethal) delta += FavorabilityConstant.KillToPlayerBonus; // 致死额外惩罚
                         fm.ModifyWithPlayer(this, delta, "被玩家攻击");
                     }
                     else if (attacker.IsWorkerCharacter)
                     {
                         fm.ModifyFavorability(this, attacker.GetInstanceID(), FavorabilityConstant.WorkerAttackDelta, "被其他工人攻击");
+                    }
+                }
+
+                // 心智层：被攻击事件记忆（事件点单次调用）。
+                // 玩家攻击 → EVT_PLAYER_ATTACK（致死升级为 EVT_PLAYER_KILL，强度更高，弹气泡）；
+                // Worker 互殴 → EVT_WORKER_ATTACK（目标为肇事者名）。
+                if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+                {
+                    if (attacker.IsPlayerCharacter)
+                    {
+                        if (lethal)
+                        {
+                            mindService.RecordEvent(this, WorkerMindConstant.EVT_PLAYER_KILL,
+                                MemoryValence.Negative, WorkerMindService.PlayerTargetName, 90f, "被玩家杀死了");
+                            this.ShowMindBubble(WorkerInnerMonologue.GetEventThought(WorkerMindConstant.EVT_PLAYER_KILL, null));
+                        }
+                        else
+                        {
+                            mindService.RecordEvent(this, WorkerMindConstant.EVT_PLAYER_ATTACK,
+                                MemoryValence.Negative, WorkerMindService.PlayerTargetName, 50f, "被玩家打了");
+                        }
+                    }
+                    else if (attacker.IsWorkerCharacter)
+                    {
+                        mindService.RecordEvent(this, WorkerMindConstant.EVT_WORKER_ATTACK,
+                            MemoryValence.Negative, attacker.name, 40f, $"被 {attacker.name} 打了");
                     }
                 }
             }
@@ -1489,6 +1551,12 @@ namespace LAB2D.Character.Worker
             /// </summary>
             public Dictionary<WorkerTaskType, float> SkillProficiencies;
 
+            /// <summary>
+            /// 心智层数据（记忆/信念/怨恨/感恩/执念/漂移/关系）— 让 Worker 有自己的思想、未来不可控。
+            /// 读旧档可能为 null（BinaryFormatter 不跑构造函数），需 WorkerMindData.Ensure 兜底。
+            /// </summary>
+            public Domain.Worker.WorkerMindData Mind;
+
             public WorkerData()
             {
                 // 所有任务类型默认开启（opt-out 语义：只有玩家通过 UI 手动关闭的才会被写入 false）
@@ -1503,6 +1571,7 @@ namespace LAB2D.Character.Worker
                 this.Storage = new Dictionary<int, ResourceInfo>();
                 this.CarriedResources = new Dictionary<int, ResourceInfo>();
                 this.SkillProficiencies = new Dictionary<WorkerTaskType, float>();
+                this.Mind = new Domain.Worker.WorkerMindData();
             }
         }
     }

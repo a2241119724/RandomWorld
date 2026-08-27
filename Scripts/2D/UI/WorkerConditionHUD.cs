@@ -7,6 +7,7 @@ namespace LAB2D.UI
       using LAB2D.Gameplay;
     using LAB2D.UnityAdapter;
     using System;
+    using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -140,7 +141,33 @@ namespace LAB2D.UI
                 return;
             }
 
-            this.conditionText.text = Core.ServiceLocator.Get<WorkerConditionManager>().BuildSummaryText();
+            string summary = Core.ServiceLocator.Get<WorkerConditionManager>().BuildSummaryText();
+            this.conditionText.text = summary + "\n——最近想法——\n" + this.BuildRecentThoughtsText();
+        }
+
+        /// <summary>
+        /// 拼接「最近想法」区（心智层运行态队列，上限 6，最新在后）。
+        /// </summary>
+        private string BuildRecentThoughtsText()
+        {
+            if (!Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+            {
+                return "（心智层未就绪）";
+            }
+
+            List<string> thoughts = mindService.GetRecentThoughts();
+            if (thoughts == null || thoughts.Count == 0)
+            {
+                return "（暂无）";
+            }
+
+            System.Text.StringBuilder builder = new System.Text.StringBuilder(128);
+            for (int i = 0; i < thoughts.Count; i++)
+            {
+                builder.Append("· ").AppendLine(thoughts[i]);
+            }
+
+            return builder.ToString();
         }
 
         /// <summary>

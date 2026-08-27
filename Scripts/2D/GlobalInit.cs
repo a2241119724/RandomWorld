@@ -169,6 +169,8 @@ namespace LAB2D
             ServiceLocator.Register(ItemDataManager.Instance);
             ServiceLocator.Register(DropDataManager.Instance);
             ServiceLocator.Register(WorkerTaskManager.Instance);
+            ServiceLocator.Register(new WorkerMindService());
+            ServiceLocator.Register(WorkerMindManager.Instance);
 
             ServiceLocator.Register(TileMap.Instance);
             ServiceLocator.Register(BuildMap.Instance);
@@ -215,6 +217,7 @@ namespace LAB2D
                 ServiceLocator.Get<EnvironmentManager>(),
                 ServiceLocator.Get<PlayerVitalAlertManager>(),
                 ServiceLocator.Get<FavorabilityManager>(),
+                ServiceLocator.Get<WorkerMindManager>(),
             };
         }
 

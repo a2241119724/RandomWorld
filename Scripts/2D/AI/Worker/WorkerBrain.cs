@@ -398,6 +398,14 @@ namespace LAB2D.AI.Worker
                     AWorkerTask.LogProvider(
                         $"{worker.name} 升级到 Established 阶段!",
                         LogManager.LogLevelEnum.Info);
+
+                    // 心智层：阶段升级事件（事件点单次调用），弹自信气泡
+                    if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+                    {
+                        mindService.RecordEvent(worker, WorkerMindConstant.EVT_STAGE_UP,
+                            MemoryValence.Positive, null, 70f, "定居成功，生活步入了正轨");
+                        worker.ShowMindBubble(WorkerInnerMonologue.GetEventThought(WorkerMindConstant.EVT_STAGE_UP, null));
+                    }
                 }
             }
 
@@ -854,6 +862,24 @@ namespace LAB2D.AI.Worker
                 return;
             }
 
+            // 执念检查：有执念且热情达标时，按 DreamRedirectChance 把目标指到执念映射
+            // （玩家不可控的个人梦想，优先级高于人格分支）
+            WorkerMindData.Ensure(workerData);
+            WorkerDream dream = workerData.Mind.ActiveDream;
+            if (WorkerDreamRuleService.IsPursuable(dream)
+                && Random.value < WorkerMindConstant.DreamRedirectChance)
+            {
+                int day = this.GetGameDayIndex();
+                WorkerDreamRuleService.Pursue(workerData.Mind, day);
+                var dreamMaterials = (dream.Type == WorkerDreamType.BuildBigHome
+                    || dream.Type == WorkerDreamType.MasterCraft
+                    || dream.Type == WorkerDreamType.FindFamily)
+                    ? this.GetBuildMaterials()
+                    : null;
+                workerData.CurrentGoal = WorkerDreamRuleService.MapToGoal(dream, dreamMaterials);
+                return;
+            }
+
             WorkerPersonality p = workerData.Personality;
 
             if (p.Ambition > 65 && workerData.Wallet.Gold >= 30)
@@ -881,6 +907,28 @@ namespace LAB2D.AI.Worker
             {
                 workerData.CurrentGoal = WorkerGoal.EarnMoney();
             }
+        }
+
+        /// <summary>当前游戏日索引（沿用 FavorabilityManager 的日口径）。</summary>
+        private int GetGameDayIndex()
+        {
+            IGameTime gt = Core.ServiceLocator.Get<IGameTime>();
+            return gt == null ? 0 : (int)(gt.Time / FavorabilityConstant.GameDaySeconds);
+        }
+
+        /// <summary>解析常见建材（木材/石材）ID→数量；找不到时用占位 id 0。</summary>
+        private System.Collections.Generic.Dictionary<int, int> GetBuildMaterials()
+        {
+            var materials = new System.Collections.Generic.Dictionary<int, int>();
+            var itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
+
+            ItemData wood = itemDataManager.GetByName("CustomWood");
+            ItemData stone = itemDataManager.GetByName("CustomStone");
+            if (wood != null && wood.Id > 0) materials[wood.Id] = 10;
+            if (stone != null && stone.Id > 0) materials[stone.Id] = 8;
+            if (materials.Count == 0) materials[0] = 10;
+
+            return materials;
         }
 
         /// <summary>

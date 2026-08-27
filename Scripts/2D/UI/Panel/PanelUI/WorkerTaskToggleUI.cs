@@ -13,6 +13,11 @@ namespace LAB2D.UI.Panel.PanelUI
     public class WorkerTaskToggleUI : MonoBehaviour
     {
         /// <summary>
+        /// 心智层「强制命令」按钮的节点名（列计数需排除它，避免被当作 Toggle 列）。
+        /// </summary>
+        private const string ForceButtonName = "ForceCommand";
+
+        /// <summary>
         /// 任务项
         /// </summary>
         public List<GameObject> TaskItems { get; set; }
@@ -115,6 +120,10 @@ namespace LAB2D.UI.Panel.PanelUI
                     }
                 }
 
+                // 心智层：每行末尾追加「强制命令」按钮
+                // （玩家兜底逃生阀：强制放行 60s 必接玩家悬赏，代价是怨恨/信任/好感）
+                this.EnsureForceCommandButton(taskItem, worker);
+
                 index++;
             }
         }
@@ -129,7 +138,8 @@ namespace LAB2D.UI.Panel.PanelUI
         private void SyncToggleColumns(GameObject taskItem, List<WorkerTaskType> taskTypeOrder)
         {
             int neededCount = taskTypeOrder.Count;
-            int currentToggleCount = taskItem.transform.childCount - 1; // 减去名称列
+            // 列计数排除末尾的「强制命令」按钮（ForceCommand 非 Toggle 列）
+            int currentToggleCount = CountToggleColumns(taskItem);
 
             if (currentToggleCount <= 0 && neededCount <= 0)
             {
@@ -141,7 +151,7 @@ namespace LAB2D.UI.Panel.PanelUI
                 ? taskItem.transform.GetChild(1).gameObject
                 : null;
 
-            // 销毁多余的 Toggle 子对象（从末尾往前删）
+            // 销毁多余的 Toggle 子对象（从末尾往前删，只删 Toggle 列，不影响末尾按钮）
             for (int i = currentToggleCount - 1; i >= neededCount; i--)
             {
                 Object.Destroy(taskItem.transform.GetChild(i + 1).gameObject);
@@ -165,6 +175,9 @@ namespace LAB2D.UI.Panel.PanelUI
                 }
 
                 newToggle.name = "Toggle_" + taskTypeOrder[i].ToString();
+
+                // 插入到正确列位（i+1），避免落在末尾「强制命令」按钮之后破坏列连续性
+                newToggle.transform.SetSiblingIndex(i + 1);
             }
 
             // 设置每个 Toggle 的绑定和事件监听
@@ -205,11 +218,96 @@ namespace LAB2D.UI.Panel.PanelUI
         private void EnsureToggleColumnsSynced(GameObject taskItem, List<WorkerTaskType> taskTypeOrder)
         {
             int neededCount = taskTypeOrder.Count;
-            int currentToggleCount = taskItem.transform.childCount - 1;
+            int currentToggleCount = CountToggleColumns(taskItem);
 
             if (currentToggleCount != neededCount)
             {
                 this.SyncToggleColumns(taskItem, taskTypeOrder);
+            }
+        }
+
+        /// <summary>
+        /// 统计 TaskItem 的 Toggle 列数：child 0 是名称，末尾可能有一个「强制命令」按钮，
+        /// 两者都不算 Toggle 列。
+        /// </summary>
+        private static int CountToggleColumns(GameObject taskItem)
+        {
+            int count = 0;
+            for (int i = 1; i < taskItem.transform.childCount; i++)
+            {
+                if (taskItem.transform.GetChild(i).name != ForceButtonName)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// 心智层：每行末尾追加「强制命令」按钮（幂等，以节点名标识）。
+        /// 点击对该 Worker 执行 ForceCommand：放行窗口内必接玩家悬赏，代价是怨恨/信任/好感。
+        /// </summary>
+        private void EnsureForceCommandButton(GameObject taskItem, AWorker worker)
+        {
+            if (taskItem == null || worker == null)
+            {
+                return;
+            }
+
+            if (taskItem.transform.Find(ForceButtonName) != null)
+            {
+                return;
+            }
+
+            GameObject buttonGo = ServiceLocator.Get<ResourceManager>().Instantiate(
+                PrefabConstant.BUTTON_ITEM, taskItem.transform, false);
+            if (buttonGo == null)
+            {
+                return;
+            }
+
+            buttonGo.name = ForceButtonName;
+
+            Text text = buttonGo.GetComponentInChildren<Text>(true);
+            if (text != null)
+            {
+                text.text = "强制";
+            }
+
+            RectTransform rect = buttonGo.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 50f);
+            }
+
+            Button button = buttonGo.GetComponent<Button>();
+            if (button != null)
+            {
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(() => this.OnForceCommandClicked(worker));
+            }
+        }
+
+        /// <summary>
+        /// 强制命令按钮点击：强制该 Worker 必接玩家悬赏（60s 窗口），怨恨/信任/好感受损。
+        /// </summary>
+        private void OnForceCommandClicked(AWorker worker)
+        {
+            if (worker == null)
+            {
+                return;
+            }
+
+            if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+            {
+                mindService.ForceCommand(worker);
+            }
+            else
+            {
+                AWorkerTask.LogProvider(
+                    "[MindDiag] WorkerMindService 未注册，强制命令不可用",
+                    LogManager.LogLevelEnum.Warning);
             }
         }
     }

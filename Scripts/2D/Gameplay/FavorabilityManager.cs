@@ -225,6 +225,12 @@ namespace LAB2D.Gameplay
 
                 this.playerHelpCooldowns[id] = now;
                 this.ModifyWithPlayer(w, FavorabilityConstant.HelpVsEnemyDelta, "Player 救危");
+
+                // 心智层钩子：玩家救危同时提升感恩/信任（EVT_PLAYER_HELP 事件在 Phase 2 全量接入）
+                if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+                {
+                    mindService.RecordPlayerHelp(w);
+                }
             }
         }
 
@@ -251,6 +257,13 @@ namespace LAB2D.Gameplay
 
             p.talkCountToday++;
             this.ModifyWithPlayer(worker, FavorabilityConstant.ConversationDelta, "对话");
+
+            // 心智层：对话结束事件记忆（对玩家，事件点单次调用）
+            if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+            {
+                mindService.RecordEvent(worker, WorkerMindConstant.EVT_CONVERSATION,
+                    MemoryValence.Positive, WorkerMindService.PlayerTargetName, 20f, "和玩家聊了会儿天");
+            }
         }
 
         // ---- 门控谓词 ----
@@ -269,8 +282,8 @@ namespace LAB2D.Gameplay
 
         // ---- 死亡清理 ----
 
-        /// <summary>Worker 死亡时清理其好感档案与所有引用（DeathProvider 调用）。</summary>
-        public void RemoveDeadWorker(int instanceId)
+        /// <summary>Worker 死亡时清理其好感档案与所有引用（DeathProvider 调用）。deadName 非空时同步清理各 Worker 心智自发关系。</summary>
+        public void RemoveDeadWorker(int instanceId, string deadName = null)
         {
             this.profiles.Remove(instanceId);
 
@@ -288,6 +301,36 @@ namespace LAB2D.Gameplay
             }
             foreach (long key in keysToRemove) this.proximityGains.Remove(key);
             this.playerHelpCooldowns.Remove(instanceId);
+
+            // 心智层：清理各 Worker 对死者的自发关系（关系键为 name，跨存档稳定引用）
+            if (!string.IsNullOrEmpty(deadName))
+            {
+                WorkerManager wm = Core.ServiceLocator.Get<WorkerManager>();
+                if (wm?.Characters != null)
+                {
+                    foreach (AWorker w in wm.Characters)
+                    {
+                        if (w == null || w.GetInstanceID() == instanceId)
+                        {
+                            continue;
+                        }
+
+                        AWorker.WorkerData wd = w.CharacterDataLAB as AWorker.WorkerData;
+                        if (wd == null)
+                        {
+                            continue;
+                        }
+
+                        WorkerMindData.Ensure(wd);
+                        if (WorkerRelationshipRuleService.Remove(wd.Mind, deadName))
+                        {
+                            AWorkerTask.LogProvider(
+                                $"[MindDiag] {w.name} 清理了对 {deadName} 的关系",
+                                LogManager.LogLevelEnum.Debug);
+                        }
+                    }
+                }
+            }
 
             AWorkerTask.LogProvider($"[Favor] 清理死亡 Worker[{instanceId}] 的好感数据", LogManager.LogLevelEnum.Debug);
         }

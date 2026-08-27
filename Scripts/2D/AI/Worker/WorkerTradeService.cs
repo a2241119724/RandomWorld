@@ -94,7 +94,11 @@ namespace LAB2D.AI.Worker
 
             float sellerFavorability = FavorabilityProvider(buyer, seller);
 
-            if (!this.WillSell(sellerData.Personality, sellerFavorability))
+            // 关系否决：卖家对买家敌意/记仇 → 拒卖（先于人格判断，关系优先）
+            WorkerMindData.Ensure(sellerData);
+            bool relationRefused = WorkerRelationshipRuleService.WouldRefuse(sellerData.Mind, buyer.name);
+
+            if (relationRefused || !this.WillSell(sellerData.Personality, sellerFavorability))
             {
                 // 卖家拒绝 → 买家心情下降
                 buyerData.Personality = new WorkerPersonality(
@@ -105,6 +109,13 @@ namespace LAB2D.AI.Worker
 
                 // 好感度：交易被拒，buyer→seller 好感下降
                 Core.ServiceLocator.Get<FavorabilityManager>()?.ModifyFavorability(buyer, seller.GetInstanceID(), FavorabilityConstant.TradeRejectDelta, "交易被拒");
+
+                // 心智层：交易被拒事件记忆（buyer 记恨 seller，事件点单次调用）
+                if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+                {
+                    mindService.RecordEvent(buyer, WorkerMindConstant.EVT_TRADE_REJECTED,
+                        MemoryValence.Negative, seller.name, 40f, $"被 {seller.name} 拒绝了交易");
+                }
 
                 LogProvider($"{seller.name} 拒绝卖给 {buyer.name} 食物 (社交{sellerData.Personality.Sociality:F0})");
                 return false;
@@ -136,6 +147,14 @@ namespace LAB2D.AI.Worker
             // 好感度：交易成功，buyer→seller 好感上升（买方幅度大，卖方小）
             Core.ServiceLocator.Get<FavorabilityManager>()?.ModifyFavorability(buyer, seller.GetInstanceID(), FavorabilityConstant.TradeSuccessBuyerDelta, "交易成功");
             Core.ServiceLocator.Get<FavorabilityManager>()?.ModifyFavorability(seller, buyer.GetInstanceID(), FavorabilityConstant.TradeSuccessSellerDelta, "交易成功");
+
+            // 心智层：交易成功事件记忆（buyer 对 seller，事件点单次调用）。
+            // 注意变量名与上方拒绝块错开（同方法体内声明空间嵌套块不可重名，CS0136）。
+            if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindServiceSuccess))
+            {
+                mindServiceSuccess.RecordEvent(buyer, WorkerMindConstant.EVT_TRADE_SUCCESS,
+                    MemoryValence.Positive, seller.name, 45f, $"从 {seller.name} 买到了食物");
+            }
 
             LogProvider($"{buyer.name} 从 {seller.name} 购买食物花费 {cost}, 饥饿恢复至 {buyerData.CurHungry:F0}");
             return true;
