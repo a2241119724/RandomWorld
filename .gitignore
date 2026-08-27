@@ -56,3 +56,7 @@ model/experiments/mlp_weights.json
 model/experiments/mlp_weights.json.meta
 *.log
 hs_err_pid*.log
+
+# 环境变量（API keys）：严禁入库，用 .env.example 作为模板
+.env
+.env.local

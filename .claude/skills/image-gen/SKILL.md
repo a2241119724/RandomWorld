@@ -1,126 +1,129 @@
 ---
 name: image-gen
-description: 使用 AI (Google Gemini) 生成角色图和图片变体，支持参考图保持风格和角色一致性。当用户要求生成新角色姿势、吉祥物变体、美术资源、插画或任何 AI 生成图片时使用。
+description: 使用国产 AI 画图模型（硅基流动 + 火山方舟 Seedream）生成角色图和图片变体，支持参考图保持风格和角色一致性。当用户要求生成新角色姿势、吉祥物变体、美术资源、插画或任何 AI 生成图片时使用。
 user_invocable: true
 ---
 
-# AI Image Generation (Gemini)
+# AI 图像生成（国产模型：硅基流动 + Seedream）
 
-Generate image variations using Google's Gemini image generation model with reference images for style and character consistency. The model supports up to 14 reference images per request and can maintain consistency across multiple characters.
+用国产画图模型生成游戏素材，按「单价最低·批量冲量 + Seedream 角色一致性」双轨选择模型。参考图用于风格与角色一致性（仅 Seedream / Qwen-Image-Edit 支持图生图）。
+
+## 双轨选型
+
+| 场景 | Provider | 模型 | 单价 |
+|---|---|---|---|
+| 道具/图标/UI 批量（无参考图） | 硅基流动 | `Tongyi-MAI/Z-Image-Turbo` | ~$0.005/张 |
+| 场景/特效（无参考图，质量优先） | 硅基流动 | `Qwen/Qwen-Image` | ~$0.042/张 |
+| 道具免费试跑 | 硅基流动 | `Kwai-Kolors/Kolors` | 免费 |
+| 角色立绘/精灵图/序列帧（有参考图） | 火山方舟 | `doubao-seedream-5-0-lite-260128` | ~$0.035/张 |
+
+**关键**：纯文生图模型（Z-Image/Kolors/Qwen-Image）**不支持参考图**。需要角色一致性的素材（角色姿势/多视图/序列帧）必须走 Seedream（传 `--ref` 自动路由），或硅基流动的 `Qwen-Image-Edit`（仅单参考图）。
 
 ## Prerequisites
 
-- **GEMINI_API_KEY** environment variable must be set
-  - Get a key at https://aistudio.google.com/apikey
-  - The key needs billing enabled for image generation (~$0.067/image at 1K resolution)
-- **Deno** runtime installed (for the generation script)
+- **SILICONFLOW_API_KEY**（硅基流动，需实名认证）：https://cloud.siliconflow.cn
+- **ARK_API_KEY**（火山方舟，需实名认证，且需在 Ark 控制台**开通模型服务** `doubao-seedream-5-0-lite`，否则报 `ModelNotOpen`）：https://console.volcengine.com/ark
+- 至少配置一个；key 只走环境变量（或项目根 `.env`），不落库。
+- **Deno** 运行时（用于生成脚本）：`winget install DenoLand.Deno`
 
 ## Workflow
 
-### Step 1 — Understand what the user wants
+### Step 1 — 明确需求
 
-Clarify the subject, pose, expression, context, and where the asset will be used (app screen, social media, website, etc.). This context helps craft the right prompt and choose the right aspect ratio.
+确认主体、姿态、表情、画风、用途（角色/道具/场景/UI/序列帧）。按用途选择 `--category`，影响自动选模型。
 
-### Step 2 — Select reference images
+### Step 2 — 决定是否用参考图
 
-Always use **1-2 reference images** for consistency:
+- **角色立绘/精灵图/序列帧**：必须传 1-2 张参考图（`--ref`，脚本自动路由到 Seedream）。
+  1. **主参考（第一个）**：角色最标准的图，锚定身份（脸型/配色/特征）。
+  2. **风格/姿态参考（第二个）**：锚定比例与画风。Seedream 支持多参考图（数组）；硅基流动编辑模型仅支持单张。
+- **道具/图标/UI/场景**：通常无参考图，直接批量，走最便宜的 Z-Image-Turbo。
 
-1. **Primary reference (always first):** The most canonical image of the character/subject. This anchors identity — face shape, color palette, defining features.
+### Step 3 — 写提示词
 
-2. **Style/pose reference (second, optional):** Pick the closest existing approved asset to the target pose. This anchors proportions and art style.
+1. **主体描述** — 定义角色/物品的特征（防止漂移）
+2. **姿态与表情** — 明确每个手臂/手在做什么
+3. **画风指令** — 如 "flat color fills, 2D game sprite"、"pixel art"、"watercolor"
+4. **背景** — 颜色、场景，或透明（透明底后接 bg-remove）
+5. **取景** — 全身/半身/四分之三视角
 
-The primary reference anchors identity; the style reference anchors proportions. Both together produce the most consistent results.
-
-### Step 3 — Craft the prompt
-
-Write a detailed prompt that describes the exact pose, expression, and style:
-
-1. **Character/subject description** — physical traits that define the character (so the model doesn't drift)
-2. **Pose and expression** — what the character is doing
-3. **Style directives** — art style, line style, shading approach
-4. **Background** — color, scene, or transparent
-5. **Framing** — full body, bust, three-quarter view, etc.
-
-**Prompt template:**
+**模板：**
 ```
-[CHARACTER_DESCRIPTION]. [POSE_AND_EXPRESSION]. [STYLE_DIRECTIVES]. [BACKGROUND]. [VIEW/FRAMING].
+[主体描述]. [姿态与表情]. [画风指令]. [背景]. [取景].
 ```
 
-**Tips:**
-- Be specific about what each hand/arm is doing — vague descriptions lead to random poses
-- Always specify the background explicitly
-- Include style keywords consistently (e.g., "flat color fills", "3D render", "watercolor")
-
-### Step 4 — Generate variations
-
-Run the bundled generation script:
+### Step 4 — 生成
 
 ```bash
 deno run --allow-env --allow-read --allow-write --allow-net \
   .claude/skills/image-gen/scripts/generate.ts \
   --prompt "your prompt here" \
-  --ref path/to/primary-reference.png \
-  --ref path/to/style-reference.png \
-  --output-dir /tmp/image-gen \
-  --variants 4 \
-  --aspect "<choose based on use case>" \
-  --size "2K"
+  [--ref path/to/primary-reference.png] \
+  [--ref path/to/style-reference.png] \
+  --category character|item|map|effect|ui \
+  --output-dir Resources/Images/<Category>/<Name>/ \
+  [--variants 4] \
+  [--aspect "3:4"] \
+  [--size "2K"] \
+  [--provider auto|siliconflow|ark] \
+  [--model "MODEL_ID"] \
+  [--negative "unwanted things"]
 ```
 
 **Parameters:**
 | Flag | Default | Options |
 |------|---------|---------|
-| `--variants` | 4 | 1-8 (each is a separate API call) |
+| `--category` | 空 | character / item / map / effect / ui（辅助自动选模型） |
+| `--provider` | auto | auto / siliconflow / ark |
+| `--model` | 空 | 显式模型 ID，覆盖自动选择 |
+| `--variants` | 1 | 1-8（每个是一次独立 API 调用；**默认 1，先选中最优再批量**） |
 | `--aspect` | 1:1 | 1:1, 3:4, 4:3, 9:16, 16:9, 2:3, 3:2 |
-| `--size` | 1K | 512, 1K, 2K, 4K |
+| `--size` | 2K | 512, 1K, 2K, 4K（Seedream 无 1K 档，512/1K 均按 2K） |
+| `--negative` | 空 | 负面提示词（Z-Image/Qwen-Image-Edit 生效） |
 
-**Always default to `2K` for size** — higher resolution gives better quality and can always be downscaled.
+**自动选模型规则：** 有 `--ref` → Seedream（有 ARK key 时）；无参考图 + item/ui → Z-Image-Turbo；map/effect → Qwen-Image；`--provider/--model` 显式指定优先。
 
-**Choose aspect ratio based on use case:**
-| Use Case | Aspect Ratio |
-|----------|-------------|
-| Full-body character poses | `3:4` |
-| App icons, avatars, social profiles | `1:1` |
-| Mobile screens, in-app cards | `9:16` or `3:4` |
-| Banner/header images, OG images | `16:9` or `4:3` |
-| Bust/upper-body portraits | `1:1` or `4:3` |
+**按用途选宽高比：**
+| 用途 | 宽高比 |
+|------|--------|
+| 角色全身立绘 | `3:4` |
+| 道具/图标 | `1:1` |
+| 序列帧（每帧动作） | `3:4` 或 `1:1` |
+| 场景背景横幅 | `16:9` 或 `4:3` |
 
-**Cost:** ~$0.10/image at 2K = ~$0.40 for 4 variants.
+**输出目录直接落在 `Resources/Images/<Category>/<Name>/`**（相对仓库根 `Assets/`，即运行时的 CWD）——注意不要再加 `Assets/` 前缀，否则会生成嵌套 `Assets/Assets/`。遵守 Unity 资源约定：单图 `{英文名}.png`（与 `ItemData.Name` 绑定）；序列帧 `{prefix}_0/_1/_2...`（对齐序列帧动画生成器自然排序）。summary 末尾含 `provider`、`model`、`estimated_cost`，供选图决策。
 
-### Step 5 — Pick the best variant
+### Step 5 — 选最优变体
 
-Use the Read tool to visually inspect all generated images. Score each on:
+用 Read 工具目检所有生成图，按以下打分：
 
-**Consistency (most important):**
-- Does it match the reference images — face, proportions, colors, style?
-- Is the art style consistent (not drifting to photorealistic, 3D, etc.)?
+**一致性（最重要）：**
+- 与参考图是否吻合（脸型/比例/配色/画风）——仅 Seedream 参考图链路
+- 画风是否稳定（未漂移成写实/3D 等）
 
-**Quality (tiebreaker):**
-- Does the image have personality and visual appeal?
-- Would this work well as a production asset?
+**质量（次之）：**
+- 是否有表现力，能否作为生产资源
 
-**Pick the single best variant** and copy it to the project's assets directory with a descriptive name. Briefly explain why you picked it.
+**选最优 1 张**，用最终英文名重命名落盘到对应资源目录，并说明选择理由。不满意则说明问题并调整提示词重生成。
 
-If none are good enough, explain what went wrong and offer to regenerate with prompt adjustments.
+### Step 6 — 后处理
 
-### Step 6 — Post-process
-
-After picking the best variant:
-- Copy the chosen file to the appropriate assets directory
-- Clean up: delete the rejected variants and the temp output directory
-- Use the **image-edit** skill if the user needs a different crop or size
+- **透明底**：角色/道具图需要透明背景时，接 `bg-remove` 技能（`birefnet-general`，magenta 合成验证）。
+- **序列帧**：帧图在 Unity 里切成 Multiple Sprite 后，跑 工具/动画/序列帧动画生成器 生成 `.anim`。
+- **清理**：删除弃用变体和临时目录；保留最优变体。
 
 ## Rate Limits
 
-If some variants fail with 429 errors: wait 60 seconds, then rerun with only the missing number of variants. Don't retry all — just fill in the gaps.
-
-If all fail with 429: wait 60 seconds and try again. If it keeps failing, the daily quota may be exhausted — try later or enable billing for higher limits.
+- **硅基流动**：`20012`（TPM 超限）、`50505`（模型过载）。
+- **火山方舟**：`429`。
+- 若部分变体失败：等 60 秒，只补缺失数量重跑，不要全量重试。
+- 批量生成建议分片 + 失败换 fallback 模型（显式 `--model`）。
 
 ## Troubleshooting
 
-- **"GEMINI_API_KEY not set"** — Get a key at https://aistudio.google.com/apikey
-- **"Billing not enabled" or 403** — Enable billing in Google AI Studio for image generation
-- **429 rate limit** — Wait 60 seconds and retry
-- **Character looks wrong** — Be more specific about physical traits, ensure both reference images are included
-- **Style drifted** — Reinforce style keywords more strongly in the prompt
-- **Pose is wrong** — Be extremely specific about what each arm/hand is doing
+- **"SILICONFLOW_API_KEY not set"** — 在 https://cloud.siliconflow.cn 实名认证后创建 key。
+- **"ARK_API_KEY not set"** — 在 https://console.volcengine.com/ark 创建 key（开通 Seedream）。
+- **参考图不生效** — Z-Image/Kolors/Qwen-Image 不支持图生图；带 `--ref` 自动走 Seedream，或显式 `--provider ark`。
+- **多参考图被截断** — 硅基流动编辑模型仅支持单张；多参考图用 `--provider ark`（Seedream 支持数组）。
+- **Ark 401 AuthenticationError** — key 格式错误，确认 `ARK_API_KEY` 完整且无空白。
+- **角色长歪/画风漂移** — 加强物理特征描述、强化画风关键词、确认参考图已包含。
