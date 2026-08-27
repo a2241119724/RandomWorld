@@ -64,6 +64,7 @@
 | 部署 | `/deploy` 技能 |
 | 日志 bug 分析 | `log-bug-fixer` 子代理（读日志前先查 `docs/ai-context/bug-fixes.md`） |
 | 运行时状态诊断 | 直接添加 `AWorkerTask.LogProvider` 诊断日志（约定见下） |
+| 生成游戏图片素材 | `image-gen` 技能（调用前先读 §4「图像生成调用约定」） |
 
 ### 日志调试约定
 
@@ -74,6 +75,16 @@
 - **前缀**：`[BrainDiag]`/`[StateDiag]`/`[TaskDiag]`/`[SeekDiag]`/`[MapDiag]`/`[MoveDiag]`/`[StuckDiag]`/`[EnemyDiag]`/`[BuildDiag]`/`[MindDiag]`，消息带角色名与坐标。
 - **只加在事件点**（状态切换/任务成败/寻路结果/建造状态变化），绝不在每帧/逐格循环加；日志参数构造廉价（禁止 ServiceLocator 查询）。
 - **避免重复**：同类事件已有日志时优先增强而非新增；历史教训（高频 Trace 曾致卡顿）见 `docs/ai-context/bug-fixes.md`。
+
+### 图像生成调用约定
+
+**生成前一次想全——返工是最大浪费（重做成本叠加每张单价），宁先确认再批量。**
+
+1. **先定用途与模型**：`--category` 决定模型。角色立绘/精灵图/序列帧必须带 `--ref` 走 Seedream（图生图一致性）；批量道具/图标无参考图走 Z-Image-Turbo（最便宜）；场景/特效走 Qwen-Image；可用免费 Kolors 先试画风。
+2. **默认 `--variants 1` 先出样板**：确认画风/姿态/一致性达标后再批量，严禁未验证就 `--variants 4-8` 冲量。
+3. **提示词一次写全**：主体特征、姿态（每个手臂在做什么）、画风关键词、背景/透明、取景——缺项必然漂移返工。
+4. **路径与命名一次对**：输出目录 `Resources/Images/<Category>/<Name>/`（CWD 已是仓库根 `Assets/`，**不带** `Assets/` 前缀）；单图英文名（与 `ItemData.Name` 绑定）、序列帧 `{prefix}_0/_1/_2...`——错命名=集成期返工。
+5. **省钱原则**：无参考图永远不用 Seedream；先免费/最便宜出样板，summary 的 `estimated_cost` 用于决策；需要透明底时生成后立即接 `bg-remove`，不拖到集成阶段。
 
 ## 5. 技术文档
 
