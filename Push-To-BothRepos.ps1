@@ -89,6 +89,7 @@ $restrictiveIgnore = @"
 /Scripts/Reference.meta
 
 /.claude/
+/.agents/
 /.codegraph/
 /.vs/
 /Library/

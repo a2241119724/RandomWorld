@@ -1,0 +1,66 @@
+# Job Lifecycle
+
+Read this for live PixelLab calls that return a job, asset ID, managed MCP asset, pending status, review status, rate-limit response, or download URL.
+
+## Polling
+
+REST v2 async jobs normally use `GET /background-jobs/{job_id}` when the create response returns a background job ID. Vocal animation is the explicit exception: poll `GET /vocal-animation/{job_id}`. MCP managed assets use the matching `get_*` tool, not REST background-job polling.
+
+MCP tilesets (`create_topdown_tileset` → `get_topdown_tileset`) have no such 423/404 window — the getter reports progress directly. For REST `POST /v2/tilesets`, the create response can contain both `background_job_id` and `tileset_id` while the status is still `processing`. Poll `GET /background-jobs/{background_job_id}` first. `GET /tilesets/{tileset_id}` may return `423` while the tileset is still being generated, or `404` until the background job has completed and the tileset object has been persisted; treat those as early lifecycle lookups while the background job is still processing.
+
+Poll gently: a short initial delay, then back off — not tight loops. A paid async result is already bought, so do not stop while it is merely still running — follow SKILL.md step 12's poll → background-wait → handoff ladder. Stop before "done" only for a real blocker: failure, auth/credit error, or a needed user choice such as review selection.
+
+Any wait that runs outside the current turn — a backgrounded poll loop, a log/file watcher, a scheduled wake — must be bounded to return control on success, failure or terminal error, and a hard deadline, never on success alone, and must emit a terminal marker on every path so the harness can always wake you. A background `until <success>; do sleep; done` loop (or a `tail -f … | grep <success>` watcher) never exits when the job fails or stalls, so nothing ever wakes you. On resuming from any wait, re-fetch actual status with the status route or getter before acting — the wait ending is not proof of success — and if the deadline passed with the job still pending, do not wait again: fall back to reporting the ID and resume route above.
+
+Do not resubmit a paid job because a poll timed out or a `423`/`404`/`review`/stale-URL lookup came back — poll again or re-fetch with the matching getter instead.
+
+Detect completion by the result, not by matching a status word: `status` is a free-form string whose in-progress vocabulary is open and endpoint-specific (`processing`, `pending`, `running`, `finalizing`, … — not a fixed set), and the tileset family carries no `status` field at all. Check in this order:
+
+- **Done** — the result payload is present: the asset/image/download/rotation URL is populated (e.g. a character's `rotation_urls` is null until done), or a tileset-family getter returns HTTP 200 (see the 423/404 note above). Verify the URL or local download.
+- **Failed** — `status: "failed"` or HTTP 410 (permanent). Report it; do not retry paid work unless the user approves.
+- **Review** — `status: "review"` (objects): selection is required; do not call it completed.
+- **Otherwise keep polling** — any in-progress status word, HTTP 423/404, or a value you do not recognize — bounded by a deadline (below). Never treat "the status isn't a word I listed" as done.
+
+## MCP Managed Assets
+
+MCP creation tools return asset IDs quickly. Use the matching getter to inspect status, previews, downloads, and results:
+
+- Characters: `get_character`.
+- Character animations: `get_character` or animation-specific tool output when available.
+- Objects: `get_object`.
+- Map objects: `get_map_object`.
+- Fonts: `get_font`.
+- Portrait-character conversions: `get_portrait_character`.
+- Vocal animations: `get_vocal_animation`; partial visemes may appear before completion, so wait for the terminal result.
+- Raw-image jobs (`create_image_pixflux`/`create_image_pixen`/`create_image_pro`, `edit_image`, `inpaint_image`, `animate_image` — none need a managed asset): `get_image`, the one shared getter for the whole family.
+- UI assets, tilesets, tiles, projects, or helpers: use the visible matching MCP getter when exposed.
+
+State tools such as `create_character_state` and `create_object_state` auto-wait only briefly for the source asset to finish. If a state call fails because the source is still pending, poll the source with its getter first, then retry the state call only when the source is ready.
+
+Animation tools such as `animate_character` and `animate_object` may expose `confirm_cost`. If the first call requests confirmation or refuses without it, report the cost gate and ask before retrying with confirmation. Do not guess that a failed confirmation gate means the animation endpoint is broken.
+
+## Object Review State
+
+PixelLab object generation can return `review` status when multiple candidate frames are produced. Credits may already be spent, but the object is not finalized.
+
+When an object is in review:
+
+- Report that it needs selection, not that it is stuck.
+- For candidate display and user choice parsing, read `reviewable-candidates.md`.
+- Use `select_object_frames` or REST `POST /objects/{object_id}/select-frames` only after the user chooses candidates or the request clearly authorized automatic selection.
+- Use `dismiss_review` only when the user approves discarding the candidates.
+
+## Expiring And Sensitive Outputs
+
+MCP download URLs may be unauthenticated and should be treated as shareable but sensitive. If a URL is stale, call the matching getter again for a fresh result.
+
+MCP map objects auto-delete after 8 hours. After a successful map-object result, download or persist needed files promptly and warn the user about the expiry.
+
+## REST Error Handling
+
+- `401`/`403`: auth or permission problem. If auth worked earlier in the same session, say it may be expired, rotated, or unavailable to the current process; point back to bearer-token setup and never ask for the token in chat.
+- `402`: credits or billing issue. Stop paid work and tell the user PixelLab rejected the operation.
+- `400`/`422`: request validation problem. Summarize the field/error, fix the payload, and retry only if the corrected request preserves user intent.
+- `409`/`423`: conflict, duplicate, or locked/in-progress state. Inspect the job or asset status before retrying.
+- `429`/`529`: rate or overload response. Honor a `Retry-After` header when visible; otherwise wait/back off. Do not immediate-loop or fan out more paid calls.
+- Concurrency: an account runs a limited number of jobs in parallel. Dispatch an approved batch up to that limit — full parallelism finishes fastest; back off only on `429`/`529` (honor `Retry-After`). PixelLab grants queue-skipping **priority slots** for sustained high utilization over a rolling 30-minute window, but that is a user-level concern — do not artificially throttle or inflate paid work to farm slots. Limits vary by tier and are not fully published; no public endpoint reports your slot count, utilization, or active-job list — only per-job `GET /background-jobs/{job_id}` and `GET /balance` / MCP `get_balance` (generations/credits). Do not assume a specific number or invent a slots route.
