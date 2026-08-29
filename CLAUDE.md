@@ -85,6 +85,8 @@
 3. **提示词一次写全**：主体特征、姿态（每个手臂在做什么）、画风关键词、背景/透明、取景——缺项必然漂移返工。
 4. **路径与命名一次对**：输出目录 `Resources/Images/<Category>/<Name>/`（CWD 已是仓库根 `Assets/`，**不带** `Assets/` 前缀）；单图英文名（与 `ItemData.Name` 绑定）、序列帧 `{prefix}_0/_1/_2...`——错命名=集成期返工。
 5. **省钱原则**：无参考图永远不用 Seedream；先免费/最便宜出样板，summary 的 `estimated_cost` 用于决策；需要透明底时生成后立即接 `bg-remove`，不拖到集成阶段。
+6. **落盘后保持 Point 过滤**：渲染层已统一像素风——`Resources/Images` 全部图片 + 图集 `All.spriteatlas` 的 `filterMode=Point`（锐化像素边缘）、URP `Light.asset` `m_MSAA=0`。新素材落盘后确认导入设置仍为 Point（默认 Bilinear 会柔化边缘），必要时用 `TexturePointFilterTool` 一键重设。
+7. **生成前先查游戏内消费方式**（返工主因）：地形 tile 是单图逐格平铺→必须无缝（AI 出图后接 PIL roll+blend tileable 化，接缝指标<15）；多格 sheet（`Mountain.png` 5×3 15格 RuleTile、`CustomRoomWall`/`InventoryWall.png` 3×3 去中心 8 格）AI 画不准→AI 只出 1 张无缝基材质、格子按 meta 切分表程序合成，落盘后 `.meta` 不动保 fileID；道具/家具用高对比纯色底（品红 #FF00FF）抠图；家具建造物严格俯视正交视角（top-down，禁 45°/等距）。
 
 ## 5. 技术文档
 

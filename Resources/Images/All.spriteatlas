@@ -15,7 +15,7 @@ SpriteAtlas:
       compressionQuality: 50
       maxTextureSize: 2048
       textureCompression: 0
-      filterMode: 1
+      filterMode: 0
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
@@ -190,7 +190,6 @@ SpriteAtlas:
     - e53d66275d3d5564d9291cdce631a96e: 21300000
     - e4138b27a34b2ac49af1807ed1ae80df: 21300000
     - 451f3f67253aa2148a29e0413f951b47: 21300000
-    - a1ca05771f77cab4fb104c5298f9395d: 21300000
     - e45a0397cf78dd64b899055e208e6657: 21300000
     - 7b27ca280966603469889370360bc8d1: 21300000
     - 7084aa58cdc3f8a46a7b8831f10a5d7d: 21300000
@@ -249,7 +248,6 @@ SpriteAtlas:
     - 62f0f11f4f373614b884d0c229cf483d: 21300000
     - d679094fa9dec074c991151e460b7261: 21300000
     - cac73e4f9a1750d4eb327ce1ff4a1c67: 21300000
-    - d60c615fa728705409052367f7363580: 21300000
     - e3ed948f460d8df4d829f799f761745a: 21300000
     - 99ac06ef9885e9042a8d68d15d3cc5ea: 21300000
   m_MasterAtlas: {fileID: 0}
@@ -389,7 +387,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: e53d66275d3d5564d9291cdce631a96e, type: 3}
   - {fileID: 21300000, guid: e4138b27a34b2ac49af1807ed1ae80df, type: 3}
   - {fileID: 21300000, guid: 451f3f67253aa2148a29e0413f951b47, type: 3}
-  - {fileID: 21300000, guid: a1ca05771f77cab4fb104c5298f9395d, type: 3}
   - {fileID: 21300000, guid: e45a0397cf78dd64b899055e208e6657, type: 3}
   - {fileID: 21300000, guid: 7b27ca280966603469889370360bc8d1, type: 3}
   - {fileID: 21300000, guid: 7084aa58cdc3f8a46a7b8831f10a5d7d, type: 3}
@@ -448,7 +445,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 62f0f11f4f373614b884d0c229cf483d, type: 3}
   - {fileID: 21300000, guid: d679094fa9dec074c991151e460b7261, type: 3}
   - {fileID: 21300000, guid: cac73e4f9a1750d4eb327ce1ff4a1c67, type: 3}
-  - {fileID: 21300000, guid: d60c615fa728705409052367f7363580, type: 3}
   - {fileID: 21300000, guid: e3ed948f460d8df4d829f799f761745a, type: 3}
   - {fileID: 21300000, guid: 99ac06ef9885e9042a8d68d15d3cc5ea, type: 3}
   m_PackedSpriteNamesToIndex:
@@ -587,7 +583,6 @@ SpriteAtlas:
   - DesertCoconutTree
   - Marsh
   - SingleGun
-  - "\u8349\u5730"
   - CustomBelt
   - "\u5546\u5E97"
   - SnowMushroom1
@@ -646,7 +641,6 @@ SpriteAtlas:
   - "\u62D6\u5C3E"
   - Water
   - SnowMushroom2
-  - "\u6C99\u6F20"
   - CustomPet
   - Dialog
   m_RenderDataMap: {}
