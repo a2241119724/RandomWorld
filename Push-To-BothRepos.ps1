@@ -87,6 +87,8 @@ $restrictiveIgnore = @"
 /TextMesh Pro.meta
 /Scripts/Reference/
 /Scripts/Reference.meta
+Scripts/2D/Core/
+Scripts/2D/Core.meta
 
 /.claude/
 /.agents/

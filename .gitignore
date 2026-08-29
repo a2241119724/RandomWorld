@@ -62,4 +62,6 @@ hs_err_pid*.log
 .env.local
 
 generated_batch/
-generated_samples/.claude/tmp/
+
+# 图像生成临时工作目录
+_tmp_*/
