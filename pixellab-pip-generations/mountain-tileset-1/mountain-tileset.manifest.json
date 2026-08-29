@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-08-29",
+  "purpose": "Mountain terrain 16-tile corner-Wang tileset for Unity RuleTile (RandomWorld)",
+  "calls": [
+    {
+      "route": "POST /v2/create-tileset",
+      "background_job_id": "af145b6f-b673-4cc4-9807-a59b9c80c461",
+      "tileset_id": "335ed539-08b9-4cbf-8f74-26dc85a26dd2",
+      "seed": 3513964172,
+      "usage_charged_generations": 4.0,
+      "request_body": {
+        "lower_description": "flat green grass with sparse small tufts",
+        "upper_description": "grey brown rocky mountain",
+        "transition_description": "rocky mountain base blending into grass",
+        "transition_size": 0.25,
+        "tile_size": { "width": 32, "height": 32 },
+        "mode": "standard",
+        "view": "high top-down",
+        "shading": "flat shading",
+        "outline": "lineless",
+        "detail": "medium detail"
+      },
+      "poll_route": "GET /v2/background-jobs/af145b6f-b673-4cc4-9807-a59b9c80c461",
+      "result_route": "GET /v2/tilesets/335ed539-08b9-4cbf-8f74-26dc85a26dd2"
+    }
+  ],
+  "outputs": {
+    "sheet_4x4": "tileset-4x4.png",
+    "preview_3x": "preview-3x.png",
+    "tiles_data": "tiles.json",
+    "unity_consumers": [
+      "Resources/Images/Map/Mountain.png (upscaled 128->400 nearest, 4x4 grid @100px)",
+      "Resources/Images/Map/Mountain.png.meta (16 sprites, Mountain_0..15)",
+      "Resources/Tilemap/Map/Mountain.asset (16 rules: AND vertex-derivation + user-verified direction swap + manual tweaks, Unity-tested 2026-08-29)",
+      "Resources/Images/All.spriteatlas (packed index rows 15 -> 16)"
+    ]
+  },
+  "rule_mapping": "FINAL (Unity-tested, user-tuned): AND vertex-derivation -> direction swap (up<->right, left<->down, diagonals swapped) -> user hand-restructured twice in Inspector (13 rules, m_Id<->sprite remap, some all-8-neighbor constraints). Do NOT regenerate rules from tiles.json corners - the asset is the source of truth, reason for the derivation mismatch never fully explained (data chain verified pixel-exact top to bottom)"
+}
