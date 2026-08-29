@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 036a0f252d49ac026c35201a3fbecb26
+guid: bc19b9c5c21e01e499b8d8bbf82c6f11
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -31,7 +31,7 @@ TextureImporter:
   cubemapConvolution: 0
   seamlessCubemap: 0
   textureFormat: 1
-  maxTextureSize: 8192
+  maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
     filterMode: 1
@@ -69,7 +69,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 8192
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -82,7 +82,7 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
     buildTarget: Standalone
-    maxTextureSize: 8192
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -95,7 +95,7 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
     buildTarget: WebGL
-    maxTextureSize: 8192
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -110,253 +110,253 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: GrassTree_0
+      name: GrassSakuraTree_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 459e56283ccf818f57a469f5e0c67b86
-      internalID: -1384067914
+      spriteID: 5ec6e2867ddaaf042b438e8b7fa9d61a
+      internalID: 839125419
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_1
+      name: GrassSakuraTree_1
       rect:
         serializedVersion: 2
-        x: 368
+        x: 532
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: b5c0dfd819cf30c584a58331dc490457
-      internalID: -1960978286
+      spriteID: c415b801a69bfd344bc8344015b3ca37
+      internalID: -1903072173
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_2
+      name: GrassSakuraTree_2
       rect:
         serializedVersion: 2
-        x: 736
+        x: 1064
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6a85b4cc4113a9587ca4f3ac68571174
-      internalID: 1189207800
+      spriteID: e7079719ccd98504e8d0b6157ffd4e61
+      internalID: 1847577547
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_3
+      name: GrassSakuraTree_3
       rect:
         serializedVersion: 2
-        x: 1104
+        x: 1596
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a9fbfd31943833cddc09d8f9cdfad79c
-      internalID: 1463257845
+      spriteID: d482920bb9767ac44ad6ff7ada54525b
+      internalID: -600174917
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_4
+      name: GrassSakuraTree_4
       rect:
         serializedVersion: 2
-        x: 1472
+        x: 2128
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 789f26777dcc74812023512427719bee
-      internalID: -1062824528
+      spriteID: a4e3f2da66e424445b7f82ffcbc9498e
+      internalID: 1637193553
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_5
+      name: GrassSakuraTree_5
       rect:
         serializedVersion: 2
-        x: 1840
+        x: 2664
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: eb6bb5998d33cba9fbc0bd8a71879f42
-      internalID: 378672186
+      spriteID: 1c7c64073fead8a42888aef37c2417bd
+      internalID: 174040851
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_6
+      name: GrassSakuraTree_6
       rect:
         serializedVersion: 2
-        x: 2208
+        x: 3192
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: b7980899b8d85453ea338d718f1001dd
-      internalID: -177743155
+      spriteID: f4583bc4f12b6384c868f8d6f1bc2ba1
+      internalID: 484818943
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_7
+      name: GrassSakuraTree_7
       rect:
         serializedVersion: 2
-        x: 2576
+        x: 3724
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: eaae7571023e52f7e8572376d104c483
-      internalID: -2110519843
+      spriteID: 96a6b829a9849cb4b827455ed4f9735b
+      internalID: 497123109
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_8
+      name: GrassSakuraTree_8
       rect:
         serializedVersion: 2
-        x: 2944
+        x: 4256
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d79d197abf54255a081a11977460d4e6
-      internalID: 167546046
+      spriteID: b074958c0e6d4b54382b7e382c631196
+      internalID: 1720908130
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_9
+      name: GrassSakuraTree_9
       rect:
         serializedVersion: 2
-        x: 3312
+        x: 4788
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7b43db7f335be01613811918bf6fcd52
-      internalID: 9530675
+      spriteID: c05ee8f4566feca44be498fd6ea271ec
+      internalID: -1783340229
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_10
+      name: GrassSakuraTree_10
       rect:
         serializedVersion: 2
-        x: 3680
+        x: 5320
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 071824c27710e3973590985233738564
-      internalID: 923842515
+      spriteID: 9a147db467b926445ac789e5c065cf6b
+      internalID: 1042586550
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GrassTree_11
+      name: GrassSakuraTree_11
       rect:
         serializedVersion: 2
-        x: 4048
+        x: 5852
         y: 0
-        width: 368
-        height: 369
+        width: 532
+        height: 560
       alignment: 9
-      pivot: {x: 0.49, y: 0.09}
+      pivot: {x: 0.54, y: 0.14}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 664b54018619e5c4f83194f81da28df3
-      internalID: 133259325
+      spriteID: 77842fe4e210ada4f80db64dfdcecb58
+      internalID: -1523787191
       vertices: []
       indices: 
       edges: []
@@ -372,18 +372,18 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      GrassTree_0: -1384067914
-      GrassTree_1: -1960978286
-      GrassTree_10: 923842515
-      GrassTree_11: 133259325
-      GrassTree_2: 1189207800
-      GrassTree_3: 1463257845
-      GrassTree_4: -1062824528
-      GrassTree_5: 378672186
-      GrassTree_6: -177743155
-      GrassTree_7: -2110519843
-      GrassTree_8: 167546046
-      GrassTree_9: 9530675
+      GrassSakuraTree_0: 839125419
+      GrassSakuraTree_1: -1903072173
+      GrassSakuraTree_10: 1042586550
+      GrassSakuraTree_11: -1523787191
+      GrassSakuraTree_2: 1847577547
+      GrassSakuraTree_3: -600174917
+      GrassSakuraTree_4: 1637193553
+      GrassSakuraTree_5: 174040851
+      GrassSakuraTree_6: 484818943
+      GrassSakuraTree_7: 497123109
+      GrassSakuraTree_8: 1720908130
+      GrassSakuraTree_9: -1783340229
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
