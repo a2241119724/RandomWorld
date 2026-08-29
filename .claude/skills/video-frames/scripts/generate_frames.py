@@ -23,7 +23,7 @@ import urllib.request
 from pathlib import Path
 
 API_BASE = "https://ark.cn-beijing.volces.com/api/v3"
-MODEL = "doubao-seedance-1-0-pro-fast-250528"
+MODEL = "doubao-seedance-1-0-pro-fast-251015"
 # pro-fast 单秒近似价（元/秒，以官方账单为准）：480p ≈ 0.126
 COST_PER_SECOND = {"480p": 0.126, "720p": 0.21, "1080p": 0.42}
 
@@ -178,7 +178,7 @@ def main() -> None:
     ap.add_argument("--first-frame", help="首帧图片路径（i2v 驱动角色一致性，推荐）")
     ap.add_argument("--output-dir", required=True, help="输出目录，如 Resources/Images/character/player_run/")
     ap.add_argument("--prefix", help="帧文件名前缀（默认取输出目录名）")
-    ap.add_argument("--frames", type=int, default=8, help="抽帧数量（默认 8）")
+    ap.add_argument("--frames", type=int, default=12, help="抽帧数量（默认 12）")
     ap.add_argument("--duration", type=float, default=2, help="视频时长秒（默认 2，pro-fast 支持 2-12）")
     ap.add_argument("--resolution", default="480p", choices=list(COST_PER_SECOND), help="分辨率（默认 480p 最便宜）")
     ap.add_argument("--ratio", default="adaptive", help="画幅比例（默认 adaptive 智能比例，i2v 跟随首帧）")

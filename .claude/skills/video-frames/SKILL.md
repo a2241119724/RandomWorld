@@ -12,10 +12,10 @@ user_invocable: true
 
 | 参数 | 值 | 说明 |
 |---|---|---|
-| 模型 | `doubao-seedance-1-0-pro-fast-250528` | pro 提速版，价格约 pro 的 1/3 |
+| 模型 | `doubao-seedance-1-0-pro-fast-251015` | pro 提速版，价格约 pro 的 1/3；旧 ID `250528` 已下线 |
 | 分辨率 | `480p` | 最低档 |
-| 时长 | `2` 秒 | 24fps，共 48 帧，默认从中均匀抽 8 帧 |
-| 比例 | `adaptive` | 智能比例，i2v 自动跟随首帧图比例 |
+| 时长 | `2` 秒 | 24fps，共 48 帧，默认从中均匀抽 12 帧（6 帧/秒） |
+| 比例 | `adaptive` | 只会输出标准比例（1:1/4:3/3:4/16:9/9:16），选**最接近**首帧的一种，然后对首帧**放大裁切填满**——并非跟随原比例，见 Step 1 比例规则 |
 | 镜头 | `camerafixed true` | **序列帧必须锁镜头**，否则镜头运动毁掉帧间一致性（脚本已内置） |
 | 水印 | `false` | |
 | 成本 | ~¥0.25/条（480p·2s） | 1080p 或更长时长按 `COST_PER_SECOND` 上浮 |
@@ -31,6 +31,10 @@ user_invocable: true
 ### Step 1 — 准备首帧
 
 首帧决定角色身份与画风（视频全程跟随首帧）。用 `image-gen` 技能生成角色标准姿势静态图（纯白/纯色底，无阴影），确认达标后再进本步。
+
+**比例规则（必须，否则主体被裁切）**：模型只输出标准比例（1:1、4:3、3:4、16:9、9:16），`ratio adaptive` 会选与首帧最接近的一种，再对首帧**放大裁切填满**（crop-to-fill）——首帧非标准比例时主体必被裁。实例：300×340 的树 → 640×640 视频，按宽放大后树高 725 超出画布，顶底各被裁 ~42px。
+
+生成前把首帧 **pad 到能完整容纳主体的标准比例画布**：纯色底（与后续抠图底色一致）居中，四周留少量余量；留白会在后处理抠图时自动消失。拿不准就 pad 成 1:1（边长 = max(宽, 高) + 余量）。
 
 ### Step 2 — 写提示词并生成
 
@@ -48,7 +52,7 @@ python .claude/skills/video-frames/scripts/generate_frames.py \
 | `--first-frame` | 无 | 首帧图 → i2v（推荐，保角色一致性）；缺省则纯文生视频 |
 | `--output-dir` | 必填 | `Resources/Images/<Category>/<Name>/`（相对仓库根 `Assets/`，**不带** `Assets/` 前缀） |
 | `--prefix` | 输出目录名 | 帧命名 `{prefix}_0.png ...`（对齐序列帧动画生成器自然排序） |
-| `--frames` | 8 | 均匀抽帧数量 |
+| `--frames` | 12 | 均匀抽帧数量 |
 | `--duration` | 2 | 2-12 秒；仅当 2 秒装不下动作时加长（成本线性上涨） |
 
 **提示词模板**：`[主体]. [动作分解，明确每个手臂/腿在做什么]. [循环或一次性]. [2d game sprite style].` —— 与 image-gen 相同的完整性要求，缺项必然漂移。
@@ -66,8 +70,10 @@ python .claude/skills/video-frames/scripts/generate_frames.py \
 
 ## Troubleshooting
 
-- **`ModelNotOpen` / 404** — Ark 控制台未开通 `doubao-seedance-1-0-pro-fast` 模型服务。
+- **`ModelNotOpen` / 404（模型不存在）** — Ark 控制台未开通模型服务，或模型 ID 已更新（脚本里的 ID 过期就用账号模型列表 `GET /api/v3/models` 查当前 ID）。
 - **401** — `ARK_API_KEY` 格式错误（检查完整性与空白）。
-- **ffmpeg 不可用** — `winget install Gyan.FFmpeg` 后重启终端。
+- **ffmpeg 不可用** — `winget install Gyan.FFmpeg` 后重启终端（当前会话可临时 `export PATH` 加入其 bin 目录）。
+- **主体被裁切（缺顶/缺底/缺边）** — 首帧比例非标准比例被 crop-to-fill 裁掉，见 Step 1 比例规则：pad 首帧到标准比例画布后重生成。
 - **抽出的帧动作重叠/残影** — 视频本身有运动模糊，属模型特性；加大 `--frames` 密抽后挑选，或 prompt 里减少动作幅度。
 - **角色漂移（画风/比例变化）** — 换更标准的首帧图，prompt 里强化画风关键词；必要时 `--seed` 复现排查。
+- **非循环元素闪现（如花瓣时有时无）** — 视频内容本身非严格循环；介意就在 prompt 里去掉该元素重生成，或改用无缝摆动类描述。

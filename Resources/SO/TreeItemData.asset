@@ -144,3 +144,16 @@ MonoBehaviour:
     RelatedTaskTime:
       TaskBaseTime: 0
       CarryTaskPutDownTime: 0
+  - Id: 1200010
+    CnName: "\u6843\u82B1\u6811"
+    Name: GrassSakuraTree
+    Info: "\u6843\u82B1\u6811"
+    IsStackable: 0
+    LayerMode: 1
+    VisualMode: 0
+    IsAnimation: 1
+    Type: 12
+    EquipSlot: 0
+    RelatedTaskTime:
+      TaskBaseTime: 0
+      CarryTaskPutDownTime: 0
