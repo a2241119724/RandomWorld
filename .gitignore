@@ -62,4 +62,4 @@ hs_err_pid*.log
 .env.local
 
 generated_batch/
-generated_samples/
+generated_samples/.claude/tmp/
