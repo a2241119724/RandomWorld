@@ -131,18 +131,19 @@ namespace LAB2D.Render
                     continue;
                 }
 
-                // 距离预过滤：树底远离玩家时树冠不可能盖住玩家，跳过 bounds 计算
+                // 距离预过滤：树底远离玩家时树冠不可能盖住玩家，跳过遮挡判定（省 bounds 计算）。
+                // 恢复不设距离门：树在半透明状态下因传送/重生等位置突变出半径时，
+                // 若一并跳过将永久停留半透明，故距离外 target 恒为 originalAlpha 继续收敛。
                 Vector3 diff = sr.transform.position - playerPos;
-                if (diff.sqrMagnitude > checkRadiusSq)
+                bool occludes = false;
+                if (diff.sqrMagnitude <= checkRadiusSq)
                 {
-                    continue;
-                }
-
-                // 玩家被遮挡 = 遮挡物绘制在玩家之上（order 大）且视觉相交
-                bool occludes = sr.sortingOrder > playerOrder && sr.bounds.Intersects(playerBounds);
-                if (occludes)
-                {
-                    this.occludedNow.Add(sr);
+                    // 玩家被遮挡 = 遮挡物绘制在玩家之上（order 大）且视觉相交
+                    occludes = sr.sortingOrder > playerOrder && sr.bounds.Intersects(playerBounds);
+                    if (occludes)
+                    {
+                        this.occludedNow.Add(sr);
+                    }
                 }
 
                 // alpha 平滑渐变（保留 RGB，不覆盖 tilemap 颜色）

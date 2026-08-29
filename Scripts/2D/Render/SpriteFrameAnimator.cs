@@ -7,7 +7,8 @@ namespace LAB2D.Render
     /// <summary>
     /// Sprite 序列帧动画：以图片前缀（如物品英文名 Name）自动收集 {prefix}_0、{prefix}_1、
     /// {prefix}_2… 序列 Sprite（收集至首个缺失，最多默认 128 帧兜底），按固定默认帧率循环
-    /// 切换 SpriteRenderer 的 sprite。由 TileVisualSpawner 在创建非恒底层（LayerMode != Bottom）
+    /// 切换 SpriteRenderer 的 sprite。Init 时随机化起始帧与帧内偏移，避免成片装饰
+    /// （树木等）多实例同相位摆动。由 TileVisualSpawner 在创建非恒底层（LayerMode != Bottom）
     /// 且 ItemData.IsAnimation 开启的独立视觉时挂载；无任何序列帧时回退静态显示（组件自毁，
     /// 不影响原 tile 静态图）。
     /// </summary>
@@ -54,10 +55,11 @@ namespace LAB2D.Render
 
             this.frames = collected;
             this.frameInterval = 1f / DefaultFrameRate;
-            this.index = 0;
-            this.timer = 0f;
+            // 随机起始相位：成片装饰（树木等）若同帧起步会整齐划一地摆动，观感假
+            this.index = Random.Range(0, this.frames.Length);
+            this.timer = Random.Range(0f, this.frameInterval);
             this.Prefix = prefix;
-            this.spriteRenderer.sprite = this.frames[0];
+            this.spriteRenderer.sprite = this.frames[this.index];
             return true;
         }
 
