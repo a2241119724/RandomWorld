@@ -83,7 +83,7 @@ def create_task(args, key: str) -> str:
     text = (args.prompt +
             f" --resolution {args.resolution}"
             f" --ratio {args.ratio}"
-            f" --duration {args.duration}"
+            f" --duration {args.duration:g}"
             " --camerafixed true"
             " --watermark false")
     if args.seed is not None:

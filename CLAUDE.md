@@ -65,7 +65,7 @@
 | 日志 bug 分析 | `log-bug-fixer` 子代理（读日志前先查 `docs/ai-context/bug-fixes.md`） |
 | 运行时状态诊断 | 直接添加 `AWorkerTask.LogProvider` 诊断日志（约定见下） |
 | 生成游戏图片素材 | `image-gen` 技能或外部素材 skill（perfectpixel 角色动作动画 / pixellab-pip / SpriteCook 系列），调用 `image-gen` 前先读 §4「图像生成调用约定」 |
-| 生成动画序列帧 | `video-frames` 技能（Seedance pro-fast 图生视频→抽帧，最便宜档）；首帧静态图先走 `image-gen` |
+| 生成动画序列帧/角色动画 | **必须**用 `video-frames` 技能（Seedance 图生视频→抽帧，帧间天然连贯防动作漂移），**禁止**用 `image-gen` 逐帧出图拼条；首帧静态图仍先走 `image-gen` |
 | 精灵动画本地管线 | `sprite-gen` 技能——不要用它直接"生成角色动画"（那是 perfectpixel/`image-gen` 的活）；只用于 `image-gen` 出图后的本地后处理：chroma-key 抽帧、atlas 组装、QA manifest、多候选 curation 挑选、palette-swap 调色变体 |
 
 ### 日志调试约定
