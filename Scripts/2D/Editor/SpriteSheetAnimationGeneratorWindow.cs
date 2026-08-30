@@ -13,7 +13,7 @@ namespace LAB2D.Editor
     /// 单贴图切片模式：
     /// 1. 在 Sprite Editor 中把序列帧图切割为多个切片（每切片 = 一帧）
     /// 2. 打开本窗口：工具/动画/序列帧动画生成器
-    /// 3. 拖入贴图 → 自动列出所有切片并预览
+    /// 3. 拖入贴图 → 自动列出所有切片并预览，点击缩略图选中/取消参与动画的切片
     /// 4. 配置动画名/帧率/循环 → 点击"生成动画"
     ///
     /// 多文件序列模式：Project 窗口多选（也可右键 → 生成序列帧动画），支持两类来源——
@@ -38,6 +38,7 @@ namespace LAB2D.Editor
         private Texture2D sourceTexture;
         private List<Sprite> sprites = new List<Sprite>();
         private bool spritesLoaded;
+        private HashSet<int> selectedSlices = new HashSet<int>(); // 参与生成的切片索引（预览区点击切换，换贴图重置为全选）
 
         private string animationName = string.Empty;
         private float frameRate = DefaultFrameRate;
@@ -107,7 +108,7 @@ namespace LAB2D.Editor
             {
                 EditorGUILayout.HelpBox(
                     "从已切割的 Sprite Sheet 一键生成帧动画 .anim。\n" +
-                    "步骤：拖入贴图 → 配置 → 生成。重新生成会覆盖同名 .anim。",
+                    "步骤：拖入贴图 → 点击切片选中/取消 → 配置 → 生成。重新生成会覆盖同名 .anim。",
                     MessageType.Info);
                 EditorGUILayout.Space(5);
 
@@ -124,7 +125,7 @@ namespace LAB2D.Editor
         }
 
         /// <summary>
-        /// 贴图选择 + 切片预览区域
+        /// 贴图选择 + 切片选择预览区域（点击缩略图切换选中，仅选中切片参与生成）。
         /// </summary>
         private void DrawTextureSection()
         {
@@ -144,27 +145,71 @@ namespace LAB2D.Editor
             if (this.spritesLoaded && this.sprites.Count > 0)
             {
                 this.showPreview = EditorGUILayout.Foldout(this.showPreview,
-                    $"已检测到 {this.sprites.Count} 个切片", true);
+                    $"已检测到 {this.sprites.Count} 个切片（已选 {this.selectedSlices.Count}）", true);
+
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("全选"))
+                {
+                    this.selectedSlices = new HashSet<int>(Enumerable.Range(0, this.sprites.Count));
+                }
+
+                if (GUILayout.Button("全不选"))
+                {
+                    this.selectedSlices.Clear();
+                }
+
+                if (GUILayout.Button("反选"))
+                {
+                    this.selectedSlices = new HashSet<int>(Enumerable
+                        .Range(0, this.sprites.Count)
+                        .Where(i => !this.selectedSlices.Contains(i)));
+                }
+
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.HelpBox("点击切片缩略图选中/取消，仅选中的切片参与生成。", MessageType.None);
 
                 if (this.showPreview)
                 {
                     this.scrollPos = EditorGUILayout.BeginScrollView(this.scrollPos, GUILayout.Height(120));
                     EditorGUILayout.BeginHorizontal();
 
-                    foreach (Sprite sprite in this.sprites)
+                    for (int i = 0; i < this.sprites.Count; i++)
                     {
+                        Sprite sprite = this.sprites[i];
                         if (sprite == null)
                         {
                             continue;
                         }
 
+                        bool selected = this.selectedSlices.Contains(i);
                         EditorGUILayout.BeginVertical(GUILayout.Width(56));
                         Rect rect = GUILayoutUtility.GetRect(48, 48, GUILayout.Width(48), GUILayout.Height(48));
+
+                        Event evt = Event.current;
+                        if (evt.type == EventType.MouseDown && evt.button == 0 && rect.Contains(evt.mousePosition))
+                        {
+                            if (!this.selectedSlices.Remove(i))
+                            {
+                                this.selectedSlices.Add(i);
+                            }
+
+                            evt.Use();
+                        }
+
+                        Color cachedColor = GUI.color;
+                        GUI.color = new Color(1f, 1f, 1f, selected ? 1f : 0.25f);
                         GUI.DrawTextureWithTexCoords(rect, sprite.texture, new Rect(
                             sprite.rect.x / sprite.texture.width,
                             sprite.rect.y / sprite.texture.height,
                             sprite.rect.width / sprite.texture.width,
                             sprite.rect.height / sprite.texture.height));
+                        GUI.color = cachedColor;
+
+                        if (selected)
+                        {
+                            DrawSelectionBorder(rect);
+                        }
+
                         GUILayout.Label(sprite.name, EditorStyles.miniLabel, GUILayout.Width(54));
                         EditorGUILayout.EndVertical();
                     }
@@ -192,18 +237,19 @@ namespace LAB2D.Editor
             this.animationName = EditorGUILayout.TextField("动画名", this.animationName);
             this.frameRate = Mathf.Max(0.01f, EditorGUILayout.FloatField("帧率（帧/秒）", this.frameRate));
 
-            // 总时间与帧率双向联动（同一节奏的两种表达）：改总时间即反算帧率
-            float duration = this.sprites.Count / this.frameRate;
+            // 总时间与帧率双向联动（同一节奏的两种表达）：改总时间即反算帧率（按选中切片数计）
+            int frameCount = this.selectedSlices.Count;
+            float duration = frameCount / this.frameRate;
             float newDuration = Mathf.Max(0.01f, EditorGUILayout.FloatField("总时间（秒）", duration));
             if (!Mathf.Approximately(newDuration, duration))
             {
-                this.frameRate = this.sprites.Count / newDuration;
+                this.frameRate = frameCount / newDuration;
             }
 
-            if (this.sprites.Count > 0)
+            if (frameCount > 0)
             {
                 EditorGUILayout.LabelField(
-                    $"{this.sprites.Count} 帧 × {1f / this.frameRate:F3} 秒 = {duration:F2} 秒", EditorStyles.miniLabel);
+                    $"{frameCount} 帧 × {1f / this.frameRate:F3} 秒 = {duration:F2} 秒", EditorStyles.miniLabel);
             }
 
             this.loop = EditorGUILayout.Toggle("循环播放", this.loop);
@@ -241,7 +287,7 @@ namespace LAB2D.Editor
         /// </summary>
         private void DrawGenerateButton()
         {
-            bool canGenerate = this.spritesLoaded && this.sprites.Count > 0 && !string.IsNullOrEmpty(this.animationName);
+            bool canGenerate = this.spritesLoaded && this.selectedSlices.Count > 0 && !string.IsNullOrEmpty(this.animationName);
             EditorGUI.BeginDisabledGroup(!canGenerate);
             if (GUILayout.Button("🚀 生成帧动画 .anim", GUILayout.Height(40)))
             {
@@ -256,6 +302,10 @@ namespace LAB2D.Editor
                 if (!this.spritesLoaded || this.sprites.Count == 0)
                 {
                     missing.Add("选择已切割的贴图");
+                }
+                else if (this.selectedSlices.Count == 0)
+                {
+                    missing.Add("至少选中一个切片");
                 }
 
                 if (string.IsNullOrEmpty(this.animationName))
@@ -274,6 +324,7 @@ namespace LAB2D.Editor
         {
             this.sprites.Clear();
             this.spritesLoaded = false;
+            this.selectedSlices.Clear();
 
             if (this.sourceTexture == null)
             {
@@ -298,6 +349,7 @@ namespace LAB2D.Editor
                 .OrderBy(s => s.name, SpriteNameNaturalSorter.Instance)
                 .ToList();
             this.spritesLoaded = this.sprites.Count > 0;
+            this.selectedSlices = new HashSet<int>(Enumerable.Range(0, this.sprites.Count));
 
             if (this.spritesLoaded && string.IsNullOrEmpty(this.animationName))
             {
@@ -699,10 +751,19 @@ namespace LAB2D.Editor
         }
 
         /// <summary>
-        /// 生成帧动画：每个切片按顺序一帧，绑定 SpriteRenderer.m_Sprite。
+        /// 生成帧动画：选中切片按原有顺序各一帧，绑定 SpriteRenderer.m_Sprite。
         /// </summary>
         private void GenerateAnimation()
         {
+            List<Sprite> frames = new List<Sprite>();
+            for (int i = 0; i < this.sprites.Count; i++)
+            {
+                if (this.sprites[i] != null && this.selectedSlices.Contains(i))
+                {
+                    frames.Add(this.sprites[i]);
+                }
+            }
+
             string dir = string.IsNullOrEmpty(this.outputDir)
                 ? this.GetDefaultOutputDir()
                 : this.outputDir.TrimEnd('/');
@@ -713,14 +774,14 @@ namespace LAB2D.Editor
                 AssetDatabase.Refresh();
             }
 
-            ObjectReferenceKeyframe[] keys = new ObjectReferenceKeyframe[this.sprites.Count];
+            ObjectReferenceKeyframe[] keys = new ObjectReferenceKeyframe[frames.Count];
             float fps = Mathf.Max(0.01f, this.frameRate);
-            for (int i = 0; i < this.sprites.Count; i++)
+            for (int i = 0; i < frames.Count; i++)
             {
                 keys[i] = new ObjectReferenceKeyframe
                 {
                     time = i / fps, // 关键帧时间以秒计：每帧间隔 1/fps 秒
-                    value = this.sprites[i],
+                    value = frames[i],
                 };
             }
 
@@ -737,7 +798,19 @@ namespace LAB2D.Editor
             EditorGUIUtility.PingObject(created);
 
             Debug.Log($"[SpriteAnimGen] 生成完成：{dir}/{this.animationName}.anim\n" +
-                $"  {this.sprites.Count} 帧 / {fps} fps / {(this.loop ? "循环" : "不循环")}，已选中");
+                $"  {frames.Count} 帧（切片共 {this.sprites.Count} 个）/ {fps} fps / {(this.loop ? "循环" : "不循环")}，已选中");
+        }
+
+        /// <summary>
+        /// 给选中的切片缩略图描高亮边框。
+        /// </summary>
+        private static void DrawSelectionBorder(Rect rect)
+        {
+            Color color = new Color(0.24f, 0.49f, 0.9f);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 2f), color);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 2f, rect.width, 2f), color);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 2f, rect.height), color);
+            EditorGUI.DrawRect(new Rect(rect.xMax - 2f, rect.y, 2f, rect.height), color);
         }
     }
 
