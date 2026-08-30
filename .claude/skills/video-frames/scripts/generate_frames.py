@@ -7,7 +7,12 @@
 用法示例：
   python generate_frames.py --prompt "a chibi character running in place, loop" \
     --first-frame Resources/Images/character/player/idle.png \
-    --output-dir Resources/Images/character/player/run/ --frames 8
+    --name player_run --frames 8
+
+产物落盘位置（固定）：
+  视频   → D:/LAB/Unity/Videos/{name}_video.mp4（仓库外，不进 Unity）
+  抽帧   → Assets/tmp/{name}/{name}_N.png + {name}_contact.png（临时区，
+           目检满意后手动拷贝到 Resources/Images/<Category>/<Name>/ 集成）
 """
 
 import argparse
@@ -24,6 +29,9 @@ from pathlib import Path
 
 API_BASE = "https://ark.cn-beijing.volces.com/api/v3"
 MODEL = "doubao-seedance-1-0-pro-fast-251015"
+# 产物落盘位置：视频放仓库外，抽帧等中间产物放 Assets/tmp 临时区（集成时再拷走）
+VIDEO_DIR = Path(r"D:\LAB\Unity\Videos")
+TMP_ROOT = Path(r"D:\LAB\Unity\RandomWorld\Assets\tmp")
 # pro-fast 单秒近似价（元/秒，以官方账单为准）：480p ≈ 0.126
 COST_PER_SECOND = {"480p": 0.126, "720p": 0.21, "1080p": 0.42}
 
@@ -176,8 +184,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Seedance 视频→序列帧（pro-fast 最便宜档）")
     ap.add_argument("--prompt", required=True, help="动作描述（英文建议，循环动画写 seamlessly looping）")
     ap.add_argument("--first-frame", help="首帧图片路径（i2v 驱动角色一致性，推荐）")
-    ap.add_argument("--output-dir", required=True, help="输出目录，如 Resources/Images/character/player_run/")
-    ap.add_argument("--prefix", help="帧文件名前缀（默认取输出目录名）")
+    ap.add_argument("--name", required=True, help="本次产物名称（如 player_run）：视频为 Videos/<name>_video.mp4，帧为 tmp/<name>/")
     ap.add_argument("--frames", type=int, default=12, help="抽帧数量（默认 12）")
     ap.add_argument("--duration", type=float, default=2, help="视频时长秒（默认 2，pro-fast 支持 2-12）")
     ap.add_argument("--resolution", default="480p", choices=list(COST_PER_SECOND), help="分辨率（默认 480p 最便宜）")
@@ -189,11 +196,13 @@ def main() -> None:
     key = load_api_key()
     check_ffmpeg()
 
-    out_dir = Path(args.output_dir)
-    if not out_dir.is_absolute():
-        out_dir = Path.cwd() / out_dir
-    out_dir.mkdir(parents=True, exist_ok=True)
-    prefix = args.prefix or out_dir.name.rstrip("/")
+    name = args.name.strip().rstrip("/")
+    video_dir = VIDEO_DIR if VIDEO_DIR.is_absolute() else Path.cwd() / VIDEO_DIR
+    video_dir.mkdir(parents=True, exist_ok=True)
+    frame_dir = TMP_ROOT if TMP_ROOT.is_absolute() else Path.cwd() / TMP_ROOT
+    frame_dir = frame_dir / name
+    frame_dir.mkdir(parents=True, exist_ok=True)
+    prefix = name
 
     task_id = create_task(args, key)
     result = poll_task(key, task_id, args.timeout)
@@ -201,10 +210,10 @@ def main() -> None:
     if not video_url:
         sys.exit(f"ERROR: 任务成功但无 video_url：{json.dumps(result, ensure_ascii=False)}")
 
-    video_path = out_dir / f"{prefix}_video.mp4"
+    video_path = video_dir / f"{prefix}_video.mp4"
     download(video_url, video_path)
-    frames = extract_frames(video_path, out_dir, prefix, args.frames, args.duration)
-    sheet = make_contact_sheet(frames, out_dir, prefix)
+    frames = extract_frames(video_path, frame_dir, prefix, args.frames, args.duration)
+    sheet = make_contact_sheet(frames, frame_dir, prefix)
 
     summary = {
         "model": MODEL,
@@ -219,7 +228,7 @@ def main() -> None:
         "estimated_cost_cny": round(COST_PER_SECOND[args.resolution] * args.duration, 3),
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))
-    log(f"[Seedance] 完成：{len(frames)} 帧 → {out_dir}（contact sheet 供目检）")
+    log(f"[Seedance] 完成：{len(frames)} 帧 → {frame_dir}（contact sheet 供目检；视频在 {video_path}）")
 
 
 if __name__ == "__main__":

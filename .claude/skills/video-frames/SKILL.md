@@ -20,6 +20,16 @@ user_invocable: true
 | 水印 | `false` | |
 | 成本 | ~¥0.25/条（480p·2s） | 1080p 或更长时长按 `COST_PER_SECOND` 上浮 |
 
+## 产物落盘位置（固定，脚本内置）
+
+| 产物 | 位置 | 说明 |
+|---|---|---|
+| 视频 mp4 | `D:\LAB\Unity\Videos\<name>_video.mp4` | 仓库外，不进 Unity；保留供换帧率重抽 |
+| 抽帧 + contact sheet | `D:\LAB\Unity\RandomWorld\Assets\tmp\<name>\<name>_N.png`、`<name>_contact.png` | 临时处理区，目检/挑选都在这里 |
+| 最终集成 | `Resources/Images/<Category>/<Name>/` | 目检满意后**手动拷贝**帧图过去（脚本不直接写入） |
+
+`--name` 即产物名与帧前缀（如 `player_attack`）。`Assets/tmp` 是临时区：Unity 会导入其中的图（生成 .meta），集成后及时清理不要的帧。
+
 ## Prerequisites
 
 - **ARK_API_KEY**（火山方舟，需实名认证，且在 Ark 控制台**开通模型服务** `doubao-seedance-1-0-pro-fast`，否则报 `ModelNotOpen`）：https://console.volcengine.com/ark 。key 走环境变量或项目根 `.env`，不落库。
@@ -42,7 +52,7 @@ user_invocable: true
 python .claude/skills/video-frames/scripts/generate_frames.py \
   --prompt "chibi character swings sword once then returns to idle, seamlessly looping, 2d game sprite style" \
   --first-frame Resources/Images/character/player/idle.png \
-  --output-dir Resources/Images/character/player/attack/ \
+  --name player_attack \
   [--frames 8] [--duration 2] [--seed 42]
 ```
 
@@ -50,23 +60,24 @@ python .claude/skills/video-frames/scripts/generate_frames.py \
 |---|---|---|
 | `--prompt` | 必填 | **动作描述**（英文建议）。循环动画写 `seamlessly looping`；一次性动作（攻击/跳跃）不写 loop |
 | `--first-frame` | 无 | 首帧图 → i2v（推荐，保角色一致性）；缺省则纯文生视频 |
-| `--output-dir` | 必填 | `Resources/Images/<Category>/<Name>/`（相对仓库根 `Assets/`，**不带** `Assets/` 前缀） |
-| `--prefix` | 输出目录名 | 帧命名 `{prefix}_0.png ...`（对齐序列帧动画生成器自然排序） |
+| `--name` | 必填 | 产物名兼帧前缀（如 `player_attack`），决定 Videos/ 与 tmp/ 下的落盘路径，帧命名 `{name}_0.png ...` 对齐序列帧动画生成器自然排序 |
 | `--frames` | 12 | 均匀抽帧数量 |
 | `--duration` | 2 | 2-12 秒；仅当 2 秒装不下动作时加长（成本线性上涨） |
 
 **提示词模板**：`[主体]. [动作分解，明确每个手臂/腿在做什么]. [循环或一次性]. [2d game sprite style].` —— 与 image-gen 相同的完整性要求，缺项必然漂移。
 
-输出：`{prefix}_0..N.png` 帧序列 + `{prefix}_contact.png` 拼图（一屏目检全部帧）+ `{prefix}_video.mp4`（保留供换帧率重抽）+ summary JSON（含 `estimated_cost`）。
+输出：`Assets\tmp\<name>\` 下的 `{name}_0..N.png` 帧序列 + `{name}_contact.png` 拼图（一屏目检全部帧），视频在 `D:\LAB\Unity\Videos\{name}_video.mp4`（保留供换帧率重抽），另打 summary JSON（含 `estimated_cost`）。
 
 ### Step 3 — 目检与取舍
 
-用 Read 看 `{prefix}_contact.png`：确认动作正确、角色无漂移、背景干净。不满意→调整动作描述重跑（成本仅一条视频）；动作对但帧不够→对保留的 mp4 用更大 `--frames` 重抽（**免费**，不重新生成）。
+用 Read 看 `Assets\tmp\<name>\{name}_contact.png`：确认动作正确、角色无漂移、背景干净。不满意→调整动作描述重跑（成本仅一条视频）；动作对但帧不够→对保留的 mp4 用更大 `--frames` 重抽（**免费**，不重新生成）。
 
-### Step 4 — 后处理
+### Step 4 — 后处理与集成
 
 - **透明底**：首帧为纯色底时抽出的帧同为纯色底，接 `bg-remove` 技能批量抠图。
-- **Unity 集成**：帧图导入后切成 Multiple Sprite，跑 工具/动画/序列帧动画生成器 生成 `.anim`；帧命名 `{prefix}_N` 已对齐其自然排序。
+- **集成**：目检/抠图满意后，把 `Assets\tmp\<name>\` 下需要的帧**手动拷贝**到 `Resources/Images/<Category>/<Name>/`（临时区不直接进游戏）。
+- **Unity**：帧图导入后切成 Multiple Sprite，跑 工具/动画/序列帧动画生成器 生成 `.anim`；帧命名 `{name}_N` 已对齐其自然排序。
+- **清理**：集成完成后删掉 `Assets\tmp\<name>\` 中不再需要的帧，避免 Unity 导入垃圾资源。
 
 ## Troubleshooting
 
