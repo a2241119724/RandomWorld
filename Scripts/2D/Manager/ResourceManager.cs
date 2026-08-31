@@ -274,17 +274,6 @@ namespace LAB2D.Manager
         }
 
         /// <summary>
-        /// 尝试通过名称获得 Sprite，未找到时返回 null 且不打日志。
-        /// 用于动画帧序列探测（Name_0/Name_1/... 按序收集至首个缺失）。
-        /// </summary>
-        /// <param name="name">名称.</param>
-        /// <returns>Sprite；不存在时 null.</returns>
-        public Sprite TryGetImage(string name)
-        {
-            return this.imageDic.TryGetValue(name, out Sprite sprite) ? sprite : null;
-        }
-
-        /// <summary>
         /// 通过AB实例化对象
         /// </summary>
         /// <param name="prefabName">预制体名称</param>

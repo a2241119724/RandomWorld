@@ -494,3 +494,17 @@
 - **修复**：在 Sprite Editor 里把 Multiple 图的各帧 pivot 统一设为中心（全选帧 → pivot 改 Center）。曾临时写过 Editor 工具批量处理（`FramePivotTool.cs`），后按用户要求删除；如需再次批量处理可重写同逻辑（`TextureImporter.spritesheet` → 各 `SpriteMetaData.alignment=Center/pivot=(0.5,0.5)` → `SaveAndReimport`）。
 - **验证**：菜单执行后动画帧视觉中心与静态图对齐到格子中心；若 GrassTree_1（525 宽）仍明显跳，需在 Sprite Editor 里重裁该帧或统一各帧框选范围。
 - **教训**：**Sprite Editor 手动裁剪出的子 sprite 默认 pivot 在左下角，必须统一设为中心（或裁剪时保持各帧 rect 一致 + 内容对齐）**。帧动画视觉中心依赖 sprite pivot 与 `GetCellCenterWorld` 的配合，pivot 异常不会报错而是静默偏移。
+
+## 2026-08-31 树动画不显示（clip 名不匹配 + Animation 组件 Culling 死锁）
+
+- **现象**：勾选 `ItemData.IsAnimation` 后 GrassTree 的 tile/碰撞体正常创建，但独立视觉物体（TreeVisual_*，可遮挡淡化的 SpriteRenderer）不显示；用户先误判为"物体没创建"（实际已创建，只是 sprite 恒 null 隐形）。game.log 先刷 `GrassTree animation clip not found!!!`，clip 名修正后物体仍在但不显示。
+- **根因**（两段叠加）：
+  1. **clip 资产名必须与 `ItemData.Name` 完全一致**：AnimationManager 按 SO 英文名（`GrassTree`）查 clip，生成的资产却叫 `GrassSakuraTree` → `GetClip` 查不到 → 回退静态（此段用户自建 `GrassTree.anim` 后已消除）。
+  2. **Animation 组件默认 `cullingType = BasedOnRenderers`**：动画接管 sprite 显示后（TileVisualSpawner 跳过静态赋值），SpriteRenderer 初始 sprite=null → 无渲染边界 → 被判定"不可见" → 动画永不求值 → sprite 永不被写。**空 sprite + 基于 Renderer 的剔除 = 自举死锁**，物体隐形但组件齐全。
+- **修复**：`SpriteFrameAnimator.Init` 中 `AddComponent<Animation>()` 后设置 `animation.cullingType = AnimationCullingType.AlwaysAnimate`（SpriteFrameAnimator.cs）。附带本轮重构：SpriteFrameAnimator 内部从"探测 `{prefix}_0/_1...` 序列图逐帧换图"改为"从 AnimationManager 取 AnimationClip 经 legacy Animation 组件播放"；`Assets/Animation` 整体移入 `Resources/Animation`（Resources.Load 运行时只能加载 Resources 下资产）；删除仅服务旧帧探测的 `ResourceManager.TryGetImage` 与废弃单测 `SpriteFrameAnimatorTests`。
+- **验证**：重进 Play，GrassTree 应显示帧动画并摆动（多实例相位随机不齐摆）；game.log 无 `animation clip not found`；随机相位日志无异常。
+- **教训**：
+  - **动画资产名与 SO 英文名的一致是隐式约定**——生成交付物（.anim）时命名以 `ItemData.Name` 为准，不是以源图文件名为准。
+  - **Animation 组件接管 sprite 显示时必须 `AlwaysAnimate`**（或先赋一帧静态图自举可见性），否则空 sprite + BasedOnRenderers 永不启动且无任何报错。
+  - **Editor 开着时勿在文件系统移动资产目录**——AssetDatabase 会按内存缓存重建出重复资产（本次 `Animation/` 目录双份、GUID 分叉），移动/重命名一律在 Project 窗口内做。
+- **追加（同日）**：legacy `Animation` 组件方案在 2022.3 实测无效（AlwaysAnimate 修复后仍静默不播，无任何报错）——非 legacy .anim 交给 Animation 组件不可靠。已整体切换为 **Animator + AnimatorController**：AnimationManager 改加载 `RuntimeAnimatorController`（`GetController`），SpriteFrameAnimator 挂 `Animator`（同样必须 `cullingMode = AlwaysAnimate`）。**新约定：每个动画物品一个 controller，资产名 == ItemData.Name**；新增 Editor 右键「为选中动画生成 Controller」（AnimationControllerGenerator.cs）一键从 clip 生成配套单状态 controller。

@@ -24,8 +24,8 @@ namespace LAB2D.Map
     ///
     /// 帧动画（animationResolver）：可选委托按 cell 返回帧动画前缀（ItemData.IsAnimation 开启且
     /// LayerMode != Bottom 时的英文名 Name）。非空时独立 sprite 视觉挂 SpriteFrameAnimator，
-    /// 按 {prefix}_0/{prefix}_1/... 序列图循环动画（图片经 ResourceManager.TryGetImage 收集至首个缺失），
-    /// 动画格 sprite 由组件接管；找不到任何帧时回退静态 tile 图。
+    /// 按名称从 AnimationManager 取 AnimationClip 经 legacy Animation 组件循环播放，
+    /// 动画格 sprite 由组件接管；取不到 clip 时回退静态 tile 图。
     ///
     /// 幂等约束：
     /// - CreateOrUpdate 以 tilemap 当前状态为准（GetSprite/GetColor/GetTransformMatrix）；
@@ -69,7 +69,7 @@ namespace LAB2D.Map
         /// 空/实例化失败走默认 tile → 单 SpriteRenderer。</param>
         /// <param name="animationResolver">可选：按 cell 返回帧动画前缀（如 ItemData.IsAnimation 开启且
         /// LayerMode != Bottom 时的英文名 Name）。非空时该格独立 SpriteRenderer 挂 SpriteFrameAnimator，
-        /// 按 {prefix}_0/{prefix}_1/... 序列图循环动画；找不到任何帧时回退静态 tile 图。</param>
+        /// 按名称从 AnimationManager 取 AnimationClip 循环播放；取不到 clip 时回退静态 tile 图。</param>
         public TileVisualSpawner(Tilemap tilemap, Transform hostTransform, string sortingLayerName, string objectNamePrefix,
             System.Func<Vector3Int, ItemLayerMode> layerModeResolver = null,
             System.Func<Vector3Int, Color> colorProvider = null,
@@ -164,8 +164,8 @@ namespace LAB2D.Map
             // 无预制体（或实例化失败回退）：清理可能残留的 prefab 视觉（配置回退/读档切格等场景）
             this.DeletePrefab(cell);
 
-            // 帧动画：非恒底层 + ItemData.IsAnimation 时，独立 sprite 视觉按英文名(Name)加 _0/_1/_2...
-            // 序列循环播放（SpriteFrameAnimator 接管 sprite 显示，跳过下方静态 tile 图赋值）。
+            // 帧动画：非恒底层 + ItemData.IsAnimation 时，独立 sprite 视觉按英文名(Name)取
+            // AnimationClip 循环播放（SpriteFrameAnimator 接管 sprite 显示，跳过下方静态 tile 图赋值）。
             string animationPrefix = this.animationResolver != null ? this.animationResolver(cell) : null;
 
             if (!this.visual.TryGetValue(cell, out SpriteRenderer sr))
@@ -230,13 +230,13 @@ namespace LAB2D.Map
         /// 调和 cell 的帧动画组件状态：以 animationResolver 结果为准（每次 CreateOrUpdate 调用）。
         /// 幂等重入安全，覆盖三类状态变化：
         /// - 非动画→动画：首次挂载 SpriteFrameAnimator（补挂到已有 SpriteRenderer 所在 GameObject）。
-        /// - 动画→非动画：移除多余组件（同格 tile 换成非动画物品时，避免旧 Update 每帧覆盖静态 sprite）。
-        /// - 动画→动画但前缀变化（同格换成另一动画物品）：按新前缀重载帧序列。
+        /// - 动画→非动画：移除多余组件（同格 tile 换成非动画物品时，避免残留 Animation 组件每帧覆盖静态 sprite）。
+        /// - 动画→动画但前缀变化（同格换成另一动画物品）：按新前缀重载动画 clip。
         /// </summary>
         /// <param name="cell">地图坐标。</param>
         /// <param name="sr">该格独立 SpriteRenderer。</param>
         /// <param name="animationPrefix">当前 resolver 返回的帧动画前缀（空 = 无需动画）。</param>
-        /// <returns>该格动画是否实际生效（组件已挂载且有有效帧序列）；false 时由调用方回退静态 tile 图。</returns>
+        /// <returns>该格动画是否实际生效（组件已挂载且取到有效 clip）；false 时由调用方回退静态 tile 图。</returns>
         private bool SyncAnimation(Vector3Int cell, SpriteRenderer sr, string animationPrefix)
         {
             bool shouldAnimate = !string.IsNullOrEmpty(animationPrefix);
@@ -257,7 +257,7 @@ namespace LAB2D.Map
                 return true; // 组件已在且帧序列一致，动画生效
             }
 
-            // 无组件（非动画→动画）或前缀变化（同格换成另一动画物品）：挂载并加载帧序列
+            // 无组件（非动画→动画）或前缀变化（同格换成另一动画物品）：挂载并加载动画 clip
             if (animator == null)
             {
                 animator = sr.gameObject.AddComponent<SpriteFrameAnimator>();

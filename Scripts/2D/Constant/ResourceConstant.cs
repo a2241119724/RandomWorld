@@ -23,6 +23,11 @@ namespace LAB2D.Constant
         public const string IMAGE_ROOT = "Images/";
 
         /// <summary>
+        /// 动画根目录
+        /// </summary>
+        public const string ANIMATION_ROOT = "Animation/";
+
+        /// <summary>
         /// 数据根目录
         /// </summary>
         public const string DATA_ROOT = "Data/";

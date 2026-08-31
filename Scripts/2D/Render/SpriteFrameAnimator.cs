@@ -1,113 +1,66 @@
 namespace LAB2D.Render
 {
-    using LAB2D.Manager;
-    using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
-    /// Sprite 序列帧动画：以图片前缀（如物品英文名 Name）自动收集 {prefix}_0、{prefix}_1、
-    /// {prefix}_2… 序列 Sprite（收集至首个缺失，最多默认 128 帧兜底），按固定默认帧率循环
-    /// 切换 SpriteRenderer 的 sprite。Init 时随机化起始帧与帧内偏移，避免成片装饰
-    /// （树木等）多实例同相位摆动。由 TileVisualSpawner 在创建非恒底层（LayerMode != Bottom）
-    /// 且 ItemData.IsAnimation 开启的独立视觉时挂载；无任何序列帧时回退静态显示（组件自毁，
-    /// 不影响原 tile 静态图）。
+    /// Sprite 帧动画：按名称（如物品英文名 Name）从 AnimationManager 取 AnimatorController，
+    /// 挂 Animator 组件播放其默认状态（循环由 .anim 的 Loop Time 驱动）。
+    /// Init 时随机化播放相位，避免成片装饰（树木等）多实例同相位摆动。
+    /// 由 TileVisualSpawner 在创建非恒底层（LayerMode != Bottom）
+    /// 且 ItemData.IsAnimation 开启的独立视觉时挂载；取不到 controller 时回退静态显示
+    /// （组件自毁，不影响原 tile 静态图）。
     /// </summary>
     public class SpriteFrameAnimator : MonoBehaviour
     {
-        private const float DefaultFrameRate = 6f; // 固定默认帧率（帧/秒），需求未提供可配置项
-        private const int MaxFrameGuard = 128; // 帧数上限兜底，防异常命名无限循环
-
-        private SpriteRenderer spriteRenderer;
-        private Sprite[] frames = System.Array.Empty<Sprite>();
-        private float frameInterval = 1f / DefaultFrameRate;
-        private float timer;
-        private int index;
+        private Animator animator; // 挂载的 Animator（须随本组件销毁，避免残留覆写 sprite）
 
         /// <summary>
-        /// 当前已加载的帧图前缀（Init 成功时记录，供调用方判断同格换物品时是否需要重载帧序列）。
+        /// 当前播放的 controller 名称（Init 成功时记录，供调用方判断同格换物品时是否需要重载动画）。
         /// </summary>
         public string Prefix { get; private set; }
 
         /// <summary>
-        /// 以前缀初始化动画帧序列。
+        /// 以名称初始化动画：从 AnimationManager 取 AnimatorController 并经 Animator 组件播放。
         /// </summary>
-        /// <param name="prefix">帧图前缀（如物品英文名），按 {prefix}_0/{prefix}_1/... 收集。</param>
-        /// <returns>是否收集到至少一帧；false 时由调用方回退静态显示。</returns>
+        /// <param name="prefix">controller 名称（如物品英文名 Name），同时是状态机内状态名。</param>
+        /// <returns>是否成功取到 controller；false 时由调用方回退静态显示。</returns>
         public bool Init(string prefix)
         {
-            this.spriteRenderer = this.GetComponent<SpriteRenderer>();
-            if (this.spriteRenderer == null || string.IsNullOrEmpty(prefix))
+            if (this.GetComponent<SpriteRenderer>() == null || string.IsNullOrEmpty(prefix))
             {
                 return false;
             }
 
-            ResourceManager resourceManager = Core.ServiceLocator.Get<ResourceManager>();
-            if (resourceManager == null)
+            RuntimeAnimatorController controller = ServiceLocator.Get<AnimationManager>()?.GetController(prefix);
+            if (controller == null)
             {
                 return false;
             }
 
-            Sprite[] collected = CollectFrames(resourceManager.TryGetImage, prefix);
-            if (collected.Length == 0)
+            // 同格换物品等场景复用已有组件；Animator 默认按 Renderer 可见性剔除——sprite 初始为
+            // null（无边界）会被判不可见，动画永不求值、sprite 永不被写 → 必须 AlwaysAnimate
+            if (this.animator == null)
             {
-                return false;
+                this.animator = this.gameObject.AddComponent<Animator>();
+                this.animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             }
 
-            this.frames = collected;
-            this.frameInterval = 1f / DefaultFrameRate;
-            // 随机起始相位：成片装饰（树木等）若同帧起步会整齐划一地摆动，观感假
-            this.index = Random.Range(0, this.frames.Length);
-            this.timer = Random.Range(0f, this.frameInterval);
+            // 换 controller 即播其默认状态；按状态名（= prefix）随机归一化相位，
+            // 打散成片装饰（树木等）的同步摆动；状态名不匹配时静默落回默认状态第 0 帧
+            this.animator.runtimeAnimatorController = controller;
+            this.animator.Play(prefix, 0, Random.Range(0f, 1f));
+
             this.Prefix = prefix;
-            this.spriteRenderer.sprite = this.frames[this.index];
             return true;
         }
 
-        private void Update()
+        private void OnDestroy()
         {
-            if (this.frames.Length < 2)
+            // Animator 残留会每帧覆写 sprite，与静态 tile 图回退逻辑打架，须一并销毁
+            if (this.animator != null)
             {
-                return; // 单帧/无帧：静态显示，不切换
+                Object.Destroy(this.animator);
             }
-
-            this.timer += Time.deltaTime;
-            while (this.timer >= this.frameInterval)
-            {
-                this.timer -= this.frameInterval;
-                this.index = (this.index + 1) % this.frames.Length;
-            }
-
-            if (this.spriteRenderer != null)
-            {
-                this.spriteRenderer.sprite = this.frames[this.index];
-            }
-        }
-
-        /// <summary>
-        /// 纯函数：按 {prefix}_0/{prefix}_1/... 收集帧序列，首个缺失即结束（上限 maxFrames 兜底）。
-        /// 与 MonoBehaviour/ServiceLocator 解耦，注入加载器便于单测（测试可用 string 代替 Sprite）。
-        /// </summary>
-        /// <param name="loader">按图片名取帧的委托（如 ResourceManager.TryGetImage），不存在时返回 null。</param>
-        /// <param name="prefix">帧图前缀（如物品英文名）。</param>
-        /// <param name="maxFrames">帧数上限兜底，防异常命名无限循环。</param>
-        /// <typeparam name="T">帧类型（生产为 Sprite，测试可为 string）。</typeparam>
-        /// <returns>收集到的帧序列；无任何帧时为空数组。</returns>
-        public static T[] CollectFrames<T>(System.Func<string, T> loader, string prefix, int maxFrames = MaxFrameGuard)
-            where T : class
-        {
-            List<T> collected = new List<T>();
-            for (int i = 0; i < maxFrames; i++)
-            {
-                T frame = loader(prefix + "_" + i);
-                if (frame == null)
-                {
-                    break; // 首个缺失即视为序列结束
-                }
-
-                collected.Add(frame);
-            }
-
-            return collected.ToArray();
         }
     }
 }

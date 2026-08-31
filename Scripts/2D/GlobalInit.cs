@@ -50,6 +50,7 @@ namespace LAB2D
             // TerrainConfigDatabase 必须在 ResourceManager 之前注册（ResourceManager 构造函数使用它）。
             ServiceLocator.Register(new TerrainConfigDatabase());
             ServiceLocator.Register(ResourceManager.Instance);
+            ServiceLocator.Register(AnimationManager.Instance);
             ServiceLocator.Register(ArchiveManager.Instance);
             ServiceLocator.Register(FrameControl.Instance);
             ServiceLocator.Register(NameGenerator.Instance);
