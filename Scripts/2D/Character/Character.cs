@@ -157,8 +157,67 @@ namespace LAB2D.Character
             this.collisionBugDetector = new CollisionBugDetector();
         }
 
+        /// <summary>
+        /// 头顶 UI 提升到的排序层（项目最高层，保证 UI 永远在世界物体之上）。
+        /// </summary>
+        private const string HeadUiSortingLayer = "Highest";
+
+        /// <summary>
+        /// 头顶 UI 防遮挡：角色 prefab 的 UI 子树（Name/State/Progress/Hp/Dialog）未挂 Canvas，
+        /// 引擎 fallback 渲染落在 Default 排序层，会被 Character 层的树/建筑
+        /// （WorldYSortManager 动态 sortingOrder）盖住。
+        /// 已有 Canvas 时仅提升排序层；否则为每个含 UI 图形的直接子树补挂
+        /// WorldSpace Canvas（默认 Overlay 会把 UI 吸附到屏幕，必须显式改世界空间）。
+        /// </summary>
+        private void EnsureHeadUiSorting()
+        {
+            Canvas[] canvases = this.GetComponentsInChildren<Canvas>(true);
+            if (canvases.Length > 0)
+            {
+                foreach (Canvas canvas in canvases)
+                {
+                    if (canvas.isRootCanvas && canvas.sortingLayerName != HeadUiSortingLayer)
+                    {
+                        canvas.sortingLayerName = HeadUiSortingLayer;
+                        AWorkerTask.LogProvider($"[UIDiag] {this.name} Canvas '{canvas.name}' 排序层提升至 {HeadUiSortingLayer}", LogManager.LogLevelEnum.Debug);
+                    }
+                }
+
+                return;
+            }
+
+            bool anyFixed = false;
+            foreach (Transform child in this.transform)
+            {
+                if (child.GetComponentsInChildren<UnityEngine.UI.Graphic>(true).Length == 0)
+                {
+                    continue;
+                }
+
+                Canvas canvas = child.GetComponent<Canvas>();
+                if (canvas == null)
+                {
+                    canvas = child.gameObject.AddComponent<Canvas>();
+                    canvas.renderMode = RenderMode.WorldSpace;
+                    anyFixed = true;
+                }
+
+                if (canvas.sortingLayerName != HeadUiSortingLayer)
+                {
+                    canvas.sortingLayerName = HeadUiSortingLayer;
+                    anyFixed = true;
+                }
+            }
+
+            if (anyFixed)
+            {
+                AWorkerTask.LogProvider($"[UIDiag] {this.name} 头顶 UI 补挂 WorldSpace Canvas 并提升至 {HeadUiSortingLayer}", LogManager.LogLevelEnum.Debug);
+            }
+        }
+
         public virtual void Start()
         {
+            this.EnsureHeadUiSorting();
             SpriteRendererSetupProvider(this);
             if (this.spriteRenderer == null)
             {
