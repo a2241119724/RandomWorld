@@ -17,7 +17,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **补给监控:** 饥饿/疲劳状态机 (Healthy → Hungry → Tired → Exhausted → Critical)；疲劳 `CurTired` 为累积疲劳值（越大越疲，初始 0；工作/空闲累积、睡眠降低，空闲累积受天气/温度倍率加速），疲劳值 > `MaxTired - ThresholdTired`(20) 判定需休息——所有疲劳阈值判断方向是 `>` 而非 `<`
 - **殖民地指挥中心 (F10):** 实时诊断报告 — 人力分析、任务阻塞原因、补给缺口、拥堵等级
 - **建造任务恢复:** 游戏重启/场景加载后自动找回原建造者恢复建造任务
-- **建造卡死重试:** `MovementStuckDetector` 每秒位移检测，位移不足先预防性重寻路，硬卡死窗口后最多 3 次重试，避免任务误放弃
+- **建造卡死重试:** `MovementStuckDetector` 每秒位移检测，累计位移 < 期望 40%（Sliding）先预防性重寻路，< 15%（Stuck）判硬卡死窗口，最多 3 次重试，避免任务误放弃
 - **建造位置预注册:** 建造位置冲突时自我预留跳过，配合建造者名称参数实现任务恢复
 
 ### 战斗系统
@@ -56,7 +56,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **Worker 人格:** `WorkerPersonality` 4 维值对象（心情/事业心/勤奋/社交），动态影响工作效率、交易决策、社交行为
 - **Worker 目标:** `WorkerGoal` 目标驱动（赚钱/建筑/囤食物/做装备），驱动自主行为而非纯被动接任务
 - **物品所有权:** `ItemOwnershipService` 追踪物品归属，Worker 采集/制作/购买获得所有权
-- **Worker 大脑:** `WorkerSeekState` 空闲时根据人格/目标/状态自主选择行动（采集/出售/买食物/接悬赏）
+- **Worker 大脑:** `WorkerDecisionService` 空闲时根据人格/目标/状态自主选择行动（采集/出售/买食物/接悬赏）
 
 ### Worker 生存与成长数值（压力/士气/熟练度/贪婪懒惰）
 - **压力 `CurStress` / 士气 `CurMorale`:** `WorkerUpdateSystem`（ITickable，GlobalInit 驱动）每帧更新——压力工作期 `Execute` 累积、空闲自然衰减（`StressDecayPerSecond=0.02`），睡眠/进食/锻炼/漫游恢复，`CurStress > MaxStress - 40` 视为高压触发减压决策；士气按困苦度（饥饿不足×0.4 + 疲劳×0.4 + 压力×0.2）下降、安好回升（`MoraleRecoverPerSecond=0.02`）
@@ -86,7 +86,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **事件记忆 + 信念:** `WorkerMindService.RecordEvent` 统一入口 → `WorkerMemoryRuleService`（记忆上限 24、逐日权重衰减）→ `WorkerBeliefRuleService`（信念 [0,100] 初始 50：信任世界/信任玩家/自尊/归属感）
 - **随机人生事件:** `WorkerLifeEventRuleService` 事件表（灵感/横财/领悟/变故/疾病/小确幸/梦魇）+ `WorkerDreamRuleService` 执念（`RefreshGoal` 人格分支前 25% 把 `CurrentGoal` 指到执念映射）。**平衡三原则**：封顶（生存单次 ≤±15、人格漂移 ≤±8）；恩典（濒危当轮不掷，一天最多 1 次）；可恢复（负事件只动士气/精气神/心情软维度，绝不扣饥饿/疲劳致死线）。`WorkerMindManager` 每 2 游戏日按日口径掷 `Random.value < 0.35`
 - **性格演化:** `PersonalityDriftRuleService` 四桶（心情/事业心/勤奋/社交）由 `RecordEvent` 按强度累积，`|v|≥12` 迁移 ±2（clamp）归零。**防横跳三机制**：滞回带（反向需积 12+6=18，`*Dir` 字段记忆方向）、每日限流（`Migrate` 日限 1）、桶饱和（±30 上限）
-- **社会关系:** `WorkerRelationshipRuleService` + `Mind.Relations`（name 键控），Kind 优先级 Grudge>Enmity>Admiration>Friendship>None；友谊 `Affinity≥40`/敌意 `≤-30`/爱慕 `Admiration≥40`/记仇（被拒交易 30、被攻击 40，每日 -2 衰减）。**四个低频行为（防经济干扰）**：①互助/回避——friend/admiration 好感门前豁免必接、enmity/grudge 拒接（`WorkerBountyTask.DoIsCanWork`）②拒卖——关系否决优先于人格（`WorkerTradeService.WillSell` 前置）③送礼——漫游决策前 5%，双方 Affinity+8、收方好感+5（`WorkerSeekState`）④嫉妒——`CurrencyManager.CompleteBounty` 节流钩子（≥30s），旁观 `Greed>60` 对完成者 Affinity-4。每日 `Decay` 淡化；死亡清理 `FavorabilityManager.RemoveDeadWorker`
+- **社会关系:** `WorkerRelationshipRuleService` + `Mind.Relations`（name 键控），Kind 优先级 Grudge>Enmity>Admiration>Friendship>None；友谊 `Affinity≥40`/敌意 `≤-30`/爱慕 `Admiration≥40`/记仇（被拒交易 30、被攻击 40，每日 -2 衰减）。**四个低频行为（防经济干扰）**：①互助/回避——friend/admiration 好感门前豁免必接、enmity/grudge 拒接（`WorkerBountyTask.DoIsCanWork`）②拒卖——关系否决优先于人格（`WorkerTradeService.WillSell` 前置）③送礼——漫游决策前 5%，双方 Affinity+8、收方好感+5（`WorkerDecisionService`）④嫉妒——`CurrencyManager.CompleteBounty` 节流钩子（≥30s），旁观 `Greed>60` 对完成者 Affinity-4。每日 `Decay` 淡化；死亡清理 `FavorabilityManager.RemoveDeadWorker`
 - **事件接入点:** 完成/接取悬赏、交易成败、被攻击、玩家救危、对话结束等事件点调 `RecordEvent`（TargetName=`"PLAYER"` 哨兵或 Worker 名），绝不每帧循环；`WorkerMindManager.Tick`/`ProcessDayRollover` 驱动
 - **反馈:** 拒绝理由/人生事件/关系变化统一走 `AWorker.ShowMindBubble`（语料 `WorkerInnerMonologue`，防被 `ShowRandomMonologue` 覆盖：进口气卫 + `HideDialogText` 清守卫）+ `[MindDiag]` Debug 日志 + `WorkerConditionHUD`「最近想法」行
 
@@ -139,6 +139,15 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
     |- 委托注入: ColonyDiagnosticContext
 ```
 
+### Worker 三层架构（决策/活动/移动）
+- **分层:** 决策层 `WorkerDecisionService`（接取管线：玩家悬赏→全局任务→自主决策，由 Seek 状态 OnEnter 单次调用）｜活动层 FSM 6 状态（Seek/Move/Work/Attack/Escape/Dead，`TypeEnum` 顺序存档兼容不可改）｜移动层 `WorkerLocomotion`（常驻服务，`AWorker.FixedUpdate` 先于状态逻辑驱动 `TickFixed`）。状态只声明移动意图（`GoTo/Chase/KeepDistance/Stop`），不直接消费寻路结果
+- **任务写入唯一入口:** `AWorker.SetTask(task, source)`——五来源语义：`SelfDecision`（自建，不打断）/ `PushAssignment`（分配循环推送，置延迟打断）/ `ChainHandoff`（任务 Finish 栈内接力，置延迟打断）/ `BountyRestore`（恢复悬赏本体，已 Start 过不重启、绝不打断）/ `Clear`（置空）。禁止绕过 SetTask 直写 `workerData.Task`
+- **延迟打断:** Push/Chain 来源只置 `HasPendingTaskInterrupt` 标记，`Update` 开头消费（非 Dead/Attack/Escape 时切 Seek 重寻路）——Finish/分配调用栈内绝不同步切状态
+- **移动写入唯一出口:** `ASeek` 是唯一合法 velocity 写入点；战斗移动走 `MoveDirect`（同速度管线 + stuckDetector.Feed），不发起异步 A*——短距高频改向与异步寻路时序天然冲突，被墙挡按 Stuck 结算站定兜底
+- **时序闸门:** Seek 状态等待寻路期间 `TickFixed` 绝不能驱动 `MoveByPath`（None 意图不驱动）——否则 `CompleteMovement` 清空路径结果，Seek.OnUpdate 误判"没有找到路"→ GiveUpTask 风暴
+- **紧急生存检测:** `AWorker.CheckSurvivalEmergency`（每 10 帧，所有状态生效；Dead/Attack/Escape/对话暂停豁免，生存优先于延迟打断消费）——饥饿/疲劳/精气神/压力越阈强制 GiveUpTask，新决策由 ChangeState(Seek)→OnEnter 管线单次完成（无二次决策）
+- **战斗移动（寻路驱动）:** Attack 状态按武器状态声明意图——超出攻击距离（×1.2）或冷却就绪→Chase；冷却中→KeepDistance（打带跑，`HitAndRunEnabled` 开关）；带内→站定挥砍。移动层执行：追击向目标当前格寻路；拉开向**背向目标扇形**（±60° 正后优先 × 距离档）采样的可走格寻路（正后是墙 A* 自动绕行），扇形全堵回退 `MoveDirect` 径向后撤；语义评估每帧优先于路径消费（进攻击距离/带内立即站定）；寻路提交节流 0.8s + 等待超时 2s；目标距离超 `CombatBreakRange=8`（对齐状态层续命判定）不再追/拉开，站定由状态层 1.5s 超时自然脱离战斗。战斗结束任务保持，回 Seek 走"有任务"分支重寻路继续
+
 ### 关键设计决策
 - **45° 转置坐标系:** 世界坐标 = tile 坐标转置（`TileMap.MapPosToWorldPos`：world = (tile.y, tile.x)）。所有 tile↔世界转换遵循此规则；房间/家具/门的布局必须在转置后视角验证，否则床/门/墙会错位。注意方向错位：tile 顶墙=屏幕右墙、tile 右墙=屏幕顶墙、tile 左墙=屏幕底墙、tile 底墙=屏幕左墙
 - **Domain 纯 C#:** 无 UnityEngine 引用，12 个接口定义在最内层
@@ -150,7 +159,6 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
 - **Worker 心智层:** 纯规则（无 LLM）叠加在好感度之上，行为调制在好感门控处汇合；拒绝双门（体验+权威，防优先级 0 绕过）；ML 41 维不动，拒绝/关系是模型之外决策门
 - **Worker AI 自主决策:** WorkerBrain 在空闲时根据人格+目标+状态自主选择行动，而非被动等待任务分配
 - **日志统一:** `GameLoggerFactory` 统一获取 `IGameLogger`，替换所有硬编码 `Debug.Log`（31 文件迁移）
-- **建造韧性:** 位置预注册 + 建造者名称参数 → 任务恢复；每秒位移卡死检测（`MovementStuckDetector`：窗口累计位移 < 期望 40%（`SlidingRatio`）先预防性重寻路，< 15%（`StuckRatio`）判硬卡死窗口，连续硬卡死后最多 3 次重试）→ 避免建造任务误放弃
 - **TaskPriority 常量管理:** 任务优先级统一使用常量类（`TaskPriorityConstant`），避免魔法数字
 - **UI 预制体加载:** 装备面板改用预制体加载（`ResourceManager.Instantiate`），替代硬编码 UI 层级
 

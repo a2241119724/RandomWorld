@@ -33,7 +33,7 @@ namespace LAB2D.Character.Worker.State
             if (workerData.Task != null)
             {
                 AWorker.GiveUpTaskProvider(this.Character, workerData.Task);
-                workerData.Task = null;
+                this.Character.SetTask(null, WorkerTaskSource.Clear);
             }
 
             // 删除任务管理器中所有与该Worker相关的任务（悬赏发布、专属任务等）

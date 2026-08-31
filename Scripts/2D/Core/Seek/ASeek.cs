@@ -529,14 +529,7 @@ namespace LAB2D.Core.Seek
             }
 
             this.Direction = worldPos - this.Character.transform.position;
-            float speed = s_weatherEffect.GetAdjustedCharacterMoveSpeed(this.Character, this.Character.MoveSpeed);
-            speed *= s_terrainEffect.GetMoveSpeedMultiplier(this.Character);
-            speed *= s_temperatureEffect != null ? s_temperatureEffect.GetCharacterMoveSpeedMultiplier(this.Character) : 1.0f;
-
-            if (this.isWorker)
-            {
-                speed = s_workerConditionManager.GetAdjustedWorkerMoveSpeed((AWorker)this.Character, speed);
-            }
+            float speed = this.ComputeAdjustedSpeed();
 
             // 移动前方碰撞预检测：设 velocity 前沿移动方向 CircleCast 探测 Tile/BuildTile 碰撞体。
             // 命中且可滑动 → 把方向投影到墙面切向平滑滑动（贴墙平行走时投影≈原方向，天然不误判）；
@@ -657,14 +650,7 @@ namespace LAB2D.Core.Seek
             // 配合 Rigidbody2D Interpolate 渲染插值（200fps 渲染 vs 50Hz 物理不跳变）。
             // 不用 MovePosition —— 它受碰撞约束削减位移，实测"又慢又卡顿"。
             // 卡死检测不受影响：velocity 撞墙被挡 → 位置不动 → 累计位移≈0 → 检出 Stuck。
-            if (this.rb != null)
-            {
-                this.rb.velocity = velocityDir * speed;
-            }
-            else
-            {
-                this.Character.transform.Translate(speed * Time.fixedDeltaTime * (Vector3)velocityDir, Space.World);
-            }
+            this.ApplyVelocity(velocityDir, speed);
 
             if (this.ShouldShowLine())
             {
@@ -672,6 +658,72 @@ namespace LAB2D.Core.Seek
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 计算经环境/状态逐级调整后的移动速度（MoveByPath / MoveDirect 共用同一管线）：
+        /// 天气 → 地形 → 温度 →（Worker）饥饿疲劳状态。
+        /// </summary>
+        private float ComputeAdjustedSpeed()
+        {
+            float speed = s_weatherEffect.GetAdjustedCharacterMoveSpeed(this.Character, this.Character.MoveSpeed);
+            speed *= s_terrainEffect.GetMoveSpeedMultiplier(this.Character);
+            speed *= s_temperatureEffect != null ? s_temperatureEffect.GetCharacterMoveSpeedMultiplier(this.Character) : 1.0f;
+
+            if (this.isWorker)
+            {
+                speed = s_workerConditionManager.GetAdjustedWorkerMoveSpeed((AWorker)this.Character, speed);
+            }
+
+            return speed;
+        }
+
+        /// <summary>
+        /// 应用移动：有刚体用 velocity 驱动，否则 Translate 回退（MoveByPath / MoveDirect 共用唯一写入点）。
+        /// </summary>
+        private void ApplyVelocity(Vector2 dir, float speed)
+        {
+            if (this.rb != null)
+            {
+                this.rb.velocity = dir * speed;
+            }
+            else
+            {
+                this.Character.transform.Translate(speed * Time.fixedDeltaTime * (Vector3)dir, Space.World);
+            }
+        }
+
+        /// <summary>
+        /// 无寻路直接移动（WorkerLocomotion 战斗移动的径向回退调用：背扇采样全堵时的直线后撤）。
+        /// 走 MoveByPath 同一速度管线与卡死检测：ComputeAdjustedSpeed 调整、velocity 驱动、
+        /// stuckDetector.Feed 结算 Sliding/Stuck（调用方读 LastStuckResult 兜底 Stop，不内部重寻路）。
+        /// 不做贴墙滑动预检测——回退场景方向单帧改写频率高，滑动状态机不适用；
+        /// 主战斗移动（追击/拉开）走 Seek+MoveByPath 寻路管线，自带贴墙滑动。
+        /// </summary>
+        /// <param name="worldDir">世界空间移动方向（内部归一化；零向量=原地停住仅继续卡死检测）。</param>
+        public void MoveDirect(Vector2 worldDir)
+        {
+            Vector3 characterPosition = this.Character.transform.position;
+            float speed = this.ComputeAdjustedSpeed();
+
+            Vector2 dir = worldDir.sqrMagnitude > 0f ? worldDir.normalized : Vector2.zero;
+            if (dir.sqrMagnitude > 0f)
+            {
+                this.Direction = new Vector3(dir.x, dir.y, 0f);
+            }
+
+            // 卡死检测：与 MoveByPath 同口径——移动前喂当前真实位置与真实速度，
+            // velocity 撞墙被挡 → 位移≈0 → 结算 Sliding/Stuck。
+            this.LastStuckResult = this.stuckDetector.Feed(Time.fixedDeltaTime, characterPosition, speed);
+            if (this.LastStuckResult != LAB2D.BugCheckResult.None)
+            {
+                AWorkerTask.LogProvider(
+                    $"[StuckDiag] {this.Character.name} 直移结算={this.LastStuckResult} " +
+                    $"pos=({characterPosition.x:F2},{characterPosition.y:F2}) dir=({dir.x:F2},{dir.y:F2}) speed={speed:F2}",
+                    LogManager.LogLevelEnum.Debug);
+            }
+
+            this.ApplyVelocity(dir, speed);
         }
 
         /// <summary>

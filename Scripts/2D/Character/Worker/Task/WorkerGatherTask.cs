@@ -204,9 +204,7 @@ namespace LAB2D.Character.Worker.Task
                     .SetChainCompleteTask(finalCarry)
                     .Build();
 
-                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-                workerData.Task = pickUpTask;
-                pickUpTask.Start(worker);
+                worker.SetTask(pickUpTask, WorkerTaskSource.ChainHandoff);
 
                 LogProvider(
                     $"[BountyDrop] Worker 悬赏: {totalDrops} 个掉落物 → 逐个捡取({totalDrops}次) → 1次搬运到 Board",
@@ -231,9 +229,7 @@ namespace LAB2D.Character.Worker.Task
                     .SetPendingPickups(selfDropPositions, selfDropResources)
                     .Build();
 
-                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-                workerData.Task = pickUpTask;
-                pickUpTask.Start(worker);
+                worker.SetTask(pickUpTask, WorkerTaskSource.ChainHandoff);
 
                 int totalDrops = 1 + (selfDropPositions.Count > 0 ? selfDropPositions.Count : 0);
                 LogProvider(

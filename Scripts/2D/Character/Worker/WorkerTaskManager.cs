@@ -189,8 +189,7 @@ namespace LAB2D.Character.Worker
                     {
                         AWorkerTask closedTask = assignment.Task;
 
-                        workerData.Task = closedTask;
-                        closedTask.Start(worker);
+                        worker.SetTask(closedTask, WorkerTaskSource.PushAssignment);
                         if (workerData.Task == closedTask)
                         {
                             this.taskQueue.MarkRunning(closedTask);
@@ -214,7 +213,7 @@ namespace LAB2D.Character.Worker
         /// </summary>
         /// <param name="worker">目标 Worker</param>
         /// <returns>成功分配返回 true</returns>
-        public bool TryAssignPlayerTask(AWorker worker)
+        public bool TryAssignPlayerTask(AWorker worker, WorkerTaskSource source = WorkerTaskSource.SelfDecision)
         {
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             if (workerData == null || workerData.Task != null)
@@ -231,8 +230,7 @@ namespace LAB2D.Character.Worker
 
             if (result.HasTask)
             {
-                workerData.Task = result.Task;
-                result.Task.Start(worker);
+                worker.SetTask(result.Task, source);
                 if (workerData.Task == result.Task)
                 {
                     this.taskQueue.MarkRunning(result.Task);
@@ -279,7 +277,7 @@ namespace LAB2D.Character.Worker
         /// </summary>
         /// <param name="worker">目标 Worker</param>
         /// <returns>成功分配返回 true</returns>
-        public bool TryAssignGlobalTask(AWorker worker)
+        public bool TryAssignGlobalTask(AWorker worker, WorkerTaskSource source = WorkerTaskSource.SelfDecision)
         {
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
             if (workerData == null || workerData.Task != null)
@@ -300,8 +298,7 @@ namespace LAB2D.Character.Worker
 
                 if (result.HasTask)
                 {
-                    workerData.Task = result.Task;
-                    result.Task.Start(worker);
+                    worker.SetTask(result.Task, source);
                     if (workerData.Task == result.Task)
                     {
                         this.taskQueue.MarkRunning(result.Task);
@@ -613,8 +610,7 @@ namespace LAB2D.Character.Worker
                     AWorker.WorkerData wd = owner.CharacterDataLAB as AWorker.WorkerData;
                     if (wd != null && wd.Task == null)
                     {
-                        wd.Task = newTask;
-                        newTask.Start(owner);
+                        owner.SetTask(newTask, WorkerTaskSource.PushAssignment);
                         assignedDirectly = true;
 
                         AWorkerTask.LogProvider(

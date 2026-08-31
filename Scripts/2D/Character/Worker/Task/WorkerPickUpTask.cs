@@ -180,9 +180,7 @@ namespace LAB2D.Character.Worker.Task
                     .SetChainCompleteTask(this.chainCompleteTask)
                     .Build();
 
-                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-                workerData.Task = nextTask;
-                nextTask.Start(worker);
+                worker.SetTask(nextTask, WorkerTaskSource.ChainHandoff);
 
                 LogProvider(
                     $"{worker.name} 链式拾取下一个: id={nextResource.Id} pos=({nextPos.x},{nextPos.y}) 剩余{this.pendingPositions.Count}个",
@@ -191,9 +189,7 @@ namespace LAB2D.Character.Worker.Task
             else if (this.chainCompleteTask != null)
             {
                 // 拾取链全部完成，启动后续搬运任务（如一次性 CarryTask(ToBoard)）
-                AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-                workerData.Task = this.chainCompleteTask;
-                this.chainCompleteTask.Start(worker);
+                worker.SetTask(this.chainCompleteTask, WorkerTaskSource.ChainHandoff);
 
                 LogProvider(
                     $"{worker.name} 拾取链完成 → 启动搬运任务 {this.chainCompleteTask.GetType().Name}",
@@ -248,8 +244,7 @@ namespace LAB2D.Character.Worker.Task
                     .SetChainCompleteTask(resume)
                     .Build();
 
-                wd.Task = store;
-                store.Start(worker);
+                worker.SetTask(store, WorkerTaskSource.ChainHandoff);
 
                 LogProvider(
                     $"[TaskDiag] {worker.name} 拾取溢出(id={this.groundResource.Id} x{this.groundResource.Count}) → 先回家存{freed}个再回来拾取 carried={worker.GetTotalCarriedCount()}/{wd.MaxResourceCount} needToFree={needToFree} pos=({posMap.x},{posMap.y})",
@@ -278,8 +273,7 @@ namespace LAB2D.Character.Worker.Task
                         .SetChainCompleteTask(this.chainCompleteTask)
                         .Build();
 
-                    wd.Task = resume;
-                    resume.Start(worker);
+                    worker.SetTask(resume, WorkerTaskSource.ChainHandoff);
 
                     LogProvider(
                         $"[TaskDiag] {worker.name} 拾取溢出(id={this.groundResource.Id} x{this.groundResource.Count}) → 出售{sellableCount}个腾空间 获{earned}G, 再回来拾取 pos=({posMap.x},{posMap.y})",

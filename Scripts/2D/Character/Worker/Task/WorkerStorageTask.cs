@@ -103,8 +103,7 @@ namespace LAB2D.Character.Worker.Task
             // base.Finish 已置空 Task，这里覆盖为新任务。
             if (this.chainCompleteTask != null && wd != null)
             {
-                wd.Task = this.chainCompleteTask;
-                this.chainCompleteTask.Start(worker);
+                worker.SetTask(this.chainCompleteTask, WorkerTaskSource.ChainHandoff);
             }
         }
 

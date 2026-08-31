@@ -148,9 +148,10 @@ namespace LAB2D.Character.Worker.Task
             AWorkerTask.IsBountyExecution = prevIsBounty;
 
             // innerTask.Finish 清除了 workerData.Task，恢复为悬赏任务
+            //（BountyRestore：恢复已运行的本体，SetTask 不重启、绝不打断）
             if (workerData != null)
             {
-                workerData.Task = this;
+                worker.SetTask(this, WorkerTaskSource.BountyRestore);
             }
 
             if (innerComplete)
@@ -167,7 +168,7 @@ namespace LAB2D.Character.Worker.Task
                 TaskLifecycleProvider(this, worker, false);
                 if (workerData != null)
                 {
-                    workerData.Task = null;
+                    worker.SetTask(null, WorkerTaskSource.Clear);
                 }
             }
 

@@ -6,6 +6,7 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 
 ## Recent Changes
 
+- 2026-08 — `refactor(worker)`: Worker 状态机三层解耦——决策服务（`WorkerDecisionService`）/活动层（FSM 只声明移动意图）/移动层（`WorkerLocomotion` 统一驱动），任务写入收口 `AWorker.SetTask(source)` + 延迟打断，紧急生存检测上移全状态生效，攻击接入移动（追击/风筝走位/打带跑，战斗结束任务保持）。spec 见 Worker 三层架构节
 - 2026-08 — `feat(worker)`: Worker 生存与成长数值——压力/士气（困苦度动态）/熟练度（每任务+0.8，进度倍率联动）/贪婪懒惰（入 ML 特征 19/20 维），删除已取代的 WorkerMoraleController。spec 见 Worker 生存与成长数值节
 - 2026-08 — `feat(worker)`: Worker 心智层完整实现（五阶段）——自主意志（拒绝/拖延/强制双门 + 怨恨感恩累积 + 强制命令伤感情）、事件记忆 + 信念演化、随机人生事件 + 执念、性格随经历演化（滞回/限流/饱和防横跳）、自发社会关系（友谊/敌意/爱慕/记仇 + 互助/回避/送礼/嫉妒四行为）。数据内嵌 `WorkerData.Mind` 随档一次写入（旧档 Ensure 兜底），7 套领域单测。spec 见心智层节
 - 2026-08 — `feat(render)`: 物品地面帧动画——`ItemData.IsAnimation`（默认关）+ `SpriteFrameAnimator` 按英文名 `{Name}_0/1/2...` 序列图 6fps 循环播放（非恒底层独立视觉，预制体视觉自管）；`TileVisualSpawner` 加 `animationResolver`，每次 `CreateOrUpdate` 调和动画组件状态（挂载/切换/同格换物品重载）。ItemMap/ResourceMap/BuildMap 三处 Map 均接入。spec 见渲染排序节
@@ -68,6 +69,7 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 | 16 | 好感度系统（定向关系 + 四项行为门控 + Mood 联动 + HUD） | 2026-08 |
 | 17 | Worker 心智层（自主意志/记忆信念/人生事件/性格演化/社会关系） | 2026-08 |
 | 18 | Worker 生存与成长数值（压力/士气/熟练度/贪婪懒惰 + 进度倍率联动） | 2026-08 |
+| 19 | Worker 状态机三层解耦（决策/活动/移动 + SetTask 收口 + 攻击移动） | 2026-08 |
 
 ## Current Work
 

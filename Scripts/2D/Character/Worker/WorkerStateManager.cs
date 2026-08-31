@@ -25,6 +25,11 @@ namespace LAB2D.Character.Worker
         /// <param name="type">切换的状态</param>
         public override void ChangeState(CST type)
         {
+            // 统一收口：任何状态切换先清除移动意图（仅 ToMap 意图存在时才 StopMove，
+            // 离开移动路径统一清刚体速度防滑行，见 bug-fixes.md 2026-08-15）。
+            // 必须在新状态 OnEnter 之前执行——新状态可在 OnEnter 内声明新意图不被覆盖。
+            this.Character.Locomotion.ClearGoToIntent();
+
             // 先执行,可以在Enter中更改,不然会被覆盖
             CST from = this.CurrentStateType;
             bool hadPriorState = this.CurrentState != null;

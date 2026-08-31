@@ -86,6 +86,22 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
         public Transform Head { get; set; }
 
         /// <summary>
+        /// 攻击是否就绪（冷却计时器已达攻击间隔）— 供攻击状态计算移动意图
+        ///（打带跑：就绪→贴近追击，冷却→拉开距离）。
+        /// </summary>
+        public bool IsAttackReady => this.recordTime >= this.attackInterval;
+
+        /// <summary>
+        /// 攻击间隔（秒）。
+        /// </summary>
+        public float AttackInterval => this.attackInterval;
+
+        /// <summary>
+        /// 武器追踪范围（≈攻击距离）— 供攻击状态计算 Chase/KeepDistance 距离带。
+        /// </summary>
+        public float AttackRange => this.raduis;
+
+        /// <summary>
         /// 设置玩家
         /// </summary>
         /// <param name="character">持有武器的角色</param>

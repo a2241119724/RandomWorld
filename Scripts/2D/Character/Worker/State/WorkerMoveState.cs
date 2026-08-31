@@ -6,15 +6,14 @@ namespace LAB2D.Character.Worker.State
     using UnityEngine;
 
     /// <summary>
-    /// Worker移动状态
+    /// Worker移动状态（薄壳）— 移动执行（MoveByPath 消费、到达判定、Sliding/Stuck 熔断）
+    /// 已下沉至 WorkerLocomotion 常驻服务层（AWorker.FixedUpdate 统一驱动）。
+    /// 本状态只负责：进入时声明 ToMap 意图、到达后按任务有无分流（Seek/Work）、UI 文案。
     /// </summary>
     public class WorkerMoveState : AWorkerState
     {
         private readonly StringBuilder builder = new (128); // 减少GC
         private float recordTime = 0.0f;
-        private bool isTargetReached = false;
-        private Vector3Int lastSlidingTarget; // 上次 Sliding 时的寻路目标，用于统计累计次数
-        private int slidingStreak;            // 同一目标累计 Sliding 次数（熔断用）
 
         public WorkerMoveState(AWorker worker)
             : base(worker)
@@ -26,9 +25,9 @@ namespace LAB2D.Character.Worker.State
         {
             base.OnEnter();
             this.recordTime = 0.0f;
-            // 修复：进入 Move 状态时重置到达标记。
-            // 避免上次任务到达后的 isTargetReached 残留，导致新任务未走到位就误判到达并切 Work。
-            this.isTargetReached = false;
+            // 声明移动意图：沿 Seek 状态已寻好的路径走向目标。
+            // GoTo 内部重置到达标记（原 OnEnter 重置 isTargetReached、避免上次任务残留误判到达的语义不变）。
+            this.Character.Locomotion.GoTo(this.Character.Seek.TargetMap);
         }
 
         /// <inheritdoc/>
@@ -36,9 +35,8 @@ namespace LAB2D.Character.Worker.State
         {
             base.OnExit();
             this.Character.HideDialogText();
-            // 状态切换离开移动：清速度，防止 MoveByPath 最后一次 velocity 残留导致停止滑行。
-            // 与 SeekEnemyMoveState.OnExit 对齐；drag=0 时残留速度不衰减，滑行尤其明显（见 bug-fixes.md 2026-08-15）。
-            this.Character.Seek?.StopMove();
+            // 停止移动/清速度已收口至 WorkerStateManager.ChangeState → Locomotion.ClearGoToIntent
+            //（离开移动统一 StopMove 防滑行，见 bug-fixes.md 2026-08-15）。
         }
 
         /// <inheritdoc/>
@@ -48,7 +46,7 @@ namespace LAB2D.Character.Worker.State
             this.builder.Clear();
             AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
 
-            if (this.isTargetReached)
+            if (this.Character.Locomotion.HasArrived)
             {
                 if (workerData.Task == null)
                 {
@@ -109,60 +107,7 @@ namespace LAB2D.Character.Worker.State
             }
         }
 
-        /// <inheritdoc/>
-        public override void OnFixedUpdate()
-        {
-            base.OnFixedUpdate();
-            this.isTargetReached = this.Character.Seek.MoveByPath();
-
-            if (this.isTargetReached)
-            {
-                return; // 到达/无路径：MoveByPath 内部已重置检测
-            }
-
-            BugCheckResult stuckResult = this.Character.Seek.LastStuckResult;
-            if (stuckResult == BugCheckResult.Sliding)
-            {
-                // 位移不足但未完全卡死 → 预防性重新寻路绕开障碍。
-                // 但若同一目标累计 Sliding 过多（A* 认为可通而物理被挡，如路径穿过床 sprite），
-                // 静默重寻路会无限循环且无任何日志/失败缓存。累计 N 次后视为卡死，
-                // 走统一的 HandleMovementStuck：建造任务保留 3 次重试，其他任务
-                // RecordFail + GiveUpTask（决策层经 IsRecentFail 失败缓存进入冷却），
-                // 打破"Sliding→重寻路→Sliding"死循环（观测 53 次/人，从不入睡）。
-                if (this.lastSlidingTarget != this.Character.Seek.TargetMap)
-                {
-                    this.lastSlidingTarget = this.Character.Seek.TargetMap;
-                    this.slidingStreak = 0;
-                }
-
-                if (++this.slidingStreak >= 4)
-                {
-                    this.slidingStreak = 0;
-                    // 熔断诊断：记录卡住格的地图坐标与通行判定，交叉验证"碰撞已注册而 A* 仍判可通"。
-                    Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
-                    AWorkerTask.LogProvider(
-                        $"[MoveDiag] {this.Character.name} Sliding 熔断 目标=({this.Character.Seek.TargetMap.x},{this.Character.Seek.TargetMap.y}) " +
-                        $"posMap=({posMap.x},{posMap.y}) 可通行={LAB2D.Core.Seek.ASeek.IsCanReach(posMap)} → HandleMovementStuck",
-                        LogManager.LogLevelEnum.Debug);
-                    this.Character.HandleMovementStuck(); // 内部已切回 Seek / 放弃任务
-                    return;
-                }
-
-                this.Character.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
-                return;
-            }
-
-            if (stuckResult == BugCheckResult.Stuck)
-            {
-                // 真卡死 → 建造重试3次 / 记录失败点位并放弃任务
-                // 卡墙诊断：记录卡住格的地图坐标与通行判定，确认是否已陷入墙/家具碰撞体。
-                Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
-                AWorkerTask.LogProvider(
-                    $"[MoveDiag] {this.Character.name} Stuck 目标=({this.Character.Seek.TargetMap.x},{this.Character.Seek.TargetMap.y}) " +
-                    $"posMap=({posMap.x},{posMap.y}) 可通行={LAB2D.Core.Seek.ASeek.IsCanReach(posMap)} → HandleMovementStuck",
-                    LogManager.LogLevelEnum.Debug);
-                this.Character.HandleMovementStuck();
-            }
-        }
+        // 移动执行（原 OnFixedUpdate：MoveByPath 消费 + Sliding/Stuck 熔断）已由
+        // WorkerLocomotion.TickFixed 在 AWorker.FixedUpdate 中统一驱动，不再 override。
     }
 }

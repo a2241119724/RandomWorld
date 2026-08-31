@@ -674,7 +674,7 @@ namespace LAB2D.Character.Worker.Task
             TaskCompletionProvider(this);
             TaskLifecycleProvider(this, worker, false);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            workerData.Task = null;
+            worker.SetTask(null, WorkerTaskSource.Clear);
 
             // 完成任务 → 人格变化：心情↑ 勤奋↑ 事业心微↑
             if (workerData != null)

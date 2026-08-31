@@ -20,6 +20,37 @@ namespace LAB2D.Character.Worker
     using LAB2D.Domain.Common;
 
     /// <summary>
+    /// 任务写入来源 — 决定 SetTask 的打断语义（任务写入唯一入口 AWorker.SetTask 的第二参数）。
+    /// </summary>
+    public enum WorkerTaskSource
+    {
+        /// <summary>
+        /// 决策层自建（Seek 状态内自主决策）——不打断当前。
+        /// </summary>
+        SelfDecision,
+
+        /// <summary>
+        /// 推送分配（WorkerTaskManager 分配循环）——置延迟打断标记，回 Seek 重寻路。
+        /// </summary>
+        PushAssignment,
+
+        /// <summary>
+        /// 链式交接（任务 Finish 调用栈内接力）——置延迟打断标记（栈内绝不同步切状态）。
+        /// </summary>
+        ChainHandoff,
+
+        /// <summary>
+        /// 悬赏结算恢复 Task=悬赏本体（已 Start 过，不重启、绝不打断）。
+        /// </summary>
+        BountyRestore,
+
+        /// <summary>
+        /// 置空（完成/放弃/死亡清理）。
+        /// </summary>
+        Clear,
+    }
+
+    /// <summary>
     /// Worker
     /// </summary>
     public abstract class AWorker : Character
@@ -106,6 +137,19 @@ namespace LAB2D.Character.Worker
         public ASeek Seek { get; set; }
 
         /// <summary>
+        /// 移动服务层 — 常驻驱动移动意图（GoTo/KeepDistance/Chase/Stop），
+        /// 状态层只声明意图，移动执行与 Sliding/Stuck 熔断统一在此。
+        /// </summary>
+        public WorkerLocomotion Locomotion { get; private set; }
+
+        /// <summary>
+        /// 延迟打断标记 — 推送分配/链式交接写入新任务后由 SetTask 置位，
+        /// Update 开头消费（非 Dead/Attack/Escape 时切 Seek 重寻路新目标）。
+        /// 写入可能发生在任务 Finish 调用栈内，绝不能同步切状态，故延迟到主循环。
+        /// </summary>
+        public bool HasPendingTaskInterrupt { get; private set; }
+
+        /// <summary>
         /// Worker的床
         /// </summary>
         public ABed BedItem { get; set; }
@@ -168,6 +212,7 @@ namespace LAB2D.Character.Worker
             }
 
             this.Seek = new AStar(this);
+            this.Locomotion = new WorkerLocomotion(this);
             this.AttackLayers = LayerMask.GetMask("Tile", "BuildTile", LayerConstant.ENEMY_LAYER);
             this.AttackTags = new List<string>
             {
@@ -219,6 +264,37 @@ namespace LAB2D.Character.Worker
             {
                 this.UpdateDialoguePauseText();
                 return;
+            }
+
+            // 紧急生存检测（原 WorkerSeekState.OnUpdate 紧急块上移）：所有状态生效
+            //（原仅 Seek 生效——Move/Work 途中饥饿/疲劳不会被打断觅食/休息）。
+            // 先于延迟打断消费：生存优先，且 GiveUpTask → ChangeState(Seek) → OnEnter
+            // 决策管线完成新决策与寻路（单次决策）。
+            if (Time.frameCount % 10 == 0)
+            {
+                this.CheckSurvivalEmergency();
+            }
+
+            // 消费延迟打断：推送分配/链式交接可能在任务 Finish / 分配循环的调用栈内写入新任务
+            //（SetTask 置位标记但绝不同步切状态），现在栈已退回主循环——切 Seek 重寻路新目标。
+            // 豁免：Dead（清标记，死人不再接手）；Attack/Escape（保命优先，保留标记，
+            // 战斗/逃跑结束后状态机自然回 Seek，届时任务已在，可再消费兜底）。
+            if (this.HasPendingTaskInterrupt)
+            {
+                AWorkerState.TypeEnum currentType = this.Manager.CurrentStateType;
+                if (currentType == AWorkerState.TypeEnum.Dead)
+                {
+                    this.HasPendingTaskInterrupt = false;
+                }
+                else if (currentType != AWorkerState.TypeEnum.Attack
+                    && currentType != AWorkerState.TypeEnum.Escape)
+                {
+                    this.HasPendingTaskInterrupt = false;
+                    AWorkerTask.LogProvider(
+                        $"[TaskDiag] {this.name} 延迟打断（原状态={currentType}）→ 切Seek执行新任务",
+                        LogManager.LogLevelEnum.Debug);
+                    this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
+                }
             }
 
             // 执行当前状态的函数（状态可能在 OnUpdate 中切换）
@@ -274,6 +350,11 @@ namespace LAB2D.Character.Worker
         public void FixedUpdate()
         {
             if (this.IsDialoguePaused) return;
+
+            // 先驱动移动服务层（执行当前意图/刷新到达标记），后跑状态逻辑——
+            // 状态 OnUpdate 读到的 Locomotion.HasArrived 是本物理帧的最新值（原 Move 状态时序不变）。
+            this.Locomotion?.TickFixed();
+
             if (this.Manager.CurrentState != null)
             {
                 this.Manager.CurrentState.OnFixedUpdate();
@@ -953,6 +1034,146 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
+        /// 任务唯一写入口：赋值 + 启动 + 收口诊断，按来源决定打断语义。
+        /// - SelfDecision：决策层自建，不打断（决策动作已有自身日志，收口日志降 Trace 防重复）；
+        /// - PushAssignment / ChainHandoff：置延迟打断标记（Update 开头消费切 Seek 重寻路新目标）；
+        /// - BountyRestore：恢复结算栈内正在执行的悬赏本体——不重启（已 Start 过）、绝不打断；
+        /// - Clear：置空。
+        /// </summary>
+        public void SetTask(AWorkerTask task, WorkerTaskSource source)
+        {
+            if (!(this.CharacterDataLAB is WorkerData workerData))
+            {
+                return;
+            }
+
+            AWorkerTask old = workerData.Task;
+            workerData.Task = task;
+
+            if (task == null)
+            {
+                // Clear 置空：调用方（GiveUpTask/Finish/死亡清理）已有各自语义日志，此处降 Trace 防重复
+                AWorkerTask.LogProvider(
+                    $"[TaskDiag] {this.name} SetTask(null) source={source} old={old?.TaskType.ToString() ?? "null"}",
+                    source == WorkerTaskSource.Clear ? LogManager.LogLevelEnum.Trace : LogManager.LogLevelEnum.Debug);
+                return;
+            }
+
+            if (source != WorkerTaskSource.BountyRestore)
+            {
+                task.Start(this);
+            }
+
+            if (source == WorkerTaskSource.PushAssignment || source == WorkerTaskSource.ChainHandoff)
+            {
+                this.HasPendingTaskInterrupt = true;
+            }
+
+            AWorkerTask.LogProvider(
+                $"[TaskDiag] {this.name} SetTask type={task.TaskType} target=({task.TargetMap.X},{task.TargetMap.Y}) source={source}",
+                source == WorkerTaskSource.SelfDecision ? LogManager.LogLevelEnum.Trace : LogManager.LogLevelEnum.Debug);
+        }
+
+        /// <summary>
+        /// 紧急生存检测（原 WorkerSeekState.OnUpdate 紧急块上移，每 10 帧调用一次）：
+        /// 饥饿/疲劳/精气神/压力超过生存阈值时强制放弃当前任务回 Seek 重决策。
+        /// 豁免：对话暂停、Dead（已死）、Attack/Escape（保命优先，战斗/逃跑结束后自然回 Seek 再检测）。
+        /// 决策与寻路由 GiveUpTask → ChangeState(Seek) → OnEnter 决策管线完成（单次决策，
+        /// 原"重入决策后再 ExecuteAutonomousDecision 二次决策"的双重决策缺陷已消除）。
+        /// </summary>
+        private void CheckSurvivalEmergency()
+        {
+            if (this.IsDialoguePaused)
+            {
+                return;
+            }
+
+            AWorkerState.TypeEnum currentType = this.Manager.CurrentStateType;
+            if (currentType == AWorkerState.TypeEnum.Dead
+                || currentType == AWorkerState.TypeEnum.Attack
+                || currentType == AWorkerState.TypeEnum.Escape)
+            {
+                return;
+            }
+
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            if (wd == null)
+            {
+                return;
+            }
+
+            bool emergency = false;
+
+            // 饥饿 < 15 → 强制触发生存决策
+            if (wd.CurHungry > 0 && wd.CurHungry < 15f)
+            {
+                if (wd.Task != null && wd.Task.TaskType != WorkerTaskType.Eat)
+                {
+                    this.GiveUpTask();
+                    emergency = true;
+                }
+            }
+
+            // 疲劳 > MaxTired-15 → 强制触发睡觉决策
+            if (wd.CurTired < wd.MaxTired && wd.CurTired > wd.MaxTired - 15f)
+            {
+                if (wd.Task != null
+                    && wd.Task.TaskType != WorkerTaskType.Sleep
+                    && wd.Task.TaskType != WorkerTaskType.GroundSleep)
+                {
+                    this.GiveUpTask();
+                    emergency = true;
+                }
+            }
+
+            // 精气神 < 10 → 强制触发漫游/休息决策
+            if (wd.CurSpirit > 0 && wd.CurSpirit < 10f)
+            {
+                if (wd.Task != null
+                    && wd.Task.TaskType != WorkerTaskType.Wander
+                    && wd.Task.TaskType != WorkerTaskType.Sleep)
+                {
+                    this.GiveUpTask();
+                    emergency = true;
+                }
+            }
+
+            // 压力 > MaxStress-10 → 强制漫游减压（吃饭/睡觉/漫游本身减压，不打断）
+            if (wd.CurStress < wd.MaxStress && wd.CurStress > wd.MaxStress - 10f)
+            {
+                if (wd.Task != null
+                    && wd.Task.TaskType != WorkerTaskType.Wander
+                    && wd.Task.TaskType != WorkerTaskType.Sleep
+                    && wd.Task.TaskType != WorkerTaskType.GroundSleep
+                    && wd.Task.TaskType != WorkerTaskType.Eat)
+                {
+                    this.GiveUpTask();
+                    emergency = true;
+                }
+            }
+
+            if (!emergency)
+            {
+                return;
+            }
+
+            // 紧急打断诊断（事件点）：生存阈值触发强制放弃任务+重新决策，记录各项状态值。
+            // 若同一 Worker 频繁紧急打断，说明生存压力下决策未真正解决问题（如饥饿无食物可采）。
+            AWorkerTask.LogProvider(
+                $"[StateDiag] {this.name} 紧急打断重决策: 饥饿={wd.CurHungry:F0} 疲劳={wd.CurTired:F0} 精气神={wd.CurSpirit:F0} 压力={wd.CurStress:F0} 士气={wd.CurMorale:F0}",
+                LogManager.LogLevelEnum.Debug);
+
+            // 心智层：极端饥饿导致的濒死经历（WorkerMindService 内按游戏日节流，同天只记一次）
+            if (wd.CurHungry > 0f && wd.CurHungry < 15f)
+            {
+                if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+                {
+                    mindService.RecordNearDeath(this);
+                }
+            }
+        }
+
+        /// <summary>
         /// 放弃任务
         /// </summary>
         public void GiveUpTask()
@@ -985,7 +1206,7 @@ namespace LAB2D.Character.Worker
             }
 
             GiveUpTaskProvider(this, workerData.Task);
-            workerData.Task = null;
+            this.SetTask(null, WorkerTaskSource.Clear);
             this.Manager.ChangeState(AWorkerState.TypeEnum.Seek);
         }
 
