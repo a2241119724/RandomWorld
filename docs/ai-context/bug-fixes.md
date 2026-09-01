@@ -522,3 +522,16 @@
   - **Animation 组件接管 sprite 显示时必须 `AlwaysAnimate`**（或先赋一帧静态图自举可见性），否则空 sprite + BasedOnRenderers 永不启动且无任何报错。
   - **Editor 开着时勿在文件系统移动资产目录**——AssetDatabase 会按内存缓存重建出重复资产（本次 `Animation/` 目录双份、GUID 分叉），移动/重命名一律在 Project 窗口内做。
 - **追加（同日）**：legacy `Animation` 组件方案在 2022.3 实测无效（AlwaysAnimate 修复后仍静默不播，无任何报错）——非 legacy .anim 交给 Animation 组件不可靠。已整体切换为 **Animator + AnimatorController**：AnimationManager 改加载 `RuntimeAnimatorController`（`GetController`），SpriteFrameAnimator 挂 `Animator`（同样必须 `cullingMode = AlwaysAnimate`）。**新约定：每个动画物品一个 controller，资产名 == ItemData.Name**；新增 Editor 右键「为选中动画生成 Controller」（AnimationControllerGenerator.cs）一键从 clip 生成配套单状态 controller。
+
+## 2026-09-01 CommonEnemy 漫游撞墙（无前方感知，全靠碰撞事后熔断）
+
+- **现象**：CommonEnemy 是矩形（BoxCollider2D 0.4×0.4、根 scale 2），Wander 随机转头直线行走，前方无任何障碍感知——顶到墙后才由 `OnCollisionStay2D` 的 Sliding/Stuck 熔断重入 Wander 换向，视觉上反复"撞墙→弹偏→换向"。
+- **根因**：`CommonEnemyWanderState.OnFixedUpdate` 只按 `rotationAngle` 渐近转向 + `MoveToForward` 直线平移，选向与移动均不看前方；事后熔断依赖物理接触，必然先撞后知。
+- **修复**：
+  - `ACommonEnemy.IsForwardBlocked(direction)`：矩形**两边及中线**三条 `Physics2D.Raycast`（中线 origin=中心，两侧边 origin=中心±垂直×半宽），距离=沿向半长+`ProbeDistance`(0.6)；半尺寸由 `BoxCollider2D.size×lossyScale` 投影算支撑半径（任意旋转自适应）。LayerMask 仅 `Tile`/`BuildTile`（同 ASeek 墙壁探测）→ 天然不命中自身与角色。
+  - `CommonEnemyWanderState`：随机选角抽成 `PickNewDirection()`——最多 8 个候选角用三射线预判，选第一个不通墙的（全堵取最后兜底）；`OnFixedUpdate` 移动前探测目标朝向，受阻即换向 + `[EnemyDiag] WanderReroute` 节流日志。定时换向同样走预判。
+- **验证**：Play 中敌人靠近墙群即提前换向，不再顶墙抖动；game.log 无刷屏。Chase/Seek/Attack 不变，`OnCollisionStay2D` 熔断保留兜底（角色碰撞、贴墙滑动）。
+- **教训**：**运动学平移的角色没有"即将碰撞"概念，前方短距探测要在选向/移动前做**，事后熔断只应作兜底；探测层收紧到墙体层即可省去"排除自身"的射线过滤。
+  - **`LayerMask.GetMask`（内部 NameToLayer）不能在 MonoBehaviour 的静态字段初始化器里调用**——实例化 prefab（MonoBehaviour 构造路径）触发 cctor 时 Unity 直接抛 `TypeInitializationException`。普通 C# 类（如 ASeek 的 `s_wallLayerMask`）不受限，照抄进 MonoBehaviour 子类必炸；改实例字段在 `Start()` 赋值。
+- **追加（同日）——水/山地形避让失效根因**：地形 tile 碰撞整体探不到，非水特有。`TileMap.Awake` 中 `chunksRoot = new GameObject("TileChunks")`（默认 **Default 层**，SetParent 不继承 layer），而全部 chunk 的 TilemapCollider2D `usedByComposite=true` 后几何被吸收、碰撞由挂在该 chunksRoot 上的 **CompositeCollider2D** 统一提供（TileMap.cs:175）→ 地图 tile 碰撞实际都在 Default 层：mask=`Tile` 的射线**探不到**（山/水/地形全中招），但碰撞接触照常（Default↔角色默认允许）→"物理挡得住、射线探不到"。建造墙（BuildMap 场景物体、层正确）能探到，故此前验证"避让了"实为 BuildTile。**修复**：chunksRoot 创建后显式 `layer = this.gameObject.layer`；已核对 Physics2D 碰撞矩阵 Default 行与 Tile 行均全开、各角色行 bit6 均开，改层零行为变化。**连带的正向修复**：ASeek 的墙壁 CircleCast（`s_wallLayerMask=Tile/BuildTile`）此前对地图 tile 同样从未命中，Worker 对山/水的贴墙滑动自此恢复生效。
+- **教训（追加）**：**运行时 `new GameObject` 默认 Default 层，SetParent 不继承 layer**——把碰撞体挂到运行时创建的物体上必须显式设层，否则"物理交互正常、LayerMask 查询全哑"这类症状极难从表现推断；Physics2D collision matrix 要同时核对旧行/新行与相对位的对称性，确认改层零副作用。

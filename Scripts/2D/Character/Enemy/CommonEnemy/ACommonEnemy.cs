@@ -23,6 +23,32 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         public readonly float RotationSpeed = 5.0f;
 
         /// <summary>
+        /// 敌人前方阻挡探测距离(短距离).
+        /// </summary>
+        public readonly float ProbeDistance = 0.6f;
+
+        /// <summary>
+        /// 墙体层(与 ASeek 墙壁探测一致):前方探测只看地形/建筑墙,不看角色.
+        /// 注:LayerMask.GetMask 不能在静态初始化器调用(MonoBehaviour cctor 限制),Start 中赋值.
+        /// </summary>
+        private LayerMask wallLayers;
+
+        /// <summary>
+        /// 矩形碰撞体缓存(Start 中获取).
+        /// </summary>
+        private BoxCollider2D boxCollider;
+
+        /// <summary>
+        /// 前方探测射线可视化开关(Scene 视图:红=命中 绿=通畅),诊断用.
+        /// </summary>
+        public static bool ShowForwardProbe { get; set; } = true;
+
+        /// <summary>
+        /// 最近一次前方探测的首个命中(供受阻换向日志打印命中物详情).
+        /// </summary>
+        public RaycastHit2D LastProbeHit { get; private set; }
+
+        /// <summary>
         /// 敌人状态管理器.
         /// </summary>
         [HideInInspector]
@@ -66,6 +92,8 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         public override void Start()
         {
             base.Start();
+            this.boxCollider = this.GetComponent<BoxCollider2D>();
+            this.wallLayers = LayerMask.GetMask("Tile", "BuildTile");
             this.Head = this.transform.Find("Head");
             if (this.Head == null)
             {
@@ -98,7 +126,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         /// </summary>
         public void MoveToForward()
         {
-            this.MoveSpeed = UnityEngine.Random.Range(4.5f, 6.0f);
+            this.MoveSpeed = UnityEngine.Random.Range(1.5f, 2.0f);
             this.transform.Translate(this.MoveSpeed * Time.fixedDeltaTime * (this.Head.position - this.transform.position).normalized, Space.World); // 向前移动
         }
 
@@ -110,6 +138,58 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         {
             // FromToRotation得到从自定义方向到某方向旋转的角度
             this.transform.rotation = Quaternion.Lerp(this.transform.rotation, Quaternion.FromToRotation(Vector3.up, direction), Time.fixedDeltaTime * this.RotationSpeed);
+        }
+
+        /// <summary>
+        /// 矩形两边及中线射线探测:沿 direction 前方短距离是否有墙。
+        /// 三条射线——中线(origin=中心)、两条侧边(origin=中心±垂直方向×半宽),
+        /// 任一命中即视为前方受阻。仅探测 Tile/BuildTile 层,天然不命中自身与角色。
+        /// </summary>
+        /// <param name="direction">探测方向(单位向量)</param>
+        /// <returns>true=前方短距离内有墙</returns>
+        public bool IsForwardBlocked(Vector3 direction)
+        {
+            if (this.boxCollider == null)
+            {
+                return false;
+            }
+
+            Vector2 pos = this.transform.position;
+            Vector2 dir = ((Vector2)direction).normalized;
+            Vector2 perp = new (-dir.y, dir.x); // 垂直于探测方向(矩形宽度方向)
+
+            // 半尺寸:BoxCollider2D.size × lossyScale;矩形在任意朝向下沿 dir/垂直 dir 的
+            // 支撑半径 = hx·|投影| + hy·|投影|(正方形/长方形均成立,随旋转自适应)
+            Vector2 lossy = this.transform.lossyScale;
+            float hx = this.boxCollider.size.x * 0.5f * lossy.x;
+            float hy = this.boxCollider.size.y * 0.5f * lossy.y;
+            Vector2 right = this.transform.right;
+            Vector2 up = this.transform.up;
+            float halfAlong = (hx * Mathf.Abs(Vector2.Dot(dir, right))) + (hy * Mathf.Abs(Vector2.Dot(dir, up)));
+            float halfAcross = (hx * Mathf.Abs(Vector2.Dot(perp, right))) + (hy * Mathf.Abs(Vector2.Dot(perp, up)));
+
+            // 从中心出发需先覆盖矩形自身半长,再向前探测 ProbeDistance
+            float probeDist = halfAlong + this.ProbeDistance;
+            RaycastHit2D hitCenter = Physics2D.Raycast(pos, dir, probeDist, this.wallLayers);
+            RaycastHit2D hitLeft = Physics2D.Raycast(pos + (perp * halfAcross), dir, probeDist, this.wallLayers);
+            RaycastHit2D hitRight = Physics2D.Raycast(pos - (perp * halfAcross), dir, probeDist, this.wallLayers);
+
+            this.LastProbeHit = hitCenter.collider != null ? hitCenter
+                : hitLeft.collider != null ? hitLeft : hitRight;
+
+#if UNITY_EDITOR
+            if (ShowForwardProbe)
+            {
+                Vector2 endCenter = pos + (dir * probeDist);
+                Vector2 endLeft = pos + (perp * halfAcross) + (dir * probeDist);
+                Vector2 endRight = pos - (perp * halfAcross) + (dir * probeDist);
+                Debug.DrawLine(pos, endCenter, hitCenter.collider != null ? Color.red : Color.green);
+                Debug.DrawLine(pos + (perp * halfAcross), endLeft, hitLeft.collider != null ? Color.red : Color.green);
+                Debug.DrawLine(pos - (perp * halfAcross), endRight, hitRight.collider != null ? Color.red : Color.green);
+            }
+#endif
+
+            return hitCenter.collider != null || hitLeft.collider != null || hitRight.collider != null;
         }
 
         /// <inheritdoc/>
