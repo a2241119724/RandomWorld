@@ -6,14 +6,13 @@ namespace LAB2D.Character.Player
     /// 小地图玩家标记 — 在小地图上以箭头图标代替角色本体显示。
     /// 初始化时将小地图摄像机的 cullingMask 剔除 Player 层（隐藏角色本体）、
     /// 显示 MinimapOnly 层；主摄像机剔除 MinimapOnly 层（游戏世界中不可见）。
-    /// 箭头作为玩家子物体跟随移动，朝向随动画 Direction 参数旋转（0-Up 1-Right 2-Down 3-Left）。
+    /// 箭头为玩家子物体 Arror（SpriteRenderer 由 prefab 预先配置），
+    /// 跟随移动，朝向随动画 Direction 参数旋转（0-Up 1-Right 2-Down 3-Left）。
     /// </summary>
     public class PlayerMinimapMarker : MonoBehaviour
     {
         private const string MarkerLayerName = "MinimapOnly";
-        private const string SpriteResourcePath = "Images/UI/MinimapArrow";
-        private const string SortingLayerName = "Highest";
-        private const int SortingOrder = 100;
+        private const string ArrorName = "Arrow";
 
         /// <summary>
         /// 朝向 -> 箭头 z 轴欧拉角（素材默认朝上，z 正角为逆时针）。
@@ -39,24 +38,18 @@ namespace LAB2D.Character.Player
                 return;
             }
 
-            Sprite sprite = Resources.Load<Sprite>(SpriteResourcePath);
-            if (sprite == null)
+            Transform markerTransform = this.transform.Find(ArrorName);
+            if (markerTransform == null)
             {
-                AWorkerTask.LogProvider($"[MiniMapDiag] 资源 {SpriteResourcePath} 加载失败，小地图箭头未初始化", LogManager.LogLevelEnum.Error);
+                AWorkerTask.LogProvider($"[MiniMapDiag] 玩家子物体 {ArrorName} 不存在，小地图箭头未初始化", LogManager.LogLevelEnum.Error);
                 this.enabled = false;
                 return;
             }
 
             // 箭头作为玩家子物体跟随移动；世界朝向由 LateUpdate 独立驱动，
             // 不受玩家本体 2.5D 视角切换（父级旋转）影响
-            GameObject markerObject = new GameObject("MinimapMarker");
-            markerObject.transform.SetParent(this.transform, false);
-            markerObject.layer = markerLayer;
-            SpriteRenderer renderer = markerObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = sprite;
-            renderer.sortingLayerName = SortingLayerName;
-            renderer.sortingOrder = SortingOrder;
-            this.marker = markerObject.transform;
+            markerTransform.gameObject.layer = markerLayer;
+            this.marker = markerTransform;
 
             this.SetupCameraMasks(markerLayer);
         }

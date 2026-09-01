@@ -224,7 +224,7 @@ namespace LAB2D.Character.Worker
         public override void Start()
         {
             base.Start();
-            this.MoveSpeed = 6f;
+            this.MoveSpeed = 2f;
             this.nameUI.text = this.name;
             this.statusBar.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
 
