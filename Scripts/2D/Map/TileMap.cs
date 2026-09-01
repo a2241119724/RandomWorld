@@ -165,6 +165,11 @@ namespace LAB2D.Map
             this.chunksRoot.gameObject.hideFlags = HideFlags.DontSaveInEditor;
             this.chunksRoot.SetParent(this.transform);
             this.chunksRoot.localPosition = Vector3.zero;
+            // 必须显式设为 TileMap 同层：new GameObject 默认 Default 层，而全部地图碰撞由
+            // 挂在 chunksRoot 上的 CompositeCollider2D 提供（chunk 碰撞体 usedByComposite 被吸收）。
+            // 不改层则一切对 Tile 层的物理查询（射线/CircleCast）探不到地图 tile（山/水等），
+            // 但碰撞接触照常（Default↔角色默认允许）——症状是"物理挡得住、射线探不到"。
+            this.chunksRoot.gameObject.layer = this.gameObject.layer;
 
             // CompositeCollider2D 合并所有 Chunk 碰撞体：各 Chunk 的 TilemapCollider2D
             // 设 usedByComposite=true 后，其独立几何体被复合体"吸收"，退出时只需序列化
