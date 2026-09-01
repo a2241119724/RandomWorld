@@ -37,5 +37,19 @@ namespace LAB2D.Enum
         /// 典型技能：治疗之光。
         /// </summary>
         SelfHeal = 4,
+
+        /// <summary>
+        /// 单体近身技能：对玩家周围半径内最近的一个敌人造成高额伤害。
+        /// AoeRadius 字段复用为目标索敌半径。
+        /// 典型技能：破空斩。
+        /// </summary>
+        SingleTarget = 5,
+
+        /// <summary>
+        /// 聚怪技能：将半径内所有敌人拉向玩家（无伤害）。
+        /// AoeRadius 字段复用为索敌半径，BuffDuration 复用为拉近距离。
+        /// 典型技能：念力（异能觉醒）。
+        /// </summary>
+        Pull = 6,
     }
 }

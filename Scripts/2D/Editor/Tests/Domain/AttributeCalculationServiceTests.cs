@@ -105,5 +105,48 @@ namespace LAB2D.Editor.Tests.Domain
             BattleStats result = this.service.ComputeFinalStats(baseStats, 1, false, false, null, equipments);
             Assert.AreEqual(10f, result.ATN, 0.0001f);
         }
+
+        [Test]
+        public void ComputeFinalStats_NullGrowthSources_EqualsLegacyBehavior()
+        {
+            BattleStats baseStats = new BattleStats(100f, 50f, 30f, 20f, 0.05f, 2.0f, 1f, 1f);
+            BattleStats weaponStats = new BattleStats(20f, 10f, 0f, 0f, 0.02f, 0.5f, 0f, 0f);
+            List<BattleStats> equipments = new List<BattleStats>
+            {
+                new BattleStats(5f, 0f, 10f, 5f, 0f, 0f, 2f, 0f),
+            };
+
+            BattleStats legacy = this.service.ComputeFinalStats(baseStats, 3, true, false, weaponStats, equipments);
+            BattleStats withNullGrowth = this.service.ComputeFinalStats(
+                baseStats, 3, true, false, weaponStats, equipments, null);
+
+            Assert.AreEqual(legacy.ATN, withNullGrowth.ATN, 0.0001f);
+            Assert.AreEqual(legacy.HIT, withNullGrowth.HIT, 0.0001f);
+        }
+
+        [Test]
+        public void ComputeFinalStats_WithGrowthSources_AllStacked()
+        {
+            BattleStats baseStats = new BattleStats(10f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
+            List<BattleStats> growthSources = new List<BattleStats>
+            {
+                new BattleStats(3f, 0f, 0f, 0f, 0f, 0f, 0f, 0f),
+                new BattleStats(5f, 0f, 0f, 0f, 0f, 0f, 0f, 0f),
+            };
+
+            BattleStats result = this.service.ComputeFinalStats(
+                baseStats, 1, false, false, null, null, growthSources);
+
+            Assert.AreEqual(18f, result.ATN, 0.0001f);
+        }
+
+        [Test]
+        public void ComputeFinalStats_EmptyGrowthSources_NoEffect()
+        {
+            BattleStats baseStats = new BattleStats(10f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
+            BattleStats result = this.service.ComputeFinalStats(
+                baseStats, 1, false, false, null, null, new List<BattleStats>());
+            Assert.AreEqual(10f, result.ATN, 0.0001f);
+        }
     }
 }

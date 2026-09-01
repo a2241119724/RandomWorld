@@ -319,6 +319,44 @@ namespace LAB2D.UI
         }
 
         /// <summary>
+        /// 确保按钮组件数组覆盖 requiredCount 个槽位：不足时扩容并为新槽位动态创建按钮。
+        /// 场景预制的 4 个按钮由 EnsureReferences 填充，功法/异能扩展槽（4~7）运行时补建。
+        /// </summary>
+        private void EnsureSkillSlots(int requiredCount)
+        {
+            int current = this.skillButtonImages != null ? this.skillButtonImages.Length : 0;
+            if (requiredCount <= current)
+            {
+                return;
+            }
+
+            this.skillButtonImages = ResizeArray(this.skillButtonImages, requiredCount);
+            this.cooldownOverlays = ResizeArray(this.cooldownOverlays, requiredCount);
+            this.cooldownTexts = ResizeArray(this.cooldownTexts, requiredCount);
+            this.manaCostTexts = ResizeArray(this.manaCostTexts, requiredCount);
+            this.skillNameTexts = ResizeArray(this.skillNameTexts, requiredCount);
+            this.skillLevelTexts = ResizeArray(this.skillLevelTexts, requiredCount);
+            this.hotkeyTexts = ResizeArray(this.hotkeyTexts, requiredCount);
+
+            for (int i = current; i < requiredCount; i++)
+            {
+                this.CreateSingleButton(this.transform, i);
+            }
+        }
+
+        /// <summary>组件数组扩容（保留原元素，空位补 null）。</summary>
+        private static T[] ResizeArray<T>(T[] source, int newSize)
+        {
+            T[] result = new T[newSize];
+            if (source != null)
+            {
+                source.CopyTo(result, 0);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// 刷新所有技能按钮的显示状态。
         /// 从 SkillManager 读取最新数据并更新 UI。
         /// </summary>
@@ -330,12 +368,14 @@ namespace LAB2D.UI
                 return;
             }
 
+            this.EnsureSkillSlots(mgr.Skills.Count);
+
             Player player = Core.ServiceLocator.TryGet(out PlayerManager pm) ? pm.Mine : null;
             int currentMp = player != null && player.CharacterDataLAB != null
                 ? player.CharacterDataLAB.Mp
                 : 0;
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < this.skillButtonImages.Length; i++)
             {
                 SkillData skill = mgr.GetSkill(i);
                 if (skill == null)

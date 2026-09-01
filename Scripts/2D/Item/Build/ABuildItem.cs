@@ -88,6 +88,15 @@ namespace LAB2D.Item.Build
         }
 
         /// <summary>
+        /// 建筑解锁检查提供者 — 返回 false 时拦截玩家手动建造。
+        /// 默认实现查 TechManager（科技未解锁的建筑，如聚灵阵）。
+        /// 可替换为测试桩。注意：只拦 AddBuildTask（玩家放置统一入口），
+        /// 房间墙/农田自动建造走 BuildMap.AddBuild，不经此处，不受影响。
+        /// </summary>
+        public static System.Func<string, bool> UnlockCheckProvider { get; set; }
+            = (tileName) => LAB2D.Gameplay.TechManager.Instance.IsBuildUnlocked(tileName);
+
+        /// <summary>
         /// 添加建造任务。对于多格物品（如 1×2 SingleBed、2×2 DoubleBed）：
         /// 主格注册为建造任务（visual tile + 任务），副格注册为碰撞体（IsComplete=true，无建造任务）。
         /// </summary>
@@ -96,6 +105,24 @@ namespace LAB2D.Item.Build
         /// <param name="priority">任务优先级，默认系统默认</param>
         public virtual void AddBuildTask(Vector3Int centerMap, Extra extra, int priority = WorkerTaskPriority.SystemDefault)
         {
+            // 科技 gating：未解锁的建筑拦截玩家放置（建造列表仍可见，放置时提示）
+            if (!UnlockCheckProvider(this.TileName))
+            {
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] 建造被拦截：{this.TileName} 科技未解锁",
+                    LogManager.LogLevelEnum.Debug);
+                try
+                {
+                    Core.GameServices.ShowTipProvider($"「{this.TileName}」尚未研究解锁，请先在科技面板（T）研究");
+                }
+                catch (Exception)
+                {
+                    // Tip 不可用时静默降级（测试环境）
+                }
+
+                return;
+            }
+
             var buildMap = Core.ServiceLocator.Get<Map.BuildMap>();
             // 使用 extra 中的尺寸（如果有的话），否则使用自身的 Width/Height
             int effectiveWidth = extra?.Width ?? this.Width;

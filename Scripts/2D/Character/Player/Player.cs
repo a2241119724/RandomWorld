@@ -371,6 +371,18 @@ namespace LAB2D.Character.Player
         }
 
         /// <inheritdoc/>
+        public override void Heal(float hp)
+        {
+            if (hp <= 0)
+            {
+                return;
+            }
+
+            // 复用 AddHp：经 ApplyHealingToState 钳制上限并刷新 HUD
+            this.AddHp(hp);
+        }
+
+        /// <inheritdoc/>
         public override void ReduceHp(float hp, Character attacker, bool isCRT = false)
         {
             if (hp <= 0)
@@ -537,12 +549,12 @@ namespace LAB2D.Character.Player
 
         /// <summary>
         /// A008: 处理主动技能快捷键输入。
-        /// Q/E/R/F 分别对应技能槽位 0/1/2/3。
+        /// Q/E/R/F/Z/X/C/V 分别对应技能槽位 0~7（4 个默认 + 4 个功法/异能扩展槽）。
         /// 仅在非 UI 输入模式下生效，不干扰文本输入或面板操作。
         /// </summary>
         private void HandleSkillInput()
         {
-            for (int slotIndex = 0; slotIndex < 4; slotIndex++)
+            for (int slotIndex = 0; slotIndex < LAB2D.Constant.SkillConstant.MaxSkillSlots; slotIndex++)
             {
                 if (UnityPlayerInputAdapter.GetGameplaySkillDown(
                     this.GetInstanceID(),

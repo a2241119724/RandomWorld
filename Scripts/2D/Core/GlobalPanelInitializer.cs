@@ -62,6 +62,12 @@ namespace LAB2D.Core
 
             // 任务栏列表 HUD (数字6键)
             TaskBoardHUD.EnsureRuntimePanel();
+
+            // 修仙面板 (K键，纯代码构建)
+            CultivationPanel.EnsureRuntimePanel();
+
+            // 科技面板 (T键，纯代码构建)
+            TechPanel.EnsureRuntimePanel();
         }
     }
 }

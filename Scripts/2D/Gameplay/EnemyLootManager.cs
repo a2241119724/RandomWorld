@@ -52,6 +52,9 @@ namespace LAB2D.Gameplay
         internal static System.Func<float, float, float> RandomFloatProvider { get; set; }
             = (minInclusive, maxInclusive) => UnityEngine.Random.Range(minInclusive, maxInclusive);
 
+        /// <summary>词条滚动规则（随机提供者由 GrowthBonusService.Install 在启动时注入）。</summary>
+        private static readonly LAB2D.Domain.Item.AffixRuleService AffixRuleService = new LAB2D.Domain.Item.AffixRuleService();
+
         /// <summary>是否已初始化</summary>
         public bool IsInitialized { get; private set; }
 
@@ -307,16 +310,21 @@ namespace LAB2D.Gameplay
             // 随机选择一个装备类型
             AEquipment template = availableEquipment[RandomIntProvider(0, availableEquipment.Count)];
 
-            // 对模板属性应用稀有度倍率
-            EquipmentLootTool.ApplyRarityToAttributes(template.Attribute, rarity);
+            // 克隆后再改属性：物品工厂中的实例是共享模板，直接修改会污染后续掉落与拾取
+            AEquipment drop = template.Clone();
+
+            // 对克隆属性应用稀有度倍率
+            EquipmentLootTool.ApplyRarityToAttributes(drop.Attribute, rarity);
             // 将稀有度写入装备的 Quality 字段，供装备面板持续展示
-            template.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
+            drop.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
+            // 按稀有度滚动随机词条
+            drop.Affixes = AffixRuleService.Roll(rarity);
 
             // 放置装备到地面（装备不可堆叠，TryMergeOrPlaceDrop 自动跳过合并）
             Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(worldPos);
-            ResourceInfo resourceInfo = new ResourceInfo(template.Id, 1) { OwnerId = ownerId };
+            ResourceInfo resourceInfo = new ResourceInfo(drop.Id, 1) { OwnerId = ownerId };
             Vector3Int availablePos = AWorkerTask.TryMergeOrPlaceDrop(
-                posMap, resourceInfo, template.Tile.name);
+                posMap, resourceInfo, drop.Tile.name);
             if (availablePos == default)
             {
                 return false;
@@ -325,10 +333,10 @@ namespace LAB2D.Gameplay
             // 记录待处理掉落，供拾取时对比使用
             PendingEquipmentDrop pending = new PendingEquipmentDrop
             {
-                Equipment = template,
+                Equipment = drop,
                 Rarity = rarity,
                 DropPosition = worldPos,
-                EquipmentId = template.Id,
+                EquipmentId = drop.Id,
                 MapPosition = availablePos,
             };
             this.pendingDrops[availablePos] = pending;
@@ -344,7 +352,7 @@ namespace LAB2D.Gameplay
             string rarityLabel = EquipmentLootTool.FormatRarityLabel(rarity);
             FloatingTextStatusProvider(worldPos, rarityLabel);
 
-            ItemData itemData = AWorkerTask.ItemDataProvider(template.Id);
+            ItemData itemData = AWorkerTask.ItemDataProvider(drop.Id);
             string itemName = itemData != null ? itemData.CnName : template.Id.ToString();
             AWorkerTask.LogProvider(
                 string.Format("装备掉落: {0} [{1}] at ({2:F0},{3:F0}) ownerId={4}",
@@ -387,14 +395,18 @@ namespace LAB2D.Gameplay
             }
 
             AEquipment template = availableEquipment[RandomIntProvider(0, availableEquipment.Count)];
-            EquipmentLootTool.ApplyRarityToAttributes(template.Attribute, rarity);
-            template.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
+
+            // 克隆后再改属性：物品工厂中的实例是共享模板，直接修改会污染后续掉落与拾取
+            AEquipment drop = template.Clone();
+            EquipmentLootTool.ApplyRarityToAttributes(drop.Attribute, rarity);
+            drop.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
+            drop.Affixes = AffixRuleService.Roll(rarity);
 
             // 放置装备到地面（装备不可堆叠，TryMergeOrPlaceDrop 自动跳过合并）
             Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(worldPos);
-            ResourceInfo resourceInfo = new ResourceInfo(template.Id, 1);
+            ResourceInfo resourceInfo = new ResourceInfo(drop.Id, 1);
             Vector3Int availablePos = AWorkerTask.TryMergeOrPlaceDrop(
-                posMap, resourceInfo, template.Tile.name);
+                posMap, resourceInfo, drop.Tile.name);
             if (availablePos == default)
             {
                 return false;
@@ -402,10 +414,10 @@ namespace LAB2D.Gameplay
 
             PendingEquipmentDrop pending = new PendingEquipmentDrop
             {
-                Equipment = template,
+                Equipment = drop,
                 Rarity = rarity,
                 DropPosition = worldPos,
-                EquipmentId = template.Id,
+                EquipmentId = drop.Id,
                 MapPosition = availablePos,
             };
             this.pendingDrops[availablePos] = pending;
@@ -416,7 +428,7 @@ namespace LAB2D.Gameplay
             string rarityLabel = EquipmentLootTool.FormatRarityLabel(rarity);
             FloatingTextStatusProvider(worldPos, rarityLabel);
 
-            ItemData itemData = AWorkerTask.ItemDataProvider(template.Id);
+            ItemData itemData = AWorkerTask.ItemDataProvider(drop.Id);
             string itemName = itemData != null ? itemData.CnName : template.Id.ToString();
             AWorkerTask.LogProvider(
                 string.Format("强制装备掉落: {0} [{1}] at ({2:F0},{3:F0})",
@@ -490,6 +502,13 @@ namespace LAB2D.Gameplay
                 rarity = pending.Rarity;
                 EquipmentLootTool.ApplyRarityToAttributes(equipment.Attribute, rarity);
                 equipment.Quality = EquipmentLootTool.MapRarityToQuality(rarity);
+                // 入包实例是工厂新建的，词条从掉落实例同步（拷贝，避免两实例共享列表）
+                List<LAB2D.Domain.Item.EquipmentAffix> dropAffixes = pending.Equipment?.GetAffixes();
+                if (dropAffixes != null && dropAffixes.Count > 0)
+                {
+                    equipment.Affixes = new List<LAB2D.Domain.Item.EquipmentAffix>(dropAffixes);
+                }
+
                 this.pendingDrops.Remove(foundKey.Value);
             }
 
@@ -591,6 +610,24 @@ namespace LAB2D.Gameplay
             if (this.pendingDrops == null) return null;
             if (this.pendingDrops.TryGetValue(mapPos, out PendingEquipmentDrop pending))
                 return pending.Rarity;
+            return null;
+        }
+
+        /// <summary>
+        /// 取出指定地图坐标的掉落装备实例并从待处理记录移除（不清理光束）。
+        /// Worker 拾取路径使用：带词条的掉落实例随 pendingDrops 记录存储，
+        /// 必须在 RemoveDropByMapPosition 之前取出，否则词条随记录一起丢弃。
+        /// </summary>
+        /// <param name="mapPos">Tilemap 坐标</param>
+        /// <returns>掉落实例（无记录返回 null）</returns>
+        public AEquipment TakeDropInstanceByPos(Vector3Int mapPos)
+        {
+            if (this.pendingDrops != null && this.pendingDrops.TryGetValue(mapPos, out PendingEquipmentDrop pending))
+            {
+                this.pendingDrops.Remove(mapPos);
+                return pending.Equipment;
+            }
+
             return null;
         }
 

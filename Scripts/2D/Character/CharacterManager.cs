@@ -131,6 +131,9 @@ namespace LAB2D.Character
                 // 老档 Mind 可能为 null，此处统一补建（AWorker.Start 与服务方法也有 Ensure 兜底）。
                 if (character is AWorker worker)
                 {
+                    // CharacterData.Character 反向引用是 [NonSerialized]，读档必须重连（仿 PlayerManager），
+                    // 否则 Worker 换装/成长系统的 RecomputeGrowthAttributes 会被静默跳过。
+                    worker.CharacterDataLAB.Character = worker;
                     WorkerMindData.Ensure(worker.CharacterDataLAB as AWorker.WorkerData);
                 }
             }

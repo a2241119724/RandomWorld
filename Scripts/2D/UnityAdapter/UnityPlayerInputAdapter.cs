@@ -39,6 +39,10 @@
             InputKeyConstant.SkillHotkey2,  // E
             InputKeyConstant.SkillHotkey3,  // R
             InputKeyConstant.SkillHotkey4,  // F
+            InputKeyConstant.SkillHotkey5,  // Z
+            InputKeyConstant.SkillHotkey6,  // X
+            InputKeyConstant.SkillHotkey7,  // C
+            InputKeyConstant.SkillHotkey8,  // V
         };
 
         /// <summary>

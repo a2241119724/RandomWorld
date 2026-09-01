@@ -23,6 +23,18 @@ namespace LAB2D.Constant
         /// <summary>治疗之光技能唯一标识</summary>
         public const string SkillHealingLight = "skill_healing_light";
 
+        /// <summary>横扫千军（武学外功）技能唯一标识</summary>
+        public const string SkillSweepAll = "skill_sweep_all";
+
+        /// <summary>破空斩（武学外功）技能唯一标识</summary>
+        public const string SkillSkySplit = "skill_sky_split";
+
+        /// <summary>念力（异能）技能唯一标识</summary>
+        public const string SkillTelekinesis = "skill_telekinesis";
+
+        /// <summary>火球（异能）技能唯一标识</summary>
+        public const string SkillFireBall = "skill_fireball";
+
         #endregion
 
         #region 旋风斩默认参数
@@ -83,6 +95,70 @@ namespace LAB2D.Constant
 
         /// <summary>治疗之光冷却时间（秒）</summary>
         public const float HealingLightCooldown = 12.0f;
+
+        #endregion
+
+        #region 横扫千军默认参数（武学外功）
+
+        /// <summary>横扫千军伤害倍率（基于ATN的倍数）</summary>
+        public const float SweepAllDamageMultiplier = 1.5f;
+
+        /// <summary>横扫千军AOE半径（世界单位）</summary>
+        public const float SweepAllRadius = 3.5f;
+
+        /// <summary>横扫千军法力消耗</summary>
+        public const int SweepAllManaCost = 20;
+
+        /// <summary>横扫千军冷却时间（秒）</summary>
+        public const float SweepAllCooldown = 6.0f;
+
+        #endregion
+
+        #region 破空斩默认参数（武学外功）
+
+        /// <summary>破空斩伤害倍率（基于ATN的倍数）</summary>
+        public const float SkySplitDamageMultiplier = 2.2f;
+
+        /// <summary>破空斩目标索敌半径（世界单位，命中最近的一个敌人）</summary>
+        public const float SkySplitTargetRadius = 5.0f;
+
+        /// <summary>破空斩法力消耗</summary>
+        public const int SkySplitManaCost = 15;
+
+        /// <summary>破空斩冷却时间（秒）</summary>
+        public const float SkySplitCooldown = 4.0f;
+
+        #endregion
+
+        #region 念力默认参数（异能）
+
+        /// <summary>念力索敌半径（世界单位，拉取半径内所有敌人）</summary>
+        public const float TelekinesisRadius = 4.0f;
+
+        /// <summary>念力将敌人拉近的距离（世界单位）</summary>
+        public const float TelekinesisPullDistance = 3.0f;
+
+        /// <summary>念力法力消耗</summary>
+        public const int TelekinesisManaCost = 15;
+
+        /// <summary>念力冷却时间（秒）</summary>
+        public const float TelekinesisCooldown = 12.0f;
+
+        #endregion
+
+        #region 火球默认参数（异能）
+
+        /// <summary>火球伤害倍率（基于INT的倍数）</summary>
+        public const float FireBallDamageMultiplier = 2.5f;
+
+        /// <summary>火球目标索敌半径（世界单位）</summary>
+        public const float FireBallTargetRadius = 5.0f;
+
+        /// <summary>火球法力消耗</summary>
+        public const int FireBallManaCost = 20;
+
+        /// <summary>火球冷却时间（秒）</summary>
+        public const float FireBallCooldown = 5.0f;
 
         #endregion
 
@@ -155,11 +231,19 @@ namespace LAB2D.Constant
         public const string DefaultSkillNameDash = "冲刺";
         public const string DefaultSkillNamePowerSurge = "力量爆发";
         public const string DefaultSkillNameHealingLight = "治疗之光";
+        public const string DefaultSkillNameSweepAll = "横扫千军";
+        public const string DefaultSkillNameSkySplit = "破空斩";
+        public const string DefaultSkillNameTelekinesis = "念力";
+        public const string DefaultSkillNameFireBall = "火球";
 
         public const string DefaultSkillDescWhirlwind = "对周围敌人造成范围伤害";
         public const string DefaultSkillDescDash = "快速冲刺并获得短暂无敌";
         public const string DefaultSkillDescPowerSurge = "短时间内大幅提升攻击力";
         public const string DefaultSkillDescHealingLight = "回复自身生命值";
+        public const string DefaultSkillDescSweepAll = "挥舞兵器横扫周围敌人";
+        public const string DefaultSkillDescSkySplit = "对最近的敌人造成高额单体伤害";
+        public const string DefaultSkillDescTelekinesis = "将周围敌人拉向你";
+        public const string DefaultSkillDescFireBall = "对最近的敌人掷出炽热火球";
 
         public const string ManaInsufficientTip = "法力不足";
         public const string SkillOnCooldownTip = "技能冷却中";
@@ -171,6 +255,9 @@ namespace LAB2D.Constant
 
         /// <summary>HUD 刷新间隔（秒），避免每帧重建UI</summary>
         public const float HudRefreshInterval = 0.2f;
+
+        /// <summary>技能槽位总数（4 个默认技能 + 4 个功法/异能扩展槽）</summary>
+        public const int MaxSkillSlots = 8;
 
         /// <summary>HUD Canvas 渲染排序层级，低于浮动文字(100)和成就弹窗(200)</summary>
         public const int CanvasSortingOrder = 80;

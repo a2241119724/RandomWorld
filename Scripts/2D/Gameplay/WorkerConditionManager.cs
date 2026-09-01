@@ -4,10 +4,14 @@ namespace LAB2D.Gameplay
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
+    using LAB2D.Domain.Gameplay.AwakenedPower;
+    using LAB2D.Domain.Gameplay.Cultivation;
+    using LAB2D.Domain.Gameplay.GongFa;
     using LAB2D.Enum;
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using GrowthData = LAB2D.Domain.Character.Growth.GrowthData;
 
     /// <summary>
     /// 工人饥饿与疲劳状态管理器。
@@ -216,6 +220,8 @@ namespace LAB2D.Gameplay
                     }
 
                     builder.AppendLine(snapshot.ToDisplayLine());
+                    builder.AppendLine(this.BuildLifeSkillLine(worker));
+                    builder.AppendLine(this.BuildCultivationLine(worker));
                 }
             }
             catch (Exception exception)
@@ -224,6 +230,98 @@ namespace LAB2D.Gameplay
             }
 
             return builder.ToString();
+        }
+
+        /// <summary>
+        /// 拼接单个工人的生活技能进度行（伐木/采矿/农耕 Lv+进度）。
+        /// 无任何经验时不显示（返回空串，避免多工人 HUD 空行噪音）。
+        /// </summary>
+        private string BuildLifeSkillLine(AWorker worker)
+        {
+            AWorker.WorkerData workerData = worker?.CharacterDataLAB as AWorker.WorkerData;
+            if (workerData == null)
+            {
+                return string.Empty;
+            }
+
+            workerData.EnsureLifeSkills();
+
+            StringBuilder builder = new StringBuilder(96);
+            builder.Append("生活技能: ");
+            bool anyXp = false;
+            foreach (LifeSkillType skill in Domain.Worker.LifeSkillRuleService.AllSkills)
+            {
+                workerData.LifeSkillXp.TryGetValue(skill, out float xp);
+                anyXp |= xp > 0f;
+                int level = Domain.Worker.LifeSkillRuleService.LevelOf(xp);
+                float next = Domain.Worker.LifeSkillRuleService.XpToNextLevel(xp);
+                string progress = next < 0f ? "MAX" : $"{xp:F0}/{next:F0}";
+                builder.Append($"{Domain.Worker.LifeSkillRuleService.GetName(skill)}Lv{level}({progress}) ");
+            }
+
+            return anyXp ? builder.ToString().TrimEnd() : string.Empty;
+        }
+
+        /// <summary>
+        /// 拼接单个 Worker 的修仙进度行（境界/灵气/灵根/运转内功/觉醒异能）。
+        /// 尚未踏入修炼（无灵气/境界/功法/异能）时不显示（返回空串，避免多工人 HUD 空行噪音）。
+        /// </summary>
+        private string BuildCultivationLine(AWorker worker)
+        {
+            AWorker.WorkerData workerData = worker?.CharacterDataLAB as AWorker.WorkerData;
+            if (workerData == null)
+            {
+                return string.Empty;
+            }
+
+            GrowthData.Ensure(ref workerData.Growth);
+            GrowthData growth = workerData.Growth;
+
+            bool hasQi = growth.Qi > 0f;
+            bool hasGongFa = growth.LearnedGongFaIds != null && growth.LearnedGongFaIds.Count > 0;
+            bool hasPower = growth.AwakenedPowerIds != null && growth.AwakenedPowerIds.Count > 0;
+            if (!hasQi && growth.RealmIndex <= 0 && !hasGongFa && !hasPower)
+            {
+                return string.Empty;
+            }
+
+            RealmDef realm = RealmRuleService.GetRealm(growth);
+            StringBuilder builder = new StringBuilder(96);
+            builder.Append($"修炼: {realm.Name}(灵气 {growth.Qi:F0}/{realm.QiToNext:F0})");
+
+            // 灵根（五行中文名连写，如"金木"）
+            if (growth.LingGenElements != null && growth.LingGenElements.Count > 0)
+            {
+                builder.Append(" 灵根:");
+                foreach (int element in growth.LingGenElements)
+                {
+                    builder.Append(LingGenRuleService.GetElementName((Element)element));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(growth.ActiveNeiGongId))
+            {
+                GongFaDef neiGong = GongFaLibrary.Get(growth.ActiveNeiGongId);
+                if (neiGong != null)
+                {
+                    builder.Append($" | 运转:{neiGong.Name}");
+                }
+            }
+
+            if (hasPower)
+            {
+                builder.Append(" | 异能:");
+                foreach (string powerId in growth.AwakenedPowerIds)
+                {
+                    AwakenedPowerDef power = AwakenedPowerLibrary.Get(powerId);
+                    if (power != null)
+                    {
+                        builder.Append(power.Name).Append(' ');
+                    }
+                }
+            }
+
+            return builder.ToString().TrimEnd();
         }
 
         /// <summary>

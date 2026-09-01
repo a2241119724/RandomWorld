@@ -1773,6 +1773,13 @@ namespace LAB2D.Character.Worker
             public Dictionary<WorkerTaskType, float> SkillProficiencies;
 
             /// <summary>
+            /// 生活技能累计经验 — 伐木/采矿/农耕用进废退，等级提升对应工作速度（见 LifeSkillRuleService）。
+            /// Key: LifeSkillType, Value: 累计经验。读旧档可能为 null（BinaryFormatter 不跑构造函数），
+            /// 使用前需 EnsureLifeSkills 兜底。
+            /// </summary>
+            public Dictionary<LAB2D.Enum.LifeSkillType, float> LifeSkillXp;
+
+            /// <summary>
             /// 心智层数据（记忆/信念/怨恨/感恩/执念/漂移/关系）— 让 Worker 有自己的思想、未来不可控。
             /// 读旧档可能为 null（BinaryFormatter 不跑构造函数），需 WorkerMindData.Ensure 兜底。
             /// </summary>
@@ -1792,7 +1799,19 @@ namespace LAB2D.Character.Worker
                 this.Storage = new Dictionary<int, ResourceInfo>();
                 this.CarriedResources = new Dictionary<int, ResourceInfo>();
                 this.SkillProficiencies = new Dictionary<WorkerTaskType, float>();
+                this.LifeSkillXp = new Dictionary<LAB2D.Enum.LifeSkillType, float>();
                 this.Mind = new Domain.Worker.WorkerMindData();
+            }
+
+            /// <summary>
+            /// 生活技能字典兜底：读档后为 null 时补建（BinaryFormatter 不跑构造函数），幂等。
+            /// </summary>
+            public void EnsureLifeSkills()
+            {
+                if (this.LifeSkillXp == null)
+                {
+                    this.LifeSkillXp = new Dictionary<LAB2D.Enum.LifeSkillType, float>();
+                }
             }
         }
     }

@@ -9,6 +9,7 @@ namespace LAB2D.Character
     using LAB2D.Serializable;
     using LAB2D.UnityAdapter;
     using LAB2D.Domain.Character;
+    using LAB2D.Domain.Character.Growth;
     using LAB2D.Domain.Common;
     using System;
     using System.Collections.Generic;
@@ -280,6 +281,38 @@ namespace LAB2D.Character
         }
 
         /// <summary>
+        /// 成长系统触发的属性重算入口（境界突破/功法激活等）—
+        /// 用当前基础属性重算，成长源（词条/境界永久加成等）一并生效。
+        /// </summary>
+        public void RecomputeGrowthAttributes()
+        {
+            if (this.CharacterDataLAB != null)
+            {
+                this.CharacterDataLAB.ComputeAttribute(this.basicAttribute, this.IsPlayerCharacter, this.IsWorkerCharacter);
+            }
+        }
+
+        /// <summary>
+        /// 回血统一入口（词条吸血等成长系统使用）— 默认只改数据并钳制上限；
+        /// Player override 额外刷新 HUD。
+        /// </summary>
+        /// <param name="hp">回复量</param>
+        public virtual void Heal(float hp)
+        {
+            if (hp <= 0 || this.CharacterDataLAB == null)
+            {
+                return;
+            }
+
+            if (this.CharacterDataLAB.Hp < this.CharacterDataLAB.MaxHp)
+            {
+                this.CharacterDataLAB.Hp = System.Math.Min(
+                    this.CharacterDataLAB.Hp + hp,
+                    this.CharacterDataLAB.MaxHp);
+            }
+        }
+
+        /// <summary>
         /// 升级提示提供者 — 当角色升级时显示视觉提示。
         /// 默认实现访问 ServiceLocator.Get&lt;GlobalInit&gt;().ShowTip。
         /// 可替换为测试桩或自定义实现。
@@ -529,6 +562,36 @@ namespace LAB2D.Character
             /// </summary>
             private Dictionary<AEquipment.EquipTypeEnum, AEquipment> equipments;
 
+            /// <summary>
+            /// 生命上限基数 — MaxHp 变为派生值：MaxHp = BaseMaxHp + 成长加成。
+            /// 0 表示未捕获（首次 ComputeAttribute 时以当前 MaxHp 为基数）。
+            /// </summary>
+            public float BaseMaxHp;
+
+            /// <summary>
+            /// 法力上限基数 — 语义同 BaseMaxHp。
+            /// </summary>
+            public int BaseMaxMp;
+
+            /// <summary>
+            /// 成长数据（灵根/境界/功法/异能）— 随 CharacterManager 存档整体序列化。
+            /// </summary>
+            public GrowthData Growth;
+
+            /// <summary>
+            /// 成长源收集提供者 — 汇总词条/内功/灵根/境界等成长系统对本角色的加成。
+            /// 默认实现返回空结果（各成长系统接线后由 GrowthBonusService 替换）；
+            /// 可替换为测试桩（仿 EquipmentSwapDropProvider 先例）。
+            /// </summary>
+            public static System.Func<CharacterData, GrowthSourceResult> GrowthCollectProvider { get; set; }
+                = data => new GrowthSourceResult();
+
+            /// <summary>
+            /// 灵根生成提供者 — 玩家首次属性重算时随机五行灵根（终身不变）。
+            /// 默认 null（不生成）；由 GrowthBonusService.Install 注入 LingGenRuleService.RollIfNotGenerated。
+            /// </summary>
+            public static System.Action<GrowthData, bool> LingGenRollProvider { get; set; }
+
             [NonSerialized]
             private Character character;
 
@@ -635,6 +698,24 @@ namespace LAB2D.Character
             /// <param name="isWorker">是否为 Worker — Worker 获得减半的等级加成。</param>
             public void ComputeAttribute(Attribute basicAttribute, bool isPlayer, bool isWorker = false)
             {
+                // 成长数据兜底（BinaryFormatter 反序列化不跑字段初始化器，读档后可能为 null）
+                GrowthData.Ensure(ref this.Growth);
+
+                // 玩家与 Worker 首次重算时生成灵根（终身不变；Enemy/已生成为空操作）
+                LingGenRollProvider?.Invoke(this.Growth, isPlayer || isWorker);
+
+                // 基数捕获：从未设置（<=0）时以当前值为基数，兼容创建器直接赋 MaxHp/MaxMp 的旧路径；
+                // 此后 MaxHp/MaxMp 变为派生值 = 基数 + 成长加成
+                if (this.BaseMaxHp <= 0)
+                {
+                    this.BaseMaxHp = this.MaxHp > 0 ? this.MaxHp : 100f;
+                }
+
+                if (this.BaseMaxMp <= 0)
+                {
+                    this.BaseMaxMp = this.MaxMp > 0 ? this.MaxMp : 100;
+                }
+
                 BattleStats baseStats = ConvertAttributeToBattleStats(basicAttribute);
                 BattleStats? weaponBStats = null;
                 if (this.weapon != null)
@@ -652,13 +733,16 @@ namespace LAB2D.Character
                     }
                 }
 
+                GrowthSourceResult growth = GrowthCollectProvider(this);
+
                 BattleStats result = attributeCalcService.ComputeFinalStats(
                     baseStats,
                     this.Level,
                     isPlayer,
                     isWorker,
                     weaponBStats,
-                    equipmentBStats);
+                    equipmentBStats,
+                    growth.Sources);
 
                 this.ATN = result.ATN;
                 this.INT = result.INT;
@@ -668,6 +752,22 @@ namespace LAB2D.Character
                 this.CSD = result.CSD;
                 this.SPD = result.SPD;
                 this.HIT = result.HIT;
+
+                // 生命/法力上限 = 基数 + 成长加成，并钳制当前值不越界
+                this.MaxHp = this.BaseMaxHp + growth.Special.MaxHpFlat;
+                this.MaxMp = this.BaseMaxMp + (int)growth.Special.MaxMpFlat;
+                if (this.Hp > this.MaxHp)
+                {
+                    this.Hp = this.MaxHp;
+                }
+
+                if (this.Mp > this.MaxMp)
+                {
+                    this.Mp = this.MaxMp;
+                }
+
+                // 特殊维度快照（吸血/反伤/回蓝/修炼速度）写回成长数据，供战斗事件点与 Tick 消费
+                this.Growth.Special = growth.Special;
             }
 
             private static BattleStats ConvertAttributeToBattleStats(Attribute attr)

@@ -535,3 +535,18 @@
   - **`LayerMask.GetMask`（内部 NameToLayer）不能在 MonoBehaviour 的静态字段初始化器里调用**——实例化 prefab（MonoBehaviour 构造路径）触发 cctor 时 Unity 直接抛 `TypeInitializationException`。普通 C# 类（如 ASeek 的 `s_wallLayerMask`）不受限，照抄进 MonoBehaviour 子类必炸；改实例字段在 `Start()` 赋值。
 - **追加（同日）——水/山地形避让失效根因**：地形 tile 碰撞整体探不到，非水特有。`TileMap.Awake` 中 `chunksRoot = new GameObject("TileChunks")`（默认 **Default 层**，SetParent 不继承 layer），而全部 chunk 的 TilemapCollider2D `usedByComposite=true` 后几何被吸收、碰撞由挂在该 chunksRoot 上的 **CompositeCollider2D** 统一提供（TileMap.cs:175）→ 地图 tile 碰撞实际都在 Default 层：mask=`Tile` 的射线**探不到**（山/水/地形全中招），但碰撞接触照常（Default↔角色默认允许）→"物理挡得住、射线探不到"。建造墙（BuildMap 场景物体、层正确）能探到，故此前验证"避让了"实为 BuildTile。**修复**：chunksRoot 创建后显式 `layer = this.gameObject.layer`；已核对 Physics2D 碰撞矩阵 Default 行与 Tile 行均全开、各角色行 bit6 均开，改层零行为变化。**连带的正向修复**：ASeek 的墙壁 CircleCast（`s_wallLayerMask=Tile/BuildTile`）此前对地图 tile 同样从未命中，Worker 对山/水的贴墙滑动自此恢复生效。
 - **教训（追加）**：**运行时 `new GameObject` 默认 Default 层，SetParent 不继承 layer**——把碰撞体挂到运行时创建的物体上必须显式设层，否则"物理交互正常、LayerMask 查询全哑"这类症状极难从表现推断；Physics2D collision matrix 要同时核对旧行/新行与相对位的对称性，确认改层零副作用。
+
+## 2026-09-01 TechPanel 从未创建（BuildUI 双调用 + Image DisallowMultipleComponent）
+
+- **现象**：K 键 CultivationPanel 正常，TechPanel 节点在 Hierarchy 中不存在（T/F12 均无反应）。用户先疑热键失效，实为面板未创建。
+- **根因**（三段链条，`[PanelDiag]` 诊断日志 + Editor.log 堆栈实锤）：
+  1. `AddComponent<TechPanel>()` 触发 Awake → `BuildUI` 第 1 遍（节点 active，正常建完）；
+  2. `EnsureRuntimePanel` 创建分支又显式调 `BuildUI()` 第 2 遍（此时节点已被第 1 遍末尾 `SetActive(false)`）——第 2 遍再次 `AddComponent<Image>()` 时，**`Image` 带 `[AddComponentMenu]` 特性 → 隐含 `DisallowMultipleComponent`** → 同物体重复添加**返回 null（不报错）** → `bg.color` NRE（CultivationPanel.cs:115）；
+  3. 异常传播出 `EnsureRuntimePanel` → `GlobalPanelInitializer.InitializeAll` 中断 → **下一行 `TechPanel.EnsureRuntimePanel()` 永不执行**。CultivationPanel"看似正常"只因节点与 runtimeInstance 在炸前已就绪（用的是第 1 遍成品，代价是全部子物体重复建了一份叠着）。
+- **修复**：两面板（CultivationPanel/TechPanel）对称——`BuildUI` 加 `uiBuilt` 防重入守卫（重复调用直接 return）；`Awake` 改判 `uiBuilt`；`EnsureRuntimePanel` existing 分支补 `if (!runtimeInstance.uiBuilt) BuildUI()`（inactive 场景节点上 AddComponent 不触发 Awake，rootObj 会是 null）。
+- **验证**：重新编译后 Play，game.log 应见两面板 EnsureRuntimePanel 各自走完（"进入→parent=UI→创建→BuildUI 开始→完成→EnsureRuntimePanel 完成"四件套），Hierarchy 的 UI 节点下 TechPanel 存在，T 键可开关；Console 无 NRE。
+- **教训**：
+  - **`[AddComponentMenu]` 特性隐含 DisallowMultipleComponent，重复 AddComponent 返回 null 而非抛错**——"AddComponent 后立刻取返回值解引用"的代码在双调用路径下必炸，且炸点是返回值 null 的 NRE 而非 AddComponent 本身。
+  - **纯代码构建 UI 的面板，BuildUI 必须防重入**——Awake（AddComponent 同步触发）与工厂方法显式调用天然构成双调用。
+  - **InitializeAll 这类顺序初始化清单对异常零防御**：任何一项抛异常，其后的面板全部静默消失且游戏照常运行（异常只在 Console 红字一次），表现为"某个面板没了"这种点状症状。`[PanelDiag]` 事件点日志（进入/分支/完成）+ game.log 是定位此类"静默中断"的最短路径。
+- **追加（同日）——形态已改**：用户随后**直接在场景中拷贝创建了两个面板节点**，两面板已删除全部代码自建逻辑（创建分支/BuildUI/构建辅助/尺寸常量）。现形态：`EnsureRuntimePanel` 仅按名查找绑定（UIRoot 下 `Find` → `GameObject.Find` 兜底，找不到 Error 不自建），`BindSceneUI` 按**固定子物体名**回填字段引用并 `AddListener`（Info/ButtonRow/MeditateBtn/BreakthroughBtn/GongFaRow{i}/GongFaBtn{i}/TechRow{i}/TechBtn{i}）——**场景子物体改名会静默断绑定**（RefreshPanel 判 null 跳过、按钮无响应），改名时须同步 `BindSceneUI`。

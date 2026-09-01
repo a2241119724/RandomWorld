@@ -72,6 +72,13 @@ namespace LAB2D.Character.Worker.Task.Individual
                     workerData.CurMorale + Constant.WorkerConditionConstant.MoraleSleepRestoreOnGround);
                 workerData.GroundSleepCount++;
             }
+
+            // 睡觉即打坐吐纳：按睡眠时长积累灵气（床睡全额，地面睡半额——鼓励建床）；
+            // 突破不在此结算（被打断走 GiveUpTask 不会 Finish），由 CultivationManager 扫描统一处理
+            CultivationManager.Instance.MeditateFor(
+                workerData,
+                WorkerTaskTimeConfig.SleepSeconds,
+                worker.BedItem != null ? 1f : CultivationManager.GroundSleepQiScale);
         }
 
         /// <inheritdoc/>

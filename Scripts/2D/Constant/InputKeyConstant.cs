@@ -69,7 +69,7 @@ namespace LAB2D.Constant
 
         #endregion
 
-        #region HUD 显示/隐藏切换 (F1-F8功能键)
+        #region HUD 显示/隐藏切换 (F1-F7/F9-F11功能键 + K/T)
 
         /// <summary>
         /// 游戏统计 HUD 显示/隐藏 (F1键)
@@ -149,6 +149,20 @@ namespace LAB2D.Constant
         /// </summary>
         public const KeyCode ToggleColonyCommandCenterHud = KeyCode.F9;
 
+        /// <summary>
+        /// 修仙面板 显示/隐藏 (K键)
+        /// 切换显示灵根、境界、灵气进度，并提供打坐/突破按钮。
+        /// 仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleCultivationHud = KeyCode.K;
+
+        /// <summary>
+        /// 科技面板 显示/隐藏 (T键)
+        /// 切换显示研究点、研究台产出与科技研究按钮。
+        /// 仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleTechHud = KeyCode.T;
+
         #endregion
 
         #region 主动技能快捷键 (Q/E/R/F)
@@ -177,6 +191,30 @@ namespace LAB2D.Constant
         /// 激活技能栏第4个技能（默认：治疗之光）。
         /// </summary>
         public const KeyCode SkillHotkey4 = KeyCode.F;
+
+        /// <summary>
+        /// 主动技能槽位5快捷键 (Z键)
+        /// 激活技能栏第5个技能（默认无，学习武学外功后注册）。
+        /// </summary>
+        public const KeyCode SkillHotkey5 = KeyCode.Z;
+
+        /// <summary>
+        /// 主动技能槽位6快捷键 (X键)
+        /// 激活技能栏第6个技能（默认无，学习武学外功后注册）。
+        /// </summary>
+        public const KeyCode SkillHotkey6 = KeyCode.X;
+
+        /// <summary>
+        /// 主动技能槽位7快捷键 (C键)
+        /// 激活技能栏第7个技能（默认无，学习功法/异能后注册）。
+        /// </summary>
+        public const KeyCode SkillHotkey7 = KeyCode.C;
+
+        /// <summary>
+        /// 主动技能槽位8快捷键 (V键)
+        /// 激活技能栏第8个技能（默认无，学习功法/异能后注册）。
+        /// </summary>
+        public const KeyCode SkillHotkey8 = KeyCode.V;
 
         #endregion
 
@@ -293,10 +331,12 @@ namespace LAB2D.Constant
   F5       —— 工人状态 HUD (饥饿/疲劳)
   F6       —— 工人补给缺口 HUD (食物/床位)
   F7       —— 任务栏列表 HUD
+  K        —— 修仙面板 (灵根/境界/打坐/突破)
   F9       —— 殖民地指挥中心 HUD
   F10      —— 工人任务队列 HUD
   6        —— 房间列表面板
   F11      —— 好感度 HUD (对玩家好感/态度)
+  T        —— 科技面板 (研究点/科技研究)
   9        —— 成就面板
   0        —— 装备面板切换
 

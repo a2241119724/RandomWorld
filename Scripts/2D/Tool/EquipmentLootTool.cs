@@ -2,6 +2,7 @@ namespace LAB2D.Tool
 {
     using LAB2D;
     using LAB2D.Domain.Gameplay;
+    using LAB2D.Domain.Item;
     using LAB2D.Enum;
     using LAB2D.Item.Backpack;
     using LAB2D.Item.Backpack.Equipment;
@@ -250,6 +251,27 @@ namespace LAB2D.Tool
             return string.Format(
                 "ATN:{0:F0} INT:{1:F0} DEF:{2:F0} RES:{3:F0} CRT:{4:F2} CSD:{5:F1} SPD:{6:F0} HIT:{7:F0}",
                 attr.ATN, attr.INT, attr.DEF, attr.RES, attr.CRT, attr.CSD, attr.SPD, attr.HIT);
+        }
+
+        /// <summary>
+        /// 格式化词条为单行显示文本（用于装备详情）。
+        /// 比例词条按百分比显示，平坦词条保留一位小数。
+        /// </summary>
+        /// <param name="affix">词条条目</param>
+        /// <returns>格式化文本</returns>
+        public static string FormatAffix(EquipmentAffix affix)
+        {
+            if (affix == null) return string.Empty;
+
+            switch (affix.Type)
+            {
+                case EquipmentAffixType.FlatAtn:   return $"物理攻击 +{affix.Value:F1}";
+                case EquipmentAffixType.FlatInt:   return $"魔法攻击 +{affix.Value:F1}";
+                case EquipmentAffixType.MaxHp:     return $"生命上限 +{affix.Value:F0}";
+                case EquipmentAffixType.Lifesteal: return $"吸血 {affix.Value:P1}";
+                case EquipmentAffixType.Reflect:   return $"反伤 {affix.Value:P1}";
+                default:                           return $"未知词条 +{affix.Value:F2}";
+            }
         }
 
         /// <summary>

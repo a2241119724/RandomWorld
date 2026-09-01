@@ -60,6 +60,18 @@ namespace LAB2D.Gameplay
             };
 
         /// <summary>
+        /// 敌人拉取提供者 — 将敌人朝目标世界坐标拉近 pullDistance（念力技能）。
+        /// 默认实现按 Transform.position 线性趋近，不穿过玩家。
+        /// </summary>
+        internal static System.Action<AEnemy, GameVector2, float> EnemyPullProvider { get; set; }
+            = (enemy, targetPos, pullDistance) =>
+            {
+                UnityEngine.Vector3 target = UnityVectorAdapter.ToUnityVector3(targetPos, 0f);
+                enemy.transform.position = UnityEngine.Vector3.MoveTowards(
+                    enemy.transform.position, target, pullDistance);
+            };
+
+        /// <summary>
         /// 玩家朝向方向提供者 — 基于 Animator Direction 参数返回方向向量（Domain 类型）。
         /// 上=0:(0,1), 下=1:(0,-1), 左=2:(-1,0), 右=3:(1,0)。默认返回 (1,0)。
         /// </summary>
@@ -142,6 +154,8 @@ namespace LAB2D.Gameplay
                 { SkillType.Movement, this.ExecuteMovement },
                 { SkillType.SelfBuff, this.ExecuteSelfBuff },
                 { SkillType.SelfHeal, this.ExecuteSelfHeal },
+                { SkillType.SingleTarget, this.ExecuteSingleTarget },
+                { SkillType.Pull, this.ExecutePull },
             };
 
             this.Skills = new List<SkillData>
@@ -255,6 +269,12 @@ namespace LAB2D.Gameplay
                 return false;
             }
 
+            // 目标检查（单体技能无目标时不进入冷却与扣蓝）
+            if (skill.SkillType == SkillType.SingleTarget && !this.HasValidTarget(skill, player))
+            {
+                return false;
+            }
+
             // 法力检查
             GameCharacter.CharacterData playerData = player.CharacterDataLAB;
             if (!SkillTool.HasEnoughMana(playerData.Mp, skill.ManaCost))
@@ -347,6 +367,86 @@ namespace LAB2D.Gameplay
             }
 
             return this.Skills[slotIndex];
+        }
+
+        /// <summary>
+        /// 注册学习功法获得的主动技能（外功招式），分配 Skills.Count 之后的扩展槽位。
+        /// </summary>
+        /// <param name="gongFa">功法定义（非内功，SkillId 指向 SkillData 工厂）。</param>
+        /// <returns>是否注册成功（false=已注册或槽位已满）。</returns>
+        public bool RegisterGongFaSkill(Domain.Gameplay.GongFa.GongFaDef gongFa)
+        {
+            if (gongFa == null || gongFa.IsNeiGong || string.IsNullOrEmpty(gongFa.SkillId))
+            {
+                return false;
+            }
+
+            return this.RegisterExtraSkill(CreateExtraSkill(gongFa.SkillId), gongFa.Name);
+        }
+
+        /// <summary>
+        /// 通用扩展技能注册（功法外功/异能共用）：幂等（同 SkillId 跳过），
+        /// 槽位满（<see cref="SkillConstant.MaxSkillSlots"/>）时拒绝，SlotIndex = Skills.Count 递增。
+        /// </summary>
+        /// <param name="skill">待注册技能数据（null 拒绝）。</param>
+        /// <param name="displayName">日志用显示名。</param>
+        /// <returns>是否注册成功。</returns>
+        public bool RegisterExtraSkill(SkillData skill, string displayName)
+        {
+            if (!this.IsInitialized || skill == null)
+            {
+                return false;
+            }
+
+            foreach (SkillData existing in this.Skills)
+            {
+                if (existing.SkillId == skill.SkillId)
+                {
+                    return false;
+                }
+            }
+
+            if (this.Skills.Count >= SkillConstant.MaxSkillSlots)
+            {
+                return false;
+            }
+
+            skill.SlotIndex = this.Skills.Count;
+            this.Skills.Add(skill);
+            AWorkerTask.LogProvider(
+                $"[SkillDiag] 扩展技能 {displayName} 注册为技能槽 {skill.SlotIndex}（{skill.SkillId}）",
+                LogManager.LogLevelEnum.Debug);
+            return true;
+        }
+
+        /// <summary>
+        /// 扩展技能 Id → SkillData 工厂（功法外功 + 异能，按 SkillId 分派）。
+        /// </summary>
+        internal static SkillData CreateExtraSkill(string skillId)
+        {
+            switch (skillId)
+            {
+                case SkillConstant.SkillSweepAll:
+                    return SkillData.CreateSweepAll();
+                case SkillConstant.SkillSkySplit:
+                    return SkillData.CreateSkySplit();
+                case SkillConstant.SkillTelekinesis:
+                    return SkillData.CreateTelekinesis();
+                case SkillConstant.SkillFireBall:
+                    return SkillData.CreateFireBall();
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// 单体技能是否有有效目标（索敌半径内存在存活敌人）。
+        /// </summary>
+        private bool HasValidTarget(SkillData skill, Player player)
+        {
+            List<AEnemy> enemies = SkillTool.GetEnemiesInRadius(
+                UnityVectorAdapter.ToUnityVector3(PlayerWorldPositionProvider(player), 0f), skill.AoeRadius);
+            return enemies != null && enemies.Count > 0;
         }
 
         /// <summary>
@@ -466,6 +566,97 @@ FloatingTextDamageProvider(
                         EnemyWorldPositionProvider(enemy), finalDamage, false, false);
                 }
             }
+        }
+
+        /// <summary>
+        /// 执行单体攻击：对索敌半径（AoeRadius 复用）内最近的一个敌人造成高额伤害。
+        /// </summary>
+        private void ExecuteSingleTarget(SkillData skill, Player player)
+        {
+            GameVector2 playerPos = PlayerWorldPositionProvider(player);
+            List<AEnemy> enemies = SkillTool.GetEnemiesInRadius(
+                UnityVectorAdapter.ToUnityVector3(playerPos, 0f), skill.AoeRadius);
+            if (enemies == null || enemies.Count == 0)
+            {
+                return;
+            }
+
+            // 取最近的一个敌人（GetEnemiesInRadius 结果无序，这里按距离取最小）
+            AEnemy target = null;
+            float nearestSqr = float.MaxValue;
+            foreach (AEnemy enemy in enemies)
+            {
+                if (enemy == null)
+                {
+                    continue;
+                }
+
+                float sqr = EnemyWorldPositionProvider(enemy).SqrDistanceTo(playerPos);
+                if (sqr < nearestSqr)
+                {
+                    nearestSqr = sqr;
+                    target = enemy;
+                }
+            }
+
+            if (target == null || target.CharacterDataLAB == null || target.CharacterDataLAB.Hp <= 0)
+            {
+                return;
+            }
+
+            float damage = SkillTool.CalculateSkillDamage(
+                GetDamageBaseStat(player.CharacterDataLAB, skill.ScaleByInt), skill.EffectMultiplier, skill.Level);
+
+            float buffMult = this.GetActiveAttackBuffMultiplier();
+            float finalDamage = damage * buffMult;
+
+            // 对敌人施加防御减免，与 SelfAOE 同一公式
+            float defReduction = finalDamage * target.CharacterDataLAB.DEF / 10f;
+            finalDamage -= defReduction;
+            finalDamage = System.Math.Max(1f, finalDamage);
+
+            // 通过 Character.ReduceHp 走标准伤害管道（含浮动文字、统计等）
+            target.ReduceHp(finalDamage, player, false);
+
+            FloatingTextDamageProvider(
+                EnemyWorldPositionProvider(target), finalDamage, false, false);
+        }
+
+        /// <summary>
+        /// 伤害基数属性：精神系技能（ScaleByInt）用 INT，其余默认 ATN。
+        /// </summary>
+        private static float GetDamageBaseStat(GameCharacter.CharacterData playerData, bool scaleByInt)
+        {
+            return scaleByInt ? playerData.INT : playerData.ATN;
+        }
+
+        /// <summary>
+        /// 执行聚怪：将索敌半径（AoeRadius 复用）内所有敌人向玩家拉近（BuffDuration 复用为拉近距离）。
+        /// 位移经 EnemyPullProvider 静态缝执行，测试可替换。
+        /// </summary>
+        private void ExecutePull(SkillData skill, Player player)
+        {
+            GameVector2 playerPos = PlayerWorldPositionProvider(player);
+            List<AEnemy> enemies = SkillTool.GetEnemiesInRadius(
+                UnityVectorAdapter.ToUnityVector3(playerPos, 0f), skill.AoeRadius);
+            if (enemies == null)
+            {
+                return;
+            }
+
+            foreach (AEnemy enemy in enemies)
+            {
+                if (enemy == null || enemy.CharacterDataLAB == null || enemy.CharacterDataLAB.Hp <= 0)
+                {
+                    continue;
+                }
+
+                EnemyPullProvider(enemy, playerPos, skill.BuffDuration);
+            }
+
+            AWorkerTask.LogProvider(
+                $"[SkillDiag] 念力拉怪 {enemies.Count} 个（半径 {skill.AoeRadius:F1}）",
+                LogManager.LogLevelEnum.Trace);
         }
 
         /// <summary>

@@ -238,6 +238,12 @@ namespace LAB2D.Character.Worker.Task
             }
         }
 
+        /// <summary>
+        /// 采集任务的生活技能：地形挖掘（山/矿石）→ 采矿，资源采集（树）→ 伐木。
+        /// </summary>
+        public override LAB2D.Enum.LifeSkillType? GrantedLifeSkill
+            => this.isTerrainDig ? LAB2D.Enum.LifeSkillType.Mining : LAB2D.Enum.LifeSkillType.Felling;
+
         /// <inheritdoc/>
         protected override bool DoIsCanWork(AWorker worker)
         {

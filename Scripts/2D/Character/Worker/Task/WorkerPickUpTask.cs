@@ -135,12 +135,14 @@ namespace LAB2D.Character.Worker.Task
             // 从地面移除掉落物
             ItemMapProvider().PickUpFromDrop(posMap, this.groundResource);
 
-            // 清除掉落物光束特效和待处理记录
+            // 先取出带词条的掉落实例（RemoveDropByMapPosition 会连记录一起清掉），
+            // 再清除掉落物光束特效和待处理记录
+            AEquipment droppedEquipment = EnemyLootProvider().TakeDropInstanceByPos(posMap);
             EquipmentBeamProvider().TryRemoveBeamAt(posMap);
             EnemyLootProvider().RemoveDropByMapPosition(posMap);
 
             // 装备/武器智能穿戴：对比身上穿的，哪个好穿哪个，没有直接穿
-            bool isEquipped = TryEquipIfBetter(worker, this.groundResource, posMap);
+            bool isEquipped = TryEquipIfBetter(worker, this.groundResource, posMap, droppedEquipment);
 
             if (!isEquipped)
             {
@@ -314,8 +316,9 @@ namespace LAB2D.Character.Worker.Task
         /// <param name="worker">执行拾取的 Worker</param>
         /// <param name="resource">拾取的资源信息</param>
         /// <param name="posMap">拾取位置（旧装备交换时放回此位置）</param>
+        /// <param name="droppedEquipment">地面掉落实例（可能携带随机词条，null=普通物品）</param>
         /// <returns>true 表示已装备处理（不需要再放入背包）</returns>
-        private bool TryEquipIfBetter(AWorker worker, ResourceInfo resource, Vector3Int posMap)
+        private bool TryEquipIfBetter(AWorker worker, ResourceInfo resource, Vector3Int posMap, AEquipment droppedEquipment)
         {
             AItem.ItemTypeEnum itemType = ItemTypeProvider(resource.Id);
             if (itemType != AItem.ItemTypeEnum.Equipment && itemType != AItem.ItemTypeEnum.Weapon)
@@ -324,6 +327,16 @@ namespace LAB2D.Character.Worker.Task
             ItemData itemData = ItemDataProvider(resource.Id);
             ABackpackItem item = ItemFactoryProvider(itemData.Name);
             AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
+
+            // 入包实例是工厂新建的（无词条），词条从掉落实例同步（拷贝，避免两实例共享列表）
+            if (item is AEquipment freshEquip && droppedEquipment != null)
+            {
+                List<Domain.Item.EquipmentAffix> dropAffixes = droppedEquipment.GetAffixes();
+                if (dropAffixes != null && dropAffixes.Count > 0)
+                {
+                    freshEquip.Affixes = new List<Domain.Item.EquipmentAffix>(dropAffixes);
+                }
+            }
 
             if (item is AWeapon newWeapon)
             {

@@ -2,7 +2,9 @@ namespace LAB2D.Item.Backpack.Equipment
 {
     using LAB2D;
     using Character = LAB2D.Character.Character;
+    using LAB2D.Domain.Item;
     using System;
+    using System.Collections.Generic;
 
     /// <summary>
     /// 装备
@@ -25,6 +27,40 @@ namespace LAB2D.Item.Backpack.Equipment
         /// 装备信息
         /// </summary>
         public Character.Attribute Attribute = new ();
+
+        /// <summary>
+        /// 随机词条（掉落时按稀有度滚动）— 随背包存档整体序列化。
+        /// 读档路径可能为 null，访问一律走 <see cref="GetAffixes"/>。
+        /// </summary>
+        public List<EquipmentAffix> Affixes;
+
+        /// <summary>
+        /// 获取词条列表（null 兜底，不回写字段）。
+        /// </summary>
+        public List<EquipmentAffix> GetAffixes()
+        {
+            return this.Affixes ?? new List<EquipmentAffix>();
+        }
+
+        /// <summary>
+        /// 深拷贝装备实例：Attribute 与 Affixes 均新建，其余字段（含 Tile 引用）浅拷贝。
+        /// 用于掉落时克隆模板，避免污染物品工厂中的共享实例。
+        /// </summary>
+        public AEquipment Clone()
+        {
+            AEquipment clone = (AEquipment)this.MemberwiseClone();
+            clone.Attribute = new Character.Attribute(
+                this.Attribute.ATN,
+                this.Attribute.INT,
+                this.Attribute.DEF,
+                this.Attribute.RES,
+                this.Attribute.CRT,
+                this.Attribute.CSD,
+                this.Attribute.SPD,
+                this.Attribute.HIT);
+            clone.Affixes = new List<EquipmentAffix>(this.GetAffixes());
+            return clone;
+        }
 
         public AEquipment()
         {
@@ -124,6 +160,17 @@ namespace LAB2D.Item.Backpack.Equipment
         {
             float mult = EquipmentLootTool.GetQualityStatMultiplier(this.Quality);
 
+            string affixLines = string.Empty;
+            List<EquipmentAffix> affixes = this.GetAffixes();
+            if (affixes.Count > 0)
+            {
+                affixLines = "词条:\n";
+                foreach (EquipmentAffix affix in affixes)
+                {
+                    affixLines += $"  {EquipmentLootTool.FormatAffix(affix)}\n";
+                }
+            }
+
             return base.ToString() +
                 $"槽位: {EquipmentLootTool.GetSlotName(this.Type)}\n" +
                 $"品质倍率: x{mult:F1}\n" +
@@ -134,7 +181,8 @@ namespace LAB2D.Item.Backpack.Equipment
                 $"CRT 暴击率: {this.Attribute.CRT:P1}\n" +
                 $"CSD 暴击伤害: {this.Attribute.CSD:F1}\n" +
                 $"SPD 速度回避: {this.Attribute.SPD:F1}\n" +
-                $"HIT 命中连击: {this.Attribute.HIT:F1}\n";
+                $"HIT 命中连击: {this.Attribute.HIT:F1}\n" +
+                affixLines;
         }
 
         /// <summary>

@@ -16,6 +16,7 @@ namespace LAB2D
     using LAB2D.Item.Backpack.Equipment.Weapon;
     using LAB2D.Map;
     using LAB2D.Network;
+    using LAB2D.UI;
     using LAB2D.UI.Action;
     using LAB2D.UI.Panel;
     using LAB2D.UnityAdapter;
@@ -132,6 +133,21 @@ namespace LAB2D
             ServiceLocator.Register(WaveEventFeedback.Instance);
             ServiceLocator.Register(OfflineNetworkView.Instance);
             ServiceLocator.Register(NullSyncSender.Instance);
+
+            // 成长系统接线：词条随机提供者注入 + GrowthCollectProvider 接管（装备词条进属性管线）
+            GrowthBonusService.Install();
+
+            // 修仙系统（打坐/突破/灵根，IInitializable + ITickable 由下表驱动）
+            ServiceLocator.Register(CultivationManager.Instance);
+
+            // 武学功法系统（学习/激活内功/读档重建外功注册，IInitializable + ITickable 由下表驱动）
+            ServiceLocator.Register(GongFaManager.Instance);
+
+            // 科技系统（研究点产出/建筑解锁 gating，ITickable 由下表驱动；存档走 ASingletonSaveData）
+            ServiceLocator.Register(TechManager.Instance);
+
+            // 异能觉醒系统（受击 roll 觉醒/读档重建异能注册，IInitializable + ITickable 由下表驱动）
+            ServiceLocator.Register(AwakenedPowerManager.Instance);
         }
 
         public void Awake()
@@ -219,6 +235,10 @@ namespace LAB2D
                 ServiceLocator.Get<PlayerVitalAlertManager>(),
                 ServiceLocator.Get<FavorabilityManager>(),
                 ServiceLocator.Get<WorkerMindManager>(),
+                ServiceLocator.Get<CultivationManager>(),
+                ServiceLocator.Get<GongFaManager>(),
+                ServiceLocator.Get<AwakenedPowerManager>(),
+                ServiceLocator.Get<TechManager>(),
             };
         }
 
@@ -231,6 +251,9 @@ namespace LAB2D
             {
                 ServiceLocator.Get<AchievementManager>(),
                 ServiceLocator.Get<SkillManager>(),
+                ServiceLocator.Get<CultivationManager>(),
+                ServiceLocator.Get<GongFaManager>(),
+                ServiceLocator.Get<AwakenedPowerManager>(),
                 ServiceLocator.Get<EquipmentBeamManager>(),
                 ServiceLocator.Get<EnemyLootManager>(),
                 ServiceLocator.Get<ComboBonusManager>(),
@@ -280,6 +303,18 @@ namespace LAB2D
             foreach (ITickable tickable in this.orderedTickables)
             {
                 tickable.Tick(dt);
+            }
+
+            // 默认隐藏的面板热键在此统一分发：面板 GameObject inactive 时自身 Update 不跑，
+            // 检测写在面板内会导致热键永远无法唤醒面板（spec：HUD 热键全局分发避免 inactive 失效）
+            if (UnityGlobalInputAdapter.GetHudToggleDown(InputKeyConstant.ToggleCultivationHud))
+            {
+                CultivationPanel.ToggleHotkey();
+            }
+
+            if (UnityGlobalInputAdapter.GetHudToggleDown(InputKeyConstant.ToggleTechHud))
+            {
+                TechPanel.ToggleHotkey();
             }
         }
 

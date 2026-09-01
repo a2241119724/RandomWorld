@@ -10,6 +10,17 @@ namespace LAB2D.Tool
     public static class HudFactory
     {
         /// <summary>
+        /// 查找 UI 根节点（UIRoot tag，不经 Foreground）。
+        /// 不存在时返回 null（调用方自兜底）。
+        /// </summary>
+        /// <returns>UIRoot 根 Transform；未找到为 null。</returns>
+        public static Transform FindUiRoot()
+        {
+            GameObject uiRoot = GameObject.FindGameObjectWithTag(TagConstant.UI_TAG);
+            return uiRoot != null ? uiRoot.transform : null;
+        }
+
+        /// <summary>
         /// 查找 HUD 应挂载的父节点。
         /// 优先返回 UIRoot/Foreground，其次 UIRoot，都不存在时创建独立 Canvas 兜底。
         /// </summary>

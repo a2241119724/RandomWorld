@@ -111,14 +111,15 @@ namespace LAB2D.Character.Worker.Task
         // 本文件通过 using WorkerTaskType = LAB2D.Enum.WorkerTaskType 保持向后兼容。
 
         /// <summary>
-        /// 任务进度倍率提供者 — 组合天气效果、Worker 状态和技能熟练度对任务进度的倍率影响。
+        /// 任务进度倍率提供者 — 组合天气效果、Worker 状态、技能熟练度和生活技能等级对任务进度的倍率影响。
         /// 默认实现访问 ServiceLocator.Get&lt;WeatherGameplayEffect&gt;()、ServiceLocator.Get&lt;WorkerConditionManager&gt;()
-        /// 以及 Worker 的技能熟练度（熟练工种干得更快）。
+        /// 以及 Worker 的技能熟练度（熟练工种干得更快）、生活技能等级（伐木/采矿/农耕用进废退）。
         /// 可替换为测试桩或自定义实现。
         /// </summary>
-        public static System.Func<WorkerTaskType, AWorker, float> ProgressMultiplierProvider { get; set; }
-            = (taskType, worker) =>
+        public static System.Func<AWorkerTask, AWorker, float> ProgressMultiplierProvider { get; set; }
+            = (task, worker) =>
             {
+                WorkerTaskType taskType = task.TaskType;
                 float multiplier = ServiceLocator.Get<WeatherGameplayEffect>().GetWorkerTaskProgressMultiplier(taskType);
                 multiplier *= ServiceLocator.Get<WorkerConditionManager>().GetWorkerTaskProgressMultiplier(worker, taskType);
 
@@ -130,8 +131,31 @@ namespace LAB2D.Character.Worker.Task
                     multiplier *= Domain.Worker.WorkerSkillProgressService.GetMultiplier(proficiency);
                 }
 
+                // 生活技能加成：伐木/采矿/农耕等级越高干得越快
+                if (workerData != null && task.GrantedLifeSkill.HasValue)
+                {
+                    workerData.EnsureLifeSkills();
+                    if (workerData.LifeSkillXp.TryGetValue(task.GrantedLifeSkill.Value, out float lifeXp))
+                    {
+                        multiplier *= Domain.Worker.LifeSkillRuleService.GetMultiplier(lifeXp);
+                    }
+
+                    // 科技加成：灵耕术提升农耕速度（加数 0.25 = +25%）
+                    if (task.GrantedLifeSkill.Value == LAB2D.Enum.LifeSkillType.Farming)
+                    {
+                        multiplier *= 1f + FarmTechBonusProvider();
+                    }
+                }
+
                 return multiplier;
             };
+
+        /// <summary>
+        /// 科技农耕加成提供者 — 返回加数（0.25 = +25%）。默认查 TechManager（灵耕术）。
+        /// 可替换为测试桩。
+        /// </summary>
+        public static System.Func<float> FarmTechBonusProvider { get; set; }
+            = () => LAB2D.Gameplay.TechManager.Instance.GetFarmSpeedBonus();
 
         /// <summary>
         /// 地图可通过性查询 — 判断指定格子是否可到达。
@@ -524,6 +548,12 @@ namespace LAB2D.Character.Worker.Task
             or WorkerTaskType.Storage or WorkerTaskType.Bounty;
 
         /// <summary>
+        /// 完成任务获得的生活技能（伐木/采矿/农耕），null 表示不积累生活技能经验。
+        /// 子类按任务目标细分（如采集任务按是否地形挖掘区分伐木/采矿）。
+        /// </summary>
+        public virtual LAB2D.Enum.LifeSkillType? GrantedLifeSkill => null;
+
+        /// <summary>
         /// Worker 饥饿时是否阻止接此任务。Eat 任务重写为 false（饥饿时才需要吃饭）。
         /// </summary>
         protected virtual bool BlocksWhenHungry => true;
@@ -577,7 +607,7 @@ namespace LAB2D.Character.Worker.Task
                     workerData.CurStress + (deltaTime * this.StressCostPerSecond));
             }
 
-            float progressMultiplier = ProgressMultiplierProvider(this.TaskType, worker);
+            float progressMultiplier = ProgressMultiplierProvider(this, worker);
             WorkerTaskProgressResult progressResult = this.progressService.AdvanceProgress(
                 this.curProgress,
                 this.maxProgress,
@@ -690,6 +720,23 @@ namespace LAB2D.Character.Worker.Task
                     workerData.SkillProficiencies[this.TaskType] = System.Math.Min(
                         100f,
                         proficiency + Domain.Worker.WorkerSkillProgressService.SkillGainPerCompletion);
+                }
+
+                // 完成任务 → 生活技能经验（伐木/采矿/农耕，用进废退；等级提升对应工作速度）
+                if (this.GrantedLifeSkill.HasValue)
+                {
+                    workerData.EnsureLifeSkills();
+                    LAB2D.Enum.LifeSkillType lifeSkill = this.GrantedLifeSkill.Value;
+                    workerData.LifeSkillXp.TryGetValue(lifeSkill, out float xp);
+                    float newXp = xp + Domain.Worker.LifeSkillRuleService.XpPerTask(lifeSkill);
+                    workerData.LifeSkillXp[lifeSkill] = newXp;
+                    int newLevel = Domain.Worker.LifeSkillRuleService.LevelOf(newXp);
+                    if (newLevel > Domain.Worker.LifeSkillRuleService.LevelOf(xp))
+                    {
+                        LogProvider(
+                            $"[LifeSkillDiag] {worker.name} {Domain.Worker.LifeSkillRuleService.GetName(lifeSkill)} 升到 {newLevel} 级（效率 ×{Domain.Worker.LifeSkillRuleService.GetMultiplier(newLevel):F2}）",
+                            LogManager.LogLevelEnum.Debug);
+                    }
                 }
 
                 // 心智层：完成任务事件记忆（事件点单次调用）。

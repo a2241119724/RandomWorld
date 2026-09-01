@@ -37,6 +37,9 @@ namespace LAB2D.Gameplay
         /// <summary>伤害/效果倍率（基于玩家属性计算）</summary>
         public float EffectMultiplier;
 
+        /// <summary>伤害基数是否用 INT（true=精神系如火球；false=默认 ATN）</summary>
+        public bool ScaleByInt;
+
         /// <summary>AOE 半径（仅 SelfAOE 类型使用）</summary>
         public float AoeRadius;
 
@@ -207,6 +210,91 @@ namespace LAB2D.Gameplay
                 EffectMultiplier = SkillConstant.HealingLightHealAmount,
                 Level = 1,
                 SlotIndex = 3,
+            };
+        }
+
+        /// <summary>
+        /// 创建横扫千军（武学外功）技能的默认数据实例
+        /// </summary>
+        public static SkillData CreateSweepAll()
+        {
+            return new SkillData
+            {
+                SkillId = SkillConstant.SkillSweepAll,
+                SkillName = SkillConstant.DefaultSkillNameSweepAll,
+                Description = SkillConstant.DefaultSkillDescSweepAll,
+                SkillType = SkillType.SelfAOE,
+                EffectType = SkillEffectType.PhysicalDamage,
+                ManaCost = SkillConstant.SweepAllManaCost,
+                BaseCooldown = SkillConstant.SweepAllCooldown,
+                EffectMultiplier = SkillConstant.SweepAllDamageMultiplier,
+                AoeRadius = SkillConstant.SweepAllRadius,
+                Level = 1,
+                SlotIndex = -1,
+            };
+        }
+
+        /// <summary>
+        /// 创建破空斩（武学外功）技能的默认数据实例
+        /// </summary>
+        public static SkillData CreateSkySplit()
+        {
+            return new SkillData
+            {
+                SkillId = SkillConstant.SkillSkySplit,
+                SkillName = SkillConstant.DefaultSkillNameSkySplit,
+                Description = SkillConstant.DefaultSkillDescSkySplit,
+                SkillType = SkillType.SingleTarget,
+                EffectType = SkillEffectType.PhysicalDamage,
+                ManaCost = SkillConstant.SkySplitManaCost,
+                BaseCooldown = SkillConstant.SkySplitCooldown,
+                EffectMultiplier = SkillConstant.SkySplitDamageMultiplier,
+                AoeRadius = SkillConstant.SkySplitTargetRadius,
+                Level = 1,
+                SlotIndex = -1,
+            };
+        }
+
+        /// <summary>
+        /// 创建念力（异能）技能的默认数据实例
+        /// </summary>
+        public static SkillData CreateTelekinesis()
+        {
+            return new SkillData
+            {
+                SkillId = SkillConstant.SkillTelekinesis,
+                SkillName = SkillConstant.DefaultSkillNameTelekinesis,
+                Description = SkillConstant.DefaultSkillDescTelekinesis,
+                SkillType = SkillType.Pull,
+                EffectType = SkillEffectType.Invincibility,
+                ManaCost = SkillConstant.TelekinesisManaCost,
+                BaseCooldown = SkillConstant.TelekinesisCooldown,
+                AoeRadius = SkillConstant.TelekinesisRadius,
+                BuffDuration = SkillConstant.TelekinesisPullDistance,
+                Level = 1,
+                SlotIndex = -1,
+            };
+        }
+
+        /// <summary>
+        /// 创建火球（异能）技能的默认数据实例（INT 基单体伤害）
+        /// </summary>
+        public static SkillData CreateFireBall()
+        {
+            return new SkillData
+            {
+                SkillId = SkillConstant.SkillFireBall,
+                SkillName = SkillConstant.DefaultSkillNameFireBall,
+                Description = SkillConstant.DefaultSkillDescFireBall,
+                SkillType = SkillType.SingleTarget,
+                EffectType = SkillEffectType.PhysicalDamage,
+                ManaCost = SkillConstant.FireBallManaCost,
+                BaseCooldown = SkillConstant.FireBallCooldown,
+                EffectMultiplier = SkillConstant.FireBallDamageMultiplier,
+                AoeRadius = SkillConstant.FireBallTargetRadius,
+                ScaleByInt = true,
+                Level = 1,
+                SlotIndex = -1,
             };
         }
     }

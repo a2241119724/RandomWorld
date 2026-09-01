@@ -70,6 +70,11 @@ namespace LAB2D.Character.Worker.Task
                 InventoryProvider().IsContainSeedAndPreTake(worker) != default;
         }
 
+        /// <summary>
+        /// 种植任务的生活技能：农耕。
+        /// </summary>
+        public override LAB2D.Enum.LifeSkillType? GrantedLifeSkill => LAB2D.Enum.LifeSkillType.Farming;
+
         /// <inheritdoc/>
         protected override float TiredCostPerSecond => WorkerTaskTimeConfig.LightWorkTiredCostPerSecond;
 

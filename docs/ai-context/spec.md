@@ -22,7 +22,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 
 ### 战斗系统
 - **波次敌人:** 普通波 + Boss 波(每 3 波)，难度渐进缩放
-- **主动技能 (Q/E/R/F):** 旋风斩、冲刺、力量爆发、治疗之光
+- **主动技能 (8 槽):** 默认 Q/E/R/F（旋风斩、冲刺、力量爆发、治疗之光）+ 功法外功/异能动态注册槽 Z/X/C/V（见成长系统节）
 - **连击系统:** 多阶连击伤害/经验加成
 - **装备稀有度:** Common → Uncommon → Rare → Epic → Legendary → Mythic，属性倍率递增
 - **死亡惩罚:** 经验损失 + 复活计时器
@@ -89,6 +89,18 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **社会关系:** `WorkerRelationshipRuleService` + `Mind.Relations`（name 键控），Kind 优先级 Grudge>Enmity>Admiration>Friendship>None；友谊 `Affinity≥40`/敌意 `≤-30`/爱慕 `Admiration≥40`/记仇（被拒交易 30、被攻击 40，每日 -2 衰减）。**四个低频行为（防经济干扰）**：①互助/回避——friend/admiration 好感门前豁免必接、enmity/grudge 拒接（`WorkerBountyTask.DoIsCanWork`）②拒卖——关系否决优先于人格（`WorkerTradeService.WillSell` 前置）③送礼——漫游决策前 5%，双方 Affinity+8、收方好感+5（`WorkerDecisionService`）④嫉妒——`CurrencyManager.CompleteBounty` 节流钩子（≥30s），旁观 `Greed>60` 对完成者 Affinity-4。每日 `Decay` 淡化；死亡清理 `FavorabilityManager.RemoveDeadWorker`
 - **事件接入点:** 完成/接取悬赏、交易成败、被攻击、玩家救危、对话结束等事件点调 `RecordEvent`（TargetName=`"PLAYER"` 哨兵或 Worker 名），绝不每帧循环；`WorkerMindManager.Tick`/`ProcessDayRollover` 驱动
 - **反馈:** 拒绝理由/人生事件/关系变化统一走 `AWorker.ShowMindBubble`（语料 `WorkerInnerMonologue`，防被 `ShowRandomMonologue` 覆盖：进口气卫 + `HideDialogText` 清守卫）+ `[MindDiag]` Debug 日志 + `WorkerConditionHUD`「最近想法」行
+
+### 成长系统（词条/功法/修仙/异能/灵根/生活技能/科技）
+- **统一属性管线:** 被动加成源（装备词条/内功/境界永久加成）→ `GrowthBonusService.CollectFromData` → `GrowthSourceResult`（`Sources`: List&lt;BattleStats&gt; + `Special`: GrowthBonus）→ `AttributeCalculationService.ComputeFinalStats(growthSources)`。特殊维度（回蓝/吸血/反伤/修炼速度）存 `GrowthBonus.Special`（`ComputeAttribute` 写回快照），各系统在战斗事件点消费。**CRT/CSD 是 0-1 比例**（"+3%" 存 0.03，BattleStats 直接加整数会爆数值）
+- **MaxHp 派生:** `MaxHp = BaseMaxHp + 成长加成`，由 `CharacterData.ComputeAttribute` 统一计算并钳制 Hp
+- **GrowthData（成长容器）:** 随 CharacterData 二进制存档——灵根五行/境界/灵气/永久加成/`LearnedGongFaIds`/`ActiveNeiGongId`(string，空=未激活)/`AwakenedPowerIds`。`GrowthData.Ensure(ref)` 兜底（BinaryFormatter 不跑构造），玩家与 Worker 首次属性计算时生成灵根（终身不变；`ComputeAttribute` 传 `isPlayer || isWorker`），Enemy 不生成
+- **修仙:** 练气→筑基→金丹（`RealmLibrary`，突破永久加成累进），K 面板打坐——灵气公式 `RealmRuleService.ComputeQiGain`（玩家打坐 Tick 与 Worker 睡眠吐纳共用；2/s ×(1+内功修炼加成+聚灵阵科技)），受击/移动打断；打坐回蓝与内功回蓝共用 int Mp 按秒折算累计器模式（`mpRegenCarry`）
+- **功法:** 3 内功（被动走统一管线 + 回蓝，同时仅激活一本）+ 2 外功（主动技）。`SkillManager` 槽位 0-7：默认 4 + `RegisterExtraSkill` 动态注册（幂等按 SkillId，SlotIndex=Skills.Count 递增，满 8 拒）；**技能不存档**——`GongFaManager`/`AwakenedPowerManager`（ITickable）Tick 检测玩家就绪后按 `LearnedGongFaIds` **学习序**懒重建注册（保槽位稳定）
+- **异能:** 受击 roll 觉醒（基础 3% + 濒死加成至 10%，上限按各自 GrowthData 计），念力（拉怪，BuffDuration 复用为拉近距离）/火球（`SkillData.ScaleByInt` 选 INT 伤害基数，SingleTarget 无目标不扣蓝不进 CD）
+- **Worker 成长接入（全自动，无 UI）:** ①睡觉即修炼——`WorkerSleepTask.Finish` 调 `CultivationManager.MeditateFor`（床睡全额/地面睡 ×0.5），被打断走 GiveUpTask 不 Finish 天然中断；②突破/内功全自动——`CultivationManager.Tick` 每 2s 扫描 `WorkerCharactersProvider` 静态缝，`BreakthroughData`（玩家/Worker 共用突破结算）+ `GongFaManager.AutoLearnNeiGongFor`（只学内功并自动运转最新一本，**绝不学外功**——外功注册进全局 SkillManager 会挤占玩家槽位）；③异能觉醒转被动——Worker 无技能栏，`AwakenedPowerDef.WorkerPassiveBonus` 入账 `PermanentRealmBonus` + 气泡反馈；④装备词条——Worker 拾取经 `EnemyLootManager.TakeDropInstanceByPos`（须在 `RemoveDropByMapPosition` 前取出）把掉落实例词条拷进穿戴实例；⑤修仙进度显示在 WorkerConditionHUD 每 worker「修炼」行。前置修复：`CharacterManager.LoadData` 读档后重连 `CharacterData.Character`（[NonSerialized]，不重连则 Worker 换装/成长重算被静默跳过）
+- **生活技能（Worker）:** 伐木/采矿/农耕——`AWorkerTask.GrantedLifeSkill` 虚属性（Gather 按 `isTerrainDig` 分 Mining/Felling），Finish 统一 +XP，升级提进度倍率（1.0/1.15/1.3/1.5，`LifeSkillRuleService` 纯函数）；`ProgressMultiplierProvider(task, worker)` 已含该倍率；WorkerConditionHUD 每 worker 追加一行技能进度
+- **科技:** `TechManager : ASingletonSaveData`（研究点/已研究列表自动存档，Ensure 兜底）；研究点 = 已建成 ResearchTable 数 × 时间（1 点/分/台，高级研究法 ×2），T 面板研究。**建筑解锁 gating 唯一收口 `ABuildItem.AddBuildTask`**（玩家放置入口；房间墙/农田自动建造走 `BuildMap.AddBuild` 不受限）。聚灵阵打坐 +50% 按有无不叠乘
+- **新建筑三同约定:** 类名 == ItemData 条目 Name == Tile 资产名（`ItemInstanceFactory` 反射扫描 ABuildItem 子类查 `GetByName(type.Name)`，缺条目启动报错）；研究台/聚灵阵条目在 `BuildOtherItemData.asset`（Id 1100002/1100003），Tile 资产在 `Resources/Tilemap/Item/Build/`
 
 ### 商店与任务板系统
 - **商店 NPC:** `ShopNPC` + `ShopNPCGenerator` — 地图就绪后自动生成商店，支持 Worker/Player 买卖交互

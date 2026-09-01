@@ -150,11 +150,21 @@ namespace LAB2D.Tool
         /// <summary>
         /// 获取技能的快捷键显示文本。
         /// </summary>
-        /// <param name="skillSlotIndex">技能槽位索引（0-3）</param>
-        /// <returns>快捷键文本，如 "Q"、"E"、"R"、"F"</returns>
+        /// <param name="skillSlotIndex">技能槽位索引（0-7）</param>
+        /// <returns>快捷键文本，如 "Q"、"E"、"R"、"F"、"Z"、"X"、"C"、"V"</returns>
         public static string GetHotkeyDisplayText(int skillSlotIndex)
         {
-            KeyCode[] hotkeys = { InputKeyConstant.SkillHotkey1, InputKeyConstant.SkillHotkey2, InputKeyConstant.SkillHotkey3, InputKeyConstant.SkillHotkey4 };
+            KeyCode[] hotkeys =
+            {
+                InputKeyConstant.SkillHotkey1,
+                InputKeyConstant.SkillHotkey2,
+                InputKeyConstant.SkillHotkey3,
+                InputKeyConstant.SkillHotkey4,
+                InputKeyConstant.SkillHotkey5,
+                InputKeyConstant.SkillHotkey6,
+                InputKeyConstant.SkillHotkey7,
+                InputKeyConstant.SkillHotkey8,
+            };
             if (skillSlotIndex < 0 || skillSlotIndex >= hotkeys.Length)
             {
                 return "?";

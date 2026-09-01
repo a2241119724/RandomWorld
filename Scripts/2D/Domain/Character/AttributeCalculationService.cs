@@ -14,7 +14,8 @@ namespace LAB2D.Domain.Character
             bool isPlayer,
             bool isWorker = false,
             BattleStats? weaponStats = null,
-            IReadOnlyList<BattleStats> equipmentStats = null)
+            IReadOnlyList<BattleStats> equipmentStats = null,
+            IReadOnlyList<BattleStats> growthSources = null)
         {
             float ratio = 1.0f;
             if (isPlayer)
@@ -38,6 +39,16 @@ namespace LAB2D.Domain.Character
                 foreach (BattleStats equipment in equipmentStats)
                 {
                     result += equipment;
+                }
+            }
+
+            // 成长源（词条/内功/灵根/境界等）— 纯加法，与装备同层；
+            // 8 维之外的维度（上限/回蓝/吸血等）由 GrowthSourceResult.Special 单独承载，不经过此管线
+            if (growthSources != null)
+            {
+                foreach (BattleStats growth in growthSources)
+                {
+                    result += growth;
                 }
             }
 

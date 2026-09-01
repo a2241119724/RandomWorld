@@ -3,6 +3,7 @@ namespace LAB2D.Character
     using LAB2D;
     using LAB2D.Core;
     using LAB2D.Domain.Character;
+    using LAB2D.Domain.Character.Growth;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
     using LAB2D.Gameplay;
@@ -80,6 +81,8 @@ namespace LAB2D.Character
                 incomingHp);
             target.CharacterDataLAB.Hp = healthResult.RemainingHp;
 
+            this.ApplyGrowthCombatEffects(attacker, target, incomingHp);
+
             return healthResult;
         }
 
@@ -156,11 +159,51 @@ namespace LAB2D.Character
             this.gameplaySessionStats.RecordDamageDealt(finalDamage, isCRT);
             this.gameplaySessionStats.RecordDamageTaken(finalDamage);
 
+            this.ApplyGrowthCombatEffects(attackerCharacter, targetCharacter, finalDamage);
+
             return new CharacterHealthDamageResult(
                 newState,
                 finalDamage,
                 isCRT,
                 false);
+        }
+
+        /// <summary>
+        /// 词条成长系统的战斗事件效果：攻击方吸血、受击方反伤。
+        /// 比例读取自双方 GrowthData.Special（ComputeAttribute 时由 GrowthCollectProvider 快照）。
+        /// 反伤经 attacker.ReduceHp 再次进入本组件时对方通常无反伤词条即终止，无递归风险。
+        /// </summary>
+        /// <param name="attacker">攻击方（可为 null，如环境伤害）。</param>
+        /// <param name="target">受击方。</param>
+        /// <param name="finalDamage">经过防御/加成后的最终伤害。</param>
+        private void ApplyGrowthCombatEffects(Character attacker, Character target, float finalDamage)
+        {
+            if (finalDamage <= 0f || attacker == null || target == null || attacker == target)
+            {
+                return;
+            }
+
+            GrowthData attackerGrowth = attacker.CharacterDataLAB?.Growth;
+            float lifestealRatio = attackerGrowth?.Special.LifestealRatio ?? 0f;
+            if (lifestealRatio > 0f)
+            {
+                float heal = finalDamage * lifestealRatio;
+                attacker.Heal(heal);
+                AWorkerTask.LogProvider(
+                    $"[AffixDiag] {attacker.name} 吸血 {heal:F1}（率 {lifestealRatio:P1}，伤害 {finalDamage:F1}）",
+                    LogManager.LogLevelEnum.Trace);
+            }
+
+            GrowthData targetGrowth = target.CharacterDataLAB?.Growth;
+            float reflectRatio = targetGrowth?.Special.ReflectRatio ?? 0f;
+            if (reflectRatio > 0f)
+            {
+                float reflectDamage = finalDamage * reflectRatio;
+                attacker.ReduceHp(reflectDamage, target);
+                AWorkerTask.LogProvider(
+                    $"[AffixDiag] {target.name} 反伤 {attacker.name} {reflectDamage:F1}（率 {reflectRatio:P1}）",
+                    LogManager.LogLevelEnum.Trace);
+            }
         }
 
         public CharacterRuntimeState ApplyHealingToState(
