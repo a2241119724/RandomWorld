@@ -2,6 +2,20 @@
 
 > 每次通过日志分析并解决 bug 后，把思路追加到此文件。开始新任务前**先通读本文件**，命中历史记录时直接引用验证，避免重复排查。
 
+## 2026-08-31 树同位置双渲染（tile 复活）+ GenTree 无限补种（TreeCurCount 负失衡）
+
+- **现象**：用户报告同一位置两个树——一份在 Tilemap 上（不透明、无动画、不淡化），一份是独立视觉物体（TreeVisual_*，有动画、可遮挡淡化）。首报位置 (63,140)。
+- **定位**：`TileVisualSpawner.CreateOrUpdate` 加两处 Warning 级诊断——①入口巡检：`visual` 字典已有该格 SR 但 `GetColor(cell).a > 0.5` → `[BuildDiag] 重影实锤`（带 tile 名/alpha/TileFlags）；②`SetColor(a=0)` 后立即回读，失败 → `[BuildDiag] tile 隐藏失败`。一局抓到 18 条"重影实锤"，全部 `a=1 flags=LockColor`，且逐条可与 GenTree/CutTree 位置对上（命中时刻=RefreshAround 路过发现时刻，晚于被弄坏时刻）。
+- **根因 1（重影）**：`ResourceMap.GenTree` → `RefreshRound(pos)` 对半径 4 共 81 格 `tilemap.RefreshTile`——**RefreshTile 会从 tile 资产重取 TileData 并把 instance 颜色/flags 重置回资产默认（白 a=1 + LockColor）**，抹掉 `SetColor(a=0)` 隐藏；SR 仍在 → TilemapRenderer 与独立 SpriteRenderer 同位置双渲染。GenTree 位置自身必复发（RefreshRound 含中心格）。
+- **修复 1**：删除 `GenTree` 的 `RefreshRound` 调用与方法本体（唯一调用者）。RuleTile 邻域形态调和已由 `SetTile → TileVisualSpawner.RefreshAround → GetSprite 重解析`承担；tile 本体被隐藏，形态不可见，RefreshTile 无意义。
+- **根因 2（数目）**：`GenResource` 只设 `TreeTotalCount = resourcesPlaced`，`TreeCurCount` 保持初始 0——初始 N 棵树未计入当前数；Worker 砍初始树 `TreeCurCount--` 无下限 → 日志 remain 一路负到 -42 → `while (TreeCurCount < TreeTotalCount)` 恒真 → GenTree 每 10s 无限补种，树越种越多。
+- **修复 2**：`GenResource` 末尾 `TreeCurCount = resourcesPlaced`（与 TreeTotalCount 同起点；砍树减、补种加，总量守恒语义才成立）。
+- **验证**：重进游戏 1-2 分钟，grep game.log `重影实锤|隐藏失败` 应为 0；`CutTree ... remain=` 不再负增长（读旧档时存量负值仍会保留，需新档或读档校准）；GenTree 仅在砍树后补种。
+- **教训**：
+  - **`Tilemap.RefreshTile` 不是只读刷新——它会重置该格 instance color/flags 为 tile 资产默认**。凡用 `SetColor` 做隐藏/状态色的 Tilemap（视觉拆分架构的 ResourceMap/ItemMap/BuildMap），邻域 RefreshTile 会让隐藏静默失效。TileMap 地形 chunk 的边界 RefreshTile（SyncAllChunkBordersCoroutine Phase 2）只刷真实格不刷幽灵格，当前安全——但未来给幽灵格邻域加刷新时警惕同类失效。
+  - **"计数守恒"必须两端对齐**：总数与当前数在同一时刻初始化为同一真实值，删除/新增各维护一边；`while (cur < total)` 型补种循环对 cur 无下限保护时，一次计数缺口就是无限循环。
+  - **重影类渲染 bug 的定位手法**：先枚举"设计上同位置双渲染"的正常结构（tile 隐藏 + 独立 SR），再对可疑格加"回读校验"（SetColor 后立即 GetColor）与"状态巡检"（字典有 SR 但 tile 不透明）两类事件点日志——一局即可拿到 a/flags 实锤，配合 GenTree/CutTree 时间线对齐锁定凶手。
+
 ## 2026-08-23 沙漠/雪地资源树缺 ItemData 回退 Bottom（sortingOrder=-1000）不淡化
 
 - **现象**：用户报告 DesertCoconutTree 配 LayerMode=Alpha 却不淡化，检查 SpriteRenderer 发现 sortingOrder=-1000（= `WorldYSortManager.BottomLayerOrder`）。game.log 观测 `没有名字为DesertCactus` 36 次、`SnowMushroom2` 16 次、`SnowMushroom1` 14 次、`SnowStone` 13 次；DesertCoconutTree 0 次缺失警告。

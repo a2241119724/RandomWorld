@@ -152,8 +152,10 @@ namespace LAB2D.Map
                 AWorkerTask.LogProvider($"GenResource: no resources placed (asset misses: {assetMissCount})", LogManager.LogLevelEnum.Warning);
             }
 
-            // 重生上限 = 初始实际生成数量
+            // 重生上限 = 初始实际生成数量；当前数同步初始化（历史 bug：TreeCurCount 初始 0，
+            // 砍初始树后变负 → while 恒真 → GenTree 无限补种）
             this.ResourceMapDataLAB.TreeTotalCount = resourcesPlaced;
+            this.ResourceMapDataLAB.TreeCurCount = resourcesPlaced;
 
             // 确保进度条到达 100%（消除动态总量调整的微小缺口）
             Core.ServiceLocator.Get<LAB2D.UI.Panel.PanelUI.AsyncProgressUI>().ForceComplete();
@@ -202,11 +204,13 @@ namespace LAB2D.Map
                     this.ResourceMapDataLAB.Add(pos, tileBase.name);
                     WalkabilityCache.UpdateCell(pos);
                     // 资源生成 → 该格变为不可通行（卡墙排查：新树阻挡原路径）。
+                    // 注意：此处不得调用 tilemap.RefreshTile——它会从 tile 资产重置该格
+                    // instance 颜色/flags，抹掉 SetColor(a=0) 的隐藏（历史 bug：半径内已有树
+                    // 全部恢复不透明 + LockColor，与独立 SpriteRenderer 同位置双渲染）。
+                    // RuleTile 邻域形态调和由 SetTile → TileVisualSpawner.RefreshAround 承担。
                     AWorkerTask.LogProvider(
                         $"[MapDiag] GenTree pos=({pos.x},{pos.y}) tile={tileBase.name}",
                         LogManager.LogLevelEnum.Trace);
-
-                    this.RefreshRound(pos);
                 }
 
                 yield return new WaitForSeconds(10f);
@@ -436,22 +440,6 @@ namespace LAB2D.Map
             }
 
             WalkabilityCache.UpdateCell(vector3Int);
-        }
-
-        /// <summary>
-        /// 生成新的资源时，刷新map,防止遮盖错误
-        /// </summary>
-        /// <param name="center">中心位置</param>
-        /// <param name="radius">半径</param>
-        private void RefreshRound(Vector3Int center, int radius = 4)
-        {
-            for (int i = -radius; i <= radius; i++)
-            {
-                for (int j = -radius; j <= radius; j++)
-                {
-                    this.tilemap.RefreshTile(VectorTool.Add(center, i, j));
-                }
-            }
         }
 
         /// <summary>

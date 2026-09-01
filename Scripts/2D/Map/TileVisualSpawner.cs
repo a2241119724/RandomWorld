@@ -131,6 +131,19 @@ namespace LAB2D.Map
                 return null;
             }
 
+            // [BuildDiag] 重影巡检：字典已有该格独立视觉（上次已按 Alpha/Normal 隐藏 tile），
+            // 但 tile 当前不透明 = 隐藏被某条 SetTile 路径重置（Unity SetTile 会把 instance 颜色还原为资产默认白）
+            // → TilemapRenderer 与独立 SpriteRenderer 同位置双渲染。仅在异常时告警。
+            if (this.visual.TryGetValue(cell, out SpriteRenderer existingSr)
+                && existingSr != null
+                && this.tilemap.GetColor(cell).a > 0.5f)
+            {
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] 重影实锤 cell=({cell.x},{cell.y}) tile={this.tilemap.GetTile(cell)?.name} " +
+                    $"a={this.tilemap.GetColor(cell).a} flags={this.tilemap.GetTileFlags(cell)}（SR 在而 tile 不透明，隐藏被重置）",
+                    LogManager.LogLevelEnum.Warning);
+            }
+
             // 统一前置：解除 LockColor，否则 SetColor 不生效（收敛各 Map 层 ApplyTileVisual 的做法）
             this.tilemap.RemoveTileFlags(cell, TileFlags.LockColor);
 
@@ -147,6 +160,16 @@ namespace LAB2D.Map
             // 非恒底层：tile 透明隐藏 TilemapRenderer（避免双重渲染，数据/碰撞/存档保留），
             // 视觉由独立 SpriteRenderer 或配置的预制体呈现。
             this.tilemap.SetColor(cell, new Color(1f, 1f, 1f, 0f));
+
+            // [BuildDiag] 隐藏回读：SetColor(0) 未生效（如 LockColor 残留）→ tile 将以原色显示，同位置双渲染。
+            Color hiddenVerify = this.tilemap.GetColor(cell);
+            if (hiddenVerify.a > 0.5f)
+            {
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] tile 隐藏失败 cell=({cell.x},{cell.y}) tile={this.tilemap.GetTile(cell)?.name} " +
+                    $"回读a={hiddenVerify.a} flags={this.tilemap.GetTileFlags(cell)}（SetColor 被吞）",
+                    LogManager.LogLevelEnum.Warning);
+            }
 
             // 预制体分支：该格物品/建筑 VisualMode == Prefab（resolver 返回其英文名 Name），用完整预制体呈现视觉
             //（可带多部件/动画/组件），而非单 SpriteRenderer。tile 仍承担数据/碰撞/存档/网络。
