@@ -14,11 +14,56 @@ namespace LAB2D.Gameplay
     /// </summary>
     public sealed class WorkerUpdateSystem : ITickable
     {
+        /// <summary>环境倍率（地形/温度）缓存刷新间隔（秒）。分钟级衰减对此延迟无感知，且与 TemperatureEffect 内部缓存口径一致。</summary>
+        private const float EnvRefreshInterval = 0.5f;
+
+        /// <summary>失效条目清理间隔（秒）：移除已移除 Worker 的残留缓存，防字典泄漏。</summary>
+        private const float StaleCleanInterval = 30f;
+
+        /// <summary>单 Worker 环境倍率缓存：地形(tired/hungry) + 温度，到期才重查（WorldToCell + ServiceLocator 是热路径）。</summary>
+        private struct EnvMultiplier
+        {
+            public float TiredTerrain;
+            public float HungryTerrain;
+            public float Temperature;
+            public float NextRefreshTime;
+        }
+
+        private readonly Dictionary<int, EnvMultiplier> envCache = new Dictionary<int, EnvMultiplier>();
+        private float elapsed;
+        private int envCursor;
+        private float staleCleanTimer;
+
         /// <inheritdoc/>
         public void Tick(float deltaTime)
         {
+            // 服务引用与全局天气倍率循环外提：几百 Worker 时省 ~3 次/人/帧的 ServiceLocator 字典查找；
+            // 天气是全局状态与具体 Worker 无关，原实现每 Worker 查一次属纯浪费。
             var terrainEffect = ServiceLocator.Get<ITerrainEffectService>();
+            var conditionManager = ServiceLocator.Get<IWorkerConditionManager>();
             List<AWorker> workers = ServiceLocator.Get<WorkerManager>().Characters;
+
+            float weatherMult = 1.0f;
+            try
+            {
+                var weatherMgr = ServiceLocator.Get<WeatherManager>();
+                if (weatherMgr != null)
+                {
+                    weatherMult = WeatherGameplayTool.GetFatigueDecayMultiplier(weatherMgr.CurrentWeather);
+                }
+            }
+            catch { /* 天气系统未注册时保持默认倍率 */ }
+
+            ITemperatureEffectService tempEffect = null;
+            try
+            {
+                tempEffect = ServiceLocator.Get<ITemperatureEffectService>();
+            }
+            catch { /* 温度系统未注册时保持默认倍率 */ }
+
+            this.elapsed += deltaTime;
+            this.RefreshEnvBatch(workers, terrainEffect, tempEffect, deltaTime);
+
             foreach (AWorker worker in workers)
             {
                 AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
@@ -27,47 +72,29 @@ namespace LAB2D.Gameplay
                     continue;
                 }
 
-                // 地形效果对衰减速率的影响
-                float tiredTerrainMult = terrainEffect.GetWorkerTiredDecayMultiplier(worker);
-                float hungryTerrainMult = terrainEffect.GetWorkerHungryDecayMultiplier(worker);
+                // 环境倍率走 0.5s 分帧缓存；新 Worker 未被游标轮到前用默认 1.0（出生即健康，无感）
+                if (!this.envCache.TryGetValue(worker.GetInstanceID(), out EnvMultiplier env))
+                {
+                    env.TiredTerrain = 1.0f;
+                    env.HungryTerrain = 1.0f;
+                    env.Temperature = 1.0f;
+                }
 
                 // 饥饿值自然衰减
                 if (workerData.CurHungry > 0)
                 {
                     workerData.CurHungry = System.Math.Max(
                         0.0f,
-                        workerData.CurHungry - (deltaTime * WorkerConditionConstant.HungryDecayPerSecond * hungryTerrainMult));
+                        workerData.CurHungry - (deltaTime * WorkerConditionConstant.HungryDecayPerSecond * env.HungryTerrain));
                 }
 
                 // 疲劳值自然累积（受地形 + 天气 + 温度影响，雨雪天/严寒加速，CurTired 越大越疲）
                 if (workerData.CurTired < workerData.MaxTired)
                 {
-                    float weatherMult = 1.0f;
-                    try
-                    {
-                        var weatherMgr = ServiceLocator.Get<WeatherManager>();
-                        if (weatherMgr != null)
-                        {
-                            weatherMult = WeatherGameplayTool.GetFatigueDecayMultiplier(weatherMgr.CurrentWeather);
-                        }
-                    }
-                    catch { /* 天气系统未注册时保持默认倍率 */ }
-
-                    float temperatureMult = 1.0f;
-                    try
-                    {
-                        var tempEffect = ServiceLocator.Get<ITemperatureEffectService>();
-                        if (tempEffect != null)
-                        {
-                            temperatureMult = tempEffect.GetWorkerFatigueDecayMultiplier(worker);
-                        }
-                    }
-                    catch { /* 温度系统未注册时保持默认倍率 */ }
-
                     workerData.CurTired = System.Math.Min(
                         workerData.MaxTired,
                         workerData.CurTired + (deltaTime * WorkerConditionConstant.TiredDecayPerSecond
-                            * tiredTerrainMult * weatherMult * temperatureMult));
+                            * env.TiredTerrain * weatherMult * env.Temperature));
                 }
 
                 // 精气神自然衰减
@@ -115,7 +142,7 @@ namespace LAB2D.Gameplay
                         System.Math.Min(workerData.MaxMorale, workerData.CurMorale + moraleDelta));
                 }
 
-                ServiceLocator.Get<IWorkerConditionManager>().UpdateWorkerCondition(worker);
+                conditionManager.UpdateWorkerCondition(worker);
             }
 
             // 子系统定时刷新（内部有节流控制）
@@ -124,6 +151,90 @@ namespace LAB2D.Gameplay
             ServiceLocator.Get<IColonyCommandCenterService>().Tick();
             ServiceLocator.Get<ISkillManager>().Tick();
             NearbyItemPickupHUD.Instance?.Tick();
+        }
+
+        /// <summary>
+        /// 分帧轮换刷新环境倍率缓存：每帧只游标推进约 1/15 的 Worker（30fps 下 0.5s 内全员轮换一遍），
+        /// 且仅对到期条目真正执行地形/温度查询——把几百次/帧的 WorldToCell 摊薄为 ~20 次/帧且无周期性尖峰。
+        /// </summary>
+        private void RefreshEnvBatch(
+            List<AWorker> workers,
+            ITerrainEffectService terrainEffect,
+            ITemperatureEffectService tempEffect,
+            float deltaTime)
+        {
+            int count = workers.Count;
+            if (count == 0)
+            {
+                if (this.envCache.Count > 0)
+                {
+                    this.envCache.Clear();
+                }
+
+                return;
+            }
+
+            float now = this.elapsed;
+            int batch = (count / 15) + 1;
+            this.envCursor %= count;
+            for (int i = 0; i < batch; i++)
+            {
+                AWorker worker = workers[this.envCursor];
+                this.envCursor = (this.envCursor + 1) % count;
+                if (worker == null)
+                {
+                    continue;
+                }
+
+                int instanceId = worker.GetInstanceID();
+                if (this.envCache.TryGetValue(instanceId, out EnvMultiplier env)
+                    && now < env.NextRefreshTime)
+                {
+                    continue;
+                }
+
+                env.TiredTerrain = terrainEffect != null ? terrainEffect.GetWorkerTiredDecayMultiplier(worker) : 1.0f;
+                env.HungryTerrain = terrainEffect != null ? terrainEffect.GetWorkerHungryDecayMultiplier(worker) : 1.0f;
+                env.Temperature = tempEffect != null ? tempEffect.GetWorkerFatigueDecayMultiplier(worker) : 1.0f;
+                env.NextRefreshTime = now + EnvRefreshInterval;
+                this.envCache[instanceId] = env;
+            }
+
+            // 定期清理已移除 Worker 的残留条目（Worker 死亡后不再被游标触达）
+            this.staleCleanTimer += deltaTime;
+            if (this.staleCleanTimer < StaleCleanInterval)
+            {
+                return;
+            }
+
+            this.staleCleanTimer = 0f;
+            HashSet<int> liveIds = new HashSet<int>(count);
+            foreach (AWorker worker in workers)
+            {
+                if (worker != null)
+                {
+                    liveIds.Add(worker.GetInstanceID());
+                }
+            }
+
+            if (this.envCache.Count == liveIds.Count)
+            {
+                return;
+            }
+
+            List<int> staleIds = new List<int>();
+            foreach (int id in this.envCache.Keys)
+            {
+                if (!liveIds.Contains(id))
+                {
+                    staleIds.Add(id);
+                }
+            }
+
+            foreach (int id in staleIds)
+            {
+                this.envCache.Remove(id);
+            }
         }
     }
 }
