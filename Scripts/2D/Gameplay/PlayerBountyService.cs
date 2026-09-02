@@ -246,6 +246,25 @@ namespace LAB2D.Gameplay
         {
             if (player == null) return false;
 
+            // 山门核心不可拆除——胜负锚点（M1.3），含 3×3 占用范围副格
+            if (Core.ServiceLocator.TryGet<MountainGateManager>(out MountainGateManager gate)
+                && gate.IsCoreCell(targetPos))
+            {
+                AWorkerTask.LogProvider(
+                    $"[PlayerBounty] 拆除被拦截：山门核心不可拆除 pos=({targetPos.x},{targetPos.y})",
+                    LogManager.LogLevelEnum.Warning);
+                try
+                {
+                    Core.GameServices.ShowTipProvider("山门核心由小镇自行生长，不可拆除");
+                }
+                catch (System.Exception)
+                {
+                    // Tip 不可用时静默降级（测试环境）
+                }
+
+                return false;
+            }
+
             Player.PlayerData pd = player.CharacterDataLAB as Player.PlayerData;
             if (pd == null) return false;
 

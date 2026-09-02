@@ -124,15 +124,17 @@ namespace LAB2D.Editor
                 "当前波次配置:\n" +
                 "  基础敌人数: {0}\n" +
                 "  每波增量: {1}\n" +
-                "  波间休息: {2}s\n" +
-                "  生成间隔: {3}s\n" +
-                "  最大存活敌人: {4}\n" +
-                "  总波次 (0=无限): {5}\n" +
-                "  难度缩放/波: {6:0.00}x\n" +
-                "  随机生成位置: {7}\n\n" +
+                "  波次挂日(一夜一波): {2}\n" +
+                "  波间休息(非挂日): {3}s\n" +
+                "  生成间隔: {4}s\n" +
+                "  最大存活敌人: {5}\n" +
+                "  总波次 (0=无限): {6}\n" +
+                "  难度缩放/波: {7:0.00}x\n" +
+                "  随机生成位置: {8}\n\n" +
                 "如需修改，请在代码中设置 WaveManager.Instance.Config。",
                 config.baseEnemyCount,
                 config.enemiesPerWaveIncrease,
+                config.syncWithDayNight ? "开" : "关",
                 config.restTimeBetweenWaves,
                 config.spawnInterval,
                 config.maxAliveEnemies,

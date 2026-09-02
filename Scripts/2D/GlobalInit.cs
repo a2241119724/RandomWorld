@@ -102,6 +102,7 @@ namespace LAB2D
             ServiceLocator.Register(MarketService.Instance);
             ServiceLocator.Register(new PlayerBountyService());
             ServiceLocator.Register(TaskBoardManager.Instance);
+            ServiceLocator.Register(MountainGateManager.Instance);
             ServiceLocator.Register(new ShopNPCGenerator());
 
             // 注入所有权名字解析：0=Player, >0=Worker名字
@@ -226,6 +227,8 @@ namespace LAB2D
         {
             this.orderedTickables = new List<ITickable>
             {
+                // 时钟源最前：时间先推进，后续系统（温度/WorkerUpdate/修仙等）读到当帧新时间
+                ServiceLocator.Get<GameTimeManager>(),
                 new WorkerUpdateSystem(),
                 ServiceLocator.Get<AchievementManager>(),
                 new GlobalInputProcessor(),
@@ -249,6 +252,8 @@ namespace LAB2D
         {
             this.orderedInitializables = new List<IInitializable>
             {
+                // 时钟最先：读档时间落位后，后续系统初始化才能拿到正确相位/天数
+                ServiceLocator.Get<GameTimeManager>(),
                 ServiceLocator.Get<AchievementManager>(),
                 ServiceLocator.Get<SkillManager>(),
                 ServiceLocator.Get<CultivationManager>(),
@@ -284,7 +289,7 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// 地图就绪回调 — 初始化任务栏位置（地图中心附近第一个可到达的空地）。
+        /// 地图就绪回调 — 初始化任务栏与山门核心位置（地图中心附近第一个可到达的空地）。
         /// 此时 TileMapDataLAB 已加载完成，可安全访问 Height/Width。
         /// </summary>
         private void OnMapReadyInitTaskBoard()
@@ -294,6 +299,8 @@ namespace LAB2D
             int centerY = tileMap.TileMapDataLAB.Width / 2;
             Vector3Int center = new Vector3Int(centerX, centerY, 0);
 
+            // 山门核心先选位（胜负锚点），任务栏在其周边避开
+            MountainGateManager.Instance.InitPosition(center);
             TaskBoardManager.Instance.InitPosition(center);
         }
 

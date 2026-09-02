@@ -20,7 +20,7 @@ namespace LAB2D.Domain.Gameplay
     /// </summary>
     public sealed class TemperatureRuleService
     {
-        // 季节长度（游戏天），可调：1 游戏天 = GlobalData.GameDayTime(1800) 真实秒
+        // 季节长度（游戏天），可调：1 游戏天 = GlobalData.GameDayTime（当前 600s）真实秒
         public const int SeasonLengthDays = 5;
 
         // 季节基础温度（℃）

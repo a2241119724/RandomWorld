@@ -30,6 +30,7 @@ global using LAB2D.Domain.Dialogue;
 global using LAB2D.Domain.Gameplay;
 global using LAB2D.Domain.Inventory;
 global using LAB2D.Domain.Player;
+global using LAB2D.Domain.Time;
 global using LAB2D.Domain.Wave;
 global using LAB2D.Domain.Worker;
 global using LAB2D.Enum;

@@ -3,6 +3,7 @@ namespace LAB2D.Gameplay
     using LAB2D;
     using LAB2D.Data;
     using LAB2D.Domain.Common;
+    using LAB2D.Domain.Time;
     using LAB2D.Domain.Wave;
     using LAB2D.UnityAdapter;
     using System;
@@ -141,6 +142,7 @@ namespace LAB2D.Gameplay
 
             this.sceneAdapter.SetWaveControlEnabled(true);
             this.ResetState();
+            this.EventBus.Subscribe<GamePhaseChangedEvent>(this.OnPhaseChanged);
             this.waveCoroutine = this.timeScheduler.Start(this.WaveLoop());
         }
 
@@ -150,6 +152,7 @@ namespace LAB2D.Gameplay
         public void StopWaves()
         {
             this.sceneAdapter.SetWaveControlEnabled(false);
+            this.EventBus.Unsubscribe<GamePhaseChangedEvent>(this.OnPhaseChanged);
             if (this.waveCoroutine != null)
             {
                 this.timeScheduler.Stop(this.waveCoroutine);
@@ -158,6 +161,25 @@ namespace LAB2D.Gameplay
 
             this.flowService.Stop(this.runtimeState);
             this.SyncPublicStateFromRuntime();
+        }
+
+        /// <summary>
+        /// 黄昏预警 — 入昏时提示今晚敌情（波次挂日模式下夜晚即波次窗口）。
+        /// </summary>
+        private void OnPhaseChanged(GamePhaseChangedEvent e)
+        {
+            if (e.NewPhase != GamePhase.Dusk || !this.Config.syncWithDayNight)
+            {
+                return;
+            }
+
+            int nextWaveIndex = this.runtimeState.CurrentWaveIndex + (this.runtimeState.IsWaveActive ? 1 : 0);
+            int nextWaveCount = this.GetEnemyCountForWave(nextWaveIndex);
+            Core.GameServices.ShowTipProvider(
+                $"黄昏将至，妖兽夜袭将至（第 {nextWaveIndex} 波，约 {nextWaveCount} 只），请做好准备");
+            AWorkerTask.LogProvider(
+                $"[WaveDiag] 黄昏预警：下一波 {nextWaveIndex}，预计 {nextWaveCount} 只",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -208,20 +230,27 @@ namespace LAB2D.Gameplay
                     yield break;
                 }
 
-                // 波间休息
-                if (this.TotalWavesCompleted > 0)
-                {
-                    WaveFlowDecision restDecision = this.flowService.BeginRestAndCreateDecision(
-                        this.runtimeState,
-                        this.Config.restTimeBetweenWaves);
-                    this.SyncPublicStateFromRuntime();
-                    this.OnRestStart?.Invoke(restDecision.RestDuration);
-                    this.EventBus.PublishInternal(new WaveRestStartedEvent { RestDuration = restDecision.RestDuration });
-                    this.OnWaveStateChanged?.Invoke();
-                    yield return this.timeScheduler.WaitForSeconds(restDecision.RestDuration);
-                    this.flowService.EndRest(this.runtimeState);
-                    this.SyncPublicStateFromRuntime();
-                }
+                // 波间休息 — 波次挂日模式：休息到下一个夜晚开始（一夜一波，白天安全经营）；
+                // 关闭挂日（调试/旧行为）：固定 restTimeBetweenWaves 秒。
+                float restDuration = this.Config.syncWithDayNight
+                    ? DayNightRuleService.SecondsUntilPhaseStart(
+                        GameTimeManager.Instance.CurGameTime,
+                        GlobalData.GameDayTime,
+                        GamePhase.Night)
+                    : this.Config.restTimeBetweenWaves;
+                WaveFlowDecision restDecision = this.flowService.BeginRestAndCreateDecision(
+                    this.runtimeState,
+                    restDuration);
+                this.SyncPublicStateFromRuntime();
+                this.OnRestStart?.Invoke(restDecision.RestDuration);
+                this.EventBus.PublishInternal(new WaveRestStartedEvent { RestDuration = restDecision.RestDuration });
+                this.OnWaveStateChanged?.Invoke();
+                AWorkerTask.LogProvider(
+                    $"[WaveDiag] 波间休息 {restDecision.RestDuration:F0}s（下一夜开始）",
+                    LogManager.LogLevelEnum.Debug);
+                yield return this.timeScheduler.WaitForSeconds(restDecision.RestDuration);
+                this.flowService.EndRest(this.runtimeState);
+                this.SyncPublicStateFromRuntime();
 
                 // 开始新波次
                 WaveFlowDecision waveStartedDecision = this.flowService.BeginNextWaveAndCreateDecision(
@@ -444,25 +473,32 @@ namespace LAB2D.Gameplay
     }
 
     /// <summary>
-    /// 波次配置 — 控制波次生成节奏和难度缩放参数
+    /// 波次配置 — 控制波次生成节奏和难度缩放参数。
+    /// 默认波次挂日（syncWithDayNight）：每天夜晚开一波，白天为安全经营期；
+    /// 波间休息时长由 DayNightRuleService 按距下一夜开始计算，restTimeBetweenWaves 仅在关闭挂日时生效。
     /// </summary>
     [Serializable]
     public class WaveConfig
     {
         /// <summary>
-        /// 第一波敌人基础数量
+        /// 第一波敌人基础数量（波次挂日后一天一波，规模相应放大）
         /// </summary>
-        public int baseEnemyCount = 3;
+        public int baseEnemyCount = 8;
 
         /// <summary>
         /// 每波增加的敌人数量
         /// </summary>
-        public int enemiesPerWaveIncrease = 2;
+        public int enemiesPerWaveIncrease = 3;
 
         /// <summary>
-        /// 波间休息时间（秒）
+        /// 波间休息时间（秒）— 仅 syncWithDayNight=false（调试/旧行为）时生效
         /// </summary>
         public float restTimeBetweenWaves = 15.0f;
+
+        /// <summary>
+        /// 波次挂日 — true 时休息至下一个夜晚开始（白天安全、夜晚波次）；false 为固定间隔旧行为
+        /// </summary>
+        public bool syncWithDayNight = true;
 
         /// <summary>
         /// 波内敌人生成间隔（秒）

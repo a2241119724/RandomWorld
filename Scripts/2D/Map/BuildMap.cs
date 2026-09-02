@@ -1,6 +1,7 @@
 namespace LAB2D.Map
 {
     using LAB2D;
+    using Character = LAB2D.Character.Character;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Constant;
     using LAB2D.Core.Seek;
@@ -218,6 +219,7 @@ namespace LAB2D.Map
                     Vector3IntLAB secLAB = Vector3IntLAB.ToVector3IntLAB(pos);
                     BuildTileData secData = new BuildTileData(tileName, true, width, height);
                     secData.RectType = rectType;
+                    secData.IsSecondary = true;
                     secData.BuilderName = builderName ?? string.Empty;
                     secData.OwnerName = builderName ?? string.Empty;
                     this.BuildMapDataLAB.PosMap.Add(secLAB, secData);
@@ -248,6 +250,7 @@ namespace LAB2D.Map
 
             BuildTileData secData = new BuildTileData(tileName, true, width, height);
             secData.RectType = rectType;
+            secData.IsSecondary = true;
             secData.BuilderName = builderName ?? string.Empty;
             secData.OwnerName = builderName ?? string.Empty;
             this.BuildMapDataLAB.PosMap.Add(posLAB, secData);
@@ -528,6 +531,64 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 对建筑造成伤害 — 妖兽啃墙通路（AttackEffect 子弹命中建筑层时调用）。
+        /// 建造中的建筑（IsComplete=false）不受伤害；核心格转调 MountainGateManager；
+        /// 普通建筑耐久归零时走与 Worker 拆除相同的移除路径（CancelBuilding + 房间失效）。
+        /// </summary>
+        /// <param name="pos">被击中的建筑格子。</param>
+        /// <param name="damage">本次伤害。</param>
+        /// <param name="attacker">攻击者（可为 null）。</param>
+        /// <returns>是否命中了有效目标（建筑或核心）。</returns>
+        public bool DamageBuilding(Vector3Int pos, float damage, Character attacker)
+        {
+            if (damage <= 0f)
+            {
+                return false;
+            }
+
+            BuildTileData data = this.GetBuildTileData(pos);
+            if (data == null || !data.IsComplete)
+            {
+                return false;
+            }
+
+            // 山门核心：耐久数据在 MountainGateManager（随其存档），不在 BuildTileData。
+            // 3×3 占用范围内任意格命中都算核心受击（副格无物理 collider，子弹通常打主格，此处兜底）
+            if (data.Name == Gameplay.MountainGateManager.CoreTileName
+                && Core.ServiceLocator.TryGet<Gameplay.MountainGateManager>(out Gameplay.MountainGateManager gate)
+                && gate.IsCoreCell(pos))
+            {
+                gate.DamageCore(damage, attacker);
+                return true;
+            }
+
+            // 旧存档/首次受击兜底：Hp 未初始化时按默认耐久起算
+            if (data.Hp <= 0f)
+            {
+                data.Hp = Domain.Gameplay.BuildingDamageRuleService.DefaultBuildingMaxHp;
+            }
+
+            Domain.Gameplay.BuildingDamageRuleService.BuildingDamageResult result =
+                new Domain.Gameplay.BuildingDamageRuleService().ApplyDamage(data.Hp, damage);
+            data.Hp = result.RemainingHp;
+            AWorkerTask.LogProvider(
+                $"[BuildDiag] 建筑受击 tile={data.Name} pos=({pos.x},{pos.y}) damage={damage:F1} hp={data.Hp:F0} attacker={attacker?.name ?? "null"}",
+                LogManager.LogLevelEnum.Debug);
+
+            if (result.IsDestroyed)
+            {
+                // 与 WorkerDemolishTask.Finish 相同的移除路径：移除瓦片 + 房间失效
+                this.CancelBuilding(pos);
+                Core.ServiceLocator.Get<Item.RoomManager>()?.NotifyBuildingDemolished(pos);
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] 建筑被摧毁 tile={data.Name} pos=({pos.x},{pos.y})",
+                    LogManager.LogLevelEnum.Debug);
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// 纯函数：统一碰撞体不变量（未完成→None；完成→IsPass?None:Sprite）。
         /// public 供 Editor 纯函数单测（BuildColliderInvariantTests）。
         /// </summary>
@@ -703,6 +764,14 @@ namespace LAB2D.Map
             {
                 Vector3Int pos = Vector3IntLAB.ToVector3Int(posMap.Key);
                 BuildTileData tileData = posMap.Value;
+
+                if (tileData.IsSecondary)
+                {
+                    // 多格副格：无 tile（贴 tile 会让多格大图逐副格重复渲染），只恢复通行缓存
+                    WalkabilityCache.UpdateCell(pos);
+                    continue;
+                }
+
                 TileBase tile = (TileBase)AWorkerTask.ResourceLoadProvider(tileData.Name);
                 this.tilemap.SetTile(pos, tile);
 
@@ -877,6 +946,19 @@ namespace LAB2D.Map
             /// 默认 Center，向后兼容旧存档。
             /// </summary>
             public AWorkerTask.RectType RectType;
+
+            /// <summary>
+            /// 当前耐久（M1.3 建筑伤害基建）。旧存档反序列化为 0，
+            /// 由 DamageBuilding 在首次受击时兜底为 DefaultBuildingMaxHp。
+            /// </summary>
+            public float Hp;
+
+            /// <summary>
+            /// 多格副格标记（RegisterCollisionTile 登记）：无 tile、纯阻挡数据。
+            /// 读档时据此跳过 SetTile——副格贴 tile 会让多格大图逐副格重复渲染（读档重影）。
+            /// 旧档无此字段反序列化为 false，副格维持旧行为。
+            /// </summary>
+            public bool IsSecondary;
 
             public BuildTileData(string name, bool isComplete, int width = 1, int height = 1)
             {

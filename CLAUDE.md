@@ -39,6 +39,12 @@
 
 ## 3. 关键架构决策
 
+- **新增建筑一律 ABuildItem 子类，禁止在 Manager 手写放置代码。**
+  三同约定：类名 == 瓦片名 == SO 条目名（`Resources/Tilemap/Item/Build/` 的 tile + 对应 `*ItemData` SO），ItemInstanceFactory 反射自动注册实例，无需任何注册代码。
+  多格建筑：构造器设 `Width/Height`，`RectType` 用 `BottomLeft`（参考点即主格，床同款惯例）；主格/副格注册统一走既有管线 `AddBuildTask → BuildMap.AddBuild（主格）+ RegisterCollisionTile（副格）`。
+  系统专属建筑（山门核心 MountainGateCore 范本）：override `AddBuildTask` 拦截玩家入口，另设 `PlaceBySystem` 调 `base.AddBuildTask` 走管线放置；SO 条目 `IsNeedBuild=false`（放置即完成、不建任务）、`IsPass=false`（主格物理阻挡可被打 + 副格 A* 阻挡，IsCanReach 通用逻辑覆盖，**无需任何特判**）。
+  教训（2026-09-02 山门核心返工）：在 MountainGateManager 手写 DirectBuild+副格循环+IsCanReach 特判，与管线行为分叉，全部删除后改为继承 ABuildItem 的十几行。
+
 <!-- 在此记录已确定的决策，避免 Claude 重复讨论。每条包含简要理由。 -->
 
 <!-- 提示：也列出已确定的决策，避免 Claude 重复讨论。
@@ -84,7 +90,7 @@
 
 1. **先定用途与模型**：`--category` 决定模型。角色立绘/精灵图/序列帧必须带 `--ref` 走 Seedream（图生图一致性）；批量道具/图标无参考图走 Z-Image-Turbo（最便宜）；场景/特效走 Qwen-Image；可用免费 Kolors 先试画风。
 2. **默认 `--variants 1` 先出样板**：确认画风/姿态/一致性达标后再批量，严禁未验证就 `--variants 4-8` 冲量。
-3. **提示词一次写全**：主体特征、姿态（每个手臂在做什么）、画风关键词、背景/透明、取景——缺项必然漂移返工。
+3. **提示词一次写全**：主体特征、姿态（每个手臂在做什么）、画风关键词、背景/透明、取景——缺项必然漂移返工。**建筑/道具等地面物件一律正俯视**（pure top-down / bird's-eye view，镜头垂直向下，prompt 须显式写明并排除 3/4 斜视角/等距视角）——游戏是俯视镜头，斜视角素材与场景不匹配（2026-09-02 用户确认）。
 4. **路径与命名一次对**：输出目录 `Resources/Images/<Category>/<Name>/`（CWD 已是仓库根 `Assets/`，**不带** `Assets/` 前缀）；单图英文名（与 `ItemData.Name` 绑定）、序列帧 `{prefix}_0/_1/_2...`——错命名=集成期返工。
 5. **省钱原则**：无参考图永远不用 Seedream；先免费/最便宜出样板，summary 的 `estimated_cost` 用于决策；需要透明底时生成后立即接 `bg-remove`，不拖到集成阶段。
 
