@@ -65,4 +65,4 @@ generated_batch/
 
 # 图像生成临时工作目录
 _tmp_*/
-.claude/tmp/
+.claude/tmp/_tmp_*.meta
