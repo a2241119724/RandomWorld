@@ -173,9 +173,9 @@ namespace LAB2D.Character.Worker
             this.CharacterDataLAB.Character = this;
             this.CharacterDataLAB.Weapon = (AWeapon)AWorkerTask.ItemFactoryProvider(PrefabConstant.CUSTOM_SWORD);
             this.Manager = new WorkerStateManager<ICharacterState, AWorkerState.TypeEnum, AWorker>(this);
-            this.nameUI = this.transform.Find("Name").GetComponent<Text>();
-            this.WorkerStateText = this.transform.Find("State").GetComponent<Text>();
-            Transform dialogTrans = this.transform.Find("Dialog");
+            this.nameUI = this.FindHeadChild("Name").GetComponent<Text>();
+            this.WorkerStateText = this.FindHeadChild("State").GetComponent<Text>();
+            Transform dialogTrans = this.FindHeadChild("Dialog");
             if (dialogTrans != null)
             {
                 this.dialogRoot = dialogTrans.gameObject;
@@ -201,10 +201,10 @@ namespace LAB2D.Character.Worker
             {
                 LogProvider($"[Monologue] {this.name} 没有 Dialog 子节点!", LogManager.LogLevelEnum.Warning);
             }
-            this.progress = this.transform.Find("Progress").GetComponent<Slider>();
+            this.progress = this.FindHeadChild("Progress").GetComponent<Slider>();
             this.progress.gameObject.SetActive(false);
             this.resourceInfos = new Dictionary<int, ResourceInfo>();
-            this.statusBar = this.transform.Find("Hp").GetComponent<CharacterStatusUI>();
+            this.statusBar = this.FindHeadChild("Hp").GetComponent<CharacterStatusUI>();
             if (this.statusBar == null)
             {
                 LogProvider("statusBar Not Found!!!", LogManager.LogLevelEnum.Error);
@@ -381,7 +381,6 @@ namespace LAB2D.Character.Worker
             if (this.progress.gameObject.activeSelf != enable)
             {
                 this.progress.gameObject.SetActive(enable);
-                this.nextProgressRefreshTime = 0f; // 显示瞬间立即反映当前进度
             }
 
             if (!enable)
@@ -389,21 +388,14 @@ namespace LAB2D.Character.Worker
                 return;
             }
 
-            // 10Hz 节流 + 值比较：工作状态下每帧都调用且进度确实在变，
-            // 每次 Slider.value 变更都驱动 fill RectTransform 尺寸变化 → Graphic 网格
-            // 重建 + LayoutRebuilder（100 人同时工作 = 每帧 100 次），0.1s 视觉粒度足够。
-            if (Time.unscaledTime >= this.nextProgressRefreshTime && this.progress.value != value)
+            // 逐帧写入（仅值比较挡掉重复值）：任务进度随 deltaTime 连续累积，
+            // 0.1s 时间节流会造成可感知的跳格；进度可见时 Canvas 重建本身不可避免，
+            // HeadUI 合并为单 Canvas 后重建边界已是每角色 1 个。
+            if (this.progress.value != value)
             {
-                this.nextProgressRefreshTime = Time.unscaledTime + ProgressRefreshInterval;
                 this.progress.value = value;
             }
         }
-
-        /// <summary>进度条刷新节流间隔（见 SetProgress 注释）。</summary>
-        private const float ProgressRefreshInterval = 0.1f;
-
-        /// <summary>下次允许写入进度条的时间（Time.unscaledTime）。</summary>
-        private float nextProgressRefreshTime;
 
         /// <summary>
         /// 显示心智气泡（自主意志拒绝/人生事件/关系变化等反馈）。

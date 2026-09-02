@@ -164,70 +164,31 @@ namespace LAB2D.Character
         private const string HeadUiSortingLayer = "Highest";
 
         /// <summary>
-        /// 头顶 UI 防遮挡：角色 prefab 的 UI 子树（Name/State/Progress/Hp/Dialog）未挂 Canvas，
-        /// 引擎 fallback 渲染落在 Default 排序层，会被 Character 层的树/建筑
-        /// （WorldYSortManager 动态 sortingOrder）盖住。
-        /// 已有 Canvas 时仅提升排序层；否则把所有含 UI 图形的直接子节点收拢到
-        /// 单个 WorldSpace Canvas（HeadUI）下——原实现为每个子节点各挂一个 Canvas，
-        /// 每角色 5 个独立 Canvas：任何头顶元素变化都重建 5 次，且 Canvas 调度基数
-        /// 随人数线性放大（100 Worker = 500 Canvas），是 PostLateUpdate.
-        /// PlayerUpdateCanvases 的主要来源。合并后重建边界统一为 1。
+        /// 头顶 UI 排序层兜底：HeadUI（单 WorldSpace Canvas，收拢 Name/State/Progress/Hp/Dialog）
+        /// 已内置于各角色 prefab，此处仅做防御——prefab 漏设排序层时提升到项目最高层，
+        /// 避免 UI 落在 Default 层被 Character 层的树/建筑（WorldYSortManager 动态 sortingOrder）盖住。
+        /// 运行时创建/迁移逻辑已随 prefab 化删除。
         /// </summary>
         private void EnsureHeadUiSorting()
         {
             Canvas[] canvases = this.GetComponentsInChildren<Canvas>(true);
-            if (canvases.Length > 0)
+            foreach (Canvas canvas in canvases)
             {
-                foreach (Canvas canvas in canvases)
+                if (canvas.isRootCanvas && canvas.sortingLayerName != HeadUiSortingLayer)
                 {
-                    if (canvas.isRootCanvas && canvas.sortingLayerName != HeadUiSortingLayer)
-                    {
-                        canvas.sortingLayerName = HeadUiSortingLayer;
-                        AWorkerTask.LogProvider($"[UIDiag] {this.name} Canvas '{canvas.name}' 排序层提升至 {HeadUiSortingLayer}", LogManager.LogLevelEnum.Debug);
-                    }
+                    canvas.sortingLayerName = HeadUiSortingLayer;
+                    AWorkerTask.LogProvider($"[UIDiag] {this.name} Canvas '{canvas.name}' 排序层提升至 {HeadUiSortingLayer}", LogManager.LogLevelEnum.Debug);
                 }
-
-                return;
             }
+        }
 
-            // 先收集再迁移（迭代中 SetParent 会破坏子节点遍历）
-            List<Transform> uiChildren = null;
-            foreach (Transform child in this.transform)
-            {
-                if (child.GetComponentsInChildren<UnityEngine.UI.Graphic>(true).Length == 0)
-                {
-                    continue;
-                }
-
-                (uiChildren ?? (uiChildren = new List<Transform>())).Add(child);
-            }
-
-            if (uiChildren == null)
-            {
-                return;
-            }
-
-            GameObject headUi = new GameObject("HeadUI", typeof(RectTransform));
-            // Canvas 根 GO 的 layer 决定相机剔除：不设会落在 Default(0)，
-            // culling mask 不含 Default 的相机会让整个头顶 UI 消失——继承角色根层
-            headUi.layer = this.gameObject.layer;
-            headUi.transform.SetParent(this.transform, false);
-            headUi.transform.localPosition = Vector3.zero;
-            headUi.transform.localRotation = Quaternion.identity;
-            headUi.transform.localScale = Vector3.one;
-
-            Canvas headCanvas = headUi.AddComponent<Canvas>();
-            headCanvas.renderMode = RenderMode.WorldSpace;
-            headCanvas.sortingLayerName = HeadUiSortingLayer;
-
-            foreach (Transform child in uiChildren)
-            {
-                // worldPositionStays:true 保留 prefab 配置的世界位置/缩放
-                //（HeadUI 与角色根完全重合，子节点 local 值不变）
-                child.SetParent(headUi.transform, true);
-            }
-
-            AWorkerTask.LogProvider($"[UIDiag] {this.name} 头顶 UI 收拢至单个 WorldSpace Canvas 并提升至 {HeadUiSortingLayer}（{uiChildren.Count} 个子节点）", LogManager.LogLevelEnum.Debug);
+        /// <summary>
+        /// 头顶 UI 子节点查找：HeadUI 已内置于 prefab，统一从 HeadUI 下取；
+        /// 兜底旧层级（直接子节点）以兼容漏改的 prefab 变体。
+        /// </summary>
+        protected Transform FindHeadChild(string name)
+        {
+            return this.transform.Find("HeadUI/" + name) ?? this.transform.Find(name);
         }
 
         public virtual void Start()

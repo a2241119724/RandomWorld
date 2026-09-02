@@ -79,9 +79,8 @@ namespace LAB2D.Character.Enemy
             this.AttackRange = LAB2D.Tool.Tool.DrawSectorSolid(10, enemyData.AttackRange, new Color32(255, 0, 0, 50), this.transform);
             this.SightRange = LAB2D.Tool.Tool.DrawSectorSolid(enemyData.SightAngle, enemyData.SightRange, new Color32(0, 255, 0, 50), this.transform);
 
-            // 头顶 UI 可能已被 base.Start() 的 EnsureHeadUiSorting 收拢到 HeadUI 子树下，
-            // 兼容迁移后（HeadUI/Hp）与未迁移（Hp，prefab 自带 Canvas 等情形）两种层级
-            Transform hpTrans = this.transform.Find("HeadUI/Hp") ?? this.transform.Find("Hp");
+            // Hp 位于 prefab 内置的 HeadUI 子树下（FindHeadChild 含旧层级兜底）
+            Transform hpTrans = this.FindHeadChild("Hp");
             this.statusBar = hpTrans != null ? hpTrans.GetComponent<CharacterStatusUI>() : null;
             if (this.statusBar == null)
             {
