@@ -27,18 +27,6 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         /// <summary>感知目标轮询索引:跨帧依次扫过全部玩家+Worker.</summary>
         private int senseTargetIndex;
 
-        /// <summary>夜袭开火间隔（与 CommonEnemyAttackState.AttackInterval 一致）.</summary>
-        private const float SiegeAttackInterval = 1.0f;
-
-        /// <summary>夜袭移动速度（慢于漫游，攻城压迫感）.</summary>
-        private const float SiegeMoveSpeed = 3.0f;
-
-        /// <summary>是否处于夜袭模式（夜晚无目标 → 聚拢山门核心啃咬）.</summary>
-        private bool isSieging;
-
-        /// <summary>夜袭开火冷却计时.</summary>
-        private float siegeAttackCooldown;
-
         public CommonEnemyWanderState(ACommonEnemy character)
             : base(character)
         {
@@ -49,8 +37,6 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         {
             base.OnEnter();
             this.Character.Target = null;
-            this.isSieging = false;
-            this.siegeAttackCooldown = 0.0f;
 
             // 为了再一次进入会直接转动方向
             this.recordTime = 9999.0f;
@@ -102,20 +88,6 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                 }
             }
 
-            // 夜袭：夜晚无目标时向山门核心聚拢并啃咬（子弹命中建筑走 BuildingDamage 通路）。
-            // 不加新 FSM 状态，仅在漫游态内切换行为分支；被玩家/Worker 感知命中的分支优先级更高。
-            if (this.TrySiegeCore())
-            {
-                return;
-            }
-
-            if (this.isSieging)
-            {
-                // 夜袭结束（天亮/核心消失）：恢复漫游速度，避免整段白天拖着慢速
-                this.isSieging = false;
-                this.ApplyNewDirection(this.rotationAngle);
-            }
-
             // 漫游：随机间隔换向（预判挑选避墙方向，见 PickNewDirection）
             this.recordTime += this.Character.DeltaTime;
             float rotateInterval = Random.Range(12.0f, 18.0f); // 动态间隔
@@ -129,12 +101,6 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         public override void OnFixedUpdate()
         {
             base.OnFixedUpdate();
-
-            if (this.isSieging)
-            {
-                this.SiegeFixedStep();
-                return;
-            }
 
             Vector3 direction = new ((float)System.Math.Sin(this.rotationAngle), (float)System.Math.Cos(this.rotationAngle), 0);
             this.Character.RotateTo(direction);
@@ -165,77 +131,6 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             // 先转再移动
             float angle = Quaternion.Angle(this.Character.transform.rotation, Quaternion.FromToRotation(Vector3.up, direction));
             if (angle < 1.0f)
-            {
-                this.Character.MoveToForward();
-            }
-        }
-
-        /// <summary>
-        /// 尝试进入夜袭模式：夜晚且山门核心已放置时朝核心聚拢；
-        /// 进入攻击距离后周期性朝核心开火（子弹撞上建筑/核心造成伤害）。
-        /// </summary>
-        /// <returns>是否处于夜袭模式（true 时跳过漫游逻辑）。</returns>
-        private bool TrySiegeCore()
-        {
-            if (!DayNightRuleService.IsNight(GameTimeManager.Instance.CurGameTime, GlobalData.GameDayTime)
-                || !Core.ServiceLocator.TryGet<Gameplay.MountainGateManager>(out Gameplay.MountainGateManager gate)
-                || !gate.IsCorePlaced)
-            {
-                return false;
-            }
-
-            Vector3 coreWorldPos = AWorkerTask.TileMapPositionProvider(gate.CorePosition);
-            this.isSieging = true;
-            this.Character.MoveSpeed = SiegeMoveSpeed;
-
-            ACommonEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as ACommonEnemy.EnemyData;
-            float sqrAttackRange = (enemyData?.AttackRange ?? 4.0f) * (enemyData?.AttackRange ?? 4.0f);
-            Vector3 toCore = coreWorldPos - this.Character.transform.position;
-
-            this.siegeAttackCooldown += this.Character.DeltaTime;
-            if (toCore.sqrMagnitude <= sqrAttackRange && this.siegeAttackCooldown >= SiegeAttackInterval)
-            {
-                this.siegeAttackCooldown = 0.0f;
-
-                // 开火（与 CommonEnemyAttackState 同路：联机走 RPC）
-                if (this.Character.NetworkView.IsOnline)
-                {
-                    this.Character.NetworkView.RPC("Attack", RpcTarget.All);
-                }
-                else
-                {
-                    this.Character.Attack();
-                }
-
-                // 夜袭开火事件（受 1s 门控，非每帧）
-                AWorkerTask.LogProvider(
-                    $"[EnemyDiag] {this.Character.name} 夜袭开火 target=山门核心 pos=({toCore.x:F1},{toCore.y:F1})",
-                    LogManager.LogLevelEnum.Debug);
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// 夜袭移动步：始终朝向核心，未进攻击距离则前进。
-        /// 故意跳过漫游的受阻换向——贴墙啃咬正是夜袭目的（子弹会啃穿面前的墙）。
-        /// </summary>
-        private void SiegeFixedStep()
-        {
-            if (!Core.ServiceLocator.TryGet<Gameplay.MountainGateManager>(out Gameplay.MountainGateManager gate)
-                || !gate.IsCorePlaced)
-            {
-                this.isSieging = false;
-                return;
-            }
-
-            Vector3 coreWorldPos = AWorkerTask.TileMapPositionProvider(gate.CorePosition);
-            Vector3 direction = coreWorldPos - this.Character.transform.position;
-            this.Character.RotateTo(direction);
-
-            ACommonEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as ACommonEnemy.EnemyData;
-            float attackRange = enemyData?.AttackRange ?? 4.0f;
-            if (direction.magnitude > attackRange)
             {
                 this.Character.MoveToForward();
             }
