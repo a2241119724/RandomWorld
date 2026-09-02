@@ -9,6 +9,7 @@ namespace LAB2D.Core.Seek
     /// </summary>
     internal static class PathfindingWorkspacePool
     {
+        /// <summary>池保底容量：Worker=0 时调度器最少 2 个并发搜索（实际容量由 Initialize 按并发上限传入）。</summary>
         private const int WorkspaceCount = 2;
         private static readonly Stack<PathfindingWorkspace> Pool = new (WorkspaceCount);
         private static readonly object PoolLock = new ();
@@ -17,9 +18,10 @@ namespace LAB2D.Core.Seek
         private static int maxIterations;
         private static volatile bool initialized;
 
-        public static void Initialize(int newWidth, int newHeight, int newMaxIterations)
+        public static void Initialize(int newWidth, int newHeight, int newMaxIterations, int poolCapacity)
         {
-            if (initialized && width == newWidth && height == newHeight && maxIterations == newMaxIterations)
+            poolCapacity = Math.Max(WorkspaceCount, poolCapacity);
+            if (initialized && width == newWidth && height == newHeight && maxIterations == newMaxIterations && Pool.Count >= poolCapacity)
             {
                 return;
             }
@@ -28,6 +30,13 @@ namespace LAB2D.Core.Seek
             {
                 if (initialized && width == newWidth && height == newHeight && maxIterations == newMaxIterations)
                 {
+                    // 尺寸未变：只按需补充到并发上限（上限随 Worker 数增长），不缩减已有工作区，
+                    // 避免首波超出预建数量的 Rent 各自 new ~20MB 大数组造成 GC 尖峰。
+                    while (Pool.Count < poolCapacity)
+                    {
+                        Pool.Push(new PathfindingWorkspace(width, height, maxIterations));
+                    }
+
                     return;
                 }
 
@@ -38,7 +47,7 @@ namespace LAB2D.Core.Seek
                 height = newHeight;
                 maxIterations = newMaxIterations;
 
-                for (int i = 0; i < WorkspaceCount; i++)
+                for (int i = 0; i < poolCapacity; i++)
                 {
                     Pool.Push(new PathfindingWorkspace(width, height, maxIterations));
                 }
@@ -57,7 +66,7 @@ namespace LAB2D.Core.Seek
                 }
             }
 
-            // 全局调度器最多只运行两个搜索，正常情况下不会进入这里。
+            // 并发上限内已由 Initialize 预建（ASeek.MaxConcurrentSearches），超出上限才进入这里。
             return new PathfindingWorkspace(width, height, maxIterations);
         }
 

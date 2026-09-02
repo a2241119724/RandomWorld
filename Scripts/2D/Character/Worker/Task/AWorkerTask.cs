@@ -865,7 +865,10 @@ namespace LAB2D.Character.Worker.Task
 
             for (int r = 0; r <= maxRadius; r++)
             {
-                bool foundInRing = FindClosest(center, r, pos =>
+                // 逐环扫描：每轮只检查第 r 环新增格（原实现对每个 r 调 FindClosest(center, r)，
+                // 后者自己从 0 重扫到 r——同格被重复检查 O(R) 次，总成本 O(R³)。
+                // 100 Worker 并行采集齐爆时每次掉落放置数千次冗余网格查询，为高频热点）。
+                bool foundInRing = ScanRing(center, r, pos =>
                 {
                     bool free = availableMap.IsTileFreeForDrop(pos);
                     // 每次放置只输出第一条失败诊断，避免逐格刷屏（日志观测 [掉落诊断] 3k+ 条，含 5 次 ServiceLocator 查询）
@@ -900,6 +903,37 @@ namespace LAB2D.Character.Worker.Task
             }
 
             return default;
+        }
+
+        /// <summary>
+        /// 只遍历 Chebyshev 距离恰为 r 的单环格（r=0 即中心格），供 FindNearestFreeTile 逐环推进。
+        /// </summary>
+        private static bool ScanRing(
+            UnityEngine.Vector3Int center, int r,
+            System.Func<UnityEngine.Vector3Int, bool> check,
+            out UnityEngine.Vector3Int result)
+        {
+            if (r == 0)
+            {
+                return TryCheck(center.x, center.y, check, out result);
+            }
+
+            // 上下水平边: y = ±r, x ∈ [-r, r]
+            for (int dx = -r; dx <= r; dx++)
+            {
+                if (TryCheck(center.x + dx, center.y - r, check, out result)) return true;
+                if (TryCheck(center.x + dx, center.y + r, check, out result)) return true;
+            }
+
+            // 左右垂直边（不含角，角已在水平边处理）: x = ±r, y ∈ [-(r-1), r-1]
+            for (int dy = -r + 1; dy <= r - 1; dy++)
+            {
+                if (TryCheck(center.x - r, center.y + dy, check, out result)) return true;
+                if (TryCheck(center.x + r, center.y + dy, check, out result)) return true;
+            }
+
+            result = default;
+            return false;
         }
 
         /// <summary>

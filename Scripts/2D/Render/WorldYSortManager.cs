@@ -1,5 +1,6 @@
 namespace LAB2D.Render
 {
+    using System;
     using System.Collections.Generic;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Manager;
@@ -140,6 +141,11 @@ namespace LAB2D.Render
             }
         }
 
+        // 排序缓冲（LateUpdate 每帧复用，避免每帧 new 数组）
+        private float[] sortBottomYs = System.Array.Empty<float>();
+        private int[] sortIndices;
+        private int[] sortOrders;
+
         private void LateUpdate()
         {
             // 1. 懒清扫已销毁条目（角色延迟销毁/Player 永不销毁/漏注销均兜底）
@@ -158,7 +164,13 @@ namespace LAB2D.Render
             }
 
             // 2. 计算当前底端 y；sprite 引用或 lossyScale 变化时重算 offset（Player 换 sprite 等）
-            float[] bottomYs = new float[count];
+            // 缓冲跨帧复用（每帧 new 3 个数组 + 闭包委托在 100+ 条目下是持续 GC 大户）
+            if (this.sortBottomYs.Length < count)
+            {
+                this.sortBottomYs = new float[Math.Max(count, 64)];
+            }
+
+            float[] bottomYs = this.sortBottomYs;
             for (int i = 0; i < count; i++)
             {
                 Entry e = this.entries[i];
@@ -171,8 +183,9 @@ namespace LAB2D.Render
                 bottomYs[i] = e.bottomY;
             }
 
-            // 3. 按底端 y 降序分配唯一 order（纯函数，可单测）
-            int[] orders = YSortAlgorithm.AssignOrders(bottomYs);
+            // 3. 按底端 y 降序分配唯一 order（缓冲复用版，排序规则与纯函数版一致）
+            YSortAlgorithm.AssignOrders(bottomYs, count, ref this.sortIndices, ref this.sortOrders);
+            int[] orders = this.sortOrders;
 
             // 4. 仅写变化的 order，减少 SetProperty 开销
             for (int i = 0; i < count; i++)

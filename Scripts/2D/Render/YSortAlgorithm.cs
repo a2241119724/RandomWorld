@@ -1,5 +1,7 @@
 namespace LAB2D.Render
 {
+    using System;
+
     /// <summary>
     /// 按底端 Y 排序分配 sortingOrder 的纯函数算法（无 UnityEngine 依赖，可单测）。
     /// 规则：底端 y 大（屏幕上方/远处）→ sortingOrder 小（先绘制，被覆盖）；
@@ -43,6 +45,66 @@ namespace LAB2D.Render
             }
 
             return orders;
+        }
+
+        /// <summary>
+        /// <see cref="AssignOrders(float[])"/> 的缓冲复用版本：调用方持有 indices/orders 缓冲跨帧复用，
+        /// 比较器用静态单例（比较键通过字段传入，避免捕获变量的闭包+委托每次分配）。
+        /// WorldYSortManager.LateUpdate 每帧高频路径用此重载，实现零分配；排序规则与纯函数版完全一致。
+        /// </summary>
+        /// <param name="bottomY">底端 y 数组（长度 ≥ count）。</param>
+        /// <param name="count">条目数。</param>
+        /// <param name="indices">复用的索引缓冲（不足时扩容）。</param>
+        /// <param name="orders">复用的结果缓冲（不足时扩容），orders[i] 为第 i 个条目的 sortingOrder。</param>
+        public static void AssignOrders(float[] bottomY, int count, ref int[] indices, ref int[] orders)
+        {
+            if (orders == null || orders.Length < count)
+            {
+                orders = new int[Math.Max(count, 64)];
+            }
+
+            if (count <= 1)
+            {
+                if (count == 1)
+                {
+                    orders[0] = 0;
+                }
+
+                return;
+            }
+
+            if (indices == null || indices.Length < count)
+            {
+                indices = new int[Math.Max(count, 64)];
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                indices[i] = i;
+            }
+
+            // 与纯函数版相同的降序稳定比较（bottomY 大的索引排前；相等按原索引升序）
+            SharedComparer.bottomY = bottomY;
+            System.Array.Sort(indices, 0, count, SharedComparer);
+
+            for (int i = 0; i < count; i++)
+            {
+                orders[indices[i]] = i;
+            }
+        }
+
+        /// <summary>静态比较器单例：主线程 LateUpdate 单线程调用，比较键经字段传递零分配。</summary>
+        private static readonly BottomYComparer SharedComparer = new ();
+
+        private sealed class BottomYComparer : System.Collections.Generic.IComparer<int>
+        {
+            internal float[] bottomY;
+
+            public int Compare(int a, int b)
+            {
+                int cmp = this.bottomY[b].CompareTo(this.bottomY[a]);
+                return cmp != 0 ? cmp : a.CompareTo(b);
+            }
         }
     }
 }

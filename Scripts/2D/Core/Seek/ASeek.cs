@@ -14,15 +14,15 @@ namespace LAB2D.Core.Seek
     public class ASeek : ISeek
     {
         /// <summary>
-        /// 动态并发数：基于 Worker 数量自动调节，最少 2 个，最多 16 个。
-        /// 约每 10 个 Worker 分配 1 个额外线程。
+        /// 动态并发数：基于 Worker 数量自动调节，最少 2 个，最多 8 个。
+        /// 约每 50 个 Worker 分配 1 个额外线程。
         /// </summary>
         private static int MaxConcurrentSearches
         {
             get
             {
                 int workerCount = Core.GameServices.WorkerCountProvider?.Invoke() ?? 0;
-                return Math.Clamp(Math.Max(2, (workerCount / 10) + 2), 2, 16);
+                return Math.Clamp(Math.Max(2, (workerCount / 50) + 2), 2, 8);
             }
         }
 
@@ -30,10 +30,16 @@ namespace LAB2D.Core.Seek
         private static readonly Dictionary<Vector3Int, float> FailCache = new ();
         private static readonly Queue<ASeek> SearchQueue = new (64);
         private static readonly object SearchQueueLock = new ();
-        private static readonly WaitCallback SearchWorkerCallback = RunSearchQueue;
         private static int activeSearchWorkers;
         private static Material sharedLineMaterial;
         private static bool quitHookRegistered;
+
+        // 每帧入队配额：同帧大量 Seek（同波敌人共振/批量任务切换）不再全部直接进全局搜索队列，
+        // 超额请求先进 PendingEnqueue，由主线程 dispatcher 每帧最多放行 MaxEnqueuesPerFrame 个，
+        // 摊平入队峰值 → 搜索队列长度有界，角色等待寻路结果从「突发积压数秒」变为「持续 ~百毫秒」。
+        private const int MaxEnqueuesPerFrame = 8;
+        private static readonly Queue<ASeek> PendingEnqueue = new (64);
+        private static bool flushScheduled;
 
         /// <summary>
         /// 全局关闭标志 — 应用退出时置为 true，阻止新寻路请求入队，
@@ -173,6 +179,9 @@ namespace LAB2D.Core.Seek
                 SearchQueue.Clear();
                 activeSearchWorkers = 0;
             }
+
+            PendingEnqueue.Clear();
+            flushScheduled = false;
 
             FailCache.Clear();
             PathfindingWorkspacePool.Clear();
@@ -314,6 +323,9 @@ namespace LAB2D.Core.Seek
                 activeSearchWorkers = 0;
             }
 
+            PendingEnqueue.Clear();
+            flushScheduled = false;
+
             FailCache.Clear();
             PathfindingWorkspacePool.Clear();
             WalkabilityCache.Clear();
@@ -385,7 +397,7 @@ namespace LAB2D.Core.Seek
 
             if (enqueue)
             {
-                EnqueueSearch(this);
+                ScheduleEnqueue(this);
             }
         }
 
@@ -862,8 +874,69 @@ namespace LAB2D.Core.Seek
             int gridWidth = tileMapData.MapTiles.GetLength(0);
             int gridHeight = tileMapData.MapTiles.GetLength(1);
             int maxIterations = CalculateMaxIterations(gridWidth, gridHeight);
-            PathfindingWorkspacePool.Initialize(gridWidth, gridHeight, maxIterations);
+            PathfindingWorkspacePool.Initialize(gridWidth, gridHeight, maxIterations, MaxConcurrentSearches);
             WalkabilityCache.Initialize(gridWidth, gridHeight, s_tileMap.GetInstanceID());
+        }
+
+        /// <summary>
+        /// 把新寻路请求放入待入队队列，并确保有一个每帧配额放行的 flush 被调度。
+        /// 只在主线程调用（Seek 由各角色状态机驱动，flush 由主线程 dispatcher 执行）。
+        /// </summary>
+        private static void ScheduleEnqueue(ASeek seek)
+        {
+            // 应用正在关闭，不再接收新请求
+            if (isShuttingDown)
+            {
+                return;
+            }
+
+            // dispatcher 未就绪（启动极早期/纯逻辑测试）→ 退回同步入队，保持旧行为。
+            if (s_mainThreadDispatcher == null)
+            {
+                EnqueueSearch(seek);
+                return;
+            }
+
+            PendingEnqueue.Enqueue(seek);
+            ScheduleFlush();
+        }
+
+        private static void ScheduleFlush()
+        {
+            // dispatcher 正在关闭时其 Enqueue 会静默丢弃，flushScheduled 不能置位，
+            // 否则卡死为 true 后新场景再无人调度 flush → 寻路全停。
+            if (flushScheduled || isShuttingDown || UnityMainThreadDispatcher.IsShuttingDown)
+            {
+                return;
+            }
+
+            flushScheduled = true;
+            s_mainThreadDispatcher.Enqueue(FlushPendingEnqueues);
+        }
+
+        /// <summary>
+        /// 每帧最多放行 MaxEnqueuesPerFrame 个待入队请求到全局搜索队列；
+        /// 仍有剩余时再调度下一帧继续，形成自续的逐帧放行。
+        /// </summary>
+        private static void FlushPendingEnqueues()
+        {
+            flushScheduled = false;
+            if (isShuttingDown)
+            {
+                PendingEnqueue.Clear();
+                return;
+            }
+
+            int budget = MaxEnqueuesPerFrame;
+            while (budget-- > 0 && PendingEnqueue.Count > 0)
+            {
+                EnqueueSearch(PendingEnqueue.Dequeue());
+            }
+
+            if (PendingEnqueue.Count > 0)
+            {
+                ScheduleFlush();
+            }
         }
 
         private static void EnqueueSearch(ASeek seek)
@@ -892,8 +965,23 @@ namespace LAB2D.Core.Seek
 
             if (startWorker)
             {
-                ThreadPool.QueueUserWorkItem(SearchWorkerCallback);
+                StartSearchWorker();
             }
+        }
+
+        /// <summary>
+        /// 用专用后台线程跑搜索 worker，不用 ThreadPool：单次搜索可达数十毫秒（长任务会刺激
+        /// 线程池注入更多线程），且 Photon 心跳等共用线程池，互相干扰。
+        /// 线程数量仍由 activeSearchWorkers 上限（MaxConcurrentSearches）严格约束。
+        /// </summary>
+        private static void StartSearchWorker()
+        {
+            var thread = new Thread(RunSearchQueue)
+            {
+                IsBackground = true,
+                Name = "ASeekSearchWorker",
+            };
+            thread.Start();
         }
 
         private static void RunSearchQueue(object _)

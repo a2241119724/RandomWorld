@@ -148,6 +148,14 @@ namespace LAB2D.UI
         private void Update()
         {
             this.HandleHotkeys();
+
+            // 面板隐藏时（兜底创建默认 SetVisible(false)，常态隐藏）不刷新摘要文本，不可见时纯属浪费；
+            // 切回可见时由 SetVisible 置 0 让下帧立即补一次刷新。
+            if (this.canvasGroup == null || this.canvasGroup.alpha < 0.5f)
+            {
+                return;
+            }
+
             if (Time.unscaledTime >= this.nextRefreshTime)
             {
                 this.nextRefreshTime = Time.unscaledTime + MathHelper.ClampRefreshInterval(this.refreshInterval);
@@ -174,6 +182,12 @@ namespace LAB2D.UI
             this.canvasGroup.alpha = visible ? 1.0f : 0.0f;
             this.canvasGroup.interactable = visible;
             this.canvasGroup.blocksRaycasts = visible;
+
+            // 重新显示时立即刷新（隐藏期间不刷新会残留旧数据），置 0 让下帧 Update 放行
+            if (visible)
+            {
+                this.nextRefreshTime = 0f;
+            }
         }
 
         /// <summary>

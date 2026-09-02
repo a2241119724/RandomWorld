@@ -54,6 +54,13 @@ namespace LAB2D.Character.Worker.State
         /// </summary>
         private WorkerMoveIntentKind lastIntentKind = WorkerMoveIntentKind.None;
 
+        /// <summary>
+        /// 武器组件缓存：OnUpdate/UpdateCombatIntent 每帧 GetComponent<AWeaponObject> 是热点
+        /// （N=100 Worker 战斗时即每帧 200 次反射式查找）。武器在 OnEnter 创建、OnExit 销毁，
+        /// 生命周期覆盖整个攻击状态，OnEnter 缓存一次即可；OnExit 置空防跨状态持有已销毁对象。
+        /// </summary>
+        private AWeaponObject cachedWeaponObject;
+
         public WorkerAttackState(AWorker worker)
             : base(worker)
         {
@@ -104,6 +111,9 @@ namespace LAB2D.Character.Worker.State
                     LogManager.LogLevelEnum.Debug);
                 this.Character.Manager.ChangeState(TypeEnum.Escape);
             }
+
+            // 每帧热点缓存：武器在本状态生命周期内不变（OnExit 才销毁），GetComponent 只做一次
+            this.cachedWeaponObject = this.Character.Weapon != null ? this.Character.Weapon.GetComponent<AWeaponObject>() : null;
 
             // 拿起武器后锁定反击目标（当前攻击目标）：进入攻击锁定 LastAttacker，
             // 之后被其他目标打才换、被当前攻击目标打保持——与 Enemy.ReduceHp 对称
@@ -188,7 +198,7 @@ namespace LAB2D.Character.Worker.State
                     }
                 }
 
-                AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
+                AWeaponObject weaponObject = this.cachedWeaponObject; // OnEnter 缓存，避免每帧 GetComponent
                 if (weaponObject != null)
                 {
                     // 武器跟踪锁定反击目标（AttackTarget）：防止武器拐向旁边其他角色
@@ -221,9 +231,7 @@ namespace LAB2D.Character.Worker.State
                 return;
             }
 
-            AWeaponObject weaponObject = this.Character.Weapon != null
-                ? this.Character.Weapon.GetComponent<AWeaponObject>()
-                : null;
+            AWeaponObject weaponObject = this.cachedWeaponObject; // OnEnter 缓存，避免每帧 GetComponent
             float attackRange = weaponObject != null ? weaponObject.AttackRange : CounterAttackRange;
             bool isReady = weaponObject != null && weaponObject.IsAttackReady;
             float dist = Vector3.Distance(this.Character.transform.position, target.transform.position);
@@ -311,6 +319,8 @@ namespace LAB2D.Character.Worker.State
                 GameObject.Destroy(this.Character.Weapon.gameObject);
                 this.Character.Weapon = null;
             }
+
+            this.cachedWeaponObject = null; // 武器已销毁，防跨状态持有已销毁组件
         }
     }
 }

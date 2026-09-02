@@ -60,6 +60,25 @@ namespace LAB2D.Item
         }
 
         /// <summary>
+        /// 尝试根据名称实例化背包道具。
+        /// 名称未注册时返回 false 而非抛 KeyNotFoundException，供调用方避免异常控制流。
+        /// </summary>
+        /// <param name="name">名字</param>
+        /// <param name="item">实例化的背包道具</param>
+        /// <returns>是否注册并实例化成功</returns>
+        public bool TryGetBackpackItemByName(string name, out ABackpackItem item)
+        {
+            if (!this.backpackItemTypes.ContainsKey(name))
+            {
+                item = null;
+                return false;
+            }
+
+            item = this.GetBackpackItemByName(name);
+            return true;
+        }
+
+        /// <summary>
         /// 根据id获得背包道具
         /// </summary>
         /// <param name="id">id</param>

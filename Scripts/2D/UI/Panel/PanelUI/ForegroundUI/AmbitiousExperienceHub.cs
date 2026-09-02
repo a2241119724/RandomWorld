@@ -126,6 +126,15 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
                 this.comboBurstText.gameObject.SetActive(false);
             }
 
+            // HUD 隐藏且结果面板未打开时不刷新：RefreshAll 是快照采集+多段大字符串拼接，
+            // 不可见时纯属浪费；切回可见时由 SetHudVisible 置 0 补一次刷新（结果面板打开时仍照常刷新）。
+            bool hudVisible = this.rightWaveHUD != null && this.rightWaveHUD.activeSelf;
+            bool resultOpen = this.resultCard != null && this.resultCard.activeSelf;
+            if (!hudVisible && !resultOpen)
+            {
+                return;
+            }
+
             if (Time.unscaledTime >= this.nextRefreshRealtime)
             {
                 this.nextRefreshRealtime = Time.unscaledTime + MathHelper.ClampRefreshInterval(this.refreshInterval);
@@ -614,6 +623,12 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             if (this.eventFeedHUD != null)
             {
                 this.eventFeedHUD.SetActive(visible);
+            }
+
+            // 重新显示时立即刷新（隐藏期间不刷新会残留旧数据），置 0 让下帧 Update 放行
+            if (visible)
+            {
+                this.nextRefreshRealtime = 0f;
             }
         }
 

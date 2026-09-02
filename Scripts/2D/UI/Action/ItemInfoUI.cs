@@ -57,36 +57,53 @@ namespace LAB2D.UI.Action
             }
         }
 
+        /// <summary>选中角色信息刷新节流（换人立即刷，同一人 0.25s 一刷）：
+        /// ToString() 拼十几行文本 + SetCharacter 重建图标层级（内含 SetActive/transform.Find/GetComponent）
+        /// 在 60fps 下是选中期间的持续热点，0.25s 粒度足够。</summary>
+        private const float CharacterInfoRefreshInterval = 0.25f;
+        private float nextCharacterInfoRefresh;
+        private Character lastInfoCharacter;
+
         public void Update()
         {
             // 实时更新Character信息
             if (this.character != null)
             {
-                if (ServiceLocator.Get<PanelController>().Panels.Peek() != ItemInfoPanel.Instance)
+                // 栈可能为空（无任何面板时选中角色），Peek() 会抛异常
+                PanelController panelController = ServiceLocator.Get<PanelController>();
+                if (panelController.Panels.Count == 0 || panelController.Panels.Peek() != ItemInfoPanel.Instance)
                 {
-                    ServiceLocator.Get<PanelController>().Show(ItemInfoPanel.Instance);
+                    panelController.Show(ItemInfoPanel.Instance);
                 }
 
-                Vector3Int charMapPos = ServiceLocator.Get<TileMap>().WorldPosToMapPos(this.character.transform.position);
-                string infoText = this.character.ToString() + $"\n位置: ({charMapPos.x}, {charMapPos.y})";
-
-                // 好感度：点击 Worker 时显示其对玩家的好感值与态度标签
-                if (this.character is AWorker worker)
+                // 换选中角色 → 立即刷新；同一角色 → 节流
+                bool isNewCharacter = !ReferenceEquals(this.character, this.lastInfoCharacter);
+                if (isNewCharacter || Time.unscaledTime >= this.nextCharacterInfoRefresh)
                 {
-                    FavorabilityManager fm = ServiceLocator.Get<FavorabilityManager>();
-                    if (fm != null)
+                    this.nextCharacterInfoRefresh = Time.unscaledTime + CharacterInfoRefreshInterval;
+                    this.lastInfoCharacter = this.character;
+
+                    Vector3Int charMapPos = ServiceLocator.Get<TileMap>().WorldPosToMapPos(this.character.transform.position);
+                    string infoText = this.character.ToString() + $"\n位置: ({charMapPos.x}, {charMapPos.y})";
+
+                    // 好感度：点击 Worker 时显示其对玩家的好感值与态度标签
+                    if (this.character is AWorker worker)
                     {
-                        infoText += $"\n对你好感: {fm.GetFavorabilityWithPlayer(worker):F0}（{fm.GetAttitudeLabel(worker)}）";
+                        FavorabilityManager fm = ServiceLocator.Get<FavorabilityManager>();
+                        if (fm != null)
+                        {
+                            infoText += $"\n对你好感: {fm.GetFavorabilityWithPlayer(worker):F0}（{fm.GetAttitudeLabel(worker)}）";
+                        }
                     }
-                }
-                else if (this.character is AEnemy enemy)
-                {
-                    // 状态：点击敌人时显示其当前状态机状态（漫游/搜索/追踪/攻击/寻路/移动/死亡）
-                    infoText += $"\n状态: {enemy.GetStateLabel()}";
-                }
+                    else if (this.character is AEnemy enemy)
+                    {
+                        // 状态：点击敌人时显示其当前状态机状态（漫游/搜索/追踪/攻击/寻路/移动/死亡）
+                        infoText += $"\n状态: {enemy.GetStateLabel()}";
+                    }
 
-                ItemInfoPanel.Instance.SetItemInfo(infoText);
-                ItemInfoPanel.Instance.SetCharacter(this.character);
+                    ItemInfoPanel.Instance.SetItemInfo(infoText);
+                    ItemInfoPanel.Instance.SetCharacter(this.character);
+                }
             }
 
             if (UnityGlobalInputAdapter.GetSecondaryMouseDown())

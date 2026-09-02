@@ -97,6 +97,13 @@ namespace LAB2D.UI
                 this.SetVisible(visible);
             }
 
+            // 隐藏时（默认隐藏）不构建缺口摘要：BuildSummaryText 是全量扫描+大字符串拼接，
+            // 不可见时纯属浪费；切回可见时由 SetVisible 置 0 补一次刷新。
+            if (!this.IsVisible())
+            {
+                return;
+            }
+
             if (Time.unscaledTime >= this.nextRefreshTime)
             {
                 this.nextRefreshTime = Time.unscaledTime + MathHelper.ClampRefreshInterval(this.refreshInterval);
@@ -126,6 +133,12 @@ namespace LAB2D.UI
             this.canvasGroup.alpha = visible ? 1.0f : 0.0f;
             this.canvasGroup.interactable = false;
             this.canvasGroup.blocksRaycasts = false;
+
+            // 重新显示时立即刷新（隐藏期间不刷新会残留旧数据），置 0 让下帧 Update 放行
+            if (visible)
+            {
+                this.nextRefreshTime = 0f;
+            }
         }
 
         /// <summary>

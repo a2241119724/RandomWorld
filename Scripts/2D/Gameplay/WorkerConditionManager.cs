@@ -93,16 +93,20 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            WorkerConditionSnapshot snapshot = WorkerConditionSnapshot.FromWorker(worker, workerData);
-            bool changed = !this.snapshots.TryGetValue(snapshot.WorkerInstanceId, out WorkerConditionSnapshot previous) ||
-                previous.State != snapshot.State;
-
-            this.snapshots[snapshot.WorkerInstanceId] = snapshot;
-            if (!changed)
+            // 每帧每 Worker 都会进来（WorkerUpdateSystem 驱动）：先比对状态档位，未变化直接复用旧快照——
+            // 避免 FromWorker 每帧 new 一个 class（100 Worker ≈ 6000 分配/秒的持续 GC）。
+            // 依据：MoveSpeed/WorkProgress 倍率是 State 的纯函数；比值字段仅 HUD 展示消费，
+            // 而 HUD 读数走 GetWorkerCondition（每次重算），此处跳过不影响任何消费方。
+            int instanceId = worker.GetInstanceID();
+            WorkerConditionState state = WorkerConditionTool.GetState(workerData);
+            if (this.snapshots.TryGetValue(instanceId, out WorkerConditionSnapshot previous)
+                && previous.State == state)
             {
                 return;
             }
 
+            WorkerConditionSnapshot snapshot = WorkerConditionSnapshot.FromWorker(worker, workerData);
+            this.snapshots[instanceId] = snapshot;
             this.OnWorkerConditionChanged?.Invoke(worker, snapshot);
             this.TryShowConditionTip(snapshot, previous);
         }

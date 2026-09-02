@@ -38,6 +38,9 @@ namespace LAB2D.Gameplay
 
         /// <summary>是否已初始化</summary>
         private bool initialized;
+
+        /// <summary>成就进度刷新节流累计器（Tick 0.5s 节流，见 Tick 注释）。</summary>
+        private float progressThrottle;
         private IGameTime gameTime;
         private IGameLogger gameLogger;
 
@@ -133,7 +136,14 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            this.UpdateProgressAll();
+            // 成就进度按 0.5s 节流：UpdateProgressAll 读会话统计做阈值跨越检测，
+            // 每帧执行在长时间游玩后（统计条目上千）是持续 GC/CPU 大户，0.5s 粒度足够。
+            this.progressThrottle += deltaTime;
+            if (this.progressThrottle >= 0.5f)
+            {
+                this.progressThrottle = 0f;
+                this.UpdateProgressAll();
+            }
 
             if (this.HasPendingUnlock)
             {
@@ -215,9 +225,9 @@ namespace LAB2D.Gameplay
 
             bool anyChanged = false;
 
-            // 从 GameplaySessionStats 快照读取会话统计数据
+            // 从 GameplaySessionStats 读取会话统计数据（只消费标量字段，用轻量快照避免 6 个明细字典全量拷贝）
             GameplaySessionStats stats = Core.ServiceLocator.Get<GameplaySessionStats>();
-            GameplaySessionStatsSnapshot snap = stats?.CreateSnapshot();
+            GameplaySessionStatsSnapshot snap = stats?.CreateScalarSnapshot();
             if (snap != null)
             {
                 anyChanged |= this.UpdateAchievement("combat_kill_1", snap.TotalDefeatedEnemyCount);

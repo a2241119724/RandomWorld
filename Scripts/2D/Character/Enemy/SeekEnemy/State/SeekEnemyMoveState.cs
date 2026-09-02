@@ -19,6 +19,12 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         private Vector3Int stuckTarget;
         private int stuckStreak;
 
+        /// <summary>
+        /// 到达后的漫游休息秒数（2s 基础 + 随机抖动）：抖动打散多个敌人的重寻路提交相位，
+        /// 避免同波敌人（同帧生成/同帧脱离战斗）固定间隔导致重寻路同帧共振提交。
+        /// </summary>
+        private readonly float roamRestSeconds = 2f + UnityEngine.Random.Range(0f, 1.5f);
+
         public SeekEnemyMoveState(ASeekEnemy character)
         : base(character)
         {
@@ -106,8 +112,8 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             {
                 this.recordTime += this.Character.DeltaTime;
 
-                // 休息2秒
-                if (this.recordTime < 2)
+                // 休息 2s + 随机抖动（打散重寻路提交相位，见 roamRestSeconds 注释）
+                if (this.recordTime < this.roamRestSeconds)
                 {
                     return;
                 }

@@ -34,6 +34,12 @@ namespace LAB2D.UI
         /// <summary>当前显示的条目（key=tilemap坐标）</summary>
         private Dictionary<Vector3Int, NearbyItemEntry> currentEntries = new Dictionary<Vector3Int, NearbyItemEntry>();
 
+        /// <summary>轮询扫描复用缓冲：扫描结果先写这里，确认有变化后与 currentEntries 交换，避免每次轮询分配新字典</summary>
+        private Dictionary<Vector3Int, NearbyItemEntry> foundEntriesBuffer = new Dictionary<Vector3Int, NearbyItemEntry>();
+
+        /// <summary>面板隐藏时的降频轮询间隔（秒）</summary>
+        private const float HiddenPollInterval = 2f;
+
         /// <summary>条目对象池</summary>
         private Stack<GameObject> entryPool = new Stack<GameObject>();
 
@@ -213,7 +219,12 @@ namespace LAB2D.UI
         /// </summary>
         public void Tick()
         {
-            if (Time.time - this.lastPollTime < NearbyItemPickupConstant.PollInterval)
+            // 面板隐藏（周围无道具/被关闭）时不做全量轮询：7x7 tile 扫描+字典重建在不可见时纯属浪费。
+            // 注意不能硬 return——该面板的隐藏恰好是「无道具」常态，轮询本身就是新掉落物的唤醒探测器，
+            // 硬停会让面板此后永久无法再唤出；降频轮询保住唤醒（最多延迟 2s），可见时节奏不变。
+            bool panelVisible = this.panelRoot != null && this.panelRoot.activeSelf;
+            float interval = panelVisible ? NearbyItemPickupConstant.PollInterval : HiddenPollInterval;
+            if (Time.time - this.lastPollTime < interval)
             {
                 return;
             }
@@ -240,7 +251,8 @@ namespace LAB2D.UI
 
             Vector3Int playerPosMap = Core.ServiceLocator.Get<TileMap>().WorldPosToMapPos(player.transform.position);
 
-            Dictionary<Vector3Int, NearbyItemEntry> foundEntries = new Dictionary<Vector3Int, NearbyItemEntry>();
+            this.foundEntriesBuffer.Clear();
+            Dictionary<Vector3Int, NearbyItemEntry> foundEntries = this.foundEntriesBuffer;
             int radius = NearbyItemPickupConstant.DetectionRadius;
             int totalTilesChecked = 0;
             int tilesFound = 0;
@@ -282,16 +294,13 @@ namespace LAB2D.UI
                     }
                     else
                     {
-                        AItem item;
-                        try
+                        // Try 版本查询替代异常控制流：非背包物品 tile（如 Bounty 任务栏图标）未注册时返回 false，跳过
+                        if (!Core.ServiceLocator.Get<ItemInstanceFactory>().TryGetBackpackItemByName(tile.name, out ABackpackItem bpInstance))
                         {
-                            item = Core.ServiceLocator.Get<ItemInstanceFactory>().GetBackpackItemByName(tile.name);
-                        }
-                        catch (System.Collections.Generic.KeyNotFoundException)
-                        {
-                            continue; // 非背包物品 tile（如 Bounty 任务栏图标），跳过
+                            continue;
                         }
 
+                        AItem item = bpInstance;
                         if (item == null)
                         {
                             continue;
@@ -363,7 +372,10 @@ namespace LAB2D.UI
                 return;
             }
 
+            // 交换缓冲：新结果成为 currentEntries，旧字典留作下轮扫描复用，避免分配
+            Dictionary<Vector3Int, NearbyItemEntry> oldEntries = this.currentEntries;
             this.currentEntries = foundEntries;
+            this.foundEntriesBuffer = oldEntries;
             this.RebuildUI();
         }
 

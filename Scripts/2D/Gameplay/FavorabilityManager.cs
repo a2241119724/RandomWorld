@@ -35,6 +35,17 @@ namespace LAB2D.Gameplay
 
         private float proximityTimer;
 
+        // ---- 摘要文本构建复用容器（HUD 每 0.5s 一次 × 上百 Worker，不能每次新建）----
+
+        /// <summary>BuildSummaryText 复用构建器，避免每次新建 StringBuilder 及其中间扩容数组。</summary>
+        private readonly System.Text.StringBuilder summaryBuilder = new System.Text.StringBuilder(4096);
+
+        /// <summary>BuildSummaryText 复用关系列表（Top 3 排序用）。</summary>
+        private readonly List<(AWorker From, AWorker To, float Value)> topRelations = new List<(AWorker From, AWorker To, float Value)>(64);
+
+        /// <summary>BuildSummaryText 复用 id→Worker 映射：替代对每条关系做 FindWorker 线性扫描。</summary>
+        private readonly Dictionary<int, AWorker> summaryIdToWorker = new Dictionary<int, AWorker>(64);
+
         /// <summary>
         /// 单个 Worker 的好感档案。
         /// toWorkers 懒初始化：首次查询未命中返回默认 50，避免 N² 预填。
@@ -98,23 +109,36 @@ namespace LAB2D.Gameplay
             return FavorabilityRuleService.GetAttitudeLabel(this.GetFavorabilityWithPlayer(from));
         }
 
-        /// <summary>好感度摘要文本（HUD 用）：每名 Worker 对玩家好感+态度标签，附最强 3 条 Worker↔Worker 关系。</summary>
+        /// <summary>好感度摘要文本（HUD 用）：每名 Worker 对玩家好感+态度标签，附最强 3 条 Worker↔Worker 关系。
+        /// 复用 builder/列表/id 映射（HUD 每 0.5s 调用一次，原实现对每条关系做 FindWorker 线性扫描，
+        /// 100 Worker × 数百关系 = 每 0.5s 数万次比较 + 多次字符串分配，为帧率热点）。</summary>
         public string BuildSummaryText()
         {
-            var sb = new System.Text.StringBuilder();
+            WorkerManager wm = Core.ServiceLocator.Get<WorkerManager>();
+            if (wm == null) return string.Empty;
+
+            List<AWorker> workers = wm.Characters;
+
+            // id→Worker 一次构建，关系遍历改为 O(1) 查表
+            Dictionary<int, AWorker> idToWorker = this.summaryIdToWorker;
+            idToWorker.Clear();
+            foreach (AWorker w in workers)
+            {
+                if (w != null) idToWorker[w.GetInstanceID()] = w;
+            }
+
+            System.Text.StringBuilder sb = this.summaryBuilder;
+            sb.Clear();
             sb.AppendLine("━━━ 好感度 ━━━");
             sb.AppendLine("· 对玩家");
 
-            WorkerManager wm = Core.ServiceLocator.Get<WorkerManager>();
-            if (wm == null) return sb.ToString();
-
-            foreach (AWorker w in wm.Characters)
+            foreach (AWorker w in workers)
             {
                 if (w == null) continue;
                 sb.Append("  ");
                 sb.Append(w.name);
                 sb.Append("：");
-                sb.Append(this.GetFavorabilityWithPlayer(w).ToString("F0"));
+                AppendRounded(sb, this.GetFavorabilityWithPlayer(w));
                 sb.Append("（");
                 sb.Append(this.GetAttitudeLabel(w));
                 sb.Append("）");
@@ -122,43 +146,50 @@ namespace LAB2D.Gameplay
             }
 
             // 最强 Worker↔Worker 关系（Top 3）
-            var relations = new List<(string From, string To, float Value)>();
+            List<(AWorker From, AWorker To, float Value)> relations = this.topRelations;
+            relations.Clear();
             foreach (KeyValuePair<int, FavorabilityProfile> kv in this.profiles)
             {
                 if (kv.Value.toWorkers == null) continue;
-                AWorker holder = this.FindWorker(kv.Key, wm);
-                if (holder == null) continue;
+                if (!idToWorker.TryGetValue(kv.Key, out AWorker holder)) continue;
                 foreach (KeyValuePair<int, float> wk in kv.Value.toWorkers)
                 {
-                    AWorker target = this.FindWorker(wk.Key, wm);
-                    if (target == null) continue;
-                    relations.Add((holder.name, target.name, wk.Value));
+                    if (!idToWorker.TryGetValue(wk.Key, out AWorker target)) continue;
+                    relations.Add((holder, target, wk.Value));
                 }
             }
             relations.Sort((a, b) => b.Value.CompareTo(a.Value));
 
+            sb.Append("· Worker 间亲近关系");
             if (relations.Count > 0)
             {
-                sb.AppendLine("· Worker 间亲近关系");
+                sb.Append('\n');
                 for (int i = 0; i < Math.Min(3, relations.Count); i++)
                 {
-                    var r = relations[i];
+                    (AWorker from, AWorker to, float value) = relations[i];
                     sb.Append("  ");
-                    sb.Append(r.From);
+                    sb.Append(from.name);
                     sb.Append(" ↔ ");
-                    sb.Append(r.To);
+                    sb.Append(to.name);
                     sb.Append("：");
-                    sb.Append(r.Value.ToString("F0"));
+                    AppendRounded(sb, value);
                     sb.Append('\n');
                 }
             }
             else
             {
-                sb.AppendLine("· Worker 间亲近关系");
+                sb.Append('\n');
                 sb.AppendLine("  （暂无——一起工作/交易/互助会逐步建立）");
             }
 
             return sb.ToString();
+        }
+
+        /// <summary>按 &quot;F0&quot; 语义（四舍五入到整数）追加数字，避免 float.ToString 的每次格式化分配。
+        /// 好感度经 Clamp 恒非负，+0.5 截断即四舍五入。</summary>
+        private static void AppendRounded(System.Text.StringBuilder sb, float value)
+        {
+            sb.Append((int)(value + 0.5f));
         }
 
         // ---- 修改 ----

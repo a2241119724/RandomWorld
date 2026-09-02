@@ -226,6 +226,29 @@ namespace LAB2D.Gameplay
             };
         }
 
+        /// <summary>
+        /// 轻量标量快照：只填数值字段、不拷贝 6 个明细字典（为 null）。
+        /// 供成就进度等只需标量的高频调用方使用——完整 CreateSnapshot 的字典全量拷贝
+        /// 在每帧路径上是持续 GC 大户。
+        /// </summary>
+        public GameplaySessionStatsSnapshot CreateScalarSnapshot()
+        {
+            return new GameplaySessionStatsSnapshot
+            {
+                CriticalHitCount = this.criticalHitCount,
+                CurrentCombo = this.currentCombo,
+                MaxCombo = this.maxCombo,
+                PlayerDeathCount = this.playerDeathCount,
+                TotalCollectedItemCount = this.totalCollectedItemCount,
+                TotalDamageDealt = this.totalDamageDealt,
+                TotalDamageTaken = this.totalDamageTaken,
+                TotalDefeatedEnemyCount = this.totalDefeatedEnemyCount,
+                TotalExperienceGained = this.totalExperienceGained,
+                TotalWorkerDeathCount = this.totalWorkerDeathCount,
+                TotalWorkerTaskCompletedCount = this.totalWorkerTaskCompletedCount,
+            };
+        }
+
         public string BuildSummaryText()
         {
             GameplaySessionStatsSnapshot snapshot = this.CreateSnapshot();

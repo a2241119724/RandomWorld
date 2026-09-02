@@ -91,10 +91,15 @@ namespace LAB2D
             }
 
             // 视角缩放（仅在游戏区域Foreground上时缩放，UI面板上不缩放）
-            List<RaycastResult> uiResults = LAB2D.Tool.Tool.GetUIByMousePos();
+            // GetUIByMousePos 每次都 new PointerEventData + 遍历整个 Canvas 的 Graphic，
+            // 而结果只在滚轮缩放/中键拖动分支用到——每帧无条件执行是热点（主相机+小地图相机
+            // 各挂一份本脚本，N 个 Graphic 时即每帧 2N 次 Raycast），故仅在这两种输入时才做射线。
             float mouseScrollDeltaY = UnityGlobalInputAdapter.GetMouseScrollDeltaY();
+            List<RaycastResult> uiResults = mouseScrollDeltaY != 0 || UnityGlobalInputAdapter.GetMiddleMouseDown()
+                ? LAB2D.Tool.Tool.GetUIByMousePos()
+                : null;
             if (Camera.main.orthographic && mouseScrollDeltaY != 0
-                && (uiResults.Count == 0 || uiResults[0].gameObject.name.Equals("Foreground")))
+                && (uiResults == null || uiResults.Count == 0 || uiResults[0].gameObject.name.Equals("Foreground")))
             {
                 if (mouseScrollDeltaY > 0 && Camera.main.orthographicSize > this.scaleThreshold[0])
                 {
@@ -122,7 +127,7 @@ namespace LAB2D
                 this.Character = null;
 
                 // 过滤不是滑动主屏幕的动作
-                if (uiResults.Count > 0 && uiResults[0].gameObject.name.Equals("Foreground"))
+                if (uiResults != null && uiResults.Count > 0 && uiResults[0].gameObject.name.Equals("Foreground"))
                 {
                     this.lastMousePos = UnityGlobalInputAdapter.GetMouseScreenPosition();
                     this.isDown = true;

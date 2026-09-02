@@ -18,6 +18,13 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         /// </summary>
         public float AttackTime { get; private set; } = 0.0f;
 
+        /// <summary>
+        /// 武器组件缓存：OnUpdate 每帧 GetComponent&lt;AWeaponObject&gt; 是热点
+        /// （N=100 敌人战斗时即每帧 100 次反射式查找）。武器在 OnEnter 确保就绪、OnExit 销毁，
+        /// 生命周期覆盖整个攻击状态，OnEnter 缓存一次即可；OnExit 置空防跨状态持有已销毁对象。
+        /// </summary>
+        private AWeaponObject cachedWeaponObject;
+
         /// <inheritdoc/>
         public override void OnEnter()
         {
@@ -43,6 +50,9 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
                 weaponObject.SetCharacter(this.Character);
             }
+
+            // 每帧热点缓存：武器在本状态生命周期内不变（OnExit 才销毁），GetComponent 只做一次
+            this.cachedWeaponObject = this.Character.Weapon != null ? this.Character.Weapon.GetComponent<AWeaponObject>() : null;
 
             // 拿起武器后立即朝攻击目标（初始朝向），避免武器 prefab 默认朝上（z=0）导致"拿起即拐到一边再拐回来"。
             // 后续武器朝向由 AWeaponObject.Update 按范围内最近目标持续动态跟踪，不固定（见 bug-fixes.md 2026-08-16）。
@@ -106,7 +116,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 }
             }
 
-            AWeaponObject weaponObject = this.Character.Weapon.GetComponent<AWeaponObject>();
+            AWeaponObject weaponObject = this.cachedWeaponObject; // OnEnter 缓存，避免每帧 GetComponent
 
             // 武器跟踪攻击目标（而非范围内最近目标）：防止武器拐向旁边的其他角色，
             // 造成"攻击 player、武器却朝最近的韩东瑜"的方向不一致（见 bug-fixes.md 2026-08-16）。
@@ -156,6 +166,8 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 GameObject.Destroy(this.Character.Weapon.gameObject);
                 this.Character.Weapon = null;
             }
+
+            this.cachedWeaponObject = null; // 武器已销毁，防跨状态持有已销毁组件
 
             // 状态切换：离开攻击状态（节流 2s/条）
             AWorkerTask.LogProviderThrottled(

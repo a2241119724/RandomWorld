@@ -60,7 +60,10 @@ namespace LAB2D.Map
                 TileInfoUI.Instance.Init();
             }
 
-            if (!UnityGlobalInputAdapter.GetShowTileInfoHeld() || Core.ServiceLocator.Get<PanelController>().Panels.Peek() == AsyncProgressPanel.Instance)
+            // 栈空时 Peek 会抛 InvalidOperationException（按住查看瓦片键且无面板时，
+            // 每帧每个 tilemap 一次异常刷屏），先判 Count 再 Peek
+            var panels = Core.ServiceLocator.Get<PanelController>().Panels;
+            if (!UnityGlobalInputAdapter.GetShowTileInfoHeld() || (panels.Count > 0 && panels.Peek() == AsyncProgressPanel.Instance))
             {
                 return;
             }
