@@ -210,6 +210,7 @@ SpriteAtlas:
     - 48c0d4d6bebaa934384b07aa1e2f8184: 21300000
     - e53d66275d3d5564d9291cdce631a96e: 21300000
     - e4138b27a34b2ac49af1807ed1ae80df: 21300000
+    - d66b71678e134cb3a3e0cbca33c6587f: 21300000
     - 451f3f67253aa2148a29e0413f951b47: 21300000
     - e45a0397cf78dd64b899055e208e6657: 21300000
     - 5e60432811fa49638ab8efb9d4e15560: 21300000
@@ -224,6 +225,7 @@ SpriteAtlas:
     - a788422bcad4cae4b8bfe7b6e1dff7bf: 21300000
     - d4dd292b322e44a448ca0347f4a13c86: 21300000
     - eacf2f3b07505af4c97d9a646f66a07b: 21300000
+    - e9a4386b52cf429f92c2ea80ba78034d: 21300000
     - 01768f7bf4a56da49acc26a9e5cf4e76: 21300000
     - 1425de8b071ae2a4e80e7a45e009ae39: 21300000
     - c375b5ebe0272a64eb9044514f983b9f: 21300000
@@ -244,6 +246,7 @@ SpriteAtlas:
     - 75147dbc9e49264488473884e9a269b9: 21300000
     - 7d9742ecc8f5a4d4398b2f8207d0783a: 21300000
     - 1c309e3daf9cea8499313575d3c6693d: 21300000
+    - bc5f84eda3254ebfafbe025328c191ce: 21300000
     - b616545ebb9e52343b00e50499974067: 21300000
     - 760c597edf7c8ac439ea73dd11dbe352: 21300000
     - 4a22ef8e0e36bd34089ef6759bfabb60: 21300000
@@ -412,6 +415,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 48c0d4d6bebaa934384b07aa1e2f8184, type: 3}
   - {fileID: 21300000, guid: e53d66275d3d5564d9291cdce631a96e, type: 3}
   - {fileID: 21300000, guid: e4138b27a34b2ac49af1807ed1ae80df, type: 3}
+  - {fileID: 21300000, guid: d66b71678e134cb3a3e0cbca33c6587f, type: 3}
   - {fileID: 21300000, guid: 451f3f67253aa2148a29e0413f951b47, type: 3}
   - {fileID: 21300000, guid: e45a0397cf78dd64b899055e208e6657, type: 3}
   - {fileID: 21300000, guid: 5e60432811fa49638ab8efb9d4e15560, type: 3}
@@ -426,6 +430,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: a788422bcad4cae4b8bfe7b6e1dff7bf, type: 3}
   - {fileID: 21300000, guid: d4dd292b322e44a448ca0347f4a13c86, type: 3}
   - {fileID: 21300000, guid: eacf2f3b07505af4c97d9a646f66a07b, type: 3}
+  - {fileID: 21300000, guid: e9a4386b52cf429f92c2ea80ba78034d, type: 3}
   - {fileID: 21300000, guid: 01768f7bf4a56da49acc26a9e5cf4e76, type: 3}
   - {fileID: 21300000, guid: 1425de8b071ae2a4e80e7a45e009ae39, type: 3}
   - {fileID: 21300000, guid: c375b5ebe0272a64eb9044514f983b9f, type: 3}
@@ -446,6 +451,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 75147dbc9e49264488473884e9a269b9, type: 3}
   - {fileID: 21300000, guid: 7d9742ecc8f5a4d4398b2f8207d0783a, type: 3}
   - {fileID: 21300000, guid: 1c309e3daf9cea8499313575d3c6693d, type: 3}
+  - {fileID: 21300000, guid: bc5f84eda3254ebfafbe025328c191ce, type: 3}
   - {fileID: 21300000, guid: b616545ebb9e52343b00e50499974067, type: 3}
   - {fileID: 21300000, guid: 760c597edf7c8ac439ea73dd11dbe352, type: 3}
   - {fileID: 21300000, guid: 4a22ef8e0e36bd34089ef6759bfabb60, type: 3}
@@ -613,6 +619,7 @@ SpriteAtlas:
   - AllAxis_Outline_Arrows
   - DesertCoconutTree
   - Marsh
+  - MountainGateCore
   - SingleGun
   - CustomBelt
   - MinimapArrow
@@ -627,6 +634,7 @@ SpriteAtlas:
   - CustomShoes
   - CustomWing
   - Apple
+  - ResearchTable
   - "\u5546\u5E973"
   - Inventory
   - Enemy
@@ -647,6 +655,7 @@ SpriteAtlas:
   - DesertGrass
   - CustomRing
   - CustomMount
+  - SpiritArray
   - Seed
   - Flame
   - SnowTree
