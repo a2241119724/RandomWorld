@@ -2,9 +2,13 @@
 
 ## Project Status
 
-v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守）已跑通，Worker AI 已升级为半自主经济模拟，商店/悬赏/货币系统已上线。当前聚焦 UI 优化、多人联机同步完善、内容扩展。
+v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**："小镇为魂，防守为骨"。M1 循环闭环（时间服务/昼夜-波次耦合/山门核心胜负）已完成；下一步 M2A 防守夜 Worker 响应 + 修仙事件接心智层。
 
 ## Recent Changes
+
+- 2026-09 — `perf(worker)`: 100 Worker 帧率排查两波——主循环/寻路/UI 全链路热点；决策链零分配（ScanForResources PosMap 预过滤省 1681 格×2 Tilemap 互操作、scratch 键复用、ref 就地取最近候选、DropManager 无掉落快速退出）；LogProviderThrottled 增 Func 惰性求值重载（被节流不再构造插值串）；删 WorkerBountyDecisionService 死代码
+- 2026-09 — `feat(combat)`: M1 循环闭环——**M1.1** 时间服务搬迁（`Domain/Time/DayNightRuleService` 纯函数 + `GameTimeManager` ITickable 自推进 + GameTimeUI 退化只读 + 跨天天气随迁）；**M1.2** 昼夜-波次耦合（波次 15s 固定间隔→每日一夜，挂 DayIndex）；**M1.3** 山门核心胜负（`MountainGateCore : ABuildItem` 3×3 系统放置建筑走既有建造管线——类名==瓦片名==SO 条目名、IsNeedBuild=false 即放置即完成；`BuildingDamageRuleService` 建筑耐久纯函数；妖兽子弹经 AttackEffect 啃墙/核心；宽闸门失败曲线：核心 3 次被破终局失败+SessionResultManager 结算，满 3 级阶段胜利；Editor 菜单 工具/山门）。新增建筑一律 ABuildItem 子类原则入 CLAUDE.md §3
+- 2026-09 — `feat(art)`: 山门核心/聚灵阵/研究台正俯视像素图并接线 tile 资产
 
 - 2026-09 — `feat(growth-worker)`: Worker 成长接入（全自动）——睡觉即修炼（床睡全额/地面睡半额）、自动突破+自动修习内功（2s 扫描，只内功不外功）、异能觉醒转被动加成（PermanentRealmBonus 入账）、拾取装备保留词条（TakeDropInstanceByPos）；修仙面板热键 F8→K（F8 实测无效禁用）；修复 Worker 读档不重连 Character 反向引用致成长重算静默跳过。spec 见成长系统节 Worker 成长接入行
 - 2026-09 — `feat(growth)`: 七大成长系统——统一 GrowthSource 属性管线（词条/内功/境界被动加成 + 吸血/反伤/回蓝特殊维度）、装备随机词条（掉落克隆修复）、修仙三境界+打坐突破（K）、武学功法 3 内功 2 外功（技能槽扩 8，Z/X/C/V）、异能觉醒（受击 roll）、Worker 生活技能（伐木/采矿/农耕）、科技研究（研究台/T 面板/建筑解锁 gating）。spec 见成长系统节
@@ -74,9 +78,16 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 | 19 | Worker 状态机三层解耦（决策/活动/移动 + SetTask 收口 + 攻击移动） | 2026-08 |
 | 20 | 七大成长系统（属性管线/词条/修仙/功法/异能/生活技能/科技） | 2026-09 |
 | 21 | Worker 成长接入（睡觉修炼/自动突破/被动觉醒/词条拾取）+ 修仙热键改 K | 2026-09 |
+| 22 | M1 循环闭环：时间服务搬迁 + 昼夜-波次耦合 + 山门核心建筑伤害与胜负 | 2026-09 |
 
 ## Current Work
 
+- **0.2 修仙小镇方向（五包路线）** — IN PROGRESS
+  - [x] M1 循环闭环（时间服务/昼夜-波次耦合/山门核心胜负）
+  - [ ] M2A 包2.1/2.2 防守夜 Worker 响应（DefenceDraftRuleService + WorkerDefendTask）+ 修仙事件接心智层（RecordEvent）
+  - [ ] M2B 包3 敌人扩种协议 + 前 2 种妖兽 + 箭塔
+  - [ ] M3 包2.3/2.4 心智面板 + LLM 对话结算
+  - [ ] M4 包2.5 灵气环境（CurEnergy 消费者）+ 包4 每局不一样
 - **Worker 建造系统优化** — IN PROGRESS
   - [x] 建造位置预注册机制
   - [x] 建造任务恢复（重启时找回原建造者）
@@ -118,15 +129,16 @@ v0.1.3 — 玩法深度打磨阶段。核心循环（白天经营+夜晚防守�
 
 ## Next Steps
 
-1. Worker 建家碰撞逻辑进一步优化
-2. Worker 大脑决策规则完善（更多目标类型、更智能的资源优先级）
-3. Editor 工具：字体批量替换 + Scale 补偿
-4. TaskBoard/ShopNPC 网络同步接入
-5. 多人联机完整测试
-6. 房间判定系统实现
+1. M2A：防守夜 Worker 响应（DefenceDraftRuleService 纯函数 + WorkerDefendTask 新任务类型 + 觉醒 Worker 优先参战 + 躲床派 Sleep）
+2. M2A：修仙事件接心智层（突破/觉醒/顿悟/走火入魔走 RecordEvent——嫉妒/护法好感/敬仰关系 + 次日语气泡）
+3. M2B：敌人扩种协议（WaveSpawnRequest 加 EnemyKindId）+ 前 2 种妖兽 + 箭塔
+4. M3：心智面板（WorkerMindPanel）+ LLM 对话结算（预设意图按钮 + LLM 增强）
+5. M4：灵气环境（EnvironmentManager.CurEnergy 消费者）+ 每局不一样（兴趣点/事件天气/局修饰符）
+6. 旧欠账：Worker 建家碰撞优化、字体批量替换、TaskBoard/ShopNPC 网络同步
 
 ## Future Phases
 
+- 包5 修仙内容深化（元婴/化神境界、功法异能池扩充、炼丹炼器雏形、修炼-劳动经济张力调参）
 - 多人合作模式完善（分工防守、资源共用）
 - 敌人类型扩展（冲锋/拆墙/偷窃/远程/感染/Boss 变体）
 - 天气事件升级（酸雨/暴雪/大雾/流星夜）
