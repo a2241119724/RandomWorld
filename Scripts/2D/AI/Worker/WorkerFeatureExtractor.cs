@@ -12,6 +12,7 @@ namespace LAB2D.AI.Worker
     using LAB2D.Manager;
     using LAB2D.Map;
     using LAB2D.Serializable;
+    using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
@@ -56,6 +57,12 @@ namespace LAB2D.AI.Worker
 
         /// <summary>视野扫描默认半径（与 WorkerBrain.ScanRadius 一致）。</summary>
         public const int DefaultScanRadius = 20;
+
+        /// <summary>
+        /// 局部视野四项计数的归一化饱和值（Extract 以 MinMax(count,0,20) 归一）：
+        /// 计数达到该值后特征值不再变化，扫描可提前终止。
+        /// </summary>
+        private const int SaturateCount = 20;
 
         // ---- 归一化辅助（公式与 features.py 完全一致）----
 
@@ -263,26 +270,43 @@ namespace LAB2D.AI.Worker
 
             Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
 
+            // 性能优化：原实现 foreach 全图 PosMap（O(全图条目)）再按切比雪夫距离过滤；
+            // 改为只枚举 Worker 周围 (2R+1)² 盒子内格子做字典探测（O(1681) 探针）。
+            // 计数结果与全图遍历完全一致（盒子内的键集合相同、计数与顺序无关），
+            // 且探测复用同一个 scratch 键实例，消除逐格 Vector3IntLAB 分配（GC 压力）。
+            // 注意：scratch 键只用于 TryGetValue 查询，绝不可存入字典（可变引用做键仅限查询场景）。
+            Vector3IntLAB scratchKey = new Vector3IntLAB(0, 0, 0);
+
             // 可采集资源（ResourceMap.PosMap：key=格坐标, value=tile 名）
             ResourceMap resourceMap = ServiceLocator.Get<ResourceMap>();
             if (resourceMap?.ResourceMapDataLAB?.PosMap != null)
             {
+                Dictionary<Vector3IntLAB, string> resourcePosMap = resourceMap.ResourceMapDataLAB.PosMap;
                 ItemDataManager itemDataManager = ServiceLocator.Get<ItemDataManager>();
-                foreach (System.Collections.Generic.KeyValuePair<Vector3IntLAB, string> kv
-                    in resourceMap.ResourceMapDataLAB.PosMap)
+                for (int dx = -scanRadius; dx <= scanRadius; dx++)
                 {
-                    Vector3Int pos = Vector3IntLAB.ToVector3Int(kv.Key);
-                    if (!WithinChebyshev(workerPos, pos, scanRadius)) continue;
-
-                    resource++;
-                    string tileName = kv.Value;
-                    if (!string.IsNullOrEmpty(tileName)
-                        && itemDataManager != null
-                        && itemDataManager.TryGetByName(tileName, out ItemData itemData)
-                        && AWorkerTask.ItemTypeProvider(itemData.Id) == AItem.ItemTypeEnum.Food)
+                    for (int dy = -scanRadius; dy <= scanRadius; dy++)
                     {
-                        food++;
+                        scratchKey.X = workerPos.x + dx;
+                        scratchKey.Y = workerPos.y + dy;
+                        scratchKey.Z = 0;
+                        if (!resourcePosMap.TryGetValue(scratchKey, out string tileName)) continue;
+
+                        resource++;
+                        if (!string.IsNullOrEmpty(tileName)
+                            && itemDataManager != null
+                            && itemDataManager.TryGetByName(tileName, out ItemData itemData)
+                            && AWorkerTask.ItemTypeProvider(itemData.Id) == AItem.ItemTypeEnum.Food)
+                        {
+                            food++;
+                        }
+
+                        // 归一化饱和提前终止：Extract 以 MinMax(count, 0, 20) 归一，计数达到
+                        // SaturateCount 后剩余探针对特征值零贡献（结果与扫满盒子完全一致）
+                        if (resource >= SaturateCount && food >= SaturateCount) break;
                     }
+
+                    if (resource >= SaturateCount && food >= SaturateCount) break;
                 }
             }
 
@@ -290,12 +314,23 @@ namespace LAB2D.AI.Worker
             BuildMap buildMap = ServiceLocator.Get<BuildMap>();
             if (buildMap?.BuildMapDataLAB?.PosMap != null)
             {
-                foreach (System.Collections.Generic.KeyValuePair<Vector3IntLAB, BuildMap.BuildTileData> kv
-                    in buildMap.BuildMapDataLAB.PosMap)
+                Dictionary<Vector3IntLAB, BuildMap.BuildTileData> buildPosMap = buildMap.BuildMapDataLAB.PosMap;
+                for (int dx = -scanRadius; dx <= scanRadius; dx++)
                 {
-                    if (!kv.Value.IsComplete) continue;
-                    Vector3Int pos = Vector3IntLAB.ToVector3Int(kv.Key);
-                    if (WithinChebyshev(workerPos, pos, scanRadius)) building++;
+                    for (int dy = -scanRadius; dy <= scanRadius; dy++)
+                    {
+                        scratchKey.X = workerPos.x + dx;
+                        scratchKey.Y = workerPos.y + dy;
+                        scratchKey.Z = 0;
+                        if (!buildPosMap.TryGetValue(scratchKey, out BuildMap.BuildTileData tile)) continue;
+                        if (!tile.IsComplete) continue;
+                        building++;
+
+                        // building 打满即饱和，提前终止（同上，结果不变）
+                        if (building >= SaturateCount) break;
+                    }
+
+                    if (building >= SaturateCount) break;
                 }
             }
 
@@ -308,6 +343,9 @@ namespace LAB2D.AI.Worker
                     if (other == null || ReferenceEquals(other, worker)) continue;
                     Vector3Int otherPos = AWorkerTask.TileMapWorldToMapProvider(other.transform.position);
                     if (WithinChebyshev(workerPos, otherPos, scanRadius)) nearbyWorker++;
+
+                    // nearbyWorker 打满即饱和，提前终止（名单表小、收益有限，与上保持一致）
+                    if (nearbyWorker >= SaturateCount) break;
                 }
             }
         }

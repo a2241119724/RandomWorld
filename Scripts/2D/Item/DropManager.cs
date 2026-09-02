@@ -16,6 +16,24 @@ namespace LAB2D.Item
         private static readonly Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> Resources = new ();
 
         /// <summary>
+        /// 当前掉落物总数（按掉落类型聚合，O(类型数) 廉价读取，无分配）。
+        /// 供决策层"全图无掉落则跳过逐格扫描"的提前退出判断（性能优化）。
+        /// </summary>
+        public int TotalDropCount
+        {
+            get
+            {
+                int total = 0;
+                foreach (KeyValuePair<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> pair in Resources)
+                {
+                    total += pair.Value.Count;
+                }
+
+                return total;
+            }
+        }
+
+        /// <summary>
         /// 添加掉落物（保持 resourceInfo 中的 OwnerId）。
         /// </summary>
         /// <param name="itemType">掉落物类型</param>

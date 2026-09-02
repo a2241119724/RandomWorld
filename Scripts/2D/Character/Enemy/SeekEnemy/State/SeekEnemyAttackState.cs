@@ -107,11 +107,16 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 float dev = Mathf.Abs(Mathf.DeltaAngle(aimAngle, targetAngle));
                 if (dev > 20f)
                 {
-                    Vector3 selfPos = this.Character.transform.position;
-                    Vector3 targetPos = this.Character.Target.transform.position;
+                    // 惰性求值：OnUpdate 每帧进入（持续偏离期间每帧都触发），被节流时
+                    // 不再每帧付取位置 + 插值串分配
                     AWorkerTask.LogProviderThrottled(
                         $"{this.Character.name}|AimDev", 0.5f,
-                        $"[EnemyDiag] {this.Character.name}@({selfPos.x:F0},{selfPos.y:F0}) 攻击方向偏差 {dev:0.0}° 武器={aimAngle:0.0}° 目标={this.Character.Target.name}@({targetPos.x:F0},{targetPos.y:F0}) 目标角={targetAngle:0.0}°",
+                        () =>
+                        {
+                            Vector3 selfPos = this.Character.transform.position;
+                            Vector3 targetPos = this.Character.Target.transform.position;
+                            return $"[EnemyDiag] {this.Character.name}@({selfPos.x:F0},{selfPos.y:F0}) 攻击方向偏差 {dev:0.0}° 武器={aimAngle:0.0}° 目标={this.Character.Target.name}@({targetPos.x:F0},{targetPos.y:F0}) 目标角={targetAngle:0.0}°";
+                        },
                         LogManager.LogLevelEnum.Debug);
                 }
             }

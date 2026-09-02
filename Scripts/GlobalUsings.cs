@@ -21,7 +21,6 @@ global using LAB2D.Character.Worker.Task.Individual;
 
 global using LAB2D.Constant;
 global using LAB2D.Core;
-global using LAB2D.Core.KDTree;
 global using LAB2D.Core.Seek;
 global using LAB2D.Data;
 global using LAB2D.Domain.Character;

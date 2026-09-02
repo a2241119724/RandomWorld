@@ -1517,7 +1517,7 @@ namespace LAB2D.Character.Worker
 
             // 核心修复：放弃前让任务进入冷却（LastFailedTime + FailedCooldownSeconds=10s）。
             // 此前只 RecordFail 了寻路目标（邻居格）而未设置 Task.LastFailedTime，
-            // 导致 IsInCooldown=false → GiveUpTask 回池 → CreateTaskSnapshots 不跳过 →
+            // 导致 IsInCooldown=false → GiveUpTask 回池 → 分配循环（TrySelectNearestAssignable）不跳过 →
             // 分配循环立即把同一任务重接回同一 Worker → "卡死→放弃→重接→再卡死"无限循环
             // （日志观测黄良/熊茂霖等 7 人各数百次 Stuck/放弃，Worker 卡在 PickUp/Build 不动）。
             if (workerData?.Task != null)

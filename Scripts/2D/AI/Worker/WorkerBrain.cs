@@ -586,8 +586,9 @@ namespace LAB2D.AI.Worker
             WorkerModelInference model = WorkerModelInference.Instance;
             if (!model.IsLoaded)
             {
+                // 惰性求值：模型未加载时每次决策都进入此处，被节流时不再构造插值串
                 AWorkerTask.LogProviderThrottled($"{worker.name}|ModelNotLoaded", 60f,
-                    $"[ModelDiag] {worker.name} 模型未加载，回退硬规则", LogManager.LogLevelEnum.Debug);
+                    () => $"[ModelDiag] {worker.name} 模型未加载，回退硬规则", LogManager.LogLevelEnum.Debug);
                 return null;
             }
 
@@ -595,8 +596,9 @@ namespace LAB2D.AI.Worker
             int actionIndex = model.PredictActionIndex(features);
             if (actionIndex < 0 || actionIndex >= 14)
             {
+                // 惰性求值：被节流时不再构造插值串（决策级调用点统一走 Func 重载）
                 AWorkerTask.LogProviderThrottled($"{worker.name}|ModelBadIndex", 60f,
-                    $"[ModelDiag] {worker.name} 模型输出异常索引 {actionIndex}，回退硬规则",
+                    () => $"[ModelDiag] {worker.name} 模型输出异常索引 {actionIndex}，回退硬规则",
                     LogManager.LogLevelEnum.Warning);
                 return null;
             }
@@ -604,8 +606,9 @@ namespace LAB2D.AI.Worker
             WorkerDecisionType type = (WorkerDecisionType)actionIndex;
 
             // 成功路径：记录模型实际输出的行为类型（按 name+type 节流，便于 A/B 观察行为分布）
+            // 惰性求值：每次模型决策都会进入此处，被节流时不再构造插值串（key 仍按 name+type 区分）
             AWorkerTask.LogProviderThrottled($"{worker.name}|ModelDecide|{type}", 5f,
-                $"[ModelDiag] {worker.name} 模型决策: {type} (index={actionIndex})",
+                () => $"[ModelDiag] {worker.name} 模型决策: {type} (index={actionIndex})",
                 LogManager.LogLevelEnum.Debug);
 
             switch (type)
@@ -1010,15 +1013,18 @@ namespace LAB2D.AI.Worker
             ResourceMap resourceMap = Core.ServiceLocator.Get<ResourceMap>();
             if (resourceMap?.ResourceMapDataLAB == null) return null;
 
+            // 性能优化：TryGetValue 单次探测替代 ContainsKey+索引器，scratch 键复用消除逐格分配
+            Dictionary<Vector3IntLAB, string> resourcePosMap = resourceMap.ResourceMapDataLAB.PosMap;
+            Vector3IntLAB scratchKey = new Vector3IntLAB(0, 0, 0);
+
             for (int dx = -this.ScanRadius; dx <= this.ScanRadius; dx++)
             {
                 for (int dy = -this.ScanRadius; dy <= this.ScanRadius; dy++)
                 {
                     Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
-                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
-                    if (!resourceMap.ResourceMapDataLAB.PosMap.ContainsKey(posLAB)) continue;
+                    scratchKey.X = pos.x; scratchKey.Y = pos.y; scratchKey.Z = 0;
+                    if (!resourcePosMap.TryGetValue(scratchKey, out string resName)) continue;
 
-                    string resName = resourceMap.ResourceMapDataLAB.PosMap[posLAB];
                     if (string.IsNullOrEmpty(resName)) continue;
                     if (!Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(resName, out ItemData itemData)) continue;
                     if (itemData.Id != targetItemId) continue;
@@ -1047,6 +1053,13 @@ namespace LAB2D.AI.Worker
             ResourceCandidate? best = null;
             float bestDist = float.MaxValue;
 
+            // 性能优化：PosMap 预过滤（无资源格不再走 TryGetGatherResourceInfo 的 2 次
+            // Tilemap.GetTile 原生互操作）+ scratch 键复用（ContainKey 逐格 new Vector3IntLAB）。
+            // 候选集合与原实现一致（PosMap 与瓦片同步维护），选中结果不变。
+            Dictionary<Vector3IntLAB, string> resourcePosMap = resourceMap?.ResourceMapDataLAB?.PosMap;
+            Dictionary<Vector3IntLAB, string> gatherPosMap = gatherMap?.GatherMapDataLAB?.PosMap;
+            Vector3IntLAB scratchKey = new Vector3IntLAB(0, 0, 0);
+
             // 根据房间参数动态计算扫描范围
             int hw = (wd.HomeRoomWidth - 1) / 2;
             int hh = (wd.HomeRoomHeight - 1) / 2;
@@ -1058,8 +1071,16 @@ namespace LAB2D.AI.Worker
                 {
                     Vector3Int pos = new Vector3Int(center.x + dx, center.y + dy, 0);
 
+                    if (resourcePosMap == null)
+                        continue;
+
+                    scratchKey.X = pos.x; scratchKey.Y = pos.y; scratchKey.Z = 0;
+
                     // 跳过已被其他 Worker 认领的资源
-                    if (gatherMap?.GatherMapDataLAB?.ContainKey(pos) == true)
+                    if (gatherPosMap != null && gatherPosMap.ContainsKey(scratchKey))
+                        continue;
+
+                    if (!resourcePosMap.ContainsKey(scratchKey))
                         continue;
 
                     if (!resourceMap.TryGetGatherResourceInfo(pos, out ResourceInfo resourceInfo))
@@ -1092,6 +1113,11 @@ namespace LAB2D.AI.Worker
 
             var dropManager = Core.ServiceLocator.Get<DropManager>();
             if (dropManager == null) return null;
+
+            // 性能优化（提前退出）：全图没有任何掉落物时（常态），41×41=1681 格逐格
+            // GetDropByAll 探测纯属白跑；总数为 O(掉落类型数) 的廉价读取，为 0 直接返回。
+            // 有掉落时行为与原实现完全一致。
+            if (dropManager.TotalDropCount == 0) return null;
 
             // 扫描周围是否有属于该 Worker 的掉落物
             for (int dx = -this.ScanRadius; dx <= this.ScanRadius; dx++)
@@ -1217,8 +1243,18 @@ namespace LAB2D.AI.Worker
                 return null;
             }
 
-            List<ResourceCandidate> candidates = new List<ResourceCandidate>();
-            var gatherMap = Core.ServiceLocator.Get<GatherMap>();
+            // 性能优化（原 O(全格) Tilemap 探测 + List 分配 → O(全格) 纯字典探测 + 零分配）：
+            // 1) PosMap.ContainsKey 预过滤：只有确有资源的格子才走 TryGetGatherResourceInfo
+            //    （其内部对每个格子做 2 次 Tilemap.GetTile 原生互操作，41×41=1681 格逐格调用是决策期大头）；
+            // 2) 复用 scratch 键查询 PosMap/GatherMap，消除逐格 Vector3IntLAB 类分配（每次决策 1681+ 个）；
+            // 3) 就地保留最近候选（严格 <，扫描顺序不变），不再构建候选 List + 二次最小值循环。
+            // 选中结果与原实现一致（同序扫描 + 严格小于取首最小）。
+            Dictionary<Vector3IntLAB, string> resourcePosMap = resourceMap.ResourceMapDataLAB.PosMap;
+            Dictionary<Vector3IntLAB, string> gatherPosMap = Core.ServiceLocator.Get<GatherMap>()?.GatherMapDataLAB?.PosMap;
+            Vector3IntLAB scratchKey = new Vector3IntLAB(0, 0, 0);
+
+            ResourceCandidate best = default;
+            float bestDist = float.MaxValue;
 
             for (int dx = -this.ScanRadius; dx <= this.ScanRadius; dx++)
             {
@@ -1226,8 +1262,13 @@ namespace LAB2D.AI.Worker
                 {
                     Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
 
+                    // 盒子内无资源格子快速跳过（避免无谓的认领/失败缓存/Tilemap 查询）
+                    scratchKey.X = pos.x; scratchKey.Y = pos.y; scratchKey.Z = 0;
+                    if (resourcePosMap == null || !resourcePosMap.ContainsKey(scratchKey))
+                        continue;
+
                     // 跳过已被其他 Worker 认领的资源（GatherMap 中的标记）
-                    if (gatherMap?.GatherMapDataLAB?.ContainKey(pos) == true)
+                    if (gatherPosMap != null && gatherPosMap.ContainsKey(scratchKey))
                         continue;
 
                     // 跳过近期寻路失败的位置，避免重复尝试不可达资源
@@ -1242,34 +1283,25 @@ namespace LAB2D.AI.Worker
                         && !this.ResourceProducesAnyMaterial(resourceInfo.Id, requiredMaterialIds))
                         continue;
 
-                    candidates.Add(new ResourceCandidate
+                    float dist = (pos - workerPos).sqrMagnitude;
+                    if (dist < bestDist)
                     {
-                        Position = pos,
-                        Resource = resourceInfo,
-                    });
+                        bestDist = dist;
+                        best = new ResourceCandidate
+                        {
+                            Position = pos,
+                            Resource = resourceInfo,
+                        };
+                    }
                 }
             }
 
             // 同时扫描可挖掘地形（山脉等），与 ResourceMap 资源使用相同的材料过滤策略。
-            List<ResourceCandidate> terrainCandidates = this.ScanForDiggableTerrain(worker, requiredMaterialIds);
-            candidates.AddRange(terrainCandidates);
+            this.ScanForDiggableTerrain(worker, requiredMaterialIds, ref best, ref bestDist);
 
-            if (candidates.Count == 0)
+            if (bestDist == float.MaxValue)
             {
                 return null;
-            }
-
-            // 返回最近的一个
-            ResourceCandidate best = candidates[0];
-            float bestDist = (best.Position - workerPos).sqrMagnitude;
-            for (int i = 1; i < candidates.Count; i++)
-            {
-                float dist = (candidates[i].Position - workerPos).sqrMagnitude;
-                if (dist < bestDist)
-                {
-                    bestDist = dist;
-                    best = candidates[i];
-                }
             }
 
             return best;
@@ -1298,12 +1330,17 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 扫描周围可挖掘的地形瓦片（如山脉）。
         /// 地形瓦片存在于 TileMap.MapTiles，不在 ResourceMap 中。
+        /// 性能优化：不再构建候选 List（每次决策 1681 格遍历 + 逐候选分配），
+        /// 改为通过 ref 就地更新最近候选（严格 &lt;，与原"List + 二次最小值"同序同结果），
+        /// 由 <see cref="ScanForResources"/> 传入共享的 best/bestDist 一并比较。
         /// </summary>
         /// <param name="worker">目标 Worker</param>
         /// <param name="requiredMaterialIds">可选：只返回能产出这些材料 ID 之一的地形。null 时不限制。</param>
-        private List<ResourceCandidate> ScanForDiggableTerrain(AWorker worker, HashSet<int> requiredMaterialIds = null)
+        /// <param name="best">共享的当前最近候选（就地更新）。</param>
+        /// <param name="bestDist">共享的当前最近距离²（就地更新）。</param>
+        private void ScanForDiggableTerrain(AWorker worker, HashSet<int> requiredMaterialIds,
+            ref ResourceCandidate best, ref float bestDist)
         {
-            List<ResourceCandidate> candidates = new List<ResourceCandidate>();
             Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
             TileMap tileMap = Core.ServiceLocator.Get<TileMap>();
             TerrainConfigDatabase db = Core.ServiceLocator.Get<TerrainConfigDatabase>();
@@ -1312,11 +1349,16 @@ namespace LAB2D.AI.Worker
 
             if (tileMap?.TileMapDataLAB?.MapTiles == null || db == null)
             {
-                return candidates;
+                return;
             }
 
             int maxX = System.Math.Min(workerPos.x + this.ScanRadius, tileMap.TileMapDataLAB.Height - 1);
             int maxY = System.Math.Min(workerPos.y + this.ScanRadius, tileMap.TileMapDataLAB.Width - 1);
+
+            // 性能优化：ContainKey 内部每次 new Vector3IntLAB 作为键（1681 格/次决策=1681 次分配），
+            // 改为复用 scratch 键直接探测 GatherMap.PosMap，行为一致且零分配。
+            Dictionary<Vector3IntLAB, string> gatherPosMap = gatherMap?.GatherMapDataLAB?.PosMap;
+            Vector3IntLAB scratchKey = new Vector3IntLAB(0, 0, 0);
 
             for (int x = System.Math.Max(workerPos.x - this.ScanRadius, 0); x <= maxX; x++)
             {
@@ -1325,9 +1367,13 @@ namespace LAB2D.AI.Worker
                     Vector3Int pos = new Vector3Int(x, y, 0);
 
                     // 跳过已被认领的位置
-                    if (gatherMap?.GatherMapDataLAB?.ContainKey(pos) == true)
+                    if (gatherPosMap != null)
                     {
-                        continue;
+                        scratchKey.X = x; scratchKey.Y = y; scratchKey.Z = 0;
+                        if (gatherPosMap.ContainsKey(scratchKey))
+                        {
+                            continue;
+                        }
                     }
 
                     // 跳过近期寻路失败的位置
@@ -1379,17 +1425,21 @@ namespace LAB2D.AI.Worker
                         continue;
                     }
 
-                    candidates.Add(new ResourceCandidate
+                    // 就地更新最近候选（严格 <，与原 List+二次最小值扫描同序同结果）
+                    float dist = (pos - workerPos).sqrMagnitude;
+                    if (dist < bestDist)
                     {
-                        Position = pos,
-                        IsTerrainDig = true,
-                        TerrainId = terrainId,
-                        Resource = new ResourceInfo(0), // 占位，实际掉落由 Finish() 确定
-                    });
+                        bestDist = dist;
+                        best = new ResourceCandidate
+                        {
+                            Position = pos,
+                            IsTerrainDig = true,
+                            TerrainId = terrainId,
+                            Resource = new ResourceInfo(0), // 占位，实际掉落由 Finish() 确定
+                        };
+                    }
                 }
             }
-
-            return candidates;
         }
 
         /// <summary>
@@ -1438,14 +1488,19 @@ namespace LAB2D.AI.Worker
             ResourceCandidate? best = null;
             float bestDist = float.MaxValue;
 
+            // 性能优化：ContainsKey+索引器两次哈希探测 → TryGetValue 一次；
+            // 复用 scratch 键避免逐格 Vector3IntLAB 类分配（41×41=1681 格/次决策）。
+            Dictionary<Vector3IntLAB, string> resourcePosMap = resourceMap.ResourceMapDataLAB.PosMap;
+            Vector3IntLAB scratchKey = new Vector3IntLAB(0, 0, 0);
+
             for (int dx = -scanR; dx <= scanR; dx++)
             {
                 for (int dy = -scanR; dy <= scanR; dy++)
                 {
                     Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
-                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                    scratchKey.X = pos.x; scratchKey.Y = pos.y; scratchKey.Z = 0;
 
-                    if (!resourceMap.ResourceMapDataLAB.PosMap.ContainsKey(posLAB))
+                    if (!resourcePosMap.TryGetValue(scratchKey, out string resourceName))
                     {
                         continue;
                     }
@@ -1454,7 +1509,6 @@ namespace LAB2D.AI.Worker
                     if (ASeek.IsRecentFail(pos))
                         continue;
 
-                    string resourceName = resourceMap.ResourceMapDataLAB.PosMap[posLAB];
                     if (string.IsNullOrEmpty(resourceName))
                     {
                         continue;
@@ -1492,6 +1546,8 @@ namespace LAB2D.AI.Worker
 
         /// <summary>
         /// 动态生成的房间布局数据，替代旧的静态硬编码常量。
+        /// 注意：实例由 s_roomLayoutCache 按参数组合共享（见 GetRoomLayout），
+        /// 仅允许 GenerateRoomLayout 在发布前填充；调用方一律只读，不得修改任何列表/字段。
         /// </summary>
         public class RoomLayout
         {
@@ -1800,6 +1856,16 @@ namespace LAB2D.AI.Worker
             AWorkerTask.LogProvider(sb.ToString(), LogManager.LogLevelEnum.Info);
         }
 
+        /// <summary>
+        /// 房间布局缓存：布局仅由 (宽, 高, 门边, 门位) 四参数决定，组合有限
+        /// （5|7 × 5|7 × 4 边 × ≤5 门位 &lt; 64 种），而决策/存取/建造路径每 tick 反复调用
+        /// GetRoomLayout（每次 new RoomLayout + 4 个 List + 逐墙填充 → 决策级高频 GC 压力）。
+        /// 已审计全部调用方对布局只读（唯一写入点 GenerateRoomLayout 在实例发布前完成），
+        /// 命中直接共享同一实例，消除每次调用的容器分配； RoomLayout 必须保持"发布后不可变"约定。
+        /// </summary>
+        private static readonly Dictionary<int, RoomLayout> s_roomLayoutCache
+            = new Dictionary<int, RoomLayout>();
+
         /// <summary>从 WorkerData 参数生成房间布局。如果参数未设置则自动生成。</summary>
         public static RoomLayout GetRoomLayout(AWorker.WorkerData wd)
         {
@@ -1807,15 +1873,21 @@ namespace LAB2D.AI.Worker
             {
                 GenerateRandomRoomParams(wd);
             }
-            return GenerateRoomLayout(
-                wd.HomeRoomWidth, wd.HomeRoomHeight,
-                wd.HomeDoorSide, wd.HomeDoorIndex);
-        }
 
-        /// <summary>获取房间所有墙壁偏移（供外部注册房间使用）。</summary>
-        public static IReadOnlyList<Vector3Int> GetWallOffsets(AWorker.WorkerData wd)
-        {
-            return GetRoomLayout(wd).WallOffsets;
+            // 参数紧凑打包为单个 int key（宽/高各 4bit、门边 3bit、门位 8bit，取值远小于位宽）
+            int key = wd.HomeRoomWidth
+                | (wd.HomeRoomHeight << 4)
+                | (wd.HomeDoorSide << 8)
+                | (wd.HomeDoorIndex << 12);
+            if (!s_roomLayoutCache.TryGetValue(key, out RoomLayout layout))
+            {
+                layout = GenerateRoomLayout(
+                    wd.HomeRoomWidth, wd.HomeRoomHeight,
+                    wd.HomeDoorSide, wd.HomeDoorIndex);
+                s_roomLayoutCache[key] = layout;
+            }
+
+            return layout;
         }
 
         /// <summary>
@@ -3053,8 +3125,9 @@ namespace LAB2D.AI.Worker
         {
             if (wd == null || wd.PlannedHomePosition == null)
             {
+                // 以下 Store* 均为决策级高频路径：惰性求值，被节流时不再构造插值串
                 AWorkerTask.LogProviderThrottled($"{worker.name}|StoreNoHome", 30f,
-                    $"[BrainDiag] {worker.name} Store跳过: 无家位置", LogManager.LogLevelEnum.Debug);
+                    () => $"[BrainDiag] {worker.name} Store跳过: 无家位置", LogManager.LogLevelEnum.Debug);
                 return null;
             }
 
@@ -3062,7 +3135,7 @@ namespace LAB2D.AI.Worker
             if (wd.HomeBuildStage < layout.CompleteStage)
             {
                 AWorkerTask.LogProviderThrottled($"{worker.name}|StoreNotBuilt", 30f,
-                    $"[BrainDiag] {worker.name} Store跳过: 家未建完 {wd.HomeBuildStage}/{layout.CompleteStage}",
+                    () => $"[BrainDiag] {worker.name} Store跳过: 家未建完 {wd.HomeBuildStage}/{layout.CompleteStage}",
                     LogManager.LogLevelEnum.Debug);
                 return null; // 家未建完
             }
@@ -3072,14 +3145,14 @@ namespace LAB2D.AI.Worker
             if (now - wd.LastStorageOverflowTime < this.StorageRetryCooldownSeconds)
             {
                 AWorkerTask.LogProviderThrottled($"{worker.name}|StoreOverflowCooldown", 30f,
-                    $"[BrainDiag] {worker.name} Store跳过: 溢出冷却 {(now - wd.LastStorageOverflowTime):F1}s < {this.StorageRetryCooldownSeconds}s",
+                    () => $"[BrainDiag] {worker.name} Store跳过: 溢出冷却 {(now - wd.LastStorageOverflowTime):F1}s < {this.StorageRetryCooldownSeconds}s",
                     LogManager.LogLevelEnum.Debug);
                 return null;
             }
             if (now - wd.LastStorageAccessFailTime < this.StorageRetryCooldownSeconds)
             {
                 AWorkerTask.LogProviderThrottled($"{worker.name}|StoreFailCooldown", 30f,
-                    $"[BrainDiag] {worker.name} Store跳过: 存取失败冷却 {(now - wd.LastStorageAccessFailTime):F1}s < {this.StorageRetryCooldownSeconds}s",
+                    () => $"[BrainDiag] {worker.name} Store跳过: 存取失败冷却 {(now - wd.LastStorageAccessFailTime):F1}s < {this.StorageRetryCooldownSeconds}s",
                     LogManager.LogLevelEnum.Debug);
                 return null;
             }
@@ -3090,7 +3163,7 @@ namespace LAB2D.AI.Worker
                 || (float)carried / wd.MaxResourceCount <= this.StorageOverflowThreshold)
             {
                 AWorkerTask.LogProviderThrottled($"{worker.name}|StoreNotFull", 30f,
-                    $"[BrainDiag] {worker.name} Store跳过: 携带{carried}/{wd.MaxResourceCount} ({(float)carried / wd.MaxResourceCount:P0} <= {this.StorageOverflowThreshold:P0})",
+                    () => $"[BrainDiag] {worker.name} Store跳过: 携带{carried}/{wd.MaxResourceCount} ({(float)carried / wd.MaxResourceCount:P0} <= {this.StorageOverflowThreshold:P0})",
                     LogManager.LogLevelEnum.Debug);
                 return null;
             }
@@ -3099,7 +3172,7 @@ namespace LAB2D.AI.Worker
             if (!worker.TryPickDepositableResource(out _))
             {
                 AWorkerTask.LogProviderThrottled($"{worker.name}|StoreNoDepositable", 30f,
-                    $"[BrainDiag] {worker.name} Store跳过: 无可存物品 携带{carried} 目标={wd.CurrentGoal.Type}",
+                    () => $"[BrainDiag] {worker.name} Store跳过: 无可存物品 携带{carried} 目标={wd.CurrentGoal.Type}",
                     LogManager.LogLevelEnum.Debug);
                 return null;
             }
@@ -3109,7 +3182,7 @@ namespace LAB2D.AI.Worker
             if (tile == default)
             {
                 AWorkerTask.LogProviderThrottled($"{worker.name}|StoreTileUnreachable", 30f,
-                    $"[BrainDiag] {worker.name} Store跳过: 仓库瓦片不可达",
+                    () => $"[BrainDiag] {worker.name} Store跳过: 仓库瓦片不可达",
                     LogManager.LogLevelEnum.Debug);
                 return null;
             }
@@ -3222,6 +3295,12 @@ namespace LAB2D.AI.Worker
             BuildCandidate? best = null;
             float bestDist = float.MaxValue;
 
+            // 性能优化：材料需求字典（GetBuildItemDataByName + BuildResourceDictFromData 各含
+            // 多次查名/字典分配）原先对半径内每个未完成格都构建一次；改为先按距离剪枝，
+            // 仅当候选能刷新最近距离时才校验并构建（结果不变：更远的候选本就不可能胜出，
+            // 无效候选不更新 bestDist 不影响后续判定）。通常每次决策只构建 ≤1 次。
+            ItemDataManager itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
+
             foreach (var kv in buildMap.BuildMapDataLAB.PosMap)
             {
                 // 已完成的建筑不需要再建造
@@ -3230,25 +3309,22 @@ namespace LAB2D.AI.Worker
                 Vector3Int pos = Vector3IntLAB.ToVector3Int(kv.Key);
                 float dist = (pos - workerPos).sqrMagnitude;
                 if (dist > this.ScanRadius * this.ScanRadius) continue;
+                if (dist >= bestDist) continue;
 
-                // 获取建造材料需求
-                var itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
+                // 获取建造材料需求（仅在候选可能胜出时才构建）
                 BuildItemData buildData = itemDataManager.GetBuildItemDataByName(kv.Value.Name);
                 if (buildData == null) continue;
 
                 Dictionary<int, ResourceInfo> needs = this.BuildResourceDictFromData(buildData);
                 if (needs == null || needs.Count == 0) continue;
 
-                if (dist < bestDist)
+                bestDist = dist;
+                best = new BuildCandidate
                 {
-                    bestDist = dist;
-                    best = new BuildCandidate
-                    {
-                        Position = pos,
-                        TileName = kv.Value.Name,
-                        NeededResources = needs,
-                    };
-                }
+                    Position = pos,
+                    TileName = kv.Value.Name,
+                    NeededResources = needs,
+                };
             }
 
             return best;

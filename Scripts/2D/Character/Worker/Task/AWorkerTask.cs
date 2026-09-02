@@ -258,6 +258,34 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <summary>
+        /// 节流版日志（惰性求值重载）— 节流规则与时间常量与字符串版完全一致，
+        /// 但 message 改为 <see cref="System.Func{String}"/>：先做节流判断，命中节流窗口时
+        /// 根本不调用委托。高频路径（每帧/每决策）原本即使被节流也已在调用点构造好 $"..." 插值串
+        /// （白付字符串分配 + 数值装箱），改传 <c>() => $"..."</c> 后被节流的调用只剩一次委托分配。
+        /// 每帧/每决策级调用点一律用本重载；低频事件点（状态进入/退出等）可继续用字符串版。
+        /// </summary>
+        public static void LogProviderThrottled(
+            string key, float intervalSec, System.Func<string> messageFactory, LogManager.LogLevelEnum level)
+        {
+            float now = UnityEngine.Time.time;
+            lock (s_logThrottleLock)
+            {
+                if (s_logThrottleLastTime.TryGetValue(key, out float last))
+                {
+                    float elapsed = now - last;
+                    if (elapsed >= 0f && elapsed < intervalSec)
+                    {
+                        return;
+                    }
+                }
+
+                s_logThrottleLastTime[key] = now;
+            }
+
+            LogProvider(messageFactory(), level);
+        }
+
+        /// <summary>
         /// 物品类型查找提供者 — 根据物品 ID 返回物品类型枚举。
         /// 默认实现访问 ServiceLocator.Get&lt;ItemDataManager&gt;().IdToType。
         /// 可替换为测试桩。
@@ -938,8 +966,10 @@ namespace LAB2D.Character.Worker.Task
 
         /// <summary>
         /// 按距离从小到大遍历周围格子（环形辐射），找到第一个满足 check 的位置。
+        /// internal：饥饿找食物（WorkerDecisionService.CreateSelfEatTask）复用同一"由近及远、找到即停"
+        /// 环形推进，替代按档位整方块重扫（原 20/40/60/80 四档最坏 ≈ 48,804 格/次 → 命中即停 ≤ 命中环面积）。
         /// </summary>
-        private static bool FindClosest(
+        internal static bool FindClosest(
             UnityEngine.Vector3Int center, int maxRadius,
             System.Func<UnityEngine.Vector3Int, bool> check,
             out UnityEngine.Vector3Int result)

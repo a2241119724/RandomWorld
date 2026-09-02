@@ -30,6 +30,17 @@ namespace LAB2D.AI.Worker
         private long seekTimes; // 没有任务寻路的次数
         private long lastDecisionAtSeekTimes; // 上次决策时的 seekTimes，用于防止快速重复决策
 
+        /// <summary>饥饿采集的最大扫描半径（与原 20/40/60/80 四档的最大档一致）。</summary>
+        private const int FoodScanMaxRadius = 80;
+
+        /// <summary>饥饿找食物扫满半径仍失败后的重试冷却（秒）：冷却内不再重复 ~48k 格的全图扫描。</summary>
+        private const float FoodScanFailRetrySeconds = 10f;
+
+        // 饥饿找食物的失败缓存：上次由近及远扫满 FoodScanMaxRadius 仍无食物的 Time.time。
+        // 饥饿决策在每次无任务寻路时触发（秒级/Worker），原实现失败时四档整方块累加扫
+        // ≈48,804 格/次且无冷却；记录失败时间后冷却期内直接空闲，消灭重复全图扫描。
+        private float lastFoodScanFailTime = float.NegativeInfinity;
+
         public WorkerDecisionService(AWorker worker)
         {
             this.worker = worker;
@@ -727,104 +738,77 @@ namespace LAB2D.AI.Worker
                 return;
             }
 
-            // 交易失败 → 自己去采集食物（扩大扫描范围）
+            // 交易失败 → 自己去采集食物（由近及远环形扫描）
             AWorkerTask.LogProvider(
                 $"{this.worker.name} 交易失败, 尝试自己采集食物（扩大扫描范围）",
                 LogManager.LogLevelEnum.Debug);
 
-            // 扫描食物：从小范围到大范围逐级扩大
-            Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(this.worker.transform.position);
-            for (int scanR = 20; scanR <= 80; scanR += 20)
+            // 失败缓存：上次扫满半径仍无食物，冷却期内不再重复全图扫描（Time.time 重置导致
+            // elapsed<0 时照常重试，与日志节流同款约定）
+            float now = UnityEngine.Time.time;
+            float sinceFail = now - this.lastFoodScanFailTime;
+            if (sinceFail >= 0f && sinceFail < FoodScanFailRetrySeconds)
             {
-                ResourceInfo foodResource = this.ScanForFoodAtRange(workerPos, scanR);
-                if (foodResource != null && foodResource.Id > 0)
-                {
-                    // 找到了！找到食物所在的具体位置
-                    Vector3Int? foodPos = this.FindResourcePosition(workerPos, foodResource.Id, scanR);
-                    if (foodPos.HasValue)
-                    {
-                        var decision = WorkerBrain.Decision.MakeGather(
-                            foodPos.Value, foodResource, "交易失败后自己采集食物");
-
-                        AWorkerTask.LogProvider(
-                            $"{this.worker.name} 找到食物 id={foodResource.Id} pos=({foodPos.Value.x},{foodPos.Value.y})",
-                            LogManager.LogLevelEnum.Debug);
-
-                        this.CreateSelfGatherTask(decision);
-                        return;
-                    }
-                }
+                this.CreateIdleTask();
+                return;
             }
 
+            // 由近及远环形扫描（AWorkerTask.FindClosest 逐环推进、命中即停）。
+            // 原实现按 20/40/60/80 四档整方块重扫（先扫食物类型、命中后再按类型全档重扫定位，
+            // 失败时两遍合计 ≈ 97,608 格），食物在身边也要付满档位成本；
+            // 环形扫描只扫到命中环为止（O(r²)），失败路径也降为单遍环扫 ≈ 48,804 格。
+            ResourceMap resourceMap = Core.ServiceLocator.Get<ResourceMap>();
+            ItemDataManager itemDataManager = Core.ServiceLocator.Get<ItemDataManager>();
+            int foundItemId = 0;
+            Vector3Int foodPos = default;
+            bool found = resourceMap?.ResourceMapDataLAB?.PosMap != null
+                && AWorkerTask.FindClosest(
+                    AWorkerTask.TileMapWorldToMapProvider(this.worker.transform.position),
+                    FoodScanMaxRadius,
+                    pos =>
+                    {
+                        // TryGetValue 单次查表（原 ContainsKey + 索引器两次查表）
+                        Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
+                        if (!resourceMap.ResourceMapDataLAB.PosMap.TryGetValue(posLAB, out string resName)
+                            || string.IsNullOrEmpty(resName))
+                        {
+                            return false;
+                        }
+
+                        if (!itemDataManager.TryGetByName(resName, out ItemData itemData)
+                            || AWorkerTask.ItemTypeProvider(itemData.Id) != AItem.ItemTypeEnum.Food)
+                        {
+                            return false;
+                        }
+
+                        foundItemId = itemData.Id;
+                        return true;
+                    },
+                    out foodPos);
+
+            if (found && foundItemId > 0)
+            {
+                var decision = WorkerBrain.Decision.MakeGather(
+                    foodPos, new ResourceInfo(foundItemId), "交易失败后自己采集食物");
+
+                AWorkerTask.LogProvider(
+                    $"{this.worker.name} 找到食物 id={foundItemId} pos=({foodPos.x},{foodPos.y})",
+                    LogManager.LogLevelEnum.Debug);
+
+                this.CreateSelfGatherTask(decision);
+                return;
+            }
+
+            // 扫满半径仍无食物 → 记录失败时间，冷却期内不再重试全图扫描
+            this.lastFoodScanFailTime = now;
             AWorkerTask.LogProvider(
                 $"{this.worker.name} 扩大扫描范围内无食物可采集，继续空闲",
                 LogManager.LogLevelEnum.Warning);
             this.CreateIdleTask();
         }
 
-        /// <summary>
-        /// 在指定范围内扫描食物资源，返回找到的第一个食物 ResourceInfo。
-        /// </summary>
-        private ResourceInfo ScanForFoodAtRange(Vector3Int workerPos, int radius)
-        {
-            var resourceMap = Core.ServiceLocator.Get<ResourceMap>();
-            if (resourceMap?.ResourceMapDataLAB?.PosMap == null) return null;
-
-            for (int dx = -radius; dx <= radius; dx++)
-            {
-                for (int dy = -radius; dy <= radius; dy++)
-                {
-                    Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
-                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
-                    if (!resourceMap.ResourceMapDataLAB.PosMap.ContainsKey(posLAB)) continue;
-
-                    string resName = resourceMap.ResourceMapDataLAB.PosMap[posLAB];
-                    if (string.IsNullOrEmpty(resName)) continue;
-                    if (!Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(resName, out ItemData itemData)) continue;
-                    if (AWorkerTask.ItemTypeProvider(itemData.Id) != AItem.ItemTypeEnum.Food) continue;
-
-                    return new ResourceInfo(itemData.Id);
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// 在指定范围内查找特定资源 ID 的位置。
-        /// </summary>
-        private Vector3Int? FindResourcePosition(Vector3Int workerPos, int itemId, int radius)
-        {
-            var resourceMap = Core.ServiceLocator.Get<ResourceMap>();
-            if (resourceMap?.ResourceMapDataLAB?.PosMap == null) return null;
-
-            Vector3Int? best = null;
-            float bestDist = float.MaxValue;
-
-            for (int dx = -radius; dx <= radius; dx++)
-            {
-                for (int dy = -radius; dy <= radius; dy++)
-                {
-                    Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
-                    Vector3IntLAB posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
-                    if (!resourceMap.ResourceMapDataLAB.PosMap.ContainsKey(posLAB)) continue;
-
-                    string resName = resourceMap.ResourceMapDataLAB.PosMap[posLAB];
-                    if (string.IsNullOrEmpty(resName)) continue;
-                    if (!Core.ServiceLocator.Get<ItemDataManager>().TryGetByName(resName, out ItemData itemData)) continue;
-                    if (itemData.Id != itemId) continue;
-
-                    float dist = (pos - workerPos).sqrMagnitude;
-                    if (dist < bestDist)
-                    {
-                        bestDist = dist;
-                        best = pos;
-                    }
-                }
-            }
-
-            return best;
-        }
+        // （原 ScanForFoodAtRange/FindResourcePosition 两个整方块扫描辅助已删除：
+        // 职责被上方 FindClosest 环形扫描合并——由近及远找到即停，无需再按类型二次定位。）
 
         /// <summary>
         /// 创建自我睡觉任务 — 有床优先床，无床原地地面睡眠。

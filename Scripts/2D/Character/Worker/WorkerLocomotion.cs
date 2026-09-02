@@ -415,7 +415,8 @@ namespace LAB2D.Character.Worker
             this.combatPathMode = CombatPathMode.WaitPath;
             AWorkerTask.LogProviderThrottled(
                 $"{this.worker.name}|CombatSeek", 2f,
-                $"[MoveDiag] {this.worker.name} 战斗寻路 目标格=({cell.x},{cell.y}) 意图={this.intent.Kind}",
+                // 惰性求值：战斗寻路按 CombatSeekThrottle 节流尝试，被节流时不构造插值串
+                () => $"[MoveDiag] {this.worker.name} 战斗寻路 目标格=({cell.x},{cell.y}) 意图={this.intent.Kind}",
                 LogManager.LogLevelEnum.Debug);
             return true;
         }
@@ -578,7 +579,8 @@ namespace LAB2D.Character.Worker
                 this.combatPathMode = CombatPathMode.Idle;
                 AWorkerTask.LogProviderThrottled(
                     $"{this.worker.name}|LocoIntent", 0.5f,
-                    $"[MoveDiag] {this.worker.name} 移动意图 -> {next.Describe()}",
+                    // 惰性求值：意图切换在战斗中高频发生，被节流时连 Describe() 也不调用
+                    () => $"[MoveDiag] {this.worker.name} 移动意图 -> {next.Describe()}",
                     LogManager.LogLevelEnum.Debug);
             }
         }

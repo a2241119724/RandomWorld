@@ -4,7 +4,6 @@ namespace LAB2D.Character.Worker
     using LAB2D;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Constant;
-    using LAB2D.Core.KDTree;
     using LAB2D.Core.Seek;
     using LAB2D.Gameplay;
     using LAB2D.Map;
@@ -14,6 +13,7 @@ namespace LAB2D.Character.Worker
     using LAB2D.UnityAdapter;
     using System;
     using System.Collections.Generic;
+    using System.Text;
     using UnityEngine;
 
     /// <summary>
@@ -27,15 +27,12 @@ namespace LAB2D.Character.Worker
     {
         private static long curtaskId = 0;
         private readonly WorkerTaskQueue<AWorkerTask> taskQueue;
-        private readonly WorkerTaskAssignmentService<AWorkerTask> assignmentService;
         private readonly List<GameGridPosition> gatherPositions;
         private readonly List<GameGridPosition> demolishPositions;
-        private KDTree taskTree = new KDTree();
 
         public WorkerTaskManager()
         {
             this.taskQueue = new WorkerTaskQueue<AWorkerTask>();
-            this.assignmentService = new WorkerTaskAssignmentService<AWorkerTask>();
             this.gatherPositions = new List<GameGridPosition>();
             this.demolishPositions = new List<GameGridPosition>();
         }
@@ -164,7 +161,14 @@ namespace LAB2D.Character.Worker
         /// </summary>
         private void RunTaskAssignmentLoop()
         {
+            // 队列空（常态）时整体退出，避免空闲 Worker 每 15 帧白跑全员循环
+            if (this.taskQueue.TotalCount == 0)
+            {
+                return;
+            }
+
             List<AWorker> workers = WorkerListProvider();
+            bool anyAssigned = false;
             foreach (AWorker worker in workers)
             {
                 if (worker.IsDialoguePaused)
@@ -178,24 +182,23 @@ namespace LAB2D.Character.Worker
                     continue;
                 }
 
+                GameVector2 workerPos = WorkerPositionProvider(worker);
                 for (int priority = 0; priority < this.taskQueue.PriorityCount; priority++)
                 {
-                    WorkerTaskAssignmentResult<AWorkerTask> assignment =
-                        this.assignmentService.SelectTask(
-                            this.CreateWorkerSnapshot(worker, workerData.Task == null),
-                            this.CreateTaskSnapshots(priority, worker));
-
-                    if (assignment.HasTask)
+                    if (this.taskQueue.GetCount(priority) == 0)
                     {
-                        AWorkerTask closedTask = assignment.Task;
+                        continue;
+                    }
 
+                    if (this.TrySelectNearestAssignable(worker, workerPos, priority, out AWorkerTask closedTask))
+                    {
                         worker.SetTask(closedTask, WorkerTaskSource.PushAssignment);
                         if (workerData.Task == closedTask)
                         {
                             this.taskQueue.MarkRunning(closedTask);
                         }
 
-                        EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+                        anyAssigned = true;
 
                         // [TaskDiag] 记录任务分配：谁接到了什么任务（任务调度主循环）
                         AWorkerTask.LogProvider(
@@ -205,6 +208,47 @@ namespace LAB2D.Character.Worker
                     }
                 }
             }
+
+            // 队列变化事件每轮最多发布一次（原实现每分配一个任务就构建一次完整任务信息字符串并发布，
+            // 同一轮批量分配时重复构建纯浪费；EventBus 无订阅者时这些构建全部白付）
+            if (anyAssigned)
+            {
+                EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+            }
+        }
+
+        /// <summary>
+        /// 在指定优先级中直选距离最近的可分配任务（内联替代「快照列表 + SelectTask」）。
+        /// 原实现每 15 帧 × 每空闲 Worker × 每优先级都为每个任务构建闭包委托与快照对象（持续 GC 大户）；
+        /// 此版本零分配，选择语义与快照版一致：跳过运行中/冷却中/不可做的任务，取 SqrDistance 最近，
+        /// 平局取字典遍历序靠前者。
+        /// </summary>
+        private bool TrySelectNearestAssignable(AWorker worker, GameVector2 workerPos, int priority, out AWorkerTask selected)
+        {
+            selected = null;
+            float minDistance = 0f;
+            foreach (KeyValuePair<AWorkerTask, bool> taskPair in this.taskQueue.GetTasksAtPriority(priority))
+            {
+                if (taskPair.Value)
+                {
+                    continue; // 已被接取（Running）
+                }
+
+                AWorkerTask task = taskPair.Key;
+                if (task.IsInCooldown || !task.IsCanWork(worker))
+                {
+                    continue;
+                }
+
+                float distance = workerPos.SqrDistanceTo(new GameVector2(task.TargetMap.X, task.TargetMap.Y));
+                if (selected == null || distance < minDistance)
+                {
+                    selected = task;
+                    minDistance = distance;
+                }
+            }
+
+            return selected != null;
         }
 
         /// <summary>
@@ -221,31 +265,26 @@ namespace LAB2D.Character.Worker
                 return false;
             }
 
-            WorkerAgentSnapshot snapshot = this.CreateWorkerSnapshot(worker, true);
-            IReadOnlyList<WorkerTaskSnapshot<AWorkerTask>> tasks = this.CreateTaskSnapshots(
-                WorkerTaskPriority.PlayerBounty, worker);
-
-            WorkerTaskAssignmentResult<AWorkerTask> result =
-                this.assignmentService.SelectTask(snapshot, tasks);
-
-            if (result.HasTask)
+            if (this.taskQueue.GetCount(WorkerTaskPriority.PlayerBounty) == 0
+                || !this.TrySelectNearestAssignable(
+                    worker, WorkerPositionProvider(worker), WorkerTaskPriority.PlayerBounty, out AWorkerTask task))
             {
-                worker.SetTask(result.Task, source);
-                if (workerData.Task == result.Task)
-                {
-                    this.taskQueue.MarkRunning(result.Task);
-                }
-
-                EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
-
-                // [TaskDiag] 记录玩家悬赏分配
-                AWorkerTask.LogProvider(
-                    $"[TaskDiag] {worker.name} 分配玩家悬赏 type={result.Task.TaskType} target=({result.Task.TargetMap.X},{result.Task.TargetMap.Y})",
-                    LogManager.LogLevelEnum.Debug);
-                return true;
+                return false;
             }
 
-            return false;
+            worker.SetTask(task, source);
+            if (workerData.Task == task)
+            {
+                this.taskQueue.MarkRunning(task);
+            }
+
+            EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+
+            // [TaskDiag] 记录玩家悬赏分配
+            AWorkerTask.LogProvider(
+                $"[TaskDiag] {worker.name} 分配玩家悬赏 type={task.TaskType} target=({task.TargetMap.X},{task.TargetMap.Y})",
+                LogManager.LogLevelEnum.Debug);
+            return true;
         }
 
         /// <summary>
@@ -261,11 +300,9 @@ namespace LAB2D.Character.Worker
                 return false;
             }
 
-            WorkerAgentSnapshot snapshot = this.CreateWorkerSnapshot(worker, true);
-            IReadOnlyList<WorkerTaskSnapshot<AWorkerTask>> tasks = this.CreateTaskSnapshots(
-                WorkerTaskPriority.PlayerBounty, worker);
-
-            return this.assignmentService.SelectTask(snapshot, tasks).HasTask;
+            return this.taskQueue.GetCount(WorkerTaskPriority.PlayerBounty) > 0
+                && this.TrySelectNearestAssignable(
+                    worker, WorkerPositionProvider(worker), WorkerTaskPriority.PlayerBounty, out _);
         }
 
         /// <summary>
@@ -285,78 +322,33 @@ namespace LAB2D.Character.Worker
                 return false;
             }
 
-            WorkerAgentSnapshot snapshot = this.CreateWorkerSnapshot(worker, true);
+            GameVector2 workerPos = WorkerPositionProvider(worker);
 
             // 从 WorkerBounty(1) 开始，跳过已处理的 PlayerBounty(0) 和自用的 Idle(3)
             for (int priority = WorkerTaskPriority.WorkerBounty; priority < WorkerTaskPriority.Idle; priority++)
             {
-                IReadOnlyList<WorkerTaskSnapshot<AWorkerTask>> tasks =
-                    this.CreateTaskSnapshots(priority, worker);
-
-                WorkerTaskAssignmentResult<AWorkerTask> result =
-                    this.assignmentService.SelectTask(snapshot, tasks);
-
-                if (result.HasTask)
-                {
-                    worker.SetTask(result.Task, source);
-                    if (workerData.Task == result.Task)
-                    {
-                        this.taskQueue.MarkRunning(result.Task);
-                    }
-
-                    EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
-
-                    // [TaskDiag] 记录全局任务分配
-                    AWorkerTask.LogProvider(
-                        $"[TaskDiag] {worker.name} 分配全局任务 type={result.Task.TaskType} target=({result.Task.TargetMap.X},{result.Task.TargetMap.Y}) pri={priority}",
-                        LogManager.LogLevelEnum.Debug);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private WorkerAgentSnapshot CreateWorkerSnapshot(AWorker worker, bool isIdle)
-        {
-            AWorker.WorkerData workerData = worker.CharacterDataLAB as AWorker.WorkerData;
-            return new WorkerAgentSnapshot(
-                worker.GetInstanceID(),
-                WorkerPositionProvider(worker),
-                isIdle,
-                worker.IsDialoguePaused,
-                workerData?.CurHungry ?? 0f,
-                workerData?.MaxHungry ?? 0f,
-                workerData?.CurTired ?? 0f,
-                workerData?.MaxTired ?? 0f,
-                workerData?.Wallet ?? Domain.Worker.CurrencyAmount.Zero,
-                workerData?.Personality ?? Domain.Worker.WorkerPersonality.Neutral);
-        }
-
-        private List<WorkerTaskSnapshot<AWorkerTask>> CreateTaskSnapshots(int priority, AWorker worker)
-        {
-            List<WorkerTaskSnapshot<AWorkerTask>> result = new ();
-            IReadOnlyDictionary<AWorkerTask, bool> taskGroup = this.taskQueue.GetTasksAtPriority(priority);
-            foreach (KeyValuePair<AWorkerTask, bool> taskPair in taskGroup)
-            {
-                AWorkerTask task = taskPair.Key;
-
-                // 跳过冷却期内的任务（目标不可达等失败后暂时不可分配）
-                if (task.IsInCooldown)
+                if (this.taskQueue.GetCount(priority) == 0
+                    || !this.TrySelectNearestAssignable(worker, workerPos, priority, out AWorkerTask task))
                 {
                     continue;
                 }
 
-                result.Add(new WorkerTaskSnapshot<AWorkerTask>(
-                    task,
-                    task.TaskId,
-                    priority,
-                    new GameVector2(task.TargetMap.X, task.TargetMap.Y),
-                    taskPair.Value,
-                    () => task.IsCanWork(worker)));
+                worker.SetTask(task, source);
+                if (workerData.Task == task)
+                {
+                    this.taskQueue.MarkRunning(task);
+                }
+
+                EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+
+                // [TaskDiag] 记录全局任务分配
+                AWorkerTask.LogProvider(
+                    $"[TaskDiag] {worker.name} 分配全局任务 type={task.TaskType} target=({task.TargetMap.X},{task.TargetMap.Y}) pri={priority}",
+                    LogManager.LogLevelEnum.Debug);
+                return true;
             }
 
-            return result;
+            return false;
         }
 
         /// <summary>
@@ -366,8 +358,15 @@ namespace LAB2D.Character.Worker
         /// </summary>
         private void ExpireBountyTasks()
         {
+            if (this.taskQueue.TotalCount == 0)
+            {
+                return;
+            }
+
             float currentGameTime = Core.ServiceLocator.Get<IGameTime>().Time;
-            List<AWorkerTask> expiredTasks = new List<AWorkerTask>();
+
+            // 懒初始化（常态无过期任务时不分配）
+            List<AWorkerTask> expiredTasks = null;
 
             for (int p = 0; p < this.taskQueue.PriorityCount; p++)
             {
@@ -377,9 +376,14 @@ namespace LAB2D.Character.Worker
                         && bountyTask.BountyInfo.IsExpired(currentGameTime)
                         && !pair.Value) // 只在未被接取（Posted 状态）时过期
                     {
-                        expiredTasks.Add(pair.Key);
+                        (expiredTasks ?? (expiredTasks = new List<AWorkerTask>())).Add(pair.Key);
                     }
                 }
+            }
+
+            if (expiredTasks == null)
+            {
+                return;
             }
 
             foreach (AWorkerTask task in expiredTasks)
@@ -456,7 +460,6 @@ namespace LAB2D.Character.Worker
             }
 
             this.taskQueue.Add(task, prior);
-            this.taskTree.Insert(Vector3IntLAB.ToVector2ShortLAB(taskPosMap));
             EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
 
             // [TaskDiag] 记录任务创建/入队（含目标坐标与优先级）
@@ -585,10 +588,20 @@ namespace LAB2D.Character.Worker
                     continue;
                 }
 
-                // 找回原建造者（如果 BuilderName 有记录）
-                AWorker owner = !string.IsNullOrEmpty(tileData.BuilderName)
-                    ? WorkerListProvider().Find(w => w.name == tileData.BuilderName)
-                    : null;
+                // 找回原建造者（如果 BuilderName 有记录）——手写循环替代 Find 闭包，避免每次捕获分配
+                AWorker owner = null;
+                if (!string.IsNullOrEmpty(tileData.BuilderName))
+                {
+                    List<AWorker> allWorkers = WorkerListProvider();
+                    for (int w = 0; w < allWorkers.Count; w++)
+                    {
+                        if (allWorkers[w].name == tileData.BuilderName)
+                        {
+                            owner = allWorkers[w];
+                            break;
+                        }
+                    }
+                }
 
                 WorkerBuildTask.BuildTaskBuilder builder = new WorkerBuildTask.BuildTaskBuilder()
                     .SetBuildPos(pos)
@@ -872,9 +885,19 @@ namespace LAB2D.Character.Worker
         /// <returns>任务信息</returns>
         public string GetTaskInfo()
         {
-            int total = this.taskQueue.TotalCount;
             int typeCount = (int)WorkerTaskType._Count;
-            int[] taskCount = new int[typeCount];
+
+            // 复用计数缓冲与 StringBuilder（高频路径：每次任务增删/分配都会调用；
+            // 原实现每次 new int[] + res += 循环拼接产生约 10 个中间字符串）
+            if (this.taskInfoCounts == null || this.taskInfoCounts.Length < typeCount)
+            {
+                this.taskInfoCounts = new int[typeCount];
+            }
+            else
+            {
+                Array.Clear(this.taskInfoCounts, 0, typeCount);
+            }
+
             for (int i = 0; i < this.taskQueue.PriorityCount; i++)
             {
                 foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriority(i))
@@ -884,19 +907,39 @@ namespace LAB2D.Character.Worker
                         int typeIndex = (int)pair.Key.TaskType;
                         if (typeIndex >= 0 && typeIndex < typeCount)
                         {
-                            taskCount[typeIndex]++;
+                            this.taskInfoCounts[typeIndex]++;
                         }
                     }
                 }
             }
 
-            string res = $"任务总数量: {total}\n";
+            StringBuilder builder = this.taskInfoBuilder ?? (this.taskInfoBuilder = new StringBuilder(256));
+            builder.Length = 0;
+            builder.Append("任务总数量: ").Append(this.taskQueue.TotalCount).Append('\n');
             for (int i = 0; i < typeCount; i++)
             {
-                res += $"{(WorkerTaskType)i}:{taskCount[i]}\n";
+                builder.Append(TaskTypeNames[i]).Append(':').Append(this.taskInfoCounts[i]).Append('\n');
             }
 
-            return res;
+            return builder.ToString();
+        }
+
+        /// <summary>GetTaskInfo 的复用缓冲（避免每次调用分配数组与 StringBuilder）。</summary>
+        private int[] taskInfoCounts;
+        private StringBuilder taskInfoBuilder;
+
+        /// <summary>任务类型名静态缓存（避免每次 GetTaskInfo 对枚举 ToString 的分配）。</summary>
+        private static readonly string[] TaskTypeNames = BuildTaskTypeNames();
+
+        private static string[] BuildTaskTypeNames()
+        {
+            var names = new string[(int)WorkerTaskType._Count];
+            for (int i = 0; i < names.Length; i++)
+            {
+                names[i] = ((WorkerTaskType)i).ToString();
+            }
+
+            return names;
         }
 
         /// <summary>

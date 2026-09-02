@@ -357,9 +357,11 @@ namespace LAB2D.Map
             {
                 AWorkerTask.LogProviderThrottled(
                     $"SetCompleteDiag|{vector3Int.x},{vector3Int.y}", 1f,
-                    $"[MapDiag] SetComplete后 pos=({vector3Int.x},{vector3Int.y}) " +
-                    $"colliderType={this.tilemap.GetColliderType(vector3Int)} " +
-                    $"cacheWalk={WalkabilityCache.IsWalkable(vector3Int.x, vector3Int.y)}",
+                    // 惰性求值：GetColliderType/IsWalkable 查询与插值串仅在真正输出时发生
+                    //（建房整批瓦片逐格完成时原实现每格都白付这两次查询）
+                    () => $"[MapDiag] SetComplete后 pos=({vector3Int.x},{vector3Int.y}) " +
+                        $"colliderType={this.tilemap.GetColliderType(vector3Int)} " +
+                        $"cacheWalk={WalkabilityCache.IsWalkable(vector3Int.x, vector3Int.y)}",
                     LogManager.LogLevelEnum.Debug);
             }
 

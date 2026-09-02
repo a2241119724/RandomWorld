@@ -380,7 +380,8 @@ namespace LAB2D.Core.Seek
             // 关键结果（不可达/到达）仍保留；提交细节需要时在 Trace 档查看。
             AWorkerTask.LogProviderThrottled(
                 $"{this.Character.name}|SeekSubmit", 2f,
-                $"[SeekDiag] {this.Character.name} 提交寻路 start=({startMap.x},{startMap.y}) target=({targetMap.x},{targetMap.y})",
+                // 惰性求值：寻路提交高频（每 2.5s/实例），被节流时不再构造插值串
+                () => $"[SeekDiag] {this.Character.name} 提交寻路 start=({startMap.x},{startMap.y}) target=({targetMap.x},{targetMap.y})",
                 LogManager.LogLevelEnum.Trace);
             this.TargetMap = targetMap;
             this.RestartStuckWindow(); // 新路径 → 新窗口，但保留连续卡住计数（重新寻路不赦免）
@@ -446,7 +447,8 @@ namespace LAB2D.Core.Seek
             // 到达终点高频（随漫游），Trace + 节流 2s/条（见 bug-fixes.md 2026-08-15）。
             AWorkerTask.LogProviderThrottled(
                 $"{this.Character.name}|SeekArrive", 2f,
-                $"[SeekDiag] {this.Character.name} 到达终点 target=({this.TargetMap.x},{this.TargetMap.y})",
+                // 惰性求值：到达终点高频（随漫游），被节流时不构造插值串
+                () => $"[SeekDiag] {this.Character.name} 到达终点 target=({this.TargetMap.x},{this.TargetMap.y})",
                 LogManager.LogLevelEnum.Trace);
             this.StopMove(); // 内部 RestartWindow（保留计数）
             this.stuckDetector.Reset(); // 真正到达 → 清空计数
@@ -481,26 +483,31 @@ namespace LAB2D.Core.Seek
             // 验证合并路径是否合理（门口卡住排查 2026-08-16）。Trace + 节流 2s/条。
             if (result.PathIndex == 0 && (result.Path.Count > 0 || result.RawPathDiag != null))
             {
-                string pathDesc = string.Empty;
-                for (int i = 0; i < result.Path.Count; i++)
-                {
-                    pathDesc += $"({result.Path[i].x},{result.Path[i].y})";
-                }
-
-                string diag = string.Empty;
-                if (result.RawPathDiag != null)
-                {
-                    diag += $" A*原始={result.RawPathDiag}";
-                }
-
-                if (result.CompressJumpDiag != null)
-                {
-                    diag += $" 跳转={result.CompressJumpDiag}";
-                }
-
+                // 惰性求值：每次消费新路径都会进入此处，但被节流时不再付 O(路径长度) 的
+                // 路径串拼接（原实现节流也逐点 += 拼接整条路径）
                 AWorkerTask.LogProviderThrottled(
                     $"{this.Character.name}|SeekPath", 2f,
-                    $"[SeekDiag] {this.Character.name} 压缩路径[{result.Path.Count}] {pathDesc}{diag}",
+                    () =>
+                    {
+                        string pathDesc = string.Empty;
+                        for (int i = 0; i < result.Path.Count; i++)
+                        {
+                            pathDesc += $"({result.Path[i].x},{result.Path[i].y})";
+                        }
+
+                        string diag = string.Empty;
+                        if (result.RawPathDiag != null)
+                        {
+                            diag += $" A*原始={result.RawPathDiag}";
+                        }
+
+                        if (result.CompressJumpDiag != null)
+                        {
+                            diag += $" 跳转={result.CompressJumpDiag}";
+                        }
+
+                        return $"[SeekDiag] {this.Character.name} 压缩路径[{result.Path.Count}] {pathDesc}{diag}";
+                    },
                     LogManager.LogLevelEnum.Trace);
             }
 
@@ -597,8 +604,9 @@ namespace LAB2D.Core.Seek
                                 this.slidingAlongWall = true;
                                 AWorkerTask.LogProviderThrottled(
                                     $"{this.Character.name}|WallSlideEnter", 2f,
-                                    $"[MoveDiag] {this.Character.name} 贴墙滑动 dir=({slideN.x:F2},{slideN.y:F2}) " +
-                                    $"pos=({characterPosition.x:F2},{characterPosition.y:F2})",
+                                    // 惰性求值：贴墙探测每帧运行，被节流时不构造插值串
+                                    () => $"[MoveDiag] {this.Character.name} 贴墙滑动 dir=({slideN.x:F2},{slideN.y:F2}) " +
+                                        $"pos=({characterPosition.x:F2},{characterPosition.y:F2})",
                                     LogManager.LogLevelEnum.Debug);
                             }
                         }
@@ -620,22 +628,27 @@ namespace LAB2D.Core.Seek
                         // 交叉验证「可通行=物理真值」是否一致（见 bug-fixes.md）。
                         // 卡床排查 2026-08-16：追加命中格的「网格判定/缓存判定」分叉诊断——
                         // 物理碰撞体存在（此分支已命中）但网格/缓存判可通即分叉，锁定 UpdateCell 失效点。
-                        Vector3Int blockCell = s_tileMap.WorldPosToMapPos(new Vector3(hit.point.x, hit.point.y, 0));
-                        string blocker = hit.collider != null ? $"{hit.collider.name}:({blockCell.x},{blockCell.y})" : "?";
-                        bool blockGridReach = ASeek.IsCanReach(blockCell);
-                        bool blockCacheWalk = WalkabilityCache.IsWalkable(blockCell.x, blockCell.y);
-                        string neighborDiag = string.Empty;
-                        if (blockGridReach || blockCacheWalk)
-                        {
-                            Vector3Int cur = s_tileMap.WorldPosToMapPos(new Vector3(characterPosition.x, characterPosition.y, 0));
-                            neighborDiag = $" 站在=({cur.x},{cur.y}) 网格可通={ASeek.IsCanReach(cur)} 缓存可通={WalkabilityCache.IsWalkable(cur.x, cur.y)}";
-                        }
-
+                        // 惰性求值：命中格换算/网格与缓存可达性查询全部移入日志委托——此分支在
+                        // 正对墙时每帧进入，原实现即使被节流也每帧白付 3 次地图查询 + 插值串分配。
                         AWorkerTask.LogProviderThrottled(
                             $"{this.Character.name}|WallHeadOn", 2f,
-                            $"[MoveDiag] {this.Character.name} 正对墙(保持速度,物理挡) dist={hit.distance:F2} " +
-                            $"pos=({characterPosition.x:F2},{characterPosition.y:F2}) hit={blocker} " +
-                            $"网格可通={blockGridReach} 缓存可通={blockCacheWalk}{neighborDiag}",
+                            () =>
+                            {
+                                Vector3Int blockCell = s_tileMap.WorldPosToMapPos(new Vector3(hit.point.x, hit.point.y, 0));
+                                string blocker = hit.collider != null ? $"{hit.collider.name}:({blockCell.x},{blockCell.y})" : "?";
+                                bool blockGridReach = ASeek.IsCanReach(blockCell);
+                                bool blockCacheWalk = WalkabilityCache.IsWalkable(blockCell.x, blockCell.y);
+                                string neighborDiag = string.Empty;
+                                if (blockGridReach || blockCacheWalk)
+                                {
+                                    Vector3Int cur = s_tileMap.WorldPosToMapPos(new Vector3(characterPosition.x, characterPosition.y, 0));
+                                    neighborDiag = $" 站在=({cur.x},{cur.y}) 网格可通={ASeek.IsCanReach(cur)} 缓存可通={WalkabilityCache.IsWalkable(cur.x, cur.y)}";
+                                }
+
+                                return $"[MoveDiag] {this.Character.name} 正对墙(保持速度,物理挡) dist={hit.distance:F2} " +
+                                    $"pos=({characterPosition.x:F2},{characterPosition.y:F2}) hit={blocker} " +
+                                    $"网格可通={blockGridReach} 缓存可通={blockCacheWalk}{neighborDiag}";
+                            },
                             LogManager.LogLevelEnum.Debug);
                     }
                 }
@@ -789,7 +802,8 @@ namespace LAB2D.Core.Seek
                 s_mainThreadDispatcher.EnqueueAsync(() =>
                     AWorkerTask.LogProviderThrottled(
                         $"{(character != null ? character.name : "?")}|SeekUnreachable", 2f,
-                        $"[SeekDiag] {(character != null ? character.name : "?")} 寻路不可达 target=({targetMap.x},{targetMap.y})",
+                        // 惰性求值：卡墙重试期间该结果反复到达，被节流时不构造插值串
+                        () => $"[SeekDiag] {(character != null ? character.name : "?")} 寻路不可达 target=({targetMap.x},{targetMap.y})",
                         LogManager.LogLevelEnum.Debug));
             }
 

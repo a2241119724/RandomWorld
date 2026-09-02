@@ -189,11 +189,16 @@ namespace LAB2D.Character.Worker.State
                     float dev = Mathf.Abs(Mathf.DeltaAngle(aimAngle, targetAngle));
                     if (dev > 20f)
                     {
-                        Vector3 selfPos = this.Character.transform.position;
-                        Vector3 targetPos = this.Character.AttackTarget.transform.position;
+                        // 惰性求值：OnUpdate 每帧进入（持续偏离期间每帧都触发），被节流时
+                        // 不再每帧付取位置 + 插值串分配
                         AWorkerTask.LogProviderThrottled(
                             $"{this.Character.name}|AimDev", 0.5f,
-                            $"[StateDiag] {this.Character.name}@({selfPos.x:F0},{selfPos.y:F0}) 攻击方向偏差 {dev:0.0}° 武器={aimAngle:0.0}° 目标={this.Character.AttackTarget.name}@({targetPos.x:F0},{targetPos.y:F0}) 目标角={targetAngle:0.0}°",
+                            () =>
+                            {
+                                Vector3 selfPos = this.Character.transform.position;
+                                Vector3 targetPos = this.Character.AttackTarget.transform.position;
+                                return $"[StateDiag] {this.Character.name}@({selfPos.x:F0},{selfPos.y:F0}) 攻击方向偏差 {dev:0.0}° 武器={aimAngle:0.0}° 目标={this.Character.AttackTarget.name}@({targetPos.x:F0},{targetPos.y:F0}) 目标角={targetAngle:0.0}°";
+                            },
                             LogManager.LogLevelEnum.Debug);
                     }
                 }
@@ -268,7 +273,8 @@ namespace LAB2D.Character.Worker.State
             this.lastIntentKind = kind;
             AWorkerTask.LogProviderThrottled(
                 $"{this.Character.name}|CombatIntent", 0.5f,
-                $"[StateDiag] {this.Character.name} 战斗意图 {kind} dist={dist:F1} ready={isReady}",
+                // 惰性求值：意图切换高频（打带跑 Chase/KeepDistance 交替），被节流时不构造插值串
+                () => $"[StateDiag] {this.Character.name} 战斗意图 {kind} dist={dist:F1} ready={isReady}",
                 LogManager.LogLevelEnum.Debug);
         }
 

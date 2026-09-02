@@ -104,14 +104,16 @@ namespace LAB2D.Core.Seek
                 {
                     AWorkerTask.LogProviderThrottled(
                         $"CacheSkipNotBuilt|{position.x},{position.y}", 1f,
-                        $"[MapDiag] 缓存更新跳过 pos=({position.x},{position.y}) 原因=未构建",
+                        // 惰性求值：地图批量写入（建房预注册/地图生成）会高频进入，被节流时不构造插值串
+                        () => $"[MapDiag] 缓存更新跳过 pos=({position.x},{position.y}) 原因=未构建",
                         LogManager.LogLevelEnum.Trace);
                 }
                 else if (!IsInBounds(position.x, position.y))
                 {
                     AWorkerTask.LogProviderThrottled(
                         $"CacheSkipOOB|{position.x},{position.y}", 1f,
-                        $"[MapDiag] 缓存更新跳过 pos=({position.x},{position.y}) 原因=越界 size={width}x{height}",
+                        // 惰性求值：同上，批量写入路径
+                        () => $"[MapDiag] 缓存更新跳过 pos=({position.x},{position.y}) 原因=越界 size={width}x{height}",
                         LogManager.LogLevelEnum.Trace);
                 }
 
@@ -127,7 +129,8 @@ namespace LAB2D.Core.Seek
             {
                 AWorkerTask.LogProviderThrottled(
                     $"CacheWriteBlock|{position.x},{position.y}", 1f,
-                    $"[MapDiag] 缓存更新 pos=({position.x},{position.y}) 判不可通",
+                    // 惰性求值：阻挡格批量写入（建房/拆除）时逐格进入，被节流时不构造插值串
+                    () => $"[MapDiag] 缓存更新 pos=({position.x},{position.y}) 判不可通",
                     LogManager.LogLevelEnum.Trace);
             }
         }

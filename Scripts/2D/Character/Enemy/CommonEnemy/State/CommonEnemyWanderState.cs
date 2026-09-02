@@ -149,10 +149,15 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                     ? $"{hitCol.name}@{LayerMask.LayerToName(hitCol.gameObject.layer)}"
                     : "无";
                 this.PickNewDirection();
-                Vector3 pos = this.Character.transform.position;
                 AWorkerTask.LogProviderThrottled(
                     $"{this.Character.name}|WanderReroute", 2f,
-                    $"[EnemyDiag] {this.Character.name} 前方受阻换向 hit={hitDesc} pos=({pos.x:F1},{pos.y:F1}) newAngle={this.rotationAngle:F0}",
+                    // 惰性求值：受阻检测每帧运行，hitDesc 须在 PickNewDirection 前取（覆盖 LastProbeHit）
+                    // 故保持立即求值；位置与角度的插值串被节流时不再构造
+                    () =>
+                    {
+                        Vector3 pos = this.Character.transform.position;
+                        return $"[EnemyDiag] {this.Character.name} 前方受阻换向 hit={hitDesc} pos=({pos.x:F1},{pos.y:F1}) newAngle={this.rotationAngle:F0}";
+                    },
                     LogManager.LogLevelEnum.Debug);
                 return;
             }
