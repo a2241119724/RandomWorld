@@ -149,6 +149,9 @@ namespace LAB2D
 
             // 异能觉醒系统（受击 roll 觉醒/读档重建异能注册，IInitializable + ITickable 由下表驱动）
             ServiceLocator.Register(AwakenedPowerManager.Instance);
+
+            // 防守夜调度（入夜按 DefenceDraftRuleService 派 WorkerDefendTask，IInitializable 由下表驱动）
+            ServiceLocator.Register(WorkerDefenceManager.Instance);
         }
 
         public void Awake()
@@ -259,6 +262,7 @@ namespace LAB2D
                 ServiceLocator.Get<CultivationManager>(),
                 ServiceLocator.Get<GongFaManager>(),
                 ServiceLocator.Get<AwakenedPowerManager>(),
+                ServiceLocator.Get<WorkerDefenceManager>(),
                 ServiceLocator.Get<EquipmentBeamManager>(),
                 ServiceLocator.Get<EnemyLootManager>(),
                 ServiceLocator.Get<ComboBonusManager>(),

@@ -37,6 +37,9 @@ namespace LAB2D.Enum
         /// <summary>拾取 — 从任务栏或地面拾取物品</summary>
         PickUp,
 
+        /// <summary>防守待命 — 夜袭驻守至黎明（WorkerDefenceManager 入夜派发）</summary>
+        Defend,
+
         /// <summary>漫游 — 恢复精气神，小概率发现物品</summary>
         Wander,
 

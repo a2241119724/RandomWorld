@@ -1,9 +1,11 @@
 namespace LAB2D.Gameplay
 {
     using System;
+    using LAB2D.Constant;
     using LAB2D.Domain.Character.Growth;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay.AwakenedPower;
+    using LAB2D.Domain.Worker;
     using GameCharacter = LAB2D.Character.Character;
 
     /// <summary>
@@ -144,6 +146,14 @@ namespace LAB2D.Gameplay
                 growth.PermanentRealmBonus += def.WorkerPassiveBonus;
                 data.Character?.RecomputeGrowthAttributes();
                 (data.Character as AWorker)?.ShowMindBubble($"体内涌起陌生的力量…觉醒了「{def.Name}」");
+
+                // 觉醒接心智层（M2A 包 2.2）：事件记忆 + 信念演化 + 最近想法
+                if ((data.Character as AWorker) is AWorker awakenedWorker
+                    && Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+                {
+                    mindService.RecordEvent(awakenedWorker, WorkerMindConstant.EVT_POWER_AWAKEN,
+                        MemoryValence.Positive, null, 85f, $"觉醒异能「{def.Name}」");
+                }
             }
 
             TipProvider($"{data.Name} 血脉觉醒！获得异能「{def.Name}」");

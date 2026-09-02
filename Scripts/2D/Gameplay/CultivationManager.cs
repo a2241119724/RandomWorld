@@ -1,9 +1,11 @@
 namespace LAB2D.Gameplay
 {
     using System;
+    using LAB2D.Constant;
     using LAB2D.Domain.Character.Growth;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay.Cultivation;
+    using LAB2D.Domain.Worker;
     using UnityEngine;
     using GameCharacter = LAB2D.Character.Character;
 
@@ -289,12 +291,67 @@ namespace LAB2D.Gameplay
                 {
                     RealmDef newRealm = RealmLibrary.Get(data.Growth.RealmIndex);
                     worker.ShowMindBubble($"突破！进入{newRealm.Name}期…");
+                    this.RecordBreakthroughMind(worker, data, newRealm);
                     AWorkerTask.LogProvider(
                         $"[CultivationDiag] {data.Name} 自动突破 -> {newRealm.Name}",
                         LogManager.LogLevelEnum.Debug);
                 }
 
                 GongFaManager.Instance.AutoLearnNeiGongFor(data);
+            }
+        }
+
+        /// <summary>
+        /// 突破接心智层（M2A 包 2.2）：突破者自身成就记忆 + 工友旁观反应 —
+        /// 贪婪高者嫉妒（记仇向记忆，Greed 越强越酸），境界低于突破者者心生敬仰
+        /// （爱慕向记忆，可能升 Admiration 关系）。两者均走 RecordEvent 既有管线
+        /// （记忆/信念/人格漂移/关系喂食/最近想法），关系等级变化自动弹关系气泡。
+        /// </summary>
+        private void RecordBreakthroughMind(AWorker breaker, GameCharacter.CharacterData data, RealmDef newRealm)
+        {
+            if (!Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+            {
+                return;
+            }
+
+            mindService.RecordEvent(breaker, WorkerMindConstant.EVT_CULTIVATION_BREAKTHROUGH,
+                MemoryValence.Positive, null, 70f, $"突破至{newRealm.Name}期");
+
+            System.Collections.Generic.List<AWorker> workers = WorkerCharactersProvider();
+            if (workers == null)
+            {
+                return;
+            }
+
+            string breakerName = breaker.name;
+            int newRealmIndex = data.Growth.RealmIndex;
+            foreach (AWorker other in workers)
+            {
+                if (other == null || other == breaker || other.CharacterDataLAB == null)
+                {
+                    continue;
+                }
+
+                GameCharacter.CharacterData otherData = other.CharacterDataLAB;
+                GrowthData.Ensure(ref otherData.Growth);
+                AWorker.WorkerData wd = otherData as AWorker.WorkerData;
+                if (wd == null)
+                {
+                    continue;
+                }
+
+                WorkerMindData.Ensure(wd);
+                if (wd.Greed >= WorkerMindConstant.RelationJealousyGreedThreshold)
+                {
+                    mindService.RecordEvent(other, WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH_ENVY,
+                        MemoryValence.Negative, breakerName,
+                        Mathf.Clamp(wd.Greed, 20f, 100f), "工友突破了，心里不是滋味");
+                }
+                else if (newRealmIndex > otherData.Growth.RealmIndex)
+                {
+                    mindService.RecordEvent(other, WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH,
+                        MemoryValence.Positive, breakerName, 40f, "工友突破了，心生敬仰");
+                }
             }
         }
 

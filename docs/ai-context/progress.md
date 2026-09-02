@@ -84,7 +84,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 - **0.2 修仙小镇方向（五包路线）** — IN PROGRESS
   - [x] M1 循环闭环（时间服务/昼夜-波次耦合/山门核心胜负）
-  - [ ] M2A 包2.1/2.2 防守夜 Worker 响应（DefenceDraftRuleService + WorkerDefendTask）+ 修仙事件接心智层（RecordEvent）
+  - [x] M2A 包2.1/2.2 防守夜 Worker 响应（`DefenceDraftRuleService` 纯函数 + `WorkerDefendTask` + `WorkerDefenceManager` 入夜派发，觉醒优先参战）+ 修仙事件接心智层（突破/觉醒/工友嫉妒·敬仰走 RecordEvent）——代码完成，待 Play 实测行为分化
   - [ ] M2B 包3 敌人扩种协议 + 前 2 种妖兽 + 箭塔
   - [ ] M3 包2.3/2.4 心智面板 + LLM 对话结算
   - [ ] M4 包2.5 灵气环境（CurEnergy 消费者）+ 包4 每局不一样

@@ -367,6 +367,38 @@ namespace LAB2D.Constant
             "得好好休息才行。",
         };
 
+        /// <summary>自己突破境界的狂喜（M2A 修仙事件接心智层）。</summary>
+        private static readonly string[] EvtBreakthrough = new[]
+        {
+            "突破了！灵气在体内奔涌！",
+            "瓶颈碎了，从此海阔天空！",
+            "这就是更高境界的感觉吗……",
+        };
+
+        /// <summary>自己觉醒异能的悸动。</summary>
+        private static readonly string[] EvtPowerAwaken = new[]
+        {
+            "体内涌起陌生的力量……",
+            "这就是血脉觉醒的感觉？！",
+            "我好像……变得不一样了。",
+        };
+
+        /// <summary>工友突破的敬仰（{0}=突破者名）。</summary>
+        private static readonly string[] EvtFellowBreakthrough = new[]
+        {
+            "{0}都突破了……我也要加紧修炼。",
+            "不愧是{0}，修为又精进了！",
+            "什么时候我也能像{0}一样……",
+        };
+
+        /// <summary>工友突破的嫉妒（{0}=突破者名）。</summary>
+        private static readonly string[] EvtFellowBreakthroughEnvy = new[]
+        {
+            "凭什么{0}突破了我没有……",
+            "哼，{0}有什么了不起的。",
+            "又是{0}出风头……不甘心。",
+        };
+
         /// <summary>噩梦缠身（负事件）。</summary>
         private static readonly string[] EvtNightmare = new[]
         {
@@ -541,11 +573,29 @@ namespace LAB2D.Constant
                 case WorkerMindConstant.EVT_NIGHTMARE:
                     pool = EvtNightmare;
                     break;
+                case WorkerMindConstant.EVT_CULTIVATION_BREAKTHROUGH:
+                    pool = EvtBreakthrough;
+                    break;
+                case WorkerMindConstant.EVT_POWER_AWAKEN:
+                    pool = EvtPowerAwaken;
+                    break;
+                case WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH:
+                    pool = EvtFellowBreakthrough;
+                    break;
+                case WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH_ENVY:
+                    pool = EvtFellowBreakthroughEnvy;
+                    break;
                 default:
                     return string.Empty;
             }
 
-            return PickRandom(pool);
+            string text = PickRandom(pool);
+            if (!string.IsNullOrEmpty(targetName) && text.Contains("{0}"))
+            {
+                text = string.Format(text, targetName);
+            }
+
+            return text;
         }
 
         /// <summary>

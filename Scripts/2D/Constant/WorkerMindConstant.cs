@@ -177,6 +177,12 @@ namespace LAB2D.Constant
         /// <summary>嫉妒节流间隔（秒，防每笔悬赏都刷）。</summary>
         public const float RelationJealousyIntervalSeconds = 30f;
 
+        /// <summary>工友突破（敬仰向）：爱慕度增益（M2A 修仙事件接心智层）。</summary>
+        public const float RelationBreakthroughAdmirationGain = 30f;
+
+        /// <summary>工友突破（嫉妒向）：记仇度增益。</summary>
+        public const float RelationBreakthroughEnvyGrudge = 15f;
+
         // ---- 命令接受判定理由键 ----
         public const string ReasonAccept = "accept";
         public const string ReasonSurvival = "survival";
@@ -210,5 +216,9 @@ namespace LAB2D.Constant
         public const string EVT_ENLIGHTENMENT = "enlightenment";
         public const string EVT_SMALL_JOY = "small_joy";
         public const string EVT_NIGHTMARE = "nightmare";
+        public const string EVT_CULTIVATION_BREAKTHROUGH = "cultivation_breakthrough";
+        public const string EVT_POWER_AWAKEN = "power_awaken";
+        public const string EVT_FELLOW_BREAKTHROUGH = "fellow_breakthrough";
+        public const string EVT_FELLOW_BREAKTHROUGH_ENVY = "fellow_breakthrough_envy";
     }
 }

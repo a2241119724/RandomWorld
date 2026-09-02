@@ -72,6 +72,12 @@ namespace LAB2D.Domain.Worker
                 case WorkerMindConstant.EVT_WORKER_ATTACK:
                     return AddGrudge(mind, targetName, WorkerMindConstant.RelationAttackGrudge, day);
 
+                case WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH:
+                    return AddAdmiration(mind, targetName, WorkerMindConstant.RelationBreakthroughAdmirationGain, day);
+
+                case WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH_ENVY:
+                    return AddGrudge(mind, targetName, WorkerMindConstant.RelationBreakthroughEnvyGrudge, day);
+
                 default:
                     return false;
             }

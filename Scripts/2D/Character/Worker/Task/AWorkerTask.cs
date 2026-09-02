@@ -768,10 +768,12 @@ namespace LAB2D.Character.Worker.Task
                 }
 
                 // 心智层：完成任务事件记忆（事件点单次调用）。
-                // 跳过高频维持类任务（吃饭/睡觉/地面睡/漫游），避免最近想法被流水账刷屏。
+                // 跳过高频维持类任务（吃饭/睡觉/地面睡/漫游）与驻守类（防守待命），
+                // 避免最近想法被流水账刷屏。
                 WorkerTaskType tt = this.TaskType;
                 if (tt != WorkerTaskType.Eat && tt != WorkerTaskType.Sleep
-                    && tt != WorkerTaskType.GroundSleep && tt != WorkerTaskType.Wander)
+                    && tt != WorkerTaskType.GroundSleep && tt != WorkerTaskType.Wander
+                    && tt != WorkerTaskType.Defend)
                 {
                     if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
                     {

@@ -95,6 +95,14 @@ namespace LAB2D.Domain.Worker
                     return D(trustWorld: 1f, esteem: 2f, belonging: 2f);
                 case WorkerMindConstant.EVT_NIGHTMARE:
                     return D(trustWorld: -3f, esteem: -2f);
+                case WorkerMindConstant.EVT_CULTIVATION_BREAKTHROUGH:
+                    return D(esteem: 8f, belonging: 4f);
+                case WorkerMindConstant.EVT_POWER_AWAKEN:
+                    return D(trustWorld: 3f, esteem: 10f);
+                case WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH:
+                    return D(belonging: 2f);
+                case WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH_ENVY:
+                    return D(esteem: -3f, belonging: -2f);
                 default:
                     return BeliefDelta.Zero;
             }
