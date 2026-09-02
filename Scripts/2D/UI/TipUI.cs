@@ -60,8 +60,17 @@ namespace LAB2D.UI
             }
             else
             {
-                // 放大
-                this.transform.localScale = Quaternion.Lerp(Quaternion.Euler(this.transform.localScale), Quaternion.Euler(1, 1, 1), 0.2f).eulerAngles;
+                // 放大（收敛后 snap 到 1 并停止写入——localScale setter 无值比较，
+                // 原实现收敛后仍每帧写，持续脏化所在 Canvas 直至 5 秒淡出结束）
+                Vector3 scale = this.transform.localScale;
+                if (scale.x < 0.999f || scale.y < 0.999f || scale.z < 0.999f)
+                {
+                    this.transform.localScale = Quaternion.Lerp(Quaternion.Euler(scale), Quaternion.Euler(1, 1, 1), 0.2f).eulerAngles;
+                }
+                else if (scale != Vector3.one)
+                {
+                    this.transform.localScale = Vector3.one;
+                }
             }
         }
 

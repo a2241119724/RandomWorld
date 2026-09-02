@@ -51,7 +51,13 @@ namespace LAB2D.UI.Character
 
         public void Update()
         {
-            this.transform.rotation = Quaternion.Euler(0, 0, 0);
+            // 仅在父级旋转（如敌人朝向转向）波及时归零抵消；父未转时跳过写，
+            // 避免 rotation setter（无值比较）每帧脏化头顶 Canvas 的 transform
+            if (this.transform.rotation != Quaternion.identity)
+            {
+                this.transform.rotation = Quaternion.Euler(0, 0, 0);
+            }
+
             this.transition?.Tick(Time.deltaTime);
         }
     }

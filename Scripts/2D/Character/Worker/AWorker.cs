@@ -258,7 +258,12 @@ namespace LAB2D.Character.Worker
 
         public void Update()
         {
-            this.transform.rotation = Quaternion.identity;
+            // 仅在根被意外旋转时归零（rotation setter 无值比较，每帧无条件写会持续
+            // 置脏头顶 Canvas 的 transform → PostLateUpdate.PlayerUpdateCanvases 放大）
+            if (this.transform.rotation != Quaternion.identity)
+            {
+                this.transform.rotation = Quaternion.identity;
+            }
 
             if (this.IsDialoguePaused)
             {
@@ -373,9 +378,32 @@ namespace LAB2D.Character.Worker
         /// <param name="enable">是否显示进度条</param>
         public void SetProgress(float value, bool enable)
         {
-            this.progress.value = value;
-            this.progress.gameObject.SetActive(enable);
+            if (this.progress.gameObject.activeSelf != enable)
+            {
+                this.progress.gameObject.SetActive(enable);
+                this.nextProgressRefreshTime = 0f; // 显示瞬间立即反映当前进度
+            }
+
+            if (!enable)
+            {
+                return;
+            }
+
+            // 10Hz 节流 + 值比较：工作状态下每帧都调用且进度确实在变，
+            // 每次 Slider.value 变更都驱动 fill RectTransform 尺寸变化 → Graphic 网格
+            // 重建 + LayoutRebuilder（100 人同时工作 = 每帧 100 次），0.1s 视觉粒度足够。
+            if (Time.unscaledTime >= this.nextProgressRefreshTime && this.progress.value != value)
+            {
+                this.nextProgressRefreshTime = Time.unscaledTime + ProgressRefreshInterval;
+                this.progress.value = value;
+            }
         }
+
+        /// <summary>进度条刷新节流间隔（见 SetProgress 注释）。</summary>
+        private const float ProgressRefreshInterval = 0.1f;
+
+        /// <summary>下次允许写入进度条的时间（Time.unscaledTime）。</summary>
+        private float nextProgressRefreshTime;
 
         /// <summary>
         /// 显示心智气泡（自主意志拒绝/人生事件/关系变化等反馈）。

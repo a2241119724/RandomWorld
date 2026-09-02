@@ -167,8 +167,11 @@ namespace LAB2D.Character
         /// 头顶 UI 防遮挡：角色 prefab 的 UI 子树（Name/State/Progress/Hp/Dialog）未挂 Canvas，
         /// 引擎 fallback 渲染落在 Default 排序层，会被 Character 层的树/建筑
         /// （WorldYSortManager 动态 sortingOrder）盖住。
-        /// 已有 Canvas 时仅提升排序层；否则为每个含 UI 图形的直接子树补挂
-        /// WorldSpace Canvas（默认 Overlay 会把 UI 吸附到屏幕，必须显式改世界空间）。
+        /// 已有 Canvas 时仅提升排序层；否则把所有含 UI 图形的直接子节点收拢到
+        /// 单个 WorldSpace Canvas（HeadUI）下——原实现为每个子节点各挂一个 Canvas，
+        /// 每角色 5 个独立 Canvas：任何头顶元素变化都重建 5 次，且 Canvas 调度基数
+        /// 随人数线性放大（100 Worker = 500 Canvas），是 PostLateUpdate.
+        /// PlayerUpdateCanvases 的主要来源。合并后重建边界统一为 1。
         /// </summary>
         private void EnsureHeadUiSorting()
         {
@@ -187,7 +190,8 @@ namespace LAB2D.Character
                 return;
             }
 
-            bool anyFixed = false;
+            // 先收集再迁移（迭代中 SetParent 会破坏子节点遍历）
+            List<Transform> uiChildren = null;
             foreach (Transform child in this.transform)
             {
                 if (child.GetComponentsInChildren<UnityEngine.UI.Graphic>(true).Length == 0)
@@ -195,25 +199,35 @@ namespace LAB2D.Character
                     continue;
                 }
 
-                Canvas canvas = child.GetComponent<Canvas>();
-                if (canvas == null)
-                {
-                    canvas = child.gameObject.AddComponent<Canvas>();
-                    canvas.renderMode = RenderMode.WorldSpace;
-                    anyFixed = true;
-                }
-
-                if (canvas.sortingLayerName != HeadUiSortingLayer)
-                {
-                    canvas.sortingLayerName = HeadUiSortingLayer;
-                    anyFixed = true;
-                }
+                (uiChildren ?? (uiChildren = new List<Transform>())).Add(child);
             }
 
-            if (anyFixed)
+            if (uiChildren == null)
             {
-                AWorkerTask.LogProvider($"[UIDiag] {this.name} 头顶 UI 补挂 WorldSpace Canvas 并提升至 {HeadUiSortingLayer}", LogManager.LogLevelEnum.Debug);
+                return;
             }
+
+            GameObject headUi = new GameObject("HeadUI", typeof(RectTransform));
+            // Canvas 根 GO 的 layer 决定相机剔除：不设会落在 Default(0)，
+            // culling mask 不含 Default 的相机会让整个头顶 UI 消失——继承角色根层
+            headUi.layer = this.gameObject.layer;
+            headUi.transform.SetParent(this.transform, false);
+            headUi.transform.localPosition = Vector3.zero;
+            headUi.transform.localRotation = Quaternion.identity;
+            headUi.transform.localScale = Vector3.one;
+
+            Canvas headCanvas = headUi.AddComponent<Canvas>();
+            headCanvas.renderMode = RenderMode.WorldSpace;
+            headCanvas.sortingLayerName = HeadUiSortingLayer;
+
+            foreach (Transform child in uiChildren)
+            {
+                // worldPositionStays:true 保留 prefab 配置的世界位置/缩放
+                //（HeadUI 与角色根完全重合，子节点 local 值不变）
+                child.SetParent(headUi.transform, true);
+            }
+
+            AWorkerTask.LogProvider($"[UIDiag] {this.name} 头顶 UI 收拢至单个 WorldSpace Canvas 并提升至 {HeadUiSortingLayer}（{uiChildren.Count} 个子节点）", LogManager.LogLevelEnum.Debug);
         }
 
         public virtual void Start()
