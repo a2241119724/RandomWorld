@@ -26,3 +26,9 @@
 - 灵雨视觉暂缺（复用 Rain prefab 需场景资产，后补）；血月视觉=光色 tint 先行
 - 实施顺序：Domain 枚举+乘数+单测 → Tool/Manager 映射+加权池 → 波次血月 → 光色 tint
 - 血月语义：全天天气（池中抽出即当日为血月日），效果只作用于当晚波次
+
+## 实施盲点勘定（2026-09-04 第 4 轮补充）
+
+- **血月光色挂法**：`DayNightRuleService.GetGlobalLightColor` 已是纯函数返回自有 `DayLightColor` RGB 载体（Domain 零 UnityEngine 依赖）——加 `(curGameTime, dayLengthSeconds, bool isBloodMoon)` 重载，夜晚相位色偏红（R↑/G、B↓）白天不变；`DayNightLightManager` 调用处传 `CurrentWeather == BloodMoon`。
+- **血月波次挂法**：不动签名——`WaveConfigModel` 加 `IsBloodMoon` 字段，`WaveManager.CreateWaveConfigModel` 填充时查天气；`GetEnemyCountForWave`（数量×1.5）与 `PickEnemyKind`（混池 waveIndex 门槛 -1）、`GetDifficultyScale`（+0.5）按标志调整。config 数据带标志，纯函数内部消化。
+- **排期参考**：包 4 其余子项成本——「每局修饰符」轻（复用乘数管线，一局 roll 全局标志）；「地图兴趣点」重（生成层仅 RandomScatterFillGenerator，需地形 SO+视觉资产），建议顺序：事件天气 → 每局修饰符 → 地图兴趣点。
