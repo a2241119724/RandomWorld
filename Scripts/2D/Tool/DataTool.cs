@@ -57,8 +57,9 @@ namespace LAB2D.Tool
                 {
                     File.Delete(filePath);
                 }
-                catch
+                catch (System.Exception ex)
                 {
+                    AWorkerTask.LogProvider($"[DataDiag] DataTool.LoadDataByBinary 删除损坏存档失败 {filePath}: {ex.Message}", LogManager.LogLevelEnum.Warning);
                 }
 
                 return null;

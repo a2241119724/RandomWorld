@@ -36,7 +36,7 @@ namespace LAB2D.UI.Panel
                 else
                 {
                     try { this.Panel = ServiceLocator.Get<ResourceManager>().Instantiate(this.Name, parent, false); }
-                    catch { }
+                    catch (System.Exception ex) { AWorkerTask.LogProvider($"[UIDiag] RoomListPanel 构造时实例化 Prefab 失败（回退空面板）: {ex.Message}", LogManager.LogLevelEnum.Warning); }
 
                     if (this.Panel == null)
                     {

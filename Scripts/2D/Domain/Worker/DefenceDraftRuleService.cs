@@ -69,6 +69,9 @@ namespace LAB2D.Domain.Worker
         public const float FightMoraleScale = 0.15f;
         public const float FightFavorScale = 0.2f;
 
+        /// <summary>事业心对参战分的系数（野心大者渴望战功证明自己，权重与好感齐平）。</summary>
+        public const float FightAmbitionScale = 0.2f;
+
         /// <summary>压力对参战分的惩罚系数。</summary>
         public const float FightStressPenalty = 0.25f;
 
@@ -120,6 +123,7 @@ namespace LAB2D.Domain.Worker
                 + (input.Sociality * FightSocialityScale)
                 + (input.Morale * FightMoraleScale)
                 + (input.FavorWithPlayer * FightFavorScale)
+                + (input.Ambition * FightAmbitionScale)
                 - (input.Stress * FightStressPenalty)
                 - ((100f - input.Mood) * FightBadMoodPenalty)
                 + (input.HasAwakenedPower ? FightAwakenedBonus : 0f)

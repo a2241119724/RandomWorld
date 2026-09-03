@@ -129,8 +129,9 @@ namespace LAB2D.UI
                 IColonyCommandCenterService service = ServiceLocator.TryGet(out IColonyCommandCenterService svc) ? svc : ServiceLocator.Get<ColonyCommandCenterManager>();
                 service.OnCommandReportChanged -= this.HandleCommandReportChanged;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] ColonyCommandCenterHUD.OnDisable 取消订阅失败（退出期服务已释放，预期内）: {ex.Message}", LogManager.LogLevelEnum.Trace);
             }
         }
 

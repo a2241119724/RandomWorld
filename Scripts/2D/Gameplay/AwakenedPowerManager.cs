@@ -145,7 +145,9 @@ namespace LAB2D.Gameplay
                 // Worker：觉醒转被动加成入账（与境界加成同通道，重算立即生效）
                 growth.PermanentRealmBonus += def.WorkerPassiveBonus;
                 data.Character?.RecomputeGrowthAttributes();
-                (data.Character as AWorker)?.ShowMindBubble($"体内涌起陌生的力量…觉醒了「{def.Name}」");
+                // 觉醒气泡走台词池（随机多样；具体异能名由下方 Tip 提示，不重复）
+                (data.Character as AWorker)?.ShowMindBubble(
+                    WorkerInnerMonologue.GetEventThought(WorkerMindConstant.EVT_POWER_AWAKEN, null));
 
                 // 觉醒接心智层（M2A 包 2.2）：事件记忆 + 信念演化 + 最近想法
                 if ((data.Character as AWorker) is AWorker awakenedWorker

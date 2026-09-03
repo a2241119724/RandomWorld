@@ -441,8 +441,9 @@ namespace LAB2D.AI.Dialogue.LLM
                             serverProcess.Kill();
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        AWorkerTask.LogProvider($"[LLMDiag] LlamaServerClient.Stop 退出期停止 llama-server 失败（进程可能已退出，预期内）: {ex.Message}", LogManager.LogLevelEnum.Trace);
                     }
                     finally
                     {

@@ -140,8 +140,9 @@ namespace LAB2D.UI
                 manager.OnRewardOptionsChanged -= this.HandleRewardOptionsChanged;
                 manager.OnStateChanged -= this.HandleStateChanged;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] WaveBossRewardPanel.OnDisable 取消订阅失败（退出期服务已释放，预期内）: {ex.Message}", LogManager.LogLevelEnum.Trace);
             }
         }
 

@@ -84,8 +84,9 @@ namespace LAB2D.UI
                 WorkerSupplyIssueManager manager = Core.ServiceLocator.TryGet(out WorkerSupplyIssueManager mgr) ? mgr : ServiceLocator.Get<WorkerSupplyIssueManager>();
                 manager.OnWorkerSupplyReportChanged -= this.HandleSupplyReportChanged;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] WorkerSupplyHUD.OnDisable 取消订阅失败（退出期服务已释放，预期内）: {ex.Message}", LogManager.LogLevelEnum.Trace);
             }
         }
 

@@ -85,8 +85,9 @@ namespace LAB2D.UI
                 WorkerConditionManager manager = Core.ServiceLocator.TryGet(out WorkerConditionManager mgr) ? mgr : ServiceLocator.Get<WorkerConditionManager>();
                 manager.OnWorkerConditionChanged -= this.HandleWorkerConditionChanged;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] WorkerConditionHUD.OnDisable 取消订阅失败（退出期服务已释放，预期内）: {ex.Message}", LogManager.LogLevelEnum.Trace);
             }
         }
 

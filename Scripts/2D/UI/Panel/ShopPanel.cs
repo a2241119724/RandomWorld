@@ -304,7 +304,10 @@ namespace LAB2D.UI.Panel
                     if (rm.GetAsset(itemData.CnName) != null) return itemData.CnName;
                 }
             }
-            catch { }
+            catch (System.Exception ex)
+            {
+                AWorkerTask.LogProvider($"[ShopPanel] GetItemTileName 解析物品贴图失败（回退 CustomWood） itemId={itemId}: {ex.Message}", LogManager.LogLevelEnum.Warning);
+            }
             return "CustomWood";
         }
     }

@@ -94,18 +94,37 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void GoodFavorWithPlayer_WeightsTowardFight()
         {
-            // 同一人：好感从 20 → 90 足以把躲避者拉回战场（玩家经营的回报）
+            // 同一人（低野心胆小者）：好感从 20 → 90 足以把躲避者拉回战场（玩家经营的回报）
             DefenceDraftInput scared = Average();
             scared.Mood = 30f;
             scared.Stress = 50f;
             scared.Morale = 40f;
             scared.Greed = 20f;
             scared.FavorWithPlayer = 20f;
+            scared.Ambition = 20f; // 低野心：否则 Ambition 参战分会把胆小者推出躲避
             DefenceDraftInput loyal = scared;
             loyal.FavorWithPlayer = 90f;
 
             Assert.AreEqual(DefenceResponse.ShelterInBed, DefenceDraftRuleService.Decide(in scared));
             Assert.AreEqual(DefenceResponse.Fight, DefenceDraftRuleService.Decide(in loyal));
+        }
+
+        [Test]
+        public void HighAmbition_WeightsTowardFight()
+        {
+            // 同一人：事业心从 20 → 95 足以把躲避者推上战场（野心者渴望战功）
+            DefenceDraftInput timid = Average();
+            timid.Mood = 30f;
+            timid.Stress = 50f;
+            timid.Morale = 40f;
+            timid.Greed = 20f;
+            timid.FavorWithPlayer = 20f;
+            timid.Ambition = 20f;
+            DefenceDraftInput ambitious = timid;
+            ambitious.Ambition = 95f;
+
+            Assert.AreEqual(DefenceResponse.ShelterInBed, DefenceDraftRuleService.Decide(in timid));
+            Assert.AreEqual(DefenceResponse.Fight, DefenceDraftRuleService.Decide(in ambitious));
         }
 
         [Test]

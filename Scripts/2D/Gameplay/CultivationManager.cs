@@ -316,6 +316,8 @@ namespace LAB2D.Gameplay
 
             mindService.RecordEvent(breaker, WorkerMindConstant.EVT_CULTIVATION_BREAKTHROUGH,
                 MemoryValence.Positive, null, 70f, $"突破至{newRealm.Name}期");
+            breaker.ShowMindBubble(WorkerInnerMonologue.GetEventThought(
+                WorkerMindConstant.EVT_CULTIVATION_BREAKTHROUGH, null));
 
             System.Collections.Generic.List<AWorker> workers = WorkerCharactersProvider();
             if (workers == null)
@@ -346,11 +348,15 @@ namespace LAB2D.Gameplay
                     mindService.RecordEvent(other, WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH_ENVY,
                         MemoryValence.Negative, breakerName,
                         Mathf.Clamp(wd.Greed, 20f, 100f), "工友突破了，心里不是滋味");
+                    other.ShowMindBubble(WorkerInnerMonologue.GetEventThought(
+                        WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH_ENVY, breakerName));
                 }
                 else if (newRealmIndex > otherData.Growth.RealmIndex)
                 {
                     mindService.RecordEvent(other, WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH,
                         MemoryValence.Positive, breakerName, 40f, "工友突破了，心生敬仰");
+                    other.ShowMindBubble(WorkerInnerMonologue.GetEventThought(
+                        WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH, breakerName));
                 }
             }
         }

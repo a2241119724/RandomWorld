@@ -83,8 +83,9 @@ namespace LAB2D.UI
                 var weatherSvc = ServiceLocator.TryGet(out IWeatherGameplayService svc) ? svc : ServiceLocator.Get<WeatherGameplayEffect>();
                 weatherSvc.OnWeatherEffectChanged -= this.HandleWeatherChanged;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] WeatherGameplayHUD.OnDisable 取消订阅失败（退出期服务已释放，预期内）: {ex.Message}", LogManager.LogLevelEnum.Trace);
             }
         }
 

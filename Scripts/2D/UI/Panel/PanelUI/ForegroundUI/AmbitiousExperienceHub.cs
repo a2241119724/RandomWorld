@@ -266,8 +266,9 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             {
                 ServiceLocator.Get<GameplaySessionStats>().StatsChanged -= this.HandleStatsChanged;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] AmbitiousExperienceHub 取消订阅会话统计失败（退出期服务已释放，预期内）: {ex.Message}", LogManager.LogLevelEnum.Trace);
             }
 
             try
@@ -276,8 +277,9 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
                 combo.OnComboMilestoneReached -= this.HandleComboMilestoneReached;
                 combo.OnComboBroken -= this.HandleComboBroken;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] AmbitiousExperienceHub 取消订阅连击事件失败（退出期服务已释放，预期内）: {ex.Message}", LogManager.LogLevelEnum.Trace);
             }
 
             try
@@ -286,16 +288,18 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
                 feedback.OnWaveFeedbackChanged -= this.HandleWaveFeedbackChanged;
                 feedback.OnWaveTipRequested -= this.HandleWaveTipRequested;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] AmbitiousExperienceHub 取消订阅波次反馈失败（退出期服务已释放，预期内）: {ex.Message}", LogManager.LogLevelEnum.Trace);
             }
 
             try
             {
                 ServiceLocator.Get<SessionResultManager>().OnResultCaptured -= this.HandleResultCaptured;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] AmbitiousExperienceHub 取消订阅结算事件失败（退出期服务已释放，预期内）: {ex.Message}", LogManager.LogLevelEnum.Trace);
             }
         }
 
@@ -416,8 +420,9 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
                 damageMultiplier = ServiceLocator.Get<ComboBonusManager>().DamageMultiplier;
                 experienceMultiplier = ServiceLocator.Get<ComboBonusManager>().ExperienceMultiplier;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] AmbitiousExperienceHub.RefreshScoreText 读取连击增益失败（按 1.00x 显示）: {ex.Message}", LogManager.LogLevelEnum.Debug);
             }
 
             this.scoreText.text =
@@ -562,8 +567,9 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             {
                 latest = ServiceLocator.Get<SessionResultManager>().LatestResult;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AWorkerTask.LogProvider($"[UIDiag] AmbitiousExperienceHub.ToggleResultPanel 读取结算结果失败（回退实时预览）: {ex.Message}", LogManager.LogLevelEnum.Warning);
             }
 
             if (latest != null)
