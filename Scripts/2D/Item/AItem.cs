@@ -16,7 +16,8 @@ namespace LAB2D.Item
         {
             { "Backpack", new ItemTypeEnum[] { ItemTypeEnum.Weapon, ItemTypeEnum.BackpackOther } },
             { "Build", new ItemTypeEnum[] { ItemTypeEnum.Room, ItemTypeEnum.BuildOther } },
-            { "Resource", new ItemTypeEnum[] { ItemTypeEnum.Tree, ItemTypeEnum.Null } },
+            // 上界不含 Null——那是仓库空槽占位值，不是资源类型（曾致启动期查 "NullItemData" 必打 Warning）
+            { "Resource", new ItemTypeEnum[] { ItemTypeEnum.Tree, ItemTypeEnum.Tree } },
         };
 
         /// <summary>

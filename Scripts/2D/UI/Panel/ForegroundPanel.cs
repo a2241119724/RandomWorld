@@ -52,12 +52,8 @@ namespace LAB2D.UI.Panel
             this.Name = "Foreground";
             this.Init();
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Pause").onClick.AddListener(this.OnClick_Pause);
-            Button attack = LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Attack");
-            if (attack != null)
-            {
-                LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Attack").onClick.AddListener(this.OnClick_Attack);
-            }
-
+            // Attack 按钮已从 Foreground UI 移除，不再查找（曾每次进游戏必打一条 Warning）；
+            // 攻击入口由 PlayerAttackRequestedEvent 事件总线承担（OnClick_Attack 保留供直接调用）
             LAB2D.Tool.Tool.GetComponentInChildren<Button>(this.Panel, "Setting").onClick.AddListener(this.OnClick_Setting);
 
             ServiceLocator.Get<EventBus>().Subscribe<PlayerAttackRequestedEvent>(this.OnPlayerAttackRequested);
