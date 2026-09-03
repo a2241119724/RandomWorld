@@ -35,6 +35,7 @@ namespace LAB2D.Core
             this.ProcessMouseClickCloseItemInfo();
             this.ProcessAchievements();
             this.ProcessRoomListToggle();
+            this.ProcessWorkerMindToggle();
         }
 
         /// <summary>
@@ -53,6 +54,27 @@ namespace LAB2D.Core
                 {
                     controller.Show(RoomListPanel.Instance);
                 }
+            }
+        }
+
+        /// <summary>
+        /// F12 — Worker 心智面板切换（走 PanelController 栈，ESC 关闭由栈顶 OnClick_Back 覆盖）。
+        /// </summary>
+        private void ProcessWorkerMindToggle()
+        {
+            if (!UnityGlobalInputAdapter.GetHudToggleDown(Constant.InputKeyConstant.ToggleWorkerMindHud))
+            {
+                return;
+            }
+
+            var controller = ServiceLocator.Get<PanelController>();
+            if (controller.Panels.Count > 0 && controller.Panels.Peek() == WorkerMindPanel.Instance)
+            {
+                controller.Close();
+            }
+            else
+            {
+                controller.Show(WorkerMindPanel.Instance);
             }
         }
 

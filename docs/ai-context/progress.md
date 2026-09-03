@@ -2,7 +2,7 @@
 
 ## Project Status
 
-v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**："小镇为魂，防守为骨"。M1 循环闭环（时间服务/昼夜-波次耦合/山门核心胜负）与 M2A（包 2.1 防守夜 Worker 响应 `DefenceDraftRuleService`/`WorkerDefenceManager`/`WorkerDefendTask` + 包 2.2 修仙事件接心智层）均已完成；下一步 M2B 内容表现（妖兽化/防御建筑/音效）与包 5 修仙深化穿插推进（大纲包 2-5）。
+v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**："小镇为魂，防守为骨"。M1 循环闭环（时间服务/昼夜-波次耦合/山门核心胜负）、M2A（包 2.1 防守夜 Worker 响应 + 包 2.2 修仙事件接心智层）与 M3（包 2.3 心智+修仙 F12 面板 + 包 2.4 对话预设意图确定性结算/LLM 增强措辞）代码均已完成；下一步 M2B 内容表现（妖兽化/防御建筑/音效）与包 5 修仙深化穿插推进（大纲包 2-5）。
 
 ## Recent Changes
 
@@ -93,7 +93,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
   - [x] M1 循环闭环（时间服务/昼夜-波次耦合/山门核心胜负）
   - [x] M2A 包2.1/2.2 防守夜 Worker 响应（`DefenceDraftRuleService` 纯函数 + `WorkerDefendTask` + `WorkerDefenceManager` 入夜派发，觉醒优先参战）+ 修仙事件接心智层（突破/觉醒/工友嫉妒·敬仰走 RecordEvent）——代码完成，待 Play 实测行为分化
   - [ ] M2B 包3 敌人扩种协议 + 前 2 种妖兽 + 箭塔
-  - [ ] M3 包2.3/2.4 心智面板 + LLM 对话结算
+  - [x] M3 包2.3/2.4 心智面板 + LLM 对话结算（`WorkerMindPanel` F12 纯代码构建 + `DialogueIntentRuleService` 确定性结算 + `DialogueManager.ApplyIntent` 副作用 + `DialoguePanelUI` 4 意图按钮走 SendMessage LLM 增强措辞 + 单测）——代码完成、主程序集编译 0 错误，待 Play 实测（按钮行位置按 Message 顶边推算可能需手调、面板布局待过目）
   - [ ] M4 包2.5 灵气环境（CurEnergy 消费者）+ 包4 每局不一样
 - **Worker 建造系统优化** — IN PROGRESS
   - [x] 建造位置预注册机制

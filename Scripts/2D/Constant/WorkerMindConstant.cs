@@ -220,5 +220,11 @@ namespace LAB2D.Constant
         public const string EVT_POWER_AWAKEN = "power_awaken";
         public const string EVT_FELLOW_BREAKTHROUGH = "fellow_breakthrough";
         public const string EVT_FELLOW_BREAKTHROUGH_ENVY = "fellow_breakthrough_envy";
+
+        // ---- 对话预设意图事件（M3 包2.4 LLM 对话结算）----
+        public const string EVT_TEACH_SEEK = "teach_seek";
+        public const string EVT_COMFORTED = "comforted";
+        public const string EVT_APOLOGY = "apology";
+        public const string EVT_GIFT_PLAYER = "gift_player";
     }
 }

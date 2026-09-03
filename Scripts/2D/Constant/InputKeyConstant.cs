@@ -163,6 +163,14 @@ namespace LAB2D.Constant
         /// </summary>
         public const KeyCode ToggleTechHud = KeyCode.T;
 
+        /// <summary>
+        /// 心智面板 显示/隐藏 (F12键)
+        /// 切换显示 Worker 心智详情（记忆流/关系网/信念四轴/对玩家意志/人格/修仙页）。
+        /// 与 F11 好感度 HUD 语义相邻。F8 实测无效禁用（见 progress.md）。
+        /// 仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleWorkerMindHud = KeyCode.F12;
+
         #endregion
 
         #region 主动技能快捷键 (Q/E/R/F)
@@ -336,6 +344,7 @@ namespace LAB2D.Constant
   F10      —— 工人任务队列 HUD
   6        —— 房间列表面板
   F11      —— 好感度 HUD (对玩家好感/态度)
+  F12      —— 心智面板 (记忆/关系/信念/修仙)
   T        —— 科技面板 (研究点/科技研究)
   9        —— 成就面板
   0        —— 装备面板切换

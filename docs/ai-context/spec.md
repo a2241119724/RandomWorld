@@ -44,6 +44,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - 短期记忆 + 长期记忆压缩(每 8 轮)
 - RAG 游戏知识检索
 - 对话期间工人任务暂停
+- **预设意图结算（M3）:** `DialoguePanelUI` 底部 4 按钮（求教功法/安抚/道歉/赠礼）——点击先走 `DialogueManager.ApplyIntent` 本地纯规则结算（`DialogueIntentRuleService`），副作用即时入账（好感/心智/压力士气/灵气/金币/事件记忆），再把 `PlayerActionText`（含角色扮演引导）走 `SendMessage` 由 LLM 增强 NPC 回复措辞；LLM 不可用时 `FallbackReply` 气泡兜底。防刷：每意图每 Worker 每游戏日限（求教 1/安抚 1/道歉 1/赠礼 2，`Mind.DialogueIntentUses` 跨日重置）+ 赠礼 20 金币门 + 等待中置灰。求教成功门 = NPC 境界高于玩家且好感≥60（婉拒也计日限，防刷 LLM 调用）
 
 ### 天气系统
 - 晴/雨/雪三种天气
@@ -90,6 +91,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **社会关系:** `WorkerRelationshipRuleService` + `Mind.Relations`（name 键控），Kind 优先级 Grudge>Enmity>Admiration>Friendship>None；友谊 `Affinity≥40`/敌意 `≤-30`/爱慕 `Admiration≥40`/记仇（被拒交易 30、被攻击 40，每日 -2 衰减）。**四个低频行为（防经济干扰）**：①互助/回避——friend/admiration 好感门前豁免必接、enmity/grudge 拒接（`WorkerBountyTask.DoIsCanWork`）②拒卖——关系否决优先于人格（`WorkerTradeService.WillSell` 前置）③送礼——漫游决策前 5%，双方 Affinity+8、收方好感+5（`WorkerDecisionService`）④嫉妒——`CurrencyManager.CompleteBounty` 节流钩子（≥30s），旁观 `Greed>60` 对完成者 Affinity-4。每日 `Decay` 淡化；死亡清理 `FavorabilityManager.RemoveDeadWorker`
 - **事件接入点:** 完成/接取悬赏、交易成败、被攻击、玩家救危、对话结束、修仙事件（突破者成就记忆+气泡 `CultivationManager.RecordBreakthroughMind`；工友旁观——`Greed≥阈值` 嫉妒记仇/境界低者敬仰爱慕，均带气泡）、异能觉醒 `AwakenedPowerManager` 等事件点调 `RecordEvent`（TargetName=`"PLAYER"` 哨兵或 Worker 名），绝不每帧循环；`WorkerMindManager.Tick`/`ProcessDayRollover` 驱动
 - **反馈:** 拒绝理由/人生事件/关系变化统一走 `AWorker.ShowMindBubble`（语料 `WorkerInnerMonologue`，防被 `ShowRandomMonologue` 覆盖：进口气卫 + `HideDialogText` 清守卫）+ `[MindDiag]` Debug 日志 + `WorkerConditionHUD`「最近想法」行
+- **可视化面板（M3）:** F12 开关 `WorkerMindPanel`（`GlobalInputProcessor` 分发，Overlay 不暂停）——左列 Worker 列表 + 右侧详情：好感/服从/怨恨/感恩、信念四轴、人格四维+贪婪懒惰+执念、修仙页（境界/灵气/灵根/内功/功法/异能）、关系网、记忆流（Day 降序前 12 条）。UI 纯代码构建（`WorkerMindUI`，场景无 prefab），1.5s 节流刷新
 
 ### 成长系统（词条/功法/修仙/异能/灵根/生活技能/科技）
 - **统一属性管线:** 被动加成源（装备词条/内功/境界永久加成）→ `GrowthBonusService.CollectFromData` → `GrowthSourceResult`（`Sources`: List&lt;BattleStats&gt; + `Special`: GrowthBonus）→ `AttributeCalculationService.ComputeFinalStats(growthSources)`。特殊维度（回蓝/吸血/反伤/修炼速度）存 `GrowthBonus.Special`（`ComputeAttribute` 写回快照），各系统在战斗事件点消费。**CRT/CSD 是 0-1 比例**（"+3%" 存 0.03，BattleStats 直接加整数会爆数值）
@@ -151,6 +153,8 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
     |- 值对象: GameGridPosition, GameVector2
     |- 委托注入: ColonyDiagnosticContext
 ```
+
+> **已知例外:** `Domain/Worker/WorkerMindService.cs` 是心智层**编排门面**（非纯规则）——使用 `Time.time`/`Mathf`/`Random` 并引用 Character/Gameplay 层（AWorker/FavorabilityManager），不满足"零 Unity 依赖"；纯规则已拆至同目录 `*RuleService`（CommandAcceptance/Memory/Belief/Relationship/PersonalityDrift/LifeEvent/Dream，均纯 C# 有单测）。新增 Domain 代码勿效仿；门面自身依赖 Unity 编排是接受的现状。
 
 ### Worker 三层架构（决策/活动/移动）
 - **分层:** 决策层 `WorkerDecisionService`（接取管线：玩家悬赏→全局任务→自主决策，由 Seek 状态 OnEnter 单次调用）｜活动层 FSM 6 状态（Seek/Move/Work/Attack/Escape/Dead，`TypeEnum` 顺序存档兼容不可改）｜移动层 `WorkerLocomotion`（常驻服务，`AWorker.FixedUpdate` 先于状态逻辑驱动 `TickFixed`）。状态只声明移动意图（`GoTo/Chase/KeepDistance/Stop`），不直接消费寻路结果

@@ -8,6 +8,7 @@ namespace LAB2D.AI.Dialogue.UI
     using LAB2D.Domain.Common;
     using LAB2D.UI.Panel;
     using LAB2D.UnityAdapter;
+    using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -42,6 +43,7 @@ namespace LAB2D.AI.Dialogue.UI
         private StreamingTextView currentStreamingText;
         private bool isWaitingResponse;
         private TokenUsageInfo currentTokenUsage;
+        private readonly Dictionary<DialogueIntentKind, Button> intentButtons = new Dictionary<DialogueIntentKind, Button>();
 
         /// <summary>
         /// 确保场景中已创建的 UI 实例可用。
@@ -181,6 +183,10 @@ namespace LAB2D.AI.Dialogue.UI
                 this.inputField.text = string.Empty;
                 this.inputField.ActivateInputField();
             }
+
+            // M3 包2.4：预设意图按钮（确定性结算 + LLM 增强措辞）
+            this.EnsureIntentButtons();
+            this.UpdateIntentButtonStates();
         }
 
         /// <summary>
@@ -265,6 +271,155 @@ namespace LAB2D.AI.Dialogue.UI
             {
                 session.options.deepThinking = isOn;
             }
+        }
+
+        /// <summary>
+        /// 构建预设意图按钮行（M3 包2.4，纯代码——面板为场景实例无法手摆子物体）。
+        /// 挂在面板根底部、输入框上方；位置按 Message 顶边推算，实测可调。
+        /// </summary>
+        private void EnsureIntentButtons()
+        {
+            if (this.intentButtons.Count > 0)
+            {
+                return;
+            }
+
+            RectTransform panelRect = this.transform as RectTransform;
+            if (panelRect == null)
+            {
+                return;
+            }
+
+            GameObject rowGo = new GameObject("IntentButtonRow", typeof(RectTransform));
+            rowGo.transform.SetParent(this.transform, false);
+            RectTransform rowRect = (RectTransform)rowGo.transform;
+            rowRect.anchorMin = new Vector2(0f, 0f);
+            rowRect.anchorMax = new Vector2(1f, 0f);
+            rowRect.pivot = new Vector2(0.5f, 0f);
+            rowRect.anchoredPosition = new Vector2(0f, this.ComputeIntentRowY());
+            rowRect.sizeDelta = new Vector2(-32f, 34f);
+
+            HorizontalLayoutGroup layout = rowGo.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+
+            foreach (DialogueIntentKind kind in DialogueIntentRuleService.AllKinds)
+            {
+                this.CreateIntentButton(rowGo.transform, kind);
+            }
+        }
+
+        private void CreateIntentButton(Transform parent, DialogueIntentKind kind)
+        {
+            GameObject go = new GameObject("Intent_" + kind, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            go.AddComponent<Image>().color = new Color(0.30f, 0.42f, 0.62f, 0.92f);
+
+            Button btn = go.AddComponent<Button>();
+            btn.onClick.AddListener(() => this.OnIntentClicked(kind));
+
+            GameObject textGo = new GameObject("Text", typeof(RectTransform));
+            textGo.transform.SetParent(go.transform, false);
+            Text label = textGo.AddComponent<Text>();
+            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.text = DialogueIntentRuleService.GetDisplayName(kind)
+                + (kind == DialogueIntentKind.Gift ? "(" + DialogueIntentRuleService.GiftCoinCost + "金)" : string.Empty);
+            label.fontSize = 14;
+            label.color = Color.white;
+            label.alignment = TextAnchor.MiddleCenter;
+
+            this.intentButtons[kind] = btn;
+        }
+
+        /// <summary>意图按钮行的 y 坐标：Message 输入框顶边 + 6px 间距（anchor 同为底部时成立，兜底 46）。</summary>
+        private float ComputeIntentRowY()
+        {
+            if (this.inputField != null)
+            {
+                RectTransform messageRect = this.inputField.GetComponent<RectTransform>();
+                if (messageRect != null && messageRect.rect.height > 0f)
+                {
+                    return messageRect.anchoredPosition.y + messageRect.rect.height * (1f - messageRect.pivot.y) + 6f;
+                }
+            }
+
+            return 46f;
+        }
+
+        /// <summary>按日限/金币/等待中刷新意图按钮可用性（面板未开或按钮未建时静默跳过）。</summary>
+        private void UpdateIntentButtonStates()
+        {
+            if (this.intentButtons.Count == 0 || string.IsNullOrEmpty(this.activeNpcId))
+            {
+                return;
+            }
+
+            DialogueManager dm = ServiceLocator.Get<DialogueManager>();
+            AWorker worker = dm != null ? dm.TryGetDialogueWorker(this.activeNpcId) : null;
+            AWorker.WorkerData wd = worker?.CharacterDataLAB as AWorker.WorkerData;
+            WorkerMindService mindService = ServiceLocator.Get<WorkerMindService>();
+            CurrencyManager cm = ServiceLocator.Get<CurrencyManager>();
+            bool coinsEnough = cm != null
+                && cm.GetPlayerBalance().Gold >= DialogueIntentRuleService.GiftCoinCost;
+
+            foreach (KeyValuePair<DialogueIntentKind, Button> kv in this.intentButtons)
+            {
+                bool usable = worker != null && wd != null && mindService != null
+                    && !this.isWaitingResponse
+                    && mindService.GetIntentUseCountToday(wd, kv.Key.ToString())
+                        < DialogueIntentRuleService.GetDailyCap(kv.Key)
+                    && (kv.Key != DialogueIntentKind.Gift || coinsEnough);
+                kv.Value.interactable = usable;
+            }
+        }
+
+        /// <summary>
+        /// 预设意图点击：DialogueManager.ApplyIntent 本地确定性结算 → 玩家气泡显示短句 →
+        /// PlayerActionText 走 SendMessage 由 LLM 增强 NPC 回复措辞（与自由输入共用流式管线）。
+        /// 结算不可用（日限/金币/会话失效）时 ApplyIntent 返回 null，仅刷新按钮状态。
+        /// </summary>
+        private void OnIntentClicked(DialogueIntentKind kind)
+        {
+            if (this.isWaitingResponse || string.IsNullOrEmpty(this.activeNpcId))
+            {
+                return;
+            }
+
+            DialogueManager dm = ServiceLocator.Get<DialogueManager>();
+            if (dm == null)
+            {
+                return;
+            }
+
+            DialogueIntentResult result = dm.ApplyIntent(this.activeNpcId, kind);
+            if (result == null)
+            {
+                this.UpdateIntentButtonStates();
+                return;
+            }
+
+            this.SetWaitingState(true);
+
+            this.AddPlayerBubble(result.PlayerDisplayText);
+
+            this.currentStreamingText = this.AddNPCBubble(string.Empty);
+            if (this.currentStreamingText != null)
+            {
+                this.currentStreamingText.TypewriterSpeed = 0;
+            }
+
+            DialogueSession session = dm.GetSession(this.activeNpcId);
+            if (session != null)
+            {
+                session.options.deepThinking = ModelSourceSettings.DeepThinkingEnabled;
+            }
+
+            dm.SendMessage(this.activeNpcId, result.PlayerActionText);
+            this.ScrollToLatest();
         }
 
         private void HandleToken(string npcId, string token)
@@ -373,6 +528,8 @@ namespace LAB2D.AI.Dialogue.UI
                     this.inputField.ActivateInputField();
                 }
             }
+
+            this.UpdateIntentButtonStates();
         }
 
         private void FindUIElements()

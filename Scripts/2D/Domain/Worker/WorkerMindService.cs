@@ -358,6 +358,58 @@ namespace LAB2D.Domain.Worker
             return result;
         }
 
+        /// <summary>对话预设意图今日已用次数（M3 包2.4 防刷；老档 List null 兜底）。</summary>
+        public int GetIntentUseCountToday(AWorker.WorkerData wd, string intentKey)
+        {
+            WorkerMindData.Ensure(wd);
+            WorkerMindData mind = wd.Mind;
+            if (mind.DialogueIntentUses == null)
+            {
+                mind.DialogueIntentUses = new List<DialogueIntentUse>();
+                return 0;
+            }
+
+            int day = this.GetGameDayIndex();
+            foreach (DialogueIntentUse use in mind.DialogueIntentUses)
+            {
+                if (use != null && use.IntentKey == intentKey && use.Day == day)
+                {
+                    return use.Count;
+                }
+            }
+
+            return 0;
+        }
+
+        /// <summary>对话预设意图使用计数 +1（跨日自动重置）。</summary>
+        public void RecordIntentUse(AWorker.WorkerData wd, string intentKey)
+        {
+            WorkerMindData.Ensure(wd);
+            WorkerMindData mind = wd.Mind;
+            if (mind.DialogueIntentUses == null)
+            {
+                mind.DialogueIntentUses = new List<DialogueIntentUse>();
+            }
+
+            int day = this.GetGameDayIndex();
+            foreach (DialogueIntentUse use in mind.DialogueIntentUses)
+            {
+                if (use != null && use.IntentKey == intentKey)
+                {
+                    if (use.Day != day)
+                    {
+                        use.Day = day;
+                        use.Count = 0;
+                    }
+
+                    use.Count++;
+                    return;
+                }
+            }
+
+            mind.DialogueIntentUses.Add(new DialogueIntentUse { IntentKey = intentKey, Day = day, Count = 1 });
+        }
+
         /// <summary>
         /// 把悬赏/攻击的 instanceID 解析为稳定引用名："PLAYER"（0）或 Worker 稳定名。
         /// 解析失败返回 null（调用方可回退为 "unknown"）。

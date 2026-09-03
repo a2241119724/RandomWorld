@@ -118,6 +118,20 @@ namespace LAB2D.Domain.Worker
         public static WorkerDream None => new WorkerDream { Type = WorkerDreamType.None };
     }
 
+    /// <summary>对话预设意图的每日使用记录（M3 包2.4 防刷）。</summary>
+    [Serializable]
+    public class DialogueIntentUse
+    {
+        /// <summary>意图键（DialogueIntentKind.ToString()）。</summary>
+        public string IntentKey;
+
+        /// <summary>游戏日。</summary>
+        public int Day;
+
+        /// <summary>当日已用次数。</summary>
+        public int Count;
+    }
+
     /// <summary>
     /// Worker 心智层总容器 — 作为 WorkerData.Mind 的单引用字段。
     /// 全部字段 [Serializable] 纯值类型，随角色二进制存档（BinaryFormatter）一次写入。
@@ -167,6 +181,9 @@ namespace LAB2D.Domain.Worker
 
         // ---- 关系 ----
         public List<WorkerRelationEntry> Relations = new List<WorkerRelationEntry>();
+
+        // ---- 对话预设意图使用记录（M3 包2.4）----
+        public List<DialogueIntentUse> DialogueIntentUses = new List<DialogueIntentUse>();
 
         // ---- 命令/拖延/强制 ----
         /// <summary>最近一次拒绝玩家命令的时间（Time.time），用于拖延冷却。</summary>

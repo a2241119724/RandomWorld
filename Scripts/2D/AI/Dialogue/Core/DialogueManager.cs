@@ -8,12 +8,14 @@ namespace LAB2D.AI.Dialogue.Core
     using LAB2D.AI.Dialogue.RAG;
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
+    using LAB2D.Domain.Gameplay.Cultivation;
     using LAB2D.Enum;
     using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
     using System.Text;
     using UnityEngine;
+    using GrowthData = LAB2D.Domain.Character.Growth.GrowthData;
 
     /// <summary>
     /// NPC 对话管理器，组织完整对话流程
@@ -207,6 +209,128 @@ namespace LAB2D.AI.Dialogue.Core
                     LogManager.LogLevelEnum.Error);
                 this.OnDialogueError?.Invoke(npcId, e.Message);
             }
+        }
+
+        /// <summary>
+        /// 对话预设意图确定性结算（M3 包2.4）：收集输入 → DialogueIntentRuleService.Evaluate → 应用副作用。
+        /// 不直接调用 LLM——返回 PlayerActionText，由 UI 加玩家气泡后走 SendMessage 让 LLM 增强 NPC 回复措辞；
+        /// LLM 不可用时 ApplyIntent 内的 ShowMindBubble 兜底台词仍可感知。
+        /// 返回 null = 不可用（日限已到/金币不足/会话或 Worker 无效）。
+        /// </summary>
+        public DialogueIntentResult ApplyIntent(string npcId, DialogueIntentKind kind)
+        {
+            if (!this.activeSessions.TryGetValue(npcId, out DialogueSession session) || !session.isActive)
+            {
+                return null;
+            }
+
+            AWorker worker = this.GetDialogueWorker(npcId);
+            AWorker.WorkerData wd = worker?.CharacterDataLAB as AWorker.WorkerData;
+            if (worker == null || wd == null)
+            {
+                return null;
+            }
+
+            // ---- 收集结算输入 ----
+            FavorabilityManager fm = ServiceLocator.Get<FavorabilityManager>();
+            CurrencyManager cm = ServiceLocator.Get<CurrencyManager>();
+            WorkerMindService mindService = ServiceLocator.Get<WorkerMindService>();
+            if (mindService == null)
+            {
+                return null;
+            }
+
+            WorkerMindData.Ensure(wd);
+            GrowthData.Ensure(ref wd.Growth);
+
+            int playerRealm = 0;
+            Player player = ServiceLocator.Get<PlayerManager>()?.Mine;
+            // 注：CharacterData 与命名空间 LAB2D.Character 同名冲突（CS0234），用 var 绕开限定名解析。
+            var playerData = player != null ? player.CharacterDataLAB : null;
+            if (playerData != null)
+            {
+                GrowthData.Ensure(ref playerData.Growth);
+                playerRealm = playerData.Growth.RealmIndex;
+            }
+
+            DialogueIntentInput input = new DialogueIntentInput
+            {
+                Favorability = fm != null ? fm.GetFavorabilityWithPlayer(worker) : 50f,
+                Resentment = wd.Mind.ResentmentToPlayer,
+                NpcStressRatio = wd.MaxStress > 0f ? wd.CurStress / wd.MaxStress : 0f,
+                NpcRealmIndex = wd.Growth.RealmIndex,
+                PlayerRealmIndex = playerRealm,
+                UsedCountToday = mindService.GetIntentUseCountToday(wd, kind.ToString()),
+                PlayerCoinsEnough = cm != null && cm.GetPlayerBalance().Gold >= DialogueIntentRuleService.GiftCoinCost,
+                NpcName = worker.name,
+            };
+
+            DialogueIntentResult result = DialogueIntentRuleService.Evaluate(kind, input);
+            if (!result.Available)
+            {
+                return null;
+            }
+
+            // ---- 应用副作用 ----
+            WorkerMindData mind = wd.Mind;
+
+            if (result.CoinCost > 0)
+            {
+                if (cm == null || !cm.TrySpendPlayerGold(result.CoinCost))
+                {
+                    return null;
+                }
+            }
+
+            if (fm != null && result.FavorDelta != 0f)
+            {
+                fm.ModifyWithPlayer(worker, result.FavorDelta, "对话意图：" + DialogueIntentRuleService.GetDisplayName(kind));
+            }
+
+            mind.ResentmentToPlayer = Mathf.Clamp(mind.ResentmentToPlayer + result.ResentDelta, 0f, 100f);
+            mind.GratitudeToPlayer = Mathf.Clamp(mind.GratitudeToPlayer + result.GratitudeDelta, 0f, 100f);
+            mind.TrustInPlayer = Mathf.Clamp(mind.TrustInPlayer + result.TrustDelta, 0f, 100f);
+
+            if (result.StressDelta != 0f && wd.MaxStress > 0f)
+            {
+                wd.CurStress = Mathf.Clamp(wd.CurStress + result.StressDelta, 0f, wd.MaxStress);
+            }
+
+            if (result.MoraleDelta != 0f)
+            {
+                wd.CurMorale = Mathf.Clamp(wd.CurMorale + result.MoraleDelta, 0f, 100f);
+            }
+
+            if (result.PlayerQiGain > 0f && playerData != null)
+            {
+                float qiCap = RealmRuleService.QiToNext(playerData.Growth);
+                playerData.Growth.Qi = qiCap > 0f
+                    ? Mathf.Min(playerData.Growth.Qi + result.PlayerQiGain, qiCap)
+                    : playerData.Growth.Qi + result.PlayerQiGain;
+            }
+
+            mindService.RecordIntentUse(wd, kind.ToString());
+
+            if (!string.IsNullOrEmpty(result.EventKey) && result.EventIntensity > 0f)
+            {
+                mindService.RecordEvent(worker, result.EventKey, MemoryValence.Positive,
+                    WorkerMindService.PlayerTargetName, result.EventIntensity,
+                    "玩家" + DialogueIntentRuleService.GetDisplayName(kind));
+            }
+
+            worker.ShowMindBubble(result.FallbackReply);
+
+            AWorkerTask.LogProvider(
+                $"[MindDiag] {worker.name} 对话意图 {kind}={result.OutcomeKey} 好感{result.FavorDelta:+0.#;-0.#}",
+                LogManager.LogLevelEnum.Debug);
+
+            return result;
+        }
+
+        /// <summary>获取当前对话 Worker（对话面板意图按钮状态查询用）。</summary>
+        public AWorker TryGetDialogueWorker(string npcId)
+        {
+            return this.GetDialogueWorker(npcId);
         }
 
         /// <summary>

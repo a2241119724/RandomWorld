@@ -407,6 +407,38 @@ namespace LAB2D.Constant
             "为什么总会梦到那种事……",
         };
 
+        /// <summary>玩家求教功法成功（正向）。</summary>
+        private static readonly string[] EvtTeachSeek = new[]
+        {
+            "能帮到道友一二，也算缘分。",
+            "传功于人，自己的领悟也深了三分。",
+            "希望这点心得对他有用。",
+        };
+
+        /// <summary>被玩家安抚（正向）。</summary>
+        private static readonly string[] EvtComforted = new[]
+        {
+            "心里的疙瘩解开了些。",
+            "有人关心，感觉没那么累了。",
+            "聊完之后，松了口气。",
+        };
+
+        /// <summary>玩家道歉（关系修复）。</summary>
+        private static readonly string[] EvtApology = new[]
+        {
+            "既然他认了错，就算了吧。",
+            "能屈能伸，此人可交。",
+            "心结打开了一半。",
+        };
+
+        /// <summary>收到玩家赠礼（感恩）。</summary>
+        private static readonly string[] EvtGiftPlayer = new[]
+        {
+            "这份心意我记下了。",
+            "得人恩惠，日后必报。",
+            "他出手真大方……",
+        };
+
         /// <summary>关系升级为友谊。</summary>
         private static readonly string[] RelFriendship = new[]
         {
@@ -584,6 +616,18 @@ namespace LAB2D.Constant
                     break;
                 case WorkerMindConstant.EVT_FELLOW_BREAKTHROUGH_ENVY:
                     pool = EvtFellowBreakthroughEnvy;
+                    break;
+                case WorkerMindConstant.EVT_TEACH_SEEK:
+                    pool = EvtTeachSeek;
+                    break;
+                case WorkerMindConstant.EVT_COMFORTED:
+                    pool = EvtComforted;
+                    break;
+                case WorkerMindConstant.EVT_APOLOGY:
+                    pool = EvtApology;
+                    break;
+                case WorkerMindConstant.EVT_GIFT_PLAYER:
+                    pool = EvtGiftPlayer;
                     break;
                 default:
                     return string.Empty;
