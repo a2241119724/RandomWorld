@@ -155,6 +155,9 @@ namespace LAB2D
 
             // 防守夜调度（入夜按 DefenceDraftRuleService 派 WorkerDefendTask，IInitializable 由下表驱动）
             ServiceLocator.Register(WorkerDefenceManager.Instance);
+
+            // 昼夜光照（驱动全局光强度/色温，ITickable 由下表驱动，排在 GameTimeManager 之后采样当帧新时间）
+            ServiceLocator.Register(DayNightLightManager.Instance);
         }
 
         public void Awake()
@@ -235,6 +238,8 @@ namespace LAB2D
             {
                 // 时钟源最前：时间先推进，后续系统（温度/WorkerUpdate/修仙等）读到当帧新时间
                 ServiceLocator.Get<GameTimeManager>(),
+                // 全局光照紧跟时钟：采样当帧新时间驱动昼夜明暗/色温
+                ServiceLocator.Get<DayNightLightManager>(),
                 new WorkerUpdateSystem(),
                 ServiceLocator.Get<AchievementManager>(),
                 new GlobalInputProcessor(),

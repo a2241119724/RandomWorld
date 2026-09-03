@@ -4,6 +4,7 @@ namespace LAB2D.Map
     using LAB2D.Manager;
     using LAB2D.Render;
     using UnityEngine;
+    using UnityEngine.Rendering.Universal;
     using UnityEngine.Tilemaps;
 
     /// <summary>
@@ -27,6 +28,11 @@ namespace LAB2D.Map
     /// 按名称从 AnimationManager 取 AnimationClip 经 legacy Animation 组件循环播放，
     /// 动画格 sprite 由组件接管；取不到 clip 时回退静态 tile 图。
     ///
+    /// 点光源（lightResolver）：可选委托按 cell 返回 TileLightConfig（BuildItemData.LightRadius &gt; 0
+    /// 的建筑如 Torch/Campfire）。非空时视觉 GO 下挂 "TileLight" 子节点（Light2D Point + Additive +
+    /// 可选 LightFlicker 平滑闪烁）；返回 null 销毁残留光。建造中不发光（BuildMap resolver 按
+    /// IsComplete 判定），SetComplete 后点亮；光 GO 随视觉 GO 销毁。Bottom 模式无独立 GO，配置无效。
+    ///
     /// 幂等约束：
     /// - CreateOrUpdate 以 tilemap 当前状态为准（GetSprite/GetColor/GetTransformMatrix）；
     ///   无 tile 的 cell 视为删除 → 多格物品副格（纯碰撞无 tile）自动不建视觉。
@@ -38,6 +44,7 @@ namespace LAB2D.Map
     public class TileVisualSpawner
     {
         private const string ParentName = "VisualSprites";
+        private const string LightChildName = "TileLight"; // 视觉 GO 下的点光源子节点名（SyncLight 调和目标）
 
         private readonly Tilemap tilemap;
         private readonly Transform parent;
@@ -49,6 +56,8 @@ namespace LAB2D.Map
         private readonly bool useTilemapColor; // false 时 SpriteRenderer 颜色强制白色（不读 tilemap 颜色）
         private readonly System.Func<Vector3Int, string> prefabResolver; // 非空时该格优先用预制体视觉（ItemData.VisualMode == Prefab 时返回 Name）
         private readonly System.Func<Vector3Int, string> animationResolver; // 非空时该格独立 sprite 视觉挂帧动画（ItemData.IsAnimation 开启时返回英文名 Name 前缀）
+        private readonly System.Func<Vector3Int, TileLightConfig> lightResolver; // 非空时按 cell 产出点光源参数（BuildItemData.LightRadius>0），null=无光
+        private readonly HashSet<Vector3Int> bottomLightWarned = new HashSet<Vector3Int>(); // Bottom+发光配置冲突已警告的格（防事件点重复刷屏）
         private readonly Dictionary<Vector3Int, SpriteRenderer> visual = new Dictionary<Vector3Int, SpriteRenderer>();
         private readonly Dictionary<Vector3Int, GameObject> prefabVisuals = new Dictionary<Vector3Int, GameObject>();
 
@@ -70,12 +79,16 @@ namespace LAB2D.Map
         /// <param name="animationResolver">可选：按 cell 返回帧动画前缀（如 ItemData.IsAnimation 开启且
         /// LayerMode != Bottom 时的英文名 Name）。非空时该格独立 SpriteRenderer 挂 SpriteFrameAnimator，
         /// 按名称从 AnimationManager 取 AnimationClip 循环播放；取不到 clip 时回退静态 tile 图。</param>
+        /// <param name="lightResolver">可选：按 cell 返回点光源参数（如 BuildItemData.LightRadius &gt; 0 的
+        /// Torch/Campfire）。非空时视觉 GO 下挂 "TileLight" 子节点（Light2D Point + 可选 LightFlicker）；
+        /// 返回 null 时销毁残留光 GO（同格换普通物品）。Bottom 模式无独立视觉 GO，发光配置无效（警告一次）。</param>
         public TileVisualSpawner(Tilemap tilemap, Transform hostTransform, string sortingLayerName, string objectNamePrefix,
             System.Func<Vector3Int, ItemLayerMode> layerModeResolver = null,
             System.Func<Vector3Int, Color> colorProvider = null,
             bool useTilemapColor = true,
             System.Func<Vector3Int, string> prefabResolver = null,
-            System.Func<Vector3Int, string> animationResolver = null)
+            System.Func<Vector3Int, string> animationResolver = null,
+            System.Func<Vector3Int, TileLightConfig> lightResolver = null)
         {
             this.tilemap = tilemap;
             this.sortingLayerName = sortingLayerName;
@@ -85,6 +98,7 @@ namespace LAB2D.Map
             this.useTilemapColor = useTilemapColor;
             this.prefabResolver = prefabResolver;
             this.animationResolver = animationResolver;
+            this.lightResolver = lightResolver;
             this.material = ResolveMaterial(tilemap);
             this.parent = new GameObject(ParentName).transform;
             this.parent.SetParent(hostTransform, false);
@@ -150,6 +164,14 @@ namespace LAB2D.Map
             ItemLayerMode mode = this.layerModeResolver != null ? this.layerModeResolver(cell) : ItemLayerMode.Alpha;
             if (mode == ItemLayerMode.Bottom)
             {
+                // Bottom 模式无独立视觉 GO 可挂光：发光配置（LightRadius>0）与 Bottom 冲突，警告一次后忽略。
+                if (this.lightResolver != null && this.lightResolver(cell) != null && this.bottomLightWarned.Add(cell))
+                {
+                    AWorkerTask.LogProvider(
+                        $"[BuildDiag] 发光建筑用了 Bottom 分层 cell=({cell.x},{cell.y}) tile={this.tilemap.GetTile(cell)?.name}，点光源无效（改 Normal/Alpha）",
+                        LogManager.LogLevelEnum.Warning);
+                }
+
                 // 恒底层（SO 开关）：不建独立 SpriteRenderer，直接由宿主 TilemapRenderer 渲染在地图层。
                 // tile 恢复该格应显示的颜色（colorProvider 状态色 / 默认白），并清残留视觉（sprite + prefab）。
                 this.tilemap.SetColor(cell, this.colorProvider != null ? this.colorProvider(cell) : Color.white);
@@ -180,6 +202,7 @@ namespace LAB2D.Map
                 GameObject instance = this.CreateOrUpdatePrefab(cell, prefabName);
                 if (instance != null)
                 {
+                    this.SyncLight(cell, instance, this.lightResolver != null ? this.lightResolver(cell) : null);
                     return instance.GetComponent<SpriteRenderer>();
                 }
             }
@@ -246,7 +269,83 @@ namespace LAB2D.Map
                 sr.transform.localScale = scale;
             }
 
+            // 点光源：发光建筑（BuildItemData.LightRadius>0）在视觉 GO 下挂 Light2D（建造中 resolver 返回 null 不发光）
+            this.SyncLight(cell, sr.gameObject, this.lightResolver != null ? this.lightResolver(cell) : null);
+
             return sr;
+        }
+
+        /// <summary>
+        /// 调和 cell 的点光源状态：以 lightResolver 结果为准（每次 CreateOrUpdate 调用，幂等重入安全）。
+        /// - config 为 null：销毁视觉 GO 下残留的 "TileLight" 子节点（同格换成普通物品/建造中）。
+        /// - config 非空：创建/复用 "TileLight" 子节点，按 config 重写 Light2D（Point 型、Additive 混合、
+        ///   阴影关闭——真实遮挡属后续阴影阶段），Flicker 开启时挂/重绑 LightFlicker（平滑火光摇曳）。
+        /// 光 GO 挂视觉 GO 之下，建筑删除时随父物体一并销毁，无需显式清理。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <param name="host">该格视觉 GO（独立 sprite 或 prefab 实例）。</param>
+        /// <param name="config">resolver 产出的光源参数（null = 无光）。</param>
+        private void SyncLight(Vector3Int cell, GameObject host, TileLightConfig config)
+        {
+            if (host == null)
+            {
+                return;
+            }
+
+            Transform existing = host.transform.Find(LightChildName);
+            if (config == null)
+            {
+                if (existing != null)
+                {
+                    Object.Destroy(existing.gameObject);
+                }
+
+                return;
+            }
+
+            GameObject lightGo;
+            if (existing != null)
+            {
+                lightGo = existing.gameObject;
+            }
+            else
+            {
+                lightGo = new GameObject(LightChildName);
+                lightGo.transform.SetParent(host.transform, false);
+            }
+
+            Light2D light = lightGo.GetComponent<Light2D>();
+            if (light == null)
+            {
+                light = lightGo.AddComponent<Light2D>();
+                light.lightType = Light2D.LightType.Point;
+                light.blendStyleIndex = 1; // Additive：暖光叠加在全局光之上
+                light.falloffIntensity = 0.5f;
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] 点光源创建 cell=({cell.x},{cell.y}) radius={config.Radius} intensity={config.Intensity}",
+                    LogManager.LogLevelEnum.Debug);
+            }
+
+            light.pointLightOuterRadius = config.Radius;
+            light.pointLightInnerRadius = config.Radius * 0.35f;
+            light.intensity = config.Intensity;
+            light.color = config.Color;
+
+            // 闪烁调和：开启时挂/重绑（参数变化时 baseIntensity 跟随），关闭时移除
+            LightFlicker flicker = lightGo.GetComponent<LightFlicker>();
+            if (config.Flicker)
+            {
+                if (flicker == null)
+                {
+                    flicker = lightGo.AddComponent<LightFlicker>();
+                }
+
+                flicker.Init(light, config.Intensity);
+            }
+            else if (flicker != null)
+            {
+                Object.Destroy(flicker);
+            }
         }
 
         /// <summary>

@@ -2,6 +2,7 @@ namespace LAB2D.Editor.Tests.Domain
 {
     using LAB2D.Domain.Time;
     using NUnit.Framework;
+    using UnityEngine;
 
     /// <summary>
     /// DayNightRuleService 纯函数单测 — 天索引/进度/相位边界/光照曲线。
@@ -157,6 +158,94 @@ namespace LAB2D.Editor.Tests.Domain
         public void SecondsUntilPhaseStart_ZeroDayLength_ReturnsZero()
         {
             Assert.AreEqual(0f, DayNightRuleService.SecondsUntilPhaseStart(100.0, 0f, GamePhase.Night));
+        }
+
+        [Test]
+        public void GetGlobalLightIntensity_MidnightMinNoonMax()
+        {
+            float midnight = DayNightRuleService.GetGlobalLightIntensity(0.0, DayLength);
+            float noon = DayNightRuleService.GetGlobalLightIntensity(DayLength * 0.5f, DayLength);
+            Assert.AreEqual(DayNightRuleService.GlobalLightIntensityMin, midnight, 0.0001f);
+            Assert.AreEqual(DayNightRuleService.GlobalLightIntensityMax, noon, 0.0001f);
+        }
+
+        [Test]
+        public void GetGlobalLightIntensity_AlwaysWithinRange()
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                double t = DayLength * i / 100.0;
+                float intensity = DayNightRuleService.GetGlobalLightIntensity(t, DayLength);
+                Assert.GreaterOrEqual(intensity, DayNightRuleService.GlobalLightIntensityMin - 0.0001f, $"t={t}");
+                Assert.LessOrEqual(intensity, DayNightRuleService.GlobalLightIntensityMax + 0.0001f, $"t={t}");
+            }
+        }
+
+        [Test]
+        public void GetGlobalLightIntensity_PeriodicPerDay()
+        {
+            double progress = 0.42;
+            float day0 = DayNightRuleService.GetGlobalLightIntensity(DayLength * progress, DayLength);
+            float day3 = DayNightRuleService.GetGlobalLightIntensity(DayLength * (progress + 3), DayLength);
+            Assert.AreEqual(day0, day3, 0.0001f);
+        }
+
+        [Test]
+        public void GetGlobalLightColor_KeyFrameSamplesExact()
+        {
+            // 午夜暗蓝 / 正午白 / 黄昏橙红（红>蓝）/ 入夜紫蓝
+            DayLightColor midnight = DayNightRuleService.GetGlobalLightColorByProgress(0.0);
+            Assert.AreEqual(0.55f, midnight.R, 0.0001f);
+            Assert.AreEqual(0.65f, midnight.G, 0.0001f);
+            Assert.AreEqual(1.00f, midnight.B, 0.0001f);
+
+            DayLightColor noon = DayNightRuleService.GetGlobalLightColorByProgress(0.5);
+            Assert.AreEqual(1f, noon.R, 0.0001f);
+            Assert.AreEqual(noon.R, noon.G, 0.0001f);
+            Assert.AreEqual(noon.G, noon.B, 0.0001f);
+
+            DayLightColor dusk = DayNightRuleService.GetGlobalLightColorByProgress(0.78);
+            Assert.Greater(dusk.R, dusk.B, "黄昏应偏橙红（R>B）");
+
+            DayLightColor night = DayNightRuleService.GetGlobalLightColorByProgress(0.9);
+            Assert.Greater(night.B, night.R, "夜晚应偏蓝（B>R）");
+        }
+
+        [Test]
+        public void GetGlobalLightColor_MidpointInterpolatesLinearly()
+        {
+            // 0.25 是 0.20 破晓暖橙与 0.30 早晨的中点：分量应为两端均值
+            DayLightColor mid = DayNightRuleService.GetGlobalLightColorByProgress(0.25);
+            DayLightColor a = DayNightRuleService.GetGlobalLightColorByProgress(0.20);
+            DayLightColor b = DayNightRuleService.GetGlobalLightColorByProgress(0.30);
+            Assert.AreEqual((a.R + b.R) / 2f, mid.R, 0.0001f);
+            Assert.AreEqual((a.G + b.G) / 2f, mid.G, 0.0001f);
+            Assert.AreEqual((a.B + b.B) / 2f, mid.B, 0.0001f);
+        }
+
+        [Test]
+        public void GetGlobalLightColor_PeriodicClosedAtDayBoundary()
+        {
+            // 周期闭合：progress 1.0（兜底分支）与 0.0（首段插值起点）同色；1-ε 与 0 连续
+            DayLightColor atOne = DayNightRuleService.GetGlobalLightColorByProgress(1.0);
+            DayLightColor atZero = DayNightRuleService.GetGlobalLightColorByProgress(0.0);
+            Assert.AreEqual(atZero.R, atOne.R, 0.0001f);
+            Assert.AreEqual(atZero.G, atOne.G, 0.0001f);
+            Assert.AreEqual(atZero.B, atOne.B, 0.0001f);
+
+            DayLightColor nearOne = DayNightRuleService.GetGlobalLightColorByProgress(0.999);
+            Assert.Less(Mathf.Abs(nearOne.R - atZero.R), 0.01f, "1-ε 应连续过渡到 0.0");
+        }
+
+        [Test]
+        public void GetGlobalLightColor_FollowsGameTimeConversion()
+        {
+            // 时间换算一致性：CurGameTime = DayLength × progress 与直接传 progress 同色
+            DayLightColor viaTime = DayNightRuleService.GetGlobalLightColor(DayLength * 0.6f, DayLength);
+            DayLightColor viaProgress = DayNightRuleService.GetGlobalLightColorByProgress(0.6);
+            Assert.AreEqual(viaProgress.R, viaTime.R, 0.0001f);
+            Assert.AreEqual(viaProgress.G, viaTime.G, 0.0001f);
+            Assert.AreEqual(viaProgress.B, viaTime.B, 0.0001f);
         }
     }
 }

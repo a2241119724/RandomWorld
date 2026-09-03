@@ -8,6 +8,7 @@ namespace LAB2D.Map
     using LAB2D.Domain.Common;
     using LAB2D.Item;
     using LAB2D.Item.Build;
+    using LAB2D.Render;
     using LAB2D.Serializable;
     using System;
     using System.Collections.Generic;
@@ -58,7 +59,8 @@ namespace LAB2D.Map
 
             this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "BuildVisual",
                 this.GetBuildLayerMode, colorProvider: this.GetBuildVisualColor,
-                prefabResolver: this.GetBuildPrefabName, animationResolver: this.GetBuildAnimationPrefix);
+                prefabResolver: this.GetBuildPrefabName, animationResolver: this.GetBuildAnimationPrefix,
+                lightResolver: this.GetBuildLightConfig);
         }
 
         public void Start()
@@ -451,6 +453,37 @@ namespace LAB2D.Map
             }
 
             return data.IsComplete ? Color.white : this.initColor;
+        }
+
+        /// <summary>
+        /// 该格建筑的点光源参数（BuildItemData.LightRadius &gt; 0 的发光建筑如 Torch/Campfire）。
+        /// 建造中不发光（IsComplete 语义同 GetBuildVisualColor：建成点亮，与视觉状态色一致）；
+        /// LightRadius &lt;= 0 / 无建造数据 = 返回 null（TileVisualSpawner 销毁残留光 GO）。
+        /// 供 TileVisualSpawner 的 lightResolver 使用；读档/网络同步经 RebuildAll/CreateOrUpdate 幂等重建。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>光源参数；无光时返回 null。</returns>
+        private TileLightConfig GetBuildLightConfig(Vector3Int cell)
+        {
+            BuildTileData data = this.GetBuildTileData(cell);
+            if (data == null || !data.IsComplete)
+            {
+                return null;
+            }
+
+            BuildItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
+            if (item == null || item.LightRadius <= 0f)
+            {
+                return null;
+            }
+
+            return new TileLightConfig
+            {
+                Radius = item.LightRadius,
+                Intensity = item.LightIntensity,
+                Color = item.LightColor,
+                Flicker = item.LightFlicker,
+            };
         }
 
         /// <summary>
