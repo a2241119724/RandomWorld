@@ -72,17 +72,12 @@ namespace LAB2D.Gameplay
 
         private void PlaceBoardIcon(Vector3Int pos)
         {
-            var tile = (UnityEngine.Tilemaps.TileBase)Character.Worker.Task.AWorkerTask.ResourceLoadProvider("Bounty");
-            if (tile == null) return;
+            // 资源兜底：tile 缺失时跳过放置（保持旧路径行为）
+            if (Character.Worker.Task.AWorkerTask.ResourceLoadProvider("Bounty") == null) return;
 
-            var buildMap = Core.ServiceLocator.Get<BuildMap>();
-            buildMap.DirectBuild(pos, tile);
-
-            var posLAB = Vector3IntLAB.ToVector3IntLAB(pos);
-            if (!buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
-            {
-                buildMap.BuildMapDataLAB.PosMap[posLAB] = new BuildMap.BuildTileData("Bounty", true);
-            }
+            // 管线放置：Bounty 是 ABuildItem 子类（系统建筑），SO 条目 IsNeedBuild=false
+            // 放置即完成、碰撞按 IsPass；PosMap/WalkabilityCache/视觉同步均由 AddBuild 统一处理
+            new Item.Build.Bounty().PlaceBySystem(pos);
         }
 
         // ---- 相邻位置 ----

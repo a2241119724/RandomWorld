@@ -148,22 +148,14 @@ namespace LAB2D.Gameplay
         {
             ShopPreset preset = GetRandomPreset();
 
-            // DirectBuild：图标不可通行，Worker/Enemy 不会穿过商店
+            // 管线放置：Shop 是 ABuildItem 子类（系统建筑）。AddBuild 内部先登记 PosMap
+            // 再 visuals.CreateOrUpdate（天然规避旧手写路径的淡化模式顺序 bug），
+            // 碰撞按 SO IsPass=false（物理阻挡 + A* 不可达，与预制体 Collider2D 双保险），
+            // WalkabilityCache 亦由管线内部刷新。
             TileBase tile = (TileBase)AWorkerTask.ResourceLoadProvider(ShopAssetName);
             if (tile != null)
             {
-                BuildMap buildMap = Core.ServiceLocator.Get<BuildMap>();
-                var posLAB = Vector3IntLAB.ToVector3IntLAB(shopPos);
-                // 先登记 PosMap 再建视觉：DirectBuild 内部 visuals.CreateOrUpdate 会读 GetBuildLayerMode，
-                // 若 PosMap 无 Shop 条目会回退 ItemLayerMode.Alpha，导致商店以"可淡化"模式注册进
-                // OcclusionFader，与 BuildItemData.LayerMode=Normal（不淡化）相悖（生成顺序 bug）。
-                if (!buildMap.BuildMapDataLAB.PosMap.ContainsKey(posLAB))
-                {
-                    buildMap.BuildMapDataLAB.PosMap[posLAB] = new BuildMap.BuildTileData(ShopAssetName, true);
-                }
-
-                buildMap.DirectBuild(shopPos, tile, true);
-                WalkabilityCache.UpdateCell(shopPos);
+                new Item.Build.Shop().PlaceBySystem(shopPos);
             }
 
             // 从预制体实例化（挂 ShopNPC 组件 + Collider2D）
