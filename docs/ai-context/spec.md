@@ -21,6 +21,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **建造位置预注册:** 建造位置冲突时自我预留跳过，配合建造者名称参数实现任务恢复
 
 ### 战斗系统
+- **防守夜 Worker 响应:** 入夜 `WorkerDefenceManager`（订阅 GamePhaseChangedEvent）按 `DefenceDraftRuleService.Decide` 纯函数打分三分行为——参战（核心旁待命位轮询驻守）/躲床（有家回 HomePosition、无家原地）/趁乱（当前位置周围随机可通行格溜边）；输入=人格四维+Greed+压力士气+玩家好感+觉醒+境界，觉醒者/高境界优先参战。派发前 `GiveUpTask` 无条件抢占（防旧任务队列占位/认领锁死）；任务时长=距黎明秒数到点自然 Finish；同游戏日防重派，山门核心未放置不部署
 - **波次敌人:** 普通波 + Boss 波(每 3 波)，难度渐进缩放
 - **主动技能 (8 槽):** 默认 Q/E/R/F（旋风斩、冲刺、力量爆发、治疗之光）+ 功法外功/异能动态注册槽 Z/X/C/V（见成长系统节）
 - **连击系统:** 多阶连击伤害/经验加成
@@ -87,7 +88,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **随机人生事件:** `WorkerLifeEventRuleService` 事件表（灵感/横财/领悟/变故/疾病/小确幸/梦魇）+ `WorkerDreamRuleService` 执念（`RefreshGoal` 人格分支前 25% 把 `CurrentGoal` 指到执念映射）。**平衡三原则**：封顶（生存单次 ≤±15、人格漂移 ≤±8）；恩典（濒危当轮不掷，一天最多 1 次）；可恢复（负事件只动士气/精气神/心情软维度，绝不扣饥饿/疲劳致死线）。`WorkerMindManager` 每 2 游戏日按日口径掷 `Random.value < 0.35`
 - **性格演化:** `PersonalityDriftRuleService` 四桶（心情/事业心/勤奋/社交）由 `RecordEvent` 按强度累积，`|v|≥12` 迁移 ±2（clamp）归零。**防横跳三机制**：滞回带（反向需积 12+6=18，`*Dir` 字段记忆方向）、每日限流（`Migrate` 日限 1）、桶饱和（±30 上限）
 - **社会关系:** `WorkerRelationshipRuleService` + `Mind.Relations`（name 键控），Kind 优先级 Grudge>Enmity>Admiration>Friendship>None；友谊 `Affinity≥40`/敌意 `≤-30`/爱慕 `Admiration≥40`/记仇（被拒交易 30、被攻击 40，每日 -2 衰减）。**四个低频行为（防经济干扰）**：①互助/回避——friend/admiration 好感门前豁免必接、enmity/grudge 拒接（`WorkerBountyTask.DoIsCanWork`）②拒卖——关系否决优先于人格（`WorkerTradeService.WillSell` 前置）③送礼——漫游决策前 5%，双方 Affinity+8、收方好感+5（`WorkerDecisionService`）④嫉妒——`CurrencyManager.CompleteBounty` 节流钩子（≥30s），旁观 `Greed>60` 对完成者 Affinity-4。每日 `Decay` 淡化；死亡清理 `FavorabilityManager.RemoveDeadWorker`
-- **事件接入点:** 完成/接取悬赏、交易成败、被攻击、玩家救危、对话结束等事件点调 `RecordEvent`（TargetName=`"PLAYER"` 哨兵或 Worker 名），绝不每帧循环；`WorkerMindManager.Tick`/`ProcessDayRollover` 驱动
+- **事件接入点:** 完成/接取悬赏、交易成败、被攻击、玩家救危、对话结束、修仙事件（突破者成就记忆+气泡 `CultivationManager.RecordBreakthroughMind`；工友旁观——`Greed≥阈值` 嫉妒记仇/境界低者敬仰爱慕，均带气泡）、异能觉醒 `AwakenedPowerManager` 等事件点调 `RecordEvent`（TargetName=`"PLAYER"` 哨兵或 Worker 名），绝不每帧循环；`WorkerMindManager.Tick`/`ProcessDayRollover` 驱动
 - **反馈:** 拒绝理由/人生事件/关系变化统一走 `AWorker.ShowMindBubble`（语料 `WorkerInnerMonologue`，防被 `ShowRandomMonologue` 覆盖：进口气卫 + `HideDialogText` 清守卫）+ `[MindDiag]` Debug 日志 + `WorkerConditionHUD`「最近想法」行
 
 ### 成长系统（词条/功法/修仙/异能/灵根/生活技能/科技）
