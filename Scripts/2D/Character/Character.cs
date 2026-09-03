@@ -202,6 +202,8 @@ namespace LAB2D.Character
 
             YSortRegisterProvider(this);
 
+            BlobShadowProvider(this);
+
             this.healthComponent = new CharacterHealthComponent(this.damageCalculator, this.levelProgressionService);
         }
 
@@ -369,6 +371,27 @@ namespace LAB2D.Character
                 }
 
                 WorldYSortManager.Ensure().Register(c.spriteRenderer);
+            };
+
+        /// <summary>
+        /// 脚下椭圆软影提供者 — 创建固定排序层级的影子子物体（地表(-1000)之上、
+        /// 全部动态对象(≥0)之下，不注册 y 排序）。默认实现用 ShadowTextureFactory
+        /// 共享纹理压椭圆；测试可替换为无操作桩（仿 YSortRegisterProvider 先例）。
+        /// </summary>
+        internal static System.Action<Character> BlobShadowProvider { get; set; }
+            = (c) =>
+            {
+                if (c == null || c.spriteRenderer == null)
+                {
+                    return;
+                }
+
+                var shadow = new GameObject("BlobShadow").AddComponent<SpriteRenderer>();
+                shadow.transform.SetParent(c.transform, false);
+                shadow.transform.localPosition = new Vector3(0f, -0.12f, 0f);
+                shadow.transform.localScale = new Vector3(0.9f, 0.45f, 1f);
+                shadow.sprite = ShadowTextureFactory.GetOrCreate();
+                shadow.sortingOrder = WorldYSortManager.BottomLayerOrder + 1;
             };
 
         /// <inheritdoc/>

@@ -5,6 +5,7 @@ namespace LAB2D.Character.Player
     using LAB2D.Domain.Character;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
+    using LAB2D.Render;
     using LAB2D.UnityAdapter;
     using System;
     using System.Collections.Generic;
@@ -236,6 +237,11 @@ namespace LAB2D.Character.Player
         public override void Start()
         {
             base.Start();
+
+            // 夜间随身光晕：运行时创建子 GO（不改 prefab，不触发 AB 重打包）
+            GameObject glowGo = new GameObject("PlayerNightGlow");
+            glowGo.transform.SetParent(this.transform, false);
+            glowGo.AddComponent<PlayerNightGlow>();
 
             Animator animator = AnimatorProvider(this);
             if (animator == null)
