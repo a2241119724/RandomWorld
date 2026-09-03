@@ -31,6 +31,13 @@ namespace LAB2D.UI.Panel
         {
             base.OnEnter();
             Dictionary<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> typeToResource = ServiceLocator.Get<InventoryManager>().TypeToResource;
+
+            // 类型减少时清理多余按钮（Destroy 帧末生效，不影响本次 foreach 复用前 N 个）
+            for (int i = this.type.childCount - 1; i >= typeToResource.Count; i--)
+            {
+                UnityEngine.Object.Destroy(this.type.GetChild(i).gameObject);
+            }
+
             int count = 0;
             foreach (KeyValuePair<AItem.ItemTypeEnum, Dictionary<Vector3Int, ResourceInfo>> pair in typeToResource)
             {
@@ -48,6 +55,8 @@ namespace LAB2D.UI.Panel
                     text1 += valuePair.Key.ToString() + ":" + valuePair.Value.ToString() + "\n";
                 }
 
+                // 复用按钮先清旧监听（每次 OnEnter 都 AddListener 会累积旧闭包，点击时串着执行过期内容）
+                button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(() =>
                 {
                     this.content.text = text1;
@@ -55,7 +64,6 @@ namespace LAB2D.UI.Panel
                 Text text = button.transform.GetComponentInChildren<Text>();
                 text.text = pair.Key.ToString();
 
-                // TODO 删除Gameobject
                 count++;
             }
         }
