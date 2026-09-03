@@ -2,6 +2,13 @@
 
 > 每次通过日志分析并解决 bug 后，把思路追加到此文件。开始新任务前**先通读本文件**，命中历史记录时直接引用验证，避免重复排查。
 
+## 2026-09-04 启动期 Warning「没有名字为Seed0的道具」+ id=0 幽灵种子入包
+- **现象**：每次启动 `Enter: CreateOrJoinPanel` 后必现 1 条 Warning「没有名字为Seed0的道具!!!」（game.log 2026-09-03 局实锤，error.log 空）。
+- **根因**：种子 SO 合并为单条 `Name=Seed`（SeedItemData.asset）后，`Seed0.cs` 成「有类无 SO 条目」孤儿——`ItemInstanceFactory.InitItemInstances` 第三步兜底（有类即可入包）把它反射注册进 `backpackItemTypes`，启动背包填充 `BackpackController.Awake → GenBackpackItems()` 对它调 `GetByName("Seed0")` 查不到 → Warning 且 `ItemData.Empty.Id=0`，**背包里多一件 id=0 幽灵种子**。与 2026-08-24「asset not found 刷屏」同型（SO 条目与反射类不对齐，兜底路径放大）。
+- **修复**：`Seed0` 改 `abstract`——`Tool.GetChildByParent` 过滤抽象类，孤儿类不再被兜底注册（一行改动，不删文件）。
+- **验证**：Unity Roslyn 按 Bee rsp 全量编译通过；种植系统按 `ItemTypeProvider==Seed` 判断不依赖类名（grep 已证）；地面拾取路径 `ItemMap.PickUpItem` 有 KeyNotFoundException 防护，无崩溃风险。
+- **教训**：**合并/精简 ItemData SO 条目时，同步处理对应 C# 具体类**（改 abstract 或补新条目名），否则反射兜底静默制造幽灵物品；「有类无 SO」的孤儿类唯一可见症状可能只是一条低频 Warning，但数据污染（id=0）已发生。
+
 ## 2026-09-03 启动期两条必现 Warning（Attack Not Found / NullItemData scriptable not found）
 
 - **现象**：game.log 启动早期（13:22 局）各 1 条 Warning：`Attack Not Found!!!`（Tool.GetComponentInChildren 带 name 重载）与 `NullItemData scriptable not found!!!`（ResourceManager.TryGetResource）。每局必现，量小但恒在。

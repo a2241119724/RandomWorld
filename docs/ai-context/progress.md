@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `fix(item)`: 启动 Warning「没有名字为Seed0的道具」+ id=0 幽灵种子入包——种子 SO 合并为单条 Seed 后 `Seed0.cs` 成有类无条目孤儿，反射兜底注册进背包致 `GetByName` 落空；改 abstract 使 `GetChildByParent` 过滤跳过。存档见 `bug-fixes.md`
 - 2026-09 — `feat(lingqi)`: M4 包2.5 灵气环境——空间浓度图 M=地形×灵脉×聚灵阵×天气（`LingQiRuleService` 纯函数 + `LingQiManager` 宿主：灵脉撒点入档三路径恢复、聚灵阵 2s 重扫不入档）；`ComputeQiGain` 加 envMultiplier 乘修炼速率（玩家打坐/Worker 睡眠吐纳采样位置浓度）；地形 SO 加 `qiDensityMultiplier`、科技聚灵阵重定义只解锁建造、EnvironmentManager 退化为浓度展示（点地分项选址工具）、`LingVeinGlow` 程序化灵脉光环。spec 见灵气环境系统节
 
 - 2026-09 — `feat(defense)`: M2B 包3——敌人扩种协议（`WaveEnemyKind` 四种 + `WaveRuleService.PickEnemyKind` 确定性轮转，第 3 波起混池 Common/Seek/Charge/Shoot；存档 `EnemyKindId` 防读档换种，旧档缺省 Common）+ 冲锋野猪/远程妖狐（ASeekEnemy/CommonEnemy 系差异化数值，prefab 复制改造 + 512px PPU1280 素材）+ 箭塔建筑（`ArrowTower : ABuildItem` + `ArrowTowerManager` ITickable 节流扫描，技能直伤公式 `ReduceHp(null)` + Bullet 粒子纯视觉弹道绕开塔非 Character 的 Onwer NRE，SO 条目 1100004）+ 防守接敌治 M2A 罚站空转（站岗索敌有武器主动进攻击状态，复用 LastAttacker→AttackTarget 反击通路；修 NextDefendPosition 核心占用格兜底死循环改躲床位）。spec 见战斗系统节
