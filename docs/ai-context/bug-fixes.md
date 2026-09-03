@@ -574,3 +574,31 @@
   - **纯代码构建 UI 的面板，BuildUI 必须防重入**——Awake（AddComponent 同步触发）与工厂方法显式调用天然构成双调用。
   - **InitializeAll 这类顺序初始化清单对异常零防御**：任何一项抛异常，其后的面板全部静默消失且游戏照常运行（异常只在 Console 红字一次），表现为"某个面板没了"这种点状症状。`[PanelDiag]` 事件点日志（进入/分支/完成）+ game.log 是定位此类"静默中断"的最短路径。
 - **追加（同日）——形态已改**：用户随后**直接在场景中拷贝创建了两个面板节点**，两面板已删除全部代码自建逻辑（创建分支/BuildUI/构建辅助/尺寸常量）。现形态：`EnsureRuntimePanel` 仅按名查找绑定（UIRoot 下 `Find` → `GameObject.Find` 兜底，找不到 Error 不自建），`BindSceneUI` 按**固定子物体名**回填字段引用并 `AddListener`（Info/ButtonRow/MeditateBtn/BreakthroughBtn/GongFaRow{i}/GongFaBtn{i}/TechRow{i}/TechBtn{i}）——**场景子物体改名会静默断绑定**（RefreshPanel 判 null 跳过、按钮无响应），改名时须同步 `BindSceneUI`。
+
+## 2026-09-03 Worker×Enemy 索敌双循环复杂度优化（空间网格 + 收口改造）
+
+- **现象**（主动优化，非日志驱动）：夜间防守全员 Worker 每 0.5s 经 `SkillTool.GetEnemiesInRadius` 全量线性扫描敌人列表取最近——O(W×E)（W=100、E=548 最坏 ~11 万次距离计算/秒 + 200 次 List 分配/秒）整夜持续；同族热点：箭塔 O(塔×E)/1.5s、`EnemyManager.AliveEnemyCount` 每次读取触发 `FindObjectsOfType` 全场景扫描（波次生成/清场期每秒一次）、攻击特效清理 O(活跃特效²)/次攻击。
+- **根因**：全项目索敌收口在 `SkillTool.GetEnemiesInRadius` 一个函数但走 `List<AEnemy>` 线性扫描，无任何空间分区（`Core/KDTree` 存在但零调用且无删除 API/无对象载荷，不可复用）。
+- **修复**（纯性能优化，行为不变）：
+  1. 新建 `Domain/Common/SpatialGrid.cs`：纯 C# 泛型均匀网格哈希（cellSize=8=最大查询半径→桶覆盖恒 3×3），**惰性全量重建**（帧号脏检查，同帧多查询只建一次；不选增量维护——Photon 销毁残留 null、死亡时机复杂易出 bug，E≤548 全量重建微秒级）；桶内存 `Entry(pos,item)` 供查询时精确距离过滤；`usedKeys` 只清非空桶（`List.Clear` 保容量防 GC）。
+  2. **快照滞后双保险**：网格是重建时刻快照，重建时 `IsAliveEnemy` 过滤 + 查询 API 带 `filter` 参数**查询时刻实时判活**（`Character.ReduceHp` 不判目标已死，ArrowTower 直打会打到已死目标——filter 不可省）。
+  3. `EnemyManager` 挂 `EnemyGrid` + `EnsureEnemyGridRebuilt()`；`AliveEnemyCount` 拆快慢路径（`PruneDeadEnemies` O(E) 每次跑 + `MaybeFullSync` FindObjectsOfType 补漏 10s 节流；`SaveData` 保留全量 `SyncAliveEnemies` 存档语义零变化）。`WorkerManager` 同款 `WorkerGrid` 供好感通知。
+  4. `SkillTool.GetEnemiesInRadius` 保持签名走网格（**保留每次 new List**——`ExecuteSelfAOE` 遍历中同步 ReduceHp 可能重入查询，池化 List 会被踩）；新增零分配 `GetNearestEnemyInRadius`；`WorkerDefendTask`/`ArrowTowerManager` 换用（消 List 分配+二次遍历）。
+  5. 错相三处：`WorkerDefendTask.enemyScanTimer` 负随机起点（入夜同帧全员派任务否则齐扫）、`SeekEnemyMoveState` 感知按 `GetInstanceID()&3` 错相（`frameCount%4` 全局相位→全部 SeekEnemy 第 4n 帧同帧尖峰）、`AttackEffectManager.GetEffect` 倒序原地清理（原 `ToArray()`+`List.Remove` 每次攻击分配+O(n²)；null 条目只移不入队——enqueue(null) 会把 NRE 延迟到 Dequeue）。
+- **验证**：`verify_compile.py` 全量 ERRORS:0；`SpatialGridTests`（EditMode，暴力线性扫描对照：随机布置/边界含等/二轮重建/filter/cellSize 校验）待 Unity Test Runner 运行；运行时待夜间防守实测（防守接敌/箭塔射击日志频率与目标行为应与改造前一致）。
+- **教训**：
+  - **角色列表的"邻近查询"一律走 SpatialGrid，勿手写线性扫描**——收口单函数+空间索引，W×E 乘积降为 W×局部E；新增查询半径显著大于 cellSize(8) 时重评（r=16 时 25 桶仍良性）。
+  - **快照型空间索引必须配查询时刻 filter 复查判活**，否则同帧"重建后死亡"的实体会被命中（ReduceHp 不挡已死目标）。
+  - **`FindObjectsOfType` 型全场景扫描做防御性兜底时必须降频**（计时脏检查），它在波次生成闸门/清场轮询路径上每秒一次地放大。
+  - **全局 `frameCount % N` 分帧是"分帧未错相"**：所有实例同帧执行形成周期尖峰，错相用实例 id（`GetInstanceID()&3`，补码低位对负 id 安全）或负随机起点。
+
+## 2026-09-03 启动崩溃：Build Torch 与消耗品 Torch 撞名（nameToId 全局键冲突）
+
+- **现象**：进 Play 即 `ArgumentException: An item with the same key has already been added. Key: Torch`，栈在 `ItemDataManager.Awake` Backpack 段（nameToId.Add）。
+- **根因**：`Name` 是跨**全部** ItemData SO 的全局键（`ItemDataManager.Awake` 三段 Build/Backpack/Resource 全部 `nameToId.Add(itemData.Name, id)` 直 Add 无查重）。光照工具 `BuildLightAssetGenerator` 往 BuildOtherItemData 写入建筑 `Torch`（三同约定全套：Torch.cs/tile/动画），与旧消耗品火把 `Torch`（ConsumableItemData Id=200001，早期手持照明半成品设计 EquipSlot=14，无引用/掉落/获取途径）撞名。Build 段先注册 `"Torch"`，Backpack 段再 Add 即炸。栈落点反推法：炸在 Backpack 段说明 Build 段已成功加过同名键。
+- **修复**：消耗品侧改名 `Torch → HandTorch`（保留手持照明设计位，Id=200001 不变；无获取途径故无存档迁移问题）；工具侧 `BuildLightAssetGenerator` 加 `IsNameTakenByOtherSO` 跨 SO 撞名检测（写入前 AssetDatabase 扫全部 `BuildItemDataSO`+`ItemDataSO` 条目 Name，撞名 LogError 跳过）。
+- **验证**：`verify_compile.py` ERRORS:0；Play 启动 ItemDataManager.Awake 三段全部通过（可临时在 Backpack 段前后打 Debug）。
+- **教训**：
+  - **三同约定只覆盖 Build 域内唯一；`Name` 实际是全物品空间的全局键**——新资产接入（含 Editor 工具）必须做跨 SO 撞名检测，不能只查目标 SO 自身去重。
+  - **`BuildItemDataSO/ItemDataSO` 磁盘 Id 是占位值**：`OnEnable` 加载时按列表顺序重排（`ItemType*100000+顺序`），`GetExpandedItems` 再兜一次——磁盘上的 `Id: 0` 不是 bug 不用修；代价是「磁盘 Id 与运行时 Id 解耦」，排查 Id 问题以运行时为准。
+  - 消耗品侧 `ItemDataSO.OnEnable` 同样按顺序重排，改名不动列表位置则 Id 稳定。

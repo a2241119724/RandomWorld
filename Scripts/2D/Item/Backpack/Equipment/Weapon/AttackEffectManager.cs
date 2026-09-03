@@ -53,13 +53,20 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
         /// <returns>特效</returns>
         public ParticleSystem GetEffect(EffectTypeEnum name, float rad)
         {
-            // 惰性检测
-            foreach (var particleSystem in this.activeEffects[name].ToArray())
+            // 惰性检测：倒序原地清理（原 ToArray 快照 + List.Remove 是每次攻击一次数组分配 + O(n²) 移动）
+            List<ParticleSystem> active = this.activeEffects[name];
+            for (int i = active.Count - 1; i >= 0; i--)
             {
-                if (!particleSystem.IsAlive())
+                ParticleSystem candidate = active[i];
+                if (candidate == null)
                 {
-                    this.availableEffects[name].Enqueue(particleSystem);
-                    this.activeEffects[name].Remove(particleSystem);
+                    // 已销毁（场景重载等）：只移出 active，不入队复用（避免 Dequeue 出 null 延迟 NRE）
+                    active.RemoveAt(i);
+                }
+                else if (!candidate.IsAlive())
+                {
+                    this.availableEffects[name].Enqueue(candidate);
+                    active.RemoveAt(i);
                 }
             }
 

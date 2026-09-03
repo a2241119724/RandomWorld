@@ -109,31 +109,11 @@ namespace LAB2D.Gameplay
         private void TryFire(TileMap tileMap, Vector3Int cell)
         {
             Vector3 towerPos = tileMap.MapPosToWorldPos(cell);
-            List<AEnemy> enemies = SkillTool.GetEnemiesInRadius(towerPos, AttackRange);
-            if (enemies.Count == 0)
-            {
-                return;
-            }
 
-            // 取最近目标（SkillManager.ExecuteSingleTarget 同款：结果无序，按距离取最小）
-            AEnemy target = null;
-            float nearestSqr = float.MaxValue;
-            foreach (AEnemy enemy in enemies)
-            {
-                if (enemy == null)
-                {
-                    continue;
-                }
-
-                float sqr = (enemy.transform.position - towerPos).sqrMagnitude;
-                if (sqr < nearestSqr)
-                {
-                    nearestSqr = sqr;
-                    target = enemy;
-                }
-            }
-
-            if (target == null)
+            // 网格最近邻查询（零分配，O(局部敌人数)，替代全列表扫描+取最近）；
+            // Hp 复查为快照防御最后关口（网格是本帧重建时刻的快照，对齐原实时判活语义）
+            AEnemy target = SkillTool.GetNearestEnemyInRadius(towerPos, AttackRange, out float nearestSqr);
+            if (target == null || target.CharacterDataLAB == null || target.CharacterDataLAB.Hp <= 0)
             {
                 return;
             }

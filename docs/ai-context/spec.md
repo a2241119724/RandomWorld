@@ -13,7 +13,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 
 ### 殖民地管理
 - **工人系统:** 招募工人执行建造、搬运、采集、种植、吃饭、睡觉、锻炼、穿戴、挖掘 9 种任务
-- **任务队列:** 优先级队列(0-3)，KD 树空间查询分配最近任务
+- **任务队列:** 优先级队列(0-3)，每优先级字典线性扫描取最近可分配任务（15 帧节流，队列空早退零分配；`Core/KDTree` 存在但零调用）
 - **补给监控:** 饥饿/疲劳状态机 (Healthy → Hungry → Tired → Exhausted → Critical)；疲劳 `CurTired` 为累积疲劳值（越大越疲，初始 0；工作/空闲累积、睡眠降低，空闲累积受天气/温度倍率加速），疲劳值 > `MaxTired - ThresholdTired`(20) 判定需休息——所有疲劳阈值判断方向是 `>` 而非 `<`
 - **殖民地指挥中心 (F10):** 实时诊断报告 — 人力分析、任务阻塞原因、补给缺口、拥堵等级
 - **建造任务恢复:** 游戏重启/场景加载后自动找回原建造者恢复建造任务
@@ -21,9 +21,10 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **建造位置预注册:** 建造位置冲突时自我预留跳过，配合建造者名称参数实现任务恢复
 
 ### 战斗系统
-- **防守夜 Worker 响应:** 入夜 `WorkerDefenceManager`（订阅 GamePhaseChangedEvent）按 `DefenceDraftRuleService.Decide` 纯函数打分三分行为——参战（核心旁待命位轮询驻守）/躲床（有家回 HomePosition、无家原地）/趁乱（当前位置周围随机可通行格溜边）；输入=人格四维+Greed+压力士气+玩家好感+觉醒+境界，觉醒者/高境界优先参战。派发前 `GiveUpTask` 无条件抢占（防旧任务队列占位/认领锁死）；任务时长=距黎明秒数到点自然 Finish；同游戏日防重派，山门核心未放置不部署。参战待命期间 `WorkerDefendTask.Execute` 索敌（半径 8、0.5s 节流），持有武器即主动进攻击状态——复用被动反击通路（`LastAttacker`→`AttackTarget`，无武器自动转 Escape，打完回 Seek 任务保持续岗）；核心被围死无待命位时 Fight 退化躲床（原核心占用格兜底不可走致弃任务）
+- **角色空间索引（SpatialGrid）:** `Domain/Common/SpatialGrid<T>` 纯 C# 均匀网格哈希（cellSize=8=最大查询半径→桶覆盖恒 3×3），惰性全量重建（帧号脏检查，同帧多查询只建一次）。`EnemyManager.EnemyGrid`（重建时 `IsAliveEnemy` 过滤）与 `WorkerManager.WorkerGrid`（只过滤 null）持有。查询 API 带 `filter` 参数做查询时刻实时判活（网格是快照，`ReduceHp` 不挡已死目标）。索敌/邻近查询一律走网格（`SkillTool.GetEnemiesInRadius`/`GetNearestEnemyInRadius`），勿对 Characters 手写线性扫描；新增显著大于 8 的查询半径时重评 cellSize
+- **防守夜 Worker 响应:** 入夜 `WorkerDefenceManager`（订阅 GamePhaseChangedEvent）按 `DefenceDraftRuleService.Decide` 纯函数打分三分行为——参战（核心旁待命位轮询驻守）/躲床（有家回 HomePosition、无家原地）/趁乱（当前位置周围随机可通行格溜边）；输入=人格四维+Greed+压力士气+玩家好感+觉醒+境界，觉醒者/高境界优先参战。派发前 `GiveUpTask` 无条件抢占（防旧任务队列占位/认领锁死）；任务时长=距黎明秒数到点自然 Finish；同游戏日防重派，山门核心未放置不部署。参战待命期间 `WorkerDefendTask.Execute` 索敌（半径 8、0.5s 节流负随机错相，走敌人空间网格取最近零分配），持有武器即主动进攻击状态——复用被动反击通路（`LastAttacker`→`AttackTarget`，无武器自动转 Escape，打完回 Seek 任务保持续岗）；核心被围死无待命位时 Fight 退化躲床（原核心占用格兜底不可走致弃任务）
 - **波次敌人（扩种协议）:** 普通波 + Boss 波(每 3 波)，难度渐进缩放。`WaveEnemyKind` 四种（Common/Seek/Charge/Shoot），`WaveRuleService.PickEnemyKind` 确定性轮转（同波次按 spawnIndex 取模，无 Random 可单测），第 `NewEnemyStartWave`(=3) 波起混池、之前只用旧池；`EnemyManager.Create(pos, kindId)` 经 `EnemyCreator` 静态映射选 prefab 并写存档 `EnemyData.EnemyKindId`（防读档换种，旧档缺省 0=Common）。冲锋野猪 ChargeBoar（ASeekEnemy 系：移速 3.2 + 刀光近战可拆墙，补旧 Seek 系不拆墙缺口）、远程妖狐 ShootFox（CommonEnemy 系复用状态机：射程 9 + 灵弹速度 60）
-- **箭塔（防御建筑）:** `ArrowTower : ABuildItem`（1×1 玩家可建，SO 条目 1100005）。`ArrowTowerManager`（ITickable 仿 TechManager，2s 节流扫已建成塔）全塔 1.5s 统一开火：索敌半径 7 取最近，直伤走技能公式（DEF/10 减免、下限 1；`ReduceHp(damage, null)`——塔非 Character，ReduceHp 对 null attacker 安全），弹道复用 Bullet 粒子纯视觉（不设 AttackTags/Onwer/Damage，粒子碰撞只 Stop 无伤害，绕开 Onwer NRE）；塔数据在 BuildMap 存档，Manager 无独立存档
+- **箭塔（防御建筑）:** `ArrowTower : ABuildItem`（1×1 玩家可建，SO 条目 1100005）。`ArrowTowerManager`（ITickable 仿 TechManager，2s 节流扫已建成塔）全塔 1.5s 统一开火：索敌半径 7 走敌人空间网格取最近（零分配+查询后 Hp 复查），直伤走技能公式（DEF/10 减免、下限 1；`ReduceHp(damage, null)`——塔非 Character，ReduceHp 对 null attacker 安全），弹道复用 Bullet 粒子纯视觉（不设 AttackTags/Onwer/Damage，粒子碰撞只 Stop 无伤害，绕开 Onwer NRE）；塔数据在 BuildMap 存档，Manager 无独立存档
 - **主动技能 (8 槽):** 默认 Q/E/R/F（旋风斩、冲刺、力量爆发、治疗之光）+ 功法外功/异能动态注册槽 Z/X/C/V（见成长系统节）
 - **连击系统:** 多阶连击伤害/经验加成
 - **装备稀有度:** Common → Uncommon → Rare → Epic → Legendary → Mythic，属性倍率递增

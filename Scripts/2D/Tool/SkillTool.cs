@@ -2,6 +2,7 @@ namespace LAB2D.Tool
 {
     using LAB2D;
     using LAB2D.Character.Enemy;
+    using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
     using System.Collections.Generic;
     using UnityEngine;
@@ -85,36 +86,54 @@ namespace LAB2D.Tool
         }
 
         /// <summary>
-        /// 查询玩家周围指定半径内所有存活敌人。
+        /// 查询指定半径内所有存活敌人。
         /// 用于 SelfAOE 类型技能的伤害目标选取。
-        /// 遍历 EnemyManager 的 Characters 列表，过滤 null 引用和死亡敌人。
+        /// 走 EnemyManager 空间网格（O(局部敌人数)，替代原全列表线性扫描）；
+        /// filter 在查询时刻实时判活，与原逐个扫描语义一致。
+        /// 返回新 List（调用方遍历中可能触发重入查询，勿改为共享缓冲）。
         /// </summary>
-        /// <param name="center">AOE 中心世界坐标（通常为玩家位置）</param>
-        /// <param name="radius">AOE 半径（世界单位）</param>
+        /// <param name="center">查询中心世界坐标</param>
+        /// <param name="radius">查询半径（世界单位）</param>
         /// <returns>半径内的存活敌人列表，无敌人时返回空列表</returns>
         public static List<AEnemy> GetEnemiesInRadius(Vector3 center, float radius)
         {
             List<AEnemy> result = new List<AEnemy>();
-            if (Core.ServiceLocator.Get<EnemyManager>() == null)
+            if (!Core.ServiceLocator.TryGet(out EnemyManager enemyManager))
             {
                 return result;
             }
 
-            float radiusSqr = radius * radius;
-            foreach (AEnemy enemy in Core.ServiceLocator.Get<EnemyManager>().Characters)
-            {
-                if (enemy == null || enemy.CharacterDataLAB == null || enemy.CharacterDataLAB.Hp <= 0)
-                {
-                    continue;
-                }
+            enemyManager.EnsureEnemyGridRebuilt();
+            enemyManager.EnemyGrid.QueryRange(
+                new GameVector2(center.x, center.y),
+                radius,
+                result,
+                e => e != null && e.CharacterDataLAB != null && e.CharacterDataLAB.Hp > 0);
+            return result;
+        }
 
-                if ((enemy.transform.position - center).sqrMagnitude <= radiusSqr)
-                {
-                    result.Add(enemy);
-                }
+        /// <summary>
+        /// 查询指定半径内最近的存活敌人（零 List 分配）。
+        /// 防守索敌/箭塔开火等高频调用方使用。
+        /// </summary>
+        /// <param name="center">查询中心世界坐标</param>
+        /// <param name="radius">查询半径（世界单位）</param>
+        /// <param name="sqrDistance">最近敌人的距离平方；无候选为 float.MaxValue</param>
+        /// <returns>最近的存活敌人；半径内无存活敌人返回 null</returns>
+        public static AEnemy GetNearestEnemyInRadius(Vector3 center, float radius, out float sqrDistance)
+        {
+            sqrDistance = float.MaxValue;
+            if (!Core.ServiceLocator.TryGet(out EnemyManager enemyManager))
+            {
+                return null;
             }
 
-            return result;
+            enemyManager.EnsureEnemyGridRebuilt();
+            return enemyManager.EnemyGrid.QueryNearest(
+                new GameVector2(center.x, center.y),
+                radius,
+                out sqrDistance,
+                e => e != null && e.CharacterDataLAB != null && e.CharacterDataLAB.Hp > 0);
         }
 
         /// <summary>

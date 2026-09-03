@@ -4,16 +4,52 @@ namespace LAB2D.Character.Worker
     using LAB2D.Data;
     using LAB2D.Domain.Common;
     using System.Collections.Generic;
+    using UnityEngine;
 
     /// <summary>
     /// Worker管理器
     /// </summary>
     public class WorkerManager : CharacterManager<WorkerManager, AWorker, WorkerCreator>
     {
+        /// <summary>Worker 空间网格 cell 尺寸（与 EnemyManager 一致，好感通知等邻近查询用）。</summary>
+        public const float WorkerGridCellSize = 8f;
+
         /// <summary>
         /// 用于多个Worker概率获取寻路锁
         /// </summary>
         private int countLock = 1;
+
+        /// <summary>Worker 空间网格（邻近查询索引；随 Characters 惰性重建，仅主线程）。</summary>
+        public SpatialGrid<AWorker> WorkerGrid { get; } = new (WorkerGridCellSize);
+
+        /// <summary>网格上次重建的帧号（同帧多次查询只重建一次）。</summary>
+        private int gridRebuildFrame = -1;
+
+        /// <summary>
+        /// 惰性重建 Worker 空间网格：当前帧首次查询时全量重建。
+        /// 与既有消费方（FavorabilityManager.NotifyPlayerHelpsNearby）语义一致：只过滤 null，不判 Hp。
+        /// </summary>
+        public void EnsureWorkerGridRebuilt()
+        {
+            int frame = UnityEngine.Time.frameCount;
+            if (frame == this.gridRebuildFrame)
+            {
+                return;
+            }
+
+            this.gridRebuildFrame = frame;
+            this.WorkerGrid.BeginRebuild();
+            foreach (AWorker worker in this.Characters)
+            {
+                if (worker == null)
+                {
+                    continue;
+                }
+
+                Vector3 p = worker.transform.position;
+                this.WorkerGrid.Add(new GameVector2(p.x, p.y), worker);
+            }
+        }
 
         /// <inheritdoc/>
         public override void Add(AWorker character)

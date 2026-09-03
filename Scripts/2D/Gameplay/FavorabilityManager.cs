@@ -3,6 +3,7 @@ namespace LAB2D.Gameplay
     using LAB2D.AI.Dialogue.Prompt;
     using LAB2D.Character.Player;
     using LAB2D.Character.Worker;
+    using LAB2D.Domain.Common;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -228,31 +229,38 @@ namespace LAB2D.Gameplay
             this.ModifyFavorability(from, PlayerId, delta, reason);
         }
 
+        /// <summary>救危通知的邻近 Worker 复用缓冲（单线程 ITickable/受击路径，无重入）。</summary>
+        private readonly List<AWorker> nearbyWorkersBuffer = new List<AWorker>();
+
         /// <summary>
         /// Player 救危：Player 在敌方受击点附近击伤敌人 → 附近 Worker 对玩家好感上升。
         /// 启发式：以受击点为中心、ProximityRadiusMapTiles 半径，30s 冷却/Worker。
         /// 由 Character.ReduceHp 基类在"Player 攻击非玩家非 Worker"时调用。
+        /// 走 WorkerManager 空间网格（O(邻近 Worker 数)，替代原全列表扫描，行为不变）。
         /// </summary>
         public void NotifyPlayerHelpsNearby(float worldX, float worldY)
         {
             WorkerManager wm = Core.ServiceLocator.Get<WorkerManager>();
             if (wm == null) return;
 
-            float radiusSq = FavorabilityConstant.ProximityRadiusMapTiles * FavorabilityConstant.ProximityRadiusMapTiles;
-            Vector3 helpPos = new Vector3(worldX, worldY, 0f);
             float now = Time.time;
 
-            foreach (AWorker w in wm.Characters)
+            wm.EnsureWorkerGridRebuilt();
+            this.nearbyWorkersBuffer.Clear();
+            wm.WorkerGrid.QueryRange(
+                new GameVector2(worldX, worldY),
+                FavorabilityConstant.ProximityRadiusMapTiles,
+                this.nearbyWorkersBuffer,
+                w => w != null);
+
+            foreach (AWorker w in this.nearbyWorkersBuffer)
             {
-                if (w == null) continue;
                 int id = w.GetInstanceID();
                 if (this.playerHelpCooldowns.TryGetValue(id, out float last)
                     && (now - last) < FavorabilityConstant.HelpCoolDownSeconds)
                 {
                     continue;
                 }
-
-                if ((w.transform.position - helpPos).sqrMagnitude > radiusSq) continue;
 
                 this.playerHelpCooldowns[id] = now;
                 this.ModifyWithPlayer(w, FavorabilityConstant.HelpVsEnemyDelta, "Player 救危");

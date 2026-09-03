@@ -11,6 +11,13 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         /// 感知目标轮询索引 — 每帧只检查一个目标（跨帧轮询所有玩家+Worker）
         /// </summary>
         private int senseTargetIndex = 0;
+
+        /// <summary>
+        /// 感知帧相位（实例 id 低 2 位）：frameCount % 4 是全局相位，全部 SeekEnemy 会在
+        /// 第 4n 帧同帧集中感知（尖峰）；按实例错开后每敌人仍每 4 帧感知一次，仅相位摊开。
+        /// </summary>
+        private readonly int sensePhase;
+
         private bool isTargetReached = false;
 
         // 卡死熔断：同一目标连续卡死（Sliding/Stuck 结算）次数上限，超过则放弃当前目标换新。
@@ -28,6 +35,8 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         public SeekEnemyMoveState(ASeekEnemy character)
         : base(character)
         {
+            // 补码低 2 位对负 id 也非负
+            this.sensePhase = character.GetInstanceID() & 3;
         }
 
         public override void OnEnter()
@@ -64,9 +73,9 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             base.OnUpdate();
 
             // 没有武器, 不进入攻击状态
-            // 感知检查降频：每4帧检查一次，每帧只检查一个目标（轮询）
+            // 感知检查降频：每4帧检查一次（按实例相位错开，见 sensePhase 注释），每帧只检查一个目标（轮询）
             if (this.Character.CharacterDataLAB.Weapon != null
-                && UnityEngine.Time.frameCount % 4 == 0)
+                && ((UnityEngine.Time.frameCount + this.sensePhase) & 3) == 0)
             {
                 int playerCount = Core.GameServices.PlayerCountProvider();
                 int workerCount = Core.GameServices.WorkerCountProvider();

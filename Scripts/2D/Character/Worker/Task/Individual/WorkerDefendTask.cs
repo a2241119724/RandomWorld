@@ -37,6 +37,9 @@ namespace LAB2D.Character.Worker.Task.Individual
         public WorkerDefendTask()
             : base(WorkerTaskType.Defend)
         {
+            // 索敌错相：入夜 RunNightDraft 同帧给全员派任务，0 起点会保持同相位齐扫；
+            // 负随机起点把各 Worker 的 0.5s 扫描帧错开（同 SeekEnemyMoveState.roamRestSeconds 抖动思路）。
+            this.enemyScanTimer = -UnityEngine.Random.Range(0f, EnemyScanInterval);
             this.stageInit.Add((AWorker worker) =>
             {
                 this.maxProgress = this.defendSeconds;
@@ -68,7 +71,8 @@ namespace LAB2D.Character.Worker.Task.Individual
                 if (this.enemyScanTimer >= EnemyScanInterval)
                 {
                     this.enemyScanTimer = 0f;
-                    AEnemy enemy = this.FindNearestEnemy(worker);
+                    // 网格最近邻查询（零分配，O(局部敌人数)，替代原全列表扫描+取最近）
+                    AEnemy enemy = SkillTool.GetNearestEnemyInRadius(worker.transform.position, DefendSightRange, out _);
                     if (enemy != null)
                     {
                         worker.LastAttacker = enemy;
@@ -82,30 +86,6 @@ namespace LAB2D.Character.Worker.Task.Individual
             }
 
             return base.Execute(worker, deltaTime);
-        }
-
-        /// <summary>索敌取最近（SkillManager.ExecuteSingleTarget 同款：结果无序，按距离取最小）。</summary>
-        private AEnemy FindNearestEnemy(AWorker worker)
-        {
-            List<AEnemy> enemies = SkillTool.GetEnemiesInRadius(worker.transform.position, DefendSightRange);
-            AEnemy nearest = null;
-            float nearestSqr = float.MaxValue;
-            foreach (AEnemy enemy in enemies)
-            {
-                if (enemy == null)
-                {
-                    continue;
-                }
-
-                float sqr = (enemy.transform.position - worker.transform.position).sqrMagnitude;
-                if (sqr < nearestSqr)
-                {
-                    nearestSqr = sqr;
-                    nearest = enemy;
-                }
-            }
-
-            return nearest;
         }
 
         /// <inheritdoc/>
