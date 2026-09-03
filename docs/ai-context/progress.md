@@ -2,10 +2,12 @@
 
 ## Project Status
 
-v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**："小镇为魂，防守为骨"。M1 循环闭环（时间服务/昼夜-波次耦合/山门核心胜负）、M2A（包 2.1 防守夜 Worker 响应 + 包 2.2 修仙事件接心智层）与 M3（包 2.3 心智+修仙 F12 面板 + 包 2.4 对话预设意图确定性结算/LLM 增强措辞）代码均已完成；下一步 M2B 内容表现（妖兽化/防御建筑/音效）与包 5 修仙深化穿插推进（大纲包 2-5）。
+v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**："小镇为魂，防守为骨"。M1 循环闭环（时间服务/昼夜-波次耦合/山门核心胜负）、M2A（包 2.1 防守夜 Worker 响应 + 包 2.2 修仙事件接心智层）、M2B（包 3 敌人扩种+双妖兽+箭塔+防守接敌）与 M3（包 2.3 心智+修仙 F12 面板 + 包 2.4 对话预设意图确定性结算/LLM 增强措辞）代码均已完成；下一步 Play 实测各包行为 + M4 灵气环境/每局不一样与包 5 修仙深化穿插推进（大纲包 2-5）。
 
 ## Recent Changes
 
+- 2026-09 — `feat(defense)`: M2B 包3——敌人扩种协议（`WaveEnemyKind` 四种 + `WaveRuleService.PickEnemyKind` 确定性轮转，第 3 波起混池 Common/Seek/Charge/Shoot；存档 `EnemyKindId` 防读档换种，旧档缺省 Common）+ 冲锋野猪/远程妖狐（ASeekEnemy/CommonEnemy 系差异化数值，prefab 复制改造 + 512px PPU1280 素材）+ 箭塔建筑（`ArrowTower : ABuildItem` + `ArrowTowerManager` ITickable 节流扫描，技能直伤公式 `ReduceHp(null)` + Bullet 粒子纯视觉弹道绕开塔非 Character 的 Onwer NRE，SO 条目 1100004）+ 防守接敌治 M2A 罚站空转（站岗索敌有武器主动进攻击状态，复用 LastAttacker→AttackTarget 反击通路；修 NextDefendPosition 核心占用格兜底死循环改躲床位）。spec 见战斗系统节
+- 2026-09 — `feat(light)`: 光影系统三阶段——A 昼夜循环（`DayNightLightManager` 运行时自建 GlobalLight + `DayNightRuleService` 强度/色温纯函数曲线，光照职责迁出 GameTimeUI）；B 点光源建筑 Torch/Campfire（`BuildItemData` 光照 4 字段数据驱动 + `TileVisualSpawner.lightResolver/SyncLight` + `LightFlicker` 闪烁；素材程序化顶视火焰 `tmp/gen_flame_sprites.py`——AI 文生图顶视火焰三连败后改程序生成，资产经 `工具/光源建筑资产生成` 一键接入）；C 角色椭圆软影（`BlobShadowProvider`，共享纹理 order -999）+ 玩家夜光环（`PlayerNightGlow` 相位事件淡入淡出）。spec 见光照系统节
 - 2026-09 — `test(domain)`: 补三个缺口服务单测（ItemOwnership/TerrainEffect/WorkerSkillProgress，22 用例）+ spec 架构节记录 WorkerMindService 门面例外（Domain 目录内编排类，依赖 Unity/上层，纯规则已拆 RuleService）
 - 2026-09 — `fix(ui)`: 仓库面板按钮只增不减+监听器闭包累积（TODO「删除Gameobject」落地）——OnEnter 先清多余按钮、复用按钮 RemoveAllListeners 再绑定
 - 2026-09 — `fix(log)`: 消除两条启动期必现 Warning——ForegroundPanel Attack 死查找（按钮已移除+重复二次查找）与 `AItem.Ranges["Resource"]` 上界误含仓库占位值 Null（致 "NullItemData" 幽灵查询）
@@ -86,13 +88,14 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 | 20 | 七大成长系统（属性管线/词条/修仙/功法/异能/生活技能/科技） | 2026-09 |
 | 21 | Worker 成长接入（睡觉修炼/自动突破/被动觉醒/词条拾取）+ 修仙热键改 K | 2026-09 |
 | 22 | M1 循环闭环：时间服务搬迁 + 昼夜-波次耦合 + 山门核心建筑伤害与胜负 | 2026-09 |
+| 23 | M2B 内容表现：敌人扩种协议 + 冲锋野猪/远程妖狐 + 箭塔 + 防守接敌 | 2026-09 |
 
 ## Current Work
 
 - **0.2 修仙小镇方向（五包路线）** — IN PROGRESS
   - [x] M1 循环闭环（时间服务/昼夜-波次耦合/山门核心胜负）
   - [x] M2A 包2.1/2.2 防守夜 Worker 响应（`DefenceDraftRuleService` 纯函数 + `WorkerDefendTask` + `WorkerDefenceManager` 入夜派发，觉醒优先参战）+ 修仙事件接心智层（突破/觉醒/工友嫉妒·敬仰走 RecordEvent）——代码完成，待 Play 实测行为分化
-  - [ ] M2B 包3 敌人扩种协议 + 前 2 种妖兽 + 箭塔
+  - [x] M2B 包3 敌人扩种协议 + 前 2 种妖兽 + 箭塔 + 防守接敌——代码完成、编译 0 错误，待重打 AB 包 + Play 实测（混池出种/塔射击/接敌日志）
   - [x] M3 包2.3/2.4 心智面板 + LLM 对话结算（`WorkerMindPanel` F12 纯代码构建 + `DialogueIntentRuleService` 确定性结算 + `DialogueManager.ApplyIntent` 副作用 + `DialoguePanelUI` 4 意图按钮走 SendMessage LLM 增强措辞 + 单测）——代码完成、主程序集编译 0 错误，待 Play 实测（按钮行位置按 Message 顶边推算可能需手调、面板布局待过目）
   - [ ] M4 包2.5 灵气环境（CurEnergy 消费者）+ 包4 每局不一样
 - **Worker 建造系统优化** — IN PROGRESS
@@ -136,15 +139,13 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Next Steps
 
-1. M2A：防守夜 Worker 响应（DefenceDraftRuleService 纯函数 + WorkerDefendTask 新任务类型 + 觉醒 Worker 优先参战 + 躲床派 Sleep）
-2. M2A：修仙事件接心智层（突破/觉醒/顿悟/走火入魔走 RecordEvent——嫉妒/护法好感/敬仰关系 + 次日语气泡）
-3. M2B：敌人扩种协议（WaveSpawnRequest 加 EnemyKindId）+ 前 2 种妖兽 + 箭塔
-4. M3：心智面板（WorkerMindPanel）+ LLM 对话结算（预设意图按钮 + LLM 增强）
-5. M4：灵气环境（EnvironmentManager.CurEnergy 消费者）+ 每局不一样（兴趣点/事件天气/局修饰符）
-6. 旧欠账：Worker 建家碰撞优化、字体批量替换、TaskBoard/ShopNPC 网络同步
+1. Play 实测：M2B（重打 AB 包后验证混池出种/箭塔射击/防守接敌）+ M2A 行为分化 + M3 面板布局
+2. M4：灵气环境（EnvironmentManager.CurEnergy 消费者）+ 每局不一样（兴趣点/事件天气/局修饰符）
+3. 旧欠账：Worker 建家碰撞优化、字体批量替换、TaskBoard/ShopNPC 网络同步
 
 ## Future Phases
 
+- 光影阶段 D：2D 阴影遮挡（假投影暗斑保守方案 or ShadowCaster2D 先 spike 实证——URP 14 Point 光阴影支持性 + m_MaxShadowRenderTextureCount=1 + 大地图性能均未验证）
 - 包5 修仙内容深化（元婴/化神境界、功法异能池扩充、炼丹炼器雏形、修炼-劳动经济张力调参）
 - 多人合作模式完善（分工防守、资源共用）
 - 敌人类型扩展（冲锋/拆墙/偷窃/远程/感染/Boss 变体）
