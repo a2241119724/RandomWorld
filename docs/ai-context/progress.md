@@ -6,8 +6,10 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `refactor(worker)`: WorkerBrain 巨石拆分阶段 1-3（3446→2255 行，零行为变化）——`WorkerDecision`/`WorkerHomeLayout`/`WorkerHomeSiteService` 三文件迁出，决策契约/布局纯函数/选址家族各自成域；阶段 4（环境扫描组）暂缓，方案见 `docs/open-issues/h1-workerbrain-refactor.md`
+- 2026-09 — `refactor(build)`: 悬赏牌/商店收拢 ABuildItem 管线——Bounty/Shop 子类 + `PlaceBySystem` 系统放置，全库 DirectBuild 手写路径清零；Bounty 条目 `IsNeedBuild`→0（放置即完成，读档重放幂等）
 - 2026-09 — `perf(worker)`: 100 Worker 帧率排查两波——主循环/寻路/UI 全链路热点；决策链零分配（ScanForResources PosMap 预过滤省 1681 格×2 Tilemap 互操作、scratch 键复用、ref 就地取最近候选、DropManager 无掉落快速退出）；LogProviderThrottled 增 Func 惰性求值重载（被节流不再构造插值串）；删 WorkerBountyDecisionService 死代码
-- 2026-09 — `feat(combat)`: M1 循环闭环——**M1.1** 时间服务搬迁（`Domain/Time/DayNightRuleService` 纯函数 + `GameTimeManager` ITickable 自推进 + GameTimeUI 退化只读 + 跨天天气随迁）；**M1.2** 昼夜-波次耦合（波次 15s 固定间隔→每日一夜，挂 DayIndex）；**M1.3** 山门核心胜负（`MountainGateCore : ABuildItem` 3×3 系统放置建筑走既有建造管线——类名==瓦片名==SO 条目名、IsNeedBuild=false 即放置即完成；`BuildingDamageRuleService` 建筑耐久纯函数；妖兽子弹经 AttackEffect 啃墙/核心；宽闸门失败曲线：核心 3 次被破终局失败+SessionResultManager 结算，满 3 级阶段胜利；Editor 菜单 工具/山门）。新增建筑一律 ABuildItem 子类原则入 CLAUDE.md §3
+- 2026-09 — `feat(combat)`: M1 循环闭环——**M1.1** 时间服务搬迁（`Domain/Time/DayNightRuleService` 纯函数 + `GameTimeManager` ITickable 自推进 + GameTimeUI 退化只读 + 跨天天气随迁）；**M1.2** 昼夜-波次耦合（波次 15s 固定间隔→每日一夜，挂 DayIndex）；**M1.3** 山门核心胜负（`MountainGateCore : ABuildItem` 3×3 系统放置建筑走既有建造管线——类名==瓦片名==SO 条目名、IsNeedBuild=true（放置后建任务，Worker 参与建核心）；`BuildingDamageRuleService` 建筑耐久纯函数；妖兽子弹经 AttackEffect 啃墙/核心；宽闸门失败曲线：核心 3 次被破终局失败+SessionResultManager 结算，满 3 级阶段胜利；Editor 菜单 工具/山门）。新增建筑一律 ABuildItem 子类原则入 CLAUDE.md §3
 - 2026-09 — `feat(art)`: 山门核心/聚灵阵/研究台正俯视像素图并接线 tile 资产
 
 - 2026-09 — `feat(growth-worker)`: Worker 成长接入（全自动）——睡觉即修炼（床睡全额/地面睡半额）、自动突破+自动修习内功（2s 扫描，只内功不外功）、异能觉醒转被动加成（PermanentRealmBonus 入账）、拾取装备保留词条（TakeDropInstanceByPos）；修仙面板热键 F8→K（F8 实测无效禁用）；修复 Worker 读档不重连 Character 反向引用致成长重算静默跳过。spec 见成长系统节 Worker 成长接入行

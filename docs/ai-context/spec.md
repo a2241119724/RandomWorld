@@ -100,7 +100,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **Worker 成长接入（全自动，无 UI）:** ①睡觉即修炼——`WorkerSleepTask.Finish` 调 `CultivationManager.MeditateFor`（床睡全额/地面睡 ×0.5），被打断走 GiveUpTask 不 Finish 天然中断；②突破/内功全自动——`CultivationManager.Tick` 每 2s 扫描 `WorkerCharactersProvider` 静态缝，`BreakthroughData`（玩家/Worker 共用突破结算）+ `GongFaManager.AutoLearnNeiGongFor`（只学内功并自动运转最新一本，**绝不学外功**——外功注册进全局 SkillManager 会挤占玩家槽位）；③异能觉醒转被动——Worker 无技能栏，`AwakenedPowerDef.WorkerPassiveBonus` 入账 `PermanentRealmBonus` + 气泡反馈；④装备词条——Worker 拾取经 `EnemyLootManager.TakeDropInstanceByPos`（须在 `RemoveDropByMapPosition` 前取出）把掉落实例词条拷进穿戴实例；⑤修仙进度显示在 WorkerConditionHUD 每 worker「修炼」行。前置修复：`CharacterManager.LoadData` 读档后重连 `CharacterData.Character`（[NonSerialized]，不重连则 Worker 换装/成长重算被静默跳过）
 - **生活技能（Worker）:** 伐木/采矿/农耕——`AWorkerTask.GrantedLifeSkill` 虚属性（Gather 按 `isTerrainDig` 分 Mining/Felling），Finish 统一 +XP，升级提进度倍率（1.0/1.15/1.3/1.5，`LifeSkillRuleService` 纯函数）；`ProgressMultiplierProvider(task, worker)` 已含该倍率；WorkerConditionHUD 每 worker 追加一行技能进度
 - **科技:** `TechManager : ASingletonSaveData`（研究点/已研究列表自动存档，Ensure 兜底）；研究点 = 已建成 ResearchTable 数 × 时间（1 点/分/台，高级研究法 ×2），T 面板研究。**建筑解锁 gating 唯一收口 `ABuildItem.AddBuildTask`**（玩家放置入口；房间墙/农田自动建造走 `BuildMap.AddBuild` 不受限）。聚灵阵打坐 +50% 按有无不叠乘
-- **新建筑三同约定:** 类名 == ItemData 条目 Name == Tile 资产名（`ItemInstanceFactory` 反射扫描 ABuildItem 子类查 `GetByName(type.Name)`，缺条目启动报错）；研究台/聚灵阵条目在 `BuildOtherItemData.asset`（Id 1100002/1100003），Tile 资产在 `Resources/Tilemap/Item/Build/`
+- **新建筑三同约定:** 类名 == ItemData 条目 Name == Tile 资产名（`ItemInstanceFactory` 反射扫描 ABuildItem 子类查 `GetByName(type.Name)`，缺条目启动报错）；条目集中在 `BuildOtherItemData.asset`（Bounty/Shop/ResearchTable/SpiritArray/MountainGateCore），Tile 资产在 `Resources/Tilemap/Item/Build/`
 
 ### 商店与任务板系统
 - **商店 NPC:** `ShopNPC` + `ShopNPCGenerator` — 地图就绪后自动生成商店，支持 Worker/Player 买卖交互
@@ -112,7 +112,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **房间判定:** 射线检测封闭房间，计算温湿度
 
 #### Worker 建房布局
-- **建房流程:** Worker 围墙壁 → 门 → 床 → 4 格仓库，布局由 `WorkerBrain.GenerateRoomLayout` 依据 `HomeRoomWidth/Height/DoorSide/DoorIndex` 动态生成
+- **建房流程:** Worker 围墙壁 → 门 → 床 → 4 格仓库，布局由 `WorkerHomeLayout.GenerateRoomLayout` 依据 `HomeRoomWidth/Height/DoorSide/DoorIndex` 动态生成
 - **房间尺寸:** 宽高 5~7（5×5 ~ 7×7），门在任意一边（doorSide 0-3）的非角位置
 - **家具块 "高2横3":** 仓库 2×2 + 床 1×2，tile 空间 3 列 2 行；5×5 房间内部 3×3 恰好放下
 - **床显示方向与足迹:** 床 sprite 永远竖向（上下）显示。物理足迹 = 主格 + 副格 tile-x+1（`BedSecondOffset`，tile 空间横放），转置到屏幕即竖向 1×2；碰撞瓦片注册、寻路与布局打印统一走该足迹（不再用 `ABuildItem.GetOccupiedPositions` 的 tile-y+1 逻辑副格，避免与 sprite 实际阻挡错位）

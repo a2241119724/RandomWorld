@@ -42,7 +42,7 @@
 - **新增建筑一律 ABuildItem 子类，禁止在 Manager 手写放置代码。**
   三同约定：类名 == 瓦片名 == SO 条目名（`Resources/Tilemap/Item/Build/` 的 tile + 对应 `*ItemData` SO），ItemInstanceFactory 反射自动注册实例，无需任何注册代码。
   多格建筑：构造器设 `Width/Height`，`RectType` 用 `BottomLeft`（参考点即主格，床同款惯例）；主格/副格注册统一走既有管线 `AddBuildTask → BuildMap.AddBuild（主格）+ RegisterCollisionTile（副格）`。
-  系统专属建筑（山门核心 MountainGateCore 范本）：override `AddBuildTask` 拦截玩家入口，另设 `PlaceBySystem` 调 `base.AddBuildTask` 走管线放置；SO 条目 `IsNeedBuild=false`（放置即完成、不建任务）、`IsPass=false`（主格物理阻挡可被打 + 副格 A* 阻挡，IsCanReach 通用逻辑覆盖，**无需任何特判**）。
+  系统专属建筑（山门核心 MountainGateCore 范本）：override `AddBuildTask` 拦截玩家入口，另设 `PlaceBySystem` 调 `base.AddBuildTask` 走管线放置；SO 条目 `IsNeedBuild` 按语义定——山门核心 `=true`（放置后创建建造任务，Worker 参与建核心；`IsCorePlaced` 只看位置，与建造完成解耦）、悬赏牌/商店 `=false`（放置即完成、不建任务，读档重放幂等）；`IsPass=false`（建成后主格物理阻挡可被打 + 副格 A* 阻挡，IsCanReach 通用逻辑覆盖，**无需任何特判**）。
   教训（2026-09-02 山门核心返工）：在 MountainGateManager 手写 DirectBuild+副格循环+IsCanReach 特判，与管线行为分叉，全部删除后改为继承 ABuildItem 的十几行。
 
 <!-- 在此记录已确定的决策，避免 Claude 重复讨论。每条包含简要理由。 -->
