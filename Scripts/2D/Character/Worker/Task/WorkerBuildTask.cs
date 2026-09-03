@@ -147,7 +147,7 @@ namespace LAB2D.Character.Worker.Task
             AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
             if (wd == null || wd.HomePosition != null) return;
 
-            var layout = LAB2D.AI.Worker.WorkerBrain.GetRoomLayout(wd);
+            var layout = LAB2D.AI.Worker.WorkerHomeLayout.GetRoomLayout(wd);
             int wallCount = layout.WallCount;
             int completeStage = layout.CompleteStage;
             int prevStage = wd.HomeBuildStage;
@@ -232,7 +232,7 @@ namespace LAB2D.Character.Worker.Task
             if (wd?.PlannedHomePosition == null) return;
 
             Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
-            var layout = LAB2D.AI.Worker.WorkerBrain.GetRoomLayout(wd);
+            var layout = LAB2D.AI.Worker.WorkerHomeLayout.GetRoomLayout(wd);
             var roomInfo = new LAB2D.Item.RoomInfo();
 
             for (int i = 0; i < layout.WallCount; i++)

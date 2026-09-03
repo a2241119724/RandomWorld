@@ -703,7 +703,7 @@ namespace LAB2D.Character.Worker
                 // 如果房间参数尚未生成，跳过（旧数据兼容）
                 if (wd.HomeRoomWidth == 0) continue;
 
-                var layout = LAB2D.AI.Worker.WorkerBrain.GetRoomLayout(wd);
+                var layout = LAB2D.AI.Worker.WorkerHomeLayout.GetRoomLayout(wd);
                 if (wd.HomeBuildStage >= layout.CompleteStage) continue;
 
                 Vector3Int center = LAB2D.Serializable.Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);

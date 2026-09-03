@@ -70,7 +70,7 @@ namespace LAB2D.Editor
         private float[] logits;
         private float[] softmax;
         private int modelActionIndex = -1;
-        private WorkerBrain.Decision hardDecision;
+        private Decision hardDecision;
         private bool hasHardDecision;
         private Vector2 featureScroll;
         private Vector2 logitScroll;

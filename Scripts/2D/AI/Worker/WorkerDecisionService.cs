@@ -113,7 +113,7 @@ namespace LAB2D.AI.Worker
             // 首次 Seek 时选定建家位置
             if (this.seekTimes == 1)
             {
-                this.brain.TryPickHomeSite(this.worker);
+                WorkerHomeSiteService.TryPickHomeSite(this.worker);
             }
 
             // 步骤1: 始终优先检查玩家悬赏任务（优先级 0）。
@@ -240,7 +240,7 @@ namespace LAB2D.AI.Worker
         /// </summary>
         private void ExecuteAutonomousDecision(AWorker.WorkerData workerData)
         {
-            WorkerBrain.Decision decision = this.brain.Decide(this.worker);
+            Decision decision = this.brain.Decide(this.worker);
 
             AWorkerTask.LogProvider(
                 $"{this.worker.name} 自主决策: {WorkerBrain.GetDecisionLabel(decision)}",
@@ -400,7 +400,7 @@ namespace LAB2D.AI.Worker
         /// 创建"回家存仓库"任务：收集全部可存物品 → 走到仓库瓦片邻居格 → 存入个人仓库。
         /// 无物可存/无可达仓库 → 记冷却并回退 Idle（决策层以此防死循环）。
         /// </summary>
-        private void CreateStorageStoreTask(WorkerBrain.Decision decision)
+        private void CreateStorageStoreTask(Decision decision)
         {
             AWorker worker = this.worker;
             AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
@@ -442,7 +442,7 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 创建"回家取料"任务：走到仓库瓦片邻居格 → 按 WithdrawNeeds 从个人仓库取到身上。
         /// </summary>
-        private void CreateStorageWithdrawTask(WorkerBrain.Decision decision)
+        private void CreateStorageWithdrawTask(Decision decision)
         {
             AWorker worker = this.worker;
             AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
@@ -470,7 +470,7 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 创建自我采集任务。
         /// </summary>
-        private void CreateSelfGatherTask(WorkerBrain.Decision decision)
+        private void CreateSelfGatherTask(Decision decision)
         {
             if (decision.TargetPosition == default)
             {
@@ -518,7 +518,7 @@ namespace LAB2D.AI.Worker
         /// 发布悬赏 — 使用 WorkerBrain 预扫描的资源位置，避免重复扫描失败。
         /// 支持 Gather 和 Build 两种悬赏类型。
         /// </summary>
-        private void TryPostBounty(WorkerBrain.Decision decision)
+        private void TryPostBounty(Decision decision)
         {
             AWorker.WorkerData wd = this.worker.CharacterDataLAB as AWorker.WorkerData;
             WorkerBountyDecisionService bountyDecision = new WorkerBountyDecisionService();
@@ -576,7 +576,7 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 发布建造悬赏。
         /// </summary>
-        private bool TryPostBuildBounty(WorkerBrain.Decision decision, WorkerBountyDecisionService bountyDecision)
+        private bool TryPostBuildBounty(Decision decision, WorkerBountyDecisionService bountyDecision)
         {
             AWorker.WorkerData wd = this.worker.CharacterDataLAB as AWorker.WorkerData;
 
@@ -639,7 +639,7 @@ namespace LAB2D.AI.Worker
         /// 创建自我建造任务 — Worker 为自己建造房屋。
         /// 先通过 BuildMap.AddBuild 注册建造位置，再直接分配给自己执行。
         /// </summary>
-        private void CreateSelfBuildTask(WorkerBrain.Decision decision)
+        private void CreateSelfBuildTask(Decision decision)
         {
             if (decision.TargetPosition == default || decision.NeededResources == null)
             {
@@ -701,7 +701,7 @@ namespace LAB2D.AI.Worker
         /// <summary>
         /// 创建自我种植任务 — 自己去种植。
         /// </summary>
-        private void CreateSelfPlantTask(WorkerBrain.Decision decision)
+        private void CreateSelfPlantTask(Decision decision)
         {
             WorkerPlantTask plantTask = new WorkerPlantTask.PlantTaskBuilder().Build();
 
@@ -788,7 +788,7 @@ namespace LAB2D.AI.Worker
 
             if (found && foundItemId > 0)
             {
-                var decision = WorkerBrain.Decision.MakeGather(
+                var decision = Decision.MakeGather(
                     foodPos, new ResourceInfo(foundItemId), "交易失败后自己采集食物");
 
                 AWorkerTask.LogProvider(
@@ -884,7 +884,7 @@ namespace LAB2D.AI.Worker
         /// 创建自我拾取任务 — 从地面捡起属于自己的物品直接放入背包。
         /// 使用 WorkerPickUpTask 的 FromGround 模式，不走复杂的 Carry 两阶段流程。
         /// </summary>
-        private void CreateSelfCarryTask(WorkerBrain.Decision decision)
+        private void CreateSelfCarryTask(Decision decision)
         {
             if (decision.TargetPosition == default)
             {
@@ -913,7 +913,7 @@ namespace LAB2D.AI.Worker
         /// 创建去任务栏拾取任务 — 去任务栏取回属于自己的悬赏物品。
         /// 直接分配给当前 Worker（不入全局池），确保物品不会被其他人拿走。
         /// </summary>
-        private void CreatePickUpTask(WorkerBrain.Decision decision)
+        private void CreatePickUpTask(Decision decision)
         {
             var boardManager = Core.ServiceLocator.Get<Gameplay.TaskBoardManager>();
             if (boardManager == null || !boardManager.IsInitialized)

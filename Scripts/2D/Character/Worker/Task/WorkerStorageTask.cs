@@ -113,7 +113,7 @@ namespace LAB2D.Character.Worker.Task
             AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
             if (wd == null || wd.PlannedHomePosition == null) return false;
 
-            var layout = WorkerBrain.GetRoomLayout(wd);
+            var layout = WorkerHomeLayout.GetRoomLayout(wd);
             if (wd.HomeBuildStage < layout.CompleteStage) return false; // 家未建完
 
             switch (this.mode)
@@ -161,7 +161,7 @@ namespace LAB2D.Character.Worker.Task
             AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
             if (wd == null || wd.PlannedHomePosition == null) return default;
 
-            var layout = WorkerBrain.GetRoomLayout(wd);
+            var layout = WorkerHomeLayout.GetRoomLayout(wd);
             if (wd.HomeBuildStage < layout.CompleteStage) return default; // 家未建完
             Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
             foreach (Vector3Int so in layout.StorageOffsets)
@@ -198,7 +198,7 @@ namespace LAB2D.Character.Worker.Task
                 return;
             }
 
-            var layout = WorkerBrain.GetRoomLayout(wd);
+            var layout = WorkerHomeLayout.GetRoomLayout(wd);
             if (wd.HomeBuildStage < layout.CompleteStage)
             {
                 LogProvider(
@@ -293,7 +293,7 @@ namespace LAB2D.Character.Worker.Task
                 AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
                 if (wd == null || wd.Storage == null || wd.PlannedHomePosition == null) continue;
 
-                var layout = WorkerBrain.GetRoomLayout(wd);
+                var layout = WorkerHomeLayout.GetRoomLayout(wd);
                 if (wd.HomeBuildStage < layout.CompleteStage) continue; // 家未建完，无仓库格
 
                 Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
