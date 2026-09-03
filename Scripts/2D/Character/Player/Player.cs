@@ -5,6 +5,7 @@ namespace LAB2D.Character.Player
     using LAB2D.Domain.Character;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Player;
+    using LAB2D.Gameplay.TurnBattle;
     using LAB2D.Render;
     using LAB2D.UnityAdapter;
     using System;
@@ -285,6 +286,13 @@ namespace LAB2D.Character.Player
 
         public void Update()
         {
+            // 回合制战斗面板打开期间屏蔽实时输入（Update 不受 timeScale 影响，
+            // Q/E/R/F 技能热键与攻击点击若不拦截会在冻结大世界上生效）
+            if (TurnBattleManager.Instance.IsActive)
+            {
+                return;
+            }
+
             // 复活等待期间：显示倒计时，阻止所有操作
             if (IsRespawningProvider())
             {
@@ -466,6 +474,27 @@ namespace LAB2D.Character.Player
             }
 
             this.RefreshUI();
+        }
+
+        /// <summary>
+        /// 回合制战败专用 — 绕过无敌帧直接走标准死亡管线。
+        /// 普通攻击会被 ShouldIgnoreDamage 的无敌窗口拦截导致死亡不触发，
+        /// 此处把最近受击时间拨回远古再结算致死伤害（内部 Hp 钳 1 + 惩罚 + 复活倒计时）。
+        /// </summary>
+        public void DeathByTurnBattle(Character killer)
+        {
+            this.lastDamageTime = -99f;
+            this.ReduceHp(this.CharacterDataLAB.Hp + 1f, killer);
+        }
+
+        /// <summary>
+        /// 授予无敌帧（回合制逃跑保护）— 把最近受击时间标记为现在，
+        /// 使 ReduceHp 的无敌窗口在指定时长内忽略来自大世界的伤害。
+        /// </summary>
+        public void GrantInvincibility(float duration)
+        {
+            this.InvincibilityDuration = duration;
+            this.lastDamageTime = this.gameTime.Time;
         }
 
         /// <summary>

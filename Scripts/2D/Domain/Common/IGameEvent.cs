@@ -1,5 +1,8 @@
 namespace LAB2D.Domain.Common
 {
+    using System.Collections.Generic;
+    using LAB2D.Domain.TurnBattle;
+
     /// <summary>
     /// 所有游戏事件的标记接口。
     /// 事件是领域服务的输出，由展示层/Unity适配器消费。
@@ -41,5 +44,28 @@ namespace LAB2D.Domain.Common
         public int Level;
         public int CurExperience;
         public int MaxExperience;
+    }
+
+    /// <summary>
+    /// 回合制战斗开始时触发（玩家按 G 加入大世界 Worker vs Enemy 交战）。
+    /// </summary>
+    public sealed class TurnBattleStartedEvent : IGameEvent
+    {
+        /// <summary>参战单位 Id 列表（含玩家/Worker/Enemy）。</summary>
+        public List<long> UnitIds = new List<long>();
+    }
+
+    /// <summary>
+    /// 回合制战斗结束时触发 — 成就"战斗"类别与会话统计消费。
+    /// </summary>
+    public sealed class TurnBattleEndedEvent : IGameEvent
+    {
+        public TurnBattleResult Result;
+
+        /// <summary>战斗持续回合数。</summary>
+        public int Round;
+
+        /// <summary>被击败的敌方单位 Id 列表（经验/掉落归因参考）。</summary>
+        public List<long> DefeatedEnemyUnitIds = new List<long>();
     }
 }

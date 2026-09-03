@@ -127,6 +127,15 @@ namespace LAB2D.Character.Worker
         private int dialoguePauseCount;
 
         /// <summary>
+        /// 刷新头顶血条 — 回合制战斗结束写回 Hp 后调用
+        /// （正常路径 ReduceHp/Start 内部刷新，快照写回绕过了这些管线）。
+        /// </summary>
+        public void RefreshStatusBar()
+        {
+            this.statusBar?.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+        }
+
+        /// <summary>
         /// Worker状态
         /// </summary>
         public Text WorkerStateText { get; set; }

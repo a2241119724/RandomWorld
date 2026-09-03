@@ -150,6 +150,10 @@ namespace LAB2D
             // 箭塔防御（已建成箭塔自动索敌射击，ITickable 由下表驱动；塔数据在 BuildMap 存档，无独立存档）
             ServiceLocator.Register(ArrowTowerManager.Instance);
 
+            // 回合制战斗（G 键加入大世界交战：快照构建→回合结算→结果写回；
+            // 交战检测由 GlobalInputProcessor 驱动，面板经 Manager 事件打开）
+            ServiceLocator.Register(Gameplay.TurnBattle.TurnBattleManager.Instance);
+
             // 灵气环境（空间灵气浓度图：灵脉撒点/聚灵阵扫描/浓度查询，IInitializable + ITickable 由下表驱动；灵脉点集走 ASingletonSaveData）
             ServiceLocator.Register(LingQiManager.Instance);
 
@@ -228,6 +232,7 @@ namespace LAB2D
             ServiceLocator.Register(DialoguePanel.Instance);
             ServiceLocator.Register(ShopPanel.Instance);
             ServiceLocator.Register(RoomListPanel.Instance);
+            ServiceLocator.Register(TurnBattlePanel.Instance);
             ServiceLocator.Register(UnityMainThreadDispatcher.Instance);
         }
 

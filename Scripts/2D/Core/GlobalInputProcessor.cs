@@ -2,9 +2,11 @@ namespace LAB2D.Core
 {
     using LAB2D;
     using LAB2D.Domain.Common;
+    using LAB2D.Gameplay.TurnBattle;
     using LAB2D.UI.Action;
     using LAB2D.UI.Panel;
     using LAB2D.UnityAdapter;
+    using System;
     using UnityEngine;
 
     /// <summary>
@@ -36,6 +38,97 @@ namespace LAB2D.Core
             this.ProcessAchievements();
             this.ProcessRoomListToggle();
             this.ProcessWorkerMindToggle();
+            this.ProcessJoinBattle(deltaTime);
+        }
+
+        /// <summary>
+        /// G 键 — 靠近大世界交战区时加入回合制战斗。
+        /// 交战检测器由此处驱动（0.5s 节流轮询 + 滞回），按下时实时重检防节流窗口错过。
+        /// 有面板打开、战斗中或联机时不触发。
+        /// </summary>
+        private void ProcessJoinBattle(float deltaTime)
+        {
+            TurnBattleManager battleManager = TurnBattleManager.Instance;
+            battleManager.Detector.Tick(deltaTime);
+
+            this.UpdateBattlePrompt(battleManager);
+
+            if (!UnityGlobalInputAdapter.GetHudToggleDown(Constant.InputKeyConstant.JoinBattle))
+            {
+                return;
+            }
+
+            if (battleManager.IsActive)
+            {
+                return;
+            }
+
+            // 有面板打开时不加入（战斗面板自身经 BattleStarted 事件打开，不依赖此处）
+            PanelController controller = ServiceLocator.Get<PanelController>();
+            if (controller != null && controller.Panels.Count > 0)
+            {
+                return;
+            }
+
+            Player player = ServiceLocator.Get<PlayerManager>()?.Mine;
+            if (player == null)
+            {
+                return;
+            }
+
+            // 实时重检一次：0.5s 节流缓存在交战刚起的瞬间可能还是空的
+            battleManager.Detector.DetectNow();
+            if (!battleManager.Detector.TryGetNearbyEncounter(
+                    (Vector2)player.transform.position, out BattleEncounter encounter))
+            {
+                return;
+            }
+
+            if (!battleManager.TryStartBattle(encounter, player, out string failReason))
+            {
+                ShowTip($"无法加入战斗：{failReason}");
+            }
+
+            // 成功路径无需提示：战斗面板经 Manager.BattleStarted 事件自动打开
+        }
+
+        /// <summary>交战提示条显隐 — 玩家检测半径内有交战且非战斗中时显示。</summary>
+        private void UpdateBattlePrompt(TurnBattleManager battleManager)
+        {
+            BattlePromptHUD prompt = BattlePromptHUD.Instance;
+            if (prompt == null)
+            {
+                return;
+            }
+
+            if (battleManager.IsActive)
+            {
+                prompt.SetVisible(false);
+                return;
+            }
+
+            Player player = ServiceLocator.Get<PlayerManager>()?.Mine;
+            if (player == null)
+            {
+                prompt.SetVisible(false);
+                return;
+            }
+
+            bool hasNearby = battleManager.Detector.HasNearbyBattle
+                && battleManager.Detector.TryGetNearbyEncounter((Vector2)player.transform.position, out _);
+            prompt.SetVisible(hasNearby);
+        }
+
+        private static void ShowTip(string text)
+        {
+            try
+            {
+                GameServices.ShowTipProvider(text);
+            }
+            catch (Exception)
+            {
+                // Tip 不可用时静默降级（测试环境）
+            }
         }
 
         /// <summary>

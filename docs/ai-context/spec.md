@@ -115,6 +115,14 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **消费端:** 玩家打坐 `CultivationManager.Tick` 采样玩家位置（`GetDensityAtWorld`）；Worker 睡眠吐纳 `MeditateFor(posMap)` 采样睡觉位置（床的选址价值）。地图未就绪/越界返 1 安全降级
 - **展示:** `EnvironmentManager` 只做浓度展示——Tick 采样玩家位置 `CurDensity`（100=草地基准）；点地显示被点格分项「地形×t 灵脉×v 阵×a 天气×w」（=1 省略段），作选址工具
 
+### 回合制战斗（洛克王国式）
+- **入口:** `BattleEncounterDetector`（`TurnBattleManager.Detector`，由 `GlobalInputProcessor.ProcessJoinBattle` 每 Tick 驱动）0.5s 轮询大世界交战——Worker Attack 状态锁 Enemy 为主信号 + Enemy 侧 Target/LastAttacker 补扫，连通分量聚合交战对，2 轮滞回防闪烁。玩家 8 格内出现 `BattlePromptHUD` 提示条（"按 B 加入"），**B 键加入**（有面板打开/战斗中/联机时不触发，联机硬边界走 `GameServices.NetworkIsOnlineProvider()`）。`Player.Update` 入口以 `TurnBattleManager.IsActive` 拦截实时技能热键（Q/E/R/F 等在面板打开时仍会响应键盘）
+- **面板:** `TurnBattlePanel`（非覆盖面板推栈自动 `timeScale=0` 冻结大世界 + Foreground `blocksRaycasts=false` 物理禁存档，Close 自动恢复）经 `Manager.BattleStarted` 事件打开（非 B 键直接 Show）。UI 纯代码构建 `TurnBattleUI`（卡片舞台/行动菜单/演出队列），演出用 `unscaledDeltaTime`（冻结下照常）；ESC 分层取消（点选目标→子菜单→逃跑确认框），无免费退出
+- **快照-写回:** 开战 `TurnBattleUnitFactory` 快照参战者（玩家+交战 Worker 为我方 vs Enemy），战斗内一切结算只读写快照（规避 `ReduceHp` 副作用链：状态切换/仇恨/心智/好感/粒子），结束 `TurnBattleResultWriter` 一次性写回（面板关闭前、timeScale=0 下纯 C# 链安全）。写回规则：存活单位 Hp/Mp 钳制写回；Worker 倒下=重伤退场战后 1 HP（不走死亡管线）；玩家倒下=立即判负 `Player.DeathByTurnBattle`（拨回 lastDamageTime 绕无敌帧致死，走标准 Death 管线）；Enemy 倒下=`LastAttacker=player` 走标准 Dead 管线（经验/掉落归因玩家）；逃跑成功玩家获 2s 无敌帧（`GrantInvincibility`）
+- **回合规则（`Domain/TurnBattle/TurnBattleRuleService` 纯函数，随机注入 `RandomFloatProvider`，未注入返回 0.5 中性值）:** SPD 降序定序（同速我方先，每回合重排）；命中率 `clamp(0.90+(攻HIT−守HIT)×0.5, 0.5, 1.0)`；暴击 roll<CRT（CRT 为 0-1 比例）；伤害=基数(ScaleByInt?INT:ATN)×倍率×(1+0.1×(等级−1))×AttackBuff→暴击×CSD→`DamageCalculator.ApplyDefense`→×五行克制；相克环 金→木→土→水→火→金（克 1.30/被克 0.75/中性 1.0，克制优先，`ElementCounterRuleService`）；技能冷却秒→回合（÷3 AwayFromZero，≤3s → 0 只耗蓝）；逃跑成功率 `0.50+双方均速差×0.03−敌存活×0.05+失败次数×0.15` clamp[0.25,0.95]，失败浪费一回合（敌方全体行动）；敌方 AI 选期望伤害最高技能（含克制，MP 不足兜底普攻），Worker 队友第一版只普攻
+- **技能/道具快照映射:** 玩家 8 槽过滤 Movement/Pull（无回合制语义）；SelfAOE→敌方全体×0.6；普攻 0 耗蓝永可用（MP 不足兜底）。道具=背包血瓶：治疗量 `AddHp.HealAmount` 单一来源（Use 与回合制共用），扣背包走 `BackpackController.ConsumeConsumableByUid`（立即生效不退还），回血走快照不实时改大世界
+- **交互:** 主菜单 攻击/技能/道具/逃跑（点击 + 数字键 1-4）；技能项显示耗蓝/冷却（不可用灰显）；多敌单体行动进入点选模式（敌方卡高亮，右键/ESC 取消）；演出点击加速（0.55s→0.12s/段）；面板内飘字 `TurnBattleFloatingText`（局部坐标 unscaled 上浮渐隐，不复用世界坐标 FloatingTextManager）
+
 ### 商店与任务板系统
 - **商店 NPC:** `ShopNPC` + `ShopNPCGenerator` — 地图就绪后自动生成商店，支持 Worker/Player 买卖交互
 - **任务板:** `TaskBoardManager` — 地图中心固定位置，Worker 存取物品的中转站，内存字典存储

@@ -13,6 +13,15 @@ namespace LAB2D.Character.Enemy
         private RaycastHit2D raycastHit2D; // 射线射中返回的结果
 
         /// <summary>
+        /// 刷新头顶血条 — 回合制战斗结束写回 Hp 后调用
+        /// （正常路径 ReduceHp 内部刷新，快照写回绕过了这些管线）。
+        /// </summary>
+        public void RefreshStatusBar()
+        {
+            this.statusBar?.UpdateStatus(this.CharacterDataLAB.Hp, this.CharacterDataLAB.MaxHp);
+        }
+
+        /// <summary>
         /// 获取角色朝向的方向
         /// </summary>
         public virtual Vector3 Direction { get; set; }

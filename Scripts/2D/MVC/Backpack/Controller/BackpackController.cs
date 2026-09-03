@@ -95,6 +95,54 @@ namespace LAB2D.MVC.Backpack.Controller
             return false;
         }
 
+        /// <summary>
+        /// 获取背包中所有消耗品物品（回合制战斗道具菜单用）。
+        /// </summary>
+        /// <returns>消耗品列表（副本，不会为 null）</returns>
+        public List<AItem> GetConsumables()
+        {
+            if (!this.model.ItemDict.TryGetValue(AItem.ItemTypeEnum.Consumable, out List<AItem> consumables))
+            {
+                return new List<AItem>();
+            }
+
+            return new List<AItem>(consumables);
+        }
+
+        /// <summary>
+        /// 根据 Uid 消耗一个消耗品（回合制战斗内用药：数量大于 1 减一，否则删除）。
+        /// 扣背包数量与回血解耦——回血走回合制快照，不实时改大世界 HP。
+        /// </summary>
+        /// <param name="uid">消耗品唯一标识符</param>
+        /// <returns>是否成功消耗</returns>
+        public bool ConsumeConsumableByUid(int uid)
+        {
+            if (!this.model.ItemDict.TryGetValue(AItem.ItemTypeEnum.Consumable, out List<AItem> consumables))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < consumables.Count; i++)
+            {
+                if (consumables[i].Uid == uid)
+                {
+                    if (consumables[i].Quantity > 1)
+                    {
+                        consumables[i].Quantity--;
+                    }
+                    else
+                    {
+                        this.model.Delete(AItem.ItemTypeEnum.Consumable, i);
+                    }
+
+                    this.UpdateInventory();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <inheritdoc/>
         protected override void OnSelectItem(int index, AItem item)
         {
