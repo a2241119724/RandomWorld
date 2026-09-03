@@ -28,7 +28,7 @@ MonoBehaviour:
       CarryTaskPutDownTime: 3
   - Id: 200001
     CnName: "\u706B\u628A"
-    Name: Torch
+    Name: HandTorch
     Info: "\u706B\u628A"
     IsStackable: 1
     LayerMode: 2

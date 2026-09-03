@@ -177,6 +177,14 @@ namespace LAB2D.Editor
                 }
             }
 
+            // 跨 SO 撞名检测：Name 是 nameToId 的全局键（ItemDataManager.Awake 直接 Add，
+            // 撞名即启动崩溃——如与消耗品 Torch 的撞名事故），写入前先扫全部 ItemData SO
+            if (IsNameTakenByOtherSO(spec.Name, targetSO))
+            {
+                Debug.LogError($"[BuildLightAssetGenerator] Name={spec.Name} 已被其他 ItemData SO 占用，跳过（Name 全局唯一）");
+                return;
+            }
+
             int newIndex = listProp.arraySize;
             listProp.InsertArrayElementAtIndex(newIndex);
             SerializedProperty e = listProp.GetArrayElementAtIndex(newIndex);
@@ -195,7 +203,7 @@ namespace LAB2D.Editor
             SetBool("IsAnimation", true);      // 帧动画（Torch_0..3）
             e.FindPropertyRelative("LayerMode").intValue = (int)ItemLayerMode.Normal; // 参与 y 排序不淡化
             e.FindPropertyRelative("VisualMode").intValue = 0; // sprite 视觉（走 SyncLight 挂光分支）
-            e.FindPropertyRelative("Id").intValue = 0; // OnEnable 按列表顺序自动分配
+            e.FindPropertyRelative("Id").intValue = (int)targetSO.ItemType * 100000 + newIndex; // 与 OnEnable 顺序分配一致（磁盘不再留 0 占位）
             e.FindPropertyRelative("Type").intValue = (int)targetSO.ItemType;
 
             // 建造消耗
@@ -217,6 +225,46 @@ namespace LAB2D.Editor
 
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(targetSO);
+        }
+
+        /// <summary>检查 Name 是否被其他 ItemData SO 条目占用（nameToId 全局键唯一契约）。</summary>
+        private static bool IsNameTakenByOtherSO(string name, BuildItemDataSO selfSO)
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:BuildItemDataSO"))
+            {
+                BuildItemDataSO so = AssetDatabase.LoadAssetAtPath<BuildItemDataSO>(AssetDatabase.GUIDToAssetPath(guid));
+                if (so == null || so == selfSO || so.BuildItemDatas == null)
+                {
+                    continue;
+                }
+
+                foreach (BuildItemData d in so.BuildItemDatas)
+                {
+                    if (d.Name == name)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            foreach (string guid in AssetDatabase.FindAssets("t:ItemDataSO"))
+            {
+                ItemDataSO so = AssetDatabase.LoadAssetAtPath<ItemDataSO>(AssetDatabase.GUIDToAssetPath(guid));
+                if (so == null || so.ItemDatas == null)
+                {
+                    continue;
+                }
+
+                foreach (ItemData d in so.ItemDatas)
+                {
+                    if (d.Name == name)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static void EnsureDirectory(string dir)
