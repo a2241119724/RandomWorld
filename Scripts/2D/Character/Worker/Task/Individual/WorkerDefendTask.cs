@@ -15,6 +15,8 @@ namespace LAB2D.Character.Worker.Task.Individual
     [Serializable]
     public class WorkerDefendTask : AWorkerTask
     {
+        // MonoBehaviour 引用禁止入存档（BinaryFormatter 序列化即抛异常），用法仅相等比较/OwnerWorkerId，null 安全
+        [NonSerialized]
         private AWorker worker;
 
         /// <summary>驻守时长（秒）— builder 按"距黎明秒数"设置。</summary>

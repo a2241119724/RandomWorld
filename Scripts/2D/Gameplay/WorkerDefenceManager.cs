@@ -155,6 +155,15 @@ namespace LAB2D.Gameplay
                     .SetWorker(worker)
                     .SetDuration(nightSeconds)
                     .Build();
+
+                // 抢占在执行的任务前先走放弃路径：SetTask 只覆盖引用不清理，
+                // 旧任务的队列 MarkRunning 占用/GatherMap 认领锁/库存预留需要 GiveUpTask 释放，
+                // 否则入夜瞬间正在采集/做悬赏的任务资源会永久锁死（本派发是首个无条件抢占调用方）
+                if (wd.Task != null)
+                {
+                    worker.GiveUpTask();
+                }
+
                 worker.SetTask(task, WorkerTaskSource.PushAssignment);
                 worker.ShowMindBubble(this.PickBubble(response));
 

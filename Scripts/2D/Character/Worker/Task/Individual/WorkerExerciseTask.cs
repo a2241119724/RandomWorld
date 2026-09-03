@@ -12,6 +12,8 @@ namespace LAB2D.Character.Worker.Task.Individual
     [Serializable]
     public class WorkerExerciseTask : AWorkerTask
     {
+        // MonoBehaviour 引用禁止入存档（BinaryFormatter 序列化即抛异常），用法仅相等比较/OwnerWorkerId，null 安全
+        [NonSerialized]
         private AWorker worker;
 
         public WorkerExerciseTask()
