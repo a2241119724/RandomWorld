@@ -2,6 +2,17 @@
 
 > 每次通过日志分析并解决 bug 后，把思路追加到此文件。开始新任务前**先通读本文件**，命中历史记录时直接引用验证，避免重复排查。
 
+## 2026-09-03 GameTimeUI.Awake NRE（场景 GlobalLight 未激活，FindWithTag 返回 null）
+
+- **现象**：error.log 启动早期（index=3，大厅加载阶段）1 条 `NullReferenceException: GameTimeUI.Awake (GameTimeUI.cs:28)`。
+- **根因**：`Scenes/Game.unity` 的 GlobalLight 物体 `m_IsActive: 0`（tag 已注册、代码无任何激活逻辑）。`FindGameObjectWithTag` **不检索未激活物体** → 返回 null → `GetComponent<Light2D>()` NRE。Awake 在 28 行中断 → `pointer`/`gameTimeManager` 未赋值，`Update` 里的 deref（`gameTimeManager.CurGameTime`/`globalLight.intensity`/`pointer.localRotation`）全部是每帧 NRE 雷。
+- **修复**（`Scripts/2D/UI/Panel/PanelUI/ForegroundUI/GameTimeUI.cs`，纯代码不改场景）：Awake 全字段容错（Text/Image 子组件 `?.` 容错、GlobalLight 缺失记 Warning 不中断）+ `globalLight` 5s 懒重试（场景物体被激活后自动接上，重试失败静默防刷屏）+ `Update` 前置守卫（`gameTimeManager`/`pointer`/`gameTime` 任一 null 直接 return，退化只读）。
+- **验证**：csc + Bee rsp 编译通过（EXIT=0）。重进游戏 error.log 不再出现该 NRE；GlobalLight 禁用状态下时间 HUD 正常走字、无光照变化；Inspector 激活 GlobalLight 后 ≤5s 光照开始联动。
+- **教训**：
+  - **`FindGameObjectWithTag` 对未激活物体返回 null 而非异常**——场景物体 `m_IsActive: 0`（用户手动禁用/忘记恢复）时 Awake 必崩。"按 tag 找场景物体"必须 null 检查。
+  - **Awake 中途抛异常的连锁伤害大于崩点本身**：中断点之后的字段赋值全部未执行，NRE 会在 Update 里以"每帧"复发；守卫要覆盖 Awake 里赋值的**全部**字段，不只崩点那一个。
+  - 排查时 Log 行格式 `[UnityException] <index> <异常>` 中数字是 LogManager 的全局 index 计数（第几条日志），不是发生次数。
+
 ## 2026-08-31 树同位置双渲染（tile 复活）+ GenTree 无限补种（TreeCurCount 负失衡）
 
 - **现象**：用户报告同一位置两个树——一份在 Tilemap 上（不透明、无动画、不淡化），一份是独立视觉物体（TreeVisual_*，有动画、可遮挡淡化）。首报位置 (63,140)。
