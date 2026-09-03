@@ -104,6 +104,16 @@ namespace LAB2D.Data
         public bool IsAnimation;
 
         /// <summary>
+        /// 地面视觉 shader 摇摆开关：开启且 LayerMode != Bottom 时，独立 sprite 视觉换用
+        /// Custom/Sprite-Lit-Sway 材质（GPU 顶点位移做摆动：树底固定、树顶摆，相位按世界
+        /// 位置 hash 逐实例打散），sprite 走静态 tile 图，不挂任何动画组件——大地图数千棵
+        /// 树的摆动不再产生逐实例 Animator 每帧求值开销。与 IsAnimation 相互独立；
+        /// 序列帧动画物品（Torch/Campfire 等）勿开（帧动画本身已含摆动语义）。
+        /// </summary>
+        [Tooltip("shader 摇摆开关：开启且 LayerMode != Bottom 时独立视觉用 Sprite-Lit-Sway 材质做 GPU 顶点摆动（静态图，无动画组件）。序列帧动画物品勿开。")]
+        public bool IsSway;
+
+        /// <summary>
         /// 物品类型
         /// </summary>
         [Tooltip("物品类型")]

@@ -64,7 +64,8 @@ namespace LAB2D.Map
             }
 
             this.visuals = new TileVisualSpawner(this.tilemap, this.transform, "Character", "TreeVisual",
-                this.GetResourceLayerMode, useTilemapColor: false, animationResolver: this.GetResourceAnimationPrefix);
+                this.GetResourceLayerMode, useTilemapColor: false, animationResolver: this.GetResourceAnimationPrefix,
+                swayResolver: this.GetResourceSway);
             if (this.resourceTileMapOne != null)
             {
                 TilemapRenderer rendererOne = this.resourceTileMapOne.GetComponent<TilemapRenderer>();
@@ -74,7 +75,8 @@ namespace LAB2D.Map
                 }
 
                 this.visualsOne = new TileVisualSpawner(this.resourceTileMapOne, this.transform, "Character", "TreeVisualOne",
-                    this.GetResourceLayerMode, useTilemapColor: false, animationResolver: this.GetResourceAnimationPrefix);
+                    this.GetResourceLayerMode, useTilemapColor: false, animationResolver: this.GetResourceAnimationPrefix,
+                    swayResolver: this.GetResourceSway);
                 this.visualsOne.RebuildAll(); // 静态场景装饰，一次性建视觉
             }
         }
@@ -289,6 +291,26 @@ namespace LAB2D.Map
 
             ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
             return item != null && item.IsAnimation && item.LayerMode != ItemLayerMode.Bottom ? item.Name : null;
+        }
+
+        /// <summary>
+        /// 该格资源是否用 shader 摇摆材质（ItemData.IsSway 开启且 LayerMode != Bottom，树资源通用）。
+        /// 开启时独立 sprite 视觉换 Custom/Sprite-Lit-Sway 材质，GPU 顶点位移做摆动
+        /// （静态 tile 图、不挂动画组件——大地图数千棵树无逐实例 Animator 每帧求值开销）。
+        /// 供 TileVisualSpawner 的 swayResolver 使用。tile 名查不到数据时返回 false（不摆）。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <returns>该格资源是否摇摆渲染；无 tile、未开启 IsSway 或恒底层时返回 false。</returns>
+        private bool GetResourceSway(Vector3Int cell)
+        {
+            TileBase tile = this.GetTile(cell);
+            if (tile == null)
+            {
+                return false;
+            }
+
+            ItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetByName(tile.name);
+            return item != null && item.IsSway && item.LayerMode != ItemLayerMode.Bottom;
         }
 
         /// <summary>

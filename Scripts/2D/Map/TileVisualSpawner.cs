@@ -28,6 +28,11 @@ namespace LAB2D.Map
     /// 按名称从 AnimationManager 取 AnimationClip 经 legacy Animation 组件循环播放，
     /// 动画格 sprite 由组件接管；取不到 clip 时回退静态 tile 图。
     ///
+    /// 摇摆材质（swayResolver）：可选委托按 cell 判定该格视觉是否用 Custom/Sprite-Lit-Sway
+    /// 材质（ItemData.IsSway 开启且 LayerMode != Bottom）。开启时 sprite 走静态 tile 图，
+    /// 摆动由 shader 顶点位移驱动（树底固定、树顶摆，相位按世界位置 hash 逐实例打散），
+    /// 不挂任何动画组件——大地图数千棵树的摆动无逐实例 Animator 每帧求值开销。
+    ///
     /// 点光源（lightResolver）：可选委托按 cell 返回 TileLightConfig（BuildItemData.LightRadius &gt; 0
     /// 的建筑如 Torch/Campfire）。非空时视觉 GO 下挂 "TileLight" 子节点（Light2D Point + Additive +
     /// 可选 LightFlicker 平滑闪烁）；返回 null 销毁残留光。建造中不发光（BuildMap resolver 按
@@ -45,6 +50,7 @@ namespace LAB2D.Map
     {
         private const string ParentName = "VisualSprites";
         private const string LightChildName = "TileLight"; // 视觉 GO 下的点光源子节点名（SyncLight 调和目标）
+        private const string SwayShaderName = "Custom/Sprite-Lit-Sway"; // 树摇摆 shader（Resources/Shader/ 下，构建必含）
 
         private readonly Tilemap tilemap;
         private readonly Transform parent;
@@ -56,10 +62,43 @@ namespace LAB2D.Map
         private readonly bool useTilemapColor; // false 时 SpriteRenderer 颜色强制白色（不读 tilemap 颜色）
         private readonly System.Func<Vector3Int, string> prefabResolver; // 非空时该格优先用预制体视觉（ItemData.VisualMode == Prefab 时返回 Name）
         private readonly System.Func<Vector3Int, string> animationResolver; // 非空时该格独立 sprite 视觉挂帧动画（ItemData.IsAnimation 开启时返回英文名 Name 前缀）
+        private readonly System.Func<Vector3Int, bool> swayResolver; // 非空且返回 true 时该格独立 sprite 视觉换摇摆材质（ItemData.IsSway，GPU 顶点摆动）
         private readonly System.Func<Vector3Int, TileLightConfig> lightResolver; // 非空时按 cell 产出点光源参数（BuildItemData.LightRadius>0），null=无光
         private readonly HashSet<Vector3Int> bottomLightWarned = new HashSet<Vector3Int>(); // Bottom+发光配置冲突已警告的格（防事件点重复刷屏）
         private readonly Dictionary<Vector3Int, SpriteRenderer> visual = new Dictionary<Vector3Int, SpriteRenderer>();
         private readonly Dictionary<Vector3Int, GameObject> prefabVisuals = new Dictionary<Vector3Int, GameObject>();
+
+        private static Material swayMaterial; // 摇摆材质（全局一份，懒加载；所有 spawner 实例共享）
+        private static bool swayMaterialResolved; // 懒加载只解析一次（含失败：找不到 shader 时固定 null 降级，不重复告警）
+
+        /// <summary>
+        /// 摇摆材质（全局一份，懒加载）：<see cref="SwayShaderName"/> 的运行时实例，
+        /// 摆动参数用 shader Properties 默认值（调参改 shader 文件即可）。
+        /// 找不到 shader（编译失败/被剥离）时返回 null，全局降级为静态不摆（不崩）。
+        /// </summary>
+        private static Material SwayMaterial
+        {
+            get
+            {
+                if (swayMaterialResolved)
+                {
+                    return swayMaterial;
+                }
+
+                swayMaterialResolved = true;
+                Shader swayShader = Shader.Find(SwayShaderName);
+                if (swayShader == null)
+                {
+                    AWorkerTask.LogProvider(
+                        $"[BuildDiag] 找不到 shader {SwayShaderName}，摇摆视觉降级为静态不摆",
+                        LogManager.LogLevelEnum.Warning);
+                    return null;
+                }
+
+                swayMaterial = new Material(swayShader);
+                return swayMaterial;
+            }
+        }
 
         /// <summary>
         /// 注入 tilemap（数据源）与 hostTransform（视觉挂载点）。
@@ -79,6 +118,9 @@ namespace LAB2D.Map
         /// <param name="animationResolver">可选：按 cell 返回帧动画前缀（如 ItemData.IsAnimation 开启且
         /// LayerMode != Bottom 时的英文名 Name）。非空时该格独立 SpriteRenderer 挂 SpriteFrameAnimator，
         /// 按名称从 AnimationManager 取 AnimationClip 循环播放；取不到 clip 时回退静态 tile 图。</param>
+        /// <param name="swayResolver">可选：按 cell 判定是否用摇摆材质（如 ItemData.IsSway 开启且
+        /// LayerMode != Bottom）。true 时独立 sprite 换 <see cref="SwayShaderName"/> 材质（GPU 顶点摆动，
+        /// sprite 走静态 tile 图、不挂动画组件）；同格换非摇摆物品时自动换回默认 lit 材质。</param>
         /// <param name="lightResolver">可选：按 cell 返回点光源参数（如 BuildItemData.LightRadius &gt; 0 的
         /// Torch/Campfire）。非空时视觉 GO 下挂 "TileLight" 子节点（Light2D Point + 可选 LightFlicker）；
         /// 返回 null 时销毁残留光 GO（同格换普通物品）。Bottom 模式无独立视觉 GO，发光配置无效（警告一次）。</param>
@@ -88,6 +130,7 @@ namespace LAB2D.Map
             bool useTilemapColor = true,
             System.Func<Vector3Int, string> prefabResolver = null,
             System.Func<Vector3Int, string> animationResolver = null,
+            System.Func<Vector3Int, bool> swayResolver = null,
             System.Func<Vector3Int, TileLightConfig> lightResolver = null)
         {
             this.tilemap = tilemap;
@@ -98,6 +141,7 @@ namespace LAB2D.Map
             this.useTilemapColor = useTilemapColor;
             this.prefabResolver = prefabResolver;
             this.animationResolver = animationResolver;
+            this.swayResolver = swayResolver;
             this.lightResolver = lightResolver;
             this.material = ResolveMaterial(tilemap);
             this.parent = new GameObject(ParentName).transform;
@@ -239,6 +283,9 @@ namespace LAB2D.Map
             // 动画组件调和：每次以 resolver 结果为准（首次挂载 / 动画↔非动画切换 / 同格换物品重载帧序列）。
             bool isAnimated = this.SyncAnimation(cell, sr, animationPrefix);
 
+            // 摇摆材质调和：该格 IsSway 时换 sway 材质（GPU 顶点摆动），同格换非摇摆物品时换回默认 lit。
+            this.SyncSwayMaterial(cell, sr);
+
             // 位置：GetCellCenterWorld 自动应用网格 transform（45° 转置坐标系）
             sr.transform.position = this.tilemap.GetCellCenterWorld(cell);
 
@@ -345,6 +392,36 @@ namespace LAB2D.Map
             else if (flicker != null)
             {
                 Object.Destroy(flicker);
+            }
+        }
+
+        /// <summary>
+        /// 调和 cell 的摇摆材质状态：以 swayResolver 结果为准（每次 CreateOrUpdate 调用，幂等）。
+        /// - 应摇摆：SpriteRenderer 换 <see cref="SwayMaterial"/>（GPU 顶点摆动，sprite 保持静态图）。
+        /// - 不应摇摆（同格换成非摇摆物品）：若当前是 sway 材质则换回默认 lit 材质。
+        /// sway shader 缺失时 <see cref="SwayMaterial"/> 为 null，全局降级为静态不摆（不崩）。
+        /// </summary>
+        /// <param name="cell">地图坐标。</param>
+        /// <param name="sr">该格独立 SpriteRenderer。</param>
+        private void SyncSwayMaterial(Vector3Int cell, SpriteRenderer sr)
+        {
+            Material sway = SwayMaterial;
+            if (sway == null)
+            {
+                return; // shader 缺失已告警降级：不碰材质（保持默认 lit 静态渲染）
+            }
+
+            if (this.swayResolver != null && this.swayResolver(cell))
+            {
+                if (sr.sharedMaterial != sway)
+                {
+                    sr.sharedMaterial = sway;
+                }
+            }
+            else if (sr.sharedMaterial == sway)
+            {
+                // 同格换非摇摆物品：换回默认 lit 材质（material 为 null 的极端兜底场景退 SR 默认）
+                sr.sharedMaterial = this.material;
             }
         }
 

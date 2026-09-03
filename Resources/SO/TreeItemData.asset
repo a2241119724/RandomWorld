@@ -21,7 +21,8 @@ MonoBehaviour:
     IsStackable: 0
     LayerMode: 1
     VisualMode: 0
-    IsAnimation: 1
+    IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
@@ -35,6 +36,7 @@ MonoBehaviour:
     LayerMode: 1
     VisualMode: 0
     IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
@@ -48,6 +50,7 @@ MonoBehaviour:
     LayerMode: 1
     VisualMode: 0
     IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
@@ -61,6 +64,7 @@ MonoBehaviour:
     LayerMode: 2
     VisualMode: 0
     IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
@@ -74,6 +78,7 @@ MonoBehaviour:
     LayerMode: 2
     VisualMode: 0
     IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
@@ -87,6 +92,7 @@ MonoBehaviour:
     LayerMode: 2
     VisualMode: 0
     IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
@@ -100,6 +106,7 @@ MonoBehaviour:
     LayerMode: 1
     VisualMode: 0
     IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
@@ -113,6 +120,7 @@ MonoBehaviour:
     LayerMode: 2
     VisualMode: 0
     IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
@@ -126,6 +134,7 @@ MonoBehaviour:
     LayerMode: 2
     VisualMode: 0
     IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
@@ -139,6 +148,7 @@ MonoBehaviour:
     LayerMode: 2
     VisualMode: 0
     IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
@@ -151,7 +161,8 @@ MonoBehaviour:
     IsStackable: 0
     LayerMode: 1
     VisualMode: 0
-    IsAnimation: 1
+    IsAnimation: 0
+    IsSway: 1
     Type: 12
     EquipSlot: 0
     RelatedTaskTime:
