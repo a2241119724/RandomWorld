@@ -171,6 +171,13 @@ namespace LAB2D.Constant
         /// </summary>
         public const KeyCode ToggleWorkerMindHud = KeyCode.F12;
 
+        /// <summary>
+        /// 山门核心 HUD 显示/隐藏 (G键, G=Gate)
+        /// 切换显示山门核心等级/耐久/被破次数，并提供金币升级按钮。
+        /// HUD 默认常驻显示。仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleMountainGateHud = KeyCode.G;
+
         #endregion
 
         #region 主动技能快捷键 (Q/E/R/F)
@@ -345,6 +352,7 @@ namespace LAB2D.Constant
   6        —— 房间列表面板
   F11      —— 好感度 HUD (对玩家好感/态度)
   F12      —— 心智面板 (记忆/关系/信念/修仙)
+  G        —— 山门核心 HUD (等级/耐久/升级)
   T        —— 科技面板 (研究点/科技研究)
   9        —— 成就面板
   0        —— 装备面板切换

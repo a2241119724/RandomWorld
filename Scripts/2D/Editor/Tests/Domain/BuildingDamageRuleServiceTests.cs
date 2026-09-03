@@ -115,5 +115,40 @@ namespace LAB2D.Editor.Tests.Domain
             Assert.IsTrue(gameOver);
             Assert.AreEqual(BuildingDamageRuleService.CoreMaxDownfalls, downfalls);
         }
+
+        [Test]
+        public void GetCoreUpgradeCost_Level1_ReturnsLevel2Cost()
+        {
+            Assert.AreEqual(200, this.service.GetCoreUpgradeCost(1));
+        }
+
+        [Test]
+        public void GetCoreUpgradeCost_Level2_ReturnsLevel3Cost()
+        {
+            Assert.AreEqual(500, this.service.GetCoreUpgradeCost(2));
+        }
+
+        [Test]
+        public void GetCoreUpgradeCost_AtOrBeyondMaxOrInvalid_ReturnsZero()
+        {
+            Assert.AreEqual(0, this.service.GetCoreUpgradeCost(BuildingDamageRuleService.CoreMaxLevel));
+            Assert.AreEqual(0, this.service.GetCoreUpgradeCost(BuildingDamageRuleService.CoreMaxLevel + 1));
+            Assert.AreEqual(0, this.service.GetCoreUpgradeCost(0));
+            Assert.AreEqual(0, this.service.GetCoreUpgradeCost(-1));
+        }
+
+        [Test]
+        public void GetCoreUpgradeCost_TwoStepChain_Spends200Then500()
+        {
+            int total = 0;
+            for (int level = 1; level < BuildingDamageRuleService.CoreMaxLevel; level++)
+            {
+                total += this.service.GetCoreUpgradeCost(level);
+            }
+
+            Assert.AreEqual(
+                BuildingDamageRuleService.CoreUpgradeCostLevel2 + BuildingDamageRuleService.CoreUpgradeCostLevel3,
+                total);
+        }
     }
 }

@@ -69,8 +69,9 @@ namespace LAB2D.Gameplay
         /// 仅在 Play Mode 可用，非 Play Mode 返回 null。
         /// 采集后将结果存入历史列表并触发 OnResultCaptured 事件。
         /// </summary>
+        /// <param name="endingType">会话结局类型（终局采集时传 Victory/Defeat，默认进行中）</param>
         /// <returns>本次采集的结算数据，非 Play Mode 时返回 null</returns>
-        public SessionResultData CaptureResult()
+        public SessionResultData CaptureResult(SessionEndingType endingType = SessionEndingType.None)
         {
             if (!IsPlayingProvider())
             {
@@ -89,7 +90,7 @@ namespace LAB2D.Gameplay
                 return null;
             }
 
-            SessionResultData result = SessionResultData.FromSnapshot(snapshot);
+            SessionResultData result = SessionResultData.FromSnapshot(snapshot, endingType);
             if (result == null)
             {
                 return null;
@@ -151,8 +152,11 @@ namespace LAB2D.Gameplay
             {
                 SessionResultData r = this.resultHistory[i];
                 string marker = i == 0 ? " [最新]" : string.Empty;
+                string ending = r.EndingType == SessionEndingType.Victory
+                    ? "胜利"
+                    : r.EndingType == SessionEndingType.Defeat ? "失败" : "进行中";
                 builder.AppendLine(
-                    $"#{i + 1}{marker} | {r.CapturedAt} | " +
+                    $"#{i + 1}{marker} | {r.CapturedAt} | {ending} | " +
                     $"评分:{r.CombatScore} | {new string('★', r.StarRating)}{new string('☆', 5 - r.StarRating)} | " +
                     $"击杀:{r.TotalDefeatedEnemyCount} | 连击:{r.MaxCombo} | " +
                     $"{(r.HasSurvived ? "存活" : "死亡" + r.PlayerDeathCount + "次")}");

@@ -64,8 +64,16 @@ namespace LAB2D.Editor
                 return;
             }
 
-            bool ok = Gameplay.MountainGateManager.Instance.TryUpgradeCore();
-            Debug.Log($"<color=cyan>[MountainGate]</color> 升级核心：{(ok ? "成功" : "失败（未放置/已终局/已满级）")}");
+            // 升级有金币门槛（1→2 扣 200、2→3 扣 500）：调试菜单先补足本次消耗，验证胜利路径不被钱包卡住
+            Gameplay.MountainGateManager gate = Gameplay.MountainGateManager.Instance;
+            int cost = new LAB2D.Domain.Gameplay.BuildingDamageRuleService().GetCoreUpgradeCost(gate.CoreLevel);
+            if (cost > 0)
+            {
+                Core.ServiceLocator.Get<Gameplay.CurrencyManager>()?.AddPlayerGold(cost);
+            }
+
+            bool ok = gate.TryUpgradeCore();
+            Debug.Log($"<color=cyan>[MountainGate]</color> 升级核心：{(ok ? "成功" : "失败（未放置/已终局/已满级/金币不足）")}");
         }
 
         [MenuItem(MenuRoot + "直接终局失败", false, 103)]

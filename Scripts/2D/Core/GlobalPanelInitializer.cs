@@ -68,6 +68,9 @@ namespace LAB2D.Core
 
             // 科技面板 (T键，纯代码构建)
             TechPanel.EnsureRuntimePanel();
+
+            // 山门核心 HUD (G键，纯代码构建)
+            MountainGateHUD.EnsureRuntimePanel();
         }
     }
 }

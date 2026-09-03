@@ -52,6 +52,15 @@ namespace LAB2D.Gameplay
 
         private readonly BuildingDamageRuleService ruleService = new();
 
+        /// <summary>核心状态变化（位置/耐久/等级/被破次数/终局态任一变化）— 山门 HUD 订阅刷新。</summary>
+        public event Action CoreChanged;
+
+        /// <summary>触发核心状态变化通知（HUD 刷新）；只在事件点调用，不在逐帧路径。</summary>
+        private void RaiseCoreChanged()
+        {
+            this.CoreChanged?.Invoke();
+        }
+
         // ---- 初始化 ----
 
         /// <summary>
@@ -64,6 +73,7 @@ namespace LAB2D.Gameplay
             if (this.IsCorePlaced)
             {
                 this.PlaceCoreIcon(this.CorePosition);
+                this.RaiseCoreChanged();
                 return;
             }
 
@@ -78,6 +88,7 @@ namespace LAB2D.Gameplay
             AWorkerTask.LogProvider(
                 $"[GateDiag] 山门核心初始化 pos=({found.x},{found.y}) size={CoreSize}x{CoreSize} hp={this.CoreHp:F0} level={this.CoreLevel}",
                 LogManager.LogLevelEnum.Debug);
+            this.RaiseCoreChanged();
         }
 
         /// <summary>
@@ -147,7 +158,8 @@ namespace LAB2D.Gameplay
 
         /// <summary>
         /// 放置核心（3×3）：走 MountainGateCore 既有建造管线——
-        /// SO 条目 IsNeedBuild=false 即放置即完成，IsPass=false 主格物理阻挡可被打、副格 A* 阻挡。
+        /// SO 条目 IsNeedBuild=true（放置后创建建造任务，Worker 参与建核心），
+        /// IsPass=false 主格物理阻挡可被打、副格 A* 阻挡。
         /// 读档重放幂等（AddBuild 覆盖已有 PosMap 条目，RegisterCollisionTile 有占用保护）。
         /// </summary>
         private void PlaceCoreIcon(Vector3Int pos)
@@ -179,11 +191,14 @@ namespace LAB2D.Gameplay
             {
                 this.OnCoreDestroyed();
             }
+
+            this.RaiseCoreChanged();
         }
 
         /// <summary>
-        /// 尝试升级核心（阶段推进入口，Editor 菜单/未来交互 UI 调用）。
-        /// 升到 CoreMaxLevel 触发阶段胜利。
+        /// 尝试升级核心（阶段推进入口，山门 HUD 升级按钮/Editor 菜单调用）。
+        /// 消耗玩家金币（1→2 扣 200、2→3 扣 500，规则见 BuildingDamageRuleService.GetCoreUpgradeCost，
+        /// HUD 按钮同规则置灰）；升到 CoreMaxLevel 触发阶段胜利。
         /// </summary>
         /// <returns>是否升级成功。</returns>
         public bool TryUpgradeCore()
@@ -193,8 +208,23 @@ namespace LAB2D.Gameplay
                 return false;
             }
 
+            int cost = this.ruleService.GetCoreUpgradeCost(this.CoreLevel);
+            if (cost > 0)
+            {
+                CurrencyManager currency = Core.ServiceLocator.Get<CurrencyManager>();
+                if (currency == null || !currency.TrySpendPlayerGold(cost))
+                {
+                    ShowTip($"金币不足：升级核心需 {cost} 金币");
+                    AWorkerTask.LogProvider(
+                        $"[GateDiag] 升级失败（金币不足）level={this.CoreLevel} cost={cost}",
+                        LogManager.LogLevelEnum.Warning);
+                    return false;
+                }
+            }
+
             this.CoreLevel++;
-            AWorkerTask.LogProvider($"[GateDiag] 山门核心升级 → level={this.CoreLevel}", LogManager.LogLevelEnum.Debug);
+            AWorkerTask.LogProvider($"[GateDiag] 山门核心升级 → level={this.CoreLevel} cost={cost}", LogManager.LogLevelEnum.Debug);
+            this.RaiseCoreChanged();
             if (this.CoreLevel >= BuildingDamageRuleService.CoreMaxLevel)
             {
                 this.TriggerVictory();
@@ -202,7 +232,6 @@ namespace LAB2D.Gameplay
             else
             {
                 ShowTip($"山门核心升至 {this.CoreLevel} 级，小镇灵气渐盛");
-
             }
 
             return true;
@@ -247,7 +276,8 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 终局失败：采集会话结算并冻结时间（ITickable 与 WaveManager 协程一并停止）。
+        /// 终局失败：采集会话结算（Defeat）并冻结时间（ITickable 与 WaveManager 协程一并停止），
+        /// 弹出终局结算面板（面板按钮负责显式恢复 timeScale）。
         /// </summary>
         private void TriggerGameOver()
         {
@@ -258,13 +288,15 @@ namespace LAB2D.Gameplay
 
             this.IsGameOver = true;
             AWorkerTask.LogProvider("[GateDiag] 终局失败：山门核心连续被毁，小镇陷落", LogManager.LogLevelEnum.Debug);
-            SessionResultManager.Instance.CaptureResult();
+            SessionResultData result = SessionResultManager.Instance.CaptureResult(SessionEndingType.Defeat);
+            this.RaiseCoreChanged();
             Time.timeScale = 0f;
             ShowTip("山门陷落，小镇化为废墟……（终局失败，结算已采集）");
+            this.OpenSessionEndPanel(result, SessionEndingType.Defeat);
         }
 
         /// <summary>
-        /// 阶段胜利：核心满级，采集会话结算。
+        /// 阶段胜利：核心满级，采集会话结算（Victory，不冻结时间），弹出终局结算面板。
         /// </summary>
         private void TriggerVictory()
         {
@@ -275,8 +307,25 @@ namespace LAB2D.Gameplay
 
             this.IsVictory = true;
             AWorkerTask.LogProvider("[GateDiag] 阶段胜利：山门核心升至满级", LogManager.LogLevelEnum.Debug);
-            SessionResultManager.Instance.CaptureResult();
+            SessionResultData result = SessionResultManager.Instance.CaptureResult(SessionEndingType.Victory);
+            this.RaiseCoreChanged();
             ShowTip("山门核心大功告成！小镇在妖兽潮中屹立不倒（阶段胜利，结算已采集）");
+            this.OpenSessionEndPanel(result, SessionEndingType.Victory);
+        }
+
+        /// <summary>
+        /// 打开终局结算面板（try-catch：面板依赖场景 UI 根节点，Editor 测试环境可能缺失时静默降级）。
+        /// </summary>
+        private void OpenSessionEndPanel(SessionResultData result, SessionEndingType ending)
+        {
+            try
+            {
+                LAB2D.UI.Panel.SessionEndPanel.Instance.Open(result, ending);
+            }
+            catch (Exception)
+            {
+                // UI 根不存在（测试环境）时静默降级
+            }
         }
 
         private static void ShowTip(string text)
@@ -331,6 +380,7 @@ namespace LAB2D.Gameplay
             this.DownfallCount = data.DownfallCount;
             this.IsGameOver = data.IsGameOver;
             this.IsVictory = data.IsVictory;
+            this.RaiseCoreChanged();
         }
 
         /// <summary>

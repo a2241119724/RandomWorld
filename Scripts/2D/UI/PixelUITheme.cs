@@ -51,6 +51,9 @@ namespace LAB2D.UI
         public static readonly Color DeathText = new Color32(220, 200, 180, 255);
         public static readonly Color DeathCount = new Color32(180, 160, 140, 255);
 
+        // === 终局结算（胜利标题，与 RichGold #F9D56E 同源的 Color 版本） ===
+        public static readonly Color VictoryTitle = new Color32(249, 213, 110, 255);
+
         // === 存档槽 ===
         public static readonly Color SaveSlotTitleText = new Color32(242, 122, 107, 255);
 

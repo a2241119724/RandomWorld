@@ -7,6 +7,21 @@ namespace LAB2D.Gameplay
     using System.Text;
 
     /// <summary>
+    /// 会话结局类型：终局采集时由调用方传入（胜利=核心满级 / 失败=山门被破上限）。
+    /// </summary>
+    public enum SessionEndingType
+    {
+        /// <summary>非终局采集（进行中快照，默认值）。</summary>
+        None = 0,
+
+        /// <summary>胜利：山门核心升至满级。</summary>
+        Victory = 1,
+
+        /// <summary>失败：山门核心被破达到上限次数。</summary>
+        Defeat = 2,
+    }
+
+    /// <summary>
     /// 会话结束统计数据模型 — 结构化保存一次游戏会话的完整结算数据。
     /// 数据来源：GameplaySessionStats.CreateSnapshot()
     /// 用途：结算面板数据源、关卡评价展示、玩家行为分析、后续成就/任务条件判断
@@ -26,6 +41,9 @@ namespace LAB2D.Gameplay
 
         /// <summary>数据采集时间戳</summary>
         public string CapturedAt;
+
+        /// <summary>会话结局类型（默认 None=进行中采集，终局时由调用方传入）</summary>
+        public SessionEndingType EndingType = SessionEndingType.None;
 
         // ---- 战斗数据 ----
 
@@ -98,8 +116,11 @@ namespace LAB2D.Gameplay
         /// 调用时机：会话结束时（玩家死亡、波次通关、手动触发）
         /// </summary>
         /// <param name="snapshot">GameplaySessionStats 快照</param>
+        /// <param name="endingType">会话结局类型（终局采集时传 Victory/Defeat，默认进行中）</param>
         /// <returns>计算完成的结算数据</returns>
-        public static SessionResultData FromSnapshot(GameplaySessionStatsSnapshot snapshot)
+        public static SessionResultData FromSnapshot(
+            GameplaySessionStatsSnapshot snapshot,
+            SessionEndingType endingType = SessionEndingType.None)
         {
             if (snapshot == null)
             {
@@ -109,6 +130,7 @@ namespace LAB2D.Gameplay
             SessionResultData result = new SessionResultData
             {
                 CapturedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                EndingType = endingType,
                 SessionDuration = snapshot.SessionDuration,
                 TotalDamageDealt = snapshot.TotalDamageDealt,
                 TotalDamageTaken = snapshot.TotalDamageTaken,

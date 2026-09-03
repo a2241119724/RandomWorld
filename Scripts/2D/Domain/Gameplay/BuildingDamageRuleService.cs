@@ -22,6 +22,12 @@ namespace LAB2D.Domain.Gameplay
         /// <summary>核心升级等级上限（达到即阶段胜利）。</summary>
         public const int CoreMaxLevel = 3;
 
+        /// <summary>核心 1→2 级升级金币消耗。</summary>
+        public const int CoreUpgradeCostLevel2 = 200;
+
+        /// <summary>核心 2→3 级升级金币消耗。</summary>
+        public const int CoreUpgradeCostLevel3 = 500;
+
         /// <summary>
         /// 一次伤害的结算结果。
         /// </summary>
@@ -64,6 +70,21 @@ namespace LAB2D.Domain.Gameplay
         public float ComputeCoreReviveHp()
         {
             return CoreMaxHp * CoreReviveHpRatio;
+        }
+
+        /// <summary>
+        /// 核心从 fromLevel 升到下一级的金币消耗：1→200、2→500，已满级或非法等级返回 0（无可升级）。
+        /// </summary>
+        /// <param name="fromLevel">当前核心等级。</param>
+        /// <returns>升级金币消耗；0 表示不可升级。</returns>
+        public int GetCoreUpgradeCost(int fromLevel)
+        {
+            switch (fromLevel)
+            {
+                case 1: return CoreUpgradeCostLevel2;
+                case 2: return CoreUpgradeCostLevel3;
+                default: return 0;
+            }
         }
     }
 }
