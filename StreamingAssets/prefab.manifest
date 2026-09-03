@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2714121712
+CRC: 1045803817
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: bcabda3a16d30a94b623aca7fda885b0
+    Hash: 543f960ace77fceedecd65a07f78c660
   TypeTreeHash:
     serializedVersion: 2
-    Hash: e27f65c9c0372bab428c3c0df3bf6059
+    Hash: 01edb9a6ef694ecbf92bd7f8303fa180
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: bcabda3a16d30a94b623aca7fda885b0
+    Hash: 543f960ace77fceedecd65a07f78c660
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -116,6 +116,10 @@ ClassTypes:
   Script: {fileID: 11500000, guid: 7bce51a8d6684b741be1c8575be0dea3, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e6390490e87e41ada49c0ff3a65c2828, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 19976a8acf344039bf2a9f171d70c363, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 120
@@ -174,11 +178,13 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Toggle/ToggleEvent
 Assets:
+- Assets/ResourcesLocal/Prefabs/ItemBox/BuyItem.prefab
 - Assets/ResourcesLocal/Prefabs/Character/Worker/Worker.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/BuildItem.prefab
 - Assets/ResourcesLocal/Prefabs/Character/Enemy/SeekEnemy.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/RoomItem.prefab
 - Assets/ResourcesLocal/Prefabs/UI/EquipmentPanel.prefab
+- Assets/ResourcesLocal/Prefabs/Character/Enemy/ShootEnemy.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Gun/SingleGun.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/WorkerBedItem.prefab
 - Assets/ResourcesLocal/Prefabs/Bar/PlantGrowthBar.prefab
@@ -210,5 +216,5 @@ Assets:
 - Assets/ResourcesLocal/Prefabs/Damage.prefab
 - Assets/ResourcesLocal/Prefabs/ItemBox/RightChatItem.prefab
 - Assets/ResourcesLocal/Prefabs/Item/Backpack/Weapon/Sword/KnifeLightEffect.prefab
-- Assets/ResourcesLocal/Prefabs/ItemBox/BuyItem.prefab
+- Assets/ResourcesLocal/Prefabs/Character/Enemy/ChargeEnemy.prefab
 Dependencies: []
