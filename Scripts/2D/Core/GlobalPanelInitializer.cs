@@ -69,6 +69,9 @@ namespace LAB2D.Core
             // 科技面板 (T键，纯代码构建)
             TechPanel.EnsureRuntimePanel();
 
+            // 山门核心 HUD (G键，纯代码构建)
+            MountainGateHUD.EnsureRuntimePanel();
+
             // 附近交战提示条 (B 键加入战斗的入口提示，显隐由 GlobalInputProcessor 驱动)
             BattlePromptHUD.EnsureRuntimePanel();
         }

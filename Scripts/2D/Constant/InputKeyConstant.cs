@@ -172,6 +172,13 @@ namespace LAB2D.Constant
         public const KeyCode ToggleWorkerMindHud = KeyCode.F12;
 
         /// <summary>
+        /// 山门核心 HUD 显示/隐藏 (G键, G=Gate)
+        /// 切换显示山门核心等级/耐久/被破次数，并提供金币升级按钮。
+        /// HUD 默认常驻显示。仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleMountainGateHud = KeyCode.G;
+
+        /// <summary>
         /// 加入附近战斗 (B键, B=Battle)
         /// 靠近大世界 Worker vs Enemy 交战区时，进入洛克王国式回合制对战面板。
         /// 仅在无 UI 输入框聚焦、无面板打开且非战斗中生效。
@@ -352,6 +359,7 @@ namespace LAB2D.Constant
   6        —— 房间列表面板
   F11      —— 好感度 HUD (对玩家好感/态度)
   F12      —— 心智面板 (记忆/关系/信念/修仙)
+  G        —— 山门核心 HUD (等级/耐久/升级)
   B        —— 加入附近战斗 (靠近交战区进入回合制对战)
   T        —— 科技面板 (研究点/科技研究)
   9        —— 成就面板
