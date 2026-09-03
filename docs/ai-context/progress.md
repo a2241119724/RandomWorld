@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `test(domain)`: 补三个缺口服务单测（ItemOwnership/TerrainEffect/WorkerSkillProgress，22 用例）+ spec 架构节记录 WorkerMindService 门面例外（Domain 目录内编排类，依赖 Unity/上层，纯规则已拆 RuleService）
 - 2026-09 — `fix(ui)`: 仓库面板按钮只增不减+监听器闭包累积（TODO「删除Gameobject」落地）——OnEnter 先清多余按钮、复用按钮 RemoveAllListeners 再绑定
 - 2026-09 — `fix(log)`: 消除两条启动期必现 Warning——ForegroundPanel Attack 死查找（按钮已移除+重复二次查找）与 `AItem.Ranges["Resource"]` 上界误含仓库占位值 Null（致 "NullItemData" 幽灵查询）
 - 2026-09 — `chore(log)`: 清理诊断遗留刷屏——WalkabilityCache「未构建跳过」（正常路径+节流键含坐标失效，817 条/局）与 YSortRegister（注册早于赋值快照误导，811 条/局）删除；越界跳过/YSortTop 事件点保留
