@@ -2,6 +2,19 @@
 
 > 每次通过日志分析并解决 bug 后，把思路追加到此文件。开始新任务前**先通读本文件**，命中历史记录时直接引用验证，避免重复排查。
 
+## 2026-09-03 启动期两条必现 Warning（Attack Not Found / NullItemData scriptable not found）
+
+- **现象**：game.log 启动早期（13:22 局）各 1 条 Warning：`Attack Not Found!!!`（Tool.GetComponentInChildren 带 name 重载）与 `NullItemData scriptable not found!!!`（ResourceManager.TryGetResource）。每局必现，量小但恒在。
+- **根因**（两条独立）：
+  1. `ForegroundPanel` 构造器查找名为 "Attack" 的 Button 并绑攻击事件——按钮已从 Foreground UI 移除，查找必失败；且 null 检查块内**重复二次查找**（冗余 GetComponentsInChildren）。攻击功能不受影响：主入口是 `PlayerAttackRequestedEvent` 事件总线（Player.cs 发布 → ForegroundPanel.OnPlayerAttackRequested）。
+  2. `AItem.Ranges["Resource"]` 上界写成了 `ItemTypeEnum.Null`——那是**仓库空槽占位值**（注释"空(用于仓库)"），不是资源类型。`ItemDataManager.Awake` 按范围枚举类型拼 `{Type}ItemData` 查 SO，`Null` → 查 "NullItemData" → 不存在 → Warning。`Ranges["Resource"]` 全库唯一消费者就是这段扫描，改上界为 `Tree` 安全。
+- **修复**：删 ForegroundPanel Attack 查找块（OnClick_Attack 方法保留供直接调用）；`Ranges["Resource"]` 收窄为 `{ Tree, Tree }` + 注释说明。
+- **验证**：csc 编译通过。重进游戏 game.log 不再出现这两条 Warning；攻击功能走事件总线正常（点按攻击键仍触发）。
+- **教训**：
+  - **枚举占位值（Null/None/Empty）混进"范围扫描"的上下界是幽灵查询的经典来源**——占位值语义是"槽位为空"，被当类型名拼进资源查询必失败。范围字典的上下界应是真实类型的闭区间，扩展时显式登记新类型。
+  - UI 按钮移除后要同步删代码侧的查找绑定，否则每次初始化必打一条"Not Found"——这类恒现 Warning 会稀释日志里真正异常的信号密度。
+  - 排查"日志字符串在源码中搜不到"先怀疑**参数化拼接**（`$"{name} {kind} not found"`）：直接搜完整消息落空，要拆成"哪个方法能产生此格式"反查调用链（本次 TryGetResource 的 typeLabel 参数）。
+
 ## 2026-09-03 GameTimeUI.Awake NRE（场景 GlobalLight 未激活，FindWithTag 返回 null）
 
 - **现象**：error.log 启动早期（index=3，大厅加载阶段）1 条 `NullReferenceException: GameTimeUI.Awake (GameTimeUI.cs:28)`。
