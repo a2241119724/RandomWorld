@@ -98,17 +98,10 @@ namespace LAB2D.Core.Seek
             int[] cache = Volatile.Read(ref walkability);
             if (!isBuilt || cache == null || !IsInBounds(position.x, position.y))
             {
-                // 卡床排查 2026-08-16：UpdateCell 被跳过 → 缓存停留初始构建值（可通）。
-                // 记录跳过原因（isBuilt/越界），用于定位「缓存判可通而物理有碰撞体」分叉根因。
-                if (!isBuilt)
-                {
-                    AWorkerTask.LogProviderThrottled(
-                        $"CacheSkipNotBuilt|{position.x},{position.y}", 1f,
-                        // 惰性求值：地图批量写入（建房预注册/地图生成）会高频进入，被节流时不构造插值串
-                        () => $"[MapDiag] 缓存更新跳过 pos=({position.x},{position.y}) 原因=未构建",
-                        LogManager.LogLevelEnum.Trace);
-                }
-                else if (!IsInBounds(position.x, position.y))
+                // 未构建期的跳过是设计内正常路径（首次构建会读取最新地图状态），
+                // 不打日志——批量写入阶段逐格进入，曾致单局 800+ 条 Trace 噪音。
+                // 越界跳过是异常信号（地图外写入），保留观测。
+                if (isBuilt && cache != null && !IsInBounds(position.x, position.y))
                 {
                     AWorkerTask.LogProviderThrottled(
                         $"CacheSkipOOB|{position.x},{position.y}", 1f,

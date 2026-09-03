@@ -90,13 +90,8 @@ namespace LAB2D.Render
             this.RefreshOffset(e);
             this.entries.Add(e);
 
-            // 诊断（事件点：每个 renderer 注册一次）：暴露注册时 sprite/pivot/offset，排查恒最顶问题
-            AWorkerTask.LogProvider(
-                $"[SeekDiag] YSortRegister name={sr.name} layer={sr.sortingLayerName} " +
-                $"sprite={sr.sprite?.name ?? "null"} pivot={sr.sprite?.pivot} size={sr.sprite?.bounds.size} " +
-                $"pos=({sr.transform.position.x:F2},{sr.transform.position.y:F2}) " +
-                $"offset={e.bottomOffset:F4} bottomY={e.bottomY:F4} entries={this.entries.Count}",
-                LogManager.LogLevelEnum.Debug);
+            // 注册不打日志——注册时序早于 sprite/位置赋值，快照全是初始态（单局曾 800+ 条误导性 Debug）。
+            // 排查 y 排序问题用 YSortTop（顶部变化事件点）+ LateUpdate 的 sprite/scale 变化重算即可。
         }
 
         /// <summary>
