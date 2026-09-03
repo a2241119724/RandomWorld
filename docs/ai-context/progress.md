@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `chore(log)`: 清理诊断遗留刷屏——WalkabilityCache「未构建跳过」（正常路径+节流键含坐标失效，817 条/局）与 YSortRegister（注册早于赋值快照误导，811 条/局）删除；越界跳过/YSortTop 事件点保留
 - 2026-09 — `fix(ui)`: GameTimeUI 全局光缺失防御——场景 GlobalLight 未激活致 Awake FindWithTag NRE（error.log 实锤），改全字段容错 + 5s 懒重试 + Update 前置守卫
 - 2026-09 — `refactor(worker)`: WorkerBrain 巨石拆分阶段 1-3（3446→2255 行，零行为变化）——`WorkerDecision`/`WorkerHomeLayout`/`WorkerHomeSiteService` 三文件迁出，决策契约/布局纯函数/选址家族各自成域；阶段 4（环境扫描组）暂缓，方案见 `docs/open-issues/h1-workerbrain-refactor.md`
 - 2026-09 — `refactor(build)`: 悬赏牌/商店收拢 ABuildItem 管线——Bounty/Shop 子类 + `PlaceBySystem` 系统放置，全库 DirectBuild 手写路径清零；Bounty 条目 `IsNeedBuild`→0（放置即完成，读档重放幂等）
