@@ -65,10 +65,15 @@ namespace LAB2D.UnityAdapter
             return Core.ServiceLocator.TryGet(out EnemyManager em) ? em.Create(spawnPosition) : null;
         }
 
+        public GameObject CreateEnemy(Vector3 spawnPosition, int enemyKindId)
+        {
+            return Core.ServiceLocator.TryGet(out EnemyManager em) ? em.Create(spawnPosition, enemyKindId) : null;
+        }
+
         public bool TrySpawnEnemy(bool useRandomSpawnPositions, WaveSpawnRequest spawnRequest)
         {
             Vector3 spawnPosition = this.GetSpawnPosition(useRandomSpawnPositions);
-            GameObject enemyObject = this.CreateEnemy(spawnPosition);
+            GameObject enemyObject = this.CreateEnemy(spawnPosition, spawnRequest.EnemyKindId);
             if (enemyObject == null)
             {
                 return false;

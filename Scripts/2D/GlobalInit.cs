@@ -147,6 +147,9 @@ namespace LAB2D
             // 科技系统（研究点产出/建筑解锁 gating，ITickable 由下表驱动；存档走 ASingletonSaveData）
             ServiceLocator.Register(TechManager.Instance);
 
+            // 箭塔防御（已建成箭塔自动索敌射击，ITickable 由下表驱动；塔数据在 BuildMap 存档，无独立存档）
+            ServiceLocator.Register(ArrowTowerManager.Instance);
+
             // 异能觉醒系统（受击 roll 觉醒/读档重建异能注册，IInitializable + ITickable 由下表驱动）
             ServiceLocator.Register(AwakenedPowerManager.Instance);
 
@@ -245,6 +248,7 @@ namespace LAB2D
                 ServiceLocator.Get<GongFaManager>(),
                 ServiceLocator.Get<AwakenedPowerManager>(),
                 ServiceLocator.Get<TechManager>(),
+                ServiceLocator.Get<ArrowTowerManager>(),
             };
         }
 

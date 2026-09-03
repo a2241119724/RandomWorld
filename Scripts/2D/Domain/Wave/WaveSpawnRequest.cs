@@ -13,5 +13,10 @@ namespace LAB2D.Domain.Wave
         public int TotalEnemiesInWave { get; set; }
 
         public float DifficultyScale { get; set; }
+
+        /// <summary>
+        /// 敌人种类 Id（<see cref="WaveEnemyKind"/>）。0=Common 缺省，旧调用方不填即旧行为。
+        /// </summary>
+        public int EnemyKindId { get; set; }
     }
 }

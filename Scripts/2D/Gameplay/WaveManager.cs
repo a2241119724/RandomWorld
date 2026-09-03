@@ -398,6 +398,7 @@ namespace LAB2D.Gameplay
                 MaxAliveEnemies = this.Config.maxAliveEnemies,
                 TotalWaves = this.Config.totalWaves,
                 DifficultyScalePerWave = this.Config.difficultyScalePerWave,
+                NewEnemyStartWave = this.Config.newEnemyStartWave,
             };
         }
 
@@ -519,6 +520,11 @@ namespace LAB2D.Gameplay
         /// 每波难度缩放系数（每完成一波，敌人整体强度增加此比例）
         /// </summary>
         public float difficultyScalePerWave = 0.1f;
+
+        /// <summary>
+        /// 新种妖兽（冲锋/远程妖狐）开始混入的波次；之前波次只用旧池（Common/Seek）
+        /// </summary>
+        public int newEnemyStartWave = 3;
 
         /// <summary>
         /// 是否使用随机生成位置（true: 随机可到达位置, false: Vector3.zero）

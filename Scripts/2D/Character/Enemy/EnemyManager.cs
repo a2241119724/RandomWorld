@@ -85,6 +85,39 @@ namespace LAB2D.Character.Enemy
             return g;
         }
 
+        /// <summary>
+        /// 按波次扩种协议创建指定种类的敌人，并把种类写入存档数据（防读档换种）。
+        /// </summary>
+        /// <param name="worldPos">生成位置。</param>
+        /// <param name="enemyKindId">敌人种类 Id（WaveEnemyKind）。</param>
+        /// <returns>实例化对象；达到上限或创建失败返回 null。</returns>
+        public GameObject Create(Vector3 worldPos, int enemyKindId)
+        {
+            if (!this.CanCreateEnemy())
+            {
+                return null;
+            }
+
+            this.creator.SetNextEnemyKindId(enemyKindId);
+            GameObject g;
+            try
+            {
+                g = this.Create(worldPos);
+            }
+            finally
+            {
+                // 清残留：无论成败都不让指定种类泄漏进后续的默认随机生成
+                this.creator.SetNextEnemyKindId(-1);
+            }
+
+            if (g != null && g.GetComponent<AEnemy>()?.CharacterDataLAB is AEnemy.EnemyData enemyData)
+            {
+                enemyData.EnemyKindId = enemyKindId;
+            }
+
+            return g;
+        }
+
         /// <inheritdoc/>
         public override void Add(AEnemy character)
         {
@@ -109,7 +142,8 @@ namespace LAB2D.Character.Enemy
             this.EnemyManagerDataLAB.EnemyDatas ??= new List<AEnemy.EnemyData>();
             foreach (AEnemy.EnemyData enemyData in this.EnemyManagerDataLAB.EnemyDatas)
             {
-                GameObject g = this.Create(Vector3LAB.ToVector3(enemyData.Pos));
+                // 按存档种类选 prefab（防读档换种）；随后 CharacterDataLAB 整体替换为存档数据
+                GameObject g = this.Create(Vector3LAB.ToVector3(enemyData.Pos), enemyData.EnemyKindId);
                 if (g == null)
                 {
                     continue;

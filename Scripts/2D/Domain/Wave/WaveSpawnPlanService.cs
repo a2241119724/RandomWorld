@@ -39,6 +39,7 @@ namespace LAB2D.Domain.Wave
                     SpawnIndex = i,
                     TotalEnemiesInWave = totalEnemyCount,
                     DifficultyScale = difficultyScale,
+                    EnemyKindId = (int)this.ruleService.PickEnemyKind(safeState.CurrentWaveIndex, i, config),
                 });
             }
 

@@ -1,5 +1,6 @@
 namespace LAB2D.Editor.Tests.Domain
 {
+    using LAB2D.Character.Enemy;
     using LAB2D.Domain.Wave;
     using NUnit.Framework;
     using System.Collections.Generic;
@@ -75,6 +76,69 @@ namespace LAB2D.Editor.Tests.Domain
             state.BeginNextWave(0);
             WaveSpawnPlan plan = this.service.CreatePlan(state, TestConfig(), 1);
             Assert.AreEqual(1f, plan.Requests[0].DifficultyScale, 0.0001f);
+        }
+
+        [Test]
+        public void PickEnemyKind_BeforeNewEnemyStartWave_UsesLegacyPoolOnly()
+        {
+            // TestConfig 未设 NewEnemyStartWave，默认 3 → 第 1/2 波只用旧池
+            for (int spawnIndex = 0; spawnIndex < 6; spawnIndex++)
+            {
+                WaveEnemyKind kind = this.ruleService.PickEnemyKind(1, spawnIndex, TestConfig());
+                Assert.IsTrue(kind == WaveEnemyKind.Common || kind == WaveEnemyKind.Seek,
+                    $"wave1 spawn{spawnIndex} 不应出新种，实际 {kind}");
+            }
+        }
+
+        [Test]
+        public void PickEnemyKind_FromNewEnemyStartWave_IncludesAllKinds()
+        {
+            var seen = new HashSet<WaveEnemyKind>();
+            // 混池周期长 8，取满一个周期
+            for (int spawnIndex = 0; spawnIndex < 8; spawnIndex++)
+            {
+                seen.Add(this.ruleService.PickEnemyKind(3, spawnIndex, TestConfig()));
+            }
+
+            Assert.IsTrue(seen.Contains(WaveEnemyKind.Common), "混池应含 Common");
+            Assert.IsTrue(seen.Contains(WaveEnemyKind.Seek), "混池应含 Seek");
+            Assert.IsTrue(seen.Contains(WaveEnemyKind.Charge), "混池应含 Charge");
+            Assert.IsTrue(seen.Contains(WaveEnemyKind.Shoot), "混池应含 Shoot");
+        }
+
+        [Test]
+        public void PickEnemyKind_IsDeterministicRotation()
+        {
+            // 轮转确定性：同 wave/spawnIndex 多次调用结果一致
+            Assert.AreEqual(
+                this.ruleService.PickEnemyKind(3, 2, TestConfig()),
+                this.ruleService.PickEnemyKind(3, 2, TestConfig()));
+        }
+
+        [Test]
+        public void CreatePlan_FillsEnemyKindIdFromRule()
+        {
+            var state = new WaveRuntimeState();
+            state.BeginNextWave(2); // CurrentWaveIndex=3，混池
+            WaveSpawnPlan plan = this.service.CreatePlan(state, TestConfig(), 8);
+            for (int i = 0; i < plan.Requests.Count; i++)
+            {
+                Assert.AreEqual(
+                    (int)this.ruleService.PickEnemyKind(3, i, TestConfig()),
+                    plan.Requests[i].EnemyKindId,
+                    $"spawnIndex={i} 的 EnemyKindId 应与规则轮转一致");
+            }
+        }
+
+        [Test]
+        public void GetPrefabNameForKind_MapsAllKinds()
+        {
+            Assert.AreEqual("CommonEnemy", EnemyCreator.GetPrefabNameForKind((int)WaveEnemyKind.Common));
+            Assert.AreEqual("SeekEnemy", EnemyCreator.GetPrefabNameForKind((int)WaveEnemyKind.Seek));
+            Assert.AreEqual("ChargeEnemy", EnemyCreator.GetPrefabNameForKind((int)WaveEnemyKind.Charge));
+            Assert.AreEqual("ShootEnemy", EnemyCreator.GetPrefabNameForKind((int)WaveEnemyKind.Shoot));
+            // 越界/未知 Id 兜底 Common
+            Assert.AreEqual("CommonEnemy", EnemyCreator.GetPrefabNameForKind(99));
         }
     }
 }

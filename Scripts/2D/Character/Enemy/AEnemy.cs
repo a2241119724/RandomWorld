@@ -292,6 +292,12 @@ namespace LAB2D.Character.Enemy
             /// 发射子弹的速度.
             /// </summary>
             public float BulletSpeed = 50.0f;
+
+            /// <summary>
+            /// 敌人种类 Id（WaveEnemyKind）。入档防读档换种：prefab 按此 Id 选择。
+            /// 旧档反序列化缺省 0=Common。
+            /// </summary>
+            public int EnemyKindId;
         }
     }
 }

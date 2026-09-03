@@ -31,6 +31,16 @@ namespace LAB2D.Constant
         public const string SEEK_ENEMY = "SeekEnemy";
 
         /// <summary>
+        /// 冲锋妖兽（波次扩种：撞墙冲撞）
+        /// </summary>
+        public const string CHARGE_ENEMY = "ChargeEnemy";
+
+        /// <summary>
+        /// 远程妖狐（波次扩种：灵弹射击）
+        /// </summary>
+        public const string SHOOT_ENEMY = "ShootEnemy";
+
+        /// <summary>
         /// 商店 NPC
         /// </summary>
         public const string SHOP_NPC = "ShopNPC";

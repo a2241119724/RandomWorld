@@ -145,7 +145,11 @@ namespace LAB2D.Gameplay
                 DefenceResponse response = DefenceDraftRuleService.Decide(in input);
                 Vector3Int target = response switch
                 {
-                    DefenceResponse.Fight => this.NextDefendPosition(defendPositions, ref defendPosCursor, coreCells),
+                    // 核心被围死无待命位时退化为躲避：原 coreCells[0] 兜底是核心占用格
+                    // （不可走→寻路失败→弃任务，Fight 响应形同虚设）
+                    DefenceResponse.Fight => defendPositions.Count == 0
+                        ? this.GetShelterPosition(worker, wd)
+                        : this.NextDefendPosition(defendPositions, ref defendPosCursor),
                     DefenceResponse.ShelterInBed => this.GetShelterPosition(worker, wd),
                     _ => this.FindLootPosition(worker),
                 };
@@ -209,15 +213,9 @@ namespace LAB2D.Gameplay
             return result;
         }
 
-        /// <summary>取下一个参战待命位（用尽后从头循环复用）。</summary>
-        private Vector3Int NextDefendPosition(List<Vector3Int> defendPositions, ref int cursor, List<Vector3Int> coreCells)
+        /// <summary>取下一个参战待命位（用尽后从头循环复用）。调用方保证列表非空。</summary>
+        private Vector3Int NextDefendPosition(List<Vector3Int> defendPositions, ref int cursor)
         {
-            if (defendPositions.Count == 0)
-            {
-                // 核心被围死：退化为第一个占用格旁（寻路会自然停在最近可达处）
-                return coreCells[0];
-            }
-
             Vector3Int pos = defendPositions[cursor % defendPositions.Count];
             cursor++;
             return pos;

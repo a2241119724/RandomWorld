@@ -14,5 +14,11 @@ namespace LAB2D.Domain.Wave
         public int TotalWaves { get; set; }
 
         public float DifficultyScalePerWave { get; set; }
+
+        /// <summary>
+        /// 新种妖兽（Charge/Shoot）开始混入的波次；之前的波次只用旧池（Common/Seek）。
+        /// 默认 3，与 WaveConfig.newEnemyStartWave 一致。
+        /// </summary>
+        public int NewEnemyStartWave { get; set; } = 3;
     }
 }

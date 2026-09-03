@@ -20,6 +20,11 @@ namespace LAB2D.UnityAdapter
 
         GameObject CreateEnemy(Vector3 spawnPosition);
 
+        /// <summary>
+        /// 按波次扩种协议创建指定种类的敌人（kindId 见 <see cref="Domain.Wave.WaveEnemyKind"/>）。
+        /// </summary>
+        GameObject CreateEnemy(Vector3 spawnPosition, int enemyKindId);
+
         bool TrySpawnEnemy(bool useRandomSpawnPositions, WaveSpawnRequest spawnRequest);
 
         void OnWaveStarted(int waveIndex, float difficultyScale);

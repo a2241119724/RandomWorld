@@ -6,6 +6,16 @@ namespace LAB2D.Domain.Wave
     /// </summary>
     public sealed class WaveRuleService
     {
+        /// <summary>新种出现前的旧池轮转（Common/Seek 交替，即旧行为的种类分布）。</summary>
+        private static readonly WaveEnemyKind[] LegacyKindCycle = { WaveEnemyKind.Common, WaveEnemyKind.Seek };
+
+        /// <summary>新种混入后的混池轮转（旧种略多，新种渐进偏向）。</summary>
+        private static readonly WaveEnemyKind[] MixedKindCycle =
+        {
+            WaveEnemyKind.Common, WaveEnemyKind.Seek, WaveEnemyKind.Charge, WaveEnemyKind.Common,
+            WaveEnemyKind.Shoot, WaveEnemyKind.Seek, WaveEnemyKind.Charge, WaveEnemyKind.Shoot,
+        };
+
         public float GetDifficultyScale(int totalWavesCompleted, WaveConfigModel config)
         {
             WaveConfigModel safeConfig = config ?? new WaveConfigModel();
@@ -35,6 +45,24 @@ namespace LAB2D.Domain.Wave
             }
 
             return MathHelper.ClampMin(maxAliveEnemies, 1);
+        }
+
+        /// <summary>
+        /// 按波次与波内序号确定性挑选敌人种类（轮转制，同波内种类分散，无随机依赖、可测可复现）。
+        /// 波次达到 <see cref="WaveConfigModel.NewEnemyStartWave"/> 前只用旧池，之后混入新种。
+        /// </summary>
+        /// <param name="waveIndex">波次号（1 起）。</param>
+        /// <param name="spawnIndex">波内生成序号（0 起）。</param>
+        /// <param name="config">波次配置。</param>
+        /// <returns>该次生成应使用的敌人种类。</returns>
+        public WaveEnemyKind PickEnemyKind(int waveIndex, int spawnIndex, WaveConfigModel config)
+        {
+            WaveConfigModel safeConfig = config ?? new WaveConfigModel();
+            int normalizedWaveIndex = MathHelper.ClampMin(waveIndex, 1);
+            WaveEnemyKind[] cycle = normalizedWaveIndex >= MathHelper.ClampMin(safeConfig.NewEnemyStartWave, 1)
+                ? MixedKindCycle
+                : LegacyKindCycle;
+            return cycle[MathHelper.ClampMin(spawnIndex, 0) % cycle.Length];
         }
 
         public bool IsWaveCleared(int enemiesSpawnedThisWave, int currentAliveEnemies, int aliveEnemiesBeforeWave)
