@@ -72,8 +72,10 @@ namespace LAB2D.Core
             {
                 controller.Close();
             }
-            else
+            else if (!controller.Panels.Contains(WorkerMindPanel.Instance))
             {
+                // 已在栈中被其他面板（如对话）盖住时按 F12 不动作——
+                // PanelController.Show 无幂等保护，重复 Push 会栈堆积、需多次 ESC 才能退净
                 controller.Show(WorkerMindPanel.Instance);
             }
         }
