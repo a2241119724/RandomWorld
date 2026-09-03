@@ -20,7 +20,7 @@ RandomWorld/
 │   │   ├── Domain/            # 纯 C# 领域规则引擎
 │   │   │   ├── Common/        # 接口、值对象、EventBus
 │   │   │   ├── Character/     # 伤害计算、等级升级、Growth 成长管线(GrowthBonus/词条)
-│   │   │   ├── Gameplay/      # 规则服务(连击、技能、装备、修仙 Cultivation、功法 GongFa、异能 AwakenedPower)
+│   │   │   ├── Gameplay/      # 规则服务(连击、技能、装备、修仙 Cultivation、功法 GongFa、异能 AwakenedPower、灵气 LingQi)
 │   │   │   ├── Tech/          # 科技定义/规则(TechDef/TechLibrary/TechRuleService)
 │   │   │   ├── Worker/        # 工人状态、补给、任务分配、人格/目标/货币/好感度/心智层/生活技能
 │   │   │   ├── Player/        # 伤害策略、移动策略
@@ -36,7 +36,7 @@ RandomWorld/
 │   │   │   └── KDTree/        # 空间索引
 │   │   ├── Gameplay/          # 运行时玩法系统(商店/任务板/市场/货币/悬赏/好感度等)
 │   │   ├── Manager/           # 跨领域管理(日志、存档、资源)
-│   │   ├── Render/            # y-sort 渲染排序(WorldYSortManager, YSortAlgorithm) + 遮挡淡化(OcclusionFader)
+│   │   ├── Render/            # y-sort 渲染排序(WorldYSortManager, YSortAlgorithm) + 遮挡淡化(OcclusionFader) + 灵脉光环(LingVeinGlow)
 │   │   ├── Map/               # 地图(TileMap, BuildMap, TileVisualSpawner 等)
 │   │   ├── Item/              # 物品(背包、建造、装备)
 │   │   ├── AI/Dialogue/       # LLM 对话(客户端、记忆、RAG)

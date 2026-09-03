@@ -156,7 +156,10 @@ namespace LAB2D.Gameplay
             return TechRuleService.SumBonus(this.ResearchedIds, t => t.FarmSpeedBonus);
         }
 
-        /// <summary>打坐灵气积累加成（聚灵阵，加数 0.5 = +50%）。</summary>
+        /// <summary>
+        /// 打坐灵气积累全局加成 — M4 起聚灵阵科技只解锁建造（加数已归 0，恒返 0），
+        /// 局部加成由 LingQiManager 按空间浓度提供。管线保留待未来全局科技。
+        /// </summary>
         public float GetMeditateSpeedBonus()
         {
             return TechRuleService.SumBonus(this.ResearchedIds, t => t.MeditateSpeedBonus);

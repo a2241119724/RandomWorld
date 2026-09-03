@@ -298,8 +298,12 @@ namespace LAB2D.UI
                 ? $"灵气: {data.Growth.Qi:F0}（已至巅峰）"
                 : $"灵气: {data.Growth.Qi:F0} / {realm.QiToNext:F0}";
 
+            // M4 灵气环境：速率随玩家位置浓度浮动（地形×灵脉×聚灵阵×天气），RefreshPanel 周期刷新
+            float envMultiplier = EnvironmentManager.Instance.CurDensity / 100f;
+            float speedMul = 1f + data.Growth.Special.CultivationSpeedMul + TechManager.Instance.GetMeditateSpeedBonus();
+            float qiRate = RealmRuleService.MeditateQiPerSec * speedMul * envMultiplier;
             string meditateLine = CultivationManager.Instance.IsMeditating
-                ? "<color=#8cff8c>【打坐中】灵气 +2/秒，法力 +2/秒</color>"
+                ? $"<color=#8cff8c>【打坐中】灵气 +{qiRate:F1}/秒（环境 ×{envMultiplier:F2}），法力 +2/秒</color>"
                 : "未打坐（打坐中受击或移动会打断）";
 
             string powerLine = "异能: 无（濒死受击时可能觉醒）";

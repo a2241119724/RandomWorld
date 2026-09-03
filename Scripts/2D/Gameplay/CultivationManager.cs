@@ -93,9 +93,11 @@ namespace LAB2D.Gameplay
 
             GrowthData.Ensure(ref data.Growth);
 
-            // 聚灵阵科技加成：任一已建成聚灵阵 → 打坐灵气积累 +50%（加数不叠乘，见 TechManager）
+            // M4 灵气环境：打坐位置的空间浓度（地形×灵脉×聚灵阵×天气）乘修炼速率。
+            // 科技全局加成管线保留（现返 0）；打坐位置锁定，每帧采样结果恒定
             float spiritArrayBonus = TechManager.Instance.GetMeditateSpeedBonus();
-            data.Growth.Qi += RealmRuleService.ComputeQiGain(data.Growth, deltaTime, spiritArrayBonus);
+            float envMultiplier = LingQiManager.Instance.GetDensityAtWorld(player.transform.position);
+            data.Growth.Qi += RealmRuleService.ComputeQiGain(data.Growth, deltaTime, spiritArrayBonus, 1f, envMultiplier);
 
             // 回蓝：int 型 Mp 按秒折算，零头进累计器
             if (data.Mp < data.MaxMp)
@@ -233,11 +235,13 @@ namespace LAB2D.Gameplay
         /// <summary>
         /// Worker 睡眠吐纳：按睡眠时长结算灵气（睡觉即打坐，床睡全额/地面睡半额）。
         /// 由 WorkerSleepTask.Finish 调用；灵气只积累不突破，突破由 TickWorkers 扫描结算。
+        /// M4 起结算位置的空间灵气浓度乘修炼速率（床/睡觉位置的选址价值）。
         /// </summary>
         /// <param name="data">Worker 角色数据。</param>
         /// <param name="seconds">睡眠时长（秒）。</param>
         /// <param name="scale">场景系数（床睡 1.0 / 地面睡 <see cref="GroundSleepQiScale"/>）。</param>
-        internal void MeditateFor(GameCharacter.CharacterData data, float seconds, float scale = 1f)
+        /// <param name="posMap">睡觉位置（地图格，浓度采样点）。</param>
+        internal void MeditateFor(GameCharacter.CharacterData data, float seconds, float scale = 1f, Vector3Int posMap = default)
         {
             if (data == null || seconds <= 0f)
             {
@@ -246,7 +250,8 @@ namespace LAB2D.Gameplay
 
             GrowthData.Ensure(ref data.Growth);
             float spiritArrayBonus = TechManager.Instance.GetMeditateSpeedBonus();
-            float gain = RealmRuleService.ComputeQiGain(data.Growth, seconds, spiritArrayBonus, scale);
+            float envMultiplier = LingQiManager.Instance.GetDensityAt(posMap);
+            float gain = RealmRuleService.ComputeQiGain(data.Growth, seconds, spiritArrayBonus, scale, envMultiplier);
             if (gain <= 0f)
             {
                 return;
@@ -254,7 +259,7 @@ namespace LAB2D.Gameplay
 
             data.Growth.Qi += gain;
             AWorkerTask.LogProvider(
-                $"[CultivationDiag] {data.Name} 睡眠吐纳 +{gain:F0} 灵气（累计 {data.Growth.Qi:F0}/{RealmRuleService.QiToNext(data.Growth):F0}）",
+                $"[CultivationDiag] {data.Name} 睡眠吐纳 +{gain:F0} 灵气（环境×{envMultiplier:F2}，累计 {data.Growth.Qi:F0}/{RealmRuleService.QiToNext(data.Growth):F0}）",
                 LogManager.LogLevelEnum.Trace);
         }
 

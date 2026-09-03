@@ -56,15 +56,16 @@ namespace LAB2D.Domain.Gameplay.Cultivation
         }
 
         /// <summary>
-        /// 计算修炼灵气增量：基础速率 × 时长 × 场景系数 × 修炼速度倍率。
+        /// 计算修炼灵气增量：基础速率 × 时长 × 场景系数 × 修炼速度倍率 × 环境灵气浓度。
         /// 玩家打坐 Tick 与 Worker 睡眠吐纳共用此公式，保证两侧节奏一致。
         /// </summary>
         /// <param name="growth">修炼者成长数据（Special.CultivationSpeedMul 为内功修炼速度加成）。</param>
         /// <param name="seconds">修炼时长（秒）。</param>
-        /// <param name="extraSpeedBonus">额外修炼速度加数（如聚灵阵科技 +0.5）。</param>
+        /// <param name="extraSpeedBonus">额外修炼速度加数（加数语义，与 CultivationSpeedMul 同层相加）。</param>
         /// <param name="scale">场景系数（床睡 1.0 / 地面睡 0.5）。</param>
+        /// <param name="envMultiplier">环境灵气浓度乘数（地形×灵脉×聚灵阵×天气，LingQiManager 采样；缺省 1 行为不变）。</param>
         /// <returns>灵气增量（入参非法时为 0）。</returns>
-        public static float ComputeQiGain(GrowthData growth, float seconds, float extraSpeedBonus = 0f, float scale = 1f)
+        public static float ComputeQiGain(GrowthData growth, float seconds, float extraSpeedBonus = 0f, float scale = 1f, float envMultiplier = 1f)
         {
             if (growth == null || seconds <= 0f)
             {
@@ -72,7 +73,7 @@ namespace LAB2D.Domain.Gameplay.Cultivation
             }
 
             float speedMul = 1f + growth.Special.CultivationSpeedMul + extraSpeedBonus;
-            return MeditateQiPerSec * seconds * scale * speedMul;
+            return MeditateQiPerSec * seconds * scale * speedMul * System.Math.Max(0f, envMultiplier);
         }
     }
 }

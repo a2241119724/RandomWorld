@@ -150,6 +150,9 @@ namespace LAB2D
             // 箭塔防御（已建成箭塔自动索敌射击，ITickable 由下表驱动；塔数据在 BuildMap 存档，无独立存档）
             ServiceLocator.Register(ArrowTowerManager.Instance);
 
+            // 灵气环境（空间灵气浓度图：灵脉撒点/聚灵阵扫描/浓度查询，IInitializable + ITickable 由下表驱动；灵脉点集走 ASingletonSaveData）
+            ServiceLocator.Register(LingQiManager.Instance);
+
             // 异能觉醒系统（受击 roll 觉醒/读档重建异能注册，IInitializable + ITickable 由下表驱动）
             ServiceLocator.Register(AwakenedPowerManager.Instance);
 
@@ -254,6 +257,8 @@ namespace LAB2D
                 ServiceLocator.Get<AwakenedPowerManager>(),
                 ServiceLocator.Get<TechManager>(),
                 ServiceLocator.Get<ArrowTowerManager>(),
+                // 灵气环境（聚灵阵 2s 节流重扫，浓度查询被动响应无 Tick 负担）
+                ServiceLocator.Get<LingQiManager>(),
             };
         }
 
@@ -275,6 +280,8 @@ namespace LAB2D
                 ServiceLocator.Get<EquipmentBeamManager>(),
                 ServiceLocator.Get<EnemyLootManager>(),
                 ServiceLocator.Get<ComboBonusManager>(),
+                // 灵气环境（订阅 OnMapReady 撒灵脉，读档路径在 LoadData 恢复/迁移）
+                ServiceLocator.Get<LingQiManager>(),
             };
         }
 

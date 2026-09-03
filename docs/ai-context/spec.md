@@ -50,7 +50,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 
 ### 天气系统
 - 晴/雨/雪三种天气
-- 影响玩家/工人移动速度、任务进度、灵气恢复
+- 影响玩家/工人移动速度、任务进度、灵气浓度（`EnergyRecoveryMultiplier` 乘进浓度合成）
 
 ### Worker 经济系统
 - **货币系统:** `CurrencyAmount` 值对象（Domain 层纯 C#），Worker/Player 双钱包，`CurrencyManager` 管理
@@ -99,13 +99,21 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **统一属性管线:** 被动加成源（装备词条/内功/境界永久加成）→ `GrowthBonusService.CollectFromData` → `GrowthSourceResult`（`Sources`: List&lt;BattleStats&gt; + `Special`: GrowthBonus）→ `AttributeCalculationService.ComputeFinalStats(growthSources)`。特殊维度（回蓝/吸血/反伤/修炼速度）存 `GrowthBonus.Special`（`ComputeAttribute` 写回快照），各系统在战斗事件点消费。**CRT/CSD 是 0-1 比例**（"+3%" 存 0.03，BattleStats 直接加整数会爆数值）
 - **MaxHp 派生:** `MaxHp = BaseMaxHp + 成长加成`，由 `CharacterData.ComputeAttribute` 统一计算并钳制 Hp
 - **GrowthData（成长容器）:** 随 CharacterData 二进制存档——灵根五行/境界/灵气/永久加成/`LearnedGongFaIds`/`ActiveNeiGongId`(string，空=未激活)/`AwakenedPowerIds`。`GrowthData.Ensure(ref)` 兜底（BinaryFormatter 不跑构造），玩家与 Worker 首次属性计算时生成灵根（终身不变；`ComputeAttribute` 传 `isPlayer || isWorker`），Enemy 不生成
-- **修仙:** 练气→筑基→金丹（`RealmLibrary`，突破永久加成累进），K 面板打坐——灵气公式 `RealmRuleService.ComputeQiGain`（玩家打坐 Tick 与 Worker 睡眠吐纳共用；2/s ×(1+内功修炼加成+聚灵阵科技)），受击/移动打断；打坐回蓝与内功回蓝共用 int Mp 按秒折算累计器模式（`mpRegenCarry`）
+- **修仙:** 练气→筑基→金丹（`RealmLibrary`，突破永久加成累进），K 面板打坐——灵气公式 `RealmRuleService.ComputeQiGain`（玩家打坐 Tick 与 Worker 睡眠吐纳共用；2/s ×(1+内功修炼加成) × 场景系数 × 环境浓度，见灵气环境系统节），受击/移动打断；打坐回蓝与内功回蓝共用 int Mp 按秒折算累计器模式（`mpRegenCarry`）
 - **功法:** 3 内功（被动走统一管线 + 回蓝，同时仅激活一本）+ 2 外功（主动技）。`SkillManager` 槽位 0-7：默认 4 + `RegisterExtraSkill` 动态注册（幂等按 SkillId，SlotIndex=Skills.Count 递增，满 8 拒）；**技能不存档**——`GongFaManager`/`AwakenedPowerManager`（ITickable）Tick 检测玩家就绪后按 `LearnedGongFaIds` **学习序**懒重建注册（保槽位稳定）
 - **异能:** 受击 roll 觉醒（基础 3% + 濒死加成至 10%，上限按各自 GrowthData 计），念力（拉怪，BuffDuration 复用为拉近距离）/火球（`SkillData.ScaleByInt` 选 INT 伤害基数，SingleTarget 无目标不扣蓝不进 CD）
 - **Worker 成长接入（全自动，无 UI）:** ①睡觉即修炼——`WorkerSleepTask.Finish` 调 `CultivationManager.MeditateFor`（床睡全额/地面睡 ×0.5），被打断走 GiveUpTask 不 Finish 天然中断；②突破/内功全自动——`CultivationManager.Tick` 每 2s 扫描 `WorkerCharactersProvider` 静态缝，`BreakthroughData`（玩家/Worker 共用突破结算）+ `GongFaManager.AutoLearnNeiGongFor`（只学内功并自动运转最新一本，**绝不学外功**——外功注册进全局 SkillManager 会挤占玩家槽位）；③异能觉醒转被动——Worker 无技能栏，`AwakenedPowerDef.WorkerPassiveBonus` 入账 `PermanentRealmBonus` + 气泡反馈；④装备词条——Worker 拾取经 `EnemyLootManager.TakeDropInstanceByPos`（须在 `RemoveDropByMapPosition` 前取出）把掉落实例词条拷进穿戴实例；⑤修仙进度显示在 WorkerConditionHUD 每 worker「修炼」行。前置修复：`CharacterManager.LoadData` 读档后重连 `CharacterData.Character`（[NonSerialized]，不重连则 Worker 换装/成长重算被静默跳过）
 - **生活技能（Worker）:** 伐木/采矿/农耕——`AWorkerTask.GrantedLifeSkill` 虚属性（Gather 按 `isTerrainDig` 分 Mining/Felling），Finish 统一 +XP，升级提进度倍率（1.0/1.15/1.3/1.5，`LifeSkillRuleService` 纯函数）；`ProgressMultiplierProvider(task, worker)` 已含该倍率；WorkerConditionHUD 每 worker 追加一行技能进度
-- **科技:** `TechManager : ASingletonSaveData`（研究点/已研究列表自动存档，Ensure 兜底）；研究点 = 已建成 ResearchTable 数 × 时间（1 点/分/台，高级研究法 ×2），T 面板研究。**建筑解锁 gating 唯一收口 `ABuildItem.AddBuildTask`**（玩家放置入口；房间墙/农田自动建造走 `BuildMap.AddBuild` 不受限）。聚灵阵打坐 +50% 按有无不叠乘
+- **科技:** `TechManager : ASingletonSaveData`（研究点/已研究列表自动存档，Ensure 兜底）；研究点 = 已建成 ResearchTable 数 × 时间（1 点/分/台，高级研究法 ×2），T 面板研究。**建筑解锁 gating 唯一收口 `ABuildItem.AddBuildTask`**（玩家放置入口；房间墙/农田自动建造走 `BuildMap.AddBuild` 不受限）
 - **新建筑三同约定:** 类名 == ItemData 条目 Name == Tile 资产名（`ItemInstanceFactory` 反射扫描 ABuildItem 子类查 `GetByName(type.Name)`，缺条目启动报错）；条目集中在 `BuildOtherItemData.asset`（Bounty/Shop/ResearchTable/SpiritArray/MountainGateCore/ArrowTower），Tile 资产在 `Resources/Tilemap/Item/Build/`
+
+### 灵气环境系统（M4）
+- **浓度模型:** 空间浓度 M(pos) = T(地形) × V(灵脉) × A(聚灵阵) × W(天气)。合成纯函数 `LingQiRuleService`（`Domain/Gameplay/LingQi`，有单测）；运行时宿主 `LingQiManager`（Gameplay，ASingletonSaveData + ITickable + IInitializable，GlobalInit 注册）。浓度乘修炼速率（`ComputeQiGain` 的 `envMultiplier`，缺省 1 行为不变），基地选址在灵脉旁/聚灵阵覆盖区成为空间策略
+- **灵脉:** 每图 8 条撒点（`GenCanReachPos` 可达 + 距地图中心 >15 格 + 脉间距 ≥25 格，重试 500 次容忍受限地图不足）；10 格欧氏距离内 ×1.5 单层不叠。点集入档（`LingQiManagerData.Veins`），三恢复路径：新图 OnMapReady 撒点 / 读档 LoadData 恢复 / 旧档迁移撒点（MapTiles 未就绪置 pendingScatter 等 OnMapReady 兜底）。视觉 `LingVeinGlow`：运行时程序化纹理（径向光晕+三道同心环+斜向亮斑，零 PNG 资产），sortingOrder -995 贴地装饰不参与 y 排序
+- **聚灵阵:** 4 格欧氏距离内 ×1.3^min(n,3)（封顶防指数膨胀）。`LingQiManager.Tick` 2s 节流重扫 BuildMap 已建成 SpiritArray 主格（点集不入档，ArrowTowerManager 同款）。科技「聚灵阵」只解锁建造（`MeditateSpeedBonus=0`），局部加成由建筑本体提供；`SpiritArray` 类保持空壳（反射约定占位）
+- **地形系数:** `TerrainTileConfig.effectData.qiDensityMultiplier`（SO，Range 0.1-3 默认 1，如雪 1.3/沙 0.7），`TerrainConfigDatabase.GetQiDensityMultiplier` 直通，漏配安全钳 ≥0
+- **消费端:** 玩家打坐 `CultivationManager.Tick` 采样玩家位置（`GetDensityAtWorld`）；Worker 睡眠吐纳 `MeditateFor(posMap)` 采样睡觉位置（床的选址价值）。地图未就绪/越界返 1 安全降级
+- **展示:** `EnvironmentManager` 只做浓度展示——Tick 采样玩家位置 `CurDensity`（100=草地基准）；点地显示被点格分项「地形×t 灵脉×v 阵×a 天气×w」（=1 省略段），作选址工具
 
 ### 商店与任务板系统
 - **商店 NPC:** `ShopNPC` + `ShopNPCGenerator` — 地图就绪后自动生成商店，支持 Worker/Player 买卖交互

@@ -119,5 +119,28 @@ namespace LAB2D.Editor.Tests.Domain
             // 地面睡眠半额：1 × 2 × 0.5 × 10 = 10
             Assert.AreEqual(10f, RealmRuleService.ComputeQiGain(growth, 10f, 0f, 0.5f), 0.0001f);
         }
+
+        [Test]
+        public void ComputeQiGain_EnvMultiplierDefault_Unchanged()
+        {
+            // 回归：不传 envMultiplier 时与旧公式一致
+            GrowthData growth = new GrowthData
+            {
+                Special = new GrowthBonus(default, cultivationSpeedMul: 0.5f),
+            };
+            Assert.AreEqual(40f, RealmRuleService.ComputeQiGain(growth, 10f, 0.5f), 0.0001f);
+        }
+
+        [Test]
+        public void ComputeQiGain_EnvMultiplierAppliesMultiplicatively()
+        {
+            // (1 + 0.5) × 2/s × 10s × 1.5 灵气浓度 = 45；负浓度钳 0
+            GrowthData growth = new GrowthData
+            {
+                Special = new GrowthBonus(default, cultivationSpeedMul: 0.5f),
+            };
+            Assert.AreEqual(45f, RealmRuleService.ComputeQiGain(growth, 10f, 0f, 1f, 1.5f), 0.0001f);
+            Assert.AreEqual(0f, RealmRuleService.ComputeQiGain(growth, 10f, 0f, 1f, -1f), 0.0001f);
+        }
     }
 }

@@ -158,7 +158,7 @@ namespace LAB2D.UI
             this.effectText.text =
                 $"<color={PixelUITheme.RichGold}>天气: {state.WeatherName}</color>\n" +
                 $"玩家移动 {state.PlayerMoveSpeedMultiplier:0.00}x | 工人移动 {state.WorkerMoveSpeedMultiplier:0.00}x\n" +
-                $"工人工作 {state.WorkerTaskProgressMultiplier:0.00}x | 灵气恢复 {state.EnergyRecoveryMultiplier:0.00}x";
+                $"工人工作 {state.WorkerTaskProgressMultiplier:0.00}x | 灵气浓度 {state.EnergyRecoveryMultiplier:0.00}x";
         }
 
         /// <summary>

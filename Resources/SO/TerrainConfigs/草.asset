@@ -26,3 +26,4 @@ MonoBehaviour:
     enemyMoveSpeedMultiplier: 1
     workerTiredDecayMultiplier: 1
     workerHungryDecayMultiplier: 1
+    qiDensityMultiplier: 1

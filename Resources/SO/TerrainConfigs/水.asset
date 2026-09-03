@@ -21,3 +21,5 @@ MonoBehaviour:
   canSpawnResources: 0
   isBorder: 0
   isWater: 1
+  effectData:
+    qiDensityMultiplier: 0.6

@@ -218,9 +218,12 @@ namespace LAB2D.UI
                 ? $"研究台: {mgr.ResearchTableCount} 座（产出 {mgr.ResearchTableCount * (1f + mgr.GetResearchSpeedBonus()):F1} 点/分）"
                 : "研究台: 0 座（建造研究台后开始产出研究点）";
 
-            string spiritArrayLine = mgr.SpiritArrayCount > 0
-                ? $"<color=#8cff8c>聚灵阵: {mgr.SpiritArrayCount} 座（打坐灵气 +{mgr.GetMeditateSpeedBonus():P0}）</color>"
-                : "聚灵阵: 0 座";
+            // M4 起聚灵阵效果由 LingQiManager 提供（半径 4 格内浓度 ×1.3，多阵指数叠至 3 层），
+            // 科技只解锁建造（GetMeditateSpeedBonus 恒 0，不再显示百分比）
+            int arrayCount = LingQiManager.Instance.SpiritArrayCount;
+            string spiritArrayLine = arrayCount > 0
+                ? $"<color=#8cff8c>聚灵阵: {arrayCount} 座（半径 4 格内灵气 ×1.3，可叠至 3 层）</color>"
+                : "聚灵阵: 0 座（建阵提升周边修炼灵气）";
 
             this.infoText.text =
                 $"研究点: {mgr.ResearchPoints:F0}\n" +

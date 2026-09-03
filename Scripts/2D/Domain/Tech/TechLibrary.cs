@@ -18,15 +18,15 @@ namespace LAB2D.Domain.Tech
             FarmSpeedBonus = 0.25f,
         };
 
-        /// <summary>聚灵阵 — 解锁聚灵阵建筑，打坐灵气积累 +50%。</summary>
+        /// <summary>聚灵阵 — 解锁聚灵阵建筑（建成后半径 4 格内修炼灵气 ×1.3，可叠至 3 层，M4 灵气环境）。</summary>
         public static readonly TechDef SpiritArray = new TechDef
         {
             Id = "tech_spirit_array",
             Name = "聚灵阵",
-            Description = "解锁建筑「聚灵阵」，打坐灵气积累 +50%",
+            Description = "解锁建筑「聚灵阵」：建成后半径 4 格内修炼灵气 ×1.3，多阵可叠（至多 3 层）",
             Cost = 60f,
             UnlockBuildName = "SpiritArray",
-            MeditateSpeedBonus = 0.5f,
+            MeditateSpeedBonus = 0f, // M4 起科技只解锁建造，局部加成由建筑本体提供（LingQiManager）
         };
 
         /// <summary>高级研究法 — 研究点产出 ×2。</summary>

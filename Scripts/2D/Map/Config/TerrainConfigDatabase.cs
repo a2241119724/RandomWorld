@@ -182,6 +182,14 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 安全获取灵气浓度倍率（默认 1.0，M4 灵气环境——乘修炼速率）。
+        /// </summary>
+        public float GetQiDensityMultiplier(int terrainId)
+        {
+            return this.GetById(terrainId)?.effectData?.qiDensityMultiplier ?? 1.0f;
+        }
+
+        /// <summary>
         /// 获取水域地形 ID。遍历配置查找首个 isWater==true 的地形，未找到回退为 6。
         /// </summary>
         public int GetWaterTerrainId()

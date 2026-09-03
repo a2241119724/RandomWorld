@@ -22,3 +22,5 @@ MonoBehaviour:
   isWater: 0
   isDiggable: 1
   isBorder: 1
+  effectData:
+    qiDensityMultiplier: 1.2

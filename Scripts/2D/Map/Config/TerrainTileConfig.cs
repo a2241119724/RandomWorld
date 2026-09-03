@@ -124,5 +124,12 @@ namespace LAB2D.Map
         [Tooltip("工人饥饿自然衰减速率倍率（>1 = 更快饥饿）。")]
         [UnityEngine.Range(0.5f, 3.0f)]
         public float workerHungryDecayMultiplier = 1.0f;
+
+        /// <summary>
+        /// 灵气浓度倍率（M4 灵气环境）— 直接乘该地形上的修炼速率。
+        /// </summary>
+        [Tooltip("灵气浓度倍率（乘修炼速率，如雪 1.3/沙 0.7）。")]
+        [UnityEngine.Range(0.1f, 3.0f)]
+        public float qiDensityMultiplier = 1.0f;
     }
 }
