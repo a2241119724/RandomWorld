@@ -21,14 +21,16 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void IsPlacementValid_TooCloseToExistingCave_False()
         {
-            // 既有洞府 (20,20)；候选 (49,50) 距离 29.15 < 30 → 拒绝；(50,50) 距离 30 边界含 → 合法
+            // 既有洞府 (70,50)（距中心 20 已合法）；候选 (99,50) 距离 29 < 30 → 拒绝；
+            // (100,50) 距离 30 边界含 → 合法。候选必须距中心 ≥20，否则先被中心约束拒绝
+            // 测不到间距分支（首版 (50,50) 压中心踩坑）。
             var existing = new List<AncientCaveRuleService.AncientCaveModel>
             {
-                new AncientCaveRuleService.AncientCaveModel(new GameVector2(20f, 20f), AncientCaveRuleService.CaveState.Hidden),
+                new AncientCaveRuleService.AncientCaveModel(new GameVector2(70f, 50f), AncientCaveRuleService.CaveState.Hidden),
             };
 
-            Assert.IsFalse(AncientCaveRuleService.IsPlacementValid(existing, new GameVector2(49f, 50f), Origin));
-            Assert.IsTrue(AncientCaveRuleService.IsPlacementValid(existing, new GameVector2(50f, 50f), Origin));
+            Assert.IsFalse(AncientCaveRuleService.IsPlacementValid(existing, new GameVector2(99f, 50f), Origin));
+            Assert.IsTrue(AncientCaveRuleService.IsPlacementValid(existing, new GameVector2(100f, 50f), Origin));
         }
 
         [Test]

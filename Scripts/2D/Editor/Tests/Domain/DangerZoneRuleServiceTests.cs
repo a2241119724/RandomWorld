@@ -68,15 +68,16 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void IsPlacementValid_OverlapsExisting_False()
         {
-            // 既有区 (80,50) r=10；候选 (60,50) r=10 → 圆心距 20 = r1+r2 相切合法；
-            // 候选 (61,50) → 圆心距 19 < 20 重叠拒绝
+            // 既有区 (80,50) r=10（距中心 30 已合法）；候选 (100,50) r=10 → 圆心距 20 = r1+r2
+            // 相切合法（距中心 50 不触发中心约束）；候选 (99,50) → 圆心距 19 < 20 重叠拒绝。
+            // 候选必须同时远离中心 ≥15，否则先被中心约束拒绝测不到重叠分支（首版踩坑）。
             var existing = new List<DangerZoneRuleService.DangerZoneModel>
             {
                 new DangerZoneRuleService.DangerZoneModel(new GameVector2(80f, 50f), 10f),
             };
 
-            Assert.IsTrue(DangerZoneRuleService.IsPlacementValid(existing, new GameVector2(60f, 50f), 10f, Origin));
-            Assert.IsFalse(DangerZoneRuleService.IsPlacementValid(existing, new GameVector2(61f, 50f), 10f, Origin));
+            Assert.IsTrue(DangerZoneRuleService.IsPlacementValid(existing, new GameVector2(100f, 50f), 10f, Origin));
+            Assert.IsFalse(DangerZoneRuleService.IsPlacementValid(existing, new GameVector2(99f, 50f), 10f, Origin));
         }
 
         [Test]

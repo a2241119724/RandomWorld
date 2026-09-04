@@ -109,15 +109,16 @@ namespace LAB2D.Editor.Tests.Domain
         public void GetRunningCountByType_CountsRunning()
         {
             var queue = new WorkerTaskQueue<int>();
-            queue.Add(100, 0); // type 0
-            queue.Add(101, 0); // type 1
-            queue.Add(200, 0); // type 0
+            queue.Add(100, 0); // type 1（100/100）
+            queue.Add(101, 0); // type 1（idle，不计数）
+            queue.Add(200, 0); // type 2（200/100）
             queue.MarkRunning(100);
             queue.MarkRunning(200);
 
             Assert.AreEqual(3, queue.TotalCount);
-            Assert.AreEqual(2, queue.GetRunningCountByType(0, t => t / 100));
-            Assert.AreEqual(0, queue.GetRunningCountByType(1, t => t / 100));
+            Assert.AreEqual(2, queue.GetRunningCountByType(t => t / 100)); // running 总数
+            Assert.AreEqual(0, queue.GetRunningCountByType(0, t => t / 100)); // type 0 无任务
+            Assert.AreEqual(1, queue.GetRunningCountByType(2, t => t / 100)); // 200 running 且 type 2
         }
 
         [Test]
