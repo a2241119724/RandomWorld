@@ -2,6 +2,19 @@
 
 > 每次通过日志分析并解决 bug 后，把思路追加到此文件。开始新任务前**先通读本文件**，命中历史记录时直接引用验证，避免重复排查。
 
+## 2026-09-04 编辑器启动三连炸：Character 静态 MPB cctor + RoundCorner 强拉 ResourceManager + SessionModifierManager 漏注册（ccdf84b6）
+
+- **现象**：用户打开 Unity/进场景即刷屏三类异常：① 全部角色 prefab（ShootEnemy_Lv1/ACommonEnemy/AWorker/Player 等）`TypeInitializationException: Character..cctor` ← `MaterialPropertyBlock..ctor` 的 "CreateImpl is not allowed to be called from a MonoBehaviour constructor"；② 同批堆栈尾部连着 `RoundCorner.OnEnable → SharedRoundMaterial → Singleton.get_Instance → ResourceManager..ctor → LoadPrefabs → AssetBundle.LoadAsset`（加载角色 prefab 又引爆①，成环刷屏）；③ `KeyNotFoundException: ServiceLocator 中未注册类型 SessionModifierManager`（GlobalInit.Awake → BuildInitializableList）。
+- **根因与修复**（三处独立，①②连锁）：
+  1. `Character.cs:113` `static readonly MaterialPropertyBlock flashBlock = new()`——**静态字段初始化器里 new Unity 原生对象**。cctor 触发时机由「首次静态成员访问」决定，AEnemy 等实例构造链访问静态成员时 cctor 在 MonoBehaviour 构造上下文里跑，Unity 禁止此处 CreateImpl。修：改惰性属性 `FlashBlock`（同日单测轮 ASeek.s_wallLayerMask 同型同修法——本次是该禁令的**编辑器运行时版本**：裸 Mono 里炸 icall 缺失，编辑器里炸 UnityException，一条规则两种皮）。
+  2. `RoundCorner.SharedRoundMaterial` 写的 `ResourceManager.Instance != null` 判断**恒真**——`Singleton<T>.Instance` 是懒创建语义（null 时 `new T()`），「探测可用性」实际是「强行拉起」。RoundCorner 是 `[ExecuteInEditMode]`，编辑器场景加载时 OnEnable 比 GlobalInit 跑得还早，一个 UI 组件把 ResourceManager→LoadPrefabs→全部角色 prefab 反序列化整条链强拉出来。修：删 ResourceManager 路径直接 `Shader.Find("Custom/RoundCorner")`（shader 在 `Resources/Shader/` 下全量打包，编辑器/运行时均可用）。
+  3. 并行会话包 4 实施「每局修饰符」时在 `BuildInitializableList` 加了 `Get<SessionModifierManager>()`（强取），但 `RegisterSafeServices` 漏了对应 `Register`（同批的 ComboBonusManager 有注册，对比即见漏项）。修：84 行 ComboBonusManager 后补一行 `ServiceLocator.Register(SessionModifierManager.Instance)`。
+- **验证**：主程序集+测试程序集编译通过、单测 984/984；编辑器侧待用户回 Unity 重编译确认（预期三类刷屏全清）。
+- **教训**：
+  - **`Singleton.Instance` 不能当「存在性探测」用**——它是懒创建，`!= null` 恒真且副作用是完整构造。要探测用 `ServiceLocator.TryGet`；UI 组件（尤其 `[ExecuteInEditMode]`）的属性 getter 里更要避免触碰任何 Singleton，编辑模式触发时机比游戏初始化还早。
+  - **静态字段初始化器/cctor 里禁 new 任何 Unity 原生对象**（MaterialPropertyBlock/Material/Texture/GameObject…），Shader.PropertyToID 这类纯查表 icall 则安全。此规则与裸 Mono 单测环境的 icall 禁令同源（见上方单测条目），修法统一是惰性属性。
+  - **BuildInitializableList/BuildTickableList 用 `Get<T>` 强取的类型，注册链必须有对应 `Register<T>`**——新增 Manager 时两处都要动，漏注册的爆炸点在 GlobalInit.Awake（启动即死），建议新增时全局 grep 一遍 Register 确认。
+
 ## 2026-09-04 单测 71→0 败全清：静态桩 TearDown 残留 + 构造期/静态 icall + GrowthData Ensure 契约（b5f83f50/c58cc97a）
 
 - **现象**：无人值守单测管线（`Assets/tmp/verify_tests.py`：主程序集 → Editor 测试程序集 → Mono 反射 runner，全程不依赖 Unity 编辑器）首跑 980 测试 71 败。异常形态四类：数值期望不符 24、`assembly:<unknown assembly> type:<unknown type>` 25、NullReferenceException 16、type initializer threw 4 + ServiceLocator KeyNotFound 2。
