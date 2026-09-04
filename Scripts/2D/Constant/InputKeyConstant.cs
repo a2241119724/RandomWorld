@@ -192,6 +192,18 @@ namespace LAB2D.Constant
         /// </summary>
         public const KeyCode JoinBattle = KeyCode.B;
 
+        /// <summary>
+        /// 亲自探索上古洞府 (N键, N=eNter)
+        /// 靠近已揭示洞府 2 格内按住触发 30s 读条（移动/受击打断，打坐同款）。
+        /// </summary>
+        public const KeyCode ExploreCave = KeyCode.N;
+
+        /// <summary>
+        /// 派最近空闲 Worker 探索洞府 (O键, O=Order)
+        /// 靠近已揭示洞府时按 O，最近的空闲 Worker 领取探索任务（60s 驻留吃乘数链）。
+        /// </summary>
+        public const KeyCode DispatchCaveExplore = KeyCode.O;
+
         #endregion
 
         #region 主动技能快捷键 (Q/E/R/F)

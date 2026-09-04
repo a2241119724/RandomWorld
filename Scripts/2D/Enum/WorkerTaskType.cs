@@ -52,6 +52,9 @@ namespace LAB2D.Enum
         /// <summary>存取个人四格仓库（自建任务，不入全局任务队列）</summary>
         Storage,
 
+        /// <summary>探索上古洞府 — 寻路到洞府邻格驻留推进，完成时风险/奖励结算（AncientCaveManager 派发）</summary>
+        Explore,
+
         /// <summary>哨兵值 — 必须始终在最后，用于动态数组大小</summary>
         _Count,
     }

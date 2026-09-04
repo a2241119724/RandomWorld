@@ -28,6 +28,7 @@ namespace LAB2D.Render
         private SpriteRenderer spriteRenderer;
         private float fadeElapsed = -1f;
         private bool fadeDone;
+        private bool explored;
 
         /// <summary>共享洞口 Sprite（@64 PPU → 2 单位直径，调用方缩放）。</summary>
         public static Sprite GetOrCreateSprite()
@@ -123,8 +124,21 @@ namespace LAB2D.Render
             this.fadeElapsed = 0f;
         }
 
+        /// <summary>探索完毕枯竭：灰暗半透明 + 停呼吸（灵气采尽的死寂遗迹）。</summary>
+        public void MarkExplored()
+        {
+            this.explored = true;
+            this.fadeDone = true;
+            this.spriteRenderer.color = new Color(0.55f, 0.55f, 0.55f, 0.45f);
+        }
+
         private void Update()
         {
+            if (this.explored)
+            {
+                return; // 枯竭后完全静止
+            }
+
             if (this.fadeDone)
             {
                 // 极慢呼吸（静态遗迹的神秘微光）

@@ -2,7 +2,10 @@ namespace LAB2D.Core
 {
     using LAB2D;
     using LAB2D.Domain.Common;
+    using LAB2D.Gameplay;
     using LAB2D.Gameplay.TurnBattle;
+    using LAB2D.Map;
+    using LAB2D.UI;
     using LAB2D.UI.Action;
     using LAB2D.UI.Panel;
     using LAB2D.UnityAdapter;
@@ -39,6 +42,7 @@ namespace LAB2D.Core
             this.ProcessRoomListToggle();
             this.ProcessWorkerMindToggle();
             this.ProcessJoinBattle(deltaTime);
+            this.ProcessCaveExplore();
         }
 
         /// <summary>
@@ -128,6 +132,66 @@ namespace LAB2D.Core
             catch (Exception)
             {
                 // Tip 不可用时静默降级（测试环境）
+            }
+        }
+
+        /// <summary>
+        /// N/O 键 — 上古洞府探索交互：提示条显隐 + 读条进度 + 按键转发 AncientCaveManager。
+        /// 读条推进/打断在 Manager.Tick（ITickable 已接线），此处只管输入与 HUD。
+        /// </summary>
+        private void ProcessCaveExplore()
+        {
+            CaveExploreHUD hud = CaveExploreHUD.Instance;
+            if (!ServiceLocator.TryGet(out AncientCaveManager caveManager) || caveManager == null)
+            {
+                hud?.SetVisible(false);
+                return;
+            }
+
+            Player player = ServiceLocator.Get<PlayerManager>()?.Mine;
+            if (player == null)
+            {
+                hud?.SetVisible(false);
+                return;
+            }
+
+            // 读条中：只显示进度，不再响应按键（打断走移动/受击通道）
+            if (caveManager.IsPlayerExploring)
+            {
+                hud?.SetExploring(caveManager.PlayerExploreProgress);
+                return;
+            }
+
+            // 提示条显隐：附近交互半径内有可探索洞府
+            bool nearCave = false;
+            if (ServiceLocator.TryGet(out TileMap tileMap) && tileMap != null)
+            {
+                Vector3Int posMap = tileMap.WorldPosToMapPos(player.transform.position);
+                nearCave = caveManager.FindRevealedCaveNear(posMap, AncientCaveManager.ExploreInteractRadius) >= 0;
+                if (nearCave && hud != null)
+                {
+                    hud.SetIdleText();
+                }
+            }
+
+            hud?.SetVisible(nearCave);
+            if (!nearCave)
+            {
+                return;
+            }
+
+            if (UnityGlobalInputAdapter.GetHudToggleDown(Constant.InputKeyConstant.ExploreCave))
+            {
+                // 有面板打开时不触发（ProcessJoinBattle 同款守卫）
+                PanelController controller = ServiceLocator.Get<PanelController>();
+                if (controller == null || controller.Panels.Count == 0)
+                {
+                    caveManager.TryStartPlayerExplore();
+                }
+            }
+            else if (UnityGlobalInputAdapter.GetHudToggleDown(Constant.InputKeyConstant.DispatchCaveExplore))
+            {
+                caveManager.TryDispatchWorkerExplore();
             }
         }
 

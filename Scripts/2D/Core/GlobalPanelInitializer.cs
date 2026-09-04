@@ -77,6 +77,9 @@ namespace LAB2D.Core
 
             // 附近交战提示条 (B 键加入战斗的入口提示，显隐由 GlobalInputProcessor 驱动)
             BattlePromptHUD.EnsureRuntimePanel();
+
+            // 上古洞府探索提示条 (N/O 键探索入口提示，显隐由 GlobalInputProcessor 驱动)
+            CaveExploreHUD.EnsureRuntimePanel();
         }
     }
 }
