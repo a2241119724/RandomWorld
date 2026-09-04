@@ -2,6 +2,22 @@
 
 > 每次通过日志分析并解决 bug 后，把思路追加到此文件。开始新任务前**先通读本文件**，命中历史记录时直接引用验证，避免重复排查。
 
+## 2026-09-04 单测 71→0 败全清：静态桩 TearDown 残留 + 构造期/静态 icall + GrowthData Ensure 契约（b5f83f50/c58cc97a）
+
+- **现象**：无人值守单测管线（`Assets/tmp/verify_tests.py`：主程序集 → Editor 测试程序集 → Mono 反射 runner，全程不依赖 Unity 编辑器）首跑 980 测试 71 败。异常形态四类：数值期望不符 24、`assembly:<unknown assembly> type:<unknown type>` 25、NullReferenceException 16、type initializer threw 4 + ServiceLocator KeyNotFound 2。
+- **根因与修复（按排查顺序）**：
+  1. **数值类 24 败全是测试自身缺陷或边界语义分歧，无产品回归**——定性方法三件套：失败消息 Expected/But was 对比 + git log 判新旧意图 + **探针复现**（写 probe.cs 用 Mono 4.7.1 BCL 编译、引用主 ref.dll 直接调产品 API 打印中间量；需补 `MonoBleedingEdge/lib/mono/4.7.1-api/Facades/netstandard.dll` 引用）。12 处测试修正 + 1 处产品边界修复（`WorkerTaskProgress` 恰达 max 即完成，`>`→`>=`）。
+  2. **TurnBattle fixture 6 连败 = runner 缺 TearDown**——`UseSequence` 静态随机桩（`TurnBattleRuleService.RandomFloatProvider`）跨测试残留 → Roll 恒 0.95+ → 必 miss → 零伤害。探针证实产品干净进程全对后，单跑 fixture 仍败才锁定 runner：**TearDown 必须无条件执行（try-finally），否则任何静态桩残留都会让后续测试连坐**。
+  3. **`assembly:<unknown assembly>` = 构造期 icall 崩的指纹**——裸 Mono 无引擎绑定，icall 抛的异常无栈无类型名。两处：`WorkerData` 构造 Greed/Laziness、`AEquipment` 构造 `RankRandom`×8 调 `UnityEngine.Random.Range`。修：换纯 C# 均匀随机（`WorkerPersonality.NextFloat` internal 复用；`AEquipment.RandomFloatProvider` 默认换 `System.Random`——均匀分布语义等价，RankRandom 偏低值算法在随机源之外不受影响）。
+  4. **type initializer threw = 静态字段初始化器里的 icall**——`ASeek.s_wallLayerMask = LayerMask.GetMask(...)` 炸 cctor，连坐**一切**静态成员访问（含纯几何函数 `TryGetSlideDirection`，其本身不碰 mask）。修：改惰性属性（运行时首次访问求值，行为无差异）。
+  5. **NullRef 16 = 测试违反 GrowthData 构造契约**——集合字段无初始化器是 BinaryFormatter 反序列化契约（类注释明确「读档路径必须先 Ensure」），测试 `new GrowthData()` 后直接 `.Add/.Count`。修：测试补 `Ensure()` 或先建集合（产品探针证实全 API 干净）。
+- **验证**：980 跑 / 980 过 / 0 败 / 6 跳（6 跳 = 显式 Ignore）。
+- **教训**：
+  - **构造函数与静态字段初始化器里禁 icall**（UnityEngine.Random / LayerMask.GetMask / Resources.Load 等）——这是「Domain 纯 C# 可测」的硬边界；随机依赖走 provider 注入（项目已有惯例）或 System.Random。
+  - **异常形态是指纹**：unknown assembly → icall；type initializer → cctor 里的引擎依赖；KeyNotFound → ServiceLocator 裸环境缺注册（fixture 自备桩：IGameTime 等）。
+  - **fixture 二分过滤**（test_runner.exe 第二参数 fixture 名子串）+ **探针直调产品 API** 是分离「产品 bug vs 测试 bug vs 环境缺失」的最快路径，比读测试失败消息猜快一个量级。
+  - Unity 定制 NUnit 是 net35（内部 CallContext），**必须 Unity 自带 Mono 运行时跑**，.NET 6 无 Remoting 直接不可用。
+
 ## 2026-09-04 BountyRestore 每 tick 刷屏（悬赏运行期 ~2400 条/人）
 - **现象**：2026-09-03 局 game.log 孔峰瑜/范学各 `SetTask type=Bounty source=BountyRestore` 约 2400 次（悬赏运行期 2 次/秒，16ms 内 5 连发），00:13-00:27 风暴后随悬赏结束自愈；Debug 级只进 game.log 不刷 Console。
 - **根因**：`WorkerBountyTask.Execute` 注释意图「innerTask.Finish 清除 Task 后恢复悬赏本体」，实现却是 `if (workerData != null)` 每 tick 无条件 `SetTask(BountyRestore)`——innerTask 未完成时 Task 本来就是 this，恢复是冗余调用。功能因 SetTask 对 BountyRestore 的「不重启不打断」特判（AWorker.cs）而侥幸正确，纯日志刷屏 + 每 tick 无效赋值。
