@@ -1,6 +1,6 @@
 # M4 包 4 切片：每局修饰符（Session Modifiers）实施方案
 
-> 状态：方案定稿待实施（2026-09-04 第 5 轮调查产出）。排在事件天气（m4-p4-event-weather-plan.md）之后。
+> 状态：**已实施**（2026-09-04，spec 见 `docs/ai-context/spec.md` 每局修饰符节）。实施与方案的差异：热键 H（原拟 F 系，F1-F12 已满且 F8 禁用）；EnemyLoot 通道接入 `EnemyLootManager` 两处 roll（通用补偿重试 + 装备概率缩放）。
 > 大纲定位：`docs/游戏大纲.md:645` 包 4「每局不一样」——每局修饰符。
 
 ## 可行性结论（调查确认）

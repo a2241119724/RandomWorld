@@ -284,6 +284,8 @@ namespace LAB2D
                 ServiceLocator.Get<WorkerDefenceManager>(),
                 ServiceLocator.Get<EquipmentBeamManager>(),
                 ServiceLocator.Get<EnemyLootManager>(),
+                // 每局修饰符（有档恢复/无档 roll——LoadData 已跑时 Initialize 兜底幂等）
+                ServiceLocator.Get<SessionModifierManager>(),
                 ServiceLocator.Get<ComboBonusManager>(),
                 // 灵气环境（订阅 OnMapReady 撒灵脉，读档路径在 LoadData 恢复/迁移）
                 ServiceLocator.Get<LingQiManager>(),

@@ -111,7 +111,7 @@ namespace LAB2D.Character.Worker.Task
         // 本文件通过 using WorkerTaskType = LAB2D.Enum.WorkerTaskType 保持向后兼容。
 
         /// <summary>
-        /// 任务进度倍率提供者 — 组合天气效果、Worker 状态、技能熟练度和生活技能等级对任务进度的倍率影响。
+        /// 任务进度倍率提供者 — 组合天气效果、每局修饰符、Worker 状态、技能熟练度和生活技能等级对任务进度的倍率影响。
         /// 默认实现访问 ServiceLocator.Get&lt;WeatherGameplayEffect&gt;()、ServiceLocator.Get&lt;WorkerConditionManager&gt;()
         /// 以及 Worker 的技能熟练度（熟练工种干得更快）、生活技能等级（伐木/采矿/农耕用进废退）。
         /// 可替换为测试桩或自定义实现。
@@ -122,6 +122,12 @@ namespace LAB2D.Character.Worker.Task
                 WorkerTaskType taskType = task.TaskType;
                 float multiplier = ServiceLocator.Get<WeatherGameplayEffect>().GetWorkerTaskProgressMultiplier(taskType);
                 multiplier *= ServiceLocator.Get<WorkerConditionManager>().GetWorkerTaskProgressMultiplier(worker, taskType);
+
+                // 每局修饰符·工作速度通道（与天气正交叠乘；未初始化/测试环境退化为 1）
+                if (ServiceLocator.TryGet(out Gameplay.SessionModifierManager sessionModifiers))
+                {
+                    multiplier *= sessionModifiers.GetChannelMultiplier(Domain.Gameplay.ModifierChannel.WorkerWorkSpeed);
+                }
 
                 // 技能熟练度加成：熟练工种进度更快
                 AWorker.WorkerData workerData = worker?.CharacterDataLAB as AWorker.WorkerData;

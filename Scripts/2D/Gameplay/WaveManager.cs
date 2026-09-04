@@ -403,6 +403,11 @@ namespace LAB2D.Gameplay
                 // 天气服务不可用（初始化早期/测试环境）按非血月
             }
 
+            // 每局修饰符·敌方强度通道（未初始化/测试环境退化为 1）
+            float enemyStrengthMultiplier = Core.ServiceLocator.TryGet(out SessionModifierManager sessionModifiers)
+                ? sessionModifiers.GetChannelMultiplier(Domain.Gameplay.ModifierChannel.EnemyStrength)
+                : 1f;
+
             return new WaveConfigModel
             {
                 BaseEnemyCount = this.Config.baseEnemyCount,
@@ -412,6 +417,7 @@ namespace LAB2D.Gameplay
                 DifficultyScalePerWave = this.Config.difficultyScalePerWave,
                 NewEnemyStartWave = this.Config.newEnemyStartWave,
                 IsBloodMoon = isBloodMoon,
+                EnemyStrengthMultiplier = enemyStrengthMultiplier,
             };
         }
 

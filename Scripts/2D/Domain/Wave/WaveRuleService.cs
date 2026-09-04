@@ -20,7 +20,13 @@ namespace LAB2D.Domain.Wave
         {
             WaveConfigModel safeConfig = config ?? new WaveConfigModel();
             float scale = 1.0f + (MathHelper.ClampMin(totalWavesCompleted, 0) * safeConfig.DifficultyScalePerWave);
-            return safeConfig.IsBloodMoon ? scale + 0.5f : scale;
+            if (safeConfig.IsBloodMoon)
+            {
+                scale += 0.5f;
+            }
+
+            // 每局修饰符·敌方强度：与血月正交叠乘（血月 +0.5 之后再整体缩放）
+            return scale * System.Math.Max(0f, safeConfig.EnemyStrengthMultiplier);
         }
 
         public bool AreAllWavesCleared(int totalWavesCompleted, WaveConfigModel config)
@@ -40,6 +46,8 @@ namespace LAB2D.Domain.Wave
                 count = (int)System.Math.Ceiling(count * 1.5f);
             }
 
+            // 每局修饰符·敌方强度：与血月正交叠乘（向上取整，保底 1 条）
+            count = (int)System.Math.Ceiling(count * System.Math.Max(0f, safeConfig.EnemyStrengthMultiplier));
             return MathHelper.ClampMin(count, 1);
         }
 

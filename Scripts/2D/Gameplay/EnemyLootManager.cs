@@ -160,6 +160,16 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
+        /// 每局修饰符·战利品通道乘数（未初始化/测试环境退化为 1，通用与装备两处掉落 roll 共用）。
+        /// </summary>
+        private static float SessionModifierLootMultiplier()
+        {
+            return Core.ServiceLocator.TryGet(out SessionModifierManager sessionModifiers)
+                ? sessionModifiers.GetChannelMultiplier(Domain.Gameplay.ModifierChannel.EnemyLoot)
+                : 1f;
+        }
+
+        /// <summary>
         /// 从 DropDataManager 默认掉落配置中概率选取一个通用物品掉落。
         /// </summary>
         /// <param name="worldPos">掉落世界坐标</param>
@@ -191,6 +201,24 @@ namespace LAB2D.Gameplay
                     {
                         selectedDrop = dropItem.Value;
                         break;
+                    }
+                }
+
+                // 每局修饰符·战利品通道：未掉落时按超出比例补偿重 roll 一次（×1.4 → 40% 概率再试）
+                if (selectedDrop == null)
+                {
+                    float lootMultiplier = SessionModifierLootMultiplier();
+                    if (lootMultiplier > 1f && RandomFloatProvider(0f, 1f) < lootMultiplier - 1f)
+                    {
+                        int retryRand = RandomIntProvider(0, this.dropTotal);
+                        foreach (KeyValuePair<int, DropItem> dropItem in this.probToDropItem)
+                        {
+                            if (retryRand <= dropItem.Key)
+                            {
+                                selectedDrop = dropItem.Value;
+                                break;
+                            }
+                        }
                     }
                 }
 
@@ -278,11 +306,13 @@ namespace LAB2D.Gameplay
                 return false;
             }
 
-            // 基础概率判定（ForceDrop 模式跳过）
+            // 基础概率判定（ForceDrop 模式跳过）；每局修饰符·战利品通道直接缩放判定概率
             if (!ForceDrop)
             {
                 float roll = RandomFloatProvider(0f, 1f);
-                if (roll > EquipmentLootConstant.BaseEquipmentDropChance)
+                float dropChance = System.Math.Min(
+                    EquipmentLootConstant.BaseEquipmentDropChance * SessionModifierLootMultiplier(), 1f);
+                if (roll > dropChance)
                 {
                     return false;
                 }

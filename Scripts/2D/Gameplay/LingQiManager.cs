@@ -74,6 +74,9 @@ namespace LAB2D.Gameplay
             /// <summary>天气倍率（EnergyRecoveryMultiplier）。</summary>
             public float Weather;
 
+            /// <summary>每局修饰符倍率（SessionModifierManager·灵气通道）。</summary>
+            public float SessionModifier;
+
             /// <summary>合成浓度（全部因子相乘）。</summary>
             public float Composed;
         }
@@ -330,6 +333,7 @@ namespace LAB2D.Gameplay
         {
             factors = default;
             factors.Weather = 1f;
+            factors.SessionModifier = 1f;
 
             TileMap tileMap = TileMapProvider();
             TileMap.TileMapData mapData = tileMap?.TileMapDataLAB;
@@ -360,8 +364,13 @@ namespace LAB2D.Gameplay
                 factors.Weather = weather.EnergyRecoveryMultiplier;
             }
 
+            // 每局修饰符·灵气通道：与天气/地形正交叠乘（未初始化/测试环境退化为 1）
+            factors.SessionModifier = Core.ServiceLocator.TryGet(out SessionModifierManager sessionModifiers)
+                ? sessionModifiers.GetChannelMultiplier(Domain.Gameplay.ModifierChannel.LingQiRecovery)
+                : 1f;
+
             factors.Composed = LingQiRuleService.ComposeMultiplier(
-                factors.Terrain, veinDist, factors.Arrays, factors.Weather);
+                factors.Terrain, veinDist, factors.Arrays, factors.Weather) * factors.SessionModifier;
             return factors.Composed;
         }
 

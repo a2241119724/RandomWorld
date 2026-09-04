@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `feat(modifier)`: M4 包4 每局修饰符「本局天机」——开局 roll 2~3 个（8 池 4 通道：灵气/敌方强度/工作速度/战利品，`SessionModifierRuleService` Fisher-Yates 确定性 Roll + `SessionModifierManager` FavorabilityManager 同款存档恢复/新档重 roll）；四接入点全部 TryGet 防御退化 1（灵气浓度合成末位乘、任务进度天气后叠乘、`WaveConfigModel.EnemyStrengthMultiplier` 数量+难度、敌方掉落两处 roll 补偿/缩放）；敌方强化自带战利品补偿通道（妖兽凶猛 1.25/1.40）防纯负面；开局 Tip + `SessionModifierHUD`（H 键，F 系已满）纯代码构建；13 单测。spec 见每局修饰符节
 - 2026-09 — `feat(weather)`: M4 包4 事件天气灵雨/血月——Domain `WeatherType`+2 值与 `RollWeather` 加权池（40/25/15/12/8，`RandWeather` 均匀随机改加权）；灵雨=灵气恢复 ×1.5；血月=波次三强化（`WaveConfigModel.IsBloodMoon`：数量 ×1.5 取整/混池提前 1 波/难度 +0.5）+ 夜晚光色随暗度血红 tint（`GetGlobalLightColor` 重载，无相位跳变）；事件天气无视觉节点静默跳过；测试扩展 Weather/Wave 两文件 11 用例。spec 见天气系统节
 - 2026-09 — `fix(bounty)`: BountyRestore 每 tick 刷屏（悬赏运行期 ~2400 条/人）——`WorkerBountyTask.Execute` 无条件恢复本体改 `Task == null` 才恢复，语义保留其余帧零开销。存档见 `bug-fixes.md`
 - 2026-09 — `fix(item)`: 启动 Warning「没有名字为Seed0的道具」+ id=0 幽灵种子入包——种子 SO 合并为单条 Seed 后 `Seed0.cs` 成有类无条目孤儿，反射兜底注册进背包致 `GetByName` 落空；改 abstract 使 `GetChildByParent` 过滤跳过。存档见 `bug-fixes.md`

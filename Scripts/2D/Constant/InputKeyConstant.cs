@@ -179,6 +179,13 @@ namespace LAB2D.Constant
         public const KeyCode ToggleMountainGateHud = KeyCode.G;
 
         /// <summary>
+        /// 本局天机 HUD 显示/隐藏 (H键, H=Heaven's will)
+        /// 切换显示本局 roll 到的全局修饰符（名称/通道数值/描述）。
+        /// F 系 HUD 键位已满（F8 实测无效禁用），H 与山门 G 相邻。仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleSessionModifierHud = KeyCode.H;
+
+        /// <summary>
         /// 加入附近战斗 (B键, B=Battle)
         /// 靠近大世界 Worker vs Enemy 交战区时，进入洛克王国式回合制对战面板。
         /// 仅在无 UI 输入框聚焦、无面板打开且非战斗中生效。

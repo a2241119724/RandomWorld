@@ -26,5 +26,11 @@ namespace LAB2D.Domain.Wave
         /// 默认 false——非血月路径与旧行为完全一致。
         /// </summary>
         public bool IsBloodMoon { get; set; }
+
+        /// <summary>
+        /// 每局修饰符·敌方强度通道（SessionModifierManager）：数量与难度同时缩放。
+        /// 默认 1f——无修饰符路径与旧行为完全一致。
+        /// </summary>
+        public float EnemyStrengthMultiplier { get; set; } = 1f;
     }
 }

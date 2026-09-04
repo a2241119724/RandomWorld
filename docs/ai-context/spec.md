@@ -111,12 +111,19 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **新建筑三同约定:** 类名 == ItemData 条目 Name == Tile 资产名（`ItemInstanceFactory` 反射扫描 ABuildItem 子类查 `GetByName(type.Name)`，缺条目启动报错）；条目集中在 `BuildOtherItemData.asset`（Bounty/Shop/ResearchTable/SpiritArray/MountainGateCore/ArrowTower），Tile 资产在 `Resources/Tilemap/Item/Build/`
 
 ### 灵气环境系统（M4）
-- **浓度模型:** 空间浓度 M(pos) = T(地形) × V(灵脉) × A(聚灵阵) × W(天气)。合成纯函数 `LingQiRuleService`（`Domain/Gameplay/LingQi`，有单测）；运行时宿主 `LingQiManager`（Gameplay，ASingletonSaveData + ITickable + IInitializable，GlobalInit 注册）。浓度乘修炼速率（`ComputeQiGain` 的 `envMultiplier`，缺省 1 行为不变），基地选址在灵脉旁/聚灵阵覆盖区成为空间策略
+- **浓度模型:** 空间浓度 M(pos) = T(地形) × V(灵脉) × A(聚灵阵) × W(天气) × S(每局修饰符)。合成纯函数 `LingQiRuleService`（`Domain/Gameplay/LingQi`，有单测）；运行时宿主 `LingQiManager`（Gameplay，ASingletonSaveData + ITickable + IInitializable，GlobalInit 注册）。浓度乘修炼速率（`ComputeQiGain` 的 `envMultiplier`，缺省 1 行为不变），基地选址在灵脉旁/聚灵阵覆盖区成为空间策略
 - **灵脉:** 每图 8 条撒点（`GenCanReachPos` 可达 + 距地图中心 >15 格 + 脉间距 ≥25 格，重试 500 次容忍受限地图不足）；10 格欧氏距离内 ×1.5 单层不叠。点集入档（`LingQiManagerData.Veins`），三恢复路径：新图 OnMapReady 撒点 / 读档 LoadData 恢复 / 旧档迁移撒点（MapTiles 未就绪置 pendingScatter 等 OnMapReady 兜底）。视觉 `LingVeinGlow`：运行时程序化纹理（径向光晕+三道同心环+斜向亮斑，零 PNG 资产），sortingOrder -995 贴地装饰不参与 y 排序
 - **聚灵阵:** 4 格欧氏距离内 ×1.3^min(n,3)（封顶防指数膨胀）。`LingQiManager.Tick` 2s 节流重扫 BuildMap 已建成 SpiritArray 主格（点集不入档，ArrowTowerManager 同款）。科技「聚灵阵」只解锁建造（`MeditateSpeedBonus=0`），局部加成由建筑本体提供；`SpiritArray` 类保持空壳（反射约定占位）
 - **地形系数:** `TerrainTileConfig.effectData.qiDensityMultiplier`（SO，Range 0.1-3 默认 1，如雪 1.3/沙 0.7），`TerrainConfigDatabase.GetQiDensityMultiplier` 直通，漏配安全钳 ≥0
 - **消费端:** 玩家打坐 `CultivationManager.Tick` 采样玩家位置（`GetDensityAtWorld`）；Worker 睡眠吐纳 `MeditateFor(posMap)` 采样睡觉位置（床的选址价值）。地图未就绪/越界返 1 安全降级
 - **展示:** `EnvironmentManager` 只做浓度展示——Tick 采样玩家位置 `CurDensity`（100=草地基准）；点地显示被点格分项「地形×t 灵脉×v 阵×a 天气×w」（=1 省略段），作选址工具
+
+### 每局修饰符（M4 包 4「每局不一样」）
+- **模型:** 开局 roll 2~3 个全局修饰符（8 个池、4 通道：灵气 LingQiRecovery / 敌方强度 EnemyStrength / 工作速度 WorkerWorkSpeed / 战利品 EnemyLoot），整局生效、与事件天气正交叠乘。规则纯函数 `SessionModifierRuleService`（`Domain/Gameplay/SessionModifier`，有单测）；宿主 `SessionModifierManager`（Gameplay，ASingletonSaveData + IInitializable，FavorabilityManager 同款存档模式）
+- **Roll:** Fisher-Yates 部分洗牌取前 count、按池序输出（同 seed 确定）；数值幅度 ±15%~40%；敌方强化自带补偿通道（妖兽凶猛 = 敌方 ×1.25 + 战利品 ×1.40，防纯负面体验）
+- **接入点:** 灵气浓度合成（`LingQiManager.ComposeAt` 末位乘，`LocalFactors.SessionModifier` 分项可见）/ Worker 任务进度（`AWorkerTask.ProgressMultiplierProvider` 天气之后）/ 波次（`WaveConfigModel.EnemyStrengthMultiplier`，数量与难度同时缩放）/ 敌方掉落两处 roll（`EnemyLootManager`：通用「不掉落」按超出比例补偿重试 + 装备判定概率直接缩放）。全部 TryGet 防御，未初始化/测试环境退化 1
+- **时序:** ArchiveManager LoadData（有档恢复 ids / 无档重 roll）→ GlobalInit Initialize（空则兜底 roll，幂等）；未知 id 读档丢弃（前向兼容删池项）
+- **展示:** 开局 Tip「本局天机：…」；`SessionModifierHUD`（H 键，纯代码构建 EnsureRuntimePanel 模式，右上角山门 HUD 正下方）列出名/通道数值/描述
 
 ### 回合制战斗（洛克王国式）
 - **入口:** `BattleEncounterDetector`（`TurnBattleManager.Detector`，由 `GlobalInputProcessor.ProcessJoinBattle` 每 Tick 驱动）0.5s 轮询大世界交战——Worker Attack 状态锁 Enemy 为主信号 + Enemy 侧 Target/LastAttacker 补扫，连通分量聚合交战对，2 轮滞回防闪烁。玩家 8 格内出现 `BattlePromptHUD` 提示条（"按 B 加入"），**B 键加入**（有面板打开/战斗中/联机时不触发，联机硬边界走 `GameServices.NetworkIsOnlineProvider()`）。`Player.Update` 入口以 `TurnBattleManager.IsActive` 拦截实时技能热键（Q/E/R/F 等在面板打开时仍会响应键盘）
