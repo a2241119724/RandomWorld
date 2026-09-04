@@ -132,7 +132,7 @@ namespace LAB2D.UI
 
             this.contentText = textGo.AddComponent<Text>();
             this.contentText.font = UIFontConfig.GetFont();
-            this.contentText.fontSize = 14;
+            this.contentText.fontSize = 12;
             this.contentText.color = PixelUITheme.TextOnDark;
             this.contentText.alignment = TextAnchor.UpperLeft;
             this.contentText.horizontalOverflow = HorizontalWrapMode.Wrap;

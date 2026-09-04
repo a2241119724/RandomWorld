@@ -266,15 +266,15 @@ namespace LAB2D.UI
             background.color = PixelUITheme.ViewportBg;
             background.raycastTarget = false;
 
-            Text title = CreateText(root, "Title", "山门核心 (G)", 18, PixelUITheme.VictoryTitle);
+            Text title = CreateText(root, "Title", "山门核心 (G)", 12, PixelUITheme.VictoryTitle);
             SetCenterRect(title.GetComponent<RectTransform>(), new Vector2(0f, 72f), new Vector2(230f, 24f));
             title.alignment = TextAnchor.MiddleCenter;
 
-            this.levelText = CreateText(root, "Level", "等级 1/3", 15, PixelUITheme.TextOnDark);
+            this.levelText = CreateText(root, "Level", "等级 1/3", 12, PixelUITheme.TextOnDark);
             SetCenterRect(this.levelText.GetComponent<RectTransform>(), new Vector2(-57f, 45f), new Vector2(110f, 20f));
             this.levelText.alignment = TextAnchor.MiddleLeft;
 
-            this.downfallText = CreateText(root, "Downfall", "被破 0/3", 15, PixelUITheme.HpBarFill);
+            this.downfallText = CreateText(root, "Downfall", "被破 0/3", 12, PixelUITheme.HpBarFill);
             SetCenterRect(this.downfallText.GetComponent<RectTransform>(), new Vector2(57f, 45f), new Vector2(110f, 20f));
             this.downfallText.alignment = TextAnchor.MiddleRight;
 
@@ -296,15 +296,15 @@ namespace LAB2D.UI
             this.hpBarFill.color = PixelUITheme.HpBarFill;
             this.hpBarFill.raycastTarget = false;
 
-            this.hpText = CreateText(barBgObject.transform, "HpText", string.Empty, 13, Color.white);
+            this.hpText = CreateText(barBgObject.transform, "HpText", string.Empty, 12, Color.white);
             StretchFill(this.hpText.GetComponent<RectTransform>());
             this.hpText.alignment = TextAnchor.MiddleCenter;
 
-            this.upgradeButton = this.CreateButton(root, "UpgradeBtn", "升级核心", new Vector2(0f, -24f), new Vector2(210f, 34f), 16);
+            this.upgradeButton = this.CreateButton(root, "UpgradeBtn", "升级核心", new Vector2(0f, -24f), new Vector2(210f, 34f), 12);
             this.upgradeButton.onClick.AddListener(this.OnClick_Upgrade);
             this.upgradeText = this.upgradeButton.transform.Find("Text").GetComponent<Text>();
 
-            this.resultButton = this.CreateButton(root, "ResultBtn", "查看结算", new Vector2(0f, -62f), new Vector2(210f, 28f), 14);
+            this.resultButton = this.CreateButton(root, "ResultBtn", "查看结算", new Vector2(0f, -62f), new Vector2(210f, 28f), 12);
             this.resultButton.onClick.AddListener(this.OnClick_ShowResult);
             this.resultButton.gameObject.SetActive(false);
         }

@@ -254,7 +254,7 @@ namespace LAB2D.UI
             hotkeyRect.sizeDelta = new Vector2(38f, 34f);
             Text hotkeyText = hotkeyObj.AddComponent<Text>();
             hotkeyText.alignment = TextAnchor.MiddleLeft;
-            hotkeyText.fontSize = 20;
+            hotkeyText.fontSize = 24;
             hotkeyText.fontStyle = FontStyle.Bold;
             hotkeyText.color = new Color(1f, 0.9f, 0.3f, 1f);
             hotkeyText.raycastTarget = false;
@@ -273,7 +273,7 @@ namespace LAB2D.UI
             manaRect.sizeDelta = new Vector2(66f, 34f);
             Text manaText = manaObj.AddComponent<Text>();
             manaText.alignment = TextAnchor.MiddleRight;
-            manaText.fontSize = 18;
+            manaText.fontSize = 12;
             manaText.fontStyle = FontStyle.Bold;
             manaText.color = SkillConstant.ManaSufficientColor;
             manaText.raycastTarget = false;
@@ -292,7 +292,7 @@ namespace LAB2D.UI
             nameRect.sizeDelta = new Vector2(108f, 26f);
             Text nameText = nameObj.AddComponent<Text>();
             nameText.alignment = TextAnchor.MiddleCenter;
-            nameText.fontSize = 18;
+            nameText.fontSize = 12;
             nameText.color = Color.white;
             nameText.raycastTarget = false;
             nameText.text = "技能";
@@ -310,7 +310,7 @@ namespace LAB2D.UI
             levelRect.sizeDelta = new Vector2(36f, 24f);
             Text levelText = levelObj.AddComponent<Text>();
             levelText.alignment = TextAnchor.MiddleRight;
-            levelText.fontSize = 16;
+            levelText.fontSize = 12;
             levelText.color = new Color(0.5f, 1f, 0.5f, 1f);
             levelText.raycastTarget = false;
             levelText.text = "Lv1";

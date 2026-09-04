@@ -133,7 +133,7 @@ namespace LAB2D.UI
             RectTransform closeRect = closeBtnObj.GetComponent<RectTransform>();
             closeRect.sizeDelta = new Vector2(32f, 32f);
 
-            this.CreateText(closeBtnObj.transform, "CloseLabel", "X", 18, Color.white, TextAnchor.MiddleCenter, 32f, 32f);
+            this.CreateText(closeBtnObj.transform, "CloseLabel", "X", 12, Color.white, TextAnchor.MiddleCenter, 32f, 32f);
 
             // 滚动区域
             this.contentArea = new GameObject("ContentArea");

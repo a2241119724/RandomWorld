@@ -197,12 +197,12 @@ namespace LAB2D.Constant
         public const float SlotRowHeight = 72f;
 
         /// <summary>面板字体大小</summary>
-        public const int PanelFontSize = 32;
+        public const int PanelFontSize = 36;
 
         /// <summary>标题字体大小</summary>
-        public const int TitleFontSize = 44;
+        public const int TitleFontSize = 48;
 
         /// <summary>稀有度标签字体大小</summary>
-        public const int RarityLabelFontSize = 28;
+        public const int RarityLabelFontSize = 24;
     }
 }

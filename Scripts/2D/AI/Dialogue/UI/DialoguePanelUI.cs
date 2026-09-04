@@ -328,7 +328,7 @@ namespace LAB2D.AI.Dialogue.UI
             label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             label.text = DialogueIntentRuleService.GetDisplayName(kind)
                 + (kind == DialogueIntentKind.Gift ? "(" + DialogueIntentRuleService.GiftCoinCost + "金)" : string.Empty);
-            label.fontSize = 14;
+            label.fontSize = 12;
             label.color = Color.white;
             label.alignment = TextAnchor.MiddleCenter;
 
@@ -808,7 +808,7 @@ namespace LAB2D.AI.Dialogue.UI
             if (textComponent != null)
             {
                 textComponent.color = new Color(0.12f, 0.12f, 0.12f, 1f);
-                textComponent.fontSize = 20;
+                textComponent.fontSize = 24;
                 textComponent.alignment = TextAnchor.MiddleLeft;
                 textComponent.horizontalOverflow = HorizontalWrapMode.Wrap;
                 textComponent.verticalOverflow = VerticalWrapMode.Overflow;

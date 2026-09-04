@@ -19,7 +19,7 @@ namespace LAB2D.UI.Panel.PanelUI
         private float elapsed;
 
         /// <summary>在目标卡片上方生成一条飘字。</summary>
-        public static TurnBattleFloatingText Create(Transform cardRoot, string text, Color color, int fontSize = 28)
+        public static TurnBattleFloatingText Create(Transform cardRoot, string text, Color color, int fontSize = 24)
         {
             GameObject go = new GameObject("BattleFloatText");
             go.transform.SetParent(cardRoot, false);

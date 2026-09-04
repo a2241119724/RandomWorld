@@ -111,6 +111,6 @@ namespace LAB2D.Constant
         /// <summary>
         /// HUD 默认字号。
         /// </summary>
-        public const int HudFontSize = 15;
+        public const int HudFontSize = 12;
     }
 }

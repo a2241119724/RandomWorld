@@ -39,6 +39,11 @@
 
 ## 3. 关键架构决策
 
+- **UI 文字渲染三铁律（2026-09-04 全量规范化）。**
+  ① 字号只允许 12 的整数倍 {12,24,36,48,60,72}——字体是方舟像素 12px 等宽中文（`Resources/Font/ark-pixel-12px-monospaced-zh_cn.ttf`），非整数倍缩放点阵会模糊；层级参考：角标 12 / 正文 24 / 标题 36 / 大标题 48。
+  ② 永久不迁 TMP——SDF 渲染抹平点阵像素风（用户已决策）；`Resources/Font/` 下两个 TMP SDF asset 是零引用历史遗留，勿启用。
+  ③ 字体引用一律 ark-pixel（guid 994464cadda06394eb1598617cdd2c57），禁 Unity 内置字体（Arial 无中文字形会 fallback 系统字体）。
+  屏幕空间 CanvasScaler 统一 ScaleWithScreenSize 1920×1080 + match 0.5（世界空间头顶 HUD 9×9 保持 match=1 勿动）；Canvas pixelPerfect 维持关闭；批量修正用 `Assets/tmp/ui_normalize.py`（dry-run 默认）。
 - **新增建筑一律 ABuildItem 子类，禁止在 Manager 手写放置代码。**
   三同约定：类名 == 瓦片名 == SO 条目名（`Resources/Tilemap/Item/Build/` 的 tile + 对应 `*ItemData` SO），ItemInstanceFactory 反射自动注册实例，无需任何注册代码。
   多格建筑：构造器设 `Width/Height`，`RectType` 用 `BottomLeft`（参考点即主格，床同款惯例）；主格/副格注册统一走既有管线 `AddBuildTask → BuildMap.AddBuild（主格）+ RegisterCollisionTile（副格）`。

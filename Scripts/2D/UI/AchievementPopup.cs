@@ -111,7 +111,7 @@ namespace LAB2D.UI
 
             // 标题 "成就解锁！"
             this.titleText = AchievementTool.CreateText(
-                this.transform, "Title", AchievementConstant.DefaultUnlockTitle, 20);
+                this.transform, "Title", AchievementConstant.DefaultUnlockTitle, 24);
             RectTransform titleRt = this.titleText.GetComponent<RectTransform>();
             titleRt.anchorMin = new Vector2(0, 1);
             titleRt.anchorMax = new Vector2(1, 1);
@@ -123,7 +123,7 @@ namespace LAB2D.UI
 
             // 成就名称
             this.nameText = AchievementTool.CreateText(
-                this.transform, "Name", "", 18);
+                this.transform, "Name", "", 12);
             RectTransform nameRt = this.nameText.GetComponent<RectTransform>();
             nameRt.anchorMin = new Vector2(0, 1);
             nameRt.anchorMax = new Vector2(1, 1);
@@ -135,7 +135,7 @@ namespace LAB2D.UI
 
             // 点数
             this.pointsText = AchievementTool.CreateText(
-                this.transform, "Points", "", 16);
+                this.transform, "Points", "", 12);
             RectTransform pointsRt = this.pointsText.GetComponent<RectTransform>();
             pointsRt.anchorMin = new Vector2(0, 0);
             pointsRt.anchorMax = new Vector2(1, 0);

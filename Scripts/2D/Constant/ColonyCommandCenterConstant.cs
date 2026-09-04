@@ -125,17 +125,17 @@ namespace LAB2D.Constant
         /// <summary>
         /// HUD 标题字号。
         /// </summary>
-        public const int TitleFontSize = 18;
+        public const int TitleFontSize = 12;
 
         /// <summary>
         /// HUD 主文本字号。
         /// </summary>
-        public const int MainFontSize = 15;
+        public const int MainFontSize = 12;
 
         /// <summary>
         /// HUD 细节文本字号。
         /// </summary>
-        public const int DetailFontSize = 14;
+        public const int DetailFontSize = 12;
 
         /// <summary>
         /// HUD 文本内边距。

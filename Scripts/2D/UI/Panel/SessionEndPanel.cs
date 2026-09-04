@@ -173,12 +173,12 @@ namespace LAB2D.UI.Panel
             // 盖住 F3 ResultCard 等同层结算 UI
             this.Panel.transform.SetAsLastSibling();
 
-            this.titleText = CreateText(root, "Title", string.Empty, 42, Color.white);
+            this.titleText = CreateText(root, "Title", string.Empty, 36, Color.white);
             RectTransform titleRect = this.titleText.GetComponent<RectTransform>();
             SetCenterRect(titleRect, new Vector2(0f, 165f), new Vector2(520f, 64f));
             this.titleText.alignment = TextAnchor.MiddleCenter;
 
-            this.statsText = CreateText(root, "Stats", string.Empty, 18, PixelUITheme.TextOnDark);
+            this.statsText = CreateText(root, "Stats", string.Empty, 12, PixelUITheme.TextOnDark);
             RectTransform statsRect = this.statsText.GetComponent<RectTransform>();
             SetCenterRect(statsRect, new Vector2(0f, -10f), new Vector2(500f, 270f));
             this.statsText.alignment = TextAnchor.MiddleCenter;
@@ -309,7 +309,7 @@ namespace LAB2D.UI.Panel
             colors.selectedColor = PixelUITheme.ButtonSelected;
             button.colors = colors;
 
-            Text text = CreateText(buttonObject.transform, "Text", label, 20, PixelUITheme.TextPrimary);
+            Text text = CreateText(buttonObject.transform, "Text", label, 24, PixelUITheme.TextPrimary);
             RectTransform textRect = text.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;

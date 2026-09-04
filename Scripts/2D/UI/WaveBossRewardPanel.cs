@@ -234,6 +234,7 @@ namespace LAB2D.UI
                 CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                 scaler.referenceResolution = new Vector2(1920.0f, 1080.0f);
+                scaler.matchWidthOrHeight = 0.5f;
             }
 
             if (FindObjectOfType<EventSystem>() == null)
@@ -281,7 +282,7 @@ namespace LAB2D.UI
                     WaveBossRewardConstant.SummaryTextName,
                     new Vector2(0.0f, 78.0f),
                     new Vector2(520.0f, 58.0f),
-                    15,
+                    12,
                     TextAnchor.MiddleCenter);
                 this.summaryText.text = WaveBossRewardConstant.EmptyRewardText;
             }
@@ -396,7 +397,7 @@ namespace LAB2D.UI
 
             Text text = textObject.GetComponent<Text>();
             text.font = LoadFont();
-            text.fontSize = 18;
+            text.fontSize = 12;
             text.alignment = TextAnchor.MiddleLeft;
             text.supportRichText = true;
             text.color = PixelUITheme.TextPrimary;

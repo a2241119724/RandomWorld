@@ -302,7 +302,7 @@ namespace LAB2D.UI.Panel.PanelUI
             logRt.sizeDelta = new Vector2(460f, 200f);
             this.logText = logGo.AddComponent<Text>();
             this.logText.font = AI.Dialogue.LLM.UIFontConfig.GetFont();
-            this.logText.fontSize = 17;
+            this.logText.fontSize = 12;
             this.logText.color = new Color(0.85f, 0.85f, 0.8f, 0.9f);
             this.logText.alignment = TextAnchor.UpperLeft;
             this.logText.raycastTarget = false;
@@ -310,7 +310,7 @@ namespace LAB2D.UI.Panel.PanelUI
 
             // 回合头（顶部中央）
             this.headerText = this.CreateText(
-                this.transform, "Header", "⚔ 回合制战斗", 28, new Color(1f, 0.93f, 0.75f),
+                this.transform, "Header", "⚔ 回合制战斗", 24, new Color(1f, 0.93f, 0.75f),
                 new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(720f, 48f));
 
             // 子菜单（主菜单上方，动态重建：技能/道具/逃跑确认/点选提示）
@@ -415,11 +415,11 @@ namespace LAB2D.UI.Panel.PanelUI
             portrait.preserveAspect = true;
 
             this.CreateText(
-                root.transform, "Name", $"{unit.DisplayName} Lv.{unit.Level}", 19, Color.white,
+                root.transform, "Name", $"{unit.DisplayName} Lv.{unit.Level}", 24, Color.white,
                 Vector2.zero, Vector2.zero, new Vector2(CardWidth - 12f, 26f));
 
             this.CreateText(
-                root.transform, "Element", this.BuildElementText(unit), 15, new Color(0.75f, 0.72f, 0.55f),
+                root.transform, "Element", this.BuildElementText(unit), 12, new Color(0.75f, 0.72f, 0.55f),
                 Vector2.zero, Vector2.zero, new Vector2(CardWidth - 12f, 20f));
 
             Image hpBg = this.CreateImage(root.transform, "HpBg", CardWidth - 24f, 15f, BarBgColor);
@@ -433,7 +433,7 @@ namespace LAB2D.UI.Panel.PanelUI
             mpFill.fillMethod = Image.FillMethod.Horizontal;
 
             Text hpText = this.CreateText(
-                root.transform, "HpText", string.Empty, 15, Color.white,
+                root.transform, "HpText", string.Empty, 12, Color.white,
                 Vector2.zero, Vector2.zero, new Vector2(CardWidth - 12f, 20f));
 
             UnitCard card = new UnitCard
@@ -602,7 +602,7 @@ namespace LAB2D.UI.Panel.PanelUI
                     string prefix = effect.ElementMultiplier > 1.05f ? "克制! "
                         : effect.ElementMultiplier < 0.95f ? "抵抗 " : string.Empty;
                     string floatText = $"{prefix}{(effect.IsCritical ? "暴击 " : "")}-{Mathf.RoundToInt(effect.Value)}";
-                    int fontSize = effect.IsCritical ? 34 : 28;
+                    int fontSize = effect.IsCritical ? 36 : 24;
                     Color color = effect.IsCritical ? CriticalColor : DamageColor;
                     this.SpawnFloatText(effect.TargetId, floatText, color, fontSize);
                     this.AppendLog(
@@ -929,7 +929,7 @@ namespace LAB2D.UI.Panel.PanelUI
             }
 
             this.CreateText(
-                go.transform, "Label", label, 19,
+                go.transform, "Label", label, 24,
                 interactable ? Color.white : new Color(0.6f, 0.6f, 0.6f),
                 new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(510f, 40f));
         }
@@ -1143,7 +1143,7 @@ namespace LAB2D.UI.Panel.PanelUI
             btn.onClick.AddListener(() => onClick());
 
             this.CreateText(
-                go.transform, "Label", label, 21, Color.white,
+                go.transform, "Label", label, 24, Color.white,
                 new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(144f, 48f));
         }
 

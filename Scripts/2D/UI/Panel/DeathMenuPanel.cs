@@ -116,7 +116,7 @@ namespace LAB2D.UI.Panel
             Text titleText = titleGo.AddComponent<Text>();
             titleText.text = "YOU DIED";
             titleText.font = font;
-            titleText.fontSize = 52;
+            titleText.fontSize = 48;
             titleText.color = PixelUITheme.DeathTitle;
             titleText.alignment = TextAnchor.MiddleCenter;
             RectTransform titleRt = titleGo.GetComponent<RectTransform>();
@@ -130,7 +130,7 @@ namespace LAB2D.UI.Panel
             cdGo.transform.SetParent(textGroup.transform, false);
             this.countdownText = cdGo.AddComponent<Text>();
             this.countdownText.font = font;
-            this.countdownText.fontSize = 28;
+            this.countdownText.fontSize = 24;
             this.countdownText.color = PixelUITheme.DeathText;
             this.countdownText.alignment = TextAnchor.MiddleCenter;
             RectTransform cdRt = cdGo.GetComponent<RectTransform>();
@@ -144,7 +144,7 @@ namespace LAB2D.UI.Panel
             dcGo.transform.SetParent(textGroup.transform, false);
             this.deathCountText = dcGo.AddComponent<Text>();
             this.deathCountText.font = font;
-            this.deathCountText.fontSize = 22;
+            this.deathCountText.fontSize = 24;
             this.deathCountText.color = PixelUITheme.DeathCount;
             this.deathCountText.alignment = TextAnchor.MiddleCenter;
             RectTransform dcRt = dcGo.GetComponent<RectTransform>();

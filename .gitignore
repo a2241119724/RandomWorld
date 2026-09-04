@@ -66,4 +66,7 @@ generated_batch/
 # 图像生成临时工作目录
 _tmp_*/
 .claude/tmp/_tmp_*.meta
-tmp/
+tmp/*
+# tmp 下常驻工具脚本豁免（曾因忽略丢失反复重建）
+!tmp/ui_normalize.py
+!tmp/verify_compile.py

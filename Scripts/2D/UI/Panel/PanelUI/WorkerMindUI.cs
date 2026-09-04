@@ -245,7 +245,7 @@ namespace LAB2D.UI.Panel.PanelUI
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            Text label = CreateText(row.transform, "Name", worker.name, 13, Color.white);
+            Text label = CreateText(row.transform, "Name", worker.name, 12, Color.white);
             label.alignment = TextAnchor.MiddleLeft;
             LayoutElement labelLayout = label.gameObject.AddComponent<LayoutElement>();
             labelLayout.flexibleWidth = 1f;
@@ -440,7 +440,7 @@ namespace LAB2D.UI.Panel.PanelUI
             bg.color = new Color(0.08f, 0.09f, 0.12f, 0.96f);
 
             // 标题
-            Text title = CreateText(root, "Title", "心智 · 修仙", 20, TitleColor);
+            Text title = CreateText(root, "Title", "心智 · 修仙", 24, TitleColor);
             SetAnchors(title.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1));
             title.rectTransform.anchoredPosition = new Vector2(0f, -14f);
             title.rectTransform.sizeDelta = new Vector2(-140f, 28f);
@@ -456,7 +456,7 @@ namespace LAB2D.UI.Panel.PanelUI
             closeBg.color = new Color(0.85f, 0.30f, 0.28f, 0.9f);
             Button closeBtn = closeGo.AddComponent<Button>();
             closeBtn.targetGraphic = closeBg;
-            Text closeText = CreateText(closeGo.transform, "Text", "× 关闭", 13, Color.white);
+            Text closeText = CreateText(closeGo.transform, "Text", "× 关闭", 12, Color.white);
             SetAnchors(closeText.rectTransform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f));
             closeText.rectTransform.offsetMin = Vector2.zero;
             closeText.rectTransform.offsetMax = Vector2.zero;
@@ -475,7 +475,7 @@ namespace LAB2D.UI.Panel.PanelUI
             hintRect.offsetMax = Vector2.zero;
             this.emptyHintText = hintGo.AddComponent<Text>();
             this.emptyHintText.text = "暂无 Worker\n（招募后显示）";
-            this.emptyHintText.fontSize = 13;
+            this.emptyHintText.fontSize = 12;
             this.emptyHintText.color = RowDimColor;
             this.emptyHintText.alignment = TextAnchor.MiddleCenter;
             this.emptyHintText.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -546,7 +546,7 @@ namespace LAB2D.UI.Panel.PanelUI
 
         private void CreateSectionTitle(Transform parent, string text)
         {
-            Text t = CreateText(parent, "SectionTitle", text, 15, TitleColor);
+            Text t = CreateText(parent, "SectionTitle", text, 12, TitleColor);
             t.alignment = TextAnchor.MiddleLeft;
             LayoutElement le = t.gameObject.AddComponent<LayoutElement>();
             le.minHeight = 24f;
@@ -555,7 +555,7 @@ namespace LAB2D.UI.Panel.PanelUI
 
         private void CreateInfoRow(Transform parent, string text, bool dim = false)
         {
-            Text t = CreateText(parent, "InfoRow", text, 13, dim ? RowDimColor : RowColor);
+            Text t = CreateText(parent, "InfoRow", text, 12, dim ? RowDimColor : RowColor);
             t.alignment = TextAnchor.MiddleLeft;
             t.horizontalOverflow = HorizontalWrapMode.Wrap;
             t.verticalOverflow = VerticalWrapMode.Overflow;
@@ -582,7 +582,7 @@ namespace LAB2D.UI.Panel.PanelUI
             rowLayout.minHeight = 20f;
             rowLayout.flexibleWidth = 1f;
 
-            Text labelText = CreateText(row.transform, "Label", label, 13, RowColor);
+            Text labelText = CreateText(row.transform, "Label", label, 12, RowColor);
             labelText.alignment = TextAnchor.MiddleLeft;
             LayoutElement labelLayout = labelText.gameObject.AddComponent<LayoutElement>();
             labelLayout.minWidth = 76f;

@@ -34,12 +34,20 @@ namespace LAB2D.Tool
                 return foreground != null ? foreground : uiRoot.transform;
             }
 
-            return new GameObject(
+            GameObject fallbackCanvas = new GameObject(
                 "HUD_Canvas",
                 typeof(RectTransform),
                 typeof(Canvas),
                 typeof(CanvasScaler),
-                typeof(GraphicRaycaster)).transform;
+                typeof(GraphicRaycaster));
+
+            // 与全工程 Canvas 统一：按 1920x1080 参考分辨率等比缩放
+            CanvasScaler scaler = fallbackCanvas.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+
+            return fallbackCanvas.transform;
         }
 
         /// <summary>

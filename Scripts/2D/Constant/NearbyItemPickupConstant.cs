@@ -61,16 +61,16 @@ namespace LAB2D.Constant
         public const float Padding = 12f;
 
         /// <summary>字体大小 - 标题</summary>
-        public const int TitleFontSize = 22;
+        public const int TitleFontSize = 24;
 
         /// <summary>字体大小 - 道具名称</summary>
-        public const int ItemNameFontSize = 18;
+        public const int ItemNameFontSize = 12;
 
         /// <summary>字体大小 - 数量</summary>
-        public const int CountFontSize = 16;
+        public const int CountFontSize = 12;
 
         /// <summary>字体大小 - 拾取按钮</summary>
-        public const int ButtonFontSize = 16;
+        public const int ButtonFontSize = 12;
 
         /// <summary>拾取按钮宽度</summary>
         public const float PickUpButtonWidth = 64f;

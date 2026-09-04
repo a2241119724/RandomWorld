@@ -43,8 +43,8 @@ namespace LAB2D.UI.Effect
             // 不能在Start中
             this.param = new List<Config>
             {
-                new Config(PixelUITheme.DamageNormal, 40),
-                new Config(PixelUITheme.DamageCritical, 50),
+                new Config(PixelUITheme.DamageNormal, 36),
+                new Config(PixelUITheme.DamageCritical, 48),
             };
         }
 

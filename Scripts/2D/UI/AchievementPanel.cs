@@ -213,7 +213,7 @@ namespace LAB2D.UI
             titleBg.color = new Color(0.15f, 0.15f, 0.2f, 1f);
 
             this.titleText = AchievementTool.CreateText(
-                titleObj.transform, "Title", AchievementConstant.DefaultPanelTitle, 64);
+                titleObj.transform, "Title", AchievementConstant.DefaultPanelTitle, 60);
             RectTransform tRt = this.titleText.GetComponent<RectTransform>();
             tRt.anchorMin = Vector2.zero;
             tRt.anchorMax = Vector2.one;
@@ -258,7 +258,7 @@ namespace LAB2D.UI
 
             // 当前类别标题 (y=-268, h=48, font=40)
             this.currentCategoryText = AchievementTool.CreateText(
-                this.transform, "CategoryTitle", "战斗", 22);
+                this.transform, "CategoryTitle", "战斗", 24);
             RectTransform ctRt = this.currentCategoryText.GetComponent<RectTransform>();
             ctRt.anchorMin = new Vector2(0, 1);
             ctRt.anchorMax = new Vector2(1, 1);
@@ -266,7 +266,7 @@ namespace LAB2D.UI
             ctRt.anchoredPosition = new Vector2(0, -268);
             ctRt.sizeDelta = new Vector2(0, 48);
             this.currentCategoryText.alignment = TextAnchor.MiddleCenter;
-            this.currentCategoryText.fontSize = 40;
+            this.currentCategoryText.fontSize = 36;
 
             // 内容滚动区
             this.CreateScrollContent();
@@ -323,7 +323,7 @@ namespace LAB2D.UI
                     }
                 });
 
-                Text tabText = AchievementTool.CreateText(tabObj.transform, "Label", catName, 32);
+                Text tabText = AchievementTool.CreateText(tabObj.transform, "Label", catName, 36);
                 RectTransform tRt = tabText.GetComponent<RectTransform>();
                 tRt.anchorMin = Vector2.zero;
                 tRt.anchorMax = Vector2.one;
@@ -456,7 +456,7 @@ namespace LAB2D.UI
             vLayout.spacing = 6;
 
             // 成就名称 (font=32, h=40)
-            Text nameTxt = AchievementTool.CreateText(infoObj.transform, "Name", data.Name, 32);
+            Text nameTxt = AchievementTool.CreateText(infoObj.transform, "Name", data.Name, 36);
             nameTxt.color = data.State == AchievementState.Locked ? Color.gray : Color.white;
             nameTxt.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 40);
 
@@ -495,7 +495,7 @@ namespace LAB2D.UI
             barFillImg.raycastTarget = false;
 
             // 进度文本 (font=22)
-            Text progressTxt = AchievementTool.CreateText(progressObj.transform, "ProgressText", data.ProgressText, 22);
+            Text progressTxt = AchievementTool.CreateText(progressObj.transform, "ProgressText", data.ProgressText, 24);
             progressTxt.alignment = TextAnchor.MiddleCenter;
             progressTxt.color = Color.white;
             RectTransform ptRt = progressTxt.GetComponent<RectTransform>();
@@ -505,7 +505,7 @@ namespace LAB2D.UI
             ptRt.offsetMax = Vector2.zero;
 
             // 点数 (font=32, w=180)
-            Text pointsTxt = AchievementTool.CreateText(itemObj.transform, "Points", data.PointsText, 32);
+            Text pointsTxt = AchievementTool.CreateText(itemObj.transform, "Points", data.PointsText, 36);
             pointsTxt.color = data.State == AchievementState.Locked ? Color.gray : new Color(0.3f, 1f, 0.5f);
             pointsTxt.alignment = TextAnchor.MiddleRight;
             pointsTxt.GetComponent<RectTransform>().sizeDelta = new Vector2(180, 0);

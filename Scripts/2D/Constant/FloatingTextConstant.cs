@@ -42,10 +42,10 @@ namespace LAB2D.Constant
         public const int DamageFontSize = 36;
 
         /// <summary>暴击伤害字号（较大以突出强调）</summary>
-        public const int CriticalFontSize = 52;
+        public const int CriticalFontSize = 48;
 
         /// <summary>治疗字号</summary>
-        public const int HealFontSize = 32;
+        public const int HealFontSize = 36;
 
         /// <summary>连击字号（特大）</summary>
         public const int ComboFontSize = 60;
@@ -54,10 +54,10 @@ namespace LAB2D.Constant
         public const int ExperienceFontSize = 24;
 
         /// <summary>闪避字号</summary>
-        public const int DodgeFontSize = 30;
+        public const int DodgeFontSize = 24;
 
         /// <summary>状态效果字号（较小）</summary>
-        public const int StatusEffectFontSize = 26;
+        public const int StatusEffectFontSize = 24;
 
         // =============================================================================================================
         // 动画参数
