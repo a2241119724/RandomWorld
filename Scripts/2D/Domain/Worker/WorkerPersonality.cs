@@ -40,7 +40,8 @@ namespace LAB2D.Domain.Worker
                 sociality: NextFloat(40f, 80f));
         }
 
-        private static float NextFloat(float min, float max)
+        /// <summary>纯 C# 均匀随机（不走 UnityEngine icall——Domain 纯函数测试在裸 Mono 下可跑）。</summary>
+        internal static float NextFloat(float min, float max)
         {
             return min + (float)(Rng.NextDouble() * (max - min));
         }

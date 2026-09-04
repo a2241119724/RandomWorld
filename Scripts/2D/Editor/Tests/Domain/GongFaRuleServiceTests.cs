@@ -19,6 +19,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void CanLearn_RealmTooLow_ReturnsFalse()
         {
             GrowthData growth = new GrowthData { RealmIndex = 0 };
+            growth.Ensure();
 
             // 长春功需练气（Index 1）
             Assert.IsFalse(GongFaRuleService.CanLearn(growth, GongFaLibrary.ChangChun));
@@ -31,6 +32,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void CanLearn_AlreadyLearned_ReturnsFalse()
         {
             GrowthData growth = new GrowthData { RealmIndex = 3 };
+            growth.Ensure();
             growth.LearnedGongFaIds.Add(GongFaLibrary.HengSao.Id);
 
             Assert.IsFalse(GongFaRuleService.CanLearn(growth, GongFaLibrary.HengSao));
@@ -40,13 +42,16 @@ namespace LAB2D.Editor.Tests.Domain
         public void CanLearn_ExternalSkill_AnyRealm()
         {
             // 外功招式凡人可学（RequiredRealmIndex=0）
-            Assert.IsTrue(GongFaRuleService.CanLearn(new GrowthData(), GongFaLibrary.HengSao));
+            GrowthData mortal = new GrowthData();
+            mortal.Ensure();
+            Assert.IsTrue(GongFaRuleService.CanLearn(mortal, GongFaLibrary.HengSao));
         }
 
         [Test]
         public void CanActivate_ExternalSkill_ReturnsFalse()
         {
             GrowthData growth = new GrowthData { RealmIndex = 3 };
+            growth.Ensure();
             growth.LearnedGongFaIds.Add(GongFaLibrary.HengSao.Id);
 
             Assert.IsFalse(GongFaRuleService.CanActivate(growth, GongFaLibrary.HengSao));
@@ -56,6 +61,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void CanActivate_RequiresLearned()
         {
             GrowthData growth = new GrowthData { RealmIndex = 3 };
+            growth.Ensure();
 
             Assert.IsFalse(GongFaRuleService.CanActivate(growth, GongFaLibrary.XuanYang));
 
@@ -67,6 +73,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void GetCultivationMul_MatchesLingGenElements()
         {
             GrowthData growth = new GrowthData();
+            growth.Ensure();
             growth.LingGenElements.Add((int)Element.Fire);
 
             // 玄阳功为火系：匹配一行 +20%

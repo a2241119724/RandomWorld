@@ -146,7 +146,7 @@ namespace LAB2D.Editor.Tests.Domain
             WorkerLifeEventRuleService.Apply(wd, mind,
                 new WorkerLifeEventDef { GoldDelta = 40f }, 1);
 
-            Assert.AreEqual(40, wd.Wallet.Gold);
+            Assert.AreEqual(70, wd.Wallet.Gold); // 构造自带初始 30 金（AWorker.cs:1678）
         }
 
         [Test]
@@ -158,7 +158,7 @@ namespace LAB2D.Editor.Tests.Domain
             WorkerLifeEventRuleService.Apply(wd, mind,
                 new WorkerLifeEventDef { Valence = MemoryValence.Negative }, 1);
 
-            Assert.AreEqual(0, wd.Wallet.Gold);
+            Assert.AreEqual(30, wd.Wallet.Gold); // 零增量不动钱包，保持构造初始 30
         }
 
         [Test]

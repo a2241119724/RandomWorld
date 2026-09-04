@@ -30,8 +30,9 @@ namespace LAB2D.Editor.Tests.Domain
         public void Ensure_ExistingData_Preserved()
         {
             GrowthData growth = new GrowthData();
-            growth.LingGenElements.Add(3);
-            growth.LearnedGongFaIds.Add("gongfa_a");
+            // 先建集合模拟读档后已有数据（构造函数无字段初始化器，直接 Add 会 NullRef）
+            growth.LingGenElements = new System.Collections.Generic.List<int> { 3 };
+            growth.LearnedGongFaIds = new System.Collections.Generic.List<string> { "gongfa_a" };
             growth.Qi = 42f;
 
             GrowthData.Ensure(ref growth);

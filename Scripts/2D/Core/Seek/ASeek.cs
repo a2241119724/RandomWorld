@@ -146,7 +146,23 @@ namespace LAB2D.Core.Seek
         private const float HeadOnSlideSqr = 0.15f;           // |slide|² < 此值 → 正对墙（移动方向在法线±23°内）
         private const float WaypointTooCloseMargin = 0.15f;   // 路点比墙近此量则忽略命中（拐点紧邻墙角属正常）
         private const float WallContactEpsilon = 0.02f; // 探测距离≈0（已接触墙）→ 停下，避免贴墙摩擦拖拽
-        private static readonly LayerMask s_wallLayerMask = LayerMask.GetMask("Tile", "BuildTile");
+        private static LayerMask s_wallLayerMask;
+        private static bool s_wallLayerMaskResolved;
+
+        /// <summary>墙探测层掩码（惰性求值：LayerMask.GetMask 是 icall，放静态字段初始化会让裸 Mono 单测环境的类型初始化直接炸）。</summary>
+        private static LayerMask WallLayerMask
+        {
+            get
+            {
+                if (!s_wallLayerMaskResolved)
+                {
+                    s_wallLayerMask = LayerMask.GetMask("Tile", "BuildTile");
+                    s_wallLayerMaskResolved = true;
+                }
+
+                return s_wallLayerMask;
+            }
+        }
 
         private bool slidingAlongWall;         // 贴墙滑动中：探测用固定进入方向，防 Direction 旋转漏墙振荡
         private Vector2 slideEnterDir;         // 进入滑动时的探测方向（指向墙），滑动期间固定
@@ -580,7 +596,7 @@ namespace LAB2D.Core.Seek
                 // 固定方向保证墙一直在探测窗口内（角色到墙垂直距离滑动中不变），直到真正绕过墙
                 // （探测落空）才退出滑动。
                 Vector2 probeDir = this.slidingAlongWall ? this.slideEnterDir : velocityDir;
-                RaycastHit2D hit = Physics2D.CircleCast(characterPosition, WallProbeRadius, probeDir, probeDist, s_wallLayerMask);
+                RaycastHit2D hit = Physics2D.CircleCast(characterPosition, WallProbeRadius, probeDir, probeDist, WallLayerMask);
 
                 if (hit.collider == null)
                 {

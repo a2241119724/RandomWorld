@@ -14,6 +14,26 @@ namespace LAB2D.Editor.Tests.Tool
     [TestFixture]
     public class ArchitectureRefactoringVerificationTests
     {
+        /// <summary>固定时间桩：运行时 IGameTime 由 GlobalInit 注册，裸 Mono 测试环境须自备（否则 ServiceLocator 抛 KeyNotFound）。</summary>
+        private class FakeGameTime : LAB2D.Domain.Common.IGameTime
+        {
+            public float DeltaTime => 0.016f;
+            public float Time => 1f;
+            public float RealtimeSinceStartup => 10f;
+        }
+
+        [SetUp]
+        public void SetUp()
+        {
+            Core.ServiceLocator.Register<LAB2D.Domain.Common.IGameTime>(new FakeGameTime());
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Core.ServiceLocator.Unregister<LAB2D.Domain.Common.IGameTime>();
+        }
+
         #region GameplaySessionStats — 验证 IGameTime 迁移后构造函数安全
 
         [Test]

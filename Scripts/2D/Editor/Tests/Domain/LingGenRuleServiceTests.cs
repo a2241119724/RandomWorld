@@ -32,6 +32,7 @@ namespace LAB2D.Editor.Tests.Domain
         {
             LingGenRuleService.RandomFloatProvider = null;
             GrowthData growth = new GrowthData();
+            growth.Ensure();
 
             LingGenRuleService.RollIfNotGenerated(growth, true);
 
@@ -44,6 +45,7 @@ namespace LAB2D.Editor.Tests.Domain
         {
             UseSequence(0f, 0f, 0f, 0f, 0f);
             GrowthData growth = new GrowthData();
+            growth.Ensure();
 
             LingGenRuleService.RollIfNotGenerated(growth, false);
 
@@ -56,6 +58,7 @@ namespace LAB2D.Editor.Tests.Domain
             // 条数 roll=0.5 → 1 条；元素 roll=0 → 金（池首）
             UseSequence(0.5f, 0f);
             GrowthData growth = new GrowthData();
+            growth.Ensure();
 
             LingGenRuleService.RollIfNotGenerated(growth, true);
 
@@ -70,6 +73,7 @@ namespace LAB2D.Editor.Tests.Domain
             // 条数 roll=0.99 → 3 条；元素 roll 依次取池首 → 金木水
             UseSequence(0.99f, 0f, 0f, 0f);
             GrowthData growth = new GrowthData();
+            growth.Ensure();
 
             LingGenRuleService.RollIfNotGenerated(growth, true);
 
@@ -84,6 +88,7 @@ namespace LAB2D.Editor.Tests.Domain
         {
             UseSequence(0.5f, 0f);
             GrowthData growth = new GrowthData();
+            growth.Ensure();
             LingGenRuleService.RollIfNotGenerated(growth, true);
             int first = growth.LingGenElements[0];
 
@@ -97,6 +102,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void GetCultivationMul_CountsMatches()
         {
             GrowthData growth = new GrowthData();
+            growth.Ensure();
             growth.LingGenElements.Add((int)Element.Fire);
             growth.LingGenElements.Add((int)Element.Earth);
 
@@ -125,6 +131,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void FormatLingGenName_JoinsWithDelimiter()
         {
             GrowthData growth = new GrowthData();
+            growth.Ensure();
             growth.LingGenElements.Add((int)Element.Metal);
             growth.LingGenElements.Add((int)Element.Water);
 
@@ -138,6 +145,7 @@ namespace LAB2D.Editor.Tests.Domain
         {
             // 未 roll（LingGenGenerated=false）不揭晓——调用方跳过
             GrowthData growth = new GrowthData();
+            growth.Ensure();
             growth.LingGenElements.Add((int)Element.Fire);
             Assert.IsNull(LingGenRuleService.FormatRevealMessage(growth));
             Assert.IsNull(LingGenRuleService.FormatRevealMessage(null));
@@ -147,6 +155,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void FormatRevealMessage_SingleElement_NoRaritySuffix()
         {
             GrowthData growth = new GrowthData();
+            growth.Ensure();
             growth.LingGenGenerated = true;
             growth.LingGenElements.Add((int)Element.Fire);
 
@@ -160,6 +169,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void FormatRevealMessage_MultiElement_ContainsRarityAndBonus()
         {
             GrowthData growth = new GrowthData();
+            growth.Ensure();
             growth.LingGenGenerated = true;
             growth.LingGenElements.Add((int)Element.Metal);
             growth.LingGenElements.Add((int)Element.Water);
@@ -170,6 +180,8 @@ namespace LAB2D.Editor.Tests.Domain
             Assert.IsTrue(message.Contains("+20%/条"));
 
             GrowthData triple = new GrowthData();
+
+            triple.Ensure();
             triple.LingGenGenerated = true;
             triple.LingGenElements.Add((int)Element.Metal);
             triple.LingGenElements.Add((int)Element.Water);

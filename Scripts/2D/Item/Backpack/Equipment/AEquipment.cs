@@ -14,10 +14,18 @@ namespace LAB2D.Item.Backpack.Equipment
     {
         /// <summary>
         /// 浮点随机数提供者（minInclusive, maxInclusive）。
-        /// 默认实现封装 UnityEngine.Random.Range 偏向低值分布算法；可在测试中替换为确定性桩。
+        /// 默认实现是纯 C# 均匀随机（UnityEngine.Random 是 icall，构造期调用会让裸 Mono 单测环境必炸）；可在测试中替换为确定性桩。
         /// </summary>
         protected static Func<float, float, float> RandomFloatProvider { get; set; }
-            = (minInclusive, maxInclusive) => UnityEngine.Random.Range(minInclusive, maxInclusive);
+            = (minInclusive, maxInclusive) => NextUniformFloat(minInclusive, maxInclusive);
+
+        /// <summary>纯 C# 随机源（语义与 UnityEngine.Random.Range 同为 [min,max] 均匀分布）。</summary>
+        private static readonly System.Random Rng = new System.Random();
+
+        private static float NextUniformFloat(float min, float max)
+        {
+            return min + (float)(Rng.NextDouble() * (max - min));
+        }
         /// <summary>
         /// 装备类型
         /// </summary>

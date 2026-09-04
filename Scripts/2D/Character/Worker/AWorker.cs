@@ -1823,8 +1823,10 @@ namespace LAB2D.Character.Worker
                     this.TaskToggle[t] = true;
                 }
                 this.Personality = Domain.Worker.WorkerPersonality.Randomize();
-                this.Greed = UnityEngine.Random.Range(40f, 80f);
-                this.Laziness = UnityEngine.Random.Range(40f, 80f);
+                // 纯 C# 随机（原 UnityEngine.Random.Range 是 icall，裸 Mono 单测环境必炸；
+                // 均匀 40-80 语义等价，项目无种子复现依赖）
+                this.Greed = Domain.Worker.WorkerPersonality.NextFloat(40f, 80f);
+                this.Laziness = Domain.Worker.WorkerPersonality.NextFloat(40f, 80f);
                 this.Storage = new Dictionary<int, ResourceInfo>();
                 this.CarriedResources = new Dictionary<int, ResourceInfo>();
                 this.SkillProficiencies = new Dictionary<WorkerTaskType, float>();
