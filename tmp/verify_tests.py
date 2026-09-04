@@ -153,9 +153,12 @@ internal static class TestRunner
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         if (args.Length < 1 || !File.Exists(args[0]))
         {
-            Console.WriteLine("usage: test_runner <test-dll>");
+            Console.WriteLine("usage: test_runner <test-dll> [fixture-filter]");
             return 2;
         }
+
+        // 可选第二参数：只跑名字包含该子串的 fixture（跨测试静态污染二分排查用）
+        string filter = args.Length > 1 ? args[1] : null;
 
         AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 
@@ -182,6 +185,11 @@ internal static class TestRunner
 
         foreach (Type fixture in types)
         {
+            if (filter != null && fixture.Name.IndexOf(filter, StringComparison.Ordinal) < 0)
+            {
+                continue;
+            }
+
             RunFixture(fixture);
         }
 
@@ -212,15 +220,17 @@ internal static class TestRunner
 
         MethodInfo setup = FindSetup(fixture, "SetUpAttribute");
         MethodInfo oneTimeSetup = FindSetup(fixture, "OneTimeSetUpAttribute");
+        MethodInfo tearDown = FindSetup(fixture, "TearDownAttribute");
 
         object oneTimeInstance = null;
         foreach (MethodInfo test in tests)
         {
             total++;
             string label = $"{fixture.Name}.{test.Name}";
+            object instance = null;
             try
             {
-                object instance = test.IsStatic ? null : Activator.CreateInstance(fixture);
+                instance = test.IsStatic ? null : Activator.CreateInstance(fixture);
                 if (instance != null)
                 {
                     setup?.Invoke(instance, null);
@@ -249,6 +259,27 @@ internal static class TestRunner
                 Exception root = ex is TargetInvocationException && ex.InnerException != null ? ex.InnerException : ex;
                 Console.WriteLine($"FAIL  {label}: {root.Message}");
                 Console.WriteLine($"      {root.StackTrace?.Split('\n').FirstOrDefault(s => s.Contains("Tests")) ?? "(无测试栈帧)"}");
+            }
+            finally
+            {
+                // TearDown 必须无条件跑——测试间静态桩清理（如 RandomFloatProvider 置 null）
+                // 缺了它残留桩会让后续测试必 miss（TurnBattle 6 连败的根因）
+                try
+                {
+                    if (tearDown != null && !tearDown.IsStatic)
+                    {
+                        object teardownInstance = instance ?? Activator.CreateInstance(fixture);
+                        tearDown.Invoke(teardownInstance, null);
+                    }
+                    else if (tearDown != null)
+                    {
+                        tearDown.Invoke(null, null);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"WARN  {label}: TearDown 抛异常 {ex.Message}");
+                }
             }
         }
     }
