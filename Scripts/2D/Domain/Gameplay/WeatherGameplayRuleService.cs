@@ -33,6 +33,16 @@ namespace LAB2D.Domain.Gameplay
         private const float FatigueDecaySnow = 1.5f;
         private const float FatigueDecayDefault = 1.0f;
 
+        // 事件天气倍率常量（灵雨：灵气恢复大幅提升；血月：常规通道无差，敌人强化挂波次）
+        private const float EnergyRecoverySpiritRain = 1.5f;
+
+        // 每日天气加权随机权重（和为 100）：常规天气高权重，事件天气稀有
+        private const int WeightClear = 40;
+        private const int WeightRain = 25;
+        private const int WeightSnow = 15;
+        private const int WeightSpiritRain = 12;
+        private const int WeightBloodMoon = 8;
+
         /// <summary>
         /// 获取玩家移动速度倍率。
         /// </summary>
@@ -92,6 +102,8 @@ namespace LAB2D.Domain.Gameplay
                     return EnergyRecoveryRain;
                 case WeatherType.Snow:
                     return EnergyRecoverySnow;
+                case WeatherType.SpiritRain:
+                    return EnergyRecoverySpiritRain;
                 default:
                     return EnergyRecoveryDefault;
             }
@@ -111,6 +123,42 @@ namespace LAB2D.Domain.Gameplay
                 default:
                     return FatigueDecayDefault;
             }
+        }
+
+        /// <summary>
+        /// 每日天气加权随机：常规天气高权重，事件天气（灵雨/血月）稀有。
+        /// </summary>
+        /// <param name="rand">[0,100) 均匀随机值（调用方注入，测试可固定）。</param>
+        /// <returns>抽中的天气类型。</returns>
+        public static WeatherType RollWeather(double rand)
+        {
+            double safeRand = rand < 0.0 ? 0.0 : (rand >= 100.0 ? 99.999 : rand);
+            double cursor = 0.0;
+            cursor += WeightClear;
+            if (safeRand < cursor)
+            {
+                return WeatherType.Clear;
+            }
+
+            cursor += WeightRain;
+            if (safeRand < cursor)
+            {
+                return WeatherType.Rain;
+            }
+
+            cursor += WeightSnow;
+            if (safeRand < cursor)
+            {
+                return WeatherType.Snow;
+            }
+
+            cursor += WeightSpiritRain;
+            if (safeRand < cursor)
+            {
+                return WeatherType.SpiritRain;
+            }
+
+            return WeatherType.BloodMoon;
         }
 
         /// <summary>

@@ -388,9 +388,21 @@ namespace LAB2D.Gameplay
 
         /// <summary>
         /// 创建供纯规则服务使用的波次配置模型。
+        /// 血月（事件天气）：查询当前天气填充 IsBloodMoon，当晚数量/难度/混池门槛强化。
         /// </summary>
         private WaveConfigModel CreateWaveConfigModel()
         {
+            bool isBloodMoon = false;
+            try
+            {
+                isBloodMoon = Core.ServiceLocator.Get<Manager.WeatherManager>().CurrentWeather
+                    == Manager.WeatherManager.WeatherTypeEnum.BloodMoon;
+            }
+            catch (Exception)
+            {
+                // 天气服务不可用（初始化早期/测试环境）按非血月
+            }
+
             return new WaveConfigModel
             {
                 BaseEnemyCount = this.Config.baseEnemyCount,
@@ -399,6 +411,7 @@ namespace LAB2D.Gameplay
                 TotalWaves = this.Config.totalWaves,
                 DifficultyScalePerWave = this.Config.difficultyScalePerWave,
                 NewEnemyStartWave = this.Config.newEnemyStartWave,
+                IsBloodMoon = isBloodMoon,
             };
         }
 

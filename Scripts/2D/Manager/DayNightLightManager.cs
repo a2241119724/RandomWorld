@@ -48,7 +48,18 @@ namespace LAB2D
 
             double curGameTime = GameTimeManager.Instance.CurGameTime;
             float intensity = DayNightRuleService.GetGlobalLightIntensity(curGameTime, GlobalData.GameDayTime);
-            DayLightColor c = DayNightRuleService.GetGlobalLightColor(curGameTime, GlobalData.GameDayTime);
+            bool isBloodMoon = false;
+            try
+            {
+                isBloodMoon = Core.ServiceLocator.Get<Manager.WeatherManager>().CurrentWeather
+                    == Manager.WeatherManager.WeatherTypeEnum.BloodMoon;
+            }
+            catch (System.Exception)
+            {
+                // 天气服务不可用（初始化早期）按非血月
+            }
+
+            DayLightColor c = DayNightRuleService.GetGlobalLightColor(curGameTime, GlobalData.GameDayTime, isBloodMoon);
 
             if (Mathf.Abs(intensity - this.lastIntensity) >= WriteThreshold)
             {

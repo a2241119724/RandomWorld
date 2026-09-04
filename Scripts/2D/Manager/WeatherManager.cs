@@ -3,6 +3,9 @@ namespace LAB2D.Manager
     using LAB2D;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Data;
+    using LAB2D.Domain.Common;
+    using LAB2D.Domain.Gameplay;
+    using LAB2D.Tool;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -34,7 +37,26 @@ namespace LAB2D.Manager
             /// 雪天
             /// </summary>
             Snow,
+
+            /// <summary>
+            /// 灵雨（事件天气）：无场景视觉节点，数值效果走玩法乘数
+            /// </summary>
+            SpiritRain,
+
+            /// <summary>
+            /// 血月（事件天气）：无场景视觉节点，夜晚光色 tint + 波次强化
+            /// </summary>
+            BloodMoon,
         }
+
+        /// <summary>
+        /// 无场景视觉节点的天气（事件天气视觉后补，节点查找静默跳过不报缺失）。
+        /// </summary>
+        private static readonly HashSet<WeatherTypeEnum> NoVisualWeathers = new HashSet<WeatherTypeEnum>
+        {
+            WeatherTypeEnum.SpiritRain,
+            WeatherTypeEnum.BloodMoon,
+        };
 
         public static WeatherManager Instance { get; private set; }
 
@@ -57,6 +79,11 @@ namespace LAB2D.Manager
             Instance = this;
             foreach (WeatherTypeEnum weatherType in System.Enum.GetValues(typeof(WeatherTypeEnum)))
             {
+                if (NoVisualWeathers.Contains(weatherType))
+                {
+                    continue;
+                }
+
                 Transform weatherTransform = this.transform.Find(weatherType.ToString());
                 if (weatherTransform == null)
                 {
@@ -75,12 +102,12 @@ namespace LAB2D.Manager
         }
 
         /// <summary>
-        /// 随机天气
+        /// 随机天气（加权：常规高权重，事件天气灵雨/血月稀有——规则见 WeatherGameplayRuleService.RollWeather）
         /// </summary>
         public void RandWeather()
         {
-            WeatherTypeEnum nextWeather = (WeatherTypeEnum)UnityEngine.Random.Range(0, System.Enum.GetValues(typeof(WeatherTypeEnum)).Length);
-            this.SetWeather(nextWeather);
+            WeatherType domainWeather = WeatherGameplayRuleService.RollWeather(UnityEngine.Random.Range(0f, 100f));
+            this.SetWeather(WeatherGameplayTool.MapFromDomain(domainWeather));
         }
 
         /// <summary>

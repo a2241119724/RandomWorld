@@ -32,6 +32,47 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
+        public void GetEnemyCountForWave_BloodMoon_Multiplies1_5Ceiling()
+        {
+            WaveConfigModel config = TestConfig();
+            config.IsBloodMoon = true;
+            // 常规 wave1=5 → 血月 7.5 → 向上取整 8
+            Assert.AreEqual(8, this.service.GetEnemyCountForWave(1, config));
+            // 常规 wave3=9 → 血月 13.5 → 14
+            Assert.AreEqual(14, this.service.GetEnemyCountForWave(3, config));
+        }
+
+        [Test]
+        public void GetEnemyCountForWave_NotBloodMoon_Unchanged()
+        {
+            Assert.AreEqual(5, this.service.GetEnemyCountForWave(1, TestConfig()));
+            Assert.AreEqual(9, this.service.GetEnemyCountForWave(3, TestConfig()));
+        }
+
+        [Test]
+        public void GetDifficultyScale_BloodMoon_Plus0_5()
+        {
+            WaveConfigModel config = TestConfig();
+            config.IsBloodMoon = true;
+            // 常规 wave5=1.5 → 血月 2.0
+            Assert.AreEqual(2.0f, this.service.GetDifficultyScale(5, config), 0.0001f);
+        }
+
+        [Test]
+        public void PickEnemyKind_BloodMoon_MixedPoolOneWaveEarlier()
+        {
+            // 常规：wave2（NewEnemyStartWave-1）走旧池；血月：wave2 即混池
+            WaveConfigModel regular = TestConfig();
+            Assert.AreEqual(WaveEnemyKind.Seek, this.service.PickEnemyKind(2, 1, regular));
+
+            WaveConfigModel bloodMoon = TestConfig();
+            bloodMoon.IsBloodMoon = true;
+            // 混池 cycle[1]=Seek…wave2 spawn0=Common（混池首位同旧池，用 spawn1 区分：
+            // 旧池 [Common,Seek] 轮转 spawn2=Common；混池 spawn2=Charge）
+            Assert.AreEqual(WaveEnemyKind.Charge, this.service.PickEnemyKind(2, 2, bloodMoon));
+        }
+
+        [Test]
         public void GetDifficultyScale_ZeroWaves_Returns1()
         {
             Assert.AreEqual(1f, this.service.GetDifficultyScale(0, TestConfig()), 0.0001f);

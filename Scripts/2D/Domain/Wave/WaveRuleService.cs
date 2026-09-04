@@ -19,7 +19,8 @@ namespace LAB2D.Domain.Wave
         public float GetDifficultyScale(int totalWavesCompleted, WaveConfigModel config)
         {
             WaveConfigModel safeConfig = config ?? new WaveConfigModel();
-            return 1.0f + (MathHelper.ClampMin(totalWavesCompleted, 0) * safeConfig.DifficultyScalePerWave);
+            float scale = 1.0f + (MathHelper.ClampMin(totalWavesCompleted, 0) * safeConfig.DifficultyScalePerWave);
+            return safeConfig.IsBloodMoon ? scale + 0.5f : scale;
         }
 
         public bool AreAllWavesCleared(int totalWavesCompleted, WaveConfigModel config)
@@ -33,6 +34,12 @@ namespace LAB2D.Domain.Wave
             WaveConfigModel safeConfig = config ?? new WaveConfigModel();
             int normalizedWaveIndex = MathHelper.ClampMin(waveIndex, 1);
             int count = safeConfig.BaseEnemyCount + ((normalizedWaveIndex - 1) * safeConfig.EnemiesPerWaveIncrease);
+            if (safeConfig.IsBloodMoon)
+            {
+                // 血月加成：数量 ×1.5（向上取整，保底不变）
+                count = (int)System.Math.Ceiling(count * 1.5f);
+            }
+
             return MathHelper.ClampMin(count, 1);
         }
 
@@ -49,7 +56,8 @@ namespace LAB2D.Domain.Wave
 
         /// <summary>
         /// 按波次与波内序号确定性挑选敌人种类（轮转制，同波内种类分散，无随机依赖、可测可复现）。
-        /// 波次达到 <see cref="WaveConfigModel.NewEnemyStartWave"/> 前只用旧池，之后混入新种。
+        /// 波次达到 <see cref="WaveConfigModel.NewEnemyStartWave"/> 前只用旧池，之后混入新种；
+        /// 血月夜混池门槛提前 1 波（妖兽倾巢）。
         /// </summary>
         /// <param name="waveIndex">波次号（1 起）。</param>
         /// <param name="spawnIndex">波内生成序号（0 起）。</param>
@@ -59,7 +67,13 @@ namespace LAB2D.Domain.Wave
         {
             WaveConfigModel safeConfig = config ?? new WaveConfigModel();
             int normalizedWaveIndex = MathHelper.ClampMin(waveIndex, 1);
-            WaveEnemyKind[] cycle = normalizedWaveIndex >= MathHelper.ClampMin(safeConfig.NewEnemyStartWave, 1)
+            int startWave = MathHelper.ClampMin(safeConfig.NewEnemyStartWave, 1);
+            if (safeConfig.IsBloodMoon)
+            {
+                startWave = MathHelper.ClampMin(startWave - 1, 1);
+            }
+
+            WaveEnemyKind[] cycle = normalizedWaveIndex >= startWave
                 ? MixedKindCycle
                 : LegacyKindCycle;
             return cycle[MathHelper.ClampMin(spawnIndex, 0) % cycle.Length];

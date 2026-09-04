@@ -20,5 +20,11 @@ namespace LAB2D.Domain.Wave
         /// 默认 3，与 WaveConfig.newEnemyStartWave 一致。
         /// </summary>
         public int NewEnemyStartWave { get; set; } = 3;
+
+        /// <summary>
+        /// 当晚是否血月（事件天气）：数量 ×1.5（向上取整）、混池门槛提前 1 波、难度 +0.5。
+        /// 默认 false——非血月路径与旧行为完全一致。
+        /// </summary>
+        public bool IsBloodMoon { get; set; }
     }
 }

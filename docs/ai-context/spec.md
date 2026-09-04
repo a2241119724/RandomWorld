@@ -49,8 +49,11 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **预设意图结算（M3）:** `DialoguePanelUI` 底部 4 按钮（求教功法/安抚/道歉/赠礼）——点击先走 `DialogueManager.ApplyIntent` 本地纯规则结算（`DialogueIntentRuleService`），副作用即时入账（好感/心智/压力士气/灵气/金币/事件记忆），再把 `PlayerActionText`（含角色扮演引导）走 `SendMessage` 由 LLM 增强 NPC 回复措辞；LLM 不可用时 `FallbackReply` 气泡兜底。防刷：每意图每 Worker 每游戏日限（求教 1/安抚 1/道歉 1/赠礼 2，`Mind.DialogueIntentUses` 跨日重置）+ 赠礼 20 金币门 + 等待中置灰。求教成功门 = NPC 境界高于玩家且好感≥60（婉拒也计日限，防刷 LLM 调用）
 
 ### 天气系统
-- 晴/雨/雪三种天气
+- 晴/雨/雪三种常规天气 + 事件天气灵雨/血月（M4 包 4「每局不一样」）
 - 影响玩家/工人移动速度、任务进度、灵气浓度（`EnergyRecoveryMultiplier` 乘进浓度合成）
+- 每日天气加权随机：`WeatherGameplayRuleService.RollWeather(rand)` 纯函数（晴 40/雨 25/雪 15/灵雨 12/血月 8），`GameTimeManager.DayRolloverAction → WeatherManager.RandWeather` 调用
+- **灵雨**：仅灵气恢复 ×1.5，其余通道默认；无场景视觉节点（`WeatherManager.NoVisualWeathers` 静默跳过）
+- **血月**：常规通道无差；当晚波次强化（`WaveConfigModel.IsBloodMoon` → 数量 ×1.5 向上取整、混池门槛提前 1 波、难度 +0.5，`WaveManager.CreateWaveConfigModel` 查天气填充）；夜晚全局光随夜色深度向血红偏移（`DayNightRuleService.GetGlobalLightColor(time, len, isBloodMoon)` 重载，tint 强度连续无相位跳变）
 
 ### Worker 经济系统
 - **货币系统:** `CurrencyAmount` 值对象（Domain 层纯 C#），Worker/Player 双钱包，`CurrencyManager` 管理

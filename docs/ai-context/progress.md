@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `feat(weather)`: M4 包4 事件天气灵雨/血月——Domain `WeatherType`+2 值与 `RollWeather` 加权池（40/25/15/12/8，`RandWeather` 均匀随机改加权）；灵雨=灵气恢复 ×1.5；血月=波次三强化（`WaveConfigModel.IsBloodMoon`：数量 ×1.5 取整/混池提前 1 波/难度 +0.5）+ 夜晚光色随暗度血红 tint（`GetGlobalLightColor` 重载，无相位跳变）；事件天气无视觉节点静默跳过；测试扩展 Weather/Wave 两文件 11 用例。spec 见天气系统节
 - 2026-09 — `fix(bounty)`: BountyRestore 每 tick 刷屏（悬赏运行期 ~2400 条/人）——`WorkerBountyTask.Execute` 无条件恢复本体改 `Task == null` 才恢复，语义保留其余帧零开销。存档见 `bug-fixes.md`
 - 2026-09 — `fix(item)`: 启动 Warning「没有名字为Seed0的道具」+ id=0 幽灵种子入包——种子 SO 合并为单条 Seed 后 `Seed0.cs` 成有类无条目孤儿，反射兜底注册进背包致 `GetByName` 落空；改 abstract 使 `GetChildByParent` 过滤跳过。存档见 `bug-fixes.md`
 - 2026-09 — `feat(lingqi)`: M4 包2.5 灵气环境——空间浓度图 M=地形×灵脉×聚灵阵×天气（`LingQiRuleService` 纯函数 + `LingQiManager` 宿主：灵脉撒点入档三路径恢复、聚灵阵 2s 重扫不入档）；`ComputeQiGain` 加 envMultiplier 乘修炼速率（玩家打坐/Worker 睡眠吐纳采样位置浓度）；地形 SO 加 `qiDensityMultiplier`、科技聚灵阵重定义只解锁建造、EnvironmentManager 退化为浓度展示（点地分项选址工具）、`LingVeinGlow` 程序化灵脉光环。spec 见灵气环境系统节

@@ -25,8 +25,32 @@ namespace LAB2D.Tool
                     return WeatherType.Rain;
                 case WeatherManager.WeatherTypeEnum.Snow:
                     return WeatherType.Snow;
+                case WeatherManager.WeatherTypeEnum.SpiritRain:
+                    return WeatherType.SpiritRain;
+                case WeatherManager.WeatherTypeEnum.BloodMoon:
+                    return WeatherType.BloodMoon;
                 default:
                     return WeatherType.Clear;
+            }
+        }
+
+        /// <summary>
+        /// 将领域层天气类型映射回 Manager 层天气类型（RollWeather 抽取结果落地用）。
+        /// </summary>
+        public static WeatherManager.WeatherTypeEnum MapFromDomain(WeatherType weather)
+        {
+            switch (weather)
+            {
+                case WeatherType.Rain:
+                    return WeatherManager.WeatherTypeEnum.Rain;
+                case WeatherType.Snow:
+                    return WeatherManager.WeatherTypeEnum.Snow;
+                case WeatherType.SpiritRain:
+                    return WeatherManager.WeatherTypeEnum.SpiritRain;
+                case WeatherType.BloodMoon:
+                    return WeatherManager.WeatherTypeEnum.BloodMoon;
+                default:
+                    return WeatherManager.WeatherTypeEnum.Sunny;
             }
         }
 
@@ -95,6 +119,10 @@ namespace LAB2D.Tool
                     return "雨天";
                 case WeatherManager.WeatherTypeEnum.Snow:
                     return "雪天";
+                case WeatherManager.WeatherTypeEnum.SpiritRain:
+                    return "灵雨";
+                case WeatherManager.WeatherTypeEnum.BloodMoon:
+                    return "血月";
                 default:
                     return "晴天";
             }

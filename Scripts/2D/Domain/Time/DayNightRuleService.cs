@@ -131,6 +131,24 @@ namespace LAB2D.Domain.Time
             return GetGlobalLightColorByProgress(progress);
         }
 
+        /// <summary>
+        /// 血月变体：色温随夜色深度向血红偏移——正午亮几乎无感、深夜 tint 最强，
+        /// 无相位边界跳变（tint 强度跟随光照强度连续变化）。
+        /// </summary>
+        public static DayLightColor GetGlobalLightColor(double curGameTime, float dayLengthSeconds, bool isBloodMoon)
+        {
+            DayLightColor baseColor = GetGlobalLightColor(curGameTime, dayLengthSeconds);
+            if (!isBloodMoon)
+            {
+                return baseColor;
+            }
+
+            float raw = GetLightIntensity(curGameTime, dayLengthSeconds);
+            float darkness = 1f - (raw - LightIntensityMin) / (LightIntensityMax - LightIntensityMin);
+            float t = darkness * 0.65f;
+            return DayLightColor.Lerp(baseColor, new DayLightColor(1.00f, 0.30f, 0.28f), t);
+        }
+
         /// <summary>按一天进度取全局光色温（关键帧插值的纯实现，便于直接按 progress 单测）。</summary>
         public static DayLightColor GetGlobalLightColorByProgress(double progress)
         {

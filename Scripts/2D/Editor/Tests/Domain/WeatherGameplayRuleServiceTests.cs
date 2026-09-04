@@ -70,6 +70,60 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
+        public void GetEnergyRecoveryMultiplier_SpiritRain_Returns1_5()
+        {
+            Assert.AreEqual(1.5f, this.service.GetEnergyRecoveryMultiplier(WeatherType.SpiritRain), 0.0001f);
+        }
+
+        [Test]
+        public void GetEnergyRecoveryMultiplier_BloodMoon_FollowsDefault()
+        {
+            Assert.AreEqual(1.05f, this.service.GetEnergyRecoveryMultiplier(WeatherType.BloodMoon), 0.0001f);
+        }
+
+        [Test]
+        public void Multipliers_SpiritRain_MoveAndTaskUnchanged()
+        {
+            Assert.AreEqual(1.0f, this.service.GetPlayerMoveSpeedMultiplier(WeatherType.SpiritRain), 0.0001f);
+            Assert.AreEqual(1.0f, this.service.GetWorkerMoveSpeedMultiplier(WeatherType.SpiritRain), 0.0001f);
+            Assert.AreEqual(1.0f, this.service.GetWorkerTaskProgressMultiplier(WeatherType.SpiritRain), 0.0001f);
+            Assert.AreEqual(1.0f, this.service.GetFatigueDecayMultiplier(WeatherType.SpiritRain), 0.0001f);
+        }
+
+        [Test]
+        public void Multipliers_BloodMoon_AllDefault()
+        {
+            Assert.AreEqual(1.0f, this.service.GetPlayerMoveSpeedMultiplier(WeatherType.BloodMoon), 0.0001f);
+            Assert.AreEqual(1.0f, this.service.GetWorkerMoveSpeedMultiplier(WeatherType.BloodMoon), 0.0001f);
+            Assert.AreEqual(1.0f, this.service.GetWorkerTaskProgressMultiplier(WeatherType.BloodMoon), 0.0001f);
+            Assert.AreEqual(1.05f, this.service.GetEnergyRecoveryMultiplier(WeatherType.BloodMoon), 0.0001f);
+            Assert.AreEqual(1.0f, this.service.GetFatigueDecayMultiplier(WeatherType.BloodMoon), 0.0001f);
+        }
+
+        [Test]
+        public void RollWeather_Boundaries()
+        {
+            // 权重边界：[0,40) Clear、[40,65) Rain、[65,80) Snow、[80,92) SpiritRain、[92,100) BloodMoon
+            Assert.AreEqual(WeatherType.Clear, WeatherGameplayRuleService.RollWeather(0.0));
+            Assert.AreEqual(WeatherType.Clear, WeatherGameplayRuleService.RollWeather(39.9));
+            Assert.AreEqual(WeatherType.Rain, WeatherGameplayRuleService.RollWeather(40.0));
+            Assert.AreEqual(WeatherType.Rain, WeatherGameplayRuleService.RollWeather(64.9));
+            Assert.AreEqual(WeatherType.Snow, WeatherGameplayRuleService.RollWeather(65.0));
+            Assert.AreEqual(WeatherType.Snow, WeatherGameplayRuleService.RollWeather(79.9));
+            Assert.AreEqual(WeatherType.SpiritRain, WeatherGameplayRuleService.RollWeather(80.0));
+            Assert.AreEqual(WeatherType.SpiritRain, WeatherGameplayRuleService.RollWeather(91.9));
+            Assert.AreEqual(WeatherType.BloodMoon, WeatherGameplayRuleService.RollWeather(92.0));
+            Assert.AreEqual(WeatherType.BloodMoon, WeatherGameplayRuleService.RollWeather(99.999));
+        }
+
+        [Test]
+        public void RollWeather_OutOfRangeClamped()
+        {
+            Assert.AreEqual(WeatherType.Clear, WeatherGameplayRuleService.RollWeather(-5.0));
+            Assert.AreEqual(WeatherType.BloodMoon, WeatherGameplayRuleService.RollWeather(150.0));
+        }
+
+        [Test]
         public void ApplyMultiplier_NormalCase()
         {
             Assert.AreEqual(50f, this.service.ApplyMultiplier(100f, 0.5f, 10f), 0.0001f);
