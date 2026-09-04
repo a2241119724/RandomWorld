@@ -157,6 +157,9 @@ namespace LAB2D
             // 灵气环境（空间灵气浓度图：灵脉撒点/聚灵阵扫描/浓度查询，IInitializable + ITickable 由下表驱动；灵脉点集走 ASingletonSaveData）
             ServiceLocator.Register(LingQiManager.Instance);
 
+            // 危险区（M4 包 4 地图兴趣点：毒雾圈撒点/区内减速与灵气增幅/区内资源，IInitializable 由下表驱动；区点集走 ASingletonSaveData）
+            ServiceLocator.Register(DangerZoneManager.Instance);
+
             // 异能觉醒系统（受击 roll 觉醒/读档重建异能注册，IInitializable + ITickable 由下表驱动）
             ServiceLocator.Register(AwakenedPowerManager.Instance);
 
@@ -289,6 +292,8 @@ namespace LAB2D
                 ServiceLocator.Get<ComboBonusManager>(),
                 // 灵气环境（订阅 OnMapReady 撒灵脉，读档路径在 LoadData 恢复/迁移）
                 ServiceLocator.Get<LingQiManager>(),
+                // 危险区（订阅 OnMapReady 撒毒雾圈，读档路径在 LoadData 恢复/迁移）
+                ServiceLocator.Get<DangerZoneManager>(),
             };
         }
 

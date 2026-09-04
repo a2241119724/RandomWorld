@@ -616,7 +616,21 @@ namespace LAB2D.Character.Player
             float temperatureMultiplier = TemperatureMoveSpeedProvider(this, 1.0f);
             float waveMultiplier = WaveMoveSpeedProvider(this, 1.0f);
             float runMultiplier = Input.GetKey(LAB2D.Constant.InputKeyConstant.Run) ? this.runSpeedMultiplier : 1.0f;
-            return this.MoveSpeed * terrainMultiplier * weatherMultiplier * waveMultiplier * runMultiplier * temperatureMultiplier;
+            float dangerZoneMultiplier = this.DangerZoneMoveSpeedMultiplier();
+            return this.MoveSpeed * terrainMultiplier * weatherMultiplier * waveMultiplier * runMultiplier * temperatureMultiplier * dangerZoneMultiplier;
+        }
+
+        /// <summary>
+        /// 危险区移动乘数（M4 包 4）：区内 ×0.7；无危险区地图/服务未注册短路为 1。
+        /// </summary>
+        private float DangerZoneMoveSpeedMultiplier()
+        {
+            if (ServiceLocator.TryGet(out LAB2D.Gameplay.DangerZoneManager dangerZones) && dangerZones.HasZones)
+            {
+                return dangerZones.GetMoveSpeedMultiplierWorld(this.transform.position);
+            }
+
+            return 1.0f;
         }
 
         /// <summary>
@@ -633,8 +647,8 @@ namespace LAB2D.Character.Player
                 float terrainMultiplier = TerrainMoveSpeedProvider(this, 1.0f);
                 float weatherMultiplier = WeatherMoveSpeedProvider(this, 1.0f);
                 float temperatureMultiplier = TemperatureMoveSpeedProvider(this, 1.0f);
-                // 地形效果与天气效果、温度效果乘法叠加
-                float combinedEnvMultiplier = terrainMultiplier * weatherMultiplier * temperatureMultiplier;
+                // 地形效果与天气效果、温度效果乘法叠加；危险区减速（M4 包 4）同层叠乘
+                float combinedEnvMultiplier = terrainMultiplier * weatherMultiplier * temperatureMultiplier * this.DangerZoneMoveSpeedMultiplier();
 
                 // A004：波间奖励移动强化在天气/地形倍率之后应用，避免覆盖环境玩法的减速/增益。
                 float waveMultiplier = WaveMoveSpeedProvider(this, 1.0f);

@@ -77,6 +77,9 @@ namespace LAB2D.Gameplay
             /// <summary>每局修饰符倍率（SessionModifierManager·灵气通道）。</summary>
             public float SessionModifier;
 
+            /// <summary>危险区倍率（区内 ×1.3，险地生灵物）。</summary>
+            public float DangerZone;
+
             /// <summary>合成浓度（全部因子相乘）。</summary>
             public float Composed;
         }
@@ -334,6 +337,7 @@ namespace LAB2D.Gameplay
             factors = default;
             factors.Weather = 1f;
             factors.SessionModifier = 1f;
+            factors.DangerZone = 1f;
 
             TileMap tileMap = TileMapProvider();
             TileMap.TileMapData mapData = tileMap?.TileMapDataLAB;
@@ -369,8 +373,14 @@ namespace LAB2D.Gameplay
                 ? sessionModifiers.GetChannelMultiplier(Domain.Gameplay.ModifierChannel.LingQiRecovery)
                 : 1f;
 
+            // 危险区灵气增幅（M4 包 4）：区内 ×1.3（险地生灵物），修饰符同款接入点
+            factors.DangerZone = Core.ServiceLocator.TryGet(out DangerZoneManager dangerZones)
+                ? dangerZones.GetQiDensityMultiplier(posMap)
+                : 1f;
+
             factors.Composed = LingQiRuleService.ComposeMultiplier(
-                factors.Terrain, veinDist, factors.Arrays, factors.Weather) * factors.SessionModifier;
+                factors.Terrain, veinDist, factors.Arrays, factors.Weather)
+                * factors.SessionModifier * factors.DangerZone;
             return factors.Composed;
         }
 

@@ -85,6 +85,11 @@ namespace LAB2D.Data
                 parts.Append($"阵×{stack:F2} ");
             }
 
+            if (!Mathf.Approximately(f.DangerZone, 1f))
+            {
+                parts.Append($"险地×{f.DangerZone:F1} ");
+            }
+
             if (!Mathf.Approximately(f.Weather, 1f))
             {
                 parts.Append($"天气×{f.Weather:F2}");

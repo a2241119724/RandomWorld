@@ -127,7 +127,22 @@ namespace LAB2D.Character
                 // 服务未注册时降级为基础速度
             }
 
-            return this.MoveSpeed * terrainMultiplier;
+            // 危险区减速（M4 包 4）：区内 ×0.7——玩家/Worker 共用基类一处接入；
+            // A* 不感知减速，Worker 路过变慢但不会绕路（行为自然）
+            float dangerZoneMultiplier = 1.0f;
+            try
+            {
+                if (Core.ServiceLocator.TryGet(out LAB2D.Gameplay.DangerZoneManager dangerZones) && dangerZones.HasZones)
+                {
+                    dangerZoneMultiplier = dangerZones.GetMoveSpeedMultiplierWorld(this.transform.position);
+                }
+            }
+            catch
+            {
+                // 服务未注册时降级
+            }
+
+            return this.MoveSpeed * terrainMultiplier * dangerZoneMultiplier;
         }
 
         /// <summary>

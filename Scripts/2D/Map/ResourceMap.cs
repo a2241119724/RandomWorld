@@ -43,6 +43,22 @@ namespace LAB2D.Map
         /// </summary>
         public ResourceMapData ResourceMapDataLAB { get; private set; }
 
+        /// <summary>
+        /// 系统保留格（危险区资源等）：已由系统放置资源的格。
+        /// GenResource 逐格扫描时跳过，防止概率命中后 Dictionary.Add 重复 key 异常；
+        /// 不入档——只在撒放当帧与 GenResource 并发窗口内需要。
+        /// </summary>
+        private readonly HashSet<Vector3IntLAB> reservedPositions = new HashSet<Vector3IntLAB>();
+
+        /// <summary>
+        /// 登记系统保留格（系统放置资源前调用，防生成管线同格二次放置）。
+        /// </summary>
+        /// <param name="pos">位置</param>
+        public void ReservePosition(Vector3Int pos)
+        {
+            this.reservedPositions.Add(Vector3IntLAB.ToVector3IntLAB(pos));
+        }
+
         /// <inheritdoc/>
         public override void Awake()
         {
@@ -126,6 +142,12 @@ namespace LAB2D.Map
 
                     // 跳过水域格，避免无效检查
                     if (Core.ServiceLocator.Get<TerrainConfigDatabase>().IsWater(terrainId))
+                    {
+                        continue;
+                    }
+
+                    // 跳过系统保留格（危险区资源）：已放置，防 Dictionary.Add 重复 key 异常
+                    if (this.reservedPositions.Contains(Vector3IntLAB.ToVector3IntLAB(posMap)))
                     {
                         continue;
                     }
