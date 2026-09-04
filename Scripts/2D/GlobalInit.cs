@@ -82,6 +82,8 @@ namespace LAB2D
             ServiceLocator.Register(SkillManager.Instance);
             ServiceLocator.Register<ISkillManager>(SkillManager.Instance);
             ServiceLocator.Register(ComboBonusManager.Instance);
+            // 每局修饰符（包 4）：BuildInitializableList 用 Get 强取，漏注册会在 GlobalInit.Awake 直接 KeyNotFound
+            ServiceLocator.Register(SessionModifierManager.Instance);
             ServiceLocator.Register(DeathPenaltyManager.Instance);
             ServiceLocator.Register(EnemyLootManager.Instance);
             ServiceLocator.Register(FloatingTextManager.Instance);

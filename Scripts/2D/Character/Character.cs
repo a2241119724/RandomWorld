@@ -110,8 +110,26 @@ namespace LAB2D.Character
         private const float FlashDurationSec = 0.2f;
         private static readonly int FlashStartTimeId = Shader.PropertyToID("_FlashStartTime");
         private static readonly int DissolveStartTimeId = Shader.PropertyToID("_DissolveStartTime");
-        private static readonly MaterialPropertyBlock flashBlock = new MaterialPropertyBlock();
+        private static MaterialPropertyBlock flashBlock;
         private static Material flashMaterial;
+
+        /// <summary>
+        /// 受击闪/溶解共享 MPB（惰性）。
+        /// 静态初始化器里 new 原生对象会在 prefab 反序列化触发 cctor 时抛
+        /// "CreateImpl is not allowed from MonoBehaviour constructor"（AEnemy 等实例构造链即触发）。
+        /// </summary>
+        private static MaterialPropertyBlock FlashBlock
+        {
+            get
+            {
+                if (flashBlock == null)
+                {
+                    flashBlock = new MaterialPropertyBlock();
+                }
+
+                return flashBlock;
+            }
+        }
 
         /// <summary>
         /// 受击闪/死亡溶解共享材质（懒加载；shader 缺失时记 Warning 并返回 null，角色保持默认 lit 材质）。
@@ -148,9 +166,10 @@ namespace LAB2D.Character
                 return;
             }
 
-            flashBlock.Clear();
-            flashBlock.SetFloat(FlashStartTimeId, Time.time);
-            spriteRenderer.SetPropertyBlock(flashBlock);
+            MaterialPropertyBlock block = FlashBlock;
+            block.Clear();
+            block.SetFloat(FlashStartTimeId, Time.time);
+            spriteRenderer.SetPropertyBlock(block);
         }
 
         /// <summary>
@@ -163,9 +182,10 @@ namespace LAB2D.Character
                 return;
             }
 
-            flashBlock.Clear();
-            flashBlock.SetFloat(DissolveStartTimeId, Time.time);
-            spriteRenderer.SetPropertyBlock(flashBlock);
+            MaterialPropertyBlock block = FlashBlock;
+            block.Clear();
+            block.SetFloat(DissolveStartTimeId, Time.time);
+            spriteRenderer.SetPropertyBlock(block);
         }
 
         /// <summary>

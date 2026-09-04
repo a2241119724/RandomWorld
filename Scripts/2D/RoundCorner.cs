@@ -54,14 +54,10 @@ namespace LAB2D
             {
                 if (sharedRoundMaterial == null)
                 {
-                    Shader shader = ResourceManager.Instance != null
-                        ? ResourceManager.Instance.GetShader("RoundCorner")
-                        : null;
-                    if (shader == null)
-                    {
-                        shader = Shader.Find("Custom/RoundCorner");
-                    }
-
+                    // 直接 Shader.Find：Singleton.Instance 是懒创建语义（!= null 恒真），
+                    // 编辑模式 OnEnable 反而会强拉 ResourceManager→LoadPrefabs 加载全部 prefab；
+                    // shader 在 Resources/Shader/ 下全量打包，Shader.Find 编辑器/运行时均可用
+                    Shader shader = Shader.Find("Custom/RoundCorner");
                     if (shader == null)
                     {
                         return null;
