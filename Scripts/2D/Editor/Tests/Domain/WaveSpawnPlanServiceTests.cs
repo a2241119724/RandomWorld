@@ -119,12 +119,12 @@ namespace LAB2D.Editor.Tests.Domain
         public void CreatePlan_FillsEnemyKindIdFromRule()
         {
             var state = new WaveRuntimeState();
-            state.BeginNextWave(2); // CurrentWaveIndex=3，混池
+            state.BeginNextWave(2); // CurrentWaveIndex: 0→1（参数是波前存活数，非波号——首版注释误读）
             WaveSpawnPlan plan = this.service.CreatePlan(state, TestConfig(), 8);
             for (int i = 0; i < plan.Requests.Count; i++)
             {
                 Assert.AreEqual(
-                    (int)this.ruleService.PickEnemyKind(3, i, TestConfig()),
+                    (int)this.ruleService.PickEnemyKind(state.CurrentWaveIndex, i, TestConfig()),
                     plan.Requests[i].EnemyKindId,
                     $"spawnIndex={i} 的 EnemyKindId 应与规则轮转一致");
             }

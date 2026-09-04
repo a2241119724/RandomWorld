@@ -19,7 +19,8 @@ namespace LAB2D.Domain.Worker
             float progressMultiplier)
         {
             float nextProgress = currentProgress + (deltaTime * progressMultiplier);
-            bool completed = nextProgress > maxProgress;
+            // 恰好达到 max 即完成（>= 边界含）——首版 > 使 10/10 仍差一帧，测试从未跑过未发现
+            bool completed = nextProgress >= maxProgress;
             return new WorkerTaskProgressResult(completed ? 0.0f : nextProgress, completed);
         }
 

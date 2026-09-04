@@ -109,9 +109,12 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
-        public void CalculateCombatScore_ZeroEverything_Returns0()
+        public void CalculateCombatScore_ZeroKillAndCollection_SurvivalOnly2000()
         {
-            Assert.AreEqual(0, this.service.CalculateCombatScore(0, 0, false, 0, 0f, 0));
+            // 生存分模型 = 2000 − 死亡×500（与存活标志无关，首版测试误以为全零得 0 分）
+            Assert.AreEqual(2000, this.service.CalculateCombatScore(0, 0, false, 0, 0f, 0));
+            // 死满 4 次 → 生存分扣光 → 真正的全零
+            Assert.AreEqual(0, this.service.CalculateCombatScore(0, 0, false, 4, 0f, 0));
         }
 
         [Test]

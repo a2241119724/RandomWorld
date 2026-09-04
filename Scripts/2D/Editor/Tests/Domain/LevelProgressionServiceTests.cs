@@ -21,19 +21,20 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void AddExperience_ExactlyEnough_LevelsUp()
         {
+            // 升级后 max 按线性曲线 4 + newLevel*3（96d26170 调整，旧翻倍公式测试同步）
             LevelProgressionResult result = this.service.AddExperience(0, 100, 1, 100);
             Assert.AreEqual(0, result.CurrentExperience);
-            Assert.AreEqual(200, result.MaxExperience);
+            Assert.AreEqual(10, result.MaxExperience);
             Assert.AreEqual(2, result.Level);
             Assert.IsTrue(result.LeveledUp);
         }
 
         [Test]
-        public void AddExperience_Overflow_CarriesOverWithDoubledMax()
+        public void AddExperience_Overflow_CarriesOverWithLinearMax()
         {
             LevelProgressionResult result = this.service.AddExperience(50, 100, 1, 120);
             Assert.AreEqual(70, result.CurrentExperience);
-            Assert.AreEqual(200, result.MaxExperience);
+            Assert.AreEqual(10, result.MaxExperience);
             Assert.AreEqual(2, result.Level);
             Assert.IsTrue(result.LeveledUp);
         }
@@ -43,7 +44,7 @@ namespace LAB2D.Editor.Tests.Domain
         {
             LevelProgressionResult result = this.service.AddExperience(0, 100, 1, 250);
             Assert.AreEqual(50, result.CurrentExperience);
-            Assert.AreEqual(200, result.MaxExperience);
+            Assert.AreEqual(10, result.MaxExperience);
             Assert.AreEqual(2, result.Level);
             Assert.IsTrue(result.LeveledUp);
         }
@@ -51,9 +52,10 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void AddExperience_ZeroMaxExperience_UsesFallback()
         {
+            // max<=0 时回退 1 防除零；升级后同样走线性曲线
             LevelProgressionResult result = this.service.AddExperience(0, 0, 5, 10);
             Assert.AreEqual(0, result.CurrentExperience);
-            Assert.AreEqual(2, result.MaxExperience);
+            Assert.AreEqual(22, result.MaxExperience);
             Assert.AreEqual(6, result.Level);
             Assert.IsTrue(result.LeveledUp);
         }

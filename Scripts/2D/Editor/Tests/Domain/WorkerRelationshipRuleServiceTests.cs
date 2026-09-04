@@ -138,7 +138,8 @@ namespace LAB2D.Editor.Tests.Domain
         public void Decay_GrudgeFadesAndEntryRemovedWhenZero()
         {
             var mind = new WorkerMindData();
-            WorkerRelationshipRuleService.AddGrudge(mind, "Tom", 2f, 1); // GrudgeLevel=2
+            WorkerRelationshipRuleService.AddGrudge(mind, "Tom", 2f, 1); // Grudge=2，Affinity=-8（记仇的亲和惩罚）
+            mind.Relations[0].Affinity = 0f; // 隔离：只测 Grudge 维度（首版漏算了惩罚致条目不归零）
 
             WorkerRelationshipRuleService.Decay(mind, 2);
 

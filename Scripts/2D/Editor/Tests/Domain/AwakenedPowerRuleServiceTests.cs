@@ -26,8 +26,8 @@ namespace LAB2D.Editor.Tests.Domain
             // 半血：0.03 + 0.5×0.07 = 0.065
             Assert.AreEqual(0.065f, AwakenedPowerRuleService.GetAwakenChance(50f, 100f), 0.0001f);
 
-            // 濒死：0.03 + 0.07 = 0.10
-            Assert.AreEqual(0.10f, AwakenedPowerRuleService.GetAwakenChance(1f, 100f), 0.0001f);
+            // 濒死（hp=0 才是 0% 血——首版用 hp=1 实为 1% 血得 0.0993，差超容差）
+            Assert.AreEqual(0.10f, AwakenedPowerRuleService.GetAwakenChance(0f, 100f), 0.0001f);
         }
 
         [Test]
@@ -42,6 +42,7 @@ namespace LAB2D.Editor.Tests.Domain
             Assert.IsFalse(AwakenedPowerRuleService.CanAwaken(null));
 
             GrowthData growth = new GrowthData();
+            growth.Ensure(); // 集合字段兜底（构造不自动 Ensure，Manager 层同款约定）
             Assert.IsTrue(AwakenedPowerRuleService.CanAwaken(growth));
 
             growth.AwakenedPowerIds.Add(AwakenedPowerLibrary.FireBall.Id);
@@ -52,6 +53,7 @@ namespace LAB2D.Editor.Tests.Domain
         public void RollPowerId_NoProvider_ReturnsNull()
         {
             GrowthData growth = new GrowthData();
+            growth.Ensure(); // 集合字段兜底（构造不自动 Ensure，Manager 层同款约定）
 
             Assert.IsNull(AwakenedPowerRuleService.RollPowerId(growth));
         }
@@ -62,6 +64,7 @@ namespace LAB2D.Editor.Tests.Domain
             // 序列桩固定取 0 → 池首（念力）
             AwakenedPowerRuleService.RandomFloatProvider = (min, max) => 0f;
             GrowthData growth = new GrowthData();
+            growth.Ensure(); // 集合字段兜底（构造不自动 Ensure，Manager 层同款约定）
 
             Assert.AreEqual(AwakenedPowerLibrary.Telekinesis.Id, AwakenedPowerRuleService.RollPowerId(growth));
 

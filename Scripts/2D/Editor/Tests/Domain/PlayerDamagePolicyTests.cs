@@ -42,10 +42,11 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
-        public void IsInvincible_ExactlyAtEdge_ReturnsTrue()
+        public void IsInvincible_ExactlyAtEdge_ReturnsFalse()
         {
+            // 窗口左闭右开（与 DayNight 相位/波次编号同惯例）：恰耗尽 0.5s 已出无敌帧
             bool result = this.policy.IsInvincible(1.0f, 0.5f, 0.5f);
-            Assert.IsTrue(result, "刚好等于无敌帧时长应在无敌帧内");
+            Assert.IsFalse(result, "刚好等于无敌帧时长应已出无敌帧（边界不含）");
         }
 
         [Test]

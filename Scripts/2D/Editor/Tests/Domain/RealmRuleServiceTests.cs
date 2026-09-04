@@ -116,8 +116,9 @@ namespace LAB2D.Editor.Tests.Domain
             // (1 + 0.5 内功 + 0.5 聚灵阵) × 2/s × 10s = 40
             Assert.AreEqual(40f, RealmRuleService.ComputeQiGain(growth, 10f, 0.5f), 0.0001f);
 
-            // 地面睡眠半额：1 × 2 × 0.5 × 10 = 10
-            Assert.AreEqual(10f, RealmRuleService.ComputeQiGain(growth, 10f, 0f, 0.5f), 0.0001f);
+            // 地面睡眠半额只砍 scale，内功 speedMul 仍生效：(1+0.5) × 2 × 0.5 × 10 = 15
+            // （首版注释把 speedMul 当 1 误算 10）
+            Assert.AreEqual(15f, RealmRuleService.ComputeQiGain(growth, 10f, 0f, 0.5f), 0.0001f);
         }
 
         [Test]

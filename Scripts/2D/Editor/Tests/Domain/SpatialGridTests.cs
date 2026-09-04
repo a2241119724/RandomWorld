@@ -253,7 +253,8 @@ namespace LAB2D.Editor.Tests.Domain
             }
 
             result.Clear();
-            grid.QueryRange(new GameVector2(0f, 0f), 200f, result);
+            // 最远点 (180,180) 距原点 ~254.6——半径须 >254.6 才能覆盖全部（首版 200 恰排除 2 个对角远点）
+            grid.QueryRange(new GameVector2(0f, 0f), 360f, result);
             Assert.AreEqual(10, result.Count, "恢复多桶轮后条目齐全");
         }
 

@@ -115,9 +115,10 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
-        public void GetEnemyCountForWave_Wave0_ClampsTo1()
+        public void GetEnemyCountForWave_Wave0_NormalizesToWave1()
         {
-            Assert.AreEqual(1, this.service.GetEnemyCountForWave(0, TestConfig()));
+            // waveIndex 归一化 ClampMin(,1)：wave0 按第 1 波算 → BaseEnemyCount（旧「clamp 到 1」语义已废弃）
+            Assert.AreEqual(5, this.service.GetEnemyCountForWave(0, TestConfig()));
         }
 
         [Test]

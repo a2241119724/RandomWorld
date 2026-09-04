@@ -51,25 +51,27 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void GetPhase_BoundariesMatchConstants()
         {
-            float day = DayLength;
+            // curGameTime 参数是 double：边界值须用 double 字面量——float 乘法 600f*0.7f
+            // = 419.99999284 下溢 DayEnd(0.70) 判成 Day（首版踩坑）
+            double day = DayLength;
             // 夜：[0.80, 1.20)
-            Assert.AreEqual(GamePhase.Night, DayNightRuleService.GetPhase(day * 0.80f, day));
-            Assert.AreEqual(GamePhase.Night, DayNightRuleService.GetPhase(day * 0.19f, day));
+            Assert.AreEqual(GamePhase.Night, DayNightRuleService.GetPhase(day * 0.80, DayLength));
+            Assert.AreEqual(GamePhase.Night, DayNightRuleService.GetPhase(day * 0.19, DayLength));
             // 晨：[0.20, 0.30)
-            Assert.AreEqual(GamePhase.Dawn, DayNightRuleService.GetPhase(day * 0.20f, day));
-            Assert.AreEqual(GamePhase.Dawn, DayNightRuleService.GetPhase(day * 0.29f, day));
+            Assert.AreEqual(GamePhase.Dawn, DayNightRuleService.GetPhase(day * 0.20, DayLength));
+            Assert.AreEqual(GamePhase.Dawn, DayNightRuleService.GetPhase(day * 0.29, DayLength));
             // 昼：[0.30, 0.70)
-            Assert.AreEqual(GamePhase.Day, DayNightRuleService.GetPhase(day * 0.30f, day));
-            Assert.AreEqual(GamePhase.Day, DayNightRuleService.GetPhase(day * 0.69f, day));
+            Assert.AreEqual(GamePhase.Day, DayNightRuleService.GetPhase(day * 0.30, DayLength));
+            Assert.AreEqual(GamePhase.Day, DayNightRuleService.GetPhase(day * 0.69, DayLength));
             // 昏：[0.70, 0.80)
-            Assert.AreEqual(GamePhase.Dusk, DayNightRuleService.GetPhase(day * 0.70f, day));
-            Assert.AreEqual(GamePhase.Dusk, DayNightRuleService.GetPhase(day * 0.79f, day));
+            Assert.AreEqual(GamePhase.Dusk, DayNightRuleService.GetPhase(day * 0.70, DayLength));
+            Assert.AreEqual(GamePhase.Dusk, DayNightRuleService.GetPhase(day * 0.79, DayLength));
         }
 
         [Test]
         public void GetPhase_SamplesCoverAllPhasesInOrder()
         {
-            GamePhase[] seen = new GamePhase[4];
+            GamePhase[] seen = new GamePhase[6]; // 0~<1.0 跨 0.80 回夜尾共 5 段，留余量
             int count = 0;
             GamePhase last = (GamePhase)(-1);
             for (int i = 0; i < 240; i++)
@@ -83,12 +85,13 @@ namespace LAB2D.Editor.Tests.Domain
                 }
             }
 
-            // 一天从午夜起：夜→晨→昼→昏（各出现一次，顺序固定）
-            Assert.AreEqual(4, count);
+            // 一天从午夜起：夜→晨→昼→昏→(夜尾回环)——第 5 段是 0.80 后的夜，非重复 bug
+            Assert.AreEqual(5, count);
             Assert.AreEqual(GamePhase.Night, seen[0]);
             Assert.AreEqual(GamePhase.Dawn, seen[1]);
             Assert.AreEqual(GamePhase.Day, seen[2]);
             Assert.AreEqual(GamePhase.Dusk, seen[3]);
+            Assert.AreEqual(GamePhase.Night, seen[4]);
         }
 
         [Test]

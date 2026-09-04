@@ -60,7 +60,8 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void GetEnemyCountForWave_BaseCountLessThan1_Returns1()
         {
-            Assert.AreEqual(1, this.service.GetEnemyCountForWave(0, 5, 5, 3));
+            // waveIndex 选非 Boss 波（4 不被 5 整除）——首版误选 5 恰为 Boss 波叠加守卫 +3 → 4
+            Assert.AreEqual(1, this.service.GetEnemyCountForWave(0, 4, 5, 3));
         }
 
         [Test]
