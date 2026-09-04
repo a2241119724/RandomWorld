@@ -36,7 +36,7 @@ namespace LAB2D
                 }
 
                 this.radius = value;
-                if (this.IsActive)
+                if (this.IsActive())
                 {
                     this.SetVerticesDirty(); // Editor 工具（UIOneClickNormalizer）直接赋值后立即重建
                 }
@@ -89,7 +89,7 @@ namespace LAB2D
         protected override void OnRectTransformDimensionsChange()
         {
             base.OnRectTransformDimensionsChange();
-            if (this.IsActive)
+            if (this.IsActive())
             {
                 this.SetVerticesDirty(); // 尺寸变化 → w/h/radiusPx 重编码进 mesh
             }
@@ -106,15 +106,27 @@ namespace LAB2D
             float w = r.width;
             float h = r.height;
             float radiusPx = Mathf.Min(this.radius * h, Mathf.Min(w, h) * 0.5f);
-            Vector2 size = new(w, h);
-            Vector2 rad = new(radiusPx, 0f);
-            Color32 c32 = this.color;
+
+            // UGUI 1.0.0 的 AddVert 无 (pos,color,uv0,uv1,uv2) 5 参重载（uv 通道是 Vector4），
+            // 经 UIVertex 结构体一次填齐 position/color/uv0~uv2。
+            UIVertex vertex = UIVertex.simpleVert;
+            vertex.color = this.color;
+            vertex.uv1 = new Vector4(w, h);
+            vertex.uv2 = new Vector4(radiusPx, 0f);
 
             // Image 标准顶点序：LL, UL, UR, LR
-            vh.AddVert(new Vector3(r.xMin, r.yMin), c32, new Vector2(0, 0), size, rad);
-            vh.AddVert(new Vector3(r.xMin, r.yMax), c32, new Vector2(0, 1), size, rad);
-            vh.AddVert(new Vector3(r.xMax, r.yMax), c32, new Vector2(1, 1), size, rad);
-            vh.AddVert(new Vector3(r.xMax, r.yMin), c32, new Vector2(1, 0), size, rad);
+            vertex.position = new Vector3(r.xMin, r.yMin);
+            vertex.uv0 = new Vector4(0, 0);
+            vh.AddVert(vertex);
+            vertex.position = new Vector3(r.xMin, r.yMax);
+            vertex.uv0 = new Vector4(0, 1);
+            vh.AddVert(vertex);
+            vertex.position = new Vector3(r.xMax, r.yMax);
+            vertex.uv0 = new Vector4(1, 1);
+            vh.AddVert(vertex);
+            vertex.position = new Vector3(r.xMax, r.yMin);
+            vertex.uv0 = new Vector4(1, 0);
+            vh.AddVert(vertex);
             vh.AddTriangle(0, 1, 2);
             vh.AddTriangle(2, 3, 0);
         }
@@ -125,7 +137,7 @@ namespace LAB2D
         /// </summary>
         private void OnValidate()
         {
-            if (this.IsActive)
+            if (this.IsActive())
             {
                 this.SetVerticesDirty();
             }

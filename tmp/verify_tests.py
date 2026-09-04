@@ -28,21 +28,8 @@ NUNIT = PROJ / "Library" / "PackageCache" / "com.unity.ext.nunit@1.0.6" / "net35
 MAIN_EXCLUDE_PREFIX = ("Scripts/Reference/Photon/", "Scripts/2D/Editor/", "tmp/",
                        "Library/", "TextMesh Pro/Editor/")
 MAIN_EXCLUDE_IN = ("/Editor/", "/Tests/")
-# 已知编译不过的文件（RoundCorner.cs：dc5a5552「圆角合批」重写从未过 Unity 编译——
-# IsActive 无括号（UIBehaviour 是方法）+ AddVert 5 参重载不存在。待并行会话修复后移除，
-# 期间用下方 STUB 替代保住 TipUI 等引用方编译）
-MAIN_EXCLUDE_FILES = {"Scripts/2D/RoundCorner.cs"}
-
-# RoundCorner 编译 stub（TipUI 只用 Graphic.color 成员，空壳足够）
-ROUND_CORNER_STUB_CS = """// verify_tests.py 生成：RoundCorner.cs 编译不过时的临时替代（勿手动编辑）
-namespace LAB2D
-{
-    public class RoundCorner : UnityEngine.UI.MaskableGraphic
-    {
-        public float Radius = 0.5f;
-    }
-}
-"""
+# 逐文件排除（当前为空；曾有 RoundCorner.cs 坏提交占位，2026-09-04 已修复移除）
+MAIN_EXCLUDE_FILES = set()
 
 
 def dec(b):
@@ -81,11 +68,6 @@ def scan_sources(root_rel, exclude_prefix, exclude_in):
     for p in (ASSETS / root_rel).rglob("*.cs"):
         rel = p.relative_to(ASSETS).as_posix()
         if rel.startswith(exclude_prefix) or any(s in rel for s in exclude_in):
-            continue
-        if rel in MAIN_EXCLUDE_FILES:
-            stub = OUT / "RoundCorner_Stub.cs"
-            stub.write_text(ROUND_CORNER_STUB_CS, encoding="utf-8")
-            out.append(str(stub))  # 用 stub 顶替，保住引用方（TipUI.color）编译
             continue
         out.append("Assets/" + rel)  # rsp 以工程根为 cwd，须带 Assets/ 前缀
     return sorted(out)
