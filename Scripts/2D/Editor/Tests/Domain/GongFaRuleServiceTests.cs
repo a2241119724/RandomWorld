@@ -104,5 +104,39 @@ namespace LAB2D.Editor.Tests.Domain
             Assert.AreEqual(GongFaLibrary.PoKong.Id, result[0].Id);
             Assert.AreEqual(GongFaLibrary.HengSao.Id, result[1].Id);
         }
+
+        [Test]
+        public void Library_AllFiveElementsCovered()
+        {
+            // 功法池按五行补全（包 5）：金木水火土全有，水系由玄水诀覆盖
+            var elements = new System.Collections.Generic.HashSet<Element>();
+            foreach (GongFaDef def in GongFaLibrary.All)
+            {
+                elements.Add(def.Element);
+            }
+
+            Assert.AreEqual(5, elements.Count, $"功法池应覆盖全部五行，实际: {string.Join(",", elements)}");
+            Assert.IsTrue(elements.Contains(Element.Water));
+        }
+
+        [Test]
+        public void CanLearn_XuanShui_WaterElementNeiGong()
+        {
+            // 玄水诀：水系内功，练气可修
+            GrowthData growth = new GrowthData { RealmIndex = 1 };
+            growth.Ensure();
+
+            Assert.IsTrue(GongFaRuleService.CanLearn(growth, GongFaLibrary.XuanShui));
+
+            GrowthData mortal = new GrowthData();
+            mortal.Ensure();
+            Assert.IsFalse(GongFaRuleService.CanLearn(mortal, GongFaLibrary.XuanShui));
+
+            // 水灵根匹配修炼速度 +20%/条
+            GrowthData waterRoot = new GrowthData { RealmIndex = 1 };
+            waterRoot.Ensure();
+            waterRoot.LingGenElements.Add((int)Element.Water);
+            Assert.AreEqual(1.2f, GongFaRuleService.GetCultivationMul(waterRoot, GongFaLibrary.XuanShui), 0.0001f);
+        }
     }
 }

@@ -180,7 +180,7 @@ namespace LAB2D.Gameplay
 
             if (RealmLibrary.IsMax(data.Growth.RealmIndex))
             {
-                TipProvider("已至金丹巅峰，暂无更高境界");
+                TipProvider($"已至{RealmRuleService.GetRealm(data.Growth).Name}巅峰，暂无更高境界");
                 return false;
             }
 

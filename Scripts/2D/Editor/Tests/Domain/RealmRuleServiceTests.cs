@@ -28,6 +28,12 @@ namespace LAB2D.Editor.Tests.Domain
             Assert.AreEqual(1200f, RealmRuleService.QiToNext(growth), 0.0001f);
 
             growth.RealmIndex = 3;
+            Assert.AreEqual(3600f, RealmRuleService.QiToNext(growth), 0.0001f);
+
+            growth.RealmIndex = 4;
+            Assert.AreEqual(10800f, RealmRuleService.QiToNext(growth), 0.0001f);
+
+            growth.RealmIndex = 5;
             Assert.AreEqual(0f, RealmRuleService.QiToNext(growth), 0.0001f);
         }
 
@@ -44,9 +50,44 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void CanBreakthrough_AtMaxRealm_ReturnsFalse()
         {
-            GrowthData growth = new GrowthData { RealmIndex = 3, Qi = 99999f };
+            GrowthData growth = new GrowthData { RealmIndex = 5, Qi = 99999f };
             Assert.IsFalse(RealmRuleService.CanBreakthrough(growth));
             Assert.IsFalse(RealmRuleService.CanBreakthrough(null));
+        }
+
+        [Test]
+        public void CanBreakthrough_GoldenCoreCanAdvanceToNascentSoul()
+        {
+            // 金丹不再是终点（元婴/化神扩展后），灵气够即可继续突破
+            GrowthData growth = new GrowthData { RealmIndex = 3, Qi = 3599f };
+            Assert.IsFalse(RealmRuleService.CanBreakthrough(growth));
+
+            growth.Qi = 3600f;
+            Assert.IsTrue(RealmRuleService.CanBreakthrough(growth));
+        }
+
+        [Test]
+        public void Breakthrough_FullChainToSpiritTransform()
+        {
+            // 凡人→练气→筑基→金丹→元婴→化神：灵气扣减逐境、化神封顶 IsMax
+            GrowthData growth = new GrowthData { Qi = 100f };
+            float[] requirements = { 100f, 400f, 1200f, 3600f, 10800f };
+
+            for (int i = 0; i < requirements.Length; i++)
+            {
+                growth.Qi = requirements[i];
+                Assert.IsTrue(RealmRuleService.Breakthrough(growth), $"第 {i + 1} 次突破应成功");
+                Assert.AreEqual(i + 1, growth.RealmIndex);
+            }
+
+            Assert.AreEqual(5, growth.RealmIndex);
+            Assert.AreEqual("化神", RealmRuleService.GetRealm(growth).Name);
+            Assert.IsTrue(RealmLibrary.IsMax(growth.RealmIndex));
+            Assert.AreEqual(0f, growth.Qi, 0.0001f);
+
+            // 全链累进加成：ATN 4+8+10+15+25=62，MaxHp 50+150+400+800=1400
+            Assert.AreEqual(62f, growth.PermanentRealmBonus.Stats.ATN, 0.0001f);
+            Assert.AreEqual(1400f, growth.PermanentRealmBonus.MaxHpFlat, 0.0001f);
         }
 
         [Test]

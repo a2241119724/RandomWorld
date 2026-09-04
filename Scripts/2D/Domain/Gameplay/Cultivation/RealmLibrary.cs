@@ -5,7 +5,7 @@ namespace LAB2D.Domain.Gameplay.Cultivation
     using LAB2D.Domain.Character.Growth;
 
     /// <summary>
-    /// 境界静态数据 — 本版实现凡人/练气/筑基/金丹四境。
+    /// 境界静态数据 — 本版实现凡人/练气/筑基/金丹/元婴/化神六境。
     /// 突破加成为 GrowthBonus（Stats 进常规管线，MaxHpFlat 进生命上限），累进存入
     /// GrowthData.PermanentRealmBonus，由成长收集服务并入属性重算。
     /// </summary>
@@ -40,21 +40,43 @@ namespace LAB2D.Domain.Gameplay.Cultivation
                 maxHpFlat: 50f),
         };
 
-        /// <summary>金丹 — 当前最高境界，突破奖励：全维+10、生命上限+150。</summary>
+        /// <summary>金丹 — 突破奖励：全维+10、生命上限+150。</summary>
         public static readonly RealmDef GoldenCore = new RealmDef
         {
             Index = 3,
             Name = "金丹",
-            QiToNext = 0f,
+            QiToNext = 3600f,
             Bonus = new GrowthBonus(
                 new BattleStats(10f, 10f, 10f, 10f, 0f, 0f, 0f, 0f),
                 maxHpFlat: 150f),
         };
 
+        /// <summary>元婴 — 突破奖励：全维+15、生命上限+400。</summary>
+        public static readonly RealmDef NascentSoul = new RealmDef
+        {
+            Index = 4,
+            Name = "元婴",
+            QiToNext = 10800f,
+            Bonus = new GrowthBonus(
+                new BattleStats(15f, 15f, 15f, 15f, 0f, 0f, 0f, 0f),
+                maxHpFlat: 400f),
+        };
+
+        /// <summary>化神 — 当前最高境界，突破奖励：全维+25、生命上限+800。</summary>
+        public static readonly RealmDef SpiritTransform = new RealmDef
+        {
+            Index = 5,
+            Name = "化神",
+            QiToNext = 0f,
+            Bonus = new GrowthBonus(
+                new BattleStats(25f, 25f, 25f, 25f, 0f, 0f, 0f, 0f),
+                maxHpFlat: 800f),
+        };
+
         /// <summary>全部境界（按索引升序）。</summary>
         public static readonly IReadOnlyList<RealmDef> All = new[]
         {
-            Mortal, QiRefining, Foundation, GoldenCore,
+            Mortal, QiRefining, Foundation, GoldenCore, NascentSoul, SpiritTransform,
         };
 
         /// <summary>按索引取境界定义（越界回落凡人）。</summary>
@@ -71,7 +93,7 @@ namespace LAB2D.Domain.Gameplay.Cultivation
         /// <summary>是否已达最高境界。</summary>
         public static bool IsMax(int index)
         {
-            return index >= GoldenCore.Index;
+            return index >= SpiritTransform.Index;
         }
     }
 }

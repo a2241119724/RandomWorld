@@ -6,8 +6,8 @@ namespace LAB2D.Domain.Gameplay.GongFa
     using LAB2D.Domain.Gameplay.Cultivation;
 
     /// <summary>
-    /// 武学功法静态库 — 本版 5 条：3 内功（长春功/玄阳功/玄天诀）+ 2 外功（横扫千军/破空斩）。
-    /// 数值调整直接影响游戏平衡，请配合 Play Mode 验证。
+    /// 武学功法静态库 — 本版 6 条：4 内功（长春功木/玄阳功火/玄天诀金/玄水诀水）+ 2 外功（横扫千军土/破空斩金）。
+    /// 内功五行齐（外功土系由横扫千军覆盖），数值调整直接影响游戏平衡，请配合 Play Mode 验证。
     /// </summary>
     public static class GongFaLibrary
     {
@@ -50,6 +50,19 @@ namespace LAB2D.Domain.Gameplay.GongFa
             RequiredRealmIndex = 3,
         };
 
+        /// <summary>玄水诀 — 水系防御内功（练气可修，五行补全：此前金木火土有水缺）。</summary>
+        public static readonly GongFaDef XuanShui = new GongFaDef
+        {
+            Id = "gongfa_xuanshui",
+            Name = "玄水诀",
+            Description = "水系护身心法，凝水成罡滋养防御",
+            Element = Element.Water,
+            IsNeiGong = true,
+            Bonus = new GrowthBonus(new BattleStats(0f, 6f, 4f, 6f, 0f, 0f, 0f, 0f), mpRegenPerSec: 2.5f),
+            MpRegenPerSec = 2.5f,
+            RequiredRealmIndex = 1,
+        };
+
         /// <summary>横扫千军 — 外功范围招式（凡人可学）。</summary>
         public static readonly GongFaDef HengSao = new GongFaDef
         {
@@ -82,6 +95,7 @@ namespace LAB2D.Domain.Gameplay.GongFa
             ChangChun,
             XuanYang,
             XuanTian,
+            XuanShui,
             HengSao,
             PoKong,
         };
