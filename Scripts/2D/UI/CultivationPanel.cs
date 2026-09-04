@@ -287,12 +287,10 @@ namespace LAB2D.UI
             RealmDef realm = RealmRuleService.GetRealm(data.Growth);
             bool isMax = RealmLibrary.IsMax(data.Growth.RealmIndex);
 
-            string lingGenText = "无（尚未感知）";
-            if (data.Growth.LingGenElements.Count > 0)
-            {
-                lingGenText = string.Join("、",
-                    data.Growth.LingGenElements.ConvertAll(e => LingGenRuleService.GetElementName((Element)e)).ToArray());
-            }
+            // 灵根文本走 Domain 单一来源（与开局揭晓 Tip 共用 FormatLingGenName）
+            string lingGenText = data.Growth.LingGenElements.Count > 0
+                ? LingGenRuleService.FormatLingGenName(data.Growth)
+                : "无（尚未感知）";
 
             string qiLine = isMax
                 ? $"灵气: {data.Growth.Qi:F0}（已至巅峰）"

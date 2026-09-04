@@ -120,5 +120,61 @@ namespace LAB2D.Editor.Tests.Domain
 
             Assert.AreEqual(5, names.Count);
         }
+
+        [Test]
+        public void FormatLingGenName_JoinsWithDelimiter()
+        {
+            GrowthData growth = new GrowthData();
+            growth.LingGenElements.Add((int)Element.Metal);
+            growth.LingGenElements.Add((int)Element.Water);
+
+            Assert.AreEqual("金、水", LingGenRuleService.FormatLingGenName(growth));
+            Assert.AreEqual("无", LingGenRuleService.FormatLingGenName(new GrowthData()));
+            Assert.AreEqual("无", LingGenRuleService.FormatLingGenName(null));
+        }
+
+        [Test]
+        public void FormatRevealMessage_NotGenerated_ReturnsNull()
+        {
+            // 未 roll（LingGenGenerated=false）不揭晓——调用方跳过
+            GrowthData growth = new GrowthData();
+            growth.LingGenElements.Add((int)Element.Fire);
+            Assert.IsNull(LingGenRuleService.FormatRevealMessage(growth));
+            Assert.IsNull(LingGenRuleService.FormatRevealMessage(null));
+        }
+
+        [Test]
+        public void FormatRevealMessage_SingleElement_NoRaritySuffix()
+        {
+            GrowthData growth = new GrowthData();
+            growth.LingGenGenerated = true;
+            growth.LingGenElements.Add((int)Element.Fire);
+
+            string message = LingGenRuleService.FormatRevealMessage(growth);
+            Assert.IsTrue(message.StartsWith("天命灵根：火，"));
+            StringAssert.DoesNotContain("双灵根", message);
+            StringAssert.DoesNotContain("多元天资", message);
+        }
+
+        [Test]
+        public void FormatRevealMessage_MultiElement_ContainsRarityAndBonus()
+        {
+            GrowthData growth = new GrowthData();
+            growth.LingGenGenerated = true;
+            growth.LingGenElements.Add((int)Element.Metal);
+            growth.LingGenElements.Add((int)Element.Water);
+
+            string message = LingGenRuleService.FormatRevealMessage(growth);
+            Assert.IsTrue(message.Contains("金、水"));
+            Assert.IsTrue(message.Contains("双灵根"));
+            Assert.IsTrue(message.Contains("+20%/条"));
+
+            GrowthData triple = new GrowthData();
+            triple.LingGenGenerated = true;
+            triple.LingGenElements.Add((int)Element.Metal);
+            triple.LingGenElements.Add((int)Element.Water);
+            triple.LingGenElements.Add((int)Element.Wood);
+            Assert.IsTrue(LingGenRuleService.FormatRevealMessage(triple).Contains("多元天资"));
+        }
     }
 }

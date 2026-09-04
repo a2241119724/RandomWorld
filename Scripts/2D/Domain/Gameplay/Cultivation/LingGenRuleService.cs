@@ -97,6 +97,50 @@ namespace LAB2D.Domain.Gameplay.Cultivation
             }
         }
 
+        /// <summary>
+        /// 灵根中文名（顿号连接，如「金、水」）；未生成为 "无"。
+        /// K 面板与开局揭晓 Tip 共用，单一格式来源。
+        /// </summary>
+        public static string FormatLingGenName(GrowthData growth)
+        {
+            if (growth?.LingGenElements == null || growth.LingGenElements.Count == 0)
+            {
+                return "无";
+            }
+
+            var builder = new System.Text.StringBuilder(16);
+            foreach (int element in growth.LingGenElements)
+            {
+                if (builder.Length > 0)
+                {
+                    builder.Append('、');
+                }
+
+                builder.Append(GetElementName((Element)element));
+            }
+
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// 开局揭晓文案（「天命灵根：金、水——双灵根，匹配元素功法修炼速度 +20%/条」）。
+        /// 未生成/空灵根返回 null（调用方跳过揭晓）。
+        /// </summary>
+        public static string FormatRevealMessage(GrowthData growth)
+        {
+            if (growth == null || !growth.LingGenGenerated
+                || growth.LingGenElements == null || growth.LingGenElements.Count == 0)
+            {
+                return null;
+            }
+
+            string rarity = growth.LingGenElements.Count >= 3
+                ? "——罕见的多元天资"
+                : (growth.LingGenElements.Count == 2 ? "——双灵根" : string.Empty);
+            return $"天命灵根：{FormatLingGenName(growth)}{rarity}，"
+                + $"匹配元素功法修炼速度 +{MatchBonusPerElement * 100f:F0}%/条（K 查看修仙面板）";
+        }
+
         /// <summary>按权重滚动灵根条数。</summary>
         private static int RollCount()
         {

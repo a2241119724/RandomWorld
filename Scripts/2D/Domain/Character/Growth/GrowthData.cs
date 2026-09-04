@@ -18,6 +18,9 @@ namespace LAB2D.Domain.Character.Growth
         /// <summary>灵根是否已生成。</summary>
         public bool LingGenGenerated;
 
+        /// <summary>玩家灵根是否已向玩家揭晓（开局仪式 Tip 只发一次；旧档缺省 false，读档后补发不重复）。</summary>
+        public bool LingGenRevealed;
+
         /// <summary>当前修仙境界索引（0=凡人，见 RealmLibrary）。</summary>
         public int RealmIndex;
 

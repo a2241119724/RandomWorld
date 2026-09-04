@@ -70,6 +70,10 @@ namespace LAB2D.Gameplay
         {
             this.TickWorkers(deltaTime);
 
+            // 出生灵根揭晓（包 4）：灵根惰性生成（首次属性计算时 roll），生成后第一时间
+            // 向玩家发一次开局仪式 Tip；标记入 GrowthData 存档，读档/老档只补发一次。
+            this.TryRevealLingGen();
+
             if (!this.IsMeditating)
             {
                 return;
@@ -367,6 +371,38 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>获取玩家角色数据（无玩家时为 null）。</summary>
+        /// <summary>
+        /// 出生灵根揭晓检测（每帧廉价短路：一次玩家数据访问 + 两个 bool）。
+        /// 灵根由首次属性计算惰性 roll（LingGenGenerated=true 后），此处第一时间发开局
+        /// 仪式 Tip 并置 LingGenRevealed 入档；未生成（roll 前）/已揭晓直接跳过。
+        /// </summary>
+        private void TryRevealLingGen()
+        {
+            GameCharacter.CharacterData data = GetPlayerData();
+            if (data == null)
+            {
+                return;
+            }
+
+            GrowthData.Ensure(ref data.Growth);
+            if (!data.Growth.LingGenGenerated || data.Growth.LingGenRevealed)
+            {
+                return;
+            }
+
+            string message = LingGenRuleService.FormatRevealMessage(data.Growth);
+            if (message == null)
+            {
+                return;
+            }
+
+            data.Growth.LingGenRevealed = true;
+            TipProvider(message);
+            AWorkerTask.LogProvider(
+                "[CultivationDiag] 出生灵根已揭晓：" + LingGenRuleService.FormatLingGenName(data.Growth),
+                LogManager.LogLevelEnum.Debug);
+        }
+
         internal static GameCharacter.CharacterData GetPlayerData()
         {
             Player player = PlayerMineProvider();
