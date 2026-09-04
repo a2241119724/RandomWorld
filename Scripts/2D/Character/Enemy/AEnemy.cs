@@ -269,6 +269,9 @@ namespace LAB2D.Character.Enemy
         protected override void Death()
         {
             base.Death();
+            // 死亡溶解：MPB 写起始时刻，Custom/Sprite-Lit-Flash 内 _Time 自驱 0.45s 颗粒吞噬 + 灼烧亮边；
+            // 各子类 Dead 状态 DeadTime=0.5s 后销毁对象，与溶解时长自然衔接（IsAliveEnemy 按 Hp 判活，溶解期间不计入）
+            ApplyDissolve(this.spriteRenderer);
         }
 
         /// <summary>

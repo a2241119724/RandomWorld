@@ -36,12 +36,46 @@ namespace LAB2D.Map
         /// </summary>
         public static IsAvailableMap Instance { get; private set; }
 
+        /// <summary>
+        /// 放置预览共享材质（呼吸+微光带）。null = shader 缺失，保持场景原材质（预览退化为静态红绿块）。
+        /// </summary>
+        private static Material previewMaterial;
+
         /// <inheritdoc/>
         public override void Awake()
         {
             base.Awake();
             Instance = this;
             this.selectPoses = new List<Vector3Int>();
+            this.SetupPreviewMaterial();
+        }
+
+        /// <summary>
+        /// 预览 Tilemap 挂 Custom/PlacingPreview：逐格绿/红判定色（顶点色链路）不变，
+        /// 叠加呼吸脉动 + 上升微光带（unlit 不受光照，夜间预览也清晰）。
+        /// </summary>
+        private void SetupPreviewMaterial()
+        {
+            if (previewMaterial == null)
+            {
+                Shader shader = ResourceManager.Instance != null
+                    ? ResourceManager.Instance.GetShader("PlacingPreview")
+                    : null;
+                if (shader == null)
+                {
+                    shader = Shader.Find("Custom/PlacingPreview");
+                }
+
+                if (shader == null)
+                {
+                    AWorkerTask.LogProvider("未找到 Custom/PlacingPreview，放置预览呼吸效果不可用", LogManager.LogLevelEnum.Warning);
+                    return;
+                }
+
+                previewMaterial = new Material(shader) { hideFlags = HideFlags.DontSave };
+            }
+
+            this.GetComponent<TilemapRenderer>().sharedMaterial = previewMaterial;
         }
 
         /// <summary>

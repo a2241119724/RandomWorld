@@ -82,6 +82,49 @@ namespace LAB2D.Map
         private readonly Dictionary<Vector2Int, Tilemap> chunkTilemaps = new Dictionary<Vector2Int, Tilemap>();
 
         /// <summary>
+        /// Chunk 索引 → 水面波光 overlay Tilemap 的映射。
+        /// overlay 是 chunk GO 的子对象（随 chunk 销毁自动清理），只放水格 tile 挂
+        /// Custom/WaterShimmer 叠 additive 波光；无碰撞、不参与边界幽灵同步。
+        /// 主 chunk 的水格照常渲染（RuleTile 邻居评估完整）。
+        /// </summary>
+        private readonly Dictionary<Vector2Int, Tilemap> waterOverlayTilemaps = new Dictionary<Vector2Int, Tilemap>();
+
+        /// <summary>
+        /// 水面波光共享材质（懒加载）。null = shader 缺失，overlay 层跳过（水面无波光，功能不受影响）。
+        /// </summary>
+        private static Material waterShimmerMaterial;
+
+        /// <summary>
+        /// 水面波光共享材质（全部水 overlay TilemapRenderer 共享 → 合批）。
+        /// </summary>
+        private static Material WaterShimmerMaterial
+        {
+            get
+            {
+                if (waterShimmerMaterial == null)
+                {
+                    Shader shader = ResourceManager.Instance != null
+                        ? ResourceManager.Instance.GetShader("WaterShimmer")
+                        : null;
+                    if (shader == null)
+                    {
+                        shader = Shader.Find("Custom/WaterShimmer");
+                    }
+
+                    if (shader == null)
+                    {
+                        AWorkerTask.LogProvider("未找到 Custom/WaterShimmer，水面波光不可用", LogManager.LogLevelEnum.Warning);
+                        return null;
+                    }
+
+                    waterShimmerMaterial = new Material(shader) { hideFlags = HideFlags.DontSave };
+                }
+
+                return waterShimmerMaterial;
+            }
+        }
+
+        /// <summary>
         /// 所有 Chunk 的父节点 Transform（Grid 的子节点，与 TileMap 同级）。
         /// </summary>
         private Transform chunksRoot;
@@ -185,7 +228,7 @@ namespace LAB2D.Map
             TilemapRenderer originalRenderer = this.GetComponent<TilemapRenderer>();
             if (originalRenderer != null)
             {
-                this.chunkMaterial = originalRenderer.material;
+                this.chunkMaterial = originalRenderer.sharedMaterial;
                 this.chunkSortingLayerID = originalRenderer.sortingLayerID;
                 this.chunkSortingOrder = originalRenderer.sortingOrder;
                 // 禁用原始 Renderer：主 Tilemap 不再直接存储瓦片
@@ -261,7 +304,7 @@ namespace LAB2D.Map
             // 复制原始渲染器配置
             if (this.chunkMaterial != null)
             {
-                tmr.material = this.chunkMaterial;
+                tmr.sharedMaterial = this.chunkMaterial;
             }
 
             tmr.sortingLayerID = this.chunkSortingLayerID;
@@ -288,6 +331,44 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 获取或创建指定 Chunk 的水面波光 overlay Tilemap（挂在 chunk GO 下零偏移）。
+        /// 纯视觉层：挂 Custom/WaterShimmer（additive 波光，贴图 alpha 作水 mask），
+        /// 无 TilemapCollider2D、不参与边界幽灵同步；运行期水格不变，只需 ShowTilemap 一次性填充。
+        /// </summary>
+        private Tilemap GetOrCreateWaterOverlay(Vector2Int chunkIndex)
+        {
+            if (this.waterOverlayTilemaps.TryGetValue(chunkIndex, out Tilemap existing))
+            {
+                return existing;
+            }
+
+            Material shimmer = WaterShimmerMaterial;
+            Tilemap mainChunk = this.chunkTilemaps[chunkIndex];
+
+            GameObject overlayGO = new GameObject("WaterOverlay");
+            overlayGO.hideFlags = HideFlags.DontSaveInEditor;
+            overlayGO.layer = this.chunkLayer;
+            overlayGO.transform.SetParent(mainChunk.gameObject.transform);
+            overlayGO.transform.localPosition = Vector3.zero;
+
+            Tilemap tm = overlayGO.AddComponent<Tilemap>();
+            tm.hideFlags = HideFlags.DontSaveInEditor;
+            tm.tileAnchor = mainChunk.tileAnchor; // 与主 chunk 一致（左下角对齐）
+            TilemapRenderer tmr = overlayGO.AddComponent<TilemapRenderer>();
+            tmr.hideFlags = HideFlags.DontSaveInEditor;
+            if (shimmer != null)
+            {
+                tmr.sharedMaterial = shimmer;
+            }
+
+            tmr.sortingLayerID = this.chunkSortingLayerID;
+            tmr.sortingOrder = this.chunkSortingOrder + 1; // 波光叠在主层水格之上（additive 顺序无依赖，明确层次）
+
+            this.waterOverlayTilemaps[chunkIndex] = tm;
+            return tm;
+        }
+
+        /// <summary>
         /// 销毁所有 Chunk GameObject 并清理缓存。
         /// </summary>
         private void ClearAllChunks()
@@ -308,6 +389,8 @@ namespace LAB2D.Map
             }
 
             this.chunkTilemaps.Clear();
+            // 水 overlay 是 chunk GO 子对象，随上面 Destroy(chunk.gameObject) 连带销毁，只清字典
+            this.waterOverlayTilemaps.Clear();
             this.cachedChunkIndex = new Vector2Int(int.MinValue, int.MinValue);
             this.cachedChunkTilemap = null;
         }
@@ -528,6 +611,9 @@ namespace LAB2D.Map
             // 缓存已加载的 TileBase，避免重复调用 ResourceLoadProvider（地形类型通常在 10 种以内）
             var tileCache = new Dictionary<string, TileBase>();
 
+            // 水面波光材质解析一次（null = shader 缺失，循环内跳过 overlay 填充）
+            Material shimmerMat = WaterShimmerMaterial;
+
             int tilesProcessed = 0;
             int tilesSet = 0;
             int frameCount = 0;
@@ -554,6 +640,13 @@ namespace LAB2D.Map
                         Vector3Int localPos = GetLocalPos(i, j, cx, cy);
                         this.GetChunkForPos(i, j).SetTile(localPos, tile);
                         tilesSet++;
+
+                        // 水面波光 overlay：水格额外放一份到 overlay 层（additive 波光 mask）；
+                        // 运行期水格不变（IsOverBorder 视水为界外、挖掘只作用陆地），一次性填充即可
+                        if (shimmerMat != null && terrainId == this.cachedWaterTerrainId)
+                        {
+                            this.GetOrCreateWaterOverlay(new Vector2Int(cx, cy)).SetTile(localPos, tile);
+                        }
                     }
 
                     if (++tilesProcessed % TILES_PER_YIELD == 0)

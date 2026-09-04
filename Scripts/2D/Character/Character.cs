@@ -88,7 +88,8 @@ namespace LAB2D.Character
 
         /// <summary>
         /// 受击闪烁表现提供者 — 在角色受到伤害时触发视觉反馈（红色闪烁）。
-        /// 默认实现操作 SpriteRenderer 颜色并通过 Invoke 延迟恢复。
+        /// 默认实现走 Custom/Sprite-Lit-Flash shader：MPB 写 _FlashStartTime 一次，
+        /// 衰减由 shader 内 _Time 自驱，0.2s 后 Invoke 清除 MPB 恢复 SRP 合批。
         /// 可在测试中替换为无操作桩，或替换为自定义表现效果。
         /// </summary>
         public static System.Action<Character> DamageFlashProvider { get; set; }
@@ -99,9 +100,73 @@ namespace LAB2D.Character
                     return;
                 }
 
-                target.spriteRenderer.color = Color.red;
-                target.Invoke(nameof(ResetColor), 0.2f);
+                ApplyFlash(target.spriteRenderer);
+                target.Invoke(nameof(ClearFlashPropertyBlock), FlashDurationSec);
             };
+
+        // --- 受击闪/死亡溶解（Custom/Sprite-Lit-Flash，共享材质 + MPB 驱动） ---
+
+        private const string FlashShaderName = "Custom/Sprite-Lit-Flash";
+        private const float FlashDurationSec = 0.2f;
+        private static readonly int FlashStartTimeId = Shader.PropertyToID("_FlashStartTime");
+        private static readonly int DissolveStartTimeId = Shader.PropertyToID("_DissolveStartTime");
+        private static readonly MaterialPropertyBlock flashBlock = new MaterialPropertyBlock();
+        private static Material flashMaterial;
+
+        /// <summary>
+        /// 受击闪/死亡溶解共享材质（懒加载；shader 缺失时记 Warning 并返回 null，角色保持默认 lit 材质）。
+        /// 所有角色 SpriteRenderer 赋 sharedMaterial，零材质实例。
+        /// </summary>
+        internal static Material FlashMaterial
+        {
+            get
+            {
+                if (flashMaterial == null)
+                {
+                    Shader shader = Shader.Find(FlashShaderName);
+                    if (shader == null)
+                    {
+                        AWorkerTask.LogProvider($"未找到 {FlashShaderName}，受击闪/死亡溶解不可用", LogManager.LogLevelEnum.Warning);
+                        return null;
+                    }
+
+                    flashMaterial = new Material(shader);
+                }
+
+                return flashMaterial;
+            }
+        }
+
+        /// <summary>
+        /// 触发受击闪：MPB 写起始时刻，衰减由 shader 内 _Time 自驱。
+        /// 共享块每次 Clear 后只写本效果属性（防与溶解等其他 MPB 属性串扰）。
+        /// </summary>
+        internal static void ApplyFlash(SpriteRenderer spriteRenderer)
+        {
+            if (spriteRenderer == null)
+            {
+                return;
+            }
+
+            flashBlock.Clear();
+            flashBlock.SetFloat(FlashStartTimeId, Time.time);
+            spriteRenderer.SetPropertyBlock(flashBlock);
+        }
+
+        /// <summary>
+        /// 触发死亡溶解：MPB 写溶解起始时刻，吞噬进度由 shader 内 _Time 自驱（对象随后销毁，无需清除 MPB）。
+        /// </summary>
+        internal static void ApplyDissolve(SpriteRenderer spriteRenderer)
+        {
+            if (spriteRenderer == null)
+            {
+                return;
+            }
+
+            flashBlock.Clear();
+            flashBlock.SetFloat(DissolveStartTimeId, Time.time);
+            spriteRenderer.SetPropertyBlock(flashBlock);
+        }
 
         /// <summary>
         /// 移动速度提供者 — 获取角色当前移动速度。
@@ -370,6 +435,13 @@ namespace LAB2D.Character
                     return;
                 }
 
+                // 统一替换为受击闪/溶解版 lit 材质（sharedMaterial 赋值零实例化，玩家/Worker/Enemy 一并覆盖）
+                Material flashMat = FlashMaterial;
+                if (flashMat != null)
+                {
+                    c.spriteRenderer.sharedMaterial = flashMat;
+                }
+
                 c.originalColor = c.spriteRenderer.color;
             };
 
@@ -473,6 +545,18 @@ namespace LAB2D.Character
             if (this.spriteRenderer != null)
             {
                 this.spriteRenderer.color = this.originalColor;
+            }
+        }
+
+        /// <summary>
+        /// 清除受击闪 MPB — DamageFlashProvider 默认实现通过 Invoke 延迟调用。
+        /// MPB 不清会让 renderer 永久脱离 SRP batch，闪烁结束后必须清。
+        /// </summary>
+        protected void ClearFlashPropertyBlock()
+        {
+            if (this.spriteRenderer != null)
+            {
+                this.spriteRenderer.SetPropertyBlock(null);
             }
         }
 

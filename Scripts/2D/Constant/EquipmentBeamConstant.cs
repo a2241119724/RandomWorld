@@ -44,36 +44,7 @@ namespace LAB2D.Constant
         public const float MythicBeamAlpha = 0.70f;
 
         // ============================================================
-        // 发光层（Epic+）参数
-        // ============================================================
-
-        /// <summary>发光层相对于主光束的宽度倍率</summary>
-        public const float GlowWidthMultiplier = 1.5f;
-
-        /// <summary>发光层相对于主光束的高度倍率</summary>
-        public const float GlowHeightMultiplier = 1.2f;
-
-        /// <summary>发光层基础透明度</summary>
-        public const float GlowAlpha = 0.35f;
-
-        // ============================================================
-        // 程序化纹理参数
-        // ============================================================
-
-        /// <summary>纹理宽度（像素）</summary>
-        public const int TextureWidth = 128;
-
-        /// <summary>纹理高度（像素）</summary>
-        public const int TextureHeight = 256;
-
-        /// <summary>高斯水平衰减系数（越大边缘越锐利）</summary>
-        public const float GaussianFalloff = 8.0f;
-
-        /// <summary>Sprite 像素单位比</summary>
-        public const float PixelsPerUnit = 100f;
-
-        // ============================================================
-        // 动画参数
+        // 动画参数（Custom/BeamGradient shader 顶点脉冲驱动）
         // ============================================================
 
         /// <summary>主光束脉冲速度</summary>
@@ -85,30 +56,15 @@ namespace LAB2D.Constant
         /// <summary>主光束脉冲幅度（Epic+）</summary>
         public const float PulseAmplitudeGlow = 0.15f;
 
-        /// <summary>发光层独立脉冲速度</summary>
-        public const float GlowPulseSpeed = 3.3f;
-
-        /// <summary>发光层独立脉冲幅度</summary>
-        public const float GlowPulseAmplitude = 0.12f;
-
         // ============================================================
         // 渲染
         // ============================================================
-
-        /// <summary>光束 SortingOrder（高于地面 Tile，低于角色）</summary>
-        public const int BeamSortingOrder = 50;
 
         /// <summary>光束 GameObject 容器名</summary>
         public const string BeamContainerName = "EquipmentBeam";
 
         /// <summary>光束对象名前缀</summary>
         public const string BeamObjectPrefix = "EquipmentBeam";
-
-        /// <summary>发光层对象名后缀</summary>
-        public const string GlowSuffix = "Glow";
-
-        /// <summary>硬安全网：最大存活时间（秒）</summary>
-        public const float MaxLifetime = 300f;
 
         // ============================================================
         // 工具方法

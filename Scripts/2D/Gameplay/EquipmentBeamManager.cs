@@ -4,45 +4,51 @@ namespace LAB2D.Gameplay
     using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Common;
     using LAB2D.Enum;
-    using LAB2D.UI.Effect;
     using System.Collections.Generic;
     using UnityEngine;
 
     /// <summary>
     /// 装备光束特效管理器（Singleton）。
     /// 在掉落装备位置生成静态半透明光柱，按稀有度着色。
-    /// 使用程序化渐变 Quad Mesh，无需外部资源。
+    /// 渐变/呼吸/流光全部由 Custom/BeamGradient shader 程序化生成（无贴图、无逐实例组件），
+    /// 材质按稀有度缓存共享。
     /// </summary>
     public class EquipmentBeamManager : Singleton<EquipmentBeamManager>, IInitializable
     {
         private Dictionary<Vector3Int, BeamEntry> activeBeams = new Dictionary<Vector3Int, BeamEntry>();
         private Transform beamContainer;
 
-        /// <summary>缓存的程序化光束贴图（按稀有度），底部亮 → 顶部透明</summary>
-        private Dictionary<EquipmentRarityType, Texture2D> beamTextures = new Dictionary<EquipmentRarityType, Texture2D>();
+        /// <summary>光柱 shader（Resources/Shader/BeamGradient，程序化无贴图）</summary>
+        private const string BeamShaderName = "Custom/BeamGradient";
+
+        private Shader beamShader;
+
+        /// <summary>按稀有度缓存的共享材质（同稀有度光柱共用 → SRP Batcher 合批）</summary>
+        private readonly Dictionary<EquipmentRarityType, Material> rarityMaterials = new Dictionary<EquipmentRarityType, Material>();
 
         /// <summary>共享 Quad Mesh</summary>
         private Mesh quadMesh;
-
-        /// <summary>共享材质模板</summary>
-        private Material sharedMaterial;
 
         public bool IsInitialized { get; private set; }
 
         private class BeamEntry
         {
-            public EquipmentBeam Beam;
+            public GameObject Go;
+            public EquipmentRarityType Rarity;
         }
 
         public void Initialize()
         {
             if (this.IsInitialized) return;
             this.activeBeams = new Dictionary<Vector3Int, BeamEntry>();
-            this.beamContainer = GameObject.Find("All")?.transform.Find("EquipmentBeam");
+            this.beamContainer = GameObject.Find("All")?.transform.Find(EquipmentBeamConstant.BeamContainerName);
             this.quadMesh = this.BuildQuadMesh();
-            this.sharedMaterial = new Material(Shader.Find("Sprites/Default"));
-            this.sharedMaterial.SetInt("_ZWrite", 0);
-            this.sharedMaterial.renderQueue = 3000;
+            this.beamShader = Shader.Find(BeamShaderName);
+            if (this.beamShader == null)
+            {
+                AWorkerTask.LogProvider($"未找到 {BeamShaderName}，光柱无法显示（shader 应位于 Resources/Shader 下）", LogManager.LogLevelEnum.Warning);
+            }
+
             this.IsInitialized = true;
             AWorkerTask.LogProvider("EquipmentBeamManager 初始化完成", LogManager.LogLevelEnum.Trace);
         }
@@ -59,9 +65,7 @@ namespace LAB2D.Gameplay
             GameObject beamObj = this.CreateBeamObject(worldPos, rarity);
             if (beamObj == null) return;
 
-            EquipmentBeam beam = beamObj.AddComponent<EquipmentBeam>();
-            beam.Initialize(rarity);
-            this.activeBeams[mapPos] = new BeamEntry { Beam = beam };
+            this.activeBeams[mapPos] = new BeamEntry { Go = beamObj, Rarity = rarity };
         }
 
         public void RemoveBeamAt(Vector3Int mapPos)
@@ -85,9 +89,7 @@ namespace LAB2D.Gameplay
             if (!this.IsInitialized) return null;
             if (this.activeBeams.TryGetValue(mapPos, out BeamEntry entry))
             {
-                EquipmentRarityType rarity = entry.Beam != null
-                    ? entry.Beam.Rarity
-                    : EquipmentRarityType.Common;
+                EquipmentRarityType rarity = entry.Rarity;
                 this.SafeDestroy(entry);
                 this.activeBeams.Remove(mapPos);
                 return rarity;
@@ -110,7 +112,7 @@ namespace LAB2D.Gameplay
             if (!Core.ServiceLocator.TryGet(out ItemMap im)) return;
             List<Vector3Int> stale = new List<Vector3Int>();
             foreach (KeyValuePair<Vector3Int, BeamEntry> kv in this.activeBeams)
-                if (kv.Value.Beam == null || im.GetTile(kv.Key) == null)
+                if (kv.Value.Go == null || im.GetTile(kv.Key) == null)
                     stale.Add(kv.Key);
             foreach (Vector3Int p in stale)
             {
@@ -129,7 +131,7 @@ namespace LAB2D.Gameplay
 
         private GameObject CreateBeamObject(Vector3 worldPos, EquipmentRarityType rarity)
         {
-            if (this.quadMesh == null || this.sharedMaterial == null) return null;
+            if (this.quadMesh == null || this.beamShader == null) return null;
 
             string objName = EquipmentBeamConstant.BeamObjectPrefix + EquipmentLootTool.GetRarityName(rarity);
             GameObject beamObj = new GameObject(objName);
@@ -149,71 +151,38 @@ namespace LAB2D.Gameplay
 
             MeshRenderer mr = beamObj.AddComponent<MeshRenderer>();
 
-            // 每个光束用独立材质实例（不同颜色）
-            Color rarityColor = EquipmentLootTool.GetRarityColor(rarity);
-            float alpha = EquipmentBeamConstant.GetBeamAlpha(rarity);
-            Material mat = new Material(this.sharedMaterial);
-            mat.SetColor("_Color", new Color(rarityColor.r, rarityColor.g, rarityColor.b, alpha));
-            mat.mainTexture = this.GetBeamTexture(rarity);
-            mr.material = mat;
+            // 按稀有度共享材质（shader 程序化生成渐变/流光，同稀有度光柱合批）
+            mr.sharedMaterial = this.GetOrCreateBeamMaterial(rarity);
             mr.sortingLayerName = "Highest";
             mr.sortingOrder = 0;
 
             return beamObj;
         }
 
-        // =============================================================================================================
-        // 程序化纹理
-        // =============================================================================================================
-
         /// <summary>
-        /// 获取或生成稀有度对应的渐变贴图（256x256，底部亮→顶部透明）。
+        /// 获取或创建稀有度对应的光柱材质（懒建缓存，同稀有度光柱共享一份）。
+        /// 参数逐项对应原 CPU 贴图生成与 EquipmentBeam 呼吸动画：
+        /// _Falloff = 6/width²（原 GenerateBeamTexture 同公式）、_PulseAmp = Glow/Normal 两档。
         /// </summary>
-        private Texture2D GetBeamTexture(EquipmentRarityType rarity)
+        private Material GetOrCreateBeamMaterial(EquipmentRarityType rarity)
         {
-            if (!this.beamTextures.TryGetValue(rarity, out Texture2D tex))
+            if (this.rarityMaterials.TryGetValue(rarity, out Material cached))
             {
-                tex = this.GenerateBeamTexture(rarity);
-                this.beamTextures[rarity] = tex;
+                return cached;
             }
 
-            return tex;
-        }
-
-        /// <summary>
-        /// 生成光束渐变贴图：底部实心→顶部完全透明，水平方向窄高斯衰减形成光柱形状。
-        /// </summary>
-        private Texture2D GenerateBeamTexture(EquipmentRarityType rarity)
-        {
-            int w = EquipmentBeamConstant.TextureWidth;
-            int h = EquipmentBeamConstant.TextureHeight;
+            Material mat = new Material(this.beamShader);
+            Color rarityColor = EquipmentLootTool.GetRarityColor(rarity);
             float beamWidth = EquipmentBeamConstant.GetBeamWidth(rarity);
-            // 宽度因子：光束越宽，高斯衰减越缓（让宽光束边缘更柔和）
-            float falloff = 6f / (beamWidth * beamWidth);
+            mat.SetColor("_BeamColor", new Color(rarityColor.r, rarityColor.g, rarityColor.b, EquipmentBeamConstant.GetBeamAlpha(rarity)));
+            mat.SetFloat("_Falloff", 6f / (beamWidth * beamWidth));
+            mat.SetFloat("_PulseSpeed", EquipmentBeamConstant.PulseSpeed);
+            mat.SetFloat("_PulseAmp", EquipmentLootTool.HasGlowEffect(rarity)
+                ? EquipmentBeamConstant.PulseAmplitudeGlow
+                : EquipmentBeamConstant.PulseAmplitudeNormal);
 
-            Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
-            Color[] pixels = new Color[w * h];
-            float halfW = w * 0.5f;
-
-            for (int y = 0; y < h; y++)
-            {
-                float vFade = 1f - ((float)y / h); // 底部=1，顶部=0
-                vFade = (float)System.Math.Pow(vFade, 0.6f);    // 加速顶部淡出
-
-                for (int x = 0; x < w; x++)
-                {
-                    float dx = (x - halfW) / halfW;
-                    float hFade = (float)System.Math.Exp(-falloff * dx * dx);
-                    float alpha = hFade * vFade;
-                    pixels[y * w + x] = new Color(1f, 1f, 1f, alpha);
-                }
-            }
-
-            tex.SetPixels(pixels);
-            tex.Apply();
-            tex.filterMode = FilterMode.Bilinear;
-            tex.wrapMode = TextureWrapMode.Clamp;
-            return tex;
+            this.rarityMaterials[rarity] = mat;
+            return mat;
         }
 
         // =============================================================================================================
@@ -257,9 +226,9 @@ namespace LAB2D.Gameplay
 
         private void SafeDestroy(BeamEntry entry)
         {
-            if (entry?.Beam != null && entry.Beam.gameObject != null)
+            if (entry?.Go != null)
             {
-                Object.Destroy(entry.Beam.gameObject);
+                Object.Destroy(entry.Go);
             }
         }
     }

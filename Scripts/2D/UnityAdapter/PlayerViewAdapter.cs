@@ -110,27 +110,30 @@ namespace LAB2D.UnityAdapter
         /// <inheritdoc/>
         public void PlayHitFlash()
         {
-            this.spriteRenderer.color = Color.red;
+            // Custom/Sprite-Lit-Flash shader：MPB 写起始时刻，衰减由 shader 内 _Time 自驱
+            LAB2D.Character.Character.ApplyFlash(this.spriteRenderer);
             this.hitFlashTimer = 0.2f;
         }
 
         /// <inheritdoc/>
         public void Tick(float deltaTime)
         {
-            // 受击闪烁恢复
+            // 受击闪烁结束：清除 MPB 恢复 SRP 合批（闪烁衰减本身由 shader 自驱）
             if (this.hitFlashTimer > 0f)
             {
                 this.hitFlashTimer -= deltaTime;
                 if (this.hitFlashTimer <= 0f)
                 {
-                    this.spriteRenderer.color = this.originalColor;
+                    this.spriteRenderer.SetPropertyBlock(null);
                 }
             }
 
-            // 边缘特效
-            if (this.spriteRenderer.sprite != null)
+            // 低血量红晕（仅玩家）：喂血量百分比驱动全屏 vignette
+            if (this.playerIdentity != null && this.playerIdentity.CharacterDataLAB != null)
             {
-                this.spriteRenderer.material.SetTexture("_MainTex", this.spriteRenderer.sprite.texture);
+                float maxHp = this.playerIdentity.CharacterDataLAB.MaxHp;
+                float hpPercent = maxHp > 0f ? this.playerIdentity.CharacterDataLAB.Hp / maxHp : 1f;
+                LAB2D.UI.Effect.LowHpVignetteUI.SetHealthPercent(hpPercent);
             }
         }
 

@@ -95,7 +95,8 @@ namespace LAB2D.UI
                 return;
             }
 
-            this.colorAlpha -= 0.02f;
+            // 60fps 基准等速率淡出（原实现按帧递减，144fps 比 30fps 快 4.8 倍）
+            this.colorAlpha -= 0.02f * 60f * Time.deltaTime;
             if (this.colorAlpha <= 0)
             {
                 Destroy(this.gameObject);
