@@ -160,6 +160,9 @@ namespace LAB2D
             // 危险区（M4 包 4 地图兴趣点：毒雾圈撒点/区内减速与灵气增幅/区内资源，IInitializable 由下表驱动；区点集走 ASingletonSaveData）
             ServiceLocator.Register(DangerZoneManager.Instance);
 
+            // 上古洞府（M4 包 4 地图兴趣点：走近揭示/探索型 POI，IInitializable + ITickable 由下表驱动；洞府状态走 ASingletonSaveData）
+            ServiceLocator.Register(AncientCaveManager.Instance);
+
             // 异能觉醒系统（受击 roll 觉醒/读档重建异能注册，IInitializable + ITickable 由下表驱动）
             ServiceLocator.Register(AwakenedPowerManager.Instance);
 
@@ -267,6 +270,8 @@ namespace LAB2D
                 ServiceLocator.Get<ArrowTowerManager>(),
                 // 灵气环境（聚灵阵 2s 节流重扫，浓度查询被动响应无 Tick 负担）
                 ServiceLocator.Get<LingQiManager>(),
+                // 上古洞府（0.5s 节流揭示扫描；全揭示后零开销短路）
+                ServiceLocator.Get<AncientCaveManager>(),
             };
         }
 
@@ -294,6 +299,8 @@ namespace LAB2D
                 ServiceLocator.Get<LingQiManager>(),
                 // 危险区（订阅 OnMapReady 撒毒雾圈，读档路径在 LoadData 恢复/迁移）
                 ServiceLocator.Get<DangerZoneManager>(),
+                // 上古洞府（订阅 OnMapReady 撒洞府，读档路径在 LoadData 恢复/迁移）
+                ServiceLocator.Get<AncientCaveManager>(),
             };
         }
 
