@@ -558,6 +558,13 @@ namespace LAB2D.Character.Worker.Task
         protected virtual bool ConsumesStress => true;
 
         /// <summary>
+        /// 是否忽略工作速度乘数链（天气/修饰符/状态/熟练度），按墙钟推进进度。
+        /// 驻守待命类任务重写为 true：DefendTask 驻守到黎明，天亮时间与个人效率无关，
+        /// 勤奋者不应提前收工（M2A 审查中 7）。
+        /// </summary>
+        protected virtual bool IgnoresProgressMultiplier => false;
+
+        /// <summary>
         /// 此任务的压力累积速率（/秒）。按任务类型分档：重活(采集/拆除)高、中活(建造/悬赏)中、轻活(种植/搬运/拾取/存取)低。
         /// </summary>
         protected virtual float StressCostPerSecond => this.TaskType switch
@@ -641,7 +648,9 @@ namespace LAB2D.Character.Worker.Task
                     workerData.CurStress + (deltaTime * this.StressCostPerSecond));
             }
 
-            float progressMultiplier = ProgressMultiplierProvider(this, worker);
+            float progressMultiplier = this.IgnoresProgressMultiplier
+                ? 1f
+                : ProgressMultiplierProvider(this, worker);
             WorkerTaskProgressResult progressResult = this.progressService.AdvanceProgress(
                 this.curProgress,
                 this.maxProgress,

@@ -13,7 +13,7 @@ namespace LAB2D.Character.Worker.Task.Individual
     /// DefenceDraftRuleService 决策后派发，本任务只负责"到位 + 待命整夜"。
     /// 防守接敌（M2B）：待命期间索敌视野内有敌人且持有武器时主动进攻击状态，
     /// 复用既有被动反击通路（ReduceHp → Attack）；被打反击照旧，任务保持。
-    /// 任务时长 = 距黎明秒数，到点自然 Finish 收工。
+    /// 任务时长 = 距黎明秒数，到点自然 Finish 收工（墙钟推进，接敌帧暂停补时）。
     /// </summary>
     [Serializable]
     public class WorkerDefendTask : AWorkerTask
@@ -99,6 +99,9 @@ namespace LAB2D.Character.Worker.Task.Individual
 
         /// <summary>站岗不累积压力（战斗压力由受击/反击路径自然产生）。</summary>
         protected override bool ConsumesStress => false;
+
+        /// <summary>驻守按墙钟推进（M2A 审查中 7）：天亮时间与个人效率无关，不吃乘数链。</summary>
+        protected override bool IgnoresProgressMultiplier => true;
 
         /// <inheritdoc/>
         public override TaskTraits Traits => TaskTraits.WorkerSpecific;
