@@ -2,6 +2,13 @@
 
 > 每次通过日志分析并解决 bug 后，把思路追加到此文件。开始新任务前**先通读本文件**，命中历史记录时直接引用验证，避免重复排查。
 
+## 2026-09-04 BountyRestore 每 tick 刷屏（悬赏运行期 ~2400 条/人）
+- **现象**：2026-09-03 局 game.log 孔峰瑜/范学各 `SetTask type=Bounty source=BountyRestore` 约 2400 次（悬赏运行期 2 次/秒，16ms 内 5 连发），00:13-00:27 风暴后随悬赏结束自愈；Debug 级只进 game.log 不刷 Console。
+- **根因**：`WorkerBountyTask.Execute` 注释意图「innerTask.Finish 清除 Task 后恢复悬赏本体」，实现却是 `if (workerData != null)` 每 tick 无条件 `SetTask(BountyRestore)`——innerTask 未完成时 Task 本来就是 this，恢复是冗余调用。功能因 SetTask 对 BountyRestore 的「不重启不打断」特判（AWorker.cs）而侥幸正确，纯日志刷屏 + 每 tick 无效赋值。
+- **修复**：前置条件 `workerData.Task == null` 才恢复——语义完全保留（innerTask Finish 清空后下一次 Execute 恢复本体），其余帧零开销。
+- **验证**：Unity Roslyn 按 Bee rsp 全量编译通过；行为验证待新局悬赏运行（预期 BountyRestore 日志从 2/s 降至每 innerTask 完成时 1 次）。
+- **教训**：**「每 tick 轮询里恢复状态」必须判断状态确实丢失才恢复**——幂等赋值看似无害，但每次都走日志/分支链路，长任务放大成千条刷屏；恢复语义写 `if (丢失) 恢复`，不写 `无条件恢复`。
+
 ## 2026-09-04 启动期 Warning「没有名字为Seed0的道具」+ id=0 幽灵种子入包
 - **现象**：每次启动 `Enter: CreateOrJoinPanel` 后必现 1 条 Warning「没有名字为Seed0的道具!!!」（game.log 2026-09-03 局实锤，error.log 空）。
 - **根因**：种子 SO 合并为单条 `Name=Seed`（SeedItemData.asset）后，`Seed0.cs` 成「有类无 SO 条目」孤儿——`ItemInstanceFactory.InitItemInstances` 第三步兜底（有类即可入包）把它反射注册进 `backpackItemTypes`，启动背包填充 `BackpackController.Awake → GenBackpackItems()` 对它调 `GetByName("Seed0")` 查不到 → Warning 且 `ItemData.Empty.Id=0`，**背包里多一件 id=0 幽灵种子**。与 2026-08-24「asset not found 刷屏」同型（SO 条目与反射类不对齐，兜底路径放大）。

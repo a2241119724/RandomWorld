@@ -149,7 +149,9 @@ namespace LAB2D.Character.Worker.Task
 
             // innerTask.Finish 清除了 workerData.Task，恢复为悬赏任务
             //（BountyRestore：恢复已运行的本体，SetTask 不重启、绝不打断）
-            if (workerData != null)
+            // 仅在 Task 确实被清空时恢复——无条件每 tick SetTask 曾致悬赏运行期
+            // 2 次/秒冗余调用刷屏 game.log（2026-09-03 局孔峰瑜/范学各 ~2400 条）
+            if (workerData != null && workerData.Task == null)
             {
                 worker.SetTask(this, WorkerTaskSource.BountyRestore);
             }

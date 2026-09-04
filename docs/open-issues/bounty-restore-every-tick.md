@@ -1,6 +1,6 @@
 # 候选修复：WorkerBountyTask.Execute 每 tick 无条件 SetTask(BountyRestore) 刷屏
 
-> 状态：已定性待修（2026-09-04 第 6 轮日志分析；等对局结束动 .cs，5 分钟一行修复）。
+> 状态：**已修复**（2026-09-04，思路存档见 bug-fixes.md 当日条目，本文保留作排查过程记录）。
 
 ## 现象（2026-09-03 局 game.log 实锤）
 
