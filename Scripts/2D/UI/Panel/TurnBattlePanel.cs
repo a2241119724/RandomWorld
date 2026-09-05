@@ -11,7 +11,7 @@ namespace LAB2D.UI.Panel
     /// <summary>
     /// 回合制战斗面板 — B 键加入大世界交战后经 TurnBattleManager.BattleStarted 事件打开。
     /// 非覆盖面板推栈自动冻结大世界（Foreground.OnPause timeScale=0），Close 后自动恢复。
-    /// UI 全部由 TurnBattleUI 代码构建（项目约定 Game.unity 不手改 YAML）；
+    /// 面板节点已在场景搭建（Init 场景绑定），战斗内容 UI 由 TurnBattleUI 构建；
     /// 回合流转全部经 Manager 事件：AwaitingPlayerAction 启用菜单，TurnResolved 演出，
     /// BattleFinished 演出结束横幅后关闭面板。
     /// </summary>
@@ -22,31 +22,7 @@ namespace LAB2D.UI.Panel
         public TurnBattlePanel()
         {
             this.Name = "TurnBattlePanel";
-
-            // 安全加载：先找场景对象 → 最后创建空占位（无 prefab，结构由 TurnBattleUI 代码构建）
-            Transform parent = this.Controller?.Parent;
-            if (parent == null)
-            {
-                GameObject uiRoot = GameObject.FindGameObjectWithTag(Constant.TagConstant.UI_TAG);
-                parent = uiRoot?.transform;
-            }
-
-            if (parent != null)
-            {
-                Transform existing = parent.Find(this.Name);
-                if (existing != null)
-                {
-                    this.Panel = existing.gameObject;
-                }
-                else
-                {
-                    this.Panel = new GameObject(this.Name, typeof(RectTransform));
-                    this.Panel.transform.SetParent(parent, false);
-                }
-
-                this.Panel.name = this.Name;
-                this.Panel.SetActive(false);
-            }
+            this.Init(); // 面板节点已在场景搭建，走标准场景绑定（同 CultivationPanel 惯例），无代码创建兜底
 
             this.BindUI();
             this.BindManagerEvents();
@@ -78,9 +54,11 @@ namespace LAB2D.UI.Panel
 
         private void OnBattleStarted(TurnBattleState state)
         {
-            // 面板被其他 UI 盖住时开战属于异常路径（B 键入口已挡），作废战斗防写回错乱
+            // 被 Foreground 之外的模态面板盖住时开战属于异常路径（B 键入口已挡），作废战斗防写回错乱。
+            // 判据用 IsForeground 而非 Panels.Count：ForegroundPanel 常驻栈底代表正常游玩态，
+            // Count>0 会在正常开战时误杀成 AbortBattle（与 ProcessJoinBattle 同源问题）
             PanelController controller = ServiceLocator.Get<PanelController>();
-            if (controller != null && controller.Panels.Count > 0)
+            if (controller != null && !controller.IsForeground())
             {
                 TurnBattleManager.Instance.AbortBattle();
                 return;

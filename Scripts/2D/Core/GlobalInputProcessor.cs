@@ -46,9 +46,11 @@ namespace LAB2D.Core
         }
 
         /// <summary>
-        /// G 键 — 靠近大世界交战区时加入回合制战斗。
+        /// B 键 — 靠近大世界交战区时加入回合制战斗。
         /// 交战检测器由此处驱动（0.5s 节流轮询 + 滞回），按下时实时重检防节流窗口错过。
         /// 有面板打开、战斗中或联机时不触发。
+        /// 按 B 后每个静默分支都有 [BattleDiag] 留痕（按键低频事件点）：
+        /// 若按 B 时一条日志都没有 = 按键被 UI 输入态（IsUIInputActive）吞掉。
         /// </summary>
         private void ProcessJoinBattle(float deltaTime)
         {
@@ -64,19 +66,26 @@ namespace LAB2D.Core
 
             if (battleManager.IsActive)
             {
+                AWorkerTask.LogProvider("[BattleDiag] 按B忽略：已在战斗中", LogManager.LogLevelEnum.Debug);
                 return;
             }
 
-            // 有面板打开时不加入（战斗面板自身经 BattleStarted 事件打开，不依赖此处）
+            // 有模态面板打开时不加入（战斗面板自身经 BattleStarted 事件打开，不依赖此处）。
+            // 判据用 IsForeground 而非 Panels.Count：ForegroundPanel 是常驻前景（游戏主界面），
+            // 正常游玩时栈=[Foreground] 非空，Count>0 会永久拦截 B 键（2026-09-05 实测按 B 无反应根因）
             PanelController controller = ServiceLocator.Get<PanelController>();
-            if (controller != null && controller.Panels.Count > 0)
+            if (controller != null && !controller.IsForeground())
             {
+                AWorkerTask.LogProvider(
+                    $"[BattleDiag] 按B忽略：有面板打开（{controller.Panels.Count} 层，非前景态）",
+                    LogManager.LogLevelEnum.Debug);
                 return;
             }
 
             Player player = ServiceLocator.Get<PlayerManager>()?.Mine;
             if (player == null)
             {
+                AWorkerTask.LogProvider("[BattleDiag] 按B忽略：玩家不存在", LogManager.LogLevelEnum.Debug);
                 return;
             }
 
@@ -85,8 +94,16 @@ namespace LAB2D.Core
             if (!battleManager.Detector.TryGetNearbyEncounter(
                     (Vector2)player.transform.position, out BattleEncounter encounter))
             {
+                string nearest = this.DescribeNearestEncounter(battleManager.Detector, player.transform.position);
+                AWorkerTask.LogProvider(
+                    $"[BattleDiag] 按B无交战：encounters={battleManager.Detector.Encounters.Count} 玩家pos={player.transform.position}{nearest}",
+                    LogManager.LogLevelEnum.Debug);
                 return;
             }
+
+            AWorkerTask.LogProvider(
+                $"[BattleDiag] 按B命中交战：Worker×{encounter.Workers.Count} Enemy×{encounter.Enemies.Count}，尝试开战",
+                LogManager.LogLevelEnum.Debug);
 
             if (!battleManager.TryStartBattle(encounter, player, out string failReason))
             {
@@ -94,6 +111,33 @@ namespace LAB2D.Core
             }
 
             // 成功路径无需提示：战斗面板经 Manager.BattleStarted 事件自动打开
+        }
+
+        /// <summary>
+        /// [BattleDiag] 最近一次聚合的交战组描述（按 B 无交战时区分
+        /// "聚合组为空"与"有交战但中心距玩家超 JoinBattleRadius"）。
+        /// </summary>
+        private string DescribeNearestEncounter(BattleEncounterDetector detector, Vector3 playerPos)
+        {
+            BattleEncounter nearest = null;
+            float bestSqr = float.MaxValue;
+            foreach (BattleEncounter encounter in detector.Encounters)
+            {
+                float sqr = (encounter.Center - (Vector2)playerPos).sqrMagnitude;
+                if (sqr <= bestSqr)
+                {
+                    bestSqr = sqr;
+                    nearest = encounter;
+                }
+            }
+
+            if (nearest == null)
+            {
+                return "（聚合组为空：无 Worker↔Enemy 交战边）";
+            }
+
+            return $"（最近交战中心距 {Mathf.Sqrt(bestSqr):F1} > 半径 {BattleEncounterDetector.JoinBattleRadius:F0}，"
+                + $"Worker×{nearest.Workers.Count} Enemy×{nearest.Enemies.Count}）";
         }
 
         /// <summary>交战提示条显隐 — 玩家检测半径内有交战且非战斗中时显示。</summary>

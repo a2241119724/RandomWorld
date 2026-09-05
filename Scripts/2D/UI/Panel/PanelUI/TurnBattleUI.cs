@@ -9,7 +9,8 @@ namespace LAB2D.UI.Panel.PanelUI
 
     /// <summary>
     /// 回合制战斗 UI — 卡片舞台 + 行动菜单 + 演出队列。
-    /// 全部代码构建（项目约定 Game.unity 不手改 YAML）；
+    /// 静态舞台（Shade/卡区/日志/回合头/子菜单/主菜单/横幅）已在场景搭建，BuildOnce 仅绑定引用；
+    /// 单位卡片/子菜单项/飘字等随战斗变化的内容仍由代码创建。
     /// 演出用 unscaledDeltaTime 驱动（面板推栈冻结大世界 timeScale=0，演出照常）。
     /// 流转：OnAwaitPlayerAction 启用菜单 → 玩家提交 → PlayResolutions 逐段演出 →
     /// Manager.NotifyPresentationFinished → 下一回合；PlayBattleFinished 横幅后回调关面板。
@@ -30,7 +31,6 @@ namespace LAB2D.UI.Panel.PanelUI
         private static readonly Color MpColor = new Color(0.2f, 0.4f, 0.9f);
         private static readonly Color BarBgColor = new Color(0.08f, 0.08f, 0.08f, 0.9f);
         private static readonly Color MenuBgColor = new Color(0.16f, 0.16f, 0.2f, 0.95f);
-        private static readonly Color SubMenuBgColor = new Color(0.1f, 0.1f, 0.14f, 0.96f);
         private static readonly Color DamageColor = new Color(1f, 0.85f, 0.85f);
         private static readonly Color CriticalColor = new Color(1f, 0.55f, 0.2f);
         private static readonly Color HealColor = new Color(0.4f, 1f, 0.45f);
@@ -271,7 +271,10 @@ namespace LAB2D.UI.Panel.PanelUI
 
         #region 构建控件
 
-        /// <summary>一次性构建静态舞台（Shade/卡区/日志/菜单/横幅）。</summary>
+        /// <summary>
+        /// 一次性绑定场景已搭建的静态舞台（Shade/卡区/日志/回合头/子菜单/主菜单/横幅，
+        /// 节点结构见 Game.unity 的 TurnBattlePanel 子树；缺失节点打 [PanelDiag] 警告）。
+        /// </summary>
         private void BuildOnce()
         {
             if (this.built)
@@ -281,104 +284,104 @@ namespace LAB2D.UI.Panel.PanelUI
 
             this.built = true;
 
-            // 全屏遮罩：挡视线 + 挡点击（大世界已冻结，双保险）
-            GameObject shade = new GameObject("Shade");
-            shade.transform.SetParent(this.transform, false);
-            Image shadeImage = shade.AddComponent<Image>();
-            shadeImage.color = new Color(0f, 0f, 0f, 0.72f);
-            this.StretchFull(shade);
+            Transform root = this.transform;
+            this.enemyCardsRoot = root.Find("EnemyCards");
+            this.allyCardsRoot = root.Find("AllyCards");
+            this.logText = root.Find("LogText")?.GetComponent<Text>();
+            this.headerText = root.Find("Header")?.GetComponent<Text>();
+            this.subMenuRoot = root.Find("SubMenu")?.gameObject;
+            this.subMenuContainer = this.subMenuRoot != null ? this.subMenuRoot.transform : null;
+            this.bannerRoot = root.Find("Banner")?.gameObject;
+            this.bannerText = this.bannerRoot != null
+                ? this.bannerRoot.transform.Find("BannerLabel")?.GetComponent<Text>()
+                : null;
 
-            // 敌我卡区（纯定位容器，卡片按索引手动排列，演出位移不受 Layout 干扰）
-            this.enemyCardsRoot = this.CreateAnchorNode("EnemyCards", new Vector2(1f, 1f), Vector2.zero);
-            this.allyCardsRoot = this.CreateAnchorNode("AllyCards", new Vector2(0f, 0f), Vector2.zero);
+            // 主菜单：绑定场景四按钮（攻击/技能/道具/逃跑），CanvasGroup 整体启停
+            Transform actionBar = root.Find("ActionBar");
+            this.menuGroup = actionBar?.GetComponent<CanvasGroup>();
+            List<string> missing = new List<string>();
+            if (!this.BindMenuButton(actionBar, "AttackBtn", this.OnClickAttack))
+            {
+                missing.Add("ActionBar/AttackBtn");
+            }
 
-            // 战斗日志（左上）
-            GameObject logGo = new GameObject("LogText");
-            logGo.transform.SetParent(this.transform, false);
-            RectTransform logRt = logGo.AddComponent<RectTransform>();
-            logRt.anchorMin = logRt.anchorMax = new Vector2(0f, 1f);
-            logRt.pivot = new Vector2(0f, 1f);
-            logRt.anchoredPosition = new Vector2(24f, -66f);
-            logRt.sizeDelta = new Vector2(460f, 200f);
-            this.logText = logGo.AddComponent<Text>();
-            this.logText.font = AI.Dialogue.LLM.UIFontConfig.GetFont();
-            this.logText.fontSize = 12;
-            this.logText.color = new Color(0.85f, 0.85f, 0.8f, 0.9f);
-            this.logText.alignment = TextAnchor.UpperLeft;
-            this.logText.raycastTarget = false;
-            this.logText.supportRichText = false;
+            if (!this.BindMenuButton(actionBar, "SkillBtn", this.OnClickSkill))
+            {
+                missing.Add("ActionBar/SkillBtn");
+            }
 
-            // 回合头（顶部中央）
-            this.headerText = this.CreateText(
-                this.transform, "Header", "⚔ 回合制战斗", 24, new Color(1f, 0.93f, 0.75f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(720f, 48f));
+            if (!this.BindMenuButton(actionBar, "ItemBtn", this.OnClickItem))
+            {
+                missing.Add("ActionBar/ItemBtn");
+            }
 
-            // 子菜单（主菜单上方，动态重建：技能/道具/逃跑确认/点选提示）
-            this.subMenuRoot = new GameObject("SubMenu");
-            this.subMenuRoot.transform.SetParent(this.transform, false);
-            RectTransform subRt = this.subMenuRoot.AddComponent<RectTransform>();
-            subRt.anchorMin = subRt.anchorMax = new Vector2(0.5f, 0f);
-            subRt.pivot = new Vector2(0.5f, 0f);
-            subRt.anchoredPosition = new Vector2(0f, 92f);
-            subRt.sizeDelta = new Vector2(560f, 300f);
-            Image subBg = this.subMenuRoot.AddComponent<Image>();
-            subBg.color = SubMenuBgColor;
-            VerticalLayoutGroup subLayout = this.subMenuRoot.AddComponent<VerticalLayoutGroup>();
-            subLayout.spacing = 6f;
-            subLayout.padding = new RectOffset(10, 10, 10, 10);
-            subLayout.childAlignment = TextAnchor.UpperCenter;
-            subLayout.childControlWidth = false;
-            subLayout.childControlHeight = false;
-            subLayout.childForceExpandWidth = false;
-            subLayout.childForceExpandHeight = false;
-            this.subMenuContainer = this.subMenuRoot.transform;
-            this.subMenuRoot.SetActive(false);
+            if (!this.BindMenuButton(actionBar, "FleeBtn", this.OnClickFlee))
+            {
+                missing.Add("ActionBar/FleeBtn");
+            }
 
-            // 主菜单（底部中央：攻击/技能/道具/逃跑）
-            GameObject menuGo = new GameObject("ActionBar");
-            menuGo.transform.SetParent(this.transform, false);
-            RectTransform menuRt = menuGo.AddComponent<RectTransform>();
-            menuRt.anchorMin = menuRt.anchorMax = new Vector2(0.5f, 0f);
-            menuRt.pivot = new Vector2(0.5f, 0f);
-            menuRt.anchoredPosition = new Vector2(0f, 24f);
-            menuRt.sizeDelta = new Vector2(640f, 56f);
-            HorizontalLayoutGroup menuLayout = menuGo.AddComponent<HorizontalLayoutGroup>();
-            menuLayout.spacing = 12f;
-            menuLayout.childAlignment = TextAnchor.MiddleCenter;
-            menuLayout.childControlWidth = false;
-            menuLayout.childControlHeight = false;
-            menuLayout.childForceExpandWidth = false;
-            menuLayout.childForceExpandHeight = false;
-            this.menuGroup = menuGo.AddComponent<CanvasGroup>();
-            this.CreateMenuButton(menuGo.transform, "AttackBtn", "攻击", () => this.OnClickAttack());
-            this.CreateMenuButton(menuGo.transform, "SkillBtn", "技能", () => this.OnClickSkill());
-            this.CreateMenuButton(menuGo.transform, "ItemBtn", "道具", () => this.OnClickItem());
-            this.CreateMenuButton(menuGo.transform, "FleeBtn", "逃跑", () => this.OnClickFlee());
+            if (this.enemyCardsRoot == null)
+            {
+                missing.Add("EnemyCards");
+            }
 
-            // 结果横幅（最上层）
-            this.bannerRoot = new GameObject("Banner");
-            this.bannerRoot.transform.SetParent(this.transform, false);
-            RectTransform bannerRt = this.bannerRoot.AddComponent<RectTransform>();
-            bannerRt.anchorMin = bannerRt.anchorMax = new Vector2(0.5f, 0.5f);
-            bannerRt.anchoredPosition = Vector2.zero;
-            bannerRt.sizeDelta = new Vector2(920f, 96f);
-            Image bannerBg = this.bannerRoot.AddComponent<Image>();
-            bannerBg.color = new Color(0.05f, 0.05f, 0.08f, 0.9f);
-            this.bannerText = this.CreateText(
-                this.bannerRoot.transform, "BannerLabel", string.Empty, 36, Color.white,
-                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 90f));
-            this.bannerRoot.SetActive(false);
+            if (this.allyCardsRoot == null)
+            {
+                missing.Add("AllyCards");
+            }
+
+            if (this.logText == null)
+            {
+                missing.Add("LogText(Text)");
+            }
+
+            if (this.headerText == null)
+            {
+                missing.Add("Header(Text)");
+            }
+
+            if (this.subMenuRoot == null)
+            {
+                missing.Add("SubMenu");
+            }
+
+            if (this.bannerRoot == null || this.bannerText == null)
+            {
+                missing.Add("Banner/BannerLabel(Text)");
+            }
+
+            if (this.menuGroup == null)
+            {
+                missing.Add("ActionBar(CanvasGroup)");
+            }
+
+            if (missing.Count > 0)
+            {
+                AWorkerTask.LogProvider(
+                    $"[PanelDiag] TurnBattlePanel 场景节点绑定不全，缺失：{string.Join("、", missing)}（开战将异常，请补建场景节点）",
+                    LogManager.LogLevelEnum.Warning);
+            }
+            else
+            {
+                AWorkerTask.LogProvider("[PanelDiag] TurnBattlePanel 场景节点绑定完成", LogManager.LogLevelEnum.Debug);
+            }
+
+            this.subMenuRoot?.SetActive(false);
+            this.bannerRoot?.SetActive(false);
         }
 
-        private Transform CreateAnchorNode(string name, Vector2 anchor, Vector2 position)
+        /// <summary>绑定场景主菜单按钮 — 只清运行时监听（RemoveAllListeners 不动 Inspector 持久绑定），返回是否绑定成功。</summary>
+        private bool BindMenuButton(Transform actionBar, string name, System.Action onClick)
         {
-            GameObject go = new GameObject(name);
-            go.transform.SetParent(this.transform, false);
-            RectTransform rt = go.AddComponent<RectTransform>();
-            rt.anchorMin = rt.anchorMax = anchor;
-            rt.anchoredPosition = position;
-            rt.sizeDelta = Vector2.zero;
-            return go.transform;
+            Button button = actionBar?.Find(name)?.GetComponent<Button>();
+            if (button == null)
+            {
+                return false;
+            }
+
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => onClick());
+            return true;
         }
 
         private void CreateCard(TurnBattleUnit unit, Transform container, Vector3 localPos)
@@ -1078,14 +1081,6 @@ namespace LAB2D.UI.Panel.PanelUI
             return unit != null ? unit.MaxHp : 1f;
         }
 
-        private void StretchFull(GameObject go)
-        {
-            RectTransform rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.sizeDelta = Vector2.zero;
-        }
-
         private Text CreateText(Transform parent, string name, string text, int fontSize, Color color,
             Vector2 anchor, Vector2 position, Vector2 size)
         {
@@ -1126,25 +1121,6 @@ namespace LAB2D.UI.Panel.PanelUI
             rt.anchorMax = Vector2.one;
             rt.sizeDelta = new Vector2(-4f, -4f);
             return image;
-        }
-
-        private void CreateMenuButton(Transform parent, string name, string label, System.Action onClick)
-        {
-            GameObject go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            RectTransform rt = go.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(148f, 52f);
-
-            Image bg = go.AddComponent<Image>();
-            bg.color = MenuBgColor;
-
-            Button btn = go.AddComponent<Button>();
-            btn.targetGraphic = bg;
-            btn.onClick.AddListener(() => onClick());
-
-            this.CreateText(
-                go.transform, "Label", label, 24, Color.white,
-                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(144f, 48f));
         }
 
         #endregion

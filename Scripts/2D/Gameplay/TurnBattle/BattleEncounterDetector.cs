@@ -12,7 +12,8 @@ namespace LAB2D.Gameplay.TurnBattle
     /// 大世界交战检测器 — 0.5s 轮询聚合 Worker↔Enemy 交战对为连通分量。
     /// 检测信号：Worker 处于 Attack 状态且目标为存活 Enemy（M2B 防守接敌走此路径）；
     /// 补扫 Enemy 侧（锁定 Worker 为 Target 或最近被 Worker 打过），覆盖 Worker 逃跑/反击间隙。
-    /// HUD 提示用滞回（连续 2 轮存在/消失才切换）防闪烁；G 键加入走 DetectNow 实时检测。
+    /// HUD 提示用滞回（连续 2 轮存在/消失才切换）防闪烁；B 键加入走 DetectNow 实时检测。
+    /// 聚合构成变化时打 [BattleDiag]（事件点，构成不变不打防 0.5s 刷屏）。
     /// </summary>
     public sealed class BattleEncounterDetector : ITickable
     {
@@ -28,6 +29,7 @@ namespace LAB2D.Gameplay.TurnBattle
         private float detectTimer;
         private int presentStreak;
         private int absentStreak;
+        private string lastEncountersSignature = string.Empty;
 
         /// <summary>滞回后的"附近存在交战"（HUD 提示条用）。</summary>
         public bool HasNearbyBattle { get; private set; }
@@ -81,7 +83,61 @@ namespace LAB2D.Gameplay.TurnBattle
                 this.HasNearbyBattle = false;
             }
 
+            this.LogEncountersIfChanged();
             return present;
+        }
+
+        /// <summary>
+        /// [BattleDiag] 聚合构成变化留痕（Worker/Enemy 名单快照）——
+        /// 交战起止/成员增减各一条，构成不变时零输出（0.5s 轮询防刷屏）。
+        /// </summary>
+        private void LogEncountersIfChanged()
+        {
+            string signature;
+            if (this.Encounters.Count == 0)
+            {
+                signature = string.Empty;
+            }
+            else
+            {
+                List<string> groups = new List<string>(this.Encounters.Count);
+                foreach (BattleEncounter encounter in this.Encounters)
+                {
+                    List<string> workerNames = new List<string>(encounter.Workers.Count);
+                    foreach (AWorker worker in encounter.Workers)
+                    {
+                        if (worker != null)
+                        {
+                            workerNames.Add(worker.name);
+                        }
+                    }
+
+                    List<string> enemyNames = new List<string>(encounter.Enemies.Count);
+                    foreach (AEnemy enemy in encounter.Enemies)
+                    {
+                        if (enemy != null)
+                        {
+                            enemyNames.Add(enemy.name);
+                        }
+                    }
+
+                    groups.Add($"[W:{string.Join(",", workerNames)} E:{string.Join(",", enemyNames)}]");
+                }
+
+                signature = string.Join(" | ", groups);
+            }
+
+            if (signature == this.lastEncountersSignature)
+            {
+                return;
+            }
+
+            AWorkerTask.LogProvider(
+                signature.Length == 0
+                    ? "[BattleDiag] 交战聚合清空（无交战边）"
+                    : $"[BattleDiag] 交战聚合变化：{signature}",
+                LogManager.LogLevelEnum.Debug);
+            this.lastEncountersSignature = signature;
         }
 
         /// <summary>
