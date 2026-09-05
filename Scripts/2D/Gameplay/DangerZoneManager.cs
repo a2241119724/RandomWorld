@@ -267,11 +267,24 @@ namespace LAB2D.Gameplay
                 return;
             }
 
+            // All/DangerZone 层级（参考 RoofManager 的 All/Building 惯例）
+            Transform zoneParent = GameObject.Find("All/DangerZone")?.transform;
+            if (zoneParent == null)
+            {
+                zoneParent = new GameObject("DangerZone").transform;
+                GameObject all = GameObject.Find("All");
+                if (all != null)
+                {
+                    zoneParent.SetParent(all.transform);
+                }
+            }
+
             foreach (DangerZoneRuleService.DangerZoneModel zone in this.zones)
             {
                 var go = new GameObject($"DangerZone_{zone.Center.X:F0}_{zone.Center.Y:F0}");
                 go.transform.position = tileMap.MapPosToWorldPos(
                     new Vector3Int((int)zone.Center.X, (int)zone.Center.Y, 0));
+                go.transform.SetParent(zoneParent);
                 DangerZoneGlow glow = go.AddComponent<DangerZoneGlow>();
                 glow.RadiusCells = zone.Radius;
                 this.zoneVisuals.Add(go);

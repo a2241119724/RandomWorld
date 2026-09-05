@@ -250,10 +250,23 @@ namespace LAB2D.Gameplay
                 return;
             }
 
+            // All/LingVein 层级（参考 RoofManager 的 All/Building 惯例）
+            Transform veinParent = GameObject.Find("All/LingVein")?.transform;
+            if (veinParent == null)
+            {
+                veinParent = new GameObject("LingVein").transform;
+                GameObject all = GameObject.Find("All");
+                if (all != null)
+                {
+                    veinParent.SetParent(all.transform);
+                }
+            }
+
             foreach (Vector3Int vein in this.veins)
             {
                 GameObject go = new GameObject($"LingVein_{vein.x}_{vein.y}");
                 go.transform.position = tileMap.MapPosToWorldPos(vein);
+                go.transform.SetParent(veinParent);
                 go.AddComponent<LingVeinGlow>();
                 this.veinVisuals.Add(go);
             }

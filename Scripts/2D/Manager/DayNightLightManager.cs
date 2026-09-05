@@ -8,10 +8,9 @@ namespace LAB2D
     using UnityEngine.Rendering.Universal;
 
     /// <summary>
-    /// 昼夜光照管理器 — 驱动场景全局光（Global 类型 Light2D）的强度与色温随游戏时间循环：
-    /// 午夜暗蓝 0.35 → 正午纯白 1.0（与无光照时代的画面亮度一致）→ 黄昏橙红 → 入夜偏蓝。
-    /// 场景缺失激活的全局光时运行时自建（场景存量未激活的 GlobalLight 对 FindWithTag 不可见，
-    /// 自建物随场景销毁，跨场景重进自动重建）。光照公式收口在 Domain 层 DayNightRuleService，
+    /// 昼夜光照管理器 — 驱动场景全局光（Global 类型 Light2D，场景物体 DayNightGlobalLight）的
+    /// 强度与色温随游戏时间循环：午夜暗蓝 0.35 → 正午纯白 1.0（与无光照时代的画面亮度一致）→ 黄昏橙红 → 入夜偏蓝。
+    /// 光由场景提供（带 GlobalLight tag），运行时只查找不自建；光照公式收口在 Domain 层 DayNightRuleService，
     /// 本类只负责查找/创建与节流写入（变化超阈值才写，Light2D setter 会置脏光照纹理）。
     /// 排在 GameTimeManager 之后 Tick，采样当帧新时间。
     /// </summary>
@@ -39,7 +38,7 @@ namespace LAB2D
                 }
 
                 this.nextFindRetryTime = Time.time + FindRetryInterval;
-                this.globalLight = this.FindOrCreateGlobalLight();
+                this.globalLight = this.FindGlobalLight();
                 if (this.globalLight == null)
                 {
                     return;
@@ -77,30 +76,24 @@ namespace LAB2D
         }
 
         /// <summary>
-        /// 查找场景激活的全局光；缺失则运行时自建（Global 类型，应用 Default 层 —
-        /// 世界物体实际全在 Default 层；Highest 层头顶 UI 不被全局光压暗，夜间保持可读）。
+        /// 查找场景全局光（Global 类型 Light2D，带 GlobalLight tag；场景物体由编辑器维护）。
+        /// 缺失时返回 null，Tick 按 FindRetryInterval 重试。
         /// </summary>
-        private Light2D FindOrCreateGlobalLight()
+        private Light2D FindGlobalLight()
         {
             GameObject go = GameObject.FindGameObjectWithTag(TagConstant.GLOBAL_LIGHT_TAG);
-            if (go != null)
+            if (go == null)
             {
-                Light2D found = go.GetComponent<Light2D>();
-                if (found != null)
-                {
-                    AWorkerTask.LogProvider("[LightDiag] 复用场景全局光，昼夜光照驱动生效", LogManager.LogLevelEnum.Debug);
-                    return found;
-                }
+                return null;
             }
 
-            GameObject created = new GameObject("DayNightGlobalLight");
-            created.tag = TagConstant.GLOBAL_LIGHT_TAG;
-            Light2D light = created.AddComponent<Light2D>();
-            light.lightType = Light2D.LightType.Global;
-            light.intensity = 1f;
-            light.color = Color.white;
-            AWorkerTask.LogProvider("[LightDiag] 场景无激活全局光，已运行时自建 DayNightGlobalLight", LogManager.LogLevelEnum.Debug);
-            return light;
+            Light2D found = go.GetComponent<Light2D>();
+            if (found != null)
+            {
+                AWorkerTask.LogProvider("[LightDiag] 复用场景全局光，昼夜光照驱动生效", LogManager.LogLevelEnum.Debug);
+            }
+
+            return found;
         }
     }
 }
