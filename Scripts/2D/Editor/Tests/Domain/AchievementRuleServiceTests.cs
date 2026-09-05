@@ -44,6 +44,8 @@ namespace LAB2D.Editor.Tests.Domain
                 "cultivation_realm_4", "cultivation_realm_5",
                 "cultivation_gongfa_3", "cultivation_gongfa_5",
                 "cultivation_awaken_1", "cultivation_awaken_2",
+                "alchemy_craft_1", "alchemy_craft_10",
+                "cave_explore_1", "cave_explore_3",
             };
             foreach (string id in expectedIds)
             {

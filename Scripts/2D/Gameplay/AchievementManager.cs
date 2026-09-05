@@ -266,6 +266,14 @@ namespace LAB2D.Gameplay
                 anyChanged |= this.UpdateAchievement("survival_death_1", snap.PlayerDeathCount);
             }
 
+            // 修仙 - 炼丹/洞府探索（会话累计：炼成丹药数、已探索洞府数；服务未就绪时计 0）
+            int pillsCrafted = this.TryGetPillsCrafted();
+            anyChanged |= this.UpdateAchievement("alchemy_craft_1", pillsCrafted);
+            anyChanged |= this.UpdateAchievement("alchemy_craft_10", pillsCrafted);
+            int exploredCaves = this.TryGetExploredCaveCount();
+            anyChanged |= this.UpdateAchievement("cave_explore_1", exploredCaves);
+            anyChanged |= this.UpdateAchievement("cave_explore_3", exploredCaves);
+
             // 生存 - 存活时间（从会话开始时间计算）
             float sessionTime = this.GameTime.Time;
             int minutes = this.ruleService.GetElapsedMinutes(sessionTime);
@@ -297,6 +305,33 @@ namespace LAB2D.Gameplay
             {
                 this.OnProgressUpdated?.Invoke();
             }
+        }
+
+        /// <summary>本会话炼成丹药数（PillManager 未注册时计 0——初始化早期/测试环境）。</summary>
+        private int TryGetPillsCrafted()
+        {
+            return Core.ServiceLocator.TryGet(out PillManager pills) ? pills.TotalPillsCrafted : 0;
+        }
+
+        /// <summary>已探索的上古洞府数（遍历 Caves 状态，AncientCaveManager 未注册时计 0）。</summary>
+        private int TryGetExploredCaveCount()
+        {
+            if (!Core.ServiceLocator.TryGet(out AncientCaveManager caveManager)
+                || caveManager.Caves == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            foreach (Domain.Gameplay.AncientCave.AncientCaveRuleService.AncientCaveModel cave in caveManager.Caves)
+            {
+                if (cave.State == Domain.Gameplay.AncientCave.AncientCaveRuleService.CaveState.Explored)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         /// <summary>
@@ -743,6 +778,62 @@ namespace LAB2D.Gameplay
                 IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Awaken",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "alchemy_craft_1",
+                Name = "初窥丹道",
+                Description = "首次炼成一颗丹药",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "累计炼成 {0} 颗丹药",
+                TargetValue = 1,
+                Points = 10,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Pill",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "alchemy_craft_10",
+                Name = "丹道小成",
+                Description = "累计炼成10颗丹药",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "累计炼成 {0} 颗丹药",
+                TargetValue = 10,
+                Points = 30,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Pill",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cave_explore_1",
+                Name = "初探古洞",
+                Description = "探索一座上古洞府",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "探索 {0} 座上古洞府",
+                TargetValue = 1,
+                Points = 10,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Cave",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cave_explore_3",
+                Name = "洞天访客",
+                Description = "探索3座上古洞府",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "探索 {0} 座上古洞府",
+                TargetValue = 3,
+                Points = 40,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Cave",
             });
         }
 

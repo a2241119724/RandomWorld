@@ -18,6 +18,9 @@ namespace LAB2D.Gameplay
     /// </summary>
     public class PillManager : Singleton<PillManager>
     {
+        /// <summary>本会话累计炼成丹药数（会话语义，不入档；成就进度消费）。</summary>
+        public int TotalPillsCrafted { get; private set; }
+
         internal static Action<string> TipProvider { get; set; }
             = (msg) =>
             {
@@ -58,6 +61,7 @@ namespace LAB2D.Gameplay
             }
 
             this.ApplyEffect(data, result);
+            this.TotalPillsCrafted++;
             TipProvider($"炼成{QualityToName(result.Quality)}·{pill.Name}（{this.DescribeEffect(data.Growth, result)}）");
             AWorkerTask.LogProvider(
                 $"[PillDiag] {data.Name} 炼制{pill.Name} -> {QualityToName(result.Quality)}",
