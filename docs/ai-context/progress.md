@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `feat(achievement)`: 修仙成就 9 条接 0.2 新系统（86b8dc3e）——AchievementCategory 追加 Cultivation（面板 tab 按 Enum.GetValues 自动出现零 UI 改动）+ 境界五档（RealmIndex 直接作档位进度，条件模板写境界名）/功法 3·5 门/异能 1·2 个；UpdateProgressAll 复用玩家块读 GrowthData 当前值，零 Manager/存档改动；+2 单测 1013/1013。既有缺口留档：`combat_boss_10` 读 TotalDefeatedEnemyCount（全部击杀而非 Boss 专属，统计源缺 Boss 计数）；炼丹/洞府探索成就待对应累计计数源
 - 2026-09 — `fix(build)`: 清 BuildMap 六处 tile SetColor 死写入（b5e7d6ed）——game.log 每次建造完成必现 1 条「重影实锤 a=1」Warning（本局 ResearchTable 实锤）；根因：SetColor(白/半透明) 是视觉拆分前「tile 直渲、半透明→实心表达建造进度」的旧语义，拆分后 tile 颜色统一由 CreateOrUpdate 管理（非 Bottom 隐藏 a=0 / Bottom 走 colorProvider），直写同帧即被覆盖、唯一可见效果是触发重影巡检误报；删六处 SetColor + 冗余 RemoveTileFlags（消费者 grep 证实无读 tile 颜色判状态的逻辑）；顺手 AncientCaveDiag 撒点完成 Warning 降 Debug；1011/1011
 - 2026-09 — `chore(const)`: 清四个零引用死常量（b3dd9582）——`WorkerConditionConstant.SpiritLowThreshold/StressHighThreshold`（从未接线，语义由 WorkerBrain 实例字段 SpiritThreshold/StressThreshold 承担且可按角色调）、`WorkerTaskTimeConfig.ExerciseSeekThreshold`（无引用）、`DialogueIntentRuleService.TeachRequireHigherRealm`（bool 开关死常量，境界门已硬编码在 EvaluateTeach）；逐一验证邻居常量活着防误删；1011/1011
 - 2026-09 — `fix(ui)`: 像素字体单一来源收口（铁律③落地）——`PixelUITheme.PixelFont` 统一入口（惰性静态缓存 ark-pixel + LegacyRuntime 兜底）；修正两处直接使用内置字体的真违规（`DialoguePanelUI` M3 意图按钮全中文标签、`FloatingTextTool` 飘字——LegacyRuntime 无中文字形 fallback 系统字体毁点阵）；消重四份同款私有加载拷贝（WaveBossRewardPanel/DeathMenuPanel/MountainGateHUD/SessionEndPanel，行为零变化）；删两个零引用字体路径死常量（SkillConstant 指向不存在路径的坑 + WorkerConditionConstant）；1011/1011
