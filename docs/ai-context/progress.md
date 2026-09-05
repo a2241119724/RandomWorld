@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `fix(ui)`: 字体来源真单一收口（0aeaeb49）——`UIFontConfig.GetFont` 三级链（SO→ark-pixel→内置）与 `PixelUITheme.PixelFont` 并存双源且 SO 可编辑器改违反「永久 ark-pixel」决策，改薄委托 PixelFont（10 消费点零改动，SO font 字段仅剩 Editor 批量工具消费）；补 CaveExploreHUD fontSize 22→24 铁律①漏网；1022/1022
 - 2026-09 — `feat(achievement)`: 炼丹/洞府探索成就 4 条（ab2035eb）——补齐 0.2 新系统成就覆盖缺口；`PillManager.TotalPillsCrafted` 会话累计（TryCraft 成功 +1）+ 洞府遍历既有 `Caves` 数 Explored（零 Manager 改动）；成就：初窥丹道/丹道小成（1·10 颗）、初探古洞/洞天访客（1·3 座），均入 Cultivation 类别；读数 TryGet 防御；+3 单测（LogProvider 静默桩裸测 TryCraft 全路径）1022/1022
 - 2026-09 — `feat(stats)`: Boss 击杀专属计数（56f1b924）——修上轮留档的 `combat_boss_10` 占位缺陷（此前读 TotalDefeatedEnemyCount，杀 10 小怪即解锁「Boss猎手」）；`EnemyData.IsBoss` 持久标记（生成时按 IsBossEnemySpawn 判定写入，旧档缺省 false 零迁移）→ RecordEnemyDefeated 4 参重载（isBoss 纯参数可裸测）→ totalBossDefeatedCount 双快照透出 → 成就改读 TotalBossDefeatedCount；+6 单测 1019/1019
 - 2026-09 — `feat(achievement)`: 修仙成就 9 条接 0.2 新系统（86b8dc3e）——AchievementCategory 追加 Cultivation（面板 tab 按 Enum.GetValues 自动出现零 UI 改动）+ 境界五档（RealmIndex 直接作档位进度，条件模板写境界名）/功法 3·5 门/异能 1·2 个；UpdateProgressAll 复用玩家块读 GrowthData 当前值，零 Manager/存档改动；+2 单测 1013/1013。既有缺口留档：`combat_boss_10` 读 TotalDefeatedEnemyCount（全部击杀而非 Boss 专属，统计源缺 Boss 计数）；炼丹/洞府探索成就待对应累计计数源
