@@ -73,6 +73,15 @@ namespace LAB2D.Character.Worker.Task.Individual
                     workerData.MaxMorale,
                     workerData.CurMorale + Constant.WorkerConditionConstant.MoraleSleepRestoreOnGround);
                 workerData.GroundSleepCount++;
+
+                // 地面睡眠接心智层（无床可归的窘迫）：信念自尊-2/人格漂移已配置
+                // （WorkerBeliefRuleService/PersonalityDriftRuleService），此前无生产者；
+                // 一夜一次天然低频，无气泡（GetEventThought 未配该键返回空串，不刷屏）
+                if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+                {
+                    mindService.RecordEvent(worker, WorkerMindConstant.EVT_GROUND_SLEEP,
+                        MemoryValence.Negative, null, 15f, "睡在了地上");
+                }
             }
 
             // 睡觉即打坐吐纳：按睡眠时长积累灵气（床睡全额，地面睡半额——鼓励建床）；

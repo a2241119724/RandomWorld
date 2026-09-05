@@ -53,6 +53,17 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
+        public void GetDelta_GroundSleep_DentsSelfEsteem()
+        {
+            // 地面睡眠（WorkerSleepTask.Finish 无床分支的生产者已接线）
+            BeliefDelta d = WorkerBeliefRuleService.GetDelta(WorkerMindConstant.EVT_GROUND_SLEEP, 100f);
+            Assert.AreEqual(-2f, d.SelfEsteem, 0.0001f);
+            Assert.AreEqual(0f, d.TrustInWorld, 0.0001f);
+            Assert.AreEqual(0f, d.TrustInPlayer, 0.0001f);
+            Assert.AreEqual(0f, d.SenseOfBelonging, 0.0001f);
+        }
+
+        [Test]
         public void GetDelta_UnknownType_Zero()
         {
             BeliefDelta d = WorkerBeliefRuleService.GetDelta("no_such_event", 100f);
