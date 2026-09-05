@@ -173,7 +173,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
   - [x] 房间列表面板
   - [x] 装备对比弹窗
   - [x] 字体批量替换（Arial → ark-pixel，21 处 m_BestFit 清零 a8a70dd2）
-  - [ ] Scale 规范化（0.5 → 1.0 补偿）
+  - [ ] Scale 规范化（0.5 → 1.0 补偿）——2026-09-06 精确摸底：Game.unity 90 处 `fontSize=36 × scale=0.5`（视觉 18px 非法字号疑似糊点阵）+ 1 处 24×0.5（合法），另有 ItemBox/Tip prefab 8 处同模式；全为场景手摆历史 UI（联机 Title/装备名/泛用 Text），代码无创建源头。**需用户拍板**：18px 无零视觉变化合法修法（36→24 视觉-33% / 36→48 + scale 补偿 +33% / sizeDelta 联动补偿爆改 90 节点布局），且真实视觉字号须叠加父链缩放、验证必须 Play 肉眼——autopilot 排除项不盲修
 
 ## Known Issues / Blockers
 
