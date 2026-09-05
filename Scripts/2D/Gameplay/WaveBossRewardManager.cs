@@ -253,6 +253,7 @@ namespace LAB2D.Gameplay
             }
 
             bool isBoss = this.ruleService.IsBossEnemySpawn(waveIndex, spawnIndex, totalEnemies, WaveBossRewardConstant.BossWaveInterval);
+            enemyData.IsBoss = isBoss; // 持久标记：击杀统计/成就按此区分 Boss（Boss 判定只在生成时刻可得）
             if (isBoss)
             {
                 this.ApplyBossScale(enemy, enemyData, waveIndex, difficultyScale);

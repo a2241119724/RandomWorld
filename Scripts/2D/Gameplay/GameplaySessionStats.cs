@@ -43,6 +43,7 @@ namespace LAB2D.Gameplay
         private int totalDamageDealt;
         private int totalDamageTaken;
         private int totalDefeatedEnemyCount;
+        private int totalBossDefeatedCount;
         private int totalExperienceGained;
         private int totalWorkerDeathCount;
         private int totalWorkerTaskCompletedCount;
@@ -87,6 +88,7 @@ namespace LAB2D.Gameplay
             this.totalDamageDealt = 0;
             this.totalDamageTaken = 0;
             this.totalDefeatedEnemyCount = 0;
+            this.totalBossDefeatedCount = 0;
             this.totalExperienceGained = 0;
             this.totalWorkerDeathCount = 0;
             this.totalWorkerTaskCompletedCount = 0;
@@ -121,15 +123,30 @@ namespace LAB2D.Gameplay
         public void RecordEnemyDefeated(AEnemy enemy, Character attacker, int experienceReward)
         {
             string enemyType = enemy == null ? "UnknownEnemy" : enemy.GetType().Name;
-            this.RecordEnemyDefeated(enemyType, attacker == null ? string.Empty : attacker.GetType().Name, experienceReward);
+            AEnemy.EnemyData enemyData = enemy == null ? null : enemy.CharacterDataLAB as AEnemy.EnemyData;
+            this.RecordEnemyDefeated(
+                enemyType,
+                attacker == null ? string.Empty : attacker.GetType().Name,
+                experienceReward,
+                enemyData != null && enemyData.IsBoss);
         }
 
         public void RecordEnemyDefeated(string enemyType, string attackerType, int experienceReward)
+        {
+            this.RecordEnemyDefeated(enemyType, attackerType, experienceReward, false);
+        }
+
+        public void RecordEnemyDefeated(string enemyType, string attackerType, int experienceReward, bool isBoss)
         {
             enemyType = string.IsNullOrEmpty(enemyType) ? "UnknownEnemy" : enemyType;
             attackerType = string.IsNullOrEmpty(attackerType) ? "UnknownAttacker" : attackerType;
 
             this.totalDefeatedEnemyCount++;
+            if (isBoss)
+            {
+                this.totalBossDefeatedCount++;
+            }
+
             this.AddCount(this.defeatedEnemiesByAttackerType, attackerType, 1);
             this.AddCount(this.defeatedEnemiesByType, enemyType, 1);
             if (experienceReward > 0)
@@ -214,6 +231,7 @@ namespace LAB2D.Gameplay
                 TotalDamageDealt = this.totalDamageDealt,
                 TotalDamageTaken = this.totalDamageTaken,
                 TotalDefeatedEnemyCount = this.totalDefeatedEnemyCount,
+                TotalBossDefeatedCount = this.totalBossDefeatedCount,
                 TotalExperienceGained = this.totalExperienceGained,
                 TotalWorkerDeathCount = this.totalWorkerDeathCount,
                 TotalWorkerTaskCompletedCount = this.totalWorkerTaskCompletedCount,
@@ -243,6 +261,7 @@ namespace LAB2D.Gameplay
                 TotalDamageDealt = this.totalDamageDealt,
                 TotalDamageTaken = this.totalDamageTaken,
                 TotalDefeatedEnemyCount = this.totalDefeatedEnemyCount,
+                TotalBossDefeatedCount = this.totalBossDefeatedCount,
                 TotalExperienceGained = this.totalExperienceGained,
                 TotalWorkerDeathCount = this.totalWorkerDeathCount,
                 TotalWorkerTaskCompletedCount = this.totalWorkerTaskCompletedCount,
@@ -325,6 +344,7 @@ namespace LAB2D.Gameplay
         public int TotalDamageDealt;
         public int TotalDamageTaken;
         public int TotalDefeatedEnemyCount;
+        public int TotalBossDefeatedCount;
         public int TotalExperienceGained;
         public int TotalWorkerDeathCount;
         public int TotalWorkerTaskCompletedCount;

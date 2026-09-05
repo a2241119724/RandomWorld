@@ -281,6 +281,12 @@ namespace LAB2D.Character.Enemy
         public class EnemyData : CharacterData
         {
             /// <summary>
+            /// 是否 Boss 波实体（生成时由 WaveBossRewardManager 按 IsBossEnemySpawn 判定写入；
+            /// 旧档缺省 false = 普通敌人，零迁移）。击杀统计/成就据此区分 Boss 计数.
+            /// </summary>
+            public bool IsBoss;
+
+            /// <summary>
             /// 敌人攻击范围.
             /// </summary>
             public float AttackRange = 4.0f;

@@ -235,7 +235,7 @@ namespace LAB2D.Gameplay
                 anyChanged |= this.UpdateAchievement("combat_kill_1000", snap.TotalDefeatedEnemyCount);
                 anyChanged |= this.UpdateAchievement("combat_combo_50", snap.MaxCombo);
                 anyChanged |= this.UpdateAchievement("combat_crit_100", snap.CriticalHitCount);
-                anyChanged |= this.UpdateAchievement("combat_boss_10", snap.TotalDefeatedEnemyCount);
+                anyChanged |= this.UpdateAchievement("combat_boss_10", snap.TotalBossDefeatedCount);
                 anyChanged |= this.UpdateAchievement("survival_exp_10", snap.TotalExperienceGained);
                 anyChanged |= this.UpdateAchievement("collection_item_100", snap.TotalCollectedItemCount);
                 anyChanged |= this.UpdateAchievement("collection_item_1000", snap.TotalCollectedItemCount);
