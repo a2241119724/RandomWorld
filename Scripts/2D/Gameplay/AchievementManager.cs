@@ -411,7 +411,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "击杀 {0} 个敌人",
                 TargetValue = 1,
                 Points = 10,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -424,7 +423,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计击杀 {0} 个敌人",
                 TargetValue = 100,
                 Points = 30,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -437,7 +435,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计击杀 {0} 个敌人",
                 TargetValue = 1000,
                 Points = 100,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -450,7 +447,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "最高连击数达到 {0}",
                 TargetValue = 50,
                 Points = 50,
-                IsProgressPersistent = false,
                 State = AchievementState.Locked,
             });
 
@@ -463,7 +459,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计暴击 {0} 次",
                 TargetValue = 100,
                 Points = 30,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -476,7 +471,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "击败 {0} 只Boss",
                 TargetValue = 10,
                 Points = 60,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -490,7 +484,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计收集 {0} 个物品",
                 TargetValue = 100,
                 Points = 20,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -503,7 +496,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计收集 {0} 个物品",
                 TargetValue = 1000,
                 Points = 50,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -516,7 +508,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计收集 {0} 个物品",
                 TargetValue = 10000,
                 Points = 150,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -530,7 +521,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计死亡 {0} 次",
                 TargetValue = 1,
                 Points = 10,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -543,7 +533,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "单局存活 {0} 分钟",
                 TargetValue = 30,
                 Points = 40,
-                IsProgressPersistent = false,
                 State = AchievementState.Locked,
             });
 
@@ -556,7 +545,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计获得 {0} 点经验",
                 TargetValue = 10000,
                 Points = 30,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -569,7 +557,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "角色等级达到 {0} 级",
                 TargetValue = 50,
                 Points = 100,
-                IsProgressPersistent = false,
                 State = AchievementState.Locked,
             });
 
@@ -583,7 +570,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "完成 {0} 波敌人",
                 TargetValue = 1,
                 Points = 10,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -596,7 +582,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计完成 {0} 波敌人",
                 TargetValue = 10,
                 Points = 40,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -609,7 +594,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计完成 {0} 波敌人",
                 TargetValue = 50,
                 Points = 120,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -623,7 +607,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "工人累计完成 {0} 个任务",
                 TargetValue = 10,
                 Points = 20,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -636,7 +619,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "工人累计完成 {0} 个任务",
                 TargetValue = 100,
                 Points = 50,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -649,7 +631,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "工人累计完成 {0} 个任务",
                 TargetValue = 500,
                 Points = 150,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
             });
 
@@ -663,7 +644,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "境界突破到练气", // 档位进度：凡人=0 → 化神=5，RealmIndex 直接作进度（模板无{0}占位，Format 原样显示）
                 TargetValue = 1,
                 Points = 10,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Realm",
             });
@@ -677,7 +657,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "境界突破到筑基",
                 TargetValue = 2,
                 Points = 20,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Realm",
             });
@@ -691,7 +670,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "境界突破到金丹",
                 TargetValue = 3,
                 Points = 40,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Realm",
             });
@@ -705,7 +683,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "境界突破到元婴",
                 TargetValue = 4,
                 Points = 60,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Realm",
             });
@@ -719,7 +696,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "境界突破到化神",
                 TargetValue = 5,
                 Points = 100,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Realm",
             });
@@ -733,7 +709,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "习得 {0} 门功法",
                 TargetValue = 3,
                 Points = 20,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "GongFa",
             });
@@ -747,7 +722,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "习得 {0} 门功法",
                 TargetValue = 5,
                 Points = 40,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "GongFa",
             });
@@ -761,7 +735,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "觉醒 {0} 个异能",
                 TargetValue = 1,
                 Points = 20,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Awaken",
             });
@@ -775,7 +748,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "觉醒 {0} 个异能",
                 TargetValue = 2,
                 Points = 50,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Awaken",
             });
@@ -789,7 +761,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计炼成 {0} 颗丹药",
                 TargetValue = 1,
                 Points = 10,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Pill",
             });
@@ -803,7 +774,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "累计炼成 {0} 颗丹药",
                 TargetValue = 10,
                 Points = 30,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Pill",
             });
@@ -817,7 +787,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "探索 {0} 座上古洞府",
                 TargetValue = 1,
                 Points = 10,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Cave",
             });
@@ -831,7 +800,6 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "探索 {0} 座上古洞府",
                 TargetValue = 3,
                 Points = 40,
-                IsProgressPersistent = true,
                 State = AchievementState.Locked,
                 IconName = "Cave",
             });

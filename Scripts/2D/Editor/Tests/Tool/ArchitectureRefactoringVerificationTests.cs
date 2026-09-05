@@ -1,5 +1,6 @@
 namespace LAB2D.Editor.Tests.Tool
 {
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Domain.Worker;
     using LAB2D.Gameplay;
     using NUnit.Framework;
@@ -22,16 +23,21 @@ namespace LAB2D.Editor.Tests.Tool
             public float RealtimeSinceStartup => 10f;
         }
 
+        private System.Action<string, LAB2D.Manager.LogManager.LogLevelEnum> originalLogProvider;
+
         [SetUp]
         public void SetUp()
         {
             Core.ServiceLocator.Register<LAB2D.Domain.Common.IGameTime>(new FakeGameTime());
+            this.originalLogProvider = AWorkerTask.LogProvider;
+            AWorkerTask.LogProvider = (message, level) => { }; // 静默桩：默认实现走 ServiceLocator.Get<LogManager>，裸环境未注册会炸
         }
 
         [TearDown]
         public void TearDown()
         {
             Core.ServiceLocator.Unregister<LAB2D.Domain.Common.IGameTime>();
+            AWorkerTask.LogProvider = this.originalLogProvider;
         }
 
         #region GameplaySessionStats — 验证 IGameTime 迁移后构造函数安全

@@ -35,7 +35,7 @@ namespace LAB2D.Gameplay
         /// <summary>目标值</summary>
         public int TargetValue;
 
-        /// <summary>当前进度值（跨局持久化时从存档恢复）</summary>
+        /// <summary>当前进度值（每局从会话统计重建，不入档）</summary>
         public int CurrentProgress;
 
         /// <summary>成就当前状态</summary>
@@ -50,9 +50,6 @@ namespace LAB2D.Gameplay
 
         /// <summary>图标资源名（预留，当前使用类别默认图标）</summary>
         public string IconName;
-
-        /// <summary>进度是否跨局持久化</summary>
-        public bool IsProgressPersistent;
 
         // --- 计算属性 ---
 

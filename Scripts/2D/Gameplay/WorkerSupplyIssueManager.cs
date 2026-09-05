@@ -343,8 +343,11 @@ namespace LAB2D.Gameplay
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                // 诊断报告不因统计源异常中断（床位项保持 0），但必须留痕防静默失真；
+                // 走 AWorkerTask.LogProvider 统一通道（裸测试环境可换静默桩）
+                AWorkerTask.LogProvider("[WorkerSupply] 床位统计失败: " + e.Message, LogManager.LogLevelEnum.Warning);
             }
         }
 
