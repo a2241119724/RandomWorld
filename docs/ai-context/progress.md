@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `feat(mind)`: EVT_GROUND_SLEEP 接活 + M2A 审查遗留全清零（3ee5b6a8）——核实中 6「四个修仙台词池死代码」已过时（突破/觉醒/工友嫉妒·敬仰四池均已被 CultivationManager/AwakenedPowerManager 接活）；顺藤发现 WorkerMindConstant 三键（BOUNTY_REFUSED/GROUND_SLEEP/FOUND_ITEM）有消费配置无生产者，接活最干净的 GROUND_SLEEP（WorkerSleepTask.Finish 无床分支 RecordEvent，自尊-2/一夜一次/无气泡），另两键留待节流设计（15 帧重试/拾取高频会刷爆记忆上限 24）；+1 Belief 防丢用例 1004/1004。**M2A 审查 2 高 5 中全部收口**
 - 2026-09 — `fix(defence)`: M2A 中4 防守夜生存打断补派（90efdadd）——WorkerDefenceManager 加 ITickable 2s 节流扫描：防守任务被生存紧急打断（吃饭/睡觉/漫游）后 Worker 脱离生存任务即重新打分拉回防守（剩余时长），治参战者整夜人力流失；豁免与 CheckSurvivalEmergency 对齐（生存任务中/紧急中/Dead/Attack/Escape/对话暂停不补派，防派发-打断死循环），常态全员在防零分配短路；提取 DraftWorker 供入夜 draft 与补派共用。生存紧急阈值下沉 Domain（`IsSurvivalEmergency` 纯函数 + 4 常量，AWorker 五处字面量换常量单一来源零行为变化）；+6 单测 1003/1003。M2A 遗留仅剩中 6（台词池死代码）
 - 2026-09 — `docs(plant)`: 种植接线核实 + 过时 TODO 清理（857e612b）——侦察 `WorkerPlantTask:115`「种植功能上线后激活」TODO 发现链路已完整（`WorkerDecisionService:291` 决策分发→`CreateSelfPlantTask`→PlantTaskBuilder→`SetTask(SelfDecision)`，Execute/DoIsCanWork 均调 FarmlandManager，Farming 生活技能已挂），误导注释改现状描述；997/997。同轮 spec.md 成长系统节同步（90c3a618：六境/功法五行/异能 6 选 2 + 炼丹行）。**下一候选**：M2A 中 4（防守夜生存打断后无补派——WorkerDefenceManager 同游戏日防重派致人力流失）
 - 2026-09 — `feat(awakened)`: 包5 功法异能池扩充 2→6（82568c62）——AwakenedPowerLibrary +4 条（剑气风暴/金光遁/真元爆发/回春术，SkillId 复用 SkillManager 既有技能零技能系统改动；sweep_all/sky_split 归外功招式语义不入池）；MaxAwakenedCount 1→2（6 选 2，消费点全为 Count>0 无上限依赖）；997/997。**包 5 剩余**：K 面板炼丹按钮行（需场景节点，待授权）、修炼-劳动经济调参（需 Play 实测）
