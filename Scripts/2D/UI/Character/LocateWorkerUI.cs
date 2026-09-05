@@ -14,6 +14,7 @@ namespace LAB2D.UI.Character
     public class LocateWorkerUI : MonoBehaviour
     {
         private Dictionary<AWorker, GameObject> allItems;
+        private Transform content;
 
         /// <summary>
         /// 单例
@@ -25,6 +26,7 @@ namespace LAB2D.UI.Character
             Instance = this;
             ServiceLocator.Register(this);
             this.allItems = new Dictionary<AWorker, GameObject>();
+            this.content = this.transform.Find("Content/Viewport/Content");
         }
 
         /// <summary>
@@ -35,7 +37,7 @@ namespace LAB2D.UI.Character
         {
             GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.LOCATE_WORKER_ITEM, true);
             this.allItems.Add(worker, g);
-            g.transform.SetParent(this.transform);
+            g.transform.SetParent(this.content);
             g.transform.localScale = Vector3.one;
             LAB2D.Tool.Tool.GetComponentInChildren<Text>(g, "Name").text = worker.name;
             g.GetComponent<Button>().onClick.AddListener(() =>
