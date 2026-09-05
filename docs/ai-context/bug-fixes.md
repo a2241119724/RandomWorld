@@ -683,3 +683,20 @@
 - **修复**：`DialoguePanelUI.Close()`（按钮/Esc 两条路径共用的收口）在 `SetActive(false)` 前：`inputField.DeactivateInputField()` + `EventSystem.current?.SetSelectedGameObject(null)`，并留 [StateDiag] 日志观察清理时 selection 指向。与上条 ConsumeCloseMenuKey 配合：清 selection 让同帧全局 Esc 放行 → 消费标记拦下 → 不误开 BuildPanel。
 - **验证**：`verify_compile.py` ERRORS:0；Unity 实测——Esc 关对话后立即按 K/T 等热键与点击 UI 应直接生效。
 - **教训**：**失活/关闭带 InputField 聚焦的面板，必须在 SetActive(false) 前显式 `DeactivateInputField()` + `SetSelectedGameObject(null)`**——EventSystem 不替你清 selection，失活对象的 selection 会把 `IsUIInputActive()` 类守卫永久卡死。症状"键盘路径关闭 UI 后输入全失灵、鼠标点一下就好"优先查 selection 残留。
+
+## 2026-09-05 退出战斗面板报 Can't remove RectTransform：Destroy(Transform) 语义误用
+
+- **现象**：回合制战斗结束、TurnBattlePanel 退出瞬间 Editor 连报 3 条 `Can't remove RectTransform because Image, Image, VerticalLayoutGroup×3 depends on it`（无 C# 堆栈）；另一会话进 Play 时也报过 3 条。且卡物体实际未被销毁（泄漏）。
+- **定位**：error.log 三条报错与 game.log `[Trace] Exit: TurnBattlePanel` **同毫秒**（18:59:27.346）；当场战斗"我方存活 2、敌方存活 1"= 3 张卡 = 3 条报错。`TurnBattleUI.ClearCards()` 写的是 `Destroy(card.Root)`，而 `UnitCard.Root = root.transform` 是 Transform 组件引用。
+- **根因**：`Destroy` 收到**组件引用**时语义是"移除该组件"而非"销毁物体"——对 RectTransform 移除会被同物体 Image/VerticalLayoutGroup 等 RequireComponent 依赖拒绝，报错后组件不移除、GameObject 也不销毁 → 每张卡一条错 + 卡整体泄漏。写 `Destroy(transform)` 几乎永远是 bug。
+- **修复**：`TurnBattleUI.cs` ClearCards 改 `Destroy(card.Root.gameObject)`（一处；同文件 919 行 `Destroy(...GetChild(i).gameObject)` 本就正确）。
+- **验证**：待 Unity 实测——打一场战斗退出，Console 不再报该错。注：报错依赖列表"2 Image+3 VLG"与卡结构（1 Image+1 VLG）数量不严格吻合，若修复后仍报错，在 ClearCards 打 `card.Root.gameObject.name` 日志定位被销毁物体的真实身份。
+- **教训**：**销毁 UI 物体永远 `Destroy(go.gameObject)`**；`Destroy(组件)` 只删组件，且 RectTransform 这类被依赖的必需组件必被拒绝——报错文本"Can't remove RectTransform because ..."即此模式签名，看到直接搜 `Destroy(` 里的 transform 引用。排查无堆栈的 Unity 内部错误，用"报错毫秒时戳 ↔ game.log 事件流"对齐定位触发点。
+
+## 2026-09-05 按 N 洞府探索无反应：B 键已修守卫根因在 CaveExplore 复活
+
+- **现象**：玩家走近已揭示洞府（提示条正常显示"按 N 亲自探索"），按 N 无任何反应。
+- **定位**：game.log 显示洞府撒点/揭示全正常；`GlobalInputProcessor.ProcessCaveExplore` 的 N 键守卫写的是 `controller.Panels.Count == 0`。
+- **根因**：同文件 `ProcessJoinBattle` 2026-09-05 已修并注释过的根因——ForegroundPanel 是常驻前景，正常游玩面板栈恒非空，`Count == 0` 永远为 false → `TryStartPlayerExplore()` 永不执行。新代码复制守卫时照抄了旧版未修写法。
+- **修复**：改 `controller == null || controller.IsForeground()`（与 ProcessJoinBattle 一致）。注：O 键分支（TryDispatchWorkerExplore）无面板守卫，开面板按 O 会直接触发——是否补守卫待定。
+- **教训**：**复制"同款守卫"前先看范本现状**——被复制处若有过 bug-fix 注释，抄的必须是修复后的判据；同一判据散落多处时，修一处必须 grep 其他副本（`Panels.Count` 判面板态在本仓至少 3 处，IsForeground 是唯一正确写法）。

@@ -642,7 +642,7 @@ namespace LAB2D.Gameplay
 
             AWorkerTask.LogProvider(
                 $"[AncientCaveDiag] 洞府撒点完成 {this.caves.Count}/{targetCount}（尝试 {attempts} 次）：{sb}",
-                LogManager.LogLevelEnum.Debug);
+                LogManager.LogLevelEnum.Warning);
         }
 
         /// <summary>创建洞府视觉（仅 Revealed 及之后调用；Hidden 无视觉——走近才揭示）。</summary>
@@ -738,7 +738,7 @@ namespace LAB2D.Gameplay
 
                 AWorkerTask.LogProvider(
                     $"[AncientCaveDiag] 洞府读档恢复 {this.caves.Count} 处（Hidden {this.HiddenCount}）",
-                    LogManager.LogLevelEnum.Debug);
+                    LogManager.LogLevelEnum.Warning);
                 return;
             }
 

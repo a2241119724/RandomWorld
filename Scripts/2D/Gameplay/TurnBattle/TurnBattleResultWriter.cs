@@ -33,6 +33,10 @@ namespace LAB2D.Gameplay.TurnBattle
             {
                 if (!worldUnits.TryGetValue(unit.UnitId, out Character character) || character == null)
                 {
+                    // UnitId↔大世界角色映射缺失（开战快照与写回之间字典不一致才会走到）
+                    AWorkerTask.LogProvider(
+                        $"[BattleDiag] 写回跳过：UnitId={unit.UnitId}（{unit.DisplayName}）在大世界单位表中不存在",
+                        LogManager.LogLevelEnum.Warning);
                     continue;
                 }
 
@@ -55,18 +59,27 @@ namespace LAB2D.Gameplay.TurnBattle
         {
             if (player == null)
             {
+                AWorkerTask.LogProvider("[BattleDiag] 写回玩家失败：player 引用为空", LogManager.LogLevelEnum.Warning);
                 return;
             }
 
             if (unit.IsDown)
             {
+                AWorkerTask.LogProvider(
+                    $"[BattleDiag] 写回玩家（战败）：Hp {player.CharacterDataLAB.Hp:0.#} → 死亡管线（killer={defeatKiller?.name ?? "无"}）",
+                    LogManager.LogLevelEnum.Debug);
                 // 判负：绕无敌帧走标准死亡管线（内部 Hp 钳 1 + 惩罚 + 复活倒计时）
                 player.DeathByTurnBattle(defeatKiller);
                 return;
             }
 
+            float oldHp = player.CharacterDataLAB.Hp;
+            int oldMp = player.CharacterDataLAB.Mp;
             player.CharacterDataLAB.Hp = Mathf.Clamp(unit.Hp, 0f, player.CharacterDataLAB.MaxHp);
             player.CharacterDataLAB.Mp = Mathf.Clamp(unit.Mp, 0, player.CharacterDataLAB.MaxMp);
+            AWorkerTask.LogProvider(
+                $"[BattleDiag] 写回玩家（{result}）：Hp {oldHp:0.#}→{player.CharacterDataLAB.Hp:0.#}/{player.CharacterDataLAB.MaxHp:0.#}，Mp {oldMp}→{player.CharacterDataLAB.Mp}/{player.CharacterDataLAB.MaxMp}",
+                LogManager.LogLevelEnum.Debug);
             player.RefreshUI();
 
             if (result == TurnBattleResult.Escaped)
@@ -81,17 +94,33 @@ namespace LAB2D.Gameplay.TurnBattle
             {
                 if (enemy == null || enemy.CharacterDataLAB == null || enemy.CharacterDataLAB.Hp <= 0f)
                 {
+                    AWorkerTask.LogProvider(
+                        $"[BattleDiag] 写回敌人（倒下）跳过：{enemy?.name ?? "null"} 已无 CharacterData 或已死",
+                        LogManager.LogLevelEnum.Debug);
                     return;
                 }
 
+                AWorkerTask.LogProvider(
+                    $"[BattleDiag] 写回敌人（倒下）：{enemy.name} Hp {enemy.CharacterDataLAB.Hp:0.#} → Dead 管线（经验/掉落归因玩家）",
+                    LogManager.LogLevelEnum.Debug);
                 // 经验/掉落归因玩家，走标准 Dead 管线（延迟掉落由 timeScale 恢复后自然执行）
                 enemy.LastAttacker = player;
                 enemy.ReduceHp(enemy.CharacterDataLAB.Hp + 1f, player);
                 return;
             }
 
+            if (enemy == null || enemy.CharacterDataLAB == null)
+            {
+                return;
+            }
+
+            float oldHp = enemy.CharacterDataLAB.Hp;
+            int oldMp = enemy.CharacterDataLAB.Mp;
             enemy.CharacterDataLAB.Hp = Mathf.Clamp(unit.Hp, 0f, enemy.CharacterDataLAB.MaxHp);
             enemy.CharacterDataLAB.Mp = Mathf.Clamp(unit.Mp, 0, enemy.CharacterDataLAB.MaxMp);
+            AWorkerTask.LogProvider(
+                $"[BattleDiag] 写回敌人（存活）：{enemy.name} Hp {oldHp:0.#}→{enemy.CharacterDataLAB.Hp:0.#}/{enemy.CharacterDataLAB.MaxHp:0.#}，Mp {oldMp}→{enemy.CharacterDataLAB.Mp}/{enemy.CharacterDataLAB.MaxMp}",
+                LogManager.LogLevelEnum.Debug);
             enemy.RefreshStatusBar();
         }
 
@@ -99,6 +128,7 @@ namespace LAB2D.Gameplay.TurnBattle
         {
             if (worker == null || worker.CharacterDataLAB == null)
             {
+                AWorkerTask.LogProvider("[BattleDiag] 写回 Worker 失败：worker 引用或 CharacterData 为空", LogManager.LogLevelEnum.Warning);
                 return;
             }
 
@@ -106,12 +136,20 @@ namespace LAB2D.Gameplay.TurnBattle
             {
                 // 重伤退场：1 HP 写回，不触发永久死亡管线
                 worker.CharacterDataLAB.Hp = 1f;
+                AWorkerTask.LogProvider(
+                    $"[BattleDiag] 写回 Worker（倒下重伤退场）：{worker.name} Hp → 1/{worker.CharacterDataLAB.MaxHp:0.#}",
+                    LogManager.LogLevelEnum.Debug);
                 worker.RefreshStatusBar();
                 return;
             }
 
+            float oldHp = worker.CharacterDataLAB.Hp;
+            int oldMp = worker.CharacterDataLAB.Mp;
             worker.CharacterDataLAB.Hp = Mathf.Clamp(unit.Hp, 0f, worker.CharacterDataLAB.MaxHp);
             worker.CharacterDataLAB.Mp = Mathf.Clamp(unit.Mp, 0, worker.CharacterDataLAB.MaxMp);
+            AWorkerTask.LogProvider(
+                $"[BattleDiag] 写回 Worker（存活）：{worker.name} Hp {oldHp:0.#}→{worker.CharacterDataLAB.Hp:0.#}/{worker.CharacterDataLAB.MaxHp:0.#}，Mp {oldMp}→{worker.CharacterDataLAB.Mp}/{worker.CharacterDataLAB.MaxMp}",
+                LogManager.LogLevelEnum.Debug);
             worker.RefreshStatusBar();
         }
     }

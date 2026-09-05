@@ -38,6 +38,11 @@ namespace LAB2D.UI.Panel.PanelUI
         private static readonly Color BuffColor = new Color(1f, 0.85f, 0.3f);
         private static readonly Color DownColor = new Color(1f, 0.3f, 0.3f);
 
+        // 血条/蓝条 Fill 的纯白 Sprite — Image 在 sprite==null 时 OnPopulateMesh 走基础满矩形
+        // 路径，type=Filled 与 fillAmount 完全无效（条永远满格），必须挂 sprite 才能按量裁剪；
+        // 纯白 4×4 程序化生成（同 ShadowTextureFactory 惯例），染色调色靠 Image.color。
+        private static Sprite whiteSprite;
+
         /// <summary>单位卡片 — 演出（前冲/白闪/置灰）与刷新的最小句柄。</summary>
         private class UnitCard
         {
@@ -427,11 +432,13 @@ namespace LAB2D.UI.Panel.PanelUI
 
             Image hpBg = this.CreateImage(root.transform, "HpBg", CardWidth - 24f, 15f, BarBgColor);
             Image hpFill = this.CreateStretchImage(hpBg.transform, "Fill", HpColor);
+            hpFill.sprite = GetWhiteSprite();
             hpFill.type = Image.Type.Filled;
             hpFill.fillMethod = Image.FillMethod.Horizontal;
 
             Image mpBg = this.CreateImage(root.transform, "MpBg", CardWidth - 24f, 11f, BarBgColor);
             Image mpFill = this.CreateStretchImage(mpBg.transform, "Fill", MpColor);
+            mpFill.sprite = GetWhiteSprite();
             mpFill.type = Image.Type.Filled;
             mpFill.fillMethod = Image.FillMethod.Horizontal;
 
@@ -478,7 +485,9 @@ namespace LAB2D.UI.Panel.PanelUI
             {
                 if (card.Root != null)
                 {
-                    Destroy(card.Root);
+                    // Root 是 Transform 引用：Destroy(组件) 只会尝试移除该组件，
+                    // RectTransform 被 Image/LayoutGroup 依赖必然拒绝并泄漏整张卡——必须销毁 GameObject
+                    Destroy(card.Root.gameObject);
                 }
             }
 
@@ -1063,6 +1072,27 @@ namespace LAB2D.UI.Panel.PanelUI
         #endregion
 
         #region 工具
+
+        /// <summary>懒创建共享白 Sprite（4×4 Point 过滤，像素风锐利块状）。</summary>
+        private static Sprite GetWhiteSprite()
+        {
+            if (whiteSprite == null)
+            {
+                Texture2D tex = new Texture2D(4, 4, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+                for (int y = 0; y < 4; y++)
+                {
+                    for (int x = 0; x < 4; x++)
+                    {
+                        tex.SetPixel(x, y, Color.white);
+                    }
+                }
+
+                tex.Apply();
+                whiteSprite = Sprite.Create(tex, new Rect(0f, 0f, 4f, 4f), new Vector2(0.5f, 0.5f), 4f);
+            }
+
+            return whiteSprite;
+        }
 
         private UnitCard GetCard(long unitId)
         {

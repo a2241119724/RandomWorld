@@ -226,9 +226,10 @@ namespace LAB2D.Core
 
             if (UnityGlobalInputAdapter.GetHudToggleDown(Constant.InputKeyConstant.ExploreCave))
             {
-                // 有面板打开时不触发（ProcessJoinBattle 同款守卫）
+                // 有面板打开时不触发（ProcessJoinBattle 同款守卫）：判据用 IsForeground 而非
+                // Panels.Count——ForegroundPanel 常驻前景，正常游玩时栈非空，Count==0 永远拦截
                 PanelController controller = ServiceLocator.Get<PanelController>();
-                if (controller == null || controller.Panels.Count == 0)
+                if (controller == null || controller.IsForeground())
                 {
                     caveManager.TryStartPlayerExplore();
                 }
