@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `fix(ui)`: 补漏两处非 12 倍数字号（c2a2b778）——成就面板标题 40→36、敌人伤害调试 HUD 16→12（BestFit 均为 0 的真违规，font-size 管线补漏）；同轮 Scale 0.5 待办精确摸底（af045f73）：90 处 `36×0.5` 视觉 18px 非法字号系场景手摆历史 UI，无零视觉变化合法修法，留档待用户拍板
 - 2026-09 — `fix(ui)`: 清 Game.unity 全部 21 处 m_BestFit 违规（a8a70dd2）——BestFit 自动缩放字号糊点阵违铁律①；21 处配套全验证合法（字体全 ark-pixel、字号全 24/36），关 BestFit 回落既定值零布局副作用；ui_normalize.py 落地 bestfit-fix 子命令（前置校验不合法拒改、dry-run 默认幂等）；挂账多月因 Game.unity 并行 WIP 占用，本轮工作区干净解锁；「字体批量替换」旧欠账就此清零
 - 2026-09 — `docs(audit)`: 全库死 public 方法地图（约 50 个待批）——高效分词扫描（token Counter 一次遍历）+ 三重排除（Tests 引用天然计入/虚方法 override 计入/接口实现计入/MenuItem·PunRPC 特性反射逐个排查：Editor 类 8 个全是 [MenuItem] 活代码）；剩余集中 Gameplay 层（MarketService.GetBuyPrice/WorkerAutoSellAll、PlayerBountyService.PostBuildBounty/CompleteBountyForPlayer、FloatingTextManager.SpawnExpText/SpawnDodgeText、CurrencyManager.GetWalletBalance/GetEscrow、SkillManager 升级链、DialogueMemoryManager 压缩链等）；不批量删因 UnityEvent 场景字符串绑定扫描不进 cs counter，删除需用户批准+场景 YAML 核查；同轮并发纪律审计通过（ASeek 后台线程零 icall，TrySetResult 节流日志走主线程 dispatcher，AStar 零节流调用）
 - 2026-09 — `chore(const)`: 清八文件三十九个零引用死常量（165ce049）——全常量类目录扫描（InputKeyConstant 延伸），三重验证（类名前缀/同文件裸名/字符串字面量）全零；典型：SkillConstant 升级成本查表常量已被 RuleService 公式取代、AchievementConstant 事件名 string 无 EventBus 消费；1030/1030
