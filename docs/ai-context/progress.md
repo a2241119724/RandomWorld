@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `chore(const)`: 清四个零引用死常量（b3dd9582）——`WorkerConditionConstant.SpiritLowThreshold/StressHighThreshold`（从未接线，语义由 WorkerBrain 实例字段 SpiritThreshold/StressThreshold 承担且可按角色调）、`WorkerTaskTimeConfig.ExerciseSeekThreshold`（无引用）、`DialogueIntentRuleService.TeachRequireHigherRealm`（bool 开关死常量，境界门已硬编码在 EvaluateTeach）；逐一验证邻居常量活着防误删；1011/1011
 - 2026-09 — `fix(ui)`: 像素字体单一来源收口（铁律③落地）——`PixelUITheme.PixelFont` 统一入口（惰性静态缓存 ark-pixel + LegacyRuntime 兜底）；修正两处直接使用内置字体的真违规（`DialoguePanelUI` M3 意图按钮全中文标签、`FloatingTextTool` 飘字——LegacyRuntime 无中文字形 fallback 系统字体毁点阵）；消重四份同款私有加载拷贝（WaveBossRewardPanel/DeathMenuPanel/MountainGateHUD/SessionEndPanel，行为零变化）；删两个零引用字体路径死常量（SkillConstant 指向不存在路径的坑 + WorkerConditionConstant）；1011/1011
 - 2026-09 — `feat(wander)`: 漫游发现物品接活（TODO 落地）——WorkerDecisionService 漫游路点 5% 此前只打「发现了东西!」假日志实际无物（TODO 指明经 DropManager 生成）；现 `WanderDiscoveryRuleService` 纯函数（Material 池均匀 roll ×1~2，随机源注入同输入同输出）+ `ItemMap.PutDownToDrop` 附近可达格放置（自动创建公开搬运任务闭环拾取，ownerId=0 无主；SO/tile/落点缺失静默跳过）；顺带清 FurnitureManager 两处空 TODO 死注释；+6 单测 1011/1011。同轮 spec 心智层节同步（全部事件键生产者收口）与种植 TODO 深挖结论：`SubAllItemByPos(农田位)` 坐标系/预扣泄漏/预占竞态疑点多，需 Play 验证不宜盲修，留档待实测
 - 2026-09 — `feat(mind)`: EVT_FOUND_ITEM 拾获小确幸接活（5c82b10a）——WorkerMindService.RecordFoundItem（RecordNearDeath 同款按游戏日节流，LastFoundItemDay 入档 int 缺省 -1 零迁移）+ WorkerPickUpTask.FinishFromGround 接线（拾取高频采集/悬赏链，节流后每天首捡记录一次链节自动短路）+ 台词池 3 条气泡；+1 用例 1005/1005。**EVT_BOUNTY_REFUSED 评估后永久搁置**：权威门拒绝已是心智状态的表露，Record 回心智层构成「拒绝→信任降→更怨恨」自反馈螺旋，配置保留无害。至此 WorkerMindConstant 无生产者键全部处置完毕
