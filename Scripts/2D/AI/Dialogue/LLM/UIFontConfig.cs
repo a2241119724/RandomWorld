@@ -23,21 +23,14 @@ namespace LAB2D.AI.Dialogue.LLM
             }
         }
 
+        /// <summary>
+        /// 运行时 UI 字体（薄委托 PixelUITheme.PixelFont——铁律③单一来源收口）。
+        /// 此前三级链（SO→ark-pixel→内置）与 PixelFont 并存双源，且 SO 可在编辑器改，
+        /// 违反「永久 ark-pixel」决策；SO 的 font 字段现仅剩 Editor 批量工具消费。
+        /// </summary>
         public static Font GetFont()
         {
-            UIFontConfig cfg = Instance;
-            if (cfg != null && cfg.font != null)
-            {
-                return cfg.font;
-            }
-
-            Font fallback = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
-            if (fallback != null)
-            {
-                return fallback;
-            }
-
-            return Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            return LAB2D.UI.PixelUITheme.PixelFont;
         }
     }
 }

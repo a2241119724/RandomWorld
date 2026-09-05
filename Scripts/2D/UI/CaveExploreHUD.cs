@@ -96,7 +96,7 @@ namespace LAB2D.UI
 
             this.label.text = "⛩ 上古洞府 — 按 N 亲自探索 / 按 O 派人探索";
             this.label.font = UIFontConfig.GetFont();
-            this.label.fontSize = 22;
+            this.label.fontSize = 24; // 铁律①：字号只允许 12 整数倍
             this.label.color = new Color(0.95f, 0.85f, 0.6f);
             this.label.alignment = TextAnchor.MiddleCenter;
             this.label.raycastTarget = false;
