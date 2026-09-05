@@ -49,16 +49,10 @@ namespace LAB2D.Constant
         /// <summary>每个食物恢复的饥饿值（任务吃和自吃统一口径）。</summary>
         public const float HungryRestorePerFood = 25f;
 
-        /// <summary>精气神低阈值。</summary>
-        public const float SpiritLowThreshold = 30f;
-
         // ---- 压力 (Stress) 常量 ----
 
         /// <summary>压力自然衰减速度（无任务/轻任务时缓慢降压，工作期间 Execute 累积更快）。</summary>
         public const float StressDecayPerSecond = 0.02f;
-
-        /// <summary>压力高阈值：CurStress > MaxStress - 此值 视为高压，触发减压决策。</summary>
-        public const float StressHighThreshold = 40f;
 
         /// <summary>有床睡眠恢复的压力。</summary>
         public const float StressSleepRestoreBonus = 50f;

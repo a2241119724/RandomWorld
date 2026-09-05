@@ -108,9 +108,6 @@ namespace LAB2D.Domain.Worker
     public static class DialogueIntentRuleService
     {
         // ---- 求教功法 ----
-        /// <summary>求教功法：Worker 境界须高于玩家。</summary>
-        public const bool TeachRequireHigherRealm = true;
-
         /// <summary>求教功法好感门控。</summary>
         public const float TeachFavorabilityThreshold = 60f;
 
