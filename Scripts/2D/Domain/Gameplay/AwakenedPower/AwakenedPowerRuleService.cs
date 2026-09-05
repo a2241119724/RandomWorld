@@ -16,8 +16,8 @@ namespace LAB2D.Domain.Gameplay.AwakenedPower
         /// <summary>濒死加成系数：血量越低越易觉醒（残血时概率最高 10%）。</summary>
         public const float LowHpBonusFactor = 0.07f;
 
-        /// <summary>同时可拥有的异能上限。</summary>
-        public const int MaxAwakenedCount = 1;
+        /// <summary>同时可拥有的异能上限（包 5 扩池 2→6 后由 1 提至 2：6 选 2，玩家技能栏 8 槽容纳）。</summary>
+        public const int MaxAwakenedCount = 2;
 
         /// <summary>
         /// 随机数提供者（返回 [min, max)），Gameplay 层安装时注入。

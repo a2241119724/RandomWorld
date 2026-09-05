@@ -1,5 +1,6 @@
 namespace LAB2D.Editor.Tests.Domain
 {
+    using LAB2D.Domain.Character;
     using LAB2D.Domain.Character.Growth;
     using LAB2D.Domain.Gameplay.AwakenedPower;
     using NUnit.Framework;
@@ -45,7 +46,11 @@ namespace LAB2D.Editor.Tests.Domain
             growth.Ensure(); // 集合字段兜底（构造不自动 Ensure，Manager 层同款约定）
             Assert.IsTrue(AwakenedPowerRuleService.CanAwaken(growth));
 
+            // 上限 2（包 5 扩池后）：第 1 个仍可，第 2 个到顶
             growth.AwakenedPowerIds.Add(AwakenedPowerLibrary.FireBall.Id);
+            Assert.IsTrue(AwakenedPowerRuleService.CanAwaken(growth));
+
+            growth.AwakenedPowerIds.Add(AwakenedPowerLibrary.Telekinesis.Id);
             Assert.IsFalse(AwakenedPowerRuleService.CanAwaken(growth));
         }
 
@@ -68,9 +73,45 @@ namespace LAB2D.Editor.Tests.Domain
 
             Assert.AreEqual(AwakenedPowerLibrary.Telekinesis.Id, AwakenedPowerRuleService.RollPowerId(growth));
 
-            // 已达觉醒上限（1 个）后再 roll → null
+            // 已有 1 个（上限 2）仍可 roll；加满 2 个后再 roll → null
             growth.AwakenedPowerIds.Add(AwakenedPowerLibrary.Telekinesis.Id);
+            Assert.IsNotNull(AwakenedPowerRuleService.RollPowerId(growth));
+
+            growth.AwakenedPowerIds.Add(AwakenedPowerLibrary.FireBall.Id);
             Assert.IsNull(AwakenedPowerRuleService.RollPowerId(growth));
+        }
+
+        [Test]
+        public void Library_SixPools_UniqueIds_ResolveToSkillConstants()
+        {
+            // 包 5 扩池：6 条异能，Id/SkillId 唯一且都对应 SkillConstant 真实技能
+            var skillIds = new System.Collections.Generic.HashSet<string>
+            {
+                SkillConstant.SkillWhirlwind,
+                SkillConstant.SkillDash,
+                SkillConstant.SkillPowerSurge,
+                SkillConstant.SkillHealingLight,
+                SkillConstant.SkillSweepAll,
+                SkillConstant.SkillSkySplit,
+                SkillConstant.SkillTelekinesis,
+                SkillConstant.SkillFireBall,
+            };
+            var ids = new System.Collections.Generic.HashSet<string>();
+
+            Assert.AreEqual(6, AwakenedPowerLibrary.All.Count);
+            foreach (AwakenedPowerDef def in AwakenedPowerLibrary.All)
+            {
+                Assert.IsTrue(ids.Add(def.Id), $"异能 Id 重复: {def.Id}");
+                Assert.IsTrue(skillIds.Contains(def.SkillId), $"{def.Name} 的 SkillId 未对应 SkillConstant: {def.SkillId}");
+
+                // Worker 被动非中性（Stats 8 维之和或 MaxHpFlat 至少一项有值）
+                BattleStats stats = def.WorkerPassiveBonus.Stats;
+                float statSum = stats.ATN + stats.INT + stats.DEF + stats.RES
+                    + stats.CRT + stats.CSD + stats.SPD + stats.HIT;
+                Assert.IsTrue(
+                    statSum > 0f || def.WorkerPassiveBonus.MaxHpFlat > 0f,
+                    $"{def.Name} 的 Worker 被动不应为中性值");
+            }
         }
 
         [Test]
