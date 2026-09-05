@@ -700,3 +700,10 @@
 - **根因**：同文件 `ProcessJoinBattle` 2026-09-05 已修并注释过的根因——ForegroundPanel 是常驻前景，正常游玩面板栈恒非空，`Count == 0` 永远为 false → `TryStartPlayerExplore()` 永不执行。新代码复制守卫时照抄了旧版未修写法。
 - **修复**：改 `controller == null || controller.IsForeground()`（与 ProcessJoinBattle 一致）。注：O 键分支（TryDispatchWorkerExplore）无面板守卫，开面板按 O 会直接触发——是否补守卫待定。
 - **教训**：**复制"同款守卫"前先看范本现状**——被复制处若有过 bug-fix 注释，抄的必须是修复后的判据；同一判据散落多处时，修一处必须 grep 其他副本（`Panels.Count` 判面板态在本仓至少 3 处，IsForeground 是唯一正确写法）。
+
+## 2026-09-05 LowHpVignette 材质报 doesn't have a texture property '_MainTex'：Properties 块缺声明
+
+- **现象**：Editor Console 周期性报 `Material 'Custom/LowHpVignette' with Shader 'Custom/LowHpVignette' doesn't have a texture property '_MainTex'`（堆栈 `Canvas:SendWillRenderCanvases`），红晕效果本身正常。
+- **根因**：shader 挂在 UGUI Image 上（LowHpVignetteUI 代码创建），CanvasRenderer 绑定 mainTexture（无 sprite 时为 s_WhiteTexture）要求 shader 在 **Properties 块**声明 `_MainTex`；shader 只在 CG 里 `sampler2D _MainTex` + `tex2D` 使用，Properties 没声明 → 每次 Canvas 重建报一条。
+- **修复**：Properties 块补 `_MainTex("Texture", 2D) = "white" {}`（一行，渲染结果不变——本就采到白色，边缘形状仍纯程序化）。
+- **教训**：**UGUI 专用 shader 的 `_MainTex` 必须进 Properties 块**，仅在 CG 代码里声明 sampler 不够——CanvasRenderer 按 Properties 查纹理属性。写零贴图 UI shader 时这个属性是"给引擎管线的接口"而非资源依赖。

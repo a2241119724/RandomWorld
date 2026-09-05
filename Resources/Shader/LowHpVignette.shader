@@ -5,6 +5,9 @@ Shader "Custom/LowHpVignette"
 {
     Properties
     {
+        // UGUI 必需：CanvasRenderer 绑定 mainTexture（无 sprite 时为白纹理）要求 Properties 里声明 _MainTex，
+        // 否则每次 Canvas 重建报 "doesn't have a texture property '_MainTex'" 刷屏。
+        _MainTex("Texture", 2D) = "white" {}
         _Color("Edge Color", Color) = (0.68, 0.04, 0.04, 1)
         _Intensity("Intensity (0=隐藏)", Range(0, 1)) = 0
         _InnerEdge("Inner Edge (开始泛红的归一化距离)", Range(0.3, 0.95)) = 0.55
