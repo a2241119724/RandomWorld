@@ -15,12 +15,17 @@ namespace LAB2D.Gameplay
     /// 给每名 Worker 决策并派发 <see cref="WorkerDefendTask"/>：参战者驻守山门核心旁、
     /// 躲避者缩回床/家旁、趁乱者溜到远处游荡（觉醒者优先参战，由打分保证）。
     /// 任务时长 = 距黎明秒数，到点自然 Finish，无需结束清理；
-    /// 单例，由 GlobalInit 注册（IInitializable 订阅相位事件，无逐帧逻辑）。
+    /// 单例，由 GlobalInit 注册（IInitializable 订阅相位事件 + ITickable 补派扫描）。
+    /// 生存打断补派（M2A 审查中 4）：防守任务被生存紧急打断（吃饭/睡觉等）后，
+    /// Tick 2s 节流扫描把已脱离生存任务的 Worker 拉回防守——否则参战人力整夜流失。
     /// </summary>
-    public class WorkerDefenceManager : Singleton<WorkerDefenceManager>, IInitializable
+    public class WorkerDefenceManager : Singleton<WorkerDefenceManager>, IInitializable, ITickable
     {
         /// <summary>趁乱者游荡点在其当前位置周围的搜索半径（格）。</summary>
         private const int LootPosSearchRadius = 6;
+
+        /// <summary>补派扫描节流间隔（秒）。</summary>
+        private const float RedraftScanInterval = 2f;
 
         /// <summary>躲床/参战/趁乱的派发气泡（每人入夜弹一句）。</summary>
         private static readonly string[] FightBubbles = new[]
@@ -46,6 +51,9 @@ namespace LAB2D.Gameplay
 
         /// <summary>上次draft的游戏日（防同夜重派：读档/边界情况下的兜底）。</summary>
         private int lastDraftDay = -1;
+
+        /// <summary>补派扫描节流累加器。</summary>
+        private float redraftTimer;
 
         /// <inheritdoc/>
         public void Initialize()
@@ -113,69 +121,205 @@ namespace LAB2D.Gameplay
 
             foreach (AWorker worker in wm.Characters)
             {
-                if (worker == null || worker.CharacterDataLAB == null)
-                {
-                    continue;
-                }
-
-                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
-                if (wd == null)
-                {
-                    continue;
-                }
-
-                GrowthData.Ensure(ref wd.Growth);
-                DefenceDraftInput input = new DefenceDraftInput
-                {
-                    Mood = wd.Personality.Mood,
-                    Ambition = wd.Personality.Ambition,
-                    Diligence = wd.Personality.Diligence,
-                    Sociality = wd.Personality.Sociality,
-                    Greed = wd.Greed,
-                    Stress = wd.CurStress,
-                    Morale = wd.CurMorale,
-                    FavorWithPlayer = favorability != null
-                        ? favorability.GetFavorabilityWithPlayer(worker)
-                        : FavorabilityRuleService.InitialFavorability,
-                    HasAwakenedPower = wd.Growth.AwakenedPowerIds != null
-                        && wd.Growth.AwakenedPowerIds.Count > 0,
-                    RealmIndex = wd.Growth.RealmIndex,
-                };
-
-                DefenceResponse response = DefenceDraftRuleService.Decide(in input);
-                Vector3Int target = response switch
-                {
-                    // 核心被围死无待命位时退化为躲避：原 coreCells[0] 兜底是核心占用格
-                    // （不可走→寻路失败→弃任务，Fight 响应形同虚设）
-                    DefenceResponse.Fight => defendPositions.Count == 0
-                        ? this.GetShelterPosition(worker, wd)
-                        : this.NextDefendPosition(defendPositions, ref defendPosCursor),
-                    DefenceResponse.ShelterInBed => this.GetShelterPosition(worker, wd),
-                    _ => this.FindLootPosition(worker),
-                };
-
-                WorkerDefendTask task = new WorkerDefendTask.DefendTaskBuilder()
-                    .SetTarget(target)
-                    .SetWorker(worker)
-                    .SetDuration(nightSeconds)
-                    .Build();
-
-                // 抢占在执行的任务前先走放弃路径：SetTask 只覆盖引用不清理，
-                // 旧任务的队列 MarkRunning 占用/GatherMap 认领锁/库存预留需要 GiveUpTask 释放，
-                // 否则入夜瞬间正在采集/做悬赏的任务资源会永久锁死（本派发是首个无条件抢占调用方）
-                if (wd.Task != null)
-                {
-                    worker.GiveUpTask();
-                }
-
-                worker.SetTask(task, WorkerTaskSource.PushAssignment);
-                worker.ShowMindBubble(this.PickBubble(response));
-
-                AWorkerTask.LogProvider(
-                    $"[DefenceDiag] {worker.name} 防守响应={response} 目标=({target.x},{target.y}) " +
-                    $"觉醒={input.HasAwakenedPower} 境界={input.RealmIndex} 贪婪={input.Greed:F0} 压力={input.Stress:F0} 士气={input.Morale:F0}",
-                    LogManager.LogLevelEnum.Debug);
+                this.DraftWorker(worker, favorability, nightSeconds, defendPositions, ref defendPosCursor, true);
             }
+        }
+
+        /// <summary>
+        /// 补派扫描（M2A 审查中 4，治生存打断后整夜人力流失）：夜间 2s 节流扫描，
+        /// 把已脱离防守且不在生存任务/紧急状态/战斗脱身状态的 Worker 拉回防守。
+        /// 豁免 Eat/Sleep/GroundSleep/Wander（正在解生存题，与
+        /// <see cref="AWorker.CheckSurvivalEmergency"/> 的豁免列表一致）——
+        /// 否则补派-打断-再补派死循环；这些任务 Finish 后进 Seek 若选了
+        /// 非生存任务，下一轮扫描即被拉回。
+        /// </summary>
+        public void Tick(float deltaTime)
+        {
+            this.redraftTimer += deltaTime;
+            if (this.redraftTimer < RedraftScanInterval)
+            {
+                return;
+            }
+
+            this.redraftTimer = 0f;
+
+            // 只补派已 draft 过的夜晚（未 draft = 无核心/未入夜，各归各的日常）
+            if (this.lastDraftDay != this.GetGameDayIndex()
+                || GameTimeManager.Instance.CurrentPhase != GamePhase.Night)
+            {
+                return;
+            }
+
+            if (!Core.ServiceLocator.TryGet<WorkerManager>(out WorkerManager wm)
+                || wm.Characters == null || wm.Characters.Count == 0)
+            {
+                return;
+            }
+
+            if (!Core.ServiceLocator.TryGet<MountainGateManager>(out MountainGateManager gate)
+                || !gate.IsCorePlaced)
+            {
+                return;
+            }
+
+            // 先收集候选，有人需补派才重算待命位/好感度（常态全员在防时零分配）
+            List<AWorker> candidates = null;
+            foreach (AWorker worker in wm.Characters)
+            {
+                if (this.ShouldRedraft(worker))
+                {
+                    (candidates ??= new List<AWorker>()).Add(worker);
+                }
+            }
+
+            if (candidates == null || candidates.Count == 0)
+            {
+                return;
+            }
+
+            float remainSeconds = DayNightRuleService.SecondsUntilPhaseStart(
+                GameTimeManager.Instance.CurGameTime,
+                GlobalData.GameDayTime,
+                GamePhase.Dawn);
+            List<Vector3Int> coreCells = ABuildItem.GetOccupiedPositions(
+                gate.CorePosition, MountainGateManager.CoreSize, MountainGateManager.CoreSize,
+                AWorkerTask.RectType.BottomLeft);
+            List<Vector3Int> defendPositions = this.CollectDefendPositions(coreCells);
+            int defendPosCursor = 0;
+            FavorabilityManager favorability = Core.ServiceLocator.Get<FavorabilityManager>();
+
+            foreach (AWorker worker in candidates)
+            {
+                this.DraftWorker(worker, favorability, remainSeconds, defendPositions, ref defendPosCursor, false);
+            }
+        }
+
+        /// <summary>补派候选判定：脱离防守 + 不在生存任务/紧急状态/战斗脱身/对话暂停。</summary>
+        private bool ShouldRedraft(AWorker worker)
+        {
+            if (worker == null || worker.CharacterDataLAB == null || worker.IsDialoguePaused)
+            {
+                return false;
+            }
+
+            AWorkerState.TypeEnum state = worker.Manager != null
+                ? worker.Manager.CurrentStateType
+                : AWorkerState.TypeEnum.Seek;
+            if (state == AWorkerState.TypeEnum.Dead
+                || state == AWorkerState.TypeEnum.Attack
+                || state == AWorkerState.TypeEnum.Escape)
+            {
+                return false;
+            }
+
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+            if (wd == null)
+            {
+                return false;
+            }
+
+            // 已在防守（含接敌中——任务保持不动）
+            if (wd.Task is WorkerDefendTask)
+            {
+                return false;
+            }
+
+            // 正在解生存题（与 CheckSurvivalEmergency 豁免列表一致）
+            if (wd.Task != null)
+            {
+                switch (wd.Task.TaskType)
+                {
+                    case WorkerTaskType.Eat:
+                    case WorkerTaskType.Sleep:
+                    case WorkerTaskType.GroundSleep:
+                    case WorkerTaskType.Wander:
+                        return false;
+                }
+            }
+
+            // 紧急中不补派（Seek 决策会优先解决生存；补了马上又被紧急打断）
+            return !WorkerConditionRuleService.IsSurvivalEmergency(
+                wd.CurHungry, wd.CurTired, wd.MaxTired, wd.CurSpirit, wd.CurStress, wd.MaxStress);
+        }
+
+        /// <summary>
+        /// 单 Worker 决策 + 派发防守任务（入夜 draft 与生存打断补派共用）。
+        /// 补派不弹气泡（防夜间反复打断场景刷屏），日志带补派标记。
+        /// </summary>
+        private void DraftWorker(
+            AWorker worker,
+            FavorabilityManager favorability,
+            float defendSeconds,
+            List<Vector3Int> defendPositions,
+            ref int defendPosCursor,
+            bool showBubble)
+        {
+            if (worker == null || worker.CharacterDataLAB == null)
+            {
+                return;
+            }
+
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+            if (wd == null)
+            {
+                return;
+            }
+
+            GrowthData.Ensure(ref wd.Growth);
+            DefenceDraftInput input = new DefenceDraftInput
+            {
+                Mood = wd.Personality.Mood,
+                Ambition = wd.Personality.Ambition,
+                Diligence = wd.Personality.Diligence,
+                Sociality = wd.Personality.Sociality,
+                Greed = wd.Greed,
+                Stress = wd.CurStress,
+                Morale = wd.CurMorale,
+                FavorWithPlayer = favorability != null
+                    ? favorability.GetFavorabilityWithPlayer(worker)
+                    : FavorabilityRuleService.InitialFavorability,
+                HasAwakenedPower = wd.Growth.AwakenedPowerIds != null
+                    && wd.Growth.AwakenedPowerIds.Count > 0,
+                RealmIndex = wd.Growth.RealmIndex,
+            };
+
+            DefenceResponse response = DefenceDraftRuleService.Decide(in input);
+            Vector3Int target = response switch
+            {
+                // 核心被围死无待命位时退化为躲避：原 coreCells[0] 兜底是核心占用格
+                // （不可走→寻路失败→弃任务，Fight 响应形同虚设）
+                DefenceResponse.Fight => defendPositions.Count == 0
+                    ? this.GetShelterPosition(worker, wd)
+                    : this.NextDefendPosition(defendPositions, ref defendPosCursor),
+                DefenceResponse.ShelterInBed => this.GetShelterPosition(worker, wd),
+                _ => this.FindLootPosition(worker),
+            };
+
+            WorkerDefendTask task = new WorkerDefendTask.DefendTaskBuilder()
+                .SetTarget(target)
+                .SetWorker(worker)
+                .SetDuration(defendSeconds)
+                .Build();
+
+            // 抢占在执行的任务前先走放弃路径：SetTask 只覆盖引用不清理，
+            // 旧任务的队列 MarkRunning 占用/GatherMap 认领锁/库存预留需要 GiveUpTask 释放，
+            // 否则入夜瞬间正在采集/做悬赏的任务资源会永久锁死（本派发是首个无条件抢占调用方）
+            if (wd.Task != null)
+            {
+                worker.GiveUpTask();
+            }
+
+            worker.SetTask(task, WorkerTaskSource.PushAssignment);
+            if (showBubble)
+            {
+                worker.ShowMindBubble(this.PickBubble(response));
+            }
+
+            AWorkerTask.LogProvider(
+                $"[DefenceDiag] {worker.name} 防守响应={response} 目标=({target.x},{target.y}) " +
+                $"觉醒={input.HasAwakenedPower} 境界={input.RealmIndex} 贪婪={input.Greed:F0} 压力={input.Stress:F0} 士气={input.Morale:F0}" +
+                (showBubble ? string.Empty : " (补派)"),
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>

@@ -52,6 +52,45 @@ namespace LAB2D.Domain.Worker
         /// <summary>士气惩罚起始比例：士气比例低于该值才开始掉效率。</summary>
         public const float MoraleWorkPenaltyBelowRatio = 0.4f;
 
+        /// <summary>饥饿紧急阈值：饥饿 &gt;0 且 &lt; 该值触发强制觅食（绝对值，Max 无关）。</summary>
+        public const float HungryEmergencyThreshold = 15f;
+
+        /// <summary>疲劳紧急余量：疲劳 &gt; Max−该值 且 &lt; Max 触发强制睡眠。</summary>
+        public const float TiredEmergencyMargin = 15f;
+
+        /// <summary>精气神紧急阈值：精气神 &gt;0 且 &lt; 该值触发强制漫游休息（绝对值）。</summary>
+        public const float SpiritEmergencyThreshold = 10f;
+
+        /// <summary>压力紧急余量：压力 &gt; Max−该值 且 &lt; Max 触发强制漫游减压。</summary>
+        public const float StressEmergencyMargin = 10f;
+
+        /// <summary>
+        /// 四项生存紧急判定（阈值单一来源）：AWorker.CheckSurvivalEmergency 的打断条件
+        /// 与防守夜补派守卫（WorkerDefenceManager.ShouldRedraft）共用。
+        /// 边界为严格不等式：饥饿/精气神的 0 值（已耗尽边界）与疲劳/压力的满值不算紧急，
+        /// 与 CheckSurvivalEmergency 逐条一致。
+        /// </summary>
+        /// <param name="curHungry">当前饥饿。</param>
+        /// <param name="curTired">当前累积疲劳。</param>
+        /// <param name="maxTired">疲劳上限。</param>
+        /// <param name="curSpirit">当前精气神。</param>
+        /// <param name="curStress">当前压力。</param>
+        /// <param name="maxStress">压力上限。</param>
+        /// <returns>任一项越阈即 true。</returns>
+        public static bool IsSurvivalEmergency(
+            float curHungry,
+            float curTired,
+            float maxTired,
+            float curSpirit,
+            float curStress,
+            float maxStress)
+        {
+            return (curHungry > 0f && curHungry < HungryEmergencyThreshold)
+                || (curTired < maxTired && curTired > maxTired - TiredEmergencyMargin)
+                || (curSpirit > 0f && curSpirit < SpiritEmergencyThreshold)
+                || (curStress < maxStress && curStress > maxStress - StressEmergencyMargin);
+        }
+
         public float GetSafeRatio(float current, float max)
         {
             if (max <= 0.0f)

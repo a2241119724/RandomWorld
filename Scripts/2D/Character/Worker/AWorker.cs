@@ -1139,7 +1139,7 @@ namespace LAB2D.Character.Worker
             bool emergency = false;
 
             // 饥饿 < 15 → 强制触发生存决策
-            if (wd.CurHungry > 0 && wd.CurHungry < 15f)
+            if (wd.CurHungry > 0 && wd.CurHungry < WorkerConditionRuleService.HungryEmergencyThreshold)
             {
                 if (wd.Task != null && wd.Task.TaskType != WorkerTaskType.Eat)
                 {
@@ -1149,7 +1149,7 @@ namespace LAB2D.Character.Worker
             }
 
             // 疲劳 > MaxTired-15 → 强制触发睡觉决策
-            if (wd.CurTired < wd.MaxTired && wd.CurTired > wd.MaxTired - 15f)
+            if (wd.CurTired < wd.MaxTired && wd.CurTired > wd.MaxTired - WorkerConditionRuleService.TiredEmergencyMargin)
             {
                 if (wd.Task != null
                     && wd.Task.TaskType != WorkerTaskType.Sleep
@@ -1161,7 +1161,7 @@ namespace LAB2D.Character.Worker
             }
 
             // 精气神 < 10 → 强制触发漫游/休息决策
-            if (wd.CurSpirit > 0 && wd.CurSpirit < 10f)
+            if (wd.CurSpirit > 0 && wd.CurSpirit < WorkerConditionRuleService.SpiritEmergencyThreshold)
             {
                 if (wd.Task != null
                     && wd.Task.TaskType != WorkerTaskType.Wander
@@ -1173,7 +1173,7 @@ namespace LAB2D.Character.Worker
             }
 
             // 压力 > MaxStress-10 → 强制漫游减压（吃饭/睡觉/漫游本身减压，不打断）
-            if (wd.CurStress < wd.MaxStress && wd.CurStress > wd.MaxStress - 10f)
+            if (wd.CurStress < wd.MaxStress && wd.CurStress > wd.MaxStress - WorkerConditionRuleService.StressEmergencyMargin)
             {
                 if (wd.Task != null
                     && wd.Task.TaskType != WorkerTaskType.Wander
@@ -1198,7 +1198,7 @@ namespace LAB2D.Character.Worker
                 LogManager.LogLevelEnum.Debug);
 
             // 心智层：极端饥饿导致的濒死经历（WorkerMindService 内按游戏日节流，同天只记一次）
-            if (wd.CurHungry > 0f && wd.CurHungry < 15f)
+            if (wd.CurHungry > 0f && wd.CurHungry < WorkerConditionRuleService.HungryEmergencyThreshold)
             {
                 if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
                 {

@@ -277,6 +277,8 @@ namespace LAB2D
                 ServiceLocator.Get<LingQiManager>(),
                 // 上古洞府（0.5s 节流揭示扫描；全揭示后零开销短路）
                 ServiceLocator.Get<AncientCaveManager>(),
+                // 防守夜补派（2s 节流扫描：生存打断后的 Worker 脱离生存任务即拉回防守；常态零分配短路）
+                ServiceLocator.Get<WorkerDefenceManager>(),
             };
         }
 
