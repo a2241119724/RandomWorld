@@ -324,8 +324,12 @@ namespace LAB2D.AI.Dialogue.UI
                 return;
             }
 
+            // 挂 Inset 中间层（四边内缩 24px 的内容区，BottomBar 也在其下、底边基准一致），
+            // 避免压 9-slice 边框；无 Inset 时退回面板根
+            RectTransform contentRoot = panelRect.Find("Inset") as RectTransform ?? panelRect;
+
             GameObject rowGo = new GameObject("IntentButtonRow", typeof(RectTransform));
-            rowGo.transform.SetParent(this.transform, false);
+            rowGo.transform.SetParent(contentRoot, false);
             RectTransform rowRect = (RectTransform)rowGo.transform;
             rowRect.anchorMin = new Vector2(0f, 0f);
             rowRect.anchorMax = new Vector2(1f, 0f);

@@ -49,13 +49,14 @@ namespace LAB2D.UI.Panel
         {
             Transform t = this.Panel.transform;
 
-            this.titleText = t.Find("Title")?.GetComponent<Text>();
-            this.goldText = t.Find("Gold")?.GetComponent<Text>();
+            // 内容都挂在 Inset 中间层下（四边内缩 24px 让内容落在 9-slice 边框内）
+            this.titleText = t.Find("Inset/Title")?.GetComponent<Text>();
+            this.goldText = t.Find("Inset/Gold")?.GetComponent<Text>();
 
-            this.buyContent = t.Find("BuyScroll/Viewport/Content");
-            this.sellContent = t.Find("SellScroll/Viewport/Content");
+            this.buyContent = t.Find("Inset/BuyScroll/Viewport/Content");
+            this.sellContent = t.Find("Inset/SellScroll/Viewport/Content");
 
-            Button closeBtn = t.Find("CloseBtn")?.GetComponent<Button>();
+            Button closeBtn = t.Find("Inset/CloseBtn")?.GetComponent<Button>();
             if (closeBtn != null) closeBtn.onClick.AddListener(() => this.Controller.Close());
         }
 

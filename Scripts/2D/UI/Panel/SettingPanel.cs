@@ -74,7 +74,9 @@ namespace LAB2D.UI.Panel
             }
 
             GameObject keyGo = new GameObject("KeyBindingInfo", typeof(RectTransform));
-            keyGo.transform.SetParent(this.Panel.transform, false);
+            // 挂 Inset 中间层（四边内缩 24px 的内容区），避免压 9-slice 边框；无 Inset 时退回面板根
+            Transform keyParent = this.Panel.transform.Find("Inset") ?? this.Panel.transform;
+            keyGo.transform.SetParent(keyParent, false);
             this.keyBindingText = keyGo.AddComponent<Text>();
             this.keyBindingText.text = InputKeyConstant.GetKeyBindingSummary();
             this.keyBindingText.font = LAB2D.AI.Dialogue.LLM.UIFontConfig.GetFont();

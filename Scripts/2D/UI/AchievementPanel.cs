@@ -84,10 +84,11 @@ namespace LAB2D.UI
             this.categoryTabButtons = new Dictionary<AchievementCategory, GameObject>();
             this.activeCategory = AchievementCategory.Combat;
 
-            this.summaryText = this.transform.Find("Summary")?.GetComponent<Text>();
-            this.currentCategoryText = this.transform.Find("CategoryTitle")?.GetComponent<Text>();
-            this.categoryTabs = this.transform.Find("CategoryTabs")?.GetComponent<RectTransform>();
-            this.scrollViewObj = this.transform.Find("ScrollView")?.gameObject;
+            // 内容都挂在 Inset 中间层下（四边内缩 24px 让内容落在 9-slice 边框内）
+            this.summaryText = this.transform.Find("Inset/Summary")?.GetComponent<Text>();
+            this.currentCategoryText = this.transform.Find("Inset/CategoryTitle")?.GetComponent<Text>();
+            this.categoryTabs = this.transform.Find("Inset/CategoryTabs")?.GetComponent<RectTransform>();
+            this.scrollViewObj = this.transform.Find("Inset/ScrollView")?.gameObject;
             if (this.scrollViewObj != null)
             {
                 // 尝试标准路径和直接子节点两种层级

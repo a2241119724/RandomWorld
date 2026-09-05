@@ -94,14 +94,15 @@ namespace LAB2D.UI
             this.uiBuilt = true;
             this.rootObj = this.gameObject;
 
-            this.infoText = this.transform.Find("Info")?.GetComponent<Text>();
+            // 内容都挂在 Inset 中间层下（四边内缩 24px 让内容落在 9-slice 边框内）
+            this.infoText = this.transform.Find("Inset/Info")?.GetComponent<Text>();
             int techCount = TechLibrary.All.Count;
             this.techRowTexts = new Text[techCount];
             this.techRowButtons = new Button[techCount];
             for (int i = 0; i < techCount; i++)
             {
-                this.techRowTexts[i] = this.transform.Find("TechRow" + i)?.GetComponent<Text>();
-                Button rowButton = this.transform.Find("TechBtn" + i)?.GetComponent<Button>();
+                this.techRowTexts[i] = this.transform.Find("Inset/TechRow" + i)?.GetComponent<Text>();
+                Button rowButton = this.transform.Find("Inset/TechBtn" + i)?.GetComponent<Button>();
                 if (rowButton != null)
                 {
                     rowButton.onClick.AddListener(this.OnTechClicked);

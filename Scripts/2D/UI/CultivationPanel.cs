@@ -100,8 +100,9 @@ namespace LAB2D.UI
             this.uiBuilt = true;
             this.rootObj = this.gameObject;
 
-            this.infoText = this.transform.Find("Info")?.GetComponent<Text>();
-            Transform buttonRow = this.transform.Find("ButtonRow");
+            // 内容都挂在 Inset 中间层下（四边内缩 24px 让内容落在 9-slice 边框内）
+            this.infoText = this.transform.Find("Inset/Info")?.GetComponent<Text>();
+            Transform buttonRow = this.transform.Find("Inset/ButtonRow");
             this.meditateButton = buttonRow != null ? buttonRow.Find("MeditateBtn")?.GetComponent<Button>() : null;
             this.meditateButtonText = this.meditateButton != null ? this.meditateButton.GetComponentInChildren<Text>() : null;
             this.breakthroughButton = buttonRow != null ? buttonRow.Find("BreakthroughBtn")?.GetComponent<Button>() : null;
@@ -111,8 +112,8 @@ namespace LAB2D.UI
             this.gongFaRowButtons = new Button[gongFaCount];
             for (int i = 0; i < gongFaCount; i++)
             {
-                this.gongFaRowTexts[i] = this.transform.Find("GongFaRow" + i)?.GetComponent<Text>();
-                Button rowButton = this.transform.Find("GongFaBtn" + i)?.GetComponent<Button>();
+                this.gongFaRowTexts[i] = this.transform.Find("Inset/GongFaRow" + i)?.GetComponent<Text>();
+                Button rowButton = this.transform.Find("Inset/GongFaBtn" + i)?.GetComponent<Button>();
                 if (rowButton != null)
                 {
                     rowButton.onClick.AddListener(this.OnGongFaClicked);
