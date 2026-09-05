@@ -18,6 +18,11 @@ namespace LAB2D.UI.Panel.PanelUI
         private const string ForceButtonName = "ForceCommand";
 
         /// <summary>
+        /// 上次强制 Toggle 状态轮询时间（1s 粒度：强制窗口到期后对勾自动弹起）。
+        /// </summary>
+        private float lastForceSyncTime;
+
+        /// <summary>
         /// 任务项
         /// </summary>
         public List<GameObject> TaskItems { get; set; }
@@ -120,11 +125,36 @@ namespace LAB2D.UI.Panel.PanelUI
                     }
                 }
 
-                // 心智层：每行末尾追加「强制命令」按钮
-                // （玩家兜底逃生阀：强制放行 60s 必接玩家悬赏，代价是怨恨/信任/好感）
-                this.EnsureForceCommandButton(taskItem, worker);
+                // 心智层：每行末尾追加「强制命令」Toggle（勾选状态 = 强制放行窗口是否生效）
+                // （玩家兜底逃生阀：勾上强制放行 60s 必接玩家悬赏，代价是怨恨/信任/好感）
+                this.EnsureForceCommandToggle(taskItem, worker);
 
                 index++;
+            }
+        }
+
+        /// <summary>
+        /// 低频轮询（1s 粒度）：强制放行窗口到期后把对勾弹起，勾选状态始终反映实际窗口。
+        /// </summary>
+        private void Update()
+        {
+            if (Time.time - this.lastForceSyncTime < 1f)
+            {
+                return;
+            }
+
+            this.lastForceSyncTime = Time.time;
+
+            List<AWorker> workers = ServiceLocator.Get<WorkerManager>().Characters;
+            if (workers == null || this.TaskItems == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < workers.Count && i < this.TaskItems.Count; i++)
+            {
+                Toggle toggle = this.TaskItems[i].transform.Find(ForceButtonName)?.GetComponent<Toggle>();
+                this.SyncForceToggleState(toggle, workers[i]);
             }
         }
 
@@ -245,70 +275,117 @@ namespace LAB2D.UI.Panel.PanelUI
         }
 
         /// <summary>
-        /// 心智层：每行末尾追加「强制命令」按钮（幂等，以节点名标识）。
-        /// 点击对该 Worker 执行 ForceCommand：放行窗口内必接玩家悬赏，代价是怨恨/信任/好感。
+        /// 心智层：每行末尾追加「强制命令」Toggle（幂等，以节点名标识）。
+        /// 勾选状态实时反映强制放行窗口（IsInForceWindow）；
+        /// 玩家勾上触发 ForceCommand：放行窗口内必接玩家悬赏，代价是怨恨/信任/好感。
         /// </summary>
-        private void EnsureForceCommandButton(GameObject taskItem, AWorker worker)
+        private void EnsureForceCommandToggle(GameObject taskItem, AWorker worker)
         {
             if (taskItem == null || worker == null)
             {
                 return;
             }
 
-            if (taskItem.transform.Find(ForceButtonName) != null)
+            Transform existing = taskItem.transform.Find(ForceButtonName);
+            if (existing != null)
             {
+                this.SyncForceToggleState(existing.GetComponent<Toggle>(), worker);
                 return;
             }
 
-            GameObject buttonGo = ServiceLocator.Get<ResourceManager>().Instantiate(
-                PrefabConstant.BUTTON_ITEM, taskItem.transform, false);
-            if (buttonGo == null)
+            // 复用行内第一个 Toggle 作模板，视觉与任务开关列一致（对勾框）
+            Transform templateTr = taskItem.transform.childCount > 1
+                ? taskItem.transform.GetChild(1)
+                : null;
+            GameObject toggleGo;
+            Toggle toggle;
+            if (templateTr != null && templateTr.GetComponent<Toggle>() != null)
             {
-                return;
+                toggleGo = Object.Instantiate(templateTr.gameObject, taskItem.transform);
+                toggle = toggleGo.GetComponent<Toggle>();
+            }
+            else
+            {
+                // 无模板时的兜底：从零创建基础 Toggle
+                toggleGo = new GameObject(ForceButtonName);
+                toggleGo.transform.SetParent(taskItem.transform, false);
+                toggleGo.transform.localScale = Vector3.one;
+                toggle = toggleGo.AddComponent<Toggle>();
             }
 
-            buttonGo.name = ForceButtonName;
+            toggleGo.name = ForceButtonName;
 
-            Text text = buttonGo.GetComponentInChildren<Text>(true);
-            if (text != null)
+            // 强制 Toggle 不是任务开关列：去掉 TaskToggleBinding，避免被当作任务类型写入
+            TaskToggleBinding binding = toggleGo.GetComponent<TaskToggleBinding>();
+            if (binding != null)
             {
-                text.text = "强制";
+                Object.Destroy(binding);
             }
 
-            RectTransform rect = buttonGo.GetComponent<RectTransform>();
+            RectTransform rect = toggleGo.GetComponent<RectTransform>();
             if (rect != null)
             {
                 rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 50f);
             }
 
-            Button button = buttonGo.GetComponent<Button>();
-            if (button != null)
+            if (toggle != null)
             {
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => this.OnForceCommandClicked(worker));
+                toggle.onValueChanged.RemoveAllListeners();
+                toggle.onValueChanged.AddListener((bool isOn) => this.OnForceCommandToggleChanged(worker, toggle));
+                this.SyncForceToggleState(toggle, worker);
             }
         }
 
         /// <summary>
-        /// 强制命令按钮点击：强制该 Worker 必接玩家悬赏（60s 窗口），怨恨/信任/好感受损。
+        /// 强制 Toggle 勾选变化：勾上触发 ForceCommand，取消则提前撤销放行窗口；
+        /// 随后把勾选状态同步回实际窗口状态（冷却中被忽略时自动回弹）。
         /// </summary>
-        private void OnForceCommandClicked(AWorker worker)
+        private void OnForceCommandToggleChanged(AWorker worker, Toggle toggle)
         {
-            if (worker == null)
+            if (worker == null || toggle == null)
             {
                 return;
             }
 
             if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
             {
-                mindService.ForceCommand(worker);
+                if (toggle.isOn)
+                {
+                    mindService.ForceCommand(worker);
+                }
+                else
+                {
+                    mindService.CancelForceCommand(worker);
+                }
             }
-            else
+            else if (toggle.isOn)
             {
                 AWorkerTask.LogProvider(
                     "[MindDiag] WorkerMindService 未注册，强制命令不可用",
                     LogManager.LogLevelEnum.Warning);
             }
+
+            this.SyncForceToggleState(toggle, worker);
+        }
+
+        /// <summary>
+        /// 把强制 Toggle 的勾选状态同步为实际强制放行窗口（不触发监听）。
+        /// </summary>
+        private void SyncForceToggleState(Toggle toggle, AWorker worker)
+        {
+            if (toggle == null || worker == null)
+            {
+                return;
+            }
+
+            AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+            bool inWindow = false;
+            if (wd != null && Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+            {
+                inWindow = mindService.IsInForceWindow(wd);
+            }
+
+            toggle.SetIsOnWithoutNotify(inWindow);
         }
     }
 }

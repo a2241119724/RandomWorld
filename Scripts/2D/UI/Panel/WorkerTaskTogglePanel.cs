@@ -100,6 +100,23 @@ namespace LAB2D.UI.Panel
                     textComponent.text = TypeToChinese[taskType];
                 }
             }
+
+            // 末尾补「强制」列头，与 TaskItem 行末尾的「强制命令」Toggle 列对齐
+            GameObject spacer = ServiceLocator.Get<ResourceManager>().Instantiate(
+                PrefabConstant.TASK_TITLE_ITEM, title, false);
+            spacer.name = "ForceCommand";
+
+            RectTransform spacerRect = spacer.GetComponent<RectTransform>();
+            if (spacerRect != null)
+            {
+                spacerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 50f);
+            }
+
+            Text spacerText = spacer.GetComponentInChildren<Text>();
+            if (spacerText != null)
+            {
+                spacerText.text = "强制";
+            }
         }
 
         /// <inheritdoc/>

@@ -176,8 +176,8 @@ namespace LAB2D.Domain.Worker
                 && Time.time - mind.LastForceCommandTime < WorkerMindConstant.ForceCommandCooldownSeconds)
             {
                 AWorkerTask.LogProvider(
-                    $"[MindDiag] {worker.name} 强制命令冷却中，忽略",
-                    LogManager.LogLevelEnum.Trace);
+                    $"[MindDiag] {worker.name} 强制命令冷却中（剩 {WorkerMindConstant.ForceCommandCooldownSeconds - (Time.time - mind.LastForceCommandTime):F1}s），忽略",
+                    LogManager.LogLevelEnum.Debug);
                 return;
             }
             mind.LastForceCommandTime = Time.time;
@@ -200,6 +200,31 @@ namespace LAB2D.Domain.Worker
             worker.ShowMindBubble(WorkerInnerMonologue.GetForcedReason());
             AWorkerTask.LogProvider(
                 $"[MindDiag] {worker.name} 被玩家强制命令 怨恨+{resentmentGain:F0} 好感-{WorkerMindConstant.ForceFavorabilityPenalty:F0}",
+                LogManager.LogLevelEnum.Debug);
+        }
+
+        /// <summary>
+        /// 玩家提前撤销强制命令：立即结束放行窗口（已付的怨恨/信任/好感代价不退还）。
+        /// 窗口本就未生效时不做任何事。
+        /// </summary>
+        public void CancelForceCommand(AWorker worker)
+        {
+            AWorker.WorkerData wd = worker?.CharacterDataLAB as AWorker.WorkerData;
+            if (wd == null)
+            {
+                return;
+            }
+
+            WorkerMindData.Ensure(wd);
+            if (Time.time >= wd.Mind.ForcedUntilTime)
+            {
+                return;
+            }
+
+            wd.Mind.ForcedUntilTime = 0f;
+            wd.Mind.LastForceCommandTime = 0f; // 解除防连击：取消后允许立即重新强制（新命令照常付代价）
+            AWorkerTask.LogProvider(
+                $"[MindDiag] {worker.name} 强制命令被玩家提前撤销",
                 LogManager.LogLevelEnum.Debug);
         }
 
