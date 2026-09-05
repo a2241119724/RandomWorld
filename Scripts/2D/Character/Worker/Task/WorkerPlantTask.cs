@@ -112,7 +112,7 @@ namespace LAB2D.Character.Worker.Task
         }
 
         /// <summary>
-        /// 建造者 — TODO: 种植功能上线后通过 FarmlandManager 调用此 Builder 激活。
+        /// 建造者 — 已接线：WorkerDecisionService.CreateSelfPlantTask（自主决策路径）经此构造。
         /// </summary>
         public class PlantTaskBuilder
         {
