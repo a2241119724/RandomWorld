@@ -22,6 +22,9 @@ namespace LAB2D.Gameplay.TurnBattle
         /// <summary>战斗进行中（Player.Update 输入拦截与检测器跳过依赖此标志）。</summary>
         public bool IsActive { get; private set; }
 
+        /// <summary>本会话回合制战斗获胜场数（会话语义不入档，成就消费——同 PillManager.TotalPillsCrafted 模式）。</summary>
+        public int TotalPlayerVictories { get; private set; }
+
         /// <summary>当前战斗状态快照（未开战为 null）。</summary>
         public TurnBattleState State { get; private set; }
 
@@ -274,6 +277,11 @@ namespace LAB2D.Gameplay.TurnBattle
                 LogManager.LogLevelEnum.Debug);
 
             TurnBattleResult result = state.Result;
+            if (result == TurnBattleResult.Victory)
+            {
+                this.TotalPlayerVictories++;
+            }
+
             this.ResetBattleState();
             this.BattleFinished?.Invoke(result);
         }

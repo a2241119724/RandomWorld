@@ -260,6 +260,15 @@ namespace LAB2D.Gameplay
                 anyChanged |= this.UpdateAchievement("worker_task_500", efficiency.TotalTasksCompleted);
             }
 
+            // 战斗 - 回合制战斗胜场（会话累计；服务未就绪时计 0）
+            int turnBattleWins = this.TryGetTurnBattleVictories();
+            anyChanged |= this.UpdateAchievement("combat_turnbattle_1", turnBattleWins);
+            anyChanged |= this.UpdateAchievement("combat_turnbattle_10", turnBattleWins);
+
+            // 社交 - 挚友人数（对玩家好感 ≥85 的 Worker 数；服务未就绪时计 0）
+            int bestFriends = this.TryGetPlayerBestFriendCount();
+            anyChanged |= this.UpdateAchievement("social_friend_first", bestFriends);
+
             // 生存 - 死亡次数（从快照读取，已累计至当前会话）
             if (snap != null)
             {
@@ -326,6 +335,35 @@ namespace LAB2D.Gameplay
             foreach (Domain.Gameplay.AncientCave.AncientCaveRuleService.AncientCaveModel cave in caveManager.Caves)
             {
                 if (cave.State == Domain.Gameplay.AncientCave.AncientCaveRuleService.CaveState.Explored)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>本会话回合制战斗胜场数（TurnBattleManager 未注册时计 0——初始化早期/测试环境）。</summary>
+        private int TryGetTurnBattleVictories()
+        {
+            return Core.ServiceLocator.TryGet(out TurnBattle.TurnBattleManager battle)
+                ? battle.TotalPlayerVictories
+                : 0;
+        }
+
+        /// <summary>对玩家好感达挚友（≥85，档位见 FavorabilityRuleService.GetAttitudeLabel）的 Worker 数；任一服务未就绪时计 0。</summary>
+        private int TryGetPlayerBestFriendCount()
+        {
+            if (!Core.ServiceLocator.TryGet(out FavorabilityManager favorability)
+                || !Core.ServiceLocator.TryGet(out Character.Worker.WorkerManager workers))
+            {
+                return 0;
+            }
+
+            int count = 0;
+            foreach (Character.Worker.AWorker worker in workers.Characters)
+            {
+                if (worker != null && favorability.GetFavorabilityWithPlayer(worker) >= 85f)
                 {
                     count++;
                 }
@@ -631,6 +669,44 @@ namespace LAB2D.Gameplay
                 ConditionTemplate = "工人累计完成 {0} 个任务",
                 TargetValue = 500,
                 Points = 150,
+                State = AchievementState.Locked,
+            });
+
+            // 社交 - 首位挚友（对玩家好感 ≥85，档位见 FavorabilityRuleService.GetAttitudeLabel）
+            this.AddAchievement(new AchievementData
+            {
+                Id = "social_friend_first",
+                Name = "以心换心",
+                Description = "与一位工人的好感达到挚友",
+                Category = AchievementCategory.Worker,
+                ConditionTemplate = "挚友人数达到 {0} 人",
+                TargetValue = 1,
+                Points = 30,
+                State = AchievementState.Locked,
+            });
+
+            // 战斗 - 回合制战斗（B 键加入大世界交战，0.2 新内容）
+            this.AddAchievement(new AchievementData
+            {
+                Id = "combat_turnbattle_1",
+                Name = "演武首胜",
+                Description = "在回合制战斗中获胜",
+                Category = AchievementCategory.Combat,
+                ConditionTemplate = "回合制战斗获胜 {0} 次",
+                TargetValue = 1,
+                Points = 15,
+                State = AchievementState.Locked,
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "combat_turnbattle_10",
+                Name = "回合宗师",
+                Description = "回合制战斗获胜10次",
+                Category = AchievementCategory.Combat,
+                ConditionTemplate = "回合制战斗获胜 {0} 次",
+                TargetValue = 10,
+                Points = 40,
                 State = AchievementState.Locked,
             });
 

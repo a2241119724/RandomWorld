@@ -71,6 +71,28 @@ namespace LAB2D.Editor.Tests.Domain
             Assert.AreEqual("修仙", AchievementTool.GetCategoryDisplayName(AchievementCategory.Cultivation));
         }
 
+        /// <summary>
+        /// 新增三成就的类别归属：回合制两入战斗、挚友入工人（面板 tab 按类别聚合，归属错则显示错页）。
+        /// </summary>
+        [Test]
+        public void RegisterAchievements_TurnBattleAndSocial_CategoriesCorrect()
+        {
+            AchievementManager manager = AchievementManager.Instance;
+            MethodInfo register = typeof(AchievementManager).GetMethod(
+                "RegisterAchievements", BindingFlags.NonPublic | BindingFlags.Instance);
+            register.Invoke(manager, null);
+
+            Dictionary<string, AchievementData> byId = new Dictionary<string, AchievementData>();
+            foreach (AchievementData a in manager.AllAchievements)
+            {
+                byId[a.Id] = a;
+            }
+
+            Assert.AreEqual(AchievementCategory.Combat, byId["combat_turnbattle_1"].Category);
+            Assert.AreEqual(AchievementCategory.Combat, byId["combat_turnbattle_10"].Category);
+            Assert.AreEqual(AchievementCategory.Worker, byId["social_friend_first"].Category);
+        }
+
         [Test]
         public void GetElapsedMinutes_0Seconds_Returns0()
         {
