@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel.PanelUI
 {
     using LAB2D;
+    using LAB2D.AI.Dialogue.LLM;
     using LAB2D.Character.Worker;
     using LAB2D.Core;
     using LAB2D.Domain.Gameplay.AwakenedPower;
@@ -14,7 +15,7 @@ namespace LAB2D.UI.Panel.PanelUI
     using GrowthData = LAB2D.Domain.Character.Growth.GrowthData;
 
     /// <summary>
-    /// Worker 心智+修仙可视化 UI — 挂载在 WorkerMindPanel 的 Panel 上，纯代码构建（无 prefab/场景依赖）。
+    /// Worker 心智+修仙可视化 UI — 挂载在 WorkerMindPanel 的 Panel 上（场景已摆放，代码只绑定引用）。
     /// 纯读展示 WorkerData.Mind（信念/意志/记忆/关系/执念）+ Personality + GrowthData（境界/灵根/功法/异能）。
     /// 左列 Worker 选择，右侧详情分区滚动；激活期每 RefreshInterval 秒全量刷新。
     /// </summary>
@@ -23,7 +24,7 @@ namespace LAB2D.UI.Panel.PanelUI
         /// <summary>详情刷新间隔（秒），避免每帧重建行 UI。</summary>
         private const float RefreshInterval = 1.5f;
 
-        // ---- 骨架引用（Awake 懒构建） ----
+        // ---- 骨架引用（Awake 从场景绑定） ----
         private Transform workerListContent;
         private Transform detailContent;
         private Text emptyHintText;
@@ -92,7 +93,7 @@ namespace LAB2D.UI.Panel.PanelUI
 
         public void Awake()
         {
-            this.BuildUi();
+            this.BindReferences();
         }
 
         public void OnEnable()
@@ -117,7 +118,7 @@ namespace LAB2D.UI.Panel.PanelUI
         {
             if (this.detailContent == null)
             {
-                this.BuildUi();
+                this.BindReferences();
             }
 
             if (this.detailContent == null)
@@ -420,128 +421,22 @@ namespace LAB2D.UI.Panel.PanelUI
             }
         }
 
-        // ---- UI 构建 ----
+        // ---- UI 绑定 ----
 
-        /// <summary>构建静态骨架：标题/关闭按钮/左列 Worker 滚动列表/右侧详情滚动区。</summary>
-        private void BuildUi()
+        /// <summary>
+        /// 绑定场景骨架引用：WorkerList/Detail 的 Content 与 EmptyHint（结构由场景摆放）。
+        /// 幂等；结构缺失时保持 null，调用方各自判空跳过。
+        /// </summary>
+        private void BindReferences()
         {
             if (this.detailContent != null)
             {
                 return;
             }
 
-            RectTransform root = (RectTransform)this.transform;
-            root.anchorMin = root.anchorMax = new Vector2(0.5f, 0.5f);
-            root.pivot = new Vector2(0.5f, 0.5f);
-            root.anchoredPosition = Vector2.zero;
-            root.sizeDelta = new Vector2(780f, 560f);
-
-            Image bg = this.gameObject.AddComponent<Image>();
-            bg.color = new Color(0.08f, 0.09f, 0.12f, 0.96f);
-
-            // 标题
-            Text title = CreateText(root, "Title", "心智 · 修仙", 24, TitleColor);
-            SetAnchors(title.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1));
-            title.rectTransform.anchoredPosition = new Vector2(0f, -14f);
-            title.rectTransform.sizeDelta = new Vector2(-140f, 28f);
-            title.alignment = TextAnchor.MiddleLeft;
-
-            // 关闭按钮
-            GameObject closeGo = new GameObject("CloseBtn", typeof(RectTransform));
-            closeGo.transform.SetParent(root, false);
-            SetAnchors((RectTransform)closeGo.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1));
-            ((RectTransform)closeGo.transform).anchoredPosition = new Vector2(-16f, -16f);
-            ((RectTransform)closeGo.transform).sizeDelta = new Vector2(72f, 28f);
-            Image closeBg = closeGo.AddComponent<Image>();
-            closeBg.color = new Color(0.85f, 0.30f, 0.28f, 0.9f);
-            Button closeBtn = closeGo.AddComponent<Button>();
-            closeBtn.targetGraphic = closeBg;
-            Text closeText = CreateText(closeGo.transform, "Text", "× 关闭", 12, Color.white);
-            SetAnchors(closeText.rectTransform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f));
-            closeText.rectTransform.offsetMin = Vector2.zero;
-            closeText.rectTransform.offsetMax = Vector2.zero;
-            closeText.alignment = TextAnchor.MiddleCenter;
-            // 点击回调由 WorkerMindPanel.BindUI 统一绑定（走 PanelController 栈关闭）
-
-            // 左列 Worker 列表（x: 10..180）
-            this.workerListContent = this.CreateScroll(root, "WorkerList", new Vector2(0f, 0f), new Vector2(0.225f, 1f), 10f, -44f, -10f, -10f);
-
-            // 空态提示
-            GameObject hintGo = new GameObject("EmptyHint", typeof(RectTransform));
-            hintGo.transform.SetParent(this.workerListContent.parent, false);
-            RectTransform hintRect = (RectTransform)hintGo.transform;
-            SetAnchors(hintRect, Vector2.zero, Vector2.one, new Vector2(0.5f, 1f));
-            hintRect.offsetMin = Vector2.zero;
-            hintRect.offsetMax = Vector2.zero;
-            this.emptyHintText = hintGo.AddComponent<Text>();
-            this.emptyHintText.text = "暂无 Worker\n（招募后显示）";
-            this.emptyHintText.fontSize = 12;
-            this.emptyHintText.color = RowDimColor;
-            this.emptyHintText.alignment = TextAnchor.MiddleCenter;
-            this.emptyHintText.horizontalOverflow = HorizontalWrapMode.Wrap;
-            this.emptyHintText.verticalOverflow = VerticalWrapMode.Overflow;
-            this.emptyHintText.gameObject.SetActive(false);
-
-            // 右侧详情（x: 190..右边界）
-            this.detailContent = this.CreateScroll(root, "Detail", new Vector2(0.245f, 0f), new Vector2(1f, 1f), 10f, -44f, -10f, -10f);
-        }
-
-        /// <summary>
-        /// 创建纯代码 ScrollView，返回 Content Transform（VerticalLayoutGroup 向下生长）。
-        /// offsets 顺序：left/top/right/bottom（anchoredPosition 语义，top/bottom 为负）。
-        /// </summary>
-        private Transform CreateScroll(RectTransform parent, string name, Vector2 anchorMin, Vector2 anchorMax,
-            float left, float top, float right, float bottom)
-        {
-            GameObject scrollGo = new GameObject(name, typeof(RectTransform));
-            scrollGo.transform.SetParent(parent, false);
-            RectTransform scrollRect = (RectTransform)scrollGo.transform;
-            SetAnchors(scrollRect, anchorMin, anchorMax, new Vector2(0.5f, 0.5f));
-            scrollRect.offsetMin = new Vector2(left, bottom);
-            scrollRect.offsetMax = new Vector2(-right, -top);
-
-            Image scrollBg = scrollGo.AddComponent<Image>();
-            scrollBg.color = new Color(1f, 1f, 1f, 0.05f);
-
-            GameObject viewportGo = new GameObject("Viewport", typeof(RectTransform));
-            viewportGo.transform.SetParent(scrollGo.transform, false);
-            RectTransform viewportRect = (RectTransform)viewportGo.transform;
-            SetAnchors(viewportRect, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f));
-            viewportRect.offsetMin = Vector2.zero;
-            viewportRect.offsetMax = Vector2.zero;
-            viewportGo.AddComponent<Image>().color = Color.clear;
-            viewportGo.AddComponent<RectMask2D>();
-
-            GameObject contentGo = new GameObject("Content", typeof(RectTransform));
-            contentGo.transform.SetParent(viewportGo.transform, false);
-            RectTransform contentRect = (RectTransform)contentGo.transform;
-            SetAnchors(contentRect, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f));
-            contentRect.anchoredPosition = Vector2.zero;
-            contentRect.sizeDelta = Vector2.zero;
-
-            VerticalLayoutGroup layout = contentGo.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(6, 6, 6, 6);
-            layout.spacing = 3f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            layout.childScaleWidth = false;
-            layout.childScaleHeight = false;
-
-            ContentSizeFitter fitter = contentGo.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            ScrollRect scroll = scrollGo.AddComponent<ScrollRect>();
-            scroll.content = contentRect;
-            scroll.viewport = viewportRect;
-            scroll.horizontal = false;
-            scroll.vertical = true;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.scrollSensitivity = 20f;
-
-            return contentGo.transform;
+            this.workerListContent = this.transform.Find("WorkerList/Viewport/Content");
+            this.detailContent = this.transform.Find("Detail/Viewport/Content");
+            this.emptyHintText = this.transform.Find("WorkerList/Viewport/EmptyHint")?.GetComponent<Text>();
         }
 
         private void CreateSectionTitle(Transform parent, string text)
@@ -629,7 +524,7 @@ namespace LAB2D.UI.Panel.PanelUI
             t.text = text;
             t.fontSize = fontSize;
             t.color = color;
-            t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            t.font = UIFontConfig.GetFont();
             t.horizontalOverflow = HorizontalWrapMode.Wrap;
             t.verticalOverflow = VerticalWrapMode.Overflow;
             t.raycastTarget = false;

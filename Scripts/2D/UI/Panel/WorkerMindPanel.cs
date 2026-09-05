@@ -1,6 +1,7 @@
 namespace LAB2D.UI.Panel
 {
     using LAB2D;
+    using LAB2D.Character.Worker.Task;
     using LAB2D.Core;
     using LAB2D.UI.Panel.PanelUI;
     using UnityEngine;
@@ -9,7 +10,7 @@ namespace LAB2D.UI.Panel
     /// <summary>
     /// Worker 心智面板 — 记忆流/关系网/信念四轴/对玩家意志/人格/修仙页可视化。
     /// 纯读面板（不改任何存档数据），IsOverlay=true 不暂停游戏，F12 切换（GlobalInputProcessor 分发）。
-    /// UI 全部由 WorkerMindUI 代码构建（Game.unity 无法手改 YAML，不走场景摆放/prefab）。
+    /// UI 骨架由 Game.unity 场景摆放（WorkerMindUI 组件已挂 Panel 上），代码只绑定引用、不创建结构。
     /// </summary>
     public class WorkerMindPanel : ABasePanel<WorkerMindPanel>
     {
@@ -18,32 +19,7 @@ namespace LAB2D.UI.Panel
         public WorkerMindPanel()
         {
             this.Name = "WorkerMindPanel";
-
-            // 安全加载：先找场景对象 → 最后创建空占位（无 prefab，结构由 WorkerMindUI 代码构建）
-            Transform parent = this.Controller?.Parent;
-            if (parent == null)
-            {
-                GameObject uiRoot = GameObject.FindGameObjectWithTag(Constant.TagConstant.UI_TAG);
-                parent = uiRoot?.transform;
-            }
-
-            if (parent != null)
-            {
-                Transform existing = parent.Find(this.Name);
-                if (existing != null)
-                {
-                    this.Panel = existing.gameObject;
-                }
-                else
-                {
-                    this.Panel = new GameObject(this.Name, typeof(RectTransform));
-                    this.Panel.transform.SetParent(parent, false);
-                }
-
-                this.Panel.name = this.Name;
-                this.Panel.SetActive(false);
-            }
-
+            this.Init();
             this.BindUI();
         }
 
@@ -57,7 +33,7 @@ namespace LAB2D.UI.Panel
             this.mindUI = this.Panel.GetComponent<WorkerMindUI>();
             if (this.mindUI == null)
             {
-                this.mindUI = this.Panel.AddComponent<WorkerMindUI>();
+                AWorkerTask.LogProvider("WorkerMindPanel: 场景 Panel 上缺少 WorkerMindUI 组件", LogManager.LogLevelEnum.Warning);
             }
 
             Button closeBtn = this.Panel.transform.Find("CloseBtn")?.GetComponent<Button>();
