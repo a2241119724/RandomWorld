@@ -7,6 +7,7 @@
   canvas-match       屏幕空间 CanvasScaler match 统一 0.5（断言 4 处；世界空间 9x9 排除）
   strip-nested-scaler 删除 2 个嵌套 Canvas 的冗余 CanvasScaler 组件（多重断言）
   bestfit-report     报告 m_BestFit: 1 位置（不改）
+  bestfit-fix        m_BestFit: 1 → 0（前置校验同块字体 ark-pixel + 字号 12 整数倍，不合法拒改）
 
 默认 dry-run 只报告；--apply 生效写回。所有写回操作幂等（重跑无变化）。
 """
@@ -182,15 +183,48 @@ def cmd_bestfit_report(apply):
     print("bestfit-report: %d 处 m_BestFit: 1（只报告，按计划不改）" % n)
 
 
+def cmd_bestfit_fix(apply):
+    """m_BestFit: 1 → 0（2026-09-06 落地，原 report 模式的执行版）。
+
+    前置校验（命中任一则拒改该文件）：同块 m_Font 必须 ark-pixel、m_FontSize 必须 12 整数倍——
+    BestFit 关闭后字号回落 m_FontSize，两者不合法会把「任意缩放糊点阵」换成「内置字体/非法字号糊点阵」。
+    """
+    for f in iter_targets():
+        text = f.read_text(encoding="utf-8")
+        if "m_BestFit: 1" not in text:
+            continue
+        bad = []
+        for header, block, off in split_blocks(text):
+            if "m_BestFit: 1" not in block:
+                continue
+            font_ok = ARK_REF in block
+            m = re.search(r"m_FontSize: (\d+)", block)
+            size_ok = m is not None and int(m.group(1)) % 12 == 0 and int(m.group(1)) > 0
+            if not (font_ok and size_ok):
+                bad.append((header, font_ok, m.group(1) if m else "无"))
+        rel = f.relative_to(ASSETS)
+        if bad:
+            print("  %s 跳过：%d 块前置校验不过（字体/字号非法，需先修配套）%s"
+                  % (rel, len(bad), bad[:3]))
+            continue
+        n = text.count("m_BestFit: 1")
+        if apply:
+            f.write_text(text.replace("m_BestFit: 1", "m_BestFit: 0"), encoding="utf-8")
+            assert "m_BestFit: 1" not in f.read_text(encoding="utf-8"), "写回后仍有残留"
+        print("  %s：%d 处 m_BestFit 1→0%s（字体/字号前置校验全过）"
+              % (rel, n, "已写回" if apply else "（dry-run）"))
+    print("bestfit-fix: 完成")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["font-size", "arial-replace", "canvas-match",
-                                    "strip-nested-scaler", "bestfit-report", "all"])
+                                    "strip-nested-scaler", "bestfit-report", "bestfit-fix", "all"])
     ap.add_argument("--apply", action="store_true", help="生效写回（默认 dry-run）")
     a = ap.parse_args()
     cmds = {"font-size": cmd_font_size, "arial-replace": cmd_arial_replace,
             "canvas-match": cmd_canvas_match, "strip-nested-scaler": cmd_strip_nested_scaler,
-            "bestfit-report": cmd_bestfit_report}
+            "bestfit-report": cmd_bestfit_report, "bestfit-fix": cmd_bestfit_fix}
     todo = cmds.values() if a.cmd == "all" else [cmds[a.cmd]]
     for fn in todo:
         print("== %s ==" % fn.__name__)
