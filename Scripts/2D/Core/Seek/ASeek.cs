@@ -480,6 +480,22 @@ namespace LAB2D.Core.Seek
             this.LastStuckResult = LAB2D.BugCheckResult.None;
         }
 
+        // ---- MoveDiag/SeekDiag 热路径日志零分配化（100 Worker 卡顿治理 2026-09-06）----
+        // LogProviderThrottled 的 key 插值含 .name（Unity getter 每次分配新串），lambda 捕获
+        // 局部变量生成闭包——正对墙/贴墙滑动/新路径消费在 100 Worker 场景是常态路径，
+        // 即使节流命中也在每次进入时白付 key 串 + 闭包。缓存 key 与委托（委托体只读实例字段，
+        // 仅捕获 this，??= 首次构造后复用）；命中节流时委托体内部的 .name/插值才求值（2s 一条，可接受）。
+        private string seekPathKey;
+        private string wallSlideKey;
+        private string wallHeadOnKey;
+        private Vector2 slideDirDiag;      // WallSlideEnter 委托读（进入滑动时刻的方向）
+        private Vector3 slidePosDiag;      // WallSlideEnter 委托读
+        private RaycastHit2D headOnHitDiag; // WallHeadOn 委托读（命中时刻的射线结果）
+        private Vector3 headOnPosDiag;     // WallHeadOn 委托读
+        private Func<string> seekPathDiag;
+        private Func<string> wallSlideDiag;
+        private Func<string> wallHeadOnDiag;
+
         /// <summary>
         /// 根据已发布的路径移动。路径使用游标推进，避免 RemoveAt(0) 搬移元素。
         /// </summary>
@@ -495,36 +511,36 @@ namespace LAB2D.Core.Seek
 
             Vector3 characterPosition = this.Character.transform.position;
 
-            // 新路径首次消费：记录压缩路径点 + 后台线程填写的 A* 原始 path/压缩跳转诊断，
-            // 验证合并路径是否合理（门口卡住排查 2026-08-16）。Trace + 节流 2s/条。
-            if (result.PathIndex == 0 && (result.Path.Count > 0 || result.RawPathDiag != null))
+            // 新路径首次消费：记录压缩路径点，验证合并路径是否合理（门口卡住排查 2026-08-16 起
+            // 保留的常规观察）。Trace + 节流 2s/条。原 RawPathDiag/CompressJumpDiag 后台诊断
+            // 已随排查结案删除（后台每次寻路无条件拼串 ~800 条/秒，见 bug-fixes.md 2026-09-06）。
+            if (result.PathIndex == 0 && result.Path.Count > 0)
             {
-                // 惰性求值：每次消费新路径都会进入此处，但被节流时不再付 O(路径长度) 的
-                // 路径串拼接（原实现节流也逐点 += 拼接整条路径）
-                AWorkerTask.LogProviderThrottled(
-                    $"{this.Character.name}|SeekPath", 2f,
-                    () =>
+                // 惰性求值 + key/委托缓存：每次消费新路径都会进入此处，被节流时不付
+                // key 插值、闭包与 O(路径长度) 的路径串拼接（委托体读 this.currentResult，
+                // 同步执行期间与局部 result 同一实例）。
+                if (this.seekPathDiag == null)
+                {
+                    this.seekPathKey = $"{this.Character.name}|SeekPath";
+                    this.seekPathDiag = () =>
                     {
+                        SeekResult current = this.currentResult;
+                        if (current == null)
+                        {
+                            return string.Empty;
+                        }
+
                         string pathDesc = string.Empty;
-                        for (int i = 0; i < result.Path.Count; i++)
+                        for (int i = 0; i < current.Path.Count; i++)
                         {
-                            pathDesc += $"({result.Path[i].x},{result.Path[i].y})";
+                            pathDesc += $"({current.Path[i].x},{current.Path[i].y})";
                         }
 
-                        string diag = string.Empty;
-                        if (result.RawPathDiag != null)
-                        {
-                            diag += $" A*原始={result.RawPathDiag}";
-                        }
+                        return $"[SeekDiag] {this.Character.name} 压缩路径[{current.Path.Count}] {pathDesc}";
+                    };
+                }
 
-                        if (result.CompressJumpDiag != null)
-                        {
-                            diag += $" 跳转={result.CompressJumpDiag}";
-                        }
-
-                        return $"[SeekDiag] {this.Character.name} 压缩路径[{result.Path.Count}] {pathDesc}{diag}";
-                    },
-                    LogManager.LogLevelEnum.Trace);
+                AWorkerTask.LogProviderThrottled(this.seekPathKey, 2f, this.seekPathDiag, LogManager.LogLevelEnum.Trace);
             }
 
             Vector3 worldPos;
@@ -618,12 +634,18 @@ namespace LAB2D.Core.Seek
                             {
                                 this.slideEnterDir = probeDir; // 进入滑动：固定探测方向（指向墙）
                                 this.slidingAlongWall = true;
-                                AWorkerTask.LogProviderThrottled(
-                                    $"{this.Character.name}|WallSlideEnter", 2f,
-                                    // 惰性求值：贴墙探测每帧运行，被节流时不构造插值串
-                                    () => $"[MoveDiag] {this.Character.name} 贴墙滑动 dir=({slideN.x:F2},{slideN.y:F2}) " +
-                                        $"pos=({characterPosition.x:F2},{characterPosition.y:F2})",
-                                    LogManager.LogLevelEnum.Debug);
+                                // key/委托缓存零分配（见字段区注释）：方向与位置拷入实例字段供委托读
+                                this.slideDirDiag = slideN;
+                                this.slidePosDiag = characterPosition;
+                                if (this.wallSlideDiag == null)
+                                {
+                                    this.wallSlideKey = $"{this.Character.name}|WallSlideEnter";
+                                    this.wallSlideDiag = () => $"[MoveDiag] {this.Character.name} 贴墙滑动 " +
+                                        $"dir=({this.slideDirDiag.x:F2},{this.slideDirDiag.y:F2}) " +
+                                        $"pos=({this.slidePosDiag.x:F2},{this.slidePosDiag.y:F2})";
+                                }
+
+                                AWorkerTask.LogProviderThrottled(this.wallSlideKey, 2f, this.wallSlideDiag, LogManager.LogLevelEnum.Debug);
                             }
                         }
                     }
@@ -644,28 +666,35 @@ namespace LAB2D.Core.Seek
                         // 交叉验证「可通行=物理真值」是否一致（见 bug-fixes.md）。
                         // 卡床排查 2026-08-16：追加命中格的「网格判定/缓存判定」分叉诊断——
                         // 物理碰撞体存在（此分支已命中）但网格/缓存判可通即分叉，锁定 UpdateCell 失效点。
-                        // 惰性求值：命中格换算/网格与缓存可达性查询全部移入日志委托——此分支在
-                        // 正对墙时每帧进入，原实现即使被节流也每帧白付 3 次地图查询 + 插值串分配。
-                        AWorkerTask.LogProviderThrottled(
-                            $"{this.Character.name}|WallHeadOn", 2f,
-                            () =>
+                        // 零分配化（2026-09-06）：key/委托缓存（见字段区注释），命中结果与位置拷入
+                        // 实例字段供委托读——此分支在正对墙时每帧进入，原实现即使被节流也每帧
+                        // 白付 key 插值 + 闭包；命中格换算/网格与缓存可达性查询仍在委托内惰性执行。
+                        this.headOnHitDiag = hit;
+                        this.headOnPosDiag = characterPosition;
+                        if (this.wallHeadOnDiag == null)
+                        {
+                            this.wallHeadOnKey = $"{this.Character.name}|WallHeadOn";
+                            this.wallHeadOnDiag = () =>
                             {
-                                Vector3Int blockCell = s_tileMap.WorldPosToMapPos(new Vector3(hit.point.x, hit.point.y, 0));
-                                string blocker = hit.collider != null ? $"{hit.collider.name}:({blockCell.x},{blockCell.y})" : "?";
+                                Vector3Int blockCell = s_tileMap.WorldPosToMapPos(new Vector3(this.headOnHitDiag.point.x, this.headOnHitDiag.point.y, 0));
+                                Collider2D hitCollider = this.headOnHitDiag.collider;
+                                string blocker = hitCollider != null ? $"{hitCollider.name}:({blockCell.x},{blockCell.y})" : "?";
                                 bool blockGridReach = ASeek.IsCanReach(blockCell);
                                 bool blockCacheWalk = WalkabilityCache.IsWalkable(blockCell.x, blockCell.y);
                                 string neighborDiag = string.Empty;
                                 if (blockGridReach || blockCacheWalk)
                                 {
-                                    Vector3Int cur = s_tileMap.WorldPosToMapPos(new Vector3(characterPosition.x, characterPosition.y, 0));
+                                    Vector3Int cur = s_tileMap.WorldPosToMapPos(this.headOnPosDiag);
                                     neighborDiag = $" 站在=({cur.x},{cur.y}) 网格可通={ASeek.IsCanReach(cur)} 缓存可通={WalkabilityCache.IsWalkable(cur.x, cur.y)}";
                                 }
 
-                                return $"[MoveDiag] {this.Character.name} 正对墙(保持速度,物理挡) dist={hit.distance:F2} " +
-                                    $"pos=({characterPosition.x:F2},{characterPosition.y:F2}) hit={blocker} " +
+                                return $"[MoveDiag] {this.Character.name} 正对墙(保持速度,物理挡) dist={this.headOnHitDiag.distance:F2} " +
+                                    $"pos=({this.headOnPosDiag.x:F2},{this.headOnPosDiag.y:F2}) hit={blocker} " +
                                     $"网格可通={blockGridReach} 缓存可通={blockCacheWalk}{neighborDiag}";
-                            },
-                            LogManager.LogLevelEnum.Debug);
+                            };
+                        }
+
+                        AWorkerTask.LogProviderThrottled(this.wallHeadOnKey, 2f, this.wallHeadOnDiag, LogManager.LogLevelEnum.Debug);
                     }
                 }
             }
@@ -1177,25 +1206,11 @@ namespace LAB2D.Core.Seek
 
             public int PathIndex { get; set; }
 
-            /// <summary>
-            /// 卡床排查 2026-08-16：A* 原始 path 头几跳（后台线程填充，纯字符串无 Unity 依赖）。
-            /// 主线程 MoveByPath 在 PathIndex==0 时打印，用于核对「压缩首点需经过缓存不可通格」矛盾。
-            /// 后台线程只写、主线程只在 currentResult 就位后读，无并发写入同一实例的窗口。
-            /// </summary>
-            public string RawPathDiag;
-
-            /// <summary>
-            /// 卡床排查 2026-08-16：压缩跳转轨迹（起点→落点 + 最近失败候选），后台线程填充。
-            /// </summary>
-            public string CompressJumpDiag;
-
             internal void Reset()
             {
                 this.IsReachable = true;
                 this.Path.Clear();
                 this.PathIndex = 0;
-                this.RawPathDiag = null;
-                this.CompressJumpDiag = null;
             }
         }
     }

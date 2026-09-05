@@ -639,6 +639,14 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// IsCanReach 的 PosMap 查询复用键：TryGetValue 只读 key 的字段（GetHashCode/Equals），
+        /// 不保存引用，复用安全。敌人 LOS Bresenham 逐格 + WalkabilityCache 批量更新每秒
+        /// 数万次调用，每次 new Vector3IntLAB 是最大的稳定分配源（100 Worker 卡顿治理 2026-09-06）。
+        /// 仅主线程使用（GetColliderType 是 icall，本方法不可能在后台线程跑）。
+        /// </summary>
+        private readonly Vector3IntLAB canReachKey = new Vector3IntLAB(0, 0, 0);
+
+        /// <summary>
         /// 是否可以通行,Worker寻路时使用。
         /// 以物理碰撞体为唯一真值：GetColliderType 读取 cell 当前碰撞体
         /// （SetTile 时取 tile 资产默认 m_ColliderType，SetColliderType 覆盖它），
@@ -662,8 +670,10 @@ namespace LAB2D.Map
             // 完成 + IsPass=false → 同样不可通行。
             if (this.BuildMapDataLAB?.PosMap != null)
             {
-                Vector3IntLAB key = Vector3IntLAB.ToVector3IntLAB(posMap);
-                if (this.BuildMapDataLAB.PosMap.TryGetValue(key, out BuildTileData data) && data.IsComplete)
+                this.canReachKey.X = posMap.x;
+                this.canReachKey.Y = posMap.y;
+                this.canReachKey.Z = posMap.z;
+                if (this.BuildMapDataLAB.PosMap.TryGetValue(this.canReachKey, out BuildTileData data) && data.IsComplete)
                 {
                     BuildItemData item = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name);
                     if (item != null && !item.IsPass)

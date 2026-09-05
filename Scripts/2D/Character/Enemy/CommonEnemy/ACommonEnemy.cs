@@ -86,6 +86,21 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         public override void Awake()
         {
             base.Awake();
+
+            // 物理配置（对齐 ASeek 构造器惯例，100 敌人卡顿治理 2026-09-06）：
+            // gravityScale=0 —— 语义防御：敌人 transform 直写移动（MoveToForward），
+            //   无重力下落语义；当前全局重力已是 (0,0)，此设置保证将来重力改动不波及敌人。
+            // freezeRotation=true —— 旋转由 RotateTo 直写 transform.rotation 驱动，
+            //   冻结 rb 旋转积分防物理扭矩与直写互相打架（2026-08-15 冻结 Z 根治抖动同源）。
+            // 注意：不动 interpolation（与 transform 直写移动互相打架）、不改移动方式
+            //（rb.MovePosition 在 Worker 上实测"又慢又卡"被否，见 bug-fixes.md 2026-08-15）。
+            Rigidbody2D rb = this.GetComponent<Rigidbody2D>();
+            if (rb != null)
+            {
+                rb.gravityScale = 0f;
+                rb.freezeRotation = true;
+            }
+
             this.Manager = new CommonEnemyStateManager<ICharacterState, ACommonEnemyState.TypeEnum, ACommonEnemy>(this);
         }
 

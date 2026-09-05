@@ -159,6 +159,14 @@ namespace LAB2D.Character.Worker
         public bool HasPendingTaskInterrupt { get; private set; }
 
         /// <summary>
+        /// 帧错相（0~63，实例 ID 低位）— Worker 侧所有 <c>frameCount % N</c> 周期门控
+        /// 统一改用 <c>(frameCount + FramePhase) % N</c>，把 100 个 Worker 的周期性工作
+        /// （生存检测/人格更新/状态文本刷新）摊到不同帧，消除全员同帧共振的周期尖峰
+        ///（100 Worker 卡顿治理 2026-09-06；惯例同 SpatialGrid 错相，补码低位对负 ID 安全）。
+        /// </summary>
+        public int FramePhase { get; private set; }
+
+        /// <summary>
         /// Worker的床
         /// </summary>
         public ABed BedItem { get; set; }
@@ -177,6 +185,7 @@ namespace LAB2D.Character.Worker
         public override void Awake()
         {
             base.Awake();
+            this.FramePhase = this.GetInstanceID() & 63; // 帧错相（见属性注释）
             this.basicAttribute = new Attribute(1.0f, 1.0f, 1.0f, 1.0f, 0.05f, 1.0f, 1.0f, 1.0f);
             this.CharacterDataLAB = new WorkerData();
             this.CharacterDataLAB.Character = this;
@@ -284,7 +293,8 @@ namespace LAB2D.Character.Worker
             //（原仅 Seek 生效——Move/Work 途中饥饿/疲劳不会被打断觅食/休息）。
             // 先于延迟打断消费：生存优先，且 GiveUpTask → ChangeState(Seek) → OnEnter
             // 决策管线完成新决策与寻路（单次决策）。
-            if (Time.frameCount % 10 == 0)
+            // +FramePhase 错相：100 Worker 的生存检测摊到 10 帧窗口内不同帧（见属性注释）
+            if ((Time.frameCount + this.FramePhase) % 10 == 0)
             {
                 this.CheckSurvivalEmergency();
             }
@@ -325,8 +335,8 @@ namespace LAB2D.Character.Worker
                 this.TryConsumeHealthPotion();
             }
 
-            // 每 60 帧更新人格：饥饿/疲劳/精气神导致心情下降
-            if (Time.frameCount % 60 == 0)
+            // 每 60 帧更新人格：饥饿/疲劳/精气神导致心情下降（+FramePhase 错相摊帧）
+            if ((Time.frameCount + this.FramePhase) % 60 == 0)
             {
                 WorkerData wd = this.CharacterDataLAB as WorkerData;
                 if (wd != null)
@@ -1246,7 +1256,8 @@ namespace LAB2D.Character.Worker
 
         private void UpdateDialoguePauseText(bool force = false)
         {
-            if (!force && Time.frameCount % 60 != 0)
+            // +FramePhase 错相（见属性注释）；对话暂停者通常个位数，顺手保持一致
+            if (!force && (Time.frameCount + this.FramePhase) % 60 != 0)
             {
                 return;
             }

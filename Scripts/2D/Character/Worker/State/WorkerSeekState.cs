@@ -157,8 +157,8 @@ namespace LAB2D.Character.Worker.State
             // 紧急生存检测已上移至 AWorker.CheckSurvivalEmergency（所有状态生效，
             // 原"仅 Seek 生效 + GiveUpTask 重入后再二次决策"的双重决策缺陷一并消除）。
 
-            // 每60帧刷新一次
-            if (Time.frameCount % 60 == 0)
+            // 每60帧刷新一次（+FramePhase 错相：100 Worker 文本刷新摊帧，见 AWorker.FramePhase 注释）
+            if ((Time.frameCount + this.Character.FramePhase) % 60 == 0)
             {
                 this.builder.Clear();
                 this.Character.WorkerStateText.text = this.builder.Append(this.preString)

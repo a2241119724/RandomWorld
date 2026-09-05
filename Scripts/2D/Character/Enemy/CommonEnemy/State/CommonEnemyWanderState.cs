@@ -27,6 +27,19 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         /// <summary>感知目标轮询索引:跨帧依次扫过全部玩家+Worker.</summary>
         private int senseTargetIndex;
 
+        // ---- 受阻换向日志零分配化（100 敌人卡顿治理 2026-09-06）----
+        // 原实现受阻分支每次无条件拼 hitDesc（collider.name + LayerToName 两次字符串分配）
+        // + key 插值（.name getter 每次分配）+ 新闭包委托，即使日志被节流也白付；
+        // 改为命中 collider 存字段（节流命中时才求值 name/layer）+ key/委托构造一次复用。
+        /// <summary>最近一次前方受阻命中的 collider（PickNewDirection 会覆盖 LastProbeHit，故先存引用）。</summary>
+        private Collider2D lastBlockedCollider;
+
+        /// <summary>受阻换向日志的节流 key（Character.name 构造一次；同类型敌人同名 → 全类型共享节流，与原行为一致）。</summary>
+        private string rerouteLogKey;
+
+        /// <summary>受阻换向日志消息委托（构造一次，体内延迟求值 collider 详情/位置/角度）。</summary>
+        private System.Func<string> rerouteLogMessage;
+
         public CommonEnemyWanderState(ACommonEnemy character)
             : base(character)
         {
@@ -109,21 +122,27 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             // 新方向下帧继续检测）。撞墙不再只依赖 OnCollisionStay2D 事后熔断。
             if (this.Character.IsForwardBlocked(direction))
             {
-                // 先保存命中详情（PickNewDirection 的候选预判会覆盖 LastProbeHit），再换向
-                Collider2D hitCol = this.Character.LastProbeHit.collider;
-                string hitDesc = hitCol != null
-                    ? $"{hitCol.name}@{LayerMask.LayerToName(hitCol.gameObject.layer)}"
-                    : "无";
+                // 先存命中 collider 引用（PickNewDirection 的候选预判会覆盖 LastProbeHit 字段，
+                // 但 collider 引用本身不受影响），name/layer 延迟到节流命中时才求值（见字段注释）
+                this.lastBlockedCollider = this.Character.LastProbeHit.collider;
                 this.PickNewDirection();
-                AWorkerTask.LogProviderThrottled(
-                    $"{this.Character.name}|WanderReroute", 2f,
-                    // 惰性求值：受阻检测每帧运行，hitDesc 须在 PickNewDirection 前取（覆盖 LastProbeHit）
-                    // 故保持立即求值；位置与角度的插值串被节流时不再构造
-                    () =>
+
+                // key/委托构造一次复用：受阻检测每帧运行，被节流时零分配
+                if (this.rerouteLogMessage == null)
+                {
+                    this.rerouteLogKey = $"{this.Character.name}|WanderReroute";
+                    this.rerouteLogMessage = () =>
                     {
                         Vector3 pos = this.Character.transform.position;
+                        string hitDesc = this.lastBlockedCollider != null
+                            ? $"{this.lastBlockedCollider.name}@{LayerMask.LayerToName(this.lastBlockedCollider.gameObject.layer)}"
+                            : "无";
                         return $"[EnemyDiag] {this.Character.name} 前方受阻换向 hit={hitDesc} pos=({pos.x:F1},{pos.y:F1}) newAngle={this.rotationAngle:F0}";
-                    },
+                    };
+                }
+
+                AWorkerTask.LogProviderThrottled(
+                    this.rerouteLogKey, 2f, this.rerouteLogMessage,
                     LogManager.LogLevelEnum.Debug);
                 return;
             }

@@ -452,6 +452,10 @@ namespace LAB2D.AI.Worker
         /// <param name="worker">目标 Worker。</param>
         /// <param name="wd">Worker 数据。</param>
         /// <returns>可执行的决策；null 表示模型不可用或输出不可行，应回退硬规则。</returns>
+        /// <summary>决策特征复用 buffer（Extract 用完即弃，PredictActionIndex 只读；
+        /// 与 WorkerFeatureExtractor.Extract 的 buffer 重载配套，决策热路径零分配）。</summary>
+        private readonly float[] featureBuffer = new float[WorkerFeatureExtractor.FeatureDim];
+
         private Decision? ModelDecide(AWorker worker, AWorker.WorkerData wd)
         {
             WorkerModelInference model = WorkerModelInference.Instance;
@@ -463,7 +467,9 @@ namespace LAB2D.AI.Worker
                 return null;
             }
 
-            float[] features = WorkerFeatureExtractor.Extract(worker, this.ScanRadius);
+            // buffer 复用（Extract 用完即弃、PredictActionIndex 只读）：~40 决策/秒 × 100 Worker
+            // 不再每次 new float[41]（100 Worker 卡顿治理 2026-09-06）
+            float[] features = WorkerFeatureExtractor.Extract(worker, this.ScanRadius, this.featureBuffer);
             int actionIndex = model.PredictActionIndex(features);
             if (actionIndex < 0 || actionIndex >= 14)
             {

@@ -102,6 +102,17 @@ namespace LAB2D.Domain.Common
             }
         }
 
+        /// <summary>
+        /// 按运行时类型发布事件（供非泛型上下文/闭包转发调用）。
+        /// 经 <see cref="PublishDispatcher{T}"/> 转发强类型 <see cref="Publish{T}"/>——
+        /// DynamicInvoke 每次分配 object[] 参数组 + 反射调用栈（CharacterDamagedEvent 在
+        /// 100 角色混战下每秒数十次），此处按事件类型缓存一个 Action&lt;EventBus, IGameEvent&gt;
+        /// 强类型分发器，之后调用是 委托直调 + (T)e 引用转换，零反射零分配。
+        /// 注意：不能对 Publish&lt;T&gt; 直接 CreateDelegate 绑 Action&lt;EventBus, IGameEvent&gt;——
+        /// CLR 委托绑定要求参数类型完全一致（具体事件类型 ≠ IGameEvent），会抛
+        /// ArgumentException: method arguments are incompatible（2026-09-06 启动即炸实锤）。
+        /// </summary>
+        /// <param name="gameEvent">事件实例。</param>
         public void PublishInternal(IGameEvent gameEvent)
         {
             if (gameEvent == null)
@@ -110,10 +121,38 @@ namespace LAB2D.Domain.Common
             }
 
             Type eventType = gameEvent.GetType();
-            if (this.subscribers.TryGetValue(eventType, out Delegate existing))
+            if (!this.subscribers.TryGetValue(eventType, out Delegate existing) || existing == null)
             {
-                existing.DynamicInvoke(gameEvent);
+                return;
             }
+
+            if (!TypedPublishCache.TryGetValue(eventType, out Action<EventBus, IGameEvent> typedPublish))
+            {
+                // MakeGenericType 实例化分发器（cctor 构造一次闭包委托），读静态字段缓存
+                typedPublish = (Action<EventBus, IGameEvent>)typeof(PublishDispatcher<>)
+                    .MakeGenericType(eventType)
+                    .GetField(nameof(PublishDispatcher<IGameEvent>.Invoke))
+                    .GetValue(null);
+                lock (TypedPublishCache)
+                {
+                    TypedPublishCache[eventType] = typedPublish;
+                }
+            }
+
+            typedPublish(this, gameEvent);
+        }
+
+        /// <summary>事件类型 → 强类型 Publish&lt;T&gt; 分发器缓存（事件类型集合在运行期有限且恒定）。</summary>
+        private static readonly Dictionary<Type, Action<EventBus, IGameEvent>> TypedPublishCache = new Dictionary<Type, Action<EventBus, IGameEvent>>();
+
+        /// <summary>
+        /// 泛型强类型分发器：让非泛型上下文拿到编译期 T，实现 PublishInternal → Publish&lt;T&gt;
+        /// 的零反射转发（MakeGenericType 触发 cctor 构造一次静态闭包委托，之后直调）。
+        /// (T)e 转换必然安全：PublishInternal 的 eventType 取自 gameEvent.GetType()。
+        /// </summary>
+        private static class PublishDispatcher<T> where T : IGameEvent
+        {
+            public static readonly Action<EventBus, IGameEvent> Invoke = (bus, e) => bus.Publish((T)e);
         }
 
         /// <summary>

@@ -56,7 +56,15 @@
   5. **AWeapon**：`attackTags.Contains(collider.tag)` → 逐 tag `CompareTag`（零分配）。
   6. **GameTimeUI**：先比总分钟 int 再 Format（原来是先 Format 再比字符串——比较本身每帧分配）。
 - **验证**：待新局 Profiler 复测——WorldYSortManager/OcclusionFader 的 CPU 与引擎调用应从 3-7ms/帧降到 <0.5ms；开局 2 秒的缓存更新刷屏消失；GC.Alloc 中 FromWorker/.tag/Format 三处归零。
-- **遗留（按严重度，未修待决策）**：① CommonEnemy 物理：动态刚体 gravityScale=1 + interpolate=0 + 每帧 transform.Translate/rotation 写 + AutoSyncTransforms=1（需改 prefab/ProjectSetting，游戏行为风险）；② 敌人追击态每帧全量 SenseNearby + LOS 逐格 new Vector3IntLAB（数 MB/s 分配，BuildMap.cs:665 可改 scratch key 零分配，追击节流是行为调参）；③ EventBus.DynamicInvoke 反射调用 + Character.ReduceHp 每受击闭包（结构性改造）；④ %15/%30/%60 全员同帧共振（UI Text 写+Canvas 重建尖峰，可按角色错相）；⑤ 决策管线 new float[41]+MLP 5 层 buffer+GetTaskPressure 快照字典（~40 次/s）；⑥ 后台 AStar CompressPath 诊断串无条件构造（~800 串/s）；⑦ Tip/武器 Instantiate-Destroy churn。
+- **遗留处置（2026-09-06 第二轮，①-⑥ 已修、⑦ 仍挂起，verify_compile 全库 0 错 0 警）**：
+  - ① **已修（保守子集）**：`ACommonEnemy.Awake` 对 rb 设 `gravityScale=0 + freezeRotation=true`（对齐 ASeek 惯例；全局重力本就是 (0,0)，gravityScale 属语义防御）；`Physics2DSettings.asset` 的 `m_AutoSyncTransforms` 1→0（现代默认；副作用=物理查询不再即时同步本帧 transform 写，最多滞后 1 物理步 ~0.04u << 探测距离 0.6。**该 asset 在 git 仓库外，仅本地生效**）。**明确不动**：interpolate（与 transform 直写打架）、MovePosition（2026-08-15 实测"又慢又卡"被否）。
+  - ② **已修**：追击态 `SenseNearby` 改 0.2s 定时器缓存结果（失联延迟 0.2s << SeekEnemy 侧 2s 容忍），攻击距离判定不节流保证进攻击及时；LOS 逐格分配由 `BuildMap.IsCanReach` scratch key 复用根治（追击/感知/WalkabilityCache 共用路径，逐格 `new Vector3IntLAB` 归零）。
+  - ③ **已修**：`EventBus.PublishInternal` 改泛型分发器中转（`PublishDispatcher<T>` 静态类，MakeGenericType 触发 cctor 构造一次闭包委托后直调，零反射零分配）；`Character.ReduceHp` 每受击闭包改实例字段回调 + Awake 构造一次的缓存委托。**首版回归（用户启动即炸实锤）**：`Delegate.CreateDelegate(typeof(Action<EventBus,IGameEvent>), Publish<T>.MakeGenericMethod)` 抛 `ArgumentException: method arguments are incompatible`——**CLR 委托绑定要求参数类型完全一致，不做参数逆变**（方法参数是具体事件类型，委托参数是 IGameEvent，二者不等即拒绑）。教训：反射构建调用器优先用「泛型静态类 + MakeGenericType 读静态字段」而非「泛型方法 + MakeGenericMethod + CreateDelegate」；且该路径单测原本零覆盖（只测了泛型 Publish），回归逃到运行时——已补 4 个 PublishInternal 测试锁死。
+  - ④ **已修**：`AWorker.FramePhase`（`GetInstanceID()&63`）错相——生存检测 `%10`、人格更新 `%60`、Move/Seek 状态文本 `%60`、对话暂停文本 `%60` 全部改 `(frameCount+phase)%N`，周期尖峰摊平。WorkerTaskManager 自身的 %15/%30/%300 是全局单例 tick 非共振源，不动。
+  - ⑤ **已修**：`WorkerBrain` 持有 `featureBuffer`（float[41] 复用）+ `WorkerModelInference.layerBuffers`（Load 时按层分配，前向传播零分配）+ `WorkerTaskManager.TotalTaskCount` 轻量计数替代 `GetTaskPressure` 的全套快照字典构建。
+  - ⑥ **已修**：`AStar.CompressPath` 的 RawPathDiag/CompressJumpDiag 诊断串块整体删除（2026-08-16 压缩跳变排查已结案，诊断使命完成）；`ASeek` 保留的 WallSlide/WallHeadOn 日志改 key/委托缓存 + 惰性求值；`SeekResult` 的两个 Diag 字段一并删除。
+  - ⑦ **Tip/武器 Instantiate-Destroy churn 仍挂起**（低优先：频率低非每帧，待真实 Profiler 数据再决策）。
+  - **验证**：待新局 Profiler 复测——敌人感知/LOS 的 GC.Alloc 归零；`frameCount%60` 整点帧的 Text 写+Canvas 重建尖峰消失；决策期（每 15 帧批量）分配显著下降。
 - **教训**：
   - **GC 治理完成后必须重新 Profiler 定位——热点会转移**（本案从 GC → CPU icall/排序）。"零分配"只解决分配，不解决 O(N) 引擎调用与 O(N log N) 排序。
   - **静态/动态分离是 2D y 排序的标准架构**：地图视觉 95% 是永不动的东西，让它们与角色共享每帧路径就是把常数项 ×N 放大。任何"每帧全量遍历注册表"的管理器都应先问：这里面多少条目其实永不变？

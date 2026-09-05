@@ -305,7 +305,20 @@ namespace LAB2D.Character
             BlobShadowProvider(this);
 
             this.healthComponent = new CharacterHealthComponent(this.damageCalculator, this.levelProgressionService);
+            this.damageAppliedCallback = (target, finalHp, crit, isCombo) =>
+            {
+                this.appliedDamage = finalHp; // ReduceHp 读回最终伤害/连击标志发布事件（零闭包化，见字段注释）
+                this.appliedCombo = isCombo;
+                DamageFlashProvider(target);
+            };
         }
+
+        // ---- ReduceHp 零闭包化（100 Worker 卡顿治理 2026-09-06）----
+        // 原实现每次受击 new 一个捕获 capturedDamage/capturedCombo 的闭包+委托（混战时每秒数十次）；
+        // 改为回调把结果写进实例字段 + Awake 构造一次的缓存委托（只捕获 this），调用点零分配。
+        private float appliedDamage;
+        private bool appliedCombo;
+        private System.Action<Character, float, bool, bool> damageAppliedCallback;
 
         /// <summary>
         /// 角色扣血 — 委托给 CharacterHealthComponent 处理伤害计算。
@@ -321,25 +334,19 @@ namespace LAB2D.Character
                 return;
             }
 
-            float capturedDamage = hp;
-            bool capturedCombo = false;
+            this.appliedDamage = hp;
+            this.appliedCombo = false;
             CharacterHealthResult healthResult = this.healthComponent.ApplyDamage(
-                this, hp, attacker, isCRT,
-                (target, finalHp, crit, isCombo) =>
-                {
-                    capturedDamage = finalHp;
-                    capturedCombo = isCombo;
-                    DamageFlashProvider(target);
-                });
+                this, hp, attacker, isCRT, this.damageAppliedCallback);
 
             GameVector2 worldPos = WorldPositionProvider(this);
             EventBusPublishProvider(new CharacterDamagedEvent
             {
                 TargetId = this.CharacterDataLAB.Id,
                 AttackerId = attacker?.CharacterDataLAB?.Id ?? 0,
-                Damage = capturedDamage,
+                Damage = this.appliedDamage,
                 IsCritical = isCRT,
-                IsCombo = capturedCombo,
+                IsCombo = this.appliedCombo,
                 RemainingHp = this.CharacterDataLAB.Hp,
                 WorldPosX = worldPos.X,
                 WorldPosY = worldPos.Y,

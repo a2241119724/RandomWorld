@@ -55,7 +55,8 @@ namespace LAB2D.Character.Worker.State
                     // 闲逛到达路点后短暂休息，显示内心独白
                     this.Character.ShowRandomMonologue();
 
-                    if (Time.frameCount % 60 == 0)
+                    // +FramePhase 错相：状态文本刷新摊帧（见 AWorker.FramePhase 注释）
+                    if ((Time.frameCount + this.Character.FramePhase) % 60 == 0)
                     {
                         this.Character.WorkerStateText.text = this.builder.Append("休息: ")
                         .Append(MathHelper.RoundToInt(this.recordTime))
@@ -91,7 +92,8 @@ namespace LAB2D.Character.Worker.State
                 this.Character.HideDialogText();
             }
 
-            if (Time.frameCount % 60 == 0)
+            // +FramePhase 错相：状态文本刷新摊帧（见 AWorker.FramePhase 注释）
+            if ((Time.frameCount + this.Character.FramePhase) % 60 == 0)
             {
                 Vector3Int posMap = AWorkerTask.TileMapWorldToMapProvider(this.Character.transform.position);
                 this.Character.WorkerStateText.text = this.builder.Append(this.preString)

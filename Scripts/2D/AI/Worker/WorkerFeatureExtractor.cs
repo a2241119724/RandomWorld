@@ -86,14 +86,31 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 提取 Worker 当前状态的 41 维特征向量。
+        /// 提取 Worker 当前状态的 41 维特征向量（每次分配新数组；编辑器/低频调用用）。
         /// </summary>
         /// <param name="worker">目标 Worker（非 null）。</param>
         /// <param name="scanRadius">视野扫描半径（切比雪夫距离），默认 <see cref="DefaultScanRadius"/>。</param>
         /// <returns>长度固定为 <see cref="FeatureDim"/> 的 float 数组。</returns>
         public static float[] Extract(AWorker worker, int scanRadius = DefaultScanRadius)
         {
-            float[] f = new float[FeatureDim];
+            return Extract(worker, scanRadius, new float[FeatureDim]);
+        }
+
+        /// <summary>
+        /// 提取 Worker 当前状态的 41 维特征向量（buffer 复用重载——决策热路径 ~40 次/秒，
+        /// 由调用方（WorkerBrain 实例）持有固定 buffer 传入，避免每次决策 new float[41]；
+        /// 100 Worker 卡顿治理 2026-09-06）。buffer 用完即弃：PredictActionIndex 只读，
+        /// 调用后不得长期持有（下次决策覆写）。
+        /// </summary>
+        /// <param name="worker">目标 Worker（非 null）。</param>
+        /// <param name="scanRadius">视野扫描半径。</param>
+        /// <param name="buffer">复用 buffer，长度须为 <see cref="FeatureDim"/>；不符时内部兜底重新分配。</param>
+        /// <returns>填充后的特征数组（即 buffer，或兜底新数组）。</returns>
+        public static float[] Extract(AWorker worker, int scanRadius, float[] buffer)
+        {
+            float[] f = buffer != null && buffer.Length == FeatureDim
+                ? buffer
+                : new float[FeatureDim]; // 兜底：尺寸不符（FeatureDim 变更后旧 buffer）不崩，退化为分配
             int i = 0;
 
             AWorker.WorkerData wd = worker?.CharacterDataLAB as AWorker.WorkerData;
@@ -236,12 +253,15 @@ namespace LAB2D.AI.Worker
             }
         }
 
-        /// <summary>任务队列压力：任务总数 × 5，clamp 到 [0,100]。</summary>
+        /// <summary>任务队列压力：任务总数 × 5，clamp 到 [0,100]。
+        /// 直接读 WorkerTaskManager.TotalTaskCount（Σ 各优先级字典 Count，与快照
+        /// TotalTaskCount 语义一致）——原实现为读一个整数每次决策构建全套快照字典
+        ///（GetTasksAsList 逐优先级拷贝 Dictionary，~40 次/秒，100 Worker 卡顿治理 2026-09-06）。</summary>
         private static float GetTaskPressure()
         {
             WorkerTaskManager taskManager = WorkerTaskManager.Instance;
             if (taskManager == null) return 0f;
-            return Mathf.Clamp(taskManager.CreateTaskQueueSnapshot().TotalTaskCount * 5, 0f, 100f);
+            return Mathf.Clamp(taskManager.TotalTaskCount * 5, 0f, 100f);
         }
 
         /// <summary>游戏时刻（0-24 小时）：当天已过秒数 / 每天秒数 × 24。</summary>

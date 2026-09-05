@@ -39,6 +39,12 @@ namespace LAB2D.AI.Worker
         private float[][] layerWeights; // 每层 (out × in) 行主序扁平数组，第 o 行 = 第 o 个输出神经元的权重
         private float[][] layerBiases;  // 每层 (out)
 
+        /// <summary>每层输出复用 buffer（Load 成功后按 layerOutDims 一次性分配）：
+        /// 推理热路径（~40 次/秒 × 5 层）原来每层 new float[]，~1KB/次推理的稳定分配
+        ///（100 Worker 卡顿治理 2026-09-06）。单例主线程调用；PredictLogits 返回值是
+        /// 内部 buffer 引用，调用方只读且用完即弃（Editor 调试窗口每次显示重新调用刷新）。</summary>
+        private float[][] layerBuffers;
+
         private static WorkerModelInference instance;
 
         /// <summary>进程内单例（懒加载：首次访问时从 Resources 读权重）。</summary>
@@ -126,6 +132,14 @@ namespace LAB2D.AI.Worker
 
                 this.InputDim = this.layerInDims[0];
                 this.NumActions = this.layerOutDims[numLayers - 1];
+
+                // 按层输出维度一次性分配推理复用 buffer（见字段注释）
+                this.layerBuffers = new float[numLayers][];
+                for (int l = 0; l < numLayers; l++)
+                {
+                    this.layerBuffers[l] = new float[this.layerOutDims[l]];
+                }
+
                 this.IsLoaded = true;
 
                 AWorkerTask.LogProvider(
@@ -162,7 +176,8 @@ namespace LAB2D.AI.Worker
                 float[] w = this.layerWeights[l];
                 float[] b = this.layerBiases[l];
 
-                float[] y = new float[outDim];
+                // 复用 Load 时按层分配的 buffer（见 layerBuffers 字段注释）：前向传播零分配
+                float[] y = this.layerBuffers[l];
                 for (int o = 0; o < outDim; o++)
                 {
                     float sum = b[o];

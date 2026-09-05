@@ -8,6 +8,17 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
     /// </summary>
     public class CommonEnemyChaseState : ACommonEnemyState
     {
+        /// <summary>
+        /// 感知节流间隔（秒）。SenseNearby 含 Bresenham 网格 LOS（逐格 IsCanReach）+
+        /// 物理射线，追击态原本每帧全量执行（100 敌人 = 每秒 6000 次逐格扫描）；
+        /// 缓存感知结果 0.2s（失联切 Seek 最多延迟 0.2s，远小于 SeekEnemy 侧 2s 容忍）。
+        /// 攻击距离判定（一次 Distance）不节流，保证进攻击及时。
+        /// </summary>
+        private const float SenseInterval = 0.2f;
+
+        private float senseTimer;
+        private bool lastSenseResult;
+
         public CommonEnemyChaseState(ACommonEnemy character)
             : base(character)
         {
@@ -17,6 +28,8 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         public override void OnEnter()
         {
             base.OnEnter();
+            this.senseTimer = 0f; // 立即做一次完整感知
+            this.lastSenseResult = true;
 
             // 状态切换：进入追击状态（节流 2s/条，见 bug-fixes.md 2026-08-15）
             AWorkerTask.LogProviderThrottled(
@@ -46,8 +59,15 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                 return;
             }
 
-            // 仅感知捕捉的玩家
-            if (this.Character.SenseNearby(this.Character.Target.transform))
+            // 感知节流（见 SenseInterval 注释）：间隔内复用上次结果，间隔到才做完整 SenseNearby
+            this.senseTimer += this.Character.DeltaTime;
+            if (this.senseTimer >= SenseInterval)
+            {
+                this.senseTimer = 0f;
+                this.lastSenseResult = this.Character.SenseNearby(this.Character.Target.transform);
+            }
+
+            if (this.lastSenseResult)
             {
                 ACommonEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as ACommonEnemy.EnemyData;
 
@@ -61,6 +81,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
             else
             {
                 // 如果敌人感知范围内没有玩家，进入搜索状态
+                this.senseTimer = 0f; // 失联换目标语义：进 Seek 前清计时，重进 Chase 立即完整感知
                 this.Character.Manager.ChangeState(TypeEnum.Seek);
             }
         }

@@ -321,27 +321,6 @@ namespace LAB2D.Core.Seek
             List<int> path,
             SeekResult result)
         {
-            // 卡床排查 2026-08-16：后台线程不调 LogProvider（ASeek 约定：LogProvider 不可在线程池内
-            // 直接调用），改为把诊断字符串填到 result 字段，主线程 MoveByPath 在 PathIndex==0 时打印。
-            // 目标：定位「压缩首点需经过缓存不可通格」矛盾——(205,400) 缓存不可通，压缩首点 (204,402)
-            // 按 Bresenham 必经 (205,400)，此日志直接显示 A* path[0]/path[1] 与压缩跳转判定。
-            if (this.Character != null)
-            {
-                int head = Math.Min(path.Count, 6);
-                string raw = string.Empty;
-                for (int j = 0; j < head; j++)
-                {
-                    raw += $"({workspace.GetX(path[j])},{workspace.GetY(path[j])})";
-                }
-
-                if (path.Count > head)
-                {
-                    raw += "...(" + path.Count + ")";
-                }
-
-                result.RawPathDiag = $"path[{path.Count}] 头{raw}";
-            }
-
             // 路径合并开关（WorkerPathMerge）关闭：直接输出 A* 原始逐格 path，不做跨格直线压缩。
             // 用于验证压缩逻辑是否为卡死根因（若关闭后不再卡 → 根因在压缩产生的跨格直线）。
             if (!EnablePathMerge)
@@ -365,7 +344,6 @@ namespace LAB2D.Core.Seek
 
                 bool advanced = false;
                 int scope = Math.Min(30, path.Count - lastIndex - 1);
-                int attemptedTarget = -1;
                 for (int i = lastIndex + scope; i >= lastIndex + 1; i--)
                 {
                     int targetIndex = path[i];
@@ -379,21 +357,11 @@ namespace LAB2D.Core.Seek
                         advanced = true;
                         break;
                     }
-
-                    // 记录最近一次直线不可通候选（i 递减，最终为最接近 startIndex 的失败候选）。
-                    attemptedTarget = targetIndex;
                 }
 
                 if (!advanced)
                 {
                     lastIndex++;
-                }
-                else if (this.Character != null && attemptedTarget >= 0)
-                {
-                    // 本轮压缩跳转成功但存在失败候选——记录跳转轨迹，供主线程打印核对直线判定。
-                    result.CompressJumpDiag = $"({workspace.GetX(startIndex)},{workspace.GetY(startIndex)})→" +
-                        $"({workspace.GetX(path[lastIndex])},{workspace.GetY(path[lastIndex])}) " +
-                        $"最近失败候选→({workspace.GetX(attemptedTarget)},{workspace.GetY(attemptedTarget)})";
                 }
             }
 

@@ -818,6 +818,13 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
+        /// 任务总数（Σ 各优先级字典 Count，含进行中）——轻量计数（优先级数量级遍历、零分配），
+        /// 供决策热路径（WorkerFeatureExtractor.GetTaskPressure，~40 次/秒）替代
+        /// CreateTaskQueueSnapshot 全套快照字典构建（语义一致，见 BuildSnapshot 的 totalTaskCount）。
+        /// </summary>
+        public int TotalTaskCount => this.taskQueue.TotalCount;
+
+        /// <summary>
         /// 创建任务队列只读快照。
         /// </summary>
         /// <returns>任务队列快照。</returns>
