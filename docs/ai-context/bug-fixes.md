@@ -2,6 +2,18 @@
 
 > 每次通过日志分析并解决 bug 后，把思路追加到此文件。开始新任务前**先通读本文件**，命中历史记录时直接引用验证，避免重复排查。
 
+## 2026-09-05 建造完成必现「重影实锤 a=1」Warning：BuildMap tile SetColor 死写入触发巡检误报（b5e7d6ed）
+
+- **现象**：game.log（23:22 局）每次建造完成必现 1 条 `[Warning] [BuildDiag] 重影实锤 cell=(118,76) tile=ResearchTable a=1 flags=None（SR 在而 tile 不透明，隐藏被重置）`，紧跟在 `SetComplete` 之后；error.log 空。全局仅此 1 条（+ AncientCaveDiag 撒点完成误用 Warning 级）。
+- **定位**：重影巡检是 2026-08-31 树重影 bug 时在 `TileVisualSpawner.CreateOrUpdate` 入口加的诊断（字典有 SR 且 `GetColor(cell).a > 0.5` 即报）。时间线 `建造完成 → SetComplete → 重影实锤` 直接指向 `BuildMap.SetComplete:344` 的 `SetColor(vector3Int, Color.white)`——它在 371 行 `CreateOrUpdate` **之前**把 tile 写成 a=1，巡检看到「SR 在 + a=1」即报；随后 CreateOrUpdate 228 行把 tile 重新隐藏 a=0，**实际无双渲染，纯误报**。
+- **根因**：BuildMap 共六处 tile `SetColor`（AddBuild/ReserveBuildPosition 建造中半透明、SetComplete/SyncDataResp 增量完成白、SyncDataResp 全量/LoadData 恢复）全是**视觉拆分前的旧语义**——当时建筑由 TilemapRenderer 直接渲染，用「半透明→实心」表达建造进度。拆分后 tile 颜色统一由 `TileVisualSpawner.CreateOrUpdate` 管理（非 Bottom 格隐藏 a=0、Bottom 格 221 行走 colorProvider `GetBuildVisualColor`：完成→白/建造中→半透明），这些直写**同帧内即被覆盖**，唯一可见效果是其中写 a=1 的两处（SetComplete/SyncDataResp 增量完成分支）触发巡检误报。
+- **修复**：删六处 SetColor + 相邻冗余 RemoveTileFlags（CreateOrUpdate:206 有统一前置）；`initColor` 字段保留（GetBuildVisualColor 消费，注释更新）；`grep GetColor` 证实全库无「读 BuildMap tile 颜色判状态」的消费者。顺手 AncientCaveDiag 撒点完成 Warning→Debug（正常事件点，Warning 应留给异常）。
+- **验证**：verify_compile 0 错 0 警；单测 1011/1011。行为验证待新局：建造完成应不再出现「重影实锤」Warning；建筑视觉（建造中半透明→完成实心）经 colorProvider 路径不变。
+- **教训**：
+  - **视觉拆分/渲染架构迁移后，旧的 tile 颜色写入不会自己死掉**——它们变成「同帧被覆盖的死写入」，平时无害，一旦有巡检/回读类诊断就会以误报形式冒头。重构渲染架构时应同步 grep 宿主 Map 层的全部 SetColor。
+  - **巡检告警的价值链**：2026-08-31 加的重影巡检本次「误报」恰恰证明了它的存在意义——没有它，这六处死写入会永远 silent。误报的正确处理是**顺着告警找到写入源删掉**，而不是调高阈值或删巡检。
+  - 「日志级别纪律」：正常事件点（撒点完成/初始化成功）打 Debug；Warning 留给异常但可继续的状态。每条恒现 Warning 都在稀释 error.log 的信号密度。
+
 ## 2026-09-04 编辑器启动三连炸：Character 静态 MPB cctor + RoundCorner 强拉 ResourceManager + SessionModifierManager 漏注册（ccdf84b6）
 
 - **现象**：用户打开 Unity/进场景即刷屏三类异常：① 全部角色 prefab（ShootEnemy_Lv1/ACommonEnemy/AWorker/Player 等）`TypeInitializationException: Character..cctor` ← `MaterialPropertyBlock..ctor` 的 "CreateImpl is not allowed to be called from a MonoBehaviour constructor"；② 同批堆栈尾部连着 `RoundCorner.OnEnable → SharedRoundMaterial → Singleton.get_Instance → ResourceManager..ctor → LoadPrefabs → AssetBundle.LoadAsset`（加载角色 prefab 又引爆①，成环刷屏）；③ `KeyNotFoundException: ServiceLocator 中未注册类型 SessionModifierManager`（GlobalInit.Awake → BuildInitializableList）。
