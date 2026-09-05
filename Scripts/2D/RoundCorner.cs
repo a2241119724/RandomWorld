@@ -135,8 +135,9 @@ namespace LAB2D
         /// <summary>
         /// Inspector 拖滑条即时刷新圆角
         /// </summary>
-        private void OnValidate()
+        protected override void OnValidate()
         {
+            base.OnValidate(); // Graphic 基类 SetAllDirty；本类再显式刷顶点（幂等）
             if (this.IsActive())
             {
                 this.SetVerticesDirty();
