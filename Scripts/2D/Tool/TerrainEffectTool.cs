@@ -8,7 +8,9 @@ namespace LAB2D.Tool
     /// 地形效果工具类。
     /// 负责适配层查询和展示文本构建。
     /// 所有游戏规则逻辑委托给 TerrainEffectRuleService。
+    /// 2026-09 审计：全库零引用死代码——运行时消费走 TerrainEffectManager（ITerrainEffectService 接口），本适配器已被取代，待用户批准后删除。
     /// </summary>
+    [System.Obsolete("零引用死代码（已被 TerrainEffectManager 取代），待批准删除")]
     public static class TerrainEffectTool
     {
         private static readonly TerrainEffectRuleService RuleService = new TerrainEffectRuleService();

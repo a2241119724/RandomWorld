@@ -7,7 +7,9 @@ namespace LAB2D.Tool
     /// <summary>
     /// 工作日判断工具（节假日/调休）。
     /// 纯数据查询，不依赖 Unity 生命周期。
+    /// 2026-09 审计：全库零引用死代码（游戏内用游戏日历不用真实日历），待用户批准后删除。
     /// </summary>
+    [System.Obsolete("零引用死代码，待批准删除")]
     public static class DateTool
     {
         private static readonly HashSet<DateTime> holidays = new ()

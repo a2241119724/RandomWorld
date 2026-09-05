@@ -25,6 +25,10 @@ namespace LAB2D.AgentGenerated
         DamageOverTime
     }
 
+    /// <summary>
+    /// 2026-09 审计：全库零引用死代码——无场景/prefab 挂载、无 AddComponent、AddEffect 零调用，待用户批准后删除。
+    /// </summary>
+    [System.Obsolete("零引用死代码，待批准删除")]
     public class StatusEffectController : MonoBehaviour
     {
         [Tooltip("要应用效果的目标角色。如果为空，将在同一 GameObject 上查找。")]
