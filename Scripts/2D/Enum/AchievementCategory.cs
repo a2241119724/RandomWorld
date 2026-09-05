@@ -22,5 +22,8 @@ namespace LAB2D.Enum
 
         /// <summary>工人运营类成就（任务完成、殖民地规模）</summary>
         Worker,
+
+        /// <summary>修仙类成就（境界突破、功法、异能）</summary>
+        Cultivation,
     }
 }

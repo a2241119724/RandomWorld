@@ -276,6 +276,21 @@ namespace LAB2D.Gameplay
             if (player != null && player.CharacterDataLAB != null)
             {
                 anyChanged |= this.UpdateAchievement("survival_level_50", player.CharacterDataLAB.Level);
+
+                // 修仙 - 境界/功法/异能（读玩家 GrowthData 当前值；数据随玩家档持久，跨局成立）
+                Domain.Character.Growth.GrowthData growth = player.CharacterDataLAB.Growth;
+                if (growth != null)
+                {
+                    anyChanged |= this.UpdateAchievement("cultivation_realm_1", growth.RealmIndex);
+                    anyChanged |= this.UpdateAchievement("cultivation_realm_2", growth.RealmIndex);
+                    anyChanged |= this.UpdateAchievement("cultivation_realm_3", growth.RealmIndex);
+                    anyChanged |= this.UpdateAchievement("cultivation_realm_4", growth.RealmIndex);
+                    anyChanged |= this.UpdateAchievement("cultivation_realm_5", growth.RealmIndex);
+                    anyChanged |= this.UpdateAchievement("cultivation_gongfa_3", growth.LearnedGongFaIds != null ? growth.LearnedGongFaIds.Count : 0);
+                    anyChanged |= this.UpdateAchievement("cultivation_gongfa_5", growth.LearnedGongFaIds != null ? growth.LearnedGongFaIds.Count : 0);
+                    anyChanged |= this.UpdateAchievement("cultivation_awaken_1", growth.AwakenedPowerIds != null ? growth.AwakenedPowerIds.Count : 0);
+                    anyChanged |= this.UpdateAchievement("cultivation_awaken_2", growth.AwakenedPowerIds != null ? growth.AwakenedPowerIds.Count : 0);
+                }
             }
 
             if (anyChanged)
@@ -601,6 +616,133 @@ namespace LAB2D.Gameplay
                 Points = 150,
                 IsProgressPersistent = true,
                 State = AchievementState.Locked,
+            });
+
+            // ===== 修仙类（境界/功法/异能，读玩家 GrowthData 当前值，进度随玩家档跨局成立） =====
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cultivation_realm_1",
+                Name = "踏入仙途",
+                Description = "境界突破到练气",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "境界突破到练气", // 档位进度：凡人=0 → 化神=5，RealmIndex 直接作进度（模板无{0}占位，Format 原样显示）
+                TargetValue = 1,
+                Points = 10,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Realm",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cultivation_realm_2",
+                Name = "筑基有成",
+                Description = "境界突破到筑基",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "境界突破到筑基",
+                TargetValue = 2,
+                Points = 20,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Realm",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cultivation_realm_3",
+                Name = "金丹大成",
+                Description = "境界突破到金丹",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "境界突破到金丹",
+                TargetValue = 3,
+                Points = 40,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Realm",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cultivation_realm_4",
+                Name = "元婴出窍",
+                Description = "境界突破到元婴",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "境界突破到元婴",
+                TargetValue = 4,
+                Points = 60,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Realm",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cultivation_realm_5",
+                Name = "化神飞升",
+                Description = "境界突破到化神",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "境界突破到化神",
+                TargetValue = 5,
+                Points = 100,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Realm",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cultivation_gongfa_3",
+                Name = "博览道藏",
+                Description = "习得3门功法",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "习得 {0} 门功法",
+                TargetValue = 3,
+                Points = 20,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "GongFa",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cultivation_gongfa_5",
+                Name = "遍访名师",
+                Description = "习得5门功法",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "习得 {0} 门功法",
+                TargetValue = 5,
+                Points = 40,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "GongFa",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cultivation_awaken_1",
+                Name = "异能初醒",
+                Description = "觉醒1个异能",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "觉醒 {0} 个异能",
+                TargetValue = 1,
+                Points = 20,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Awaken",
+            });
+
+            this.AddAchievement(new AchievementData
+            {
+                Id = "cultivation_awaken_2",
+                Name = "身负双能",
+                Description = "同时觉醒2个异能",
+                Category = AchievementCategory.Cultivation,
+                ConditionTemplate = "觉醒 {0} 个异能",
+                TargetValue = 2,
+                Points = 50,
+                IsProgressPersistent = true,
+                State = AchievementState.Locked,
+                IconName = "Awaken",
             });
         }
 

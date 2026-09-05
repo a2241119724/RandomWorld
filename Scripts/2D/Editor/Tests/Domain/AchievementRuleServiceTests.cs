@@ -1,7 +1,12 @@
 namespace LAB2D.Editor.Tests.Domain
 {
     using LAB2D.Domain.Gameplay;
+    using LAB2D.Enum;
+    using LAB2D.Gameplay;
+    using LAB2D.Tool;
     using NUnit.Framework;
+    using System.Collections.Generic;
+    using System.Reflection;
 
     [TestFixture]
     public class AchievementRuleServiceTests
@@ -12,6 +17,56 @@ namespace LAB2D.Editor.Tests.Domain
         public void GetElapsedMinutes_120Seconds_Returns2()
         {
             Assert.AreEqual(2, this.service.GetElapsedMinutes(120f));
+        }
+
+        /// <summary>
+        /// 修仙成就注册完整性：9 条 cultivation_* 全部注册、类别正确、数值合法。
+        /// 防回归：注册处删改 ID/TargetValue 时此处先红。读数映射在 UpdateProgressAll（运行时），不在此断言。
+        /// </summary>
+        [Test]
+        public void RegisterAchievements_CultivationEntries_ExistAndWellFormed()
+        {
+            AchievementManager manager = AchievementManager.Instance;
+            MethodInfo register = typeof(AchievementManager).GetMethod(
+                "RegisterAchievements", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(register, "RegisterAchievements 应为 private 可反射方法");
+            register.Invoke(manager, null);
+
+            Dictionary<string, AchievementData> byId = new Dictionary<string, AchievementData>();
+            foreach (AchievementData a in manager.AllAchievements)
+            {
+                byId[a.Id] = a;
+            }
+
+            string[] expectedIds =
+            {
+                "cultivation_realm_1", "cultivation_realm_2", "cultivation_realm_3",
+                "cultivation_realm_4", "cultivation_realm_5",
+                "cultivation_gongfa_3", "cultivation_gongfa_5",
+                "cultivation_awaken_1", "cultivation_awaken_2",
+            };
+            foreach (string id in expectedIds)
+            {
+                Assert.IsTrue(byId.ContainsKey(id), $"缺少修仙成就 {id}");
+                AchievementData a = byId[id];
+                Assert.AreEqual(AchievementCategory.Cultivation, a.Category, $"{id} 类别应为修仙");
+                Assert.Greater(a.TargetValue, 0, $"{id} TargetValue 应为正");
+                Assert.Greater(a.Points, 0, $"{id} Points 应为正");
+                Assert.IsFalse(string.IsNullOrEmpty(a.ConditionTemplate), $"{id} 条件模板不应为空");
+            }
+
+            // 境界五档：TargetValue 严格对应 RealmIndex 档位 1~5（练气~化神）
+            for (int realm = 1; realm <= 5; realm++)
+            {
+                Assert.AreEqual(realm, byId[$"cultivation_realm_{realm}"].TargetValue,
+                    $"境界档成就 realm_{realm} 的 TargetValue 应等于 RealmIndex 档位");
+            }
+        }
+
+        [Test]
+        public void GetCategoryDisplayName_Cultivation_ReturnsChinese()
+        {
+            Assert.AreEqual("修仙", AchievementTool.GetCategoryDisplayName(AchievementCategory.Cultivation));
         }
 
         [Test]

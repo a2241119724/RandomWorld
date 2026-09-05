@@ -76,6 +76,8 @@ namespace LAB2D.Tool
                     return "波次";
                 case AchievementCategory.Worker:
                     return "工人";
+                case AchievementCategory.Cultivation:
+                    return "修仙";
                 default:
                     return "其他";
             }
