@@ -156,9 +156,6 @@ namespace LAB2D.Constant
         /// <summary>记仇时的亲密度惩罚。</summary>
         public const float RelationGrudgeAffinityPenalty = 8f;
 
-        /// <summary>被攻击时的亲密度惩罚。</summary>
-        public const float RelationAttackAffinityPenalty = 10f;
-
         /// <summary>送礼触发概率（漫游决策时）。</summary>
         public const float RelationGiftChance = 0.05f;
 

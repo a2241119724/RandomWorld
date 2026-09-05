@@ -173,24 +173,9 @@ namespace LAB2D.Constant
         /// <summary>技能最大等级</summary>
         public const int MaxSkillLevel = 5;
 
-        /// <summary>从1级升到2级所需经验点数</summary>
-        public const int UpgradeCostLevel1To2 = 1;
-
-        /// <summary>从2级升到3级所需经验点数</summary>
-        public const int UpgradeCostLevel2To3 = 2;
-
-        /// <summary>从3级升到4级所需经验点数</summary>
-        public const int UpgradeCostLevel3To4 = 3;
-
-        /// <summary>从4级升到5级所需经验点数</summary>
-        public const int UpgradeCostLevel4To5 = 5;
-
         #endregion
 
         #region UI 节点名
-
-        /// <summary>技能HUD独立Canvas名称</summary>
-        public const string SkillCanvasName = "SkillHUDCanvas";
 
         /// <summary>技能HUD根节点名称</summary>
         public const string SkillHUDRootName = "SkillHUD";
@@ -245,10 +230,6 @@ namespace LAB2D.Constant
         public const string DefaultSkillDescTelekinesis = "将周围敌人拉向你";
         public const string DefaultSkillDescFireBall = "对最近的敌人掷出炽热火球";
 
-        public const string ManaInsufficientTip = "法力不足";
-        public const string SkillOnCooldownTip = "技能冷却中";
-        public const string SkillUpgradedTip = "技能升级！";
-
         #endregion
 
         #region HUD 参数
@@ -270,9 +251,6 @@ namespace LAB2D.Constant
 
         /// <summary>技能按钮间距（像素）</summary>
         public const float SkillButtonSpacing = 18f;
-
-        /// <summary>HUD 底部边距（像素）</summary>
-        public const float HudBottomMargin = 40f;
 
         #endregion
 

@@ -98,19 +98,5 @@ namespace LAB2D.Constant
         /// </summary>
         public const float HudAnchoredY = -560.0f;
 
-        /// <summary>
-        /// HUD 文本横向内边距。
-        /// </summary>
-        public const float HudPaddingX = 12.0f;
-
-        /// <summary>
-        /// HUD 文本纵向内边距。
-        /// </summary>
-        public const float HudPaddingY = 8.0f;
-
-        /// <summary>
-        /// HUD 默认字号。
-        /// </summary>
-        public const int HudFontSize = 12;
     }
 }

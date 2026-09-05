@@ -78,9 +78,6 @@ namespace LAB2D.Constant
         /// <summary>Mythic 掉落权重</summary>
         public const float MythicWeight = 0.5f;
 
-        /// <summary>稀有度权重总和</summary>
-        public const float RarityWeightTotal = CommonWeight + UncommonWeight + RareWeight + EpicWeight + LegendaryWeight + MythicWeight;
-
         /// <summary>每波稀有度加权提升值（越高波次稀有掉落越多）</summary>
         public const float RarityWeightBonusPerWave = 0.03f;
 
@@ -117,12 +114,6 @@ namespace LAB2D.Constant
         // Canvas 排序层级
         // ============================================================
 
-        /// <summary>装备面板排序层级</summary>
-        public const int EquipmentPanelSortingOrder = 120;
-
-        /// <summary>对比弹窗排序层级</summary>
-        public const int ComparePopupSortingOrder = 250;
-
         // ============================================================
         // 快捷键
         // ============================================================
@@ -133,9 +124,6 @@ namespace LAB2D.Constant
         // ============================================================
         // 默认文案
         // ============================================================
-
-        /// <summary>装备面板标题</summary>
-        public const string EquipmentPanelTitle = "装备管理";
 
         /// <summary>对比弹窗标题</summary>
         public const string ComparePopupTitle = "装备对比";
@@ -161,12 +149,6 @@ namespace LAB2D.Constant
         /// <summary>稀有度标签格式</summary>
         public const string RarityLabelFormat = "[{0}]";
 
-        /// <summary>属性显示格式</summary>
-        public const string StatDisplayFormat = "{0}: {1:F1}";
-
-        /// <summary>对比属性行格式</summary>
-        public const string CompareStatFormat = "{0}: {1:F1} → {2:F1}";
-
         // ============================================================
         // Editor 菜单路径
         // ============================================================
@@ -189,12 +171,6 @@ namespace LAB2D.Constant
 
         /// <summary>对比弹窗宽度</summary>
         public const float ComparePopupWidth = 840f;
-
-        /// <summary>对比弹窗高度</summary>
-        public const float ComparePopupHeight = 760f;
-
-        /// <summary>槽位行高度</summary>
-        public const float SlotRowHeight = 72f;
 
         /// <summary>面板字体大小</summary>
         public const int PanelFontSize = 36;

@@ -15,9 +15,6 @@ namespace LAB2D.Constant
         /// <summary>完成一次农耕（种植收获）任务获得的经验。</summary>
         public const float XpPerFarming = 1f;
 
-        /// <summary>等级上限（0 级起步，练到 3 级满级）。</summary>
-        public const int MaxLevel = 3;
-
         /// <summary>升到 1 级所需累计经验。</summary>
         public const float XpToLevel1 = 10f;
 

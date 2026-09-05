@@ -78,17 +78,10 @@ namespace LAB2D.Constant
         /// <summary>拾取按钮高度</summary>
         public const float PickUpButtonHeight = 30f;
 
-        /// <summary>面板距屏幕右侧的偏移</summary>
-        public const float PanelRightMargin = 20f;
-
-        /// <summary>面板距屏幕顶部的偏移</summary>
-        public const float PanelTopMargin = -20f;
-
         // ============================================================
         // 颜色
         // ============================================================
 
-        public static readonly Color PanelBgColor = new Color(0.1f, 0.1f, 0.1f, 0.85f);
         public static readonly Color TitleColor = new Color(1f, 0.85f, 0.3f);
         public static readonly Color ItemNameColor = Color.white;
         public static readonly Color CountColor = new Color(0.7f, 0.7f, 0.7f);

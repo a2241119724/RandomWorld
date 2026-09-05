@@ -39,11 +39,6 @@ namespace LAB2D.Constant
         public const string HudRootName = "ColonyCommandCenterHUD";
 
         /// <summary>
-        /// HUD 背景节点名。
-        /// </summary>
-        public const string BackgroundName = "CommandBackground";
-
-        /// <summary>
         /// HUD 标题文本节点名。
         /// </summary>
         public const string TitleTextName = "CommandTitleText";
@@ -65,12 +60,6 @@ namespace LAB2D.Constant
         public const string PrefabFolderPath = "Assets/ResourcesLocal/Prefabs/UI/ColonyCommandCenter";
 
         /// <summary>
-        /// ResourcesLocal UI Prefab 输出路径。
-        /// 由 Editor 菜单创建；若已存在会覆盖同名 Prefab，需要在菜单执行前确认。
-        /// </summary>
-        public const string PrefabAssetPath = PrefabFolderPath + "/ColonyCommandCenterHUD.prefab";
-
-        /// <summary>
         /// 指挥中心报告刷新间隔。
         /// 调低会更实时，但会增加任务队列和 Worker 状态只读统计频率。
         /// </summary>
@@ -87,18 +76,6 @@ namespace LAB2D.Constant
         /// 只在没有 UI 输入框聚焦时生效，避免输入穿透。
         /// </summary>
         public const KeyCode HudToggleKey = InputKeyConstant.ToggleColonyCommandCenterHud;
-
-        /// <summary>
-        /// 阻塞任务达到该数量时视为警告。
-        /// 只影响指挥中心等级和文案，不改变任务调度。
-        /// </summary>
-        public const int WarningBlockedTaskThreshold = 2;
-
-        /// <summary>
-        /// 阻塞任务达到该数量时视为危急。
-        /// 只影响指挥中心等级和文案，不改变任务调度。
-        /// </summary>
-        public const int CriticalBlockedTaskThreshold = 6;
 
         /// <summary>
         /// HUD 默认宽度。
@@ -126,16 +103,6 @@ namespace LAB2D.Constant
         /// HUD 标题字号。
         /// </summary>
         public const int TitleFontSize = 12;
-
-        /// <summary>
-        /// HUD 主文本字号。
-        /// </summary>
-        public const int MainFontSize = 12;
-
-        /// <summary>
-        /// HUD 细节文本字号。
-        /// </summary>
-        public const int DetailFontSize = 12;
 
         /// <summary>
         /// HUD 文本内边距。
