@@ -43,7 +43,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 
 ### LLM NPC 对话
 - 本地 llama-server 驱动的 NPC 对话
-- 短期记忆 + 长期记忆压缩(每 8 轮)
+- 短期记忆（`GetRecentHistory` 最近 6 轮进 prompt）；长期记忆压缩 API（`GetAllMessagesForCompression`/`AddLongTermSummary`/`GetLongTermMemories`）**预留未接线**——有效摘要依赖 LLM 异步调用策略，待设计后接入
 - RAG 游戏知识检索
 - 对话期间工人任务暂停
 - **预设意图结算（M3）:** `DialoguePanelUI` 底部 4 按钮（求教功法/安抚/道歉/赠礼）——点击先走 `DialogueManager.ApplyIntent` 本地纯规则结算（`DialogueIntentRuleService`），副作用即时入账（好感/心智/压力士气/灵气/金币/事件记忆），再把 `PlayerActionText`（含角色扮演引导）走 `SendMessage` 由 LLM 增强 NPC 回复措辞；LLM 不可用时 `FallbackReply` 气泡兜底。防刷：每意图每 Worker 每游戏日限（求教 1/安抚 1/道歉 1/赠礼 2，`Mind.DialogueIntentUses` 跨日重置）+ 赠礼 20 金币门 + 等待中置灰。求教成功门 = NPC 境界高于玩家且好感≥60（婉拒也计日限，防刷 LLM 调用）
