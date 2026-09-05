@@ -16748,9 +16748,9 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 100, y: 120}
-  m_Spacing: {x: 15, y: 15}
-  m_Constraint: 1
+  m_CellSize: {x: 70, y: 30}
+  m_Spacing: {x: 5, y: 5}
+  m_Constraint: 0
   m_ConstraintCount: 4
 --- !u!1 &489389268
 GameObject:

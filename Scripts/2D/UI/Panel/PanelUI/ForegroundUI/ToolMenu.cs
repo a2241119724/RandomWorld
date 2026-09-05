@@ -59,7 +59,10 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
                 return;
             }
 
-            ServiceLocator.Get<WorkerManager>().Create(ServiceLocator.Get<PlayerManager>().Mine.transform.position);
+            for (int i = 0; i < 5; i++)
+            {
+                ServiceLocator.Get<WorkerManager>().Create(ServiceLocator.Get<PlayerManager>().Mine.transform.position);
+            }
         }
 
 
