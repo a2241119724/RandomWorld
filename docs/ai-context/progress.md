@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `test(layout)`: WorkerHomeLayout 布局不变量防回归 4 用例（1481a71f）——历史 bug 密集区（床副格碰撞/门堵家具/interiorW 硬编码）零单测补盲；全组合枚举验证墙数/门位/家具互异内部/不堵门契约；首跑即抓出 5×5 side=0 已知全堵例外（GenerateRandomRoomParams 换参规避），锁现状防漂移；1027/1027
 - 2026-09 — `feat(achievement)`: 回合制战斗/挚友社交成就 3 条（64185d98）——`TurnBattleManager.TotalPlayerVictories` 会话计数（FinishBattle 统一结束路径）+ combat_turnbattle_1/10 / social_friend_first（首位挚友·遍历对玩家好感 ≥85 零 Manager 改动）；+1 类别归属用例 1023/1023
 - 2026-09 — `chore(clean)`: 清 IconName 死字段 + 修 progress 包4 失同步（99d84f40）——15 处全为定义+赋值零读者（UI 用类别默认图标），同 IsProgressPersistent 同款「预留未接线」；Current Work M4 包4 勾选（三大子项早已完成）；1022/1022
 - 2026-09 — `chore(clean)`: IsProgressPersistent 死字段清理 + WorkerSupply 空 catch 留痕（08aaf531）——33 处引用全为定义+赋值零读者（「跨局持久化」从未实现，Manager 非存档每局重建）；FillBedInfo 空 catch 静默吞统计异常改走 AWorkerTask.LogProvider 统一通道（裸测试 fixture 配静默桩）；1022/1022
