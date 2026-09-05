@@ -269,52 +269,6 @@ namespace LAB2D.Constant
         #region 快捷选择 (数字键 1-9)
 
         /// <summary>
-        /// 工具菜单快捷选择 - 第1项 (数字1键)
-        /// 在前景面板中打开或关闭工具菜单第1个功能按钮对应的面板。
-        /// </summary>
-        public const KeyCode ToolMenuSlot1 = KeyCode.Alpha1;
-
-        /// <summary>
-        /// 工具菜单快捷选择 - 第2项 (数字2键)
-        /// </summary>
-        public const KeyCode ToolMenuSlot2 = KeyCode.Alpha2;
-
-        /// <summary>
-        /// 工具菜单快捷选择 - 第3项 (数字3键)
-        /// </summary>
-        public const KeyCode ToolMenuSlot3 = KeyCode.Alpha3;
-
-        /// <summary>
-        /// 工具菜单快捷选择 - 第4项 (数字4键)
-        /// </summary>
-        public const KeyCode ToolMenuSlot4 = KeyCode.Alpha4;
-
-        /// <summary>
-        /// 工具菜单快捷选择 - 第5项 (数字5键)
-        /// </summary>
-        public const KeyCode ToolMenuSlot5 = KeyCode.Alpha5;
-
-        /// <summary>
-        /// 工具菜单快捷选择 - 第6项 (数字6键)
-        /// </summary>
-        public const KeyCode ToolMenuSlot6 = KeyCode.Alpha6;
-
-        /// <summary>
-        /// 工具菜单快捷选择 - 第7项 (数字7键)
-        /// </summary>
-        public const KeyCode ToolMenuSlot7 = KeyCode.Alpha7;
-
-        /// <summary>
-        /// 工具菜单快捷选择 - 第8项 (数字8键)
-        /// </summary>
-        public const KeyCode ToolMenuSlot8 = KeyCode.Alpha8;
-
-        /// <summary>
-        /// 工具菜单快捷选择 - 第9项 (数字9键)
-        /// </summary>
-        public const KeyCode ToolMenuSlot9 = KeyCode.Alpha9;
-
-        /// <summary>
         /// 工具菜单所有快捷选择键（按菜单顺序排列，索引 0-8 对应 Alpha1-Alpha9）
         /// </summary>
         public static readonly KeyCode[] ToolMenuKeys =
