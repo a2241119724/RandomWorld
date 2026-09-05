@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `fix(seek)`: WalkabilityCache 快照发布关闭换图越界窗口——静态 width/height 与数组分别发布，换图尺寸变化瞬间后台 IsWalkable 用新边界过检查后读旧数组引用，index 越界直接炸后台寻路线程（无兜底）；数组与尺寸绑定为不可变 Snapshot 单次 volatile 发布，一次读引用即得一致视图；技术债清单「非原子写入→不可变快照」条目收口；公开 API 零变化；+3 单测（未初始化兜底/幂等/尺寸切换并发读零异常压测）1030/1030
 - 2026-09 — `test(layout)`: WorkerHomeLayout 布局不变量防回归 4 用例（1481a71f）——历史 bug 密集区（床副格碰撞/门堵家具/interiorW 硬编码）零单测补盲；全组合枚举验证墙数/门位/家具互异内部/不堵门契约；首跑即抓出 5×5 side=0 已知全堵例外（GenerateRandomRoomParams 换参规避），锁现状防漂移；1027/1027
 - 2026-09 — `feat(achievement)`: 回合制战斗/挚友社交成就 3 条（64185d98）——`TurnBattleManager.TotalPlayerVictories` 会话计数（FinishBattle 统一结束路径）+ combat_turnbattle_1/10 / social_friend_first（首位挚友·遍历对玩家好感 ≥85 零 Manager 改动）；+1 类别归属用例 1023/1023
 - 2026-09 — `chore(clean)`: 清 IconName 死字段 + 修 progress 包4 失同步（99d84f40）——15 处全为定义+赋值零读者（UI 用类别默认图标），同 IsProgressPersistent 同款「预留未接线」；Current Work M4 包4 勾选（三大子项早已完成）；1022/1022
@@ -180,7 +181,6 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 | Singleton 泛滥（30+ 个） | 紧耦合，测试困难 | 渐进迁移到 ServiceLocator 接口注入 |
 | GlobalInit 上帝对象 | 初始化逻辑集中，难以拆分 | 提取独立 Bootstrap/Composition Root |
 | AgentFull Python 框架在 Assets 内 | 非 Unity 运行时却占用项目空间 | 移出 Unity 项目到 Tools/ |
-| 并发寻路 WalkabilityCache 非原子写入 | 潜在数据竞争 | 使用不可变快照替代原地刷新 |
 
 ## Next Steps
 
