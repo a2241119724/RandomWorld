@@ -393,14 +393,10 @@ namespace LAB2D.Core.Seek
             WalkabilityCache.EnsureBuilt();
 
             Vector3Int startMap = s_tileMap.WorldPosToMapPos(this.Character.transform.position);
-            // 寻路提交高频（seekenemy 漫游每 2.5s/实例，峰值每秒数十次），降 Trace + 节流 2s/条
-            // （game.log 181 万行/61 分钟刷屏源之一，见 bug-fixes.md 2026-08-15）。
-            // 关键结果（不可达/到达）仍保留；提交细节需要时在 Trace 档查看。
-            AWorkerTask.LogProviderThrottled(
-                $"{this.Character.name}|SeekSubmit", 2f,
-                // 惰性求值：寻路提交高频（每 2.5s/实例），被节流时不再构造插值串
-                () => $"[SeekDiag] {this.Character.name} 提交寻路 start=({startMap.x},{startMap.y}) target=({targetMap.x},{targetMap.y})",
-                LogManager.LogLevelEnum.Trace);
+            // 寻路"提交寻路"成功日志已删除（100 Worker 收紧，bug-fixes.md 2026-09-06）：
+            // 100 Worker 下每秒 ~100 条（36k 条/6 分钟，Trace 2s 节流窗内基本次次放行），
+            // 成功提交无诊断价值——寻路结果由"到达终点"（节流 Trace）与"寻路不可达"
+            // （Debug+节流）表达，提交→到达对账可由到达数≈提交数-在途推出。
             this.TargetMap = targetMap;
             this.RestartStuckWindow(); // 新路径 → 新窗口，但保留连续卡住计数（重新寻路不赦免）
             int generation = this.StartSeek();

@@ -220,16 +220,29 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
             float minDistance = 9999.0f, tempDistance;
 
             // 通过检测碰撞器内部的碰撞体{Overlap:重叠}
+            // .tag getter 每次分配新字符串（200 把武器 × 60fps × 每重叠碰撞体 = 每秒上万分配，
+            // 100 Worker 卡顿治理 2026-09-06）→ CompareTag 零分配逐个比对。
             int length = this.circleCollider2D.OverlapCollider(this.contactFilter2D, this.retCollider2Ds);
             for (int i = 0; i < length; i++)
             {
-                if (this.attackTags.Contains(this.retCollider2Ds[i].tag))
+                Collider2D collider = this.retCollider2Ds[i];
+                bool isAttackable = false;
+                for (int t = 0; t < this.attackTags.Count; t++)
                 {
-                    tempDistance = (this.retCollider2Ds[i].transform.position - this.transform.position).magnitude;
+                    if (collider.CompareTag(this.attackTags[t]))
+                    {
+                        isAttackable = true;
+                        break;
+                    }
+                }
+
+                if (isAttackable)
+                {
+                    tempDistance = (collider.transform.position - this.transform.position).magnitude;
                     if (tempDistance < minDistance)
                     {
                         minDistance = tempDistance;
-                        this.minDistanceCharacter = this.retCollider2Ds[i].transform;
+                        this.minDistanceCharacter = collider.transform;
                     }
                 }
             }

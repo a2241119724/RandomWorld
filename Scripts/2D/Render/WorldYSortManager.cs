@@ -1,9 +1,6 @@
 namespace LAB2D.Render
 {
-    using System;
     using System.Collections.Generic;
-    using LAB2D.Character.Worker.Task;
-    using LAB2D.Manager;
     using UnityEngine;
 
     /// <summary>
@@ -13,8 +10,18 @@ namespace LAB2D.Render
     /// 底端 y 小（屏幕下方/近处）→ order 大（后绘制，盖住上方）。
     /// 约束：所有被排序的 renderer 必须位于同一 sorting layer（Character），
     /// 且该层内不得存在未注册的 renderer（否则其 order 固定为 0 会错乱）。
-    /// 注册方：角色在 Character.Start 注册、建筑/树 sprite 由 TileVisualSpawner 注册；
+    /// 注册方：角色在 Character.Start 注册（动态），建筑/树 sprite 由 TileVisualSpawner 注册（静态）；
     /// 注销不强制，LateUpdate 懒清扫已销毁的 renderer（覆盖延迟销毁/漏注销）。
+    ///
+    /// 性能架构（2026-09-06 100 Worker 卡顿重构）：静态/动态分层。
+    /// 树/建筑等静态视觉（全图 ~1.5 万）bottomY 在入列时缓存一次、仅在批量脏时排一次序；
+    /// 每帧只有 ~200 个动态角色读 position/sprite（约 600 次引擎调用），
+    /// 再与有序静态表做纯内存双指针归并派发唯一 order——语义与旧版全量排序一致。
+    /// 旧版每帧全量重算+全量排序（1.5 万条 × 3 引擎调用 + 1.5 万元素比较排序 ≈ 3-7ms/帧，
+    /// 见 bug-fixes.md 2026-09-06）。
+    /// 注意：注册发生在 TileVisualSpawner 配置 position/sprite 之前，故注册只进 pending 队列，
+    /// 下一次 LateUpdate（配置已落地）才读 bounds/位置入列；原地换图（RuleTile 邻居变化）由
+    /// TileVisualSpawner 调 <see cref="MarkStaticDirty"/> 打脏重算。
     /// </summary>
     public class WorldYSortManager : MonoBehaviour
     {
@@ -29,17 +36,29 @@ namespace LAB2D.Render
         {
             public SpriteRenderer renderer;
             public Transform transform;
-            public float bottomOffset; // bounds.min.y - position.y（缓存，sprite/scale 变化时重算）
-            public float bottomY;      // 当前底端世界 y
+            public float bottomOffset; // bounds.min.y - position.y（动态：sprite/scale 变化时重算）
+            public float bottomY;      // 静态：入列时缓存；动态：每帧重算
             public int lastOrder = int.MinValue;
-            public Sprite lastSprite;
+            public bool isDynamic;
+            public bool isPending; // 注册后等待入列（TileVisualSpawner 的 position/sprite 配置落地）
+            public Sprite lastSprite;  // 仅动态使用：静态视觉的原地换图走 MarkStaticDirty 显式打脏
             public Vector3 lastScale;
         }
 
-        private readonly List<Entry> entries = new List<Entry>();
+        /// <summary>bottomY 降序比较器（静态/动态共用）。List.Sort 不稳定，但同 y 并列时
+        /// 旧版也只是注册序（无视觉语义）；输入顺序确定 → 输出确定，不会帧间闪烁。</summary>
+        private static readonly BottomYDescComparer SortComparer = new BottomYDescComparer();
 
-        /// <summary>上一帧"最顶条目"名（诊断：顶部变化时打一条，暴露恒最顶的根因）。</summary>
-        private string lastTopName;
+        private sealed class BottomYDescComparer : IComparer<Entry>
+        {
+            public int Compare(Entry x, Entry y) => y.bottomY.CompareTo(x.bottomY);
+        }
+
+        private readonly Dictionary<SpriteRenderer, Entry> entryMap = new Dictionary<SpriteRenderer, Entry>();
+        private readonly List<Entry> pending = new List<Entry>();  // 已注册待入列（等 TileVisualSpawner 配置落地）
+        private readonly List<Entry> statics = new List<Entry>();  // 静态，按缓存 bottomY 降序
+        private readonly List<Entry> dynamics = new List<Entry>(); // 动态，每帧重排
+        private bool staticsDirty = true;
 
         private static WorldYSortManager instance;
 
@@ -66,32 +85,22 @@ namespace LAB2D.Render
 
         /// <summary>
         /// 注册一个参与 y 排序的 SpriteRenderer（幂等，重复注册忽略）。
+        /// 注册时不读 bounds/位置（调用方可能尚未配置），下一次 LateUpdate 才入列。
         /// </summary>
-        public void Register(SpriteRenderer sr)
+        /// <param name="sr">渲染器。</param>
+        /// <param name="isDynamic">是否移动实体（角色）：每帧读位置重排；静态（树/建筑）bottomY 入列时缓存、仅批量脏时排序。</param>
+        public void Register(SpriteRenderer sr, bool isDynamic = false)
         {
-            if (sr == null)
+            if (sr == null || this.entryMap.ContainsKey(sr))
             {
                 return;
             }
 
-            for (int i = 0; i < this.entries.Count; i++)
-            {
-                if (this.entries[i].renderer == sr)
-                {
-                    return;
-                }
-            }
-
-            Entry e = new Entry
-            {
-                renderer = sr,
-                transform = sr.transform,
-            };
-            this.RefreshOffset(e);
-            this.entries.Add(e);
+            Entry e = new Entry { renderer = sr, transform = sr.transform, isDynamic = isDynamic, isPending = true };
+            this.entryMap.Add(sr, e);
+            this.pending.Add(e);
 
             // 注册不打日志——注册时序早于 sprite/位置赋值，快照全是初始态（单局曾 800+ 条误导性 Debug）。
-            // 排查 y 排序问题用 YSortTop（顶部变化事件点）+ LateUpdate 的 sprite/scale 变化重算即可。
         }
 
         /// <summary>
@@ -99,135 +108,130 @@ namespace LAB2D.Render
         /// </summary>
         public void Unregister(SpriteRenderer sr)
         {
-            if (sr == null)
+            if (sr == null || !this.entryMap.TryGetValue(sr, out Entry e))
             {
                 return;
             }
 
-            for (int i = this.entries.Count - 1; i >= 0; i--)
+            this.entryMap.Remove(sr);
+            this.pending.Remove(e);
+            if (e.isDynamic)
             {
-                if (this.entries[i].renderer == sr)
-                {
-                    this.entries.RemoveAt(i);
-                    return;
-                }
+                this.dynamics.Remove(e);
+            }
+            else
+            {
+                this.statics.Remove(e); // 从有序表移除不破坏有序性，无需重排
             }
         }
 
         /// <summary>
-        /// 外部改了 sprite/scale 时强制重算底端偏移（通常不需要，
-        /// LateUpdate 会自动检测 sprite/scale 变化；用于 RuleTile 邻居变化等场景）。
+        /// 外部原地改了 sprite/scale（如 RuleTile 邻居变化触发的 CreateOrUpdate 原地换图）时
+        /// 强制重算该静态条目的底端偏移。动态条目每帧自动检测，无需调用。
         /// </summary>
         public void MarkStaticDirty(SpriteRenderer sr)
         {
-            if (sr == null)
+            if (sr == null || !this.entryMap.TryGetValue(sr, out Entry e) || e.isDynamic)
             {
                 return;
             }
 
-            for (int i = 0; i < this.entries.Count; i++)
+            if (e.isPending)
             {
-                Entry e = this.entries[i];
-                if (e.renderer == sr)
-                {
-                    this.RefreshOffset(e);
-                    return;
-                }
+                return; // 尚未入列，入列时会读最新状态（标志位 O(1)，地图生成期 pending 上万不可 Contains 线性扫）
             }
-        }
 
-        // 排序缓冲（LateUpdate 每帧复用，避免每帧 new 数组）
-        private float[] sortBottomYs = System.Array.Empty<float>();
-        private int[] sortIndices;
-        private int[] sortOrders;
+            this.RefreshOffset(e);
+            this.staticsDirty = true;
+        }
 
         private void LateUpdate()
         {
-            // 1. 懒清扫已销毁条目（角色延迟销毁/Player 永不销毁/漏注销均兜底）
-            for (int i = this.entries.Count - 1; i >= 0; i--)
+            // 1. pending 入列：此刻 TileVisualSpawner 的 position/sprite 配置已落地，读 bounds/位置才有效
+            for (int i = 0; i < this.pending.Count; i++)
             {
-                if (this.entries[i].renderer == null)
+                Entry e = this.pending[i];
+                if (e.renderer == null)
                 {
-                    this.entries.RemoveAt(i);
+                    this.entryMap.Remove(e.renderer);
+                    continue;
+                }
+
+                e.isPending = false;
+                this.RefreshOffset(e);
+                if (e.isDynamic)
+                {
+                    this.dynamics.Add(e);
+                }
+                else
+                {
+                    this.statics.Add(e);
+                    this.staticsDirty = true;
                 }
             }
 
-            int count = this.entries.Count;
-            if (count == 0)
+            this.pending.Clear();
+
+            // 2. 懒清扫已销毁条目（角色延迟销毁/Player 永不销毁/漏注销均兜底；移除不破坏静态有序性）
+            this.SweepDestroyed(this.statics);
+            this.SweepDestroyed(this.dynamics);
+
+            // 3. 静态重排：仅批量脏时（地图生成完成/补种/MarkStaticDirty），一次性排序
+            if (this.staticsDirty)
             {
-                return;
+                this.statics.Sort(SortComparer);
+                this.staticsDirty = false;
             }
 
-            // 2. 计算当前底端 y；sprite 引用或 lossyScale 变化时重算 offset（Player 换 sprite 等）
-            // 缓冲跨帧复用（每帧 new 3 个数组 + 闭包委托在 100+ 条目下是持续 GC 大户）
-            if (this.sortBottomYs.Length < count)
+            // 4. 动态：读当前位置（本管理器唯一的每帧引擎调用，~200 条 × 3 次），重算 bottomY
+            for (int i = 0; i < this.dynamics.Count; i++)
             {
-                this.sortBottomYs = new float[Math.Max(count, 64)];
-            }
-
-            float[] bottomYs = this.sortBottomYs;
-            for (int i = 0; i < count; i++)
-            {
-                Entry e = this.entries[i];
+                Entry e = this.dynamics[i];
                 if (e.renderer.sprite != e.lastSprite || e.transform.lossyScale != e.lastScale)
                 {
                     this.RefreshOffset(e);
                 }
 
                 e.bottomY = e.transform.position.y + e.bottomOffset;
-                bottomYs[i] = e.bottomY;
             }
 
-            // 3. 按底端 y 降序分配唯一 order（缓冲复用版，排序规则与纯函数版一致）
-            YSortAlgorithm.AssignOrders(bottomYs, count, ref this.sortIndices, ref this.sortOrders);
-            int[] orders = this.sortOrders;
+            this.dynamics.Sort(SortComparer);
 
-            // 4. 仅写变化的 order，减少 SetProperty 开销
-            for (int i = 0; i < count; i++)
+            // 5. 双指针归并按 bottomY 降序派发唯一 order（等 y 取静态先行：同基线角色盖住树基，
+            //    与旧版"地图生成先注册静态、角色后出生"的稳定序一致），只写变化项
+            int s = 0, d = 0, order = 0;
+            while (s < this.statics.Count || d < this.dynamics.Count)
             {
-                Entry e = this.entries[i];
-                int order = orders[i];
+                Entry e;
+                if (d >= this.dynamics.Count
+                    || (s < this.statics.Count && this.statics[s].bottomY >= this.dynamics[d].bottomY))
+                {
+                    e = this.statics[s++];
+                }
+                else
+                {
+                    e = this.dynamics[d++];
+                }
+
                 if (e.lastOrder != order)
                 {
                     e.renderer.sortingOrder = order;
                     e.lastOrder = order;
                 }
-            }
 
-            // 诊断（事件点：最顶条目变化时打一条）：直接暴露"谁在最顶 + 其 bottomY/offset"，排查恒最顶问题
-            int topIdx = 0;
-            for (int i = 1; i < count; i++)
+                order++;
+            }
+        }
+
+        private void SweepDestroyed(List<Entry> list)
+        {
+            for (int i = list.Count - 1; i >= 0; i--)
             {
-                if (bottomYs[i] < bottomYs[topIdx])
+                if (list[i].renderer == null)
                 {
-                    topIdx = i;
+                    this.entryMap.Remove(list[i].renderer);
+                    list.RemoveAt(i);
                 }
-            }
-
-            int secondIdx = -1;
-            float secondMin = float.MaxValue;
-            for (int i = 0; i < count; i++)
-            {
-                if (i == topIdx || bottomYs[i] >= secondMin)
-                {
-                    continue;
-                }
-
-                secondMin = bottomYs[i];
-                secondIdx = i;
-            }
-
-            Entry top = this.entries[topIdx];
-            if (top.renderer.name != this.lastTopName)
-            {
-                this.lastTopName = top.renderer.name;
-                Entry second = secondIdx >= 0 ? this.entries[secondIdx] : null;
-                AWorkerTask.LogProvider(
-                    $"[SeekDiag] YSortTop top={top.renderer.name} " +
-                    $"pos=({top.transform.position.x:F2},{top.transform.position.y:F2}) " +
-                    $"sprite={top.renderer.sprite?.name ?? "null"} offset={top.bottomOffset:F4} bottomY={top.bottomY:F4} " +
-                    $"next={second?.renderer?.name ?? "null"} nextBottomY={(second != null ? second.bottomY : 0f):F4} entries={count}",
-                    LogManager.LogLevelEnum.Debug);
             }
         }
 

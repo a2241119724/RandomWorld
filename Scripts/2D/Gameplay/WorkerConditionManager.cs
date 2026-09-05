@@ -111,6 +111,23 @@ namespace LAB2D.Gameplay
             this.TryShowConditionTip(snapshot, previous);
         }
 
+        /// <summary>热路径复用快照（仅倍率读取用，不入 snapshots 字典；name 字段恒为空——.name 分配禁入热路径）。</summary>
+        private readonly WorkerConditionSnapshot hotPathSnapshot = new WorkerConditionSnapshot();
+
+        /// <summary>
+        /// 热路径填充复用快照（零分配）。失败（数据不可读）返回 null，由调用方按倍率 1 处理。
+        /// </summary>
+        private WorkerConditionSnapshot FillHotPathSnapshot(AWorker worker)
+        {
+            if (!WorkerConditionTool.TryGetWorkerData(worker, out AWorker.WorkerData workerData))
+            {
+                return null;
+            }
+
+            WorkerConditionSnapshot.FillCore(this.hotPathSnapshot, workerData);
+            return this.hotPathSnapshot;
+        }
+
         /// <summary>
         /// 获取 Worker 当前状态快照。
         /// </summary>
@@ -131,6 +148,8 @@ namespace LAB2D.Gameplay
 
         /// <summary>
         /// 获取 Worker 当前移动速度倍率。
+        /// 热路径（每移动 Worker 每物理帧）：复用实例填充，零分配（不写 snapshots 字典，
+        /// 事件/HUD 流程仍走 <see cref="GetWorkerCondition"/> 全量快照）。
         /// </summary>
         /// <param name="worker">目标工人。</param>
         /// <returns>移动速度倍率，禁用或无法读取时返回 1。</returns>
@@ -141,7 +160,7 @@ namespace LAB2D.Gameplay
                 return 1.0f;
             }
 
-            WorkerConditionSnapshot snapshot = this.GetWorkerCondition(worker);
+            WorkerConditionSnapshot snapshot = this.FillHotPathSnapshot(worker);
             return snapshot == null ? 1.0f : snapshot.MoveSpeedMultiplier;
         }
 
@@ -172,7 +191,7 @@ namespace LAB2D.Gameplay
                 return 1.0f;
             }
 
-            WorkerConditionSnapshot snapshot = this.GetWorkerCondition(worker);
+            WorkerConditionSnapshot snapshot = this.FillHotPathSnapshot(worker);
             if (snapshot == null)
             {
                 return 1.0f;
@@ -429,37 +448,43 @@ namespace LAB2D.Gameplay
         /// <returns>状态快照。</returns>
         public static WorkerConditionSnapshot FromWorker(AWorker worker, AWorker.WorkerData workerData)
         {
+            WorkerConditionSnapshot snapshot = new WorkerConditionSnapshot();
+            FillCore(snapshot, workerData);
+            snapshot.WorkerName = worker == null ? "未知工人" : worker.name;
+            snapshot.WorkerInstanceId = worker == null ? 0 : worker.GetInstanceID();
+            return snapshot;
+        }
+
+        /// <summary>
+        /// 原地填充状态/比例/倍率（与 <see cref="FromWorker"/> 语义一致，但不含 name 身份字段——
+        /// Unity .name getter 每次分配新字符串，热路径禁用）。
+        /// 热路径（移动速度/任务进度倍率，每物理帧 × 每 Worker 调用）复用同一实例填充，
+        /// 避免旧版 ~5500 次/秒的 new（100 Worker 卡顿治理 2026-09-06，见 bug-fixes.md）。
+        /// </summary>
+        public static void FillCore(WorkerConditionSnapshot target, AWorker.WorkerData workerData)
+        {
             if (workerData == null)
             {
-                return new WorkerConditionSnapshot
-                {
-                    WorkerName = worker == null ? "未知工人" : worker.name,
-                    WorkerInstanceId = worker == null ? 0 : worker.GetInstanceID(),
-                    State = WorkerConditionState.Healthy,
-                    HungryRatio = 1.0f,
-                    TiredRatio = 0.0f,
-                    StressRatio = 0.0f,
-                    MoraleRatio = 1.0f,
-                    MoveSpeedMultiplier = 1.0f,
-                    WorkProgressMultiplier = 1.0f,
-                };
+                target.State = WorkerConditionState.Healthy;
+                target.HungryRatio = 1.0f;
+                target.TiredRatio = 0.0f;
+                target.StressRatio = 0.0f;
+                target.MoraleRatio = 1.0f;
+                target.MoveSpeedMultiplier = 1.0f;
+                target.WorkProgressMultiplier = 1.0f;
+                return;
             }
 
             WorkerConditionState state = WorkerConditionTool.GetState(workerData);
-            return new WorkerConditionSnapshot
-            {
-                WorkerName = worker == null ? "未知工人" : worker.name,
-                WorkerInstanceId = worker == null ? 0 : worker.GetInstanceID(),
-                State = state,
-                HungryRatio = WorkerConditionTool.GetSafeRatio(workerData.CurHungry, workerData.MaxHungry),
-                TiredRatio = WorkerConditionTool.GetSafeRatio(workerData.CurTired, workerData.MaxTired),
-                StressRatio = WorkerConditionTool.GetSafeRatio(workerData.CurStress, workerData.MaxStress),
-                MoraleRatio = WorkerConditionTool.GetSafeRatio(workerData.CurMorale, workerData.MaxMorale),
-                MoveSpeedMultiplier = WorkerConditionTool.GetMoveSpeedMultiplier(state),
-                WorkProgressMultiplier = WorkerConditionTool.GetTaskProgressMultiplier(
-                    state,
-                    WorkerTaskType.Build),
-            };
+            target.State = state;
+            target.HungryRatio = WorkerConditionTool.GetSafeRatio(workerData.CurHungry, workerData.MaxHungry);
+            target.TiredRatio = WorkerConditionTool.GetSafeRatio(workerData.CurTired, workerData.MaxTired);
+            target.StressRatio = WorkerConditionTool.GetSafeRatio(workerData.CurStress, workerData.MaxStress);
+            target.MoraleRatio = WorkerConditionTool.GetSafeRatio(workerData.CurMorale, workerData.MaxMorale);
+            target.MoveSpeedMultiplier = WorkerConditionTool.GetMoveSpeedMultiplier(state);
+            target.WorkProgressMultiplier = WorkerConditionTool.GetTaskProgressMultiplier(
+                state,
+                WorkerTaskType.Build);
         }
 
         /// <summary>

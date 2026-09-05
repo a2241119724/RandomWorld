@@ -855,9 +855,9 @@ namespace LAB2D.Character.Worker.Task
             const int placeMaxRadius = 20;
             ItemData itemData = ItemDataProvider(resourceInfo.Id);
 
-            LogProvider(
-                $"[掉落入口] center=({center.x},{center.y}) id={resourceInfo.Id} count={resourceInfo.Count} stackable={itemData?.IsStackable}",
-                LogManager.LogLevelEnum.Trace);
+            // 掉落入口成功日志已删除（100 Worker 收紧，bug-fixes.md 2026-09-06）：采集链每次
+            // 掉落一条（2.7k 条/6 分钟），成功放置无诊断价值——放置失败路径（下方 [掉落诊断]）
+            // 保留原样。
 
             // 可堆叠物品：附近 5 格内找同类合并（仅限同 Owner）
             if (itemData != null && itemData.IsStackable)

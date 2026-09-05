@@ -509,11 +509,18 @@ namespace LAB2D.Character.Worker
                 this.taskQueue.MarkIdle(task);
             }
 
-            // [TaskDiag] 记录队列认领释放：Gather 移除队列（释放认领锁），其他类型标记空闲可重试
-            string releaseAction = task.TaskType == WorkerTaskType.Gather ? "移除队列(Gather认领)" : "标记Idle可重试";
-            AWorkerTask.LogProvider(
-                $"[TaskDiag] 队列释放 type={task.TaskType} target=({task.TargetMap.X},{task.TargetMap.Y}) {releaseAction}",
-                LogManager.LogLevelEnum.Debug);
+            // [TaskDiag] 队列认领释放（Gather 移除队列释放认领锁，其他类型标记空闲可重试）：
+            // 释放随任务失败/完成高频发生（100 Worker 下常态 20 次/秒、6,932 条/6 分钟），
+            // 改全局节流 2s + Trace 采样——释放本身无诊断价值，异常方向是"同一任务反复
+            // 释放重试"，节流采样配合 SetTask/开始任务 链路足够定位（bug-fixes.md 2026-09-06）。
+            AWorkerTask.LogProviderThrottled(
+                "QueueRelease", 2f,
+                () =>
+                {
+                    string releaseAction = task.TaskType == WorkerTaskType.Gather ? "移除队列(Gather认领)" : "标记Idle可重试";
+                    return $"[TaskDiag] 队列释放 type={task.TaskType} target=({task.TargetMap.X},{task.TargetMap.Y}) {releaseAction}";
+                },
+                LogManager.LogLevelEnum.Trace);
 
             EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
         }

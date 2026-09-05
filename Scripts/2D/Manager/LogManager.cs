@@ -12,12 +12,16 @@ namespace LAB2D.Manager
     public class LogManager : Singleton<LogManager>
     {
         private readonly object syncRoot = new object();
+        // 文件写专用锁：与 syncRoot 分离——AppendAllText（Open/Write/Close）耗时且波动大
+        // （磁盘抖动时数十 ms），若在 syncRoot 内执行会阻塞所有线程的日志入队（主线程
+        // Update 卡在日志锁上）。写之间互斥即可，入队不被 I/O 拖住（bug-fixes.md 2026-09-06）。
+        private readonly object ioRoot = new object();
         private readonly string logPath = Path.Combine(Application.persistentDataPath, "game.log");
         private readonly string errorLogPath = Path.Combine(Application.persistentDataPath, "error.log");
         private readonly List<string> logs = new List<string>();
-        private readonly int maxLogCount = 100; // 每 100 条批量落盘一次。10 时每秒 ~30 次 File.AppendAllText（Open/Write/Close），
-                                                // 在高频日志（敌人状态切换/寻路）下主线程阻塞显著；100 将文件写频率降 10 倍。
-                                                // 影响：game.log 最多滞后 ~0.3-1 秒（Flush 在退出/关停时兜底）。
+        private readonly int maxLogCount = 300; // 每 300 条批量落盘一次。10 时每秒 ~30 次 File.AppendAllText（Open/Write/Close），
+                                                // 100 在 100 Worker 常态 ~1000 行/秒下仍 ~10 次写/秒；300 再降 3 倍（~3 次/秒）。
+                                                // 影响：game.log 最多滞后 ~1-2 秒（Flush 在退出/关停时兜底），崩溃丢日志窗口同量级。
         private LogLevelEnum minLogLevel = LogLevelEnum.Trace; // 最小的日志级别.
         private bool isSave = true;
         private bool logFileAvailable = true;
@@ -162,9 +166,11 @@ namespace LAB2D.Manager
                 return;
             }
 
+            // join 与写盘均在 ioRoot（写互斥）内、syncRoot 之外：入队锁只保护 logs 列表，
+            // I/O 不阻塞其他线程的 Log() 调用。logs 参数是锁内拷贝出的独立列表，锁外只读安全。
             try
             {
-                lock (this.syncRoot)
+                lock (this.ioRoot)
                 {
                     File.AppendAllText(path, string.Join(Environment.NewLine, logs) + Environment.NewLine);
                 }
@@ -183,9 +189,10 @@ namespace LAB2D.Manager
                 return;
             }
 
+            // 同 SaveLog：写盘走 ioRoot，不与入队锁互斥（Unity 日志回调线程也可能进入）。
             try
             {
-                lock (this.syncRoot)
+                lock (this.ioRoot)
                 {
                     File.AppendAllText(this.errorLogPath, logMessage + Environment.NewLine);
                 }

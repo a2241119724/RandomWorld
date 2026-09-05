@@ -2,6 +2,7 @@ namespace LAB2D.Character.Worker
 {
     using LAB2D;
     using System;
+    using System.Collections.Generic;
 
     /// <summary>
     /// Worker状态管理器
@@ -36,14 +37,21 @@ namespace LAB2D.Character.Worker
             this.Character.WorkerStateText.text = this.CurrentStateType.ToString();
             base.ChangeState(type);
 
-            // 状态切换诊断轨迹（事件点，Debug 只进 game.log）：记录 from→to + 角色名，
-            // 用于排查同一对状态来回切换的异常振荡（如 Seek→Seek 重入、任务完成→寻路→移动循环）。
-            // 首次切换（无前置状态）不记录，避免 enum 默认值造成"Move→X"的误导。
-            if (hadPriorState)
+            // 状态切换诊断轨迹：排查同一对状态来回切换的异常振荡（任务完成→寻路→移动循环等）。
+            // 100 Worker 收紧（bug-fixes.md 2026-09-06）：常态流转每 Worker 每秒 ~0.6 条、全队
+            // 63k 条/6 分钟是第一刷屏源（字符串插值+装箱+写盘 I/O 均在主线程热路径上）。
+            // ① 首次切换（无前置状态）不记录，避免 enum 默认值造成"Move→X"的误导；
+            // ② from==to 重入不记录——任务接取重入 Seek 属正常路径（每局 21k+ 条），
+            //    语义已由 [TaskDiag] SetTask/开始任务 表达；
+            // ③ 其余切换走节流（每 Worker 2s 一条，惰性求值：被节流不构造插值串），
+            //    节流粒度足以还原振荡模式（正常循环间隔 >2s 只略降采样，异常往返 14ms 级
+            //    会连续命中节流窗只出首条——配合 TaskDiag/SeekDiag 链路定位）。
+            if (hadPriorState && !EqualityComparer<CST>.Default.Equals(from, type))
             {
-                AWorkerTask.LogProvider(
-                    $"[StateDiag] {this.Character.name} 状态切换 {from} -> {type}",
-                    LogManager.LogLevelEnum.Debug);
+                AWorkerTask.LogProviderThrottled(
+                    $"{this.Character.name}|StateDiag", 2f,
+                    () => $"[StateDiag] {this.Character.name} 状态切换 {from} -> {type}",
+                    LogManager.LogLevelEnum.Trace);
             }
         }
     }

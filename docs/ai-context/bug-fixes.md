@@ -2,6 +2,67 @@
 
 > 每次通过日志分析并解决 bug 后，把思路追加到此文件。开始新任务前**先通读本文件**，命中历史记录时直接引用验证，避免重复排查。
 
+## 2026-09-06 100 Worker 场景卡顿：Worker 侧诊断日志常态化刷屏（977 行/秒、峰值 4257）+ LogManager 锁内写盘（2026-08-15 姊妹篇）
+
+- **现象**：用户报告"游戏很卡"（100 Worker / 地图 1000×1000 / 最大敌人 100）。game.log 5 分 54 秒 **346,002 行（35.7MB）**，平均 **977 行/秒**、峰值秒 **4,257 行**（01:18:56，集体决策风暴：该秒 563 次 Seek→Seek + 大量队列释放）。error.log 仅 1 条启动序列化警告（无害）。刷屏源 Top：`[StateDiag] 状态切换` 63,376（其中 `Seek -> Seek` **21,649**）＞ `[SeekDiag] 提交寻路` 36,498 ＞ `[TaskDiag] SetTask/开始任务/队列释放` ~37,000（队列释放 6,932）＞ MapDiag 建造四件套（ReserveBuildPosition 2,544/SetComplete 2,112/缓存更新 1,957/SetComplete后 1,793）＞ `[掉落入口]` 2,734。
+- **根因**（命中 2026-08-15「敌人日志刷屏致帧率 20 多」同族，但换皮为 **Worker 侧 + 规模放大**；该次只节流了敌人状态切换，Worker 状态机日志未动）：
+  1. **正常行为 × 事件级日志 × 100 倍规模**：每个 Worker 任务循环（Seek→Seek 重入→Move→Work→Seek）产出 ~10 条日志，Seek→Seek 重入是任务接取的**正常路径**（决策 SetTask 内部重入 ChangeState，语义由 TaskDiag 表达），21,649 次/局全量落盘；100 Worker 使所有人均摊事件日志乘 100。
+  2. **"提交寻路"节流失效**：ASeek.Seek 的 2s 节流窗对每 Worker ~0.3 次/秒的寻路频率基本次次放行（36,495 条），Trace 降级不减 I/O。
+  3. **LogManager 锁内写盘（新发现的结构缺陷）**：`SaveLog` 在 `lock(syncRoot)` 内做 `File.AppendAllText`（Open/Write/Close），而 `Log()` 入队要拿同一把锁——磁盘抖动时**所有线程的日志调用阻塞在锁上**，主线程 Update 直接卡在日志锁；maxLogCount=100 在 977 行/秒下仍 ~10 次写/秒。
+  4. 行为侧核实为**无 bug**：决策风暴（峰值秒 563 次重入）与防守夜/集体任务释放联动，每次重入的决策成本本身经前两波 perf 排查已零分配化，量级可忽略——卡顿主体是日志构造（插值+装箱+GC 分配）与锁内 I/O。
+- **修复**（6 文件，原则：**正常事件静默/节流，异常才打；降级不减 I/O，只有减条数才真减**）：
+  1. `WorkerStateManager.cs`：StateDiag 状态切换——`from==to` 重入不记录（砍 21,649）；其余切换走 `LogProviderThrottled("{name}|StateDiag", 2f, Func, Trace)` 惰性求值（被节流不构造插值串），63k→~1.5 万。
+  2. `ASeek.cs`：删除"提交寻路"成功日志（36,495→0）；寻路结果由"到达终点"（节流 Trace）+"寻路不可达"（Debug+节流）表达，对账能力保留。
+  3. `WorkerTaskManager.cs`：队列释放 6,932 条 Debug→全局节流 key `QueueRelease` 2s + Trace（→~180 条）。
+  4. `LogManager.cs`：新增 `ioRoot` 写盘专用锁，`SaveLog`/`SaveErrorLog` 的 join+AppendAllText 移出 `syncRoot`（入队不再被 I/O 阻塞；写之间仍互斥防交错）；`maxLogCount` 100→300（写次数再降 3 倍，滞后 ~1-2s，Flush 兜底）。
+  5. `BuildMap.cs`：删 SetComplete 主日志与 ReserveBuildPosition 成功日志（失败分支日志本就存在）；"SetComplete后"回读校验从**逐格无条件打**改为**仅校验失败**（colliderType=Sprite 但 cacheWalk=True）时 Warning——正常建造零日志零查询。
+  6. `AWorkerTask.cs`：删"[掉落入口]"成功日志（2,734→0），"[掉落诊断]"失败路径保留。
+- **验证**：verify_compile 通过（我改的 6 文件 0 错误；残余 6 错全部在 `TurnBattleUI.cs`，系并行会话 WIP 未写完的方法体，非本次引入）。行为验证待新局：game.log 应从 ~977 行/秒降到 **~700 行/秒以下**（砍 ~29% 条数 + 大头构造开销），`Seek -> Seek`/`提交寻路`/`队列释放`/`SetComplete` 应基本消失，建造期不再出现逐格 MapDiag 刷屏；帧率尖峰（原 01:18:56 型集体决策风暴）应显著缓和。若仍卡，下一优先级是 TaskDiag 生命周期三件套（SetTask/开始任务/SetTask(null) ~3 万条，SetTask 与开始任务语义重复可合一）。
+- **教训**：
+  - **节流窗口必须匹配事件频率**：2s 节流对每秒 0.3 次的事件≈无节流（窗窗放行）。给"高频事件"上节流前先算稳态触发频率，节流间隔应 ≥ 事件间隔的数倍，或直接判定"成功路径无诊断价值"删除。
+  - **日志降级的边际收益是零 I/O 节省**（Trace/Debug 同通道写盘），只有跳过构造+不落盘（节流命中/删除）才真省——"降级到 Trace"只解决 Console 刷屏，不解决 game.log I/O。
+  - **锁内 I/O 是隐性全线程卡点**：任何"日志入队锁 == 文件写锁"的设计，磁盘抖动都会把单次慢写放大成所有线程停等。入队锁与 I/O 锁必须分离（拷贝列表锁内、写盘锁外）。
+  - 2026-08-15 修复只覆盖了敌人侧状态切换——**同类诊断日志要按"调用方规模"评估而非只按"事件级别"**：同一条状态切换日志，16 个敌人时无害，100 个 Worker 时成为第一刷屏源。新增诊断日志时自问"这个事件点 × 满编角色数 = 每秒几条"。
+
+## 2026-09-06 100 Worker 卡顿第二刀：LateUpdate 诊断代码 GC——`renderer.name` 每帧分配 + 遮挡日志非惰性（Profiler 定位）
+
+- **现象**：日志刀（上一条）落地后，用户 Profiler 复测仍见卡顿，GC 热点直接指向 `WorldYSortManager.LateUpdate` 与 `OcclusionFader.LateUpdate` 的 GC.Alloc 列。
+- **根因**：
+  1. `WorldYSortManager.LateUpdate` 顶部诊断块用 `top.renderer.name != this.lastTopName` 判"最顶条目是否变化"——**Unity `.name` getter 每次访问都跨原生边界分配新托管字符串**，该比较每帧执行，即每帧白付一次字符串分配（entries 几千条也一样，分配只与调用次数相关）。
+  2. `OcclusionFader.LateUpdate` 遮挡诊断日志走 `LogProvider(string)` **直接构造重载**：`SetEquals` 事件点判定本身零分配，但玩家沿树冠边缘走动时遮挡集合**每帧进出** → 每帧构造 `$"..."` 插值串 + `sr.name` 又是 name 分配——"变化时才打"在开阔地是事件点，在遮挡边界上就是每帧。
+  3. 排除项（核实过勿再查）：`YSortAlgorithm.AssignOrders` 缓冲复用版零分配（静态比较器单例 + `ref` 缓冲 + 键经字段传递）；OcclusionFader 循环体 `bounds`/`position`/`color` 全 struct 无分配；两处排序缓冲均跨帧复用。
+- **修复**（2 文件，两轮）：
+  - 第一轮（不彻底）：`WorldYSortManager` 改 `GetInstanceID()` int 比较 + `OcclusionFader` 改 `LogProviderThrottled` 惰性节流——用户复测**仍报 GC**。
+  - 第二轮（终版）：**删除两块排查期诊断**。残余分配：① YSortTop 只治了比较没治日志体——100 Worker 移动时"最顶条目"高频换位，每秒几十次 × （插值串 + 4×`.name` + 落盘）仍是每帧级；② OccluDiag 的 `Func<string>` lambda 捕获局部变量，**变化帧仍分配闭包+委托**（节流判定在函数内部，参数求值在调用点已完成）。删除后两个 LateUpdate 只剩排序/淡化必要逻辑（`occludedNow`/`lastOccluded`/`OccluderName` 一并删），托管分配严格归零。排查工具需要时从 git 历史找回。
+- **验证**：verify_compile 0 错 0 警（全库 643 源文件）。行为验证待新局 Profiler：两个 LateUpdate 的 GC.Alloc 应为 0——再有任何分配即说明测的是旧域或分配源在别处（需点开 Profiler 红条看子调用）。
+- **教训**：
+  - **Unity `.name` 每次访问都分配新字符串**——任何 GameObject/Component 的 name 比较、排序、字典键都禁止进每帧路径，用 `GetInstanceID()`（int）判等或缓存字符串。
+  - **非惰性日志重载 = 无条件付字符串分配**：即使最终被级别过滤/不落盘，`$"..."` 在调用点已分配。
+  - **惰性重载不是免费午餐**：`Func<string>` 捕获局部变量即生成闭包+委托分配（AWorkerTask 注释自己写明"被节流的调用只剩一次委托分配"）——每帧可达路径要**不捕获的静态 lambda 或彻底删除**，"惰性了"不等于"零分配了"。
+  - **"变化时才打"的事件点在多角色移动场景会退化为每帧**（最顶条目换位/遮挡集合进出），诊断日志在排查完成后的正确归宿是删除，不是降级或节流。
+
+## 2026-09-06 100 Worker 卡顿第三刀（深度探索）：渲染管理器全量遍历 N≈1.5 万（CPU 主因）+ 全局每帧分配清扫
+
+- **现象**：前两刀（日志节流、LateUpdate 诊断删除）落地、程序集确认重编译（ScriptAssemblies 02:56 晚于源码 02:46，Editor.log 有 play 前强制重编译）后用户复测仍卡。三路并行只读探索（渲染链路/角色寻路/全局扫描）定量定位。
+- **根因**（多源叠加，按帧耗时排序）：
+  1. **渲染管理器无空间剔除的全量遍历（CPU 主因，3-7ms/帧）**：`ResourceMap.GenResource` 全图 5% 撒点且无 chunk/相机裁剪 → **WorldYSortManager 注册 ~1.3-2 万静态视觉**（树/建筑全图常驻）+ ~200 角色；OcclusionFader 候选 ~7 千。旧版每帧：1.5 万条 × 3 次引擎调用（sprite/lossyScale/position）+ 1.5 万元素比较排序（~20 万次虚调用比较）+ 遮挡器 2 万次引擎调用——**GC 治好后 CPU 瓶颈裸露**，这就是"零分配化后依然卡"的答案。
+  2. **WalkabilityCache.UpdateCell 逐格日志**：开局地图注册 2 秒内 10,391 格批量写入，节流 key 含坐标（`CacheWriteBlock|x,y`）位置一换 key 就换 → 节流失效；且 **key 插值串在节流判断前就已构造**。
+  3. **全局每帧分配（三路扫描汇总）**：`WorkerConditionManager.GetWorkerCondition` 每物理帧 new 快照（~5500 次/s）；`AWeapon.Update` 的 `.tag` getter 分配（200 武器 × 60fps × 重叠碰撞体 ≈ 1.2-3.6 万串/s）；`GameTimeUI` 每帧 Format；另有敌人 LOS 逐格 `new Vector3IntLAB`（BuildMap.cs:665，追击态每帧全量扫 → 数 MB/s）、EventBus DynamicInvoke、%60 同帧共振等（见下方"遗留"）。
+- **修复**（本轮，verify_compile 全库 0 错 0 警）：
+  1. **WorldYSortManager 静态/动态分层**：静态（树/建筑）bottomY 入列时缓存一次、仅批量脏时排一次序；每帧只读 ~200 动态角色位置（~600 次引擎调用）+ 双指针归并派发唯一 order（纯内存）。**注册时序陷阱**：TileVisualSpawner 先 Register 后配置 position/sprite（:268→:290-301），故注册只进 pending 队列、下一次 LateUpdate 才读 bounds；原地换图（RuleTile 邻居）由 TileVisualSpawner 换 sprite 处调 `MarkStaticDirty`（用 isPending 标志位判断，不可 Contains——地图生成期 pending 上万会 O(N²)）。Register 加 `isDynamic` 参数，Character.cs 传 true。
+  2. **OcclusionFader 空间网格**：遮挡物全是静态（树/建筑不动），按格分桶（格边长=CheckRadius=6），每帧只查玩家格 ±1（3×3 必覆盖判定圆）≈ 十几个候选 + "未恢复集合"兜底传送/快速离开的恢复收敛（lastProcessedFrame 帧标记去重防双倍收敛）。同样 pending 延迟分桶。
+  3. **WalkabilityCache**：删逐格"判不可通"日志（2026-08-16 卡床排查已结案）；越界 key 改全局（逐格 key 同理失效）。
+  4. **WorkerConditionManager**：热路径倍率（GetWorkerMoveSpeedMultiplier/GetWorkerTaskProgressMultiplier）改复用实例 + `Snapshot.FillCore`（**不含 name 字段**——.name 分配禁入热路径），不写 snapshots 字典零行为变化；事件/HUD 路径仍走 FromWorker 全量快照。
+  5. **AWeapon**：`attackTags.Contains(collider.tag)` → 逐 tag `CompareTag`（零分配）。
+  6. **GameTimeUI**：先比总分钟 int 再 Format（原来是先 Format 再比字符串——比较本身每帧分配）。
+- **验证**：待新局 Profiler 复测——WorldYSortManager/OcclusionFader 的 CPU 与引擎调用应从 3-7ms/帧降到 <0.5ms；开局 2 秒的缓存更新刷屏消失；GC.Alloc 中 FromWorker/.tag/Format 三处归零。
+- **遗留（按严重度，未修待决策）**：① CommonEnemy 物理：动态刚体 gravityScale=1 + interpolate=0 + 每帧 transform.Translate/rotation 写 + AutoSyncTransforms=1（需改 prefab/ProjectSetting，游戏行为风险）；② 敌人追击态每帧全量 SenseNearby + LOS 逐格 new Vector3IntLAB（数 MB/s 分配，BuildMap.cs:665 可改 scratch key 零分配，追击节流是行为调参）；③ EventBus.DynamicInvoke 反射调用 + Character.ReduceHp 每受击闭包（结构性改造）；④ %15/%30/%60 全员同帧共振（UI Text 写+Canvas 重建尖峰，可按角色错相）；⑤ 决策管线 new float[41]+MLP 5 层 buffer+GetTaskPressure 快照字典（~40 次/s）；⑥ 后台 AStar CompressPath 诊断串无条件构造（~800 串/s）；⑦ Tip/武器 Instantiate-Destroy churn。
+- **教训**：
+  - **GC 治理完成后必须重新 Profiler 定位——热点会转移**（本案从 GC → CPU icall/排序）。"零分配"只解决分配，不解决 O(N) 引擎调用与 O(N log N) 排序。
+  - **静态/动态分离是 2D y 排序的标准架构**：地图视觉 95% 是永不动的东西，让它们与角色共享每帧路径就是把常数项 ×N 放大。任何"每帧全量遍历注册表"的管理器都应先问：这里面多少条目其实永不变？
+  - **注册时序决定缓存正确性**：注册发生在配置（position/sprite）之前时，缓存必须在配置落地后（pending 延迟入列），否则缓存的是垃圾初始值且永不自愈。
+  - **节流 key 含坐标 = 无节流**（位置一换 key 就换）；且**参数（含 key）在节流判断前求值**——真节流要 key 固定 + 消息惰性。
+
 ## 2026-09-05 建造完成必现「重影实锤 a=1」Warning：BuildMap tile SetColor 死写入触发巡检误报（b5e7d6ed）
 
 - **现象**：game.log（23:22 局）每次建造完成必现 1 条 `[Warning] [BuildDiag] 重影实锤 cell=(118,76) tile=ResearchTable a=1 flags=None（SR 在而 tile 不透明，隐藏被重置）`，紧跟在 `SetComplete` 之后；error.log 空。全局仅此 1 条（+ AncientCaveDiag 撒点完成误用 Warning 级）。

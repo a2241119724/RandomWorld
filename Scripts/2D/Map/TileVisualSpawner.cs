@@ -291,12 +291,15 @@ namespace LAB2D.Map
 
             // 图：GetSprite 可解析 RuleTile（依据 8 邻域）。引用变化才写，减少 SetProperty。
             // 动画格由 SpriteFrameAnimator 接管 sprite 切换（跳过，避免覆盖动画帧）。
+            // 原地换图后必须 MarkStaticDirty：WorldYSortManager 静态条目的 bottomY/bounds 是入列时缓存的
+            // （RuleTile 邻居变化 → 本格 sprite 轮廓变化 → 底端偏移变化），不打脏会用旧 bounds 排序。
             if (!isAnimated)
             {
                 Sprite sprite = this.tilemap.GetSprite(cell);
                 if (sr.sprite != sprite)
                 {
                     sr.sprite = sprite;
+                    WorldYSortManager.Ensure().MarkStaticDirty(sr);
                 }
             }
 

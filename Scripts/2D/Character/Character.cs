@@ -477,7 +477,8 @@ namespace LAB2D.Character
                     return;
                 }
 
-                WorldYSortManager.Ensure().Register(c.spriteRenderer);
+                // isDynamic: 角色每帧移动，走动态路径（每帧读位置重排）；树/建筑默认静态缓存 bottomY
+                WorldYSortManager.Ensure().Register(c.spriteRenderer, isDynamic: true);
             };
 
         /// <summary>

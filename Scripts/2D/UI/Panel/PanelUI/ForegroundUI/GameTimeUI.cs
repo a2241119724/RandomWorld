@@ -16,7 +16,8 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
         private readonly double rate = DayTime * 1.0 / GlobalData.GameDayTime;
         private Text gameTime;
         private Transform pointer; // 指针
-        private string lastTimeText; // 上次写入的时间文本：分钟级才变化，避免每帧 string.Format 后重复赋值 UI（Text 赋值会触发重建顶点）
+        private int lastTotalMinutes = -1; // 上次写入的总分钟数：文本分钟级才变化，先比 int 再 Format，
+                                           // 避免每帧 string.Format 分配（100 Worker 卡顿治理 2026-09-06）
 
         private GameTimeManager gameTimeManager;
 
@@ -37,15 +38,15 @@ namespace LAB2D.UI.Panel.PanelUI.ForegroundUI
             double curGameTime = this.gameTimeManager.CurGameTime;
             double time = curGameTime * this.rate;
 
-            string timeText = string.Format(
-                "<color=" + PixelUITheme.RichPink + ">游戏时间: </color>{0:D2}天{1:D2}时{2:D2}分",
-                (int)time / DayTime,
-                ((int)time % DayTime) / HourTime,
-                ((int)time % HourTime) / 60);
-            if (timeText != this.lastTimeText) // 文本未变则跳过赋值（每帧热点：HUD 常驻，N 帧里只有分钟翻转的 1 帧真正需要更新）
+            int totalMinutes = (int)time / 60;
+            if (totalMinutes != this.lastTotalMinutes) // 分钟翻转才 Format+赋值（每帧热点：常驻 HUD，先比 int 零分配）
             {
-                this.lastTimeText = timeText;
-                this.gameTime.text = timeText;
+                this.lastTotalMinutes = totalMinutes;
+                this.gameTime.text = string.Format(
+                    "<color=" + PixelUITheme.RichPink + ">游戏时间: </color>{0:D2}天{1:D2}时{2:D2}分",
+                    (int)time / DayTime,
+                    ((int)time % DayTime) / HourTime,
+                    ((int)time % HourTime) / 60);
             }
 
             // 一度等于2分钟

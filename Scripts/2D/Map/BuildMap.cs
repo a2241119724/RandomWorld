@@ -196,9 +196,8 @@ namespace LAB2D.Map
             }
             this.BuildMapDataLAB.PosMap.Add(primaryLAB, primaryData);
             WalkabilityCache.UpdateCell(targetMap);
-            AWorkerTask.LogProvider(
-                $"[MapDiag] ReserveBuildPosition pos=({targetMap.x},{targetMap.y}) tile={tileName} size={width}x{height}",
-                LogManager.LogLevelEnum.Trace);
+            // 成功预约日志已删除（100 Worker 收紧，bug-fixes.md 2026-09-06）：建房整批逐格
+            // 预约在建造期刷 2.5k+ 条；失败分支（位置/副格被占用）上方已有日志，正常预约无诊断价值。
 
             this.SyncSender.Broadcast(
                 "SyncDataResp",
@@ -343,26 +342,25 @@ namespace LAB2D.Map
             // 完成态颜色（白）由 GetBuildVisualColor 经 CreateOrUpdate 落到独立视觉/Bottom tile，不在 tile 上直写。
             this.ApplyCollider(vector3Int, true, buildItemData != null && buildItemData.IsPass);
 
-            // 建造完成是通行判定变化的关键事件（卡墙排查：建成后不可通行建筑阻挡寻路）。
-            AWorkerTask.LogProvider(
-                $"[MapDiag] SetComplete pos=({vector3Int.x},{vector3Int.y}) tile={buildTileData.Name} pass={(buildItemData != null && buildItemData.IsPass)}",
-                LogManager.LogLevelEnum.Debug);
+            // 建造完成主日志已删除（100 Worker 收紧，bug-fixes.md 2026-09-06）：整批逐格完成
+            // 在建造期刷 2k+ 条；通行判定一致性由下方回读校验兜底——正常静默，异常才告警。
 
             WalkabilityCache.UpdateCell(vector3Int);
 
             // 卡床排查 2026-08-16：UpdateCell 后立即回读，确认网格判定与缓存判定是否同步。
-            // 仅对阻挡格（pass=False → Sprite 碰撞体）记录：若 colliderType=Sprite 但 cacheWalk=True，
-            // 说明 UpdateCell 未生效（isBuilt/越界/坐标错位），锁定根因。
-            if (buildItemData != null && !buildItemData.IsPass)
+            // 100 Worker 收紧：原实现逐格无条件回读+打日志（建造期 1.8k 条），改为仅在校验
+            // 失败（colliderType=Sprite 但 cacheWalk=True，说明 UpdateCell 未生效：
+            // isBuilt/越界/坐标错位）时输出 Warning——正常零日志零查询开销（惰性）。
+            if (buildItemData != null && !buildItemData.IsPass
+                && this.tilemap.GetColliderType(vector3Int) == UnityEngine.Tilemaps.Tile.ColliderType.Sprite
+                && WalkabilityCache.IsWalkable(vector3Int.x, vector3Int.y))
             {
                 AWorkerTask.LogProviderThrottled(
                     $"SetCompleteDiag|{vector3Int.x},{vector3Int.y}", 1f,
-                    // 惰性求值：GetColliderType/IsWalkable 查询与插值串仅在真正输出时发生
-                    //（建房整批瓦片逐格完成时原实现每格都白付这两次查询）
-                    () => $"[MapDiag] SetComplete后 pos=({vector3Int.x},{vector3Int.y}) " +
+                    () => $"[MapDiag] SetComplete回读不一致 pos=({vector3Int.x},{vector3Int.y}) " +
                         $"colliderType={this.tilemap.GetColliderType(vector3Int)} " +
-                        $"cacheWalk={WalkabilityCache.IsWalkable(vector3Int.x, vector3Int.y)}",
-                    LogManager.LogLevelEnum.Debug);
+                        $"cacheWalk={WalkabilityCache.IsWalkable(vector3Int.x, vector3Int.y)}（UpdateCell 未生效?）",
+                    LogManager.LogLevelEnum.Warning);
             }
 
             // 视觉同步：完成态颜色切换（半透明→实心，经 colorProvider）+ 刷新 8 邻域（RuleTile 邻居变化）

@@ -124,28 +124,19 @@ namespace LAB2D.Core.Seek
             if (position.x < 0 || position.y < 0
                 || position.x >= snapshot.Width || position.y >= snapshot.Height)
             {
-                // 越界跳过是异常信号（地图外写入），保留观测。
+                // 越界跳过是异常信号（地图外写入），保留观测（全局 1s 节流——逐格 key 在批量
+                // 异常写入时等同无节流，见 bug-fixes.md 2026-09-06）。
                 AWorkerTask.LogProviderThrottled(
-                    $"CacheSkipOOB|{position.x},{position.y}", 1f,
-                    // 惰性求值：批量写入路径，被节流时不构造插值串
+                    "CacheSkipOOB", 1f,
                     () => $"[MapDiag] 缓存更新跳过 pos=({position.x},{position.y}) 原因=越界 size={snapshot.Width}x{snapshot.Height}",
                     LogManager.LogLevelEnum.Trace);
                 return;
             }
 
+            // 阻挡格（不可通）逐格日志已删（2026-08-16 卡床排查已结案；开局地图注册曾 2 秒
+            // 内 1 万格批量写入——逐格 key 节流失效，每格 key 插值+闭包构造是开局卡顿贡献者）。
             int index = (position.y * snapshot.Width) + position.x;
-            bool reach = ASeek.IsCanReach(position);
-            Volatile.Write(ref snapshot.Cells[index], reach ? 1 : 0);
-            // 卡床排查 2026-08-16：阻挡格（不可通）写入记录，确认 UpdateCell 确实生效。
-            // 若此处已写「不可通」但压缩路径仍穿过该格 → 另有机制回写可通，需继续追。
-            if (!reach)
-            {
-                AWorkerTask.LogProviderThrottled(
-                    $"CacheWriteBlock|{position.x},{position.y}", 1f,
-                    // 惰性求值：阻挡格批量写入（建房/拆除）时逐格进入，被节流时不构造插值串
-                    () => $"[MapDiag] 缓存更新 pos=({position.x},{position.y}) 判不可通",
-                    LogManager.LogLevelEnum.Trace);
-            }
+            Volatile.Write(ref snapshot.Cells[index], ASeek.IsCanReach(position) ? 1 : 0);
         }
 
         /// <summary>
