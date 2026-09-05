@@ -167,9 +167,9 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **屋顶间 y 排序:** 屋顶 SpriteRenderer 注册进 `WorldYSortManager` 参与 y 排序（层仍 `Highest`，盖住屋内一切的设计不变），多个房间屋顶之间按"视觉底端世界 y"分配唯一 `sortingOrder`（近处屋顶盖住远处），不再固定 order=0；移除时由 `LateUpdate` 懒清扫兜底
 
 ### 成就系统
-- 6 类别(战斗/收集/生存/波次/工人/修仙)，共 31 个成就
+- 6 类别(战斗/收集/生存/波次/工人/修仙)，共 34 个成就
 - 修仙类读玩家 `GrowthData` 当前值（境界五档 RealmIndex 1~5 / 功法 3·5 门 / 异能 1·2 个）+ 会话累计（炼丹 `PillManager.TotalPillsCrafted` / 洞府 `Caves` Explored 计数），`UpdateProgressAll` 0.5s 节流同步
-- Boss 击杀走 `EnemyData.IsBoss` 专属计数（`TotalBossDefeatedCount`，生成时 `WaveBossRewardManager` 判定写入）
+- Boss 击杀走 `EnemyData.IsBoss` 专属计数（`TotalBossDefeatedCount`，生成时 `WaveBossRewardManager` 判定写入）；回合制战斗胜场走 `TurnBattleManager.TotalPlayerVictories`（FinishBattle 会话计数）；挚友数遍历 Worker 对玩家好感 ≥85（`GetFavorabilityWithPlayer`，零 Manager 改动）
 - F7 切换成就面板（类别 tab 按 `Enum.GetValues` 自动遍历，新类别零 UI 改动）
 
 ### 存档系统

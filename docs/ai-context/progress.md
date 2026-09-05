@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `feat(achievement)`: 回合制战斗/挚友社交成就 3 条（64185d98）——`TurnBattleManager.TotalPlayerVictories` 会话计数（FinishBattle 统一结束路径）+ combat_turnbattle_1/10 / social_friend_first（首位挚友·遍历对玩家好感 ≥85 零 Manager 改动）；+1 类别归属用例 1023/1023
 - 2026-09 — `chore(clean)`: 清 IconName 死字段 + 修 progress 包4 失同步（99d84f40）——15 处全为定义+赋值零读者（UI 用类别默认图标），同 IsProgressPersistent 同款「预留未接线」；Current Work M4 包4 勾选（三大子项早已完成）；1022/1022
 - 2026-09 — `chore(clean)`: IsProgressPersistent 死字段清理 + WorkerSupply 空 catch 留痕（08aaf531）——33 处引用全为定义+赋值零读者（「跨局持久化」从未实现，Manager 非存档每局重建）；FillBedInfo 空 catch 静默吞统计异常改走 AWorkerTask.LogProvider 统一通道（裸测试 fixture 配静默桩）；1022/1022
 - 2026-09 — `fix(ui)`: 字体来源真单一收口（0aeaeb49）——`UIFontConfig.GetFont` 三级链（SO→ark-pixel→内置）与 `PixelUITheme.PixelFont` 并存双源且 SO 可编辑器改违反「永久 ark-pixel」决策，改薄委托 PixelFont（10 消费点零改动，SO font 字段仅剩 Editor 批量工具消费）；补 CaveExploreHUD fontSize 22→24 铁律①漏网；1022/1022
