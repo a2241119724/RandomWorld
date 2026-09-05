@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `docs(plant)`: 种植接线核实 + 过时 TODO 清理（857e612b）——侦察 `WorkerPlantTask:115`「种植功能上线后激活」TODO 发现链路已完整（`WorkerDecisionService:291` 决策分发→`CreateSelfPlantTask`→PlantTaskBuilder→`SetTask(SelfDecision)`，Execute/DoIsCanWork 均调 FarmlandManager，Farming 生活技能已挂），误导注释改现状描述；997/997。同轮 spec.md 成长系统节同步（90c3a618：六境/功法五行/异能 6 选 2 + 炼丹行）。**下一候选**：M2A 中 4（防守夜生存打断后无补派——WorkerDefenceManager 同游戏日防重派致人力流失）
 - 2026-09 — `feat(awakened)`: 包5 功法异能池扩充 2→6（82568c62）——AwakenedPowerLibrary +4 条（剑气风暴/金光遁/真元爆发/回春术，SkillId 复用 SkillManager 既有技能零技能系统改动；sweep_all/sky_split 归外功招式语义不入池）；MaxAwakenedCount 1→2（6 选 2，消费点全为 Count>0 无上限依赖）；997/997。**包 5 剩余**：K 面板炼丹按钮行（需场景节点，待授权）、修炼-劳动经济调参（需 Play 实测）
 - 2026-09 — `feat(alchemy)`: 包5 炼丹雏形轮2 PillManager 宿主（0c9f3674）——效果落地管线（聚气/治伤/归元即时；**渡劫辅助以等效补灵气实现** `Qi+=QiToNext×减免`——零新存档字段零 CultivationManager 改动，突破扣全额时等效打折；洗髓走 PermanentRealmBonus 累进+属性重算）；Domain 补渡劫丹化神巅峰禁炼防呆（+1 单测 996/996）；GlobalInit 注册；Editor 菜单「工具/炼丹」5 丹方 Play 入口。**K 面板按钮行未接**：CultivationPanel 已被并行会话改为场景摆放（代码不自建），加丹药行需改 Game.unity 场景——超出 autopilot 排除项，待用户摆节点或另行授权
 - 2026-09 — `feat(alchemy)`: 包5 炼丹雏形轮1 规则层（c41bb5f3）——`Domain/Gameplay/Alchemy` 三件套（危险区/洞府同款规则先行模式）：`PillDef`（效果类型×5 聚气/治伤/归元/渡劫辅助/洗髓 + 品质档凡上极）、`PillLibrary`（5 丹方：回气散/培元丹/凝神丹/渡劫丹/九转金丹，门槛练气~元婴，**成本用灵气不引入药材物品**——避免碰 item/SO 资产）、`PillRuleService`（CanCraft 境界+灵气判定 / TryCraft 扣灵气+品质倍率结算 / RollQuality 60/30/10 档 / 倍率 1.0/1.5/2.0，随机源注入默认纯 C#）+ 11 单测 995/995。后续轮次：Manager 宿主、炼丹 UI、渡劫丹减免消费入口（CultivationManager）、炼丹炉建筑（ABuildItem）
