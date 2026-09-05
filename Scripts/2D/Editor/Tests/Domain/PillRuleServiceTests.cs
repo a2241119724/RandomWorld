@@ -124,6 +124,18 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
+        public void CanCraft_BreakthroughAid_AtMaxRealm_ReturnsFalse()
+        {
+            // 化神巅峰无可破之境：渡劫丹禁炼（防白扣灵气——等效补灵气在此 QiToNext=0）
+            GrowthData growth = new GrowthData { RealmIndex = 5, Qi = 99999f };
+            Assert.IsFalse(PillRuleService.CanCraft(growth, PillLibrary.DuJieDan));
+
+            // 同条件下其他丹方不受影响（九转金丹同为元婴档以上，改验回气散门槛本身就够）
+            growth.RealmIndex = 4;
+            Assert.IsTrue(PillRuleService.CanCraft(growth, PillLibrary.DuJieDan));
+        }
+
+        [Test]
         public void Library_AllPillsHaveUniqueIds_AndValidCosts()
         {
             var ids = new HashSet<string>();

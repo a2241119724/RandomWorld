@@ -143,6 +143,9 @@ namespace LAB2D
             // 修仙系统（打坐/突破/灵根，IInitializable + ITickable 由下表驱动）
             ServiceLocator.Register(CultivationManager.Instance);
 
+            // 炼丹（丹方规则落地：扣灵气/品质结算/效果应用；入口 Editor 菜单，K 面板按钮行待场景节点）
+            ServiceLocator.Register(PillManager.Instance);
+
             // 武学功法系统（学习/激活内功/读档重建外功注册，IInitializable + ITickable 由下表驱动）
             ServiceLocator.Register(GongFaManager.Instance);
 

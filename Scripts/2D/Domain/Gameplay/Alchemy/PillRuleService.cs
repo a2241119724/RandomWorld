@@ -3,6 +3,7 @@ namespace LAB2D.Domain.Gameplay.Alchemy
     using System;
     using LAB2D.Domain.Character;
     using LAB2D.Domain.Character.Growth;
+    using LAB2D.Domain.Gameplay.Cultivation;
 
     /// <summary>
     /// 炼丹规则 — 纯函数：可炼判定、品质 roll、按品质结算效果倍率。
@@ -34,6 +35,12 @@ namespace LAB2D.Domain.Gameplay.Alchemy
         public static bool CanCraft(GrowthData growth, PillDef pill)
         {
             if (growth == null || pill == null)
+            {
+                return false;
+            }
+
+            // 渡劫辅助在巅峰无意义（无可破之境），禁炼防白扣灵气（QiToNext=0 补不出等效灵气）
+            if (pill.Effect == PillEffectType.BreakthroughAid && RealmLibrary.IsMax(growth.RealmIndex))
             {
                 return false;
             }
