@@ -52,6 +52,7 @@ namespace LAB2D.Core.Seek
         protected static BuildMap s_buildMap;
         protected static WeatherGameplayEffect s_weatherEffect;
         protected static ITerrainEffectService s_terrainEffect;
+        protected static LAB2D.Gameplay.DangerZoneManager s_dangerZones;
         protected static WorkerConditionManager s_workerConditionManager;
         protected static ITemperatureEffectService s_temperatureEffect;
         protected static UnityMainThreadDispatcher s_mainThreadDispatcher;
@@ -187,6 +188,7 @@ namespace LAB2D.Core.Seek
             s_terrainEffect = null;
             s_workerConditionManager = null;
             s_temperatureEffect = null;
+            s_dangerZones = null;
             s_mainThreadDispatcher = null;
             sharedLineMaterial = null;
 
@@ -713,6 +715,13 @@ namespace LAB2D.Core.Seek
             speed *= s_terrainEffect.GetMoveSpeedMultiplier(this.Character);
             speed *= s_temperatureEffect != null ? s_temperatureEffect.GetCharacterMoveSpeedMultiplier(this.Character) : 1.0f;
 
+            // 险地减速（M4 包 4）：区内 ×0.7——与 Player.Move / GetEffectiveMoveSpeed 同层叠乘；
+            // Worker/Enemy 实际移动走 ASeek 此管线，此前漏乘致险地只对玩家生效（spec 契约「玩家/Worker 共用」未兑现）
+            if (s_dangerZones != null && s_dangerZones.HasZones)
+            {
+                speed *= s_dangerZones.GetMoveSpeedMultiplierWorld(this.Character.transform.position);
+            }
+
             if (this.isWorker)
             {
                 speed = s_workerConditionManager.GetAdjustedWorkerMoveSpeed((AWorker)this.Character, speed);
@@ -885,6 +894,8 @@ namespace LAB2D.Core.Seek
             s_buildMap = Core.ServiceLocator.Get<BuildMap>();
             s_weatherEffect = Core.ServiceLocator.Get<WeatherGameplayEffect>();
             s_terrainEffect = Core.ServiceLocator.Get<ITerrainEffectService>();
+            Core.ServiceLocator.TryGet(out LAB2D.Gameplay.DangerZoneManager dangerZones);
+            s_dangerZones = dangerZones;
             s_workerConditionManager = Core.ServiceLocator.Get<WorkerConditionManager>();
             s_mainThreadDispatcher = Core.ServiceLocator.Get<UnityMainThreadDispatcher>();
             if (Core.ServiceLocator.TryGet<ITemperatureEffectService>(out var tempEffect))
