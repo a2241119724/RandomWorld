@@ -34,7 +34,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 ### Worker 自动生存
 - **血瓶自动使用:** HP 低于 30% 时自动消耗背包中的血瓶（3 秒冷却），战斗结束后和低血量检测时触发
 - **自主交易:** 背包满时自动出售多余资源，饥饿时自主寻找食物卖家
-- **自主决策:** 空闲时 WorkerBrain 根据人格/目标/状态自主选择行动
+- **自主决策:** 空闲时 WorkerBrain 根据人格/目标/状态自主选择行动；漫游路点 5% 发现随机基础资源掉落（`WanderDiscoveryRuleService` 纯函数均匀 roll Material 池 ×1~2，`ItemMap.PutDownToDrop` 附近可达格放置并自动创建公开搬运任务闭环拾取，SO/tile/落点缺失静默跳过）
 
 ### 地形系统
 - **地形挖掘:** Worker 可挖掘可挖掘地形（如山），复用 GatherTask + GatherMap 认领机制防止多人同时挖掘
@@ -94,7 +94,7 @@ RandomWorld 是一款 2D 像素风生存殖民地建设游戏。玩家在随机�
 - **随机人生事件:** `WorkerLifeEventRuleService` 事件表（灵感/横财/领悟/变故/疾病/小确幸/梦魇）+ `WorkerDreamRuleService` 执念（`RefreshGoal` 人格分支前 25% 把 `CurrentGoal` 指到执念映射）。**平衡三原则**：封顶（生存单次 ≤±15、人格漂移 ≤±8）；恩典（濒危当轮不掷，一天最多 1 次）；可恢复（负事件只动士气/精气神/心情软维度，绝不扣饥饿/疲劳致死线）。`WorkerMindManager` 每 2 游戏日按日口径掷 `Random.value < 0.35`
 - **性格演化:** `PersonalityDriftRuleService` 四桶（心情/事业心/勤奋/社交）由 `RecordEvent` 按强度累积，`|v|≥12` 迁移 ±2（clamp）归零。**防横跳三机制**：滞回带（反向需积 12+6=18，`*Dir` 字段记忆方向）、每日限流（`Migrate` 日限 1）、桶饱和（±30 上限）
 - **社会关系:** `WorkerRelationshipRuleService` + `Mind.Relations`（name 键控），Kind 优先级 Grudge>Enmity>Admiration>Friendship>None；友谊 `Affinity≥40`/敌意 `≤-30`/爱慕 `Admiration≥40`/记仇（被拒交易 30、被攻击 40，每日 -2 衰减）。**四个低频行为（防经济干扰）**：①互助/回避——friend/admiration 好感门前豁免必接、enmity/grudge 拒接（`WorkerBountyTask.DoIsCanWork`）②拒卖——关系否决优先于人格（`WorkerTradeService.WillSell` 前置）③送礼——漫游决策前 5%，双方 Affinity+8、收方好感+5（`WorkerDecisionService`）④嫉妒——`CurrencyManager.CompleteBounty` 节流钩子（≥30s），旁观 `Greed>60` 对完成者 Affinity-4。每日 `Decay` 淡化；死亡清理 `FavorabilityManager.RemoveDeadWorker`
-- **事件接入点:** 完成/接取悬赏、交易成败、被攻击、玩家救危、对话结束、修仙事件（突破者成就记忆+气泡 `CultivationManager.RecordBreakthroughMind`；工友旁观——`Greed≥阈值` 嫉妒记仇/境界低者敬仰爱慕，均带气泡）、异能觉醒 `AwakenedPowerManager` 等事件点调 `RecordEvent`（TargetName=`"PLAYER"` 哨兵或 Worker 名），绝不每帧循环；`WorkerMindManager.Tick`/`ProcessDayRollover` 驱动
+- **事件接入点:** 完成/接取悬赏、交易成败、被攻击、玩家救危、对话结束、修仙事件（突破者成就记忆+气泡 `CultivationManager.RecordBreakthroughMind`；工友旁观——`Greed≥阈值` 嫉妒记仇/境界低者敬仰爱慕，均带气泡）、异能觉醒 `AwakenedPowerManager`、地面睡眠（`WorkerSleepTask.Finish` 无床分支，自尊-2 无气泡）、拾获小确幸（`WorkerMindService.RecordFoundItem`，拾取任务高频故按游戏日节流每天首捡一次+气泡）等事件点调 `RecordEvent`（TargetName=`"PLAYER"` 哨兵或 Worker 名），绝不每帧循环；`WorkerMindConstant` 全部事件键均有生产者（`EVT_BOUNTY_REFUSED` 永久搁置未接——权威门拒绝已是心智状态表露，回写构成自反馈螺旋）；`WorkerMindManager.Tick`/`ProcessDayRollover` 驱动
 - **反馈:** 拒绝理由/人生事件/关系变化统一走 `AWorker.ShowMindBubble`（语料 `WorkerInnerMonologue`，防被 `ShowRandomMonologue` 覆盖：进口气卫 + `HideDialogText` 清守卫）+ `[MindDiag]` Debug 日志 + `WorkerConditionHUD`「最近想法」行
 - **可视化面板（M3）:** F12 开关 `WorkerMindPanel`（`GlobalInputProcessor` 分发，Overlay 不暂停）——左列 Worker 列表 + 右侧详情：好感/服从/怨恨/感恩、信念四轴、人格四维+贪婪懒惰+执念、修仙页（境界/灵气/灵根/内功/功法/异能）、关系网、记忆流（Day 降序前 12 条）。UI 骨架由 Game.unity 场景摆放（`WorkerMindUI` 挂 Panel 上，代码只 `BindReferences` 绑定 Content/EmptyHint 引用；行内容运行时动态生成），1.5s 节流刷新
 

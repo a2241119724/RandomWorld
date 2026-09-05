@@ -53,7 +53,6 @@ namespace LAB2D.Item
             {
                 this.BedToWorker[posMap] = worker;
 
-                // TODO
                 worker.BedItem = new SingleBed();
 
                 // 同步家位置到 WorkerData（持久化 + O(1) 查找）
@@ -65,7 +64,6 @@ namespace LAB2D.Item
                 this.BedToWorker[posMap].BedItem = null;
                 this.BedToWorker[posMap] = worker;
 
-                // TODO
                 worker.BedItem = new SingleBed();
 
                 // 同步家位置到 WorkerData

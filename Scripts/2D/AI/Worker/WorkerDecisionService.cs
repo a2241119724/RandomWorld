@@ -15,6 +15,7 @@ namespace LAB2D.AI.Worker
     using LAB2D.Serializable;
     using System.Collections.Generic;
     using UnityEngine;
+    using UnityEngine.Tilemaps;
 
     /// <summary>
     /// Worker 决策服务 — 三段式任务接取（玩家悬赏 → 全局任务 → WorkerBrain 自主决策）
@@ -81,13 +82,10 @@ namespace LAB2D.AI.Worker
                     workerData.CurStress - Constant.WorkerConditionConstant.StressWanderRestorePerWaypoint);
                 workerData.Personality = workerData.Personality.AfterWander();
 
-                // 小概率(5%)发现随机物品
+                // 小概率(5%)发现随机物品：附近生成随机基础资源掉落，闭环给拾取任务
                 if (UnityEngine.Random.value < 0.05f)
                 {
-                    AWorkerTask.LogProvider(
-                        $"{this.worker.name} 漫游中发现了一些东西!",
-                        LogManager.LogLevelEnum.Debug);
-                    // TODO: 可通过 DropManager 在附近生成随机基础资源
+                    this.TryDropWanderDiscovery();
                 }
 
                 if (workerData.WanderWaypointsRemaining > 0)
@@ -233,6 +231,51 @@ namespace LAB2D.AI.Worker
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 漫游发现物品：附近可通行格生成随机基础资源掉落（Material 池 ×1~2，无主）。
+        /// PutDownToDrop 自动创建公开搬运任务，空闲 Worker（含发现者）接手闭环；
+        /// SO/tile/落点缺失时静默跳过（不打扰漫游）。
+        /// </summary>
+        private void TryDropWanderDiscovery()
+        {
+            var materialSO = Core.ServiceLocator.Get<ResourceManager>().GetBackpackSO("MaterialItemData");
+            if (materialSO == null || materialSO.ItemDatas == null || materialSO.ItemDatas.Count == 0)
+            {
+                return;
+            }
+
+            int[] pool = new int[materialSO.ItemDatas.Count];
+            for (int i = 0; i < materialSO.ItemDatas.Count; i++)
+            {
+                pool[i] = materialSO.ItemDatas[i].Id;
+            }
+
+            if (!WanderDiscoveryRuleService.TryRoll(pool, UnityEngine.Random.value, UnityEngine.Random.value, out int itemId, out int count))
+            {
+                return;
+            }
+
+            ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(itemId);
+            TileBase tile = Core.ServiceLocator.Get<ResourceManager>().TryGetAsset(itemData?.Name);
+            if (itemData == null || tile == null)
+            {
+                return;
+            }
+
+            Vector3Int currentPos = AWorkerTask.TileMapWorldToMapProvider(this.worker.transform.position);
+            Vector3Int dropPos = AWorkerTask.GenCanReachPosProvider(currentPos);
+            if (dropPos == default)
+            {
+                return;
+            }
+
+            AWorkerTask.ItemMapProvider().PutDownToDrop(dropPos, tile, new ResourceInfo(itemId, count, ownerId: 0));
+
+            AWorkerTask.LogProvider(
+                $"{this.worker.name} 漫游发现了 {itemData.CnName}x{count} pos=({dropPos.x},{dropPos.y})",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
