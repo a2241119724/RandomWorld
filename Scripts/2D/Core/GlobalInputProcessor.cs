@@ -284,6 +284,16 @@ namespace LAB2D.Core
 
         private void ProcessAchievements()
         {
+            // 按键低频事件点留痕（ProcessJoinBattle 同款）：按键9失效排查——
+            // 无此日志=Tick 未跑；uiInputActive=True=输入框聚焦吞键；panel=null=场景绑定失败
+            if (Input.GetKeyDown(Constant.InputKeyConstant.ToggleWorkerTaskAndAchievementHud))
+            {
+                AWorkerTask.LogProvider(
+                    $"[PanelDiag] 按键9按下 uiInputActive={LAB2D.Tool.Tool.IsUIInputActive()} " +
+                    $"panel={(AchievementPanel.RuntimeInstance == null ? "null" : AchievementPanel.RuntimeInstance.name)}",
+                    LogManager.LogLevelEnum.Debug);
+            }
+
             if (UnityGlobalInputAdapter.GetToggleWorkerTaskAndAchievementHudDown())
             {
                 AchievementPanel.RuntimeInstance?.TogglePanel();

@@ -152,6 +152,11 @@ namespace LAB2D.UI
 
         public void TogglePanel()
         {
+            // 按键低频事件点留痕：按键9失效排查——区分"按键未到达"与"切换未生效"
+            AWorkerTask.LogProvider(
+                $"[PanelDiag] AchievementPanel 切换 isVisible={this.isVisible} → {!this.isVisible}",
+                LogManager.LogLevelEnum.Debug);
+
             if (this.isVisible)
             {
                 this.Hide();
