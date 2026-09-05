@@ -645,3 +645,17 @@
   - **三同约定只覆盖 Build 域内唯一；`Name` 实际是全物品空间的全局键**——新资产接入（含 Editor 工具）必须做跨 SO 撞名检测，不能只查目标 SO 自身去重。
   - **`BuildItemDataSO/ItemDataSO` 磁盘 Id 是占位值**：`OnEnable` 加载时按列表顺序重排（`ItemType*100000+顺序`），`GetExpandedItems` 再兜一次——磁盘上的 `Id: 0` 不是 bug 不用修；代价是「磁盘 Id 与运行时 Id 解耦」，排查 Id 问题以运行时为准。
   - 消耗品侧 `ItemDataSO.OnEnable` 同样按顺序重排，改名不动列表位置则 Id 稳定。
+
+## 2026-09-05 RoundCorner 圆角背景整块不渲染（uv1/uv2 顶点传参依赖 Canvas 通道配置）
+
+- **现象**：dc5a5552 合批重构后，挂 RoundCorner 的 UI 背景（Tip/面板底等）一个像素也不渲染；shader 在 Editor.log 中编译通过（vp/fp 无报错），排除编译失败。
+- **根因**（代码分析锁定，非日志驱动）：
+  1. 重构把尺寸/半径从材质属性（旧 `_Width/_Height/_RoundRadius` 每实例一份）改为顶点 `uv1=(w,h)`、`uv2=(radiusPx)` 传参，shader appdata 声明了 `TEXCOORD1/TEXCOORD2` 输入；
+  2. **Canvas 批处理 mesh 只保留 `additionalShaderChannels` 声明的额外通道**——全项目实测：Game.unity 三处 flag=25（TexCoord1|Normal|Tangent，**不含 TexCoord2**）、一处 0，Menu.unity=0，运行时代码创建的 Canvas 默认 0。**没有任何一个 Canvas 同时启用 TexCoord1+TexCoord2**，参数链路必断；
+  3. 旧 SDF `p=(uv-0.5)*wh; q=|p|-(half-r); step(length(max(q,0)), r)` 对部分缺失零容错：uv1 丢而 uv2 在时 `p=(0,0)→q=(r,r)→length=r√2>r` → **step=0 整块全透明**；uv1 在 uv2 丢（flag=25）时 radius=0 圆角静默失效变直角。
+- **修复**：参数改打包进 **uv0.zw**（z=aspect=w/h、w=radius 相对 h 比例，C# 侧钳到 `0.5*min(1,aspect)`）——uv0 是 Canvas 唯一无条件保留的通道，零配置依赖；frag 端换算回像素 SDF（`c=(1-2r/aspect, 1-2r)`，`length(q*(aspect,1)) ≤ 2r`），并加卫兵 `aspect<=0||radius<=0` 时退化为不裁剪直角（宁可直角不消失）。
+- **验证**：`verify_compile.py` ERRORS:0；Python 数值模拟 200×200 采样——正常输入覆盖率 0.94~0.99（圆角缺口正常），退化输入（uv 全丢/单丢/全零）覆盖率恒 1.0，角区像素抽查与手算一致。待 Unity 内目验各场景圆角恢复。
+- **教训**：
+  - **自定义 UI shader 的顶点传参只能用 uv0.zw**（或顶点色），uv1/uv2/uv3/Normal/Tangent 全部依赖所在 Canvas 的 additionalShaderChannels 配置——组件级功能绝不能隐式依赖场景级配置（44+ 实例分散在多个 Canvas，配置漂移必踩）。
+  - **SDF 类 shader 对退化输入必须卫兵**：几何公式拿 `(0,0)` 尺寸参与运算不是无害 no-op，本次 `q=|0|-(0-r)=+r` 直接把 alpha 干成全 0。数据缺失的兜底行为应定义成"可见的降级"（直角）而非"消失"。
+  - Unity 侧 Text/Image 只用 uv0.xy 是有原因的——TexCoord0 的 zw 在 Canvas 管线里不被 atlas 重映射触及（本组件 mainTexture=whiteTexture 非 sprite，安全）。
