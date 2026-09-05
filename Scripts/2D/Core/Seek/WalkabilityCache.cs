@@ -8,44 +8,57 @@ namespace LAB2D.Core.Seek
     /// <summary>
     /// 后台寻路使用的可步行性快照。
     /// 地图加载后只进行一次全量构建，运行期间由地图变更入口按格更新。
+    /// 线程安全模型：数组与其尺寸绑定为不可变 <see cref="Snapshot"/> 单次 volatile 发布——
+    /// 后台 <see cref="IsWalkable"/> 一次读引用即拿到 (cells, width, height) 一致视图，
+    /// 不存在「新边界 + 旧数组」的越界窗口（换图尺寸变化瞬间曾可能 IndexOutOfRange 炸后台寻路线程）。
     /// </summary>
     public static class WalkabilityCache
     {
-        private static int[] walkability;
-        private static int width;
-        private static int height;
+        /// <summary>快照：格值数组与其尺寸绑定发布，发布后 Cells 内容可原地按格更新（单 int 写原子）。</summary>
+        private class Snapshot
+        {
+            public readonly int[] Cells;
+            public readonly int Width;
+            public readonly int Height;
+
+            public Snapshot(int width, int height)
+            {
+                this.Cells = new int[checked(width * height)];
+                this.Width = width;
+                this.Height = height;
+            }
+        }
+
+        private static volatile Snapshot current;
         private static int mapInstanceId;
         private static volatile bool isBuilt;
 
-        public static bool IsInitialized => walkability != null;
+        public static bool IsInitialized => current != null;
 
         /// <summary>
         /// 应用退出时释放可步行性快照数组，帮助 GC 回收。
         /// </summary>
         public static void Clear()
         {
-            walkability = null;
+            current = null;
             isBuilt = false;
-            width = 0;
-            height = 0;
             mapInstanceId = 0;
         }
 
         public static void Initialize(int newWidth, int newHeight, int newMapInstanceId)
         {
-            if (walkability != null
-                && width == newWidth
-                && height == newHeight
+            Snapshot snapshot = current;
+            if (snapshot != null
+                && snapshot.Width == newWidth
+                && snapshot.Height == newHeight
                 && mapInstanceId == newMapInstanceId)
             {
                 return;
             }
 
             isBuilt = false;
-            width = newWidth;
-            height = newHeight;
             mapInstanceId = newMapInstanceId;
-            Volatile.Write(ref walkability, new int[checked(width * height)]);
+            current = new Snapshot(newWidth, newHeight);
         }
 
         /// <summary>
@@ -59,12 +72,18 @@ namespace LAB2D.Core.Seek
                 return;
             }
 
-            int[] cache = Volatile.Read(ref walkability);
-            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-            for (int y = 0; y < height; y++)
+            Snapshot snapshot = current;
+            if (snapshot == null)
             {
-                int rowOffset = y * width;
-                for (int x = 0; x < width; x++)
+                return;
+            }
+
+            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+            int[] cache = snapshot.Cells;
+            for (int y = 0; y < snapshot.Height; y++)
+            {
+                int rowOffset = y * snapshot.Width;
+                for (int x = 0; x < snapshot.Width; x++)
                 {
                     cache[rowOffset + x] = ASeek.IsCanReach(new Vector3Int(x, y, 0)) ? 1 : 0;
                 }
@@ -74,7 +93,7 @@ namespace LAB2D.Core.Seek
             sw.Stop();
             // WalkabilityCache 与物理碰撞体失配是历史卡墙根因之一 → 构建完成后记录尺寸与耗时。
             AWorkerTask.LogProvider(
-                $"[MapDiag] WalkabilityCache 构建完成 size={width}x{height} cells={width * height} elapsed={sw.ElapsedMilliseconds}ms",
+                $"[MapDiag] WalkabilityCache 构建完成 size={snapshot.Width}x{snapshot.Height} cells={cache.Length} elapsed={sw.ElapsedMilliseconds}ms",
                 LogManager.LogLevelEnum.Debug);
         }
 
@@ -85,7 +104,7 @@ namespace LAB2D.Core.Seek
         {
             isBuilt = false;
             AWorkerTask.LogProvider(
-                $"[MapDiag] WalkabilityCache 失效 size={width}x{height}",
+                $"[MapDiag] WalkabilityCache 失效 size={(current != null ? current.Width : 0)}x{(current != null ? current.Height : 0)}",
                 LogManager.LogLevelEnum.Trace);
         }
 
@@ -95,27 +114,28 @@ namespace LAB2D.Core.Seek
         /// </summary>
         public static void UpdateCell(Vector3Int position)
         {
-            int[] cache = Volatile.Read(ref walkability);
-            if (!isBuilt || cache == null || !IsInBounds(position.x, position.y))
+            Snapshot snapshot = current;
+            if (!isBuilt || snapshot == null)
             {
-                // 未构建期的跳过是设计内正常路径（首次构建会读取最新地图状态），
-                // 不打日志——批量写入阶段逐格进入，曾致单局 800+ 条 Trace 噪音。
-                // 越界跳过是异常信号（地图外写入），保留观测。
-                if (isBuilt && cache != null && !IsInBounds(position.x, position.y))
-                {
-                    AWorkerTask.LogProviderThrottled(
-                        $"CacheSkipOOB|{position.x},{position.y}", 1f,
-                        // 惰性求值：同上，批量写入路径
-                        () => $"[MapDiag] 缓存更新跳过 pos=({position.x},{position.y}) 原因=越界 size={width}x{height}",
-                        LogManager.LogLevelEnum.Trace);
-                }
-
+                // 未构建期的跳过是设计内正常路径（首次构建会读取最新地图状态）
                 return;
             }
 
-            int index = (position.y * width) + position.x;
+            if (position.x < 0 || position.y < 0
+                || position.x >= snapshot.Width || position.y >= snapshot.Height)
+            {
+                // 越界跳过是异常信号（地图外写入），保留观测。
+                AWorkerTask.LogProviderThrottled(
+                    $"CacheSkipOOB|{position.x},{position.y}", 1f,
+                    // 惰性求值：批量写入路径，被节流时不构造插值串
+                    () => $"[MapDiag] 缓存更新跳过 pos=({position.x},{position.y}) 原因=越界 size={snapshot.Width}x{snapshot.Height}",
+                    LogManager.LogLevelEnum.Trace);
+                return;
+            }
+
+            int index = (position.y * snapshot.Width) + position.x;
             bool reach = ASeek.IsCanReach(position);
-            Volatile.Write(ref cache[index], reach ? 1 : 0);
+            Volatile.Write(ref snapshot.Cells[index], reach ? 1 : 0);
             // 卡床排查 2026-08-16：阻挡格（不可通）写入记录，确认 UpdateCell 确实生效。
             // 若此处已写「不可通」但压缩路径仍穿过该格 → 另有机制回写可通，需继续追。
             if (!reach)
@@ -130,21 +150,22 @@ namespace LAB2D.Core.Seek
 
         /// <summary>
         /// 检查坐标是否可行走，可从任意后台线程调用。
+        /// 未构建/未初始化/越界一律返回 false（宁可寻路失败不误穿墙的安全方向）。
         /// </summary>
         public static bool IsWalkable(int x, int y)
         {
-            int[] cache = Volatile.Read(ref walkability);
-            if (!isBuilt || cache == null || !IsInBounds(x, y))
+            Snapshot snapshot = current;
+            if (!isBuilt || snapshot == null)
             {
                 return false;
             }
 
-            return Volatile.Read(ref cache[(y * width) + x]) != 0;
-        }
+            if (x < 0 || y < 0 || x >= snapshot.Width || y >= snapshot.Height)
+            {
+                return false;
+            }
 
-        private static bool IsInBounds(int x, int y)
-        {
-            return x >= 0 && y >= 0 && x < width && y < height;
+            return Volatile.Read(ref snapshot.Cells[(y * snapshot.Width) + x]) != 0;
         }
     }
 }
