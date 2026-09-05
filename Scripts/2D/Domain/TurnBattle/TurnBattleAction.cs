@@ -1,6 +1,7 @@
 namespace LAB2D.Domain.TurnBattle
 {
     using System.Collections.Generic;
+    using LAB2D.Domain.Gameplay.Cultivation;
 
     /// <summary>
     /// 玩家/单位在本回合选择的行动。
@@ -18,6 +19,12 @@ namespace LAB2D.Domain.TurnBattle
 
         /// <summary>尝试逃跑（可能失败并浪费本回合）。</summary>
         Flee,
+
+        /// <summary>防御：本回合受到伤害减半，回合结束解除（玩家与敌方 AI 可用）。</summary>
+        Defend,
+
+        /// <summary>系统合成行动（回合结束状态跳动等，ActorId=-1 无行动者，仅演出用）。</summary>
+        System,
     }
 
     /// <summary>
@@ -65,6 +72,18 @@ namespace LAB2D.Domain.TurnBattle
 
         /// <summary>逃跑成功（战斗结束）。</summary>
         FleeSuccess,
+
+        /// <summary>状态施加生效（SourceName=状态名，Value=持续回合数）。</summary>
+        StatusApply,
+
+        /// <summary>状态跳动伤害（DOT 回合结束掉血，SourceName=状态名，带 RemainingHp）。</summary>
+        StatusTick,
+
+        /// <summary>眩晕跳过行动（目标即行动者）。</summary>
+        Stunned,
+
+        /// <summary>进入防御姿态（本回合受伤减半）。</summary>
+        Defend,
     }
 
     /// <summary>
@@ -84,6 +103,15 @@ namespace LAB2D.Domain.TurnBattle
         public float Value;
 
         public bool IsCritical;
+
+        /// <summary>追击伤害（暴击触发的半伤追打，UI 飘字前缀"追击"）。</summary>
+        public bool IsCombo;
+
+        /// <summary>状态类型（StatusApply/StatusTick 条目携带，UI 图标与飘字配色用）。</summary>
+        public TurnBattleStatusKind? StatusKind;
+
+        /// <summary>技能五行（UI 特效选型；普攻/无元素 = null）。</summary>
+        public Element? Element;
 
         /// <summary>五行克制倍率（≠1 时 UI 显示"克制!/抵抗"）。</summary>
         public float ElementMultiplier = 1f;

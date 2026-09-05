@@ -22,6 +22,9 @@ namespace LAB2D.UI.Panel.PanelUI
         private const float CardHeight = 230f;
         private const float CardSpacing = 16f;
 
+        /// <summary>顶部回合顺序预览条槽位数。</summary>
+        private const int TurnOrderSlotCount = 5;
+
         // ===== 配色 =====
         private static readonly Color AllyCardBg = new Color(0.14f, 0.22f, 0.15f, 0.92f);
         private static readonly Color EnemyCardBg = new Color(0.28f, 0.13f, 0.13f, 0.92f);
@@ -37,6 +40,12 @@ namespace LAB2D.UI.Panel.PanelUI
         private static readonly Color MissColor = new Color(0.7f, 0.7f, 0.7f);
         private static readonly Color BuffColor = new Color(1f, 0.85f, 0.3f);
         private static readonly Color DownColor = new Color(1f, 0.3f, 0.3f);
+        private static readonly Color StunColor = new Color(0.95f, 0.85f, 0.35f);
+        private static readonly Color DefendColor = new Color(0.55f, 0.75f, 1f);
+        private static readonly Color DefendBgColor = new Color(0.22f, 0.34f, 0.55f, 0.92f);
+        private static readonly Color AllySlotColor = new Color(0.2f, 0.38f, 0.28f, 0.9f);
+        private static readonly Color EnemySlotColor = new Color(0.42f, 0.2f, 0.2f, 0.9f);
+        private static readonly Color CurrentSlotColor = new Color(0.9f, 0.75f, 0.25f, 0.95f);
 
         // 血条/蓝条 Fill 的纯白 Sprite — Image 在 sprite==null 时 OnPopulateMesh 走基础满矩形
         // 路径，type=Filled 与 fillAmount 完全无效（条永远满格），必须挂 sprite 才能按量裁剪；
@@ -51,9 +60,11 @@ namespace LAB2D.UI.Panel.PanelUI
             public Transform Root;
             public Image Bg;
             public Text NameText;
+            public string NameBase = string.Empty;
             public Image HpFill;
             public Image MpFill;
             public Text HpText;
+            public Transform StatusRow;
             public CanvasGroup Group;
             public Vector3 HomePos;
             public Color BaseBgColor;
@@ -86,6 +97,7 @@ namespace LAB2D.UI.Panel.PanelUI
         private CanvasGroup menuGroup;
         private GameObject bannerRoot;
         private Text bannerText;
+        private Transform turnOrderBar;
 
         // ===== 菜单状态 =====
         private bool subMenuActive;
@@ -138,6 +150,7 @@ namespace LAB2D.UI.Panel.PanelUI
             this.SetMenuEnabled(false);
             this.HideSubMenu();
             this.CancelTargeting();
+            this.RefreshTurnOrderBar();
         }
 
         /// <summary>等待玩家行动 — 刷新卡片数据并启用菜单。</summary>
@@ -151,6 +164,7 @@ namespace LAB2D.UI.Panel.PanelUI
             this.RefreshCards();
             this.headerText.text = $"⚔ 回合制战斗 — 第 {battleState.Round} 回合";
             this.SetMenuEnabled(true);
+            this.RefreshTurnOrderBar();
         }
 
         /// <summary>回合结算 — 展平效果队列开始演出（unscaled 计时）。</summary>
@@ -180,9 +194,26 @@ namespace LAB2D.UI.Panel.PanelUI
 
             this.playIndex = 0;
             this.segTimer = 0f;
-            this.segDuration = 0.55f;
+            this.segDuration = SegmentDurationOf(this.playQueue[0].Kind);
             this.impactApplied = false;
             this.playing = true;
+        }
+
+        /// <summary>演出段时长分档：重打击 0.55s / 治疗与 DOT 跳动及击倒 0.45s / 轻提示（闪避/眩晕/防御等）0.4s。</summary>
+        private static float SegmentDurationOf(TurnBattleEffectKind kind)
+        {
+            switch (kind)
+            {
+                case TurnBattleEffectKind.Damage:
+                case TurnBattleEffectKind.StatusApply:
+                    return 0.55f;
+                case TurnBattleEffectKind.Heal:
+                case TurnBattleEffectKind.StatusTick:
+                case TurnBattleEffectKind.Down:
+                    return 0.45f;
+                default:
+                    return 0.4f;
+            }
         }
 
         /// <summary>战斗结束横幅 — 演完回调 onDone（Panel 此时 Close 恢复 timeScale）。</summary>
@@ -220,6 +251,7 @@ namespace LAB2D.UI.Panel.PanelUI
             this.HideSubMenu();
             this.CancelTargeting();
             this.ClearCards();
+            this.ClearTurnOrderBar();
             this.logs.Clear();
             if (this.logText != null)
             {
@@ -373,6 +405,66 @@ namespace LAB2D.UI.Panel.PanelUI
 
             this.subMenuRoot?.SetActive(false);
             this.bannerRoot?.SetActive(false);
+
+            // 代码补建：防御按钮（ActionBar 横排自动排版）与回合顺序条
+            this.EnsureDefendButton(actionBar);
+            this.EnsureTurnOrderBar();
+        }
+
+        /// <summary>代码创建防御按钮（148×52 与场景四按钮同规格，HorizontalLayoutGroup 自动排入）。</summary>
+        private void EnsureDefendButton(Transform actionBar)
+        {
+            if (actionBar == null || actionBar.Find("DefendBtn") != null)
+            {
+                return;
+            }
+
+            GameObject go = new GameObject("DefendBtn");
+            go.transform.SetParent(actionBar, false);
+            RectTransform rt = go.AddComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(148f, 52f);
+            LayoutElement layoutElement = go.AddComponent<LayoutElement>();
+            layoutElement.minWidth = 148f;
+            layoutElement.minHeight = 52f;
+            layoutElement.preferredWidth = 148f;
+            layoutElement.preferredHeight = 52f;
+
+            Image bg = go.AddComponent<Image>();
+            bg.color = MenuBgColor;
+            Button btn = go.AddComponent<Button>();
+            btn.targetGraphic = bg;
+            btn.onClick.AddListener(this.OnClickDefend);
+
+            this.CreateText(
+                go.transform, "Label", "防御(5)", 24, Color.white,
+                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(140f, 40f));
+        }
+
+        /// <summary>代码创建回合顺序条（panel 根下、Header 下方横排 5 槽）。</summary>
+        private void EnsureTurnOrderBar()
+        {
+            if (this.turnOrderBar != null)
+            {
+                return;
+            }
+
+            GameObject bar = new GameObject("TurnOrderBar");
+            bar.transform.SetParent(this.transform, false);
+            RectTransform rt = bar.AddComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.anchoredPosition = new Vector2(0f, -64f);
+            rt.sizeDelta = new Vector2(660f, 62f);
+
+            HorizontalLayoutGroup layout = bar.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            this.turnOrderBar = bar.transform;
         }
 
         /// <summary>绑定场景主菜单按钮 — 只清运行时监听（RemoveAllListeners 不动 Inspector 持久绑定），返回是否绑定成功。</summary>
@@ -422,7 +514,7 @@ namespace LAB2D.UI.Panel.PanelUI
             portrait.sprite = TurnBattleManager.Instance.GetPortrait(unit.UnitId);
             portrait.preserveAspect = true;
 
-            this.CreateText(
+            Text nameText = this.CreateText(
                 root.transform, "Name", $"{unit.DisplayName} Lv.{unit.Level}", 24, Color.white,
                 Vector2.zero, Vector2.zero, new Vector2(CardWidth - 12f, 26f));
 
@@ -446,15 +538,31 @@ namespace LAB2D.UI.Panel.PanelUI
                 root.transform, "HpText", string.Empty, 12, Color.white,
                 Vector2.zero, Vector2.zero, new Vector2(CardWidth - 12f, 20f));
 
+            // 状态行（末尾追加，最多 4 个 16×16 色块，按状态类型染色）
+            GameObject statusRow = new GameObject("StatusRow");
+            statusRow.transform.SetParent(root.transform, false);
+            RectTransform statusRt = statusRow.AddComponent<RectTransform>();
+            statusRt.sizeDelta = new Vector2(CardWidth - 24f, 18f);
+            HorizontalLayoutGroup statusLayout = statusRow.AddComponent<HorizontalLayoutGroup>();
+            statusLayout.spacing = 4f;
+            statusLayout.childAlignment = TextAnchor.MiddleCenter;
+            statusLayout.childControlWidth = false;
+            statusLayout.childControlHeight = false;
+            statusLayout.childForceExpandWidth = false;
+            statusLayout.childForceExpandHeight = false;
+
             UnitCard card = new UnitCard
             {
                 UnitId = unit.UnitId,
                 Faction = unit.Faction,
                 Root = root.transform,
                 Bg = bg,
+                NameText = nameText,
+                NameBase = nameText.text,
                 HpFill = hpFill,
                 MpFill = mpFill,
                 HpText = hpText,
+                StatusRow = statusRow.transform,
                 Group = group,
                 HomePos = localPos,
                 BaseBgColor = bg.color,
@@ -517,9 +625,51 @@ namespace LAB2D.UI.Panel.PanelUI
             card.MpFill.fillAmount = unit.MaxMp > 0 ? Mathf.Clamp01((float)unit.Mp / unit.MaxMp) : 0f;
             card.HpText.text = $"{Mathf.CeilToInt(Mathf.Max(unit.Hp, 0f))}/{Mathf.CeilToInt(unit.MaxHp)}";
 
+            // 眩晕标记 + 状态图标；恢复防御染色的卡底（演出期间的临时色）
+            if (card.NameText != null)
+            {
+                card.NameText.text = TurnBattleStatusRuleService.IsStunned(unit)
+                    ? $"[晕]{card.NameBase}"
+                    : card.NameBase;
+            }
+
+            if (card.Bg != null && !card.Down && card.FlashTimer <= 0f && !this.IsTargetHighlighted(card))
+            {
+                card.Bg.color = card.BaseBgColor;
+            }
+
+            this.RefreshCardStatus(card, unit);
+
             if (unit.IsDown && !card.Down)
             {
                 this.MarkCardDown(card);
+            }
+        }
+
+        /// <summary>重建卡片状态图标行（≤4 个色块，同类单实例天然不重复）。</summary>
+        private void RefreshCardStatus(UnitCard card, TurnBattleUnit unit)
+        {
+            if (card.StatusRow == null)
+            {
+                return;
+            }
+
+            for (int i = card.StatusRow.childCount - 1; i >= 0; i--)
+            {
+                Destroy(card.StatusRow.GetChild(i).gameObject);
+            }
+
+            int added = 0;
+            foreach (TurnBattleStatusEffect status in unit.StatusEffects)
+            {
+                if (added >= 4)
+                {
+                    break;
+                }
+
+                Image icon = this.CreateImage(card.StatusRow, $"Status_{status.Kind}", 16f, 16f, this.StatusColorOf(status.Kind, Color.white));
+                icon.sprite = GetWhiteSprite();
+                added++;
             }
         }
 
@@ -529,6 +679,75 @@ namespace LAB2D.UI.Panel.PanelUI
             card.Group.alpha = 0.4f;
             card.Group.interactable = false;
             card.Root.localPosition = card.HomePos + new Vector3(0f, -14f, 0f);
+        }
+
+        /// <summary>重建回合顺序预览条 — 未来 N 手 SPD 序；槽 0=当前行动者（放大金框），眩晕置灰带「晕」角标。</summary>
+        private void RefreshTurnOrderBar()
+        {
+            this.ClearTurnOrderBar();
+            if (this.state == null || this.turnOrderBar == null)
+            {
+                return;
+            }
+
+            List<TurnBattleUnit> order = TurnBattleRuleService.PredictTurnOrder(this.state, TurnOrderSlotCount);
+            for (int i = 0; i < order.Count; i++)
+            {
+                TurnBattleUnit unit = order[i];
+                GameObject slot = new GameObject($"Slot_{unit.UnitId}");
+                slot.transform.SetParent(this.turnOrderBar, false);
+                RectTransform slotRt = slot.AddComponent<RectTransform>();
+                slotRt.sizeDelta = new Vector2(56f, 60f);
+
+                Image frame = slot.AddComponent<Image>();
+                frame.color = i == 0 ? CurrentSlotColor
+                    : unit.Faction == TurnBattleFaction.Ally ? AllySlotColor : EnemySlotColor;
+                frame.raycastTarget = false;
+
+                // 头像贴顶，名字沉底，56×60 内不重叠
+                Image portrait = this.CreateImage(slot.transform, "Portrait", 44f, 44f, Color.white);
+                RectTransform portraitRt = portrait.rectTransform;
+                portraitRt.anchorMin = portraitRt.anchorMax = new Vector2(0.5f, 1f);
+                portraitRt.pivot = new Vector2(0.5f, 1f);
+                portraitRt.anchoredPosition = new Vector2(0f, -6f);
+                portrait.sprite = TurnBattleManager.Instance.GetPortrait(unit.UnitId);
+                portrait.preserveAspect = true;
+
+                this.CreateText(
+                    slot.transform, "Name", unit.DisplayName, 12, Color.white,
+                    new Vector2(0.5f, 0f), new Vector2(0f, 4f), new Vector2(56f, 14f));
+
+                if (i == 0)
+                {
+                    // 只放大视觉不占布局（LayoutGroup 不改 localScale）
+                    slot.transform.localScale = Vector3.one * 1.15f;
+                }
+
+                if (TurnBattleStatusRuleService.IsStunned(unit))
+                {
+                    CanvasGroup stunGroup = slot.AddComponent<CanvasGroup>();
+                    stunGroup.alpha = 0.5f;
+                    stunGroup.blocksRaycasts = false;
+
+                    Text badge = this.CreateText(
+                        slot.transform, "StunBadge", "晕", 12, StunColor,
+                        new Vector2(1f, 1f), new Vector2(-4f, -2f), new Vector2(14f, 14f));
+                    badge.alignment = TextAnchor.UpperRight;
+                }
+            }
+        }
+
+        private void ClearTurnOrderBar()
+        {
+            if (this.turnOrderBar == null)
+            {
+                return;
+            }
+
+            for (int i = this.turnOrderBar.childCount - 1; i >= 0; i--)
+            {
+                Destroy(this.turnOrderBar.GetChild(i).gameObject);
+            }
         }
 
         #endregion
@@ -582,6 +801,10 @@ namespace LAB2D.UI.Panel.PanelUI
             {
                 this.FinishPlayback();
             }
+            else
+            {
+                this.segDuration = SegmentDurationOf(this.playQueue[this.playIndex].Kind);
+            }
         }
 
         private void FinishPlayback()
@@ -611,8 +834,14 @@ namespace LAB2D.UI.Panel.PanelUI
                         target.HpText.text = $"{Mathf.CeilToInt(Mathf.Max(effect.RemainingHp, 0f))}/{Mathf.CeilToInt(maxHp)}";
                     }
 
-                    string prefix = effect.ElementMultiplier > 1.05f ? "克制! "
-                        : effect.ElementMultiplier < 0.95f ? "抵抗 " : string.Empty;
+                    // 序列帧攻击特效：敌方攻击镜像（斩击方向与我方相反）
+                    UnitCard actorCard = this.GetCard(effect.ActorId);
+                    bool flipX = actorCard != null && actorCard.Faction == TurnBattleFaction.Enemy;
+                    TurnBattleEffectLibrary.PlayDamage(target?.Root, effect, flipX);
+
+                    string prefix = (effect.IsCombo ? "追击 " : "")
+                        + (effect.ElementMultiplier > 1.05f ? "克制! "
+                            : effect.ElementMultiplier < 0.95f ? "抵抗 " : string.Empty);
                     string floatText = $"{prefix}{(effect.IsCritical ? "暴击 " : "")}-{Mathf.RoundToInt(effect.Value)}";
                     int fontSize = effect.IsCritical ? 36 : 24;
                     Color color = effect.IsCritical ? CriticalColor : DamageColor;
@@ -633,6 +862,7 @@ namespace LAB2D.UI.Panel.PanelUI
                         target.HpText.text = $"{Mathf.CeilToInt(Mathf.Max(effect.RemainingHp, 0f))}/{Mathf.CeilToInt(maxHp)}";
                     }
 
+                    TurnBattleEffectLibrary.PlayHeal(target?.Root);
                     this.SpawnFloatText(effect.TargetId, $"+{Mathf.RoundToInt(effect.Value)}", HealColor, 28);
                     this.AppendLog($"{actorName} 回复 {Mathf.RoundToInt(effect.Value)} HP");
                     break;
@@ -664,6 +894,55 @@ namespace LAB2D.UI.Panel.PanelUI
 
                 case TurnBattleEffectKind.FleeSuccess:
                     this.AppendLog($"{actorName} 逃跑成功");
+                    break;
+
+                case TurnBattleEffectKind.StatusApply:
+                {
+                    Color statusColor = this.StatusColorOf(effect.StatusKind, BuffColor);
+                    TurnBattleEffectLibrary.PlayStatus(target?.Root, statusColor);
+                    this.SpawnFloatText(effect.TargetId, $"{effect.SourceName}！", statusColor, 24);
+                    this.AppendLog($"{actorName} 使 {targetName} {effect.SourceName}（{Mathf.RoundToInt(effect.Value)} 回合）");
+                    if (target != null)
+                    {
+                        TurnBattleUnit targetUnit = this.state?.FindUnit(effect.TargetId);
+                        if (targetUnit != null)
+                        {
+                            this.RefreshCardStatus(target, targetUnit); // 图标即时可见
+                        }
+                    }
+
+                    break;
+                }
+
+                case TurnBattleEffectKind.StatusTick:
+                {
+                    if (target != null)
+                    {
+                        target.Flash();
+                        float maxHp = this.UnitMaxHp(effect.TargetId);
+                        target.HpFill.fillAmount = maxHp > 0f ? Mathf.Clamp01(effect.RemainingHp / maxHp) : 0f;
+                        target.HpText.text = $"{Mathf.CeilToInt(Mathf.Max(effect.RemainingHp, 0f))}/{Mathf.CeilToInt(maxHp)}";
+                    }
+
+                    Color tickColor = this.StatusColorOf(effect.StatusKind, DamageColor);
+                    this.SpawnFloatText(effect.TargetId, $"{effect.SourceName} -{Mathf.RoundToInt(effect.Value)}", tickColor, 24);
+                    this.AppendLog($"{targetName} 因{effect.SourceName} 受到 {Mathf.RoundToInt(effect.Value)} 伤害");
+                    break;
+                }
+
+                case TurnBattleEffectKind.Stunned:
+                    this.SpawnFloatText(effect.ActorId, "眩晕", StunColor, 24);
+                    this.AppendLog($"{actorName} 眩晕，无法行动");
+                    break;
+
+                case TurnBattleEffectKind.Defend:
+                    this.SpawnFloatText(effect.ActorId, "防御姿态", DefendColor, 24);
+                    if (target != null && target.Bg != null)
+                    {
+                        target.Bg.color = DefendBgColor;
+                    }
+
+                    this.AppendLog($"{actorName} 进入防御姿态（本回合受伤减半）");
                     break;
             }
 
@@ -720,7 +999,7 @@ namespace LAB2D.UI.Panel.PanelUI
 
         private void ProcessHotkeys()
         {
-            // 数字键 1-4 主菜单快捷键（主菜单层可用时；子菜单开着时忽略防误触）
+            // 数字键 1-5 主菜单快捷键（主菜单层可用时；子菜单开着时忽略防误触）
             if (!this.CanUseMenu() || this.subMenuActive || this.targeting)
             {
                 return;
@@ -741,6 +1020,10 @@ namespace LAB2D.UI.Panel.PanelUI
             else if (Input.GetKeyDown(KeyCode.Alpha4))
             {
                 this.OnClickFlee();
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha5))
+            {
+                this.OnClickDefend();
             }
         }
 
@@ -789,6 +1072,16 @@ namespace LAB2D.UI.Panel.PanelUI
             }
 
             this.ShowFleeConfirm();
+        }
+
+        private void OnClickDefend()
+        {
+            if (!this.CanUseMenu())
+            {
+                return;
+            }
+
+            this.SubmitAction(new TurnBattleAction { Kind = TurnBattleActionKind.Defend });
         }
 
         private void SubmitAction(TurnBattleAction action)
@@ -1097,6 +1390,23 @@ namespace LAB2D.UI.Panel.PanelUI
         private UnitCard GetCard(long unitId)
         {
             return this.cards.TryGetValue(unitId, out UnitCard card) ? card : null;
+        }
+
+        /// <summary>状态类型配色 — 状态图标/飘字/角标共用；未知类型回落 fallback。</summary>
+        private Color StatusColorOf(TurnBattleStatusKind? kind, Color fallback)
+        {
+            switch (kind)
+            {
+                case TurnBattleStatusKind.Poison: return new Color(0.45f, 0.85f, 0.35f);
+                case TurnBattleStatusKind.Burn: return new Color(1f, 0.5f, 0.25f);
+                case TurnBattleStatusKind.Bleed: return new Color(0.8f, 0.15f, 0.2f);
+                case TurnBattleStatusKind.Stun: return StunColor;
+                case TurnBattleStatusKind.AttackUp: return new Color(1f, 0.78f, 0.3f);
+                case TurnBattleStatusKind.AttackDown: return new Color(0.72f, 0.45f, 0.95f);
+                case TurnBattleStatusKind.DefenseUp: return new Color(0.4f, 0.65f, 1f);
+                case TurnBattleStatusKind.DefenseDown: return new Color(0.55f, 0.35f, 0.75f);
+                default: return fallback;
+            }
         }
 
         private string UnitName(long unitId)

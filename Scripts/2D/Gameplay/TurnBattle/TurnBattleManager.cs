@@ -192,13 +192,37 @@ namespace LAB2D.Gameplay.TurnBattle
                 }
             }
 
+            int statusSegmentCount = 0;
             if (state.Phase != TurnBattlePhase.BattleOver)
             {
-                TurnBattleRuleService.AdvanceRound(state);
+                // 回合结束状态跳动（DOT 掉血/到期）— 包装成 System 合成演出（ActorId=-1 无行动者）
+                List<TurnBattleEffectEntry> statusEntries = TurnBattleRuleService.AdvanceRound(state);
+                if (statusEntries.Count > 0)
+                {
+                    statusSegmentCount = 1;
+                    resolutions.Add(new TurnBattleActionResolution
+                    {
+                        ActorId = -1,
+                        ActorFaction = TurnBattleFaction.Ally,
+                        Round = state.Round,
+                        ActionKind = TurnBattleActionKind.System,
+                        Effects = statusEntries,
+                    });
+                    this.TrackDefeatKiller(resolutions[resolutions.Count - 1], state);
+
+                    // DOT 可终结战斗/判负（如中毒致死）
+                    TurnBattleResult? statusResult = TurnBattleRuleService.EvaluateBattleResult(state);
+                    if (statusResult != null)
+                    {
+                        state.Phase = TurnBattlePhase.BattleOver;
+                        state.Result = statusResult.Value;
+                    }
+                }
             }
 
             AWorkerTask.LogProvider(
-                $"[BattleDiag] 第 {state.Round} 回合结算：{resolutions.Count} 次行动，"
+                $"[BattleDiag] 第 {state.Round} 回合结算：{resolutions.Count} 次行动"
+                + (statusSegmentCount > 0 ? $"（含状态跳动 {statusSegmentCount} 段）" : string.Empty) + "，"
                 + $"我方存活 {state.AliveAllies.Count}、敌方存活 {state.AliveEnemies.Count}"
                 + (state.Phase == TurnBattlePhase.BattleOver ? $"，战斗结束（{state.Result}）" : string.Empty),
                 LogManager.LogLevelEnum.Debug);

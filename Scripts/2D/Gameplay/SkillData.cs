@@ -2,6 +2,8 @@ namespace LAB2D.Gameplay
 {
     using LAB2D;
     using LAB2D.Enum;
+    using LAB2D.Domain.Gameplay.Cultivation;
+    using LAB2D.Domain.TurnBattle;
     using System;
 
     /// <summary>
@@ -45,6 +47,21 @@ namespace LAB2D.Gameplay
 
         /// <summary>Buff 持续时间（仅 SelfBuff 类型使用，秒）</summary>
         public float BuffDuration;
+
+        /// <summary>功法五行元素（回合制五行克制与特效选型；null = 无元素恒中性 1.0）。</summary>
+        public Element? Element;
+
+        /// <summary>附带状态类型（回合制命中后按 StatusChance 概率施加；null = 无状态）。</summary>
+        public TurnBattleStatusKind? StatusKind;
+
+        /// <summary>状态施加概率（0-1）。</summary>
+        public float StatusChance = 1f;
+
+        /// <summary>状态持续时长（秒，快照换算回合；≤3s 归 0 = 不施加）。</summary>
+        public float StatusDuration;
+
+        /// <summary>DOT 每回合伤害比率（施加时按 Kind 参照 MaxHp/攻击基数落成绝对值）。</summary>
+        public float StatusValueRatio;
 
         /// <summary>当前技能等级（1-MaxSkillLevel）</summary>
         public int Level;
@@ -229,6 +246,7 @@ namespace LAB2D.Gameplay
                 BaseCooldown = SkillConstant.SweepAllCooldown,
                 EffectMultiplier = SkillConstant.SweepAllDamageMultiplier,
                 AoeRadius = SkillConstant.SweepAllRadius,
+                Element = LAB2D.Domain.Gameplay.Cultivation.Element.Metal,
                 Level = 1,
                 SlotIndex = -1,
             };
@@ -250,6 +268,11 @@ namespace LAB2D.Gameplay
                 BaseCooldown = SkillConstant.SkySplitCooldown,
                 EffectMultiplier = SkillConstant.SkySplitDamageMultiplier,
                 AoeRadius = SkillConstant.SkySplitTargetRadius,
+                Element = LAB2D.Domain.Gameplay.Cultivation.Element.Metal,
+                StatusKind = TurnBattleStatusKind.Bleed,
+                StatusChance = 0.4f,
+                StatusDuration = 9f,
+                StatusValueRatio = 0.05f,
                 Level = 1,
                 SlotIndex = -1,
             };
@@ -277,7 +300,7 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 创建火球（异能）技能的默认数据实例（INT 基单体伤害）
+        /// 创建火球（异能）技能的默认数据实例（INT 基单体伤害，火元素 + 概率灼烧）
         /// </summary>
         public static SkillData CreateFireBall()
         {
@@ -293,6 +316,11 @@ namespace LAB2D.Gameplay
                 EffectMultiplier = SkillConstant.FireBallDamageMultiplier,
                 AoeRadius = SkillConstant.FireBallTargetRadius,
                 ScaleByInt = true,
+                Element = LAB2D.Domain.Gameplay.Cultivation.Element.Fire,
+                StatusKind = TurnBattleStatusKind.Burn,
+                StatusChance = 0.5f,
+                StatusDuration = 6f,
+                StatusValueRatio = 0.08f,
                 Level = 1,
                 SlotIndex = -1,
             };

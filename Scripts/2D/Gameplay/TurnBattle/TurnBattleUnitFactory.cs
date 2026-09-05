@@ -36,12 +36,55 @@ namespace LAB2D.Gameplay.TurnBattle
             return CreateCommon(worker, TurnBattleFaction.Ally, isPlayer: false);
         }
 
-        /// <summary>Enemy 快照：无灵根恒中性、无技能只有普攻。</summary>
+        /// <summary>Enemy 快照：无灵根恒中性；附带状态演示技能（毒牙/撞击，调平衡时关开关）。</summary>
         public static TurnBattleUnit CreateFromEnemy(AEnemy enemy)
         {
             TurnBattleUnit unit = CreateCommon(enemy, TurnBattleFaction.Enemy, isPlayer: false);
             unit.LingGenElements.Clear();
+
+            if (EnemyStatusSkillsEnabled)
+            {
+                AddEnemyStatusSkills(unit);
+            }
+
             return unit;
+        }
+
+        /// <summary>敌方状态演示技能开关（演示位：让中毒/眩晕在实战可见，调平衡时置 false 恢复纯普攻）。</summary>
+        private const bool EnemyStatusSkillsEnabled = true;
+
+        /// <summary>
+        /// 敌方演示技能（直接构造快照，不依赖 SkillManager）：
+        /// 毒牙 — 倍率同普攻、35% 中毒 3 回合（每回合 6% MaxHp）；
+        /// 撞击 — 0.8 倍率冷却 3 回合、20% 眩晕 1 回合。
+        /// AI 按期望伤害评分自然选用。
+        /// </summary>
+        private static void AddEnemyStatusSkills(TurnBattleUnit unit)
+        {
+            unit.Skills.Add(new TurnBattleSkillState
+            {
+                SkillId = "enemy_poison_fang",
+                SkillName = "毒牙",
+                Type = SkillType.SingleTarget,
+                EffectMultiplier = 1f,
+                CooldownTurns = 2,
+                StatusKind = TurnBattleStatusKind.Poison,
+                StatusChance = 0.35f,
+                StatusDurationTurns = 3,
+                StatusValueRatio = 0.06f,
+            });
+
+            unit.Skills.Add(new TurnBattleSkillState
+            {
+                SkillId = "enemy_stun_ram",
+                SkillName = "撞击",
+                Type = SkillType.SingleTarget,
+                EffectMultiplier = 0.8f,
+                CooldownTurns = 3,
+                StatusKind = TurnBattleStatusKind.Stun,
+                StatusChance = 0.2f,
+                StatusDurationTurns = 1,
+            });
         }
 
         private static TurnBattleUnit CreateCommon(Character character, TurnBattleFaction faction, bool isPlayer)
@@ -88,7 +131,7 @@ namespace LAB2D.Gameplay.TurnBattle
             return result;
         }
 
-        /// <summary>技能快照映射：实时秒冷却 → 回合数（≤3s 归 0 只耗蓝）；SkillData 暂无元素标注恒 null。</summary>
+        /// <summary>技能快照映射：实时秒冷却/状态时长 → 回合数（≤3s 归 0）；元素与状态字段直拷。</summary>
         private static void MapSkills(TurnBattleUnit unit, List<SkillData> skills)
         {
             foreach (SkillData skill in skills)
@@ -110,7 +153,11 @@ namespace LAB2D.Gameplay.TurnBattle
                     Level = skill.Level,
                     CooldownTurns = TurnBattleRuleService.ConvertSecondsToTurns(skill.BaseCooldown),
                     BuffDurationTurns = TurnBattleRuleService.ConvertSecondsToTurns(skill.BuffDuration),
-                    Element = null,
+                    Element = skill.Element,
+                    StatusKind = skill.StatusKind,
+                    StatusChance = skill.StatusChance,
+                    StatusDurationTurns = TurnBattleRuleService.ConvertSecondsToTurns(skill.StatusDuration),
+                    StatusValueRatio = skill.StatusValueRatio,
                 });
             }
         }

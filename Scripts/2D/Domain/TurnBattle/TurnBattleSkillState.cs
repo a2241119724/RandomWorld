@@ -42,7 +42,19 @@ namespace LAB2D.Domain.TurnBattle
         /// <summary>Buff 持续回合数（SelfBuff 用，实时秒换算）。</summary>
         public int BuffDurationTurns;
 
-        /// <summary>功法元素（决定五行克制）；默认技能无元素 = null，恒中性 1.0。</summary>
+        /// <summary>附带状态类型（null = 无状态；命中后按 StatusChance 概率施加）。</summary>
+        public TurnBattleStatusKind? StatusKind;
+
+        /// <summary>状态施加概率（0-1）。</summary>
+        public float StatusChance = 1f;
+
+        /// <summary>状态持续回合数。</summary>
+        public int StatusDurationTurns;
+
+        /// <summary>DOT 每回合伤害比率（施加时按 Kind 参照 MaxHp/攻击基数落成绝对值）。</summary>
+        public float StatusValueRatio;
+
+        /// <summary>功法元素（决定五行克制与特效选型）；无元素 = null，恒中性 1.0。</summary>
         public Element? Element;
 
         /// <summary>本回合是否可释放（存活单位视角：冷却 0 且蓝够）。</summary>

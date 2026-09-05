@@ -60,6 +60,21 @@ namespace LAB2D.Domain.TurnBattle
         /// <summary>敌方 AI 目标选择偏向 HP 最低我方的概率。</summary>
         public const float LowHpTargetBias = 0.4f;
 
+        /// <summary>防御行动的受伤倍率（本回合受到伤害 ×0.5）。</summary>
+        public const float GuardIncomingMultiplier = 0.5f;
+
+        /// <summary>暴击后触发追击的概率。</summary>
+        public const float ComboFollowUpChance = 0.5f;
+
+        /// <summary>追击伤害相对主击的比例（必中不暴击）。</summary>
+        public const float ComboDamageMultiplier = 0.5f;
+
+        /// <summary>敌方 AI 考虑防御的自身 HP 比例门槛。</summary>
+        public const float AiDefendConsiderHpRatio = 0.25f;
+
+        /// <summary>敌方 AI 低血时选择防御的概率。</summary>
+        public const float AiDefendChance = 0.30f;
+
         /// <summary>敌方 AI 治疗技能的考虑门槛（自身 HP 低于此比例才评估治疗）。</summary>
         public const float AiHealConsiderHpRatio = 0.5f;
 
@@ -96,16 +111,22 @@ namespace LAB2D.Domain.TurnBattle
         }
 
         /// <summary>
-        /// 伤害公式：基数(ATN/INT) × 倍率 × (1 + 0.1×(等级−1)) × 攻击增益，
-        /// 暴击乘 CSD，再乘五行克制，最后防御减免（下限 0.1）。
+        /// 伤害公式：基数(ATN/INT) × 倍率 × (1 + 0.1×(等级−1)) × 攻击增益(含攻增减益)，
+        /// 暴击乘 CSD，再乘五行克制与受伤倍率（防增减益 × 防御姿态减半），最后防御减免（下限 0.1）。
         /// </summary>
         public static float CalculateDamage(TurnBattleUnit attacker, TurnBattleUnit target, bool useInt, float multiplier, bool isCritical, float elementMultiplier)
         {
             float baseStat = useInt ? attacker.Stats.INT : attacker.Stats.ATN;
             float raw = baseStat * multiplier * (1f + (LevelBonusPerLevel * (attacker.Level - 1)));
-            raw *= attacker.AttackBuffMultiplier;
+            raw *= TurnBattleStatusRuleService.GetAttackMultiplier(attacker);
             raw = Calculator.GetOutgoingDamage(raw, attacker.Stats.CSD, isCritical);
             raw *= elementMultiplier;
+            raw *= TurnBattleStatusRuleService.GetIncomingDamageMultiplier(target);
+            if (target.IsDefending)
+            {
+                raw *= GuardIncomingMultiplier;
+            }
+
             return Calculator.ApplyDefense(raw, target.Stats.DEF);
         }
 
@@ -143,7 +164,7 @@ namespace LAB2D.Domain.TurnBattle
         }
 
         /// <summary>
-        /// 敌方 AI 行动选择 — 可用技能中期望收益最高者，无可用技能退化为普攻。
+        /// 敌方 AI 行动选择 — 低血概率转防御；可用技能中期望收益最高者，无可用技能退化为普攻。
         /// 目标选择：40% 偏向 HP 最低我方，否则随机。
         /// </summary>
         public static TurnBattleAction SelectEnemyAction(TurnBattleState state, TurnBattleUnit actor)
@@ -153,6 +174,13 @@ namespace LAB2D.Domain.TurnBattle
             if (targets.Count == 0)
             {
                 action.Kind = TurnBattleActionKind.Attack;
+                return action;
+            }
+
+            // 低血防御：HP 低于门槛时概率转防御（不消耗目标选择随机数）
+            if (actor.Hp < actor.MaxHp * AiDefendConsiderHpRatio && Roll() < AiDefendChance)
+            {
+                action.Kind = TurnBattleActionKind.Defend;
                 return action;
             }
 
@@ -209,6 +237,20 @@ namespace LAB2D.Domain.TurnBattle
                 return resolution;
             }
 
+            // 眩晕拦截：本回合跳过行动（不耗蓝不出伤，演出可见"眩晕"）
+            if (TurnBattleStatusRuleService.IsStunned(actor))
+            {
+                TurnBattleStatusEffect stun = TurnBattleStatusRuleService.GetStatus(actor, TurnBattleStatusKind.Stun);
+                resolution.Effects.Add(new TurnBattleEffectEntry
+                {
+                    Kind = TurnBattleEffectKind.Stunned,
+                    ActorId = actor.UnitId,
+                    TargetId = actor.UnitId,
+                    SourceName = stun != null ? stun.SourceName : string.Empty,
+                });
+                return resolution;
+            }
+
             switch (action.Kind)
             {
                 case TurnBattleActionKind.Attack:
@@ -225,6 +267,16 @@ namespace LAB2D.Domain.TurnBattle
 
                 case TurnBattleActionKind.Flee:
                     ResolveFlee(state, resolution);
+                    break;
+
+                case TurnBattleActionKind.Defend:
+                    actor.IsDefending = true;
+                    resolution.Effects.Add(new TurnBattleEffectEntry
+                    {
+                        Kind = TurnBattleEffectKind.Defend,
+                        ActorId = actor.UnitId,
+                        TargetId = actor.UnitId,
+                    });
                     break;
             }
 
@@ -251,9 +303,11 @@ namespace LAB2D.Domain.TurnBattle
             return null;
         }
 
-        /// <summary>回合推进 — 回合数 +1、技能冷却集体递减、攻击增益到期清除。</summary>
-        public static void AdvanceRound(TurnBattleState state)
+        /// <summary>回合推进 — 状态跳动（DOT/到期，返回演出条目，空列表=无跳动）、回合数 +1、
+        /// 技能冷却集体递减、攻击增益到期清除、防御姿态清除。</summary>
+        public static List<TurnBattleEffectEntry> AdvanceRound(TurnBattleState state)
         {
+            List<TurnBattleEffectEntry> statusEntries = TurnBattleStatusRuleService.TickAndExpire(state);
             state.Round++;
             foreach (TurnBattleUnit unit in state.Units)
             {
@@ -273,7 +327,32 @@ namespace LAB2D.Domain.TurnBattle
                         unit.AttackBuffMultiplier = 1f;
                     }
                 }
+
+                unit.IsDefending = false;
             }
+
+            return statusEntries;
+        }
+
+        /// <summary>
+        /// 未来 N 手行动顺序预测 — 当回合存活序（SPD 降序）循环展开。
+        /// SPD 静态故未来回合序与当回合相同；眩晕单位保留（UI 标记），倒下单位天然排除。
+        /// </summary>
+        public static List<TurnBattleUnit> PredictTurnOrder(TurnBattleState state, int slotCount)
+        {
+            List<TurnBattleUnit> result = new List<TurnBattleUnit>();
+            List<TurnBattleUnit> order = DetermineTurnOrder(state);
+            if (order.Count == 0 || slotCount <= 0)
+            {
+                return result;
+            }
+
+            for (int i = 0; i < slotCount; i++)
+            {
+                result.Add(order[i % order.Count]);
+            }
+
+            return result;
         }
 
         /// <summary>普攻与单体技能共用的一次打击结算（命中/暴击/克制/伤害/倒下）。</summary>
@@ -313,6 +392,7 @@ namespace LAB2D.Domain.TurnBattle
                 TargetId = target.UnitId,
                 Value = damage,
                 IsCritical = isCritical,
+                Element = skill != null ? skill.Element : null,
                 ElementMultiplier = elementMultiplier,
                 RemainingHp = target.Hp,
                 SourceName = skill != null ? skill.SkillName : string.Empty,
@@ -326,6 +406,55 @@ namespace LAB2D.Domain.TurnBattle
                     ActorId = actor.UnitId,
                     TargetId = target.UnitId,
                     RemainingHp = target.Hp,
+                });
+            }
+
+            // 暴击追击：目标仍存活时概率追打半伤一刀（必中不暴击）
+            if (isCritical && !target.IsDown && Roll() < ComboFollowUpChance)
+            {
+                float comboDamage = damage * ComboDamageMultiplier;
+                bool comboDown = ApplyDamage(target, comboDamage);
+                resolution.Effects.Add(new TurnBattleEffectEntry
+                {
+                    Kind = TurnBattleEffectKind.Damage,
+                    ActorId = actor.UnitId,
+                    TargetId = target.UnitId,
+                    Value = comboDamage,
+                    IsCritical = false,
+                    IsCombo = true,
+                    Element = skill != null ? skill.Element : null,
+                    ElementMultiplier = elementMultiplier,
+                    RemainingHp = target.Hp,
+                    SourceName = skill != null ? skill.SkillName : string.Empty,
+                });
+
+                if (comboDown)
+                {
+                    resolution.Effects.Add(new TurnBattleEffectEntry
+                    {
+                        Kind = TurnBattleEffectKind.Down,
+                        ActorId = actor.UnitId,
+                        TargetId = target.UnitId,
+                        RemainingHp = target.Hp,
+                    });
+                }
+            }
+
+            // 状态施加：技能带状态且目标存活时按概率附加（同类刷新）
+            if (skill != null && skill.StatusKind != null && !target.IsDown && Roll() < skill.StatusChance)
+            {
+                TurnBattleStatusKind statusKind = skill.StatusKind.Value;
+                float statusValue = TurnBattleStatusRuleService.CalculateStatusValue(statusKind, skill, actor, target);
+                TurnBattleStatusRuleService.Apply(target, statusKind, skill.StatusDurationTurns, statusValue, actor.UnitId, skill.SkillName);
+                resolution.Effects.Add(new TurnBattleEffectEntry
+                {
+                    Kind = TurnBattleEffectKind.StatusApply,
+                    ActorId = actor.UnitId,
+                    TargetId = target.UnitId,
+                    Value = skill.StatusDurationTurns,
+                    Element = skill.Element,
+                    StatusKind = statusKind,
+                    SourceName = TurnBattleStatusRuleService.GetStatusDisplayName(statusKind),
                 });
             }
         }

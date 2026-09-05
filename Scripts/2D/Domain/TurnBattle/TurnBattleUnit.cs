@@ -59,6 +59,12 @@ namespace LAB2D.Domain.TurnBattle
         /// <summary>攻击增益倍率（无 Buff = 1.0）。</summary>
         public float AttackBuffMultiplier = 1f;
 
+        /// <summary>状态效果列表（同类单实例，回合结束跳动/到期，见 TurnBattleStatusRuleService）。</summary>
+        public List<TurnBattleStatusEffect> StatusEffects = new List<TurnBattleStatusEffect>();
+
+        /// <summary>防御姿态（Defend 行动置位：本回合受伤 ×0.5，回合结束清除）。</summary>
+        public bool IsDefending;
+
         /// <summary>倒下（HP≤0）— 战斗内仅置灰退场，"死"的落定由写回规则决定。</summary>
         public bool IsDown
         {
