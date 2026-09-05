@@ -103,7 +103,7 @@ namespace LAB2D.UI.Panel
             tgRt.sizeDelta = new Vector2(500, 260);
             tgRt.anchoredPosition = Vector2.zero;
 
-            Font font = this.GetDefaultFont();
+            Font font = PixelUITheme.PixelFont;
             if (font == null)
             {
                 return;
@@ -154,17 +154,6 @@ namespace LAB2D.UI.Panel
             dcRt.offsetMax = Vector2.zero;
 
             this.panelRoot.SetActive(false);
-        }
-
-        private Font GetDefaultFont()
-        {
-            Font font = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
-            if (font == null)
-            {
-                font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            }
-
-            return font;
         }
     }
 }

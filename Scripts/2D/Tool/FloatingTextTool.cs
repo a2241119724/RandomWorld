@@ -198,12 +198,8 @@ namespace LAB2D.Tool
             text.alignment = TextAnchor.MiddleCenter;
             text.raycastTarget = false; // 不拦截射线，避免影响点击
 
-            // 使用默认字体（项目中的 Arial 或内置字体）
-            Font defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (defaultFont != null)
-            {
-                text.font = defaultFont;
-            }
+            // 像素字体单一来源（铁律③：一律 ark-pixel，禁 Unity 内置字体）
+            text.font = PixelUITheme.PixelFont;
 
             // 添加描边效果增强可读性
             Outline outline = obj.AddComponent<Outline>();

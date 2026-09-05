@@ -213,6 +213,7 @@ Domain 层 (纯 C# 规则引擎，零 Unity 依赖)
 - **日志统一:** `GameLoggerFactory` 统一获取 `IGameLogger`，替换所有硬编码 `Debug.Log`（31 文件迁移）
 - **TaskPriority 常量管理:** 任务优先级统一使用常量类（`TaskPriorityConstant`），避免魔法数字
 - **UI 预制体加载:** 装备面板改用预制体加载（`ResourceManager.Instantiate`），替代硬编码 UI 层级
+- **像素字体单一来源:** 纯代码 UI 字体一律 `PixelUITheme.PixelFont`（惰性静态缓存 ark-pixel，资源缺失退回 LegacyRuntime 防裸 null）——禁各处直接 `Resources.GetBuiltinResource`（内置字体无中文字形 fallback 系统字体毁点阵）；零引用字体路径常量已清
 
 ### 渲染排序（y-sort）
 - **统一层:** TagManager 仅 Default/Middle/Highest 三层；代码传入的 `"Character"` 层名不存在、Unity 静默回落 Default——全部世界物体实际同在 Default 层，交叉排序完全靠 `sortingOrder`。武器（`Item`）、寻路线/光束（`Highest`）、Tool 调试（`Enemy`）不参与。

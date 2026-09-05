@@ -185,12 +185,6 @@ namespace LAB2D.Constant
         public const string HudTextName = "WorkerConditionText";
 
         /// <summary>
-        /// 项目像素中文字体 Resources 路径。
-        /// 若加载失败，Editor 菜单会保留 Unity 默认字体。
-        /// </summary>
-        public const string FontResourcePath = "Font/ark-pixel-12px-monospaced-zh_cn";
-
-        /// <summary>
         /// HUD 无数据时的默认文案。
         /// 仅用于运行时展示，不影响任何业务状态。
         /// </summary>

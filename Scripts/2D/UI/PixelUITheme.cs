@@ -7,6 +7,31 @@ namespace LAB2D.UI
     /// </summary>
     public static class PixelUITheme
     {
+        // === 像素字体（单一来源） ===
+        private static Font pixelFont;
+
+        /// <summary>
+        /// 项目像素字体（Resources/Font/ark-pixel，UI 铁律③：字体引用一律 ark-pixel，
+        /// 禁 Unity 内置——Arial/LegacyRuntime 无中文字形会 fallback 系统字体毁点阵）。
+        /// 静态缓存一次性加载；资源缺失（异常环境）退回 LegacyRuntime 防裸 null。
+        /// </summary>
+        public static Font PixelFont
+        {
+            get
+            {
+                if (pixelFont == null)
+                {
+                    pixelFont = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
+                    if (pixelFont == null)
+                    {
+                        pixelFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                    }
+                }
+
+                return pixelFont;
+            }
+        }
+
         // === 主按钮 (确认/通用) ===
         // 使用更饱和的中粉色以提高与文字对比度，避免浅粉色在屏幕上发白看不清
         public static readonly Color ButtonNormal = new Color32(200, 135, 152, 255);

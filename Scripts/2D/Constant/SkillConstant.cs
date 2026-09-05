@@ -274,9 +274,6 @@ namespace LAB2D.Constant
         /// <summary>HUD 底部边距（像素）</summary>
         public const float HudBottomMargin = 40f;
 
-        /// <summary>默认字体资源路径（复用项目已有字体）</summary>
-        public const string FontResourcePath = "Fonts/LegacyRuntime";
-
         #endregion
 
         #region 颜色常量

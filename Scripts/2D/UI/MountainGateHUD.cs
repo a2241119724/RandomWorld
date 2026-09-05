@@ -43,8 +43,7 @@ namespace LAB2D.UI
         private Button resultButton;
 
         /// <summary>像素字体缓存（ark-pixel 加载失败回退 Unity 内置）。</summary>
-        private static Font cachedFont;
-
+        
         /// <summary>
         /// HUD 刷新间隔（轮询兜底，正常由 CoreChanged 事件驱动），避免每帧拼接文本。
         /// </summary>
@@ -350,28 +349,11 @@ namespace LAB2D.UI
             t.text = text;
             t.fontSize = fontSize;
             t.color = color;
-            t.font = LoadPixelFont();
+            t.font = PixelUITheme.PixelFont;
             t.horizontalOverflow = HorizontalWrapMode.Wrap;
             t.verticalOverflow = VerticalWrapMode.Overflow;
             t.raycastTarget = false;
             return t;
-        }
-
-        /// <summary>
-        /// 加载像素字体：ark-pixel 优先，失败回退 Unity 内置 LegacyRuntime。
-        /// </summary>
-        private static Font LoadPixelFont()
-        {
-            if (cachedFont == null)
-            {
-                cachedFont = Resources.Load<Font>("Font/ark-pixel-12px-monospaced-zh_cn");
-                if (cachedFont == null)
-                {
-                    cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                }
-            }
-
-            return cachedFont;
         }
 
         /// <summary>

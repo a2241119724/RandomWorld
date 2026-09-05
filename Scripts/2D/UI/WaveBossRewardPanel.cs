@@ -332,7 +332,7 @@ namespace LAB2D.UI
             rect.sizeDelta = size;
 
             Text text = textObject.GetComponent<Text>();
-            text.font = LoadFont();
+            text.font = PixelUITheme.PixelFont;
             text.fontSize = fontSize;
             text.alignment = alignment;
             text.supportRichText = true;
@@ -396,27 +396,12 @@ namespace LAB2D.UI
             rect.offsetMax = new Vector2(-14.0f, -6.0f);
 
             Text text = textObject.GetComponent<Text>();
-            text.font = LoadFont();
+            text.font = PixelUITheme.PixelFont;
             text.fontSize = 12;
             text.alignment = TextAnchor.MiddleLeft;
             text.supportRichText = true;
             text.color = PixelUITheme.TextPrimary;
             return text;
-        }
-
-        /// <summary>
-        /// 加载项目字体，失败时使用 Unity 内置字体。
-        /// </summary>
-        /// <returns>字体。</returns>
-        private static Font LoadFont()
-        {
-            Font font = Resources.Load<Font>(WaveBossRewardConstant.FontResourcePath);
-            if (font != null)
-            {
-                return font;
-            }
-
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
         }
 
         /// <summary>

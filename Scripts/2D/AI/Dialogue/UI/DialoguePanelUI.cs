@@ -363,7 +363,7 @@ namespace LAB2D.AI.Dialogue.UI
             GameObject textGo = new GameObject("Text", typeof(RectTransform));
             textGo.transform.SetParent(go.transform, false);
             Text label = textGo.AddComponent<Text>();
-            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.font = PixelUITheme.PixelFont; // 铁律③：中文标签禁内置字体（fallback 系统字体毁点阵）
             label.text = DialogueIntentRuleService.GetDisplayName(kind)
                 + (kind == DialogueIntentKind.Gift ? "(" + DialogueIntentRuleService.GiftCoinCost + "金)" : string.Empty);
             label.fontSize = 12;
