@@ -46,11 +46,6 @@ namespace LAB2D.Gameplay
         /// <summary>解锁该成就获得的成就点数</summary>
         public int Points;
 
-        // --- 扩展 ---
-
-        /// <summary>图标资源名（预留，当前使用类别默认图标）</summary>
-        public string IconName;
-
         // --- 计算属性 ---
 
         /// <summary>进度比例（0.0 ~ 1.0）</summary>

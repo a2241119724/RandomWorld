@@ -645,7 +645,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 1,
                 Points = 10,
                 State = AchievementState.Locked,
-                IconName = "Realm",
             });
 
             this.AddAchievement(new AchievementData
@@ -658,7 +657,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 2,
                 Points = 20,
                 State = AchievementState.Locked,
-                IconName = "Realm",
             });
 
             this.AddAchievement(new AchievementData
@@ -671,7 +669,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 3,
                 Points = 40,
                 State = AchievementState.Locked,
-                IconName = "Realm",
             });
 
             this.AddAchievement(new AchievementData
@@ -684,7 +681,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 4,
                 Points = 60,
                 State = AchievementState.Locked,
-                IconName = "Realm",
             });
 
             this.AddAchievement(new AchievementData
@@ -697,7 +693,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 5,
                 Points = 100,
                 State = AchievementState.Locked,
-                IconName = "Realm",
             });
 
             this.AddAchievement(new AchievementData
@@ -710,7 +705,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 3,
                 Points = 20,
                 State = AchievementState.Locked,
-                IconName = "GongFa",
             });
 
             this.AddAchievement(new AchievementData
@@ -723,7 +717,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 5,
                 Points = 40,
                 State = AchievementState.Locked,
-                IconName = "GongFa",
             });
 
             this.AddAchievement(new AchievementData
@@ -736,7 +729,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 1,
                 Points = 20,
                 State = AchievementState.Locked,
-                IconName = "Awaken",
             });
 
             this.AddAchievement(new AchievementData
@@ -749,7 +741,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 2,
                 Points = 50,
                 State = AchievementState.Locked,
-                IconName = "Awaken",
             });
 
             this.AddAchievement(new AchievementData
@@ -762,7 +753,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 1,
                 Points = 10,
                 State = AchievementState.Locked,
-                IconName = "Pill",
             });
 
             this.AddAchievement(new AchievementData
@@ -775,7 +765,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 10,
                 Points = 30,
                 State = AchievementState.Locked,
-                IconName = "Pill",
             });
 
             this.AddAchievement(new AchievementData
@@ -788,7 +777,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 1,
                 Points = 10,
                 State = AchievementState.Locked,
-                IconName = "Cave",
             });
 
             this.AddAchievement(new AchievementData
@@ -801,7 +789,6 @@ namespace LAB2D.Gameplay
                 TargetValue = 3,
                 Points = 40,
                 State = AchievementState.Locked,
-                IconName = "Cave",
             });
         }
 
