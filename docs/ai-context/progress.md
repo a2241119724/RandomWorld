@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `chore(const)`: 清九个零引用死键位常量 ToolMenuSlot1-9（ff9df1a9）——消费端走 ToolMenuKeys 数组（直写字面 Alpha1-9 不经常量），同 b3dd9582 先例；同轮 EventBus 配对审计全链健康：8 个「无发布」系 PublishInternal/Provider 别名假阳性，5 个「无订阅」低频预留钩子（交易/跨天/回合战斗广播）零成本保留；1030/1030
 - 2026-09 — `chore(clean)`: 三个零引用死类 Obsolete 标记（40134eb5）——DateTool（2023 节假日死表）/TerrainEffectTool（被 TerrainEffectManager 取代）/StatusEffectController（零挂载零调用），四重验证（类名/方法名/反射串/guid）实证后标记待批准删除；TerrainEffectRuleService 因测试仍在引用不标；1030/1030
 - 2026-09 — `fix(seek)`: 险地减速接入 ASeek 移动管线（ad0ebc1b）——DangerZone ×0.7 此前只挂 Player 双入口，Worker/Enemy 实际移动走 `ASeek.ComputeAdjustedSpeed` 漏乘，spec 契约「玩家/Worker 共用」未兑现险地对 NPC 形同虚设；同层补乘（s_dangerZones 静态缓存+HasZones 短路，s_temperatureEffect 同款 TryGet 模式）；同轮摸底勘误：地形效果五通道实为活链（TerrainEffectManager 经 ITerrainEffectService 接口消费，直引扫描漏判接口间接层），死类仅 DateTool/TerrainEffectTool/TerrainEffectRuleService 三个（禁删文件，留档）；1030/1030
 - 2026-09 — `docs(audit)`: 零接线 API 审计与 spec 失实修正——扫描零引用 public 方法揪出三套预留未接线功能链：①技能升级整链（`SkillManager.TryUpgradeSkill`/`AddUpgradePoints`/`AvailableUpgradePoints` 恒 0，注释称「击杀 Boss 或完成波次时调用」从未发生）②长期记忆压缩三 API（`GetAllMessagesForCompression`/`AddLongTermSummary`/`GetLongTermMemories` 全零调用——spec 原声称「长期记忆压缩(每 8 轮)」失实已改现状）③成就 Claim 领取（前轮已记）；均涉 LLM/数值设计决策留档待用户拍板不盲接；另核实 survival_exp_10 经验口径为殖民地级统计（F10 同源）自洽非缺陷
