@@ -437,8 +437,10 @@ namespace LAB2D.Core.Seek
 
         /// <summary>
         /// 清空刚体速度（velocity 驱动模式下停止/寻路间隙必须清零，否则角色滑行）。
+        /// 对话暂停等"保持路径只站定"的场景也用此方法（勿用 StopMove——会清路径，
+        /// 恢复后 Move 状态误判到达提前切状态）。
         /// </summary>
-        private void ClearVelocity()
+        public void ClearVelocity()
         {
             if (this.rb != null)
             {

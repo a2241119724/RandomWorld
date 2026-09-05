@@ -10,7 +10,7 @@ namespace LAB2D.AI.Dialogue.Core
     using UnityEngine;
 
     /// <summary>
-    /// NPC 对话触发器，挂载在 NPC GameObject 上，玩家靠近按 T 键开始对话
+    /// NPC 对话触发器，挂载在 NPC GameObject 上，玩家靠近按 I 键开始对话
     /// </summary>
     public class NPCDialogueTrigger : MonoBehaviour
     {
@@ -25,9 +25,9 @@ namespace LAB2D.AI.Dialogue.Core
         public float interactionRadius = 3f;
 
         /// <summary>
-        /// 交互按键
+        /// 交互按键（默认 I，键位统一收口 InputKeyConstant.NpcDialogueInteract，勿与科技面板 T 冲突）
         /// </summary>
-        public KeyCode interactKey = KeyCode.T;
+        public KeyCode interactKey = Constant.InputKeyConstant.NpcDialogueInteract;
 
         private NPCPromptProfile cachedProfile;
         private string npcId;

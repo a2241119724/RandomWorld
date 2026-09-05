@@ -501,6 +501,11 @@ namespace LAB2D.Character.Worker
         public void PauseForDialogue()
         {
             this.dialoguePauseCount++;
+            // 暂停只挡 Update/FixedUpdate（状态机 + TickFixed），不清路径——但移动是
+            // velocity 每物理帧重设驱动，暂停后没人再设速度，刚体带最后速度匀速滑行不止。
+            // 只清速度保留路径：对话结束恢复 TickFixed 后沿剩余路径继续赶路（暂停语义，
+            // 非 StopMove 的放弃路径语义——恢复后 Move 会误判到达提前切 Work/Seek）。
+            this.Seek.ClearVelocity();
             this.UpdateDialoguePauseText(true);
         }
 

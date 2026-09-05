@@ -9,6 +9,21 @@ namespace LAB2D.UnityAdapter
     /// </summary>
     public static class UnityGlobalInputAdapter
     {
+        /// <summary>
+        /// Esc 已被消费的帧号（-1=无）。对话面板聚焦态 Esc 补位关闭后标记——关闭动作本身
+        /// 会清输入框 selection（IsUIInputActive 翻转），若不消费，同帧稍后的全局 Esc 分发
+        /// 会放行并在栈空时误开 BuildPanel（GlobalInputProcessor.ProcessCloseOrBuildMenu）。
+        /// </summary>
+        private static int closeMenuKeyConsumedFrame = -1;
+
+        /// <summary>
+        /// 声明本帧 Esc 已被消费（如对话面板补位关闭），所有 GetCloseOrBuildMenuDown 监听同帧跳过。
+        /// </summary>
+        public static void ConsumeCloseMenuKey()
+        {
+            closeMenuKeyConsumedFrame = Time.frameCount;
+        }
+
         public static bool GetToggleWorkerTaskAndAchievementHudDown()
         {
             return !LAB2D.Tool.Tool.IsUIInputActive() &&
@@ -23,6 +38,7 @@ namespace LAB2D.UnityAdapter
         public static bool GetCloseOrBuildMenuDown()
         {
             return !LAB2D.Tool.Tool.IsUIInputActive() &&
+                Time.frameCount != closeMenuKeyConsumedFrame &&
                 Input.GetKeyDown(InputKeyConstant.CloseOrBuildMenu);
         }
 

@@ -204,6 +204,13 @@ namespace LAB2D.Constant
         /// </summary>
         public const KeyCode DispatchCaveExplore = KeyCode.O;
 
+        /// <summary>
+        /// NPC 对话交互 (I键, I=Interact)
+        /// 玩家靠近 NPC 时按 I 开始对话。原为 T 与科技面板热键冲突，2026-09-05 改 I。
+        /// 仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode NpcDialogueInteract = KeyCode.I;
+
         #endregion
 
         #region 主动技能快捷键 (Q/E/R/F)
@@ -381,6 +388,7 @@ namespace LAB2D.Constant
   G        —— 山门核心 HUD (等级/耐久/升级)
   B        —— 加入附近战斗 (靠近交战区进入回合制对战)
   T        —— 科技面板 (研究点/科技研究)
+  I        —— NPC 对话交互 (靠近 NPC 开始对话)
   9        —— 成就面板
   0        —— 装备面板切换
 

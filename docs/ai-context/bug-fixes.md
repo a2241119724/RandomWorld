@@ -659,3 +659,27 @@
   - **自定义 UI shader 的顶点传参只能用 uv0.zw**（或顶点色），uv1/uv2/uv3/Normal/Tangent 全部依赖所在 Canvas 的 additionalShaderChannels 配置——组件级功能绝不能隐式依赖场景级配置（44+ 实例分散在多个 Canvas，配置漂移必踩）。
   - **SDF 类 shader 对退化输入必须卫兵**：几何公式拿 `(0,0)` 尺寸参与运算不是无害 no-op，本次 `q=|0|-(0-r)=+r` 直接把 alpha 干成全 0。数据缺失的兜底行为应定义成"可见的降级"（直角）而非"消失"。
   - Unity 侧 Text/Image 只用 uv0.xy 是有原因的——TexCoord0 的 zw 在 Canvas 管线里不被 atlas 重映射触及（本组件 mainTexture=whiteTexture 非 sprite，安全）。
+
+## 2026-09-05 NPC 对话暂停后 Worker 滑行不止：暂停挡板绕过 StopMove 收口
+
+- **现象**：用户报告"按 I 开始对话后，Worker 还是会继续移动，不会停下来"。
+- **根因**：对话暂停走的是 `dialoguePauseCount++` → `AWorker.Update/FixedUpdate` 开头 `IsDialoguePaused` return，**不切状态**——而 2026-08-15 的"离开移动统一 StopMove 防滑行"收口挂在 `WorkerStateManager.ChangeState` 上，只对状态切换生效，暂停路径完全绕过它。移动是 velocity 每物理帧重设驱动（`ASeek.cs` `rb.velocity = dir * speed`）+ drag=0：暂停后 `TickFixed` 不再跑、没人再设速度也没人清速度，刚体带最后一次 velocity 匀速滑行不止。
+- **修复**：`AWorker.PauseForDialogue()` 追加 `this.Seek.ClearVelocity()`（`ASeek.ClearVelocity` 由 private 提为 public）。**特意不用 `StopMove()`**：StopMove 会清路径（`currentResult=null`），恢复后 Move 状态 `MoveByPath` 无路径返回"到达"→ 半路误切 Work/Seek；对话语义是"暂停任务"（头顶文案即"对话中\n暂停任务: xxx"），只清速度保留路径，恢复后沿剩余路径继续赶路。时序安全：Unity 帧序 FixedUpdate→Update，对话在 Update 栈内清速度，下一 FixedUpdate 已被挡板拦截，速度不会被重设。
+- **验证**：`verify_compile.py` ERRORS:0；待 Unity 内实测——对话中 Worker 站定、结束后继续原任务路线。
+- **教训**：**"暂停"（保留状态/路径只停驱动）与"停止"（切状态弃路径）是两个语义点，各自的清速度义务都要显式落实**。velocity+drag=0 驱动下，任何"停止施加 velocity 但不切状态"的挡板（暂停/等待/节流窗口）都必须自己清一次速度，否则就是把滑行 bug 换个入口重新引入。
+
+## 2026-09-05 Esc 关对话后点击全失效：同帧双 Esc 触发误开 BuildPanel（回归自修）
+
+- **现象**：用户报告"按 Esc 关闭对话面板后，点任何按钮都不管用，需要鼠标点一下屏幕才恢复"。
+- **根因**：对话面板的 Esc 补位（DialoguePanelUI.Update，聚焦态走 OnBackClicked 关闭）与全局 Esc 分发（GlobalInputProcessor.ProcessCloseOrBuildMenu）互斥守卫是 `IsUIInputActive`（输入框聚焦）——但**关闭动作本身会在同帧内翻转该守卫条件**：补位 Update 先跑，SetActive(false) 清掉 selection → IsUIInputActive 翻 false → 同帧稍后全局分发的守卫放行 → 此时面板栈已被弹空 → 走 `Panels.Count==0` 分支 `Show(BuildPanel.Instance)`（GlobalInputProcessor.cs）悄悄打开建造菜单——全屏面板挡住全部点击；用户点一下屏幕关掉它，看似"恢复了"。
+- **修复**：`UnityGlobalInputAdapter` 加一帧消费标记 `ConsumeCloseMenuKey()`（记 `Time.frameCount`），`GetCloseOrBuildMenuDown()` 加 `Time.frameCount != closeMenuKeyConsumedFrame`；DialoguePanelUI 补位分支在 OnBackClicked 前先 `ConsumeCloseMenuKey()`。同帧内所有 Esc 监听（含 185 行的组合判断）统一跳过，下一帧自动失效。
+- **验证**：`verify_compile.py` ERRORS:0；待 Unity 实测——Esc 关对话后立即点击各按钮应正常响应。
+- **教训**：**互斥守卫的判定条件若会被其中一方的动作本身改变（此处：关面板→清 selection→IsUIInputActive 翻转），"互斥"在同帧内不成立**。同一按键多处监听 + 守卫翻转 = 必然双触发；跨模块的按键独占要么用一帧消费标记，要么保证所有监听读到的守卫状态帧内不可变。
+
+## 2026-09-05 Esc 关对话后点击失效【真根因】：EventSystem selection 残留失活输入框（上一条的补充修正）
+
+- **现象**：同上条（Esc 关对话后点什么都没反应，点一下屏幕才恢复）。加 ConsumeEsc 后用户复测仍不行。
+- **真根因**：`SetActive(false)` **不会自动清** `EventSystem.currentSelectedGameObject`（Unity 不 deselect 失活对象，著名陷阱）——selection 残留指向失活的对话输入框，而失活对象 `!= null` 且 `GetComponent<InputField>()` 仍返回组件 → `Tool.IsUIInputActive()` **持续 true** → 所有带 `!IsUIInputActive()` 守卫的输入（全局热键、部分点击处理）全部失效。玩家点一下屏幕：点到非 selectable 处 → selection 置 null / 点到按钮 → selection 换成按钮 → 恢复。**点关闭按钮无此症状**：鼠标点击本身已把 selection 从输入框换成按钮。上条的"同帧双开 BuildPanel"在 selection 残留场景其实不会发生（全局守卫一直被拦）——但本条修复后 selection 被清、守卫放行，ConsumeEsc 反而成为必需配套（否则同帧栈空真的会误开 BuildPanel）。
+- **修复**：`DialoguePanelUI.Close()`（按钮/Esc 两条路径共用的收口）在 `SetActive(false)` 前：`inputField.DeactivateInputField()` + `EventSystem.current?.SetSelectedGameObject(null)`，并留 [StateDiag] 日志观察清理时 selection 指向。与上条 ConsumeCloseMenuKey 配合：清 selection 让同帧全局 Esc 放行 → 消费标记拦下 → 不误开 BuildPanel。
+- **验证**：`verify_compile.py` ERRORS:0；Unity 实测——Esc 关对话后立即按 K/T 等热键与点击 UI 应直接生效。
+- **教训**：**失活/关闭带 InputField 聚焦的面板，必须在 SetActive(false) 前显式 `DeactivateInputField()` + `SetSelectedGameObject(null)`**——EventSystem 不替你清 selection，失活对象的 selection 会把 `IsUIInputActive()` 类守卫永久卡死。症状"键盘路径关闭 UI 后输入全失灵、鼠标点一下就好"优先查 selection 残留。

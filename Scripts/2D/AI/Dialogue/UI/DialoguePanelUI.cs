@@ -133,6 +133,23 @@ namespace LAB2D.AI.Dialogue.UI
 
         public void Update()
         {
+            // Esc 补位：输入框聚焦时全局 Esc 分发被 IsUIInputActive 守卫拦截
+            //（GlobalInputProcessor 摸不到面板栈），此处按 Esc 走关闭按钮同款管线。
+            // 守卫限定"本面板输入框聚焦"——失焦态由全局分发走 PanelController 栈的
+            // OnClick_Back，避免同帧双 Close 把栈下层面板误弹掉；其他面板输入框
+            //（如 LLMSettingPanel）聚焦时不误触。
+            if (this.inputField != null &&
+                UnityEngine.EventSystems.EventSystem.current?.currentSelectedGameObject == this.inputField.gameObject &&
+                Input.GetKeyDown(Constant.InputKeyConstant.CloseOrBuildMenu))
+            {
+                // 先消费本帧 Esc：OnBackClicked 的关闭会清输入框 selection（IsUIInputActive
+                // 翻转），不消费的话同帧稍后的全局 Esc 分发会放行——栈已空 → 误开 BuildPanel
+                // 挡住全部点击（表现为"关了对话后点什么都没反应，点下屏幕才恢复"）。
+                UnityGlobalInputAdapter.ConsumeCloseMenuKey();
+                this.OnBackClicked();
+                return;
+            }
+
             if (this.ShouldSubmitFromKeyboard())
             {
                 this.OnSendClicked();
@@ -197,6 +214,23 @@ namespace LAB2D.AI.Dialogue.UI
             if (!string.IsNullOrEmpty(this.activeNpcId))
             {
                 ServiceLocator.Get<DialogueManager>().EndDialogue(this.activeNpcId);
+            }
+
+            // 显式释放输入焦点并清 EventSystem selection：直接 SetActive(false) 不会清
+            // currentSelectedGameObject（Unity 不自动 deselect 失活对象），selection 残留
+            // 指向失活的输入框 → IsUIInputActive() 持续 true → 所有带 !IsUIInputActive()
+            // 守卫的输入（全局热键/点击处理）失效，直到玩家点一下屏幕（点击会改 selection）
+            // 才恢复——即"Esc 关对话后点什么都没反应"症状。点关闭按钮无此问题：鼠标点击
+            // 本身已把 selection 换成按钮。
+            if (this.inputField != null && this.inputField.IsActive())
+            {
+                LogProvider(
+                    $"[StateDiag] DialoguePanelUI.Close 清输入焦点: selection="
+                    + UnityEngine.EventSystems.EventSystem.current?.currentSelectedGameObject?.name,
+                    LogManager.LogLevelEnum.Debug);
+
+                this.inputField.DeactivateInputField();
+                UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
             }
 
             this.activeNpcId = string.Empty;
