@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `fix(seek)`: 险地减速接入 ASeek 移动管线（ad0ebc1b）——DangerZone ×0.7 此前只挂 Player 双入口，Worker/Enemy 实际移动走 `ASeek.ComputeAdjustedSpeed` 漏乘，spec 契约「玩家/Worker 共用」未兑现险地对 NPC 形同虚设；同层补乘（s_dangerZones 静态缓存+HasZones 短路，s_temperatureEffect 同款 TryGet 模式）；同轮摸底勘误：地形效果五通道实为活链（TerrainEffectManager 经 ITerrainEffectService 接口消费，直引扫描漏判接口间接层），死类仅 DateTool/TerrainEffectTool/TerrainEffectRuleService 三个（禁删文件，留档）；1030/1030
 - 2026-09 — `docs(audit)`: 零接线 API 审计与 spec 失实修正——扫描零引用 public 方法揪出三套预留未接线功能链：①技能升级整链（`SkillManager.TryUpgradeSkill`/`AddUpgradePoints`/`AvailableUpgradePoints` 恒 0，注释称「击杀 Boss 或完成波次时调用」从未发生）②长期记忆压缩三 API（`GetAllMessagesForCompression`/`AddLongTermSummary`/`GetLongTermMemories` 全零调用——spec 原声称「长期记忆压缩(每 8 轮)」失实已改现状）③成就 Claim 领取（前轮已记）；均涉 LLM/数值设计决策留档待用户拍板不盲接；另核实 survival_exp_10 经验口径为殖民地级统计（F10 同源）自洽非缺陷
 - 2026-09 — `fix(seek)`: WalkabilityCache 快照发布关闭换图越界窗口——静态 width/height 与数组分别发布，换图尺寸变化瞬间后台 IsWalkable 用新边界过检查后读旧数组引用，index 越界直接炸后台寻路线程（无兜底）；数组与尺寸绑定为不可变 Snapshot 单次 volatile 发布，一次读引用即得一致视图；技术债清单「非原子写入→不可变快照」条目收口；公开 API 零变化；+3 单测（未初始化兜底/幂等/尺寸切换并发读零异常压测）1030/1030
 - 2026-09 — `test(layout)`: WorkerHomeLayout 布局不变量防回归 4 用例（1481a71f）——历史 bug 密集区（床副格碰撞/门堵家具/interiorW 硬编码）零单测补盲；全组合枚举验证墙数/门位/家具互异内部/不堵门契约；首跑即抓出 5×5 side=0 已知全堵例外（GenerateRandomRoomParams 换参规避），锁现状防漂移；1027/1027
