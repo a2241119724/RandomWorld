@@ -165,6 +165,13 @@ namespace LAB2D.Character.Worker.Task
                 $"{worker.name} 从地面捡起物品(id={this.groundResource.Id}, count={this.groundResource.Count}) pos=({posMap.x},{posMap.y})",
                 LogManager.LogLevelEnum.Debug);
 
+            // 拾获小确幸接心智层（自尊+2/记忆流）：拾取高频，Service 层按游戏日节流
+            // （每天首捡记录一次，链式拾取后续链节自动短路）
+            if (Core.ServiceLocator.TryGet<WorkerMindService>(out WorkerMindService mindService))
+            {
+                mindService.RecordFoundItem(worker);
+            }
+
             // 链式拾取：还有待拾取物品时，立即创建下一个拾取任务
             if (this.pendingPositions != null && this.pendingPositions.Count > 0)
             {

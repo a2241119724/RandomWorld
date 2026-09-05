@@ -210,6 +210,9 @@ namespace LAB2D.Domain.Worker
         /// <summary>最近一次濒死经历的游戏日（按日节流，避免同一天刷屏记忆）。-1 = 从未。</summary>
         public int LastNearDeathDay = -1;
 
+        /// <summary>最近一次拾获物品事件的游戏日（拾取任务高频，按日节流防刷爆记忆上限）。-1 = 从未。</summary>
+        public int LastFoundItemDay = -1;
+
         /// <summary>最近一次人格迁移的游戏日（限流）。</summary>
         public float LastDriftMigrationDay = -1f;
 

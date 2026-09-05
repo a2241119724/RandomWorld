@@ -287,6 +287,36 @@ namespace LAB2D.Domain.Worker
         }
 
         /// <summary>
+        /// 拾获物品的小确幸（WorkerPickUpTask.FromGround 成功拾取）：拾取任务高频
+        /// （采集链/悬赏链每天大量），按游戏日节流同一天只记一次（RecordNearDeath 同款）。
+        /// </summary>
+        public void RecordFoundItem(AWorker worker)
+        {
+            AWorker.WorkerData wd = worker?.CharacterDataLAB as AWorker.WorkerData;
+            if (wd == null)
+            {
+                return;
+            }
+
+            WorkerMindData.Ensure(wd);
+            WorkerMindData mind = wd.Mind;
+            int day = this.GetGameDayIndex();
+            if (mind.LastFoundItemDay == day)
+            {
+                return;
+            }
+
+            mind.LastFoundItemDay = day;
+            this.RecordEvent(worker, WorkerMindConstant.EVT_FOUND_ITEM, MemoryValence.Positive,
+                null, 20f, "捡到了不错的东西");
+            string thought = WorkerInnerMonologue.GetEventThought(WorkerMindConstant.EVT_FOUND_ITEM, null);
+            if (!string.IsNullOrEmpty(thought))
+            {
+                worker.ShowMindBubble(thought);
+            }
+        }
+
+        /// <summary>
         /// 濒死经历（极端饥饿紧急打断等）：按游戏日节流，同一天只记一次。
         /// 直接叠加记忆/信念副作用，并弹一句恐惧气泡。
         /// </summary>

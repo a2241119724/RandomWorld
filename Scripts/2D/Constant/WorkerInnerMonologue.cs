@@ -407,6 +407,14 @@ namespace LAB2D.Constant
             "为什么总会梦到那种事……",
         };
 
+        /// <summary>拾获物品的小确幸（拾取任务按日节流，每天首捡）。</summary>
+        private static readonly string[] EvtFoundItem = new[]
+        {
+            "运气不错，捡到了东西。",
+            "今天手气可以啊。",
+            "白捡的，真香。",
+        };
+
         /// <summary>玩家求教功法成功（正向）。</summary>
         private static readonly string[] EvtTeachSeek = new[]
         {
@@ -604,6 +612,9 @@ namespace LAB2D.Constant
                     break;
                 case WorkerMindConstant.EVT_NIGHTMARE:
                     pool = EvtNightmare;
+                    break;
+                case WorkerMindConstant.EVT_FOUND_ITEM:
+                    pool = EvtFoundItem;
                     break;
                 case WorkerMindConstant.EVT_CULTIVATION_BREAKTHROUGH:
                     pool = EvtBreakthrough;

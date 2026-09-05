@@ -64,6 +64,17 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
+        public void GetDelta_FoundItem_BoostsSelfEsteem()
+        {
+            // 拾获小确幸（WorkerMindService.RecordFoundItem 每日节流，生产者已接线）
+            BeliefDelta d = WorkerBeliefRuleService.GetDelta(WorkerMindConstant.EVT_FOUND_ITEM, 100f);
+            Assert.AreEqual(2f, d.SelfEsteem, 0.0001f);
+            Assert.AreEqual(0f, d.TrustInWorld, 0.0001f);
+            Assert.AreEqual(0f, d.TrustInPlayer, 0.0001f);
+            Assert.AreEqual(0f, d.SenseOfBelonging, 0.0001f);
+        }
+
+        [Test]
         public void GetDelta_UnknownType_Zero()
         {
             BeliefDelta d = WorkerBeliefRuleService.GetDelta("no_such_event", 100f);
