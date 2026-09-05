@@ -22,6 +22,8 @@ namespace LAB2D.Map
     /// </summary>
     public class BuildMap : BaseTileMap
     {
+        // 建造中状态色（半透明）。视觉拆分后仅供 GetBuildVisualColor 消费（落到独立 SR/Bottom tile），
+        // 不再直接 SetColor 到 tilemap——tile 颜色统一由 TileVisualSpawner.CreateOrUpdate 管理。
         private Color initColor = new (1, 1, 1, 0.5f);
 
         /// <summary>
@@ -99,10 +101,8 @@ namespace LAB2D.Map
                     .SetNeedResource(buildCosts).Build(), new GameGridPosition(targetMap.x, targetMap.y, targetMap.z),
                     priority);
 
-                // 设置可通过并且颜色变淡
-                this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
+                // 建造中无碰撞体可通行；视觉（建造中半透明/隐藏 tile）由下方 CreateOrUpdate 统一落
                 this.tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
-                this.tilemap.SetColor(targetMap, this.initColor);
             }
             else
             {
@@ -185,9 +185,7 @@ namespace LAB2D.Map
             if (tile != null)
             {
                 this.tilemap.SetTile(targetMap, tile);
-                this.tilemap.RemoveTileFlags(targetMap, TileFlags.LockColor);
                 this.tilemap.SetColliderType(targetMap, Tile.ColliderType.None);
-                this.tilemap.SetColor(targetMap, this.initColor);
             }
 
             BuildTileData primaryData = new BuildTileData(tileName, false, width, height);
@@ -279,7 +277,7 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 完成建造（带建造者和所属者信息）,设置颜色透明度为1,不可通过的添加碰撞体
+        /// 完成建造（带建造者和所属者信息）,不可通过的添加碰撞体
         /// </summary>
         /// <param name="targetMap">目标位置</param>
         /// <param name="builderName">建造者 Worker 名称</param>
@@ -324,7 +322,7 @@ namespace LAB2D.Map
         }
 
         /// <summary>
-        /// 完成建造,设置颜色透明度为1,不可通过的添加碰撞体
+        /// 完成建造,不可通过的添加碰撞体
         /// </summary>
         /// <param name="targetMap">目标位置</param>
         public void SetComplete(Vector3IntLAB targetMap)
@@ -341,8 +339,8 @@ namespace LAB2D.Map
             buildTileData.IsComplete = true;
             Core.ServiceLocator.Get<RoomManager>().Complete(vector3Int);
             BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
-            this.tilemap.SetColor(vector3Int, Color.white);
-            // 统一不变量：完成 + IsPass → None；完成 + 阻挡 → Sprite（显式设置，不依赖资产默认）
+            // 统一不变量：完成 + IsPass → None；完成 + 阻挡 → Sprite（显式设置，不依赖资产默认）。
+            // 完成态颜色（白）由 GetBuildVisualColor 经 CreateOrUpdate 落到独立视觉/Bottom tile，不在 tile 上直写。
             this.ApplyCollider(vector3Int, true, buildItemData != null && buildItemData.IsPass);
 
             // 建造完成是通行判定变化的关键事件（卡墙排查：建成后不可通行建筑阻挡寻路）。
@@ -367,7 +365,7 @@ namespace LAB2D.Map
                     LogManager.LogLevelEnum.Debug);
             }
 
-            // 视觉同步：重读 GetColor=白（半透明→实心）+ 刷新 8 邻域（RuleTile 邻居变化）
+            // 视觉同步：完成态颜色切换（半透明→实心，经 colorProvider）+ 刷新 8 邻域（RuleTile 邻居变化）
             this.visuals.CreateOrUpdate(vector3Int);
             this.visuals.RefreshAround(vector3Int);
 
@@ -719,8 +717,6 @@ namespace LAB2D.Map
                 if (!enumerator.Current.Value.IsComplete)
                 {
                     this.tilemap.SetColliderType(vector3Int, Tile.ColliderType.None);
-                    this.tilemap.RemoveTileFlags(vector3Int, TileFlags.LockColor);
-                    this.tilemap.SetColor(vector3Int, this.initColor);
                 }
                 else
                 {
@@ -770,13 +766,10 @@ namespace LAB2D.Map
             BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(buildTileData.Name);
             if (buildTileData.IsComplete)
             {
-                this.tilemap.SetColor(vector3Int, Color.white);
                 this.ApplyCollider(vector3Int, true, buildItemData != null && buildItemData.IsPass);
             }
             else
             {
-                this.tilemap.RemoveTileFlags(vector3Int, TileFlags.LockColor);
-                this.tilemap.SetColor(vector3Int, new Color(1, 1, 1, 0.5f));
                 // 未完成：无条件可通行。修复远端建造中墙保留资产默认 Sprite 碰撞体 → 网格误判
                 // "建造中不可通行"的反向不一致；同时消除原 buildItemData.IsPass 的潜在 NRE。
                 this.ApplyCollider(vector3Int, false, true);
@@ -812,16 +805,13 @@ namespace LAB2D.Map
 
                 if (tileData.IsComplete)
                 {
-                    // 已完成：全色 + 统一不变量（完成 + IsPass → None；阻挡 → Sprite）
-                    this.tilemap.SetColor(pos, Color.white);
+                    // 已完成：统一不变量（完成 + IsPass → None；阻挡 → Sprite）
                     BuildItemData buildItemData = Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(tileData.Name);
                     this.ApplyCollider(pos, true, buildItemData != null && buildItemData.IsPass);
                 }
                 else
                 {
-                    // 未完成：半透明 + 无碰撞体
-                    this.tilemap.RemoveTileFlags(pos, TileFlags.LockColor);
-                    this.tilemap.SetColor(pos, this.initColor);
+                    // 未完成：无碰撞体
                     this.ApplyCollider(pos, false, true);
                 }
 
