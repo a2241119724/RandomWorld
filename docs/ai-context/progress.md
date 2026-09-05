@@ -6,6 +6,7 @@ v0.2 方向已定（0.1.5 分支推进中）——**修仙小镇生存建造**�
 
 ## Recent Changes
 
+- 2026-09 — `chore(clean)`: 清 IconName 死字段 + 修 progress 包4 失同步（99d84f40）——15 处全为定义+赋值零读者（UI 用类别默认图标），同 IsProgressPersistent 同款「预留未接线」；Current Work M4 包4 勾选（三大子项早已完成）；1022/1022
 - 2026-09 — `chore(clean)`: IsProgressPersistent 死字段清理 + WorkerSupply 空 catch 留痕（08aaf531）——33 处引用全为定义+赋值零读者（「跨局持久化」从未实现，Manager 非存档每局重建）；FillBedInfo 空 catch 静默吞统计异常改走 AWorkerTask.LogProvider 统一通道（裸测试 fixture 配静默桩）；1022/1022
 - 2026-09 — `fix(ui)`: 字体来源真单一收口（0aeaeb49）——`UIFontConfig.GetFont` 三级链（SO→ark-pixel→内置）与 `PixelUITheme.PixelFont` 并存双源且 SO 可编辑器改违反「永久 ark-pixel」决策，改薄委托 PixelFont（10 消费点零改动，SO font 字段仅剩 Editor 批量工具消费）；补 CaveExploreHUD fontSize 22→24 铁律①漏网；1022/1022
 - 2026-09 — `feat(achievement)`: 炼丹/洞府探索成就 4 条（ab2035eb）——补齐 0.2 新系统成就覆盖缺口；`PillManager.TotalPillsCrafted` 会话累计（TryCraft 成功 +1）+ 洞府遍历既有 `Caves` 数 Explored（零 Manager 改动）；成就：初窥丹道/丹道小成（1·10 颗）、初探古洞/洞天访客（1·3 座），均入 Cultivation 类别；读数 TryGet 防御；+3 单测（LogProvider 静默桩裸测 TryCraft 全路径）1022/1022
