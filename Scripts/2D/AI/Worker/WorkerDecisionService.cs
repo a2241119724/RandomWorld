@@ -82,10 +82,12 @@ namespace LAB2D.AI.Worker
                     workerData.CurStress - Constant.WorkerConditionConstant.StressWanderRestorePerWaypoint);
                 workerData.Personality = workerData.Personality.AfterWander();
 
-                // 小概率(5%)发现随机物品：附近生成随机基础资源掉落，闭环给拾取任务
-                if (UnityEngine.Random.value < 0.05f)
+                // 小概率(5%)发现随机物品：掉落归发现者并派专属拾取任务；
+                // 接手则中断漫游（任务 Start 内部已重入寻路，调用方不要再 Seek）
+                if (UnityEngine.Random.value < 0.05f && this.TryDropWanderDiscovery())
                 {
-                    this.TryDropWanderDiscovery();
+                    workerData.WanderWaypointsRemaining = 0;
+                    return true;
                 }
 
                 if (workerData.WanderWaypointsRemaining > 0)
@@ -234,16 +236,19 @@ namespace LAB2D.AI.Worker
         }
 
         /// <summary>
-        /// 漫游发现物品：附近可通行格生成随机基础资源掉落（Material 池 ×1~2，无主）。
-        /// PutDownToDrop 自动创建公开搬运任务，空闲 Worker（含发现者）接手闭环；
-        /// SO/tile/落点缺失时静默跳过（不打扰漫游）。
+        /// 漫游发现物品：附近可通行格生成随机基础资源掉落（Material 池 ×1~2，归发现者）。
+        /// 掉落归属 OwnerId=发现者（防他人抢捡，同自我采集掉落惯例），并移除
+        /// PutDownToDrop 自动创建的公开搬运任务（终点玩家仓库）——改为给发现者
+        /// 直接派 FromGround 专属拾取任务：拾取入自己背包，后续经 Store 决策入
+        /// 个人仓库/自用/出售，经济闭环归发现者。返回 true=发现者已接手（中断漫游）；
+        /// SO/tile/落点缺失时静默跳过（不打扰漫游）返回 false。
         /// </summary>
-        private void TryDropWanderDiscovery()
+        private bool TryDropWanderDiscovery()
         {
             var materialSO = Core.ServiceLocator.Get<ResourceManager>().GetBackpackSO("MaterialItemData");
             if (materialSO == null || materialSO.ItemDatas == null || materialSO.ItemDatas.Count == 0)
             {
-                return;
+                return false;
             }
 
             int[] pool = new int[materialSO.ItemDatas.Count];
@@ -254,28 +259,46 @@ namespace LAB2D.AI.Worker
 
             if (!WanderDiscoveryRuleService.TryRoll(pool, UnityEngine.Random.value, UnityEngine.Random.value, out int itemId, out int count))
             {
-                return;
+                return false;
             }
 
             ItemData itemData = Core.ServiceLocator.Get<ItemDataManager>().GetById(itemId);
             TileBase tile = Core.ServiceLocator.Get<ResourceManager>().TryGetAsset(itemData?.Name);
             if (itemData == null || tile == null)
             {
-                return;
+                return false;
             }
 
             Vector3Int currentPos = AWorkerTask.TileMapWorldToMapProvider(this.worker.transform.position);
             Vector3Int dropPos = AWorkerTask.GenCanReachPosProvider(currentPos);
             if (dropPos == default)
             {
-                return;
+                return false;
             }
 
-            AWorkerTask.ItemMapProvider().PutDownToDrop(dropPos, tile, new ResourceInfo(itemId, count, ownerId: 0));
+            // 掉落物归发现者：OwnerId 防他人抢捡（拾取/搬运掉落物时归拾取者自己，见 WorkerPickUpTask）
+            int ownerId = this.worker.GetInstanceID();
+            AWorkerTask.ItemMapProvider().PutDownToDrop(dropPos, tile, new ResourceInfo(itemId, count, ownerId));
+
+            // PutDownToDrop 自动创建了公开搬运任务（终点玩家仓库），移除之——
+            // 资源归发现者，不走公共搬运（同 WorkerGatherTask.ProcessDrops 的处理）
+            Core.ServiceLocator.Get<WorkerTaskManager>().RemoveCarryTaskAt(dropPos);
+
+            // 发现者专属拾取任务：直接分配不入全局池，FromGround 拾取入自己背包
+            WorkerPickUpTask pickUpTask = new WorkerPickUpTask.PickUpTaskBuilder()
+                .SetMode(WorkerPickUpTask.PickUpMode.FromGround)
+                .SetTargetPosition(dropPos)
+                .SetGroundResource(new ResourceInfo(itemId, count, ownerId))
+                .SetOwnerId(ownerId)
+                .Build();
+
+            this.worker.SetTask(pickUpTask, WorkerTaskSource.SelfDecision);
 
             AWorkerTask.LogProvider(
-                $"{this.worker.name} 漫游发现了 {itemData.CnName}x{count} pos=({dropPos.x},{dropPos.y})",
+                $"{this.worker.name} 漫游发现了 {itemData.CnName}x{count} pos=({dropPos.x},{dropPos.y})，中断漫游去拾取",
                 LogManager.LogLevelEnum.Debug);
+
+            return true;
         }
 
         /// <summary>
