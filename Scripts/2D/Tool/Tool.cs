@@ -228,13 +228,35 @@ namespace LAB2D.Tool
         /// <summary>
         /// 是否有 UI 输入控件处于聚焦状态（InputField 等）。
         /// 游戏按键检测前应调用此方法，避免输入穿透到游戏操作。
+        /// 按 currentSelectedGameObject 引用缓存判定结果：selection 只在点击/换选时变化
+        /// （频率极低），而本方法被 NPCDialogueTrigger×100、各 HUD Update 等每帧轮询上百次，
+        /// 逐次 GetComponent&lt;InputField&gt;() 对非输入框 selection 在 Editor 下走
+        /// EditorOnly[GetComponentNullErrorMessage] 懒错误消息构造路径（2026-09-06 Profiler 热点）。
+        /// 注：运行时对同一物体动态增删 InputField 不会被感知（项目无此路径，输入框都在 prefab）。
         /// </summary>
         /// <returns>true 表示 UI 正在接收文本输入，应屏蔽游戏按键。</returns>
         public static bool IsUIInputActive()
         {
             GameObject selected = EventSystem.current?.currentSelectedGameObject;
-            return selected != null && selected.GetComponent<InputField>() != null;
+            if (selected == null)
+            {
+                return false; // 无 selection / 已销毁伪 null：直接 false，不动缓存键
+            }
+
+            if (!ReferenceEquals(selected, uiInputCheckLastSelected))
+            {
+                uiInputCheckLastSelected = selected;
+                uiInputCheckLastResult = selected.GetComponent<InputField>() != null;
+            }
+
+            return uiInputCheckLastResult;
         }
+
+        /// <summary>IsUIInputActive 的 selection 缓存（见该方法注释）。</summary>
+        private static GameObject uiInputCheckLastSelected;
+
+        /// <summary>IsUIInputActive 的判定结果缓存（见该方法注释）。</summary>
+        private static bool uiInputCheckLastResult;
 
         /// <summary>
         /// 点击射线检测UI对象.

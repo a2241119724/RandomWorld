@@ -71,11 +71,10 @@ namespace LAB2D.AI.Dialogue.Core
 
         public void Update()
         {
-            if (!UnityGlobalInputAdapter.GetNpcDialogueInteractDown(this.interactKey))
-            {
-                return;
-            }
-
+            // 距离前置（2026-09-06 Profiler EditorOnly[GetComponentNullErrorMessage] 热点）：
+            // 100 Worker 各挂本组件，原顺序每帧每实例先查按键（内部 IsUIInputActive）再查距离，
+            // 99% 的实例距离不满足却付了输入查询。距离筛掉后每帧仅 ~1 个邻近实例查按键。
+            // 各项均为无副作用查询（GetKeyDown 不消费事件），交换顺序语义等价。
             if (this.isDialogueOpen)
             {
                 return;
@@ -89,6 +88,11 @@ namespace LAB2D.AI.Dialogue.Core
 
             float sqrDist = (this.transform.position - player.transform.position).sqrMagnitude;
             if (sqrDist > this.interactionRadius * this.interactionRadius)
+            {
+                return;
+            }
+
+            if (!UnityGlobalInputAdapter.GetNpcDialogueInteractDown(this.interactKey))
             {
                 return;
             }

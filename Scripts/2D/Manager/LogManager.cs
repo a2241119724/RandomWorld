@@ -4,6 +4,7 @@ namespace LAB2D.Manager
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Text;
     using UnityEngine;
 
     /// <summary>
@@ -28,6 +29,22 @@ namespace LAB2D.Manager
         private bool errorFileAvailable = true;
         private int suppressUnityErrorCapture = 0;
         private long index = 0;
+
+        // ---- Log() 的热路径降本字段（均在 syncRoot 锁内使用，见 Log 内注释）----
+        /// <summary>时间戳缓存：上次格式化对应的毫秒数（Ticks/TimeSpan.TicksPerMillisecond）。</summary>
+        private long lastTimestampMs = -1;
+
+        /// <summary>时间戳缓存：lastTimestampMs 对应的格式化串（"yyyy-MM-dd HH:mm:ss.fff"）。</summary>
+        private string lastTimestampString;
+
+        /// <summary>日志行拼接复用缓冲（仅锁内使用，每次 Length=0 重写）。</summary>
+        private StringBuilder logBuilder;
+
+        /// <summary>级别名缓存：索引 = (int)LogLevelEnum，与枚举值域 0-6 一一对应。</summary>
+        private static readonly string[] LevelNames =
+        {
+            "Trace", "Debug", "Info", "Warning", "Error", "Fatal", "Off",
+        };
 
         public LogManager()
         {
@@ -92,11 +109,31 @@ namespace LAB2D.Manager
 
             string logMessage;
             List<string> pendingLogs = null;
-            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+
+            // 时间戳同毫秒复用（2026-09-06 AWorker.Update Invoke 峰值耗时治理）：
+            // 自定义格式 DateTime.ToString 是单条日志最大成本（格式化 ~几μs + 串分配），
+            // 而格式精度本就是 1ms（fff）——同毫秒多条共享同一字符串零语义损失。日志高峰期
+            //（建造/战斗/决策风暴，正是 Invoke 峰值期）~4 条/ms 命中率高，平期 ~30%。
+            DateTime now = DateTime.Now;
 
             lock (this.syncRoot)
             {
-                logMessage = $"{timestamp} [{level}] {this.index++} {message ?? string.Empty}";
+                long nowMs = now.Ticks / TimeSpan.TicksPerMillisecond;
+                if (nowMs != this.lastTimestampMs)
+                {
+                    this.lastTimestampMs = nowMs;
+                    this.lastTimestampString = now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                }
+
+                // 拼接改 StringBuilder 复用 + 级别名静态数组：替代插值（string.Format 对
+                // enum/int 装箱 + 中间串），单条内部分配只剩最终 ToString 一次。
+                // builder 为实例字段，仅在 syncRoot 锁内使用，线程安全。
+                StringBuilder builder = this.logBuilder ?? (this.logBuilder = new StringBuilder(160));
+                builder.Length = 0;
+                builder.Append(this.lastTimestampString).Append(" [").Append(LevelNames[(int)level])
+                    .Append("] ").Append(this.index++).Append(' ').Append(message ?? string.Empty);
+                logMessage = builder.ToString();
+
                 this.logs.Add(logMessage);
                 if (this.logs.Count >= this.maxLogCount)
                 {

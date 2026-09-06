@@ -445,14 +445,24 @@ namespace LAB2D.Character.Worker
                 return;
             }
 
-            // 逐帧写入（仅值比较挡掉重复值）：任务进度随 deltaTime 连续累积，
-            // 0.1s 时间节流会造成可感知的跳格；进度可见时 Canvas 重建本身不可避免，
-            // HeadUI 合并为单 Canvas 后重建边界已是每角色 1 个。
-            if (this.progress.value != value)
+            // 量化写入（2026-09-06 GC.Collect 热点治理）：任务进度随 deltaTime 连续累积，
+            // 逐帧写 value → fillRect RectTransform 每帧变 → 该角色 HeadUI Canvas 每帧
+            // 重建；100 Worker 的重建托管分配是剩余分配率的大头，驱动 Boehm GC 频繁回收
+            //（回收耗时记在随机触发分配的调用栈上——AWorker/GlobalInit.Update 轮换挂
+            // GC.Collect 即此记账效应，非 Update 内新增代码）。
+            // 跨 1/64 档才写：进度条屏宽几十像素下 1 档 ≤1px 视觉不可辨，重建频率降
+            // ~3-10 倍（按任务时长）。曾否过 0.1s 时间节流（可感知跳格）；量化是空间
+            // 维度的等价物，帧率无关、无跳格。
+            int quantized = (int)(UnityEngine.Mathf.Clamp01(value) * 64f);
+            if (quantized != this.lastProgressQuantized)
             {
+                this.lastProgressQuantized = quantized;
                 this.progress.value = value;
             }
         }
+
+        /// <summary>SetProgress 的量化档位缓存（见该方法注释）。</summary>
+        private int lastProgressQuantized = -1;
 
         /// <summary>
         /// 显示心智气泡（自主意志拒绝/人生事件/关系变化等反馈）。

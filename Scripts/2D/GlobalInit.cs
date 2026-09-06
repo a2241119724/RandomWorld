@@ -280,6 +280,13 @@ namespace LAB2D
                 // 防守夜补派（2s 节流扫描：生存打断后的 Worker 脱离生存任务即拉回防守；常态零分配短路）
                 ServiceLocator.Get<WorkerDefenceManager>(),
             };
+
+            // [GcDiag] tickable 逐项采样数组与列表对齐（见 Update 内注释）
+            if (this.gcTickItemBytes.Length < this.orderedTickables.Count)
+            {
+                this.gcTickItemBytes = new long[this.orderedTickables.Count];
+                this.gcTickItemMax = new long[this.orderedTickables.Count];
+            }
         }
 
         /// <summary>
@@ -354,22 +361,21 @@ namespace LAB2D
         {
             float dt = Time.deltaTime;
 
-            // [GcDiag] tickable 循环段 mono 堆增量采样（定位 Profiler「GlobalInit.Update
-            // ~50KB/帧」分配源用——循环内 18 个 ITickable 某个在分配，排查后删除）
-            long gcTickLoopStart = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
-
-            foreach (ITickable tickable in this.orderedTickables)
+            // [GcDiag] tickable 逐项采样（升级版，定位循环内 18 个 ITickable 谁在分配——
+            // 整段采样只测得 6.3MB/5s 总量无法指认，排查后删除）。每项 Tick 前后各一次
+            // GetMonoUsedSizeLong（纯读 icall，纳秒级），差值累计到该项窗口。
+            for (int i = 0; i < this.orderedTickables.Count; i++)
             {
-                tickable.Tick(dt);
-            }
-
-            long gcTickLoopDelta = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - gcTickLoopStart;
-            if (gcTickLoopDelta > 0)
-            {
-                this.gcTickLoopWindowBytes += gcTickLoopDelta;
-                if (gcTickLoopDelta > this.gcTickLoopMaxFrame)
+                long before = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
+                this.orderedTickables[i].Tick(dt);
+                long delta = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - before;
+                if (delta > 0)
                 {
-                    this.gcTickLoopMaxFrame = gcTickLoopDelta;
+                    this.gcTickItemBytes[i] += delta;
+                    if (delta > this.gcTickItemMax[i])
+                    {
+                        this.gcTickItemMax[i] = delta;
+                    }
                 }
             }
 
@@ -377,15 +383,45 @@ namespace LAB2D
             if (this.gcTickLoopReportTimer >= 5f)
             {
                 this.gcTickLoopReportTimer -= 5f;
-                if (this.gcTickLoopWindowBytes > 10240)
+                // 报窗口内 top4（>128KB 才报）——类型名是 ASCII，方便日志 grep
+                System.Text.StringBuilder sb = null;
+                for (int rank = 0; rank < 4; rank++)
                 {
-                    AWorkerTask.LogProvider(
-                        $"[GcDiag] tickable循环 5s窗口分配≈{this.gcTickLoopWindowBytes / 1024}KB 单帧max={this.gcTickLoopMaxFrame}B frame={Time.frameCount}",
-                        LogManager.LogLevelEnum.Debug);
+                    long best = 0;
+                    int bestIdx = -1;
+                    for (int i = 0; i < this.gcTickItemBytes.Length; i++)
+                    {
+                        if (this.gcTickItemBytes[i] > best)
+                        {
+                            best = this.gcTickItemBytes[i];
+                            bestIdx = i;
+                        }
+                    }
+
+                    if (bestIdx < 0 || best < 128 * 1024)
+                    {
+                        break;
+                    }
+
+                    sb ??= new System.Text.StringBuilder("[GcDiag] tickable 5s top:");
+                    sb.Append(' ').Append(this.orderedTickables[bestIdx].GetType().Name)
+                        .Append('=').Append(best / 1024).Append("KB(max=")
+                        .Append(this.gcTickItemMax[bestIdx]).Append("B)");
+                    this.gcTickItemBytes[bestIdx] = 0;
+                    this.gcTickItemMax[bestIdx] = 0;
                 }
 
-                this.gcTickLoopWindowBytes = 0;
-                this.gcTickLoopMaxFrame = 0;
+                if (sb != null)
+                {
+                    sb.Append(" frame=").Append(Time.frameCount);
+                    AWorkerTask.LogProvider(sb.ToString(), LogManager.LogLevelEnum.Debug);
+                }
+
+                for (int i = 0; i < this.gcTickItemBytes.Length; i++)
+                {
+                    this.gcTickItemBytes[i] = 0;
+                    this.gcTickItemMax[i] = 0;
+                }
             }
 
             // 默认隐藏的面板热键在此统一分发：面板 GameObject inactive 时自身 Update 不跑，
@@ -460,10 +496,10 @@ namespace LAB2D
         private long gcAllocBytes;
         private long gcMaxFrameAllocBytes;
 
-        // ---- [GcDiag] tickable 循环段采样字段（见 Update 内注释，排查完成后整体删除）----
+        // ---- [GcDiag] tickable 逐项采样字段（见 Update 内注释，排查完成后整体删除）----
         private float gcTickLoopReportTimer;
-        private long gcTickLoopWindowBytes;
-        private long gcTickLoopMaxFrame;
+        private long[] gcTickItemBytes = new long[32];
+        private long[] gcTickItemMax = new long[32];
 
         public void ShowTip(string text)
         {
