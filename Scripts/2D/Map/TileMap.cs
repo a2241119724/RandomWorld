@@ -59,8 +59,10 @@ namespace LAB2D.Map
 
         /// <summary>
         /// 目标每维度最大 Chunk 数。总 Chunk = MaxChunksPerDim²。
+        /// 8 → 1000×1000 地图 64 个 chunk（边长 125）：碰撞 Composite 按 chunk 合成
+        /// （见 GetOrCreateChunk），chunk 越小，单格地形变化（挖山）的几何重建范围越小。
         /// </summary>
-        private const int MaxChunksPerDim = 2;
+        private const int MaxChunksPerDim = 8;
 
         /// <summary>
         /// 根据地图尺寸计算 Chunk 边长，保证总 Chunk 数不超过 MaxChunksPerDim²。
@@ -208,21 +210,16 @@ namespace LAB2D.Map
             this.chunksRoot.gameObject.hideFlags = HideFlags.DontSaveInEditor;
             this.chunksRoot.SetParent(this.transform);
             this.chunksRoot.localPosition = Vector3.zero;
-            // 必须显式设为 TileMap 同层：new GameObject 默认 Default 层，而全部地图碰撞由
-            // 挂在 chunksRoot 上的 CompositeCollider2D 提供（chunk 碰撞体 usedByComposite 被吸收）。
-            // 不改层则一切对 Tile 层的物理查询（射线/CircleCast）探不到地图 tile（山/水等），
-            // 但碰撞接触照常（Default↔角色默认允许）——症状是"物理挡得住、射线探不到"。
+            // 必须显式设为 TileMap 同层：new GameObject 默认 Default 层。chunksRoot 自身
+            // 无碰撞体（Composite 已按 chunk 下放），同层仅防御性保持一致；实际碰撞由
+            // 各 chunk GO 上的 Composite 提供（层在 GetOrCreateChunk 设置），对 Tile 层的
+            // 物理查询（射线/CircleCast）照常命中地图 tile（山/水等）。
             this.chunksRoot.gameObject.layer = this.gameObject.layer;
 
-            // CompositeCollider2D 合并所有 Chunk 碰撞体：各 Chunk 的 TilemapCollider2D
-            // 设 usedByComposite=true 后，其独立几何体被复合体"吸收"，退出时只需序列化
-            // 1 个复合体 + N 个轻量 Collider，而非 N 个完整碰撞几何体，解决退出卡死。
-            Rigidbody2D rb = this.chunksRoot.gameObject.AddComponent<Rigidbody2D>();
-            rb.bodyType = RigidbodyType2D.Static;
-            rb.hideFlags = HideFlags.DontSaveInEditor;
-            CompositeCollider2D cc = this.chunksRoot.gameObject.AddComponent<CompositeCollider2D>();
-            cc.hideFlags = HideFlags.DontSaveInEditor;
-            cc.geometryType = CompositeCollider2D.GeometryType.Polygons;
+            // chunksRoot 是纯层级节点，不再挂全局 CompositeCollider2D：全图单 Composite 下
+            // 任何一格地形变化（挖山 DigTerrain 单格 SetTile）都会触发整图几何 CleanUp+全量
+            // 重建（Composite 全量非增量），100 Worker 高频挖山成为常驻热点——2026-09-06
+            // 拆分到每个 chunk 自挂 Static rb + Composite（见 GetOrCreateChunk）。
 
             // 缓存原始 TilemapRenderer 配置，供 Chunk TilemapRenderer 复制
             TilemapRenderer originalRenderer = this.GetComponent<TilemapRenderer>();
@@ -294,8 +291,20 @@ namespace LAB2D.Map
             tm.tileAnchor = this.tilemap.tileAnchor;
             TilemapRenderer tmr = chunkGO.AddComponent<TilemapRenderer>();
             tmr.hideFlags = HideFlags.DontSaveInEditor;
-            // TilemapCollider2D 设 usedByComposite=true，几何体合并到 CompositeCollider2D，
-            // 退出时各 Chunk Collider 本身轻量，不会造成序列化卡死。
+            // 碰撞按 chunk 合成（挖山热点治理 2026-09-06）：chunk 自挂 Static rb + Composite，
+            // 本 chunk 的 TilemapCollider2D 设 usedByComposite=true 被吸收——单格地形变化
+            // （DigTerrain 挖山）只 CleanUp+重建所在 chunk 的复合几何，不再整图全量重建。
+            // 拆分后 chunk 接缝回到多边形共边拼接，幽灵碰撞理论风险由 SyncBorderToNeighbor
+            // 边界基建 + 卡死检测器兜底（贴墙滑动实测验证）。全部组件 DontSaveInEditor，
+            // 退出时随 chunk GO 自动销毁不序列化（退出卡死治理不回归）。
+            // vertexDistance 0.05：格子 1 单位下简化近共线顶点，降低合成多边形复杂度。
+            Rigidbody2D chunkRb = chunkGO.AddComponent<Rigidbody2D>();
+            chunkRb.bodyType = RigidbodyType2D.Static;
+            chunkRb.hideFlags = HideFlags.DontSaveInEditor;
+            CompositeCollider2D chunkCc = chunkGO.AddComponent<CompositeCollider2D>();
+            chunkCc.hideFlags = HideFlags.DontSaveInEditor;
+            chunkCc.geometryType = CompositeCollider2D.GeometryType.Polygons;
+            chunkCc.vertexDistance = 0.05f;
             TilemapCollider2D tc = chunkGO.AddComponent<TilemapCollider2D>();
             tc.hideFlags = HideFlags.DontSaveInEditor;
             tc.usedByComposite = true;
