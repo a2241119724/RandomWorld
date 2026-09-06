@@ -303,6 +303,13 @@ namespace LAB2D.Character.Worker
                 this.CheckSurvivalEmergency();
             }
 
+            // HeadUI 相机视野剔除（%30 错相摊帧）：相机外的头顶 Canvas 关渲染，
+            // 省掉 UGUI.Rendering.UpdateBatches 对不可见 Canvas 的每帧批次计算
+            if ((Time.frameCount + this.FramePhase) % 30 == 0)
+            {
+                this.UpdateHeadUiVisibility();
+            }
+
             // 消费延迟打断：推送分配/链式交接可能在任务 Finish / 分配循环的调用栈内写入新任务
             //（SetTask 置位标记但绝不同步切状态），现在栈已退回主循环——切 Seek 重寻路新目标。
             // 豁免：Dead（清标记，死人不再接手）；Attack/Escape（保命优先，保留标记，

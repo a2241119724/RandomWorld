@@ -274,11 +274,74 @@ namespace LAB2D.Character
             Canvas[] canvases = this.GetComponentsInChildren<Canvas>(true);
             foreach (Canvas canvas in canvases)
             {
-                if (canvas.isRootCanvas && canvas.sortingLayerName != HeadUiSortingLayer)
+                if (canvas.isRootCanvas)
                 {
-                    canvas.sortingLayerName = HeadUiSortingLayer;
-                    AWorkerTask.LogProvider($"[UIDiag] {this.name} Canvas '{canvas.name}' 排序层提升至 {HeadUiSortingLayer}", LogManager.LogLevelEnum.Debug);
+                    this.headUiRootCanvas = canvas; // 视野剔除用缓存（见 UpdateHeadUiVisibility）
+                    if (canvas.sortingLayerName != HeadUiSortingLayer)
+                    {
+                        canvas.sortingLayerName = HeadUiSortingLayer;
+                        AWorkerTask.LogProvider($"[UIDiag] {this.name} Canvas '{canvas.name}' 排序层提升至 {HeadUiSortingLayer}", LogManager.LogLevelEnum.Debug);
+                    }
                 }
+            }
+        }
+
+        /// <summary>HeadUI 根 Canvas 缓存（EnsureHeadUiSorting 顺带填充，视野剔除用）。</summary>
+        private Canvas headUiRootCanvas;
+
+        // ---- HeadUI 相机视野剔除（100 Worker 卡顿治理 2026-09-06）----
+        // UGUI.Rendering.UpdateBatches 对每个激活 Canvas 每帧做批次计算（与 dirty 无关的
+        // 固定成本）；每角色 1 个 WorldSpace HeadUI Canvas，100 Worker + 100 敌人全常激活
+        // = 每帧上百份。相机外的 HeadUI 不可见纯浪费——视锥 AABB 判定后翻转 Canvas.enabled
+        //（只关渲染不停脚本：血条过渡/独白计时等行为不变）。
+        /// <summary>剔除 AABB 半半径：覆盖 HeadUI 世界尺寸（~2）+ 边缘滞后带。</summary>
+        private const float HeadUiCullRadius = 3f;
+
+        /// <summary>视锥平面缓存（Plane[6] 预分配，每帧首个调用者更新，零 GC）。</summary>
+        private static Plane[] headUiCullPlanes = new Plane[6];
+
+        /// <summary>视锥平面已更新的帧号。</summary>
+        private static int headUiCullPlanesFrame = -1;
+
+        /// <summary>剔除用相机缓存（销毁后 Unity null 判定触发重取，覆盖场景切换）。</summary>
+        private static Camera headUiCullCamera;
+
+        /// <summary>
+        /// HeadUI 相机视野剔除——调用方按错相节流（如 %30，见块注释）。
+        /// 可见性比较读 Canvas.enabled，翻转只在进出视野时发生。
+        /// </summary>
+        protected void UpdateHeadUiVisibility()
+        {
+            Canvas canvas = this.headUiRootCanvas;
+            if (canvas == null)
+            {
+                return;
+            }
+
+            Camera camera = headUiCullCamera;
+            if (camera == null)
+            {
+                camera = headUiCullCamera = Camera.main;
+                if (camera == null)
+                {
+                    return; // 无相机（测试桩/未就绪）：不动
+                }
+            }
+
+            if (headUiCullPlanesFrame != Time.frameCount)
+            {
+                headUiCullPlanesFrame = Time.frameCount;
+                GeometryUtility.CalculateFrustumPlanes(camera, headUiCullPlanes);
+            }
+
+            // 单点 AABB（全 struct 零分配）：半径含 UI 尺寸余量作滞后带
+            Bounds bounds = new Bounds(
+                this.transform.position,
+                new Vector3(HeadUiCullRadius * 2f, HeadUiCullRadius * 2f, 1f));
+            bool visible = GeometryUtility.TestPlanesAABB(headUiCullPlanes, bounds);
+            if (canvas.enabled != visible)
+            {
+                canvas.enabled = visible;
             }
         }
 

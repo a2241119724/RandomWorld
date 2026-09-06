@@ -84,6 +84,13 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         {
             // 执行当前状态的函数
             this.Manager.CurrentState.OnUpdate();
+
+            // HeadUI 相机视野剔除（%32 错相，实例 id 低位）：相机外头顶 Canvas 关渲染，
+            // 省掉 UGUI.Rendering.UpdateBatches 对不可见 Canvas 的每帧批次计算
+            if ((Time.frameCount + (this.GetInstanceID() & 31)) % 32 == 0)
+            {
+                this.UpdateHeadUiVisibility();
+            }
         }
 
         public void FixedUpdate()
