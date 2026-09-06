@@ -254,7 +254,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         private void OnCollisionStay2D(Collision2D collision)
         {
             this.collisionBugDetector.AddColliderCount(DateTime.Now.Ticks, this.transform.position);
-            BugCheckResult bugResult = this.collisionBugDetector.CheckBug(this.name);
+            BugCheckResult bugResult = this.collisionBugDetector.CheckBug();
 
             if (bugResult == BugCheckResult.Sliding)
             {

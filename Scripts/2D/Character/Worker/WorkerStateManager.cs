@@ -15,6 +15,18 @@ namespace LAB2D.Character.Worker
         where CST : Enum
         where C : AWorker
     {
+        // ---- 状态切换路径零分配化（GC 排查 2026-09-06，仿 ASeek seekPathDiag 范本）----
+        // ChangeState 是全队高频事件点（100 Worker ~60 次/s）：enum.ToString 每次装箱/分配、
+        // 节流 key 插值（含 .name getter）与捕获局部变量的闭包即使被节流也每次分配。
+        // 枚举值有限（状态机全集），文本与 key/委托缓存后命中即零分配；委托体只在真正
+        // 打日志时求值（2s 一条，其中枚举插值的装箱可接受）。
+        private CST labelState;       // 上次写 WorkerStateText 的枚举值
+        private string labelStateText; // 对应缓存字符串
+        private string stateDiagKey;
+        private Func<string> stateDiagLog;
+        private CST stateFromDiag; // 委托读（触发时刻的来源状态）
+        private CST stateToDiag;   // 委托读
+
         public WorkerStateManager(C character)
             : base(character)
         {
@@ -34,7 +46,14 @@ namespace LAB2D.Character.Worker
             // 先执行,可以在Enter中更改,不然会被覆盖
             CST from = this.CurrentStateType;
             bool hadPriorState = this.CurrentState != null;
-            this.Character.WorkerStateText.text = this.CurrentStateType.ToString();
+            // enum.ToString 缓存：状态值有限，重复出现直接复用（见字段区注释）
+            if (!EqualityComparer<CST>.Default.Equals(this.labelState, from))
+            {
+                this.labelState = from;
+                this.labelStateText = from.ToString();
+            }
+
+            this.Character.WorkerStateText.text = this.labelStateText;
             base.ChangeState(type);
 
             // 状态切换诊断轨迹：排查同一对状态来回切换的异常振荡（任务完成→寻路→移动循环等）。
@@ -48,9 +67,14 @@ namespace LAB2D.Character.Worker
             //    会连续命中节流窗只出首条——配合 TaskDiag/SeekDiag 链路定位）。
             if (hadPriorState && !EqualityComparer<CST>.Default.Equals(from, type))
             {
+                // 零分配节流：from/to 拷字段供委托读，key/委托缓存复用（见字段区注释）
+                this.stateFromDiag = from;
+                this.stateToDiag = type;
+                this.stateDiagKey ??= $"{this.Character.name}|StateDiag";
+                this.stateDiagLog ??= () => $"[StateDiag] {this.Character.name} 状态切换 {this.stateFromDiag} -> {this.stateToDiag}";
                 AWorkerTask.LogProviderThrottled(
-                    $"{this.Character.name}|StateDiag", 2f,
-                    () => $"[StateDiag] {this.Character.name} 状态切换 {from} -> {type}",
+                    this.stateDiagKey, 2f,
+                    this.stateDiagLog,
                     LogManager.LogLevelEnum.Trace);
             }
         }

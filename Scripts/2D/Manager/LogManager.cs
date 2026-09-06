@@ -22,7 +22,7 @@ namespace LAB2D.Manager
         private readonly int maxLogCount = 300; // 每 300 条批量落盘一次。10 时每秒 ~30 次 File.AppendAllText（Open/Write/Close），
                                                 // 100 在 100 Worker 常态 ~1000 行/秒下仍 ~10 次写/秒；300 再降 3 倍（~3 次/秒）。
                                                 // 影响：game.log 最多滞后 ~1-2 秒（Flush 在退出/关停时兜底），崩溃丢日志窗口同量级。
-        private LogLevelEnum minLogLevel = LogLevelEnum.Trace; // 最小的日志级别.
+        private LogLevelEnum minLogLevel = LogLevelEnum.Debug; // 最小的日志级别.
         private bool isSave = true;
         private bool logFileAvailable = true;
         private bool errorFileAvailable = true;

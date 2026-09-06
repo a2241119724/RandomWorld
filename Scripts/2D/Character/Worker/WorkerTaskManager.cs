@@ -30,6 +30,13 @@ namespace LAB2D.Character.Worker
         private readonly List<GameGridPosition> gatherPositions;
         private readonly List<GameGridPosition> demolishPositions;
 
+        // VerifyBuildTasks 的反转索引（跨调用复用，Clear 不缩容）：把逐格 × (全队列扫描 +
+        // 100 Worker 携带检查 + 100 Worker × 房间布局逐偏移比对) 的 O(N×W) 遍历反转为
+        // 一次构建集合、逐格 O(1) 查。key 用 Vector2Int——原三层谓词只比 X/Y（Z 忽略）。
+        private readonly HashSet<Vector2Int> verifyQueuedBuildPos = new (64);
+        private readonly HashSet<Vector2Int> verifyCarryingBuildPos = new (16);
+        private readonly HashSet<Vector2Int> verifyPlannedRoomPos = new (1024);
+
         public WorkerTaskManager()
         {
             this.taskQueue = new WorkerTaskQueue<AWorkerTask>();
@@ -131,11 +138,17 @@ namespace LAB2D.Character.Worker
 
             this.lastTickFrame = currentFrame;
 
-            // 任务分配循环：每15帧执行一次（约250ms @60fps，大幅减少迭代开销）
-            if (currentFrame % 15 == 0)
-            {
-                this.RunTaskAssignmentLoop();
-            }
+            // [GcDiag] 本 Tick 内 mono 堆增量采样（定位 Profiler「WorkerTaskManager.Update
+            // ~167KB/帧」分配源用；静态走查已排除每帧路径，改由运行时指认，排查后删除）
+            long gcTickStart = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
+
+            // 任务分配循环：每帧进入、时间配额切片——每秒恒定处理 WorkersPerSecond 个 Worker
+            //（60fps = 每帧 2 个），帧率无关：低帧率自动加大每帧预算、高帧率自动减小，
+            // 全员一轮耗时稳定 ≈ count / 120 秒（100 Worker ≈ 0.83s），不随帧率波动。
+            // 原「每 15 帧一个整帧全员跑完」在 100 空闲 Worker × 多任务时形成周期尖峰，
+            // 且周期实际时长随帧率漂移（30fps 时翻倍）；时间配额两问题一并消除
+            //（100 Worker 卡顿治理 2026-09-06）。
+            this.RunTaskAssignmentLoop(deltaTime);
 
             // 悬赏过期检查：每30帧执行一次（悬赏过期窗口为数分钟，半秒延迟可忽略）
             if (currentFrame % 30 == 0)
@@ -154,23 +167,93 @@ namespace LAB2D.Character.Worker
             {
                 this.VerifyBuildTasks();
             }
+
+            // [GcDiag] Tick 内增量结算（见方法开头采样注释）：与 AWorker 同款 5s 汇总 + 单帧 max。
+            long gcTickDelta = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - gcTickStart;
+            if (gcTickDelta > 0)
+            {
+                this.gcTickWindowBytes += gcTickDelta;
+                if (gcTickDelta > this.gcTickMaxFrame)
+                {
+                    this.gcTickMaxFrame = gcTickDelta;
+                }
+            }
+
+            this.gcTickReportTimer += deltaTime;
+            if (this.gcTickReportTimer >= 5f)
+            {
+                this.gcTickReportTimer -= 5f;
+                if (this.gcTickWindowBytes > 10240)
+                {
+                    AWorkerTask.LogProvider(
+                        $"[GcDiag] TaskManager 5s窗口Tick内分配≈{this.gcTickWindowBytes / 1024}KB 单帧max={this.gcTickMaxFrame}B 队列任务数={this.taskQueue.TotalCount} frame={Time.frameCount}",
+                        LogManager.LogLevelEnum.Debug);
+                }
+
+                this.gcTickWindowBytes = 0;
+                this.gcTickMaxFrame = 0;
+            }
         }
+
+        // ---- [GcDiag] Tick 内分配采样字段（见 Tick 内注释，排查完成后整体删除）----
+        private long gcTickWindowBytes;
+        private long gcTickMaxFrame;
+        private float gcTickReportTimer;
 
         /// <summary>
         /// 任务分配主循环：遍历空闲 Worker，按优先级分配任务。
+        /// 时间配额切片：每帧累计 <see cref="WorkersPerSecond"/> × deltaTime 个配额，
+        /// 整数部分即本帧处理预算（60fps = 每帧 2 个），从 <see cref="assignmentCursor"/>
+        /// 起处理后推进游标、到尾回卷。一轮耗时 = count / WorkersPerSecond 秒，与帧率解耦；
+        /// 卡顿尖帧的超额配额被 <see cref="MaxWorkersPerFrame"/> 截断（不补偿性还债，防再现单帧尖峰）。
+        /// Worker 列表增减导致游标错位时无害（个别 Worker 最多多等一轮）。
         /// </summary>
-        private void RunTaskAssignmentLoop()
+        private void RunTaskAssignmentLoop(float deltaTime)
         {
-            // 队列空（常态）时整体退出，避免空闲 Worker 每 15 帧白跑全员循环
+            // 队列空（常态）时整体退出，避免空闲 Worker 每帧白跑全员循环
             if (this.taskQueue.TotalCount == 0)
+            {
+                this.assignmentCursor = 0;
+                this.assignmentQuota = 0f;
+                return;
+            }
+
+            // 帧率无关的时间配额：每秒吞吐恒定，帧预算随 dt 缩放（高帧率下小数累计，
+            // 会出现 0 预算帧——配额仍在累计，下一帧补足，行为正确）
+            this.assignmentQuota += WorkersPerSecond * deltaTime;
+            int budget = (int)this.assignmentQuota;
+            this.assignmentQuota -= budget;
+            if (budget <= 0)
             {
                 return;
             }
 
-            List<AWorker> workers = WorkerListProvider();
-            bool anyAssigned = false;
-            foreach (AWorker worker in workers)
+            // 卡顿尖帧（dt 异常大）截断超额预算：不把欠的债一次还清，防补偿性单帧尖峰
+            if (budget > MaxWorkersPerFrame)
             {
+                budget = MaxWorkersPerFrame;
+                this.assignmentQuota = 0f;
+            }
+
+            List<AWorker> workers = WorkerListProvider();
+            int count = workers.Count;
+            if (count == 0)
+            {
+                return;
+            }
+
+            // 列表缩短时游标可能越界，先归位（该帧不处理，下一帧从头开始）
+            if (this.assignmentCursor >= count)
+            {
+                this.assignmentCursor = 0;
+            }
+
+            int end = System.Math.Min(this.assignmentCursor + budget, count);
+
+            bool anyAssigned = false;
+            for (int i = this.assignmentCursor; i < end; i++)
+            {
+                AWorker worker = workers[i];
                 if (worker.IsDialoguePaused)
                 {
                     continue;
@@ -209,13 +292,33 @@ namespace LAB2D.Character.Worker
                 }
             }
 
-            // 队列变化事件每轮最多发布一次（原实现每分配一个任务就构建一次完整任务信息字符串并发布，
-            // 同一轮批量分配时重复构建纯浪费；EventBus 无订阅者时这些构建全部白付）
-            if (anyAssigned)
+            // 游标推进，到尾回卷
+            this.assignmentCursor = end >= count ? 0 : end;
+
+            // 队列变化事件节流：切片后分配分散到各帧，按 ≥0.25s 节流（帧率无关，对齐
+            // LogProviderThrottled 的秒计惯例）保持原「一轮最多一两次」的合并语义——事件携带的
+            // 是全量 TaskInfo 快照，少发不影响最终一致，消费者用最新即可，防止分发窗口期每帧一发。
+            if (anyAssigned && Time.time - this.lastQueueChangedEventTime >= 0.25f)
             {
+                this.lastQueueChangedEventTime = Time.time;
                 EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
             }
         }
+
+        /// <summary>分配循环吞吐（Worker 数/秒）——帧率无关的切片配额，60fps 时即每帧 2 个。</summary>
+        private const float WorkersPerSecond = 120f;
+
+        /// <summary>单帧处理预算上界——截断卡顿尖帧的超额配额（&lt;12fps 才触顶，防补偿性单帧尖峰）。</summary>
+        private const int MaxWorkersPerFrame = 10;
+
+        /// <summary>分配循环的累计待处理配额（每帧累加 WorkersPerSecond × deltaTime，整数部分为本帧预算）。</summary>
+        private float assignmentQuota;
+
+        /// <summary>分配循环的 Worker 列表游标（每帧按预算推进，到尾回卷）。</summary>
+        private int assignmentCursor;
+
+        /// <summary>队列变化事件上次发布的时间（秒计节流，见 RunTaskAssignmentLoop 尾部）。</summary>
+        private float lastQueueChangedEventTime = -1f;
 
         /// <summary>
         /// 在指定优先级中直选距离最近的可分配任务（内联替代「快照列表 + SelectTask」）。
@@ -227,7 +330,7 @@ namespace LAB2D.Character.Worker
         {
             selected = null;
             float minDistance = 0f;
-            foreach (KeyValuePair<AWorkerTask, bool> taskPair in this.taskQueue.GetTasksAtPriority(priority))
+            foreach (KeyValuePair<AWorkerTask, bool> taskPair in this.taskQueue.GetTasksAtPriorityForIteration(priority))
             {
                 if (taskPair.Value)
                 {
@@ -370,7 +473,7 @@ namespace LAB2D.Character.Worker
 
             for (int p = 0; p < this.taskQueue.PriorityCount; p++)
             {
-                foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriority(p))
+                foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriorityForIteration(p))
                 {
                     if (pair.Key is WorkerBountyTask bountyTask
                         && bountyTask.BountyInfo.IsExpired(currentGameTime)
@@ -560,6 +663,66 @@ namespace LAB2D.Character.Worker
                 return;
             }
 
+            // 反转索引（见字段区注释）：100 Worker 建房期 ~2400 未完成格 × (全队列扫描 +
+            // 100 Worker 携带检查 + 100 Worker × ~30 偏移比对) ≈ 数百万次比较，全部落在
+            // 每 300 帧一次的单帧里 = 「WorkerTaskManager.Update 每 300 帧耗时」尖峰
+            // （2026-09-06 Profiler）。改为一次构建三个集合（O(队列 + Worker + 房间格)），
+            // 逐格 O(1) 查——三层跳过语义与原嵌套遍历完全等价。
+            this.verifyQueuedBuildPos.Clear();
+            for (int p = 0; p < this.taskQueue.PriorityCount; p++)
+            {
+                foreach (var kv in this.taskQueue.GetTasksAtPriorityForIteration(p))
+                {
+                    if (kv.Key.TaskType == WorkerTaskType.Build)
+                    {
+                        this.verifyQueuedBuildPos.Add(new Vector2Int(kv.Key.TargetMap.X, kv.Key.TargetMap.Y));
+                    }
+                }
+            }
+
+            List<AWorker> workers = WorkerListProvider();
+            this.verifyCarryingBuildPos.Clear();
+            this.verifyPlannedRoomPos.Clear();
+            foreach (AWorker worker in workers)
+            {
+                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd?.Task != null && wd.Task.TaskType == WorkerTaskType.Build)
+                {
+                    this.verifyCarryingBuildPos.Add(new Vector2Int(wd.Task.TargetMap.X, wd.Task.TargetMap.Y));
+                }
+
+                // 规划房间认领条件与原 IsPartOfWorkerPlannedRoom 一致：有规划、参数已生成、未建完
+                if (wd?.PlannedHomePosition == null || wd.HomeRoomWidth == 0)
+                {
+                    continue;
+                }
+
+                var layout = LAB2D.AI.Worker.WorkerHomeLayout.GetRoomLayout(wd);
+                if (wd.HomeBuildStage >= layout.CompleteStage)
+                {
+                    continue;
+                }
+
+                Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+                for (int i = 0; i < layout.WallCount; i++)
+                {
+                    Vector3Int cell = center + layout.WallOffsets[i];
+                    this.verifyPlannedRoomPos.Add(new Vector2Int(cell.x, cell.y));
+                }
+
+                Vector3Int door = center + layout.DoorOffset;
+                this.verifyPlannedRoomPos.Add(new Vector2Int(door.x, door.y));
+                Vector3Int bed = center + layout.BedOffset;
+                this.verifyPlannedRoomPos.Add(new Vector2Int(bed.x, bed.y));
+                Vector3Int bedSecond = center + layout.BedSecondOffset;
+                this.verifyPlannedRoomPos.Add(new Vector2Int(bedSecond.x, bedSecond.y));
+                foreach (var so in layout.StorageOffsets)
+                {
+                    Vector3Int cell = center + so;
+                    this.verifyPlannedRoomPos.Add(new Vector2Int(cell.x, cell.y));
+                }
+            }
+
             foreach (var kv in buildMap.BuildMapDataLAB.PosMap)
             {
                 BuildMap.BuildTileData tileData = kv.Value;
@@ -570,20 +733,11 @@ namespace LAB2D.Character.Worker
 
                 Vector3Int pos = Vector3IntLAB.ToVector3Int(kv.Key);
 
-                // 已有运行中或闲置的建造任务 → 跳过
-                if (this.HasBuildTaskAtPosition(pos))
-                {
-                    continue;
-                }
-
-                // 已有 Worker 正在携带该位置的建造任务（Self-Build 场景）→ 跳过
-                if (this.HasWorkerCarryingBuildTaskAt(pos))
-                {
-                    continue;
-                }
-
-                // 位置属于某 Worker 的规划房间区域（预注册的 Self-Build 墙壁）→ 跳过
-                if (this.IsPartOfWorkerPlannedRoom(pos))
+                // 三层跳过：已有任务 / 已有 Worker 携带（Self-Build）/ 属规划房间 → O(1) 集合查
+                Vector2Int posXY = new Vector2Int(pos.x, pos.y);
+                if (this.verifyQueuedBuildPos.Contains(posXY)
+                    || this.verifyCarryingBuildPos.Contains(posXY)
+                    || this.verifyPlannedRoomPos.Contains(posXY))
                 {
                     continue;
                 }
@@ -599,12 +753,11 @@ namespace LAB2D.Character.Worker
                 AWorker owner = null;
                 if (!string.IsNullOrEmpty(tileData.BuilderName))
                 {
-                    List<AWorker> allWorkers = WorkerListProvider();
-                    for (int w = 0; w < allWorkers.Count; w++)
+                    for (int w = 0; w < workers.Count; w++)
                     {
-                        if (allWorkers[w].name == tileData.BuilderName)
+                        if (workers[w].name == tileData.BuilderName)
                         {
-                            owner = allWorkers[w];
+                            owner = workers[w];
                             break;
                         }
                     }
@@ -654,91 +807,6 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
-        /// 检查任务队列中是否已存在指定位置的建造任务（含运行中和闲置）。
-        /// </summary>
-        private bool HasBuildTaskAtPosition(Vector3Int pos)
-        {
-            for (int p = 0; p < this.taskQueue.PriorityCount; p++)
-            {
-                foreach (var kv in this.taskQueue.GetTasksAtPriority(p))
-                {
-                    if (kv.Key.TaskType == WorkerTaskType.Build
-                        && kv.Key.TargetMap.X == pos.x
-                        && kv.Key.TargetMap.Y == pos.y)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// 检查是否已有 Worker 正在携带指定位置的建造任务（Self-Build 场景中任务不经过全局队列）。
-        /// </summary>
-        private bool HasWorkerCarryingBuildTaskAt(Vector3Int pos)
-        {
-            List<AWorker> workers = WorkerListProvider();
-            foreach (AWorker worker in workers)
-            {
-                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
-                if (wd?.Task != null
-                    && wd.Task.TaskType == WorkerTaskType.Build
-                    && wd.Task.TargetMap.X == pos.x
-                    && wd.Task.TargetMap.Y == pos.y)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// 检查指定位置是否属于某 Worker 的规划房间区域（预注册的 Self-Build 墙壁/门/床）。
-        /// 若属于规划房间，则该位置由 Worker 自行建造，不应创建全局任务。
-        /// </summary>
-        private bool IsPartOfWorkerPlannedRoom(Vector3Int pos)
-        {
-            List<AWorker> workers = WorkerListProvider();
-
-            foreach (AWorker worker in workers)
-            {
-                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
-                if (wd?.PlannedHomePosition == null) continue;
-                // 如果房间参数尚未生成，跳过（旧数据兼容）
-                if (wd.HomeRoomWidth == 0) continue;
-
-                var layout = LAB2D.AI.Worker.WorkerHomeLayout.GetRoomLayout(wd);
-                if (wd.HomeBuildStage >= layout.CompleteStage) continue;
-
-                Vector3Int center = LAB2D.Serializable.Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
-
-                // 检查是否匹配墙壁位置
-                for (int i = 0; i < layout.WallCount; i++)
-                {
-                    if (pos == center + layout.WallOffsets[i]) return true;
-                }
-
-                // 检查是否匹配门位置
-                if (pos == center + layout.DoorOffset) return true;
-
-                // 检查是否匹配床位置（1×2 两格）
-                if (pos == center + layout.BedOffset) return true;
-                if (pos == center + layout.BedSecondOffset) return true;
-
-                // 检查是否匹配仓库位置
-                foreach (var so in layout.StorageOffsets)
-                {
-                    if (pos == center + so) return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
         /// 删除队列中所有与指定 Worker 相关的任务。
         /// Worker 死亡时调用，清理：悬赏发布、专属任务（Wear/Sleep/Exercise）、
         /// PickUp 目标所有、Carry(ToBoard) 指定执行者。
@@ -757,7 +825,7 @@ namespace LAB2D.Character.Worker
             // 尝试标准退款（Worker GameObject 可能还存活）
             for (int p = 0; p < this.taskQueue.PriorityCount; p++)
             {
-                foreach (var pair in this.taskQueue.GetTasksAtPriority(p))
+                foreach (var pair in this.taskQueue.GetTasksAtPriorityForIteration(p))
                 {
                     if (pair.Key is WorkerBountyTask bounty
                         && bounty.OwnerWorkerId == workerInstanceId
@@ -798,7 +866,7 @@ namespace LAB2D.Character.Worker
             Vector3 workerWorldPos = new Vector3(workerPos.X, workerPos.Y, 0);
             for (int p = 0; p < this.taskQueue.PriorityCount; p++)
             {
-                foreach (var pair in this.taskQueue.GetTasksAtPriority(p))
+                foreach (var pair in this.taskQueue.GetTasksAtPriorityForIteration(p))
                 {
                     if (pair.Key is WorkerBountyTask bounty
                         && bounty.BountyInfo.State == BountyState.Posted)
@@ -848,7 +916,7 @@ namespace LAB2D.Character.Worker
             List<Dictionary<AWorkerTask, bool>> result = new ();
             for (int i = 0; i < this.taskQueue.PriorityCount; i++)
             {
-                result.Add(new Dictionary<AWorkerTask, bool>(this.taskQueue.GetTasksAtPriority(i)));
+                result.Add(new Dictionary<AWorkerTask, bool>(this.taskQueue.GetTasksAtPriorityForIteration(i)));
             }
 
             return result;
@@ -873,7 +941,7 @@ namespace LAB2D.Character.Worker
             var result = new List<(WorkerBountyTask, bool)>();
             for (int p = 0; p < this.taskQueue.PriorityCount; p++)
             {
-                foreach (var kv in this.taskQueue.GetTasksAtPriority(p))
+                foreach (var kv in this.taskQueue.GetTasksAtPriorityForIteration(p))
                 {
                     if (kv.Key is WorkerBountyTask bounty)
                     {
@@ -914,7 +982,7 @@ namespace LAB2D.Character.Worker
 
             for (int i = 0; i < this.taskQueue.PriorityCount; i++)
             {
-                foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriority(i))
+                foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriorityForIteration(i))
                 {
                     if (pair.Value)
                     {
@@ -963,7 +1031,7 @@ namespace LAB2D.Character.Worker
         {
             for (int p = 0; p < this.taskQueue.PriorityCount; p++)
             {
-                foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriority(p))
+                foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriorityForIteration(p))
                 {
                     AWorkerTask existing = pair.Key;
                     if (existing.TaskType == task.TaskType &&

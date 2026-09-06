@@ -61,6 +61,23 @@ namespace LAB2D.Character.Worker.State
         /// </summary>
         private AWeaponObject cachedWeaponObject;
 
+        // ---- AimDev 日志零分配化（GC 排查 2026-09-06，仿 ASeek seekPathDiag 范本）----
+        // 偏离持续期间 OnUpdate 每帧进入：key 插值（含 .name getter，每次跨原生分配）与
+        // 捕获局部变量的闭包即使被节流也每次分配。key/委托缓存 + 偏移量拷实例字段，
+        // 命中节流时零分配；委托体只在真正打日志时求值（0.5s 一条）。
+        private string aimDevKey;
+        private System.Func<string> aimDevLog;
+        private float aimDevDeg;    // 委托读（触发时刻的攻击方向偏差角）
+        private float aimWeaponDeg; // 委托读（触发时刻的武器朝向角）
+        private float aimTargetDeg; // 委托读（触发时刻的目标方向角）
+
+        private string BuildAimDevLog()
+        {
+            Vector3 selfPos = this.Character.transform.position;
+            Vector3 targetPos = this.Character.AttackTarget.transform.position;
+            return $"[StateDiag] {this.Character.name}@({selfPos.x:F0},{selfPos.y:F0}) 攻击方向偏差 {this.aimDevDeg:0.0}° 武器={this.aimWeaponDeg:0.0}° 目标={this.Character.AttackTarget.name}@({targetPos.x:F0},{targetPos.y:F0}) 目标角={this.aimTargetDeg:0.0}°";
+        }
+
         public WorkerAttackState(AWorker worker)
             : base(worker)
         {
@@ -189,16 +206,15 @@ namespace LAB2D.Character.Worker.State
                     float dev = Mathf.Abs(Mathf.DeltaAngle(aimAngle, targetAngle));
                     if (dev > 20f)
                     {
-                        // 惰性求值：OnUpdate 每帧进入（持续偏离期间每帧都触发），被节流时
-                        // 不再每帧付取位置 + 插值串分配
+                        // 零分配节流：偏移量拷字段供委托读，key/委托缓存复用（见字段区注释）
+                        this.aimDevDeg = dev;
+                        this.aimWeaponDeg = aimAngle;
+                        this.aimTargetDeg = targetAngle;
+                        this.aimDevKey ??= $"{this.Character.name}|AimDev";
+                        this.aimDevLog ??= this.BuildAimDevLog;
                         AWorkerTask.LogProviderThrottled(
-                            $"{this.Character.name}|AimDev", 0.5f,
-                            () =>
-                            {
-                                Vector3 selfPos = this.Character.transform.position;
-                                Vector3 targetPos = this.Character.AttackTarget.transform.position;
-                                return $"[StateDiag] {this.Character.name}@({selfPos.x:F0},{selfPos.y:F0}) 攻击方向偏差 {dev:0.0}° 武器={aimAngle:0.0}° 目标={this.Character.AttackTarget.name}@({targetPos.x:F0},{targetPos.y:F0}) 目标角={targetAngle:0.0}°";
-                            },
+                            this.aimDevKey, 0.5f,
+                            this.aimDevLog,
                             LogManager.LogLevelEnum.Debug);
                     }
                 }

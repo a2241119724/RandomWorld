@@ -283,6 +283,10 @@ namespace LAB2D.Character.Worker
                 this.transform.rotation = Quaternion.identity;
             }
 
+            // [GcDiag] 本 Update 内 mono 堆增量采样（定位 Profiler「AWorker.Update ~129KB/帧」
+            // 分配源用；静态走查已排除全部显式路径，改由运行时指认，排查后删除）
+            long gcUpdateStart = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
+
             if (this.IsDialoguePaused)
             {
                 this.UpdateDialoguePauseText();
@@ -369,7 +373,41 @@ namespace LAB2D.Character.Worker
                     this.TryConsumeHealthPotion();
                 }
             }
+
+            // [GcDiag] Update 内增量结算（见方法开头采样注释）：5s 窗口汇总 + 单帧 max（带
+            // 当时状态）。若每 Worker 每帧有 ~1KB 级匀速分配，5s 累计必超阈值被抓到。
+            long gcUpdateDelta = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - gcUpdateStart;
+            if (gcUpdateDelta > 0)
+            {
+                this.gcUpdateWindowBytes += gcUpdateDelta;
+                if (gcUpdateDelta > this.gcUpdateMaxFrame)
+                {
+                    this.gcUpdateMaxFrame = gcUpdateDelta;
+                    this.gcUpdateMaxState = stateBefore;
+                }
+            }
+
+            this.gcUpdateReportTimer += Time.deltaTime;
+            if (this.gcUpdateReportTimer >= 5f)
+            {
+                this.gcUpdateReportTimer -= 5f;
+                if (this.gcUpdateWindowBytes > 10240)
+                {
+                    AWorkerTask.LogProvider(
+                        $"[GcDiag] {this.name} 5s窗口Update内分配≈{this.gcUpdateWindowBytes / 1024}KB 单帧max={this.gcUpdateMaxFrame}B(max时状态={this.gcUpdateMaxState}) frame={Time.frameCount}",
+                        LogManager.LogLevelEnum.Debug);
+                }
+
+                this.gcUpdateWindowBytes = 0;
+                this.gcUpdateMaxFrame = 0;
+            }
         }
+
+        // ---- [GcDiag] Update 内分配采样字段（见 Update 内注释，排查完成后整体删除）----
+        private long gcUpdateWindowBytes;
+        private long gcUpdateMaxFrame;
+        private float gcUpdateReportTimer;
+        private AWorkerState.TypeEnum gcUpdateMaxState;
 
         public void FixedUpdate()
         {

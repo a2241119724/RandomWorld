@@ -91,14 +91,13 @@ namespace LAB2D
         /// <summary>
         /// 检测碰撞 Bug 状态。
         /// </summary>
-        /// <param name="name">角色名称（调试用，当前未输出日志）。</param>
         /// <param name="threshold">碰撞阈值，默认 30 次。</param>
         /// <returns>
         /// Stuck — 碰撞多 + 位移不足，真卡死；
         /// Sliding — 碰撞多 + 位移足够（贴墙滑动），或碰撞持续时间过长，建议重新寻路；
         /// None — 未触发。
         /// </returns>
-        public BugCheckResult CheckBug(string name, int threshold = DefaultThreshold)
+        public BugCheckResult CheckBug(int threshold = DefaultThreshold)
         {
             if (this.ColliderCount > threshold)
             {
@@ -132,12 +131,11 @@ namespace LAB2D
         /// 是否有碰撞 Bug（连续碰撞次数超过阈值 AND 累计位移不足）。
         /// 保留此方法以兼容旧调用方。
         /// </summary>
-        /// <param name="name">角色名称。</param>
         /// <param name="threshold">碰撞阈值，默认 30 次。</param>
         /// <returns>是否超过阈值且位移不足（真卡死）。</returns>
-        public bool IsBug(string name, int threshold = DefaultThreshold)
+        public bool IsBug(int threshold = DefaultThreshold)
         {
-            return this.CheckBug(name, threshold) == BugCheckResult.Stuck;
+            return this.CheckBug(threshold) == BugCheckResult.Stuck;
         }
     }
 }

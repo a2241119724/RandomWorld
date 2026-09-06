@@ -353,9 +353,39 @@ namespace LAB2D
         public void Update()
         {
             float dt = Time.deltaTime;
+
+            // [GcDiag] tickable 循环段 mono 堆增量采样（定位 Profiler「GlobalInit.Update
+            // ~50KB/帧」分配源用——循环内 18 个 ITickable 某个在分配，排查后删除）
+            long gcTickLoopStart = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
+
             foreach (ITickable tickable in this.orderedTickables)
             {
                 tickable.Tick(dt);
+            }
+
+            long gcTickLoopDelta = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - gcTickLoopStart;
+            if (gcTickLoopDelta > 0)
+            {
+                this.gcTickLoopWindowBytes += gcTickLoopDelta;
+                if (gcTickLoopDelta > this.gcTickLoopMaxFrame)
+                {
+                    this.gcTickLoopMaxFrame = gcTickLoopDelta;
+                }
+            }
+
+            this.gcTickLoopReportTimer += dt;
+            if (this.gcTickLoopReportTimer >= 5f)
+            {
+                this.gcTickLoopReportTimer -= 5f;
+                if (this.gcTickLoopWindowBytes > 10240)
+                {
+                    AWorkerTask.LogProvider(
+                        $"[GcDiag] tickable循环 5s窗口分配≈{this.gcTickLoopWindowBytes / 1024}KB 单帧max={this.gcTickLoopMaxFrame}B frame={Time.frameCount}",
+                        LogManager.LogLevelEnum.Debug);
+                }
+
+                this.gcTickLoopWindowBytes = 0;
+                this.gcTickLoopMaxFrame = 0;
             }
 
             // 默认隐藏的面板热键在此统一分发：面板 GameObject inactive 时自身 Update 不跑，
@@ -369,7 +399,71 @@ namespace LAB2D
             {
                 TechPanel.ToggleHotkey();
             }
+
+            // ---- GC 监控诊断（[GcDiag]，排查「GC 频繁」用，定位后删除）----
+            // Unity 的 GC 是 Boehm（无分代，GC.CollectionCount 恒 0 无意义），改用 mono 堆
+            // 字节差：每帧采样 GetMonoUsedSizeLong（icall 廉价）——下降沿计一次回收，正增量
+            // 累计为窗口分配；单帧正增量 > FrameAllocAlarmBytes 时打一条 Debug 报警（带
+            // frameCount，把分配尖峰帧与 game.log 其他事件按时间对齐；匀速分配不触发防刷屏）。
+            // 每 5s 汇总一条 Debug 级日志（只进 game.log）。
+            long gcMonoBytes = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
+            if (this.gcLastMonoBytes > 0)
+            {
+                long gcDelta = gcMonoBytes - this.gcLastMonoBytes;
+                if (gcDelta < 0)
+                {
+                    this.gcDropCount++; // 堆下降沿 ≈ 一次 GC 回收
+                }
+                else
+                {
+                    this.gcAllocBytes += gcDelta;
+                    if (gcDelta > this.gcMaxFrameAllocBytes)
+                    {
+                        // 窗口最大单帧：量化「匀速分配源」——240KB/帧匀速流不触发尖峰报警，
+                        // 但会把 max 顶到 ~240KB，avg vs max 的形状直接区分匀速/尖峰源
+                        this.gcMaxFrameAllocBytes = gcDelta;
+                    }
+
+                    if (gcDelta > FrameAllocAlarmBytes)
+                    {
+                        AWorkerTask.LogProvider(
+                            $"[GcDiag] 单帧大分配 {gcDelta / 1024}KB frame={Time.frameCount}",
+                            LogManager.LogLevelEnum.Debug);
+                    }
+                }
+            }
+
+            this.gcLastMonoBytes = gcMonoBytes;
+
+            this.gcReportTimer += dt;
+            if (this.gcReportTimer >= 5f)
+            {
+                this.gcReportTimer -= 5f;
+                AWorkerTask.LogProvider(
+                    $"[GcDiag] 5s窗口: 回收≈{this.gcDropCount}次 分配≈{this.gcAllocBytes / 1024}KB "
+                    + $"单帧max≈{this.gcMaxFrameAllocBytes / 1024}KB "
+                    + $"当前堆≈{UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() / 1024}KB frame={Time.frameCount}",
+                    LogManager.LogLevelEnum.Debug);
+                this.gcDropCount = 0;
+                this.gcAllocBytes = 0;
+                this.gcMaxFrameAllocBytes = 0;
+            }
         }
+
+        // ---- GC 监控诊断字段（见 Update 内注释，排查完成后整体删除）----
+        /// <summary>单帧大分配报警阈值（512KB）：高于它的帧打 [GcDiag] 便于按 frameCount 对齐定位。</summary>
+        private const long FrameAllocAlarmBytes = 512L * 1024;
+
+        private float gcReportTimer;
+        private long gcLastMonoBytes;
+        private int gcDropCount;
+        private long gcAllocBytes;
+        private long gcMaxFrameAllocBytes;
+
+        // ---- [GcDiag] tickable 循环段采样字段（见 Update 内注释，排查完成后整体删除）----
+        private float gcTickLoopReportTimer;
+        private long gcTickLoopWindowBytes;
+        private long gcTickLoopMaxFrame;
 
         public void ShowTip(string text)
         {

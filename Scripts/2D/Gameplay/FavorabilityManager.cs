@@ -195,8 +195,10 @@ namespace LAB2D.Gameplay
 
         // ---- 修改 ----
 
-        /// <summary>修改 from 对 toId 的好感。delta 可为负。联动 Mood，发布变化事件。</summary>
-        public void ModifyFavorability(AWorker from, int toId, float delta, string reason)
+        /// <summary>修改 from 对 toId 的好感。delta 可为负。联动 Mood，发布变化事件。
+        /// log=false 供高频路径（接近/共事每 3s 可达数百次）跳过日志构造——好感归因价值
+        /// 全在低频事件（对话/救危/悬赏），接近刷屏属正常事件静默（bug-fixes.md 2026-09-06）。</summary>
+        public void ModifyFavorability(AWorker from, int toId, float delta, string reason, bool log = true)
         {
             if (from == null || delta == 0f) return;
             int fromId = from.GetInstanceID();
@@ -218,9 +220,12 @@ namespace LAB2D.Gameplay
 
             this.OnFavorabilityChanged?.Invoke(from, toId, delta);
             this.ApplyMoodDelta(from, delta);
-            AWorkerTask.LogProvider(
-                $"[Favor] {from.name} → {(toId == PlayerId ? "玩家" : $"Worker[{toId}]")} 好感 {newValue:F0} ({reason}, {delta:+#.##;-#.##;0})",
-                LogManager.LogLevelEnum.Debug);
+            if (log)
+            {
+                AWorkerTask.LogProvider(
+                    $"[Favor] {from.name} → {(toId == PlayerId ? "玩家" : $"Worker[{toId}]")} 好感 {newValue:F0} ({reason}, {delta:+#.##;-#.##;0})",
+                    LogManager.LogLevelEnum.Debug);
+            }
         }
 
         /// <summary>修改 from 对 Player 的好感。</summary>
@@ -384,9 +389,15 @@ namespace LAB2D.Gameplay
             this.ScanProximity();
         }
 
+        /// <summary>ScanProximity 的邻近候选复用缓冲（单线程 ITickable，无重入）。</summary>
+        private readonly List<AWorker> proximityScanBuffer = new List<AWorker>();
+
         /// <summary>
         /// 节流扫描：距离 &lt; 半径的 Worker 对互相缓慢累积好感；与 Player 相邻的 Worker 也累积。
         /// 每对累计上限 ProximityMaxPerPair，防自动刷满。
+        /// 邻近候选走 WorkerManager 空间网格（O(邻近数)，替代 O(N²) 全对扫描——
+        /// 100 Worker 聚集时原版每轮 4950 对距离检查，2026-09-06 GC 排查改网格）；
+        /// 命中对的 [Favor] 日志由 AddProximityGain 传 log:false 砍除（正常事件静默）。
         /// </summary>
         private void ScanProximity()
         {
@@ -400,11 +411,14 @@ namespace LAB2D.Gameplay
             float radiusSq = FavorabilityConstant.ProximityRadiusMapTiles * FavorabilityConstant.ProximityRadiusMapTiles;
             Player player = Core.ServiceLocator.Get<PlayerManager>()?.Mine;
 
+            wm.EnsureWorkerGridRebuilt();
+
             for (int i = 0; i < n; i++)
             {
                 AWorker a = workers[i];
                 if (a == null) continue;
                 Vector3 pa = a.transform.position;
+                int aId = a.GetInstanceID();
 
                 if (player != null)
                 {
@@ -414,15 +428,20 @@ namespace LAB2D.Gameplay
                     }
                 }
 
-                for (int j = i + 1; j < n; j++)
+                this.proximityScanBuffer.Clear();
+                wm.WorkerGrid.QueryRange(
+                    new GameVector2(pa.x, pa.y),
+                    FavorabilityConstant.ProximityRadiusMapTiles,
+                    this.proximityScanBuffer,
+                    w => w != null);
+
+                foreach (AWorker b in this.proximityScanBuffer)
                 {
-                    AWorker b = workers[j];
-                    if (b == null) continue;
+                    // instanceID 去重替代原 j>i：双方各自查询都会命中对方，只按 id 小→大方向处理一次
+                    if (b == null || b.GetInstanceID() <= aId) continue;
                     if ((pa - b.transform.position).sqrMagnitude <= radiusSq)
                     {
-                        int aId = a.GetInstanceID();
-                        int bId = b.GetInstanceID();
-                        this.AddProximityGain(a, bId, FavorabilityConstant.ProximityPerTick);
+                        this.AddProximityGain(a, b.GetInstanceID(), FavorabilityConstant.ProximityPerTick);
                         this.AddProximityGain(b, aId, FavorabilityConstant.ProximityPerTick);
                     }
                 }
@@ -437,7 +456,7 @@ namespace LAB2D.Gameplay
 
             float next = Mathf.Min(acc + perTick, FavorabilityConstant.ProximityMaxPerPair);
             this.proximityGains[key] = next;
-            this.ModifyFavorability(from, toId, next - acc, "接近/共事");
+            this.ModifyFavorability(from, toId, next - acc, "接近/共事", log: false);
         }
 
         // ---- 存档 ----

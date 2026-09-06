@@ -31,6 +31,19 @@ namespace LAB2D.Core.Seek
         private static readonly Queue<ASeek> SearchQueue = new (64);
         private static readonly object SearchQueueLock = new ();
         private static int activeSearchWorkers;
+
+        // 常驻搜索线程的唤醒信号：任务入队 Release、线程阻塞 Wait——替代原「队列空线程退出、
+        // 下次请求 new Thread」的按需建线程。100 Worker 场景寻路 ~70 次/s 而单次消费只需
+        // 毫秒级，队列几乎总是空：原模型退化为每次寻路创建+销毁一个线程（~70 Thread/s 的
+        // 内核对象/线程栈 churn，每次 ~100-300μs），且 new Thread 发生在 FlushPendingEnqueues
+        // 调用链内 = 主线程 dispatcher.Update 的 Invoke 行——是该行 Profiler 耗时热点的
+        // 主要构成（2026-09-06）。常驻后线程阻塞在 Wait 不占 CPU，只在停机/静态重置时退役。
+        private static readonly SemaphoreSlim SearchSignal = new (0, int.MaxValue);
+
+        // 搜索线程世代：常驻线程不因队列空退出，由世代变化显式退役——Shutdown 停机、
+        // ResetStaticState（编辑器关闭 Domain Reload 的静态重置）递增世代并唤醒全部线程；
+        // 旧线程处理完手头寻路后回到 Wait，醒来发现世代已变即退出，不泄漏进下一次 Play。
+        private static int searchWorkersGeneration;
         private static Material sharedLineMaterial;
         private static bool quitHookRegistered;
 
@@ -192,11 +205,8 @@ namespace LAB2D.Core.Seek
             s_mainThreadDispatcher = null;
             sharedLineMaterial = null;
 
-            lock (SearchQueueLock)
-            {
-                SearchQueue.Clear();
-                activeSearchWorkers = 0;
-            }
+            // 常驻搜索线程靠世代退役（见 StopSearchWorkers/搜索线程世代字段注释）
+            StopSearchWorkers();
 
             PendingEnqueue.Clear();
             flushScheduled = false;
@@ -322,6 +332,23 @@ namespace LAB2D.Core.Seek
         }
 
         /// <summary>
+        /// 停止全部搜索线程：世代递增让常驻线程退出（Wait 醒来后判世代），并补发信号唤醒
+        /// 阻塞中的线程（数量取上限 8 而非动态值——停机路径读 WorkerCountProvider 可能已不可靠，
+        /// 多发无害：残留信号由新世代线程以空转 continue 消化）。
+        /// </summary>
+        private static void StopSearchWorkers()
+        {
+            lock (SearchQueueLock)
+            {
+                searchWorkersGeneration++;
+                SearchQueue.Clear();
+                activeSearchWorkers = 0;
+            }
+
+            SearchSignal.Release(8);
+        }
+
+        /// <summary>
         /// 应用退出时调用，停止所有后台寻路线程并清空队列。
         /// 防止 ThreadPool 线程在 Unity 销毁 GameObject 后仍访问静态状态导致卡死。
         /// 幂等：多次调用安全。
@@ -335,11 +362,7 @@ namespace LAB2D.Core.Seek
 
             isShuttingDown = true;
 
-            lock (SearchQueueLock)
-            {
-                SearchQueue.Clear();
-                activeSearchWorkers = 0;
-            }
+            StopSearchWorkers();
 
             PendingEnqueue.Clear();
             flushScheduled = false;
@@ -461,10 +484,12 @@ namespace LAB2D.Core.Seek
         private void CompleteMovement()
         {
             // 到达终点高频（随漫游），Trace + 节流 2s/条（见 bug-fixes.md 2026-08-15）。
+            // key/委托缓存复用（委托体只读实例字段，仿 seekPathDiag 范本），命中节流时零分配。
+            this.seekArriveKey ??= $"{this.Character.name}|SeekArrive";
+            this.seekArriveDiag ??= () => $"[SeekDiag] {this.Character.name} 到达终点 target=({this.TargetMap.x},{this.TargetMap.y})";
             AWorkerTask.LogProviderThrottled(
-                $"{this.Character.name}|SeekArrive", 2f,
-                // 惰性求值：到达终点高频（随漫游），被节流时不构造插值串
-                () => $"[SeekDiag] {this.Character.name} 到达终点 target=({this.TargetMap.x},{this.TargetMap.y})",
+                this.seekArriveKey, 2f,
+                this.seekArriveDiag,
                 LogManager.LogLevelEnum.Trace);
             this.StopMove(); // 内部 RestartWindow（保留计数）
             this.stuckDetector.Reset(); // 真正到达 → 清空计数
@@ -495,6 +520,12 @@ namespace LAB2D.Core.Seek
         private Func<string> seekPathDiag;
         private Func<string> wallSlideDiag;
         private Func<string> wallHeadOnDiag;
+        private string seekArriveKey;   // 到达终点节流 key（CompleteMovement，随漫游高频）
+        private Func<string> seekArriveDiag;
+        private string unreachableDiagKey;        // 寻路不可达节流 key（TrySetResult 后台线程路径）
+        private Action unreachableDiagAction;     // 主线程日志 action 缓存（实例方法组转换不自动缓存）
+        private Func<string> seekUnreachableDiag; // 不可达消息体缓存
+        private Vector3Int unreachableDiagTarget; // 最近一次不可达结果的目标（主线程日志读取）
 
         /// <summary>
         /// 根据已发布的路径移动。路径使用游标推进，避免 RemoveAt(0) 搬移元素。
@@ -830,6 +861,25 @@ namespace LAB2D.Core.Seek
             return this.isStopThread || generation != this.seekGeneration || isShuttingDown;
         }
 
+        /// <summary>
+        /// 寻路不可达日志的主线程侧（经 dispatcher 队列执行）——节流 key/消息委托缓存，
+        /// TrySetResult 后台线程入队零分配（见该方法内注释）。
+        /// </summary>
+        private void LogUnreachableOnMainThread()
+        {
+            this.unreachableDiagKey ??= $"{(this.Character != null ? this.Character.name : "?")}|SeekUnreachable";
+            this.seekUnreachableDiag ??= () =>
+            {
+                LAB2D.Character.Character c = this.Character;
+                Vector3Int t = this.unreachableDiagTarget;
+                return $"[SeekDiag] {(c != null ? c.name : "?")} 寻路不可达 target=({t.x},{t.y})";
+            };
+            AWorkerTask.LogProviderThrottled(
+                this.unreachableDiagKey, 2f,
+                this.seekUnreachableDiag,
+                LogManager.LogLevelEnum.Debug);
+        }
+
         protected bool TrySetResult(SeekResult result, int generation)
         {
             Vector3Int targetMap;
@@ -847,16 +897,18 @@ namespace LAB2D.Core.Seek
 
             // 寻路结果落地。TrySetResult 由后台工作线程调用，LogProvider 不可在线程池内直接调用，
             // 故"不可达"结果通过 s_mainThreadDispatcher 回主线程后记录（卡墙/困住排查关键事件）。
+            // key/委托/参数三元缓存（仿 seekArriveDiag 范本）：原版每次不可达都构造 key 插值串
+            // （含 .name getter）+ 双层闭包 + EnqueueAsync 的 TCS——卡墙重试期间该结果反复到达，
+            // 即使日志被节流，入队侧的分配照付。缓存后 this-only 委托复用，入队零分配。
+            // 字段写发生在后台线程、读在主线程 action 执行时——竞态只影响日志打新旧目标值，可接受。
             if (!result.IsReachable && !isShuttingDown && s_mainThreadDispatcher != null)
             {
-                LAB2D.Character.Character character = this.Character;
+                this.unreachableDiagTarget = targetMap;
+                // 实例方法组转换每次 new 委托（编译器只缓存静态方法组），缓存到字段复用；
+                // 后台线程并发 ??= 的竞态至多构造两个指向同一方法的委托，无害。
+                this.unreachableDiagAction ??= this.LogUnreachableOnMainThread;
                 // 关键事件：保持 Debug，节流 2s/条防连续失败刷屏（见 bug-fixes.md 2026-08-15）。
-                s_mainThreadDispatcher.EnqueueAsync(() =>
-                    AWorkerTask.LogProviderThrottled(
-                        $"{(character != null ? character.name : "?")}|SeekUnreachable", 2f,
-                        // 惰性求值：卡墙重试期间该结果反复到达，被节流时不构造插值串
-                        () => $"[SeekDiag] {(character != null ? character.name : "?")} 寻路不可达 target=({targetMap.x},{targetMap.y})",
-                        LogManager.LogLevelEnum.Debug));
+                s_mainThreadDispatcher.Enqueue(this.unreachableDiagAction);
             }
 
             return true;
@@ -1016,6 +1068,7 @@ namespace LAB2D.Core.Seek
             }
 
             bool startWorker = false;
+            int generation = 0;
             lock (SearchQueueLock)
             {
                 if (isShuttingDown)
@@ -1027,13 +1080,17 @@ namespace LAB2D.Core.Seek
                 if (activeSearchWorkers < MaxConcurrentSearches)
                 {
                     activeSearchWorkers++;
+                    generation = searchWorkersGeneration;
                     startWorker = true;
                 }
             }
 
+            // 唤醒一个常驻线程消费（信号:任务 1:1；锁外 Release 减少锁持有时间）
+            SearchSignal.Release();
+
             if (startWorker)
             {
-                StartSearchWorker();
+                StartSearchWorker(generation);
             }
         }
 
@@ -1041,10 +1098,12 @@ namespace LAB2D.Core.Seek
         /// 用专用后台线程跑搜索 worker，不用 ThreadPool：单次搜索可达数十毫秒（长任务会刺激
         /// 线程池注入更多线程），且 Photon 心跳等共用线程池，互相干扰。
         /// 线程数量仍由 activeSearchWorkers 上限（MaxConcurrentSearches）严格约束。
+        /// 线程常驻：阻塞在 SearchSignal.Wait 等任务，不因队列空退出（见 SearchSignal 注释），
+        /// 只在停机/世代变化/动态上限缩容时退役。
         /// </summary>
-        private static void StartSearchWorker()
+        private static void StartSearchWorker(int generation)
         {
-            var thread = new Thread(RunSearchQueue)
+            var thread = new Thread(() => RunSearchQueue(generation))
             {
                 IsBackground = true,
                 Name = "ASeekSearchWorker",
@@ -1052,18 +1111,33 @@ namespace LAB2D.Core.Seek
             thread.Start();
         }
 
-        private static void RunSearchQueue(object _)
+        private static void RunSearchQueue(int generation)
         {
             try
             {
-                while (!isShuttingDown)
+                while (true)
                 {
+                    SearchSignal.Wait();
+                    if (isShuttingDown || generation != searchWorkersGeneration)
+                    {
+                        return;
+                    }
+
                     ASeek seek;
                     lock (SearchQueueLock)
                     {
+                        // 动态上限下调（Worker 数减少）时多余线程优雅缩容退役；
+                        // 归还消费的信号（未取任务），避免该任务无人唤醒滞留队列
+                        if (activeSearchWorkers > MaxConcurrentSearches)
+                        {
+                            SearchSignal.Release();
+                            return;
+                        }
+
                         if (SearchQueue.Count == 0)
                         {
-                            return;
+                            // 停机唤醒/信号残留的虚假唤醒：任务已被其他线程抢先取走
+                            continue;
                         }
 
                         seek = SearchQueue.Dequeue();
@@ -1105,7 +1179,8 @@ namespace LAB2D.Core.Seek
             // 关闭时不尝试回调主线程
             if (!isShuttingDown && s_mainThreadDispatcher != null)
             {
-                s_mainThreadDispatcher.EnqueueAsync(() =>
+                // fire-and-forget 日志走 Enqueue（无人 await Task，EnqueueAsync 的 TCS 纯属浪费）
+                s_mainThreadDispatcher.Enqueue(() =>
                     AWorkerTask.LogProvider(
                         this.Character.name + ":寻路调度异常 " + exception,
                         LogManager.LogLevelEnum.Error));
@@ -1140,7 +1215,8 @@ namespace LAB2D.Core.Seek
                         this.TrySetResult(new SeekResult { IsReachable = false }, generation);
                         if (!isShuttingDown && s_mainThreadDispatcher != null)
                         {
-                            s_mainThreadDispatcher.EnqueueAsync(() =>
+                            // fire-and-forget 日志走 Enqueue（无人 await Task，EnqueueAsync 的 TCS 纯属浪费）
+                            s_mainThreadDispatcher.Enqueue(() =>
                                 AWorkerTask.LogProvider(
                                     this.Character.name + ":寻路异常 " + exception,
                                     LogManager.LogLevelEnum.Error));
@@ -1155,7 +1231,8 @@ namespace LAB2D.Core.Seek
                     {
                         if (!isShuttingDown && s_mainThreadDispatcher != null)
                         {
-                            s_mainThreadDispatcher.EnqueueAsync(() =>
+                            // fire-and-forget 走 Enqueue（无人 await Task，EnqueueAsync 的 TCS 纯属浪费）
+                            s_mainThreadDispatcher.Enqueue(() =>
                             {
                                 if (generation == this.seekGeneration)
                                 {

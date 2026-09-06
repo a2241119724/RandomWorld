@@ -18,10 +18,16 @@ namespace LAB2D.Core.Seek
         private static int maxIterations;
         private static volatile bool initialized;
 
+        /// <summary>历史创建总数（含租出在飞，不含换图丢弃）——补货只看它，不看池内瞬时数。
+        /// 1000×1000 地图单个工作区 ~20MB（LOH），原实现按 Pool.Count 补货，把「租出中」误判为
+        /// 「缺货」：并发搜索在飞时 Count &lt; capacity 即触发主线程 Seek() 调用栈里的 20MB×k
+        /// 补货尖峰，且池随 Return 无上限膨胀（GC 排查实锤，bug-fixes.md 2026-09-06）。</summary>
+        private static int createdCount;
+
         public static void Initialize(int newWidth, int newHeight, int newMaxIterations, int poolCapacity)
         {
             poolCapacity = Math.Max(WorkspaceCount, poolCapacity);
-            if (initialized && width == newWidth && height == newHeight && maxIterations == newMaxIterations && Pool.Count >= poolCapacity)
+            if (initialized && width == newWidth && height == newHeight && maxIterations == newMaxIterations && System.Threading.Volatile.Read(ref createdCount) >= poolCapacity)
             {
                 return;
             }
@@ -30,17 +36,20 @@ namespace LAB2D.Core.Seek
             {
                 if (initialized && width == newWidth && height == newHeight && maxIterations == newMaxIterations)
                 {
-                    // 尺寸未变：只按需补充到并发上限（上限随 Worker 数增长），不缩减已有工作区，
-                    // 避免首波超出预建数量的 Rent 各自 new ~20MB 大数组造成 GC 尖峰。
-                    while (Pool.Count < poolCapacity)
+                    // 尺寸未变：只补「历史创建总数」到并发上限（租出中属健康状态，不是缺货），
+                    // 不缩减已有工作区。createdCount 含在飞数，并发满载时此循环不再触发——
+                    // 池稳定在 capacity + 峰值并发个，不再周期性 new 20MB 大数组。
+                    while (createdCount < poolCapacity)
                     {
                         Pool.Push(new PathfindingWorkspace(width, height, maxIterations));
+                        createdCount++;
                     }
 
                     return;
                 }
 
                 Pool.Clear();
+                createdCount = 0;
 
                 initialized = false;
                 width = newWidth;
@@ -50,6 +59,7 @@ namespace LAB2D.Core.Seek
                 for (int i = 0; i < poolCapacity; i++)
                 {
                     Pool.Push(new PathfindingWorkspace(width, height, maxIterations));
+                    createdCount++;
                 }
 
                 initialized = true;
@@ -64,6 +74,10 @@ namespace LAB2D.Core.Seek
                 {
                     return Pool.Pop();
                 }
+
+                // 兜底 new 也计入 createdCount（锁内，与 Initialize 补货互斥，不重不漏）：
+                // 它回归池后同样受「历史总数」口径管理，防止 Initialize 再把它当成缺口补一份。
+                createdCount++;
             }
 
             // 并发上限内已由 Initialize 预建（ASeek.MaxConcurrentSearches），超出上限才进入这里。
