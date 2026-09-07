@@ -511,6 +511,47 @@ namespace LAB2D.Character.Worker
         }
 
         /// <summary>
+        /// 清理指定阵营所有「未被接取」的阵营任务（FactionManager 日更生成前调用，
+        /// 防旧任务堆积）。未接取任务的 GatherMap 认领由任务自身释放；
+        /// 已接取（运行中）的任务不动 — 执行者的正常完成/放弃路径自行收尾。
+        /// </summary>
+        /// <param name="factionId">阵营 ID。</param>
+        public void RemoveFactionQuestTasks(int factionId)
+        {
+            if (this.taskQueue.TotalCount == 0)
+            {
+                return;
+            }
+
+            List<AWorkerTask> staleTasks = null;
+            for (int p = 0; p < this.taskQueue.PriorityCount; p++)
+            {
+                foreach (KeyValuePair<AWorkerTask, bool> pair in this.taskQueue.GetTasksAtPriorityForIteration(p))
+                {
+                    if (pair.Key is WorkerFactionQuestTask quest
+                        && quest.QuestFactionId == factionId
+                        && !pair.Value) // 只清未被接取的
+                    {
+                        (staleTasks ?? (staleTasks = new List<AWorkerTask>())).Add(pair.Key);
+                    }
+                }
+            }
+
+            if (staleTasks == null)
+            {
+                return;
+            }
+
+            foreach (AWorkerTask task in staleTasks)
+            {
+                ((WorkerFactionQuestTask)task).ReleaseUnclaimed();
+                this.taskQueue.Remove(task);
+            }
+
+            EventBusPublishProvider(new WorkerTaskQueueChangedEvent { TaskInfo = this.GetTaskInfo() });
+        }
+
+        /// <summary>
         /// 添加任务（Domain 类型）。
         /// </summary>
         /// <param name="task">任务</param>

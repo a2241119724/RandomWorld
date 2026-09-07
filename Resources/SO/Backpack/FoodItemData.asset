@@ -18,5 +18,7 @@ MonoBehaviour:
     CnName: "\u82F9\u679C"
     Name: Apple
     Info: "\u4E00\u4E2A\u53EF\u4EE5\u63D0\u9AD8\u9971\u8179\u5EA6\u7684\u6C34\u679C"
+    SellPrice: 4
+    BuyPrice: 6
     IsStackable: 1
     Type: 0

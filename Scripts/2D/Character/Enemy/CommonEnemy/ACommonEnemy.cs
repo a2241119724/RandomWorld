@@ -49,6 +49,13 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         public RaycastHit2D LastProbeHit { get; private set; }
 
         /// <summary>
+        /// 目标锁定截止时刻（Time.time 轴）：被打锁定最近攻击者后 <see cref="AEnemy.ChangeTarget"/>
+        /// 秒内被其他目标打不换目标——新攻击者需持续攻击到锁定到期才能抢走目标
+        ///（2026-09-07 用户要求；锁定中被当前目标再打会刷新，语义同 Worker.OnHit）。
+        /// </summary>
+        private float targetFocusEndTime;
+
+        /// <summary>
         /// 敌人状态管理器.
         /// </summary>
         [HideInInspector]
@@ -217,6 +224,30 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         /// <inheritdoc/>
         public override void ReduceHp(float hp, Character attacker, bool isCRT = false)
         {
+            // 被打锁定最近攻击者（2026-09-07 用户要求）：被打即把 Target 锁定为攻击者——
+            // 原实现只切 Seek 不设 Target，Seek 见 Target=null 秒回 Wander，围殴下敌人
+            // 反复重进 Wander 转向期（对准前不移动）= 原地站着不动。锁定期（被打起
+            // ChangeTarget=5s）内被其他目标打不换目标——新攻击者需持续攻击到锁定到期
+            // 才能抢走；被当前锁定目标再打会刷新锁定（持续攻击 = 持续保持目标）。
+            if (attacker != null && attacker.CharacterDataLAB != null && attacker.CharacterDataLAB.Hp > 0f)
+            {
+                bool targetInvalid = this.Target == null
+                    || this.Target.CharacterDataLAB == null
+                    || this.Target.CharacterDataLAB.Hp <= 0f;
+                if (targetInvalid || Time.time >= this.targetFocusEndTime)
+                {
+                    if (this.Target != attacker)
+                    {
+                        AWorkerTask.LogProvider(
+                            $"[EnemyDiag] {this.name} 被打锁定目标 → {attacker.name}（旧={this.Target?.name ?? "null"}）",
+                            LogManager.LogLevelEnum.Debug);
+                    }
+
+                    this.Target = attacker;
+                    this.targetFocusEndTime = Time.time + ChangeTarget;
+                }
+            }
+
             // 被打换目标需排除"打我的就是当前攻击目标"：否则单目标战斗中敌人每攻击几秒
             // 被反击一次就切 Seek → 又切回 Attack，武器反复销毁重建，拿起瞬间方向跳变
             // （同 ASeekEnemy.ReduceHp，见 bug-fixes.md 2026-08-16）。只有被其他目标打才换。

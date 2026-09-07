@@ -105,6 +105,8 @@ namespace LAB2D
             ServiceLocator.Register(new PlayerBountyService());
             ServiceLocator.Register(TaskBoardManager.Instance);
             ServiceLocator.Register(MountainGateManager.Instance);
+            // 阵营系统（Worker 自发结社/玩家阵营/核心放置，ASingletonSaveData 需 BeforeSceneLoad）
+            ServiceLocator.Register(FactionManager.Instance);
             ServiceLocator.Register(new ShopNPCGenerator());
 
             // 注入所有权名字解析：0=Player, >0=Worker名字
@@ -279,6 +281,8 @@ namespace LAB2D
                 ServiceLocator.Get<AncientCaveManager>(),
                 // 防守夜补派（2s 节流扫描：生存打断后的 Worker 脱离生存任务即拉回防守；常态零分配短路）
                 ServiceLocator.Get<WorkerDefenceManager>(),
+                // 阵营调度（10s 节流 + 日更守卫：核心重试/入伙评估；读档核心重放兜底）
+                ServiceLocator.Get<FactionManager>(),
             };
 
             // [GcDiag] tickable 逐项采样数组与列表对齐（见 Update 内注释）
@@ -315,6 +319,8 @@ namespace LAB2D
                 ServiceLocator.Get<DangerZoneManager>(),
                 // 上古洞府（订阅 OnMapReady 撒洞府，读档路径在 LoadData 恢复/迁移）
                 ServiceLocator.Get<AncientCaveManager>(),
+                // 阵营（订阅 OnMapReady 重放核心瓦片；新档无动作，Worker 攒钱自然形成阵营）
+                ServiceLocator.Get<FactionManager>(),
             };
         }
 

@@ -4,6 +4,7 @@ namespace LAB2D.Tool
     using LAB2D.Character.Enemy;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
+    using LAB2D.Map;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -115,6 +116,8 @@ namespace LAB2D.Tool
         /// <summary>
         /// 查询指定半径内最近的存活敌人（零 List 分配）。
         /// 防守索敌/箭塔开火等高频调用方使用。
+        /// 注意：本查询是纯距离语义（不含视线遮挡），需要"看不见墙后敌人"的
+        /// 探测方（Worker 索敌等）应再用 <see cref="HasLineOfSight"/> 过滤命中结果。
         /// </summary>
         /// <param name="center">查询中心世界坐标</param>
         /// <param name="radius">查询半径（世界单位）</param>
@@ -134,6 +137,85 @@ namespace LAB2D.Tool
                 radius,
                 out sqrDistance,
                 e => e != null && e.CharacterDataLAB != null && e.CharacterDataLAB.Hp > 0);
+        }
+
+        /// <summary>
+        /// 网格级视线检查（Bresenham）— 遍历两点之间的格子，检测不可通过的
+        /// BuildTile（含建造中——物理射线检测不到无碰撞体的墙壁）与 TerrainTile 阻挡。
+        /// TileMap.IsCanReach 即瓦片碰撞体判定，故本检查等价于「视线不穿碰撞体」。
+        /// 从 AEnemy.HasGridLineOfSight 抽出共用（Enemy 感知 / Worker 索敌统一语义）。
+        /// </summary>
+        /// <param name="fromWorld">起点世界坐标（探测者）。</param>
+        /// <param name="toWorld">终点世界坐标（目标）。</param>
+        /// <returns>两点之间视线畅通（无墙/地形阻挡）返回 true。</returns>
+        public static bool HasLineOfSight(Vector3 fromWorld, Vector3 toWorld)
+        {
+            TileMap tileMap = Core.ServiceLocator.Get<TileMap>();
+            if (tileMap == null)
+            {
+                return true; // 无 TileMap 时不做网格检测，回退纯距离语义
+            }
+
+            BuildMap buildMap = Core.ServiceLocator.Get<BuildMap>();
+            Vector3Int fromMap = tileMap.WorldPosToMapPos(fromWorld);
+            Vector3Int toMap = tileMap.WorldPosToMapPos(toWorld);
+
+            int x0 = fromMap.x;
+            int y0 = fromMap.y;
+            int x1 = toMap.x;
+            int y1 = toMap.y;
+
+            int dx = Mathf.Abs(x1 - x0);
+            int dy = Mathf.Abs(y1 - y0);
+            int sx = x0 < x1 ? 1 : -1;
+            int sy = y0 < y1 ? 1 : -1;
+            int err = dx - dy;
+
+            int x = x0;
+            int y = y0;
+            int steps = 0;
+            const int maxSteps = 200; // 安全上限，防止无限循环
+
+            while (steps++ < maxSteps)
+            {
+                // 跳过起点和终点（起点是探测者自身，终点是目标）
+                if ((x != x0 || y != y0) && (x != x1 || y != y1))
+                {
+                    Vector3Int checkPos = new Vector3Int(x, y, 0);
+
+                    // BuildMap：不可通过的建筑瓦片阻挡视线（含建造中）
+                    if (buildMap != null && !buildMap.IsCanReach(checkPos))
+                    {
+                        return false;
+                    }
+
+                    // TileMap：不可通过的地形瓦片阻挡视线
+                    if (!tileMap.IsCanReach(checkPos))
+                    {
+                        return false;
+                    }
+                }
+
+                if (x == x1 && y == y1)
+                {
+                    break;
+                }
+
+                int e2 = 2 * err;
+                if (e2 > -dy)
+                {
+                    err -= dy;
+                    x += sx;
+                }
+
+                if (e2 < dx)
+                {
+                    err += dx;
+                    y += sy;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>

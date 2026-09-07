@@ -21,6 +21,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy
             this.Manager.AddState(ASeekEnemyState.TypeEnum.Move, new SeekEnemyMoveState(this));
             this.Manager.AddState(ASeekEnemyState.TypeEnum.Dead, new SeekEnemyDeadState(this));
             this.Manager.AddState(ASeekEnemyState.TypeEnum.Attack, new SeekEnemyAttackState(this));
+            this.Manager.AddState(ASeekEnemyState.TypeEnum.Siege, new SeekEnemySiegeState(this));
 
             // 初始化状态
             this.Manager.ChangeState(ASeekEnemyState.TypeEnum.Seek);

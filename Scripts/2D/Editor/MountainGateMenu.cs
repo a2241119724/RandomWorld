@@ -27,16 +27,15 @@ namespace LAB2D.Editor
                 "核心位置: {0}\n" +
                 "耐久: {1:F0}/{2:F0}\n" +
                 "等级: {3}/{4}\n" +
-                "被击破次数: {5}/{6}\n" +
-                "终局失败: {7}\n" +
-                "阶段胜利: {8}",
+                "被击破次数: {5}（P5 软化后不再终局）\n" +
+                "终局失败: {6}\n" +
+                "阶段胜利: {7}",
                 gate.IsCorePlaced ? $"({gate.CorePosition.x}, {gate.CorePosition.y})" : "未放置",
                 gate.CoreHp,
                 (float)LAB2D.Domain.Gameplay.BuildingDamageRuleService.CoreMaxHp,
                 gate.CoreLevel,
                 LAB2D.Domain.Gameplay.BuildingDamageRuleService.CoreMaxLevel,
                 gate.DownfallCount,
-                LAB2D.Domain.Gameplay.BuildingDamageRuleService.CoreMaxDownfalls,
                 gate.IsGameOver ? "是" : "否",
                 gate.IsVictory ? "是" : "否");
 
@@ -76,21 +75,22 @@ namespace LAB2D.Editor
             Debug.Log($"<color=cyan>[MountainGate]</color> 升级核心：{(ok ? "成功" : "失败（未放置/已终局/已满级/金币不足）")}");
         }
 
-        [MenuItem(MenuRoot + "直接终局失败", false, 103)]
-        private static void ForceGameOver()
+        [MenuItem(MenuRoot + "连破3次（验证不再终局）", false, 103)]
+        private static void BreakCoreThrice()
         {
             if (!RequirePlayMode())
             {
                 return;
             }
 
+            // P5 胜负软化：山门被破不再终局——连打 3 次致死伤害，观察惩罚+复活+游戏继续
             Gameplay.MountainGateManager gate = Gameplay.MountainGateManager.Instance;
-            while (!gate.IsGameOver)
+            for (int i = 0; i < 3; i++)
             {
                 gate.DamageCore(LAB2D.Domain.Gameplay.BuildingDamageRuleService.CoreMaxHp, null);
             }
 
-            Debug.Log("<color=cyan>[MountainGate]</color> 已触发终局失败（时间冻结 + 结算采集）");
+            Debug.Log($"<color=cyan>[MountainGate]</color> 连破 3 次完成：被破={gate.DownfallCount} hp={gate.CoreHp:F0} 终局={(gate.IsGameOver ? "是（异常！）" : "否（已软化）")}");
         }
 
         private static bool RequirePlayMode()

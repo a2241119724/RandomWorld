@@ -218,6 +218,23 @@ namespace LAB2D.Constant
         public const string EVT_FELLOW_BREAKTHROUGH = "fellow_breakthrough";
         public const string EVT_FELLOW_BREAKTHROUGH_ENVY = "fellow_breakthrough_envy";
 
+        // ---- 阵营事件（P1：创建/加入/退出；P2：任务/晋职；P3：选举）----
+        public const string EVT_FACTION_FOUND = "faction_found";
+        public const string EVT_FACTION_JOIN = "faction_join";
+        public const string EVT_FACTION_LEAVE = "faction_leave";
+        public const string EVT_FACTION_QUEST_DONE = "faction_quest_done";
+        public const string EVT_FACTION_RANK_UP = "faction_rank_up";
+        public const string EVT_FACTION_CAMPAIGN = "faction_campaign";
+        public const string EVT_FACTION_ELECTION_WIN = "faction_election_win";
+        public const string EVT_FACTION_ELECTION_LOSE = "faction_election_lose";
+        public const string EVT_FACTION_CORE_DOWNFALL = "faction_core_downfall";
+        public const string EVT_FACTION_DISSOLVE = "faction_dissolve";
+
+        // ---- 阵营战争事件（P5：宣战/攻伐/和谈）----
+        public const string EVT_FACTION_WAR_DECLARE = "faction_war_declare";
+        public const string EVT_FACTION_WAR_RAID = "faction_war_raid";
+        public const string EVT_FACTION_PEACE = "faction_peace";
+
         // ---- 对话预设意图事件（M3 包2.4 LLM 对话结算）----
         public const string EVT_TEACH_SEEK = "teach_seek";
         public const string EVT_COMFORTED = "comforted";

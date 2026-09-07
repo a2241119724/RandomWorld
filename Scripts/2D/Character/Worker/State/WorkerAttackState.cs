@@ -38,16 +38,17 @@ namespace LAB2D.Character.Worker.State
         private float focusEndTime = float.MinValue;
 
         /// <summary>
-        /// 打带跑开关：攻击冷却中拉开与目标的距离（风筝），冷却好了再贴近——
-        /// 置 false 退化为原地站桩输出。
-        /// </summary>
-        private const bool HitAndRunEnabled = true;
-
-        /// <summary>
         /// 追击触发距离系数：与目标距离超过 攻击距离×该系数 才追击
         ///（攻击距离边缘的抖动不触发移动）。
         /// </summary>
         private const float ChaseRangeFactor = 1.2f;
+
+        /// <summary>
+        /// 攻击被墙遮挡的放弃阈值（秒）：武器就绪但目标隔墙（LOS 射线命中墙）持续
+        /// 这么久 → 放弃反击目标回 Seek 续原任务。治"互相看见却打不到"的隔墙僵持
+        /// ——双方锁着对方空转谁也不退（2026-09-08 用户报告）。
+        /// </summary>
+        private const float AttackBlockedGiveUpSeconds = 3f;
 
         /// <summary>
         /// 上一次声明的战斗移动意图种类（等值短路防每帧风暴，与 Locomotion.SetIntent 短路互补）。
@@ -132,6 +133,13 @@ namespace LAB2D.Character.Worker.State
             // 每帧热点缓存：武器在本状态生命周期内不变（OnExit 才销毁），GetComponent 只做一次
             this.cachedWeaponObject = this.Character.Weapon != null ? this.Character.Weapon.GetComponent<AWeaponObject>() : null;
 
+            // Worker 发射频率减半（2026-09-07 用户要求）：有效攻击间隔 ×2，敌人保持 1s 默认。
+            // 武器对象每次进出攻击状态销毁重建，倍率随新实例重设，不会泄漏到敌人/玩家。
+            if (this.cachedWeaponObject != null)
+            {
+                this.cachedWeaponObject.AttackIntervalMultiplier = 2f;
+            }
+
             // 拿起武器后锁定反击目标（当前攻击目标）：进入攻击锁定 LastAttacker，
             // 之后被其他目标打才换、被当前攻击目标打保持——与 Enemy.ReduceHp 对称
             // （见 bug-fixes.md 2026-08-16）。
@@ -193,7 +201,7 @@ namespace LAB2D.Character.Worker.State
             if (this.Character.Weapon != null)
             {
                 // 战斗移动意图（移动执行由 WorkerLocomotion 在 FixedUpdate 统一驱动，
-                // 状态只声明意图——攻击时移动：追击贴近 / 打带跑风筝 / 站定挥砍）。
+                // 状态只声明意图——攻击时移动：追击贴近 / 站定挥砍）。
                 this.UpdateCombatIntent();
 
                 // 攻击方向诊断（事件点，仅武器明显偏离反击目标时记录 + 节流 0.5s）：定位"拐到其他方向攻击"
@@ -228,6 +236,20 @@ namespace LAB2D.Character.Worker.State
                     {
                         weaponObject.AimTarget = this.Character.AttackTarget.transform;
                     }
+
+                    // 隔墙僵持熔断：武器持续就绪却被墙挡（发射不出）超阈值 → 放弃目标
+                    // 回 Seek 续原任务（TrySenseEnemy 有 LOS 过滤，不会立即重锁同一目标）
+                    if (weaponObject.AttackBlockedSeconds > AttackBlockedGiveUpSeconds)
+                    {
+                        AWorkerTask.LogProvider(
+                            $"[StateDiag] {this.Character.name} 攻击被墙遮挡 {weaponObject.AttackBlockedSeconds:F1}s，放弃反击目标 → 回Seek续任务",
+                            LogManager.LogLevelEnum.Debug);
+                        this.Character.AttackTarget = null;
+                        this.Character.LastAttacker = null;
+                        this.Character.Manager.ChangeState(TypeEnum.Seek);
+                        return;
+                    }
+
                     weaponObject.Attack();
                 }
             }
@@ -237,8 +259,8 @@ namespace LAB2D.Character.Worker.State
         /// 计算并声明战斗移动意图（每帧调用，同参数由 Locomotion.SetIntent 短路防风暴）：
         /// - 目标死亡/丢失 → Stop 站定（等超时退出战斗）；
         /// - 超出攻击距离（&gt;AttackRange×1.2）或攻击就绪 → Chase 贴近；
-        /// - 攻击冷却中（HitAndRunEnabled）→ KeepDistance 拉开（打带跑：冷却好了再贴近）；
-        /// - 其余（带内且打带跑关闭）→ Stop 站定输出。
+        /// - 其余（攻击冷却中）→ Stop 站定输出（打带跑已删——一前一后移动观感差，
+        ///   2026-09-07 用户要求移除 KeepDistance 风筝）。
         /// </summary>
         private void UpdateCombatIntent()
         {
@@ -263,14 +285,9 @@ namespace LAB2D.Character.Worker.State
                 this.DeclareIntent(WorkerMoveIntentKind.Chase, dist, isReady);
                 locomotion.Chase(target, attackRange);
             }
-            else if (HitAndRunEnabled && weaponObject != null)
-            {
-                // 攻击冷却中 → 打带跑：拉开到攻击距离外（带=range+1 ~ range+3），冷却好了再贴近
-                this.DeclareIntent(WorkerMoveIntentKind.KeepDistance, dist, isReady);
-                locomotion.KeepDistance(target, attackRange + 1f, attackRange + 3f);
-            }
             else
             {
+                // 攻击冷却中 → 站定等下一轮（打带跑已删）
                 this.DeclareIntent(WorkerMoveIntentKind.None, dist, isReady);
                 locomotion.Stop();
             }
@@ -289,7 +306,7 @@ namespace LAB2D.Character.Worker.State
             this.lastIntentKind = kind;
             AWorkerTask.LogProviderThrottled(
                 $"{this.Character.name}|CombatIntent", 0.5f,
-                // 惰性求值：意图切换高频（打带跑 Chase/KeepDistance 交替），被节流时不构造插值串
+                // 惰性求值：意图切换高频（Chase/Stop 交替），被节流时不构造插值串
                 () => $"[StateDiag] {this.Character.name} 战斗意图 {kind} dist={dist:F1} ready={isReady}",
                 LogManager.LogLevelEnum.Debug);
         }

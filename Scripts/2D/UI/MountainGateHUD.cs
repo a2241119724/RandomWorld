@@ -171,7 +171,7 @@ namespace LAB2D.UI
             MountainGateManager gate = this.gateManager ?? MountainGateManager.Instance;
 
             this.levelText.text = $"等级 {gate.CoreLevel}/{BuildingDamageRuleService.CoreMaxLevel}";
-            this.downfallText.text = $"被破 {gate.DownfallCount}/{BuildingDamageRuleService.CoreMaxDownfalls}";
+            this.downfallText.text = $"被破 {gate.DownfallCount}";
             this.hpBarFill.fillAmount = Mathf.Clamp01(gate.CoreHp / BuildingDamageRuleService.CoreMaxHp);
             this.hpText.text = $"{gate.CoreHp:F0}/{BuildingDamageRuleService.CoreMaxHp:F0}";
 

@@ -4,6 +4,8 @@ namespace LAB2D.Gameplay
     using LAB2D.Character.Worker;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Worker;
+    using LAB2D.Manager;
+    using LAB2D.SO;
     using System.Collections.Generic;
     using System.Text;
 
@@ -47,6 +49,9 @@ namespace LAB2D.Gameplay
         /// <summary>价格表（ItemId → PriceConfig）</summary>
         private readonly Dictionary<int, PriceConfig> priceTable;
 
+        /// <summary>SO 价目是否已加载（惰性一次；ResourceManager 未就绪时不置位，下次询价重试）。</summary>
+        private bool pricesLoadedFromSO;
+
         /// <summary>市场利润率：BuyPrice = SellPrice × (1 + profitMargin)</summary>
         public float ProfitMargin = 0.3f;
 
@@ -62,24 +67,49 @@ namespace LAB2D.Gameplay
         public MarketService()
         {
             this.priceTable = new Dictionary<int, PriceConfig>();
-            this.InitDefaultPrices();
         }
 
         /// <summary>
-        /// 初始化默认价格表。基于常见资源类型设置默认价格。
+        /// 从 ItemDataSO 价目字段构建价格表（首次询价时惰性执行一次）。
+        /// 条目 SellPrice&gt;0 才注册，未定价物品走 fallback 低保价。
+        /// 价格直接挂在物品条目上，与 ItemDataSO.OnEnable 自动重算的 Id 天然对齐——
+        /// 杜绝手抄 ID 错位（2026-09-07 硬编码价目表 itemId 全为占位 0 致 Worker 收入被吞 3~8 倍）。
         /// </summary>
-        private void InitDefaultPrices()
+        private void EnsurePricesLoaded()
         {
-            // 木材类
-            this.RegisterPrice(/* wood */ 0, 3, 5, "木材");
-            this.RegisterPrice(/* hardwood */ 0, 5, 8, "硬木");
+            if (this.pricesLoadedFromSO)
+            {
+                return;
+            }
 
-            // 石材类
-            this.RegisterPrice(/* stone */ 0, 3, 5, "石材");
+            if (!Core.ServiceLocator.TryGet<ResourceManager>(out ResourceManager resources))
+            {
+                return; // ResourceManager 未就绪（启动早期/Editor 测试环境）：走 fallback，下次询价重试
+            }
 
-            // 食物类
-            this.RegisterPrice(/* apple */ 0, 4, 6, "苹果");
-            this.RegisterPrice(/* meat */ 0, 8, 12, "肉");
+            foreach (ItemDataSO so in resources.GetAllBackpackSOs())
+            {
+                if (so?.ItemDatas == null)
+                {
+                    continue;
+                }
+
+                foreach (Data.ItemData item in so.ItemDatas)
+                {
+                    if (item != null && item.SellPrice > 0)
+                    {
+                        this.RegisterPrice(
+                            item.Id, item.SellPrice,
+                            item.BuyPrice > 0 ? item.BuyPrice : item.SellPrice * 2,
+                            item.CnName);
+                    }
+                }
+            }
+
+            this.pricesLoadedFromSO = true;
+            AWorkerTask.LogProvider(
+                $"[Market] 价目表已从 SO 加载 {this.priceTable.Count} 条",
+                LogManager.LogLevelEnum.Debug);
         }
 
         /// <summary>
@@ -95,6 +125,7 @@ namespace LAB2D.Gameplay
         /// </summary>
         public int GetSellPrice(int itemId, int count = 1)
         {
+            this.EnsurePricesLoaded();
             if (this.priceTable.TryGetValue(itemId, out PriceConfig config))
             {
                 return config.BaseSellPrice * count;
@@ -109,6 +140,7 @@ namespace LAB2D.Gameplay
         /// </summary>
         public int GetBuyPrice(int itemId, int count = 1)
         {
+            this.EnsurePricesLoaded();
             if (this.priceTable.TryGetValue(itemId, out PriceConfig config))
             {
                 return config.BaseBuyPrice * count;

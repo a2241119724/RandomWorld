@@ -9,10 +9,11 @@ namespace LAB2D.Gameplay
     using UnityEngine;
 
     /// <summary>
-    /// 山门核心管理器 — 小镇胜负锚点（M1.3）。
+    /// 山门核心管理器 — 无阵营 Worker 与玩家的默认核心（M1.3，P5 胜负软化后去终局）。
     /// 地图就绪后在中心附近放置核心瓦片（不可通行）；妖兽子弹命中核心格转调 DamageCore。
-    /// 宽闸门失败曲线：前 CoreMaxDownfalls-1 次被击破只降级（恢复部分耐久 + 居民好感惩罚），
-    /// 耗尽后终局失败（采集结算 + 冻结时间）；核心升到 CoreMaxLevel 即阶段胜利。
+    /// 被击破不再终局：惩罚（居民好感 -10 + 玩家钱包罚 10%）+ 按比例复活（山门永续）；
+    /// 升到满级也不再胜利：改里程碑播报（ShowTip + 全员士气 +20）。
+    /// 终局结算面板（SessionEndPanel）保留，触发线交由后续玩法接管。
     /// 存档：核心位置/耐久/等级/被毁次数随 ASingletonSaveData 自动存取，读档后 InitPosition 重建视觉。
     /// </summary>
     public class MountainGateManager : ASingletonSaveData<MountainGateManager>
@@ -28,6 +29,12 @@ namespace LAB2D.Gameplay
 
         /// <summary>核心被击破时全体居民对玩家的好感惩罚。</summary>
         private const float DownfallFavorabilityPenalty = -10f;
+
+        /// <summary>核心被击破时玩家钱包罚没比例（P5 胜负软化：惩罚替代终局）。</summary>
+        private const float DownfallWalletPenaltyRatio = 0.1f;
+
+        /// <summary>核心满级里程碑的全员士气增益（P5：替代原阶段胜利）。</summary>
+        private const float MaxLevelMoraleBonus = 20f;
 
         /// <summary>核心所在地图格子坐标（default 表示尚未放置）。</summary>
         public Vector3Int CorePosition { get; private set; }
@@ -227,7 +234,7 @@ namespace LAB2D.Gameplay
             this.RaiseCoreChanged();
             if (this.CoreLevel >= BuildingDamageRuleService.CoreMaxLevel)
             {
-                this.TriggerVictory();
+                this.OnCoreMaxLevelMilestone();
             }
             else
             {
@@ -238,32 +245,21 @@ namespace LAB2D.Gameplay
         }
 
         /// <summary>
-        /// 核心被击破 — 宽闸门：未达上限先降级（恢复部分耐久 + 居民好感惩罚），达上限终局失败。
+        /// 满级里程碑（P5 胜负软化）：不再触发阶段胜利终局，
+        /// 改为播报 + 全员士气 +20（小镇纪元继续）。
         /// </summary>
-        private void OnCoreDestroyed()
+        private void OnCoreMaxLevelMilestone()
         {
-            this.DownfallCount++;
-            if (this.DownfallCount >= BuildingDamageRuleService.CoreMaxDownfalls)
-            {
-                this.TriggerGameOver();
-                return;
-            }
-
-            this.CoreHp = this.ruleService.ComputeCoreReviveHp();
-            AWorkerTask.LogProvider(
-                $"[GateDiag] 山门核心被击破（第 {this.DownfallCount}/{BuildingDamageRuleService.CoreMaxDownfalls} 次）→ 降级恢复 hp={this.CoreHp:F0}",
-                LogManager.LogLevelEnum.Debug);
-
-            // 居民士气受挫：全体对玩家好感下降
+            AWorkerTask.LogProvider("[GateDiag] 山门核心升至满级（里程碑，胜负软化后不再终局）", LogManager.LogLevelEnum.Debug);
             try
             {
-                FavorabilityManager fm = Core.ServiceLocator.Get<FavorabilityManager>();
                 int workerCount = Core.GameServices.WorkerCountProvider();
                 for (int i = 0; i < workerCount; i++)
                 {
-                    if (Core.GameServices.WorkerGetProvider(i) is AWorker worker)
+                    if (Core.GameServices.WorkerGetProvider(i) is Character { IsWorkerCharacter: true } worker
+                        && worker.CharacterDataLAB is LAB2D.Character.Worker.AWorker.WorkerData wd)
                     {
-                        fm?.ModifyWithPlayer(worker, DownfallFavorabilityPenalty, "山门核心被击破");
+                        wd.CurMorale = Math.Min(100f, wd.CurMorale + MaxLevelMoraleBonus);
                     }
                 }
             }
@@ -272,60 +268,49 @@ namespace LAB2D.Gameplay
                 // Provider 未就绪（测试环境）时静默降级
             }
 
-            ShowTip($"山门核心被击破！（第 {this.DownfallCount}/{BuildingDamageRuleService.CoreMaxDownfalls} 次）居民士气受挫，速速重建防线！");
+            ShowTip("山门核心大功告成！小镇声威大振，居民士气高涨（里程碑达成，纪元继续）");
         }
 
         /// <summary>
-        /// 终局失败：采集会话结算（Defeat）并冻结时间（ITickable 与 WaveManager 协程一并停止），
-        /// 弹出终局结算面板（面板按钮负责显式恢复 timeScale）。
+        /// 核心被击破 — 胜负软化（P5）：不再终局，山门永续。
+        /// 惩罚 = 居民好感 -10 + 玩家钱包罚 10%；核心按比例复活（ComputeCoreReviveHp）。
         /// </summary>
-        private void TriggerGameOver()
+        private void OnCoreDestroyed()
         {
-            if (this.IsGameOver)
-            {
-                return;
-            }
+            this.DownfallCount++;
+            this.CoreHp = this.ruleService.ComputeCoreReviveHp();
+            AWorkerTask.LogProvider(
+                $"[GateDiag] 山门核心被击破（第 {this.DownfallCount} 次，胜负软化后不再终局）→ 恢复 hp={this.CoreHp:F0}",
+                LogManager.LogLevelEnum.Debug);
 
-            this.IsGameOver = true;
-            AWorkerTask.LogProvider("[GateDiag] 终局失败：山门核心连续被毁，小镇陷落", LogManager.LogLevelEnum.Debug);
-            SessionResultData result = SessionResultManager.Instance.CaptureResult(SessionEndingType.Defeat);
-            this.RaiseCoreChanged();
-            Time.timeScale = 0f;
-            ShowTip("山门陷落，小镇化为废墟……（终局失败，结算已采集）");
-            this.OpenSessionEndPanel(result, SessionEndingType.Defeat);
-        }
-
-        /// <summary>
-        /// 阶段胜利：核心满级，采集会话结算（Victory，不冻结时间），弹出终局结算面板。
-        /// </summary>
-        private void TriggerVictory()
-        {
-            if (this.IsVictory)
-            {
-                return;
-            }
-
-            this.IsVictory = true;
-            AWorkerTask.LogProvider("[GateDiag] 阶段胜利：山门核心升至满级", LogManager.LogLevelEnum.Debug);
-            SessionResultData result = SessionResultManager.Instance.CaptureResult(SessionEndingType.Victory);
-            this.RaiseCoreChanged();
-            ShowTip("山门核心大功告成！小镇在妖兽潮中屹立不倒（阶段胜利，结算已采集）");
-            this.OpenSessionEndPanel(result, SessionEndingType.Victory);
-        }
-
-        /// <summary>
-        /// 打开终局结算面板（try-catch：面板依赖场景 UI 根节点，Editor 测试环境可能缺失时静默降级）。
-        /// </summary>
-        private void OpenSessionEndPanel(SessionResultData result, SessionEndingType ending)
-        {
+            int walletPenalty = 0;
             try
             {
-                LAB2D.UI.Panel.SessionEndPanel.Instance.Open(result, ending);
+                // 居民士气受挫：全体对玩家好感下降
+                FavorabilityManager fm = Core.ServiceLocator.Get<FavorabilityManager>();
+                int workerCount = Core.GameServices.WorkerCountProvider();
+                for (int i = 0; i < workerCount; i++)
+                {
+                    if (Core.GameServices.WorkerGetProvider(i) is LAB2D.Character.Worker.AWorker worker)
+                    {
+                        fm?.ModifyWithPlayer(worker, DownfallFavorabilityPenalty, "山门核心被击破");
+                    }
+                }
+
+                // 玩家惩罚：钱包罚 10%（与死亡惩罚管线同思路——惩罚而非终局）
+                CurrencyManager currency = Core.ServiceLocator.Get<CurrencyManager>();
+                if (currency != null)
+                {
+                    walletPenalty = (int)(currency.GetWalletBalance(0).Gold * DownfallWalletPenaltyRatio);
+                    currency.TrySpendPlayerGold(walletPenalty);
+                }
             }
             catch (Exception)
             {
-                // UI 根不存在（测试环境）时静默降级
+                // Provider 未就绪（测试环境）时静默降级
             }
+
+            ShowTip($"山门核心被击破！（第 {this.DownfallCount} 次）居民士气受挫、损失 {walletPenalty} 金——重整旗鼓，山门可再守！");
         }
 
         private static void ShowTip(string text)

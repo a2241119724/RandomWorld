@@ -50,6 +50,9 @@ namespace LAB2D.AI.Worker
 
         /// <summary>回家从个人四格仓库取任务材料</summary>
         Withdraw,
+
+        /// <summary>自立门户创建阵营（高事业心+高社交者攒够创始金触发）</summary>
+        FoundFaction,
     }
 
     /// <summary>

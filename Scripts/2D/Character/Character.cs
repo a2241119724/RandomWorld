@@ -421,8 +421,24 @@ namespace LAB2D.Character
                 Core.ServiceLocator.Get<FavorabilityManager>()?.NotifyPlayerHelpsNearby(worldPos.X, worldPos.Y);
             }
 
+            // 跨阵营互殴关系累计（P5）：不同阵营 Worker 互攻击 → 阵营对关系 -3（每日封顶 -9），
+            // 关系恶化到宣战线以下由 FactionManager 日更开战
+            if (attacker != null && attacker.IsWorkerCharacter && this.IsWorkerCharacter && attacker != this)
+            {
+                Core.ServiceLocator.Get<Gameplay.FactionManager>()?.RecordCrossFactionAttack(
+                    attacker as Worker.AWorker, this as Worker.AWorker);
+            }
+
             if (healthResult.IsDead)
             {
+                // 防御击杀贡献（P4）：Worker 击杀敌人且有所属阵营 → FactionManager 记贡献
+                // （击杀目标是敌人才算——Worker 互殴走战争管线，不吃防御击杀贡献）
+                if (attacker != null && attacker.IsWorkerCharacter && this is Enemy.AEnemy)
+                {
+                    Core.ServiceLocator.Get<Gameplay.FactionManager>()?.RecordDefenseKill(
+                        attacker as Worker.AWorker);
+                }
+
                 this.Death();
             }
         }

@@ -168,7 +168,7 @@ namespace LAB2D.Character.Worker.Task
             else if (this.BuildTileName == "CustomDoor")
             {
                 // 墙壁和门建完 → 立即注册为房间，之后再建床和仓库
-                this.RegisterWorkerRoom(wd, worker.name);
+                WorkerHomeSiteService.RegisterWorkerRoom(wd, worker.name);
                 LogProvider(
                     $"{worker.name} 建家: 门完成 → 房间已注册 → 接下来建床和仓库",
                     LogManager.LogLevelEnum.Debug);
@@ -222,40 +222,6 @@ namespace LAB2D.Character.Worker.Task
                         LogManager.LogLevelEnum.Debug);
                 }
             }
-        }
-
-        /// <summary>
-        /// 墙壁和门建完后，将所有墙壁和门位置注册到 RoomManager 形成房间。
-        /// </summary>
-        private void RegisterWorkerRoom(AWorker.WorkerData wd, string ownerName)
-        {
-            if (wd?.PlannedHomePosition == null) return;
-
-            Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
-            var layout = LAB2D.AI.Worker.WorkerHomeLayout.GetRoomLayout(wd);
-            var roomInfo = new LAB2D.Item.RoomInfo();
-
-            for (int i = 0; i < layout.WallCount; i++)
-            {
-                roomInfo.Points.Add(center + layout.WallOffsets[i]);
-            }
-
-            roomInfo.Points.Add(center + layout.DoorOffset);
-            roomInfo.Progress = 0;
-            roomInfo.Temperature = 25.0f;
-            roomInfo.Humidity = 25.0f;
-            roomInfo.OwnerName = ownerName;
-
-            Core.ServiceLocator.Get<LAB2D.Item.RoomManager>().AddRoom(
-                System.Guid.NewGuid().ToString(), roomInfo);
-
-            // 房间创建完成 → 生成覆盖整个房间矩形的屋顶（本地玩家进入房间时隐藏，离开恢复显示）
-            LAB2D.Item.RoofManager.Ensure().AddRoof(
-                roomInfo, center, wd.HomeRoomWidth, wd.HomeRoomHeight, ownerName);
-
-            LogProvider(
-                $"{ownerName} 房间已注册: {roomInfo.Points.Count} 个墙壁/门位置",
-                LogManager.LogLevelEnum.Debug);
         }
 
         /// <inheritdoc/>

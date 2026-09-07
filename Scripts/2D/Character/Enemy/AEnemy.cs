@@ -13,6 +13,31 @@ namespace LAB2D.Character.Enemy
         private RaycastHit2D raycastHit2D; // 射线射中返回的结果
 
         /// <summary>
+        /// 感知遮挡层（只算静态墙/建筑）：物理射线判定"目标被挡"用。
+        /// 不含 Player/Worker 层——角色不挡视线，否则被围一圈 Worker 即被致盲
+        /// （丢目标回 Seek → 寻路被围卡死不动，2026-09-07 用户报告"Enemy 卡住"根因）。
+        /// 动态遮挡语义由网格 LOS 覆盖（SkillTool.HasLineOfSight 挡墙/地形）。
+        /// 惰性初始化：LayerMask.GetMask 禁止在静态字段初始化器中调用
+        /// （实例化触发 .cctor 即抛 UnityException，见 bug-fixes.md 2026-09-07）。
+        /// </summary>
+        private static LayerMask senseOcclusionLayers;
+        private static bool senseOcclusionLayersReady;
+
+        private static LayerMask SenseOcclusionLayers
+        {
+            get
+            {
+                if (!senseOcclusionLayersReady)
+                {
+                    senseOcclusionLayers = LayerMask.GetMask("Tile", "BuildTile");
+                    senseOcclusionLayersReady = true;
+                }
+
+                return senseOcclusionLayers;
+            }
+        }
+
+        /// <summary>
         /// 刷新头顶血条 — 回合制战斗结束写回 Hp 后调用
         /// （正常路径 ReduceHp 内部刷新，快照写回绕过了这些管线）。
         /// </summary>
@@ -139,17 +164,18 @@ namespace LAB2D.Character.Enemy
             {
                 // 网格级视线遮挡检查：Bresenham 遍历两点之间的网格，
                 // 检测建造中/已完成的墙壁和不可通过地形，弥补物理射线无法检测无碰撞体瓦片的缺陷。
-                if (!this.HasGridLineOfSight(target.position))
+                if (!SkillTool.HasLineOfSight(this.transform.position, target.position))
                 {
                     isFind = false;
                 }
             }
 
-            // 物理射线检测作为补充（检测动态障碍物等）
+            // 物理射线检测作为补充（检测动态障碍物等）——只查静态遮挡层：
+            // 若含 Player/Worker 层，被一圈 Worker 围住即判定目标不可见 → 致盲卡死
             if (isFind)
             {
                 Vector3 direction = target.position - this.transform.position;
-                this.raycastHit2D = Physics2D.Raycast(this.transform.position, direction, enemyData.SightRange, this.AttackLayers); // (源,方向,距离,层级)
+                this.raycastHit2D = Physics2D.Raycast(this.transform.position, direction, enemyData.SightRange, SenseOcclusionLayers); // (源,方向,距离,层级)
 
                 // 如果有碰撞体并且不是目标，是障碍物
                 if (this.raycastHit2D.collider != null && this.raycastHit2D.transform != target)
@@ -165,83 +191,6 @@ namespace LAB2D.Character.Enemy
         public override void Attack()
         {
             throw new System.NotImplementedException();
-        }
-
-        /// <summary>
-        /// 网格级视线检查 — 使用 Bresenham 算法遍历两点之间的网格，
-        /// 检测是否有不可通过的 BuildTile 或 TerrainTile 阻挡视线。
-        /// 物理射线无法检测建造中（无碰撞体）的墙壁和门洞，此方法弥补该缺陷。
-        /// </summary>
-        /// <param name="targetWorldPos">目标世界坐标。</param>
-        /// <returns>两点之间是否有畅通的网格视线。</returns>
-        private bool HasGridLineOfSight(Vector3 targetWorldPos)
-        {
-            var tileMap = Core.ServiceLocator.Get<TileMap>();
-            var buildMap = Core.ServiceLocator.Get<BuildMap>();
-            if (tileMap == null)
-            {
-                return true; // 无 TileMap 时不做网格检测，回退到物理射线
-            }
-
-            Vector3Int fromMap = tileMap.WorldPosToMapPos(this.transform.position);
-            Vector3Int toMap = tileMap.WorldPosToMapPos(targetWorldPos);
-
-            int x0 = fromMap.x;
-            int y0 = fromMap.y;
-            int x1 = toMap.x;
-            int y1 = toMap.y;
-
-            int dx = Mathf.Abs(x1 - x0);
-            int dy = Mathf.Abs(y1 - y0);
-            int sx = x0 < x1 ? 1 : -1;
-            int sy = y0 < y1 ? 1 : -1;
-            int err = dx - dy;
-
-            int x = x0;
-            int y = y0;
-            int steps = 0;
-            const int maxSteps = 200; // 安全上限，防止无限循环
-
-            while (steps++ < maxSteps)
-            {
-                // 跳过起点和终点（起点是敌人自身，终点是目标）
-                if ((x != x0 || y != y0) && (x != x1 || y != y1))
-                {
-                    Vector3Int checkPos = new Vector3Int(x, y, 0);
-
-                    // 检查 BuildMap：已完成且不可通过的建筑瓦片阻挡视线
-                    if (buildMap != null && !buildMap.IsCanReach(checkPos))
-                    {
-                        return false;
-                    }
-
-                    // 检查 TileMap：不可通过的地形瓦片阻挡视线
-                    if (!tileMap.IsCanReach(checkPos))
-                    {
-                        return false;
-                    }
-                }
-
-                if (x == x1 && y == y1)
-                {
-                    break;
-                }
-
-                int e2 = 2 * err;
-                if (e2 > -dy)
-                {
-                    err -= dy;
-                    x += sx;
-                }
-
-                if (e2 < dx)
-                {
-                    err += dx;
-                    y += sy;
-                }
-            }
-
-            return true;
         }
 
         /// <inheritdoc/>

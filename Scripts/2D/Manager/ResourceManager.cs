@@ -171,6 +171,15 @@ namespace LAB2D.Manager
         }
 
         /// <summary>
+        /// 获取全部背包道具SO（市场价目表等需要全量遍历物品条目的消费方使用）。
+        /// </summary>
+        /// <returns>全部背包道具SO 只读集合</returns>
+        public System.Collections.Generic.IReadOnlyCollection<ItemDataSO> GetAllBackpackSOs()
+        {
+            return this.backpackDataDic.Values;
+        }
+
+        /// <summary>
         /// 获取建造道具SO
         /// </summary>
         /// <param name="name">道具数据名称</param>

@@ -17,7 +17,7 @@ namespace LAB2D.UI
     public class TipHUD : MonoBehaviour
     {
         private const string HudTextName = "Text";
-        private const int MaxEntries = 5; // 保留的最近 Tip 条数
+        private const int MaxEntries = 14; // 保留的最近 Tip 条数
 
         private static TipHUD instance;
         private static bool warnedMissing;

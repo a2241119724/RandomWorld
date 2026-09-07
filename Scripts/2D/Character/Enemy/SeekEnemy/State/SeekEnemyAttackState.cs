@@ -19,6 +19,13 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         public float AttackTime { get; private set; } = 0.0f;
 
         /// <summary>
+        /// 攻击被墙遮挡的放弃阈值（秒）：武器持续就绪却被墙挡（发射不出）超阈值 →
+        /// 放弃目标回 Seek 换目标漫游。治"互相看见却打不到"的隔墙僵持
+        /// ——双方锁着对方空转谁也不退（2026-09-08 用户报告，同 WorkerAttackState）。
+        /// </summary>
+        private const float AttackBlockedGiveUpSeconds = 3f;
+
+        /// <summary>
         /// 武器组件缓存：OnUpdate 每帧 GetComponent&lt;AWeaponObject&gt; 是热点
         /// （N=100 敌人战斗时即每帧 100 次反射式查找）。武器在 OnEnter 确保就绪、OnExit 销毁，
         /// 生命周期覆盖整个攻击状态，OnEnter 缓存一次即可；OnExit 置空防跨状态持有已销毁对象。
@@ -102,9 +109,13 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 return;
             }
 
-            // 玩家朝向设置为攻击方向
+            // 玩家朝向设置为攻击方向（近零保护：与目标重合时不写零向量——
+            // 零方向会让感知扇形 Vector3.Angle 恒 90° 不命中 + 扇形渲染抖动）
             Vector3 dirToTarget = this.Character.Target.transform.position - this.Character.transform.position;
-            this.Character.Direction = dirToTarget;
+            if (dirToTarget.sqrMagnitude > 0.0001f)
+            {
+                this.Character.Direction = dirToTarget;
+            }
 
             // 设置视觉，攻击方向（直接用目标方向，不依赖武器 rotation：武器由
             // AWeaponObject.Update 动态跟踪，进攻击状态首帧可能尚未矫正，跟随它会导致
@@ -146,6 +157,17 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 weaponObject.AimTarget = this.Character.Target.transform;
             }
 
+            // 隔墙僵持熔断：武器持续就绪却被墙挡（发射不出）超阈值 → 放弃目标回 Seek
+            //（Seek.OnEnter 清 Target 选漫游格，不会原地重锁同一目标）
+            if (weaponObject.AttackBlockedSeconds > AttackBlockedGiveUpSeconds)
+            {
+                AWorkerTask.LogProvider(
+                    $"[EnemyDiag] {this.Character.name} 攻击被墙遮挡 {weaponObject.AttackBlockedSeconds:F1}s，放弃目标 → 回Seek",
+                    LogManager.LogLevelEnum.Debug);
+                this.Character.Manager.ChangeState(TypeEnum.Seek);
+                return;
+            }
+
             weaponObject.Attack();
             if (this.Character.NetworkView.IsOnline)
             {
@@ -175,6 +197,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         {
             base.OnExit();
             this.Character.AttackRange.SetActive(false);
+            this.Character.Direction = Vector3.zero; // 清攻击方向：Direction getter 攻击方向优先，清零后感知扇形回落到寻路方向
 
             // 放下武器
             if (this.Character.Weapon != null)

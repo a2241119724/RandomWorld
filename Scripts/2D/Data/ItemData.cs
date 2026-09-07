@@ -71,6 +71,20 @@ namespace LAB2D.Data
         public string Info;
 
         /// <summary>
+        /// 市场收价（Worker 卖给市场的单价）。0=未定价，出售走 1 金/个低保价。
+        /// 市场价目表 MarketService 从本字段构建（价格挂在物品条目上，
+        /// 与 ItemDataSO.OnEnable 自动重算的 Id 天然对齐，杜绝手抄 ID 错位）。
+        /// </summary>
+        [Tooltip("市场收价（Worker 卖出单价；0=未定价走 1 金/个低保价）")]
+        public int SellPrice;
+
+        /// <summary>
+        /// 市场售价（Player 买入单价）。0=未定价，按 2 金/个兜底。
+        /// </summary>
+        [Tooltip("市场售价（Player 买入单价；0=未定价按 2 金/个兜底）")]
+        public int BuyPrice;
+
+        /// <summary>
         /// 是否可堆叠
         /// </summary>
         [Tooltip("是否可堆叠")]

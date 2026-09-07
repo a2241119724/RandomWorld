@@ -87,6 +87,13 @@ namespace LAB2D.Data
         [Tooltip("是否平滑闪烁（火光摇曳；双频 sin 叠加，非每帧随机）")]
         public bool LightFlicker = true;
 
+        /// <summary>
+        /// 最大耐久。0=未配置走 BuildingDamageRuleService.DefaultBuildingMaxHp 兜底；
+        /// 建成时以此初始化 BuildTileData.Hp，受击上限以 SO 为准（W1 血量 SO 化）。
+        /// </summary>
+        [Tooltip("最大耐久。0=未配置走默认 200；建成时初始化 Hp，受击结算以此封顶")]
+        public float MaxHp;
+
         // 地面视觉模式字段位于基类 ItemData.VisualMode（建筑/背包掉落/资源通用，Clone 继承）。
 
         /// <summary>
@@ -127,6 +134,7 @@ namespace LAB2D.Data
                 LightIntensity = this.LightIntensity,
                 LightColor = this.LightColor,
                 LightFlicker = this.LightFlicker,
+                MaxHp = this.MaxHp,
                 VisualMode = this.VisualMode,
                 IsAnimation = this.IsAnimation,
             };

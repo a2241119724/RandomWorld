@@ -80,7 +80,7 @@ namespace LAB2D.Editor.Tests.Domain
         [Test]
         public void Constants_FormValidDownfallChain()
         {
-            // 宽闸门曲线：第 1/2 次被击破降级，第 CoreMaxDownfalls 次终局
+            // P5 胜负软化：CoreMaxDownfalls 仅作展示参考（山门被破不再终局），数值链仍须自洽
             Assert.GreaterOrEqual(BuildingDamageRuleService.CoreMaxDownfalls, 2);
             Assert.Greater(BuildingDamageRuleService.CoreMaxHp, this.service.ComputeCoreReviveHp());
             Assert.GreaterOrEqual(BuildingDamageRuleService.CoreMaxLevel, 2);
@@ -88,32 +88,22 @@ namespace LAB2D.Editor.Tests.Domain
         }
 
         [Test]
-        public void DownfallChain_SimulatedThreeBreaks_EndsInGameOver()
+        public void DownfallChain_Softened_ThreeBreaks_ReviveForever_NoGameOver()
         {
-            // 数值层模拟核心被毁三次：前两次降级恢复、第三次终局（MountainGateManager 的闸门逻辑同此）
+            // P5 胜负软化：山门被破不再终局——连破 CoreMaxDownfalls 次，每次都按比例复活，游戏继续
             float hp = BuildingDamageRuleService.CoreMaxHp;
             int downfalls = 0;
-            bool gameOver = false;
-            while (!gameOver)
+            for (int i = 0; i < BuildingDamageRuleService.CoreMaxDownfalls; i++)
             {
                 BuildingDamageRuleService.BuildingDamageResult result = this.service.ApplyDamage(hp, BuildingDamageRuleService.CoreMaxHp);
-                hp = result.RemainingHp;
-                if (result.IsDestroyed)
-                {
-                    downfalls++;
-                    if (downfalls >= BuildingDamageRuleService.CoreMaxDownfalls)
-                    {
-                        gameOver = true;
-                    }
-                    else
-                    {
-                        hp = this.service.ComputeCoreReviveHp();
-                    }
-                }
+                Assert.IsTrue(result.IsDestroyed);
+                downfalls++;
+                hp = this.service.ComputeCoreReviveHp();
+                Assert.Greater(hp, 0f); // 复活耐久 > 0，可继续防守
             }
 
-            Assert.IsTrue(gameOver);
             Assert.AreEqual(BuildingDamageRuleService.CoreMaxDownfalls, downfalls);
+            Assert.Greater(hp, 0f); // 超过原上限次数仍存活（软化语义：无终局分支）
         }
 
         [Test]

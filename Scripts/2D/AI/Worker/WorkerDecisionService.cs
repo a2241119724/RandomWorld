@@ -384,10 +384,28 @@ namespace LAB2D.AI.Worker
                     this.CreateWanderTask();
                     break;
 
+                case WorkerDecisionType.FoundFaction:
+                    // 阵营创始：门槛复核/扣创始金/落核心/心智事件由 FactionManager 出，
+                    // 创建后回 Idle 走日常（下次决策起 FactionId!=0 不再触发）
+                    this.TryFoundFaction();
+                    this.CreateIdleTask();
+                    break;
+
                 case WorkerDecisionType.Idle:
                 default:
                     this.CreateIdleTask();
                     break;
+            }
+        }
+
+        /// <summary>
+        /// 阵营创始（P1）：调 FactionManager 走创建管线（CanFound 复核/扣钱/核心落位/播报由 Manager 出）。
+        /// </summary>
+        private void TryFoundFaction()
+        {
+            if (Core.ServiceLocator.TryGet<FactionManager>(out FactionManager factionManager))
+            {
+                factionManager.TryCreateFactionByWorker(this.worker);
             }
         }
 

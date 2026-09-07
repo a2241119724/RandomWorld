@@ -72,6 +72,9 @@ namespace LAB2D.Core
             // 山门核心 HUD (G键，纯代码构建)
             MountainGateHUD.EnsureRuntimePanel();
 
+            // 阵营概览 HUD (纯代码构建，无独立热键)
+            FactionHUD.EnsureRuntimePanel();
+
             // 本局天机 HUD (H键，纯代码构建)
             SessionModifierHUD.EnsureRuntimePanel();
 

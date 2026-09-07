@@ -2,6 +2,7 @@ namespace LAB2D.Map
 {
     using LAB2D;
     using Character = LAB2D.Character.Character;
+    using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Constant;
     using LAB2D.Core.Seek;
@@ -113,6 +114,10 @@ namespace LAB2D.Map
 
             BuildTileData buildTileData = new BuildTileData(tileName, !isNeedBuild, width, height);
             buildTileData.RectType = rectType;
+            // W1 血量 SO 化：登记即按 SO MaxHp 初始化耐久（0=默认 200）。放置即完成
+            // （!isNeedBuild）的建筑立即可受击，必须在登记时初始化；走建造管线的建成前
+            // 免疫，此处一并初始化保持口径统一。
+            buildTileData.Hp = ResolveMaxHp(itemData as BuildItemData);
             if (this.BuildMapDataLAB.PosMap.ContainsKey(vector3IntLAB))
             {
                 // 门
@@ -342,6 +347,12 @@ namespace LAB2D.Map
             // 完成态颜色（白）由 GetBuildVisualColor 经 CreateOrUpdate 落到独立视觉/Bottom tile，不在 tile 上直写。
             this.ApplyCollider(vector3Int, true, buildItemData != null && buildItemData.IsPass);
 
+            // W1 血量 SO 化：早期版本/旁路登记的格子建成时兜底初始化耐久（AddBuild 新登记已带）
+            if (buildTileData.Hp <= 0f)
+            {
+                buildTileData.Hp = ResolveMaxHp(buildItemData);
+            }
+
             // 建造完成主日志已删除（100 Worker 收紧，bug-fixes.md 2026-09-06）：整批逐格完成
             // 在建造期刷 2k+ 条；通行判定一致性由下方回读校验兜底——正常静默，异常才告警。
 
@@ -562,6 +573,117 @@ namespace LAB2D.Map
         }
 
         /// <summary>
+        /// 解析建筑最大耐久：SO 配置 MaxHp&gt;0 优先，否则落回
+        /// BuildingDamageRuleService.DefaultBuildingMaxHp（W1 血量 SO 化）。
+        /// AddBuild 登记初始化、SetComplete 建成兜底、DamageBuilding 旧档受击兜底三处共用。
+        /// </summary>
+        private static float ResolveMaxHp(BuildItemData buildItemData)
+        {
+            return buildItemData != null && buildItemData.MaxHp > 0f
+                ? buildItemData.MaxHp
+                : Domain.Gameplay.BuildingDamageRuleService.DefaultBuildingMaxHp;
+        }
+
+        /// <summary>
+        /// W4 家受击通知：按房间 OwnerName 找房主 Worker，设置 LastAttacker 并切 Attack
+        /// （复用被动反击链；睡眠中被唤醒，Attack OnExit 回 Seek 续原任务——打完回床续睡）。
+        /// 幂等：房主已是 Attack/Dead/Escape 状态则整链跳过（敌弹连射不重入、不刷屏）。
+        /// </summary>
+        private void NotifyRoomOwnerUnderAttack(RoomInfo room, Character attacker)
+        {
+            if (room == null || string.IsNullOrEmpty(room.OwnerName) || room.OwnerName == "玩家")
+            {
+                return; // 公共房间（玩家自建）无 Worker 房主可通知
+            }
+
+            if (!(attacker is LAB2D.Character.Enemy.AEnemy))
+            {
+                return; // 只对敌人拆家通知（玩家/Worker 造成的建筑伤害不唤醒回防）
+            }
+
+            if (!Core.ServiceLocator.TryGet<WorkerManager>(out WorkerManager wm) || wm.Characters == null)
+            {
+                return;
+            }
+
+            foreach (AWorker worker in wm.Characters)
+            {
+                if (worker == null || worker.name != room.OwnerName || worker.Manager == null)
+                {
+                    continue;
+                }
+
+                AWorkerState.TypeEnum state = worker.Manager.CurrentStateType;
+                if (state == AWorkerState.TypeEnum.Attack
+                    || state == AWorkerState.TypeEnum.Dead
+                    || state == AWorkerState.TypeEnum.Escape)
+                {
+                    return; // 房主已在战斗/不可打断状态：幂等跳过
+                }
+
+                worker.LastAttacker = attacker;
+                worker.Manager.ChangeState(AWorkerState.TypeEnum.Attack);
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] 家受击通知: {worker.name} 被唤醒回防 attacker={attacker.name}",
+                    LogManager.LogLevelEnum.Warning);
+                return;
+            }
+        }
+
+        /// <summary>
+        /// W5 缺墙登记：被摧毁的房间边界格（位置+原瓦片名，变体名摧毁后无法重算）
+        /// 记入房主 WorkerData.HomeRepairCells，白天决策链逐格重新登记建造。
+        /// 同格去重（反复拆建不重复登记）。旧档 HomeRepairCells 为 null 时懒初始化
+        /// （BinaryFormatter 不跑构造函数）。
+        /// </summary>
+        private void RecordDestroyedHomeWall(Vector3Int pos, RoomInfo room, string tileName)
+        {
+            if (room == null || string.IsNullOrEmpty(room.OwnerName) || room.OwnerName == "玩家")
+            {
+                return;
+            }
+
+            if (!Core.ServiceLocator.TryGet<WorkerManager>(out WorkerManager wm) || wm.Characters == null)
+            {
+                return;
+            }
+
+            foreach (AWorker worker in wm.Characters)
+            {
+                if (worker == null || worker.name != room.OwnerName)
+                {
+                    continue;
+                }
+
+                AWorker.WorkerData wd = worker.CharacterDataLAB as AWorker.WorkerData;
+                if (wd == null)
+                {
+                    return;
+                }
+
+                Vector3IntLAB cell = Vector3IntLAB.ToVector3IntLAB(pos);
+                wd.HomeRepairCells ??= new List<AWorker.WorkerData.HomeRepairEntry>();
+                for (int i = 0; i < wd.HomeRepairCells.Count; i++)
+                {
+                    if (wd.HomeRepairCells[i].Pos.Equals(cell))
+                    {
+                        return; // 已登记（同格反复摧毁）
+                    }
+                }
+
+                wd.HomeRepairCells.Add(new AWorker.WorkerData.HomeRepairEntry
+                {
+                    Pos = cell,
+                    TileName = tileName,
+                });
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] 缺墙登记: {worker.name} {tileName} pos=({pos.x},{pos.y}) 待修={wd.HomeRepairCells.Count}",
+                    LogManager.LogLevelEnum.Debug);
+                return;
+            }
+        }
+
+        /// <summary>
         /// 对建筑造成伤害 — 妖兽啃墙通路（AttackEffect 子弹命中建筑层时调用）。
         /// 建造中的建筑（IsComplete=false）不受伤害；核心格转调 MountainGateManager；
         /// 普通建筑耐久归零时走与 Worker 拆除相同的移除路径（CancelBuilding + 房间失效）。
@@ -593,10 +715,31 @@ namespace LAB2D.Map
                 return true;
             }
 
-            // 旧存档/首次受击兜底：Hp 未初始化时按默认耐久起算
+            // 阵营核心：耐久数据在 FactionManager（随其存档）。占用格 O(1) 查表路由，
+            // 陷落走 FactionManager（复活+惩罚/超限解散，不触发终局）
+            if (data.Name == Gameplay.FactionManager.CoreTileName
+                && Core.ServiceLocator.TryGet<Gameplay.FactionManager>(out Gameplay.FactionManager factionManager)
+                && factionManager.IsCoreCell(pos))
+            {
+                factionManager.DamageCoreAt(pos, damage, attacker);
+                return true;
+            }
+
+            // 旧存档/首次受击兜底：Hp 未初始化时按 SO MaxHp 起算（未配置/查不到 SO 走默认常量）
             if (data.Hp <= 0f)
             {
-                data.Hp = Domain.Gameplay.BuildingDamageRuleService.DefaultBuildingMaxHp;
+                data.Hp = ResolveMaxHp(
+                    Core.ServiceLocator.Get<ItemDataManager>().GetBuildItemDataByName(data.Name));
+            }
+
+            // W4 家受击通知：房间边界建筑受击即通知房主回防（不等摧毁；睡眠中亦唤醒，
+            // Attack 结束回 Seek 续原任务）。核心格已在上方转调并 return，此处只有普通建筑。
+            RoomInfo hitRoom = Core.ServiceLocator.TryGet<RoomManager>(out RoomManager roomManager)
+                ? roomManager.FindRoomByPoint(pos)
+                : null;
+            if (hitRoom != null)
+            {
+                this.NotifyRoomOwnerUnderAttack(hitRoom, attacker);
             }
 
             Domain.Gameplay.BuildingDamageRuleService.BuildingDamageResult result =
@@ -611,6 +754,8 @@ namespace LAB2D.Map
                 // 与 WorkerDemolishTask.Finish 相同的移除路径：移除瓦片 + 房间失效
                 this.CancelBuilding(pos);
                 Core.ServiceLocator.Get<Item.RoomManager>()?.NotifyBuildingDemolished(pos);
+                // W5 缺墙登记：被摧毁的房间边界格记入房主 HomeRepairCells，白天决策链重建
+                this.RecordDestroyedHomeWall(pos, hitRoom, data.Name);
                 AWorkerTask.LogProvider(
                     $"[BuildDiag] 建筑被摧毁 tile={data.Name} pos=({pos.x},{pos.y})",
                     LogManager.LogLevelEnum.Debug);

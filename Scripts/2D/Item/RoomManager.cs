@@ -219,6 +219,26 @@ namespace LAB2D.Item
         }
 
         /// <summary>
+        /// 按格查房间：该格属于某房间的墙/门 Points 即命中（不区分建造进度）。
+        /// 家受击通知（BuildMap.DamageBuilding）与建筑拆除回调共用。
+        /// </summary>
+        /// <param name="posMap">地图坐标。</param>
+        /// <returns>命中的房间，无则 null。</returns>
+        public RoomInfo FindRoomByPoint(Vector3Int posMap)
+        {
+            foreach (KeyValuePair<string, RoomInfo> kv in Rooms)
+            {
+                RoomInfo room = kv.Value;
+                if (room.Points != null && room.Points.Contains(posMap))
+                {
+                    return room;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// 建筑被拆除回调：若拆除位置是某房间的墙/门位置，则该房间失效——
         /// 从 Rooms 移除并通知 RoofManager 移除对应屋顶（修复拆除后孤屋顶残留）。
         /// 床/仓库等房内家具不在房间 Points 中，拆除它们不影响房间。
@@ -226,17 +246,8 @@ namespace LAB2D.Item
         /// <param name="posMap">被拆除建筑的地图坐标。</param>
         public void NotifyBuildingDemolished(Vector3Int posMap)
         {
-            // 先收集目标房间再退出循环，避免迭代中 RemoveRoom 修改 Rooms 引发枚举异常
-            RoomInfo targetRoom = null;
-            foreach (KeyValuePair<string, RoomInfo> kv in Rooms)
-            {
-                RoomInfo room = kv.Value;
-                if (room.Points != null && room.Points.Contains(posMap))
-                {
-                    targetRoom = room;
-                    break;
-                }
-            }
+            // 先收集目标房间再操作，避免迭代中 RemoveRoom 修改 Rooms 引发枚举异常
+            RoomInfo targetRoom = this.FindRoomByPoint(posMap);
 
             if (targetRoom != null && this.RemoveRoom(targetRoom))
             {

@@ -4,6 +4,8 @@ namespace LAB2D.AI.Worker
     using LAB2D.Character.Worker;
     using LAB2D.Character.Worker.Task;
     using LAB2D.Core.Seek;
+    using LAB2D.Domain.Gameplay.Faction;
+    using LAB2D.Gameplay;
     using LAB2D.Item;
     using LAB2D.Map;
     using System.Collections.Generic;
@@ -41,10 +43,23 @@ namespace LAB2D.AI.Worker
             wd.PlannedHomePosition = null;
         }
 
-        Vector3Int workerPos = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+        // 螺旋搜索原点与半径：无阵营 = 当前位置 r=8（现状）；
+        // 有阵营且核心已放置 = 核心位置 r=12（新房向阵营核心聚拢，核心本就是成员房间质心）
+        Vector3Int origin = AWorkerTask.TileMapWorldToMapProvider(worker.transform.position);
+        int searchRadius = 8;
+        if (wd != null && wd.FactionId != 0
+            && Core.ServiceLocator.TryGet<FactionManager>(out FactionManager factionManager))
+        {
+            WorkerFaction faction = factionManager.GetFactionById(wd.FactionId);
+            if (faction != null && faction.Core.IsPlaced)
+            {
+                origin = new Vector3Int(faction.Core.X, faction.Core.Y, 0);
+                searchRadius = 12;
+            }
+        }
 
-        // 从 Worker 位置向外螺旋搜索空闲位置
-        for (int r = 1; r <= 8; r++)
+        // 从搜索原点向外螺旋搜索空闲位置
+        for (int r = 1; r <= searchRadius; r++)
         {
             for (int dx = -r; dx <= r; dx++)
             {
@@ -52,7 +67,7 @@ namespace LAB2D.AI.Worker
                 {
                     if (System.Math.Abs(dx) != r && System.Math.Abs(dy) != r) continue; // 只检查外围
 
-                    Vector3Int pos = new Vector3Int(workerPos.x + dx, workerPos.y + dy, 0);
+                    Vector3Int pos = new Vector3Int(origin.x + dx, origin.y + dy, 0);
 
                     // 检查是否可通行
                     if (!ASeek.IsCanReach(pos)) continue;
@@ -245,6 +260,59 @@ namespace LAB2D.AI.Worker
             $"{worker.name} 预注册完成: {layout.WallCount}面墙+门+床+4仓库 共{positionsToReserve.Count}个位置",
             LogManager.LogLevelEnum.Debug);
         return true;
+    }
+
+    /// <summary>
+    /// 按布局参数组装 RoomInfo 注册到 RoomManager 并生成屋顶（H1 抽自
+    /// WorkerBuildTask.RegisterWorkerRoom，建房门完成与 W5 缺墙重建共用）。
+    /// Progress = 布局边界格（墙+门）中尚未建成的格数：首次注册时全部已建成=0
+    /// （房间立即生效，与原行为一致）；重建重注册时含建造中/待建格，逐格
+    /// SetComplete → RoomManager.Complete 递减，归 0 房间自然生效。
+    /// </summary>
+    /// <param name="wd">Worker 数据（需已规划 PlannedHomePosition）。</param>
+    /// <param name="ownerName">房间所有者名称。</param>
+    internal static void RegisterWorkerRoom(AWorker.WorkerData wd, string ownerName)
+    {
+        if (wd?.PlannedHomePosition == null) return;
+
+        Vector3Int center = Vector3IntLAB.ToVector3Int(wd.PlannedHomePosition);
+        var layout = WorkerHomeLayout.GetRoomLayout(wd);
+        var roomInfo = new LAB2D.Item.RoomInfo();
+        var buildMap = Core.ServiceLocator.Get<BuildMap>();
+
+        int pending = 0;
+        for (int i = 0; i < layout.WallCount; i++)
+        {
+            Vector3Int pos = center + layout.WallOffsets[i];
+            roomInfo.Points.Add(pos);
+            if (buildMap?.GetBuildTileData(pos) is not { IsComplete: true })
+            {
+                pending++;
+            }
+        }
+
+        Vector3Int doorPos = center + layout.DoorOffset;
+        roomInfo.Points.Add(doorPos);
+        if (buildMap?.GetBuildTileData(doorPos) is not { IsComplete: true })
+        {
+            pending++;
+        }
+
+        roomInfo.Progress = pending;
+        roomInfo.Temperature = 25.0f;
+        roomInfo.Humidity = 25.0f;
+        roomInfo.OwnerName = ownerName;
+
+        Core.ServiceLocator.Get<LAB2D.Item.RoomManager>().AddRoom(
+            System.Guid.NewGuid().ToString(), roomInfo);
+
+        // 房间创建完成 → 生成覆盖整个房间矩形的屋顶（本地玩家进入房间时隐藏，离开恢复显示）
+        LAB2D.Item.RoofManager.Ensure().AddRoof(
+            roomInfo, center, wd.HomeRoomWidth, wd.HomeRoomHeight, ownerName);
+
+        AWorkerTask.LogProvider(
+            $"{ownerName} 房间已注册: {roomInfo.Points.Count} 个墙壁/门位置 待建={pending}",
+            LogManager.LogLevelEnum.Debug);
     }
 
     /// <summary>

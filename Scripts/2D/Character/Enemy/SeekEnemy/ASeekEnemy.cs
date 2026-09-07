@@ -12,6 +12,13 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         private Vector3 direction;
 
         /// <summary>
+        /// 目标锁定截止时刻（Time.time 轴）：被打锁定最近攻击者后 <see cref="AEnemy.ChangeTarget"/>
+        /// 秒内被其他目标打不换目标——新攻击者需持续攻击到锁定到期才能抢走目标
+        ///（2026-09-07 用户要求，同 ACommonEnemy；锁定中被当前目标再打会刷新）。
+        /// </summary>
+        private float targetFocusEndTime;
+
+        /// <summary>
         /// 寻路
         /// </summary>
         public ASeek Seek { get; private set; }
@@ -23,7 +30,11 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         {
             get
             {
-                if (this.Seek.Direction == Vector3.zero)
+                // 攻击方向优先（非零=攻击/攻城状态刚写入）：寻路 Direction 在 StopMove 后
+                // 不清零，旧优先级"寻路方向优先"会让攻击中的感知扇形（SenseNearby 视觉判定）
+                // 朝残留移动方向而非攻击目标——扇形检测区与宝剑方向分叉（2026-09-07 用户报告）。
+                // 攻击退出时由 SeekEnemyAttackState/SiegeState 的 OnExit 清零回落到寻路方向。
+                if (this.direction != Vector3.zero)
                 {
                     // 攻击方向
                     return this.direction;
@@ -101,6 +112,30 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         /// <inheritdoc/>
         public override void ReduceHp(float hp, Character attacker, bool isCRT = false)
         {
+            // 被打锁定最近攻击者（2026-09-07 用户要求，同 ACommonEnemy）：被打即把 Target
+            // 锁定为攻击者——原实现被打只切 Move 不设 Target，Move 无活动路径判"已到达"
+            // 原地休息站桩，且接敌唯一通路的感知轮询每 0.5s 只查 1 个目标（100 Worker
+            // 轮询一圈 ~50s），围殴者轮不到 = "收起武器站着不动被打"。锁定期（被打起
+            // ChangeTarget=5s）内被其他目标打不换目标；被当前锁定目标再打会刷新。
+            if (attacker != null && attacker.CharacterDataLAB != null && attacker.CharacterDataLAB.Hp > 0f)
+            {
+                bool targetInvalid = this.Target == null
+                    || this.Target.CharacterDataLAB == null
+                    || this.Target.CharacterDataLAB.Hp <= 0f;
+                if (targetInvalid || Time.time >= this.targetFocusEndTime)
+                {
+                    if (this.Target != attacker)
+                    {
+                        AWorkerTask.LogProvider(
+                            $"[EnemyDiag] {this.name} 被打锁定目标 → {attacker.name}（旧={this.Target?.name ?? "null"}）",
+                            LogManager.LogLevelEnum.Debug);
+                    }
+
+                    this.Target = attacker;
+                    this.targetFocusEndTime = Time.time + ChangeTarget;
+                }
+            }
+
             // 被打换目标需排除"打我的就是当前攻击目标"：否则单目标战斗中敌人每攻击几秒
             // 被反击一次就切 Move → 立即又切回 Attack，武器反复销毁重建，拿起瞬间方向跳变
             // （"攻击几秒→Move→又攻击"，见 bug-fixes.md 2026-08-16）。只有被其他目标打才换目标。

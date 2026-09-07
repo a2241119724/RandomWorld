@@ -46,6 +46,19 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
         public Transform AimTarget { get; set; }
 
         /// <summary>
+        /// 攻击间隔倍率（默认 1）——按持有者调发射频率：Worker 持有时调高（降低发射
+        /// 频率），敌人/玩家保持默认。有效间隔 = attackInterval × 本值。
+        /// </summary>
+        public float AttackIntervalMultiplier { get; set; } = 1f;
+
+        /// <summary>
+        /// 锁定武器朝向（不跟踪目标/摇杆/鼠标）——攻城固定朝建筑目标开火用：
+        /// true 时 Update 保持外部设置的朝向。不锁会被范围内最近角色劫持武器方向
+        /// （守卫靠近时攻城子弹全打守卫、拆不动墙，且宝剑与感知扇形朝向分叉）。
+        /// </summary>
+        public bool LockAim { get; set; }
+
+        /// <summary>
         /// 武器追踪敌人范围
         /// </summary>
         protected float raduis = 0.0f;
@@ -85,11 +98,21 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
         /// </summary>
         public Transform Head { get; set; }
 
+        /// <summary>有效攻击间隔（秒）= 基础间隔 × 持有者倍率。</summary>
+        private float EffectiveAttackInterval => this.attackInterval * this.AttackIntervalMultiplier;
+
         /// <summary>
-        /// 攻击是否就绪（冷却计时器已达攻击间隔）— 供攻击状态计算移动意图
-        ///（打带跑：就绪→贴近追击，冷却→拉开距离）。
+        /// 攻击是否就绪（冷却计时器已达有效攻击间隔）— 供攻击状态计算移动意图
+        ///（就绪→贴近追击出手）。
         /// </summary>
-        public bool IsAttackReady => this.recordTime >= this.attackInterval;
+        public bool IsAttackReady => this.recordTime >= this.EffectiveAttackInterval;
+
+        /// <summary>
+        /// 攻击被视线遮挡累计秒数：冷却就绪但目标在墙后（LOS 射线命中 Tile/BuildTile）
+        /// 时每帧累加，发射成功清零。攻击状态据此熔断"互相看见却隔墙打不到"的僵持
+        /// ——双方锁着对方空转，谁也不退（2026-09-08 用户报告）。
+        /// </summary>
+        public float AttackBlockedSeconds { get; private set; }
 
         /// <summary>
         /// 攻击间隔（秒）。
@@ -126,7 +149,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
                 return;
             }
 
-            if (this.recordTime >= this.attackInterval)
+            if (this.recordTime >= this.EffectiveAttackInterval)
             {
                 // 视线检测：如果目标在墙后，跳过攻击避免剑光出生即碰墙消失。
                 // 检测对象取攻击目标（AimTarget）优先，回退到范围内最近目标。
@@ -139,7 +162,9 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
                         LayerMask.GetMask("Tile", "BuildTile"));
                     if (hit.collider != null)
                     {
-                        // 目标被墙壁遮挡，跳过本次攻击
+                        // 目标被墙壁遮挡，跳过本次攻击（累计被挡时长供攻击状态熔断隔墙僵持：
+                        // 冷却就绪后 recordTime 封顶恒就绪，每帧都会进此分支）
+                        this.AttackBlockedSeconds += Time.deltaTime;
                         return;
                     }
                 }
@@ -156,6 +181,7 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
                 attackEffect.Onwer = this.character;
                 attackEffect.Damage = this.character.CharacterDataLAB.GetDamage(this.IsCRT);
                 this.recordTime = 0.0f;
+                this.AttackBlockedSeconds = 0f; // 实际发射：隔墙空转累计清零
                 this.DoAttack(attackEffect);
             }
         }
@@ -211,8 +237,8 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
             // 首次执行到此处说明朝向矫正逻辑已就绪，允许攻击
             this.aimInitialized = true;
 
-            // 控制武器攻击的事件间隔
-            if (this.recordTime < this.attackInterval)
+            // 控制武器攻击的事件间隔（含持有者倍率：倍率高时计满更久才允许下次攻击）
+            if (this.recordTime < this.EffectiveAttackInterval)
             {
                 this.recordTime += Time.deltaTime;
             }
@@ -251,11 +277,23 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
             // 否则攻击状态锁定的 Target/LastAttacker 与武器实际方向不一致，
             // 武器在最近几个目标间切换 = "拐到其他方向攻击"（见 bug-fixes.md 2026-08-16）。
             Transform trackTarget = this.AimTarget != null ? this.AimTarget : this.minDistanceCharacter;
-            if (trackTarget != null)
+            if (this.LockAim)
             {
-                // 如果范围内有目标, 跟踪目标
-                // transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(Vector3.up, minDistanceEnemy.position - transform.position), Time.deltaTime * 100);
-                this.transform.rotation = Quaternion.FromToRotation(Vector3.up, trackTarget.position - this.transform.position);
+                // 朝向锁定：保持外部设置的朝向（攻城朝建筑目标），不跟踪任何目标。
+                // minDistanceCharacter 不清空（攻城 LOS 射线用它做回退检测）。
+            }
+            else if (trackTarget != null)
+            {
+                // 如果范围内有目标, 跟踪目标。
+                // 近零保护：目标与自身重合时差向量≈0，FromToRotation(up, zero) 每帧
+                // 无定义抖动 = 武器原地疯狂摆头——保持当前朝向不动（2026-09-08）
+                Vector3 toTarget = trackTarget.position - this.transform.position;
+                if (toTarget.sqrMagnitude > 0.0001f)
+                {
+                    // transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(Vector3.up, minDistanceEnemy.position - transform.position), Time.deltaTime * 100);
+                    this.transform.rotation = Quaternion.FromToRotation(Vector3.up, toTarget);
+                }
+
                 this.minDistanceCharacter = null;
             }
             else if (this.character is Player)

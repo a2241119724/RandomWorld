@@ -29,6 +29,11 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             Attack,
 
             /// <summary>
+            /// 攻城状态 — 夜间长时间追不到角色时攻向最近阵营核心（P4）
+            /// </summary>
+            Siege,
+
+            /// <summary>
             /// 死亡状态
             /// </summary>
             Dead,

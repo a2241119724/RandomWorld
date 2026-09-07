@@ -6,8 +6,10 @@ namespace LAB2D.AI.Worker
     using LAB2D.Core.Seek;
     using LAB2D.Data;
     using LAB2D.Domain.Common;
+    using LAB2D.Domain.Gameplay.Faction;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
+    using LAB2D.Gameplay;
     using LAB2D.Item;
     using LAB2D.Item.Build.Furniture.Bed;
     using LAB2D.Map;
@@ -155,6 +157,10 @@ namespace LAB2D.AI.Worker
             if (workerData == null)
                 return Decision.Make(WorkerDecisionType.Idle, "WorkerData is null");
 
+            // === W5 家园修墙登记：夜里被拆的墙格重新登记公共建造任务（任何 Worker 可接；
+            // 只登记不占本次决策，登记完继续走下方常规决策链）===
+            this.TryRegisterHomeRepair(worker, workerData);
+
             WorkerPersonality p = workerData.Personality;
 
             // === 第1层：生存优先 ===
@@ -280,6 +286,14 @@ namespace LAB2D.AI.Worker
                 }
             }
 
+            // === 阵营创始（P1）：高事业心+高社交者攒够创始金自立门户 ===
+            // 攒钱阶段不返回决策（继续日常赚钱，保留线由 GetEffectiveWalletReserve 抬高）
+            Decision? factionDecision = this.TryMakeFoundFactionDecision(worker, workerData);
+            if (factionDecision.HasValue)
+            {
+                return factionDecision.Value;
+            }
+
             // === 模型决策（正常态 A/B）：开关开启且模型可用时，正常态自主行为交给 MLP ===
             // 生存优先与 Bootstrap 建家仍是硬规则兜底；模型只决策「不饿/不累/精气神充足」的
             // 正常态行为。模型未加载或输出不可行（如附近无资源却要采集）时回退下方硬规则级联。
@@ -316,7 +330,7 @@ namespace LAB2D.AI.Worker
             // === 预扫描：一次扫描供后续复用 ===
             ResourceCandidate? nearbyResource = this.ScanForResources(worker);
             bool canAfford = workerData.Wallet.HasEnough(
-                this.DetermineMinReward() + this.MinimumWalletReserve);
+                this.DetermineMinReward() + this.GetEffectiveWalletReserve(workerData));
 
             // === 建造决策：无家者始终尝试建家（不受 Ambition 门控），有家者 Ambition>65 才扩建 ===
             {
@@ -438,6 +452,66 @@ namespace LAB2D.AI.Worker
             return Decision.Make(WorkerDecisionType.Idle, $"无特别需求, {p}");
         }
 
+        /// <summary>
+        /// W5 家园修墙登记：夜里被拆的墙/门格逐个 AddBuild 重新登记（任务进公共池由
+        /// 分配循环派发，任何 Worker 可接，材料走 SO BuildCosts；任务意外丢失时
+        /// VerifyBuildTasks 扫 PosMap 未完成格接力续建）。登记后按布局参数重注册房间
+        /// （Progress=未建成边界格数，逐格建成递减归 0 房间生效，含屋顶恢复）。
+        /// 位置已被新建筑占用的格直接放弃。事件点级：清单非空才做事，处理一轮即清空。
+        /// </summary>
+        private void TryRegisterHomeRepair(AWorker worker, AWorker.WorkerData wd)
+        {
+            if (wd.HomeRepairCells == null || wd.HomeRepairCells.Count == 0)
+            {
+                return;
+            }
+
+            if (wd.PlannedHomePosition == null)
+            {
+                // 布局参数缺失无法重注册房间：清单作废（已注册房间的房主必有规划位置）
+                wd.HomeRepairCells.Clear();
+                return;
+            }
+
+            var buildMap = Core.ServiceLocator.Get<BuildMap>();
+            if (buildMap == null)
+            {
+                return; // 地图未就绪：清单保留，下次决策再试
+            }
+
+            int registered = 0;
+            foreach (var entry in wd.HomeRepairCells)
+            {
+                if (entry == null || string.IsNullOrEmpty(entry.TileName))
+                {
+                    continue;
+                }
+
+                Vector3Int pos = Vector3IntLAB.ToVector3Int(entry.Pos);
+                if (buildMap.GetBuildTileData(pos) != null)
+                {
+                    continue; // 该格已有建筑（他人新建/已在建造）：无需重建
+                }
+
+                buildMap.AddBuild(pos, entry.TileName);
+                registered++;
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] 修墙登记: {worker.name} {entry.TileName} pos=({pos.x},{pos.y})",
+                    LogManager.LogLevelEnum.Debug);
+            }
+
+            wd.HomeRepairCells.Clear();
+
+            if (registered > 0)
+            {
+                // 全部边界格重注册（含屋顶），Progress 由未建成格数决定，建成归 0 房间生效
+                WorkerHomeSiteService.RegisterWorkerRoom(wd, worker.name);
+                AWorkerTask.LogProvider(
+                    $"[BuildDiag] 修墙登记完成: {worker.name} 共{registered}格已登记，房间重注册待建",
+                    LogManager.LogLevelEnum.Debug);
+            }
+        }
+
         // ---- 模型决策 ----
 
         /// <summary>
@@ -513,7 +587,7 @@ namespace LAB2D.AI.Worker
                 case WorkerDecisionType.PostBounty:
                 {
                     bool canAfford = wd.Wallet.HasEnough(
-                        this.DetermineMinReward() + this.MinimumWalletReserve);
+                        this.DetermineMinReward() + this.GetEffectiveWalletReserve(wd));
                     if (!this.CanPostBounty(worker, wd, canAfford)) return null; // 悬赏门槛不满足
                     ResourceCandidate? rc = this.ScanForResources(worker);
                     if (!rc.HasValue) return null;
@@ -541,7 +615,7 @@ namespace LAB2D.AI.Worker
                 case WorkerDecisionType.SelfBuild:
                 {
                     bool canAfford = wd.Wallet.HasEnough(
-                        this.DetermineMinReward() + this.MinimumWalletReserve);
+                        this.DetermineMinReward() + this.GetEffectiveWalletReserve(wd));
                     Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, wd, canAfford);
                     if (!buildDecision.HasValue) return null;
 
@@ -627,7 +701,7 @@ namespace LAB2D.AI.Worker
 
             // 5. 尝试建造（不受 Ambition 门控！）
             bool canAfford = wd.Wallet.HasEnough(
-                this.DetermineMinReward() + this.MinimumWalletReserve);
+                this.DetermineMinReward() + this.GetEffectiveWalletReserve(wd));
             Decision? buildDecision = this.TryMakeSelfBuildDecision(worker, wd, canAfford);
             if (buildDecision.HasValue)
             {
@@ -2244,6 +2318,61 @@ namespace LAB2D.AI.Worker
         }
 
         // ---- 工具方法 ----
+
+        /// <summary>
+        /// 阵营创始决策（P1）：无阵营 + 事业心/社交过门槛 + Established + 名额未满者，
+        /// 攒够创始金（+安全垫）即返回 FoundFaction 决策；攒钱阶段返回 null 继续日常。
+        /// 门槛规则集中在 FactionCreationRuleService，此处只做快照组装。
+        /// </summary>
+        private Decision? TryMakeFoundFactionDecision(AWorker worker, AWorker.WorkerData workerData)
+        {
+            if (workerData.FactionId != 0)
+            {
+                return null;
+            }
+
+            if (!Core.ServiceLocator.TryGet<FactionManager>(out FactionManager factionManager))
+            {
+                return null;
+            }
+
+            FactionFounderSnapshot snapshot = factionManager.BuildFounderSnapshot(workerData);
+            if (!FactionCreationRuleService.ShouldSaveForFaction(in snapshot))
+            {
+                return null;
+            }
+
+            if (FactionCreationRuleService.CanFound(in snapshot))
+            {
+                return Decision.Make(WorkerDecisionType.FoundFaction,
+                    $"事业心({workerData.Personality.Ambition:F0})+声望({workerData.Personality.Sociality:F0})兼备，攒够本钱自立门户");
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 有效钱包保留线：阵营攒钱者把「创始金+安全垫」抬进保留线，
+        /// 抑制悬赏/奢侈支出把创始金花掉（四处 canAfford 预扫描共用，
+        /// Bootstrap 阶段天然不满足攒钱条件返回基线）。
+        /// </summary>
+        private CurrencyAmount GetEffectiveWalletReserve(AWorker.WorkerData workerData)
+        {
+            if (workerData.FactionId != 0
+                || !Core.ServiceLocator.TryGet<FactionManager>(out FactionManager factionManager))
+            {
+                return this.MinimumWalletReserve;
+            }
+
+            FactionFounderSnapshot snapshot = factionManager.BuildFounderSnapshot(workerData);
+            if (!FactionCreationRuleService.ShouldSaveForFaction(in snapshot))
+            {
+                return this.MinimumWalletReserve;
+            }
+
+            return new CurrencyAmount(
+                FactionCreationRuleService.FoundingCostGold + FactionCreationRuleService.WalletReserveAfterFounding);
+        }
 
         private CurrencyAmount DetermineMinReward()
         {

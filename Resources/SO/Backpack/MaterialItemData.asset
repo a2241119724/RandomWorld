@@ -18,6 +18,8 @@ MonoBehaviour:
     CnName: "\u6728\u5934"
     Name: CustomWood
     Info: "\u780D\u6811\u5F97\u5230\u7684\u6728\u5934\uFF0C\u53EF\u4EE5\u5EFA\u623F\u5B50"
+    SellPrice: 3
+    BuyPrice: 5
     IsStackable: 1
     Type: 3
     EquipSlot: 0
@@ -28,6 +30,8 @@ MonoBehaviour:
     CnName: "\u77F3\u5934"
     Name: CustomStone
     Info: "\u5F00\u91C7\u5F97\u5230\u7684\u77F3\u5934\uFF0C\u53EF\u4EE5\u5EFA\u623F\u5B50"
+    SellPrice: 3
+    BuyPrice: 5
     IsStackable: 1
     Type: 3
     EquipSlot: 0

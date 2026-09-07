@@ -310,6 +310,14 @@ namespace LAB2D.Character.Worker
                 this.UpdateHeadUiVisibility();
             }
 
+            // W6 常态索敌（%30 错相 ≈0.5s/次，全天）：Worker 主动扫描周围敌人，
+            // 感知即接敌（复用反击链——Attack 结束回 Seek 续原任务，睡眠中被唤醒
+            // 打完回床续睡）；Defend/Raid 任务自带索敌不重扫
+            if ((Time.frameCount + this.FramePhase) % 30 == 0)
+            {
+                this.TrySenseEnemy();
+            }
+
             // 消费延迟打断：推送分配/链式交接可能在任务 Finish / 分配循环的调用栈内写入新任务
             //（SetTask 置位标记但绝不同步切状态），现在栈已退回主循环——切 Seek 重寻路新目标。
             // 豁免：Dead（清标记，死人不再接手）；Attack/Escape（保命优先，保留标记，
@@ -1173,6 +1181,57 @@ namespace LAB2D.Character.Worker
                 source == WorkerTaskSource.SelfDecision ? LogManager.LogLevelEnum.Trace : LogManager.LogLevelEnum.Debug);
         }
 
+        /// <summary>常态索敌半径（格，与 WorkerDefendTask.DefendSightRange 一致）。</summary>
+        private const float SenseEnemyRadius = 8f;
+
+        /// <summary>
+        /// W6 常态索敌（全天）：Worker 每 ~0.5s 扫描周围敌人
+        /// （SkillTool 空间网格最近邻，零分配），感知即设置 LastAttacker 切 Attack
+        /// （复用被动反击链——Attack 结束回 Seek 续原任务，睡眠中被唤醒打完回床续睡）。
+        /// Attack/Dead/Escape 不重入；Defend/Raid 任务执行中自带索敌扫描，跳过防重复。
+        /// </summary>
+        private void TrySenseEnemy()
+        {
+            WorkerData wd = this.CharacterDataLAB as WorkerData;
+            if (wd == null)
+            {
+                return;
+            }
+
+            AWorkerState.TypeEnum state = this.Manager.CurrentStateType;
+            if (state == AWorkerState.TypeEnum.Attack
+                || state == AWorkerState.TypeEnum.Dead
+                || state == AWorkerState.TypeEnum.Escape)
+            {
+                return;
+            }
+
+            // Defend/Raid 任务执行中自带 0.5s 索敌扫描（WorkerDefendTask 模式），此处不重扫
+            if (wd.Task is WorkerDefendTask || wd.Task is WorkerFactionRaidTask)
+            {
+                return;
+            }
+
+            AEnemy enemy = SkillTool.GetNearestEnemyInRadius(
+                this.transform.position, SenseEnemyRadius, out _);
+            if (enemy == null)
+            {
+                return;
+            }
+
+            // 视线遮挡：墙/地形挡住的敌人不可见（探测不穿碰撞体，墙内看不到墙外）
+            if (!SkillTool.HasLineOfSight(this.transform.position, enemy.transform.position))
+            {
+                return;
+            }
+
+            this.LastAttacker = enemy;
+            this.Manager.ChangeState(AWorkerState.TypeEnum.Attack);
+            AWorkerTask.LogProvider(
+                $"[DefenceDiag] {this.name} 索敌接敌 → {enemy.name}@({enemy.transform.position.x:F0},{enemy.transform.position.y:F0})",
+                LogManager.LogLevelEnum.Debug);
+        }
+
         /// <summary>
         /// 紧急生存检测（原 WorkerSeekState.OnUpdate 紧急块上移，每 10 帧调用一次）：
         /// 饥饿/疲劳/精气神/压力超过生存阈值时强制放弃当前任务回 Seek 重决策。
@@ -1820,6 +1879,26 @@ namespace LAB2D.Character.Worker
             /// <summary>门在该边的位置索引（0-based，不含角）。</summary>
             public int HomeDoorIndex;
 
+            /// <summary>
+            /// 缺墙待修条目 — 摧毁时记下位置与原瓦片名（墙变体 CustomRoomWall_{0..7}
+            /// 摧毁后无法从地图重算，必须当场记录），白天决策链逐格 AddBuild 重建（W5）。
+            /// </summary>
+            [Serializable]
+            public class HomeRepairEntry
+            {
+                /// <summary>被摧毁的边界格（墙/门）。</summary>
+                public Vector3IntLAB Pos;
+
+                /// <summary>摧毁前的瓦片名（含方向变体后缀）。</summary>
+                public string TileName;
+            }
+
+            /// <summary>
+            /// 家缺墙待修清单 — 夜袭拆掉的房间边界格，白天决策链逐格重新登记建造（W5）。
+            /// 读旧档可能为 null（BinaryFormatter 不跑构造函数），使用前判空懒初始化。
+            /// </summary>
+            public System.Collections.Generic.List<HomeRepairEntry> HomeRepairCells;
+
             /// <summary>当前精气神值。</summary>
             public float CurSpirit = 100.0f;
 
@@ -1840,6 +1919,9 @@ namespace LAB2D.Character.Worker
 
             /// <summary>生命周期阶段。</summary>
             public Domain.Worker.WorkerLifeStage LifeStage = Domain.Worker.WorkerLifeStage.Bootstrap;
+
+            /// <summary>所属阵营 ID（0=无阵营；FactionManager 阵营自增从 1 起）。</summary>
+            public int FactionId;
 
             /// <summary>连续地面睡眠次数（用于递增惩罚）。</summary>
             public int GroundSleepCount;

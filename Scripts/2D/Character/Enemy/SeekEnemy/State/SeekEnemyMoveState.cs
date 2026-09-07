@@ -1,6 +1,7 @@
 namespace LAB2D.Character.Enemy.SeekEnemy.State
 {
     using LAB2D;
+    using LAB2D.Domain.Time;
     using UnityEngine;
 
     public class SeekEnemyMoveState : ASeekEnemyState
@@ -13,8 +14,8 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         private int senseTargetIndex = 0;
 
         /// <summary>
-        /// 感知帧相位（实例 id 低 2 位）：frameCount % 4 是全局相位，全部 SeekEnemy 会在
-        /// 第 4n 帧同帧集中感知（尖峰）；按实例错开后每敌人仍每 4 帧感知一次，仅相位摊开。
+        /// 感知帧相位（实例 id 低 6 位）：感知周期 30 帧（0.5s），全局相位会让全部
+        /// SeekEnemy 同帧集中感知（尖峰）；按实例错开相位摊到 30 帧窗口内不同帧。
         /// </summary>
         private readonly int sensePhase;
 
@@ -32,11 +33,17 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         /// </summary>
         private readonly float roamRestSeconds = 2f + UnityEngine.Random.Range(0f, 1.5f);
 
+        /// <summary>攻城触发阈值：夜间连续这么多秒未感知到任何角色 → 攻向最近阵营核心（P4）。</summary>
+        private const float SiegeDelaySeconds = 8f;
+
+        /// <summary>未感知角色累计秒数（感知命中清零；达 SiegeDelaySeconds 且夜间有核心 → Siege）。</summary>
+        private float noSenseSeconds;
+
         public SeekEnemyMoveState(ASeekEnemy character)
         : base(character)
         {
-            // 补码低 2 位对负 id 也非负
-            this.sensePhase = character.GetInstanceID() & 3;
+            // 补码低 6 位对负 id 也非负（30 帧周期 64 个相位足够错开）
+            this.sensePhase = character.GetInstanceID() & 63;
         }
 
         public override void OnEnter()
@@ -50,6 +57,20 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 $"{this.Character.name}|MoveIn", 2f,
                 $"[EnemyDiag] {this.Character.name} → Move",
                 LogManager.LogLevelEnum.Debug);
+
+            // 追击进入（被打锁定/脱战重入）：Target 非空且存活 → 朝目标附近可走格重新寻路。
+            // 不寻路则无活动路径，MoveByPath 判"已到达"原地休息 2s 回 Seek——
+            // 被打后全程站桩挨打的根因（2026-09-07 用户报告）。寻的是目标邻格而非
+            // 目标本格：A* 不考虑目标占格排斥，直寻本格会走到与目标重合（2026-09-08
+            // 用户报告"靠近直到重合然后一直摆头"）。
+            if (this.Character.Target != null
+                && this.Character.Target.CharacterDataLAB != null
+                && this.Character.Target.CharacterDataLAB.Hp > 0f)
+            {
+                Vector3Int pursuitMap = AWorkerTask.GenCanReachPosProvider(
+                    AWorkerTask.TileMapWorldToMapProvider(this.Character.Target.transform.position));
+                this.Character.Seek.Seek(pursuitMap);
+            }
 
             // 重置卡死熔断计数（新目标/新进入移动 → 从头计数）
             this.stuckStreak = 0;
@@ -73,10 +94,26 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             base.OnUpdate();
 
             // 没有武器, 不进入攻击状态
-            // 感知检查降频：每4帧检查一次（按实例相位错开，见 sensePhase 注释），每帧只检查一个目标（轮询）
+            // 感知检查降频：每 30 帧检查一次 ≈0.5s（按实例相位错开，见 sensePhase 注释），
+            // 每次只检查一个目标（轮询，与 Worker 侧 0.5s 索敌对齐）
             if (this.Character.CharacterDataLAB.Weapon != null
-                && ((UnityEngine.Time.frameCount + this.sensePhase) & 3) == 0)
+                && (UnityEngine.Time.frameCount + this.sensePhase) % 30 == 0)
             {
+                // 锁定目标优先快查：Target 非空且存活先感知它——追击/被打锁定场景下
+                // 等全目标轮询圈（100 Worker ≈50s）轮到攻击者太久，围殴者贴脸却反击不了
+                bool targetAlive = this.Character.Target != null
+                    && this.Character.Target.CharacterDataLAB != null
+                    && this.Character.Target.CharacterDataLAB.Hp > 0f;
+                if (targetAlive && this.Character.SenseNearby(this.Character.Target.transform))
+                {
+                    this.noSenseSeconds = 0f;
+                    this.Character.Manager.ChangeState(TypeEnum.Attack);
+                    AWorkerTask.LogProvider(
+                        $"[EnemyDiag] {this.Character.name} 追击锁定目标进入攻击 target={this.Character.Target.name}",
+                        LogManager.LogLevelEnum.Debug);
+                    return;
+                }
+
                 int playerCount = Core.GameServices.PlayerCountProvider();
                 int workerCount = Core.GameServices.WorkerCountProvider();
                 int totalTargets = playerCount + workerCount;
@@ -103,6 +140,7 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                         // prefab 默认朝上（z=0），同帧 AttackRange 跟随武器朝空方向闪一下
                         // 再拐回——即"攻击时拐向没有角色的地方攻击一次"（见 bug-fixes.md 2026-08-16）。
                         this.Character.Target = target.GetComponent<LAB2D.Character.Character>();
+                        this.noSenseSeconds = 0f;
                         this.Character.Manager.ChangeState(TypeEnum.Attack);
 
                         // 攻击目标选定事件（一次性）
@@ -112,6 +150,18 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                         return;
                     }
                 }
+            }
+
+            // 攻城判定（P4→W3 修正）：连续 SiegeDelaySeconds 秒没感知到任何角色 → 转 Siege。
+            // 不分昼夜、不要求有阵营核心——目标选择交给 SiegeState.OnEnter（最近核心优先，
+            // 无核心拆最近房间墙格，全无回 Seek）。此前入口要求 Night+HasPlacedCore，
+            // 无核心的局 Enemy 永远进不了 Siege（夜袭拆家看不到的根因）。
+            this.noSenseSeconds += this.Character.DeltaTime;
+            if (this.noSenseSeconds >= SiegeDelaySeconds)
+            {
+                this.noSenseSeconds = 0f;
+                this.Character.Manager.ChangeState(TypeEnum.Siege);
+                return;
             }
 
             // 设置视觉角度

@@ -243,6 +243,110 @@ namespace LAB2D.Constant
             "你的忙，我不想帮。",
         };
 
+        /// <summary>创立阵营的独白（{0}=阵营名）。</summary>
+        private static readonly string[] EvtFactionFound = new[]
+        {
+            "从今日起，我就是「{0}」之主！",
+            "攒了这么久，终于能自立门户了！",
+            "招兵买马，共图大业！",
+        };
+
+        /// <summary>加入阵营的独白（{0}=阵营名）。</summary>
+        private static readonly string[] EvtFactionJoin = new[]
+        {
+            "「{0}」正合我意，入伙了！",
+            "跟着「{0}」，心里踏实。",
+            "独木难支，找个同伴多的去处。",
+        };
+
+        /// <summary>退出阵营的独白（{0}=阵营名）。</summary>
+        private static readonly string[] EvtFactionLeave = new[]
+        {
+            "道不同不相为谋，「{0}」就此别过。",
+            "此处不留人，自有留人处。",
+            "散了吧，各奔前程。",
+        };
+
+        /// <summary>完成阵营任务的独白（{0}=阵营名）。</summary>
+        private static readonly string[] EvtFactionQuestDone = new[]
+        {
+            "替「{0}」办妥了一桩差事。",
+            "任务完成，功劳簿上该记我一笔。",
+            "为「{0}」出力，义不容辞。",
+        };
+
+        /// <summary>阵营晋职的独白（{0}=阵营名）。</summary>
+        private static readonly string[] EvtFactionRankUp = new[]
+        {
+            "承蒙看重，我在「{0}」升了职！",
+            "多年耕耘，总算在「{0}」有了名分。",
+            "位子越高，责任越重啊。",
+        };
+
+        /// <summary>选举拉票的独白（{0}=阵营名）。</summary>
+        private static readonly string[] EvtFactionCampaign = new[]
+        {
+            "各位道友，选我当「{0}」之主，绝不负所托！",
+            "「{0}」要兴旺，还得看我！",
+            "一票一诺，我记在心里。",
+        };
+
+        /// <summary>当选领袖的独白（{0}=阵营名）。</summary>
+        private static readonly string[] EvtFactionElectionWin = new[]
+        {
+            "众人抬爱，我定带「{0}」走向鼎盛！",
+            "既然信我，「{0}」的事就是我的事！",
+            "新官上任，先烧三把火！",
+        };
+
+        /// <summary>选举落败的独白（{0}=阵营名）。</summary>
+        private static readonly string[] EvtFactionElectionLose = new[]
+        {
+            "「{0}」交到别人手里，但愿是好事。",
+            "输了就是输了，来日再战。",
+            "也罢，正好清闲些。",
+        };
+
+        /// <summary>阵营核心被击破的独白（{0}=阵营名）。</summary>
+        private static readonly string[] EvtFactionCoreDownfall = new[]
+        {
+            "「{0}」的核心塌了……得重振旗鼓！",
+            "核心失守，家底都赔进去了。",
+            "这一夜，刻骨铭心。",
+        };
+
+        /// <summary>阵营解散的独白（{0}=阵营名）。</summary>
+        private static readonly string[] EvtFactionDissolve = new[]
+        {
+            "「{0}」散了……各寻出路吧。",
+            "大势已去，就此别过。",
+            "树倒猢狲散，唉。",
+        };
+
+        /// <summary>阵营宣战的独白（{0}=敌对阵营名）。</summary>
+        private static readonly string[] EvtFactionWarDeclare = new[]
+        {
+            "与「{0}」刀兵相见，此战难免！",
+            "「{0}」欺人太甚，开战！",
+            "传令下去，向「{0}」进军！",
+        };
+
+        /// <summary>攻伐出征/被掠的独白（{0}=敌对阵营名）。</summary>
+        private static readonly string[] EvtFactionWarRaid = new[]
+        {
+            "杀进「{0}」，夺其金库！",
+            "此行若成，「{0}」气数尽矣。",
+            "「{0}」的家底，搬空为止！",
+        };
+
+        /// <summary>阵营和谈的独白（{0}=敌对阵营名）。</summary>
+        private static readonly string[] EvtFactionPeace = new[]
+        {
+            "与「{0}」罢兵休战，善莫大焉。",
+            "仗打够了，与「{0}」言和吧。",
+            "化干戈为玉帛，各安生业。",
+        };
+
         /// <summary>意愿低落导致的拖延（没心情/没干劲）。</summary>
         private static readonly string[] DelayWillingness = new[]
         {
@@ -639,6 +743,45 @@ namespace LAB2D.Constant
                     break;
                 case WorkerMindConstant.EVT_GIFT_PLAYER:
                     pool = EvtGiftPlayer;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_FOUND:
+                    pool = EvtFactionFound;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_JOIN:
+                    pool = EvtFactionJoin;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_LEAVE:
+                    pool = EvtFactionLeave;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_QUEST_DONE:
+                    pool = EvtFactionQuestDone;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_RANK_UP:
+                    pool = EvtFactionRankUp;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_CAMPAIGN:
+                    pool = EvtFactionCampaign;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_ELECTION_WIN:
+                    pool = EvtFactionElectionWin;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_ELECTION_LOSE:
+                    pool = EvtFactionElectionLose;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_CORE_DOWNFALL:
+                    pool = EvtFactionCoreDownfall;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_DISSOLVE:
+                    pool = EvtFactionDissolve;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_WAR_DECLARE:
+                    pool = EvtFactionWarDeclare;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_WAR_RAID:
+                    pool = EvtFactionWarRaid;
+                    break;
+                case WorkerMindConstant.EVT_FACTION_PEACE:
+                    pool = EvtFactionPeace;
                     break;
                 default:
                     return string.Empty;

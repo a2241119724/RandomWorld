@@ -55,6 +55,12 @@ namespace LAB2D.Enum
         /// <summary>探索上古洞府 — 寻路到洞府邻格驻留推进，完成时风险/奖励结算（AncientCaveManager 派发）</summary>
         Explore,
 
+        /// <summary>阵营任务 — FactionManager 日更生成、同阵营 Worker 领取，完成结算贡献+金库付款（P2）</summary>
+        FactionQuest,
+
+        /// <summary>阵营攻伐 — 攻伐窗口出征敌核心，抵达掠夺金库后返回（FactionManager 战争调度，P5）</summary>
+        FactionRaid,
+
         /// <summary>哨兵值 — 必须始终在最后，用于动态数组大小</summary>
         _Count,
     }

@@ -4,6 +4,7 @@ namespace LAB2D.Gameplay
     using LAB2D;
     using LAB2D.Character.Worker.Task.Individual;
     using LAB2D.Domain.Character.Growth;
+    using LAB2D.Domain.Gameplay.Faction;
     using LAB2D.Domain.Time;
     using LAB2D.Domain.Worker;
     using LAB2D.Enum;
@@ -12,12 +13,14 @@ namespace LAB2D.Gameplay
 
     /// <summary>
     /// 防守夜调度（M2A 包 2.1）— 入夜时按 <see cref="DefenceDraftRuleService"/>
-    /// 给每名 Worker 决策并派发 <see cref="WorkerDefendTask"/>：参战者驻守山门核心旁、
+    /// 给每名 Worker 决策并派发 <see cref="WorkerDefendTask"/>：参战者驻守阵营核心旁、
     /// 躲避者缩回床/家旁、趁乱者溜到远处游荡（觉醒者优先参战，由打分保证）。
     /// 任务时长 = 距黎明秒数，到点自然 Finish，无需结束清理；
     /// 单例，由 GlobalInit 注册（IInitializable 订阅相位事件 + ITickable 补派扫描）。
     /// 生存打断补派（M2A 审查中 4）：防守任务被生存紧急打断（吃饭/睡觉等）后，
     /// Tick 2s 节流扫描把已脱离生存任务的 Worker 拉回防守——否则参战人力整夜流失。
+    /// W2 收紧（2026-09-07）：锚点只剩阵营核心——无阵营/核心未放置者不集结
+    /// （山门不再自动派人守），夜间正常作息，家园受击由受击通知单独唤醒回防。
     /// </summary>
     public class WorkerDefenceManager : Singleton<WorkerDefenceManager>, IInitializable, ITickable
     {
@@ -79,7 +82,9 @@ namespace LAB2D.Gameplay
             this.RunNightDraft();
         }
 
-        /// <summary>入夜点名：逐 Worker 决策 + 派防守待命任务（事件点，每夜一次）。</summary>
+        /// <summary>入夜点名：逐 Worker 决策 + 派防守待命任务（事件点，每夜一次）。
+        /// P4 多核心分组：每 Worker 按 ResolveDefendAnchor 分到自己的守卫锚点
+        /// （阵营成员守阵营核心；无阵营者锚点为 null 不集结，夜间正常作息）。</summary>
         private void RunNightDraft()
         {
             WorkerManager wm = Core.ServiceLocator.Get<WorkerManager>();
@@ -88,12 +93,11 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            // 无山门核心（未放置）：无处可守，不部署（村民按各自日常过夜）
-            if (!Core.ServiceLocator.TryGet<MountainGateManager>(out MountainGateManager gate)
-                || !gate.IsCorePlaced)
+            // 无任何守卫锚点（W2 收紧后仅看阵营核心）：无处可守，不部署
+            if (!this.HasAnyDefendAnchor())
             {
                 AWorkerTask.LogProvider(
-                    "[DefenceDiag] 入夜但山门核心未放置，跳过防守draft",
+                    "[DefenceDiag] 入夜但无阵营核心可守（无阵营者不集结，正常作息），跳过防守draft",
                     LogManager.LogLevelEnum.Debug);
                 return;
             }
@@ -112,16 +116,70 @@ namespace LAB2D.Gameplay
                 GlobalData.GameDayTime,
                 GamePhase.Dawn);
 
-            List<Vector3Int> coreCells = ABuildItem.GetOccupiedPositions(
-                gate.CorePosition, MountainGateManager.CoreSize, MountainGateManager.CoreSize,
-                AWorkerTask.RectType.BottomLeft);
-            List<Vector3Int> defendPositions = this.CollectDefendPositions(coreCells);
-            int defendPosCursor = 0;
             FavorabilityManager favorability = Core.ServiceLocator.Get<FavorabilityManager>();
+            this.DraftAllWorkers(wm.Characters, favorability, nightSeconds, true);
+        }
 
-            foreach (AWorker worker in wm.Characters)
+        /// <summary>守卫锚点是否存在（W2 收紧：仅任一阵营核心已放置；山门不再触发自动集结）。</summary>
+        private bool HasAnyDefendAnchor()
+        {
+            return Core.ServiceLocator.TryGet<FactionManager>(out FactionManager factions)
+                && factions.HasPlacedCore;
+        }
+
+        /// <summary>
+        /// 解析 Worker 的守卫锚点（W2 收紧）：仅「有阵营且阵营核心已放置」→ 守它（各守各核）；
+        /// 无阵营 / 阵营核心未放置 / 阵营系统未启动 → null（不集结，夜间正常作息，
+ /// 家园受击由 BuildMap.DamageBuilding 的受击通知单独唤醒回防）。
+        /// </summary>
+        private Vector3Int? ResolveDefendAnchor(AWorker worker)
+        {
+            if (Core.ServiceLocator.TryGet<FactionManager>(out FactionManager factions))
             {
-                this.DraftWorker(worker, favorability, nightSeconds, defendPositions, ref defendPosCursor, true);
+                WorkerFaction faction = factions.GetFactionOfWorker(worker);
+                if (faction != null && faction.Core.IsPlaced)
+                {
+                    return new Vector3Int(faction.Core.X, faction.Core.Y, 0);
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 分组派发（入夜 draft 与补派共用）：按锚点懒构建待命位 + 独立游标轮转。
+        /// 锚点即 3×3 核心主格（阵营核心与山门同尺寸）。
+        /// </summary>
+        private void DraftAllWorkers(
+            List<AWorker> workers,
+            FavorabilityManager favorability,
+            float defendSeconds,
+            bool showBubble)
+        {
+            var defendPositionsByAnchor = new Dictionary<Vector3Int, List<Vector3Int>>();
+            var cursorByAnchor = new Dictionary<Vector3Int, int>();
+
+            foreach (AWorker worker in workers)
+            {
+                Vector3Int? anchor = this.ResolveDefendAnchor(worker);
+                if (anchor == null)
+                {
+                    continue;
+                }
+
+                if (!defendPositionsByAnchor.TryGetValue(anchor.Value, out List<Vector3Int> defendPositions))
+                {
+                    List<Vector3Int> coreCells = ABuildItem.GetOccupiedPositions(
+                        anchor.Value, FactionManager.CoreSize, FactionManager.CoreSize,
+                        AWorkerTask.RectType.BottomLeft);
+                    defendPositions = this.CollectDefendPositions(coreCells);
+                    defendPositionsByAnchor[anchor.Value] = defendPositions;
+                    cursorByAnchor[anchor.Value] = 0;
+                }
+
+                int cursor = cursorByAnchor[anchor.Value];
+                this.DraftWorker(worker, favorability, defendSeconds, defendPositions, ref cursor, showBubble);
+                cursorByAnchor[anchor.Value] = cursor;
             }
         }
 
@@ -156,8 +214,7 @@ namespace LAB2D.Gameplay
                 return;
             }
 
-            if (!Core.ServiceLocator.TryGet<MountainGateManager>(out MountainGateManager gate)
-                || !gate.IsCorePlaced)
+            if (!this.HasAnyDefendAnchor())
             {
                 return;
             }
@@ -181,17 +238,10 @@ namespace LAB2D.Gameplay
                 GameTimeManager.Instance.CurGameTime,
                 GlobalData.GameDayTime,
                 GamePhase.Dawn);
-            List<Vector3Int> coreCells = ABuildItem.GetOccupiedPositions(
-                gate.CorePosition, MountainGateManager.CoreSize, MountainGateManager.CoreSize,
-                AWorkerTask.RectType.BottomLeft);
-            List<Vector3Int> defendPositions = this.CollectDefendPositions(coreCells);
-            int defendPosCursor = 0;
             FavorabilityManager favorability = Core.ServiceLocator.Get<FavorabilityManager>();
 
-            foreach (AWorker worker in candidates)
-            {
-                this.DraftWorker(worker, favorability, remainSeconds, defendPositions, ref defendPosCursor, false);
-            }
+            // P4 多核心分组：补派按各自锚点拉回（与入夜 draft 同一解析链）
+            this.DraftAllWorkers(candidates, favorability, remainSeconds, false);
         }
 
         /// <summary>补派候选判定：脱离防守 + 不在生存任务/紧急状态/战斗脱身/对话暂停。</summary>
