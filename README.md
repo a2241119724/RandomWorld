@@ -70,6 +70,7 @@ Assets/
 * 功法按照Worker的开的脉判断是否可学习，跟灵根相关
 * 加入世界Boss
 * Worker加入阵营
+* Defend重设计
 
 ## 开发环境
 
