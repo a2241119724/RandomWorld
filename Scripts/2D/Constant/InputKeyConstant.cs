@@ -186,6 +186,13 @@ namespace LAB2D.Constant
         public const KeyCode ToggleSessionModifierHud = KeyCode.H;
 
         /// <summary>
+        /// 常驻提示 HUD 显示/隐藏 (P键, P=Popup)
+        /// 切换显示最近一条 Tip 文本（弹窗 5 秒淡出后仍常驻于此）。
+        /// F 系 HUD 键位已满（F8 实测无效禁用）。仅在无 UI 输入框聚焦时生效。
+        /// </summary>
+        public const KeyCode ToggleTipHud = KeyCode.P;
+
+        /// <summary>
         /// 加入附近战斗 (B键, B=Battle)
         /// 靠近大世界 Worker vs Enemy 交战区时，进入洛克王国式回合制对战面板。
         /// 仅在无 UI 输入框聚焦、无面板打开且非战斗中生效。

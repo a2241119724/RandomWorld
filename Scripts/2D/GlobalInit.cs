@@ -503,6 +503,7 @@ namespace LAB2D
 
         public void ShowTip(string text)
         {
+            TipHUD.PublishLatest(text); // 常驻 HUD 同步最新一条（弹窗 5 秒淡出后仍可见）
             GameObject g = ServiceLocator.Get<ResourceManager>().Instantiate(PrefabConstant.TIP);
             if (g == null)
             {
