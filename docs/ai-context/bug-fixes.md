@@ -836,3 +836,76 @@
 - **教训（十、十一轮追加）**：①**UGUI 的 UpdateBatches 是"每激活 Canvas"的每帧固定税**——Canvas 数量本身就是成本，世界空间 UI（头顶条）数量大时视野剔除是第一杠杆；`Canvas.enabled=false` 只停渲染，子脚本（过渡/计时）照常跑，行为语义不变。②**CompositeCollider2D 吸收多少 collider 就要在任何变化时全量重建多少**——「合并去缝 + 退出序列化轻量」的收益与「单格编辑全量重建」的代价是同一枚硬币；可编辑地形（挖山永久改地形）必须按空间粒度拆 Composite，chunk 越小单次重建越便宜；接缝幽灵碰撞风险与重建成本是一对可调的 trade-off（当前取 64 chunk，实测贴墙滑动验证）。
 - **已修（第十二轮，2026-09-07）**：**生成敌人即抛 UnityException: NameToLayer is not allowed to be called from a MonoBehaviour constructor**——`AEnemy` 新增的感知遮挡层写成静态字段初始化器 `static readonly LayerMask = LayerMask.GetMask("Tile","BuildTile")`，任何敌人子类实例化（构造函数执行）首次触碰 `AEnemy` 类型即触发 `.cctor`，而 GetMask 内部走 NameToLayer（Unity 主线程 API），构造期调用被 Unity 判非法 → TypeInitializationException，EnemyManager.GenEnemy 协程连续炸（Instantiate 一帧内构造+Awake 双触发）。修复（AEnemy.cs）：改惰性初始化属性——静态字段存值 + bool ready 标记，getter 首次调用时 GetMask（SenseNearby 在 Start 后的运行时生命周期被调，合法点）。
 - **教训（第十二轮追加）**：**LayerMask.GetMask / NameToLayer / 一切 Unity 主线程 API 禁止出现在字段初始化器（含 static readonly）**——`.cctor` 由构造函数触发，Unity 视同"从构造函数调用"；静态 LayerMask 缓存的正确写法是惰性属性或 Awake 里赋值（项目内 AEnemy.Awake 的 AttackLayers 即合法范本）。
+- **已修（第十三轮，2026-09-08）**：**敌人实际攻击范围与检测范围不一致——视野边缘看见目标就进攻击站桩空挥**。现象：敌人（SeekEnemy 系，含 ChargeEnemy）在 SightRange=10 扇形边缘"看见"目标立即进入攻击状态，武器特效实际够不着却持续空挥（目标一直可见 → SenseNearby 永不失联 → 攻击状态 2s 失联退出永不触发）。根因：**三套范围数互不挂钩且状态机用错了一套**——① 检测范围（`SenseNearby`：Sight=10/Sound=4，AEnemy.EnemyData）；② 红色攻击扇形视觉（`EnemyData.AttackRange=4`，AEnemy.Start 画）；③ 武器实际追踪/攻击范围（`AWeaponObject.raduis`：剑 8/枪 5）。`SeekEnemyMoveState.OnUpdate` 感知命中后**无距离判断**直接 `ChangeState(Attack)`，而 `SeekEnemyAttackState` 又没有任何贴近移动逻辑（对比 WorkerAttackState.UpdateCombatIntent 的 `dist>attackRange×1.2→Chase`）。修复（2 文件）：① SeekEnemyMoveState——感知命中抽 `TryEnterAttack(target)`：`dist≤EnemyData.AttackRange` 才切 Attack，否则锁定 Target 留 Move 追击（`RepathPursuit` 朝目标邻格周期重寻路，`PursuitRepathInterval=1s` 节流 + 同格跳过防重复 A*）；到达目标格的追击场景不休息回 Seek，改试切攻击/重贴近；② SeekEnemyAttackState——OnUpdate 加脱离判定：`dist>AttackRange×1.2`（滞回对齐 Worker 的 ChaseRangeFactor）→ 回 Move（OnEnter 追击分支重新贴近，Target 不清）。红色扇形（4）从此=真实开火触发圈。验证：verify_compile.py 编译通过 0 错 0 警。
+- **教训（第十三轮追加）**：**"检测范围"与"攻击范围"是两个语义，状态机切换必须用后者做门槛**——感知命中只应锁目标（谁），距离门槛决定行为（打/追）。CommonEnemy 的 Chase 状态（`Distance≤AttackRange` 才进 Attack）与 Worker 的 CombatIntent 一直是对的，SeekEnemy 系漏了距离分流；新行为对齐时优先抄同库已验证模式（滞回系数 1.2、邻格寻路）而非自造参数。武器追踪范围 raduis（剑 8/枪 5）与 EnemyData.AttackRange=4 仍是两套数——本次取 AttackRange 做状态机门槛（红圈视觉同源、保守必进武器射程），射程浪费（剑 8 只在 4 内开打）留待后续统一。
+- **已修（第十三轮第二轮，2026-09-08）**：**Worker/拿剑敌人仍站桩空挥——raduis 是瞄准范围不是特效射程**。用户追问"Worker 检测距离大于攻击距离解决了吗"暴露第一轮修得不彻底：WorkerAttackState.UpdateCombatIntent 用 `weaponObject.AttackRange`（=raduis，剑 8）判定站定输出，而剑光 prefab 实测（ResourcesLocal/.../KnifeLightEffect.prefab）：**Mesh 粒子（m_RenderMode=4）startSize=1、startSpeed=0、ShapeModule/SizeModule 全禁用、burst 1 次**——剑光是武器 Head 处原地闪 0.5s 的 1 格光效，真实命中距离 ~1 格（靠粒子+目标 collider 接触触发 OnParticleCollision）；子弹（VOL 速度 30×寿命 1s=30 格）无此问题。即拿剑 Worker 索敌（8）命中后按 raduis=8 判"在射程内"站 8 格外挥剑，第一轮给敌人的门槛 4 对拿剑敌人同样不够近。修复（4 文件）：① AWeapon（数据类）加 `virtual float AttackReach => 2f`（属性不序列化零存档兼容）；AGun override `=> 5f`（=raduis，瞄得到的必打得着）——实际攻击距离从此与瞄准追踪范围解耦；② WorkerAttackState.UpdateCombatIntent 的 attackRange 改 `workerData.Weapon.AttackReach`（剑 2）：索敌 8 命中 → Chase 贴到 2×1.2 内才站定；③ SeekEnemyMoveState.TryEnterAttack 与 SeekEnemyAttackState 脱离判定门槛统一 `min(EnemyData.AttackRange, Weapon.AttackReach)`（剑 2/枪 4），进=门槛、脱=门槛×1.2 构成滞回防 Attack↔Move 抖动。验证：verify_compile.py 0 错 0 警。
+- **教训（十三轮二追）**：**"武器参数"字段名会撒谎——raduis 注释写"追踪敌人范围"但三个攻击状态都把它当射程用了 8 个月**。核对距离语义时必须下到特效 prefab 实测（粒子 startSpeed/lifetime/shape 决定真实命中范围，代码侧看不到）；"检测范围>攻击范围"是正常设计（看见→冲过来打），但中间必须有"追击衔接"且追击终点=真实射程，否则检测距离就变成空挥距离。第一轮只修了状态机缺 Chase 分流，没核"攻击距离"数值本身是否等于特效射程——同一报告修两层才到底。
+- **已修（十三轮第三轮，2026-09-08）**：**Chase 追击终点贴脸太近**——第二轮把追击停止距离从 raduis(8) 修正为 AttackReach(剑 2) 后，Worker 冲到敌人脸前 ~2 格才站定，观感贴脸。但停止距离不能单方面调远（剑光粒子命中 ≤2 格，停 3+ 格空挥回归），须与特效射程同步放大：KnifeLightEffect.prefab 粒子 startSize 1→3（Mesh 粒子，视觉与碰撞半径同随 size 缩放，命中 ~3 格）+ m_MaxParticleSize 0.5→10（消除 billboard 钳制隐患）+ AWeapon.AttackReach 2→3。Worker Chase 停止距离、敌人进/脱攻击门槛（min(4, reach)=3 / ×1.2=3.6）全部自动跟随，零代码改动。验证：verify_compile.py 0 错 0 警（视觉需实测）。
+- **教训（十三轮三追）**：**"停止距离/攻击距离/特效射程"是三方锁定组，单调一个必破一致**——调停止距离先问"特效够不够得着"，调特效射程记得同步数据侧 AttackReach（三个状态机的门槛都从它派生）。粒子 Mesh 模式下 startSize 同时决定视觉尺寸与碰撞半径，是"改一个值同时放大打击范围与观感"的单一杠杆。
+- **已修（第十四轮，2026-09-08）**：**SeekEnemy 被打不反击——围殴下追击走走停停净速度≈0，贴不到攻击距离**。用户报告"Enemy 被攻击怎么不会反击"，game.log 显示反击链每环都在走（被打锁定目标 ✓、17s 后"目标进入攻击距离 dist=2.9 → Attack" ✓），但被打→进攻击隔 17 秒（Workers 6 格外站桩输出，实际靠 Worker 自己 Chase 贴近才接战），且 Attack 每 ~5s 进出循环（武器反复销毁重建）。根因：**`ASeekEnemy.ReduceHp` 每次被打都 `ChangeState(Move)`，而 ChangeState 不查同状态（Move→Move 照样走 OnExit 停移动 + OnEnter）**——Move.OnEnter 重置 lastPursuitMap 并强制重新提交异步 A*（等待期站定）。围殴 ~1-3 刀/s → 每刀打断一次追击 → 敌人走走停停净移速≈0，永远贴不到第一轮加的 3 格攻击门槛（原版"看见 10 格就打"掩盖了这个低效，门槛收紧后暴露成"站着挨打不还手"）。5s 进出循环则是 ReduceHp 的 `AttackTime > ChangeTarget && attacker != Target` 分支在多 Worker 围殴下周期触发（换目标语义，保留）。修复（ASeekEnemy.cs 一处）：ReduceHp 切状态前加守卫——**已在 Move 不重进**：Target 由锁定分支维护，追击路径由 Move 主循环 1s 节流 RepathPursuit 朝最新目标刷新（漫游中被打也经它 ≤1s 改道，到达分支立即重贴近）。CommonEnemy 不动：其 ReduceHp 切 Seek、Chase 是直线移动（无异步寻路站定期），日志实测反击正常。验证：verify_compile.py 0 错 0 警（待实测）。
+- **教训（十四轮追加）**：**"每次被打强制切状态"与"状态 OnEnter 有启动成本（异步寻路等待期站定）"组合，在高频打断（围殴 ~1 刀/s）下退化为永久站桩**——打断式设计的启动成本必须按打断频率摊销评估；已有周期性自愈通道（节流 RepathPursuit）时，打断只需改数据（Target）不需要改控制流（重进状态）。ChangeState 不查同状态是本项目状态机语义，"Move→Move"不是 no-op，写防御逻辑时必须知道这一点。
+- **已修（第十五轮，2026-09-08）**：**GrassSakuraTree 地图上不可见但有碰撞体**。现象：樱花树 tile 放置后碰撞阻挡正常（游戏按格子注册碰撞，与 sprite 无关），Tilemap 渲染却画不出来。根因：**Tile 资产的 m_Sprite 悬空引用（guid+fileID 双错）**——初版提交 37f86be2 添加 png 时未带 .meta（Unity 本地导入生成 guid 41cdec…，tile 手写 YAML 引用它且 fileID 用了占位值 -10001，非任何真实帧 internalID）；后续 327d1ac4 重生成素材时新 .meta 入库 guid 变为 bc19b9…，旧 guid 从仓库消失。sprite 加载为 null → Tilemap 静默不渲染（无报错）。修复：GrassSakuraTree.asset 的 m_Sprite 改 `{fileID: 839125419, guid: bc19b9c5c21e01e499b8d8bbf82c6f11}`（png.meta nameFileIdTable 中 GrassSakuraTree_0 的 internalID，静态单帧与 GrassTree 同模式）。
+- **教训（十五轮追加）**：**手写/外部生成 Tile YAML 引用 sprite 时，guid 必须取自 png.meta 实际入库值、fileID 必须取自 nameFileIdTable 的真实帧 internalID**——占位值（如 -10001）与后续重生成素材换 guid 都会造成静默悬空（sprite=null 不报错，碰撞照常，只剩"隐形"这一症状）。排查"有碰撞没图像"的 tile 直接 diff Tile.asset 的 m_Sprite guid 与目标 png.meta guid。另注意：png 提交不带 .meta → 各机器导入各自生成 guid，是引用漂移的温床（与「Unity 资产重建导入窗口」条目同源不同症：那个是导入时序可自愈，这个是引用真悬空必须手修）。
+- **已修（第十五轮，2026-09-08）**：**敌人正在被攻击突然后走开 + 刀特效回退**。用户报告"Enemy 正在被攻击，突然后走开了"，猜测攻击持续时间没因被打重置——猜测命中一半，完整链路是两条并行路径：(A) **锁定期注释-实现不符（主凶）**：锁定分支条件 `targetInvalid || Time.time >= targetFocusEndTime` 注释承诺"锁定中被当前目标再打会刷新"，实现里锁定期内（time < endTime）连 if 都不进、根本不刷新——A 第一刀锁 Target 后 5 秒整一到"谁先打到谁抢走"，围殴中 B 一刀把 Target 抢走，敌人此刻在 Attack 状态，下一帧脱离判定 `dist(B) > 门槛×1.2` → Move 追 B = 转身走开；(B) **AttackTime 不因被打重置（用户猜测）**：`AttackTime > ChangeTarget && attacker != Target` 切 Move，与 A 路径抢走 Target 后合流。修复（4 文件）：① ASeekEnemy/ACommonEnemy.ReduceHp 锁定条件补 `|| attacker == this.Target`（被当前目标打无条件刷新锁 = 实现注释语义：持续攻击 = 持续保锁）；② 两 ReduceHp 在 Attack 状态被打时调 `ResetAttackTimeOnHit()`（SeekEnemyAttackState/CommonEnemyAttackState 新增方法，AttackTime 唯一外部读取处就是换目标判定，重置无副作用）——判定语义从"本状态累计 5s"变为"距上次挨打 5s"，贴身互殴中每刀重置，敌人不再被持续交战中的其他攻击者拉走。同批（用户插话"刀特效变大了改回去"）：KnifeLightEffect.prefab startSize 3→1、m_MaxParticleSize 10→0.5 回退，AWeapon.AttackReach 3→1.5 同步（三方锁定组：特效 1 格 + collider 半径余量；Worker Chase 停止距离、敌人进/脱攻击门槛 min(4,1.5)=1.5/×1.2=1.8 自动跟随）。验证：verify_compile.py 0 错 0 警（待实测）。
+- **教训（十五轮追加）**：**"锁定/冷却刷新"类条件写 `time >= endTime` 时必须问：窗口内重复事件要不要续期？** 不续期 = 窗口一到期就被任意后来者抢走（"先到先得"变成"到期重抢"）；本项目 2026-09-07 注释已承诺"再打会刷新"但实现漏了 `|| attacker == this.Target` 一项——注释与实现不符是这类 bug 的标准形态，写防御性刷新时对照注释逐条验证。另：用户对行为的猜测（"是不是 X 没重置"）值得先验证再修——本次猜测命中切状态分支但漏了锁定分支，两条路径都在才凑成完整"走开"链路。
+- **调整（第十五轮追加，2026-09-08）**：**Worker Chase 停止距离 1.5→4（用户拍板）**。特效回退后停止距离自动跟到 1.5 观感太贴，用户定 4 格。实现：WorkerAttackState 新增 `ChaseStopRange=4f` 常量，`locomotion.Chase(target, ChaseStopRange)`——**停止距离与 AttackReach（特效真实射程 1.5）正式解耦成两个参数**：前者是观感（停多远），后者是事实（特效打多远）。追击触发条件（dist > attackRange×1.2）与攻击门槛不动。已知取舍（注释已记录）：剑光 ~1 格，对不自己贴近的目标站 4 格挥剑打不中——伤害实际依赖敌人（SeekEnemy 贴 1.5 格反击）进入近战范围；观感与命中的取舍由用户定，后续只调 ChaseStopRange 或特效二者之一即可。
+
+## 2026-09-08 第十七轮：CommonEnemy 被攻击就会切换目标
+
+**现象**：CommonEnemy 被打后频繁更换攻击目标，不像 SeekEnemy 那样锁定。
+
+**根因**：`ACommonEnemy.ReduceHp` 的切状态分支与 SeekEnemy 版有两处分叉——①无"已在追击态不重进"守卫：Chase 追 A 时被 B 打，每次都 `Chase→Seek` 重进（丢感知节流缓存+重置计时），围殴下追击反复被打断；②被打切的是 Seek 而非追击态：Seek 3 秒超时→Wander 的 `OnEnter` 清 Target + `OnUpdate` 轮询感知**无条件覆写 Target** 就近选新目标——被打进 Seek 后一旦 3 秒感知不回，目标即被 Wander 重选。
+
+**修复**：`ACommonEnemy.ReduceHp` 对齐 `ASeekEnemy.ReduceHp` 范本：已在 Chase 不重进（围殴下不打断当前追击）；其余被打场景直接切 Chase 朝锁定目标追（原切 Seek 绕一圈感知再回 Chase 还有 3 秒超时丢目标风险）。Chase.OnEnter 不清 Target，锁定目标即追击目标。
+
+**验证**：verify_compile.py 0 错误 0 警告。
+
+**教训**：CommonEnemy 与 SeekEnemy 的状态机拓扑不同（追击态=Chase vs Move），对齐"逻辑"时要找语义对应物（追击职能），不能照抄状态名；Wander.OnEnter 清 Target + OnUpdate 无条件覆写是 CommonEnemy 换目标环的出口，ReduceHp 守卫只能堵"被打"这一条入口。
+
+## 2026-09-08 第十八轮：SeekEnemy 被多 Worker 围殴站着不动 + 攻击扇形视觉失真
+
+**现象**：SeekEnemy 被 3+ Worker 同时攻击时站着不动（偶尔正常攻击）；红色攻击扇形显示 4 格与实际攻击距离不符。
+
+**根因**（game.log 2026-09-08 13:02:10.906-913 实证）：`SeekEnemySiegeState.OnUpdate` 攻城感知到角色就**无距离门槛**直接切 Attack——守卫在 4~10 格（感知半径）外即转攻，进 Attack 首帧被脱离判定（门槛 1.5×1.2=1.8）踢回 Move：Siege→Attack→Move 7ms 一圈，每圈拿放武器 + Move.OnEnter 强制重新提交异步寻路（等待期站定）。Worker 侧 ChaseStopRange=4 恰好让围殴 Worker 站在 4 格外，永远落在 (1.8, 4] 乒乓区。次要根因：`SeekEnemyMoveState.OnUpdate` 轮询感知命中**无条件覆写 Target**（无视被打锁定期）——锁定目标暂离感知扇形就被旁观者抢走。扇形视觉：`AEnemy.Start` 固定用 AttackRange=4 画红扇形，实际门槛已降为 min(4, AttackReach=1.5)。
+
+**修复**：① Siege 转攻加距离门槛（对齐 TryEnterAttack 的 attackGate=min(AttackRange, AttackReach)），门槛外留在 Siege 继续拆家等守卫自己靠近；② Move 轮询分支覆写 Target 前查新增的 `ASeekEnemy.IsTargetFocusActive`（Target 存活且 Time.time < targetFocusEndTime），锁定期内轮询命中只清 noSenseSeconds 不抢锁——换锁正当途径只有 ReduceHp 的"打我"；③ `AEnemy.Start` 红扇形半径改为 min(AttackRange, Weapon?.AttackReach ?? AttackRange)，无武器敌人（CommonEnemy）回退 AttackRange 保持与其判定一致。
+
+**验证**：verify_compile.py 0 错误 0 警告；待用户实测围殴场景（预期：Siege 转攻必带"dist≤1.5"，无 7ms 进出横跳；扇形缩到 1.5）。
+
+**教训**：所有进 Attack 的入口门槛必须与脱离门槛同源并构成滞回（进 ≤gate、出 >gate×1.2），否则入口-出口净流量=高频乒乓；状态机里绕过 ReduceHp 直接写 Target 的路径（轮询感知/转攻）是锁定机制的旁路，加锁时必须逐一排查这些写入点。
+
+## 2026-09-08 第十七轮补修：CommonEnemy 被打换目标残留（追击丢目标链）
+
+**现象**：第十七轮 ReduceHp 对齐（Chase 不重进+被打切 Chase）后用户实测仍复现"被攻击就会切换目标"。
+
+**根因**：CommonEnemy 状态机有 SeekEnemy 没有的丢目标链——SeekEnemy.Move 追击**永不因感知失联丢目标**（Target 只被死亡/被抢锁/卡死熔断改变），而 CommonEnemy：Chase 感知失联 0.2s → Seek → 3 秒超时 → **Wander.OnEnter 清 Target + OnUpdate 轮询就近重选**。Worker 站 4 格外（Sound=4 边界外/扇形外）打它时链路必触发——"我打它，它转头去打别人"。
+
+**修复**（对齐 SeekEnemy 语义，2 处）：① CommonEnemyChaseState.OnUpdate 删掉失联→Seek 分支——失联不切状态不丢目标，继续直线追（OnFixedUpdate 朝 Target 移动不依赖感知），失联唯一作用是不进 Attack（看不见不打）；放弃目标只走目标死亡（新增 Hp 判空清引用）或卡死熔断。② CommonEnemySeekState.OnUpdate 超时分支加"目标存活"守卫——活着不超时（持续朝它搜索接近，感知命中回 Chase），只有目标死亡/为空才超时回 Wander 兜底。
+
+**验证**：verify_compile.py 0 错误 0 警告；待用户实测。
+
+**教训**："被打换目标"类问题要列全**所有写 Target 的代码路径**（ReduceHp 锁定/状态 OnEnter 清空/轮询感知覆写/超时放弃）逐一对照范本，只堵 ReduceHp 一条入口不够——状态机的超时放弃链是隐蔽的第二入口。
+
+## 2026-09-08 第二十轮：Worker 索敌穿墙（LOS 穿建造中的墙）
+
+**现象**：Worker 检测 Enemy 能穿过墙体（"以前不能，现在能"的回归观感）。
+
+**根因**：`SkillTool.HasLineOfSight` 复用寻路的 `BuildMap.IsCanReach`，而后者自 2026-08-15"治本"改动（读真实碰撞体）起对**建造中的墙**放行——未完工墙 `ColliderType.None`（寻路必须如此，builder 才能到位）且 PosMap 补充分支要求 `IsComplete`，两层检查都透明 → 网格 LOS 穿过半成品墙。此前无主动索敌（只被打反击）所以不可见；9a080d85 新增 W6 常态索敌（TrySenseEnemy 每 0.5s 扫 8 格）后高频触发。物理侧全链路同样透明：无碰撞体 → 武器发射 Raycast 无物可撞、子弹粒子也无碰撞 → 看得见打得中墙外敌人。次要：WorkerFactionRaidTask 索敌完全无 LOS；Bresenham 对角缝隙网格放行物理挡（反向不一致）。
+
+**修复**：① `SkillTool.HasLineOfSight` 建筑检查改视线专用查询：`GetBuildData(checkPos)`（数据模型，不论建没建完）+ SO `IsPass` 判定——未完工墙挡视线、对脚仍可通行（寻路 IsCanReach 不动）；② 新增 `IsPhysicallyOccluded`（Physics2D.Raycast 查 Tile/BuildTile 惰性 LayerMask）+ 组合方法 `HasClearSight`（网格+物理双查，对齐 AEnemy.SenseNearby 双重 LOS）；③ 三个索敌入口统一换 HasClearSight：AWorker.TrySenseEnemy、WorkerDefendTask.Execute、WorkerFactionRaidTask.FindEnemyFactionWorker（原无 LOS）。AEnemy.SenseNearby 调 HasLineOfSight 自动受益于①。
+
+**验证**：verify_compile.py 0 错误 0 警告；待实测半成品墙后不再被索敌锁定。
+
+**教训**：**视线语义 ≠ 寻路语义**——寻路"可走"对建造中墙放行是功能需求，LOS 复用它就是漏洞；给两类语义各自专用查询（IsCanReach vs GetBuildData+IsPass），不要图省事共用。新增高频扫描（常态索敌）会把沉睡的语义漏洞变成可见 bug——上线前对齐一次所有"看见/够得着"判定的口径。
+
+## 2026-09-08 Worker 与 CommonEnemy 重合（第二十一轮）
+
+**现象**：Worker 与 CommonEnemy 出现精灵重叠/压叠。
+
+**根因**：移动通道不对称——Worker 已全走 rb.velocity 物理通道（CircleCollider2D r=0.1，质量约为敌人 1/20），CommonEnemy 仍是 `ACommonEnemy.MoveToForward` 每物理帧 `transform.Translate` 直写（BoxCollider2D 0.8×0.8）。直写覆盖物理解算：敌人硬闯 Worker 时穿透修正全转嫁给 20 倍轻的 Worker，Worker 背后有墙推无可推即两者压叠。叠加因素：敌人对非目标角色零避让（`IsForwardBlocked` 只 mask Tile/BuildTile，从路人 Worker 身上碾过）；碰撞体远小于精灵（物理保证中心距 ≥0.5 而精灵半宽合计 ~1.3，贴身即视觉重叠）。层碰撞矩阵 Worker×Enemy 本来就全开（正常，勿关矩阵修）。
+
+**修复**：`ACommonEnemy.MoveToForward`（四个状态唯一移动咽喉）单点加角色避让——移动落点 `Physics2D.OverlapCircleNonAlloc(pos+step, 0.5f, buffer, LayerMask.GetMask("Player","Worker","Enemy"))`，命中非自身 collider 本帧跳过 Translate。不动物理通道；共享 buffer 零分配（仿 AWeaponObject.retCollider2Ds 惯例）；characterLayers 在 Start 赋值（GetMask 禁静态初始化器，同 wallLayers）。挡住时停下等对方走开——Wander 由换向计时兜底、追击由目标移动自然解除。
+
+**验证**：verify_compile.py 0 错误 0 警告；运行观察敌人贴近 Worker 停在一格间距不再压叠。
+
+**教训**：同屏角色混用两种移动通道（transform 直写 vs rb.velocity）时，直写方天然无视碰撞解算——直写方必须自带"移动前探测"；探测自身层时起点必在自身 collider 内，须按 collider 引用过滤自己（LayerMask 无法排除单个 collider）。

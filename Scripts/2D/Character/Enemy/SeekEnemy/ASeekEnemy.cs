@@ -19,6 +19,18 @@ namespace LAB2D.Character.Enemy.SeekEnemy
         private float targetFocusEndTime;
 
         /// <summary>
+        /// 目标锁定是否生效：Target 存活且被打锁定期未过。锁定期内状态机的轮询感知
+        /// 不得覆写 Target（Move 轮询命中只是"看见别人"，不是换锁的正当途径——
+        /// 打我才配抢锁，走 ReduceHp）——否则围殴中锁定目标暂离感知扇形就被旁观者
+        /// 抢走（2026-09-08 用户报告残留）。Target 死亡/无目标时为 false，允许正常锁定。
+        /// </summary>
+        public bool IsTargetFocusActive =>
+            this.Target != null
+            && this.Target.CharacterDataLAB != null
+            && this.Target.CharacterDataLAB.Hp > 0f
+            && Time.time < this.targetFocusEndTime;
+
+        /// <summary>
         /// 寻路
         /// </summary>
         public ASeek Seek { get; private set; }
@@ -122,7 +134,11 @@ namespace LAB2D.Character.Enemy.SeekEnemy
                 bool targetInvalid = this.Target == null
                     || this.Target.CharacterDataLAB == null
                     || this.Target.CharacterDataLAB.Hp <= 0f;
-                if (targetInvalid || Time.time >= this.targetFocusEndTime)
+                // attacker == this.Target：被当前锁定目标再打无条件刷新锁定期——原条件缺此项，
+                // 锁定期内被打连 if 都不进（不刷新），5 秒整一到"谁先打到谁抢走"：围殴中
+                // 贴脸打着 A，B 一刀把 Target 抢走 → Attack 脱离判定 dist(B)>门槛 → 转身走开
+                //（2026-09-08 用户报告"正在被攻击突然走开"）。补上后：A 持续攻击 = 持续保锁。
+                if (targetInvalid || Time.time >= this.targetFocusEndTime || attacker == this.Target)
                 {
                     if (this.Target != attacker)
                     {
@@ -136,10 +152,28 @@ namespace LAB2D.Character.Enemy.SeekEnemy
                 }
             }
 
+            // 被打重置攻击持续时长（2026-09-08 用户报告"被打突然走开"）：下方换目标判定
+            // "AttackTime > ChangeTarget"的语义从"本状态累计 5s"变为"距上次挨打 5s"——
+            // 贴身互殴中每刀重置，切状态分支不会在持续交战中被其他攻击者触发。
+            if (this.Manager.CurrentStateType == ASeekEnemyState.TypeEnum.Attack)
+            {
+                ((SeekEnemyAttackState)this.Manager.CurrentState).ResetAttackTimeOnHit();
+            }
+
             // 被打换目标需排除"打我的就是当前攻击目标"：否则单目标战斗中敌人每攻击几秒
             // 被反击一次就切 Move → 立即又切回 Attack，武器反复销毁重建，拿起瞬间方向跳变
             // （"攻击几秒→Move→又攻击"，见 bug-fixes.md 2026-08-16）。只有被其他目标打才换目标。
-            if (this.Manager.CurrentStateType != ASeekEnemyState.TypeEnum.Attack ||
+            // 已在 Move 不重进（2026-09-08 用户报告"被打不反击"）：ChangeState 不查同状态，
+            // Move→Move 照样走 OnExit（停移动）+ OnEnter（重置追击目标格、强制重新提交异步
+            // 寻路，等待期站定）——围殴下被打 ~1-3 刀/s，每次都重进 = 追击走走停停净速度≈0，
+            // 永远贴不到攻击距离（game.log 实测被打→进攻击隔 17s，靠 Worker 自己贴近才接战）。
+            // Target 由上方锁定分支维护，追击路径由 Move 主循环 1s 节流 RepathPursuit 朝最新
+            // 目标刷新（漫游中被打也经它改道，无需重进状态）。
+            if (this.Manager.CurrentStateType == ASeekEnemyState.TypeEnum.Move)
+            {
+                // 已在 Move：不重进，不打断当前追击
+            }
+            else if (this.Manager.CurrentStateType != ASeekEnemyState.TypeEnum.Attack ||
                 (this.Manager.CurrentStateType == ASeekEnemyState.TypeEnum.Attack
                 && ((SeekEnemyAttackState)this.Manager.CurrentState).AttackTime > ChangeTarget
                 && attacker != this.Target))

@@ -21,6 +21,17 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon
         {
             this.Type = EquipTypeEnum.Weapon;
         }
+
+        /// <summary>
+        /// 实际攻击距离（格）：特效真实命中范围，与瞄准追踪范围（AWeaponObject.raduis）解耦。
+        /// 近战剑光是原地闪的 Mesh 粒子（startSpeed=0、shape 禁用），命中范围由 startSize 决定
+        /// ——2026-09-08 startSize 曾 1→3（配 3 格停止距离），用户实测嫌特效大已回退 1，
+        /// 命中 ~1 格 + 角色 collider 半径余量 → AttackReach 同步回 1.5（停太远空挥回归，
+        /// 三方锁定组：停止距离/攻击门槛/特效射程必须一致）。raduis=8 只是武器指向距离，
+        /// 攻击状态曾拿它当射程，拿剑角色在 8 格外站桩空挥（用户报告"检测距离大于攻击距离"）。
+        /// 属性不序列化，零存档兼容；远程子类按弹道 override。
+        /// </summary>
+        public virtual float AttackReach => 1.5f;
     }
 
     /// <summary>

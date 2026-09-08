@@ -10,6 +10,11 @@ namespace LAB2D.Item.Backpack.Equipment.Weapon.Gun
     [Serializable]
     public abstract class AGun : AWeapon
     {
+        /// <summary>
+        /// 枽弹实际射程（VOL 速度 30 × 粒子寿命 1s = 30 格）远超瞄准范围，
+        /// 攻击距离取瞄准范围（AGunObject.raduis=5）：瞄得到的必打得着。
+        /// </summary>
+        public override float AttackReach => 5.0f;
     }
 
     /// <summary>

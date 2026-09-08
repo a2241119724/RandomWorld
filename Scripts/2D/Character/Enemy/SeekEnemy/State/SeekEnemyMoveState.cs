@@ -39,6 +39,20 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         /// <summary>未感知角色累计秒数（感知命中清零；达 SiegeDelaySeconds 且夜间有核心 → Siege）。</summary>
         private float noSenseSeconds;
 
+        /// <summary>
+        /// 追击重寻路间隔（秒）：感知命中但目标超出攻击距离时，朝目标邻格周期刷新路径
+        ///（目标在移动，单次寻路会走空）。检测范围（Sight=10/Sound=4）只负责锁目标，
+        /// 不再作为开火门槛——修"实际攻击范围与检测范围不一致"（2026-09-08 用户报告：
+        /// 敌人视野边缘看见就站桩空挥，武器实际打不到）。
+        /// </summary>
+        private const float PursuitRepathInterval = 1f;
+
+        /// <summary>追击重寻路计时（每帧累加，达 PursuitRepathInterval 朝目标邻格重寻路）。</summary>
+        private float pursuitRepathTimer;
+
+        /// <summary>上次追击寻路的目标格：同格不重复提交 A*（现有路径仍指向它）。</summary>
+        private Vector3Int lastPursuitMap;
+
         public SeekEnemyMoveState(ASeekEnemy character)
         : base(character)
         {
@@ -67,14 +81,14 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 && this.Character.Target.CharacterDataLAB != null
                 && this.Character.Target.CharacterDataLAB.Hp > 0f)
             {
-                Vector3Int pursuitMap = AWorkerTask.GenCanReachPosProvider(
-                    AWorkerTask.TileMapWorldToMapProvider(this.Character.Target.transform.position));
-                this.Character.Seek.Seek(pursuitMap);
+                this.RepathPursuit();
             }
 
             // 重置卡死熔断计数（新目标/新进入移动 → 从头计数）
             this.stuckStreak = 0;
             this.stuckTarget = default;
+            this.lastPursuitMap = default;
+            this.pursuitRepathTimer = 0f;
         }
 
         public override void OnExit()
@@ -107,11 +121,12 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
                 if (targetAlive && this.Character.SenseNearby(this.Character.Target.transform))
                 {
                     this.noSenseSeconds = 0f;
-                    this.Character.Manager.ChangeState(TypeEnum.Attack);
-                    AWorkerTask.LogProvider(
-                        $"[EnemyDiag] {this.Character.name} 追击锁定目标进入攻击 target={this.Character.Target.name}",
-                        LogManager.LogLevelEnum.Debug);
-                    return;
+                    if (this.TryEnterAttack(this.Character.Target.transform))
+                    {
+                        return;
+                    }
+
+                    // 仍在攻击距离外：锁定目标留在 Move 追击贴近（下方节流重寻路）
                 }
 
                 int playerCount = Core.GameServices.PlayerCountProvider();
@@ -135,19 +150,23 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
 
                     if (target != null && this.Character.SenseNearby(target))
                     {
-                        // 先赋 Target 再切攻击状态：ChangeState 同步触发 OnEnter，若 Target
-                        // 在 ChangeState 之后才赋值，OnEnter 初始朝向读不到目标，武器保持
-                        // prefab 默认朝上（z=0），同帧 AttackRange 跟随武器朝空方向闪一下
-                        // 再拐回——即"攻击时拐向没有角色的地方攻击一次"（见 bug-fixes.md 2026-08-16）。
-                        this.Character.Target = target.GetComponent<LAB2D.Character.Character>();
                         this.noSenseSeconds = 0f;
-                        this.Character.Manager.ChangeState(TypeEnum.Attack);
+                        if (!this.Character.IsTargetFocusActive)
+                        {
+                            // 锁定不生效（无目标/已死/锁过期）才允许轮询覆写 Target——
+                            // 锁定期内被旁观者抢走 = "被攻击就换目标"残留（2026-09-08，
+                            // 换锁正当途径只有 ReduceHp 的"打我"）。先赋 Target 再切攻击状态：
+                            // ChangeState 同步触发 OnEnter，若 Target 在 ChangeState 之后才赋值，
+                            // OnEnter 初始朝向读不到目标，武器保持 prefab 默认朝上（z=0），
+                            // 同帧 AttackRange 跟随武器朝空方向闪一下再拐回（见 bug-fixes.md 2026-08-16）。
+                            this.Character.Target = target.GetComponent<LAB2D.Character.Character>();
+                            if (this.TryEnterAttack(target))
+                            {
+                                return;
+                            }
+                        }
 
-                        // 攻击目标选定事件（一次性）
-                        AWorkerTask.LogProvider(
-                            $"[EnemyDiag] {this.Character.name} 攻击目标选定 target={target.name}",
-                            LogManager.LogLevelEnum.Debug);
-                        return;
+                        // 超出攻击距离/锁定中追原目标：留在 Move 追击贴近（下方节流重寻路）
                     }
                 }
             }
@@ -167,8 +186,33 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             // 设置视觉角度
             this.Character.SightRange.transform.rotation = Quaternion.FromToRotation(Vector3.up, this.Character.Direction);
 
+            // 追击贴近：锁定存活目标后周期朝目标邻格重寻路（目标在移动，见 PursuitRepathInterval 注释）；
+            // 进入攻击距离由上方感知分支的 TryEnterAttack 切换
+            this.pursuitRepathTimer += this.Character.DeltaTime;
+            if (this.pursuitRepathTimer >= PursuitRepathInterval
+                && this.Character.Target != null
+                && this.Character.Target.CharacterDataLAB != null
+                && this.Character.Target.CharacterDataLAB.Hp > 0f)
+            {
+                this.RepathPursuit();
+            }
+
             if (this.isTargetReached)
             {
+                // 追击中到达目标格：目标多已移走，立即试切攻击/朝新位置重贴近——
+                // 不休息不回 Seek（漫游休息只属于无目标场景）
+                if (this.Character.Target != null
+                    && this.Character.Target.CharacterDataLAB != null
+                    && this.Character.Target.CharacterDataLAB.Hp > 0f)
+                {
+                    if (!this.TryEnterAttack(this.Character.Target.transform))
+                    {
+                        this.RepathPursuit();
+                    }
+
+                    return;
+                }
+
                 this.recordTime += this.Character.DeltaTime;
 
                 // 休息 2s + 随机抖动（打散重寻路提交相位，见 roamRestSeconds 注释）
@@ -179,6 +223,56 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
 
                 this.Character.Manager.ChangeState(TypeEnum.Seek);
             }
+        }
+
+        /// <summary>
+        /// 感知命中后按距离分流（修"实际攻击范围与检测范围不一致"2026-09-08）：
+        /// 目标进入攻击距离（EnemyData.AttackRange，红色扇形视觉同源）→ 切 Attack 返回 true；
+        /// 仍在攻击距离外 → 返回 false，调用方留在 Move 追击贴近——检测范围
+        ///（SightRange=10/SoundRange=4）只负责锁目标，不再作为开火门槛
+        ///（此前视野边缘看见就进攻击站桩空挥，武器实际打不到那么远）。
+        /// </summary>
+        private bool TryEnterAttack(Transform target)
+        {
+            AEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as AEnemy.EnemyData;
+            // 门槛 = min(EnemyData.AttackRange, 武器实际射程 AttackReach)：红色扇形上限与
+            // 特效命中范围双重约束——剑光原地闪真实命中 ~1 格（AttackReach=1.5），单用
+            // AttackRange=4 拿剑敌人贴到 4 格仍空挥（2026-09-08 第二轮）。进攻门槛须与
+            // SeekEnemyAttackState 脱攻门槛（本门槛×1.2）构成滞回，防 Attack↔Move 抖动。
+            float attackGate = Mathf.Min(
+                enemyData.AttackRange,
+                this.Character.CharacterDataLAB.Weapon?.AttackReach ?? enemyData.AttackRange);
+            float dist = Vector3.Distance(target.position, this.Character.transform.position);
+            if (dist > attackGate)
+            {
+                return false;
+            }
+
+            // 攻击目标选定事件（一次性）
+            AWorkerTask.LogProvider(
+                $"[EnemyDiag] {this.Character.name} 目标进入攻击距离 dist={dist:F1} ≤ {attackGate:F1} target={target.name} → Attack",
+                LogManager.LogLevelEnum.Debug);
+            this.Character.Manager.ChangeState(TypeEnum.Attack);
+            return true;
+        }
+
+        /// <summary>
+        /// 朝目标邻格重寻路（追击贴近）并重置节流计时；目标格未变时跳过
+        ///（现有路径仍指向它，重复提交只浪费 A*）。寻邻格而非目标本格：
+        /// A* 不考虑目标占格排斥，直寻本格会走到与目标重合（2026-09-08 用户报告）。
+        /// </summary>
+        private void RepathPursuit()
+        {
+            this.pursuitRepathTimer = 0f;
+            Vector3Int pursuitMap = AWorkerTask.GenCanReachPosProvider(
+                AWorkerTask.TileMapWorldToMapProvider(this.Character.Target.transform.position));
+            if (pursuitMap == this.lastPursuitMap)
+            {
+                return;
+            }
+
+            this.lastPursuitMap = pursuitMap;
+            this.Character.Seek.Seek(pursuitMap);
         }
 
         /// <inheritdoc/>

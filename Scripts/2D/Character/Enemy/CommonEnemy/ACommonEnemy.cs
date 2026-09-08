@@ -34,6 +34,18 @@ namespace LAB2D.Character.Enemy.CommonEnemy
         private LayerMask wallLayers;
 
         /// <summary>
+        /// 角色层(Player/Worker/Enemy):MoveToForward 移动落点的避让探测用.
+        /// 同为 Start 赋值(静态初始化器限制,同 wallLayers).
+        /// </summary>
+        private LayerMask characterLayers;
+
+        /// <summary>
+        /// 角色避让探测结果缓冲(OverlapCircleNonAlloc 共享,避免每帧分配,
+        /// 仿 AWeaponObject.retCollider2Ds 共享数组惯例).
+        /// </summary>
+        private static readonly Collider2D[] characterProbeBuffer = new Collider2D[8];
+
+        /// <summary>
         /// 矩形碰撞体缓存(Start 中获取).
         /// </summary>
         private BoxCollider2D boxCollider;
@@ -116,6 +128,7 @@ namespace LAB2D.Character.Enemy.CommonEnemy
             base.Start();
             this.boxCollider = this.GetComponent<BoxCollider2D>();
             this.wallLayers = LayerMask.GetMask("Tile", "BuildTile");
+            this.characterLayers = LayerMask.GetMask("Player", "Worker", "Enemy");
             this.Head = this.transform.Find("Head");
             if (this.Head == null)
             {
@@ -152,11 +165,46 @@ namespace LAB2D.Character.Enemy.CommonEnemy
 
         /// <summary>
         /// 向前移动.
+        /// 移动落点被其他角色占据时本帧不动（角色避让）：本类移动是 transform 直写，
+        /// 会覆盖物理解算——直写硬闯 Worker（rb.velocity 物理通道、碰撞体 20 倍轻）
+        /// 时穿透修正全转嫁给 Worker，推无可推（背后是墙）即两者压叠
+        ///（2026-09-08 用户报告"Worker 与 CommonEnemy 重合"）。挡住时停下等对方走开，
+        /// Wander 由换向计时（12-18s）兜底、追击由目标移动自然解除。
         /// </summary>
         public void MoveToForward()
         {
             this.MoveSpeed = UnityEngine.Random.Range(1.5f, 2.0f);
-            this.transform.Translate(this.MoveSpeed * Time.fixedDeltaTime * (this.Head.position - this.transform.position).normalized, Space.World); // 向前移动
+            Vector3 step = this.MoveSpeed * Time.fixedDeltaTime * (this.Head.position - this.transform.position).normalized;
+            if (!this.IsCharacterBlockingStep(step))
+            {
+                this.transform.Translate(step, Space.World); // 向前移动
+            }
+        }
+
+        /// <summary>
+        /// 移动落点是否被其他角色占据：新位置圆形探测（近似 BoxCollider 扫掠区，
+        /// 半径 0.5≈0.8 箱半宽+余量）命中 Player/Worker/Enemy 且非自身 collider 即阻挡.
+        /// 起点在自身 box 内必然命中自己，须按 collider 引用过滤.
+        /// </summary>
+        private bool IsCharacterBlockingStep(Vector3 step)
+        {
+            if (this.boxCollider == null)
+            {
+                return false;
+            }
+
+            Vector2 probePos = this.transform.position + step;
+            int hits = Physics2D.OverlapCircleNonAlloc(probePos, 0.5f, characterProbeBuffer, this.characterLayers);
+            for (int i = 0; i < hits; i++)
+            {
+                Collider2D collider = characterProbeBuffer[i];
+                if (collider != null && collider != this.boxCollider)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -234,7 +282,11 @@ namespace LAB2D.Character.Enemy.CommonEnemy
                 bool targetInvalid = this.Target == null
                     || this.Target.CharacterDataLAB == null
                     || this.Target.CharacterDataLAB.Hp <= 0f;
-                if (targetInvalid || Time.time >= this.targetFocusEndTime)
+                // attacker == this.Target：被当前锁定目标再打无条件刷新锁定期——原条件缺此项，
+                // 锁定期内被打连 if 都不进（不刷新），5 秒整一到"谁先打到谁抢走"：围殴中
+                // 贴脸打着 A，B 一刀把 Target 抢走 → 敌人转身追 B = "正在被攻击突然走开"
+                //（2026-09-08 用户报告，同 ASeekEnemy.ReduceHp）。补上后：A 持续攻击 = 持续保锁。
+                if (targetInvalid || Time.time >= this.targetFocusEndTime || attacker == this.Target)
                 {
                     if (this.Target != attacker)
                     {
@@ -248,15 +300,35 @@ namespace LAB2D.Character.Enemy.CommonEnemy
                 }
             }
 
+            // 被打重置攻击持续时长（2026-09-08 用户报告"被打突然走开"，同 ASeekEnemy.ReduceHp）：
+            // 下方换目标判定"AttackTime > ChangeTarget"的语义从"本状态累计 5s"变为
+            // "距上次挨打 5s"——贴身互殴中每刀重置，切状态分支不会在持续交战中被触发。
+            if (this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Attack)
+            {
+                ((CommonEnemyAttackState)this.Manager.CurrentState).ResetAttackTimeOnHit();
+            }
+
             // 被打换目标需排除"打我的就是当前攻击目标"：否则单目标战斗中敌人每攻击几秒
             // 被反击一次就切 Seek → 又切回 Attack，武器反复销毁重建，拿起瞬间方向跳变
             // （同 ASeekEnemy.ReduceHp，见 bug-fixes.md 2026-08-16）。只有被其他目标打才换。
-            if (this.Manager.CurrentStateType != ACommonEnemyState.TypeEnum.Attack ||
+            // 已在 Chase 不重进（同 ASeekEnemy.ReduceHp 的 Move 守卫）：ChangeState 不查同状态，
+            // Chase→Chase 照样走 OnExit+OnEnter（丢感知节流缓存、重置计时）——围殴下被打
+            // ~1-3 刀/s，每次都重进 = 追击反复被打断，3 秒感知不回还会经 Seek 超时进
+            // Wander 清 Target 重选目标 = "被攻击就会切换目标"（2026-09-08 用户报告）。
+            // Target 由上方锁定分支维护（锁定期内换打不换锁），追击由 Chase 主循环朝
+            // 最新 Target 直线追 + 感知失联 0.2s 才回 Seek，无需重进状态。
+            if (this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Chase)
+            {
+                // 已在 Chase：不重进，不打断当前追击
+            }
+            else if (this.Manager.CurrentStateType != ACommonEnemyState.TypeEnum.Attack ||
                 (this.Manager.CurrentStateType == ACommonEnemyState.TypeEnum.Attack
                 && ((CommonEnemyAttackState)this.Manager.CurrentState).AttackTime > ChangeTarget
                 && attacker != this.Target))
             {
-                this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Seek); // 进入搜索状态
+                // 被打直接进 Chase 朝锁定目标追（原切 Seek 绕一圈感知再回 Chase，还有
+                // 3 秒超时丢目标风险）；Chase.OnEnter 不清 Target，锁定目标即追击目标。
+                this.Manager.ChangeState(ACommonEnemyState.TypeEnum.Chase);
             }
 
             base.ReduceHp(hp, attacker, isCRT);

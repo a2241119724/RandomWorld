@@ -32,6 +32,14 @@ namespace LAB2D.MVC.Build.Controller
                 List<AItem> items = ServiceLocator.Get<ItemInstanceFactory>().GetBuildItems();
                 foreach (AItem item in items)
                 {
+                    // 系统专属建筑不进建造菜单（2026-09-08 用户要求移除）：宗门核心/
+                    // 阵营核心由系统放置（PlaceBySystem），玩家不可建——条目原本可见但
+                    // 点击被 AddBuildTask override 拦截弹 Tip，留着只剩误导。
+                    if (item is LAB2D.Item.Build.MountainGateCore || item is LAB2D.Item.Build.FactionCore)
+                    {
+                        continue;
+                    }
+
                     this.AddItem(item);
                 }
             }

@@ -22,6 +22,13 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         /// </summary>
         public float AttackTime { get; private set; } = 0.0f;
 
+        /// <summary>
+        /// 被打时重置攻击持续时长（ACommonEnemy.ReduceHp 调用，2026-09-08 用户报告"被打突然走开"）：
+        /// 换目标判定"AttackTime > ChangeTarget"语义从"本状态累计 5s"变为"距上次挨打 5s"——
+        /// 贴身互殴中每刀重置，敌人不会在持续交战中被其他攻击者拉走。同 SeekEnemyAttackState。
+        /// </summary>
+        public void ResetAttackTimeOnHit() => this.AttackTime = 0.0f;
+
         /// <inheritdoc/>
         public override void OnEnter()
         {

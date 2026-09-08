@@ -129,7 +129,10 @@ namespace LAB2D.Character.Worker.Task.Individual
                 }
 
                 float sqr = (other.transform.position - worker.transform.position).sqrMagnitude;
-                if (sqr <= bestSqr)
+                // 视线过滤（网格+物理双查，2026-09-08 统一索敌语义）：墙后/建造中墙后的
+                // 敌阵营 Worker 不可见，防止隔墙锁定空转
+                if (sqr <= bestSqr
+                    && LAB2D.Tool.SkillTool.HasClearSight(worker.transform.position, other.transform.position))
                 {
                     bestSqr = sqr;
                     foe = other;

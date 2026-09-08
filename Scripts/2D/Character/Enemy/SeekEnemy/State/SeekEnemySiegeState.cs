@@ -147,13 +147,29 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
 
                     if (target != null && this.Character.SenseNearby(target))
                     {
-                        // 先赋 Target 再切状态（OnEnter 初始朝向读目标，见 bug-fixes.md 2026-08-16）
-                        this.Character.Target = target.GetComponent<LAB2D.Character.Character>();
-                        this.Character.Manager.ChangeState(TypeEnum.Attack);
-                        AWorkerTask.LogProvider(
-                            $"[EnemyDiag] {this.Character.name} 攻城中感知到 {target.name}，转攻",
-                            LogManager.LogLevelEnum.Debug);
-                        return;
+                        // 距离门槛（对齐 MoveState.TryEnterAttack 的 attackGate）：感知命中
+                        // 只说明看得见（Sight=10/Sound=4），守卫在门槛外不转攻——继续拆家
+                        // 等它自己靠近。原实现无门槛直接切 Attack，进 Attack 首帧即被
+                        // 脱离判定（门槛×1.2）踢回 Move：Siege→Attack→Move 7ms 一圈
+                        //（game.log 2026-09-08 13:02:10.906-913 实证 dist=4.8），每圈
+                        // 拿放武器 + Move.OnEnter 强制重寻路（异步等待期站定）——围殴下
+                        // 反复横跳 = 用户报告"被攻击站着不动但偶尔正常攻击"。
+                        AEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as AEnemy.EnemyData;
+                        float attackGate = Mathf.Min(
+                            enemyData.AttackRange,
+                            this.Character.CharacterDataLAB.Weapon?.AttackReach ?? enemyData.AttackRange);
+                        if (Vector3.Distance(target.position, this.Character.transform.position) <= attackGate)
+                        {
+                            // 先赋 Target 再切状态（OnEnter 初始朝向读目标，见 bug-fixes.md 2026-08-16）
+                            this.Character.Target = target.GetComponent<LAB2D.Character.Character>();
+                            this.Character.Manager.ChangeState(TypeEnum.Attack);
+                            AWorkerTask.LogProvider(
+                                $"[EnemyDiag] {this.Character.name} 攻城中感知到 {target.name}，转攻",
+                                LogManager.LogLevelEnum.Debug);
+                            return;
+                        }
+
+                        // 门槛外：感知到了但不追（转攻丢拆家目标），留在 Siege 继续攻城
                     }
                 }
             }

@@ -19,11 +19,27 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
         public float AttackTime { get; private set; } = 0.0f;
 
         /// <summary>
+        /// 被打时重置攻击持续时长（ASeekEnemy.ReduceHp 调用，2026-09-08 用户报告"被打突然走开"）：
+        /// 换目标判定"AttackTime > ChangeTarget"语义从"本状态累计 5s"变为"距上次挨打 5s"——
+        /// 贴身互殴中每刀重置，敌人不会在持续交战中被其他攻击者拉走（攻击状态只被
+        /// "5 秒没挨打"的新攻击者打断）。AttackTime 唯一外部读取处就是该判定，重置无副作用。
+        /// </summary>
+        public void ResetAttackTimeOnHit() => this.AttackTime = 0.0f;
+
+        /// <summary>
         /// 攻击被墙遮挡的放弃阈值（秒）：武器持续就绪却被墙挡（发射不出）超阈值 →
         /// 放弃目标回 Seek 换目标漫游。治"互相看见却打不到"的隔墙僵持
         /// ——双方锁着对方空转谁也不退（2026-09-08 用户报告，同 WorkerAttackState）。
         /// </summary>
         private const float AttackBlockedGiveUpSeconds = 3f;
+
+        /// <summary>
+        /// 攻击脱离距离系数：与目标距离超过 AttackRange×本值才退出攻击回 Move 追击。
+        /// 滞回防攻击距离边缘 Attack↔Move 抖动（对齐 WorkerAttackState.ChaseRangeFactor=1.2）。
+        /// 目标后撤拉远时武器特效实际够不着还站定空挥——检测命中是开火许可，
+        /// 不是持续站桩许可（修"实际攻击范围与检测范围不一致"2026-09-08）。
+        /// </summary>
+        private const float LeaveRangeFactor = 1.2f;
 
         /// <summary>
         /// 武器组件缓存：OnUpdate 每帧 GetComponent&lt;AWeaponObject&gt; 是热点
@@ -107,6 +123,28 @@ namespace LAB2D.Character.Enemy.SeekEnemy.State
             {
                 this.Character.Manager.ChangeState(TypeEnum.Seek);
                 return;
+            }
+
+            // 脱离攻击距离（×滞回系数）→ 回 Move 追击重新贴近：Move.OnEnter 追击分支
+            // 按 Target 重新寻路（Target 在本状态 OnExit 不清，仅 Seek.OnEnter 清）。
+            // 门槛与 SeekEnemyMoveState.TryEnterAttack 同源：min(AttackRange, 武器实际
+            // 射程 AttackReach)——剑光真实命中 ~1 格，单用 AttackRange=4 拿剑敌人
+            // 贴到 4 格站定仍空挥（2026-09-08 第二轮）。
+            {
+                AEnemy.EnemyData enemyData = this.Character.CharacterDataLAB as AEnemy.EnemyData;
+                float attackGate = Mathf.Min(
+                    enemyData.AttackRange,
+                    this.Character.CharacterDataLAB.Weapon?.AttackReach ?? enemyData.AttackRange);
+                float dist = Vector3.Distance(
+                    this.Character.transform.position, this.Character.Target.transform.position);
+                if (dist > attackGate * LeaveRangeFactor)
+                {
+                    AWorkerTask.LogProvider(
+                        $"[EnemyDiag] {this.Character.name} 目标脱离攻击距离 dist={dist:F1} > {attackGate * LeaveRangeFactor:F1} → Move 追击",
+                        LogManager.LogLevelEnum.Debug);
+                    this.Character.Manager.ChangeState(TypeEnum.Move);
+                    return;
+                }
             }
 
             // 玩家朝向设置为攻击方向（近零保护：与目标重合时不写零向量——

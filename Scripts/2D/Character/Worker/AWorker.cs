@@ -1219,8 +1219,9 @@ namespace LAB2D.Character.Worker
                 return;
             }
 
-            // 视线遮挡：墙/地形挡住的敌人不可见（探测不穿碰撞体，墙内看不到墙外）
-            if (!SkillTool.HasLineOfSight(this.transform.position, enemy.transform.position))
+            // 视线遮挡（网格+物理双查）：墙/地形/建造中的墙挡住的敌人不可见
+            //（探测不穿碰撞体，墙内看不到墙外；2026-09-08 修 LOS 穿建造中墙）
+            if (!SkillTool.HasClearSight(this.transform.position, enemy.transform.position))
             {
                 return;
             }

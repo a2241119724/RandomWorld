@@ -42,9 +42,15 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         /// <inheritdoc/>
         public override void OnUpdate()
         {
-            // 如果一段时间后没有找到搜索目标,那么回到游荡状态
+            // 目标存活时不超时放弃（对齐 SeekEnemy 语义，2026-09-08"被攻击就会切换目标"残留）：
+            // 原实现 3 秒超时 → Wander 清 Target 重选——被打后目标暂离感知（4 格外/扇形外）
+            // 就被换掉。存活期间持续朝目标搜索接近（OnFixedUpdate 直线移动），感知命中回 Chase；
+            // 只有目标死亡/为空才走超时回 Wander（此时无目标可追，超时兜底防呆站）。
+            bool targetAlive = this.Character.Target != null
+                && this.Character.Target.CharacterDataLAB != null
+                && this.Character.Target.CharacterDataLAB.Hp > 0f;
             this.recordTime += this.Character.DeltaTime;
-            if (this.recordTime > SeekTime)
+            if (this.recordTime > SeekTime && !targetAlive)
             {
                 this.Character.Manager.ChangeState(TypeEnum.Wander); // 进入游荡状态
                 return;

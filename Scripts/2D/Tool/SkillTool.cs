@@ -2,6 +2,7 @@ namespace LAB2D.Tool
 {
     using LAB2D;
     using LAB2D.Character.Enemy;
+    using LAB2D.Data;
     using LAB2D.Domain.Common;
     using LAB2D.Domain.Gameplay;
     using LAB2D.Map;
@@ -140,9 +141,11 @@ namespace LAB2D.Tool
         }
 
         /// <summary>
-        /// 网格级视线检查（Bresenham）— 遍历两点之间的格子，检测不可通过的
-        /// BuildTile（含建造中——物理射线检测不到无碰撞体的墙壁）与 TerrainTile 阻挡。
-        /// TileMap.IsCanReach 即瓦片碰撞体判定，故本检查等价于「视线不穿碰撞体」。
+        /// 网格级视线检查（Bresenham）— 遍历两点之间的格子，检测挡视线的建筑与地形。
+        /// 建筑用视线专用查询（GetBuildData + SO IsPass，不论建没建完都挡——物理射线
+        /// 检测不到建造中墙的无碰撞体格，必须查数据模型）；不复用寻路 IsCanReach：
+        /// 它对建造中墙放行（未完工无碰撞体 + PosMap 分支要求 IsComplete），LOS 复用
+        /// 会穿半成品墙 = Worker 隔墙索敌（2026-09-08 用户报告"检测穿墙"）。
         /// 从 AEnemy.HasGridLineOfSight 抽出共用（Enemy 感知 / Worker 索敌统一语义）。
         /// </summary>
         /// <param name="fromWorld">起点世界坐标（探测者）。</param>
@@ -183,10 +186,20 @@ namespace LAB2D.Tool
                 {
                     Vector3Int checkPos = new Vector3Int(x, y, 0);
 
-                    // BuildMap：不可通过的建筑瓦片阻挡视线（含建造中）
-                    if (buildMap != null && !buildMap.IsCanReach(checkPos))
+                    // BuildMap：格上有不可通行建筑即挡视线（含建造中——IsPass 在 SO 条目上，
+                    // BuildTileData 无此字段须按名回查；PosMap 无条目=空地不挡）
+                    if (buildMap != null)
                     {
-                        return false;
+                        BuildMap.BuildTileData buildData = buildMap.GetBuildData(checkPos);
+                        if (buildData != null
+                            && Core.ServiceLocator.TryGet(out ItemDataManager itemDataManager))
+                        {
+                            BuildItemData buildItemData = itemDataManager.GetBuildItemDataByName(buildData.Name);
+                            if (buildItemData != null && !buildItemData.IsPass)
+                            {
+                                return false;
+                            }
+                        }
                     }
 
                     // TileMap：不可通过的地形瓦片阻挡视线
@@ -216,6 +229,47 @@ namespace LAB2D.Tool
             }
 
             return true;
+        }
+
+        /// <summary>物理视线遮挡层（Tile/BuildTile 静态墙）——惰性初始化：LayerMask.GetMask
+        /// 禁止在静态字段初始化器调用（实例化触发 .cctor 即抛 UnityException，见 bug-fixes.md 2026-09-07）。</summary>
+        private static LayerMask senseOcclusionLayers;
+        private static bool senseOcclusionLayersReady;
+
+        /// <summary>
+        /// 物理级视线遮挡（单条 Physics2D.Raycast 查静态墙层）：网格 LOS 的补强，覆盖
+        /// 网格漏判的边角（Bresenham 对角缝隙正对物理碰撞体等）。注意对无碰撞体的
+        /// 建造中墙无效（射线无物可撞）——未完工墙由 <see cref="HasLineOfSight"/> 的
+        /// 数据模型查询覆盖，两层各管一半（对齐 AEnemy.SenseNearby 的双重 LOS）。
+        /// </summary>
+        /// <param name="fromWorld">起点世界坐标（探测者）。</param>
+        /// <param name="toWorld">终点世界坐标（目标）。</param>
+        /// <returns>true = 视线被物理碰撞体挡住。</returns>
+        public static bool IsPhysicallyOccluded(Vector3 fromWorld, Vector3 toWorld)
+        {
+            if (!senseOcclusionLayersReady)
+            {
+                senseOcclusionLayers = LayerMask.GetMask("Tile", "BuildTile");
+                senseOcclusionLayersReady = true;
+            }
+
+            Vector3 dir = toWorld - fromWorld;
+            float dist = dir.magnitude;
+            if (dist < 0.001f)
+            {
+                return false;
+            }
+
+            return Physics2D.Raycast(fromWorld, dir.normalized, dist, senseOcclusionLayers).collider != null;
+        }
+
+        /// <summary>
+        /// 组合视线检查（网格 + 物理）：索敌入口统一用本方法——网格挡（含建造中墙）
+        /// 或物理挡（碰撞体边角）均不可见。AEnemy.SenseNearby 保持自己的双重实现不变。
+        /// </summary>
+        public static bool HasClearSight(Vector3 fromWorld, Vector3 toWorld)
+        {
+            return HasLineOfSight(fromWorld, toWorld) && !IsPhysicallyOccluded(fromWorld, toWorld);
         }
 
         /// <summary>

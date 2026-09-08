@@ -44,6 +44,14 @@ namespace LAB2D.Character.Worker.State
         private const float ChaseRangeFactor = 1.2f;
 
         /// <summary>
+        /// Chase 追击停止距离（格）——观感参数，与特效真实射程（AWeapon.AttackReach，剑 1.5）
+        /// 解耦（2026-09-08 用户拍板 4 格）：Worker 追到目标 4 格内站定输出，不再贴脸。
+        /// 注意：剑光特效 ~1 格，对不自己贴近的目标站 4 格挥剑实际打不中（伤害依赖
+        /// 敌人进入近战范围）；观感与命中的取舍由用户定，调这里只动停止距离。
+        /// </summary>
+        private const float ChaseStopRange = 4f;
+
+        /// <summary>
         /// 攻击被墙遮挡的放弃阈值（秒）：武器就绪但目标隔墙（LOS 射线命中墙）持续
         /// 这么久 → 放弃反击目标回 Seek 续原任务。治"互相看见却打不到"的隔墙僵持
         /// ——双方锁着对方空转谁也不退（2026-09-08 用户报告）。
@@ -258,9 +266,12 @@ namespace LAB2D.Character.Worker.State
         /// <summary>
         /// 计算并声明战斗移动意图（每帧调用，同参数由 Locomotion.SetIntent 短路防风暴）：
         /// - 目标死亡/丢失 → Stop 站定（等超时退出战斗）；
-        /// - 超出攻击距离（&gt;AttackRange×1.2）或攻击就绪 → Chase 贴近；
+        /// - 超出实际攻击距离（&gt;AttackReach×1.2）或攻击就绪 → Chase 贴近；
         /// - 其余（攻击冷却中）→ Stop 站定输出（打带跑已删——一前一后移动观感差，
         ///   2026-09-07 用户要求移除 KeepDistance 风筝）。
+        /// 攻击距离取数据侧 AWeapon.AttackReach（特效真实命中范围），不是武器瞄准范围
+        /// raduis——剑 raduis=8 而剑光粒子原地闪真实命中 ~1 格，用 raduis 判定会让拿剑
+        /// Worker 索敌（8 格）命中后站桩空挥（2026-09-08 用户报告"检测距离大于攻击距离"）。
         /// </summary>
         private void UpdateCombatIntent()
         {
@@ -275,15 +286,16 @@ namespace LAB2D.Character.Worker.State
             }
 
             AWeaponObject weaponObject = this.cachedWeaponObject; // OnEnter 缓存，避免每帧 GetComponent
-            float attackRange = weaponObject != null ? weaponObject.AttackRange : CounterAttackRange;
+            AWorker.WorkerData workerData = this.Character.CharacterDataLAB as AWorker.WorkerData;
+            float attackRange = workerData?.Weapon != null ? workerData.Weapon.AttackReach : CounterAttackRange;
             bool isReady = weaponObject != null && weaponObject.IsAttackReady;
             float dist = Vector3.Distance(this.Character.transform.position, target.transform.position);
 
             if (dist > attackRange * ChaseRangeFactor || isReady)
             {
-                // 打不着或正好该出手 → 追击贴近
+                // 打不着或正好该出手 → 追击贴近（停止距离 4 格观感值，非特效射程）
                 this.DeclareIntent(WorkerMoveIntentKind.Chase, dist, isReady);
-                locomotion.Chase(target, attackRange);
+                locomotion.Chase(target, ChaseStopRange);
             }
             else
             {

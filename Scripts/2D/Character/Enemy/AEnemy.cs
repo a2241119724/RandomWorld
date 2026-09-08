@@ -110,7 +110,14 @@ namespace LAB2D.Character.Enemy
 
             // 画视觉,听觉,攻击范围
             // LAB2D.Tool.Tool.DrawSectorSolid(360, enemyData.SoundRange, new Color32(0, 0, 255, 50), this.transform);
-            this.AttackRange = LAB2D.Tool.Tool.DrawSectorSolid(10, enemyData.AttackRange, new Color32(255, 0, 0, 50), this.transform);
+            // 攻击范围视觉与实际攻击门槛同源：min(AttackRange, 武器实际射程 AttackReach)
+            //（SeekEnemy 拿剑 →1.5）——原固定 AttackRange=4，实际门槛降到 1.5 后扇形
+            // 仍显示 4 格 = "视觉范围不管用了"（2026-09-08 用户报告）。无武器敌人
+            //（CommonEnemy）回退 AttackRange，与其攻击判定 dist≤AttackRange 一致。
+            float attackVisualRange = Mathf.Min(
+                enemyData.AttackRange,
+                this.CharacterDataLAB.Weapon?.AttackReach ?? enemyData.AttackRange);
+            this.AttackRange = LAB2D.Tool.Tool.DrawSectorSolid(10, attackVisualRange, new Color32(255, 0, 0, 50), this.transform);
             this.SightRange = LAB2D.Tool.Tool.DrawSectorSolid(enemyData.SightAngle, enemyData.SightRange, new Color32(0, 255, 0, 50), this.transform);
 
             // Hp 位于 prefab 内置的 HeadUI 子树下（FindHeadChild 含旧层级兜底）

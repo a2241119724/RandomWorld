@@ -72,30 +72,15 @@ namespace LAB2D.Gameplay
 
         /// <summary>
         /// 初始化核心位置（地图就绪后由 GlobalInit 调用）。
-        /// 已有位置（读档恢复）时只重建视觉瓦片，不重新选址。
+        /// 2026-09-08 用户决策"中心点不需要宗门核心的建造"：本函数不再自动放置/重建
+        /// 山门核心（新档不放、读档不重放），IsCorePlaced 保持 false——HUD/胜负/伤害
+        /// 各依赖方均有"无核心"分支自然跳过。MountainGateCore 类、SO 条目与
+        /// PlaceBySystem 管线保留（Editor 菜单 MountainGateMenu 仍可手动放置）。
         /// </summary>
         /// <param name="mapCenter">地图中心格子坐标。</param>
         public void InitPosition(Vector3Int mapCenter)
         {
-            if (this.IsCorePlaced)
-            {
-                this.PlaceCoreIcon(this.CorePosition);
-                this.RaiseCoreChanged();
-                return;
-            }
-
-            if (!this.TryFindCoreArea(mapCenter, PlaceSearchRadius, out Vector3Int found))
-            {
-                found = mapCenter; // 找不到整片空地时退回中心（极端地图）
-                AWorkerTask.LogProvider("[GateDiag] 山门核心未找到 3×3 空地，退回地图中心", LogManager.LogLevelEnum.Warning);
-            }
-
-            this.CorePosition = found;
-            this.PlaceCoreIcon(found);
-            AWorkerTask.LogProvider(
-                $"[GateDiag] 山门核心初始化 pos=({found.x},{found.y}) size={CoreSize}x{CoreSize} hp={this.CoreHp:F0} level={this.CoreLevel}",
-                LogManager.LogLevelEnum.Debug);
-            this.RaiseCoreChanged();
+            // 山门核心自动放置已停用（见上注释）：新档不放、读档不重放
         }
 
         /// <summary>

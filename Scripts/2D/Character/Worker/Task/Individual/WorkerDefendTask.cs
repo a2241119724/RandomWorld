@@ -72,10 +72,10 @@ namespace LAB2D.Character.Worker.Task.Individual
                 {
                     this.enemyScanTimer = 0f;
                     // 网格最近邻查询（零分配，O(局部敌人数)，替代原全列表扫描+取最近）+
-                    // 视线遮挡过滤：墙/地形挡住的敌人不可见（探测不穿碰撞体）
+                    // 视线遮挡过滤（网格+物理双查，含建造中的墙）：墙/地形挡住的敌人不可见
                     AEnemy enemy = SkillTool.GetNearestEnemyInRadius(worker.transform.position, DefendSightRange, out _);
                     if (enemy != null
-                        && SkillTool.HasLineOfSight(worker.transform.position, enemy.transform.position))
+                        && SkillTool.HasClearSight(worker.transform.position, enemy.transform.position))
                     {
                         worker.LastAttacker = enemy;
                         worker.Manager.ChangeState(AWorkerState.TypeEnum.Attack);

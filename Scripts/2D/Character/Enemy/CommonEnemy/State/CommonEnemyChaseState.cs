@@ -53,8 +53,12 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
         /// <inheritdoc/>
         public override void OnUpdate()
         {
-            if (this.Character.Target == null)
+            // 目标死亡/销毁才放弃（清引用防追尸体）
+            if (this.Character.Target == null
+                || this.Character.Target.CharacterDataLAB == null
+                || this.Character.Target.CharacterDataLAB.Hp <= 0f)
             {
+                this.Character.Target = null;
                 this.Character.Manager.ChangeState(TypeEnum.Wander);
                 return;
             }
@@ -78,12 +82,13 @@ namespace LAB2D.Character.Enemy.CommonEnemy.State
                     return;
                 }
             }
-            else
-            {
-                // 如果敌人感知范围内没有玩家，进入搜索状态
-                this.senseTimer = 0f; // 失联换目标语义：进 Seek 前清计时，重进 Chase 立即完整感知
-                this.Character.Manager.ChangeState(TypeEnum.Seek);
-            }
+
+            // 感知失联不切状态、不丢目标（对齐 SeekEnemy.Move 语义，2026-09-08 用户报告
+            // "被攻击就会切换目标"残留）：原实现失联 0.2s → Seek → 3 秒超时 → Wander 清
+            // Target 重选——Worker 站 4 格外（Sound=4 边界外/扇形外）打它时链路必触发，
+            // 观感"我打它，它转头去打别人"。追击移动不依赖感知（OnFixedUpdate 朝 Target
+            // 直线移动），失联唯一作用是不进 Attack（看不见不打）；放弃目标只走目标死亡
+            // 或卡死熔断（OnCollisionStay2D），换锁唯一正当途径是 ReduceHp 的"打我"。
         }
 
         /// <inheritdoc/>
