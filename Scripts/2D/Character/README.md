@@ -1,1 +1,0 @@
-- 使用Manager，不使用Creator
